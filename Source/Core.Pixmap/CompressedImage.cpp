@@ -136,9 +136,6 @@ static void BlockCompress_(FCompressedImage* dst, const FImage* src, FCompressed
     case EColorSpace::sRGB:
         BlockSpaceCompress_<_Format, EColorSpace::sRGB>(dst, src, quality);
         break;
-    case EColorSpace::Float:
-        BlockSpaceCompress_<_Format, EColorSpace::Float>(dst, src, quality);
-        break;
     case EColorSpace::YCoCg:
         BlockSpaceCompress_<_Format, EColorSpace::YCoCg>(dst, src, quality);
         break;

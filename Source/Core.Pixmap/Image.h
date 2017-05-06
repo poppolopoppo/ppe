@@ -17,7 +17,7 @@ class FFloatImage;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(Image);
-class FImage : public FRefCountable {
+class CORE_PIXMAP_API FImage : public FRefCountable {
 public:
     // raw data stores pixel data in rgba order by default :
     typedef PIXELSTORAGE(Image, u8) raw_data_type;
@@ -59,8 +59,8 @@ public:
     void ConvertFrom(const FFloatImage* src);
     void ConvertTo(FFloatImage* dst) const;
 
-    friend bool Load(FImage* dst, const FFilename& filename);
-    friend bool Load(FImage* dst, const FFilename& filename, const TMemoryView<const u8>& content);
+    friend bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const FFilename& filename);
+    friend bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const TMemoryView<const u8>& content);
 
     friend bool Save(const FImage* src, const FFilename& filename);
     friend bool Save(const FImage* src, const FFilename& filename, IStreamWriter* writer);
@@ -81,11 +81,11 @@ private:
     raw_data_type _data;
 };
 //----------------------------------------------------------------------------
-bool Load(FImage* dst, const FFilename& filename);
-bool Load(FImage* dst, const FFilename& filename, const TMemoryView<const u8>& content);
+CORE_PIXMAP_API bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const FFilename& filename);
+CORE_PIXMAP_API bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const TMemoryView<const u8>& content);
 //----------------------------------------------------------------------------
-bool Save(const FImage* src, const FFilename& filename);
-bool Save(const FImage* src, const FFilename& filename, IStreamWriter* writer);
+CORE_PIXMAP_API bool Save(const FImage* src, const FFilename& filename);
+CORE_PIXMAP_API bool Save(const FImage* src, const FFilename& filename, IStreamWriter* writer);
 //----------------------------------------------------------------------------
 template <typename T>
 void FImage::Fill(T value) {

@@ -29,7 +29,7 @@ static void Test_ExpandAlphaMask_(const FFilename& input) {
     const FDirpath output = L"Process:/";
 
     Pixmap::FImage img;
-    if (false == Pixmap::Load(&img, input))
+    if (false == Pixmap::Load(&img, Pixmap::_8bits, Pixmap::sRGB, input))
         AssertNotReached();
 
     Pixmap::PFloatImage intermediate = new Pixmap::FFloatImage();
@@ -74,7 +74,7 @@ static void Test_ExpandAlphaMask_(const FFilename& input) {
 //----------------------------------------------------------------------------
 static void Test_DistanceField(const FFilename& input) {
     Pixmap::FImage img;
-    if (false == Pixmap::Load(&img, input))
+    if (false == Pixmap::Load(&img, Pixmap::_32bits, Pixmap::sRGB, input))
         AssertNotReached();
 
     Pixmap::FFloatImage tmp;
@@ -88,7 +88,7 @@ static void Test_DistanceField(const FFilename& input) {
 //----------------------------------------------------------------------------
 static void Test_DXTCompression_(const FFilename& input) {
     Pixmap::FImage img;
-    if (false == Pixmap::Load(&img, input))
+    if (false == Pixmap::Load(&img, Pixmap::_8bits, Pixmap::sRGB, input))
         AssertNotReached();
 
     Pixmap::FCompressedImage compressed;
@@ -97,7 +97,7 @@ static void Test_DXTCompression_(const FFilename& input) {
 //----------------------------------------------------------------------------
 static void Test_ConvexHull_(const FFilename& input) {
     Pixmap::FImage img;
-    if (false == Pixmap::Load(&img, input))
+    if (false == Pixmap::Load(&img, Pixmap::_8bits, Pixmap::sRGB, input))
         AssertNotReached();
 
     Pixmap::FFloatImage convexhull;

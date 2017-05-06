@@ -72,19 +72,6 @@ struct TChannelTraits_<EColorDepth::_32bits, _Space> {
     }
 };
 //----------------------------------------------------------------------------
-template <>
-struct TChannelTraits_<EColorDepth::_8bits, EColorSpace::Float> {
-    typedef ubyten type;
-};
-template <>
-struct TChannelTraits_<EColorDepth::_16bits, EColorSpace::Float> {
-    typedef half type;
-};
-template <>
-struct TChannelTraits_<EColorDepth::_32bits, EColorSpace::Float> {
-    typedef float type;
-};
-//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -414,15 +401,7 @@ void FImage::ConvertTo(FFloatImage* dst) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Load(FImage* dst, const FFilename& filename) {
-    RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
-    if (false == VFS_ReadAll(&content, filename, AccessPolicy::Binary))
-        return false;
-
-    return Load(dst, filename, content.MakeConstView());
-}
-//----------------------------------------------------------------------------
-bool Load(FImage* dst, const FFilename& filename, const TMemoryView<const u8>& content) {
+bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const FFilename& filename) {
     Assert(dst);
     Assert(filename.HasExtname());
 
@@ -437,96 +416,82 @@ bool Load(FImage* dst, const FFilename& filename, const TMemoryView<const u8>& c
         FFSConstNames::PpmExt() != ext &&
         FFSConstNames::PicExt() != ext &&
         FFSConstNames::PsdExt() != ext &&
-        FFSConstNames::TgaExt() != ext )
+        FFSConstNames::TgaExt() != ext)
         return false;
 
-    if (FFSConstNames::HdrExt() == ext) {
-        // import .hdr images in a 32bits float buffer :
-        const int len = checked_cast<int>(content.size());
+    RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
+    if (false == VFS_ReadAll(&content, filename, AccessPolicy::Binary))
+        return false;
 
-        int x, y, comp;
-        const TThreadLocalPtr<float, MEMORY_DOMAIN_TAG(Image)> decoded(
-            ::stbi_loadf_from_memory(content.data(), len, &x, &y, &comp, 0) );
+    return Load(dst, depth, space, content.MakeConstView());
+}
+//----------------------------------------------------------------------------
+bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const TMemoryView<const u8>& content) {
+    Assert(dst);
 
-        if (nullptr == decoded)
-            return false;
+    int channelCount = 0;
+    int width = 0;
+    int height = 0;
 
-        dst->_width = checked_cast<size_t>(x);
-        dst->_height = checked_cast<size_t>(y);
-        dst->_depth = EColorDepth::_32bits;
-        dst->_space = EColorSpace::Float;
+    dst->_depth = depth;
+    dst->_space = space;
 
-        switch (comp)
-        {
-        case 1:
-            dst->_mask = EColorMask::R;
-            break;
-        case 2:
-            dst->_mask = EColorMask::RG;
-            break;
-        case 3:
-            dst->_mask = EColorMask::RGB;
-            break;
-        case 4:
-            dst->_mask = EColorMask::RGBA;
-            break;
+    TThreadLocalPtr<const u8, MEMORY_DOMAIN_TAG(Image)> decoded;
+    const int contentSizeInBytes = checked_cast<int>(content.size());
 
-        default:
-            AssertNotImplemented();
-            break;
-        }
+    switch (depth)
+    {
+    case Core::Pixmap::EColorDepth::_8bits:
+        decoded.reset((const u8*)::stbi_load_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0));
+        break;
+    case Core::Pixmap::EColorDepth::_16bits:
+        decoded.reset((const u8*)::stbi_load_16_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0));
+        break;
+    case Core::Pixmap::EColorDepth::_32bits:
+        decoded.reset((const u8*)::stbi_loadf_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0));
+        break;
 
-        const size_t sizeInBytes = (dst->_width*dst->_height*dst->PixelSizeInBytes());
-
-        dst->_data.Resize_DiscardData(sizeInBytes);
-        Assert(dst->TotalSizeInBytes() == sizeInBytes);
-        ::memcpy(dst->_data.data(), decoded.get(), sizeInBytes);
-    }
-    else {
-        // everything else will always use an 8bits buffer :
-        const int len = checked_cast<int>(content.size());
-
-        int x, y, comp;
-        const TThreadLocalPtr<::stbi_uc, MEMORY_DOMAIN_TAG(Image)> decoded(
-            ::stbi_load_from_memory(content.data(), len, &x, &y, &comp, 0) );
-        if (nullptr == decoded)
-            return false;
-
-        dst->_width = checked_cast<size_t>(x);
-        dst->_height = checked_cast<size_t>(y);
-        dst->_depth = EColorDepth::_8bits; // sadly stbi doesn't handle 16 bits per channel...
-        dst->_space = EColorSpace::sRGB;
-
-        switch (comp)
-        {
-        case 1:
-            dst->_mask = EColorMask::R;
-            break;
-        case 2:
-            dst->_mask = EColorMask::RG;
-            break;
-        case 3:
-            dst->_mask = EColorMask::RGB;
-            break;
-        case 4:
-            dst->_mask = EColorMask::RGBA;
-            break;
-
-        default:
-            AssertNotImplemented();
-            break;
-        }
-
-        const size_t sizeInBytes = (dst->_width*dst->_height*dst->PixelSizeInBytes());
-
-        dst->_data.Resize_DiscardData(sizeInBytes);
-        Assert(dst->TotalSizeInBytes() == sizeInBytes);
-        ::memcpy(dst->_data.data(), decoded.get(), sizeInBytes);
+    default:
+        AssertNotImplemented();
+        return false;
     }
 
-    LOG(Info, L"[Pixmap] Loaded a {0}_{1}_{2}:{3}x{4} image from '{5}'",
-        dst->Mask(), dst->Depth(), dst->Space(), dst->Width(), dst->Height(),
-        filename );
+    if (nullptr == decoded)
+        return false;
+
+    AssertRelease(space != EColorSpace::YCoCg || channelCount > 2);
+
+    switch (channelCount)
+    {
+    case 1:
+        dst->_mask = EColorMask::R;
+        break;
+    case 2:
+        dst->_mask = EColorMask::RG;
+        break;
+    case 3:
+        dst->_mask = EColorMask::RGB;
+        break;
+    case 4:
+        dst->_mask = EColorMask::RGBA;
+        break;
+
+    default:
+        AssertNotImplemented();
+        return false;
+    }
+
+    dst->_width = checked_cast<size_t>(width);
+    dst->_height = checked_cast<size_t>(height);
+
+    LOG(Info, L"[Pixmap] Loaded a {0}_{1}_{2}:{3}x{4} image",
+        dst->Mask(), dst->Depth(), dst->Space(), dst->Width(), dst->Height() );
+
+    const size_t decodedSizeInBytes = (dst->_width*dst->_height*dst->PixelSizeInBytes());
+
+    dst->_data.Resize_DiscardData(decodedSizeInBytes);
+    Assert(dst->TotalSizeInBytes() == decodedSizeInBytes);
+    ::memcpy(dst->_data.data(), decoded.get(), decodedSizeInBytes);
 
     return true;
 }
@@ -576,7 +541,7 @@ bool Save(const FImage* src, const FFilename& filename, IStreamWriter* writer) {
     }
     else if (FFSConstNames::HdrExt() == ext) {
         AssertRelease(EColorDepth::_32bits == src->_depth);
-        AssertRelease(EColorSpace::Float == src->_space);
+        AssertRelease(EColorSpace::Linear == src->_space);
         result = ::stbi_write_hdr_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, reinterpret_cast<const float*>(src->_data.data()));
     }
     else if (FFSConstNames::BmpExt() == ext) {

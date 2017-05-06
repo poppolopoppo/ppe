@@ -12,7 +12,7 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EBlockFormat {
+enum EBlockFormat {
     DXT1    = 8,
     DXT5    = 16,
 };
@@ -22,7 +22,7 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
     return oss << BlockFormatToCStr(value);
 }
 //----------------------------------------------------------------------------
-enum class EColorDepth {
+enum EColorDepth {
     _8bits  = 8,
     _16bits = 16,
     _32bits = 32,
@@ -33,7 +33,7 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
     return oss << ColorDepthToCStr(value);
 }
 //----------------------------------------------------------------------------
-enum class EColorMask {
+enum EColorMask {
     R       = 1,
     RG      = 2,
     RGB     = 3,
@@ -45,10 +45,9 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
     return oss << ColorMaskToCStr(value);
 }
 //----------------------------------------------------------------------------
-enum class EColorSpace {
+enum EColorSpace {
     Linear  = 0,
     sRGB,
-    Float,
     YCoCg,
 };
 FStringView ColorSpaceToCStr(EColorSpace value);

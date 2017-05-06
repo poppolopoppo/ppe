@@ -34,7 +34,7 @@ void DistanceField_CDT(FImage* dst, const FFloatImage* src, float alphaCutoff) {
 
     const float DISTMAX = float(w*w + h*h) + 1;
 
-    dst->Resize_DiscardData(w, h, EColorDepth::_32bits, EColorMask::R, EColorSpace::Float);
+    dst->Resize_DiscardData(w, h, EColorDepth::_32bits, EColorMask::R, EColorSpace::Linear);
 
     const TMemoryView<const FFloatImage::color_type> srcData = src->MakeConstView();
     const TMemoryView<float> dstData = dst->MakeView().Cast<float>();
@@ -139,7 +139,7 @@ void DistanceField_DRA(FImage* dst, const FFloatImage* src, float alphaCutoff) {
 
     const float DISTMAX = float(w*w + h*h) + 1;
 
-    dst->Resize_DiscardData(w, h, EColorDepth::_32bits, EColorMask::R, EColorSpace::Float);
+    dst->Resize_DiscardData(w, h, EColorDepth::_32bits, EColorMask::R, EColorSpace::Linear);
 
     const TMemoryView<const FFloatImage::color_type> srcData = src->MakeConstView();
     const TMemoryView<float> dstData = dst->MakeView().Cast<float>();

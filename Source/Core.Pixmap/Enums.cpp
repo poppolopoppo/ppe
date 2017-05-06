@@ -62,8 +62,6 @@ FStringView ColorSpaceToCStr(EColorSpace value) {
         return "Linear";
     case Core::Pixmap::EColorSpace::sRGB:
         return "sRGB";
-    case Core::Pixmap::EColorSpace::Float:
-        return "Float";
     case Core::Pixmap::EColorSpace::YCoCg:
         return "YCoCg";
     default:
