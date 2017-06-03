@@ -14,13 +14,12 @@ template <size_t _SizeInBytes>
 class TInSituStorage : Meta::FThreadResource {
 public:
     TInSituStorage() noexcept
-        : _insituPtr(reinterpret_cast<u8*>(&_insituData))
-        , _insituCount(0) {}
+        : _insituCount(0)
+        , _insituOffset(0) {}
 
     ~TInSituStorage() {
-        Assert(0 == _insituCount);
         Assert(InSituEmpty());
-        _insituPtr = nullptr;
+        Assert(0 == _insituOffset);
     }
 
     TInSituStorage(const TInSituStorage& ) = delete;
@@ -29,91 +28,88 @@ public:
     TInSituStorage(TInSituStorage&& ) = delete;
     TInSituStorage& operator=(TInSituStorage&& ) = delete;
 
-    const u8* InsituData() const { return reinterpret_cast<const u8*>(&_insituData); }
+    FORCE_INLINE const u8* InsituData() const { return reinterpret_cast<const u8*>(&_insituData); }
 
     void* AllocateIFP(size_t sizeInBytes);
     bool DeallocateIFP(void* ptr, size_t sizeInBytes) noexcept;
     void* ReallocateIFP(void* ptr, size_t newSizeInBytes, size_t oldSizeInBytes);
 
-    bool InSituEmpty() const noexcept {
-        Assert((InsituData() == _insituPtr) == (0 == _insituCount));
-        return (InsituData() == _insituPtr);
-    }
+    FORCE_INLINE bool InSituEmpty() const noexcept { return (0 == _insituCount); }
 
-    bool Contains(const void* ptr) const noexcept {
+    FORCE_INLINE bool Contains(const void* ptr) const noexcept {
         THIS_THREADRESOURCE_CHECKACCESS();
-        const u8* const p = reinterpret_cast<const u8*>(ptr);
-        return (InsituData() <= p && p <= InsituData() + _SizeInBytes);
+        return (InsituData() <= reinterpret_cast<const u8*>(ptr) &&
+                reinterpret_cast<const u8*>(ptr) <= InsituData() + _SizeInBytes);
     }
 
 private:
+#ifdef ARCH_X86 // less padding -> pack to u16
+    STATIC_ASSERT(_SizeInBytes < UINT16_MAX);
+    typedef u16 size_type;
+#else
+    STATIC_ASSERT(_SizeInBytes < UINT32_MAX);
+    typedef u32 size_type;
+#endif
+
     typename std::aligned_storage<_SizeInBytes, 16>::type _insituData;
-    u8* _insituPtr;
-    size_t _insituCount;
+
+    size_type _insituCount;
+    size_type _insituOffset;
 };
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
 void* TInSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Contains(_insituPtr));
-    if (Contains(_insituPtr + sizeInBytes)) {
-        Assert(0 != _insituCount || InsituData() == _insituPtr);
-        ++_insituCount;
-        u8* const p = _insituPtr;
-        _insituPtr += sizeInBytes;
-        return p;
-    }
-    else {
+
+    if (_insituOffset + sizeInBytes > _SizeInBytes)
         return nullptr;
-    }
+
+    void* p = (void*)(InsituData() + _insituOffset);
+
+    _insituCount++;
+    _insituOffset += (size_type)sizeInBytes;
+
+    return p;
 }
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
 bool TInSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) noexcept {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Contains(_insituPtr));
-    u8* p = reinterpret_cast<u8*>(ptr);
-    if (Contains(p)) {
-        Assert(0 < _insituCount);
-        --_insituCount;
-        Assert(Contains(p + sizeInBytes));
-        if (0 == _insituCount) {
-            Assert(p + sizeInBytes == _insituPtr);
-            _insituPtr = reinterpret_cast<u8*>(&_insituData);
-        }
-        else if (p + sizeInBytes == _insituPtr) {
-            _insituPtr = p;
-        }
-        else {
-            Assert(0 < _insituCount);
-        }
-        return true;
-    }
-    else {
+
+    const size_type offset = size_type((const u8*)ptr - InsituData());
+    if (offset > _insituOffset)
         return false;
-    }
+
+    Assert(_insituCount > 0);
+    Assert(offset + sizeInBytes <= _insituOffset);
+
+    _insituCount--;
+
+    if (offset + sizeInBytes == _insituOffset)
+        _insituOffset = offset;
+    else
+        Assert(0 < _insituCount); // TODO : memory just freed is definitively lost (bubble) ...
+
+    return true;
 }
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
 void* TInSituStorage<_SizeInBytes>::ReallocateIFP(void* ptr, size_t newSizeInBytes, size_t oldSizeInBytes) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Contains(_insituPtr));
-    u8* p = reinterpret_cast<u8*>(ptr);
-    if (Contains(p)) {
-        Assert(Contains(p + oldSizeInBytes));
-        Assert(0 < _insituCount);
-        if (p + oldSizeInBytes == _insituPtr && Contains(p + newSizeInBytes)) {
-            _insituPtr = p + newSizeInBytes;
-            return p;
-        }
-        else {
-            return nullptr;
-        }
+    Assert(ptr); // All previously handled :
+    Assert(oldSizeInBytes);
+    Assert(newSizeInBytes);
+
+    const size_type offset = size_type((const u8*)ptr - InsituData());
+    Assert(offset + oldSizeInBytes <= _insituOffset);
+    Assert(_insituCount > 0);
+
+    // Try realloc in-place ONLY IF ITS THE LAST BLOCK ALLOCATED
+    if (offset + oldSizeInBytes == _insituOffset && offset + newSizeInBytes <= _SizeInBytes) {
+        _insituOffset = size_type(offset + newSizeInBytes);
+        return ptr;
     }
-    else if (nullptr == ptr) {
-        Assert(0 == oldSizeInBytes);
-        return AllocateIFP(newSizeInBytes);
-    }
+    // Need to allocate externally and free this block afterwards
     else {
         return nullptr;
     }
@@ -207,10 +203,16 @@ void TInSituAllocator<T, _SizeInBytes, _Allocator>::deallocate(pointer p, size_t
 //----------------------------------------------------------------------------
 template <typename T, size_t _SizeInBytes, typename _Allocator>
 void* TInSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type newSize, size_type oldSize) {
-    STATIC_ASSERT(std::is_pod<value_type>::value);
+    STATIC_ASSERT(Meta::TIsPod<value_type>::value);
     Assert(nullptr == p || 0 < oldSize);
 
-    if (0 == newSize) {
+    Likely(oldSize);
+    Likely(newSize);
+    if (0 == oldSize) {
+        Assert(nullptr == p);
+        return allocate(newSize);
+    }
+    else if (0 == newSize) {
         if (p) {
             Assert(0 < oldSize);
             deallocate(static_cast<pointer>(p), oldSize);
@@ -218,13 +220,30 @@ void* TInSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type
         return nullptr;
     }
     else {
-        void* result = _insitu.ReallocateIFP(p, newSize * sizeof(value_type), oldSize * sizeof(value_type));
-        if (nullptr != result)
-            return result;
+        Assert(nullptr != p);
 
-        return (_insitu.Contains(p))
-            ? Relocate_AssumeNoRealloc(*this, TMemoryView<value_type>(static_cast<pointer>(p), oldSize), newSize, oldSize)
-            : Relocate_AssumePod(static_cast<fallback_type&>(*this), TMemoryView<value_type>(static_cast<pointer>(p), oldSize), newSize, oldSize);
+        if (not _insitu.Contains(p))
+            return Relocate_AssumePod(
+                static_cast<fallback_type&>(*this),
+                TMemoryView<value_type>(static_cast<pointer>(p), oldSize),
+                newSize, oldSize );
+
+        void* newp = _insitu.ReallocateIFP(p, newSize * sizeof(value_type), oldSize * sizeof(value_type));
+        if (newp)
+            return newp;
+
+        newp = fallback_type::allocate(newSize);
+        if (nullptr == newp)
+            return nullptr;
+
+        // This is a POD type, so this is safe :
+        const size_t cpySize = Min(oldSize, newSize);
+        ::memcpy(newp, p, cpySize * sizeof(value_type));
+
+        if (not _insitu.DeallocateIFP(p, oldSize * sizeof(value_type)))
+            AssertNotReached();
+
+        return newp;
     }
 }
 //----------------------------------------------------------------------------
