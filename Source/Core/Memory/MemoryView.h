@@ -189,6 +189,13 @@ public:
         return nonconst_type(const_cast<typename nonconst_type::pointer>(_storage), _size);
     }
 
+    template <typename _Transform>
+    auto Map(const _Transform& transform) const {
+        return MakeIterable(
+            MakeOutputIterator(begin(), transform),
+            MakeOutputIterator(end(), transform) );
+    }
+
     friend void swap(TMemoryView& lhs, TMemoryView& rhs) {
         std::swap(lhs._storage, rhs._storage);
         std::swap(lhs._size, rhs._size);
@@ -272,8 +279,28 @@ TMemoryView<u8> MakeRawView(T& assumePod) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
+TMemoryView<u8> MakeRawView(const TMemoryView<T>& assumePods) {
+    return assumePods.Cast<u8>();
+}
+//----------------------------------------------------------------------------
+template <typename T>
 TMemoryView<const u8> MakeRawView(const T& assumePod) {
     return TMemoryView<const u8>(reinterpret_cast<const u8*>(&assumePod), sizeof(T));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+TMemoryView<const u8> MakeRawView(const TMemoryView<const T>& assumePods) {
+    return assumePods.Cast<const u8>();
+}
+//----------------------------------------------------------------------------
+template <typename T>
+TMemoryView<const u8> MakeRawConstView(const T& assumePod) {
+    return TMemoryView<const u8>(reinterpret_cast<const u8*>(&assumePod), sizeof(T));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+TMemoryView<const u8> MakeRawConstView(const TMemoryView<T>& assumePods) {
+    return assumePods.Cast<const u8>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
