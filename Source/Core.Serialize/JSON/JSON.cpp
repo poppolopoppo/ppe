@@ -413,7 +413,7 @@ bool FJSON::Load(FJSON* json, const FFilename& filename) {
     Assert(not filename.empty());
 
     RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
-    if (not VFS_ReadAll(&content, filename, AccessPolicy::Binary))
+    if (not VFS_ReadAll(&content, filename, EAccessPolicy::Binary))
         return false;
 
     return Load(json, filename, content.MakeConstView().Cast<const char>());
