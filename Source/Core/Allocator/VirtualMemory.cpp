@@ -6,7 +6,7 @@
 #include "Core/Misc/TargetPlatform.h"
 
 #if     defined(PLATFORM_WINDOWS)
-#   include <windows.h>
+#   include "Misc/Platform_Windows.h"
 #else
 #   error "unsupported platform"
 #endif
@@ -14,6 +14,21 @@
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+size_t FVirtualMemory::AllocSizeInBytes(void* ptr) {
+#if     defined(PLATFORM_WINDOWS)
+//  https://msdn.microsoft.com/en-us/library/windows/desktop/aa366902(v=vs.85).aspx
+    ::MEMORY_BASIC_INFORMATION info;
+    if (0 == ::VirtualQuery(ptr, &info, sizeof(info)))
+        AssertNotReached();
+
+    Assert(ptr == info.BaseAddress);
+
+    return info.RegionSize;
+#else
+#   error "not implemented !"
+#endif
+}
 //----------------------------------------------------------------------------
 // Keep allocations aligned to OS granularity
 // https://github.com/r-lyeh/ltalloc/blob/master/ltalloc.cc
@@ -149,9 +164,12 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first) {
 }
 //----------------------------------------------------------------------------
 void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* first, size_t cacheBlocksCapacity, size_t maxCacheSizeInBytes) {
+    if (0 == sizeInBytes)
+        sizeInBytes = FVirtualMemory::AllocSizeInBytes(ptr);
+
     Assert(IS_ALIGNED(FPlatform::SystemInfo.AllocationGranularity, sizeInBytes));
 
-    if (sizeInBytes > maxCacheSizeInBytes * 4) {
+    if (sizeInBytes > maxCacheSizeInBytes) {
         FVirtualMemory::AlignedFree(ptr, sizeInBytes);
         return;
     }

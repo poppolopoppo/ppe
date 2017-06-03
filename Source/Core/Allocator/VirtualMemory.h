@@ -8,6 +8,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 class FVirtualMemory {
 public:
+    static size_t AllocSizeInBytes(void* ptr);
     static void* AlignedAlloc(size_t alignment, size_t sizeInBytes);
     static void  AlignedFree(void* ptr, size_t sizeInBytes);
 };
@@ -41,7 +42,7 @@ public:
     ~TVirtualMemoryCache() { ReleaseAll(); }
 
     FORCE_INLINE void* Allocate(size_t sizeInBytes) { return FVirtualMemoryCache::Allocate(sizeInBytes, _freePageBlocks); }
-    void Free(void* ptr, size_t sizeInBytes) { FVirtualMemoryCache::Free(ptr, sizeInBytes, _freePageBlocks, _CacheBlocksCapacity, _MaxCacheSizeInBytes); }
+    void Free(void* ptr, size_t sizeInBytes = 0) { FVirtualMemoryCache::Free(ptr, sizeInBytes, _freePageBlocks, _CacheBlocksCapacity, _MaxCacheSizeInBytes); }
     void ReleaseAll() { FVirtualMemoryCache::ReleaseAll(_freePageBlocks); }
 
 private:
