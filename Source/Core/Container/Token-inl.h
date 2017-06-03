@@ -276,24 +276,23 @@ void TTokenSet<_Char, _Sensitive, _Allocator>::Clear() {
         slot.Clear();
 }
 //----------------------------------------------------------------------------
-#pragma warning( push )
-#pragma warning( disable : 4127) // C4127: l'expression conditionnelle est une constante
+namespace details {
+template <typename _Char>
+inline size_t TokenSlotHash(const TBasicStringView<_Char>& content, Meta::TIntegralConstant<ECase, ECase::Sensitive>) {
+    return hash_fnv1a(content.begin(), content.end());
+}
+template <typename _Char>
+inline size_t TokenSlotHash(const TBasicStringView<_Char>& content, Meta::TIntegralConstant<ECase, ECase::Insensitive>) {
+    const auto lower = content.ToLower();
+    return hash_fnv1a(lower.begin(), lower.end());
+}
+} //!details
 template <typename _Char, ECase _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
 size_t TTokenSet<_Char, _Sensitive, _Allocator>::SlotHash(const TBasicStringView<_Char>& content) {
     static_assert(IS_POW2(SlotCount), "SlotCount must be a power of 2");
-    size_t h = 0;
-    if (ECase::Sensitive == _Sensitive) {
-        for (const _Char ch : content)
-            h += size_t(ch);
-    }
-    else {
-        for (const _Char ch : content)
-            h += size_t(ToLower(ch));
-    }
-    return (h & SlotMask);
+    return (details::TokenSlotHash(content, Meta::TIntegralConstant<ECase, _Sensitive>{}) & SlotMask);
 }
-#pragma warning( pop )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
