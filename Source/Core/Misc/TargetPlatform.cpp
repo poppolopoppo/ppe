@@ -29,6 +29,8 @@ struct FWindowsSystemInfo_ : FPlatform::FSystemInfo {
         AllocationGranularity = checked_cast<size_t>(st.dwAllocationGranularity);
         PageSize = checked_cast<size_t>(st.dwPageSize);
         ProcessorsCount = checked_cast<size_t>(st.dwNumberOfProcessors);
+
+        AssertRelease(HUGE_PAGE_SIZE == AllocationGranularity);
     }
 };
 static const FWindowsSystemInfo_ GSystemInfo;
@@ -105,8 +107,7 @@ void FPlatform::DebugBreak() {
 #ifndef FINAL_RELEASE
 void FPlatform::DebugBreakAttach() {
 #ifdef PLATFORM_WINDOWS
-    if (::IsDebuggerPresent())
-    {
+    if (::IsDebuggerPresent()) {
         ::DebugBreak();
     }
 #else
