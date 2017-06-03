@@ -62,6 +62,10 @@
         _RTTI_PROPERTY_IMPL(&propName[1], Core::RTTI::FMetaProperty::Private, &object_type::_Name ) \
     } while (0);
 //----------------------------------------------------------------------------
+// Add a public property "SomeName" from a public field "SomeName"
+#define RTTI_PROPERTY_PUBLIC_FIELD(_Name) \
+        _RTTI_PROPERTY_IMPL(STRINGIZE(_Name), Core::RTTI::FMetaProperty::Public, &object_type::_Name)
+//----------------------------------------------------------------------------
 // Add a public property "SomeName" from 3 delegates or 3 std::function : a getter, a mover & a setter
 #define RTTI_PROPERTY_GETSET_FLAGS(_Name, _Flags, _Get, _Set) \
     _RTTI_PROPERTY_IMPL(STRINGIZE(_Name), _Flags, COMMA_PROTECT(std::move(_Get), std::move(_Set)) )
