@@ -3,6 +3,7 @@
 #include "PackingHelpers.h"
 
 #include "Maths/ScalarVectorHelpers.h"
+#include "Maths/Quaternion.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

@@ -13,7 +13,15 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct UX10Y10Z10W2N {
-    u32 _data;
+    union {
+        u32 _data;
+        struct {
+            u32 _x : 10;
+            u32 _y : 10;
+            u32 _z : 10;
+            u32 _w : 2;
+        };
+    };
 
     FORCE_INLINE UX10Y10Z10W2N() {}
     FORCE_INLINE explicit UX10Y10Z10W2N(Meta::FForceInit) : _data(0) {}
@@ -57,6 +65,9 @@ UX10Y10Z10W2N Float01_to_UX10Y10Z10W2N(float x, float y, float z, u8 w);
 UX10Y10Z10W2N FloatM11_to_UX10Y10Z10W2N(const float3& xyz, u8 w);
 UX10Y10Z10W2N FloatM11_to_UX10Y10Z10W2N(float x, float y, float z, u8 w);
 //----------------------------------------------------------------------------
+UX10Y10Z10W2N Quaternion_to_UX10Y10Z10W2N(const class FQuaternion& quaternion);
+FQuaternion   UX10Y10Z10W2N_to_Quaternion(const struct UX10Y10Z10W2N& packed);
+//----------------------------------------------------------------------------
 template <>
 struct TNumericLimits< UX10Y10Z10W2N > {
     typedef UX10Y10Z10W2N value_type;
@@ -77,9 +88,6 @@ struct TNumericLimits< UX10Y10Z10W2N > {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef TScalarVector<FHalfFloat, 2> half2;
-typedef TScalarVector<FHalfFloat, 4> half4;
-//----------------------------------------------------------------------------
 template <size_t _Dim>
 TScalarVector<FHalfFloat, _Dim> HalfPack(const TScalarVector<float, _Dim>& value);
 //----------------------------------------------------------------------------
@@ -87,23 +95,6 @@ template <size_t _Dim>
 TScalarVector<float, _Dim> HalfUnpack(const TScalarVector<FHalfFloat, _Dim>& value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-typedef TScalarVector<TSNorm<u8>, 2> byte2n;
-typedef TScalarVector<TSNorm<u8>, 4> byte4n;
-typedef TScalarVector<TUNorm<u8>, 2> ubyte2n;
-typedef TScalarVector<TUNorm<u8>, 4> Short2Nubyte4n;
-
-typedef TScalarVector<TSNorm<u16>, 2> short2n;
-typedef TScalarVector<TSNorm<u16>, 4> short4n;
-typedef TScalarVector<TUNorm<u16>, 2> ushort2n;
-typedef TScalarVector<TUNorm<u16>, 4> ushort4n;
-
-typedef TScalarVector<TSNorm<u32>, 2> word2n;
-typedef TScalarVector<TSNorm<u32>, 3> word3n;
-typedef TScalarVector<TSNorm<u32>, 4> word4n;
-typedef TScalarVector<TUNorm<u32>, 2> uword2n;
-typedef TScalarVector<TUNorm<u32>, 3> uword3n;
-typedef TScalarVector<TUNorm<u32>, 4> uword4n;
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<TUNorm<T>, _Dim> UNormPack(const TScalarVector<float, _Dim>& value);

@@ -52,6 +52,8 @@ public:
     value_type Value() const { return _value; }
     void SetValue(value_type value) { _value = value; }
 
+    value_type operator *() const { return _value; }
+
     bool operator ==(const TUnit& other) const { return _value == other._value; }
     bool operator !=(const TUnit& other) const { return !operator ==(other); }
 

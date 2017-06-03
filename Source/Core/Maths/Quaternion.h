@@ -51,8 +51,10 @@ public:
     FQuaternion Invert() const;
     FQuaternion Negate() const;
     FQuaternion Normalize() const;
+    FQuaternion NormalizeInvert() const;
 
     float3 Transform(const float3& value) const;
+    float3 InvertTransform(const float3& value) const;
 
     bool operator ==(const FQuaternion& other) const { return _value == other._value; }
     bool operator !=(const FQuaternion& other) const { return !operator ==(other); }
@@ -69,15 +71,24 @@ public:
     FQuaternion& operator *=(const FQuaternion& other);
     FQuaternion operator *(const FQuaternion& other) const;
 
-    FORCE_INLINE static FQuaternion Identity() { return FQuaternion(0,0,0,1); }
-    FORCE_INLINE static FQuaternion One() { return FQuaternion(1,1,1,1); }
-    FORCE_INLINE static FQuaternion Zero() { return FQuaternion(0,0,0,0); }
+    static const FQuaternion Identity;
+    static const FQuaternion One;
+    static const FQuaternion Zero;
 
 private:
     float4 _value;
 };
 //----------------------------------------------------------------------------
 FQuaternion operator *(float scale, const FQuaternion& quaternion);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Quaternions are considered as pods
+//----------------------------------------------------------------------------
+namespace Meta {
+template <>
+struct TIsPod< FQuaternion > : public std::integral_constant<bool, true> {};
+} //!Meta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
