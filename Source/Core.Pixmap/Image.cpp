@@ -407,20 +407,20 @@ bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const FFilename& fi
 
     // supported image file types :
     const FExtname ext = filename.Extname();
-    if (FFSConstNames::BmpExt() != ext &&
-        FFSConstNames::GifExt() != ext &&
-        FFSConstNames::HdrExt() != ext &&
-        FFSConstNames::JpgExt() != ext &&
-        FFSConstNames::PgmExt() != ext &&
-        FFSConstNames::PngExt() != ext &&
-        FFSConstNames::PpmExt() != ext &&
-        FFSConstNames::PicExt() != ext &&
-        FFSConstNames::PsdExt() != ext &&
-        FFSConstNames::TgaExt() != ext)
+    if (FFSConstNames::Bmp() != ext &&
+        FFSConstNames::Gif() != ext &&
+        FFSConstNames::Hdr() != ext &&
+        FFSConstNames::Jpg() != ext &&
+        FFSConstNames::Pgm() != ext &&
+        FFSConstNames::Png() != ext &&
+        FFSConstNames::Ppm() != ext &&
+        FFSConstNames::Pic() != ext &&
+        FFSConstNames::Psd() != ext &&
+        FFSConstNames::Tga() != ext)
         return false;
 
     RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
-    if (false == VFS_ReadAll(&content, filename, AccessPolicy::Binary))
+    if (false == VFS_ReadAll(&content, filename, EAccessPolicy::Binary))
         return false;
 
     return Load(dst, depth, space, content.MakeConstView());
@@ -509,7 +509,7 @@ bool Save(const FImage* src, const FFilename& filename) {
     if (false == Save(src, filename, &writer))
         return false;
 
-    if (false == VFS_WriteAll(filename, writer.MakeView(), AccessPolicy::Truncate_Binary))
+    if (false == VFS_WriteAll(filename, writer.MakeView(), EAccessPolicy::Truncate_Binary))
         return false;
 
     return true;
@@ -531,20 +531,20 @@ bool Save(const FImage* src, const FFilename& filename, IStreamWriter* writer) {
     const int comp = int(src->_mask);
 
     const FExtname ext = filename.Extname();
-    if (FFSConstNames::PngExt() == ext) {
+    if (FFSConstNames::Png() == ext) {
         AssertRelease(EColorDepth::_8bits == src->_depth);
         result = ::stbi_write_png_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, src->_data.data(), 0);
     }
-    else if (FFSConstNames::TgaExt() == ext) {
+    else if (FFSConstNames::Tga() == ext) {
         AssertRelease(EColorDepth::_8bits == src->_depth);
         result = ::stbi_write_tga_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, src->_data.data());
     }
-    else if (FFSConstNames::HdrExt() == ext) {
+    else if (FFSConstNames::Hdr() == ext) {
         AssertRelease(EColorDepth::_32bits == src->_depth);
         AssertRelease(EColorSpace::Linear == src->_space);
         result = ::stbi_write_hdr_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, reinterpret_cast<const float*>(src->_data.data()));
     }
-    else if (FFSConstNames::BmpExt() == ext) {
+    else if (FFSConstNames::Bmp() == ext) {
         AssertRelease(EColorDepth::_8bits == src->_depth);
         result = ::stbi_write_bmp_to_func(&WriteFuncForSTBIW_, writer, x, y, comp, src->_data.data());
     }
