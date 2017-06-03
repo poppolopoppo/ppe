@@ -160,11 +160,6 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
     BOOL succeed = dbghelp.SymInitializeW()(process, symbol_path, FALSE);
 
     LOG(Info, L"[PDB] Path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
-
-    if (FALSE == succeed)
-        return;
-
-    LoadModules_(dbghelp);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -205,6 +200,8 @@ void FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
     Assert(decoded);
 
     const auto dbghelp(FDbghelpWrapper::Instance().Lock());
+
+    LoadModules_(dbghelp);
 
     static const wchar_t* kUnknown = L"?????????????????????";
 
