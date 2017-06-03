@@ -33,9 +33,9 @@ namespace {
 #ifdef PLATFORM_WINDOWS
 static void GamepadTestButton_(
     EGamepadButton btn,
-    GamepadButtonState& ups,
-    GamepadButtonState& presseds,
-    GamepadButtonState& downs,
+    FGamepadButtonState& ups,
+    FGamepadButtonState& presseds,
+    FGamepadButtonState& downs,
     const ::XINPUT_STATE& stateXInput,
     const WORD btnXInput ) {
     if (stateXInput.Gamepad.wButtons & btnXInput) {
@@ -50,22 +50,27 @@ static void GamepadTestButton_(
 #endif
 //----------------------------------------------------------------------------
 #ifdef PLATFORM_WINDOWS
-static float GamepadNormalizeAxis_(SHORT axis, SHORT deadzone) {
-    if (axis <= -deadzone)
-        return float(axis + deadzone)/(32768 - deadzone);
-    else if (axis >= deadzone)
-        return float(axis - deadzone)/(32767 - deadzone);
-    else
-        return 0.0f;
+// https://web.archive.org/web/20130418234531/http://www.gamasutra.com/blogs/JoshSutphin/20130416/190541/Doing_Thumbstick_Dead_Zones_Right.php
+static void GamepadFilterStick_(FGamepadState::FSmoothAnalog* x, FGamepadState::FSmoothAnalog* y, i16 axisX, i16 axisY, i16 deadzone) {
+    float fx = ShortM3276832767_to_FloatM11(axisX);
+    float fy = ShortM3276832767_to_FloatM11(axisY);
+    const float d = (deadzone / 32767.f);
+    const float l = Sqrt(fx * fx + fy * fy);
+    if (l <= d) {
+        x->Set(0.f);
+        y->Set(0.f);
+    }
+    else {
+        const float filter = (l - d) / (l * (1 - d));
+        x->Set(Clamp(fx * filter, -1.f, 1.f));
+        y->Set(Clamp(fy * filter, -1.f, 1.f));
+    }
 }
 #endif
 //----------------------------------------------------------------------------
 #ifdef PLATFORM_WINDOWS
-static float GamepadNormalizeTrigger_(BYTE axis, BYTE deadzone) {
-    if (axis >= deadzone)
-        return float(axis - deadzone)/(255 - deadzone);
-    else
-        return 0.0f;
+static void GamepadFilterTrigger_(FGamepadState::FSmoothAnalog* x, u8 axis, int deadzone) {
+    x->Set(axis >= deadzone ? Saturate(float(axis - deadzone)/(255 - deadzone)) : 0.f);
 }
 #endif
 //----------------------------------------------------------------------------
@@ -108,14 +113,23 @@ void FGamepadInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
         if (ERROR_SUCCESS == ::XInputGetState(checked_cast<DWORD>(gamepadIndex), &stateXInput)) {
             gamepad._connected = true;
 
-            gamepad._leftStickX = GamepadNormalizeAxis_(stateXInput.Gamepad.sThumbLX, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
-            gamepad._leftStickY = GamepadNormalizeAxis_(stateXInput.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+            GamepadFilterStick_(
+                &gamepad._leftStickX, &gamepad._leftStickY,
+                stateXInput.Gamepad.sThumbLX, stateXInput.Gamepad.sThumbLY,
+                XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE );
+            GamepadFilterStick_(
+                &gamepad._rightStickX, &gamepad._rightStickY,
+                stateXInput.Gamepad.sThumbRX, stateXInput.Gamepad.sThumbRY,
+                XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE );
 
-            gamepad._rightStickX = GamepadNormalizeAxis_(stateXInput.Gamepad.sThumbRX, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
-            gamepad._rightStickY = GamepadNormalizeAxis_(stateXInput.Gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
-
-            gamepad._leftTrigger = GamepadNormalizeTrigger_(stateXInput.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
-            gamepad._rightTrigger = GamepadNormalizeTrigger_(stateXInput.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+            GamepadFilterTrigger_(
+                 &gamepad._leftTrigger,
+                 stateXInput.Gamepad.bLeftTrigger,
+                XINPUT_GAMEPAD_TRIGGER_THRESHOLD );
+            GamepadFilterTrigger_(
+                &gamepad._rightTrigger,
+                stateXInput.Gamepad.bRightTrigger,
+                XINPUT_GAMEPAD_TRIGGER_THRESHOLD );
 
 #   define TEST_XINPUT_BTN(_GAMEPADBTN, _XINPUTBTN) \
             GamepadTestButton_(_GAMEPADBTN, \

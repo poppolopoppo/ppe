@@ -2,9 +2,9 @@
 
 #include "Core.Application/Application.h"
 
-#include "Core.Graphics/Window/WindowMessageHandler.h"
-
 #include "Core.Application/Input/GamepadState.h"
+
+#include "Core.Graphics/Window/WindowMessageHandler.h"
 
 namespace Core {
 namespace Application {

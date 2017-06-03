@@ -16,46 +16,76 @@ class FGamepadState {
 public:
     friend class FGamepadInputHandler;
 
+    class FSmoothAnalog {
+    public:
+        static constexpr float DefaultSmoothing = 0.9f;
+        FSmoothAnalog() : _raw(0), _smoothed(0), _smoothing(DefaultSmoothing){}
+        float Raw() const { return _raw; }
+        float Smoothed() const { return _smoothed; }
+        float Smoothing() const { return _smoothing; }
+        void SetSmoothing(float f) { _smoothing = Max(0.1f, Min(f, 1.f)); }
+        void Clear() { _raw = _smoothed = 0; }
+        void Set(float raw) {
+            _raw = raw;
+            _smoothed = Lerp(_smoothed, _raw, _smoothing);
+            if (Abs(_smoothed) < 1e-3f)
+                _smoothed = 0;
+        }
+    private:
+        float _raw;
+        float _smoothed;
+        float _smoothing;
+    };
+
     explicit FGamepadState()
         : _connected(false)
         , _onConnect(false)
-        , _onDisconnect(false)
-        , _leftStickX(0), _leftStickY(0)
-        , _rightStickX(0), _rightStickY(0)
-        , _leftTrigger(0), _rightTrigger(0) {}
+        , _onDisconnect(false) {}
 
     bool IsConnected() const { return _connected; }
 
     bool OnConnect() const { return _onConnect; }
     bool OnDisconnect() const { return _onDisconnect; }
 
-    float LeftStickX() const { return _leftStickX; }
-    float LeftStickY() const { return _leftStickY; }
+    const FSmoothAnalog& LeftStickX() const { return _leftStickX; }
+    const FSmoothAnalog& LeftStickY() const { return _leftStickY; }
 
-    float2 LeftStick() const { return float2(_leftStickX, _leftStickY); }
+    float2 LeftStickRaw() const { return float2(_leftStickX.Raw(), _leftStickY.Raw()); }
+    float2 LeftStickSmooth() const { return float2(_leftStickX.Smoothed(), _leftStickY.Smoothed()); }
 
-    float RightStickX() const { return _rightStickX; }
-    float RightStickY() const { return _rightStickY; }
+    const FSmoothAnalog& RightStickX() const { return _rightStickX; }
+    const FSmoothAnalog& RightStickY() const { return _rightStickY; }
 
-    float2 RightStick() const { return float2(_rightStickX, _rightStickY); }
+    float2 RightStickRaw() const { return float2(_rightStickX.Raw(), _rightStickY.Raw()); }
+    float2 RightStickSmooth() const { return float2(_rightStickX.Smoothed(), _rightStickY.Smoothed()); }
 
-    float LeftTrigger() const { return _leftTrigger; }
-    float RightTrigger() const { return _rightTrigger; }
+    const FSmoothAnalog& LeftTrigger() const { return _leftTrigger; }
+    const FSmoothAnalog& RightTrigger() const { return _rightTrigger; }
 
-    float2 Triggers() const { return float2(_leftTrigger, _rightTrigger); }
+    float2 TriggersRaw() const { return float2(_leftTrigger.Raw(), _rightTrigger.Raw()); }
+    float2 TriggersSmooth() const { return float2(_leftTrigger.Smoothed(), _rightTrigger.Smoothed()); }
 
-    const GamepadButtonState& ButtonsDown() const { return _buttonsDown; }
-    const GamepadButtonState& ButtonsPressed() const { return _buttonsPressed; }
-    const GamepadButtonState& ButtonsUp() const { return _buttonsUp; }
+    const FGamepadButtonState& ButtonsDown() const { return _buttonsDown; }
+    const FGamepadButtonState& ButtonsPressed() const { return _buttonsPressed; }
+    const FGamepadButtonState& ButtonsUp() const { return _buttonsUp; }
+
+    bool IsButtonDown(EGamepadButton button) const { return _buttonsDown.Contains(button); }
+    bool IsButtonPressed(EGamepadButton button) const { return _buttonsPressed.Contains(button); }
+    bool IsButtonUp(EGamepadButton button) const { return _buttonsUp.Contains(button); }
 
     void Clear() {
         _connected = false;
         _onConnect = false;
         _onDisconnect = false;
 
-        _leftStickX = _leftStickY = 0;
-        _rightStickX = _rightStickY = 0;
-        _leftTrigger = _rightTrigger = 0;
+        _leftStickX.Clear();
+        _leftStickY.Clear();
+
+        _rightStickX.Clear();
+        _rightStickY.Clear();
+
+        _leftTrigger.Clear();
+        _rightTrigger.Clear();
 
         _buttonsDown.Clear();
         _buttonsPressed.Clear();
@@ -67,18 +97,18 @@ private:
     bool _onConnect     : 1;
     bool _onDisconnect  : 1;
 
-    float _leftStickX;
-    float _leftStickY;
+    FSmoothAnalog _leftStickX;
+    FSmoothAnalog _leftStickY;
 
-    float _rightStickX;
-    float _rightStickY;
+    FSmoothAnalog _rightStickX;
+    FSmoothAnalog _rightStickY;
 
-    float _leftTrigger;
-    float _rightTrigger;
+    FSmoothAnalog _leftTrigger;
+    FSmoothAnalog _rightTrigger;
 
-    GamepadButtonState _buttonsDown;
-    GamepadButtonState _buttonsPressed;
-    GamepadButtonState _buttonsUp;
+    FGamepadButtonState _buttonsDown;
+    FGamepadButtonState _buttonsPressed;
+    FGamepadButtonState _buttonsUp;
 };
 //----------------------------------------------------------------------------
 class FMultiGamepadState {
