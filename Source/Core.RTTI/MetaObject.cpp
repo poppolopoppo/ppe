@@ -42,7 +42,7 @@ void FMetaObject::RTTI_Export(const FName& name) {
     Assert(not (_state ^ Exported));
 
     _name = name;
-    _state = _state | Exported;
+    _state = _state + Exported;
 }
 //----------------------------------------------------------------------------
 void FMetaObject::RTTI_Unexport() {
@@ -50,7 +50,7 @@ void FMetaObject::RTTI_Unexport() {
     Assert(not (_state ^ Exported));
 
     _name = FName();
-    _state = _state & ~Exported;
+    _state = _state - Exported;
 
     Assert(_name.empty());
 }
@@ -59,12 +59,12 @@ void FMetaObject::RTTI_Load(FMetaLoadContext * /* context */) {
     Assert(not (_state ^ Loaded));
     Assert(not (_state ^ Unloaded));
 
-    _state = _state | Loaded;
+    _state = _state + Loaded;
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     // checks that base method was called :
     Assert(not (_state ^ Verifying));
-    _state = _state | Verifying;
+    _state = _state + Verifying;
     RTTI_VerifyPredicates();
     Assert(not (_state ^ Verifying));
 #endif
@@ -74,12 +74,12 @@ void FMetaObject::RTTI_Unload(FMetaUnloadContext * /* context */) {
     Assert(_state ^ Loaded);
     Assert(not (_state ^ Unloaded));
 
-    _state = (_state & ~Loaded) | Unloaded;
+    _state = (_state - Loaded) + Unloaded;
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     // checks that base method was called :
     Assert(not (_state ^ Verifying));
-    _state = _state | Verifying;
+    _state = _state + Verifying;
     RTTI_VerifyPredicates();
     Assert(not (_state ^ Verifying));
 #endif
@@ -104,7 +104,8 @@ void FMetaObject::RTTI_CallUnloadIFN(FMetaUnloadContext *context) {
 #ifdef WITH_RTTI_VERIFY_PREDICATES
 void FMetaObject::RTTI_VerifyPredicates() const {
     // checks that base method was called :
-    _state = _state & ~Verifying;
+    Assert(_state ^ Verifying);
+    _state = _state - Verifying;
 }
 #endif
 //----------------------------------------------------------------------------
