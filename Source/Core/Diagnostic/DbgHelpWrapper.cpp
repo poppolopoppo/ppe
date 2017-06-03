@@ -41,7 +41,7 @@ FDbghelpWrapper::FDbghelpWrapper()
         Assert(_miniDumpWriteDump);
     }
     else {
-        LOG(Warning, L"[DbgHelp] Failed to 'dbghelp.dll' callstacks and minidumps won't be available !");
+        LOG(Warning, L"[DbgHelp] Failed to load 'dbghelp.dll' : callstacks and minidumps won't be available !");
     }
 }
 //----------------------------------------------------------------------------
