@@ -23,7 +23,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, bool _IsPod = std::is_pod<T>::value >
+template <typename T, bool _IsPod = Meta::TIsPod<T>::value >
 class TStack {
 public:
     typedef T value_type;
@@ -92,6 +92,10 @@ public:
     void Deallocate_AssertLIFO(pointer p, size_type count);
 
     void Swap(TStack& other);
+
+    bool AliasesToContainer(const_pointer p) const {
+        return (p >= _storage && p < _storage + _size);
+    }
 
 private:
     size_type _size;

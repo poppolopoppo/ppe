@@ -43,7 +43,7 @@ public:
     FDataID Id;
 };
 //----------------------------------------------------------------------------
-template <typename T, bool _IsPod = std::is_pod<T>::value >
+template <typename T, bool _IsPod = Meta::TIsPod<T>::value >
 class TSparseArray {
 public:
     typedef TSparseArraySlot<T> FSlot;

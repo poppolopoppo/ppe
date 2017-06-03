@@ -22,7 +22,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, bool _IsPod = std::is_pod<T>::value >
+template <typename T, bool _IsPod = Meta::TIsPod<T>::value >
 class TRingBuffer {
 public:
     typedef T value_type;
