@@ -105,7 +105,7 @@ void TConcurentPriorityQueue<T, _Allocator>::Consume(T *pvalue) {
     Assert(pvalue);
 
     std::unique_lock<std::mutex> scopeLock(_barrier);
-    _empty.wait(scopeLock, [this] { return (not _queue.empty()); });
+    _empty.wait(scopeLock, [&] { return (not _queue.empty()); });
 
     *pvalue = std::move(_queue.front().second);
 
@@ -122,7 +122,7 @@ bool TConcurentPriorityQueue<T, _Allocator>::TryConsume(T *pvalue) {
     if (_queue.empty())
         return false;
 
-    _empty.wait(scopeLock, [this] { return (not _queue.empty()); });
+    _empty.wait(scopeLock, [&] { return (not _queue.empty()); });
 
     *pvalue = std::move(_queue.front().second);
 
