@@ -66,7 +66,7 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find(const key_typ
             const EBucketState state = _data.GetState(index);
 
             if (state == EBucketState::Filled &&
-                key_equal()(table_traits::Key(buckets[index]), key)) {
+                _data.KeyEqual(table_traits::Key(buckets[index]), key)) {
                 return iterator(*this, (public_type*)(buckets + index));
             }
             else if (state == EBucketState::Inactive) {
@@ -437,7 +437,7 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindFilledBucket_(
         const EBucketState state = _data.GetState(index);
 
         if (state == EBucketState::Filled &&
-            key_equal()(table_traits::Key(buckets[index]), key) ) {
+            _data.KeyEqual(table_traits::Key(buckets[index]), key) ) {
             return index;
         }
         else if (state == EBucketState::Inactive) {
@@ -481,7 +481,7 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindOrAllocateBuck
         const EBucketState state = _data.GetState(index);
 
         if (state == EBucketState::Filled) {
-            if (key_equal()(table_traits::Key(buckets[index]), key))
+            if (_data.KeyEqual(table_traits::Key(buckets[index]), key))
                 return index;
         }
         else if (state == EBucketState::Inactive) {
@@ -504,7 +504,7 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindOrAllocateBuck
         const EBucketState state = _data.GetState(index);
 
         if (state != EBucketState::Filled) {
-            _data.MaxProbeDist = (offset + 1);
+            _data.MaxProbeDist = checked_cast<u8>(offset + 1);
             return index;
         }
     }

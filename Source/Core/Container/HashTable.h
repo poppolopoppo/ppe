@@ -155,6 +155,9 @@ public:
     explicit TBasicHashTable(allocator_type&& alloc) : allocator_type(std::move(alloc)) {}
     explicit TBasicHashTable(const allocator_type& alloc) : allocator_type(alloc) {}
 
+    TBasicHashTable(hasher&& hash, key_equal&& equalto) : _data(std::move(hash), std::move(equalto)) {}
+    TBasicHashTable(hasher&& hash, key_equal&& equalto, allocator_type&& alloc) : allocator_type(std::move(alloc)), _data(std::move(hash), std::move(equalto)) {}
+
     explicit TBasicHashTable(size_type capacity) : TBasicHashTable() { reserve(capacity); }
     TBasicHashTable(size_type capacity, const allocator_type& alloc) : TBasicHashTable(alloc) { reserve(capacity); }
 
@@ -383,30 +386,37 @@ private:
         Filled,         // Is set item
     };
 
-    struct FData_ {
+    struct EMPTY_BASES FData_ : hasher, key_equal {
         pointer     StatesAndBuckets;
         u32         CapacityM1;
         u32         Size            : 24;
         mutable u32 MaxProbeDist    : 8;
 
-        FData_()
-            : StatesAndBuckets(nullptr)
+        FData_() : FData_(hasher{}, key_equal{}) {}
+        FData_(hasher&& hash, key_equal&& equal)
+            : hasher(std::move(hash))
+            , key_equal(std::move(equal))
+            , StatesAndBuckets(nullptr)
             , CapacityM1(u32(-1))
             , Size(0)
             , MaxProbeDist(0) {}
 
 #if 0 // scrambling upper bits
         size_type HashKey(const key_type& key) const {
-            size_type h = size_type(hasher()(key));
+            size_type h = size_type(hasher::operator ()(key));
             while (h > CapacityM1)
                 h = (h >> 8) + (h & CapacityM1);
             return h;
         }
 #else
-        size_type HashKey(const key_type& key) const {
-            return size_type(hasher()(key));
+        FORCE_INLINE size_type HashKey(const key_type& key) const {
+            return size_type(hasher::operator ()(key));
         }
 #endif
+
+        FORCE_INLINE bool KeyEqual(const key_type& lhs, const key_type& rhs) const {
+            return key_equal::operator ()(lhs, rhs);
+        }
 
         STATIC_CONST_INTEGRAL(size_type, BitsPerState_, 2);
         STATIC_CONST_INTEGRAL(size_type, BitsPerStateLog2_, Meta::template TLog2<BitsPerState_>::value);
