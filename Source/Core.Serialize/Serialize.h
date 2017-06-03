@@ -16,18 +16,18 @@ POOL_TAG_DECL(Serialize);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// SerializeStartup is the entry and exit point encapsulating every call to Core::Serialize::.
+// FSerializeModule is the entry and exit point encapsulating every call to Core::Serialize::.
 // Constructed with the same lifetime than the program (or application if segregated).
 //----------------------------------------------------------------------------
-class CORE_SERIALIZE_API SerializeStartup {
+class CORE_SERIALIZE_API FSerializeModule {
 public:
     static void Start();
     static void Shutdown();
 
     static void ClearAll_UnusedMemory();
 
-    SerializeStartup()  { Start(); }
-    ~SerializeStartup() { Shutdown(); }
+    FSerializeModule()  { Start(); }
+    ~FSerializeModule() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

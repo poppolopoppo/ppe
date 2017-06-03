@@ -21,15 +21,15 @@ RTTI_NAMESPACE_DECL(CORE_CONTENTPIPELINE_API, ContentPipeline);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class CORE_CONTENTPIPELINE_API ContentPipelineStartup {
+class CORE_CONTENTPIPELINE_API FContentPipelineModule {
 public:
     static void Start();
     static void Shutdown();
 
     static void ClearAll_UnusedMemory();
 
-    ContentPipelineStartup() { Start(); }
-    ~ContentPipelineStartup() { Shutdown(); }
+    FContentPipelineModule() { Start(); }
+    ~FContentPipelineModule() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

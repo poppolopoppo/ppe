@@ -15,21 +15,21 @@ RTTI_NAMESPACE_DEF(CORE_CONTENTPIPELINE_API, ContentPipeline);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ContentPipelineStartup::Start() {
+void FContentPipelineModule::Start() {
     CORE_MODULE_START(ContentPipeline);
 
     POOL_TAG(ContentPipeline)::Start();
     RTTI_NAMESPACE(ContentPipeline).Start();
 }
 //----------------------------------------------------------------------------
-void ContentPipelineStartup::Shutdown() {
+void FContentPipelineModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(ContentPipeline);
 
     RTTI_NAMESPACE(ContentPipeline).Shutdown();
     POOL_TAG(ContentPipeline)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void ContentPipelineStartup::ClearAll_UnusedMemory() {
+void FContentPipelineModule::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(ContentPipeline);
 
     POOL_TAG(ContentPipeline)::ClearAll_UnusedMemory();

@@ -49,7 +49,7 @@ STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPool
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
+void FCoreModule::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
     CORE_MODULE_START(Core);
 
     // 1 - diagnostics
@@ -75,7 +75,7 @@ void CoreStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, cons
 #endif
 }
 //----------------------------------------------------------------------------
-void CoreStartup::Shutdown() {
+void FCoreModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Core);
 
     // 9 - logger
@@ -101,7 +101,7 @@ void CoreStartup::Shutdown() {
     FDiagnosticsStartup::Shutdown();
 }
 //----------------------------------------------------------------------------
-void CoreStartup::ClearAll_UnusedMemory() {
+void FCoreModule::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Core);
 
     POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();

@@ -38,7 +38,7 @@ STATIC_CONST_INTEGRAL(size_t, MaxRecvLength_, 1024*1024*100);
 STATIC_CONST_INTEGRAL(size_t, MaxSendLength_, 1024*1024*100);
 //----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(::SOCKET) <= sizeof(void*));
-STATIC_ASSERT(std::is_pod<::SOCKET>::value);
+STATIC_ASSERT(Meta::TIsPod<::SOCKET>::value);
 //----------------------------------------------------------------------------
 constexpr intptr_t PackSocket_(::SOCKET socket) {
     return static_cast<intptr_t>(socket);

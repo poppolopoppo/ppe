@@ -13,7 +13,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class CORE_RTTI_API RTTIStartup {
+class CORE_RTTI_API FRTTIModule {
 public:
     static void Start();
     static void Shutdown();
@@ -21,8 +21,8 @@ public:
     static void Clear();
     static void ClearAll_UnusedMemory();
 
-    RTTIStartup() { Start(); }
-    ~RTTIStartup() { Shutdown(); }
+    FRTTIModule() { Start(); }
+    ~FRTTIModule() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

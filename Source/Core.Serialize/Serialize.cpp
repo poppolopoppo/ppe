@@ -17,7 +17,7 @@ POOL_TAG_DEF(Serialize);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void SerializeStartup::Start() {
+void FSerializeModule::Start() {
     CORE_MODULE_START(Serialize);
 
     POOL_TAG(Serialize)::Start();
@@ -27,7 +27,7 @@ void SerializeStartup::Start() {
     XML::FXMLStartup::Start();
 }
 //----------------------------------------------------------------------------
-void SerializeStartup::Shutdown() {
+void FSerializeModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Serialize);
 
     XML::FXMLStartup::Shutdown();
@@ -37,7 +37,7 @@ void SerializeStartup::Shutdown() {
     POOL_TAG(Serialize)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void SerializeStartup::ClearAll_UnusedMemory() {
+void FSerializeModule::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Serialize);
 
     Lexer::FLexerStartup::ClearAll_UnusedMemory();

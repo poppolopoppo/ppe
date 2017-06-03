@@ -13,15 +13,15 @@ namespace Pixmap {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class CORE_PIXMAP_API PixmapStartup {
+class CORE_PIXMAP_API FPixmapModule {
 public:
     static void Start();
     static void Shutdown();
 
     static void ClearAll_UnusedMemory();
 
-    PixmapStartup() { Start(); }
-    ~PixmapStartup() { Shutdown(); }
+    FPixmapModule() { Start(); }
+    ~FPixmapModule() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

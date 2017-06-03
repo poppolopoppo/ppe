@@ -28,7 +28,7 @@ RTTI_NAMESPACE_DEF(CORE_RTTI_API, RTTI);
 #ifdef WITH_RTTI_UNITTESTS
 static void RTTI_UnitTests();
 #endif
-void RTTIStartup::Start() {
+void FRTTIModule::Start() {
     CORE_MODULE_START(RTTI);
 
     POOL_TAG(RTTI)::Start();
@@ -44,7 +44,7 @@ void RTTIStartup::Start() {
 #endif
 }
 //----------------------------------------------------------------------------
-void RTTIStartup::Shutdown() {
+void FRTTIModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(RTTI);
 
     RTTI_NAMESPACE(RTTI).Shutdown();
@@ -56,7 +56,7 @@ void RTTIStartup::Shutdown() {
     POOL_TAG(RTTI)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void RTTIStartup::Clear() {
+void FRTTIModule::Clear() {
     CORE_MODULE_CLEARALL(RTTI);
 
     FName::Clear();
@@ -64,7 +64,7 @@ void RTTIStartup::Clear() {
     POOL_TAG(RTTI)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
-void RTTIStartup::ClearAll_UnusedMemory() {
+void FRTTIModule::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(RTTI);
 
     POOL_TAG(RTTI)::ClearAll_UnusedMemory();

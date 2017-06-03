@@ -13,15 +13,15 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class CORE_NETWORK_API NetworkStartup {
+class CORE_NETWORK_API FNetworkModule {
 public:
     static void Start();
     static void Shutdown();
 
     static void ClearAll_UnusedMemory();
 
-    NetworkStartup() { Start(); }
-    ~NetworkStartup() { Shutdown(); }
+    FNetworkModule() { Start(); }
+    ~FNetworkModule() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

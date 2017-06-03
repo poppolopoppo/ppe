@@ -16,7 +16,7 @@ RTTI_TAG_DEF(Logic);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void LogicStartup::Start() {
+void FLogicModule::Start() {
     CORE_MODULE_START(Logic);
 
     POOL_TAG(Logic)::Start();
@@ -24,7 +24,7 @@ void LogicStartup::Start() {
     FEntity::Start();
 }
 //----------------------------------------------------------------------------
-void LogicStartup::Shutdown() {
+void FLogicModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Logic);
 
     FEntity::Shutdown();
@@ -32,7 +32,7 @@ void LogicStartup::Shutdown() {
     POOL_TAG(Logic)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void LogicStartup::ClearAll_UnusedMemory() {
+void FLogicModule::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Logic);
 
     POOL_TAG(Logic)::ClearAll_UnusedMemory();

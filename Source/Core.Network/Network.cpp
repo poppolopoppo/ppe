@@ -22,7 +22,7 @@ POOL_TAG_DEF(Network);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void NetworkStartup::Start() {
+void FNetworkModule::Start() {
     CORE_MODULE_START(Network);
 
     POOL_TAG(Network)::Start();
@@ -32,7 +32,7 @@ void NetworkStartup::Start() {
     FSocket::Start();
 }
 //----------------------------------------------------------------------------
-void NetworkStartup::Shutdown() {
+void FNetworkModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Network);
 
     FSocket::Shutdown();
@@ -42,7 +42,7 @@ void NetworkStartup::Shutdown() {
     POOL_TAG(Network)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void NetworkStartup::ClearAll_UnusedMemory() {
+void FNetworkModule::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Network);
 
     POOL_TAG(Network)::ClearAll_UnusedMemory();

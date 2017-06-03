@@ -23,15 +23,15 @@ RTTI_TAG_DECL(Logic);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class CORE_LOGIC_API LogicStartup {
+class CORE_LOGIC_API FLogicModule {
 public:
     static void Start();
     static void Shutdown();
 
     static void ClearAll_UnusedMemory();
 
-    LogicStartup()  { Start(); }
-    ~LogicStartup() { Shutdown(); }
+    FLogicModule()  { Start(); }
+    ~FLogicModule() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
