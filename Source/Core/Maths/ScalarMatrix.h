@@ -132,6 +132,9 @@ public:
     template <size_t _NWidth, size_t _NHeight>
     TScalarMatrix<T, _NWidth, _NHeight> Crop() const;
 
+    TScalarMatrix<T, _Width + 1, _Height + 1> OneExtend() const;
+    TScalarMatrix<T, _Width + 1, _Height + 1> ZeroExtend() const;
+
     static TScalarMatrix One() { return TScalarMatrix(T(1)); }
     static TScalarMatrix Zero() { return TScalarMatrix(T(0)); }
     static TScalarMatrix Identity();
@@ -246,6 +249,15 @@ template <typename T, size_t _Width, size_t _Height>
 void swap(TScalarMatrix<T, _Width, _Height>& lhs, TScalarMatrix<T, _Width, _Height>& rhs) {
     lhs.Swap(rhs);
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// All scalar matrices are considered as pods
+//----------------------------------------------------------------------------
+namespace Meta {
+template <typename T, size_t _Width, size_t _Height>
+struct TIsPod< TScalarMatrix<T, _Width, _Height> > : public std::integral_constant<bool, true> {};
+} //!Meta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

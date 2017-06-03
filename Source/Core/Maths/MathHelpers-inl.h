@@ -41,6 +41,11 @@ constexpr T Floor(T f) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
+constexpr T FMod(T f, T m) {
+    return std::fmod(f, m);
+}
+//----------------------------------------------------------------------------
+template <typename T>
 constexpr T Frac(T f) {
     return f - std::trunc(f);
 }
@@ -77,9 +82,27 @@ double Pow(double f, U n) {
     return std::pow(d, n);
 }
 //----------------------------------------------------------------------------
+#ifdef WITH_CORE_ASSERT
+inline float Rcp(float f) {
+#else
+inline constexpr float Rcp(float f) {
+#endif
+    Assert(Abs(f) > F_SmallEpsilon);
+    return (1.f / f);
+}
+//----------------------------------------------------------------------------
+#ifdef WITH_CORE_ASSERT
+inline double Rcp(double d) {
+#else
+inline constexpr double Rcp(double d) {
+#endif
+    Assert(Abs(d) > F_SmallEpsilon);
+    return (1. / d);
+}
+//----------------------------------------------------------------------------
 template <typename T>
-constexpr T Rcp(T f) {
-    return T(1) / f;
+constexpr T Round(T f) {
+    return std::round(f);
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -108,6 +131,13 @@ constexpr T Sqrt(T x) {
 template <typename T>
 constexpr T Step(T y, T x) {
     return (x >= y) ? T(1) : T(0);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename U>
+constexpr T SMin(T a, T b, U k) {
+    // Polynomial smooth minimum by iq
+    U h = Saturate(U(0.5) + U(0.5)*(a - b) / k);
+    return T(Lerp(a, b, h) - k*h*(U(1.0) - h));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename U>
@@ -140,11 +170,11 @@ FORCE_INLINE void SinCos(T radians, T *fsin, T *fcos) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline bool NearlyEquals(float A, float B, float maxRelDiff/* = 1e-3f */) {
+inline bool NearlyEquals(float A, float B, float maxRelDiff/* = F_Epsilon */) {
     // Calculate the difference.
-    const float diff = fabs(A - B);
-    A = fabs(A);
-    B = fabs(B);
+    const float diff = Abs(A - B);
+    A = Abs(A);
+    B = Abs(B);
 
     // Find the largest
     float largest = (B > A) ? B : A;
@@ -152,6 +182,35 @@ inline bool NearlyEquals(float A, float B, float maxRelDiff/* = 1e-3f */) {
     if (diff <= largest * maxRelDiff)
         return true;
     return false;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline float ClampAngle(float degrees) { // [0,360)
+    degrees = FMod(degrees, 360.f);
+    degrees = (degrees < 0.f ? degrees + 360.f : degrees);
+    return degrees;
+}
+//----------------------------------------------------------------------------
+inline float NormalizeAngle(float degrees) { // (-180,180]
+    degrees = ClampAngle(degrees);
+    degrees = (degrees > 180.f ? degrees - 360.f : degrees);
+    return degrees;
+}
+//----------------------------------------------------------------------------
+inline size_t CubeMapFaceID(float x, float y, float z) {
+    if (Abs(z) >= Abs(x) && Abs(z) >= Abs(y))
+        return (z < 0.0f) ? 5 : 4;
+    else if (Abs(y) >= Abs(x))
+        return (y < 0.0f) ? 3 : 2;
+    else
+        return (x < 0.0f) ? 1 : 0;
+}
+//----------------------------------------------------------------------------
+inline float GridSnap(float location, float grid) {
+    return (0.f != grid)
+        ? Floor((location + 0.5f * grid) / grid) * grid
+        : location;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

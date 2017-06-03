@@ -38,6 +38,17 @@ bool IsSymetrical(const TScalarMatrix<T, _Width, _Height>& m, float epsilon = F_
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
+bool IsINF(const TScalarMatrix<T, _Width, _Height>& m);
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
+bool IsNAN(const TScalarMatrix<T, _Width, _Height>& m);
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
+bool IsNANorINF(const TScalarMatrix<T, _Width, _Height>& m);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
 TScalarMatrix<T, _Width, _Height> Abs(const TScalarMatrix<T, _Width, _Height>& m);
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
@@ -256,37 +267,39 @@ TScalarMatrix<T, 3, 2> Make2DTransformMatrix(const TScalarVector<T, 2>& translat
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-TScalarMatrix<T, 4, 4> Make3DRotationMatrix(const TScalarVector<T, 3>& axis);
+TScalarMatrix<float, 3, 3> Make3DRotationMatrix(const FQuaternion& rotation);
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> Make3DRotationMatrix(const TScalarVector<T, 3>& axis, T radians);
+TScalarMatrix<T, 3, 3> Make3DRotationMatrix(const TScalarVector<T, 3>& axis);
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> Make3DRotationMatrix(const TScalarVector<T, 3>& axis, T fsin, T fcos);
-//----------------------------------------------------------------------------
-TScalarMatrix<float, 4, 4> Make3DRotationMatrix(const FQuaternion& rotation);
+TScalarMatrix<T, 3, 3> Make3DRotationMatrix(const TScalarVector<T, 3>& axis, T radians);
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> Make3DYawPitchRollMatrix(T yaw, T pitch, T roll);
+TScalarMatrix<T, 3, 3> Make3DRotationMatrix(const TScalarVector<T, 3>& axis, T fsin, T fcos);
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> Make3DRotationMatrixAroundX(T radians);
+TScalarMatrix<T, 3, 3> MakeYawPitchRollMatrix(T yaw, T pitch, T roll);
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> Make3DRotationMatrixAroundX(T fsin, T fcos);
+TScalarMatrix<T, 3, 3> Make3DRotationMatrixAroundX(T radians);
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> Make3DRotationMatrixAroundY(T radians);
+TScalarMatrix<T, 3, 3> Make3DRotationMatrixAroundX(T fsin, T fcos);
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> Make3DRotationMatrixAroundY(T fsin, T fcos);
+TScalarMatrix<T, 3, 3> Make3DRotationMatrixAroundY(T radians);
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> Make3DRotationMatrixAroundZ(T radians);
+TScalarMatrix<T, 3, 3> Make3DRotationMatrixAroundY(T fsin, T fcos);
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> Make3DRotationMatrixAroundZ(T fsin, T fcos);
+TScalarMatrix<T, 3, 3> Make3DRotationMatrixAroundZ(T radians);
+//----------------------------------------------------------------------------
+template <typename T>
+TScalarMatrix<T, 3, 3> Make3DRotationMatrixAroundZ(T fsin, T fcos);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarMatrix<T, 4, 4> Make3DTransformMatrix(const TScalarVector<T, 3>& translate, T scale, const TScalarVector<T, 3>& axis, T radians);
@@ -322,6 +335,12 @@ TScalarMatrix<T, 4, 4> Make3DTransformMatrixAroundZ(const TScalarVector<T, 3>& t
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarVector<T, 3> Transform3(const TScalarMatrix<T, 3, 3>& m, const TScalarVector<T, 3>& v);
+//----------------------------------------------------------------------------
+template <typename T>
+TScalarVector<T, 3> TransformPosition3(const TScalarMatrix<T, 4, 4>& m, const TScalarVector<T, 3>& v);
+//----------------------------------------------------------------------------
+template <typename T>
+TScalarVector<T, 3> TransformVector3(const TScalarMatrix<T, 4, 4>& m, const TScalarVector<T, 3>& v);
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarVector<T, 4> Transform3_OneExtend(const TScalarMatrix<T, 4, 4>& m, const TScalarVector<T, 3>& v);

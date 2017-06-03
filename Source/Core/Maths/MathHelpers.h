@@ -8,6 +8,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 constexpr float F_Epsilon = 1e-3f;
 constexpr float F_EpsilonSQ = 1e-9f;
+constexpr float F_SmallEpsilon = 1e-6f;
+constexpr float F_LargeEpsilon = 0.01f;
+constexpr float F_Delta = 0.00001f;
 constexpr float F_PI = 3.14159265359f;
 constexpr float F_2PI = 6.28318530718f;
 constexpr float F_3PI = 9.42477796077f;
@@ -18,6 +21,9 @@ constexpr float F_2PIOver3 = 2.09439510239f;
 constexpr float F_HalfPi = 1.57079632679f;
 constexpr float F_Deg2Rad = 0.01745329251f;
 constexpr float F_Rad2Deg = 57.2957795131f;
+constexpr float F_Sqrt2 = 1.4142135623730951f;
+constexpr float F_Sqrt2OO = 0.7071067811865475f;
+constexpr float F_SqrtHalf = F_Sqrt2OO;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -35,6 +41,9 @@ constexpr T Frac(T f);
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T Floor(T f);
+//----------------------------------------------------------------------------
+template <typename T>
+constexpr T FMod(T f, T m);
 //----------------------------------------------------------------------------
 template <typename T, typename U>
 constexpr T Lerp(T v0, T v1, U f);
@@ -57,14 +66,25 @@ float Pow(float f, U n);
 template <typename U>
 double Pow(double d, U n);
 //----------------------------------------------------------------------------
+#ifdef WITH_CORE_ASSERT
+float Rcp(float f);
+double Rcp(double d);
+#else
+constexpr float Rcp(float f);
+constexpr double Rcp(double d);
+#endif
+//----------------------------------------------------------------------------
 template <typename T>
-constexpr T Rcp(T f);
+constexpr T Round(T f);
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T RSqrt(T f);
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T Saturate(T value) { return Clamp(value, T(0), T(1)); }
+//----------------------------------------------------------------------------
+template <typename T>
+constexpr T Sign(T value) { return (value < T(0) ? T(-1) : (value == T(0) ? T(0) : T(1))); }
 //----------------------------------------------------------------------------
 template <typename T, typename U>
 constexpr T SLerp(T v0, T v1, U f);
@@ -79,10 +99,21 @@ template <typename T>
 constexpr T Step(T y, T x);
 //----------------------------------------------------------------------------
 template <typename T, typename U>
+constexpr T SMin(T a, T b, U k);
+//----------------------------------------------------------------------------
+template <typename T, typename U>
 constexpr U Smoothstep(T vmin, T vmax, U f);
 //----------------------------------------------------------------------------
 template <typename T, typename U>
 constexpr U Smootherstep(T vmin, T vmax, U f);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline int CeilToInt(float f) { return int(Ceil(f)); }
+//----------------------------------------------------------------------------
+inline int FloorToInt(float f) { return int(Floor(f)); }
+//----------------------------------------------------------------------------
+inline int RoundToInt(float f) { return int(Round(f)); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -95,7 +126,27 @@ FORCE_INLINE void SinCos(T radians, T *fsin, T *fcos);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool NearlyEquals(float A, float B, float maxRelDiff=1e-3f);
+bool NearlyEquals(float A, float B, float maxRelDiff = F_Epsilon);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline bool IsINF(float f)  { return std::isinf(f); }
+inline bool IsINF(double d) { return std::isinf(d); }
+//----------------------------------------------------------------------------
+inline bool IsNAN(float f)  { return std::isnan(f); }
+inline bool IsNAN(double d) { return std::isnan(d); }
+//----------------------------------------------------------------------------
+inline bool IsNANorINF(float f)  { return (IsNAN(f) || IsINF(f)); }
+inline bool IsNANorINF(double d) { return (IsNAN(d) || IsINF(d)); }
+//----------------------------------------------------------------------------
+float ClampAngle(float degrees);
+//----------------------------------------------------------------------------
+float NormalizeAngle(float degrees);
+//----------------------------------------------------------------------------
+// https://michaldrobot.files.wordpress.com/2014/05/gcn_alu_opt_digitaldragons2014.pdf
+size_t CubeMapFaceID(float x, float y, float z);
+//----------------------------------------------------------------------------
+float GridSnap(float location, float grid);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

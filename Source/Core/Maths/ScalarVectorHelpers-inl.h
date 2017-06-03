@@ -130,7 +130,7 @@ FORCE_INLINE float Distance4(const TScalarVector<T, _Dim>& a, const TScalarVecto
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Normalize(const TScalarVector<T, _Dim>& v) {
     const float length = Length(v);
-    Assert(length > 0); // no zero length normalize
+    Assert(length > F_SmallEpsilon); // no zero length normalize
     TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = static_cast<T>(v._data[i] / length);
@@ -140,7 +140,7 @@ TScalarVector<T, _Dim> Normalize(const TScalarVector<T, _Dim>& v) {
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Normalize2(const TScalarVector<T, _Dim>& v) {
     const float length = Length2(v);
-    Assert(length > 0); // no zero length normalize
+    Assert(length > F_SmallEpsilon); // no zero length normalize
     TScalarVector<T, _Dim> result;
     result.x() = static_cast<T>(v.x() / length);
     result.y() = static_cast<T>(v.y() / length);
@@ -152,7 +152,7 @@ TScalarVector<T, _Dim> Normalize2(const TScalarVector<T, _Dim>& v) {
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Normalize3(const TScalarVector<T, _Dim>& v) {
     const float length = Length3(v);
-    Assert(length > 0); // no zero length normalize
+    Assert(length > F_SmallEpsilon); // no zero length normalize
     TScalarVector<T, _Dim> result;
     result.x() = static_cast<T>(v.x() / length);
     result.y() = static_cast<T>(v.y() / length);
@@ -165,7 +165,7 @@ TScalarVector<T, _Dim> Normalize3(const TScalarVector<T, _Dim>& v) {
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Normalize4(const TScalarVector<T, _Dim>& v) {
     const float length = Length4(v);
-    Assert(length > 0); // no zero length normalize
+    Assert(length > F_SmallEpsilon); // no zero length normalize
     TScalarVector<T, _Dim> result(
         static_cast<T>(v.x() / length),
         static_cast<T>(v.y() / length),
@@ -177,6 +177,22 @@ TScalarVector<T, _Dim> Normalize4(const TScalarVector<T, _Dim>& v) {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+T Min(const TScalarVector<T, _Dim>& v) {
+    T result = v._data[0];
+    forrange(i, 1, _Dim)
+        result = Min(v._data[i], result);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+T Max(const TScalarVector<T, _Dim>& v) {
+    T result = v._data[0];
+    forrange(i, 1, _Dim)
+        result = Max(v._data[i], result);
+    return result;
+}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Min(const TScalarVector<T, _Dim>& lhs, const TScalarVector<T, _Dim>& rhs) {
@@ -267,6 +283,14 @@ TScalarVector<T, _Dim> BarycentricLerp(const TScalarVector<T, _Dim>& v0, const T
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+TScalarVector<T, _Dim> Ceil(const TScalarVector<T, _Dim>& f) {
+    TScalarVector<T, _Dim> result;
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = Ceil(f._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> Clamp(const TScalarVector<T, _Dim>& value, T vmin, T vmax) {
     TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
@@ -279,6 +303,30 @@ TScalarVector<T, _Dim> Clamp(const TScalarVector<T, _Dim>& value, const TScalarV
     TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = Clamp(value._data[i], vmin._data[i], vmax._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<T, _Dim> Floor(const TScalarVector<T, _Dim>& f) {
+    TScalarVector<T, _Dim> result;
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = Floor(f._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<T, _Dim> FMod(const TScalarVector<T, _Dim>& f, float m) {
+    TScalarVector<T, _Dim> result;
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = FMod(f._data[i], m);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<T, _Dim> FMod(const TScalarVector<T, _Dim>& f, const TScalarVector<T, _Dim>& m) {
+    TScalarVector<T, _Dim> result;
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = FMod(f._data[i], m._data[i]);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -339,6 +387,14 @@ TScalarVector<T, _Dim> Rcp(const TScalarVector<T, _Dim>& f) {
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+TScalarVector<T, _Dim> Round(const TScalarVector<T, _Dim>& f) {
+    TScalarVector<T, _Dim> result;
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = Round(f._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> RSqrt(const TScalarVector<T, _Dim>& f) {
     TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
@@ -389,13 +445,88 @@ TScalarVector<U, _Dim> Smoothstep(const TScalarVector<T, _Dim>& vmin, const TSca
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+TScalarVector<T, _Dim> GridSnap(const TScalarVector<T, _Dim>& location, T grid) {
+    TScalarVector<U, _Dim> result;
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = GridSnap(location._data[i], grid);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<T, _Dim> GridSnap(const TScalarVector<T, _Dim>& location, const TScalarVector<T, _Dim>& grid) {
+    TScalarVector<U, _Dim> result;
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = GridSnap(location._data[i], grid._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 bool IsNormalized(const TScalarVector<T, _Dim>& v, float epsilon/* = F_Epsilon */) {
     return std::abs(T(1) - LengthSq(v)) < epsilon;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+bool NearlyEquals(const TScalarVector<T, _Dim>& a, const TScalarVector<T, _Dim>& b, float maxRelDiff/* = F_Epsilon */) {
+    for (size_t i = 0; i < _Dim; ++i) {
+
+        if (not NearlyEquals(a._data[i], b._data[i], maxRelDiff))
+            return false;
+    }
+    return true;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarVector<T, 2> SinCos(T angle) {
     return TScalarVector<T, 2>(std::sin(angle), std::cos(angle));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+size_t BiggestComponent2(const TScalarVector<T, 2>& v) {
+    return (v.x() < v.y() ? 1 : 0);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+size_t BiggestComponent3(const TScalarVector<T, 3>& v) {
+    return (size_t)RoundToInt(CubeMapFaceID(v.x(), v.y(), v.z()) * 0.5f);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+size_t BiggestComponent4(const TScalarVector<T, 4>& v) {
+    constexpr size_t wIndex = 3;
+    const size_t xyzIndex = (size_t)RoundToInt(CubeMapFaceID(v.x(), v.y(), v.z()) * 0.5f);
+    const bool wBiggest = Abs(v.w()) > Max3(Abs(v.x()), Abs(v.y()), Abs(v.z()));
+    return (wBiggest ? wIndex : xyzIndex);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+bool IsINF(const TScalarVector<T, _Dim>& v) {
+    for (size_t i = 0; i < _Dim; ++i) {
+        if (IsINF(v._data[i]))
+            return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+bool IsNAN(const TScalarVector<T, _Dim>& v) {
+    for (size_t i = 0; i < _Dim; ++i) {
+        if (IsNAN(v._data[i]))
+            return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+bool IsNANorINF(const TScalarVector<T, _Dim>& v) {
+    for (size_t i = 0; i < _Dim; ++i) {
+        if (IsNANorINF(v._data[i]))
+            return true;
+    }
+    return false;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

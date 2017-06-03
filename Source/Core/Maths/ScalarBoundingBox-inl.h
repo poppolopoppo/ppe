@@ -26,6 +26,19 @@ auto TScalarBoundingBox<T, _Dim>::operator =(const TScalarBoundingBox& other) ->
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
+TScalarBoundingBox<T, _Dim>::TScalarBoundingBox(std::initializer_list<vector_type> points)
+    : TScalarBoundingBox() {
+    AddRange(points.begin(), points.end());
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+auto TScalarBoundingBox<T, _Dim>::operator =(std::initializer_list<vector_type> points) -> TScalarBoundingBox& {
+    *this = TScalarBoundingBox::DefaultValue();
+    AddRange(points.begin(), points.end());
+    return *this;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
 template <typename U>
 TScalarBoundingBox<T, _Dim>::TScalarBoundingBox(const TScalarBoundingBox<U, _Dim>& other)
 :   _min(other._min), _max(other._max) {}
@@ -40,12 +53,17 @@ auto TScalarBoundingBox<T, _Dim>::operator =(const TScalarBoundingBox<U, _Dim>& 
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 auto TScalarBoundingBox<T, _Dim>::Center() const -> vector_type {
-    return (_max + _min) / 2;
+    return ((_max + _min) / 2);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 auto TScalarBoundingBox<T, _Dim>::Extents() const -> vector_type {
-    return _max - _min;
+    return (_max - _min);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+auto TScalarBoundingBox<T, _Dim>::HalfExtents() const -> vector_type {
+    return ((_max - _min) / 2);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
@@ -111,10 +129,10 @@ bool TScalarBoundingBox<T, _Dim>::Intersects(const TScalarBoundingBox& other, bo
     const vector_type c0 = Center();
     const vector_type c1 = other.Center();
 
-    const vector_type h0 = Extents() / 2;
-    const vector_type h1 = other.Extents() / 2;
+    const vector_type h0 = Extents();
+    const vector_type h1 = other.Extents();
 
-    const bool intersects = (c0 - c1).AllLessThan(h0 + h1);
+    const bool intersects = ((c0 - c1) * 2).AllLessThan(h0 + h1);
 
     if (intersects && inside) {
         if (Contains(other._min))

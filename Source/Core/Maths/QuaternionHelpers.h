@@ -49,7 +49,7 @@ FQuaternion MakeBarycentricQuaternion(
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Packing tangent space in a quaternion
-// https://dl.dropboxusercontent.com/u/16861957/gdc2015_rendering_the_world_of_far_cry_4.pdf
+// https://www.benicourt.com/blender/wp-content/uploads/2015/03/gdc2015_rendering_the_world_of_far_cry_4.pdf
 //----------------------------------------------------------------------------
 inline FQuaternion TangentSpaceToQuaternion(const float3& tangent, const float3& binormal, const float3& normal) {
     return Make3AxisQuaterion(tangent, binormal, normal);
@@ -59,6 +59,20 @@ inline void QuaternionToTangentSpace(   float3 *ptangent, float3 *pbinormal, flo
                                         const FQuaternion& quaternion) {
     Extract3AxisFromQuaternion(ptangent, pbinormal, pnormal, quaternion);
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline bool NearlyEquals(const FQuaternion& a, const FQuaternion& b, float maxRelDiff = F_Epsilon) {
+    return NearlyEquals(a.Value(), b.Value());
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline bool IsINF(const FQuaternion& q) { return (IsINF(q.Value())); }
+//----------------------------------------------------------------------------
+inline bool IsNAN(const FQuaternion& q) { return (IsNAN(q.Value())); }
+//----------------------------------------------------------------------------
+inline bool IsNANorINF(const FQuaternion& q) { return (IsNANorINF(q.Value())); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -50,6 +50,8 @@ public:
     EPlaneIntersectionType Intersects(const FBoundingBox& box) const;
     EPlaneIntersectionType Intersects(const FSphere& sphere) const;
 
+    static FPlane Make(const float3& pos, const float3& normal);
+
     static FPlane FromTriangle(const float3& a, const float3& b, const float3& c);
 
     static FPlane Transform(const FPlane& plane, const FQuaternion& rotation);

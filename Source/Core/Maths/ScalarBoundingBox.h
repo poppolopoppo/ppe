@@ -28,6 +28,9 @@ public:
     TScalarBoundingBox(const TScalarBoundingBox& other);
     TScalarBoundingBox& operator =(const TScalarBoundingBox& other);
 
+    TScalarBoundingBox(std::initializer_list<vector_type> points);
+    TScalarBoundingBox& operator =(std::initializer_list<vector_type> points);
+
     template <typename U>
     TScalarBoundingBox(const TScalarBoundingBox<U, _Dim>& other);
     template <typename U>
@@ -44,6 +47,7 @@ public:
 
     vector_type Center() const;
     vector_type Extents() const;
+    vector_type HalfExtents() const;
 
     bool HasPositiveExtents() const;
     bool HasPositiveExtentsStrict() const;

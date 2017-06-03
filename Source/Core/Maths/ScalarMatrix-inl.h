@@ -319,6 +319,24 @@ TScalarMatrix<T, _NWidth, _NHeight> TScalarMatrix<T, _Width, _Height>::Crop() co
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
+TScalarMatrix<T, _Width + 1, _Height + 1> TScalarMatrix<T, _Width, _Height>::OneExtend() const {
+    TScalarMatrix<T, _Width+1, _Height+1> result = TScalarMatrix<T, _Width + 1, _Height + 1>::Identity();
+    for (size_t col = 0; col < _Width; ++col)
+        for (size_t row = 0; row < _Height; ++row)
+            result.at_(col, row) = at_(col, row);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
+TScalarMatrix<T, _Width + 1, _Height + 1> TScalarMatrix<T, _Width, _Height>::ZeroExtend() const {
+    TScalarMatrix<T, _Width + 1, _Height + 1> result = TScalarMatrix<T, _Width + 1, _Height + 1>::Zero();
+    for (size_t col = 0; col < _Width; ++col)
+        for (size_t row = 0; row < _Height; ++row)
+            result.at_(col, row) = at_(col, row);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
 TScalarMatrix<T, _Width, _Height> TScalarMatrix<T, _Width, _Height>::Identity() {
     TScalarMatrix result;
     for (size_t col = 0; col < _Width; ++col)
