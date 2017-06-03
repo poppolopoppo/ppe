@@ -7,7 +7,8 @@
     .UnityNumFiles = 6
     .ProjectIsolatedFiles =
     {
-        'Graphics.cpp'
+        'Graphics.cpp',
+        'RenderDocWrapper.cpp'
     }
     #include "../../Build/Templates/Library.bff"
 }
