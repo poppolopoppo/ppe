@@ -14,6 +14,8 @@
 #define USE_VISUAL2017_DEBUG_FASTLINK
 ; activer la protection du flux de controle
 #define USE_VISUAL2017_GUARD_CF
+; affiche a rapport avec les EBCO (Empty Base Class Optimizations) possibles (à utiliser avec -buildlog)
+;#define USE_VISUAL2017_EBCO_REPORT
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
 #define USE_PRECOMPILED_HEADERS
 ; utilise les .obj plutôt que les .lib comme input du linker (encore nécessaire ?)
@@ -228,6 +230,16 @@ Print( "Using Visual 2017 incremental LTCG for profiling : no profiling informat
 #endif
 ]
 
+.MSVC2017ReportClassLayoutChanges =
+[
+#if USE_VISUAL2017_EBCO_REPORT
+    Print( "Using Visual 2017 empty base class optimizations report" )
+    ; https://blogs.msdn.microsoft.com/vcblog/2016/03/30/optimizing-the-layout-of-empty-base-classes-in-vs2015-update-2-3/
+    .CompilerOptions    = ' /d1reportClassLayoutChanges'
+#endif
+]
+.MSVC2017BaseConfig + .MSVC2017ReportClassLayoutChanges
+
 //------------------------------------------------------------------------------
 // Platforms
 //------------------------------------------------------------------------------
@@ -275,17 +287,17 @@ Print( "Using Visual 2017 incremental LTCG for profiling : no profiling informat
 // Configurations
 //------------------------------------------------------------------------------
 
-.MSVC2017_X86Debug         = .MSVC2017PlatformX86   + .MSVCBaseDebugConfig          + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
-.MSVC2017_X86FastDebug     = .MSVC2017PlatformX86   + .MSVCBaseFastDebugConfig      + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
-.MSVC2017_X86Release       = .MSVC2017PlatformX86   + .MSVCBaseReleaseConfig        + .MSVC2017DebugFastLink
-.MSVC2017_X86Profiling     = .MSVC2017PlatformX86   + .MSVCBaseProfilingConfig      + .MSVC2017LinkTimeCodeGenerationIncremental + .MSVC2017GenerateProfilingInfos
-.MSVC2017_X86Final         = .MSVC2017PlatformX86   + .MSVCBaseFinalConfig          + .MSVC2017LinkTimeCodeGenerationIncremental
+.MSVC2017_X86Debug      = .MSVC2017PlatformX86   + .MSVCBaseDebugConfig          + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
+.MSVC2017_X86FastDebug  = .MSVC2017PlatformX86   + .MSVCBaseFastDebugConfig      + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
+.MSVC2017_X86Release    = .MSVC2017PlatformX86   + .MSVCBaseReleaseConfig        + .MSVC2017DebugFastLink
+.MSVC2017_X86Profiling  = .MSVC2017PlatformX86   + .MSVCBaseProfilingConfig      + .MSVC2017LinkTimeCodeGenerationIncremental + .MSVC2017GenerateProfilingInfos
+.MSVC2017_X86Final      = .MSVC2017PlatformX86   + .MSVCBaseFinalConfig          + .MSVC2017LinkTimeCodeGenerationIncremental
 
-.MSVC2017_X64Debug           = .MSVC2017PlatformX64     + .MSVCBaseDebugConfig          + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
-.MSVC2017_X64FastDebug       = .MSVC2017PlatformX64     + .MSVCBaseFastDebugConfig      + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
-.MSVC2017_X64Release         = .MSVC2017PlatformX64     + .MSVCBaseReleaseConfig        + .MSVC2017DebugFastLink
-.MSVC2017_X64Profiling       = .MSVC2017PlatformX64     + .MSVCBaseProfilingConfig      + .MSVC2017LinkTimeCodeGenerationIncremental + .MSVC2017GenerateProfilingInfos
-.MSVC2017_X64Final           = .MSVC2017PlatformX64     + .MSVCBaseFinalConfig          + .MSVC2017LinkTimeCodeGenerationIncremental
+.MSVC2017_X64Debug      = .MSVC2017PlatformX64   + .MSVCBaseDebugConfig          + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
+.MSVC2017_X64FastDebug  = .MSVC2017PlatformX64   + .MSVCBaseFastDebugConfig      + .MSVC2017DebugFastLink    + .MSVC2015GuardCF
+.MSVC2017_X64Release    = .MSVC2017PlatformX64   + .MSVCBaseReleaseConfig        + .MSVC2017DebugFastLink
+.MSVC2017_X64Profiling  = .MSVC2017PlatformX64   + .MSVCBaseProfilingConfig      + .MSVC2017LinkTimeCodeGenerationIncremental + .MSVC2017GenerateProfilingInfos
+.MSVC2017_X64Final      = .MSVC2017PlatformX64   + .MSVCBaseFinalConfig          + .MSVC2017LinkTimeCodeGenerationIncremental
 
 .MSVC2017CompileConfigs =
 {
