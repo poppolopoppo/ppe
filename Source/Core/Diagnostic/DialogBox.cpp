@@ -16,7 +16,7 @@
 #include "Memory/MemoryProvider.h"
 
 #ifdef PLATFORM_WINDOWS
-#   include <Windows.h>
+#   include "Misc/Platform_Windows.h"
 #   include <Windowsx.h> // Edit_GetSel()
 #else
 #   error "no support"

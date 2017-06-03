@@ -3,7 +3,7 @@
 #include "Fiber.h"
 
 #ifdef PLATFORM_WINDOWS
-#   include <windows.h>
+#   include "Misc/Platform_Windows.h"
 #else
 #   error "OS not yet supported"
 #endif

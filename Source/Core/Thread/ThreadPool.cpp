@@ -8,7 +8,7 @@
 #include <thread>
 
 #ifdef PLATFORM_WINDOWS
-#   include <windows.h>
+#   include "Misc/Platform_Windows.h"
 #endif
 
 namespace Core {

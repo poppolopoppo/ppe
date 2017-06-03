@@ -9,7 +9,7 @@
 #include <sstream>
 
 #ifdef PLATFORM_WINDOWS
-#   include <Windows.h>
+#   include "Core/Misc/Platform_Windows.h"
 #else
 #   error "no support"
 #endif

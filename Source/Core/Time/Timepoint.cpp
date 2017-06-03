@@ -3,7 +3,7 @@
 #include "Timepoint.h"
 
 #ifdef PLATFORM_WINDOWS
-#   include <Windows.h>
+#   include "Misc/Platform_Windows.h"
 #else
 #   error "no support !"
 #endif

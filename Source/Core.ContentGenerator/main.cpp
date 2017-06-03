@@ -23,7 +23,7 @@ typedef Core::ContentGenerator::FRobotApp application_type;
 
 #if defined(PLATFORM_WINDOWS) && CORE_RESOURCES
 //  Retrieves application icon for windows
-#   include <windows.h>
+#   include "Core/Misc/Platform_Windows.h"
 #   include "resource.h"
 #endif
 
@@ -35,15 +35,15 @@ static int Bootstrap(void *appHandle, int nShowCmd, int argc, const wchar_t**arg
 
     const Application::FApplicationContext appContext;
 
-    const Core::CoreStartup startupCore{ appHandle, nShowCmd, size_t(argc), argv };
-    const RTTI::RTTIStartup startupRTTI;
-    const Serialize::SerializeStartup startupSerialize;
-    const Graphics::GraphicsStartup startupGraphics;
-    const Lattice::LatticeStartup startupLattice;
-    const Network::NetworkStartup startupNetwork;
-    const Pixmap::PixmapStartup startupPixmap;
-    const ContentPipeline::ContentPipelineStartup startupContentPipeline;
-    const Application::FApplicationStartup startupApplication;
+    const Core::FCoreModule moduleCore{ appHandle, nShowCmd, size_t(argc), argv };
+    const RTTI::FRTTIModule moduleRTTI;
+    const Serialize::FSerializeModule moduleSerialize;
+    const Graphics::FGraphicsModule moduleGraphics;
+    const Lattice::FLatticeModule moduleLattice;
+    const Network::FNetworkModule moduleNetwork;
+    const Pixmap::FPixmapModule modulePixmap;
+    const ContentPipeline::FContentPipelineModule moduleContentPipeline;
+    const Application::FApplicationModule moduleApplication;
 
 #if defined(PLATFORM_WINDOWS) && CORE_RESOURCES
     FCurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
@@ -54,7 +54,7 @@ static int Bootstrap(void *appHandle, int nShowCmd, int argc, const wchar_t**arg
 }
 
 #ifdef PLATFORM_WINDOWS
-#   include <Windows.h>
+#   include "Core/Misc/Platform_Windows.h"
 #   include <shellapi.h>
 #   include <tchar.h>
 int APIENTRY _tWinMain(

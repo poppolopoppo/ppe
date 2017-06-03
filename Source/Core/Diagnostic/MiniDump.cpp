@@ -9,7 +9,7 @@
 // http://blog.aaronballman.com/2011/05/generating-a-minidump/
 */
 
-#ifndef _MSC_VER
+#ifndef PLATFORM_WINDOWS
 
 namespace MiniDump
 {
@@ -30,7 +30,7 @@ namespace MiniDump
 
 #include "DbghelpWrapper.h"
 
-#include <Windows.h>
+#include "Misc/Platform_Windows.h"
 #include <winnt.h>
 #include <time.h>
 #include <TlHelp32.h>

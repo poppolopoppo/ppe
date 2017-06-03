@@ -14,7 +14,7 @@
 #pragma warning(disable: 4091) // 'typedef '�: ignor� � gauche de '' quand aucune variable n'est d�clar�e
 
 
-#include <Windows.h>
+#include "Misc/Platform_Windows.h"
 #include <DbgHelp.h>
 
 #pragma warning(pop)

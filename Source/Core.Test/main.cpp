@@ -43,7 +43,7 @@ typedef Core::FGameTest4 application_type;
 
 #if defined(PLATFORM_WINDOWS) && CORE_RESOURCES
 //  Retrieves application icon for windows
-#   include <windows.h>
+#   include "Core/Misc/Platform_Windows.h"
 #   include "resource.h"
 #endif
 
@@ -104,7 +104,7 @@ static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wcha
 }
 
 #ifdef PLATFORM_WINDOWS
-#   include <Windows.h>
+#   include "Core/Misc/Platform_Windows.h"
 #   include <shellapi.h>
 #   include <tchar.h>
 int APIENTRY _tWinMain(

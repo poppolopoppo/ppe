@@ -15,9 +15,10 @@
 
 #include "Thread/ReadWriteLock.h"
 
+#include "Misc/Platform_Windows.h"
+
 #include <iostream>
 #include <crtdbg.h>
-#include <Windows.h>
 
 #include <thread>
 #include <unordered_map>

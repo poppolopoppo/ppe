@@ -14,7 +14,7 @@
 #endif
 
 #ifdef PLATFORM_WINDOWS
-#   include <Windows.h>
+#   include "Misc/Platform_Windows.h"
 #endif
 
 namespace Core {

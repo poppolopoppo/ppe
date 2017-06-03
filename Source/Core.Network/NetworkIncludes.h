@@ -19,7 +19,7 @@
 #       error "_WINSOCKAPI_ must be defined to prevent inclusion of winsock.h"
 #   endif
 
-#   include <windows.h>
+#   include "Core/Misc/Platform_Windows.h"
 
 #else
 

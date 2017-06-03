@@ -7,7 +7,7 @@
 #include "Core/Diagnostic/Logger.h"
 
 #ifdef PLATFORM_WINDOWS
-#   include <windows.h>
+#   include "Core/Misc/Platform_Windows.h"
 #endif
 
 namespace Core {

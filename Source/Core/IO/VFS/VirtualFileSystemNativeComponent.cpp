@@ -21,19 +21,9 @@
 
 // EnumerateFiles()
 #ifdef PLATFORM_WINDOWS
-#   include <windows.h>
+#   include "Misc/Platform_Windows.h"
 #   include <tchar.h>
 #   include <stdio.h>
-
-    // Stupid M$ macros removal ...
-#   pragma push_macro("CreateDirectory")
-#   ifdef CreateDirectory
-#       undef CreateDirectory
-#   endif
-#   pragma push_macro("RemoveDirectory")
-#   ifdef RemoveDirectory
-#       undef RemoveDirectory
-#   endif
 #endif
 
 #define NATIVE_ENTITYNAME_MAXSIZE 1024

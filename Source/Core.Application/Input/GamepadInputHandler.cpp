@@ -14,7 +14,7 @@
 #endif
 
 #ifdef PLATFORM_WINDOWS
-#   include <Windows.h>
+#   include "Core/Misc/Platform_Windows.h"
 #   include <XInput.h>
 
 #   pragma comment(lib, "XInput.lib")

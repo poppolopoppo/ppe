@@ -11,7 +11,7 @@
 #       error "invalid TCHAR format"
 #   endif
 
-#   include <Windows.h>
+#   include "Misc/Platform_Windows.h"
 #   include <comdef.h>
 #endif
 

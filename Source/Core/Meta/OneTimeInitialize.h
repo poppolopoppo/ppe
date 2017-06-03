@@ -32,7 +32,7 @@
 #else
 
 #   ifdef PLATFORM_WINDOWS
-#      include <windows.h>
+#      include "Misc/Platform_Windows.h"
 #      include <intrin.h>
 
 #      define CORE_INTERLOCKEDCOMPAREEXCHANGE_32(_Var, _Src, _Operand) ::InterlockedCompareExchange((volatile long*)(&(_Var)), static_cast<long>(_Src), static_cast<long>(_Operand))

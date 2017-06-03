@@ -3,7 +3,7 @@
 #include "ApplicationConsole.h"
 
 #ifdef PLATFORM_WINDOWS
-#   include <windows.h>
+#   include "Core/Misc/Platform_Windows.h"
 #else
 #   error "no support"
 #endif
