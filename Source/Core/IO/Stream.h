@@ -73,13 +73,52 @@ private:
     std::streamsize _capacity;
 };
 //----------------------------------------------------------------------------
+// Allow to create a std::basic_istream<> from a non-growable (char|wchar_t) buffer
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits = std::char_traits<_Char> >
+class TBasicICStrStreamBuffer : public std::basic_streambuf<_Char, _Traits> {
+public:
+    typedef std::basic_streambuf<_Char, _Traits> parent_type;
+
+    using typename parent_type::int_type;
+    using typename parent_type::traits_type;
+
+    TBasicICStrStreamBuffer(const _Char* storage, std::streamsize capacity);
+    virtual ~TBasicICStrStreamBuffer(); // _storage is only null-terminated here
+
+    TBasicICStrStreamBuffer(TBasicICStrStreamBuffer&& rvalue);
+    TBasicICStrStreamBuffer& operator =(TBasicICStrStreamBuffer&& rvalue);
+
+    TBasicICStrStreamBuffer(const TBasicICStrStreamBuffer&) = delete;
+    TBasicICStrStreamBuffer& operator =(const TBasicICStrStreamBuffer&) = delete;
+
+    const _Char* storage() const { return _storage; }
+    std::streamsize capacity() const { return _capacity; }
+    std::streamsize size() const { return parent_type::pptr() - _storage; }
+
+    void Reset();
+
+    void swap(TBasicICStrStreamBuffer& other);
+
+private:
+    const _Char* _storage;
+    std::streamsize _capacity;
+};
+//----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
 void swap(TBasicOCStrStreamBuffer<_Char, _Traits>& lhs, TBasicOCStrStreamBuffer<_Char, _Traits>& rhs) {
     lhs.swap(rhs);
 }
 //----------------------------------------------------------------------------
+template <typename _Char, typename _Traits = std::char_traits<_Char> >
+void swap(TBasicICStrStreamBuffer<_Char, _Traits>& lhs, TBasicICStrStreamBuffer<_Char, _Traits>& rhs) {
+    lhs.swap(rhs);
+}
+//----------------------------------------------------------------------------
 typedef TBasicOCStrStreamBuffer<char, std::char_traits<char> >          FOCStrStreamBuffer;
 typedef TBasicOCStrStreamBuffer<wchar_t, std::char_traits<wchar_t> >    FWOCStrStreamBuffer;
+typedef TBasicICStrStreamBuffer<char, std::char_traits<char> >          FICStrStreamBuffer;
+typedef TBasicICStrStreamBuffer<wchar_t, std::char_traits<wchar_t> >    FWICStrStreamBuffer;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -131,13 +170,59 @@ public:
     void swap(TBasicOCStrStream& other);
 };
 //----------------------------------------------------------------------------
+template <typename _Char, typename _Traits = std::char_traits<_Char> >
+class TBasicICStrStream :
+    private TBasicICStrStreamBuffer<_Char, _Traits>
+,   public std::basic_istream<_Char, _Traits> {
+public:
+    typedef TBasicICStrStreamBuffer<_Char, _Traits> buffer_type;
+    typedef std::basic_istream<_Char, _Traits> stream_type;
+
+    TBasicICStrStream(const _Char* storage, std::streamsize capacity);
+    virtual ~TBasicICStrStream();
+
+    explicit TBasicICStrStream(const TMemoryView<const _Char>& view)
+        : TBasicICStrStream(view.Pointer(), view.size()) {}
+
+    template <size_t _Capacity>
+    explicit TBasicICStrStream(const _Char(&staticArray)[_Capacity])
+        : TBasicICStrStream(staticArray, _Capacity) {}
+
+    TBasicICStrStream(TBasicICStrStream&& rvalue);
+    TBasicICStrStream& operator =(TBasicICStrStream&& rvalue);
+
+    TBasicICStrStream(const TBasicICStrStream&) = delete;
+    TBasicICStrStream& operator =(const TBasicICStrStream&) = delete;
+
+    const _Char *storage() const { return buffer_type::storage(); }
+    std::streamsize capacity() const { return buffer_type::capacity(); }
+    std::streamsize size() const { return buffer_type::size(); }
+
+    const _Char *begin() const { return buffer_type::storage(); }
+    const _Char *end() const { return buffer_type::storage() + buffer_type::size(); }
+
+    const _Char *Pointer() const { return buffer_type::storage(); }
+    size_t SizeInBytes() const { return checked_cast<size_t>(buffer_type::size() * sizeof(_Char)); }
+
+    using buffer_type::Reset;
+
+    void swap(TBasicICStrStream& other);
+};
+//----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 void swap(TBasicOCStrStream<_Char, _Traits>& lhs, TBasicOCStrStream<_Char, _Traits>& rhs) {
     lhs.swap(rhs);
 }
 //----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+void swap(TBasicICStrStream<_Char, _Traits>& lhs, TBasicICStrStream<_Char, _Traits>& rhs) {
+    lhs.swap(rhs);
+}
+//----------------------------------------------------------------------------
 typedef TBasicOCStrStream<char, std::char_traits<char> >        FOCStrStream;
 typedef TBasicOCStrStream<wchar_t, std::char_traits<wchar_t> >  FWOCStrStream;
+typedef TBasicICStrStream<char, std::char_traits<char> >        FICStrStream;
+typedef TBasicICStrStream<wchar_t, std::char_traits<wchar_t> >  FWICStrStream;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
