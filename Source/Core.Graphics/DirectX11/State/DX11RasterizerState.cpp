@@ -42,7 +42,7 @@ FDX11RasterizerState::FDX11RasterizerState(IDeviceAPIEncapsulator *device, FRast
 
     Assert(_entity);
 
-    DX11SetDeviceResourceNameIFP(_entity, owner);
+    DX11SetDeviceResourceNameIFP(_entity.Get(), owner);
 }
 //----------------------------------------------------------------------------
 FDX11RasterizerState::~FDX11RasterizerState() {

@@ -12,6 +12,12 @@ enum class EIndexElementSize {
     ThirtyTwoBits   = sizeof(u32)
 };
 //----------------------------------------------------------------------------
+inline EIndexElementSize IndexCountToIndexElementSize(size_t indexCount) {
+    return (indexCount <= UINT16_MAX
+        ? EIndexElementSize::SixteenBits
+        : EIndexElementSize::ThirtyTwoBits);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Graphics

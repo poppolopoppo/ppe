@@ -104,7 +104,7 @@ void FDeviceEncapsulator::Create(EDeviceAPI api, void *windowHandle, const FPres
     _deviceSharedEntityPool.reset(new FDeviceSharedEntityPool(&_videoMemory));
 
     Assert(_deviceAPIEncapsulator);
-    GraphicsStartup::OnDeviceCreate(this);
+    FGraphicsModule::OnDeviceCreate(this);
     _onDeviceCreate.Invoke(this);
 
     Assert(EDeviceStatus::Create == _status);
@@ -132,7 +132,7 @@ void FDeviceEncapsulator::Destroy() {
     }
     _deviceSharedEntityPool.reset();
 
-    GraphicsStartup::OnDeviceDestroy(this);
+    FGraphicsModule::OnDeviceDestroy(this);
 
     _deviceAPIEncapsulator.reset();
 

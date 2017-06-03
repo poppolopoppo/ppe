@@ -37,7 +37,7 @@ FDX11RenderTarget::FDX11RenderTarget(IDeviceAPIEncapsulator *device, FRenderTarg
     }
     Assert(_renderTargetView);
 
-    DX11SetDeviceResourceNameIFP(_renderTargetView, owner);
+    DX11SetDeviceResourceNameIFP(_renderTargetView.Get(), owner);
 }
 //----------------------------------------------------------------------------
 FDX11RenderTarget::FDX11RenderTarget(
@@ -53,12 +53,12 @@ FDX11RenderTarget::~FDX11RenderTarget() {
     ReleaseComRef(_renderTargetView);
 }
 //----------------------------------------------------------------------------
-void FDX11RenderTarget::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
-    FDX11Texture2DContent::GetContent(device, offset, dst, stride, count, Mode(), Usage());
+void FDX11RenderTarget::GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) {
+    FDX11Texture2DContent::GetContent(device, offset, dst, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
-void FDX11RenderTarget::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
-    FDX11Texture2DContent::SetContent(device, offset, src, stride, count, Mode(), Usage());
+void FDX11RenderTarget::SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) {
+    FDX11Texture2DContent::SetContent(device, offset, src, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
 void FDX11RenderTarget::CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantTexture2D *psource) {

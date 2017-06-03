@@ -49,6 +49,12 @@ private:
     FDX11DeviceWrapper _wrapper;
     PDX11ConstantWriter _writer;
 
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+    u16 _useDebugDrawEvents = 0;
+    u16 _framesToCapture = 0;
+    u16 _framesCapturing = 0;
+#endif
+
 private:
     virtual const FAbstractDeviceAPIEncapsulator *APIEncapsulator() const override final { return this; }
 
@@ -62,8 +68,8 @@ private: // IDeviceAPIEncapsulator impl
 
     // Viewport
 
-    virtual void SetViewport(const ViewportF& viewport) override final;
-    virtual void SetViewports(const TMemoryView<const ViewportF>& viewports) override final;
+    virtual void SetViewport(const FViewport& viewport) override final;
+    virtual void SetViewports(const TMemoryView<const FViewport>& viewports) override final;
 
     // Alpha/Raster/Depth State
 
@@ -84,8 +90,8 @@ private: // IDeviceAPIEncapsulator impl
     virtual FDeviceAPIDependantVertexDeclaration *CreateVertexDeclaration(FVertexDeclaration *declaration) override final;
     virtual void DestroyVertexDeclaration(FVertexDeclaration *declaration, PDeviceAPIDependantVertexDeclaration& entity) override final;
 
-    virtual FDeviceAPIDependantResourceBuffer *CreateIndexBuffer(IndexBuffer *indexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) override final;
-    virtual void DestroyIndexBuffer(IndexBuffer *indexBuffer, PDeviceAPIDependantResourceBuffer& entity) override final;
+    virtual FDeviceAPIDependantResourceBuffer *CreateIndexBuffer(FIndexBuffer *indexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) override final;
+    virtual void DestroyIndexBuffer(FIndexBuffer *indexBuffer, PDeviceAPIDependantResourceBuffer& entity) override final;
 
     virtual FDeviceAPIDependantResourceBuffer *CreateVertexBuffer(FVertexBuffer *vertexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) override final;
     virtual void DestroyVertexBuffer(FVertexBuffer *vertexBuffer, PDeviceAPIDependantResourceBuffer& entity) override final;
@@ -143,8 +149,8 @@ private: // IDeviceAPIContext
 
     // Index/Vertex Buffer
 
-    virtual void SetIndexBuffer(const IndexBuffer *indexBuffer) override final;
-    virtual void SetIndexBuffer(const IndexBuffer *indexBuffer, size_t offset) override final;
+    virtual void SetIndexBuffer(const FIndexBuffer *indexBuffer) override final;
+    virtual void SetIndexBuffer(const FIndexBuffer *indexBuffer, size_t offset) override final;
 
     virtual void SetVertexBuffer(const FVertexBuffer *vertexBuffer) override final;
     virtual void SetVertexBuffer(const FVertexBuffer *vertexBuffer, u32 vertexOffset) override final;
@@ -174,12 +180,22 @@ private: // IDeviceAPIDiagnosticsEncapsulator() {}
 
     //virtual const FAbstractDeviceAPIEncapsulator *Encapsulator() const override final { return _deviceAPIDependantEncapsulator.get(); }
 
-    virtual bool IsProfilerAttached() const override final;
+    virtual bool UseDebugDrawEvents() const override final;
+    virtual void ToggleDebugDrawEvents(bool enabled) override final;
 
-    virtual void BeginEvent(const wchar_t *name) override final;
+    virtual void SetMarker(const FWStringView& name) override final;
+    virtual void BeginEvent(const FWStringView& name) override final;
     virtual void EndEvent() override final;
 
-    virtual void SetMarker(const wchar_t *name) override final;
+    virtual bool IsProfilerAttached() const override final;
+    virtual bool LaunchProfiler() override final;
+    virtual bool LaunchProfilerAndTriggerCapture() override final;
+
+    virtual bool IsCapturingFrame() const override final;
+    virtual void SetCaptureWindow(void* hwnd) override final;
+    virtual void TriggerCapture() override final;
+    virtual void TriggerMultiFrameCapture(size_t numFrames) override final;
+
 #endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS
 };
 //----------------------------------------------------------------------------

@@ -49,7 +49,7 @@ public:
     void FillSubstitutions( VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>)& substitutions,
                             const FVertexDeclaration *vertexDeclaration) const;
 
-    static FShaderSource *LoadFromFileIFP(   const Core::FFilename& filename,
+    static FShaderSource *LoadFromFileIFP(  const Core::FFilename& filename,
                                             const TMemoryView<const TPair<FString, FString>>& defines);
 
     SINGLETON_POOL_ALLOCATED_DECL();

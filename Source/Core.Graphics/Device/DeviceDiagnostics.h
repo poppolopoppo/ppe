@@ -15,23 +15,48 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 class IDeviceAPIDiagnostics;
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(const IDeviceAPIDiagnostics *diagnostics, const char *cstr);
-void Diagnostics_SetMarker(const IDeviceAPIDiagnostics *diagnostics, const char *cstr);
+void CORE_GRAPHICS_API Diagnostics_BeginEvent(IDeviceAPIDiagnostics *diagnostics, const FStringView& name);
+void CORE_GRAPHICS_API Diagnostics_SetMarker(IDeviceAPIDiagnostics *diagnostics, const FStringView& name);
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(const IDeviceAPIDiagnostics *diagnostics, const wchar_t *wcstr);
-void Diagnostics_SetMarker(const IDeviceAPIDiagnostics *diagnostics, const wchar_t *wcstr);
+void CORE_GRAPHICS_API Diagnostics_BeginEvent(IDeviceAPIDiagnostics *diagnostics, const FWStringView& name);
+void CORE_GRAPHICS_API Diagnostics_SetMarker(IDeviceAPIDiagnostics *diagnostics, const FWStringView& name);
 //----------------------------------------------------------------------------
-void Diagnostics_EndEvent(const IDeviceAPIDiagnostics *encapsulator);
+void CORE_GRAPHICS_API Diagnostics_EndEvent(IDeviceAPIDiagnostics *diagnostics);
 //----------------------------------------------------------------------------
 class FAbstractDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const char *cstr);
-void Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const char *cstr);
+void CORE_GRAPHICS_API Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const FStringView& name);
+void CORE_GRAPHICS_API Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const FStringView& name);
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr);
-void Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr);
+void CORE_GRAPHICS_API Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const FWStringView& name);
+void CORE_GRAPHICS_API Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const FWStringView& name);
 //----------------------------------------------------------------------------
-void Diagnostics_EndEvent(const FAbstractDeviceAPIEncapsulator *encapsulator);
+void CORE_GRAPHICS_API Diagnostics_EndEvent(const FAbstractDeviceAPIEncapsulator *encapsulator);
+//----------------------------------------------------------------------------
+namespace details {
+template <typename T>
+struct TDiagnostics_EventScope;
+template <> struct TDiagnostics_EventScope<IDeviceAPIDiagnostics*> {
+    IDeviceAPIDiagnostics* Diagnostics;
+    TDiagnostics_EventScope(IDeviceAPIDiagnostics* diagnostics, const FWStringView& name)
+        : Diagnostics(diagnostics) {
+        Diagnostics_BeginEvent(Diagnostics, name);
+    }
+    ~TDiagnostics_EventScope() {
+        Diagnostics_EndEvent(Diagnostics);
+    }
+};
+template <> struct TDiagnostics_EventScope<FAbstractDeviceAPIEncapsulator*> {
+    const FAbstractDeviceAPIEncapsulator* Encapsulator;
+    TDiagnostics_EventScope(const FAbstractDeviceAPIEncapsulator* encapsulator, const FWStringView& name)
+        : Encapsulator(encapsulator) {
+        Diagnostics_BeginEvent(Encapsulator, name);
+    }
+    ~TDiagnostics_EventScope() {
+        Diagnostics_EndEvent(Encapsulator);
+    }
+};
+} //!details
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
@@ -39,15 +64,19 @@ void Diagnostics_EndEvent(const FAbstractDeviceAPIEncapsulator *encapsulator);
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
+#define GRAPHICS_DIAGNOSTICS_SCOPEEVENT(_DiagnosticsOrEncapsulator, _Name) \
+    const Core::Graphics::details::TDiagnostics_EventScope< Meta::TDecay<decltype(_DiagnosticsOrEncapsulator)> > \
+        CONCAT(Graphics_Diagnostics_ScopeEvent_, __LINE__)((_DiagnosticsOrEncapsulator), (_Name))
 #define GRAPHICS_DIAGNOSTICS_BEGINEVENT(_DiagnosticsOrEncapsulator, _Name) \
-    Core::Graphics::Diagnostics_BeginEvent(_DiagnosticsOrEncapsulator, _Name)
+    Core::Graphics::Diagnostics_BeginEvent((_DiagnosticsOrEncapsulator), (_Name))
 #define GRAPHICS_DIAGNOSTICS_ENDEVENT(_DiagnosticsOrEncapsulator) \
     Core::Graphics::Diagnostics_EndEvent(_DiagnosticsOrEncapsulator)
 #define GRAPHICS_DIAGNOSTICS_SETMARKER(_DiagnosticsOrEncapsulator, _Name) \
-    Core::Graphics::Diagnostics_SetMarker(_DiagnosticsOrEncapsulator, _Name)
+    Core::Graphics::Diagnostics_SetMarker((_DiagnosticsOrEncapsulator), (_Name))
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
+#define GRAPHICS_DIAGNOSTICS_SCOPEEVENT(_DiagnosticsOrEncapsulator, _Name) NOOP()
 #define GRAPHICS_DIAGNOSTICS_BEGINEVENT(_DiagnosticsOrEncapsulator, _Name) NOOP()
 #define GRAPHICS_DIAGNOSTICS_ENDEVENT(_DiagnosticsOrEncapsulator) NOOP()
 #define GRAPHICS_DIAGNOSTICS_SETMARKER(_DiagnosticsOrEncapsulator, _Name) NOOP()

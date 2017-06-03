@@ -32,7 +32,7 @@ public:
 
     size_t SizeInBytes() const { return _block.SizeInBytes(); }
 
-    TMemoryView<const FValueBlock::TField> Fields() const { return _block.MakeView(); }
+    TMemoryView<const FValueField> Fields() const { return _block.MakeView(); }
 
     const FValueBlock& Block() const { return _block; }
 

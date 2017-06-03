@@ -33,11 +33,11 @@ FVertexBuffer::FVertexBuffer(const Graphics::FVertexDeclaration *vertexDeclarati
 //----------------------------------------------------------------------------
 FVertexBuffer::~FVertexBuffer() {}
 //----------------------------------------------------------------------------
-void FVertexBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
+void FVertexBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
 
-    _buffer.SetData(device, offset, src, stride, count);
+    _buffer.SetData(device, offset, src);
 }
 //----------------------------------------------------------------------------
 void FVertexBuffer::Create(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData) {
@@ -57,10 +57,7 @@ void FVertexBuffer::Destroy(IDeviceAPIEncapsulator *device) {
     Assert(Frozen());
     Assert(device);
 
-    PDeviceAPIDependantResourceBuffer resourceBuffer = _buffer.Destroy(device, this);
-    Assert(resourceBuffer);
-
-    device->DestroyVertexBuffer(this, resourceBuffer);
+    device->DestroyVertexBuffer(this, _buffer.Destroy(device, this));
 }
 //----------------------------------------------------------------------------
 size_t FVertexBuffer::VirtualSharedKeyHashValue() const {

@@ -33,7 +33,6 @@ public:
     const FDeviceResourceBuffer& Buffer() const { return _buffer; }
     const FConstantBufferLayout* Layout() const { return _layout.get(); }
 
-    void SetData(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& rawData);
     void SetData(IDeviceAPIEncapsulator *device, const TMemoryView<const void *>& fieldsData);
 
     void Create(IDeviceAPIEncapsulator *device);

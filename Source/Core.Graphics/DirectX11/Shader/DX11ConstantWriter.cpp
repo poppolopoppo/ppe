@@ -18,7 +18,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool ExportFieldData_(void *dst, const void *src, EValueType type) {
+static bool ExporFFieldData_(void *dst, const void *src, EValueType type) {
     switch (type)
     {
     // bool
@@ -105,13 +105,13 @@ void FDX11ConstantWriter::SetData(
     Assert(resource->Layout());
     Assert(rawData.size() == resource->Layout()->SizeInBytes());
 
-    for (const FValueBlock::TField& field : resource->Layout()->Fields()) {
+    for (const FValueBlock::FField& field : resource->Layout()->Fields()) {
         const size_t offset = field.Offset();
 
         const void *src = rawData.CutStartingAt(offset).data();
         void *const dst = output.CutStartingAt(offset).data();
 
-        if (!ExportFieldData_(dst, src, field.Type())) {
+        if (!ExporFFieldData_(dst, src, field.Type())) {
             AssertNotImplemented();
             CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to write constant buffer field", device, resource));
         }
@@ -127,18 +127,18 @@ void FDX11ConstantWriter::SetData(
     Assert(resource);
     Assert(resource->Layout());
 
-    const TMemoryView<const FValueBlock::TField> fields = resource->Layout()->Fields();
+    const TMemoryView<const FValueBlock::FField> fields = resource->Layout()->Fields();
     Assert(fields.size());
     Assert(fields.size() == fieldsData.size());
 
     const size_t n = fields.size();
     for (size_t i = 0; i < n; ++i) {
-        const FValueBlock::TField& field = fields[i];
+        const FValueBlock::FField& field = fields[i];
 
         const void *src = fieldsData[i];
         void *const dst = &output.at(field.Offset());
 
-        if (!ExportFieldData_(dst, src, field.Type())) {
+        if (!ExporFFieldData_(dst, src, field.Type())) {
             AssertNotImplemented();
             CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to write constant buffer field", device, resource));
         }

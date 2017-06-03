@@ -20,8 +20,9 @@ enum class EClearOptions {
     Depth           = 1 << 0,
     Stencil         = 1 << 1,
     NotRenderTarget = 1 << 2,
-    FDepthStencil    = Depth|Stencil,
-    DepthStencil_NotRenderTarget = FDepthStencil|NotRenderTarget,
+    DepthStencil    = Depth|Stencil,
+    DepthStencil_NotRenderTarget = DepthStencil|NotRenderTarget,
+    All             = DepthStencil,
 };
 ENUM_FLAGS(EClearOptions);
 //----------------------------------------------------------------------------
@@ -35,8 +36,8 @@ public:
 
     // Viewport
 
-    virtual void SetViewport(const ViewportF& viewport) = 0;
-    virtual void SetViewports(const TMemoryView<const ViewportF>& viewports) = 0;
+    virtual void SetViewport(const FViewport& viewport) = 0;
+    virtual void SetViewports(const TMemoryView<const FViewport>& viewports) = 0;
 
     // Alpha/Raster/Depth State
 
@@ -57,8 +58,8 @@ public:
     virtual FDeviceAPIDependantVertexDeclaration *CreateVertexDeclaration(FVertexDeclaration *declaration) = 0;
     virtual void DestroyVertexDeclaration(FVertexDeclaration *declaration, PDeviceAPIDependantVertexDeclaration& entity) = 0;
 
-    virtual FDeviceAPIDependantResourceBuffer *CreateIndexBuffer(IndexBuffer *indexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) = 0;
-    virtual void DestroyIndexBuffer(IndexBuffer *indexBuffer, PDeviceAPIDependantResourceBuffer& entity) = 0;
+    virtual FDeviceAPIDependantResourceBuffer *CreateIndexBuffer(FIndexBuffer *indexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) = 0;
+    virtual void DestroyIndexBuffer(FIndexBuffer *indexBuffer, PDeviceAPIDependantResourceBuffer& entity) = 0;
 
     virtual FDeviceAPIDependantResourceBuffer *CreateVertexBuffer(FVertexBuffer *vertexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) = 0;
     virtual void DestroyVertexBuffer(FVertexBuffer *vertexBuffer, PDeviceAPIDependantResourceBuffer& entity) = 0;

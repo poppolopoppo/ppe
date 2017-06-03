@@ -124,19 +124,19 @@ static bool TryPoolDeallocate_Exclusive_(
 //----------------------------------------------------------------------------
 // Viewport
 //----------------------------------------------------------------------------
-void FDeviceEncapsulator::SetViewport(const ViewportF& viewport) {
+void FDeviceEncapsulator::SetViewport(const FViewport& viewport) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(viewport.HasPositiveExtentsStrict());
 
     _deviceAPIEncapsulator->Device()->SetViewport(viewport);
 }
 //----------------------------------------------------------------------------
-void FDeviceEncapsulator::SetViewports(const TMemoryView<const ViewportF>& viewports) {
+void FDeviceEncapsulator::SetViewports(const TMemoryView<const FViewport>& viewports) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(viewports.size());
 
 #ifdef WITH_CORE_ASSERT
-    for (const ViewportF& viewport : viewports)
+    for (const FViewport& viewport : viewports)
         Assert(viewport.HasPositiveExtentsStrict());
 #endif
 
@@ -265,7 +265,7 @@ void FDeviceEncapsulator::DestroyVertexDeclaration(FVertexDeclaration *declarati
 //----------------------------------------------------------------------------
 // IndexBuffer
 //----------------------------------------------------------------------------
-FDeviceAPIDependantResourceBuffer *FDeviceEncapsulator::CreateIndexBuffer(IndexBuffer *indexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) {
+FDeviceAPIDependantResourceBuffer *FDeviceEncapsulator::CreateIndexBuffer(FIndexBuffer *indexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(indexBuffer);
     Assert(indexBuffer->Frozen());
@@ -283,7 +283,7 @@ FDeviceAPIDependantResourceBuffer *FDeviceEncapsulator::CreateIndexBuffer(IndexB
     return RemoveRef_AssertReachZero_KeepAlive(entity);
 }
 //----------------------------------------------------------------------------
-void FDeviceEncapsulator::DestroyIndexBuffer(IndexBuffer *indexBuffer, PDeviceAPIDependantResourceBuffer& entity) {
+void FDeviceEncapsulator::DestroyIndexBuffer(FIndexBuffer *indexBuffer, PDeviceAPIDependantResourceBuffer& entity) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(indexBuffer);
     Assert(indexBuffer->Frozen());
@@ -516,6 +516,8 @@ void FDeviceEncapsulator::SetRenderTarget(const FRenderTarget *renderTarget, con
     Assert(!renderTarget || (renderTarget->Frozen() && renderTarget->Available()));
     Assert(!depthStencil || (depthStencil->Frozen() && depthStencil->Available()));
 
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), renderTarget ? renderTarget->ResourceName() : L"Null");
+
     _deviceAPIEncapsulator->Device()->SetRenderTarget(renderTarget, depthStencil);
 }
 //----------------------------------------------------------------------------
@@ -531,6 +533,10 @@ void FDeviceEncapsulator::SetRenderTargets(const TMemoryView<const FRenderTarget
         Assert(b.RT->Available());
         Assert(b.Slot < bindings.size());
     }
+#endif
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+    for (const FRenderTargetBinding& b : bindings)
+        GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), b.RT ? b.RT->ResourceName() : L"Null");
 #endif
 
     _deviceAPIEncapsulator->Device()->SetRenderTargets(bindings, depthStencil);

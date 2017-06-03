@@ -42,9 +42,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-typedef STRINGVIEW_HASHMAP(Vertex, PCVertexDeclaration, ECase::Sensitive) stringview_to_vdecl_type;
-class FVertexDeclarationDico_ : Meta::TSingleton<stringview_to_vdecl_type, FVertexDeclarationDico_> {
-    typedef Meta::TSingleton<stringview_to_vdecl_type, FVertexDeclarationDico_> parent_type;
+typedef WSTRINGVIEW_HASHMAP(Vertex, PCVertexDeclaration, ECase::Sensitive) wstringview_to_vdecl_type;
+class FVertexDeclarationDico_ : Meta::TSingleton<wstringview_to_vdecl_type, FVertexDeclarationDico_> {
+    typedef Meta::TSingleton<wstringview_to_vdecl_type, FVertexDeclarationDico_> parent_type;
 public:
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
@@ -55,7 +55,7 @@ public:
         parent_type::Create();
     }
 
-    static stringview_to_vdecl_type& Instance() {
+    static wstringview_to_vdecl_type& Instance() {
         AssertIsMainThread();
         return parent_type::Instance();
     }
@@ -66,12 +66,12 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-static FString VertexTypeName_(const FVertexDeclaration* vdecl) {
-    FOStringStream oss;
+static FWString VertexTypeName_(const FVertexDeclaration* vdecl) {
+    FWOStringStream oss;
 
     oss << "Vertex";
-    for (const FValueBlock::TField& subPart : vdecl->SubParts())
-        Format( oss, "__{0}{1}_{2}", subPart.Name(), subPart.Index(), ValueTypeToCStr(subPart.Type()) );
+    for (const FValueField& subPart : vdecl->SubParts())
+        Format(oss, L"__{0}{1}_{2}", subPart.Name(), subPart.Index(), ValueTypeToCStr(subPart.Type()) );
 
     return oss.str();
 }
@@ -303,7 +303,7 @@ void UnregisterVertexType(const FVertexDeclaration* vdecl) {
     Remove_AssertExistsAndSameValue(FVertexDeclarationDico_::Instance(), MakeStringView(vdecl->ResourceName()), pcvdecl);
 }
 //----------------------------------------------------------------------------
-const FVertexDeclaration* VertexTypeByName(const FStringView& name) {
+const FVertexDeclaration* VertexTypeByName(const FWStringView& name) {
     PCVertexDeclaration vdecl;
     TryGetValue(FVertexDeclarationDico_::Instance(), name, &vdecl);
     return vdecl.get();

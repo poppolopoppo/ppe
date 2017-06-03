@@ -76,7 +76,7 @@ void FDepthStencilState::Start() {
         FDepthStencilState *const state = new ((void *)&GDepthStencilState_Default) FDepthStencilState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("Default");
+        state->SetResourceName(L"Default");
 #endif
         state->SetDepthBufferEnabled(true);
         state->SetDepthBufferWriteEnabled(true);
@@ -88,7 +88,7 @@ void FDepthStencilState::Start() {
         FDepthStencilState *const state = new ((void *)&GDepthStencilState_DepthRead) FDepthStencilState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("DepthRead");
+        state->SetResourceName(L"DepthRead");
 #endif
         state->SetDepthBufferEnabled(true);
         state->SetDepthBufferWriteEnabled(false);
@@ -100,7 +100,7 @@ void FDepthStencilState::Start() {
         FDepthStencilState *const state = new ((void *)&GDepthStencilState_None) FDepthStencilState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("None");
+        state->SetResourceName(L"None");
 #endif
         state->SetDepthBufferEnabled(false);
         state->SetDepthBufferWriteEnabled(false);

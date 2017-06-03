@@ -32,17 +32,6 @@ FConstantBuffer::~FConstantBuffer() {
     Assert(!_deviceAPIDependantWriter);
 }
 //----------------------------------------------------------------------------
-void FConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& rawData) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(Frozen());
-
-    STACKLOCAL_POD_ARRAY(u8, deviceAPIDependantRawData, _layout->SizeInBytes());
-    Assert(IS_ALIGNED(16, deviceAPIDependantRawData.Pointer()));
-
-    _deviceAPIDependantWriter->SetData(device, this, rawData, deviceAPIDependantRawData);
-    _buffer.SetData(device, 0, deviceAPIDependantRawData.Pointer(), deviceAPIDependantRawData.size());
-}
-//----------------------------------------------------------------------------
 void FConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const TMemoryView<const void *>& fieldsData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
@@ -51,7 +40,7 @@ void FConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const TMemoryView<
     Assert(IS_ALIGNED(16, deviceAPIDependantRawData.Pointer()));
 
     _deviceAPIDependantWriter->SetData(device, this, fieldsData, deviceAPIDependantRawData);
-    _buffer.SetData(device, 0, deviceAPIDependantRawData.Pointer(), deviceAPIDependantRawData.size());
+    _buffer.SetData(device, 0, deviceAPIDependantRawData);
 }
 //----------------------------------------------------------------------------
 void FConstantBuffer::Create(IDeviceAPIEncapsulator *device) {
@@ -62,7 +51,6 @@ void FConstantBuffer::Create(IDeviceAPIEncapsulator *device) {
 
     FDeviceAPIDependantResourceBuffer *const resourceBuffer = device->CreateConstantBuffer(this, &_buffer);
     Assert(resourceBuffer);
-    Assert(_deviceAPIDependantWriter);
 
     _deviceAPIDependantWriter = device->ConstantWriter();
     Assert(_deviceAPIDependantWriter);
@@ -76,12 +64,9 @@ void FConstantBuffer::Destroy(IDeviceAPIEncapsulator *device) {
     Assert(device);
     Assert(_deviceAPIDependantWriter);
 
-    PDeviceAPIDependantResourceBuffer resourceBuffer = _buffer.Destroy(device, this);
-    Assert(resourceBuffer);
+    device->DestroyConstantBuffer(this, _buffer.Destroy(device, this));
 
-    device->DestroyConstantBuffer(this, resourceBuffer);
-
-    Assert(!_deviceAPIDependantWriter);
+    _deviceAPIDependantWriter = nullptr;
 }
 //----------------------------------------------------------------------------
 size_t FConstantBuffer::VirtualSharedKeyHashValue() const {

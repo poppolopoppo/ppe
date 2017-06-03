@@ -63,9 +63,9 @@ FDX11ShaderEffect::FDX11ShaderEffect(IDeviceAPIEncapsulator *device, FShaderEffe
             ));
 
         Assert(_inputLayout);
-        DX11SetDeviceResourceNameIFP(_inputLayout, owner->VertexDeclaration().get());
+        DX11SetDeviceResourceNameIFP(_inputLayout.Get(), owner->VertexDeclaration().get());
 
-        _vertexShader = dx11ShaderProgram->VertexShader();
+        _vertexShader.Reset(dx11ShaderProgram->VertexShader());
     }
 
     const PCShaderProgram& domainProgram = owner->StageProgram(EShaderProgramType::Domain);
@@ -75,7 +75,7 @@ FDX11ShaderEffect::FDX11ShaderEffect(IDeviceAPIEncapsulator *device, FShaderEffe
         const FDX11ShaderProgram *dx11ShaderProgram =
             checked_cast<FDX11ShaderProgram *>(domainProgram->DeviceAPIDependantProgram().get());
 
-        _domainShader = dx11ShaderProgram->DomainShader();
+        _domainShader.Reset(dx11ShaderProgram->DomainShader());
     }
 
     const PCShaderProgram& hullProgram = owner->StageProgram(EShaderProgramType::Hull);
@@ -85,7 +85,7 @@ FDX11ShaderEffect::FDX11ShaderEffect(IDeviceAPIEncapsulator *device, FShaderEffe
         const FDX11ShaderProgram *dx11ShaderProgram =
             checked_cast<FDX11ShaderProgram *>(hullProgram->DeviceAPIDependantProgram().get());
 
-        _hullShader = dx11ShaderProgram->HullShader();
+        _hullShader.Reset(dx11ShaderProgram->HullShader());
     }
 
     const PCShaderProgram& geometryProgram = owner->StageProgram(EShaderProgramType::Geometry);
@@ -95,7 +95,7 @@ FDX11ShaderEffect::FDX11ShaderEffect(IDeviceAPIEncapsulator *device, FShaderEffe
         const FDX11ShaderProgram *dx11ShaderProgram =
             checked_cast<FDX11ShaderProgram *>(geometryProgram->DeviceAPIDependantProgram().get());
 
-        _geometryShader = dx11ShaderProgram->GeometryShader();
+        _geometryShader.Reset(dx11ShaderProgram->GeometryShader());
     }
 
     const PCShaderProgram& pixelProgram = owner->StageProgram(EShaderProgramType::Pixel);
@@ -105,7 +105,7 @@ FDX11ShaderEffect::FDX11ShaderEffect(IDeviceAPIEncapsulator *device, FShaderEffe
         const FDX11ShaderProgram *dx11ShaderProgram =
             checked_cast<FDX11ShaderProgram *>(pixelProgram->DeviceAPIDependantProgram().get());
 
-        _pixelShader = dx11ShaderProgram->PixelShader();
+        _pixelShader.Reset(dx11ShaderProgram->PixelShader());
     }
 
     const PCShaderProgram& computeProgram = owner->StageProgram(EShaderProgramType::Compute);
@@ -115,7 +115,7 @@ FDX11ShaderEffect::FDX11ShaderEffect(IDeviceAPIEncapsulator *device, FShaderEffe
         const FDX11ShaderProgram *dx11ShaderProgram =
             checked_cast<FDX11ShaderProgram *>(computeProgram->DeviceAPIDependantProgram().get());
 
-        _computeShader = dx11ShaderProgram->ComputeShader();
+        _computeShader.Reset(dx11ShaderProgram->ComputeShader());
     }
 }
 //----------------------------------------------------------------------------

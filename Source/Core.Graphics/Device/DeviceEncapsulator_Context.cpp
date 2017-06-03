@@ -28,6 +28,10 @@
 
 // IDeviceAPIContext
 
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+//#   define WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT //%_NOCOMMIT%
+#endif
+
 namespace Core {
 namespace Graphics {
 //----------------------------------------------------------------------------
@@ -41,6 +45,10 @@ void FDeviceEncapsulator::SetBlendState(const FBlendState *state) {
     Assert(state->Frozen());
     Assert(state->Available());
 
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), state ? state->ResourceName() : L"Null");
+#endif
+
     state->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetBlendState(state);
 }
@@ -51,6 +59,10 @@ void FDeviceEncapsulator::SetRasterizerState(const FRasterizerState *state) {
     Assert(state->Frozen());
     Assert(state->Available());
 
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), state ? state->ResourceName() : L"Null");
+#endif
+
     state->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetRasterizerState(state);
 }
@@ -60,6 +72,10 @@ void FDeviceEncapsulator::SetDepthStencilState(const FDepthStencilState *state) 
     Assert(state);
     Assert(state->Frozen());
     Assert(state->Available());
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), state ? state->ResourceName() : L"Null");
+#endif
 
     state->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetDepthStencilState(state);
@@ -73,6 +89,10 @@ void FDeviceEncapsulator::SetSamplerState(EShaderProgramType stage, size_t slot,
     Assert(state->Frozen());
     Assert(state->Available());
 
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), state ? state->ResourceName() : L"Null");
+#endif
+
     state->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetSamplerState(stage, slot, state);
 }
@@ -85,6 +105,11 @@ void FDeviceEncapsulator::SetSamplerStates(EShaderProgramType stage, const TMemo
         Assert(state);
         Assert(state->Frozen());
         Assert(state->Available());
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+        GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), state ? state->ResourceName() : L"Null");
+#endif
+
         state->TerminalEntity()->SetLastUsed(_revision);
     }
 
@@ -93,22 +118,30 @@ void FDeviceEncapsulator::SetSamplerStates(EShaderProgramType stage, const TMemo
 //----------------------------------------------------------------------------
 // IndexBuffer
 //----------------------------------------------------------------------------
-void FDeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer) {
+void FDeviceEncapsulator::SetIndexBuffer(const FIndexBuffer *indexBuffer) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(indexBuffer);
     Assert(indexBuffer->Frozen());
     Assert(indexBuffer->Available());
 
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), indexBuffer ? indexBuffer->ResourceName() : L"Null");
+#endif
+
     indexBuffer->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetIndexBuffer(indexBuffer);
 }
 //----------------------------------------------------------------------------
-void FDeviceEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer, size_t offset) {
+void FDeviceEncapsulator::SetIndexBuffer(const FIndexBuffer *indexBuffer, size_t offset) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(indexBuffer);
     Assert(indexBuffer->Frozen());
     Assert(indexBuffer->Available());
     Assert(offset < indexBuffer->IndexCount());
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), indexBuffer ? indexBuffer->ResourceName() : L"Null");
+#endif
 
     indexBuffer->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetIndexBuffer(indexBuffer, offset);
@@ -122,6 +155,10 @@ void FDeviceEncapsulator::SetVertexBuffer(const FVertexBuffer *vertexBuffer) {
     Assert(vertexBuffer->Frozen());
     Assert(vertexBuffer->Available());
 
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), vertexBuffer ? vertexBuffer->ResourceName() : L"Null");
+#endif
+
     vertexBuffer->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetVertexBuffer(vertexBuffer);
 }
@@ -132,6 +169,10 @@ void FDeviceEncapsulator::SetVertexBuffer(const FVertexBuffer *vertexBuffer, u32
     Assert(vertexBuffer->Frozen());
     Assert(vertexBuffer->Available());
     Assert(vertexOffset < vertexBuffer->VertexCount());
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), vertexBuffer ? vertexBuffer->ResourceName() : L"Null");
+#endif
 
     vertexBuffer->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetVertexBuffer(vertexBuffer, vertexOffset);
@@ -146,6 +187,11 @@ void FDeviceEncapsulator::SetVertexBuffer(const TMemoryView<const FVertexBufferB
         Assert(b.VertexBuffer->Frozen());
         Assert(b.VertexBuffer->Available());
         Assert(b.VertexOffset < b.VertexBuffer->VertexCount());
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+        GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), b.VertexBuffer ? b.VertexBuffer->ResourceName() : L"Null");
+#endif
+
         b.VertexBuffer->TerminalEntity()->SetLastUsed(_revision);
     }
 
@@ -160,6 +206,10 @@ void FDeviceEncapsulator::SetConstantBuffer(EShaderProgramType stage, size_t slo
     Assert(constantBuffer->Frozen());
     Assert(constantBuffer->Available());
 
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), constantBuffer ? constantBuffer->ResourceName() : L"Null");
+#endif
+
     constantBuffer->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetConstantBuffer(stage, slot, constantBuffer);
 }
@@ -171,6 +221,11 @@ void FDeviceEncapsulator::SetConstantBuffers(EShaderProgramType stage, const TMe
         Assert(constantBuffer);
         Assert(constantBuffer->Frozen());
         Assert(constantBuffer->Available());
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+        GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), constantBuffer ? constantBuffer->ResourceName() : L"Null");
+#endif
+
         constantBuffer->TerminalEntity()->SetLastUsed(_revision);
     }
 
@@ -183,6 +238,10 @@ void FDeviceEncapsulator::SetShaderEffect(const FShaderEffect *effect) {
     Assert(effect->Frozen());
     Assert(effect->Available());
 
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), effect ? effect->ResourceName() : L"Null");
+#endif
+
     effect->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetShaderEffect(effect);
 }
@@ -193,6 +252,10 @@ void FDeviceEncapsulator::SetTexture(EShaderProgramType stage, size_t slot, cons
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(!texture || texture->Frozen());
     Assert(!texture || texture->Available());
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+    GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), texture ? texture->ResourceName() : L"Null");
+#endif
 
     texture->TerminalEntity()->SetLastUsed(_revision);
     _deviceAPIEncapsulator->Immediate()->SetTexture(stage, slot, texture);
@@ -205,6 +268,11 @@ void FDeviceEncapsulator::SetTextures(EShaderProgramType stage, const TMemoryVie
         if (!texture) continue;
         Assert(texture->Frozen());
         Assert(texture->Available());
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS_FOR_CONTEXT
+        GRAPHICS_DIAGNOSTICS_SETMARKER(_deviceAPIEncapsulator->Diagnostics(), texture ? texture->ResourceName() : L"Null");
+#endif
+
         texture->TerminalEntity()->SetLastUsed(_revision);
     }
 

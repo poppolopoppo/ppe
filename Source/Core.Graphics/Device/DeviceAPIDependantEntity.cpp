@@ -43,7 +43,7 @@ void FDeviceAPIDependantEntity::AttachResource(const FDeviceResource *resource) 
     Assert(!resource->Available());
     Assert( nullptr == _resource ||
             resource == _resource );
-    Assert(!_resource->Available());
+    Assert(!_resource || !_resource->Available());
     Assert(ResourceType() == resource->ResourceType());
 
     _resource.reset(resource);
@@ -59,14 +59,14 @@ void FDeviceAPIDependantEntity::DetachResource(const FDeviceResource *resource) 
     _resource.reset(nullptr);
 }
 //----------------------------------------------------------------------------
-void FDeviceAPIDependantEntity::SetCreatedAt(DeviceRevision revision) {
+void FDeviceAPIDependantEntity::SetCreatedAt(FDeviceRevision revision) {
     Assert(_resource);
     Assert(revision != InvalidDeviceRevision());
 
     _createdAt = revision;
 }
 //----------------------------------------------------------------------------
-void FDeviceAPIDependantEntity::SetLastUsed(DeviceRevision revision) {
+void FDeviceAPIDependantEntity::SetLastUsed(FDeviceRevision revision) {
     Assert(_resource);
     Assert(revision != InvalidDeviceRevision());
 

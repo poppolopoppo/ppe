@@ -9,7 +9,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-IndexBuffer::IndexBuffer(Graphics::EIndexElementSize indexElementSize, size_t indexCount, EBufferMode mode, EBufferUsage usage, bool sharable)
+FIndexBuffer::FIndexBuffer(Graphics::EIndexElementSize indexElementSize, size_t indexCount, EBufferMode mode, EBufferUsage usage, bool sharable)
 :   FDeviceResourceSharable(EDeviceResourceType::Indices, sharable)
 ,   _buffer(size_t(indexElementSize), indexCount, mode, usage) {
     Assert( sizeof(u16) == size_t(indexElementSize) ||
@@ -17,26 +17,26 @@ IndexBuffer::IndexBuffer(Graphics::EIndexElementSize indexElementSize, size_t in
     Assert(indexCount);
 }
 //----------------------------------------------------------------------------
-IndexBuffer::~IndexBuffer() {}
+FIndexBuffer::~FIndexBuffer() {}
 //----------------------------------------------------------------------------
-void IndexBuffer::SetData_(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
+void FIndexBuffer::SetData_(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
 
-    _buffer.SetData(device, offset, src, stride, count);
+    _buffer.SetData(device, offset, src);
 }
 //----------------------------------------------------------------------------
-size_t IndexBuffer::VirtualSharedKeyHashValue() const {
+size_t FIndexBuffer::VirtualSharedKeyHashValue() const {
     return _buffer.HashValue();
 }
 //----------------------------------------------------------------------------
-bool IndexBuffer::VirtualMatchTerminalEntity(const FDeviceAPIDependantEntity *entity) const {
+bool FIndexBuffer::VirtualMatchTerminalEntity(const FDeviceAPIDependantEntity *entity) const {
     const FDeviceAPIDependantResourceBuffer *resourceBuffer =
         checked_cast<const FDeviceAPIDependantResourceBuffer *>(entity);
     return _buffer.Match(*resourceBuffer);
 }
 //----------------------------------------------------------------------------
-void IndexBuffer::Create_(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData) {
+void FIndexBuffer::Create_(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
@@ -48,15 +48,12 @@ void IndexBuffer::Create_(IDeviceAPIEncapsulator *device, const TMemoryView<cons
     _buffer.Create(device, this, resourceBuffer);
 }
 //----------------------------------------------------------------------------
-void IndexBuffer::Destroy(IDeviceAPIEncapsulator *device) {
+void FIndexBuffer::Destroy(IDeviceAPIEncapsulator *device) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
 
-    PDeviceAPIDependantResourceBuffer resourceBuffer = _buffer.Destroy(device, this);
-    Assert(resourceBuffer);
-
-    device->DestroyIndexBuffer(this, resourceBuffer);
+    device->DestroyIndexBuffer(this, _buffer.Destroy(device, this));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

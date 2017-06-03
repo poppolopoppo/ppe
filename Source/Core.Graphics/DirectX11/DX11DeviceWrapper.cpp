@@ -174,25 +174,25 @@ static FRenderTarget *CreateDX11BackBufferRenderTarget_(
         dx11SwapChain->GetBuffer(0, __uuidof(::ID3D11Texture2D), (LPVOID *)pBackBuffer.GetAddressOf())
         ));
 
-    DX11SetDeviceResourceName(pBackBuffer, "BackBuffer");
+    DX11SetDeviceResourceName(pBackBuffer.Get(), L"BackBuffer");
 
     TComPtr<::ID3D11RenderTargetView> pBackBufferRenderTargetView;
     DX11_THROW_IF_FAILED(device->Device(), nullptr, (
         dx11Device->CreateRenderTargetView(pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.GetAddressOf())
         ));
 
-    DX11SetDeviceResourceName(pBackBufferRenderTargetView, "BackBuffer");
+    DX11SetDeviceResourceName(pBackBufferRenderTargetView.Get(), L"BackBuffer");
 
     FRenderTarget *const backBufferRenderTarget = new FRenderTarget(
         presentationParameters.BackBufferWidth(),
         presentationParameters.BackBufferHeight(),
         FSurfaceFormat::FromType(presentationParameters.BackBufferFormat()),
         false );
-    backBufferRenderTarget->SetResourceName("BackBufferRenderTarget");
+    backBufferRenderTarget->SetResourceName(L"BackBufferRenderTarget");
     backBufferRenderTarget->Freeze();
 
     FDX11RenderTarget *dx11RenderTarget = new FDX11RenderTarget(device->Device(), backBufferRenderTarget, pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.Get());
-    DX11SetDeviceResourceName(dx11RenderTarget->RenderTargetView(), "BackBufferRenderTarget");
+    DX11SetDeviceResourceName(dx11RenderTarget->RenderTargetView(), L"BackBufferRenderTarget");
 
     backBufferRenderTarget->StealRenderTarget(dx11RenderTarget);
 
@@ -268,7 +268,7 @@ void FDX11DeviceWrapper::Create(FDX11DeviceAPIEncapsulator *device, void *window
             _backBufferRenderTarget->Width(), _backBufferRenderTarget->Height(),
             FSurfaceFormat::FromType(presentationParameters.DepthStencilFormat()),
             false );
-        _backBufferDepthStencil->SetResourceName("BackBufferDepthStencil");
+        _backBufferDepthStencil->SetResourceName(L"BackBufferDepthStencil");
         _backBufferDepthStencil->Freeze();
         _backBufferDepthStencil->Create(device->Device());
     }
@@ -423,13 +423,14 @@ void DX11ThrowIfFailed(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void DX11SetDeviceResourceName(::ID3D11DeviceChild *deviceChild, const char *name, size_t length) {
+void DX11SetDeviceResourceName(::ID3D11DeviceChild *deviceChild, const wchar_t *name, size_t length) {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     Assert(deviceChild);
     Assert(name);
     Assert(length);
 
-    deviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, checked_cast<UINT>(length), name);
+    const FString nameA = ToString(FWStringView(name, length));
+    deviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, checked_cast<UINT>(nameA.size()), nameA.c_str());
 #else
     UNUSED(deviceChild);
     UNUSED(name);
@@ -443,12 +444,13 @@ void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const FDevic
     if (!deviceChild)
         return;
 
-    const FStringView resourceName = owner->ResourceName();
+    const FWStringView resourceName = owner->ResourceName();
     if (resourceName.empty())
         return;
 
-    const UINT length = checked_cast<UINT>(resourceName.size());
-    deviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, length, resourceName.data());
+    const FString nameA = ToString(resourceName);
+    const UINT length = checked_cast<UINT>(nameA.size());
+    deviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, length, nameA.c_str());
 #else
     UNUSED(deviceChild);
     UNUSED(owner);

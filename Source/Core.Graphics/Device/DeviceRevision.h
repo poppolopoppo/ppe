@@ -9,10 +9,10 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_STRONGLYTYPED_NUMERIC_DEF(u64, DeviceRevision);
+CORE_STRONGLYTYPED_NUMERIC_DEF(u64, FDeviceRevision);
 //----------------------------------------------------------------------------
-inline DeviceRevision InvalidDeviceRevision() {
-    return DeviceRevision::MinusOne();
+inline FDeviceRevision InvalidDeviceRevision() {
+    return FDeviceRevision::MinusOne();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

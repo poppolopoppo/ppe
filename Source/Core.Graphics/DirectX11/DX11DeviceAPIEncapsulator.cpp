@@ -30,6 +30,8 @@
 #include "Device/Geometry/VertexBuffer.h"
 #include "Device/PresentationParameters.h"
 
+#include "RenderDocWrapper.h"
+
 #include "Core/Color/Color.h"
 #include "Core/Maths/ScalarRectangle.h"
 #include "Core/Memory/UniqueView.h"
@@ -78,6 +80,18 @@ void FDX11DeviceAPIEncapsulator::Reset(const FPresentationParameters& pp) {
 void FDX11DeviceAPIEncapsulator::Present() {
     const UINT syncInterval = UINT(Parameters().PresentationInterval());
     _wrapper.SwapChain()->Present(syncInterval, 0);
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+    if (_framesToCapture) {
+        if (_framesCapturing == _framesToCapture) {
+            LOG(Info, L"[DX11] Finished capturing frames");
+            _framesToCapture = _framesCapturing = 0;
+        }
+        else {
+            _framesCapturing++;
+        }
+    }
+#endif
 }
 //----------------------------------------------------------------------------
 void FDX11DeviceAPIEncapsulator::ClearState() {
@@ -89,7 +103,7 @@ void FDX11DeviceAPIEncapsulator::ClearState() {
 //----------------------------------------------------------------------------
 // Alpha/Raster/Depth State
 //----------------------------------------------------------------------------
-void FDX11DeviceAPIEncapsulator::SetViewport(const ViewportF& viewport) {
+void FDX11DeviceAPIEncapsulator::SetViewport(const FViewport& viewport) {
     ::D3D11_VIEWPORT dx11Viewport;
 
     dx11Viewport.TopLeftX = viewport.Left();
@@ -106,12 +120,12 @@ void FDX11DeviceAPIEncapsulator::SetViewport(const ViewportF& viewport) {
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void FDX11DeviceAPIEncapsulator::SetViewports(const TMemoryView<const ViewportF>& viewports) {
+void FDX11DeviceAPIEncapsulator::SetViewports(const TMemoryView<const FViewport>& viewports) {
     const UINT dx11NumViews = checked_cast<UINT>(viewports.size());
     STACKLOCAL_POD_ARRAY(::D3D11_VIEWPORT, dx11Viewports, viewports.size());
 
     for (size_t i = 0; i < dx11NumViews; ++i) {
-        const ViewportF& viewport = viewports[i];
+        const FViewport& viewport = viewports[i];
         ::D3D11_VIEWPORT& dx11Viewport = dx11Viewports[i];
 
         dx11Viewport.TopLeftX = viewport.Left();
@@ -279,15 +293,15 @@ void FDX11DeviceAPIEncapsulator::DestroyVertexDeclaration(FVertexDeclaration * /
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
-FDeviceAPIDependantResourceBuffer *FDX11DeviceAPIEncapsulator::CreateIndexBuffer(IndexBuffer *indexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) {
+FDeviceAPIDependantResourceBuffer *FDX11DeviceAPIEncapsulator::CreateIndexBuffer(FIndexBuffer *indexBuffer, FDeviceResourceBuffer *resourceBuffer, const TMemoryView<const u8>& optionalData) {
     return new FDX11ResourceBuffer(this, indexBuffer, resourceBuffer, optionalData);
 }
 //----------------------------------------------------------------------------
-void FDX11DeviceAPIEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer) {
+void FDX11DeviceAPIEncapsulator::SetIndexBuffer(const FIndexBuffer *indexBuffer) {
     SetIndexBuffer(indexBuffer, 0);
 }
 //----------------------------------------------------------------------------
-void FDX11DeviceAPIEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer, size_t offset) {
+void FDX11DeviceAPIEncapsulator::SetIndexBuffer(const FIndexBuffer *indexBuffer, size_t offset) {
     ::ID3D11Buffer *const dx11Buffer = DX11DeviceBufferEntity(indexBuffer->Buffer());
 
     _wrapper.ImmediateContext()->IASetIndexBuffer(
@@ -301,7 +315,7 @@ void FDX11DeviceAPIEncapsulator::SetIndexBuffer(const IndexBuffer *indexBuffer, 
     CHECK_DIRECTX11_ERROR();
 }
 //----------------------------------------------------------------------------
-void FDX11DeviceAPIEncapsulator::DestroyIndexBuffer(IndexBuffer * /* indexBuffer */, PDeviceAPIDependantResourceBuffer& entity) {
+void FDX11DeviceAPIEncapsulator::DestroyIndexBuffer(FIndexBuffer * /* indexBuffer */, PDeviceAPIDependantResourceBuffer& entity) {
     RemoveRef_AssertReachZero(entity);
 }
 //----------------------------------------------------------------------------
@@ -755,31 +769,108 @@ void FDX11DeviceAPIEncapsulator::DrawInstancedPrimitives(EPrimitiveType primitiv
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
-bool FDX11DeviceAPIEncapsulator::IsProfilerAttached() const {
+bool FDX11DeviceAPIEncapsulator::UseDebugDrawEvents() const {
 #ifdef WITH_DIRECTX11_DEBUG_MARKERS
-    return  nullptr != _wrapper.UserDefinedAnnotation()/* &&
-            _wrapper.UserDefinedAnnotation()->GetStatus() */;
+    return (
+        (_useDebugDrawEvents || _framesCapturing) &&
+        _wrapper.UserDefinedAnnotation() );
 #else
     return false;
 #endif
 }
 //----------------------------------------------------------------------------
-void FDX11DeviceAPIEncapsulator::BeginEvent(const wchar_t *name) {
-    Assert(_wrapper.UserDefinedAnnotation());
-
-    _wrapper.UserDefinedAnnotation()->BeginEvent(name);
+void FDX11DeviceAPIEncapsulator::ToggleDebugDrawEvents(bool enabled) {
+#ifdef WITH_DIRECTX11_DEBUG_MARKERS
+    _useDebugDrawEvents = (enabled ? 1 : 0);
+#endif
+}
+//----------------------------------------------------------------------------
+void FDX11DeviceAPIEncapsulator::SetMarker(const FWStringView& name) {
+#ifdef WITH_DIRECTX11_DEBUG_MARKERS
+    if (FDX11DeviceAPIEncapsulator::UseDebugDrawEvents())
+        _wrapper.UserDefinedAnnotation()->SetMarker(name.data());
+#endif
+}
+//----------------------------------------------------------------------------
+void FDX11DeviceAPIEncapsulator::BeginEvent(const FWStringView& name) {
+#ifdef WITH_DIRECTX11_DEBUG_MARKERS
+    if (FDX11DeviceAPIEncapsulator::UseDebugDrawEvents())
+        _wrapper.UserDefinedAnnotation()->BeginEvent(name.data());
+#endif
 }
 //----------------------------------------------------------------------------
 void FDX11DeviceAPIEncapsulator::EndEvent() {
-    Assert(_wrapper.UserDefinedAnnotation());
-
-    _wrapper.UserDefinedAnnotation()->EndEvent();
+#ifdef WITH_DIRECTX11_DEBUG_MARKERS
+    if (FDX11DeviceAPIEncapsulator::UseDebugDrawEvents())
+        _wrapper.UserDefinedAnnotation()->EndEvent();
+#endif
 }
 //----------------------------------------------------------------------------
-void FDX11DeviceAPIEncapsulator::SetMarker(const wchar_t *name) {
-    Assert(_wrapper.UserDefinedAnnotation());
+bool FDX11DeviceAPIEncapsulator::IsProfilerAttached() const {
+#ifdef WITH_CORE_RENDERDOC
+    const auto RenderDOC = FRenderDocWrapper::API();
+    return (RenderDOC ? RenderDOC->IsTargetControlConnected() : false);
+#else
+    return false;
+#endif
+}
+//----------------------------------------------------------------------------
+bool FDX11DeviceAPIEncapsulator::LaunchProfiler() {
+#ifdef WITH_CORE_RENDERDOC
+    const auto RenderDOC = FRenderDocWrapper::API();
+    return (RenderDOC ? RenderDOC->LaunchReplayUI(1, nullptr) != 0 : false);
+#else
+    return false;
+#endif
+}
+//----------------------------------------------------------------------------
+bool FDX11DeviceAPIEncapsulator::LaunchProfilerAndTriggerCapture() {
+#ifdef WITH_CORE_RENDERDOC
+    if (const auto RenderDOC = FRenderDocWrapper::API()) {
+        if (false == RenderDOC->IsTargetControlConnected() &&
+            0 == RenderDOC->LaunchReplayUI(1, nullptr))
+            return false;
 
-    _wrapper.UserDefinedAnnotation()->SetMarker(name);
+        _framesToCapture++;
+        FRenderDocWrapper::API()->TriggerCapture();
+        return true;
+    }
+#endif
+    return false;
+}
+//----------------------------------------------------------------------------
+bool FDX11DeviceAPIEncapsulator::IsCapturingFrame() const {
+#ifdef WITH_CORE_RENDERDOC
+    const auto RenderDOC = FRenderDocWrapper::API();
+    return (RenderDOC ? RenderDOC->IsFrameCapturing() != 0 : false);
+#else
+    return false;
+#endif
+}
+//----------------------------------------------------------------------------
+void FDX11DeviceAPIEncapsulator::SetCaptureWindow(void* hwnd) {
+#ifdef WITH_CORE_RENDERDOC
+    if (const auto RenderDOC = FRenderDocWrapper::API())
+        RenderDOC->SetActiveWindow(_wrapper.Device(), hwnd);
+#endif
+}
+//----------------------------------------------------------------------------
+void FDX11DeviceAPIEncapsulator::TriggerCapture() {
+#ifdef WITH_CORE_RENDERDOC
+    if (const auto RenderDOC = FRenderDocWrapper::API()) {
+        _framesToCapture++;
+        RenderDOC->TriggerCapture();
+    }
+#endif
+}
+//----------------------------------------------------------------------------
+void FDX11DeviceAPIEncapsulator::TriggerMultiFrameCapture(size_t numFrames) {
+#ifdef WITH_CORE_RENDERDOC
+    if (const auto RenderDOC = FRenderDocWrapper::API()) {
+        _framesToCapture += checked_cast<u16>(numFrames);
+        RenderDOC->TriggerMultiFrameCapture(u32(numFrames));
+    }
+#endif
 }
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS

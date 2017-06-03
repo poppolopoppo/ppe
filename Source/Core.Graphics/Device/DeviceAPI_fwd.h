@@ -16,51 +16,51 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 class FPresentationParameters;
 //----------------------------------------------------------------------------
-class FDeviceResource;
-class FDeviceResourceBuffer;
+FWD_REFPTR(DeviceResource);
+FWD_REFPTR(DeviceResourceBuffer);
 FWD_REFPTR(DeviceAPIDependantResourceBuffer);
 //----------------------------------------------------------------------------
-class FBlendState;
+FWD_REFPTR(BlendState);
 FWD_REFPTR(DeviceAPIDependantBlendState);
-class FRasterizerState;
+FWD_REFPTR(RasterizerState);
 FWD_REFPTR(DeviceAPIDependantRasterizerState);
-class FDepthStencilState;
+FWD_REFPTR(DepthStencilState);
 FWD_REFPTR(DeviceAPIDependantDepthStencilState);
-class FSamplerState;
+FWD_REFPTR(SamplerState);
 FWD_REFPTR(DeviceAPIDependantSamplerState);
 //----------------------------------------------------------------------------
 enum class EPrimitiveType;
-class IndexBuffer;
-class FVertexBuffer;
+FWD_REFPTR(IndexBuffer);
+FWD_REFPTR(VertexBuffer);
 struct FVertexBufferBinding;
-class FVertexDeclaration;
+FWD_REFPTR(VertexDeclaration);
 FWD_REFPTR(DeviceAPIDependantVertexDeclaration);
 //----------------------------------------------------------------------------
 class FName;
-class FConstantBuffer;
+FWD_REFPTR(ConstantBuffer);
 FWD_REFPTR(ConstantBufferLayout);
 FWD_REFPTR(DeviceAPIDependantConstantWriter);
 enum class EShaderProfileType;
-class FShaderProgram;
+FWD_REFPTR(ShaderProgram);
 struct FShaderProgramTexture;
 enum class EShaderTextureDimension;
 enum class EShaderProgramType;
 FWD_REFPTR(DeviceAPIDependantShaderProgram);
-class FShaderEffect;
+FWD_REFPTR(ShaderEffect);
 FWD_REFPTR(DeviceAPIDependantShaderEffect);
 FWD_REFPTR(ShaderCompiled);
 //----------------------------------------------------------------------------
 class FSurfaceFormat;
 //----------------------------------------------------------------------------
-class FTexture;
+FWD_REFPTR(Texture);
 FWD_REFPTR(DeviceAPIDependantTexture);
-class FTexture2D;
+FWD_REFPTR(Texture2D);
 FWD_REFPTR(DeviceAPIDependantTexture2D);
-class FTextureCube;
+FWD_REFPTR(TextureCube);
 FWD_REFPTR(DeviceAPIDependantTextureCube);
-class FRenderTarget;
+FWD_REFPTR(RenderTarget);
 FWD_REFPTR(DeviceAPIDependantRenderTarget);
-class FDepthStencil;
+FWD_REFPTR(DepthStencil);
 FWD_REFPTR(DeviceAPIDependantDepthStencil);
 struct FRenderTargetBinding;
 //----------------------------------------------------------------------------

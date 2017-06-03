@@ -20,9 +20,12 @@ enum class EShaderCompilerFlags {
     NoOptimize  = 1 << 2,
     Pedantic    = 1 << 3,
     WError      = 1 << 4,
+    IEEEStrict  = 1 << 5,
+    StripDebug  = 1 << 6,
 
     Default = Optimize|Pedantic|WError,
     DefaultForDebug = Debug|NoOptimize|Pedantic|WError,
+    DefaultForFinal = Default|StripDebug,
 };
 ENUM_FLAGS(EShaderCompilerFlags);
 //----------------------------------------------------------------------------

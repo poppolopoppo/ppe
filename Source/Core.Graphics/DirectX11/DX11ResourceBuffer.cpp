@@ -58,22 +58,22 @@ FDX11ResourceBuffer::FDX11ResourceBuffer(
     }
 
     Assert(_entity);
-    DX11SetDeviceResourceNameIFP(_entity, resource);
+    DX11SetDeviceResourceNameIFP(_entity.Get(), resource);
 }
 //----------------------------------------------------------------------------
 FDX11ResourceBuffer::~FDX11ResourceBuffer() {
     ReleaseComRef(_entity);
 }
 //----------------------------------------------------------------------------
-void FDX11ResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
+void FDX11ResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) {
     AssertRelease(Usage() == EBufferUsage::Staging);
 
-    DX11ResourceGetData(device, _entity.Get(), 0, offset, dst, stride, count, Mode(), Usage());
+    DX11ResourceGetData(device, _entity.Get(), 0, offset, dst, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
-void FDX11ResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
+void FDX11ResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) {
 
-    DX11ResourceSetData(device, _entity.Get(), 0, offset, src, stride, count, Mode(), Usage());
+    DX11ResourceSetData(device, _entity.Get(), 0, offset, src, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
 void FDX11ResourceBuffer::CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantResourceBuffer *psource) {

@@ -44,7 +44,7 @@ FDX11DepthStencilState::FDX11DepthStencilState(IDeviceAPIEncapsulator *device, F
 
     Assert(_entity);
 
-    DX11SetDeviceResourceNameIFP(_entity, owner);
+    DX11SetDeviceResourceNameIFP(_entity.Get(), owner);
 }
 //----------------------------------------------------------------------------
 FDX11DepthStencilState::~FDX11DepthStencilState() {

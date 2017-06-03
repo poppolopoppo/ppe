@@ -40,16 +40,21 @@ struct TValueCopy_<void, void, void> {
 //----------------------------------------------------------------------------
 template <typename U, typename V = U, typename = typename std::enable_if< std::is_constructible<U, const V&>::value >::type >
 struct TValueCopyArray_ {
-    void operator ()(const TMemoryView<u8>& dst, size_t dstStride, const TMemoryView<const u8>& src, size_t srcStride, size_t count) const {
-        Assert(dst.SizeInBytes() >= dstStride * count + sizeof(U));
-        Assert(src.SizeInBytes() >= srcStride * count + sizeof(V));
+    void operator ()(
+        const TMemoryView<u8>& dstValues, size_t dstOffset, size_t dstStride,
+        const TMemoryView<const u8>& srcValues, size_t srcOffset, size_t srcStride,
+        size_t count ) const {
+        Assert(dstStride >= dstOffset + sizeof(U));
+        Assert(srcStride >= srcOffset + sizeof(V));
+        Assert(dstValues.SizeInBytes() >= dstStride * count);
+        Assert(srcValues.SizeInBytes() >= srcStride * count);
 
-        u8* pdst = dst.data();
-        const u8* psrc = src.data();
+        u8* pdst = dstValues.data();
+        const u8* psrc = srcValues.data();
 
         forrange(v, 0, count) {
-            *reinterpret_cast<U*>(pdst) =
-                *reinterpret_cast<const V*>(psrc);
+            *reinterpret_cast<U*>(pdst + dstOffset) =
+                *reinterpret_cast<const V*>(psrc + srcOffset);
 
             pdst += dstStride;
             psrc += srcStride;
@@ -58,7 +63,10 @@ struct TValueCopyArray_ {
 };
 template <>
 struct TValueCopyArray_<void, void, void> {
-    void operator ()(const TMemoryView<u8>& , size_t , const TMemoryView<const u8>& , size_t , size_t ) {
+    void operator ()(
+        const TMemoryView<u8>& , size_t , size_t ,
+        const TMemoryView<const u8>& , size_t , size_t ,
+        size_t ) {
         AssertNotReached();
     }
 };
@@ -551,13 +559,13 @@ bool ValuePromote(EValueType output, const TMemoryView<u8>& dst, EValueType inpu
         : ValuePromote_<TValueCopy_>(output, input, dst, src);
 }
 //----------------------------------------------------------------------------
-bool ValuePromoteArray( EValueType output, const TMemoryView<u8>& dst, size_t dstStride,
-                        EValueType input, const TMemoryView<const u8>& src, size_t srcStride,
+bool ValuePromoteArray( EValueType output, const TMemoryView<u8>& dst, size_t dstOffset, size_t dstStride,
+                        EValueType input, const TMemoryView<const u8>& src, size_t srcOffset, size_t srcStride,
                         size_t count ) {
     Assert(0 != count);
     return (output == input)
-        ? SwitchValue_<void, TValueCopyArray_>(output, dst, dstStride, src, srcStride, count), true
-        : ValuePromote_<TValueCopyArray_>(output, input, dst, dstStride, src, srcStride, count);
+        ? SwitchValue_<void, TValueCopyArray_>(output, dst, dstOffset, dstStride, src, srcOffset, srcStride, count), true
+        : ValuePromote_<TValueCopyArray_>(output, input, dst, dstOffset, dstStride, src, srcOffset, srcStride, count);
 }
 //----------------------------------------------------------------------------
 void ValueSwap(EValueType type, const TMemoryView<u8>& lhs, const TMemoryView<u8>& rhs) {
@@ -616,15 +624,17 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename T>
 struct TValueToMetaAtom_ {
-    void operator ()(RTTI::PMetaAtom& dst, const Graphics::FValue& src) const {
+    bool operator ()(RTTI::PMetaAtom& dst, const Graphics::FValue& src) const {
         dst = RTTI::MakeAtom(src.Get<T>());
+        return true;
     }
 };
 template <>
 struct TValueToMetaAtom_<void> {
-    void operator ()(RTTI::PMetaAtom& dst, const Graphics::FValue& src) const {
+    bool operator ()(RTTI::PMetaAtom& dst, const Graphics::FValue& src) const {
         AssertNotReached();
         dst.reset();
+        return false;
     }
 };
 //----------------------------------------------------------------------------
@@ -656,7 +666,7 @@ private:
     template <typename T>
     void Visit_(const TMetaTypedAtom<T>* scalar) {
         typedef typename std::integral_constant< bool,
-            (Graphics::TValueTraits<T>::ETypeId != Graphics::EValueType::Void) >::type
+            (Graphics::TValueTraits<T>::TypeId != Graphics::EValueType::Void) >::type
             boolean_type;
 
         Unwrap_(scalar, boolean_type());
@@ -669,17 +679,37 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void GraphicsValueToAtom(RTTI::PMetaAtom& dst, const Graphics::FValue& src) {
-    Assert(!src.empty());
-    SwitchValue_<void, TValueToMetaAtom_>(src.Type(), dst, src);
+Graphics::EValueType GraphicsValueType(u32 typeId) {
+    switch (typeId) {
+#define SWITCH_ON_RTTI_NATIVE_TYPE(_Name, T, _TypeId, _Unused) \
+    case TMetaType< T >::TypeId: \
+        return Graphics::TValueTraits< T >::TypeId;
+        FOREACH_CORE_RTTI_NATIVE_TYPES(SWITCH_ON_RTTI_NATIVE_TYPE)
+#undef SWITCH_ON_RTTI_NATIVE_TYPE
+    };
+    return Graphics::EValueType::Void;
 }
 //----------------------------------------------------------------------------
-void AtomToGraphicsValue(Graphics::FValue& dst, const RTTI::PMetaAtom& src) {
-    Assert(src);
+bool GraphicsValueToAtomIFP(RTTI::PMetaAtom& dst, const Graphics::FValue& src) {
+    Assert(!src.empty());
+    return SwitchValue_<bool, TValueToMetaAtom_>(src.Type(), dst, src);
+}
+//----------------------------------------------------------------------------
+bool AtomToGraphicsValueIFP(Graphics::FValue& dst, const RTTI::FMetaAtom& src) {
     dst.clear();
     FMetaAtomToValueVisitor_ visitor(&dst);
-    src->Accept(&visitor);
-    AssertRelease(!dst.empty());
+    src.Accept(&visitor);
+    return (!dst.empty());
+}
+//----------------------------------------------------------------------------
+void GraphicsValueToAtom(RTTI::PMetaAtom& dst, const Graphics::FValue& src) {
+    if (not GraphicsValueToAtomIFP(dst, src))
+        AssertNotReached();
+}
+//----------------------------------------------------------------------------
+void AtomToGraphicsValue(Graphics::FValue& dst, const RTTI::FMetaAtom& src) {
+    if (not AtomToGraphicsValueIFP(dst, src))
+        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

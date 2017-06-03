@@ -82,7 +82,7 @@ void FSamplerState::Start() {
         FSamplerState *const state = new ((void *)&GSamplerState_AnisotropicClamp) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("AnisotropicClamp");
+        state->SetResourceName(L"AnisotropicClamp");
 #endif
         state->SetAddressU(ETextureAddressMode::Clamp);
         state->SetAddressV(ETextureAddressMode::Clamp);
@@ -96,7 +96,7 @@ void FSamplerState::Start() {
         FSamplerState *const state = new ((void *)&GSamplerState_AnisotropicWrap) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("AnisotropicWrap");
+        state->SetResourceName(L"AnisotropicWrap");
 #endif
         state->SetAddressU(ETextureAddressMode::Wrap);
         state->SetAddressV(ETextureAddressMode::Wrap);
@@ -110,7 +110,7 @@ void FSamplerState::Start() {
         FSamplerState *const state = new ((void *)&GSamplerState_LinearClamp) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("LinearClamp");
+        state->SetResourceName(L"LinearClamp");
 #endif
         state->SetAddressU(ETextureAddressMode::Clamp);
         state->SetAddressV(ETextureAddressMode::Clamp);
@@ -124,7 +124,7 @@ void FSamplerState::Start() {
         FSamplerState *const state = new ((void *)&GSamplerState_LinearWrap) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("LinearWrap");
+        state->SetResourceName(L"LinearWrap");
 #endif
         state->SetAddressU(ETextureAddressMode::Wrap);
         state->SetAddressV(ETextureAddressMode::Wrap);
@@ -138,7 +138,7 @@ void FSamplerState::Start() {
         FSamplerState *const state = new ((void *)&GSamplerState_PointClamp) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("PointClamp");
+        state->SetResourceName(L"PointClamp");
 #endif
         state->SetAddressU(ETextureAddressMode::Clamp);
         state->SetAddressV(ETextureAddressMode::Clamp);
@@ -152,7 +152,7 @@ void FSamplerState::Start() {
         FSamplerState *const state = new ((void *)&GSamplerState_PointWrap) FSamplerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("PointWrap");
+        state->SetResourceName(L"PointWrap");
 #endif
         state->SetAddressU(ETextureAddressMode::Wrap);
         state->SetAddressV(ETextureAddressMode::Wrap);

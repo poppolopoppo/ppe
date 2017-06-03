@@ -79,7 +79,7 @@ void FBlendState::Start() {
         FBlendState *const state = new ((void *)&GBlendState_Additive) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("Additive");
+        state->SetResourceName(L"Additive");
 #endif
         state->SetBlendEnabled(true);
         state->SetColorSourceBlend(EBlend::SourceAlpha);
@@ -94,7 +94,7 @@ void FBlendState::Start() {
         FBlendState *const state = new ((void *)&GBlendState_AlphaBlend) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("AlphaBlend");
+        state->SetResourceName(L"AlphaBlend");
 #endif
         state->SetBlendEnabled(true);
         state->SetColorSourceBlend(EBlend::One);
@@ -109,7 +109,7 @@ void FBlendState::Start() {
         FBlendState *const state = new ((void *)&GBlendState_NonPremultiplied) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("NonPremultiplied");
+        state->SetResourceName(L"NonPremultiplied");
 #endif
         state->SetBlendEnabled(true);
         state->SetColorSourceBlend(EBlend::SourceAlpha);
@@ -124,7 +124,7 @@ void FBlendState::Start() {
         FBlendState *const state = new ((void *)&GBlendState_Opaque) FBlendState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("Opaque");
+        state->SetResourceName(L"Opaque");
 #endif
         state->SetColorSourceBlend(EBlend::One);
         state->SetAlphaSourceBlend(EBlend::One);

@@ -42,11 +42,11 @@ public:
     void AttachResource(const FDeviceResource *resource);
     void DetachResource(const FDeviceResource *resource);
 
-    DeviceRevision CreatedAt() const { return _createdAt; }
-    DeviceRevision LastUsed() const { return _lastUsed; }
+    FDeviceRevision CreatedAt() const { return _createdAt; }
+    FDeviceRevision LastUsed() const { return _lastUsed; }
 
-    void SetCreatedAt(DeviceRevision revision);
-    void SetLastUsed(DeviceRevision revision);
+    void SetCreatedAt(FDeviceRevision revision);
+    void SetLastUsed(FDeviceRevision revision);
 
     virtual size_t VideoMemorySizeInBytes() const = 0;
 
@@ -57,8 +57,8 @@ private:
     u32 _apiAndResourceType;
     SCDeviceResource _resource;
 
-    DeviceRevision _createdAt;
-    DeviceRevision _lastUsed;
+    FDeviceRevision _createdAt;
+    FDeviceRevision _lastUsed;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

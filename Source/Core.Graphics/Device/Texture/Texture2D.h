@@ -49,8 +49,8 @@ public:
 
     virtual size_t SizeInBytes() const override;
 
-    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) override;
-    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) override;
+    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) override;
+    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) override;
 
     virtual void CopyFrom(IDeviceAPIEncapsulator *device, const FTexture *psource) override;
     void CopyFrom(IDeviceAPIEncapsulator *device, const FTexture2D *psource2D);

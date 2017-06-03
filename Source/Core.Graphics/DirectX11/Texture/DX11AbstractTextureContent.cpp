@@ -165,8 +165,8 @@ void FDX11AbstractTextureContent::CreateTexture(
         Assert(_shaderView);
     }
 
-    DX11SetDeviceResourceNameIFP(pTexture2D, owner);
-    DX11SetDeviceResourceNameIFP(_shaderView, owner);
+    DX11SetDeviceResourceNameIFP(pTexture2D.Get(), owner);
+    DX11SetDeviceResourceNameIFP(_shaderView.Get(), owner);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -49,7 +49,7 @@ void FDeviceResource::Unfreeze() {
     UnfreezeImpl();
 }
 //----------------------------------------------------------------------------
-FStringView FDeviceResource::ResourceName() const {
+FWStringView FDeviceResource::ResourceName() const {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     THIS_THREADRESOURCE_CHECKACCESS();
     return MakeStringView(_resourceName);
@@ -58,7 +58,7 @@ FStringView FDeviceResource::ResourceName() const {
 #endif
 }
 //----------------------------------------------------------------------------
-void FDeviceResource::SetResourceName(const char *name) {
+void FDeviceResource::SetResourceName(const wchar_t* name) {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     Assert(!Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();
@@ -69,18 +69,18 @@ void FDeviceResource::SetResourceName(const char *name) {
 #endif
 }
 //----------------------------------------------------------------------------
-void FDeviceResource::SetResourceName(const FStringView& name) {
+void FDeviceResource::SetResourceName(const FWStringView& name) {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     Assert(!Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(name.empty());
-    _resourceName = ToString(name);
+    _resourceName = ToWString(name);
 #else
     UNUSED(name);
 #endif
 }
 //----------------------------------------------------------------------------
-void FDeviceResource::SetResourceName(FString&& name) {
+void FDeviceResource::SetResourceName(FWString&& name) {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     Assert(!Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();

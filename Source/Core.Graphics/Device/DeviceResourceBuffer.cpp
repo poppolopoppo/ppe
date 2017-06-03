@@ -25,7 +25,8 @@ FDeviceResourceBuffer::FDeviceResourceBuffer(size_t stride, size_t count, EBuffe
                         EBufferMode::Write == mode);
         break;
     case EBufferUsage::Dynamic:
-        AssertRelease(  EBufferMode::Write == mode);
+        AssertRelease(  EBufferMode::Write == mode ||
+                        EBufferMode::WriteDiscard == mode);
         break;
     case EBufferUsage::Immutable:
         AssertRelease(  EBufferMode::None == mode);
@@ -63,35 +64,30 @@ void FDeviceResourceBuffer::Create(IDeviceAPIEncapsulator *device, const FDevice
     _deviceAPIDependantBuffer = buffer;
 }
 //----------------------------------------------------------------------------
-PDeviceAPIDependantResourceBuffer FDeviceResourceBuffer::Destroy(IDeviceAPIEncapsulator *device, const FDeviceResource * /* resource */) {
+PDeviceAPIDependantResourceBuffer& FDeviceResourceBuffer::Destroy(IDeviceAPIEncapsulator *device, const FDeviceResource * /* resource */) {
     UNUSED(device);
     Assert(_deviceAPIDependantBuffer);
     Assert(_deviceAPIDependantBuffer->MatchDevice(device));
 
-    PDeviceAPIDependantResourceBuffer result = std::move(_deviceAPIDependantBuffer);
-    Assert(!_deviceAPIDependantBuffer);
-
-    return result;
+    return _deviceAPIDependantBuffer;
 }
 //----------------------------------------------------------------------------
-void FDeviceResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
-    Assert(dst);
-    Assert(stride == Stride());
-    Assert(offset + count <= _count);
+void FDeviceResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) {
+    Assert(IS_ALIGNED(Stride(), dst.SizeInBytes()));
+    Assert(dst.SizeInBytes() + offset <= _count * Stride());
     Assert(_deviceAPIDependantBuffer);
     //Assert(u32(EBufferMode::Read) == (u32(EMode()) & u32(EBufferMode::Read)));
 
-    _deviceAPIDependantBuffer->GetData(device, offset, dst, stride, count);
+    _deviceAPIDependantBuffer->GetData(device, offset, dst);
 }
 //----------------------------------------------------------------------------
-void FDeviceResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
-    Assert(src);
-    Assert(stride == Stride());
-    Assert(offset + count <= _count);
+void FDeviceResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) {
+    Assert(IS_ALIGNED(Stride(), src.SizeInBytes()));
+    Assert(src.SizeInBytes() + offset <= _count * Stride());
     Assert(_deviceAPIDependantBuffer);
     //Assert(u32(EBufferMode::Write) == (u32(EMode()) & u32(EBufferMode::Write)));
 
-    _deviceAPIDependantBuffer->SetData(device, offset, src, stride, count);
+    _deviceAPIDependantBuffer->SetData(device, offset, src);
 }
 //----------------------------------------------------------------------------
 void FDeviceResourceBuffer::CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceResourceBuffer *psource) {

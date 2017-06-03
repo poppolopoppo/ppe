@@ -38,7 +38,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
                     NULL,
                     vertexShader.GetAddressOf())
                 ));
-            _abstractShader = vertexShader.Get();
+            _abstractShader.Steal(vertexShader);
         }
         break;
     case Core::Graphics::EShaderProgramType::Hull:
@@ -51,7 +51,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
                     NULL,
                     hullShader.GetAddressOf())
                 ));
-            _abstractShader = hullShader.Get();
+            _abstractShader.Steal(hullShader);
         }
         break;
     case Core::Graphics::EShaderProgramType::Domain:
@@ -64,7 +64,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
                     NULL,
                     domainShader.GetAddressOf())
                 ));
-            _abstractShader = domainShader.Get();
+            _abstractShader.Steal(domainShader);
         }
         break;
     case Core::Graphics::EShaderProgramType::Pixel:
@@ -77,7 +77,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
                     NULL,
                     pixelShader.GetAddressOf())
                 ));
-            _abstractShader = pixelShader.Get();
+            _abstractShader.Steal(pixelShader);
         }
         break;
     case Core::Graphics::EShaderProgramType::Geometry:
@@ -90,7 +90,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
                     NULL,
                     geometryShader.GetAddressOf())
                 ));
-            _abstractShader = geometryShader.Get();
+            _abstractShader.Steal(geometryShader);
         }
         break;
     case Core::Graphics::EShaderProgramType::Compute:
@@ -103,7 +103,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
                     NULL,
                     computeShader.GetAddressOf())
                 ));
-            _abstractShader = computeShader.Get();
+            _abstractShader.Steal(computeShader);
         }
         break;
     default:
@@ -111,8 +111,8 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
         break;
     }
 
-    Assert(_abstractShader);
-    DX11SetDeviceResourceNameIFP(_abstractShader, resource);
+    Assert(_abstractShader.IsValid());
+    DX11SetDeviceResourceNameIFP(_abstractShader.Get(), resource);
 }
 //----------------------------------------------------------------------------
 FDX11ShaderProgram::~FDX11ShaderProgram() {

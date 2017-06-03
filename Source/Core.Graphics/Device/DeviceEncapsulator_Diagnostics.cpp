@@ -4,26 +4,6 @@
 
 #include "AbstractDeviceAPIEncapsulator.h"
 
-#include "Geometry/IndexBuffer.h"
-#include "Geometry/PrimitiveType.h"
-#include "Geometry/VertexBuffer.h"
-#include "Geometry/VertexDeclaration.h"
-
-#include "Shader/ConstantBuffer.h"
-#include "Shader/ShaderEffect.h"
-#include "Shader/ShaderProgram.h"
-
-#include "State/BlendState.h"
-#include "State/DepthStencilState.h"
-#include "State/RasterizerState.h"
-#include "State/SamplerState.h"
-
-#include "Texture/DepthStencil.h"
-#include "Texture/RenderTarget.h"
-#include "Texture/Texture.h"
-#include "Texture/Texture2D.h"
-#include "Texture/TextureCube.h"
-
 #include "Core/Diagnostic/Logger.h"
 
 // IDeviceAPIDiagnostics
@@ -37,33 +17,64 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
-bool FDeviceEncapsulator::IsProfilerAttached() const {
+bool FDeviceEncapsulator::UseDebugDrawEvents() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-
-    return _deviceAPIEncapsulator->Diagnostics()->IsProfilerAttached();
+    return _deviceAPIEncapsulator->Diagnostics()->UseDebugDrawEvents();
 }
 //----------------------------------------------------------------------------
-void FDeviceEncapsulator::BeginEvent(const wchar_t *name) {
+void FDeviceEncapsulator::ToggleDebugDrawEvents(bool enabled) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(name);
-    Assert(IsProfilerAttached());
-
-    return _deviceAPIEncapsulator->Diagnostics()->BeginEvent(name);
+    _deviceAPIEncapsulator->Diagnostics()->ToggleDebugDrawEvents(enabled);
+}
+//----------------------------------------------------------------------------
+void FDeviceEncapsulator::SetMarker(const FWStringView& name) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    _deviceAPIEncapsulator->Diagnostics()->SetMarker(name);
+}
+//----------------------------------------------------------------------------
+void FDeviceEncapsulator::BeginEvent(const FWStringView& name) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    _deviceAPIEncapsulator->Diagnostics()->BeginEvent(name);
 }
 //----------------------------------------------------------------------------
 void FDeviceEncapsulator::EndEvent() {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(IsProfilerAttached());
-
-    return _deviceAPIEncapsulator->Diagnostics()->EndEvent();
+    _deviceAPIEncapsulator->Diagnostics()->EndEvent();
 }
 //----------------------------------------------------------------------------
-void FDeviceEncapsulator::SetMarker(const wchar_t *name) {
+bool FDeviceEncapsulator::IsProfilerAttached() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(name);
-    Assert(IsProfilerAttached());
-
-    return _deviceAPIEncapsulator->Diagnostics()->SetMarker(name);
+    return _deviceAPIEncapsulator->Diagnostics()->IsProfilerAttached();
+}
+//----------------------------------------------------------------------------
+bool FDeviceEncapsulator::LaunchProfiler() {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return _deviceAPIEncapsulator->Diagnostics()->LaunchProfiler();
+}
+//----------------------------------------------------------------------------
+bool FDeviceEncapsulator::LaunchProfilerAndTriggerCapture() {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return _deviceAPIEncapsulator->Diagnostics()->LaunchProfilerAndTriggerCapture();
+}
+//----------------------------------------------------------------------------
+bool FDeviceEncapsulator::IsCapturingFrame() const {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return _deviceAPIEncapsulator->Diagnostics()->IsCapturingFrame();
+}
+//----------------------------------------------------------------------------
+void FDeviceEncapsulator::SetCaptureWindow(void* hwnd) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return _deviceAPIEncapsulator->Diagnostics()->SetCaptureWindow(hwnd);
+}
+//----------------------------------------------------------------------------
+void FDeviceEncapsulator::TriggerCapture() {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return _deviceAPIEncapsulator->Diagnostics()->TriggerCapture();
+}
+//----------------------------------------------------------------------------
+void FDeviceEncapsulator::TriggerMultiFrameCapture(size_t numFrames) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    return _deviceAPIEncapsulator->Diagnostics()->TriggerMultiFrameCapture(numFrames);
 }
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_GRAPHICS_DIAGNOSTICS

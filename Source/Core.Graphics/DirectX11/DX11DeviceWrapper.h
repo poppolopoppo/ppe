@@ -87,18 +87,18 @@ void DX11ThrowIfFailed(
             ); \
     }
 //----------------------------------------------------------------------------
-void DX11SetDeviceResourceName(::ID3D11DeviceChild *deviceChild, const char *name, size_t length);
+void DX11SetDeviceResourceName(::ID3D11DeviceChild *deviceChild, const wchar_t* name, size_t length);
 void DX11SetDeviceResourceNameIFP(::ID3D11DeviceChild *deviceChild, const FDeviceResource *owner);
 //----------------------------------------------------------------------------
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
 template <size_t _Dim>
-void DX11SetDeviceResourceName(::ID3D11DeviceChild *deviceChild, const char (&staticArray)[_Dim]) {
+void DX11SetDeviceResourceName(::ID3D11DeviceChild *deviceChild, const wchar_t(&staticArray)[_Dim]) {
     DX11SetDeviceResourceName(deviceChild, staticArray, _Dim);
 }
 #else
 //  Prevent useless static string export in the binary
 template <size_t _Dim>
-void DX11SetDeviceResourceName(::ID3D11DeviceChild *, const char (&)[_Dim]) {}
+void DX11SetDeviceResourceName(::ID3D11DeviceChild *, const wchar_t (&)[_Dim]) {}
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

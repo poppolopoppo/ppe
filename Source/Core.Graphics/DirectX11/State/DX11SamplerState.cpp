@@ -39,7 +39,7 @@ FDX11SamplerState::FDX11SamplerState(IDeviceAPIEncapsulator *device, FSamplerSta
 
     Assert(_entity);
 
-    DX11SetDeviceResourceNameIFP(_entity, owner);
+    DX11SetDeviceResourceNameIFP(_entity.Get(), owner);
 }
 //----------------------------------------------------------------------------
 FDX11SamplerState::~FDX11SamplerState() {

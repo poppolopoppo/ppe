@@ -13,6 +13,7 @@
 #include "Device/State/SamplerState.h"
 #include "Device/Texture/SurfaceFormat.h"
 #include "Device/Geometry/VertexDeclaration.h"
+#include "RenderDocWrapper.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 
@@ -120,22 +121,22 @@ static void MatrixUnitTests_() {
     AssertRelease(Equals_(x_sc, c_sc));
 
     const XMMATRIX x_rx = XMMatrixRotationX(F_PIOver3);
-    const float4x4 c_rx = Make3DRotationMatrixAroundX(F_PIOver3);
+    const float4x4 c_rx = Make3DRotationMatrixAroundX(F_PIOver3).OneExtend();
     AssertRelease(Equals_(x_rx, c_rx));
 
     const XMMATRIX x_ry = XMMatrixRotationY(F_PIOver3);
-    const float4x4 c_ry = Make3DRotationMatrixAroundY(F_PIOver3);
+    const float4x4 c_ry = Make3DRotationMatrixAroundY(F_PIOver3).OneExtend();
     AssertRelease(Equals_(x_ry, c_ry));
 
     const XMMATRIX x_rz = XMMatrixRotationZ(F_PIOver3);
-    const float4x4 c_rz = Make3DRotationMatrixAroundZ(F_PIOver3);
+    const float4x4 c_rz = Make3DRotationMatrixAroundZ(F_PIOver3).OneExtend();
     AssertRelease(Equals_(x_rz, c_rz));
 
     const float3 axis = Normalize3(float3(1,2,3));
     const FXMVECTOR x_axis = {axis.x(),axis.y(),axis.z(),0};
 
     const XMMATRIX x_ra = XMMatrixRotationAxis(x_axis, F_PIOver3);
-    const float4x4 c_ra = Make3DRotationMatrix(axis, F_PIOver3);
+    const float4x4 c_ra = Make3DRotationMatrix(axis, F_PIOver3).OneExtend();
     AssertRelease(Equals_(x_ra, c_ra));
 
     const XMMATRIX x_tr = XMMatrixTranslation(-1, -2, -3);
@@ -151,7 +152,7 @@ static void MatrixUnitTests_() {
     XMVECTOR x_vtr;
     XMMatrixDecompose(&x_vsc, &x_vqt, &x_vtr, x_af);
     float3 scale;
-    FQuaternion rot = FQuaternion::Identity();
+    FQuaternion rot = FQuaternion::Identity;
     float3 translate;
     Decompose(c_af, scale, rot, translate);
     Assert(Equals_(x_vsc, scale));
@@ -279,12 +280,13 @@ static void MathUnitTests_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void GraphicsStartup::Start() {
+void FGraphicsModule::Start() {
     CORE_MODULE_START(Graphics);
 
 #ifdef WITH_CORE_MATHS_UNITTESTS
     MathUnitTests_();
 #endif
+
     // 0 - pool allocator tag
     POOL_TAG(Graphics)::Start();
     // 1 - Graphics Names
@@ -302,11 +304,19 @@ void GraphicsStartup::Start() {
     FDepthStencilState::Start();
     FRasterizerState::Start();
     FSamplerState::Start();
+    // 7 - render doc wrapper
+#ifdef WITH_CORE_RENDERDOC
+    FRenderDocWrapper::Create();
+#endif
 }
 //----------------------------------------------------------------------------
-void GraphicsStartup::Shutdown() {
+void FGraphicsModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Graphics);
 
+    // 7 - render doc wrapper
+#ifdef WITH_CORE_RENDERDOC
+    FRenderDocWrapper::Destroy();
+#endif
     // 6 - Device states
     FSamplerState::Shutdown();
     FRasterizerState::Shutdown();
@@ -326,7 +336,7 @@ void GraphicsStartup::Shutdown() {
     POOL_TAG(Graphics)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void GraphicsStartup::ClearAll_UnusedMemory() {
+void FGraphicsModule::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Graphics);
 
     POOL_TAG(Graphics)::ClearAll_UnusedMemory();
@@ -334,7 +344,7 @@ void GraphicsStartup::ClearAll_UnusedMemory() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void GraphicsStartup::OnDeviceCreate(FDeviceEncapsulator *device) {
+void FGraphicsModule::OnDeviceCreate(FDeviceEncapsulator *device) {
     // 1 - Surface format builtin-types
     FSurfaceFormat::OnDeviceCreate(device);
     // 2 - Vertex declaration builtin-types
@@ -346,7 +356,7 @@ void GraphicsStartup::OnDeviceCreate(FDeviceEncapsulator *device) {
     FSamplerState::OnDeviceCreate(device);
 }
 //----------------------------------------------------------------------------
-void GraphicsStartup::OnDeviceDestroy(FDeviceEncapsulator *device) {
+void FGraphicsModule::OnDeviceDestroy(FDeviceEncapsulator *device) {
     // 3 - Device states
     FSamplerState::OnDeviceDestroy(device);
     FRasterizerState::OnDeviceDestroy(device);

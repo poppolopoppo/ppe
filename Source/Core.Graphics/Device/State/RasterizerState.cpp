@@ -76,7 +76,7 @@ void FRasterizerState::Start() {
         FRasterizerState *const state = new ((void *)&GRasterizerState_CullClockwise) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("CullClockwise");
+        state->SetResourceName(L"CullClockwise");
 #endif
         state->SetCullMode(Graphics::ECullMode::CullClockwiseFace);
         state->Freeze();
@@ -87,7 +87,7 @@ void FRasterizerState::Start() {
         FRasterizerState *const state = new ((void *)&GRasterizerState_CullCounterClockwise) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("CullCounterClockwise");
+        state->SetResourceName(L"CullCounterClockwise");
 #endif
         state->SetCullMode(Graphics::ECullMode::CullCounterClockwiseFace);
         state->Freeze();
@@ -98,7 +98,7 @@ void FRasterizerState::Start() {
         FRasterizerState *const state = new ((void *)&GRasterizerState_CullNone) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("CullNone");
+        state->SetResourceName(L"CullNone");
 #endif
         state->SetCullMode(Graphics::ECullMode::None);
         state->Freeze();
@@ -109,7 +109,7 @@ void FRasterizerState::Start() {
         FRasterizerState *const state = new ((void *)&GRasterizerState_Wireframe) FRasterizerState();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-        state->SetResourceName("Wireframe");
+        state->SetResourceName(L"Wireframe");
 #endif
         state->SetFillMode(Graphics::EFillMode::WireFrame);
         state->SetCullMode(Graphics::ECullMode::None);

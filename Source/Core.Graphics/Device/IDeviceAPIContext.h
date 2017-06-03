@@ -24,8 +24,8 @@ public:
 
     // Index/Vertex Buffer
 
-    virtual void SetIndexBuffer(const IndexBuffer *indexBuffer) = 0;
-    virtual void SetIndexBuffer(const IndexBuffer *indexBuffer, size_t offset) = 0;
+    virtual void SetIndexBuffer(const FIndexBuffer *indexBuffer) = 0;
+    virtual void SetIndexBuffer(const FIndexBuffer *indexBuffer, size_t offset) = 0;
 
     virtual void SetVertexBuffer(const FVertexBuffer *vertexBuffer) = 0;
     virtual void SetVertexBuffer(const FVertexBuffer *vertexBuffer, u32 vertexOffset) = 0;
@@ -40,7 +40,7 @@ public:
 
     virtual void SetTexture(EShaderProgramType stage, size_t slot, const FTexture *texture) = 0;
     virtual void SetTextures(EShaderProgramType stage, const TMemoryView<const FTexture *>& textures) = 0;
-    
+
     virtual void SetSamplerState(EShaderProgramType stage, size_t slot, const FSamplerState *state) = 0;
     virtual void SetSamplerStates(EShaderProgramType stage, const TMemoryView<const FSamplerState *>& states) = 0;
 
@@ -49,6 +49,12 @@ public:
     virtual void DrawPrimitives(EPrimitiveType primitiveType, size_t startVertex, size_t primitiveCount) = 0;
     virtual void DrawIndexedPrimitives(Graphics::EPrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount) = 0;
     virtual void DrawInstancedPrimitives(Graphics::EPrimitiveType primitiveType, size_t baseVertex, size_t startIndex, size_t primitiveCount, size_t startInstance, size_t instanceCount) = 0;
+
+    // Diagnostics
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+    virtual IDeviceAPIDiagnostics* DeviceDiagnostics() const = 0;
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

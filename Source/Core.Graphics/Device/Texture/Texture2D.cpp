@@ -94,32 +94,28 @@ size_t FTexture2D::SizeInBytes() const {
     return Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount);
 }
 //----------------------------------------------------------------------------
-void FTexture2D::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
+void FTexture2D::GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(Available());
-    Assert(dst);
-    Assert(stride);
-    Assert(count);
-    Assert(offset + stride * count <= Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount));
+    Assert(dst.SizeInBytes());
+    Assert(offset + dst.SizeInBytes() <= Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount));
     Assert(_deviceAPIDependantTexture2D);
     Assert(u32(EBufferMode::Read) == (u32(Mode()) & u32(EBufferMode::Read)));
 
-    _deviceAPIDependantTexture2D->GetData(device, offset, dst, stride, count);
+    _deviceAPIDependantTexture2D->GetData(device, offset, dst);
 }
 //----------------------------------------------------------------------------
-void FTexture2D::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
+void FTexture2D::SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(Available());
-    Assert(src);
-    Assert(stride);
-    Assert(count);
-    Assert(offset + stride * count <= Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount));
+    Assert(src.SizeInBytes());
+    Assert(offset + src.SizeInBytes() <= Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount));
     Assert(_deviceAPIDependantTexture2D);
     Assert(u32(EBufferMode::Write) == (u32(Mode()) & u32(EBufferMode::Write)));
 
-    _deviceAPIDependantTexture2D->SetData(device, offset, src, stride, count);
+    _deviceAPIDependantTexture2D->SetData(device, offset, src);
 }
 //----------------------------------------------------------------------------
 void FTexture2D::CopyFrom(IDeviceAPIEncapsulator *device, const FTexture *psource) {

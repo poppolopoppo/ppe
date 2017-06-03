@@ -12,13 +12,13 @@ class IDeviceAPIEncapsulator;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(IndexBuffer);
-class IndexBuffer : public FDeviceResourceSharable {
+FWD_REFPTR(FIndexBuffer);
+class FIndexBuffer : public FDeviceResourceSharable {
 public:
-    IndexBuffer(Graphics::EIndexElementSize indexElementSize, size_t indexCount,
+    FIndexBuffer(Graphics::EIndexElementSize indexElementSize, size_t indexCount,
                 EBufferMode mode, EBufferUsage usage,
                 bool sharable );
-    virtual ~IndexBuffer();
+    virtual ~FIndexBuffer();
 
     virtual bool Available() const override { return _buffer.Available(); }
     virtual FDeviceAPIDependantEntity *TerminalEntity() const override { return _buffer.DeviceAPIDependantBuffer().get(); }
@@ -27,8 +27,8 @@ public:
     Graphics::EIndexElementSize IndexElementSize() const { return static_cast<Graphics::EIndexElementSize>(_buffer.Stride()); }
     const FDeviceResourceBuffer& Buffer() const { return _buffer; }
 
-    void SetData(IDeviceAPIEncapsulator *device, size_t offset, const u16 *src, size_t count);
-    void SetData(IDeviceAPIEncapsulator *device, size_t offset, const u32 *src, size_t count);
+    void SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u16>& src);
+    void SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u32>& src);
 
     void Create(IDeviceAPIEncapsulator *device, const TMemoryView<const u16>& optionalData);
     void Create(IDeviceAPIEncapsulator *device, const TMemoryView<const u32>& optionalData);
@@ -40,27 +40,27 @@ protected:
 
 private:
     void Create_(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData);
-    void SetData_(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count);
+    void SetData_(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src);
 
     FDeviceResourceBuffer _buffer;
 };
 //----------------------------------------------------------------------------
-inline void IndexBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const u16 *src, size_t count) {
+inline void FIndexBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u16>& src) {
     Assert(Graphics::EIndexElementSize::SixteenBits == IndexElementSize());
-    SetData_(device, offset, src, sizeof(u16), count);
+    SetData_(device, offset, src.Cast<const u8>());
 }
 //----------------------------------------------------------------------------
-inline void IndexBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const u32 *src, size_t count) {
+inline void FIndexBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u32>& src) {
     Assert(Graphics::EIndexElementSize::ThirtyTwoBits == IndexElementSize());
-    SetData_(device, offset, src, sizeof(u32), count);
+    SetData_(device, offset, src.Cast<const u8>());
 }
 //----------------------------------------------------------------------------
-inline void IndexBuffer::Create(IDeviceAPIEncapsulator *device, const TMemoryView<const u16>& optionalData) {
+inline void FIndexBuffer::Create(IDeviceAPIEncapsulator *device, const TMemoryView<const u16>& optionalData) {
     Assert(Graphics::EIndexElementSize::SixteenBits == IndexElementSize());
     Create_(device, optionalData.Cast<const u8>());
 }
 //----------------------------------------------------------------------------
-inline void IndexBuffer::Create(IDeviceAPIEncapsulator *device, const TMemoryView<const u32>& optionalData) {
+inline void FIndexBuffer::Create(IDeviceAPIEncapsulator *device, const TMemoryView<const u32>& optionalData) {
     Assert(Graphics::EIndexElementSize::ThirtyTwoBits == IndexElementSize());
     Create_(device, optionalData.Cast<const u8>());
 }

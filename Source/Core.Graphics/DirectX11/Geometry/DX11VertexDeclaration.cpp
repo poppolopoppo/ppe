@@ -22,7 +22,7 @@ FDX11VertexDeclaration::FDX11VertexDeclaration(IDeviceAPIEncapsulator *device, F
     ::SecureZeroMemory(subPartDescs, sizeof(::D3D11_INPUT_ELEMENT_DESC) * count);
 
     for (size_t i = 0; i < count; ++i) {
-        const FValueBlock::TField& subPart = owner->SubPartByIndex(i);
+        const FValueField& subPart = owner->SubPartByIndex(i);
 
         ::D3D11_INPUT_ELEMENT_DESC& subPartDesc = subPartDescs[i];
 

@@ -46,11 +46,11 @@ void FVertexDeclaration::AddSubPart(const FVertexSemantic& semantic, size_t inde
     _block.Add(semantic, type, offset, index);
 }
 //----------------------------------------------------------------------------
-const FValueBlock::TField& FVertexDeclaration::SubPartBySemantic(const FVertexSemantic& semantic, size_t index) const {
+const FValueField& FVertexDeclaration::SubPartBySemantic(const FVertexSemantic& semantic, size_t index) const {
     return _block.FindByNameAndIndex(semantic, index);
 }
 //----------------------------------------------------------------------------
-const FValueBlock::TField* FVertexDeclaration::SubPartBySemanticIFP(const FVertexSemantic& semantic, size_t index) const {
+const FValueField* FVertexDeclaration::SubPartBySemanticIFP(const FVertexSemantic& semantic, size_t index) const {
     return _block.FindByNameAndIndexIFP(semantic, index);
 }
 //----------------------------------------------------------------------------
@@ -106,6 +106,16 @@ FDeviceAPIDependantVertexDeclaration::~FDeviceAPIDependantVertexDeclaration() {}
     const FVertexSemantic FVertexSemantic::_Name;
 FOREACH_VERTEXSEMANTIC_NAME(DEF_VERTEXSEMANTIC_ACCESSOR)
 #undef DEF_VERTEXSEMANTIC_ACCESSOR
+//----------------------------------------------------------------------------
+FVertexSemantic FVertexSemantic::FromName(const FName& name) {
+#define DEF_VERTEXSEMANTIC_ASSERT(_Name) FVertexSemantic::_Name == name ||
+    Assert(
+        FOREACH_VERTEXSEMANTIC_NAME(DEF_VERTEXSEMANTIC_ASSERT)
+        true
+    );
+#undef DEF_VERTEXSEMANTIC_ASSERT
+    return FVertexSemantic(name);
+}
 //----------------------------------------------------------------------------
 void FVertexDeclaration::Start() {
 #define DEF_VERTEXSEMANTIC_START(_Name) \

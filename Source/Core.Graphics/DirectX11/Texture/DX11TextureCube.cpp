@@ -29,12 +29,12 @@ FDX11TextureCubeContent::~FDX11TextureCubeContent() {
     ReleaseComRef(_texture);
 }
 //----------------------------------------------------------------------------
-void FDX11TextureCubeContent::GetContent(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count, EBufferMode mode, EBufferUsage usage) {
-    DX11ResourceGetData(device, _texture.Get(), 0, offset, dst, stride, count, mode, usage);
+void FDX11TextureCubeContent::GetContent(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst, EBufferMode mode, EBufferUsage usage) {
+    DX11ResourceGetData(device, _texture.Get(), 0, offset, dst, mode, usage);
 }
 //----------------------------------------------------------------------------
-void FDX11TextureCubeContent::SetContent(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count, EBufferMode mode, EBufferUsage usage) {
-    DX11ResourceSetData(device, _texture, 0, offset, src, stride, count, mode, usage);
+void FDX11TextureCubeContent::SetContent(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src, EBufferMode mode, EBufferUsage usage) {
+    DX11ResourceSetData(device, _texture.Get(), 0, offset, src, mode, usage);
 }
 //----------------------------------------------------------------------------
 void FDX11TextureCubeContent::CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantTextureCube *psource) {
@@ -73,12 +73,12 @@ FDX11TextureCube::FDX11TextureCube(IDeviceAPIEncapsulator *device, FTextureCube 
 //----------------------------------------------------------------------------
 FDX11TextureCube::~FDX11TextureCube() {}
 //----------------------------------------------------------------------------
-void FDX11TextureCube::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
-    FDX11TextureCubeContent::GetContent(device, offset, dst, stride, count, Mode(), Usage());
+void FDX11TextureCube::GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) {
+    FDX11TextureCubeContent::GetContent(device, offset, dst, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
-void FDX11TextureCube::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
-    FDX11TextureCubeContent::SetContent(device, offset, src, stride, count, Mode(), Usage());
+void FDX11TextureCube::SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) {
+    FDX11TextureCubeContent::SetContent(device, offset, src, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
 void FDX11TextureCube::CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantTextureCube *psource) {

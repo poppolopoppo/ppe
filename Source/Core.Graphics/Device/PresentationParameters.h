@@ -43,7 +43,7 @@ public:
         bool tripleBuffer,
         u32 multiSampleCount,
         EPresentInterval presentationInterval,
-        const ViewportF& viewport
+        const FViewport& viewport
         );
     ~FPresentationParameters();
 
@@ -59,7 +59,7 @@ public:
     u32 MultiSampleCount() const;
     EPresentInterval PresentationInterval() const;
 
-    ViewportF Viewport() const { return _viewport; }
+    FViewport Viewport() const { return _viewport; }
 
 private:
     u32 _backBufferWidth;
@@ -70,7 +70,7 @@ private:
 
     u32 _data; // fullscreen + present + multisample
 
-    ViewportF _viewport;
+    FViewport _viewport;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

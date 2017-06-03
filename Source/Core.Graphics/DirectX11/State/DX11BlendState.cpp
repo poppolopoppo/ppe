@@ -40,7 +40,7 @@ FDX11BlendState::FDX11BlendState(IDeviceAPIEncapsulator *device, FBlendState *ow
 
     Assert(_entity);
 
-    DX11SetDeviceResourceNameIFP(_entity, owner);
+    DX11SetDeviceResourceNameIFP(_entity.Get(), owner);
 }
 //----------------------------------------------------------------------------
 FDX11BlendState::~FDX11BlendState() {

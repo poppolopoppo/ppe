@@ -33,7 +33,7 @@ void FConstantBufferLayout::AddField(const FName& name, EValueType type) {
 
     size_t offset = 0;
     if (_block.size()) {
-        const FValueBlock::TField& pred = _block.MakeView().back();
+        const FValueField& pred = _block.MakeView().back();
         offset = pred.Offset();
         offset += pred.SizeInBytes();
     }

@@ -20,7 +20,7 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FShaderSource, );
 //----------------------------------------------------------------------------
 FStringView FShaderSource::AppIn_SubstitutionName() { return MakeStringView("__AppIn_AutoSubstitutionHeader__"); }
 FStringView FShaderSource::AppIn_VertexDefinitionName() { return MakeStringView("__AppIn_AutoVertexDefinition__"); }
-FileSystem::FStringView FShaderSource::SystemDirpath() { return MakeStringView(L"GameData:/Shaders/Lib"); }
+FileSystem::FStringView FShaderSource::SystemDirpath() { return MakeStringView(L"Data:/Shaders/Lib"); }
 //----------------------------------------------------------------------------
 FShaderSource::FShaderSource( const char *sourceName,
                             const Core::FFilename& filename,
@@ -119,7 +119,7 @@ FShaderSource *FShaderSource::LoadFromFileIFP(const Core::FFilename& filename,
     Assert(!filename.empty());
 
     RAWSTORAGE_THREAD_LOCAL(Shader, char) sourceCode;
-    if (false == FVirtualFileSystem::ReadAll(filename, sourceCode))
+    if (false == FVirtualFileSystem::ReadAll(filename, sourceCode, EAccessPolicy::Binary))
         return nullptr;
 
     ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, FString, FString) sourceDefines(defines.size());

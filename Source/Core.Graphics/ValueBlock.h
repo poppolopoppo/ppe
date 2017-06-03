@@ -13,10 +13,10 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 class FValueBlock {
 public:
-    class TField {
+    class FField {
     public:
-        TField() : _index(0), _type(0), _inUse(0), _offset(0) {}
-        TField(Graphics::FName name, EValueType type, size_t offset, size_t index = 0, bool inUse = false)
+        FField() : _index(0), _type(0), _inUse(0), _offset(0) {}
+        FField(Graphics::FName name, EValueType type, size_t offset, size_t index = 0, bool inUse = false)
             : _name(name), _index(u32(index)), _type(u32(type)), _inUse(inUse?1:0), _offset(u32(offset)) {
             Assert(EValueType::Void != type);
             Assert(index == _index);
@@ -47,8 +47,8 @@ public:
         bool Promote(const TMemoryView<u8>& dst, const FValue& src) const { return ValuePromote(Type(), dst.CutStartingAt(_offset), src.Type(), src.MakeView()); }
         bool Promote(const TMemoryView<u8>& dst, EValueType input, const TMemoryView<const u8>& src) const { return ValuePromote(Type(), dst.CutStartingAt(_offset), input, src); }
 
-        bool PromoteArray(const TMemoryView<u8>& dst, size_t dstStride, EValueType input, const TMemoryView<const u8>& src, size_t srcStride, size_t count) const {
-            return ValuePromoteArray(Type(), dst.CutStartingAt(_offset), dstStride, input, src, srcStride, count);
+        bool PromoteArray(const TMemoryView<u8>& dst, size_t dstStride, EValueType input, const TMemoryView<const u8>& src, size_t srcOffset, size_t srcStride, size_t count) const {
+            return ValuePromoteArray(Type(), dst, _offset, dstStride, input, src, srcOffset, srcStride, count);
         }
 
         template <typename T>
@@ -65,8 +65,8 @@ public:
             ValueDefault(Type(), dst);
         }
 
-        friend bool operator ==(const TField& lhs, const TField& rhs) { return (lhs._name == rhs._name && lhs._type == rhs._type && lhs._offset == rhs._offset && lhs._index == rhs._index ); }
-        friend bool operator !=(const TField& lhs, const TField& rhs) { return not operator ==(lhs, rhs); }
+        friend bool operator ==(const FField& lhs, const FField& rhs) { return (lhs._name == rhs._name && lhs._type == rhs._type && lhs._offset == rhs._offset && lhs._index == rhs._index ); }
+        friend bool operator !=(const FField& lhs, const FField& rhs) { return not operator ==(lhs, rhs); }
 
     private:
         Graphics::FName _name;
@@ -76,21 +76,21 @@ public:
         u32 _offset : 16;
     };
 
-    typedef VECTORINSITU(Value, TField, 6) fields_type;
+    typedef VECTORINSITU(Value, FField, 6) fields_type;
 
     FValueBlock() {}
     ~FValueBlock() {}
 
-    FValueBlock(std::initializer_list<TField> fields) : _fields(fields) {}
-    FValueBlock(const TMemoryView<const TField>& fields) : _fields(fields) {}
+    FValueBlock(std::initializer_list<FField> fields) : _fields(fields) {}
+    FValueBlock(const TMemoryView<const FField>& fields) : _fields(fields) {}
 
     size_t size() const { return _fields.size(); }
     bool empty() const { return _fields.empty(); }
 
-    const TField& operator [](size_t index) const { return _fields[index]; }
+    const FField& operator [](size_t index) const { return _fields[index]; }
 
-    const TField& front() const { return _fields.front(); }
-    const TField& back() const { return _fields.back(); }
+    const FField& front() const { return _fields.front(); }
+    const FField& back() const { return _fields.back(); }
 
     fields_type::const_iterator begin() const { return _fields.begin(); }
     fields_type::const_iterator end() const { return _fields.end(); }
@@ -105,19 +105,19 @@ public:
     void Defaults(const TMemoryView<u8>& dst) const;
     bool Equals(const TMemoryView<const u8>& lhs, const TMemoryView<const u8>& rhs) const;
 
-    TField& FindByName(const Graphics::FName& name);
-    TField* FindByNameIFP(const Graphics::FName& name);
+    FField& FindByName(const Graphics::FName& name);
+    FField* FindByNameIFP(const Graphics::FName& name);
 
-    TField& FindByNameAndIndex(const Graphics::FName& name, size_t index);
-    TField* FindByNameAndIndexIFP(const Graphics::FName& name, size_t index);
+    FField& FindByNameAndIndex(const Graphics::FName& name, size_t index);
+    FField* FindByNameAndIndexIFP(const Graphics::FName& name, size_t index);
 
-    const TField& FindByName(const Graphics::FName& name) const { return remove_const(this)->FindByName(name); }
-    const TField* FindByNameIFP(const Graphics::FName& name) const { return remove_const(this)->FindByNameIFP(name); }
+    const FField& FindByName(const Graphics::FName& name) const { return remove_const(this)->FindByName(name); }
+    const FField* FindByNameIFP(const Graphics::FName& name) const { return remove_const(this)->FindByNameIFP(name); }
 
-    const TField& FindByNameAndIndex(const Graphics::FName& name, size_t index) const { return remove_const(this)->FindByNameAndIndex(name, index); }
-    const TField* FindByNameAndIndexIFP(const Graphics::FName& name, size_t index) const { return remove_const(this)->FindByNameAndIndexIFP(name, index); }
+    const FField& FindByNameAndIndex(const Graphics::FName& name, size_t index) const { return remove_const(this)->FindByNameAndIndex(name, index); }
+    const FField* FindByNameAndIndexIFP(const Graphics::FName& name, size_t index) const { return remove_const(this)->FindByNameAndIndexIFP(name, index); }
 
-    TMemoryView<const TField> MakeView() const { return _fields.MakeConstView(); }
+    TMemoryView<const FField> MakeView() const { return _fields.MakeConstView(); }
 
     hash_t THash(const TMemoryView<const u8>& data) const;
 
@@ -130,7 +130,7 @@ private:
     fields_type _fields;
 };
 //----------------------------------------------------------------------------
-using FValueField = FValueBlock::TField;
+using FValueField = FValueBlock::FField;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

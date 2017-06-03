@@ -22,11 +22,11 @@ void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA 
 
     oss << "struct {";
 
-    const FValueBlock::TField* pNormalKey = nullptr;
-    const FValueBlock::TField* pTangentKey = nullptr;
-    const FValueBlock::TField* pBinormalKey = nullptr;
+    const FValueField* pNormalKey = nullptr;
+    const FValueField* pTangentKey = nullptr;
+    const FValueField* pBinormalKey = nullptr;
 
-    for (const FValueBlock::TField& subPart : declaration->SubParts()) {
+    for (const FValueField& subPart : declaration->SubParts()) {
         const size_t index = subPart.Index();
         const EValueType type = subPart.Type();
         const Graphics::FName& semantic = subPart.Name();
@@ -159,7 +159,7 @@ FStringView VertexFormatToShaderFormat(FVertexFormat format) {
 FStringView VertexSemanticToShaderSemantic(const Graphics::FName& semantic) {
     if      (semantic == FVertexSemantic::Position)
         return MakeStringView("POSITION");
-    else if (semantic == FVertexSemantic::Position)
+    else if (semantic == FVertexSemantic::TexCoord)
         return MakeStringView("TEXCOORD");
     else if (semantic == FVertexSemantic::Color)
         return MakeStringView("COLOR");

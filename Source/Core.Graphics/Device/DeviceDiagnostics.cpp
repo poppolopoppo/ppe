@@ -16,34 +16,34 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(IDeviceAPIDiagnostics *diagnostics, const char *cstr) {
-    if (diagnostics && diagnostics->IsProfilerAttached()) {
-        wchar_t buffer[1024];
-        ToWCStr(buffer, cstr);
+void Diagnostics_BeginEvent(IDeviceAPIDiagnostics *diagnostics, const FStringView& name) {
+    if (diagnostics && diagnostics->UseDebugDrawEvents()) {
+        wchar_t buffer[512];
+        ToWCStr(buffer, name.data());
         diagnostics->BeginEvent(buffer);
     }
 }
 //----------------------------------------------------------------------------
-void Diagnostics_SetMarker(IDeviceAPIDiagnostics *diagnostics, const char *cstr) {
-    if (diagnostics && diagnostics->IsProfilerAttached()) {
-        wchar_t buffer[1024];
-        ToWCStr(buffer, cstr);
+void Diagnostics_SetMarker(IDeviceAPIDiagnostics *diagnostics, const FStringView& name) {
+    if (diagnostics && diagnostics->UseDebugDrawEvents()) {
+        wchar_t buffer[512];
+        ToWCStr(buffer, name.data());
         diagnostics->SetMarker(buffer);
     }
 }
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(IDeviceAPIDiagnostics *diagnostics, const wchar_t *wcstr) {
-    if (diagnostics && diagnostics->IsProfilerAttached())
-        diagnostics->BeginEvent(wcstr);
+void Diagnostics_BeginEvent(IDeviceAPIDiagnostics *diagnostics, const FWStringView& name) {
+    if (diagnostics && diagnostics->UseDebugDrawEvents())
+        diagnostics->BeginEvent(name);
 }
 //----------------------------------------------------------------------------
-void Diagnostics_SetMarker(IDeviceAPIDiagnostics *diagnostics, const wchar_t *wcstr) {
-    if (diagnostics && diagnostics->IsProfilerAttached())
-        diagnostics->SetMarker(wcstr);
+void Diagnostics_SetMarker(IDeviceAPIDiagnostics *diagnostics, const FWStringView& name) {
+    if (diagnostics && diagnostics->UseDebugDrawEvents())
+        diagnostics->SetMarker(name);
 }
 //----------------------------------------------------------------------------
 void Diagnostics_EndEvent(IDeviceAPIDiagnostics *diagnostics) {
-    if (diagnostics && diagnostics->IsProfilerAttached())
+    if (diagnostics && diagnostics->UseDebugDrawEvents())
         diagnostics->EndEvent();
 }
 //----------------------------------------------------------------------------
@@ -53,20 +53,20 @@ void Diagnostics_EndEvent(IDeviceAPIDiagnostics *diagnostics) {
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const char *cstr) {
-    Diagnostics_BeginEvent(encapsulator->Diagnostics(), cstr);
+void Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const FStringView& name) {
+    Diagnostics_BeginEvent(encapsulator->Diagnostics(), name);
 }
 //----------------------------------------------------------------------------
-void Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const char *cstr) {
-    Diagnostics_SetMarker(encapsulator->Diagnostics(), cstr);
+void Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const FStringView& name) {
+    Diagnostics_SetMarker(encapsulator->Diagnostics(), name);
 }
 //----------------------------------------------------------------------------
-void Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr) {
-    Diagnostics_BeginEvent(encapsulator->Diagnostics(), wcstr);
+void Diagnostics_BeginEvent(const FAbstractDeviceAPIEncapsulator *encapsulator, const FWStringView& name) {
+    Diagnostics_BeginEvent(encapsulator->Diagnostics(), name);
 }
 //----------------------------------------------------------------------------
-void Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const wchar_t *wcstr) {
-    Diagnostics_SetMarker(encapsulator->Diagnostics(), wcstr);
+void Diagnostics_SetMarker(const FAbstractDeviceAPIEncapsulator *encapsulator, const FWStringView& name) {
+    Diagnostics_SetMarker(encapsulator->Diagnostics(), name);
 }
 //----------------------------------------------------------------------------
 void Diagnostics_EndEvent(const FAbstractDeviceAPIEncapsulator *encapsulator) {

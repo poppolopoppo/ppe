@@ -35,8 +35,8 @@ public:
     virtual bool Available() const override;
     virtual FDeviceAPIDependantEntity *TerminalEntity() const override;
 
-    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) = 0;
-    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) = 0;
+    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) = 0;
+    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) = 0;
 
     virtual void Destroy(IDeviceAPIEncapsulator *device) = 0;
 
@@ -70,8 +70,8 @@ public:
     EBufferMode Mode() const { return _mode; }
     EBufferUsage Usage() const { return _usage; }
 
-    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) = 0;
-    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) = 0;
+    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) = 0;
+    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) = 0;
 
     virtual const IDeviceAPIDependantAbstractTextureContent *Content() const = 0;
 

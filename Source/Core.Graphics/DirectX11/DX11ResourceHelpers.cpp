@@ -21,7 +21,7 @@ namespace Graphics {
 bool DX11ResourceGetData(
     IDeviceAPIEncapsulator *device,
     ::ID3D11Resource *resource, size_t subResource,
-    size_t offset, void *const dst, size_t stride, size_t count,
+    size_t offset, const TMemoryView<u8>& dst,
     EBufferMode bufferMode,
     EBufferUsage bufferUsage ) {
     UNUSED(bufferMode);
@@ -33,7 +33,7 @@ bool DX11ResourceGetData(
     Assert(EBufferUsage::Immutable != bufferUsage);
     Assert(bufferMode ^ EBufferMode::Read);
 
-    if (!DX11MapRead(wrapper->ImmediateContext(), resource, subResource, offset, dst, stride, count))
+    if (!DX11MapRead(wrapper->ImmediateContext(), resource, subResource, offset, dst))
         CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to map resource buffer for reading", device));
 
     return true;
@@ -42,7 +42,7 @@ bool DX11ResourceGetData(
 bool DX11ResourceSetData(
     IDeviceAPIEncapsulator *device,
     ::ID3D11Resource *resource, size_t subResource,
-    size_t offset, const void *src, size_t stride, size_t count,
+    size_t offset, const TMemoryView<const u8>& src,
     Graphics::EBufferMode bufferMode,
     Graphics::EBufferUsage bufferUsage ) {
 
@@ -56,14 +56,14 @@ bool DX11ResourceSetData(
     switch (bufferUsage)
     {
     case Core::Graphics::EBufferUsage::Default:
-        if (!DX11UpdateResource(wrapper->ImmediateContext(), resource, subResource, src, rowPitch, depthPitch))
+        if (!DX11UpdateResource(wrapper->ImmediateContext(), resource, subResource, src.data(), rowPitch, depthPitch))
             CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to update resource buffer", device));
         break;
 
     case Core::Graphics::EBufferUsage::Dynamic:
     case Core::Graphics::EBufferUsage::Staging:
         Assert(bufferMode ^ EBufferMode::Write);
-        if (!DX11MapWrite(  wrapper->ImmediateContext(), resource, subResource, offset, src, stride, count,
+        if (!DX11MapWrite(  wrapper->ImmediateContext(), resource, subResource, offset, src,
                             bufferMode ^ EBufferMode::Discard,
                             bufferMode ^ EBufferMode::DoNotWait ))
             CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to map resource buffer for writing", device));
@@ -103,19 +103,19 @@ bool DX11CopyResourceSubRegion(
 
     ::D3D11_BOX dx11SrcBox;
 
-    dx11SrcBox.left = checked_cast<UINT>(srcBox.Min().x());
-    dx11SrcBox.right = checked_cast<UINT>(srcBox.Max().x());
+    dx11SrcBox.left = checked_cast<::UINT>(srcBox.Min().x());
+    dx11SrcBox.right = checked_cast<::UINT>(srcBox.Max().x());
 
-    dx11SrcBox.top = checked_cast<UINT>(srcBox.Min().y());
-    dx11SrcBox.bottom = checked_cast<UINT>(srcBox.Max().z());
+    dx11SrcBox.top = checked_cast<::UINT>(srcBox.Min().y());
+    dx11SrcBox.bottom = checked_cast<::UINT>(srcBox.Max().z());
 
-    dx11SrcBox.front = checked_cast<UINT>(srcBox.Min().z());
-    dx11SrcBox.back = checked_cast<UINT>(srcBox.Max().z());
+    dx11SrcBox.front = checked_cast<::UINT>(srcBox.Min().z());
+    dx11SrcBox.back = checked_cast<::UINT>(srcBox.Max().z());
 
     wrapper->ImmediateContext()->CopySubresourceRegion(
-        dst, checked_cast<UINT>(dstSubResource),
-        checked_cast<UINT>(dstPos.x()), checked_cast<UINT>(dstPos.y()), checked_cast<UINT>(dstPos.z()),
-        src, checked_cast<UINT>(srcSubResource),
+        dst, checked_cast<::UINT>(dstSubResource),
+        checked_cast<::UINT>(dstPos.x()), checked_cast<::UINT>(dstPos.y()), checked_cast<::UINT>(dstPos.z()),
+        src, checked_cast<::UINT>(srcSubResource),
         &dx11SrcBox );
 
     return true;
@@ -127,45 +127,45 @@ bool DX11UpdateResource(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *
     Assert(resource);
     Assert(IS_ALIGNED(16, src));
 
-    deviceContext->UpdateSubresource(resource, checked_cast<UINT>(subResource), NULL, src, checked_cast<UINT>(rowPitch), checked_cast<UINT>(depthPitch));
+    deviceContext->UpdateSubresource(resource, checked_cast<::UINT>(subResource), NULL, src, checked_cast<::UINT>(rowPitch), checked_cast<::UINT>(depthPitch));
     return true;
 }
 //----------------------------------------------------------------------------
-bool DX11MapRead(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, void *const dst, size_t stride, size_t count) {
+bool DX11MapRead(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<u8>& dst) {
     Assert(resource);
-    Assert(IS_ALIGNED(16, dst));
+    Assert(IS_ALIGNED(16, dst.data()));
 
     ::D3D11_MAPPED_SUBRESOURCE mappedResource;
-    const ::HRESULT result = deviceContext->Map(resource, checked_cast<UINT>(subResource), D3D11_MAP_READ, 0, &mappedResource);
+    const ::HRESULT result = deviceContext->Map(resource, checked_cast<::UINT>(subResource), D3D11_MAP_READ, 0, &mappedResource);
     if (FAILED(result))
         return false;
 
-    memcpy(dst, reinterpret_cast<const u8 *>(mappedResource.pData) + offset, stride * count);
+    memcpy(dst.data(), reinterpret_cast<const u8 *>(mappedResource.pData) + offset, dst.size());
 
-    deviceContext->Unmap(resource, checked_cast<UINT>(subResource));
+    deviceContext->Unmap(resource, checked_cast<::UINT>(subResource));
     return true;
 }
 //----------------------------------------------------------------------------
-bool DX11MapWrite(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const void *src, size_t stride, size_t count, bool discard, bool doNotWait) {
+bool DX11MapWrite(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<const u8>& src, bool discard, bool doNotWait) {
     Assert(resource);
-    Assert(IS_ALIGNED(16, src));
+    Assert(IS_ALIGNED(16, src.data()));
 
     const ::D3D11_MAP mapType = (discard)
         ? ::D3D11_MAP_WRITE_DISCARD
         : ::D3D11_MAP_WRITE;
 
-    const UINT mapFlags = (doNotWait)
+    const ::UINT mapFlags = (doNotWait)
         ? ::D3D11_MAP_FLAG_DO_NOT_WAIT
         : 0;
 
     ::D3D11_MAPPED_SUBRESOURCE mappedResource;
-    const ::HRESULT result = deviceContext->Map(resource, checked_cast<UINT>(subResource), mapType, mapFlags, &mappedResource);
+    const ::HRESULT result = deviceContext->Map(resource, checked_cast<::UINT>(subResource), mapType, mapFlags, &mappedResource);
     if (FAILED(result))
         return false;
 
-    memcpy(reinterpret_cast<u8 *>(mappedResource.pData) + offset, src, stride * count);
+    memcpy(reinterpret_cast<u8 *>(mappedResource.pData) + offset, src.data(), src.size());
 
-    deviceContext->Unmap(resource, checked_cast<UINT>(subResource));
+    deviceContext->Unmap(resource, checked_cast<::UINT>(subResource));
     return true;
 }
 //----------------------------------------------------------------------------

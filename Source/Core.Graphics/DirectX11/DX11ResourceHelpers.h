@@ -16,13 +16,13 @@ enum class EDeviceResourceType;
 //----------------------------------------------------------------------------
 bool DX11ResourceGetData(   IDeviceAPIEncapsulator *device,
                             ::ID3D11Resource *resource, size_t subResource,
-                            size_t offset, void *const dst, size_t stride, size_t count,
+                            size_t offset, const TMemoryView<u8>& dst,
                             EBufferMode bufferMode,
                             EBufferUsage bufferUsage );
 //----------------------------------------------------------------------------
 bool DX11ResourceSetData(   IDeviceAPIEncapsulator *device,
                             ::ID3D11Resource *resource, size_t subResource,
-                            size_t offset, const void *src, size_t stride, size_t count,
+                            size_t offset, const TMemoryView<const u8>& src,
                             EBufferMode bufferMode,
                             EBufferUsage bufferUsage );
 //----------------------------------------------------------------------------
@@ -38,9 +38,9 @@ bool DX11CopyResourceSubRegion( IDeviceAPIEncapsulator *device,
 //----------------------------------------------------------------------------
 bool DX11UpdateResource(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, const void *src, size_t rowPitch, size_t depthPitch);
 //----------------------------------------------------------------------------
-bool DX11MapRead(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, void *const dst, size_t stride, size_t count);
+bool DX11MapRead(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<u8>& dst);
 //----------------------------------------------------------------------------
-bool DX11MapWrite(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const void *src, size_t stride, size_t count, bool discard, bool doNotWait);
+bool DX11MapWrite(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<const u8>& src, bool discard, bool doNotWait);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

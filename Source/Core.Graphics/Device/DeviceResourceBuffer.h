@@ -69,20 +69,10 @@ public:
     void Resize(size_t count);
 
     void Create(IDeviceAPIEncapsulator *device, const FDeviceResource *resource, FDeviceAPIDependantResourceBuffer *buffer);
-    PDeviceAPIDependantResourceBuffer Destroy(IDeviceAPIEncapsulator *device, const FDeviceResource *resource);
+    PDeviceAPIDependantResourceBuffer& Destroy(IDeviceAPIEncapsulator *device, const FDeviceResource *resource);
 
-    void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count);
-    void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count);
-
-    template <typename T>
-    void GetData(IDeviceAPIEncapsulator *device, size_t offset, T *const dst, size_t count) {
-        GetData(device, offset, dst, sizeof(T), count);
-    }
-
-    template <typename T>
-    void SetData(IDeviceAPIEncapsulator *device, size_t offset, const T *src, size_t count) {
-        SetData(device, offset, src, sizeof(T), count);
-    }
+    void GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst);
+    void SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src);
 
     void CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceResourceBuffer *psource);
     void CopySubPart(   IDeviceAPIEncapsulator *device, size_t dstOffset,
@@ -121,8 +111,8 @@ public:
     EBufferMode Mode() const { return static_cast<EBufferMode>(bitmode_type::Get(_strideModeUsage)); }
     EBufferUsage Usage() const { return static_cast<EBufferUsage>(bitusage_type::Get(_strideModeUsage)); }
 
-    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) = 0;
-    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) = 0;
+    virtual void GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) = 0;
+    virtual void SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) = 0;
 
     virtual void CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantResourceBuffer *psource) = 0;
 
@@ -134,7 +124,7 @@ public:
 
 private:
     typedef Meta::TBit<u32>::TFirst<2>::type bitusage_type;
-    typedef Meta::TBit<u32>::TAfter<bitusage_type>::TField<2>::type bitmode_type;
+    typedef Meta::TBit<u32>::TAfter<bitusage_type>::TField<4>::type bitmode_type;
     typedef Meta::TBit<u32>::TAfter<bitmode_type>::FRemain::type bitstride_type;
 
     u32 _count;

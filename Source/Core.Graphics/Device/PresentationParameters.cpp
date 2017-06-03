@@ -37,7 +37,7 @@ FPresentationParameters::FPresentationParameters(
     u32 multiSampleCount,
     EPresentInterval presentationInterval )
 :   FPresentationParameters( backBufferWidth, backBufferHeight, backBufferFormat, depthStencilFormat, fullscreen, tripleBuffer, multiSampleCount, presentationInterval,
-                            ViewportF(0, 0, float(backBufferWidth), float(backBufferHeight), 0, 1)) {}
+                            FViewport(0, 0, float(backBufferWidth), float(backBufferHeight), 0, 1)) {}
 //----------------------------------------------------------------------------
 FPresentationParameters::FPresentationParameters(
     u32 backBufferWidth,
@@ -48,7 +48,7 @@ FPresentationParameters::FPresentationParameters(
     bool tripleBuffer,
     u32 multiSampleCount,
     EPresentInterval presentationInterval,
-    const ViewportF& viewport)
+    const FViewport& viewport)
 :   _backBufferWidth(backBufferWidth)
 ,   _backBufferHeight(backBufferHeight)
 ,   _backBufferFormat(backBufferFormat)

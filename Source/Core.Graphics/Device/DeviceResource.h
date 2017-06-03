@@ -56,10 +56,10 @@ public:
     void OnDeviceLost(FDeviceEncapsulator *device);
     void OnDeviceDestroy(FDeviceEncapsulator *device);
 
-    FStringView ResourceName() const;
-    void SetResourceName(const char *name);
-    void SetResourceName(const FStringView& name);
-    void SetResourceName(FString&& name);
+    FWStringView ResourceName() const;
+    void SetResourceName(const wchar_t* name);
+    void SetResourceName(const FWStringView& name);
+    void SetResourceName(FWString&& name);
 
 protected:
     bool Sharable_() const { return bitsharable_type::Get(_flagsAndResourceType); }
@@ -81,7 +81,7 @@ private:
     u32 _flagsAndResourceType;
 
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
-    FString _resourceName;
+    FWString _resourceName;
 #endif
 };
 //----------------------------------------------------------------------------

@@ -89,32 +89,28 @@ size_t FTextureCube::SizeInBytes() const {
     return Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount) * CubeMapFaceCount;
 }
 //----------------------------------------------------------------------------
-void FTextureCube::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
+void FTextureCube::GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
-    Assert(dst);
-    Assert(stride);
-    Assert(count);
-    Assert(offset + stride * count <= Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount) * CubeMapFaceCount);
+    Assert(dst.SizeInBytes());
+    Assert(offset + dst.SizeInBytes() <= Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount) * CubeMapFaceCount);
     Assert(_deviceAPIDependantTextureCube);
     Assert(u32(EBufferMode::Read) == (u32(Mode()) & u32(EBufferMode::Read)));
 
-    _deviceAPIDependantTextureCube->GetData(device, offset, dst, stride, count);
+    _deviceAPIDependantTextureCube->GetData(device, offset, dst);
 }
 //----------------------------------------------------------------------------
-void FTextureCube::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
+void FTextureCube::SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Frozen());
     Assert(device);
-    Assert(src);
-    Assert(stride);
-    Assert(count);
-    Assert(offset + stride * count <= Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount) * CubeMapFaceCount);
+    Assert(src.SizeInBytes());
+    Assert(offset + src.SizeInBytes() <= Format()->SizeOfTexture2DInBytes(_width, _height, _levelCount) * CubeMapFaceCount);
     Assert(_deviceAPIDependantTextureCube);
     Assert(u32(EBufferMode::Write) == (u32(Mode()) & u32(EBufferMode::Write)));
 
-    _deviceAPIDependantTextureCube->SetData(device, offset, src, stride, count);
+    _deviceAPIDependantTextureCube->SetData(device, offset, src);
 }
 //----------------------------------------------------------------------------
 void FTextureCube::CopyFrom(IDeviceAPIEncapsulator *device, const FTexture *psource) {

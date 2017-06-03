@@ -39,6 +39,7 @@ public:
     static const FVertexSemantic Binormal;
 
     static FVertexSemantic Invalid() { return FVertexSemantic(); }
+    static FVertexSemantic FromName(const FName& name);
 
     FVertexSemantic() {}
 
@@ -75,16 +76,16 @@ public:
 
     const FValueBlock& FBlock() const { return _block; }
 
-    TMemoryView<const FValueBlock::TField> SubParts() const { return _block.MakeView(); }
+    TMemoryView<const FValueField> SubParts() const { return _block.MakeView(); }
 
     void AddSubPart(const FVertexSemantic& semantic, size_t index, EValueType type, size_t offset);
 
     template <typename _Class, typename T>
     void AddTypedSubPart(const FVertexSemantic& semantic, size_t index, T _Class:: *member);
 
-    const FValueBlock::TField& SubPartByIndex(size_t index) const { return _block[index]; }
-    const FValueBlock::TField& SubPartBySemantic(const FVertexSemantic& semantic, size_t index) const;
-    const FValueBlock::TField* SubPartBySemanticIFP(const FVertexSemantic& semantic, size_t index) const;
+    const FValueField& SubPartByIndex(size_t index) const { return _block[index]; }
+    const FValueField& SubPartBySemantic(const FVertexSemantic& semantic, size_t index) const;
+    const FValueField* SubPartBySemanticIFP(const FVertexSemantic& semantic, size_t index) const;
 
     void CopyVertex(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src) const;
 
@@ -110,7 +111,7 @@ template <typename _Class, typename T>
 void FVertexDeclaration::AddTypedSubPart(const FVertexSemantic& semantic, size_t index, T _Class:: *member) {
     const size_t offset = (size_t)&(((_Class *)nullptr)->*member);
     Assert(0 == offset % sizeof(u32));
-    AddSubPart(semantic, index, TValueTraits<T>::ETypeId, offset);
+    AddSubPart(semantic, index, TValueTraits<T>::TypeId, offset);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

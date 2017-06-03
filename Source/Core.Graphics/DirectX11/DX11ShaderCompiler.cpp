@@ -86,23 +86,23 @@ HRESULT STDCALL FDX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType,
         return S_OK;
     }
 
+    size_t length = 0;
     FileSystem::char_type buffer[2048];
-    const FileSystem::char_type sep = FileSystem::char_type(FileSystem::Separator);
 
     switch (IncludeType)
     {
     case ::D3D_INCLUDE_SYSTEM:
-        Format(buffer, L"{0}{1}{2}", _systemDir, sep, pFileName);
+        length = Format(buffer, L"{0}{1}", _systemDir, pFileName);
         break;
     case ::D3D_INCLUDE_LOCAL:
-        Format(buffer, L"{0}{1}{2}", _source->Filename().Dirpath(), sep, pFileName);
+        length = Format(buffer, L"{0}{1}", _source->Filename().Dirpath(), pFileName);
         break;
     default:
         AssertNotImplemented();
         return E_FAIL;
     }
 
-    const FFilename includeFilename(buffer);
+    const FFilename includeFilename(FileSystem::FStringView(buffer, length));
     if (!FVirtualFileSystem::Instance().FileExists(includeFilename))
         return E_FAIL;
 
@@ -118,7 +118,7 @@ HRESULT STDCALL FDX11ShaderIncludeHandler_::Close(LPCVOID pData) {
 }
 //----------------------------------------------------------------------------
 void FDX11ShaderIncludeHandler_::Open_(const FFilename& filename, LPCVOID *ppData, UINT *pBytes) {
-    const auto file = FVirtualFileSystem::Instance().OpenReadable(filename, AccessPolicy::Ate_Binary );
+    const auto file = FVirtualFileSystem::Instance().OpenReadable(filename, EAccessPolicy::Ate_Binary );
     AssertRelease(file);
 
     const size_t sizeInBytes = checked_cast<size_t>(file->TellI()); // Ate
@@ -169,45 +169,45 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename T>
 static EValueType DX11VariableTypeToValueType_(const size_t rows, const size_t columns) {
-    switch (columns)
+    switch (rows)
     {
     case 1:
-        switch (rows)
+        switch (columns)
         {
-        case 1: return TValueTraits< T >::ETypeId;
-        case 2: return TValueTraits< TScalarVector<T, 2> >::ETypeId;
-        case 3: return TValueTraits< TScalarVector<T, 3> >::ETypeId;
-        case 4: return TValueTraits< TScalarVector<T, 4> >::ETypeId;
+        case 1: return TValueTraits< T >::TypeId;
+        case 2: return TValueTraits< TScalarVector<T, 2> >::TypeId;
+        case 3: return TValueTraits< TScalarVector<T, 3> >::TypeId;
+        case 4: return TValueTraits< TScalarVector<T, 4> >::TypeId;
         }
         break;
 
     case 2:
-        switch (rows)
+        switch (columns)
         {
-        case 1: return TValueTraits< TScalarMatrix<T, 1, 2> >::ETypeId;
-        case 2: return TValueTraits< TScalarMatrix<T, 2, 2> >::ETypeId;
-        case 3: return TValueTraits< TScalarMatrix<T, 3, 2> >::ETypeId;
-        case 4: return TValueTraits< TScalarMatrix<T, 4, 2> >::ETypeId;
+        case 1: return TValueTraits< TScalarMatrix<T, 1, 2> >::TypeId;
+        case 2: return TValueTraits< TScalarMatrix<T, 2, 2> >::TypeId;
+        case 3: return TValueTraits< TScalarMatrix<T, 3, 2> >::TypeId;
+        case 4: return TValueTraits< TScalarMatrix<T, 4, 2> >::TypeId;
         }
         break;
 
     case 3:
-        switch (rows)
+        switch (columns)
         {
-        case 1: return TValueTraits< TScalarMatrix<T, 1, 3> >::ETypeId;
-        case 2: return TValueTraits< TScalarMatrix<T, 2, 3> >::ETypeId;
-        case 3: return TValueTraits< TScalarMatrix<T, 3, 3> >::ETypeId;
-        case 4: return TValueTraits< TScalarMatrix<T, 4, 3> >::ETypeId;
+        case 1: return TValueTraits< TScalarMatrix<T, 1, 3> >::TypeId;
+        case 2: return TValueTraits< TScalarMatrix<T, 2, 3> >::TypeId;
+        case 3: return TValueTraits< TScalarMatrix<T, 3, 3> >::TypeId;
+        case 4: return TValueTraits< TScalarMatrix<T, 4, 3> >::TypeId;
         }
         break;
 
     case 4:
-        switch (rows)
+        switch (columns)
         {
-        case 1: return TValueTraits< TScalarMatrix<T, 1, 4> >::ETypeId;
-        case 2: return TValueTraits< TScalarMatrix<T, 2, 4> >::ETypeId;
-        case 3: return TValueTraits< TScalarMatrix<T, 3, 4> >::ETypeId;
-        case 4: return TValueTraits< TScalarMatrix<T, 4, 4> >::ETypeId;
+        case 1: return TValueTraits< TScalarMatrix<T, 1, 4> >::TypeId;
+        case 2: return TValueTraits< TScalarMatrix<T, 2, 4> >::TypeId;
+        case 3: return TValueTraits< TScalarMatrix<T, 3, 4> >::TypeId;
+        case 4: return TValueTraits< TScalarMatrix<T, 4, 4> >::TypeId;
         }
         break;
     }
@@ -411,8 +411,8 @@ static void DX11StripShaderBlobIFN_(
     const FShaderSource *source,
     EShaderCompilerFlags flags ) {
 
-    if (flags ^ EShaderCompilerFlags::NoOptimize)
-        return; // shader is not stripped when NoOptimize is set (debug)
+    if (not (flags ^ EShaderCompilerFlags::StripDebug))
+        return; // shader is not stripped when StripDebug is not set
 
     TComPtr<::ID3DBlob> striped = nullptr;
 
@@ -523,21 +523,25 @@ UINT ShaderCompilerFlagsToD3D11CompileFlags(EShaderCompilerFlags value) {
         result |= D3DCOMPILE_ENABLE_STRICTNESS;
     if (value ^ EShaderCompilerFlags::WError)
         result |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
+    if (value ^ EShaderCompilerFlags::IEEEStrict)
+        result |= D3DCOMPILE_IEEE_STRICTNESS;
     return result;
 }
 //----------------------------------------------------------------------------
 EShaderCompilerFlags D3D11CompileFlagsToShaderCompilerFlags(UINT  value) {
     EShaderCompilerFlags result = EShaderCompilerFlags::None;
     if (D3DCOMPILE_DEBUG == (D3DCOMPILE_DEBUG & value) )
-        result = static_cast<EShaderCompilerFlags>(size_t(result) | size_t(EShaderCompilerFlags::Debug));
+        result = result + EShaderCompilerFlags::Debug;
     if (D3DCOMPILE_OPTIMIZATION_LEVEL3 == (D3DCOMPILE_OPTIMIZATION_LEVEL3 & value) )
-        result = static_cast<EShaderCompilerFlags>(size_t(result) | size_t(EShaderCompilerFlags::Optimize));
+        result = result + EShaderCompilerFlags::Optimize;
     else if (D3DCOMPILE_SKIP_OPTIMIZATION == (D3DCOMPILE_SKIP_OPTIMIZATION & value) )
-        result = static_cast<EShaderCompilerFlags>(size_t(result) | size_t(EShaderCompilerFlags::NoOptimize));
+        result = result + EShaderCompilerFlags::NoOptimize;
     if (D3DCOMPILE_ENABLE_STRICTNESS == (D3DCOMPILE_ENABLE_STRICTNESS & value) )
-        result = static_cast<EShaderCompilerFlags>(size_t(result) | size_t(EShaderCompilerFlags::Pedantic));
+        result = result + EShaderCompilerFlags::Pedantic;
     if (D3DCOMPILE_WARNINGS_ARE_ERRORS == (D3DCOMPILE_WARNINGS_ARE_ERRORS & value) )
-        result = static_cast<EShaderCompilerFlags>(size_t(result) | size_t(EShaderCompilerFlags::WError));
+        result = result + EShaderCompilerFlags::WError;
+    if (D3DCOMPILE_IEEE_STRICTNESS == (D3DCOMPILE_IEEE_STRICTNESS & value))
+        result = result + EShaderCompilerFlags::IEEEStrict;
     return result;
 }
 //----------------------------------------------------------------------------

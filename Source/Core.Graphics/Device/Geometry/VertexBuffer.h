@@ -39,7 +39,7 @@ public:
     const PCVertexDeclaration& VertexDeclaration() const { return _vertexDeclaration; }
     const FDeviceResourceBuffer& Buffer() const { return _buffer; }
 
-    void SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count);
+    void SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src);
 
     template <typename T>
     void Create(IDeviceAPIEncapsulator *device, const TMemoryView<const T>& optionalData);

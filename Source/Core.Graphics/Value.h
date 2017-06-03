@@ -63,14 +63,14 @@ bool ValueIsPromotable(EValueType dst, EValueType src);
 
 bool ValuePromote(EValueType output, const TMemoryView<u8>& dst, EValueType input, const TMemoryView<const u8>& src);
 
-bool ValuePromoteArray( EValueType output, const TMemoryView<u8>& dst, size_t dstStride,
-                        EValueType input, const TMemoryView<const u8>& src, size_t srcStride,
+bool ValuePromoteArray( EValueType output, const TMemoryView<u8>& dst, size_t dstOffset, size_t dstStride,
+                        EValueType input, const TMemoryView<const u8>& src, size_t srcOffset, size_t srcStride,
                         size_t count );
 
 void ValueSwap(EValueType type, const TMemoryView<u8>& lhs, const TMemoryView<u8>& rhs);
 //----------------------------------------------------------------------------
 template <typename T>
-struct TValueTraits { STATIC_CONST_INTEGRAL(EValueType, ETypeId, EValueType::Void); };
+struct TValueTraits { STATIC_CONST_INTEGRAL(EValueType, TypeId, EValueType::Void); };
 template <EValueType _Type>
 struct TValueTraitsReverse { typedef void type; };
 //----------------------------------------------------------------------------
@@ -156,7 +156,7 @@ inline FValue Lerp(const FValue& v0, const FValue& v1, float t) {
 #define VALUETYPE_TRAITS_DEF(_Name, T, _TypeId, _Unused) \
     template <> struct TValueTraits< T > { \
         STATIC_ASSERT(size_t(EValueType::_Name) == (_TypeId)); \
-        STATIC_CONST_INTEGRAL(EValueType, ETypeId, EValueType::_Name); \
+        STATIC_CONST_INTEGRAL(EValueType, TypeId, EValueType::_Name); \
         static T& Get(FValue::udata_type& data) { return data._Name; } \
     }; \
     template <> struct TValueTraitsReverse< EValueType::_Name > { \
@@ -167,29 +167,29 @@ FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_TRAITS_DEF)
 //----------------------------------------------------------------------------
 template <typename T>
 T& FValue::Get() {
-    STATIC_ASSERT(TValueTraits<T>::ETypeId != EValueType::Void);
-    Assert(_type == TValueTraits<T>::ETypeId);
+    STATIC_ASSERT(TValueTraits<T>::TypeId != EValueType::Void);
+    Assert(_type == TValueTraits<T>::TypeId);
     return TValueTraits<T>::Get(_data);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 const T& FValue::Get() const {
-    STATIC_ASSERT(TValueTraits<T>::ETypeId != EValueType::Void);
-    Assert(_type == TValueTraits<T>::ETypeId);
+    STATIC_ASSERT(TValueTraits<T>::TypeId != EValueType::Void);
+    Assert(_type == TValueTraits<T>::TypeId);
     return TValueTraits<T>::Get(const_cast<udata_type&>(_data));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void FValue::Set(const T& value) {
-    STATIC_ASSERT(TValueTraits<T>::ETypeId != EValueType::Void);
-    _type = TValueTraits<T>::ETypeId;
+    STATIC_ASSERT(TValueTraits<T>::TypeId != EValueType::Void);
+    _type = TValueTraits<T>::TypeId;
     new ((void*)&TValueTraits<T>::Get(_data)) T(value);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 T FValue::Lerp(const T& other, float f) const {
-    STATIC_ASSERT(TValueTraits<T>::ETypeId != EValueType::Void);
-    Assert(TValueTraits<T>::ETypeId == _type);
+    STATIC_ASSERT(TValueTraits<T>::TypeId != EValueType::Void);
+    Assert(TValueTraits<T>::TypeId == _type);
     return Lerp(TValueTraits<T>::Get(_data), other, f);
 }
 //----------------------------------------------------------------------------
@@ -207,8 +207,13 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 // FValue RTTI Wrapping :
 //----------------------------------------------------------------------------
+Graphics::EValueType GraphicsValueType(u32 typeId);
+//----------------------------------------------------------------------------
+bool GraphicsValueToAtomIFP(RTTI::PMetaAtom& dst, const Graphics::FValue& src);
+bool AtomToGraphicsValueIFP(Graphics::FValue& dst, const RTTI::FMetaAtom& src);
+//----------------------------------------------------------------------------
 void GraphicsValueToAtom(RTTI::PMetaAtom& dst, const Graphics::FValue& src);
-void AtomToGraphicsValue(Graphics::FValue& dst, const RTTI::PMetaAtom& src);
+void AtomToGraphicsValue(Graphics::FValue& dst, const RTTI::FMetaAtom& src);
 //----------------------------------------------------------------------------
 template <>
 struct TMetaTypeTraitsImpl< Graphics::FValue, void > {
@@ -226,8 +231,8 @@ struct TMetaTypeTraitsImpl< Graphics::FValue, void > {
     static void WrapMove(wrapper_type& dst, wrapped_type&& src) { GraphicsValueToAtom(dst, src); }
     static void WrapCopy(wrapper_type& dst, const wrapped_type& src) { GraphicsValueToAtom(dst, src); }
 
-    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { AtomToGraphicsValue(dst, src); }
-    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { AtomToGraphicsValue(dst, src); }
+    static void UnwrapMove(wrapped_type& dst, wrapper_type&& src) { AtomToGraphicsValue(dst, *src); }
+    static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src) { AtomToGraphicsValue(dst, *src); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

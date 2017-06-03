@@ -126,6 +126,9 @@ void FDeviceSharedEntityPool::Release_Exclusive(const FDeviceSharedEntityKey& ke
     FSharedEntity *& shared = _map[key];
     FSharedEntity *const mru = new FSharedEntity;
     mru->LockCount = 0;
+    mru->Key = key;
+    mru->Entity = std::move(entity);
+    Assert(entity.get() == nullptr);
 
     global_lru_type::PushFront(&_mru, &_lru, mru);
     local_lru_type::PushFront(&shared, nullptr, mru);
@@ -133,10 +136,6 @@ void FDeviceSharedEntityPool::Release_Exclusive(const FDeviceSharedEntityKey& ke
     const size_t sizeInBytes = shared->Entity->VideoMemorySizeInBytes();
     Assert(sizeInBytes);
     _usedMemory.Allocate(1, sizeInBytes);
-
-    mru->Key = key;
-    mru->Entity = std::move(entity);
-    Assert(entity.get() == nullptr);
 }
 //----------------------------------------------------------------------------
 size_t FDeviceSharedEntityPool::ReleaseLRU_ReturnRealSize(size_t targetSizeInBytes) {

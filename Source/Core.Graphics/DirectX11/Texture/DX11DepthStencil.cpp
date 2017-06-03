@@ -37,7 +37,7 @@ FDX11DepthStencil::FDX11DepthStencil(IDeviceAPIEncapsulator *device, FDepthStenc
     }
     Assert(_depthStencilView);
 
-    DX11SetDeviceResourceNameIFP(_depthStencilView, owner);
+    DX11SetDeviceResourceNameIFP(_depthStencilView.Get(), owner);
 }
 //----------------------------------------------------------------------------
 FDX11DepthStencil::FDX11DepthStencil(
@@ -53,12 +53,12 @@ FDX11DepthStencil::~FDX11DepthStencil() {
     ReleaseComRef(_depthStencilView);
 }
 //----------------------------------------------------------------------------
-void FDX11DepthStencil::GetData(IDeviceAPIEncapsulator *device, size_t offset, void *const dst, size_t stride, size_t count) {
-    FDX11Texture2DContent::GetContent(device, offset, dst, stride, count, Mode(), Usage());
+void FDX11DepthStencil::GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) {
+    FDX11Texture2DContent::GetContent(device, offset, dst, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
-void FDX11DepthStencil::SetData(IDeviceAPIEncapsulator *device, size_t offset, const void *src, size_t stride, size_t count) {
-    FDX11Texture2DContent::SetContent(device, offset, src, stride, count, Mode(), Usage());
+void FDX11DepthStencil::SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) {
+    FDX11Texture2DContent::SetContent(device, offset, src, Mode(), Usage());
 }
 //----------------------------------------------------------------------------
 void FDX11DepthStencil::CopyFrom(IDeviceAPIEncapsulator *device, const FDeviceAPIDependantTexture2D *psource) {
