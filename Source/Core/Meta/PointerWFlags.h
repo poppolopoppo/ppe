@@ -127,8 +127,8 @@ struct TPointerWFlags<void> {
 //----------------------------------------------------------------------------
 #undef POINTERWFLAGS_BASE_DEF
 //----------------------------------------------------------------------------
-static_assert(std::is_pod< TPointerWFlags<int> >::value, "TPointerWFlags<int> must be a POD type" );
-static_assert(std::is_pod< TPointerWFlags<void> >::value, "TPointerWFlags<void> must be a POD type");
+static_assert(Meta::TIsPod< TPointerWFlags<int> >::value, "TPointerWFlags<int> must be a POD type" );
+static_assert(Meta::TIsPod< TPointerWFlags<void> >::value, "TPointerWFlags<void> must be a POD type");
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

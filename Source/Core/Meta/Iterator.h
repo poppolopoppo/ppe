@@ -103,6 +103,7 @@ public:
     using typename parent_type::pointer;
     using typename parent_type::reference;
 
+    TOutputIterator(const _It& it) : _it(it) {}
     TOutputIterator(const _It& it, const _Transform& transform) : _it(it), _transform(transform) {}
 
     TOutputIterator(const TOutputIterator& ) = default;

@@ -32,28 +32,14 @@ typename std::enable_if<std::is_integral<T>::value, size_t>::type CountBitsSet(T
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if defined(CPP_VISUALSTUDIO)
-inline size_t FloorLog2(size_t value) {
-    unsigned long log2;
-#if defined(ARCH_X64)
-    _BitScanReverse64(&log2, value);
-#elif defined(ARCH_X86)
-    _BitScanReverse(&log2, value);
-#else
-#   error "unsupported architecture !"
-#endif
-    return log2;
-}
-#elif defined(CPP_GCC) or defined(CPP_CLANG)
-// TODO : http://www.boost.org/doc/libs/master/boost/intrusive/detail/math.hpp
-#   error "not implemented !"
-#else
+// Can always be called in constexpr context (MSVC can't)
 // http://stackoverflow.com/questions/11376288/fast-computing-of-log2-for-64-bit-integers
-inline u32 FloorLog2(u32 value) {
-    const u32 sMultiplyDeBruijnBitPosition32[32] = {
-         0,  9,  1, 10, 13, 21,  2, 29,
+//----------------------------------------------------------------------------
+inline constexpr u32 FloorLog2_Slow(u32 value) {
+    constexpr u32 sMultiplyDeBruijnBitPosition32[32] = {
+        0,  9,  1, 10, 13, 21,  2, 29,
         11, 14, 16, 18, 22, 25,  3, 30,
-         8, 12, 20, 28, 15, 17, 24,  7,
+        8, 12, 20, 28, 15, 17, 24,  7,
         19, 27, 23,  6, 26,  5,  4, 31
     };
 
@@ -63,10 +49,11 @@ inline u32 FloorLog2(u32 value) {
     value |= value >> 8;
     value |= value >> 16;
 
-    return sMultiplyDeBruijnBitPosition32[(u32)(value*0x07C4ACDDul) >> 27];
+    return sMultiplyDeBruijnBitPosition32[(u32)(value * 0x07C4ACDDul) >> 27];
 }
-inline u64 FloorLog2(u64 value) {
-    const u64 sMultiplyDeBruijnBitPosition64[64] = {
+//----------------------------------------------------------------------------
+inline constexpr u64 FloorLog2_Slow(u64 value) {
+    constexpr u64 sMultiplyDeBruijnBitPosition64[64] = {
         63,  0, 58,  1, 59, 47, 53,  2,
         60, 39, 48, 27, 54, 33, 42,  3,
         61, 51, 37, 40, 49, 18, 28, 20,
@@ -84,7 +71,35 @@ inline u64 FloorLog2(u64 value) {
     value |= value >> 16;
     value |= value >> 32;
 
-    return sMultiplyDeBruijnBitPosition64[((u64)((value - (value >> 1))*0x07EDD5E59A4E28C2ull)) >> 58];
+    return sMultiplyDeBruijnBitPosition64[((u64)((value - (value >> 1)) * 0x07EDD5E59A4E28C2ull)) >> 58];
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#if defined(CPP_VISUALSTUDIO)
+inline size_t FloorLog2(size_t value) {
+    unsigned long log2;
+#if defined(ARCH_X64)
+    _BitScanReverse64(&log2, value);
+#elif defined(ARCH_X86)
+    _BitScanReverse(&log2, value);
+#else
+#   error "unsupported architecture !"
+#endif
+    return log2;
+}
+#elif defined(CPP_GCC) or defined(CPP_CLANG)
+inline constexpr size_t FloorLog2(size_t value)
+{
+    //x ^ 31 = 31 - x, but gcc does not optimize 31 - __builtin_clz(x) to bsr(x), but generates 31 - (bsr(x) ^ 31)
+    return CODE3264(__builtin_clz(v) ^ 31, __builtin_clzll(v) ^ 63)
+}
+#else
+inline constexpr u32 FloorLog2(u32 value) {
+    return FloorLog2_Slow(value);
+}
+inline constexpr u64 FloorLog2(u64 value) {
+    return FloorLog2_Slow(value);
 }
 #endif
 //----------------------------------------------------------------------------

@@ -74,7 +74,7 @@ template <typename _Arg0, typename _Ret, typename... _Args >
 struct TBindDelegate<_Arg0, _Ret (*)(_Arg0, _Args... )> {
     typedef TDelegate<_Ret (*)(_Args... )> type;
 
-    STATIC_ASSERT(std::is_pod<_Arg0>::value);
+    STATIC_ASSERT(Meta::TIsPod<_Arg0>::value);
     static_assert(  sizeof(_Arg0) <= sizeof(void *),
                     "_Arg0 is too big to fit in a void *" );
     typedef union { _Arg0 typed; void *raw; } arg0_type;
@@ -110,7 +110,7 @@ template <typename _Arg1, typename _Ret, typename _Arg0 >
 struct TBindDelegate<_Arg1, _Ret (*)(_Arg0, _Arg1)> {
     typedef TDelegate<_Ret (*)(_Arg0)> type;
 
-    STATIC_ASSERT(std::is_pod<_Arg1>::value);
+    STATIC_ASSERT(Meta::TIsPod<_Arg1>::value);
     static_assert(  sizeof(_Arg1) <= sizeof(void *),
                     "_Arg1 is too big to fit in a void *" );
     typedef union { _Arg1 typed; void *raw; } arg1_type;

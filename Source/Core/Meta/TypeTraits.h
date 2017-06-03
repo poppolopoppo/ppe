@@ -7,6 +7,11 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T, T _Value>
+using TIntegralConstant = typename std::integral_constant<T, _Value>::type;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T>
 using TGreater = std::greater<T>;
 //----------------------------------------------------------------------------
@@ -47,6 +52,19 @@ using TAddPointer = typename std::add_pointer<T>::type;
 //----------------------------------------------------------------------------
 template <typename T>
 using TRemovePointer = typename std::remove_pointer<T>::type;
+//----------------------------------------------------------------------------
+template <bool _Test, typename T = void>
+using TEnableIf = typename std::enable_if< _Test, T >::type;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Replaces std::is_pod<>, can be overrided for specific types
+//----------------------------------------------------------------------------
+template <typename T>
+struct TIsPod : public std::is_pod<T> {
+    using std::is_pod<T>::value;
+    using typename std::is_pod<T>::value_type;
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -162,7 +180,12 @@ void Construct(T* p, _Args&&... args) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void Destroy(T* p) {
+typename std::enable_if<Meta::TIsPod<T>::value >::type Destroy(T* ) {
+    // PODs don't have a destructor
+}
+//----------------------------------------------------------------------------
+template <typename T>
+typename std::enable_if< not Meta::TIsPod<T>::value >::type Destroy(T* p) {
     Likely(p);
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);

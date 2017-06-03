@@ -103,7 +103,7 @@ void TEvent< TDelegate<_Ret (*)(_Args... )> >::Invoke(_Args... args) const {
 //----------------------------------------------------------------------------
 // Public interface of event, hides owner-only methods
 // ex :
-//      TPublicEvent<TDelegate> TEvent() { return _event; }
+//      TPublicEvent<TDelegate> Event() { return _event; }
 //      TEvent<TDelegate> _event;
 //----------------------------------------------------------------------------
 template <typename _Delegate>
