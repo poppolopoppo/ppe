@@ -52,9 +52,9 @@ public:
     TScalarVector& operator =(const TScalarVector<U, _Dim>& other);
 
     template <size_t _Idx>
-    FORCE_INLINE const T& get() const { STATIC_ASSERT(_Idx < _Dim); return _data[_Idx]; }
+    FORCE_INLINE Meta::TEnableIf<_Idx < _Dim, T&> get() { return _data[_Idx]; }
     template <size_t _Idx>
-    FORCE_INLINE T& get() { STATIC_ASSERT(_Idx < _Dim); return _data[_Idx]; }
+    FORCE_INLINE Meta::TEnableIf<_Idx < _Dim, const T&> get() const { return _data[_Idx]; }
 
     FORCE_INLINE const T& x() const { return get<0>(); };
     FORCE_INLINE const T& y() const { return get<1>(); };
@@ -66,8 +66,8 @@ public:
     FORCE_INLINE T& z() { return get<2>(); };
     FORCE_INLINE T& w() { return get<3>(); };
 
-    FORCE_INLINE const T& operator [](size_t i) const;
     FORCE_INLINE T& operator [](size_t i);
+    FORCE_INLINE const T& operator [](size_t i) const;
 
 #define DECL_SCALARVECTOR_OP_SELF_LHS(_Op) \
     TScalarVector&   operator _Op (T scalar); \
@@ -149,12 +149,16 @@ public:
     static TScalarVector Forward() { STATIC_ASSERT(3 == _Dim); return TScalarVector(0,0,1); }
     static TScalarVector Backward() { STATIC_ASSERT(3 == _Dim); return TScalarVector(0,0,-1); }
 
+    template <size_t _Offset, size_t _N>
+    Meta::TEnableIf<_Offset + _N <= _Dim, TScalarVector<T, _N>&> Shuffle0() { return *reinterpret_cast< TScalarVector<T, _N>* >(&_data[_Offset]); }
+    template <size_t _Offset, size_t _N>
+    Meta::TEnableIf<_Offset + _N <= _Dim, const TScalarVector<T,_N>&> Shuffle0() const { return *reinterpret_cast< const TScalarVector<T,_N>* >(&_data[_Offset]); }
     template <size_t _0, size_t _1>
-    TScalarVector<T, 2> Shuffle2() const { return TScalarVector<T, 2>(get<_0>(), get<_1>()); }
+    Meta::TEnableIf<_0 < _Dim && _1 < _Dim, TScalarVector<T, 2>> Shuffle2() const { return TScalarVector<T, 2>(get<_0>(), get<_1>()); }
     template <size_t _0, size_t _1, size_t _2>
-    TScalarVector<T, 3> Shuffle3() const { return TScalarVector<T, 3>(get<_0>(), get<_1>(), get<_2>()); }
+    Meta::TEnableIf<_0 < _Dim && _1 < _Dim && _2 < _Dim, TScalarVector<T, 3>> Shuffle3() const { return TScalarVector<T, 3>(get<_0>(), get<_1>(), get<_2>()); }
     template <size_t _0, size_t _1, size_t _2, size_t _3>
-    TScalarVector<T, 4> Shuffle4() const { return TScalarVector<T, 4>(get<_0>(), get<_1>(), get<_2>(), get<_3>()); }
+    Meta::TEnableIf<_0 < _Dim && _1 < _Dim && _2 < _Dim && _3 < _Dim, TScalarVector<T, 4>> Shuffle4() const { return TScalarVector<T, 4>(get<_0>(), get<_1>(), get<_2>(), get<_3>()); }
 
 public:
     STATIC_CONST_INTEGRAL(size_t, Dim, _Dim);
@@ -164,15 +168,19 @@ public:
 public:
     // All shuffle specializations :
 
+#define DEF_SCALARVECTOR_SHUFFLE0(_Name, _Offset, _N) \
+    FORCE_INLINE TScalarVector<T,_N>& _Name() { return Shuffle0<_Offset,_N>(); } \
+    FORCE_INLINE const TScalarVector<T,_N>& _Name() const { return Shuffle0<_Offset,_N>(); }
 #define DEF_SCALARVECTOR_SHUFFLE2(_Name, _0, _1) \
-    TScalarVector<T, 2> _Name() const { return Shuffle2<_0, _1>(); }
+    FORCE_INLINE TScalarVector<T, 2> _Name() const { return Shuffle2<_0, _1>(); }
 #define DEF_SCALARVECTOR_SHUFFLE3(_Name, _0, _1, _2) \
-    TScalarVector<T, 3> _Name() const { return Shuffle3<_0, _1, _2>(); }
+    FORCE_INLINE TScalarVector<T, 3> _Name() const { return Shuffle3<_0, _1, _2>(); }
 #define DEF_SCALARVECTOR_SHUFFLE4(_Name, _0, _1, _2, _3) \
-    TScalarVector<T, 4> _Name() const { return Shuffle4<_0, _1, _2, _3>(); }
+    FORCE_INLINE TScalarVector<T, 4> _Name() const { return Shuffle4<_0, _1, _2, _3>(); }
 
 #   include "Core/Maths/ScalarVector.Shuffle-inl.h"
 
+#undef DEF_SCALARVECTOR_SHUFFLE0
 #undef DEF_SCALARVECTOR_SHUFFLE2
 #undef DEF_SCALARVECTOR_SHUFFLE3
 #undef DEF_SCALARVECTOR_SHUFFLE4
@@ -228,6 +236,15 @@ struct TNumericLimits< TScalarVector<T, _Dim> > {
     static constexpr value_type Nan() { return value_type( scalar_type::Nan() ); }
     static constexpr value_type Zero() { return value_type( scalar_type::Zero() ); }
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// All scalar vectors are considered as pods
+//----------------------------------------------------------------------------
+namespace Meta {
+template <typename T, size_t _Dim>
+struct TIsPod< TScalarVector<T, _Dim> > : public std::integral_constant<bool, true> {};
+} //!Meta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
