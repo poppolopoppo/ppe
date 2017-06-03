@@ -777,16 +777,131 @@ EPlaneIntersectionType PlaneIntersectsSphere(const FPlane& plane, const FSphere&
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool BoxIntersectsTriangle(const FBoundingBox& box, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
-    if (BoxContainsPoint(box, vertex1) == EContainmentType::Contains)
-        return true;
+    //Source: Real-Time Collision Detection by Christer Ericson
+    //Reference: Page 169
 
-    if (BoxContainsPoint(box, vertex2) == EContainmentType::Contains)
-        return true;
+    const float3 boxcenter = box.Center();
+    const float3 boxhalfsize = box.Max() - boxcenter;
 
-    if (BoxContainsPoint(box, vertex3) == EContainmentType::Contains)
-        return true;
+    /*    use separating axis theorem to test overlap between triangle and box */
+    /*    need to test for overlap in these directions: */
+    /*    1) the {x,y,z}-directions (actually, since we use the AABB of the triangle */
+    /*       we do not even need to test these) */
+    /*    2) normal of the triangle */
+    /*    3) crossproduct(edge from tri, {x,y,z}-directin) */
+    /*       this gives 3x3=9 more tests */
 
-    return false;
+    /* This is the fastest branch on Sun */
+    /* move everything so that the boxcenter is in (0,0,0) */
+    const float3 v0 = vertex1 - boxcenter;
+    const float3 v1 = vertex2 - boxcenter;
+    const float3 v2 = vertex3 - boxcenter;
+
+    /* compute triangle edges */
+    const float3 e0 = v1 - v0;      /* tri edge 0 */
+    const float3 e1 = v2 - v1;      /* tri edge 1 */
+    const float3 e2 = v0 - v2;      /* tri edge 2 */
+
+    /*  test the 9 tests first (this was faster) */
+    float rad;
+    float min, max;
+    float p0, p1, p2;
+    float fex, fey, fez;
+
+#define AXISTEST_X01(a, b, fa, fb)\
+    p0 = a*v0.y() - b*v0.z();\
+    p2 = a*v2.y() - b*v2.z();\
+    if(p0<p2) {min=p0; max=p2;} else {min=p2; max=p0;}\
+    rad = fa * boxhalfsize.y() + fb * boxhalfsize.z();\
+    if(min>rad || max<-rad) return false;
+#define AXISTEST_X2(a, b, fa, fb)\
+    p0 = a*v0.y() - b*v0.z();\
+    p1 = a*v1.y() - b*v1.z();\
+    if(p0<p1) {min=p0; max=p1;} else {min=p1; max=p0;}\
+    rad = fa * boxhalfsize.y() + fb * boxhalfsize.z();\
+    if(min>rad || max<-rad) return false;
+
+#define AXISTEST_Y02(a, b, fa, fb)\
+    p0 = -a*v0.x() + b*v0.z();\
+    p2 = -a*v2.x() + b*v2.z();\
+    if(p0<p2) {min=p0; max=p2;} else {min=p2; max=p0;}\
+    rad = fa * boxhalfsize.x() + fb * boxhalfsize.z();\
+    if(min>rad || max<-rad) return false;
+#define AXISTEST_Y1(a, b, fa, fb)\
+    p0 = -a*v0.x() + b*v0.z();\
+    p1 = -a*v1.x() + b*v1.z();\
+    if(p0<p1) {min=p0; max=p1;} else {min=p1; max=p0;}\
+    rad = fa * boxhalfsize.x() + fb * boxhalfsize.z();\
+    if(min>rad || max<-rad) return false;
+
+#define AXISTEST_Z12(a, b, fa, fb)\
+    p1 = a*v1.x() - b*v1.y();\
+    p2 = a*v2.x() - b*v2.y();\
+    if(p2<p1) {min=p2; max=p1;} else {min=p1; max=p2;}\
+    rad = fa * boxhalfsize.x() + fb * boxhalfsize.y();\
+    if(min>rad || max<-rad) return false;
+#define AXISTEST_Z0(a, b, fa, fb)\
+    p0 = a*v0.x() - b*v0.y();\
+    p1 = a*v1.x() - b*v1.y();\
+    if(p0<p1) {min=p0; max=p1;} else {min=p1; max=p0;}\
+    rad = fa * boxhalfsize.x() + fb * boxhalfsize.y();\
+    if(min>rad || max<-rad) return false;
+
+    fex = Abs(e0.x());
+    fey = Abs(e0.y());
+    fez = Abs(e0.z());
+
+    AXISTEST_X01(e0.z(), e0.y(), fez, fey);
+    AXISTEST_Y02(e0.z(), e0.x(), fez, fex);
+    AXISTEST_Z12(e0.y(), e0.x(), fey, fex);
+
+    fex = Abs(e1.x());
+    fey = Abs(e1.y());
+    fez = Abs(e1.z());
+
+    AXISTEST_X01(e1.z(), e1.y(), fez, fey);
+    AXISTEST_Y02(e1.z(), e1.x(), fez, fex);
+    AXISTEST_Z0(e1.y(), e1.x(), fey, fex);
+
+    fex = Abs(e2.x());
+    fey = Abs(e2.y());
+    fez = Abs(e2.z());
+    AXISTEST_X2(e2.z(), e2.y(), fez, fey);
+    AXISTEST_Y1(e2.z(), e2.x(), fez, fex);
+    AXISTEST_Z12(e2.y(), e2.x(), fey, fex);
+
+#undef AXISTEST_X01
+#undef AXISTEST_X2
+#undef AXISTEST_Y02
+#undef AXISTEST_Y1
+#undef AXISTEST_Z12
+#undef AXISTEST_Z0
+
+    /*  first test overlap in the {x,y,z}-directions */
+    /*  find min, max of the triangle each direction, and test for overlap in */
+    /*  that direction -- this is equivalent to testing a minimal AABB around */
+    /*  the triangle against the AABB */
+    /* test in X-direction */
+    min = Min3(v0.x(), v1.x(), v2.x());
+    max = Max3(v0.x(), v1.x(), v2.x());
+    if (min>boxhalfsize.x() || max<-boxhalfsize.x()) return false;
+
+    /* test in Y-direction */
+    min = Min3(v0.y(), v1.y(), v2.y());
+    max = Max3(v0.y(), v1.y(), v2.y());
+    if (min>boxhalfsize.y() || max<-boxhalfsize.y()) return false;
+
+    /* test in Z-direction */
+    min = Min3(v0.z(), v1.z(), v2.z());
+    max = Max3(v0.z(), v1.z(), v2.z());
+    if (min>boxhalfsize.z() || max<-boxhalfsize.z()) return false;
+
+    /*  test if the box intersects the plane of the triangle */
+    /*  compute plane equation of triangle: normal*x+d=0 */
+    const float3 normal = Cross(e0, e1);
+
+    const auto result = PlaneIntersectsBox(FPlane::Make(v0, normal), FBoundingBox(-boxhalfsize, boxhalfsize));
+    return (result == EPlaneIntersectionType::Intersecting);
 }
 //----------------------------------------------------------------------------
 bool BoxIntersectsBox(const FBoundingBox& box1, const FBoundingBox& box2) {
@@ -845,17 +960,7 @@ EContainmentType BoxContainsPoint(const FBoundingBox& box, const float3& point) 
 }
 //----------------------------------------------------------------------------
 EContainmentType BoxContainsTriangle(const FBoundingBox& box, const float3& vertex1, const float3& vertex2, const float3& vertex3) {
-    EContainmentType test1 = BoxContainsPoint(box, vertex1);
-    EContainmentType test2 = BoxContainsPoint(box, vertex2);
-    EContainmentType test3 = BoxContainsPoint(box, vertex3);
-
-    if (test1 == EContainmentType::Contains && test2 == EContainmentType::Contains && test3 == EContainmentType::Contains)
-        return EContainmentType::Contains;
-
-    if (test1 == EContainmentType::Contains || test2 == EContainmentType::Contains || test3 == EContainmentType::Contains)
-        return EContainmentType::Intersects;
-
-    return EContainmentType::Disjoint;
+    return BoxContainsBox(box, { vertex1, vertex2, vertex3 });
 }
 //----------------------------------------------------------------------------
 EContainmentType BoxContainsBox(const FBoundingBox& box1, const FBoundingBox& box2) {
