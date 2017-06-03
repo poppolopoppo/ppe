@@ -19,7 +19,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 class FVirtualFileSystemNativeFileIStream : public IVirtualFileSystemIStream, public Meta::FThreadResource {
 public:
-    FVirtualFileSystemNativeFileIStream(const FFilename& filename, const wchar_t* native, AccessPolicy::EMode policy);
+    FVirtualFileSystemNativeFileIStream(const FFilename& filename, const wchar_t* native, EAccessPolicy policy);
     virtual ~FVirtualFileSystemNativeFileIStream();
 
     FVirtualFileSystemNativeFileIStream(FVirtualFileSystemNativeFileIStream&& rvalue);
@@ -52,7 +52,7 @@ private:
 //----------------------------------------------------------------------------
 class FVirtualFileSystemNativeFileOStream : public IVirtualFileSystemOStream, public Meta::FThreadResource {
 public:
-    FVirtualFileSystemNativeFileOStream(const FFilename& filename, const wchar_t* native, AccessPolicy::EMode policy);
+    FVirtualFileSystemNativeFileOStream(const FFilename& filename, const wchar_t* native, EAccessPolicy policy);
     virtual ~FVirtualFileSystemNativeFileOStream();
 
     FVirtualFileSystemNativeFileOStream(FVirtualFileSystemNativeFileOStream&& rvalue);

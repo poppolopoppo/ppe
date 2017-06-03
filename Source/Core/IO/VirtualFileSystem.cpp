@@ -7,6 +7,7 @@
 #include "StringView.h"
 
 #include "Allocator/PoolAllocatorTag-impl.h"
+#include "Container/RawStorage.h"
 #include "Diagnostic/Logger.h"
 #include "Diagnostic/CurrentProcess.h"
 
@@ -78,15 +79,122 @@ FFilename FVirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wch
     return FFilename(FileSystem::FStringView(buffer, length - 1));
 }
 //----------------------------------------------------------------------------
-bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TMemoryView<const u8>& storage, AccessPolicy::EMode policy /* = AccessPolicy::None */) {
-    const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(filename, policy);
+bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TMemoryView<const u8>& storage, EAccessPolicy policy /* = EAccessPolicy::None */) {
+    Assert(!filename.empty());
+
+    const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(filename, (policy ^ EAccessPolicy::Compress
+        ? policy - EAccessPolicy::Compress + EAccessPolicy::Binary
+        : policy ));
+
     if (ostream) {
-        ostream->Write(storage.Pointer(), storage.SizeInBytes());
+        if (policy ^ EAccessPolicy::Compress) {
+            RAWSTORAGE_THREAD_LOCAL(Compress, u8) compressed;
+            const size_t compressedSizeInBytes = Compression::CompressMemory(compressed, storage, Compression::HighCompression);
+            ostream->Write(compressed.Pointer(), compressedSizeInBytes);
+        }
+        else {
+            ostream->Write(storage.Pointer(), storage.SizeInBytes());
+        }
+
         return true;
     }
     else {
         return false;
     }
+}
+//----------------------------------------------------------------------------
+bool FVirtualFileSystem::Copy(const FFilename& dst, const FFilename& src, EAccessPolicy policy/* = EAccessPolicy::None */) {
+    Assert(dst != src);
+    Assert(not (policy ^ EAccessPolicy::Compress)); // use Compress() method instead
+
+    if (src == dst)
+        return true;
+
+    const TUniquePtr<IVirtualFileSystemIStream> istream = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate);
+    if (not istream)
+        return false;
+
+    const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate);
+    if (not ostream)
+        return false;
+
+    const TUniqueArray<u8> buffer = NewArray<u8>(HUGE_PAGE_SIZE);
+    while (size_t read = istream->ReadSome(buffer.data(), 1, buffer.SizeInBytes())) {
+        if (not ostream->Write(buffer.data(), read)) {
+            AssertNotReached();
+            return false;
+        }
+    }
+
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FVirtualFileSystem::Compress(const FFilename& dst, const FFilename& src, EAccessPolicy policy/* = EAccessPolicy::None */) {
+    Assert(dst != src);
+    Assert(not (policy ^ EAccessPolicy::Compress)); // don't specify it, implicit within this method
+
+    if (src == dst)
+        return true;
+
+    size_t compressedSizeInBytes = 0;
+    RAWSTORAGE_THREAD_LOCAL(Compress, u8) data;
+    {
+        const TUniquePtr<IVirtualFileSystemIStream> istream = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate);
+        if (not istream)
+            return false;
+
+        istream->ReadAll(data);
+    }
+    {
+        RAWSTORAGE_THREAD_LOCAL(Compress, u8) compressed;
+        compressedSizeInBytes = Compression::CompressMemory(compressed, data.MakeConstView().Cast<const u8>());
+
+        swap(data, compressed);
+    }
+    {
+        const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate + EAccessPolicy::Binary);
+        if (not ostream)
+            return false;
+
+        if (not ostream->Write(data.Pointer(), compressedSizeInBytes))
+            return false;
+    }
+
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, EAccessPolicy policy/* = EAccessPolicy::None */) {
+    Assert(dst != src);
+    Assert(not (policy ^ EAccessPolicy::Compress)); // don't specify it, implicit within this method
+
+    if (src == dst)
+        return true;
+
+    RAWSTORAGE_THREAD_LOCAL(Compress, u8) data;
+    {
+        const TUniquePtr<IVirtualFileSystemIStream> istream = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate + EAccessPolicy::Binary);
+        if (not istream)
+            return false;
+
+        istream->ReadAll(data);
+    }
+    {
+        RAWSTORAGE_THREAD_LOCAL(Compress, u8) uncompressed;
+        if (not Compression::DecompressMemory(uncompressed, data.MakeConstView().Cast<const u8>()))
+            return false;
+
+        swap(data, uncompressed);
+    }
+    {
+        const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate);
+        if (not ostream)
+            return false;
+
+        if (not ostream->Write(data.Pointer(), data.SizeInBytes()))
+            return false;
+    }
+
+    return true;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -29,18 +29,20 @@ public:
     FVirtualFileSystemTrie(const FVirtualFileSystemTrie& other) = delete;
     FVirtualFileSystemTrie& operator =(const FVirtualFileSystemTrie& other) = delete;
 
-    bool DirectoryExists(const FDirpath& dirpath, ExistPolicy::EMode policy = ExistPolicy::Exists) const;
-    bool FileExists(const FFilename& filename, ExistPolicy::EMode policy = ExistPolicy::Exists) const;
+    bool DirectoryExists(const FDirpath& dirpath, EExistPolicy policy = EExistPolicy::Exists) const;
+    bool FileExists(const FFilename& filename, EExistPolicy policy = EExistPolicy::Exists) const;
     bool FileStats(FFileStat* pstat, const FFilename& filename) const;
 
     size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach) const;
     size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach) const;
 
-    bool TryCreateDirectory(const FDirpath& dirpath) const;
+    bool CreateDirectory(const FDirpath& dirpath) const;
+    bool RemoveDirectory(const FDirpath& dirpath) const;
+    bool RemoveFile(const FFilename& filename) const;
 
-    TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None) const;
-    TUniquePtr<IVirtualFileSystemOStream> OpenWritable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None) const;
-    TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None) const;
+    TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None) const;
+    TUniquePtr<IVirtualFileSystemOStream> OpenWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None) const;
+    TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None) const;
 
     FWString Unalias(const FFilename& aliased) const;
 

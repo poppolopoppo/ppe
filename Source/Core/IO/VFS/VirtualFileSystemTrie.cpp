@@ -56,7 +56,7 @@ FVirtualFileSystemTrie::FVirtualFileSystemTrie() {}
 //----------------------------------------------------------------------------
 FVirtualFileSystemTrie::~FVirtualFileSystemTrie() { Clear(); }
 //----------------------------------------------------------------------------
-bool FVirtualFileSystemTrie::DirectoryExists(const FDirpath& dirpath, ExistPolicy::EMode policy) const {
+bool FVirtualFileSystemTrie::DirectoryExists(const FDirpath& dirpath, EExistPolicy policy) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
     return (readable)
@@ -64,7 +64,7 @@ bool FVirtualFileSystemTrie::DirectoryExists(const FDirpath& dirpath, ExistPolic
         : false;
 }
 //----------------------------------------------------------------------------
-bool FVirtualFileSystemTrie::FileExists(const FFilename& filename, ExistPolicy::EMode policy) const {
+bool FVirtualFileSystemTrie::FileExists(const FFilename& filename, EExistPolicy policy) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(filename.MountingPoint(), _nodes);
     return (readable)
@@ -97,15 +97,32 @@ size_t FVirtualFileSystemTrie::GlobFiles(const FDirpath& dirpath, const FWString
         : 0;
 }
 //----------------------------------------------------------------------------
-bool FVirtualFileSystemTrie::TryCreateDirectory(const FDirpath& dirpath) const {
+bool FVirtualFileSystemTrie::CreateDirectory(const FDirpath& dirpath) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentWritable* const writable = WritableComponent_(dirpath.MountingPoint(), _nodes);
     return (writable)
-        ? writable->TryCreateDirectory(dirpath)
+        ? writable->CreateDirectory(dirpath)
         : false;
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIStream> FVirtualFileSystemTrie::OpenReadable(const FFilename& filename, AccessPolicy::EMode policy) const {
+bool FVirtualFileSystemTrie::RemoveDirectory(const FDirpath& dirpath) const {
+    READSCOPELOCK(_barrier);
+    IVirtualFileSystemComponentWritable* const writable = WritableComponent_(dirpath.MountingPoint(), _nodes);
+    return (writable)
+        ? writable->RemoveDirectory(dirpath)
+        : false;
+}
+//----------------------------------------------------------------------------
+bool FVirtualFileSystemTrie::RemoveFile(const FFilename& filename) const {
+    READSCOPELOCK(_barrier);
+    IVirtualFileSystemComponentWritable* const writable = WritableComponent_(filename.MountingPoint(), _nodes);
+    return (writable)
+        ? writable->RemoveFile(filename)
+        : false;
+}
+//----------------------------------------------------------------------------
+TUniquePtr<IVirtualFileSystemIStream> FVirtualFileSystemTrie::OpenReadable(const FFilename& filename, EAccessPolicy policy) const {
+    Assert(!(policy ^ EAccessPolicy::Compress)); // not handled here
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(filename.MountingPoint(), _nodes);
     TUniquePtr<IVirtualFileSystemIStream> result;
@@ -114,7 +131,8 @@ TUniquePtr<IVirtualFileSystemIStream> FVirtualFileSystemTrie::OpenReadable(const
     return result;
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemTrie::OpenWritable(const FFilename& filename, AccessPolicy::EMode policy) const {
+TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemTrie::OpenWritable(const FFilename& filename, EAccessPolicy policy) const {
+    Assert(!(policy ^ EAccessPolicy::Compress)); // not handled here
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentWritable* const writable = WritableComponent_(filename.MountingPoint(), _nodes);
     TUniquePtr<IVirtualFileSystemOStream> result;
@@ -123,7 +141,8 @@ TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemTrie::OpenWritable(const
     return result;
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIOStream> FVirtualFileSystemTrie::OpenReadWritable(const FFilename& filename, AccessPolicy::EMode policy) const {
+TUniquePtr<IVirtualFileSystemIOStream> FVirtualFileSystemTrie::OpenReadWritable(const FFilename& filename, EAccessPolicy policy) const {
+    Assert(!(policy ^ EAccessPolicy::Compress)); // not handled here
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadWritable* const readWritable = ReadWritableComponent_(filename.MountingPoint(), _nodes);
     TUniquePtr<IVirtualFileSystemIOStream> result;

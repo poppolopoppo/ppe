@@ -16,6 +16,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(VirtualFileSystemComponent);
+class FDirpath;
 class FFilename;
 class FFileStat;
 class IVirtualFileSystemComponentReadable;
@@ -49,23 +50,25 @@ class IVirtualFileSystemComponentReadable {
 public:
     virtual ~IVirtualFileSystemComponentReadable() {}
 
-    virtual bool DirectoryExists(const FDirpath& dirpath, ExistPolicy::EMode policy) = 0;
-    virtual bool FileExists(const FFilename& filename, ExistPolicy::EMode policy) = 0;
+    virtual bool DirectoryExists(const FDirpath& dirpath, EExistPolicy policy) = 0;
+    virtual bool FileExists(const FFilename& filename, EExistPolicy policy) = 0;
     virtual bool FileStats(FFileStat* pstat, const FFilename& filename) = 0;
 
     virtual size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach) = 0;
     virtual size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach) = 0;
 
-    virtual TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, AccessPolicy::EMode policy) = 0;
+    virtual TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, EAccessPolicy policy) = 0;
 };
 //----------------------------------------------------------------------------
 class IVirtualFileSystemComponentWritable {
 public:
     virtual ~IVirtualFileSystemComponentWritable() {}
 
-    virtual bool TryCreateDirectory(const FDirpath& dirpath) = 0;
+    virtual bool CreateDirectory(const FDirpath& dirpath) = 0;
+    virtual bool RemoveDirectory(const FDirpath& dirpath) = 0;
+    virtual bool RemoveFile(const FFilename& filename) = 0;
 
-    virtual TUniquePtr<IVirtualFileSystemOStream> OpenWritable(const FFilename& filename, AccessPolicy::EMode policy) = 0;
+    virtual TUniquePtr<IVirtualFileSystemOStream> OpenWritable(const FFilename& filename, EAccessPolicy policy) = 0;
 };
 //----------------------------------------------------------------------------
 class IVirtualFileSystemComponentReadWritable :
@@ -74,7 +77,7 @@ class IVirtualFileSystemComponentReadWritable :
 public:
     virtual ~IVirtualFileSystemComponentReadWritable() {}
 
-    virtual TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, AccessPolicy::EMode policy) = 0;
+    virtual TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, EAccessPolicy policy) = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

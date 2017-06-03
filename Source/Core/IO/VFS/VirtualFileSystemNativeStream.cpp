@@ -23,7 +23,7 @@ static bool IsValidFileHandle_(FILE *handle) {
             0 == ferror(handle);
 }
 //----------------------------------------------------------------------------
-static FILE* OpenFileHandle_(const wchar_t *filename, bool readIfFalseElseWrite, AccessPolicy::EMode policy) {
+static FILE* OpenFileHandle_(const wchar_t *filename, bool readIfFalseElseWrite, EAccessPolicy policy) {
     Assert(filename);
 
     FILE* phandle = nullptr;
@@ -31,15 +31,15 @@ static FILE* OpenFileHandle_(const wchar_t *filename, bool readIfFalseElseWrite,
     STACKLOCAL_WOCSTRSTREAM(openFlags, 32);
     if (readIfFalseElseWrite) {
         // write
-        if (AccessPolicy::Create == (policy & AccessPolicy::Create) ||
-            AccessPolicy::Truncate == (policy & AccessPolicy::Truncate) )
+        if (policy ^ EAccessPolicy::Create ||
+            policy ^ EAccessPolicy::Truncate)
             openFlags << L'w';
         else
             openFlags << L'a';
 
-        if (AccessPolicy::ShortLived == (policy & AccessPolicy::ShortLived))
+        if (policy ^ EAccessPolicy::ShortLived)
             openFlags << L'T'; // Specifies a file as temporary. If possible, it is not flushed to disk.
-        else if (AccessPolicy::Temporary == (policy & AccessPolicy::ShortLived))
+        else if (policy ^ EAccessPolicy::Temporary)
             openFlags << L'D'; // Specifies a file as temporary. It is deleted when the last file pointer is closed.
     }
     else {
@@ -47,19 +47,19 @@ static FILE* OpenFileHandle_(const wchar_t *filename, bool readIfFalseElseWrite,
         openFlags << L'r';
     }
 
-    if (AccessPolicy::Binary == (policy & AccessPolicy::Binary) )
+    if (policy ^ EAccessPolicy::Binary)
         openFlags << L'b';
 
-    if (AccessPolicy::Random == (policy & AccessPolicy::Random))
+    if (policy ^ EAccessPolicy::Random)
         openFlags << L'R'; // Optimize for random access
     else
-        openFlags << L'S'; // Optimize for sequential accesss (by default)
+        openFlags << L'S'; // Optimize for sequential access (by default)
 
     if (::_wfopen_s(&phandle, filename, openFlags.NullTerminatedStr()))
         return nullptr;
     Assert(phandle);
 
-    if (AccessPolicy::Ate == (policy & AccessPolicy::Ate))
+    if (policy ^ EAccessPolicy::Ate)
         fseek(phandle, 0, SEEK_END);
 
     Assert(IsValidFileHandle_(phandle));
@@ -78,7 +78,7 @@ static void CloseFileHandle_(FILE* phandle) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FVirtualFileSystemNativeFileIStream::FVirtualFileSystemNativeFileIStream(const FFilename& filename, const wchar_t* native, AccessPolicy::EMode policy)
+FVirtualFileSystemNativeFileIStream::FVirtualFileSystemNativeFileIStream(const FFilename& filename, const wchar_t* native, EAccessPolicy policy)
 :   _handle(OpenFileHandle_(native, false, policy))
 ,   _filename(filename) {}
 //----------------------------------------------------------------------------
@@ -198,7 +198,7 @@ std::streamsize FVirtualFileSystemNativeFileIStream::SizeInBytes() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FVirtualFileSystemNativeFileOStream::FVirtualFileSystemNativeFileOStream(const FFilename& filename, const wchar_t* native, AccessPolicy::EMode policy)
+FVirtualFileSystemNativeFileOStream::FVirtualFileSystemNativeFileOStream(const FFilename& filename, const wchar_t* native, EAccessPolicy policy)
 :   _handle(OpenFileHandle_(native, true, policy))
 ,   _filename(filename) {}
 //----------------------------------------------------------------------------

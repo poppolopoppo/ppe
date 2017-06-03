@@ -22,28 +22,30 @@ class TRawStorage;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool VFS_DirectoryExists(const FDirpath& dirpath, ExistPolicy::EMode policy = ExistPolicy::Exists);
-bool VFS_FileExists(const FFilename& filename, ExistPolicy::EMode policy = ExistPolicy::Exists);
+bool VFS_DirectoryExists(const FDirpath& dirpath, EExistPolicy policy = EExistPolicy::Exists);
+bool VFS_FileExists(const FFilename& filename, EExistPolicy policy = EExistPolicy::Exists);
+bool VFS_FileStats(FFileStat* pstat, const FFilename& filename);
 //----------------------------------------------------------------------------
 size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach);
+size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach);
 //----------------------------------------------------------------------------
-bool VFS_TryCreateDirectory(const FDirpath& dirpath);
+bool VFS_CreateDirectory(const FDirpath& dirpath);
+bool VFS_RemoveDirectory(const FDirpath& dirpath);
+bool VFS_RemoveFile(const FFilename& filename);
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIStream> VFS_OpenReadable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None);
-TUniquePtr<IVirtualFileSystemOStream> VFS_OpenWritable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None);
-TUniquePtr<IVirtualFileSystemIOStream> VFS_OpenReadWritable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None);
+TUniquePtr<IVirtualFileSystemIStream> VFS_OpenReadable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
+TUniquePtr<IVirtualFileSystemOStream> VFS_OpenWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
+TUniquePtr<IVirtualFileSystemIOStream> VFS_OpenReadWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIStream> VFS_OpenBinaryReadable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None);
-TUniquePtr<IVirtualFileSystemOStream> VFS_OpenBinaryWritable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None);
+TUniquePtr<IVirtualFileSystemIStream> VFS_OpenBinaryReadable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
+TUniquePtr<IVirtualFileSystemOStream> VFS_OpenBinaryWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIStream> VFS_OpenTextReadable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None);
-TUniquePtr<IVirtualFileSystemOStream> VFS_OpenTextWritable(const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None);
+TUniquePtr<IVirtualFileSystemIStream> VFS_OpenTextReadable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
+TUniquePtr<IVirtualFileSystemOStream> VFS_OpenTextWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
 //----------------------------------------------------------------------------
-bool VFS_ReadAll(TRawStorage<u8, ALLOCATOR(FileSystem, u8)> *pcontent, const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None);
-bool VFS_ReadAll(TRawStorage<u8, THREAD_LOCAL_ALLOCATOR(FileSystem, u8)> *pcontent, const FFilename& filename, AccessPolicy::EMode policy = AccessPolicy::None);
-bool VFS_WriteAll(const FFilename& filename, const TMemoryView<const u8>& content, AccessPolicy::EMode policy = AccessPolicy::None);
-//----------------------------------------------------------------------------
-bool VFS_FileStats(FFileStat *pstats, const FFilename& filename);
+bool VFS_ReadAll(TRawStorage<u8, ALLOCATOR(FileSystem, u8)> *pcontent, const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
+bool VFS_ReadAll(TRawStorage<u8, THREAD_LOCAL_ALLOCATOR(FileSystem, u8)> *pcontent, const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
+bool VFS_WriteAll(const FFilename& filename, const TMemoryView<const u8>& content, EAccessPolicy policy = EAccessPolicy::None);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

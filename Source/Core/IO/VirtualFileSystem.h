@@ -35,10 +35,14 @@ public:
     static FFilename TemporaryFilename(const wchar_t *prefix, const wchar_t *ext);
 
     template <typename T, typename _Allocator>
-    static bool ReadAll(const FFilename& filename, TRawStorage<T, _Allocator>& storage, AccessPolicy::EMode policy = AccessPolicy::None);
+    static bool ReadAll(const FFilename& filename, TRawStorage<T, _Allocator>& storage, EAccessPolicy policy = EAccessPolicy::None);
     template <typename T, typename _Allocator>
-    static bool WriteAll(const FFilename& filename, const TRawStorage<T, _Allocator>& storage, AccessPolicy::EMode policy = AccessPolicy::None);
-    static bool WriteAll(const FFilename& filename, const TMemoryView<const u8>& storage, AccessPolicy::EMode policy = AccessPolicy::None);
+    static bool WriteAll(const FFilename& filename, const TRawStorage<T, _Allocator>& storage, EAccessPolicy policy = EAccessPolicy::None);
+    static bool WriteAll(const FFilename& filename, const TMemoryView<const u8>& storage, EAccessPolicy policy = EAccessPolicy::None);
+
+    static bool Copy(const FFilename& dst, const FFilename& src, EAccessPolicy policy = EAccessPolicy::None);
+    static bool Compress(const FFilename& dst, const FFilename& src, EAccessPolicy policy = EAccessPolicy::None);
+    static bool Decompress(const FFilename& dst, const FFilename& src, EAccessPolicy policy = EAccessPolicy::None);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
