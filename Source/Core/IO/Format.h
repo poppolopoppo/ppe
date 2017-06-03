@@ -105,7 +105,7 @@ inline FWString ToWString(bool b) { return (b ? L"true" : L"false"); }
 template <typename _Char, size_t _Capacity = 64>
 class FStaticFormat {
 public:
-    STATIC_ASSERT(std::is_pod<_Char>::value);
+    STATIC_ASSERT(Meta::TIsPod<_Char>::value);
 
     template <typename _Arg0, typename... _Args>
     FStaticFormat(const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {

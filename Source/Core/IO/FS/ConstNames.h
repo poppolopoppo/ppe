@@ -17,22 +17,25 @@ public:
     static const FDirname& DotDot();
 
     // Extnames :
-    static const FExtname& DaeExt();
-    static const FExtname& FxExt();
-    static const FExtname& ObjExt();
-    static const FExtname& PlyExt();
+    static const FExtname& Bkm();
+    static const FExtname& Bkmz();
+    static const FExtname& Dae();
+    static const FExtname& Fx();
+    static const FExtname& Obj();
+    static const FExtname& Objz();
+    static const FExtname& Ply();
 
-    static const FExtname& BmpExt();
-    static const FExtname& DdsExt();
-    static const FExtname& GifExt();
-    static const FExtname& HdrExt();
-    static const FExtname& JpgExt();
-    static const FExtname& PgmExt();
-    static const FExtname& PngExt();
-    static const FExtname& PpmExt();
-    static const FExtname& PicExt();
-    static const FExtname& PsdExt();
-    static const FExtname& TgaExt();
+    static const FExtname& Bmp();
+    static const FExtname& Dds();
+    static const FExtname& Gif();
+    static const FExtname& Hdr();
+    static const FExtname& Jpg();
+    static const FExtname& Pgm();
+    static const FExtname& Png();
+    static const FExtname& Ppm();
+    static const FExtname& Pic();
+    static const FExtname& Psd();
+    static const FExtname& Tga();
 
     // Mounting points :
     static const FMountingPoint& GameDataDir();

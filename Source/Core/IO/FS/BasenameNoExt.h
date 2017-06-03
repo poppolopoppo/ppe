@@ -21,7 +21,7 @@ public:
 
     template <typename _CharTraits, typename _Allocator>
     FBasenameNoExt(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : FBasenameNoExt(content.c_str(), content.size()) {}
+        : FBasenameNoExt(MakeStringView(content)) {}
 
     FBasenameNoExt(const FFileSystemToken& token);
     FBasenameNoExt& operator =(const FFileSystemToken& token);

@@ -8,22 +8,25 @@
 #define FOREACH_FILESYSTEMCONSTNAMES(_Macro) \
     _Macro(FDirname,         DotDot,         L"..") \
     \
-    _Macro(FExtname,         DaeExt,         L".dae") \
-    _Macro(FExtname,         FxExt,          L".fx") \
-    _Macro(FExtname,         ObjExt,         L".obj") \
-    _Macro(FExtname,         PlyExt,         L".ply") \
+    _Macro(FExtname,         Bkm,            L".bkm") \
+    _Macro(FExtname,         Bkmz,           L".bkmz") \
+    _Macro(FExtname,         Dae,            L".dae") \
+    _Macro(FExtname,         Fx,             L".fx") \
+    _Macro(FExtname,         Obj,            L".obj") \
+    _Macro(FExtname,         Objz,           L".objz") \
+    _Macro(FExtname,         Ply,            L".ply") \
     \
-    _Macro(FExtname,         BmpExt,         L".bmp") \
-    _Macro(FExtname,         DdsExt,         L".dds") \
-    _Macro(FExtname,         GifExt,         L".gif") \
-    _Macro(FExtname,         HdrExt,         L".hdr") \
-    _Macro(FExtname,         JpgExt,         L".jpg") \
-    _Macro(FExtname,         PgmExt,         L".pgm") \
-    _Macro(FExtname,         PngExt,         L".png") \
-    _Macro(FExtname,         PpmExt,         L".ppm") \
-    _Macro(FExtname,         PicExt,         L".pic") \
-    _Macro(FExtname,         PsdExt,         L".psd") \
-    _Macro(FExtname,         TgaExt,         L".tga") \
+    _Macro(FExtname,         Bmp,            L".bmp") \
+    _Macro(FExtname,         Dds,            L".dds") \
+    _Macro(FExtname,         Gif,            L".gif") \
+    _Macro(FExtname,         Hdr,            L".hdr") \
+    _Macro(FExtname,         Jpg,            L".jpg") \
+    _Macro(FExtname,         Pgm,            L".pgm") \
+    _Macro(FExtname,         Png,            L".png") \
+    _Macro(FExtname,         Ppm,            L".ppm") \
+    _Macro(FExtname,         Pic,            L".pic") \
+    _Macro(FExtname,         Psd,            L".psd") \
+    _Macro(FExtname,         Tga,            L".tga") \
     \
     _Macro(FMountingPoint,   GameDataDir,    L"GameData:") \
     _Macro(FMountingPoint,   ProcessDir,     L"Process:") \

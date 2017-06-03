@@ -22,6 +22,20 @@ enum class ECase : bool {
     Insensitive = false,
 };
 //----------------------------------------------------------------------------
+inline char ToLower(char ch) { return ((ch >= 'A') && (ch <= 'Z')) ? 'a' + (ch - 'A') : ch; }
+inline char ToUpper(char ch) { return ((ch >= 'a') && (ch <= 'z')) ? 'A' + (ch - 'a') : ch; }
+//----------------------------------------------------------------------------
+inline wchar_t ToLower(wchar_t wch) { return std::towlower(wch); }
+inline wchar_t ToUpper(wchar_t wch) { return std::towupper(wch); }
+//----------------------------------------------------------------------------
+template <typename _Char> void InplaceToLower(_Char& ch) { ch = ToLower(ch); }
+template <typename _Char> void InplaceToUpper(_Char& ch) { ch = ToUpper(ch); }
+//----------------------------------------------------------------------------
+template <typename _Char> void InplaceToLower(const TMemoryView<_Char>& str) { for (_Char& ch : str) InplaceToLower(ch); }
+template <typename _Char> void InplaceToUpper(const TMemoryView<_Char>& str) { for (_Char& ch : str) InplaceToUpper(ch); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Char>
 class TBasicStringView : public TMemoryView< Meta::TAddConst<_Char> > {
 public:
@@ -68,6 +82,16 @@ public:
     }
 
     const parent_type& MakeView() const { return *this; }
+
+    auto ToLower() const {
+        _Char(*transform)(_Char) = &Core::ToLower;
+        return parent_type::Map(transform);
+    }
+
+    auto ToUpper() const {
+        _Char(*transform)(_Char) = &Core::ToUpper;
+        return parent_type::Map(transform);
+    }
 
     friend bool operator ==(const TBasicStringView& lhs, const TBasicStringView& rhs) { return Equals(lhs, rhs); }
     friend bool operator !=(const TBasicStringView& lhs, const TBasicStringView& rhs) { return not operator ==(lhs, rhs); }
@@ -173,20 +197,6 @@ FWStringView::reverse_iterator StrRChr(const FWStringView& wstr, wchar_t wch);
 //----------------------------------------------------------------------------
 FStringView::iterator StrStr(const FStringView& str, const FStringView& firstOccurence);
 FWStringView::iterator StrStr(const FWStringView& wstr, const FWStringView& firstOccurence);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-inline char ToLower(char ch) { return ( ( ch >= 'A' ) && ( ch <= 'Z' ) ) ? 'a' + ( ch - 'A' ) : ch; }
-inline char ToUpper(char ch) { return ( ( ch >= 'a' ) && ( ch <= 'z' ) ) ? 'A' + ( ch - 'a' ) : ch; }
-//----------------------------------------------------------------------------
-inline wchar_t ToLower(wchar_t wch) { return std::towlower(wch); }
-inline wchar_t ToUpper(wchar_t wch) { return std::towupper(wch); }
-//----------------------------------------------------------------------------
-template <typename _Char> void InplaceToLower(_Char& ch) { ch = ToLower(ch); }
-template <typename _Char> void InplaceToUpper(_Char& ch) { ch = ToUpper(ch); }
-//----------------------------------------------------------------------------
-template <typename _Char> void InplaceToLower(const TMemoryView<_Char>& str) { for (_Char& ch : str) InplaceToLower(ch); }
-template <typename _Char> void InplaceToUpper(const TMemoryView<_Char>& str) { for (_Char& ch : str) InplaceToUpper(ch); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

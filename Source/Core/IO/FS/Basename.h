@@ -43,9 +43,14 @@ public:
     const FExtname& Extname() const { return _extname; }
 
     void SetBasenameNoExt(const FBasenameNoExt& basenameNoExt) { _basenameNoExt = basenameNoExt; }
-    void SetExtname(const FExtname& extName) { _extname = extName; }
 
     bool HasExtname() const { return !_extname.empty(); }
+    void SetExtname(const FExtname& extName) { _extname = extName; }
+    FBasename ReplaceExtname(const FExtname& extName) {
+        FBasename other(*this);
+        other.SetExtname(extName);
+        return other;
+    }
 
     bool Equals(const FBasename& other) const;
     bool Less(const FBasename& other) const;

@@ -62,6 +62,11 @@ public:
     bool HasExtname() const { return _basename.HasExtname(); }
     bool HasMountingPoint() const { return _dirpath.HasMountingPoint(); }
 
+    void AppendBasename(const FileSystem::FStringView& basenameNoExt);
+    void AppendBasename(const FBasenameNoExt& basenameNoExt) { AppendBasename(basenameNoExt.MakeView()); }
+    FFilename WithAppendBasename(const FileSystem::FStringView& basenameNoExt) const;
+    FFilename WithAppendBasename(const FBasenameNoExt& basenameNoExt) const { return WithAppendBasename(basenameNoExt.MakeView()); }
+
     void ReplaceExtension(const FExtname& ext);
     FFilename WithReplacedExtension(const FExtname& ext) const;
 

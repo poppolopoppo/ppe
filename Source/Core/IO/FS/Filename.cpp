@@ -113,6 +113,18 @@ void FFilename::SetMountingPoint(const FMountingPoint& mountingPoint) {
     _dirpath = FDirpath(mountingPoint, dirnames);
 }
 //----------------------------------------------------------------------------
+void FFilename::AppendBasename(const FileSystem::FStringView& basenameNoExt) {
+    FWString newBasenameNoExt(Core::ToWString(_basename.BasenameNoExt().MakeView()));
+    newBasenameNoExt.append(basenameNoExt.begin(), basenameNoExt.end());
+    _basename.SetBasenameNoExt(newBasenameNoExt);
+}
+//----------------------------------------------------------------------------
+FFilename FFilename::WithAppendBasename(const FileSystem::FStringView& basenameNoExt) const {
+    FFilename cpy(*this);
+    cpy.AppendBasename(basenameNoExt);
+    return cpy;
+}
+//----------------------------------------------------------------------------
 FFilename FFilename::WithReplacedExtension(const FExtname& ext) const {
     FFilename cpy(*this);
     cpy.ReplaceExtension(ext);
