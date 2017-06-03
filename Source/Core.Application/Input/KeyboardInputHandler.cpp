@@ -282,7 +282,7 @@ static const u8 GVirtualKey_to_KeyboardKey[0xFF] = {
     0xFF,
 };
 //----------------------------------------------------------------------------
-static void AddVirtualKey_IfMapped_(KeyboardKeyState& state, Graphics::MessageWParam virtualKey) {
+static void AddVirtualKey_IfMapped_(FKeyboardKeyState& state, Graphics::MessageWParam virtualKey) {
     const u8 keyboardKey = GVirtualKey_to_KeyboardKey[checked_cast<u8>(virtualKey)];
 
     if (keyboardKey != 0xFF)

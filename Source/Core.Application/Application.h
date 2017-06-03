@@ -17,15 +17,15 @@ class FApplicationBase;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FApplicationStartup {
+class FApplicationModule {
 public:
     static void Start();
     static void Shutdown();
 
     static void ClearAll_UnusedMemory();
 
-    FApplicationStartup() { Start(); }
-    ~FApplicationStartup() { Shutdown(); }
+    FApplicationModule() { Start(); }
+    ~FApplicationModule() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

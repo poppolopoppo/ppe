@@ -74,6 +74,9 @@ void FApplicationGraphics::RenderLoop() {
     LOG(Info, L"[Application][Graphics] Start render loop");
 
     Graphics::IDeviceAPIEncapsulator *const device = _deviceEncapsulator->Device();
+
+    device->SetViewport(_pp.Viewport());
+
     device->SetRenderTarget(device->BackBufferRenderTarget(),
                             device->BackBufferDepthStencil() );
 

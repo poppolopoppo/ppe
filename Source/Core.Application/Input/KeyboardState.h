@@ -14,9 +14,9 @@ class FKeyboardState {
 public:
     friend class FKeyboardInputHandler;
 
-    const KeyboardKeyState& KeysDown() const { return _keysDown; }
-    const KeyboardKeyState& KeysPressed() const { return _keysPressed; }
-    const KeyboardKeyState& KeysUp() const { return _keysUp; }
+    const FKeyboardKeyState& KeysDown() const { return _keysDown; }
+    const FKeyboardKeyState& KeysPressed() const { return _keysPressed; }
+    const FKeyboardKeyState& KeysUp() const { return _keysUp; }
 
     bool IsKeyDown(EKeyboardKey key) const { return _keysDown.Contains(key); }
     bool IsKeyPressed(EKeyboardKey key) const { return _keysPressed.Contains(key); }
@@ -29,9 +29,9 @@ public:
     }
 
 private:
-    KeyboardKeyState _keysDown;
-    KeyboardKeyState _keysPressed;
-    KeyboardKeyState _keysUp;
+    FKeyboardKeyState _keysDown;
+    FKeyboardKeyState _keysPressed;
+    FKeyboardKeyState _keysUp;
 };
 //----------------------------------------------------------------------------
 typedef IInputStateProvider<FKeyboardState> IKeyboardService;

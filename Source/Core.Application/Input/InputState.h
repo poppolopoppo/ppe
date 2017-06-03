@@ -62,9 +62,9 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef InputState<EGamepadButton,  8> GamepadButtonState;
-typedef InputState<EKeyboardKey,    8> KeyboardKeyState;
-typedef InputState<EMouseButton,    8> MouseButtonState;
+typedef InputState<EGamepadButton,  8> FGamepadButtonState;
+typedef InputState<EKeyboardKey,    8> FKeyboardKeyState;
+typedef InputState<EMouseButton,    8> FMouseButtonState;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

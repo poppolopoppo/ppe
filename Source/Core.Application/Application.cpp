@@ -63,19 +63,19 @@ static void ConfigureCRTHeapForDebugging_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FApplicationStartup::Start() {
+void FApplicationModule::Start() {
     CORE_MODULE_START(Application);
 
     POOL_TAG(Application)::Start();
 }
 //----------------------------------------------------------------------------
-void FApplicationStartup::Shutdown() {
+void FApplicationModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Application);
 
     POOL_TAG(Application)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FApplicationStartup::ClearAll_UnusedMemory() {
+void FApplicationModule::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Application);
 
     POOL_TAG(Application)::ClearAll_UnusedMemory();
@@ -84,6 +84,10 @@ void FApplicationStartup::ClearAll_UnusedMemory() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationContext::FApplicationContext() {
+    // Much faster cio !
+    // https://gcc.gnu.org/onlinedocs/libstdc++/manual/io_and_c.html
+    std::ios::sync_with_stdio(false);
+
 #ifdef PLATFORM_WINDOWS
     ConfigureCRTHeapForDebugging_();
 #endif
@@ -102,6 +106,7 @@ FApplicationContext::~FApplicationContext() {
 int LaunchApplication(const FApplicationContext& context, FApplicationBase* app) {
     UNUSED(context);
     AssertRelease(app);
+
     {
 #if WITH_APPLICATION_TRY_CATCH
         CORE_TRY

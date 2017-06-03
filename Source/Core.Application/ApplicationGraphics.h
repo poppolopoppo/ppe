@@ -30,8 +30,10 @@ public:
     bool FixedTimeStep() const { return _fixedTimeStep; }
     void SetFixedTimeStep(bool value) { _fixedTimeStep = value; }
 
-    const Graphics::FPresentationParameters& FPresentationParameters() const { return _pp; }
-    const Graphics::FDeviceEncapsulator& FDeviceEncapsulator() const { return *_deviceEncapsulator; }
+    const Graphics::FPresentationParameters& PresentationParameters() const { return _pp; }
+
+    Graphics::FDeviceEncapsulator& DeviceEncapsulator() { return *_deviceEncapsulator; }
+    const Graphics::FDeviceEncapsulator& DeviceEncapsulator() const { return *_deviceEncapsulator; }
 
     virtual void Start() override;
     virtual void Shutdown() override;

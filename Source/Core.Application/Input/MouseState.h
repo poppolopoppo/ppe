@@ -22,9 +22,13 @@ public:
     float RelativeX() const { return _relativeX; }
     float RelativeY() const { return _relativeY; }
 
-    const MouseButtonState& ButtonsDown() const { return _buttonsDown; }
-    const MouseButtonState& ButtonsPressed() const { return _buttonsPressed; }
-    const MouseButtonState& ButtonsUp() const { return _buttonsUp; }
+    const FMouseButtonState& ButtonsDown() const { return _buttonsDown; }
+    const FMouseButtonState& ButtonsPressed() const { return _buttonsPressed; }
+    const FMouseButtonState& ButtonsUp() const { return _buttonsUp; }
+
+    bool IsButtonDown(EMouseButton button) const { return _buttonsDown.Contains(button); }
+    bool IsButtonPressed(EMouseButton button) const { return _buttonsPressed.Contains(button); }
+    bool IsButtonUp(EMouseButton button) const { return _buttonsUp.Contains(button); }
 
     void Clear() {
         _clientX = _clientY = 0;
@@ -38,9 +42,9 @@ private:
     int _clientX, _clientY;
     float _relativeX, _relativeY;
 
-    MouseButtonState _buttonsDown;
-    MouseButtonState _buttonsPressed;
-    MouseButtonState _buttonsUp;
+    FMouseButtonState _buttonsDown;
+    FMouseButtonState _buttonsPressed;
+    FMouseButtonState _buttonsUp;
 };
 //----------------------------------------------------------------------------
 typedef IInputStateProvider<FMouseState> IMouseService;
