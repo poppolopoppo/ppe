@@ -15,7 +15,7 @@ POOL_TAG_DEF(Lattice);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void LatticeStartup::Start() {
+void FLatticeModule::Start() {
     CORE_MODULE_START(Lattice);
 
     POOL_TAG(Lattice)::Start();
@@ -23,7 +23,7 @@ void LatticeStartup::Start() {
     FCollada::Start();
 }
 //----------------------------------------------------------------------------
-void LatticeStartup::Shutdown() {
+void FLatticeModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Lattice);
 
     FCollada::Shutdown();
@@ -31,7 +31,7 @@ void LatticeStartup::Shutdown() {
     POOL_TAG(Lattice)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void LatticeStartup::ClearAll_UnusedMemory() {
+void FLatticeModule::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Lattice);
 
     POOL_TAG(Lattice)::ClearAll_UnusedMemory();

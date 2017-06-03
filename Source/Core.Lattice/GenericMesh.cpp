@@ -4,11 +4,15 @@
 
 #include "Lattice_fwd.h"
 
+#include "GenericMeshHelpers.h"
+
 #include "Core.Graphics/Device/Geometry/IndexElementSize.h"
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Container/Hash.h"
+#include "Core/Diagnostic/Logger.h"
+#include "Core/Maths/ScalarBoundingBox.h"
 
 namespace Core {
 namespace Lattice {
@@ -16,6 +20,7 @@ namespace Lattice {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Lattice, FGenericMesh, );
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Lattice, FGenericVertexData, );
 //----------------------------------------------------------------------------
 FGenericMesh::FGenericMesh() : _indexCount(0), _vertexCount(0) {}
 //----------------------------------------------------------------------------
@@ -23,20 +28,21 @@ FGenericMesh::~FGenericMesh() {
     Clear();
 }
 //----------------------------------------------------------------------------
+void FGenericMesh::AddIndices(const TMemoryView<const u32>& indices) {
+    _indexCount += indices.size();
+    _indices.WriteView(indices);
+}
+//----------------------------------------------------------------------------
 void FGenericMesh::AddTriangle(size_t i0, size_t i1, size_t i2, size_t offset/* = 0 */) {
-    const u32 src[3] = {
-        checked_cast<u32>(offset + i0),
-        checked_cast<u32>(offset + i1),
-        checked_cast<u32>(offset + i2)
-    };
-
     _indexCount += 3;
-    _indices.WriteArray(src);
+    _indices.WritePOD(checked_cast<u32>(offset + i0));
+    _indices.WritePOD(checked_cast<u32>(offset + i1));
+    _indices.WritePOD(checked_cast<u32>(offset + i2));
 }
 //----------------------------------------------------------------------------
 const FGenericVertexData* FGenericMesh::GetVertexData(const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type) const {
     const FGenericVertexData* vertices = GetVertexDataIFP(semantic, index, type);
-    Assert(nullptr != vertices);
+    AssertRelease(nullptr != vertices);
     return vertices;
 }
 //----------------------------------------------------------------------------
@@ -44,32 +50,54 @@ const FGenericVertexData* FGenericMesh::GetVertexDataIFP(const Graphics::FVertex
     Assert(!semantic.empty());
     Assert(Graphics::EValueType::Void != type);
 
-    for (const FGenericVertexData& vertices : _vertices) {
-        if (vertices.Semantic() == semantic &&
-            vertices.Index() == index) {
-            Assert(vertices.Type() == type);
-            return &vertices;
+    for (const UGenericVertexData& vertices : _vertices) {
+        if (vertices->Semantic() == semantic &&
+            vertices->Index() == index &&
+            vertices->Type() == type) {
+            return vertices.get();
         }
     }
 
     return nullptr;
 }
 //----------------------------------------------------------------------------
-void FGenericMesh::AddVertexData(const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type) {
+FGenericVertexData* FGenericMesh::AddVertexData(const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type) {
     Assert(nullptr == GetVertexDataIFP(semantic, index, type));
 
-    _vertices.Push(this, semantic, index, type);
+    _vertices.Push(new FGenericVertexData(this, semantic, index, type));
+    return _vertices.Peek()->get();
 }
 //----------------------------------------------------------------------------
 FGenericVertexData* FGenericMesh::GetOrAddVertexData(const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type) {
     const FGenericVertexData* vertices = GetVertexDataIFP(semantic, index, type);
     if (nullptr == vertices) {
-        _vertices.Push(this, semantic, index, type);
-        return _vertices.Peek();
+        _vertices.Push(new FGenericVertexData(this, semantic, index, type));
+        return _vertices.Peek()->get();
     }
     else {
         return remove_const(vertices);
     }
+}
+//----------------------------------------------------------------------------
+void FGenericMesh::RemoveVertexData(const FGenericVertexData* data) {
+    Assert(data);
+
+    const auto it = std::find_if(_vertices.begin(), _vertices.end(), [data](const UGenericVertexData& v) {
+        return (v.get() == data);
+    });
+    Assert(_vertices.end() != it);
+
+    const size_t index = (&(*it) - &_vertices[0]);
+    if (index + 1 < _vertices.size())
+        swap(*_vertices.Peek(), _vertices[index]);
+
+    _vertices.Pop();
+}
+//----------------------------------------------------------------------------
+void FGenericMesh::RemoveVertexData(const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type) {
+    const FGenericVertexData* data = GetVertexData(semantic, index, type);
+    AssertRelease(nullptr != data);
+    RemoveVertexData(data);
 }
 //----------------------------------------------------------------------------
 bool FGenericMesh::AreVertexEquals(size_t v0, size_t v1) const {
@@ -78,15 +106,15 @@ bool FGenericMesh::AreVertexEquals(size_t v0, size_t v1) const {
     if (v0 == v1)
         return true;
 
-    for (const FGenericVertexData& vertices : _vertices) {
-        Assert(_vertexCount == vertices.VertexCount());
-        const size_t strideInBytes = vertices.StrideInBytes();
+    for (const UGenericVertexData& vertices : _vertices) {
+        Assert(_vertexCount == vertices->VertexCount());
+        const size_t strideInBytes = vertices->StrideInBytes();
 
-        const TMemoryView<const u8> rawData = vertices.MakeView();
+        const TMemoryView<const u8> rawData = vertices->MakeView();
         const TMemoryView<const u8> lhsData = rawData.SubRange(v0 * strideInBytes, strideInBytes);
         const TMemoryView<const u8> rhsData = rawData.SubRange(v1 * strideInBytes, strideInBytes);
 
-        if (not Graphics::ValueEquals(vertices.Type(), lhsData, rhsData))
+        if (not Graphics::ValueEquals(vertices->Type(), lhsData, rhsData))
             return false;
     }
 
@@ -98,13 +126,13 @@ hash_t FGenericMesh::VertexHash(size_t v, size_t seed/* = 0 */) const {
 
     hash_t result = seed;
 
-    for (const FGenericVertexData& vertices : _vertices) {
-        Assert(_vertexCount == vertices.VertexCount());
-        const TMemoryView<const u8>& rawData = vertices.MakeView();
-        const size_t strideInBytes = vertices.StrideInBytes();
+    for (const UGenericVertexData& vertices : _vertices) {
+        Assert(_vertexCount == vertices->VertexCount());
+        const TMemoryView<const u8>& rawData = vertices->MakeView();
+        const size_t strideInBytes = vertices->StrideInBytes();
 
         const auto subpart = rawData.SubRange(v * strideInBytes, strideInBytes);
-        const hash_t h = Graphics::ValueHash(vertices.Type(), subpart);
+        const hash_t h = Graphics::ValueHash(vertices->Type(), subpart);
 
         hash_combine(result, h);
     }
@@ -118,11 +146,11 @@ void FGenericMesh::VertexCopy(size_t dst, size_t src) {
     if (src == dst)
         return;
 
-    for (FGenericVertexData& vertices : _vertices) {
-        Assert(_vertexCount == vertices.VertexCount());
-        const size_t strideInBytes = vertices.StrideInBytes();
+    for (const UGenericVertexData& vertices : _vertices) {
+        Assert(_vertexCount == vertices->VertexCount());
+        const size_t strideInBytes = vertices->StrideInBytes();
 
-        const TMemoryView<u8> rawData = vertices.MakeView();
+        const TMemoryView<u8> rawData = vertices->MakeView();
 
 #if 1
         // no need for memory semantic, assumes pod and should be faster
@@ -132,7 +160,7 @@ void FGenericMesh::VertexCopy(size_t dst, size_t src) {
 #else
         const TMemoryView<u8> dstData = rawData.SubRange(dst * strideInBytes, strideInBytes);
         const TMemoryView<const u8> srcData = rawData.SubRange(src * strideInBytes, strideInBytes);
-        Graphics::ValueCopy(vertices.Type(), dstData, srcData);
+        Graphics::ValueCopy(vertices->Type(), dstData, srcData);
 #endif
     }
 }
@@ -143,15 +171,15 @@ void FGenericMesh::VertexSwap(size_t v0, size_t v1) {
     if (v0 == v1)
         return;
 
-    for (FGenericVertexData& vertices : _vertices) {
-        Assert(_vertexCount == vertices.VertexCount());
-        const size_t strideInBytes = vertices.StrideInBytes();
+    for (const UGenericVertexData& vertices : _vertices) {
+        Assert(_vertexCount == vertices->VertexCount());
+        const size_t strideInBytes = vertices->StrideInBytes();
 
-        const TMemoryView<u8> rawData = vertices.MakeView();
+        const TMemoryView<u8> rawData = vertices->MakeView();
         const TMemoryView<u8> lhsData = rawData.SubRange(v0 * strideInBytes, strideInBytes);
         const TMemoryView<u8> rhsData = rawData.SubRange(v1 * strideInBytes, strideInBytes);
 
-        Graphics::ValueSwap(vertices.Type(), lhsData, rhsData);
+        Graphics::ValueSwap(vertices->Type(), lhsData, rhsData);
     }
 }
 //----------------------------------------------------------------------------
@@ -176,8 +204,8 @@ void FGenericMesh::Resize(size_t indexCount, size_t vertexCount, bool keepData/*
     }
     if (_vertexCount != vertexCount) {
         _vertexCount = vertexCount;
-        for (FGenericVertexData& vertices : _vertices)
-            vertices.Resize(vertexCount, keepData);
+        for (const UGenericVertexData& vertices : _vertices)
+            vertices->Resize(vertexCount, keepData);
     }
 }
 //----------------------------------------------------------------------------
@@ -190,9 +218,40 @@ void FGenericMesh::Reserve(size_t indexCount, size_t vertexCount, bool additiona
         _indices.reserve(indexCount * sizeof(u32));
     }
     if (_vertexCount < vertexCount) {
-        for (FGenericVertexData& vertices : _vertices)
-            vertices.Reserve(vertexCount);
+        for (const UGenericVertexData& vertices : _vertices)
+            vertices->Reserve(vertexCount);
     }
+}
+//----------------------------------------------------------------------------
+void FGenericMesh::CleanAndOptimize(size_t index) {
+    if (!Position3f_IFP(index) && !Position4f_IFP(index))
+        return;
+
+    const size_t duplicated = MergeDuplicateVertices(*this);
+    LOG(Info, L"[Mesh] removed {0}/{1} duplicate vertices = {2:f2}%", duplicated, _vertexCount, duplicated * 100.f / _vertexCount);
+
+    const size_t unused = RemoveUnusedVertices(*this);
+    LOG(Info, L"[Mesh] removed {0}/{1} unused vertices = {2:f2}%", unused, _vertexCount + unused, unused * 100.f / (_vertexCount + unused));
+
+    const FAabb3f bounds = ComputeBounds(*this, index);
+    const float minDistance = Min(bounds.Extents()) * 0.001f; // 0.1%
+    const float minArea = minDistance * minDistance;
+
+#if 0 // May merge needed vertices for interpolation : can't be in the default path
+    const size_t close = MergeCloseVertices(*this, index, minDistance);
+    LOG(Info, L"[Mesh] removed {0}/{1} close vertices (epsilon = {2}) = {3:f2}%", close, _vertexCount, minDistance, close * 100.f / _vertexCount);
+#endif
+
+    const size_t zero = RemoveZeroAreaTriangles(*this, index, minArea);
+    LOG(Info, L"[Mesh] removed {0}/{1} zero area triangle indices (epsilon = {2}) = {3:f2}%", zero, _indexCount + zero, minArea, zero * 100.f / (_indexCount + zero));
+
+    const size_t unused2 = RemoveUnusedVertices(*this);
+    LOG(Info, L"[Mesh] removed {0}/{1} unused vertices = {2:f2}%", unused2, _vertexCount + unused2, unused2 * 100.f / (_vertexCount + unused2));
+
+    const float VACMR_Before = VertexAverageCacheMissRate(*this);
+    OptimizeIndicesAndVerticesOrder(*this);
+    const float VACMR_After = VertexAverageCacheMissRate(*this);
+    LOG(Info, L"[Mesh] optimized vertex average cache miss rate from {0:f3} to {1:f3} = {2:f2}%", VACMR_Before, VACMR_After, VACMR_After * 100.f / VACMR_Before);
 }
 //----------------------------------------------------------------------------
 bool FGenericMesh::ExportIndices(const TMemoryView<u16>& dst) const {
@@ -232,21 +291,21 @@ bool FGenericMesh::ExportVertices(const Graphics::FVertexDeclaration* vdecl, con
     const size_t vertexSizeInBytes = vdecl->SizeInBytes();
     Assert(dst.SizeInBytes() == vertexSizeInBytes * _vertexCount);
 
-    const TMemoryView<const Graphics::FValueBlock::TField> subParts = vdecl->SubParts();
+    const TMemoryView<const Graphics::FValueField> subParts = vdecl->SubParts();
     STACKLOCAL_POD_STACK(const FGenericVertexData*, channels, subParts.size());
 
-    for (const Graphics::FValueBlock::TField& subPart : subParts) {
+    for (const Graphics::FValueField& subPart : subParts) {
         bool found = false;
 
-        for (const FGenericVertexData& vertices : _vertices) {
-            Assert(vertices.VertexCount() == _vertexCount);
+        for (const UGenericVertexData& vertices : _vertices) {
+            Assert(vertices->VertexCount() == _vertexCount);
 
-            if (subPart.Name() == vertices.Semantic() &&
-                subPart.Index() == vertices.Index() &&
-                subPart.IsPromotableFrom(vertices.Type()) ) {
+            if (subPart.Name() == vertices->Semantic() &&
+                subPart.Index() == vertices->Index() &&
+                subPart.IsPromotableFrom(vertices->Type()) ) {
 
-                Assert(not channels.Contains(&vertices));
-                channels.Push(&vertices);
+                Assert(not channels.Contains(vertices.get()));
+                channels.Push(vertices.get());
                 found = true;
             }
         }
@@ -262,13 +321,13 @@ bool FGenericMesh::ExportVertices(const Graphics::FVertexDeclaration* vdecl, con
 
     forrange(c, 0, channels.size()) {
         const FGenericVertexData* pchannel = channels[c];
-        const Graphics::FValueBlock::TField& subPart = vdecl->SubPartByIndex(c);
+        const Graphics::FValueField& subPart = vdecl->SubPartByIndex(c);
 
         if (not subPart.PromoteArray(
             dst, vertexSizeInBytes,
             pchannel->Type(),
             pchannel->MakeView(),
-            pchannel->StrideInBytes(),
+            0, pchannel->StrideInBytes(),
             _vertexCount )) {
             AssertNotReached();
         }
@@ -280,9 +339,9 @@ bool FGenericMesh::ExportVertices(const Graphics::FVertexDeclaration* vdecl, con
 void FGenericMesh::Clear() {
 #ifdef WITH_CORE_ASSERT
     Assert((_indexCount % 3) == 0);
-    for (const FGenericVertexData& vertices : _vertices) {
-        Assert(vertices.VertexCount() == _vertexCount);
-        Assert(vertices.VertexCount() * vertices.StrideInBytes() == vertices.SizeInBytes());
+    for (const UGenericVertexData& vertices : _vertices) {
+        Assert(vertices->VertexCount() == _vertexCount);
+        Assert(vertices->VertexCount() * vertices->StrideInBytes() == vertices->SizeInBytes());
     }
     for (u32 index : Indices()) {
         Assert(index < _vertexCount);
@@ -374,7 +433,7 @@ TMemoryView<const u8> FGenericVertexData::SubRange(size_t start, size_t count) c
         return TGenericVertexSubPart< _TYPE >( GetOrAddVertexData(Graphics::FVertexSemantic::_NAME, index, TGenericVertexSubPart< _TYPE >::Type) ); \
     } \
     TGenericVertexSubPart< _TYPE > FGenericMesh::_NAME ## _INDEX ## f_IFP(size_t index) const { \
-        return TGenericVertexSubPart< _TYPE >( GetVertexData(Graphics::FVertexSemantic::_NAME, index, TGenericVertexSubPart< _TYPE >::Type) ); \
+        return TGenericVertexSubPart< _TYPE >( GetVertexDataIFP(Graphics::FVertexSemantic::_NAME, index, TGenericVertexSubPart< _TYPE >::Type) ); \
     }
 //----------------------------------------------------------------------------
 GENERICVERTEX_SEMANTIC_DEF(Position,    3, float3)
@@ -384,6 +443,7 @@ GENERICVERTEX_SEMANTIC_DEF(TexCoord,    3, float3)
 GENERICVERTEX_SEMANTIC_DEF(TexCoord,    4, float4)
 GENERICVERTEX_SEMANTIC_DEF(Color,       4, float4)
 GENERICVERTEX_SEMANTIC_DEF(Normal,      3, float3)
+GENERICVERTEX_SEMANTIC_DEF(Normal,      4, float4)
 GENERICVERTEX_SEMANTIC_DEF(Tangent,     3, float3)
 GENERICVERTEX_SEMANTIC_DEF(Tangent,     4, float4)
 GENERICVERTEX_SEMANTIC_DEF(Binormal,    3, float3)

@@ -265,14 +265,14 @@ bool FCollada::ImportMaterials(TArray<PGenericMaterial>& materials) const {
 }
 //----------------------------------------------------------------------------
 bool FCollada::Load(FCollada* pdst, const FFilename& filename) {
-    Assert(filename.Extname() == FFSConstNames::DaeExt());
+    Assert(filename.Extname() == FFSConstNames::Dae());
 
     pdst->_xml = new XML::FDocument();
     return XML::FDocument::Load(pdst->_xml.get(), filename);
 }
 //----------------------------------------------------------------------------
 bool FCollada::Load(FCollada* pdst, const FFilename& filename, const FStringView& content) {
-    Assert(filename.Extname() == FFSConstNames::DaeExt());
+    Assert(filename.Extname() == FFSConstNames::Dae());
 
     pdst->_xml = new XML::FDocument();
     return XML::FDocument::Load(pdst->_xml.get(), filename, content);

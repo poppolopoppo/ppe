@@ -15,15 +15,15 @@ namespace Lattice {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class CORE_LATTICE_API LatticeStartup {
+class CORE_LATTICE_API FLatticeModule {
 public:
     static void Start();
     static void Shutdown();
 
     static void ClearAll_UnusedMemory();
 
-    LatticeStartup() { Start(); }
-    ~LatticeStartup() { Shutdown(); }
+    FLatticeModule() { Start(); }
+    ~FLatticeModule() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

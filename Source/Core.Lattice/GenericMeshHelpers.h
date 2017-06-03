@@ -4,15 +4,23 @@
 
 #include "Core.Lattice/GenericMesh_fwd.h"
 
+#include "Core/Maths/MathHelpers.h"
+#include "Core/Maths/ScalarBoundingBox_fwd.h"
+#include "Core/Maths/ScalarMatrix_fwd.h"
 #include "Core/Memory/MemoryView.h"
 
 namespace Core {
+class FTransform;
 namespace Lattice {
 class FGenericMesh;
 template <typename T>
 class TGenericVertexSubPart;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FAabb3f ComputeBounds(const FGenericMesh& mesh, size_t index);
+FAabb3f ComputeSubPartBounds(const TGenericVertexSubPart<float3>& subPart);
+FAabb4f ComputeSubPartBounds(const TGenericVertexSubPart<float4>& subPart);
 //----------------------------------------------------------------------------
 bool ComputeNormals(FGenericMesh& mesh, size_t index);
 void ComputeNormals(const FGenericMesh& mesh, const FPositions3f& positions, const FNormals3f& normals);
@@ -24,7 +32,17 @@ void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions4f& positions
 void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents4f& tangents);
 void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions4f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents4f& tangents);
 //----------------------------------------------------------------------------
-bool MergeDuplicateVertices(FGenericMesh& mesh);
+bool TangentSpaceToQuaternion(FGenericMesh& mesh, size_t index, bool removeTBN = true);
+void TangentSpaceToQuaternion(const FGenericMesh& mesh, const FNormals3f& normals, const FBinormals3f& binormals, const FTangents3f& tangents, const FNormals4f& quaternions);
+void TangentSpaceToQuaternion(const FGenericMesh& mesh, const FNormals3f& normals, const FTangents4f& tangentsWithHandedness, const FNormals4f& quaternions);
+//----------------------------------------------------------------------------
+size_t MergeCloseVertices(FGenericMesh& mesh, size_t index, float minDistance = F_Epsilon);
+size_t MergeDuplicateVertices(FGenericMesh& mesh);
+size_t RemoveZeroAreaTriangles(FGenericMesh& mesh, size_t index, float minArea = F_Epsilon);
+size_t RemoveUnusedVertices(FGenericMesh& mesh);
+//----------------------------------------------------------------------------
+void Transform(FGenericMesh& mesh, size_t index, const float4x4& transform);
+void Transform(FGenericMesh& mesh, size_t index, const FTransform& transform);
 //----------------------------------------------------------------------------
 bool PNTriangles(FGenericMesh& mesh, size_t index, size_t recursions);
 void PNTriangles(FGenericMesh& mesh, const FPositions3f& positions, const FNormals3f& normals, size_t recursions);

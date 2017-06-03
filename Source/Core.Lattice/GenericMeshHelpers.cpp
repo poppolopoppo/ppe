@@ -6,17 +6,37 @@
 
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 
+#include "Core/Container/BitSet.h"
 #include "Core/Container/Hash.h"
+#include "Core/Container/HashMap.h"
 #include "Core/Container/Vector.h"
+#include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/PNTriangle.h"
+#include "Core/Maths/ScalarBoundingBox.h"
+#include "Core/Maths/ScalarMatrix.h"
+#include "Core/Maths/ScalarMatrixHelpers.h"
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/ScalarVectorHelpers.h"
+#include "Core/Maths/Transform.h"
+#include "Core/Maths/Quaternion.h"
+#include "Core/Maths/QuaternionHelpers.h"
 #include "Core/Memory/UniqueView.h"
 
 #include <algorithm>
 
 namespace Core {
 namespace Lattice {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static float3 SafeNormalize3_(const float3& n) {
+    const float l = Length3(n);
+    return (l > F_SmallEpsilon ? n / l : float3(0, 0, 1));
+}
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -56,8 +76,8 @@ static float3 ComputeNormal_(const float3& p0, const float3& p1, const float3& p
     const float d201 = LengthSq3(c201);
 
     return (d012 > d102)
-        ? (d012 > d201 ? Normalize3(c012) : Normalize3(c201))
-        : (d102 > d201 ? Normalize3(c102) : Normalize3(c201));
+        ? (d012 > d201 ? c012 : c201)
+        : (d102 > d201 ? c102 : c201);
 }
 //----------------------------------------------------------------------------
 static void ComputeTriangleBasis_(
@@ -95,26 +115,26 @@ static void ComputeTriangleBasis_(
     const float f201 = (tex02.x() * tex12.y() -
                         tex02.y() * tex12.x() );
 
-    if (fabs(f012) > fabs(f102)) {
-        if (fabs(f012) > fabs(f201)) {
-            const float f = (fabs(f012) < F_EpsilonSQ) ? 1.0f : 1.0f/f012;
+    if (Abs(f012) > Abs(f102)) {
+        if (Abs(f012) > Abs(f201)) {
+            const float f = (Abs(f012) < F_EpsilonSQ) ? 1.0f : 1.0f/f012;
             *pTangent = ((pos10 * tex20.y()) - (pos20 * tex10.y())) * f;
             *pBinormal = ((pos20 * tex10.x()) - (pos10 * tex20.x())) * f;
         }
         else {
-            const float f = (fabs(f201) < F_EpsilonSQ) ? 1.0f : 1.0f/f201;
+            const float f = (Abs(f201) < F_EpsilonSQ) ? 1.0f : 1.0f/f201;
             *pTangent = ((pos01 * tex21.y()) - (pos21 * tex01.y())) * f;
             *pBinormal = ((pos21 * tex01.x()) - (pos01 * tex21.x())) * f;
         }
     }
     else {
-        if (fabs(f102) > fabs(f201)) {
-            const float f = (fabs(f102) < F_EpsilonSQ) ? 1.0f : 1.0f/f102;
+        if (Abs(f102) > Abs(f201)) {
+            const float f = (Abs(f102) < F_EpsilonSQ) ? 1.0f : 1.0f/f102;
             *pTangent = ((pos01 * tex21.y()) - (pos21 * tex01.y())) * f;
             *pBinormal = ((pos21 * tex01.x()) - (pos01 * tex21.x())) * f;
         }
         else {
-            const float f = (fabs(f201) < F_EpsilonSQ) ? 1.0f : 1.0f/f201;
+            const float f = (Abs(f201) < F_EpsilonSQ) ? 1.0f : 1.0f/f201;
             *pTangent = ((pos02 * tex12.y()) - (pos12 * tex02.y())) * f;
             *pBinormal = ((pos12 * tex02.x()) - (pos02 * tex12.x())) * f;
         }
@@ -124,6 +144,42 @@ static void ComputeTriangleBasis_(
 }//!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+template <size_t _Dim>
+TScalarBoundingBox<float, _Dim> ComputeSubPartBounds_(
+    const TGenericVertexSubPart<TScalarVector<float, _Dim>>& subPart) {
+    TScalarBoundingBox<float, _Dim> bounds;
+    bounds.AddRange(subPart.MakeView().begin(), subPart.MakeView().end());
+    return bounds;
+}
+} //!namespace
+//----------------------------------------------------------------------------
+FAabb3f ComputeBounds(const FGenericMesh& mesh, size_t index) {
+    FAabb3f bounds;
+
+    const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index);
+    const TGenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index);
+    if (!sp_position3f && !sp_position4f) {
+        AssertNotReached();
+        return bounds;
+    }
+
+    if (sp_position3f)
+        bounds = ComputeSubPartBounds(sp_position3f);
+    else
+        bounds = ComputeSubPartBounds(sp_position4f).xyz();
+
+    return bounds;
+}
+//----------------------------------------------------------------------------
+FAabb3f ComputeSubPartBounds(const TGenericVertexSubPart<float3>& subPart) {
+    return ComputeSubPartBounds_(subPart);
+}
+//----------------------------------------------------------------------------
+FAabb4f ComputeSubPartBounds(const TGenericVertexSubPart<float4>& subPart) {
+    return ComputeSubPartBounds_(subPart);
+}
 //----------------------------------------------------------------------------
 namespace {
 static void ComputeNormals_(
@@ -187,7 +243,7 @@ static void ComputeNormals_(
     }
 
     for (float3& n : normals3f)
-        n = Normalize3(n);
+        n = SafeNormalize3_(n);
 }
 } //!namespace
 //----------------------------------------------------------------------------
@@ -314,21 +370,21 @@ static void ComputeTangentSpace_(
         }
         else if (float3(0) == tangent) {
             Assert(float3(0) != binormal);
-            binormal = Normalize3(binormal);
+            binormal = SafeNormalize3_(binormal);
             tangent = Cross(normal, binormal);
         }
         else if (float3(0) == binormal) {
             Assert(float3(0) != tangent);
-            tangent = Normalize3(tangent);
+            tangent = SafeNormalize3_(tangent);
             binormal = Cross(normal, tangent);
         }
         else {
-            tangent = Normalize3(tangent);
-            binormal = Normalize3(binormal);
+            tangent = SafeNormalize3_(tangent);
+            binormal = SafeNormalize3_(binormal);
         }
 
         //Gram-Schmidt orthogonalization
-        tangent = Normalize3(tangent - normal * Dot3(normal, tangent));
+        tangent = SafeNormalize3_(tangent - normal * Dot3(normal, tangent));
 
         //Right handed TBN space ?
         const bool leftHanded = (Dot3(Cross(tangent, binormal), normal) < 0);
@@ -400,106 +456,311 @@ void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions4f& positions
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool MergeDuplicateVertices(FGenericMesh& mesh) {
-    const size_t vertexCount = mesh.VertexCount();
-    if (0 == vertexCount)
+bool TangentSpaceToQuaternion(FGenericMesh& mesh, size_t index, bool removeTBN/* = true */) {
+    const TGenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f_IFP(index);
+    if (!sp_normal3f)
         return false;
 
-    Assert(vertexCount > 1);
+    if (const TGenericVertexSubPart<float4> sp_tangent4f = mesh.Tangent4f_IFP(index)) {
+        TangentSpaceToQuaternion(mesh, sp_normal3f, sp_tangent4f, mesh.Normal4f(index));
 
-    STACKLOCAL_POD_ARRAY(hash_t, hashes, vertexCount);
-    STACKLOCAL_POD_ARRAY(u32, tmp, vertexCount*2);
-    const TMemoryView<u32> sorteds = tmp.SubRange(0*vertexCount, vertexCount);
-    const TMemoryView<u32> reindexation = tmp.SubRange(1*vertexCount, vertexCount);
+        if (removeTBN) {
+            mesh.RemoveSubPart(sp_normal3f);
+            mesh.RemoveSubPart(sp_tangent4f);
+        }
+    }
+    else if (const TGenericVertexSubPart<float3> sp_tangent3f = mesh.Tangent3f_IFP(index)) {
 
-    // Init vertex hash value and sort index
-    forrange(v, 0, vertexCount) {
-        sorteds[v] = checked_cast<u32>(v);
-        hashes[v] = CORE_HASH_VALUE_SEED;
+        const TGenericVertexSubPart<float3> sp_binormal3f = mesh.Binormal3f_IFP(index);
+        if (!sp_binormal3f)
+            return false;
+
+        TangentSpaceToQuaternion(mesh, sp_normal3f, sp_binormal3f, sp_tangent3f, mesh.Normal4f(index));
+
+        if (removeTBN) {
+            mesh.RemoveSubPart(sp_normal3f);
+            mesh.RemoveSubPart(sp_binormal3f);
+            mesh.RemoveSubPart(sp_tangent3f);
+        }
+    }
+    else {
+        return false;
     }
 
-    // Compute each vertex hash value subpart by supart
-    for (const FGenericVertexData& subpart : mesh.Vertices()) {
-        Assert(subpart.VertexCount() == vertexCount);
+    return true;
+}
+//----------------------------------------------------------------------------
+void TangentSpaceToQuaternion(const FGenericMesh& mesh, const FNormals3f& normals, const FBinormals3f& binormals, const FTangents3f& tangents, const FNormals4f& quaternions) {
+    const size_t vertexCount = mesh.VertexCount();
 
-        const TMemoryView<const u8> rawData = subpart.MakeView();
-        const Graphics::EValueType type = subpart.Type();
-        const size_t strideInBytes = subpart.StrideInBytes();
+    const TMemoryView<const float3> t = tangents.MakeView();
+    const TMemoryView<const float3> b = binormals.MakeView();
+    const TMemoryView<const float3> n = normals.MakeView();
+
+    TMemoryView<float4> q = quaternions.MakeView();
+    forrange(v, 0, vertexCount)
+        q[v] = TangentSpaceToQuaternion(t[v], b[v], n[v]).Value();
+}
+//----------------------------------------------------------------------------
+void TangentSpaceToQuaternion(const FGenericMesh& mesh, const FNormals3f& normals, const FTangents4f& tangentsWithHandedness, const FNormals4f& quaternions) {
+    const size_t vertexCount = mesh.VertexCount();
+
+    const TMemoryView<const float4> t = tangentsWithHandedness.MakeView();
+    const TMemoryView<const float3> n = normals.MakeView();
+
+    TMemoryView<float4> q = quaternions.MakeView();
+    forrange(v, 0, vertexCount) {
+        const float4& tangent = t[v];
+        const float3& normal = n[v];
+        const float3 binormal = SafeNormalize3_(Cross(tangent.xyz(), normal)) *
+            (tangent.w() > 0 ? -1.f : 1.f);
+
+        q[v] = TangentSpaceToQuaternion(tangent.xyz(), binormal, normal).Value();
+    }
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+size_t MergeCloseVertices(FGenericMesh& mesh, size_t index, float minDistance/* = F_Epsilon */) {
+    const size_t vertexCount = mesh.VertexCount();
+    if (0 == vertexCount)
+        return 0;
+
+    const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index);
+    const TGenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index);
+    if (!sp_position3f && !sp_position4f) {
+        AssertNotReached();
+        return 0;
+    }
+
+    STACKLOCAL_POD_ARRAY(u32, tmp, vertexCount * 2);
+    const TMemoryView<u32> sorted = tmp.SubRange(0 * vertexCount, vertexCount);
+    const TMemoryView<u32> reindexation = tmp.SubRange(1 * vertexCount, vertexCount);
+
+    forrange(i, 0, mesh.VertexCount())
+        sorted[i] = u32(i);
+
+    const TMemoryView<const float3> positions3f = sp_position3f.MakeView();
+    const TMemoryView<const float4> positions4f = sp_position4f.MakeView();
+
+    if (sp_position3f)
+        std::sort(sorted.begin(), sorted.end(), [&positions3f](u32 lhs, u32 rhs) {
+            return (positions3f[lhs].x() < positions3f[rhs].x());
+        });
+    else
+        std::sort(sorted.begin(), sorted.end(), [&positions4f](u32 lhs, u32 rhs) {
+            return (positions4f[lhs].x() < positions4f[rhs].x());
+        });
+
+    const float minDistanceSq = Sqr(minDistance);
+    for (size_t a = 0; a < vertexCount; ++a) {
+        const u32 ia = sorted[a];
+        const float3& pa = (sp_position3f ? positions3f[ia] : positions4f[ia].xyz());
+
+        reindexation[ia] = ia;
+
+        size_t b = a;
+        while (b--) {
+            const u32 ib = sorted[b];
+            const float3& pb = (sp_position3f ? positions3f[ib] : positions4f[ib].xyz());
+
+            if (pb.x() < pa.x() - minDistance)
+                break;
+
+            if (DistanceSq3(pa, pb) < minDistanceSq) {
+                reindexation[ib] = ia;
+            }
+        }
+    }
+
+    for (u32& vertexIndex : mesh.Indices())
+        vertexIndex = reindexation[vertexIndex];
+
+    size_t mergedCount = 0;
+    forrange(v, 0, vertexCount)
+        if (reindexation[v] != v)
+            mergedCount++;
+
+    return mergedCount;
+}
+//----------------------------------------------------------------------------
+size_t MergeDuplicateVertices(FGenericMesh& mesh) {
+    const size_t vertexCount = mesh.VertexCount();
+    if (0 == vertexCount)
+        return 0;
+
+    // Hash all vertices
+    STACKLOCAL_POD_ARRAY(hash_t, hashes, vertexCount);
+    std::fill(hashes.begin(), hashes.end(), CORE_HASH_VALUE_SEED);
+
+    // Compute each vertex hash value subpart by subpart
+    for (const UGenericVertexData& subpart : mesh.Vertices()) {
+        Assert(subpart->VertexCount() == vertexCount);
+
+        const TMemoryView<const u8> rawData = subpart->MakeView();
+        const Graphics::EValueType type = subpart->Type();
+        const size_t strideInBytes = subpart->StrideInBytes();
 
         forrange(v, 0, vertexCount) {
-            const auto block = rawData.SubRange(v * strideInBytes, strideInBytes);
+            auto block = rawData.SubRange(v * strideInBytes, strideInBytes);
             hash_combine(hashes[v], Graphics::ValueHash(type, block));
         }
     }
 
-    // Sort by hash value and by index
-    std::sort(sorteds.begin(), sorteds.end(), [&hashes](u32 lhs, u32 rhs) {
-        return (hashes[lhs] == hashes[rhs]
-            ? lhs < rhs // preserve vertex order when duplicated (we want the first occurence)
-            : hashes[lhs] < hashes[rhs] );
-    });
-
-    // Search for equal hash values <=> duplicates and remap vertices
-    u32 finalCount = 1;
-    u32 v0 = sorteds[0];
-    reindexation[v0] = v0;
-    forrange(i, 1, vertexCount) {
-        const u32 v1 = sorteds[i];
-
-        if (mesh.AreVertexEquals(v0, v1)) {
-            reindexation[v1] =  reindexation[v0];
+    // Construct a hash set with all vertices
+    struct TVertexIndexHasher_ {
+        const TMemoryView<const hash_t> Hashes;
+        hash_t operator ()(u32 v) const {
+            return (Hashes[v]);
         }
-        else {
-            reindexation[v1] =  v1;
-            finalCount++;
+    };
+    struct TVertexIndexEqual_ {
+        const TMemoryView<const hash_t> Hashes;
+        const FGenericMesh* pMesh;
+        bool operator ()(u32 lhs, u32 rhs) const {
+            return (Hashes[lhs] == Hashes[rhs] &&
+                    pMesh->AreVertexEquals(lhs, rhs) );
         }
+    };
+    THashSet<u32, TVertexIndexHasher_, TVertexIndexEqual_, THREAD_LOCAL_ALLOCATOR(GenericMesh, u32)>
+        verticesSet(TVertexIndexHasher_{ hashes }, TVertexIndexEqual_{ hashes, &mesh });
+    verticesSet.reserve(vertexCount);
 
-        v0 = v1;
+    // Merge and re-index all vertices
+    STACKLOCAL_POD_ARRAY(u32, reindexation, vertexCount);
+    forrange(v, 0, u32(vertexCount)) {
+        const auto it = verticesSet.insert(v);
+        Assert(it.second || *it.first < v);
+        reindexation[v] = *it.first;
     }
 
     // No collisions <=> no duplicates
-    if (finalCount == vertexCount)
-        return false;
-    Assert(finalCount < vertexCount);
+    if (verticesSet.size() == vertexCount)
+        return 0;
+    Assert(verticesSet.size() < vertexCount);
 
     // Remap all indices to new merged indices
     for (u32& index : mesh.Indices())
         index = reindexation[index];
 
-    // Sort the reindexation to get the new vertices order
-    std::sort(reindexation.begin(), reindexation.end());
-    Assert(0 == reindexation[0]); // the first vertex can't be replaced : it's always the first occurence
+    // Duplicate vertices are still there but not referenced, call RemoveUnusedVertices()
 
-    // Compact reindexation by removing duplicates
+    return (vertexCount - verticesSet.size());
+}
+//----------------------------------------------------------------------------
+size_t RemoveZeroAreaTriangles(FGenericMesh& mesh, size_t index, float minArea/* = F_Epsilon */) {
+    if (0 == mesh.IndexCount() || 0 == mesh.VertexCount())
+        return 0;
+
+    const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index);
+    const TGenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index);
+    if (!sp_position3f && !sp_position4f) {
+        AssertNotReached();
+        return 0;
+    }
+
+    const TMemoryView<u32> indices = mesh.Indices();
+    const float twiceMinArea = 2 * minArea;
+
+    const TMemoryView<const float3> positions3f = sp_position3f.MakeView();
+    const TMemoryView<const float4> positions4f = sp_position4f.MakeView();
+
+    u32 indexCount = 0;
+    for (size_t t = 0; t < indices.size(); t += 3)
     {
-        u32 n = 1;
-        forrange(v, 1, vertexCount) {
-            if (reindexation[v] != reindexation[v-1])
-                reindexation[n++] = reindexation[v];
+        const uint32_t i0 = indices[t + 0];
+        const uint32_t i1 = indices[t + 1];
+        const uint32_t i2 = indices[t + 2];
+
+        float3 p0, p1, p2;
+        if (sp_position3f) {
+            p0 = positions3f[i0];
+            p1 = positions3f[i1];
+            p2 = positions3f[i2];
         }
-        Assert(n == finalCount);
+        else {
+            p0 = positions4f[i0].xyz();
+            p1 = positions4f[i1].xyz();
+            p2 = positions4f[i2].xyz();
+        }
+
+        float twiceArea = 0;
+        twiceArea = Max(twiceArea, Length3(Cross(p1 - p0, p2 - p0)));
+        twiceArea = Max(twiceArea, Length3(Cross(p0 - p1, p2 - p1)));
+        twiceArea = Max(twiceArea, Length3(Cross(p0 - p2, p1 - p2)));
+
+        if (twiceArea > twiceMinArea)
+        {
+            indices[indexCount++] = i0;
+            indices[indexCount++] = i1;
+            indices[indexCount++] = i2;
+        }
     }
 
-    // Compact each subpart data with the reindexation
-    for (FGenericVertexData& subpart : mesh.Vertices()) {
-        forrange(i, 1, finalCount) {
-            if (i != reindexation[i]) {
-                Assert(i < reindexation[i]);
-                subpart.CopyVertex(i, reindexation[i]);
-            }
+    if (indexCount == indices.size())
+        return 0;
+    Assert(indexCount < indices.size());
+
+    mesh.Resize(indexCount, mesh.VertexCount(), true);
+
+    return (indices.size() - indexCount);
+}
+//----------------------------------------------------------------------------
+size_t RemoveUnusedVertices(FGenericMesh& mesh) {
+    if (mesh.VertexCount() == 0)
+        return 0;
+
+    STACKLOCAL_POD_BITSET(inUse, mesh.VertexCount());
+    inUse.ResetAll(false);
+
+    size_t vertexCountUsed = 0;
+    for (u32 vertexIndex : mesh.Indices()) {
+        if (!inUse[vertexIndex]) {
+            inUse.SetTrue(vertexIndex);
+            vertexCountUsed++;
         }
     }
 
-    mesh.Resize(mesh.Indices().size(), vertexCount, true);
+    if (vertexCountUsed == mesh.VertexCount())
+        return 0;
 
-    return true;
+    const size_t vertexCountBefore = mesh.VertexCount();
+    Assert(vertexCountUsed < vertexCountBefore);
+
+    STACKLOCAL_POD_ARRAY(u32, reindexation, mesh.VertexCount());
+
+    u32 insertIndex = 0;
+    forrange(vertexIndex, 0, mesh.VertexCount()) {
+        if (inUse[vertexIndex]) {
+            if (vertexIndex != insertIndex)
+                mesh.VertexCopy(insertIndex, vertexIndex);
+
+            reindexation[vertexIndex] = insertIndex++;
+        }
+#ifdef WITH_CORE_ASSERT
+        else {
+            reindexation[vertexIndex] = u32(-1);
+        }
+#endif
+    }
+    Assert(insertIndex == vertexCountUsed);
+
+    for (u32& index : mesh.Indices()) {
+        Assert(reindexation[index] != u32(-1));
+        Assert(reindexation[index] <= index);
+        index = reindexation[index];
+    }
+
+    mesh.Resize(mesh.IndexCount(), vertexCountUsed, true);
+
+    return (vertexCountBefore - vertexCountUsed);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-// PN-Triangles tesselation :
+// PN-Triangles tessellation :
 static void PNTesselateRecursive_(
     u32* pBaseIndex,
     u32* pBaseVertex,
@@ -542,10 +803,10 @@ static void PNTriangles_(
         return;
 
     TFixedSizeStack<FGenericVertexData*, 6> sp_lerps;
-    for (FGenericVertexData& vertices : mesh.Vertices()) {
-        if (&vertices != sp_position3f.Data() &&
-            &vertices != sp_normal3f.Data() ) {
-            sp_lerps.Push(&vertices);
+    for (const UGenericVertexData& vertices : mesh.Vertices()) {
+        if (vertices.get() != sp_position3f.Data() &&
+            vertices.get() != sp_normal3f.Data() ) {
+            sp_lerps.Push(vertices.get());
         }
     }
 
@@ -635,10 +896,11 @@ bool PNTriangles(FGenericMesh& mesh, size_t index, size_t recursions) {
     if (!sp_normal3f)
         return false;
 
-    // You have to generate those after tesselation,
-    // or these will linearly interpolated (instead of quadratrically, like normals3f)
+    // You have to generate those after tessellation,
+    // or these will linearly interpolated (instead of quadratically, like normals3f)
     // and you would get a wrong TBN basis.
     // Better call ComputeTangentSpace() after this pass.
+    Assert(!mesh.Normal4f_IFP(index));
     Assert(!mesh.Tangent3f_IFP(index));
     Assert(!mesh.Tangent4f_IFP(index));
     Assert(!mesh.Binormal3f_IFP(index));
@@ -650,6 +912,84 @@ bool PNTriangles(FGenericMesh& mesh, size_t index, size_t recursions) {
 //----------------------------------------------------------------------------
 void PNTriangles(FGenericMesh& mesh, const FPositions3f& positions, const FNormals3f& normals, size_t recursions) {
     PNTriangles_(mesh, positions, normals, recursions);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void Transform(FGenericMesh& mesh, size_t index, const float4x4& transform) {
+    Assert(not IsNANorINF(transform));
+
+    if (const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index)) {
+        for (float3& p : sp_position3f.MakeView())
+            p = TransformPosition3(transform, p);
+    }
+    else if (const TGenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index)) {
+        for (float4& p : sp_position4f.MakeView())
+            p = transform.Multiply(p);
+    }
+
+    if (const TGenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f_IFP(index)) {
+        for (float3& p : sp_normal3f.MakeView())
+            p = SafeNormalize3_(TransformVector3(transform, p));
+    }
+    else if (const TGenericVertexSubPart<float4> sp_normal4f = mesh.Normal4f_IFP(index)) {
+        float3 scale;
+        float3 translation;
+        FQuaternion rotation;
+        Decompose(transform, scale, rotation, translation);
+        for (float4& p : sp_normal4f.MakeView())
+            p = (rotation * FQuaternion(p)).Normalize().Value();
+    }
+
+    if (const TGenericVertexSubPart<float3> sp_tangent3f = mesh.Tangent3f_IFP(index)) {
+        for (float3& p : sp_tangent3f.MakeView())
+            p = SafeNormalize3_(TransformVector3(transform, p));
+    }
+    else if (const TGenericVertexSubPart<float4> sp_tangent4f = mesh.Tangent4f_IFP(index)) {
+        for (float4& p : sp_tangent4f.MakeView())
+            p = float4(SafeNormalize3_(TransformVector3(transform, p.xyz())), p.w());
+    }
+
+    if (const TGenericVertexSubPart<float3> sp_binormal3f = mesh.Binormal3f_IFP(index)) {
+        for (float3& p : sp_binormal3f.MakeView())
+            p = SafeNormalize3_(TransformVector3(transform, p));
+    }
+}
+//----------------------------------------------------------------------------
+void Transform(FGenericMesh& mesh, size_t index, const FTransform& transform) {
+    Assert(not IsNANorINF(transform));
+
+    if (const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index)) {
+        for (float3& p : sp_position3f.MakeView())
+            p = transform.TransformPosition(p);
+    }
+    else if (const TGenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index)) {
+        for (float4& p : sp_position4f.MakeView())
+            p = transform.Transform(p);
+    }
+
+    if (const TGenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f_IFP(index)) {
+        for (float3& p : sp_normal3f.MakeView())
+            p = transform.TransformVectorNoScale(p);
+    }
+    else if (const TGenericVertexSubPart<float4> sp_normal4f = mesh.Normal4f_IFP(index)) {
+        for (float4& p : sp_normal4f.MakeView())
+            p = (transform.Rotation() * FQuaternion(p)).Value();
+    }
+
+    if (const TGenericVertexSubPart<float3> sp_tangent3f = mesh.Tangent3f_IFP(index)) {
+        for (float3& p : sp_tangent3f.MakeView())
+            p = transform.TransformVectorNoScale(p);
+    }
+    else if (const TGenericVertexSubPart<float4> sp_tangent4f = mesh.Tangent4f_IFP(index)) {
+        for (float4& p : sp_tangent4f.MakeView())
+            p = float4(transform.TransformVectorNoScale(p.xyz()), p.w());
+    }
+
+    if (const TGenericVertexSubPart<float3> sp_binormal3f = mesh.Binormal3f_IFP(index)) {
+        for (float3& p : sp_binormal3f.MakeView())
+            p = transform.TransformVectorNoScale(p);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -909,11 +1249,11 @@ void OptimizeVerticesOrder(FGenericMesh& mesh) { // also removes unused vertices
 
     // Reorder each vertex subpart
     Graphics::FValue x;
-    for (FGenericVertexData& subpart : mesh.Vertices()) {
+    for (const UGenericVertexData& subpart : mesh.Vertices()) {
         Copy(tmp, reindexation);
 
         forrange(i, 0, vertexCount) {
-            subpart.ReadVertex(i, x);
+            subpart->ReadVertex(i, x);
 
             size_t j = i;
             while (true) {
@@ -922,11 +1262,11 @@ void OptimizeVerticesOrder(FGenericMesh& mesh) { // also removes unused vertices
                 if (k == i)
                     break;
 
-                subpart.CopyVertex(j, k);
+                subpart->CopyVertex(j, k);
                 j = k;
             }
 
-            subpart.WriteVertex(j, x);
+            subpart->WriteVertex(j, x);
         }
     }
 

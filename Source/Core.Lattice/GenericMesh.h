@@ -27,7 +27,7 @@ class FGenericVertexData;
 template <typename T>
 class TGenericVertexSubPart {
 public:
-    STATIC_CONST_INTEGRAL(Graphics::EValueType, Type, Graphics::TValueTraits<T>::ETypeId);
+    STATIC_CONST_INTEGRAL(Graphics::EValueType, Type, Graphics::TValueTraits<T>::TypeId);
     STATIC_ASSERT(Type != Graphics::EValueType::Void);
 
     TGenericVertexSubPart() : TGenericVertexSubPart(nullptr) {}
@@ -51,6 +51,7 @@ private:
     const FGenericVertexData* _data;
 };
 //----------------------------------------------------------------------------
+FWD_UNIQUEPTR(GenericVertexData);
 class FGenericVertexData {
 public:
     template <typename T>
@@ -74,7 +75,9 @@ public:
 
     void Resize(size_t count, bool keepData = true);
     void Reserve(size_t count);
+
     TMemoryView<const u8> VertexView(size_t v) const;
+
     void CopyVertex(size_t dst, size_t src);
     void ReadVertex(size_t v, Graphics::FValue& dst) const;
     void WriteVertex(size_t v, const Graphics::FValue& src);
@@ -84,6 +87,8 @@ public:
 
     TMemoryView<u8> SubRange(size_t start, size_t count);
     TMemoryView<const u8> SubRange(size_t start, size_t count) const;
+
+    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     FGenericMesh* _owner;
@@ -112,12 +117,12 @@ public:
     size_t IndexCount() const { return _indexCount; }
     size_t TriangleCount() const { return (_indexCount / 3); }
     size_t VertexCount() const { return _vertexCount; }
+    size_t SubPartCount() const { return _vertices.size(); }
 
     TMemoryView<u32> Indices() { return _indices.MakeView().Cast<u32>(); }
     TMemoryView<const u32> Indices() const { return _indices.MakeView().Cast<const u32>(); }
 
-    TMemoryView<FGenericVertexData> Vertices() { return _vertices.MakeView(); }
-    TMemoryView<const FGenericVertexData> Vertices() const { return _vertices.MakeView(); }
+    TMemoryView<const UGenericVertexData> Vertices() const { return _vertices.MakeView(); }
 
     FPositions3f Position3f(size_t index);
     FPositions3f Position3f_IFP(size_t index) const;
@@ -136,6 +141,8 @@ public:
 
     FNormals3f   Normal3f(size_t index);
     FNormals3f   Normal3f_IFP(size_t index) const;
+    FNormals4f   Normal4f(size_t index);
+    FNormals4f   Normal4f_IFP(size_t index) const;
 
     FTangents3f  Tangent3f(size_t index);
     FTangents3f  Tangent3f_IFP(size_t index) const;
@@ -145,13 +152,22 @@ public:
     FBinormals3f Binormal3f(size_t index);
     FBinormals3f Binormal3f_IFP(size_t index) const;
 
+    void AddIndices(const TMemoryView<const u32>& indices);
     void AddTriangle(size_t i0, size_t i1, size_t i2, size_t offset = 0);
 
     const FGenericVertexData* GetVertexData(const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type) const;
     const FGenericVertexData* GetVertexDataIFP(const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type) const;
 
-    void AddVertexData(const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type);
+    FGenericVertexData* AddVertexData(const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type);
     FGenericVertexData* GetOrAddVertexData(const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type);
+
+    void RemoveVertexData(const FGenericVertexData* data);
+    void RemoveVertexData(const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type);
+
+    template <typename T>
+    void RemoveSubPart(const TGenericVertexSubPart<T>& subPart) {
+        RemoveVertexData(subPart.Data());
+    }
 
     bool AreVertexEquals(size_t v0, size_t v1) const;
     hash_t VertexHash(size_t v, size_t seed = 0 ) const;
@@ -162,6 +178,8 @@ public:
 
     void Resize(size_t indexCount, size_t vertexCount, bool keepData = true);
     void Reserve(size_t indexCount, size_t vertexCount, bool additional = false);
+
+    void CleanAndOptimize(size_t index = 0);
 
     bool ExportIndices(const TMemoryView<u16>& dst) const;
     bool ExportIndices(const TMemoryView<u32>& dst) const;
@@ -186,6 +204,12 @@ public:
         ExportIndices(eltSize, dst.MakeView());
     }
 
+    template <typename _Allocator>
+    void ExportVertices(const Graphics::FVertexDeclaration* vdecl, TRawStorage<u8, _Allocator>& dst) const {
+        dst.Resize_DiscardData(VertexCount() * vdecl->SizeInBytes());
+        ExportVertices(vdecl, dst.MakeView());
+    }
+
     template <typename T, typename _Allocator>
     void ExportVertices(const Graphics::FVertexDeclaration* vdecl, TRawStorage<T, _Allocator>& dst) const {
         dst.Resize_DiscardData(VertexCount());
@@ -202,7 +226,7 @@ private:
     size_t _indexCount;
     size_t _vertexCount;
     FIndexStream _indices;
-    TFixedSizeStack<FGenericVertexData, 6> _vertices;
+    TFixedSizeStack<UGenericVertexData, 8> _vertices;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

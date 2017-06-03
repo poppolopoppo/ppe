@@ -20,6 +20,7 @@ typedef TGenericVertexSubPart<float3> FTexCoords3f;
 typedef TGenericVertexSubPart<float4> FTexCoords4f;
 typedef TGenericVertexSubPart<float4> FColors4f;
 typedef TGenericVertexSubPart<float3> FNormals3f;
+typedef TGenericVertexSubPart<float4> FNormals4f;
 typedef TGenericVertexSubPart<float3> FTangents3f;
 typedef TGenericVertexSubPart<float4> FTangents4f;
 typedef TGenericVertexSubPart<float3> FBinormals3f;
