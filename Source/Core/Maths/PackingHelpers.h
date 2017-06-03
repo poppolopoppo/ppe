@@ -109,6 +109,8 @@ struct TNumericLimits< FHalfFloat > {
     static FHalfFloat Zero() { return FHalfFloat::Zero(); }
 };
 //----------------------------------------------------------------------------
+CORE_ASSUME_TYPE_AS_POD(FHalfFloat)
+//----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
@@ -230,6 +232,8 @@ struct TNumericLimits< TBasicNorm<T, _Traits> > {
     static const value_type Nan() { return value_type{ scalar_type::Nan() }; }
     static const value_type Zero() { return value_type{ scalar_type::Zero() }; }
 };
+//----------------------------------------------------------------------------
+CORE_ASSUME_TYPE_AS_POD(TBasicNorm<T COMMA _Traits>, typename T, typename _Traits)
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits, typename _Char, typename _CharTraits>
 std::basic_ostream<_Char, _CharTraits>& operator <<(

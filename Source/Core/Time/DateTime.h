@@ -41,6 +41,7 @@ public:
     friend bool operator !=(const FDateTime& lhs, const FDateTime& rhs) { return lhs.Ord() != rhs.Ord(); }
 };
 STATIC_ASSERT(sizeof(FDateTime) == sizeof(u64));
+CORE_ASSUME_TYPE_AS_POD(FDateTime)
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const FDateTime& d) {

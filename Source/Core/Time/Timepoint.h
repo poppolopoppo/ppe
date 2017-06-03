@@ -54,6 +54,7 @@ public:
 private:
     value_type _value;
 };
+CORE_ASSUME_TYPE_AS_POD(FTimepoint)
 //----------------------------------------------------------------------------
 constexpr FTimespan::value_type Timespan_60hz() { return Units::ConvertValue<FTimespan, Units::Time::FSeconds>( 1.0/60 ); }
 constexpr FTimespan::value_type Timespan_30hz() { return Units::ConvertValue<FTimespan, Units::Time::FSeconds>( 1.0/30 ); }

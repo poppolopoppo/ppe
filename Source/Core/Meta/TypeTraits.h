@@ -2,6 +2,12 @@
 
 #include <type_traits>
 
+#define CORE_ASSUME_TYPE_AS_POD(T, ...) \
+    namespace Meta { \
+        template < __VA_ARGS__ > \
+        struct TIsPod< T > : public std::integral_constant<bool, true> {}; \
+    } //!Meta
+
 namespace Core {
 namespace Meta {
 //----------------------------------------------------------------------------

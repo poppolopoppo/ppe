@@ -241,10 +241,7 @@ struct TNumericLimits< TScalarVector<T, _Dim> > {
 //----------------------------------------------------------------------------
 // All scalar vectors are considered as pods
 //----------------------------------------------------------------------------
-namespace Meta {
-template <typename T, size_t _Dim>
-struct TIsPod< TScalarVector<T, _Dim> > : public std::integral_constant<bool, true> {};
-} //!Meta
+CORE_ASSUME_TYPE_AS_POD(TScalarVector<T COMMA _Dim>, typename T, size_t _Dim)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

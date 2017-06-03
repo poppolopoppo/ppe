@@ -39,6 +39,7 @@ public:
 private:
     value_type _value;
 };
+CORE_ASSUME_TYPE_AS_POD(FTimestamp)
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const FTimestamp& t) {

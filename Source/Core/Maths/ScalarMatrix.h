@@ -254,10 +254,7 @@ void swap(TScalarMatrix<T, _Width, _Height>& lhs, TScalarMatrix<T, _Width, _Heig
 //----------------------------------------------------------------------------
 // All scalar matrices are considered as pods
 //----------------------------------------------------------------------------
-namespace Meta {
-template <typename T, size_t _Width, size_t _Height>
-struct TIsPod< TScalarMatrix<T, _Width, _Height> > : public std::integral_constant<bool, true> {};
-} //!Meta
+CORE_ASSUME_TYPE_AS_POD(TScalarMatrix<T COMMA _Width COMMA _Height>, typename T, size_t _Width, size_t _Height)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

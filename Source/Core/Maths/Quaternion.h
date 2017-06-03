@@ -85,10 +85,7 @@ FQuaternion operator *(float scale, const FQuaternion& quaternion);
 //----------------------------------------------------------------------------
 // Quaternions are considered as pods
 //----------------------------------------------------------------------------
-namespace Meta {
-template <>
-struct TIsPod< FQuaternion > : public std::integral_constant<bool, true> {};
-} //!Meta
+CORE_ASSUME_TYPE_AS_POD(FQuaternion)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -103,6 +103,9 @@ public:
 typedef TBasicStringView<char>      FStringView;
 typedef TBasicStringView<wchar_t>   FWStringView;
 //----------------------------------------------------------------------------
+CORE_ASSUME_TYPE_AS_POD(FStringView)
+CORE_ASSUME_TYPE_AS_POD(FWStringView)
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits, typename _Allocator >

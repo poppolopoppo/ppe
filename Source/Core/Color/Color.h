@@ -225,6 +225,7 @@ struct CORE_API FLinearColor {
     static FLinearColor Yellow();
     static FLinearColor YellowGreen();
 };
+CORE_ASSUME_TYPE_AS_POD(FLinearColor)
 //----------------------------------------------------------------------------
 FLinearColor AlphaBlend(const FLinearColor& dst, const FLinearColor& src);
 FLinearColor Lerp(const FLinearColor& from, const FLinearColor& to, float t);
@@ -411,6 +412,7 @@ struct CORE_API FColor {
     static FColor Yellow();
     static FColor YellowGreen();
 };
+CORE_ASSUME_TYPE_AS_POD(FColor)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

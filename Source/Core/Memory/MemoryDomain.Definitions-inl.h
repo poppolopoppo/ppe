@@ -12,6 +12,7 @@
 MEMORY_DOMAIN_IMPL(Core,                                Global)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Alloca,                              Core)
+MEMORY_DOMAIN_IMPL(Compress,                            Core)
 MEMORY_DOMAIN_IMPL(Container,                           Core)
 MEMORY_DOMAIN_IMPL(Diagnostic,                          Core)
 MEMORY_DOMAIN_IMPL(Event,                               Core)
@@ -49,6 +50,7 @@ MEMORY_DOMAIN_IMPL(Lattice,                             Core)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Collada,                 Lattice)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(GenericMesh,             Lattice)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(GenericMaterial,         Lattice)
+MEMORY_DOMAIN_COLLAPSABLE_IMPL(WaveFrontObj,            Lattice)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Pixmap,                              Core)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(CompressedImage,         Pixmap)
@@ -68,5 +70,6 @@ MEMORY_DOMAIN_COLLAPSABLE_IMPL(Entity,                  Logic)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(System,                  Logic)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Application,                         Core)
+MEMORY_DOMAIN_COLLAPSABLE_IMPL(Engine,                  Application)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Window,                  Application)
 //------------------------------------------------------------------------------
