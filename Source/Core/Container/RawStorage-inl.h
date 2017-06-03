@@ -99,15 +99,6 @@ void TRawStorage<T, _Allocator>::Swap(TRawStorage& other) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void TRawStorage<T, _Allocator>::Clear_StealData(pointer p, size_type size) {
-    if (0 != _size)
-        Clear_ReleaseMemory();
-
-    _storage = p;
-    _size = size;
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
 void TRawStorage<T, _Allocator>::Resize(size_type size, bool keepData) {
     if (_size == size)
         return;

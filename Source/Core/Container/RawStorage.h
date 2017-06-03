@@ -25,6 +25,9 @@ namespace Core {
 template <typename T, typename _Allocator = ALLOCATOR(Container, T)>
 class TRawStorage : _Allocator {
 public:
+    template <typename U, typename A>
+    friend class TRawStorage;
+
     typedef _Allocator allocator_type;
 
     typedef T value_type;
@@ -63,6 +66,8 @@ public:
     size_type size() const { return _size; }
     bool empty() const { return 0 == _size; }
 
+    const allocator_type& allocator() const { return *this; }
+
     iterator begin() { return _storage; }
     iterator end() { return _storage + _size; }
 
@@ -85,13 +90,25 @@ public:
 
     void Swap(TRawStorage& other);
 
+    template <typename U, typename A>
+    typename std::enable_if< sizeof(U) == sizeof(T) >::type Swap(TRawStorage<U, A>& other) {
+        AssertRelease(allocator() == other.allocator());
+        std::swap((void*&)_storage, (void*&)other._storage);
+        std::swap(_size, other._size);
+    }
+
     void Resize(size_type size, bool keepData);
     void Clear_ReleaseMemory();
 
     FORCE_INLINE void Resize_DiscardData(size_type size) { Resize(size, false); }
     FORCE_INLINE void Resize_KeepData(size_type size) { Resize(size, true); }
 
-    void Clear_StealData(pointer p, size_type size);
+    template <typename U, typename A>
+    typename std::enable_if< sizeof(U) == sizeof(T) >::type Clear_StealData(TRawStorage<U, A>& other) {
+        AssertRelease(allocator() == other.allocator());
+        Clear_ReleaseMemory();
+        Swap(other);
+    }
 
     template <typename _It>
     void insert(iterator after, _It&& begin, _It&& end);
@@ -110,8 +127,8 @@ protected:
     size_type _size;
 };
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-void swap(TRawStorage<T, _Allocator>& lhs, TRawStorage<T, _Allocator>& rhs) {
+template <typename U, typename AU, typename V, typename AV>
+void swap(TRawStorage<U, AU>& lhs, TRawStorage<V, AV>& rhs) {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
