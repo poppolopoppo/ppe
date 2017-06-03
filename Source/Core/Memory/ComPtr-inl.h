@@ -21,32 +21,29 @@ TComPtr<_ComInterface>::~TComPtr() {
 }
 //----------------------------------------------------------------------------
 template <typename _ComInterface>
-TComPtr<_ComInterface>::TComPtr(TComPtr&& rvalue)
-:   Meta::FThreadResource(std::move(rvalue)) {
+TComPtr<_ComInterface>::TComPtr(TComPtr&& rvalue) {
     CheckThreadAccess();
     _comObject = rvalue._comObject;
-    _comObject = nullptr;
+    rvalue._comObject = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename _ComInterface>
 auto TComPtr<_ComInterface>::operator =(TComPtr&& rvalue) -> TComPtr& {
-    Meta::FThreadResource::operator =(std::move(rvalue));
     CheckThreadAccess();
+    DecRefCountIFP();
     _comObject = rvalue._comObject;
-    _comObject = nullptr;
+    rvalue._comObject = nullptr;
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename _ComInterface>
 TComPtr<_ComInterface>::TComPtr(const TComPtr& other)
-:   Meta::FThreadResource(other)
-,   _comObject(other._comObject) {
+:   _comObject(other._comObject) {
     IncRefCountIFP();
 }
 //----------------------------------------------------------------------------
 template <typename _ComInterface>
 auto TComPtr<_ComInterface>::operator =(const TComPtr& other) -> TComPtr& {
-    Meta::FThreadResource::operator =(other);
     DecRefCountIFP();
     _comObject = other._comObject;
     IncRefCountIFP();
@@ -69,6 +66,13 @@ template <typename _ComInterface>
 void TComPtr<_ComInterface>::Reset() {
     DecRefCountIFP();
     _comObject = nullptr;
+}
+//----------------------------------------------------------------------------
+template <typename _ComInterface>
+void TComPtr<_ComInterface>::Reset(_ComInterface* comObject) {
+    DecRefCountIFP();
+    _comObject = comObject;
+    IncRefCountIFP();
 }
 //----------------------------------------------------------------------------
 template <typename _ComInterface>
