@@ -367,13 +367,13 @@ private:
 
         template <typename T>
         bool ReadValue_(T& value) {
-            STATIC_ASSERT(std::is_pod<T>::value);
+            STATIC_ASSERT(Meta::TIsPod<T>::value);
             return _reader->ReadPOD(&value);
         }
 
         template <typename T, size_t _Dim>
         bool ReadValue_(TScalarVector<T, _Dim>& value) {
-            STATIC_ASSERT(std::is_pod<T>::value);
+            STATIC_ASSERT(Meta::TIsPod<T>::value);
             for (size_t i = 0; i < _Dim; ++i)
                 if (false == _reader->ReadPOD(&value[i]))
                     return false;
@@ -382,7 +382,7 @@ private:
 
         template <typename T, size_t _Width, size_t _Height>
         bool ReadValue_(TScalarMatrix<T, _Width, _Height>& value) {
-            STATIC_ASSERT(std::is_pod<T>::value);
+            STATIC_ASSERT(Meta::TIsPod<T>::value);
             ScalarMatrixData<T, _Width, _Height>& data = value.data();
             const size_t dim = _Width * _Height;
             for (size_t i = 0; i < dim; ++i)
@@ -873,20 +873,20 @@ private:
 
         template <typename T>
         void WriteValue_(const T& value) {
-            STATIC_ASSERT(std::is_pod<T>::value);
+            STATIC_ASSERT(Meta::TIsPod<T>::value);
             WritePOD(value);
         }
 
         template <typename T, size_t _Dim>
         void WriteValue_(const TScalarVector<T, _Dim>& value) {
-            STATIC_ASSERT(std::is_pod<T>::value);
+            STATIC_ASSERT(Meta::TIsPod<T>::value);
             for (size_t i = 0; i < _Dim; ++i)
                 WritePOD(value[i]);
         }
 
         template <typename T, size_t _Width, size_t _Height>
         void WriteValue_(const TScalarMatrix<T, _Width, _Height>& value) {
-            STATIC_ASSERT(std::is_pod<T>::value);
+            STATIC_ASSERT(Meta::TIsPod<T>::value);
             const TMemoryView<const T> data = value.MakeView();
             for (const T& pod : data)
                 WritePOD(pod);

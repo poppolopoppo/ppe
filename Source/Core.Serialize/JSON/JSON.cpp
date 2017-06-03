@@ -14,6 +14,7 @@
 #include "Core.RTTI/MetaTransaction.h"
 
 #include "Core/Container/RawStorage.h"
+#include "Core/IO/FS/ConstNames.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/FormatHelpers.h"
 #include "Core/Memory/MemoryProvider.h"
@@ -412,8 +413,12 @@ bool FJSON::Load(FJSON* json, const FFilename& filename) {
     Assert(json);
     Assert(not filename.empty());
 
+    EAccessPolicy policy = EAccessPolicy::Binary;
+    if (filename.Extname() == FFSConstNames::Jsonz())
+        policy = policy + EAccessPolicy::Compress;
+
     RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
-    if (not VFS_ReadAll(&content, filename, EAccessPolicy::Binary))
+    if (not VFS_ReadAll(&content, filename, policy))
         return false;
 
     return Load(json, filename, content.MakeConstView().Cast<const char>());

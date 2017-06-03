@@ -8,6 +8,7 @@
 
 #include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
+#include "Core/IO/FS/ConstNames.h"
 #include "Core/Memory/MemoryProvider.h"
 
 namespace Core {
@@ -173,8 +174,12 @@ bool FDocument::Load(FDocument* document, const FFilename& filename) {
     Assert(document);
     Assert(not filename.empty());
 
+    EAccessPolicy policy = EAccessPolicy::Truncate_Binary;
+    if (filename.Extname() == FFSConstNames::Xmlz())
+        policy = policy + EAccessPolicy::Compress;
+
     RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
-    if (not VFS_ReadAll(&content, filename, EAccessPolicy::Binary))
+    if (not VFS_ReadAll(&content, filename, policy))
         return false;
 
     return Load(document, filename, content.MakeConstView().Cast<const char>() );

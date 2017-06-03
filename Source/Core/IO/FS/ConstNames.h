@@ -17,6 +17,11 @@ public:
     static const FDirname& DotDot();
 
     // Extnames :
+    static const FExtname& Json();
+    static const FExtname& Jsonz();
+    static const FExtname& Xml();
+    static const FExtname& Xmlz();
+
     static const FExtname& Bkm();
     static const FExtname& Bkmz();
     static const FExtname& Dae();
