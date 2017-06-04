@@ -388,19 +388,19 @@ void Test_RTTI() {
 
         {
             Serialize::FTextSerializer s;
-            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.cdf", AccessPolicy::Truncate);
+            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.cdf", EAccessPolicy::Truncate);
             s.Serialize(oss.get(), &input);
         }
 
         {
             Serialize::FXMLSerializer s;
-            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.xml", AccessPolicy::Truncate);
+            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.xml", EAccessPolicy::Truncate);
             s.Serialize(oss.get(), &input);
         }
 
         {
             Serialize::FJSONSerializer s;
-            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.json", AccessPolicy::Truncate);
+            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.json", EAccessPolicy::Truncate);
             s.Serialize(oss.get(), &input);
         }
 
@@ -411,7 +411,7 @@ void Test_RTTI() {
         {
             serializer.Serialize(&uncompressed, &input);
 #if 0
-            auto compressed = VFS_OpenBinaryWritable(filename, AccessPolicy::Truncate);
+            auto compressed = VFS_OpenBinaryWritable(filename, EAccessPolicy::Truncate);
             LZJB::CompressMemory(compressed.get(), uncompressed.MakeView());
 #else
             RAWSTORAGE_THREAD_LOCAL(Serialize, u8) compressed;
@@ -428,13 +428,13 @@ void Test_RTTI() {
             for (size_t i = 0; i < k; ++i)
                 Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
 
-            if (false == VFS_WriteAll(filename, compressedView, AccessPolicy::Truncate_Binary))
+            if (false == VFS_WriteAll(filename, compressedView, EAccessPolicy::Truncate_Binary))
                 AssertNotReached();
-            if (false == VFS_WriteAll(filename2, decompressed.MakeView(), AccessPolicy::Truncate_Binary))
+            if (false == VFS_WriteAll(filename2, decompressed.MakeView(), EAccessPolicy::Truncate_Binary))
                 AssertNotReached();
 
             RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) stored;
-            if (false == VFS_ReadAll(&stored, filename, AccessPolicy::Binary))
+            if (false == VFS_ReadAll(&stored, filename, EAccessPolicy::Binary))
                 AssertNotReached();
 
             Assert(stored.SizeInBytes() == compressedSizeInBytes);
@@ -448,7 +448,7 @@ void Test_RTTI() {
 
         {
             RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) compressed;
-            if (false == VFS_ReadAll(&compressed, filename, AccessPolicy::Binary))
+            if (false == VFS_ReadAll(&compressed, filename, EAccessPolicy::Binary))
                 AssertNotReached();
 
             RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
@@ -507,9 +507,9 @@ void Test_RTTI() {
     }
     RTTI_NAMESPACE(Test).Shutdown();
 
-    Serialize::SerializeStartup::ClearAll_UnusedMemory();
-    RTTI::RTTIStartup::ClearAll_UnusedMemory();
-    Core::CoreStartup::ClearAll_UnusedMemory();
+    Serialize::FSerializeModule::ClearAll_UnusedMemory();
+    RTTI::FRTTIModule::ClearAll_UnusedMemory();
+    Core::FCoreModule::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
