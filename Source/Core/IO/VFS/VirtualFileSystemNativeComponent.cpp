@@ -390,9 +390,3 @@ TUniquePtr<IVirtualFileSystemIOStream> FVirtualFileSystemNativeComponent::OpenRe
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
-
-#ifdef PLATFORM_WINDOWS
-    // Stupid M$ macros restitution ...
-#   pragma pop_macro("RemoveDirectory")
-#   pragma pop_macro("CreateDirectory")
-#endif

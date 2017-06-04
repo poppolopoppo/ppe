@@ -15,6 +15,11 @@
 #   include <crtdbg.h>
 #endif
 
+#if defined(_MSC_VER)
+//  Include this asap to avoid M$ macro substitutions bullshit
+#   include "Misc/Platform_Windows.h"
+#endif
+
 #include <stdio.h>
 #include <tchar.h>
 
