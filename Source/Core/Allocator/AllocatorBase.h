@@ -88,7 +88,7 @@ struct allocator_has_realloc : decltype(details::_allocator_has_realloc( std::de
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 typename std::enable_if<
-    true  == std::is_pod<typename _Allocator::value_type>::value,
+    true  == Meta::TIsPod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
 >::type Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     typedef std::allocator_traits<_Allocator> allocator_traits;
@@ -111,7 +111,7 @@ typename std::enable_if<
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 typename std::enable_if<
-    false  == std::is_pod<typename _Allocator::value_type>::value,
+    false  == Meta::TIsPod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
 >::type Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     STATIC_ASSERT(std::is_default_constructible<typename _Allocator::value_type>::value);
@@ -138,7 +138,7 @@ typename std::enable_if<
 template <typename _Allocator>
 typename std::enable_if<
     true  == allocator_has_realloc<_Allocator>::value &&
-    true  == std::is_pod<typename _Allocator::value_type>::value,
+    true  == Meta::TIsPod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
 >::type Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return static_cast<typename _Allocator::pointer>(allocator.relocate(data.Pointer(), newSize, oldSize));
@@ -148,16 +148,16 @@ typename std::enable_if<
 template <typename _Allocator>
 typename std::enable_if<
     false == allocator_has_realloc<_Allocator>::value &&
-    true  == std::is_pod<typename _Allocator::value_type>::value,
+    true  == Meta::TIsPod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
 >::type Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);
 }
 //----------------------------------------------------------------------------
-// Common case : T is not a pod, wheter _Allocator supports relocate() or not
+// Common case : T is not a pod, whether _Allocator supports relocate() or not
 template <typename _Allocator>
 typename std::enable_if<
-    false == std::is_pod<typename _Allocator::value_type>::value,
+    false == Meta::TIsPod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
 >::type Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);

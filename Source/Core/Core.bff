@@ -8,12 +8,13 @@
     .ProjectIsolatedFiles =
     {
         'Core.cpp'
+        'Allocator/MallocBinned.cpp'
         'Maths/SHVector_extern.cpp',
         'External/farmhash.cpp',
-        'External/lz4.cpp',
-        'External/lz4hc.cpp',
+        'External/lz4.c',
+        'External/lz4hc.c',
         'External/MurmurHash3.cpp',
-        'External/PMurHash.cpp',
+        'External/xxhash.c',
     }
     #include "../../Build/Templates/Library.bff"
 }

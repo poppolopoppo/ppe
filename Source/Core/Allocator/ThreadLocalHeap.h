@@ -16,7 +16,7 @@ struct TThreadLocalHeapFree {
     typedef void result_type;
     typedef T * argument_type;
     void operator ()(T * x) const {
-        STATIC_ASSERT(std::is_pod<T>::value); // ~T is never called !
+        STATIC_ASSERT(Meta::TIsPod<T>::value); // ~T is never called !
         if (x)
             GetThreadLocalHeap().Free((void*)x, _MemoryDomain::TrackingData);
     }

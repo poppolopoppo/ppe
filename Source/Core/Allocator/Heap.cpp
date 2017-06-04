@@ -3,7 +3,7 @@
 #include "Heap.h"
 
 #ifdef PLATFORM_WINDOWS
-#   include <windows.h>
+#   include "Misc/Platform_Windows.h"
 #   include <HeapApi.h>
 #else
 #   error "no support"
