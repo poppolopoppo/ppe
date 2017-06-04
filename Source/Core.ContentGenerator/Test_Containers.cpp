@@ -966,7 +966,7 @@ void Test_Containers() {
 
     }
 
-    Core::CoreStartup::ClearAll_UnusedMemory();
+    Core::FCoreModule::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
