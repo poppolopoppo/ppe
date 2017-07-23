@@ -11,7 +11,7 @@
 #include "Core/Meta/Singleton.h"
 #include "Core/Meta/ThreadResource.h"
 
-#include "renderdoc_app.h"
+#include "Core/External/renderdoc_app.h"
 
 namespace Core {
 namespace Graphics {
