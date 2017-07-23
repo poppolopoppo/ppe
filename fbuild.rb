@@ -26,7 +26,7 @@ class FHeader
     attr_reader :filename, :header
     def initialize(filename)
         @filename = filename
-        @header = File.read(@filename)
+        @header = File.exists?(@filename) ? File.read(@filename) : nil
     end
     def match?(header)
         return (@header == header)
