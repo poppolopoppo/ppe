@@ -52,14 +52,14 @@ inline EPlaneIntersectionType FPlane::Intersects(const float3& point) const {
 //----------------------------------------------------------------------------
 inline bool FPlane::Intersects(const FRay& ray) const {
     float distance;
+    return Collision::RayIntersectsPlane(ray, *this, &distance);
+}
+//----------------------------------------------------------------------------
+inline bool FPlane::Intersects(const FRay& ray, float* distance) const {
     return Collision::RayIntersectsPlane(ray, *this, distance);
 }
 //----------------------------------------------------------------------------
-inline bool FPlane::Intersects(const FRay& ray, float& distance) const {
-    return Collision::RayIntersectsPlane(ray, *this, distance);
-}
-//----------------------------------------------------------------------------
-inline bool FPlane::Intersects(const FRay& ray, float3& point) const {
+inline bool FPlane::Intersects(const FRay& ray, float3* point) const {
     return Collision::RayIntersectsPlane(ray, *this, point);
 }
 //----------------------------------------------------------------------------
@@ -67,7 +67,7 @@ inline bool FPlane::Intersects(const FPlane& plane) const {
     return Collision::PlaneIntersectsPlane(*this, plane);
 }
 //----------------------------------------------------------------------------
-inline bool FPlane::Intersects(const FPlane& plane, FRay& line) const {
+inline bool FPlane::Intersects(const FPlane& plane, FRay* line) const {
     return Collision::PlaneIntersectsPlane(*this, plane, line);
 }
 //----------------------------------------------------------------------------

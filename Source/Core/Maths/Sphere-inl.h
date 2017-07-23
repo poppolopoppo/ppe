@@ -22,14 +22,14 @@ inline FSphere& FSphere::operator =(const FSphere& other) {
 //----------------------------------------------------------------------------
 inline bool FSphere::Intersects(const FRay& ray) const {
     float distance;
+    return Collision::RayIntersectsSphere(ray, *this, &distance);
+}
+//----------------------------------------------------------------------------
+inline bool FSphere::Intersects(const FRay& ray, float* distance) const {
     return Collision::RayIntersectsSphere(ray, *this, distance);
 }
 //----------------------------------------------------------------------------
-inline bool FSphere::Intersects(const FRay& ray, float& distance) const {
-    return Collision::RayIntersectsSphere(ray, *this, distance);
-}
-//----------------------------------------------------------------------------
-inline bool FSphere::Intersects(const FRay& ray, float3& point) const {
+inline bool FSphere::Intersects(const FRay& ray, float3* point) const {
     return Collision::RayIntersectsSphere(ray, *this, point);
 }
 //----------------------------------------------------------------------------

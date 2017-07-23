@@ -27,8 +27,8 @@ public:
     float Radius() const { return _radius; }
 
     bool Intersects(const FRay& ray) const;
-    bool Intersects(const FRay& ray, float& distance) const;
-    bool Intersects(const FRay& ray, float3& point) const;
+    bool Intersects(const FRay& ray, float* distance) const;
+    bool Intersects(const FRay& ray, float3* point) const;
     EPlaneIntersectionType Intersects(const FPlane& plane) const;
     bool Intersects(const float3& triangle1, const float3& triangle2, const float3& triangle3) const;
     bool Intersects(const FSphere& sphere) const;
@@ -37,6 +37,8 @@ public:
     EContainmentType Contains(const float3& triangle1, const float3& triangle2, const float3& triangle3) const;
     EContainmentType Contains(const FBoundingBox& box) const;
     EContainmentType Contains(const FSphere& sphere) const;
+
+    FBoundingBox ToBox() const;
 
     static FSphere FromSegment(const float3& a, const float3& b);
     static FSphere FromPoints(const TMemoryView<const float3>& points);

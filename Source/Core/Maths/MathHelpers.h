@@ -109,11 +109,11 @@ constexpr U Smootherstep(T vmin, T vmax, U f);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline int CeilToInt(float f) { return int(Ceil(f)); }
+inline constexpr int CeilToInt(float f) { return int(Ceil(f)); }
 //----------------------------------------------------------------------------
-inline int FloorToInt(float f) { return int(Floor(f)); }
+inline constexpr int FloorToInt(float f) { return int(Floor(f)); }
 //----------------------------------------------------------------------------
-inline int RoundToInt(float f) { return int(Round(f)); }
+inline constexpr int RoundToInt(float f) { return int(Round(f)); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -139,14 +139,14 @@ inline bool IsNAN(double d) { return std::isnan(d); }
 inline bool IsNANorINF(float f)  { return (IsNAN(f) || IsINF(f)); }
 inline bool IsNANorINF(double d) { return (IsNAN(d) || IsINF(d)); }
 //----------------------------------------------------------------------------
-float ClampAngle(float degrees);
+constexpr float ClampAngle(float degrees);
 //----------------------------------------------------------------------------
-float NormalizeAngle(float degrees);
+constexpr float NormalizeAngle(float degrees);
 //----------------------------------------------------------------------------
 // https://michaldrobot.files.wordpress.com/2014/05/gcn_alu_opt_digitaldragons2014.pdf
 size_t CubeMapFaceID(float x, float y, float z);
 //----------------------------------------------------------------------------
-float GridSnap(float location, float grid);
+constexpr float GridSnap(float location, float grid);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

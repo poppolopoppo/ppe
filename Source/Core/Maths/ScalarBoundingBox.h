@@ -36,6 +36,9 @@ public:
     template <typename U>
     TScalarBoundingBox& operator =(const TScalarBoundingBox<U, _Dim>& other);
 
+    vector_type& Min() { return _min; }
+    vector_type& Max() { return _max; }
+
     const vector_type& Min() const { return _min; }
     const vector_type& Max() const { return _max; }
 
@@ -69,7 +72,8 @@ public:
     bool ContainsStrict(const TScalarBoundingBox& other) const;
     bool ContainsMaxStrict(const TScalarBoundingBox& other) const;
 
-    bool Intersects(const TScalarBoundingBox& other, bool *inside) const;
+    bool Intersects(const TScalarBoundingBox& other) const;
+    bool Intersects(const TScalarBoundingBox& other, bool* inside) const;
 
     template <size_t _Dim2>
     void GetCorners(vector_type (&points)[_Dim2]) const;
@@ -190,12 +194,6 @@ template <typename T, size_t _Dim>
 void swap(TScalarBoundingBox<T, _Dim>& lhs, TScalarBoundingBox<T, _Dim>& rhs) {
     lhs.Swap(rhs);
 }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// All scalar bounding boxes are considered as pods
-//----------------------------------------------------------------------------
-CORE_ASSUME_TYPE_AS_POD(TScalarBoundingBox<T COMMA _Dim>, typename T, size_t _Dim)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

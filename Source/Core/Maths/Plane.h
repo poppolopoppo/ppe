@@ -40,11 +40,11 @@ public:
     EPlaneIntersectionType Intersects(const float3& point) const;
 
     bool Intersects(const FRay& ray) const;
-    bool Intersects(const FRay& ray, float& distance) const;
-    bool Intersects(const FRay& ray, float3& point) const;
+    bool Intersects(const FRay& ray, float* distance) const;
+    bool Intersects(const FRay& ray, float3* point) const;
 
     bool Intersects(const FPlane& plane) const;
-    bool Intersects(const FPlane& plane, FRay& line) const;
+    bool Intersects(const FPlane& plane, FRay* line) const;
 
     EPlaneIntersectionType Intersects(const float3& triangle1, const float3& triangle2, const float3& triangle3) const;
     EPlaneIntersectionType Intersects(const FBoundingBox& box) const;

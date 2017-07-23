@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Maths/ScalarBoundingBox.h"
+#include "Core/Maths/ScalarRectangle_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -55,10 +56,6 @@ public:
     void SetHeight(T value) { Assert(value >= 0); aabb_type::Max().y() = aabb_type::Min().y() + value; }
     void SetDepth(T value) { Assert(value >= 0); aabb_type::Max().z() = aabb_type::Min().z() + value; }
 };
-//----------------------------------------------------------------------------
-typedef TScalarRectangle<float, 2> FRectangle;
-//----------------------------------------------------------------------------
-typedef TScalarRectangle<float, 3> FViewport;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

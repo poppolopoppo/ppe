@@ -52,9 +52,9 @@ float DistanceSphereSphere(const FSphere& sphere1, const FSphere& sphere2);
 //----------------------------------------------------------------------------
 float DistanceLine(const float2& a, const float2& b, const float2& point);
 //----------------------------------------------------------------------------
-float2 LineBisector(const float2& a, const float2& b, const float2& c, float2& bisector);
+float2 LineBisector(const float2& a, const float2& b, const float2& c);
 //----------------------------------------------------------------------------
-bool LineIntersectsLine(const float2& a0, const float2& b0, const float2& a1, const float2& b1, float2& point);
+bool LineIntersectsLine(const float2& a0, const float2& b0, const float2& a1, const float2& b1, float2* point);
 //----------------------------------------------------------------------------
 float2 LineOrtho(const float2& dir);
 //----------------------------------------------------------------------------
@@ -62,23 +62,23 @@ float2 LineOrtho(const float2& dir);
 //----------------------------------------------------------------------------
 bool RayIntersectsPoint(const FRay& ray, const float3& point);
 //----------------------------------------------------------------------------
-bool RayIntersectsRay(const FRay& ray1, const FRay& ray2, float3& point);
+bool RayIntersectsRay(const FRay& ray1, const FRay& ray2, float3* point);
 //----------------------------------------------------------------------------
-bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float& distance);
+bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float* distance);
 //----------------------------------------------------------------------------
-bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float3& point);
+bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float3* point);
 //----------------------------------------------------------------------------
-bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float& distance);
+bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float* distance);
 //----------------------------------------------------------------------------
-bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float3& point);
+bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float3* point);
 //----------------------------------------------------------------------------
-bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float& distance);
+bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float* distance);
 //----------------------------------------------------------------------------
-bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float3& point);
+bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float3* point);
 //----------------------------------------------------------------------------
-bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float& distance);
+bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float* distance);
 //----------------------------------------------------------------------------
-bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float3& point);
+bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float3* point);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -86,7 +86,7 @@ EPlaneIntersectionType PlaneIntersectsPoint(const FPlane& plane, const float3& p
 //----------------------------------------------------------------------------
 bool PlaneIntersectsPlane(const FPlane& plane1, const FPlane& plane2);
 //----------------------------------------------------------------------------
-bool PlaneIntersectsPlane(const FPlane& plane1, const FPlane& plane2, FRay& line);
+bool PlaneIntersectsPlane(const FPlane& plane1, const FPlane& plane2, FRay* line);
 //----------------------------------------------------------------------------
 EPlaneIntersectionType PlaneIntersectsTriangle(const FPlane& plane, const float3& vertex1, const float3& vertex2, const float3& vertex3);
 //----------------------------------------------------------------------------

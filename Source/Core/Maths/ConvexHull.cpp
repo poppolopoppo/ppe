@@ -28,7 +28,7 @@ size_t LeastImportantEdge_(const TMemoryView<const float2>& hull, float2& collap
         const float2& d = hull[(i + 2) % n];
 
         float2 it;
-        if (Collision::LineIntersectsLine(a, b, c, d, it)) {
+        if (Collision::LineIntersectsLine(a, b, c, d, &it)) {
             const float twiceArea = Abs(Cross(b, c, it));
             if (twiceArea < areaMin) {
                 areaMin = twiceArea;

@@ -125,25 +125,33 @@ bool TScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const TScalarBoundingBox& ot
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-bool TScalarBoundingBox<T, _Dim>::Intersects(const TScalarBoundingBox& other, bool *inside) const {
+bool TScalarBoundingBox<T, _Dim>::Intersects(const TScalarBoundingBox& other) const {
     const vector_type c0 = Center();
     const vector_type c1 = other.Center();
 
     const vector_type h0 = Extents();
     const vector_type h1 = other.Extents();
 
-    const bool intersects = ((c0 - c1) * 2).AllLessThan(h0 + h1);
+    return ((c0 - c1) * 2).AllLessThan(h0 + h1);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+bool TScalarBoundingBox<T, _Dim>::Intersects(const TScalarBoundingBox& other, bool* inside) const {
+    Assert(inside);
 
-    if (intersects && inside) {
+    if (Intersects(other)) {
         if (Contains(other._min))
             *inside = Contains(other._max);
         else if (other.Contains(_min))
             *inside = other.Contains(_max);
         else
             *inside = false;
-    }
 
-    return intersects;
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>

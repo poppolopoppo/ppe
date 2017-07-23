@@ -42,7 +42,7 @@ TScalarVector<U, _Dim> QuantizeCeil(const TScalarBoundingBox<T, _Dim>& aabb, con
     TScalarVector<float, _Dim> normalized = LinearStep(aabb, value);
     normalized += 1 / static_cast<float>(TNumericLimits<U>::MaxValue() - TNumericLimits<U>::MinValue());
     normalized = Saturate(normalized);
-    return TLerp(TScalarVector<U, _Dim>::MinValue(), TScalarVector<U, _Dim>::MaxValue(), normalized);
+    return Lerp(TScalarVector<U, _Dim>::MinValue(), TScalarVector<U, _Dim>::MaxValue(), normalized);
 }
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>
@@ -50,7 +50,7 @@ TScalarVector<U, _Dim> QuantizeFloor(const TScalarBoundingBox<T, _Dim>& aabb, co
     TScalarVector<float, _Dim> normalized = LinearStep(aabb, value);
     normalized -= 1 / static_cast<float>(TNumericLimits<U>::MaxValue() - TNumericLimits<U>::MinValue());
     normalized = Saturate(normalized);
-    return TLerp(TScalarVector<U, _Dim>::MinValue(), TScalarVector<U, _Dim>::MaxValue(), normalized);
+    return Lerp(TScalarVector<U, _Dim>::MinValue(), TScalarVector<U, _Dim>::MaxValue(), normalized);
 }
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>
@@ -58,7 +58,7 @@ TScalarVector<U, _Dim> QuantizeRound(const TScalarBoundingBox<T, _Dim>& aabb, co
     TScalarVector<float, _Dim> normalized = LinearStep(aabb, value);
     normalized += 0.5f / static_cast<float>(TNumericLimits<U>::MaxValue() - TNumericLimits<U>::MinValue());
     normalized = Saturate(normalized);
-    return TLerp(TScalarVector<U, _Dim>::MinValue(), TScalarVector<U, _Dim>::MaxValue(), normalized);
+    return Lerp(TScalarVector<U, _Dim>::MinValue(), TScalarVector<U, _Dim>::MaxValue(), normalized);
 }
 //----------------------------------------------------------------------------
 template <typename U, typename T, size_t _Dim>

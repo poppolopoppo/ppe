@@ -502,6 +502,98 @@ size_t BiggestComponent4(const TScalarVector<T, 4>& v) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <size_t _Dim>
+TScalarVector<u32, _Dim> FalseMask() {
+    return TScalarVector<u32, _Dim>(0x00000000);
+}
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+TScalarVector<u32, _Dim> TrueMask() {
+    return TScalarVector<u32, _Dim>(0xFFFFFFFF);
+}
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+TScalarVector<u32, _Dim> BitAndMask(const TScalarVector<u32, _Dim>& lhs, const TScalarVector<u32, _Dim>& rhs) {
+    TScalarVector<u32, _Dim> result;
+    forrange(i, 0, _Dim)
+        result._data[i] = (lhs._data[i] & rhs._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+TScalarVector<u32, _Dim> BitOrMask(const TScalarVector<u32, _Dim>& lhs, const TScalarVector<u32, _Dim>& rhs) {
+    TScalarVector<u32, _Dim> result;
+    forrange(i, 0, _Dim)
+        result._data[i] = (lhs._data[i] | rhs._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+TScalarVector<u32, _Dim> BitXorMask(const TScalarVector<u32, _Dim>& lhs, const TScalarVector<u32, _Dim>& rhs) {
+    TScalarVector<u32, _Dim> result;
+    forrange(i, 0, _Dim)
+        result._data[i] = (lhs._data[i] ^ rhs._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<u32, _Dim> EqualMask(const TScalarVector<T, _Dim>& lhs, const TScalarVector<T, _Dim>& rhs) {
+    TScalarVector<u32, _Dim> result;
+    forrange(i, 0, _Dim)
+        result._data[i] = (lhs._data[i] == rhs._data[i] ? 0xFFFFFFFF : 0x00000000);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<u32, _Dim> NotEqualMask(const TScalarVector<T, _Dim>& lhs, const TScalarVector<T, _Dim>& rhs) {
+    TScalarVector<u32, _Dim> result;
+    forrange(i, 0, _Dim)
+        result._data[i] = (lhs._data[i] != rhs._data[i] ? 0xFFFFFFFF : 0x00000000);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<u32, _Dim> LessMask(const TScalarVector<T, _Dim>& lhs, const TScalarVector<T, _Dim>& rhs) {
+    TScalarVector<u32, _Dim> result;
+    forrange(i, 0, _Dim)
+        result._data[i] = (lhs._data[i] < rhs._data[i] ? 0xFFFFFFFF : 0x00000000);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<u32, _Dim> LessEqualMask(const TScalarVector<T, _Dim>& lhs, const TScalarVector<T, _Dim>& rhs) {
+    TScalarVector<u32, _Dim> result;
+    forrange(i, 0, _Dim)
+        result._data[i] = (lhs._data[i] <= rhs._data[i] ? 0xFFFFFFFF : 0x00000000);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<u32, _Dim> GreaterMask(const TScalarVector<T, _Dim>& lhs, const TScalarVector<T, _Dim>& rhs) {
+    TScalarVector<u32, _Dim> result;
+    forrange(i, 0, _Dim)
+        result._data[i] = (lhs._data[i] > rhs._data[i] ? 0xFFFFFFFF : 0x00000000);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<u32, _Dim> GreaterEqualMask(const TScalarVector<T, _Dim>& lhs, const TScalarVector<T, _Dim>& rhs) {
+    TScalarVector<u32, _Dim> result;
+    forrange(i, 0, _Dim)
+        result._data[i] = (lhs._data[i] >= rhs._data[i] ? 0xFFFFFFFF : 0x00000000);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+TScalarVector<T, _Dim> SelectMask(const TScalarVector<u32, _Dim>& mask, const TScalarVector<T, _Dim>& ifTrue, const TScalarVector<T, _Dim>& ifFalse) {
+    TScalarVector<T, _Dim> result;
+    forrange(i, 0, _Dim)
+        result._data[i] = (mask._data[i] ? ifTrue._data[i] : ifFalse._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool IsINF(const TScalarVector<T, _Dim>& v) {
     for (size_t i = 0; i < _Dim; ++i) {

@@ -240,7 +240,7 @@ float2 LineBisector(const float2& a, const float2& b, const float2& c) {
         : LineOrtho(d0) );
 }
 //----------------------------------------------------------------------------
-bool LineIntersectsLine(const float2& a0, const float2& b0, const float2& a1, const float2& b1, float2& point) {
+bool LineIntersectsLine(const float2& a0, const float2& b0, const float2& a1, const float2& b1, float2* point) {
     const float2 slope0 = a0 - b0;
     const float2 slope1 = a1 - b1;
 
@@ -248,7 +248,7 @@ bool LineIntersectsLine(const float2& a0, const float2& b0, const float2& a1, co
     if (Abs(d) < F_EpsilonSQ)
         return false;
 
-    point = ( (slope1 * Det(a0, b0) - slope0 * Det(a1, b1)) / d );
+    *point = ( (slope1 * Det(a0, b0) - slope0 * Det(a1, b1)) / d );
     return true;
 }
 //----------------------------------------------------------------------------
@@ -280,7 +280,7 @@ bool RayIntersectsPoint(const FRay& ray, const float3& point) {
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsRay(const FRay& ray1, const FRay& ray2, float3& point) {
+bool RayIntersectsRay(const FRay& ray1, const FRay& ray2, float3* point) {
     //Source: Real-Time Rendering, Third Edition
     //Reference: Page 780
 
@@ -295,7 +295,7 @@ bool RayIntersectsRay(const FRay& ray1, const FRay& ray2, float3& point) {
             Abs(ray2.Origin().y() - ray1.Origin().y()) < F_Epsilon &&
             Abs(ray2.Origin().z() - ray1.Origin().z()) < F_Epsilon)
         {
-            point = float3::Zero();
+            *point = float3::Zero();
             return true;
         }
     }
@@ -349,15 +349,15 @@ bool RayIntersectsRay(const FRay& ray1, const FRay& ray2, float3& point) {
         Abs(point2.y() - point1.y()) > F_Epsilon ||
         Abs(point2.z() - point1.z()) > F_Epsilon)
     {
-        point = float3::Zero();
+        *point = float3::Zero();
         return false;
     }
 
-    point = point1;
+    *point = point1;
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float& distance) {
+bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float* distance) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 175
 
@@ -365,43 +365,43 @@ bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float& distance) {
 
     if (Abs(direction) < F_Epsilon)
     {
-        distance = 0.0f;
+        *distance = 0.0f;
         return false;
     }
 
     float position = Dot3(plane.Normal(), ray.Origin());
-    distance = (plane.D() - position) / direction;
+    float d = (plane.D() - position) / direction;
 
-    if (distance < 0.0f)
+    if (d < 0.0f)
     {
-        if (distance < -F_Epsilon)
-        {
-            distance = 0;
+        *distance = 0.0f;
+        if (d < -F_Epsilon)
             return false;
-        }
-
-        distance = 0.0f;
+    }
+    else
+    {
+        *distance = d;
     }
 
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float3& point) {
+bool RayIntersectsPlane(const FRay& ray, const FPlane& plane, float3* point) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 175
 
     float distance;
-    if (!RayIntersectsPlane(ray, plane, distance))
+    if (!RayIntersectsPlane(ray, plane, &distance))
     {
-        point = float3::Zero();
+        *point = float3::Zero();
         return false;
     }
 
-    point = ray.Origin() + (ray.Direction() * distance);
+    *point = ray.Origin() + (ray.Direction() * distance);
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float& distance) {
+bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float* distance) {
     //Source: Fast Minimum Storage FRay / FTriangle Intersection
     //Reference: http://www.cs.virginia.edu/~gfx/Courses/2003/ImageSynthesis/papers/Acceleration/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf
 
@@ -434,7 +434,7 @@ bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3&
     //back and the front of the triangle.
     if (determinant > -F_Epsilon && determinant < F_Epsilon)
     {
-        distance = 0.0f;
+        *distance = 0.0f;
         return false;
     }
 
@@ -453,7 +453,7 @@ bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3&
     //Make sure it is inside the triangle.
     if (triangleU < 0.0f || triangleU > 1.0f)
     {
-        distance = 0.0f;
+        *distance = 0.0f;
         return false;
     }
 
@@ -470,7 +470,7 @@ bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3&
     //Make sure it is inside the triangle.
     if (triangleV < 0.0f || triangleU + triangleV > 1.0f)
     {
-        distance = 0.0f;
+        *distance = 0.0f;
         return false;
     }
 
@@ -482,38 +482,38 @@ bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3&
     //Is the triangle behind the ray origin?
     if (raydistance < 0.0f)
     {
-        distance = 0.0f;
+        *distance = 0.0f;
         return false;
     }
 
-    distance = raydistance;
+    *distance = raydistance;
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float3& point) {
+bool RayIntersectsTriangle(const FRay& ray, const float3& vertex1, const float3& vertex2, const float3& vertex3, float3* point) {
     float distance;
-    if (!RayIntersectsTriangle(ray, vertex1, vertex2, vertex3, distance))
+    if (!RayIntersectsTriangle(ray, vertex1, vertex2, vertex3, &distance))
     {
-        point = float3::Zero();
+        *point = float3::Zero();
         return false;
     }
 
-    point = ray.Origin() + (ray.Direction() * distance);
+    *point = ray.Origin() + (ray.Direction() * distance);
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float& distance) {
+bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float* distance) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 179
 
-    distance = 0.0f;
+    float d = 0.0f;
     float tmax = FLT_MAX;
 
     if (Abs(ray.Direction().x()) < F_Epsilon)
     {
         if (ray.Origin().x() < box.Min().x() || ray.Origin().x() > box.Max().x())
         {
-            distance = 0.0f;
+            *distance = 0.0f;
             return false;
         }
     }
@@ -524,18 +524,14 @@ bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float& distance)
         float t2 = (box.Max().x() - ray.Origin().x()) * inverse;
 
         if (t1 > t2)
-        {
-            float temp = t1;
-            t1 = t2;
-            t2 = temp;
-        }
+            std::swap(t1, t2);
 
-        distance = Max(t1, distance);
+        d = Max(t1, d);
         tmax = Min(t2, tmax);
 
-        if (distance > tmax)
+        if (d > tmax)
         {
-            distance = 0.0f;
+            *distance = 0.0f;
             return false;
         }
     }
@@ -544,7 +540,7 @@ bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float& distance)
     {
         if (ray.Origin().y() < box.Min().y() || ray.Origin().y() > box.Max().y())
         {
-            distance = 0.0f;
+            *distance = 0.0f;
             return false;
         }
     }
@@ -555,18 +551,14 @@ bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float& distance)
         float t2 = (box.Max().y() - ray.Origin().y()) * inverse;
 
         if (t1 > t2)
-        {
-            float temp = t1;
-            t1 = t2;
-            t2 = temp;
-        }
+            std::swap(t1, t2);
 
-        distance = Max(t1, distance);
+        d = Max(t1, d);
         tmax = Min(t2, tmax);
 
-        if (distance > tmax)
+        if (d > tmax)
         {
-            distance = 0.0f;
+            *distance = 0.0f;
             return false;
         }
     }
@@ -575,7 +567,7 @@ bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float& distance)
     {
         if (ray.Origin().z() < box.Min().z() || ray.Origin().z() > box.Max().z())
         {
-            distance = 0.0f;
+            *distance = 0.0f;
             return false;
         }
     }
@@ -586,38 +578,35 @@ bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float& distance)
         float t2 = (box.Max().z() - ray.Origin().z()) * inverse;
 
         if (t1 > t2)
-        {
-            float temp = t1;
-            t1 = t2;
-            t2 = temp;
-        }
+            std::swap(t1, t2);
 
-        distance = Max(t1, distance);
+        d = Max(t1, d);
         tmax = Min(t2, tmax);
 
-        if (distance > tmax)
+        if (d > tmax)
         {
-            distance = 0.0f;
+            *distance = 0.0f;
             return false;
         }
     }
 
+    *distance = d;
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float3& point) {
+bool RayIntersectsBox(const FRay& ray, const FBoundingBox& box, float3* point) {
     float distance;
-    if (!RayIntersectsBox(ray, box, distance))
+    if (!RayIntersectsBox(ray, box, &distance))
     {
-        point = float3::Zero();
+        *point = float3::Zero();
         return false;
     }
 
-    point = ray.Origin() + (ray.Direction() * distance);
+    *point = ray.Origin() + (ray.Direction() * distance);
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float& distance) {
+bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float* distance) {
     //Source: Real-Time Collision Detection by Christer Ericson
     //Reference: Page 177
 
@@ -628,7 +617,7 @@ bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float& distance
 
     if (c > 0.0f && b > 0.0f)
     {
-        distance = 0.0f;
+        *distance = 0.0f;
         return false;
     }
 
@@ -636,27 +625,28 @@ bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float& distance
 
     if (discriminant < 0.0f)
     {
-        distance = 0.0f;
+        *distance = 0.0f;
         return false;
     }
 
-    distance = -b - Sqrt(discriminant);
+    float d = -b - Sqrt(discriminant);
 
-    if (distance < 0.0f)
-        distance = 0.0f;
+    if (d < 0.0f)
+        d = 0.0f;
 
+    *distance = d;
     return true;
 }
 //----------------------------------------------------------------------------
-bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float3& point) {
+bool RayIntersectsSphere(const FRay& ray, const FSphere& sphere, float3* point) {
     float distance;
-    if (!RayIntersectsSphere(ray, sphere, distance))
+    if (!RayIntersectsSphere(ray, sphere, &distance))
     {
-        point = float3::Zero();
+        *point = float3::Zero();
         return false;
     }
 
-    point = ray.Origin() + (ray.Direction() * distance);
+    *point = ray.Origin() + (ray.Direction() * distance);
     return true;
 }
 //----------------------------------------------------------------------------

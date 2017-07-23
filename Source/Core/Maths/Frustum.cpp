@@ -278,7 +278,7 @@ bool FFrustum::Intersects(const FRay& ray, float& in, float& out) const {
 
     for (const FPlane& plane : ioFrsutrum._planes) {
         float planeDistance;
-        const bool planeResult = plane.Intersects(ray, planeDistance);
+        const bool planeResult = plane.Intersects(ray, &planeDistance);
 
         if (!planeResult)
             continue;

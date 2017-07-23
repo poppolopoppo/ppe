@@ -64,7 +64,7 @@ inline bool Lerp(bool v0, bool v1, float f) {
 template <typename T>
 constexpr float LinearStep(T value, T vmin, T vmax) {
     Assert(vmin < vmax);
-    return static_cast<float>(value - vmin) / (vmax - vmin);
+    return Saturate((value - vmin) / static_cast<float>(vmax - vmin));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename U>
@@ -186,13 +186,13 @@ inline bool NearlyEquals(float A, float B, float maxRelDiff/* = F_Epsilon */) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline float ClampAngle(float degrees) { // [0,360)
+inline constexpr float ClampAngle(float degrees) { // [0,360)
     degrees = FMod(degrees, 360.f);
     degrees = (degrees < 0.f ? degrees + 360.f : degrees);
     return degrees;
 }
 //----------------------------------------------------------------------------
-inline float NormalizeAngle(float degrees) { // (-180,180]
+inline constexpr float NormalizeAngle(float degrees) { // (-180,180]
     degrees = ClampAngle(degrees);
     degrees = (degrees > 180.f ? degrees - 360.f : degrees);
     return degrees;
@@ -207,7 +207,7 @@ inline size_t CubeMapFaceID(float x, float y, float z) {
         return (x < 0.0f) ? 1 : 0;
 }
 //----------------------------------------------------------------------------
-inline float GridSnap(float location, float grid) {
+inline constexpr float GridSnap(float location, float grid) {
     return (0.f != grid)
         ? Floor((location + 0.5f * grid) / grid) * grid
         : location;

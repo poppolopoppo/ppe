@@ -11,11 +11,11 @@ namespace details {
 template <typename _Smaller>
 struct TNextUnitIndex {
     typedef typename _Smaller::traits_type smaller_traits_type;
-    static constexpr u64 FValue = smaller_traits_type::Index + 1;
+    static constexpr u64 Value = smaller_traits_type::Index + 1;
 };
 template <>
 struct TNextUnitIndex<void> {
-    static constexpr u64 FValue = 0;
+    static constexpr u64 Value = 0;
 };
 } //!details
 //----------------------------------------------------------------------------
@@ -42,12 +42,12 @@ struct TConvertionRatio_LargerToSmaller {
     typedef typename from_traits_type::smaller_type from_smaller_type;
     typedef typename from_smaller_type::traits_type from_smaller_traits_type;
 
-    static constexpr u64 FValue = from_smaller_traits_type::Ratio * TConvertionRatio_LargerToSmaller<_To, from_smaller_type>::FValue;
+    static constexpr u64 Value = from_smaller_traits_type::Ratio * TConvertionRatio_LargerToSmaller<_To, from_smaller_type>::FValue;
 };
 //----------------------------------------------------------------------------
 template <typename _ToFrom>
 struct TConvertionRatio_LargerToSmaller<_ToFrom, _ToFrom> {
-    static constexpr u64 FValue = 1;
+    static constexpr u64 Value = 1;
 };
 //----------------------------------------------------------------------------
 } //!details
@@ -74,12 +74,12 @@ struct TConvertionRatio {
         TConvertionRatio_LargerToSmaller<_From, _To>
     >::type convertionratio_type;
 
-    static constexpr u64 FValue = convertionratio_type::FValue;
+    static constexpr u64 Value = convertionratio_type::FValue;
 };
 //----------------------------------------------------------------------------
 template <typename _ToFrom>
 struct TConvertionRatio<_ToFrom, _ToFrom> {
-    static constexpr u64 FValue = 1;
+    static constexpr u64 Value = 1;
 };
 //----------------------------------------------------------------------------
 } //!details

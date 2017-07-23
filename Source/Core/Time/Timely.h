@@ -16,11 +16,11 @@ public:
     FNormalized();
     ~FNormalized();
 
-    FNormalized(const FTimeline& time, const Timespan& duration);
-    FNormalized(const FTimepoint& start, const Timespan& duration);
+    FNormalized(const FTimeline& time, const FTimespan& duration);
+    FNormalized(const FTimepoint& start, const FTimespan& duration);
 
-    void Start(const FTimeline& time, const Timespan& duration);
-    void Start(const FTimepoint& start, const Timespan& duration);
+    void Start(const FTimeline& time, const FTimespan& duration);
+    void Start(const FTimepoint& start, const FTimespan& duration);
 
     float Eval(const FTimeline& time) const;
 
@@ -34,11 +34,11 @@ public:
     FPulsar();
     ~FPulsar();
 
-    FPulsar(const FTimeline& time, const Timespan& duration);
-    FPulsar(const FTimepoint& start, const Timespan& duration);
+    FPulsar(const FTimeline& time, const FTimespan& duration);
+    FPulsar(const FTimepoint& start, const FTimespan& duration);
 
-    void Start(const FTimeline& time, const Timespan& duration);
-    void Start(const FTimepoint& start, const Timespan& duration);
+    void Start(const FTimeline& time, const FTimespan& duration);
+    void Start(const FTimepoint& start, const FTimespan& duration);
 
     float Eval(const FTimeline& time) const;
 
@@ -55,8 +55,8 @@ public:
     TLerp(const T& v0, const T& v1);
     ~TLerp();
 
-    TLerp(const T& v0, const T& v1, const FTimeline& time, const Timespan& duration);
-    TLerp(const T& v0, const T& v1, const FTimepoint& start, const Timespan& duration);
+    TLerp(const T& v0, const T& v1, const FTimeline& time, const FTimespan& duration);
+    TLerp(const T& v0, const T& v1, const FTimepoint& start, const FTimespan& duration);
 
     using _Eval::Start;
 
@@ -74,8 +74,8 @@ public:
     TSmoothstep(const T& v0, const T& v1);
     ~TSmoothstep();
 
-    TSmoothstep(const T& v0, const T& v1, const FTimeline& time, const Timespan& duration);
-    TSmoothstep(const T& v0, const T& v1, const FTimepoint& start, const Timespan& duration);
+    TSmoothstep(const T& v0, const T& v1, const FTimeline& time, const FTimespan& duration);
+    TSmoothstep(const T& v0, const T& v1, const FTimepoint& start, const FTimespan& duration);
 
     using _Eval::Start;
 

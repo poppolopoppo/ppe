@@ -37,12 +37,28 @@ typedef unsigned2 uint2;
 typedef unsigned3 uint3;
 typedef unsigned4 uint4;
 //----------------------------------------------------------------------------
+typedef TScalarVector<u32, 2> mask2;
+typedef TScalarVector<u32, 3> mask3;
+typedef TScalarVector<u32, 4> mask4;
+//----------------------------------------------------------------------------
 #undef DECL_SCALARVECTOR
 #undef DECL_SCALARVECTOR_ALIAS
 //----------------------------------------------------------------------------
+typedef float3 Point;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef float3 Point;
+namespace Constants {
+extern const float2 CORE_API Float2_One;
+extern const float2 CORE_API Float2_Half;
+extern const float2 CORE_API Float2_Zero;
+extern const float3 CORE_API Float3_One;
+extern const float3 CORE_API Float3_Half;
+extern const float3 CORE_API Float3_Zero;
+extern const float4 CORE_API Float4_One;
+extern const float4 CORE_API Float4_Half;
+extern const float4 CORE_API Float4_Zero;
+} //!Constants
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
