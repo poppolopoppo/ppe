@@ -46,11 +46,13 @@ public:
     size_type size() const;
     bool empty() const { return (0 == _size); }
 
+    reference push_back_Uninitialized();
     template <typename _Arg0, typename... _Args>
     void push_back(_Arg0&& arg0, _Args&&... args);
     template <typename _Arg0, typename... _Args>
     bool push_back_OverflowIFN(_Arg0&& arg0, _Args&&... args);
 
+    reference push_front_Uninitialized();
     template <typename _Arg0, typename... _Args>
     void push_front(_Arg0&& arg0, _Args&&... args);
     template <typename _Arg0, typename... _Args>
@@ -103,12 +105,17 @@ auto TRingBuffer<T, _IsPod>::size() const -> size_type {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-template <typename _Arg0, typename... _Args>
-void TRingBuffer<T, _IsPod>::push_back(_Arg0&& arg0, _Args&&... args) {
+auto TRingBuffer<T, _IsPod>::push_back_Uninitialized() -> reference {
     Assert(_storage);
     Assert(_size < _capacity);
 
-    new (&_storage[(_begin + _size++) % _capacity]) T{ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
+    return (_storage[(_begin + _size++) % _capacity]);
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+template <typename _Arg0, typename... _Args>
+void TRingBuffer<T, _IsPod>::push_back(_Arg0&& arg0, _Args&&... args) {
+    new (&push_back_Uninitialized()) T{ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -128,13 +135,17 @@ bool TRingBuffer<T, _IsPod>::push_back_OverflowIFN(_Arg0&& arg0, _Args&&... args
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-template <typename _Arg0, typename... _Args>
-void TRingBuffer<T, _IsPod>::push_front(_Arg0&& arg0, _Args&&... args) {
+auto TRingBuffer<T, _IsPod>::push_front_Uninitialized() -> reference {
     Assert(_storage);
     Assert(_size < _capacity);
 
-    new (&_storage[(_begin + (_capacity - 1)) % _capacity]) T{ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
-    _size++;
+    return (_size++, _storage[(_begin + (_capacity - 1)) % _capacity]);
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+template <typename _Arg0, typename... _Args>
+void TRingBuffer<T, _IsPod>::push_front(_Arg0&& arg0, _Args&&... args) {
+    new (&push_front_Uninitialized()) T{ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
