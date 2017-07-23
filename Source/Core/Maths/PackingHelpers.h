@@ -12,6 +12,39 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Generalist float quantization
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr T QuantizeCeil(float value, float vmin, float vmax) {
+    constexpr T GNumSlices = (1 << _Bits);
+    constexpr T GMaxValue = (GNumSlices - 1);
+    return Min(T(CeilToInt(LinearStep(value, vmin, vmax) * GNumSlices)), GMaxValue);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr T QuantizeFloor(float value, float vmin, float vmax) {
+    constexpr T GNumSlices = (1 << _Bits);
+    constexpr T GMaxValue = (GNumSlices - 1);
+    return Min(T(FloorToInt(LinearStep(value, vmin, vmax) * GNumSlices)), GMaxValue);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr T QuantizeRound(float value, float vmin, float vmax) {
+    constexpr T GNumSlices = (1 << _Bits);
+    constexpr T GMaxValue = (GNumSlices - 1);
+    return Min(T(RoundToInt(LinearStep(value, vmin, vmax) * GNumSlices)), GMaxValue);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr float Unquantize(T quantized, float vmin, float vmax) {
+    constexpr T GMaxValue = ((1 << _Bits) - 1);
+    constexpr float GMaxValueF = float(GMaxValue);
+    Assert(vmin < vmax);
+    return Lerp(vmin, vmax, Min(1.f, quantized / GMaxValueF));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FORCE_INLINE float UByte0255_to_Float01(u8 value);
 //----------------------------------------------------------------------------
 FORCE_INLINE float UByte0255_to_FloatM11(u8 value);
