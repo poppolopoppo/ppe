@@ -12,12 +12,12 @@ namespace Meta {
 //----------------------------------------------------------------------------
 // use a macro instead of inheritance to keep TPointerWFlags<> as a pod
 #define POINTERWFLAGS_BASE_DEF() \
-    typedef TBit<size_t>::TFirst<2>::type field_Flag01; \
-    typedef TBit<size_t>::TFirst<1>::type field_Flag0; \
-    typedef TBit<size_t>::TAfter<field_Flag0>::TField<1>::type field_Flag1; \
+    typedef TBit<uintptr_t>::TFirst<2>::type field_Flag01; \
+    typedef TBit<uintptr_t>::TFirst<1>::type field_Flag0; \
+    typedef TBit<uintptr_t>::TAfter<field_Flag0>::TField<1>::type field_Flag1; \
     \
-    size_t Flag01() const { return field_Flag01::Get(_pFlags); } \
-    void SetFlag01(size_t value) { field_Flag01::InplaceSet(_pFlags, value); } \
+    uintptr_t Flag01() const { return field_Flag01::Get(_pFlags); } \
+    void SetFlag01(uintptr_t value) { field_Flag01::InplaceSet(_pFlags, value); } \
     \
     bool Flag0() const { return field_Flag0::Get(_pFlags); } \
     void SetFlag0(bool value) { field_Flag0::InplaceSet(_pFlags, value); } \
@@ -26,12 +26,12 @@ namespace Meta {
     void SetFlag1(bool value) { field_Flag1::InplaceSet(_pFlags, value); } \
     \
     void *RawPointer() const { \
-        return reinterpret_cast<void *>(_pFlags & size_t(field_Flag01::NotMask)); \
+        return reinterpret_cast<void *>(_pFlags & uintptr_t(field_Flag01::NotMask)); \
     } \
     \
     void SetRawPointer(const void *ptr) { \
-        Assert((size_t(ptr) & field_Flag01::Mask) == 0); \
-        _pFlags = (_pFlags & field_Flag01::Mask) | size_t(ptr); \
+        Assert((uintptr_t(ptr) & field_Flag01::Mask) == 0); \
+        _pFlags = (_pFlags & field_Flag01::Mask) | uintptr_t(ptr); \
     } \
     \
     friend inline bool operator ==(const TPointerWFlags& lhs, const TPointerWFlags& rhs) { \
@@ -42,7 +42,7 @@ namespace Meta {
         return (lhs._pFlags != rhs._pFlags); \
     } \
     \
-    size_t  _pFlags
+    uintptr_t _pFlags
 //----------------------------------------------------------------------------
 template <typename T>
 struct TPointerWFlags {
@@ -64,7 +64,7 @@ struct TPointerWFlags {
         SetRawPointer(p);
     }
 
-    void Reset(T* p, size_t flag01) {
+    void Reset(T* p, uintptr_t flag01) {
         _pFlags = 0;
         field_Flag01::InplaceSet(_pFlags, flag01);
         SetRawPointer(p);
@@ -94,7 +94,7 @@ struct TPointerWFlags<T *> {
         SetRawPointer(p);
     }
 
-    void Reset(T* p, size_t flag01) {
+    void Reset(T* p, uintptr_t flag01) {
         _pFlags = 0;
         field_Flag01::InplaceSet(_pFlags, flag01);
         SetRawPointer(p);
@@ -118,7 +118,7 @@ struct TPointerWFlags<void> {
         SetRawPointer(p);
     }
 
-    void Reset(void *p, size_t flag01) {
+    void Reset(void *p, uintptr_t flag01) {
         _pFlags = 0;
         field_Flag01::InplaceSet(_pFlags, flag01);
         SetRawPointer(p);
