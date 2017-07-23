@@ -13,7 +13,7 @@
 #include "Device/State/SamplerState.h"
 #include "Device/Texture/SurfaceFormat.h"
 #include "Device/Geometry/VertexDeclaration.h"
-#include "RenderDocWrapper.h"
+#include "Helpers/RenderDocWrapper.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 
