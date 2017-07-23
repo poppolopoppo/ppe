@@ -3,7 +3,7 @@
 #include "VertexTypes.h"
 
 #include "Device/DeviceEncapsulator.h"
-#include "VertexDeclaration.h"
+#include "Device/Geometry/VertexDeclaration.h"
 
 #include "Core/Container/StringHashMap.h"
 #include "Core/IO/StringView.h"
@@ -33,7 +33,8 @@
     _Foreach(FPosition0_Float3__TexCoord0_Half2__Normal0_UByte4N__Tangent0_UByte4N__Binormal0_UByte4N) \
     _Foreach(FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N) \
     _Foreach(FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N) \
-    _Foreach(FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N)
+    _Foreach(FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N) \
+    _Foreach(FPosition0_Float3__Color0_UByte4N__Color1_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N)
 
 namespace Core {
 namespace Graphics {
@@ -110,139 +111,148 @@ void VertexTypes_Start() {
     FVertexDeclarationDico_::Create();
 
     #define CREATE_VERTEXDECL_BUILTINTYPE(_Name) \
-        Assert(nullptr == Vertex::_Name::Declaration); \
-        Vertex::_Name::Declaration = ::new ((void*)&CONCAT(GVertexDeclarationPOD_, _Name)) FVertexDeclaration(); \
-        FVertexDeclarator vdecl(remove_const(Vertex::_Name::Declaration));
+        typedef Vertex::_Name vertex_type; \
+        Assert(nullptr == vertex_type::Declaration); \
+        vertex_type::Declaration = ::new ((void*)&CONCAT(GVertexDeclarationPOD_, _Name)) FVertexDeclaration(); \
+        FVertexDeclarator vdecl(remove_const(vertex_type::Declaration));
 
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_UByte4);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_UByte4::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_UShort2);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_UShort2::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Half2);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Half2::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Half4);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Half4::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float4);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float4::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__Color0_UByte4N);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__Color0_UByte4N::Position0);
-        vdecl.AddSubPart(FVertexSemantic::Color, 0, &Vertex::FPosition0_Float3__Color0_UByte4N::Color0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Color,        0, &vertex_type::Color0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N::Position0);
-        vdecl.AddSubPart(FVertexSemantic::Color, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N::Color0);
-        vdecl.AddSubPart(FVertexSemantic::Normal, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__Normal0_UX10Y10Z10W2N::Normal0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Color,        0, &vertex_type::Color0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__Normal0_UX10Y10Z10W2N);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__Normal0_UX10Y10Z10W2N::Position0);
-        vdecl.AddSubPart(FVertexSemantic::Normal, 0, &Vertex::FPosition0_Float3__Normal0_UX10Y10Z10W2N::Normal0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__TexCoord0_Half2);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2::Position0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float4__TexCoord0_Float2);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float4__TexCoord0_Float2::Position0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float4__TexCoord0_Float2::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float4__TexCoord0_Half2);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float4__TexCoord0_Half2::Position0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float4__TexCoord0_Half2::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2::Position0);
-        vdecl.AddSubPart(FVertexSemantic::Color, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2::Color0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Color,        0, &vertex_type::Color0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2::Position0);
-        vdecl.AddSubPart(FVertexSemantic::Color, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2::Color0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Color,        0, &vertex_type::Color0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Position0);
-        vdecl.AddSubPart(FVertexSemantic::Color, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Color0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::TexCoord0);
-        vdecl.AddSubPart(FVertexSemantic::Normal, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Float2__Normal0_UX10Y10Z10W2N::Normal0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Color,        0, &vertex_type::Color0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__TexCoord0_Half2__Normal0_UByte4N);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UByte4N::Position0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UByte4N::TexCoord0);
-        vdecl.AddSubPart(FVertexSemantic::Normal, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UByte4N::Normal0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Position0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::TexCoord0);
-        vdecl.AddSubPart(FVertexSemantic::Normal, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Normal0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__TexCoord0_Float2__Normal0_Float3);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__TexCoord0_Float2__Normal0_Float3::Position0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__TexCoord0_Float2__Normal0_Float3::TexCoord0);
-        vdecl.AddSubPart(FVertexSemantic::Normal, 0, &Vertex::FPosition0_Float3__TexCoord0_Float2__Normal0_Float3::Normal0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__TexCoord0_Float2__Normal0_Float3__Tangent0_Float3__Binormal0_Float3);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__TexCoord0_Float2__Normal0_Float3__Tangent0_Float3__Binormal0_Float3::Position0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__TexCoord0_Float2__Normal0_Float3__Tangent0_Float3__Binormal0_Float3::TexCoord0);
-        vdecl.AddSubPart(FVertexSemantic::Normal, 0, &Vertex::FPosition0_Float3__TexCoord0_Float2__Normal0_Float3__Tangent0_Float3__Binormal0_Float3::Normal0);
-        vdecl.AddSubPart(FVertexSemantic::Tangent, 0, &Vertex::FPosition0_Float3__TexCoord0_Float2__Normal0_Float3__Tangent0_Float3__Binormal0_Float3::Tangent0);
-        vdecl.AddSubPart(FVertexSemantic::Binormal, 0, &Vertex::FPosition0_Float3__TexCoord0_Float2__Normal0_Float3__Tangent0_Float3__Binormal0_Float3::Binormal0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
+        vdecl.AddSubPart(FVertexSemantic::Tangent,      0, &vertex_type::Tangent0);
+        vdecl.AddSubPart(FVertexSemantic::Binormal,     0, &vertex_type::Binormal0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__TexCoord0_Half2__Normal0_UByte4N__Tangent0_UByte4N__Binormal0_UByte4N);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UByte4N__Tangent0_UByte4N__Binormal0_UByte4N::Position0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UByte4N__Tangent0_UByte4N__Binormal0_UByte4N::TexCoord0);
-        vdecl.AddSubPart(FVertexSemantic::Normal, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UByte4N__Tangent0_UByte4N__Binormal0_UByte4N::Normal0);
-        vdecl.AddSubPart(FVertexSemantic::Tangent, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UByte4N__Tangent0_UByte4N__Binormal0_UByte4N::Tangent0);
-        vdecl.AddSubPart(FVertexSemantic::Binormal, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UByte4N__Tangent0_UByte4N__Binormal0_UByte4N::Binormal0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
+        vdecl.AddSubPart(FVertexSemantic::Tangent,      0, &vertex_type::Tangent0);
+        vdecl.AddSubPart(FVertexSemantic::Binormal,     0, &vertex_type::Binormal0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Position0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::TexCoord0);
-        vdecl.AddSubPart(FVertexSemantic::Normal, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Normal0);
-        vdecl.AddSubPart(FVertexSemantic::Tangent, 0, &Vertex::FPosition0_Float3__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Tangent0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
+        vdecl.AddSubPart(FVertexSemantic::Tangent,      0, &vertex_type::Tangent0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Position0);
-        vdecl.AddSubPart(FVertexSemantic::Color, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Color0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::TexCoord0);
-        vdecl.AddSubPart(FVertexSemantic::Normal, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N::Normal0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Color,        0, &vertex_type::Color0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
+    }
+    {
+        CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__Color0_UByte4N__Color1_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Color,        0, &vertex_type::Color0);
+        vdecl.AddSubPart(FVertexSemantic::Color,        1, &vertex_type::Color1);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
     }
     {
         CREATE_VERTEXDECL_BUILTINTYPE(FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N);
-        vdecl.AddSubPart(FVertexSemantic::Position, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Position0);
-        vdecl.AddSubPart(FVertexSemantic::Color, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Color0);
-        vdecl.AddSubPart(FVertexSemantic::TexCoord, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::TexCoord0);
-        vdecl.AddSubPart(FVertexSemantic::Normal, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Normal0);
-        vdecl.AddSubPart(FVertexSemantic::Tangent, 0, &Vertex::FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N::Tangent0);
+        vdecl.AddSubPart(FVertexSemantic::Position,     0, &vertex_type::Position0);
+        vdecl.AddSubPart(FVertexSemantic::Color,        0, &vertex_type::Color0);
+        vdecl.AddSubPart(FVertexSemantic::TexCoord,     0, &vertex_type::TexCoord0);
+        vdecl.AddSubPart(FVertexSemantic::Normal,       0, &vertex_type::Normal0);
+        vdecl.AddSubPart(FVertexSemantic::Tangent,      0, &vertex_type::Tangent0);
     }
 
 #undef CREATE_VERTEXDECL_BUILTINTYPE

@@ -193,6 +193,16 @@ struct FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N
     static const FVertexDeclaration *Declaration;
 };
 //----------------------------------------------------------------------------
+struct FPosition0_Float3__Color0_UByte4N__Color1_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N {
+    float3 Position0;
+    ubyte4n Color0;
+    ubyte4n Color1;
+    half2 TexCoord0;
+    UX10Y10Z10W2N Normal0;
+
+    static const FVertexDeclaration *Declaration;
+};
+//----------------------------------------------------------------------------
 struct FPosition0_Float3__Color0_UByte4N__TexCoord0_Half2__Normal0_UX10Y10Z10W2N__Tangent0_UX10Y10Z10W2N {
     float3 Position0;
     ubyte4n Color0;
