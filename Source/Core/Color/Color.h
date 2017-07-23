@@ -83,6 +83,8 @@ struct CORE_API FLinearColor {
         return (not operator ==(lhs, rhs));
     }
 
+    static const FLinearColor PaperWhite;
+
     static FLinearColor AliceBlue();
     static FLinearColor AntiqueWhite();
     static FLinearColor Aqua();
@@ -269,6 +271,8 @@ struct CORE_API FColor {
     inline friend bool operator !=(const FColor& lhs, const FColor& rhs) { return (lhs.DWord != rhs.DWord); }
 
     inline hash_t hash_value(const FColor& color) { return (color.DWord); }
+
+    static const FColor PaperWhite;
 
     static FColor AliceBlue();
     static FColor AntiqueWhite();
