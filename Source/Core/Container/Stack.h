@@ -6,6 +6,7 @@
 #include "Core/Memory/AlignedStorage.h"
 #include "Core/Memory/MemoryView.h"
 
+#include <algorithm>
 #include <iterator>
 #include <type_traits>
 
@@ -20,6 +21,14 @@ namespace Core {
 #define STACKLOCAL_STACK(T, _NAME, _COUNT) \
     MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT); \
     Core::TStack<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+//----------------------------------------------------------------------------
+#define STACKLOCAL_POD_HEAP(T, _Pred, _NAME, _COUNT) \
+    MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT); \
+    Core::TPODStackHeapAdapter<T, Meta::TDecay<decltype(_Pred)> > _NAME( CONCAT(_Alloca_, _NAME).MakeView(), _Pred )
+//----------------------------------------------------------------------------
+#define STACKLOCAL_HEAP(T, _Pred, _NAME, _COUNT) \
+    MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT); \
+    Core::TStackHeapAdapter<T, Meta::TDecay<decltype(_Pred)> > _NAME( CONCAT(_Alloca_, _NAME).MakeView(), _Pred )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -75,6 +84,7 @@ public:
     TMemoryView<const T> MakeView() const { return TMemoryView<const T>(_storage, _size); }
     TMemoryView<const T> MakeConstView() const { return TMemoryView<const T>(_storage, _size); }
 
+    reference Push_Uninitialized();
     template <typename _Arg0, typename... _Args>
     void Push(_Arg0&& arg0, _Args&&... args);
     bool Pop(pointer pvalue = nullptr);
@@ -103,6 +113,9 @@ private:
     pointer _storage;
 };
 //----------------------------------------------------------------------------
+template <typename T>
+using TPodStack = TStack<T, true>;
+//----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 TStack<T, _IsPod>::TStack()
 :   _size(0), _capacity(0), _storage(nullptr) {}
@@ -118,12 +131,17 @@ TStack<T, _IsPod>::TStack(const TMemoryView<T>& storage)
 :   TStack(storage.Pointer(), storage.size()) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-template <typename _Arg0, typename... _Args>
-void TStack<T, _IsPod>::Push(_Arg0&& arg0, _Args&&... args) {
+auto TStack<T, _IsPod>::Push_Uninitialized() -> reference {
     Assert(_storage);
     Assert(_size < _capacity);
 
-    TAllocatorBase<T>().construct((T*)&_storage[_size++], std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    return (*(T*)&_storage[_size++]);
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+template <typename _Arg0, typename... _Args>
+void TStack<T, _IsPod>::Push(_Arg0&& arg0, _Args&&... args) {
+    TAllocatorBase<T>().construct(&Push_Uninitialized(), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -208,11 +226,6 @@ void swap(TStack<T, _IsPod>& lhs, TStack<T, _IsPod>& rhs) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-using TPodStack = TStack<T, true>;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename T, size_t _Capacity, size_t _Alignment = std::alignment_of<T>::value >
 class TFixedSizeStack : public TStack<T> {
 public:
@@ -249,6 +262,54 @@ private:
     // /!\ won't call any ctor or dtor, values are considered as undefined
     typename ALIGNED_STORAGE(sizeof(T) * _Capacity, _Alignment) _insitu;
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, typename _Less = Meta::TLess<T>, bool _IsPod = Meta::TIsPod<T>::value>
+class TStackHeapAdapter : _Less {
+public:
+    typedef TStack<T, _IsPod> stack_type;
+    typedef typename stack_type::pointer pointer;
+    typedef typename stack_type::const_pointer const_pointer;
+    typedef typename stack_type::size_type size_type;
+
+    explicit TStackHeapAdapter(const TMemoryView<T>& storage) : _stack(storage) {}
+    TStackHeapAdapter(const TMemoryView<T>& storage, _Less&& pred) : _Less(std::move(pred)), _stack(storage) {}
+
+    size_type capacity() const { return _stack.capacity(); }
+    size_type size() const { return _stack.size(); }
+    bool empty() const { return _stack.empty(); }
+
+    const_pointer PeekHeap() const {
+        return _stack.Peek();
+    }
+
+    template <typename _Arg0, typename... _Args>
+    void PushHeap(_Arg0&& arg0, _Args&&... args) {
+        _stack.Push(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+        std::push_heap(_stack.begin(), _stack.end(), static_cast<_Less&>(*this));
+    }
+
+    bool PopHeap(pointer pvalue) {
+        std::pop_heap(_stack.begin(), _stack.end(), static_cast<_Less&>(*this));
+        return _stack.Pop(pvalue);
+    }
+
+    void clear() {
+        _stack.clear();
+    }
+
+    inline friend void swap(TStackHeapAdapter& lhs, TStackHeapAdapter& rhs) {
+        swap(static_cast<_Less&>(lhs), static_cast<_Less&>(rhs));
+        lhs._stack.Swap(rhs._stack);
+    }
+
+private:
+    stack_type _stack;
+};
+//----------------------------------------------------------------------------
+template <typename T, typename _Less>
+using TPODStackHeapAdapter = TStackHeapAdapter<T, _Less, true>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
