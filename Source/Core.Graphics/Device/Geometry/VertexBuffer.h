@@ -44,6 +44,7 @@ public:
     template <typename T>
     void Create(IDeviceAPIEncapsulator *device, const TMemoryView<const T>& optionalData);
     void Create(IDeviceAPIEncapsulator *device, const TMemoryView<const u8>& optionalRawData);
+    void Create(IDeviceAPIEncapsulator *device) { Create(device, TMemoryView<const u8>());  }
     void Destroy(IDeviceAPIEncapsulator *device);
 
 protected:

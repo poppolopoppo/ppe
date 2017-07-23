@@ -22,14 +22,16 @@ FWD_REFPTR(DeviceAPIDependantResourceBuffer);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EBufferMode : u32 {
-    None            = 0,
-    Read            = 1<<0,
-    Write           = 1<<1,
-    Discard         = 1<<2,
-    DoNotWait       = 1<<3,
-    ReadWrite       = Read|Write,
-    WriteDiscard    = Write|Discard,
-    WriteDoNotWait  = Write|DoNotWait,
+    None                = 0,
+    Read                = 1<<0,
+    Write               = 1<<1,
+    Discard             = 1<<2,
+    DoNotWait           = 1<<3,
+    NoOverwrite         = 1<<4,
+    ReadWrite           = Read|Write,
+    WriteDiscard        = Write|Discard,
+    WriteDoNotWait      = Write|DoNotWait,
+    WriteNoOverwrite    = Write|NoOverwrite,
 };
 ENUM_FLAGS(EBufferMode);
 //----------------------------------------------------------------------------

@@ -73,7 +73,7 @@ void FDeviceResource::SetResourceName(const FWStringView& name) {
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     Assert(!Frozen());
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(name.empty());
+    Assert(not name.empty());
     _resourceName = ToWString(name);
 #else
     UNUSED(name);

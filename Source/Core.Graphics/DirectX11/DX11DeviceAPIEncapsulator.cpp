@@ -30,7 +30,7 @@
 #include "Device/Geometry/VertexBuffer.h"
 #include "Device/PresentationParameters.h"
 
-#include "RenderDocWrapper.h"
+#include "Helpers/RenderDocWrapper.h"
 
 #include "Core/Color/Color.h"
 #include "Core/Maths/ScalarRectangle.h"

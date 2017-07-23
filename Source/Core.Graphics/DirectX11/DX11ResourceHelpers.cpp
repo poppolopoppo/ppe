@@ -18,20 +18,42 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static bool DX11MapWrite_(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<const u8>& src, ::D3D11_MAP mapType, bool doNotWait) {
+    Assert(resource);
+    Assert(IS_ALIGNED(16, src.data()));
+
+    const ::UINT mapFlags = (doNotWait ? ::D3D11_MAP_FLAG_DO_NOT_WAIT : 0);
+
+    ::D3D11_MAPPED_SUBRESOURCE mappedResource;
+    const ::HRESULT result = deviceContext->Map(resource, checked_cast<::UINT>(subResource), mapType, mapFlags, &mappedResource);
+    if (FAILED(result))
+        return false;
+
+    memcpy(reinterpret_cast<u8 *>(mappedResource.pData) + offset, src.data(), src.size());
+
+    deviceContext->Unmap(resource, checked_cast<::UINT>(subResource));
+    return true;
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 bool DX11ResourceGetData(
     IDeviceAPIEncapsulator *device,
     ::ID3D11Resource *resource, size_t subResource,
     size_t offset, const TMemoryView<u8>& dst,
     EBufferMode bufferMode,
     EBufferUsage bufferUsage ) {
-    UNUSED(bufferMode);
-    UNUSED(bufferUsage);
     AssertRelease(EBufferUsage::Staging == bufferUsage);
-
-    const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
-
     Assert(EBufferUsage::Immutable != bufferUsage);
     Assert(bufferMode ^ EBufferMode::Read);
+    UNUSED(bufferMode);
+    UNUSED(bufferUsage);
+
+    const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
 
     if (!DX11MapRead(wrapper->ImmediateContext(), resource, subResource, offset, dst))
         CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to map resource buffer for reading", device));
@@ -45,10 +67,9 @@ bool DX11ResourceSetData(
     size_t offset, const TMemoryView<const u8>& src,
     Graphics::EBufferMode bufferMode,
     Graphics::EBufferUsage bufferUsage ) {
+    Assert(EBufferUsage::Immutable != bufferUsage);
 
     const FDX11DeviceWrapper *wrapper = DX11GetDeviceWrapper(device);
-
-    Assert(EBufferUsage::Immutable != bufferUsage);
 
     const size_t rowPitch = 0; // TODO : RTFM ...
     const size_t depthPitch = 0; // TODO
@@ -63,9 +84,7 @@ bool DX11ResourceSetData(
     case Core::Graphics::EBufferUsage::Dynamic:
     case Core::Graphics::EBufferUsage::Staging:
         Assert(bufferMode ^ EBufferMode::Write);
-        if (!DX11MapWrite(  wrapper->ImmediateContext(), resource, subResource, offset, src,
-                            bufferMode ^ EBufferMode::Discard,
-                            bufferMode ^ EBufferMode::DoNotWait ))
+        if (!DX11MapWrite(wrapper->ImmediateContext(), resource, subResource, offset, src, bufferMode))
             CORE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to map resource buffer for writing", device));
         break;
 
@@ -146,27 +165,31 @@ bool DX11MapRead(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resourc
     return true;
 }
 //----------------------------------------------------------------------------
-bool DX11MapWrite(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<const u8>& src, bool discard, bool doNotWait) {
-    Assert(resource);
-    Assert(IS_ALIGNED(16, src.data()));
+bool DX11MapWrite(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<const u8>& src, bool doNotWait) {
+    return DX11MapWrite_(deviceContext, resource, subResource, offset, src, ::D3D11_MAP_WRITE, doNotWait);
+}
+//----------------------------------------------------------------------------
+bool DX11MapWriteDiscard(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<const u8>& src, bool doNotWait) {
+    return DX11MapWrite_(deviceContext, resource, subResource, offset, src, ::D3D11_MAP_WRITE_DISCARD, doNotWait);
+}
+//----------------------------------------------------------------------------
+bool DX11MapWriteNoOverwrite(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<const u8>& src, bool doNotWait) {
+    return DX11MapWrite_(deviceContext, resource, subResource, offset, src, ::D3D11_MAP_WRITE_NO_OVERWRITE, doNotWait);
+}
+//----------------------------------------------------------------------------
+bool DX11MapWrite(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<const u8>& src, EBufferMode bufferMode) {
+    Assert(EBufferMode::Write ^ bufferMode);
 
-    const ::D3D11_MAP mapType = (discard)
-        ? ::D3D11_MAP_WRITE_DISCARD
-        : ::D3D11_MAP_WRITE;
+    ::D3D11_MAP mapType;
+    if (bufferMode == EBufferMode::WriteDiscard)
+        mapType = ::D3D11_MAP_WRITE_DISCARD;
+    else if (bufferMode == EBufferMode::WriteNoOverwrite)
+        mapType = ::D3D11_MAP_WRITE_NO_OVERWRITE;
+    else
+        mapType = ::D3D11_MAP_WRITE;
 
-    const ::UINT mapFlags = (doNotWait)
-        ? ::D3D11_MAP_FLAG_DO_NOT_WAIT
-        : 0;
-
-    ::D3D11_MAPPED_SUBRESOURCE mappedResource;
-    const ::HRESULT result = deviceContext->Map(resource, checked_cast<::UINT>(subResource), mapType, mapFlags, &mappedResource);
-    if (FAILED(result))
-        return false;
-
-    memcpy(reinterpret_cast<u8 *>(mappedResource.pData) + offset, src.data(), src.size());
-
-    deviceContext->Unmap(resource, checked_cast<::UINT>(subResource));
-    return true;
+    const bool doNotWait = (EBufferMode::DoNotWait ^ bufferMode);
+    return DX11MapWrite_(deviceContext, resource, subResource, offset, src, mapType, doNotWait);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
