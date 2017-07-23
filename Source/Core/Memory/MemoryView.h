@@ -215,11 +215,36 @@ protected:
     size_type _size;
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 // All memory views are considered as pods
 //----------------------------------------------------------------------------
 CORE_ASSUME_TYPE_AS_POD(TMemoryView<T>, typename T)
+//----------------------------------------------------------------------------
+// Inplace reindexation, beware that indices will be modified too !
+//----------------------------------------------------------------------------
+template <typename T, typename _Index>
+Meta::TEnableIf< std::is_integral<_Index>::value > ReindexMemoryView(const TMemoryView<T>& data, const TMemoryView<_Index>& indices) {
+    Assert(data.size() == indices.size());
+
+    forrange(i, 0, checked_cast<_Index>(indices.size())) {
+        if (i == indices[i])
+            continue;
+
+        T x = std::move(data[i]);
+        _Index j = i;
+
+        while (true) {
+            const _Index k = indices[j];
+            indices[j] = j;
+            if (k == i)
+                break;
+
+            data[j] = std::move(data[k]);
+            j = k;
+        }
+
+        data[j] = std::move(x);
+    }
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
