@@ -2,9 +2,8 @@
 
 #include "RobotApp.h"
 
-#include "Core/Color/Color.h"
-#include "Core/Diagnostic/DialogBox.h"
-#include "Core/Maths/Maths.h"
+#include "Core.Application/ApplicationConsole.h"
+#include "Core.Application/Input/GamepadInputHandler.h"
 
 #include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/DeviceEncapsulator.h"
@@ -16,7 +15,6 @@
 #include "Core.Graphics/Device/Geometry/PrimitiveType.h"
 #include "Core.Graphics/Device/Geometry/VertexBuffer.h"
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
-#include "Core.Graphics/Device/Geometry/VertexTypes.h"
 #include "Core.Graphics/Device/Shader/ConstantBuffer.h"
 #include "Core.Graphics/Device/Shader/ConstantBufferLayout.h"
 #include "Core.Graphics/Device/Shader/ShaderCompiled.h"
@@ -26,6 +24,7 @@
 #include "Core.Graphics/Device/State/DepthStencilState.h"
 #include "Core.Graphics/Device/State/RasterizerState.h"
 #include "Core.Graphics/Device/State/SamplerState.h"
+#include "Core.Graphics/VertexTypes.h"
 
 #include "Core.Lattice/BulkMesh.h"
 #include "Core.Lattice/GenericMesh.h"
@@ -35,19 +34,18 @@
 #include "Core.RTTI/RTTI_Macros-impl.h"
 #include "Core.RTTI/RTTI_Namespace-impl.h"
 
+#include "Core/Color/Color.h"
 #include "Core/Container/AssociativeVector.h"
 #include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
 #include "Core/Diagnostic/CurrentProcess.h"
+#include "Core/Diagnostic/DialogBox.h"
 #include "Core/IO/FS/ConstNames.h"
 #include "Core/Maths/QuaternionHelpers.h"
 #include "Core/Maths/ScalarVectorHelpers.h"
 #include "Core/Maths/ScalarMatrixHelpers.h"
 #include "Core/Maths/Transform.h"
 #include "Core/Memory/Compression.h"
-
-#include "Core.Application/ApplicationConsole.h"
-#include "Core.Application/Input/GamepadInputHandler.h"
 
 namespace Core {
 namespace ContentGenerator {
