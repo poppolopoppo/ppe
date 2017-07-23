@@ -8,7 +8,7 @@
     .ProjectIsolatedFiles =
     {
         'Graphics.cpp',
-        'RenderDocWrapper.cpp'
+        'Helpers/RenderDocWrapper.cpp'
     }
     #include "../../Build/Templates/Library.bff"
 }
