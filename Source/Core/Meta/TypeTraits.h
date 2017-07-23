@@ -7,6 +7,8 @@
         template < __VA_ARGS__ > \
         struct TIsPod< T > : public std::integral_constant<bool, true> {}; \
     } //!Meta
+#define CORE_ASSERT_TYPE_IS_POD(T, ...) \
+    static_assert(::Core::Meta::TIsPod<T>::value, STRINGIZE(T) " is not a POD type");
 
 namespace Core {
 namespace Meta {
