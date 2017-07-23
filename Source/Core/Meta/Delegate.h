@@ -27,7 +27,7 @@ public:
 class FBaseDelegate {
 public:
     FBaseDelegate() : FBaseDelegate(nullptr, nullptr) {}
-    FBaseDelegate(void* pcallback, void*pcallee)
+    FBaseDelegate(void* pcallback, void* pcallee)
     :   _pcallee(pcallee)
     ,   _pcallback(pcallback) {}
 
@@ -80,6 +80,10 @@ public:
     return_type Invoke(_Args... args) const {
         Assert(Valid());
         return reinterpret_cast<callback_type>(_pcallback)(_pcallee, std::forward<_Args>(args)... );
+    }
+
+    return_type InvokeIFP(_Args... args) const {
+        return (Valid() ? Invoke(std::forward<_Args>(args)...) : return_type());
     }
 
     FORCE_INLINE return_type operator ()(_Args... args) const {

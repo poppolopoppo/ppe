@@ -42,11 +42,11 @@ _Ret TBindDelegate<T *, _Ret (T::*)(_Args... )>::Wrapper_(void *pcallee, _Args..
 // Const member function  :
 //----------------------------------------------------------------------------
 template <typename T, typename _Ret, typename... _Args >
-struct TBindDelegate<T *, _Ret (T::*)(_Args... ) const> {
+struct TBindDelegate<const T*, _Ret (T::*)(_Args... ) const> {
     typedef TDelegate<_Ret (*)(_Args... )> type;
 
     template <_Ret (T::*_Member)(_Args... ) const>
-    static type get(T *pcallee);
+    static type get(const T *pcallee);
 
     template <_Ret (T::*_Member)(_Args... ) const>
     static _Ret Wrapper_(void *pcallee, _Args... args );
@@ -54,13 +54,13 @@ struct TBindDelegate<T *, _Ret (T::*)(_Args... ) const> {
 //----------------------------------------------------------------------------
 template <typename T, typename _Ret, typename... _Args >
 template <_Ret (T::*_Member)(_Args... ) const>
-auto TBindDelegate<T *, _Ret (T::*)(_Args... ) const>::get(T *pcallee) -> type {
-    return type(&Wrapper_<_Member>, static_cast<void *>(pcallee));
+auto TBindDelegate<const T*, _Ret (T::*)(_Args... ) const>::get(const T *pcallee) -> type {
+    return type(&Wrapper_<_Member>, const_cast<void*>(static_cast<const void *>(pcallee)));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Ret, typename... _Args >
 template <_Ret (T::*_Member)(_Args... ) const>
-_Ret TBindDelegate<T *, _Ret (T::*)(_Args... ) const>::Wrapper_(void *pcallee, _Args... args ) {
+_Ret TBindDelegate<const T*, _Ret (T::*)(_Args... ) const>::Wrapper_(void *pcallee, _Args... args ) {
     Likely(pcallee);
     const T *p = static_cast<const T *>(pcallee);
     return (p->*_Member)(std::forward<_Args>(args)... );
