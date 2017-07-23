@@ -4,6 +4,8 @@
 
 #include "Maths/RandomGenerator.h"
 
+// http://silviojemma.com/public/papers/lighting/spherical-harmonic-lighting.pdf
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
