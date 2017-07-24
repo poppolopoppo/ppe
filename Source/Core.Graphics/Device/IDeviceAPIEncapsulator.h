@@ -33,7 +33,7 @@ public:
     virtual ~IDeviceAPIEncapsulator() {}
 
     virtual const FAbstractDeviceAPIEncapsulator *APIEncapsulator() const = 0;
-    IDeviceAPIContext* Immediate() const { return APIEncapsulator()->Immediate(); }
+    IDeviceAPIContext* Immediate() const;
 
     // Viewport
 
