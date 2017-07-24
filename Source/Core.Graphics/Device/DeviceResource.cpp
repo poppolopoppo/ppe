@@ -54,7 +54,7 @@ FWStringView FDeviceResource::ResourceName() const {
     THIS_THREADRESOURCE_CHECKACCESS();
     return MakeStringView(_resourceName);
 #else
-    return FStringView();
+    return FWStringView();
 #endif
 }
 //----------------------------------------------------------------------------
