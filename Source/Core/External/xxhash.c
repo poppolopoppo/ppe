@@ -1,4 +1,3 @@
-#include "stdafx.h"
 /*
 *  xxHash - Fast Hash algorithm
 *  Copyright (C) 2012-2016, Yann Collet
@@ -112,7 +111,6 @@ static void* XXH_memcpy(void* dest, const void* src, size_t size) { return memcp
 /* *************************************
 *  Compiler Specific Options
 ***************************************/
-#ifndef FORCE_INLINE
 #ifdef _MSC_VER    /* Visual Studio */
 #  pragma warning(disable : 4127)      /* disable: C4127: conditional expression is constant */
 #  define FORCE_INLINE static __forceinline
@@ -126,7 +124,6 @@ static void* XXH_memcpy(void* dest, const void* src, size_t size) { return memcp
 #  else
 #    define FORCE_INLINE static
 #  endif /* __STDC_VERSION__ */
-#endif
 #endif
 
 

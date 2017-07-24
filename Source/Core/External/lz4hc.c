@@ -1,4 +1,3 @@
-#include "stdafx.h"
 /*
     LZ4 HC - High Compression Mode of LZ4
     Copyright (C) 2011-2017, Yann Collet.
@@ -183,7 +182,7 @@ FORCE_INLINE int LZ4HC_InsertAndGetWiderMatch (
     const BYTE* const dictBase = hc4->dictBase;
     int const delta = (int)(ip-iLowLimit);
     int nbAttempts = maxNbAttempts;
-    U32   matchIndex;
+    U32 matchIndex;
 
 
     /* First Match */
@@ -193,16 +192,17 @@ FORCE_INLINE int LZ4HC_InsertAndGetWiderMatch (
     while ((matchIndex>=lowLimit) && (nbAttempts)) {
         nbAttempts--;
         if (matchIndex >= dictLimit) {
-            const BYTE* matchPtr = base + matchIndex;
+            const BYTE* const matchPtr = base + matchIndex;
             if (*(iLowLimit + longest) == *(matchPtr - delta + longest)) {
                 if (LZ4_read32(matchPtr) == LZ4_read32(ip)) {
                     int mlt = MINMATCH + LZ4_count(ip+MINMATCH, matchPtr+MINMATCH, iHighLimit);
                     int back = 0;
 
-                    while ((ip+back > iLowLimit)
-                           && (matchPtr+back > lowPrefixPtr)
-                           && (ip[back-1] == matchPtr[back-1]))
+                    while ( (ip+back > iLowLimit)
+                         && (matchPtr+back > lowPrefixPtr)
+                         && (ip[back-1] == matchPtr[back-1])) {
                             back--;
+                    }
 
                     mlt -= back;
 
@@ -549,13 +549,13 @@ static int LZ4HC_compress_generic (
         if (limit == limitedDestSize) cLevel = 10;
         switch (cLevel) {
             case 10:
-                return LZ4HC_compress_hashChain(ctx, src, dst, srcSizePtr, dstCapacity, 1 << (15-1), limit);
+                return LZ4HC_compress_hashChain(ctx, src, dst, srcSizePtr, dstCapacity, 1 << 12, limit);
             case 11:
                 ctx->searchNum = LZ4HC_getSearchNum(cLevel);
                 return LZ4HC_compress_optimal(ctx, src, dst, *srcSizePtr, dstCapacity, limit, 128, 0);
             default:
                 cLevel = 12;
-                /* pass-through */
+                /* fall-through */
             case 12:
                 ctx->searchNum = LZ4HC_getSearchNum(cLevel);
                 return LZ4HC_compress_optimal(ctx, src, dst, *srcSizePtr, dstCapacity, limit, LZ4_OPT_NUM, 1);
