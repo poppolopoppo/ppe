@@ -25,7 +25,7 @@ struct TUnitTraits {
     typedef _Smaller smaller_type;
     typedef typename tag_type::value_type value_type;
     static constexpr u64 Ratio = _Ratio;
-    static constexpr u64 Index = details::TNextUnitIndex<smaller_type>::FValue;
+    static constexpr u64 Index = details::TNextUnitIndex<smaller_type>::Value;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -42,7 +42,7 @@ struct TConvertionRatio_LargerToSmaller {
     typedef typename from_traits_type::smaller_type from_smaller_type;
     typedef typename from_smaller_type::traits_type from_smaller_traits_type;
 
-    static constexpr u64 Value = from_smaller_traits_type::Ratio * TConvertionRatio_LargerToSmaller<_To, from_smaller_type>::FValue;
+    static constexpr u64 Value = from_smaller_traits_type::Ratio * TConvertionRatio_LargerToSmaller<_To, from_smaller_type>::Value;
 };
 //----------------------------------------------------------------------------
 template <typename _ToFrom>
@@ -74,7 +74,7 @@ struct TConvertionRatio {
         TConvertionRatio_LargerToSmaller<_From, _To>
     >::type convertionratio_type;
 
-    static constexpr u64 Value = convertionratio_type::FValue;
+    static constexpr u64 Value = convertionratio_type::Value;
 };
 //----------------------------------------------------------------------------
 template <typename _ToFrom>
@@ -95,7 +95,7 @@ struct TConverter {
     typedef typename _To::traits_type from_traits_type;
     typedef typename from_traits_type::value_type value_type;
     static constexpr value_type Convert(value_type from) {
-        return value_type(TConvertionRatio<_To, _From>::FValue * from);
+        return value_type(TConvertionRatio<_To, _From>::Value * from);
     }
 };
 //----------------------------------------------------------------------------
@@ -104,7 +104,7 @@ struct TConverter<_To, _From, false> {
     typedef typename _To::traits_type from_traits_type;
     typedef typename from_traits_type::value_type value_type;
     static constexpr value_type Convert(value_type from) {
-        return value_type(from / TConvertionRatio<_To, _From>::FValue);
+        return value_type(from / TConvertionRatio<_To, _From>::Value);
     }
 };
 //----------------------------------------------------------------------------
