@@ -11,7 +11,7 @@
 #endif
 
 #define CORE_MESSAGE(_Message) \
-    __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) ") : " _Message))
+    __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) ",1): " _Message))
 
 #define CORE_WARNING(_Code, _Message) CORE_MESSAGE("WARNING " _Code ": " _Message)
 
