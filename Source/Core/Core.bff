@@ -11,9 +11,13 @@
         'Allocator/MallocBinned.cpp'
         'Maths/SHVector_extern.cpp',
         'External/farmhash.cpp',
+        'External/MurmurHash3.cpp',
+        'External/LZ4_Integration.cpp',
+    }
+    .ProjectExcludedFiles =
+    {
         'External/lz4.c',
         'External/lz4hc.c',
-        'External/MurmurHash3.cpp',
         'External/xxhash.c',
     }
     #include "../../Build/Templates/Library.bff"

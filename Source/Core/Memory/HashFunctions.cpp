@@ -4,10 +4,17 @@
 
 #define WITH_CORE_HASH_FNV1A 0
 
-#define CORE_HASH_FUNCTION CORE_HASH_XXHASH
-
 #include "External/farmhash.h"
+
+#pragma warning(push)
+#pragma push_macro("FORCE_INLINE")
+#undef FORCE_INLINE
+#define XXH_PRIVATE_API
+extern "C" {
 #include "External/xxhash.h"
+} //!extern "C"
+#pragma pop_macro("FORCE_INLINE")
+#pragma warning(pop)
 
 namespace Core {
 //----------------------------------------------------------------------------

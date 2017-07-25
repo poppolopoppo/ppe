@@ -22,13 +22,13 @@ namespace Compression {
 namespace {
 //----------------------------------------------------------------------------
 static const FFourCC FILE_MAGIC_     ("LZ4B");
-static const FFourCC FILE_VERSION_   ("1.00");
+static const FFourCC FILE_VERSION_   (STRINGIZE(LZ4_VERSION_MAJOR) ".00");
 //----------------------------------------------------------------------------
 struct FFileHeader_ {
-    FFourCC  Magic;
-    FFourCC  Version;
-    u32     SizeInBytes;
-    u32     Fingerpint;
+    FFourCC     Magic;
+    FFourCC     Version;
+    u32         SizeInBytes;
+    u32         Fingerpint;
 };
 STATIC_ASSERT(sizeof(FFileHeader_) == 16);
 //----------------------------------------------------------------------------
