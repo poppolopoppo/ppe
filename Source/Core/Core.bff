@@ -13,6 +13,7 @@
         'External/farmhash.cpp',
         'External/MurmurHash3.cpp',
         'External/LZ4_Integration.cpp',
+        'External/LZ4HC_Integration.cpp',
     }
     .ProjectExcludedFiles =
     {

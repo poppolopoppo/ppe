@@ -155,7 +155,7 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
 [
     Using( .MSVC2017BasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath$\Bin\$WindowsSDKVersion$\x86\RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]

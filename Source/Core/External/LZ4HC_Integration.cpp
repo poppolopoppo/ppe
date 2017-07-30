@@ -4,4 +4,4 @@
 #undef ALLOCATOR
 #undef FORCE_INLINE
 
-#include "External/lz4hc.c"
+#include "External/lz4.c"

@@ -7,7 +7,8 @@
 #if __WINDOWS__
 // DirectX SDK
 //------------------------------------------------------------------------------
-#   include "Externals/DirectX.bff"
+; This is deprecated
+;#   include "Externals/DirectX.bff"
 #endif
 
 #if __WINDOWS__

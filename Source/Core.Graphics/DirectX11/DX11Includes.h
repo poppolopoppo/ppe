@@ -20,15 +20,15 @@
 #ifdef PLATFORM_WINDOWS
 #   include <d3d11.h>
 #   include <dxgi.h>
-#   include <d3dx11.h>
+//#   include <d3dx11.h>
 
 //  include the Direct3D Library file
 #   pragma comment (lib, "d3d11.lib")
-#   ifdef WITH_DIRECTX11_DEBUG_LAYER
-#       pragma comment (lib, "d3dx11d.lib")
-#   else
-#       pragma comment (lib, "d3dx11.lib")
-#   endif
+//#   ifdef WITH_DIRECTX11_DEBUG_LAYER
+//#       pragma comment (lib, "d3dx11d.lib")
+//#   else
+//#       pragma comment (lib, "d3dx11.lib")
+//#   endif
 
 //  Direct3D interface GUIDs
 #   pragma comment (lib, "dxguid.lib")
