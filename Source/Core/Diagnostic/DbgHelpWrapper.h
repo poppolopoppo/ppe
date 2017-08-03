@@ -13,7 +13,6 @@
 #pragma warning(push)
 #pragma warning(disable: 4091) // 'typedef '�: ignor� � gauche de '' quand aucune variable n'est d�clar�e
 
-
 #include "Misc/Platform_Windows.h"
 #include <DbgHelp.h>
 
@@ -96,7 +95,7 @@ public:
 
     ~FDbghelpWrapper();
 
-    bool Available() const { return nullptr != _library; }
+    bool Available() const { return (nullptr != _dbghelp_dll); }
     FLocked Lock() const { return FLocked(*this); }
 
 #ifdef WITH_CORE_ASSERT
@@ -114,7 +113,8 @@ private:
 
     mutable std::mutex _barrier;
 
-    HMODULE _library;
+	HMODULE _dbgcore_dll;
+    HMODULE _dbghelp_dll;
 
     FSymInitializeW _symInitializeW;
     FSymCleanup _symCleanup;
