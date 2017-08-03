@@ -9,10 +9,10 @@
 
 #define WITH_CORE_USE_SYSALLOCA 1 //%__NOCOMMIT%
 
-#if 0
+#if 1
 //  16k means you have changed your default stack size in your compiler settings
 #   define CORE_SYSALLOCA_SIZELIMIT (16<<10) // bytes
-#elif 1
+#elif 0
 //  2k is a good trade off with default compiler settings and a wise user
 #   define CORE_SYSALLOCA_SIZELIMIT (2<<10) // bytes
 #else
