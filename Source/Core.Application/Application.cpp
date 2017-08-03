@@ -4,6 +4,10 @@
 
 #include "ApplicationBase.h"
 
+#ifdef PLATFORM_WINDOWS
+#   include "Input/XInputWrapper.h"
+#endif
+
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 #include "Core/Diagnostic/CrtDebug.h"
 #include "Core/Diagnostic/CurrentProcess.h"
@@ -67,10 +71,18 @@ void FApplicationModule::Start() {
     CORE_MODULE_START(Application);
 
     POOL_TAG(Application)::Start();
+
+#ifdef PLATFORM_WINDOWS
+    FXInputWrapper::Create();
+#endif
 }
 //----------------------------------------------------------------------------
 void FApplicationModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Application);
+
+#ifdef PLATFORM_WINDOWS
+    FXInputWrapper::Destroy();
+#endif
 
     POOL_TAG(Application)::Shutdown();
 }

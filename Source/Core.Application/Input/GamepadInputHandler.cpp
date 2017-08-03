@@ -14,11 +14,7 @@
 #endif
 
 #ifdef PLATFORM_WINDOWS
-#   include "Core/Misc/Platform_Windows.h"
-#   include <XInput.h>
-
-#   pragma comment(lib, "XInput.lib")
-
+#   include "XInputWrapper.h"
 #else
 #   error "no support"
 #endif
@@ -99,6 +95,10 @@ void FGamepadInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
     AssertIsMainThread();
     UNUSED(wnd);
 
+#ifdef PLATFORM_WINDOWS
+    FXInputWrapper::FLocked& XInputWrapper = FXInputWrapper::Instance().Lock();
+#endif
+
     int gamepadIndex = 0;
     for (FGamepadState& gamepad : _state.Gamepads()) {
         gamepad._buttonsDown.Clear();
@@ -110,7 +110,8 @@ void FGamepadInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
         ::XINPUT_STATE stateXInput;
         ::ZeroMemory(&stateXInput, sizeof(::XINPUT_STATE));
 
-        if (ERROR_SUCCESS == ::XInputGetState(checked_cast<DWORD>(gamepadIndex), &stateXInput)) {
+        if (XInputWrapper.Available() &&
+            ERROR_SUCCESS == XInputWrapper.XInputGetState()(checked_cast<DWORD>(gamepadIndex), &stateXInput)) {
             gamepad._connected = true;
 
             GamepadFilterStick_(
@@ -123,8 +124,8 @@ void FGamepadInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
                 XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE );
 
             GamepadFilterTrigger_(
-                 &gamepad._leftTrigger,
-                 stateXInput.Gamepad.bLeftTrigger,
+                &gamepad._leftTrigger,
+                stateXInput.Gamepad.bLeftTrigger,
                 XINPUT_GAMEPAD_TRIGGER_THRESHOLD );
             GamepadFilterTrigger_(
                 &gamepad._rightTrigger,
