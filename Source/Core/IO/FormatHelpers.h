@@ -12,22 +12,6 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, FSizeInBytes);
-//----------------------------------------------------------------------------
-void Format(char *buffer, size_t capacity, FSizeInBytes value);
-void Format(wchar_t *buffer, size_t capacity, FSizeInBytes value);
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const FSizeInBytes& size) {
-    _Char buffer[32];
-    Format(buffer, lengthof(buffer), size);
-    return oss << buffer;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 CORE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, FCountOfElements);
 //----------------------------------------------------------------------------
 void Format(char *buffer, size_t capacity, FCountOfElements count);
@@ -39,6 +23,38 @@ std::basic_ostream<_Char, _Traits>& operator <<(
     const FCountOfElements& count) {
     _Char buffer[32];
     Format(buffer, lengthof(buffer), count);
+    return oss << buffer;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+CORE_STRONGLYTYPED_NUMERIC_DEF(intptr_t, FPointer);
+//----------------------------------------------------------------------------
+void Format(char *buffer, size_t capacity, FPointer ptr);
+void Format(wchar_t *buffer, size_t capacity, FPointer ptr);
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const FPointer& ptr) {
+    _Char buffer[32];
+    Format(buffer, lengthof(buffer), ptr);
+    return oss << buffer;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+CORE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, FSizeInBytes);
+//----------------------------------------------------------------------------
+void Format(char *buffer, size_t capacity, FSizeInBytes value);
+void Format(wchar_t *buffer, size_t capacity, FSizeInBytes value);
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const FSizeInBytes& size) {
+    _Char buffer[32];
+    Format(buffer, lengthof(buffer), size);
     return oss << buffer;
 }
 //----------------------------------------------------------------------------

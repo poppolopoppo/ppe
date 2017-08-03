@@ -13,6 +13,46 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void Format(char *buffer, size_t capacity, FCountOfElements count) {
+    TBasicOCStrStream<char> oss(buffer, capacity);
+    oss.precision(2);
+    oss.flags(std::ios_base::fixed);
+
+    if (count > 9e5f)
+        oss << (count / 1e6f) << " M";
+    else if (count > 9e2f)
+        oss << (count / 1e3f) << " K";
+    else
+        oss << count.Value;
+}
+//----------------------------------------------------------------------------
+void Format(wchar_t *buffer, size_t capacity, FCountOfElements count) {
+    TBasicOCStrStream<wchar_t> oss(buffer, capacity);
+    oss.precision(2);
+    oss.flags(std::ios_base::fixed);
+
+    if (count > 9e5f)
+        oss << (count / 1e6f) << L" M";
+    else if (count > 9e2f)
+        oss << (count / 1e3f) << L" K";
+    else
+        oss << count.Value;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void Format(char *buffer, size_t capacity, FPointer ptr) {
+    TBasicOCStrStream<char> oss(buffer, capacity);
+    oss << std::internal << std::hex << std::setw(sizeof(intptr_t)*2+1) << std::setfill('0') << ptr.Value;
+}
+//----------------------------------------------------------------------------
+void Format(wchar_t *buffer, size_t capacity, FPointer ptr) {
+    TBasicOCStrStream<wchar_t> oss(buffer, capacity);
+    oss << std::internal << std::hex << std::setw(sizeof(intptr_t)*2+1) << std::setfill(L'0') << ptr.Value;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 void Format(char *buffer, size_t capacity, FSizeInBytes size) {
     TBasicOCStrStream<char> oss(buffer, capacity);
     oss.precision(2);
@@ -65,34 +105,6 @@ void Format(wchar_t *buffer, size_t capacity, FSizeInBytes size) {
         oss << Units::Storage::FKilobytes(bytes);
     else
         oss << bytes;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void Format(char *buffer, size_t capacity, FCountOfElements count) {
-    TBasicOCStrStream<char> oss(buffer, capacity);
-    oss.precision(2);
-    oss.flags(std::ios_base::fixed);
-
-    if (count > 9e5f)
-        oss << (count / 1e6f) << " M";
-    else if (count > 9e2f)
-        oss << (count / 1e3f) << " K";
-    else
-        oss << count.Value;
-}
-//----------------------------------------------------------------------------
-void Format(wchar_t *buffer, size_t capacity, FCountOfElements count) {
-    TBasicOCStrStream<wchar_t> oss(buffer, capacity);
-    oss.precision(2);
-    oss.flags(std::ios_base::fixed);
-
-    if (count > 9e5f)
-        oss << (count / 1e6f) << L" M";
-    else if (count > 9e2f)
-        oss << (count / 1e3f) << L" K";
-    else
-        oss << count.Value;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
