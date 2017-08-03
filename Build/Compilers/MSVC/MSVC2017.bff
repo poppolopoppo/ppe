@@ -31,9 +31,10 @@
 
 .MSVC2017PlatformToolset = 'v141'
 
-; TODO : %VS141COMNTOOLS% n'est pas défini dans la RC, fix quand la version finale de VS2017 sera sortie (voir fbuild.rb)
+; VS141COMNTOOLS ou VS150COMNTOOLS n'est plus défini par Visual 2017 ...
+; https://stackoverflow.com/questions/42713238/reliable-way-to-find-the-location-devenv-exe-of-visual-studio-2017
 ; #import VS141COMNTOOLS
-.MSVC2017BinPath = "$VS141COMNTOOLS$..\..\VC\Tools\MSVC\$VS141VERSIONRC$\bin"
+.MSVC2017BinPath = "$VS141COMNTOOLS$..\..\VC\Tools\MSVC\$VS141VERSION$\bin"
 Print( "Using Visual 2017 installation found in '$MSVC2017BinPath$'" )
 
 .PATH   = "$VS141COMNTOOLS$..\IDE;"
@@ -49,7 +50,7 @@ Print( "Using Visual 2017 installation found in '$MSVC2017BinPath$'" )
     .LocalisationUID    = '$VS141CLUID$' ; code zone pour le language (EN)
     Print( "Using Visual 2017 with localisation uid $LocalisationUID$" )
     .VSBasePath         = '$VS141COMNTOOLS$..\..'
-    .VSToolsVersion     = '$VS141VERSIONRC$'
+    .VSToolsVersion     = '$VS141VERSION$'
     Print( "Using Visual 2017 with tools version $VSToolsVersion$" )
     .WindowsSDKBasePath = .WindowsSDKBasePath10
     .WindowsSDKVersion  = .WindowsSDKVersion10
@@ -80,10 +81,6 @@ Compiler( 'Compiler-MSVC2017-x86' )
         '$Root$\mspdbsrv.exe',
         '$Root$\mspft140.dll',
         '$Root$\msvcdis140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\concrt140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\msvcp140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vccorlib140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vcruntime140.dll',
     }
 }
 
@@ -109,10 +106,6 @@ Compiler( 'Compiler-MSVC2017-x64' )
         '$Root$\mspdbsrv.exe',
         '$Root$\mspft140.dll',
         '$Root$\msvcdis140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\concrt140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\msvcp140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\vccorlib140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x64\Microsoft.VC150.CRT\vcruntime140.dll',
     }
 }
 
@@ -140,10 +133,6 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
         '$RootX86$\mspdbsrv.exe',
         '$RootX86$\mspft140.dll',
         '$RootX86$\msvcdis140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\concrt140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\msvcp140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vccorlib140.dll',
-        ;'$VSBasePath$\VC\Redist\MSVC\$VSToolsVersion$\x86\Microsoft.VC150.CRT\vcruntime140.dll',
     }
 }
 #endif
@@ -199,7 +188,6 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
 #if USE_VISUAL2017_DEBUG_FASTLINK
     Print( "Using Visual 2017 debug fast link : pdb references built objs" )
     ; utilise un lien symbolique vers les obj plutot que de les copier dans le pdb
-    ; TODO: pour l'instant je n'arrive pas a debug correctement quand c'est activé
     .LinkerOptions      = ' /DEBUG:FASTLINK'
 #endif
 ]

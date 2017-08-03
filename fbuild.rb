@@ -1,5 +1,7 @@
 #!/bin/env ruby
 
+START_TIME=Time.now
+
 VERSION='2.2'
 VERSION_HEADER="; Version = <#{VERSION}>"
 
@@ -109,7 +111,7 @@ private
     end
 end
 
-class FVisualStudio2017RC < FVisualStudio
+class FVisualStudio2017 < FVisualStudio
     attr_reader :versionrc
     def initialize()
         super('141')
@@ -117,9 +119,9 @@ class FVisualStudio2017RC < FVisualStudio
     def export(oss)
         super(oss)
         if @available
-            oss.puts ".VS141VERSIONRC='#{@versionrc}'"
+            oss.puts ".VS141VERSION='#{@versionrc}'"
         else
-            oss.puts ";.VS141VERSIONRC='XXX'"
+            oss.puts ";.VS141VERSION='XXX'"
         end
     end
 private
@@ -176,7 +178,7 @@ DEPENDENCIES= [
     [ 'Visual Studio 2012'      , FVisualStudio.new('110')  ],
     [ 'Visual Studio 2013'      , FVisualStudio.new('120')  ],
     [ 'Visual Studio 2015'      , FVisualStudio.new('140')  ],
-    [ 'Visual Studio 2017 RC'   , FVisualStudio2017RC.new() ],
+    [ 'Visual Studio 2017'      , FVisualStudio2017.new()   ],
     [ 'Windows SDK 8.1'         , FWindowsSDK.new('8.1')    ],
     [ 'Windows SDK 10'          , FWindowsSDK.new('10')     ],
     [ 'LLVM for Windows x86'    , FDirectoryDependency.new('LLVMFORWINDOWS_X86', 'LLVMBasePathX86', 'C:\Program Files (x86)\LLVM') ],
@@ -249,5 +251,9 @@ File.open(MODIFIED_FILES_LIST, 'w') do |f|
         end
     end
 end
+
+END_TIME=Time.now
+$stdout.puts("Spent %5.3f milliseconds in #{__FILE__}" % [(END_TIME - START_TIME)*1000])
+$stdout.flush
 
 exec(SOLUTION_FBUILDCMD, *ARGV)
