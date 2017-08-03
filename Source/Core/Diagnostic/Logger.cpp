@@ -88,6 +88,7 @@ public:
     // Used before main, no dependencies on allocators
     virtual void Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) override {
         wchar_t buffer[2048];
+
         FWOCStrStream oss(buffer);
         if (ELogCategory::Callstack != category &&
             ELogCategory::Info != category ) {
@@ -98,7 +99,11 @@ public:
         }
         FormatArgs(oss, text, args);
         oss << eol;
-        FPlatform::OutputDebug(oss.NullTerminatedStr());
+
+        if (FPlatform::IsDebuggerAttached())
+            FPlatform::OutputDebug(oss.NullTerminatedStr());
+        else
+            std::wcout << oss.NullTerminatedStr();
     }
 
     virtual void Flush() override {}
