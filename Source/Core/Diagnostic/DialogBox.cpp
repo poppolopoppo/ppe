@@ -374,7 +374,9 @@ static Dialog::EResult Template_CreateDialogBox_(
 
         STACKLOCAL_WOCSTRSTREAM(tmp, 4096);
         for (const FDecodedCallstack::FFrame& frame : ctx.DecodedCallstack.Frames()) {
-            tmp << frame.Filename() << L'(' << frame.Line() << L"): " << frame.Symbol();
+            tmp << FPointer(reinterpret_cast<intptr_t>(frame.Address()))
+                << L' ' << frame.Filename()
+                << L'(' << frame.Line() << L"): " << frame.Symbol();
             callstackFrames.emplace_back(tmp.NullTerminatedStr());
             tmp.Reset();
         }
@@ -409,7 +411,7 @@ static Dialog::EResult Template_CreateDialogBox_(
         Template_AddCaption_(writer, caption);
 
         writer.WritePOD(WORD(9)); // Font size
-        Template_AddCaption_(writer, L"Segoe UI"); // Font name
+        Template_AddCaption_(writer, L"Consolas"); // Font name
 
         // modal buttons
         const size_t buttonTop = tpl->cy - 5 - buttonHeight;

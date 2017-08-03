@@ -23,6 +23,7 @@ public:
     public:
         FFrame();
         FFrame(void* address, const wchar_t* symbol, const wchar_t* filename, size_t line);
+        FFrame(void* address, FWString&& symbol, FWString&& filename, size_t line);
         ~FFrame();
 
         FFrame(FFrame&& rvalue);
@@ -76,16 +77,18 @@ template <typename _Traits>
 std::basic_ostream<char, _Traits>& operator <<(
     std::basic_ostream<char, _Traits>& oss,
     const FDecodedCallstack::FFrame& frame) {
-    return oss  << frame.Symbol() << eol
-                << "    " << frame.Filename()
-                << '(' << frame.Line() << ')';
+    return oss
+        << frame.Symbol() << eol
+        << "    " << frame.Filename()
+        << '(' << frame.Line() << ')';
 }
 //----------------------------------------------------------------------------
 template <typename _Traits>
 std::basic_ostream<wchar_t, _Traits>& operator <<(
     std::basic_ostream<wchar_t, _Traits>& oss,
     const FDecodedCallstack::FFrame& frame) {
-    return oss << frame.Symbol() << eol
+    return oss
+        << frame.Symbol() << eol
         << L"    " << frame.Filename()
         << L'(' << frame.Line() << L')';
 }

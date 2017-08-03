@@ -3,6 +3,7 @@
 #include "Callstack.h"
 
 #include "DecodedCallstack.h"
+#include "LastError.h"
 #include "Logger.h"
 
 #include "IO/Stream.h"
@@ -168,7 +169,9 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
 //----------------------------------------------------------------------------
 FCallstack::FCallstack()
 : _hash(0), _depth(0) {
-    memset(_frames, 0xCD, sizeof(_frames));
+#ifdef WITH_CORE_ASSERT
+    ::memset(_frames, 0xCD, sizeof(_frames));
+#endif
 }
 //----------------------------------------------------------------------------
 FCallstack::FCallstack(size_t framesToSkip, size_t framesToCapture)
@@ -203,7 +206,7 @@ void FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
 
     LoadModules_(dbghelp);
 
-    static const wchar_t* kUnknown = L"?????????????????????";
+    static const wchar_t* kUnknown = L"????????";
 
     decoded->_hash = hash;
     decoded->_depth = frames.size();
@@ -223,8 +226,8 @@ void FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
     void* const* address = frames.data();
     auto frame = reinterpret_cast<FDecodedCallstack::FFrame *>(&decoded->_frames);
     for (size_t i = 0; i < frames.size(); ++i, ++frame, ++address) {
-        const wchar_t *symbol = NULL;
-        const wchar_t *filename = NULL;
+        FWString symbol;
+        FWString filename;
         size_t line(static_cast<size_t>(-1ll));
 
         {
@@ -233,7 +236,8 @@ void FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
                 symbol = pSymbol->Name;
             }
             else {
-                symbol = kUnknown;
+                const long lastErrorCode = ::GetLastError();
+                symbol = GetLastErrorToWString(lastErrorCode);
             }
         }
         {
@@ -244,11 +248,11 @@ void FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
             }
             else {
                 filename = kUnknown;
-                line = static_cast<size_t>(-1ll);
+                line = 0;
             }
         }
 
-        ::new ((void*)frame) FDecodedCallstack::FFrame(*address, symbol, filename, line);
+        ::new ((void*)frame) FDecodedCallstack::FFrame(*address, std::move(symbol), std::move(filename), line);
     }
 #pragma warning( pop )
 }
@@ -292,23 +296,23 @@ size_t FCallstack::Capture(
 }
 //----------------------------------------------------------------------------
 void FCallstack::Start() {
-    const FDbghelpWrapper::FLocked dbghelp = FDbghelpWrapper::Instance().Lock();
-
-    InitializeSymbols_(dbghelp);
+    const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
+	if (dbghelp.Available())
+		InitializeSymbols_(dbghelp.Lock());
 }
 //----------------------------------------------------------------------------
 void FCallstack::ReloadSymbols() {
-    const FDbghelpWrapper::FLocked dbghelp = FDbghelpWrapper::Instance().Lock();
-
-    LoadModules_(dbghelp);
+    const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
+	if (dbghelp.Available())
+		LoadModules_(dbghelp.Lock());
 }
 //----------------------------------------------------------------------------
 void FCallstack::Shutdown() {
-    const FDbghelpWrapper::FLocked dbghelp = FDbghelpWrapper::Instance().Lock();
-
-    HANDLE hProcess = ::GetCurrentProcess();
-
-    dbghelp.SymCleanup()(hProcess);
+    const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
+	if (dbghelp.Available()) {
+		HANDLE hProcess = ::GetCurrentProcess();
+		dbghelp.Lock().SymCleanup()(hProcess);
+	}
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
