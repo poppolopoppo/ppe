@@ -1,8 +1,9 @@
 #include "stdafx.h"
 
-#include "Core/IO/StringView.h"
+#include "StringView.h"
 
-#include "Core/Memory/HashFunctions.h"
+#include "Allocator/Alloca.h"
+#include "Memory/HashFunctions.h"
 
 #include <ostream>
 
@@ -214,13 +215,95 @@ starCheck:
    goto loopStart;
 }
 //----------------------------------------------------------------------------
-template <typename _Char>
-struct FCharFunctor_ {
-    template <bool (*_Pred)(_Char)>
-    bool operator ()(_Char ch) const {
-        return _Pred(ch);
+/*
+ * This function implements the Damerau-Levenshtein algorithm to
+ * calculate a distance between strings.
+ *
+ * Basically, it says how many letters need to be swapped, substituted,
+ * deleted from, or added to string1, at least, to get string2.
+ *
+ * The idea is to build a distance matrix for the substrings of both
+ * strings.  To avoid a large space complexity, only the last three rows
+ * are kept in memory (if swaps had the same or higher cost as one deletion
+ * plus one insertion, only two rows would be needed).
+ *
+ * At any stage, "i + 1" denotes the length of the current substring of
+ * string1 that the distance is calculated for.
+ *
+ * row2 holds the current row, row1 the previous row (i.e. for the substring
+ * of string1 of length "i"), and row0 the row before that.
+ *
+ * In other words, at the start of the big loop, row2[j + 1] contains the
+ * Damerau-Levenshtein distance between the substring of string1 of length
+ * "i" and the substring of string2 of length "j + 1".
+ *
+ * All the big loop does is determine the partial minimum-cost paths.
+ *
+ * It does so by calculating the costs of the path ending in characters
+ * i (in string1) and j (in string2), respectively, given that the last
+ * operation is a substitution, a swap, a deletion, or an insertion.
+ *
+ * This implementation allows the costs to be weighted:
+ *
+ * - w (as in "sWap")
+ * - s (as in "Substitution")
+ * - a (for insertion, AKA "Add")
+ * - d (as in "Deletion")
+ *
+ * Note that this algorithm calculates a distance _iff_ d == a.
+ */
+// https://github.com/gitster/git/blob/master/levenshtein.c
+template <typename _Char, ECase _Sensitive>
+static size_t LevenshteinDistance_(
+    TBasicStringView<_Char> str1,
+    TBasicStringView<_Char> str2,
+    const u32 w, const u32 s, const u32 a, const u32 d) {
+    typedef TCharEqualTo<_Char, _Sensitive> equalto;
+
+    if (str1.empty()) return (a * str2.size());
+    if (str2.empty()) return (d * str1.size());
+
+    const u32 len1 = checked_cast<u32>(str1.size());
+    const u32 len2 = checked_cast<u32>(str2.size());
+
+    STACKLOCAL_POD_ARRAY(u32, rows_alloc, (len2 + 1) * 3);
+
+    TMemoryView<u32> row0 = rows_alloc.SubRange(0 * (len2 + 1), len2 + 1);
+    TMemoryView<u32> row1 = rows_alloc.SubRange(1 * (len2 + 1), len2 + 1);
+    TMemoryView<u32> row2 = rows_alloc.SubRange(2 * (len2 + 1), len2 + 1);
+
+    forrange(j, 0, len2 + 1) row1[j] = j * a;
+
+    forrange(i, 0, len1) {
+        row2[0] = (i + 1) * d;
+
+        forrange(j, 0, len2) {
+            /* substitution */
+            row2[j + 1] = row1[j] + (equalto()(str1[i], str2[j]) ? 0 : s);
+            /* swap */
+            if (i > 0 && j > 0 && equalto()(str1[i - 1], str2[j]) && equalto()(str1[i], str2[j - 1]) && row2[j + 1] > row0[j - 1] + w)
+                row2[j + 1] = row0[j - 1] + w;
+            /* deletion */
+            if (row2[j + 1] > row1[j + 1] + d)
+                row2[j + 1] = row1[j + 1] + d;
+            /* insertion */
+            if (row2[j + 1] > row2[j] + a)
+                row2[j + 1] = row2[j] + a;
+        }
+
+        auto dummy = row0;
+        row0 = row1;
+        row1 = row2;
+        row2 = dummy;
     }
-};
+
+    return row1[len2];
+}
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sentitive>
+static size_t LevenshteinDistance_(const TBasicStringView<_Char>& str1, const TBasicStringView<_Char>& str2) {
+    return LevenshteinDistance_<_Char, _Sentitive>(str1, str2, 0, 2, 1, 3); //taken from https://github.com/gitster/git/blob/master/help.c
+}
 //----------------------------------------------------------------------------
 template <typename _Char>
 static bool IsAll_(const TBasicStringView<_Char>& str, bool (*pred)(_Char)) {
@@ -544,6 +627,24 @@ bool WildMatchI(const FStringView& pattern, const FStringView& str) {
 //----------------------------------------------------------------------------
 bool WildMatchI(const FWStringView& pattern, const FWStringView& wstr) {
     return WildMatch_<ECase::Insensitive, wchar_t>(pattern, wstr);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+size_t EditDistance(const FStringView& lhs, const FStringView& rhs) {
+    return LevenshteinDistance_<char, ECase::Sensitive>(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+size_t EditDistance(const FWStringView& lhs, const FWStringView& rhs) {
+    return LevenshteinDistance_<wchar_t, ECase::Sensitive>(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+size_t EditDistanceI(const FStringView& lhs, const FStringView& rhs) {
+    return LevenshteinDistance_<char, ECase::Insensitive>(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+size_t EditDistanceI(const FWStringView& lhs, const FWStringView& rhs) {
+    return LevenshteinDistance_<wchar_t, ECase::Insensitive>(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

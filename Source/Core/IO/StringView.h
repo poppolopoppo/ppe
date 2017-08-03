@@ -360,6 +360,14 @@ bool WildMatchI(const FWStringView& pattern, const FWStringView& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+size_t EditDistance(const FStringView& lhs, const FStringView& rhs);
+size_t EditDistance(const FWStringView& lhs, const FWStringView& rhs);
+//----------------------------------------------------------------------------
+size_t EditDistanceI(const FStringView& lhs, const FStringView& rhs);
+size_t EditDistanceI(const FWStringView& lhs, const FWStringView& rhs);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 size_t Copy(const TMemoryView<char>& dst, const FStringView& src);
 size_t Copy(const TMemoryView<wchar_t>& dst, const FWStringView& src);
 //----------------------------------------------------------------------------
