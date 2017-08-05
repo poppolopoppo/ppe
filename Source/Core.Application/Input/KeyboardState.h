@@ -22,6 +22,10 @@ public:
     bool IsKeyPressed(EKeyboardKey key) const { return _keysPressed.Contains(key); }
     bool IsKeyUp(EKeyboardKey key) const { return _keysUp.Contains(key); }
 
+	bool HasKeyDown() const { return (_keysDown.size() > 0); }
+	bool HasKeyPressed() const { return (_keysPressed.size() > 0); }
+	bool HasKeyUp() const { return (_keysUp.size() > 0); }
+
     void Clear() {
         _keysDown.Clear();
         _keysPressed.Clear();

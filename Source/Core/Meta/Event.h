@@ -12,6 +12,16 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#define PUBLIC_EVENT(_NAME, _RET, ...) \
+	public: \
+		Core::TPublicEvent< TDelegate<_RET (*)(__VA_ARGS__)> > _NAME() { \
+			return Core::TPublicEvent< TDelegate<_RET (*)(__VA_ARGS__)> >( CONCAT(_, _NAME) ); \
+		} \
+	private: \
+		Core::TEvent< TDelegate<_RET (*)(__VA_ARGS__)> > CONCAT(_, _NAME)
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Delegate>
 class TEvent {
 public:
@@ -55,6 +65,7 @@ private:
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
 void TEvent< TDelegate<_Ret (*)(_Args... )> >::Add(const delegate_type& d) {
+	Assert(d.Valid());
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(_delegates.end() == std::find(_delegates.begin(), _delegates.end(), d));
     _delegates.push_back(d);
@@ -62,6 +73,7 @@ void TEvent< TDelegate<_Ret (*)(_Args... )> >::Add(const delegate_type& d) {
 //----------------------------------------------------------------------------
 template <typename _Ret, typename... _Args >
 void TEvent< TDelegate<_Ret (*)(_Args... )> >::Remove(const delegate_type& d) {
+	Assert(d.Valid());
     THIS_THREADRESOURCE_CHECKACCESS();
     const auto it = std::find(_delegates.begin(), _delegates.end(), d);
     Assert(_delegates.end() != it);

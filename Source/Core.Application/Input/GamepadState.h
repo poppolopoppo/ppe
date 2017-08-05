@@ -40,7 +40,13 @@ public:
     explicit FGamepadState()
         : _connected(false)
         , _onConnect(false)
-        , _onDisconnect(false) {}
+        , _onDisconnect(false)
+		, _leftRumble(0)
+		, _rightRumble(0)
+		, _index(size_t(-1))
+	{}
+
+	size_t Index() const { return _index; }
 
     bool IsConnected() const { return _connected; }
 
@@ -72,6 +78,13 @@ public:
     bool IsButtonDown(EGamepadButton button) const { return _buttonsDown.Contains(button); }
     bool IsButtonPressed(EGamepadButton button) const { return _buttonsPressed.Contains(button); }
     bool IsButtonUp(EGamepadButton button) const { return _buttonsUp.Contains(button); }
+
+	bool HasButtonDown() const { return (_buttonsDown.size() > 0); }
+	bool HasButtonPressed() const { return (_buttonsPressed.size() > 0); }
+	bool HasButtonUp() const { return (_buttonsUp.size() > 0); }
+
+	float LeftRumble() const { return _leftRumble; }
+	float RightRumble() const { return _rightRumble; }
 
     void Clear() {
         _connected = false;
@@ -109,6 +122,11 @@ private:
     FGamepadButtonState _buttonsDown;
     FGamepadButtonState _buttonsPressed;
     FGamepadButtonState _buttonsUp;
+
+	float _leftRumble;
+	float _rightRumble;
+
+	size_t _index;
 };
 //----------------------------------------------------------------------------
 class FMultiGamepadState {
