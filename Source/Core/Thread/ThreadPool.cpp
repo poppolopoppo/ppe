@@ -36,6 +36,10 @@ static size_t IOWorkerCount_() {
         Min(MaxIOWorkerCount_, std::thread::hardware_concurrency() - GlobalWorkerCount_()));
 }
 //----------------------------------------------------------------------------
+static size_t LowestPriorityWorkerCount_() {
+	return 1;
+}
+//----------------------------------------------------------------------------
 static constexpr size_t GlobalWorkerThreadAffinities[] = {
     1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11 // from 3rd to 12th core
 };
@@ -44,13 +48,17 @@ static constexpr size_t IOWorkerThreadAffinities[] = {
     (1<<0)|(1<<1), (1<<0)|(1<<1), (1<<0)|(1<<1), (1<<0)|(1<<1) // 1th and 2nd core, allowed to change threads
 };
 //----------------------------------------------------------------------------
+static constexpr size_t LowestPriorityWorkerThreadAffinities[] = {
+	0xFFFFFFFF - 1 // all cores except first
+};
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FGlobalThreadPool::Create() {
     const size_t count = GlobalWorkerCount_();
-    parent_type::Create("FGlobalThreadPool", CORE_THREADTAG_WORKER, count, EThreadPriority::Normal);
+    parent_type::Create("GlobalThreadPool", CORE_THREADTAG_WORKER, count, EThreadPriority::Normal);
     parent_type::Instance().Start(ThreadAffinities().CutBefore(count));
 }
 //----------------------------------------------------------------------------
@@ -72,7 +80,7 @@ void AsyncWork(const FTaskDelegate& task, ETaskPriority priority /* = ETaskPrior
 void FIOThreadPool::Create() {
     // IO should be operated in 2 threads max to prevent slow seeks :
     const size_t count = IOWorkerCount_();
-    parent_type::Create("FIOThreadPool", CORE_THREADTAG_IO, count, EThreadPriority::BelowNormal);
+    parent_type::Create("IOThreadPool", CORE_THREADTAG_IO, count, EThreadPriority::BelowNormal);
     parent_type::Instance().Start(ThreadAffinities().CutBefore(count));
 }
 //----------------------------------------------------------------------------
@@ -91,12 +99,35 @@ void AsyncIO(const FTaskDelegate& task, ETaskPriority priority /* = ETaskPriorit
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void FLowestPriorityThreadPool::Create() {
+	const size_t count = LowestPriorityWorkerCount_();
+	parent_type::Create("LowestPriorityThreadPool", CORE_THREADTAG_LOWEST_PRIORITY, count, EThreadPriority::Lowest);
+	parent_type::Instance().Start(ThreadAffinities().CutBefore(count));
+}
+//----------------------------------------------------------------------------
+void FLowestPriorityThreadPool::Destroy() {
+	parent_type::Instance().Shutdown();
+	parent_type::Destroy();
+}
+//----------------------------------------------------------------------------
+TMemoryView<const size_t> FLowestPriorityThreadPool::ThreadAffinities() {
+	return MakeView(LowestPriorityWorkerThreadAffinities);
+}
+//----------------------------------------------------------------------------
+void AsyncLowestPriority(const FTaskDelegate& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
+	FLowestPriorityThreadPool::Instance().Run(task, priority);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 void FThreadPoolStartup::Start() {
     FGlobalThreadPool::Create();
     FIOThreadPool::Create();
+	FLowestPriorityThreadPool::Create();
 }
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::Shutdown() {
+	FLowestPriorityThreadPool::Destroy();
     FIOThreadPool::Destroy();
     FGlobalThreadPool::Destroy();
 }

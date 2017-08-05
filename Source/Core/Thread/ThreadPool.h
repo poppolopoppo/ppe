@@ -28,6 +28,8 @@ public:
 //----------------------------------------------------------------------------
 void AsyncWork(const FTaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 class FIOThreadPool : Meta::TSingleton<FTaskManager, FIOThreadPool> {
 public:
     typedef Meta::TSingleton<FTaskManager, FIOThreadPool> parent_type;
@@ -44,6 +46,25 @@ public:
 };
 //----------------------------------------------------------------------------
 void AsyncIO(const FTaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class FLowestPriorityThreadPool : Meta::TSingleton<FTaskManager, FLowestPriorityThreadPool> {
+public:
+	typedef Meta::TSingleton<FTaskManager, FLowestPriorityThreadPool> parent_type;
+
+	using parent_type::Instance;
+#ifdef WITH_CORE_ASSERT
+	using parent_type::HasInstance;
+#endif
+
+	static void Create();
+	static void Destroy();
+
+	static TMemoryView<const size_t> ThreadAffinities();
+};
+//----------------------------------------------------------------------------
+void AsyncLowestPriority(const FTaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
