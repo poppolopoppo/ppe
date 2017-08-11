@@ -63,37 +63,4 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FDecodedCallstack;
-//----------------------------------------------------------------------------
-class FMemoryBlockHeader {
-public:
-    FMemoryBlockHeader();
-    FMemoryBlockHeader(FMemoryTrackingData* trackingData, size_t blockCount, size_t strideInBytes);
-    ~FMemoryBlockHeader();
-
-    FMemoryTrackingData* TrackingData() const { return _trackingData; }
-    size_t BlockCount() const { return _blockCount; }
-    size_t StrideInBytes() const{ return _strideInBytes; }
-
-    void DecodeCallstack(FDecodedCallstack* decoded) const;
-
-private:
-    enum { BacktraceMaxDepth = 6 };
-
-    FMemoryTrackingData* _trackingData;
-#ifdef ARCH_X64
-    uint32_t    _blockCount;
-    uint32_t    _strideInBytes;
-#else
-    uint32_t    _blockCount : 18;
-    uint32_t    _strideInBytes : 14;
-#endif
-    void*       _backtraceFrames[BacktraceMaxDepth];
-};
-//----------------------------------------------------------------------------
-static_assert(  sizeof(FMemoryBlockHeader) == sizeof(size_t) * 8,
-                "invalid FMemoryBlockHeader size");
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 } //!namespace Core

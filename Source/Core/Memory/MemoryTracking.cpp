@@ -2,7 +2,6 @@
 
 #include "MemoryTracking.h"
 
-#include "Diagnostic/Callstack.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/Stream.h"
@@ -220,37 +219,6 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
     }
 
     oss << Repeat<width>(L"-") << eol;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FMemoryBlockHeader::FMemoryBlockHeader()
-:   _trackingData(nullptr), _blockCount(0), _strideInBytes(0) {
-    _backtraceFrames[0] = nullptr;
-}
-//----------------------------------------------------------------------------
-FMemoryBlockHeader::FMemoryBlockHeader(FMemoryTrackingData* trackingData, size_t blockCount, size_t strideInBytes)
-: _trackingData(trackingData), _blockCount(checked_cast<uint32_t>(blockCount)), _strideInBytes(checked_cast<uint32_t>(strideInBytes)) {
-    Assert(blockCount == _blockCount);
-    Assert(strideInBytes == _strideInBytes);
-    if (_trackingData)
-        _trackingData->Allocate(_blockCount, _strideInBytes);
-    const size_t backtraceDepth = FCallstack::Capture(MakeView(_backtraceFrames), nullptr, 2, BacktraceMaxDepth);
-    if (backtraceDepth < BacktraceMaxDepth)
-        _backtraceFrames[backtraceDepth] = nullptr;
-}
-//----------------------------------------------------------------------------
-FMemoryBlockHeader::~FMemoryBlockHeader() {
-    if (_trackingData)
-        _trackingData->Deallocate(_blockCount, _strideInBytes);
-}
-//----------------------------------------------------------------------------
-void FMemoryBlockHeader::DecodeCallstack(FDecodedCallstack* decoded) const {
-    size_t backtraceDepth = 0;
-    while (backtraceDepth < BacktraceMaxDepth && _backtraceFrames[backtraceDepth])
-        ++backtraceDepth;
-    auto frames = MakeView(&_backtraceFrames[0], &_backtraceFrames[backtraceDepth]);
-    FCallstack::Decode(decoded, 0, frames);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
