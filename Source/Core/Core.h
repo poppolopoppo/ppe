@@ -201,13 +201,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 class CORE_API FCoreModule {
 public:
-    static void Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv);
+    static void Start(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv);
     static void Shutdown();
 
     static void ClearAll_UnusedMemory();
 
-    FCoreModule(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
-        Start(applicationHandle, nShowCmd, argc, argv);
+    FCoreModule(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv) {
+        Start(applicationHandle, nShowCmd, filename, argc, argv);
     }
 
     ~FCoreModule() {

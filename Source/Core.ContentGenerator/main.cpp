@@ -30,12 +30,12 @@ typedef Core::ContentGenerator::FRobotApp application_type;
 #include "Core/Diagnostic/CurrentProcess.h"
 
 template <typename _Application>
-static int Bootstrap(void *appHandle, int nShowCmd, int argc, const wchar_t**argv) {
+static int Bootstrap(void *appHandle, int nShowCmd, const wchar_t* filename, int argc, const wchar_t**argv) {
     using namespace Core;
 
     const Application::FApplicationContext appContext;
 
-    const Core::FCoreModule moduleCore{ appHandle, nShowCmd, size_t(argc), argv };
+    const Core::FCoreModule moduleCore{ appHandle, nShowCmd, filename, size_t(argc), argv };
     const RTTI::FRTTIModule moduleRTTI;
     const Serialize::FSerializeModule moduleSerialize;
     const Graphics::FGraphicsModule moduleGraphics;
@@ -81,10 +81,19 @@ int main(int argc, const wchar_t* argv[]) {
 #   endif
 
     int argc;
-    wchar_t *const *argv = ::CommandLineToArgvW(lpCmdLine, &argc);
+    wchar_t* const *argv = ::CommandLineToArgvW(lpCmdLine, &argc);
+
+    wchar_t filename[256];
+    ::GetModuleFileNameW(nullptr, filename, lengthof(filename));
+
+#else
+    const wchar_t* filename = argv[0];
+    argv = &argv[1];
+    argc--;
+
 #endif
 
     int result = 0;
-    result = Bootstrap<application_type>(hInstance, nCmdShow, argc, const_cast<const wchar_t**>(&argv[0]));
+    result = Bootstrap<application_type>(hInstance, nCmdShow, filename, argc, const_cast<const wchar_t**>(&argv[0]));
     return result;
 }

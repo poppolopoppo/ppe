@@ -3,22 +3,21 @@
 #include "CurrentProcess.h"
 
 #include "Diagnostic/Logger.h"
+#include "Misc/TargetPlatform.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv)
-:   _args(NewArray<FWString>(argc - 1)), _exitCode(0), _appIcon(0)
+FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv)
+:   _fileName(filename)
+,   _args(NewArray<FWString>(argc)), _exitCode(0), _appIcon(0)
 ,   _startedAt(FTimepoint::Now()) {
-    Assert(argc); // current process name at least
 
-    for (size_t i = 1; i < argc; ++i) {
+    for (size_t i = 0; i < argc; ++i) {
         Assert(argv[i]);
         _args[i] = argv[i];
     }
-
-    _fileName = argv[0];
 
     size_t dirSep = _fileName.size();
     for (; dirSep > 0 && _fileName[dirSep - 1] != L'/' && _fileName[dirSep - 1] != L'\\'; --dirSep);
@@ -26,13 +25,32 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, size_t a
 
     _applicationHandle = applicationHandle;
     _nShowCmd = nShowCmd;
+#ifndef FINAL_RELEASE
+    _startedWithDebugger = FPlatform::IsDebuggerAttached();
+#else
+    _startedWithDebugger = false;
+#endif
+
+#ifndef FINAL_RELEASE
+    if (_args.end() != _args.FindIf([](const FWString& arg) { return EqualsI(arg, L"-WaitForDebugger"); })) {
+        _startedWithDebugger = false; // some parts of the code won't detect that the debugger is attached
+        volatile bool bTurnThisOffWhenDebuggerIsAttached = true;
+        volatile size_t loopCount = 0;
+        while (bTurnThisOffWhenDebuggerIsAttached) {
+            LOG(Warning, L"[Process] Waiting for debugger to be attached");
+            std::this_thread::sleep_for(std::chrono::milliseconds(500)); // wait for debugger to be attached
+            loopCount++;
+        }
+    }
+#endif
 
 #ifdef USE_DEBUG_LOGGER
     LOG(Info, L"[Process] Started '{0}' with {1} parameters.", _fileName, _args.size());
     LOG(Info, L"[Process] Directory = '{0}'.", _directory);
     LOG(Info, L"[Process] Application Handle = '{0}', nShowCmd = '{1}'.", _applicationHandle, _nShowCmd);
-    for (size_t i = 0; i < _args.size(); ++i)
+    for (size_t i = 0; i < _args.size(); ++i) {
         LOG(Info, L"- [{0:2}] '{1}'", i, _args[i]);
+    }
 #endif
 }
 //----------------------------------------------------------------------------

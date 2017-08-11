@@ -30,6 +30,8 @@ public:
     size_t AppIcon() const { return _appIcon; }
     void SetAppIcon(size_t value) { _appIcon = value; }
 
+    bool StartedWithDebugger() const { return _startedWithDebugger; }
+
     const FTimepoint& StartedAt() const { return _startedAt; }
 
     using parent_type::Instance;
@@ -38,8 +40,8 @@ public:
 #endif
     using parent_type::Destroy;
 
-    static void Create(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv) {
-        parent_type::Create(applicationHandle, nShowCmd, argc, argv);
+    static void Create(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv) {
+        parent_type::Create(applicationHandle, nShowCmd, filename, argc, argv);
     }
 
     static FSeconds ElapsedSeconds() {
@@ -48,7 +50,7 @@ public:
 
 private:
     friend class Meta::TSingleton<FCurrentProcess>;
-    FCurrentProcess(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t **argv);
+    FCurrentProcess(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv);
 
     FWString _fileName;
     FWString _directory;
@@ -60,6 +62,7 @@ private:
     std::atomic<int> _exitCode;
 
     size_t _appIcon;
+    bool _startedWithDebugger;
 
     FTimepoint _startedAt;
 };

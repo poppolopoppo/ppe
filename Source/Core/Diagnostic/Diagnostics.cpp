@@ -18,8 +18,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FDiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
-    FCurrentProcess::Create(applicationHandle, nShowCmd, argc, argv);
+void FDiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv) {
+    FCurrentProcess::Create(applicationHandle, nShowCmd, filename, argc, argv);
 #ifdef PLATFORM_WINDOWS
     FDbghelpWrapper::Create();
 #endif

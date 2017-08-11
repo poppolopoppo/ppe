@@ -47,13 +47,33 @@ STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPool
 STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPoolAllocator<int>)>::propagate_on_container_swap::value);
 STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPoolAllocator<int>)>::is_always_equal::value);
 //----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
+static void CheckMemory_() {
+    static THREAD_LOCAL bool bInScope = false;
+    if (bInScope)
+        return;
+
+    bInScope = true;
+    AssertRelease(!std::cout.bad());
+    AssertRelease(!std::wcout.bad());
+    AssertRelease(!std::cerr.bad());
+    AssertRelease(!std::wcerr.bad());
+    AssertRelease(!std::cin.bad());
+    AssertRelease(!std::wcin.bad());
+
+    FPlatform::CheckMemory();
+
+    bInScope = false;
+}
+#endif //!FINAL_RELEASE
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FCoreModule::Start(void *applicationHandle, int nShowCmd, size_t argc, const wchar_t** argv) {
+void FCoreModule::Start(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv) {
     CORE_MODULE_START(Core);
 
     // 1 - diagnostics
-    FDiagnosticsStartup::Start(applicationHandle, nShowCmd, argc, argv);
+    FDiagnosticsStartup::Start(applicationHandle, nShowCmd, filename, argc, argv);
     // 2 - main thread context
     FThreadContextStartup::Start_MainThread();
     // 3 - heap allocators
