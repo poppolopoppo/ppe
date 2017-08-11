@@ -60,7 +60,7 @@ public:
     typedef typename tree_type::size_type size_type;
     typedef typename tree_type::iterator iterator;
 
-    //STATIC_ASSERT(IS_POW2(_Capacity));
+    //STATIC_ASSERT(Meta::IsPow2(_Capacity));
     static constexpr size_type Capacity = _Capacity;
 
     struct query_t {

@@ -5,6 +5,7 @@
 #include "Core/IO/FileSystem_fwd.h"
 #include "Core/IO/VFS/VirtualFileSystemPolicies.h"
 #include "Core/Memory/UniquePtr.h"
+#include "Core/Meta/Function.h"
 
 #include <functional>
 
@@ -26,8 +27,8 @@ bool VFS_DirectoryExists(const FDirpath& dirpath, EExistPolicy policy = EExistPo
 bool VFS_FileExists(const FFilename& filename, EExistPolicy policy = EExistPolicy::Exists);
 bool VFS_FileStats(FFileStat* pstat, const FFilename& filename);
 //----------------------------------------------------------------------------
-size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach);
-size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach);
+size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach);
+size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach);
 //----------------------------------------------------------------------------
 bool VFS_CreateDirectory(const FDirpath& dirpath);
 bool VFS_RemoveDirectory(const FDirpath& dirpath);

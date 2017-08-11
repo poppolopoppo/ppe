@@ -66,11 +66,11 @@
 #define RTTI_PROPERTY_PUBLIC_FIELD(_Name) \
         _RTTI_PROPERTY_IMPL(STRINGIZE(_Name), Core::RTTI::FMetaProperty::Public, &object_type::_Name)
 //----------------------------------------------------------------------------
-// Add a public property "SomeName" from 3 delegates or 3 std::function : a getter, a mover & a setter
+// Add a public property "SomeName" from 3 delegates or 3 Meta::TFunction : a getter, a mover & a setter
 #define RTTI_PROPERTY_GETSET_FLAGS(_Name, _Flags, _Get, _Set) \
     _RTTI_PROPERTY_IMPL(STRINGIZE(_Name), _Flags, COMMA_PROTECT(std::move(_Get), std::move(_Set)) )
 //----------------------------------------------------------------------------
-// Add a property "SomeName" from 3 delegates or 3 std::function : a getter, a mover & a setter
+// Add a property "SomeName" from 3 delegates or 3 Meta::TFunction : a getter, a mover & a setter
 #define RTTI_PROPERTY_GETSET(_Name, _Get, _Set) \
     RTTI_PROPERTY_GETSET_FLAGS(_Name, Core::RTTI::FMetaProperty::Public, _Get, _Set )
 //----------------------------------------------------------------------------

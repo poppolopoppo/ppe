@@ -44,13 +44,13 @@ void TTaskFuture<_Result>::Run(ITaskContext& ctx) {
 template <typename _Lambda>
 TTaskFuture< decltype(std::declval<_Lambda>()()) >*
     MakeFuture(_Lambda&& func) {
-    typedef decltype(std::declval<_Lambda>()()) return_type;
+    using return_type = decltype(std::declval<_Lambda>()());
     return new TTaskFuture<return_type>(std::move(func));// will be deleted by RunAndSuicide()
 }
 //----------------------------------------------------------------------------
 template <typename _Lambda>
 TTaskFuture< decltype(std::declval<_Lambda>()()) >*
-    FFuture(FTaskManager& manager, _Lambda&& func, ETaskPriority priority/* = ETaskPriority::Normal */) {
+    Future(FTaskManager& manager, _Lambda&& func, ETaskPriority priority/* = ETaskPriority::Normal */) {
     auto* const task = MakeFuture(std::move(func));
     manager.Run(*task, priority);
     return task;
@@ -65,7 +65,7 @@ void ParallelForRange(
     ETaskPriority priority/* = ETaskPriority::Normal */) {
     const size_t count = std::distance(first, last);
     if (0 == count) {
-        // skip completly empty sequences
+        // skip completely empty sequences
         return;
     }
     else if (1 == count) {
@@ -77,7 +77,7 @@ void ParallelForRange(
         STACKLOCAL_STACK(FTaskDelegate, tasks, count);
 
         forrange(it, first, last) {
-            auto* const task = new FTaskProcedure(std::bind(lambda, std::cref(*it)));
+            auto* const task = new FTaskProcedure(std::bind(lambda, std::ref(*it)));
             tasks.Push(*task/* will be deleted by RunAndSuicide() */);
         }
 

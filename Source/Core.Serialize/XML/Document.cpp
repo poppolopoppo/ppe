@@ -166,7 +166,7 @@ const FElement* FDocument::XPath(const TMemoryView<const FName>& path) const {
     return (_root ? _root->XPath(path) : nullptr );
 }
 //----------------------------------------------------------------------------
-size_t FDocument::XPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const {
+size_t FDocument::XPath(const TMemoryView<const FName>& path, const Meta::TFunction<void(const FElement&)>& functor) const {
     return (_root ? _root->XPath(path, functor) : 0 );
 }
 //----------------------------------------------------------------------------

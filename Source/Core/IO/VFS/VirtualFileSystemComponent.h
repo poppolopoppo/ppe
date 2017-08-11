@@ -5,6 +5,7 @@
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Memory/UniquePtr.h"
+#include "Core/Meta/Function.h"
 
 #include "Core/IO/VFS/VirtualFileSystemPolicies.h"
 #include "Core/IO/VFS/VirtualFileSystemStream.h"
@@ -54,8 +55,8 @@ public:
     virtual bool FileExists(const FFilename& filename, EExistPolicy policy) = 0;
     virtual bool FileStats(FFileStat* pstat, const FFilename& filename) = 0;
 
-    virtual size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach) = 0;
-    virtual size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach) = 0;
+    virtual size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) = 0;
+    virtual size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) = 0;
 
     virtual TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, EAccessPolicy policy) = 0;
 };

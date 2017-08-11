@@ -33,8 +33,8 @@ public:
     bool FileExists(const FFilename& filename, EExistPolicy policy = EExistPolicy::Exists) const;
     bool FileStats(FFileStat* pstat, const FFilename& filename) const;
 
-    size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach) const;
-    size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach) const;
+    size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) const;
+    size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) const;
 
     bool CreateDirectory(const FDirpath& dirpath) const;
     bool RemoveDirectory(const FDirpath& dirpath) const;

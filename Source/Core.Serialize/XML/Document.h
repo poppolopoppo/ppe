@@ -46,7 +46,7 @@ public:
     void ToStream(std::basic_ostream<char>& oss) const;
 
     const FElement* XPath(const TMemoryView<const FName>& path) const;
-    size_t XPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const;
+    size_t XPath(const TMemoryView<const FName>& path, const Meta::TFunction<void(const FElement&)>& functor) const;
 
     static bool Load(FDocument* document, const FFilename& filename);
     static bool Load(FDocument* document, const FFilename& filename, IStreamReader* input);

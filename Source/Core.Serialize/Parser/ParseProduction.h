@@ -26,17 +26,17 @@ struct TProduction : public std::unary_function<FParseList&, TParseResult<T> > {
     typedef T value_type;
 
     typedef SINGLETON_POOL_ALLOCATOR(Parser, int, POOL_TAG(Parser)) allocator_type;
-    typedef std::function< TParseResult<T>(FParseList&) > lambda_type;
+    typedef Meta::TFunction< TParseResult<T>(FParseList&), allocator_type > lambda_type;
 
     lambda_type Lambda;
 
     template <typename _Func>
     explicit TProduction(_Func&& lambda) {
-        Lambda.assign(std::move(lambda), allocator_type());
+        Lambda.assign(std::move(lambda));
     }
 
     TProduction(const TProduction& other) { operator =(other); }
-    TProduction& operator =(const TProduction& other) { Lambda.assign(other.Lambda, allocator_type()); return *this; }
+    TProduction& operator =(const TProduction& other) { Lambda.assign(other.Lambda); return *this; }
 
     TProduction(TProduction&& rvalue) : Lambda(std::move(rvalue.Lambda)) {}
     TProduction& operator =(TProduction&& rvalue) { Lambda = std::move(rvalue.Lambda); return *this; }
@@ -77,7 +77,7 @@ struct TProduction : public std::unary_function<FParseList&, TParseResult<T> > {
     }
 
     template <typename U>
-    TProduction<U> Then(std::function< TProduction<U>(T&&) >&& then) const {
+    TProduction<U> Then(Meta::TFunction< TProduction<U>(T&&) >&& then) const {
         const TProduction& first = *this;
         return TProduction<U>{[first, then](FParseList& input) -> TParseResult<U> {
             TParseResult<T> result = first(input);
@@ -88,7 +88,7 @@ struct TProduction : public std::unary_function<FParseList&, TParseResult<T> > {
     }
 
     template <typename U>
-    TProduction<U> Select(std::function< U(T&&) >&& convert) const {
+    TProduction<U> Select(Meta::TFunction< U(T&&) >&& convert) const {
         const TProduction& first = *this;
         return TProduction<U>{[first, convert](FParseList& input) -> TParseResult<U> {
             TParseResult<T> result = first(input);

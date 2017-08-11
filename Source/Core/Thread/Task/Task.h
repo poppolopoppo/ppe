@@ -33,7 +33,7 @@ class FTask : public FRefCountable {
 public:
     // Won't be deleted if the task was never run !
 
-    virtual ~FTask() {}
+    virtual ~FTask() = default;
 
     operator FTaskDelegate ();
 

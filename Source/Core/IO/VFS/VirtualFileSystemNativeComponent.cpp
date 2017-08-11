@@ -112,7 +112,7 @@ namespace {
 static size_t GlobFiles_Windows_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
-    const std::function<void(const FFilename&)>& foreach,
+    const Meta::TFunction<void(const FFilename&)>& foreach,
     VECTOR_THREAD_LOCAL(FileSystem, FDirpath)& subDirectories,
     const wchar_t *pattern,
     bool recursive
@@ -201,7 +201,7 @@ namespace {
 static size_t GlobFiles_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& destination,
-    const std::function<void(const FFilename&)>& foreach,
+    const Meta::TFunction<void(const FFilename&)>& foreach,
     const FWStringView& pattern,
     bool recursive
     ) {
@@ -294,12 +294,12 @@ bool FVirtualFileSystemNativeComponent::FileStats(FFileStat* pstat, const FFilen
     return FFileStat::FromNativePath(pstat, nativeFilename);
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemNativeComponent::EnumerateFiles(const FDirpath& dirpath, bool recursive, const std::function<void(const FFilename&)>& foreach) {
+size_t FVirtualFileSystemNativeComponent::EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) {
     Assert(_mode ^ EOpenMode::Readable);
     return GlobFiles_(dirpath, _alias, _target, foreach, L"*", recursive);
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const std::function<void(const FFilename&)>& foreach) {
+size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) {
     Assert(_mode ^ EOpenMode::Readable);
     Assert(pattern.size());
     return GlobFiles_(dirpath, _alias, _target, foreach, pattern, recursive);
@@ -310,7 +310,7 @@ TUniquePtr<IVirtualFileSystemIStream> FVirtualFileSystemNativeComponent::OpenRea
 
     wchar_t nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, lengthof(nativeFilename), filename, _alias, _target);
-    LOG(Info, L"[VFS] OpenNativeReadable('{0}')", nativeFilename);
+    LOG(Debug, L"[VFS] OpenNativeReadable('{0}')", nativeFilename);
 
     TUniquePtr<IVirtualFileSystemIStream> result;
     FVirtualFileSystemNativeFileIStream tmp(filename, nativeFilename, policy);
@@ -348,7 +348,7 @@ bool FVirtualFileSystemNativeComponent::RemoveDirectory(const FDirpath& dirpath)
 
     wchar_t nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeDirpath, lengthof(nativeDirpath), dirpath, _alias, _target);
-    LOG(Info, L"[VFS] RemoveNaticeDirectory('{0}')", nativeDirpath);
+    LOG(Debug, L"[VFS] RemoveNaticeDirectory('{0}')", nativeDirpath);
 
     return RemoveDirectory_(nativeDirpath);
 }
@@ -358,7 +358,7 @@ bool FVirtualFileSystemNativeComponent::RemoveFile(const FFilename& filename) {
 
     wchar_t nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, lengthof(nativeFilename), filename, _alias, _target);
-    LOG(Info, L"[VFS] RemoveNaticeFile('{0}')", nativeFilename);
+    LOG(Debug, L"[VFS] RemoveNativeFile('{0}')", nativeFilename);
 
     return RemoveFile_(nativeFilename);
 }
@@ -368,7 +368,7 @@ TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemNativeComponent::OpenWri
 
     wchar_t nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, lengthof(nativeFilename), filename, _alias, _target);
-    LOG(Info, L"[VFS] OpenNativeWritable('{0}')", nativeFilename);
+    LOG(Debug, L"[VFS] OpenNativeWritable('{0}')", nativeFilename);
 
     TUniquePtr<IVirtualFileSystemOStream> result;
     FVirtualFileSystemNativeFileOStream tmp(filename, nativeFilename, policy);

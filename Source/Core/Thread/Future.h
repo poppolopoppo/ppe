@@ -19,7 +19,7 @@ class FFuture;
 template <typename T>
 class FPromise : public FTask {
 public:
-    FPromise(std::function<T>&& async);
+    FPromise(Meta::TFunction<T>&& async);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

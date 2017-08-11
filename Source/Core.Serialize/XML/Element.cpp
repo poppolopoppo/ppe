@@ -41,7 +41,7 @@ static void PrintElement_(std::basic_ostream<char>& oss, const XML::FElement* el
 }
 //----------------------------------------------------------------------------
 template <typename _It>
-static size_t XPath_(_It first, _It last, const XML::FElement& elt, const std::function<void(const FElement&)>& functor) {
+static size_t XPath_(_It first, _It last, const XML::FElement& elt, const Meta::TFunction<void(const FElement&)>& functor) {
     Assert(first != last);
 
     if (*first != elt.Type())
@@ -106,7 +106,7 @@ const FElement* FElement::XPath(const TMemoryView<const FName>& path) const {
     return result;
 }
 //----------------------------------------------------------------------------
-size_t FElement::XPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const {
+size_t FElement::XPath(const TMemoryView<const FName>& path, const Meta::TFunction<void(const FElement&)>& functor) const {
     Assert(!path.empty());
 
     return XPath_(path.begin(), path.end(), *this, functor);
@@ -122,7 +122,7 @@ const FElement* FElement::ChildXPath(const TMemoryView<const FName>& path) const
     return result;
 }
 //----------------------------------------------------------------------------
-size_t FElement::ChildXPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const {
+size_t FElement::ChildXPath(const TMemoryView<const FName>& path, const Meta::TFunction<void(const FElement&)>& functor) const {
     size_t count = 0;
     for (const PElement& child : _children) {
         count += child->XPath(path, functor);

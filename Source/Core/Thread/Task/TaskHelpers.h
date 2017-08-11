@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/PoolAllocator.h"
+#include "Core/Meta/Function.h"
 #include "Core/Thread/Task/Task.h"
 
 namespace Core {
@@ -12,10 +13,10 @@ namespace Core {
 template <typename _Result>
 class TTaskFuture : public FTask {
 public:
-    typedef std::function<_Result()> function_type;
+    typedef Meta::TFunction<_Result()> function_type;
 
     TTaskFuture(function_type&& func);
-    ~TTaskFuture();
+    virtual ~TTaskFuture();
 
     bool Available() const { return _available; }
     const _Result& Result() const;// will wait for the result if not available
@@ -42,13 +43,13 @@ using PFuture = TRefPtr< const TTaskFuture<_Result> >;
 //----------------------------------------------------------------------------
 template <typename _Lambda>
 TTaskFuture< decltype(std::declval<_Lambda>()()) >*
-    FFuture(FTaskManager& manager, _Lambda&& func, ETaskPriority priority = ETaskPriority::Normal);
+    Future(FTaskManager& manager, _Lambda&& func, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FTaskProcedure : public FTask {
 public:
-    typedef std::function<void(ITaskContext& ctx)> function_type;
+    typedef Meta::TFunction<void(ITaskContext& ctx)> function_type;
 
     FTaskProcedure(function_type&& func);
 
@@ -64,11 +65,11 @@ private:
     function_type _func;
 };
 //----------------------------------------------------------------------------
-FTaskProcedure* MakeAsync(std::function<void()>&& fireAndForget);
-FTaskProcedure* MakeAsync(std::function<void(ITaskContext&)>&& fireAndForget);
+FTaskProcedure* MakeAsync(Meta::TFunction<void()>&& fireAndForget);
+FTaskProcedure* MakeAsync(Meta::TFunction<void(ITaskContext&)>&& fireAndForget);
 //----------------------------------------------------------------------------
-void ASync(FTaskManager& manager, std::function<void()>&& fireAndForget, ETaskPriority priority = ETaskPriority::Normal);
-void ASync(FTaskManager& manager, std::function<void(ITaskContext&)>&& fireAndForget, ETaskPriority priority = ETaskPriority::Normal);
+void ASync(FTaskManager& manager, Meta::TFunction<void()>&& fireAndForget, ETaskPriority priority = ETaskPriority::Normal);
+void ASync(FTaskManager& manager, Meta::TFunction<void(ITaskContext&)>&& fireAndForget, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 template <typename _It, typename _Lambda>
 void ParallelForRange(
@@ -82,7 +83,7 @@ void ParallelForRange(
     Core::ASync(Core::FGlobalThreadPool::Instance(), __VA_ARGS__)
 //----------------------------------------------------------------------------
 #define future(...) \
-    Core::FFuture(Core::FGlobalThreadPool::Instance(), __VA_ARGS__)
+    Core::Future(Core::FGlobalThreadPool::Instance(), __VA_ARGS__)
 //----------------------------------------------------------------------------
 #define parallel_for(_First, _Last, ...) \
     Core::ParallelForRange(Core::FGlobalThreadPool::Instance(), _First, _Last, __VA_ARGS__)

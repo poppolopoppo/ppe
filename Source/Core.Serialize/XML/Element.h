@@ -58,10 +58,10 @@ public:
     FStringView operator [](const XML::FName& name) const; // return the attribute IFP
 
     const FElement* XPath(const TMemoryView<const FName>& path) const;
-    size_t XPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const;
+    size_t XPath(const TMemoryView<const FName>& path, const Meta::TFunction<void(const FElement&)>& functor) const;
 
     const FElement* ChildXPath(const TMemoryView<const FName>& path) const;
-    size_t ChildXPath(const TMemoryView<const FName>& path, const std::function<void(const FElement&)>& functor) const;
+    size_t ChildXPath(const TMemoryView<const FName>& path, const Meta::TFunction<void(const FElement&)>& functor) const;
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
