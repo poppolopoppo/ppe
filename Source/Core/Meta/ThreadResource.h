@@ -49,45 +49,5 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <bool _Lock>
-class TThreadLock {
-public:
-    class FScopeLock {
-    public:
-        FScopeLock(TThreadLock&) {}
-    };
-
-    TThreadLock() {}
-    ~TThreadLock() {}
-
-    void Lock() {}
-    bool TryLock() { return true; }
-    void Unlock() {}
-};
-//----------------------------------------------------------------------------
-template <>
-class TThreadLock<true> {
-public:
-    class FScopeLock {
-    public:
-        FScopeLock(TThreadLock& owner) : _owner(&owner) { _owner->Lock(); }
-        ~FScopeLock() { Assert(_owner); _owner->Unlock(); }
-    private:
-        TThreadLock *_owner;
-    };
-
-    TThreadLock() {}
-    ~TThreadLock() {}
-
-    void Lock() { _lock.lock(); }
-    bool TryLock() { return _lock.try_lock(); }
-    void Unlock() { _lock.unlock(); }
-
-private:
-    std::mutex _lock;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 } //!namespace Meta
 } //!namespace Core
