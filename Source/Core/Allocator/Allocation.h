@@ -3,7 +3,6 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Alloca.h"
-#include "Core/Allocator/BuddyAllocator.h"
 #include "Core/Allocator/HeapAllocator.h"
 #include "Core/Allocator/Mallocator.h"
 #include "Core/Allocator/New.h"
