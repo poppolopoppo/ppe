@@ -11,6 +11,14 @@
 #   error "unsupported platform"
 #endif
 
+#ifdef USE_MEMORY_DOMAINS
+#   define TRACKINGDATA_ARG_IFP , FMemoryTrackingData& trackingData
+#   define TRACKINGDATA_ARG_FWD , trackingData
+#else
+#   define TRACKINGDATA_ARG_IFP
+#   define TRACKINGDATA_ARG_FWD
+#endif
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -33,7 +41,7 @@ size_t FVirtualMemory::AllocSizeInBytes(void* ptr) {
 // Keep allocations aligned to OS granularity
 // https://github.com/r-lyeh/ltalloc/blob/master/ltalloc.cc
 void* FVirtualMemory::AlignedAlloc(size_t alignment, size_t sizeInBytes) {
-    Assert(IS_POW2(alignment));
+    Assert(Meta::IsPow2(alignment));
 
 #if     defined(PLATFORM_WINDOWS)
     // Optimistically try mapping precisely the right amount before falling back to the slow method :
@@ -107,7 +115,7 @@ FVirtualMemoryCache::FVirtualMemoryCache()
     : FreePageBlockCount(0)
     , TotalCacheSizeInBytes(0) {}
 //----------------------------------------------------------------------------
-void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first) {
+void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first TRACKINGDATA_ARG_IFP) {
     const size_t alignment = FPlatform::SystemInfo.AllocationGranularity;
     Assert(IS_ALIGNED(alignment, sizeInBytes));
 
@@ -142,8 +150,13 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first) {
             FreePageBlockCount--;
             TotalCacheSizeInBytes -= cachedBlock->SizeInBytes;
 
+#ifdef USE_MEMORY_DOMAINS
+            // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
+            trackingData.Deallocate(cachedBlock->SizeInBytes / alignment, alignment);
+#endif
+
             if (cachedBlock + 1 != last)
-                ::memmove(cachedBlock, cachedBlock + 1, sizeof(FFreePageBlock) * ((last - cachedBlock) + 1));
+                ::memmove(cachedBlock, cachedBlock + 1, sizeof(FFreePageBlock) * (last - cachedBlock - 1));
 
             Assert(IS_ALIGNED(alignment, result));
             return result;
@@ -155,19 +168,22 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first) {
         }
 
         // Are we holding on to much mem? Release it all.
-        ReleaseAll(first);
+        ReleaseAll(first TRACKINGDATA_ARG_FWD);
     }
 
     void* result = FVirtualMemory::AlignedAlloc(alignment, sizeInBytes);
     Assert(IS_ALIGNED(alignment, result));
+    Assert(FVirtualMemory::AllocSizeInBytes(result) == sizeInBytes);
+
     return result;
 }
 //----------------------------------------------------------------------------
-void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* first, size_t cacheBlocksCapacity, size_t maxCacheSizeInBytes) {
+void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* first, size_t cacheBlocksCapacity, size_t maxCacheSizeInBytes TRACKINGDATA_ARG_IFP) {
     if (0 == sizeInBytes)
         sizeInBytes = FVirtualMemory::AllocSizeInBytes(ptr);
 
-    Assert(IS_ALIGNED(FPlatform::SystemInfo.AllocationGranularity, sizeInBytes));
+    const size_t alignment = FPlatform::SystemInfo.AllocationGranularity;
+    Assert(IS_ALIGNED(alignment, sizeInBytes));
 
     if (sizeInBytes > maxCacheSizeInBytes) {
         FVirtualMemory::AlignedFree(ptr, sizeInBytes);
@@ -182,6 +198,11 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
         Assert(TotalCacheSizeInBytes >= first->SizeInBytes);
         TotalCacheSizeInBytes -= first->SizeInBytes;
 
+#ifdef USE_MEMORY_DOMAINS
+        // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
+        trackingData.Deallocate(first->SizeInBytes / alignment, alignment);
+#endif
+
 #ifdef _DEBUG
         first->Ptr = nullptr;
         first->SizeInBytes = 0;
@@ -194,9 +215,14 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
     first[FreePageBlockCount] = { ptr, sizeInBytes };
     TotalCacheSizeInBytes += sizeInBytes;
     FreePageBlockCount++;
+
+#ifdef USE_MEMORY_DOMAINS
+    // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
+    trackingData.Allocate(sizeInBytes / alignment, alignment);
+#endif
 }
 //----------------------------------------------------------------------------
-void FVirtualMemoryCache::ReleaseAll(FFreePageBlock* first) {
+void FVirtualMemoryCache::ReleaseAll(FFreePageBlock* first TRACKINGDATA_ARG_IFP) {
     for (   FFreePageBlock* const last = (first + FreePageBlockCount);
             first != last;
             ++first ) {
@@ -206,6 +232,12 @@ void FVirtualMemoryCache::ReleaseAll(FFreePageBlock* first) {
 
         Assert(TotalCacheSizeInBytes >= first->SizeInBytes);
         TotalCacheSizeInBytes -= first->SizeInBytes;
+
+#ifdef USE_MEMORY_DOMAINS
+        // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
+        const size_t alignment = FPlatform::SystemInfo.AllocationGranularity;
+        trackingData.Deallocate(first->SizeInBytes / alignment, alignment);
+#endif
 
 #ifdef _DEBUG
         first->Ptr = nullptr;
@@ -219,3 +251,5 @@ void FVirtualMemoryCache::ReleaseAll(FFreePageBlock* first) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
+
+#undef TRACKINGDATA_ARG_IFP
