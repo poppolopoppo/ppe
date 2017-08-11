@@ -2,6 +2,7 @@
 
 #include "Alloca.h"
 
+#include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Meta/Singleton.h"
 #include "ThreadLocalHeap.h"
@@ -54,6 +55,11 @@ public:
     FAllocaStorage();
     ~FAllocaStorage();
 
+    bool Contains(const void* ptr) const {
+        return (size_t(ptr) > size_t(_storage) &&
+                size_t(ptr) < size_t(_storage) + _offset);
+    }
+
     void* Push(size_t sizeInBytes);
     void Pop(void* ptr);
     void* Relocate(void* ptr, size_t newSizeInBytes, bool keepData);
@@ -72,7 +78,7 @@ FAllocaStorage::~FAllocaStorage() {
     Assert(0 == _offset); // Check that all used memory has been released
 
     if (_storage)
-        GetThreadLocalHeap().AlignedFree(_storage, MEMORY_DOMAIN_TRACKING_DATA(Alloca));
+        GetThreadLocalHeap().Free<Boundary>(_storage);
 }
 //----------------------------------------------------------------------------
 void* FAllocaStorage::Push(size_t sizeInBytes) {
@@ -84,10 +90,7 @@ void* FAllocaStorage::Push(size_t sizeInBytes) {
         alignedSizeInBytes + PayloadSize + _offset <= Capacity) {
         if (!_storage) {
             Assert(0  == _offset);
-            _storage = GetThreadLocalHeap().AlignedMalloc(
-                Capacity,
-                Boundary,
-                MEMORY_DOMAIN_TRACKING_DATA(Alloca));
+            _storage = GetThreadLocalHeap().Malloc<Boundary>(Capacity);
             Assert(_storage);
         }
 
@@ -121,23 +124,22 @@ void* FAllocaStorage::Push(size_t sizeInBytes) {
         // Fallback on thread local heap allocations if :
         // - asked block size is too large (> MaxBlockSize)
         // - no more space available in _storage (should not happen ...)
-        return GetThreadLocalHeap().AlignedMalloc(
-            sizeInBytes,
-            Boundary,
-            MEMORY_DOMAIN_TRACKING_DATA(Alloca));
+        return GetThreadLocalHeap().Malloc<Boundary>(sizeInBytes);
     }
 }
 //----------------------------------------------------------------------------
 void FAllocaStorage::Pop(void* ptr) {
     Assert(size_t(ptr) > HeaderSize);
 
-    void* const block = reinterpret_cast<u8*>(ptr) - HeaderSize;
-
-    const u32* header = reinterpret_cast<const u32*>(block);
-    const u32 blockSize = *header;
-
-    if (size_t(block) + blockSize == size_t(_storage) + _offset) {
+    if (Contains(ptr)) {
         Assert(_storage);
+
+        void* const block = reinterpret_cast<u8*>(ptr) - HeaderSize;
+        const u32* header = reinterpret_cast<u32*>(block);
+        const u32 blockSize = *header;
+
+        // Can't delete any other block than the last one allocated
+        AssertRelease(size_t(block) + blockSize == size_t(_storage) + _offset);
 
         Assert(blockSize <= _offset);
         Assert(blockSize <= checked_cast<u32>(ROUND_TO_NEXT_16(MaxBlockSize) + PayloadSize));
@@ -161,12 +163,7 @@ void FAllocaStorage::Pop(void* ptr) {
         _offset -= blockSize;
     }
     else {
-        Assert( size_t(block) < size_t(_storage) || // dont delete any other ptr than the last allocated
-                size_t(block) > size_t(_storage) + Capacity);
-
-        GetThreadLocalHeap().AlignedFree(
-            ptr,
-            MEMORY_DOMAIN_TRACKING_DATA(Alloca));
+        GetThreadLocalHeap().Free<Boundary>(ptr);
     }
 }
 //----------------------------------------------------------------------------
@@ -176,13 +173,15 @@ void* FAllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) 
 
     const size_t alignedSizeInBytes = ROUND_TO_NEXT_16(newSizeInBytes);
 
-    void* const block = reinterpret_cast<u8*>(ptr) - HeaderSize;
-
-    u32* header = reinterpret_cast<u32*>(block);
-    u32& blockSize = *header;
-
-    if (size_t(block) + blockSize == size_t(_storage) + _offset) {
+    if (Contains(ptr)) {
         Assert(_storage);
+
+        void* const block = reinterpret_cast<u8*>(ptr) - HeaderSize;
+        u32* const header = reinterpret_cast<u32*>(block);
+        u32 blockSize = *header;
+
+        // Can't delete any other block than the last one allocated
+        AssertRelease(size_t(block) + blockSize == size_t(_storage) + _offset);
 
         Assert(blockSize <= _offset);
         Assert(blockSize <= checked_cast<u32>(ROUND_TO_NEXT_16(MaxBlockSize) + PayloadSize));
@@ -220,10 +219,7 @@ void* FAllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) 
 #endif
         }
         else { // not enough place in the stack local space, fallback to thread local allocation
-            void* newPtr = GetThreadLocalHeap().AlignedMalloc(
-                alignedSizeInBytes,
-                Boundary,
-                MEMORY_DOMAIN_TRACKING_DATA(Alloca));
+            void* newPtr = GetThreadLocalHeap().Malloc<Boundary>(alignedSizeInBytes);
 
             if (keepData) {
                 const size_t copySizeInBytes = Min(alignedSizeInBytes, blockSize);
@@ -238,14 +234,7 @@ void* FAllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) 
         return ptr;
     }
     else {
-        Assert( size_t(block) < size_t(_storage) || // dont delete any other ptr than the last allocated
-                size_t(block) > size_t(_storage) + Capacity);
-
-        return GetThreadLocalHeap().AlignedRealloc(
-            ptr,
-            alignedSizeInBytes,
-            Boundary,
-            MEMORY_DOMAIN_TRACKING_DATA(Alloca) );
+        return GetThreadLocalHeap().Realloc<Boundary>(ptr, alignedSizeInBytes);
     }
 }
 //----------------------------------------------------------------------------
