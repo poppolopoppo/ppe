@@ -12,10 +12,6 @@
 
 #include <mutex>
 
-// TODO: DIA - to support fastlink
-// https://blogs.msdn.microsoft.com/vcblog/2010/01/05/dia-based-stack-walking/
-// https://msdn.microsoft.com/en-us/library/hd8h6f46.aspx
-
 #ifdef PLATFORM_WINDOWS
 #   include "DbghelpWrapper.h"
 #   include <TlHelp32.h>
@@ -295,24 +291,33 @@ size_t FCallstack::Capture(
     return checked_cast<size_t>(rtlDepth);
 }
 //----------------------------------------------------------------------------
+void FCallstack::SetFrames(const TMemoryView<void* const>& frames) {
+    _hash = 0;
+    const size_t n = Min(MaxDepth, frames.size());
+    for (_depth = 0; _depth < n; ++_depth) {
+        if (nullptr == frames[_depth]) break;
+        _frames[_depth] = frames[_depth];
+    }
+}
+//----------------------------------------------------------------------------
 void FCallstack::Start() {
     const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
-	if (dbghelp.Available())
-		InitializeSymbols_(dbghelp.Lock());
+    if (dbghelp.Available())
+        InitializeSymbols_(dbghelp.Lock());
 }
 //----------------------------------------------------------------------------
 void FCallstack::ReloadSymbols() {
     const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
-	if (dbghelp.Available())
-		LoadModules_(dbghelp.Lock());
+    if (dbghelp.Available())
+        LoadModules_(dbghelp.Lock());
 }
 //----------------------------------------------------------------------------
 void FCallstack::Shutdown() {
     const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
-	if (dbghelp.Available()) {
-		HANDLE hProcess = ::GetCurrentProcess();
-		dbghelp.Lock().SymCleanup()(hProcess);
-	}
+    if (dbghelp.Available()) {
+        HANDLE hProcess = ::GetCurrentProcess();
+        dbghelp.Lock().SymCleanup()(hProcess);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -12,7 +12,7 @@ class FDecodedCallstack;
 //----------------------------------------------------------------------------
 class ALIGN(16) FCallstack {
 public:
-    enum { MaxDepth = 46};
+    STATIC_CONST_INTEGRAL(size_t, MaxDepth, 46);
     // 46 * 4 + 4 + 4 = 192 -> align on 16, no overhead (32 bits)
     // 46 * 8 + 8 + 8 = 384 -> align on 16, no overhead (64 bits)
 
@@ -39,6 +39,8 @@ public:
 
     void Decode(FDecodedCallstack* decoded) const;
     static void Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryView<void* const>& frames);
+
+    void SetFrames(const TMemoryView<void* const>& frames);
 
     static void Start();
     static void ReloadSymbols();
