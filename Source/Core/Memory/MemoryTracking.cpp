@@ -21,6 +21,9 @@ FMemoryTrackingData::FMemoryTrackingData(
     _maxBlockCount(0), _maxAllocationCount(0), _maxTotalSizeInBytes(0) {}
 //----------------------------------------------------------------------------
 void FMemoryTrackingData::Allocate(size_t blockCount, size_t strideInBytes) {
+    if (0 == blockCount)
+        return;
+
     _blockCount += blockCount;
     _totalSizeInBytes += blockCount * strideInBytes;
     ++_allocationCount;
@@ -44,6 +47,9 @@ void FMemoryTrackingData::Allocate(size_t blockCount, size_t strideInBytes) {
 }
 //----------------------------------------------------------------------------
 void FMemoryTrackingData::Deallocate(size_t blockCount, size_t strideInBytes) {
+    if (0 == blockCount)
+        return;
+
     Assert(_blockCount >= blockCount);
     Assert(_totalSizeInBytes >= blockCount * strideInBytes);
     Assert(_allocationCount);
@@ -198,7 +204,7 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
         << Repeat<width>(L"-") << eol;
 
     Format(oss, fmt,    L"Tracking Data FName",
-                        L"FBlock", "Max",
+                        L"Block", "Max",
                         L"Alloc", "Max",
                         L"Total", "Max" );
 
