@@ -16,19 +16,18 @@ FXInputWrapper::FXInputWrapper()
 ,   _XInputSetState(nullptr)
 ,   _XInputGetCapabilities(nullptr) {
     static const wchar_t* GXInputDllPossiblePaths[] = {
-		// Should be L"xinput1_4.dll" for SDK 10, L"xinput9_1_0.dll" for SDK 8.1
+        // Should be L"xinput1_4.dll" for SDK 10, L"xinput9_1_0.dll" for SDK 8.1
         XINPUT_DLL_W,
-		// Still fallback to older dll when compiled on SDK 10 but running on older system (API should be binary compatible)
-		L"xinput9_1_0.dll", 
+        // Still fallback to older dll when compiled on SDK 10 but running on older system (API should be binary compatible)
+        L"xinput9_1_0.dll",
     };
 
-	const DWORD libraryFlags = (LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
-	const wchar_t* ModuleFilename = nullptr;
-	for (const wchar_t* filename : GXInputDllPossiblePaths) {
-		ModuleFilename = filename;
-		if (_library = ::LoadLibraryExW(filename, nullptr, libraryFlags))
-			break;
-	}
+    const wchar_t* ModuleFilename = nullptr;
+    for (const wchar_t* filename : GXInputDllPossiblePaths) {
+        ModuleFilename = filename;
+        if (_library = ::LoadLibraryW(filename))
+            break;
+    }
 
     if (_library) {
         _XInputGetState = (FXInputGetState)::GetProcAddress(_library, "XInputGetState");
