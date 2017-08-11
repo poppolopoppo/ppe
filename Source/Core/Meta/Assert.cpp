@@ -80,7 +80,11 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
         failure = (*handler)(msg, file, line);
     }
     else if (FPlatform::IsDebuggerAttached()) {
+#ifdef PLATFORM_WINDOWS // breaking in this frame is much quicker for debugging
+        ::DebugBreak();
+#else
         FPlatform::DebugBreak();
+#endif
     }
     else {
         switch (AssertAbortRetryIgnore_(MakeStringView(L"Assert debug failed !"), msg, file, line)) {
