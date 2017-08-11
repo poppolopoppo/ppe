@@ -8,7 +8,7 @@
 #endif
 
 // Memory domains collapsing (less codegen)
-#if defined(USE_MEMORY_DOMAINS) && !defined(PROFILING_ENABLED) // %_NOCOMMIT%
+#if defined(USE_MEMORY_DOMAINS) && defined(PROFILING_ENABLED) // %_NOCOMMIT%
 #   define COLLAPSE_MEMORY_DOMAINS
 #endif
 
