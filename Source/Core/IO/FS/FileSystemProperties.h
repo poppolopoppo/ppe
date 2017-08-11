@@ -26,6 +26,8 @@ typedef TBasicStringView<char_type> FStringView;
 //----------------------------------------------------------------------------
 inline FileSystem::FStringView Separators() { return MakeStringView(L"/\\"); }
 //----------------------------------------------------------------------------
+size_t WorkingDirectory(char_type *path, size_t capacity);
+//----------------------------------------------------------------------------
 size_t SystemTemporaryDirectory(char_type *path, size_t capacity);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -17,14 +17,29 @@ bool TTokenTraits::IsAllowedChar(wchar_t ch) const {
     return  IsAlnum(ch) || ch == L'_' || ch == L'-' || ch == L':' || ch == L'.';
 }
 //----------------------------------------------------------------------------
+size_t WorkingDirectory(char_type *path, size_t capacity) {
+    Assert(path);
+
+#ifdef PLATFORM_WINDOWS
+    Assert(capacity >= MAX_PATH);
+    return checked_cast<size_t>(::GetCurrentDirectoryW(checked_cast<DWORD>(capacity), path));
+
+#else
+    AssertNotImplemented();
+    return 0;
+
+#endif
+}
+//----------------------------------------------------------------------------
 size_t SystemTemporaryDirectory(char_type *path, size_t capacity) {
     Assert(path);
 
 #ifdef PLATFORM_WINDOWS
     Assert(capacity >= MAX_PATH);
-    return checked_cast<size_t>(GetTempPathW(checked_cast<DWORD>(capacity), path));
+    return checked_cast<size_t>(::GetTempPathW(checked_cast<DWORD>(capacity), path));
 
 #else
+    AssertNotImplemented();
     return 0;
 
 #endif

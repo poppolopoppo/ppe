@@ -203,15 +203,29 @@ void FVirtualFileSystemStartup::Start() {
     POOL_TAG(VirtualFileSystem)::Start();
     FVirtualFileSystem::Create();
     auto& VFS = FVirtualFileSystem::Instance();
-    // current process directory
+    // current process executable directory
     {
         VFS.MountNativePath(L"Process:/", FCurrentProcess::Instance().Directory());
+    }
+    // current process working directory
+    {
+        FileSystem::char_type workingPath[1024];
+        if (!FileSystem::WorkingDirectory(workingPath, lengthof(workingPath)))
+            AssertNotReached();
+
+        VFS.MountNativePath(L"Working:/", workingPath);
     }
     // data directory
     {
         FWString path;
         Format(path, L"{0}/../../Data", FCurrentProcess::Instance().Directory());
         VFS.MountNativePath(MakeStringView(L"Data:/"), path);
+    }
+    // saved directory
+    {
+        FWString path;
+        Format(path, L"{0}/../../Saved", FCurrentProcess::Instance().Directory());
+        VFS.MountNativePath(MakeStringView(L"Saved:/"), path);
     }
     // system temporary path
     {
@@ -239,7 +253,7 @@ void FVirtualFileSystemStartup::Start() {
         AssertRelease(userPath);
         VFS.MountNativePath(L"User:/", userPath);
 #if defined(PLATFORM_WINDOWS)
-        free(userPath); // must free() the string allocated by _wdupenv_s()
+        ::free(userPath); // must free() the string allocated by _wdupenv_s()
 #endif
     }
 }
