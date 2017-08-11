@@ -22,8 +22,6 @@ namespace Core {
 #   error "no support"
 #endif
 //----------------------------------------------------------------------------
-#define IS_POW2(v) ((v) >= 2) && (((v) & ((v) - 1)) == 0)
-//----------------------------------------------------------------------------
 #define IS_ALIGNED(_BOUNDARY, _POINTER) (0 == (size_t(_POINTER) % (_BOUNDARY)) )
 //----------------------------------------------------------------------------
 #define ALIGN(_BOUNDARY) __declspec(align(_BOUNDARY))
@@ -46,17 +44,15 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// By default std allocations are already aligned on size_t (pointer size).
+// By default std allocations are already aligned on intptr_t (pointer size).
 // Aligned allocations induce overhead so this will prevent us from calling it systematically.
 template <size_t _Alignment>
 struct TIsNaturalyAligned {
     // Power of 2 assertion guarantees <= test correctness :
     // if aligned on 8, also aligned on 4, 2 & 1
     static_assert(_Alignment && 0 == (_Alignment & (_Alignment - 1)), "_Alignment must be a power of 2");
-    enum { value = (_Alignment <= sizeof(ptrdiff_t)) };
+    enum { value = (_Alignment <= sizeof(intptr_t)) };
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 struct TIsCacheLineAligned {
@@ -75,7 +71,7 @@ struct TAlignmentOfIFP {
 //----------------------------------------------------------------------------
 template <typename T>
 struct TAlignmentOfIFP<T, false> {
-    enum : size_t { value = sizeof(size_t) };
+    enum : size_t { value = alignof(intptr_t) };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

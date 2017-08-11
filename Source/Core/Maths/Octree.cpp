@@ -175,7 +175,7 @@ FBasicOctree::FBasicOctree(const float3& center, float voxelSize, int dimension)
     , _root(nullptr) {
     Assert(_voxelSize > 0);
     Assert(_dimension > 1);
-    Assert(IS_POW2(_dimension));
+    Assert(Meta::IsPow2(_dimension));
 }
 //----------------------------------------------------------------------------
 FBasicOctree::~FBasicOctree()

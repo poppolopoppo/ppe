@@ -135,7 +135,7 @@ bool FMemoryViewWriter::WriteAligned(const void* storage, std::streamsize sizeIn
 }
 //----------------------------------------------------------------------------
 bool FMemoryViewWriter::WriteAlignmentPadding(size_t boundary, u8 padvalue /* = 0 */) {
-    Assert(boundary > 0 && IS_POW2(boundary));
+    Assert(boundary > 0 && Meta::IsPow2(boundary));
     const size_t offset = (_offsetO + boundary - 1) & ~(boundary - 1);
     if (offset > _rawData.SizeInBytes()) {
         AssertNotReached();

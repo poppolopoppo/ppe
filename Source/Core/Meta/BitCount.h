@@ -76,6 +76,10 @@ inline constexpr u64 FloorLog2_Slow(u64 value) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+inline constexpr size_t IsPow2(size_t v) {
+    return ((v) >= 2) && (((v) & ((v)-1)) == 0);
+}
+//----------------------------------------------------------------------------
 #if defined(CPP_VISUALSTUDIO)
 inline size_t FloorLog2(size_t value) {
     unsigned long log2;
@@ -104,7 +108,7 @@ inline constexpr u64 FloorLog2(u64 value) {
 #endif
 //----------------------------------------------------------------------------
 inline size_t CeilLog2(size_t value) {
-    return (IS_POW2(value) ? 0 : 1) + FloorLog2(value);
+    return (IsPow2(value) ? 0 : 1) + FloorLog2(value);
 }
 //----------------------------------------------------------------------------
 inline size_t HighestBitSet(size_t value) {

@@ -306,7 +306,7 @@ bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::CheckInvariants() 
     STATIC_ASSERT(MaxLoadFactor < 100);
     STATIC_ASSERT(sizeof(value_type) >= sizeof(EBucketState));
 #ifndef NDEBUG
-    if (0 != capacity() && false == IS_POW2(capacity()))
+    if (0 != capacity() && false == Meta::IsPow2(capacity()))
         return false;
     if (nullptr == _data.StatesAndBuckets && (size() || capacity()))
         return false;
@@ -515,7 +515,7 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindOrAllocateBuck
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::RelocateRehash_(size_type newCapacity) {
-    Assert(newCapacity > 0 && IS_POW2(newCapacity));
+    Assert(newCapacity > 0 && Meta::IsPow2(newCapacity));
     Assert(_data.Size <= newCapacity);
 
     const FData_ oldData = _data;
@@ -533,7 +533,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::RelocateRehash_(si
 
     if (oldData.Size) {
         Assert(oldData.StatesAndBuckets);
-        Assert(oldCapacity > 0 && IS_POW2(oldCapacity));
+        Assert(oldCapacity > 0 && Meta::IsPow2(oldCapacity));
         const pointer newBuckets = _data.GetBuckets();
         const_pointer oldBuckets = oldData.GetBuckets();
 

@@ -290,7 +290,7 @@ inline size_t TokenSlotHash(const TBasicStringView<_Char>& content, Meta::TInteg
 template <typename _Char, ECase _Sensitive, typename _Allocator>
 template <typename _TokenTraits>
 size_t TTokenSet<_Char, _Sensitive, _Allocator>::SlotHash(const TBasicStringView<_Char>& content) {
-    static_assert(IS_POW2(SlotCount), "SlotCount must be a power of 2");
+    static_assert(Meta::IsPow2(SlotCount), "SlotCount must be a power of 2");
     return (details::TokenSlotHash(content, Meta::TIntegralConstant<ECase, _Sensitive>{}) & SlotMask);
 }
 //----------------------------------------------------------------------------
