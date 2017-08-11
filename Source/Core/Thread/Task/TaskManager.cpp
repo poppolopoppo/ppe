@@ -391,6 +391,8 @@ void STDCALL FWorkerContext_::WorkerEntryPoint_(void* pArg) {
         Instance().ReleaseFiberIFP();
         Instance().ResumeFiberIFP();
 
+        malloc_release_pending_blocks();
+
 #if WITH_CORE_NONBLOCKING_TASKPRIORITYQUEUE
         while (not impl.Queue().Consume(&task))
             std::this_thread::yield();
