@@ -15,6 +15,8 @@ public:
     static CORE_API void* AlignedMalloc(size_t size, size_t alignment);
     static CORE_API void  AlignedFree(void* ptr);
     static CORE_API void* AlignedRealloc(void* ptr, size_t size, size_t alignment);
+
+    static CORE_API void  ReleasePendingBlocks();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
