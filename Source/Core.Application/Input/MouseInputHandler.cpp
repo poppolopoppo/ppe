@@ -69,6 +69,19 @@ void FMouseInputHandler::UpdateAfterDispatch(Graphics::FBasicWindow *wnd) {
     AssertIsMainThread();
     UNUSED(wnd);
 
+    _state._relativeX.Update();
+    _state._relativeY.Update();
+
+    if (_state._prevSmoothRelativeX.has_value()) {
+        Assert(_state._prevSmoothRelativeY.has_value());
+
+        _state._smoothDeltaRelativeX = _state.SmoothRelativeX() - _state._prevSmoothRelativeX;
+        _state._smoothDeltaRelativeY = _state.SmoothRelativeY() - _state._prevSmoothRelativeY;
+    }
+
+    _state._prevSmoothRelativeX = _state.SmoothDeltaRelativeX();
+    _state._prevSmoothRelativeY = _state.SmoothDeltaRelativeY();
+
     for (EMouseButton btn : _state._buttonsUp.MakeView()) {
 #ifdef WITH_MOUSESTATE_VERBOSE
         LOG(Info, L"[Mouse] button {0} up", MouseButtonToCStr(btn));
@@ -91,27 +104,27 @@ Graphics::MessageResult FMouseInputHandler::OnMouseMove_(Graphics::IWindowMessag
     UNUSED(wparam);
 
     FMouseInputHandler *const mouse = checked_cast<FMouseInputHandler *>(handler);
-	{
-		const int oldClientX = mouse->_state._clientX;
-		const int oldClientY = mouse->_state._clientY;
+    {
+        const int oldClientX = mouse->_state._clientX;
+        const int oldClientY = mouse->_state._clientY;
 
-		mouse->_state._clientX = checked_cast<int>(LOWORD(lparam));
-		mouse->_state._clientY = checked_cast<int>(HIWORD(lparam));
+        mouse->_state._clientX = checked_cast<int>(LOWORD(lparam));
+        mouse->_state._clientY = checked_cast<int>(HIWORD(lparam));
 
-		mouse->_state._deltaClientX = (mouse->_state._clientX - oldClientX);
-		mouse->_state._deltaClientY = (mouse->_state._clientY - oldClientY);
-	}
-	{
-		const float oldRelativeX = mouse->_state._relativeX;
-		const float oldRelativeY = mouse->_state._relativeY;
+        mouse->_state._deltaClientX = (mouse->_state._clientX - oldClientX);
+        mouse->_state._deltaClientY = (mouse->_state._clientY - oldClientY);
+    }
+    {
+        const float oldRelativeX = mouse->_state._relativeX.Raw();
+        const float oldRelativeY = mouse->_state._relativeY.Raw();
 
-		mouse->_state._relativeX = float(mouse->_state._clientX) / wnd->Width();
-		mouse->_state._relativeY = float(mouse->_state._clientY) / wnd->Height();
+        mouse->_state._relativeX.Set(float(mouse->_state._clientX) / wnd->Width());
+        mouse->_state._relativeY.Set(float(mouse->_state._clientY) / wnd->Height());
 
-		mouse->_state._deltaRelativeX = (mouse->_state._relativeX - oldRelativeX);
-		mouse->_state._deltaRelativeY = (mouse->_state._relativeY - oldRelativeY);
-	}
-	
+        mouse->_state._deltaRelativeX = (mouse->_state._relativeX.Raw() - oldRelativeX);
+        mouse->_state._deltaRelativeY = (mouse->_state._relativeY.Raw() - oldRelativeY);
+    }
+
     return 0;
 }
 //----------------------------------------------------------------------------

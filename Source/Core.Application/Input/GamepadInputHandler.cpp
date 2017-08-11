@@ -74,15 +74,15 @@ static void GamepadFilterTrigger_(FGamepadState::FSmoothAnalog* x, u8 axis, int 
 //----------------------------------------------------------------------------
 #ifdef PLATFORM_WINDOWS
 static void GamepadRumble_(const FGamepadState* pGamepad, ITaskContext& ctx) {
-	Assert(pGamepad);
-	UNUSED(ctx);
+    Assert(pGamepad);
+    UNUSED(ctx);
 
-	::XINPUT_VIBRATION vibration;
-	vibration.wLeftMotorSpeed = Float01_to_UShort065535(pGamepad->LeftRumble());
-	vibration.wRightMotorSpeed = Float01_to_UShort065535(pGamepad->RightRumble());
+    ::XINPUT_VIBRATION vibration;
+    vibration.wLeftMotorSpeed = Float01_to_UShort065535(pGamepad->LeftRumble());
+    vibration.wRightMotorSpeed = Float01_to_UShort065535(pGamepad->RightRumble());
 
-	const ::DWORD dwUserIndex = checked_cast<::DWORD>(pGamepad->Index());
-	FXInputWrapper::Instance().Lock().XInputSetState()(dwUserIndex, &vibration);
+    const ::DWORD dwUserIndex = checked_cast<::DWORD>(pGamepad->Index());
+    FXInputWrapper::Instance().Lock().XInputSetState()(dwUserIndex, &vibration);
 }
 #endif
 //----------------------------------------------------------------------------
@@ -91,8 +91,8 @@ static void GamepadRumble_(const FGamepadState* pGamepad, ITaskContext& ctx) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FGamepadInputHandler::FGamepadInputHandler() {
-	forrange(i, 0, _state.Gamepads().size())
-		_state.Gamepads()[i]._index = i;
+    forrange(i, 0, _state.Gamepads().size())
+        _state.Gamepads()[i]._index = i;
 }
 //----------------------------------------------------------------------------
 FGamepadInputHandler::~FGamepadInputHandler() {}
@@ -209,17 +209,21 @@ void FGamepadInputHandler::UpdateAfterDispatch(Graphics::FBasicWindow *wnd) {
 }
 //----------------------------------------------------------------------------
 void FGamepadInputHandler::Rumble(size_t index, float left, float right) {
-	if (FXInputWrapper::Instance().Available()) {
-		FGamepadState& gamepad = _state.Gamepads()[index];
-		Assert(gamepad.IsConnected());
+    if (FXInputWrapper::Instance().Available()) {
+        FGamepadState& gamepad = _state.Gamepads()[index];
+        Assert(gamepad.IsConnected());
 
-		if (gamepad._leftRumble != left || gamepad._rightRumble != right) {
-			gamepad._leftRumble = left;
-			gamepad._rightRumble = right;
+        // snap to quantized values :
+        left = UShort065535_to_Float01(Float01_to_UShort065535(left));
+        right = UShort065535_to_Float01(Float01_to_UShort065535(right));
 
-			AsyncLowestPriority(TDelegate(&GamepadRumble_, const_cast<const FGamepadState*>(&gamepad)));
-		}
-	}
+        if (gamepad._leftRumble != left || gamepad._rightRumble != right) {
+            gamepad._leftRumble = left;
+            gamepad._rightRumble = right;
+
+            AsyncLowestPriority(TDelegate(&GamepadRumble_, const_cast<const FGamepadState*>(&gamepad)));
+        }
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

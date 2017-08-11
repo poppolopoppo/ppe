@@ -29,7 +29,7 @@ public:
     virtual void UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) override final;
     virtual void UpdateAfterDispatch(Graphics::FBasicWindow *wnd) override final;
 
-	void Rumble(size_t index, float left, float right);
+    void Rumble(size_t index, float left, float right);
 
 private:
     FMultiGamepadState _state;

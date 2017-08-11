@@ -6,6 +6,7 @@
 #include "Core.Application/Input/GamepadButton.h"
 
 #include "Core/Maths/ScalarVector.h"
+#include "Core/Meta/Optional.h"
 
 namespace Core {
 namespace Application {
@@ -19,21 +20,21 @@ public:
     class FSmoothAnalog {
     public:
         static constexpr float DefaultSmoothing = 0.9f;
-        FSmoothAnalog() : _raw(0), _smoothed(0), _smoothing(DefaultSmoothing){}
+        FSmoothAnalog() : _raw(0), _smoothing(DefaultSmoothing){}
         float Raw() const { return _raw; }
-        float Smoothed() const { return _smoothed; }
+        float Smoothed() const { return (_smoothed.has_value() ? *_smoothed : _raw); }
         float Smoothing() const { return _smoothing; }
         void SetSmoothing(float f) { _smoothing = Max(0.1f, Min(f, 1.f)); }
-        void Clear() { _raw = _smoothed = 0; }
+        void Clear() { _raw = 0; _smoothed.reset(); }
         void Set(float raw) {
             _raw = raw;
-            _smoothed = Lerp(_smoothed, _raw, _smoothing);
-            if (Abs(_smoothed) < 1e-3f)
+            _smoothed = Lerp(Smoothed(), _raw, _smoothing);
+            if (Abs(*_smoothed) < 1e-3f)
                 _smoothed = 0;
         }
     private:
         float _raw;
-        float _smoothed;
+        Meta::TOptional<float> _smoothed;
         float _smoothing;
     };
 
@@ -41,12 +42,12 @@ public:
         : _connected(false)
         , _onConnect(false)
         , _onDisconnect(false)
-		, _leftRumble(0)
-		, _rightRumble(0)
-		, _index(size_t(-1))
-	{}
+        , _leftRumble(0)
+        , _rightRumble(0)
+        , _index(size_t(-1))
+    {}
 
-	size_t Index() const { return _index; }
+    size_t Index() const { return _index; }
 
     bool IsConnected() const { return _connected; }
 
@@ -79,12 +80,12 @@ public:
     bool IsButtonPressed(EGamepadButton button) const { return _buttonsPressed.Contains(button); }
     bool IsButtonUp(EGamepadButton button) const { return _buttonsUp.Contains(button); }
 
-	bool HasButtonDown() const { return (_buttonsDown.size() > 0); }
-	bool HasButtonPressed() const { return (_buttonsPressed.size() > 0); }
-	bool HasButtonUp() const { return (_buttonsUp.size() > 0); }
+    bool HasButtonDown() const { return (not _buttonsDown.empty()); }
+    bool HasButtonPressed() const { return (not _buttonsPressed.empty()); }
+    bool HasButtonUp() const { return (not _buttonsUp.empty()); }
 
-	float LeftRumble() const { return _leftRumble; }
-	float RightRumble() const { return _rightRumble; }
+    float LeftRumble() const { return _leftRumble; }
+    float RightRumble() const { return _rightRumble; }
 
     void Clear() {
         _connected = false;
@@ -123,10 +124,10 @@ private:
     FGamepadButtonState _buttonsPressed;
     FGamepadButtonState _buttonsUp;
 
-	float _leftRumble;
-	float _rightRumble;
+    float _leftRumble;
+    float _rightRumble;
 
-	size_t _index;
+    size_t _index;
 };
 //----------------------------------------------------------------------------
 class FMultiGamepadState {
