@@ -9,7 +9,7 @@
 #endif
 
 namespace Core {
-class FMemoryPoolBase;
+class IMemoryPool;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -19,8 +19,8 @@ class FMemoryPoolBase;
         public: \
             static const char* Name() { return (_NameStr); } \
             \
-            static void Register(FMemoryPoolBase* ppool); \
-            static void Unregister(FMemoryPoolBase* ppool); \
+            static void Register(IMemoryPool* ppool); \
+            static void Unregister(IMemoryPool* ppool); \
             \
             static void Start(); \
             static void Shutdown(); \

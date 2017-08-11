@@ -2,13 +2,10 @@
 
 #include "Core/Core.h"
 
-#include "Core/Allocator/Allocation.h"
 #include "Core/Container/IntrusiveList.h"
-#include "Core/Meta/ThreadResource.h"
 #include "Core/Thread/AtomicSpinLock.h"
 
-// Uncomment to disable pool allocation (useful for memory debugging) :
-//#define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC //%__NOCOMMIT%
+#include <mutex>
 
 namespace Core {
 class FMemoryTrackingData;
@@ -20,7 +17,7 @@ class FMemoryTrackingData;
 //----------------------------------------------------------------------------
 ALIGN(16) class FMemoryPoolChunk {
 public:
-    friend class FMemoryPoolBase;
+    friend class FMemoryPool;
 
     struct FBlock { FBlock *Next; };
 
@@ -71,18 +68,34 @@ STATIC_ASSERT(IS_ALIGNED(16, sizeof(FMemoryPoolChunk)));
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMemoryPoolBase {
+class IMemoryPool {
 public:
-    friend class FMemoryPoolBaseList;
+    virtual ~IMemoryPool() {
+        Assert(nullptr == _node.Next);
+        Assert(nullptr == _node.Prev);
+    }
 
-    FMemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t maxChunkSize);
-    virtual ~FMemoryPoolBase();
+    virtual void Clear_AssertCompletelyFree() = 0;
+    virtual void Clear_IgnoreLeaks() = 0;
+    virtual void Clear_UnusedMemory() = 0;
 
-    FMemoryPoolBase(FMemoryPoolBase&&) = delete;
-    FMemoryPoolBase& operator =(FMemoryPoolBase&&) = delete;
+    const TIntrusiveListNode<IMemoryPool>& Node() const { return _node; }
 
-    FMemoryPoolBase(const FMemoryPoolBase&) = delete;
-    FMemoryPoolBase& operator =(const FMemoryPoolBase&) = delete;
+private:
+    friend class FMemoryPoolList;
+    TIntrusiveListNode<IMemoryPool> _node;
+};
+//----------------------------------------------------------------------------
+class FMemoryPool : public IMemoryPool {
+public:
+    FMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize);
+    virtual ~FMemoryPool();
+
+    FMemoryPool(FMemoryPool&&) = delete;
+    FMemoryPool& operator =(FMemoryPool&&) = delete;
+
+    FMemoryPool(const FMemoryPool&) = delete;
+    FMemoryPool& operator =(const FMemoryPool&) = delete;
 
     size_t BlockSize() const { return _blockSize; }
     size_t MinChunkSize() const { return _minChunkSize; }
@@ -90,34 +103,34 @@ public:
     size_t CurrentChunkSize() const { return _currentChunksize; }
     size_t ChunkCount() const { return _chunkCount; }
 
-    FMemoryPoolChunk *Chunks() { return _chunks.Head(); }
-    const FMemoryPoolChunk *Chunks() const { return _chunks.Head(); }
+    void* Allocate(FMemoryTrackingData *trackingData = nullptr);
+    void Deallocate(void *ptr, FMemoryTrackingData *trackingData = nullptr);
 
-    size_t BlockCountPerChunk(size_t chunkSize) const { return (chunkSize - sizeof(FMemoryPoolChunk)) / _blockSize; }
-
-    virtual void Clear_AssertCompletelyFree() = 0;
-    virtual void Clear_IgnoreLeaks() = 0;
-    virtual void Clear_UnusedMemory() = 0;
-
-    const TIntrusiveListNode<FMemoryPoolBase>& Node() const { return _node; }
-
-protected:
-    void GrowChunkSizeIFP();
-    void ResetChunkSize();
-
-    void AddChunk(FMemoryPoolChunk *chunk);
-
-    void *TryAllocate_FailIfNoBlockAvailable();
-    FMemoryPoolChunk *Deallocate_ReturnChunkToRelease(void *ptr);
-
-    FMemoryPoolChunk *ClearOneChunk_AssertCompletelyFree();
-    FMemoryPoolChunk *ClearOneChunk_IgnoreLeaks();
-    FMemoryPoolChunk *ClearOneChunk_UnusedMemory();
+    virtual void Clear_AssertCompletelyFree() override;
+    virtual void Clear_IgnoreLeaks() override;
+    virtual void Clear_UnusedMemory() override;
 
 private:
+    size_t BlockCountPerChunk_(size_t chunkSize) const { return (chunkSize - sizeof(FMemoryPoolChunk)) / _blockSize; }
+
+    void GrowChunkSizeIFP_();
+    void ResetChunkSize_();
+
+    void AddChunk_(FMemoryPoolChunk *chunk);
+
+    void* TryAllocate_FailIfNoBlockAvailable_();
+    FMemoryPoolChunk* Deallocate_ReturnChunkToRelease_(void* ptr);
+
+    FMemoryPoolChunk* ClearOneChunk_AssertCompletelyFree_();
+    FMemoryPoolChunk* ClearOneChunk_IgnoreLeaks_();
+    FMemoryPoolChunk* ClearOneChunk_UnusedMemory_();
+
     void SpareChunk_(FMemoryPoolChunk *chunk);
     FMemoryPoolChunk* ReviveChunk_();
     FMemoryPoolChunk* ReleaseChunk_();
+
+    FMemoryPoolChunk* AllocateChunk_();
+    void DeallocateChunk_(FMemoryPoolChunk* chunk);
 
     typedef INTRUSIVELIST(&FMemoryPoolChunk::_node) list_type;
 
@@ -133,27 +146,126 @@ private:
     const size_t _blockSize;
     const size_t _minChunkSize;
     const size_t _maxChunkSize;
-
-    TIntrusiveListNode<FMemoryPoolBase> _node;
 };
 //----------------------------------------------------------------------------
-class FMemoryPoolBaseList {
+#ifndef WITH_CORE_ASSERT
+using FMemoryPoolThreadLocal = FMemoryPool;
+#else
+class FMemoryPoolThreadLocal : public IMemoryPool, Meta::FThreadResource {
 public:
-    FMemoryPoolBaseList();
-    ~FMemoryPoolBaseList();
+    FMemoryPoolThreadLocal(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
+        : _pool(blockSize, minChunkSize, maxChunkSize) {}
+    virtual ~FMemoryPoolThreadLocal() {}
 
-    FMemoryPoolBaseList(const FMemoryPoolBaseList& ) = delete;
-    FMemoryPoolBaseList& operator =(const FMemoryPoolBaseList& ) = delete;
+    FMemoryPoolThreadLocal(FMemoryPoolThreadLocal&&) = delete;
+    FMemoryPoolThreadLocal& operator =(FMemoryPoolThreadLocal&&) = delete;
 
-    void Insert(FMemoryPoolBase* ppool);
-    void Remove(FMemoryPoolBase* ppool);
+    FMemoryPoolThreadLocal(const FMemoryPoolThreadLocal&) = delete;
+    FMemoryPoolThreadLocal& operator =(const FMemoryPoolThreadLocal&) = delete;
+
+    size_t BlockSize() const { return _pool.BlockSize(); }
+    size_t MinChunkSize() const { return _pool.MinChunkSize(); }
+    size_t MaxChunksize() const { return _pool.MaxChunksize(); }
+    size_t CurrentChunkSize() const { return _pool.CurrentChunkSize(); }
+    size_t ChunkCount() const { return _pool.ChunkCount(); }
+
+    void* Allocate(FMemoryTrackingData *trackingData = nullptr) {
+        THIS_THREADRESOURCE_CHECKACCESS();
+        return _pool.Allocate(trackingData);
+    }
+
+    void Deallocate(void *ptr, FMemoryTrackingData *trackingData = nullptr) {
+        THIS_THREADRESOURCE_CHECKACCESS();
+        _pool.Deallocate(ptr, trackingData);
+    }
+
+    virtual void Clear_AssertCompletelyFree() override {
+        THIS_THREADRESOURCE_CHECKACCESS();
+        _pool.Clear_AssertCompletelyFree();
+    }
+
+    virtual void Clear_IgnoreLeaks() override {
+        THIS_THREADRESOURCE_CHECKACCESS();
+        _pool.Clear_IgnoreLeaks();
+    }
+
+    virtual void Clear_UnusedMemory() override {
+        THIS_THREADRESOURCE_CHECKACCESS();
+        _pool.Clear_UnusedMemory();
+    }
+
+private:
+    FMemoryPool _pool;
+};
+#endif //!WITH_CORE_ASSERT
+//----------------------------------------------------------------------------
+class FMemoryPoolThreadSafe : public IMemoryPool {
+public:
+    FMemoryPoolThreadSafe(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
+        : _pool(blockSize, minChunkSize, maxChunkSize) {}
+    virtual ~FMemoryPoolThreadSafe() {}
+
+    FMemoryPoolThreadSafe(FMemoryPoolThreadSafe&&) = delete;
+    FMemoryPoolThreadSafe& operator =(FMemoryPoolThreadSafe&&) = delete;
+
+    FMemoryPoolThreadSafe(const FMemoryPoolThreadSafe&) = delete;
+    FMemoryPoolThreadSafe& operator =(const FMemoryPoolThreadSafe&) = delete;
+
+    size_t BlockSize() const { return _pool.BlockSize(); }
+    size_t MinChunkSize() const { return _pool.MinChunkSize(); }
+    size_t MaxChunksize() const { return _pool.MaxChunksize(); }
+    size_t CurrentChunkSize() const { return _pool.CurrentChunkSize(); }
+    size_t ChunkCount() const { return _pool.ChunkCount(); }
+
+    void* Allocate(FMemoryTrackingData *trackingData = nullptr) {
+        const std::unique_lock<std::mutex> scopeLock(_barrier);
+        return _pool.Allocate(trackingData);
+    }
+
+    void Deallocate(void *ptr, FMemoryTrackingData *trackingData = nullptr) {
+        const std::unique_lock<std::mutex> scopeLock(_barrier);
+        _pool.Deallocate(ptr, trackingData);
+    }
+
+    virtual void Clear_AssertCompletelyFree() override {
+        const std::unique_lock<std::mutex> scopeLock(_barrier);
+        _pool.Clear_AssertCompletelyFree();
+    }
+
+    virtual void Clear_IgnoreLeaks() override {
+        const std::unique_lock<std::mutex> scopeLock(_barrier);
+        _pool.Clear_IgnoreLeaks();
+    }
+
+    virtual void Clear_UnusedMemory() override {
+        const std::unique_lock<std::mutex> scopeLock(_barrier);
+        _pool.Clear_UnusedMemory();
+    }
+
+private:
+    std::mutex _barrier;
+    FMemoryPool _pool;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class FMemoryPoolList {
+public:
+    FMemoryPoolList();
+    ~FMemoryPoolList();
+
+    FMemoryPoolList(const FMemoryPoolList& ) = delete;
+    FMemoryPoolList& operator =(const FMemoryPoolList& ) = delete;
+
+    void Insert(IMemoryPool* ppool);
+    void Remove(IMemoryPool* ppool);
 
     void ClearAll_AssertCompletelyFree();
     void ClearAll_IgnoreLeaks();
     void ClearAll_UnusedMemory();
 
 private:
-    typedef INTRUSIVELIST(&FMemoryPoolBase::_node) list_type;
+    typedef INTRUSIVELIST(&IMemoryPool::_node) list_type;
 
     FAtomicSpinLock _barrier;
     list_type _pools;
@@ -161,38 +273,4 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <bool _Lock, typename _Allocator = ALLOCATOR(Pool, u64) >
-class TMemoryPool : protected FMemoryPoolBase, private _Allocator, private Meta::TThreadLock<_Lock> {
-public:
-    typedef Meta::TThreadLock<_Lock> threadlock_type;
-    typedef _Allocator allocator_type;
-
-    enum : bool { IsLocked = _Lock };
-
-    TMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize);
-    TMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize, allocator_type&& allocator);
-    TMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize, const allocator_type& allocator);
-    virtual ~TMemoryPool();
-
-    using FMemoryPoolBase::BlockSize;
-    using FMemoryPoolBase::CurrentChunkSize;
-    using FMemoryPoolBase::BlockCountPerChunk;
-    using FMemoryPoolBase::ResetChunkSize;
-
-    void *Allocate(FMemoryTrackingData *trackingData = nullptr);
-    void Deallocate(void *ptr, FMemoryTrackingData *trackingData = nullptr);
-
-    virtual void Clear_AssertCompletelyFree() override final;
-    virtual void Clear_IgnoreLeaks() override final;
-    virtual void Clear_UnusedMemory() override final;
-
-private:
-    FMemoryPoolChunk *AllocateChunk_();
-    void DeallocateChunk_(FMemoryPoolChunk *chunk);
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 } //!namespace Core
-
-#include "Core/Memory/MemoryPool-inl.h"

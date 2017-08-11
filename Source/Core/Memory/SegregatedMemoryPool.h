@@ -21,7 +21,7 @@
 #   define POOL_MIN_CHUNKSIZE (  64ul << 10ul) /*  64k */
 #else
 #   define POOL_MAX_CHUNKSIZE (1024ul << 10ul) /*1024k */
-#   define POOL_MIN_CHUNKSIZE (  16ul << 10ul) /*  16k */
+#   define POOL_MIN_CHUNKSIZE (  16ul << 10ul) /*  64k */
 #endif
 
 #ifdef _DEBUG
@@ -59,11 +59,11 @@ struct TPoolTracking {
     typedef TPoolTracking<T, _ThreadLocal, _Size> self_type;
 
     Core::FMemoryTrackingData TrackingData;
-    char FName[128];
+    char Name[256];
 
     TPoolTracking(const char* tagname, FMemoryTrackingData* parent = nullptr)
-    :   TrackingData(&FName[0], parent) {
-        Format(FName, "{0}<{1},{2}>", tagname, _ThreadLocal, _Size);
+    :   TrackingData(&Name[0], parent) {
+        Format(Name, "{0}<{1},{2}>", tagname, _ThreadLocal, _Size);
         RegisterAdditionalTrackingData(&TrackingData);
     }
 
@@ -78,7 +78,7 @@ struct TPoolTracking {
 //----------------------------------------------------------------------------
 template <  typename _Tag
 ,           size_t _BlockSize
-,           typename _MemoryPool = TMemoryPool<true>
+,           typename _MemoryPool
 ,           template <class > class _AutoSingleton = Meta::TAutoSingleton >
 class TSegregatedMemoryPool :
     private _MemoryPool
@@ -102,7 +102,7 @@ public:
 
 #ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
 private:
-    TPoolTracking<_Tag, (false == memorypool_type::IsLocked), _BlockSize> _poolTracking;
+    TPoolTracking<_Tag, std::is_same<FMemoryPool, _MemoryPool>::value, _BlockSize> _poolTracking;
 public:
     FMemoryTrackingData* TrackingData() { return &_poolTracking.TrackingData; }
 #else
@@ -137,8 +137,8 @@ public:
     enum : size_t { BlockSize = SNAP_SIZE_FOR_POOL_SEGREGATION(T) };
 
     typedef typename std::conditional<_ThreadLocal,
-        TSegregatedMemoryPool<_Tag, BlockSize, TMemoryPool<false, THREAD_LOCAL_ALLOCATOR(Pool, size_t) >, Meta::TThreadLocalAutoSingleton >,
-        TSegregatedMemoryPool<_Tag, BlockSize, TMemoryPool<true , ALLOCATOR(Pool, size_t)              >, Meta::TAutoSingleton >
+        TSegregatedMemoryPool<_Tag, BlockSize, FMemoryPoolThreadLocal, Meta::TThreadLocalAutoSingleton >,
+        TSegregatedMemoryPool<_Tag, BlockSize, FMemoryPoolThreadSafe, Meta::TAutoSingleton >
     >::type     segregatedpool_type;
 
     FORCE_INLINE static void* Allocate() { return segregatedpool_type::Instance().Allocate(TrackingData()); }

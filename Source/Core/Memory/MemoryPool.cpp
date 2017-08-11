@@ -2,10 +2,48 @@
 
 #include "MemoryPool.h"
 
+#include "Allocator/VirtualMemory.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
 
+#include <mutex>
+
+// Uncomment to disable pool allocation (useful for memory debugging) :
+//#define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC //%__NOCOMMIT%
+
 namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+class FMemoryPoolAllocator_ {
+public:
+    static FMemoryPoolAllocator_& Instance() {
+        ONE_TIME_INITIALIZE(FMemoryPoolAllocator_, GInstance, );
+        return GInstance;
+    }
+
+    void* Allocate(size_t sizeInBytes) {
+        const std::unique_lock<std::mutex> scopeLock(_barrier);
+        return VM.Allocate(sizeInBytes);
+    }
+
+    void Free(void* ptr, size_t sizeInBytes) {
+        const std::unique_lock<std::mutex> scopeLock(_barrier);
+        VM.Free(ptr, sizeInBytes);
+    }
+
+private:
+    FMemoryPoolAllocator_() {}
+    FMemoryPoolAllocator_(const FMemoryPoolAllocator_&) = delete;
+    FMemoryPoolAllocator_& operator=(const FMemoryPoolAllocator_&) = delete;
+
+    std::mutex _barrier;
+    VIRTUALMEMORYCACHE(MemoryPool, 32, 16 * 1024 * 1024) VM; // 32 entries caches with max 16 mo
+};
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -63,7 +101,7 @@ void FMemoryPoolChunk::ReleaseBlock(void *ptr, size_t blockSize) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMemoryPoolBase::FMemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
+FMemoryPool::FMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
 :   _chunkCount(0)
 ,   _usedSize(0)
 ,   _totalSize(0)
@@ -83,24 +121,24 @@ FMemoryPoolBase::FMemoryPoolBase(size_t blockSize, size_t minChunkSize, size_t m
         L"[Pool] New pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
         FSizeInBytes{ _currentChunksize },
-        BlockCountPerChunk(_currentChunksize) );
+        BlockCountPerChunk_(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
-FMemoryPoolBase::~FMemoryPoolBase() {
+FMemoryPool::~FMemoryPool() {
+    Clear_AssertCompletelyFree();
+
     Assert(0 == _usedSize);
     Assert(0 == _totalSize);
     Assert(0 == _chunkCount);
-    Assert(nullptr == _node.Next);
-    Assert(nullptr == _node.Prev);
 
     LOG(Info,
         L"[Pool] Delete pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
         FSizeInBytes{ _currentChunksize },
-        BlockCountPerChunk(_currentChunksize) );
+        BlockCountPerChunk_(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
-void FMemoryPoolBase::GrowChunkSizeIFP() {
+void FMemoryPool::GrowChunkSizeIFP_() {
     const size_t nextChunkSize = _currentChunksize * 2;
     if (nextChunkSize <= _maxChunkSize) {
         _currentChunksize = nextChunkSize;
@@ -109,18 +147,18 @@ void FMemoryPoolBase::GrowChunkSizeIFP() {
             L"[Pool] Grow pool with block size = {0}, {3} used pages, {1} = {2} per chunk ({4}/{5})",
             _blockSize,
             FSizeInBytes{ _currentChunksize },
-            BlockCountPerChunk(_currentChunksize),
+            BlockCountPerChunk_(_currentChunksize),
             _chunkCount,
             FSizeInBytes{ _usedSize },
             FSizeInBytes{ _totalSize });
     }
 }
 //----------------------------------------------------------------------------
-void FMemoryPoolBase::ResetChunkSize() {
+void FMemoryPool::ResetChunkSize_() {
     _currentChunksize = _minChunkSize;
 }
 //----------------------------------------------------------------------------
-void FMemoryPoolBase::AddChunk(FMemoryPoolChunk *chunk) {
+void FMemoryPool::AddChunk_(FMemoryPoolChunk *chunk) {
     Assert(chunk);
     Assert(_spares.empty());
 
@@ -130,7 +168,7 @@ void FMemoryPoolBase::AddChunk(FMemoryPoolChunk *chunk) {
     _totalSize += chunk->ChunkSize();
 }
 //----------------------------------------------------------------------------
-void *FMemoryPoolBase::TryAllocate_FailIfNoBlockAvailable() {
+void *FMemoryPool::TryAllocate_FailIfNoBlockAvailable_() {
     FMemoryPoolChunk *chunk = _chunks.Head();
 
     while (chunk) {
@@ -158,7 +196,7 @@ void *FMemoryPoolBase::TryAllocate_FailIfNoBlockAvailable() {
     }
 }
 //----------------------------------------------------------------------------
-FMemoryPoolChunk *FMemoryPoolBase::Deallocate_ReturnChunkToRelease(void *ptr) {
+FMemoryPoolChunk *FMemoryPool::Deallocate_ReturnChunkToRelease_(void *ptr) {
     Assert(false == _chunks.empty());
 
     FMemoryPoolChunk *chunk = _chunks.Head();
@@ -189,7 +227,7 @@ FMemoryPoolChunk *FMemoryPoolBase::Deallocate_ReturnChunkToRelease(void *ptr) {
     return nullptr;
 }
 //----------------------------------------------------------------------------
-FMemoryPoolChunk *FMemoryPoolBase::ClearOneChunk_AssertCompletelyFree() {
+FMemoryPoolChunk *FMemoryPool::ClearOneChunk_AssertCompletelyFree_() {
     FMemoryPoolChunk* const last = _chunks.PopHead();
 
     if (nullptr == last) {
@@ -208,7 +246,7 @@ FMemoryPoolChunk *FMemoryPoolBase::ClearOneChunk_AssertCompletelyFree() {
     }
 }
 //----------------------------------------------------------------------------
-FMemoryPoolChunk *FMemoryPoolBase::ClearOneChunk_IgnoreLeaks() {
+FMemoryPoolChunk *FMemoryPool::ClearOneChunk_IgnoreLeaks_() {
     FMemoryPoolChunk* const last = _chunks.PopHead();
 
     if (nullptr == last) {
@@ -224,14 +262,14 @@ FMemoryPoolChunk *FMemoryPoolBase::ClearOneChunk_IgnoreLeaks() {
     }
 }
 //----------------------------------------------------------------------------
-FMemoryPoolChunk *FMemoryPoolBase::ClearOneChunk_UnusedMemory() {
+FMemoryPoolChunk *FMemoryPool::ClearOneChunk_UnusedMemory_() {
     if (_chunks.Head() && _chunks.Head()->CompletelyFree())
         SpareChunk_(_chunks.Head());
 
     return ReleaseChunk_();
 }
 //----------------------------------------------------------------------------
-void FMemoryPoolBase::SpareChunk_(FMemoryPoolChunk *chunk) {
+void FMemoryPool::SpareChunk_(FMemoryPoolChunk *chunk) {
     Assert(chunk);
     Assert(not _chunks.empty());
 
@@ -244,7 +282,7 @@ void FMemoryPoolBase::SpareChunk_(FMemoryPoolChunk *chunk) {
     });
 }
 //----------------------------------------------------------------------------
-FMemoryPoolChunk *FMemoryPoolBase::ReviveChunk_() {
+FMemoryPoolChunk *FMemoryPool::ReviveChunk_() {
     FMemoryPoolChunk* const revive = _spares.PopTail();
 
     if (nullptr == revive) {
@@ -257,7 +295,7 @@ FMemoryPoolChunk *FMemoryPoolBase::ReviveChunk_() {
     }
 }
 //----------------------------------------------------------------------------
-FMemoryPoolChunk *FMemoryPoolBase::ReleaseChunk_() {
+FMemoryPoolChunk *FMemoryPool::ReleaseChunk_() {
     FMemoryPoolChunk* const release = _spares.PopHead();
 
     if (nullptr == release) {
@@ -275,53 +313,187 @@ FMemoryPoolChunk *FMemoryPoolBase::ReleaseChunk_() {
             L"[Pool] Release chunk with block size = {0}, page size = {4} ({5} blocs), {3} remaining pages, {1} = {2} per chunk ({6:f2}%)",
             _blockSize,
             FSizeInBytes{ _currentChunksize },
-            BlockCountPerChunk(_currentChunksize),
+            BlockCountPerChunk_(_currentChunksize),
             _chunkCount,
             FSizeInBytes{ release->ChunkSize() },
-            BlockCountPerChunk(release->ChunkSize()),
+            BlockCountPerChunk_(release->ChunkSize()),
             (100.0f*_usedSize)/_totalSize );
 
         return release;
     }
 }
 //----------------------------------------------------------------------------
+void* FMemoryPool::Allocate(FMemoryTrackingData *trackingData /* = nullptr */) {
+#ifndef USE_MEMORY_DOMAINS
+    UNUSED(trackingData);
+#endif
+#ifdef WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+    if (trackingData)
+        trackingData->Allocate(1, BlockSize());
+
+    return Core::aligned_malloc(BlockSize(), 16);
+
+#else
+    
+    void *ptr = TryAllocate_FailIfNoBlockAvailable_();
+    if (nullptr == ptr) {
+
+        if (_chunks.Head())
+            GrowChunkSizeIFP_();
+
+        FMemoryPoolChunk *const newChunk = AllocateChunk_();
+        AddChunk_(newChunk);
+
+        ptr = TryAllocate_FailIfNoBlockAvailable_();
+        Assert(ptr);
+
+#ifdef USE_MEMORY_DOMAINS
+        if (trackingData && trackingData->Parent())
+            trackingData->Parent()->Pool_AllocateOneChunk(newChunk->ChunkSize());
+#endif
+    }
+
+#ifdef USE_MEMORY_DOMAINS
+    if (trackingData)
+        trackingData->Pool_AllocateOneBlock(BlockSize());
+#endif
+
+    return ptr;
+
+#endif
+}
+//----------------------------------------------------------------------------
+void FMemoryPool::Deallocate(void *ptr, FMemoryTrackingData *trackingData /* = nullptr */) {
+#ifndef USE_MEMORY_DOMAINS
+    UNUSED(trackingData);
+#endif
+#ifdef WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+    Core::aligned_free(ptr);
+
+    if (trackingData)
+        trackingData->Deallocate(1, BlockSize());
+
+#else
+    Assert(ptr);
+
+#ifdef USE_MEMORY_DOMAINS
+    if (trackingData)
+        trackingData->Pool_DeallocateOneBlock(BlockSize());
+#endif
+
+    FMemoryPoolChunk *chunk;
+    if (nullptr == (chunk = Deallocate_ReturnChunkToRelease_(ptr)))
+        return;
+
+#ifdef USE_MEMORY_DOMAINS
+    if (trackingData && trackingData->Parent())
+        trackingData->Parent()->Pool_DeallocateOneChunk(chunk->ChunkSize());
+#endif
+
+    DeallocateChunk_(chunk);
+
+#endif
+}
+//----------------------------------------------------------------------------
+void FMemoryPool::Clear_AssertCompletelyFree() {
+#ifdef WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+    AssertRelease(nullptr == Chunks());
+
+#else
+    FMemoryPoolChunk *chunk;
+    while (nullptr != (chunk = ClearOneChunk_AssertCompletelyFree_())) {
+        DeallocateChunk_(chunk);
+    }
+
+#endif
+}
+//----------------------------------------------------------------------------
+void FMemoryPool::Clear_IgnoreLeaks() {
+#ifdef WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+    AssertRelease(nullptr == Chunks());
+
+#else
+    FMemoryPoolChunk *chunk;
+    while (nullptr != (chunk = ClearOneChunk_IgnoreLeaks_())) {
+        DeallocateChunk_(chunk);
+    }
+
+#endif
+}
+//----------------------------------------------------------------------------
+void FMemoryPool::Clear_UnusedMemory() {
+#ifdef WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+    AssertRelease(nullptr == Chunks());
+
+#else
+    FMemoryPoolChunk *chunk;
+    while (nullptr != (chunk = ClearOneChunk_UnusedMemory_())) {
+        DeallocateChunk_(chunk);
+    }
+
+#endif
+}
+//----------------------------------------------------------------------------
+FMemoryPoolChunk* FMemoryPool::AllocateChunk_() {
+#ifdef WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+    AssertNotReached();
+#else
+    const size_t currentChunkSize = CurrentChunkSize();
+    const size_t currentBlockCount = BlockCountPerChunk_(currentChunkSize);
+    void* const storage = FMemoryPoolAllocator_::Instance().Allocate(currentChunkSize);
+    return new (storage) FMemoryPoolChunk(currentChunkSize, currentBlockCount);
+#endif
+}
+//----------------------------------------------------------------------------
+void FMemoryPool::DeallocateChunk_(FMemoryPoolChunk *chunk) {
+#ifdef WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+    AssertNotReached();
+
+#else
+    Assert(chunk);
+    const size_t chunkSize = chunk->ChunkSize();
+    chunk->~FMemoryPoolChunk();
+    FMemoryPoolAllocator_::Instance().Free(chunk, chunkSize);
+#endif
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMemoryPoolBaseList::FMemoryPoolBaseList() {}
+FMemoryPoolList::FMemoryPoolList() {}
 //----------------------------------------------------------------------------
-FMemoryPoolBaseList::~FMemoryPoolBaseList() {
+FMemoryPoolList::~FMemoryPoolList() {
     while (nullptr != _pools.Head())
         checked_delete(_pools.Head());
     Assert(_pools.empty());
 }
 //----------------------------------------------------------------------------
-void FMemoryPoolBaseList::Insert(FMemoryPoolBase* ppool) {
+void FMemoryPoolList::Insert(IMemoryPool* ppool) {
     Assert(ppool);
     const FAtomicSpinLock::FScope scopeLock(_barrier);
     _pools.PushFront(ppool);
 }
 //----------------------------------------------------------------------------
-void FMemoryPoolBaseList::Remove(FMemoryPoolBase* ppool) {
+void FMemoryPoolList::Remove(IMemoryPool* ppool) {
     Assert(ppool);
     const FAtomicSpinLock::FScope scopeLock(_barrier);
     _pools.Erase(ppool);
 }
 //----------------------------------------------------------------------------
-void FMemoryPoolBaseList::ClearAll_AssertCompletelyFree() {
+void FMemoryPoolList::ClearAll_AssertCompletelyFree() {
     const FAtomicSpinLock::FScope scopeLock(_barrier);
-    for (FMemoryPoolBase* phead = _pools.Head(); phead; phead = phead->Node().Next )
+    for (IMemoryPool* phead = _pools.Head(); phead; phead = phead->Node().Next )
         phead->Clear_AssertCompletelyFree();
 }
 //----------------------------------------------------------------------------
-void FMemoryPoolBaseList::ClearAll_IgnoreLeaks() {
+void FMemoryPoolList::ClearAll_IgnoreLeaks() {
     const FAtomicSpinLock::FScope scopeLock(_barrier);
-    for (FMemoryPoolBase* phead = _pools.Head(); phead; phead = phead->Node().Next )
+    for (IMemoryPool* phead = _pools.Head(); phead; phead = phead->Node().Next )
         phead->Clear_IgnoreLeaks();
 }
 //----------------------------------------------------------------------------
-void FMemoryPoolBaseList::ClearAll_UnusedMemory() {
+void FMemoryPoolList::ClearAll_UnusedMemory() {
     const FAtomicSpinLock::FScope scopeLock(_barrier);
-    for (FMemoryPoolBase* phead = _pools.Head(); phead; phead = phead->Node().Next )
+    for (IMemoryPool* phead = _pools.Head(); phead; phead = phead->Node().Next )
         phead->Clear_UnusedMemory();
 }
 //----------------------------------------------------------------------------
