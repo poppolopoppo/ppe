@@ -11,6 +11,8 @@
 ;#define USE_INLINING_IN_DEBUG
 ; active l'utilistion de /analyze pour une meilleure détéction d'erreur (mais des builds bcp plus lent)
 ;#define USE_MSVC_ANALYZE
+; active le folding des COMDAT en final (exe plus petit, pb pour debugger par contre)
+#define USE_MSVC_IDENTICAL_COMDAT_FOLDING
 
 //------------------------------------------------------------------------------
 // Common MSVC Configuration
@@ -33,7 +35,7 @@
     .Defines =
     {
         'CPP_VISUALSTUDIO',             ; identification du compiler dans les sources (custom)
-        
+
         "_MT", "_DLL",                  ; https://msdn.microsoft.com/fr-fr/library/abx4dbyh.aspx
 
         "STRICT",                       ; https://msdn.microsoft.com/en-us/library/windows/desktop/aa383681(v=vs.85).aspx
@@ -266,6 +268,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .CompilerWithRTTI           = ' /GR'  ; active le support des RTTI std de C++ (RunTime Type Information, nécessaire pour dynamic_cast<> par ex)
 
 #if !USE_CLANG_WINDOWS
+    .CompilerWithoutCache       + ' /FS' ; nécessaire pour lancer plusieurs CL.exe en meme temps sans le cache (https://msdn.microsoft.com/fr-fr/library/dn502518.aspx)
     .CompilerWithCache          + ' /FS' ; nécessaire pour lancer plusieurs CL.exe en meme temps sans le cache (https://msdn.microsoft.com/fr-fr/library/dn502518.aspx)
 #if USE_FASTBUILD_CACHE
     Print( "Using FBuild cache : compiling with /Z7 instead of /Zi" )
@@ -384,13 +387,19 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .Defines            = .ConfigDefines
                         + .ReleaseDefines
 
-    .CompilerOptions    = .FinalOptimisations
+    .CompilerOptions    = .ConfigOptions
                         + .CompilerWithoutRTTI
 
     .LibrarianOptions   = ' /LTCG'          ; link time code generation
 
     .LinkerOptions      = ' /LTCG'          ; link time code generation
                         + ' /OPT:REF'       ; supprime le code non référencé
-                        + ' /OPT:ICF=4'     ; COMDAT folding (4 itérations)
                         + ' /INCREMENTAL:NO'
+
+#if USE_MSVC_IDENTICAL_COMDAT_FOLDING
+    Print( "Using identical comdat folding in final : /OPT:ICF=4" )
+    .LinkerOptions      + ' /OPT:ICF=4'     ; COMDAT folding (4 itérations)
+#else
+    .LinkerOptions      + ' /OPT:NOICF'     ; Désactivé car empeche de debugger
+#endif
 ]
