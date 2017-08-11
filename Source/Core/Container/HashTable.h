@@ -149,7 +149,11 @@ public:
     typedef TIterator_<public_type> iterator;
     typedef TIterator_<Meta::TAddConst<public_type>> const_iterator;
 
-    TBasicHashTable() NOEXCEPT { STATIC_ASSERT(sizeof(*this) == sizeof(u32) * 2 + sizeof(intptr_t)); }
+    TBasicHashTable() NOEXCEPT { 
+#ifndef WITH_CORE_THREADRESOURCE_CHECKS
+        STATIC_ASSERT(sizeof(*this) == sizeof(u32) * 2 + sizeof(intptr_t)); 
+#endif
+    }
     ~TBasicHashTable() { Assert(CheckInvariants()); clear_ReleaseMemory(); }
 
     explicit TBasicHashTable(allocator_type&& alloc) : allocator_type(std::move(alloc)) {}
