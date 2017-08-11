@@ -25,11 +25,11 @@ public:
 };
 //----------------------------------------------------------------------------
 void FThreadLocalHeap::Create() {
-    parent_type::Create("FThreadLocalHeap", false /* not locked since accessed by only one thread */);
+    parent_type::Create();
 }
 //----------------------------------------------------------------------------
 void FThreadLocalHeap::CreateMainThread() {
-    parent_type::Create(FHeap::current_process_t() /* thread local in main thread <=> process heap */);
+    parent_type::Create(FHeap::current_process_t{});
 }
 //----------------------------------------------------------------------------
 } //!namespace
