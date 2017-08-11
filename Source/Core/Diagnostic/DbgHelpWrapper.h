@@ -113,7 +113,7 @@ private:
 
     mutable std::mutex _barrier;
 
-	HMODULE _dbgcore_dll;
+    HMODULE _dbgcore_dll;
     HMODULE _dbghelp_dll;
 
     FSymInitializeW _symInitializeW;

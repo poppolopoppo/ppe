@@ -19,7 +19,7 @@ FDbghelpWrapper::FDbghelpWrapper()
 ,   _symFromAddrW(nullptr)
 ,   _symGetLineFromAddrW64(nullptr)
 ,   _miniDumpWriteDump(nullptr) {
-	_dbghelp_dll = _dbgcore_dll = nullptr;
+    _dbghelp_dll = _dbgcore_dll = nullptr;
 
     static const wchar_t* const GDbgHelpDllPossiblePaths[] = {
         // Windows 10 SDK ships with a dbghelp.dll which handles /DEBUG:fastlink
@@ -31,18 +31,18 @@ FDbghelpWrapper::FDbghelpWrapper()
         // Should fallback to c:\windows\system32\dbghelp.dll
         L"dbghelp.dll",
     };
-	static const wchar_t* const GDbgCoreDllPossiblePaths[] = {
-		// Windows 10 SDK ships with a dbgcore.dll which handles /DEBUG:fastlink
+    static const wchar_t* const GDbgCoreDllPossiblePaths[] = {
+        // Windows 10 SDK ships with a dbgcore.dll which handles /DEBUG:fastlink
 #ifdef ARCH_X86
-		L"C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\\x86\\dbgcore.dll",
+        L"C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\\x86\\dbgcore.dll",
 #else
-		L"C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\\x64\\dbgcore.dll",
+        L"C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\\x64\\dbgcore.dll",
 #endif
-		// Should fallback to c:\windows\system32\dbgcore.dll
-		L"dbgcore.dll",
-	};
+        // Should fallback to c:\windows\system32\dbgcore.dll
+        L"dbgcore.dll",
+    };
 
-	const DWORD libraryFlags = (LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    const DWORD libraryFlags = (LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
     const wchar_t* ModuleFilename = nullptr;
     for (const wchar_t* filename : GDbgHelpDllPossiblePaths) {
         ModuleFilename = filename;
@@ -67,16 +67,16 @@ FDbghelpWrapper::FDbghelpWrapper()
         Assert(_symFromAddrW);
         Assert(_symGetLineFromAddrW64);
 
-		_miniDumpWriteDump = (FMiniDumpWriteDump)::GetProcAddress(_dbghelp_dll, "MiniDumpWriteDump");
+        _miniDumpWriteDump = (FMiniDumpWriteDump)::GetProcAddress(_dbghelp_dll, "MiniDumpWriteDump");
 
-		if (nullptr == _miniDumpWriteDump) {
-			for (const wchar_t* filename : GDbgCoreDllPossiblePaths)
-				if (_dbgcore_dll = ::LoadLibraryExW(filename, nullptr, libraryFlags))
-					break;
+        if (nullptr == _miniDumpWriteDump) {
+            for (const wchar_t* filename : GDbgCoreDllPossiblePaths)
+                if (_dbgcore_dll = ::LoadLibraryExW(filename, nullptr, libraryFlags))
+                    break;
 
-			if (_dbgcore_dll)
-				_miniDumpWriteDump = (FMiniDumpWriteDump)::GetProcAddress(_dbgcore_dll, "MiniDumpWriteDump");
-		}
+            if (_dbgcore_dll)
+                _miniDumpWriteDump = (FMiniDumpWriteDump)::GetProcAddress(_dbgcore_dll, "MiniDumpWriteDump");
+        }
 
         Assert(_miniDumpWriteDump);
 
@@ -96,8 +96,8 @@ FDbghelpWrapper::FDbghelpWrapper()
 FDbghelpWrapper::~FDbghelpWrapper() {
     if (_dbghelp_dll)
         ::FreeLibrary(_dbghelp_dll);
-	if (_dbgcore_dll)
-		::FreeLibrary(_dbgcore_dll);
+    if (_dbgcore_dll)
+        ::FreeLibrary(_dbgcore_dll);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
