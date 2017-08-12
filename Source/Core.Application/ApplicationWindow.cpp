@@ -59,68 +59,68 @@ void FApplicationWindow::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::Update_AfterDispatch() {
-	Graphics::FBasicWindow::Update_AfterDispatch();
+    Graphics::FBasicWindow::Update_AfterDispatch();
 
-	// Gamepad events
-	forrange(i, 0, FMultiGamepadState::MaxConnected) {
-		const FGamepadState& gamepad = _gamepad->State().Gamepads()[i];
+    // Gamepad events
+    forrange(i, 0, FMultiGamepadState::MaxConnected) {
+        const FGamepadState& gamepad = _gamepad->State().Gamepads()[i];
 
-		if (gamepad.OnConnect())
-			_OnGamepadConnect.Invoke(this, gamepad, i);
+        if (gamepad.OnConnect())
+            _OnGamepadConnect.Invoke(this, gamepad, i);
 
-		if (gamepad.HasButtonDown())
-			_OnGamepadButtonUp.Invoke(this, gamepad, i);
-		if (gamepad.HasButtonPressed())
-			_OnGamepadButtonPressed.Invoke(this, gamepad, i);
-		if (gamepad.HasButtonUp())
-			_OnGamepadButtonUp.Invoke(this, gamepad, i);
-		
-		if (gamepad.LeftStickX().Smoothed() != 0 || gamepad.LeftStickY().Smoothed() != 0)
-			_OnGamepadLeftStick.Invoke(this, gamepad, i);
-		if (gamepad.RightStickX().Smoothed() != 0 || gamepad.RightStickY().Smoothed() != 0)
-			_OnGamepadRightStick.Invoke(this, gamepad, i);
+        if (gamepad.HasButtonDown())
+            _OnGamepadButtonUp.Invoke(this, gamepad, i);
+        if (gamepad.HasButtonPressed())
+            _OnGamepadButtonPressed.Invoke(this, gamepad, i);
+        if (gamepad.HasButtonUp())
+            _OnGamepadButtonUp.Invoke(this, gamepad, i);
+        
+        if (gamepad.LeftStickX().Smoothed() != 0 || gamepad.LeftStickY().Smoothed() != 0)
+            _OnGamepadLeftStick.Invoke(this, gamepad, i);
+        if (gamepad.RightStickX().Smoothed() != 0 || gamepad.RightStickY().Smoothed() != 0)
+            _OnGamepadRightStick.Invoke(this, gamepad, i);
 
-		if (gamepad.LeftTrigger().Smoothed() != 0)
-			_OnGamepadLeftTrigger.Invoke(this, gamepad, i);
-		if (gamepad.RightTrigger().Smoothed() != 0)
-			_OnGamepadRightTrigger.Invoke(this, gamepad, i);
+        if (gamepad.LeftTrigger().Smoothed() != 0)
+            _OnGamepadLeftTrigger.Invoke(this, gamepad, i);
+        if (gamepad.RightTrigger().Smoothed() != 0)
+            _OnGamepadRightTrigger.Invoke(this, gamepad, i);
 
-		if (gamepad.OnDisconnect())
-			_OnGamepadDisconnect.Invoke(this, gamepad, i);
-	}
+        if (gamepad.OnDisconnect())
+            _OnGamepadDisconnect.Invoke(this, gamepad, i);
+    }
 
-	// Keyboard events
-	{
-		const FKeyboardState& keyboard = _keyboard->State();
+    // Keyboard events
+    {
+        const FKeyboardState& keyboard = _keyboard->State();
 
-		if (keyboard.HasKeyDown())
-			_OnKeyboardKeyDown.Invoke(this, keyboard);
-		if (keyboard.HasKeyPressed())
-			_OnKeyboardKeyPressed.Invoke(this, keyboard);
-		if (keyboard.HasKeyUp())
-			_OnKeyboardKeyUp.Invoke(this, keyboard);
-	}
+        if (keyboard.HasKeyDown())
+            _OnKeyboardKeyDown.Invoke(this, keyboard);
+        if (keyboard.HasKeyPressed())
+            _OnKeyboardKeyPressed.Invoke(this, keyboard);
+        if (keyboard.HasKeyUp())
+            _OnKeyboardKeyUp.Invoke(this, keyboard);
+    }
 
-	// Mouse events
-	{
-		const FMouseState& mouse = _mouse->State();
+    // Mouse events
+    {
+        const FMouseState& mouse = _mouse->State();
 
-		if (mouse.OnEnter())
-			_OnMouseEnter.Invoke(this, mouse);
-		
-		if (mouse.HasButtonDown())
-			_OnMouseButtonDown.Invoke(this, mouse);
-		if (mouse.HasButtonPressed())
-			_OnMouseButtonPressed.Invoke(this, mouse);
-		if (mouse.HasButtonUp())
-			_OnMouseButtonUp.Invoke(this, mouse);
-		
-		if (mouse.HasMoved())
-			_OnMouseMove.Invoke(this, mouse);
+        if (mouse.OnEnter())
+            _OnMouseEnter.Invoke(this, mouse);
+        
+        if (mouse.HasButtonDown())
+            _OnMouseButtonDown.Invoke(this, mouse);
+        if (mouse.HasButtonPressed())
+            _OnMouseButtonPressed.Invoke(this, mouse);
+        if (mouse.HasButtonUp())
+            _OnMouseButtonUp.Invoke(this, mouse);
+        
+        if (mouse.HasMoved())
+            _OnMouseMove.Invoke(this, mouse);
 
-		if (mouse.OnLeave())
-			_OnMouseLeave.Invoke(this, mouse);
-	}
+        if (mouse.OnLeave())
+            _OnMouseLeave.Invoke(this, mouse);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
