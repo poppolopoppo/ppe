@@ -82,7 +82,13 @@ void FApplicationGraphics::RenderLoop() {
 
     Update_BeforeDispatch();
 
-    while (false == PumpAllMessages_ReturnIfQuit()) {
+    size_t mallocPendingCycles = 0;
+
+    bool quit = false;
+    while (!quit) {
+        if (PumpAllMessages_ReturnIfQuit())
+            quit = true;
+
         FTimespan elapsed;
         bool run = true;
         if (_tickRate > 0)
@@ -91,16 +97,24 @@ void FApplicationGraphics::RenderLoop() {
             clock.Tick();
 
         if (run) {
+            // app loop
             realtime.Tick(clock);
 
             Update_AfterDispatch();
-            Update(realtime);
-            Update_BeforeDispatch();
 
+            Update(realtime);
             Draw(realtime);
             Present();
 
             _deviceEncapsulator->Present();
+
+            Update_BeforeDispatch();
+        }
+        else {
+            // malloc cleanup every 128 cycles
+            mallocPendingCycles++;
+            if (0 == (mallocPendingCycles & 127))
+                malloc_release_pending_blocks();
         }
     }
 
