@@ -90,13 +90,14 @@
 #if ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
 #   define Likely(expr) (__builtin_expect (!!(expr),1) )
 #   define Unlikely(expr) (__builtin_expect (!!(expr),0) )
+#   define Assume(expr) Likely(expr)
 #elif defined(CPP_VISUALSTUDIO)
-#   define Likely(expr) __assume(expr)
-#   define Unlikely(expr) __assume(!(expr))
+#   define Likely(expr) NOOP()
+#   define Unlikely(expr) NOOP()
+#   define Assume(expr) __assume(expr)
 #else
 #   error "unsupported compiler"
 #endif
-#   define Assume(expr) Likely((expr))
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
