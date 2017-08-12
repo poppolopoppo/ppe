@@ -188,7 +188,7 @@ static FRenderTarget *CreateDX11BackBufferRenderTarget_(
         presentationParameters.BackBufferHeight(),
         FSurfaceFormat::FromType(presentationParameters.BackBufferFormat()),
         false );
-    backBufferRenderTarget->SetResourceName(L"BackBufferRenderTarget");
+    ONLY_IF_GRAPHICS_DEVICERESOURCE_NAME(backBufferRenderTarget->SetResourceName(L"BackBufferRenderTarget"));
     backBufferRenderTarget->Freeze();
 
     FDX11RenderTarget *dx11RenderTarget = new FDX11RenderTarget(device->Device(), backBufferRenderTarget, pBackBuffer.Get(), nullptr, pBackBufferRenderTargetView.Get());
@@ -268,7 +268,7 @@ void FDX11DeviceWrapper::Create(FDX11DeviceAPIEncapsulator *device, void *window
             _backBufferRenderTarget->Width(), _backBufferRenderTarget->Height(),
             FSurfaceFormat::FromType(presentationParameters.DepthStencilFormat()),
             false );
-        _backBufferDepthStencil->SetResourceName(L"BackBufferDepthStencil");
+        ONLY_IF_GRAPHICS_DEVICERESOURCE_NAME(_backBufferDepthStencil->SetResourceName(L"BackBufferDepthStencil"));
         _backBufferDepthStencil->Freeze();
         _backBufferDepthStencil->Create(device->Device());
     }
@@ -389,7 +389,8 @@ void FDX11DeviceWrapper::CheckDeviceErrors(const FDX11DeviceAPIEncapsulator *enc
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void DX11ThrowIfFailed(
+PRAGMA_DISABLE_OPTIMIZATION
+NO_INLINE void DX11ThrowIfFailed(
     const IDeviceAPIEncapsulator *encapsulator,
     HRESULT result,
     const FDeviceResource *optionalResource,
@@ -420,6 +421,7 @@ void DX11ThrowIfFailed(
     LOG(Error, L"[D3D11] {0}", formatedMessage);
     CORE_THROW_IT(FDeviceEncapsulatorException(formatedMessage, encapsulator, optionalResource));
 }
+PRAGMA_ENABLE_OPTIMIZATION
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

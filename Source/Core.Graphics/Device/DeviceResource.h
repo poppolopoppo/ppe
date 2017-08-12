@@ -17,6 +17,12 @@
 #   define WITH_GRAPHICS_DEVICERESOURCE_NAME
 #endif
 
+#ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
+#   define ONLY_IF_GRAPHICS_DEVICERESOURCE_NAME(...) __VA_ARGS__
+#else
+#   define ONLY_IF_GRAPHICS_DEVICERESOURCE_NAME(...) NOOP()
+#endif
+
 namespace Core {
 namespace Graphics {
 FWD_REFPTR(DeviceAPIDependantEntity);
@@ -56,10 +62,12 @@ public:
     void OnDeviceLost(FDeviceEncapsulator *device);
     void OnDeviceDestroy(FDeviceEncapsulator *device);
 
+#ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
     FWStringView ResourceName() const;
     void SetResourceName(const wchar_t* name);
     void SetResourceName(const FWStringView& name);
     void SetResourceName(FWString&& name);
+#endif
 
 protected:
     bool Sharable_() const { return bitsharable_type::Get(_flagsAndResourceType); }

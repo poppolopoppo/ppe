@@ -241,7 +241,7 @@ public:
 
         if (VertexDeclaration) {
             ShaderEffect = new Graphics::FShaderEffect(VertexDeclaration);
-            ShaderEffect->SetResourceName(filename.BasenameNoExt().MakeView());
+            ONLY_IF_GRAPHICS_DEVICERESOURCE_NAME(ShaderEffect->SetResourceName(filename.BasenameNoExt().MakeView()));
 
             const Graphics::EShaderProfileType shaderProfile = Graphics::EShaderProfileType::ShaderModel5;
 
