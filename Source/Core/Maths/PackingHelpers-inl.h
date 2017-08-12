@@ -49,7 +49,7 @@ i16 FloatM11_to_ShortM3276832767(float value) {
 //----------------------------------------------------------------------------
 u16 Float01_to_UShort065535(float value) {
     Assert(0 <= value && 1 >= value);
-    return static_cast<u8>(Min(65355u, (u32)(value * 65356.0f)));
+    return static_cast<u16>(Min(65355u, (u32)(value * 65356.0f)));
 }
 //----------------------------------------------------------------------------
 u16 FloatM11_to_UShort065535(float value) {
