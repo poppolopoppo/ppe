@@ -125,6 +125,10 @@
 #   define CORE_THROW_SPECIFIER(_Type)
 #endif
 //----------------------------------------------------------------------------
+#ifndef _HAS_CXX17
+#   define _HAS_CXX17 0
+#endif
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if     defined(STATIC_LINK)
@@ -163,6 +167,9 @@
 #   define PRAGMA_INITSEG_LIB \
     __pragma(warning(disable: 4073)) \
     __pragma(init_seg(lib))
+#   define PRAGMA_INITSEG_COMPILER \
+    __pragma(warning(disable: 4074)) \
+    __pragma(init_seg(compiler))
 #else
 #   error "need to implement pragma initseg lib !"
 #endif
