@@ -57,7 +57,7 @@ public:
     template <typename T>
     friend class TGenericVertexSubPart;
 
-    typedef MEMORYSTREAM_THREAD_LOCAL(GenericMesh) FVertexStream;
+    typedef MEMORYSTREAM(GenericMesh) FVertexStream;
 
     FGenericVertexData(FGenericMesh* owner, const Graphics::FVertexSemantic& semantic, size_t index, Graphics::EValueType type);
     ~FGenericVertexData();
@@ -107,7 +107,7 @@ public:
     friend class TGenericVertexSubPart;
     friend FGenericVertexData;
 
-    typedef MEMORYSTREAM_THREAD_LOCAL(GenericMesh) FIndexStream;
+    typedef MEMORYSTREAM(GenericMesh) FIndexStream;
 
     FGenericMesh();
     ~FGenericMesh();
