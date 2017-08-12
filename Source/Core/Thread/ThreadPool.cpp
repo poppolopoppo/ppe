@@ -37,7 +37,7 @@ static size_t IOWorkerCount_() {
 }
 //----------------------------------------------------------------------------
 static size_t LowestPriorityWorkerCount_() {
-	return 1;
+    return 1;
 }
 //----------------------------------------------------------------------------
 static constexpr size_t GlobalWorkerThreadAffinities[] = {
@@ -49,7 +49,7 @@ static constexpr size_t IOWorkerThreadAffinities[] = {
 };
 //----------------------------------------------------------------------------
 static constexpr size_t LowestPriorityWorkerThreadAffinities[] = {
-	0xFFFFFFFF - 1 // all cores except first
+    0xFF - 1 // all cores except first
 };
 //----------------------------------------------------------------------------
 } //!namespace
@@ -100,22 +100,22 @@ void AsyncIO(const FTaskDelegate& task, ETaskPriority priority /* = ETaskPriorit
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FLowestPriorityThreadPool::Create() {
-	const size_t count = LowestPriorityWorkerCount_();
-	parent_type::Create("LowestPriorityThreadPool", CORE_THREADTAG_LOWEST_PRIORITY, count, EThreadPriority::Lowest);
-	parent_type::Instance().Start(ThreadAffinities().CutBefore(count));
+    const size_t count = LowestPriorityWorkerCount_();
+    parent_type::Create("LowestPriorityThreadPool", CORE_THREADTAG_LOWEST_PRIORITY, count, EThreadPriority::Lowest);
+    parent_type::Instance().Start(ThreadAffinities().CutBefore(count));
 }
 //----------------------------------------------------------------------------
 void FLowestPriorityThreadPool::Destroy() {
-	parent_type::Instance().Shutdown();
-	parent_type::Destroy();
+    parent_type::Instance().Shutdown();
+    parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
 TMemoryView<const size_t> FLowestPriorityThreadPool::ThreadAffinities() {
-	return MakeView(LowestPriorityWorkerThreadAffinities);
+    return MakeView(LowestPriorityWorkerThreadAffinities);
 }
 //----------------------------------------------------------------------------
 void AsyncLowestPriority(const FTaskDelegate& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
-	FLowestPriorityThreadPool::Instance().Run(task, priority);
+    FLowestPriorityThreadPool::Instance().Run(task, priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -123,11 +123,11 @@ void AsyncLowestPriority(const FTaskDelegate& task, ETaskPriority priority /* = 
 void FThreadPoolStartup::Start() {
     FGlobalThreadPool::Create();
     FIOThreadPool::Create();
-	FLowestPriorityThreadPool::Create();
+    FLowestPriorityThreadPool::Create();
 }
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::Shutdown() {
-	FLowestPriorityThreadPool::Destroy();
+    FLowestPriorityThreadPool::Destroy();
     FIOThreadPool::Destroy();
     FGlobalThreadPool::Destroy();
 }

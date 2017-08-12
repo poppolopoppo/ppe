@@ -5,9 +5,9 @@
 #include <thread>
 
 // macro enable extension outside Core::
-#define CORE_THREADTAG_MAIN				0
-#define CORE_THREADTAG_WORKER			1
-#define CORE_THREADTAG_IO				2
+#define CORE_THREADTAG_MAIN                0
+#define CORE_THREADTAG_WORKER            1
+#define CORE_THREADTAG_IO                2
 #define CORE_THREADTAG_LOWEST_PRIORITY  3
 
 namespace Core {
@@ -63,7 +63,7 @@ inline bool IsInWorkerThread() {
 }
 //----------------------------------------------------------------------------
 inline bool IsInLowestPriorityThread() {
-	return (CORE_THREADTAG_WORKER == CurrentThreadContext().Tag());
+    return (CORE_THREADTAG_WORKER == CurrentThreadContext().Tag());
 }
 //----------------------------------------------------------------------------
 #define AssertIsMainThread() Assert(Core::IsInMainThread())

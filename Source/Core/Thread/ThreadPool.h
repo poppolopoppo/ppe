@@ -51,17 +51,17 @@ void AsyncIO(const FTaskDelegate& task, ETaskPriority priority = ETaskPriority::
 //----------------------------------------------------------------------------
 class FLowestPriorityThreadPool : Meta::TSingleton<FTaskManager, FLowestPriorityThreadPool> {
 public:
-	typedef Meta::TSingleton<FTaskManager, FLowestPriorityThreadPool> parent_type;
+    typedef Meta::TSingleton<FTaskManager, FLowestPriorityThreadPool> parent_type;
 
-	using parent_type::Instance;
+    using parent_type::Instance;
 #ifdef WITH_CORE_ASSERT
-	using parent_type::HasInstance;
+    using parent_type::HasInstance;
 #endif
 
-	static void Create();
-	static void Destroy();
+    static void Create();
+    static void Destroy();
 
-	static TMemoryView<const size_t> ThreadAffinities();
+    static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
 void AsyncLowestPriority(const FTaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
