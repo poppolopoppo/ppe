@@ -414,7 +414,7 @@ FRobotApp::FRobotApp()
         0,
         Graphics::EPresentInterval::Default ),
     Graphics::EDeviceAPI::DirectX11,
-    true ) {
+    Timespan_120hz() ) {
 
     Application::FApplicationConsole::RedirectIOToConsole();
 

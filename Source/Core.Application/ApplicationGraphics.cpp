@@ -15,11 +15,11 @@ FApplicationGraphics::FApplicationGraphics(
     int left, int top,
     const Graphics::FPresentationParameters& pp,
     Graphics::EDeviceAPI api,
-    bool fixedTimeStep/* = true */)
+    FTimespan tickRate/* = Timespan_60hz()*/ )
 :   FApplicationWindow(appname, left, top, pp.BackBufferWidth(), pp.BackBufferHeight())
 ,   _pp(pp)
 ,   _api(api)
-,   _fixedTimeStep(fixedTimeStep) {
+,   _tickRate(tickRate) {
 }
 //----------------------------------------------------------------------------
 FApplicationGraphics::~FApplicationGraphics() {
@@ -85,8 +85,8 @@ void FApplicationGraphics::RenderLoop() {
     while (false == PumpAllMessages_ReturnIfQuit()) {
         FTimespan elapsed;
         bool run = true;
-        if (_fixedTimeStep)
-            run = clock.Tick_Target60FPS(elapsed);
+        if (_tickRate > 0)
+            run = clock.Tick_Every(_tickRate, elapsed);
         else
             clock.Tick();
 

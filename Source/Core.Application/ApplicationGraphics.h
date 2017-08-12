@@ -5,6 +5,8 @@
 #include "Core.Application/ApplicationWindow.h"
 #include "Core.Graphics/Device/PresentationParameters.h"
 
+#include "Core/Time/Timepoint.h"
+
 namespace Core {
 class FTimeline;
 namespace Graphics {
@@ -20,15 +22,17 @@ namespace Application {
 class FApplicationGraphics : public FApplicationWindow
 {
 public:
-    FApplicationGraphics(const wchar_t *appname,
-                        int left, int top,
-                        const Graphics::FPresentationParameters& pp,
-                        Graphics::EDeviceAPI api,
-                        bool fixedTimeStep = true );
+    FApplicationGraphics(
+        const wchar_t *appname,
+        int left, int top,
+        const Graphics::FPresentationParameters& pp,
+        Graphics::EDeviceAPI api,
+        FTimespan tickRate = Timespan_60hz() );
     virtual ~FApplicationGraphics();
 
-    bool FixedTimeStep() const { return _fixedTimeStep; }
-    void SetFixedTimeStep(bool value) { _fixedTimeStep = value; }
+    // setting to 0 will make the app tick at maximum speed without timestepping
+    const FTimespan& TickRate() const { return _tickRate; }
+    void SetTickRate(const FTimespan& value) { _tickRate = value; }
 
     const Graphics::FPresentationParameters& PresentationParameters() const { return _pp; }
 
@@ -52,7 +56,7 @@ private:
     Graphics::FPresentationParameters _pp;
     TUniquePtr<Graphics::FDeviceEncapsulator> _deviceEncapsulator;
     Graphics::EDeviceAPI _api;
-    bool _fixedTimeStep;
+    FTimespan _tickRate;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
