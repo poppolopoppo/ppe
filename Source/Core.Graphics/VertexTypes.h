@@ -19,7 +19,7 @@ void VertexTypes_Shutdown();
 void VertexTypes_OnDeviceCreate(FDeviceEncapsulator *device);
 void VertexTypes_OnDeviceDestroy(FDeviceEncapsulator *device);
 //----------------------------------------------------------------------------
-void RegisterVertexType(const FVertexDeclaration* vdecl);
+void RegisterVertexType(FWString&& name, const FVertexDeclaration* vdecl);
 void UnregisterVertexType(const FVertexDeclaration* vdecl);
 const FVertexDeclaration* VertexTypeByName(const FWStringView& name);
 //----------------------------------------------------------------------------

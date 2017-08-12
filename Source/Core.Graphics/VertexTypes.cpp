@@ -43,9 +43,9 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-typedef WSTRINGVIEW_HASHMAP(Vertex, PCVertexDeclaration, ECase::Sensitive) wstringview_to_vdecl_type;
-class FVertexDeclarationDico_ : Meta::TSingleton<wstringview_to_vdecl_type, FVertexDeclarationDico_> {
-    typedef Meta::TSingleton<wstringview_to_vdecl_type, FVertexDeclarationDico_> parent_type;
+typedef WSTRING_HASHMAP_MEMOIZE(Vertex, PCVertexDeclaration, ECase::Sensitive) wstring_to_vdecl_type;
+class FVertexDeclarationDico_ : Meta::TSingleton<wstring_to_vdecl_type, FVertexDeclarationDico_> {
+    typedef Meta::TSingleton<wstring_to_vdecl_type, FVertexDeclarationDico_> parent_type;
 public:
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
@@ -56,7 +56,7 @@ public:
         parent_type::Create();
     }
 
-    static wstringview_to_vdecl_type& Instance() {
+    static wstring_to_vdecl_type& Instance() {
         AssertIsMainThread();
         return parent_type::Instance();
     }
@@ -70,7 +70,7 @@ public:
 static FWString VertexTypeName_(const FVertexDeclaration* vdecl) {
     FWOStringStream oss;
 
-    oss << "Vertex";
+    oss << L"Vertex";
     for (const FValueField& subPart : vdecl->SubParts())
         Format(oss, L"__{0}{1}_{2}", subPart.Name(), subPart.Index(), ValueTypeToCStr(subPart.Type()) );
 
@@ -295,13 +295,12 @@ void VertexTypes_OnDeviceDestroy(FDeviceEncapsulator *device) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RegisterVertexType(const FVertexDeclaration* vdecl) {
+void RegisterVertexType(FWString&& name, const FVertexDeclaration* vdecl) {
     Assert(vdecl);
     Assert(vdecl->Frozen());
-    Assert(vdecl->ResourceName() == VertexTypeName_(vdecl));
 
     PCVertexDeclaration pcvdecl(vdecl);
-    Insert_AssertUnique(FVertexDeclarationDico_::Instance(), MakeStringView(vdecl->ResourceName()), pcvdecl);
+    FVertexDeclarationDico_::Instance().emplace_AssertUnique(std::move(name), std::move(pcvdecl));
 }
 //----------------------------------------------------------------------------
 void UnregisterVertexType(const FVertexDeclaration* vdecl) {
@@ -309,13 +308,24 @@ void UnregisterVertexType(const FVertexDeclaration* vdecl) {
     Assert(vdecl->Frozen());
     Assert(vdecl->ResourceName() == VertexTypeName_(vdecl));
 
-    PCVertexDeclaration pcvdecl(vdecl);
-    Remove_AssertExistsAndSameValue(FVertexDeclarationDico_::Instance(), MakeStringView(vdecl->ResourceName()), pcvdecl);
+    auto& vertexDico = FVertexDeclarationDico_::Instance();
+
+    auto erase_it = vertexDico.end();
+    for (auto it = vertexDico.begin(); it != vertexDico.end(); ++it) {
+        if (it->second == vdecl) {
+            erase_it = it;
+            break;
+        }
+    }
+
+    AssertRelease(erase_it != vertexDico.end());
+    vertexDico.erase(erase_it);
 }
 //----------------------------------------------------------------------------
 const FVertexDeclaration* VertexTypeByName(const FWStringView& name) {
     PCVertexDeclaration vdecl;
-    TryGetValue(FVertexDeclarationDico_::Instance(), name, &vdecl);
+    TBasicStringHashMemoizer<wchar_t, ECase::Sensitive> key(ToWString(name));
+    TryGetValue(FVertexDeclarationDico_::Instance(), key, &vdecl);
     return vdecl.get();
 }
 //----------------------------------------------------------------------------
@@ -330,10 +340,14 @@ FVertexDeclarator::~FVertexDeclarator() {
     Assert(_vdecl);
     Assert(!_vdecl->Frozen());
 
-    _vdecl->SetResourceName(VertexTypeName_(_vdecl.get()));
+    FWString vertexTypeName = VertexTypeName_(_vdecl.get());
+
+#ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
+    _vdecl->SetResourceName(vertexTypeName.MakeView());
+#endif
     _vdecl->Freeze();
 
-    RegisterVertexType(_vdecl.get());
+    RegisterVertexType(std::move(vertexTypeName), _vdecl.get());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
