@@ -55,8 +55,8 @@ private:
     void Open_(const FFilename& filename, LPCVOID *ppData, UINT *pBytes);
     void GenerateAutomaticSubstitutions_(LPCVOID *ppData, UINT *pBytes);
 
-    static void *Allocate_(size_t sizeInBytes) { return GetThreadLocalHeap().Malloc(sizeInBytes, MEMORY_DOMAIN_TRACKING_DATA(Shader)); }
-    static void Deallocate_(void *ptr) { GetThreadLocalHeap().Free(ptr); }
+    static void *Allocate_(size_t sizeInBytes) { return Alloca(sizeInBytes); }
+    static void Deallocate_(void *ptr) { FreeAlloca(ptr); }
 
     const FDirpath _systemDir;
     const FShaderSource *_source;

@@ -5,8 +5,8 @@
 #include "FloatImage.h"
 #include "Pixmap_fwd.h"
 
+#include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/PoolAllocator-impl.h"
-#include "Core/Allocator/ThreadLocalHeap.h"
 #include "Core/Color/Color.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FileSystem.h"
@@ -18,25 +18,25 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_MALLOC(sz) \
-    Core::GetThreadLocalHeap().Malloc(sz, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Malloc(sz)
 #define STBI_REALLOC(p,newsz) \
-    Core::GetThreadLocalHeap().Realloc(p, newsz, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Realloc(p, newsz)
 #define STBI_FREE(p) \
-    Core::GetThreadLocalHeap().Free(p, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Free(p)
 #define STBI_ASSERT(x) \
-    Assert(x)
+    Assert("stb_image: ", (x))
 #define STBI_NO_STDIO
 #include "External/stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBIW_MALLOC(sz) \
-    Core::GetThreadLocalHeap().Malloc(sz, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Malloc(sz)
 #define STBIW_REALLOC(p,newsz) \
-    Core::GetThreadLocalHeap().Realloc(p, newsz, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Realloc(p, newsz)
 #define STBIW_FREE(p) \
-    Core::GetThreadLocalHeap().Free(p, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Free(p)
 #define STBIW_ASSERT(x) \
-    Assert(x)
+    Assert("stb_image_write: ", (x))
 #define STBI_WRITE_NO_STDIO
 #include "External/stb_image_write.h"
 
@@ -436,19 +436,19 @@ bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const TMemoryView<c
     dst->_depth = depth;
     dst->_space = space;
 
-    TThreadLocalPtr<const u8, MEMORY_DOMAIN_TAG(Image)> decoded;
     const int contentSizeInBytes = checked_cast<int>(content.size());
 
+    void* decoded;
     switch (depth)
     {
     case Core::Pixmap::EColorDepth::_8bits:
-        decoded.reset((const u8*)::stbi_load_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0));
+        decoded = ::stbi_load_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0);
         break;
     case Core::Pixmap::EColorDepth::_16bits:
-        decoded.reset((const u8*)::stbi_load_16_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0));
+        decoded = ::stbi_load_16_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0);
         break;
     case Core::Pixmap::EColorDepth::_32bits:
-        decoded.reset((const u8*)::stbi_loadf_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0));
+        decoded = ::stbi_loadf_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0);
         break;
 
     default:
@@ -491,7 +491,9 @@ bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const TMemoryView<c
 
     dst->_data.Resize_DiscardData(decodedSizeInBytes);
     Assert(dst->TotalSizeInBytes() == decodedSizeInBytes);
-    ::memcpy(dst->_data.data(), decoded.get(), decodedSizeInBytes);
+    ::memcpy(dst->_data.data(), decoded, decodedSizeInBytes);
+
+    STBI_FREE(decoded);
 
     return true;
 }

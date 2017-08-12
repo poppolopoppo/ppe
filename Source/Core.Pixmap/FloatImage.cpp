@@ -3,8 +3,8 @@
 #include "FloatImage.h"
 #include "Pixmap_fwd.h"
 
+#include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/PoolAllocator-impl.h"
-#include "Core/Allocator/ThreadLocalHeap.h"
 #include "Core/Color/Color.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/Container/BitSet.h"
@@ -14,11 +14,11 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 
 #define STBIR_MALLOC(size,c) \
-    Core::GetThreadLocalHeap().Malloc(size, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Malloc(size)
 #define STBIR_FREE(ptr,c) \
-    Core::GetThreadLocalHeap().Free(ptr, MEMORY_DOMAIN_TRACKING_DATA(Image))
+    Core::GetThreadLocalHeap().Free(ptr)
 #define STBIR_ASSERT(x) \
-    Assert(x)
+    Assert("stb_image_resize: ", (x))
 
 #define STBIR_DEFAULT_FILTER_UPSAMPLE     STBIR_FILTER_CATMULLROM
 #define STBIR_DEFAULT_FILTER_DOWNSAMPLE   STBIR_FILTER_CUBICBSPLINE // TODO: workaround invalid alpha with STBIR_FILTER_MITCHELL
