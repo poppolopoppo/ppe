@@ -18,6 +18,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 enum class ELogCategory {
     Info = 0,
+    Emphasis,
     Warning,
     Error,
     Exception,

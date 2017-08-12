@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "Logger.h"
+
 #include "Misc/TargetPlatform.h"
 
 namespace Core {
@@ -8,17 +9,19 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 STATIC_ASSERT(0 == size_t(ELogCategory::Info));
-STATIC_ASSERT(1 == size_t(ELogCategory::Warning));
-STATIC_ASSERT(2 == size_t(ELogCategory::Error));
-STATIC_ASSERT(3 == size_t(ELogCategory::Exception));
-STATIC_ASSERT(4 == size_t(ELogCategory::Debug));
-STATIC_ASSERT(5 == size_t(ELogCategory::Assertion));
-STATIC_ASSERT(6 == size_t(ELogCategory::Profiling));
-STATIC_ASSERT(7 == size_t(ELogCategory::Callstack));
+STATIC_ASSERT(1 == size_t(ELogCategory::Emphasis));
+STATIC_ASSERT(2 == size_t(ELogCategory::Warning));
+STATIC_ASSERT(3 == size_t(ELogCategory::Error));
+STATIC_ASSERT(4 == size_t(ELogCategory::Exception));
+STATIC_ASSERT(5 == size_t(ELogCategory::Debug));
+STATIC_ASSERT(6 == size_t(ELogCategory::Assertion));
+STATIC_ASSERT(7 == size_t(ELogCategory::Profiling));
+STATIC_ASSERT(8 == size_t(ELogCategory::Callstack));
 //----------------------------------------------------------------------------
 namespace {
     static constexpr ELogCategory sCategories[] = {
         ELogCategory::Info,
+        ELogCategory::Emphasis,
         ELogCategory::Warning,
         ELogCategory::Error,
         ELogCategory::Exception,
@@ -28,7 +31,7 @@ namespace {
         ELogCategory::Callstack,
     };
 
-    STATIC_ASSERT(8 == lengthof(sCategories));
+    STATIC_ASSERT(9 == lengthof(sCategories));
 }
 //----------------------------------------------------------------------------
 TMemoryView<const ELogCategory> EachLogCategory() {
@@ -40,6 +43,8 @@ FWStringView LogCategoryToWCStr(ELogCategory category) {
     {
     case Core::ELogCategory::Info:
         return L"Info";
+    case Core::ELogCategory::Emphasis:
+        return L"Emphasis";
     case Core::ELogCategory::Warning:
         return L"Warning";
     case Core::ELogCategory::Error:
@@ -83,7 +88,9 @@ namespace {
 //----------------------------------------------------------------------------
 class FBasicLogger_ : public ILogger {
 public:
-    FBasicLogger_(const FWStringView& prefix) : _prefix(prefix) {}
+    FBasicLogger_(const FWStringView& prefix) 
+        : _prefix(prefix)
+    {}
 
     // Used before main, no dependencies on allocators
     virtual void Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) override {
@@ -99,17 +106,16 @@ public:
         }
         FormatArgs(oss, text, args);
         oss << eol;
+        AssertRelease(!oss.bad());
 
-        if (FPlatform::IsDebuggerAttached())
-            FPlatform::OutputDebug(oss.NullTerminatedStr());
-        else
-            std::wcout << oss.NullTerminatedStr();
+        FPlatform::OutputDebug(oss.NullTerminatedStr());
     }
 
     virtual void Flush() override {}
 
 private:
     FWStringView _prefix;
+    bool _debuggerAttached;
 };
 static const FBasicLogger_ GLoggerBeforeMain (L"BEFORE_MAIN");
 static const FBasicLogger_ GLoggerAfterMain  (L"AFTER_MAIN");
@@ -180,6 +186,59 @@ void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView
 void FOutputDebugLogger::FlushThreadSafe() {}
 //----------------------------------------------------------------------------
 void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
+#ifdef PLATFORM_WINDOWS
+    constexpr ::WORD fWhite = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    constexpr ::WORD fYellow = FOREGROUND_RED | FOREGROUND_GREEN;
+    constexpr ::WORD fCyan = FOREGROUND_GREEN | FOREGROUND_BLUE;
+    constexpr ::WORD bBlack = 0;
+
+    static ::WORD GPreviousTextAttribute = ::WORD(-1);
+
+    ::WORD textAttribute;
+    switch (category)
+    {
+    case Core::ELogCategory::Info:
+        textAttribute = (fWhite | bBlack);
+        break;
+    case Core::ELogCategory::Emphasis:
+        textAttribute = (FOREGROUND_GREEN | BACKGROUND_BLUE | FOREGROUND_INTENSITY);
+        break;
+    case Core::ELogCategory::Warning:
+        textAttribute = (fYellow | bBlack | FOREGROUND_INTENSITY);
+        break;
+    case Core::ELogCategory::Error:
+        textAttribute = (FOREGROUND_RED | bBlack);
+        break;
+    case Core::ELogCategory::Exception:
+        textAttribute = (fWhite | BACKGROUND_RED | BACKGROUND_INTENSITY);
+        break;
+    case Core::ELogCategory::Debug:
+        textAttribute = (fCyan | bBlack);
+        break;
+    case Core::ELogCategory::Assertion:
+        textAttribute = (fYellow | BACKGROUND_RED | FOREGROUND_INTENSITY);
+        break;
+    case Core::ELogCategory::Profiling:
+        textAttribute = (BACKGROUND_GREEN | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+        break;
+    case Core::ELogCategory::Callstack:
+        textAttribute = (FOREGROUND_GREEN);
+    default:
+        textAttribute = (fWhite | bBlack);
+        break;
+    }
+
+    if (GPreviousTextAttribute != textAttribute) {
+        if (::HANDLE hConsole = ::GetStdHandle(STD_OUTPUT_HANDLE)) {
+            GPreviousTextAttribute = textAttribute;
+            ::SetConsoleTextAttribute(hConsole, textAttribute);
+        }
+        else {
+            GPreviousTextAttribute = ::WORD(-1);
+        }
+    }
+#endif
+
     if (ELogCategory::Callstack != category)
         Format(std::wcout, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 
@@ -225,7 +284,7 @@ void FLoggerStartup::Start() {
 
     ILogger* logger = nullptr;
 
-    if (FPlatform::IsDebuggerAttached())
+    if (FCurrentProcess::Instance().StartedWithDebugger())
         logger = new ((void*)&GLoggerDefaultStorage) FOutputDebugLogger();
     else
         logger = new ((void*)&GLoggerDefaultStorage) FStdoutLogger();
