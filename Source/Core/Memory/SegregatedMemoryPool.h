@@ -21,7 +21,7 @@
 #   define POOL_MIN_CHUNKSIZE (  64ul << 10ul) /*  64k */
 #else
 #   define POOL_MAX_CHUNKSIZE (1024ul << 10ul) /*1024k */
-#   define POOL_MIN_CHUNKSIZE (  16ul << 10ul) /*  64k */
+#   define POOL_MIN_CHUNKSIZE (  64ul << 10ul) /*  64k */
 #endif
 
 #ifdef _DEBUG
