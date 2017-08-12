@@ -4,6 +4,8 @@
 
 #include "Core.Application/ApplicationConsole.h"
 #include "Core.Application/Input/GamepadInputHandler.h"
+#include "Core.Application/Input/KeyboardInputHandler.h"
+#include "Core.Application/Input/MouseInputHandler.h"
 
 #include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/DeviceEncapsulator.h"
@@ -46,6 +48,8 @@
 #include "Core/Maths/ScalarMatrixHelpers.h"
 #include "Core/Maths/Transform.h"
 #include "Core/Memory/Compression.h"
+#include "Core/Thread/Task/TaskHelpers.h"
+#include "Core/Thread/ThreadPool.h"
 
 namespace Core {
 namespace ContentGenerator {
@@ -182,6 +186,9 @@ public:
 
     Graphics::PShaderProgram VertexShader;
     Graphics::PShaderCompiled VertexShaderCompiled;
+
+    bool bReady = false;
+    PFuture<Lattice::PGenericMesh> FutureMesh;
 
     FRobotAppImpl() {
         ShaderCompiler.Create(Graphics::EDeviceAPI::DirectX11);
@@ -416,9 +423,11 @@ FRobotApp::FRobotApp()
     Graphics::EDeviceAPI::DirectX11,
     Timespan_120hz() ) {
 
+#ifdef USE_DEBUG_LOGGER
     Application::FApplicationConsole::RedirectIOToConsole();
+#endif
 
-    /*
+#if 0
     Test_Lattice();
     Test_Format();
     Test_Containers();
@@ -427,7 +436,7 @@ FRobotApp::FRobotApp()
     Test_Thread();
     Test_XML();
     Test_Network();
-    */
+#endif
 }
 //----------------------------------------------------------------------------
 FRobotApp::~FRobotApp() {}
@@ -456,14 +465,17 @@ void FRobotApp::Shutdown() {
 void FRobotApp::Draw(const FTimeline& time) {
     parent_type::Draw(time);
 
-    using Application::EGamepadButton;
-
     GRAPHICS_DIAGNOSTICS_SCOPEEVENT(DeviceEncapsulator().Diagnostics(), L"FRobotApp::Draw");
 
     const double totalSeconds = FSeconds(time.Total()).Value();
 
-    const auto* gamepadService = Services().Get<Application::IGamepadService>();
-    const Application::FGamepadState& gamepad = gamepadService->State().First();
+    using Application::EGamepadButton;
+    using Application::EKeyboardKey;
+    using Application::EMouseButton;
+
+    const Application::FGamepadState& gamepad = Gamepad().State().First();
+    const Application::FKeyboardState& keyboard = Keyboard().State();
+    const Application::FMouseState& mouse = Mouse().State();
 
     float3 hsv(float(Frac(totalSeconds*0.1)), 1.0f, 0.5f);
 
@@ -484,6 +496,9 @@ void FRobotApp::Draw(const FTimeline& time) {
         p = Saturate(p);
 
         hsv = p;
+    }
+    else {
+
     }
 
     const float3 rgb = HSV_to_RGB(hsv);
@@ -511,50 +526,62 @@ void FRobotApp::Draw(const FTimeline& time) {
 
     bool wireframe = false;
 
-    if (gamepad.IsConnected()) {
-        bool needShaderCompile = false;
-        if (GMeshCurrent < 0 || gamepad.IsButtonUp(EGamepadButton::Start)) {
-            GMeshCurrent = (GMeshCurrent + 1) % lengthof(GMeshes);
+    bool needShaderCompile = false;
+    if (_pimpl->FutureMesh) {
+        if (_pimpl->FutureMesh->Available()) {
+            const Lattice::PGenericMesh& pmesh = _pimpl->FutureMesh->Result();
+            needShaderCompile = _pimpl->SetMesh(device, *pmesh);
+            RemoveRef_AssertReachZero(_pimpl->FutureMesh);
+            _pimpl->bReady = true;
+        }
+    }
+    else if (GMeshCurrent < 0 ||
+        gamepad.IsButtonUp(EGamepadButton::Start) ||
+        keyboard.IsKeyUp(EKeyboardKey::Space) ||
+        mouse.IsButtonUp(EMouseButton::Button1) ) {
+        GMeshCurrent = (GMeshCurrent + 1) % lengthof(GMeshes);
 
-            const FFilename srcFilename(GMeshes[GMeshCurrent]);
+        const FFilename srcFilename(GMeshes[GMeshCurrent]);
 
+        _pimpl->FutureMesh = future([srcFilename]() -> Lattice::PGenericMesh {
             LOG(Info, L"[RobotApp] Load mesh '{0}'", srcFilename);
 
-            Lattice::FGenericMesh mesh;
-
+            Lattice::PGenericMesh pmesh = new Lattice::FGenericMesh();
             const FFilename bulkFilename = srcFilename.WithReplacedExtension(FFSConstNames::Bkmz());
-            if (not Lattice::FBulkMesh::Load(&mesh, bulkFilename)) {
-                Lattice::FWaveFrontObj::Load(&mesh, srcFilename);
+            if (not Lattice::FBulkMesh::Load(pmesh.get(), bulkFilename)) {
+                Lattice::FWaveFrontObj::Load(pmesh.get(), srcFilename);
 
-                mesh.CleanAndOptimize();
+                pmesh->CleanAndOptimize();
 
-                const FAabb3f bounds = Lattice::ComputeBounds(mesh, 0);
+                const FAabb3f bounds = Lattice::ComputeBounds(*pmesh, 0);
                 const float4x4 transform =
                     MakeTranslationMatrix(-bounds.Center()) *
                     MakeScalingMatrix(float3(Rcp(Max(bounds.HalfExtents()))));
 
-                Lattice::Transform(mesh, 0, transform);
+                Lattice::Transform(*pmesh, 0, transform);
 
-                Lattice::FBulkMesh::Save(&mesh, bulkFilename);
+                Lattice::FBulkMesh::Save(pmesh.get(), bulkFilename);
             }
 
-            needShaderCompile = _pimpl->SetMesh(device, mesh);
-        }
-        if (needShaderCompile || GShaderCurrent < 0 || gamepad.IsButtonUp(EGamepadButton::Back)) {
-            GShaderCurrent = (GShaderCurrent + 1) % lengthof(GShaders);
-
-            const FFilename srcFilename(GShaders[GShaderCurrent]);
-
-            LOG(Info, L"[RobotApp] Load shader '{0}'", srcFilename);
-
-            _pimpl->SetShader(device, srcFilename);
-        }
-        if (gamepad.IsButtonPressed(EGamepadButton::LS)) {
-            wireframe = true;
-        }
+            return pmesh;
+        });
     }
+    if (needShaderCompile ||
+        GShaderCurrent < 0 ||
+        gamepad.IsButtonUp(EGamepadButton::Back) ||
+        keyboard.IsKeyUp(EKeyboardKey::Backspace) ) {
+        GShaderCurrent = (GShaderCurrent + 1) % lengthof(GShaders);
 
-    const float aspectRatio = DeviceEncapsulator().Parameters().Viewport().AspectRatio();
+        const FFilename srcFilename(GShaders[GShaderCurrent]);
+
+        LOG(Info, L"[RobotApp] Load shader '{0}'", srcFilename);
+
+        _pimpl->SetShader(device, srcFilename);
+    }
+    if (gamepad.IsButtonPressed(EGamepadButton::LS) ||
+        keyboard.IsKeyPressed(EKeyboardKey::F1) ) {
+        wireframe = true;
+    }
 
     float rotx  = 0;
     float roty  = 0;
@@ -575,20 +602,44 @@ void FRobotApp::Draw(const FTimeline& time) {
             scale = Lerp( 1.0f, 2.0f, gamepad.LeftTrigger().Smoothed());
         }
 
-        rotx += F_HalfPi;
+        Gamepad().Rumble(
+            gamepad.Index(),
+            gamepad.LeftTrigger().Smoothed(),
+            gamepad.RightTrigger().Smoothed() );
+    }
+    else if (mouse.IsButtonPressed(EMouseButton::Button0)) {
+        rotx  = Lerp(-F_PI, F_PI, mouse.SmoothRelativeX());
+        roty  = Lerp(-F_PI, F_PI, 1.0f - mouse.SmoothRelativeY());
+        fov   = Lerp( 40.f, 90.f, keyboard.IsKeyPressed(EKeyboardKey::A) ? 1.f : 0.f);
+        scale = Lerp( 1.0f, 2.0f, keyboard.IsKeyPressed(EKeyboardKey::Z) ? 1.f : 0.f);
+    }
 
-        if (gamepad.IsButtonUp(EGamepadButton::LeftThumb)) {
-            LOG(Info, L"[RobotApp] Triggering frame capture");
-            device->DeviceDiagnostics()->LaunchProfilerAndTriggerCapture();
-        }
+    rotx += F_HalfPi;
+
+#ifdef WITH_CORE_GRAPHICS_DIAGNOSTICS
+    if (gamepad.IsButtonUp(EGamepadButton::LeftThumb) ||
+        keyboard.IsKeyUp(EKeyboardKey::Enter)) {
+        LOG(Info, L"[RobotApp] Triggering frame capture");
+        device->DeviceDiagnostics()->LaunchProfilerAndTriggerCapture();
+    }
+#endif
+
+    if (gamepad.IsButtonUp(EGamepadButton::RightThumb) ||
+        keyboard.IsKeyUp(EKeyboardKey::Backspace)) {
+        LOG(Info, L"[RobotApp] Dumping memory domains");
+        ReportAllTrackingData();
     }
 
     immediate->SetBlendState(Graphics::FBlendState::Opaque);
     immediate->SetDepthStencilState(Graphics::FDepthStencilState::Default);
     immediate->SetRasterizerState(wireframe ? Graphics::FRasterizerState::Wireframe : Graphics::FRasterizerState::CullCounterClockwise);
 
-    _pimpl->Update(device, fov, aspectRatio, rotx, roty, scale);
-    _pimpl->Draw(immediate);
+    const float aspectRatio = DeviceEncapsulator().Parameters().Viewport().AspectRatio();
+
+    if (_pimpl->bReady) {
+        _pimpl->Update(device, fov, aspectRatio, rotx, roty, scale);
+        _pimpl->Draw(immediate);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
