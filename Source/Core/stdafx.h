@@ -7,7 +7,9 @@
 
 #include "targetver.h"
 
-#if defined(_MSC_VER) && defined(_DEBUG)
+#define WITH_CORE_CRTDBG_MAP_ALLOC 0
+
+#if defined(_MSC_VER) && defined(_DEBUG) && WITH_CORE_CRTDBG_MAP_ALLOC
 //  Finding memory leaks with CRT FHeap
 //  https://msdn.microsoft.com/en-us/library/x98tx3cf.aspx
 #   define _CRTDBG_MAP_ALLOC
@@ -39,7 +41,6 @@
 #include <locale>
 #include <string>
 
-#include <unordered_map>
 #include <type_traits>
 
 #include "Core/Core.h"
