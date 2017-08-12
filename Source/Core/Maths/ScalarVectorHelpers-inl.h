@@ -689,6 +689,22 @@ TScalarVector<u16, _Dim> FloatM11_to_UShort065535(const TScalarVector<float, _Di
     return result;
 }
 //----------------------------------------------------------------------------
+template <size_t _Dim>
+TScalarVector<float, _Dim> Float01_to_FloatM11(const TScalarVector<float, _Dim>& v_01) {
+    TScalarVector<float, _Dim> result;
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = Float01_to_FloatM11(v_01._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+TScalarVector<float, _Dim> FloatM11_to_Float01(const TScalarVector<float, _Dim>& v_M11) {
+    TScalarVector<float, _Dim> result;
+    for (size_t i = 0; i < _Dim; ++i)
+        result._data[i] = FloatM11_to_Float01(v_M11._data[i]);
+    return result;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 TScalarVector<u8, 4> Float3M11_to_UByte4N(const TScalarVector<float, 3>& value) {

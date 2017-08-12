@@ -121,6 +121,9 @@ constexpr float Degrees(float radians);
 //----------------------------------------------------------------------------
 constexpr float Radians(float degrees);
 //----------------------------------------------------------------------------
+constexpr float Float01_to_FloatM11(float v_01) { return (v_01 * 2.f - 1.f); }
+constexpr float FloatM11_to_Float01(float v_M11) { return (v_M11 * .5f + .5f); }
+//----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE void SinCos(T radians, T *fsin, T *fcos);
 //----------------------------------------------------------------------------
