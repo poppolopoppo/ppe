@@ -22,6 +22,9 @@ public:
                 FBasicWindow *parent = nullptr   );
     virtual ~FBasicWindow();
 
+    FBasicWindow(const FBasicWindow&) = delete;
+    FBasicWindow& operator =(const FBasicWindow&) = delete;
+
     void *Handle() const { return _handle; }
     const FWString& Title() const { return _title; }
     size_t Width() const { return _width; }
