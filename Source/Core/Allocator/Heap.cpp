@@ -187,7 +187,7 @@ struct FHeapHandle_ {
     const size_t Canary0 = 0xBAADF00D;
 #endif
 
-    VIRTUALMEMORYCACHE(Heap, 4, 16 * 1024 * 1024) LocalVM; // 4 cached entries, max 16 mo
+    VIRTUALMEMORYCACHE(Heap, 16, 2 * 1024 * 1024) LocalVM; // 16 cached entries, max 2 mo
 
 #ifdef WITH_CORE_ASSERT
     size_t NumAllocs = 0;
