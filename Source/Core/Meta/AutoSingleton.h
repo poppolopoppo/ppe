@@ -71,8 +71,8 @@ protected:
 
 public:
     static T& Instance() {
-        ONE_TIME_INITIALIZE_TPL(T *, sInstance, new T() );
-        return *sInstance;
+        ONE_TIME_INITIALIZE_TPL(T *, GInstance, new T() );
+        return *GInstance;
     }
 };
 //----------------------------------------------------------------------------
@@ -84,8 +84,8 @@ protected:
 
 public:
     static T& Instance() {
-        ONE_TIME_INITIALIZE_THREAD_LOCAL_TPL(T *, sTlsInstance, new T() );
-        return *sTlsInstance;
+        ONE_TIME_INITIALIZE_THREAD_LOCAL_TPL(T *, GInstanceTLS, new T() );
+        return *GInstanceTLS;
     }
 };
 //----------------------------------------------------------------------------
