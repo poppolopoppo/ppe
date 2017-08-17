@@ -160,7 +160,8 @@ void FAbstractThreadSafeLogger::Flush() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
-    FThreadLocalWOStringStream oss;
+    wchar_t buffer[2048];
+    FWOCStrStream oss(buffer);
 
 #if 0
     if (ELogCategory::Callstack != category) {
@@ -168,19 +169,43 @@ void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView
     }
 #else
     if (ELogCategory::Callstack != category &&
-        ELogCategory::Info != category ) {
+        ELogCategory::Info != category) {
         Format(oss, L"[{0}]", category);
     }
 #endif
 
-    if (args.empty())
-        oss << text;
-    else
-        FormatArgs(oss, text, args);
+    if (text.size() + oss.size() + 16 * args.size() < 2048) {
+        // still remaining place in stack buffer
+        if (args.empty()) {
+            oss << text;
+        }
+        else {
+            FormatArgs(oss, text, args);
+        }
 
-    oss << eol;
+        oss << eol;
 
-    FPlatform::OutputDebug(oss.str().c_str());
+        FPlatform::OutputDebug(oss.NullTerminatedStr());
+    }
+    else {
+        // different strategy for large logs, assuming no args is given for them
+        Assert(args.empty()); // TODO : handle splitting formatted texts
+
+        FPlatform::OutputDebug(oss.NullTerminatedStr());
+
+        FWStringView input = text;
+        do {
+            const size_t amount = Min(2047ul, input.size());
+            const FWStringView print = input.CutBefore(amount);
+            input = input.CutStartingAt(amount);
+
+            ::memcpy(buffer, print.data(), print.SizeInBytes());
+            buffer[amount] = L'\0';
+
+            FPlatform::OutputDebug(buffer);
+
+        } while (not input.empty());
+    }
 }
 //----------------------------------------------------------------------------
 void FOutputDebugLogger::FlushThreadSafe() {}
