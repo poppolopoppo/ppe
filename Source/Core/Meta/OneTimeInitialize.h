@@ -31,17 +31,11 @@
 
 #else
 
-#   ifdef PLATFORM_WINDOWS
-#      include "Misc/Platform_Windows.h"
-#      include <intrin.h>
-
-#      define CORE_INTERLOCKEDCOMPAREEXCHANGE_32(_Var, _Src, _Operand) ::InterlockedCompareExchange((volatile long*)(&(_Var)), static_cast<long>(_Src), static_cast<long>(_Operand))
-#      define CORE_INTERLOCKEDEXCHANGE_PTR(_Var, _Value) ::InterlockedExchangePointer((void* volatile*)(&(_Var)), _Value)
-#      define CORE_INTERLOCKEDEXCHANGE_32(_Var, _Value) ::InterlockedExchange((volatile long*)(&(_Var)), static_cast<long>(_Value))
-#      define CORE_SHORTSYNCWAIT() ::_mm_pause()
-#   else
-#      error "no support for this os"
-#   endif
+#   include "Misc/TargetPlatform.h"
+#   define CORE_INTERLOCKEDCOMPAREEXCHANGE_32(_Var, _Src, _Operand) Core::FPlatformAtomics::CompareExchange((volatile long*)(&(_Var)), static_cast<long>(_Src), static_cast<long>(_Operand))
+#   define CORE_INTERLOCKEDEXCHANGE_PTR(_Var, _Value) Core::FPlatformAtomics::Exchange((void* volatile*)(&(_Var)), _Value)
+#   define CORE_INTERLOCKEDEXCHANGE_32(_Var, _Value) Core::FPlatformAtomics::Exchange((volatile long*)(&(_Var)), static_cast<long>(_Value))
+#   define CORE_SHORTSYNCWAIT() Core::FPlatformAtomics::ShortSyncWait()
 
 #   include "Core/Meta/AlignedStorage.h"
 

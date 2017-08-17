@@ -5,6 +5,8 @@
 #include "Core/IO/StringView.h"
 #include "Core/Memory/MemoryView.h"
 
+#include <intrin.h>
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -63,6 +65,18 @@ CORE_API struct FPlatform {
     static bool IsDebuggerAttached();
     static void OutputDebug(const char* text);
     static void OutputDebug(const wchar_t* text);
+#endif
+};
+//----------------------------------------------------------------------------
+struct FPlatformAtomics {
+#ifdef PLATFORM_WINDOWS
+    FORCE_INLINE static long Exchange(long volatile* target, long value) { return ::InterlockedExchange(target, value); }
+    FORCE_INLINE static void* Exchange(void* volatile* target, void* value) { return ::InterlockedExchangePointer(target, value); }
+    FORCE_INLINE static long CompareExchange(long volatile* target, long exchange, long comparand) { return ::InterlockedCompareExchange(target, exchange, comparand); }
+    FORCE_INLINE static void* CompareExchange(void* volatile* target, void* exchange, void* comparand) { return ::InterlockedCompareExchangePointer(target, exchange, comparand); }
+    FORCE_INLINE static void ShortSyncWait() { ::_mm_pause(); }
+#else
+#   error "unsupported platform"
 #endif
 };
 //----------------------------------------------------------------------------
