@@ -2,6 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/String_fwd.h"
+
 #include "Core/Allocator/Allocation.h"
 #include "Core/IO/Stream.h"
 #include "Core/IO/StringView.h"
@@ -20,11 +22,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <
-    typename _Char,
-    typename _Traits = std::char_traits<_Char>,
-    typename _Allocator = ALLOCATOR(String, _Char)
->
+template <typename _Char, typename _Traits, typename _Allocator>
 class TBasicString : public std::basic_string<_Char, _Traits, _Allocator> {
 public:
     typedef std::basic_string<_Char, _Traits, _Allocator> parent_type;
@@ -49,9 +47,6 @@ public:
     TBasicStringView<_Char> MakeView() const { return TBasicStringView<_Char>(c_str(), size()); }
     operator TBasicStringView<_Char> () const { return MakeView(); }
 };
-//----------------------------------------------------------------------------
-typedef TBasicString<char>      FString;
-typedef TBasicString<wchar_t>   FWString;
 //----------------------------------------------------------------------------
 hash_t hash_value(const FString& str);
 hash_t hash_value(const FWString& wstr);
