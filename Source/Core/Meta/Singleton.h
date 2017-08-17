@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Meta/AlignedStorage.h"
+#include "Core/Memory/UniquePtr.h"
 
 namespace Core {
 namespace Meta {
@@ -16,6 +17,7 @@ public:
 #ifdef WITH_CORE_ASSERT
     static bool GHasInstance;
 #endif
+
     static T& Ref() {
         static typename POD_STORAGE(T) GPod;
         return reinterpret_cast<T&>(GPod);
@@ -31,6 +33,7 @@ public:
 #ifdef WITH_CORE_ASSERT
     static THREAD_LOCAL bool GHasInstance;
 #endif
+
     static T& Ref() {
         static THREAD_LOCAL typename POD_STORAGE(T) GPod;
         return reinterpret_cast<T&>(GPod);
@@ -69,19 +72,51 @@ public:
     template <typename... _Args>
     static void Create(_Args&&... args) {
         Assert(not HasInstance());
-        new ((void*)&storage_type::Ref()) T(std::forward<_Args>(args)...);
         ONLY_IF_ASSERT(storage_type::GHasInstance = true);
+        new ((void*)&storage_type::Ref()) T{ std::forward<_Args>(args)... };
     }
 
     static void Destroy() {
         Assert(HasInstance());
-        storage_type::Ref().~T();
         ONLY_IF_ASSERT(storage_type::GHasInstance = false);
+        storage_type::Ref().~T();
     }
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Tag = T>
 using TThreadLocalSingleton = TSingleton<T, _Tag, true>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, typename _Tag = T, bool _ThreadLocal = false>
+class TIndirectSingleton : TSingleton<TUniquePtr<T>, _Tag, _ThreadLocal> {
+    typedef TSingleton<TUniquePtr<T>, _Tag, _ThreadLocal> parent_type;
+protected:
+    TIndirectSingleton() = default;
+
+public:
+#ifdef WITH_CORE_ASSERT
+    static bool HasInstance() {
+        return parent_type::GHasInstance;
+    }
+#endif
+
+    static T& Instance() {
+        return (*parent_type::Instance());
+    }
+
+    template <typename... _Args>
+    static void Create(_Args&&... args) {
+        parent_type::Create(new T{ std::forward<_Args>(args)... });
+    }
+
+    static void Destroy() {
+        parent_type::Destroy();
+    }
+};
+//----------------------------------------------------------------------------
+template <typename T, typename _Tag = T>
+using TThreadLocalIndirectSingleton = TIndirectSingleton<T, _Tag, true>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
