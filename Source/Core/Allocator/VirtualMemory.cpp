@@ -46,13 +46,18 @@ void* FVirtualMemory::AlignedAlloc(size_t alignment, size_t sizeInBytes) {
 #if     defined(PLATFORM_WINDOWS)
     // Optimistically try mapping precisely the right amount before falling back to the slow method :
     void* p = ::VirtualAlloc(nullptr, sizeInBytes, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+#ifdef USE_MEMORY_DOMAINS
+    if (p)
+        MEMORY_DOMAIN_TRACKING_DATA(Reserved).Allocate(1, sizeInBytes);
+#endif
 
     if (not IS_ALIGNED(alignment, p)) {
         const size_t allocationGranularity = FPlatform::SystemInfo.AllocationGranularity;
 
         // Fill "bubbles" (reserve unaligned regions) at the beginning of virtual address space, otherwise there will be always falling back to the slow method
-        if ((uintptr_t)p < 16 * 1024 * 1024)
+        if ((uintptr_t)p < 16 * 1024 * 1024) {
             ::VirtualAlloc(p, alignment - ((uintptr_t)p & (alignment - 1)), MEM_RESERVE, PAGE_NOACCESS);
+        }
 
         do {
             p = ::VirtualAlloc(NULL, sizeInBytes + alignment - allocationGranularity, MEM_RESERVE, PAGE_NOACCESS);
@@ -97,10 +102,16 @@ void* FVirtualMemory::AlignedAlloc(size_t alignment, size_t sizeInBytes) {
 //----------------------------------------------------------------------------
 void FVirtualMemory::AlignedFree(void* ptr, size_t sizeInBytes) {
 #if     defined(PLATFORM_WINDOWS)
-    UNUSED(sizeInBytes);
 
     if (0 == ::VirtualFree(ptr, 0, MEM_RELEASE))
         throw FLastErrorException();
+
+#ifdef USE_MEMORY_DOMAINS
+    if (ptr)
+        MEMORY_DOMAIN_TRACKING_DATA(Reserved).Deallocate(1, sizeInBytes);
+#else
+    UNUSED(sizeInBytes);
+#endif
 
 #elif   defined(PLATFORM_LINUX)
 
