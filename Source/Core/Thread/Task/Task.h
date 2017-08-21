@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/Container/Stack.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/Delegate.h"
 

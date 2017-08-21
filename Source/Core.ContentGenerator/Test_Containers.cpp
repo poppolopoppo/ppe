@@ -8,7 +8,9 @@
 #include "Core/Container/StringHashSet.h"
 
 #include "Core/Diagnostic/Profiling.h"
+#include "Core/IO/FS/Filename.h"
 #include "Core/IO/StringView.h"
+#include "Core/IO/VirtualFileSystem.h"
 #include "Core/IO/VFS/VirtualFileSystemStream.h"
 #include "Core/Maths/Maths.h"
 #include "Core/Memory/MemoryStream.h"

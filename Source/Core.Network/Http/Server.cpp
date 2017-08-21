@@ -16,6 +16,7 @@
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/Thread/ThreadContext.h"
 #include "Core/Thread/ThreadPool.h"
 
 namespace Core {

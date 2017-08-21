@@ -17,6 +17,7 @@
 #include "Core/IO/FS/ConstNames.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/FormatHelpers.h"
+#include "Core/IO/VirtualFileSystem.h"
 #include "Core/Memory/MemoryProvider.h"
 
 namespace Core {

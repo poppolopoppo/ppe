@@ -4,6 +4,8 @@
 
 #include "Core.RTTI/RTTI_Macros-impl.h"
 
+#include "Core/Thread/ThreadContext.h"
+
 namespace Core {
 namespace ContentPipeline {
 //----------------------------------------------------------------------------

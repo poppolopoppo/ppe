@@ -2,6 +2,8 @@
 
 #include "Core.Graphics/Graphics.h"
 
+#include "Core/IO/StringView.h"
+
 #ifndef FINAL_RELEASE
 #   define WITH_CORE_GRAPHICS_DIAGNOSTICS
 #endif

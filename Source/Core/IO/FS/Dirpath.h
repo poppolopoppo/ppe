@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/FS/Dirname.h"
 #include "Core/IO/FS/FileSystemProperties.h"
 
 #include "Core/IO/String.h"
@@ -15,7 +16,6 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FDirname;
 class FFilename;
 FWD_REFPTR(FileSystemNode);
 class FMountingPoint;

@@ -6,9 +6,11 @@
 #include "Device/Geometry/VertexDeclaration.h"
 
 #include "Core/Container/StringHashMap.h"
+#include "Core/IO/Format.h"
 #include "Core/IO/StringView.h"
 #include "Core/Memory/AlignedStorage.h"
 #include "Core/Meta/Singleton.h"
+#include "Core/Thread/ThreadContext.h"
 
 #define FOREACH_VERTEXDECL_BUILTINTYPE(_Foreach) \
     _Foreach(FPosition0_UByte4) \

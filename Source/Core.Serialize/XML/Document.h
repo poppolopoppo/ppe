@@ -7,6 +7,7 @@
 #include "Core/Container/StringHashMap.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringView.h"
+#include "Core/IO/VirtualFileSystem_fwd.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {

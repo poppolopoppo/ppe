@@ -5,11 +5,10 @@
 #include "Core.Graphics/Window/BasicWindow.h"
 #include "Core.Graphics/Window/WindowMessage.h"
 
-//#define WITH_MOUSESTATE_VERBOSE //%_NOCOMMIT%
+#include "Core/Diagnostic/Logger.h"
+#include "Core/Thread/ThreadContext.h"
 
-#ifdef WITH_MOUSESTATE_VERBOSE
-#   include "Core/Diagnostic/Logger.h"
-#endif
+//#define WITH_MOUSESTATE_VERBOSE //%_NOCOMMIT%
 
 #ifdef PLATFORM_WINDOWS
 #   include "Core/Misc/Platform_Windows.h"

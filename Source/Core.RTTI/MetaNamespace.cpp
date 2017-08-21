@@ -9,6 +9,7 @@
 #include "Core/Container/Stack.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/Maths/PrimeNumbers.h"
+#include "Core/Thread/ThreadContext.h"
 
 #include <atomic>
 

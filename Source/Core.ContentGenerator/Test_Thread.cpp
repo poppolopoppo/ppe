@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "Core/Thread/Task.h"
+#include "Core/Thread/ThreadContext.h"
 
 namespace Core {
 namespace ContentGenerator {

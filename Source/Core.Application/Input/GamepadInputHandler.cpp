@@ -5,15 +5,13 @@
 #include "Core.Graphics/Window/BasicWindow.h"
 #include "Core.Graphics/Window/WindowMessage.h"
 
+#include "Core/Diagnostic/Logger.h"
 #include "Core/Maths/PackingHelpers.h"
 #include "Core/Meta/Delegate.h"
+#include "Core/Thread/ThreadContext.h"
 #include "Core/Thread/ThreadPool.h"
 
 //#define WITH_GAMEPADSTATE_VERBOSE //%_NOCOMMIT%
-
-#ifdef WITH_GAMEPADSTATE_VERBOSE
-#   include "Core/Diagnostic/Logger.h"
-#endif
 
 #ifdef PLATFORM_WINDOWS
 #   include "XInputWrapper.h"

@@ -1,18 +1,19 @@
 #include "stdafx.h"
 
 #pragma warning( push )
-#pragma warning( disable : 4503) // C4503 'XXX' : longueur du nom décoré dépassée, le nom a été tronqué
+#pragma warning( disable : 4503) // C4503 'XXX'ï¿½: longueur du nom dï¿½corï¿½ dï¿½passï¿½e, le nom a ï¿½tï¿½ tronquï¿½
 
 #include "Grammar.h"
 
 #include "Lexer/Lexer.h"
 #include "Parser/Parser.h"
 
-#include "Core/IO/Format.h"
-#include "Core/IO/Stream.h"
-
 #include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/MetaTypePromote.h"
+
+#include "Core/IO/Format.h"
+#include "Core/IO/Stream.h"
+#include "Core/Thread/ThreadContext.h"
 
 namespace Core {
 namespace Serialize {

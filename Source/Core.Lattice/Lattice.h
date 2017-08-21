@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.Lattice/Lattice.h"
+#include "Core/Core.h"
 
 #ifdef EXPORT_CORE_LATTICE
 #   define CORE_LATTICE_API DLL_EXPORT

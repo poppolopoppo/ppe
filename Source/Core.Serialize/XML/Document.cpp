@@ -9,6 +9,8 @@
 #include "Core/Container/RawStorage.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/ConstNames.h"
+#include "Core/IO/FS/Filename.h"
+#include "Core/IO/VirtualFileSystem.h"
 #include "Core/Memory/MemoryProvider.h"
 
 namespace Core {

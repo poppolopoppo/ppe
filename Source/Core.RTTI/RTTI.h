@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.RTTI/RTTI.h"
+#include "Core/Core.h"
 
 #ifdef EXPORT_CORE_RTTI
 #   define CORE_RTTI_API DLL_EXPORT

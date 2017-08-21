@@ -16,6 +16,8 @@
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/RandomGenerator.h"
 
+#include "Core/IO/FS/Filename.h"
+
 namespace Core {
 namespace ContentGenerator {
 //----------------------------------------------------------------------------

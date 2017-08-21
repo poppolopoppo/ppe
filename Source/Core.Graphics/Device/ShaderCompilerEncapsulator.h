@@ -5,6 +5,7 @@
 #include "Core.Graphics/Device/DeviceAPI.h"
 #include "Core.Graphics/Device/IDeviceAPIShaderCompiler.h"
 
+#include "Core/IO/VirtualFileSystem_fwd.h"
 #include "Core/Memory/UniquePtr.h"
 
 namespace Core {

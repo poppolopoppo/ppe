@@ -5,6 +5,7 @@
 #include "Core.Application/Input/InputState.h"
 #include "Core.Application/Input/GamepadButton.h"
 
+#include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Meta/Optional.h"
 

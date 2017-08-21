@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <type_traits>
 
 #define CORE_ASSUME_TYPE_AS_POD(T, ...) \

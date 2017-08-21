@@ -48,6 +48,7 @@
 #include "Core/Maths/ScalarMatrixHelpers.h"
 #include "Core/Maths/Transform.h"
 #include "Core/Memory/Compression.h"
+#include "Core/Time/Timeline.h"
 #include "Core/Thread/Task/TaskHelpers.h"
 #include "Core/Thread/ThreadPool.h"
 

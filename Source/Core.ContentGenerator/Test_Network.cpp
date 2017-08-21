@@ -15,6 +15,9 @@
 #include "Core.Serialize/XML/Document.h"
 #include "Core.Serialize/XML/Element.h"
 
+#include "Core/Diagnostic/Logger.h"
+#include "Core/IO/FS/Filename.h"
+
 namespace Core {
 namespace ContentGenerator {
 //----------------------------------------------------------------------------
@@ -152,7 +155,8 @@ static void Test_HttpGet_() {
 
     if (response.Status() == Network::EHttpStatus::OK) {
         XML::FDocument xml;
-        if (not XML::FDocument::Load(&xml, L"network.tmp", &response.Body()))
+        IStreamReader* reader = &response.Body();
+        if (not XML::FDocument::Load(&xml, L"network.tmp", reader))
             AssertNotReached();
 
         std::cout << "XML:" << eol;

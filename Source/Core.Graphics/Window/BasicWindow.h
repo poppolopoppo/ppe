@@ -1,12 +1,13 @@
 #pragma once
 
-#include "Core/Core.h"
-
-#include "Core/Container/AssociativeVector.h"
-#include "Core/Memory/RefPtr.h"
+#include "Core.Graphics/Graphics.h"
 
 #include "Core.Graphics/Window/WindowMessage.h"
 #include "Core.Graphics/Window/WindowMessageHandler.h"
+
+#include "Core/Container/AssociativeVector.h"
+#include "Core/IO/String.h"
+#include "Core/Memory/RefPtr.h"
 
 namespace Core {
 namespace Graphics {

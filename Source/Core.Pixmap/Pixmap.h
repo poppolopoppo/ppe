@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.Pixmap/Pixmap.h"
+#include "Core/Core.h"
 
 #ifdef EXPORT_CORE_PIXMAP
 #   define CORE_PIXMAP_API DLL_EXPORT

@@ -13,8 +13,8 @@
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Token.h"
 #include "Core/Container/Vector.h"
-
 #include "Core/IO/Format.h"
+#include "Core/Thread/ThreadContext.h"
 
 namespace Core {
 namespace RTTI {

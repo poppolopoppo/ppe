@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.Network/Network.h"
+#include "Core/Core.h"
 
 #ifdef EXPORT_CORE_NETWORK
 #   define CORE_NETWORK_API DLL_EXPORT

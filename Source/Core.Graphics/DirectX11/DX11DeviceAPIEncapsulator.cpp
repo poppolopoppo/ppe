@@ -33,6 +33,7 @@
 #include "Helpers/RenderDocWrapper.h"
 
 #include "Core/Color/Color.h"
+#include "Core/Diagnostic/Logger.h"
 #include "Core/Maths/ScalarRectangle.h"
 #include "Core/Memory/UniqueView.h"
 

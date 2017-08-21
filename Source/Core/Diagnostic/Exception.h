@@ -2,6 +2,7 @@
 
 #include <exception>
 #include <iosfwd>
+#include <stdexcept>
 
 #ifndef FINAL_RELEASE
 #   define WITH_CORE_EXCEPTION_CALLSTACK 1 //%_NOCOMMIT%
