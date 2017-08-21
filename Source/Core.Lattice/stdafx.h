@@ -1,15 +1,17 @@
-// stdafx.h : fichier Include pour les fichiers Include système standard,
-// ou les fichiers Include spécifiques aux projets qui sont utilisés fréquemment,
-// et sont rarement modifiés
+// stdafx.h : include file for standard system include files,
+// or project specific include files that are used frequently, but
+// are changed infrequently
 //
 
 #pragma once
 
 #include "targetver.h"
 
-#include "Core/stdafx.h"
+#if defined(_MSC_VER)
+//  Include this asap to avoid M$ macro substitutions bullshit
+#   include "Core/Misc/Platform_Windows.h"
+#endif
 
-#include "Core/Core.h"
-#include "Core/IO/FileSystem_fwd.h"
-#include "Core/Memory/MemoryView.h"
-#include "Core/Memory/RefPtr.h"
+#include "Core.Lattice/Lattice.h"
+
+#include "Core.Lattice/stdafx.generated.h"

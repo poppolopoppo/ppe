@@ -19,28 +19,9 @@
 
 #if defined(_MSC_VER)
 //  Include this asap to avoid M$ macro substitutions bullshit
-#   include "Misc/Platform_Windows.h"
+#   include "Core/Misc/Platform_Windows.h"
 #endif
 
-#include <stdio.h>
-#include <tchar.h>
-
-#include <algorithm>
-#include <atomic>
-#include <cmath>
-#include <exception>
-#include <limits>
-#include <mutex>
-#include <utility>
-#include <type_traits>
-
-#include <iomanip>
-#include <iosfwd>
-#include <iostream>
-
-#include <locale>
-#include <string>
-
-#include <type_traits>
-
 #include "Core/Core.h"
+
+#include "Core/stdafx.generated.h"

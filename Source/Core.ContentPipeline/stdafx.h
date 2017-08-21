@@ -6,12 +6,12 @@
 #pragma once
 
 #include "targetver.h"
-#include "Core/stdafx.h"
 
-#include "Core.Graphics/stdafx.h"
-#include "Core.RTTI/stdafx.h"
-#include "Core.Serialize/stdafx.h"
+#if defined(_MSC_VER)
+//  Include this asap to avoid M$ macro substitutions bullshit
+#   include "Core/Misc/Platform_Windows.h"
+#endif
 
-#include "Core.Graphics/Graphics.h"
-#include "Core.RTTI/RTTI.h"
-#include "Core.Serialize/Serialize.h"
+#include "Core.ContentPipeline/ContentPipeline.h"
+
+#include "Core.ContentPipeline/stdafx.generated.h"
