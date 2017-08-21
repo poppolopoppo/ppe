@@ -57,6 +57,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .Defines_Link_Dll   = { 'DYNAMIC_LINK' }
 
             .Defines    + ."Defines_Link_$ConfigLinkType$"
+            .Defines    + "BUILDCONFIG_$Platform$_$Config$"
             .Defines    + .ProjectDefines
 
             ForEach( .define in .Defines )

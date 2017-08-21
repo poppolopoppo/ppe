@@ -5,6 +5,8 @@
 
 ; Utilisé aussi par les options du compilo
 ;#define USE_FASTBUILD_CACHE
+; Désactive l'utilisation des unity builds
+;#define DISABLE_UNITY_BUILDS ; %_NOCOMMIT%
 
 #include "_solution_path.bff" ; généré par fbuild.bat, permet d'avoir le rep du sln
 
@@ -24,8 +26,12 @@
 // Default Unity Options
 //------------------------------------------------------------------------------
 .UnityNumFiles = 5 ; peut être override par projet
-.UnityInputIsolateWritableFiles = false ; %_NOCOMMIT% ; passer à true désactive l'utilisation des unity builds
 .UnityInputIsolateListFile = '$BuildDirectory$/.modified_files'
+.UnityInputIsolateWritableFiles = false
+#if DISABLE_UNITY_BUILDS
+.UnityInputIsolateWritableFiles = true
+Print("Unity input isolate writable files")
+#endif
 
 //------------------------------------------------------------------------------
 // Default Visual Options
