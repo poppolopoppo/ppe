@@ -4,7 +4,7 @@
     .ProjectPath = '$SourceDiretory$/Core'
     .ProjectSolutionFolder = 'Core'
     .ProjectDefines = { 'EXPORT_CORE' }
-    .UnityNumFiles = 8
+    .UnityNumFiles = 6
     .ProjectIsolatedFiles =
     {
         'Core.cpp'

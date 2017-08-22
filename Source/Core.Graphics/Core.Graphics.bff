@@ -4,7 +4,7 @@
     .ProjectPath = '$SourceDiretory$/Core.Graphics'
     .ProjectSolutionFolder = 'Core'
     .ProjectDefines = { 'EXPORT_CORE_GRAPHICS' }
-    .UnityNumFiles = 6
+    .UnityNumFiles = 4
     .ProjectIsolatedFiles =
     {
         'Graphics.cpp',
