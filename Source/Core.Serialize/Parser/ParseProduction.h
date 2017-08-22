@@ -2,12 +2,13 @@
 
 #include "Core.Serialize/Serialize.h"
 
-#include "Core/Allocator/SingletonPoolAllocator.h"
-#include "Core/Container/Tuple.h"
-
 #include "Core.Serialize/Parser/Parser.h"
 #include "Core.Serialize/Parser/ParseList.h"
 #include "Core.Serialize/Parser/ParseResult.h"
+
+#include "Core/Allocator/SingletonPoolAllocator.h"
+#include "Core/Container/Tuple.h"
+#include "Core/Meta/Function.h"
 
 #include <functional>
 #include <type_traits>

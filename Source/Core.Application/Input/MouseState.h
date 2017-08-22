@@ -5,6 +5,7 @@
 #include "Core.Application/Input/InputState.h"
 #include "Core.Application/Input/MouseButton.h"
 
+#include "Core/Maths/MathHelpers.h"
 #include "Core/Meta/Optional.h"
 
 namespace Core {

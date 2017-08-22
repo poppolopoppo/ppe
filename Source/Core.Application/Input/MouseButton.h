@@ -2,6 +2,8 @@
 
 #include "Core.Application/Application.h"
 
+#include "Core/IO/StringView.h"
+
 namespace Core {
 namespace Application {
 //----------------------------------------------------------------------------
