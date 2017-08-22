@@ -4,7 +4,7 @@
 
 #include "Core/Allocator/NodeBasedContainerAllocator.h"
 #include "Core/Container/Stack.h"
-#include "Core/Memory/AlignedStorage.h"
+#include "Core/Meta/AlignedStorage.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Meta/PointerWFlags.h"
 

@@ -13,7 +13,7 @@
 #include "Core/Container/AssociativeVector.h"
 #include "Core/IO/FileSystem.h"
 #include "Core/IO/FS/ConstNames.h"
-#include "Core/Memory/AlignedStorage.h"
+#include "Core/Meta/AlignedStorage.h"
 
 namespace Core {
 namespace Lattice {

@@ -3,8 +3,8 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Alloca.h"
-#include "Core/Memory/AlignedStorage.h"
 #include "Core/Memory/MemoryView.h"
+#include "Core/Meta/AlignedStorage.h"
 
 #include <type_traits>
 

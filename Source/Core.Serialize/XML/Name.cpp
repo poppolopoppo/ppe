@@ -2,7 +2,7 @@
 
 #include "Name.h"
 
-#include "Core/Memory/AlignedStorage.h"
+#include "Core/Meta/AlignedStorage.h"
 
 namespace Core {
 namespace XML {

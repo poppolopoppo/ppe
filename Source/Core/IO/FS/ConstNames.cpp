@@ -2,8 +2,8 @@
 
 #include "ConstNames.h"
 
-#include "../FileSystem.h"
-#include "../../Memory/AlignedStorage.h"
+#include "IO/FileSystem.h"
+#include "Meta/AlignedStorage.h"
 
 #define FOREACH_FILESYSTEMCONSTNAMES(_Macro) \
     _Macro(FDirname,         DotDot,         L"..") \

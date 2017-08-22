@@ -4,7 +4,7 @@
 
 #include "Device/DeviceEncapsulator.h"
 
-#include "Core/Memory/AlignedStorage.h"
+#include "Core/Meta/AlignedStorage.h"
 
 namespace Core {
 namespace Graphics {

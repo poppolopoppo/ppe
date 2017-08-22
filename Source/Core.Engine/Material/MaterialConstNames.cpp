@@ -2,7 +2,7 @@
 
 #include "MaterialConstNames.h"
 
-#include "Core/Memory/AlignedStorage.h"
+#include "Core/Meta/AlignedStorage.h"
 #include "Core.Graphics/Device/BindName.h"
 
 namespace Core {

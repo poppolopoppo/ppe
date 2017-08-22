@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/Memory/AlignedStorage.h"
+#include "Core/Meta/AlignedStorage.h"
 #include "Core/Meta/Singleton.h"
 
 #ifdef _DEBUG

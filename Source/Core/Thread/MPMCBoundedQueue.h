@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/Memory/AlignedStorage.h"
+#include "Core/Meta/AlignedStorage.h"
 
 #include <atomic>
 #include <memory>

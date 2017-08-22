@@ -188,7 +188,7 @@
 #include "Core/Allocator/HeapAllocator.h" // 91% 22/24
 #include "Core/Allocator/AllocatorBase.h" // 91% 22/24
 #include "Core/Allocator/Heap.h" // 91% 22/24
-#include "Core/Memory/AlignedStorage.h" // 95% 23/24
+#include "Core/Meta/AlignedStorage.h" // 95% 23/24
 #include "Core/Meta/Singleton.h" // 91% 22/24
 #include "Core/Allocator/Mallocator.h" // 91% 22/24
 #include "Core/Allocator/Malloc.h" // 91% 22/24

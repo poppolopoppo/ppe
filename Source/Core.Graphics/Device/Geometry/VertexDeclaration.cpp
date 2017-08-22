@@ -5,8 +5,8 @@
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/Stream.h"
-#include "Core/Memory/AlignedStorage.h"
 #include "Core/Memory/MemoryView.h"
+#include "Core/Meta/AlignedStorage.h"
 
 #include "Device/DeviceEncapsulator.h"
 #include "VertexTypes.h"

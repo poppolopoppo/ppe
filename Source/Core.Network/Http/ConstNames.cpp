@@ -2,7 +2,7 @@
 
 #include "ConstNames.h"
 
-#include "Core/Memory/AlignedStorage.h"
+#include "Core/Meta/AlignedStorage.h"
 
 #define FOREACH_HTTPCONSTNAMES(_Macro) \
     _Macro(FName,           Accept,             "Accept") \

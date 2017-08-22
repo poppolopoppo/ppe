@@ -192,7 +192,7 @@
 #    include "Core/Allocator/HeapAllocator.h" // 111% 10/9
 #    include "Core/Allocator/AllocatorBase.h" // 111% 10/9
 #    include "Core/Allocator/Heap.h" // 111% 10/9
-#    include "Core/Memory/AlignedStorage.h" // 111% 10/9
+#    include "Core/Meta/AlignedStorage.h" // 111% 10/9
 #    include "Core/Meta/Singleton.h" // 111% 10/9
 #    include "Core/Allocator/Mallocator.h" // 111% 10/9
 #    include "Core/Allocator/Malloc.h" // 111% 10/9
@@ -280,7 +280,7 @@
 #    include "Core/Allocator/HeapAllocator.h" // 111% 10/9
 #    include "Core/Allocator/AllocatorBase.h" // 111% 10/9
 #    include "Core/Allocator/Heap.h" // 111% 10/9
-#    include "Core/Memory/AlignedStorage.h" // 111% 10/9
+#    include "Core/Meta/AlignedStorage.h" // 111% 10/9
 #    include "Core/Meta/Singleton.h" // 111% 10/9
 #    include "Core/Allocator/Mallocator.h" // 111% 10/9
 #    include "Core/Allocator/Malloc.h" // 111% 10/9
