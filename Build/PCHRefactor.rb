@@ -1,8 +1,8 @@
 #!/bin/env ruby
 
 VERSION = "1.0" # increment to invalidate all stdafx.generated.h
-PERCENT_INCLUSION_THRESHOLD = 65
-MIN_INCLUSION_COUNT = 3
+PERCENT_INCLUSION_THRESHOLD = 75
+MIN_INCLUSION_COUNT = 6
 
 require 'rbconfig'
 RUBY_INTERPRETER_PATH = File.join(
@@ -146,7 +146,7 @@ def process_target_deps(target, define, stds, sdks, prjs)
             next if filename =~ /\-inl\.h$/i
             filename = filename[sourcedir_cmp.length..-1]
             percent = ((100 * count) / sourcefiles_count)
-            prj << "\"#{filename}\"" if percent > PERCENT_INCLUSION_THRESHOLD && count > MIN_INCLUSION_COUNT
+            prj << "\"#{filename}\" // #{percent}% #{count}/#{sourcefiles_count}" if percent > PERCENT_INCLUSION_THRESHOLD && count > MIN_INCLUSION_COUNT
         elsif File.extname(filename).empty?
             basename = File.basename(filename)
             next if basename[0] == 'x' # MSVC includes
