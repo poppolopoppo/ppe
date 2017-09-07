@@ -200,9 +200,9 @@ struct TMetaTypeTraitsImpl< std::basic_string<_Char, _Traits, _Allocator> > {
     static void UnwrapCopy(wrapped_type& dst, const wrapper_type& src);
 };
 //----------------------------------------------------------------------------
-template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits, typename _Allocator>
-struct TMetaTypeTraitsImpl< Core::TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> > {
-    typedef Core::TToken<_Tag, _Char, _Sensitive, _TokenTraits, _Allocator> wrapped_type;
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
+struct TMetaTypeTraitsImpl< Core::TToken<_Tag, _Char, _Sensitive, _TokenTraits> > {
+    typedef Core::TToken<_Tag, _Char, _Sensitive, _TokenTraits> wrapped_type;
     typedef TBasicString<_Char> wrapper_type;
 
     typedef TMetaType< wrapper_type > meta_type;

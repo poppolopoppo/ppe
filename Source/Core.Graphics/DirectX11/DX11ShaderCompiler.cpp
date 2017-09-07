@@ -354,7 +354,7 @@ static void DX11ReflectShaderBlob_(
 
             const EValueType type = DX11ShaderTypeToValueType_(dx11TypeDesc);
 
-            layout->AddField(   FName(dx11VariableDesc.Name),
+            layout->AddField(   FName(MakeStringView(dx11VariableDesc.Name, Meta::FForceInit{})),
                                 type,
                                 dx11VariableDesc.StartOffset,
                                 dx11VariableDesc.Size,
@@ -363,7 +363,7 @@ static void DX11ReflectShaderBlob_(
 
         Assert(layout->Block().size() > 0);
         AssertRelease(checked_cast<size_t>(dx11ConstantDesc.Size) == layout->Block().SizeInBytes());
-        constants.Insert_AssertUnique(FName(dx11ConstantDesc.Name), layout);
+        constants.Insert_AssertUnique(FName(MakeStringView(dx11ConstantDesc.Name, Meta::FForceInit{})), layout);
     }
 
     for (UINT i = 0; i < dx11ShaderDesc.BoundResources; ++i) {
@@ -377,7 +377,8 @@ static void DX11ReflectShaderBlob_(
         AssertRelease(1 == dx11ResourceDesc.BindCount);
 
         FShaderProgramTexture texture;
-        texture.Name = dx11ResourceDesc.Name;
+        texture.Name = MakeStringView(dx11ResourceDesc.Name, Meta::FForceInit{});
+
         switch (dx11ResourceDesc.Dimension)
         {
         case ::D3D11_SRV_DIMENSION_TEXTURE2D:

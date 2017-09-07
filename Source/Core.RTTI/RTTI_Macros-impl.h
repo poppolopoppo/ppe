@@ -59,7 +59,8 @@
         char propName[] = STRINGIZE(_Name); \
         STATIC_ASSERT(sizeof(propName) > 1); \
         InplaceToUpper(propName[1]); \
-        _RTTI_PROPERTY_IMPL(&propName[1], Core::RTTI::FMetaProperty::Private, &object_type::_Name ) \
+        const FStringView capitalizedWithoutUnderscore(&propName[1], lengthof(propName) - 2); \
+        _RTTI_PROPERTY_IMPL(capitalizedWithoutUnderscore, Core::RTTI::FMetaProperty::Private, &object_type::_Name ) \
     } while (0);
 //----------------------------------------------------------------------------
 // Add a public property "SomeName" from a public field "SomeName"
