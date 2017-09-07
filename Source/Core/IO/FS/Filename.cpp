@@ -108,9 +108,15 @@ void FFilename::SetMountingPoint(const FMountingPoint& mountingPoint) {
     FMountingPoint oldMountingPoint;
     STACKLOCAL_POD_ARRAY(FDirname, dirnames, _dirpath.Depth());
     const size_t k = _dirpath.ExpandPath(oldMountingPoint, dirnames);
-    Assert(_dirpath.Depth() == k);
+    Assert(_dirpath.Depth() >= k);
     UNUSED(k);
-    _dirpath = FDirpath(mountingPoint, dirnames);
+    _dirpath = FDirpath(mountingPoint, dirnames.CutBeforeConst(k));
+}
+//----------------------------------------------------------------------------
+FFilename FFilename::WithReplacedMountingPoint(const FMountingPoint& mountingPoint) const {
+    FFilename cpy(*this);
+    cpy.SetMountingPoint(mountingPoint);
+    return cpy;
 }
 //----------------------------------------------------------------------------
 void FFilename::AppendBasename(const FileSystem::FStringView& basenameNoExt) {

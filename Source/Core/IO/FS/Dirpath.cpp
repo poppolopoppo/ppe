@@ -9,6 +9,7 @@
 
 #include "Allocator/Alloca.h"
 #include "Container/Token.h"
+#include "Container/Stack.h"
 #include "IO/FS/ConstNames.h"
 #include "Memory/UniqueView.h"
 
@@ -128,7 +129,7 @@ FDirpath::FDirpath(std::initializer_list<const FileSystem::char_type *> path)  {
     STACKLOCAL_POD_STACK(FFileSystemToken, tokens, path.size());
 
     for (const FileSystem::char_type *wcstr : path) {
-        tokens.Push(wcstr);
+        tokens.Push(MakeStringView(wcstr, Meta::FForceInit{}));
         Assert(!tokens.Peek()->empty());
     }
 

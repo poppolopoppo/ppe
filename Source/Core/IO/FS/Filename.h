@@ -52,6 +52,7 @@ public:
 
     FMountingPoint MountingPoint() const { return _dirpath.MountingPoint(); }
     void SetMountingPoint(const FMountingPoint& mountingPoint);
+    FFilename WithReplacedMountingPoint(const FMountingPoint& mountingPoint) const;
 
     size_t ExpandPath(FMountingPoint& mountingPoint, TMemoryView<FDirname>& dirnames) const { return _dirpath.ExpandPath(mountingPoint, dirnames); }
     const FBasenameNoExt& BasenameNoExt() const { return _basename.BasenameNoExt(); }
