@@ -10,6 +10,7 @@
 #include "Thread/AtomicSpinLock.h"
 
 #ifdef WITH_CORE_ASSERT
+#   include "Diagnostic/Callstack.h"
 #   include "Diagnostic/DecodedCallstack.h"
 #endif
 
@@ -22,6 +23,12 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 STATIC_ASSERT(64 == CACHELINE_SIZE);
+//----------------------------------------------------------------------------
+struct FBinnedPage_;
+struct FBinnedChunk_;
+struct FBinnedGlobalCache_;
+struct FBinnedThreadCache_;
+struct FBinnedAllocator_;
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT
 #   define WITH_MALLOCBINNED_FILLBLOCK //%_NOCOMMIT%
@@ -75,7 +82,11 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
         FBlock* Next;
 
 #ifdef WITH_CORE_ASSERT
-        STATIC_CONST_INTEGRAL(u32, Canary, 0xCDCDCDCD);
+#   ifdef ARCH_X86
+        STATIC_CONST_INTEGRAL(size_t, Canary, 0xCDCDCDCD);
+#   else
+        STATIC_CONST_INTEGRAL(size_t, Canary, 0xCDCDCDCDCDCDCDCDull);
+#   endif
         size_t _Canary;
         void MakeCanary() { _Canary = Canary; }
         bool TestCanary() const { return (Canary == _Canary); }
@@ -153,6 +164,69 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
         _freeCount++;
     }
 
+    void TakeOwn(FBinnedThreadCache_* newCache) {
+        Assert(CheckCanaries_());
+        
+        _threadCache = newCache;
+
+#ifdef WITH_CORE_ASSERT
+        if (nullptr == newCache)
+            Assert(CheckThreadSafety_());
+        else
+            _threadId = std::this_thread::get_id();
+#endif
+    }
+
+#ifdef WITH_CORE_ASSERT
+    void ReportLeaks() const {
+        Assert(CheckCanaries_());
+
+        const size_t n = BlockAllocatedCount();
+        Assert(n);
+
+        size_t leakedNumBlocks = n;
+        size_t leakedSizeInBytes = n * BlockSizeInBytes();
+
+        forrange(i, 0, _usedCount) {
+            using block_type = FBinnedChunk_::FBlock;
+            block_type* const usedBlock = BlockAt_(i);
+
+            bool isLeak = true;
+            for (block_type* freeBlock = _freeBlock; freeBlock; freeBlock = freeBlock->Next) {
+                Assert(freeBlock->TestCanary());
+                if (freeBlock == usedBlock) {
+                    Assert(usedBlock->TestCanary());
+                    isLeak = false;
+                    break;
+                }
+            }
+
+            if (isLeak) {
+                size_t blockSizeInBytes = 0;
+                FCallstack callstack;
+                if (FetchMemoryBlockDebugInfos(usedBlock, &callstack, &blockSizeInBytes, true)) {
+                    FPlatform::DebugBreak();
+
+                    FDecodedCallstack decoded;
+                    callstack.Decode(&decoded);
+                    LOG(Error, L"[MallocBinned] leaked block {0} :\n{1}", FSizeInBytes{ blockSizeInBytes }, decoded);
+                }
+                else {
+                    LOG(Warning, L"[MallocBinned] no infos available for leaked memory block, try to turn on CORE_MALLOC_LOGGER_PROXY");
+                }
+            }
+        }
+
+        if (leakedNumBlocks) {
+            LOG(Error, L"[MallocBinned] leaked {0} blocks ({1}) in one chunk",
+                FCountOfElements{ leakedNumBlocks },
+                FSizeInBytes{ leakedSizeInBytes });
+
+            AssertNotReached();
+        }
+    }
+#endif
+
     static constexpr size_t NumClasses = 45;
     FORCE_INLINE static size_t MakeClass(size_t size) {
         constexpr size_t POW_N = 2;
@@ -163,6 +237,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     }
 
 private:
+    friend struct FBinnedGlobalCache_;
     friend struct FBinnedThreadCache_;
 
     FBinnedChunk_(FBinnedThreadCache_* threadCache, size_t class_)
@@ -210,10 +285,10 @@ private:
     TIntrusiveListNode<FBinnedChunk_> _node;
     typedef INTRUSIVELIST_ACCESSOR(&FBinnedChunk_::_node) list_type;
 
-    FBinnedThreadCache_* const _threadCache;
+    FBinnedThreadCache_* _threadCache;
 
 #ifdef WITH_CORE_ASSERT
-    const std::thread::id _threadId = std::this_thread::get_id();
+    std::thread::id _threadId = std::this_thread::get_id();
 
     STATIC_CONST_INTEGRAL(u32, Canary1, 0xBAADF00D);
     const u32 _canary1 = Canary1;
@@ -238,18 +313,51 @@ STATIC_ASSERT(sizeof(FBinnedChunk_) == CACHELINE_SIZE);
 struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
     STATIC_CONST_INTEGRAL(size_t, FreePagesMax, 128); // <=> 8 mo global cache (128 * 64 * 1024)
 
-    static FBinnedGlobalCache_ GInstance;
+    static FBinnedGlobalCache_& Instance() {
+        static FBinnedGlobalCache_ GInstance;
+        return GInstance;
+    }
 
     FBinnedGlobalCache_(const FBinnedGlobalCache_&) = delete;
     FBinnedGlobalCache_& operator =(const FBinnedGlobalCache_&) = delete;
 
-    ~FBinnedGlobalCache_() {
+    NO_INLINE ~FBinnedGlobalCache_() {
+        // release dangling chunks, report potentially leaked blocks
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        INTRUSIVELIST(&FBinnedChunk_::_node) chunksToRelease = _danglingChunks;
+        _danglingChunks.Clear();
+
+        while (FBinnedChunk_* chunk = chunksToRelease.PopHead()) {
+            Assert(chunk->_threadCache == nullptr);
+
+            ONLY_IF_ASSERT(b->ReportLeaks());
+
+            if (chunk->BlockAllocatedCount() == 0) {
+                ONLY_IF_ASSERT(chunk->~FBinnedChunk_());
+                ONLY_IF_ASSERT(FillBlockDeleted_(b, FBinnedChunk_::ChunkSizeInBytes));
+
+                FBinnedPage_::Release((FBinnedPage_*)chunk);
+            }
+            else {
+                // keep leaking blocks alive to avoid crashing
+                _danglingChunks.PushFront(chunk);
+            }
+        }
+
         // release pages in cache
         while (FBinnedPage_* p = _freePages.PopHead()) {
-            Assert(_freePagesCount);
+            Assert(_freePagesCount--);
+
             FBinnedPage_::Release(p);
-            _freePagesCount--;
+
+#ifdef USE_MEMORY_DOMAINS
+            MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Deallocate(1, FBinnedPage_::PageSize);
+#endif
         }
+
+        // will not try to cache next pages (in case of very late deallocation in another static)
+        _freePagesCount = FreePagesMax;
     }
 
     FBinnedPage_* AllocPage() {
@@ -259,7 +367,9 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
 
             if (FBinnedPage_* p = _freePages.PopHead()) {
                 Assert(_freePagesCount);
+                
                 _freePagesCount--;
+
 #ifdef USE_MEMORY_DOMAINS
                 MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Deallocate(1, FBinnedPage_::PageSize);
 #endif
@@ -290,91 +400,55 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
         }
     }
 
+    NO_INLINE void RegisterDanglingChunk(FBinnedChunk_* chunk) {
+        Assert(chunk);
+        Assert(chunk->BlockAllocatedCount() > 0);
+
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        Assert(not _danglingChunks.Contains(chunk));
+
+        chunk->TakeOwn(nullptr);
+        _danglingChunks.PushFront(chunk);
+    }
+
+    NO_INLINE bool StealDanglingChunk(FBinnedChunk_* chunk, FBinnedThreadCache_* newCache) {
+        Assert(chunk);
+        Assert(chunk->BlockAllocatedCount() > 0);
+        Assert(newCache);
+
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        if (chunk->ThreadCache())
+            return false;
+
+        Assert(_danglingChunks.Contains(chunk));
+
+        chunk->TakeOwn(newCache);
+        _danglingChunks.Erase(chunk);
+
+        return true;
+    }
+
 private:
     size_t _freePagesCount;
     FAtomicSpinLock _barrier;
     INTRUSIVESINGLELIST(&FBinnedPage_::Node) _freePages;
+    INTRUSIVELIST(&FBinnedChunk_::_node) _danglingChunks;
 
     FBinnedGlobalCache_() : _freePagesCount(0) {}
 };
-FBinnedGlobalCache_ FBinnedGlobalCache_::GInstance;
 //----------------------------------------------------------------------------
 struct FBinnedThreadCache_ {
     STATIC_CONST_INTEGRAL(size_t, FreePagesMax, 16); // <=> 1 mo cache per thread (16 * 64 * 1024)
 
-    static THREAD_LOCAL FBinnedThreadCache_ GInstanceTLS;
+    static FBinnedThreadCache_& InstanceTLS() {
+        static THREAD_LOCAL FBinnedThreadCache_ GInstanceTLS;
+        return GInstanceTLS;
+    }
 
     FBinnedThreadCache_(const FBinnedThreadCache_&) = delete;
     FBinnedThreadCache_& operator =(const FBinnedThreadCache_&) = delete;
-
-    ~FBinnedThreadCache_() {
-        // release pending blocks before checking for leaks :
-        ReleasePendingBlocks();
-
-#ifdef WITH_CORE_ASSERT
-        // check for leaks :
-        {
-            size_t leakedNumBlocks = 0;
-            size_t leakedSizeInBytes = 0;
-            forrange(sizeClass, 0, FBinnedChunk_::NumClasses) {
-                for (FBinnedChunk_* p = _buckets[sizeClass]; p; p = p->_node.Next) {
-                    const size_t n = p->BlockAllocatedCount();
-                    Assert(n);
-
-                    leakedNumBlocks += n;
-                    leakedSizeInBytes += n * p->BlockSizeInBytes();
-
-                    forrange(i, 0, p->_usedCount) {
-                        using block_type = FBinnedChunk_::FBlock;
-                        block_type* usedBlock = p->BlockAt_(i);
-
-                        bool isLeak = true;
-                        for (block_type* freeBlock = p->_freeBlock; freeBlock; freeBlock = freeBlock->Next) {
-                            if (freeBlock == usedBlock) {
-                                isLeak = false;
-                                break;
-                            }
-                        }
-
-                        if (isLeak) {
-                            size_t blockSizeInBytes = 0;
-                            FDecodedCallstack callstack;
-                            if (FetchMemoryBlockDebugInfos(usedBlock, &callstack, &blockSizeInBytes, true)) {
-                                LOG(Error, L"[MallocBinned] leaked block {0} :\n{1}", FSizeInBytes{ blockSizeInBytes }, callstack);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (leakedNumBlocks) {
-                LOG(Error, L"[MallocBinned] leaked {0} blocks ({1})", 
-                    FCountOfElements{ leakedNumBlocks },
-                    FSizeInBytes{ leakedSizeInBytes } );
-
-                AssertNotReached();
-            }
-        }
-#endif
-
-        // worst case scenario, still recycle pages :
-        for (FBinnedChunk_*& p : _buckets) {
-            using list_type = FBinnedChunk_::list_type;
-            while (FBinnedChunk_* chunk = list_type::PopHead(&p, nullptr)) {
-                Assert(chunk->_threadCache == this);
-                ONLY_IF_ASSERT(chunk->~FBinnedChunk_());
-                ONLY_IF_ASSERT(FillBlockDeleted_(chunk, FBinnedChunk_::ChunkSizeInBytes));
-                ReleasePage_((FBinnedPage_*)chunk);
-            }
-        }
-
-        // release pages in cache
-        while (FBinnedPage_* p = _freePages.PopHead()) {
-            Assert(_freePagesCount);
-            FBinnedPage_::Release(p);
-            _freePagesCount--;
-        }
-    }
 
     void* Allocate(size_t sizeInBytes) {
         using list_type = FBinnedChunk_::list_type;
@@ -391,6 +465,8 @@ struct FBinnedThreadCache_ {
                 // poke the chunk with free blocks first if it's not already
                 if (chunk != _buckets[sizeClass] && chunk->_freeCount)
                     list_type::Poke(&_buckets[sizeClass], nullptr, chunk);
+
+                // found a free block :
                 return p;
             }
             Assert(0 == chunk->_freeCount);
@@ -420,9 +496,17 @@ struct FBinnedThreadCache_ {
 
         // Register the block for deletion in another thread
         if (this != chunk->_threadCache) {
-            chunk->_threadCache->RegisterPendingBlock(block);
-            return;
+            if (FBinnedGlobalCache_::Instance().StealDanglingChunk(chunk, this)) {
+                list_type::PushFront(&_buckets[chunk->_class], nullptr, chunk);
+            }
+            else {
+                Assert(chunk->_threadCache);
+                chunk->_threadCache->RegisterPendingBlock(block);
+                return;
+            }
         }
+
+        Assert(this == chunk->_threadCache);
 
         // Check that the block if freed from the same thread
         Assert(list_type::Contains(_buckets[chunk->_class], chunk));
@@ -443,7 +527,7 @@ struct FBinnedThreadCache_ {
         }
     }
 
-    void RegisterPendingBlock(FBinnedChunk_::FBlock* block) {
+    NO_INLINE void RegisterPendingBlock(FBinnedChunk_::FBlock* block) {
         Assert(block);
         Assert(block->TestCanary());
         Assert(this == block->Owner()->_threadCache);
@@ -451,48 +535,96 @@ struct FBinnedThreadCache_ {
         const FAtomicSpinLock::FScope scopeLock(_pendingBarrier);
 
         const size_t slot = _pendingBlocksCount++;
-        AssertRelease(slot < PendingBlocksCapacity);
-        Assert(nullptr == _pendingBlocks[slot]);
-
-        _pendingBlocks[slot] = block;
 
         ONLY_IF_ASSERT(FillBlockPending_(block, block->Owner()->BlockSizeInBytes()));
         ONLY_IF_ASSERT(block->MakeCanary());
+
+        block->Next = _pendingBlocks;
+        _pendingBlocks = block;
     }
 
     bool ReleasePendingBlocks() {
-        Likely(0 == _pendingBlocks);
         if (0 == _pendingBlocksCount)
             return false;
 
         const FAtomicSpinLock::FScope scopeLock(_pendingBarrier);
 
-        const size_t n = _pendingBlocksCount.exchange(0);
-        forrange(i, 0, n) {
-            FBinnedChunk_::FBlock*& block = _pendingBlocks[i];
-            Assert(block);
-            Assert(block->TestCanary());
-            Assert(this == block->Owner()->_threadCache);
+        while (_pendingBlocks) {
+            Assert(_pendingBlocks->TestCanary());
+            Assert(this == _pendingBlocks->Owner()->_threadCache);
 
-            Release(block);
+            FBinnedChunk_::FBlock* next = _pendingBlocks->Next;
 
-            ONLY_IF_ASSERT(block = nullptr);
+            Release(_pendingBlocks);
+
+            _pendingBlocks = next;
         }
+
+        _pendingBlocksCount = 0;
 
         return true;
     }
 
+    NO_INLINE ~FBinnedThreadCache_() {
+        LOG(Info, L"[MallocBinned] Shutdown thread cache {0:X}", std::this_thread::get_id());
+
+        FBinnedGlobalCache_& globalCache = FBinnedGlobalCache_::Instance();
+
+        // thread safety while releasing pending blocks, alive deallocations will need to still the chunk
+        {
+            const FAtomicSpinLock::FScope scopeLock(_pendingBarrier);
+
+            // release pending blocks before checking for leaks :
+            while (_pendingBlocks) {
+                Assert(_pendingBlocks->TestCanary());
+                Assert(this == _pendingBlocks->Owner()->_threadCache);
+
+                FBinnedChunk_::FBlock* next = _pendingBlocks->Next;
+
+                Release(_pendingBlocks);
+
+                _pendingBlocks = next;
+            }
+
+            // look for chunks still alive
+            forrange(sizeClass, 0, FBinnedChunk_::NumClasses) {
+                FBinnedChunk_* next;
+                for (FBinnedChunk_* b = _buckets[sizeClass]; b; b = next) {
+                    next = b->_node.Next;
+
+                    // detach the chunk from this thread
+                    globalCache.RegisterDanglingChunk(b);
+                }
+
+                _buckets[sizeClass] = nullptr;
+            }
+        }
+
+        // release pages in local cache
+        while (FBinnedPage_* p = _freePages.PopHead()) {
+            Assert(_freePagesCount--);
+            globalCache.ReleasePage(p);
+        }
+
+        // will not try to cache next pages (in case of very late deallocation in another static)
+        _freePagesCount = FreePagesMax;
+    }
+
 private:
+    std::atomic<size_t> _pendingBlocksCount;
+    FBinnedChunk_::FBlock* _pendingBlocks = nullptr;
+    FAtomicSpinLock _pendingBarrier;
+
     FBinnedChunk_* _buckets[FBinnedChunk_::NumClasses] = { 0 };
     INTRUSIVESINGLELIST(&FBinnedPage_::Node) _freePages;
     size_t _freePagesCount;
 
-    FAtomicSpinLock _pendingBarrier;
-    std::atomic<size_t> _pendingBlocksCount;
-    STATIC_CONST_INTEGRAL(size_t, PendingBlocksCapacity, 128);
-    FBinnedChunk_::FBlock* _pendingBlocks[PendingBlocksCapacity] = { 0 };
-
-    FBinnedThreadCache_() : _freePagesCount(0), _pendingBlocksCount(0) {}
+    FBinnedThreadCache_() 
+        : _pendingBlocksCount(0)
+        , _pendingBlocks(nullptr)
+        , _freePagesCount(0) {
+        LOG(Info, L"[MallocBinned] Start thread cache {0:X}", std::this_thread::get_id());
+    }
 
     FBinnedPage_* AllocPage_() {
         if (FBinnedPage_* p = _freePages.PopHead()) {
@@ -504,14 +636,14 @@ private:
             return p;
         }
         else {
-            return FBinnedGlobalCache_::GInstance.AllocPage();
+            return FBinnedGlobalCache_::Instance().AllocPage();
         }
     }
 
-    void ReleasePage_(FBinnedPage_* page) {
+    NO_INLINE void ReleasePage_(FBinnedPage_* page) {
         Likely(_freePagesCount != FreePagesMax);
         if (_freePagesCount == FreePagesMax) {
-            FBinnedGlobalCache_::GInstance.ReleasePage(page);
+            FBinnedGlobalCache_::Instance().ReleasePage(page);
         }
         else {
             Assert(_freePagesCount < FreePagesMax);
@@ -523,13 +655,15 @@ private:
         }
     }
 };
-THREAD_LOCAL FBinnedThreadCache_ FBinnedThreadCache_::GInstanceTLS;
 //----------------------------------------------------------------------------
 struct CACHELINE_ALIGNED FBinnedAllocator_ {
     STATIC_CONST_INTEGRAL(size_t, VMCacheBlocks,        32);
     STATIC_CONST_INTEGRAL(size_t, VMCacheSizeInBytes,   16*1024*1024); // <=> 16 mo global cache for large blocks
 
-    static FBinnedAllocator_ GInstance;
+    static FBinnedAllocator_& Instance() {
+        static FBinnedAllocator_ GInstance;
+        return GInstance;
+    }
 #ifdef WITH_CORE_ASSERT
     static THREAD_LOCAL bool GIsInAllocatorTLS;
     struct FCheckReentrancy {
@@ -553,9 +687,9 @@ struct CACHELINE_ALIGNED FBinnedAllocator_ {
         if (0 == sizeInBytes)
             return nullptr;
         else if (sizeInBytes <= FBinnedChunk_::MaxSizeInBytes)
-            return FBinnedThreadCache_::GInstanceTLS.Allocate(sizeInBytes);
+            return FBinnedThreadCache_::InstanceTLS().Allocate(sizeInBytes);
         else
-            return GInstance.AllocLargeBlock_(sizeInBytes);
+            return Instance().AllocLargeBlock_(sizeInBytes);
     }
 
     FORCE_INLINE static void Release(void* p) {
@@ -564,9 +698,9 @@ struct CACHELINE_ALIGNED FBinnedAllocator_ {
         if (nullptr == p)
             return;
         else if (not IS_ALIGNED(FBinnedChunk_::ChunkSizeInBytes, p))
-            FBinnedThreadCache_::GInstanceTLS.Release(p);
+            FBinnedThreadCache_::InstanceTLS().Release(p);
         else
-            GInstance.ReleaseLargeBlock_(p);
+            Instance().ReleaseLargeBlock_(p);
     }
 
     FORCE_INLINE static size_t RegionSize(void* p) {
@@ -585,21 +719,25 @@ private:
 
     FBinnedAllocator_() {
         STATIC_ASSERT(FBinnedPage_::PageSize == FBinnedChunk_::ChunkSizeInBytes);
+        LOG(Info, L"[MallocBinned] Start allocator");
     }
 
-    void* AllocLargeBlock_(size_t sizeInBytes) {
+    ~FBinnedAllocator_() {
+        LOG(Info, L"[MallocBinned] Shutdown allocator");
+    }
+
+    NO_INLINE void* AllocLargeBlock_(size_t sizeInBytes) {
         STATIC_ASSERT(FBinnedPage_::PageSize == 64 * 1024);
         sizeInBytes = ROUND_TO_NEXT_64K(sizeInBytes);
         const FAtomicSpinLock::FScope scopeLock(_barrier);
         return _vm.Allocate(sizeInBytes);
     }
 
-    void ReleaseLargeBlock_(void* p) {
+    NO_INLINE void ReleaseLargeBlock_(void* p) {
         const FAtomicSpinLock::FScope scopeLock(_barrier);
         _vm.Free(p);
     }
 };
-FBinnedAllocator_ FBinnedAllocator_::GInstance;
 #ifdef WITH_CORE_ASSERT
 THREAD_LOCAL bool FBinnedAllocator_::GIsInAllocatorTLS = false;
 #endif
@@ -669,9 +807,10 @@ void* FMallocBinned::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
 }
 //----------------------------------------------------------------------------
 void FMallocBinned::ReleasePendingBlocks() {
-    FBinnedThreadCache_::GInstanceTLS.ReleasePendingBlocks();
+    FBinnedThreadCache_::InstanceTLS().ReleasePendingBlocks();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
+

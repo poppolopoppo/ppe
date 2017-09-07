@@ -8,15 +8,15 @@ namespace Core {
 //----------------------------------------------------------------------------
 class FMallocBinned {
 public:
-    static CORE_API void* Malloc(size_t size);
-    static CORE_API void  Free(void* ptr);
-    static CORE_API void* Realloc(void* ptr, size_t size);
+    static void* Malloc(size_t size);
+    static void  Free(void* ptr);
+    static void* Realloc(void* ptr, size_t size);
 
-    static CORE_API void* AlignedMalloc(size_t size, size_t alignment);
-    static CORE_API void  AlignedFree(void* ptr);
-    static CORE_API void* AlignedRealloc(void* ptr, size_t size, size_t alignment);
+    static void* AlignedMalloc(size_t size, size_t alignment);
+    static void  AlignedFree(void* ptr);
+    static void* AlignedRealloc(void* ptr, size_t size, size_t alignment);
 
-    static CORE_API void  ReleasePendingBlocks();
+    static void  ReleasePendingBlocks();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
