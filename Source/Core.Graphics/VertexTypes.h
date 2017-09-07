@@ -2,6 +2,7 @@
 
 #include "Core.Graphics/Graphics.h"
 
+#include "Core/IO/String_fwd.h"
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/PackedVectors.h"
 

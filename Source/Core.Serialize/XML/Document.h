@@ -9,6 +9,7 @@
 #include "Core/IO/StringView.h"
 #include "Core/IO/VirtualFileSystem_fwd.h"
 #include "Core/Memory/RefPtr.h"
+#include "Core/Meta/Function.h"
 
 namespace Core {
 class IStreamReader;

@@ -9,6 +9,7 @@
 #include "Core/IO/String.h"
 #include "Core/IO/StringView.h"
 #include "Core/Memory/RefPtr.h"
+#include "Core/Meta/Function.h"
 
 namespace Core {
 namespace XML {

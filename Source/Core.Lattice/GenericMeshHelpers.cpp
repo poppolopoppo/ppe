@@ -9,6 +9,7 @@
 #include "Core/Container/BitSet.h"
 #include "Core/Container/Hash.h"
 #include "Core/Container/HashMap.h"
+#include "Core/Container/HashSet.h"
 #include "Core/Container/Vector.h"
 #include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/PNTriangle.h"

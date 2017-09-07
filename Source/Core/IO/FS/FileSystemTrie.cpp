@@ -5,6 +5,7 @@
 #include "Allocator/Alloca.h"
 #include "Allocator/PoolAllocator-impl.h"
 #include "Container/Hash.h"
+#include "Container/Stack.h"
 #include "Container/Vector.h"
 #include "IO/FileSystem.h"
 

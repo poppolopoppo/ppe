@@ -6,6 +6,7 @@
 #include "Symbols.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
+#include "Core/Container/Stack.h"
 #include "Core/IO/Stream.h"
 #include "Core/IO/String.h"
 

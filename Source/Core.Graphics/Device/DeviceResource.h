@@ -18,6 +18,7 @@
 #endif
 
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
+#   include "Core/IO/String_fwd.h"
 #   define ONLY_IF_GRAPHICS_DEVICERESOURCE_NAME(...) __VA_ARGS__
 #else
 #   define ONLY_IF_GRAPHICS_DEVICERESOURCE_NAME(...) NOOP()
