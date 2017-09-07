@@ -60,13 +60,13 @@
   </Type>
 
   <Type Name="Core::THashTable&lt;*, *, *, *, *&gt;">
-    <DisplayString>{{ size={_size_capacityIndex>>5}, capacity={Core::details::HashTableCapacityForValue_[_size_capacityIndex&amp;31]} }}</DisplayString>
+    <DisplayString>{{ size={_size_capacityIndex&gt;&gt;5}, capacity={Core::details::HashTableCapacityForValue_[_size_capacityIndex&amp;31]} }}</DisplayString>
     <Expand>
-      <Item Name="Size">_size_capacityIndex>>5</Item>
+      <Item Name="Size">_size_capacityIndex&gt;&gt;5</Item>
       <Item Name="Capacity for hashes">Core::details::HashTableCapacityForHash_[_size_capacityIndex&amp;31]</Item>
       <Item Name="Capacity for values">Core::details::HashTableCapacityForValue_[_size_capacityIndex&amp;31]</Item>
       <ArrayItems>
-        <Size>_size_capacityIndex>>5</Size>
+        <Size>_size_capacityIndex&gt;&gt;5</Size>
         <ValuePointer>_values_hashIndices</ValuePointer>
       </ArrayItems>
     </Expand>
@@ -160,20 +160,24 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TToken&lt;*, char, *, *, * &gt;">
-    <DisplayString>{_data.Ptr,[(int)_data.Ptr[-1]]s}</DisplayString>
-    <StringView>_data.Ptr,[(int)_data.Ptr[-1]]s</StringView>
+  <Type Name="Core::TToken&lt;*, char, *, * &gt;">
+    <DisplayString Condition="_handle != nullptr">{(const char*)(_handle+1),[(int)_handle-&gt;Length]s}</DisplayString>
+    <DisplayString>empty</DisplayString>
+    <StringView>(const char*)(_handle+1),[(int)_handle-&gt;Length]s</StringView>
     <Expand>
-      <Item Name="String">_data.Ptr,[_data.Ptr[-1]]s</Item>
-      <Item Name="Length">(int)_data.Ptr[-1]</Item>
+      <Item Name="String" Condition="_handle != nullptr">(const char*)(_handle+1),[(int)_handle-&gt;Length]s</Item>
+      <Item Name="Length" Condition="_handle != nullptr">(int)_handle-&gt;Length</Item>
+      <Item Name="HashValue" Condition="_handle != nullptr">(int)_handle-&gt;HashValue,X</Item>
     </Expand>
   </Type>
-  <Type Name="Core::TToken&lt;*, wchar_t, *, *, * &gt;">
-    <DisplayString>{_data.Ptr,[(int)_data.Ptr[-1]]su}</DisplayString>
-    <StringView>_data.Ptr,[(int)_data.Ptr[-1]]su</StringView>
+  <Type Name="Core::TToken&lt;*, wchar_t, *, * &gt;">
+    <DisplayString Condition="_handle != nullptr">{(const wchar_t*)(_handle+1),[(int)_handle-&gt;Length]su}</DisplayString>
+    <DisplayString Condition="_handle == nullptr">empty</DisplayString>
+    <StringView>(const wchar_t*)(_handle+1),[(int)_handle-&gt;Length]su</StringView>
     <Expand>
-      <Item Name="String">_data.Ptr,[_data.Ptr[-1]]su</Item>
-      <Item Name="Length">(int)_data.Ptr[-1]</Item>
+      <Item Name="String" Condition="_handle != nullptr">(const wchar_t*)(_handle+1),[(int)_handle-&gt;Length]su</Item>
+      <Item Name="Length" Condition="_handle != nullptr">(int)_handle-&gt;Length</Item>
+      <Item Name="HashValue" Condition="_handle != nullptr">(int)_handle-&gt;HashValue,X</Item>
     </Expand>
   </Type>
 
@@ -194,9 +198,10 @@
     <DisplayString>{_basenameNoExt} {_extname}</DisplayString>
   </Type>
   <Type Name="Core::FDirpath">
-    <DisplayString Condition="_path._ptr != nullptr">[{_path._ptr->_depth}] {*_path._ptr}"</DisplayString>
+    <DisplayString Condition="_path._ptr != nullptr">[{_path._ptr-&gt;_depth}] {*_path._ptr}"</DisplayString>
+    <DisplayString>empty</DisplayString>
     <Expand>
-      <Item Name="Depth">_path._ptr->_depth</Item>
+      <Item Name="Depth">_path._ptr-&gt;_depth</Item>
       <Item Name="Path" Condition="_path._ptr != nullptr">*_path._ptr</Item>
     </Expand>
   </Type>
@@ -211,7 +216,7 @@
   <Type Name="Core::TRefPtr&lt;* &gt;">
     <DisplayString>{_ptr}</DisplayString>
     <Expand>
-      <Item Name="RefCount" Condition="_ptr != nullptr">_ptr->_refCount</Item>
+      <Item Name="RefCount" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
       <ExpandedItem>_ptr</ExpandedItem>
     </Expand>
   </Type>
@@ -219,8 +224,8 @@
   <Type Name="Core::TSafePtr&lt;* &gt;">
     <DisplayString>{_ptr}</DisplayString>
     <Expand>
-      <Item Name="RefCount" Condition="_ptr != nullptr">_ptr->_refCount</Item>
-      <Item Name="SafeCount" Condition="_ptr != nullptr">_ptr->_safeRefCount</Item>
+      <Item Name="RefCount" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
+      <Item Name="SafeCount" Condition="_ptr != nullptr">_ptr-&gt;_safeRefCount</Item>
       <ExpandedItem>_ptr</ExpandedItem>
     </Expand>
   </Type>
