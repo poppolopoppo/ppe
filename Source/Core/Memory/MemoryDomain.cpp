@@ -53,10 +53,8 @@ namespace {
 //----------------------------------------------------------------------------
 static FMemoryTrackingData *GAllMemoryDomainTrackingData[] = {
 //----------------------------------------------------------------------------
-    &MEMORY_DOMAIN_TRACKING_DATA(Global)
-//----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
-#   define MEMORY_DOMAIN_IMPL(_Name, _Parent) COMMA &MEMORY_DOMAIN_TRACKING_DATA(_Name)
+#   define MEMORY_DOMAIN_IMPL(_Name, _Parent) &MEMORY_DOMAIN_TRACKING_DATA(_Name) COMMA
 #else
 #   define MEMORY_DOMAIN_IMPL(_Name, _Parent)
 #endif
@@ -81,7 +79,12 @@ namespace {
 #ifdef USE_MEMORY_DOMAINS
 struct FAdditionalTrackingData {
     std::mutex Barrier;
-    TVector<FMemoryTrackingData *, std::allocator<FMemoryTrackingData *>> Datas;
+    STATIC_CONST_INTEGRAL(size_t, Capacity, 2048);
+    VECTORINSITU(Internal, FMemoryTrackingData*, Capacity) Datas;
+    FAdditionalTrackingData() {
+        // don't want to allocate on other threads :
+        Datas.reserve_AssumeEmpty(Capacity);
+    }
 };
 static FAdditionalTrackingData* GAllAdditionalTrackingData = nullptr;
 #endif
@@ -115,7 +118,8 @@ void RegisterAdditionalTrackingData(FMemoryTrackingData *pTrackingData) {
     AssertRelease(GAllAdditionalTrackingData);
     SKIP_MEMORY_LEAKS_IN_SCOPE();
     std::unique_lock<std::mutex> scopeLock(GAllAdditionalTrackingData->Barrier);
-    Add_AssertUnique(GAllAdditionalTrackingData->Datas, pTrackingData);
+    Assert(not Contains(GAllAdditionalTrackingData->Datas, pTrackingData));
+    GAllAdditionalTrackingData->Datas.push_back_AssumeNoGrow(pTrackingData);
 #else
     UNUSED(pTrackingData);
 #endif
@@ -137,11 +141,9 @@ void ReportAdditionalTrackingData() {
 #if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
     AssertRelease(GAllAdditionalTrackingData);
     SKIP_MEMORY_LEAKS_IN_SCOPE();
-    std::unique_lock<std::mutex> scopeLock(GAllAdditionalTrackingData->Barrier);
-    const FMemoryTrackingData **ptr = (const FMemoryTrackingData **)&GAllAdditionalTrackingData->Datas[0];
-    const TMemoryView<const FMemoryTrackingData *> datas(ptr, GAllAdditionalTrackingData->Datas.size());
     FLoggerStream log(ELogCategory::Debug);
-    ReportTrackingDatas(log, L"Additional", datas);
+    std::unique_lock<std::mutex> scopeLock(GAllAdditionalTrackingData->Barrier);
+    ReportTrackingDatas(log, L"Additional", GAllAdditionalTrackingData->Datas.MakeConstView());
 #endif
 }
 //----------------------------------------------------------------------------

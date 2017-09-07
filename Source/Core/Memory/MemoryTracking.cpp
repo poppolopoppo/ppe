@@ -16,9 +16,9 @@ namespace Core {
 FMemoryTrackingData::FMemoryTrackingData(
     const char* optionalName /*= "unknown"*/,
     FMemoryTrackingData* optionalParent /*= nullptr*/)
-:   _name(optionalName), _parent(optionalParent),
-    _blockCount(0), _allocationCount(0), _totalSizeInBytes(0),
-    _maxBlockCount(0), _maxAllocationCount(0), _maxTotalSizeInBytes(0) {}
+:   _blockCount(0), _allocationCount(0), _totalSizeInBytes(0),
+    _maxBlockCount(0), _maxAllocationCount(0), _maxStrideInBytes(0), _minStrideInBytes(UINT32_MAX), _maxTotalSizeInBytes(0),
+    _parent(optionalParent), _name(optionalName) {}
 //----------------------------------------------------------------------------
 void FMemoryTrackingData::Allocate(size_t blockCount, size_t strideInBytes) {
     if (0 == blockCount)
@@ -28,19 +28,12 @@ void FMemoryTrackingData::Allocate(size_t blockCount, size_t strideInBytes) {
     _totalSizeInBytes += blockCount * strideInBytes;
     ++_allocationCount;
 
-    size_t value = 0;
+    _maxStrideInBytes = Max(_maxStrideInBytes.load(), strideInBytes);
+    _minStrideInBytes = Min(_minStrideInBytes.load(), strideInBytes);
 
-    value = _blockCount;
-    if (_maxBlockCount < value)
-        _maxBlockCount = value;
-
-    value = _allocationCount;
-    if (_maxAllocationCount < value)
-        _maxAllocationCount = value;
-
-    value = _totalSizeInBytes;
-    if (_maxTotalSizeInBytes < value)
-        _maxTotalSizeInBytes = value;
+    _maxBlockCount = Max(_maxBlockCount.load(), _blockCount.load());
+    _maxAllocationCount = Max(_maxAllocationCount.load(), _allocationCount.load());
+    _maxTotalSizeInBytes = Max(_maxTotalSizeInBytes.load(), _totalSizeInBytes.load());
 
     if (_parent)
         _parent->Allocate(blockCount, strideInBytes);
@@ -53,6 +46,8 @@ void FMemoryTrackingData::Deallocate(size_t blockCount, size_t strideInBytes) {
     Assert(_blockCount >= blockCount);
     Assert(_totalSizeInBytes >= blockCount * strideInBytes);
     Assert(_allocationCount);
+    Assert(_maxStrideInBytes >= strideInBytes);
+    Assert(_minStrideInBytes <= strideInBytes);
 
     _blockCount -= blockCount;
     _totalSizeInBytes -= blockCount * strideInBytes;
@@ -63,91 +58,55 @@ void FMemoryTrackingData::Deallocate(size_t blockCount, size_t strideInBytes) {
 }
 //----------------------------------------------------------------------------
 void FMemoryTrackingData::Pool_AllocateOneBlock(size_t blockSizeInBytes) {
-    if (_parent) {
-        ++_blockCount;
-        _totalSizeInBytes += blockSizeInBytes;
-        ++_allocationCount;
+    ++_blockCount;
 
-        size_t value = 0;
+    _maxStrideInBytes = Max(_maxStrideInBytes.load(), blockSizeInBytes);
+    _minStrideInBytes = Min(_minStrideInBytes.load(), blockSizeInBytes);
 
-        value = _blockCount;
-        if (_maxBlockCount < value)
-            _maxBlockCount = value;
-
-        value = _allocationCount;
-        if (_maxAllocationCount < value)
-            _maxAllocationCount = value;
-
-        value = _totalSizeInBytes;
-        if (_maxTotalSizeInBytes < value)
-            _maxTotalSizeInBytes = value;
-
+    if (_parent)
         _parent->Pool_AllocateOneBlock(blockSizeInBytes);
-    }
-    else {
-        ++_blockCount;
-
-        size_t value = _blockCount;
-        if (_maxBlockCount < value)
-            _maxBlockCount = value;
-    }
 }
 //----------------------------------------------------------------------------
 void FMemoryTrackingData::Pool_DeallocateOneBlock(size_t blockSizeInBytes) {
-    if (_parent) {
-        Assert(_blockCount >= 1);
-        Assert(_totalSizeInBytes >= blockSizeInBytes);
-        Assert(_allocationCount);
+    Assert(_blockCount >= 1);
+    Assert(_maxStrideInBytes >= blockSizeInBytes);
+    Assert(_minStrideInBytes <= blockSizeInBytes);
 
-        --_blockCount;
-        _totalSizeInBytes -= blockSizeInBytes;
-        --_allocationCount;
-
-        _parent->Pool_DeallocateOneBlock(blockSizeInBytes);
-    }
-    else {
-        Assert(_blockCount > 0);
-        --_blockCount;
-    }
-}
-//----------------------------------------------------------------------------
-void FMemoryTrackingData::Pool_AllocateOneChunk(size_t chunkSizeInBytes) {
-    if (_parent) {
-        _parent->Pool_AllocateOneChunk(chunkSizeInBytes);
-    }
-    else {
-        _totalSizeInBytes += chunkSizeInBytes;
-        ++_allocationCount;
-
-        _maxAllocationCount = max(_maxAllocationCount, _allocationCount).load();
-        _maxTotalSizeInBytes = max(_maxTotalSizeInBytes, _totalSizeInBytes).load();
-    }
-}
-//----------------------------------------------------------------------------
-void FMemoryTrackingData::Pool_DeallocateOneChunk(size_t chunkSizeInBytes) {
-    if (_parent) {
-        _parent->Pool_DeallocateOneChunk(chunkSizeInBytes);
-    }
-    else {
-        Assert(_totalSizeInBytes >= chunkSizeInBytes);
-        Assert(_allocationCount);
-
-        _totalSizeInBytes -= chunkSizeInBytes;
-        --_allocationCount;
-    }
-}
-//----------------------------------------------------------------------------
-void FMemoryTrackingData::Append(const FMemoryTrackingData& other) {
-    _blockCount += other._blockCount;
-    _allocationCount += other._allocationCount;
-    _totalSizeInBytes += other._totalSizeInBytes;
-
-    _maxBlockCount = max(_maxBlockCount, _blockCount).load();
-    _maxAllocationCount = max(_maxAllocationCount, _allocationCount).load();
-    _maxTotalSizeInBytes = max(_maxTotalSizeInBytes, _totalSizeInBytes).load();
+    --_blockCount;
 
     if (_parent)
-        _parent->Append(other);
+        _parent->Pool_DeallocateOneBlock(blockSizeInBytes);
+}
+//----------------------------------------------------------------------------
+void FMemoryTrackingData::Pool_AllocateOneChunk(size_t chunkSizeInBytes, size_t numBlocks) {
+    Assert(chunkSizeInBytes >= numBlocks);
+    Assert(numBlocks > 0);
+
+    _maxBlockCount += numBlocks;
+    _totalSizeInBytes += chunkSizeInBytes;
+    ++_allocationCount;
+
+    _maxAllocationCount = Max(_maxAllocationCount.load(), _allocationCount.load());
+    _maxTotalSizeInBytes = Max(_maxTotalSizeInBytes.load(), _totalSizeInBytes.load());
+
+    if (_parent)
+        _parent->Pool_AllocateOneChunk(chunkSizeInBytes, numBlocks);
+}
+//----------------------------------------------------------------------------
+void FMemoryTrackingData::Pool_DeallocateOneChunk(size_t chunkSizeInBytes, size_t numBlocks) {
+    Assert(chunkSizeInBytes >= numBlocks);
+    Assert(numBlocks > 0);
+
+    Assert(_maxBlockCount >= numBlocks);
+    Assert(_totalSizeInBytes >= chunkSizeInBytes);
+    Assert(_allocationCount);
+
+    _maxBlockCount -= numBlocks;
+    _totalSizeInBytes -= chunkSizeInBytes;
+    --_allocationCount;
+
+    if (_parent)
+        _parent->Pool_DeallocateOneChunk(chunkSizeInBytes, numBlocks);
 }
 //----------------------------------------------------------------------------
 FMemoryTrackingData& FMemoryTrackingData::Global() {
@@ -158,7 +117,7 @@ FMemoryTrackingData& FMemoryTrackingData::Global() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 static void TrackingDataAbsoluteName_(TBasicOCStrStream<char>& oss, const FMemoryTrackingData& trackingData) {
-    if (trackingData.Parent()) {
+    if (trackingData.Parent() && trackingData.Parent() != &FMemoryTrackingData::Global()) {
         TrackingDataAbsoluteName_(oss, *trackingData.Parent());
         oss << "::";
     }
@@ -175,7 +134,7 @@ static bool LessTrackingData_(const FMemoryTrackingData& lhs, const FMemoryTrack
 //----------------------------------------------------------------------------
 void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                             const wchar_t *header,
-                            const TMemoryView<const FMemoryTrackingData *>& datas ) {
+                            const TMemoryView<const FMemoryTrackingData * const>& datas ) {
     Assert(header);
 
     oss << L"Reporting trackings data :" << eol;
@@ -196,8 +155,8 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
             return LessTrackingData_(*lhs, *rhs);
     });
 
-    const size_t width = 109;
-    const wchar_t fmt[] = L" {0:-40}|{1:8} {2:10} |{3:8} {4:11} |{5:11} {6:11}\n";
+    const size_t width = 128;
+    const wchar_t fmt[] = L" {0:-37}|{1:8} {2:10} |{3:8} {4:11} |{5:8} {6:11} |{7:11} {8:11}\n";
 
     oss << Repeat<width>(L"-") << eol
         << "    " << header << L" (" << datas.size() << L" elements)" << eol
@@ -206,6 +165,7 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
     Format(oss, fmt,    L"Tracking Data FName",
                         L"Block", "Max",
                         L"Alloc", "Max",
+                        L"Stride", "Max",
                         L"Total", "Max" );
 
     oss << Repeat<width>(L"-") << eol;
@@ -220,6 +180,8 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                             data->MaxBlockCount(),
                             data->AllocationCount(),
                             data->MaxAllocationCount(),
+                            FSizeInBytes{ Min(data->MaxStrideInBytes(), data->MinStrideInBytes()) },
+                            data->MaxStrideInBytes(),
                             data->TotalSizeInBytes(),
                             data->MaxTotalSizeInBytes() );
     }

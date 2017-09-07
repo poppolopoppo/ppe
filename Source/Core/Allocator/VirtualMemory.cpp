@@ -163,7 +163,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first TR
 
 #ifdef USE_MEMORY_DOMAINS
             // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
-            trackingData.Deallocate(cachedBlock->SizeInBytes / alignment, alignment);
+            trackingData.Deallocate(1, cachedBlock->SizeInBytes);
 #endif
 
             if (cachedBlock + 1 != last)
@@ -193,8 +193,7 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
     if (0 == sizeInBytes)
         sizeInBytes = FVirtualMemory::AllocSizeInBytes(ptr);
 
-    const size_t alignment = FPlatform::SystemInfo.AllocationGranularity;
-    Assert(IS_ALIGNED(alignment, sizeInBytes));
+    Assert(IS_ALIGNED(FPlatform::SystemInfo.AllocationGranularity, sizeInBytes));
 
     if (sizeInBytes > maxCacheSizeInBytes) {
         FVirtualMemory::AlignedFree(ptr, sizeInBytes);
@@ -211,7 +210,7 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
 
 #ifdef USE_MEMORY_DOMAINS
         // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
-        trackingData.Deallocate(first->SizeInBytes / alignment, alignment);
+        trackingData.Deallocate(1, first->SizeInBytes);
 #endif
 
 #ifdef _DEBUG
@@ -229,7 +228,7 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
 
 #ifdef USE_MEMORY_DOMAINS
     // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
-    trackingData.Allocate(sizeInBytes / alignment, alignment);
+    trackingData.Allocate(1, sizeInBytes);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -246,8 +245,7 @@ void FVirtualMemoryCache::ReleaseAll(FFreePageBlock* first TRACKINGDATA_ARG_IFP)
 
 #ifdef USE_MEMORY_DOMAINS
         // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
-        const size_t alignment = FPlatform::SystemInfo.AllocationGranularity;
-        trackingData.Deallocate(first->SizeInBytes / alignment, alignment);
+        trackingData.Deallocate(1, first->SizeInBytes);
 #endif
 
 #ifdef _DEBUG
