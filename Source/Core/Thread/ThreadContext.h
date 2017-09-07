@@ -5,10 +5,10 @@
 #include <thread>
 
 // macro enable extension outside Core::
-#define CORE_THREADTAG_MAIN                0
-#define CORE_THREADTAG_WORKER            1
-#define CORE_THREADTAG_IO                2
-#define CORE_THREADTAG_LOWEST_PRIORITY  3
+#define CORE_THREADTAG_MAIN                 size_t(0)
+#define CORE_THREADTAG_WORKER               size_t(1)
+#define CORE_THREADTAG_IO                   size_t(2)
+#define CORE_THREADTAG_LOWEST_PRIORITY      size_t(3)
 
 namespace Core {
 //----------------------------------------------------------------------------
