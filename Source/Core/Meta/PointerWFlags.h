@@ -34,6 +34,10 @@ namespace Meta {
         _pFlags = (_pFlags & field_Flag01::Mask) | uintptr_t(ptr); \
     } \
     \
+    friend inline void swap(TPointerWFlags& lhs, TPointerWFlags& rhs) { \
+        std::swap(lhs._pFlags, rhs._pFlags); \
+    } \
+    \
     friend inline bool operator ==(const TPointerWFlags& lhs, const TPointerWFlags& rhs) { \
         return (lhs._pFlags == rhs._pFlags); \
     } \
