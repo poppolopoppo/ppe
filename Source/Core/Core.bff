@@ -8,7 +8,8 @@
     .ProjectIsolatedFiles =
     {
         'Core.cpp'
-        'Allocator/MallocBinned.cpp'
+        'Allocator/MallocBinned.cpp',
+        'Allocator/New.cpp',
         'Maths/SHVector_extern.cpp',
         'External/farmhash.cpp',
         'External/MurmurHash3.cpp',
