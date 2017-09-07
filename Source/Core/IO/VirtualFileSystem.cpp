@@ -84,7 +84,7 @@ bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TMemoryView<c
 
     const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(filename, (policy ^ EAccessPolicy::Compress
         ? policy - EAccessPolicy::Compress + EAccessPolicy::Binary
-        : policy ));
+        : policy ) + EAccessPolicy::Create );
 
     if (ostream) {
         if (policy ^ EAccessPolicy::Compress) {
@@ -224,7 +224,7 @@ void FVirtualFileSystemStartup::Start() {
     // saved directory
     {
         FWString path;
-        Format(path, L"{0}/../../Saved", FCurrentProcess::Instance().Directory());
+        Format(path, L"{0}/../../Output/Saved", FCurrentProcess::Instance().Directory());
         VFS.MountNativePath(MakeStringView(L"Saved:/"), path);
     }
     // system temporary path

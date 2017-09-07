@@ -43,10 +43,13 @@ public:
     static const FExtname& Tga();
 
     // Mounting points :
-    static const FMountingPoint& GameDataDir();
+    static const FMountingPoint& DataDir();
     static const FMountingPoint& ProcessDir();
+    static const FMountingPoint& SavedDir();
     static const FMountingPoint& TmpDir();
+    static const FMountingPoint& UserDir();
     static const FMountingPoint& VirtualDataDir();
+    static const FMountingPoint& WorkingDir();
 
     static void Start();
     static void Shutdown();

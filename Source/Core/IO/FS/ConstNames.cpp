@@ -33,10 +33,13 @@
     _Macro(FExtname,         Psd,            L".psd") \
     _Macro(FExtname,         Tga,            L".tga") \
     \
-    _Macro(FMountingPoint,   GameDataDir,    L"GameData:") \
-    _Macro(FMountingPoint,   ProcessDir,     L"Process:") \
-    _Macro(FMountingPoint,   TmpDir,         L"Tmp:") \
-    _Macro(FMountingPoint,   VirtualDataDir, L"VirtualData:")
+    _Macro(FMountingPoint,   DataDir,       L"Data:") \
+    _Macro(FMountingPoint,   ProcessDir,    L"Process:") \
+    _Macro(FMountingPoint,   SavedDir,      L"Saved:") \
+    _Macro(FMountingPoint,   TmpDir,        L"Tmp:") \
+    _Macro(FMountingPoint,   UserDir,       L"User:") \
+    _Macro(FMountingPoint,   VirtualDataDir,L"VirtualData:") \
+    _Macro(FMountingPoint,   WorkingDir,    L"Working:")
 
 namespace Core {
 //----------------------------------------------------------------------------
