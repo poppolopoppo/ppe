@@ -412,11 +412,12 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::swap_(TBasicHashTa
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::GrowIFN_ReturnNewCapacity_(size_type atleast) const -> size_type {
     atleast += (atleast * SlackFactor) >> 7;// (atleast * (100 - MaxLoadFactor))/100;
-    return ((atleast >= (_data.CapacityM1 + 1)) ? Meta::NextPow2(atleast) : 0);
+    return ((atleast > 0 && atleast >= (_data.CapacityM1 + 1)) ? Meta::NextPow2(atleast) : 0);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::ShrinkIFN_ReturnNewCapacity_(size_type atleast) const -> size_type {
+    if (atleast == 0) return 0;
     atleast += (atleast * SlackFactor) >> 7;// (atleast * (100 - MaxLoadFactor))/100;
     atleast = Meta::NextPow2(atleast);
     return ((atleast < (_data.CapacityM1 + 1)) ? atleast : 0);

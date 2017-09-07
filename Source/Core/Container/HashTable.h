@@ -150,9 +150,7 @@ public:
     typedef TIterator_<Meta::TAddConst<public_type>> const_iterator;
 
     TBasicHashTable() NOEXCEPT { 
-#ifndef WITH_CORE_THREADRESOURCE_CHECKS
-        STATIC_ASSERT(sizeof(*this) == sizeof(u32) * 2 + sizeof(intptr_t)); 
-#endif
+        STATIC_ASSERT(sizeof(_data) == sizeof(u32) * 2 + sizeof(intptr_t)); 
     }
     ~TBasicHashTable() { Assert(CheckInvariants()); clear_ReleaseMemory(); }
 
@@ -391,19 +389,20 @@ private:
     };
 
     struct EMPTY_BASES FData_ : hasher, key_equal {
-        pointer     StatesAndBuckets;
         u32         CapacityM1;
         u32         Size            : 24;
         mutable u32 MaxProbeDist    : 8;
+        pointer     StatesAndBuckets;
 
         FData_() : FData_(hasher{}, key_equal{}) {}
         FData_(hasher&& hash, key_equal&& equal)
             : hasher(std::move(hash))
             , key_equal(std::move(equal))
-            , StatesAndBuckets(nullptr)
             , CapacityM1(u32(-1))
             , Size(0)
-            , MaxProbeDist(0) {}
+            , MaxProbeDist(0) 
+            , StatesAndBuckets(nullptr) 
+        {}
 
 #if 0 // scrambling upper bits
         size_type HashKey(const key_type& key) const {
