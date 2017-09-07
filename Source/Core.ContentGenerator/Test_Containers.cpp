@@ -396,6 +396,42 @@ public:
         return (not key_equal()(_values[bucket], empty_key) ? _values + bucket : nullptr);
     }
 
+    void erase(const_reference value) {
+        Assert(0 < _capacity);
+        Assert(_size < _capacity);
+        const size_t h = hasher()(value);
+        /*
+        size_type bucket = h % _capacity;
+        size_type inc = 1 + (h>>16) % Min(5, _capacity - 1);
+        */
+        size_type bucket = size_type(h & (_capacity - 1));
+        size_type inc = 1;// +((h >> 16) & Min(5ul, _capacity - 1));
+
+        const value_type empty_key{};
+
+        while ( not key_equal()(_values[bucket], value) &&
+                not key_equal()(_values[bucket], empty_key) )
+            bucket = (bucket + inc < _capacity ? bucket + inc : (bucket + inc) - _capacity);
+
+        if (key_equal()(_values[bucket], empty_key))
+            return;
+
+        const size_type todelete = bucket;
+
+        size_type chaintail;
+        do {
+            chaintail = bucket;
+            bucket = (bucket + inc < _capacity ? bucket + inc : (bucket + inc) - _capacity);
+        } while (not key_equal()(_values[bucket], empty_key));
+
+        if (todelete != chaintail)
+            _values[todelete] = _values[chaintail];
+
+        _values[chaintail] = empty_key;
+
+        _size--;
+    }
+
     void clear() {
         Assert(_values);
         if (_capacity) {
@@ -485,7 +521,7 @@ void Test_Containers() {
                     break;
 
                 const FStringView word = Chomp(line);
-                words.emplace_back(ToString(word));
+                words.push_back_Default().assign(word);
             }
         }
 
@@ -505,6 +541,13 @@ void Test_Containers() {
 
         VECTOR_THREAD_LOCAL(Container, FStringView) search(input);
         std::random_shuffle(search.begin(), search.end());
+
+        VECTOR_THREAD_LOCAL(Container, FStringView) todelete(search);
+        std::random_shuffle(todelete.begin(), todelete.end());
+        todelete.resize(k / 2);
+
+        VECTOR_THREAD_LOCAL(Container, FStringView) searchafterdelete(input);
+        std::random_shuffle(searchafterdelete.begin(), searchafterdelete.end());
 
 #ifdef WITH_CORE_ASSERT
         static constexpr size_t loops = 10;
@@ -598,6 +641,20 @@ void Test_Containers() {
                             AssertNotReached();
                     }
             }
+            {
+                const FBenchmarkScope subbench("TCompactHashSet deletion");
+                PROFILING_SCOPE(Global, 4, "TCompactHashSet deletion");
+                for (const FStringView& word : todelete)
+                    set.erase(word);
+            }
+            {
+                const FBenchmarkScope subbench("TCompactHashSet search after delete");
+                PROFILING_SCOPE(Global, 4, "TCompactHashSet search after delete");
+                forrange(i, 0, loops) {
+                    for (const FStringView& word : searchafterdelete)
+                        set.find(word);
+                }
+            }
         }
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
@@ -637,6 +694,20 @@ void Test_Containers() {
                     for (const FStringView& word : negative)
                         if (nullptr != set.find(word))
                             AssertNotReached();
+                }
+            }
+            {
+                const FBenchmarkScope subbench("TCompactHashSet Memoize deletion");
+                PROFILING_SCOPE(Global, 4, "TCompactHashSet Memoize deletion");
+                for (const FStringView& word : todelete)
+                    set.erase(word);
+            }
+            {
+                const FBenchmarkScope subbench("TCompactHashSet Memoize search after delete");
+                PROFILING_SCOPE(Global, 4, "TCompactHashSet Memoize search after delete");
+                forrange(i, 0, loops) {
+                    for (const FStringView& word : searchafterdelete)
+                        set.find(word);
                 }
             }
         }
@@ -706,6 +777,20 @@ void Test_Containers() {
                             AssertNotReached();
                 }
             }
+            {
+                const FBenchmarkScope subbench("THashSet deletion");
+                PROFILING_SCOPE(Global, 4, "THashSet deletion");
+                for (const FStringView& word : todelete)
+                    set.erase(word);
+            }
+            {
+                const FBenchmarkScope subbench("THashSet search after delete");
+                PROFILING_SCOPE(Global, 4, "THashSet search after delete");
+                forrange(i, 0, loops) {
+                    for (const FStringView& word : searchafterdelete)
+                        set.find(word);
+                }
+            }
         }
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
@@ -736,6 +821,20 @@ void Test_Containers() {
                     for (const FStringView& word : negative)
                         if (set.end() != set.find(word))
                             AssertNotReached();
+                }
+            }
+            {
+                const FBenchmarkScope subbench("THashSet Memoize deletion");
+                PROFILING_SCOPE(Global, 4, "THashSet Memoize deletion");
+                for (const FStringView& word : todelete)
+                    set.erase(word);
+            }
+            {
+                const FBenchmarkScope subbench("THashSet Memoize search after delete");
+                PROFILING_SCOPE(Global, 4, "THashSet Memoize search after delete");
+                forrange(i, 0, loops) {
+                    for (const FStringView& word : searchafterdelete)
+                        set.find(word);
                 }
             }
         }
@@ -773,6 +872,20 @@ void Test_Containers() {
                             AssertNotReached();
                 }
             }
+            {
+                const FBenchmarkScope subbench("std::unordered_set deletion");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set deletion");
+                for (const FStringView& word : todelete)
+                    set.erase(word);
+            }
+            {
+                const FBenchmarkScope subbench("std::unordered_set search after delete");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set search after delete");
+                forrange(i, 0, loops) {
+                    for (const FStringView& word : searchafterdelete)
+                        set.find(word);
+                }
+            }
         }
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
@@ -807,6 +920,20 @@ void Test_Containers() {
                             AssertNotReached();
                 }
             }
+            {
+                const FBenchmarkScope subbench("std::unordered_set Memoize deletion");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set Memoize deletion");
+                for (const FStringView& word : todelete)
+                    set.erase(word);
+            }
+            {
+                const FBenchmarkScope subbench("std::unordered_set Memoize search after delete");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set Memoize search after delete");
+                forrange(i, 0, loops) {
+                    for (const FStringView& word : searchafterdelete)
+                        set.find(word);
+                }
+            }
         }
     }
     {
@@ -831,6 +958,13 @@ void Test_Containers() {
 
         VECTOR_THREAD_LOCAL(Container, value_type) search(input);
         std::random_shuffle(search.begin(), search.end());
+
+        VECTOR_THREAD_LOCAL(Container, value_type) todelete(search);
+        std::random_shuffle(todelete.begin(), todelete.end());
+        todelete.resize(k / 2);
+
+        VECTOR_THREAD_LOCAL(Container, value_type) searchafterdelete(input);
+        std::random_shuffle(searchafterdelete.begin(), searchafterdelete.end());
 
 #ifdef WITH_CORE_ASSERT
         static constexpr size_t loops = 100;
@@ -870,35 +1004,18 @@ void Test_Containers() {
                             AssertNotReached();
                     }
             }
-        }
-        {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
-            const FBenchmarkScope bench("TFlatSet");
-
-            TFlatSet<value_type> set;
             {
-                const FBenchmarkScope subbench("TFlatSet construction");
-                PROFILING_SCOPE(Global, 3, "TFlatSet construction");
-                set.reserve(input.size());
-                set.insert(input.begin(), input.end());
-            }
-            Assert(set.size() == input.size());
-            {
-                const FBenchmarkScope subbench("TFlatSet search");
-                PROFILING_SCOPE(Global, 4, "TFlatSet search");
-                forrange(i, 0, loops) {
-                    for (const auto& word : search)
-                        if (set.end() == set.find(word))
-                            AssertNotReached();
-                }
+                const FBenchmarkScope subbench("TCompactHashSet deletion");
+                PROFILING_SCOPE(Global, 4, "TCompactHashSet deletion");
+                for (const auto& word : todelete)
+                    set.erase(word);
             }
             {
-                const FBenchmarkScope subbench("TFlatSet negative search");
-                PROFILING_SCOPE(Global, 4, "TFlatSet negative search");
+                const FBenchmarkScope subbench("TCompactHashSet search after delete");
+                PROFILING_SCOPE(Global, 4, "TCompactHashSet search after delete");
                 forrange(i, 0, loops) {
-                    for (const auto& word : negative)
-                        if (set.end() != set.find(word))
-                            AssertNotReached();
+                    for (const auto& word : searchafterdelete)
+                        set.find(word);
                 }
             }
         }
@@ -933,6 +1050,20 @@ void Test_Containers() {
                             AssertNotReached();
                 }
             }
+            {
+                const FBenchmarkScope subbench("THashSet deletion");
+                PROFILING_SCOPE(Global, 4, "THashSet deletion");
+                for (const auto& word : todelete)
+                    set.erase(word);
+            }
+            {
+                const FBenchmarkScope subbench("THashSet search after delete");
+                PROFILING_SCOPE(Global, 4, "THashSet search after delete");
+                forrange(i, 0, loops) {
+                    for (const auto& word : searchafterdelete)
+                        set.find(word);
+                }
+            }
         }
         {
             LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
@@ -962,6 +1093,65 @@ void Test_Containers() {
                     for (const auto& word : negative)
                         if (set.end() != set.find(word))
                             AssertNotReached();
+                }
+            }
+            {
+                const FBenchmarkScope subbench("std::unordered_set deletion");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set deletion");
+                for (const auto& word : todelete)
+                    set.erase(word);
+            }
+            {
+                const FBenchmarkScope subbench("std::unordered_set search after delete");
+                PROFILING_SCOPE(Global, 4, "std::unordered_set search after delete");
+                forrange(i, 0, loops) {
+                    for (const auto& word : searchafterdelete)
+                        set.find(word);
+                }
+            }
+        }
+        {
+            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            const FBenchmarkScope bench("TFlatSet");
+
+            TFlatSet<value_type> set;
+            {
+                const FBenchmarkScope subbench("TFlatSet construction");
+                PROFILING_SCOPE(Global, 3, "TFlatSet construction");
+                set.reserve(input.size());
+                set.insert(input.begin(), input.end());
+            }
+            Assert(set.size() == input.size());
+            {
+                const FBenchmarkScope subbench("TFlatSet search");
+                PROFILING_SCOPE(Global, 4, "TFlatSet search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : search)
+                        if (set.end() == set.find(word))
+                            AssertNotReached();
+                }
+            }
+            {
+                const FBenchmarkScope subbench("TFlatSet negative search");
+                PROFILING_SCOPE(Global, 4, "TFlatSet negative search");
+                forrange(i, 0, loops) {
+                    for (const auto& word : negative)
+                        if (set.end() != set.find(word))
+                            AssertNotReached();
+                }
+            }
+            {
+                const FBenchmarkScope subbench("TFlatSet deletion");
+                PROFILING_SCOPE(Global, 4, "TFlatSet deletion");
+                for (const auto& word : todelete)
+                    set.erase(word);
+            }
+            {
+                const FBenchmarkScope subbench("TFlatSet search after delete");
+                PROFILING_SCOPE(Global, 4, "TFlatSet search after delete");
+                forrange(i, 0, loops) {
+                    for (const auto& word : searchafterdelete)
+                        set.find(word);
                 }
             }
         }
