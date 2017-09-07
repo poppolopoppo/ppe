@@ -82,6 +82,7 @@ inline constexpr size_t IsPow2(size_t v) {
 //----------------------------------------------------------------------------
 #if defined(CPP_VISUALSTUDIO)
 inline size_t FloorLog2(size_t value) {
+    Assert(value > 0);
     unsigned long log2;
 #if defined(ARCH_X64)
     _BitScanReverse64(&log2, value);
@@ -93,8 +94,7 @@ inline size_t FloorLog2(size_t value) {
     return log2;
 }
 #elif defined(CPP_GCC) or defined(CPP_CLANG)
-inline constexpr size_t FloorLog2(size_t value)
-{
+inline constexpr size_t FloorLog2(size_t value) {
     //x ^ 31 = 31 - x, but gcc does not optimize 31 - __builtin_clz(x) to bsr(x), but generates 31 - (bsr(x) ^ 31)
     return CODE3264(__builtin_clz(v) ^ 31, __builtin_clzll(v) ^ 63)
 }
