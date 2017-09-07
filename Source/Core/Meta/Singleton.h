@@ -78,8 +78,8 @@ public:
 
     static void Destroy() {
         Assert(HasInstance());
-        ONLY_IF_ASSERT(storage_type::GHasInstance = false);
         storage_type::Ref().~T();
+        ONLY_IF_ASSERT(storage_type::GHasInstance = false);
     }
 };
 //----------------------------------------------------------------------------
