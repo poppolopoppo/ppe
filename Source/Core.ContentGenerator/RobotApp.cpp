@@ -463,6 +463,36 @@ void FRobotApp::Shutdown() {
     parent_type::Shutdown();
 }
 //----------------------------------------------------------------------------
+static Lattice::FGenericMesh* LoadBulkMesh_(const FFilename& srcFilename) {
+    LOG(Info, L"[RobotApp] Load mesh '{0}'", srcFilename);
+
+    Lattice::FGenericMesh* const pmesh = new Lattice::FGenericMesh();
+
+    const FFilename bulkFilename = srcFilename
+        .WithReplacedExtension(FFSConstNames::Bkmz())
+        .WithReplacedMountingPoint(FFSConstNames::SavedDir())
+        ;
+
+    if (not Lattice::FBulkMesh::Load(pmesh, bulkFilename)) {
+        Lattice::FWaveFrontObj::Load(pmesh, srcFilename);
+
+        pmesh->CleanAndOptimize();
+
+        const FAabb3f bounds = Lattice::ComputeBounds(*pmesh, 0);
+
+        const float4x4 transform =
+            MakeTranslationMatrix(-bounds.Center()) *
+            MakeScalingMatrix(float3(Rcp(Max(bounds.HalfExtents()))))
+            ;
+        
+        Lattice::Transform(*pmesh, 0, transform);
+
+        Lattice::FBulkMesh::Save(pmesh, bulkFilename);
+    }
+
+    return pmesh;
+}
+//----------------------------------------------------------------------------
 void FRobotApp::Draw(const FTimeline& time) {
     parent_type::Draw(time);
 
@@ -545,26 +575,7 @@ void FRobotApp::Draw(const FTimeline& time) {
         const FFilename srcFilename(GMeshes[GMeshCurrent]);
 
         _pimpl->FutureMesh = future([srcFilename]() -> Lattice::PGenericMesh {
-            LOG(Info, L"[RobotApp] Load mesh '{0}'", srcFilename);
-
-            Lattice::PGenericMesh pmesh = new Lattice::FGenericMesh();
-            const FFilename bulkFilename = srcFilename.WithReplacedExtension(FFSConstNames::Bkmz());
-            if (not Lattice::FBulkMesh::Load(pmesh.get(), bulkFilename)) {
-                Lattice::FWaveFrontObj::Load(pmesh.get(), srcFilename);
-
-                pmesh->CleanAndOptimize();
-
-                const FAabb3f bounds = Lattice::ComputeBounds(*pmesh, 0);
-                const float4x4 transform =
-                    MakeTranslationMatrix(-bounds.Center()) *
-                    MakeScalingMatrix(float3(Rcp(Max(bounds.HalfExtents()))));
-
-                Lattice::Transform(*pmesh, 0, transform);
-
-                Lattice::FBulkMesh::Save(pmesh.get(), bulkFilename);
-            }
-
-            return pmesh;
+            return LoadBulkMesh_(srcFilename);
         });
     }
     if (needShaderCompile ||
