@@ -117,7 +117,7 @@ void FCoreModule::Shutdown() {
     Heaps::Process::Destroy();
     // 2 - main thread context
     FThreadContextStartup::Shutdown();
-    // 1 - logger
+    // 1 - diagnostics
     FDiagnosticsStartup::Shutdown();
 }
 //----------------------------------------------------------------------------

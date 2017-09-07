@@ -117,32 +117,42 @@ private:
     FWStringView _prefix;
     bool _debuggerAttached;
 };
-static const FBasicLogger_ GLoggerBeforeMain (L"BEFORE_MAIN");
-static const FBasicLogger_ GLoggerAfterMain  (L"AFTER_MAIN");
 //----------------------------------------------------------------------------
-static std::atomic<ILogger*> GLoggerCurrentImpl(remove_const(&GLoggerBeforeMain));
+static ILogger* LowLevelLogger_() {
+    static FBasicLogger_ GLoggerBasic(L"LOWLEVEL");
+    return (&GLoggerBasic);
+}
+//----------------------------------------------------------------------------
+static ILogger* GLoggerCurrentImpl = nullptr;
+static ILogger* CurrentLogger_() {
+    if (nullptr == GLoggerCurrentImpl)
+        GLoggerCurrentImpl = LowLevelLogger_();
+    return GLoggerCurrentImpl;
+}
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 ILogger* SetLoggerImpl(ILogger* logger) { // return previous handler
     Assert(logger);
-    return GLoggerCurrentImpl.exchange(logger);
+    ILogger* previous = GLoggerCurrentImpl;
+    GLoggerCurrentImpl = logger;
+    return previous;
 }
 //----------------------------------------------------------------------------
 void FlushLog() {
-    GLoggerCurrentImpl.load()->Flush();
+    CurrentLogger_()->Flush();
 }
 //----------------------------------------------------------------------------
 void Log(ELogCategory category, const FWStringView& text) {
     Assert(text.size());
     Assert('\0' == text.data()[text.size()]); // text must be null terminated !
-    GLoggerCurrentImpl.load()->Log(category, text, FormatArgListW());
+    CurrentLogger_()->Log(category, text, FormatArgListW());
 }
 //----------------------------------------------------------------------------
 void LogArgs(ELogCategory category, const FWStringView& format, const FormatArgListW& args) {
     Assert(format.size());
     Assert('\0' == format.data()[format.size()]); // text must be null terminated !
-    GLoggerCurrentImpl.load()->Log(category, format, args);
+    CurrentLogger_()->Log(category, format, args);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -302,10 +312,11 @@ void FStderrLogger::FlushThreadSafe() {
 STATIC_ASSERT(sizeof(FAbstractThreadSafeLogger) == sizeof(FOutputDebugLogger));
 STATIC_ASSERT(sizeof(FAbstractThreadSafeLogger) == sizeof(FStdoutLogger));
 STATIC_ASSERT(sizeof(FAbstractThreadSafeLogger) == sizeof(FStderrLogger));
+//----------------------------------------------------------------------------
 static POD_STORAGE(FAbstractThreadSafeLogger) GLoggerDefaultStorage;
 //----------------------------------------------------------------------------
 void FLoggerStartup::Start() {
-    Assert(&GLoggerBeforeMain == GLoggerCurrentImpl.load());
+    Assert(LowLevelLogger_() == CurrentLogger_());
 
     ILogger* logger = nullptr;
 
@@ -320,10 +331,10 @@ void FLoggerStartup::Start() {
 }
 //----------------------------------------------------------------------------
 void FLoggerStartup::Shutdown() {
-    ILogger* logger = SetLoggerImpl(remove_const(&GLoggerAfterMain));
+    ILogger* logger = SetLoggerImpl(LowLevelLogger_());
 
     Assert(logger);
-    Assert(logger != &GLoggerBeforeMain);
+    Assert(logger != LowLevelLogger_());
 
     if (logger == (ILogger*)&GLoggerDefaultStorage)
         logger->~ILogger();
