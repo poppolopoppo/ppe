@@ -67,7 +67,7 @@ void* TInSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
     void* p = (void*)(InsituData() + _insituOffset);
 
     _insituCount++;
-    _insituOffset += (size_type)sizeInBytes;
+    _insituOffset = checked_cast<size_type>(_insituOffset + sizeInBytes);
 
     return p;
 }
@@ -76,7 +76,7 @@ template <size_t _SizeInBytes>
 bool TInSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) noexcept {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    const size_type offset = size_type((const u8*)ptr - InsituData());
+    const uintptr_t offset = uintptr_t((const u8*)ptr - InsituData());
     if (offset > _insituOffset)
         return false;
 
@@ -86,7 +86,7 @@ bool TInSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) 
     _insituCount--;
 
     if (offset + sizeInBytes == _insituOffset)
-        _insituOffset = offset;
+        _insituOffset = checked_cast<size_type>(offset);
     else
         Assert(0 < _insituCount); // TODO : memory just freed is definitively lost (bubble) ...
 
@@ -100,13 +100,13 @@ void* TInSituStorage<_SizeInBytes>::ReallocateIFP(void* ptr, size_t newSizeInByt
     Assert(oldSizeInBytes);
     Assert(newSizeInBytes);
 
-    const size_type offset = size_type((const u8*)ptr - InsituData());
+    const uintptr_t offset = uintptr_t((const u8*)ptr - InsituData());
     Assert(offset + oldSizeInBytes <= _insituOffset);
     Assert(_insituCount > 0);
 
     // Try realloc in-place ONLY IF ITS THE LAST BLOCK ALLOCATED
     if (offset + oldSizeInBytes == _insituOffset && offset + newSizeInBytes <= _SizeInBytes) {
-        _insituOffset = size_type(offset + newSizeInBytes);
+        _insituOffset = checked_cast<size_type>(offset + newSizeInBytes);
         return ptr;
     }
     // Need to allocate externally and free this block afterwards
