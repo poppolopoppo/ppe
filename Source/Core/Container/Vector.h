@@ -123,11 +123,11 @@ public:
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-    TVector() noexcept : _data(nullptr), _size(0), _capacity(0) {}
+    TVector() noexcept : _capacity(0), _size(0), _data(nullptr) {}
     ~TVector() { Assert(CheckInvariants()); clear_ReleaseMemory(); }
 
-    explicit TVector(allocator_type&& alloc) : allocator_type(std::move(alloc)), _data(nullptr), _size(0), _capacity(0) {}
-    explicit TVector(const allocator_type& alloc) : allocator_type(alloc), _data(nullptr), _size(0), _capacity(0) {}
+    explicit TVector(allocator_type&& alloc) : allocator_type(std::move(alloc)), _capacity(0), _size(0), _data(nullptr) {}
+    explicit TVector(const allocator_type& alloc) : allocator_type(alloc), _capacity(0), _size(0), _data(nullptr) {}
 
     explicit TVector(size_type count) : TVector() { resize_AssumeEmpty(count); }
     TVector(size_type count, const_reference value) : TVector() { resize_AssumeEmpty(count, value); }
@@ -237,6 +237,8 @@ public:
     void push_back(T&& rvalue) { emplace_back(std::move(rvalue)); }
     reference push_back_Default() { emplace_back(); return back(); }
     pointer push_back_Uninitialized() { reserve_Additional(1); return &_data[_size++]; }
+    void push_back_AssumeNoGrow(const T& value);
+    void push_back_AssumeNoGrow(T&& rvalue);
 
     void pop_back();
     value_type pop_back_ReturnBack();
@@ -289,9 +291,9 @@ private:
     void swap_(TVector& other, std::true_type );
     void swap_(TVector& other, std::false_type );
 
-    pointer _data;
-    u32 _size;
     u32 _capacity;
+    u32 _size;
+    pointer _data;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

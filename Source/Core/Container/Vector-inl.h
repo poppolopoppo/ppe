@@ -65,9 +65,9 @@ void TVector<T, _Allocator>::assign_rvalue_(TVector&& rvalue, std::true_type ) {
     Assert(0 == _size);
     Assert(0 == _capacity);
 
-    std::swap(_data, rvalue._data);
-    std::swap(_size, rvalue._size);
     std::swap(_capacity, rvalue._capacity);
+    std::swap(_size, rvalue._size);
+    std::swap(_data, rvalue._data);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -176,32 +176,40 @@ void TVector<T, _Allocator>::emplace_back(_Args&&... args) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::emplace_back(const T& value) {
+    reserve_Additional(1);
+    Assert(_size < _capacity);
     if (AliasesToContainer(&value)) {
         T tmp(value); // value points to something in this container
-        reserve_Additional(1);
-        Assert(_size < _capacity);
         allocator_traits::construct(*this, &_data[_size++], std::move(tmp));
     }
     else {
-        reserve_Additional(1);
-        Assert(_size < _capacity);
         allocator_traits::construct(*this, &_data[_size++], value);
     }
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::emplace_back(T&& rvalue) {
+    reserve_Additional(1);
+    Assert(_size < _capacity);
     if (AliasesToContainer(&rvalue)) {
         T tmp(std::move(rvalue)); // value points to something in this container
-        reserve_Additional(1);
-        Assert(_size < _capacity);
         allocator_traits::construct(*this, &_data[_size++], std::move(tmp));
     }
     else {
-        reserve_Additional(1);
-        Assert(_size < _capacity);
         allocator_traits::construct(*this, &_data[_size++], std::move(rvalue));
     }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void TVector<T, _Allocator>::push_back_AssumeNoGrow(const T& value) {
+    AssertRelease(_size < _capacity);
+    allocator_traits::construct(*this, &_data[_size++], value);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void TVector<T, _Allocator>::push_back_AssumeNoGrow(T&& rvalue) {
+    AssertRelease(_size < _capacity);
+    allocator_traits::construct(*this, &_data[_size++], std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -358,18 +366,19 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
             Assert(0 < _capacity);
             allocator_traits::deallocate(*this, _data, _capacity);
         }
-        _capacity = checked_cast<u32>(Max(AllocationMinSize(static_cast<const allocator_type&>(*this)), count));
+        count = Max(AllocationMinSize(static_cast<const allocator_type&>(*this)), count);
         _data = allocator_traits::allocate(*this, count);
+        _capacity = checked_cast<u32>(count);
     }
     Assert(nullptr != _data);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::reserve_Exactly(size_type count) {
+    count = Max(AllocationMinSize(static_cast<const allocator_type&>(*this)), count);
     if (_capacity == count)
         return;
     AssertRelease(count >= _size);
-    count = Max(AllocationMinSize(static_cast<const allocator_type&>(*this)), count);
 #if 1 //%TODO
     _data = Relocate(allocator_(), TMemoryView<value_type>(_data, _size), count, _capacity);
     _capacity = checked_cast<u32>(count);
