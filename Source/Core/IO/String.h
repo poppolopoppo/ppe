@@ -46,6 +46,9 @@ public:
 
     TBasicStringView<_Char> MakeView() const { return TBasicStringView<_Char>(c_str(), size()); }
     operator TBasicStringView<_Char> () const { return MakeView(); }
+
+    using parent_type::assign;
+    void assign(const TBasicStringView<_Char>& strview) { parent_type::assign(strview.data(), strview.size()); }
 };
 //----------------------------------------------------------------------------
 hash_t hash_value(const FString& str);
