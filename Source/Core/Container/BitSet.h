@@ -71,24 +71,24 @@ class FWordBitSet {
 public:
     typedef size_t word_t;
 
-    FWordBitSet(size_t data, size_t size) : _data(data), _size(size) {
+    FWordBitSet(word_t data, size_t size) : _data(data), _size(size) {
         Assert(_size < MaxBit);
     }
 
-    size_t data() const { return _data; }
+    word_t data() const { return _data; }
     size_t size() const { return _size; }
 
     template <size_t _Index>
     bool Get() const {
         STATIC_ASSERT(_Index < MaxBit);
-        return (0 != (_data & (size_t(1) << _Index)));
+        return (0 != (_data & (word_t(1) << _Index)));
     }
 
-    bool Get(size_t index) const { Assert(index < _size); return (0 != (_data & (size_t(1) << index))); }
+    bool Get(size_t index) const { Assert(index < _size); return (0 != (_data & (word_t(1) << index))); }
     void Set(size_t index, bool value) { if (value) SetTrue(index); else SetFalse(index); }
 
-    void SetTrue(size_t index) { Assert(index < _size); _data |= size_t(1) << index; }
-    void SetFalse(size_t index) { Assert(index < _size); _data &= ~(size_t(1) << index); }
+    void SetTrue(size_t index) { Assert(index < _size); _data |= word_t(1) << index; }
+    void SetFalse(size_t index) { Assert(index < _size); _data &= ~(word_t(1) << index); }
 
     bool operator [](size_t index) const { return Get(index); }
 
@@ -98,7 +98,7 @@ public:
     bool AnyTrue() const { return ((_data & AllMask_()) != 0); }
     bool AnyFalse() const { return ((_data & AllMask_()) != AllMask_()); }
 
-    void ResetAll(bool value) { _data = (value ? size_t(-1) : 0); }
+    void ResetAll(bool value) { _data = (value ? word_t(-1) : 0); }
 
     FWordBitSet BitAnd(const FWordBitSet& other) const {
         Assert(_size == other._size);
@@ -112,14 +112,14 @@ public:
 
 private:
 #ifdef ARCH_X64
-    static constexpr size_t MaxBit = 64;
+    static constexpr word_t MaxBit = 64;
 #else
-    static constexpr size_t MaxBit = 32;
+    static constexpr word_t MaxBit = 32;
 #endif
 
     size_t AllMask_() const { return (1 << _size) - 1; }
 
-    size_t _data;
+    word_t _data;
     size_t _size;
 };
 //----------------------------------------------------------------------------
