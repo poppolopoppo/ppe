@@ -290,7 +290,7 @@ void FGraphicsModule::Start() {
     // 0 - pool allocator tag
     POOL_TAG(Graphics)::Start();
     // 1 - Graphics Names
-    FName::Start(256);
+    FName::Start();
     // 2 - Global video memory
     FGlobalVideoMemory::Create();
     // 3 - Register basic window class

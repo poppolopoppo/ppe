@@ -9,8 +9,7 @@ template <
     typename        _Tag,
     typename        _Char,
     ECase            _Sensitive,
-    typename        _TokenTraits,
-    typename        _Allocator
+    typename        _TokenTraits
 >
 class TToken;
 //----------------------------------------------------------------------------

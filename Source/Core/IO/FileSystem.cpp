@@ -15,7 +15,7 @@ POOL_TAG_DEF(FileSystem);
 //----------------------------------------------------------------------------
 void FFileSystemStartup::Start() {
     POOL_TAG(FileSystem)::Start();
-    FFileSystemToken::Start(1024);
+    FFileSystemToken::Start();
     FFileSystemPath::Create();
     FFSConstNames::Start();
 }
@@ -28,10 +28,7 @@ void FFileSystemStartup::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FFileSystemStartup::Clear() {
-    FFSConstNames::Shutdown();
     FFileSystemPath::Instance().Clear();
-    FFileSystemToken::Clear();
-    FFSConstNames::Start();
     POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

@@ -23,9 +23,9 @@ bool FNameTokenTraits::IsAllowedChar(char ch) const {
     return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.';
 }
 //----------------------------------------------------------------------------
-void FName::Start(size_t reserve) {
+void FName::Start() {
 
-    parent_type::Start(reserve);
+    parent_type::Start();
 
     new ((void*)&_gAnyStorage) FName("_.A.-.N.-.Y._");
 }

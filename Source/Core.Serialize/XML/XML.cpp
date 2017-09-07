@@ -14,7 +14,7 @@ POOL_TAG_DEF(XML);
 //----------------------------------------------------------------------------
 void FXMLStartup::Start() {
     POOL_TAG(XML)::Start();
-    XML::FName::Start(256);
+    XML::FName::Start();
 }
 //----------------------------------------------------------------------------
 void FXMLStartup::Shutdown() {
