@@ -114,7 +114,8 @@ public: \
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT
-bool FetchMemoryBlockDebugInfos(void* ptr, class FDecodedCallstack* pCallstack, size_t* pSizeInBytes, bool raw = false);
+class ALIGN(16) FCallstack;
+bool FetchMemoryBlockDebugInfos(void* ptr, FCallstack* pCallstack, size_t* pSizeInBytes, bool raw = false);
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

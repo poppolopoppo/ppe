@@ -293,7 +293,7 @@ public:
 #endif //!NEED_CORE_MALLOCPROXY
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT
-NO_INLINE bool FetchMemoryBlockDebugInfos(void* ptr, class FDecodedCallstack* pCallstack, size_t* pSizeInBytes, bool raw/* = false */) {
+NO_INLINE bool FetchMemoryBlockDebugInfos(void* ptr, class FCallstack* pCallstack, size_t* pSizeInBytes, bool raw/* = false */) {
 #if CORE_MALLOC_LOGGER_PROXY
     STATIC_ASSERT(CORE_MALLOC_POISON_PROXY);
 
@@ -316,14 +316,10 @@ NO_INLINE bool FetchMemoryBlockDebugInfos(void* ptr, class FDecodedCallstack* pC
 
     canary->CheckCanaries();
 
-    if (pCallstack) {
-        FCallstack callstack;
-        callstack.SetFrames(debugData->Frames);
-        callstack.Decode(pCallstack);
-    }
-    if (pSizeInBytes) {
+    if (pCallstack)
+        pCallstack->SetFrames(debugData->Frames);
+    if (pSizeInBytes)
         *pSizeInBytes = canary->SizeInBytes;
-    }
 
     return true;
 #else
