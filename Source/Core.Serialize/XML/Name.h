@@ -19,7 +19,7 @@ BEGIN_BASICTOKEN_CLASS_DEF(FName, char, ECase::Insensitive, FNameTokenTraits);
 
     static const FName& Any;
 
-    static void Start(size_t reserve);
+    static void Start();
     static void Shutdown();
 
     friend inline bool operator ==(const FName& lhs, const FName& rhs) {

@@ -27,7 +27,7 @@ void FNetworkModule::Start() {
 
     POOL_TAG(Network)::Start();
 
-    FName::Start(256);
+    FName::Start();
     FHttpConstNames::Start();
     FSocket::Start();
 }

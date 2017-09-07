@@ -20,8 +20,7 @@ using TMeshToken = Core::TToken<
     _Tag,
     char,
     CaseSensitive::False,
-    FMeshTokenTraits,
-    ALLOCATOR(FMaterial, char)
+    FMeshTokenTraits
 >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -20,8 +20,7 @@ using EntityTagToken = Core::TToken<
     _Tag,
     char,
     ECase::Sensitive,
-    FEntityTagTokenTraits,
-    ALLOCATOR(FEntity, char)
+    FEntityTagTokenTraits
 >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -33,7 +33,7 @@ void FRTTIModule::Start() {
 
     POOL_TAG(RTTI)::Start();
 
-    FName::Start(2048);
+    FName::Start();
 
     FMetaDatabase::Create();
 
@@ -58,8 +58,6 @@ void FRTTIModule::Shutdown() {
 //----------------------------------------------------------------------------
 void FRTTIModule::Clear() {
     CORE_MODULE_CLEARALL(RTTI);
-
-    FName::Clear();
 
     POOL_TAG(RTTI)::ClearAll_UnusedMemory();
 }
