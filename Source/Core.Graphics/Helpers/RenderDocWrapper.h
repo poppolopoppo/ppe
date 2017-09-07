@@ -3,15 +3,14 @@
 #include "Core.Graphics/Graphics.h"
 
 #ifndef FINAL_RELEASE
-#   define WITH_CORE_RENDERDOC
+//#   define WITH_CORE_RENDERDOC
 #endif
 
 #ifdef WITH_CORE_RENDERDOC
 
 #include "Core/Meta/Singleton.h"
 #include "Core/Meta/ThreadResource.h"
-
-#include "Core/External/renderdoc_app.h"
+#include "Core/Misc/DLLWrapper.h"
 
 namespace Core {
 namespace Graphics {
@@ -22,34 +21,29 @@ class FRenderDocWrapper :
     public Meta::TSingleton<FRenderDocWrapper>
 ,   public Meta::FThreadResource {
 public:
-    static void Create() { Meta::TSingleton<FRenderDocWrapper>::Create(); }
     using Meta::TSingleton<FRenderDocWrapper>::Destroy;
+    static void Create() { Meta::TSingleton<FRenderDocWrapper>::Create(); }
+    static const FRenderDocWrapper& Instance() { return Meta::TSingleton<FRenderDocWrapper>::Instance(); }
 
-    typedef ::RENDERDOC_API_1_1_1 renderdoc_api_type;
+    bool IsAvailable() const;
+    bool IsTargetControlConnected() const;
+    bool IsFrameCapturing() const;
 
-    static const renderdoc_api_type* API() {
-#ifdef WITH_CORE_ASSERT
-        const FRenderDocWrapper& wrapper = Instance();
-        THREADRESOURCE_CHECKACCESS(&wrapper);
-        return (wrapper._api);
-#else
-        return Instance()._api;
-#endif
-    }
+    bool LaunchReplayUI() const;
+
+    bool SetActiveWindow(void* device, void* hwnd) const;
+
+    bool TriggerCapture() const;
+    bool TriggerMultiFrameCapture(size_t numFrames) const;
 
 private:
     friend class Meta::TSingleton<FRenderDocWrapper>;
 
-#ifdef WITH_CORE_ASSERT
-    using Meta::TSingleton<FRenderDocWrapper>::HasInstance;
-#endif
-    using Meta::TSingleton<FRenderDocWrapper>::Instance;
-
     FRenderDocWrapper();
     ~FRenderDocWrapper();
 
-    renderdoc_api_type* _api;
-    void* _library;
+    void* _api;
+    FDLLWrapper _renderdoc_dll;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

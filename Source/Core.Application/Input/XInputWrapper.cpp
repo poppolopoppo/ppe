@@ -15,45 +15,36 @@ FXInputWrapper::FXInputWrapper()
 :   _XInputGetState(nullptr)
 ,   _XInputSetState(nullptr)
 ,   _XInputGetCapabilities(nullptr) {
-    static const wchar_t* GXInputDllPossiblePaths[] = {
+    static const FStringView GXInputDllPossiblePaths[] = {
         // Should be L"xinput1_4.dll" for SDK 10, L"xinput9_1_0.dll" for SDK 8.1
-        XINPUT_DLL_W,
+        XINPUT_DLL_A,
         // Still fallback to older dll when compiled on SDK 10 but running on older system (API should be binary compatible)
-        L"xinput9_1_0.dll",
+        "xinput9_1_0.dll",
     };
 
-    const wchar_t* ModuleFilename = nullptr;
-    for (const wchar_t* filename : GXInputDllPossiblePaths) {
-        ModuleFilename = filename;
-        if (_library = ::LoadLibraryW(filename))
+    for (const FStringView& filename : GXInputDllPossiblePaths) {
+        if (_XInputDLL.AttachOrLoad(filename))
             break;
     }
 
-    if (_library) {
-        _XInputGetState = (FXInputGetState)::GetProcAddress(_library, "XInputGetState");
-        _XInputSetState = (FXInputSetState)::GetProcAddress(_library, "XInputSetState");
-        _XInputGetCapabilities = (FXInputGetCapabilities)::GetProcAddress(_library, "XInputGetCapabilities");
+    if (_XInputDLL) {
+        _XInputGetState = (FXInputGetState)_XInputDLL.FunctionAddr("XInputGetState");
+        _XInputSetState = (FXInputSetState)_XInputDLL.FunctionAddr("XInputSetState");
+        _XInputGetCapabilities = (FXInputGetCapabilities)_XInputDLL.FunctionAddr("XInputGetCapabilities");
 
         Assert(_XInputGetState);
         Assert(_XInputSetState);
         Assert(_XInputGetCapabilities);
 
-#ifdef USE_DEBUG_LOGGER
-        wchar_t ModuleFilenameBuffer[1024];
-        if (::GetModuleFileName(_library, ModuleFilenameBuffer, lengthof(ModuleFilenameBuffer)))
-            ModuleFilename = ModuleFilenameBuffer;
-
-        LOG(Info, L"[XInput] Successfully loaded '{0}' : gamepad controller are available", ModuleFilename);
-#endif
+        LOG(Info, L"[XInput] Successfully loaded : gamepad controller are available");
     }
     else {
-        LOG(Warning, L"[XInput] Failed to load '{0}' : gamepad controller won't be available !", ModuleFilename);
+        LOG(Warning, L"[XInput] Failed to load : gamepad controller won't be available !");
     }
 }
 //----------------------------------------------------------------------------
 FXInputWrapper::~FXInputWrapper() {
-    if (_library)
-        ::FreeLibrary(_library);
+    LOG(Info, L"[XInput] Destroying wrapper");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

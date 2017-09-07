@@ -6,79 +6,93 @@
 
 #include "Core/Diagnostic/Logger.h"
 
-#ifdef PLATFORM_WINDOWS
-#   include "Core/Misc/Platform_Windows.h"
-#endif
+#include "Core/External/renderdoc_app.h"
+
+using renderdoc_api_type = ::RENDERDOC_API_1_1_1;
 
 namespace Core {
 namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-static void RenderDoc_StartAPI_(void** pLibrary, FRenderDocWrapper::renderdoc_api_type** pAPI) {
-#ifdef PLATFORM_WINDOWS
-     ::HMODULE const renderDoc = ::LoadLibraryA("C:\\Program Files\\RenderDoc\\renderdoc.dll");
+FRenderDocWrapper::FRenderDocWrapper() 
+    : _api(nullptr) {
 
-     *pAPI = nullptr;
-     *pLibrary = (void*)renderDoc;
+    if (not _renderdoc_dll.Attach("renderdoc.dll"))
+        if (not _renderdoc_dll.Load("C:\\Program Files\\RenderDoc\\renderdoc.dll"))
+            return;
+    
+    ::pRENDERDOC_GetAPI RENDERDOC_GetAPI = (::pRENDERDOC_GetAPI)_renderdoc_dll.FunctionAddr("RENDERDOC_GetAPI");
+    Assert(RENDERDOC_GetAPI);
+    if (nullptr == RENDERDOC_GetAPI)
+        return;
 
-     if (nullptr == renderDoc)
-         return;
-
-     ::pRENDERDOC_GetAPI RENDERDOC_GetAPI = (::pRENDERDOC_GetAPI)::GetProcAddress(renderDoc, "RENDERDOC_GetAPI");
-     Assert(RENDERDOC_GetAPI);
-     if (nullptr == RENDERDOC_GetAPI)
-         return;
-
-#   ifdef WITH_CORE_ASSERT
-     const int result =
-#   endif
-         RENDERDOC_GetAPI(RENDERDOC_Version::eRENDERDOC_API_Version_1_1_1, (void**)pAPI);
-     Assert(result);
-
-#else
-#   error "not supported yet"
-#endif
-}
-//----------------------------------------------------------------------------
-static void RenderDoc_ShutdownAPI_(void* library, FRenderDocWrapper::renderdoc_api_type* api) {
-    if (api)
-        api->Shutdown();
-
-#ifdef PLATFORM_WINDOWS
-    if (library)
-        ::FreeLibrary((::HMODULE)library);
-
-#else
-#   error "not supported yet"
-#endif
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FRenderDocWrapper::FRenderDocWrapper() {
-    RenderDoc_StartAPI_(&_library, &_api);
+    RENDERDOC_GetAPI(RENDERDOC_Version::eRENDERDOC_API_Version_1_1_1, &_api);
 
     if (_api) {
+        LOG(Info, L"[RenderDOC] Successfully loaded : scenes captures and overlay are available");
+
         // disable render doc shortcut (prefer to call with our own API)
-        _api->SetCaptureKeys(nullptr, 0);
-        _api->SetFocusToggleKeys(nullptr, 0);
+        reinterpret_cast<renderdoc_api_type*>(_api)->SetCaptureKeys(nullptr, 0);
+        reinterpret_cast<renderdoc_api_type*>(_api)->SetFocusToggleKeys(nullptr, 0);
 
         // capture options
-        _api->SetCaptureOptionU32(eRENDERDOC_Option_APIValidation, 1);
-        _api->SetCaptureOptionU32(eRENDERDOC_Option_VerifyMapWrites, 1);
+        reinterpret_cast<renderdoc_api_type*>(_api)->SetCaptureOptionU32(eRENDERDOC_Option_APIValidation, 1);
+        reinterpret_cast<renderdoc_api_type*>(_api)->SetCaptureOptionU32(eRENDERDOC_Option_VerifyMapWrites, 1);
     }
     else {
-        LOG(Warning, L"[RenderDOC] Failed to load 'renderdoc.dll' : scene captures and overlay won't be enabled");
+        LOG(Warning, L"[RenderDOC] Failed to load : scene captures and overlay won't be enabled");
     }
 }
 //----------------------------------------------------------------------------
 FRenderDocWrapper::~FRenderDocWrapper() {
-    RenderDoc_ShutdownAPI_(_library, _api);
+    LOG(Info, L"[RenderDOC] Destroying wrapper");
+}
+//----------------------------------------------------------------------------
+bool FRenderDocWrapper::IsAvailable() const {
+    return (_renderdoc_dll.IsValid() && _api);
+}
+//----------------------------------------------------------------------------
+bool FRenderDocWrapper::IsTargetControlConnected() const {
+    return (IsAvailable() && reinterpret_cast<renderdoc_api_type*>(_api)->IsTargetControlConnected());
+}
+//----------------------------------------------------------------------------
+bool FRenderDocWrapper::IsFrameCapturing() const {
+    return (IsAvailable() && reinterpret_cast<renderdoc_api_type*>(_api)->IsFrameCapturing());
+}
+//----------------------------------------------------------------------------
+bool FRenderDocWrapper::LaunchReplayUI() const {
+    return (IsAvailable() && reinterpret_cast<renderdoc_api_type*>(_api)->LaunchReplayUI(1, nullptr) != 0);
+}
+//----------------------------------------------------------------------------
+bool FRenderDocWrapper::SetActiveWindow(void* device, void* hwnd) const {
+    if (IsAvailable()) {
+        reinterpret_cast<renderdoc_api_type*>(_api)->SetActiveWindow(device, hwnd);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+bool FRenderDocWrapper::TriggerCapture() const {
+    if (IsAvailable()) {
+        reinterpret_cast<renderdoc_api_type*>(_api)->TriggerCapture();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+bool FRenderDocWrapper::TriggerMultiFrameCapture(size_t numFrames) const {
+    if (IsAvailable()) {
+        reinterpret_cast<renderdoc_api_type*>(_api)->TriggerMultiFrameCapture(checked_cast<u32>(numFrames));
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -7,6 +7,7 @@
 #endif
 
 #include "Core/Meta/Singleton.h"
+#include "Core/Misc/DLLWrapper.h"
 #include "Core/Misc/Platform_Windows.h"
 
 #include <mutex>
@@ -53,7 +54,8 @@ public:
 
     ~FXInputWrapper();
 
-    bool Available() const { return nullptr != _library; }
+    bool Available() const { return (_XInputDLL.IsValid()); }
+
     FLocked Lock() const { return FLocked(*this); }
 
 #ifdef WITH_CORE_ASSERT
@@ -71,7 +73,7 @@ private:
 
     mutable std::mutex _barrier;
 
-    HMODULE _library;
+    FDLLWrapper _XInputDLL;
 
     FXInputGetState _XInputGetState;
     FXInputSetState _XInputSetState;
