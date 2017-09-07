@@ -13,8 +13,6 @@
 #include "../Socket/Listener.h"
 #include "../Socket/SocketBuffered.h"
 
-#include "Core/Allocator/PoolAllocator.h"
-#include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/Thread/ThreadContext.h"
 #include "Core/Thread/ThreadPool.h"
@@ -89,9 +87,7 @@ namespace {
 class FHttpServicingTask_ : public FTask {
 public:
     FHttpServicingTask_(const FHttpServerImpl* server, FSocketBuffered&& socket);
-    ~FHttpServicingTask_();
-
-    SINGLETON_POOL_ALLOCATED_DECL();
+    virtual ~FHttpServicingTask_();
 
 protected:
     virtual void Run(ITaskContext& ctx) override;
@@ -100,7 +96,6 @@ private:
     const FHttpServerImpl* _server;
     FSocketBuffered _socket;
 };
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Network, FHttpServicingTask_, );
 //----------------------------------------------------------------------------
 FHttpServicingTask_::FHttpServicingTask_(const FHttpServerImpl* server, FSocketBuffered&& socket)
 :   _server(server)
@@ -150,7 +145,7 @@ void FHttpServicingTask_::Run(ITaskContext& ctx) {
 namespace {
 //----------------------------------------------------------------------------
 static void HttpServicingThreadLaunchPad_(FHttpServer* owner) {
-    const FThreadContextStartup threadStartup("HttpServer", CORE_THREADTAG_IO);
+    const FThreadContextStartup threadStartup("HttpServer", CORE_THREADTAG_LOWEST_PRIORITY);
     threadStartup.Context().SetPriority(EThreadPriority::Lowest);
 
     const FMilliseconds acceptTimeout = FSeconds(1);

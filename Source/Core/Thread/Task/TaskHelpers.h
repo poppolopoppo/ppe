@@ -2,7 +2,6 @@
 
 #include "Core/Core.h"
 
-#include "Core/Allocator/PoolAllocator.h"
 #include "Core/Meta/Function.h"
 #include "Core/Thread/Task/Task.h"
 
@@ -20,8 +19,6 @@ public:
 
     bool Available() const { return _available; }
     const _Result& Result() const;// will wait for the result if not available
-
-    SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
     virtual void Run(ITaskContext& ctx) override final;
@@ -55,8 +52,6 @@ public:
 
     FTaskProcedure(const FTaskProcedure& ) = delete;
     FTaskProcedure& operator=(const FTaskProcedure& ) = delete;
-
-    SINGLETON_POOL_ALLOCATED_DECL();
 
 protected:
     virtual void Run(ITaskContext& ctx) override final;

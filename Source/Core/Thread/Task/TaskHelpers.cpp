@@ -2,14 +2,11 @@
 
 #include "TaskHelpers.h"
 
-#include "Allocator/PoolAllocator-impl.h"
 #include "Thread/Task/TaskManager.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(FTaskProcedure, );
 //----------------------------------------------------------------------------
 FTaskProcedure::FTaskProcedure(function_type&& func)
 :   _func(std::move(func)) {}

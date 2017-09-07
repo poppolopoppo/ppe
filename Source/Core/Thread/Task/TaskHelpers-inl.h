@@ -2,13 +2,11 @@
 
 #include "Core/Thread/Task/TaskHelpers.h"
 
-#include "Core/Allocator/PoolAllocator-impl.h"
+#include "Core/Container/Stack.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_DEF(TTaskFuture<_Result>, template <typename _Result>);
 //----------------------------------------------------------------------------
 template <typename _Result>
 TTaskFuture<_Result>::TTaskFuture(function_type&& func)
