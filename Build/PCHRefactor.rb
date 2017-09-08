@@ -1,7 +1,7 @@
 #!/bin/env ruby
 
 VERSION = "1.0" # increment to invalidate all stdafx.generated.h
-PERCENT_INCLUSION_THRESHOLD = 75
+PERCENT_INCLUSION_THRESHOLD = 66
 MIN_INCLUSION_COUNT = 6
 
 require 'rbconfig'
