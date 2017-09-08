@@ -33,8 +33,8 @@ static void Test_XMLLoad_Collada_() {
 
     for (const Lattice::PGenericMaterial& m : materials) {
         std::cout
-            << Repeat<80>('-') << eol
-            << "FName = " << m->Name() << eol
+            << Repeat('-', 80) << eol
+            << "Name = " << m->Name() << eol
             << "Technique = " << m->Technique() << eol;
 
         std::cout << "Parameters (" << m->Parameters().size() << ")" << eol;

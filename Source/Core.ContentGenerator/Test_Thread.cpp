@@ -2,6 +2,7 @@
 
 #include "Core/Thread/Task.h"
 #include "Core/Thread/ThreadContext.h"
+#include "Core/IO/Stream.h"
 
 namespace Core {
 namespace ContentGenerator {

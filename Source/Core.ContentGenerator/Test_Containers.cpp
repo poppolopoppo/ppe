@@ -503,7 +503,7 @@ void Test_Containers() {
         Assert(absolute2 == normalized2);
     }
     {
-        LOG(Info, L"{0}", Repeat<20>(L">>="));
+        LOG(Info, L"{0}", Repeat(L">>=", 20));
         LOG(Info, L"FStringView collection");
 
         const FFilename filename = L"Process:/dico.txt";
@@ -556,7 +556,7 @@ void Test_Containers() {
 #endif
 
         /*{
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
             const FBenchmarkScope bench("TBurstTrie");
 
             STRINGTRIE_SET(Container, ECase::Sensitive, 31) set;
@@ -582,7 +582,7 @@ void Test_Containers() {
             }
         }
         {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
             const FBenchmarkScope bench("FBulkTrie");
 
             FBulkTrie<char, void, 8192, 31> set;
@@ -604,7 +604,7 @@ void Test_Containers() {
             }
         }*/
         {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
 
             const FBenchmarkScope bench("TCompactHashSet");
 
@@ -657,7 +657,7 @@ void Test_Containers() {
             }
         }
         {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
 
             const FBenchmarkScope bench("TCompactHashSet Memoize");
 
@@ -712,7 +712,7 @@ void Test_Containers() {
             }
         }
         /*{
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
             const FBenchmarkScope bench("TFlatSet");
 
             TFlatSet<
@@ -747,7 +747,7 @@ void Test_Containers() {
             }
         }*/
         {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
             const FBenchmarkScope bench("THashSet");
 
             STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
@@ -793,7 +793,7 @@ void Test_Containers() {
             }
         }
         {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
             const FBenchmarkScope bench("THashSet Memoize");
 
             STRINGVIEW_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
@@ -839,7 +839,7 @@ void Test_Containers() {
             }
         }
         {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
             const FBenchmarkScope bench("std::unordered_set");
 
             std::unordered_set<
@@ -888,7 +888,7 @@ void Test_Containers() {
             }
         }
         {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
             const FBenchmarkScope bench("std::unordered_set Memoize");
 
             std::unordered_set<
@@ -937,7 +937,7 @@ void Test_Containers() {
         }
     }
     {
-        LOG(Info, L"{0}", Repeat<20>(L">>="));
+        LOG(Info, L"{0}", Repeat(L">>=", 20));
         LOG(Info, L"Integer collection");
 
         typedef double value_type;
@@ -972,7 +972,7 @@ void Test_Containers() {
         static constexpr size_t loops = 10000;
 #endif
         {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
             const FBenchmarkScope bench("TCompactHashSet");
 
             typedef TCompactHashSet<value_type>   hashtable_type;
@@ -1020,7 +1020,7 @@ void Test_Containers() {
             }
         }
         {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
             const FBenchmarkScope bench("THashSet");
 
             THashSet<value_type> set;
@@ -1066,7 +1066,7 @@ void Test_Containers() {
             }
         }
         {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
             const FBenchmarkScope bench("std::unordered_set");
 
             std::unordered_set<value_type, THash<value_type>> set;
@@ -1111,7 +1111,7 @@ void Test_Containers() {
             }
         }
         {
-            LOG(Info, L"{0}", Repeat<20>(L"-*=*"));
+            LOG(Info, L"{0}", Repeat(L"-*=*", 20));
             const FBenchmarkScope bench("TFlatSet");
 
             TFlatSet<value_type> set;

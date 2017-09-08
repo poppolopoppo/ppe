@@ -60,21 +60,22 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Count>
+template <typename T>
 struct TRepeater {
     const T *Value;
+    size_t Count;
 };
 //----------------------------------------------------------------------------
-template <size_t _Count, typename T>
-TRepeater<T, _Count> Repeat(const T& value) {
-    return TRepeater<T, _Count>{ &value };
+template <typename T>
+TRepeater<T> Repeat(const T& value, size_t count) {
+    return TRepeater<T>{ &value, count };
 }
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename T, size_t _Count>
+template <typename _Char, typename _Traits, typename T>
 std::basic_ostream<_Char, _Traits>& operator <<(
     std::basic_ostream<_Char, _Traits>& oss,
-    const TRepeater<T, _Count>& repeat) {
-    for (size_t i = 0; i < _Count; ++i)
+    const TRepeater<T>& repeat) {
+    forrange(i, 0, repeat.Count)
         oss << *repeat.Value;
     return oss;
 }
