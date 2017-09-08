@@ -86,9 +86,12 @@ void UnregisterAdditionalTrackingData(FMemoryTrackingData *pTrackingData);
 //----------------------------------------------------------------------------
 void ReportAdditionalTrackingData();
 //----------------------------------------------------------------------------
+void ReportAllocationHistogram();
+//----------------------------------------------------------------------------
 inline void ReportAllTrackingData() {
     ReportDomainTrackingData();
     ReportAdditionalTrackingData();
+    ReportAllocationHistogram();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

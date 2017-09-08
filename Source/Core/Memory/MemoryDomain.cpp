@@ -24,7 +24,8 @@ namespace Domain {
 }
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
-#   define MEMORY_DOMAIN_IMPL(_Name, _Parent) \
+//----------------------------------------------------------------------------
+#define MEMORY_DOMAIN_IMPL(_Name, _Parent) \
     namespace Domain { \
         namespace { \
             static FMemoryTrackingData CONCAT(GTrackingData, MEMORY_DOMAIN_NAME(_Name)) { \
@@ -34,43 +35,38 @@ namespace Domain {
         FMemoryTrackingData& MEMORY_DOMAIN_NAME(_Name)::TrackingData = \
             CONCAT(GTrackingData, MEMORY_DOMAIN_NAME(_Name)); \
     }
-#else
-#   define MEMORY_DOMAIN_IMPL(_Name, _Parent)
-#endif
-//----------------------------------------------------------------------------
+
 #ifdef COLLAPSE_MEMORY_DOMAINS
 #   define MEMORY_DOMAIN_COLLAPSABLE_IMPL(_Name, _Parent)
 #endif
-//----------------------------------------------------------------------------
+
 #include "MemoryDomain.Definitions-inl.h"
-//----------------------------------------------------------------------------
+
 #undef MEMORY_DOMAIN_COLLAPSABLE_IMPL
 #undef MEMORY_DOMAIN_IMPL
+//----------------------------------------------------------------------------
+#endif //!USE_MEMORY_DOMAINS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#ifdef USE_MEMORY_DOMAINS
 namespace {
 //----------------------------------------------------------------------------
-static FMemoryTrackingData *GAllMemoryDomainTrackingData[] = {
-//----------------------------------------------------------------------------
-#ifdef USE_MEMORY_DOMAINS
-#   define MEMORY_DOMAIN_IMPL(_Name, _Parent) &MEMORY_DOMAIN_TRACKING_DATA(_Name) COMMA
-#else
-#   define MEMORY_DOMAIN_IMPL(_Name, _Parent)
-#endif
-//----------------------------------------------------------------------------
+#define MEMORY_DOMAIN_IMPL(_Name, _Parent) &MEMORY_DOMAIN_TRACKING_DATA(_Name) COMMA
+
 #ifdef COLLAPSE_MEMORY_DOMAINS
 #   define MEMORY_DOMAIN_COLLAPSABLE_IMPL(_Name, _Parent)
 #endif
-//----------------------------------------------------------------------------
+
+static FMemoryTrackingData *GAllMemoryDomainTrackingData[] = {
 #include "MemoryDomain.Definitions-inl.h"
-//----------------------------------------------------------------------------
+};
+
 #undef MEMORY_DOMAIN_COLLAPSABLE_IMPL
 #undef MEMORY_DOMAIN_IMPL
 //----------------------------------------------------------------------------
-}; //!namespace
-//----------------------------------------------------------------------------
 } //!namespace
+#endif //!USE_MEMORY_DOMAINS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -144,6 +140,53 @@ void ReportAdditionalTrackingData() {
     FLoggerStream log(ELogCategory::Debug);
     std::unique_lock<std::mutex> scopeLock(GAllAdditionalTrackingData->Barrier);
     ReportTrackingDatas(log, L"Additional", GAllAdditionalTrackingData->Datas.MakeConstView());
+#endif
+}
+//----------------------------------------------------------------------------
+void ReportAllocationHistogram() {
+#ifdef WITH_CORE_ASSERT
+    TMemoryView<const size_t> classes, allocations, totalBytes;
+    if (not FetchMemoryAllocationHistogram(&classes, &allocations, &totalBytes))
+        return;
+
+    Assert(classes.size() == allocations.size());
+
+    const auto distribution = [](size_t sz) -> float {
+        return std::log((float)sz + 1.0f) - std::log(1.0f);
+    };
+
+    float totalCount = 0;
+    float allocationScale = 0;
+    for (size_t count : allocations) {
+        totalCount += count;
+        allocationScale = Max(allocationScale, distribution(count));
+    }
+
+    LOG(Info, L"[Malloc] report allocations size histogram");
+
+    static size_t GPrevAllocations[60/* chhh */] = { 0 };
+    AssertRelease(lengthof(GPrevAllocations) == classes.size());
+
+    constexpr float width = 80;
+    forrange(i, 0, classes.size()) {
+        if (0 == classes[i]) continue;
+
+        if (0 == allocations[i])
+            LOG(Info, L" >= {0:9} | {1:9} | {2:5f2}% |",
+                FSizeInBytes{ classes[i] },
+                FSizeInBytes{ totalBytes[i] },
+                100 * float(allocations[i]) / totalCount );
+        else
+            LOG(Info, L" >= {0:9} | {1:9} | {2:5f2}% |{3}> {4} +{5}",
+                FSizeInBytes{ classes[i] },
+                FSizeInBytes{ totalBytes[i] },
+                100 * float(allocations[i]) / totalCount,
+                Repeat(L'=', size_t(Min(width, std::round(width * distribution(allocations[i]) / allocationScale)))),
+                FCountOfElements{ allocations[i] },
+                allocations[i] - GPrevAllocations[i] );
+
+        GPrevAllocations[i] = allocations[i];
+    }
 #endif
 }
 //----------------------------------------------------------------------------

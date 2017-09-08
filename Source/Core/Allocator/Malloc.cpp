@@ -5,6 +5,7 @@
 
 #ifdef WITH_CORE_ASSERT
 #   include "Diagnostic/Callstack.h"
+#   include "Memory/MemoryView.h"
 #endif
 
 #include "Meta/Assert.h"
@@ -26,6 +27,16 @@
 
 #if (CORE_MALLOC_ALLOCATOR != CORE_MALLOC_ALLOCATOR_STD)
 #   ifdef WITH_CORE_ASSERT
+#       define CORE_MALLOC_HISTOGRAM_PROXY 1
+#   else
+#       define CORE_MALLOC_HISTOGRAM_PROXY 0
+#   endif
+#else
+#   define CORE_MALLOC_HISTOGRAM_PROXY 0
+#endif
+
+#if (CORE_MALLOC_ALLOCATOR != CORE_MALLOC_ALLOCATOR_STD)
+#   ifdef WITH_CORE_ASSERT
 #       define CORE_MALLOC_POISON_PROXY 1
 #   else
 #       define CORE_MALLOC_POISON_PROXY 0
@@ -40,7 +51,7 @@
 #   define CORE_MALLOC_LOGGER_PROXY 0
 #endif
 
-#define NEED_CORE_MALLOCPROXY (CORE_MALLOC_POISON_PROXY||CORE_MALLOC_LOGGER_PROXY)
+#define NEED_CORE_MALLOCPROXY (CORE_MALLOC_HISTOGRAM_PROXY|CORE_MALLOC_POISON_PROXY||CORE_MALLOC_LOGGER_PROXY)
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -246,10 +257,71 @@ typedef FMallocLoggerFacet_ FMallocPoisonFacet_;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if NEED_CORE_MALLOCPROXY
+namespace {
+//----------------------------------------------------------------------------
+#if CORE_MALLOC_HISTOGRAM_PROXY
+template <typename _Pred = FMallocFacetId_>
+struct TMallocHistogramFacet_ : TMallocBaseFacet_<_Pred, 0, 0> {
+    typedef _Pred pred_type;
+
+    static constexpr size_t GNumClasses = 60;
+    static constexpr size_t GSizeClasses[GNumClasses] = {
+        16,        0,        0,        0,       32,        0,
+        48,        0,       64,       80,       96,      112,
+        128,      160,      192,      224,      256,      320,
+        384,      448,      512,      640,      768,      896,
+        1024,     1280,     1536,     1792,     2048,     2560,
+        3072,     3584,     4096,     5120,     6144,     7168,
+        8192,    10240,    12288,    14336,    16384,    20480,
+        24576,    28672,    32768,    40960,    49152,    57344,
+        65536,    81920,    98304,   114688,   131072,   163840,
+        196608,   229376,   262144,   327680,   393216,   425952,
+    };
+
+    static size_t GSizeAllocations[GNumClasses];
+    static size_t GSizeTotalBytes[GNumClasses];
+
+    FORCE_INLINE static size_t MakeClass(size_t size) {
+        constexpr size_t POW_N = 2;
+        constexpr size_t MinClassIndex = 19;
+        const size_t index = Meta::FloorLog2((size - 1) | 1);
+        return ((index << POW_N) + ((size - 1) >> (index - POW_N)) - MinClassIndex);
+    }
+
+    static void MakeBlock(void* ptr, size_t sizeInBytes) {
+        const size_t sizeClass = Min(MakeClass(sizeInBytes), GNumClasses - 1);
+        ++GSizeAllocations[sizeClass];
+        GSizeTotalBytes[sizeClass] += sizeInBytes;
+
+        pred_type::MakeBlock(ptr, sizeInBytes);
+    }
+
+    static void TestBlock(void* ptr) {
+        pred_type::TestBlock(ptr);
+    }
+};
+template <typename _Pred>
+size_t TMallocHistogramFacet_<_Pred>::GSizeAllocations[GNumClasses] = { 0 };
+template <typename _Pred>
+size_t TMallocHistogramFacet_<_Pred>::GSizeTotalBytes[GNumClasses] = { 0 };
+#endif
+//----------------------------------------------------------------------------
+#if CORE_MALLOC_HISTOGRAM_PROXY
+typedef TMallocHistogramFacet_<FMallocPoisonFacet_> FMallocHistogramFacet_;
+#else
+typedef FMallocPoisonFacet_ FMallocHistogramFacet_;
+#endif //!_DEBUG
+//----------------------------------------------------------------------------
+} //!namespace
+#endif //!NEED_CORE_MALLOCPROXY
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 #if !NEED_CORE_MALLOCPROXY
 using FMallocProxy_ = FMalloc_;
 #else
-using FMallocFacet_ = FMallocPoisonFacet_;
+using FMallocFacet_ = FMallocHistogramFacet_;
 class FMallocProxy_ : private FMallocFacet_ {
     STATIC_CONST_INTEGRAL(size_t, OverheadSize, HeaderSize + FooterSize);
 
@@ -319,13 +391,29 @@ NO_INLINE bool FetchMemoryBlockDebugInfos(void* ptr, class FCallstack* pCallstac
     if (pCallstack)
         pCallstack->SetFrames(debugData->Frames);
     if (pSizeInBytes)
-        *pSizeInBytes = canary->SizeInBytes;
+        *pSizeInBytes = canary->SizeInBytes;<
 
     return true;
 #else
     UNUSED(ptr);
     UNUSED(pCallstack);
     UNUSED(pSizeInBytes);
+    return false;
+#endif
+}
+#endif //!WITH_CORE_ASSERT
+//----------------------------------------------------------------------------
+#ifdef WITH_CORE_ASSERT
+bool FetchMemoryAllocationHistogram(
+    TMemoryView<const size_t>* classes, 
+    TMemoryView<const size_t>* allocations, 
+    TMemoryView<const size_t>* totalBytes ) {
+#if CORE_MALLOC_HISTOGRAM_PROXY
+    *classes = MakeView(FMallocHistogramFacet_::GSizeClasses);
+    *allocations = MakeView(FMallocHistogramFacet_::GSizeAllocations);
+    *totalBytes = MakeView(FMallocHistogramFacet_::GSizeTotalBytes);
+    return true;
+#else
     return false;
 #endif
 }

@@ -158,9 +158,9 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
     const size_t width = 128;
     const wchar_t fmt[] = L" {0:-37}|{1:8} {2:10} |{3:8} {4:11} |{5:8} {6:11} |{7:11} {8:11}\n";
 
-    oss << Repeat<width>(L"-") << eol
+    oss << Repeat(L"-", width) << eol
         << "    " << header << L" (" << datas.size() << L" elements)" << eol
-        << Repeat<width>(L"-") << eol;
+        << Repeat(L"-", width) << eol;
 
     Format(oss, fmt,    L"Tracking Data FName",
                         L"Block", "Max",
@@ -168,7 +168,7 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                         L"Stride", "Max",
                         L"Total", "Max" );
 
-    oss << Repeat<width>(L"-") << eol;
+    oss << Repeat(L"-", width) << eol;
 
     STACKLOCAL_OCSTRSTREAM(tmp, 256);
     for (const FMemoryTrackingData *data : datas) {
@@ -186,7 +186,7 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                             data->MaxTotalSizeInBytes() );
     }
 
-    oss << Repeat<width>(L"-") << eol;
+    oss << Repeat(L"-", width) << eol;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
