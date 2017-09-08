@@ -109,8 +109,8 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     }
 
     size_t Class() const { return _class; }
-    size_t BlockSizeInBytes() const { return GClassesSize_[_class]; }
-    size_t BlockTotalCount() const { return (ChunkAvailable / GClassesSize_[_class]); }
+    size_t BlockSizeInBytes() const { return GClassesSize[_class]; }
+    size_t BlockTotalCount() const { return (ChunkAvailable / GClassesSize[_class]); }
     size_t BlockAllocatedCount() const { return (BlockTotalCount() - _freeCount); }
 
     FBinnedThreadCache_* ThreadCache() const { return _threadCache; }
@@ -142,7 +142,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
         _freeCount--;
 
         Assert(IS_ALIGNED(Alignment, p));
-        ONLY_IF_ASSERT(FillBlockUninitialized_(p, GClassesSize_[_class]));
+        ONLY_IF_ASSERT(FillBlockUninitialized_(p, GClassesSize[_class]));
 
         return p;
     }
@@ -154,7 +154,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
         Assert(p->TestCanary());
         Assert(IS_ALIGNED(Alignment, p));
 
-        ONLY_IF_ASSERT(FillBlockDeleted_(p, GClassesSize_[_class]));
+        ONLY_IF_ASSERT(FillBlockDeleted_(p, GClassesSize[_class]));
         ONLY_IF_ASSERT(p->MakeCanary());
 
         Assert(!_freeBlock || _freeBlock->TestCanary());
@@ -228,6 +228,18 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 #endif
 
     static constexpr size_t NumClasses = 45;
+
+    static constexpr u16 GClassesSize[NumClasses] = {
+        16,     0,      0,      0,      32,     0,
+        48,     0,      64,     80,     96,     112,
+        128,    160,    192,    224,    256,    320,
+        384,    448,    512,    640,    768,    896,
+        1024,   1280,   1536,   1792,   2048,   2560,
+        3072,   3584,   4096,   5120,   6144,   7168,
+        8192,   10240,  12288,  14336,  16384,  20480,
+        24576,  28672,  32736,
+    };
+
     FORCE_INLINE static size_t MakeClass(size_t size) {
         constexpr size_t POW_N = 2;
         constexpr size_t MinClassIndex = 19;
@@ -247,7 +259,7 @@ private:
         , _freeBlock(nullptr)
         , _threadCache(threadCache) {
         Assert(_threadCache);
-        Assert(GClassesSize_[_class] > 0);
+        Assert(GClassesSize[_class] > 0);
         Assert(IS_ALIGNED(ChunkSizeInBytes, this));
         Assert((u8*)BlockAt_(0) >= (u8*)(this + 1));
         Assert((u8*)BlockAt_(BlockTotalCount() - 1) + BlockSizeInBytes() <= (u8*)this + ChunkSizeInBytes);
@@ -296,17 +308,6 @@ private:
     bool CheckCanaries_() const { return (_canary0 == Canary0 && _canary1 == Canary1); }
     bool CheckThreadSafety_() const { return (std::this_thread::get_id() == _threadId); }
 #endif
-
-    static constexpr u16 GClassesSize_[NumClasses] = {
-           16,     0,     0,     0,    32,     0,
-           48,     0,    64,    80,    96,   112,
-          128,   160,   192,   224,   256,   320,
-          384,   448,   512,   640,   768,   896,
-         1024,  1280,  1536,  1792,  2048,  2560,
-         3072,  3584,  4096,  5120,  6144,  7168,
-         8192, 10240, 12288, 14336, 16384, 20480,
-        24576, 28672, 32736,
-    };
 };
 STATIC_ASSERT(sizeof(FBinnedChunk_) == CACHELINE_SIZE);
 //----------------------------------------------------------------------------
@@ -331,11 +332,11 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
         while (FBinnedChunk_* chunk = chunksToRelease.PopHead()) {
             Assert(chunk->_threadCache == nullptr);
 
-            ONLY_IF_ASSERT(b->ReportLeaks());
+            ONLY_IF_ASSERT(chunk->ReportLeaks());
 
             if (chunk->BlockAllocatedCount() == 0) {
                 ONLY_IF_ASSERT(chunk->~FBinnedChunk_());
-                ONLY_IF_ASSERT(FillBlockDeleted_(b, FBinnedChunk_::ChunkSizeInBytes));
+                ONLY_IF_ASSERT(FillBlockDeleted_(chunk, FBinnedChunk_::ChunkSizeInBytes));
 
                 FBinnedPage_::Release((FBinnedPage_*)chunk);
             }
@@ -455,7 +456,7 @@ struct FBinnedThreadCache_ {
 
         const size_t sizeClass = FBinnedChunk_::MakeClass(sizeInBytes);
         Assert(sizeClass < lengthof(_buckets));
-        Assert(sizeInBytes <= FBinnedChunk_::GClassesSize_[sizeClass]);
+        Assert(sizeInBytes <= FBinnedChunk_::GClassesSize[sizeClass]);
 
     TRY_CHUNK_ALLOCATION:
         FBinnedChunk_* chunk = _buckets[sizeClass];
