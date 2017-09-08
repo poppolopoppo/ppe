@@ -12,12 +12,10 @@
 
 // Lowest level to hook or replace default allocator
 
-#define CORE_MALLOC_FORCE_STD           0 //%_NOCOMMIT%
-#define CORE_MALLOC_TRACK_ALLOCATIONS   0 //%_NOCOMMIT%
+#define CORE_MALLOC_ALLOCATOR_STD           0
+#define CORE_MALLOC_ALLOCATOR_BINNED        1
 
-
-#define CORE_MALLOC_ALLOCATOR_STD       0
-#define CORE_MALLOC_ALLOCATOR_BINNED    1
+#define CORE_MALLOC_FORCE_STD               0 //%_NOCOMMIT%
 
 #if     CORE_MALLOC_FORCE_STD
 #   define CORE_MALLOC_ALLOCATOR CORE_MALLOC_ALLOCATOR_STD
@@ -25,30 +23,18 @@
 #   define CORE_MALLOC_ALLOCATOR CORE_MALLOC_ALLOCATOR_BINNED
 #endif
 
-#if (CORE_MALLOC_ALLOCATOR != CORE_MALLOC_ALLOCATOR_STD)
-#   ifdef WITH_CORE_ASSERT
-#       define CORE_MALLOC_HISTOGRAM_PROXY 1
-#   else
-#       define CORE_MALLOC_HISTOGRAM_PROXY 0
-#   endif
+#if not defined(FINAL_RELEASE) && not defined(PROFILING_ENABLED)
+#   define CORE_MALLOC_HISTOGRAM_PROXY     1 //%_NOCOMMIT%
+#   define CORE_MALLOC_LOGGER_PROXY        0 //%_NOCOMMIT%
 #else
-#   define CORE_MALLOC_HISTOGRAM_PROXY 0
-#endif
-
-#if (CORE_MALLOC_ALLOCATOR != CORE_MALLOC_ALLOCATOR_STD)
-#   ifdef WITH_CORE_ASSERT
-#       define CORE_MALLOC_POISON_PROXY 1
-#   else
-#       define CORE_MALLOC_POISON_PROXY 0
-#   endif
-#else
-#   define CORE_MALLOC_POISON_PROXY 0
+#   define CORE_MALLOC_HISTOGRAM_PROXY     0
+#   define CORE_MALLOC_LOGGER_PROXY        0
 #endif
 
 #ifdef WITH_CORE_ASSERT
-#   define CORE_MALLOC_LOGGER_PROXY CORE_MALLOC_TRACK_ALLOCATIONS
+#   define CORE_MALLOC_POISON_PROXY     (CORE_MALLOC_ALLOCATOR != CORE_MALLOC_ALLOCATOR_STD)
 #else
-#   define CORE_MALLOC_LOGGER_PROXY 0
+#   define CORE_MALLOC_POISON_PROXY     0
 #endif
 
 #define NEED_CORE_MALLOCPROXY (CORE_MALLOC_HISTOGRAM_PROXY|CORE_MALLOC_POISON_PROXY||CORE_MALLOC_LOGGER_PROXY)
@@ -267,15 +253,15 @@ struct TMallocHistogramFacet_ : TMallocBaseFacet_<_Pred, 0, 0> {
 
     static constexpr size_t GNumClasses = 60;
     static constexpr size_t GSizeClasses[GNumClasses] = {
-        16,        0,        0,        0,       32,        0,
-        48,        0,       64,       80,       96,      112,
+        16,       0,        0,        0,        32,       0,
+        48,       0,        64,       80,       96,       112,
         128,      160,      192,      224,      256,      320,
         384,      448,      512,      640,      768,      896,
         1024,     1280,     1536,     1792,     2048,     2560,
         3072,     3584,     4096,     5120,     6144,     7168,
-        8192,    10240,    12288,    14336,    16384,    20480,
+        8192,     10240,    12288,    14336,    16384,    20480,
         24576,    28672,    32768,    40960,    49152,    57344,
-        65536,    81920,    98304,   114688,   131072,   163840,
+        65536,    81920,    98304,    114688,   131072,   163840,
         196608,   229376,   262144,   327680,   393216,   425952,
     };
 
@@ -364,7 +350,7 @@ public:
 };
 #endif //!NEED_CORE_MALLOCPROXY
 //----------------------------------------------------------------------------
-#ifdef WITH_CORE_ASSERT
+#ifndef FINAL_RELEASE
 NO_INLINE bool FetchMemoryBlockDebugInfos(void* ptr, class FCallstack* pCallstack, size_t* pSizeInBytes, bool raw/* = false */) {
 #if CORE_MALLOC_LOGGER_PROXY
     STATIC_ASSERT(CORE_MALLOC_POISON_PROXY);
@@ -401,9 +387,9 @@ NO_INLINE bool FetchMemoryBlockDebugInfos(void* ptr, class FCallstack* pCallstac
     return false;
 #endif
 }
-#endif //!WITH_CORE_ASSERT
+#endif //!FINAL_RELEASE
 //----------------------------------------------------------------------------
-#ifdef WITH_CORE_ASSERT
+#ifndef FINAL_RELEASE
 bool FetchMemoryAllocationHistogram(
     TMemoryView<const size_t>* classes, 
     TMemoryView<const size_t>* allocations, 
@@ -417,7 +403,7 @@ bool FetchMemoryAllocationHistogram(
     return false;
 #endif
 }
-#endif
+#endif //!FINAL_RELEASE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

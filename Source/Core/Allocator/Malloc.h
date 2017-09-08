@@ -113,7 +113,7 @@ public: \
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifdef WITH_CORE_ASSERT
+#ifndef FINAL_RELEASE
 //----------------------------------------------------------------------------
 class ALIGN(16) FCallstack;
 bool FetchMemoryBlockDebugInfos(void* ptr, FCallstack* pCallstack, size_t* pSizeInBytes, bool raw = false);
@@ -122,7 +122,7 @@ template <typename T>
 class TMemoryView;
 bool FetchMemoryAllocationHistogram(TMemoryView<const size_t>* classes, TMemoryView<const size_t>* allocations, TMemoryView<const size_t>* totalBytes);
 //----------------------------------------------------------------------------
-#endif //!WITH_CORE_ASSERT
+#endif //!FINAL_RELEASE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

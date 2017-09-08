@@ -144,7 +144,7 @@ void ReportAdditionalTrackingData() {
 }
 //----------------------------------------------------------------------------
 void ReportAllocationHistogram() {
-#ifdef WITH_CORE_ASSERT
+#if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
     TMemoryView<const size_t> classes, allocations, totalBytes;
     if (not FetchMemoryAllocationHistogram(&classes, &allocations, &totalBytes))
         return;
@@ -172,12 +172,14 @@ void ReportAllocationHistogram() {
         if (0 == classes[i]) continue;
 
         if (0 == allocations[i])
-            LOG(Info, L" >= {0:9} | {1:9} | {2:5f2}% |",
+            LOG(Info, L" #{0:#2} | {1:9} | {2:9} | {3:5f2}% |",
+                i,
                 FSizeInBytes{ classes[i] },
                 FSizeInBytes{ totalBytes[i] },
                 100 * float(allocations[i]) / totalCount );
         else
-            LOG(Info, L" >= {0:9} | {1:9} | {2:5f2}% |{3}> {4} +{5}",
+            LOG(Info, L" #{0:#2} | {1:9} | {2:9} | {3:5f2}% |{4}> {5} +{6}",
+                i,
                 FSizeInBytes{ classes[i] },
                 FSizeInBytes{ totalBytes[i] },
                 100 * float(allocations[i]) / totalCount,
