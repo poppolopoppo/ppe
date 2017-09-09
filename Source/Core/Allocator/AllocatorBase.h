@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/Memory/MemoryView.h"
 #include "Core/Memory/UniquePtr.h"
 
 namespace Core {
@@ -72,6 +73,43 @@ using TAllocatorPtr = TUniquePtr<T, TAllocatorDeleter<T, _Allocator> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Construct/Destroy ranges
+//----------------------------------------------------------------------------
+namespace details {
+template <typename _Allocator, typename T>
+void Construct_(_Allocator&, const TMemoryView<T>&, std::true_type) {}
+template <typename _Allocator, typename T, typename _Arg0, typename... _Args>
+void Construct_(_Allocator&, const TMemoryView<T>&, std::true_type, _Arg0&& arg0, _Args&&... args) {
+    for (T& pod : items)
+        alloc.construct(&pod, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+}
+template <typename _Allocator, typename T, typename... _Args>
+void Construct_(_Allocator& alloc, const TMemoryView<T>& items, std::false_type, _Args&&... args) {
+    for (T& non_pod : items)
+        alloc.construct(&non_pod, std::forward<_Args>(args)...);
+}
+} //!details
+template <typename _Allocator, typename T, typename... _Args>
+void Construct(_Allocator& alloc, const TMemoryView<T>& items, _Args&&... args) {
+    details::Construct_(alloc, items, typename Meta::TIsPod<T>{}, std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+namespace details {
+template <typename _Allocator, typename T>
+void Destroy_(_Allocator&, const TMemoryView<T>&, std::true_type) {}
+template <typename _Allocator, typename T>
+void Destroy_(_Allocator& alloc, const TMemoryView<T>& items, std::false_type) {
+    for (T& non_pod : items)
+        alloc.destroy(&non_pod);
+}
+} //!details
+template <typename _Allocator, typename T>
+void Destroy(_Allocator& alloc, const TMemoryView<T>& items) {
+    details::Destroy_(alloc, items, typename Meta::TIsPod<T>{});
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 // Realloc semantic for allocators
 //----------------------------------------------------------------------------
 namespace details {
@@ -116,19 +154,26 @@ typename std::enable_if<
 >::type Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     STATIC_ASSERT(std::is_default_constructible<typename _Allocator::value_type>::value);
     STATIC_ASSERT(std::is_move_constructible<typename _Allocator::value_type>::value);
+
     typedef std::allocator_traits<_Allocator> allocator_traits;
     typedef typename allocator_traits::pointer pointer;
     pointer const p = data.Pointer();
+
     Assert(0 == oldSize || nullptr != p);
+
     pointer const newp = newSize ? allocator.allocate(newSize) : nullptr;
     const size_t moveRange = (newSize < data.size()) ? newSize : data.size();
+
     Assert((newp && p) || 0 == moveRange);
+
     forrange(i, 0, moveRange)
         allocator_traits::construct(allocator, newp + i, std::move(p[i]));
-    forrange(i, 0, data.size())
-        allocator_traits::destroy(allocator, p + i);
+
     if (data.Pointer()) {
         Assert(p);
+
+        Destroy(allocator, data);
+
         allocator_traits::deallocate(allocator, p, oldSize);
     }
     return newp;

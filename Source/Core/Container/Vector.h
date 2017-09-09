@@ -252,12 +252,15 @@ public:
     void reserve_Exactly(size_type count);
     void resize(size_type count);
     void resize(size_type count, const_reference value);
+    void resize_Uninitialized(size_type count);
     void resize_AssumeEmpty(size_type count);
     void resize_AssumeEmpty(size_type count, const_reference value);
     void shrink_to_fit() { reserve_Exactly(_size); }
 
     void swap(TVector& other);
     friend void swap(TVector& lhs, TVector& rhs) { lhs.swap(rhs); }
+
+    operator TMemoryView<Meta::TAddConst<value_type>>() const { return MakeConstView(); }
 
     TMemoryView<value_type> MakeView() const { return TMemoryView<value_type>(_data, _size); }
     TMemoryView<Meta::TAddConst<value_type>> MakeConstView() const { return TMemoryView<Meta::TAddConst<value_type>>(_data, _size); }
