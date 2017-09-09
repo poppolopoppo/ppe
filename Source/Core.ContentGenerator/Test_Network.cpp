@@ -257,10 +257,12 @@ static void Test_HttpServer_() {
 //----------------------------------------------------------------------------
 void Test_Network() {
     Test_ParseUri_();
-    Test_SocketAccept_();
     Test_HttpGet_();
     Test_HttpPost_();
+#if not defined(PROFILING_ENABLED) && not defined(FINAL_RELEASE)
+    Test_SocketAccept_();
     Test_HttpServer_();
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

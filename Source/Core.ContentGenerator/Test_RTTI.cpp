@@ -467,6 +467,7 @@ void Test_RTTI() {
         if (false == input.DeepEquals(output))
             AssertNotReached();
     }
+#if not defined(PROFILING_ENABLED) && not defined(FINAL_RELEASE)
     {
         Parser::FParseContext globalContext;
         do
@@ -503,8 +504,8 @@ void Test_RTTI() {
                 Format(std::cerr, "lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), e.what(), e.Match().Site());
             }
         } while (true);
-
     }
+#endif //! not defined(PROFILING_ENABLED) && not defined(FINAL_RELEASE)
     RTTI_NAMESPACE(Test).Shutdown();
 
     Serialize::FSerializeModule::ClearAll_UnusedMemory();
