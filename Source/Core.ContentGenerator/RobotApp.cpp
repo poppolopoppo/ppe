@@ -55,6 +55,7 @@
 namespace Core {
 namespace ContentGenerator {
 
+extern void Test_Allocators();
 extern void Test_Format();
 extern void Test_Containers();
 extern void Test_Lattice();
@@ -428,9 +429,10 @@ FRobotApp::FRobotApp()
     Application::FApplicationConsole::RedirectIOToConsole();
 #endif
 
-#if 0
-    Test_Lattice();
+#if 1
+    Test_Allocators();
     Test_Format();
+    Test_Lattice();
     Test_Containers();
     Test_Pixmap();
     Test_RTTI();
