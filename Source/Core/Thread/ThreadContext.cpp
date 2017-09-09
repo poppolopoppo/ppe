@@ -209,6 +209,9 @@ Assert(std::this_thread::get_id() == _threadId);
     case Core::EThreadPriority::Lowest:
         priorityWin32 = THREAD_PRIORITY_LOWEST;
         break;
+    default:
+        AssertNotImplemented();
+        return;
     }
 
     if (0 == ::SetThreadPriority(hThread, priorityWin32))

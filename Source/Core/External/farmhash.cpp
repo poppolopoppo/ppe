@@ -5,6 +5,7 @@
 #pragma warning(disable: 4244)
 #pragma warning(disable: 4319)
 #pragma warning(disable: 4307)
+#pragma warning(disable: 6297)
 
 // Copyright (c) 2014 Google, Inc.
 //

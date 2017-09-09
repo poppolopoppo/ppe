@@ -20,14 +20,23 @@ private:
     FTimepoint _startedAt;
 };
 //----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
 class FBenchmarkScope : public FTimedScope {
 public:
-    FBenchmarkScope(const char* message) : _message(message) {}
-    ~FBenchmarkScope() { LOG(Profiling, L"benchmark scope: {0:-30} = {1}", _message, Elapsed()); }
+    FBenchmarkScope(const wchar_t* category, const wchar_t* message) 
+        : _category(category)
+        , _message(message) {}
+
+    ~FBenchmarkScope() { 
+        LOG(Profiling, L" benchmark - {0:-30} {1:-30} = {2}", 
+            _category, _message, Elapsed()); 
+    }
 
 private:
-    const char* _message;
+    const wchar_t* const _category;
+    const wchar_t* const _message;
 };
+#endif //!FINAL_RELEASE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

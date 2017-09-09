@@ -4,7 +4,16 @@
 
 #define WITH_CORE_HASH_FNV1A 0
 
+#ifdef PLATFORM_WINDOWS
+#   pragma warning(push)
+#   pragma warning(disable: 6297) // Arithmetic overflow:  32-bit value is shifted, then cast to 64-bit value.  Results might not be an expected value.
+#endif
+
 #include "External/farmhash.h"
+
+#ifdef PLATFORM_WINDOWS
+#   pragma warning(pop)
+#endif
 
 #pragma warning(push)
 #pragma push_macro("FORCE_INLINE")

@@ -4,4 +4,13 @@
 #undef ALLOCATOR
 #undef FORCE_INLINE
 
-#include "External/lz4hc.c"
+#ifdef PLATFORM_WINDOWS
+#   pragma warning(push)
+#   pragma warning(disable: 6239) // (<non-zero constant> && <expression>) always evaluates to the result of <expression>.  Did you intend to use the bitwise-and operator?
+#endif
+
+#include "External/lz4.c"
+
+#ifdef PLATFORM_WINDOWS
+#   pragma warning(pop)
+#endif

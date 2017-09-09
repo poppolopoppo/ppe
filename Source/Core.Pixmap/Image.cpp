@@ -16,6 +16,11 @@
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Memory/MemoryStream.h"
 
+#ifdef PLATFORM_WINDOWS
+#   pragma warning(push)
+#   pragma warning(disable: 6001) // warning C6001: Using uninitialized memory 'coutput'
+#endif
+
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_MALLOC(sz) \
     Core::GetThreadLocalHeap().Malloc(sz)
@@ -39,6 +44,10 @@
     Assert("stb_image_write: ", (x))
 #define STBI_WRITE_NO_STDIO
 #include "External/stb_image_write.h"
+
+#ifdef PLATFORM_WINDOWS
+#   pragma warning(pop)
+#endif
 
 namespace Core {
 namespace Pixmap {
@@ -78,6 +87,26 @@ struct TChannelTraits_<EColorDepth::_32bits, _Space> {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+template <EColorMask _Mask> 
+struct THomogenizeColorF_ {
+    static void _0001(FFloatImage::color_type&) {}
+};
+template <> struct THomogenizeColorF_<EColorMask::R> {
+    static void _0001(FFloatImage::color_type& dst) {
+        dst[1] = dst[2] = 0.f; dst[3] = 1.f;
+    }
+};
+template <> struct THomogenizeColorF_<EColorMask::RG> {
+    static void _0001(FFloatImage::color_type& dst) {
+        dst[2] = 0.f; dst[3] = 1.f;
+    }
+};
+template <> struct THomogenizeColorF_<EColorMask::RGB> {
+    static void _0001(FFloatImage::color_type& dst) {
+        dst[3] = 1.f;
+    }
+};
+//----------------------------------------------------------------------------
 template <EColorDepth _Depth, EColorMask _Mask, EColorSpace _Space>
 struct TPixelTraits_ {
     typedef typename TChannelTraits_<_Depth, _Space>::type channel_type;
@@ -91,10 +120,7 @@ struct TPixelTraits_ {
     static void raw_to_float(FFloatImage::color_type* dst, const raw_type* src) {
         for (size_t i = 0; i < size_t(_Mask); ++i)
             (*dst)[i] = (*src)[i];
-        for (size_t i = size_t(_Mask); i < 3; ++i)
-            (*dst)[i] = 0.0f;
-        if (size_t(_Mask) < 4)
-            (*dst)[3] = 1.0f;
+        THomogenizeColorF_<_Mask>::_0001(*dst);
     }
 };
 //----------------------------------------------------------------------------
@@ -112,10 +138,7 @@ struct TPixelTraits_<_Depth, _Mask, EColorSpace::sRGB> {
     static void raw_to_float(FFloatImage::color_type* dst, const raw_type* src) {
         for (size_t i = 0; i < size_t(_Mask); ++i)
             (*dst)[i] = channel_traits::SRGB_to_Linear((*src)[i]);
-        for (size_t i = size_t(_Mask); i < 3; ++i)
-            (*dst)[i] = 0.0f;
-        if (size_t(_Mask) < 4)
-            (*dst)[3] = 1.0f;
+        THomogenizeColorF_<_Mask>::_0001(*dst);
     }
 };
 //----------------------------------------------------------------------------

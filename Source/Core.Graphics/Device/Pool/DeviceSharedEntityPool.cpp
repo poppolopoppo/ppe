@@ -69,10 +69,14 @@ void FDeviceSharedEntityPool::Release_Cooperative(const FDeviceSharedEntityKey& 
     while (p && p->Entity != entity)
         p = p->Local.Next;
 
-    AssertRelease(p);
-    Assert(entity == p->Entity);
-    Assert(p->LockCount);
-    p->LockCount--;
+    if (p) {
+        Assert(entity == p->Entity);
+        Assert(p->LockCount);
+        p->LockCount--;
+    }
+    else {
+        AssertNotReached();
+    }
 
     global_lru_type::Poke(&_mru, &_lru, p);
 

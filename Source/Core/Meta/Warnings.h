@@ -1,13 +1,15 @@
 #pragma once
 
 #ifdef PLATFORM_WINDOWS
+// /W3
 #pragma warning(disable: 4127) // L'expression conditionnelle est une constante
-#pragma warning(disable: 4201) // Extension non standard utilis�e�: struct/union sans nom.
-#pragma warning(disable: 4503) // Longueur du nom d�cor� d�pass�e, le nom a �t� tronqu�
-#pragma warning(disable: 6011) // Suppression de la r�f�rence du pointeur NULL 'XXX'.
-#pragma warning(disable: 6255) // _alloca signale un �chec en levant une exception de d�passement de capacit� de la pile. Utilisez _malloca � la place.
-#pragma warning(disable: 6385) // Lecture de donn�es non valides depuis 'XXX'�: la taille lisible est 'XXX' octets, mais 'XXX' octets sont peut-�tre lus.
-#pragma warning(disable: 4714) // Fonction 'XXX' marqu�e comme __forceinline non inline
+#pragma warning(disable: 4201) // Extension non standard utilisée: struct/union sans nom.
+#pragma warning(disable: 4503) // Longueur du nom décoré dépassée, le nom a été tronqué
+#pragma warning(disable: 4714) // Fonction 'XXX' marquée comme __forceinline non inline
+// /analyze
+#pragma warning(disable: 6054) // String 'XXX' might not be zero-terminated.
+#pragma warning(disable: 6255) // _alloca signale un échec en levant une exception de dépassement de capacité de la pile. Utilisez _malloca à la place.
+#pragma warning(disable: 6326) // Potential comparison of a constant with another constant.
 #endif
 
 #define CORE_MESSAGE(_Message) \

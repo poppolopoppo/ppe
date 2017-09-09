@@ -320,6 +320,7 @@ T TSymmetricEigensolver<T, N>::GetEigenvalue(int c) const
 template <typename T, size_t N>
 void TSymmetricEigensolver<T, N>::Tridiagonalize()
 {
+    STATIC_ASSERT(N > 1);
     int r, c;
     for (int i = 0, ip1 = 1; i < N - 2; ++i, ++ip1)
     {
