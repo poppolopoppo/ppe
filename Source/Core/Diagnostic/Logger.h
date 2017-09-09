@@ -8,7 +8,7 @@
 #include <iosfwd>
 #include <mutex>
 
-#if !defined(FINAL_RELEASE) && !defined(PROFILING_ENABLED)
+#if !defined(FINAL_RELEASE)
 #   define USE_DEBUG_LOGGER
 #endif
 
