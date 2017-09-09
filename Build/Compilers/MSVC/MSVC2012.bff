@@ -122,7 +122,6 @@ Compiler( 'Compiler-MSVC2012-x64' )
 
     .Defines = {}
     .CompilerOptions = ''
-    + ' /arch:SSE2'     ; active le support SSE2
     + ' /d2Zi+'         ; https://randomascii.wordpress.com/2013/09/11/debugging-optimized-codenew-in-visual-studio-2012/
 
     .IncludePaths =
