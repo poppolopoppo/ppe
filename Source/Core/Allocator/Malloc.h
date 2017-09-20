@@ -94,25 +94,6 @@ void* (realloc)(void *ptr, size_t size, Meta::TEnableIf< !Meta::TIsNaturalyAlign
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define ALIGNED_ALLOCATED_DEF(_Type, _Alignment) \
-public: \
-    void* operator new(size_t size) { \
-        return Core::malloc<_Alignment>(sizeof(_Type)); \
-    } \
-    void* operator new(size_t, void* ptr) { \
-        Assert(ptr); \
-        Likely(ptr); \
-        return ptr; \
-    } \
-    \
-    void operator delete(void* ptr) { \
-        Core::free<_Alignment>(ptr); \
-    } \
-    void operator delete(void* ptr, size_t) { operator delete(ptr); } \
-    void operator delete(void*, void*) {}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 //----------------------------------------------------------------------------
 class ALIGN(16) FCallstack;

@@ -50,26 +50,16 @@ public:
         return (static_cast<std::size_t>(0) - static_cast<std::size_t>(1)) / sizeof(T);
     }
 
+    /*
+    ** Implemented in derived classes :
+    */
+
     //pointer allocate(size_type n, const void* hint = 0) {}
     //void deallocate(void* p, size_type n) {}
 
     // AllocatorRealloc()
     //void* relocate(void* p, size_type newSize, size_type oldSize) {}
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-class TAllocatorDeleter : _Allocator {
-public:
-    void operator ()(T* ptr) {
-        _Allocator::destroy(ptr);
-        _Allocator::deallocate(ptr, 1);
-    }
-};
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-using TAllocatorPtr = TUniquePtr<T, TAllocatorDeleter<T, _Allocator> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -44,4 +44,24 @@ using TAllocator = TDecorateAllocator< DEFAULT_ALLOCATOR<T>, _Tag >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#define OVERRIDE_CLASS_ALLOCATOR(_Allocator) \
+public: \
+    void* operator new(size_t size) { \
+        return _Allocator().allocate(1); \
+    } \
+    void* operator new(size_t, void* ptr) { \
+        Assert(ptr); \
+        Likely(ptr); \
+        return ptr; \
+    } \
+    \
+    void operator delete(void* ptr) { \
+        using pointer = typename std::allocator_traits<_Allocator>::pointer; \
+        _Allocator().deallocate(reinterpret_cast<pointer>(ptr), 1); \
+    } \
+    void operator delete(void* ptr, size_t) { operator delete(ptr); } \
+    void operator delete(void*, void*) {}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core
