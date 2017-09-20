@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 
 // Memory Domains ON/OFF
-#ifndef FINAL_RELEASE
+#if not defined(FINAL_RELEASE) && not defined(PROFILING_ENABLED) // %_NOCOMMIT%
 #   define USE_MEMORY_DOMAINS
 #endif
 
