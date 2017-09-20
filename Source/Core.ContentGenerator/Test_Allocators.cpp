@@ -80,7 +80,7 @@ static void Test_Allocator_Sliding_(const wchar_t* category, const wchar_t* name
 
     BENCHMARK_SCOPE(category, name);
 
-    const size_t numDeallocs = Max(1, window / 10);
+    const size_t numDeallocs = Max(size_t(1), window / 10);
 
     using pointer = typename std::allocator_traits<_Alloc>::pointer;
     using block_type = TPair<pointer, size_t>;

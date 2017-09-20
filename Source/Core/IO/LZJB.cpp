@@ -149,7 +149,7 @@ void CompressMemory(IBufferedStreamWriter* dst, const TMemoryView<const u8>& src
     while (psrc < s_start + s_len) {
         if ((copymask <<= 1) == (1 << NBBY)) {
             copymask = 1;
-            copyoff = dst->TellO();
+            copyoff = checked_cast<size_t>(dst->TellO());
             copyval = 0;
             dst->WritePOD(u8(0));
         }
