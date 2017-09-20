@@ -247,7 +247,7 @@ void *FMemoryPool::TryAllocate_FailIfNoBlockAvailable_() {
         Assert(_totalSize >= _usedSize);
 
         using list_accessor = FMemoryPoolChunk::list_accessor;
-        list_accessor::Poke(&_chunksHead, &_chunksTail, chunk);
+        list_accessor::PokeFront(&_chunksHead, &_chunksTail, chunk);
 
         return chunk->AllocateBlock(_blockSize);
     }

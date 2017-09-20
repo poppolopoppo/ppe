@@ -52,7 +52,7 @@ bool FDeviceSharedEntityPool::Acquire_Cooperative(PCDeviceAPIDependantEntity *pE
 
     p->LockCount++;
 
-    global_lru_type::Poke(&_mru, &_lru, p);
+    global_lru_type::PokeFront(&_mru, &_lru, p);
 
     Assert(key == p->Key);
     *pEntity = p->Entity;
@@ -78,7 +78,7 @@ void FDeviceSharedEntityPool::Release_Cooperative(const FDeviceSharedEntityKey& 
         AssertNotReached();
     }
 
-    global_lru_type::Poke(&_mru, &_lru, p);
+    global_lru_type::PokeFront(&_mru, &_lru, p);
 
     entity.reset();
     Assert(entity.get() == nullptr);
@@ -178,7 +178,7 @@ size_t FDeviceSharedEntityPool::ReleaseLRU_ReturnRealSize(size_t targetSizeInByt
     }
 
     Assert(_usedMemory.TotalSizeInBytes() == totalSizeInBytes);
-    return checked_cast<size_t>(_usedMemory.TotalSizeInBytes().Value);
+    return checked_cast<size_t>(_usedMemory.TotalSizeInBytes());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
