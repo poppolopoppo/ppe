@@ -81,7 +81,7 @@ inline constexpr size_t IsPow2(size_t v) {
 }
 //----------------------------------------------------------------------------
 #if defined(CPP_VISUALSTUDIO)
-inline size_t FloorLog2(size_t value) {
+FORCE_INLINE size_t FloorLog2(size_t value) {
     Assert(value > 0);
     unsigned long log2;
 #if defined(ARCH_X64)
@@ -94,7 +94,7 @@ inline size_t FloorLog2(size_t value) {
     return log2;
 }
 #elif defined(CPP_GCC) or defined(CPP_CLANG)
-inline constexpr size_t FloorLog2(size_t value) {
+FORCE_INLINE constexpr size_t FloorLog2(size_t value) {
     //x ^ 31 = 31 - x, but gcc does not optimize 31 - __builtin_clz(x) to bsr(x), but generates 31 - (bsr(x) ^ 31)
     return CODE3264(__builtin_clz(v) ^ 31, __builtin_clzll(v) ^ 63)
 }
@@ -135,6 +135,17 @@ template <>
 struct TLog2<1> {
     STATIC_CONST_INTEGRAL(size_t, value, 0);
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+T BitSetsCount(T bits) {
+    // https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+    bits = bits - ((bits >> 1) & (T)~(T)0/3);                           // temp
+    bits = (bits & (T)~(T)0/15*3) + ((bits >> 2) & (T)~(T)0/15*3);      // temp
+    bits = (bits + (bits >> 4)) & (T)~(T)0/255*15;                      // temp
+    return (T)(bits * ((T)~(T)0/255)) >> (sizeof(T) - 1) * CHAR_BIT;    // count
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
