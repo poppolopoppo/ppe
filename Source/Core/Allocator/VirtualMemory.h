@@ -63,7 +63,7 @@ template <size_t _CacheBlocksCapacity, size_t _MaxCacheSizeInBytes>
 #endif
 class TVirtualMemoryCache : private FVirtualMemoryCache {
 public:
-    TVirtualMemoryCache() { STATIC_ASSERT(_MaxCacheSizeInBytes > 0 && IS_ALIGNED(64 * 1024, _MaxCacheSizeInBytes)); }
+    TVirtualMemoryCache() { STATIC_ASSERT(_MaxCacheSizeInBytes > 0 && Meta::IsAligned(64 * 1024, _MaxCacheSizeInBytes)); }
     ~TVirtualMemoryCache() { ReleaseAll(); }
 
 #ifdef USE_MEMORY_DOMAINS
