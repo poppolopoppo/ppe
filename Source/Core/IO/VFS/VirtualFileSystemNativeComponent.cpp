@@ -14,10 +14,7 @@
 #include "IO/FileSystem.h"
 #include "IO/VirtualFileSystem.h"
 #include "IO/Stream.h"
-
-// _waccess()
-#include <io.h>
-#include <wchar.h>
+#include "Misc/TargetPlatform.h"
 
 // EnumerateFiles()
 #ifdef PLATFORM_WINDOWS
@@ -167,12 +164,7 @@ static size_t GlobFiles_Windows_(
 static bool EntityExists_(const wchar_t *nativeName, EExistPolicy policy) {
     Assert(nativeName);
 
-    static_assert(0 == (int)EExistPolicy::Exists, "http://msdn.microsoft.com/en-us/library/1w06ktdy.aspx");
-    static_assert(2 == (int)EExistPolicy::WriteOnly, "http://msdn.microsoft.com/en-us/library/1w06ktdy.aspx");
-    static_assert(4 == (int)EExistPolicy::ReadOnly, "http://msdn.microsoft.com/en-us/library/1w06ktdy.aspx");
-    static_assert(6 == (int)EExistPolicy::ReadWrite, "http://msdn.microsoft.com/en-us/library/1w06ktdy.aspx");
-
-    return 0 == ::_waccess(nativeName, (int)policy);
+    return FPlatformIO::Access(nativeName, policy);
 }
 //----------------------------------------------------------------------------
 static bool CreateDirectory_(const wchar_t *nativeDirpath, bool& existed) {
@@ -245,30 +237,30 @@ static size_t GlobFiles_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FVirtualFileSystemNativeComponent::FVirtualFileSystemNativeComponent(const FDirpath& alias, FWString&& target, EOpenMode mode /* = EOpenMode::ReadWritable */)
+FVirtualFileSystemNativeComponent::FVirtualFileSystemNativeComponent(const FDirpath& alias, FWString&& target, EOpenPolicy openMode /* = EOpenPolicy::ReadWritable */)
 :   FVirtualFileSystemComponent(alias)
-,   _mode(mode), _target(SanitizeTarget_(std::move(target)) ) {
+,   _openMode(openMode), _target(SanitizeTarget_(std::move(target)) ) {
     Assert(!_target.empty());
 }
 //----------------------------------------------------------------------------
-FVirtualFileSystemNativeComponent::FVirtualFileSystemNativeComponent(const FDirpath& alias, const FWString& target, EOpenMode mode /* = EOpenMode::ReadWritable */)
+FVirtualFileSystemNativeComponent::FVirtualFileSystemNativeComponent(const FDirpath& alias, const FWString& target, EOpenPolicy openMode /* = EOpenPolicy::ReadWritable */)
 :   FVirtualFileSystemComponent(alias)
-,   _mode(mode), _target(SanitizeTarget_(target)) {
+,   _openMode(openMode), _target(SanitizeTarget_(target)) {
     Assert(!_target.empty());
 }
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeComponent::~FVirtualFileSystemNativeComponent() {}
 //----------------------------------------------------------------------------
 IVirtualFileSystemComponentReadable* FVirtualFileSystemNativeComponent::Readable() {
-    return (_mode ^ EOpenMode::Readable ? this : nullptr);
+    return (_openMode ^ EOpenPolicy::Readable ? this : nullptr);
 }
 //----------------------------------------------------------------------------
 IVirtualFileSystemComponentWritable* FVirtualFileSystemNativeComponent::Writable() {
-    return (_mode ^ EOpenMode::Writable ? this : nullptr);
+    return (_openMode ^ EOpenPolicy::Writable ? this : nullptr);
 }
 //----------------------------------------------------------------------------
 IVirtualFileSystemComponentReadWritable* FVirtualFileSystemNativeComponent::ReadWritable() {
-    return (_mode ^ EOpenMode::ReadWritable ? this : nullptr);
+    return (_openMode ^ EOpenPolicy::ReadWritable ? this : nullptr);
 }
 //----------------------------------------------------------------------------
 FWString FVirtualFileSystemNativeComponent::Unalias(const FFilename& aliased) const {
@@ -278,7 +270,7 @@ FWString FVirtualFileSystemNativeComponent::Unalias(const FFilename& aliased) co
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::DirectoryExists(const FDirpath& dirpath, EExistPolicy policy) {
-    Assert(_mode ^ EOpenMode::Readable);
+    Assert(_openMode ^ EOpenPolicy::Readable);
 
     wchar_t nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeDirpath, dirpath, _alias, _target);
@@ -287,7 +279,7 @@ bool FVirtualFileSystemNativeComponent::DirectoryExists(const FDirpath& dirpath,
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::FileExists(const FFilename& filename, EExistPolicy policy) {
-    Assert(_mode ^ EOpenMode::Readable);
+    Assert(_openMode ^ EOpenPolicy::Readable);
 
     wchar_t nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
@@ -302,18 +294,18 @@ bool FVirtualFileSystemNativeComponent::FileStats(FFileStat* pstat, const FFilen
 }
 //----------------------------------------------------------------------------
 size_t FVirtualFileSystemNativeComponent::EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) {
-    Assert(_mode ^ EOpenMode::Readable);
+    Assert(_openMode ^ EOpenPolicy::Readable);
     return GlobFiles_(dirpath, _alias, _target, foreach, L"*", recursive);
 }
 //----------------------------------------------------------------------------
 size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) {
-    Assert(_mode ^ EOpenMode::Readable);
+    Assert(_openMode ^ EOpenPolicy::Readable);
     Assert(pattern.size());
     return GlobFiles_(dirpath, _alias, _target, foreach, pattern, recursive);
 }
 //----------------------------------------------------------------------------
 TUniquePtr<IVirtualFileSystemIStream> FVirtualFileSystemNativeComponent::OpenReadable(const FFilename& filename, EAccessPolicy policy) {
-    Assert(_mode ^ EOpenMode::Readable);
+    Assert(_openMode ^ EOpenPolicy::Readable);
 
     wchar_t nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
@@ -328,7 +320,7 @@ TUniquePtr<IVirtualFileSystemIStream> FVirtualFileSystemNativeComponent::OpenRea
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::CreateDirectory(const FDirpath& dirpath) {
-    Assert(_mode ^ EOpenMode::Writable );
+    Assert(_openMode ^ EOpenPolicy::Writable);
 
     bool result = false;
 
@@ -365,7 +357,7 @@ bool FVirtualFileSystemNativeComponent::CreateDirectory(const FDirpath& dirpath)
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::RemoveDirectory(const FDirpath& dirpath) {
-    Assert(_mode ^ EOpenMode::Writable );
+    Assert(_openMode ^ EOpenPolicy::Writable);
 
     wchar_t nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeDirpath, dirpath, _alias, _target);
@@ -375,7 +367,7 @@ bool FVirtualFileSystemNativeComponent::RemoveDirectory(const FDirpath& dirpath)
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::RemoveFile(const FFilename& filename) {
-    Assert(_mode ^ EOpenMode::Writable );
+    Assert(_openMode ^ EOpenPolicy::Writable);
 
     wchar_t nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
@@ -385,7 +377,7 @@ bool FVirtualFileSystemNativeComponent::RemoveFile(const FFilename& filename) {
 }
 //----------------------------------------------------------------------------
 TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& filename, EAccessPolicy policy) {
-    Assert(_mode ^ EOpenMode::Writable );
+    Assert(_openMode ^ EOpenPolicy::Writable);
 
     TUniquePtr<IVirtualFileSystemOStream> result;
 
@@ -406,9 +398,9 @@ TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemNativeComponent::OpenWri
 }
 //----------------------------------------------------------------------------
 TUniquePtr<IVirtualFileSystemIOStream> FVirtualFileSystemNativeComponent::OpenReadWritable(const FFilename&/* filename */, EAccessPolicy/* policy */) {
-    Assert(_mode ^ EOpenMode::ReadWritable);
+    Assert(_openMode == EOpenPolicy::ReadWritable);
 
-    // TODO (12/13) : not supported
+    // TODO (12/13) : not supported/required atm
     AssertNotImplemented();
 
     return nullptr;

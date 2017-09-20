@@ -6,6 +6,12 @@
 
 #include "Allocator/PoolAllocator-impl.h"
 #include "IO/VirtualFileSystem.h"
+#include "Misc/TargetPlatform.h"
+#include "Time/TimedScope.h"
+
+#ifndef FINAL_RELEASE
+#   include "IO/Format.h"
+#endif
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -16,249 +22,130 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(VirtualFileSystem, FVirtualFileSystemNat
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-static bool IsValidFileHandle_(FILE *handle) {
-    return  handle &&
-            0 == ferror(handle);
-}
-//----------------------------------------------------------------------------
-static FILE* OpenFileHandle_(const wchar_t *filename, bool readIfFalseElseWrite, EAccessPolicy policy) {
-    Assert(filename);
-
-    FILE* phandle = nullptr;
-
-    STACKLOCAL_WOCSTRSTREAM(openFlags, 32);
-    if (readIfFalseElseWrite) {
-        // write
-        if (policy ^ EAccessPolicy::Create ||
-            policy ^ EAccessPolicy::Truncate)
-            openFlags << L'w';
-        else
-            openFlags << L'a';
-
-        if (policy ^ EAccessPolicy::ShortLived)
-            openFlags << L'T'; // Specifies a file as temporary. If possible, it is not flushed to disk.
-        else if (policy ^ EAccessPolicy::Temporary)
-            openFlags << L'D'; // Specifies a file as temporary. It is deleted when the last file pointer is closed.
-    }
-    else {
-        // read
-        openFlags << L'r';
-    }
-
-    if (policy ^ EAccessPolicy::Binary)
-        openFlags << L'b';
-
-    if (policy ^ EAccessPolicy::Random)
-        openFlags << L'R'; // Optimize for random access
-    else
-        openFlags << L'S'; // Optimize for sequential access (by default)
-
-    if (::_wfopen_s(&phandle, filename, openFlags.NullTerminatedStr()))
-        return nullptr;
-    Assert(phandle);
-
-    if (policy ^ EAccessPolicy::Ate)
-        fseek(phandle, 0, SEEK_END);
-
-    Assert(IsValidFileHandle_(phandle));
-    return phandle;
-}
-//----------------------------------------------------------------------------
-static void CloseFileHandle_(FILE* phandle) {
-    Assert(phandle);
-    Assert(IsValidFileHandle_(phandle));
-
-    if (0 != fclose(phandle))
-        AssertNotReached();
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileIStream::FVirtualFileSystemNativeFileIStream(const FFilename& filename, const wchar_t* native, EAccessPolicy policy)
-:   _handle(OpenFileHandle_(native, false, policy))
+:   _handle(FPlatformIO::Open(native, EOpenPolicy::Readable, policy))
 ,   _filename(filename) {}
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileIStream::~FVirtualFileSystemNativeFileIStream() {
-    if (false == Bad()) {
-        Assert(IsValidFileHandle_(_handle));
-        CloseFileHandle_(_handle);
-    }
-    else {
-        Assert(false == IsValidFileHandle_(_handle));
-    }
+    if (FPlatformIO::InvalidHandle != _handle)
+        FPlatformIO::Close(_handle);
 }
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileIStream::FVirtualFileSystemNativeFileIStream(FVirtualFileSystemNativeFileIStream&& rvalue)
 :   _handle(rvalue._handle)
 ,   _filename(std::move(rvalue._filename)) {
-    rvalue._handle = nullptr;
+    rvalue._handle = FPlatformIO::InvalidHandle;
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeFileIStream::Bad() const {
-    return (false == IsValidFileHandle_(_handle));
+    return (FPlatformIO::InvalidHandle == _handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FVirtualFileSystemNativeFileIStream::TellI() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(IsValidFileHandle_(_handle));
 
-    return checked_cast<std::streamoff>(_ftelli64(_handle));
+    return FPlatformIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
-bool FVirtualFileSystemNativeFileIStream::SeekI(std::streamoff offset, ESeekOrigin origin) {
+std::streamoff FVirtualFileSystemNativeFileIStream::SeekI(std::streamoff offset, ESeekOrigin origin) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(IsValidFileHandle_(_handle));
 
-    STATIC_ASSERT(SEEK_SET == int(ESeekOrigin::Begin));
-    STATIC_ASSERT(SEEK_CUR == int(ESeekOrigin::Relative));
-    STATIC_ASSERT(SEEK_END == int(ESeekOrigin::End));
-
-    if (0 != _fseeki64(_handle, checked_cast<__int64>(offset), int(origin)) )
-        return false;
-
-    Assert(IsValidFileHandle_(_handle));
-    return true;
+    return FPlatformIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeFileIStream::Read(void* storage, std::streamsize sizeInBytes) {
-    const size_t count = checked_cast<size_t>(sizeInBytes);
-    return (count == FVirtualFileSystemNativeFileIStream::ReadSome(storage, 1, count) );
+    THIS_THREADRESOURCE_CHECKACCESS();
+
+    IOBENCHMARK_SCOPE(L"NATIVE-READ", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), checked_cast<size_t>(sizeInBytes));
+
+    return (FPlatformIO::Read(_handle, storage, sizeInBytes) == sizeInBytes);
 }
 //----------------------------------------------------------------------------
 size_t FVirtualFileSystemNativeFileIStream::ReadSome(void* storage, size_t eltsize, size_t count) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(IsValidFileHandle_(_handle));
-    Assert(storage);
-    Assert(count);
 
-    const size_t read = fread(storage, eltsize, count, _handle);
+    IOBENCHMARK_SCOPE(L"NATIVE-READ", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), eltsize * count);
 
-    Assert(IsValidFileHandle_(_handle));
-    return read;
-}
-//----------------------------------------------------------------------------
-bool FVirtualFileSystemNativeFileIStream::Peek(char& ch) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(IsValidFileHandle_(_handle));
+    const std::streamsize read = FPlatformIO::Read(_handle, storage, eltsize * count);
 
-    const int poke = fgetc(_handle);
-    if (EOF == poke)
-        return false;
-
-    if (poke != ungetc(poke, _handle))
-        AssertNotReached();
-
-    ch = char(checked_cast<u8>(poke));
-    return true;
-}
-//----------------------------------------------------------------------------
-bool FVirtualFileSystemNativeFileIStream::Peek(wchar_t& wch) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(IsValidFileHandle_(_handle));
-
-    const ::wint_t poke = fgetwc(_handle);
-    if (::wint_t(EOF) == poke)
-        return false;
-
-    if (poke != ungetwc(poke, _handle))
-        AssertNotReached();
-
-    wch = wchar_t(checked_cast<u16>(poke));
-    return true;
+    return checked_cast<size_t>(read / eltsize);
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeFileIStream::Eof() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(IsValidFileHandle_(_handle));
 
-    return 0 != feof(_handle);
+    return FPlatformIO::Eof(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamsize FVirtualFileSystemNativeFileIStream::SizeInBytes() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(IsValidFileHandle_(_handle));
+    Assert(FPlatformIO::InvalidHandle != _handle);
 
-    const long long offset = _ftelli64(_handle);
+    const std::streamoff offset = FPlatformIO::Tell(_handle);
+    const std::streamoff ate = FPlatformIO::Seek(_handle, 0, ESeekOrigin::End);
 
-    if (0 != _fseeki64(_handle, 0, SEEK_END))
-        AssertNotReached();
+    Assert(ate != std::streamoff(-1));
 
-    const std::streamsize size = checked_cast<std::streamsize>(_ftelli64(_handle));
+    if (ate != offset) {
+        const std::streamoff restored = FPlatformIO::Seek(_handle, offset, ESeekOrigin::Begin);
+        Assert(restored == offset);
+    }
 
-    if (0 != _fseeki64(_handle, offset, SEEK_SET))
-        AssertNotReached();
-
-    Assert(IsValidFileHandle_(_handle));
-    return (size);
+    Assert(ate >= 0);
+    return checked_cast<std::streamsize>(ate);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileOStream::FVirtualFileSystemNativeFileOStream(const FFilename& filename, const wchar_t* native, EAccessPolicy policy)
-:   _handle(OpenFileHandle_(native, true, policy))
+:   _handle(FPlatformIO::Open(native, EOpenPolicy::Writable, policy))
 ,   _filename(filename) {}
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileOStream::~FVirtualFileSystemNativeFileOStream() {
-    if (false == Bad()) {
-        Assert(IsValidFileHandle_(_handle));
-        CloseFileHandle_(_handle);
-    }
-    else {
-        Assert(false == IsValidFileHandle_(_handle));
-    }
+    if (FPlatformIO::InvalidHandle != _handle)
+        FPlatformIO::Close(_handle);
 }
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileOStream::FVirtualFileSystemNativeFileOStream(FVirtualFileSystemNativeFileOStream&& rvalue)
 :   _handle(rvalue._handle)
 ,   _filename(std::move(rvalue._filename)) {
-    rvalue._handle = nullptr;
+    rvalue._handle = FPlatformIO::InvalidHandle;
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeFileOStream::Bad() const {
-    return (false == IsValidFileHandle_(_handle));
+    return (FPlatformIO::InvalidHandle == _handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FVirtualFileSystemNativeFileOStream::TellO() const {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(IsValidFileHandle_(_handle));
 
-    return checked_cast<std::streamoff>(_ftelli64(_handle));
+    return FPlatformIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
-bool FVirtualFileSystemNativeFileOStream::SeekO(std::streamoff offset, ESeekOrigin origin) {
+std::streamoff FVirtualFileSystemNativeFileOStream::SeekO(std::streamoff offset, ESeekOrigin origin) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(IsValidFileHandle_(_handle));
 
-    STATIC_ASSERT(SEEK_SET == int(ESeekOrigin::Begin));
-    STATIC_ASSERT(SEEK_CUR == int(ESeekOrigin::Relative));
-    STATIC_ASSERT(SEEK_END == int(ESeekOrigin::End));
-
-    if (0 != _fseeki64(_handle, checked_cast<long>(offset), int(origin)) )
-        return false;
-
-    Assert(IsValidFileHandle_(_handle));
-    return true;
+    return FPlatformIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeFileOStream::Write(const void* storage, std::streamsize sizeInBytes) {
-    const size_t count = checked_cast<size_t>(sizeInBytes);
-    return (count == FVirtualFileSystemNativeFileOStream::WriteSome(storage, 1, count) );
+    THIS_THREADRESOURCE_CHECKACCESS();
+
+    IOBENCHMARK_SCOPE(L"NATIVE-WRITE", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), checked_cast<size_t>(sizeInBytes));
+
+    return (FPlatformIO::Write(_handle, storage, sizeInBytes) == sizeInBytes);
 }
 //----------------------------------------------------------------------------
 size_t FVirtualFileSystemNativeFileOStream::WriteSome(const void* storage, size_t eltsize, size_t count) {
     THIS_THREADRESOURCE_CHECKACCESS();
-    Assert(IsValidFileHandle_(_handle));
-    Assert(storage);
+    Assert(eltsize);
     Assert(count);
 
-    const size_t written = fwrite(storage, eltsize, count, _handle);
+    IOBENCHMARK_SCOPE(L"NATIVE-WRITE", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), eltsize * count);
 
-    Assert(IsValidFileHandle_(_handle));
-    return written;
+    const std::streamsize written = FPlatformIO::Write(_handle, storage, eltsize * count);
+
+    return checked_cast<size_t>(written / eltsize);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

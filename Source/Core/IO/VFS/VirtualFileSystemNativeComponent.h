@@ -16,18 +16,11 @@ class FFileStat;
 //----------------------------------------------------------------------------
 class FVirtualFileSystemNativeComponent : public FVirtualFileSystemComponent, IVirtualFileSystemComponentReadWritable {
 public:
-    enum class EOpenMode {
-        Readable        = 1,
-        Writable        = 2,
-        ReadWritable    = 3
-    };
-    ENUM_FLAGS_FRIEND(EOpenMode);
-
-    FVirtualFileSystemNativeComponent(const FDirpath& alias, FWString&& target, EOpenMode mode = EOpenMode::ReadWritable);
-    FVirtualFileSystemNativeComponent(const FDirpath& alias, const FWString& target, EOpenMode mode = EOpenMode::ReadWritable);
+    FVirtualFileSystemNativeComponent(const FDirpath& alias, FWString&& target, EOpenPolicy openMode = EOpenPolicy::ReadWritable);
+    FVirtualFileSystemNativeComponent(const FDirpath& alias, const FWString& target, EOpenPolicy openMode = EOpenPolicy::ReadWritable);
     virtual ~FVirtualFileSystemNativeComponent();
 
-    EOpenMode EMode() const { return _mode; }
+    EOpenPolicy OpenMode() const { return _openMode; }
     const FWString& Target() const { return _target; }
 
     // FVirtualFileSystemComponent
@@ -61,7 +54,7 @@ private:
     virtual TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, EAccessPolicy policy) override final;
 
 private:
-    const EOpenMode _mode;
+    const EOpenPolicy _openMode;
     const FWString _target;
 };
 //----------------------------------------------------------------------------

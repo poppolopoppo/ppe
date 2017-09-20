@@ -6,7 +6,7 @@
 
 #include "Core/IO/FS/Filename.h"
 
-#include "Core/IO/VFS/VirtualFileSystemPolicies.h"
+#include "Core/IO/FS/Policies.h"
 #include "Core/IO/VFS/VirtualFileSystemStream.h"
 
 #include "Core/Allocator/PoolAllocator.h"
@@ -25,20 +25,17 @@ public:
     FVirtualFileSystemNativeFileIStream(FVirtualFileSystemNativeFileIStream&& rvalue);
     FVirtualFileSystemNativeFileIStream& operator =(FVirtualFileSystemNativeFileIStream&& rvalue) = delete;
 
-    virtual const FFilename& SourceFilename() const override final { return _filename; }
+    virtual const FFilename& Fragment() const override final { return _filename; }
 
     virtual bool Bad() const override final;
 
     virtual bool IsSeekableI(ESeekOrigin ) const override final { return true; }
 
     virtual std::streamoff TellI() const override final;
-    virtual bool SeekI(std::streamoff offset, ESeekOrigin policy) override final;
+    virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin policy) override final;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
-
-    virtual bool Peek(char& ch) override final;
-    virtual bool Peek(wchar_t& ch) override final;
 
     virtual bool Eof() const override final;
     virtual std::streamsize SizeInBytes() const override final;
@@ -46,7 +43,7 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    FILE *_handle;
+    int _handle;
     const FFilename _filename;
 };
 //----------------------------------------------------------------------------
@@ -58,14 +55,14 @@ public:
     FVirtualFileSystemNativeFileOStream(FVirtualFileSystemNativeFileOStream&& rvalue);
     FVirtualFileSystemNativeFileOStream& operator =(FVirtualFileSystemNativeFileOStream&& rvalue) = delete;
 
-    virtual const FFilename& SourceFilename() const override final { return _filename; }
+    virtual const FFilename& Fragment() const override final { return _filename; }
 
     virtual bool Bad() const override final;
 
     virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
 
     virtual std::streamoff TellO() const override final;
-    virtual bool SeekO(std::streamoff offset, ESeekOrigin policy) override final;
+    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin policy) override final;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
@@ -73,7 +70,7 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    FILE *_handle;
+    int _handle;
     const FFilename _filename;
 };
 //----------------------------------------------------------------------------
