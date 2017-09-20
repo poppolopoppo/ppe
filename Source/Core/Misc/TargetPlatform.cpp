@@ -2,8 +2,13 @@
 
 #include "TargetPlatform.h"
 
+#include "Diagnostic/Logger.h"
+
 #ifdef PLATFORM_WINDOWS
 #   include "Misc/Platform_Windows.h"
+#   include <fcntl.h>
+#   include <io.h>
+#   include <wchar.h>
 #endif
 
 namespace Core {
@@ -84,6 +89,17 @@ EEndianness TargetPlatformEndianness(ETargetPlatform platform) {
 //----------------------------------------------------------------------------
 const FPlatform::FSystemInfo& FPlatform::SystemInfo = GSystemInfo;
 //----------------------------------------------------------------------------
+void FPlatform::Sleep(size_t ms) {
+#ifdef PLATFORM_WINDOWS
+    if (ms)
+        ::Sleep((::DWORD)ms);
+    else
+        ::SwitchToThread();
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 void FPlatform::CheckMemory() {
 #ifdef PLATFORM_WINDOWS
@@ -145,6 +161,189 @@ void FPlatform::OutputDebug(const wchar_t* text) {
 #endif
 }
 #endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#ifdef PLATFORM_WINDOWS
+static int OpenPolicyToPMode_(EOpenPolicy openMode) {
+    switch (openMode) {
+    case EOpenPolicy::Readable: return _S_IREAD;
+    case EOpenPolicy::Writable: return _S_IWRITE;
+    case EOpenPolicy::ReadWritable: return _S_IREAD | _S_IWRITE;
+    };
+    AssertNotImplemented();
+    return -1;
+}
+#endif
+//----------------------------------------------------------------------------
+bool FPlatformIO::Access(const wchar_t* entity, EExistPolicy exists) {
+#ifdef PLATFORM_WINDOWS
+    int mode = 0;
+
+    //if (exists ^ EExistPolicy::Exists) mode |= 0; // on by default
+    if (exists ^ EExistPolicy::WriteOnly)   mode |= 2;
+    if (exists ^ EExistPolicy::ReadOnly)    mode |= 4;
+    if (exists ^ EExistPolicy::ReadWrite)   mode |= 6;
+
+    return (0 == ::_waccess(entity, mode));
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+auto FPlatformIO::Open(const wchar_t* filename, EOpenPolicy openMode, EAccessPolicy accessFlags) -> FHandle {
+#ifdef PLATFORM_WINDOWS
+    int oflag = 0;
+
+    if (accessFlags ^ EAccessPolicy::Binary)        oflag |= _O_BINARY;
+    if (accessFlags ^ EAccessPolicy::Text)          oflag |= _O_TEXT;
+    if (accessFlags ^ EAccessPolicy::TextU8)        oflag |= _O_U8TEXT;
+    if (accessFlags ^ EAccessPolicy::TextU16)       oflag |= _O_U16TEXT;
+    if (accessFlags ^ EAccessPolicy::TextW)         oflag |= _O_WTEXT;
+
+    Assert(Meta::BitSetsCount(oflag) <= 1); // non overlapping options !
+
+    if (accessFlags ^ EAccessPolicy::Create)        oflag |= _O_CREAT;
+    if (accessFlags ^ EAccessPolicy::Append)        oflag |= _O_APPEND;
+    if (accessFlags ^ EAccessPolicy::Truncate)      oflag |= _O_CREAT|_O_TRUNC;
+
+    if (accessFlags ^ EAccessPolicy::Random)        oflag |= _O_RANDOM;
+    if (accessFlags ^ EAccessPolicy::Sequential)    oflag |= _O_SEQUENTIAL;
+
+    Assert(Meta::BitSetsCount(oflag & (_O_RANDOM | _O_SEQUENTIAL)) <= 1); // non overlapping options !
+
+    if (accessFlags ^ EAccessPolicy::ShortLived)    oflag |= _O_SHORT_LIVED;
+    if (accessFlags ^ EAccessPolicy::Temporary)     oflag |= _O_TEMPORARY;
+    if (accessFlags ^ EAccessPolicy::Exclusive)     oflag |= _O_EXCL;
+
+    Assert(Meta::BitSetsCount(oflag & (_O_SHORT_LIVED | _O_TEMPORARY)) <= 1); // non overlapping options !
+    Assert(!(oflag & (_O_SHORT_LIVED | _O_TEMPORARY | _O_EXCL)) || (oflag & _O_CREAT)); // must use _O_CREAT with these flags !
+
+    switch (openMode) {
+    case EOpenPolicy::Readable:                     oflag |= _O_RDONLY; break;
+    case EOpenPolicy::Writable:                     oflag |= _O_WRONLY; break;
+    case EOpenPolicy::ReadWritable:                 oflag |= _O_RDWR; break;
+    default:
+        AssertNotImplemented();
+        break;
+    }
+
+    FHandle handle;
+    if (::_wsopen_s(&handle, filename, oflag, _SH_DENYRW, OpenPolicyToPMode_(openMode)) != 0) {
+#ifdef USE_DEBUG_LOGGER
+        const wchar_t* reason;
+        switch (errno) {
+        case EACCES:    reason = L"Given path is a directory, or file is read-only, but an open-for-writing operation was attempted."; break;
+        case EEXIST:    reason = L"_O_CREAT and _O_EXCL flags were specified, but filename already exists."; break;
+        case EINVAL:    reason = L"Invalid oflag, shflag, orpmode argument, or pfh or filename was a null pointer."; break;
+        case ENOENT:    reason = L"File or path not found."; break;
+        default:        reason = L"unknown error"; break;
+        }
+        LOG(Error, L"[IO] Failed to open '{0}': {1}", filename, reason);
+#endif
+        Assert(InvalidHandle == handle);
+    }
+    return handle;
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+bool FPlatformIO::Close(FHandle handle) {
+    Assert(InvalidHandle != handle);
+#ifdef PLATFORM_WINDOWS
+    return (0 == ::_close(handle));
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+bool FPlatformIO::Eof(FHandle handle) {
+    Assert(InvalidHandle != handle);
+#ifdef PLATFORM_WINDOWS
+    return (0 < ::_eof(handle));
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+std::streamoff FPlatformIO::Tell(FHandle handle) {
+    Assert(InvalidHandle != handle);
+#ifdef PLATFORM_WINDOWS
+    return ::_telli64(handle);
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+std::streamoff FPlatformIO::Seek(FHandle handle, std::streamoff offset, ESeekOrigin origin) {
+    Assert(InvalidHandle != handle);
+#ifdef PLATFORM_WINDOWS
+    int _origin;
+    switch (origin) {
+    case ESeekOrigin::Begin:    _origin = SEEK_SET; break;
+    case ESeekOrigin::Relative: _origin = SEEK_CUR; break;
+    case ESeekOrigin::End:      _origin = SEEK_END; break;
+    default:
+        AssertNotImplemented();
+        _origin = 0;
+        break;
+    }
+    return ::_lseeki64(handle, checked_cast<int>(offset), _origin);
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+std::streamsize FPlatformIO::Read(FHandle handle, void* dst, std::streamsize sizeInBytes) {
+    Assert(InvalidHandle != handle);
+    Assert(dst);
+    Assert(sizeInBytes);
+#ifdef PLATFORM_WINDOWS
+    return ::_read(handle, dst, checked_cast<unsigned int>(sizeInBytes));
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+std::streamsize FPlatformIO::Write(FHandle handle, const void* src, std::streamsize sizeInBytes) {
+    Assert(InvalidHandle != handle);
+    Assert(src);
+    Assert(sizeInBytes);
+#ifdef PLATFORM_WINDOWS
+    return ::_write(handle, src, checked_cast<unsigned int>(sizeInBytes));
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+bool FPlatformIO::Commit(FHandle handle) {
+    Assert(InvalidHandle != handle);
+#ifdef PLATFORM_WINDOWS
+    return (0 != ::_commit(handle));
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+auto FPlatformIO::Dup(FHandle handle) -> FHandle {
+    Assert(InvalidHandle != handle);
+#ifdef PLATFORM_WINDOWS
+    return ::_dup(handle);
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+bool FPlatformIO::Dup2(FHandle handleSrc, FHandle handleDst) {
+    Assert(InvalidHandle != handleSrc);
+    Assert(InvalidHandle != handleDst);
+#ifdef PLATFORM_WINDOWS
+    return (0 != _dup2(handleSrc, handleDst));
+#else
+#   error "no support"
+#endif
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
