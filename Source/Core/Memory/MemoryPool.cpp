@@ -95,7 +95,7 @@ private:
     TIntrusiveListNode<FMemoryPoolChunk> _node;
     typedef INTRUSIVELIST_ACCESSOR(&FMemoryPoolChunk::_node) list_accessor;
 };
-STATIC_ASSERT(IS_ALIGNED(16, sizeof(FMemoryPoolChunk)));
+STATIC_ASSERT(Meta::IsAligned(16, sizeof(FMemoryPoolChunk)));
 #pragma warning(pop)
 //----------------------------------------------------------------------------
 FMemoryPoolChunk::FMemoryPoolChunk(size_t chunkSize, size_t blockCount)

@@ -46,7 +46,7 @@ FDX11ResourceBuffer::FDX11ResourceBuffer(
     }
     else {
         AssertRelease(bd.ByteWidth == optionalData.SizeInBytes());
-        Assert(IS_ALIGNED(16, optionalData.Pointer()));
+        Assert(Meta::IsAligned(16, optionalData.Pointer()));
 
         ::D3D11_SUBRESOURCE_DATA initData;
         ::SecureZeroMemory(&initData, sizeof(initData));

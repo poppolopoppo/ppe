@@ -86,7 +86,7 @@ void FDX11AbstractTextureContent::CreateTexture(
         }
         else {
             AssertRelease(optionalData.SizeInBytes() == owner->SizeInBytes()); // <=> 0 == offset
-            Assert(IS_ALIGNED(16, optionalData.Pointer()));
+            Assert(Meta::IsAligned(16, optionalData.Pointer()));
 
             STACKLOCAL_POD_ARRAY(::D3D11_SUBRESOURCE_DATA, initDatas, textureDesc.ArraySize * textureDesc.MipLevels);
 

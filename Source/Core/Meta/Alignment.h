@@ -3,44 +3,45 @@
 #include "Core/Meta/TypeTraits.h"
 
 namespace Core {
+namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define ROUND_TO_NEXT_4(v)   ((((size_t)(v)) + 3) & ~3)
-#define ROUND_TO_NEXT_8(v)   ((((size_t)(v)) + 7) & ~7)
-#define ROUND_TO_NEXT_16(v)  ((((size_t)(v)) + 15) & ~15)
-#define ROUND_TO_NEXT_32(v)  ((((size_t)(v)) + 31) & ~31)
-#define ROUND_TO_NEXT_64(v)  ((((size_t)(v)) + 63) & ~63)
-#define ROUND_TO_NEXT_128(v) ((((size_t)(v)) + 127) & ~127)
-#define ROUND_TO_NEXT_64K(v) ((((size_t)(v)) + 64*1024-1) & ~(64*1024-1))
-//----------------------------------------------------------------------------
-#if defined(ARCH_X64)
-#   define ROUND_TO_NEXT_SIZE_T(v) ROUND_TO_NEXT_8(v)
-#elif defined(ARCH_X86)
-#   define ROUND_TO_NEXT_SIZE_T(v) ROUND_TO_NEXT_4(v)
-#else
-#   error "no support"
-#endif
-//----------------------------------------------------------------------------
-#define IS_ALIGNED(_BOUNDARY, _POINTER) (0 == (size_t(_POINTER) % (_BOUNDARY)) )
+#define ROUND_TO_NEXT_4(v)   ((((uintptr_t)(v)) + 3) & ~3)
+#define ROUND_TO_NEXT_8(v)   ((((uintptr_t)(v)) + 7) & ~7)
+#define ROUND_TO_NEXT_16(v)  ((((uintptr_t)(v)) + 15) & ~15)
+#define ROUND_TO_NEXT_32(v)  ((((uintptr_t)(v)) + 31) & ~31)
+#define ROUND_TO_NEXT_64(v)  ((((uintptr_t)(v)) + 63) & ~63)
+#define ROUND_TO_NEXT_128(v) ((((uintptr_t)(v)) + 127) & ~127)
+#define ROUND_TO_NEXT_64K(v) ((((uintptr_t)(v)) + 64*1024-1) & ~(64*1024-1))
 //----------------------------------------------------------------------------
 #define ALIGN(_BOUNDARY) __declspec(align(_BOUNDARY))
 //----------------------------------------------------------------------------
+// /!\ Assumes <alignment> is a power of 2
+inline constexpr bool IsAligned(const size_t alignment, const uintptr_t v) {
+    return (0 == (v & (alignment - 1)));
+}
+//----------------------------------------------------------------------------
+// /!\ Assumes <alignment> is a power of 2
+template <typename T>
+inline constexpr bool IsAligned(const size_t alignment, const T* ptr) {
+    return (0 == (uintptr_t(ptr) & (alignment - 1)));
+}
+//----------------------------------------------------------------------------
+// /!\ Assumes <alignment> is a power of 2
+inline constexpr size_t RoundToNext(const size_t v, size_t alignment) {
+    return --alignment, ((0 == v) ? 0 : (v + alignment) & ~alignment);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#define PAGE_SIZE (65536)
 //----------------------------------------------------------------------------
 #define CACHELINE_SIZE (64)
 //----------------------------------------------------------------------------
 #define CACHELINE_ALIGNED ALIGN(CACHELINE_SIZE)
 //----------------------------------------------------------------------------
 #define ROUND_TO_NEXT_CACHELINE(v) ROUND_TO_NEXT_64(v)
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#define PAGE_SIZE (4096)
-//----------------------------------------------------------------------------
-#define PAGE_ALIGNED ALIGN(PAGE_SIZE)
-//----------------------------------------------------------------------------
-#define HUGE_PAGE_SIZE (65536)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -76,4 +77,5 @@ struct TAlignmentOfIFP<T, false> {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace Meta
 } //!namespace Core

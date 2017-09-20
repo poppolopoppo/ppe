@@ -37,32 +37,32 @@ void    CORE_API (malloc_release_pending_blocks)();
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE NOALIAS RESTRICT
-void* (malloc)(size_t size, typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0) {
+void* (malloc)(size_t size, Meta::TEnableIf< Meta::TIsNaturalyAligned<_Alignment>::value >* = 0) {
     void* const p = (Core::malloc)(size);
-    Assert(IS_ALIGNED(_Alignment, p));
+    Assert(Meta::IsAligned(_Alignment, p));
     return p;
 }
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE NOALIAS
-void (free)(void *ptr, typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0) {
-    Assert(IS_ALIGNED(_Alignment, ptr));
+void (free)(void *ptr, Meta::TEnableIf< Meta::TIsNaturalyAligned<_Alignment>::value >* = 0) {
+    Assert(Meta::IsAligned(_Alignment, ptr));
     (Core::free)(ptr);
 }
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE NOALIAS RESTRICT
-void* (calloc)(size_t nmemb, size_t size, typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0) {
+void* (calloc)(size_t nmemb, size_t size, Meta::TEnableIf< Meta::TIsNaturalyAligned<_Alignment>::value >* = 0) {
     void* const p = (Core::calloc)(nmemb, size);
-    Assert(IS_ALIGNED(_Alignment, p));
+    Assert(Meta::IsAligned(_Alignment, p));
     return p;
 }
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE NOALIAS RESTRICT
-void* (realloc)(void *ptr, size_t size, typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0) {
+void* (realloc)(void *ptr, size_t size, Meta::TEnableIf< Meta::TIsNaturalyAligned<_Alignment>::value >* = 0) {
     void* const p = (Core::realloc)(ptr, size);
-    Assert(IS_ALIGNED(_Alignment, p));
+    Assert(Meta::IsAligned(_Alignment, p));
     return p;
 }
 //----------------------------------------------------------------------------
@@ -70,25 +70,25 @@ void* (realloc)(void *ptr, size_t size, typename std::enable_if< TIsNaturalyAlig
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE NOALIAS RESTRICT
-void* (malloc)(size_t size, typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0) {
+void* (malloc)(size_t size, Meta::TEnableIf< !Meta::TIsNaturalyAligned<_Alignment>::value >* = 0) {
     return (Core::aligned_malloc)(size, _Alignment);
 }
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE NOALIAS
-void (free)(void *ptr, typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0) {
+void (free)(void *ptr, Meta::TEnableIf< !Meta::TIsNaturalyAligned<_Alignment>::value >* = 0) {
     (Core::aligned_free)(ptr);
 }
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE NOALIAS RESTRICT
-void* (calloc)(size_t nmemb, size_t size, typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0) {
+void* (calloc)(size_t nmemb, size_t size, Meta::TEnableIf< !Meta::TIsNaturalyAligned<_Alignment>::value >* = 0) {
     return (Core::aligned_calloc)(nmemb, size, _Alignment);
 }
 //----------------------------------------------------------------------------
 template <size_t _Alignment>
 FORCE_INLINE NOALIAS RESTRICT
-void* (realloc)(void *ptr, size_t size, typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0) {
+void* (realloc)(void *ptr, size_t size, Meta::TEnableIf< !Meta::TIsNaturalyAligned<_Alignment>::value >* = 0) {
     return (Core::aligned_realloc)(ptr, size, _Alignment);
 }
 //----------------------------------------------------------------------------

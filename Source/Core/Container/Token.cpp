@@ -16,7 +16,7 @@ namespace {
 using FChunk = FTokenFactory::FChunk;
 using FEntry = FTokenFactory::FEntry;
 //----------------------------------------------------------------------------
-STATIC_CONST_INTEGRAL(size_t, PageSize, HUGE_PAGE_SIZE);
+STATIC_CONST_INTEGRAL(size_t, PageSize, PAGE_SIZE);
 //----------------------------------------------------------------------------
 static FEntry* AllocateEntry_(FChunk** chunks, size_t len, size_t stride, size_t hash) {
     Assert(len > 0);

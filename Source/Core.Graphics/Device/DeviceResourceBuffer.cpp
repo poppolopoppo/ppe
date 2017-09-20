@@ -73,7 +73,7 @@ PDeviceAPIDependantResourceBuffer& FDeviceResourceBuffer::Destroy(IDeviceAPIEnca
 }
 //----------------------------------------------------------------------------
 void FDeviceResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<u8>& dst) {
-    Assert(IS_ALIGNED(Stride(), dst.SizeInBytes()));
+    Assert(Meta::IsAligned(Stride(), dst.SizeInBytes()));
     Assert(dst.SizeInBytes() + offset <= _count * Stride());
     Assert(_deviceAPIDependantBuffer);
     //Assert(u32(EBufferMode::Read) == (u32(EMode()) & u32(EBufferMode::Read)));
@@ -82,7 +82,7 @@ void FDeviceResourceBuffer::GetData(IDeviceAPIEncapsulator *device, size_t offse
 }
 //----------------------------------------------------------------------------
 void FDeviceResourceBuffer::SetData(IDeviceAPIEncapsulator *device, size_t offset, const TMemoryView<const u8>& src) {
-    Assert(IS_ALIGNED(Stride(), src.SizeInBytes()));
+    Assert(Meta::IsAligned(Stride(), src.SizeInBytes()));
     Assert(src.SizeInBytes() + offset <= _count * Stride());
     Assert(_deviceAPIDependantBuffer);
     //Assert(u32(EBufferMode::Write) == (u32(EMode()) & u32(EBufferMode::Write)));

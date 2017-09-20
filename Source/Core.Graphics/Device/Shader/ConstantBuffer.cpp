@@ -37,7 +37,7 @@ void FConstantBuffer::SetData(IDeviceAPIEncapsulator *device, const TMemoryView<
     Assert(Frozen());
 
     STACKLOCAL_POD_ARRAY(u8, deviceAPIDependantRawData, _layout->SizeInBytes());
-    Assert(IS_ALIGNED(16, deviceAPIDependantRawData.Pointer()));
+    Assert(Meta::IsAligned(16, deviceAPIDependantRawData.Pointer()));
 
     _deviceAPIDependantWriter->SetData(device, this, fieldsData, deviceAPIDependantRawData);
     _buffer.SetData(device, 0, deviceAPIDependantRawData);

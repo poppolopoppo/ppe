@@ -38,22 +38,22 @@ public:
     void*   AlignedRealloc(void *ptr, size_t size, size_t alignment);
 
     template <size_t _Alignment>
-    void*   Malloc(size_t size, typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Malloc(size_t size, Meta::TEnableIf< Meta::TIsNaturalyAligned<_Alignment>::value >* = 0);
     template <size_t _Alignment>
-    void    Free(void *ptr, typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void    Free(void *ptr, Meta::TEnableIf< Meta::TIsNaturalyAligned<_Alignment>::value >* = 0);
     template <size_t _Alignment>
-    void*   Calloc(size_t nmemb, size_t size, typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Calloc(size_t nmemb, size_t size, Meta::TEnableIf< Meta::TIsNaturalyAligned<_Alignment>::value >* = 0);
     template <size_t _Alignment>
-    void*   Realloc(void *ptr, size_t size, typename std::enable_if< TIsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Realloc(void *ptr, size_t size, Meta::TEnableIf< Meta::TIsNaturalyAligned<_Alignment>::value >* = 0);
 
     template <size_t _Alignment>
-    void*   Malloc(size_t size, typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Malloc(size_t size, Meta::TEnableIf< !Meta::TIsNaturalyAligned<_Alignment>::value >* = 0);
     template <size_t _Alignment>
-    void    Free(void *ptr, typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void    Free(void *ptr, Meta::TEnableIf< !Meta::TIsNaturalyAligned<_Alignment>::value >* = 0);
     template <size_t _Alignment>
-    void*   Calloc(size_t nmemb, size_t size, typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Calloc(size_t nmemb, size_t size, Meta::TEnableIf< !Meta::TIsNaturalyAligned<_Alignment>::value >* = 0);
     template <size_t _Alignment>
-    void*   Realloc(void *ptr, size_t size, typename std::enable_if< !TIsNaturalyAligned<_Alignment>::value >::type* = 0);
+    void*   Realloc(void *ptr, size_t size, Meta::TEnableIf< !Meta::TIsNaturalyAligned<_Alignment>::value >* = 0);
 
     void    Swap(FHeap& other);
 

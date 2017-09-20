@@ -30,7 +30,7 @@ struct FWindowsSystemInfo_ : FPlatform::FSystemInfo {
         PageSize = checked_cast<size_t>(st.dwPageSize);
         ProcessorsCount = checked_cast<size_t>(st.dwNumberOfProcessors);
 
-        AssertRelease(HUGE_PAGE_SIZE == AllocationGranularity);
+        AssertRelease(PAGE_SIZE == AllocationGranularity);
     }
 };
 static const FWindowsSystemInfo_ GSystemInfo;

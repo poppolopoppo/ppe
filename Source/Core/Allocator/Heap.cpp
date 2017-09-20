@@ -180,8 +180,8 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 struct FHeapHandle_ {
-    STATIC_CONST_INTEGRAL(size_t, PageSize, 64*1024/* System */);
-    STATIC_CONST_INTEGRAL(size_t, LargeAllocSize, 32736/* FMallocBinned */); 
+    STATIC_ASSERT(PAGE_SIZE == 64 * 1024);
+    STATIC_CONST_INTEGRAL(size_t, LargeAllocSize, 32736/* FMallocBinned */);
 
 #ifdef WITH_CORE_ASSERT
     const size_t Canary0 = 0xBAADF00D;
@@ -196,9 +196,9 @@ struct FHeapHandle_ {
         Assert(Canary0 == 0xBAADF00D);
         Assert(Canary1 == 0xF00DBAAD);
     }
-    ~FHeapHandle_() { 
+    ~FHeapHandle_() {
         ONLY_IF_ASSERT(CheckCanaries());
-        Assert(0 == NumAllocs); 
+        Assert(0 == NumAllocs);
     };
 #endif
 
@@ -209,7 +209,7 @@ struct FHeapHandle_ {
 
         void* const result = LocalVM.Allocate(sizeInBytes);
         AssertRelease(result);
-        Assert(IS_ALIGNED(PageSize, result));
+        Assert(Meta::IsAligned(PAGE_SIZE, result));
         ONLY_IF_ASSERT(NumAllocs++);
 
         return result;
@@ -218,7 +218,7 @@ struct FHeapHandle_ {
     void Free(void* ptr) {
         ONLY_IF_ASSERT(CheckCanaries());
         Assert(ptr);
-        Assert(IS_ALIGNED(PageSize, ptr));
+        Assert(Meta::IsAligned(PAGE_SIZE, ptr));
         Assert(0 < NumAllocs);
 
         ONLY_IF_ASSERT(NumAllocs--);
@@ -228,7 +228,7 @@ struct FHeapHandle_ {
     static void* Create() { return new FHeapHandle_{}; }
     static void Destroy(void* handle) { Assert(handle); delete(handle); }
 
-    static FHeapHandle_* Get(void* handle) { 
+    static FHeapHandle_* Get(void* handle) {
         Assert(handle);
         return reinterpret_cast<FHeapHandle_*>(handle);
     }
@@ -260,11 +260,11 @@ void* FHeap::Malloc(size_t size) {
 
     void* result;
 
-    if (size < FHeapHandle_::LargeAllocSize) {
+    if (size <= FHeapHandle_::LargeAllocSize) {
         // there's probably already a thread local cache efficient for small blocks
-        result = Core::malloc(size); 
+        result = Core::malloc(size);
 
-        Assert(not IS_ALIGNED(FHeapHandle_::PageSize, result));
+        Assert(not Meta::IsAligned(PAGE_SIZE, result));
     }
     else {
         // fallback to a local cache of large blocks
@@ -281,7 +281,7 @@ void FHeap::Free(void *ptr) {
     if (nullptr == ptr)
         return;
 
-    if (not IS_ALIGNED(FHeapHandle_::PageSize, ptr)) {
+    if (not Meta::IsAligned(PAGE_SIZE, ptr)) {
         // return to standard allocator
         Core::free(ptr);
     }
@@ -312,9 +312,9 @@ void* FHeap::Realloc(void *ptr, size_t size) {
         this->Free(ptr);
         result = nullptr;
     }
-    else if (not IS_ALIGNED(FHeapHandle_::PageSize, ptr)) {
+    else if (not Meta::IsAligned(PAGE_SIZE, ptr)) {
         result = Core::realloc(ptr, size);
-        Assert(not IS_ALIGNED(FHeapHandle_::PageSize, ptr));
+        Assert(not Meta::IsAligned(PAGE_SIZE, ptr));
     }
     else {
         const size_t oldSize = FVirtualMemory::AllocSizeInBytes(ptr);
@@ -340,7 +340,7 @@ void* FHeap::AlignedMalloc(size_t size, size_t alignment) {
         // there's probably already a thread local cache efficient for small blocks
         result = Core::aligned_malloc(size, alignment);
 
-        Assert(not IS_ALIGNED(FHeapHandle_::PageSize, result));
+        Assert(not Meta::IsAligned(PAGE_SIZE, result));
     }
     else {
         // fallback to a local cache of large blocks
@@ -349,7 +349,7 @@ void* FHeap::AlignedMalloc(size_t size, size_t alignment) {
 
         result = FHeapHandle_::Get(_handle)->Allocate(size);
 
-        Assert(IS_ALIGNED(alignment, result));
+        Assert(Meta::IsAligned(alignment, result));
     }
 
     return result;
@@ -359,7 +359,7 @@ void FHeap::AlignedFree(void *ptr) {
     if (nullptr == ptr)
         return;
 
-    if (not IS_ALIGNED(FHeapHandle_::PageSize, ptr)) {
+    if (not Meta::IsAligned(PAGE_SIZE, ptr)) {
         // return to standard allocator
         Core::aligned_free(ptr);
     }
@@ -390,7 +390,7 @@ void* FHeap::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
         this->AlignedFree(ptr);
         result = nullptr;
     }
-    else if (not IS_ALIGNED(FHeapHandle_::PageSize, ptr)) {
+    else if (not Meta::IsAligned(PAGE_SIZE, ptr)) {
         result = Core::aligned_realloc(ptr, size, alignment);
     }
     else {
