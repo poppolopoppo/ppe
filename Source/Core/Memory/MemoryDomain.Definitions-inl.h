@@ -13,7 +13,6 @@ MEMORY_DOMAIN_IMPL(Reserved,                            Global)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Core,                                Global)
 //------------------------------------------------------------------------------
-MEMORY_DOMAIN_IMPL(Alloca,                              Core)
 MEMORY_DOMAIN_IMPL(Compress,                            Core)
 MEMORY_DOMAIN_IMPL(Container,                           Core)
 MEMORY_DOMAIN_IMPL(Diagnostic,                          Core)
@@ -30,7 +29,7 @@ MEMORY_DOMAIN_IMPL(Task,                                Core)
 MEMORY_DOMAIN_IMPL(Token,                               Core)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(VirtualMemory,                       Core)
-//------------------------------------------------------------------------------
+MEMORY_DOMAIN_COLLAPSABLE_IMPL(Alloca,                  VirtualMemory)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Heap,                    VirtualMemory)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(MallocBinned,            VirtualMemory)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(MemoryPool,              VirtualMemory)
