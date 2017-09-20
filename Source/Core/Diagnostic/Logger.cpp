@@ -88,12 +88,12 @@ namespace {
 //----------------------------------------------------------------------------
 class FBasicLogger_ : public ILogger {
 public:
-    FBasicLogger_(const FWStringView& prefix) 
+    FBasicLogger_(const FWStringView& prefix)
         : _prefix(prefix)
     {}
 
     // Used before main, no dependencies on allocators
-    virtual void Log(ELogCategory category, const FWStringView& text, const FormatArgListW& args) override {
+    virtual void Log(ELogCategory category, const FWStringView& text, const FFormatArgListW& args) override {
         wchar_t buffer[2048];
 
         FWOCStrStream oss(buffer);
@@ -146,10 +146,10 @@ void FlushLog() {
 void Log(ELogCategory category, const FWStringView& text) {
     Assert(text.size());
     Assert('\0' == text.data()[text.size()]); // text must be null terminated !
-    CurrentLogger_()->Log(category, text, FormatArgListW());
+    CurrentLogger_()->Log(category, text, FFormatArgListW());
 }
 //----------------------------------------------------------------------------
-void LogArgs(ELogCategory category, const FWStringView& format, const FormatArgListW& args) {
+void LogArgs(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) {
     Assert(format.size());
     Assert('\0' == format.data()[format.size()]); // text must be null terminated !
     CurrentLogger_()->Log(category, format, args);
@@ -157,7 +157,7 @@ void LogArgs(ELogCategory category, const FWStringView& format, const FormatArgL
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FAbstractThreadSafeLogger::Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) {
+void FAbstractThreadSafeLogger::Log(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) {
     const std::lock_guard<std::recursive_mutex> scopeLock(_barrier);
     LogThreadSafe(category, format, args);
 }
@@ -169,7 +169,10 @@ void FAbstractThreadSafeLogger::Flush() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
+void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FFormatArgListW& args) {
+    if (ELogCategory::Emphasis == category)
+        FPlatform::OutputDebug(L"------------------------------------------------------------------------------\n");
+
     wchar_t buffer[2048];
     FWOCStrStream oss(buffer);
 
@@ -179,6 +182,7 @@ void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView
     }
 #else
     if (ELogCategory::Callstack != category &&
+        ELogCategory::Emphasis != category &&
         ELogCategory::Info != category) {
         Format(oss, L"[{0}]", category);
     }
@@ -199,7 +203,7 @@ void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView
     }
     else {
         // different strategy for large logs, assuming no args is given for them
-        Assert(args.empty()); // TODO : handle splitting formatted texts
+        AssertRelease(args.empty()); // TODO : handle splitting formatted texts
 
         FPlatform::OutputDebug(oss.NullTerminatedStr());
 
@@ -220,7 +224,7 @@ void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView
 //----------------------------------------------------------------------------
 void FOutputDebugLogger::FlushThreadSafe() {}
 //----------------------------------------------------------------------------
-void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
+void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FFormatArgListW& args) {
 #ifdef PLATFORM_WINDOWS
     constexpr ::WORD fWhite = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
     constexpr ::WORD fYellow = FOREGROUND_RED | FOREGROUND_GREEN;
@@ -248,13 +252,13 @@ void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& tex
         textAttribute = (fWhite | BACKGROUND_RED | BACKGROUND_INTENSITY);
         break;
     case Core::ELogCategory::Debug:
-        textAttribute = (fCyan | bBlack);
+        textAttribute = (fCyan | bBlack | FOREGROUND_INTENSITY);
         break;
     case Core::ELogCategory::Assertion:
         textAttribute = (fYellow | BACKGROUND_RED | FOREGROUND_INTENSITY);
         break;
     case Core::ELogCategory::Profiling:
-        textAttribute = (BACKGROUND_GREEN | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+        textAttribute = (fCyan | bBlack);
         break;
     case Core::ELogCategory::Callstack:
         textAttribute = (FOREGROUND_GREEN);
@@ -274,7 +278,8 @@ void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& tex
     }
 #endif
 
-    if (ELogCategory::Callstack != category)
+    if (ELogCategory::Callstack != category &&
+        ELogCategory::Emphasis != category )
         Format(std::wcout, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 
     if (args.empty())
@@ -290,7 +295,7 @@ void FStdoutLogger::FlushThreadSafe() {
     std::wcout.flush();
 }
 //----------------------------------------------------------------------------
-void FStderrLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FormatArgListW& args) {
+void FStderrLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FFormatArgListW& args) {
     if (ELogCategory::Callstack != category)
         Format(std::wcerr, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 

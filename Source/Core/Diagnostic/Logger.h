@@ -41,17 +41,17 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
 class ILogger {
 public:
     virtual ~ILogger() {}
-    virtual void Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) = 0;
+    virtual void Log(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) = 0;
     virtual void Flush() = 0;
 };
 //----------------------------------------------------------------------------
 class FAbstractThreadSafeLogger : public ILogger {
 public:
     virtual ~FAbstractThreadSafeLogger() {}
-    virtual void Log(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+    virtual void Log(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) override;
     virtual void Flush() override;
 protected:
-    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) = 0;
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) = 0;
     virtual void FlushThreadSafe() = 0;
 private:
     std::recursive_mutex _barrier;
@@ -78,7 +78,7 @@ void FlushLog();
 //----------------------------------------------------------------------------
 void Log(ELogCategory category, const FWStringView& text);
 //----------------------------------------------------------------------------
-void LogArgs(ELogCategory category, const FWStringView& format, const FormatArgListW& args);
+void LogArgs(ELogCategory category, const FWStringView& format, const FFormatArgListW& args);
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
 void Log(ELogCategory category, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
@@ -88,7 +88,7 @@ void Log(ELogCategory category, const FWStringView& format, _Arg0&& arg0, _Args&
         formatfunctor_t::Make(std::forward<_Args>(args))...
     };
 
-    LogArgs(category, format, FormatArgListW(functors));
+    LogArgs(category, format, FFormatArgListW(functors));
 }
 //----------------------------------------------------------------------------
 class FLoggerStream : public FThreadLocalWOStringStream {
@@ -117,19 +117,19 @@ private:
 //----------------------------------------------------------------------------
 class FOutputDebugLogger : public FAbstractThreadSafeLogger {
 protected:
-    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) override;
     virtual void FlushThreadSafe() override;
 };
 //----------------------------------------------------------------------------
 class FStdoutLogger : public FAbstractThreadSafeLogger {
 protected:
-    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) override;
     virtual void FlushThreadSafe() override;
 };
 //----------------------------------------------------------------------------
 class FStderrLogger : public FAbstractThreadSafeLogger {
 protected:
-    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FormatArgListW& args) override;
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) override;
     virtual void FlushThreadSafe() override;
 };
 //----------------------------------------------------------------------------
