@@ -26,7 +26,7 @@ public:
     friend class FTaskManagerImpl;
 
     FTaskWaitHandle();
-    FTaskWaitHandle(ETaskPriority priority, FTaskCounter* counter);
+    FTaskWaitHandle(ETaskPriority priority, PTaskCounter&& counter);
     ~FTaskWaitHandle();
 
     FTaskWaitHandle(const FTaskWaitHandle& other) = delete;

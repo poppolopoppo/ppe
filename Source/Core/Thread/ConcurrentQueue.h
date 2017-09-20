@@ -71,7 +71,11 @@ public:
     TConcurentPriorityQueue(const TConcurentPriorityQueue& ) = delete;
     TConcurentPriorityQueue& operator =(const TConcurentPriorityQueue& ) = delete;
 
-    void Produce(int priority, T&& rvalue); // lower is higher priority
+    // lower is higher priority
+    void Produce(int priority, T&& rvalue);
+    template <typename _Lambda>
+    void Produce(int priority, size_t count, size_t stride, _Lambda&& lambda);
+
     void Consume(T* pvalue);
     bool TryConsume(T* pvalue);
 

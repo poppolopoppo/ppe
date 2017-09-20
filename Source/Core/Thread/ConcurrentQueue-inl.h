@@ -97,7 +97,39 @@ void TConcurentPriorityQueue<T, _Allocator>::Produce(int priority, T&& rvalue) {
         _queue.emplace_back(priority, std::move(rvalue));
         std::push_heap(_queue.begin(), _queue.end(), FGreater_());
     }
-    _empty.notify_one();
+    {
+        // notify outside scope lock :
+        _empty.notify_one();
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator >
+template <typename _Lambda>
+void TConcurentPriorityQueue<T, _Allocator>::Produce(int priority, size_t count, size_t stride, _Lambda&& lambda) {
+    Assert(0 < count);
+    size_t batchIndex = 0;
+    do
+    {
+        // time slice job pushing, prevent from flooding the queue while worker are waiting for the lock
+        const size_t batchCount = Min(stride, count - batchIndex);
+        {
+            const std::unique_lock<std::mutex> scopeLock(_barrier);
+
+            _queue.reserve_Additional(batchCount);
+
+            forrange(i, 0, batchCount) {
+                _queue.emplace_back_AssumeNoGrow(priority, std::move(lambda(batchIndex + i)));
+                std::push_heap(_queue.begin(), _queue.end(), FGreater_());
+            }
+        }
+        {
+            // notify outside scope lock :
+            forrange(i, 0, batchCount)
+                _empty.notify_one();
+        }
+        batchIndex += batchCount;
+    }
+    while (batchIndex != count);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >

@@ -8,6 +8,7 @@
 #include "Diagnostic/Logger.h"
 #include "IO/Format.h"
 #include "Meta/Delegate.h"
+#include "Meta/PointerWFlags.h"
 #include "Meta/ThreadResource.h"
 
 #include "Thread/AtomicSpinLock.h"
@@ -34,12 +35,13 @@ STATIC_CONST_INTEGRAL(size_t, FiberQueueCapacity_, 2048);
 //----------------------------------------------------------------------------
 class FFiberQueued_ {
 public:
-    FFiberQueued_() : _taskContext(nullptr), _priority(ETaskPriority::Normal) {}
+    FFiberQueued_() {
+        _taskContextAndPriority.Reset(nullptr, uintptr_t(ETaskPriority::Normal));
+    }
     FFiberQueued_(ITaskContext* taskContext, FFiber&& halted, ETaskPriority priority)
-    :   _taskContext(taskContext)
-    ,   _halted(std::move(halted))
-    ,   _priority(priority) {
-        Assert(_taskContext);
+    :   _halted(std::move(halted)) {
+        Assert(taskContext);
+        _taskContextAndPriority.Reset(taskContext, uintptr_t(priority));
     }
 
     FFiberQueued_(const FFiberQueued_& ) = delete;
@@ -48,56 +50,67 @@ public:
     FFiberQueued_(FFiberQueued_&& ) = default;
     FFiberQueued_& operator =(FFiberQueued_&& ) = default;
 
-    ITaskContext* TaskContext() const { return _taskContext; }
+    ITaskContext* TaskContext() const { return _taskContextAndPriority.Get(); }
     FFiber& Halted() { return _halted; }
-    ETaskPriority Priority() { return _priority; }
+    ETaskPriority Priority() { return ETaskPriority(_taskContextAndPriority.Flag01()); }
 
 private:
-    ITaskContext* _taskContext;
+    STATIC_ASSERT(uintptr_t(ETaskPriority::High) == 0);
+    STATIC_ASSERT(uintptr_t(ETaskPriority::Normal) == 1);
+    STATIC_ASSERT(uintptr_t(ETaskPriority::Low) == 2);
+    Meta::TPointerWFlags<ITaskContext> _taskContextAndPriority;
+
     FFiber _halted;
-    ETaskPriority _priority;
 };
-typedef TFixedSizeRingBuffer<FFiberQueued_, 8> FiberQueue_;
+STATIC_ASSERT(sizeof(FFiberQueued_) == 2 * sizeof(uintptr_t));
+//----------------------------------------------------------------------------
+static constexpr size_t GFiberQueueCapacity_ = 8;
+typedef TFixedSizeRingBuffer<FFiberQueued_, GFiberQueueCapacity_> FFiberQueue_;
+STATIC_ASSERT(sizeof(FFiberQueue_) == (4 + 2 * GFiberQueueCapacity_) * sizeof(uintptr_t));
 //----------------------------------------------------------------------------
 struct FTaskQueued_ {
     FTaskDelegate Pending;
-    PTaskCounter Counter;
+    STaskCounter Counter;
 };
+STATIC_ASSERT(sizeof(FTaskQueued_) == 3 * sizeof(uintptr_t));
 #if WITH_CORE_NONBLOCKING_TASKPRIORITYQUEUE
 typedef TMPMCPriorityQueue<
     TMPMCBoundedQueue<FTaskQueued_>,
     size_t(ETaskPriority::_Count)
 >   TaskPriorityQueue_;
 #else
-typedef CONCURRENT_PRIORITY_QUEUE(Task, FTaskQueued_) TaskPriorityQueue_;
+typedef CONCURRENT_PRIORITY_QUEUE(Task, FTaskQueued_) FTaskPriorityQueue_;
 #endif
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FTaskCounter : public FRefCountable {
+class CACHELINE_ALIGNED FTaskCounter : public FRefCountable {
 public:
-    FTaskCounter() : _count(0) {}
-    ~FTaskCounter() { Assert(0 == _count); }
+    FTaskCounter() : _count(-1) {}
+    ~FTaskCounter() { Assert(-1 == _count); }
 
     FTaskCounter(const FTaskCounter& ) = delete;
     FTaskCounter& operator =(const FTaskCounter& ) = delete;
 
-    bool Finished() const { return (0 == _count); }
+    bool Valid() const;
+    bool Finished() const;
+    void Start(size_t count);
+    bool WaitFor(FFiberQueued_&& waiting);
+    void Clear();
 
-    void Reset(size_t count);
-    void Decrement_ResumeWaitingTasksIfZero();
+    friend void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef);
 
-    void WaitFor(FFiberQueued_&& waiting);
-
-    ALIGNED_ALLOCATED_DEF(FTaskCounter, CACHELINE_SIZE);
+    OVERRIDE_CLASS_ALLOCATOR(ALIGNED_ALLOCATOR(Task, FTaskCounter, CACHELINE_SIZE))
 
 private:
-    FAtomicSpinLock _lock;
-    std::atomic<u32> _count;
-    FiberQueue_ _queue;
+    mutable FAtomicSpinLock _lock;
+
+    i32 _count;
+    FFiberQueue_ _queue;
 };
+STATIC_ASSERT(Meta::IsAligned(CACHELINE_SIZE, sizeof(FTaskCounter)));
 //----------------------------------------------------------------------------
 class FTaskManagerImpl : public ITaskContext {
 public:
@@ -115,7 +128,7 @@ public:
     explicit FTaskManagerImpl(FTaskManager& manager);
     ~FTaskManagerImpl();
 
-    TaskPriorityQueue_& Queue() { return _queue; }
+    FTaskPriorityQueue_& Queue() { return _queue; }
     TMemoryView<std::thread> Threads() { return MakeView(_threads); }
     size_t TaskRunningCount() const { return checked_cast<size_t>(_taskRunningCount); }
 
@@ -127,7 +140,7 @@ public:
     virtual void RunAndWaitFor(const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority, ITaskContext* resume) override final;
 
 private:
-    TaskPriorityQueue_ _queue;
+    FTaskPriorityQueue_ _queue;
     FTaskManager& _manager;
     VECTOR(Task, std::thread) _threads;
 
@@ -156,7 +169,7 @@ public:
     size_t WorkerIndex() const { return _workerIndex; }
 
     PTaskCounter CreateCounter();
-    void DestroyCounter(PTaskCounter& counter);
+    void DestroyCounter(PTaskCounter& pcounter);
     void ClearCounters();
 
     void CreateFiber(FFiber* pFiber);
@@ -220,8 +233,8 @@ PTaskCounter FWorkerContext_::CreateCounter() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     PTaskCounter result;
-    if (not _counters.pop_back(&result))
-        result = new FTaskCounter();
+    if (not _counters.pop_front(&result))
+        result.reset(new FTaskCounter());
 
 #ifdef WITH_CORE_ASSERT
     {
@@ -230,14 +243,14 @@ PTaskCounter FWorkerContext_::CreateCounter() {
     }
 #endif
 
-    Assert(nullptr != result);
-    Assert(result->Finished());
+    Assert(not result->Valid());
     return result;
 }
 //----------------------------------------------------------------------------
 void FWorkerContext_::DestroyCounter(PTaskCounter& counter) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(counter);
+    Assert(counter->Finished());
 
 #ifdef WITH_CORE_ASSERT
     {
@@ -248,15 +261,20 @@ void FWorkerContext_::DestroyCounter(PTaskCounter& counter) {
 #endif
 
     FTaskCounter* const pcounter = RemoveRef_AssertReachZero_KeepAlive(counter);
-    _counters.push_back_OverflowIFN(pcounter);
+    Assert(pcounter->SafeRefCount() == 0);
+    pcounter->Clear();
+
+    _counters.push_back_OverflowIFN(nullptr, pcounter);
 }
 //----------------------------------------------------------------------------
 void FWorkerContext_::ClearCounters() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     PTaskCounter counter;
-    while (_counters.Dequeue(&counter))
+    while (_counters.Dequeue(&counter)) {
+        Assert(not counter->Valid());
         RemoveRef_AssertReachZero(counter);
+    }
 
     Assert(0 == _counters.size());
 }
@@ -288,7 +306,7 @@ void FWorkerContext_::DestroyFiber(FFiber& fiber) {
     }
 #endif
 
-    _fibers.push_back_OverflowIFN(std::move(fiber));
+    _fibers.push_back_OverflowIFN(nullptr, std::move(fiber));
 
     Assert(nullptr == fiber.Pimpl());
 }
@@ -406,11 +424,8 @@ void STDCALL FWorkerContext_::WorkerEntryPoint_(void* pArg) {
 
             task.Pending.Invoke(impl);
 
-            if (task.Counter) {
-                task.Counter->Decrement_ResumeWaitingTasksIfZero();
-            }
-
-            task = FTaskQueued_(); // reset to release reference to counter
+            if (task.Counter)
+                Decrement_ResumeWaitingTasksIfZero(task.Counter);
         }
     }
 }
@@ -550,28 +565,35 @@ void FTaskManagerImpl::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    PTaskCounter counter;
+    FTaskCounter* pcounter = nullptr;
 
     if (phandle) {
         Assert(not phandle->Valid());
 
-        counter = FWorkerContext_::Instance().CreateCounter();
-        counter->Reset(tasks.size());
-
-        *phandle = FTaskWaitHandle(priority, counter.get());
+        *phandle = FTaskWaitHandle(priority, FWorkerContext_::Instance().CreateCounter());
         Assert(phandle->Valid());
-    }
+        Assert(phandle->Counter());
 
-    for (const FTaskDelegate& task : tasks) {
-        FTaskQueued_ queued{ task, counter };
+        pcounter = const_cast<FTaskCounter*>(phandle->Counter());
+        pcounter->Start(tasks.size());
+    }
 
 #if WITH_CORE_NONBLOCKING_TASKPRIORITYQUEUE
+    for (const FTaskDelegate& task : tasks) {
+        FTaskQueued_ queued{ task, pcounter };
+
         while (false == _queue.Produce(size_t(priority), std::move(queued)))
             ::_mm_pause();
-#else
-        _queue.Produce(int(priority), std::move(queued));
-#endif
     }
+#else
+    _queue.Produce(
+        int(priority),
+        tasks.size(),
+        _threads.size(),
+        [&tasks, pcounter](size_t i) {
+            return FTaskQueued_{ tasks[i], pcounter };
+        });
+#endif
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) {
@@ -579,9 +601,8 @@ void FTaskManagerImpl::WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) {
     Assert(handle.Valid());
 
     FFiberQueued_ waiting(resume ? resume : this, FFiber::RunningFiber(), handle.Priority());
-    handle._counter->WaitFor(std::move(waiting));
-
-    FWorkerContext_::Instance().YieldFiber();
+    if (handle._counter->WaitFor(std::move(waiting)))
+        FWorkerContext_::Instance().YieldFiber();
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority, ITaskContext* resume) {
@@ -592,36 +613,71 @@ void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<const FTaskDelegate>& tas
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FTaskCounter::Reset(size_t count) {
+bool FTaskCounter::Valid() const {
     const FAtomicSpinLock::FScope scopedLock(_lock);
-    Assert(0 == _count);
-    _count = checked_cast<u32>(count);
+    return (0 <= _count);
 }
 //----------------------------------------------------------------------------
-void FTaskCounter::Decrement_ResumeWaitingTasksIfZero() {
+bool FTaskCounter::Finished() const {
     const FAtomicSpinLock::FScope scopedLock(_lock);
-    const u32 previousCount = _count.fetch_sub(1);
-    Assert(previousCount > 0);
+#ifdef WITH_CORE_ASSERT
+    Assert(0 <= _count);
+    if (0 == _count) {
+        Assert(SafeRefCount() == 0);
+        return true;
+    }
+    else {
+        return false;
+    }
+#else
+    return (0 == _count);
+#endif
+}
+//----------------------------------------------------------------------------
+void FTaskCounter::Start(size_t count) {
+    const FAtomicSpinLock::FScope scopedLock(_lock);
+    Assert(-1 == _count);
 
-    if (1 == previousCount) {
-        Assert(0 == _count);
+    _count = checked_cast<i32>(count);
+}
+//----------------------------------------------------------------------------
+bool FTaskCounter::WaitFor(FFiberQueued_&& waiting) {
+    const FAtomicSpinLock::FScope scopedLock(_lock);
+    if (0 == _count) {
+        Assert(_queue.empty());
+        return false;
+    }
+    else {
+        _queue.push_back(std::move(waiting));
+        return true;
+    }
+}
+//----------------------------------------------------------------------------
+void FTaskCounter::Clear() {
+    const FAtomicSpinLock::FScope scopedLock(_lock);
+    Assert(0 == _count);
+    Assert(_queue.empty());
 
-        if (_queue.empty())
-            return;
+    _count = -1;
+    _queue.clear();
+}
+//----------------------------------------------------------------------------
+NO_INLINE void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef) {
+    Assert(saferef);
+    Assert(saferef->Valid());
 
+    const FAtomicSpinLock::FScope scopedLock(saferef->_lock);
+
+    if (0 == --saferef->_count) {
         FFiberQueued_ waiting;
-        while (_queue.pop_front(&waiting)) {
+        while (saferef->_queue.pop_front(&waiting)) {
             const FTaskDelegate task(TDelegate(&FWorkerContext_::ResumeFiberTask, waiting.Halted().Pimpl()));
             waiting.TaskContext()->RunOne(nullptr, task, waiting.Priority());
             waiting.Halted().Reset();
         }
     }
-}
-//----------------------------------------------------------------------------
-void FTaskCounter::WaitFor(FFiberQueued_&& waiting) {
-    const FAtomicSpinLock::FScope scopedLock(_lock);
-    Assert(0 < _count);
-    _queue.push_back(std::move(waiting));
+
+    saferef.reset();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -630,13 +686,15 @@ FTaskWaitHandle::FTaskWaitHandle()
 :   _priority(ETaskPriority::Normal)
 ,   _counter(nullptr) {}
 //----------------------------------------------------------------------------
-FTaskWaitHandle::FTaskWaitHandle(ETaskPriority priority, FTaskCounter* counter)
+FTaskWaitHandle::FTaskWaitHandle(ETaskPriority priority, PTaskCounter&& counter)
 :   _priority(priority)
-,   _counter(counter) {}
+,   _counter(std::move(counter)) {}
 //----------------------------------------------------------------------------
 FTaskWaitHandle::~FTaskWaitHandle() {
-    if (_counter)
+    if (_counter) {
+        Assert(_counter->Finished());
         FWorkerContext_::Instance().DestroyCounter(_counter);
+    }
 }
 //----------------------------------------------------------------------------
 FTaskWaitHandle::FTaskWaitHandle(FTaskWaitHandle&& rvalue) {
@@ -657,7 +715,6 @@ FTaskWaitHandle& FTaskWaitHandle::operator =(FTaskWaitHandle&& rvalue) {
 //----------------------------------------------------------------------------
 bool FTaskWaitHandle::Finished() const {
     Assert(nullptr != _counter);
-
     return _counter->Finished();
 }
 //----------------------------------------------------------------------------
