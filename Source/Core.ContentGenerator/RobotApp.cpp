@@ -466,7 +466,7 @@ void FRobotApp::Shutdown() {
 }
 //----------------------------------------------------------------------------
 static Lattice::FGenericMesh* LoadBulkMesh_(const FFilename& srcFilename) {
-    LOG(Info, L"[RobotApp] Load mesh '{0}'", srcFilename);
+    LOG(Emphasis, L"[RobotApp] Load mesh '{0}'", srcFilename);
 
     Lattice::FGenericMesh* const pmesh = new Lattice::FGenericMesh();
 
@@ -486,7 +486,7 @@ static Lattice::FGenericMesh* LoadBulkMesh_(const FFilename& srcFilename) {
             MakeTranslationMatrix(-bounds.Center()) *
             MakeScalingMatrix(float3(Rcp(Max(bounds.HalfExtents()))))
             ;
-        
+
         Lattice::Transform(*pmesh, 0, transform);
 
         Lattice::FBulkMesh::Save(pmesh, bulkFilename);
@@ -588,7 +588,7 @@ void FRobotApp::Draw(const FTimeline& time) {
 
         const FFilename srcFilename(GShaders[GShaderCurrent]);
 
-        LOG(Info, L"[RobotApp] Load shader '{0}'", srcFilename);
+        LOG(Emphasis, L"[RobotApp] Load shader '{0}'", srcFilename);
 
         _pimpl->SetShader(device, srcFilename);
     }
