@@ -4,8 +4,10 @@
 #include <iosfwd>
 #include <stdexcept>
 
-#ifndef FINAL_RELEASE
+#if !(defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
 #   define WITH_CORE_EXCEPTION_CALLSTACK 1 //%_NOCOMMIT%
+#else
+#   define WITH_CORE_EXCEPTION_CALLSTACK 0
 #endif
 
 namespace Core {
