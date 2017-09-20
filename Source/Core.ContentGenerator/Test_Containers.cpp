@@ -488,16 +488,16 @@ static void Test_Container_POD_(
 #endif
 
     LOG(Info, L"{0}", Repeat(L"-*=*", 20));
-    const FBenchmarkScope bench(name, L"global");
+    BENCHMARK_SCOPE(name, L"global");
 
     {
-        const FBenchmarkScope subbench(name, L"construction");
+        BENCHMARK_SCOPE(name, L"construction");
         for (const auto& word : input)
             set.insert(word);
     }
     Assert(set.size() == input.size());
     {
-        const FBenchmarkScope subbench(name, L"search");
+        BENCHMARK_SCOPE(name, L"search");
         forrange(i, 0, loops) {
             for (const auto& word : search)
                 if (set.end() == set.find(word))
@@ -505,7 +505,7 @@ static void Test_Container_POD_(
         }
     }
     {
-        const FBenchmarkScope subbench(name, L"negative search");
+        BENCHMARK_SCOPE(name, L"negative search");
         forrange(i, 0, loops) {
             for (const auto& word : negative)
                 if (set.end() != set.find(word))
@@ -513,12 +513,12 @@ static void Test_Container_POD_(
         }
     }
     {
-        const FBenchmarkScope subbench(name, L"deletion");
+        BENCHMARK_SCOPE(name, L"deletion");
         for (const auto& word : todelete)
             set.erase(word);
     }
     {
-        const FBenchmarkScope subbench(name, L"search after delete");
+        BENCHMARK_SCOPE(name, L"search after delete");
         forrange(i, 0, loops) {
             for (const auto& word : searchafterdelete)
                 set.find(word);
@@ -544,16 +544,16 @@ static void Test_Container_Obj_(
 
     LOG(Info, L"{0}", Repeat(L"-*=*", 20));
 
-    const FBenchmarkScope bench(name, L"global");
+    BENCHMARK_SCOPE(name, L"global");
 
     {
-        const FBenchmarkScope subbench(name, L"construction");
+        BENCHMARK_SCOPE(name, L"construction");
         for (const FStringView& word : input)
             set.insert(word);
     }
     Assert(set.size() == input.size());
     {
-        const FBenchmarkScope subbench(name, L"search");
+        BENCHMARK_SCOPE(name, L"search");
         forrange(i, 0, loops) {
             for (const FStringView& word : search)
                 if (set.end() == set.find(word))
@@ -561,7 +561,7 @@ static void Test_Container_Obj_(
         }
     }
     {
-        const FBenchmarkScope subbench(name, L"negative search");
+        BENCHMARK_SCOPE(name, L"negative search");
         forrange(i, 0, loops) {
             for (const FStringView& word : negative)
                 if (set.end() != set.find(word))
@@ -569,12 +569,12 @@ static void Test_Container_Obj_(
         }
     }
     {
-        const FBenchmarkScope subbench(name, L"deletion");
+        BENCHMARK_SCOPE(name, L"deletion");
         for (const FStringView& word : todelete)
             set.erase(word);
     }
     {
-        const FBenchmarkScope subbench(name, L"search after delete");
+        BENCHMARK_SCOPE(name, L"search after delete");
         forrange(i, 0, loops) {
             for (const FStringView& word : searchafterdelete)
                 set.find(word);

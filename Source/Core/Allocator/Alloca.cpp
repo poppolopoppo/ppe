@@ -346,7 +346,7 @@ static void* AllocaFallback_Realloc_(void* p, size_t newSizeInBytes, bool keepDa
         return AllocaFallback_Malloc_(newSizeInBytes);
     }
 #else
-    GetThreadLocalHeap().Realloc(p, newSizeInBytes);
+    return GetThreadLocalHeap().Realloc(p, newSizeInBytes);
 #endif
 }
 //----------------------------------------------------------------------------

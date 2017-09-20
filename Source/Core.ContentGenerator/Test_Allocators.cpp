@@ -47,7 +47,7 @@ template <typename _Alloc>
 static void Test_Allocator_ST_(const wchar_t* category, const wchar_t* name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
-    const FBenchmarkScope bench(category, name);
+    BENCHMARK_SCOPE(category, name);
 
     forrange(loop, 0, GLoopCount_) {
         for (size_t sz : blockSizes) {
@@ -62,7 +62,7 @@ template <typename _Alloc>
 static void Test_Allocator_MT_(const wchar_t* category, const wchar_t* name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
-    const FBenchmarkScope bench(category, name);
+    BENCHMARK_SCOPE(category, name);
 
     forrange(loop, 0, GLoopCount_) {
         parallel_for(blockSizes.begin(), blockSizes.end(), [&allocator](size_t sz) {
@@ -78,7 +78,7 @@ template <typename _Alloc>
 static void Test_Allocator_Sliding_(const wchar_t* category, const wchar_t* name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes, size_t window) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
-    const FBenchmarkScope bench(category, name);
+    BENCHMARK_SCOPE(category, name);
 
     const size_t numDeallocs = Max(1, window / 10);
 
@@ -114,7 +114,7 @@ template <typename _Alloc>
 static void Test_Allocator_Trashing_(const wchar_t* category, const wchar_t* name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
-    const FBenchmarkScope bench(category, name);
+    BENCHMARK_SCOPE(category, name);
 
     using value_type = typename std::allocator_traits<_Alloc>::value_type;
     STACKLOCAL_POD_ARRAY(value_type*, blockAddrs, blockSizes.size());
@@ -140,30 +140,30 @@ static void Test_Allocator_(const wchar_t* name, _Alloc&& allocator,
 
     LOG(Info, L"{0}", Repeat(L"-*=*", 20));
 
-    const FBenchmarkScope bench(name, L"Global");
+    BENCHMARK_SCOPE(name, L"Global");
     {
-        const FBenchmarkScope bench(name, L"Single-Thread");
+        BENCHMARK_SCOPE(name, L"Single-Thread");
 
         Test_Allocator_ST_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks);
         Test_Allocator_ST_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
         Test_Allocator_ST_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks);
     }
     {
-        const FBenchmarkScope bench(name, L"Multi-Thread");
+        BENCHMARK_SCOPE(name, L"Multi-Thread");
 
         Test_Allocator_MT_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks);
         Test_Allocator_MT_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
         Test_Allocator_MT_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks);
     }
     {
-        const FBenchmarkScope bench(name, L"Sliding");
+        BENCHMARK_SCOPE(name, L"Sliding");
 
         Test_Allocator_Sliding_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks, GSlidingWindow_);
         Test_Allocator_Sliding_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks, GSlidingWindow_);
         Test_Allocator_Sliding_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks, GSlidingWindow_);
     }
     {
-        const FBenchmarkScope bench(name, L"Trashing");
+        BENCHMARK_SCOPE(name, L"Trashing");
 
         Test_Allocator_Trashing_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks);
         Test_Allocator_Trashing_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
