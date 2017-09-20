@@ -5,7 +5,10 @@
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Meta/Singleton.h"
+#include "Misc/TargetPlatform.h"
+
 #include "ThreadLocalHeap.h"
+#include "VirtualMemory.h"
 
 #ifdef WITH_CORE_ASSERT
 #   define WITH_CORE_ALLOCA_CANARY
@@ -17,6 +20,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+static void* AllocaFallback_Malloc_(size_t sizeInBytes);
+static void AllocaFallback_Free_(void* p);
+static void* AllocaFallback_Realloc_(void* p, size_t newSizeInBytes, bool keepData);
+//----------------------------------------------------------------------------
+static void* AllocaLocalStorage_Alloc_();
+static void AllocaLocalStorage_Deallocate_(void* p);
+//----------------------------------------------------------------------------
 class FAllocaStorage {
 public:
     enum : u32 {
@@ -25,15 +35,17 @@ public:
         Capacity        =128<<10    /* 128 kb   */
 #elif defined(ARCH_X86)
         Capacity        = 64<<10    /*  64 kb   */
-#else
-#   error "no support"
 #endif
 
     // each allocation are guaranteed to be aligned on :
     ,   Boundary        = 16        /* 16 b     */
 
     // each allocation fallback on TLH when bigger than :
+#if defined(ARCH_X64)
+    ,   MaxBlockSize    = 32<<10    /* 32 kb    */
+#else
     ,   MaxBlockSize    = 16<<10    /* 16 kb    */
+#endif
 
     // internal configuration :
 
@@ -55,13 +67,14 @@ public:
     FAllocaStorage();
     ~FAllocaStorage();
 
-    bool Contains(const void* ptr) const {
+    bool AliasesToLocalStorage(const void* ptr) const {
         return (size_t(ptr) > size_t(_storage) &&
                 size_t(ptr) < size_t(_storage) + _offset);
     }
 
     void* Push(size_t sizeInBytes);
     void Pop(void* ptr);
+
     void* Relocate(void* ptr, size_t newSizeInBytes, bool keepData);
 
 private:
@@ -78,24 +91,23 @@ FAllocaStorage::~FAllocaStorage() {
     Assert(0 == _offset); // Check that all used memory has been released
 
     if (_storage)
-        GetThreadLocalHeap().Free<Boundary>(_storage);
+        AllocaLocalStorage_Deallocate_(_storage);
 }
 //----------------------------------------------------------------------------
 void* FAllocaStorage::Push(size_t sizeInBytes) {
     Assert(sizeInBytes > 0);
 
     const size_t alignedSizeInBytes = ROUND_TO_NEXT_16(sizeInBytes);
+    Assert(alignedSizeInBytes <= MaxBlockSize);
 
-    if (alignedSizeInBytes <= MaxBlockSize &&
-        alignedSizeInBytes + PayloadSize + _offset <= Capacity) {
-        if (!_storage) {
+    if (alignedSizeInBytes + PayloadSize + _offset <= Capacity) {
+
+        if (nullptr == _storage) {
             Assert(0  == _offset);
-            _storage = GetThreadLocalHeap().Malloc<Boundary>(Capacity);
-            Assert(_storage);
+            _storage = AllocaLocalStorage_Alloc_();
         }
 
-        Assert(ROUND_TO_NEXT_16(_offset) == _offset);
-
+        Assert(Meta::IsAligned(16, _offset));
         void* const block = reinterpret_cast<u8*>(_storage) + _offset;
 
         const u32 blockSize = checked_cast<u32>(alignedSizeInBytes + PayloadSize);
@@ -117,21 +129,21 @@ void* FAllocaStorage::Push(size_t sizeInBytes) {
         footer[3] = header[1];
 #endif
 
-        Assert(IS_ALIGNED(Boundary, userBlock));
+        Assert(Meta::IsAligned(Boundary, userBlock));
         return userBlock;
     }
     else {
         // Fallback on thread local heap allocations if :
         // - asked block size is too large (> MaxBlockSize)
         // - no more space available in _storage (should not happen ...)
-        return GetThreadLocalHeap().Malloc<Boundary>(sizeInBytes);
+        return AllocaFallback_Malloc_(sizeInBytes);
     }
 }
 //----------------------------------------------------------------------------
 void FAllocaStorage::Pop(void* ptr) {
-    Assert(size_t(ptr) > HeaderSize);
+    Assert(uintptr_t(ptr) > HeaderSize);
 
-    if (Contains(ptr)) {
+    if (AliasesToLocalStorage(ptr)) {
         Assert(_storage);
 
         void* const block = reinterpret_cast<u8*>(ptr) - HeaderSize;
@@ -139,7 +151,7 @@ void FAllocaStorage::Pop(void* ptr) {
         const u32 blockSize = *header;
 
         // Can't delete any other block than the last one allocated
-        AssertRelease(size_t(block) + blockSize == size_t(_storage) + _offset);
+        AssertRelease(uintptr_t(block) + blockSize == uintptr_t(_storage) + _offset);
 
         Assert(blockSize <= _offset);
         Assert(blockSize <= checked_cast<u32>(ROUND_TO_NEXT_16(MaxBlockSize) + PayloadSize));
@@ -157,31 +169,31 @@ void FAllocaStorage::Pop(void* ptr) {
 #endif
 
 #ifdef WITH_CORE_ASSERT
-        memset(block, 0xDD, blockSize);
+        ::memset(block, 0xDD, blockSize);
 #endif
 
         _offset -= blockSize;
     }
     else {
-        GetThreadLocalHeap().Free<Boundary>(ptr);
+        AllocaFallback_Free_(ptr);
     }
 }
 //----------------------------------------------------------------------------
 void* FAllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) {
-    Assert(size_t(ptr) > HeaderSize);
+    Assert(uintptr_t(ptr) > HeaderSize);
     Assert(newSizeInBytes);
 
     const size_t alignedSizeInBytes = ROUND_TO_NEXT_16(newSizeInBytes);
 
-    if (Contains(ptr)) {
+    if (AliasesToLocalStorage(ptr)) {
         Assert(_storage);
 
         void* const block = reinterpret_cast<u8*>(ptr) - HeaderSize;
         u32* const header = reinterpret_cast<u32*>(block);
         u32 blockSize = *header;
 
-        // Can't delete any other block than the last one allocated
-        AssertRelease(size_t(block) + blockSize == size_t(_storage) + _offset);
+        // Can't relocate any other block than the last one allocated
+        AssertRelease(uintptr_t(block) + blockSize == uintptr_t(_storage) + _offset);
 
         Assert(blockSize <= _offset);
         Assert(blockSize <= checked_cast<u32>(ROUND_TO_NEXT_16(MaxBlockSize) + PayloadSize));
@@ -198,13 +210,13 @@ void* FAllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) 
         Assert(footer[3] == userSizeInBytes);
 #endif
 
-        if (size_t(block) + alignedSizeInBytes + PayloadSize <= size_t(_storage) + Capacity) {
+        if (uintptr_t(block) + alignedSizeInBytes + PayloadSize <= uintptr_t(_storage) + Capacity) {
             _offset -= blockSize;
             blockSize = checked_cast<u32>(alignedSizeInBytes + PayloadSize);
             _offset += blockSize;
             *header = blockSize;
 
-            Assert(size_t(_storage) + _offset == size_t(block) + blockSize);
+            Assert(uintptr_t(_storage) + _offset == uintptr_t(block) + blockSize);
 
 #ifdef WITH_CORE_ALLOCA_CANARY
             header[1] = checked_cast<u32>(newSizeInBytes);
@@ -219,12 +231,10 @@ void* FAllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) 
 #endif
         }
         else { // not enough place in the stack local space, fallback to thread local allocation
-            void* newPtr = GetThreadLocalHeap().Malloc<Boundary>(alignedSizeInBytes);
+            void* newPtr = AllocaFallback_Malloc_(newSizeInBytes);
 
-            if (keepData) {
-                const size_t copySizeInBytes = Min(alignedSizeInBytes, blockSize);
-                memcpy(newPtr, ptr, copySizeInBytes);
-            }
+            if (keepData)
+                ::memcpy(newPtr, ptr, Min(newSizeInBytes, blockSize));
 
             Pop(ptr);
 
@@ -234,8 +244,133 @@ void* FAllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) 
         return ptr;
     }
     else {
-        return GetThreadLocalHeap().Realloc<Boundary>(ptr, alignedSizeInBytes);
+        return AllocaFallback_Realloc_(ptr, newSizeInBytes, keepData);
     }
+}
+//----------------------------------------------------------------------------
+#ifdef USE_MEMORY_DOMAINS
+constexpr size_t GAllocaFallbackPayload = 4 * sizeof(u32); // keep memory aligned on 16
+constexpr u32 GAllocaFallbackAliveCanary = 0x0A110CA;
+constexpr u32 GAllocaFallbackDeadCanary = 0xDEADBEEF;
+#endif
+//----------------------------------------------------------------------------
+static void* AllocaFallback_Malloc_(size_t sizeInBytes) {
+#ifdef USE_MEMORY_DOMAINS
+    // Need a payload to track memory allocated for Alloca()
+    if (void* p = GetThreadLocalHeap().Malloc(sizeInBytes + GAllocaFallbackPayload)) {
+        u32* const payload = (u32*)p;
+        payload[0] = checked_cast<u32>(sizeInBytes);
+        ONLY_IF_ASSERT(payload[1] = GAllocaFallbackAliveCanary);
+        ONLY_IF_ASSERT(payload[2] = GAllocaFallbackAliveCanary);
+        ONLY_IF_ASSERT(payload[3] = GAllocaFallbackAliveCanary);
+
+        MEMORY_DOMAIN_TRACKING_DATA(Alloca).Allocate(1, sizeInBytes);
+
+        p = (payload + 4);
+        Assert(Meta::IsAligned(16, p));
+
+        return p;
+    }
+    return nullptr;
+#else
+    return GetThreadLocalHeap().Malloc(sizeInBytes);
+#endif
+}
+//----------------------------------------------------------------------------
+static void AllocaFallback_Free_(void* p) {
+#ifdef USE_MEMORY_DOMAINS
+    u32* const payload = (u32*)p - 4;
+    Assert(GAllocaFallbackAliveCanary == payload[1]);
+    Assert(GAllocaFallbackAliveCanary == payload[2]);
+    Assert(GAllocaFallbackAliveCanary == payload[3]);
+
+    // Without payload we wouldn't know how much memory we just freed
+    const size_t sizeInBytes = payload[0];
+    MEMORY_DOMAIN_TRACKING_DATA(Alloca).Deallocate(1, sizeInBytes);
+
+    ONLY_IF_ASSERT(payload[0] = GAllocaFallbackDeadCanary);
+    ONLY_IF_ASSERT(payload[1] = GAllocaFallbackDeadCanary);
+    ONLY_IF_ASSERT(payload[2] = GAllocaFallbackDeadCanary);
+    ONLY_IF_ASSERT(payload[3] = GAllocaFallbackDeadCanary);
+
+    GetThreadLocalHeap().Free(payload);
+#else
+    GetThreadLocalHeap().Free(p);
+#endif
+}
+//----------------------------------------------------------------------------
+static void* AllocaFallback_Realloc_(void* p, size_t newSizeInBytes, bool keepData) {
+#ifdef USE_MEMORY_DOMAINS
+    if (p) {
+        u32* const oldPayload = (u32*)p - 4;
+        Assert(GAllocaFallbackAliveCanary == oldPayload[1]);
+        Assert(GAllocaFallbackAliveCanary == oldPayload[2]);
+        Assert(GAllocaFallbackAliveCanary == oldPayload[3]);
+
+        const size_t oldSizeInBytes = oldPayload[0];
+        MEMORY_DOMAIN_TRACKING_DATA(Alloca).Deallocate(1, oldSizeInBytes);
+
+        if (oldSizeInBytes == newSizeInBytes)
+            return p;
+
+        void* newP = nullptr;
+        if (newSizeInBytes) {
+            u32* const newPayload = (u32*)GetThreadLocalHeap().Malloc(newSizeInBytes);
+
+            if (newPayload)
+            {
+                MEMORY_DOMAIN_TRACKING_DATA(Alloca).Allocate(1, newSizeInBytes);
+
+                newPayload[0] = checked_cast<u32>(newSizeInBytes);
+                newPayload[1] = GAllocaFallbackAliveCanary;
+                newPayload[2] = GAllocaFallbackAliveCanary;
+                newPayload[3] = GAllocaFallbackAliveCanary;
+
+                newP = (newPayload + 4);
+                Assert(Meta::IsAligned(16, newP));
+
+                ::memcpy(newP, p, Min(newSizeInBytes, oldSizeInBytes));
+            }
+        }
+
+        ONLY_IF_ASSERT(oldPayload[0] = GAllocaFallbackDeadCanary);
+        ONLY_IF_ASSERT(oldPayload[1] = GAllocaFallbackDeadCanary);
+        ONLY_IF_ASSERT(oldPayload[2] = GAllocaFallbackDeadCanary);
+        ONLY_IF_ASSERT(oldPayload[3] = GAllocaFallbackDeadCanary);
+
+        GetThreadLocalHeap().Free(oldPayload);
+
+        return newP;
+    }
+    else {
+        return AllocaFallback_Malloc_(newSizeInBytes);
+    }
+#else
+    GetThreadLocalHeap().Realloc(p, newSizeInBytes);
+#endif
+}
+//----------------------------------------------------------------------------
+static void* AllocaLocalStorage_Alloc_() {
+    void* const p = FVirtualMemory::AlignedAlloc(FPlatform::SystemInfo.AllocationGranularity, FAllocaStorage::Capacity);
+    AssertRelease(p);
+    Assert(Meta::IsAligned(FAllocaStorage::Boundary, p));
+
+#ifdef USE_MEMORY_DOMAINS
+    MEMORY_DOMAIN_TRACKING_DATA(Alloca).Allocate(1, FAllocaStorage::Capacity);
+#endif
+
+    return p;
+}
+//----------------------------------------------------------------------------
+static void AllocaLocalStorage_Deallocate_(void* p) {
+    Assert(p);
+    Assert(Meta::IsAligned(FPlatform::SystemInfo.AllocationGranularity, p));
+
+#ifdef USE_MEMORY_DOMAINS
+    MEMORY_DOMAIN_TRACKING_DATA(Alloca).Deallocate(1, FAllocaStorage::Capacity);
+#endif
+
+    FVirtualMemory::AlignedFree(p, FAllocaStorage::Capacity);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -264,7 +399,9 @@ void* Alloca(size_t sizeInBytes) {
     if (0 == sizeInBytes)
         return nullptr;
 
-    return FThreadLocalAllocaStorage::Instance().Push(sizeInBytes);
+    return (sizeInBytes <= FAllocaStorage::MaxBlockSize)
+        ? FThreadLocalAllocaStorage::Instance().Push(sizeInBytes)
+        : AllocaFallback_Malloc_(sizeInBytes);
 }
 //----------------------------------------------------------------------------
 void* RelocateAlloca(void* ptr, size_t newSizeInBytes, bool keepData) {
@@ -278,7 +415,9 @@ void* RelocateAlloca(void* ptr, size_t newSizeInBytes, bool keepData) {
         }
     }
     else if (newSizeInBytes) {
-        return Alloca(newSizeInBytes);
+        return (newSizeInBytes <= FAllocaStorage::MaxBlockSize)
+            ? FThreadLocalAllocaStorage::Instance().Push(newSizeInBytes)
+            : AllocaFallback_Malloc_(newSizeInBytes);
     }
     else {
         return nullptr;

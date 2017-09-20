@@ -84,6 +84,7 @@ struct TAllocaBlock {
             Relocate(newCount, keepData);
     }
 
+    operator TMemoryView<T> () const { return MakeView(); }
     TMemoryView<T> MakeView() const { return TMemoryView<T>(RawData, Count); }
 };
 //----------------------------------------------------------------------------
@@ -97,13 +98,16 @@ struct TAllocaBlock {
 //----------------------------------------------------------------------------
 #define MALLOCA(T, _NAME, _COUNT) \
     const size_t CONCAT(_Count_, _NAME) = (_COUNT); \
-    const Core::TAllocaBlock<T> _NAME( static_cast< T* >( \
+    const ::Core::TAllocaBlock<T> _NAME( static_cast< T* >( \
         SYSALLOCA_IFP(sizeof(T) * CONCAT(_Count_, _NAME))), \
         CONCAT(_Count_, _NAME) )
 //----------------------------------------------------------------------------
+#define INLINE_MALLOCA(T, _COUNT) \
+    ::Core::TAllocaBlock<T>( static_cast< T* >(SYSALLOCA_IFP(sizeof(T) * _COUNT)), _COUNT )
+//----------------------------------------------------------------------------
 #define STACKLOCAL_POD_ARRAY(T, _NAME, _COUNT) \
     MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT ); \
-    const Core::TMemoryView< T > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+    const ::Core::TMemoryView< T > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
