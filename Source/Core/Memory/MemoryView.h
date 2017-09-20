@@ -60,6 +60,7 @@ public:
 
     pointer Pointer() const { return _storage; }
     size_t SizeInBytes() const { return _size * sizeof(T); }
+    size_t StrideInBytes() const { return sizeof(T); }
 
     pointer data() const { return _storage; }
     size_type size() const { return _size; }
