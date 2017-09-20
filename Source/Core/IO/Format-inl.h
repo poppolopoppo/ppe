@@ -53,8 +53,8 @@ void _FormatArgs(std::basic_ostream<wchar_t>& oss, const FWStringView& format, c
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
 using TBasicFormatArgList = TMemoryView< const details::TFormatFunctor_<_Char, _Traits> >;
-typedef TBasicFormatArgList<char>    FormatArgList;
-typedef TBasicFormatArgList<wchar_t> FormatArgListW;
+typedef TBasicFormatArgList<char>    FFormatArgList;
+typedef TBasicFormatArgList<wchar_t> FFormatArgListW;
 //----------------------------------------------------------------------------
 template <typename _Char>
 void FormatArgs(std::basic_ostream<_Char>& oss, const TBasicStringView<_Char>& format, const TBasicFormatArgList<_Char>& args) {
@@ -64,7 +64,7 @@ void FormatArgs(std::basic_ostream<_Char>& oss, const TBasicStringView<_Char>& f
 template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
 void Format(std::basic_ostream<_Char, _Traits>& oss, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     // args are always passed by pointer, wrapped in a void *
-    // this avoids unintended copies and decorrelates from actual types (_FormatArgs is defined in Format.cpp)
+    // this avoids unintended copies and de-correlates from actual types (_FormatArgs is defined in Format.cpp)
     const details::TFormatFunctor_<_Char, _Traits> functors[] = {
         details::TFormatFunctor_<_Char, _Traits>::Make(std::forward<_Arg0>(arg0)),
         details::TFormatFunctor_<_Char, _Traits>::Make(std::forward<_Args>(args))...
@@ -91,7 +91,7 @@ template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
 void Format(TBasicString<_Char, _Traits>& result, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     STACKLOCAL_BASICOCSTRSTREAM(_Char, oss, 2048);
     Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-    result.assign(oss.Pointer(), checked_cast<size_t>(oss.size()) );
+    result.assign(oss.data(), checked_cast<size_t>(oss.size()) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -100,14 +100,14 @@ template <typename _Arg>
 FString ToString(_Arg&& arg) {
     STACKLOCAL_OCSTRSTREAM(oss, 2048);
     oss << arg;
-    return FString(oss.Pointer(), checked_cast<size_t>(oss.size()) );
+    return FString(oss.data(), checked_cast<size_t>(oss.size()) );
 }
 //----------------------------------------------------------------------------
 template <typename _Arg>
 FWString ToWString(_Arg&& arg) {
     STACKLOCAL_WOCSTRSTREAM(oss, 2048);
     oss << arg;
-    return FWString(oss.Pointer(), checked_cast<size_t>(oss.size()) );
+    return FWString(oss.data(), checked_cast<size_t>(oss.size()) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

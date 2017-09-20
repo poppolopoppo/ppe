@@ -201,14 +201,14 @@ FWString FFilename::ToWString() const {
     return Core::ToWString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
-size_t FFilename::ToCStr(char *dst, size_t capacity) const {
-    FOCStrStream oss(dst, capacity);
+size_t FFilename::ToCStr(const TMemoryView<char>& dst) const {
+    FOCStrStream oss(dst);
     oss << *this;
     return static_cast<size_t>(oss.tellp());
 }
 //----------------------------------------------------------------------------
-size_t FFilename::ToWCStr(wchar_t *dst, size_t capacity) const {
-    FWOCStrStream oss(dst, capacity);
+size_t FFilename::ToWCStr(const TMemoryView<wchar_t>& dst) const {
+    FWOCStrStream oss(dst);
     oss << *this;
     return static_cast<size_t>(oss.tellp());
 }

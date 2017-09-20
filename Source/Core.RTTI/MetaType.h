@@ -83,7 +83,7 @@ const FAbstractMetaTypeScalarTraits* ScalarTraitsFromTypeId(FMetaTypeId typeId);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define CORE_RTTI_METATYPE_NAMETYPE FStaticFormat<char, CORE_RTTI_METATYPE_NAME_CAPACITY>
+#define CORE_RTTI_METATYPE_NAMETYPE ::Core::TFixedSizeFormat<char, CORE_RTTI_METATYPE_NAME_CAPACITY>
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
 struct TMetaType< RTTI::TPair<_First, _Second> > {

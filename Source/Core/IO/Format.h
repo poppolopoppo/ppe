@@ -103,32 +103,49 @@ inline FWString ToWString(bool b) { return (b ? L"true" : L"false"); }
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Capacity = 64>
-class FStaticFormat {
+class TFixedSizeFormat {
 public:
     STATIC_ASSERT(Meta::TIsPod<_Char>::value);
 
     template <typename _Arg0, typename... _Args>
-    FStaticFormat(const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
-        _length = Format(_c_str, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    TFixedSizeFormat(const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args)
+        : _length(Format(_c_str, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...)) {
+        Assert(_length < _Capacity);
+        _c_str[Min(_Capacity - 1, _length)] = _Char(0);
     }
 
     template <size_t _Dim, typename _Arg0, typename... _Args>
-    FStaticFormat(const _Char (&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
-        _length = Format(_c_str, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    TFixedSizeFormat(const _Char (&format)[_Dim], _Arg0&& arg0, _Args&&... args)
+        : _length(Format(_c_str, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...)) {
+        Assert(_length < _Capacity);
+        _c_str[Min(_Capacity - 1, _length)] = _Char(0);
     }
 
-    FStaticFormat(const FStaticFormat& ) = delete;
-    FStaticFormat& operator =(const FStaticFormat& ) = delete;
-
-    FStaticFormat(FStaticFormat&& ) = delete;
-    FStaticFormat& operator =(FStaticFormat&& ) = delete;
-
-    TMemoryView<const _Char> MakeView() const { return TMemoryView<const _Char>(_c_str, _length); }
+    operator const _Char* () const { return (&_c_str[0]); }
+    operator TBasicStringView<_Char> () const { return MakeView(); }
+    TBasicStringView<_Char> MakeView() const { return TBasicStringView<_Char>(_c_str, _length); }
 
 private:
-    size_t _length;
+    const size_t _length;
     _Char _c_str[_Capacity];
 };
+//----------------------------------------------------------------------------
+#define INPLACE_TO_STRINGVIEW(_OBJ, _CAPACITY) ::Core::ToStringView(INLINE_MALLOCA(char, _CAPACITY), (_OBJ))
+#define INPLACE_TO_WSTRINGVIEW(_OBJ, _CAPACITY) ::Core::ToWStringView(INLINE_MALLOCA(wchar_t, _CAPACITY), (_OBJ))
+//----------------------------------------------------------------------------
+template <typename T>
+FStringView ToStringView(const TMemoryView<char>& buffer, const T& obj) {
+    FOCStrStream oss(buffer);
+    oss << obj;
+    return oss.MakeView();
+}
+//----------------------------------------------------------------------------
+template <typename T>
+FWStringView ToWStringView(const TMemoryView<wchar_t>& buffer, const T& obj) {
+    FWOCStrStream oss(buffer);
+    oss << obj;
+    return oss.MakeView();
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

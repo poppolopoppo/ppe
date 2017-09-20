@@ -320,7 +320,8 @@ static void FormatArgs_(
     const TBasicStringView<_Char>& format,
     const TMemoryView<const details::TFormatFunctor_<_Char, _Traits>>& args ) {
     Assert(format.Pointer());
-    Assert(!oss.bad());
+    Assert(not oss.bad());
+    Assert(not oss.fail());
 
     FFormatProperties_ original;
     original.From(oss); // backups original state
@@ -333,7 +334,8 @@ static void FormatArgs_(
     while (FormatParser_(formatIt, &outp, &index, props)) {
         if (outp.size()) {
             oss.write(outp.Pointer(), outp.size());
-            Assert(!oss.bad());
+            Assert(not oss.bad());
+            Assert(not oss.fail());
         }
 
         if (size_t(-1) != index) {
@@ -342,7 +344,8 @@ static void FormatArgs_(
             for (size_t n = 0; n < props.Repeat; ++n) {
                 props.To(oss);
                 oss << args[index];
-                Assert(!oss.bad());
+                Assert(not oss.bad());
+                Assert(not oss.fail());
             }
         }
 
