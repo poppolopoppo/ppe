@@ -175,13 +175,30 @@ template <typename T, typename _Allocator>
 template <class... _Args>
 void TVector<T, _Allocator>::emplace_back(_Args&&... args) {
     reserve_Additional(1);
-    Assert(_size < _capacity);
-    allocator_traits::construct(allocator_(), &_data[_size++], std::forward<_Args>(args)...);
+    emplace_back_AssumeNoGrow(std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::emplace_back(const T& value) {
     reserve_Additional(1);
+    emplace_back_AssumeNoGrow(value);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void TVector<T, _Allocator>::emplace_back(T&& rvalue) {
+    reserve_Additional(1);
+    emplace_back_AssumeNoGrow(std::move(rvalue));
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+template <class... _Args>
+void TVector<T, _Allocator>::emplace_back_AssumeNoGrow(_Args&&... args) {
+    Assert(_size < _capacity);
+    allocator_traits::construct(allocator_(), &_data[_size++], std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void TVector<T, _Allocator>::emplace_back_AssumeNoGrow(const T& value) {
     Assert(_size < _capacity);
     if (AliasesToContainer(&value)) {
         T tmp(value); // value points to something in this container
@@ -193,8 +210,7 @@ void TVector<T, _Allocator>::emplace_back(const T& value) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void TVector<T, _Allocator>::emplace_back(T&& rvalue) {
-    reserve_Additional(1);
+void TVector<T, _Allocator>::emplace_back_AssumeNoGrow(T&& rvalue) {
     Assert(_size < _capacity);
     if (AliasesToContainer(&rvalue)) {
         T tmp(std::move(rvalue)); // value points to something in this container

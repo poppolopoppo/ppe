@@ -216,10 +216,16 @@ public:
 
     template <class... _Args>
     iterator emplace(const_iterator pos, _Args&&... args);
+    
     template <class... _Args>
     void emplace_back(_Args&&... args);
     void emplace_back(const T& value);
     void emplace_back(T&& rvalue);
+
+    template <class... _Args>
+    void emplace_back_AssumeNoGrow(_Args&&... args);
+    void emplace_back_AssumeNoGrow(const T& value);
+    void emplace_back_AssumeNoGrow(T&& rvalue);
 
     iterator erase(const_iterator pos);
     iterator erase(const_iterator first, const_iterator last);
