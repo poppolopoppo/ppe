@@ -17,24 +17,24 @@
 
 #define CORE_MALLOC_FORCE_STD               0 //%_NOCOMMIT%
 
-#if     CORE_MALLOC_FORCE_STD
+#if CORE_MALLOC_FORCE_STD
 #   define CORE_MALLOC_ALLOCATOR CORE_MALLOC_ALLOCATOR_STD
 #else
 #   define CORE_MALLOC_ALLOCATOR CORE_MALLOC_ALLOCATOR_BINNED
 #endif
 
 #if not defined(FINAL_RELEASE) && not defined(PROFILING_ENABLED)
-#   define CORE_MALLOC_HISTOGRAM_PROXY     1 //%_NOCOMMIT%
-#   define CORE_MALLOC_LOGGER_PROXY        0 //%_NOCOMMIT%
+#   define CORE_MALLOC_HISTOGRAM_PROXY      1 //%_NOCOMMIT%
+#   define CORE_MALLOC_LOGGER_PROXY         0 //%_NOCOMMIT%
 #else
-#   define CORE_MALLOC_HISTOGRAM_PROXY     0
-#   define CORE_MALLOC_LOGGER_PROXY        0
+#   define CORE_MALLOC_HISTOGRAM_PROXY      0
+#   define CORE_MALLOC_LOGGER_PROXY         0
 #endif
 
 #ifdef WITH_CORE_ASSERT
-#   define CORE_MALLOC_POISON_PROXY     (CORE_MALLOC_ALLOCATOR != CORE_MALLOC_ALLOCATOR_STD)
+#   define CORE_MALLOC_POISON_PROXY         (CORE_MALLOC_ALLOCATOR != CORE_MALLOC_ALLOCATOR_STD)
 #else
-#   define CORE_MALLOC_POISON_PROXY     0
+#   define CORE_MALLOC_POISON_PROXY         0
 #endif
 
 #define NEED_CORE_MALLOCPROXY (CORE_MALLOC_HISTOGRAM_PROXY|CORE_MALLOC_POISON_PROXY||CORE_MALLOC_LOGGER_PROXY)
@@ -123,9 +123,12 @@ struct FMallocFacetId_ {
 //----------------------------------------------------------------------------
 template <typename _Base, size_t _HeaderSize, size_t _FooterSize>
 struct TMallocBaseFacet_ {
+    STATIC_CONST_INTEGRAL(size_t, ThisHeaderSize, _HeaderSize);
+    STATIC_CONST_INTEGRAL(size_t, ThisFooterSize, _FooterSize);
+
     STATIC_CONST_INTEGRAL(size_t, BlockOffset, _Base::BlockOffset + _Base::HeaderSize);
-    STATIC_CONST_INTEGRAL(size_t, HeaderSize,  _Base::HeaderSize + _HeaderSize);
-    STATIC_CONST_INTEGRAL(size_t, FooterSize,  _Base::FooterSize + _FooterSize);
+    STATIC_CONST_INTEGRAL(size_t, HeaderSize,  _Base::HeaderSize + ThisHeaderSize);
+    STATIC_CONST_INTEGRAL(size_t, FooterSize,  _Base::FooterSize + ThisFooterSize);
 };
 //----------------------------------------------------------------------------
 } //!namespace
@@ -179,7 +182,7 @@ namespace {
 //----------------------------------------------------------------------------
 #if CORE_MALLOC_POISON_PROXY
 template <typename _Pred = FMallocFacetId_>
-struct TMallocPoisonFacet_ : TMallocBaseFacet_<_Pred, 16, 16> {
+struct TMallocPoisonFacet_ : TMallocBaseFacet_<_Pred, 64/* should preserve alignment */, 16> {
     typedef _Pred pred_type;
 
     static u32 MakeCanary_(const u32 seed, const void* p) {
@@ -208,8 +211,12 @@ struct TMallocPoisonFacet_ : TMallocBaseFacet_<_Pred, 16, 16> {
     STATIC_ASSERT(sizeof(FCanary) == CanarySize);
 
     static void MakeBlock(void* ptr, size_t sizeInBytes) {
-        FCanary* const header = (FCanary*)((u8*)ptr + BlockOffset);
-        FCanary* const footer = (FCanary*)((u8*)(header + 1) + sizeInBytes);
+        u8* const pdata = (u8*)ptr + BlockOffset;
+
+        ::memset(pdata, 0xEE, ThisHeaderSize - sizeof(FCanary));
+
+        FCanary* const header = (FCanary*)(pdata + ThisHeaderSize - sizeof(FCanary));
+        FCanary* const footer = (FCanary*)(pdata + ThisHeaderSize + sizeInBytes);
 
         header->MakeCanaries(sizeInBytes);
         footer->MakeCanaries(sizeInBytes);
@@ -218,14 +225,18 @@ struct TMallocPoisonFacet_ : TMallocBaseFacet_<_Pred, 16, 16> {
     }
 
     static void TestBlock(void* ptr) {
-        FCanary* const header = (FCanary*)((u8*)ptr + BlockOffset);
+        u8* const pdata = (u8*)ptr + BlockOffset;
+
+        FCanary* const header = (FCanary*)(pdata + ThisHeaderSize - sizeof(FCanary));
         header->CheckCanaries();
 
-        FCanary* const footer = (FCanary*)((u8*)(header + 1) + header->SizeInBytes);
+        FCanary* const footer = (FCanary*)(pdata + ThisHeaderSize + header->SizeInBytes);
         footer->CheckCanaries();
 
         header->MakeCanaries(0xdeadbeef);
         footer->MakeCanaries(0xdeadbeef);
+
+        ::memset(pdata, 0xDD, ThisHeaderSize - sizeof(FCanary));
 
         pred_type::TestBlock(ptr);
     }
@@ -308,42 +319,47 @@ typedef FMallocPoisonFacet_ FMallocHistogramFacet_;
 using FMallocProxy_ = FMalloc_;
 #else
 using FMallocFacet_ = FMallocHistogramFacet_;
-class FMallocProxy_ : private FMallocFacet_ {
-    STATIC_CONST_INTEGRAL(size_t, OverheadSize, HeaderSize + FooterSize);
+class FMallocProxy_ {
+    STATIC_CONST_INTEGRAL(size_t, OverheadSize, FMallocFacet_::HeaderSize + FMallocFacet_::FooterSize);
 
-    static void* MakeBlock_(void* ptr, size_t size) {
+    static void* MakeBlock(void* ptr, size_t size, size_t alignment = 16) {
+        Assert(Meta::IsPow2(alignment));
         if (nullptr == ptr) return nullptr;
         FMallocFacet_::MakeBlock(ptr, size);
-        return ((u8*)ptr + FMallocFacet_::HeaderSize);
+        void* const userland = ((u8*)ptr + FMallocFacet_::HeaderSize);
+        Assert(Meta::IsAligned(alignment, userland));
+        return userland;
     }
 
-    static void* TestBlock_(void* ptr) {
-        if (nullptr == ptr) return nullptr;
-        void* const block = ((u8*)ptr - FMallocFacet_::HeaderSize);
-        FMallocFacet_::TestBlock(block);
-        return block;
+    static void* TestBlock(void* userland, size_t alignment = 16) {
+        Assert(Meta::IsPow2(alignment));
+        if (nullptr == userland) return nullptr;
+        Assert(Meta::IsAligned(alignment, userland));
+        void* const ptr = ((u8*)userland - FMallocFacet_::HeaderSize);
+        FMallocFacet_::TestBlock(ptr);
+        return ptr;
     }
 
 public:
-    FORCE_INLINE static void* Malloc(size_t size) { return MakeBlock_(FMalloc_::Malloc(size + OverheadSize), size); }
-    FORCE_INLINE static void  Free(void* ptr) { FMalloc_::Free(TestBlock_(ptr)); }
-    FORCE_INLINE static void* Calloc(size_t nmemb, size_t size) { return MakeBlock_(FMalloc_::Calloc(nmemb, size + OverheadSize), size); }
-    FORCE_INLINE static void* Realloc(void *ptr, size_t size) { return MakeBlock_(FMalloc_::Realloc(TestBlock_(ptr), size + OverheadSize), size); }
+    FORCE_INLINE static void* Malloc(size_t size) { return MakeBlock(FMalloc_::Malloc(size + OverheadSize), size); }
+    FORCE_INLINE static void  Free(void* ptr) { FMalloc_::Free(TestBlock(ptr)); }
+    FORCE_INLINE static void* Calloc(size_t nmemb, size_t size) { return MakeBlock(FMalloc_::Calloc(nmemb, size + OverheadSize), size); }
+    FORCE_INLINE static void* Realloc(void *ptr, size_t size) { return MakeBlock(FMalloc_::Realloc(TestBlock(ptr), size + OverheadSize), size); }
 
-    FORCE_INLINE static void* AlignedMalloc(size_t size, size_t alignment) { return MakeBlock_(FMalloc_::AlignedMalloc(size + OverheadSize, alignment), size); }
-    FORCE_INLINE static void  AlignedFree(void *ptr) { FMalloc_::AlignedFree(TestBlock_(ptr)); }
-    FORCE_INLINE static void* AlignedCalloc(size_t nmemb, size_t size, size_t alignment) { return MakeBlock_(FMalloc_::AlignedCalloc(nmemb, size + OverheadSize, alignment), size); }
-    FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment) { return MakeBlock_(FMalloc_::AlignedRealloc(TestBlock_(ptr), size + OverheadSize, alignment), size); }
+    FORCE_INLINE static void* AlignedMalloc(size_t size, size_t alignment) { return MakeBlock(FMalloc_::AlignedMalloc(size + OverheadSize, alignment), size, alignment); }
+    FORCE_INLINE static void  AlignedFree(void *ptr) { FMalloc_::AlignedFree(TestBlock(ptr)); }
+    FORCE_INLINE static void* AlignedCalloc(size_t nmemb, size_t size, size_t alignment) { return MakeBlock(FMalloc_::AlignedCalloc(nmemb, size + OverheadSize, alignment), size, alignment); }
+    FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment) { return MakeBlock(FMalloc_::AlignedRealloc(TestBlock(ptr, alignment), size + OverheadSize, alignment), size, alignment); }
 
 #if CORE_MALLOC_LOGGER_PROXY
     static const FMallocLoggerFacet_::FDebugData* DebugData(void* ptr) {
-        void* const block = TestBlock_(ptr);
+        void* const block = TestBlock(ptr);
         return (const FMallocLoggerFacet_::FDebugData*)((u8*)block + FMallocLoggerFacet_::BlockOffset);
     }
 #endif
 #if CORE_MALLOC_POISON_PROXY
     static const FMallocPoisonFacet_::FCanary* CanaryHeader(void* ptr) {
-        void* const block = TestBlock_(ptr);
+        void* const block = TestBlock(ptr);
         return (const FMallocPoisonFacet_::FCanary*)((u8*)block + FMallocPoisonFacet_::BlockOffset);
     }
 #endif
