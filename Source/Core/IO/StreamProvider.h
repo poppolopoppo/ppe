@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/FS/Policies.h"
 #include "Core/IO/StringView.h"
 #include "Core/Meta/AlignedStorage.h"
 #include "Core/Memory/MemoryView.h"
@@ -14,13 +15,6 @@ class TRawStorage;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class ESeekOrigin {
-    Begin       = 0,
-    Relative    = 1,
-    End         = 2,
-    All         = 0xFF,
-};
-//----------------------------------------------------------------------------
 class IStreamReader {
 public: // virtual interface
     virtual ~IStreamReader() {}
@@ -30,20 +24,16 @@ public: // virtual interface
     virtual bool IsSeekableI(ESeekOrigin origin = ESeekOrigin::All) const = 0;
 
     virtual std::streamoff TellI() const = 0;
-    virtual bool SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) = 0;
+    virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) = 0;
 
     virtual std::streamsize SizeInBytes() const = 0;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) = 0;
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) = 0;
 
-    virtual bool Peek(char& ch) = 0;
-    virtual bool Peek(wchar_t& ch) = 0;
+    virtual class IBufferedStreamReader* ToBufferedI() { return nullptr; }
 
-public: // read helpers
-    template <typename T>
-    bool ReadPOD(T* pod);
-
+public: // helpers
     template <typename T, size_t _Dim>
     bool ReadArray(T(&staticArray)[_Dim]);
 
@@ -52,6 +42,18 @@ public: // read helpers
 
     template <typename T>
     bool ReadView(const TMemoryView<T>& dst);
+};
+//----------------------------------------------------------------------------
+class IBufferedStreamReader : public IStreamReader {
+    virtual IBufferedStreamReader* ToBufferedI() override final { return this; }
+
+public:
+    virtual bool Peek(char& ch) = 0;
+    virtual bool Peek(wchar_t& ch) = 0;
+
+public: // helpers
+    template <typename T>
+    bool ReadPOD(T* pod);
 
     template <typename T>
     bool ExpectPOD(const T& pod);
@@ -81,15 +83,14 @@ public: // virtual interface
     virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const = 0;
 
     virtual std::streamoff TellO() const = 0;
-    virtual bool SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) = 0;
+    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) = 0;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) = 0;
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) = 0;
 
-public: // helpers
-    template <typename T>
-    void WritePOD(const T& pod);
+    virtual class IBufferedStreamWriter* ToBufferedO() { return nullptr; }
 
+public: // helpers
     template <typename T, size_t _Dim>
     void WriteArray(const T(&staticArray)[_Dim]);
 
@@ -100,10 +101,21 @@ public: // helpers
     void WriteView(const TMemoryView<T>& data);
 };
 //----------------------------------------------------------------------------
+class IBufferedStreamWriter : public IStreamWriter {
+    virtual class IBufferedStreamWriter* ToBufferedO() override final { return this; }
+
+public:
+    virtual void Flush() = 0;
+
+public: // helpers
+    template <typename T>
+    void WritePOD(const T& pod);
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
-class TBasicStreamReader : public IStreamReader {
+class TBasicStreamReader : public IBufferedStreamReader {
 public:
     typedef std::basic_istream<_Char, _Traits> stream_type;
 
@@ -115,15 +127,16 @@ public:
     virtual bool IsSeekableI(ESeekOrigin ) const override final { return true; }
 
     virtual std::streamoff TellI() const override final;
-    virtual bool SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
+    virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
     virtual std::streamsize SizeInBytes() const override final;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
 
+public:
     virtual bool Peek(char& ch) override final;
-    virtual bool Peek(wchar_t& wch) override final;
+    virtual bool Peek(wchar_t& ch) override final;
 
 private:
     typedef typename stream_type::traits_type traits_type;
@@ -133,7 +146,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
-class TBasicStreamWriter : public IStreamWriter {
+class TBasicStreamWriter : public IBufferedStreamWriter {
 public:
     typedef std::basic_ostream<_Char, _Traits> stream_type;
 
@@ -143,10 +156,13 @@ public:
     virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
 
     virtual std::streamoff TellO() const override final;
-    virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
+    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
+
+public:
+    virtual void Flush() override final;
 
 private:
     stream_type& _oss;
@@ -167,12 +183,12 @@ class TStreamWriterBasicStreamBuffer : public std::basic_streambuf<_Char, _Trait
 public:
     typedef std::basic_streambuf<_Char, _Traits> parent_type;
 
-    explicit TStreamWriterBasicStreamBuffer(IStreamWriter* writer) : _writer(writer) {
+    explicit TStreamWriterBasicStreamBuffer(IBufferedStreamWriter* writer) : _writer(writer) {
         Assert(nullptr != writer);
     }
 
-    IStreamWriter* Writer() { return _writer; }
-    const IStreamWriter* Writer() const { return _writer; }
+    IBufferedStreamWriter* Writer() { return _writer; }
+    const IBufferedStreamWriter* Writer() const { return _writer; }
 
     void swap(TStreamWriterBasicStreamBuffer& other) {
         parent_type::swap(other);
@@ -192,7 +208,7 @@ protected:
     }
 
 private:
-    IStreamWriter* _writer;
+    IBufferedStreamWriter* _writer;
 };
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits = std::char_traits<_Char> >
@@ -203,7 +219,7 @@ public:
     typedef TStreamWriterBasicStreamBuffer<_Char, _Traits> buffer_type;
     typedef std::basic_ostream<_Char, _Traits> stream_type;
 
-    explicit TStreamWriterBasicOStream(IStreamWriter* writer)
+    explicit TStreamWriterBasicOStream(IBufferedStreamWriter* writer)
         : buffer_type(writer)
         , stream_type(this) {}
 
@@ -215,8 +231,8 @@ public:
     TStreamWriterBasicOStream(const TStreamWriterBasicOStream&) = delete;
     TStreamWriterBasicOStream& operator =(const TStreamWriterBasicOStream&) = delete;
 
-    IStreamWriter* Writer() { return buffer_type::Writer(); }
-    const IStreamWriter* Writer() const { return buffer_type::Writer(); }
+    IBufferedStreamWriter* Writer() { return buffer_type::Writer(); }
+    const IBufferedStreamWriter* Writer() const { return buffer_type::Writer(); }
 
     void swap(TStreamWriterBasicOStream& other) {
         buffer_type::swap(other);

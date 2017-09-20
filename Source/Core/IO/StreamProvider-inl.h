@@ -6,11 +6,6 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-bool IStreamReader::ReadPOD(T* pod) {
-    return (1 == ReadSome(pod, sizeof(T), 1));
-}
-//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool IStreamReader::ReadArray(T(&staticArray)[_Dim]) {
     return (_Dim == ReadSome(staticArray, sizeof(T), _Dim));
@@ -34,8 +29,15 @@ bool IStreamReader::ReadView(const TMemoryView<T>& dst) {
     return Read(dst.data(), dst.SizeInBytes());
 }
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T>
-bool IStreamReader::ExpectPOD(const T& pod) {
+bool IBufferedStreamReader::ReadPOD(T* pod) {
+    return (1 == ReadSome(pod, sizeof(T), 1));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool IBufferedStreamReader::ExpectPOD(const T& pod) {
     const std::streamoff off = TellI();
     typename POD_STORAGE(T) read;
     if (false == ReadPOD(&read))
@@ -49,12 +51,6 @@ bool IStreamReader::ExpectPOD(const T& pod) {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-void IStreamWriter::WritePOD(const T& pod) {
-    if (not Write(&pod, sizeof(T)) )
-        AssertNotReached();
-}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 void IStreamWriter::WriteArray(const T(&staticArray)[_Dim]) {
@@ -80,6 +76,14 @@ void IStreamWriter::WriteView(const TMemoryView<T>& data) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T>
+void IBufferedStreamWriter::WritePOD(const T& pod) {
+    if (not Write(&pod, sizeof(T)))
+        AssertNotReached();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
 std::streamoff TBasicStreamReader<_Char, _Traits>::TellI() const {
     Assert(!_iss.bad());
@@ -87,11 +91,11 @@ std::streamoff TBasicStreamReader<_Char, _Traits>::TellI() const {
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
-bool TBasicStreamReader<_Char, _Traits>::SeekI(std::streamoff offset, ESeekOrigin origin/* = ESeekOrigin::Begin */) {
+std::streamoff TBasicStreamReader<_Char, _Traits>::SeekI(std::streamoff offset, ESeekOrigin origin/* = ESeekOrigin::Begin */) {
     Assert(!_iss.bad());
     _iss.seekg(offset, int(origin));
     Assert(!_iss.bad());
-    return true;
+    return checked_cast<std::streamoff>(_iss.tellg());
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
@@ -142,11 +146,11 @@ std::streamoff TBasicStreamWriter<_Char, _Traits>::TellO() const {
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
-bool TBasicStreamWriter<_Char, _Traits>::SeekO(std::streamoff offset, ESeekOrigin policy/* = ESeekOrigin::Begin */) {
+std::streamoff TBasicStreamWriter<_Char, _Traits>::SeekO(std::streamoff offset, ESeekOrigin policy/* = ESeekOrigin::Begin */) {
     Assert(!_oss.bad());
     _oss.seekp(offset, int(policy));
     Assert(!_oss.bad());
-    return true;
+    return checked_cast<std::streamoff>(_oss.tellp());
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits>
@@ -161,6 +165,11 @@ size_t TBasicStreamWriter<_Char, _Traits>::WriteSome(const void* storage, size_t
     Assert(!_oss.bad());
     _oss.write((const _Char*)storage, (eltsize*count)/(sizeof(_Char)) );
     return (_oss.bad() ? 0 : eltsize);
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits>
+void TBasicStreamWriter<_Char, _Traits>::Flush() {
+    _oss.flush();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

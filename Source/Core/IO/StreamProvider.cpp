@@ -12,9 +12,10 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Pred>
-TMemoryView<_Char> StreamLookup_(  IStreamReader& iss,
-                                _Char *const storage, const std::streamsize capacity,
-                                _Pred&& pred ) {
+TMemoryView<_Char> StreamLookup_(
+    IBufferedStreamReader& iss,
+    _Char *const storage, const std::streamsize capacity,
+    _Pred&& pred ) {
     Assert(storage);
     AssertRelease(capacity > 0);
 
@@ -41,7 +42,7 @@ TMemoryView<_Char> StreamLookup_(  IStreamReader& iss,
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Pred>
-bool StreamSeekI_(IStreamReader& iss, _Pred&& pred ) {
+bool StreamSeekI_(IBufferedStreamReader& iss, _Pred&& pred ) {
     _Char ch;
     if (iss.IsSeekableI()) {
         for (std::streamsize offset = iss.TellI(); iss.Peek(ch); iss.SeekI(++offset) ) {
@@ -63,46 +64,46 @@ bool StreamSeekI_(IStreamReader& iss, _Pred&& pred ) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TMemoryView<char> IStreamReader::ReadUntil(const TMemoryView<char>& storage, char expected) {
+TMemoryView<char> IBufferedStreamReader::ReadUntil(const TMemoryView<char>& storage, char expected) {
     return StreamLookup_(*this, storage.data(), storage.size(), [expected](const char ch) { return (expected == ch); });
 }
 //----------------------------------------------------------------------------
-TMemoryView<wchar_t> IStreamReader::ReadUntil(const TMemoryView<wchar_t>& storage, wchar_t expected) {
+TMemoryView<wchar_t> IBufferedStreamReader::ReadUntil(const TMemoryView<wchar_t>& storage, wchar_t expected) {
     return StreamLookup_(*this, storage.data(), storage.size(), [expected](const wchar_t wch) { return (expected == wch); });
 }
 //----------------------------------------------------------------------------
-TMemoryView<char> IStreamReader::ReadUntil(const TMemoryView<char>& storage, const TMemoryView<const char>& any) {
+TMemoryView<char> IBufferedStreamReader::ReadUntil(const TMemoryView<char>& storage, const TMemoryView<const char>& any) {
     Assert(!any.empty());
     return StreamLookup_(*this, storage.data(), storage.size(), [&any](const char ch) { return any.Contains(ch); });
 }
 //----------------------------------------------------------------------------
-TMemoryView<wchar_t> IStreamReader::ReadUntil(const TMemoryView<wchar_t>& storage, const TMemoryView<const wchar_t>& any) {
+TMemoryView<wchar_t> IBufferedStreamReader::ReadUntil(const TMemoryView<wchar_t>& storage, const TMemoryView<const wchar_t>& any) {
     Assert(!any.empty());
     return StreamLookup_(*this, storage.data(), storage.size(), [&any](const wchar_t wch) { return any.Contains(wch); });
 }
 //----------------------------------------------------------------------------
-TMemoryView<char> IStreamReader::ReadLine(const TMemoryView<char>& storage) {
+TMemoryView<char> IBufferedStreamReader::ReadLine(const TMemoryView<char>& storage) {
     return StreamLookup_(*this, storage.data(), storage.size(), [](const char ch) { return '\n' == ch; });
 }
 //----------------------------------------------------------------------------
-TMemoryView<wchar_t> IStreamReader::ReadLine(const TMemoryView<wchar_t>& storage) {
+TMemoryView<wchar_t> IBufferedStreamReader::ReadLine(const TMemoryView<wchar_t>& storage) {
     return StreamLookup_(*this, storage.data(), storage.size(), [](const wchar_t wch) { return L'\n' == wch; });
 }
 //----------------------------------------------------------------------------
-TMemoryView<char> IStreamReader::ReadWord(const TMemoryView<char>& storage) {
+TMemoryView<char> IBufferedStreamReader::ReadWord(const TMemoryView<char>& storage) {
     return StreamLookup_(*this, storage.data(), storage.size(), [](const char ch) { return IsSpace(ch); });
 }
 //----------------------------------------------------------------------------
-TMemoryView<wchar_t> IStreamReader::ReadWord(const TMemoryView<wchar_t>& storage) {
+TMemoryView<wchar_t> IBufferedStreamReader::ReadWord(const TMemoryView<wchar_t>& storage) {
     return StreamLookup_(*this, storage.data(), storage.size(), [](const wchar_t wch) { return IsSpace(wch); });
 }
 //----------------------------------------------------------------------------
-bool IStreamReader::SeekI_FirstOf(char cmp) {
+bool IBufferedStreamReader::SeekI_FirstOf(char cmp) {
     Assert(IsSeekableI());
     return StreamSeekI_<char>(*this, [cmp](const char ch) { return ch == cmp; });
 }
 //----------------------------------------------------------------------------
-bool IStreamReader::SeekI_FirstOf(wchar_t cmp) {
+bool IBufferedStreamReader::SeekI_FirstOf(wchar_t cmp) {
     Assert(IsSeekableI());
     return StreamSeekI_<wchar_t>(*this, [cmp](const wchar_t wch) { return wch == cmp; });
 }

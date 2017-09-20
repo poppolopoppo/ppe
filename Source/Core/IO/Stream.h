@@ -146,15 +146,17 @@ public:
     TBasicOCStrStream(const TBasicOCStrStream&) = delete;
     TBasicOCStrStream& operator =(const TBasicOCStrStream&) = delete;
 
-    const _Char *storage() const { return buffer_type::storage(); }
-    std::streamsize capacity() const { return buffer_type::capacity(); }
-    std::streamsize size() const { return buffer_type::size(); }
+    using buffer_type::storage;
+    using buffer_type::capacity;
+    using buffer_type::size;
 
-    const _Char *begin() const { return buffer_type::storage(); }
-    const _Char *end() const { return buffer_type::storage() + buffer_type::size(); }
+    TCheckedArrayIterator<_Char> begin() const { return MakeCheckedIterator(buffer_type::storage(), SizeInChars(), 0); }
+    TCheckedArrayIterator<_Char> end() const { return MakeCheckedIterator(buffer_type::storage(), SizeInChars(), SizeInChars()); }
 
-    const _Char *Pointer() const { return buffer_type::storage(); }
+    const _Char* data() const { return buffer_type::storage(); }
+
     size_t SizeInBytes() const { return checked_cast<size_t>(buffer_type::size() * sizeof(_Char)); }
+    size_t SizeInChars() const { return checked_cast<size_t>(buffer_type::size()); }
 
     using buffer_type::ForceEOS;
     using buffer_type::PutEOS;
@@ -194,15 +196,17 @@ public:
     TBasicICStrStream(const TBasicICStrStream&) = delete;
     TBasicICStrStream& operator =(const TBasicICStrStream&) = delete;
 
-    const _Char *storage() const { return buffer_type::storage(); }
-    std::streamsize capacity() const { return buffer_type::capacity(); }
-    std::streamsize size() const { return buffer_type::size(); }
+    using buffer_type::storage;
+    using buffer_type::capacity;
+    using buffer_type::size;
 
-    const _Char *begin() const { return buffer_type::storage(); }
-    const _Char *end() const { return buffer_type::storage() + buffer_type::size(); }
+    TCheckedArrayIterator<_Char> begin() const { return MakeCheckedIterator(buffer_type::storage(), SizeInChars(), 0); }
+    TCheckedArrayIterator<_Char> end() const { return MakeCheckedIterator(buffer_type::storage(), SizeInChars(), SizeInChars()); }
 
-    const _Char *Pointer() const { return buffer_type::storage(); }
+    const _Char* data() const { return buffer_type::storage(); }
+
     size_t SizeInBytes() const { return checked_cast<size_t>(buffer_type::size() * sizeof(_Char)); }
+    size_t SizeInChars() const { return checked_cast<size_t>(buffer_type::size()); }
 
     using buffer_type::Reset;
 
