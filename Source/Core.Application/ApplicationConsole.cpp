@@ -37,11 +37,12 @@ void FApplicationConsole::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FApplicationConsole::RedirectIOToConsole() {
-
     LOG(Info, L"[Application] RedirectIOToConsole()");
 
+#ifdef PLATFORM_WINDOWS
     ::AllocConsole();
     ::SetConsoleOutputCP(65001/* UTF-8 */);
+#endif
 
     FILE* fp = nullptr;
 
