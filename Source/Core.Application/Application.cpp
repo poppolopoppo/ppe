@@ -51,7 +51,7 @@ static void ConfigureCRTHeapForDebugging_() {
     int debugHeapFlag = 0
         | debugHeapEnabled
         //| debugCheckMemory //%_NOCOMMIT%
-        | debugNecrophilia
+        //| debugNecrophilia //%_NOCOMMIT%
         | debugLeaks;
 
     _CrtSetDbgFlag(debugHeapFlag);
