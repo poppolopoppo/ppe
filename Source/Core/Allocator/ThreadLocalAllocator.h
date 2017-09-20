@@ -50,13 +50,9 @@ public:
 
     TThreadLocalAllocator() throw() {}
 
-    TThreadLocalAllocator(const TThreadLocalAllocator& other) throw() { 
-        THREADRESOURCE_CHECKACCESS(&other);
-    }
+    TThreadLocalAllocator(const TThreadLocalAllocator& other) throw() {}
     template <typename U>
-    TThreadLocalAllocator(const TThreadLocalAllocator<U>& other) throw() { 
-        THREADRESOURCE_CHECKACCESS(&other);
-    }
+    TThreadLocalAllocator(const TThreadLocalAllocator<U>& other) throw() {}
 
     TThreadLocalAllocator& operator =(const TThreadLocalAllocator& other) { 
         THIS_THREADRESOURCE_CHECKACCESS(); 
