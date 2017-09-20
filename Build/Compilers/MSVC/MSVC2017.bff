@@ -170,9 +170,11 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
     + ' /Zc:implicitNoexcept'   ; https://msdn.microsoft.com/fr-fr/library/dn818588.aspx
     + ' /Zc:rvalueCast'         ; https://msdn.microsoft.com/fr-fr/library/dn449507.aspx
     + ' /Zc:strictStrings'      ; https://msdn.microsoft.com/fr-fr/library/dn449508.aspx
-    + ' /cgthreads4'            ; https://msdn.microsoft.com/fr-fr/library/dn631956.aspx
     + ' /diagnostics:caret'     ; https://docs.microsoft.com/en-us/cpp/build/reference/diagnostics-compiler-diagnostic-options
     + ' /arch:AVX'              ; active le support AVX
+
+    .LinkerOptions = ''
+    + ' /CGTHREADS8'            ; https://msdn.microsoft.com/fr-fr/library/dn631956.aspx
 
     .IncludePaths =
     {
