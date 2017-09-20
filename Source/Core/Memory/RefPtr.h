@@ -54,10 +54,16 @@ public:
 
     size_t RefCount() const { return _refCount; }
 
+#ifdef WITH_CORE_SAFEPTR
+    size_t SafeRefCount() const { return _safeRefCount; }
+#endif
+
 protected:
     friend void AddRef(const FRefCountable* ptr);
     template <typename T>
     friend void RemoveRef(T* ptr);
+    template <typename T>
+    friend T* RemoveRef_AssertAlive(TRefPtr<T>& ptr);
     template <typename T>
     friend void OnRefCountReachZero(T* ptr);
     template <typename T>

@@ -60,14 +60,24 @@ inline void AddRef(const FRefCountable* ptr) {
 //----------------------------------------------------------------------------
 template <typename T>
 void RemoveRef(T* ptr) {
-    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
+    STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     if (ptr->DecRefCount_ReturnIfReachZero())
         OnRefCountReachZero(ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
+T* RemoveRef_AssertAlive(TRefPtr<T>& ptr) {
+    STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
+    Assert(1 < ptr->RefCount());
+    T* alive = ptr.get();
+    ptr.reset();
+    Assert(0 < alive->RefCount());
+    return alive;
+}
+//----------------------------------------------------------------------------
+template <typename T>
 void OnRefCountReachZero(T* ptr) {
-    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
+    STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     checked_delete(ptr);
 }
 //----------------------------------------------------------------------------
@@ -84,7 +94,7 @@ void RemoveRef_AssertReachZero_NoDelete(T *& ptr) {
 //----------------------------------------------------------------------------
 template <typename T>
 void RemoveRef_AssertReachZero(TRefPtr<T>& ptr) {
-    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
+    STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     Assert(ptr);
     Assert(1 == ptr->RefCount());
     ptr.reset();
@@ -92,7 +102,7 @@ void RemoveRef_AssertReachZero(TRefPtr<T>& ptr) {
 //----------------------------------------------------------------------------
 template <typename T>
 void RemoveRef_AssertGreaterThanZero(TRefPtr<T>& ptr) {
-    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
+    STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     Assert(ptr);
     Assert(1 < ptr->RefCount());
     ptr.reset();
@@ -206,14 +216,14 @@ void TRefPtr<T>::Swap(TRefPtr<U>& other) {
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE void TRefPtr<T>::IncRefCountIFP() const {
-    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
+    STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     if (_ptr)
         AddRef(_ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE void TRefPtr<T>::DecRefCountIFP() const {
-    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
+    STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     if (_ptr)
         RemoveRef(_ptr);
 }
@@ -338,7 +348,7 @@ void TSafePtr<T>::Swap(TSafePtr<U>& other) {
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE void TSafePtr<T>::IncRefCountIFP() const {
-    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
+    STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
 #ifdef WITH_CORE_SAFEPTR
     if (_ptr) {
         _ptr->_safeRefCount.fetch_add(1u, std::memory_order_seq_cst);
@@ -348,7 +358,7 @@ FORCE_INLINE void TSafePtr<T>::IncRefCountIFP() const {
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE void TSafePtr<T>::DecRefCountIFP() const {
-    static_assert(std::is_base_of<FRefCountable, T>::value, "T must be derived from FRefCountable");
+    STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
 #ifdef WITH_CORE_SAFEPTR
     if (_ptr) {
         Assert(_ptr->_safeRefCount);
