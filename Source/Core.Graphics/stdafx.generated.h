@@ -196,7 +196,6 @@
 #    include "Core/Maths/ScalarRectangle_fwd.h" // 69% 48/69
 #    include "Core/Maths/ScalarVector_fwd.h" // 79% 55/69
 #    include "Core/Memory/MemoryTracking.h" // 85% 59/69
-#    include "Core/IO/FormatHelpers.h" // 85% 59/69
 #    include "Core.Graphics/Device/DeviceAPIDependantEntity.h" // 69% 48/69
 #    include "Core.Graphics/Device/DeviceRevision.h" // 73% 51/69
 #    include "Core/Meta/BitField.h" // 79% 55/69
@@ -255,7 +254,6 @@
 #    include "Core/Maths/ScalarRectangle_fwd.h" // 68% 47/69
 #    include "Core/Maths/ScalarVector_fwd.h" // 78% 54/69
 #    include "Core/Memory/MemoryTracking.h" // 84% 58/69
-#    include "Core/IO/FormatHelpers.h" // 84% 58/69
 #    include "Core.Graphics/Device/DeviceAPIDependantEntity.h" // 69% 48/69
 #    include "Core.Graphics/Device/DeviceRevision.h" // 73% 51/69
 #    include "Core/Meta/BitField.h" // 79% 55/69

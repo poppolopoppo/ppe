@@ -119,23 +119,6 @@ std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Replaces std::endl which will cause almost always unneeded/unwanted flush of the stream !
-template<class _Elem, class _Traits>
-std::basic_ostream<_Elem, _Traits>& eol(std::basic_ostream<_Elem, _Traits>& oss) {
-    oss.put(oss.widen('\n'));
-    return (oss);
-}
-//----------------------------------------------------------------------------
-// Same than eol but with a CRLF
-template<class _Elem, class _Traits>
-std::basic_ostream<_Elem, _Traits>& crlf(std::basic_ostream<_Elem, _Traits>& oss) {
-    oss.put(oss.widen('\r'));
-    oss.put(oss.widen('\n'));
-    return (oss);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 struct FIndent {
     FStringView Tab = "    ";
     int Level = 0;

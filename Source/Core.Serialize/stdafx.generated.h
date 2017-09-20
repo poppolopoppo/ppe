@@ -198,7 +198,6 @@
 #include "Core/Meta/Singleton.h" // 91% 22/24
 #include "Core/Allocator/TrackingAllocator.h" // 83% 20/24
 #include "Core/Memory/MemoryTracking.h" // 83% 20/24
-#include "Core/IO/FormatHelpers.h" // 83% 20/24
 #include "Core/IO/StringView.h" // 100% 24/24
 #include "Core/Container/Hash.h" // 100% 24/24
 #include "Core/Memory/HashFunctions.h" // 100% 24/24

@@ -202,7 +202,6 @@
 #    include "Core/Meta/Singleton.h" // 111% 10/9
 #    include "Core/Allocator/TrackingAllocator.h" // 111% 10/9
 #    include "Core/Memory/MemoryTracking.h" // 111% 10/9
-#    include "Core/IO/FormatHelpers.h" // 111% 10/9
 #    include "Core/IO/StringView.h" // 111% 10/9
 #    include "Core/Container/Hash.h" // 111% 10/9
 #    include "Core/Memory/HashFunctions.h" // 111% 10/9
@@ -289,7 +288,6 @@
 #    include "Core/Meta/Singleton.h" // 111% 10/9
 #    include "Core/Allocator/TrackingAllocator.h" // 111% 10/9
 #    include "Core/Memory/MemoryTracking.h" // 111% 10/9
-#    include "Core/IO/FormatHelpers.h" // 111% 10/9
 #    include "Core/IO/StringView.h" // 111% 10/9
 #    include "Core/Container/Hash.h" // 111% 10/9
 #    include "Core/Memory/HashFunctions.h" // 111% 10/9

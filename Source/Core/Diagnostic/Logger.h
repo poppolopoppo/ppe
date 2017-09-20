@@ -63,7 +63,6 @@ private:
 
 #ifdef USE_DEBUG_LOGGER
 
-#include "Core/IO/FormatHelpers.h"
 #include "Core/IO/Stream.h"
 
 #include <memory>

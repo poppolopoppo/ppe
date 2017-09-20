@@ -195,7 +195,6 @@
 #include "Core/Allocator/TrackingAllocator.h" // 70% 12/17
 #include "Core/Memory/MemoryDomain.h" // 76% 13/17
 #include "Core/Memory/MemoryTracking.h" // 70% 12/17
-#include "Core/IO/FormatHelpers.h" // 70% 12/17
 #include "Core/IO/StringView.h" // 94% 16/17
 #include "Core/Container/Hash.h" // 94% 16/17
 #include "Core/Memory/HashFunctions.h" // 94% 16/17

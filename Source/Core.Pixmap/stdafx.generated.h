@@ -200,7 +200,6 @@
 #include "Core/Allocator/TrackingAllocator.h" // 77% 7/9
 #include "Core/Memory/MemoryDomain.h" // 88% 8/9
 #include "Core/Memory/MemoryTracking.h" // 77% 7/9
-#include "Core/IO/FormatHelpers.h" // 77% 7/9
 #include "Core/Allocator/PoolAllocator.h" // 77% 7/9
 #include "Core/Allocator/PoolAllocatorTag.h" // 88% 8/9
 #include "Core.Pixmap/Pixmap_fwd.h" // 88% 8/9

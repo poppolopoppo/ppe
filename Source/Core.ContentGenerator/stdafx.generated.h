@@ -203,7 +203,6 @@
 #    include "Core/Memory/RefPtr.h" // 2290% 229/10
 #    include "Core/Memory/MemoryDomain.h" // 2400% 240/10
 #    include "Core/Memory/MemoryTracking.h" // 2150% 215/10
-#    include "Core/IO/FormatHelpers.h" // 2150% 215/10
 #    include "Core/IO/StringView.h" // 2470% 247/10
 #    include "Core/Container/Hash.h" // 2500% 250/10
 #    include "Core/Memory/HashFunctions.h" // 2540% 254/10
@@ -449,7 +448,6 @@
 #    include "Core/Memory/RefPtr.h" // 2290% 229/10
 #    include "Core/Memory/MemoryDomain.h" // 2400% 240/10
 #    include "Core/Memory/MemoryTracking.h" // 2150% 215/10
-#    include "Core/IO/FormatHelpers.h" // 2150% 215/10
 #    include "Core/IO/StringView.h" // 2470% 247/10
 #    include "Core/Container/Hash.h" // 2500% 250/10
 #    include "Core/Memory/HashFunctions.h" // 2540% 254/10
@@ -694,7 +692,6 @@
 #    include "Core/Memory/RefPtr.h" // 2280% 228/10
 #    include "Core/Memory/MemoryDomain.h" // 2390% 239/10
 #    include "Core/Memory/MemoryTracking.h" // 2140% 214/10
-#    include "Core/IO/FormatHelpers.h" // 2140% 214/10
 #    include "Core/IO/StringView.h" // 2460% 246/10
 #    include "Core/Container/Hash.h" // 2490% 249/10
 #    include "Core/Memory/HashFunctions.h" // 2530% 253/10
@@ -939,7 +936,6 @@
 #    include "Core/Memory/RefPtr.h" // 2260% 226/10
 #    include "Core/Memory/MemoryDomain.h" // 2380% 238/10
 #    include "Core/Memory/MemoryTracking.h" // 2120% 212/10
-#    include "Core/IO/FormatHelpers.h" // 2120% 212/10
 #    include "Core/IO/StringView.h" // 2450% 245/10
 #    include "Core/Container/Hash.h" // 2480% 248/10
 #    include "Core/Memory/HashFunctions.h" // 2520% 252/10
