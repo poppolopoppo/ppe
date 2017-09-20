@@ -68,12 +68,15 @@ public:
     T* PopTail() { return traits_type::PopTail(&_head, &_tail); }
 
     void PushFront(T* value) { traits_type::PushFront(&_head, &_tail, value); }
+    void PushTail(T* value) { traits_type::PushTail(&_head, &_tail, value); }
+
     void Erase(T* value) { traits_type::Erase(&_head, &_tail, value); }
 
     template <typename _Less>
     void Insert(T* value, const _Less& pred) { traits_type::Insert(&_head, &_tail, value, pred); }
 
-    void Poke(T* value) { traits_type::Poke(&_head, &_tail, value); }
+    void PokeFront(T* value) { traits_type::PokeFront(&_head, &_tail, value); }
+    void PokeTail(T* value) { traits_type::PokeTail(&_head, &_tail, value); }
 
     bool Contains(T* value) const { return traits_type::Contains(_head, value); }
 
@@ -111,7 +114,7 @@ public:
     template <typename _Less>
     void Insert(T* value, const _Less& pred) { traits_type::Insert(&_head, value, pred); }
 
-    void Poke(T* value, T* prev = nullptr) { traits_type::Poke(&_head, prev, value); }
+    void PokeFront(T* value, T* prev = nullptr) { traits_type::PokeFront(&_head, prev, value); }
 
     bool Contains(T* value) const { return traits_type::Contains(_head, value); }
 

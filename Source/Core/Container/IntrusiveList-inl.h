@@ -33,6 +33,8 @@ struct TIntrusiveListAccessor {
     static T* PopTail(T** pHead, T** pTail);
 
     static void PushFront(T** pHead, T** pTailIFP, T* value);
+    static void PushTail(T** pHead, T** pTailIFP, T* value);
+
     static void Erase(T** pHead, T** pTailIFP, T* value);
 
     template <typename _Less>
@@ -40,11 +42,20 @@ struct TIntrusiveListAccessor {
 
     static bool Contains(T* head, T* value);
 
-    static void Poke(T** pHead, T** pTailIFP, T* value) {
+    static void PokeFront(T** pHead, T** pTailIFP, T* value) {
         Assert(pHead);
         if (*pHead != value) {
             Erase(pHead, pTailIFP, value);
             PushFront(pHead, pTailIFP, value);
+        }
+    }
+
+    static void PokeTail(T** pHead, T** pTail, T* value) {
+        Assert(pHead);
+        Assert(pTail);
+        if (*pTail != value) {
+            Erase(pHead, pTail, value);
+            PushTail(pHead, pTail, value);
         }
     }
 };
@@ -105,6 +116,29 @@ void TIntrusiveListAccessor<T, _Member>::PushFront(T** pHead, T** pTailIFP, T* v
     }
 
     *pHead = value;
+}
+//----------------------------------------------------------------------------
+template <typename T, TIntrusiveListNode<T> T::*_Member>
+void TIntrusiveListAccessor<T, _Member>::PushTail(T** pHead, T** pTail, T* value) {
+    Assert(pHead);
+    Assert(pTail);
+    Assert(value);
+
+    node_type& node = Node(value);
+    node.Prev = *pTail;
+    node.Next = nullptr;
+
+    if (nullptr != *pTail) {
+        node_type& tail = Node(*pTail);
+        Assert(nullptr == tail.Next);
+        tail.Next = value;
+    }
+    else {
+        Assert(nullptr == *pHead);
+        *pHead = value;
+    }
+
+    *pTail = value;
 }
 //----------------------------------------------------------------------------
 template <typename T, TIntrusiveListNode<T> T::*_Member>
@@ -245,7 +279,7 @@ struct TIntrusiveSingleListAccessor {
 
     static bool Contains(T* head, T* value);
 
-    static void Poke(T** pHead, T* prev, T* value) {
+    static void PokeFront(T** pHead, T* prev, T* value) {
         Assert(pHead);
         if (*pHead != value) {
             Erase(pHead, prev, value);
