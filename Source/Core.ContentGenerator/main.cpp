@@ -57,41 +57,25 @@ static int Bootstrap(void *appHandle, int nShowCmd, const wchar_t* filename, int
 #   include "Core/Misc/Platform_Windows.h"
 #   include <shellapi.h>
 #   include <tchar.h>
-int APIENTRY _tWinMain(
+int APIENTRY wWinMain(
     _In_ HINSTANCE      hInstance,
     _In_opt_ HINSTANCE  hPrevInstance,
     _In_ LPWSTR         lpCmdLine,
     _In_ int            nCmdShow ) {
     UNUSED(hPrevInstance);
+    UNUSED(lpCmdLine);
 #else
 int main(int argc, const wchar_t* argv[]) {
 #endif
 
 #ifdef PLATFORM_WINDOWS
-#   ifdef _DEBUG
-    int debugHeapFlag = _CRTDBG_ALLOC_MEM_DF |
-                        _CRTDBG_CHECK_EVERY_1024_DF |
-                        _CRTDBG_DELAY_FREE_MEM_DF |
-                        _CRTDBG_LEAK_CHECK_DF;
-    _CrtSetDbgFlag(debugHeapFlag);
-    // les erreurs / assert de check lance une window qui break
-    _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
-    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
-    //_CrtSetBreakAlloc(1146); // for leak debugging purpose // %__NOCOMMIT%
-#   endif
+    int argc = __argc;
+    wchar_t* const* argv = __wargv;
+#endif
 
-    int argc;
-    wchar_t* const *argv = ::CommandLineToArgvW(lpCmdLine, &argc);
-
-    wchar_t filename[256];
-    ::GetModuleFileNameW(nullptr, filename, lengthof(filename));
-
-#else
     const wchar_t* filename = argv[0];
     argv = &argv[1];
     argc--;
-
-#endif
 
     int result = 0;
     result = Bootstrap<application_type>(hInstance, nCmdShow, filename, argc, const_cast<const wchar_t**>(&argv[0]));
