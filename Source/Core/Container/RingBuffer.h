@@ -43,29 +43,35 @@ public:
     ~TRingBuffer() { clear(); }
 
     size_type capacity() const { return _capacity; }
-    size_type size() const;
+    size_type size() const { return _size; }
     bool empty() const { return (0 == _size); }
 
     reference push_back_Uninitialized();
     template <typename _Arg0, typename... _Args>
     void push_back(_Arg0&& arg0, _Args&&... args);
     template <typename _Arg0, typename... _Args>
-    bool push_back_OverflowIFN(_Arg0&& arg0, _Args&&... args);
+    bool push_back_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args);
 
     reference push_front_Uninitialized();
     template <typename _Arg0, typename... _Args>
     void push_front(_Arg0&& arg0, _Args&&... args);
     template <typename _Arg0, typename... _Args>
-    bool push_front_OverflowIFN(_Arg0&& arg0, _Args&&... args);
+    bool push_front_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args);
 
     bool pop_front(pointer pvalue);
     bool pop_back(pointer pvalue);
 
     template <typename _Arg0, typename... _Args>
-    void Queue(_Arg0&& arg0, _Args&&... args) { push_back(std::forward<_Arg0>(arg0), std::forward<_Args>(args)); }
+    void Queue(_Arg0&& arg0, _Args&&... args) { push_back(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...); }
     template <typename _Arg0, typename... _Args>
-    bool Queue_OverflowIFN(_Arg0&& arg0, _Args&&... args) { push_back_OverflowIFN(std::forward<_Arg0>(arg0), std::forward<_Args>(args)); }
+    bool Queue_OverflowIFN(_Arg0&& arg0, _Args&&... args) { return push_back_OverflowIFN(nullptr, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...); }
     bool Dequeue(pointer pvalue) { return pop_front(pvalue); }
+
+    reference front() { Assert(_size); return _storage[_begin]; }
+    reference back() { return at(_size - 1); }
+
+    const_reference front() const { Assert(_size); return _storage[_begin]; }
+    const_reference back() const { return at(_size - 1); }
 
     reference at(size_t index) { Assert(index < _size); return _storage[(_begin + index) % _capacity]; }
     const_reference at(size_t index) const { Assert(index < _size); return _storage[(_begin + index) % _capacity]; }
@@ -100,11 +106,6 @@ TRingBuffer<T, _IsPod>::TRingBuffer(const TMemoryView<T>& storage)
 :   TRingBuffer(storage.Pointer(), storage.size()) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-auto TRingBuffer<T, _IsPod>::size() const -> size_type {
-    return _size;
-}
-//----------------------------------------------------------------------------
-template <typename T, bool _IsPod>
 auto TRingBuffer<T, _IsPod>::push_back_Uninitialized() -> reference {
     Assert(_storage);
     Assert(_size < _capacity);
@@ -120,13 +121,13 @@ void TRingBuffer<T, _IsPod>::push_back(_Arg0&& arg0, _Args&&... args) {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-bool TRingBuffer<T, _IsPod>::push_back_OverflowIFN(_Arg0&& arg0, _Args&&... args) {
+bool TRingBuffer<T, _IsPod>::push_back_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
 
     const bool overflow = (_size == _capacity);
     if (overflow) {
         Assert(0 < _size);
-        pop_front(nullptr);
+        pop_front(overflowIFN);
     }
 
     push_back(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
@@ -139,7 +140,11 @@ auto TRingBuffer<T, _IsPod>::push_front_Uninitialized() -> reference {
     Assert(_storage);
     Assert(_size < _capacity);
 
-    return (_size++, _storage[(_begin + (_capacity - 1)) % _capacity]);
+    reference slot = _storage[_begin];
+    _begin = (_begin + _capacity - 1) % _capacity;
+    _size++;
+
+    return slot;
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -150,13 +155,13 @@ void TRingBuffer<T, _IsPod>::push_front(_Arg0&& arg0, _Args&&... args) {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
-bool TRingBuffer<T, _IsPod>::push_front_OverflowIFN(_Arg0&& arg0, _Args&&... args) {
+bool TRingBuffer<T, _IsPod>::push_front_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args) {
     Assert(_storage);
 
     const bool overflow = (_size == _capacity);
     if (overflow) {
         Assert(0 < _size);
-        pop_back(nullptr);
+        pop_back(overflowIFN);
     }
 
     push_front(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
@@ -166,8 +171,6 @@ bool TRingBuffer<T, _IsPod>::push_front_OverflowIFN(_Arg0&& arg0, _Args&&... arg
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 bool TRingBuffer<T, _IsPod>::pop_front(pointer pvalue) {
-    Assert(pvalue);
-
     if (0 == _size)
         return false;
 
@@ -188,8 +191,6 @@ bool TRingBuffer<T, _IsPod>::pop_front(pointer pvalue) {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 bool TRingBuffer<T, _IsPod>::pop_back(pointer pvalue) {
-    Assert(pvalue);
-
     if (0 == _size)
         return false;
 
