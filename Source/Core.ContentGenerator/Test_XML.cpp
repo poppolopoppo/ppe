@@ -8,6 +8,8 @@
 #include "Core.Serialize/XML/Document.h"
 #include "Core.Serialize/XML/Element.h"
 
+#include "Core/IO/FormatHelpers.h"
+
 namespace Core {
 namespace ContentGenerator {
 //----------------------------------------------------------------------------

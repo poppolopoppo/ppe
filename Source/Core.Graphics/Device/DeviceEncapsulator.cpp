@@ -29,6 +29,7 @@
 #include "Pool/DeviceSharedEntityPool.h"
 
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/FormatHelpers.h"
 #include "Core/Memory/ComPtr.h"
 
 #ifdef PLATFORM_WINDOWS
@@ -133,7 +134,7 @@ void FDeviceEncapsulator::Destroy() {
     Assert(nullptr != _deviceSharedEntityPool);
     const size_t poolSizeInBytes = _deviceSharedEntityPool->ReleaseAll_ReturnRealSize();
     if (0 != poolSizeInBytes) {
-        LOG(Error, L"[FDeviceSharedEntityPool] There is still {0} used in the pool !", FSizeInBytes(poolSizeInBytes));
+        LOG(Error, L"[FDeviceSharedEntityPool] There is still {0} used in the pool !", FSizeInBytes{ poolSizeInBytes });
         AssertNotReached();
     }
     _deviceSharedEntityPool.reset();

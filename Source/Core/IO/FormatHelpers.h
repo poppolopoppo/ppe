@@ -60,10 +60,66 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T, typename _Char>
+struct TPadLeft {
+    const T *Value = nullptr;
+    size_t Count = 0;
+    _Char Char = _Char(' ');
+};
+//----------------------------------------------------------------------------
+template <typename T, typename _Char>
+TPadLeft<T, _Char> PadLeft(const T& value, size_t count, _Char ch = _Char(' ')) {
+    return TPadLeft<T, _Char>{ &value, count, ch };
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits, typename T>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const TPadLeft<T, _Char>& pad ) {
+    const _Char fill = oss.fill();
+    const std::streamsize width = oss.width();
+    const std::ios_base::fmtflags flags = oss.flags();
+    oss << std::setfill(pad.Char) << std::right << std::setw(pad.Count) << *pad.Value;
+    oss.fill(fill);
+    oss.width(width);
+    oss.flags(flags);
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, typename _Char>
+struct TPadRight {
+    const T *Value = nullptr;
+    size_t Count = 0;
+    _Char Char = _Char(' ');
+};
+//----------------------------------------------------------------------------
+template <typename T, typename _Char>
+TPadRight<T, _Char> PadRight(const T& value, size_t count, _Char ch = _Char(' ')) {
+    return TPadRight<T, _Char>{ &value, count, ch };
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits, typename T>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    const TPadRight<T, _Char>& pad ) {
+    const _Char fill = oss.fill();
+    const std::streamsize width = oss.width();
+    const std::ios_base::fmtflags flags = oss.flags();
+    oss << std::setfill(pad.Char) << std::left << std::setw(pad.Count) << *pad.Value;
+    oss.fill(fill);
+    oss.width(width);
+    oss.flags(flags);
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T>
 struct TRepeater {
-    const T *Value;
-    size_t Count;
+    const T *Value = nullptr;
+    size_t Count = 0;
 };
 //----------------------------------------------------------------------------
 template <typename T>

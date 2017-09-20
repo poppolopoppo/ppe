@@ -137,7 +137,7 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                             const TMemoryView<const FMemoryTrackingData * const>& datas ) {
     Assert(header);
 
-    oss << L"Reporting trackings data :" << eol;
+    oss << L"Reporting tracking data :" << eol;
 
     STACKLOCAL_POD_ARRAY(const FMemoryTrackingData *, sortedDatas, datas.size());
     memcpy(sortedDatas.Pointer(), datas.Pointer(), datas.SizeInBytes());
@@ -176,14 +176,14 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
         tmp.Reset();
         TrackingDataAbsoluteName_(tmp, *data);
         Format(oss, fmt,    tmp.NullTerminatedStr(),
-                            data->BlockCount(),
-                            data->MaxBlockCount(),
-                            data->AllocationCount(),
-                            data->MaxAllocationCount(),
-                            FSizeInBytes{ Min(data->MaxStrideInBytes(), data->MinStrideInBytes()) },
-                            data->MaxStrideInBytes(),
-                            data->TotalSizeInBytes(),
-                            data->MaxTotalSizeInBytes() );
+            FCountOfElements{ data->BlockCount() },
+            FCountOfElements{ data->MaxBlockCount() },
+            FCountOfElements{ data->AllocationCount() },
+            FCountOfElements{ data->MaxAllocationCount() },
+            FSizeInBytes{ Min(data->MaxStrideInBytes(), data->MinStrideInBytes()) },
+            FSizeInBytes{ data->MaxStrideInBytes() },
+            FSizeInBytes{ data->TotalSizeInBytes() },
+            FSizeInBytes{ data->MaxTotalSizeInBytes() });
     }
 
     oss << Repeat(L"-", width) << eol;

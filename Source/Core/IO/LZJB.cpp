@@ -4,6 +4,7 @@
 
 #include "Diagnostic/Logger.h"
 #include "IO/StreamProvider.h"
+#include "IO/FormatHelpers.h"
 #include "Memory/MemoryView.h"
 #include "Misc/FourCC.h"
 

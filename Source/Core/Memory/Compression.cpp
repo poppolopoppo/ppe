@@ -7,6 +7,7 @@
 
 #include "Diagnostic/Logger.h"
 #include "Container/RawStorage.h"
+#include "IO/FormatHelpers.h"
 #include "Misc/FourCC.h"
 
 #include "External/lz4.h"

@@ -2,7 +2,6 @@
 
 #include "Core/Core.h"
 
-#include "Core/IO/FormatHelpers.h"
 #include "Core/Meta/TypeTraits.h"
 
 #include <iosfwd>
@@ -23,17 +22,17 @@ public:
     FMemoryTrackingData* Parent() { return _parent; }
     const FMemoryTrackingData* Parent() const { return _parent; }
 
-    FCountOfElements BlockCount() const { return FCountOfElements{ _blockCount }; }
-    FCountOfElements AllocationCount() const { return FCountOfElements{ _allocationCount }; }
-    FSizeInBytes TotalSizeInBytes() const { return FSizeInBytes{ _totalSizeInBytes }; }
+    size_t BlockCount() const { return _blockCount; }
+    size_t AllocationCount() const { return _allocationCount; }
+    size_t TotalSizeInBytes() const { return _totalSizeInBytes; }
 
-    FCountOfElements MaxBlockCount() const { return FCountOfElements{ _maxBlockCount }; }
-    FCountOfElements MaxAllocationCount() const { return FCountOfElements{ _maxAllocationCount }; }
+    size_t MaxBlockCount() const { return _maxBlockCount; }
+    size_t MaxAllocationCount() const { return _maxAllocationCount; }
     
-    FSizeInBytes MaxStrideInBytes() const { return FSizeInBytes{ _maxStrideInBytes }; }
-    FSizeInBytes MinStrideInBytes() const { return FSizeInBytes{ _minStrideInBytes }; }
+    size_t MaxStrideInBytes() const { return _maxStrideInBytes; }
+    size_t MinStrideInBytes() const { return _minStrideInBytes; }
 
-    FSizeInBytes MaxTotalSizeInBytes() const { return FSizeInBytes{ _maxTotalSizeInBytes }; }
+    size_t MaxTotalSizeInBytes() const { return _maxTotalSizeInBytes; }
 
     void Allocate(size_t blockCount, size_t strideInBytes);
     void Deallocate(size_t blockCount, size_t strideInBytes);

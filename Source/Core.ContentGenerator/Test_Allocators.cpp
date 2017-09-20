@@ -5,6 +5,7 @@
 
 #include "Core/Container/Vector.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/FormatHelpers.h"
 #include "Core/Maths/RandomGenerator.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Time/TimedScope.h"
