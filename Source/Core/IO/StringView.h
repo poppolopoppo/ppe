@@ -67,6 +67,8 @@ public:
     TBasicStringView(const iterator& first, const iterator& last) : parent_type(first, last) {}
     TBasicStringView(pointer storage, size_type size) : parent_type(storage, size) {}
 
+    const _Char* c_str() { return parent_type::data(); }
+
     template <size_t _Dim>
     TBasicStringView(const _Char (&staticChars)[_Dim])
         : parent_type(staticChars, _Dim - 1/* assume null terminated string */) {
