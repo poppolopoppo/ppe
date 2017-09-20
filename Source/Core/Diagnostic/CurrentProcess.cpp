@@ -34,7 +34,7 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
 #ifndef FINAL_RELEASE
     if (_args.end() != _args.FindIf([](const FWString& arg) { return EqualsI(arg, L"-WaitForDebugger"); })) {
         _startedWithDebugger = false; // some parts of the code won't detect that the debugger is attached
-        volatile bool bTurnThisOffWhenDebuggerIsAttached = true;
+        volatile bool bTurnThisOffWhenDebuggerIsAttached = (!FPlatform::IsDebuggerAttached());
         volatile size_t loopCount = 0;
         while (bTurnThisOffWhenDebuggerIsAttached) {
             LOG(Warning, L"[Process] Waiting for debugger to be attached");
