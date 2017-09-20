@@ -332,7 +332,7 @@ namespace MiniDump
         // no reentrancy (needed by ::MiniDumpWriteDump !)
         const FAtomicSpinLock::FTryScope scopeLock(GMinidumpBarrier_);
 
-        if (scopeLock.Locked())
+        if (scopeLock.Locked)
             Write(pExceptionInfo);
 
         return EXCEPTION_EXECUTE_HANDLER;
@@ -345,7 +345,7 @@ namespace MiniDump
         // no reentrancy (needed by ::MiniDumpWriteDump !)
         const FAtomicSpinLock::FTryScope scopeLock(GMinidumpBarrier_);
 
-        if (scopeLock.Locked())
+        if (scopeLock.Locked)
             Write(pExceptionInfo);
 
         return EXCEPTION_EXECUTE_HANDLER;

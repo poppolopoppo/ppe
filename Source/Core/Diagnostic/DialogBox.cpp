@@ -11,6 +11,7 @@
 
 #include "Container/Vector.h"
 #include "IO/FileSystem.h"
+#include "IO/FormatHelpers.h"
 #include "IO/StringView.h"
 #include "IO/VirtualFileSystem.h"
 #include "Memory/MemoryProvider.h"
@@ -138,7 +139,7 @@ static void Template_AddItem_(
     size_t id, size_t style,
     EAtomClass_ klass ) {
     const auto eaten = writer.EatAligned(sizeof(::DLGITEMTEMPLATE), sizeof(DWORD));
-    Assert(IS_ALIGNED(sizeof(DWORD), eaten.Pointer()));
+    Assert(Meta::IsAligned(sizeof(DWORD), eaten.Pointer()));
     ::LPDLGITEMTEMPLATE const tpl = reinterpret_cast<::LPDLGITEMTEMPLATE>(eaten.Pointer());
 
     tpl->x = checked_cast<short>(x);
@@ -374,7 +375,7 @@ static Dialog::EResult Template_CreateDialogBox_(
 
         STACKLOCAL_WOCSTRSTREAM(tmp, 4096);
         for (const FDecodedCallstack::FFrame& frame : ctx.DecodedCallstack.Frames()) {
-            tmp << FPointer(reinterpret_cast<intptr_t>(frame.Address()))
+            tmp << FPointer{ reinterpret_cast<intptr_t>(frame.Address()) }
                 << L' ' << frame.Filename()
                 << L'(' << frame.Line() << L"): " << frame.Symbol();
             callstackFrames.emplace_back(tmp.NullTerminatedStr());
@@ -395,7 +396,7 @@ static Dialog::EResult Template_CreateDialogBox_(
         FMemoryViewWriter writer(TMemoryView<u8>((u8*)::GlobalLock(hgbl), GAllocSize));
 
         const auto eaten = writer.Eat(sizeof(::DLGTEMPLATE));
-        Assert(IS_ALIGNED(sizeof(DWORD), eaten.Pointer()));
+        Assert(Meta::IsAligned(sizeof(DWORD), eaten.Pointer()));
         ::LPDLGTEMPLATE const tpl = reinterpret_cast<::LPDLGTEMPLATE>(eaten.Pointer());
 
         tpl->x = 10;
