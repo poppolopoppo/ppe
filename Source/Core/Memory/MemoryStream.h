@@ -22,7 +22,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Allocator = ALLOCATOR(Stream, u8)>
-class TMemoryStream : public IStreamReader, public IStreamWriter  {
+class TMemoryStream : public IBufferedStreamReader, public IBufferedStreamWriter  {
 public:
     typedef TRawStorage<u8, _Allocator> storage_type;
 
@@ -67,24 +67,28 @@ public: // IStreamReader
     virtual bool IsSeekableI(ESeekOrigin ) const override final { return true; }
 
     virtual std::streamoff TellI() const override final;
-    virtual bool SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
+    virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
     virtual std::streamsize SizeInBytes() const override final;
 
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
 
+public: // IBufferedStreamReader
     virtual bool Peek(char& ch) override final;
-    virtual bool Peek(wchar_t& ch) override final;
+    virtual bool Peek(wchar_t& wch) override final;
 
 public: // IStreamWriter
     virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
 
     virtual std::streamoff TellO() const override final;
-    virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
+    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
+
+public: // IBufferedStreamWriter
+    virtual void Flush() override final {}
 
 private:
     size_t _size;
@@ -194,31 +198,31 @@ std::streamoff TMemoryStream<_Allocator>::TellI() const {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-bool TMemoryStream<_Allocator>::SeekI(std::streamoff offset, ESeekOrigin origin/* = ESeekOrigin::Begin */) {
+std::streamoff TMemoryStream<_Allocator>::SeekI(std::streamoff offset, ESeekOrigin origin/* = ESeekOrigin::Begin */) {
     switch (origin)
     {
     case ESeekOrigin::Begin:
         if (offset > checked_cast<std::streamoff>(_size))
-            return false;
+            return std::streamoff(-1);
         _offsetI = checked_cast<size_t>(offset);
         break;
     case ESeekOrigin::Relative:
         if (checked_cast<std::streamoff>(_offsetI) + offset < 0 ||
             checked_cast<std::streamoff>(_offsetI) + offset > checked_cast<std::streamoff>(_size) )
-            return false;
+            return std::streamoff(-1);
         _offsetI = checked_cast<size_t>(_offsetI + offset);
         break;
     case ESeekOrigin::End:
         if (checked_cast<std::streamoff>(_size) + offset < 0 ||
             checked_cast<std::streamoff>(_size) + offset > checked_cast<std::streamoff>(_size) )
-            return false;
+            return std::streamoff(-1);
         _offsetI = checked_cast<size_t>(_size + offset);
         break;
     default:
         AssertNotImplemented();
-        return false;
+        return std::streamoff(-1);
     }
-    return true;
+    return checked_cast<std::streamoff>(_offsetI);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -251,6 +255,8 @@ size_t TMemoryStream<_Allocator>::ReadSome(void* storage, size_t eltsize, size_t
     return (TMemoryStream::Read(storage, realsize) ? (realsize/eltsize) : 0 );
 }
 //----------------------------------------------------------------------------
+// IBufferedStreamReader
+//----------------------------------------------------------------------------
 template <typename _Allocator>
 bool TMemoryStream<_Allocator>::Peek(char& ch) {
     Assert(_offsetI <= _size);
@@ -280,31 +286,31 @@ std::streamoff TMemoryStream<_Allocator>::TellO() const {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-bool TMemoryStream<_Allocator>::SeekO(std::streamoff offset, ESeekOrigin policy /* = ESeekOrigin::Begin */) {
+std::streamoff TMemoryStream<_Allocator>::SeekO(std::streamoff offset, ESeekOrigin policy /* = ESeekOrigin::Begin */) {
     switch (policy)
     {
     case ESeekOrigin::Begin:
         if (offset > checked_cast<std::streamoff>(_size))
-            return false;
+            return std::streamoff(-1);
         _offsetO = checked_cast<size_t>(offset);
         break;
     case ESeekOrigin::Relative:
         if (checked_cast<std::streamoff>(_offsetO) + offset < 0 ||
             checked_cast<std::streamoff>(_offsetO) + offset > checked_cast<std::streamoff>(_size) )
-            return false;
+            return std::streamoff(-1);
         _offsetO = checked_cast<size_t>(_offsetO + offset);
         break;
     case ESeekOrigin::End:
         if (checked_cast<std::streamoff>(_size) + offset < 0 ||
             checked_cast<std::streamoff>(_size) + offset > checked_cast<std::streamoff>(_size) )
-            return false;
+            return std::streamoff(-1);
         _offsetO = checked_cast<size_t>(_size + offset);
         break;
     default:
         AssertNotImplemented();
-        return false;
+        return std::streamoff(-1);
     }
-    return true;
+    return checked_cast<std::streamoff>(_offsetO);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>

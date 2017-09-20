@@ -3,7 +3,6 @@
 #include "Core/Core.h"
 
 #include "Core/IO/FileSystem_fwd.h"
-#include "Core/IO/VFS/VirtualFileSystemPolicies.h"
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/Function.h"
 

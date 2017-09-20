@@ -19,7 +19,7 @@ namespace Parser {
 //----------------------------------------------------------------------------
 class FParseList {
 public:
-    FParseList(Lexer::FLexer *lexer);
+    FParseList();
     ~FParseList();
 
     FParseList(FParseList&& rvalue);
@@ -37,6 +37,7 @@ public:
 
     const VECTOR(Parser, Lexer::FMatch)& Matches() const { return _matches; }
 
+    bool Parse(Lexer::FLexer* lexer);
     void Reset();
     void Seek(const Lexer::FMatch *match);
     const Lexer::FMatch *Read();

@@ -10,6 +10,7 @@
 
 #include "Core/Container/HashSet.h"
 #include "Core/Container/Vector.h"
+#include "Core/IO/BufferedStreamProvider.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/StreamProvider.h"
 
@@ -24,7 +25,7 @@ struct FXMLEscaped_ {
     FStringView Str;
 
     inline friend void operator <<(
-        IStreamWriter& output,
+        IBufferedStreamWriter& output,
         const FXMLEscaped_& escaped ) {
         escaped.Serialize_([&output](char  ch) { output.WritePOD(ch); });
     }
@@ -60,7 +61,7 @@ private:
 //----------------------------------------------------------------------------
 class FXMLSerialize_ : private RTTI::FMetaAtomWrapCopyVisitor {
 public:
-    FXMLSerialize_(IStreamWriter* output, const RTTI::FMetaTransaction* transaction)
+    FXMLSerialize_(IBufferedStreamWriter* output, const RTTI::FMetaTransaction* transaction)
         : _output(output)
         , _transaction(transaction)
         , _indentLevel(0)
@@ -342,7 +343,7 @@ private:
     }
 
 private:
-    IStreamWriter* _output;
+    IBufferedStreamWriter* _output;
     const RTTI::FMetaTransaction* _transaction;
 
     size_t _indentLevel;
@@ -431,12 +432,14 @@ void FXMLSerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransacti
 
     output->WriteView("<?xml version=\"1.0\"?>\r\n");
 
-    FXMLSerialize_ serialize(output, transaction);
+    UsingBufferedStream(output, [transaction](IBufferedStreamWriter* buffered) {
+        FXMLSerialize_ serialize(buffered, transaction);
 
-    for (const RTTI::PMetaObject& object : transaction->MakeView())
-        serialize.QueueObject(object.get());
+        for (const RTTI::PMetaObject& object : transaction->MakeView())
+            serialize.QueueObject(object.get());
 
-    serialize.ProcessQueue();
+        serialize.ProcessQueue();
+    });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

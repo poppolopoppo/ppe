@@ -12,7 +12,7 @@
 #include "Core/Meta/Function.h"
 
 namespace Core {
-class IStreamReader;
+class IBufferedStreamReader;
 namespace XML {
 FWD_REFPTR(Element);
 //----------------------------------------------------------------------------
@@ -51,7 +51,7 @@ public:
     size_t XPath(const TMemoryView<const FName>& path, const Meta::TFunction<void(const FElement&)>& functor) const;
 
     static bool Load(FDocument* document, const FFilename& filename);
-    static bool Load(FDocument* document, const FFilename& filename, IStreamReader* input);
+    static bool Load(FDocument* document, const FFilename& filename, IBufferedStreamReader* input);
     static bool Load(FDocument* document, const FFilename& filename, const FStringView& content);
 
 private:

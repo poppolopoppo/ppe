@@ -21,9 +21,9 @@ std::streamoff FSocketStreamWriter::TellO() const {
     return _tellO;
 }
 //----------------------------------------------------------------------------
-bool FSocketStreamWriter::SeekO(std::streamoff offset, ESeekOrigin policy/* = ESeekOrigin::Begin */) {
+std::streamoff FSocketStreamWriter::SeekO(std::streamoff offset, ESeekOrigin policy/* = ESeekOrigin::Begin */) {
     AssertNotReached();
-    return false;
+    return std::streamoff(-1);
 }
 //----------------------------------------------------------------------------
 bool FSocketStreamWriter::Write(const void* storage, std::streamsize sizeInBytes) {

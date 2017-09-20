@@ -9,10 +9,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMemoryViewReader : public IStreamReader {
+class FMemoryViewReader : public IBufferedStreamReader {
 public:
     FMemoryViewReader() : _offsetI(0) {}
-    FMemoryViewReader(const TMemoryView<const u8>& rawData) : _offsetI(0), _rawData(rawData) {}
+    explicit FMemoryViewReader(const TMemoryView<const u8>& rawData) : _offsetI(0), _rawData(rawData) {}
 
     TMemoryView<const u8> Eat(size_t sizeInBytes) {
         AssertRelease(sizeInBytes + _offsetI <= _rawData.SizeInBytes());
@@ -34,7 +34,7 @@ public:
     virtual bool IsSeekableI(ESeekOrigin ) const override final { return true; }
 
     virtual std::streamoff TellI() const override final { return checked_cast<std::streamsize>(_offsetI); }
-    virtual bool SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
+    virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
 
     virtual std::streamsize SizeInBytes() const override final { return checked_cast<std::streamsize>(_rawData.SizeInBytes()); }
 
@@ -55,15 +55,15 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMemoryViewWriter : public IStreamWriter {
+class FMemoryViewWriter : public IBufferedStreamWriter {
 public:
     FMemoryViewWriter() : _size(0), _offsetO(0) {}
-    FMemoryViewWriter(const TMemoryView<u8>& rawData) : _size(0), _offsetO(0), _rawData(rawData) {}
+    explicit FMemoryViewWriter(const TMemoryView<u8>& rawData) : _size(0), _offsetO(0), _rawData(rawData) {}
 
     virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
 
     virtual std::streamoff TellO() const override final;
-    virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
+    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
@@ -88,6 +88,9 @@ public:
         WriteAlignmentPadding(boundary);
         return Eat(sizeInBytes);
     }
+
+public:
+    virtual void Flush() override final {}
 
 private:
     size_t _size;

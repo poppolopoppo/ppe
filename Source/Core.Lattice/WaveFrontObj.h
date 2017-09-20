@@ -7,7 +7,7 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-class IStreamWriter;
+class IBufferedStreamWriter;
 namespace Lattice {
 FWD_REFPTR(GenericMaterial);
 FWD_REFPTR(GenericMesh);
@@ -22,7 +22,7 @@ public:
     static bool Load(FGenericMesh* dst, const FFilename& filename, const FStringView& content);
 
     static bool Save(const FGenericMesh* src, const FFilename& filename);
-    static bool Save(const FGenericMesh* src, const FFilename& filename, IStreamWriter* writer);
+    static bool Save(const FGenericMesh* src, const FFilename& filename, IBufferedStreamWriter* writer);
 
 private:
     FWaveFrontObj() = delete;

@@ -426,7 +426,7 @@ static bool Lex_Identifier_(FLookAheadReader& reader, const FSymbol **psymbol, F
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FLexer::FLexer(IStreamReader* input, const FWStringView& sourceFileName, bool allowTypenames)
+FLexer::FLexer(IBufferedStreamReader* input, const FWStringView& sourceFileName, bool allowTypenames)
 :   _sourceFileName(sourceFileName.begin(), sourceFileName.end())
 ,   _reader(input, _sourceFileName.c_str())
 ,   _allowTypenames(allowTypenames)

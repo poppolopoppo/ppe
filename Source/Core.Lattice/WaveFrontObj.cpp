@@ -193,7 +193,7 @@ bool FWaveFrontObj::Save(const FGenericMesh* src, const FFilename& filename) {
     return VFS_WriteAll(filename, writer.MakeView(), policy);
 }
 //----------------------------------------------------------------------------
-bool FWaveFrontObj::Save(const FGenericMesh* src, const FFilename& filename, IStreamWriter* writer) {
+bool FWaveFrontObj::Save(const FGenericMesh* src, const FFilename& filename, IBufferedStreamWriter* writer) {
     Assert(src);
     Assert(writer);
 

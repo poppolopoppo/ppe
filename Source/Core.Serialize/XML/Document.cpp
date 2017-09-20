@@ -176,7 +176,7 @@ bool FDocument::Load(FDocument* document, const FFilename& filename) {
     Assert(document);
     Assert(not filename.empty());
 
-    EAccessPolicy policy = EAccessPolicy::Truncate_Binary;
+    EAccessPolicy policy = EAccessPolicy::Binary;
     if (filename.Extname() == FFSConstNames::Xmlz())
         policy = policy + EAccessPolicy::Compress;
 
@@ -187,7 +187,7 @@ bool FDocument::Load(FDocument* document, const FFilename& filename) {
     return Load(document, filename, content.MakeConstView().Cast<const char>() );
 }
 //----------------------------------------------------------------------------
-bool FDocument::Load(FDocument* document, const FFilename& filename, IStreamReader* input) {
+bool FDocument::Load(FDocument* document, const FFilename& filename, IBufferedStreamReader* input) {
     Assert(document);
     Assert(input);
 

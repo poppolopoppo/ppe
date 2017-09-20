@@ -6,7 +6,7 @@
 #include "Core/IO/StringView.h"
 
 namespace Core {
-class IStreamReader;
+class IBufferedStreamReader;
 enum class ESeekOrigin;
 namespace Lexer {
 //----------------------------------------------------------------------------
@@ -14,9 +14,7 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 class FLookAheadReader {
 public:
-    STATIC_CONST_INTEGRAL(size_t, BufferCapacity, 2048 - 6 * sizeof(size_t));
-
-    FLookAheadReader(IStreamReader* input, const wchar_t *sourceFileName);
+    FLookAheadReader(IBufferedStreamReader* input, const wchar_t *sourceFileName);
     ~FLookAheadReader();
 
     const wchar_t *SourceFileName() const { return _sourceFileName; }
@@ -36,19 +34,12 @@ public:
     bool SkipUntil(char expected);
     void EatWhiteSpaces();
 
-    void Flush();
-
 private:
     const wchar_t *_sourceFileName;
     size_t _sourceLine;
     size_t _sourceColumn;
 
-    IStreamReader* _input;
-
-    size_t _bufferPos;
-    size_t _bufferSize;
-
-    u8 _bufferData[BufferCapacity];
+    IBufferedStreamReader* _input;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

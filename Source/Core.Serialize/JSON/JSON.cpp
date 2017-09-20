@@ -430,7 +430,7 @@ bool FJSON::Load(FJSON* json, const FFilename& filename, const FStringView& cont
     return Load(json, filename, &reader);
 }
 //----------------------------------------------------------------------------
-bool FJSON::Load(FJSON* json, const FFilename& filename, IStreamReader* input) {
+bool FJSON::Load(FJSON* json, const FFilename& filename, IBufferedStreamReader* input) {
     Assert(json);
     Assert(input);
 
@@ -608,7 +608,7 @@ private:
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
-void RTTItoJSON(FJSON& dst, const VECTOR(Serialize, RTTI::PMetaAtom)& src) {
+void RTTItoJSON(FJSON& dst, const TMemoryView<const RTTI::PMetaAtom>& src) {
     FRTTItoJSON_ visitor;
     FJSON::FArray& array = dst.Root().SetType(FJSON::Array).ToArray();
     array.resize(src.size());
@@ -622,7 +622,7 @@ void RTTItoJSON(FJSON& dst, const VECTOR(Serialize, RTTI::PMetaAtom)& src) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void JSONtoRTTI(VECTOR(Serialize, RTTI::PMetaAtom)& dst, const FJSON& src) {
+void JSONtoRTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaAtom)& dst, const FJSON& src) {
     AssertNotImplemented(); // TODO
 }
 //----------------------------------------------------------------------------

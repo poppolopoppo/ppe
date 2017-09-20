@@ -24,7 +24,7 @@ public: // IStreamWriter
     virtual bool IsSeekableO(ESeekOrigin ) const override final { return false; }
 
     virtual std::streamoff TellO() const override final;
-    virtual bool SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
+    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
 
     virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;

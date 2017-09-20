@@ -3,7 +3,7 @@
 #include "LZJB.h"
 
 #include "Diagnostic/Logger.h"
-#include "IO/StreamProvider.h"
+#include "IO/BufferedStreamProvider.h"
 #include "IO/FormatHelpers.h"
 #include "Memory/MemoryView.h"
 #include "Misc/FourCC.h"
@@ -13,9 +13,6 @@
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-
 //----------------------------------------------------------------------------
 // LZJB  https://hg.java.net/hg/solaris~on-src/file/tip/usr/src/uts/common/os/compress.c
 /*
@@ -105,64 +102,6 @@ namespace {
  * no need to initialize the Lempel history; not doing so saves time.
  */
 //----------------------------------------------------------------------------
-class FBufferedStreamWriter_ {
-public:
-    FBufferedStreamWriter_(IStreamWriter* writer, const TMemoryView<u8>& buffer)
-        : _writer(writer), _buffer(buffer), _offset(0), _pendingSize(0) {
-        Assert(buffer.size());
-        _offset = checked_cast<size_t>(_writer->TellO());
-    }
-
-    ~FBufferedStreamWriter_() {
-        Flush();
-    }
-
-    size_t TellO() const { return _offset + _pendingSize; }
-
-    void Write(u8 oneByte) {
-        Assert(_pendingSize < _buffer.SizeInBytes());
-
-        _buffer[_pendingSize++] = oneByte;
-        if (_buffer.SizeInBytes() == _pendingSize)
-            Flush();
-    }
-
-    void Overwrite(size_t offset, u8 value, u8 mask) {
-        UNUSED(mask);
-        if (offset < _offset) {
-            const std::streamoff cur = _writer->TellO();
-            _writer->SeekO(std::streamoff(offset));
-            _writer->WritePOD(value);
-            _writer->SeekO(cur);
-        }
-        else {
-            const size_t rel = offset - _offset;
-            Assert(rel < _pendingSize);
-            Assert((_buffer[rel]|mask) == value);
-            _buffer[rel] = value;
-        }
-    }
-
-    void Flush() {
-        if (0 == _pendingSize)
-            return;
-
-        _writer->Write(_buffer.Pointer(), _pendingSize);
-        _offset = checked_cast<size_t>(_writer->TellO());
-        _pendingSize = 0;
-    }
-
-private:
-    IStreamWriter* _writer;
-    TMemoryView<u8> _buffer;
-    size_t _offset;
-    size_t _pendingSize;
-};
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 namespace LZJB {
 //----------------------------------------------------------------------------
 static const FFourCC FILE_MAGIC_         ("LZJB");
@@ -181,7 +120,14 @@ struct FHeader {
     u32     SizeInBytes;
 };
 //----------------------------------------------------------------------------
-void CompressMemory(IStreamWriter* dst, const TMemoryView<const u8>& src) {
+static void Overwrite_(IBufferedStreamWriter* writer, size_t offset, u8 value) {
+    const std::streamoff cur = writer->TellO();
+    writer->SeekO(std::streamoff(offset));
+    writer->WritePOD(value);
+    writer->SeekO(cur);
+}
+//----------------------------------------------------------------------------
+void CompressMemory(IBufferedStreamWriter* dst, const TMemoryView<const u8>& src) {
     const FHeader header = {
         FILE_MAGIC_,
         FILE_VERSION_,
@@ -190,7 +136,6 @@ void CompressMemory(IStreamWriter* dst, const TMemoryView<const u8>& src) {
     dst->WritePOD(header);
 
     STACKLOCAL_POD_ARRAY(u8, buffer, 8<<10);
-    FBufferedStreamWriter_ writer(dst, buffer);
 
     const u8* s_start = src.Pointer();
     const u8* psrc = s_start;
@@ -204,12 +149,12 @@ void CompressMemory(IStreamWriter* dst, const TMemoryView<const u8>& src) {
     while (psrc < s_start + s_len) {
         if ((copymask <<= 1) == (1 << NBBY)) {
             copymask = 1;
-            copyoff = writer.TellO();
+            copyoff = dst->TellO();
             copyval = 0;
-            writer.Write(0);
+            dst->WritePOD(u8(0));
         }
         if (psrc > s_start + s_len - MATCH_MAX) {
-            writer.Write(*psrc++);
+            dst->WritePOD(*psrc++);
             continue;
         }
         int hash = (psrc[0] << 16) + (psrc[1] << 8) + psrc[2];
@@ -222,21 +167,21 @@ void CompressMemory(IStreamWriter* dst, const TMemoryView<const u8>& src) {
         if (cpy >= s_start && cpy != psrc &&
             psrc[0] == cpy[0] && psrc[1] == cpy[1] && psrc[2] == cpy[2]) {
             copyval |= copymask;
-            writer.Overwrite(copyoff, copyval, u8(copymask));
+            Overwrite_(dst, copyoff, copyval);
             size_t mlen = MATCH_MIN;
             for (; mlen < MATCH_MAX; mlen++)
                 if (psrc[mlen] != cpy[mlen])
                     break;
-            writer.Write((u8)(((mlen - MATCH_MIN) << (NBBY - MATCH_BITS)) | (offset >> NBBY)) );
-            writer.Write((u8)offset );
+            dst->WritePOD((u8)(((mlen - MATCH_MIN) << (NBBY - MATCH_BITS)) | (offset >> NBBY)) );
+            dst->WritePOD((u8)offset );
             psrc += mlen;
         } else {
-            writer.Write(*psrc++);
+            dst->WritePOD(*psrc++);
         }
     }
 
     LOG(Info, L"[LZJB] Compression ratio : {0} -> {1} = {2:f2}%",
-        FSizeInBytes(src.SizeInBytes()), FSizeInBytes(writer.TellO()), writer.TellO()*100.0f/src.SizeInBytes() );
+        FSizeInBytes(src.SizeInBytes()), FSizeInBytes(dst->TellO()), dst->TellO()*100.0f/src.SizeInBytes() );
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>

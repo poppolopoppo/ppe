@@ -8,6 +8,7 @@
 #include "Core/Container/StringHashSet.h"
 
 #include "Core/Diagnostic/Profiling.h"
+#include "Core/IO/BufferedStreamProvider.h"
 #include "Core/IO/FormatHelpers.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/StringView.h"
@@ -628,9 +629,11 @@ void Test_Containers() {
             if (not reader)
                 AssertNotReached();
 
-            char buffer[2048];
+            FBufferedStreamReader buffered(reader.get());
+
+            char buffer[512];
             while (true) {
-                const FStringView line = reader->ReadLine(buffer);
+                const FStringView line = buffered.ReadLine(buffer);
                 if (line.empty())
                     break;
 
@@ -717,7 +720,7 @@ void Test_Containers() {
                 TBasicStringViewHashMemoizer<char, ECase::Sensitive>,
                 THash< TBasicStringViewHashMemoizer<char, ECase::Sensitive> >
             >   set;
-            
+
             Test_Container_Obj_(L"std::unordered_set Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
         }
         /*{
@@ -726,7 +729,7 @@ void Test_Containers() {
                 TStringViewEqualTo<char, ECase::Sensitive>,
                 TStringViewLess<char, ECase::Sensitive>
             >   set;
-            
+
             Test_Container_Obj_(L"TFlatSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
         }
         {
@@ -780,14 +783,14 @@ void Test_Containers() {
 
             hashtable_type set;
             set.resize(input.size());
-            
+
             Test_Container_POD_(L"TCompactHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
         }
         {
             THashSet<value_type> set;
 
             Test_Container_POD_(L"THashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-            
+
             LOG(Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
         }
         {

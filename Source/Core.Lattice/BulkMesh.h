@@ -7,8 +7,8 @@
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-class IStreamReader;
-class IStreamWriter;
+class IBufferedStreamReader;
+class IBufferedStreamWriter;
 namespace Lattice {
 FWD_REFPTR(GenericMaterial);
 FWD_REFPTR(GenericMesh);
@@ -21,10 +21,10 @@ public:
 
     static bool Load(FGenericMesh* dst, const FFilename& filename);
     static bool Load(FGenericMesh* dst, const FFilename& filename, const TMemoryView<const u8>& content);
-    static bool Load(FGenericMesh* dst, const FFilename& filename, IStreamReader* reader);
+    static bool Load(FGenericMesh* dst, const FFilename& filename, IBufferedStreamReader* reader);
 
     static bool Save(const FGenericMesh* src, const FFilename& filename);
-    static bool Save(const FGenericMesh* src, const FFilename& filename, IStreamWriter* writer);
+    static bool Save(const FGenericMesh* src, const FFilename& filename, IBufferedStreamWriter* writer);
 
 private:
     FBulkMesh() = delete;

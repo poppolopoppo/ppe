@@ -2,14 +2,6 @@
 
 #include "TextSerializer.h"
 
-#include "Core/Container/HashSet.h"
-#include "Core/Container/Vector.h"
-#include "Core/Memory/MemoryStream.h"
-
-#include "Core.RTTI/MetaAtom.h"
-#include "Core.RTTI/MetaClass.h"
-#include "Core.RTTI/MetaObject.h"
-#include "Core.RTTI/MetaProperty.h"
 #include "Core.RTTI/MetaTransaction.h"
 
 #include "Lexer/Lexer.h"
@@ -20,6 +12,16 @@
 
 #include "Grammar.h"
 
+#include "Core.RTTI/MetaAtom.h"
+#include "Core.RTTI/MetaClass.h"
+#include "Core.RTTI/MetaObject.h"
+#include "Core.RTTI/MetaProperty.h"
+
+#include "Core/Container/HashSet.h"
+#include "Core/Container/Vector.h"
+#include "Core/IO/BufferedStreamProvider.h"
+#include "Core/Memory/MemoryStream.h"
+
 namespace Core {
 namespace Serialize {
 //----------------------------------------------------------------------------
@@ -29,9 +31,13 @@ namespace {
 //----------------------------------------------------------------------------
 class FTextSerialize_ {
 public:
-    FTextSerialize_(const FTextSerializer* owner)
-        : _newline(false), _indent(0), _owner(owner) {
+    FTextSerialize_(const FTextSerializer* owner, IBufferedStreamWriter* writer)
+        : _newline(false)
+        , _indent(0)
+        , _owner(owner)
+        , _writer(writer) {
         Assert(owner);
+        Assert(writer);
     }
 
     FTextSerialize_(const FTextSerialize_& ) = delete;
@@ -41,7 +47,6 @@ public:
 
     void Append(const RTTI::FMetaObject* object, bool topObject = true);
     void Append(const TMemoryView<const RTTI::PMetaObject>& objects, bool topObject = true);
-    void Finalize(IStreamWriter* writer);
 
 private:
     class FAtomWriter_ : public RTTI::FMetaAtomWrapCopyVisitor {
@@ -130,24 +135,24 @@ private:
         }
 
         void WriteValue_(const FString& str) {
-            static char const* const hexdig = "0123456789ABCDEF";
+            static const char hexdig[] = "0123456789ABCDEF";
             _owner->Print("\"");
             for (char c : str) {
                 if (' ' <= c && c <= '~' && c != '\\' && c != '"') {
-                    _owner->_oss.WritePOD(c);
+                    _owner->_writer->WritePOD(c);
                 }
                 else {
-                    _owner->_oss.WritePOD('\\');
+                    _owner->_writer->WritePOD('\\');
                     switch(c) {
-                        case '"':  _owner->_oss.WritePOD('"');  break;
-                        case '\\': _owner->_oss.WritePOD('\\'); break;
-                        case '\t': _owner->_oss.WritePOD('t');  break;
-                        case '\r': _owner->_oss.WritePOD('r');  break;
-                        case '\n': _owner->_oss.WritePOD('n');  break;
+                        case '"':  _owner->_writer->WritePOD('"');  break;
+                        case '\\': _owner->_writer->WritePOD('\\'); break;
+                        case '\t': _owner->_writer->WritePOD('t');  break;
+                        case '\r': _owner->_writer->WritePOD('r');  break;
+                        case '\n': _owner->_writer->WritePOD('n');  break;
                         default:
-                            _owner->_oss.WritePOD('x');
-                            _owner->_oss.WritePOD(hexdig[c >> 4]);
-                            _owner->_oss.WritePOD(hexdig[c & 0xF]);
+                            _owner->_writer->WritePOD('x');
+                            _owner->_writer->WritePOD(hexdig[c >> 4]);
+                            _owner->_writer->WritePOD(hexdig[c & 0xF]);
                     }
                 }
             }
@@ -175,12 +180,12 @@ private:
                 _owner->Print("BinaryData:\"");
                 for (const u8& b : rawdata) {
                     if (IsAlnum((char)b)) {
-                        _owner->_oss.WritePOD((char)b);
+                        _owner->_writer->WritePOD((char)b);
                     }
                     else {
                         hexbyte[2] = hexdigit[b>>4];
                         hexbyte[3] = hexdigit[b&15];
-                        _owner->_oss.WritePOD(hexbyte);
+                        _owner->_writer->WritePOD(hexbyte);
                     }
                 }
                 _owner->Print("\"");
@@ -285,7 +290,7 @@ private:
     bool _newline;
     size_t _indent;
     const FTextSerializer* _owner;
-    MEMORYSTREAM_THREAD_LOCAL(Serialize) _oss;
+    IBufferedStreamWriter* _writer;
     VECTOR_THREAD_LOCAL(Serialize, RTTI::PCMetaObject) _queue;
     HASHSET_THREAD_LOCAL(Serialize, RTTI::PCMetaObject) _exported;
 };
@@ -303,11 +308,6 @@ void FTextSerialize_::Append(const TMemoryView<const RTTI::PMetaObject>& objects
         QueueObject_(object.get());
     }
     ProcessQueue_();
-}
-//----------------------------------------------------------------------------
-void FTextSerialize_::Finalize(IStreamWriter* writer) {
-    Assert(writer);
-    writer->WriteView(_oss.MakeView());
 }
 //----------------------------------------------------------------------------
 void FTextSerialize_::QueueObject_(const RTTI::FMetaObject* object) {
@@ -376,19 +376,19 @@ void FTextSerialize_::Indent_() {
     if (_newline) {
         _newline = false;
         forrange(i, 0, _indent)
-            _oss.WriteView("    ");
+            _writer->WriteView("    ");
     }
 }
 //----------------------------------------------------------------------------
 void FTextSerialize_::Print(const FStringView& str) {
     Indent_();
-    _oss.WriteView(str);
+    _writer->WriteView(str);
 }
 //----------------------------------------------------------------------------
 void FTextSerialize_::Puts(const FStringView& str) {
     Indent_();
-    _oss.WriteView(str);
-    _oss.WriteView("\r\n");
+    _writer->WriteView(str);
+    _writer->WriteView("\r\n");
     _newline = true;
 }
 //----------------------------------------------------------------------------
@@ -404,9 +404,12 @@ void FTextSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamRe
     Assert(transaction);
     Assert(input);
 
-    Lexer::FLexer lexer(input, MakeStringView(sourceName, Meta::FForceInit{}), true);
+    Parser::FParseList parseList;
+    UsingBufferedStream(input, [&parseList, sourceName](IBufferedStreamReader* buffered) {
+        Lexer::FLexer lexer(buffered, MakeStringView(sourceName, Meta::FForceInit{}), true);
+        parseList.Parse(&lexer);
+    });
 
-    Parser::FParseList parseList(&lexer);
     Parser::FParseContext parseContext;
 
     while (Parser::PCParseItem result = FGrammarStartup::Parse(parseList)) {
@@ -426,9 +429,10 @@ void FTextSerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransact
     Assert(output);
     Assert(transaction);
 
-    FTextSerialize_ serialize(this);
-    serialize.Append(transaction->MakeView());
-    serialize.Finalize(output);
+    UsingBufferedStream(output, [this, transaction](IBufferedStreamWriter* buffered) {
+        FTextSerialize_ serialize(this, buffered);
+        serialize.Append(transaction->MakeView());
+    });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

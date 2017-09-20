@@ -13,7 +13,7 @@
 
 namespace Core {
 struct FIndent;
-class IStreamReader;
+class IBufferedStreamReader;
 namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -132,7 +132,7 @@ public:
     void ToStream(std::basic_ostream<char>& oss, bool minify = false) const { _root.ToStream(oss, minify); }
 
     static bool Load(FJSON* json, const FFilename& filename);
-    static bool Load(FJSON* json, const FFilename& filename, IStreamReader* input);
+    static bool Load(FJSON* json, const FFilename& filename, IBufferedStreamReader* input);
     static bool Load(FJSON* json, const FFilename& filename, const FStringView& content);
 
 private:
@@ -151,9 +151,9 @@ inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, cons
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RTTItoJSON(FJSON& dst, const VECTOR(Serialize, RTTI::PMetaAtom)& src);
+void RTTItoJSON(FJSON& dst, const TMemoryView<const RTTI::PMetaAtom>& src);
 //----------------------------------------------------------------------------
-void JSONtoRTTI(VECTOR(Serialize, RTTI::PMetaAtom)& dst, const FJSON& src);
+void JSONtoRTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaAtom)& dst, const FJSON& src);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

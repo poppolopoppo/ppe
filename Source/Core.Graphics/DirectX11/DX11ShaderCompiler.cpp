@@ -55,7 +55,7 @@ private:
     void Open_(const FFilename& filename, LPCVOID *ppData, UINT *pBytes);
     void GenerateAutomaticSubstitutions_(LPCVOID *ppData, UINT *pBytes);
 
-    static void *Allocate_(size_t sizeInBytes) { return Alloca(sizeInBytes); }
+    static void* Allocate_(size_t sizeInBytes) { return Alloca(sizeInBytes); }
     static void Deallocate_(void *ptr) { FreeAlloca(ptr); }
 
     const FDirpath _systemDir;
@@ -118,14 +118,17 @@ HRESULT STDCALL FDX11ShaderIncludeHandler_::Close(LPCVOID pData) {
 }
 //----------------------------------------------------------------------------
 void FDX11ShaderIncludeHandler_::Open_(const FFilename& filename, LPCVOID *ppData, UINT *pBytes) {
-    const auto file = FVirtualFileSystem::Instance().OpenReadable(filename, EAccessPolicy::Ate_Binary );
+    const auto file = FVirtualFileSystem::Instance().OpenReadable(filename, EAccessPolicy::Binary);
     AssertRelease(file);
 
-    const size_t sizeInBytes = checked_cast<size_t>(file->TellI()); // Ate
-    void *const storage = Allocate_(sizeInBytes);
+    const size_t sizeInBytes = checked_cast<size_t>(file->SeekI(0, ESeekOrigin::End)); // Ate
+    void *storage = nullptr;
 
-    file->SeekI(0);
-    file->Read(storage, sizeInBytes);
+    if (sizeInBytes) {
+        storage = Allocate_(sizeInBytes);
+        file->SeekI(0);
+        file->Read(storage, sizeInBytes);
+    }
 
     *ppData = storage;
     *pBytes = checked_cast<UINT>(sizeInBytes);

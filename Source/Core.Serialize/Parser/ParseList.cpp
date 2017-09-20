@@ -10,24 +10,10 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FParseList::FParseList(Lexer::FLexer *lexer)
+FParseList::FParseList()
 :   _site(Lexer::FLocation::None())
-,   _current(nullptr) {
-    Assert(lexer);
-
-    Lexer::FMatch match;
-    while (lexer->Read(match)) {
-        //LOG(Info, L"[Parser] match : <{0}> = '{1}'", match.Symbol()->CStr().Pointer(), match.Value().c_str());
-        _matches.emplace_back(std::move(match));
-    }
-
-    if (_matches.size())
-        _site = _matches.front().Site();
-    else
-        _site.FileName = lexer->SourceFileName().c_str();
-
-    Reset();
-}
+,   _current(nullptr)
+{}
 //----------------------------------------------------------------------------
 FParseList::~FParseList() {}
 //----------------------------------------------------------------------------
@@ -44,6 +30,27 @@ FParseList& FParseList::operator =(FParseList&& rvalue) {
     _matches = std::move(rvalue._matches);
     std::swap(rvalue._current, _current);
     return *this;
+}
+//----------------------------------------------------------------------------
+bool FParseList::Parse(Lexer::FLexer* lexer /* = nullptr */) {
+    Assert(lexer);
+
+    _matches.clear();
+
+    Lexer::FMatch match;
+    while (lexer->Read(match)) {
+        //LOG(Info, L"[Parser] match : <{0}> = '{1}'", match.Symbol()->CStr().Pointer(), match.Value().c_str());
+        _matches.emplace_back(std::move(match));
+    }
+
+    if (_matches.size())
+        _site = _matches.front().Site();
+    else
+        _site.FileName = lexer->SourceFileName().c_str();
+
+    Reset();
+
+    return (not _matches.empty());
 }
 //----------------------------------------------------------------------------
 void FParseList::Reset() {

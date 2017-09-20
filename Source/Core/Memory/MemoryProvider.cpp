@@ -6,32 +6,32 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool FMemoryViewReader::SeekI(std::streamoff offset, ESeekOrigin origin /* = ESeekOrigin::Begin */) {
+std::streamoff FMemoryViewReader::SeekI(std::streamoff offset, ESeekOrigin origin /* = ESeekOrigin::Begin */) {
     switch (origin)
     {
     case ESeekOrigin::Begin:
         if (offset > checked_cast<std::streamoff>(_rawData.SizeInBytes()))
-            return false;
+            return std::streamoff(-1);
         _offsetI = checked_cast<size_t>(offset);
         break;
     case ESeekOrigin::Relative:
         if (checked_cast<std::streamoff>(_offsetI) + offset < 0 ||
             checked_cast<std::streamoff>(_offsetI) + offset > checked_cast<std::streamoff>(_rawData.SizeInBytes()) )
-            return false;
+            return std::streamoff(-1);
         _offsetI = checked_cast<size_t>(_offsetI + offset);
         break;
     case ESeekOrigin::End:
         if (checked_cast<std::streamoff>(_rawData.SizeInBytes()) + offset < 0 ||
             checked_cast<std::streamoff>(_rawData.SizeInBytes()) + offset > checked_cast<std::streamoff>(_rawData.SizeInBytes()) )
-            return false;
+            return std::streamoff(-1);
         _offsetI = checked_cast<size_t>(_rawData.SizeInBytes() + offset);
         break;
     default:
         AssertNotImplemented();
-        return false;
+        return std::streamoff(-1);
     }
     Assert(_offsetI <= _rawData.SizeInBytes());
-    return true;
+    return checked_cast<std::streamoff>(_offsetI);
 }
 //----------------------------------------------------------------------------
 bool FMemoryViewReader::Read(void* storage, std::streamsize sizeInBytes) {
@@ -83,32 +83,32 @@ std::streamoff FMemoryViewWriter::TellO() const {
     return checked_cast<std::streamsize>(_offsetO);
 }
 //----------------------------------------------------------------------------
-bool FMemoryViewWriter::SeekO(std::streamoff offset, ESeekOrigin policy /* = ESeekOrigin::Begin */) {
+std::streamoff FMemoryViewWriter::SeekO(std::streamoff offset, ESeekOrigin policy /* = ESeekOrigin::Begin */) {
     switch (policy)
     {
     case ESeekOrigin::Begin:
         if (offset > checked_cast<std::streamoff>(_size))
-            return false;
+            return std::streamoff(-1);
         _offsetO = checked_cast<size_t>(offset);
         break;
     case ESeekOrigin::Relative:
         if (checked_cast<std::streamoff>(_offsetO) + offset < 0 ||
             checked_cast<std::streamoff>(_offsetO) + offset > checked_cast<std::streamoff>(_size) )
-            return false;
+            return std::streamoff(-1);
         _offsetO = checked_cast<size_t>(_offsetO + offset);
         break;
     case ESeekOrigin::End:
         if (checked_cast<std::streamoff>(_size) + offset < 0 ||
             checked_cast<std::streamoff>(_size) + offset > checked_cast<std::streamoff>(_size) )
-            return false;
+            return std::streamoff(-1);
         _offsetO = checked_cast<size_t>(_size + offset);
         break;
     default:
         AssertNotImplemented();
-        return false;
+        return std::streamoff(-1);
     }
     Assert(_offsetO <= _size);
-    return true;
+    return checked_cast<std::streamoff>(_offsetO);
 }
 //----------------------------------------------------------------------------
 bool FMemoryViewWriter::Write(const void* storage, std::streamsize sizeInBytes) {
@@ -149,7 +149,7 @@ bool FMemoryViewWriter::WriteAlignmentPadding(size_t boundary, u8 padvalue /* = 
         _offsetO = offset;
     }
 
-    Assert(IS_ALIGNED(boundary, _rawData.Pointer() + _offsetO));
+    Assert(Meta::IsAligned(boundary, _rawData.Pointer() + _offsetO));
     return true;
 }
 //----------------------------------------------------------------------------

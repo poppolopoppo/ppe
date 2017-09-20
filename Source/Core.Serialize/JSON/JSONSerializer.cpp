@@ -12,6 +12,7 @@
 
 #include "Core/Container/HashSet.h"
 #include "Core/Container/Vector.h"
+#include "Core/IO/BufferedStreamProvider.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/StreamProvider.h"
 
@@ -29,10 +30,13 @@ void FJSONSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamRe
     Assert(input);
 
     FJSON json;
-    if (not FJSON::Load(&json, FFilename(MakeStringView(sourceName, Meta::FForceInit{})), input))
-        CORE_THROW_IT(FJSONSerializerException("failed to parse JSON document"));
 
-    VECTOR(Serialize, RTTI::PMetaAtom) parsed;
+    UsingBufferedStream(input, [&json, sourceName](IBufferedStreamReader* buffered) {
+        if (not FJSON::Load(&json, FFilename(MakeStringView(sourceName, Meta::FForceInit{})), buffered))
+            CORE_THROW_IT(FJSONSerializerException("failed to parse JSON document"));
+    });
+
+    VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaAtom) parsed;
     JSONtoRTTI(parsed, json);
 
     for (const RTTI::PMetaAtom& atom : parsed)
@@ -43,16 +47,18 @@ void FJSONSerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransact
     Assert(output);
     Assert(transaction);
 
-    VECTOR(Serialize, RTTI::PMetaAtom) atoms;
+    VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaAtom) atoms;
     atoms.reserve(transaction->size());
     for (const RTTI::PMetaObject& object : transaction->MakeView())
         atoms.emplace_back(RTTI::MakeAtom(object));
 
     FJSON json;
-    RTTItoJSON(json, atoms);
+    RTTItoJSON(json, atoms.MakeConstView());
 
-    FStreamWriterOStream oss(output);
-    json.ToStream(oss, _minify);
+    UsingBufferedStream(output, [this, &json](IBufferedStreamWriter* buffered) {
+        FStreamWriterOStream oss(buffered);
+        json.ToStream(oss, _minify);
+    });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

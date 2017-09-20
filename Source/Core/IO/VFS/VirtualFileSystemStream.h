@@ -3,8 +3,8 @@
 #include "Core/Core.h"
 
 #include "Core/Memory/UniqueView.h"
+#include "Core/IO/FS/Policies.h"
 #include "Core/IO/StreamProvider.h"
-#include "Core/IO/VFS/VirtualFileSystemPolicies.h"
 
 #include <iosfwd>
 
@@ -22,7 +22,7 @@ public:
     virtual ~IVirtualFileSystemBaseStream() {}
 
     virtual bool Bad() const = 0;
-    virtual const FFilename& SourceFilename() const = 0;
+    virtual const FFilename& Fragment() const = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

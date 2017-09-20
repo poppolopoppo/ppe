@@ -155,7 +155,7 @@ static void Test_HttpGet_() {
 
     if (response.Status() == Network::EHttpStatus::OK) {
         XML::FDocument xml;
-        IStreamReader* reader = &response.Body();
+        IBufferedStreamReader* reader = &response.Body();
         if (not XML::FDocument::Load(&xml, L"network.tmp", reader))
             AssertNotReached();
 

@@ -7,7 +7,7 @@
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/Function.h"
 
-#include "Core/IO/VFS/VirtualFileSystemPolicies.h"
+#include "Core/IO/FS/Policies.h"
 #include "Core/IO/VFS/VirtualFileSystemStream.h"
 
 #include <functional>

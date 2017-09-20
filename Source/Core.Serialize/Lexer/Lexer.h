@@ -13,7 +13,7 @@
 #include <stdexcept>
 
 namespace Core {
-class IStreamReader;
+class IBufferedStreamReader;
 namespace Lexer {
 POOL_TAG_DECL(FLexer);
 //----------------------------------------------------------------------------
@@ -39,7 +39,7 @@ private:
 //----------------------------------------------------------------------------
 class FLexer {
 public:
-    FLexer(IStreamReader* input, const FWStringView& sourceFileName, bool allowTypenames);
+    FLexer(IBufferedStreamReader* input, const FWStringView& sourceFileName, bool allowTypenames);
     ~FLexer();
 
     const FMatch* Peek();

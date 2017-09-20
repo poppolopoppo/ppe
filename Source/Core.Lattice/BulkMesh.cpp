@@ -8,6 +8,7 @@
 #include "Core.Graphics/Device/Geometry/VertexDeclaration.h"
 
 #include "Core/Container/Vector.h"
+#include "Core/IO/BufferedStreamProvider.h"
 #include "Core/IO/FS/ConstNames.h"
 #include "Core/IO/VFS/VirtualFileSystemStream.h"
 #include "Core/IO/StreamProvider.h"
@@ -49,7 +50,8 @@ bool FBulkMesh::Load(FGenericMesh* dst, const FFilename& filename) {
         const TUniquePtr<IVirtualFileSystemIStream> readable =
             VFS_OpenReadable(filename, policy);
 
-        return (readable && Load(dst, filename, readable.get()));
+        FBufferedStreamReader buffered(readable.get());
+        return (readable && Load(dst, filename, &buffered));
     }
 }
 //----------------------------------------------------------------------------
@@ -62,7 +64,7 @@ bool FBulkMesh::Load(FGenericMesh* dst, const FFilename& filename, const TMemory
     return Load(dst, filename, &reader);
 }
 //----------------------------------------------------------------------------
-bool FBulkMesh::Load(FGenericMesh* dst, const FFilename& filename, IStreamReader* reader) {
+bool FBulkMesh::Load(FGenericMesh* dst, const FFilename& filename, IBufferedStreamReader* reader) {
     Assert(dst);
 
     // Test magic and version :
@@ -131,11 +133,19 @@ bool FBulkMesh::Save(const FGenericMesh* src, const FFilename& filename) {
         const TUniquePtr<IVirtualFileSystemOStream> writable =
             VFS_OpenWritable(filename, policy);
 
-        return (writable && Save(src, filename, writable.get()));
+        if (not writable)
+            return false;
+
+        bool result = false;
+        UsingBufferedStream(writable.get(), [src, &filename, &result](IBufferedStreamWriter* buffered) {
+            result = Save(src, filename, buffered);
+        });
+
+        return result;
     }
 }
 //----------------------------------------------------------------------------
-bool FBulkMesh::Save(const FGenericMesh* src, const FFilename& filename, IStreamWriter* writer) {
+bool FBulkMesh::Save(const FGenericMesh* src, const FFilename& filename, IBufferedStreamWriter* writer) {
     Assert(src);
     Assert(writer);
 

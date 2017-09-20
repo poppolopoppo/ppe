@@ -82,12 +82,18 @@ FFilename FVirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wch
 bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TMemoryView<const u8>& storage, EAccessPolicy policy /* = EAccessPolicy::None */) {
     Assert(!filename.empty());
 
-    const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(filename, (policy ^ EAccessPolicy::Compress
-        ? policy - EAccessPolicy::Compress + EAccessPolicy::Binary
-        : policy ) + EAccessPolicy::Create );
+    bool needCompress = false;
+    if (policy ^ EAccessPolicy::Compress) {
+        needCompress = true;
+        policy = policy - EAccessPolicy::Compress + EAccessPolicy::Binary;
+    }
+
+    policy = policy + EAccessPolicy::Sequential; // we're going to make only 1 write, full sequential
+
+    const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(filename, policy);
 
     if (ostream) {
-        if (policy ^ EAccessPolicy::Compress) {
+        if (needCompress) {
             RAWSTORAGE_THREAD_LOCAL(Compress, u8) compressed;
             const size_t compressedSizeInBytes = Compression::CompressMemory(compressed, storage, Compression::HighCompression);
             ostream->Write(compressed.Pointer(), compressedSizeInBytes);
@@ -118,7 +124,7 @@ bool FVirtualFileSystem::Copy(const FFilename& dst, const FFilename& src, EAcces
     if (not ostream)
         return false;
 
-    const TUniqueArray<u8> buffer = NewArray<u8>(HUGE_PAGE_SIZE);
+    STACKLOCAL_POD_ARRAY(u8, buffer, PAGE_SIZE);
     while (size_t read = istream->ReadSome(buffer.data(), 1, buffer.SizeInBytes())) {
         if (not ostream->Write(buffer.data(), read)) {
             AssertNotReached();

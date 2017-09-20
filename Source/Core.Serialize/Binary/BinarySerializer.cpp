@@ -2,15 +2,6 @@
 
 #include "BinarySerializer.h"
 
-#include "Core/Container/Deque.h"
-#include "Core/Container/HashMap.h"
-#include "Core/Container/Vector.h"
-#include "Core/Diagnostic/Logger.h"
-#include "Core/Memory/MemoryStream.h"
-#include "Core/Memory/MemoryProvider.h"
-#include "Core/Misc/FourCC.h"
-#include "Core/Meta/StronglyTyped.h"
-
 #include "Core.RTTI/RTTI_fwd.h"
 #include "Core.RTTI/MetaAtom.h"
 #include "Core.RTTI/MetaAtomVisitor.h"
@@ -21,7 +12,15 @@
 #include "Core.RTTI/MetaTransaction.h"
 #include "Core.RTTI/MetaType.h"
 
-#include "Core.RTTI/MetaType.Definitions-inl.h"
+#include "Core/Container/Deque.h"
+#include "Core/Container/HashMap.h"
+#include "Core/Container/Vector.h"
+#include "Core/Diagnostic/Logger.h"
+#include "Core/IO/BufferedStreamProvider.h"
+#include "Core/Memory/MemoryStream.h"
+#include "Core/Memory/MemoryProvider.h"
+#include "Core/Misc/FourCC.h"
+#include "Core/Meta/StronglyTyped.h"
 
 #ifdef USE_DEBUG_LOGGER
 #   define WITH_RTTI_BINARYSERIALIZER_LOG       0 //%_NOCOMMIT%
@@ -144,7 +143,7 @@ public:
     };
 
     template <typename _WriteLambda>
-    void Serialize(IStreamWriter* writer, _WriteLambda&& lambda) const {
+    void Serialize(IBufferedStreamWriter* writer, _WriteLambda&& lambda) const {
         const u32 count = checked_cast<u32>(Entities.size());
         writer->WritePOD(count);
         typedef decltype(traits_type::proxy_(std::declval<const _Key&>())) proxy_type;
@@ -173,7 +172,7 @@ static void Linearize_(const TMemoryView< TPair<_Key, _Value> >& linearized, con
 }
 //----------------------------------------------------------------------------
 template <typename T>
-static void SerializePODs_(IStreamWriter* writer, const TMemoryView<T>& pods) {
+static void SerializePODs_(IBufferedStreamWriter* writer, const TMemoryView<T>& pods) {
     const u32 n = checked_cast<u32>(pods.size());
     writer->WritePOD(n);
     if (n)
@@ -181,7 +180,7 @@ static void SerializePODs_(IStreamWriter* writer, const TMemoryView<T>& pods) {
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-static void SerializePODs_(IStreamWriter* writer, const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap) {
+static void SerializePODs_(IBufferedStreamWriter* writer, const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap) {
     typedef TPair<_Key, _Value> pair_type;
     STACKLOCAL_POD_ARRAY(pair_type, linearized, hashmap.size());
     Linearize_(linearized, hashmap);
@@ -192,7 +191,7 @@ static void SerializePODs_(IStreamWriter* writer, const THashMap<_Key, _Value, _
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool DeserializePODs_(IStreamReader& reader, VECTOR_THREAD_LOCAL(Serialize, T)& results) {
+bool DeserializePODs_(IBufferedStreamReader& reader, VECTOR_THREAD_LOCAL(Serialize, T)& results) {
     u32 arraySize = UINT32_MAX;
     if (false == reader.ReadPOD(&arraySize))
         return false;
@@ -211,7 +210,7 @@ bool DeserializePODs_(IStreamReader& reader, VECTOR_THREAD_LOCAL(Serialize, T)& 
 }
 //----------------------------------------------------------------------------
 template <typename _Elt, typename _Result, typename _ReadLambda>
-bool DeserializePODArrays_( IStreamReader& reader,
+bool DeserializePODArrays_( IBufferedStreamReader& reader,
                             VECTOR_THREAD_LOCAL(Serialize, _Result)& results,
                             _ReadLambda&& lambda ) {
     u32 arraySize = UINT32_MAX;
@@ -263,7 +262,7 @@ public:
 
     const FBinarySerializer* Owner() const { return _owner; }
 
-    void Read(IStreamReader& reader);
+    void Read(IBufferedStreamReader& reader);
     void Finalize(RTTI::FMetaTransaction* transaction);
 
 private:
@@ -271,12 +270,12 @@ private:
     static const RTTI::FMetaProperty* RetrieveMetaProperty_(const RTTI::FMetaClass* metaClass, const FStringView& str);
 
     RTTI::FMetaObject* CreateObjectFromHeader_(const FSerializedObject_& header);
-    void DeserializeObjectData_(IStreamReader& reader, RTTI::FMetaObject* object);
+    void DeserializeObjectData_(IBufferedStreamReader& reader, RTTI::FMetaObject* object);
 
     class FAtomReader_ : public RTTI::FMetaAtomWrapMoveVisitor {
     public:
         typedef RTTI::FMetaAtomWrapMoveVisitor parent_type;
-        FAtomReader_(FBinaryDeserialize_* owner, IStreamReader* reader)
+        FAtomReader_(FBinaryDeserialize_* owner, IBufferedStreamReader* reader)
             : _owner(owner), _reader(reader) {}
 
         using parent_type::Inspect;
@@ -511,7 +510,7 @@ private:
         }
 
         FBinaryDeserialize_* _owner;
-        IStreamReader* _reader;
+        IBufferedStreamReader* _reader;
     };
 
     FBinarySerializer* _owner;
@@ -533,7 +532,7 @@ private:
     VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject) _objects;
 };
 //----------------------------------------------------------------------------
-void FBinaryDeserialize_::Read(IStreamReader& reader) {
+void FBinaryDeserialize_::Read(IBufferedStreamReader& reader) {
 
     if (false == reader.ExpectPOD(FILE_MAGIC_) )
         CORE_THROW_IT(FBinarySerializerException("invalid file magic"));
@@ -713,7 +712,7 @@ RTTI::FMetaObject* FBinaryDeserialize_::CreateObjectFromHeader_(const FSerialize
     }
 }
 //----------------------------------------------------------------------------
-void FBinaryDeserialize_::DeserializeObjectData_(IStreamReader& reader, RTTI::FMetaObject* object) {
+void FBinaryDeserialize_::DeserializeObjectData_(IBufferedStreamReader& reader, RTTI::FMetaObject* object) {
     u32 metaClassCount = 0;
     if (false == reader.ExpectPOD(TAG_OBJECT_START_) ||
         false == reader.ReadPOD(&metaClassCount) )
@@ -808,7 +807,7 @@ public:
 
     void Append(const RTTI::FMetaObject* object, bool topObject = true);
     void Append(const TMemoryView<const RTTI::PMetaObject>& objects, bool topObject = true);
-    void Finalize(IStreamWriter* writer);
+    void Finalize(IBufferedStreamWriter* writer);
 
 private:
     class FAtomWriter_ : public RTTI::FMetaAtomWrapCopyVisitor {
@@ -1010,7 +1009,7 @@ void FBinarySerialize_::Append(const TMemoryView<const RTTI::PMetaObject>& objec
     ProcessQueue_();
 }
 //----------------------------------------------------------------------------
-void FBinarySerialize_::Finalize(IStreamWriter* writer) {
+void FBinarySerialize_::Finalize(IBufferedStreamWriter* writer) {
     Assert(writer);
 
     // TODO: merge objects when metaclass allows it (separated preprocess ?)
@@ -1239,7 +1238,11 @@ void FBinarySerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStream
     UNUSED(sourceName);
 
     FBinaryDeserialize_ deserialize(this);
-    deserialize.Read(*input);
+
+    UsingBufferedStream(input, [&deserialize](IBufferedStreamReader* buffered) {
+        deserialize.Read(*buffered);
+    });
+
     deserialize.Finalize(transaction);
 }
 //----------------------------------------------------------------------------
@@ -1249,7 +1252,10 @@ void FBinarySerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransa
 
     FBinarySerialize_ serialize(this, transaction);
     serialize.Append(transaction->MakeView());
-    serialize.Finalize(output);
+
+    UsingBufferedStream(output, [&serialize](IBufferedStreamWriter* buffered) {
+        serialize.Finalize(buffered);
+    });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -487,7 +487,9 @@ void Test_RTTI() {
             try {
                 FMemoryViewReader reader(line.Cast<const u8>());
                 Lexer::FLexer lexer(&reader, filename, true);
-                Parser::FParseList input(&lexer);
+
+                Parser::FParseList input;
+                input.Parse(&lexer);
 
                 Parser::PCParseItem item = Serialize::FGrammarStartup::Parse(input);
                 AssertRelease(item);
