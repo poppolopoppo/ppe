@@ -534,7 +534,7 @@ void FRobotApp::Draw(const FTimeline& time) {
 
     }
 
-    const float3 rgb = HSV_to_RGB(hsv);
+    const float3 rgb = HSV_to_RGB_smooth(hsv);
     const FLinearColor clearColor(rgb, 1.0f);
 
     Graphics::IDeviceAPIEncapsulator* const device = DeviceEncapsulator().Device();

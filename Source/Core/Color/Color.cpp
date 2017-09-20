@@ -116,6 +116,10 @@ FLinearColor FLinearColor::FromHSV(const float3& hsv, float a/* = 1.0f */) {
     return FLinearColor(HSV_to_RGB(hsv), a);
 }
 //----------------------------------------------------------------------------
+FLinearColor FLinearColor::FromHSV_smooth(const float3& hsv, float a/* = 1.0f */) {
+    return FLinearColor(HSV_to_RGB_smooth(hsv), a);
+}
+//----------------------------------------------------------------------------
 FLinearColor FLinearColor::FromYCoCg(const float3& yCoCg, float a/* = 1.0f */) {
     return FLinearColor(YCoCg_to_RGB(yCoCg), a);
 }
@@ -274,6 +278,12 @@ float3 RGB_to_HSV(const float3& rgb) {
     float3 HCV = RGB_to_HCV(rgb);
     float S = HCV.y() / (HCV.z() + Epsilon);
     return float3(HCV.x(), S, HCV.z());
+}
+//----------------------------------------------------------------------------
+// IQ's goodness
+// https://www.shadertoy.com/view/MsS3Wc
+float3 HSV_to_RGB_smooth(const float3& rgb) {
+    return rgb.z() * (1.f - rgb.y() * Smoothstep(2.f, 1.f, Abs(FMod(rgb.x()*6.f + float3(0, 4, 2), 6.f) - 3.f)));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -24,6 +24,7 @@ float3 RGB_to_HCV(const float3& rgb);
 //----------------------------------------------------------------------------
 float3 HSV_to_RGB(const float3& hsv);
 float3 RGB_to_HSV(const float3& rgb);
+float3 HSV_to_RGB_smooth(const float3& rgb);
 //----------------------------------------------------------------------------
 float3 HSL_to_RGB(const float3& hsl);
 float3 RGB_to_HSL(const float3& rgb);
@@ -73,6 +74,7 @@ struct CORE_API FLinearColor {
     static FLinearColor FromHue(float hue, float a = 1.0f);
     static FLinearColor FromHSL(const float3& hsl, float a = 1.0f);
     static FLinearColor FromHSV(const float3& hsv, float a = 1.0f);
+    static FLinearColor FromHSV_smooth(const float3& hsv, float a = 1.0f);
     static FLinearColor FromYCoCg(const float3& yCoCg, float a = 1.0f);
     static FLinearColor FromTemperature(float kelvins, float a = 1.0f);
 
