@@ -181,7 +181,7 @@ void CompressMemory(IBufferedStreamWriter* dst, const TMemoryView<const u8>& src
     }
 
     LOG(Info, L"[LZJB] Compression ratio : {0} -> {1} = {2:f2}%",
-        FSizeInBytes(src.SizeInBytes()), FSizeInBytes(dst->TellO()), dst->TellO()*100.0f/src.SizeInBytes() );
+        Fmt::FSizeInBytes(src.SizeInBytes()), Fmt::FSizeInBytes(dst->TellO()), dst->TellO()*100.0f/src.SizeInBytes() );
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>

@@ -13,6 +13,7 @@
 #   include <mutex>
 #   include "Container/Vector.h"
 #   include "Diagnostic/CrtDebug.h"
+#   include "IO/FormatHelpers.h"
 #endif
 
 namespace Core {
@@ -174,17 +175,17 @@ void ReportAllocationHistogram() {
         if (0 == allocations[i])
             LOG(Info, L" #{0:#2} | {1:9} | {2:9} | {3:5f2}% |",
                 i,
-                FSizeInBytes{ classes[i] },
-                FSizeInBytes{ totalBytes[i] },
+                Fmt::FSizeInBytes{ classes[i] },
+                Fmt::FSizeInBytes{ totalBytes[i] },
                 100 * float(allocations[i]) / totalCount );
         else
             LOG(Info, L" #{0:#2} | {1:9} | {2:9} | {3:5f2}% |{4}> {5} +{6}",
                 i,
-                FSizeInBytes{ classes[i] },
-                FSizeInBytes{ totalBytes[i] },
+                Fmt::FSizeInBytes{ classes[i] },
+                Fmt::FSizeInBytes{ totalBytes[i] },
                 100 * float(allocations[i]) / totalCount,
-                Repeat(L'=', size_t(Min(width, std::round(width * distribution(allocations[i]) / allocationScale)))),
-                FCountOfElements{ allocations[i] },
+                Fmt::Repeat(L'=', size_t(Min(width, std::round(width * distribution(allocations[i]) / allocationScale)))),
+                Fmt::FCountOfElements{ allocations[i] },
                 allocations[i] - GPrevAllocations[i] );
 
         GPrevAllocations[i] = allocations[i];

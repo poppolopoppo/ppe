@@ -35,7 +35,7 @@ static void Test_XMLLoad_Collada_() {
 
     for (const Lattice::PGenericMaterial& m : materials) {
         std::cout
-            << Repeat('-', 80) << eol
+            << Fmt::Repeat('-', 80) << eol
             << "Name = " << m->Name() << eol
             << "Technique = " << m->Technique() << eol;
 

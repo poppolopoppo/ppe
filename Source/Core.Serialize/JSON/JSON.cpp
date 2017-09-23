@@ -140,6 +140,87 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJSON::FValue& value) {
     return true;
 }
 //----------------------------------------------------------------------------
+static void ToStream_(const FJSON::FValue& value, std::basic_ostream<char>& oss, Fmt::FIndent& indent, bool minify) {
+    switch (value.Type()) {
+
+    case Core::Serialize::FJSON::Null:
+        oss << "null";
+        break;
+
+    case Core::Serialize::FJSON::Bool:
+        oss << (value.ToBool() ? "true" : "false");
+        break;
+
+    case Core::Serialize::FJSON::Number:
+        oss << value.ToNumber();
+        break;
+
+    case Core::Serialize::FJSON::String:
+        oss << '"';
+        JSON_::EscapeString_(oss, value.ToString());
+        oss << '"';
+        break;
+
+    case Core::Serialize::FJSON::Array:
+        if (not value.ToArray().empty()) {
+            const auto& arr = value.ToArray();
+            oss << '[';
+            if (not minify)
+                oss << eol;
+            {
+                const Fmt::FIndent::FScope scopeIndent(indent);
+
+                size_t n = arr.size();
+                for (const FJSON::FValue& item : arr) {
+                    oss << indent;
+                    ToStream_(item, oss, indent, minify);
+                    if (--n)
+                        oss << ',';
+                    if (not minify)
+                        oss << eol;
+                }
+            }
+            oss << indent << ']';
+        }
+        else {
+            oss << "[]";
+        }
+        break;
+
+    case Core::Serialize::FJSON::Object:
+        if (not value.ToObject().empty()) {
+            const auto& obj = value.ToObject();
+            oss << '{';
+            if (not minify)
+                oss << eol;
+            {
+                const Fmt::FIndent::FScope scopeIndent(indent);
+
+                size_t n = obj.size();
+                for (const auto& member : obj) {
+                    oss << indent << '"';
+                    JSON_::EscapeString_(oss, member.first);
+                    oss << "\": ";
+                    ToStream_(member.second, oss, indent, minify);
+                    if (--n)
+                        oss << ',';
+                    if (not minify)
+                        oss << eol;
+                }
+            }
+            oss << indent << '}';
+        }
+        else {
+            oss << "{}";
+        }
+        break;
+
+    default:
+        AssertNotImplemented();
+        break;
+    }
+}
+//----------------------------------------------------------------------------
 } //!namespace JSON_
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -332,80 +413,10 @@ void FJSON::FValue::Clear() {
 }
 //----------------------------------------------------------------------------
 void FJSON::FValue::ToStream(std::basic_ostream<char>& oss, bool minify/* = true */) const {
-    FIndent indent = (minify ? FIndent::None() : FIndent::TwoSpaces());
+    Fmt::FIndent indent = (minify ? Fmt::FIndent::None() : Fmt::FIndent::TwoSpaces());
     oss << std::fixed;
-    ToStream(oss, indent, minify);
+    JSON_::ToStream_(*this, oss, indent, minify);
     Assert(0 == indent.Level);
-}
-//----------------------------------------------------------------------------
-void FJSON::FValue::ToStream(std::basic_ostream<char>& oss, FIndent& indent, bool minify) const {
-    switch (_type) {
-    case Core::Serialize::FJSON::Null:
-        oss << "null";
-        break;
-    case Core::Serialize::FJSON::Bool:
-        oss << (_bool ? "true" : "false");
-        break;
-    case Core::Serialize::FJSON::Number:
-        oss << _number;
-        break;
-    case Core::Serialize::FJSON::String:
-        oss << '"';
-        JSON_::EscapeString_(oss, _string);
-        oss << '"';
-        break;
-    case Core::Serialize::FJSON::Array:
-        ;
-        if (_array.size()) {
-            oss << '[';
-            if (not minify)
-                oss << eol;
-            {
-                const FIndent::FScope scopeIndent(indent);
-                size_t n = _array.size();
-                for (const FValue& item : _array) {
-                    oss << indent;
-                    item.ToStream(oss, indent, minify);
-                    if (--n)
-                        oss << ',';
-                    if (not minify)
-                        oss << eol;
-                }
-            }
-            oss << indent << ']';
-        }
-        else {
-            oss << "[]";
-        }
-        break;
-    case Core::Serialize::FJSON::Object:
-        if (_object.size()) {
-            oss << '{';
-            if (not minify)
-                oss << eol;
-            {
-                const FIndent::FScope scopeIndent(indent);
-                size_t n = _object.size();
-                for (const auto& member : _object) {
-                    oss << indent << '"';
-                    JSON_::EscapeString_(oss, member.first);
-                    oss << "\": ";
-                    member.second.ToStream(oss, indent, minify);
-                    if (--n)
-                        oss << ',';
-                    if (not minify)
-                        oss << eol;
-                }
-            }
-            oss << indent << '}';
-        }
-        else {
-            oss << "{}";
-        }
-        break;
-    default:
-        break;
-    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

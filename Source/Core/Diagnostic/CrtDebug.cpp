@@ -433,11 +433,11 @@ bool CrtDumpMemoryStats(FCrtMemoryStats* memoryStats, void* heapHandle/* = nullp
         return false;
     }
 
-    memoryStats->TotalFreeSize = FSizeInBytes{ totalFreeSize };
-    memoryStats->LargestFreeBlockSize = FSizeInBytes{ largestFreeBlockSize };
-    memoryStats->TotalUsedSize = FSizeInBytes{ totalUsedSize };
-    memoryStats->LargestUsedBlockSize = FSizeInBytes{ largestUsedBlockSize };
-    memoryStats->TotalOverheadSize = FSizeInBytes{ totalOverheadSize };
+    memoryStats->TotalFreeSize = totalFreeSize;
+    memoryStats->LargestFreeBlockSize = largestFreeBlockSize;
+    memoryStats->TotalUsedSize = totalUsedSize;
+    memoryStats->LargestUsedBlockSize = largestUsedBlockSize;
+    memoryStats->TotalOverheadSize = totalOverheadSize;
 
     return true;
 }

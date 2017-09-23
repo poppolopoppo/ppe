@@ -104,7 +104,7 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
     }
 
     LOG(Info, L"[Compression] Compress ratio : {0} -> {1} = {2:f2}%",
-        FSizeInBytes(src.SizeInBytes()), FSizeInBytes(compressedSizeInBytes), compressedSizeInBytes*100.0f/src.SizeInBytes() );
+        Fmt::FSizeInBytes(src.SizeInBytes()), Fmt::FSizeInBytes(compressedSizeInBytes), compressedSizeInBytes*100.0f/src.SizeInBytes() );
 
     return compressedSizeInBytes;
 }
@@ -143,7 +143,9 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
 #endif
 
     LOG(Info, L"[Compression] Decompress ratio : {0} -> {1} = {2:f2}%",
-        FSizeInBytes(compressedSizeInBytes), FSizeInBytes(pheader->SizeInBytes), compressedSizeInBytes*100.0f/dst.SizeInBytes() );
+        Fmt::FSizeInBytes(compressedSizeInBytes),
+        Fmt::FSizeInBytes(pheader->SizeInBytes),
+        compressedSizeInBytes*100.0f/dst.SizeInBytes() );
 
     return true;
 }

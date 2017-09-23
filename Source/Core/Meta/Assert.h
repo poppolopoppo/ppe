@@ -6,6 +6,9 @@
 #   define WITH_CORE_ASSERT
 #endif
 
+#define WITH_CORE_ASSERT_FALLBACK_TO_ASSUME 1 // when enabled every assert becomes an __assume() when !_DEBUG // %_NOCOMMIT%
+#define WITH_CORE_ASSERT_RELEASE_FALLBACK_TO_ASSUME 1 // when enabled every assert release becomes an __assume() when !FINAL_RELEASE // %_NOCOMMIT%
+
 #if !defined(FINAL_RELEASE) && !defined(PROFILING_ENABLED)
 #   define WITH_CORE_ASSERT_RELEASE
 #endif
@@ -37,19 +40,29 @@ private:
     const wchar_t *_file;
     unsigned _line;
 };
-//----------------------------------------------------------------------------
+
 void AssertionFailed(const char *msg, const wchar_t *file, unsigned line);
 void SetAssertionHandler(AssertionHandler handler);
-//----------------------------------------------------------------------------
+
 #   define AssertMessage(_Expression, _Message) \
     (void)( (!!(_Expression)) || (Core::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__), 0) )
+
+#   define AssertMessage_NoAssume(_Expression, _Message) AssertMessage(_Expression, _Message)
+
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
 inline void AssertionFailed(const wchar_t *, const wchar_t *, unsigned ) {}
 inline void SetAssertionHandler(AssertionHandler ) {}
-//----------------------------------------------------------------------------
-#   define AssertMessage(_Expression, _Message) NOOP()
+
+#   if WITH_CORE_ASSERT_FALLBACK_TO_ASSUME
+#       define AssertMessage(_Expression, _Message) Assume(_Expression)
+#   else
+#       define AssertMessage(_Expression, _Message) NOOP()
+#   endif
+
+#   define AssertMessage_NoAssume(_Expression, _Message) NOOP()
+
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_ASSERT
 //----------------------------------------------------------------------------
@@ -58,6 +71,7 @@ inline void SetAssertionHandler(AssertionHandler ) {}
 } //!namespace Core
 
 #define Assert(...) AssertMessage(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
+#define Assert_NoAssume(...) AssertMessage_NoAssume(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -79,19 +93,29 @@ private:
     const wchar_t *_file;
     unsigned _line;
 };
-//----------------------------------------------------------------------------
+
 void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line);
 void SetAssertionReleaseHandler(AssertionReleaseHandler handler);
-//----------------------------------------------------------------------------
+
 #   define AssertReleaseMessage(_Expression, _Message) \
     (void)( (!!(_Expression)) || (Core::AssertionReleaseFailed(_Message, WIDESTRING(__FILE__), __LINE__), 0) )
+
+#   define AssertReleaseMessage_NoAssume(_Expression, _Message) AssertReleaseMessage(_Expression, _Message)
+
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
 inline void AssertionReleaseFailed(const char *, const wchar_t *, unsigned ) {}
 inline void SetAssertionReleaseHandler(AssertionReleaseHandler ) {}
-//----------------------------------------------------------------------------
+
 #   define AssertReleaseMessage(_Expression, _Message)  NOOP()
+
+#   if WITH_CORE_ASSERT_RELEASE_FALLBACK_TO_ASSUME
+#       define AssertReleaseMessage_NoAssume(_Expression, _Message)  Assume(_Expression)
+#   else
+#       define AssertReleaseMessage_NoAssume(_Expression, _Message)  NOOP()
+#   endif
+
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_ASSERT_RELEASE
 //----------------------------------------------------------------------------
@@ -100,6 +124,8 @@ inline void SetAssertionReleaseHandler(AssertionReleaseHandler ) {}
 } //!namespace Core
 
 #define AssertRelease(...) AssertReleaseMessage(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
+#define AssertRelease_NoAssume(...) AssertReleaseMessage_NoAssume(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
+
 #define AssertNotReached() AssertReleaseMessage(false, "unreachable state")
 #define AssertNotImplemented() AssertReleaseMessage(false, "not implemented")
 

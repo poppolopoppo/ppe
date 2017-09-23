@@ -31,17 +31,18 @@ FBenchmarkScope::~FBenchmarkScope() {
 
     LOG(Profiling, L"{0:28} | {1}{2} | {3:8f2}",
         _category,
-        Repeat(L"  ", GBenchmarkScopeDepth_),
-        PadRight(_message, 30 - GBenchmarkScopeDepth_ * 2, L' '),
+        Fmt::Repeat(L"  ", GBenchmarkScopeDepth_),
+        Fmt::PadRight(_message, 30 - GBenchmarkScopeDepth_ * 2, L' '),
         Elapsed() );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FIOBenchmarkScope::FIOBenchmarkScope(const wchar_t* category, const wchar_t* message, size_t sizeInBytes)
+FIOBenchmarkScope::FIOBenchmarkScope(const wchar_t* category, const wchar_t* message, const std::streamsize* pSizeInBytes)
     : _category(category)
     , _message(message)
-    , _sizeInBytes(sizeInBytes) {
+    , _pSizeInBytes(pSizeInBytes) {
+    Assert(pSizeInBytes);
     ++GBenchmarkScopeDepth_;
 }
 //----------------------------------------------------------------------------
@@ -53,11 +54,11 @@ FIOBenchmarkScope::~FIOBenchmarkScope() {
 
     LOG(Profiling, L" {0:20} | {3:8} | {4:10} = {5:10f2} Mb/s | {1}{2}",
         _category,
-        Repeat(L"  ", GBenchmarkScopeDepth_),
-        PadRight(_message, 30 - GBenchmarkScopeDepth_ * 2, L' '),
+        Fmt::Repeat(L"  ", GBenchmarkScopeDepth_),
+        Fmt::PadRight(_message, 30 - GBenchmarkScopeDepth_ * 2, L' '),
         Elapsed(),
-        FSizeInBytes{ _sizeInBytes },
-        FMegabytes(FBytes((double)_sizeInBytes)).Value() / FSeconds(elapsed).Value() );
+        Fmt::FSizeInBytes{ checked_cast<size_t>(*_pSizeInBytes) },
+        FMegabytes(FBytes((double)*_pSizeInBytes)).Value() / FSeconds(elapsed).Value() );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

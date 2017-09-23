@@ -10,10 +10,11 @@
 #include <ostream>
 
 namespace Core {
+namespace Fmt {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Format(char *buffer, size_t capacity, FCountOfElements count) {
+void Format(char *buffer, size_t capacity, Fmt::FCountOfElements count) {
     TBasicOCStrStream<char> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
@@ -26,7 +27,7 @@ void Format(char *buffer, size_t capacity, FCountOfElements count) {
         oss << count.Value;
 }
 //----------------------------------------------------------------------------
-void Format(wchar_t *buffer, size_t capacity, FCountOfElements count) {
+void Format(wchar_t *buffer, size_t capacity, Fmt::FCountOfElements count) {
     TBasicOCStrStream<wchar_t> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
@@ -41,19 +42,19 @@ void Format(wchar_t *buffer, size_t capacity, FCountOfElements count) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Format(char *buffer, size_t capacity, FPointer ptr) {
+void Format(char *buffer, size_t capacity, Fmt::FPointer ptr) {
     TBasicOCStrStream<char> oss(buffer, capacity);
     oss << std::internal << std::hex << std::setw(sizeof(intptr_t)*2+1) << std::setfill('0') << ptr.Value;
 }
 //----------------------------------------------------------------------------
-void Format(wchar_t *buffer, size_t capacity, FPointer ptr) {
+void Format(wchar_t *buffer, size_t capacity, Fmt::FPointer ptr) {
     TBasicOCStrStream<wchar_t> oss(buffer, capacity);
     oss << std::internal << std::hex << std::setw(sizeof(intptr_t)*2+1) << std::setfill(L'0') << ptr.Value;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Format(char *buffer, size_t capacity, FSizeInBytes size) {
+void Format(char *buffer, size_t capacity, Fmt::FSizeInBytes size) {
     TBasicOCStrStream<char> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
@@ -80,7 +81,7 @@ void Format(char *buffer, size_t capacity, FSizeInBytes size) {
         oss << bytes;
 }
 //----------------------------------------------------------------------------
-void Format(wchar_t *buffer, size_t capacity, FSizeInBytes size) {
+void Format(wchar_t *buffer, size_t capacity, Fmt::FSizeInBytes size) {
     TBasicOCStrStream<wchar_t> oss(buffer, capacity);
     oss.precision(2);
     oss.flags(std::ios_base::fixed);
@@ -109,14 +110,14 @@ void Format(wchar_t *buffer, size_t capacity, FSizeInBytes size) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FHexDump& hexDump) {
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::FHexDump& hexDump) {
     const size_t totalBytes = hexDump.RawData.SizeInBytes();
     for (size_t offset = 0; offset < totalBytes; ) {
-        Format(oss, "0x{0:#8X} ", offset);
+        Core::Format(oss, "0x{0:#8X} ", offset);
         const size_t origin = offset;
         for (size_t row = 0; row < hexDump.BytesPerRow; ++row, ++offset) {
             if (offset < totalBytes)
-                Format(oss, " {0:#2X}", (unsigned)hexDump.RawData[offset]);
+                Core::Format(oss, " {0:#2X}", (unsigned)hexDump.RawData[offset]);
             else
                 oss << "   ";
         }
@@ -129,14 +130,14 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FHexD
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const FHexDump& hexDump) {
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Fmt::FHexDump& hexDump) {
     const size_t totalBytes = hexDump.RawData.SizeInBytes();
     for (size_t offset = 0; offset < totalBytes; ) {
-        Format(oss, L"0x{0:#8X} ", offset);
+        Core::Format(oss, L"0x{0:#8X} ", offset);
         const size_t origin = offset;
         for (size_t row = 0; row < hexDump.BytesPerRow; ++row, ++offset) {
             if (offset < totalBytes)
-                Format(oss, L" {0:#2X}", (unsigned)hexDump.RawData[offset]);
+                Core::Format(oss, L" {0:#2X}", (unsigned)hexDump.RawData[offset]);
             else
                 oss << L"   ";
         }
@@ -151,4 +152,22 @@ std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::FIndent& indent) {
+    Assert(indent.Level >= 0);
+    forrange(i, 0, indent.Level)
+        oss << indent.Tab;
+    return oss;
+}
+//----------------------------------------------------------------------------
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Fmt::FIndent& indent) {
+    Assert(indent.Level >= 0);
+    forrange(i, 0, indent.Level)
+        for(char ch : indent.Tab)
+            oss << ch;
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Fmt
 } //!namespace Core

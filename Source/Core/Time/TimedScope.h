@@ -7,11 +7,11 @@
 #ifndef FINAL_RELEASE
 #   define BENCHMARK_SCOPE(_CATEGORY, _MSG) \
         const ::Core::FBenchmarkScope CONCAT(__benchmarkScope, __LINE__)((_CATEGORY), (_MSG))
-#   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES) \
-        const ::Core::FIOBenchmarkScope CONCAT(__IObenchmarkScope, __LINE__)((_CATEGORY), (_MSG), (_SIZE_IN_BYTES))
+#   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR) \
+        const ::Core::FIOBenchmarkScope CONCAT(__IObenchmarkScope, __LINE__)((_CATEGORY), (_MSG), (_SIZE_IN_BYTES_PTR))
 #else
 #   define BENCHMARK_SCOPE(_CATEGORY, _MSG) NOOP()
-#   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES) NOOP()
+#   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR) NOOP()
 #endif
 
 namespace Core {
@@ -44,13 +44,13 @@ private:
 #ifndef FINAL_RELEASE
 class FIOBenchmarkScope : public FTimedScope {
 public:
-    FIOBenchmarkScope(const wchar_t* category, const wchar_t* message, size_t sizeInBytes);
+    FIOBenchmarkScope(const wchar_t* category, const wchar_t* message, const std::streamsize* pSizeInBytes);
     ~FIOBenchmarkScope();
 
 private:
     const wchar_t* const _category;
     const wchar_t* const _message;
-    const size_t _sizeInBytes;
+    const std::streamsize* _pSizeInBytes;
 };
 #endif //!FINAL_RELEASE
 //----------------------------------------------------------------------------

@@ -12,7 +12,6 @@
 #include "Core/IO/FS/Filename.h"
 
 namespace Core {
-struct FIndent;
 class IBufferedStreamReader;
 namespace Serialize {
 //----------------------------------------------------------------------------
@@ -107,7 +106,6 @@ public:
         void Clear();
 
         void ToStream(std::basic_ostream<char>& oss, bool minify = true) const;
-        void ToStream(std::basic_ostream<char>& oss, FIndent& indent, bool minify) const;
 
     private:
         EType _type;

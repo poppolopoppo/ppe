@@ -2,7 +2,6 @@
 
 #include "Core/Core.h"
 
-#include "Core/IO/FormatHelpers.h"
 #include "Core/Memory/UniquePtr.h"
 
 #if defined(PLATFORM_WINDOWS) && defined(_DEBUG)
@@ -60,15 +59,15 @@ void CrtCheckGlobalMemoryLeaks(bool enabled);
 //----------------------------------------------------------------------------
 class FCrtMemoryStats {
 public:
-    FSizeInBytes TotalUsedSize;
-    FSizeInBytes LargestUsedBlockSize;
-    FSizeInBytes TotalFreeSize;
-    FSizeInBytes LargestFreeBlockSize;
-    FSizeInBytes TotalOverheadSize;
+    size_t TotalUsedSize;
+    size_t LargestUsedBlockSize;
+    size_t TotalFreeSize;
+    size_t LargestFreeBlockSize;
+    size_t TotalOverheadSize;
 
     // http://en.wikipedia.org/wiki/Fragmentation_(computing)#External_fragmentation
     float ExternalFragmentation() const {
-        return (0 == TotalFreeSize.Value) ? 0 : 1.0f - (float)LargestFreeBlockSize.Value / TotalFreeSize.Value;
+        return (0 == TotalFreeSize ? 0 : 1.0f - (float)LargestFreeBlockSize / TotalFreeSize);
     }
 };
 //----------------------------------------------------------------------------

@@ -16,6 +16,10 @@
 #include "Core/IO/Stream.h"
 #include "Core/Misc/TargetPlatform.h"
 
+#ifdef USE_DEBUG_LOGGER
+#   include "Core/IO/FormatHelpers.h"
+#endif
+
 #define WITH_APPLICATION_TRY_CATCH 0 //%_NOCOMMIT%
 
 PRAGMA_INITSEG_LIB
@@ -30,12 +34,12 @@ POOL_TAG_DEF(Application);
 static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
     FStackLocalLoggerStream(ELogCategory::Info)
         << "Memory statistics :" << eol
-        << " - Total free size          = " << memoryStats.TotalFreeSize << eol
-        << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << eol
-        << " - Total used size          = " << memoryStats.TotalUsedSize << eol
-        << " - Largest used block       = " << memoryStats.LargestUsedBlockSize << eol
-        << " - Total overhead size      = " << memoryStats.TotalOverheadSize << eol
-        << " - Total comitted size      = " << Core::FSizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << eol
+        << " - Total free size          = " << Fmt::FSizeInBytes{ memoryStats.TotalFreeSize } << eol
+        << " - Largest free block       = " << Fmt::FSizeInBytes{ memoryStats.LargestFreeBlockSize } << eol
+        << " - Total used size          = " << Fmt::FSizeInBytes{ memoryStats.TotalUsedSize } << eol
+        << " - Largest used block       = " << Fmt::FSizeInBytes{ memoryStats.LargestUsedBlockSize } << eol
+        << " - Total overhead size      = " << Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize } << eol
+        << " - Total comitted size      = " << Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize + memoryStats.TotalFreeSize + memoryStats.TotalUsedSize } << eol
         << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << eol;
 }
 #endif

@@ -375,7 +375,7 @@ static Dialog::EResult Template_CreateDialogBox_(
 
         STACKLOCAL_WOCSTRSTREAM(tmp, 4096);
         for (const FDecodedCallstack::FFrame& frame : ctx.DecodedCallstack.Frames()) {
-            tmp << FPointer{ reinterpret_cast<intptr_t>(frame.Address()) }
+            tmp << Fmt::FPointer{ reinterpret_cast<intptr_t>(frame.Address()) }
                 << L' ' << frame.Filename()
                 << L'(' << frame.Line() << L"): " << frame.Symbol();
             callstackFrames.emplace_back(tmp.NullTerminatedStr());

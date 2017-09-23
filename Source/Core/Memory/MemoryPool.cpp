@@ -175,7 +175,7 @@ FMemoryPool::FMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkS
     LOG(Info,
         L"[Pool] New pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
-        FSizeInBytes{ _currentChunksize },
+        Fmt::FSizeInBytes{ _currentChunksize },
         BlockCountPerChunk_(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
@@ -189,7 +189,7 @@ FMemoryPool::~FMemoryPool() {
     LOG(Info,
         L"[Pool] Delete pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
-        FSizeInBytes{ _currentChunksize },
+        Fmt::FSizeInBytes{ _currentChunksize },
         BlockCountPerChunk_(_currentChunksize) );
 }
 //----------------------------------------------------------------------------
@@ -201,11 +201,11 @@ void FMemoryPool::GrowChunkSizeIFP_() {
         LOG(Info,
             L"[Pool] Grow pool with block size = {0}, {3} used pages, {1} = {2} per chunk ({4}/{5})",
             _blockSize,
-            FSizeInBytes{ _currentChunksize },
+            Fmt::FSizeInBytes{ _currentChunksize },
             BlockCountPerChunk_(_currentChunksize),
             _chunkCount,
-            FSizeInBytes{ _usedSize },
-            FSizeInBytes{ _totalSize });
+            Fmt::FSizeInBytes{ _usedSize },
+            Fmt::FSizeInBytes{ _totalSize });
     }
 }
 //----------------------------------------------------------------------------
@@ -374,10 +374,10 @@ FMemoryPoolChunk *FMemoryPool::ReleaseChunk_() {
         LOG(Info,
             L"[Pool] Release chunk with block size = {0}, page size = {4} ({5} blocs), {3} remaining pages, {1} = {2} per chunk ({6:f2}%)",
             _blockSize,
-            FSizeInBytes{ _currentChunksize },
+            Fmt::FSizeInBytes{ _currentChunksize },
             BlockCountPerChunk_(_currentChunksize),
             _chunkCount,
-            FSizeInBytes{ release->ChunkSize() },
+            Fmt::FSizeInBytes{ release->ChunkSize() },
             BlockCountPerChunk_(release->ChunkSize()),
             (100.0f*_usedSize)/_totalSize );
 
@@ -396,7 +396,7 @@ void* FMemoryPool::Allocate(FMemoryTrackingData *trackingData /* = nullptr */) {
     return Core::aligned_malloc(BlockSize(), 16);
 
 #else
-    
+
     void *ptr = TryAllocate_FailIfNoBlockAvailable_();
     if (nullptr == ptr) {
 
@@ -496,8 +496,8 @@ void FMemoryPool::Clear_UnusedMemory() {
 #endif
 }
 //----------------------------------------------------------------------------
-size_t FMemoryPool::BlockCountPerChunk_(size_t chunkSize) const { 
-    return (chunkSize - sizeof(FMemoryPoolChunk)) / _blockSize; 
+size_t FMemoryPool::BlockCountPerChunk_(size_t chunkSize) const {
+    return (chunkSize - sizeof(FMemoryPoolChunk)) / _blockSize;
 }
 //----------------------------------------------------------------------------
 FMemoryPoolChunk* FMemoryPool::AllocateChunk_() {
