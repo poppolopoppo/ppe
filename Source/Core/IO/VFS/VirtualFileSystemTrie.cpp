@@ -128,6 +128,8 @@ TUniquePtr<IVirtualFileSystemIStream> FVirtualFileSystemTrie::OpenReadable(const
     TUniquePtr<IVirtualFileSystemIStream> result;
     if (readable)
         result = readable->OpenReadable(filename, policy);
+    if (not result)
+        LOG(Error, L"[VFS] failed to open file '{0}' for read (access flags = {1})", filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -138,6 +140,8 @@ TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemTrie::OpenWritable(const
     TUniquePtr<IVirtualFileSystemOStream> result;
     if (writable)
         result = writable->OpenWritable(filename, policy);
+    if (not result)
+        LOG(Error, L"[VFS] failed to open file '{0}' for write (access flags = {1})", filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -148,6 +152,8 @@ TUniquePtr<IVirtualFileSystemIOStream> FVirtualFileSystemTrie::OpenReadWritable(
     TUniquePtr<IVirtualFileSystemIOStream> result;
     if (readWritable)
         result = readWritable->OpenReadWritable(filename, policy);
+    if (not result)
+        LOG(Error, L"[VFS] failed to open file '{0}' for read/write (access flags = {1})", filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------

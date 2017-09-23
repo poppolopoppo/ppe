@@ -33,12 +33,14 @@ enum class EAccessPolicy {
     ShortLived      = 1 << 10,  // Temporary file, try as much as possible to don't flush to disk (use with |Create)
     Temporary       = 1 << 11,  // Delete files after when last descriptor is closed (use with |Create)
     Exclusive       = 1 << 12,  // Fail if the file already exists (use with |Create)
-    Compress        = 1 << 12,  // Uses Core::Compression
+    Compress        = 1 << 13,  // Uses Core::Compression
 
     Truncate_Binary = Truncate | Binary,
     Truncate_Text   = Truncate | Text,
 };
 ENUM_FLAGS(EAccessPolicy);
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, EAccessPolicy policy);
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, EAccessPolicy policy);
 //----------------------------------------------------------------------------
 enum class EExistPolicy {
     Exists          = 1 << 0,

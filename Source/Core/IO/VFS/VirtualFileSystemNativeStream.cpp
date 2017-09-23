@@ -56,17 +56,21 @@ std::streamoff FVirtualFileSystemNativeFileIStream::SeekI(std::streamoff offset,
 bool FVirtualFileSystemNativeFileIStream::Read(void* storage, std::streamsize sizeInBytes) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    IOBENCHMARK_SCOPE(L"NATIVE-READ", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), checked_cast<size_t>(sizeInBytes));
+    std::streamsize read = sizeInBytes;
+    IOBENCHMARK_SCOPE(L"NATIVE-READ", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), &read);
 
-    return (FPlatformIO::Read(_handle, storage, sizeInBytes) == sizeInBytes);
+    read = FPlatformIO::Read(_handle, storage, read);
+
+    return (sizeInBytes == read);
 }
 //----------------------------------------------------------------------------
 size_t FVirtualFileSystemNativeFileIStream::ReadSome(void* storage, size_t eltsize, size_t count) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    IOBENCHMARK_SCOPE(L"NATIVE-READ", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), eltsize * count);
+    std::streamsize read = checked_cast<std::streamsize>(eltsize * count);
+    IOBENCHMARK_SCOPE(L"NATIVE-READ", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), &read);
 
-    const std::streamsize read = FPlatformIO::Read(_handle, storage, eltsize * count);
+    read = FPlatformIO::Read(_handle, storage, read);
 
     return checked_cast<size_t>(read / eltsize);
 }
@@ -131,9 +135,12 @@ std::streamoff FVirtualFileSystemNativeFileOStream::SeekO(std::streamoff offset,
 bool FVirtualFileSystemNativeFileOStream::Write(const void* storage, std::streamsize sizeInBytes) {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    IOBENCHMARK_SCOPE(L"NATIVE-WRITE", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), checked_cast<size_t>(sizeInBytes));
+    std::streamsize written = sizeInBytes;
+    IOBENCHMARK_SCOPE(L"NATIVE-WRITE", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), &written);
 
-    return (FPlatformIO::Write(_handle, storage, sizeInBytes) == sizeInBytes);
+    written = FPlatformIO::Write(_handle, storage, sizeInBytes);
+
+    return (sizeInBytes == written);
 }
 //----------------------------------------------------------------------------
 size_t FVirtualFileSystemNativeFileOStream::WriteSome(const void* storage, size_t eltsize, size_t count) {
@@ -141,9 +148,10 @@ size_t FVirtualFileSystemNativeFileOStream::WriteSome(const void* storage, size_
     Assert(eltsize);
     Assert(count);
 
-    IOBENCHMARK_SCOPE(L"NATIVE-WRITE", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), eltsize * count);
+    std::streamsize written = checked_cast<std::streamsize>(eltsize * count);
+    IOBENCHMARK_SCOPE(L"NATIVE-WRITE", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), &written);
 
-    const std::streamsize written = FPlatformIO::Write(_handle, storage, eltsize * count);
+    written = FPlatformIO::Write(_handle, storage, written);
 
     return checked_cast<size_t>(written / eltsize);
 }
