@@ -15,6 +15,7 @@
 #include "Core/IO/VirtualFileSystem.h"
 #include "Core/IO/VFS/VirtualFileSystemStream.h"
 #include "Core/Maths/Maths.h"
+#include "Core/Maths/PrimeNumbers.h"
 #include "Core/Memory/MemoryStream.h"
 #include "Core/Time/TimedScope.h"
 
@@ -400,7 +401,7 @@ public:
         return (not key_equal()(_values[bucket], empty_key) ? _values + bucket : nullptr);
     }
 
-    void erase(const_reference value) {
+    void erase(const_reference value) { // bubble down
         Assert(0 < _capacity);
         Assert(_size < _capacity);
         const size_t h = hasher()(value);
@@ -462,6 +463,140 @@ private:
     size_type _capacity;
     size_type _size;
 };
+//----------------------------------------------------------------------------
+template <typename _Key>
+struct TRobinHoodHashEmptyKey {
+    STATIC_ASSERT(sizeof(_Key) >= sizeof(u32));
+    static constexpr u32 Empty = 0xBADDADD1ul;
+    static bool IsEmpty(const _Key& key) { return (reinterpret_cast<const u32&>(key) == Empty); }
+    static void MarkAsEmpty(_Key* pkey) { reinterpret_cast<u32&>(*pkey) = Empty; }
+};
+//----------------------------------------------------------------------------
+struct FRobinHoodHashLinearProbing {
+    static size_t Bucket(hash_t h, size_t capacity) { return Bounded(h, capacity); }
+    static size_t ProbeDistance(hash_t h, size_t capacity) {
+        const size_t b = Bucket(h, capacity);
+        return (b < bucket ? b + _capacity - bucket : b - bucket);
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _Key>
+struct TRobinHoodHashSetTraits {
+    typedef _Key key_type;
+    typedef _Key mapped_type;
+    typedef _Key value_type;
+    typedef _Key public_type;
+    static _Key& Key(value_type& v) { return v; }
+    static const _Key& Key(const value_type& v) { return v; }
+};
+template <
+    typename _Traits
+,   typename _EmptyKey = TRobinHoodHashEmptyKey<typename _Traits::key_type>
+,   typename _Probing = TRobinHoodHash<typename _Traits::key_type>
+,   typename _Hash = THash<typename _Policy::key_type>
+,   typename _EqualTo = Meta::TEqualTo<typename _Policy::key_type>
+,   typename _Allocator = ALLOCATOR(Container, typename _Policy::value_type)
+>   class TRobinHoodHashTable : TRebindAlloc< _Allocator, typename _Policy::value_type > {
+public:
+    typedef _Policy policy_type;
+    typedef typename _Policy::key_type key_type;
+    typedef typename _Policy::mapped_type mapped_type;
+    typedef typename _Policy::value_type value_type;
+    typedef typename _Policy::public_type public_type;
+
+    typedef _Hash hasher;
+    typedef _EqualTo key_equal;
+
+    typedef TRebindAlloc< _Allocator, typename _Policy::value_type > allocator_type;
+    typedef std::allocator_traits< allocator_type > allocator_traits;
+
+    typedef Meta::TAddReference<public_type> reference;
+    typedef Meta::TAddReference<const public_type> const_reference;
+    typedef Meta::TAddPointer<public_type> pointer;
+    typedef Meta::TAddPointer<const public_type> const_pointer;
+
+    typedef size_t size_type;
+    typedef ptrdiff_t difference_type;
+
+    static constexpr size_type MaxLoadFactor = 80;
+
+    TRobinHoodHashTable() : _values(nullptr), _capacity(0), _size(0) {}
+    ~TRobinHoodHashTable() { clear_ReleaseMemory(); }
+
+    size_type size() const { return _size; }
+    bool empty() const { return 0 == _size; }
+    size_type capacity() const { return _capacity; }
+
+    void resize(size_type atleast) {
+
+    }
+
+    bool insert(const_reference value) {
+
+    }
+
+    pointer end() const { return nullptr; }
+
+    pointer find(const_reference value) const {
+
+    }
+
+    void erase(const_reference value) {
+
+    }
+
+    void clear() {
+        for (value_type& v : MakeView(_values, _values + _capacity)) {
+            if (v.)
+        }
+    }
+
+    void clear_ReleaseMemory() {
+        if (nullptr == _values)
+            return;
+
+        clear();
+        allocator_traits::deallocate(*this, _values);
+        _values = nullptr;
+        _capacity = 0;
+    }
+
+private:
+    FORCE_INLINE size_t BucketFromHash_(size_t h) const {
+        return Bounded(h, _capacity);
+    }
+
+    FORCE_INLINE size_t ProbeDistance_(size_t h, size_t bucket) const {
+
+    }
+
+    size_t FindOrAddBucket_AssumeUnique_(const key_type& key, bool* pexists) const {
+        Assert(_values);
+        Assert(pexists);
+
+        const hash_t h = hasher()(key);
+        const size_t b = BucketFromHash_(h);
+
+        bool exists = false;
+        size_t distance = 0;
+        for (;;) {
+            value_type& bucket = _buckets[b];
+            if (policy_type::IsEmpty(bucket) || (exists = ) )
+                break;
+
+
+        }
+
+        Assert(not key_equal()(policy_type::Key(_buckets[b]), key));
+        *pexists = exists;
+        return b;
+    }
+
+    size_type _capacity;
+    value_type* _buckets;
+    size_type _size;
+};
+*/
 //----------------------------------------------------------------------------
 template class TAssociativeVector<FString, int>;
 template class TFlatMap<FString, int>;
