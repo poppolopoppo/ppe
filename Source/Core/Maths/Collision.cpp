@@ -165,21 +165,21 @@ float DistanceBoxBox(const FBoundingBox& box1, const FBoundingBox& box2) {
 
     //Distance for X.
     if (box1.Min().x() > box2.Max().x())
-        distance += Square(box2.Max().x() - box1.Min().x());
+        distance += Sqr(box2.Max().x() - box1.Min().x());
     else if (box2.Min().x() > box1.Max().x())
-        distance += Square(box1.Max().x() - box2.Min().x());
+        distance += Sqr(box1.Max().x() - box2.Min().x());
 
     //Distance for Y.
     if (box1.Min().y() > box2.Max().y())
-        distance += Square(box2.Max().y() - box1.Min().y());
+        distance += Sqr(box2.Max().y() - box1.Min().y());
     else if (box2.Min().y() > box1.Max().y())
-        distance += Sqaure(box1.Max().y() - box2.Min().y());
+        distance += Sqr(box1.Max().y() - box2.Min().y());
 
     //Distance for Z.
     if (box1.Min().z() > box2.Max().z())
-        distance += Square(box2.Max().z() - box1.Min().z());
+        distance += Sqr(box2.Max().z() - box1.Min().z());
     else if (box2.Min().z() > box1.Max().z())
-        distance += Square(box1.Max().z() - box2.Min().z());
+        distance += Sqr(box1.Max().z() - box2.Min().z());
 
     return Sqrt(distance);
 }
