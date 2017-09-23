@@ -61,10 +61,10 @@ template <typename T, typename U>
 constexpr T Pow(T v, U n);
 //----------------------------------------------------------------------------
 template <typename U>
-float Pow(float f, U n);
+constexpr float Pow(float f, U n);
 //----------------------------------------------------------------------------
 template <typename U>
-double Pow(double d, U n);
+constexpr double Pow(double d, U n);
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT
 float Rcp(float f);
@@ -125,13 +125,11 @@ constexpr float Float01_to_FloatM11(float v_01) { return (v_01 * 2.f - 1.f); }
 constexpr float FloatM11_to_Float01(float v_M11) { return (v_M11 * .5f + .5f); }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE void SinCos(T radians, T *fsin, T *fcos);
+constexpr void SinCos(T radians, T *fsin, T *fcos);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool NearlyEquals(float A, float B, float maxRelDiff = F_Epsilon);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline bool IsINF(float f)  { return std::isinf(f); }
 inline bool IsINF(double d) { return std::isinf(d); }
@@ -150,6 +148,28 @@ constexpr float NormalizeAngle(float degrees);
 size_t CubeMapFaceID(float x, float y, float z);
 //----------------------------------------------------------------------------
 constexpr float GridSnap(float location, float grid);
+//----------------------------------------------------------------------------
+// https://github.com/lemire/fastrange/blob/master/fastrange.h
+inline u32 Bounded(u32 word, u32 p) {
+	return (u32)(((u64)word * (u64)p) >> 32);
+}
+inline u64 Bounded(u64 word, u64 p) {
+#ifdef __SIZEOF_INT128__ // then we know we have a 128-bit int
+    return (u64)(((__uint128_t)word * (__uint128_t)p) >> 64);
+#elif defined(_MSC_VER) && defined(_WIN64)
+    // supported in Visual Studio 2005 and better
+    u64 highProduct;
+    _umul128(word, p, &highProduct); // ignore output
+    return highProduct;
+    unsigned __int64 _umul128(
+        unsigned __int64 Multiplier,
+        unsigned __int64 Multiplicand,
+        unsigned __int64 *HighProduct
+    );
+#else
+    return word % p; // fallback
+#endif // __SIZEOF_INT128__
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

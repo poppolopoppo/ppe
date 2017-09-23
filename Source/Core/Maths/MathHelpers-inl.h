@@ -7,12 +7,12 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-T Abs(T value, typename std::enable_if<std::is_signed<T>::value>::type* = nullptr) {
+constexpr T Abs(T value, typename std::enable_if<std::is_signed<T>::value>::type* = nullptr) {
     return (value < 0 ? -value : value);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-T Abs(T value, typename std::enable_if<not std::is_signed<T>::value>::type* = nullptr) {
+constexpr T Abs(T value, typename std::enable_if<not std::is_signed<T>::value>::type* = nullptr) {
     return (value);
 }
 //----------------------------------------------------------------------------
@@ -21,7 +21,7 @@ constexpr T BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) {
     return static_cast<T>(v0*f0 + v1*f1 + v2*f2);
 }
 //----------------------------------------------------------------------------
-inline bool BarycentricLerp(bool v0, bool v1, bool v2, float f0, float f1, float f2) {
+inline constexpr bool BarycentricLerp(bool v0, bool v1, bool v2, float f0, float f1, float f2) {
     return (((v0?1:0)*f0 + (v1?1:0)*f1 + (v2?1:0)*f2) >= 0.5f);
 }
 //----------------------------------------------------------------------------
@@ -56,7 +56,7 @@ constexpr T Lerp(T v0, T v1, U f) {
     return static_cast<T>((v0 * (U(1) - f)) + (v1 * f));
 }
 //----------------------------------------------------------------------------
-inline bool Lerp(bool v0, bool v1, float f) {
+inline constexpr bool Lerp(bool v0, bool v1, float f) {
     Assert(f >= 0 && f <= 1);
     return (Lerp(v0 ? 1.f : 0.f, v1 ? 1.f : 0.f, f) >= 0.5f);
 }
@@ -73,12 +73,12 @@ constexpr T Pow(T v, U n) {
 }
 //----------------------------------------------------------------------------
 template <typename U>
-float Pow(float f, U n) {
+constexpr float Pow(float f, U n) {
     return std::pow(f, n);
 }
 //----------------------------------------------------------------------------
 template <typename U>
-double Pow(double f, U n) {
+constexpr double Pow(double f, U n) {
     return std::pow(d, n);
 }
 //----------------------------------------------------------------------------
@@ -163,7 +163,7 @@ constexpr float Radians(float degrees) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE void SinCos(T radians, T *fsin, T *fcos) {
+constexpr void SinCos(T radians, T *fsin, T *fcos) {
     *fsin = std::sin(radians);
     *fcos = std::cos(radians);
 }
@@ -208,9 +208,8 @@ inline size_t CubeMapFaceID(float x, float y, float z) {
 }
 //----------------------------------------------------------------------------
 inline constexpr float GridSnap(float location, float grid) {
-    return (0.f != grid)
-        ? Floor((location + 0.5f * grid) / grid) * grid
-        : location;
+    //Assert(Abs(grid) > F_SmallEpsilon); // constexpr :'(
+    return (Floor((location + 0.5f * grid) / grid) * grid);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
