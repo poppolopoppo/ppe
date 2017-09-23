@@ -487,7 +487,7 @@ static void Test_Container_POD_(
     static constexpr size_t loops = 100;
 #endif
 
-    LOG(Info, L"{0}", Repeat(L"-*=*", 20));
+    LOG(Info, L"{0}", Fmt::Repeat(L"-*=*", 20));
     BENCHMARK_SCOPE(name, L"global");
 
     {
@@ -526,6 +526,63 @@ static void Test_Container_POD_(
     }
 }
 //----------------------------------------------------------------------------
+template <typename _Set, typename T, typename _Adaptor>
+static void Test_Container_Obj_(
+    const wchar_t* name, _Set& set,
+    const TMemoryView<const T>& input,
+    const TMemoryView<const T>& negative,
+    const TMemoryView<const T>& search,
+    const TMemoryView<const T>& todelete,
+    const TMemoryView<const T>& searchafterdelete,
+    const _Adaptor& adaptor
+) {
+
+#ifdef WITH_CORE_ASSERT
+    static constexpr size_t loops = 10;
+#else
+    static constexpr size_t loops = 100;
+#endif
+
+    LOG(Info, L"{0}", Fmt::Repeat(L"-*=*", 20));
+
+    BENCHMARK_SCOPE(name, L"global");
+
+    {
+        BENCHMARK_SCOPE(name, L"construction");
+        for (const auto& word : input.Map(adaptor))
+            set.insert(word);
+    }
+    Assert(set.size() == input.size());
+    {
+        BENCHMARK_SCOPE(name, L"search");
+        forrange(i, 0, loops) {
+            for (const auto& word : search.Map(adaptor))
+                if (set.end() == set.find(word))
+                    AssertNotReached();
+        }
+    }
+    {
+        BENCHMARK_SCOPE(name, L"negative search");
+        forrange(i, 0, loops) {
+            for (const auto& word : negative.Map(adaptor))
+                if (set.end() != set.find(word))
+                    AssertNotReached();
+        }
+    }
+    {
+        BENCHMARK_SCOPE(name, L"deletion");
+        for (const auto& word : todelete.Map(adaptor))
+            set.erase(word);
+    }
+    {
+        BENCHMARK_SCOPE(name, L"search after delete");
+        forrange(i, 0, loops) {
+            for (const auto& word : searchafterdelete.Map(adaptor))
+                set.find(word);
+        }
+    }
+}
+//----------------------------------------------------------------------------
 template <typename _Set, typename T>
 static void Test_Container_Obj_(
     const wchar_t* name, _Set& set,
@@ -535,51 +592,8 @@ static void Test_Container_Obj_(
     const TMemoryView<const T>& todelete,
     const TMemoryView<const T>& searchafterdelete
 ) {
-
-#ifdef WITH_CORE_ASSERT
-    static constexpr size_t loops = 10;
-#else
-    static constexpr size_t loops = 100;
-#endif
-
-    LOG(Info, L"{0}", Repeat(L"-*=*", 20));
-
-    BENCHMARK_SCOPE(name, L"global");
-
-    {
-        BENCHMARK_SCOPE(name, L"construction");
-        for (const FStringView& word : input)
-            set.insert(word);
-    }
-    Assert(set.size() == input.size());
-    {
-        BENCHMARK_SCOPE(name, L"search");
-        forrange(i, 0, loops) {
-            for (const FStringView& word : search)
-                if (set.end() == set.find(word))
-                    AssertNotReached();
-        }
-    }
-    {
-        BENCHMARK_SCOPE(name, L"negative search");
-        forrange(i, 0, loops) {
-            for (const FStringView& word : negative)
-                if (set.end() != set.find(word))
-                    AssertNotReached();
-        }
-    }
-    {
-        BENCHMARK_SCOPE(name, L"deletion");
-        for (const FStringView& word : todelete)
-            set.erase(word);
-    }
-    {
-        BENCHMARK_SCOPE(name, L"search after delete");
-        forrange(i, 0, loops) {
-            for (const FStringView& word : searchafterdelete)
-                set.find(word);
-        }
-    }
+    constexpr auto identity = [](const T& v) -> const T& { return v; };
+    return Test_Container_Obj_(name, set, input, negative, search, todelete, searchafterdelete, identity);
 }
 //----------------------------------------------------------------------------
 void Test_Containers() {
@@ -618,7 +632,7 @@ void Test_Containers() {
         Assert(absolute2 == normalized2);
     }
     {
-        LOG(Info, L"{0}", Repeat(L">>=", 20));
+        LOG(Info, L"{0}", Fmt::Repeat(L">>=", 20));
         LOG(Info, L"FStringView collection");
 
         const FFilename filename = L"Process:/dico.txt";
@@ -666,6 +680,12 @@ void Test_Containers() {
         VECTOR_THREAD_LOCAL(Container, FStringView) searchafterdelete(input);
         std::random_shuffle(searchafterdelete.begin(), searchafterdelete.end());
 
+        const hash_t h0 = hash_value(words.front());
+        const hash_t h1 = hash_string(words.front().MakeView());
+        const hash_t h2 = TConstCharHasher<char, ECase::Sensitive>()(FConstChar(words.front().MakeView()));
+        AssertRelease(h0 == h1);
+        AssertRelease(h1 == h2);
+
         {
             typedef TCompactHashSet<
                 FStringView,
@@ -707,6 +727,26 @@ void Test_Containers() {
             LOG(Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
         }
         {
+            CONSTCHAR_HASHSET(Container, ECase::Sensitive) set;
+
+            Test_Container_Obj_(L"TConstCharHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView(),
+                [](const FStringView& str) -> FConstChar {
+                    return FConstChar(str);
+                });
+
+            LOG(Info, L"TConstCharHashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
+        }
+        {
+            CONSTCHAR_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
+
+            Test_Container_Obj_(L"TConstCharHashSet Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView(),
+                [](const FStringView& str) -> FConstChar {
+                    return FConstChar(str);
+                });
+
+            LOG(Info, L"TConstCharHashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
+        }
+        {
             std::unordered_set<
                 FStringView,
                 TStringViewHasher<char, ECase::Sensitive>,
@@ -744,7 +784,7 @@ void Test_Containers() {
         }*/
     }
     {
-        LOG(Info, L"{0}", Repeat(L">>=", 20));
+        LOG(Info, L"{0}", Fmt::Repeat(L">>=", 20));
         LOG(Info, L"Integer collection");
 
         typedef double value_type;

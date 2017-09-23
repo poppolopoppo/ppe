@@ -67,7 +67,7 @@ public:
     TBasicStringView(const iterator& first, const iterator& last) : parent_type(first, last) {}
     TBasicStringView(pointer storage, size_type size) : parent_type(storage, size) {}
 
-    const _Char* c_str() { return parent_type::data(); }
+    const _Char* c_str() const { return parent_type::data(); }
 
     template <size_t _Dim>
     TBasicStringView(const _Char (&staticChars)[_Dim])
@@ -440,13 +440,13 @@ struct TStringViewLess<_Char, ECase::Insensitive> {
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TStringViewHasher {
-    size_t operator ()(const TBasicStringView<_Char>& str) const {
+    hash_t operator ()(const TBasicStringView<_Char>& str) const {
         return hash_string(str);
     }
 };
 template <typename _Char>
 struct TStringViewHasher<_Char, ECase::Insensitive> {
-    size_t operator ()(const TBasicStringView<_Char>& str) const {
+    hash_t operator ()(const TBasicStringView<_Char>& str) const {
         return hash_stringI(str);
     }
 };
@@ -456,6 +456,52 @@ using TBasicStringViewHashMemoizer = THashMemoizer<
     TBasicStringView<_Char>,
     TStringViewHasher<_Char, _Sensitive>,
     TStringViewEqualTo<_Char, _Sensitive>
+>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char>
+struct TBasicConstChar {
+    const _Char* Data = nullptr;
+
+    TBasicConstChar(const _Char* data) : Data(data) {}
+    TBasicConstChar(const TBasicStringView<_Char>& str) : Data(str.c_str()) {}
+
+    const _Char* c_str() const { return Data; }
+    operator const _Char* () const { return Data; }
+
+    TBasicStringView<_Char> MakeView() const { return TBasicStringView<_Char>(Data, Length(Data)); }
+};
+//----------------------------------------------------------------------------
+using FConstChar = TBasicConstChar<char>;
+using FConstWChar = TBasicConstChar<wchar_t>;
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+struct TConstCharEqualTo : TStringViewEqualTo<_Char, _Sensitive> {
+    bool operator ()(const TBasicConstChar<_Char>& lhs, const TBasicConstChar<_Char>& rhs) const {
+        return (lhs.Data == rhs.Data || TStringViewEqualTo<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView()));
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+struct TConstCharLess : TStringViewLess<_Char, _Sensitive> {
+    bool operator ()(const TBasicConstChar<_Char>& lhs, const TBasicConstChar<_Char>& rhs) const {
+        return (lhs.Data == rhs.Data ? 0 : TStringViewLess<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView()));
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+struct TConstCharHasher : TStringViewHasher<_Char, _Sensitive> {
+    hash_t operator ()(const TBasicConstChar<_Char>& cstr) const {
+        return TStringViewHasher<_Char, _Sensitive>::operator ()(cstr.MakeView());
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+using TBasicConstCharHashMemoizer = THashMemoizer<
+    TBasicConstChar<_Char>,
+    TConstCharHasher<_Char, _Sensitive>,
+    TConstCharEqualTo<_Char, _Sensitive>
 >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
