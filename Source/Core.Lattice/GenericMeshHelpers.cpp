@@ -861,7 +861,7 @@ static void PNTriangles_(
             positions3f[i1], normals3f[i1],
             positions3f[i2], normals3f[i2] );
 
-        Assert(indicesPerTriangle == (nextIndex - startIndex));
+        Assert_NoAssume(indicesPerTriangle == (nextIndex - startIndex));
         Assert(verticesPerTriangle == (nextVertex - startVertex));
 
         forrange(j, startVertex, nextVertex)
@@ -1034,7 +1034,7 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
             FVertexCache::FEntry& entry = entries[i];
             entry.TriangleList = pTriList;
             pTriList += entry.TrianglesLeft;
-            Assert(pTriList <= pTriListEnd);
+            Assert_NoAssume(pTriList <= pTriListEnd);
             entry.TrianglesLeft = 0;
         }
 

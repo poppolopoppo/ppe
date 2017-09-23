@@ -174,8 +174,8 @@ void FMetaDatabase::UnregisterObject(FMetaObject* object) {
 #endif
     }
 
-    Assert(atom);
-    Assert(atom->Cast<PMetaObject>()->Wrapper() == object);
+    Assert_NoAssume(atom);
+    Assert_NoAssume(atom->Cast<PMetaObject>()->Wrapper() == object);
 }
 //----------------------------------------------------------------------------
 FMetaObject* FMetaDatabase::FindObject(const FName& name) const {

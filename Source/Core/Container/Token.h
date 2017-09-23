@@ -10,7 +10,7 @@
 
 #include <iosfwd>
 #include <mutex>
-#endif 
+#endif
 
 #include "Core/IO/StringView.h"
 #include "Core/Meta/Singleton.h"
@@ -78,7 +78,7 @@ public:
 #endif
         FChunk() : Next(nullptr), WriteOffset(0) {}
         u8* Data() const {
-            Assert(TestCanary());
+            Assert_NoAssume(TestCanary());
             return (u8*)(this + 1);
         }
     };
@@ -101,7 +101,7 @@ public:
         size_t Length;
 #endif
         u8* Data() const { return (u8*)(this + 1); }
-        FEntry(size_t length, size_t hashValue) 
+        FEntry(size_t length, size_t hashValue)
             : Next(nullptr)
             , HashValue(hashValue)
             , Length(checked_cast<decltype(Length)>(length)) {}
@@ -166,10 +166,10 @@ public:
     const _Char* c_str() const { return (const _Char*)(_handle ? _handle->Data() : nullptr); }
     const _Char* data() const { return (const _Char*)(_handle ? _handle->Data() : nullptr); }
 
-    stringview_type MakeView() const { 
+    stringview_type MakeView() const {
         return ((_handle)
-            ? stringview_type((const _Char*)_handle->Data(), _handle->Length) 
-            : stringview_type() ); 
+            ? stringview_type((const _Char*)_handle->Data(), _handle->Length)
+            : stringview_type() );
     }
 
     size_t HashValue() const { return (_handle ? _handle->HashValue : 0); }
@@ -177,10 +177,10 @@ public:
     void Swap(TToken& other) { std::swap(_handle, other._handle); }
 
     bool Equals(const TToken& other) const { return (_handle == other._handle); }
-    bool Less(const TToken& other) const { 
+    bool Less(const TToken& other) const {
         return ((_handle != other._handle)
             ? less_type{}(MakeView(), other.MakeView())
-            : false ); 
+            : false );
     }
 
     bool Equals(const stringview_type& str) const { return equalto_type{}(MakeView(), str); }

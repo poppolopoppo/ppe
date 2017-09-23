@@ -65,19 +65,19 @@ public:
 #endif
 
     static T& Instance() {
-        Assert(HasInstance());
+        Assert_NoAssume(HasInstance());
         return storage_type::Ref();
     }
 
     template <typename... _Args>
     static void Create(_Args&&... args) {
-        Assert(not HasInstance());
+        Assert_NoAssume(not HasInstance());
         ONLY_IF_ASSERT(storage_type::GHasInstance = true);
         new ((void*)&storage_type::Ref()) T{ std::forward<_Args>(args)... };
     }
 
     static void Destroy() {
-        Assert(HasInstance());
+        Assert_NoAssume(HasInstance());
         storage_type::Ref().~T();
         ONLY_IF_ASSERT(storage_type::GHasInstance = false);
     }

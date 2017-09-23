@@ -177,7 +177,7 @@ size_t FDeviceSharedEntityPool::ReleaseLRU_ReturnRealSize(size_t targetSizeInByt
         p = prev;
     }
 
-    Assert(_usedMemory.TotalSizeInBytes() == totalSizeInBytes);
+    Assert_NoAssume(_usedMemory.TotalSizeInBytes() == totalSizeInBytes);
     return checked_cast<size_t>(_usedMemory.TotalSizeInBytes());
 }
 //----------------------------------------------------------------------------

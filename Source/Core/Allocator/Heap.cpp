@@ -219,7 +219,7 @@ struct FHeapHandle_ {
         ONLY_IF_ASSERT(CheckCanaries());
         Assert(ptr);
         Assert(Meta::IsAligned(PAGE_SIZE, ptr));
-        Assert(0 < NumAllocs);
+        Assert_NoAssume(0 < NumAllocs);
 
         ONLY_IF_ASSERT(NumAllocs--);
         LocalVM.Free(ptr);

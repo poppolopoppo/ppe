@@ -63,7 +63,7 @@ static const FSymbol* FindSymbol_(const FSymbols::hashmap_type& symbols, const F
 static void UnregisterSymbol_(const FSymbols::hashmap_type& symbols, const FSymbol** psymbol) {
     UNUSED(symbols);
     Assert(nullptr != *psymbol);
-    Assert(*psymbol == FindSymbol_(symbols, (*psymbol)->CStr()));
+    Assert_NoAssume(*psymbol == FindSymbol_(symbols, (*psymbol)->CStr()));
     *psymbol = nullptr;
 }
 //----------------------------------------------------------------------------

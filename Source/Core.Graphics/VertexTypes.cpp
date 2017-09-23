@@ -308,7 +308,7 @@ void RegisterVertexType(FWString&& name, const FVertexDeclaration* vdecl) {
 void UnregisterVertexType(const FVertexDeclaration* vdecl) {
     Assert(vdecl);
     Assert(vdecl->Frozen());
-    Assert(vdecl->ResourceName() == VertexTypeName_(vdecl));
+    Assert_NoAssume(vdecl->ResourceName() == VertexTypeName_(vdecl));
 
     auto& vertexDico = FVertexDeclarationDico_::Instance();
 

@@ -99,7 +99,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 
         FBinnedChunk_* Owner() const {
             FBinnedChunk_* owner = (FBinnedChunk_*)((uintptr_t(this) & ChunkSizeMask));
-            Assert(owner->CheckCanaries_());
+            Assert_NoAssume(owner->CheckCanaries_());
             return owner;
         }
     };
@@ -109,8 +109,8 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     FBinnedChunk_& operator =(const FBinnedChunk_&) = delete;
 
     ~FBinnedChunk_() {
-        Assert(CheckCanaries_());
-        Assert(CheckThreadSafety_());
+        Assert_NoAssume(CheckCanaries_());
+        Assert_NoAssume(CheckThreadSafety_());
     }
 
     size_t Class() const { return _class; }
@@ -124,13 +124,13 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     bool HasFreeBlock() const { return (_freeCount > 0); }
 
     FORCE_INLINE FBlock* Allocate() {
-        Assert(CheckCanaries_());
-        Assert(CheckThreadSafety_());
+        Assert_NoAssume(CheckCanaries_());
+        Assert_NoAssume(CheckThreadSafety_());
         Assert(_freeCount);
 
         FBlock* p;
         if (_freeBlock) {
-            Assert(_freeBlock->TestCanary());
+            Assert_NoAssume(_freeBlock->TestCanary());
 
             p = _freeBlock;
             _freeBlock = p->Next;
@@ -151,16 +151,16 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     }
 
     FORCE_INLINE void Release(FBlock* p) {
-        Assert(CheckCanaries_());
-        Assert(CheckThreadSafety_());
+        Assert_NoAssume(CheckCanaries_());
+        Assert_NoAssume(CheckThreadSafety_());
 
-        Assert(p->TestCanary());
+        Assert_NoAssume(p->TestCanary());
         Assert(Meta::IsAligned(Alignment, p));
 
         ONLY_IF_ASSERT(FillBlockDeleted_(p, GClassesSize[_class]));
         ONLY_IF_ASSERT(p->MakeCanary());
 
-        Assert(!_freeBlock || _freeBlock->TestCanary());
+        Assert_NoAssume(!_freeBlock || _freeBlock->TestCanary());
 
         p->Next = _freeBlock;
         _freeBlock = p;
@@ -168,13 +168,13 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     }
 
     void TakeOwn(FBinnedThreadCache_* newCache) {
-        Assert(CheckCanaries_());
-        
+        Assert_NoAssume(CheckCanaries_());
+
         _threadCache = newCache;
 
 #ifdef WITH_CORE_ASSERT
         if (nullptr == newCache)
-            Assert(CheckThreadSafety_());
+            Assert_NoAssume(CheckThreadSafety_());
         else
             _threadId = std::this_thread::get_id();
 #endif
@@ -182,7 +182,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 
 #ifdef WITH_CORE_ASSERT
     void ReportLeaks() const {
-        Assert(CheckCanaries_());
+        Assert_NoAssume(CheckCanaries_());
 
         const size_t n = BlockAllocatedCount();
         Assert(n);
@@ -196,9 +196,9 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 
             bool isLeak = true;
             for (block_type* freeBlock = _freeBlock; freeBlock; freeBlock = freeBlock->Next) {
-                Assert(freeBlock->TestCanary());
+                Assert_NoAssume(freeBlock->TestCanary());
                 if (freeBlock == usedBlock) {
-                    Assert(usedBlock->TestCanary());
+                    Assert_NoAssume(usedBlock->TestCanary());
                     isLeak = false;
                     break;
                 }
@@ -212,7 +212,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 
                     FDecodedCallstack decoded;
                     callstack.Decode(&decoded);
-                    LOG(Error, L"[MallocBinned] leaked block {0} :\n{1}", FSizeInBytes{ blockSizeInBytes }, decoded);
+                    LOG(Error, L"[MallocBinned] leaked block {0} :\n{1}", Fmt::FSizeInBytes{ blockSizeInBytes }, decoded);
                 }
                 else {
                     LOG(Warning, L"[MallocBinned] no infos available for leaked memory block, try to turn on CORE_MALLOC_LOGGER_PROXY");
@@ -222,8 +222,8 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 
         if (leakedNumBlocks) {
             LOG(Error, L"[MallocBinned] leaked {0} blocks ({1}) in one chunk",
-                FCountOfElements{ leakedNumBlocks },
-                FSizeInBytes{ leakedSizeInBytes });
+                Fmt::FCountOfElements{ leakedNumBlocks },
+                Fmt::FSizeInBytes{ leakedSizeInBytes });
 
             AssertNotReached();
         }
@@ -371,7 +371,7 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
 
             if (FBinnedPage_* p = _freePages.PopHead()) {
                 Assert(_freePagesCount);
-                
+
                 _freePagesCount--;
 
 #ifdef USE_MEMORY_DOMAINS
@@ -472,7 +472,7 @@ struct FBinnedThreadCache_ {
         if (chunk && chunk->_freeCount) {
             // allocate from the head chunk
             p = chunk->Allocate();
-            
+
             // push empty chunks to the tail of the bucket list
             // if there is still free space it should be at head after that
             if (0 == chunk->_freeCount)
@@ -539,7 +539,7 @@ struct FBinnedThreadCache_ {
 
     NO_INLINE void RegisterPendingBlock(FBinnedChunk_::FBlock* block) {
         Assert(block);
-        Assert(block->TestCanary());
+        Assert_NoAssume(block->TestCanary());
         Assert(this == block->Owner()->_threadCache);
 
         const FAtomicSpinLock::FScope scopeLock(_pending.Barrier);
@@ -561,7 +561,7 @@ struct FBinnedThreadCache_ {
 
         while (_pending.FirstBlock) {
             Assert(_pending.NumBlocks--);
-            Assert(_pending.FirstBlock->TestCanary());
+            Assert_NoAssume(_pending.FirstBlock->TestCanary());
             Assert(this == _pending.FirstBlock->Owner()->_threadCache);
 
             FBinnedChunk_::FBlock* next = _pending.FirstBlock->Next;
@@ -588,7 +588,7 @@ struct FBinnedThreadCache_ {
 
             // release pending blocks before checking for leaks :
             while (_pending.FirstBlock) {
-                Assert(_pending.FirstBlock->TestCanary());
+                Assert_NoAssume(_pending.FirstBlock->TestCanary());
                 Assert(this == _pending.FirstBlock->Owner()->_threadCache);
 
                 FBinnedChunk_::FBlock* next = _pending.FirstBlock->Next;
@@ -665,7 +665,7 @@ private:
     }
 };
 //----------------------------------------------------------------------------
-struct CACHELINE_ALIGNED FBinnedAllocator_ { 
+struct CACHELINE_ALIGNED FBinnedAllocator_ {
     STATIC_CONST_INTEGRAL(size_t, VMCacheBlocks, 32);
     STATIC_CONST_INTEGRAL(size_t, VMCacheSizeInBytes,   16*1024*1024); // <=> 16 mo global cache for large blocks
 

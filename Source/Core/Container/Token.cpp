@@ -27,7 +27,7 @@ static FEntry* AllocateEntry_(FChunk** chunks, size_t len, size_t stride, size_t
 
     FChunk* chunkToAllocate = nullptr;
     for (FChunk* chunk = *chunks; chunk; chunk = chunk->Next) {
-        Assert(chunk->TestCanary());
+        Assert_NoAssume(chunk->TestCanary());
 
         if (chunk->WriteOffset + allocSizeInBytes <= chunkSizeInBytes) {
             chunkToAllocate = chunk;
@@ -42,7 +42,7 @@ static FEntry* AllocateEntry_(FChunk** chunks, size_t len, size_t stride, size_t
     }
 
     Assert(chunkToAllocate);
-    Assert(chunkToAllocate->TestCanary());
+    Assert_NoAssume(chunkToAllocate->TestCanary());
     Assert(chunkToAllocate->WriteOffset + allocSizeInBytes <= chunkSizeInBytes);
 
     FEntry* entry = new (chunkToAllocate->Data() + chunkToAllocate->WriteOffset) FEntry(len, hash);
@@ -57,7 +57,7 @@ static FEntry* AllocateEntry_(FChunk** chunks, size_t len, size_t stride, size_t
 //----------------------------------------------------------------------------
 static void ReleaseChunks_(FChunk* chunks) {
     while (chunks) {
-        Assert(chunks->TestCanary());
+        Assert_NoAssume(chunks->TestCanary());
         FChunk* const next = chunks->Next;
         FVirtualMemory::AlignedFree(chunks, PageSize);
         chunks = next;
@@ -68,7 +68,7 @@ static void ReleaseChunks_(FChunk* chunks) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTokenFactory::FTokenFactory() 
+FTokenFactory::FTokenFactory()
     : _chunks(nullptr) {}
 //----------------------------------------------------------------------------
 FTokenFactory::~FTokenFactory() {
@@ -82,7 +82,7 @@ const FTokenFactory::FEntry* FTokenFactory::Lookup(size_t len, size_t hash, cons
         : head->Next;
 
     for (const FEntry* bucket = head; bucket; bucket = bucket->Next) {
-        Assert(bucket->TestCanary());
+        Assert_NoAssume(bucket->TestCanary());
 
         if (bucket->HashValue == hash && bucket->Length == len)
             return bucket;
@@ -108,14 +108,14 @@ const FTokenFactory::FEntry* FTokenFactory::Allocate(void* src, size_t len, size
 
     if (nullptr == head) {
         Assert(nullptr == tail);
-        
+
         if (FPlatformAtomics::CompareExchange((void**)&_bucketHeads[bucket], result, head) != head)
             Assert("concurrency problem, some thread might already have the head", 0);
     }
     else {
         Assert(nullptr != tail);
-        Assert(head->TestCanary());
-        Assert(tail->TestCanary());
+        Assert_NoAssume(head->TestCanary());
+        Assert_NoAssume(tail->TestCanary());
 
         if (FPlatformAtomics::CompareExchange((void**)&tail->Next, result, nullptr) != nullptr)
             Assert("concurrency problem, some thread might already have the tail", 0);
@@ -123,7 +123,7 @@ const FTokenFactory::FEntry* FTokenFactory::Allocate(void* src, size_t len, size
 
     _bucketTails[bucket] = result; // non-atomically updated since only used when locked
 
-    Assert(result->TestCanary());
+    Assert_NoAssume(result->TestCanary());
     return result;
 }
 //----------------------------------------------------------------------------

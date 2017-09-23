@@ -354,7 +354,7 @@ namespace MiniDump
 
     void Start()
     {
-        Assert(FDbghelpWrapper::HasInstance());
+        Assert_NoAssume(FDbghelpWrapper::HasInstance());
 
 #ifdef HANDLE_VECTORED_EXCEPTION
         GHandleVectoredExceptionHandler = ::AddVectoredExceptionHandler(0, &OnVectoredHandler_);
@@ -365,7 +365,7 @@ namespace MiniDump
 
     void Shutdown()
     {
-        Assert(FDbghelpWrapper::HasInstance());
+        Assert_NoAssume(FDbghelpWrapper::HasInstance());
 
         ::SetUnhandledExceptionFilter(GPreviousUnhandledExceptionFilter);
 

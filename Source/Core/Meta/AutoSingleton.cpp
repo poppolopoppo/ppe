@@ -37,13 +37,13 @@ FAutoSingletonManagerImpl::~FAutoSingletonManagerImpl() {
 }
 //----------------------------------------------------------------------------
 void FAutoSingletonManagerImpl::Start() {
-    Assert(!_isStarted);
+    Assert_NoAssume(!_isStarted);
     ONLY_IF_ASSERT(_isStarted = true);
     Assert(_instances.empty());
 }
 //----------------------------------------------------------------------------
 void FAutoSingletonManagerImpl::Shutdown() {
-    Assert(_isStarted);
+    Assert_NoAssume(_isStarted);
     ONLY_IF_ASSERT(_isStarted = false);
 
     while (FAbstractAutoSingleton* pHead = _instances.Head()) {

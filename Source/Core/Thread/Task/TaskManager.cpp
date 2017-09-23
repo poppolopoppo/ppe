@@ -261,7 +261,7 @@ void FWorkerContext_::DestroyCounter(PTaskCounter& counter) {
 #endif
 
     FTaskCounter* const pcounter = RemoveRef_AssertReachZero_KeepAlive(counter);
-    Assert(pcounter->SafeRefCount() == 0);
+    Assert_NoAssume(pcounter->SafeRefCount() == 0);
     pcounter->Clear();
 
     _counters.push_back_OverflowIFN(nullptr, pcounter);
