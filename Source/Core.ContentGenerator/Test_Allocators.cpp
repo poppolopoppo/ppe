@@ -35,7 +35,7 @@ static constexpr size_t GNumBlocks_ = 10000;
 #ifdef WITH_CORE_ASSERT
 static constexpr size_t GLoopCount_ = 10;
 #else
-static constexpr size_t GLoopCount_ = 200;
+static constexpr size_t GLoopCount_ = 100;
 #endif
 #ifdef WITH_CORE_ASSERT
 static constexpr size_t GSlidingWindow_ = 50;
@@ -52,7 +52,7 @@ static void Test_Allocator_ST_(const wchar_t* category, const wchar_t* name, _Al
     forrange(loop, 0, GLoopCount_) {
         for (size_t sz : blockSizes) {
             auto* ptr = allocator.allocate(sz);
-            memset(ptr, 0xFA, sizeof(value_type) * sz);
+            ::memset(ptr, 0xFA, sizeof(value_type) * sz);
             allocator.deallocate(ptr, sz);
         }
     }
@@ -68,7 +68,7 @@ static void Test_Allocator_MT_(const wchar_t* category, const wchar_t* name, _Al
         parallel_for(blockSizes.begin(), blockSizes.end(), [&allocator](size_t sz) {
             _Alloc alloc(allocator);
             auto* ptr = alloc.allocate(sz);
-            memset(ptr, 0xFB, sizeof(value_type) * sz);
+            ::memset(ptr, 0xFB, sizeof(value_type) * sz);
             alloc.deallocate(ptr, sz);
         });
     }
@@ -91,7 +91,7 @@ static void Test_Allocator_Sliding_(const wchar_t* category, const wchar_t* name
     forrange(loop, 0, GLoopCount_) {
         for(size_t sz : blockSizes) {
             pointer ptr = allocator.allocate(sz);
-            memset(ptr, 0xFC, sizeof(value_type) * sz);
+            ::memset(ptr, 0xFC, sizeof(value_type) * sz);
 
             if (blockAddrs.size() == window) {
                 forrange(i, 0, numDeallocs) {
@@ -138,7 +138,7 @@ static void Test_Allocator_(const wchar_t* name, _Alloc&& allocator,
     const TMemoryView<const size_t>& largeBlocks,
     const TMemoryView<const size_t>& mixedBlocks ) {
 
-    LOG(Info, L"{0}", Repeat(L"-*=*", 20));
+    LOG(Info, L"{0}", Fmt::Repeat(L"-*=*", 20));
 
     BENCHMARK_SCOPE(name, L"Global");
     {
@@ -211,9 +211,9 @@ void Test_Allocators() {
         }
     }
 
-    LOG(Info, L"Small blocks data set = {0} blocks / {1}", smallBlocks.size(), FSizeInBytes{ smallBlocksSizeInBytes } );
-    LOG(Info, L"Large blocks data set = {0} blocks / {1}", largeBlocks.size(), FSizeInBytes{ largeBlocksSizeInBytes });
-    LOG(Info, L"Mixed blocks data set = {0} blocks / {1}", mixedBlocks.size(), FSizeInBytes{ mixedBlocksSizeInBytes });
+    LOG(Info, L"Small blocks data set = {0} blocks / {1}", smallBlocks.size(), Fmt::FSizeInBytes{ smallBlocksSizeInBytes } );
+    LOG(Info, L"Large blocks data set = {0} blocks / {1}", largeBlocks.size(), Fmt::FSizeInBytes{ largeBlocksSizeInBytes });
+    LOG(Info, L"Mixed blocks data set = {0} blocks / {1}", mixedBlocks.size(), Fmt::FSizeInBytes{ mixedBlocksSizeInBytes });
 
     Test_Allocator_(L"std::allocator", std::allocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
     Test_Allocator_(L"TMallocator", TMallocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
