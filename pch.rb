@@ -3,7 +3,7 @@
 require 'benchmark'
 require 'find'
 
-REBUILD = !ARGV.collect{|s| s.downcase }.include?('-norebuild')
+REBUILD = !ARGV.reject! {|x| x.casecmp('-norebuild') == 0 }
 
 # TODO : parse COMPILE_CONFIGS from build output
 PLATFORMS = %w{Win32 Win64}
@@ -45,6 +45,25 @@ Find.find(SOURCEDIR) do |path|
         $projects << project_name
     end
 end
+end
+
+# filter projects by name
+unless ARGV.empty?
+    filtered_projects = []
+    ARGV.each do |project_name|
+        if $projects.any? {|it| it.casecmp(project_name) == 0 }
+            puts "selected project '#{project_name}' from command line"
+            filtered_projects << project_name
+        else
+            $stderr.puts "could not find '#{project_name}' project, ignoring"
+        end
+    end
+    $projects = filtered_projects
+end
+
+if $projects.empty?
+    $stderr.puts "no projects found, aborting"
+    exit 2
 end
 
 # regen every stdafx.generated.h to empty files

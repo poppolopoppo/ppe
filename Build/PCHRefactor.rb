@@ -62,7 +62,7 @@ class FParser
 
         if !@stack.empty? && @depth >= d
             @line, @depth = *@stack.pop
-            dputs "pop to #{@line}:#{@depth}"
+            #dputs "pop to #{@line}:#{@depth}"
         end
 
         key = current.strip
@@ -72,17 +72,16 @@ class FParser
             jump = @index[key]
             if jump.nil?
                 @index[key] = [@line, d]
-                dputs "register <#{key}>@#{@line+1}:#{d}" # register first child
+                #dputs "register <#{key}>@#{@line+1}:#{d}" # register first child
             elsif self.next().strip == '...'
                 @stack << [@line+2, d] # skip current line + "..."
                 @line, @depth = *jump
-                dputs "jump to <#{key}>@#{@line}:#{@depth}"
+                #dputs "jump to <#{key}>@#{@line}:#{@depth}"
             end
         end
 
         return true
     end
-private
     def self.item_depth(line)
         return 0 if line.nil?
         depth = 0
@@ -92,21 +91,42 @@ private
     end
 end
 
+class FDependency
+    attr_reader :filename, :min_depth, :count
+    def initialize(filename, depth)
+        @filename = filename
+        @min_depth = depth
+        @count = 1
+    end
+    def add(depth)
+        @min_depth = depth if @min_depth > depth
+        @count += 1
+        return 
+    end
+    def to_s() @filename end
+end #~ FDependency
+
 RE_FILEDEP = /File\s+(.*)$/
 RE_BINARY = /\.(exe|dll)$/i
 RE_UNITY = /Unity_(\d+)_of_(\d+)\.cpp/
-RE_SYSHEADERS = /(stdafx)|(targetver.h)/i
-def parse_file(output, dependencies)
+RE_STDAFX = /(stdafx)|(targetver.h)/i
+def parse_file(output, depth, dependencies)
     raise "invalid fastbuild output" if output.nil?
     output.scan(RE_FILEDEP) do |match|
         filename = match[0]
         next if filename.nil?
         next if filename =~ RE_BINARY
         next if filename =~ RE_UNITY
-        next if filename =~ RE_SYSHEADERS
-        count = dependencies[filename]
-        count = 0 if count.nil?
-        dependencies[filename] = (count + 1)
+        next if filename =~ RE_STDAFX
+
+        key = filename.downcase.gsub('\\', '/')
+        if dep = dependencies[key]
+            dep.add(depth)
+        else
+            dep = dependencies[key] = FDependency.new(filename, depth)
+        end
+
+        #dputs("[dep] '#{filename}' : #{dep.count} / #{depth}")
     end
 end
 
@@ -117,20 +137,27 @@ def process_target_deps(target, define, stds, sdks, prjs)
 
     parser = FParser.new(%x("#{RUBY_INTERPRETER_PATH}" "#{FBUILDCMD}" -showdeps "#{target}").split("\n"))
     while parser.next!
-        dputs("[%5d][%3d] %s" % [parser.line, parser.depth, parser.current])
-        parse_file(parser.current, dependencies)
+        #dputs("[%5d][%3d] %s" % [parser.line, parser.depth, parser.current])
+        parse_file(parser.current, parser.depth, dependencies)
     end
 
     headers=[]
     sources=[]
-    dependencies.each do |filename, count|
+    dependencies.values.each do |dep|
+        #dputs("<< [%3d] %s = %d" % [dep.min_depth, dep.filename, dep.count])
+        #next if dep.min_depth > 8 # consider only headers directly included in the solution
+        filename = dep.filename
         filename = Pathname.new(filename)
         filename = filename.realpath.to_s
+        # system headers (no extension)
         if (filename =~ /\.h$/i || File.extname(filename).empty?)
-            headers << [filename, count]
+            #dputs "[header] #{filename}"
+            headers << [filename, dep.count, dep.min_depth]
+        # other headers
         elsif filename =~ /\.((cpp)|c)$/i
             next unless filename.upcase.include?(PROJECTDIR.upcase)
-            sources << [filename, count]
+            #dputs "[source] #{filename}"
+            sources << [filename, dep.count, dep.min_depth]
         end
     end
 
@@ -141,19 +168,19 @@ def process_target_deps(target, define, stds, sdks, prjs)
     prj=[]
     sdk=[]
     sourcedir_cmp = SOURCEDIR.upcase + '/'
-    headers.each do |(filename, count)|
+    headers.each do |(filename, count, min_depth)|
         if filename.upcase.include?(sourcedir_cmp)
             next if filename =~ /\-inl\.h$/i
             filename = filename[sourcedir_cmp.length..-1]
             percent = ((100 * count) / sourcefiles_count)
-            prj << "\"#{filename}\" // #{percent}% #{count}/#{sourcefiles_count}" if percent > PERCENT_INCLUSION_THRESHOLD && count > MIN_INCLUSION_COUNT
+            prj << "\"#{filename}\" // #{percent}% #{count}/#{sourcefiles_count} (depth = #{min_depth})" #if percent > PERCENT_INCLUSION_THRESHOLD && count > MIN_INCLUSION_COUNT
         elsif File.extname(filename).empty?
             basename = File.basename(filename)
             next if basename[0] == 'x' # MSVC includes
             std << "<#{basename}>"
         elsif filename.split('/')[-2].upcase == 'INCLUDE'
             basename = File.basename(filename)
-            sdk << "\"#{basename}\""
+            sdk << "\"#{basename}\" // (depth = #{min_depth})"
         end
     end
 
