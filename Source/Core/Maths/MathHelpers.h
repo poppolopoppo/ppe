@@ -150,16 +150,16 @@ size_t CubeMapFaceID(float x, float y, float z);
 constexpr float GridSnap(float location, float grid);
 //----------------------------------------------------------------------------
 // https://github.com/lemire/fastrange/blob/master/fastrange.h
-inline u32 Bounded(u32 word, u32 p) {
-	return (u32)(((u64)word * (u64)p) >> 32);
+inline u32 Bounded(u32 x, u32 N) {
+	return (u32)(((u64)x * (u64)N) >> 32);
 }
-inline u64 Bounded(u64 word, u64 p) {
+inline u64 Bounded(u64 x, u64 N) {
 #ifdef __SIZEOF_INT128__ // then we know we have a 128-bit int
-    return (u64)(((__uint128_t)word * (__uint128_t)p) >> 64);
+    return (u64)(((__uint128_t)x * (__uint128_t)N) >> 64);
 #elif defined(_MSC_VER) && defined(_WIN64)
     // supported in Visual Studio 2005 and better
     u64 highProduct;
-    _umul128(word, p, &highProduct); // ignore output
+    _umul128(x, N, &highProduct); // ignore output
     return highProduct;
     unsigned __int64 _umul128(
         unsigned __int64 Multiplier,
