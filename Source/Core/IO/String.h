@@ -29,6 +29,7 @@ public:
 
     using parent_type::parent_type;
     using parent_type::operator=;
+    using parent_type::operator+=;
 
     TBasicString() = default;
 
