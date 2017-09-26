@@ -7,6 +7,7 @@
 #include "Core/Container/HashTable.h"
 #include "Core/Container/StringHashSet.h"
 
+#include "Core/Diagnostic/Logger.h"
 #include "Core/Diagnostic/Profiling.h"
 #include "Core/IO/BufferedStreamProvider.h"
 #include "Core/IO/FormatHelpers.h"
@@ -472,43 +473,38 @@ struct TRobinHoodHashEmptyKey {
     static void MarkAsEmpty(_Key* pkey) { reinterpret_cast<u32&>(*pkey) = Empty; }
 };
 //----------------------------------------------------------------------------
-struct FRobinHoodHashLinearProbing {
-    static size_t Bucket(hash_t h, size_t capacity) { return Bounded(h, capacity); }
-    static size_t ProbeDistance(hash_t h, size_t capacity) {
-        const size_t b = Bucket(h, capacity);
-        return (b < bucket ? b + _capacity - bucket : b - bucket);
-    }
-};
-//----------------------------------------------------------------------------
-template <typename _Key>
+template <typename _Key, typename _EmptyKey = TRobinHoodHashEmptyKey<_Key> >
 struct TRobinHoodHashSetTraits {
     typedef _Key key_type;
     typedef _Key mapped_type;
     typedef _Key value_type;
     typedef _Key public_type;
+    typedef _Key emptykey_type;
     static _Key& Key(value_type& v) { return v; }
     static const _Key& Key(const value_type& v) { return v; }
 };
+//----------------------------------------------------------------------------
+/*
 template <
     typename _Traits
-,   typename _EmptyKey = TRobinHoodHashEmptyKey<typename _Traits::key_type>
-,   typename _Probing = TRobinHoodHash<typename _Traits::key_type>
-,   typename _Hash = THash<typename _Policy::key_type>
-,   typename _EqualTo = Meta::TEqualTo<typename _Policy::key_type>
-,   typename _Allocator = ALLOCATOR(Container, typename _Policy::value_type)
->   class TRobinHoodHashTable : TRebindAlloc< _Allocator, typename _Policy::value_type > {
+,   typename _Hash = THash<typename _Traits::key_type>
+,   typename _EqualTo = Meta::TEqualTo<typename _Traits::key_type>
+,   typename _Allocator = ALLOCATOR(Container, typename _Traits::value_type)
+>   class TRobinHoodHashTable : TRebindAlloc< _Allocator, typename _Traits::value_type > {
 public:
-    typedef _Policy policy_type;
-    typedef typename _Policy::key_type key_type;
-    typedef typename _Policy::mapped_type mapped_type;
-    typedef typename _Policy::value_type value_type;
-    typedef typename _Policy::public_type public_type;
+    typedef _Traits traits_type;
+    typedef typename traits_type::key_type key_type;
+    typedef typename traits_type::mapped_type mapped_type;
+    typedef typename traits_type::value_type value_type;
+    typedef typename traits_type::public_type public_type;
+    typedef typename traits_type::public_type public_type;
+    typedef typename traits_type::emptykey_type emptykey_type;
 
     typedef _Hash hasher;
     typedef _EqualTo key_equal;
 
-    typedef TRebindAlloc< _Allocator, typename _Policy::value_type > allocator_type;
-    typedef std::allocator_traits< allocator_type > allocator_traits;
+    typedef TRebindAlloc<_Allocator, value_type> allocator_type;
+    typedef std::allocator_traits<allocator_type> allocator_traits;
 
     typedef Meta::TAddReference<public_type> reference;
     typedef Meta::TAddReference<const public_type> const_reference;
@@ -518,7 +514,7 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    static constexpr size_type MaxLoadFactor = 80;
+    static constexpr size_type MaxLoadFactor = 90;
 
     TRobinHoodHashTable() : _values(nullptr), _capacity(0), _size(0) {}
     ~TRobinHoodHashTable() { clear_ReleaseMemory(); }
@@ -528,11 +524,29 @@ public:
     size_type capacity() const { return _capacity; }
 
     void resize(size_type atleast) {
+        if (atleast <= (_capacity * MaxLoadFactor) / 100)
+            return;
 
+        const pointer oldBuckets = _buckets;
+        const u32 oldCapacity = _capacity;
+
+        _capacity = 1;
+        _buckets = allocator_traits::allocate()
+
+        forrange(pbucket, oldBuckets, oldBuckets + _capacity) {
+            if (IsEmpty_(*pbucket))
+                continue;
+
+            Insert_(HashValue_(*pbucket), std::move(*pbucket));
+            allocator_traits::destroy(pbucket);
+        }
+
+        allocator_traits::deallocate(oldBuckets, _capacity);
     }
 
     bool insert(const_reference value) {
-
+        if (_size + 1 > (_capacity * MaxLoadFactor) / 100)
+            resize(_capacity * 2);
     }
 
     pointer end() const { return nullptr; }
@@ -561,40 +575,65 @@ public:
         _capacity = 0;
     }
 
+    size_type load_factor() const {
+        return ((_size * 100) / _capacity);
+    }
+
 private:
-    FORCE_INLINE size_t BucketFromHash_(size_t h) const {
-        return Bounded(h, _capacity);
+    static bool IsEqual_(const value_type& lhs, const value_type& rhs) {
+        return key_equal()(trais_type::Key(lhs), traits_type::Key(rhs));
     }
 
-    FORCE_INLINE size_t ProbeDistance_(size_t h, size_t bucket) const {
-
+    static bool IsEmpty_(const value_type& v) {
+        return emptykey_type::IsEmpty(traits_type::Key(v));
     }
 
-    size_t FindOrAddBucket_AssumeUnique_(const key_type& key, bool* pexists) const {
+    static hash_t HashValue_(const value_type& v) {
+        return hasher()(traits_type::Key(v));
+    }
+
+    size_t DesiredPos_(hash_t h) const {
+        return Bounded(u32(h._value), _capacity);
+    }
+
+    size_t ProbeDistance_(hash_t h, size_t pos) {
+        const size_t b = DesiredPos_(h);
+        return (b < pos ? b + _capacity - pos : b - pos);
+    }
+
+    size_t Insert_(hash_t hash, value_type&& value) {
         Assert(_values);
-        Assert(pexists);
+        Assert(load_factor() <= MaxLoadFactor);
 
-        const hash_t h = hasher()(key);
-        const size_t b = BucketFromHash_(h);
-
-        bool exists = false;
-        size_t distance = 0;
-        for (;;) {
+        size_t dist = 0;
+        for(size_t b = Bounded(hash, _capacity); ; ++dist, b = (b + 1 < _capacity ? b + 1 : 0) ) {
             value_type& bucket = _buckets[b];
-            if (policy_type::IsEmpty(bucket) || (exists = ) )
-                break;
 
+            if (IsEmpty_(bucket)) {
+                allocator_traits::construct(*this, &bucket, std::move(value));
+                _size++;
+                return b;
+            }
 
+            Assert(IsEqual_(value, bucket) == false);
+
+            const hash_t h = HashValue_(bucket);
+            const size_t d = ProbeDistance_(h, b);
+            if (d < dist) {
+                using std::swap;
+                swap(bucket, value);
+                hash = h;
+                dist = d;
+            }
         }
 
-        Assert(not key_equal()(policy_type::Key(_buckets[b]), key));
-        *pexists = exists;
-        return b;
+        AssertNotReached();
+        return size_t(-1);
     }
 
-    size_type _capacity;
-    value_type* _buckets;
-    size_type _size;
+    u32 _capacity;
+    u32 _size;
+    pointer _buckets;
 };
 */
 //----------------------------------------------------------------------------
