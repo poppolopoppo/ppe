@@ -3,6 +3,7 @@
 #include "LookAheadReader.h"
 
 #include "Core/IO/StreamProvider.h"
+#include "Core/IO/String.h"
 
 #include <locale>
 

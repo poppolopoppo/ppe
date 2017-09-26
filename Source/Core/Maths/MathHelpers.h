@@ -167,7 +167,7 @@ inline u64 Bounded(u64 x, u64 N) {
         unsigned __int64 *HighProduct
     );
 #else
-    return word % p; // fallback
+    return x % N; // fallback
 #endif // __SIZEOF_INT128__
 }
 //----------------------------------------------------------------------------

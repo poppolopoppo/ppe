@@ -4,6 +4,7 @@
 
 #include "Core.Serialize/Lexer/Location.h"
 #include "Core/IO/StringView.h"
+#include "Core/IO/String_fwd.h"
 
 namespace Core {
 class IBufferedStreamReader;
