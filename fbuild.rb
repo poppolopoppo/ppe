@@ -1,5 +1,8 @@
 #!/bin/env ruby
 
+require 'fileutils'
+require 'pathname'
+
 START_TIME=Time.now
 
 VERSION='2.3'
@@ -11,17 +14,7 @@ RUBY_INTERPRETER_PATH = File.join(
     RbConfig::CONFIG["RUBY_INSTALL_NAME"] +
     RbConfig::CONFIG["EXEEXT"] )
 
-def absolute_path(path)
-    path = File.absolute_path(path)
-    if path =~/^\//
-        path = path[1..-1]
-        return path.insert(path.index('/'), ':')
-    else
-        return path
-    end
-end
-
-SOLUTION_ROOT = absolute_path(File.dirname(__FILE__))
+SOLUTION_ROOT = Pathname.new(File.join(File.dirname(__FILE__))).realpath.to_s
 SOLUTION_FBUILDROOT = File.join(SOLUTION_ROOT, 'Build')
 SOLUTION_FBUILDCMD = File.join(SOLUTION_FBUILDROOT, 'FBuild.exe')
 SOLUTION_PATHFILE = File.join(SOLUTION_FBUILDROOT, '_solution_path.bff')
@@ -40,8 +33,9 @@ class FHeader
         return (@header == header)
     end
     def write(header)
+        filename_old = @filename + '.old'
+        FileUtils.mv(@filename, filename_old) if File.exist?(@filename)
         File.write(@filename, header)
-        File.write(@filename + '.old', @header)
     end
 end
 
