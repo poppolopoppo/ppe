@@ -30,17 +30,17 @@ using TAllocator = TDecorateAllocator< DEFAULT_ALLOCATOR<T>, _Tag >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define ALLOCATOR(_Domain, T) \
-    ::Core::TAllocator<COMMA_PROTECT(T), MEMORY_DOMAIN_TAG(_Domain) >
+#define ALLOCATOR(_Domain, ...) \
+    ::Core::TAllocator<COMMA_PROTECT(__VA_ARGS__), MEMORY_DOMAIN_TAG(_Domain) >
 //----------------------------------------------------------------------------
 #define ALIGNED_ALLOCATOR(_Domain, T, _Alignment) \
     DECORATE_ALLOCATOR(_Domain, ::Core::TMallocator<COMMA_PROTECT(T) COMMA _Alignment>)
 //----------------------------------------------------------------------------
-#define BUDDY_ALLOCATOR(_Domain, T) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::TBuddyAllocator<COMMA_PROTECT(T)>)
+#define BUDDY_ALLOCATOR(_Domain, ...) \
+    DECORATE_ALLOCATOR(_Domain, ::Core::TBuddyAllocator<COMMA_PROTECT(__VA_ARGS__)>)
 //----------------------------------------------------------------------------
-#define THREAD_LOCAL_ALLOCATOR(_Domain, T) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::TThreadLocalAllocator<COMMA_PROTECT(T)>)
+#define THREAD_LOCAL_ALLOCATOR(_Domain, ...) \
+    DECORATE_ALLOCATOR(_Domain, ::Core::TThreadLocalAllocator<COMMA_PROTECT(__VA_ARGS__)>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

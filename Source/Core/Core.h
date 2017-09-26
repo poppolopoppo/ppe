@@ -88,13 +88,13 @@
 #define NO_INLINE       __declspec(noinline)
 //----------------------------------------------------------------------------
 #if ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
-#   define Likely(expr) (__builtin_expect (!!(expr),1) )
-#   define Unlikely(expr) (__builtin_expect (!!(expr),0) )
-#   define Assume(expr) Likely(expr)
+#   define Likely(...) (__builtin_expect (!!(__VA_ARGS__),1) )
+#   define Unlikely(...) (__builtin_expect (!!(__VA_ARGS__),0) )
+#   define Assume(...) Likely(__VA_ARGS__)
 #elif defined(CPP_VISUALSTUDIO)
-#   define Likely(expr) NOOP()
-#   define Unlikely(expr) NOOP()
-#   define Assume(expr) __assume(expr)
+#   define Likely(...) NOOP()
+#   define Unlikely(...) NOOP()
+#   define Assume(...) __assume(__VA_ARGS__)
 #else
 #   error "unsupported compiler"
 #endif
