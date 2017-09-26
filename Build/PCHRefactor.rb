@@ -93,20 +93,24 @@ class FParser
     end
 end
 
-RE_SOURCEDIR = /^#{SOURCEDIR}\//i
+RE_SOURCEDIR = SOURCEDIR.downcase.gsub('\\', '/')
+RE_PROJECTDIR = PROJECTDIR.downcase.gsub('\\', '/')
 class FDependency
-    attr_reader :filename, :min_depth, :max_depth, :count, :is_source
+    attr_reader :filename
+    attr_reader :min_depth, :max_depth, :count
+    attr_reader :is_source, :is_project
     def initialize(filename, depth)
         @filename = filename
         @min_depth = @max_depth = depth
         @count = 1
-        @is_source = (@filename =~ RE_SOURCEDIR)
+        @is_source = (@filename.downcase.include? RE_SOURCEDIR)
+        @is_project = @is_source && (@filename.downcase.include? RE_PROJECTDIR)
     end
     def add(depth)
         @min_depth = depth if @min_depth > depth
         @max_depth = depth if @max_depth < depth
         @count += 1
-        return 
+        return
     end
     def to_s() @filename end
 end #~ FDependency
@@ -114,7 +118,7 @@ end #~ FDependency
 RE_FILEDEP = /File\s+(.*)$/
 RE_BINARY = /\.(exe|dll)$/i
 RE_UNITY = /Unity_(\d+)_of_(\d+)\.cpp/
-RE_STDAFX = /(stdafx)|(targetver.h)/i
+RE_STDAFX = /(stdafx)|(targetver\.h)/i
 def parse_showdeps(output, depth, dependencies)
     raise "invalid fastbuild output" if output.nil?
     output.scan(RE_FILEDEP) do |match|
@@ -125,16 +129,17 @@ def parse_showdeps(output, depth, dependencies)
         next if filename =~ RE_STDAFX
 
         filename = Pathname.new(filename).realpath.to_s
-        
-        key = filename.downcase.gsub('\\', '/')
-        
+        filename.gsub!('\\', '/')
+
+        key = filename.downcase
+
         if dep = dependencies[key]
             dep.add(depth)
         else
             dep = dependencies[key] = FDependency.new(filename, depth)
         end
 
-        #dputs("[dep] '#{filename}' : #{dep.count} / #{depth}")
+        #dputs("[dep] '#{filename}' : #{dep.count}") if filename =~ /core\.h$/i
     end
 end
 
@@ -151,10 +156,11 @@ def parse_source(filename, include_searchdirs, dependencies)
             next if File.extname(header).empty? # system headers ignored
 
             include_searchdirs.each do |path|
-                header  = File.join(path, m[1])
+                header = File.join(path, m[1])
                 break if File.exist?(header)
             end
-            next unless File.exist?(header)
+
+            next unless File.exist?(header) # don't handle #ifdef/#if so it could be an include from another platform/target
 
             header = Pathname.new(header).realpath.to_s
             dependencies << header.downcase.gsub('\\', '/')
@@ -179,8 +185,9 @@ def process_target_deps(target, define, stds, sdks, prjs)
     end
 
     headers_directlyincluded = Set.new
-    dependencies.values.each do |dep|
-        next unless dep.is_source
+    dependencies.each do |key, dep|
+        next unless dep.is_project
+        headers_directlyincluded << key
         parse_source(dep.filename, include_searchdirs, headers_directlyincluded)
     end
 
@@ -188,12 +195,19 @@ def process_target_deps(target, define, stds, sdks, prjs)
     sourcefiles_count = 0
     dependencies.each do |key, dep|
         filename = dep.filename
-        if dep.is_source && filename =~ /\.((cpp)|c)$/i
-            sourcefiles_count += 1
-        elsif File.extname(filename).empty?
+        extname = File.extname(dep.filename)
+        if extname.empty?
+            #dputs "[STD] #{filename} #{dep.count}"
+            next if File.basename(filename)[0] == 'x' # MSVC specific headers
             headers << dep
         elsif filename =~ /\.h$/i && headers_directlyincluded.include?(key)
+            #dputs "[PRJ] #{filename} #{dep.count}"
             headers << dep
+        elsif dep.is_project && extname =~ /\.((cpp)|c)$/i
+            #dputs "[SRC] #{filename} #{dep.count}"
+            sourcefiles_count += 1
+        else
+            #dputs "[NON] #{filename} #{dep.count} #{dep.is_project}"
         end
     end
 
@@ -201,19 +215,20 @@ def process_target_deps(target, define, stds, sdks, prjs)
     prj=[]
     sdk=[]
     headers.each do |dep|
-        filename, count, min_depth = dep.filename, dep.count, dep.min_depth
+        filename, count = dep.filename, dep.count
         if dep.is_source
             next if filename =~ /\-inl\.h$/i
             filename = filename[(SOURCEDIR.length+1)..-1]
             percent = ((100 * count) / sourcefiles_count)
-            prj << "\"#{filename}\" // #{percent}% #{count}/#{sourcefiles_count} (depth = #{min_depth})" if percent > PERCENT_INCLUSION_THRESHOLD && count > MIN_INCLUSION_COUNT
+            if percent > PERCENT_INCLUSION_THRESHOLD && count > MIN_INCLUSION_COUNT
+                prj << "\"#{filename}\"" #// #{percent}% #{count}/#{sourcefiles_count}"
+            end
         elsif File.extname(filename).empty?
             basename = File.basename(filename)
-            next if basename[0] == 'x' # MSVC includes
             std << "<#{basename}>"
         elsif filename.split('/')[-2].upcase == 'INCLUDE'
             basename = File.basename(filename)
-            sdk << "\"#{basename}\" // (depth = #{min_depth})"
+            sdk << "\"#{basename}\""
         end
     end
 
