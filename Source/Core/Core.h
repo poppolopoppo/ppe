@@ -31,13 +31,15 @@
 #   define not !
 #endif
 //----------------------------------------------------------------------------
+#define EXPAND(x) x
+//----------------------------------------------------------------------------
 #define COMMA ,
 #define COMMA_PROTECT(...) __VA_ARGS__
 //----------------------------------------------------------------------------
-#define STRINGIZE_2(_X) # _X
-#define STRINGIZE_1(_X) STRINGIZE_2(_X)
-#define STRINGIZE_0(_X) STRINGIZE_1(_X)
-#define STRINGIZE(_X) STRINGIZE_0(_X)
+#define STRINGIZE_2(...) # __VA_ARGS__
+#define STRINGIZE_1(...) EXPAND( STRINGIZE_2(__VA_ARGS__) )
+#define STRINGIZE_0(...) EXPAND( STRINGIZE_1(__VA_ARGS__) )
+#define STRINGIZE(...) EXPAND( STRINGIZE_0(__VA_ARGS__) )
 //----------------------------------------------------------------------------
 #define WIDESTRING_2(_X) L ## _X
 #define WIDESTRING_1(_X) WIDESTRING_2(_X)
@@ -55,6 +57,8 @@
 //----------------------------------------------------------------------------
 #define lengthof(_ARRAY) ((sizeof(_ARRAY))/(sizeof(_ARRAY[0])))
 //----------------------------------------------------------------------------
+constexpr size_t INDEX_NONE = size_t(-1);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if defined(CPP_CLANG)
@@ -64,7 +68,11 @@
 #   define STDCALL      __stdcall
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
-#   define EMPTY_BASES
+#   if defined(_MSC_VER)
+#       define EMPTY_BASES __declspec(empty_bases)
+#   else
+#       define EMPTY_BASES
+#   endif
 #elif defined(CPP_VISUALSTUDIO) && _MSC_VER >= 1900
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     noexcept
