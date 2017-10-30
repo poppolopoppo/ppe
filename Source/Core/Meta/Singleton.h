@@ -19,7 +19,7 @@ public:
 #endif
 
     static T& Ref() {
-        static typename POD_STORAGE(T) GPod;
+        static POD_STORAGE(T) GPod;
         return reinterpret_cast<T&>(GPod);
     }
 };
@@ -35,7 +35,7 @@ public:
 #endif
 
     static T& Ref() {
-        static THREAD_LOCAL typename POD_STORAGE(T) GPod;
+        static THREAD_LOCAL POD_STORAGE(T) GPod;
         return reinterpret_cast<T&>(GPod);
     }
 };
@@ -73,7 +73,7 @@ public:
     static void Create(_Args&&... args) {
         Assert_NoAssume(not HasInstance());
         ONLY_IF_ASSERT(storage_type::GHasInstance = true);
-        new ((void*)&storage_type::Ref()) T{ std::forward<_Args>(args)... };
+        new ((void*)std::addressof(storage_type::Ref())) T{ std::forward<_Args>(args)... };
     }
 
     static void Destroy() {

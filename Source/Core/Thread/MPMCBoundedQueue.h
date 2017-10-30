@@ -34,7 +34,7 @@ public:
 protected:
     struct cell_t {
         std::atomic<size_type> _sequence;
-        typename POD_STORAGE(T) _data;
+        POD_STORAGE(T) _data;
     };
 
     TMPMCBoundedQueueView();
@@ -103,7 +103,7 @@ bool TMPMCBoundedQueueView<T>::Produce(T&& rdata) {
             pos = _enqueuePos.load(std::memory_order_relaxed);
     }
 
-    new ((void*)&cell->_data) T(std::move(rdata));
+    new ((void*)std::addressof(cell->_data)) T(std::move(rdata));
     cell->_sequence.store(pos + 1, std::memory_order_release);
 
     return true;
@@ -201,7 +201,7 @@ public:
     }
 
 private:
-    typename POD_STORAGE(T(&)[_Capacity]) _storage;
+    POD_STORAGE(T(&)[_Capacity]) _storage;
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
