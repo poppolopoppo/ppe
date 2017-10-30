@@ -44,7 +44,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
         // For VCXProj
         .PreprocessorDefinitions    = ''
-        .IncludeSearchPath          = '$SourceDiretory$;$ProjectPath$'
+        .IncludeSearchPath          = '$SourceDirectory$;$ProjectPath$'
 
         // Project compiled config
         .ProjectCompileConfig =
@@ -81,7 +81,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             }
 
             // For actual compilation
-            .ProjectIncludes    + .SourceDiretory
+            .ProjectIncludes    + .SourceDirectory
                                 + .ProjectPath
 
             .AllIncludes        = .ProjectIncludes + .SystemIncludes

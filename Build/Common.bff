@@ -14,7 +14,7 @@
 // Default Directories
 //------------------------------------------------------------------------------
 .OutputDirectory        = '$SolutionPath$/Output'
-.SourceDiretory         = '$SolutionPath$/Source'
+.SourceDirectory         = '$SolutionPath$/Source'
 
 .BuildDirectory         = '$SolutionPath$/Build'
 .TemplateDirectory      = '$BuildDirectory$/Templates'
