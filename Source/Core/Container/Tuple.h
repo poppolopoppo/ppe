@@ -74,41 +74,45 @@ typename TTupleMerger<_Lhs, _Rhs>::type MergeTuple(_Lhs&& lhs, _Rhs&& rhs) {
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-template<typename _Return, typename... _Args, size_t... _Index>
-FORCE_INLINE _Return CallHelper_(_Return (*func)(_Args...), const TTupleDecay<_Args...>& args, std::index_sequence<_Index...>) {
+template<typename _Return, typename... _Args, typename... _Prms, size_t... _Index>
+FORCE_INLINE _Return CallHelper_(_Return (*func)(_Args...), const TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
     return func(std::get<_Index>(args)...);
 }
-template<typename _Return, typename... _Args, size_t... _Index>
-FORCE_INLINE _Return CallHelper_(_Return (*func)(_Args...), TTupleDecay<_Args...>& args, std::index_sequence<_Index...>) {
+template<typename _Return, typename... _Args, typename... _Prms, size_t... _Index>
+FORCE_INLINE _Return CallHelper_(_Return (*func)(_Args...), TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
     return func(std::get<_Index>(args)...);
 }
 //----------------------------------------------------------------------------
-template<typename _Return, typename _Class, typename... _Args, size_t... _Index>
-FORCE_INLINE _Return CallHelper_(_Return (_Class::*member)(_Args...), _Class* src, const TTupleDecay<_Args...>& args, std::index_sequence<_Index...>) {
+template<typename _Return, typename _Class, typename... _Args, typename... _Prms, size_t... _Index>
+FORCE_INLINE _Return CallHelper_(_Return (_Class::*member)(_Args...), _Class* src, const TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
     return (src->*member)(std::get<_Index>(args)...);
 }
-template<typename _Return, typename _Class, typename... _Args, size_t... _Index>
-FORCE_INLINE _Return CallHelper_(_Return(_Class::*member)(_Args...), _Class* src, TTupleDecay<_Args...>& args, std::index_sequence<_Index...>) {
+template<typename _Return, typename _Class, typename... _Args, typename... _Prms, size_t... _Index>
+FORCE_INLINE _Return CallHelper_(_Return(_Class::*member)(_Args...), _Class* src, TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
     return (src->*member)(std::get<_Index>(args)...);
 }
 //----------------------------------------------------------------------------
 } //!details
 //----------------------------------------------------------------------------
-template<typename _Return, typename... _Args>
-_Return Call(_Return (*func)(_Args...), const TTupleDecay<_Args...>& args) {
+template<typename _Return, typename... _Args, typename... _Prms>
+_Return Call(_Return (*func)(_Args...), const TTuple<_Prms...>& args) {
+    STATIC_ASSERT(sizeof...(_Args) == sizeof...(_Prms));
     return details::CallHelper_(func, args, std::index_sequence_for<_Args...>{});
 }
-template<typename _Return, typename... _Args>
-_Return Call(_Return(*func)(_Args...), TTupleDecay<_Args...>& args) {
+template<typename _Return, typename... _Args, typename... _Prms>
+_Return Call(_Return(*func)(_Args...), TTuple<_Prms...>& args) {
+    STATIC_ASSERT(sizeof...(_Args) == sizeof...(_Prms));
     return details::CallHelper_(func, args, std::index_sequence_for<_Args...>{});
 }
 //----------------------------------------------------------------------------
-template<typename _Return, typename _Class, typename... _Args>
-_Return Call(_Return (_Class::*member)(_Args...), _Class* src, const TTupleDecay<_Args...>& args) {
+template<typename _Return, typename _Class, typename... _Args, typename... _Prms>
+_Return Call(_Return (_Class::*member)(_Args...), _Class* src, const TTuple<_Prms...>& args) {
+    STATIC_ASSERT(sizeof...(_Args) == sizeof...(_Prms));
     return details::CallHelper_(member, src, args, std::index_sequence_for<_Args...>{});
 }
-template<typename _Return, typename _Class, typename... _Args>
-_Return Call(_Return(_Class::*member)(_Args...), _Class* src, TTupleDecay<_Args...>& args) {
+template<typename _Return, typename _Class, typename... _Args, typename... _Prms>
+_Return Call(_Return(_Class::*member)(_Args...), _Class* src, TTuple<_Prms...>& args) {
+    STATIC_ASSERT(sizeof...(_Args) == sizeof...(_Prms));
     return details::CallHelper_(member, src, args, std::index_sequence_for<_Args...>{});
 }
 //----------------------------------------------------------------------------
