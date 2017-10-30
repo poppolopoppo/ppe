@@ -71,8 +71,15 @@ void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::clear() {
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Clear_ReleaseMemory() {
-    _vector.clear();
-    _vector.shrink_to_fit();
+    _vector.clear_ReleaseMemory();
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+_Value& TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Add(const _Key& key) {
+    Assert(end() == Find(key));
+    _vector.emplace_back();
+    _vector.back().first = key;
+    return _vector.back().second;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
