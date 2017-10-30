@@ -18,6 +18,7 @@
 
     .FixWarningsOnWindows = ''
         + ' -Wno-error'
+        + ' -Wno-invalid-noreturn'              // nécessaire pour STL M$
         + ' -Wno-expansion-to-defined'          // macro expansion producing 'defined' has undefined behavior (nécessaire pour WinAPI)
         + ' -Wno-ignored-attributes'            // ignore les attributs de classe/fonction non supportées par CLANG (sinon échoue a cause de /WError)
         + ' -Wno-int-to-void-pointer-cast'      // cast to 'void *' from smaller integer type 'unsigned long' (nécessaire pour WinAPI)
@@ -30,6 +31,7 @@
         + ' -Wno-unused-value'                  // ignore les expressions non utilisées (UNUSED(x) ou CRT)
         + ' -Wno-#pragma-messages'              // don't consider #pragma message as warnings
         + ' -Wno-nonportable-include-path'      // windows libs are filled with includes not matching file system case, this will ignore those
+        + ' -Wno-microsoft-explicit-constructor-call'
 
     .CompilerOptions = ''
         + .FixWarningsOnWindows

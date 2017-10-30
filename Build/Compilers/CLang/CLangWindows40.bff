@@ -111,6 +111,7 @@ Compiler( 'Compiler-CLangWindows40' )
 #endif
     .CompilerOptions  + ' -Wno-dllimport-static-field-def'
                       + ' -Wno-microsoft-template'
+                      + ' -Xclang -std=c++17' // support for C++ 17
 
 #if WITH_VISUALSTUDIO_TOOLSET_140
     .IncludePaths =
