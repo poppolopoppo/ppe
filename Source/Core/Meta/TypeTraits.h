@@ -19,6 +19,9 @@ namespace Meta {
 template <typename T, T _Value>
 using TIntegralConstant = typename std::integral_constant<T, _Value>::type;
 //----------------------------------------------------------------------------
+template <typename T>
+struct TType {}; // used to overload function base on type without to give an actual value
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
@@ -64,6 +67,14 @@ using TRemovePointer = typename std::remove_pointer<T>::type;
 //----------------------------------------------------------------------------
 template <bool _Test, typename T = void>
 using TEnableIf = typename std::enable_if< _Test, T >::type;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+using TReference = TAddReference< TRemoveConst< TDecay<T> > >;
+//----------------------------------------------------------------------------
+template <typename T>
+using TConstReference = TAddReference< TAddConst< TDecay<T> > >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -161,11 +172,21 @@ using has_forceinit_constructor = has_constructor<T, Meta::FForceInit>;
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
+FORCE_INLINE T ForceInit_(std::false_type) { return T{}; }
+template <typename T>
+FORCE_INLINE T ForceInit_(std::true_type) { return T{ FForceInit{} }; }
+} //!details
+template <typename T>
+T ForceInit() {
+    return details::ForceInit_<T>(typename has_forceinit_constructor<T>::type{});
+}
+//----------------------------------------------------------------------------
+namespace details {
+template <typename T>
 FORCE_INLINE void Construct_(T* p, FForceInit, std::false_type) { new ((void*)p) T(); }
 template <typename T>
 FORCE_INLINE void Construct_(T* p, FForceInit init, std::true_type) { new ((void*)p) T(init); }
 } //!details
-//----------------------------------------------------------------------------
 template <typename T>
 void Construct(T* p, FForceInit init) {
     Likely(p);
