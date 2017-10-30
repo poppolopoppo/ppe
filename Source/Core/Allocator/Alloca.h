@@ -57,7 +57,7 @@ struct TAllocaBlock {
     TAllocaBlock() : RawData(nullptr), Count(0), UsingSysAlloca(0) {}
 
     TAllocaBlock(T* rawData, size_t count)
-    :   RawData(rawData), Count(count), UsingSysAlloca(1) {
+        : RawData(rawData), Count(count), UsingSysAlloca(1) {
         if (nullptr == RawData) {
             RawData = TypedAlloca< T >(Count);
             UsingSysAlloca = 0;
@@ -70,16 +70,34 @@ struct TAllocaBlock {
             FreeAlloca(RawData);
     }
 
-    void Relocate(size_t newCount, bool keepData = true)
-    {
+    TAllocaBlock(const TAllocaBlock& ) = delete;
+    TAllocaBlock& operator =(const TAllocaBlock& ) = delete;
+
+    TAllocaBlock(TAllocaBlock&& rvalue)
+        : TAllocaBlock() {
+        std::swap(*this, rvalue);
+    }
+
+    TAllocaBlock& operator =(TAllocaBlock&& rvalue) {
+        if (not UsingSysAlloca && RawData)
+            FreeAlloca(RawData);
+
+        RawData = nullptr;
+        Count = 0;
+        UsingSysAlloca = 0;
+        std::swap(*this, rvalue);
+
+        return (*this);
+    }
+
+    void Relocate(size_t newCount, bool keepData = true) {
         Assert(newCount != Count);
         Assert(!UsingSysAlloca);
         RawData = TypedRelocateAlloca(RawData, newCount, keepData);
         Count = newCount;
     }
 
-    void RelocateIFP(size_t newCount, bool keepData = true)
-    {
+    void RelocateIFP(size_t newCount, bool keepData = true) {
         if (newCount > Count)
             Relocate(newCount, keepData);
     }
