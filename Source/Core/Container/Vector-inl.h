@@ -455,7 +455,7 @@ template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::resize(size_type count) {
     if (_size == count)
         return;
-    
+
     reserve(count);
 
     if (count < _size)
@@ -512,12 +512,12 @@ void TVector<T, _Allocator>::resize_AssumeEmpty(size_type count) {
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::resize_AssumeEmpty(size_type count, const_reference value) {
     reserve_AssumeEmpty(count);
-    
+
     Assert(0 == _size);
     Assert(count <= _capacity);
 
     std::uninitialized_fill_n(MakeCheckedIterator(_data, _capacity, 0), count, value);
-    
+
     _size = checked_cast<u32>(count);
     Assert(_size <= _capacity);
 }
@@ -633,14 +633,15 @@ void Append(TVector<T, _Allocator>& v, const TMemoryView<const T>& elts) {
     v.insert(v.end(), elts.begin(), elts.end());
 }
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-typename TVector<T, _Allocator>::const_iterator Find(const TVector<T, _Allocator>& v, const T& elt) {
-    return std::find(v.begin(), v.end(), elt);
+template <typename T, typename _Allocator, typename U>
+bool Contains(const TVector<T, _Allocator>& v, const U& elt) {
+    return (v.end() != std::find(v.begin(), v.end(), elt));
 }
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-bool Contains(const TVector<T, _Allocator>& v, const T& elt) {
-    return (v.end() != std::find(v.begin(), v.end(), elt));
+template <typename T, typename _Allocator, typename U>
+size_t IndexOf(const TVector<T, _Allocator>& v, const U& elt) {
+    const auto it = std::find(v.begin(), v.end(), elt);
+    return (v.end() == it ? std::distance(v.begin(), it) : INDEX_NONE);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>

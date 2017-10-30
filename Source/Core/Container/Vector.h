@@ -216,7 +216,7 @@ public:
 
     template <class... _Args>
     iterator emplace(const_iterator pos, _Args&&... args);
-    
+
     template <class... _Args>
     void emplace_back(_Args&&... args);
     void emplace_back(const T& value);
@@ -310,8 +310,11 @@ private:
 template <typename T, typename _Allocator>
 void Append(TVector<T, _Allocator>& v, const TMemoryView<const T>& elts);
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-bool Contains(const TVector<T, _Allocator>& v, const T& elt);
+template <typename T, typename _Allocator, typename U>
+bool Contains(const TVector<T, _Allocator>& v, const U& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename U>
+size_t IndexOf(const TVector<T, _Allocator>& v, const U& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 bool FindElementIndexIFP(size_t *pIndex, const TVector<T, _Allocator>& v, const T& elt);
@@ -416,5 +419,11 @@ std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Trait
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
+
+template <typename T, typename _Allocator>
+void* operator new(size_t sizeInBytes, Core::TVector<T, _Allocator>& vector) {
+    Assert(sizeInBytes == sizeof(T));
+    return vector.push_back_Uninitialized();
+}
 
 #include "Core/Container/Vector-inl.h"
