@@ -149,8 +149,8 @@ public:
     typedef TIterator_<public_type> iterator;
     typedef TIterator_<Meta::TAddConst<public_type>> const_iterator;
 
-    TBasicHashTable() NOEXCEPT { 
-        STATIC_ASSERT(sizeof(_data) == sizeof(u32) * 2 + sizeof(intptr_t)); 
+    TBasicHashTable() NOEXCEPT {
+        STATIC_ASSERT(sizeof(_data) == sizeof(u32) * 2 + sizeof(intptr_t));
     }
     ~TBasicHashTable() { Assert(CheckInvariants()); clear_ReleaseMemory(); }
 
@@ -222,6 +222,11 @@ public:
     iterator find(const key_type& key);
     const_iterator find(const key_type& key) const;
 
+    template <typename _KeyLike>
+    iterator find_like(const _KeyLike& keyLike, hash_t h);
+    template <typename _KeyLike>
+    const_iterator find_like(const _KeyLike& keyLike, hash_t h) const;
+
     mapped_reference at(const key_type& key) { return table_traits::Value(*find(key)); }
     mapped_reference_const at(const key_type& key) const { return table_traits::Value(*find(key)); }
 
@@ -287,9 +292,10 @@ public:
         return (not it.second);
     }
     template <typename... _Args>
-    void emplace_AssertUnique(_Args&&... args) {
+    iterator emplace_AssertUnique(_Args&&... args) {
         const TPair<iterator, bool> it = emplace(std::forward<_Args>(args)...);
         Assert(it.second);
+        return (it.first);
     }
 
     template <typename... _Args>
@@ -400,8 +406,8 @@ private:
             , key_equal(std::move(equal))
             , CapacityM1(u32(-1))
             , Size(0)
-            , MaxProbeDist(0) 
-            , StatesAndBuckets(nullptr) 
+            , MaxProbeDist(0)
+            , StatesAndBuckets(nullptr)
         {}
 
 #if 0 // scrambling upper bits

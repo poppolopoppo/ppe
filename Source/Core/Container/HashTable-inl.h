@@ -87,6 +87,37 @@ FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find(
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+template <typename _KeyLike>
+auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find_like(const _KeyLike& keyLike, hash_t h) -> iterator {
+    if (_data.Size) {
+        Assert(_data.MaxProbeDist);
+
+        const_pointer buckets = _data.GetBuckets();
+        const size_type mask = size_type(_data.CapacityM1);
+
+        forrange(o, 0, size_type(_data.MaxProbeDist)) {
+            const size_type index = (size_type(h) + o) & mask;
+            const EBucketState state = _data.GetState(index);
+
+            if (state == EBucketState::Filled &&
+                table_traits::Key(buckets[index]) == keyLike) {
+                return iterator(*this, (public_type*)(buckets + index));
+            }
+            else if (state == EBucketState::Inactive) {
+                break; // End of the chain!
+            }
+        }
+    }
+    return end();
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+template <typename _KeyLike>
+FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find_like(const _KeyLike& keyLike, hash_t h) const -> const_iterator {
+    return const_cast<TBasicHashTable*>(this)->find_like(keyLike, h);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert(const value_type& value) -> TPair<iterator, bool> {
     reserve_Additional(1);
     const size_type bucket = FindOrAllocateBucket_(table_traits::Key(value));
