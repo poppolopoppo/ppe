@@ -84,7 +84,7 @@ public:
     TMemoryView<const T> MakeView() const { return TMemoryView<const T>(_storage, _size); }
     TMemoryView<const T> MakeConstView() const { return TMemoryView<const T>(_storage, _size); }
 
-    reference Push_Uninitialized();
+    pointer Push_Uninitialized();
     template <typename _Arg0, typename... _Args>
     void Push(_Arg0&& arg0, _Args&&... args);
     bool Pop(pointer pvalue = nullptr);
@@ -131,17 +131,17 @@ TStack<T, _IsPod>::TStack(const TMemoryView<T>& storage)
 :   TStack(storage.Pointer(), storage.size()) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-auto TStack<T, _IsPod>::Push_Uninitialized() -> reference {
+auto TStack<T, _IsPod>::Push_Uninitialized() -> pointer {
     Assert(_storage);
     Assert(_size < _capacity);
 
-    return (*(T*)&_storage[_size++]);
+    return ((T*)&_storage[_size++]);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
 void TStack<T, _IsPod>::Push(_Arg0&& arg0, _Args&&... args) {
-    TAllocatorBase<T>().construct(&Push_Uninitialized(), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    TAllocatorBase<T>().construct(Push_Uninitialized(), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -314,3 +314,9 @@ using TPODStackHeapAdapter = TStackHeapAdapter<T, _Less, true>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
+
+template <typename T, bool _IsPod>
+void* operator new(size_t sizeInBytes, Core::TStack<T, _IsPod>& stack) {
+    Assert(sizeInBytes == sizeof(T));
+    return stack.Push_Uninitialized();
+}
