@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Allocation.h"
+#include "Core/Container/Hash.h"
 
 #include <type_traits>
 
@@ -115,12 +116,18 @@ public:
 
     bool Equals(const TRawStorage& other) const;
 
-    TMemoryView<T> MakeView() { return TMemoryView<T>(data(), size()); }
-    TMemoryView<const T> MakeView() const { return TMemoryView<const T>(data(), size()); }
-    TMemoryView<const T> MakeConstView() const { return TMemoryView<const T>(data(), size()); }
+    hash_t HashValue() const {
+        return hash_as_pod_array(_storage, _size);
+    }
 
-    friend bool operator ==(const TRawStorage& lhs, const TRawStorage& rhs) { return lhs.Equals(rhs); }
-    friend bool operator !=(const TRawStorage& lhs, const TRawStorage& rhs) { return not lhs.Equals(rhs); }
+    TMemoryView<T> MakeView() { return TMemoryView<T>(_storage, _size); }
+    TMemoryView<const T> MakeView() const { return TMemoryView<const T>(_storage, _size); }
+    TMemoryView<const T> MakeConstView() const { return TMemoryView<const T>(_storage, _size); }
+
+    inline friend bool operator ==(const TRawStorage& lhs, const TRawStorage& rhs) { return lhs.Equals(rhs); }
+    inline friend bool operator !=(const TRawStorage& lhs, const TRawStorage& rhs) { return not lhs.Equals(rhs); }
+
+    inline friend hash_t hash_value(const TRawStorage& storage) { return storage.HashValue(); }
 
 protected:
     pointer _storage;
