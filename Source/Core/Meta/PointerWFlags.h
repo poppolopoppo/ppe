@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core/Meta/BitField.h"
 #include "Core/Meta/Cast.h"
 
 #include <type_traits>
@@ -12,41 +11,44 @@ namespace Meta {
 //----------------------------------------------------------------------------
 // use a macro instead of inheritance to keep TPointerWFlags<> as a pod
 #define POINTERWFLAGS_BASE_DEF() \
-    typedef TBit<uintptr_t>::TFirst<2>::type field_Flag01; \
-    typedef TBit<uintptr_t>::TFirst<1>::type field_Flag0; \
-    typedef TBit<uintptr_t>::TAfter<field_Flag0>::TField<1>::type field_Flag1; \
-    \
-    uintptr_t Flag01() const { return field_Flag01::Get(_pFlags); } \
-    void SetFlag01(uintptr_t value) { field_Flag01::InplaceSet(_pFlags, value); } \
-    \
-    bool Flag0() const { return field_Flag0::Get(_pFlags); } \
-    void SetFlag0(bool value) { field_Flag0::InplaceSet(_pFlags, value); } \
-    \
-    bool Flag1() const { return field_Flag1::Get(_pFlags); } \
-    void SetFlag1(bool value) { field_Flag1::InplaceSet(_pFlags, value); } \
-    \
-    void *RawPointer() const { \
-        return reinterpret_cast<void *>(_pFlags & uintptr_t(field_Flag01::NotMask)); \
+    uintptr_t Flag01() const { return _packed._flags; } \
+    void SetFlag01(uintptr_t value) { \
+        _packed._flags = value; \
+        Assert(value == _packed._flags); \
     } \
     \
+    bool Flag0() const { return (0 != (_packed._flags & 1)); } \
+    void SetFlag0(bool value) { _packed._flags = (value ? _packed._flags | 1 : _packed._flags & ~1); } \
+    \
+    bool Flag1() const { return (0 != (_packed._flags & 2)); } \
+    void SetFlag1(bool value) { _packed._flags = (value ? _packed._flags | 2 : _packed._flags & ~2); } \
+    \
+    void *RawPointer() const { return (void*)(_packed._ptr << 2); } \
     void SetRawPointer(const void *ptr) { \
-        Assert((uintptr_t(ptr) & field_Flag01::Mask) == 0); \
-        _pFlags = (_pFlags & field_Flag01::Mask) | uintptr_t(ptr); \
+        _packed._ptr = ((uintptr_t)ptr >> 2); \
+        Assert(RawPointer() == ptr); \
     } \
     \
     friend inline void swap(TPointerWFlags& lhs, TPointerWFlags& rhs) { \
-        std::swap(lhs._pFlags, rhs._pFlags); \
+        std::swap(lhs._raw, rhs._raw); \
     } \
     \
     friend inline bool operator ==(const TPointerWFlags& lhs, const TPointerWFlags& rhs) { \
-        return (lhs._pFlags == rhs._pFlags); \
+        return (lhs._raw == rhs._raw); \
     } \
     \
     friend inline bool operator !=(const TPointerWFlags& lhs, const TPointerWFlags& rhs) { \
-        return (lhs._pFlags != rhs._pFlags); \
+        return (lhs._raw != rhs._raw); \
     } \
     \
-    uintptr_t _pFlags
+    union { \
+        void* _raw; \
+        struct { \
+            uintptr_t _flags : 2; \
+            uintptr_t _ptr : CODE3264(30, 62); \
+        }   _packed; \
+    }
+
 //----------------------------------------------------------------------------
 template <typename T>
 struct TPointerWFlags {
@@ -62,46 +64,14 @@ struct TPointerWFlags {
     }
 
     void Reset(T* p, bool flag0 = false, bool flag1 = false) {
-        _pFlags = 0;
-        field_Flag0::InplaceSet(_pFlags, flag0);
-        field_Flag1::InplaceSet(_pFlags, flag1);
         SetRawPointer(p);
+        SetFlag0(flag0);
+        SetFlag1(flag1);
     }
 
     void Reset(T* p, uintptr_t flag01) {
-        _pFlags = 0;
-        field_Flag01::InplaceSet(_pFlags, flag01);
         SetRawPointer(p);
-    }
-
-    T* operator ->() const { return Get(); }
-    T& operator *() const { return *Get(); }
-};
-//----------------------------------------------------------------------------
-template <typename T>
-struct TPointerWFlags<T *> {
-    POINTERWFLAGS_BASE_DEF();
-
-    FORCE_INLINE T *Get() const { return reinterpret_cast<T*>(RawPointer()); }
-    FORCE_INLINE void Set(T *ptr) { SetRawPointer(ptr); }
-
-    T& Reference() const {
-        T* ptr = Get();
-        Assert(ptr);
-        return *ptr;
-    }
-
-    void Reset(T* p, bool flag0 = false, bool flag1 = false) {
-        _pFlags = 0;
-        field_Flag0::InplaceSet(_pFlags, flag0);
-        field_Flag1::InplaceSet(_pFlags, flag1);
-        SetRawPointer(p);
-    }
-
-    void Reset(T* p, uintptr_t flag01) {
-        _pFlags = 0;
-        field_Flag01::InplaceSet(_pFlags, flag01);
-        SetRawPointer(p);
+        SetFlag01(flag01);
     }
 
     T* operator ->() const { return Get(); }
@@ -116,23 +86,22 @@ struct TPointerWFlags<void> {
     FORCE_INLINE void Set(void *ptr) { SetRawPointer(ptr); }
 
     void Reset(void *p, bool flag0 = false, bool flag1 = false) {
-        _pFlags = 0;
-        field_Flag0::InplaceSet(_pFlags, flag0);
-        field_Flag1::InplaceSet(_pFlags, flag1);
         SetRawPointer(p);
+        SetFlag0(flag0);
+        SetFlag1(flag1);
     }
 
     void Reset(void *p, uintptr_t flag01) {
-        _pFlags = 0;
-        field_Flag01::InplaceSet(_pFlags, flag01);
         SetRawPointer(p);
+        SetFlag01(flag01);
     }
 };
 //----------------------------------------------------------------------------
 #undef POINTERWFLAGS_BASE_DEF
 //----------------------------------------------------------------------------
-static_assert(Meta::TIsPod< TPointerWFlags<int> >::value, "TPointerWFlags<int> must be a POD type" );
-static_assert(Meta::TIsPod< TPointerWFlags<void> >::value, "TPointerWFlags<void> must be a POD type");
+STATIC_ASSERT(sizeof(TPointerWFlags<int>) == sizeof(void*));
+STATIC_ASSERT(Meta::TIsPod< TPointerWFlags<int> >::value);
+STATIC_ASSERT(Meta::TIsPod< TPointerWFlags<void> >::value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
