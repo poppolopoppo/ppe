@@ -66,7 +66,7 @@ inline bool IsInLowestPriorityThread() {
     return (CORE_THREADTAG_WORKER == CurrentThreadContext().Tag());
 }
 //----------------------------------------------------------------------------
-#define AssertIsMainThread() Assert(Core::IsInMainThread())
+#define AssertIsMainThread() Assert_NoAssume(Core::IsInMainThread())
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
