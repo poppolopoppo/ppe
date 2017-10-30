@@ -84,16 +84,16 @@ template <typename _It> size_t hash_fnv1a(_It first, _It last, size_t seed) { re
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 u128 Fingerprint128(const void *ptr, size_t sizeInBytes);
-template <typename T> u128 Fingerprint128(const TMemoryView<T>& src) { return Fingerprint128(src.Pointer(), src.SizeInBytes()); }
+template <typename T> u128 Fingerprint128(const TMemoryView<const T>& src) { return Fingerprint128(src.Pointer(), src.SizeInBytes()); }
 //----------------------------------------------------------------------------
 u64 Fingerprint64(const void *ptr, size_t sizeInBytes);
-template <typename T> u64 Fingerprint64(const TMemoryView<T>& src) { return Fingerprint64(src.Pointer(), src.SizeInBytes()); }
+template <typename T> u64 Fingerprint64(const TMemoryView<const T>& src) { return Fingerprint64(src.Pointer(), src.SizeInBytes()); }
 //----------------------------------------------------------------------------
 u32 Fingerprint32(const void *ptr, size_t sizeInBytes);
-template <typename T> u32 Fingerprint32(const TMemoryView<T>& src) { return Fingerprint32(src.Pointer(), src.SizeInBytes()); }
+template <typename T> u32 Fingerprint32(const TMemoryView<const T>& src) { return Fingerprint32(src.Pointer(), src.SizeInBytes()); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-}
+} //!namespace Core
 
 #include "Core/Memory/HashFunctions-inl.h"
