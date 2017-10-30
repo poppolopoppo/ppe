@@ -4,6 +4,7 @@
 
 #include "Core/IO/StringView.h"
 #include "Core/Memory/MemoryView.h"
+    #include "Core/Meta/Function.h"
 #include "Core/Meta/StronglyTyped.h"
 
 #include <iosfwd>
@@ -228,10 +229,10 @@ struct FHexDump {
     FHexDump(const TMemoryView<const u8>& rawData, size_t bytesPerRow = 16)
         : RawData(rawData), BytesPerRow(bytesPerRow) {}
 };
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::FHexDump& hexDump);
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Fmt::FHexDump& hexDump);
 } //!namespace Fmt
 //----------------------------------------------------------------------------
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::FHexDump& hexDump);
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Fmt::FHexDump& hexDump);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -251,9 +252,29 @@ struct FIndent {
     static FIndent FourSpaces() { return FIndent{ "    " }; }
     static FIndent None()       { return FIndent{ "" }; }
 };
+} //!namespace Fmt
+//----------------------------------------------------------------------------
 std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::FIndent& indent);
 std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Fmt::FIndent& indent);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Fmt {
+template <typename _Char>
+using TBasicFormator = Meta::TFunction<void (std::basic_ostream<_Char>&)>;
+using FFormator = TBasicFormator<char>;
+using FWFormator = TBasicFormator<wchar_t>;
 } //!namespace Fmt
+//----------------------------------------------------------------------------
+inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::FFormator& formator) {
+    formator(oss);
+    return oss;
+}
+//----------------------------------------------------------------------------
+inline std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& woss, const Fmt::FWFormator& wformator) {
+    wformator(woss);
+    return woss;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
