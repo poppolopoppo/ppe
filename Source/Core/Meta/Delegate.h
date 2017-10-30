@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "Core/Meta/PointerWFlags.h"
@@ -106,11 +107,14 @@ struct TBindDelegate {};
 
 #include "Delegate-inl.h"
 
-#define TDelegate(_pMemberOrFunc, _pCalleeOrArg0) \
+#define _TDelegate(_pMemberOrFunc, _pCalleeOrArg0, _Template) \
     ::Core::details::TBindDelegate< \
             decltype( _pCalleeOrArg0 ) \
         ,   decltype( _pMemberOrFunc ) \
-        >::get< _pMemberOrFunc >( _pCalleeOrArg0 )
+        >::_Template get< _pMemberOrFunc >( _pCalleeOrArg0 )
+
+#define TDelegate(_pMemberOrFunc, _pCalleeOrArg0) _TDelegate(_pMemberOrFunc, _pCalleeOrArg0, )
+#define TDelegateTpl(_pMemberOrFunc, _pCalleeOrArg0) _TDelegate(_pMemberOrFunc, _pCalleeOrArg0, template)
 
 #define DelegateType(_pMemberOrFunc, _pCalleeOrArg0) \
     ::Core::details::TBindDelegate< \

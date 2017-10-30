@@ -55,7 +55,7 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
 }
 //----------------------------------------------------------------------------
 FCurrentProcess::~FCurrentProcess() {
-    LOG(Info, L"[Process] Exit with code = {0}.", _exitCode);
+    LOG(Info, L"[Process] Exit with code = {0}.", _exitCode.load());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

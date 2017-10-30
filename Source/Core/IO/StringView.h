@@ -384,29 +384,29 @@ hash_t hash_stringI(const FWStringView& wstr);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
-struct TCharEqualTo : public std::binary_function<const _Char, const _Char, bool> {
+struct TCharEqualTo {
     bool operator ()(const _Char& lhs, const _Char& rhs) const { return lhs == rhs; }
 };
 template <typename _Char>
-struct TCharEqualTo<_Char, ECase::Insensitive> : public std::binary_function<const _Char, const _Char, bool> {
+struct TCharEqualTo<_Char, ECase::Insensitive> {
     bool operator ()(const _Char& lhs, const _Char& rhs) const { return ToLower(lhs) == ToLower(rhs); }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
-struct TCharLess : public std::binary_function<const _Char, const _Char, bool> {
+struct TCharLess {
     bool operator ()(const _Char& lhs, const _Char& rhs) const { return lhs < rhs; }
 };
 template <typename _Char>
-struct TCharLess<_Char, ECase::Insensitive> : public std::binary_function<const _Char, const _Char, bool>{
+struct TCharLess<_Char, ECase::Insensitive> {
     bool operator ()(const _Char& lhs, const _Char& rhs) const { return ToLower(lhs) < ToLower(rhs); }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
-struct TCharCase : public std::unary_function<const _Char, _Char> {
+struct TCharCase {
     _Char operator ()(const _Char& ch) const { return ch; }
 };
 template <typename _Char>
-struct TCharCase<_Char, ECase::Insensitive> : public std::unary_function<const _Char, _Char> {
+struct TCharCase<_Char, ECase::Insensitive> {
     _Char operator ()(const _Char& ch) const { return ToLower(ch); }
 };
 //----------------------------------------------------------------------------

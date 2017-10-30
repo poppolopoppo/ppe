@@ -28,8 +28,7 @@ public:
     using base_type::max_size;
 
     template<typename U>
-    struct rebind
-    {
+    struct rebind {
         typedef TMallocator<U> other;
     };
 

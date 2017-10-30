@@ -58,7 +58,7 @@ private:
     int _dimension;
 };
 //----------------------------------------------------------------------------
-template <typename _Allocator = typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Maths, FOctreeNode) >
+template <typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Maths, FOctreeNode) >
 class TBareOctree : public FBasicOctree, _Allocator {
 public:
     typedef _Allocator allocator_type;
@@ -67,7 +67,6 @@ public:
     using typename FBasicOctree::FHitResult;
 
     using FBasicOctree::Intersects;
-    using FBasicOctree::Cull;
 
 private:
 

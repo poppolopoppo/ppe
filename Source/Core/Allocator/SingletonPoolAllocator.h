@@ -33,8 +33,7 @@ public:
     typedef TTypedSegregatedMemoryPool<_PoolTag, T, _ThreadLocal> segregatedpool_type;
 
     template<typename U>
-    struct rebind
-    {
+    struct rebind {
         typedef TSingletonPoolAllocator<U, _ThreadLocal, _PoolTag > other;
     };
 

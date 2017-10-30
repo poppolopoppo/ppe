@@ -36,7 +36,7 @@ public:
     ~TMemoryView();
 
     // enables type promotion between {T(),T(),T()} and TMemoryView<T>
-    TMemoryView(std::initializer_list<value_type> list)
+    TMemoryView(std::initializer_list<T> list)
         : TMemoryView(&*list.begin(), std::distance(list.begin(), list.end())) {}
 
     // enables type promotion between T[] and TMemoryView<T>

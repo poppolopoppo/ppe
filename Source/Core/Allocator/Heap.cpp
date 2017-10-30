@@ -226,7 +226,7 @@ struct FHeapHandle_ {
     }
 
     static void* Create() { return new FHeapHandle_{}; }
-    static void Destroy(void* handle) { Assert(handle); delete(handle); }
+    static void Destroy(void* handle) { Assert(handle); delete(reinterpret_cast<FHeapHandle_*>(handle)); }
 
     static FHeapHandle_* Get(void* handle) {
         Assert(handle);

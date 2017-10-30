@@ -239,7 +239,7 @@ FLinearColor LerpUsingHSV(const FLinearColor& from, const FLinearColor& to, floa
 //----------------------------------------------------------------------------
 struct CORE_API FColor {
     union {
-        u8  R, G, B, A;
+        struct { u8  R, G, B, A; };
         u32 DWord;
     };
 

@@ -29,8 +29,7 @@ public:
     using base_type::max_size;
 
     template<typename U>
-    struct rebind
-    {
+    struct rebind {
         typedef THeapAllocator<U, heapsingleton_type> other;
     };
 

@@ -29,7 +29,7 @@ static void DLLWrapper_Unload_(void* handle) {
 //----------------------------------------------------------------------------
 static void* DLLWrapper_FunctionAddr_(void* handle, const FStringView& funcname) {
     Assert('\0' == funcname.data()[funcname.size()]);
-    return ::GetProcAddress((::HMODULE)handle, funcname.data());
+    return (void*)::GetProcAddress((::HMODULE)handle, funcname.data());
 }
 //----------------------------------------------------------------------------
 static size_t DLLWrapper_LibaryFilename_(void* handle, const TMemoryView<char>& buffer) {

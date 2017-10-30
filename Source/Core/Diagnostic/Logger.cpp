@@ -115,7 +115,6 @@ public:
 
 private:
     FWStringView _prefix;
-    bool _debuggerAttached;
 };
 //----------------------------------------------------------------------------
 static ILogger* LowLevelLogger_() {
@@ -323,12 +322,11 @@ static POD_STORAGE(FAbstractThreadSafeLogger) GLoggerDefaultStorage;
 void FLoggerStartup::Start() {
     Assert(LowLevelLogger_() == CurrentLogger_());
 
-    ILogger* logger = nullptr;
+    void* const storage = (void*)std::addressof(GLoggerDefaultStorage);
 
-    if (FCurrentProcess::Instance().StartedWithDebugger())
-        logger = new ((void*)&GLoggerDefaultStorage) FOutputDebugLogger();
-    else
-        logger = new ((void*)&GLoggerDefaultStorage) FStdoutLogger();
+    ILogger* const logger = (FCurrentProcess::Instance().StartedWithDebugger())
+        ? (ILogger*)new (storage) FOutputDebugLogger()
+        : (ILogger*)new (storage) FStdoutLogger();
 
     Assert(logger == (ILogger*)&GLoggerDefaultStorage);
 

@@ -544,7 +544,7 @@ struct FBinnedThreadCache_ {
 
         const FAtomicSpinLock::FScope scopeLock(_pending.Barrier);
 
-        const size_t slot = _pending.NumBlocks++;
+        _pending.NumBlocks++;
 
         ONLY_IF_ASSERT(FillBlockPending_(block, block->Owner()->BlockSizeInBytes()));
         ONLY_IF_ASSERT(block->MakeCanary());
@@ -619,7 +619,7 @@ struct FBinnedThreadCache_ {
 
 private:
     struct CACHELINE_ALIGNED/* avoid false sharing */ FPendingBlocks_ {
-        std::atomic<size_t> NumBlocks = 0;
+        std::atomic<size_t> NumBlocks{ 0 };
         FAtomicSpinLock Barrier;
         FBinnedChunk_::FBlock* FirstBlock = nullptr;
     };

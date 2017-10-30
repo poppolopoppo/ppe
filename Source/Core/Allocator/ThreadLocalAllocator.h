@@ -43,8 +43,7 @@ public:
     using base_type::max_size;
 
     template<typename U>
-    struct rebind
-    {
+    struct rebind {
         typedef TThreadLocalAllocator<U> other;
     };
 
@@ -54,16 +53,16 @@ public:
     template <typename U>
     TThreadLocalAllocator(const TThreadLocalAllocator<U>& other) throw() {}
 
-    TThreadLocalAllocator& operator =(const TThreadLocalAllocator& other) { 
-        THIS_THREADRESOURCE_CHECKACCESS(); 
+    TThreadLocalAllocator& operator =(const TThreadLocalAllocator& other) {
+        THIS_THREADRESOURCE_CHECKACCESS();
         THREADRESOURCE_CHECKACCESS(&other);
-        return *this; 
+        return *this;
     }
     template <typename U>
-    TThreadLocalAllocator& operator =(const TThreadLocalAllocator<U>&) { 
-        THIS_THREADRESOURCE_CHECKACCESS(); 
-        THREADRESOURCE_CHECKACCESS(&other); 
-        return *this; 
+    TThreadLocalAllocator& operator =(const TThreadLocalAllocator<U>&) {
+        THIS_THREADRESOURCE_CHECKACCESS();
+        THREADRESOURCE_CHECKACCESS(&other);
+        return *this;
     }
 
     pointer allocate(size_type n) {

@@ -118,12 +118,12 @@ public:
         return (*this);
     }
 
-    template <typename _Fx, class = decltype(parent_type(std::declval<_Fx>())) >
+    template <typename _Fx>
     TFunction(_Fx fx)
         : parent_type(std::allocator_arg, allocator_(), std::forward<_Fx>(fx))
     {}
 
-    template <typename _Fx, class = decltype(std::declval<parent_type>().assign(std::declval<_Fx>())) >
+    template <typename _Fx>
     TFunction& operator =(_Fx fx) {
         parent_type::assign(std::forward<_Fx>(fx), allocator_());
         return (*this);

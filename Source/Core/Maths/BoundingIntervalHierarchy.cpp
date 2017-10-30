@@ -56,7 +56,6 @@ static size_t CullBIHTree_(
         u32 Begin, End;
     };
 
-    FHitResult hit{ FLT_MAX, checked_cast<u32>(count) };
     FBIHCandidate_ it{ root, bounds, 0, checked_cast<u32>(count) };
     STACKLOCAL_POD_STACK(FBIHCandidate_, candidates, ApproxBIHTreeDepth_(count));
 
@@ -259,8 +258,8 @@ void FBasicBIHTree::Build(
         else { // continue to split
             Assert(it.Node->IsLeaf());
 
-            FBIHCandidate_& child0 = candidates.Push_Uninitialized();
-            FBIHCandidate_& child1 = candidates.Push_Uninitialized();
+            FBIHCandidate_& child0 = *candidates.Push_Uninitialized();
+            FBIHCandidate_& child1 = *candidates.Push_Uninitialized();
 
             child0.Begin = it.Begin;
             child0.End = pivot;

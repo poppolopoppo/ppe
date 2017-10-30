@@ -89,7 +89,7 @@ static bool RayIntersectsOctree_(
 
         forrange(i, 0, 8) {
             const FOctreeNode::pointer& p = it.Node->Children[i];
-            if (not p._pFlags)
+            if (not p._raw)
                 continue;
 
             const i16 x = it.X + GChildOffset_[i][0] * halfExtent;
@@ -169,10 +169,10 @@ static bool BatchRaysIntersectsOctree_(
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FBasicOctree::FBasicOctree(const float3& center, float voxelSize, int dimension)
-    : _center(center)
+    : _root(nullptr)
+    , _center(center)
     , _voxelSize(voxelSize)
-    , _dimension(dimension)
-    , _root(nullptr) {
+    , _dimension(dimension) {
     Assert(_voxelSize > 0);
     Assert(_dimension > 1);
     Assert(Meta::IsPow2(_dimension));

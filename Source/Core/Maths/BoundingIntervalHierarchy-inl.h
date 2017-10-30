@@ -34,22 +34,22 @@ auto TBIHTree<T, _Traits>::operator =(TBIHTree&& rvalue) -> TBIHTree& {
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>
 bool TBIHTree<T, _Traits>::Intersects(const FRay& ray) const {
-    return _bih.Intersects(ray, _items.size(), TDelegate(&TBIHTree::IntersectsFirstHit_, this));
+    return _bih.Intersects(ray, _items.size(), TDelegateTpl(&TBIHTree::IntersectsFirstHit_, this));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>
 bool TBIHTree<T, _Traits>::Intersects(const FRay& ray, FHitResult* firstHit) const {
-    return _bih.Intersects(ray, firstHit, _items.size(), TDelegate(&TBIHTree::IntersectsFirstHit_, this));
+    return _bih.Intersects(ray, firstHit, _items.size(), TDelegateTpl(&TBIHTree::IntersectsFirstHit_, this));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>
 bool TBIHTree<T, _Traits>::Intersects(const FRay& ray, const onhit_delegate& onHit) const {
-    return _bih.Intersects(ray, onHit, _items.size(), TDelegate(&TBIHTree::IntersectsOnEachHit_, this));
+    return _bih.Intersects(ray, onHit, _items.size(), TDelegateTpl(&TBIHTree::IntersectsOnEachHit_, this));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>
 size_t TBIHTree<T, _Traits>::BatchIntersects(const TMemoryView<const FRay>& rays, const TMemoryView<FHitResult>& firstHits) const {
-    return _bih.BatchIntersects(rays, firstHits, _items.size(), TDelegate(&TBIHTree::IntersectsFirstHit_, this));
+    return _bih.BatchIntersects(rays, firstHits, _items.size(), TDelegateTpl(&TBIHTree::IntersectsFirstHit_, this));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Traits>

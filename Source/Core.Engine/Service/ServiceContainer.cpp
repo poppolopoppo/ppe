@@ -14,7 +14,7 @@ namespace Engine {
 namespace {
 //----------------------------------------------------------------------------
 typedef TPair<FGuid, IService *> ServiceEntry;
-struct FServiceLessByPriority_ : public std::binary_function<const ServiceEntry&, const ServiceEntry&, bool> {
+struct FServiceLessByPriority_ {
     bool operator ()(const ServiceEntry& lhs, const ServiceEntry& rhs) const {
         return lhs.second->ServicePriority() < rhs.second->ServicePriority();
     }

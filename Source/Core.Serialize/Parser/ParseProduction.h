@@ -23,7 +23,7 @@ template <typename T>
 using TEnumerable = VECTOR_THREAD_LOCAL(Parser, T);
 //----------------------------------------------------------------------------
 template <typename T>
-struct TProduction : public std::unary_function<FParseList&, TParseResult<T> > {
+struct TProduction {
     typedef T value_type;
 
     typedef SINGLETON_POOL_ALLOCATOR(Parser, int, POOL_TAG(Parser)) allocator_type;

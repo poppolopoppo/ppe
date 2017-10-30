@@ -14,6 +14,7 @@ namespace Core {
 #define HASH_AS_POD_DEF(_Prefix, _Type) \
     _Prefix hash_t hash_value(_Type value) { return hash_as_pod(value); }
 //----------------------------------------------------------------------------
+HASH_AS_POD_DEF(inline, bool)
 HASH_AS_POD_DEF(inline, i8)
 HASH_AS_POD_DEF(inline, u8)
 HASH_AS_POD_DEF(inline, i16)
@@ -70,7 +71,7 @@ hash_t hash_range(_It first, _It last);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct THash : public std::unary_function<const T&, size_t> {
+struct THash {
     hash_t operator ()(const T& value) const {
         using Core::hash_value;
         return hash_value(value);

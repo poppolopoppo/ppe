@@ -203,7 +203,7 @@ TKeyIterator<_It> MakeKeyIterator(_It&& it) { return TKeyIterator<_It>(std::move
 //----------------------------------------------------------------------------
 template <typename _It>
 class TValueIterator : public Meta::TIterator<
-    Meta::TAddConst<  decltype(std::declval<_It>()->second) >,
+    Meta::TAddConst< decltype(std::declval<_It>()->second) >,
     std::forward_iterator_tag
 > {
 public:

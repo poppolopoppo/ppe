@@ -93,8 +93,7 @@ struct FFoldExpression {
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
-#   error "TODO: test if the line above works""
-//#   define FOLD_EXPR(...) __VA_ARGS__
+#   define FOLD_EXPR(...) __VA_ARGS__
 //----------------------------------------------------------------------------
 #endif //!_HAS_CXX17
 //----------------------------------------------------------------------------
@@ -229,7 +228,7 @@ typename std::enable_if< not Meta::TIsPod<T>::value >::type Destroy(T* p) {
         \
         template < \
             typename... _Args, \
-            typename = typename std:: < has_constructor<parent_type, _Args...>::value > \
+            typename = Core::Meta::TEnableIf< Meta::has_constructor<parent_type, _Args...>::value > \
         > \
         explicit _NAME(_Args&&... args) \
             : parent_type(std::forward<_Args>(args)...) {} \

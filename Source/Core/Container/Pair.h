@@ -4,23 +4,22 @@
 
 #include <iosfwd>
 #include <utility>
-#include <type_traits>
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-using TPair = std::pair<_Key, _Value>;
+template <typename _First, typename _Second>
+using TPair = std::pair<_First, _Second>;
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-FORCE_INLINE TPair< Meta::TRemoveReference<_Key>, Meta::TRemoveReference<_Value> > MakePair(_Key&& key, _Value&& value) {
-    typedef TPair< Meta::TRemoveReference<_Key>, Meta::TRemoveReference<_Value> > pair_type;
-    return pair_type(std::forward<_Key>(key), std::forward<_Value>(value));
+template <typename _First, typename _Second>
+FORCE_INLINE TPair< Meta::TRemoveReference<_First>, Meta::TRemoveReference<_Second> > MakePair(_First&& first, _Second&& second) {
+    typedef TPair< Meta::TRemoveReference<_First>, Meta::TRemoveReference<_Second> > pair_type;
+    return pair_type(std::forward<_First>(first), std::forward<_Second>(second));
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-FORCE_INLINE hash_t hash_value(const TPair<_Key, _Value>& pair) {
+template <typename _First, typename _Second>
+FORCE_INLINE hash_t hash_value(const TPair<_First, _Second>& pair) {
     using Core::hash_value;
     return hash_tuple(hash_value(pair.first), hash_value(pair.second));
 }
@@ -28,12 +27,10 @@ FORCE_INLINE hash_t hash_value(const TPair<_Key, _Value>& pair) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <
-    typename _Key,
-    typename _Value,
-    typename _Char,
-    typename _Traits
+    typename _Char,  typename _Traits,
+    typename _First, typename _Second
 >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TPair<_Key, _Value>& pair) {
+std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TPair<_First, _Second>& pair) {
     return oss << "( " << pair.first << ", " << pair.second << " )";
 }
 //----------------------------------------------------------------------------

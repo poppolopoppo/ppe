@@ -31,16 +31,20 @@ template <typename T, typename U>
 constexpr T BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2);
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr T Ceil(T f);
+T Ceil(T f) {
+    return std::ceil(f);
+}
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T Clamp(T value, T vmin, T vmax);
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr T Frac(T f);
+T Frac(T f);
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr T Floor(T f);
+T Floor(T f) {
+    return std::floor(f);
+}
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T FMod(T f, T m);
@@ -75,7 +79,9 @@ constexpr double Rcp(double d);
 #endif
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr T Round(T f);
+T Round(T f) {
+    return std::round(f);
+}
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T RSqrt(T f);
@@ -109,11 +115,11 @@ constexpr U Smootherstep(T vmin, T vmax, U f);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline constexpr int CeilToInt(float f) { return int(Ceil(f)); }
+inline int CeilToInt(float f) { return int(Ceil(f)); }
 //----------------------------------------------------------------------------
-inline constexpr int FloorToInt(float f) { return int(Floor(f)); }
+inline int FloorToInt(float f) { return int(Floor(f)); }
 //----------------------------------------------------------------------------
-inline constexpr int RoundToInt(float f) { return int(Round(f)); }
+inline int RoundToInt(float f) { return int(Round(f)); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -147,10 +153,10 @@ constexpr float NormalizeAngle(float degrees);
 // https://michaldrobot.files.wordpress.com/2014/05/gcn_alu_opt_digitaldragons2014.pdf
 size_t CubeMapFaceID(float x, float y, float z);
 //----------------------------------------------------------------------------
-constexpr float GridSnap(float location, float grid);
+float GridSnap(float location, float grid);
 //----------------------------------------------------------------------------
 // https://github.com/lemire/fastrange/blob/master/fastrange.h
-inline u32 Bounded(u32 x, u32 N) {
+inline constexpr u32 Bounded(u32 x, u32 N) {
 	return (u32)(((u64)x * (u64)N) >> 32);
 }
 inline u64 Bounded(u64 x, u64 N) {

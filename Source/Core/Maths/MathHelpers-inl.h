@@ -26,18 +26,8 @@ inline constexpr bool BarycentricLerp(bool v0, bool v1, bool v2, float f0, float
 }
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr T Ceil(T f) {
-    return std::ceil(f);
-}
-//----------------------------------------------------------------------------
-template <typename T>
 constexpr T Clamp(T value, T vmin, T vmax) {
     return std::min(vmax, std::max(vmin, value));
-}
-//----------------------------------------------------------------------------
-template <typename T>
-constexpr T Floor(T f) {
-    return std::floor(f);
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -46,8 +36,8 @@ constexpr T FMod(T f, T m) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr T Frac(T f) {
-    return f - std::trunc(f);
+T Frac(T f) {
+    return (f - std::trunc(f));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename U>
@@ -78,7 +68,7 @@ constexpr float Pow(float f, U n) {
 }
 //----------------------------------------------------------------------------
 template <typename U>
-constexpr double Pow(double f, U n) {
+constexpr double Pow(double d, U n) {
     return std::pow(d, n);
 }
 //----------------------------------------------------------------------------
@@ -101,13 +91,8 @@ inline constexpr double Rcp(double d) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr T Round(T f) {
-    return std::round(f);
-}
-//----------------------------------------------------------------------------
-template <typename T>
 constexpr T RSqrt(T f) {
-    return TRcp(std::sqrt(f));
+    return Rcp(std::sqrt(f));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename U>
@@ -207,7 +192,7 @@ inline size_t CubeMapFaceID(float x, float y, float z) {
         return (x < 0.0f) ? 1 : 0;
 }
 //----------------------------------------------------------------------------
-inline constexpr float GridSnap(float location, float grid) {
+inline float GridSnap(float location, float grid) {
     //Assert(Abs(grid) > F_SmallEpsilon); // constexpr :'(
     return (Floor((location + 0.5f * grid) / grid) * grid);
 }

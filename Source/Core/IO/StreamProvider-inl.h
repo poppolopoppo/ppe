@@ -39,7 +39,7 @@ bool IBufferedStreamReader::ReadPOD(T* pod) {
 template <typename T>
 bool IBufferedStreamReader::ExpectPOD(const T& pod) {
     const std::streamoff off = TellI();
-    typename POD_STORAGE(T) read;
+    POD_STORAGE(T) read;
     if (false == ReadPOD(&read))
         return false;
 
