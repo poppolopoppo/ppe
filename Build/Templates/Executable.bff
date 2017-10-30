@@ -44,6 +44,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
         .CompilerInputFiles     = '$ProjectPath$\$ProjectName$.rc'
         .CompilerOutputPath     = .IntermediateDirectory
+
+        .CompilerOptions = '/i"$SourceDirectory$" /i"$ProjectPath$" $CompilerOptions$'
     }
 #endif
 

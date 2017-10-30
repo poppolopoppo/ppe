@@ -13,6 +13,7 @@
 .ProjectLibraries = {}
 .ProjectPostBuild = {}
 .ProjectPreBuild = {}
+.ProjectUseUnity = 'true'
 
 //------------------------------------------------------------------------------
 // Project registrations

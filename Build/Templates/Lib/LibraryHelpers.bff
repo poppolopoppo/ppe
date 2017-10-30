@@ -13,6 +13,7 @@
 ;   [ProjectLibraries]      project specific libraries (default value in Defaults.bff)
 ;   [ProjectIsolatedFiles]  project files not included in unity builds but still compiled (default value in Defaults.bff)
 ;   [ProjectPCHConfig]      project Pre-Compiled Headers configuration to enable/disable PCH (default value in Defaults.bff)
+;   [ProjectUseUnity]       project specific boolean : if true use unity input, else only ProjectIsolatedFiles
 //------------------------------------------------------------------------------
 
 .EvalParameters = {
@@ -24,6 +25,7 @@
     "ProjectLibraries",
     "ProjectIsolatedFiles",
     "ProjectPCHConfig",
+    "ProjectUseUnity"
 }
 
 .ProjectConfigs = {}
@@ -137,13 +139,17 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
             .CompilerOutputPath = .IntermediateDirectory
 
-            // Compiler
+            // Isolated files
             .CompilerInputFiles = {}
             ForEach( .Filename in .ProjectIsolatedFiles )
             {
                 ^CompilerInputFiles + "$ProjectPath$/$Filename$"
             }
-            .CompilerInputUnity = '$ProjectName$-Unity-$Platform$-$Config$'
+
+            // Unity files IFN
+            .ProjectCompilerInputUnity_false = []
+            .ProjectCompilerInputUnity_true = [ .CompilerInputUnity = '$ProjectName$-Unity-$Platform$-$Config$' ]
+            Using( ."ProjectCompilerInputUnity_$ProjectUseUnity$" )
 
             // Pre-Compiled Headers
             .ProjectPCHOptions = []
