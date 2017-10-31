@@ -27,7 +27,7 @@ void FName::Start() {
 
     parent_type::Start();
 
-    new ((void*)&_gAnyStorage) FName("_.A.-.N.-.Y._");
+    new ((void*)std::addressof(_gAnyStorage)) FName("_.A.-.N.-.Y._");
 }
 //----------------------------------------------------------------------------
 void FName::Shutdown() {

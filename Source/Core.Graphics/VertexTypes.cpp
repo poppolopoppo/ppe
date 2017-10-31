@@ -115,7 +115,7 @@ void VertexTypes_Start() {
     #define CREATE_VERTEXDECL_BUILTINTYPE(_Name) \
         typedef Vertex::_Name vertex_type; \
         Assert(nullptr == vertex_type::Declaration); \
-        vertex_type::Declaration = ::new ((void*)&CONCAT(GVertexDeclarationPOD_, _Name)) FVertexDeclaration(); \
+        vertex_type::Declaration = ::new ((void*)std::addressof(CONCAT(GVertexDeclarationPOD_, _Name))) FVertexDeclaration(); \
         FVertexDeclarator vdecl(remove_const(vertex_type::Declaration));
 
     {
