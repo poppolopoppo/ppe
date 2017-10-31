@@ -1,21 +1,23 @@
 #pragma once
 
-#include "Core.Application/Application.h"
 #include "Core.Application/ApplicationConsole.h"
 
 namespace Core {
+namespace Test {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FApplicationTest : public Application::FApplicationConsole {
+class FTestApp : public Application::FApplicationConsole {
+    typedef Application::FApplicationConsole parent_type;
 public:
-    FApplicationTest();
-    virtual ~FApplicationTest();
+    FTestApp();
+    ~FTestApp();
 
-protected:
     virtual void Start() override;
+    virtual void Shutdown() override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace Test
 } //!namespace Core

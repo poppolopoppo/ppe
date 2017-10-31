@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Fichier Include généré de Microsoft Visual C++.
-// Utilisé par Core.Test.rc
+// Fichier Include gÃ©nÃ©rÃ© de Microsoft Visual C++.
+// UtilisÃ© par Core.Test.rc
 //
 #define IDI_WINDOW_ICON                 101
 #define IDI_APP_ICON                    101
@@ -9,7 +9,7 @@
 #define IDI_WARNING_ICON                104
 
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        102

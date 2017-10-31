@@ -1,39 +1,12 @@
 #include "stdafx.h"
 
+#include "TestApp.h"
+
+typedef Core::Test::FTestApp application_type;
+
 #include "Core/Core.h"
-#include "Core/Diagnostic/CrtDebug.h"
-#include "Core/Diagnostic/DialogBox.h"
-#include "Core/Diagnostic/Logger.h"
-#include "Core/Memory/UniquePtr.h"
-
-#include "Core.Application/ApplicationWindow.h"
-#include "Core.Engine/Engine.h"
-#include "Core.Graphics/Graphics.h"
-#include "Core.Logic/Logic.h"
-#include "Core.Serialize/Serialize.h"
-
-#include <iostream>
-
-#define APPLICATION_TYPE 4
-
-#if   (0 == APPLICATION_TYPE)
-#   include "ApplicationTest.h"
-typedef Core::FApplicationTest application_type;
-#elif (1 == APPLICATION_TYPE)
-#   include "GameTest.h"
-typedef Core::FGameTest application_type;
-#elif (2 == APPLICATION_TYPE)
-#   include "GameTest2.h"
-typedef Core::FGameTest2 application_type;
-#elif (3 == APPLICATION_TYPE)
-#   include "GameTest3.h"
-typedef Core::FGameTest3 application_type;
-#elif (4 == APPLICATION_TYPE)
-#   include "GameTest4.h"
-typedef Core::FGameTest4 application_type;
-#else
-#   error "unknown application type"
-#endif
+#include "Core.RTTI/RTTI.h"
+#include "Core.Application/Application.h"
 
 #ifdef PLATFORM_WINDOWS
 #   define CORE_RESOURCES 1
@@ -47,102 +20,51 @@ typedef Core::FGameTest4 application_type;
 #   include "resource.h"
 #endif
 
-static void PrintMemStats(const Core::FCrtMemoryStats& memoryStats) {
-    STACKLOCAL_OCSTRSTREAM(4096, oss);
-    oss << "Memory statistics :" << eol
-        << " - Total free size          = " << memoryStats.TotalFreeSize << eol
-        << " - Largest free block       = " << memoryStats.LargestFreeBlockSize << eol
-        << " - Total used size          = " << memoryStats.TotalUsedSize << eol
-        << " - Largest used block       = " << memoryStats.LargestUsedBlockSize << eol
-        << " - Total overhead size      = " << memoryStats.TotalOverheadSize << eol
-        << " - Total comitted size      = " << Core::SizeInBytes{ memoryStats.TotalOverheadSize.Value + memoryStats.TotalFreeSize.Value + memoryStats.TotalUsedSize.Value } << eol
-        << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << eol;
-#ifdef PLATFORM_WINDOWS
-    ::OutputDebugStringA(oss.NullTerminatedStr());
-#else
-    std::cerr << oss.NullTerminatedStr();
-#endif
-}
-
-//#define WITH_APPLICATION_TRY_CATCH
+#include "Core/Diagnostic/CurrentProcess.h"
 
 template <typename _Application>
-static int Bootstrap(void *applicationHandle, int nShowCmd, int argc, const wchar_t**argv) {
+static int Bootstrap(void *appHandle, int nShowCmd, const wchar_t* filename, int argc, const wchar_t**argv) {
     using namespace Core;
 
-    Core::CoreStartup startupCore{ applicationHandle, nShowCmd, size_t(argc), argv };
-    Serialize::SerializeStartup startupSerialize;
-    Graphics::GraphicsStartup startupGraphics;
-    Logic::LogicStartup startupLogic;
-    Engine::FEngineStartup startupEngine;
+    const Application::FApplicationContext appContext;
+
+    const Core::FCoreModule moduleCore{ appHandle, nShowCmd, filename, size_t(argc), argv };
+    const Core::RTTI::FRTTIModule moduleRTTI;
+    const Core::Application::FApplicationModule moduleApplication;
 
 #if defined(PLATFORM_WINDOWS) && CORE_RESOURCES
     FCurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
 #endif
 
-#ifdef WITH_APPLICATION_TRY_CATCH
-    try
-#endif
-    {
-        _Application app;
-        Application::LaunchApplication(&app);
-    }
-#ifdef WITH_APPLICATION_TRY_CATCH
-    catch (const std::exception& e)
-    {
-        const FWString wwhat = ToWString(e.what());
-        Dialog::Ok(wwhat.c_str(), L"FException caught !", Dialog::Icon::Exclamation);
-        AssertNotReached();
-    }
-#endif
-
-#ifndef FINAL_RELEASE
-    ReportAllTrackingData();
-#endif
-
-    return FCurrentProcess::Instance().ExitCode();
+    _Application app;
+    return Application::LaunchApplication(appContext, &app);
 }
 
 #ifdef PLATFORM_WINDOWS
 #   include "Core/Misc/Platform_Windows.h"
 #   include <shellapi.h>
 #   include <tchar.h>
-int APIENTRY _tWinMain(
-    HINSTANCE hInstance,
-    HINSTANCE hPrevInstance,
-    LPTSTR    lpCmdLine,
-    int       nCmdShow) {
+int APIENTRY wWinMain(
+    _In_ HINSTANCE      hInstance,
+    _In_opt_ HINSTANCE  hPrevInstance,
+    _In_ LPWSTR         lpCmdLine,
+    _In_ int            nCmdShow ) {
+    UNUSED(hPrevInstance);
+    UNUSED(lpCmdLine);
 #else
 int main(int argc, const wchar_t* argv[]) {
 #endif
 
 #ifdef PLATFORM_WINDOWS
-#   ifdef _DEBUG
-    int debugHeapFlag = _CRTDBG_ALLOC_MEM_DF |
-                        _CRTDBG_CHECK_EVERY_1024_DF |
-                        _CRTDBG_DELAY_FREE_MEM_DF |
-                        _CRTDBG_LEAK_CHECK_DF;
-    _CrtSetDbgFlag(debugHeapFlag);
-    // les erreurs / assert de check lance une window qui break
-    _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
-    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
-    //_CrtSetBreakAlloc(1146); // for leak debugging purpose // %__NOCOMMIT%
-#   endif
-
-    int argc;
-    wchar_t *const *argv = ::CommandLineToArgvW(lpCmdLine, &argc);
+    int argc = __argc;
+    wchar_t* const* argv = __wargv;
 #endif
+
+    const wchar_t* filename = argv[0];
+    argv = &argv[1];
+    argc--;
 
     int result = 0;
-    using namespace Core;
-    {
-        result = Bootstrap<application_type>(hInstance, nCmdShow, argc, const_cast<const wchar_t**>(&argv[0]));
-
-#if defined(PLATFORM_WINDOWS) && !defined(FINAL_RELEASE)
-        FCrtMemoryStats memoryStats;
-        CrtDumpMemoryStats(&memoryStats);
-        PrintMemStats(memoryStats);
-#endif
-    }
+    result = Bootstrap<application_type>(hInstance, nCmdShow, filename, argc, const_cast<const wchar_t**>(&argv[0]));
     return result;
 }

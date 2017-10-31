@@ -1,18 +1,20 @@
 #once
 {
-    .BinaryPrefix = 'Test'
-    .ProjectName = 'Core.Test'
-    .ProjectPath = '$SourceDiretory$/Core.Test'
+    .BinaryPrefix = 'Core.Test'
+    .ProjectName  = 'Core.Test'
+    .ProjectSolutionFolder = 'Core.Test'
+    .ProjectPath  = '$SourceDirectory$/Core.Test'
+    .UnityNumFiles = 1
     .ProjectDependencies =
     {
         'Core',
         'Core.RTTI',
-        'Core.Serialize',
-        'Core.Graphics',
-        'Core.ContentPipeline',
-        'Core.Logic',
-        'Core.Engine',
-        'Core.Application',
+        'Core.Application.Console',
+    }
+    .ProjectIsolatedFiles =
+    {
+        'main.cpp'
     }
     #include "../../Build/Templates/Executable.bff"
+    #include "../../Build/Templates/CompressedExecutable.bff"
 }
