@@ -4,244 +4,228 @@
 
 #include "Core.RTTI/Typedefs.h"
 #include "Core.RTTI/MetaNamespace.h"
+#include "Core.RTTI/MetaFunction.h"
+#include "Core.RTTI/MetaProperty.h"
 
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Vector.h"
-#include "Core/Memory/UniquePtr.h"
 
 namespace Core {
 namespace RTTI {
+FWD_REFPTR(MetaObject);
+class FMetaNamespace;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMetaObject;
-FWD_UNIQUEPTR(MetaFunction);
-FWD_UNIQUEPTR(MetaProperty);
-//----------------------------------------------------------------------------
-class FMetaClassGuid {
-public:
-    FMetaClassGuid() : FMetaClassGuid(0) {}
+enum class EClassFlags {
+    Concrete    = 1<<0,
+    Abstract    = 1<<1,
+    Dynamic     = 1<<2,
 
-    FMetaClassGuid(const FMetaClassGuid&) = default;
-    FMetaClassGuid& operator =(const FMetaClassGuid&) = default;
+    Private     = 0,
+    Public      = 1<<3,
 
-    bool InheritsFrom(FMetaClassGuid parent) const;
-    FMetaClassGuid Combine(FMetaClassGuid other) const;
+    Mergeable   = 1<<4,
+    Deprecated  = 1<<5,
 
-    inline friend bool operator ==(FMetaClassGuid lhs, FMetaClassGuid rhs) { return (lhs._value == rhs._value); }
-    inline friend bool operator !=(FMetaClassGuid lhs, FMetaClassGuid rhs) { return (lhs._value != rhs._value); }
-
-    inline friend bool operator < (FMetaClassGuid lhs, FMetaClassGuid rhs) { return (lhs._value <  rhs._value); }
-    inline friend bool operator >=(FMetaClassGuid lhs, FMetaClassGuid rhs) { return (lhs._value >= rhs._value); }
-
-    template <typename _Char, typename _Traits>
-    inline friend std::basic_ostream<_Char, _Traits>& operator <<(
-        std::basic_ostream<_Char, _Traits>& oss,
-        const FMetaClassGuid& guid) {
-        return (oss << guid._value);
-    }
-
-private:
-    friend class FMetaNamespace;
-    FMetaClassGuid(u64 value) : _value(value) {}
-
-    u64 _value;
+    Registered  = 1<<6,
 };
+ENUM_FLAGS(EClassFlags);
 //----------------------------------------------------------------------------
-template <typename T> // valid RTTI parent
-static const RTTI::FMetaClass *MetaClass(typename std::enable_if< std::is_base_of<RTTI::FMetaObject, T>::value >::type* = 0) {
-    typedef Meta::TDecay<T> metaobject_type;
-    typedef typename metaobject_type::FMetaClass metaclass_type;
-    return metaclass_type::Instance();
-}
-template <typename T> // no parent
-static const RTTI::FMetaClass *MetaClass(typename std::enable_if< std::is_void<T>::value >::type* = 0) {
-    return nullptr;
-}
+template <typename T> const FMetaClass* MetaClass();
 //----------------------------------------------------------------------------
-class FMetaClass {
+class CORE_RTTI_API FMetaClass {
 public:
-    enum EFlags {
-        Concrete    = 1<<0,
-        Abstract    = 1<<1,
-        Dynamic     = 1<<2,
-        Mergeable   = 1<<3,
-        Deprecated  = 1<<4,
-
-        Default     = Concrete
-    };
-    ENUM_FLAGS_FRIEND(EFlags);
-
-protected:
-    FMetaClass(
-        FMetaClassGuid guid,
-        EFlags attributes,
-        const FName& name,
-        const FMetaNamespace* metaNamespace );
-
-public:
+    FMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaNamespace* metaNamespace);
     virtual ~FMetaClass();
 
-    FMetaClass(const FMetaClass&) = delete;
-    FMetaClass& operator =(const FMetaClass&) = delete;
+    FMetaClass(const FMetaClass& ) = delete;
+    FMetaClass& operator =(const FMetaClass& ) = delete;
 
-    FMetaClassGuid Guid() const { return _guid; } // this id can change across multiple runs !
-    EFlags Attributes() const { return _attributes; }
+    FClassId Id() const { return _id; }
     const FName& Name() const { return _name; }
+    const EClassFlags Flags() const { return _flags; }
     const FMetaNamespace* Namespace() const { return _namespace; }
 
-    bool IsAbstract()   const { return (_attributes ^ Abstract); }
-    bool IsConcrete()   const { return (_attributes ^ Concrete); }
-    bool IsDynamic()    const { return (_attributes ^ Dynamic); }
-    bool IsMergeable()  const { return (_attributes ^ Mergeable); }
-    bool IsDeprecated() const { return (_attributes ^ Deprecated); }
+    // Status
 
-    bool CastTo(const FMetaClass* other) const { return (InheritsFrom(other) || IsAssignableFrom(this)); }
-    bool InheritsFrom(const FMetaClass* parent) const { Assert(parent); return (_guid.InheritsFrom(parent->_guid)); }
-    bool IsAssignableFrom(const FMetaClass* child) const { Assert(child); return (child->_guid.InheritsFrom(_guid)); }
+    bool IsAbstract()   const { return (_flags ^ EClassFlags::Abstract); }
+    bool IsConcrete()   const { return (_flags ^ EClassFlags::Concrete); }
+    bool IsDynamic()    const { return (_flags ^ EClassFlags::Dynamic); }
+    bool IsMergeable()  const { return (_flags ^ EClassFlags::Mergeable); }
+    bool IsDeprecated() const { return (_flags ^ EClassFlags::Deprecated); }
+    bool IsRegistered() const { return (_flags ^ EClassFlags::Registered); }
 
-    template <typename T>
-    bool CastTo() const { return CastTo(RTTI::MetaClass<T>()); }
-    template <typename T>
-    bool InheritsFrom() const { return InheritsFrom(RTTI::MetaClass<T>()); }
-    template <typename T>
-    bool IsAssignableFrom() const { return IsAssignableFrom(RTTI::MetaClass<T>()); }
+    // Cast / Inheritance
 
-    auto AllFunctions() const { return _functionsInherited.Values(); }
-    auto AllProperties() const { return _propertiesInherited.Values(); }
+    bool CastTo(const FMetaClass& other) const;
+    bool InheritsFrom(const FMetaClass& parent) const;
+    bool IsAssignableFrom(const FMetaClass& child) const;
 
-    TMemoryView<const UCMetaFunction> Functions() const { return _functions.MakeConstView(); }
-    TMemoryView<const UCMetaProperty> Properties() const { return _properties.MakeConstView(); }
+    // Functions
 
-    const FMetaFunction* Function(const FName& name, size_t attributes = 0, bool inherited = true) const;
-    const FMetaFunction* Function(const FStringView& name, size_t attributes = 0, bool inherited = true) const;
+    size_t NumFunctions(bool inherited = true) const {
+        return (inherited ? _functionsAll.size() : _functionsSelf.size());
+    }
 
-    const FMetaFunction* FunctionIFP(const FName& name, size_t attributes = 0, bool inherited = true) const;
-    const FMetaFunction* FunctionIFP(const FStringView& name, size_t attributes = 0, bool inherited = true) const;
+    void RegisterFunction(FMetaFunction&& function);
 
-    const FMetaProperty* Property(const FName& name, size_t attributes = 0, bool inherited = true) const;
-    const FMetaProperty* Property(const FStringView& name, size_t attributes = 0, bool inherited = true) const;
+    auto AllFunctions() const { return _functionsAll.Values(); }
 
-    const FMetaProperty* PropertyIFP(const FName& name, size_t attributes = 0, bool inherited = true) const;
-    const FMetaProperty* PropertyIFP(const FStringView& name, size_t attributes = 0, bool inherited = true) const;
+    TMemoryView<const FMetaFunction> SelfFunctions() const { return _functionsSelf.MakeConstView(); }
+
+    const FMetaFunction& Function(const FName& name, EFunctionFlags flags = EFunctionFlags(0), bool inherited = true) const;
+    const FMetaFunction* FunctionIFP(const FName& name, EFunctionFlags flags = EFunctionFlags(0), bool inherited = true) const;
+    const FMetaFunction* FunctionIFP(const FStringView& name, EFunctionFlags flags = EFunctionFlags(0), bool inherited = true) const;
+
+    virtual const FMetaFunction* OnMissingFunction(const FName& name, EFunctionFlags flags = EFunctionFlags(0)) const;
+
+    // Properties
+
+    size_t NumProperties(bool inherited = true) const {
+        return (inherited ? _propertiesAll.size() : _propertiesSelf.size());
+    }
+
+    void RegisterProperty(FMetaProperty&& property);
+
+    auto AllProperties() const { return _propertiesAll.Values(); }
+
+    TMemoryView<const FMetaProperty> SelfProperties() const { return _propertiesSelf.MakeConstView(); }
+
+    const FMetaProperty& Property(const FName& name, EPropertyFlags flags = EPropertyFlags(0), bool inherited = true) const;
+    const FMetaProperty* PropertyIFP(const FName& name, EPropertyFlags flags = EPropertyFlags(0), bool inherited = true) const;
+    const FMetaProperty* PropertyIFP(const FStringView& name, EPropertyFlags flags = EPropertyFlags(0), bool inherited = true) const;
+
+    virtual const FMetaProperty* OnMissingProperty(const FName& name, EPropertyFlags flags = EPropertyFlags(0)) const;
+
+    // Virtual helpers
 
     virtual const FMetaClass* Parent() const = 0;
-    virtual FMetaObject* CreateInstance() const = 0;
 
-    void Initialize(); // called by namespace
+    virtual bool CreateInstance(PMetaObject& dst) const = 0;
 
-protected:
-    void RegisterFunction(UCMetaFunction&& func);
-    void RegisterProperty(UCMetaProperty&& prop);
+    // Called by meta namespace
 
-    // Only available for dynamic metaclasses
-    virtual const FMetaFunction* OnMissingFunction(const FName& name, size_t attributes = 0) const = 0;
-    virtual const FMetaProperty* OnMissingProperty(const FName& name, size_t attributes = 0) const = 0;
+    void CallOnRegister_IFN();
+
+    virtual void OnRegister();
+    virtual void OnUnregister();
 
 private:
-    FMetaClassGuid _guid;
-    const EFlags _attributes;
+    FClassId _id;
+    EClassFlags _flags;
 
     const FName _name;
-    const FMetaNamespace* const _namespace;
+    const FMetaNamespace* _namespace;
 
-    VECTOR(RTTI, UCMetaFunction) _functions;
-    VECTOR(RTTI, UCMetaProperty) _properties;
+    HASHMAP(RTTI, FName, const FMetaProperty*) _propertiesAll;
+    HASHMAP(RTTI, FName, const FMetaFunction*) _functionsAll;
 
-    HASHMAP(RTTI, FName, const FMetaFunction*) _functionsInherited;
-    HASHMAP(RTTI, FName, const FMetaProperty*) _propertiesInherited;
+    VECTORINSITU(RTTI, FMetaProperty, 8) _propertiesSelf;
+    VECTORINSITU(RTTI, FMetaFunction, 4) _functionsSelf;
 };
 //----------------------------------------------------------------------------
-template <typename _Visitor = void(*)(const FMetaClass* metaClass, const FMetaFunction* func) >
-void ForEachFunction(const FMetaClass* metaClass, const _Visitor& visitor);
+template <typename T>
+using TMetaClass = typename T::RTTI_FMetaClass;
 //----------------------------------------------------------------------------
-template <typename _Pred = bool(*)(const FMetaClass* metaClass, const FMetaFunction* func) >
-const FMetaFunction* FindFunction(const FMetaClass* metaClass, const _Pred& pred);
-//----------------------------------------------------------------------------
-template <typename _Visitor = void (*)(const FMetaClass* metaClass, const FMetaProperty* prop) >
-void ForEachProperty(const FMetaClass* metaClass, const _Visitor& visitor);
-//----------------------------------------------------------------------------
-template <typename _Pred = bool (*)(const FMetaClass* metaClass, const FMetaProperty* prop) >
-const FMetaProperty* FindProperty(const FMetaClass* metaClass, const _Pred& pred);
+namespace details {
+template <typename T>
+static const FMetaClass* MetaClass_(std::false_type) { return nullptr; }
+template <typename T>
+static const FMetaClass* MetaClass_(std::true_type) { return TMetaClass<T>::Instance(); }
+} //!details
+template <typename T>
+const FMetaClass* MetaClass() {
+    return details::MetaClass_< Meta::TDecay<T> >(
+        typename std::is_base_of< FMetaObject, Meta::TDecay<T> >::type {}
+    );
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// RTTI support for types derived from FMetaObject
+//----------------------------------------------------------------------------
+template <typename _PMetaObject>
+Meta::TEnableIf<std::is_assignable<PMetaObject, _PMetaObject>::value, PTypeTraits>
+    Traits(Meta::TType<_PMetaObject>) {
+        return MakeTraits<PMetaObject>();
+    }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace details {
+template <typename T>
+bool CreateMetaObject_(PMetaObject& dst, std::true_type) {
+    FMetaObject* const obj = new T();
+    Assert(obj);
+    return obj;
+}
+template <typename T>
+FMetaObject* CreateMetaObject_(PMetaObject&, std::false_type) {
+    AssertNotReached(); // abstract class
+    return nullptr;
+}
+inline void DeleteMetaClass_(FMetaClass* metaClass) {
+    delete(metaClass);
+}
+} //!details
 //----------------------------------------------------------------------------
 template <typename T>
 class TInScopeMetaClass : public FMetaClass {
-public:
-    using FMetaClass::EFlags;
+protected:
+    TInScopeMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaNamespace* metaNamespace)
+        : FMetaClass(id, name, FlagsForT_(flags), metaNamespace)
+    {}
 
+public:
     virtual const FMetaClass* Parent() const override final {
-        typedef typename T::FMetaClass metaclass_type;
-        typedef typename metaclass_type::parent_type parent_type;
+        typedef typename TMetaClass<T>::parent_type parent_type;
         return RTTI::MetaClass<parent_type>();
     }
 
-    virtual FMetaObject* CreateInstance() const override final {
-        typedef typename std::is_default_constructible<T>::type constructible_type;
-        return CreateInstance_<T>(constructible_type());
-    }
-
-    static bool HasInstance() {
-        return (nullptr != GMetaClassHandle.MetaClass());
+    virtual bool CreateInstance(PMetaObject& dst) const override final {
+        Assert(not dst);
+        return details::CreateMetaObject_<T>(dst, typename std::is_default_constructible<T>::type{});
     }
 
     static const FMetaClass* Instance() {
-        Assert(GMetaClassHandle.MetaClass());
-        return GMetaClassHandle.MetaClass();
+        Assert(GMetaClassHandle.Class());
+        return GMetaClassHandle.Class();
     }
-
-    static const FMetaClassHandle& Handle() { return GMetaClassHandle; }
-
-protected:
-    TInScopeMetaClass(
-        FMetaClassGuid guid,
-        EFlags attributes,
-        const FName& name,
-        const FMetaNamespace* metaNamespace )
-        : FMetaClass(guid, InferAttributes_(attributes), name, metaNamespace) {}
-
-    virtual const FMetaFunction* OnMissingFunction(const FName& , size_t ) const override { AssertNotReached(); return nullptr; }
-    virtual const FMetaProperty* OnMissingProperty(const FName& , size_t ) const override { AssertNotReached(); return nullptr; }
 
 private:
-    static EFlags InferAttributes_(EFlags attributes) {
-        return (attributes | (std::is_abstract<T>::value ? EFlags::Abstract : EFlags::Concrete));
-    }
-
-    template <typename U>
-    static FMetaObject* CreateInstance_(std::true_type) {
-        STATIC_ASSERT(std::is_same<T, U>::value);
-        FMetaObject* const obj = new U();
-        Assert(obj);
-        return obj;
-    }
-
-    template <typename U>
-    static FMetaObject* CreateInstance_(std::false_type) {
-        AssertNotReached(); // abstract class
-        return nullptr;
-    }
-
-    static void CreateMetaClass_(
-        const FMetaClass** pMetaClass,
-        FMetaClassGuid classGuid,
-        const FMetaNamespace* metaNamespace) {
-        typedef typename T::FMetaClass metaclass_type;
-        *pMetaClass = new metaclass_type(classGuid, metaNamespace);
-    }
-
     static const FMetaClassHandle GMetaClassHandle;
+
+    static constexpr EClassFlags FlagsForT_(EClassFlags flags) {
+        return (std::is_abstract<T>::value
+            ? flags + EClassFlags::Abstract
+            : flags + EClassFlags::Concrete );
+    }
+
+    static FMetaClass* CreateMetaClass_(FClassId id, const FMetaNamespace* metaNamespace) {
+        return new TMetaClass<T>(id, metaNamespace);
+    }
 };
 //----------------------------------------------------------------------------
 template <typename T>
 const FMetaClassHandle TInScopeMetaClass<T>::GMetaClassHandle(
-    T::FMetaClass::Namespace(),
-    &TInScopeMetaClass<T>::CreateMetaClass_ );
+    TMetaClass<T>::Namespace(),
+    &TInScopeMetaClass<T>::CreateMetaClass_,
+    &details::DeleteMetaClass_
+);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace Core
 
-#include "Core.RTTI/MetaClass-inl.h"
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EClassFlags flags);
+CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EClassFlags flags);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core

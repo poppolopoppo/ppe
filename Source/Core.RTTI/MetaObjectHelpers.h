@@ -2,45 +2,78 @@
 
 #include "Core.RTTI/RTTI.h"
 
-#include "Core/IO/String.h"
+#include <iosfwd>
 
 namespace Core {
 namespace RTTI {
-FWD_REFPTR(MetaObject);
+class FMetaClass;
+class FMetaObject;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Equals(const FMetaObject& lhs, const FMetaObject& rhs);
+CORE_RTTI_API bool Equals(const FMetaObject& lhs, const FMetaObject& rhs);
 //----------------------------------------------------------------------------
-inline bool NotEquals(const FMetaObject& lhs, const FMetaObject& rhs) { return !Equals(lhs, rhs); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-bool DeepEquals(const FMetaObject& lhs, const FMetaObject& rhs);
-//----------------------------------------------------------------------------
-inline bool NotDeepEquals(const FMetaObject& lhs, const FMetaObject& rhs) { return !DeepEquals(lhs, rhs); }
+CORE_RTTI_API bool DeepEquals(const FMetaObject& lhs, const FMetaObject& rhs);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-hash_t hash_value(const FMetaObject& object);
+CORE_RTTI_API void Move(const FMetaObject& src, FMetaObject& dst);
 //----------------------------------------------------------------------------
-u128 Fingerprint128(const FMetaObject& object);
+CORE_RTTI_API void Copy(const FMetaObject& src, FMetaObject& dst);
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+CORE_RTTI_API void Swap(FMetaObject& lhs, FMetaObject& rhs);
 //----------------------------------------------------------------------------
-void Move(FMetaObject& dst, FMetaObject& src);
+CORE_RTTI_API void Clone(const FMetaObject& src, PMetaObject& pdst);
 //----------------------------------------------------------------------------
-void Copy(FMetaObject& dst, const FMetaObject& src);
+CORE_RTTI_API void DeepCopy(const FMetaObject& src, FMetaObject& dst);
 //----------------------------------------------------------------------------
-void Swap(FMetaObject& lhs, FMetaObject& rhs);
-//----------------------------------------------------------------------------
-FMetaObject *NewCopy(const FMetaObject& src);
+CORE_RTTI_API void DeepClone(const FMetaObject& src, PMetaObject& pdst);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void DeepCopy(FMetaObject& dst, const FMetaObject& src);
+CORE_RTTI_API hash_t hash_value(const FMetaObject& obj);
 //----------------------------------------------------------------------------
-FMetaObject *NewDeepCopy(const FMetaObject& src);
+CORE_RTTI_API u128 Fingerprint128(const FMetaObject& obj);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+T* Cast(FMetaObject* p) {
+    Assert(p);
+    const FMetaClass* const metaClass = MetaClass<T>();
+    Assert(metaClass);
+    return (p->RTTI_CastTo(*metaClass) ? checked_cast<T*>(p) : nullptr);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+const T* Cast(const FMetaObject* p) {
+    Assert(p);
+    const FMetaClass* const metaClass = MetaClass<T>();
+    Assert(metaClass);
+    return (p->RTTI_CastTo(*metaClass) ? checked_cast<const T*>(p) : nullptr);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+T* CastChecked(FMetaObject* p) {
+#ifdef WITH_CORE_ASSERT_RELEASE
+    T* const result = Cast<T>(p);
+    AssertRelease(result);
+    return result;
+#else
+    return reinterpret_cast<T*>(result);
+#endif
+}
+//----------------------------------------------------------------------------
+template <typename T>
+const T* CastChecked(const FMetaObject* p) {
+#ifdef WITH_CORE_ASSERT_RELEASE
+    const T* const result = Cast<T>(p);
+    AssertRelease(result);
+    return result;
+#else
+    return reinterpret_cast<const T*>(result);
+#endif
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -51,30 +84,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FString ToString(const RTTI::FMetaObject& object);
-FString ToString(const RTTI::PMetaObject& pobject);
-FString ToString(const RTTI::PCMetaObject& pobject);
+CORE_RTTI_API std::basic_ostream<char>& operator << (std::basic_ostream<char>& oss, const RTTI::FMetaObject& obj);
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const RTTI::FMetaObject& object) {
-    return oss << ToString(object);
-}
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const RTTI::PMetaObject& pobject) {
-    return oss << ToString(pobject);
-}
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const RTTI::PCMetaObject& pobject) {
-    return oss << ToString(pobject);
-}
+CORE_RTTI_API std::basic_ostream<wchar_t>& operator << (std::basic_ostream<wchar_t>& oss, const RTTI::FMetaObject& obj);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

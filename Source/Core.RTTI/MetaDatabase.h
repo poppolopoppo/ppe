@@ -5,81 +5,77 @@
 #include "Core.RTTI/Typedefs.h"
 
 #include "Core/Container/HashMap.h"
-#include "Core/Container/Vector.h"
-#include "Core/Memory/RefPtr.h"
 #include "Core/Meta/Singleton.h"
-#include "Core/ThreaD/ReadWriteLock.h"
+#include "Core/Thread/ReadWriteLock.h"
 
 namespace Core {
 namespace RTTI {
-FWD_REFPTR(MetaAtom);
-FWD_REFPTR(MetaObject);
 class FMetaClass;
+FWD_REFPTR(MetaObject);
 class FMetaNamespace;
+FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMetaDatabase : Meta::TSingleton<FMetaDatabase> {
-private:
-    typedef Meta::TSingleton<FMetaDatabase> singleton_type;
-    friend class Meta::TSingleton<FMetaDatabase>;
-
-    FMetaDatabase();
-    ~FMetaDatabase();
-
+class CORE_RTTI_API FMetaDatabase : Meta::TSingleton<FMetaDatabase> {
 public:
-    using singleton_type::Create;
-    using singleton_type::Destroy;
-#ifdef WITH_CORE_ASSERT
-    using singleton_type::HasInstance;
-#endif
-    using singleton_type::Instance;
+    /* Singleton */
 
-    template <typename T>
-    using TCollector = VECTOR(RTTI, T);
+#ifdef WITH_CORE_ASSERT
+    using Meta::TSingleton<FMetaDatabase>::HasInstance;
+#endif
+    using Meta::TSingleton<FMetaDatabase>::Instance;
+
+    static void Create() { Meta::TSingleton<FMetaDatabase>::Create(); }
+    using Meta::TSingleton<FMetaDatabase>::Destroy;
+
+    /* Transactions */
+
+    void RegisterTransaction(FMetaTransaction* metaTransaction);
+    void UnregisterTransaction(FMetaTransaction* metaTransaction);
+
+    FMetaTransaction& Transaction(const FName& name) const;
+    FMetaTransaction* TransactionIFP(const FName& name) const;
+    FMetaTransaction* TransactionIFP(const FStringView& name) const;
+
+    /* Objects */
+
+    void RegisterObject(FMetaObject* metaObject);
+    void UnregisterObject(FMetaObject* metaObject);
+
+    FMetaObject& Object(const FName& name) const;
+    FMetaObject* ObjectIFP(const FName& name) const;
+    FMetaObject* ObjectIFP(const FStringView& name) const;
+
+    /* Namespaces */
 
     void RegisterNamespace(const FMetaNamespace* metaNamespace);
     void UnregisterNamespace(const FMetaNamespace* metaNamespace);
 
-    const FMetaClass* FindClass(const FName& name) const;
-    const FMetaClass* FindClassIFP(const FName& name) const;
-    void AllClasses(TCollector<const FMetaClass*>& instances) const;
+    const FMetaNamespace& Namespace(const FName& name) const;
+    const FMetaNamespace* NamespaceIFP(const FName& name) const;
+    const FMetaNamespace* NamespaceIFP(const FStringView& name) const;
 
-    const FMetaNamespace* FindNamespace(const FName& name) const;
-    const FMetaNamespace* FindNamespaceIFP(const FName& name) const;
-    void AllNamespaces(TCollector<const FMetaNamespace*>& instances) const;
+    /* Classes */
 
-    void RegisterAtom(const FName& name, FMetaAtom* metaAtom, bool allowOverride);
-    void UnregisterAtom(const FName& name, FMetaAtom* metaAtom);
-
-    FMetaAtom* FindAtom(const FName& name) const;
-    FMetaAtom* FindAtomIFP(const FName& name) const;
-    void AllAtoms(TCollector<PMetaAtom>& instances) const;
-
-    void RegisterObject(FMetaObject* object);
-    void UnregisterObject(FMetaObject* object);
-
-    FMetaObject* FindObject(const FName& name) const;
-    FMetaObject* FindObjectIFP(const FName& name) const;
-    void AllObjects(TCollector<PMetaObject>& instances) const;
-    void FindObjectsByClass(const FMetaClass* metaClass, TCollector<PMetaObject>& instances) const;
-    void FindObjectsInheritingClass(const FMetaClass* metaClass, TCollector<PMetaObject>& instances) const;
-
-    template <typename _MetaClass>
-    void FindObjectsByClass(TCollector<PMetaObject>& instances) const {
-        FindObjectsByClass(GetMetaClass<_MetaClass>(), instances);
-    }
-
-    template <typename _MetaClass>
-    void FindObjectsInheritingClass(TCollector<PMetaObject>& instances) const {
-        FindObjectsInheritingClass(GetMetaClass<_MetaClass>(), instances);
-    }
+    const FMetaClass& Class(const FName& name) const;
+    const FMetaClass* ClassIFP(const FName& name) const;
+    const FMetaClass* ClassIFP(const FStringView& name) const;
 
 private:
-    FReadWriteLock _barrier;
+    friend Meta::TSingleton<FMetaDatabase>;
 
-    HASHMAP(RTTI, FName, const FMetaNamespace*) _namespaces;
-    HASHMAP(RTTI, FName, PMetaAtom) _atoms;
+    FMetaDatabase();
+    ~FMetaDatabase();
+
+    FReadWriteLock _lockRW;
+
+    // dont hold lifetime, must be handled separately
+    HASHMAP(RTTI, FName, SMetaTransaction) _transactions;
+    HASHMAP(RTTI, FName, SMetaObject) _objects;
+    HASHMAP(RTTI, FName, const FMetaClass*) _classes;
+
+    VECTORINSITU(RTTI, const FMetaNamespace*, 8) _namespaces;
 };
 //----------------------------------------------------------------------------
 inline FMetaDatabase& MetaDB() {

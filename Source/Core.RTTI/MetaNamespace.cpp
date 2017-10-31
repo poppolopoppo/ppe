@@ -5,180 +5,158 @@
 #include "MetaClass.h"
 #include "MetaDatabase.h"
 
-#include "Core/Container/HashSet.h"
-#include "Core/Container/Stack.h"
 #include "Core/Diagnostic/Logger.h"
-#include "Core/Maths/PrimeNumbers.h"
 #include "Core/Thread/ThreadContext.h"
-
-#include <atomic>
 
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaClassHandle::FMetaClassHandle(const FMetaNamespace& metaNamespace, create_delegate create) NOEXCEPT
-    : _create(create)
-    , _metaClass(nullptr) {
-    Assert(create);
-    const_cast<FMetaNamespace&>(metaNamespace).Append_(this); // register in namespace
+FMetaClassHandle::FMetaClassHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy)
+    : _class(nullptr)
+    , _create(create)
+    , _destroy(destroy) {
+    Assert(_create);
+    Assert(_destroy);
+
+    metaNamespace.RegisterClass(*this);
 }
 //----------------------------------------------------------------------------
-FMetaClassHandle::~FMetaClassHandle() NOEXCEPT {
-    Assert(nullptr == _metaClass);
-    // don't unregister to diminish class size, and it's useless anyway
+FMetaClassHandle::~FMetaClassHandle() {
+    Assert(nullptr == _class);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-// Global lock instead of member (less space used in static vars)
-FAtomicSpinLock GMetaNamespaceSpinLock;
-// Take a new prime number range for each namespace
-static size_t MetaNamespaceGuidOffset_(size_t count) {
-    static std::atomic<size_t>  GMetaNamespaceGuidOffset(0);
-    const size_t offset = GMetaNamespaceGuidOffset.fetch_add(count);
-    Assert(offset + count <= lengthof(GPrimeNumbersU16));
-    return offset;
-}
-} //!namespace
-//----------------------------------------------------------------------------
-FMetaNamespace::FMetaNamespace(const FStringView& name) NOEXCEPT
-    : _nameCStr(name)
-    , _guidOffset(size_t(-1)) {
+FMetaNamespace::FMetaNamespace(const FStringView& name)
+    : _classIdOffset(INDEX_NONE)
+    , _classCount(0)
+    , _nameCStr(name) {
     Assert(not _nameCStr.empty());
 }
 //----------------------------------------------------------------------------
-FMetaNamespace::~FMetaNamespace() NOEXCEPT {
-    Assert(_nameTokenized.empty());
-    Assert(_metaClasses.empty()); // Shutdown wasn't called !
-    ONLY_IF_ASSERT(_handles.Clear()); // Skip list non empty assert
+void FMetaNamespace::RegisterClass(FMetaClassHandle& handle) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(not IsStarted());
+    Assert(not _handles.Contains(&handle));
+
+    _classCount++;
+    _handles.PushFront(&handle);
 }
 //----------------------------------------------------------------------------
 void FMetaNamespace::Start() {
-    AssertIsMainThread();
-    Assert(_metaClasses.empty());
-    Assert(_nameTokenized.empty());
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(not IsStarted());
+    Assert(_classes.empty());
 
-    typedef INTRUSIVELIST_ACCESSOR(&FMetaClassHandle::_node) accessor_type;
+    LOG(Info, L"[RTTI] Start namespace <{0}> ({1} handles)", _nameCStr, _classCount);
 
-    const FAtomicSpinLock::FScope scopeLock(GMetaNamespaceSpinLock);
+    _nameToken = FName(_nameCStr);
 
-    _nameTokenized = FName(_nameCStr);
-
-    LOG(Info, L"[RTTI] Start namespace <{0}>", _nameTokenized);
-
-    size_t metaClassCount = 0;
-    for (FMetaClassHandle* pHandle = _handles.Head(); pHandle; pHandle = accessor_type::Next(pHandle))
-        ++metaClassCount;
-
-    if (_guidOffset == size_t(-1))
-        _guidOffset = MetaNamespaceGuidOffset_(metaClassCount);
-
-    size_t metaClassIndex = 0;
-    const TMemoryView<const u16> metaClassGuid = MakeView(GPrimeNumbersU16).SubRange(_guidOffset, metaClassCount);
-
-    for (FMetaClassHandle* pHandle = _handles.Head(); pHandle; pHandle = accessor_type::Next(pHandle), ++metaClassIndex) {
-        Assert(nullptr == pHandle->_metaClass);
-
-        const FMetaClassGuid guid(metaClassGuid[metaClassIndex]);
-
-        Assert(nullptr == pHandle->_metaClass);
-        (*pHandle->_create)(&pHandle->_metaClass, guid, this);
-        AssertRelease(pHandle->_metaClass);
-
-        LOG(Info, L"[RTTI] Create meta class <{0}>::<{1}> ({2:#16x})",
-            _nameTokenized, pHandle->_metaClass->Name(), pHandle->_metaClass->Guid());
-
-        Assert(nullptr != pHandle->_metaClass);
-        Assert(not pHandle->_metaClass->Name().empty());
-
-        _metaClasses.emplace_AssertUnique(pHandle->_metaClass->Name(), pHandle->_metaClass);
+    if (INDEX_NONE == _classIdOffset) {
+        static size_t GClassIdFirstFree = 0;
+        _classIdOffset = GClassIdFirstFree;
+        GClassIdFirstFree += _classCount;
     }
+    Assert(INDEX_NONE != _classIdOffset);
 
-    if (_metaClasses.size()) {
-        STACKLOCAL_POD_ARRAY(FMetaClass*, byInheritance, _metaClasses.size());
-        size_t registered = 0;
+    /* Create meta classes */
 
-        for (const auto& it : _metaClasses) {
-            for (const FMetaClass* m = it.second; m; m = m->Parent()) {
-                if (m->Namespace() == this &&
-                    not byInheritance.CutBefore(registered).Contains(const_cast<FMetaClass*>(m)) )
-                    byInheritance[registered++] = const_cast<FMetaClass*>(m);
-            }
-        }
+    size_t index = 0;
+    for (FMetaClassHandle* phandle = _handles.Head(); phandle; phandle = phandle->_node.Next, index++) {
+        Assert(nullptr == phandle->_class);
 
-        Assert(registered == _metaClasses.size());
-        reverseforeachitem(it, byInheritance) {
-            (*it)->Initialize();
+        const FClassId classId = FClassId::Prime(_classIdOffset + index);
 
-            LOG(Info, L"[RTTI] Initialize meta class <{0}>::<{1}> ({2:#16x})",
-                _nameTokenized, (*it)->Name(), (*it)->Guid() );
-        }
+        phandle->_class = phandle->_create(classId, this);
+        Assert(phandle->_class);
+
+        const FMetaClass* metaClass = phandle->_class;
+        const FName& metaClassName = metaClass->Name();
+        Insert_AssertUnique(_classes, metaClassName, metaClass);
+
+        LOG(Info, L"[RTTI] Create meta class <{0}::{1}> = #{2}", _nameCStr, metaClassName, classId);
+    }
+    Assert(index == _classCount);
+
+    /* Call OnRegister() on every classes, every parent are guaranted to be already constructed */
+
+    for (FMetaClassHandle* phandle = _handles.Head(); phandle; phandle = phandle->_node.Next) {
+        Assert(phandle->_class);
+        Assert(phandle->_class->Namespace() == this);
+
+        phandle->_class->CallOnRegister_IFN();
+
+        LOG(Info, L"[RTTI] Register meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
     }
 
     MetaDB().RegisterNamespace(this);
+
+    Assert(IsStarted());
 }
 //----------------------------------------------------------------------------
 void FMetaNamespace::Shutdown() {
-    AssertIsMainThread();
-    Assert(_handles.empty() || not _metaClasses.empty());
-    Assert(not _nameTokenized.empty());
-
-    const FAtomicSpinLock::FScope scopeLock(GMetaNamespaceSpinLock);
-
-    LOG(Info, L"[RTTI] Shutdown namespace <{0}>", _nameTokenized);
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(IsStarted());
 
     MetaDB().UnregisterNamespace(this);
 
-    typedef INTRUSIVELIST_ACCESSOR(&FMetaClassHandle::_node) accessor_type;
-    for (FMetaClassHandle* pHandle = _handles.Head(); pHandle; pHandle = accessor_type::Next(pHandle)) {
-        Assert(nullptr != pHandle->_metaClass);
+    LOG(Info, L"[RTTI] Shutdown namespace <{0}> ({1} handles)", _nameCStr, _classCount);
 
-        LOG(Info, L"[RTTI] Destroy meta class <{0}>::<{1}> ({2:#16x})",
-            _nameTokenized, pHandle->_metaClass->Name(), pHandle->_metaClass->Guid());
+    _nameToken = FName();
 
-#ifdef WITH_CORE_ASSERT
-        Remove_AssertExistsAndSameValue(_metaClasses, pHandle->_metaClass->Name(), pHandle->_metaClass);
-#endif
+    /* Call OnRegister() on every classes, every parent are guaranted to be still alive */
 
-        checked_delete_ref(pHandle->_metaClass);
+    for (FMetaClassHandle* phandle = _handles.Head(); phandle; phandle = phandle->_node.Next) {
+        Assert(phandle->_class);
+        Assert(phandle->_class->Namespace() == this);
+
+        LOG(Info, L"[RTTI] Unregister meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
+
+        phandle->_class->OnUnregister();
     }
 
-    _metaClasses.clear_ReleaseMemory();
+    /* Destroy meta classes */
 
-    _nameTokenized = FName();
+    _classes.clear_ReleaseMemory();
+
+    for (FMetaClassHandle* phandle = _handles.Head(); phandle; phandle = phandle->_node.Next) {
+        Assert(phandle->_class);
+        Assert(phandle->_class->Namespace() == this);
+
+        LOG(Info, L"[RTTI] Destroy meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
+
+        phandle->_destroy(phandle->_class);
+        phandle->_class = nullptr;
+    }
+
+    Assert(not IsStarted());
 }
 //----------------------------------------------------------------------------
-const FMetaClass* FMetaNamespace::FindClass(const FName& metaClassName) const {
-    Assert(not metaClassName.empty());
+const FMetaClass& FMetaNamespace::Class(const FName& name) const {
+    Assert(IsStarted());
 
-    return _metaClasses.at(metaClassName);
+    const auto it = _classes.find(name);
+    AssertRelease(_classes.end() != it);
+
+    return (*it->second);
 }
 //----------------------------------------------------------------------------
-const FMetaClass* FMetaNamespace::FindClassIFP(const FName& metaClassName) const {
-    Assert(not metaClassName.empty());
+const FMetaClass* FMetaNamespace::ClassIFP(const FName& name) const {
+    Assert(IsStarted());
 
-    const auto it = _metaClasses.find(metaClassName);
-    return (_metaClasses.end() != it ? it->second : nullptr);
+    const auto it = _classes.find(name);
+    return (_classes.end() == it ? nullptr : it->second);
 }
 //----------------------------------------------------------------------------
-void FMetaNamespace::AllClasses(VECTOR(RTTI, const FMetaClass*)& instances) const {
-    instances.reserve_Additional(_metaClasses.size());
-    const auto values = _metaClasses.Values();
-    instances.insert(instances.end(), std::begin(values), std::end(values));
-}
-//----------------------------------------------------------------------------
-void FMetaNamespace::Append_(FMetaClassHandle* pHandle) {
-    Assert(pHandle);
+const FMetaClass* FMetaNamespace::ClassIFP(const FStringView& name) const {
+    Assert(IsStarted());
 
-    // thread safety for constants initialization in different threads :
-    const FAtomicSpinLock::FScope scopeLock(GMetaNamespaceSpinLock);
+    const hash_t h = FName::HashValue(name);
+    const auto it = _classes.find_like(name, h);
 
-    Assert(_metaClasses.empty()); // don't register while already started
-
-    _handles.PushFront(pHandle);
+    return (_classes.end() == it ? nullptr : it->second);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

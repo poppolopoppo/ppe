@@ -8,6 +8,12 @@
 #   define CORE_RTTI_API DLL_IMPORT
 #endif
 
+#if !defined(FINAL_RELEASE) && !defined(PROFILING_ENABLED)
+#   define USE_CORE_RTTI_CHECKS 1
+#else
+#   define USE_CORE_RTTI_CHECKS 0
+#endif
+
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------

@@ -2,114 +2,189 @@
 
 #include "MetaObject.h"
 
-#include "MetaAtom.h"
 #include "MetaClass.h"
-#include "MetaNamespace.h"
-#include "MetaProperty.h"
+#include "MetaTransaction.h"
 
 #include "RTTI_Namespace.h"
-
-#include "Core/Container/Hash.h"
-#include "Core/Container/HashMap.h"
-#include "Core/Container/Token.h"
-#include "Core/Container/Vector.h"
-#include "Core/IO/Format.h"
-#include "Core/Thread/ThreadContext.h"
 
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaNamespace& FMetaObject::FMetaClass::Namespace() {
-    return RTTI_NAMESPACE(RTTI);
-}
-//----------------------------------------------------------------------------
-FMetaObject::FMetaClass::FMetaClass(FMetaClassGuid guid, const FMetaNamespace* metaNamespace)
-    : metaclass_type(guid, RTTI::FMetaClass::Abstract, FName("FMetaObject"), metaNamespace)
+FMetaObject::FMetaObject()
+    : _flags(EObjectFlags::Unloaded)
 {}
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+FMetaObject::~FMetaObject() {
+    Assert(RTTI_IsUnloaded());
+    Assert(not RTTI_IsLoaded());
+    Assert(not RTTI_IsExported());
+    Assert(not RTTI_IsTopObject());
+}
 //----------------------------------------------------------------------------
-FMetaObject::FMetaObject()
-:   _state(None) {}
+bool FMetaObject::RTTI_IsA(const FMetaClass& metaClass) const {
+    return (RTTI_Class() == &metaClass);
+}
 //----------------------------------------------------------------------------
-FMetaObject::~FMetaObject() {}
+bool FMetaObject::RTTI_CastTo(const FMetaClass& metaClass) const {
+    return RTTI_Class()->CastTo(metaClass);
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_InheritsFrom(const FMetaClass& metaClass) const {
+    return RTTI_Class()->InheritsFrom(metaClass);
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_IsAssignableFrom(const FMetaClass& metaClass) const {
+    return RTTI_Class()->IsAssignableFrom(metaClass);
+}
 //----------------------------------------------------------------------------
 void FMetaObject::RTTI_Export(const FName& name) {
-    Assert(!name.empty());
+    Assert(RTTI_IsLoaded());
+    Assert(not RTTI_IsExported());
     Assert(_name.empty());
-    Assert(not (_state ^ Exported));
 
+    _flags = _flags + EObjectFlags::Exported;
     _name = name;
-    _state = _state + Exported;
+
+    Assert(RTTI_IsExported());
 }
 //----------------------------------------------------------------------------
 void FMetaObject::RTTI_Unexport() {
-    Assert(!_name.empty());
-    Assert(not (_state ^ Exported));
+    Assert(RTTI_IsLoaded());
+    Assert(RTTI_IsExported());
+    Assert(not _name.empty());
 
+    _flags = _flags - EObjectFlags::Exported;
     _name = FName();
-    _state = _state - Exported;
 
-    Assert(_name.empty());
+    Assert(not RTTI_IsExported());
 }
 //----------------------------------------------------------------------------
-void FMetaObject::RTTI_Load(FMetaLoadContext * /* context */) {
-    Assert(not (_state ^ Loaded));
-    Assert(not (_state ^ Unloaded));
+void FMetaObject::RTTI_Load(ILoadContext* context) {
+    Assert(not RTTI_IsLoaded());
+    Assert(RTTI_IsUnloaded());
 
-    _state = _state + Loaded;
+    _flags = _flags + EObjectFlags::Loaded - EObjectFlags::Unloaded;
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     // checks that base method was called :
-    Assert(not (_state ^ Verifying));
-    _state = _state + Verifying;
+    Assert(not (_flags ^ EObjectFlags::Verifying));
+
+    _flags = _flags + EObjectFlags::Verifying;
+
     RTTI_VerifyPredicates();
-    Assert(not (_state ^ Verifying));
+
+    Assert(not (_flags ^ EObjectFlags::Verifying)); // checks that parent method was called
 #endif
+
+    if (context)
+        context->OnLoadObject(*this);
+
+    Assert(RTTI_IsLoaded());
+    Assert(not RTTI_IsUnloaded());
 }
 //----------------------------------------------------------------------------
-void FMetaObject::RTTI_Unload(FMetaUnloadContext * /* context */) {
-    Assert(_state ^ Loaded);
-    Assert(not (_state ^ Unloaded));
+void FMetaObject::RTTI_Unload(IUnloadContext* context) {
+    Assert(RTTI_IsLoaded());
+    Assert(not RTTI_IsUnloaded());
 
-    _state = (_state - Loaded) + Unloaded;
+    if (context)
+        context->OnUnloadObject(*this);
 
-#ifdef WITH_RTTI_VERIFY_PREDICATES
-    // checks that base method was called :
-    Assert(not (_state ^ Verifying));
-    _state = _state + Verifying;
-    RTTI_VerifyPredicates();
-    Assert(not (_state ^ Verifying));
-#endif
+    _flags = _flags - EObjectFlags::Loaded + EObjectFlags::Unloaded;
+
+    Assert(not RTTI_IsLoaded());
+    Assert(RTTI_IsUnloaded());
 }
 //----------------------------------------------------------------------------
-void FMetaObject::RTTI_CallLoadIFN(FMetaLoadContext *context) {
-    Assert(not (_state ^ Unloaded));
-    if (not (_state ^ Loaded)) {
+void FMetaObject::RTTI_CallLoadIFN(ILoadContext* context) {
+    if (not RTTI_IsLoaded())
         RTTI_Load(context);
-        Assert(_state ^ Loaded);
-    }
+
+    Assert(RTTI_IsLoaded());
 }
 //----------------------------------------------------------------------------
-void FMetaObject::RTTI_CallUnloadIFN(FMetaUnloadContext *context) {
-    Assert(_state ^ Loaded);
-    if (not (_state ^ Unloaded)) {
+void FMetaObject::RTTI_CallUnloadIFN(IUnloadContext* context) {
+    if (RTTI_IsLoaded())
         RTTI_Unload(context);
-        Assert(_state ^ Unloaded);
-    }
+
+    Assert(RTTI_IsUnloaded());
+}
+//----------------------------------------------------------------------------
+void FMetaObject::RTTI_MarkAsTopObject() {
+    Assert(RTTI_IsUnloaded());
+    Assert(not RTTI_IsTopObject());
+
+    _flags = _flags + EObjectFlags::TopObject;
+}
+//----------------------------------------------------------------------------
+void FMetaObject::RTTI_UnmarkAsTopObject() {
+    Assert(RTTI_IsUnloaded());
+    Assert(RTTI_IsTopObject());
+
+    _flags = _flags - EObjectFlags::TopObject;
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
 void FMetaObject::RTTI_VerifyPredicates() const {
-    // checks that base method was called :
-    Assert(_state ^ Verifying);
-    _state = _state - Verifying;
+    Assert(_flags ^ EObjectFlags::Verifying);
+
+    _flags = _flags - EObjectFlags::Verifying;
 }
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FMetaNamespace& FMetaObject::RTTI_FMetaClass::Namespace() {
+    return RTTI_NAMESPACE(RTTI);
+}
+//----------------------------------------------------------------------------
+FMetaObject::RTTI_FMetaClass::RTTI_FMetaClass(FClassId id, const FMetaNamespace* metaNamespace)
+    : metaclass_type(id, FName("FMetaObject"), EClassFlags::Abstract, metaNamespace)
+{}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace RTTI
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EObjectFlags flags) {
+    if (flags == RTTI::EObjectFlags::None)
+        return oss << "None";
+
+    bool s = false;
+    if (flags & RTTI::EObjectFlags::Loaded)     { if (s) oss << L'|'; else s = true; oss << L"Loaded"; }
+    if (flags & RTTI::EObjectFlags::Unloaded)   { if (s) oss << L'|'; else s = true; oss << L"Unloaded"; }
+    if (flags & RTTI::EObjectFlags::Exported)   { if (s) oss << L'|'; else s = true; oss << L"Exported"; }
+    if (flags & RTTI::EObjectFlags::TopObject)  { if (s) oss << L'|'; else s = true; oss << L"TopObject"; }
+#ifdef WITH_RTTI_VERIFY_PREDICATES
+    if (flags & RTTI::EObjectFlags::Verifying)  { if (s) oss << L'|'; else s = true; oss << L"Verifying"; }
+#endif
+
+    return oss;
+}
+//----------------------------------------------------------------------------
+std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EObjectFlags flags) {
+    if (flags == RTTI::EObjectFlags::None)
+        return oss << L"None";
+
+    bool s = false;
+    if (flags & RTTI::EObjectFlags::Loaded)     { if (s) oss << L'|'; else s = true; oss << L"Loaded"; }
+    if (flags & RTTI::EObjectFlags::Unloaded)   { if (s) oss << L'|'; else s = true; oss << L"Unloaded"; }
+    if (flags & RTTI::EObjectFlags::Exported)   { if (s) oss << L'|'; else s = true; oss << L"Exported"; }
+    if (flags & RTTI::EObjectFlags::TopObject)  { if (s) oss << L'|'; else s = true; oss << L"TopObject"; }
+#ifdef WITH_RTTI_VERIFY_PREDICATES
+    if (flags & RTTI::EObjectFlags::Verifying)  { if (s) oss << L'|'; else s = true; oss << L"Verifying"; }
+#endif
+
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

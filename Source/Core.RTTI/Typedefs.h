@@ -8,14 +8,12 @@
 #include "Core/Container/Vector.h"
 #include "Core/Container/Token.h"
 
-#include "Core/IO/String.h"
+#include "Core/Maths/PrimeNumbers.h" // FClassId
 
-#include "Core/Maths/ScalarVector_fwd.h"
-#include "Core/Maths/ScalarMatrix_fwd.h"
+#include <iosfwd>
 
 namespace Core {
 namespace RTTI {
-FWD_REFPTR(MetaAtom);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -27,27 +25,25 @@ public:
 //----------------------------------------------------------------------------
 BASICTOKEN_CLASS_DEF(FName, char, ECase::Insensitive, FNameTokenTraits);
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-using TVector = VECTORINSITU(Container, T, 4);
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-using TPair = Core::TPair<_Key, _Value>;
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-using TDictionary = Core::TAssociativeVector<
-    _Key,
-    _Value,
-    Meta::TEqualTo<_Key>,
-    RTTI::TVector<RTTI::TPair<_Key COMMA _Value> >
->;
-//----------------------------------------------------------------------------
 INSTANTIATE_CLASS_TYPEDEF(FBinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, 16));
 //----------------------------------------------------------------------------
-INSTANTIATE_CLASS_TYPEDEF(FOpaqueData, TDictionary<FName, PMetaAtom>);
+//INSTANTIATE_CLASS_TYPEDEF(FOpaqueData, ASSOCIATIVE_VECTOR(RTTI, FName, PMetaAtom));
+//----------------------------------------------------------------------------
+// /!\ not guaranted to be stable : dependant of initialization order
+using FClassId = TPrimeNumberProduct<class FMetaClass>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RTTI
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const RTTI::FBinaryData& bindata);
+CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const RTTI::FBinaryData& bindata);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

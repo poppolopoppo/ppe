@@ -4,7 +4,6 @@
 
 #include "Core.RTTI/RTTI_fwd.h"
 #include "Core.RTTI/MetaClass.h"
-#include "Core.RTTI/MetaObject.h"
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -13,11 +12,11 @@
 public: \
     typedef _Parent RTTI_parent_type; \
     \
-    virtual const Core::RTTI::FMetaClass *RTTI_MetaClass() const override { \
-        return _Name::FMetaClass::Instance(); \
+    virtual const Core::RTTI::FMetaClass *RTTI_Class() const override { \
+        return RTTI_FMetaClass::Instance(); \
     } \
     \
-    class FMetaClass : public Core::RTTI::TInScopeMetaClass<_Name> { \
+    class RTTI_FMetaClass : public Core::RTTI::TInScopeMetaClass<_Name> { \
         friend class Core::RTTI::TInScopeMetaClass<_Name>; \
         typedef Core::RTTI::TInScopeMetaClass<_Name> metaclass_type; \
         \
@@ -25,14 +24,12 @@ public: \
         typedef _Name object_type; \
         typedef _Parent parent_type; \
         \
-        using metaclass_type::HasInstance; \
         using metaclass_type::Instance; \
-        using metaclass_type::Handle; \
         \
         static Core::RTTI::FMetaNamespace& Namespace(); \
         \
     private: \
-        FMetaClass(Core::RTTI::FMetaClassGuid guid, const Core::RTTI::FMetaNamespace* metaNamespace); \
+        RTTI_FMetaClass(Core::RTTI::FClassId id, const Core::RTTI::FMetaNamespace* metaNamespace); \
     }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

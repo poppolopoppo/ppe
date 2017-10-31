@@ -2,143 +2,182 @@
 
 #include "Core.RTTI/RTTI.h"
 
-#include "Core.RTTI/MetaAtom.h"
-#include "Core.RTTI/MetaType.h"
-#include "Core.RTTI/MetaTypeTraits.h"
-#include "Core.RTTI/MetaTypeVirtualTraits.h"
+#include "Core.RTTI/Atom.h"
 #include "Core.RTTI/Typedefs.h"
+#include "Core.RTTI/TypeTraits.h"
 
-#include "Core/Allocator/PoolAllocator.h"
-#include "Core/Container/BitSet.h"
-#include "Core/Meta/BitField.h"
+#include "Core/Container/Tuple.h"
+#include "Core/Meta/PointerWFlags.h"
 
 namespace Core {
 namespace RTTI {
+class FMetaObject;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(MetaAtom);
-FWD_UNIQUEPTR(MetaFunction);
-class FMetaFunction {
+enum class EParameterFlags : u32 {
+    Default     = 0,
+    Output      = 1<<0,
+    Optional    = 1<<1,
+};
+ENUM_FLAGS(EParameterFlags);
+//----------------------------------------------------------------------------
+class CORE_RTTI_API FMetaParameter {
 public:
-    enum EFlags {
-        Public          = 1<<0,
-        Protected       = 1<<1,
-        Private         = 1<<2,
-        Const           = 1<<3,
-        Deprecated      = 1<<4,
-        Procedure       = 1<<5,
-    };
-    ENUM_FLAGS_FRIEND(EFlags);
-
-    FMetaFunction(const FName& name, EFlags attributes, size_t argCount);
-    virtual ~FMetaFunction();
-
-    FMetaFunction(const FMetaFunction&) = delete;
-    FMetaFunction& operator =(const FMetaFunction&) = delete;
+    FMetaParameter();
+    FMetaParameter(const FName& name, const PTypeTraits& traits, EParameterFlags flags);
 
     const FName& Name() const { return _name; }
-    size_t ArgCount()   const { return argscount_type::Get(_data); }
-    EFlags Attributes() const { return EFlags(attributes_type::Get(_data)); }
-    FWordBitSet OutputFlags() const { return FWordBitSet(outputflags_type::Get(_data), ArgCount()); }
+    PTypeTraits Traits() const { return union_cast_t{ _traitsAndFlags.Get() }.Traits; }
+    EParameterFlags Flags() const { return EParameterFlags(_traitsAndFlags.Flag01()); }
 
-    bool IsPublic()     const { return (Attributes() ^ Public); }
-    bool IsProtected()  const { return (Attributes() ^ Protected); }
-    bool IsPrivate()    const { return (Attributes() ^ Private); }
-    bool IsConst()      const { return (Attributes() ^ Const); }
-    bool IsDeprecated() const { return (Attributes() ^ Deprecated); }
-    bool IsProcedure()  const { return (Attributes() ^ Procedure); }
-
-    bool IsOutput(size_t argIndex) const {
-        Assert(argIndex < ArgCount());
-        return (0 != (outputflags_type::Get(_data) & (1<<argIndex)) );
-    }
-
-    // The first entry is the return type
-    virtual TMemoryView<const FMetaTypeInfo> SignatureInfos() const = 0;
-    virtual TMemoryView<const IMetaTypeVirtualTraits* const> SignatureTraits() const = 0;
-
-    virtual bool Invoke(FMetaObject* src, PMetaAtom& presult, const TMemoryView<const PMetaAtom>& args) const = 0;
-    virtual bool PromoteInvoke(FMetaObject* src, PMetaAtom& presult, const TMemoryView<const PMetaAtom>& args) const = 0;
-
-protected:
-    void SetOutputFlags_(size_t value);
+    bool IsOutput() const       { return _traitsAndFlags.Flag0(); }
+    bool IsOptional() const     { return _traitsAndFlags.Flag1(); }
 
 private:
-    typedef Meta::TBit<u32>::TFirst<5>::type attributes_type;
-    typedef Meta::TBit<u32>::TAfter<attributes_type>::TField<5>::type argscount_type;
-    typedef Meta::TBit<u32>::TAfter<argscount_type>::TField<15>::type outputflags_type;
+    union union_cast_t {
+        void* Raw;
+        PTypeTraits Traits;
+        union_cast_t(void* raw) : Raw(raw) {}
+        union_cast_t(const PTypeTraits& traits) : Traits(traits) {}
+    };
 
     FName _name;
-    u32 _data;
-
-public:
-    STATIC_CONST_INTEGRAL(size_t, MaxArgCount, argscount_type::MaxValue);
+    Meta::TPointerWFlags<void> _traitsAndFlags;
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename _Result, typename... _Args>
-class TMetaFunctionImpl : public FMetaFunction {
-public:
-    using typename FMetaFunction::EFlags;
-
-    TMetaFunctionImpl(const FName& name, EFlags attributes, size_t argCount)
-        : FMetaFunction(name, attributes, argCount) {}
-
-    virtual TMemoryView<const FMetaTypeInfo> SignatureInfos() const override final;
-    virtual TMemoryView<const IMetaTypeVirtualTraits* const> SignatureTraits() const override final;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace details {
 template <typename T>
-struct TMetaFunctionArg_;
-} //!details
+FMetaParameter MakeParameter(Meta::TType<T>, const FStringView& name) {
+    static_assert(not std::is_pointer<T>::value, "pointers are not supported, use non-const references instead");
+    return FMetaParameter(
+        FName(name),
+        MakeTraits<T>(),
+        (std::is_lvalue_reference<T>::value && not std::is_const< Meta::TDecay<T> >::value)
+            ? EParameterFlags::Output
+            : EParameterFlags::Default );
+}
 //----------------------------------------------------------------------------
-template <typename _Result, typename _Class, typename... _Args>
-class TMetaTypedFunction : public TMetaFunctionImpl<
-    typename details::TMetaFunctionArg_< Meta::TDecay<_Result> >::wrapper_type,
-    typename details::TMetaFunctionArg_< Meta::TDecay<_Args>   >::wrapper_type...
-> {
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+enum class EFunctionFlags : u32 {
+    Const       = 1<<0,
+    Public      = 1<<1,
+    Protected   = 1<<2,
+    Private     = 1<<3,
+    Deprecated  = 1<<4,
+};
+ENUM_FLAGS(EFunctionFlags);
+//----------------------------------------------------------------------------
+class CORE_RTTI_API FMetaFunction {
 public:
-    typedef TMetaFunctionImpl<
-        typename details::TMetaFunctionArg_< Meta::TDecay<_Result> >::wrapper_type,
-        typename details::TMetaFunctionArg_< Meta::TDecay<_Args>   >::wrapper_type...
-    >   parent_type;
+    typedef void (*invoke_func)(
+            const FMetaObject& obj,
+            const FAtom& result,
+            const TMemoryView<const FAtom>& arguments );
 
-    using typename parent_type::EFlags;
+    FMetaFunction();
+    FMetaFunction(
+        const FName& name,
+        EFunctionFlags flags,
+        const PTypeTraits& result,
+        std::initializer_list<FMetaParameter> parameters,
+        invoke_func invoke );
+    ~FMetaFunction();
 
-    typedef _Result (_Class::* func_type)(_Args...);
+    const FName& Name() const { return _name; }
+    EFunctionFlags Flags() const { return _flags; }
+    const PTypeTraits& Result() const { return _result; }
+    TMemoryView<const FMetaParameter> Parameters() const { return _parameters.MakeConstView(); }
 
-    TMetaTypedFunction(const FName& name, EFlags attributes, func_type func);
+    bool IsConst() const        { return (_flags ^ EFunctionFlags::Const        ); }
+    bool IsPublic() const       { return (_flags ^ EFunctionFlags::Public       ); }
+    bool IsProtected() const    { return (_flags ^ EFunctionFlags::Protected    ); }
+    bool IsPrivate() const      { return (_flags ^ EFunctionFlags::Private      ); }
+    bool IsDeprecated() const   { return (_flags ^ EFunctionFlags::Deprecated   ); }
 
-    virtual bool Invoke(FMetaObject* src, PMetaAtom& presult, const TMemoryView<const PMetaAtom>& args) const override final;
-    virtual bool PromoteInvoke(FMetaObject* src, PMetaAtom& presult, const TMemoryView<const PMetaAtom>& args) const override final;
+    bool HasReturnValue() const { return (_result.Valid()); }
 
-    SINGLETON_POOL_ALLOCATED_DECL();
+    void Invoke(
+        const FMetaObject& obj,
+        const FAtom& result,
+        const TMemoryView<const FAtom>& arguments ) const;
 
 private:
-    func_type _func;
+    FName _name;
+    invoke_func _invoke;
+    EFunctionFlags _flags;
+    PTypeTraits _result;
+    VECTORINSITU(RTTI, FMetaParameter, 4) _parameters;
 };
 //----------------------------------------------------------------------------
-template <typename _Result, typename _Class, typename... _Args>
-TMetaTypedFunction<_Result, _Class, _Args...>* MakeFunction(
-    const FName& name, FMetaFunction::EFlags attributes, _Result(_Class::* func)(_Args...)) {
-    return new TMetaTypedFunction<_Result, _Class, _Args...>(name, attributes, func);
-}
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Result, typename _Class, typename... _Args>
-TMetaTypedFunction<_Result, _Class, _Args...>* MakeFunction(
-    const FName& name, FMetaFunction::EFlags attributes, _Result(_Class::* func_const)(_Args...) const) {
-    typedef _Result(_Class::* func_type)(_Args...);
-    return new TMetaTypedFunction<_Result, _Class, _Args...>(name, attributes, reinterpret_cast<func_type>(func_const));
-}
+template <typename T> struct TMakeFunction {};
+//----------------------------------------------------------------------------
+template <typename _Result, class _Class, typename... _Args>
+struct TMakeFunction<_Result (_Class::*)(_Args...)> {
+    template <_Result (_Class::* _Member)(_Args...)>
+    static Meta::TEnableIf<std::is_base_of<FMetaObject, _Class>::value, FMetaFunction>
+        Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) {
+        Assert(sizeof...(_Args) == parametersName.size());
+        auto nameIt = std::begin(parametersName);
+        return FMetaFunction(
+            name,
+            flags,
+            MakeTraits<_Result>(),
+            { MakeParameter(Meta::TType<_Args>{}, *nameIt++)... },
+            &TMemberFunction_<_Member, std::is_void<_Result>::type>::Invoke
+        );
+    }
+
+private:
+    template <_Result (_Class::* _Member)(_Args...), typename T = std::false_type>
+    struct TMemberFunction_ {
+        static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
+            size_t argIndex = 0;
+            result.TypedData<_Result>() = Call(_Member, const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)), TTuple<Meta::TReference<_Args>...>{
+                arguments[argIndex++].TypedData<Meta::TDecay<_Args>>()...
+            });
+        }
+    };
+
+    template <_Result (_Class::* _Member)(_Args...)>
+    struct TMemberFunction_<_Member, std::true_type> {
+        static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
+            Assert(not result);
+            size_t argIndex = 0;
+            Call(_Member, const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)), TTuple<Meta::TReference<_Args>...>{
+                arguments[argIndex++].TypedData<Meta::TDecay<_Args>>()...
+            });
+        }
+    };
+};
+//----------------------------------------------------------------------------
+template <typename _Result, class _Class, typename... _Args>
+struct TMakeFunction<_Result (_Class::*)(_Args...) const> {
+    template <_Result (_Class::* _Member)(_Args...) const>
+    static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) {
+        typedef _Result (_Class::* non_const_type)(_Args...);
+        return TMakeFunction<non_const_type>::Make<(non_const_type)_Member>(name, flags + EFunctionFlags::Const, std::move(parametersName));
+    }
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RTTI
+CORE_ASSUME_TYPE_AS_POD(RTTI::FMetaParameter);
 } //!namespace Core
 
-#include "Core.RTTI/MetaFunction-inl.h"
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EParameterFlags flags);
+CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EParameterFlags flags);
+//----------------------------------------------------------------------------
+CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EFunctionFlags flags);
+CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EFunctionFlags flags);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core

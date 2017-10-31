@@ -4,18 +4,13 @@
 
 #include "Core.RTTI/RTTI_Macros.h"
 
-#include "Core.RTTI/MetaType.h"
-#include "Core.RTTI/MetaTypePromote.h"
-#include "Core.RTTI/MetaTypeTraits.h"
-
-#include "Core.RTTI/MetaAtom.h"
+#include "Core.RTTI/Atom.h"
 #include "Core.RTTI/MetaClass.h"
 #include "Core.RTTI/MetaNamespace.h"
 #include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/MetaFunction.h"
 #include "Core.RTTI/MetaProperty.h"
-
-#include "Core.RTTI/RTTI_extern.h"
+#include "Core.RTTI/NativeTypes.h"
 
 #include <type_traits>
 
@@ -23,71 +18,61 @@
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_BEGIN(_Namespace, _Name, _Attributes) \
-    Core::RTTI::FMetaNamespace& _Name::FMetaClass::Namespace() { \
+    Core::RTTI::FMetaNamespace& _Name::RTTI_FMetaClass::Namespace() { \
         return RTTI_NAMESPACE(_Namespace); \
     } \
     \
-    _Name::FMetaClass::FMetaClass(Core::RTTI::FMetaClassGuid guid, const Core::RTTI::FMetaNamespace* metaNamespace) \
-        : metaclass_type(guid, (_Attributes), Core::RTTI::FName(STRINGIZE(_Name)), metaNamespace) { \
+    _Name::RTTI_FMetaClass::RTTI_FMetaClass(Core::RTTI::FClassId id, const Core::RTTI::FMetaNamespace* metaNamespace) \
+        : metaclass_type(id, Core::RTTI::FName(STRINGIZE(_Name)), (_Attributes), metaNamespace) { \
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_END() }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Internal helper
-#define _RTTI_FUNCTION_IMPL(_Name, _Flags, _Args) \
-     RegisterFunction(MakeUnique<const Core::RTTI::FMetaFunction>(Core::RTTI::MakeFunction(Core::RTTI::FName(_Name), _Flags, _Args)));
+#define _RTTI_FUNCTION_IMPL(_Name, _Flags, _Func, ...) \
+    RegisterFunction(Core::RTTI::TMakeFunction<decltype(_Func)>::Make<_Func>(Core::RTTI::FName(_Name), (_Flags), { PP_FOREACH_ARGS(STRINGIZE, __VA_ARGS__) }))
 //----------------------------------------------------------------------------
-#define RTTI_FUNCTION(_Name) \
-    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), Core::RTTI::FMetaFunction::Public, &object_type::_Name )
+// Add a public function
+#define RTTI_FUNCTION(_Name, ...) \
+    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), Core::RTTI::EFunctionFlags::Public, &object_type::_Name, __VA_ARGS__);
 //----------------------------------------------------------------------------
-#define RTTI_FUNCTION_PRIVATE(_Name) \
-    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), Core::RTTI::FMetaFunction::Private, &object_type::_Name )
+// Add a private function
+#define RTTI_FUNCTION_PRIVATE(_Name, ...) \
+    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), Core::RTTI::EFunctionFlags::Private, &object_type::_Name, __VA_ARGS__);
+//----------------------------------------------------------------------------
+// Add a deprecated function
+#define RTTI_FUNCTION_DEPRECATED(_Name, ...) \
+    _RTTI_FUNCTION_IMPL(STRINGIZE(_Name), Core::RTTI::EFunctionFlags::Private + Core::RTTI::EFunctionFlags::Deprecated, &object_type::_Name, __VA_ARGS__);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Internal helper
-#define _RTTI_PROPERTY_IMPL(_Name, _Flags, _Args) \
-    RegisterProperty(MakeUnique<const Core::RTTI::FMetaProperty>(Core::RTTI::MakeProperty(Core::RTTI::FName(_Name), _Flags, _Args )));
+#define _RTTI_PROPERTY_IMPL(_Name, _Flags, ...) \
+    RegisterProperty(Core::RTTI::MakeProperty(Core::RTTI::FName(_Name), _Flags, __VA_ARGS__))
 //----------------------------------------------------------------------------
-// Add a public property "Alias" from a private field "_someName"
-#define RTTI_PROPERTY_FIELD_ALIAS(_Name, _Alias) \
-    _RTTI_PROPERTY_IMPL(STRINGIZE(_Alias), Core::RTTI::FMetaProperty::Public, &object_type::_Name )
+// Add a public property "Alias" from a field "_someName"
+#define RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, _Flags) \
+    _RTTI_PROPERTY_IMPL(STRINGIZE(_Alias), (_Flags), &object_type::_Name);
+#define RTTI_PROPERTY_FIELD_ALIAS(_Name, _Alias) RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, Core::RTTI::EPropertyFlags::Public)
+#define RTTI_PROPERTY_DEPRECATED_ALIAS(_Name, _Alias) RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, Core::RTTI::EPropertyFlags::Public + Core::RTTI::EPropertyFlags::Deprecated)
 //----------------------------------------------------------------------------
 // Add a private property "SomeName" from a private field "_someName"
-#define RTTI_PROPERTY_PRIVATE_FIELD(_Name) do { \
+#define _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, _Flags) do { \
         char propName[] = STRINGIZE(_Name); \
-        STATIC_ASSERT(sizeof(propName) > 1); \
+        STATIC_ASSERT(sizeof(propName) > 2 * sizeof(char)); \
+        Assert(propName[0] == '_'); \
+        Assert(IsAlpha(propName[1])); \
         InplaceToUpper(propName[1]); \
         const FStringView capitalizedWithoutUnderscore(&propName[1], lengthof(propName) - 2); \
-        _RTTI_PROPERTY_IMPL(capitalizedWithoutUnderscore, Core::RTTI::FMetaProperty::Private, &object_type::_Name ) \
-    } while (0);
+        _RTTI_PROPERTY_IMPL(capitalizedWithoutUnderscore, (_Flags), &object_type::_Name); \
+    } while (0)
+#define RTTI_PROPERTY_PRIVATE_FIELD(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, Core::RTTI::EPropertyFlags::Private);
+#define RTTI_PROPERTY_PRIVATE_DEPRECATED(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, Core::RTTI::EPropertyFlags::Private + Core::RTTI::EPropertyFlags::Deprecated);
 //----------------------------------------------------------------------------
 // Add a public property "SomeName" from a public field "SomeName"
-#define RTTI_PROPERTY_PUBLIC_FIELD(_Name) \
-        _RTTI_PROPERTY_IMPL(STRINGIZE(_Name), Core::RTTI::FMetaProperty::Public, &object_type::_Name)
-//----------------------------------------------------------------------------
-// Add a public property "SomeName" from 3 delegates or 3 Meta::TFunction : a getter, a mover & a setter
-#define RTTI_PROPERTY_GETSET_FLAGS(_Name, _Flags, _Get, _Set) \
-    _RTTI_PROPERTY_IMPL(STRINGIZE(_Name), _Flags, COMMA_PROTECT(std::move(_Get), std::move(_Set)) )
-//----------------------------------------------------------------------------
-// Add a property "SomeName" from 3 delegates or 3 Meta::TFunction : a getter, a mover & a setter
-#define RTTI_PROPERTY_GETSET(_Name, _Get, _Set) \
-    RTTI_PROPERTY_GETSET_FLAGS(_Name, Core::RTTI::FMetaProperty::Public, _Get, _Set )
-//----------------------------------------------------------------------------
-// Add a property "SomeName" from 2 member functions : SomeName() & SetSomeName()
-#define RTTI_PROPERTY_MEMBER(_Name) \
-    RTTI_PROPERTY_GETSET(_Name, \
-        &object_type::_Name, \
-        &object_type::CONCAT(Set,  _Name)  )
-//----------------------------------------------------------------------------
-// Add a deprecated property "SomeName" of type T, these are write-only : you can't read from them
-#define RTTI_PROPERTY_DEPRECATED(_Type, _Name) \
-    RegisterProperty(MakeUnique<const Core::RTTI::FMetaProperty>( \
-        Core::RTTI::MakeDeprecatedProperty<_Type, object_type>( \
-            Core::RTTI::FName(STRINGIZE(_Name)), \
-            Core::RTTI::FMetaProperty::Private  \
-        )));
+#define RTTI_PROPERTY_PUBLIC_FIELD(_Name) RTTI_PROPERTY_FIELD_ALIAS(_Name, _Name);
+#define RTTI_PROPERTY_DEPRECATED_FIELD(_Name) RTTI_PROPERTY_DEPRECATED_ALIAS(_Name, _Name);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

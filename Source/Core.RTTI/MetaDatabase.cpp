@@ -2,10 +2,9 @@
 
 #include "MetaDatabase.h"
 
-#include "MetaAtom.h"
-#include "MetaClass.h"
-#include "MetaNamespace.h"
 #include "MetaObject.h"
+#include "MetaNamespace.h"
+#include "MetaTransaction.h"
 
 #include "Core/Diagnostic/Logger.h"
 
@@ -14,219 +13,268 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-static FMetaObject* CastAtomToObject_(const TPair<const FName, PMetaAtom>& it) {
-    const auto* pObjectAtom = it.second->As<PMetaObject>();
-    return (pObjectAtom ? pObjectAtom->Wrapper().get() : nullptr);
+FMetaDatabase::FMetaDatabase() {
+    LOG(Info, L"[RTTI] Create DB");
 }
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FMetaDatabase::FMetaDatabase() {}
 //----------------------------------------------------------------------------
 FMetaDatabase::~FMetaDatabase() {
-    WRITESCOPELOCK(_barrier);
+    LOG(Info, L"[RTTI] Destroy DB");
+
     Assert(_namespaces.empty());
-    _atoms.clear();
+    Assert(_objects.empty());
+    Assert(_classes.empty());
 }
+//----------------------------------------------------------------------------
+// Transactions
+//----------------------------------------------------------------------------
+void FMetaDatabase::RegisterTransaction(FMetaTransaction* metaTransaction) {
+    Assert(metaTransaction);
+    Assert(metaTransaction->IsLoaded());
+
+    const FName& exportName = metaTransaction->Name();
+    Assert(not exportName.empty());
+
+    LOG(Info, L"[RTTI] Register transaction in DB : '{0}', {1} top objects, {2} loaded objects",
+        exportName,
+        metaTransaction->TopObjects().size(),
+        metaTransaction->LoadedObjects().size() );
+
+    WRITESCOPELOCK(_lockRW);
+
+    Insert_AssertUnique(_transactions, exportName, SMetaTransaction(metaTransaction));
+}
+//----------------------------------------------------------------------------
+void FMetaDatabase::UnregisterTransaction(FMetaTransaction* metaTransaction) {
+    Assert(metaTransaction);
+    Assert(metaTransaction->IsLoaded());
+
+    const FName& exportName = metaTransaction->Name();
+    Assert(not exportName.empty());
+
+    LOG(Info, L"[RTTI] Unregister transaction in DB : '{0}', {1} top objects, {2} loaded objects",
+        exportName,
+        metaTransaction->TopObjects().size(),
+        metaTransaction->LoadedObjects().size() );
+
+    WRITESCOPELOCK(_lockRW);
+
+    Remove_AssertExistsAndSameValue(_transactions, exportName, SMetaTransaction(metaTransaction));
+}
+//----------------------------------------------------------------------------
+FMetaTransaction& FMetaDatabase::Transaction(const FName& name) const {
+    Assert(not name.empty());
+
+    READSCOPELOCK(_lockRW);
+    return (*_transactions[name]);
+}
+//----------------------------------------------------------------------------
+FMetaTransaction* FMetaDatabase::TransactionIFP(const FName& name) const {
+    Assert(not name.empty());
+
+    READSCOPELOCK(_lockRW);
+
+    const auto it = _transactions.find(name);
+
+    return (_transactions.end() == it ? nullptr : it->second);
+}
+//----------------------------------------------------------------------------
+FMetaTransaction* FMetaDatabase::TransactionIFP(const FStringView& name) const {
+    Assert(not name.empty());
+
+    READSCOPELOCK(_lockRW);
+
+    const hash_t h = FName::HashValue(name);
+    const auto it = _transactions.find_like(name, h);
+
+    return (_transactions.end() == it ? nullptr : it->second);
+}
+//----------------------------------------------------------------------------
+// Objects
+//----------------------------------------------------------------------------
+void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
+    Assert(metaObject);
+
+    const FName& exportName = metaObject->RTTI_Name();
+    Assert(not exportName.empty());
+
+    LOG(Info, L"[RTTI] Register object in DB : <{0}::{1}> '{2}'",
+        metaObject->RTTI_Class()->Namespace()->Name(),
+        metaObject->RTTI_Class()->Name(),
+        exportName );
+
+    Assert(metaObject->RTTI_IsExported());
+
+    WRITESCOPELOCK(_lockRW);
+
+    Assert(Contains(_namespaces, metaObject->RTTI_Class()->Namespace()));
+
+    Insert_AssertUnique(_objects, exportName, SMetaObject(metaObject));
+}
+//----------------------------------------------------------------------------
+void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
+    Assert(metaObject);
+
+    const FName& exportName = metaObject->RTTI_Name();
+    Assert(not exportName.empty());
+
+    LOG(Info, L"[RTTI] Unregister object from DB : <{0}::{1}> '{2}'",
+        metaObject->RTTI_Class()->Namespace()->Name(),
+        metaObject->RTTI_Class()->Name(),
+        exportName );
+
+    Assert(metaObject->RTTI_IsExported());
+
+    WRITESCOPELOCK(_lockRW);
+
+    Assert(Contains(_namespaces, metaObject->RTTI_Class()->Namespace()));
+
+    Remove_AssertExistsAndSameValue(_objects, exportName, SMetaObject(metaObject));
+}
+//----------------------------------------------------------------------------
+FMetaObject& FMetaDatabase::Object(const FName& name) const {
+    Assert(not name.empty());
+
+    READSCOPELOCK(_lockRW);
+    return (*_objects[name]);
+}
+//----------------------------------------------------------------------------
+FMetaObject* FMetaDatabase::ObjectIFP(const FName& name) const {
+    Assert(not name.empty());
+
+    READSCOPELOCK(_lockRW);
+
+    const auto it = _objects.find(name);
+
+    return (_objects.end() == it ? nullptr : it->second);
+}
+//----------------------------------------------------------------------------
+FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& name) const {
+    Assert(not name.empty());
+
+    READSCOPELOCK(_lockRW);
+
+    const hash_t h = FName::HashValue(name);
+    const auto it = _objects.find_like(name, h);
+
+    return (_objects.end() == it ? nullptr : it->second);
+}
+//----------------------------------------------------------------------------
+// Namespaces
 //----------------------------------------------------------------------------
 void FMetaDatabase::RegisterNamespace(const FMetaNamespace* metaNamespace) {
     Assert(metaNamespace);
 
-    LOG(Info, L"[RTTI] Register namespace <{0}>", metaNamespace->Name());
+    LOG(Info, L"[RTTI] Register namespace in DB : <{0}>", metaNamespace->Name());
 
-    WRITESCOPELOCK(_barrier);
-    Insert_AssertUnique(_namespaces, metaNamespace->Name(), metaNamespace);
+    Assert(metaNamespace->IsStarted());
+
+    WRITESCOPELOCK(_lockRW);
+
+    Add_AssertUnique(_namespaces, metaNamespace);
+
+    for (const FMetaClass* metaClass : metaNamespace->Classes()) {
+        Assert(metaClass);
+        Assert(metaClass->IsRegistered());
+        Assert(metaClass->Namespace() == metaNamespace);
+
+        Insert_AssertUnique(_classes, metaClass->Name(), metaClass);
+    }
 }
 //----------------------------------------------------------------------------
 void FMetaDatabase::UnregisterNamespace(const FMetaNamespace* metaNamespace) {
     Assert(metaNamespace);
 
-    LOG(Info, L"[RTTI] Unregister namespace <{0}>", metaNamespace->Name());
+    LOG(Info, L"[RTTI] Unregister namespace from DB : <{0}>", metaNamespace->Name());
 
-    WRITESCOPELOCK(_barrier);
-    Remove_AssertExistsAndSameValue(_namespaces, metaNamespace->Name(), metaNamespace);
-}
-//----------------------------------------------------------------------------
-const FMetaClass* FMetaDatabase::FindClass(const FName& name) const {
-    Assert(not name.empty());
+    Assert(metaNamespace->IsStarted());
 
-    READSCOPELOCK(_barrier);
-    for (const auto& it : _namespaces) {
-        if (const FMetaClass* metaClass = it.second->FindClass(name))
-            return metaClass;
+    WRITESCOPELOCK(_lockRW);
+
+    for (const FMetaClass* metaClass : metaNamespace->Classes()) {
+        Assert(metaClass);
+        Assert(metaClass->IsRegistered());
+        Assert(metaClass->Namespace() == metaNamespace);
+
+        Remove_AssertExistsAndSameValue(_classes, metaClass->Name(), metaClass);
     }
-    AssertNotReached();
-    return nullptr;
-}
-//----------------------------------------------------------------------------
-const FMetaClass* FMetaDatabase::FindClassIFP(const FName& name) const {
-    Assert(not name.empty());
 
-    READSCOPELOCK(_barrier);
-    for (const auto& it : _namespaces) {
-        if (const FMetaClass* metaClass = it.second->FindClassIFP(name))
-            return metaClass;
-    }
-    return nullptr;
-}
-//----------------------------------------------------------------------------
-void FMetaDatabase::AllClasses(TCollector<const FMetaClass*>& instances) const {
-    READSCOPELOCK(_barrier);
-    for (const auto& it : _namespaces) {
-        it.second->AllClasses(instances);
-    }
-}
-//----------------------------------------------------------------------------
-const FMetaNamespace* FMetaDatabase::FindNamespace(const FName& name) const {
-    Assert(not name.empty());
+    Remove_AssertExists(_namespaces, metaNamespace);
 
-    READSCOPELOCK(_barrier);
-    return _namespaces.at(name);
-}
-//----------------------------------------------------------------------------
-const FMetaNamespace* FMetaDatabase::FindNamespaceIFP(const FName& name) const {
-    Assert(not name.empty());
-
-    READSCOPELOCK(_barrier);
-    const auto it = _namespaces.find(name);
-    return (_namespaces.end() == it ? nullptr : it->second);
-}
-//----------------------------------------------------------------------------
-void FMetaDatabase::AllNamespaces(TCollector<const FMetaNamespace*>& instances) const {
-    READSCOPELOCK(_barrier);
-    instances.assign(
-        MakeValueIterator(_namespaces.begin()),
-        MakeValueIterator(_namespaces.end()) );
-}
-//----------------------------------------------------------------------------
-void FMetaDatabase::RegisterAtom(const FName& name, FMetaAtom* metaAtom, bool allowOverride) {
-    Assert(not name.empty());
-    Assert(metaAtom);
-
-    LOG(Info, L"[RTTI] Register atom '{0}' <{1}>", name, metaAtom->TypeInfo().Name);
-
-    WRITESCOPELOCK(_barrier);
-    PMetaAtom& dst = _atoms[name];
-    AssertRelease(allowOverride || not dst);
-    dst = metaAtom;
-}
-//----------------------------------------------------------------------------
-void FMetaDatabase::UnregisterAtom(const FName& name, FMetaAtom* metaAtom) {
-    Assert(not name.empty());
-    Assert(metaAtom);
-
-    LOG(Info, L"[RTTI] Unregister atom '{0}' <{1}>", name, metaAtom->TypeInfo().Name);
-
-    WRITESCOPELOCK(_barrier);
-    const PMetaAtom scopeAtom(metaAtom);
-    Remove_AssertExistsAndSameValue(_atoms, name, scopeAtom);
-}
-//----------------------------------------------------------------------------
-FMetaAtom* FMetaDatabase::FindAtom(const FName& name) const {
-    Assert(not name.empty());
-
-    READSCOPELOCK(_barrier);
-    return _atoms.at(name).get();
-}
-//----------------------------------------------------------------------------
-FMetaAtom* FMetaDatabase::FindAtomIFP(const FName& name) const {
-    Assert(not name.empty());
-
-    READSCOPELOCK(_barrier);
-    const auto it = _atoms.find(name);
-    return (it != _atoms.end() ? it->second.get() : nullptr);
-}
-//----------------------------------------------------------------------------
-void FMetaDatabase::AllAtoms(TCollector<PMetaAtom>& instances) const {
-    READSCOPELOCK(_barrier);
-    instances.assign(
-        MakeValueIterator(_atoms.begin()),
-        MakeValueIterator(_atoms.end()) );
-}
-//----------------------------------------------------------------------------
-void FMetaDatabase::RegisterObject(FMetaObject* object) {
-    Assert(object);
-    Assert(FindClassIFP(object->RTTI_MetaClass()->Name()));
-
-    PMetaObject pObject(object);
-    RegisterAtom(pObject->RTTI_Name(), MakeAtom(std::move(pObject)), false);
-}
-//----------------------------------------------------------------------------
-void FMetaDatabase::UnregisterObject(FMetaObject* object) {
-    Assert(object);
-    Assert(FindClassIFP(object->RTTI_MetaClass()->Name()));
-
-    ONLY_IF_ASSERT(PMetaAtom atom);
-    const FName name = object->RTTI_Name();
-    Assert(not name.empty());
-
-    LOG(Info, L"[RTTI] Unregister atom '{0}' <{1}>", name, TypeInfo<PMetaObject>().Name);
-    {
-        WRITESCOPELOCK(_barrier);
 #ifdef WITH_CORE_ASSERT
-        atom = Remove_ReturnValue(_atoms, name);
-#else
-        Remove_AssertExists(_atoms, name);
+    // Check that no object belonging to this namespace if still referenced
+    for (const auto& it : _objects) {
+        const FMetaClass* metaClass = it.second->RTTI_Class();
+        Assert(metaClass->Namespace() != metaNamespace);
+    }
 #endif
-    }
-
-    Assert_NoAssume(atom);
-    Assert_NoAssume(atom->Cast<PMetaObject>()->Wrapper() == object);
 }
 //----------------------------------------------------------------------------
-FMetaObject* FMetaDatabase::FindObject(const FName& name) const {
+const FMetaNamespace& FMetaDatabase::Namespace(const FName& name) const {
     Assert(not name.empty());
 
-    const FMetaAtom* pAtom = FindAtom(name);
-    return pAtom->Cast<PMetaObject>()->Wrapper().get();
+    READSCOPELOCK(_lockRW);
+
+    const auto it = std::find_if(_namespaces.begin(), _namespaces.end(), [&name](const FMetaNamespace* metaNamespace) {
+        return (metaNamespace->Name() == name);
+    });
+    AssertRelease(_namespaces.end() != it);
+
+    return (**it);
 }
 //----------------------------------------------------------------------------
-FMetaObject* FMetaDatabase::FindObjectIFP(const FName& name) const {
+const FMetaNamespace* FMetaDatabase::NamespaceIFP(const FName& name) const {
     Assert(not name.empty());
 
-    const FMetaAtom* pAtom = FindAtomIFP(name);
-    return (pAtom ? pAtom->Cast<PMetaObject>()->Wrapper().get() : nullptr);
+    READSCOPELOCK(_lockRW);
+
+    const auto it = std::find_if(_namespaces.begin(), _namespaces.end(), [&name](const FMetaNamespace* metaNamespace) {
+        return (metaNamespace->Name() == name);
+    });
+
+    return (_namespaces.end() == it ? nullptr : *it);
 }
 //----------------------------------------------------------------------------
-void FMetaDatabase::AllObjects(TCollector<PMetaObject>& instances) const {
-    READSCOPELOCK(_barrier);
+const FMetaNamespace* FMetaDatabase::NamespaceIFP(const FStringView& name) const {
+    Assert(not name.empty());
 
-    forrange(it,
-        MakeOutputIterator(_atoms.begin(), &CastAtomToObject_),
-        MakeOutputIterator(_atoms.end(), &CastAtomToObject_) ) {
-        if (*it != nullptr)
-            instances.emplace_back(*it);
-    }
+    READSCOPELOCK(_lockRW);
+
+    const auto it = std::find_if(_namespaces.begin(), _namespaces.end(), [&name](const FMetaNamespace* metaNamespace) {
+        return (metaNamespace->Name() == name);
+    });
+
+    return (_namespaces.end() == it ? nullptr : *it);
 }
 //----------------------------------------------------------------------------
-void FMetaDatabase::FindObjectsByClass(const FMetaClass* metaClass, TCollector<PMetaObject>& instances) const {
-    Assert(metaClass);
+// Classes
+//----------------------------------------------------------------------------
+const FMetaClass& FMetaDatabase::Class(const FName& name) const {
+    Assert(not name.empty());
 
-    READSCOPELOCK(_barrier);
+    READSCOPELOCK(_lockRW);
 
-    forrange(it,
-        MakeOutputIterator(_atoms.begin(), &CastAtomToObject_),
-        MakeOutputIterator(_atoms.end(), &CastAtomToObject_) ) {
-        if (*it != nullptr && (*it)->RTTI_MetaClass() == metaClass)
-            instances.emplace_back(*it);
-    }
+    return (*_classes.at(name));
 }
 //----------------------------------------------------------------------------
-void FMetaDatabase::FindObjectsInheritingClass(const FMetaClass* metaClass, TCollector<PMetaObject>& instances) const {
-    Assert(metaClass);
+const FMetaClass* FMetaDatabase::ClassIFP(const FName& name) const {
+    Assert(not name.empty());
 
-    READSCOPELOCK(_barrier);
+    READSCOPELOCK(_lockRW);
 
-    forrange(it,
-        MakeOutputIterator(_atoms.begin(), &CastAtomToObject_),
-        MakeOutputIterator(_atoms.end(), &CastAtomToObject_)) {
-        if (*it != nullptr && (*it)->RTTI_MetaClass()->InheritsFrom(metaClass))
-            instances.emplace_back(*it);
-    }
+    const auto it = _classes.find(name);
+
+    return (_classes.end() == it ? nullptr : it->second);
+}
+//----------------------------------------------------------------------------
+const FMetaClass* FMetaDatabase::ClassIFP(const FStringView& name) const {
+    Assert(not name.empty());
+
+    READSCOPELOCK(_lockRW);
+
+    const hash_t h = FName::HashValue(name);
+    const auto it = _classes.find_like(name, h);
+
+    return (_classes.end() == it ? nullptr : it->second);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

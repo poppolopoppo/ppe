@@ -1,13 +1,12 @@
 #once
 {
     .ProjectName = 'Core.RTTI'
-    .ProjectPath = '$SourceDiretory$/Core.RTTI'
+    .ProjectPath = '$SourceDirectory$/Core.RTTI'
     .ProjectSolutionFolder = 'Core'
     .ProjectDefines = { 'EXPORT_CORE_RTTI' }
     .ProjectIsolatedFiles =
     {
         'RTTI.cpp',
-        'RTTI_extern.cpp',
     }
     #include "../../Build/Templates/Library.bff"
 }

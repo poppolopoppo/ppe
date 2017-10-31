@@ -4,16 +4,13 @@
 #include "RTTI_fwd.h"
 #include "RTTI_Namespace.h"
 #include "RTTI_Namespace-impl.h"
-
 #include "MetaDatabase.h"
-#include "MetaObject.h"
 #include "MetaObjectHelpers.h"
-#include "MetaType.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 
 #if !(defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
-//#   define WITH_RTTI_UNITTESTS %_NOCOMMIT%
+#   define WITH_RTTI_UNITTESTS //%_NOCOMMIT%
 #endif
 
 PRAGMA_INITSEG_LIB
@@ -77,12 +74,17 @@ void FRTTIModule::ClearAll_UnusedMemory() {
 
 #include "RTTI_fwd.h"
 #include "RTTI_Namespace-impl.h"
-#include "MetaAtom.h"
+#include "Atom.h"
+#include "AtomVisitor.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
 #include "RTTI_Macros.h"
 #include "RTTI_Macros-impl.h"
 
+#include "Core/Container/Pair.h"
+#include "Core/Diagnostic/Logger.h"
+#include "Core/IO/Format.h"
+#include "Core/IO/FormatHelpers.h"
 #include "Core/IO/String.h"
 
 namespace Core {
@@ -102,9 +104,10 @@ public:
     FTiti() {}
     virtual ~FTiti() {}
     RTTI_CLASS_HEADER(FTiti, Core::RTTI::FMetaObject);
-    void Proc(int, float, const FString& ) {}
+    void Proc(int a, float b, const FString& c) {}
     float Id(float f) { return f; }
-    void ProcConst(int, float, const FString&) const {}
+    float IdDeprecated(float f) { return f; }
+    void ProcConst(int a, float b, const FString& c) const {}
     int Getter() { return 42; }
     int GetterConst() const { return 69;  }
     FString Func(float f) { return ToString(f); }
@@ -116,77 +119,125 @@ private:
     int _count;
     Core::FString _name;
     VECTOR(Internal, PTiti) _tities;
+    VECTOR(Internal, PTiti) _titiesOld;
     VECTOR(Internal, PCTiti) _consttities;
-    //ASSOCIATIVE_VECTOR(Internal, Core::TPair<int COMMA PTiti>, VECTORINSITU(RTTI, Core::TPair<float COMMA Core::FString>, 2)) _dict;
+    ASSOCIATIVE_VECTOR(Internal, Core::TPair<int COMMA PTiti>, VECTORINSITU(RTTI, Core::TPair<float COMMA Core::FString>, 2)) _dict;
 };
-RTTI_CLASS_BEGIN(RTTI_UnitTest, FTiti, Concrete)
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FTiti, RTTI::EClassFlags::Public)
 RTTI_PROPERTY_PRIVATE_FIELD(_count)
 RTTI_PROPERTY_FIELD_ALIAS(_name, Name)
 RTTI_PROPERTY_PRIVATE_FIELD(_tities)
-RTTI_PROPERTY_DEPRECATED(VECTOR(Internal, PTiti), Tities2)
+RTTI_PROPERTY_PRIVATE_DEPRECATED(_titiesOld)
 RTTI_PROPERTY_PRIVATE_FIELD(_consttities)
-//RTTI_PROPERTY_PRIVATE_FIELD(_dict)
-RTTI_FUNCTION(Id)
-RTTI_FUNCTION(Func)
-RTTI_FUNCTION(FuncConst)
-RTTI_FUNCTION(Proc)
-RTTI_FUNCTION(ProcConst)
+RTTI_PROPERTY_PRIVATE_FIELD(_dict)
+RTTI_FUNCTION(Id, f)
+RTTI_FUNCTION_DEPRECATED(IdDeprecated, f)
+RTTI_FUNCTION(Func, f)
+RTTI_FUNCTION(FuncConst, f)
+RTTI_FUNCTION(Proc, a, b, c)
+RTTI_FUNCTION(ProcConst, a, b, c)
 RTTI_FUNCTION(Getter)
 RTTI_FUNCTION(GetterConst)
-RTTI_FUNCTION(Out)
-RTTI_FUNCTION(OutConst)
-RTTI_FUNCTION(OutConstReturn)
+RTTI_FUNCTION(Out, f, str)
+RTTI_FUNCTION(OutConst, f, str)
+RTTI_FUNCTION(OutConstReturn, f, str)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 FWD_REFPTR(Toto);
-class FToto : public Core::RTTI::FMetaObject {
+class FToto : public RTTI::FMetaObject {
 public:
     FToto() {}
     virtual ~FToto() {}
-    RTTI_CLASS_HEADER(FToto, Core::RTTI::FMetaObject);
+    RTTI_CLASS_HEADER(FToto, RTTI::FMetaObject);
 private:
-    typedef Core::TPair<int COMMA Core::TPair<float COMMA Core::FString>> value_type;
+    typedef TPair<int, FString> value_type;
     int _count;
-    Core::FString _name;
+    FString _name;
     VECTOR(Internal, PTiti) _tities;
-    VECTOR_THREAD_LOCAL(Internal, Core::FString) _titles;
-    Core::TRefPtr<FToto> _parent;
-    Core::TPair<int, int> _pair;
-    Core::TPair<float, float> _fpair;
-    Core::TPair<Core::TPair<int, int>, Core::TPair<int, int> > _vpair;
-    Core::TPair<Core::TPair<int, int>, Core::TPair<int, float> > _vpair2;
-    HASHMAP_THREAD_LOCAL(Internal, Core::FString, float) _dict;
-    HASHMAP_THREAD_LOCAL(Internal, Core::FString, value_type) _dict2;
-    /*
-    INSTANTIATE_CLASS_TYPEDEF(key_type3, Core::TPair<int COMMA float>);
-    INSTANTIATE_CLASS_TYPEDEF(value_type3, VECTORINSITU(RTTI, Core::TPair<float COMMA Core::FString>, 2));
-    ASSOCIATIVE_VECTOR(Internal, key_type3, value_type3) _dict3;
-    */
+    VECTORINSITU(Internal, PTiti, 2) _tities2;
+    VECTOR_THREAD_LOCAL(Internal, FString) _titles;
+    TRefPtr<FToto> _parent;
+    TPair<int, int> _pair;
+    TPair<float, float> _fpair;
+    TPair<TPair<int, int>, TPair<int, int> > _vpair;
+    TPair<TPair<int, int>, TPair<int, float> > _vpair2;
+    HASHMAP_THREAD_LOCAL(Internal, FString, float) _dict;
+    HASHMAP(Internal, FString, value_type) _dict2;
+    HASHMAP(Internal, FString, float) _dict3;
 };
-RTTI_CLASS_BEGIN(RTTI_UnitTest, FToto, Concrete)
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FToto, RTTI::EClassFlags::Public)
 RTTI_PROPERTY_FIELD_ALIAS(_count, Count)
 RTTI_PROPERTY_FIELD_ALIAS(_name, Name)
 RTTI_PROPERTY_FIELD_ALIAS(_tities, Tities)
+RTTI_PROPERTY_FIELD_ALIAS(_tities2, Tities2)
 RTTI_PROPERTY_FIELD_ALIAS(_titles, Titles)
 RTTI_PROPERTY_FIELD_ALIAS(_parent, Parent)
-RTTI_PROPERTY_FIELD_ALIAS(_pair, TPair)
+RTTI_PROPERTY_FIELD_ALIAS(_pair, Pair)
 RTTI_PROPERTY_FIELD_ALIAS(_fpair, FPair)
 RTTI_PROPERTY_FIELD_ALIAS(_vpair, VPair)
 RTTI_PROPERTY_FIELD_ALIAS(_vpair2, VPair2)
 RTTI_PROPERTY_FIELD_ALIAS(_dict, Dict)
 RTTI_PROPERTY_FIELD_ALIAS(_dict2, Dict2)
-//RTTI_PROPERTY_FIELD_ALIAS(_dict3, Dict3)
+RTTI_PROPERTY_FIELD_ALIAS(_dict3, Dict3)
+RTTI_CLASS_END()
+//----------------------------------------------------------------------------
+FWD_REFPTR(Toto2);
+class FToto2 : public FToto {
+public:
+    FToto2() {}
+    virtual ~FToto2() {}
+    RTTI_CLASS_HEADER(FToto2, FToto);
+private:
+    PToto _parent1;
+};
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FToto2, RTTI::EClassFlags::Public)
+RTTI_PROPERTY_PRIVATE_FIELD(_parent1)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 template <typename T>
-static void TestRTTIWrap_() {
-    typedef Core::RTTI::TMetaTypeTraits< T > type_traits;
-    T wrapped;
-    typename type_traits::wrapper_type wrapper;
-    type_traits::WrapCopy(wrapper, wrapped);
-    type_traits::WrapMove(wrapper, std::move(wrapped));
-    type_traits::UnwrapCopy(wrapped, wrapper);
-    type_traits::UnwrapMove(wrapped, std::move(wrapper));
+static void RTTIPrintType_() {
+    const RTTI::PTypeTraits traits = RTTI::MakeTraits<T>();
+    const RTTI::FTypeInfos typeInfos = traits->TypeInfos();
+    STACKLOCAL_ATOM(defaultValue, traits);
+    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Flags = {2}, Default = {3}",
+        typeInfos.Id(),
+        typeInfos.Name(),
+        typeInfos.Flags(),
+        defaultValue.MakeAtom() );
+}
+//----------------------------------------------------------------------------
+template <typename T>
+static void RTTIPrintClass_() {
+    TRefPtr<T> t( new T() );
+    const RTTI::FMetaClass *metaClass = t->RTTI_Class();
+
+    LOG(Info, L"[RTTI] TMetaClass<{0}> : {1}", metaClass->Name(), metaClass->Flags());
+
+    for (const auto& it : metaClass->AllFunctions()) {
+        LOG(Info, L"[RTTI]   - FUNC {0} {1}({2}) : <{3}>",
+            it->HasReturnValue() ? it->Result()->TypeInfos().Name() : "void",
+            it->Name(),
+            Fmt::FWFormator([&it](std::basic_ostream<wchar_t>& oss) {
+                const auto& prms = it->Parameters();
+                forrange(i, 0, prms.size()) {
+                    if (i > 0) oss << L", ";
+                    oss << prms[i].Name() << L" : " << prms[i].Traits()->TypeInfos().Name() << L" <" << prms[i].Flags() << L'>';
+                }
+            }),
+            it->Flags()
+        );
+    }
+
+    for (const auto& it : metaClass->AllProperties()) {
+        const RTTI::FTypeInfos typeInfos = it->Traits()->TypeInfos();
+        LOG(Info, L"[RTTI]   - PROP {0} : <{1}> -> {2} = {3} [{4}]",
+            it->Name(),
+            it->Flags(),
+            typeInfos.Name(),
+            typeInfos.SizeInBytes(),
+            typeInfos.Id()
+        );
+    }
 }
 //----------------------------------------------------------------------------
 static void TestRTTI_() {
@@ -194,139 +245,83 @@ static void TestRTTI_() {
 
     RTTI_NAMESPACE(RTTI_UnitTest).Start();
 
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, EFlags = {3}",
-        RTTI::TMetaType< int32_t >::Id(),
-        RTTI::TMetaType< int32_t >::Name(),
-        RTTI::TMetaType< int32_t >::DefaultValue(),
-        (size_t)RTTI::TMetaType< int32_t >::Flags()
-        );
+    RTTIPrintType_< int >();
+    RTTIPrintType_< size_t >();
+    RTTIPrintType_< FString >();
+    RTTIPrintType_< TVector<int> >();
+    RTTIPrintType_< TPair<RTTI::FName, float> >();
+    RTTIPrintType_< PTiti >();
+    RTTIPrintType_< TPair<FWString, PTiti> >();
+    RTTIPrintType_< VECTOR_THREAD_LOCAL(RTTI, PTiti) >();
+    RTTIPrintType_< HASHMAP(RTTI, int, int) >();
+    RTTIPrintType_< HASHMAP(RTTI, FString, PTiti) >();
+    RTTIPrintType_< ASSOCIATIVE_VECTOR(RTTI, FString, PTiti) >();
+    //RTTIPrintType_< HASHSET(RTTI, FString) >();
 
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, EFlags = {3}",
-        RTTI::TMetaType< int >::Id(),
-        RTTI::TMetaType< int >::Name(),
-        RTTI::TMetaType< int >::DefaultValue(),
-        (size_t)RTTI::TMetaType< int >::Flags()
-        );
+    RTTIPrintClass_<FTiti>();
+    RTTIPrintClass_<FToto>();
+    RTTIPrintClass_<FToto2>();
 
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, EFlags = {3}",
-        RTTI::TMetaType< size_t >::Id(),
-        RTTI::TMetaType< size_t >::Name(),
-        RTTI::TMetaType< size_t >::DefaultValue(),
-        (size_t)RTTI::TMetaType< size_t >::Flags()
-        );
-
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, EFlags = {3}",
-        RTTI::TMetaType< FString >::Id(),
-        RTTI::TMetaType< FString >::Name(),
-        RTTI::TMetaType< FString >::DefaultValue(),
-        (size_t)RTTI::TMetaType< FString >::Flags()
-        );
-
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, EFlags = {3}",
-        RTTI::TMetaType< RTTI::TVector<int> >::Id(),
-        RTTI::TMetaType< RTTI::TVector<int> >::Name(),
-        RTTI::TMetaType< RTTI::TVector<int> >::DefaultValue(),
-        (size_t)RTTI::TMetaType< RTTI::TVector<int> >::Flags()
-        );
-
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Default = {2}, EFlags = {3}",
-        RTTI::TMetaType< TPair<float, int> >::Id(),
-        RTTI::TMetaType< TPair<float, int> >::Name(),
-        RTTI::TMetaType< TPair<float, int> >::DefaultValue(),
-        (size_t)RTTI::TMetaType< TPair<float, int> >::Flags()
-        );
-
-    RTTI::TMetaTypeTraits< int >::meta_type::Name();
-
-    int i = 0;
-    RTTI::TMetaTypeTraits< int >::UnwrapCopy(i, 42);
-
-    RTTI::PMetaObject o;
-    RTTI::TMetaTypeTraits< RTTI::PMetaObject >::UnwrapCopy(o, nullptr);
-
-    PTiti t;
-    RTTI::TMetaTypeTraits< PTiti >::UnwrapCopy(t, nullptr);
-    RTTI::TMetaTypeTraits< PTiti >::WrapMove(o, std::move(t));
-
-    TestRTTIWrap_< PTiti >();
-    TestRTTIWrap_< TPair<FWString, PTiti> >();
-    TestRTTIWrap_< VECTOR_THREAD_LOCAL(RTTI, PTiti) >();
-    TestRTTIWrap_< HASHMAP(RTTI, int, int) >();
-    TestRTTIWrap_< HASHMAP(RTTI, FString, PTiti) >();
-    TestRTTIWrap_< ASSOCIATIVE_VECTOR(RTTI, FString, PTiti) >();
-    //TestRTTIWrap_< HASHSET(RTTI, FString) >();
-
-    t = new FTiti();
-    const RTTI::FMetaClass *metaClass = t->RTTI_MetaClass();
-
-    LOG(Info, L"[RTTI] TMetaClass<{0}> : {1}", metaClass->Name(), metaClass->Attributes());
-    for (const auto& it : metaClass->Functions())
-        LOG(Info, L"[RTTI]   - FUNC {0} {1}({2}) : {3}", it->SignatureInfos().front(), it->Name(), CommaSeparated(it->SignatureInfos().ShiftFront()), it->Attributes());
-    for (const auto& it : metaClass->Properties())
-        LOG(Info, L"[RTTI]   - PROP {0} : {1} -> {2}", it->Name(), it->Attributes(), it->TypeInfo());
-
-    const RTTI::FMetaProperty *prop = metaClass->PropertyIFP("Count");
-
-    int value;
-    prop->Cast<int>()->GetCopy(t.get(), value);
-    prop->Cast<int>()->SetMove(t.get(), 42);
-    Assert(!prop->IsDefaultValue(t.get()));
-    prop->Cast<int>()->SetMove(t.get(), int());
-    Assert(prop->IsDefaultValue(t.get()));
-
-    PTiti t2 = new FTiti();
-    prop->Swap(t.get(), t2.get());
-    Swap(*t, *t2);
-
-    RTTI::PMetaAtom atom = prop->WrapCopy(t.get());
-    RTTI::PMetaAtom defaultAtom = atom->Traits()->CreateDefaultValue();
-    Assert(defaultAtom->IsDefaultValue());
-    LOG(Info, L"[RTTI] {0} ({1})", *atom->Cast<int>(), atom->HashValue());
-    /*
-    prop = metaClass->PropertyIFP("Dict");
-    defaultAtom = prop->Traits()->CreateDefaultValue();
-    Assert(defaultAtom->IsDefaultValue());
-    atom = prop->WrapMove(t.get());
-    */
-    prop = metaClass->PropertyIFP("Tities");
-    defaultAtom = prop->Traits()->CreateDefaultValue();
-    Assert(defaultAtom->IsDefaultValue());
-    atom = prop->WrapCopy(t.get());
-
-    auto typedAtom = atom->Cast< VECTOR(Internal, PTiti) >();
-    typedAtom->Wrapper().push_back(new FTiti());
-
-    prop->MoveFrom(t.get(), typedAtom);
-
-    //auto wrongAtom = atom->Cast< int >();
-    auto wrongAtom2 = atom->As< int >();
-    AssertRelease(!wrongAtom2);
-
-    const RTTI::FMetaFunction* func = metaClass->FunctionIFP("OutConstReturn");
-
-    RTTI::PMetaAtom args[] = {
-        RTTI::MakeAtom(42.0f) ,
-        RTTI::MakeAtom(FString("string"))
-    };
-    RTTI::PMetaAtom result;
-    if (not func->Invoke(t.get(), result, args))
     {
-        AssertNotReached();
-    }
+        PToto toto(new FToto());
+        PToto2 toto2(new FToto2());
 
-    RTTI::PMetaAtom args2[] = {
-        RTTI::MakeAtom(42.f) ,
-        RTTI::MakeAtom(FString("string"))
-    };
-    if (not func->PromoteInvoke(t.get(), result, args2))
+        toto->RTTI_Load(nullptr);
+        toto->RTTI_Export(RTTI::FName("toto"));
+
+        toto2->RTTI_Load(nullptr);
+        toto2->RTTI_Export(RTTI::FName("toto2"));
+
+        if (not RTTI::Cast<FToto>(toto.get()))
+            AssertNotReached();
+        if (not RTTI::Cast<FToto>(toto2.get()))
+            AssertNotReached();
+        if (not RTTI::Cast<FToto2>(toto2.get()))
+            AssertNotReached();
+
+        const RTTI::FMetaClass* metaClass = toto2->RTTI_Class();
+        metaClass->Property(RTTI::FName("Parent1")).CopyFrom(*toto2, MakeAtom(&toto));
+
+        RTTI::PrettyPrint(FLoggerStream(ELogCategory::Info), MakeAtom(&toto2)) << eol;
+
+        toto->RTTI_Unexport();
+        toto->RTTI_Unload(nullptr);
+
+        toto2->RTTI_Unexport();
+        toto2->RTTI_Unload(nullptr);
+    }
     {
-        AssertNotReached();
-    }
+        PTiti titi(new FTiti());
+        titi->RTTI_Load(nullptr);
+        titi->RTTI_Export(RTTI::FName("titi"));
 
-#if 0
-    const int v = wrongAtom2->Wrapper(); // crash !
-    LOG(Info, L"[RTTI] wrong atom = {0}", v);
-#endif
+        const RTTI::FMetaClass* metaClass = titi->RTTI_Class();
+
+        if (RTTI::Cast<FToto>(titi.get()))
+            AssertNotReached();
+
+        {
+            auto prop = metaClass->Property(RTTI::FName("Dict"));
+            auto value = prop.Get(*titi);
+            LOG(Info, L"[RTTI] {0} = {1}", prop.Name(), value);
+        }
+        {
+            auto func = metaClass->Function(RTTI::FName("OutConstReturn"));
+            STACKLOCAL_ATOM(result, func.Result());
+            FString string;
+            func.Invoke(*titi, result, { RTTI::InplaceAtom(42.0f), RTTI::MakeAtom(&string) });
+            LOG(Info, L"[RTTI] {0} : {1} = {2}", func.Name(), string, result);
+        }
+        {
+            auto func = metaClass->Function(RTTI::FName("IdDeprecated"));
+            STACKLOCAL_ATOM(result, func.Result());
+            func.Invoke(*titi, result, { RTTI::InplaceAtom(69.0f) });
+            LOG(Info, L"[RTTI] {0}({1}) = {2}", func.Name(), 69.0f, result);
+        }
+
+        titi->RTTI_Unexport();
+        titi->RTTI_Unload(nullptr);
+    }
 
     RTTI_NAMESPACE(RTTI_UnitTest).Shutdown();
 }

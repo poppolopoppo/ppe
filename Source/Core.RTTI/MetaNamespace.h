@@ -6,71 +6,83 @@
 
 #include "Core/Container/HashMap.h"
 #include "Core/Container/IntrusiveList.h"
-#include "Core/Thread/AtomicSpinLock.h"
+#include "Core/Meta/ThreadResource.h"
 
 namespace Core {
 namespace RTTI {
 class FMetaClass;
-class FMetaClassGuid;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMetaClassHandle {
+class CORE_RTTI_API FMetaClassHandle {
 public:
-    friend class FMetaNamespace;
+    typedef FMetaClass* (*create_func)(FClassId , const FMetaNamespace* );
+    typedef void (*destroy_func)(FMetaClass*);
 
-    typedef void (*create_delegate)(const FMetaClass** , FMetaClassGuid, const FMetaNamespace* );
+    FMetaClassHandle(class FMetaNamespace& metaNamespace, create_func create, destroy_func destroy);
+    ~FMetaClassHandle();
 
-    FMetaClassHandle(const FMetaNamespace& metaNamespace, create_delegate create) NOEXCEPT;
-    ~FMetaClassHandle() NOEXCEPT;
+    FMetaClassHandle(const FMetaClassHandle& ) = delete;
+    FMetaClassHandle& operator =(const FMetaClassHandle& ) = delete;
 
-    FMetaClassHandle(const FMetaClassHandle&) = delete;
-    FMetaClassHandle& operator =(const FMetaClassHandle&) = delete;
-
-    FMetaClassHandle(FMetaClassHandle&&) = delete;
-    FMetaClassHandle& operator =(FMetaClassHandle&&) = delete;
-
-    const FMetaClass* MetaClass() const { return _metaClass; }
+    const FMetaClass* Class() const { return _class; }
 
 private:
-    const create_delegate _create;
-    const FMetaClass* _metaClass;
-    TIntrusiveListNode<FMetaClassHandle> _node;
+    friend class FMetaNamespace;
+
+    FMetaClass* _class;
+
+    create_func const _create;
+    destroy_func const _destroy;
+
+    TIntrusiveSingleListNode<FMetaClassHandle> _node;
 };
 //----------------------------------------------------------------------------
-class FMetaNamespace {
+class CORE_RTTI_API FMetaNamespace : Meta::FThreadResource {
 public:
-    friend class FMetaClassHandle;
+    explicit FMetaNamespace(const FStringView& name);
 
-    explicit FMetaNamespace(const FStringView& name) NOEXCEPT;
-    ~FMetaNamespace() NOEXCEPT;
+#ifdef WITH_CORE_ASSERT
+    ~FMetaNamespace() {
+        Assert(not IsStarted());
+        _handles.Clear();
+    }
+#endif
 
-    FMetaNamespace(const FMetaNamespace&) = delete;
-    FMetaNamespace& operator =(const FMetaNamespace&) = delete;
+    FMetaNamespace(const FMetaNamespace& ) = delete;
+    FMetaNamespace& operator =(const FMetaNamespace& ) = delete;
+
+    bool IsStarted() const { return (not _nameToken.empty()); }
 
     const FName& Name() const {
-        Assert(not _nameTokenized.empty());
-        return _nameTokenized;
+        Assert(IsStarted());
+        return _nameToken;
     }
+
+    void RegisterClass(FMetaClassHandle& handle);
 
     void Start();
     void Shutdown();
 
-    const FMetaClass* FindClass(const FName& metaClassName) const;
-    const FMetaClass* FindClassIFP(const FName& metaClassName) const;
+    const FMetaClass& Class(const FName& name) const;
+    const FMetaClass* ClassIFP(const FName& name) const;
+    const FMetaClass* ClassIFP(const FStringView& name) const;
 
-    void AllClasses(VECTOR(RTTI, const FMetaClass*)& instances) const;
+    auto Classes() const {
+        Assert(IsStarted());
+        return _classes.Values();
+    }
 
 private:
-    void Append_(FMetaClassHandle* pHandle);
+    HASHMAP(RTTI, FName, const FMetaClass*) _classes;
 
-    FStringView _nameCStr;
-    FName _nameTokenized; // only available after Start() and before Shutdown()
+    FName _nameToken;
+    size_t _classIdOffset;
+    size_t _classCount;
 
-    size_t _guidOffset;
+    const FStringView _nameCStr;
 
-    HASHMAP(RTTI, FName, const FMetaClass*) _metaClasses;
-    INTRUSIVELIST(&FMetaClassHandle::_node) _handles;
+    INTRUSIVESINGLELIST(&FMetaClassHandle::_node) _handles;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

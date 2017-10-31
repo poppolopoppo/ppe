@@ -74,16 +74,5 @@
 //------------------------------------------------------------------------------
 */
 #include "Core.RTTI/RTTI.h"
-#include "core.rtti/MetaClass.h"
 #include "Core.RTTI/Typedefs.h"
-#include "Core.RTTI/MetaNamespace.h"
-#include "core.rtti/MetaObject.h"
-#include "Core.RTTI/MetaType.h"
-#include "Core.RTTI/MetaTypeVirtualTraits.h"
-#include "core.rtti/MetaAtom.h"
 #include "Core.RTTI/RTTI_fwd.h"
-#include "Core.RTTI/MetaObjectHelpers.h"
-#include "Core.RTTI/MetaAtomVisitor.h"
-#include "Core.RTTI/MetaTypeTraits.h"
-#include "Core.RTTI/MetaTypePromote.h"
-

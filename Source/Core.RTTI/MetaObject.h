@@ -2,8 +2,8 @@
 
 #include "Core.RTTI/RTTI.h"
 
+#include "Core.RTTI/Typedefs.h"
 #include "Core.RTTI/MetaClass.h"
-#include "Core.RTTI/MetaType.h"
 
 #include "Core/Memory/RefPtr.h"
 
@@ -17,84 +17,98 @@
 
 namespace Core {
 namespace RTTI {
+class FMetaClass;
+class FMetaNamespace;
+class ILoadContext;
+class IUnloadContext;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMetaClass;
-class FMetaNamespace;
-FWD_REFPTR(MetaObject);
-class FMetaLoadContext;
-class FMetaUnloadContext;
-//----------------------------------------------------------------------------
-class FMetaObject : public FRefCountable {
-public:
-    enum EFlags : size_t {
-        None        = 0,
-        Loaded      = 1<<0,
-        Unloaded    = 1<<1,
-        Exported    = 1<<2,
+enum class EObjectFlags : u32 {
+    None        = 0,
+    Loaded      = 1<<0,
+    Unloaded    = 1<<1,
+    Exported    = 1<<2,
+    TopObject   = 1<<3,
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-        Verifying   = 1<<3,
+    Verifying   = 1<<4,
 #endif
-    };
-    ENUM_FLAGS_FRIEND(EFlags);
-
+};
+ENUM_FLAGS(EObjectFlags);
+//----------------------------------------------------------------------------
+FWD_REFPTR(MetaObject);
+class CORE_RTTI_API FMetaObject : public FRefCountable {
 public:
     FMetaObject();
     virtual ~FMetaObject();
 
-    FMetaObject(const FMetaObject&) = delete;
-    FMetaObject& operator =(const FMetaObject&) = delete;
+    const FName& RTTI_Name() const  { return _name; }
+    EObjectFlags RTTI_Flags() const { return _flags; }
 
-    const FName& RTTI_Name() const { return _name; }
+    bool RTTI_IsLoaded() const      { return (_flags ^ EObjectFlags::Loaded     ); }
+    bool RTTI_IsUnloaded() const    { return (_flags ^ EObjectFlags::Unloaded   ); }
+    bool RTTI_IsExported() const    { return (_flags ^ EObjectFlags::Exported   ); }
+    bool RTTI_IsTopObject() const   { return (_flags ^ EObjectFlags::TopObject  ); }
 
-    bool RTTI_IsLoaded() const   { return (_state ^ Loaded  ); }
-    bool RTTI_IsUnloaded() const { return (_state ^ Unloaded); }
-    bool RTTI_IsExported() const { return (_state ^ Exported); }
+    bool RTTI_IsA(const FMetaClass& metaClass) const;
+    bool RTTI_CastTo(const FMetaClass& metaClass) const;
+    bool RTTI_InheritsFrom(const FMetaClass& metaClass) const;
+    bool RTTI_IsAssignableFrom(const FMetaClass& metaClass) const;
 
     void RTTI_Export(const FName& name);
     void RTTI_Unexport();
 
-    virtual void RTTI_Load(FMetaLoadContext* context);
-    virtual void RTTI_Unload(FMetaUnloadContext* context);
+    virtual void RTTI_Load(ILoadContext* context);
+    virtual void RTTI_Unload(IUnloadContext* context);
 
-    void RTTI_CallLoadIFN(FMetaLoadContext* context);
-    void RTTI_CallUnloadIFN(FMetaUnloadContext* context);
+    void RTTI_CallLoadIFN(ILoadContext* context);
+    void RTTI_CallUnloadIFN(IUnloadContext* context);
+
+    void RTTI_MarkAsTopObject(); // should only be called by FMetaTransaction
+    void RTTI_UnmarkAsTopObject(); // should only be called by FMetaTransaction
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     virtual void RTTI_VerifyPredicates() const;
 #endif
 
-    class FMetaClass: public TInScopeMetaClass<FMetaObject> {
+public: // Meta class
+    class RTTI_FMetaClass : public TInScopeMetaClass<FMetaObject> {
         friend class TInScopeMetaClass<FMetaObject>;
         typedef TInScopeMetaClass<FMetaObject> metaclass_type;
     public:
         typedef FMetaObject object_type;
         typedef void parent_type;
-        using metaclass_type::HasInstance;
         using metaclass_type::Instance;
-        using metaclass_type::Handle;
         static FMetaNamespace& Namespace();
     private:
-        FMetaClass(FMetaClassGuid guid, const FMetaNamespace* metaNamespace);
+        RTTI_FMetaClass(FClassId id, const FMetaNamespace* metaNamespace);
     };
 
-    virtual const RTTI::FMetaClass* RTTI_MetaClass() const {
-        return FMetaObject::FMetaClass::Instance();
-    }
-
-    template <typename T> bool RTTI_InheritsFrom() const { return RTTI_MetaClass()->InheritsFrom<T>(); }
-    template <typename T> bool RTTI_IsAssignableFrom() const { return RTTI_MetaClass()->IsAssignableFrom<T>(); }
-
-    template <typename T> T* RTTI_Cast() { return (RTTI_MetaClass()->CastTo<T>() ? checked_cast<T*>(this) : nullptr); }
-    template <typename T> const T* RTTI_Cast() const { return (RTTI_MetaClass()->CastTo<T>() ? checked_cast<const T*>(this) : nullptr); }
+    virtual const RTTI::FMetaClass* RTTI_Class() const {
+        return RTTI_FMetaClass::Instance();
+    };
 
 private:
     FName _name;
-    mutable EFlags _state;
+#ifdef WITH_RTTI_VERIFY_PREDICATES
+    mutable EObjectFlags _flags;
+#else
+    EObjectFlags _flags;
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RTTI
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EObjectFlags flags);
+CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EObjectFlags flags);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

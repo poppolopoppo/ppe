@@ -19,7 +19,7 @@ class FPropertyException : public FRTTIException {
 public:
     FPropertyException(const char* what, const FMetaProperty* prop = nullptr) : FRTTIException(what), _property(prop) {}
 
-    const FMetaProperty* EProperty() const { return _property; }
+    const FMetaProperty* Property() const { return _property; }
 
 private:
     const FMetaProperty* _property;

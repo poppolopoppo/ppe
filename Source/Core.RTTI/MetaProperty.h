@@ -2,237 +2,122 @@
 
 #include "Core.RTTI/RTTI.h"
 
-#include "Core.RTTI/MetaPropertyAccessor.h"
+#include "Core.RTTI/Atom.h"
+#include "Core.RTTI/Typedefs.h"
+#include "Core.RTTI/TypeTraits.h"
 
-#include "Core.RTTI/MetaAtom.h"
-#include "Core.RTTI/MetaType.h"
-#include "Core.RTTI/MetaTypeTraits.h"
-#include "Core.RTTI/MetaTypeVirtualTraits.h"
-
-#include "Core/Allocator/PoolAllocator.h"
+#if USE_CORE_RTTI_CHECKS
+#   define WITH_CORE_RTTI_PROPERTY_CHECKS
+#endif
 
 namespace Core {
 namespace RTTI {
+class FMetaObject;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMetaObject;
-template <typename T>
-class TMetaTypedProperty;
+enum class EPropertyFlags : u32 {
+    Public       = 1<<0,
+    Protected    = 1<<1,
+    Private      = 1<<2,
+    ReadOnly     = 1<<3,
+    Deprecated   = 1<<4,
+    Member       = 1<<5,
+    Dynamic      = 1<<6,
+};
+ENUM_FLAGS(EPropertyFlags);
 //----------------------------------------------------------------------------
-FWD_UNIQUEPTR(MetaProperty);
-class FMetaProperty {
+class CORE_RTTI_API FMetaProperty {
 public:
-    enum EFlags {
-        Public       = 1<<0,
-        Protected    = 1<<1,
-        Private      = 1<<2,
-        ReadOnly     = 1<<3,
-        Deprecated   = 1<<4,
-        Dynamic      = 1<<5,
-    };
-    ENUM_FLAGS_FRIEND(EFlags);
+    typedef FAtom (*makeatom_func)(const FMetaObject&, const PTypeTraits&);
 
-    FMetaProperty(const FName& name, EFlags attributes);
-    virtual ~FMetaProperty();
-
-    FMetaProperty(const FMetaProperty&) = delete;
-    FMetaProperty& operator =(const FMetaProperty&) = delete;
+    FMetaProperty(const FName& name, EPropertyFlags flags, const PTypeTraits& traits, ptrdiff_t memberOffset);
+    FMetaProperty(const FName& name, EPropertyFlags flags, const PTypeTraits& traits, makeatom_func makeAtom);
+    ~FMetaProperty();
 
     const FName& Name() const { return _name; }
-    EFlags Attributes() const { return _attributes; }
+    const PTypeTraits& Traits() const { return _traits; }
+    EPropertyFlags Flags() const { return _flags; }
 
-    bool IsPublic()     const { return (_attributes ^ Public); }
-    bool IsProtected()  const { return (_attributes ^ Protected); }
-    bool IsPrivate()    const { return (_attributes ^ Private); }
-    bool IsReadOnly()   const { return (_attributes ^ ReadOnly); }
-    bool IsDeprecated() const { return (_attributes ^ Deprecated); }
-    bool IsDynamic()    const { return (_attributes ^ Dynamic); }
-    bool IsWritable()   const { return false == (IsReadOnly() || IsDeprecated()); }
+    bool IsPublic() const       { return (_flags ^ EPropertyFlags::Public       ); }
+    bool IsProtected() const    { return (_flags ^ EPropertyFlags::Protected    ); }
+    bool IsPrivate() const      { return (_flags ^ EPropertyFlags::Private      ); }
+    bool IsReadOnly() const     { return (_flags ^ EPropertyFlags::ReadOnly     ); }
+    bool IsDeprecated() const   { return (_flags ^ EPropertyFlags::Deprecated   ); }
+    bool IsMember() const       { return (_flags ^ EPropertyFlags::Member       ); }
+    bool IsDynamic() const      { return (_flags ^ EPropertyFlags::Dynamic      ); }
 
-    virtual FMetaTypeInfo TypeInfo() const = 0;
-    virtual const IMetaTypeVirtualTraits *Traits() const = 0;
+#ifdef WITH_CORE_RTTI_PROPERTY_CHECKS
+#   define CheckPropertyIFN(obj, write) CheckProperty_(obj, write)
+#else
+#   define CheckPropertyIFN(obj, write) NOOP()
+#endif
 
-    virtual bool IsDefaultValue(const FMetaObject *object) const = 0;
-
-    virtual FMetaAtom *WrapMove(FMetaObject *src) const = 0;
-    virtual FMetaAtom *WrapCopy(const FMetaObject *src) const = 0;
-
-    virtual bool UnwrapMove(FMetaObject *dst, FMetaAtom *src) const = 0;
-    virtual bool UnwrapCopy(FMetaObject *dst, const FMetaAtom *src) const = 0;
-
-    virtual void MoveTo(FMetaObject *object, FMetaAtom *atom) const = 0;
-    virtual void CopyTo(const FMetaObject *object, FMetaAtom *atom) const = 0;
-
-    virtual void MoveFrom(FMetaObject *object, FMetaAtom *atom) const = 0;
-    virtual void CopyFrom(FMetaObject *object, const FMetaAtom *atom) const = 0;
-
-    virtual void Move(FMetaObject *dst, FMetaObject *src) const = 0;
-    virtual void Copy(FMetaObject *dst, const FMetaObject *src) const = 0;
-
-    virtual void Swap(FMetaObject *lhs, FMetaObject *rhs) const = 0;
-
-    virtual bool Equals(const FMetaObject *lhs, const FMetaObject *rhs) const = 0;
-    virtual bool DeepEquals(const FMetaObject *lhs, const FMetaObject *rhs) const = 0;
-
-    virtual void *RawPtr(FMetaObject *obj) const = 0;
-    virtual const void *RawPtr(const FMetaObject *obj) const = 0;
-
-    virtual size_t HashValue(const FMetaObject *object) const = 0;
-
-    template <typename T>
-    TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *Cast() {
-        typedef typename TMetaTypeTraits<T>::meta_type meta_type;
-        Assert(TypeInfo().Id == meta_type::TypeId);
-        return checked_cast<TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *>(this);
+    FAtom Get(const FMetaObject& obj) const {
+        CheckPropertyIFN(obj, false);
+        return MakeAtom_(obj);
     }
 
-    template <typename T>
-    const TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *Cast() const {
-        return const_cast<FMetaProperty*>(this)->Cast<T>();
+    bool CopyTo(const FMetaObject& obj, const FAtom& dst) const {
+        CheckPropertyIFN(obj, false);
+        return MakeAtom_(obj).CopyTo(dst);
     }
 
-    template <typename T>
-    TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *As() {
-        typedef typename TMetaTypeTraits<T>::meta_type meta_type;
-        return (TypeInfo().Id == meta_type::TypeId ? Cast<T>() : nullptr);
+    bool MoveTo(FMetaObject& obj, const FAtom& dst) const {
+        CheckPropertyIFN(obj, true);
+        return MakeAtom_(obj).MoveTo(dst);
     }
 
-    template <typename T>
-    const TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type > *As() const {
-        return const_cast<FMetaProperty*>(this)->As<T>();
+    bool CopyFrom(FMetaObject& obj, const FAtom& src) const {
+        CheckPropertyIFN(obj, true);
+        return src.CopyTo(MakeAtom_(obj));
     }
 
-protected:
-    FName _name;
-    EFlags _attributes;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-class TMetaTypedProperty : public FMetaProperty {
-public:
-    typedef TMetaType<T> meta_type;
-    static_assert(meta_type::TypeId, "T is not supported by RTTI");
-
-    TMetaTypedProperty(const FName& name, EFlags attributes);
-    virtual ~TMetaTypedProperty();
-
-    virtual FMetaTypeInfo TypeInfo() const override final;
-
-    virtual void GetCopy(const FMetaObject *object, T& dst) const = 0;
-    virtual void GetMove(FMetaObject *object, T& dst) const = 0;
-
-    virtual void SetMove(FMetaObject *object, T&& src) const = 0;
-    virtual void SetCopy(FMetaObject *object, const T& src) const = 0;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T, typename _Accessor >
-class TMetaWrappedProperty :
-    public TMetaTypedProperty< typename TMetaTypeTraits<T>::wrapper_type >
-,   private _Accessor {
-public:
-    typedef TMetaTypeTraits< T > meta_type_traits;
-
-    typedef typename meta_type_traits::meta_type meta_type;
-    typedef typename meta_type_traits::wrapped_type wrapped_type;
-    typedef typename meta_type_traits::wrapper_type wrapper_type;
-
-    typedef TMetaTypedAtom< wrapper_type > typed_atom_type;
-    typedef TMetaTypedProperty< wrapper_type > typed_property_type;
-
-    typedef _Accessor accessor_type;
-
-    using FMetaProperty::EFlags;
-
-    TMetaWrappedProperty(const FName& name, EFlags attributes, accessor_type&& accessor);
-    virtual ~TMetaWrappedProperty();
-
-    virtual const IMetaTypeVirtualTraits *Traits() const override final { return meta_type_traits::VirtualTraits(); }
-
-    virtual bool IsDefaultValue(const FMetaObject *object) const override final;
-
-    virtual void GetCopy(const FMetaObject *object, wrapper_type& dst) const override final;
-    virtual void GetMove(FMetaObject *object, wrapper_type& dst) const override final;
-
-    virtual void SetMove(FMetaObject *object, wrapper_type&& src) const override final;
-    virtual void SetCopy(FMetaObject *object, const wrapper_type& src) const override final;
-
-    virtual FMetaAtom *WrapMove(FMetaObject *src) const override final;
-    virtual FMetaAtom *WrapCopy(const FMetaObject *src) const override final;
-
-    virtual bool UnwrapMove(FMetaObject *dst, FMetaAtom *src) const override final;
-    virtual bool UnwrapCopy(FMetaObject *dst, const FMetaAtom *src) const override final;
-
-    virtual void MoveTo(FMetaObject *object, FMetaAtom *atom) const override final;
-    virtual void CopyTo(const FMetaObject *object, FMetaAtom *atom) const override final;
-
-    virtual void MoveFrom(FMetaObject *object, FMetaAtom *atom) const override final;
-    virtual void CopyFrom(FMetaObject *object, const FMetaAtom *atom) const override final;
-
-    virtual void Move(FMetaObject *dst, FMetaObject *src) const override final;
-    virtual void Copy(FMetaObject *dst, const FMetaObject *src) const override final;
-
-    virtual void Swap(FMetaObject *lhs, FMetaObject *rhs) const override final;
-
-    virtual bool Equals(const FMetaObject *lhs, const FMetaObject *rhs) const override final;
-    virtual bool DeepEquals(const FMetaObject *lhs, const FMetaObject *rhs) const override final;
-
-    virtual void *RawPtr(FMetaObject *obj) const override final;
-    virtual const void *RawPtr(const FMetaObject *obj) const override final;
-
-    virtual size_t HashValue(const FMetaObject *object) const override final;
-
-    SINGLETON_POOL_ALLOCATED_DECL();
+    bool MoveFrom(FMetaObject& obj, FAtom& src) const {
+        CheckPropertyIFN(obj, true);
+        return src.MoveTo(MakeAtom_(obj));
+    }
 
 private:
-    using FMetaProperty::_name;
-    using FMetaProperty::_attributes;
+#ifdef WITH_CORE_RTTI_PROPERTY_CHECKS
+#   undef CheckPropertyIFN
+    void CheckProperty_(const FMetaObject& obj, bool write) const;
+#endif
+
+    FName _name;
+    PTypeTraits _traits;
+    EPropertyFlags _flags;
+    i32 _memberOffset;
+
+    FORCE_INLINE FAtom MakeAtom_(const FMetaObject& obj) const {
+        return FAtom((const u8*)&obj + _memberOffset, _traits);
+    }
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Class>
-TMetaWrappedProperty<T, TMetaFieldAccessor<T> > *MakeProperty(
-    const FName& name, FMetaProperty::EFlags attributes, T _Class::* field) {
-    return new TMetaWrappedProperty<T, TMetaFieldAccessor<T> >(
-        name, attributes,
-        MakeFieldAccessor(field) );
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Class>
-TMetaWrappedProperty<T, TMetaMemberAccessor<T, _Class> > *MakeProperty(
-    const FName& name, FMetaProperty::EFlags attributes,
-    const T& (_Class::* getter)() const,
-    void (_Class::* setter)(const T& ) ) {
-    return new TMetaWrappedProperty<T, TMetaMemberAccessor<T, _Class> >(
-        name, attributes,
-        MakeMemberAccessor(getter, setter) );
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Class>
-TMetaWrappedProperty<T, TMetaDelegateAccessor<T, _Class> > *MakeProperty(
-    const FName& name, FMetaProperty::EFlags attributes,
-    TDelegate<T&   (*)(_Class* )>&& getter,
-    TDelegate<void (*)(_Class*, T&& )>&& mover,
-    TDelegate<void (*)(_Class*, const T& )>&& setter ) {
-    return new TMetaWrappedProperty<T, TMetaDelegateAccessor<T, _Class> >(
-        name, attributes,
-        MakeDelegateAccessor(std::move(getter), std::move(mover), std::move(setter)) );
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Class>
-TMetaWrappedProperty<T, TMetaDeprecatedAccessor<T, _Class> > *MakeDeprecatedProperty(
-    const FName& name, FMetaProperty::EFlags attributes ) {
-    return new TMetaWrappedProperty<T, TMetaDeprecatedAccessor<T, _Class> >(
-        name, attributes | FMetaProperty::Deprecated | FMetaProperty::ReadOnly,
-        MakeDeprecatedAccessor<T, _Class>() );
+Meta::TEnableIf<std::is_base_of<FMetaObject, _Class>::value, FMetaProperty>
+    MakeProperty(const FName& name, EPropertyFlags flags, T _Class::* member) {
+    return FMetaProperty(
+        name,
+        flags,
+        MakeTraits<T>(),
+        (ptrdiff_t)&(((_Class*)0)->*member)
+    );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RTTI
+CORE_ASSUME_TYPE_AS_POD(RTTI::FMetaProperty);
 } //!namespace Core
 
-#include "Core.RTTI/MetaProperty-inl.h"
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EPropertyFlags flags);
+CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EPropertyFlags flags);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core
