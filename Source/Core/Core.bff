@@ -1,7 +1,7 @@
 #once
 {
     .ProjectName = 'Core'
-    .ProjectPath = '$SourceDiretory$/Core'
+    .ProjectPath = '$SourceDirectory$/Core'
     .ProjectSolutionFolder = 'Core'
     .ProjectDefines = { 'EXPORT_CORE' }
     .UnityNumFiles = 6

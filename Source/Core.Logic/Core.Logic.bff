@@ -1,7 +1,7 @@
 #once
 {
     .ProjectName = 'Core.Logic'
-    .ProjectPath = '$SourceDiretory$/Core.Logic'
+    .ProjectPath = '$SourceDirectory$/Core.Logic'
     .ProjectSolutionFolder = 'Core'
     .ProjectDefines = { 'EXPORT_CORE_LOGIC' }
     .UnityNumFiles = 1

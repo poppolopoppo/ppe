@@ -1,7 +1,7 @@
 #once
 {
     .ProjectName = 'Core.Engine'
-    .ProjectPath = '$SourceDiretory$/Core.Engine'
+    .ProjectPath = '$SourceDirectory$/Core.Engine'
     .ProjectSolutionFolder = 'Core.Engine'
     .ProjectDefines = { 'EXPORT_CORE_ENGINE' }
     .ProjectIsolatedFiles =

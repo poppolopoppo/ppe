@@ -1,7 +1,7 @@
 #once
 {
     .ProjectName = 'Core.Graphics'
-    .ProjectPath = '$SourceDiretory$/Core.Graphics'
+    .ProjectPath = '$SourceDirectory$/Core.Graphics'
     .ProjectSolutionFolder = 'Core'
     .ProjectDefines = { 'EXPORT_CORE_GRAPHICS' }
     .UnityNumFiles = 4

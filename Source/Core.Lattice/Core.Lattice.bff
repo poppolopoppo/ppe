@@ -1,7 +1,7 @@
 #once
 {
     .ProjectName = 'Core.Lattice'
-    .ProjectPath = '$SourceDiretory$/Core.Lattice'
+    .ProjectPath = '$SourceDirectory$/Core.Lattice'
     .ProjectSolutionFolder = 'Core.Content'
     .ProjectDefines = { 'EXPORT_CORE_LATTICE' }
     .UnityNumFiles = 1

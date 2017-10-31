@@ -9,8 +9,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FApplicationConsole : public FApplicationBase
-{
+class FApplicationConsole : public FApplicationBase {
 public:
     FApplicationConsole(const wchar_t *appname);
     virtual ~FApplicationConsole();

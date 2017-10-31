@@ -4,8 +4,9 @@
 
 #include "ApplicationBase.h"
 
-#ifdef PLATFORM_WINDOWS
+#if CORE_APPLICATION_GRAPHICS && defined(PLATFORM_WINDOWS)
 #   include "Input/XInputWrapper.h"
+#   define WITH_APPLICATION_XINPUT
 #endif
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
@@ -52,6 +53,11 @@ static void ConfigureCRTHeapForDebugging_() {
     constexpr int debugNecrophilia  = _CRTDBG_DELAY_FREE_MEM_DF;
     constexpr int debugLeaks        = _CRTDBG_LEAK_CHECK_DF;
 
+    UNUSED(debugHeapEnabled);
+    UNUSED(debugCheckMemory);
+    UNUSED(debugNecrophilia);
+    UNUSED(debugLeaks);
+
     int debugHeapFlag = 0
         | debugHeapEnabled
         //| debugCheckMemory //%_NOCOMMIT%
@@ -76,7 +82,7 @@ void FApplicationModule::Start() {
 
     POOL_TAG(Application)::Start();
 
-#ifdef PLATFORM_WINDOWS
+#ifdef WITH_APPLICATION_XINPUT
     FXInputWrapper::Create();
 #endif
 }
@@ -84,7 +90,7 @@ void FApplicationModule::Start() {
 void FApplicationModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Application);
 
-#ifdef PLATFORM_WINDOWS
+#ifdef WITH_APPLICATION_XINPUT
     FXInputWrapper::Destroy();
 #endif
 

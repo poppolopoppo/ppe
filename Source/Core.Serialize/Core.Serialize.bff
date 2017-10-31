@@ -1,7 +1,7 @@
 #once
 {
     .ProjectName = 'Core.Serialize'
-    .ProjectPath = '$SourceDiretory$/Core.Serialize'
+    .ProjectPath = '$SourceDirectory$/Core.Serialize'
     .ProjectSolutionFolder = 'Core'
     .ProjectDefines = { 'EXPORT_CORE_SERIALIZE' }
     .ProjectIsolatedFiles =

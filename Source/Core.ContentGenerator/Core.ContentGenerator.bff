@@ -3,7 +3,7 @@
     .BinaryPrefix = 'Core.ContentGenerator'
     .ProjectName  = 'Core.ContentGenerator'
     .ProjectSolutionFolder = 'Core.Content'
-    .ProjectPath  = '$SourceDiretory$/Core.ContentGenerator'
+    .ProjectPath  = '$SourceDirectory$/Core.ContentGenerator'
     .UnityNumFiles = 1
     .ProjectDependencies =
     {
@@ -15,7 +15,7 @@
         'Core.Pixmap',
         'Core.Graphics',
         'Core.ContentPipeline',
-        'Core.Application',
+        'Core.Application.Graphics',
     }
     .ProjectIsolatedFiles =
     {

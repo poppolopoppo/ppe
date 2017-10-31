@@ -1,13 +1,42 @@
 #once
 {
-    .ProjectName = 'Core.Application'
-    .ProjectPath = '$SourceDiretory$/Core.Application'
-    .ProjectSolutionFolder = 'Core'
-    .ProjectDefines = { 'EXPORT_CORE_APPLICATION' }
-    .UnityNumFiles = 1
-    .ProjectIsolatedFiles =
+    // Core.Application can be compiled through 2 libraries :
+    //  * console only : FApplicationConsole available
+    //  * console + graphics : FApplicationGraphics available
     {
-        'Application.cpp'
+        .ProjectName = 'Core.Application.Console'
+        .ProjectPath = '$SourceDirectory$/Core.Application'
+        .ProjectSolutionFolder = 'Core'
+        .ProjectDefines =
+        {
+            'EXPORT_CORE_APPLICATION',
+            'CORE_APPLICATION_CONSOLE=1',
+            'CORE_APPLICATION_GRAPHICS=0',
+        }
+        .ProjectUseUnity = 'false'
+        .ProjectIsolatedFiles =
+        {
+            'Application.cpp',
+            'ApplicationBase.cpp',
+            'ApplicationConsole.cpp',
+        }
+        #include "../../Build/Templates/Library.bff"
     }
-    #include "../../Build/Templates/Library.bff"
+    {
+        .ProjectName = 'Core.Application.Graphics'
+        .ProjectPath = '$SourceDirectory$/Core.Application'
+        .ProjectSolutionFolder = 'Core'
+        .ProjectDefines =
+        {
+            'EXPORT_CORE_APPLICATION',
+            'CORE_APPLICATION_CONSOLE=0',
+            'CORE_APPLICATION_GRAPHICS=1',
+        }
+        .UnityNumFiles = 1
+        .ProjectIsolatedFiles =
+        {
+            'Application.cpp',
+        }
+        #include "../../Build/Templates/Library.bff"
+    }
 }
