@@ -29,16 +29,17 @@ public:
     TMemoryView<void*> Frames() { return MakeView(&_frames[0], &_frames[_depth]); }
     TMemoryView<void* const> Frames() const { return MakeView(&_frames[0], &_frames[_depth]); }
 
-    static void Capture(FCallstack* callstack, size_t framesToSkip, size_t framesToCapture);
+    static void Capture(FCallstack* callstack, size_t framesToSkip, size_t framesToCapture = MaxDepth);
+
     static size_t Capture(
         const TMemoryView<void*>& frames,
         size_t* backtraceHash,
         size_t framesToSkip,
-        size_t framesToCapture
-        );
+        size_t framesToCapture );
 
-    void Decode(FDecodedCallstack* decoded) const;
-    static void Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryView<void* const>& frames);
+    bool Decode(FDecodedCallstack* decoded) const;
+
+    static bool Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryView<void* const>& frames);
 
     void SetFrames(const TMemoryView<void* const>& frames);
 

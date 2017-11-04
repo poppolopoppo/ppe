@@ -191,12 +191,15 @@ FCallstack& FCallstack::operator =(const FCallstack& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
-void FCallstack::Decode(FDecodedCallstack* decoded) const {
-    Decode(decoded, _hash, Frames());
+bool FCallstack::Decode(FDecodedCallstack* decoded) const {
+    return Decode(decoded, _hash, Frames());
 }
 //----------------------------------------------------------------------------
-void FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryView<void* const>& frames) {
+bool FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryView<void* const>& frames) {
     Assert(decoded);
+
+    if (not FDbghelpWrapper::Instance().Available())
+        return false;
 
     const auto dbghelp(FDbghelpWrapper::Instance().Lock());
 
@@ -251,6 +254,8 @@ void FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
         ::new ((void*)frame) FDecodedCallstack::FFrame(*address, std::move(symbol), std::move(filename), line);
     }
 #pragma warning( pop )
+
+    return true;
 }
 //----------------------------------------------------------------------------
 void FCallstack::Capture(FCallstack* callstack, size_t framesToSkip, size_t framesToCapture) {

@@ -70,7 +70,9 @@ FWStringView LogCategoryToWCStr(ELogCategory category) {
 
 #ifdef USE_DEBUG_LOGGER
 
+#include "Diagnostic/Callstack.h"
 #include "Diagnostic/CurrentProcess.h"
+#include "Diagnostic/DecodedCallstack.h"
 
 #include "IO/Stream.h"
 #include "IO/String.h"
@@ -80,11 +82,31 @@ FWStringView LogCategoryToWCStr(ELogCategory category) {
 #include <iostream>
 #include <sstream>
 
+#define CORE_DUMP_CALLSTACK_ON_WARNING  1
+#define CORE_DUMP_CALLSTACK_ON_ERROR    1
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+#if CORE_DUMP_CALLSTACK_ON_WARNING || CORE_DUMP_CALLSTACK_ON_ERROR
+template <typename _Char>
+static void DumpThreadCallstack_(std::basic_ostream<_Char>& oss) {
+    FCallstack callstack;
+    FCallstack::Capture(&callstack, 4);
+
+    if (not callstack.Depth())
+        return;
+
+    FDecodedCallstack decoded;
+    if (not callstack.Decode(&decoded))
+        return;
+
+    oss << decoded;
+}
+#endif
 //----------------------------------------------------------------------------
 class FBasicLogger_ : public ILogger {
 public:
@@ -288,6 +310,15 @@ void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& tex
     Assert(!std::wcout.bad());
 
     std::wcout << eol;
+
+#if CORE_DUMP_CALLSTACK_ON_WARNING
+    if (ELogCategory::Warning == category)
+        DumpThreadCallstack_(std::wcout);
+#endif
+#if CORE_DUMP_CALLSTACK_ON_ERROR
+    if (ELogCategory::Error == category)
+        DumpThreadCallstack_(std::wcout);
+#endif
 }
 //----------------------------------------------------------------------------
 void FStdoutLogger::FlushThreadSafe() {
