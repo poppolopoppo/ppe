@@ -21,7 +21,7 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
 
     size_t dirSep = _fileName.size();
     for (; dirSep > 0 && _fileName[dirSep - 1] != L'/' && _fileName[dirSep - 1] != L'\\'; --dirSep);
-    _directory = FWString(_fileName.begin(), _fileName.begin() + dirSep);
+    _directory.assign(_fileName.begin(), _fileName.begin() + dirSep);
 
     _applicationHandle = applicationHandle;
     _nShowCmd = nShowCmd;
