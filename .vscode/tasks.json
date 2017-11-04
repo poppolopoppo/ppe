@@ -1,0 +1,187 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "taskName": "Core.ContentGenerator-Win64-Debug",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win64-debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "taskName": "Core.ContentGenerator-Win64-FastDebug",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win64-FastDebug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "taskName": "Core.ContentGenerator-Win64-Release",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win64-Release",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "taskName": "Core.ContentGenerator-Win64-Profiling",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win64-Profiling",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "taskName": "Core.ContentGenerator-Win64-Final",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win64-Final",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "taskName": "Core.ContentGenerator-Win32-Debug",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win32-debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "taskName": "Core.ContentGenerator-Win32-FastDebug",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win32-FastDebug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "taskName": "Core.ContentGenerator-Win32-Release",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win32-Release",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "taskName": "Core.ContentGenerator-Win32-Profiling",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win32-Profiling",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "taskName": "Core.ContentGenerator-Win32-Final",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win32-Final",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        }
+    ]
+}
