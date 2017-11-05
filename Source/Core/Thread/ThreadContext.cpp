@@ -23,6 +23,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+static std::atomic<size_t> GNumThreadContext_{ 0 };
+//----------------------------------------------------------------------------
 class FThreadLocalContext_ : Meta::TThreadLocalSingleton<FThreadContext, FThreadLocalContext_> {
     typedef Meta::TThreadLocalSingleton<FThreadContext, FThreadLocalContext_> parent_type;
 public:
@@ -37,12 +39,11 @@ public:
 };
 //----------------------------------------------------------------------------
 inline void FThreadLocalContext_::Create(const char* name, size_t tag) {
-    Assert(CORE_THREADTAG_MAIN != tag);
-    parent_type::Create(name, tag);
+    parent_type::Create(name, tag, GNumThreadContext_++);
 }
 //----------------------------------------------------------------------------
 inline void FThreadLocalContext_::CreateMainThread() {
-    parent_type::Create("MainThread", CORE_THREADTAG_MAIN);
+    FThreadLocalContext_::Create("MainThread", CORE_THREADTAG_MAIN);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -52,8 +53,8 @@ inline void FThreadLocalContext_::CreateMainThread() {
 namespace {
 //----------------------------------------------------------------------------
 #pragma warning(push)
-#pragma warning(disable: 6320) // L'expression de filtre d'exception correspond � la constante EXCEPTION_EXECUTE_HANDLER.
-                               // Cela risque de masquer les exceptions qui n'�taient pas destin�es � �tre g�r�es.
+#pragma warning(disable: 6320) // L'expression de filtre d'exception correspond à la constante EXCEPTION_EXECUTE_HANDLER.
+                               // Cela risque de masquer les exceptions qui n'étaient pas destinées à être gérées.
 #pragma warning(disable: 6322) // bloc empty _except.
 static void SetWin32ThreadName_(const char* name) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME
@@ -80,7 +81,7 @@ static void SetWin32ThreadName_(const char* name) {
 
     __try
     {
-        RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
+        ::RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -107,9 +108,10 @@ static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FThreadContext::FThreadContext(const char* name, size_t tag)
+FThreadContext::FThreadContext(const char* name, size_t tag, size_t index)
 :   _tag(tag)
-,   _threadId(std::this_thread::get_id()) {
+,   _threadId(std::this_thread::get_id())
+,   _threadIndex(index) {
     Assert(name);
 
     const size_t n = Copy(MakeView(_name), MakeStringView(name, Meta::FForceInit{}));
@@ -219,6 +221,10 @@ Assert(std::this_thread::get_id() == _threadId);
 #else
 #   error "platform not supported"
 #endif
+}
+//----------------------------------------------------------------------------
+size_t FThreadContext::NumThreads() {
+    return GNumThreadContext_;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -24,7 +24,7 @@ enum class EThreadPriority {
 //----------------------------------------------------------------------------
 class FThreadContext {
 public:
-    FThreadContext(const char* name, size_t tag);
+    FThreadContext(const char* name, size_t tag, size_t index);
     ~FThreadContext();
 
     FThreadContext(const FThreadContext&) = delete;
@@ -33,6 +33,7 @@ public:
     const char *Name() const { return _name; }
     size_t Tag() const { return _tag; }
     std::thread::id ThreadId() const { return _threadId; }
+    size_t ThreadIndex() const { return _threadIndex; }
 
     size_t AffinityMask() const;
     void SetAffinityMask(size_t mask) const;
@@ -40,10 +41,13 @@ public:
     EThreadPriority Priority() const;
     void SetPriority(EThreadPriority priority) const;
 
+    static size_t NumThreads();
+
 private:
-    char _name[64];
     const size_t _tag;
     const std::thread::id _threadId;
+    const size_t _threadIndex;
+    char _name[64];
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
