@@ -166,13 +166,13 @@ static void VMRegisterBlockSize_(void* ptr, size_t sizeInBytes) {
     }
     else if (GVMPtrieNewAllocatedPage) {
         newNode = GVMPtrieNewAllocatedPage;
-        if (!((uintptr_t)++GVMPtrieNewAllocatedPage & (PAGE_SIZE - 1)))
+        if (!((uintptr_t)++GVMPtrieNewAllocatedPage & (ALLOCATION_GRANULARITY - 1)))
             GVMPtrieNewAllocatedPage = ((FVMPtrieNode_**)GVMPtrieNewAllocatedPage)[-1];
     }
     else {
         GVMPtrieLock.Unlock();
 
-        newNode = (FVMPtrieNode_*)VMALLOC(PAGE_SIZE);
+        newNode = (FVMPtrieNode_*)VMALLOC(ALLOCATION_GRANULARITY);
         if (!newNode)
             throw std::bad_alloc();
 
@@ -180,13 +180,13 @@ static void VMRegisterBlockSize_(void* ptr, size_t sizeInBytes) {
         // Memory allocated here will never be freed !
         // But we're talking about never more than a few megabytes
         // 1024 * 1024 / 32 = 32768 *ALIVE* allocations for 1 mo on x64 architecture, 65536 for x86
-        MEMORY_DOMAIN_TRACKING_DATA(Internal).Allocate(1, PAGE_SIZE);
+        MEMORY_DOMAIN_TRACKING_DATA(Internal).Allocate(1, ALLOCATION_GRANULARITY);
 #endif
 
-        Assert(((char**)((char*)newNode + PAGE_SIZE))[-1] == 0);
+        Assert(((char**)((char*)newNode + ALLOCATION_GRANULARITY))[-1] == 0);
 
         GVMPtrieLock.Lock();
-        ((FVMPtrieNode_**)((char*)newNode + PAGE_SIZE))[-1] = GVMPtrieNewAllocatedPage;//in case if other thread also have just allocated a new page
+        ((FVMPtrieNode_**)((char*)newNode + ALLOCATION_GRANULARITY))[-1] = GVMPtrieNewAllocatedPage;//in case if other thread also have just allocated a new page
         GVMPtrieNewAllocatedPage = newNode + 1;
     }
 
@@ -215,11 +215,11 @@ size_t FVirtualMemory::AllocSizeInBytes(void* ptr) {
     if (nullptr == ptr)
         return 0;
 
-    Assert(Meta::IsAligned(PAGE_SIZE, ptr));
+    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
 
 #ifdef USE_VMALLOC_SIZE_PTRIE
     const size_t regionSize = VMFetchBlockSize_(ptr);
-    Assert(Meta::IsAligned(PAGE_SIZE, regionSize));
+    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, regionSize));
 
     return regionSize;
 
@@ -243,7 +243,7 @@ size_t FVirtualMemory::AllocSizeInBytes(void* ptr) {
 // https://github.com/r-lyeh/ltalloc/blob/master/ltalloc.cc
 void* FVirtualMemory::AlignedAlloc(size_t alignment, size_t sizeInBytes) {
     Assert(sizeInBytes);
-    Assert(Meta::IsAligned(PAGE_SIZE, sizeInBytes));
+    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
     Assert(Meta::IsPow2(alignment));
 
     void* p;
@@ -283,12 +283,12 @@ void* FVirtualMemory::AlignedAlloc(size_t alignment, size_t sizeInBytes) {
     p = (void*)(((uintptr_t)::mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0) + 1)&~1);//with the conversion of MAP_FAILED to 0
 
     if (not Meta::IsAligned(alignment, p)) {
-        p = VMALLOC(size + alignment - page_size());
+        p = VMALLOC(size + alignment - ALLOCATION_GRANULARITY());
         if (p/* != MAP_FAILED*/) {
             uintptr_t ap = ((uintptr_t)p + (alignment - 1)) & ~(alignment - 1);
             uintptr_t diff = ap - (uintptr_t)p;
             if (diff) VMFREE(p, diff);
-            diff = alignment - page_size() - diff;
+            diff = alignment - ALLOCATION_GRANULARITY() - diff;
             assert((intptr_t)diff >= 0);
             if (diff) VMFREE((void*)(ap + size), diff);
             return (void*)ap;
@@ -376,7 +376,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first TR
             TotalCacheSizeInBytes -= cachedBlock->SizeInBytes;
 
 #ifdef USE_MEMORY_DOMAINS
-            // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
+            // Only track overhead due to cached memory, actual blocks in use should be logged in their own domain
             trackingData.Deallocate(1, cachedBlock->SizeInBytes);
 #endif
 

@@ -124,7 +124,7 @@ bool FVirtualFileSystem::Copy(const FFilename& dst, const FFilename& src, EAcces
     if (not ostream)
         return false;
 
-    STACKLOCAL_POD_ARRAY(u8, buffer, PAGE_SIZE);
+    STACKLOCAL_POD_ARRAY(u8, buffer, ALLOCATION_GRANULARITY);
     while (size_t read = istream->ReadSome(buffer.data(), 1, buffer.SizeInBytes())) {
         if (not ostream->Write(buffer.data(), read)) {
             AssertNotReached();

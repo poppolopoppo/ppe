@@ -7,7 +7,7 @@
 
 #include <malloc.h>
 
-#define WITH_CORE_USE_SYSALLOCA 1 //%__NOCOMMIT%
+#define USE_CORE_SYSALLOCA (!USE_CORE_MEMORY_DEBUGGING) //%__NOCOMMIT%
 
 #if 1
 //  16k means you have changed your default stack size in your compiler settings
@@ -108,7 +108,7 @@ struct TAllocaBlock {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if WITH_CORE_USE_SYSALLOCA
+#if USE_CORE_SYSALLOCA
 #   define SYSALLOCA_IFP(_SIZEINBYTES) ((CORE_SYSALLOCA_SIZELIMIT >= (_SIZEINBYTES) ) ? _alloca(_SIZEINBYTES) : nullptr )
 #else
 #   define SYSALLOCA_IFP(_SIZEINBYTES) nullptr

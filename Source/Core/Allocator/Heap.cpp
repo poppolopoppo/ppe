@@ -3,8 +3,64 @@
 #include "Heap.h"
 
 #define WITH_CORE_USE_NATIVEHEAP 0 //%_NOCOMMIT%
+#define WITH_CORE_HEAP_FALLBACK_TO_MALLOC USE_CORE_MEMORY_DEBUGGING //%_NOCOMMIT%
 
-#if WITH_CORE_USE_NATIVEHEAP
+#if WITH_CORE_HEAP_FALLBACK_TO_MALLOC
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FHeap::FHeap()
+:   _handle(this) {}
+//----------------------------------------------------------------------------
+FHeap::FHeap(current_process_t)
+:   _handle(this) {}
+//----------------------------------------------------------------------------
+FHeap::FHeap(FHeap&& )
+:   _handle(this)
+{}
+//----------------------------------------------------------------------------
+FHeap::~FHeap()
+{}
+//----------------------------------------------------------------------------
+void* FHeap::Malloc(size_t size) {
+    return Core::malloc(size);
+}
+//----------------------------------------------------------------------------
+void FHeap::Free(void *ptr) {
+    Core::free(ptr);
+}
+//----------------------------------------------------------------------------
+void* FHeap::Calloc(size_t nmemb, size_t size) {
+    return Core::calloc(nmemb, size);
+}
+//----------------------------------------------------------------------------
+void* FHeap::Realloc(void *ptr, size_t size) {
+    return Core::realloc(ptr, size);
+}
+//----------------------------------------------------------------------------
+void* FHeap::AlignedMalloc(size_t size, size_t alignment) {
+    return Core::aligned_malloc(size, alignment);
+}
+//----------------------------------------------------------------------------
+void FHeap::AlignedFree(void *ptr) {
+    Core::aligned_free(ptr);
+}
+//----------------------------------------------------------------------------
+void* FHeap::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
+    return Core::aligned_calloc(nmemb, size, alignment);
+}
+//----------------------------------------------------------------------------
+void* FHeap::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
+    return Core::aligned_realloc(ptr, size, alignment);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //namespace
+
+#elif WITH_CORE_USE_NATIVEHEAP
 
 #ifdef PLATFORM_WINDOWS
 #   include "Misc/Platform_Windows.h"
@@ -177,11 +233,22 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Thread local cache for "big" allocations (> 32k) with 64k granularity.
+//  - Fallback to malloc() for small blocks (ie MallocBinned)
+//  - FMallocBinned has its own TLS cache for small allocations
+//  - But FMallocBinned handles large blocks as global resources (spinlock)
+//
+// => This TLS cache can prevent from spin locking when doing large allocs
+//    in concurrent threads.
+//
+// IO operations are generally a good fit for this (IStreamReader, IStreamWriter).
+//
+//----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
 struct FHeapHandle_ {
-    STATIC_ASSERT(PAGE_SIZE == 64 * 1024);
-    STATIC_CONST_INTEGRAL(size_t, LargeAllocSize, 32736/* FMallocBinned */);
+    STATIC_ASSERT(ALLOCATION_GRANULARITY == 64 * 1024);
+    STATIC_CONST_INTEGRAL(size_t, LargeAllocSize, 32736/* see FMallocBinned */);
 
 #ifdef WITH_CORE_ASSERT
     const size_t Canary0 = 0xBAADF00D;
@@ -209,7 +276,7 @@ struct FHeapHandle_ {
 
         void* const result = LocalVM.Allocate(sizeInBytes);
         AssertRelease(result);
-        Assert(Meta::IsAligned(PAGE_SIZE, result));
+        Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, result));
         ONLY_IF_ASSERT(NumAllocs++);
 
         return result;
@@ -218,7 +285,7 @@ struct FHeapHandle_ {
     void Free(void* ptr) {
         ONLY_IF_ASSERT(CheckCanaries());
         Assert(ptr);
-        Assert(Meta::IsAligned(PAGE_SIZE, ptr));
+        Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
         Assert_NoAssume(0 < NumAllocs);
 
         ONLY_IF_ASSERT(NumAllocs--);
@@ -264,7 +331,7 @@ void* FHeap::Malloc(size_t size) {
         // there's probably already a thread local cache efficient for small blocks
         result = Core::malloc(size);
 
-        Assert(not Meta::IsAligned(PAGE_SIZE, result));
+        Assert(not Meta::IsAligned(ALLOCATION_GRANULARITY, result));
     }
     else {
         // fallback to a local cache of large blocks
@@ -281,7 +348,7 @@ void FHeap::Free(void *ptr) {
     if (nullptr == ptr)
         return;
 
-    if (not Meta::IsAligned(PAGE_SIZE, ptr)) {
+    if (not Meta::IsAligned(ALLOCATION_GRANULARITY, ptr)) {
         // return to standard allocator
         Core::free(ptr);
     }
@@ -312,9 +379,9 @@ void* FHeap::Realloc(void *ptr, size_t size) {
         this->Free(ptr);
         result = nullptr;
     }
-    else if (not Meta::IsAligned(PAGE_SIZE, ptr)) {
+    else if (not Meta::IsAligned(ALLOCATION_GRANULARITY, ptr)) {
         result = Core::realloc(ptr, size);
-        Assert(not Meta::IsAligned(PAGE_SIZE, ptr));
+        Assert(not Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
     }
     else {
         const size_t oldSize = FVirtualMemory::AllocSizeInBytes(ptr);
@@ -340,7 +407,7 @@ void* FHeap::AlignedMalloc(size_t size, size_t alignment) {
         // there's probably already a thread local cache efficient for small blocks
         result = Core::aligned_malloc(size, alignment);
 
-        Assert(not Meta::IsAligned(PAGE_SIZE, result));
+        Assert(not Meta::IsAligned(ALLOCATION_GRANULARITY, result));
     }
     else {
         // fallback to a local cache of large blocks
@@ -359,7 +426,7 @@ void FHeap::AlignedFree(void *ptr) {
     if (nullptr == ptr)
         return;
 
-    if (not Meta::IsAligned(PAGE_SIZE, ptr)) {
+    if (not Meta::IsAligned(ALLOCATION_GRANULARITY, ptr)) {
         // return to standard allocator
         Core::aligned_free(ptr);
     }
@@ -390,7 +457,7 @@ void* FHeap::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
         this->AlignedFree(ptr);
         result = nullptr;
     }
-    else if (not Meta::IsAligned(PAGE_SIZE, ptr)) {
+    else if (not Meta::IsAligned(ALLOCATION_GRANULARITY, ptr)) {
         result = Core::aligned_realloc(ptr, size, alignment);
     }
     else {

@@ -32,10 +32,23 @@ inline constexpr bool IsAligned(const size_t alignment, const T* ptr) {
 inline constexpr size_t RoundToNext(const size_t v, size_t alignment) {
     return --alignment, ((0 == v) ? 0 : (v + alignment) & ~alignment);
 }
+template <typename T> T* RoundToNext(const T* p, size_t alignment) {
+    return (T*)RoundToNext(size_t(p), alignment);
+}
+//----------------------------------------------------------------------------
+// /!\ Assumes <alignment> is a power of 2
+inline constexpr size_t RoundToPrev(const size_t v, size_t alignment) {
+    return ((0 == v) ? 0 : v & ~(alignment - 1));
+}
+template <typename T> T* RoundToPrev(const T* p, size_t alignment) {
+    return (T*)RoundToPrev(size_t(p), alignment);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define PAGE_SIZE (65536)
+#define PAGE_SIZE (4096)
+//----------------------------------------------------------------------------
+#define ALLOCATION_GRANULARITY (65536)
 //----------------------------------------------------------------------------
 #define CACHELINE_SIZE (64)
 //----------------------------------------------------------------------------

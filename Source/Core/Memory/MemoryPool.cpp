@@ -8,8 +8,10 @@
 
 #include <mutex>
 
-// Uncomment to disable pool allocation (useful for memory debugging) :
-#define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC 0 //%__NOCOMMIT%
+//----------------------------------------------------------------------------
+// Turn to 1 to disable pool allocation (useful for memory debugging) :
+//----------------------------------------------------------------------------
+#define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC USE_CORE_MEMORY_DEBUGGING //%__NOCOMMIT%
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -459,7 +461,7 @@ void FMemoryPool::Deallocate(void *ptr, FMemoryTrackingData *trackingData /* = n
 //----------------------------------------------------------------------------
 void FMemoryPool::Clear_AssertCompletelyFree() {
 #if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
-    AssertRelease(nullptr == Chunks());
+    AssertRelease(0 == _chunkCount);
 
 #else
     FMemoryPoolChunk *chunk;
@@ -472,7 +474,7 @@ void FMemoryPool::Clear_AssertCompletelyFree() {
 //----------------------------------------------------------------------------
 void FMemoryPool::Clear_IgnoreLeaks() {
 #if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
-    AssertRelease(nullptr == Chunks());
+    AssertRelease(0 == _chunkCount);
 
 #else
     FMemoryPoolChunk *chunk;
@@ -485,7 +487,7 @@ void FMemoryPool::Clear_IgnoreLeaks() {
 //----------------------------------------------------------------------------
 void FMemoryPool::Clear_UnusedMemory() {
 #if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
-    AssertRelease(nullptr == Chunks());
+    AssertRelease(0 == _chunkCount);
 
 #else
     FMemoryPoolChunk *chunk;
@@ -503,6 +505,7 @@ size_t FMemoryPool::BlockCountPerChunk_(size_t chunkSize) const {
 FMemoryPoolChunk* FMemoryPool::AllocateChunk_() {
 #if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     AssertNotReached();
+    return nullptr;
 
 #else
     const size_t currentChunkSize = CurrentChunkSize();

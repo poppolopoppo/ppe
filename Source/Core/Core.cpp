@@ -54,12 +54,12 @@ static void CheckMemory_() {
         return;
 
     bInScope = true;
-    AssertRelease(!std::cout.bad());
-    AssertRelease(!std::wcout.bad());
-    AssertRelease(!std::cerr.bad());
-    AssertRelease(!std::wcerr.bad());
-    AssertRelease(!std::cin.bad());
-    AssertRelease(!std::wcin.bad());
+    AssertRelease(not std::cout.bad());
+    AssertRelease(not std::wcout.bad());
+    AssertRelease(not std::cerr.bad());
+    AssertRelease(not std::wcerr.bad());
+    AssertRelease(not std::cin.bad());
+    AssertRelease(not std::wcin.bad());
 
     FPlatform::CheckMemory();
 

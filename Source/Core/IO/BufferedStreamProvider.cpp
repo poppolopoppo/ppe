@@ -6,7 +6,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static constexpr size_t GBufferStreamBufferSizeInBytes = PAGE_SIZE;
+static constexpr size_t GStreamBufferSizeInBytes = ALLOCATION_GRANULARITY;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ FBufferedStreamReader::FBufferedStreamReader(IStreamReader* nonBuffered)
 FBufferedStreamReader::~FBufferedStreamReader() {
     if (_buffer) {
         Assert(_nonBuffered);
-        FBufferedStreamAllocator::deallocate(_buffer, GBufferStreamBufferSizeInBytes);
+        FBufferedStreamAllocator::deallocate(_buffer, GStreamBufferSizeInBytes);
         ONLY_IF_ASSERT(_buffer = nullptr);
     }
 }
@@ -97,7 +97,7 @@ bool FBufferedStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
 
     u8* pdst = (u8*)storage;
 
-    if (sizeInBytes <= GBufferStreamBufferSizeInBytes) {
+    if (sizeInBytes <= GStreamBufferSizeInBytes) {
         // Buffered read
 
         u8* pend = pdst + checked_cast<ptrdiff_t>(sizeInBytes);
@@ -210,11 +210,11 @@ bool FBufferedStreamReader::RefillBuffer_() {
     if (nullptr == _buffer) {
         // Allocate read buffer lazily
 
-        _buffer = FBufferedStreamAllocator::allocate(GBufferStreamBufferSizeInBytes);
+        _buffer = FBufferedStreamAllocator::allocate(GStreamBufferSizeInBytes);
         AssertRelease(_buffer);
     }
 
-    const size_t count = _nonBuffered->ReadSome(_buffer, 1, GBufferStreamBufferSizeInBytes);
+    const size_t count = _nonBuffered->ReadSome(_buffer, 1, GStreamBufferSizeInBytes);
 
     _offset = 0;
     _capacity = checked_cast<u32>(count);
@@ -244,7 +244,7 @@ FBufferedStreamWriter::~FBufferedStreamWriter() {
     if (_buffer) {
         Assert(_nonBuffered);
         Flush();
-        FBufferedStreamAllocator::deallocate(_buffer, GBufferStreamBufferSizeInBytes);
+        FBufferedStreamAllocator::deallocate(_buffer, GStreamBufferSizeInBytes);
         ONLY_IF_ASSERT(_buffer = nullptr);
     }
 }
@@ -252,7 +252,7 @@ FBufferedStreamWriter::~FBufferedStreamWriter() {
 std::streamoff FBufferedStreamWriter::TellO() const {
     Assert(_nonBuffered);
     Assert(_origin >= 0);
-    Assert(_offset <= GBufferStreamBufferSizeInBytes);
+    Assert(_offset <= GStreamBufferSizeInBytes);
     Assert(_nonBuffered->TellO() == _origin);
 
     return (_origin + _offset);
@@ -301,21 +301,21 @@ bool FBufferedStreamWriter::Write(const void* storage, std::streamsize sizeInByt
     Assert(_nonBuffered);
     Assert(_nonBuffered->TellO() == _origin);
 
-    if (sizeInBytes <= GBufferStreamBufferSizeInBytes) {
+    if (sizeInBytes <= GStreamBufferSizeInBytes) {
         // Buffered write
 
         if (nullptr == _buffer) {
-            _buffer = FBufferedStreamAllocator::allocate(GBufferStreamBufferSizeInBytes);
+            _buffer = FBufferedStreamAllocator::allocate(GStreamBufferSizeInBytes);
             AssertRelease(_buffer);
         }
 
         const u8* psrc = (const u8*)storage;
         const u8* pend = psrc + checked_cast<ptrdiff_t>(sizeInBytes);
         while (psrc != pend) {
-            Assert(_offset <= GBufferStreamBufferSizeInBytes);
+            Assert(_offset <= GStreamBufferSizeInBytes);
 
-            if (_offset != GBufferStreamBufferSizeInBytes) {
-                const size_t toWrite = Min(checked_cast<size_t>(pend - psrc), GBufferStreamBufferSizeInBytes - _offset);
+            if (_offset != GStreamBufferSizeInBytes) {
+                const size_t toWrite = Min(checked_cast<size_t>(pend - psrc), GStreamBufferSizeInBytes - _offset);
                 Assert(toWrite > 0);
 
                 ::memcpy(_buffer + _offset, psrc, toWrite);

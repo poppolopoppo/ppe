@@ -10,6 +10,10 @@
 #include "ThreadLocalHeap.h"
 #include "VirtualMemory.h"
 
+#if USE_CORE_MEMORY_DEBUGGING
+#   define WITH_CORE_ALLOCA_FALLBACK_TO_MALLOC
+#endif
+
 #ifdef WITH_CORE_ASSERT
 #   define WITH_CORE_ALLOCA_CANARY
 #endif
@@ -396,15 +400,22 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void* Alloca(size_t sizeInBytes) {
+#ifndef WITH_CORE_ALLOCA_FALLBACK_TO_MALLOC
     if (0 == sizeInBytes)
         return nullptr;
 
     return (sizeInBytes <= FAllocaStorage::MaxBlockSize)
         ? FThreadLocalAllocaStorage::Instance().Push(sizeInBytes)
         : AllocaFallback_Malloc_(sizeInBytes);
+
+#else
+    return Core::malloc(sizeInBytes);
+
+#endif
 }
 //----------------------------------------------------------------------------
 void* RelocateAlloca(void* ptr, size_t newSizeInBytes, bool keepData) {
+#ifndef WITH_CORE_ALLOCA_FALLBACK_TO_MALLOC
     if (ptr) {
         if (0 == newSizeInBytes) {
             FreeAlloca(ptr);
@@ -422,23 +433,38 @@ void* RelocateAlloca(void* ptr, size_t newSizeInBytes, bool keepData) {
     else {
         return nullptr;
     }
+
+#else
+    return Core::realloc(ptr, newSizeInBytes);
+
+#endif
 }
 //----------------------------------------------------------------------------
 void FreeAlloca(void* ptr) {
+#ifndef WITH_CORE_ALLOCA_FALLBACK_TO_MALLOC
     if (!ptr)
         return;
 
     FThreadLocalAllocaStorage::Instance().Pop(ptr);
+
+#else
+    Core::free(ptr);
+
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FAllocaStartup::Start(bool/* mainThread */) {
+#ifndef WITH_CORE_ALLOCA_FALLBACK_TO_MALLOC
     FThreadLocalAllocaStorage::Create();
+#endif
 }
 //----------------------------------------------------------------------------
 void FAllocaStartup::Shutdown() {
+#ifndef WITH_CORE_ALLOCA_FALLBACK_TO_MALLOC
     FThreadLocalAllocaStorage::Destroy();
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

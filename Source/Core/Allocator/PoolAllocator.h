@@ -5,7 +5,9 @@
 #include "Core/Allocator/PoolAllocatorTag.h"
 #include "Core/Memory/MemoryDomain.h"
 
-#define WITH_CORE_POOL_ALLOCATOR
+#if not USE_CORE_MEMORY_DEBUGGING
+#   define WITH_CORE_POOL_ALLOCATOR
+#endif
 
 namespace Core {
 class FMemoryTrackingData;
