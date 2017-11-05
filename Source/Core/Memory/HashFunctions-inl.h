@@ -16,11 +16,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 #ifdef ARCH_X64
 #   define CORE_HASH_VALUE_SEED (0xdeadbeefabadcafeULL)
-#   define CORE_HASH_VALUE_32_TO_64_IFP(_VALUE) (size_t(_VALUE)*GOLDEN_RATIO_PRIME_64)
 #   define GOLDEN_RATIO_PRIME_SIZE_T GOLDEN_RATIO_PRIME_64
 #else
 #   define CORE_HASH_VALUE_SEED (0xdeadbeefUL)
-#   define CORE_HASH_VALUE_32_TO_64_IFP(_VALUE) (size_t(_VALUE)*GOLDEN_RATIO_PRIME_32)
 #   define GOLDEN_RATIO_PRIME_SIZE_T GOLDEN_RATIO_PRIME_32
 #endif
 //----------------------------------------------------------------------------
@@ -28,78 +26,49 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-template <typename T>
-typename std::enable_if<sizeof(T) == sizeof(uint8_t), size_t>::type hash_as_pod_impl_(T&& value) {
-    size_t a = *reinterpret_cast<const uint8_t *>(&value);
-    return CORE_HASH_VALUE_32_TO_64_IFP(a^0x55+(a>>4));
-}
-template <typename T>
-typename std::enable_if<sizeof(T) == sizeof(uint16_t), size_t>::type hash_as_pod_impl_(T&& value) {
-    size_t a = *reinterpret_cast<const uint16_t *>(&value);
-    a = (a^CORE_HASH_VALUE_SEED) + (a<<4);
-    a = a ^ (a>>10);
-    a = a + (a<<7);
-    a = a ^ (a>>13);
-    return CORE_HASH_VALUE_32_TO_64_IFP(a);
-}
-template <typename T>
-typename std::enable_if<sizeof(T) == sizeof(uint32_t), size_t>::type hash_as_pod_impl_(T&& value) {
-    // http://burtleburtle.net/bob/hash/integer.html
-    size_t a = *reinterpret_cast<const uint32_t *>(&value);
-    a = (a^CORE_HASH_VALUE_SEED) + (a<<4);
-    a = a ^ (a>>10);
-    a = a + (a>>24);
-    a = a + (a<<7);
-    a = a ^ (a>>13);
-    return CORE_HASH_VALUE_32_TO_64_IFP(a);
-}
-template <typename T>
-typename std::enable_if<sizeof(T) == sizeof(uint64_t), size_t>::type hash_as_pod_impl_(T&& value) {
-    // http://www.concentric.net/~ttwang/tech/inthash.htm
-    uint64_t a = *reinterpret_cast<const uint64_t *>(&value);
-    a = a + (a>>32)^0x48655121UL;
-    a = (a^CORE_HASH_VALUE_SEED) + (a<<4);
-    a = a ^ (a>>10);
-    a = a + (a>>24);
-    a = a + (a<<7);
-    a = a ^ (a>>13);
-    return CORE_HASH_VALUE_32_TO_64_IFP(a);
-}
-template <typename T>
-typename std::enable_if<sizeof(T) == sizeof(u128), size_t>::type hash_as_pod_impl_(T&& value) {
-    // http://www.concentric.net/~ttwang/tech/inthash.htm
-    u128 x = *reinterpret_cast<const u128 *>(&value);
-    const uint64_t kMul = 0x9ddfea08eb382d69ULL;
-    uint64_t a = (x.lo ^ x.hi) * kMul;
-    a ^= (a >> 47);
-    uint64_t b = (x.hi ^ a) * kMul;
-    b ^= (b >> 44);
-    b *= kMul;
-    b ^= (b >> 41);
-    b *= kMul;
-    return size_t(b);
-}
-template <typename T>
-typename std::enable_if<
-    sizeof(T) != sizeof(u8) &&
-    sizeof(T) != sizeof(u16) &&
-    sizeof(T) != sizeof(u32) &&
-    sizeof(T) != sizeof(u64) &&
-    sizeof(T) != sizeof(u128),
-    size_t
->::type hash_as_pod_impl_(T&& pod) {
-    return hash_mem((const void *)&pod, sizeof(T));
-}
+template <typename T, size_t _Sz = sizeof(T)> struct TPODHash {
+    static FORCE_INLINE size_t fn(const T& pod) {
+        return hash_mem((const void *)&pod, sizeof(T));
+    }
+};
+template <typename T> struct TPODHash<T, sizeof(u8)> {
+    static FORCE_INLINE size_t fn(const T& pod) {
+        return hash_uint(size_t(reinterpret_cast<const u8&>(pod)));
+    }
+};
+template <typename T> struct TPODHash<T, sizeof(u16)> {
+    static FORCE_INLINE size_t fn(const T& pod) {
+        return hash_uint(size_t(reinterpret_cast<const u16&>(pod)));
+    }
+};
+template <typename T> struct TPODHash<T, sizeof(u32)> {
+    static FORCE_INLINE size_t fn(const T& pod) {
+        return hash_uint(size_t(reinterpret_cast<const u32&>(pod)));
+    }
+};
+template <typename T> struct TPODHash<T, sizeof(u64)> {
+    static FORCE_INLINE size_t fn(const T& pod) {
+        return hash_uint(reinterpret_cast<const u64&>(pod));
+    }
+};
+template <typename T> struct TPODHash<T, sizeof(u128)> {
+    static FORCE_INLINE size_t fn(const T& pod) {
+        return hash_uint(reinterpret_cast<const u128&>(pod));
+    }
+};
+template <typename T> struct TPODHash<T, sizeof(u32)*3> {
+    struct uint96_t { u64 lo; u32 hi; };
+    static FORCE_INLINE size_t fn(const T& pod) {
+        const uint96_t& uint96 = reinterpret_cast<const uint96_t&>(pod);
+        return hash_uint(u128{ uint96.lo, uint96.hi });
+    }
+};
 //----------------------------------------------------------------------------
 } //!namespace details
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE size_t hash_as_pod(T&& pod) {
-    return details::hash_as_pod_impl_(std::forward<T>(pod));
-}
-//----------------------------------------------------------------------------
-inline size_t hash_ptr(const void* ptr) {
-    return details::hash_as_pod_impl_(intptr_t(ptr));
+size_t hash_as_pod(const T& pod) {
+    return details::TPODHash<T>::fn(pod);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -11,39 +11,29 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define HASH_AS_POD_DEF(_Prefix, _Type) \
-    _Prefix hash_t hash_value(_Type value) { return hash_as_pod(value); }
+FORCE_INLINE hash_t hash_value(bool v)  { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(i8 v)    { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(u8 v)    { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(i16 v)   { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(u16 v)   { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(i32 v)   { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(u32 v)   { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(i64 v)   { return hash_uint(u64(v)); }
+FORCE_INLINE hash_t hash_value(u64 v)   { return hash_uint(v); }
+FORCE_INLINE hash_t hash_value(u128 v)  { return hash_uint(v); }
+FORCE_INLINE hash_t hash_value(u256 v)  { return hash_as_pod(v); }
+FORCE_INLINE hash_t hash_value(float v) { return (0 == v ? 0 : hash_uint(*(u32*)&v)); } // 0.0f and -0.0f must have the same hash
+FORCE_INLINE hash_t hash_value(double v){ return (0 == v ? 0 : hash_uint(*(u64*)&v)); } // 0.0  and -0.0  must have the same hash
 //----------------------------------------------------------------------------
-HASH_AS_POD_DEF(inline, bool)
-HASH_AS_POD_DEF(inline, i8)
-HASH_AS_POD_DEF(inline, u8)
-HASH_AS_POD_DEF(inline, i16)
-HASH_AS_POD_DEF(inline, u16)
-HASH_AS_POD_DEF(inline, i32)
-HASH_AS_POD_DEF(inline, u32)
-HASH_AS_POD_DEF(inline, i64)
-HASH_AS_POD_DEF(inline, u64)
-HASH_AS_POD_DEF(inline, u128)
-HASH_AS_POD_DEF(inline, u256)
-//----------------------------------------------------------------------------
-inline hash_t hash_value(float value) {
-    // -0.0 and 0.0 should return same hash
-    return (0.f == value ? 0 : hash_as_pod(value));
-}
-//----------------------------------------------------------------------------
-inline hash_t hash_value(double value) {
-    // -0.0 and 0.0 should return same hash
-    return (0.0 == value ? 0 : hash_as_pod(value));
+template <typename T>
+FORCE_INLINE hash_t hash_value(const T *ptr) {
+    return hash_ptr(ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-typename std::enable_if<std::is_enum<T>::value, hash_t>::type hash_value(T value) {
+FORCE_INLINE auto hash_value(T value)
+    -> typename std::enable_if<std::is_enum<T>::value, hash_t>::type {
     return hash_as_pod(value);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-hash_t hash_value(const T *ptr) {
-    return hash_as_pod(intptr_t(ptr));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
