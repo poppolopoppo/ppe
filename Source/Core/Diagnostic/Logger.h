@@ -8,7 +8,7 @@
 #include <iosfwd>
 #include <mutex>
 
-#if !defined(FINAL_RELEASE)
+#if !defined(FINAL_RELEASE) || USE_CORE_FORCE_LOGGING
 #   define USE_DEBUG_LOGGER
 #endif
 
@@ -91,7 +91,7 @@ void Log(ELogCategory category, const FWStringView& format, _Arg0&& arg0, _Args&
     LogArgs(category, format, FFormatArgListW(functors));
 }
 //----------------------------------------------------------------------------
-class FLoggerStream : public FThreadLocalWOStringStream {
+class FLoggerStream : public TBasicOStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(Logger, wchar_t)> {
 public:
     FLoggerStream(ELogCategory category) : _category(category) {}
     ~FLoggerStream() { Log(_category, MakeStringView(str())); }

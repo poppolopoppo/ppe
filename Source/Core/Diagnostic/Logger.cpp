@@ -354,8 +354,8 @@ void FLoggerStartup::Start() {
     Assert(LowLevelLogger_() == CurrentLogger_());
 
     // don't buffer output
-    if (setvbuf(stdout, nullptr, _IONBF, 0)) AssertNotReached();
-    if (setvbuf(stderr, nullptr, _IONBF, 0)) AssertNotReached();
+    if (::setvbuf(stdout, nullptr, _IONBF, 0)) AssertNotReached();
+    if (::setvbuf(stderr, nullptr, _IONBF, 0)) AssertNotReached();
 
     void* const storage = (void*)std::addressof(GLoggerDefaultStorage);
 
