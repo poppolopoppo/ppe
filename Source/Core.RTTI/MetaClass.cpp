@@ -217,6 +217,8 @@ void FMetaClass::OnRegister() {
     Assert(_propertiesAll.empty());
 
     _flags = _flags + EClassFlags::Registered;
+
+    _functionsSelf.shrink_to_fit();
     _propertiesSelf.shrink_to_fit();
 
     const FMetaClass* parent = Parent();
