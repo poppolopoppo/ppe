@@ -65,6 +65,8 @@ static bool Until_(const char ch) {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+// TODO : Minimize indirect writes
+// https://www.youtube.com/watch?v=o4-CwDo2zpg
 template <size_t _Base>
 static void Itoa_(int64_t value, FString& str) {
     static_assert(1 < _Base && _Base <= 16, "invalid _Base");
