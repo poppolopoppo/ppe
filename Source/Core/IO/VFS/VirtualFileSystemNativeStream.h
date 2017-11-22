@@ -45,6 +45,9 @@ public:
 private:
     int _handle;
     const FFilename _filename;
+#ifndef FINAL_RELEASE
+    const FWString _filenameForDebug;
+#endif
 };
 //----------------------------------------------------------------------------
 class FVirtualFileSystemNativeFileOStream : public IVirtualFileSystemOStream, public Meta::FThreadResource {
@@ -72,6 +75,9 @@ public:
 private:
     int _handle;
     const FFilename _filename;
+#ifndef FINAL_RELEASE
+    const FWString _filenameForDebug;
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -137,6 +137,9 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                             const TMemoryView<const FMemoryTrackingData * const>& datas ) {
     Assert(header);
 
+    if (datas.empty())
+        return;
+
     oss << L"Reporting tracking data :" << eol;
 
     STACKLOCAL_POD_ARRAY(const FMemoryTrackingData *, sortedDatas, datas.size());
@@ -175,7 +178,8 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
         Assert(data);
         tmp.Reset();
         TrackingDataAbsoluteName_(tmp, *data);
-        Format(oss, fmt,    tmp.NullTerminatedStr(),
+        Format(oss, fmt,
+            tmp.NullTerminatedStr(),
             Fmt::FCountOfElements{ data->BlockCount() },
             Fmt::FCountOfElements{ data->MaxBlockCount() },
             Fmt::FCountOfElements{ data->AllocationCount() },

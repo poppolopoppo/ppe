@@ -702,19 +702,19 @@ FTaskWaitHandle::FTaskWaitHandle(FTaskWaitHandle&& rvalue) {
 }
 //----------------------------------------------------------------------------
 FTaskWaitHandle& FTaskWaitHandle::operator =(FTaskWaitHandle&& rvalue) {
-    Assert(nullptr == _counter);
+    Assert(not _counter.valid());
 
     _priority = rvalue._priority;
     _counter = std::move(rvalue._counter);
 
     rvalue._priority = ETaskPriority::Normal;
-    Assert(nullptr == rvalue._counter);
+    Assert(not rvalue._counter.valid());
 
     return *this;
 }
 //----------------------------------------------------------------------------
 bool FTaskWaitHandle::Finished() const {
-    Assert(nullptr != _counter);
+    Assert(not _counter.valid());
     return _counter->Finished();
 }
 //----------------------------------------------------------------------------

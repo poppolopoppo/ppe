@@ -24,7 +24,11 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(VirtualFileSystem, FVirtualFileSystemNat
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileIStream::FVirtualFileSystemNativeFileIStream(const FFilename& filename, const wchar_t* native, EAccessPolicy policy)
 :   _handle(FPlatformIO::Open(native, EOpenPolicy::Readable, policy))
-,   _filename(filename) {}
+,   _filename(filename)
+#ifndef FINAL_RELEASE
+,   _filenameForDebug(_filename.ToWString())
+#endif
+{}
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileIStream::~FVirtualFileSystemNativeFileIStream() {
     if (FPlatformIO::InvalidHandle != _handle)
@@ -33,7 +37,11 @@ FVirtualFileSystemNativeFileIStream::~FVirtualFileSystemNativeFileIStream() {
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileIStream::FVirtualFileSystemNativeFileIStream(FVirtualFileSystemNativeFileIStream&& rvalue)
 :   _handle(rvalue._handle)
-,   _filename(std::move(rvalue._filename)) {
+,   _filename(std::move(rvalue._filename))
+#ifndef FINAL_RELEASE
+,   _filenameForDebug(std::move(rvalue._filenameForDebug))
+#endif
+{
     rvalue._handle = FPlatformIO::InvalidHandle;
 }
 //----------------------------------------------------------------------------
@@ -57,7 +65,7 @@ bool FVirtualFileSystemNativeFileIStream::Read(void* storage, std::streamsize si
     THIS_THREADRESOURCE_CHECKACCESS();
 
     std::streamsize read = sizeInBytes;
-    IOBENCHMARK_SCOPE(L"NATIVE-READ", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), &read);
+    IOBENCHMARK_SCOPE(L"NATIVE-READ", _filenameForDebug.c_str(), &read);
 
     read = FPlatformIO::Read(_handle, storage, read);
 
@@ -68,7 +76,7 @@ size_t FVirtualFileSystemNativeFileIStream::ReadSome(void* storage, size_t eltsi
     THIS_THREADRESOURCE_CHECKACCESS();
 
     std::streamsize read = checked_cast<std::streamsize>(eltsize * count);
-    IOBENCHMARK_SCOPE(L"NATIVE-READ", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), &read);
+    IOBENCHMARK_SCOPE(L"NATIVE-READ", _filenameForDebug.c_str(), &read);
 
     read = FPlatformIO::Read(_handle, storage, read);
 
@@ -103,7 +111,11 @@ std::streamsize FVirtualFileSystemNativeFileIStream::SizeInBytes() const {
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileOStream::FVirtualFileSystemNativeFileOStream(const FFilename& filename, const wchar_t* native, EAccessPolicy policy)
 :   _handle(FPlatformIO::Open(native, EOpenPolicy::Writable, policy))
-,   _filename(filename) {}
+,   _filename(filename)
+#ifndef FINAL_RELEASE
+,   _filenameForDebug(_filename.ToWString())
+#endif
+{}
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileOStream::~FVirtualFileSystemNativeFileOStream() {
     if (FPlatformIO::InvalidHandle != _handle)
@@ -112,7 +124,11 @@ FVirtualFileSystemNativeFileOStream::~FVirtualFileSystemNativeFileOStream() {
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeFileOStream::FVirtualFileSystemNativeFileOStream(FVirtualFileSystemNativeFileOStream&& rvalue)
 :   _handle(rvalue._handle)
-,   _filename(std::move(rvalue._filename)) {
+,   _filename(std::move(rvalue._filename))
+#ifndef FINAL_RELEASE
+,   _filenameForDebug(std::move(rvalue._filenameForDebug))
+#endif
+{
     rvalue._handle = FPlatformIO::InvalidHandle;
 }
 //----------------------------------------------------------------------------
@@ -136,7 +152,7 @@ bool FVirtualFileSystemNativeFileOStream::Write(const void* storage, std::stream
     THIS_THREADRESOURCE_CHECKACCESS();
 
     std::streamsize written = sizeInBytes;
-    IOBENCHMARK_SCOPE(L"NATIVE-WRITE", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), &written);
+    IOBENCHMARK_SCOPE(L"NATIVE-WRITE", _filenameForDebug.c_str(), &written);
 
     written = FPlatformIO::Write(_handle, storage, sizeInBytes);
 
@@ -149,7 +165,7 @@ size_t FVirtualFileSystemNativeFileOStream::WriteSome(const void* storage, size_
     Assert(count);
 
     std::streamsize written = checked_cast<std::streamsize>(eltsize * count);
-    IOBENCHMARK_SCOPE(L"NATIVE-WRITE", INPLACE_TO_WSTRINGVIEW(_filename, FileSystem::MaxPathLength).c_str(), &written);
+    IOBENCHMARK_SCOPE(L"NATIVE-WRITE", _filenameForDebug.c_str(), &written);
 
     written = FPlatformIO::Write(_handle, storage, written);
 
