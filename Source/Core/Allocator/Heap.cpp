@@ -56,6 +56,10 @@ void* FHeap::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return Core::aligned_realloc(ptr, size, alignment);
 }
 //----------------------------------------------------------------------------
+size_t FHeap::SnapSize(size_t size) const {
+    return Core::malloc_snap_size(size);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //namespace
@@ -218,6 +222,10 @@ void* FHeap::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     aligned = reinterpret_cast<void**>(((size_t)new_ptr + alignment) & (~(alignment - 1)));
     aligned[-1] = new_ptr;
     return new_ptr;
+}
+//----------------------------------------------------------------------------
+size_t FHeap::SnapSize(size_t size) const {
+    return ROUND_TO_NEXT_16(size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -472,6 +480,12 @@ void* FHeap::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     }
 
     return result;
+}
+//----------------------------------------------------------------------------
+size_t FHeap::SnapSize(size_t size) const {
+    return ((size < FHeapHandle_::LargeAllocSize)
+        ? Core::malloc_snap_size(size)
+        : ROUND_TO_NEXT_64K(size) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

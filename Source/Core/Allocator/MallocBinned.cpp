@@ -708,6 +708,12 @@ struct CACHELINE_ALIGNED FBinnedAllocator_ {
         else
             GInstance.ReleaseLargeBlock_(p);
     }
+
+    FORCE_INLINE static size_t SnapSize(size_t sizeInBytes) {
+        STATIC_ASSERT(ALLOCATION_GRANULARITY == 64<<10);
+        return (sizeInBytes <= FBinnedChunk_::MaxSizeInBytes
+            ? FBinnedChunk_::GClassesSize[FBinnedChunk_::MakeClass(sizeInBytes)]
+            : ROUND_TO_NEXT_64K(sizeInBytes) );
     }
 
     FORCE_INLINE static size_t RegionSize(void* p) {
@@ -798,6 +804,15 @@ void* FMallocBinned::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
 //----------------------------------------------------------------------------
 void FMallocBinned::ReleasePendingBlocks() {
     FBinnedThreadCache_::InstanceTLS().ReleasePendingBlocks();
+}
+//----------------------------------------------------------------------------
+size_t FMallocBinned::SnapSize(size_t size) {
+    return FBinnedAllocator_::SnapSize(size);
+}
+//----------------------------------------------------------------------------
+size_t FMallocBinned::RegionSize(void* ptr) {
+    Assert(ptr);
+    return FBinnedAllocator_::RegionSize(ptr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -159,8 +159,8 @@ TMemoryView<u8> TMemoryStream<_Allocator>::Append(size_t sizeInBytes) {
     _size = Max(sizeInBytes + _offsetO, _size);
 
     if (_size > _storage.size()) { // doubles the storage size if there is not enough space
-        const size_t growCapacity = (_storage.size() ? _storage.size() * 2 : 128);
-        const size_t newCapacity = Max(_size, growCapacity);
+        const size_t newCapacity = AllocatorSnapSize(_storage.allocator(), Max(_size, _storage.size() * 2));
+        Assert(newCapacity >= _size);
         _storage.Resize_KeepData(newCapacity);
     }
 

@@ -56,6 +56,11 @@ struct FMalloc_ {
     FORCE_INLINE static void* AlignedCalloc(size_t nmemb, size_t size, size_t alignment);
     FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment);
 
+    FORCE_INLINE static size_t  SnapSize(size_t size);
+
+#ifndef FINAL_RELEASE
+    FORCE_INLINE static size_t  RegionSize(void* ptr);
+#endif
     FORCE_INLINE static void  ReleasePendingBlocks();
 };
 //----------------------------------------------------------------------------
@@ -64,7 +69,6 @@ void* FMalloc_::Malloc(size_t size) { return std::malloc(size); }
 void  FMalloc_::Free(void* ptr) { std::free(ptr); }
 void* FMalloc_::Calloc(size_t nmemb, size_t size) { return std::calloc(nmemb, size); }
 void* FMalloc_::Realloc(void *ptr, size_t size) { return std::realloc(ptr, size); }
-
 void* FMalloc_::AlignedMalloc(size_t size, size_t alignment) { return _aligned_malloc(size, alignment); }
 void  FMalloc_::AlignedFree(void *ptr) { _aligned_free(ptr); }
 void* FMalloc_::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
@@ -75,8 +79,15 @@ void* FMalloc_::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
 void* FMalloc_::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return _aligned_realloc(ptr, size, alignment);
 }
-
 void  FMalloc_::ReleasePendingBlocks() {}
+size_t FMalloc_::SnapSize(size_t size) { return size; }
+size_t FMalloc_::RegionSize(void* ptr) {
+#   ifdef PLATFORM_WINDOWS
+    return ::_msize(ptr);
+#   else
+    return 0;
+#   endif
+}
 #endif //!CORE_MALLOC_ALLOCATOR_STD
 //----------------------------------------------------------------------------
 #if (CORE_MALLOC_ALLOCATOR == CORE_MALLOC_ALLOCATOR_BINNED)
@@ -88,7 +99,6 @@ void* FMalloc_::Calloc(size_t nmemb, size_t size) {
     return p;
 }
 void* FMalloc_::Realloc(void *ptr, size_t size) { return FMallocBinned::Realloc(ptr, size); }
-
 void* FMalloc_::AlignedMalloc(size_t size, size_t alignment) { return FMallocBinned::AlignedMalloc(size, alignment); }
 void  FMalloc_::AlignedFree(void *ptr) { FMallocBinned::AlignedFree(ptr); }
 void* FMalloc_::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
@@ -99,9 +109,14 @@ void* FMalloc_::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
 void* FMalloc_::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return FMallocBinned::AlignedRealloc(ptr, size, alignment);
 }
-
 void  FMalloc_::ReleasePendingBlocks() {
     FMallocBinned::ReleasePendingBlocks();
+}
+size_t FMalloc_::SnapSize(size_t size) {
+    return FMallocBinned::SnapSize(size);
+}
+size_t FMalloc_::RegionSize(void* ptr) {
+    return FMallocBinned::RegionSize(ptr);
 }
 #endif //!CORE_MALLOC_ALLOCATOR_BINNED
 //----------------------------------------------------------------------------
@@ -466,6 +481,11 @@ void*   (aligned_realloc)(void *ptr, size_t size, size_t alignment) {
 NOALIAS
 void    (malloc_release_pending_blocks)() {
     FMalloc_::ReleasePendingBlocks();
+}
+//----------------------------------------------------------------------------
+NOALIAS
+size_t  (malloc_snap_size)(size_t size) {
+    return FMalloc_::SnapSize(size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

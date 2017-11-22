@@ -392,9 +392,9 @@ template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::reserve_AtLeast(size_type count) {
     if (_capacity < count) {
         size_type newCapacity = (0 == _capacity ? 1 : _capacity);
-        newCapacity = Max(AllocationMinSize(allocator_()), newCapacity);
 
-        while (newCapacity < count) { newCapacity = newCapacity<<1; }
+        while (newCapacity < count)
+            newCapacity = newCapacity<<1;
 
         reserve_Exactly(newCapacity);
     }
@@ -408,7 +408,7 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
             Assert(0 < _capacity);
             allocator_traits::deallocate(allocator_(), _data, _capacity);
         }
-        count = Max(AllocationMinSize(allocator_()), count);
+        count = AllocatorSnapSize(allocator_(), count);
         _data = allocator_traits::allocate(allocator_(), count);
         _capacity = checked_cast<u32>(count);
     }
@@ -417,12 +417,12 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::reserve_Exactly(size_type count) {
-    count = Max(AllocationMinSize(allocator_()), count);
+    count = AllocatorSnapSize(allocator_(), count);
     if (_capacity == count)
         return;
     AssertRelease(count >= _size);
 #if 1 //%TODO
-    _data = Relocate(allocator_(), TMemoryView<value_type>(_data, _size), count, _capacity);
+    _data = Relocate(allocator_(), MakeView(), count, _capacity);
     _capacity = checked_cast<u32>(count);
 #else
     T* newdata = nullptr;

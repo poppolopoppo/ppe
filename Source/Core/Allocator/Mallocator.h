@@ -111,8 +111,8 @@ bool operator !=(const TMallocator<T, A>& lhs, const TMallocator<U, B>& rhs) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
-typename TAllocatorBase<T>::size_type AllocationMinSize(const TMallocator<T, _Alignment>& ) {
-    return 0;
+size_t AllocatorSnapSize(const TMallocator<T, _Alignment>&, size_t size) {
+    return (Core::malloc_snap_size(size * sizeof(T)) / sizeof(T));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

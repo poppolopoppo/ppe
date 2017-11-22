@@ -146,6 +146,8 @@ public:
         >   other;
     };
 
+    const fallback_type& FallbackAllocator() const { return static_cast<const fallback_type&>(*this); }
+
     TInSituAllocator(storage_type& insitu) noexcept : _insitu(insitu) {}
     template <typename U, typename A>
     TInSituAllocator(const TInSituAllocator<U, _SizeInBytes, A>& other) noexcept : _insitu(other._insitu) {}
@@ -248,8 +250,9 @@ void* TInSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _SizeInBytes, typename _Allocator>
-typename TAllocatorBase<T>::size_type AllocationMinSize(const TInSituAllocator<T, _SizeInBytes, _Allocator>& ) {
-    return (_SizeInBytes / sizeof(T));
+size_t AllocatorSnapSize(const TInSituAllocator<T, _SizeInBytes, _Allocator>& allocator, size_t size) {
+    constexpr size_t GInSituCount = (_SizeInBytes / sizeof(T));
+    return (size < GInSituCount ? GInSituCount : AllocatorSnapSize(allocator.FallbackAllocator(), size));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

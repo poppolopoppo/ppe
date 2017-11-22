@@ -55,6 +55,8 @@ public:
     template <size_t _Alignment>
     void*   Realloc(void *ptr, size_t size, Meta::TEnableIf< !Meta::TIsNaturalyAligned<_Alignment>::value >* = 0);
 
+    size_t  SnapSize(size_t size) const;
+
     void    Swap(FHeap& other);
 
 private:

@@ -33,6 +33,9 @@ void*   CORE_API (aligned_realloc)(void *ptr, size_t size, size_t alignment);
 NOALIAS
 void    CORE_API (malloc_release_pending_blocks)();
 //----------------------------------------------------------------------------
+NOALIAS
+size_t  CORE_API (malloc_snap_size)(size_t size);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <size_t _Alignment>

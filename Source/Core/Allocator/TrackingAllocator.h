@@ -109,7 +109,7 @@ public:
     }
 
     FMemoryTrackingData* TrackingData() const { return &(domain_type::TrackingData); }
-    const _Allocator& InnerAllocator() const { return (*this); }
+    const _Allocator& WrappedAllocator() const { return static_cast<const _Allocator&>(*this); }
 
     size_type max_size() const { return base_type::max_size(); }
 
@@ -142,8 +142,8 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Domain, typename _Allocator>
-typename _Allocator::size_type AllocationMinSize(const TTrackingAllocator<_Domain, _Allocator>& allocator) {
-    return AllocationMinSize(allocator.InnerAllocator());
+size_t AllocationSnapSize(const TTrackingAllocator<_Domain, _Allocator>& allocator, size_t size) {
+    return AllocationSnapSize(allocator.WrappedAllocator(), size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

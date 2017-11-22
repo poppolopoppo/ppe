@@ -220,11 +220,13 @@ typename std::enable_if<
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Must be overloaded by each allocator, used to correctly handle insitu allocations
+// Can be overloaded by each allocator,
+//  - Correctly handle insitu allocations
+//  - Minimize wasted size for heap allocations
 //----------------------------------------------------------------------------
-template <typename T>
-size_t AllocationMinSize(const std::allocator<T>& ) {
-    return 0;
+template <typename _Allocator>
+size_t AllocatorSnapSize(const _Allocator&, size_t size) {
+    return size; // identity by default (<=> no snapping)
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

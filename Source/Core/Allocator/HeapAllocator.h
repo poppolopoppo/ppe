@@ -117,8 +117,9 @@ void* THeapAllocator<T, _HeapSingleton>::relocate(void* p, size_type newSize, si
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton >
-typename TAllocatorBase<T>::size_type AllocationMinSize(const THeapAllocator<T, _HeapSingleton>& ) {
-    return 0;
+size_t AllocatorSnapSize(const THeapAllocator<T, _HeapSingleton>&, size_t size) {
+    const auto& heap = THeapAllocator<T, _HeapSingleton>::HeapInstance();
+    return (heap.SnapSize(size * sizeof(T)) / sizeof(T));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
