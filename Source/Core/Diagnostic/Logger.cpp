@@ -4,6 +4,13 @@
 
 #include "Misc/TargetPlatform.h"
 
+#include <fcntl.h>
+#include <io.h>
+
+#ifdef PLATFORM_WINDOWS
+#   include "Misc/Platform_Windows.h"
+#endif
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -82,8 +89,8 @@ FWStringView LogCategoryToWCStr(ELogCategory category) {
 #include <iostream>
 #include <sstream>
 
-#define CORE_DUMP_CALLSTACK_ON_WARNING  1
-#define CORE_DUMP_CALLSTACK_ON_ERROR    1
+#define CORE_DUMP_CALLSTACK_ON_WARNING  0
+#define CORE_DUMP_CALLSTACK_ON_ERROR    0
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -116,6 +123,9 @@ public:
 
     // Used before main, no dependencies on allocators
     virtual void Log(ELogCategory category, const FWStringView& text, const FFormatArgListW& args) override {
+        if (not FPlatform::IsDebuggerAttached())
+            return; // because we are using OutputDebug()
+
         wchar_t buffer[2048];
 
         FWOCStrStream oss(buffer);
@@ -165,9 +175,10 @@ void FlushLog() {
 }
 //----------------------------------------------------------------------------
 void Log(ELogCategory category, const FWStringView& text) {
-    Assert(text.size());
-    Assert('\0' == text.data()[text.size()]); // text must be null terminated !
-    CurrentLogger_()->Log(category, text, FFormatArgListW());
+    if (not text.empty()) {
+        Assert('\0' == text.data()[text.size()]); // text must be null terminated !
+        CurrentLogger_()->Log(category, text, FFormatArgListW());
+    }
 }
 //----------------------------------------------------------------------------
 void LogArgs(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) {
@@ -244,6 +255,8 @@ void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView
 }
 //----------------------------------------------------------------------------
 void FOutputDebugLogger::FlushThreadSafe() {}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FFormatArgListW& args) {
 #ifdef PLATFORM_WINDOWS
@@ -325,6 +338,8 @@ void FStdoutLogger::FlushThreadSafe() {
     std::wcout.flush();
 }
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 void FStderrLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FFormatArgListW& args) {
     if (ELogCategory::Callstack != category)
         Format(std::wcerr, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
@@ -344,6 +359,30 @@ void FStderrLogger::FlushThreadSafe() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#ifdef PLATFORM_WINDOWS
+class FConsoleWriterW : public std::basic_streambuf<wchar_t> {
+public:
+    explicit FConsoleWriterW(::HANDLE out) : _out(out) {}
+
+    virtual int_type overflow(int_type c = traits_type::eof()) {
+        ::DWORD written;
+        const wchar_t wch = wchar_t(c);
+        const ::BOOL res = ::WriteConsoleW(_out, &wch, 1, &written, NULL);
+        (void)res;
+        return 1;
+    }
+
+    static FConsoleWriterW& Stdout() {
+        static FConsoleWriterW GInstance(::GetStdHandle(STD_OUTPUT_HANDLE));
+        return GInstance;
+    }
+
+private:
+    ::HANDLE _out;
+};
+std::basic_streambuf<wchar_t>* GStdWCoutOriginalReadBuffer = nullptr;
+#endif
+//----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(FAbstractThreadSafeLogger) == sizeof(FOutputDebugLogger));
 STATIC_ASSERT(sizeof(FAbstractThreadSafeLogger) == sizeof(FStdoutLogger));
 STATIC_ASSERT(sizeof(FAbstractThreadSafeLogger) == sizeof(FStderrLogger));
@@ -353,9 +392,33 @@ static POD_STORAGE(FAbstractThreadSafeLogger) GLoggerDefaultStorage;
 void FLoggerStartup::Start() {
     Assert(LowLevelLogger_() == CurrentLogger_());
 
+    // set locale to UTF-8
+    //_setmode(_fileno(stdout), _O_U16TEXT);
+    //_setmode(_fileno(stderr), _O_U16TEXT);
+
     // don't buffer output
     if (::setvbuf(stdout, nullptr, _IONBF, 0)) AssertNotReached();
     if (::setvbuf(stderr, nullptr, _IONBF, 0)) AssertNotReached();
+    /*
+    std::cout .setf(std::ios::unitbuf);
+    std::wcout.setf(std::ios::unitbuf);
+    std::cerr .setf(std::ios::unitbuf);
+    std::wcerr.setf(std::ios::unitbuf);
+    */
+
+    // workaround for windows and unicode
+#if PLATFORM_WINDOWS
+    Assert(nullptr == GStdWCoutOriginalReadBuffer);
+    GStdWCoutOriginalReadBuffer = std::wcout.rdbuf(&FConsoleWriterW::Stdout());
+#endif
+
+    // throw exceptions instead of silently failing
+    std::cout .exceptions(std::ostream::failbit  | std::ostream::badbit );
+    std::wcout.exceptions(std::wostream::failbit | std::wostream::badbit);
+    std::cerr .exceptions(std::ostream::failbit  | std::ostream::badbit );
+    std::wcerr.exceptions(std::wostream::failbit | std::wostream::badbit);
+    std::cin  .exceptions(std::istream::failbit  | std::istream::badbit );
+    std::wcin .exceptions(std::wistream::failbit | std::wistream::badbit);
 
     void* const storage = (void*)std::addressof(GLoggerDefaultStorage);
 
@@ -378,6 +441,13 @@ void FLoggerStartup::Shutdown() {
         logger->~ILogger();
     else
         checked_delete(logger);
+
+    // workaround for windows and unicode
+#if PLATFORM_WINDOWS
+    Assert(GStdWCoutOriginalReadBuffer);
+    std::wcout.rdbuf(GStdWCoutOriginalReadBuffer);
+    GStdWCoutOriginalReadBuffer = nullptr;
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
