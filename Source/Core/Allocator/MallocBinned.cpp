@@ -451,6 +451,8 @@ struct FBinnedThreadCache_ {
         return GInstanceTLS;
     }
 
+    static THREAD_LOCAL FBinnedThreadCache_& GInstanceTLS;
+
     FBinnedThreadCache_(const FBinnedThreadCache_&) = delete;
     FBinnedThreadCache_& operator =(const FBinnedThreadCache_&) = delete;
 
@@ -464,7 +466,6 @@ struct FBinnedThreadCache_ {
         auto& bucket = _buckets[sizeClass];
         void* p;
 
-    TRY_CHUNK_ALLOCATION:
         // chunks with free blocks are always at head, so if it failed here we need a new page
         FBinnedChunk_* chunk = bucket.Head();
         Assert(!chunk || this == chunk->_threadCache);
@@ -483,9 +484,9 @@ struct FBinnedThreadCache_ {
 
         // try to release pending blocks to get free memory before reserving a new page
         if (ReleasePendingBlocks())
-            goto TRY_CHUNK_ALLOCATION;
+            return Allocate(sizeInBytes);
 
-        // register new page a head of buckets
+        // register new page at head of buckets
         chunk = new ((void*)AllocPage_()) FBinnedChunk_(this, sizeClass);
         bucket.PushFront(chunk);
 
@@ -663,15 +664,19 @@ private:
         }
     }
 };
+THREAD_LOCAL FBinnedThreadCache_& FBinnedThreadCache_::GInstanceTLS = FBinnedThreadCache_::InstanceTLS();
 //----------------------------------------------------------------------------
 struct CACHELINE_ALIGNED FBinnedAllocator_ {
     STATIC_CONST_INTEGRAL(size_t, VMCacheBlocks, 32);
-    STATIC_CONST_INTEGRAL(size_t, VMCacheSizeInBytes,   16*1024*1024); // <=> 16 mo global cache for large blocks
+    STATIC_CONST_INTEGRAL(size_t, VMCacheSizeInBytes, 16*1024*1024); // <=> 16 mo global cache for large blocks
 
     static FBinnedAllocator_& Instance() {
         static FBinnedAllocator_ GInstance;
         return GInstance;
     }
+
+    static FBinnedAllocator_& GInstance;
+
 #ifdef WITH_CORE_ASSERT
     static THREAD_LOCAL bool GIsInAllocatorTLS;
     struct FCheckReentrancy {
@@ -750,6 +755,7 @@ private:
         _vm.Free(p);
     }
 };
+FBinnedAllocator_& FBinnedAllocator_::GInstance = FBinnedAllocator_::Instance();
 #ifdef WITH_CORE_ASSERT
 THREAD_LOCAL bool FBinnedAllocator_::GIsInAllocatorTLS = false;
 #endif
