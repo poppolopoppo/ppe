@@ -11,6 +11,8 @@
 #   include <wchar.h>
 #endif
 
+#define USE_CORE_DEBUGGER_PRESENT 1 // set to 0 to fake non-attached to a debugger behavior %_NOCOMMIT%
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -135,10 +137,14 @@ void FPlatform::DebugBreakAttach() {
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 bool FPlatform::IsDebuggerAttached() {
-#ifdef PLATFORM_WINDOWS
-    return ::IsDebuggerPresent() ? true : false;
+#if USE_CORE_DEBUGGER_PRESENT
+    return false;
 #else
-#   error "no support"
+#   ifdef PLATFORM_WINDOWS
+        return ::IsDebuggerPresent() ? true : false;
+#   else
+#       error "no support"
+#   endif
 #endif
 }
 #endif
@@ -202,7 +208,7 @@ auto FPlatformIO::Open(const wchar_t* filename, EOpenPolicy openMode, EAccessPol
     if (accessFlags ^ EAccessPolicy::TextU16)       oflag |= _O_U16TEXT;
     if (accessFlags ^ EAccessPolicy::TextW)         oflag |= _O_WTEXT;
 
-    Assert(Meta::BitSetsCount(oflag) <= 1); // non overlapping options !
+    Assert(Meta::popcnt(size_t(oflag)) <= 1); // non overlapping options !
 
     if (accessFlags ^ EAccessPolicy::Create)        oflag |= _O_CREAT;
     if (accessFlags ^ EAccessPolicy::Append)        oflag |= _O_APPEND;
@@ -211,13 +217,13 @@ auto FPlatformIO::Open(const wchar_t* filename, EOpenPolicy openMode, EAccessPol
     if (accessFlags ^ EAccessPolicy::Random)        oflag |= _O_RANDOM;
     if (accessFlags ^ EAccessPolicy::Sequential)    oflag |= _O_SEQUENTIAL;
 
-    Assert(Meta::BitSetsCount(oflag & (_O_RANDOM | _O_SEQUENTIAL)) <= 1); // non overlapping options !
+    Assert(Meta::popcnt(size_t(oflag) & (_O_RANDOM | _O_SEQUENTIAL)) <= 1); // non overlapping options !
 
     if (accessFlags ^ EAccessPolicy::ShortLived)    oflag |= _O_SHORT_LIVED;
     if (accessFlags ^ EAccessPolicy::Temporary)     oflag |= _O_TEMPORARY;
     if (accessFlags ^ EAccessPolicy::Exclusive)     oflag |= _O_EXCL;
 
-    Assert(Meta::BitSetsCount(oflag & (_O_SHORT_LIVED | _O_TEMPORARY)) <= 1); // non overlapping options !
+    Assert(Meta::popcnt(size_t(oflag) & (_O_SHORT_LIVED | _O_TEMPORARY)) <= 1); // non overlapping options !
     Assert(!(oflag & (_O_SHORT_LIVED | _O_TEMPORARY | _O_EXCL)) || (oflag & _O_CREAT)); // must use _O_CREAT with these flags !
 
     switch (openMode) {
