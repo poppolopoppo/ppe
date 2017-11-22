@@ -11,19 +11,37 @@ class TMemoryView;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Murmur-inspired hashing: https://github.com/google/farmhash/blob/master/dev/farmhash.h
-inline constexpr u64 hash_uint64(u64 value) {
-    const u64 kMul = 0x9ddfea08eb382d69ULL;
+inline CONSTEXPR u64 hash_uint64(u64 b) {
+#if 1 // for constexpr
+    b *= 0x9ddfea08eb382d69ULL;
+    b ^= (b >> 44);
+    b *= 0x9ddfea08eb382d69ULL;
+    b ^= (b >> 41);
+    b *= 0x9ddfea08eb382d69ULL;
+#else
+    constexpr u64 kMul = 0x9ddfea08eb382d69ULL;
     u64 b = value * kMul;
     b ^= (b >> 44);
     b *= kMul;
     b ^= (b >> 41);
     b *= kMul;
+#endif
     return b;
 }
 //----------------------------------------------------------------------------
 // Murmur-inspired hashing: https://github.com/google/farmhash/blob/master/dev/farmhash.h
-FORCE_INLINE constexpr u64 hash_uint64(u128 value) {
-    const u64 kMul = 0x9ddfea08eb382d69ULL;
+inline CONSTEXPR u64 hash_uint64(u128 b) {
+#if 1 // for constexpr
+    b.lo  = (b.lo ^ b.hi) * 0x9ddfea08eb382d69ULL;
+    b.lo ^= (b.lo >> 47);
+    b.hi  = (b.hi ^ b.lo) * 0x9ddfea08eb382d69ULL;
+    b.hi ^= (b.hi >> 44);
+    b.hi *= 0x9ddfea08eb382d69ULL;
+    b.hi ^= (b.hi >> 41);
+    b.hi *= 0x9ddfea08eb382d69ULL;
+    return b.hi;
+#else
+    constexpr u64 kMul = 0x9ddfea08eb382d69ULL;
     u64 a = (value.lo ^ value.hi) * kMul;
     a ^= (a >> 47);
     u64 b = (value.hi ^ a) * kMul;
@@ -32,44 +50,55 @@ FORCE_INLINE constexpr u64 hash_uint64(u128 value) {
     b ^= (b >> 41);
     b *= kMul;
     return b;
+#endif
 }
 //----------------------------------------------------------------------------
 // Burtle, Full avalanche: http://burtleburtle.net/bob/hash/integer.html
-inline constexpr u32 hash_uint32(u32 a) {
+inline CONSTEXPR u32 hash_uint32(u32 a) {
     a = (a+0x7ed55d16) + (a<<12);
     a = (a^0xc761c23c) ^ (a>>19);
-    a = (a+0x165667b1) + (a<<5);
-    a = (a+0xd3a2646c) ^ (a<<9);
-    a = (a+0xfd7046c5) + (a<<3);
+    a = (a+0x165667b1) + (a<<5 );
+    a = (a+0xd3a2646c) ^ (a<<9 );
+    a = (a+0xfd7046c5) + (a<<3 );
     a = (a^0xb55a4f09) ^ (a>>16);
     return a;
 }
 //----------------------------------------------------------------------------
 // Thomas Wang's 64 bit Mix Function: http://web.archive.org/web/20071223173210/http://www.concentric.net/~Ttwang/tech/inthash.htm
-inline constexpr u32 hash_uint32(u64 key) {
+inline CONSTEXPR u32 hash_uint32(u64 key) {
     key += ~(key << 32);
-    key ^= (key >> 22);
+    key ^=  (key >> 22);
     key += ~(key << 13);
-    key ^= (key >> 8);
-    key += (key << 3);
-    key ^= (key >> 15);
+    key ^=  (key >> 8 );
+    key +=  (key << 3 );
+    key ^=  (key >> 15);
     key += ~(key << 27);
-    key ^= (key >> 31);
+    key ^=  (key >> 31);
     return u32(key);
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE constexpr u32 hash_uint32(u128 value) {
+FORCE_INLINE CONSTEXPR u32 hash_uint32(u128 value) {
     return u32(hash_uint64(value)); // takes lower bits, should be alright
 }
 //----------------------------------------------------------------------------
+// Finalization mix - force all bits of a hash block to avalanche
+FORCE_INLINE CONSTEXPR u64 hash_fmix64(u64 k) {
+    k ^= k >> 33;
+    k *= 0xff51afd7ed558ccdull;
+    k ^= k >> 33;
+    k *= 0xc4ceb9fe1a85ec53ull;
+    k ^= k >> 33;
+    return k;
+}
+//----------------------------------------------------------------------------
 #ifdef ARCH_X64
-FORCE_INLINE constexpr u64 hash_uint(u32 value) { return hash_uint64(u64(value)); }
-FORCE_INLINE constexpr u64 hash_uint(u64 value) { return hash_uint64(value); }
-FORCE_INLINE constexpr u64 hash_uint(u128 value){ return hash_uint64(value); }
+FORCE_INLINE CONSTEXPR u64 hash_uint(u32 value) { return hash_uint64(u64(value)); }
+FORCE_INLINE CONSTEXPR u64 hash_uint(u64 value) { return hash_uint64(value); }
+FORCE_INLINE CONSTEXPR u64 hash_uint(u128 value){ return hash_uint64(value); }
 #else
-FORCE_INLINE constexpr u32 hash_uint(u32 value) { return hash_uint32(value); }
-FORCE_INLINE constexpr u32 hash_uint(u64 value) { return hash_uint32(value); }
-FORCE_INLINE constexpr u32 hash_uint(u128 value){ return hash_uint32(value); }
+FORCE_INLINE CONSTEXPR u32 hash_uint(u32 value) { return hash_uint32(value); }
+FORCE_INLINE CONSTEXPR u32 hash_uint(u64 value) { return hash_uint32(value); }
+FORCE_INLINE CONSTEXPR u32 hash_uint(u128 value){ return hash_uint32(value); }
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -98,7 +127,7 @@ template <typename T> size_t hash_mem(const TMemoryView<T>& src, size_t seed) { 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FORCE_INLINE size_t hash_ptr(const void* ptr) { return hash_uint(uintptr_t(ptr)); }
+inline size_t hash_ptr(const void* ptr) { return hash_uint(uintptr_t(ptr)); }
 //----------------------------------------------------------------------------
 template <typename T>
 size_t hash_as_pod(const T& pod);
@@ -117,33 +146,47 @@ size_t hash_as_pod_range(_It&& first, _It&& last);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _It>
-u32 hash_fnv1a32(_It first, _It last, u32 seed = 2166136261U) {
-    u32 _Val = seed;
-    for (; first != last; ++first) {
-        _Val ^= (u32)*first;
-        _Val *= 16777619U;
+inline u32 hash_fnv1a32(const void* key, const size_t sizeInBytes, u32 hash = 0x811c9dc5ul) {
+    auto data = (const u8*)key;
+    for(size_t i = 0; i < sizeInBytes; ++i) {
+        u8 value = data[i];
+        hash = hash ^ value;
+        hash *= 0x1000193ul;
     }
-    return (_Val);
+    return hash;
 }
 //----------------------------------------------------------------------------
-template <typename _It>
-u64 hash_fnv1a64(_It first, _It last, u64 seed = 14695981039346656037ULL) {
-    u64 _Val = seed;
-    for (; first != last; ++first) {
-        _Val ^= (u64)*first;
-        _Val *= 1099511628211ULL;
+inline u64 hash_fnv1a64(const void* key, const size_t sizeInBytes, u64 hash = 0xcbf29ce484222325ull) {
+    auto data = (const u8*)key;
+    for(size_t i = 0; i < sizeInBytes; ++i) {
+        u8 value = data[i];
+        hash = hash ^ value;
+        hash *= 0x100000001b3ull;
     }
-    return (_Val);
+    return hash;
 }
 //----------------------------------------------------------------------------
-#if defined(ARCH_X64)
-template <typename _It> size_t hash_fnv1a(_It first, _It last) { return hash_fnv1a64(first, last); }
-template <typename _It> size_t hash_fnv1a(_It first, _It last, size_t seed) { return hash_fnv1a64(first, last, seed); }
-#else
-template <typename _It> size_t hash_fnv1a(_It first, _It last) { return hash_fnv1a32(first, last); }
-template <typename _It> size_t hash_fnv1a(_It first, _It last, size_t seed) { return hash_fnv1a32(first, last, seed); }
-#endif
+FORCE_INLINE size_t hash_fnv1a(const void* key, const size_t len, size_t hash = CODE3264(0x811c9dc5ul, 0xcbf29ce484222325ull)) {
+    return CODE3264(hash_fnv1a32, hash_fnv1a64)(key, len, hash);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FORCE_INLINE size_t hash_crc32(const void* key, size_t sizeInBytes, size_t crc32 = 0) {
+    const size_t fast = sizeInBytes / sizeof(intptr_t);
+    size_t offset = fast * sizeof(intptr_t);
+    size_t current_block = 0;
+
+    crc32 ^= 0xffffffff;
+
+    for (; current_block < fast; ++current_block)
+        crc32 = CODE3264(_mm_crc32_u32, _mm_crc32_u64)(crc32, ((const CODE3264(u32, u64)*)key)[current_block]);
+
+    for (; offset < sizeInBytes; ++offset)
+        crc32 = _mm_crc32_u8(u32(crc32), ((const u8*)key)[offset]);
+
+    return (crc32 ^ 0xffffffff);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -14,13 +14,10 @@ namespace Core {
 /*  2^63 + 2^61 - 2^57 + 2^54 - 2^51 - 2^18 + 1 */
 #define GOLDEN_RATIO_PRIME_64 0x9e37fffffffc0001ULL
 //----------------------------------------------------------------------------
-#ifdef ARCH_X64
-#   define CORE_HASH_VALUE_SEED (0xdeadbeefabadcafeULL)
-#   define GOLDEN_RATIO_PRIME_SIZE_T GOLDEN_RATIO_PRIME_64
-#else
-#   define CORE_HASH_VALUE_SEED (0xdeadbeefUL)
-#   define GOLDEN_RATIO_PRIME_SIZE_T GOLDEN_RATIO_PRIME_32
-#endif
+#define CORE_HASH_VALUE_SEED_32 GOLDEN_RATIO_PRIME_32
+#define CORE_HASH_VALUE_SEED_64 GOLDEN_RATIO_PRIME_64
+//----------------------------------------------------------------------------
+#define CORE_HASH_VALUE_SEED CODE3264(CORE_HASH_VALUE_SEED_32, CORE_HASH_VALUE_SEED_64)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
