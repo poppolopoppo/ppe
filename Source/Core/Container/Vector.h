@@ -50,75 +50,8 @@ public:
     static_assert(std::is_same<value_type, typename allocator_traits::value_type>::value,
         "allocator value_type mismatch");
 
-    template <typename _Value, typename _Ptr, typename _Ref>
-    class iterator_ : public std::iterator<std::random_access_iterator_tag, _Value, difference_type, _Ptr, _Ref> {
-    public:
-        typedef std::iterator<std::random_access_iterator_tag, _Value, difference_type, _Ptr, _Ref> parent_type;
-
-        using typename parent_type::value_type;
-        using typename parent_type::reference;
-        using typename parent_type::pointer;
-        using typename parent_type::difference_type;
-        using typename parent_type::iterator_category;
-
-        static_assert(std::is_same<typename parent_type::difference_type, typename TVector::difference_type>::value, "");
-
-        iterator_() noexcept : _p(nullptr) {}
-        explicit iterator_(pointer p) : _p(p) {}
-
-        template <typename _V, typename _P, typename _R>
-        iterator_(const iterator_<_V, _P, _R>& other) : _p(other.data()) {}
-        template <typename _V, typename _P, typename _R>
-        iterator_& operator=(const iterator_<_V, _P, _R>& other) { _p = other.data(); return *this; }
-
-        pointer data() const { return _p; }
-
-        iterator_& operator++() /* prefix */ { ++_p; return *this; }
-        iterator_& operator--() /* prefix */ { --_p; return *this; }
-
-        iterator_ operator++(int) /* postfix */ { return iterator_(_p++); }
-        iterator_ operator--(int) /* postfix */ { return iterator_(_p--); }
-
-        iterator_& operator+=(difference_type n) { _p += n; return *this; }
-        iterator_& operator-=(difference_type n) { _p -= n; return *this; }
-
-        iterator_ operator+(difference_type n) { return iterator_(_p + n); }
-        iterator_ operator-(difference_type n) { return iterator_(_p - n); }
-
-        reference operator*() const { Assert(_p); return *_p; }
-        pointer operator->() const { Assert(_p); return _p; }
-
-        reference operator[](difference_type n) const { return _p[n]; }
-
-        void swap(iterator_& other) { std::swap(_p, other_p); }
-        inline friend void swap(iterator_& lhs, iterator_& rhs) { lhs.swap(rhs); }
-
-        bool AliasesToContainer(const TVector& v) const { return v.AliasesToContainer(_p); }
-
-        template <typename _V, typename _P, typename _R>
-        difference_type operator-(const iterator_<_V, _P, _R>& other) const { return checked_cast<difference_type>(_p - other.data()); }
-
-        template <typename _V, typename _P, typename _R>
-        bool operator==(const iterator_<_V, _P, _R>& other) const { return (_p == other.data()); }
-        template <typename _V, typename _P, typename _R>
-        bool operator!=(const iterator_<_V, _P, _R>& other) const { return (_p != other.data()); }
-
-        template <typename _V, typename _P, typename _R>
-        bool operator< (const iterator_<_V, _P, _R>& other) const { return (_p <  other.data()); }
-        template <typename _V, typename _P, typename _R>
-        bool operator> (const iterator_<_V, _P, _R>& other) const { return (_p >  other.data()); }
-
-        template <typename _V, typename _P, typename _R>
-        bool operator<=(const iterator_<_V, _P, _R>& other) const { return (_p <= other.data()); }
-        template <typename _V, typename _P, typename _R>
-        bool operator>=(const iterator_<_V, _P, _R>& other) const { return (_p >= other.data()); }
-
-    private:
-        pointer _p;
-    };
-
-    typedef iterator_<value_type, pointer, reference> iterator;
-    typedef iterator_<const value_type, const_pointer, const_reference> const_iterator;
+    typedef TCheckedArrayIterator<value_type> iterator;
+    typedef TCheckedArrayIterator<Meta::TAddConst<value_type>> const_iterator;
 
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
@@ -170,14 +103,14 @@ public:
     pointer data() { return _data; }
     const_pointer data() const { return _data; }
 
-    iterator begin() { return iterator(_data); }
-    iterator end() { return iterator(_data + _size); }
+    iterator begin() { return MakeCheckedIterator(_data, _size, 0); }
+    iterator end() { return MakeCheckedIterator(_data, _size, _size); }
 
-    const_iterator begin() const { return const_iterator(_data); }
-    const_iterator end() const { return const_iterator(_data + _size); }
+    const_iterator begin() const { return MakeCheckedIterator((const_pointer)_data, _size, 0); }
+    const_iterator end() const { return MakeCheckedIterator((const_pointer)_data, _size, _size); }
 
-    const_iterator cbegin() const { return const_iterator(_data); }
-    const_iterator cend() const { return const_iterator(_data + _size); }
+    const_iterator cbegin() const { return begin(); }
+    const_iterator cend() const { return end; }
 
     reverse_iterator rbegin() { return reverse_iterator(end()); }
     reverse_iterator rend() { return reverse_iterator(begin()); }
@@ -272,7 +205,12 @@ public:
     TMemoryView<Meta::TAddConst<value_type>> MakeConstView() const { return TMemoryView<Meta::TAddConst<value_type>>(_data, _size); }
 
     bool CheckInvariants() const;
+
     bool AliasesToContainer(const_pointer p) const { return ((p >= _data) && (p <= _data + _size)); }
+#if USE_CORE_CHECKEDARRAYITERATOR
+    bool AliasesToContainer(const iterator& it) const { return (it >= begin() && it <= end()); }
+    bool AliasesToContainer(const const_iterator& it) const { return (it >= begin() && it <= end()); }
+#endif
 
 private:
     allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }

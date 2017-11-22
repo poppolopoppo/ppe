@@ -103,7 +103,7 @@ auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::Find(const _Key& key) const -> co
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::FindAfter(const _Key& key, const iterator& after) -> iterator {
     const iterator end = _vector.end();
-    const iterator first = (after == end ? end : ++iterator(after));
+    const iterator first = (after == end ? end : after + 1);
     const iterator it = std::lower_bound(first, end, key, value_less());
     return ((it != end && value_equal()(*it, key)) ? it : end);
 }
@@ -111,7 +111,7 @@ auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::FindAfter(const _Key& key, const 
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 auto TFlatSet<_Key, _EqualTo, _Less, _Vector>::FindAfter(const _Key& key, const const_iterator& after) const -> const_iterator {
     const const_iterator end = _vector.end();
-    const const_iterator first = (after == end ? end : ++const_iterator(after));
+    const const_iterator first = (after == end ? end : after + 1);
     const const_iterator it = std::lower_bound(first, end, key, value_less());
     return ((it != end && value_equal()(*it, key)) ? it : end);
 }

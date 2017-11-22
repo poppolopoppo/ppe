@@ -36,7 +36,7 @@ using TIteratorTraits = std::iterator_traits<T>;
 template <typename T, typename _Category = std::forward_iterator_tag>
 using TIterator = std::iterator<
     _Category,
-    TDecay<T>,
+    TRemoveReference<T>,
     ptrdiff_t,
     TAddPointer<T>,
     TAddReference<T>
@@ -51,10 +51,152 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if 0 != _SECURE_SCL
+#ifdef _SECURE_SCL
+#   define USE_CORE_CHECKEDARRAYITERATOR _SECURE_SCL
+#else
+#   define USE_CORE_CHECKEDARRAYITERATOR 0
+#endif
+//----------------------------------------------------------------------------
+#if USE_CORE_CHECKEDARRAYITERATOR
+//----------------------------------------------------------------------------
+// Sadly all of this is needed simply because stdext::checked_array_iterator<>
+// isn't compliant with std requirements of const_iterator = iterator.
+// And at the same time many algorithms in MSVC STL require iterators to be
+// "safe", aka being a stdext::checked_array_iterator<>.
 //----------------------------------------------------------------------------
 template <typename T>
-using TCheckedArrayIterator = stdext::checked_array_iterator< Meta::TAddPointer<T> >;
+class TCheckedArrayIterator : public stdext::checked_array_iterator< Meta::TAddPointer<T> > {
+    typedef stdext::checked_array_iterator< Meta::TAddPointer<T> > parent_type;
+public:
+    using typename parent_type::iterator_category;
+    using typename parent_type::value_type;
+    using typename parent_type::difference_type;
+    using typename parent_type::pointer;
+    using typename parent_type::reference;
+
+    using parent_type::operator ==;
+    using parent_type::operator !=;
+    using parent_type::operator <;
+    using parent_type::operator >;
+    using parent_type::operator <=;
+    using parent_type::operator >=;
+    using parent_type::operator *;
+    using parent_type::operator ->;
+    using parent_type::operator ++;
+    using parent_type::operator --;
+    using parent_type::operator +;
+    using parent_type::operator -;
+    using parent_type::operator +=;
+    using parent_type::operator -=;
+    using parent_type::operator [];
+
+    TCheckedArrayIterator() {}
+
+    TCheckedArrayIterator(const TCheckedArrayIterator&) = default;
+    TCheckedArrayIterator& operator=(const TCheckedArrayIterator&) = default;
+
+    template <typename U, class = Meta::TEnableIf< std::is_convertible<U*, T*>::value> >
+    TCheckedArrayIterator(const TCheckedArrayIterator<U>& other) : parent_type(reinterpret_cast<const parent_type&>(other)) {}
+    template <typename U, class = Meta::TEnableIf< std::is_convertible<U*, T*>::value> >
+    TCheckedArrayIterator& operator=(const TCheckedArrayIterator<U>& other) { parent_type::operator=(reinterpret_cast<const parent_type&>(other)); return *this }
+
+    // needed for implicit conversion
+    TCheckedArrayIterator(const parent_type& other) : parent_type(other) {}
+    TCheckedArrayIterator& operator =(const parent_type& other) { parent_type::operator=(other); return *this }
+
+    // overload stdext::checked_array_iterator<> for this constructor
+    // std needs iterator = const_iterator which is supported by default
+    template <typename U>
+    TCheckedArrayIterator(U* ptr, size_t count, size_t index)
+        : parent_type(ptr, count, index)
+    {}
+
+    // All those are specialized to return a TCheckArrayIterator instead of stdext::checked_array_iterator
+
+    TCheckedArrayIterator& operator++() {
+        parent_type::operator++();
+        return (*this);
+    }
+
+    TCheckedArrayIterator operator++(int) {
+        TCheckedArrayIterator tmp(*this);
+        ++(*this);
+        return tmp;
+    }
+
+    TCheckedArrayIterator& operator--() {
+        parent_type::operator--();
+        return (*this);
+    }
+
+    TCheckedArrayIterator operator--(int) {
+        TCheckedArrayIterator tmp(*this);
+        --(*this);
+        return tmp;
+    }
+
+    TCheckedArrayIterator& operator+=(const difference_type offset) {
+        parent_type::operator+=(offset);
+        return (*this);
+    }
+
+    TCheckedArrayIterator operator+(const difference_type offset) const {
+        TCheckedArrayIterator tmp(*this);
+        return (tmp += offset);
+    }
+
+    TCheckedArrayIterator& operator-=(const difference_type offset) {
+        parent_type::operator-=(offset);
+        return (*this);
+    }
+
+    TCheckedArrayIterator operator-(const difference_type offset) const {
+        TCheckedArrayIterator tmp(*this);
+        return (tmp -= offset);
+    }
+
+    // bidirectional comparisons
+    template <typename U>
+    using TCastable = Meta::TEnableIf<
+        std::is_convertible<U*, T*>::value ||
+        std::is_convertible<T*, U*>::value
+    >;
+
+    template <typename U, class = TCastable<U> >
+    difference_type operator-(const TCheckedArrayIterator<U>& other) const {
+        return parent_type::operator-(reinterpret_cast<const parent_type&>(other));
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator==(const TCheckedArrayIterator<U>& other) const {
+        return parent_type::operator==(reinterpret_cast<const parent_type&>(other));
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator!=(const TCheckedArrayIterator<U>& other) const {
+        return parent_type::operator!=(reinterpret_cast<const parent_type&>(other));
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator<(const TCheckedArrayIterator<U>& other) const {
+        return parent_type::operator<(reinterpret_cast<const parent_type&>(other));
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator>(const TCheckedArrayIterator<U>& other) const {
+        return parent_type::operator>(reinterpret_cast<const parent_type&>(other));
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator<=(const TCheckedArrayIterator<U>& other) const {
+        return parent_type::operator<=(reinterpret_cast<const parent_type&>(other));
+    }
+
+    template <typename U, class = TCastable<U> >
+    bool operator>=(const TCheckedArrayIterator<U>& other) const {
+        return parent_type::operator>=(reinterpret_cast<const parent_type&>(other));
+    }
+};
 //----------------------------------------------------------------------------
 template <typename T>
 TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index) {
@@ -77,7 +219,7 @@ TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index)
     return ptr + index;
 }
 //----------------------------------------------------------------------------
-#endif
+#endif //!USE_CORE_CHECKEDARRAYITERATOR
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TCheckedArrayIterator<T> MakeCheckedIterator(T (&staticArray)[_Dim], size_t index) {
@@ -112,8 +254,8 @@ public:
     TOutputIterator& operator++() /* prefix */ { ++_it; return *this; }
     TOutputIterator& operator--() /* prefix */ { --_it; return *this; }
 
-    TOutputIterator operator++(int) /* postfix */ { return TOutputIterator(_it++); }
-    TOutputIterator operator--(int) /* postfix */ { return TOutputIterator(_it--); }
+    TOutputIterator operator++(int) /* postfix */ { const auto jt(_it); ++_it; return TOutputIterator(jt); }
+    TOutputIterator operator--(int) /* postfix */ { const auto jt(_it); --_it; return TOutputIterator(jt); }
 
     TOutputIterator& operator+=(difference_type n) { _it += n; return *this; }
     TOutputIterator& operator-=(difference_type n) { _it -= n; return *this; }

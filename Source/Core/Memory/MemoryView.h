@@ -99,14 +99,14 @@ public:
     TMemoryView< Meta::TAddConst<T> > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
 
     TMemoryView<T> CutStartingAt(const iterator& it) const {
-        Assert(AliasesToContainer(it));
+        Assert_NoAssume(AliasesToContainer(it));
         return (end() != it
             ? TMemoryView(std::addressof(*it), std::distance(it, end()))
             : TMemoryView(_storage+_size, size_type(0)) );
     }
 
     TMemoryView<T> CutStartingAt(const reverse_iterator& it) const {
-        Assert(AliasesToContainer(it));
+        Assert_NoAssume(AliasesToContainer(it));
         return (rend() != it
             ? TMemoryView(std::addressof(*it), _storage + _size - std::addressof(*it))
             : TMemoryView(_storage, size_type(0)) );
@@ -116,12 +116,12 @@ public:
     TMemoryView< Meta::TAddConst<T> > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
 
     TMemoryView<T> CutBefore(const iterator& it) const {
-        Assert(AliasesToContainer(it));
+        Assert_NoAssume(AliasesToContainer(it));
         return TMemoryView<T>(_storage, std::distance(begin(), it));
     }
 
     TMemoryView<T> CutBefore(const reverse_iterator& it) const {
-        Assert(AliasesToContainer(it));
+        Assert_NoAssume(AliasesToContainer(it));
         return TMemoryView<T>(_storage, std::addressof(*it) - _storage);
     }
 
@@ -175,8 +175,11 @@ public:
     template <typename _Pred>
     TMemoryView SplitIfNot(const _Pred& pred) const { return TMemoryView(_storage, FindFirstNot(pred)); }
 
+    bool AliasesToContainer(const_pointer p) const { return (_storage <= p && _storage + _size >= p); }
+#if USE_CORE_CHECKEDARRAYITERATOR
     bool AliasesToContainer(const iterator& it) const { return (begin() <= it && it <= end()); }
     bool AliasesToContainer(const reverse_iterator& it) const { return (rbegin() <= it && it <= rend()); }
+#endif
 
     template <typename U>
     TMemoryView<U> Cast() const;

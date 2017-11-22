@@ -116,7 +116,7 @@ auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key) 
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindAfter(const _Key& key, const iterator& after) -> iterator {
     const iterator end = _vector.end();
-    const iterator first = (after == end ? end : ++iterator(after));
+    const iterator first = (after == end ? end : after + 1);
     return std::find_if(first, end, [&key](const value_type& it) {
         return key_equal()(it.first, key);
     });
@@ -125,7 +125,7 @@ auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindAfter(const _Key& 
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindAfter(const _Key& key, const const_iterator& after) const -> const_iterator {
     const const_iterator end = _vector.end();
-    const const_iterator first = (after == end ? end : ++const_iterator(after));
+    const const_iterator first = (after == end ? end : after + 1);
     return std::find_if(first, end, [&key](const value_type& it) {
         return key_equal()(it.first, key);
     });

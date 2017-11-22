@@ -103,7 +103,7 @@ auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Find(const _Key& key) con
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::FindAfter(const _Key& key, const iterator& after) -> iterator {
     const iterator end = _vector.end();
-    const iterator first = (after == end ? end : ++iterator(after));
+    const iterator first = (after == end ? end : after + 1);
     const iterator it = std::lower_bound(first, end, key, FKeyLess_());
     return ((it != end && FKeyEqual_()(*it, key)) ? it : end);
 }
@@ -111,7 +111,7 @@ auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::FindAfter(const _Key& key
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::FindAfter(const _Key& key, const const_iterator& after) const -> const_iterator {
     const const_iterator end = _vector.end();
-    const const_iterator first = (after == end ? end : ++const_iterator(after));
+    const const_iterator first = (after == end ? end : after + 1);
     const const_iterator it = std::lower_bound(first, end, key, FKeyLess_());
     return ((it != end && FKeyEqual_()(*it, key)) ? it : end);
 }
