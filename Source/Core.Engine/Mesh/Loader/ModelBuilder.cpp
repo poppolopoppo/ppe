@@ -43,7 +43,7 @@ static PMaterial CreateMaterial_(const FModelBuilder::FMaterial& materialMB) {
     ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, FFilename) textures;
     ASSOCIATIVE_VECTOR(FMaterial, Graphics::FBindName, PMaterialParameter) parameters;
 
-    tags.reserve(Meta::BitSetsCount(materialMB.Mode));
+    tags.reserve(Meta::popcnt(materialMB.Mode));
     if (materialMB.HasFlag(FModelBuilder::FMaterial::Ambient))
         tags.push_back(FMaterialConstNames::Ambient());
     if (materialMB.HasFlag(FModelBuilder::FMaterial::BumpMapping))
@@ -161,8 +161,8 @@ static const Graphics::FVertexDeclaration *GetVertexDeclaration_(const FModelBui
 }
 //----------------------------------------------------------------------------
 static const Graphics::FVertexDeclaration *GetVertexDeclaration_(
-    const FModelBuilder::FGroup& groupMB, 
-    const FModelBuilder::FMaterial& materialMB, 
+    const FModelBuilder::FGroup& groupMB,
+    const FModelBuilder::FMaterial& materialMB,
     bool useVertexColor) {
     const bool useNormalMap = !materialMB.NormalMap.empty();
     return GetVertexDeclaration_(FModelBuilder::FGroup::EFlags(groupMB.Mode), useNormalMap, useVertexColor);
@@ -237,41 +237,41 @@ static void WriteGroupModelMesh_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[3]) { 
-    FPositionIndex::Assign(P, pos); FNormalIndex::Uninitialized(N); FTexcoordIndex::Uninitialized(T); 
+FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[3]) {
+    FPositionIndex::Assign(P, pos); FNormalIndex::Uninitialized(N); FTexcoordIndex::Uninitialized(T);
 }
 //----------------------------------------------------------------------------
-FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[3], const FTexcoordIndex (&texcoords)[3]) { 
-    FPositionIndex::Assign(P, pos); FNormalIndex::Uninitialized(N); FTexcoordIndex::Assign(T, texcoords); 
+FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[3], const FTexcoordIndex (&texcoords)[3]) {
+    FPositionIndex::Assign(P, pos); FNormalIndex::Uninitialized(N); FTexcoordIndex::Assign(T, texcoords);
 }
 //----------------------------------------------------------------------------
-FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[3], const FTexcoordIndex (&texcoords)[3], const FNormalIndex (&normals)[3]) { 
-    FPositionIndex::Assign(P, pos); FNormalIndex::Assign(N, normals); FTexcoordIndex::Assign(T, texcoords); 
+FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[3], const FTexcoordIndex (&texcoords)[3], const FNormalIndex (&normals)[3]) {
+    FPositionIndex::Assign(P, pos); FNormalIndex::Assign(N, normals); FTexcoordIndex::Assign(T, texcoords);
 }
 //----------------------------------------------------------------------------
-FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[3], const FNormalIndex (&normals)[3]) { 
-    FPositionIndex::Assign(P, pos); FNormalIndex::Assign(N, normals); FTexcoordIndex::Uninitialized(T); 
+FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[3], const FNormalIndex (&normals)[3]) {
+    FPositionIndex::Assign(P, pos); FNormalIndex::Assign(N, normals); FTexcoordIndex::Uninitialized(T);
 }
 //----------------------------------------------------------------------------
-FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[4]) { 
-    FPositionIndex::Assign(P, pos); FNormalIndex::Uninitialized(N); FTexcoordIndex::Uninitialized(T); 
+FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[4]) {
+    FPositionIndex::Assign(P, pos); FNormalIndex::Uninitialized(N); FTexcoordIndex::Uninitialized(T);
 }
 //----------------------------------------------------------------------------
-FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[4], const FTexcoordIndex (&texcoords)[4]) { 
-    FPositionIndex::Assign(P, pos); FNormalIndex::Uninitialized(N); FTexcoordIndex::Assign(T, texcoords); 
+FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[4], const FTexcoordIndex (&texcoords)[4]) {
+    FPositionIndex::Assign(P, pos); FNormalIndex::Uninitialized(N); FTexcoordIndex::Assign(T, texcoords);
 }
 //----------------------------------------------------------------------------
-FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[4], const FTexcoordIndex (&texcoords)[4], const FNormalIndex (&normals)[4]) { 
-    FPositionIndex::Assign(P, pos); FNormalIndex::Assign(N, normals); FTexcoordIndex::Assign(T, texcoords); 
+FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[4], const FTexcoordIndex (&texcoords)[4], const FNormalIndex (&normals)[4]) {
+    FPositionIndex::Assign(P, pos); FNormalIndex::Assign(N, normals); FTexcoordIndex::Assign(T, texcoords);
 }
 //----------------------------------------------------------------------------
-FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[4], const FNormalIndex (&normals)[4]) { 
-    FPositionIndex::Assign(P, pos); FNormalIndex::Assign(N, normals); FTexcoordIndex::Uninitialized(T); 
+FModelBuilder::EFace::EFace(const FPositionIndex (&pos)[4], const FNormalIndex (&normals)[4]) {
+    FPositionIndex::Assign(P, pos); FNormalIndex::Assign(N, normals); FTexcoordIndex::Uninitialized(T);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FModelBuilder::FModelBuilder() 
+FModelBuilder::FModelBuilder()
 :   _name()
 #ifdef WITH_CORE_ASSERT
 ,   _openGroup(false)
@@ -453,8 +453,8 @@ PModel FModelBuilder::CreateModel() {
         materialMB.SetFlag(FMaterial::_InUse);
 
         const Graphics::PCVertexDeclaration vertexDeclaration = GetVertexDeclaration_(
-            groupMB, 
-            _materials[groupMB.Material], 
+            groupMB,
+            _materials[groupMB.Material],
             useVertexColor );
 
         size_t meshIndex = 0;
@@ -513,10 +513,10 @@ PModel FModelBuilder::CreateModel() {
         FMeshData& meshData = meshDatas[meshIndex];
 
         AABB3f& boundingBox = groupAABBs[i];
-        WriteGroupModelMesh_(   &meshData.IndexOffset, &meshData.VertexOffset, 
-                                boundingBox, 
-                                meshData.Indices, meshData.Vertices, 
-                                *this, groupMB, 
+        WriteGroupModelMesh_(   &meshData.IndexOffset, &meshData.VertexOffset,
+                                boundingBox,
+                                meshData.Indices, meshData.Vertices,
+                                *this, groupMB,
                                 vertexDeclarations[meshIndex].get() );
 
         boneAABBs[groupMB.Bone].Add(boundingBox);
@@ -583,11 +583,11 @@ PModel FModelBuilder::CreateModel() {
 
         const float ACMR1 = VertexAverageCacheMissRate(indices);
 
-        LOG(Warning, L"[FModel] {0}/{1}: Optimized mesh average cache miss rate from {2}% to {3}%", 
+        LOG(Warning, L"[FModel] {0}/{1}: Optimized mesh average cache miss rate from {2}% to {3}%",
             _name, genericVertex.VertexDeclaration()->ToString(), ACMR0, ACMR1 );
 
         const Graphics::IndexElementSize indexElementSize = (meshStat.VertexCount <= UINT16_MAX
-            ? Graphics::IndexElementSize::SixteenBits 
+            ? Graphics::IndexElementSize::SixteenBits
             : Graphics::IndexElementSize::ThirtyTwoBits );
 
         if (Graphics::IndexElementSize::SixteenBits == indexElementSize) {
@@ -603,7 +603,7 @@ PModel FModelBuilder::CreateModel() {
         }
 
         modelMeshes.emplace_back(new FModelMesh(
-            checked_cast<u32>(meshStat.IndexCount), 
+            checked_cast<u32>(meshStat.IndexCount),
             checked_cast<u32>(meshStat.VertexCount),
             meshStat.PrimitiveType,
             indexElementSize,

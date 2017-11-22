@@ -15,7 +15,7 @@ namespace Lexer {
 class FSymbol {
 public:
 
-    enum ETypeId : uint64_t {
+    enum ETypeId : u64 {
         Invalid         = 0,
 
         Eof             = 1ull<< 0,
@@ -94,7 +94,7 @@ public:
     FSymbol() : _type(Invalid), _ord(0) {}
     FSymbol(ETypeId type, const FStringView& cstr, u64 ord = 0) : _type(type), _cstr(cstr), _ord(ord) {}
 
-    bool IsValid() const { return (Meta::CountBitsSet(uint64_t(_type)) == 1); }
+    bool IsValid() const { return (Meta::popcnt64(u64(_type)) == 1); }
     bool IsPrefix() const { return (_type ^ Prefix); }
 
     ETypeId Type() const { return _type; }

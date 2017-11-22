@@ -110,6 +110,9 @@ FORCE_INLINE bool TBitField<T, _Index, 1>::Get(T flags) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
+using TBitCount = std::integral_constant<size_t, (sizeof(T)<<3)>;
+//----------------------------------------------------------------------------
+template <typename T>
 struct TBit {
     enum { Capacity = TBitCount<T>::value };
 
