@@ -385,8 +385,8 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
 
     void ReleasePage(FBinnedPage_* page) {
         Assert(page);
-        Likely(_freePagesCount < FreePagesMax);
-        if (_freePagesCount != FreePagesMax) {
+
+        if (Likely(_freePagesCount != FreePagesMax)) {
             Assert(_freePagesCount < FreePagesMax);
 
             const FAtomicSpinLock::FScope scopeLock(_barrier);
@@ -650,7 +650,6 @@ private:
     }
 
     NO_INLINE void ReleasePage_(FBinnedPage_* page) {
-        Likely(_freePagesCount != FreePagesMax);
         if (_freePagesCount == FreePagesMax) {
             FBinnedGlobalCache_::Instance().ReleasePage(page);
         }
@@ -692,31 +691,29 @@ struct CACHELINE_ALIGNED FBinnedAllocator_ {
 
     FORCE_INLINE static void* Allocate(size_t sizeInBytes) {
         ONLY_IF_ASSERT(const FCheckReentrancy reentrancy);
-        Likely(sizeInBytes <= FBinnedChunk_::MaxSizeInBytes);
-        if (0 == sizeInBytes)
+        if (Unlikely(0 == sizeInBytes))
             return nullptr;
-        else if (sizeInBytes <= FBinnedChunk_::MaxSizeInBytes)
-            return FBinnedThreadCache_::InstanceTLS().Allocate(sizeInBytes);
+        else if (Likely(sizeInBytes <= FBinnedChunk_::MaxSizeInBytes))
+            return FBinnedThreadCache_::GInstanceTLS.Allocate(sizeInBytes);
         else
-            return Instance().AllocLargeBlock_(sizeInBytes);
+            return GInstance.AllocLargeBlock_(sizeInBytes);
     }
 
     FORCE_INLINE static void Release(void* p) {
         ONLY_IF_ASSERT(const FCheckReentrancy reentrancy);
-        Likely(not Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p));
-        if (nullptr == p)
+        if (Unlikely(nullptr == p))
             return;
-        else if (not Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p))
-            FBinnedThreadCache_::InstanceTLS().Release(p);
+        else if (Likely(not Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p)))
+            FBinnedThreadCache_::GInstanceTLS.Release(p);
         else
-            Instance().ReleaseLargeBlock_(p);
+            GInstance.ReleaseLargeBlock_(p);
+    }
     }
 
     FORCE_INLINE static size_t RegionSize(void* p) {
-        Likely(not Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p));
-        if (nullptr == p)
+        if (Unlikely(nullptr == p))
             return 0;
-        else if (not Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p))
+        else if (Likely(not Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p)))
             return ((FBinnedChunk_::FBlock*)p)->Owner()->BlockSizeInBytes();
         else
             return FVirtualMemory::AllocSizeInBytes(p);
@@ -764,8 +761,7 @@ void FMallocBinned::Free(void* ptr) {
 }
 //----------------------------------------------------------------------------
 void* FMallocBinned::Realloc(void* ptr, size_t size) {
-    Likely(ptr);
-    if (ptr) {
+    if (Likely(ptr)) {
         const size_t old = FBinnedAllocator_::RegionSize(ptr);
 
         // Skip if the same block can be reused :

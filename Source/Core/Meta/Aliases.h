@@ -108,8 +108,8 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define Unlikely(...) (__builtin_expect (!!(__VA_ARGS__),0) )
 #   define Assume(...) Likely(__VA_ARGS__)
 #elif defined(CPP_VISUALSTUDIO)
-#   define Likely(...) NOOP()
-#   define Unlikely(...) NOOP()
+#   define Likely(...) __VA_ARGS__
+#   define Unlikely(...) __VA_ARGS__
 #   define Assume(...) __assume(__VA_ARGS__)
 #else
 #   error "unsupported compiler"

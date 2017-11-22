@@ -17,14 +17,13 @@ struct TBindDelegate<T *, _Ret (T::*)(_Args... )> {
     typedef TDelegate<_Ret (*)(_Args... )> type;
 
     template <_Ret (T::*_Member)(_Args... )>
-    static type get(T *pcallee) {
+    static type get(T *pcallee) NOEXCEPT {
         return type(&Wrapper_<_Member>, static_cast<void *>(pcallee));
     }
 
     template <_Ret (T::*_Member)(_Args... )>
     static _Ret Wrapper_(void *pcallee, _Args... args ) {
-        Likely(pcallee);
-        T *const p = static_cast<T *>(pcallee);
+        T *const p = Likely(static_cast<T *>(pcallee));
         return (p->*_Member)(std::forward<_Args>(args)... );
     }
 };
@@ -38,14 +37,13 @@ struct TBindDelegate<const T*, _Ret (T::*)(_Args... ) const> {
     typedef TDelegate<_Ret (*)(_Args... )> type;
 
     template <_Ret (T::*_Member)(_Args... ) const>
-    static type get(const T* pcallee) {
+    static type get(const T* pcallee) NOEXCEPT {
         return type(&Wrapper_<_Member>, (void*)pcallee);
     }
 
     template <_Ret (T::*_Member)(_Args... ) const>
     static _Ret Wrapper_(void *pcallee, _Args... args ) {
-        Likely(pcallee);
-        const T* p = static_cast<const T*>(pcallee);
+        const T* p = Likely(static_cast<const T*>(pcallee));
         return (p->*_Member)(std::forward<_Args>(args)... );
     }
 };
@@ -71,7 +69,7 @@ struct TBindDelegate<_Arg0, _Ret (*)(_Arg0, _Args... )> {
     typedef union { _Arg0 typed; void *raw; } arg0_type;
 
     template <_Ret (*_Func)(_Arg0, _Args... )>
-    static type get(_Arg0&& arg0) {
+    static type get(_Arg0&& arg0) NOEXCEPT {
         arg0_type callee = {0};
         callee.typed = std::forward<_Arg0>(arg0);
         return type(&Wrapper_<_Func>, callee.raw);
@@ -99,7 +97,7 @@ struct TBindDelegate<_Arg1, _Ret (*)(_Arg0, _Arg1)> {
     typedef union { _Arg1 typed; void *raw; } arg1_type;
 
     template <_Ret (*_Func)(_Arg0, _Arg1)>
-    static type get(_Arg1&& arg1) {
+    static type get(_Arg1&& arg1) NOEXCEPT {
         arg1_type callee = {0};
         callee.typed = std::forward<_Arg1>(arg1);
         return type(&Wrapper_<_Func>, callee.raw);
@@ -122,7 +120,7 @@ struct TBindDelegate<decltype(nullptr), _Ret (*)(_Args... )> {
     typedef TDelegate<_Ret (*)(_Args... )> type;
 
     template <_Ret (*_Func)(_Args... )>
-    static type get(void *) {
+    static type get(void *) NOEXCEPT {
         return type(&Wrapper_<_Func>, nullptr);
     }
 

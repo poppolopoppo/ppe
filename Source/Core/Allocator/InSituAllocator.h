@@ -206,13 +206,11 @@ void* TInSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type
     STATIC_ASSERT(Meta::TIsPod<value_type>::value);
     Assert(nullptr == p || 0 < oldSize);
 
-    Likely(oldSize);
-    Likely(newSize);
-    if (0 == oldSize) {
+    if (Unlikely(0 == oldSize)) {
         Assert(nullptr == p);
         return allocate(newSize);
     }
-    else if (0 == newSize) {
+    else if (Unlikely(0 == newSize)) {
         if (p) {
             Assert(0 < oldSize);
             deallocate(static_cast<pointer>(p), oldSize);

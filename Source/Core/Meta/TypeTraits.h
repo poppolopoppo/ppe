@@ -88,6 +88,12 @@ struct TIsPod : public std::is_pod<T> {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if _HAS_CXX14
+#   define CONSTEXPR constexpr
+#else
+#   define CONSTEXPR
+#endif
+//----------------------------------------------------------------------------
 #if _HAS_CXX17
 #   define FOLD_EXPR(...) ((__VA_ARGS__), ...)
 #else
@@ -176,31 +182,31 @@ FORCE_INLINE void Construct_(T* p, FForceInit init, std::true_type) { new ((void
 } //!details
 template <typename T>
 void Construct(T* p, FForceInit init) {
-    Likely(p);
+    Assume(p);
     details::Construct_(p, init, typename has_forceinit_constructor<T>::type{});
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void Construct(T* p) {
-    Likely(p);
+    Assume(p);
     ::new ((void*)p) T();
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void Construct(T* p, T&& rvalue) {
-    Likely(p);
+    Assume(p);
     ::new ((void*)p) T(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void Construct(T* p, const T& other) {
-    Likely(p);
+    Assume(p);
     ::new ((void*)p) T(other);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
 void Construct(T* p, _Args&&... args) {
-    Likely(p);
+    Assume(p);
     ::new((void*)p) T{ std::forward<_Args>(args)... };
 }
 //----------------------------------------------------------------------------
@@ -211,7 +217,7 @@ typename std::enable_if<Meta::TIsPod<T>::value >::type Destroy(T* ) {
 //----------------------------------------------------------------------------
 template <typename T>
 typename std::enable_if< not Meta::TIsPod<T>::value >::type Destroy(T* p) {
-    Likely(p);
+    Assume(p);
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);
     p->~T();

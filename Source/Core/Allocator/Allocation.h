@@ -51,8 +51,7 @@ public: \
     } \
     void* operator new(size_t, void* ptr) { \
         Assert(ptr); \
-        Likely(ptr); \
-        return ptr; \
+        return Likely(ptr); \
     } \
     \
     void operator delete(void* ptr) { \
