@@ -31,8 +31,14 @@ inline wchar_t ToUpper(wchar_t wch) { return std::towupper(wch); }
 template <typename _Char> void InplaceToLower(_Char& ch) { ch = ToLower(ch); }
 template <typename _Char> void InplaceToUpper(_Char& ch) { ch = ToUpper(ch); }
 //----------------------------------------------------------------------------
-template <typename _Char> void InplaceToLower(const TMemoryView<_Char>& str) { for (_Char& ch : str) InplaceToLower(ch); }
-template <typename _Char> void InplaceToUpper(const TMemoryView<_Char>& str) { for (_Char& ch : str) InplaceToUpper(ch); }
+CORE_API void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src);
+CORE_API void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src);
+//----------------------------------------------------------------------------
+CORE_API void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src);
+CORE_API void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src);
+//----------------------------------------------------------------------------
+template <typename _Char> void InplaceToLower(const TMemoryView<_Char>& str) { ToLower(str, str); }
+template <typename _Char> void InplaceToUpper(const TMemoryView<_Char>& str) { ToUpper(str, str); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -291,6 +297,12 @@ int CompareI(const FWStringView& lhs, const FWStringView& rhs);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+bool EqualsN(const char* lhs, const char* rhs, size_t len);
+bool EqualsNI(const char* lhs, const char* rhs, size_t len);
+//----------------------------------------------------------------------------
+bool EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len);
+bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len);
+//----------------------------------------------------------------------------
 bool Equals(const FStringView& lhs, const FStringView& rhs);
 bool Equals(const FWStringView& lhs, const FWStringView& rhs);
 //----------------------------------------------------------------------------
@@ -415,26 +427,26 @@ struct TCharCase<_Char, ECase::Insensitive> {
 template <typename _Char, ECase _Sensitive>
 struct TStringViewEqualTo {
     bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
-        return (Equals(lhs, rhs));
+        return Equals(lhs, rhs);
     }
 };
 template <typename _Char>
 struct TStringViewEqualTo<_Char, ECase::Insensitive> {
     bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
-        return (EqualsI(lhs, rhs));
+        return EqualsI(lhs, rhs);
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TStringViewLess {
     bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
-        return (-1 == Compare(lhs, rhs));
+        return (Compare(lhs, rhs) < 0);
     }
 };
 template <typename _Char>
 struct TStringViewLess<_Char, ECase::Insensitive> {
     bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
-        return (-1 == CompareI(lhs, rhs));
+        return (CompareI(lhs, rhs) < 0);
     }
 };
 //----------------------------------------------------------------------------

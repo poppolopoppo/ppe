@@ -5,7 +5,11 @@
 #include "Allocator/Alloca.h"
 #include "Memory/HashFunctions.h"
 
+#include <emmintrin.h>
+#include <intrin.h>
 #include <ostream>
+
+#define USE_CORE_SIMD_STRINGOPS 1 // turn to 0 to disable SIMD optimizations %_NOCOMMIT%
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -90,7 +94,7 @@ static bool Atoi_(T *dst, const TBasicStringView<_Char>& str, size_t base) {
     for (size_t i = neg ? 1 : 0; i < str.size(); ++i) {
         const _Char ch = str[i];
 
-        int d = 0;
+        int d;
         if (ch >= traits::_0 && ch <= traits::_9)
             d = ch - traits::_0;
         else if (base > 10 && ch >= traits::a && ch <= traits::f)
@@ -366,7 +370,348 @@ bool EndsWithI_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char
     return (str.size() >= suffix.size() && EqualsI(str.LastNElements(suffix.size()), suffix) );
 }
 //----------------------------------------------------------------------------
+// returns < 0 if less (not necessarly -1), > 0 if greater (not necessarly +1) and 0 if equals
+// 1x-2x faster with SIMD on x64 :
+static int StrNCmp_(const char* lhs, const char* rhs, size_t len) {
+#if defined(ARCH_X64) && USE_CORE_SIMD_STRINGOPS
+    size_t fast = len / sizeof(__m128i);
+    size_t offset = fast * sizeof(__m128i);
+    size_t current_block = 0;
+
+    const __m128i* lhs_128i = (const __m128i*)lhs;
+    const __m128i* rhs_128i = (const __m128i*)rhs;
+
+    for (; current_block < fast; ++current_block) {
+        __m128i cmpsg = ::_mm_sub_epi8(
+            ::_mm_lddqu_si128(lhs_128i + current_block),
+            ::_mm_lddqu_si128(rhs_128i + current_block)
+        );
+
+        size_t mask = size_t(::_mm_movemask_epi8(::_mm_cmpgt_epi8(::_mm_abs_epi8(cmpsg), ::_mm_setzero_si128())));
+        if (mask)
+            return cmpsg.m128i_i8[Meta::tzcnt(mask)];
+    }
+
+    for (; len > offset; ++offset) {
+        if (lhs[offset] ^ rhs[offset])
+            return (int)((unsigned char)lhs[offset] - (unsigned char)rhs[offset]);
+    }
+
+    return 0;
+#else
+    return ::strncmp(lhs, rhs, len);
+#endif
+}
+static int StrNCmp_(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
+#if defined(ARCH_X64) && USE_CORE_SIMD_STRINGOPS && 0 // some ops are not available for epi16
+    size_t fast = (len * sizeof(wchar_t)) / sizeof(__m128i);
+    size_t offset = fast * sizeof(__m128i);
+    size_t current_block = 0;
+
+    const __m128i* lhs_128i = (const __m128i*)lhs;
+    const __m128i* rhs_128i = (const __m128i*)rhs;
+
+    for (; current_block < fast; ++current_block) {
+        __m128i cmpsg = ::_mm_sub_epi16(
+            ::_mm_lddqu_si128(lhs_128i + current_block),
+            ::_mm_lddqu_si128(rhs_128i + current_block)
+        );
+
+        size_t mask = size_t(::_mm_movemask_epi16(::_mm_cmpgt_epi16(::_mm_abs_epi16(cmpsg), ::_mm_setzero_si128())));
+        if (mask)
+            return cmpsg.m128i_i16[Meta::tzcnt(mask)];
+    }
+
+    for (; len > offset; ++offset) {
+        if (lhs[offset] ^ rhs[offset])
+            return (int)(lhs[offset] - rhs[offset]);
+    }
+
+    return 0;
+#else
+    return ::wcsncmp(lhs, rhs, len);
+#endif
+}
+//----------------------------------------------------------------------------
+// 2x-3x faster than ::strncmp() == 0
+static bool StrEquals_(const char* lhs, const char* rhs, size_t len) {
+#if USE_CORE_SIMD_STRINGOPS
+    size_t fast = len / sizeof(__m128i);
+    size_t offset = fast * sizeof(__m128i);
+    size_t current_block = 0;
+
+    for (; current_block < fast; ++current_block) {
+        __m128i lhs_epi8 = ::_mm_lddqu_si128((const __m128i*)lhs + current_block);
+        __m128i rhs_epi8 = ::_mm_lddqu_si128((const __m128i*)rhs + current_block);
+
+        if (::_mm_movemask_epi8(::_mm_cmpeq_epi8(lhs_epi8, rhs_epi8)) != 0xFFFF)
+            return false;
+    }
+
+    for (; len > offset; ++offset) {
+        if (lhs[offset] ^ rhs[offset])
+            return false;
+    }
+
+    return true;
+#else
+    return (0 == ::strncmp(lhs, rhs, len));
+#endif
+}
+static bool StrEquals_(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
+#if USE_CORE_SIMD_STRINGOPS && 0 // some ops are not available for epi16
+    size_t fast = (len * sizeof(wchar_t)) / sizeof(__m128i);
+    size_t offset = fast * sizeof(__m128i);
+    size_t current_block = 0;
+
+    for (; current_block < fast; ++current_block) {
+        __m128i lhs_epi16 = ::_mm_lddqu_si128((const __m128i*)lhs + current_block);
+        __m128i rhs_epi16 = ::_mm_lddqu_si128((const __m128i*)rhs + current_block);
+
+        if (::_mm_movemask_epi16(::_mm_cmpeq_epi16(lhs_epi16, rhs_epi16)) != 0xFF)
+            return false;
+    }
+
+    for (; len > offset; ++offset) {
+        if (lhs[offset] ^ rhs[offset])
+            return false;
+    }
+
+    return true;
+#else
+    return (0 == ::wcsncmp(lhs, rhs, len));
+#endif
+}
+//----------------------------------------------------------------------------
+// 2x-3x faster than ::strncmp() == 0
+static bool StrEqualsI_(const char* lhs, const char* rhs, size_t len) {
+#if USE_CORE_SIMD_STRINGOPS
+    size_t fast = len / sizeof(__m128i);
+    size_t offset = fast * sizeof(__m128i);
+    size_t current_block = 0;
+
+    for (; current_block < fast; ++current_block) {
+        __m128i lhs_epi8 = ::_mm_lddqu_si128((const __m128i*)lhs + current_block);
+        __m128i rhs_epi8 = ::_mm_lddqu_si128((const __m128i*)rhs + current_block);
+
+        __m128i lower_lhs_epi8 = ::_mm_blendv_epi8(
+            lhs_epi8,
+            ::_mm_add_epi8(_mm_sub_epi8(lhs_epi8, ::_mm_set1_epi8('A')), ::_mm_set1_epi8('a')),
+            ::_mm_and_si128(
+                ::_mm_cmpgt_epi8(lhs_epi8, ::_mm_set1_epi8('A' - 1)),
+                ::_mm_cmplt_epi8(lhs_epi8, ::_mm_set1_epi8('Z' + 1))
+            )
+        );
+        __m128i lower_rhs_epi8 = _mm_blendv_epi8(
+            rhs_epi8,
+            ::_mm_add_epi8(_mm_sub_epi8(rhs_epi8, ::_mm_set1_epi8('A')), ::_mm_set1_epi8('a')),
+            ::_mm_and_si128(
+                ::_mm_cmpgt_epi8(rhs_epi8, ::_mm_set1_epi8('A' - 1)),
+                ::_mm_cmplt_epi8(rhs_epi8, ::_mm_set1_epi8('Z' + 1))
+            )
+        );
+
+        if (::_mm_movemask_epi8(::_mm_cmpeq_epi8(lower_lhs_epi8, lower_rhs_epi8)) != 0xFFFF)
+            return false;
+    }
+
+    for (; len > offset; ++offset) {
+        if (ToLower(lhs[offset]) ^ ToLower(rhs[offset]))
+            return false;
+    }
+
+    return true;
+#else
+    return (0 == ::_strnicmp(lhs, rhs, len));
+#endif
+}
+static bool StrEqualsI_(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
+#if USE_CORE_SIMD_STRINGOPS && 0 // some ops are not available for epi16
+    size_t fast = (len * sizeof(wchar_t)) / sizeof(__m128i);
+    size_t offset = fast * sizeof(__m128i);
+    size_t current_block = 0;
+
+    for (; current_block < fast; ++current_block) {
+        __m128i lhs_epi16 = ::_mm_lddqu_si128((const __m128i*)lhs + current_block);
+        __m128i rhs_epi16 = ::_mm_lddqu_si128((const __m128i*)rhs + current_block);
+
+        __m128i lower_lhs_epi16 = ::_mm_blend_epi16(
+            lhs_epi16,
+            ::_mm_add_epi16(_mm_sub_epi16(lhs_epi16, ::_mm_set1_epi16(L'A')), ::_mm_set1_epi16(L'a')),
+            ::_mm_and_si128(
+                ::_mm_cmpgt_epi16(lhs_epi16, ::_mm_set1_epi16(L'A' - 1)),
+                ::_mm_cmplt_epi16(lhs_epi16, ::_mm_set1_epi16(L'Z' + 1))
+            )
+        );
+        __m128i lower_rhs_epi16 = ::_mm_blend_epi16(
+            rhs_epi16,
+            ::_mm_add_epi16(_mm_sub_epi16(rhs_epi16, ::_mm_set1_epi16(L'A')), ::_mm_set1_epi16(L'a')),
+            ::_mm_and_si128(
+                ::_mm_cmpgt_epi16(rhs_epi16, ::_mm_set1_epi16(L'A' - 1)),
+                ::_mm_cmplt_epi16(rhs_epi16, ::_mm_set1_epi16(L'Z' + 1))
+            )
+        );
+
+        if (::_mm_movemask_epi8(::_mm_cmpeq_epi16(lower_lhs_epi16, lower_rhs_epi16)) != 0xFF)
+            return false;
+    }
+
+    for (; len > offset; ++offset) {
+        if (ToLower(lhs[offset]) ^ ToLower(rhs[offset]))
+            return false;
+    }
+
+    return true;
+#else
+    return (0 == ::_wcsnicmp(lhs, rhs, len));
+#endif
+}
+//----------------------------------------------------------------------------
 } //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// 6x-8x faster with SIMD :
+//----------------------------------------------------------------------------
+void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src) {
+    Assert(dst.size() == src.size());
+
+    const char* sbegin = src.data();
+    const char* send = (sbegin + src.size());
+    char* dbegin = dst.data();
+
+#if USE_CORE_SIMD_STRINGOPS
+    size_t fast = (send - sbegin) / sizeof(__m128i);
+    size_t offset = fast * sizeof(__m128i);
+    size_t current_block = 0;
+
+    for (; current_block < fast; ++current_block) {
+        __m128i src_epi8 = ::_mm_lddqu_si128((const __m128i*)sbegin + current_block);
+
+        __m128i lower_epi8 = ::_mm_blendv_epi8(
+            src_epi8,
+            ::_mm_add_epi8(_mm_sub_epi8(src_epi8, ::_mm_set1_epi8('A')), ::_mm_set1_epi8('a')),
+            ::_mm_and_si128(
+                ::_mm_cmpgt_epi8(src_epi8, ::_mm_set1_epi8('A' - 1)),
+                ::_mm_cmplt_epi8(src_epi8, ::_mm_set1_epi8('Z' + 1))
+            )
+        );
+
+        ::_mm_storeu_si128((__m128i*)dbegin + current_block, lower_epi8);
+    }
+
+    sbegin += offset;
+    dbegin += offset;
+#endif
+
+    for (; sbegin != send; ++sbegin, ++dbegin)
+        *dbegin = ToLower(*sbegin);
+}
+//----------------------------------------------------------------------------
+void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) {
+    Assert(dst.size() == src.size());
+
+    const wchar_t* sbegin = src.data();
+    const wchar_t* send = (sbegin + src.size());
+    wchar_t* dbegin = dst.data();
+
+#if USE_CORE_SIMD_STRINGOPS && 0 // some ops are not available for epi16
+    size_t fast = ((send - sbegin) * sizeof(wchar_t)) / sizeof(__m128i);
+    size_t offset = fast * sizeof(__m128i);
+    size_t current_block = 0;
+
+    for (; current_block < fast; ++current_block) {
+        __m128i src_epi16 = ::_mm_lddqu_si128((const __m128i*)sbegin + current_block);
+
+        __m128i lower_epi16 = ::_mm_blendv_epi16(
+            src_epi16,
+            ::_mm_add_epi16(_mm_sub_epi16(src_epi16, ::_mm_set1_epi16(L'A')), ::_mm_set1_epi16(L'a')),
+            ::_mm_and_si128(
+                ::_mm_cmpgt_epi16(src_epi16, ::_mm_set1_epi16(L'A' - 1)),
+                ::_mm_cmplt_epi16(src_epi16, ::_mm_set1_epi16(L'Z' + 1))
+            )
+        );
+
+        ::_mm_storeu_si128((__m128i*)dbegin + current_block, lower_epi8);
+    }
+
+    sbegin += offset;
+    dbegin += offset;
+#endif
+
+    for (; sbegin != send; ++sbegin, ++dbegin)
+        *dbegin = ToLower(*sbegin);
+}
+//----------------------------------------------------------------------------
+void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src) {
+    Assert(dst.size() == src.size());
+
+    const char* sbegin = src.data();
+    const char* send = (sbegin + src.size());
+    char* dbegin = dst.data();
+
+#if USE_CORE_SIMD_STRINGOPS
+    size_t fast = (send - sbegin) / sizeof(__m128i);
+    size_t offset = fast * sizeof(__m128i);
+    size_t current_block = 0;
+
+    for (; current_block < fast; ++current_block) {
+        __m128i src_epi8 = ::_mm_lddqu_si128((const __m128i*)sbegin + current_block);
+
+        __m128i lower_epi8 = ::_mm_blendv_epi8(
+            src_epi8,
+            ::_mm_add_epi8(_mm_sub_epi8(src_epi8, ::_mm_set1_epi8('a')), ::_mm_set1_epi8('A')),
+            ::_mm_and_si128(
+                ::_mm_cmpgt_epi8(src_epi8, ::_mm_set1_epi8('a' - 1)),
+                ::_mm_cmplt_epi8(src_epi8, ::_mm_set1_epi8('z' + 1))
+            )
+        );
+
+        ::_mm_storeu_si128((__m128i*)dbegin + current_block, lower_epi8);
+    }
+
+    sbegin += offset;
+    dbegin += offset;
+#endif
+
+    for (; sbegin != send; ++sbegin, ++dbegin)
+        *dbegin = ToUpper(*sbegin);
+}
+//----------------------------------------------------------------------------
+void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) {
+    Assert(dst.size() == src.size());
+
+    const wchar_t* sbegin = src.data();
+    const wchar_t* send = (sbegin + src.size());
+    wchar_t* dbegin = dst.data();
+
+#if USE_CORE_SIMD_STRINGOPS && 0 // some ops are not available for epi16
+    size_t fast = ((send - sbegin) * sizeof(wchar_t)) / sizeof(__m128i);
+    size_t offset = fast * sizeof(__m128i);
+    size_t current_block = 0;
+
+    for (; current_block < fast; ++current_block) {
+        __m128i src_epi16 = ::_mm_lddqu_si128((const __m128i*)sbegin + current_block);
+
+        __m128i lower_epi16 = ::_mm_blendv_epi16(
+            src_epi16,
+            ::_mm_add_epi16(_mm_sub_epi16(src_epi16, ::_mm_set1_epi16(L'a')), ::_mm_set1_epi16(L'A')),
+            ::_mm_and_si128(
+                ::_mm_cmpgt_epi16(src_epi16, ::_mm_set1_epi16(L'a' - 1)),
+                ::_mm_cmplt_epi16(src_epi16, ::_mm_set1_epi16(L'z' + 1))
+            )
+        );
+
+        ::_mm_storeu_si128((__m128i*)dbegin + current_block, lower_epi8);
+    }
+
+    sbegin += offset;
+    dbegin += offset;
+#endif
+
+    for (; sbegin != send; ++sbegin, ++dbegin)
+        *dbegin = ToUpper(*sbegin);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -447,7 +792,7 @@ int Compare(const FStringView& lhs, const FStringView& rhs) {
     if (lhs == rhs)
         return 0;
 
-    const int cmp = ::strncmp(lhs.data(), rhs.data(), std::min(lhs.size(), rhs.size()));
+    const int cmp = StrNCmp_(lhs.data(), rhs.data(), std::min(lhs.size(), rhs.size()));
 
     if (cmp)
         return cmp;
@@ -461,7 +806,7 @@ int Compare(const FWStringView& lhs, const FWStringView& rhs) {
     if (lhs == rhs)
         return 0;
 
-    const int cmp = ::wcsncmp(lhs.data(), rhs.data(), std::min(lhs.size(), rhs.size()));
+    const int cmp = StrNCmp_(lhs.data(), rhs.data(), std::min(lhs.size(), rhs.size()));
 
     if (cmp)
         return cmp;
@@ -475,6 +820,7 @@ int CompareI(const FStringView& lhs, const FStringView& rhs) {
     if (lhs == rhs)
         return 0;
 
+    // Faster than SIMD on MSVC
     const int cmp = ::_strnicmp(lhs.data(), rhs.data(), std::min(lhs.size(), rhs.size()));
 
     if (cmp)
@@ -489,6 +835,7 @@ int CompareI(const FWStringView& lhs, const FWStringView& rhs) {
     if (lhs == rhs)
         return 0;
 
+    // Faster than SIMD on MSVC
     const int cmp = ::_wcsnicmp(lhs.data(), rhs.data(), std::min(lhs.size(), rhs.size()));
 
     if (cmp)
@@ -501,28 +848,48 @@ int CompareI(const FWStringView& lhs, const FWStringView& rhs) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+bool EqualsN(const char* lhs, const char* rhs, size_t len) {
+    return StrEquals_(lhs, rhs, len);
+}
+//----------------------------------------------------------------------------
+bool EqualsNI(const char* lhs, const char* rhs, size_t len) {
+    return StrEqualsI_(lhs, rhs, len);
+}
+//----------------------------------------------------------------------------
+bool EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
+    return StrEquals_(lhs, rhs, len);
+}
+//----------------------------------------------------------------------------
+bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
+    return StrEqualsI_(lhs, rhs, len);
+}
+//----------------------------------------------------------------------------
 bool Equals(const FStringView& lhs, const FStringView& rhs) {
-    return (lhs.size() == rhs.size())
-        ? ( (lhs.data() == rhs.data()) || (::strncmp(lhs.data(), rhs.data(), lhs.size()) == 0) )
-        : false;
+    return (
+        (lhs.size() == rhs.size()) &&
+        (lhs.data() == rhs.data() || StrEquals_(lhs.data(), rhs.data(), lhs.size()))
+        );
 }
 //----------------------------------------------------------------------------
 bool Equals(const FWStringView& lhs, const FWStringView& rhs) {
-    return (lhs.size() == rhs.size())
-        ? ( (lhs.data() == rhs.data()) || (::wcsncmp(lhs.data(), rhs.data(), lhs.size()) == 0) )
-        : false;
+    return (
+        (lhs.size() == rhs.size()) &&
+        (lhs.data() == rhs.data() || StrEquals_(lhs.data(), rhs.data(), lhs.size()))
+    );
 }
 //----------------------------------------------------------------------------
 bool EqualsI(const FStringView& lhs, const FStringView& rhs) {
-    return (lhs.size() == rhs.size())
-        ? ( (lhs.data() == rhs.data()) || (::_strnicmp(lhs.data(), rhs.data(), lhs.size()) == 0) )
-        : false;
+    return (
+        (lhs.size() == rhs.size()) &&
+        (lhs.data() == rhs.data() || StrEqualsI_(lhs.data(), rhs.data(), lhs.size()))
+    );
 }
 //----------------------------------------------------------------------------
 bool EqualsI(const FWStringView& lhs, const FWStringView& rhs) {
-    return (lhs.size() == rhs.size())
-        ? ( (lhs.data() == rhs.data()) || (::_wcsnicmp(lhs.data(), rhs.data(), lhs.size()) == 0) )
-        : false;
+    return (
+        (lhs.size() == rhs.size()) &&
+        (lhs.data() == rhs.data() || StrEqualsI_(lhs.data(), rhs.data(), lhs.size()))
+    );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -672,13 +1039,27 @@ hash_t hash_string(const FWStringView& wstr) {
 }
 //----------------------------------------------------------------------------
 hash_t hash_stringI(const FStringView& str) {
+#if 0 // don't want to use another hash function :/
     char (*transform)(char) = &ToLower;
     return hash_fnv1a(MakeOutputIterator(str.begin(), transform), MakeOutputIterator(str.end(), transform));
+#else
+    const size_t sz = str.size();
+    STACKLOCAL_POD_ARRAY(u8, istr, sz);
+    ::memcpy(istr.data(), str.data(), sz);
+    return hash_mem(istr.data(), sz);
+#endif
 }
 //----------------------------------------------------------------------------
 hash_t hash_stringI(const FWStringView& wstr) {
+#if 0 // don't want to use another hash function :/
     wchar_t (*transform)(wchar_t) = &ToLower;
     return hash_fnv1a(MakeOutputIterator(wstr.begin(), transform), MakeOutputIterator(wstr.end(), transform));
+#else
+    const size_t sz = wstr.size();
+    STACKLOCAL_POD_ARRAY(wchar_t, iwstr, sz);
+    ToLower(iwstr, wstr);
+    return hash_mem(iwstr.data(), iwstr.SizeInBytes());
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
