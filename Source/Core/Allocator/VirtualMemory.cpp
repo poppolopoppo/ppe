@@ -8,7 +8,7 @@
 #if     defined(PLATFORM_WINDOWS)
 #   include "Misc/Platform_Windows.h"
 #   define VMALLOC(_SizeInBytes) ::VirtualAlloc(nullptr, (_SizeInBytes), MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE)
-#   define VMFREE(_Ptr, _SizeInBytes) ::VirtualFree((_Ptr), (_SizeInBytes), MEM_RELEASE)
+#   define VMFREE(_Ptr, _SizeInBytes) ::VirtualFree((_Ptr), 0, MEM_RELEASE)
 #elif   defined(PLATFORM_LINUX)
 #   include "Misc/Platform_Linux.h"
 #   define VMALLOC(_SizeInBytes) (void*)(((uintptr_t)mmap(NULL, (_SizeInBytes), PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0)+1)&~1)//with the conversion of MAP_FAILED to 0
@@ -239,6 +239,52 @@ size_t FVirtualMemory::AllocSizeInBytes(void* ptr) {
 #endif
 }
 //----------------------------------------------------------------------------
+void* FVirtualMemory::Alloc(size_t sizeInBytes) {
+    Assert(sizeInBytes);
+
+    void* const vmem = VMALLOC(sizeInBytes);
+
+#ifdef USE_VMALLOC_SIZE_PTRIE
+    VMRegisterBlockSize_(vmem, sizeInBytes);
+#endif
+
+    return vmem;
+}
+//----------------------------------------------------------------------------
+void FVirtualMemory::Free(void* ptr, size_t sizeInBytes) {
+    Assert(ptr);
+
+#ifdef USE_VMALLOC_SIZE_PTRIE
+    const size_t regionSize = VMReleaseBlockSize_(ptr);
+    Assert(regionSize == sizeInBytes);
+#endif
+
+    VMFREE(ptr, sizeInBytes);
+}
+//----------------------------------------------------------------------------
+bool FVirtualMemory::Protect(void* ptr, size_t sizeInBytes, bool read, bool write) {
+    Assert(ptr);
+    Assert(sizeInBytes);
+
+#if     defined(PLATFORM_WINDOWS)
+    ::DWORD oldProtect, newProtect;
+
+    if (read && write)
+        newProtect = PAGE_READWRITE;
+    else if (write)
+        newProtect = PAGE_READWRITE;
+    else if (read)
+        newProtect = PAGE_READONLY;
+    else
+        newProtect = PAGE_NOACCESS;
+
+    return (0 != ::VirtualProtect(ptr, sizeInBytes, newProtect, &oldProtect));
+
+#else
+#       error "Unsupported platform !"
+#endif
+}
+//----------------------------------------------------------------------------
 // Keep allocations aligned to OS granularity
 // https://github.com/r-lyeh/ltalloc/blob/master/ltalloc.cc
 void* FVirtualMemory::AlignedAlloc(size_t alignment, size_t sizeInBytes) {
@@ -436,7 +482,7 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
             ::memmove(first, first + 1, sizeof(FFreePageBlock) * FreePageBlockCount);
     }
 
-    first[FreePageBlockCount] = { ptr, sizeInBytes };
+    first[FreePageBlockCount] = FFreePageBlock{ ptr, sizeInBytes };
     TotalCacheSizeInBytes += sizeInBytes;
     FreePageBlockCount++;
 

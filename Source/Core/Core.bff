@@ -9,6 +9,7 @@
     {
         'Core.cpp'
         'Allocator/MallocBinned.cpp',
+        'Allocator/MallocStomp.cpp',
         'Allocator/VirtualMemory.cpp',
         'Allocator/New.cpp',
         'Maths/SHVector_extern.cpp',

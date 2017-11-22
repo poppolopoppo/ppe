@@ -20,9 +20,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 class FVirtualMemory {
 public:
-    static size_t AllocSizeInBytes(void* ptr);
-    static void* AlignedAlloc(size_t alignment, size_t sizeInBytes);
-    static void  AlignedFree(void* ptr, size_t sizeInBytes);
+    static size_t   AllocSizeInBytes(void* ptr);
+
+    static void*    Alloc(size_t sizeInBytes);
+    static void     Free(void* ptr, size_t sizeInBytes);
+    static bool     Protect(void* ptr, size_t sizeInBytes, bool read, bool write);
+
+    static void*    AlignedAlloc(size_t alignment, size_t sizeInBytes);
+    static void     AlignedFree(void* ptr, size_t sizeInBytes);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

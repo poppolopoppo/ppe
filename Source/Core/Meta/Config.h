@@ -16,6 +16,6 @@
 #define USE_CORE_FORCE_LOGGING      0 //%_NOCOMMIT%
 
 //----------------------------------------------------------------------------
-// Global switch for using stomp allocator, memory guards and turning memory pools off
+// Global switch for using stomp allocator, memory guards and turning special allocators off
 //----------------------------------------------------------------------------
 #define USE_CORE_MEMORY_DEBUGGING   0 //%_NOCOMMIT%

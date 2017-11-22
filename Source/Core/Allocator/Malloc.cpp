@@ -2,6 +2,7 @@
 
 #include "Malloc.h"
 #include "MallocBinned.h"
+#include "MallocStomp.h"
 
 #ifdef WITH_CORE_ASSERT
 #   include "Diagnostic/Callstack.h"
@@ -14,30 +15,41 @@
 
 #define CORE_MALLOC_ALLOCATOR_STD           0
 #define CORE_MALLOC_ALLOCATOR_BINNED        1
+#define CORE_MALLOC_ALLOCATOR_STOMP         2
 
 #define CORE_MALLOC_FORCE_STD               0 //%_NOCOMMIT%
+#define CORE_MALLOC_FORCE_STOMP             USE_CORE_MEMORY_DEBUGGING //%_NOCOMMIT%
 
 #if CORE_MALLOC_FORCE_STD
-#   define CORE_MALLOC_ALLOCATOR CORE_MALLOC_ALLOCATOR_STD
+#   define CORE_MALLOC_ALLOCATOR            CORE_MALLOC_ALLOCATOR_STD
+#elif CORE_MALLOC_FORCE_STOMP
+#   define CORE_MALLOC_ALLOCATOR            CORE_MALLOC_ALLOCATOR_STOMP
 #else
-#   define CORE_MALLOC_ALLOCATOR CORE_MALLOC_ALLOCATOR_BINNED
+#   define CORE_MALLOC_ALLOCATOR            CORE_MALLOC_ALLOCATOR_BINNED
 #endif
 
-#if not defined(FINAL_RELEASE) && not defined(PROFILING_ENABLED)
-#   define CORE_MALLOC_HISTOGRAM_PROXY      1 //%_NOCOMMIT%
-#   define CORE_MALLOC_LOGGER_PROXY         0 //%_NOCOMMIT%
+#if USE_CORE_MEMORY_DEBUGGING
+#   define CORE_MALLOC_HISTOGRAM_PROXY      1 // Keep memory histogram available, shouldn't have any influence on debugging
+#   define CORE_MALLOC_LOGGER_PROXY         0 // Disabled since it adds payload to each allocation
+#elif not (defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
+#   define CORE_MALLOC_HISTOGRAM_PROXY      1 //%_NOCOMMIT% // Logs memory statictics in a histogram
+#   define CORE_MALLOC_LOGGER_PROXY         0 //%_NOCOMMIT% // Turn on locally to get infos about leaked memory blocks
 #else
 #   define CORE_MALLOC_HISTOGRAM_PROXY      0
 #   define CORE_MALLOC_LOGGER_PROXY         0
 #endif
 
 #ifdef WITH_CORE_ASSERT
-#   define CORE_MALLOC_POISON_PROXY         (CORE_MALLOC_ALLOCATOR != CORE_MALLOC_ALLOCATOR_STD)
+#   define CORE_MALLOC_POISON_PROXY         (CORE_MALLOC_ALLOCATOR == CORE_MALLOC_ALLOCATOR_BINNED) // other allocators have their own poisoning system
 #else
 #   define CORE_MALLOC_POISON_PROXY         0
 #endif
 
-#define NEED_CORE_MALLOCPROXY (CORE_MALLOC_HISTOGRAM_PROXY|CORE_MALLOC_POISON_PROXY||CORE_MALLOC_LOGGER_PROXY)
+#define NEED_CORE_MALLOCPROXY               (CORE_MALLOC_HISTOGRAM_PROXY|CORE_MALLOC_POISON_PROXY|CORE_MALLOC_LOGGER_PROXY)
+
+#if CORE_MALLOC_LOGGER_PROXY
+#   include "Diagnostic/Callstack.h"
+#endif
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -46,22 +58,23 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 struct FMalloc_ {
-    FORCE_INLINE static void* Malloc(size_t size);
-    FORCE_INLINE static void  Free(void* ptr);
-    FORCE_INLINE static void* Calloc(size_t nmemb, size_t size);
-    FORCE_INLINE static void* Realloc(void *ptr, size_t size);
+    FORCE_INLINE static void*   Malloc(size_t size);
+    FORCE_INLINE static void    Free(void* ptr);
+    FORCE_INLINE static void*   Calloc(size_t nmemb, size_t size);
+    FORCE_INLINE static void*   Realloc(void *ptr, size_t size);
 
-    FORCE_INLINE static void* AlignedMalloc(size_t size, size_t alignment);
-    FORCE_INLINE static void  AlignedFree(void *ptr);
-    FORCE_INLINE static void* AlignedCalloc(size_t nmemb, size_t size, size_t alignment);
-    FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment);
+    FORCE_INLINE static void*   AlignedMalloc(size_t size, size_t alignment);
+    FORCE_INLINE static void    AlignedFree(void *ptr);
+    FORCE_INLINE static void*   AlignedCalloc(size_t nmemb, size_t size, size_t alignment);
+    FORCE_INLINE static void*   AlignedRealloc(void *ptr, size_t size, size_t alignment);
+
+    FORCE_INLINE static void    ReleasePendingBlocks();
 
     FORCE_INLINE static size_t  SnapSize(size_t size);
 
 #ifndef FINAL_RELEASE
     FORCE_INLINE static size_t  RegionSize(void* ptr);
 #endif
-    FORCE_INLINE static void  ReleasePendingBlocks();
 };
 //----------------------------------------------------------------------------
 #if (CORE_MALLOC_ALLOCATOR == CORE_MALLOC_ALLOCATOR_STD)
@@ -119,6 +132,32 @@ size_t FMalloc_::RegionSize(void* ptr) {
     return FMallocBinned::RegionSize(ptr);
 }
 #endif //!CORE_MALLOC_ALLOCATOR_BINNED
+//----------------------------------------------------------------------------
+#if (CORE_MALLOC_ALLOCATOR == CORE_MALLOC_ALLOCATOR_STOMP)
+void* FMalloc_::Malloc(size_t size) { return FMallocStomp::Malloc(size); }
+void  FMalloc_::Free(void* ptr) { FMallocStomp::Free(ptr); }
+void* FMalloc_::Calloc(size_t nmemb, size_t size) {
+    void* const p = FMallocStomp::Malloc(size * nmemb);
+    ::memset(p, 0, size * nmemb);
+    return p;
+}
+void* FMalloc_::Realloc(void *ptr, size_t size) { return FMallocStomp::Realloc(ptr, size); }
+void* FMalloc_::AlignedMalloc(size_t size, size_t alignment) { return FMallocStomp::AlignedMalloc(size, alignment); }
+void  FMalloc_::AlignedFree(void *ptr) { FMallocStomp::AlignedFree(ptr); }
+void* FMalloc_::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
+    void* const p = FMallocStomp::AlignedMalloc(size * nmemb, alignment);
+    ::memset(p, 0, size * nmemb);
+    return p;
+}
+void* FMalloc_::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
+    return FMallocStomp::AlignedRealloc(ptr, size, alignment);
+}
+void  FMalloc_::ReleasePendingBlocks() {}
+size_t FMalloc_::SnapSize(size_t size) { return size; }
+size_t FMalloc_::RegionSize(void* ptr) {
+    return FMallocStomp::RegionSize(ptr);
+}
+#endif //!CORE_MALLOC_ALLOCATOR_STOMP
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -383,15 +422,14 @@ public:
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 NO_INLINE bool FetchMemoryBlockDebugInfos(void* ptr, class FCallstack* pCallstack, size_t* pSizeInBytes, bool raw/* = false */) {
-#if CORE_MALLOC_LOGGER_PROXY
-    STATIC_ASSERT(CORE_MALLOC_POISON_PROXY);
-
+#if CORE_MALLOC_LOGGER_PROXY && CORE_MALLOC_POISON_PROXY
     if (nullptr == ptr)
         return false;
 
     Assert(pCallstack || pSizeInBytes);
 
     const FMallocLoggerFacet_::FDebugData* debugData;
+
     const FMallocPoisonFacet_::FCanary* canary;
 
     if (raw) {
@@ -408,30 +446,34 @@ NO_INLINE bool FetchMemoryBlockDebugInfos(void* ptr, class FCallstack* pCallstac
     if (pCallstack)
         pCallstack->SetFrames(debugData->Frames);
     if (pSizeInBytes)
-        *pSizeInBytes = canary->SizeInBytes;<
+        *pSizeInBytes = canary->SizeInBytes;
 
     return true;
+
 #else
     UNUSED(ptr);
     UNUSED(pCallstack);
     UNUSED(pSizeInBytes);
     return false;
+
 #endif
 }
 #endif //!FINAL_RELEASE
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
 bool FetchMemoryAllocationHistogram(
-    TMemoryView<const size_t>* classes, 
-    TMemoryView<const size_t>* allocations, 
+    TMemoryView<const size_t>* classes,
+    TMemoryView<const size_t>* allocations,
     TMemoryView<const size_t>* totalBytes ) {
-#if CORE_MALLOC_HISTOGRAM_PROXY
+#if CORE_MALLOC_HISTOGRAM_PROXY && CORE_MALLOC_POISON_PROXY
     *classes = MakeView(FMallocHistogramFacet_::GSizeClasses);
     *allocations = MakeView(FMallocHistogramFacet_::GSizeAllocations);
     *totalBytes = MakeView(FMallocHistogramFacet_::GSizeTotalBytes);
     return true;
+
 #else
     return false;
+
 #endif
 }
 #endif //!FINAL_RELEASE
