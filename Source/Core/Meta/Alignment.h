@@ -30,7 +30,7 @@ inline constexpr bool IsAligned(const size_t alignment, const T* ptr) {
 //----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
 inline constexpr size_t RoundToNext(const size_t v, size_t alignment) {
-    return --alignment, ((0 == v) ? 0 : (v + alignment) & ~alignment);
+    return ((0 == v) ? 0 : (v + alignment - 1) & ~(alignment - 1));
 }
 template <typename T> T* RoundToNext(const T* p, size_t alignment) {
     return (T*)RoundToNext(size_t(p), alignment);
