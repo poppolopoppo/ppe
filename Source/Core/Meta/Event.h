@@ -37,7 +37,7 @@ public:
     bool empty() const { return _delegates.empty(); }
     size_t size() const { return _delegates.size(); }
 
-    operator const void *() const { return _delegates.empty() ? nullptr : this; }
+    CORE_FAKEBOOL_OPERATOR_DECL() { return (_delegates.empty() ? this : nullptr); }
 
     const vector_type& Delegates() const { return _delegates; }
 

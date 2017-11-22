@@ -55,16 +55,18 @@ struct TNumeric {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct fake_bool {
+struct FFakeBool {
     bool Value;
-    fake_bool() = default;
-    fake_bool(const fake_bool& other) = default;
-    fake_bool& operator =(const fake_bool& other) = default;
-    fake_bool(bool value) : Value(value) {}
-    fake_bool& operator =(bool value) { Value = value; return *this; }
+    FFakeBool() = default;
+    FFakeBool(const FFakeBool& other) = default;
+    FFakeBool& operator =(const FFakeBool& other) = default;
+    FFakeBool(bool value) : Value(value) {}
+    FFakeBool& operator =(bool value) { Value = value; return *this; }
     operator bool () const { return Value; }
-    friend void swap(fake_bool& lhs, fake_bool& rhs) { std::swap(lhs.Value, rhs.Value); }
+    inline friend void swap(FFakeBool& lhs, FFakeBool& rhs) { std::swap(lhs.Value, rhs.Value); }
 };
+//----------------------------------------------------------------------------
+#define CORE_FAKEBOOL_OPERATOR_DECL() operator const void* () const
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

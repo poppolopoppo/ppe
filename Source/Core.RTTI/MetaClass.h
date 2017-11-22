@@ -156,17 +156,16 @@ Meta::TEnableIf<std::is_assignable<PMetaObject, _PMetaObject>::value, PTypeTrait
 namespace details {
 template <typename T>
 bool CreateMetaObject_(PMetaObject& dst, std::true_type) {
-    FMetaObject* const obj = new T();
-    Assert(obj);
-    return obj;
+    dst.reset(new T());
+    Assert(dst);
+    return true;
 }
 template <typename T>
 FMetaObject* CreateMetaObject_(PMetaObject&, std::false_type) {
-    AssertNotReached(); // abstract class
-    return nullptr;
+    return false;
 }
 inline void DeleteMetaClass_(FMetaClass* metaClass) {
-    delete(metaClass);
+    checked_delete(metaClass);
 }
 } //!details
 //----------------------------------------------------------------------------

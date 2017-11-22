@@ -20,15 +20,15 @@ public:
     FDLLWrapper(FDLLWrapper&& rvalue);
     FDLLWrapper& operator =(FDLLWrapper&& rvalue);
 
-    void* Handle() const { 
-        Assert(IsValid()); 
-        return _handle.Get(); 
+    void* Handle() const {
+        Assert(IsValid());
+        return _handle.Get();
     }
 
     bool IsValid() const { return _handle.Flag0(); }
     bool IsSharedResource() const { return _handle.Flag1(); }
 
-    operator const void* () const { return (_handle.Get()); }
+    CORE_FAKEBOOL_OPERATOR_DECL() { return _handle.Get(); }
 
     bool Attach(const FStringView& path);
     bool Load(const FStringView& path);

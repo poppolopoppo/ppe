@@ -7,6 +7,7 @@
 #include "Core/Meta/AlignedStorage.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Meta/PointerWFlags.h"
+#include "Core/Meta/StronglyTyped.h"
 
 #include <algorithm>
 #include <type_traits>
@@ -153,7 +154,7 @@ public:
     struct iterator {
         const node_type* Node;
         size_type Relative;
-        operator const void* () const { return Node; }
+        CORE_FAKEBOOL_OPERATOR_DECL() { return Node; }
         bool HasValue() const {
             return (nullptr != Node &&
                     Node->HasValue() &&

@@ -23,7 +23,7 @@ struct TInSituPtr {
     };
 
     bool Valid() const { return (VTable != NullMagick); }
-    operator const void* () const { return (Valid() ? this : nullptr); }
+    CORE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
 
     T* get() {
         Assert(Valid());

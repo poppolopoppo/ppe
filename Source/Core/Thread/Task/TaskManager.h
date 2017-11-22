@@ -38,7 +38,7 @@ public:
     ETaskPriority Priority() const { return _priority; }
     const FTaskCounter* Counter() const { return _counter.get(); }
 
-    bool Valid() const { return (nullptr != _counter); }
+    bool Valid() const { return _counter.valid(); }
     bool Finished() const;
 
 private:

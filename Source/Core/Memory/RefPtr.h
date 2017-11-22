@@ -128,8 +128,8 @@ public:
     T& operator *() const { Assert(_ptr); return *_ptr; }
     T* operator ->() const { Assert(_ptr); return _ptr; }
 
-    //operator T* () const { return _ptr; } // better to let the user know what he/she is doing
-    FORCE_INLINE operator const void *() const { return _ptr; }
+    CORE_FAKEBOOL_OPERATOR_DECL() { return _ptr; }
+    bool valid() const { return (!!_ptr); }
 
     template <typename U>
     void Swap(TRefPtr<U>& other);

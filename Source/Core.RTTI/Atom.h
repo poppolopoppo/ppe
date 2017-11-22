@@ -17,7 +17,7 @@ public:
         , _traits(traits) {
     }
 
-    operator const void* () const { return _data; }
+    CORE_FAKEBOOL_OPERATOR_DECL() { return _data; }
 
     void* Data() const { return _data; }
     const PTypeTraits& Traits() const { return _traits; }
