@@ -8,6 +8,11 @@
 // http://dlib.net/files/dlib-19.1.zip
 // http://dlib.net/dlib/sockets/sockets_kernel_1.h.html
 
+#ifdef PLATFORM_WINDOWS
+//  Link with WinSock2 library
+#   pragma comment(lib, "ws2_32.lib")
+#endif
+
 namespace Core {
 namespace Network {
 //----------------------------------------------------------------------------

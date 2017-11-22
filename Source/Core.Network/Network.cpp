@@ -11,11 +11,6 @@
 
 PRAGMA_INITSEG_LIB
 
-#ifdef PLATFORM_WINDOWS
-//  Link with WinSock2 library
-#   pragma comment(lib, "ws2_32.lib")
-#endif
-
 namespace Core {
 namespace Network {
 POOL_TAG_DEF(Network);

@@ -5,6 +5,7 @@
 #include "NetworkIncludes.h"
 
 #include "Core/Diagnostic/LastError.h"
+#include "Core/Diagnostic/Logger.h"
 
 namespace Core {
 namespace Network {
