@@ -24,6 +24,15 @@ FORCE_INLINE hash_t hash_value(const TPair<_First, _Second>& pair) {
     return hash_tuple(hash_value(pair.first), hash_value(pair.second));
 }
 //----------------------------------------------------------------------------
+namespace Meta {
+template <typename _First, typename _Second>
+struct TIsPod< TPair<_First, _Second> >
+    : public std::integral_constant<bool,
+        Meta::TIsPod<_First>::value &&
+        Meta::TIsPod<_Second>::value >
+{};
+} //!Meta
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <
