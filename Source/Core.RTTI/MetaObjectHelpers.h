@@ -2,12 +2,14 @@
 
 #include "Core.RTTI/RTTI.h"
 
+#include "Core/Memory/RefPtr.h"
+
 #include <iosfwd>
 
 namespace Core {
 namespace RTTI {
 class FMetaClass;
-class FMetaObject;
+FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

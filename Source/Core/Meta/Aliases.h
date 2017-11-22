@@ -29,6 +29,10 @@ typedef int64_t     i64;
 #   error "unknown architecture !"
 #endif
 //----------------------------------------------------------------------------
+#ifndef _HAS_CXX14
+#   define _HAS_CXX14 0
+#endif
+//----------------------------------------------------------------------------
 #ifndef _HAS_CXX17
 #   define _HAS_CXX17 0
 #endif

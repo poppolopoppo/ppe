@@ -64,7 +64,7 @@ public:
     static constexpr size_type Capacity = _Capacity;
 
     struct query_t {
-        size_type THash = 0;
+        size_type Hash = 0;
         iterator It = iterator{ nullptr };
     };
 

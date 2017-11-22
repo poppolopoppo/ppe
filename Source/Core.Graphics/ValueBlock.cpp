@@ -89,7 +89,7 @@ FValueBlock::FField* FValueBlock::FindByNameAndIndexIFP(const Graphics::FName& n
     return (it != _fields.end() ? &*it : nullptr);
 }
 //----------------------------------------------------------------------------
-hash_t FValueBlock::THash(const TMemoryView<const u8>& data) const {
+hash_t FValueBlock::HashValue(const TMemoryView<const u8>& data) const {
     hash_t h(0);
     for (const FField& field : _fields)
         hash_combine(h, ValueHash(field.Type(), data.CutStartingAt(field.Offset())));

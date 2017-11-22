@@ -238,7 +238,8 @@ std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const
 //----------------------------------------------------------------------------
 namespace Fmt {
 struct FIndent {
-    FStringView Tab = "    ";
+    explicit FIndent(const FStringView& tab = "    ") : Tab(tab) {}
+    FStringView Tab;
     int Level = 0;
     void Inc() { ++Level; }
     void Dec() { Assert(Level > 0); --Level; }

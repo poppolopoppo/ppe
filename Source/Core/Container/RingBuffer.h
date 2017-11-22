@@ -45,6 +45,7 @@ public:
     size_type capacity() const { return _capacity; }
     size_type size() const { return _size; }
     bool empty() const { return (0 == _size); }
+    pointer data() const { return _storage; }
 
     reference push_back_Uninitialized();
     template <typename _Arg0, typename... _Args>

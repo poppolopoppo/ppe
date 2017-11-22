@@ -60,10 +60,12 @@ private:
     function_type _func;
 };
 //----------------------------------------------------------------------------
-FTaskProcedure* MakeAsync(Meta::TFunction<void()>&& fireAndForget);
+// Can't overload with std::function<>: http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2132
+//FTaskProcedure* MakeAsync(Meta::TFunction<void()>&& fireAndForget);
 FTaskProcedure* MakeAsync(Meta::TFunction<void(ITaskContext&)>&& fireAndForget);
 //----------------------------------------------------------------------------
-void ASync(FTaskManager& manager, Meta::TFunction<void()>&& fireAndForget, ETaskPriority priority = ETaskPriority::Normal);
+// Can't overload with std::function<>: http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2132
+//void ASync(FTaskManager& manager, Meta::TFunction<void()>&& fireAndForget, ETaskPriority priority = ETaskPriority::Normal);
 void ASync(FTaskManager& manager, Meta::TFunction<void(ITaskContext&)>&& fireAndForget, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 template <typename _It, typename _Lambda>

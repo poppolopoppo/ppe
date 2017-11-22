@@ -62,7 +62,7 @@ struct TAllocaBlock {
             RawData = TypedAlloca< T >(Count);
             UsingSysAlloca = 0;
         }
-        Assert(RawData);
+        Assert(RawData || 0 == Count);
     }
 
     ~TAllocaBlock() {

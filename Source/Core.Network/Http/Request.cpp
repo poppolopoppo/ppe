@@ -10,6 +10,8 @@
 #include "../Socket/SocketBuffered.h"
 #include "../Uri.h"
 
+#include "Core/IO/Format.h"
+
 namespace Core {
 namespace Network {
 //----------------------------------------------------------------------------

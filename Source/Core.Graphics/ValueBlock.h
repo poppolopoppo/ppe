@@ -119,7 +119,7 @@ public:
 
     TMemoryView<const FField> MakeView() const { return _fields.MakeConstView(); }
 
-    hash_t THash(const TMemoryView<const u8>& data) const;
+    hash_t HashValue(const TMemoryView<const u8>& data) const;
 
     friend hash_t hash_value(const FValueBlock& block);
 

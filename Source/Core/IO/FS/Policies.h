@@ -6,14 +6,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EOpenPolicy {
+enum class EOpenPolicy : size_t {
     Readable        = 1 << 0,
     Writable        = 1 << 1,
     ReadWritable    = Readable | Writable,
 };
 ENUM_FLAGS(EOpenPolicy);
 //----------------------------------------------------------------------------
-enum class EAccessPolicy {
+enum class EAccessPolicy : size_t {
 
     None            = 0,
 
@@ -42,7 +42,7 @@ ENUM_FLAGS(EAccessPolicy);
 std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, EAccessPolicy policy);
 std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, EAccessPolicy policy);
 //----------------------------------------------------------------------------
-enum class EExistPolicy {
+enum class EExistPolicy : size_t{
     Exists          = 1 << 0,
     WriteOnly       = 1 << 1,
     ReadOnly        = 1 << 2,
@@ -50,7 +50,7 @@ enum class EExistPolicy {
 };
 ENUM_FLAGS(EExistPolicy);
 //----------------------------------------------------------------------------
-enum class ESeekOrigin {
+enum class ESeekOrigin : size_t{
     Begin = 0,
     Relative,
     End,

@@ -149,7 +149,7 @@ class TVectorLikeTraits : public TBaseTypeTraits< _VectorLike, TBaseListTraits<t
     using typename base_traits::const_pointer;
 
 public: // IListTraits
-    using IListTraits::foreach_fun;
+    using typename base_traits::foreach_fun;
 
     virtual size_t Count(const FAtom& list) const override final;
     virtual bool Empty(const FAtom& list) const override final;
@@ -189,7 +189,7 @@ class TAssociativeVectorTraits : public TBaseTypeTraits< TAssociativeVector<_Key
     using typename base_traits::const_pointer;
 
 public: // IDicoTraits:
-    using IDicoTraits::foreach_fun;
+    using typename base_traits::foreach_fun;
 
     virtual size_t Count(const FAtom& dico) const override final;
     virtual bool Empty(const FAtom& dico) const override final;
@@ -222,7 +222,7 @@ class THashMapTraits : public TBaseTypeTraits< THashMap<_Key, _Value, _Hasher, _
     using typename base_traits::const_pointer;
 
 public: // IDicoTraits:
-    using IDicoTraits::foreach_fun;
+    using typename base_traits::foreach_fun;
 
     virtual size_t Count(const FAtom& dico) const override final;
     virtual bool Empty(const FAtom& dico) const override final;
