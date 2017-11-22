@@ -11,10 +11,10 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define HASHSET(_DOMAIN, T) \
-    ::Core::THashSet<T, ::Core::THash<T>, ::Core::Meta::TEqualTo<T>, ALLOCATOR(_DOMAIN, T)>
+    ::Core::THashSet<T, ::Core::Meta::THash<T>, ::Core::Meta::TEqualTo<T>, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 #define HASHSET_THREAD_LOCAL(_DOMAIN, T) \
-    ::Core::THashSet<T, ::Core::THash<T>, ::Core::Meta::TEqualTo<T>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T)>
+    ::Core::THashSet<T, ::Core::Meta::THash<T>, ::Core::Meta::TEqualTo<T>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 #define HASHSET_MEMOIZE(_DOMAIN, T) \
     HASHSET(_DOMAIN, ::Core::THashMemoizer<T>)
@@ -26,7 +26,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 template <
     typename _Key,
-    typename _Hasher = THash<_Key>,
+    typename _Hasher = Meta::THash<_Key>,
     typename _EqualTo = Meta::TEqualTo<_Key>,
     typename _Allocator = ALLOCATOR(Container, _Key)
 >

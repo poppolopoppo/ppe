@@ -11,10 +11,10 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define HASHMAP(_DOMAIN, _KEY, _VALUE) \
-    ::Core::THashMap<_KEY, _VALUE, ::Core::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>)>
+    ::Core::THashMap<_KEY, _VALUE, ::Core::Meta::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define HASHMAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::THashMap<_KEY, _VALUE, ::Core::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>)>
+    ::Core::THashMap<_KEY, _VALUE, ::Core::Meta::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define HASHMAP_MEMOIZE(_DOMAIN, _KEY, _VALUE) \
     HASHMAP(_DOMAIN, ::Core::THashMemoizer<_KEY>, _VALUE)
@@ -27,7 +27,7 @@ namespace Core {
 template <
     typename _Key,
     typename _Value,
-    typename _Hasher = THash<_Key>,
+    typename _Hasher = Meta::THash<_Key>,
     typename _EqualTo = Meta::TEqualTo<_Key>,
     typename _Allocator = ALLOCATOR(Container, TPair<_Key COMMA _Value>)
 >

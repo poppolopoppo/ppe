@@ -98,7 +98,11 @@ public:
         pointer data() const { return _p; }
 
         TIterator_& operator++() /* prefix */ { return GotoNextBucket_(); }
-        TIterator_ operator++(int) /* postfix */ { return TIterator_(*this).GotoNextBucket_(); }
+        TIterator_ operator++(int) /* postfix */ {
+            TIterator_ tmp(*this);
+            ++(*this);
+            return tmp;
+        }
 
         reference operator*() const { Assert(_p); return *_p; }
         pointer operator->() const { Assert(_p); return _p; }
@@ -432,7 +436,7 @@ private:
         STATIC_CONST_INTEGRAL(size_type, BitsStateMask_, 3);
 
         FORCE_INLINE static size_type StatesSizeInT(size_type capacity) {
-            STATIC_CONST_INTEGRAL(size_type, BitsPerT_, Meta::template TBitCount<value_type>::value);
+            STATIC_CONST_INTEGRAL(size_type, BitsPerT_, sizeof(value_type)<<3);
             STATIC_CONST_INTEGRAL(size_type, BitsPerTM1_, BitsPerT_ - 1);
             STATIC_CONST_INTEGRAL(size_type, BitsPerTLog2_, Meta::template TLog2<BitsPerT_>::value);
             //return ((capacity * BitsPerState_ + BitsPerT_ - 1) / BitsPerT_);
