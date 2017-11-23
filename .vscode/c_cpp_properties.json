@@ -5,7 +5,8 @@
             "includePath": [
                 "/usr/include",
                 "/usr/local/include",
-                "${workspaceRoot}/Source"
+                "${workspaceRoot}/Source",
+                "${fileDirname}"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -13,7 +14,8 @@
                 "path": [
                     "/usr/include",
                     "/usr/local/include",
-                    "${workspaceRoot}/Source"
+                    "${workspaceRoot}/Source",
+                    "${fileDirname}"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
@@ -28,7 +30,8 @@
             "includePath": [
                 "/usr/include",
                 "/usr/local/include",
-                "${workspaceRoot}/Source"
+                "${workspaceRoot}/Source",
+                "${fileDirname}"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -36,7 +39,8 @@
                 "path": [
                     "/usr/include",
                     "/usr/local/include",
-                    "${workspaceRoot}/Source"
+                    "${workspaceRoot}/Source",
+                    "${fileDirname}"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
@@ -50,7 +54,8 @@
                 "C:/Program Files (x86)/Windows Kits/10/Include/10.0.15063.0/ucrt",
                 "C:/Program Files (x86)/Windows Kits/10/Include/10.0.15063.0/shared",
                 "C:/Program Files (x86)/Windows Kits/10/Include/10.0.15063.0/winrt",
-                "${workspaceRoot}/Source"
+                "${workspaceRoot}/Source",
+                "${fileDirname}"
             ],
             "defines": [
                 "_DEBUG",
@@ -64,7 +69,8 @@
                     "C:/Program Files (x86)/Windows Kits/10/Include/10.0.15063.0/ucrt",
                     "C:/Program Files (x86)/Windows Kits/10/Include/10.0.15063.0/shared",
                     "C:/Program Files (x86)/Windows Kits/10/Include/10.0.15063.0/winrt",
-                    "${workspaceRoot}/Source"
+                    "${workspaceRoot}/Source",
+                    "${fileDirname}"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""

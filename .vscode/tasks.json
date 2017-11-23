@@ -3,8 +3,9 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
+        // Core.ContentGenerator
         {
-            "taskName": "Core.ContentGenerator-Win64-Debug",
+            "label": "Core.ContentGenerator-Win64-Debug",
             "type": "shell",
             "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win64-debug",
             "group": {
@@ -22,7 +23,7 @@
             ]
         },
         {
-            "taskName": "Core.ContentGenerator-Win64-FastDebug",
+            "label": "Core.ContentGenerator-Win64-FastDebug",
             "type": "shell",
             "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win64-FastDebug",
             "group": {
@@ -40,7 +41,7 @@
             ]
         },
         {
-            "taskName": "Core.ContentGenerator-Win64-Release",
+            "label": "Core.ContentGenerator-Win64-Release",
             "type": "shell",
             "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win64-Release",
             "group": {
@@ -58,7 +59,7 @@
             ]
         },
         {
-            "taskName": "Core.ContentGenerator-Win64-Profiling",
+            "label": "Core.ContentGenerator-Win64-Profiling",
             "type": "shell",
             "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win64-Profiling",
             "group": {
@@ -76,7 +77,7 @@
             ]
         },
         {
-            "taskName": "Core.ContentGenerator-Win64-Final",
+            "label": "Core.ContentGenerator-Win64-Final",
             "type": "shell",
             "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win64-Final",
             "group": {
@@ -94,7 +95,7 @@
             ]
         },
         {
-            "taskName": "Core.ContentGenerator-Win32-Debug",
+            "label": "Core.ContentGenerator-Win32-Debug",
             "type": "shell",
             "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win32-debug",
             "group": {
@@ -112,7 +113,7 @@
             ]
         },
         {
-            "taskName": "Core.ContentGenerator-Win32-FastDebug",
+            "label": "Core.ContentGenerator-Win32-FastDebug",
             "type": "shell",
             "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win32-FastDebug",
             "group": {
@@ -130,7 +131,7 @@
             ]
         },
         {
-            "taskName": "Core.ContentGenerator-Win32-Release",
+            "label": "Core.ContentGenerator-Win32-Release",
             "type": "shell",
             "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win32-Release",
             "group": {
@@ -148,7 +149,7 @@
             ]
         },
         {
-            "taskName": "Core.ContentGenerator-Win32-Profiling",
+            "label": "Core.ContentGenerator-Win32-Profiling",
             "type": "shell",
             "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win32-Profiling",
             "group": {
@@ -166,9 +167,190 @@
             ]
         },
         {
-            "taskName": "Core.ContentGenerator-Win32-Final",
+            "label": "Core.ContentGenerator-Win32-Final",
             "type": "shell",
             "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.ContentGenerator-Win32-Final",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        // Core.Test
+        {
+            "label": "Core.Test-Win64-Debug",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.Test-Win64-debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "label": "Core.Test-Win64-FastDebug",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.Test-Win64-FastDebug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "label": "Core.Test-Win64-Release",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.Test-Win64-Release",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "label": "Core.Test-Win64-Profiling",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.Test-Win64-Profiling",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "label": "Core.Test-Win64-Final",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.Test-Win64-Final",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "label": "Core.Test-Win32-Debug",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.Test-Win32-debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "label": "Core.Test-Win32-FastDebug",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.Test-Win32-FastDebug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "label": "Core.Test-Win32-Release",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.Test-Win32-Release",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "label": "Core.Test-Win32-Profiling",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.Test-Win32-Profiling",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "label": "Core.Test-Win32-Final",
+            "type": "shell",
+            "command": "ruby \"${workspaceRoot}\\fbuild.rb\" Core.Test-Win32-Final",
             "group": {
                 "kind": "build",
                 "isDefault": true
