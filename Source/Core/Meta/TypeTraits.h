@@ -24,20 +24,24 @@ struct TType {}; // used to overload function base on type without to give an ac
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-using TGreater = std::greater<T>;
+// Unlike STL variants theses operators allow to compare _Lhs with a compatible _Rhs
 //----------------------------------------------------------------------------
-template <typename T>
-using TGreaterEqual = std::greater_equal<T>;
+#define CORE_META_OPERATOR(_NAME, _OP) \
+    template <typename _Lhs> \
+    struct _NAME { \
+        template <typename _Rhs> \
+        CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const { \
+            return (rhs _OP lhs); \
+        } \
+    }
 //----------------------------------------------------------------------------
-template <typename T>
-using TLess = std::less<T>;
+CORE_META_OPERATOR(TGreater,        > );
+CORE_META_OPERATOR(TGreaterEqual,   >=);
+CORE_META_OPERATOR(TLess,           < );
+CORE_META_OPERATOR(TLessEqual,      <=);
+CORE_META_OPERATOR(TEqualTo,        ==);
 //----------------------------------------------------------------------------
-template <typename T>
-using TLessEqual = std::less_equal<T>;
-//----------------------------------------------------------------------------
-template <typename T>
-using TEqualTo = std::equal_to<T>;
+#undef CORE_META_OPERATOR
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -88,21 +92,6 @@ struct TIsPod : public std::is_pod<T> {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if _HAS_CXX14
-#   define CONSTEXPR constexpr
-#else
-#   define CONSTEXPR
-#endif
-//----------------------------------------------------------------------------
-#if _HAS_CXX17
-#   define FOLD_EXPR(...) ((__VA_ARGS__), ...)
-#else
-//  Workaround from Jason Turner: https://youtu.be/nnY4e4faNp0?t=39m51s
-#   define FOLD_EXPR(...) (void)std::initializer_list<int>{ ((__VA_ARGS__), 0)... }
-#endif //!_HAS_CXX17
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 #if 0
 // Uses SFINAE to determine if T has a compatible constructor
 namespace details {
@@ -139,13 +128,13 @@ template< typename T>
 struct has_destructor {
     /* Has destructor :) */
     template <typename A>
-    static std::true_type test(decltype(std::declval<A>().~A()) *) {
+    static CONSTEXPR std::true_type test(decltype(std::declval<A>().~A()) *) {
         return std::true_type();
     }
 
     /* Has no destructor :( */
     template<typename A>
-    static std::false_type test(...) {
+    static CONSTEXPR std::false_type test(...) {
         return std::false_type();
     }
 
@@ -165,9 +154,9 @@ using has_forceinit_constructor = has_constructor<T, Meta::FForceInit>;
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
-FORCE_INLINE T ForceInit_(std::false_type) { return T{}; }
+FORCE_INLINE CONSTEXPR T ForceInit_(std::false_type) { return T{}; }
 template <typename T>
-FORCE_INLINE T ForceInit_(std::true_type) { return T{ FForceInit{} }; }
+FORCE_INLINE CONSTEXPR T ForceInit_(std::true_type) { return T{ FForceInit{} }; }
 } //!details
 template <typename T>
 T ForceInit() {

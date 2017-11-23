@@ -3,8 +3,11 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Allocation.h"
+#include "Core/Container/BitMask.h"
 #include "Core/Container/Hash.h"
 #include "Core/Container/Pair.h"
+#include "Core/Memory/MemoryView.h"
+#include "Core/Meta/Iterator.h"
 
 #include <algorithm>
 #include <initializer_list>
@@ -12,12 +15,8 @@
 #include <utility>
 #include <type_traits>
 
-// http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/
-// https://github.com/goossaert/hashmap/blob/master/backshift_hashmap.cc
-// http://codecapsule.com/2013/08/11/hopscotch-hashing/
-// http://www.sebastiansylvan.com/post/robin-hood-hashing-should-be-your-default-hash-table-implementation/
-// http://stackoverflow.com/questions/245878/how-do-i-choose-between-a-hash-table-and-a-trie-prefix-tree
-// http://www.ilikebigbits.com/blog/2016/8/28/designing-a-fast-hash-table
+// CppCon 2017: Matt Kulukundis “Designing a Fast, Efficient, Cache-friendly Hash Table, Step by Step”
+// https://www.youtube.com/watch?v=ncHmEUmJZf4
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -34,17 +33,20 @@ struct THashMapTraits_ {
     typedef Meta::TAddReference<const mapped_type> mapped_reference_const;
     static key_type& Key(value_type& value) { return value.first; }
     static const key_type& Key(const value_type& value) { return value.first; }
+    static const key_type& Key(const public_type& value) { return value.first; }
     static mapped_type& Value(value_type& value) { return value.second; }
     static const mapped_type& Value(const value_type& value) { return value.second; }
     static mapped_type& Value(public_type& value) { return value.second; }
     static const mapped_type& Value(const public_type& value) { return value.second; }
-    static value_type Make(const _Key& key) { return value_type(key, _Value()); }
-    static value_type Make(_Key&& rkey) { return value_type(std::move(rkey), _Value()); }
-    static value_type Make(const _Key& key, const _Value& value) { return value_type(key, value); }
-    static value_type Make(const _Key& key, _Value&& rvalue) { return value_type(key, std::move(rvalue)); }
-    static value_type Make(_Key&& rkey, _Value&& rvalue) { return value_type(std::move(rkey), std::move(rvalue)); }
     template <typename _It> static TKeyIterator<_It> MakeKeyIterator(_It&& it) { return Core::MakeKeyIterator(std::move(it)); }
     template <typename _It> static TValueIterator<_It> MakeValueIterator(_It&& it) { return Core::MakeValueIterator(std::move(it)); }
+    static value_type MakeValue(const _Key& key) { return value_type(key, _Value()); }
+    static value_type MakeValue(_Key&& rkey) { return value_type(std::move(rkey), _Value()); }
+    static value_type MakeValue(const _Key& key, const _Value& value) { return value_type(key, value); }
+    static value_type MakeValue(const _Key& key, _Value&& rvalue) { return value_type(key, std::move(rvalue)); }
+    static value_type MakeValue(_Key&& rkey, _Value&& rvalue) { return value_type(std::move(rkey), std::move(rvalue)); }
+    static value_type&& MakeValue(value_type&& rvalue) { return std::move(rvalue); }
+    static const value_type& MakeValue(const value_type& value) { return value; }
 };
 template <typename _Key>
 struct THashSetTraits_ {
@@ -58,76 +60,205 @@ struct THashSetTraits_ {
     static const _Key& Key(const value_type& value) { return value; }
     static mapped_type& Value(value_type& value) { return value; }
     static const mapped_type& Value(const value_type& value) { return value; }
-    template <typename... _Args>
-    static value_type Make(_Args&&... args) { return value_type(std::forward<_Args>(args)...); }
     template <typename _It> static const _It& MakeKeyIterator(const _It& it) { return it; }
     template <typename _It> static const _It& MakeValueIterator(const _It& it) { return it; }
+    template <typename... _Args> static value_type MakeValue(_Args&&... args) { return value_type(std::forward<_Args>(args)...); }
+};
+struct FHashTableData_ {
+    union {
+        struct {
+            u64     Size : 24;
+            u64     Capacity :24;
+            u64     OffsetOfBuckets : 16;
+        };
+        u64 Packed;
+    };
+
+    void*   StatesAndBuckets;
+
+    FHashTableData_()
+        : Size(0)
+        , Capacity(0)
+        , OffsetOfBuckets(0)
+        , StatesAndBuckets(nullptr)
+    {}
+
+    typedef i8 state_t;
+    enum EState : state_t {
+        kEmpty      = -1,
+        kSentinel   = -2, // for iterators
+        kDeleted    = -128,
+    };
+
+    typedef __m128i group_t;
+    static constexpr size_t GGroupSize = 16;
+
+    size_t NumBuckets() const {
+        return (Capacity);
+    }
+
+    size_t NumStates() const {
+        // 15 last states are mirroring the 15th
+        // allows to sample state across table boundary
+        return (Capacity ? Capacity + GGroupSize/* sentinel */ : 0);
+    }
+
+    const state_t* GetState(size_t index) const {
+        Assert(index < Capacity);
+        return ((const state_t*)StatesAndBuckets + index);
+    }
+
+    CORE_API state_t SetState(size_t index, state_t state);
+
+    bool SetElement(size_t index, size_t hash);
+    CORE_API void SetDeleted(size_t index);
+
+    CORE_API void ResetStates();
+
+    group_t SIMD_INLINE GroupAt(size_t first) const {
+        return _mm_lddqu_si128((const __m128i*)GetState(first));
+    }
+
+    group_t SIMD_INLINE GroupAt_StreamLoad(size_t first) const {
+        Assert(Meta::IsAligned(16, GetState(first)));
+        return _mm_stream_load_si128((const __m128i*)GetState(first));
+    }
+
+    static FBitMask SIMD_INLINE Match(group_t group, group_t state) {
+        return FBitMask{ size_t(_mm_movemask_epi8(_mm_cmpeq_epi8(group, state))) };
+    }
+
+    static FBitMask SIMD_INLINE MatchEmpty(group_t group) {
+        return FBitMask{ size_t(_mm_movemask_epi8(_mm_cmpeq_epi8(group, _mm_set1_epi8(kEmpty)))) };
+    }
+
+    static FBitMask SIMD_INLINE MatchNonEmpty(group_t group) {
+        return FBitMask{ (~size_t(_mm_movemask_epi8(_mm_cmpeq_epi8(group, _mm_set1_epi8(kEmpty))))) & 0xFFFFu };
+    }
+
+    static FBitMask SIMD_INLINE MatchFreeBucket(group_t group) {
+        return FBitMask{ size_t(_mm_movemask_epi8(_mm_and_si128(group, _mm_set1_epi8(kDeleted)))) };
+    }
+
+    static FBitMask SIMD_INLINE MatchFilledBucket(group_t group) {
+        return FBitMask{ size_t(_mm_movemask_epi8(_mm_andnot_si128(group, _mm_set1_epi8(kDeleted)))) };
+    }
+
+    void Swap(FHashTableData_& other);
+
+    FORCE_INLINE static constexpr size_t H1(size_t hash) { return hash >> 7; }
+    FORCE_INLINE static constexpr state_t H2(size_t hash) { return state_t(hash & 0x7f); }
+
+    size_t FirstFilledIndex() const {
+        const size_t first = (Size
+            ? FirstFilledBucket_ReturnOffset((const state_t*)StatesAndBuckets)
+            : Capacity);
+        return first;
+    }
+
+    static CORE_API size_t FirstFilledBucket_ReturnOffset(const state_t* states);
+};
+template <typename T>
+class THashTableIterator_ : public Meta::TIterator<T, std::forward_iterator_tag> {
+public:
+    typedef Meta::TIterator<T, std::forward_iterator_tag> parent_type;
+
+    using state_t = typename FHashTableData_::state_t;
+
+    using typename parent_type::value_type;
+    using typename parent_type::reference;
+    using typename parent_type::pointer;
+    using typename parent_type::difference_type;
+    using typename parent_type::iterator_category;
+
+    THashTableIterator_() NOEXCEPT : THashTableIterator_(nullptr, nullptr) {}
+    THashTableIterator_(const state_t* states, pointer buckets, size_t capacity, size_t index) NOEXCEPT
+        : _state(states + index)
+        , _bucket(MakeCheckedIterator(buckets, capacity, index))
+    {}
+
+    template <typename U>
+    THashTableIterator_(const THashTableIterator_<U>& other)
+        : _state(other.state())
+        , _bucket(other.bucket())
+    {}
+    template <typename U>
+    THashTableIterator_& operator =(const THashTableIterator_<U>& other) {
+        _state = other.state();
+        _bucket = other.bucket();
+        return *this;
+    }
+
+    const state_t* state() const { return _state; }
+    const TCheckedArrayIterator<value_type>& bucket() const { return _bucket; }
+
+    pointer data() const { return std::addressof(*_bucket); }
+
+    THashTableIterator_& operator++() /* prefix */ { return GotoNextBucket_(); }
+    THashTableIterator_ operator++(int) /* postfix */ {
+        THashTableIterator_ tmp(*this);
+        ++(*this);
+        return tmp;
+    }
+
+    reference operator*() const { return (*_bucket); }
+    pointer operator->() const { return data(); }
+
+    void Swap(THashTableIterator_& other) {
+        std::swap(_state, other._state);
+        std::swap(_bucket, other._bucket);
+    }
+
+    bool AliasesToContainer(const TMemoryView<const state_t>& states) const {
+        return states.AliasesToContainer(_state);
+    }
+
+    template <typename U>
+    bool operator ==(const THashTableIterator_<U>& other) const {
+#ifdef WITH_CORE_ASSERT
+        if (_state == other.state()) {
+            Assert(_bucket == other.bucket());
+            return true;
+        }
+        else {
+            Assert(_bucket != other.bucket());
+            return false;
+        }
+#else
+        return (_state == other.state());
+#endif
+    }
+    template <typename U>
+    bool operator !=(const THashTableIterator_<U>& other) const { return (not operator ==(other)); }
+
+private:
+    THashTableIterator_& GotoNextBucket_() NOEXCEPT {
+        using FHTD = FHashTableData_;
+        const size_t offset = (1 + FHTD::FirstFilledBucket_ReturnOffset(_state + 1));
+        _bucket += offset; // _bucket first since it's a checked iterator
+        _state += offset;
+        return (*this);
+    }
+
+    const state_t* _state;
+    TCheckedArrayIterator<value_type> _bucket;
 };
 } //!details
 //----------------------------------------------------------------------------
+template <typename T>
+inline void swap(details::THashTableIterator_<T>& lhs, details::THashTableIterator_<T>& rhs) {
+    lhs.Swap(rhs);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-class TBasicHashTable : _Allocator {
+class EMPTY_BASES TBasicHashTable : _Hasher, _EqualTo, _Allocator {
+    using FHTD = typename details::FHashTableData_;
 public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
-
-    template <typename T>
-    class TIterator_ : public std::iterator<std::forward_iterator_tag, T, difference_type, Meta::TAddPointer<T>, Meta::TAddReference<T> > {
-    public:
-        typedef std::iterator<std::forward_iterator_tag, T, difference_type, Meta::TAddPointer<T>, Meta::TAddReference<T> > parent_type;
-
-        using typename parent_type::value_type;
-        using typename parent_type::reference;
-        using typename parent_type::pointer;
-        using typename parent_type::difference_type;
-        using typename parent_type::iterator_category;
-
-        TIterator_() NOEXCEPT : _m(nullptr), _p(nullptr) {}
-        TIterator_(const TBasicHashTable& m, pointer p) : _m(&m), _p(p) {}
-
-        template <typename U>
-        TIterator_(const TIterator_<U>& other) : _m(other.map()), _p(other.data()) {}
-        template <typename U>
-        TIterator_& operator =(const TIterator_<U>& other) {
-            _m = other.map();
-            _p = other.data();
-            return *this;
-        }
-
-        const TBasicHashTable* map() const { return _m; }
-        pointer data() const { return _p; }
-
-        TIterator_& operator++() /* prefix */ { return GotoNextBucket_(); }
-        TIterator_ operator++(int) /* postfix */ {
-            TIterator_ tmp(*this);
-            ++(*this);
-            return tmp;
-        }
-
-        reference operator*() const { Assert(_p); return *_p; }
-        pointer operator->() const { Assert(_p); return _p; }
-
-        void swap(TIterator_& other) {
-            std::swap(_m, other._m);
-            std::swap(_p, other._p);
-        }
-        inline friend void swap(TIterator_& lhs, TIterator_& rhs) { lhs.swap(rhs); }
-
-        bool AliasesToContainer(const TBasicHashTable& m) const {
-            return (_m == &m && m.AliasesToContainer(reinterpret_cast<const_pointer>(_p)));
-        }
-
-        template <typename U>
-        bool operator ==(const TIterator_<U>& other) const { Assert(_m == other._m); return (_p == other.data()); }
-        template <typename U>
-        bool operator !=(const TIterator_<U>& other) const { Assert(_m == other._m); return (_p != other.data()); }
-
-    private:
-        TIterator_& GotoNextBucket_();
-
-        const TBasicHashTable* _m;
-        pointer _p;
-    };
+    typedef typename FHTD::state_t state_t;
 
     typedef _Traits table_traits;
 
@@ -150,19 +281,21 @@ public:
     typedef _Allocator allocator_type;
     typedef std::allocator_traits<allocator_type> allocator_traits;
 
-    typedef TIterator_<public_type> iterator;
-    typedef TIterator_<Meta::TAddConst<public_type>> const_iterator;
+    typedef details::THashTableIterator_<public_type> iterator;
+    typedef details::THashTableIterator_<Meta::TAddConst<public_type>> const_iterator;
 
-    TBasicHashTable() NOEXCEPT {
-        STATIC_ASSERT(sizeof(_data) == sizeof(u32) * 2 + sizeof(intptr_t));
+    TBasicHashTable() NOEXCEPT {}
+
+    ~TBasicHashTable() {
+        Assert(CheckInvariants());
+        clear_ReleaseMemory();
     }
-    ~TBasicHashTable() { Assert(CheckInvariants()); clear_ReleaseMemory(); }
 
     explicit TBasicHashTable(allocator_type&& alloc) : allocator_type(std::move(alloc)) {}
     explicit TBasicHashTable(const allocator_type& alloc) : allocator_type(alloc) {}
 
-    TBasicHashTable(hasher&& hash, key_equal&& equalto) : _data(std::move(hash), std::move(equalto)) {}
-    TBasicHashTable(hasher&& hash, key_equal&& equalto, allocator_type&& alloc) : allocator_type(std::move(alloc)), _data(std::move(hash), std::move(equalto)) {}
+    TBasicHashTable(hasher&& hash, key_equal&& equalto) : hasher(std::move(hash)), key_equal(std::move(equalto)) {}
+    TBasicHashTable(hasher&& hash, key_equal&& equalto, allocator_type&& alloc) : hasher(std::move(hash)), key_equal(std::move(equalto)), allocator_type(std::move(alloc)) {}
 
     explicit TBasicHashTable(size_type capacity) : TBasicHashTable() { reserve(capacity); }
     TBasicHashTable(size_type capacity, const allocator_type& alloc) : TBasicHashTable(alloc) { reserve(capacity); }
@@ -179,7 +312,7 @@ public:
     TBasicHashTable(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TBasicHashTable(alloc) { assign(ilist.begin(), ilist.end()); }
     TBasicHashTable& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
 
-    size_type capacity() const { return (_data.CapacityM1 + 1); }
+    size_type capacity() const { return (_data.Capacity); }
     bool empty() const { return (0 == _data.Size); }
     size_type size() const { return size_type(_data.Size); }
 
@@ -187,13 +320,13 @@ public:
     size_type max_bucket_count() const { return Min(size_type(1ull << 24) - 1, size_type(allocator_traits::max_size(*this) / sizeof(value_type))); }
 
     float load_factor() const;
-    size_type max_probe_dist() const { return _data.MaxProbeDist; }
+    size_type max_probe_dist() const;
 
-    iterator begin() { return MakeIterator_(_data.NextBucket(0)); }
-    iterator end() { return MakeIterator_(capacity()); }
+    iterator begin() { return MakeIterator_(_data.FirstFilledIndex()); }
+    iterator end() { return MakeIterator_(_data.NumBuckets()); }
 
-    const_iterator begin() const { return MakeIterator_(_data.NextBucket(0)); }
-    const_iterator end() const { return MakeIterator_(capacity()); }
+    const_iterator begin() const { return MakeIterator_(_data.FirstFilledIndex()); }
+    const_iterator end() const { return MakeIterator_(_data.NumBuckets()); }
 
     const_iterator cbegin() const { return begin(); }
     const_iterator cend() const { return end(); }
@@ -223,13 +356,13 @@ public:
         insert_AssertUnique(other.begin(), other.end());
     }
 
-    iterator find(const key_type& key);
-    const_iterator find(const key_type& key) const;
+    iterator find(const key_type& key) NOEXCEPT;
+    const_iterator find(const key_type& key) const NOEXCEPT;
 
     template <typename _KeyLike>
-    iterator find_like(const _KeyLike& keyLike, hash_t h);
+    iterator find_like(const _KeyLike& keyLike, hash_t hash) NOEXCEPT;
     template <typename _KeyLike>
-    const_iterator find_like(const _KeyLike& keyLike, hash_t h) const;
+    const_iterator find_like(const _KeyLike& keyLike, hash_t hash) const NOEXCEPT;
 
     mapped_reference at(const key_type& key) { return table_traits::Value(*find(key)); }
     mapped_reference_const at(const key_type& key) const { return table_traits::Value(*find(key)); }
@@ -246,11 +379,10 @@ public:
     TPair<iterator, bool> insert(iterator hint, value_type&& rvalue) { UNUSED(hint); return insert(std::move(rvalue)); }
 
     bool insert_ReturnIfExists(const value_type& value) { return (not insert(value).second); }
-    void insert_AssertUnique(const value_type& value) {
-        const TPair<iterator, bool> it = insert(value);
-        Assert(it.second);
-        UNUSED(it);
-    }
+    void insert_AssertUnique(const value_type& value);
+
+    bool insert_ReturnIfExists(value_type&& rvalue) { return (not insert(std::move(rvalue)).second); }
+    void insert_AssertUnique(value_type&& rvalue);
 
     void insert(std::initializer_list<value_type> ilist) { insert(ilist.begin(), ilist.end()); }
 
@@ -343,12 +475,12 @@ public:
 
     bool CheckInvariants() const;
     bool AliasesToContainer(const_pointer p) const;
+    bool AliasesToContainer(const_iterator it) const;
 
     bool operator ==(const TBasicHashTable& other) const;
     bool operator !=(const TBasicHashTable& other) const { return (not operator ==(other)); }
 
 private:
-    STATIC_CONST_INTEGRAL(size_type, NoIndex, size_type(-1));
     STATIC_CONST_INTEGRAL(size_type, MaxLoadFactor, 70);
     STATIC_CONST_INTEGRAL(size_type, SlackFactor, ((100 - MaxLoadFactor) * 128) / 100);
 
@@ -356,10 +488,10 @@ private:
     const allocator_type& allocator_() const { return static_cast<const allocator_type&>(*this); }
 
     void allocator_copy_(const allocator_type& other, std::true_type);
-    void allocator_copy_(const allocator_type& other, std::false_type) { UNUSED(other); }
+    void allocator_copy_(const allocator_type& , std::false_type) {}
 
     void allocator_move_(allocator_type&& rvalue, std::true_type);
-    void allocator_move_(allocator_type&& rvalue, std::false_type) { UNUSED(rvalue); }
+    void allocator_move_(allocator_type&& , std::false_type) {}
 
     void assign_rvalue_(TBasicHashTable&& rvalue, std::true_type);
     void assign_rvalue_(TBasicHashTable&& rvalue, std::false_type);
@@ -377,96 +509,56 @@ private:
     size_type GrowIFN_ReturnNewCapacity_(size_type atleast) const;
     size_type ShrinkIFN_ReturnNewCapacity_(size_type atleast) const;
 
-    iterator MakeIterator_(size_type bucket) {
-        Assert(bucket <= capacity());
-        return iterator(*this, reinterpret_cast<public_type*>(_data.GetBuckets() + bucket));
-    }
-    const_iterator MakeIterator_(size_type bucket) const {
-        Assert(bucket <= capacity());
-        return const_iterator(*this, reinterpret_cast<const public_type*>(_data.GetBuckets() + bucket));
-    }
+    template <typename... _Args>
+    TPair<iterator, bool> InsertIFN_(const key_type& key, _Args&&... args);
 
-    size_type FindFilledBucket_(const key_type& key) const;
-    size_type FindEmptyBucket_(const key_type& key) const;
-    size_type FindOrAllocateBucket_(const key_type& key) const;
+    template <typename _KeyLike>
+    size_type FindFilledBucket_(const _KeyLike& key, size_t hash) const NOEXCEPT;
+    template <typename _KeyLike>
+    size_type FindEmptyBucket_(const _KeyLike& key, size_t hash) const NOEXCEPT;
+    template <typename _KeyLike>
+    size_type FindOrAllocateBucket_(const _KeyLike& key, size_t hash) const NOEXCEPT;
 
     void RelocateRehash_(size_type newCapacity);
 
-    enum class EBucketState : u8 {
-        Inactive = 0,   // Never been touched
-        Tomb,           // Is inside a search-chain, but is empty
-        Filled,         // Is set item
-    };
-
-    struct EMPTY_BASES FData_ : hasher, key_equal {
-        u32         CapacityM1;
-        u32         Size            : 24;
-        mutable u32 MaxProbeDist    : 8;
-        pointer     StatesAndBuckets;
-
-        FData_() : FData_(hasher{}, key_equal{}) {}
-        FData_(hasher&& hash, key_equal&& equal)
-            : hasher(std::move(hash))
-            , key_equal(std::move(equal))
-            , CapacityM1(u32(-1))
-            , Size(0)
-            , MaxProbeDist(0)
-            , StatesAndBuckets(nullptr)
-        {}
-
-#if 0 // scrambling upper bits
-        size_type HashKey(const key_type& key) const {
-            size_type h = size_type(hasher::operator ()(key));
-            while (h > CapacityM1)
-                h = (h >> 8) + (h & CapacityM1);
-            return h;
-        }
+    size_t OffsetOfBuckets_() const {
+#if 0
+        return ((_data.NumStates() + (sizeof(value_type) - 1)) / sizeof(value_type));
 #else
-        FORCE_INLINE size_type HashKey(const key_type& key) const {
-            return size_type(hasher::operator ()(key));
-        }
+        return _data.OffsetOfBuckets;
 #endif
+    }
 
-        FORCE_INLINE bool KeyEqual(const key_type& lhs, const key_type& rhs) const {
-            return key_equal::operator ()(lhs, rhs);
-        }
+    pointer BucketAt_(size_t index) const NOEXCEPT {
+        Assert(index < (_data.Capacity));
+        return ((pointer)_data.StatesAndBuckets + OffsetOfBuckets_() + index);
+    }
 
-        STATIC_CONST_INTEGRAL(size_type, BitsPerState_, 2);
-        STATIC_CONST_INTEGRAL(size_type, BitsPerStateLog2_, Meta::template TLog2<BitsPerState_>::value);
-        STATIC_CONST_INTEGRAL(size_type, BitsStateMask_, 3);
+    size_t HashKey_(const key_type& key) const {
+        return static_cast<const _Hasher&>(*this)(key);
+    }
 
-        FORCE_INLINE static size_type StatesSizeInT(size_type capacity) {
-            STATIC_CONST_INTEGRAL(size_type, BitsPerT_, sizeof(value_type)<<3);
-            STATIC_CONST_INTEGRAL(size_type, BitsPerTM1_, BitsPerT_ - 1);
-            STATIC_CONST_INTEGRAL(size_type, BitsPerTLog2_, Meta::template TLog2<BitsPerT_>::value);
-            //return ((capacity * BitsPerState_ + BitsPerT_ - 1) / BitsPerT_);
-            return (((capacity << BitsPerStateLog2_) + BitsPerTM1_) >> BitsPerTLog2_);
-        }
+    size_t HashValue_(const value_type& value) const {
+        return static_cast<const _Hasher&>(*this)(table_traits::Key(value));
+    }
 
-#if     defined(ARCH_64BIT)
-        STATIC_ASSERT(sizeof(size_type) == sizeof(u64));
-        STATIC_CONST_INTEGRAL(size_type, WordBitMask,  63);
-        STATIC_CONST_INTEGRAL(size_type, WordBitShift,  6);
-#elif   defined(ARCH_32BIT)
-        STATIC_ASSERT(sizeof(size_type) == sizeof(u32));
-        STATIC_CONST_INTEGRAL(size_type, WordBitMask,  31);
-        STATIC_CONST_INTEGRAL(size_type, WordBitShift,  5);
-#else
-#   error "unsupported architecture !"
-#endif
+    iterator MakeIterator_(size_t index) NOEXCEPT {
+        return iterator(
+            (const state_t*)_data.StatesAndBuckets,
+            (typename iterator::pointer)_data.StatesAndBuckets + OffsetOfBuckets_(),
+            capacity(),
+            index );
+    }
 
-        EBucketState GetState(size_type index) const;
-        void SetState(size_type index, EBucketState state);
+    const_iterator MakeIterator_(size_t index) const NOEXCEPT {
+        return const_iterator(
+            (const state_t*)_data.StatesAndBuckets,
+            (typename iterator::pointer)_data.StatesAndBuckets + OffsetOfBuckets_(),
+            capacity(),
+            index );
+    }
 
-        FORCE_INLINE pointer GetBuckets() { return (StatesAndBuckets + StatesSizeInT(CapacityM1 + 1)); }
-        FORCE_INLINE const_pointer GetBuckets() const { return const_cast<FData_*>(this)->GetBuckets(); }
-
-        size_type NextBucket(size_type bucket) const;
-
-        void Swap(FData_& other);
-    };
-
-    FData_ _data;
+    FHTD _data;
 };
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>

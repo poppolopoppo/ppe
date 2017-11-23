@@ -120,6 +120,19 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   error "unsupported compiler"
 #endif
 //----------------------------------------------------------------------------
+#if _HAS_CXX14
+#   define CONSTEXPR constexpr
+#else
+#   define CONSTEXPR
+#endif
+//----------------------------------------------------------------------------
+#if _HAS_CXX17
+#   define FOLD_EXPR(...) ((__VA_ARGS__), ...)
+#else
+//  Workaround from Jason Turner: https://youtu.be/nnY4e4faNp0?t=39m51s
+#   define FOLD_EXPR(...) (void)std::initializer_list<int>{ ((__VA_ARGS__), 0)... }
+#endif //!_HAS_CXX17
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #ifdef USE_CORE_EXCEPTIONS

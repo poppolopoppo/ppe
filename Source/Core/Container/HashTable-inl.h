@@ -6,6 +6,21 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
+//----------------------------------------------------------------------------
+inline bool FHashTableData_::SetElement(size_t index, size_t hash) {
+    return (H2(hash) != SetState(index, H2(hash)));
+}
+//----------------------------------------------------------------------------
+inline void FHashTableData_::Swap(FHashTableData_& other) {
+    std::swap(Packed, other.Packed);
+    std::swap(StatesAndBuckets, other.StatesAndBuckets);
+}
+//----------------------------------------------------------------------------
+} //!details
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::operator=(const TBasicHashTable& other) -> TBasicHashTable& {
     if (this == &other)
@@ -32,14 +47,46 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::operator=(TBasicHa
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 float TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::load_factor() const {
-    // truely computes load factor by taking tombstones in check
-    const_pointer buckets = _data.GetBuckets();
-    size_type occupieds = 0;
-    forrange(index, 0, capacity()) {
-        if (_data.GetState(index) != EBucketState::Inactive)
-            occupieds++;
+    const size_type n = capacity();
+    Assert(Meta::IsAligned(FHTD::GGroupSize, n));
+
+    size_type occupied = 0;
+    for (size_type i = 0; i < n; i += FHTD::GGroupSize) {
+        // include kDeleted for load_factor() since it's directly affecting probing performance
+        occupied += FHTD::MatchNonEmpty(_data.GroupAt_StreamLoad(i)).Count();
     }
-    return (occupieds * 1.0f / capacity());
+
+    return (float(occupied) / n);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::max_probe_dist() const -> size_type {
+    if (0 == _data.Size)
+        return 0;
+
+    const size_type capacityM1 = (_data.Capacity - 1);
+    const size_type n = (_data.Capacity);
+    const const_pointer buckets = BucketAt_(0);
+
+    size_type max_dist = 0;
+    ONLY_IF_ASSERT(size_type sizeCheck = 0);
+
+    forrange(it, begin(), end()) {
+        const const_pointer p = (const_pointer)it.data();
+        const size_type hash = HashValue_(*p);
+
+        const size_type wanted = (FHTD::H1(hash) & capacityM1);
+        const size_type inserted = (p - buckets);
+
+        const size_type probe_dist = (((inserted + n) - wanted) & capacityM1);
+
+        max_dist = Max(max_dist, probe_dist);
+
+        ONLY_IF_ASSERT(++sizeCheck);
+    }
+
+    Assert_NoAssume(sizeCheck == _data.Size);
+    return max_dist;
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -49,279 +96,222 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::assign(TBasicHashT
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find(const key_type& key) -> iterator {
-    /*
-    const size_type bucket = FindFilledBucket_(key);
-    return (NoIndex != bucket ? MakeIterator_(bucket) : end());
-    */
-    if (_data.Size) {
-        Assert(_data.MaxProbeDist);
-
-        const_pointer buckets = _data.GetBuckets();
-        const size_type mask = size_type(_data.CapacityM1);
-        const size_type h = _data.HashKey(key);
-
-        forrange(o, 0, size_type(_data.MaxProbeDist)) {
-            const size_type index = (h + o) & mask;
-            const EBucketState state = _data.GetState(index);
-
-            if (state == EBucketState::Filled &&
-                _data.KeyEqual(table_traits::Key(buckets[index]), key)) {
-                return iterator(*this, (public_type*)(buckets + index));
-            }
-            else if (state == EBucketState::Inactive) {
-                break; // End of the chain!
-            }
-        }
-    }
-    return end();
+auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find(const key_type& key) NOEXCEPT -> iterator {
+    return find_like(key, HashKey_(key));
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find(const key_type& key) const -> const_iterator {
-    /*
-    const size_type bucket = FindFilledBucket_(key);
-    return (NoIndex != bucket ? MakeIterator_(bucket) : end());
-    */
-    return const_cast<TBasicHashTable*>(this)->find(key);
+FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find(const key_type& key) const NOEXCEPT -> const_iterator {
+    return find_like(key, HashKey_(key));
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 template <typename _KeyLike>
-auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find_like(const _KeyLike& keyLike, hash_t h) -> iterator {
-    if (_data.Size) {
-        Assert(_data.MaxProbeDist);
+auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find_like(const _KeyLike& keyLike, hash_t hash) NOEXCEPT -> iterator {
+    Assert(hash);
 
-        const_pointer buckets = _data.GetBuckets();
-        const size_type mask = size_type(_data.CapacityM1);
+    using public_pointer = typename iterator::pointer;
 
-        forrange(o, 0, size_type(_data.MaxProbeDist)) {
-            const size_type index = (size_type(h) + o) & mask;
-            const EBucketState state = _data.GetState(index);
+    pointer const buckets = ((pointer)_data.StatesAndBuckets + OffsetOfBuckets_());
 
-            if (state == EBucketState::Filled &&
-                table_traits::Key(buckets[index]) == keyLike) {
-                return iterator(*this, (public_type*)(buckets + index));
+    if (Likely(_data.Size)) {
+        const size_type capacityM1 = (_data.Capacity - 1);
+        const __m128i h2_16 = _mm_set1_epi8(FHTD::H2(hash));
+
+        size_type start = (FHTD::H1(hash) & capacityM1);
+
+        for (;;) {
+            auto group = _data.GroupAt(start);
+            FBitMask match_16 = FHTD::Match(group, h2_16);
+
+            while (match_16) {
+                const size_type index = ((start + match_16.PopFront_AssumeNotEmpty()) & capacityM1/* can overflow due to wrapping */);
+                if (Likely(static_cast<const _EqualTo&>(*this)(table_traits::Key(buckets[index]), keyLike)))
+                    return iterator((const state_t*)_data.StatesAndBuckets, (public_pointer)buckets, _data.Capacity, index);
             }
-            else if (state == EBucketState::Inactive) {
-                break; // End of the chain!
-            }
+
+            if (FHTD::MatchEmpty(group))
+                break;
+
+            start = ((start + FHTD::GGroupSize) & capacityM1);
         }
     }
-    return end();
+
+    return iterator((const state_t*)_data.StatesAndBuckets, (public_pointer)buckets, _data.Capacity, _data.Capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 template <typename _KeyLike>
-FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find_like(const _KeyLike& keyLike, hash_t h) const -> const_iterator {
-    return const_cast<TBasicHashTable*>(this)->find_like(keyLike, h);
+FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find_like(const _KeyLike& keyLike, hash_t hash) const NOEXCEPT -> const_iterator {
+    return const_cast<TBasicHashTable*>(this)->find_like(keyLike, hash);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert(const value_type& value) -> TPair<iterator, bool> {
-    reserve_Additional(1);
-    const size_type bucket = FindOrAllocateBucket_(table_traits::Key(value));
-    Assert(NoIndex != bucket);
-    Assert(bucket < capacity());
-    const iterator it = MakeIterator_(bucket);
-    if (EBucketState::Filled == _data.GetState(bucket)) {
-        return MakePair(it, false);
-    }
-    else {
-        _data.Size++;
-        _data.SetState(bucket, EBucketState::Filled);
-        allocator_traits::construct(*this, (pointer)it.data(), value);
-        return MakePair(it, true);
-    }
+    return InsertIFN_(table_traits::Key(value), value);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert(value_type&& rvalue) -> TPair<iterator, bool> {
-    reserve_Additional(1);
-    const size_type bucket = FindOrAllocateBucket_(table_traits::Key(rvalue));
-    Assert(NoIndex != bucket);
-    Assert(bucket < capacity());
-    const iterator it = MakeIterator_(bucket);
-    if (EBucketState::Filled == _data.GetState(bucket)) {
-        return MakePair(it, false);
-    }
-    else {
-        _data.Size++;
-        _data.SetState(bucket, EBucketState::Filled);
-        allocator_traits::construct(*this, (pointer)it.data(), std::move(rvalue));
-        return MakePair(it, true);
-    }
+    return InsertIFN_(table_traits::Key(rvalue), std::move(rvalue));
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_AssertUnique(const value_type& value) {
+    value_type cpy(value);
+    insert_AssertUnique(std::move(cpy));
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_AssertUnique(value_type&& rvalue) {
+    reserve_Additional(1); // TODO: problem here -> we reserve a slot (and potential alloc) even if nothing is inserted
+
+    const size_type hash = HashValue_(rvalue);
+    const size_type index = FindEmptyBucket_(table_traits::Key(rvalue), hash);
+
+    if (not _data.SetElement(index, hash))
+        AssertNotReached();
+
+    _data.Size++;
+    allocator_traits::construct(
+        static_cast<allocator_type&>(*this),
+        BucketAt_(index),
+        std::move(rvalue)
+    );
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_or_assign(const value_type& value) -> TPair<iterator, bool> {
-    reserve_Additional(1);
-    const size_type bucket = FindOrAllocateBucket_(table_traits::Key(value));
-    Assert(NoIndex != bucket);
-    Assert(bucket < capacity());
-    const iterator it = MakeIterator_(bucket);
-    if (EBucketState::Filled == _data.GetState(bucket)) {
-        *(pointer)it.data() = value;
-        return MakePair(it, false);
-    }
-    else {
-        _data.Size++;
-        _data.SetState(bucket, EBucketState::Filled);
-        allocator_traits::construct(*this, (pointer)it.data(), value);
-        return MakePair(it, true);
-    }
+    const auto result = InsertIFN_(table_traits::Key(value), value);
+    if (not result.second)
+        *(pointer)result.first.data() = value;
+
+    return result;
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_or_assign(value_type&& rvalue) -> TPair<iterator, bool> {
-    reserve_Additional(1);
-    const size_type bucket = FindOrAllocateBucket_(table_traits::Key(rvalue));
-    Assert(NoIndex != bucket);
-    Assert(bucket < capacity());
-    const iterator it = MakeIterator_(bucket);
-    if (EBucketState::Filled == _data.GetState(bucket)) {
-        *(pointer)it.data() = std::move(rvalue);
-        return MakePair(it, false);
-    }
-    else {
-        _data.Size++;
-        _data.SetState(bucket, EBucketState::Filled);
-        allocator_traits::construct(*this, (pointer)it.data(), std::move(rvalue));
-        return MakePair(it, true);
-    }
+    const auto result = InsertIFN_(table_traits::Key(rvalue), std::move(rvalue));
+    if (not result.second)
+        *(pointer)result.first.data() = std::move(rvalue);
+
+    return result;
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 template <typename... _Args>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::try_emplace(const key_type& key, _Args&&... args) -> TPair<iterator, bool> {
-    reserve_Additional(1);
-    const size_type bucket = FindOrAllocateBucket_(key);
-    Assert(NoIndex != bucket);
-    Assert(bucket < capacity());
-    const iterator it = MakeIterator_(bucket);
-    if (EBucketState::Filled == _data.GetState(bucket)) {
-        return MakePair(it, false);
-    }
-    else {
-        _data.Size++;
-        _data.SetState(bucket, EBucketState::Filled);
-        allocator_traits::construct(*this, (pointer)it.data(),
-            table_traits::Make(key, std::forward<_Args>(args)...) );
-        return MakePair(it, true);
-    }
+    return InsertIFN_(key, key, std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 template <typename... _Args>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::try_emplace(key_type&& rkey, _Args&&... args) -> TPair<iterator, bool> {
-    reserve_Additional(1);
-    const size_type bucket = FindOrAllocateBucket_(rkey);
-    Assert(NoIndex != bucket);
-    Assert(bucket < capacity());
-    const iterator it = MakeIterator_(bucket);
-    if (EBucketState::Filled == _data.GetState(bucket)) {
-        return MakePair(it, false);
-    }
-    else {
-        _data.Size++;
-        _data.SetState(bucket, EBucketState::Filled);
-        allocator_traits::construct(*this, (pointer)it.data(),
-            table_traits::Make(std::move(rkey), std::forward<_Args>(args)...) );
-        return MakePair(it, true);
-    }
+    return InsertIFN_(rkey, std::move(rkey), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::erase(const const_iterator& it) {
-    Assert(it.AliasesToContainer(*this));
+    Assert(AliasesToContainer(it));
     Assert(_data.Size > 0);
 
-    const pointer buckets = _data.GetBuckets();
-    const size_type bucket = std::distance(reinterpret_cast<const public_type*>(buckets), it.data());
-    Assert(_data.GetState(bucket) == EBucketState::Filled);
+    pointer const buckets = ((pointer)_data.StatesAndBuckets + OffsetOfBuckets_());;
+    const size_type index = checked_cast<size_type>((pointer)it.data() - buckets);
 
     _data.Size--;
-    _data.SetState(bucket, EBucketState::Tomb);
-    allocator_traits::destroy(*this, &buckets[bucket]);
+    _data.SetDeleted(index);
+    allocator_traits::destroy(static_cast<allocator_type&>(*this), buckets + index);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::erase(const key_type& key, value_type* pValueIFP) {
-    const size_type bucket = FindFilledBucket_(key);
-
-    if (NoIndex != bucket) {
-        Assert(_data.Size > 0);
-        Assert(_data.GetState(bucket) == EBucketState::Filled);
-
-        _data.Size--;
-        _data.SetState(bucket, EBucketState::Tomb);
-
-        value_type& item = _data.GetBuckets()[bucket];
-        if (pValueIFP)
-            *pValueIFP = std::move(item);
-
-        allocator_traits::destroy(*this, &item);
-
-        return true;
-    }
-    else {
+    if (Unlikely(0 == _data.Size))
         return false;
-    }
+
+    const size_type hash = HashKey_(key);
+    const size_type index = FindFilledBucket_(key, hash);
+
+    if (INDEX_NONE == index)
+        return false;
+
+    Assert(_data.Size > 0);
+    _data.Size--;
+    _data.SetDeleted(index);
+
+    pointer pitem = BucketAt_(index);
+
+    if (pValueIFP)
+        *pValueIFP = std::move(*pitem);
+
+    allocator_traits::destroy(static_cast<allocator_type&>(*this), pitem);
+
+    return true;
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear() {
-    if (_data.Size) {
-        const size_type n = capacity();
-        const_pointer buckets = _data.GetBuckets();
-        ONLY_IF_ASSERT(size_type deleteds = 0);
-        for (size_type i = 0; i < n; ++i) {
-            if (_data.GetState(i) == EBucketState::Filled) {
-                allocator_traits::destroy(*this, &buckets[i]);
-                ONLY_IF_ASSERT(++deleteds);
+    if (0 == _data.Size)
+        return;
+
+    Assert(CheckInvariants());
+
+    const size_type n = capacity();
+    const pointer buckets = BucketAt_(0);
+
+    ONLY_IF_ASSERT(size_t sizeCheck = 0);
+
+    for (size_type b = 0; b < n; b += FHTD::GGroupSize) {
+        FBitMask nonEmpty = FHTD::MatchNonEmpty(_data.GroupAt_StreamLoad(b));
+
+        while (nonEmpty) {
+            const size_type index = (b + nonEmpty.PopFront_AssumeNotEmpty())/* can't overflow here due to loop */;
+
+            if (not (_data.SetState(index, FHTD::kEmpty) & FHTD::kDeleted)) {
+                ONLY_IF_ASSERT(++sizeCheck);
+                allocator_traits::destroy(static_cast<allocator_type&>(*this), buckets + index);
             }
         }
-        ONLY_IF_ASSERT(Assert(deleteds == _data.Size));
-        _data.Size = 0;
-        _data.MaxProbeDist = 0;
-        memset(_data.StatesAndBuckets, 0x00, FData_::StatesSizeInT(n) * sizeof(value_type)); // Reset all states to Inactive
     }
+
+    Assert_NoAssume(sizeCheck == _data.Size);
+    _data.Size = 0;
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_ReleaseMemory() {
     const size_type n = capacity();
-    if (n) {
-        Assert(_data.StatesAndBuckets);
+    if (0 == n)
+        return;
 
-        clear();
+    Assert(_data.StatesAndBuckets);
 
-        allocator_traits::deallocate(*this, _data.StatesAndBuckets, FData_::StatesSizeInT(n) + n);
-        _data.StatesAndBuckets = nullptr;
-        _data.CapacityM1 = u32(-1);
-    }
+    clear();
+
+    Assert(0 == _data.Size);
+
+    allocator_traits::deallocate(static_cast<allocator_type&>(*this), (pointer)_data.StatesAndBuckets, OffsetOfBuckets_() + n);
+
+    _data.Capacity = 0;
+    _data.StatesAndBuckets = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::rehash(size_type count) {
     const size_type newCapacity = Meta::NextPow2(count);
-    if (newCapacity > capacity()) {
+    if (newCapacity > capacity())
         RelocateRehash_(newCapacity);
-    }
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::reserve(size_type count) {
-    if (size_type newCapacity = GrowIFN_ReturnNewCapacity_(count)) {
+    if (size_type newCapacity = GrowIFN_ReturnNewCapacity_(count))
         RelocateRehash_(newCapacity);
-    }
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::shrink_to_fit() {
-    if (size_type newCapacity = ShrinkIFN_ReturnNewCapacity_(_data.Size)) {
+    if (size_type newCapacity = ShrinkIFN_ReturnNewCapacity_(_data.Size))
         RelocateRehash_(newCapacity);
-    }
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -335,13 +325,17 @@ template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Alloc
 bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::CheckInvariants() const {
     STATIC_ASSERT(sizeof(value_type) == sizeof(public_type));
     STATIC_ASSERT(MaxLoadFactor < 100);
-    STATIC_ASSERT(sizeof(value_type) >= sizeof(EBucketState));
+    STATIC_ASSERT(sizeof(value_type) >= sizeof(state_t));
+    STATIC_ASSERT(sizeof(public_type) == sizeof(value_type));
 #ifndef NDEBUG
-    if (0 != capacity() && false == Meta::IsPow2(capacity()))
+    const size_type n = capacity();
+    if (0 != n && false == Meta::IsPow2(n))
         return false;
-    if (nullptr == _data.StatesAndBuckets && (size() || capacity()))
+    if (nullptr == _data.StatesAndBuckets && (_data.Size || n))
         return false;
-    if (size() > capacity())
+    if (_data.Size > n)
+        return false;
+    if (_data.StatesAndBuckets && ((const state_t*)_data.StatesAndBuckets)[_data.Capacity + FHTD::GGroupSize - 1] != FHTD::kSentinel)
         return false;
 #endif
     return true;
@@ -349,21 +343,35 @@ bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::CheckInvariants() 
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::AliasesToContainer(const_pointer p) const {
-    const_pointer buckets = _data.GetBuckets();
-    return (buckets <= p && buckets + capacity() > p);
+    return (BucketAt_(0) <= p && BucketAt_(_data.Capacity/* end */) >= p);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::AliasesToContainer(const_iterator it) const {
+    return it.AliasesToContainer(TMemoryView<const state_t>((const state_t*)_data.StatesAndBuckets, capacity()));
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::operator ==(const TBasicHashTable& other) const {
-    if (size() != other.size())
+    if (this == &other)
+        return true;
+    else if (size() != other.size())
         return false;
+    else if (0 == _data.Size)
+        return true;
 
-    const_pointer buckets = _data.GetBuckets();
-    forrange(i, 0, capacity()) {
-        if (_data.GetState(i) == EBucketState::Filled) {
-            const value_type& elt = buckets[i];
-            const auto it = other.find(table_traits::Key(elt));
-            if (other.end() == it || table_traits::Value(*it) != table_traits::Value(elt))
+    const size_type n = capacity();
+    const pointer buckets = BucketAt_(0);
+
+    for (size_type i = 0; i <= n; i += FHTD::GGroupSize) {
+        FBitMask filled = FHTD::MatchFilledBucket(_data.GroupAt_StreamLoad(i));
+
+        while (filled) {
+            const size_type lhs = (i + filled.PopFront_AssumeNotEmpty())/* can't overflow here due to loop */;
+            const size_type hsh = HashValue_(buckets[lhs]);
+            const size_type rhs = other.FindFilledBucket_(table_traits::Key(buckets[lhs]), hsh);
+
+            if (INDEX_NONE == rhs)
                 return false;
         }
     }
@@ -441,225 +449,192 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::swap_(TBasicHashTa
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::GrowIFN_ReturnNewCapacity_(size_type atleast) const -> size_type {
+FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::GrowIFN_ReturnNewCapacity_(size_type atleast) const -> size_type {
     atleast += (atleast * SlackFactor) >> 7;// (atleast * (100 - MaxLoadFactor))/100;
-    return ((atleast > 0 && atleast >= (_data.CapacityM1 + 1)) ? Meta::NextPow2(atleast) : 0);
+    // if not empty can't be smaller than GGroupSize
+    return ((atleast > 0 && atleast > (_data.Capacity)) ? Max(FHTD::GGroupSize, Meta::NextPow2(atleast)) : 0);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::ShrinkIFN_ReturnNewCapacity_(size_type atleast) const -> size_type {
+FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::ShrinkIFN_ReturnNewCapacity_(size_type atleast) const -> size_type {
     if (atleast == 0) return 0;
     atleast += (atleast * SlackFactor) >> 7;// (atleast * (100 - MaxLoadFactor))/100;
-    atleast = Meta::NextPow2(atleast);
-    return ((atleast < (_data.CapacityM1 + 1)) ? atleast : 0);
+    // if not empty can't be smaller than GGroupSize
+    atleast = Max(FHTD::GGroupSize, Meta::NextPow2(atleast));
+    return ((atleast < (_data.Capacity)) ? atleast : 0);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindFilledBucket_(const key_type& key) const -> size_type {
-    if (0 == _data.Size)
-        return NoIndex;
+template <typename... _Args>
+FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::InsertIFN_(const key_type& key, _Args&&... args) -> TPair<iterator, bool> {
+    reserve_Additional(1); // TODO: problem here -> we reserve a slot (and potential alloc) even if nothing is inserted
 
-    Assert(_data.MaxProbeDist);
-    const size_type h = _data.HashKey(key);
-    const size_type mask = size_type(_data.CapacityM1);
-    const_pointer buckets = _data.GetBuckets();
+    const size_type hash = HashKey_(key);
+    const size_type bucket = FindOrAllocateBucket_(key, hash);
 
-    forrange(o, 0, size_type(_data.MaxProbeDist)) {
-        const size_type index = (h + o) & mask;
-        const EBucketState state = _data.GetState(index);
+    const iterator it = MakeIterator_(bucket);
+    if (not _data.SetElement(bucket, hash))
+        return MakePair(it, false);
 
-        if (state == EBucketState::Filled &&
-            _data.KeyEqual(table_traits::Key(buckets[index]), key) ) {
-            return index;
-        }
-        else if (state == EBucketState::Inactive) {
-            break; // End of the chain!
-        }
-    }
+    _data.Size++;
+    allocator_traits::construct(
+        static_cast<allocator_type&>(*this),
+        (pointer)it.data(),
+        table_traits::MakeValue(std::forward<_Args>(args)...)
+    );
 
-    return NoIndex;
+    return MakePair(it, true);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindEmptyBucket_(const key_type& key) const -> size_type {
-    Assert(_data.Size < (_data.CapacityM1 + 1));
-    const size_type h = _data.HashKey(key);
-    const size_type mask = size_type(_data.CapacityM1);
+template <typename _KeyLike>
+auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindFilledBucket_(const _KeyLike& keyLike, size_t hash) const NOEXCEPT -> size_type {
+    Assert(0 != _data.Size);
 
-    for (size_type o = 0; ; ++o) {
-        const size_type index = (h + o) & mask;
-        if (_data.GetState(index) != EBucketState::Filled) {
-            if (o >= _data.MaxProbeDist) {
-                _data.MaxProbeDist = (o + 1);
-            }
-            return index;
-        }
-    }
+    const size_type capacityM1 = (_data.Capacity - 1);
+    __m128i h2_16 = _mm_set1_epi8(FHTD::H2(hash));
+    size_type start = (FHTD::H1(hash) & capacityM1);
 
-    AssertNotReached();
-    return NoIndex;
-}
-//----------------------------------------------------------------------------
-template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindOrAllocateBucket_(const key_type& key) const -> size_type {
-    const size_type h = _data.HashKey(key);
-    const size_type mask = size_type(_data.CapacityM1);
-    const const_pointer buckets = _data.GetBuckets();
+    for (;;) {
+        auto group = _data.GroupAt(start);
+        FBitMask match = FHTD::Match(group, h2_16);
 
-    size_type hole = NoIndex;
-    size_type offset = 0;
-    for (; offset < _data.MaxProbeDist; ++offset) {
-        const size_type index = (h + offset) & mask;
-        const EBucketState state = _data.GetState(index);
-
-        if (state == EBucketState::Filled) {
-            if (_data.KeyEqual(table_traits::Key(buckets[index]), key))
+        while (match) {
+            const size_type index = ((start + match.PopFront_AssumeNotEmpty()) & capacityM1/* can overflow due to wrapping */);
+            const key_type& storedKey = table_traits::Key(*BucketAt_(index));
+            if (Likely(static_cast<const _EqualTo&>(*this)(storedKey, keyLike)))
                 return index;
         }
-        else if (state == EBucketState::Inactive) {
-            return index;
-        }
-        else { // ACTIVE: keep searching
-            if (hole == NoIndex)
-                hole = index;
-        }
+
+        if (FHTD::MatchEmpty(group))
+            break;
+
+        start = ((start + FHTD::GGroupSize) & capacityM1);
     }
 
-    // No key found - but maybe a hole for it
-    Assert(_data.MaxProbeDist == offset);
-    if (hole != NoIndex)
-        return hole;
-
-    // No hole found within _data.MaxProbeDist
-    for (;; ++offset) {
-        const size_type index = (h + offset) & mask;
-        const EBucketState state = _data.GetState(index);
-
-        if (state != EBucketState::Filled) {
-            _data.MaxProbeDist = checked_cast<u8>(offset + 1);
-            return index;
-        }
-    }
-
-    AssertNotReached();
-    return NoIndex;
+    return INDEX_NONE;
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::RelocateRehash_(size_type newCapacity) {
+template <typename _KeyLike>
+auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindEmptyBucket_(const _KeyLike& keyLike, size_t hash) const NOEXCEPT -> size_type {
+    Assert(_data.Capacity > 0);
+    Assert(_data.Size < _data.Capacity);
+
+    const size_type capacityM1 = (_data.Capacity - 1);
+    size_type bucket = (FHTD::H1(hash) & capacityM1);
+    ONLY_IF_ASSERT(__m128i h2_16 = _mm_set1_epi8(FHTD::H2(hash)));
+
+    for (;;) {
+        auto group = _data.GroupAt(bucket);
+        FBitMask freeMask = FHTD::MatchFreeBucket(group);
+
+        if (freeMask)
+            return ((bucket + freeMask.FirstBitSet_AssumeNotEmpty()) & capacityM1/* can overflow due to wrapping */);
+
+#ifdef WITH_CORE_ASSERT
+        FBitMask match = FHTD::Match(group, h2_16);
+        while (Unlikely(size_type offsetP1 = match.PopFront())) {
+            const size_type index = (bucket + offsetP1 - 1);
+            if (Unlikely(static_cast<const _EqualTo&>(*this)(table_traits::Key(*BucketAt_(index)), keyLike)))
+                AssertNotReached(); // key already exists !
+        }
+#endif
+
+        bucket = (bucket + FHTD::GGroupSize) & capacityM1;
+    }
+
+    AssertNotReached(); // guaranteed to have a free slot if size < capacity !
+    return INDEX_NONE;
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+template <typename _KeyLike>
+auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindOrAllocateBucket_(const _KeyLike& keyLike, size_t hash) const NOEXCEPT -> size_type {
+    Assert(_data.Capacity > 0);
+    Assert(_data.Size < _data.Capacity);
+
+    const size_type capacityM1 = (_data.Capacity - 1);
+    pointer const buckets = BucketAt_(0);
+    __m128i h2_16 = _mm_set1_epi8(FHTD::H2(hash));
+    size_type start = (FHTD::H1(hash) & capacityM1);
+
+    for (;;) {
+        auto group = _data.GroupAt(start);
+        FBitMask match = FHTD::Match(group, h2_16);
+
+        while (match) {
+            const size_type index = ((start + match.PopFront_AssumeNotEmpty()) & capacityM1/* can overflow due to wrapping */);
+            const key_type& storedKey = table_traits::Key(buckets[index]);
+            if (Likely(static_cast<const _EqualTo&>(*this)(storedKey, keyLike)))
+                return index;
+        }
+
+        if (const FBitMask freeMask = FHTD::MatchFreeBucket(group))
+            return ((start + freeMask.FirstBitSet_AssumeNotEmpty()) & capacityM1/* can overflow due to wrapping */);
+
+        start = ((start + FHTD::GGroupSize) & capacityM1);
+    }
+
+    AssertNotReached(); // guaranteed to have a free slot if size < capacity !
+    return INDEX_NONE;
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+NO_INLINE void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::RelocateRehash_(size_type newCapacity) {
     Assert(newCapacity > 0 && Meta::IsPow2(newCapacity));
     Assert(_data.Size <= newCapacity);
 
-    const FData_ oldData = _data;
-    const size_type oldCapacity = capacity();
-    const size_type newStatesSizeInT = FData_::StatesSizeInT(newCapacity);
+    const FHTD oldData = _data;
+    const size_t oldCapacity = capacity();
+    const size_t oldOffsetOfBuckets = OffsetOfBuckets_();
+    Assert(oldCapacity != newCapacity);
 
-    _data.StatesAndBuckets = allocator_traits::allocate(*this, newStatesSizeInT + newCapacity);
-    _data.CapacityM1 = u32(newCapacity) - 1;
-    _data.Size = 0;
-    _data.MaxProbeDist = 0;
+    _data.Capacity = newCapacity;
+    _data.OffsetOfBuckets = ((_data.NumStates() + (sizeof(value_type) - 1)) / sizeof(value_type));
+    _data.StatesAndBuckets = allocator_traits::allocate(static_cast<allocator_type&>(*this), OffsetOfBuckets_() + newCapacity);
+    _data.ResetStates();
 
-    AssertRelease(_data.StatesAndBuckets);
+    Assert(Meta::IsAligned(FHTD::GGroupSize, capacity()));
 
-    memset(_data.StatesAndBuckets, 0x00, newStatesSizeInT * sizeof(value_type)); // Initialize all states to Inactive
-
-    if (oldData.Size) {
-        Assert(oldData.StatesAndBuckets);
-        Assert(oldCapacity > 0 && Meta::IsPow2(oldCapacity));
-        const pointer newBuckets = _data.GetBuckets();
-        const_pointer oldBuckets = oldData.GetBuckets();
-
-        for (size_type i = 0; i < oldCapacity; ++i) {
-            if (oldData.GetState(i) == EBucketState::Filled) {
-                const size_type j = FindEmptyBucket_(table_traits::Key(oldBuckets[i]));
-                Assert(NoIndex != j);
-
-                ONLY_IF_ASSERT(_data.Size++);
-                _data.SetState(j, EBucketState::Filled);
-
-                allocator_traits::construct(*this, &newBuckets[j], std::move(oldBuckets[i]));
-                allocator_traits::destroy(*this, &oldBuckets[i]);
-            }
-        }
-
-#ifdef WITH_CORE_ASSERT
-        Assert(_data.Size == oldData.Size);
-#else
-        _data.Size = oldData.Size;
-#endif
-    }
-
-    if (oldData.CapacityM1 != u32(-1)) {
-        Assert(oldData.StatesAndBuckets);
-        allocator_traits::deallocate(*this, oldData.StatesAndBuckets, FData_::StatesSizeInT(oldCapacity) + oldCapacity);
-    }
-    else {
+    if (0 == _data.Size) {
         Assert(nullptr == oldData.StatesAndBuckets);
+        return;
     }
-}
-//----------------------------------------------------------------------------
-template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FData_::GetState(size_type index) const -> EBucketState {
-    Assert(index < (CapacityM1 + 1));
-    //index *= BitsPerState_;
-    index <<= BitsPerStateLog2_;
-    return EBucketState(
-        (((const size_type*)StatesAndBuckets)[index >> WordBitShift] >>
-        (index & WordBitMask)) & BitsStateMask_
-    );
-}
-//----------------------------------------------------------------------------
-template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FData_::SetState(size_type index, EBucketState state) {
-    Assert(index < (CapacityM1 + 1));
-    //index *= BitsPerState_;
-    index <<= BitsPerStateLog2_;
-    size_type& w = ((size_type*)StatesAndBuckets)[index >> WordBitShift];
-    w &= ~(BitsStateMask_ << index);
-    w |= size_type(state) << index;
-}
-//----------------------------------------------------------------------------
-template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FData_::NextBucket(size_type bucket) const -> size_type {
-    Assert(bucket <= (CapacityM1 + 1));
-    for (   const size_type n = (CapacityM1 + 1);
-            bucket < n && GetState(bucket) != EBucketState::Filled;
-            bucket++ );
-    return bucket;
-}
-//----------------------------------------------------------------------------
-template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FData_::Swap(FData_& other) {
-    std::swap(StatesAndBuckets, other.StatesAndBuckets);
-    std::swap(CapacityM1, other.CapacityM1);
-    u32 tmp;
-    {
-        tmp = Size;
-        Size = other.Size;
-        other.Size = tmp;
-    }
-    {
-        tmp = MaxProbeDist;
-        MaxProbeDist = other.MaxProbeDist;
-        other.MaxProbeDist = tmp;
-    }
-}
-//----------------------------------------------------------------------------
-template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-template <typename T>
-auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::TIterator_<T>::GotoNextBucket_() -> TIterator_& {
-    Assert(_p);
-    Assert(_m);
-    Assert(_m->AliasesToContainer(reinterpret_cast<const_pointer>(_p)));
 
-    STATIC_ASSERT(std::is_same<
-        typename parent_type::difference_type,
-        typename TBasicHashTable::difference_type
-    >::value);
+    Assert(oldData.StatesAndBuckets);
+    Assert(oldCapacity > 0 && Meta::IsPow2(oldCapacity));
 
-    const pointer buckets = (pointer)_m->_data.GetBuckets();
-    _p = buckets + _m->_data.NextBucket(size_type(std::distance(buckets, _p) + 1));
-    return *this;
+    const pointer newBuckets = BucketAt_(0);
+    const_pointer oldBuckets = ((pointer)oldData.StatesAndBuckets + oldOffsetOfBuckets);
+
+    ONLY_IF_ASSERT(size_t sizeCheck = 0);
+
+    for (size_type i = 0; i < oldCapacity; i += FHTD::GGroupSize) {
+        FBitMask filled = FHTD::MatchFilledBucket(oldData.GroupAt_StreamLoad(i));
+
+        while (filled) {
+            const size_type src = (i + filled.PopFront_AssumeNotEmpty())/* can't overflow here due to loop */;
+            const size_type hsh = HashValue_(oldBuckets[src]); // still needs rehashing here, but THashMemoizer<> can amortize this cost
+            const size_type dst = FindEmptyBucket_(table_traits::Key(oldBuckets[src]), hsh);
+            Assert(INDEX_NONE != dst);
+
+            Assert(FHTD::H2(hsh) == *oldData.GetState(src)); // checks that the hash function is stable
+            if (not _data.SetElement(dst, hsh))
+                AssertNotReached();
+
+            allocator_traits::construct(static_cast<allocator_type&>(*this), &newBuckets[dst], std::move(oldBuckets[src]));
+            allocator_traits::destroy(static_cast<allocator_type&>(*this), &oldBuckets[src]);
+
+            ONLY_IF_ASSERT(++sizeCheck);
+        }
+    }
+
+    Assert_NoAssume(sizeCheck == _data.Size);
+
+    allocator_traits::deallocate(static_cast<allocator_type&>(*this), (pointer)oldData.StatesAndBuckets, oldOffsetOfBuckets + oldCapacity);
+
+    Assert(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
