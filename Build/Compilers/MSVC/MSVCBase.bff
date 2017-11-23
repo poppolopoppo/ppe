@@ -62,8 +62,9 @@
     + ' /Gm-'               ; minimal rebuild est incompatible avec FastBuild qui gère cette feature lui même
     + ' /GF'                ; fusion des chaînes de caractères identiques (string pooling)
     + ' /GT'                ; fiber safe optimizations (https://msdn.microsoft.com/fr-fr/library/6e298fy4.aspx)
-    + ' /EHsc'              ; active le support des exceptions
-    + ' /fp:precise'        ; opération virgule flottante précises, NECESSAIRE POUR LE DETERMINISME
+    + ' /EHsc'              ; active le support des exceptions structurées
+    //+ ' /fp:precise'        ; opération virgule flottante précises, NECESSAIRE POUR LE DETERMINISME
+    + ' /fp:fast'           ; pas de determinisme, utilise des intrinsics (https://msdn.microsoft.com/fr-fr/library/tzkfha43.aspx)
     + ' /bigobj'            ; augmente le nombre des sections qu'un fichier objet peut contenir (les obj peuvent être plus gros)
     + ' /openmp-'           ; désactivation du support de openmp (parallèlisation automatique)
     ;+ ' /Za'                ; désactivation des extensions C++ de Visual non ANSI (https://msdn.microsoft.com/fr-fr/library/0k0w269d.aspx) FAIT PETER WINDOWS SDK :/
@@ -159,7 +160,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .Defines            + .PlatformDefines
 
     .PlatformOptions    = ' /favor:blend'   ; https://msdn.microsoft.com/fr-fr/library/ms173505(v=vs.110).aspx
-                        + ' /Zm500'         ; precompiled header size limit
+                        //+ ' /Zm500'         ; precompiled header size limit
 
     .CompilerOptions    + .PlatformOptions
 
@@ -177,7 +178,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .Defines            + .PlatformDefines
 
     .PlatformOptions    = ' /favor:AMD64'   ; https://msdn.microsoft.com/fr-fr/library/ms173505(v=vs.110).aspx
-                        + ' /Zm1000'        ; precompiled header size limit
+                        //+ ' /Zm1000'        ; precompiled header size limit
 
     .CompilerOptions    + .PlatformOptions
 
@@ -233,8 +234,6 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .FastDebugOptimisations = ''
     + ' /MDd'               ; MultiThreaded Debug dll
     + ' /O2'                ; optimisations favorisant la vitesse
-    + ' /Ot'                ; favorise le code rapide (pas la taille)
-    + ' /Oi'                ; active les fonctions intrinsics
     + ' /Oy-'               ; n'empêche pas la création des pointeurs de frame sur la pile des appels
     + ' /GS-'               ; vérification de la sécurité de la mémoire tampon
     + ' /Gw-'               ; pas d'optimisations des données globales
@@ -242,18 +241,13 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .ReleaseOptimisations = ''
     + ' /MD'                ; MultiThreaded dll
     + ' /O2'                ; optimisations favorisant la vitesse
-    + ' /Ot'                ; favorise le code rapide (pas la taille)
-    + ' /Oi'                ; active les fonctions intrinsics
     + ' /Oy-'               ; n'empêche pas la création des pointeurs de frame sur la pile des appels
     + ' /GS-'               ; vérification de la sécurité de la mémoire tampon
     + ' /GA'                ; optimisation d'accès aux variables thread-local
 
     .FinalOptimisations = ''
     + ' /MD'                ; MultiThreaded dll
-    + ' /Ox'                ; optimisations complète
-    + ' /Ot'                ; favorise le code rapide (pas la taille)
-    + ' /Oi'                ; active les fonctions intrinsics
-    + ' /Oy'                ; empêche la création des pointeurs de frame sur la pile des appels
+    + ' /O2'                ; optimisations favorisant la vitesse
     + ' /GS-'               ; vérification de la sécurité de la mémoire tampon
     + ' /Gw'                ; optimisations des données globales
     + ' /GL'                ; optimisations du programme globales
