@@ -126,13 +126,7 @@ bool TScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const TScalarBoundingBox& ot
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::Intersects(const TScalarBoundingBox& other) const {
-    const vector_type c0 = Center();
-    const vector_type c1 = other.Center();
-
-    const vector_type h0 = Extents();
-    const vector_type h1 = other.Extents();
-
-    return ((c0 - c1) * 2).AllLessThan(h0 + h1);
+    return (Abs(Center() - other.Center()) * 2).AllLessThan(Extents() + other.Extents());
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
