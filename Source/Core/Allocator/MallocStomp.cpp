@@ -8,11 +8,16 @@
 
 #   define CORE_MALLOCSTOMP_CHECK_OVERRUN 1 // set to 0 to check for underruns
 #   define CORE_MALLOCSTOMP_DELAY_DELETES 1 // set to 1 to check for necrophilia
+#   define CORE_MALLOCSTOMP_BLOCK_OVERLAP 0 // need CORE_MALLOCSTOMP_DELAY_DELETES
 
 #   if CORE_MALLOCSTOMP_DELAY_DELETES
 #       include "Container/RingBuffer.h"
 #       include "Thread/AtomicSpinLock.h"
         PRAGMA_INITSEG_COMPILER
+#   endif
+
+#   ifdef PLATFORM_WINDOWS
+#       include "Diagnostic/LastError.h"
 #   endif
 
 namespace Core {
@@ -121,6 +126,8 @@ static void* StompVMAlloc_(size_t sizeInBytes) {
     void* result;
 #if     defined(PLATFORM_WINDOWS)
     result = (void*)::VirtualAlloc(nullptr, sizeInBytes, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+    if (nullptr == result)
+        throw FLastErrorException();
 
 #elif   defined(PLATFORM_LINUX)
     result = (void*)::mmap(nullptr, sizeInBytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -148,7 +155,7 @@ static void StompVMFree_(void* ptr, size_t sizeInBytes) {
 #if     defined(PLATFORM_WINDOWS)
     UNUSED(sizeInBytes);
     if (not ::VirtualFree(ptr, 0, MEM_RELEASE))
-        AssertNotReached();
+        throw FLastErrorException();
 
 #elif   defined(PLATFORM_LINUX)
     ::munmap(ptr, sizeInBytes);
@@ -178,6 +185,9 @@ public:
             return;
         }
 
+        // construct the deleted block to be delayed
+        const FDeletedBlock_ delayed{ ptr, sizeInBytes };
+
         // can't read or write any of this deleted block now
         FVirtualMemory::Protect(ptr, sizeInBytes, false, false);
 
@@ -187,9 +197,17 @@ public:
         // track total delayed memory size
         _delayedSizeInBytes += sizeInBytes;
 
+        // check if the block overlaps with something in the list
+#if CORE_MALLOCSTOMP_BLOCK_OVERLAP
+        forrange(i, 0, _delayeds.size()) {
+            const FDeletedBlock_& deleted = _delayeds[i];
+            AssertRelease(not delayed.Overlaps(deleted));
+        }
+#endif
+
         // queue this block for delayed deletion and possibly delete an older one
         FDeletedBlock_ toDelete;
-        if (_delayeds.push_front_OverflowIFN(&toDelete, ptr, sizeInBytes)) {
+        if (_delayeds.push_front_OverflowIFN(&toDelete, delayed)) {
             ReleaseDelayedDelete_(toDelete);
         }
 
@@ -206,6 +224,15 @@ private:
     struct FDeletedBlock_ {
         void* Ptr;
         size_t SizeInBytes;
+
+#if CORE_MALLOCSTOMP_BLOCK_OVERLAP
+        // return true if this block intersects the memory mapped by other
+        bool Overlaps(const FDeletedBlock_& other) const {
+            u8* const c0 = (u8*)Ptr + (SizeInBytes >> 1);
+            u8* const c1 = (u8*)other.Ptr + (other.SizeInBytes >> 1);
+            return (size_t(std::abs(c0 - c1)) * 2 < (SizeInBytes + other.SizeInBytes));
+        }
+#endif
     };
 
 #ifdef ARCH_X64
