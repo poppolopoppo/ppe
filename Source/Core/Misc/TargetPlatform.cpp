@@ -138,13 +138,13 @@ void FPlatform::DebugBreakAttach() {
 #ifndef FINAL_RELEASE
 bool FPlatform::IsDebuggerAttached() {
 #if USE_CORE_DEBUGGER_PRESENT
-    return false;
-#else
 #   ifdef PLATFORM_WINDOWS
         return ::IsDebuggerPresent() ? true : false;
 #   else
 #       error "no support"
 #   endif
+#else
+    return false;
 #endif
 }
 #endif
