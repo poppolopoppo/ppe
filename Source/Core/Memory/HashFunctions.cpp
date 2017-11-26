@@ -64,7 +64,7 @@ u64 hash_mem64(const void *ptr, size_t sizeInBytes, u64 seed) {
 #if     CORE_HASH_FUNCTION == CORE_HASH_FNV1A
     return hash_fnv1a64(ptr, sizeInBytes, seed);
 #elif   CORE_HASH_FUNCTION == CORE_HASH_CRC32
-    return hash_fmix64(hash_crc32(ptr, sizeInBytes, seed));
+    return hash_fmix64(hash_crc32(ptr, sizeInBytes, u32(seed)));
 #elif   CORE_HASH_FUNCTION == CORE_HASH_XXHASH
     return XXH64(ptr, sizeInBytes, seed);
 #elif   CORE_HASH_FUNCTION == CORE_HASH_FARMHASH
