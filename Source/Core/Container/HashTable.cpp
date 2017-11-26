@@ -8,7 +8,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-STATIC_ASSERT(sizeof(FHashTableData_) == sizeof(intptr_t)*2);
+STATIC_ASSERT(sizeof(FHashTableData_) == sizeof(void*)+sizeof(u64));
 STATIC_ASSERT((FHashTableData_::kEmpty & FHashTableData_::kDeleted) == FHashTableData_::kDeleted);
 STATIC_ASSERT((FHashTableData_::kSentinel & FHashTableData_::kDeleted) == FHashTableData_::kDeleted);
 //----------------------------------------------------------------------------

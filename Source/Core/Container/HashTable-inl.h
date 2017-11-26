@@ -13,7 +13,8 @@ inline bool FHashTableData_::SetElement(size_t index, size_t hash) {
 }
 //----------------------------------------------------------------------------
 inline void FHashTableData_::Swap(FHashTableData_& other) {
-    std::swap(Packed, other.Packed);
+    std::swap(Size, other.Size);
+    std::swap(Capacity, other.Capacity);
     std::swap(StatesAndBuckets, other.StatesAndBuckets);
 }
 //----------------------------------------------------------------------------
@@ -64,7 +65,7 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::max_probe_dist() c
     if (0 == _data.Size)
         return 0;
 
-    const size_type capacityM1 = (_data.Capacity - 1);
+    const size_type capacityM1 = size_type(_data.Capacity - 1);
     const size_type n = (_data.Capacity);
     const const_pointer buckets = BucketAt_(0);
 
@@ -115,7 +116,7 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find_like(const _K
     pointer const buckets = ((pointer)_data.StatesAndBuckets + OffsetOfBuckets_());
 
     if (Likely(_data.Size)) {
-        const size_type capacityM1 = (_data.Capacity - 1);
+        const size_type capacityM1 = size_type(_data.Capacity - 1);
         const __m128i h2_16 = _mm_set1_epi8(FHTD::H2(hash));
 
         size_type start = (FHTD::H1(hash) & capacityM1);
@@ -491,7 +492,7 @@ template <typename _KeyLike>
 auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindFilledBucket_(const _KeyLike& keyLike, size_t hash) const NOEXCEPT -> size_type {
     Assert(0 != _data.Size);
 
-    const size_type capacityM1 = (_data.Capacity - 1);
+    const size_type capacityM1 = size_type(_data.Capacity - 1);
     __m128i h2_16 = _mm_set1_epi8(FHTD::H2(hash));
     size_type start = (FHTD::H1(hash) & capacityM1);
 
@@ -521,7 +522,7 @@ auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindE
     Assert(_data.Capacity > 0);
     Assert(_data.Size < _data.Capacity);
 
-    const size_type capacityM1 = (_data.Capacity - 1);
+    const size_type capacityM1 = size_type(_data.Capacity - 1);
     size_type bucket = (FHTD::H1(hash) & capacityM1);
     ONLY_IF_ASSERT(__m128i h2_16 = _mm_set1_epi8(FHTD::H2(hash)));
 
@@ -554,7 +555,7 @@ auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindO
     Assert(_data.Capacity > 0);
     Assert(_data.Size < _data.Capacity);
 
-    const size_type capacityM1 = (_data.Capacity - 1);
+    const size_type capacityM1 = size_type(_data.Capacity - 1);
     pointer const buckets = BucketAt_(0);
     __m128i h2_16 = _mm_set1_epi8(FHTD::H2(hash));
     size_type start = (FHTD::H1(hash) & capacityM1);
@@ -590,8 +591,7 @@ NO_INLINE void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Relocate
     const size_t oldOffsetOfBuckets = OffsetOfBuckets_();
     Assert(oldCapacity != newCapacity);
 
-    _data.Capacity = newCapacity;
-    _data.OffsetOfBuckets = ((_data.NumStates() + (sizeof(value_type) - 1)) / sizeof(value_type));
+    _data.Capacity = checked_cast<u32>(newCapacity);
     _data.StatesAndBuckets = allocator_traits::allocate(static_cast<allocator_type&>(*this), OffsetOfBuckets_() + newCapacity);
     _data.ResetStates();
 

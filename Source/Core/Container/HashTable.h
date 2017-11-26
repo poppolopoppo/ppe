@@ -65,21 +65,13 @@ struct THashSetTraits_ {
     template <typename... _Args> static value_type MakeValue(_Args&&... args) { return value_type(std::forward<_Args>(args)...); }
 };
 struct FHashTableData_ {
-    union {
-        struct {
-            u64     Size : 24;
-            u64     Capacity :24;
-            u64     OffsetOfBuckets : 16;
-        };
-        u64 Packed;
-    };
-
+    u32     Size;
+    u32     Capacity;
     void*   StatesAndBuckets;
 
     FHashTableData_()
         : Size(0)
         , Capacity(0)
-        , OffsetOfBuckets(0)
         , StatesAndBuckets(nullptr)
     {}
 
@@ -94,13 +86,13 @@ struct FHashTableData_ {
     static constexpr size_t GGroupSize = 16;
 
     size_t NumBuckets() const {
-        return (Capacity);
+        return size_t(Capacity);
     }
 
     size_t NumStates() const {
         // 15 last states are mirroring the 15th
         // allows to sample state across table boundary
-        return (Capacity ? Capacity + GGroupSize/* sentinel */ : 0);
+        return size_t(Capacity ? Capacity + GGroupSize/* sentinel */ : 0);
     }
 
     const state_t* GetState(size_t index) const {
@@ -152,7 +144,7 @@ struct FHashTableData_ {
     size_t FirstFilledIndex() const {
         const size_t first = (Size
             ? FirstFilledBucket_ReturnOffset((const state_t*)StatesAndBuckets)
-            : Capacity);
+            : size_t(Capacity));
         return first;
     }
 
@@ -522,11 +514,7 @@ private:
     void RelocateRehash_(size_type newCapacity);
 
     size_t OffsetOfBuckets_() const {
-#if 0
         return ((_data.NumStates() + (sizeof(value_type) - 1)) / sizeof(value_type));
-#else
-        return _data.OffsetOfBuckets;
-#endif
     }
 
     pointer BucketAt_(size_t index) const NOEXCEPT {
