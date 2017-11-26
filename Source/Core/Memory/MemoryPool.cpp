@@ -4,14 +4,14 @@
 
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
+#include "Thread/AtomicSpinLock.h"
 
 #include "VirtualMemory.h"
-#include <mutex>
 
 //----------------------------------------------------------------------------
 // Turn to 1 to disable pool allocation (useful for memory debugging) :
 //----------------------------------------------------------------------------
-#define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC USE_CORE_MEMORY_DEBUGGING //%__NOCOMMIT%
+#define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC (USE_CORE_MEMORY_DEBUGGING) //%__NOCOMMIT%
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -27,12 +27,12 @@ public:
     }
 
     void* Allocate(size_t sizeInBytes) {
-        const std::unique_lock<std::mutex> scopeLock(_barrier);
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
         return VM.Allocate(sizeInBytes);
     }
 
     void Free(void* ptr, size_t sizeInBytes) {
-        const std::unique_lock<std::mutex> scopeLock(_barrier);
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
         VM.Free(ptr, sizeInBytes);
     }
 
@@ -41,7 +41,7 @@ private:
     FMemoryPoolAllocator_(const FMemoryPoolAllocator_&) = delete;
     FMemoryPoolAllocator_& operator=(const FMemoryPoolAllocator_&) = delete;
 
-    std::mutex _barrier;
+    FAtomicSpinLock _barrier;
     VIRTUALMEMORYCACHE(MemoryPool, 32, 16 * 1024 * 1024) VM; // 32 entries caches with max 16 mo
 };
 //----------------------------------------------------------------------------
