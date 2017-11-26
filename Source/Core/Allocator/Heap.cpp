@@ -235,7 +235,7 @@ size_t FHeap::SnapSize(size_t size) const {
 #else //WITH_CORE_USE_NATIVEHEAP
 
 #include "Malloc.h"
-#include "VirtualMemory.h"
+#include "Memory/VirtualMemory.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

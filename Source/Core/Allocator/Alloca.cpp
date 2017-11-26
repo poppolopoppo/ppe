@@ -4,11 +4,11 @@
 
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
+#include "Memory/VirtualMemory.h"
 #include "Meta/Singleton.h"
 #include "Misc/TargetPlatform.h"
 
 #include "ThreadLocalHeap.h"
-#include "VirtualMemory.h"
 
 #if USE_CORE_MEMORY_DEBUGGING
 #   define WITH_CORE_ALLOCA_FALLBACK_TO_MALLOC

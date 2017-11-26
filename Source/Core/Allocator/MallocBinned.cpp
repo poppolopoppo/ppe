@@ -2,10 +2,10 @@
 
 #include "MallocBinned.h"
 
-#include "VirtualMemory.h"
 #include "Container/IntrusiveList.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
+#include "Memory/VirtualMemory.h"
 #include "Misc/TargetPlatform.h"
 #include "Thread/AtomicSpinLock.h"
 

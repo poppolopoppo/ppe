@@ -2,9 +2,9 @@
 
 #include "Token.h"
 
-#include "Allocator/VirtualMemory.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
+#include "Memory/VirtualMemory.h"
 #include "Misc/TargetPlatform.h"
 
 namespace Core {

@@ -2,10 +2,10 @@
 
 #include "MemoryPool.h"
 
-#include "Allocator/VirtualMemory.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
 
+#include "VirtualMemory.h"
 #include <mutex>
 
 //----------------------------------------------------------------------------

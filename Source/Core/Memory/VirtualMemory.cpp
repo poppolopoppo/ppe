@@ -174,7 +174,7 @@ static void VMRegisterBlockSize_(void* ptr, size_t sizeInBytes) {
 
         newNode = (FVMPtrieNode_*)VMALLOC(ALLOCATION_GRANULARITY);
         if (!newNode)
-            throw std::bad_alloc();
+            CORE_THROW_IT(std::bad_alloc());
 
 #ifdef USE_MEMORY_DOMAINS
         // Memory allocated here will never be freed !
@@ -364,7 +364,7 @@ void FVirtualMemory::AlignedFree(void* ptr, size_t sizeInBytes) {
 #if     defined(PLATFORM_WINDOWS)
     UNUSED(sizeInBytes);
     if (0 == ::VirtualFree(ptr, 0, MEM_RELEASE))
-        throw FLastErrorException();
+        CORE_THROW_IT(FLastErrorException());
 
 #elif   defined(PLATFORM_LINUX)
 
