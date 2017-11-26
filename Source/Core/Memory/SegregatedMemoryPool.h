@@ -58,10 +58,10 @@ template <typename T, bool _ThreadLocal, size_t _Size = sizeof(T) >
 struct TPoolTracking {
     typedef TPoolTracking<T, _ThreadLocal, _Size> self_type;
 
-    Core::FMemoryTrackingData TrackingData;
+    Core::FMemoryTracking TrackingData;
     char Name[256];
 
-    TPoolTracking(const char* tagname, FMemoryTrackingData* parent = nullptr)
+    TPoolTracking(const char* tagname, FMemoryTracking* parent = nullptr)
     :   TrackingData(&Name[0], parent) {
         Format(Name, "{0}<{1},{2}>", tagname, _ThreadLocal, _Size);
         RegisterAdditionalTrackingData(&TrackingData);
@@ -104,9 +104,9 @@ public:
 private:
     TPoolTracking<_Tag, std::is_same<FMemoryPool, _MemoryPool>::value, _BlockSize> _poolTracking;
 public:
-    FMemoryTrackingData* TrackingData() { return &_poolTracking.TrackingData; }
+    FMemoryTracking* TrackingData() { return &_poolTracking.TrackingData; }
 #else
-    FMemoryTrackingData* TrackingData() const { return nullptr; }
+    FMemoryTracking* TrackingData() const { return nullptr; }
 #endif
 
 public:
@@ -146,15 +146,15 @@ public:
     FORCE_INLINE static void Clear_UnusedMemory() { segregatedpool_type::Instance().Clear_UnusedMemory(); }
 
 #if defined(WITH_CORE_POOL_ALLOCATOR_TRACKING_DETAILS)
-    static FMemoryTrackingData* TrackingData() {
+    static FMemoryTracking* TrackingData() {
         ONE_TIME_INITIALIZE_TPL(TPoolTracking<T COMMA _ThreadLocal>, sPoolTracking,
             typeid(T).name(), segregatedpool_type::Instance().TrackingData());
         return &sPoolTracking.TrackingData;
     }
 #elif defined(WITH_CORE_POOL_ALLOCATOR_TRACKING)
-    static FMemoryTrackingData* TrackingData() { return segregatedpool_type::Instance().TrackingData(); }
+    static FMemoryTracking* TrackingData() { return segregatedpool_type::Instance().TrackingData(); }
 #else
-    static constexpr FMemoryTrackingData* TrackingData() { return nullptr; }
+    static constexpr FMemoryTracking* TrackingData() { return nullptr; }
 #endif
 };
 //----------------------------------------------------------------------------

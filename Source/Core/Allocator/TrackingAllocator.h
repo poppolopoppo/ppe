@@ -108,14 +108,14 @@ public:
         return *this;
     }
 
-    FMemoryTrackingData* TrackingData() const { return &(domain_type::TrackingData); }
+    FMemoryTracking* TrackingData() const { return &(domain_type::TrackingData); }
     const _Allocator& WrappedAllocator() const { return static_cast<const _Allocator&>(*this); }
 
     size_type max_size() const { return base_type::max_size(); }
 
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
     pointer allocate(size_type n) {
-        if (FMemoryTrackingData* const trackingData = TrackingData())
+        if (FMemoryTracking* const trackingData = TrackingData())
             trackingData->Allocate(n, sizeof(value_type));
 
         return traits_type::allocate(*this, n);
@@ -124,7 +124,7 @@ public:
     void deallocate(void* p, size_type n) {
         traits_type::deallocate(*this, pointer(p), n);
 
-        if (FMemoryTrackingData* const trackingData = TrackingData())
+        if (FMemoryTracking* const trackingData = TrackingData())
             trackingData->Deallocate(n, sizeof(value_type));
     }
 

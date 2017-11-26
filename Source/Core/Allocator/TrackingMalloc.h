@@ -3,17 +3,17 @@
 #include "Core/Core.h"
 
 namespace Core {
-class FMemoryTrackingData;
+class FMemoryTracking;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void* (malloc)(FMemoryTrackingData& trackingData, size_t size);
+void* (malloc)(FMemoryTracking& trackingData, size_t size);
 //----------------------------------------------------------------------------
-void  (free)(FMemoryTrackingData& trackingData, void *ptr);
+void  (free)(FMemoryTracking& trackingData, void *ptr);
 //----------------------------------------------------------------------------
-void* (calloc)(FMemoryTrackingData& trackingData, size_t nmemb, size_t size);
+void* (calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size);
 //----------------------------------------------------------------------------
-void* (realloc)(FMemoryTrackingData& trackingData, void *ptr, size_t size);
+void* (realloc)(FMemoryTracking& trackingData, void *ptr, size_t size);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

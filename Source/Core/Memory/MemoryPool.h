@@ -8,7 +8,7 @@
 #include <mutex>
 
 namespace Core {
-class FMemoryTrackingData;
+class FMemoryTracking;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -31,8 +31,8 @@ public:
     size_t CurrentChunkSize() const { return _currentChunksize; }
     size_t ChunkCount() const { return _chunkCount; }
 
-    void* Allocate(FMemoryTrackingData *trackingData = nullptr);
-    void Deallocate(void *ptr, FMemoryTrackingData *trackingData = nullptr);
+    void* Allocate(FMemoryTracking *trackingData = nullptr);
+    void Deallocate(void *ptr, FMemoryTracking *trackingData = nullptr);
 
     void Clear_AssertCompletelyFree();
     void Clear_IgnoreLeaks();
@@ -114,8 +114,8 @@ public:
     size_t CurrentChunkSize() const { return _pool.CurrentChunkSize(); }
     size_t ChunkCount() const { return _pool.ChunkCount(); }
 
-    void* Allocate(FMemoryTrackingData* trackingData = nullptr);
-    void Deallocate(void *ptr, FMemoryTrackingData* trackingData = nullptr);
+    void* Allocate(FMemoryTracking* trackingData = nullptr);
+    void Deallocate(void *ptr, FMemoryTracking* trackingData = nullptr);
 
     virtual void Clear_AssertCompletelyFree() override final;
     virtual void Clear_IgnoreLeaks() override final;
@@ -143,8 +143,8 @@ public:
     size_t CurrentChunkSize() const { return _pool.CurrentChunkSize(); }
     size_t ChunkCount() const { return _pool.ChunkCount(); }
 
-    void* Allocate(FMemoryTrackingData* trackingData = nullptr);
-    void Deallocate(void *ptr, FMemoryTrackingData* trackingData = nullptr);
+    void* Allocate(FMemoryTracking* trackingData = nullptr);
+    void Deallocate(void *ptr, FMemoryTracking* trackingData = nullptr);
 
     virtual void Clear_AssertCompletelyFree() override final;
     virtual void Clear_IgnoreLeaks() override final;

@@ -18,7 +18,7 @@ class TMemoryView;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMemoryTrackingData;
+class FMemoryTracking;
 //----------------------------------------------------------------------------
 #define MEMORY_DOMAIN_NAME(_Name) CONCAT(_, _Name)
 #define MEMORY_DOMAIN_TAG(_Name) Core::Domain::MEMORY_DOMAIN_NAME(_Name)
@@ -26,7 +26,7 @@ class FMemoryTrackingData;
 //----------------------------------------------------------------------------
 namespace Domain {
     struct MEMORY_DOMAIN_NAME(Global) {
-        static FMemoryTrackingData& TrackingData;
+        static FMemoryTracking& TrackingData;
     };
 }
 //----------------------------------------------------------------------------
@@ -77,12 +77,12 @@ TMemoryTracking<T, _Domain>::~TMemoryTracking() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TMemoryView<FMemoryTrackingData *> EachDomainTrackingData();
+TMemoryView<FMemoryTracking *> EachDomainTrackingData();
 //----------------------------------------------------------------------------
 void ReportDomainTrackingData();
 //----------------------------------------------------------------------------
-void RegisterAdditionalTrackingData(FMemoryTrackingData *pTrackingData);
-void UnregisterAdditionalTrackingData(FMemoryTrackingData *pTrackingData);
+void RegisterAdditionalTrackingData(FMemoryTracking *pTrackingData);
+void UnregisterAdditionalTrackingData(FMemoryTracking *pTrackingData);
 //----------------------------------------------------------------------------
 void ReportAdditionalTrackingData();
 //----------------------------------------------------------------------------

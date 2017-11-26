@@ -387,7 +387,7 @@ FMemoryPoolChunk *FMemoryPool::ReleaseChunk_() {
     }
 }
 //----------------------------------------------------------------------------
-void* FMemoryPool::Allocate(FMemoryTrackingData *trackingData /* = nullptr */) {
+void* FMemoryPool::Allocate(FMemoryTracking *trackingData /* = nullptr */) {
 #ifndef USE_MEMORY_DOMAINS
     UNUSED(trackingData);
 #endif
@@ -427,7 +427,7 @@ void* FMemoryPool::Allocate(FMemoryTrackingData *trackingData /* = nullptr */) {
 #endif
 }
 //----------------------------------------------------------------------------
-void FMemoryPool::Deallocate(void *ptr, FMemoryTrackingData *trackingData /* = nullptr */) {
+void FMemoryPool::Deallocate(void *ptr, FMemoryTracking *trackingData /* = nullptr */) {
 #ifndef USE_MEMORY_DOMAINS
     UNUSED(trackingData);
 #endif
@@ -531,12 +531,12 @@ void FMemoryPool::DeallocateChunk_(FMemoryPoolChunk *chunk) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void* FMemoryPoolThreadLocal::Allocate(FMemoryTrackingData* trackingData/* = nullptr */) {
+void* FMemoryPoolThreadLocal::Allocate(FMemoryTracking* trackingData/* = nullptr */) {
     THIS_THREADRESOURCE_CHECKACCESS();
     return _pool.Allocate(trackingData);
 }
 //----------------------------------------------------------------------------
-void FMemoryPoolThreadLocal::Deallocate(void *ptr, FMemoryTrackingData* trackingData/* = nullptr */) {
+void FMemoryPoolThreadLocal::Deallocate(void *ptr, FMemoryTracking* trackingData/* = nullptr */) {
     THIS_THREADRESOURCE_CHECKACCESS();
     _pool.Deallocate(ptr, trackingData);
 }
@@ -558,12 +558,12 @@ void FMemoryPoolThreadLocal::Clear_UnusedMemory() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void* FMemoryPoolThreadSafe::Allocate(FMemoryTrackingData* trackingData/* = nullptr */) {
+void* FMemoryPoolThreadSafe::Allocate(FMemoryTracking* trackingData/* = nullptr */) {
     const std::unique_lock<std::mutex> scopeLock(_barrier);
     return _pool.Allocate(trackingData);
 }
 //----------------------------------------------------------------------------
-void FMemoryPoolThreadSafe::Deallocate(void *ptr, FMemoryTrackingData* trackingData/* = nullptr */) {
+void FMemoryPoolThreadSafe::Deallocate(void *ptr, FMemoryTracking* trackingData/* = nullptr */) {
     const std::unique_lock<std::mutex> scopeLock(_barrier);
     _pool.Deallocate(ptr, trackingData);
 }

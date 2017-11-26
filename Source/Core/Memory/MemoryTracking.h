@@ -12,15 +12,15 @@ class TMemoryView;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMemoryTrackingData {
+class FMemoryTracking {
 public:
-    FMemoryTrackingData(const char* optionalName = "unknown",
-                        FMemoryTrackingData* optionalParent = nullptr);
+    FMemoryTracking(const char* optionalName = "unknown",
+                        FMemoryTracking* optionalParent = nullptr);
 
     const char* Name() const { return _name; }
 
-    FMemoryTrackingData* Parent() { return _parent; }
-    const FMemoryTrackingData* Parent() const { return _parent; }
+    FMemoryTracking* Parent() { return _parent; }
+    const FMemoryTracking* Parent() const { return _parent; }
 
     size_t BlockCount() const { return _blockCount; }
     size_t AllocationCount() const { return _allocationCount; }
@@ -43,7 +43,7 @@ public:
     void Pool_AllocateOneChunk(size_t chunkSizeInBytes, size_t numBlocks);
     void Pool_DeallocateOneChunk(size_t chunkSizeInBytes, size_t numBlocks);
 
-    static FMemoryTrackingData& Global();
+    static FMemoryTracking& Global();
 
 private:
     std::atomic<size_t> _blockCount;
@@ -58,13 +58,13 @@ private:
 
     std::atomic<size_t> _maxTotalSizeInBytes;
 
-    FMemoryTrackingData* _parent;
+    FMemoryTracking* _parent;
     const char* _name;
 };
 //----------------------------------------------------------------------------
 void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                             const wchar_t *header,
-                            const TMemoryView<const FMemoryTrackingData * const>& datas );
+                            const TMemoryView<const FMemoryTracking * const>& datas );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

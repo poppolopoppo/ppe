@@ -21,7 +21,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Domain {
-    FMemoryTrackingData& MEMORY_DOMAIN_NAME(Global)::TrackingData = FMemoryTrackingData::Global();
+    FMemoryTracking& MEMORY_DOMAIN_NAME(Global)::TrackingData = FMemoryTracking::Global();
 }
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
@@ -59,7 +59,7 @@ namespace {
 #   define MEMORY_DOMAIN_COLLAPSABLE_IMPL(_Name, _Parent)
 #endif
 
-static FMemoryTrackingData *GAllMemoryDomainTrackingData[] = {
+static FMemoryTracking *GAllMemoryDomainTrackingData[] = {
 #include "MemoryDomain.Definitions-inl.h"
 };
 
@@ -77,7 +77,7 @@ namespace {
 struct FAdditionalTrackingData {
     std::mutex Barrier;
     STATIC_CONST_INTEGRAL(size_t, Capacity, 2048);
-    VECTORINSITU(Internal, FMemoryTrackingData*, Capacity) Datas;
+    VECTORINSITU(Internal, FMemoryTracking*, Capacity) Datas;
     FAdditionalTrackingData() {
         // don't want to allocate on other threads :
         Datas.reserve_AssumeEmpty(Capacity);
@@ -90,18 +90,18 @@ static FAdditionalTrackingData* GAllAdditionalTrackingData = nullptr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TMemoryView<FMemoryTrackingData *> EachDomainTrackingData() {
+TMemoryView<FMemoryTracking *> EachDomainTrackingData() {
 #ifdef USE_MEMORY_DOMAINS
     return MakeView(GAllMemoryDomainTrackingData);
 #else
-    return TMemoryView<FMemoryTrackingData *>();
+    return TMemoryView<FMemoryTracking *>();
 #endif
 }
 //----------------------------------------------------------------------------
 void ReportDomainTrackingData() {
 #if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
-    const FMemoryTrackingData **ptr = (const FMemoryTrackingData **)&GAllMemoryDomainTrackingData[0];
-    const TMemoryView<const FMemoryTrackingData *> datas(ptr, lengthof(GAllMemoryDomainTrackingData));
+    const FMemoryTracking **ptr = (const FMemoryTracking **)&GAllMemoryDomainTrackingData[0];
+    const TMemoryView<const FMemoryTracking *> datas(ptr, lengthof(GAllMemoryDomainTrackingData));
     FLoggerStream log(ELogCategory::Debug);
     ReportTrackingDatas(log, L"Memory Domains", datas);
 #endif
@@ -109,7 +109,7 @@ void ReportDomainTrackingData() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RegisterAdditionalTrackingData(FMemoryTrackingData *pTrackingData) {
+void RegisterAdditionalTrackingData(FMemoryTracking *pTrackingData) {
 #ifdef USE_MEMORY_DOMAINS
     Assert(pTrackingData);
     AssertRelease(GAllAdditionalTrackingData);
@@ -122,7 +122,7 @@ void RegisterAdditionalTrackingData(FMemoryTrackingData *pTrackingData) {
 #endif
 }
 //----------------------------------------------------------------------------
-void UnregisterAdditionalTrackingData(FMemoryTrackingData *pTrackingData) {
+void UnregisterAdditionalTrackingData(FMemoryTracking *pTrackingData) {
 #ifdef USE_MEMORY_DOMAINS
     Assert(pTrackingData);
     AssertRelease(GAllAdditionalTrackingData);

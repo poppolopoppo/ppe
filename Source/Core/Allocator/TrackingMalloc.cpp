@@ -15,7 +15,7 @@ namespace {
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
 struct FBlockTracking_ {
-    FMemoryTrackingData* TrackingData;
+    FMemoryTracking* TrackingData;
     u32 SizeInBytes;
     // adapt canary size to preserve alignment on 16 :
 #ifdef ARCH_X86
@@ -33,7 +33,7 @@ STATIC_ASSERT(sizeof(FBlockTracking_) == 16);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void* (malloc)(FMemoryTrackingData& trackingData, size_t size) {
+void* (malloc)(FMemoryTracking& trackingData, size_t size) {
 #ifdef USE_MEMORY_DOMAINS
     if (0 == size)
         return nullptr;
@@ -52,7 +52,7 @@ void* (malloc)(FMemoryTrackingData& trackingData, size_t size) {
 #endif
 }
 //----------------------------------------------------------------------------
-void (free)(FMemoryTrackingData& trackingData, void *ptr) {
+void (free)(FMemoryTracking& trackingData, void *ptr) {
 #ifdef USE_MEMORY_DOMAINS
     if (nullptr == ptr)
         return;
@@ -68,7 +68,7 @@ void (free)(FMemoryTrackingData& trackingData, void *ptr) {
 #endif
 }
 //----------------------------------------------------------------------------
-void* (calloc)(FMemoryTrackingData& trackingData, size_t nmemb, size_t size) {
+void* (calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size) {
 #ifdef USE_MEMORY_DOMAINS
     const size_t sizeInBytes = nmemb*size;
     void* const ptr = (malloc)(trackingData, sizeInBytes);
@@ -79,7 +79,7 @@ void* (calloc)(FMemoryTrackingData& trackingData, size_t nmemb, size_t size) {
 #endif
 }
 //----------------------------------------------------------------------------
-void* (realloc)(FMemoryTrackingData& trackingData, void *ptr, size_t size) {
+void* (realloc)(FMemoryTracking& trackingData, void *ptr, size_t size) {
 #ifdef USE_MEMORY_DOMAINS
     if (nullptr != ptr) {
         auto* const pblock = reinterpret_cast<FBlockTracking_*>(ptr) - 1;
