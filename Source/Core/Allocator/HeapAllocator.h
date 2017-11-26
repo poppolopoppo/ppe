@@ -80,14 +80,14 @@ auto THeapAllocator<T, _HeapSingleton>::allocate(size_type n) -> pointer {
     // The Standardization Committee recommends that std::length_error
     // be thrown in the case of integer overflow.
     if (n > max_size())
-        throw std::length_error("THeapAllocator<T, _HeapSingleton>::allocate() - Integer overflow.");
+        CORE_THROW_IT(std::length_error("THeapAllocator<T, _HeapSingleton>::allocate() - Integer overflow."));
 
     // THeapAllocator wraps FHeap.
     void * const pv = HeapInstance().Malloc<Alignment>(n * sizeof(T));
 
     // Allocators should throw std::bad_alloc in the case of memory allocation failure.
     if (pv == nullptr)
-        throw std::bad_alloc();
+        CORE_THROW_IT(std::bad_alloc());
 
     return static_cast<T *>(pv);
 }
@@ -109,7 +109,7 @@ void* THeapAllocator<T, _HeapSingleton>::relocate(void* p, size_type newSize, si
     // THeapAllocator wraps FHeap.
     void* const newp = HeapInstance().Realloc<Alignment>(p, newSize * sizeof(T));
     if (nullptr == newp && newSize)
-        throw std::bad_alloc();
+        CORE_THROW_IT(std::bad_alloc());
 
     return static_cast<T*>(newp);
 }

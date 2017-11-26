@@ -61,7 +61,7 @@ public:
     bool Process(FContentProcessorContext& ctx, _Output& dst, const _Input& src) const {
         const TContentProcessor<_Input, _Output>* const processor = As<_Input, _Output>();
         if (nullptr == processor)
-            throw FContentProcessorException("invalid processor type", ctx.Identity(), this);
+            CORE_THROW_IT(FContentProcessorException("invalid processor type", ctx.Identity(), this));
         else
             return processor->Process(ctx, dst, src);
     }

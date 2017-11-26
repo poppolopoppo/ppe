@@ -52,7 +52,7 @@ public:
     bool Import(FContentImporterContext& ctx, _Import& dst) const {
         const TContentImporter<_Import>* const importer = As<_Import>();
         if (nullptr == importer)
-            throw FContentImporterException("invalid importer type", ctx.Identity(), this);
+            CORE_THROW_IT(FContentImporterException("invalid importer type", ctx.Identity(), this));
         else
             return importer->Import(ctx, dst);
     }

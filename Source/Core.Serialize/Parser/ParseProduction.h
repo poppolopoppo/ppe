@@ -61,7 +61,7 @@ struct TProduction {
         if (result.Succeed())
             return result.Value();
 
-        throw FParserException(result.Message(), result.Site(), nullptr);
+        CORE_THROW_IT(FParserException(result.Message(), result.Site(), nullptr));
     }
 
     TProduction Ref() const {

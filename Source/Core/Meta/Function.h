@@ -26,7 +26,7 @@ public:
 
     _Ret operator()(Args&& ...args) const {
         if (!valid())
-            throw std::bad_function_call();
+            CORE_THROW_IT(std::bad_function_call());
 
         return pimpl_()->Invoke(std::forward<Args>(args)...);
     }

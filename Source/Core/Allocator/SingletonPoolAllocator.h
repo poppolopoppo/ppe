@@ -77,14 +77,14 @@ auto TSingletonPoolAllocator<T, _ThreadLocal, _PoolTag>::allocate(size_type n) -
     // The Standardization Committee recommends that std::length_error
     // be thrown in the case of integer overflow.
     if (n > 1)
-        throw std::length_error("TSingletonPoolAllocator<T, _ThreadLocal, _PoolTag>::allocate() - pool allocator does not support contiguous allocations.");
+        CORE_THROW_IT(std::length_error("TSingletonPoolAllocator<T, _ThreadLocal, _PoolTag>::allocate() - pool allocator does not support contiguous allocations."));
 
     // TSingletonPoolAllocator wraps TTypedSegregatedMemoryPool<>.
     void * const pv = segregatedpool_type::Allocate();
 
     // Allocators should throw std::bad_alloc in the case of memory allocation failure.
     if (pv == nullptr)
-        throw std::bad_alloc();
+        CORE_THROW_IT(std::bad_alloc());
 
     return static_cast<T *>(pv);
 }

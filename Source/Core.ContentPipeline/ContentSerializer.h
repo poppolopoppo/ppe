@@ -46,7 +46,7 @@ public:
     bool Serialize(FContentSerializerContext& ctx, const _Asset& src) const {
         const TContentSerializer<_Asset>* const serializer = As<_Asset>();
         if (nullptr == serializer)
-            throw FContentSerializerException("invalid serializer type", ctx.OutputFilename(), this);
+            CORE_THROW_IT(FContentSerializerException("invalid serializer type", ctx.OutputFilename(), this));
         else
             return serializer->Serialize(ctx, src);
     }
@@ -55,7 +55,7 @@ public:
     bool Deserialize(FContentSerializerContext& ctx, _Asset& dst) const {
         const TContentSerializer<_Asset>* const serializer = As<_Asset>();
         if (nullptr == serializer)
-            throw FContentSerializerException("invalid serializer type", ctx.OutputFilename(), this);
+            CORE_THROW_IT(FContentSerializerException("invalid serializer type", ctx.OutputFilename(), this));
         else
             return serializer->Deserialize(ctx, dst);
     }

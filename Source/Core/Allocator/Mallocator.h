@@ -65,14 +65,14 @@ auto TMallocator<T, _Alignment>::allocate(size_type n) -> pointer {
     // The Standardization Committee recommends that std::length_error
     // be thrown in the case of integer overflow.
     if (n > max_size())
-        throw std::length_error("TMallocator<T>::allocate() - Integer overflow.");
+        CORE_THROW_IT(std::length_error("TMallocator<T>::allocate() - Integer overflow."));
 
     // TMallocator wraps malloc().
     void * const pv = Core::malloc<_Alignment>(n * sizeof(T));
 
     // Allocators should throw std::bad_alloc in the case of memory allocation failure.
     if (pv == nullptr)
-        throw std::bad_alloc();
+        CORE_THROW_IT(std::bad_alloc());
 
     return static_cast<T *>(pv);
 }
@@ -91,7 +91,7 @@ void* TMallocator<T, _Alignment>::relocate(void* p, size_type newSize, size_type
     // TMallocator wraps malloc()
     void* const newp = Core::realloc<_Alignment>(p, newSize * sizeof(T));
     if (nullptr == newp && newSize)
-        throw std::bad_alloc();
+        CORE_THROW_IT(std::bad_alloc());
 
     return newp;
 }
