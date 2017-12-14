@@ -16,13 +16,13 @@ namespace {
 using FChunk = FTokenFactory::FChunk;
 using FEntry = FTokenFactory::FEntry;
 //----------------------------------------------------------------------------
-STATIC_CONST_INTEGRAL(size_t, PageSize, ALLOCATION_GRANULARITY);
+STATIC_CONST_INTEGRAL(size_t, GTokenChunkSize, ALLOCATION_GRANULARITY);
 //----------------------------------------------------------------------------
 static FEntry* AllocateEntry_(FChunk** chunks, size_t len, size_t stride, size_t hash) {
     Assert(len > 0);
     Assert(stride > 0);
 
-    constexpr size_t chunkSizeInBytes = (PageSize - sizeof(FChunk));
+    constexpr size_t chunkSizeInBytes = (GTokenChunkSize - sizeof(FChunk));
     const size_t allocSizeInBytes = (sizeof(FEntry) + (len + 1/* null terminate the string */) * stride);
 
     FChunk* chunkToAllocate = nullptr;
@@ -36,7 +36,7 @@ static FEntry* AllocateEntry_(FChunk** chunks, size_t len, size_t stride, size_t
     }
 
     if (nullptr == chunkToAllocate) {
-        chunkToAllocate = new (FVirtualMemory::AlignedAlloc(PageSize, PageSize)) FChunk();
+        chunkToAllocate = new (FVirtualMemory::AlignedAlloc(GTokenChunkSize, GTokenChunkSize)) FChunk();
         chunkToAllocate->Next = *chunks;
         *chunks = chunkToAllocate;
     }
@@ -59,7 +59,7 @@ static void ReleaseChunks_(FChunk* chunks) {
     while (chunks) {
         Assert_NoAssume(chunks->TestCanary());
         FChunk* const next = chunks->Next;
-        FVirtualMemory::AlignedFree(chunks, PageSize);
+        FVirtualMemory::AlignedFree(chunks, GTokenChunkSize);
         chunks = next;
     }
 }

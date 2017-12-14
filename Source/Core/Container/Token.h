@@ -72,7 +72,7 @@ public:
             return (u8*)(this + 1);
         }
     };
-    STATIC_ASSERT(sizeof(FChunk) == 16);
+    STATIC_ASSERT(sizeof(FChunk) == ALLOCATION_BOUNDARY);
 
     struct FEntry {
         FEntry* Next;

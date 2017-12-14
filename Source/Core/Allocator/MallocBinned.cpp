@@ -71,8 +71,8 @@ struct CACHELINE_ALIGNED FBinnedPage_ {
 //----------------------------------------------------------------------------
 struct FBinnedThreadCache_;
 struct CACHELINE_ALIGNED FBinnedChunk_ {
-    STATIC_CONST_INTEGRAL(size_t, Alignment,        16);
-    STATIC_CONST_INTEGRAL(size_t, MinSizeInBytes,   16);
+    STATIC_CONST_INTEGRAL(size_t, Alignment,        ALLOCATION_BOUNDARY);
+    STATIC_CONST_INTEGRAL(size_t, MinSizeInBytes,   ALLOCATION_BOUNDARY);
     STATIC_CONST_INTEGRAL(size_t, MaxSizeInBytes,   32736);
     STATIC_CONST_INTEGRAL(size_t, ChunkSizeInBytes, FBinnedPage_::PageSize);
     STATIC_CONST_INTEGRAL(size_t, ChunkSizeMask,    ~(ChunkSizeInBytes - 1));

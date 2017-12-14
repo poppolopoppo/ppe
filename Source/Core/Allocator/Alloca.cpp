@@ -65,7 +65,7 @@ public:
 #endif
     ,   PayloadSize     = HeaderSize + FooterSize
     };
-    STATIC_ASSERT(Boundary == 16);
+    STATIC_ASSERT(Boundary == ALLOCATION_BOUNDARY);
     STATIC_ASSERT(ROUND_TO_NEXT_16(PayloadSize) == PayloadSize);
 
     FAllocaStorage();
@@ -111,7 +111,7 @@ void* FAllocaStorage::Push(size_t sizeInBytes) {
             _storage = AllocaLocalStorage_Alloc_();
         }
 
-        Assert(Meta::IsAligned(16, _offset));
+        Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, _offset));
         void* const block = reinterpret_cast<u8*>(_storage) + _offset;
 
         const u32 blockSize = checked_cast<u32>(alignedSizeInBytes + PayloadSize);
@@ -271,7 +271,7 @@ static void* AllocaFallback_Malloc_(size_t sizeInBytes) {
         MEMORY_DOMAIN_TRACKING_DATA(Alloca).Allocate(1, sizeInBytes);
 
         p = (payload + 4);
-        Assert(Meta::IsAligned(16, p));
+        Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, p));
 
         return p;
     }
@@ -331,7 +331,7 @@ static void* AllocaFallback_Realloc_(void* p, size_t newSizeInBytes, bool keepDa
                 newPayload[3] = GAllocaFallbackAliveCanary;
 
                 newP = (newPayload + 4);
-                Assert(Meta::IsAligned(16, newP));
+                Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, newP));
 
                 ::memcpy(newP, p, Min(newSizeInBytes, oldSizeInBytes));
             }

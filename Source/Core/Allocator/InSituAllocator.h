@@ -51,7 +51,7 @@ private:
     typedef u32 size_type;
 #endif
 
-    typename std::aligned_storage<_SizeInBytes, 16>::type _insituData;
+    typename std::aligned_storage<_SizeInBytes, ALLOCATION_BOUNDARY>::type _insituData;
 
     size_type _insituCount;
     size_type _insituOffset;

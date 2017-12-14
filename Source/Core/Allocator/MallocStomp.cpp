@@ -59,7 +59,7 @@ struct FStompPayload_ {
         AssertRelease("Corrupted payload !", GStompDefaultCanary == Canary);
     }
 };
-STATIC_ASSERT(sizeof(FStompPayload_) == 16);
+STATIC_ASSERT(sizeof(FStompPayload_) == ALLOCATION_BOUNDARY);
 //----------------------------------------------------------------------------
 static void StompFillPadding_(const void* pbegin, const void* pend) {
     constexpr size_t word_size = sizeof(GStompLongCanary);

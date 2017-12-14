@@ -97,7 +97,7 @@ private:
     TIntrusiveListNode<FMemoryPoolChunk> _node;
     typedef INTRUSIVELIST_ACCESSOR(&FMemoryPoolChunk::_node) list_accessor;
 };
-STATIC_ASSERT(Meta::IsAligned(16, sizeof(FMemoryPoolChunk)));
+STATIC_ASSERT(Meta::IsAligned(ALLOCATION_BOUNDARY, sizeof(FMemoryPoolChunk)));
 #pragma warning(pop)
 //----------------------------------------------------------------------------
 FMemoryPoolChunk::FMemoryPoolChunk(size_t chunkSize, size_t blockCount)
@@ -395,7 +395,7 @@ void* FMemoryPool::Allocate(FMemoryTracking *trackingData /* = nullptr */) {
     if (trackingData)
         trackingData->Allocate(1, BlockSize());
 
-    return Core::aligned_malloc(BlockSize(), 16);
+    return Core::aligned_malloc(BlockSize(), ALLOCATION_BOUNDARY);
 
 #else
 
