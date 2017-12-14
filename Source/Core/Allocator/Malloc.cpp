@@ -94,12 +94,14 @@ void* FMalloc_::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
 }
 void  FMalloc_::ReleasePendingBlocks() {}
 size_t FMalloc_::SnapSize(size_t size) { return size; }
+#ifndef FINAL_RELEASE
 size_t FMalloc_::RegionSize(void* ptr) {
 #   ifdef PLATFORM_WINDOWS
     return ::_msize(ptr);
 #   else
     return 0;
 #   endif
+#endif
 }
 #endif //!CORE_MALLOC_ALLOCATOR_STD
 //----------------------------------------------------------------------------
@@ -128,9 +130,11 @@ void  FMalloc_::ReleasePendingBlocks() {
 size_t FMalloc_::SnapSize(size_t size) {
     return FMallocBinned::SnapSize(size);
 }
+#ifndef FINAL_RELEASE
 size_t FMalloc_::RegionSize(void* ptr) {
     return FMallocBinned::RegionSize(ptr);
 }
+#endif
 #endif //!CORE_MALLOC_ALLOCATOR_BINNED
 //----------------------------------------------------------------------------
 #if (CORE_MALLOC_ALLOCATOR == CORE_MALLOC_ALLOCATOR_STOMP)
@@ -154,9 +158,11 @@ void* FMalloc_::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
 }
 void  FMalloc_::ReleasePendingBlocks() {}
 size_t FMalloc_::SnapSize(size_t size) { return size; }
+#ifndef FINAL_RELEASE
 size_t FMalloc_::RegionSize(void* ptr) {
     return FMallocStomp::RegionSize(ptr);
 }
+#endif
 #endif //!CORE_MALLOC_ALLOCATOR_STOMP
 //----------------------------------------------------------------------------
 } //!namespace
