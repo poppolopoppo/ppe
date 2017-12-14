@@ -23,7 +23,7 @@ struct TBindDelegate<T *, _Ret (T::*)(_Args... )> {
 
     template <_Ret (T::*_Member)(_Args... )>
     static _Ret Wrapper_(void *pcallee, _Args... args ) {
-        T *const p = Likely(static_cast<T *>(pcallee));
+        T *const p = static_cast<T *>(pcallee);
         return (p->*_Member)(std::forward<_Args>(args)... );
     }
 };
@@ -43,7 +43,7 @@ struct TBindDelegate<const T*, _Ret (T::*)(_Args... ) const> {
 
     template <_Ret (T::*_Member)(_Args... ) const>
     static _Ret Wrapper_(void *pcallee, _Args... args ) {
-        const T* p = Likely(static_cast<const T*>(pcallee));
+        const T* p = static_cast<const T*>(pcallee);
         return (p->*_Member)(std::forward<_Args>(args)... );
     }
 };
