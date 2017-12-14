@@ -18,7 +18,7 @@
 #endif
 
 #ifdef USE_MEMORY_DOMAINS
-#   define TRACKINGDATA_ARG_IFP , FMemoryTrackingData& trackingData
+#   define TRACKINGDATA_ARG_IFP , FMemoryTracking& trackingData
 #   define TRACKINGDATA_ARG_FWD , trackingData
 #else
 #   define TRACKINGDATA_ARG_IFP

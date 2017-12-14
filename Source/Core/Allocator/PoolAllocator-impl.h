@@ -23,7 +23,7 @@
     _Prefix void _Type::Pool_ReleaseMemory() { \
         _Pool::Clear_UnusedMemory(); \
     } \
-    _Prefix const FMemoryTrackingData *_Type::Pool_TrackingData() { \
+    _Prefix const FMemoryTracking *_Type::Pool_TrackingData() { \
         return _Pool::TrackingData(); \
     }
 //----------------------------------------------------------------------------
@@ -31,7 +31,7 @@
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, _Pool) \
     _Prefix void _Type::Pool_ReleaseMemory() {} \
-    _Prefix const FMemoryTrackingData *_Type::Pool_TrackingData() { return nullptr; }
+    _Prefix const FMemoryTracking *_Type::Pool_TrackingData() { return nullptr; }
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_POOL_ALLOCATOR
 //----------------------------------------------------------------------------

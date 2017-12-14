@@ -48,7 +48,7 @@ protected:
     size_t TotalCacheSizeInBytes;
 
 #ifdef USE_MEMORY_DOMAINS
-#   define TRACKINGDATA_ARG_IFP , FMemoryTrackingData& trackingData
+#   define TRACKINGDATA_ARG_IFP , FMemoryTracking& trackingData
 #else
 #   define TRACKINGDATA_ARG_IFP
 #endif

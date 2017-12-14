@@ -29,11 +29,11 @@ namespace Domain {
 #define MEMORY_DOMAIN_IMPL(_Name, _Parent) \
     namespace Domain { \
         namespace { \
-            static FMemoryTrackingData CONCAT(GTrackingData, MEMORY_DOMAIN_NAME(_Name)) { \
+            static FMemoryTracking CONCAT(GTrackingData, MEMORY_DOMAIN_NAME(_Name)) { \
                 STRINGIZE(_Name), &MEMORY_DOMAIN_TRACKING_DATA(_Parent) \
             }; \
         }\
-        FMemoryTrackingData& MEMORY_DOMAIN_NAME(_Name)::TrackingData = \
+        FMemoryTracking& MEMORY_DOMAIN_NAME(_Name)::TrackingData = \
             CONCAT(GTrackingData, MEMORY_DOMAIN_NAME(_Name)); \
     }
 

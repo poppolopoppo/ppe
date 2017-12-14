@@ -34,7 +34,7 @@ namespace Domain {
 #   define MEMORY_DOMAIN_IMPL(_Name, _Parent) \
     namespace Domain { \
         struct MEMORY_DOMAIN_NAME(_Name) { \
-            static FMemoryTrackingData& TrackingData; \
+            static FMemoryTracking& TrackingData; \
         }; \
     }
 #else

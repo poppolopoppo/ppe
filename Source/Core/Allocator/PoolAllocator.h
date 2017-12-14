@@ -29,14 +29,14 @@ public: \
     void operator delete(void*, void*) {} \
     \
     static void Pool_ReleaseMemory(); \
-    static const FMemoryTrackingData *Pool_TrackingData()
+    static const FMemoryTracking *Pool_TrackingData()
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_DECL() \
 public: \
     static void Pool_ReleaseMemory(); \
-    static const FMemoryTrackingData *Pool_TrackingData()
+    static const FMemoryTracking *Pool_TrackingData()
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_POOL_ALLOCATOR
 //----------------------------------------------------------------------------
