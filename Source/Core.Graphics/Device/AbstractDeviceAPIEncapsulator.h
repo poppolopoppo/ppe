@@ -49,7 +49,7 @@ private:
     FDeviceEncapsulator *_owner;
     FPresentationParameters _parameters;
 
-    FMemoryTrackingData _usedMemory;
+    FMemoryTracking _usedMemory;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -17,7 +17,7 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FDeviceSharedEntityPool::FShar
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FDeviceSharedEntityPool::FDeviceSharedEntityPool(FMemoryTrackingData *globalVideoMemory)
+FDeviceSharedEntityPool::FDeviceSharedEntityPool(FMemoryTracking *globalVideoMemory)
 :   _mru(nullptr)
 ,   _lru(nullptr)
 ,   _map(128)

@@ -10,6 +10,8 @@
 
 #include "Core/Allocator/PoolAllocatorTag.h"
 
+#define GRAPHICS_BOUNDARY (16)
+
 namespace Core {
 namespace Graphics {
 class FDeviceEncapsulator;

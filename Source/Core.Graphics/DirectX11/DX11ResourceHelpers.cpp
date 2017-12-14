@@ -22,7 +22,7 @@ namespace {
 //----------------------------------------------------------------------------
 static bool DX11MapWrite_(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<const u8>& src, ::D3D11_MAP mapType, bool doNotWait) {
     Assert(resource);
-    Assert(Meta::IsAligned(16, src.data()));
+    Assert(Meta::IsAligned(GRAPHICS_BOUNDARY, src.data()));
 
     const ::UINT mapFlags = (doNotWait ? ::D3D11_MAP_FLAG_DO_NOT_WAIT : 0);
 
@@ -144,7 +144,7 @@ bool DX11CopyResourceSubRegion(
 //----------------------------------------------------------------------------
 bool DX11UpdateResource(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, const void *src, size_t rowPitch, size_t depthPitch) {
     Assert(resource);
-    Assert(Meta::IsAligned(16, src));
+    Assert(Meta::IsAligned(GRAPHICS_BOUNDARY, src));
 
     deviceContext->UpdateSubresource(resource, checked_cast<::UINT>(subResource), NULL, src, checked_cast<::UINT>(rowPitch), checked_cast<::UINT>(depthPitch));
     return true;
@@ -152,7 +152,7 @@ bool DX11UpdateResource(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *
 //----------------------------------------------------------------------------
 bool DX11MapRead(::ID3D11DeviceContext *deviceContext, ::ID3D11Resource *resource, size_t subResource, size_t offset, const TMemoryView<u8>& dst) {
     Assert(resource);
-    Assert(Meta::IsAligned(16, dst.data()));
+    Assert(Meta::IsAligned(GRAPHICS_BOUNDARY, dst.data()));
 
     ::D3D11_MAPPED_SUBRESOURCE mappedResource;
     const ::HRESULT result = deviceContext->Map(resource, checked_cast<::UINT>(subResource), D3D11_MAP_READ, 0, &mappedResource);

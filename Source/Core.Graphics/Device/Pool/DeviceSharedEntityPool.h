@@ -31,10 +31,10 @@ public:
     typedef INTRUSIVELIST_ACCESSOR(&FSharedEntity::Global) global_lru_type;
     typedef INTRUSIVELIST_ACCESSOR(&FSharedEntity::Local)  local_lru_type;
 
-    explicit FDeviceSharedEntityPool(FMemoryTrackingData *globalVideoMemory);
+    explicit FDeviceSharedEntityPool(FMemoryTracking *globalVideoMemory);
     ~FDeviceSharedEntityPool();
 
-    const FMemoryTrackingData& UsedMemory() const { return _usedMemory; }
+    const FMemoryTracking& UsedMemory() const { return _usedMemory; }
 
     bool Acquire_Cooperative(PCDeviceAPIDependantEntity *pEntity, const FDeviceResourceSharable& resource);
     void Release_Cooperative(const FDeviceSharedEntityKey& key, PCDeviceAPIDependantEntity& entity);
@@ -52,7 +52,7 @@ private:
     FSharedEntity *_lru;
 
     map_type _map;
-    FMemoryTrackingData _usedMemory;
+    FMemoryTracking _usedMemory;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

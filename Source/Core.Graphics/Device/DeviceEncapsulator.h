@@ -42,7 +42,7 @@ public:
 
     const FPresentationParameters& Parameters() const;
 
-    const FMemoryTrackingData& VideoMemory() const { return _videoMemory; }
+    const FMemoryTracking& VideoMemory() const { return _videoMemory; }
 
     IDeviceAPIEncapsulator *Device() const;
     IDeviceAPIContext *Immediate() const;
@@ -70,7 +70,7 @@ private:
     EDeviceStatus _status;
     FDeviceRevision _revision;
 
-    FMemoryTrackingData _videoMemory;
+    FMemoryTracking _videoMemory;
 
     TEvent<event_t> _onDeviceCreate;
     TEvent<event_t> _onDeviceDestroy;
