@@ -15,7 +15,8 @@
 #define CORE_MESSAGE(_Message) \
     __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) ",1): " _Message))
 
-#define CORE_WARNING(_Code, _Message) CORE_MESSAGE("WARNING " _Code ": " _Message)
+#define CORE_WARNING(_Code, _Message) CORE_MESSAGE("warning " _Code ": " _Message)
+#define CORE_ERROR(_Code, _Message) CORE_MESSAGE("error " _Code ": " _Message)
 
 #if     defined(CPP_VISUALSTUDIO)
 #   define CORE_DEPRECATED __declspec(deprecated)
