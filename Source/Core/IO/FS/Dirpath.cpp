@@ -231,16 +231,16 @@ FWString FDirpath::ToWString() const {
     return Core::ToWString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
-size_t FDirpath::ToCStr(char *dst, size_t capacity) const {
+FStringView FDirpath::ToCStr(char *dst, size_t capacity) const {
     FOCStrStream oss(dst, capacity);
     oss << *this;
-    return static_cast<size_t>(oss.tellp());
+    return oss.MakeView();
 }
 //----------------------------------------------------------------------------
-size_t FDirpath::ToWCStr(wchar_t *dst, size_t capacity) const {
+FWStringView FDirpath::ToWCStr(wchar_t *dst, size_t capacity) const {
     FWOCStrStream oss(dst, capacity);
     oss << *this;
-    return static_cast<size_t>(oss.tellp());
+    return oss.MakeView();
 }
 //----------------------------------------------------------------------------
 void FDirpath::Swap(FDirpath& other) {
@@ -275,7 +275,7 @@ bool FDirpath::Less(const FDirpath& other) const {
 }
 //----------------------------------------------------------------------------
 size_t FDirpath::HashValue() const {
-    return (_path) ? _path->HashValue() : 0;
+    return (_path ? _path->HashValue() : 0);
 }
 //----------------------------------------------------------------------------
 bool FDirpath::Absolute(FDirpath* absolute, const FDirpath& origin, const FDirpath& relative) {

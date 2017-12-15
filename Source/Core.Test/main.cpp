@@ -5,7 +5,10 @@
 typedef Core::Test::FTestApp application_type;
 
 #include "Core/Core.h"
+#include "Core.Network/Network.h"
 #include "Core.RTTI/RTTI.h"
+#include "Core.Serialize/Serialize.h"
+#include "Core.Pixmap/Pixmap.h"
 #include "Core.Application/Application.h"
 
 #ifdef PLATFORM_WINDOWS
@@ -29,7 +32,10 @@ static int Bootstrap(void *appHandle, int nShowCmd, const wchar_t* filename, int
     const Application::FApplicationContext appContext;
 
     const Core::FCoreModule moduleCore{ appHandle, nShowCmd, filename, size_t(argc), argv };
+    const Core::Network::FNetworkModule moduleNetwork;
     const Core::RTTI::FRTTIModule moduleRTTI;
+    const Core::Serialize::FSerializeModule moduleSerialize;
+    const Core::Pixmap::FPixmapModule modulePixmap;
     const Core::Application::FApplicationModule moduleApplication;
 
 #if defined(PLATFORM_WINDOWS) && CORE_RESOURCES

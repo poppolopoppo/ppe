@@ -67,6 +67,9 @@ public:
     size_t Next(size_t vmin, size_t vmax) { return NextU32(vmin, vmax); }
 #endif
 
+    // Compatibility with STL : callable like a function
+    size_t operator ()(size_t vmax) { return Next(vmax); }
+
     float NextFloat01();
     float NextFloatM11();
 
