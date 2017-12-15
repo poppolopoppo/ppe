@@ -4,7 +4,13 @@
 
 #include "Core/Time/Timepoint.h"
 
-#ifndef FINAL_RELEASE
+#if defined(FINAL_RELEASE)
+#   define USE_CORE_BENCHMARK 0
+#else
+#   define USE_CORE_BENCHMARK 1
+#endif
+
+#if USE_CORE_BENCHMARK
 #   define BENCHMARK_SCOPE(_CATEGORY, _MSG) \
         const ::Core::FBenchmarkScope CONCAT(__benchmarkScope, __LINE__)((_CATEGORY), (_MSG))
 #   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR) \
@@ -29,7 +35,7 @@ private:
     FTimepoint _startedAt;
 };
 //----------------------------------------------------------------------------
-#ifndef FINAL_RELEASE
+#if USE_CORE_BENCHMARK
 class FBenchmarkScope : public FTimedScope {
 public:
     FBenchmarkScope(const wchar_t* category, const wchar_t* message);
@@ -38,10 +44,13 @@ public:
 private:
     const wchar_t* const _category;
     const wchar_t* const _message;
+    FBenchmarkScope* const _parentIFP;
+    const size_t _depth;
+    FTimespan _accumulated;
 };
-#endif //!FINAL_RELEASE
+#endif //!USE_CORE_BENCHMARK
 //----------------------------------------------------------------------------
-#ifndef FINAL_RELEASE
+#if USE_CORE_BENCHMARK
 class FIOBenchmarkScope : public FTimedScope {
 public:
     FIOBenchmarkScope(const wchar_t* category, const wchar_t* message, const std::streamsize* pSizeInBytes);
@@ -52,7 +61,7 @@ private:
     const wchar_t* const _message;
     const std::streamsize* _pSizeInBytes;
 };
-#endif //!FINAL_RELEASE
+#endif //!USE_CORE_BENCHMARK
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

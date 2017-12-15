@@ -5,13 +5,18 @@
 #include "HashFunctions.h"
 #include "MemoryView.h"
 
-#include "Diagnostic/Logger.h"
+
 #include "Container/RawStorage.h"
 #include "IO/FormatHelpers.h"
 #include "Misc/FourCC.h"
 
 #include "External/lz4.h"
 #include "External/lz4hc.h"
+
+#include "Time/TimedScope.h"
+#if USE_CORE_BENCHMARK
+#   include "Diagnostic/Logger.h"
+#endif
 
 #define WITH_CORE_COMPRESSION_FINGERPRINT 1 //%_NOCOMMTI%
 
@@ -41,6 +46,23 @@ static u32 StreamFingerprint_(const TMemoryView<const u8>& src) {
 #endif
 }
 //----------------------------------------------------------------------------
+#if USE_CORE_BENCHMARK
+struct FCompressionBenchmark_ {
+    const FTimepoint StartedAt;
+    FCompressionBenchmark_() : StartedAt(FTimepoint::Now()) {}
+    void Finished(const wchar_t* msg, size_t a, size_t b) {
+        const FTimespan elapsed = FTimepoint::ElapsedSince(StartedAt);
+        LOG(Profiling, L" {0:20} | {1:8} | {2:10} ==> {3:10} : {4:10f2}% = {5:10f2} Mb/s",
+            msg,
+            elapsed,
+            Fmt::FSizeInBytes{ a },
+            Fmt::FSizeInBytes{ b },
+            b * 100.0 / a,
+            FMegabytes(FBytes((double)Max(a, b))).Value() / FSeconds(elapsed).Value() );
+    }
+};
+#endif //!USE_CORE_BENCHMARK
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -67,6 +89,9 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
 
     const TMemoryView<u8> datas = dst.CutStartingAt(compressedSizeInBytes);
 
+#if USE_CORE_BENCHMARK
+    FCompressionBenchmark_ bm;
+#endif
     STATIC_CONST_INTEGRAL(int, FastAccelerator,  7/* ~21% faster */);
     STATIC_CONST_INTEGRAL(int, CompressionLevel, 9/* LZ4 default */);
 
@@ -103,8 +128,9 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
         break;
     }
 
-    LOG(Info, L"[Compression] Compress ratio : {0} -> {1} = {2:f2}%",
-        Fmt::FSizeInBytes(src.SizeInBytes()), Fmt::FSizeInBytes(compressedSizeInBytes), compressedSizeInBytes*100.0f/src.SizeInBytes() );
+#if USE_CORE_BENCHMARK
+    bm.Finished(L"COMPRESS", src.SizeInBytes(), compressedSizeInBytes);
+#endif
 
     return compressedSizeInBytes;
 }
@@ -129,11 +155,18 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
         FILE_VERSION_ != pheader->Version )
         return false;
 
+#if USE_CORE_BENCHMARK
+    FCompressionBenchmark_ bm;
+#endif
+
     const size_t dataSizeInBytes = checked_cast<size_t>(::LZ4_decompress_fast(
         (const char*)&pheader[1],
         (char*)dst.Pointer(),
         pheader->SizeInBytes ));
 
+#if USE_CORE_BENCHMARK
+    bm.Finished(L"DECOMPRESS", src.SizeInBytes(), pheader->SizeInBytes);
+#endif
     const size_t compressedSizeInBytes = dataSizeInBytes + sizeof(FFileHeader_);
     Assert(compressedSizeInBytes <= src.SizeInBytes());
 
@@ -141,11 +174,6 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
     const u32 readFingerprint = StreamFingerprint_(dst);
     AssertRelease(readFingerprint == pheader->Fingerpint);
 #endif
-
-    LOG(Info, L"[Compression] Decompress ratio : {0} -> {1} = {2:f2}%",
-        Fmt::FSizeInBytes(compressedSizeInBytes),
-        Fmt::FSizeInBytes(pheader->SizeInBytes),
-        compressedSizeInBytes*100.0f/dst.SizeInBytes() );
 
     return true;
 }
