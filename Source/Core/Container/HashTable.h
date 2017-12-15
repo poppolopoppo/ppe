@@ -361,8 +361,11 @@ public:
 
     mapped_reference_const operator [](const key_type& key) const { return at(key); }
 
-    mapped_reference operator [](const key_type& key) { return table_traits::Value(*try_emplace(key).first); }
-    mapped_reference operator [](key_type&& rkey) { return table_traits::Value(*try_emplace(std::move(rkey)).first); }
+    mapped_reference Add(const key_type& key) { return table_traits::Value(*try_emplace(key).first); }
+    mapped_reference Add(key_type&& rkey) { return table_traits::Value(*try_emplace(std::move(rkey)).first); }
+
+    mapped_reference operator [](const key_type& key) { return Add(key); }
+    mapped_reference operator [](key_type&& rkey) { return Add(std::move(rkey)); }
 
     TPair<iterator, bool> insert(const value_type& value);
     TPair<iterator, bool> insert(value_type&& rvalue);
@@ -495,6 +498,12 @@ private:
     template <typename _It>
     void insert_(_It first, _It last, std::random_access_iterator_tag);
 
+    void clear_(std::true_type);
+    void clear_(std::false_type);
+
+    void clear_ReleaseMemory_(std::true_type);
+    void clear_ReleaseMemory_(std::false_type);
+
     void swap_(TBasicHashTable& other, std::true_type);
     void swap_(TBasicHashTable& other, std::false_type);
 
@@ -522,14 +531,6 @@ private:
         return ((pointer)_data.StatesAndBuckets + OffsetOfBuckets_() + index);
     }
 
-    size_t HashKey_(const key_type& key) const {
-        return static_cast<const _Hasher&>(*this)(key);
-    }
-
-    size_t HashValue_(const value_type& value) const {
-        return static_cast<const _Hasher&>(*this)(table_traits::Key(value));
-    }
-
     iterator MakeIterator_(size_t index) NOEXCEPT {
         return iterator(
             (const state_t*)_data.StatesAndBuckets,
@@ -544,6 +545,22 @@ private:
             (typename iterator::pointer)_data.StatesAndBuckets + OffsetOfBuckets_(),
             capacity(),
             index );
+    }
+
+    static FORCE_INLINE size_t SeedHash_(size_t h) {
+        return (h ^ CORE_HASH_VALUE_SEED/* don't want hash == 0 */);
+    }
+
+    size_t HashKey_(const key_type& key) const {
+        return SeedHash_(HashKeyNoSeed_(key));
+    }
+
+    size_t HashKeyNoSeed_(const key_type& key) const {
+        return static_cast<const _Hasher&>(*this)(key);
+    }
+
+    size_t HashValue_(const value_type& value) const {
+        return HashKey_(table_traits::Key(value));
     }
 
     FHTD _data;

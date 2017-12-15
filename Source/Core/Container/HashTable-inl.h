@@ -98,12 +98,12 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::assign(TBasicHashT
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find(const key_type& key) NOEXCEPT -> iterator {
-    return find_like(key, HashKey_(key));
+    return find_like(key, HashKeyNoSeed_(key));
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find(const key_type& key) const NOEXCEPT -> const_iterator {
-    return find_like(key, HashKey_(key));
+    return find_like(key, HashKeyNoSeed_(key));
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -112,6 +112,8 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find_like(const _K
     Assert(hash);
 
     using public_pointer = typename iterator::pointer;
+
+    hash = SeedHash_(hash);
 
     pointer const buckets = ((pointer)_data.StatesAndBuckets + OffsetOfBuckets_());
 
@@ -251,49 +253,18 @@ bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::erase(const key_ty
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear() {
-    if (0 == _data.Size)
-        return;
-
     Assert(CheckInvariants());
 
-    const size_type n = capacity();
-    const pointer buckets = BucketAt_(0);
-
-    ONLY_IF_ASSERT(size_t sizeCheck = 0);
-
-    for (size_type b = 0; b < n; b += FHTD::GGroupSize) {
-        FBitMask nonEmpty = FHTD::MatchNonEmpty(_data.GroupAt_StreamLoad(b));
-
-        while (nonEmpty) {
-            const size_type index = (b + nonEmpty.PopFront_AssumeNotEmpty())/* can't overflow here due to loop */;
-
-            if (not (_data.SetState(index, FHTD::kEmpty) & FHTD::kDeleted)) {
-                ONLY_IF_ASSERT(++sizeCheck);
-                allocator_traits::destroy(static_cast<allocator_type&>(*this), buckets + index);
-            }
-        }
-    }
-
-    Assert_NoAssume(sizeCheck == _data.Size);
-    _data.Size = 0;
+    if (_data.Size)
+        clear_(typename Meta::TIsPod<value_type>::type{});
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_ReleaseMemory() {
-    const size_type n = capacity();
-    if (0 == n)
-        return;
+    Assert(CheckInvariants());
 
-    Assert(_data.StatesAndBuckets);
-
-    clear();
-
-    Assert(0 == _data.Size);
-
-    allocator_traits::deallocate(static_cast<allocator_type&>(*this), (pointer)_data.StatesAndBuckets, OffsetOfBuckets_() + n);
-
-    _data.Capacity = 0;
-    _data.StatesAndBuckets = nullptr;
+    if (_data.Capacity)
+        clear_ReleaseMemory_(typename Meta::TIsPod<value_type>::type{});
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -437,6 +408,61 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_(_It first,
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_(std::true_type) {
+    _data.Size = 0;
+    _data.ResetStates();
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_(std::false_type) {
+    const size_type n = capacity();
+    const pointer buckets = BucketAt_(0);
+
+    ONLY_IF_ASSERT(size_t sizeCheck = 0);
+
+    for (size_type b = 0; b < n; b += FHTD::GGroupSize) {
+        FBitMask nonEmpty = FHTD::MatchNonEmpty(_data.GroupAt_StreamLoad(b));
+
+        while (nonEmpty) {
+            const size_type index = (b + nonEmpty.PopFront_AssumeNotEmpty())/* can't overflow here due to loop */;
+
+            if (not (_data.SetState(index, FHTD::kEmpty) & FHTD::kDeleted)) {
+                ONLY_IF_ASSERT(++sizeCheck);
+                allocator_traits::destroy(static_cast<allocator_type&>(*this), buckets + index);
+            }
+        }
+    }
+
+    Assert_NoAssume(sizeCheck == _data.Size);
+    _data.Size = 0;
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_ReleaseMemory_(std::true_type) {
+    Assert(_data.StatesAndBuckets);
+
+    allocator_traits::deallocate(static_cast<allocator_type&>(*this), (pointer)_data.StatesAndBuckets, OffsetOfBuckets_() + capacity());
+
+    _data.Size = 0;
+    _data.Capacity = 0;
+    _data.StatesAndBuckets = nullptr;
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_ReleaseMemory_(std::false_type) {
+    Assert(_data.StatesAndBuckets);
+
+    clear_(std::false_type{});
+
+    Assert(0 == _data.Size);
+
+    allocator_traits::deallocate(static_cast<allocator_type&>(*this), (pointer)_data.StatesAndBuckets, OffsetOfBuckets_() + capacity());
+
+    _data.Capacity = 0;
+    _data.StatesAndBuckets = nullptr;
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::swap_(TBasicHashTable& other, std::true_type) {
     _data.Swap(other._data);
     std::swap(static_cast<allocator_type&>(*this), static_cast<allocator_type&>(other));
@@ -535,7 +561,7 @@ auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindE
 
 #ifdef WITH_CORE_ASSERT
         FBitMask match = FHTD::Match(group, h2_16);
-        while (Unlikely(size_type offsetP1 = match.PopFront())) {
+        while (size_type offsetP1 = match.PopFront()) {
             const size_type index = (bucket + offsetP1 - 1);
             if (Unlikely(static_cast<const _EqualTo&>(*this)(table_traits::Key(*BucketAt_(index)), keyLike)))
                 AssertNotReached(); // key already exists !
