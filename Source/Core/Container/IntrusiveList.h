@@ -22,13 +22,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 template <typename T>
 struct TIntrusiveListNode {
-    T* Next = nullptr;
-    T* Prev = nullptr;
+    T* Next;
+    T* Prev;
 };
 //----------------------------------------------------------------------------
 template <typename T>
 struct TIntrusiveSingleListNode {
-    T* Next = nullptr;
+    T* Next;
 };
 //----------------------------------------------------------------------------
 namespace details {
