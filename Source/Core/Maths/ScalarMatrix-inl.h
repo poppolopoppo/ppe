@@ -90,6 +90,7 @@ auto TScalarMatrix<T, _Width, _Height>::operator =(const TScalarMatrix<U, _Width
     return *this;
 }
 //----------------------------------------------------------------------------
+#if 0
 template <typename T, size_t _Width, size_t _Height>
 template <size_t _Idx>
 auto TScalarMatrix<T, _Width, _Height>::Column() const -> column_type {
@@ -115,6 +116,44 @@ void TScalarMatrix<T, _Width, _Height>::SetColumn(size_t i, const column_type& v
     for (size_t j = 0; j < _Height; ++j)
         at_(i, j) = v._data[j];
 }
+#else
+// benefits from memory layout
+template <typename T, size_t _Width, size_t _Height>
+template <size_t _Idx>
+auto TScalarMatrix<T, _Width, _Height>::Column() -> column_type& {
+    STATIC_ASSERT(_Idx < _Width);
+    STATIC_ASSERT(sizeof(_data.m[_Idx]) == sizeof(column_type));
+    return *reinterpret_cast<column_type*>(&_data.m[_Idx][0]);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
+template <size_t _Idx>
+auto TScalarMatrix<T, _Width, _Height>::Column() const -> const column_type& {
+    STATIC_ASSERT(_Idx < _Width);
+    STATIC_ASSERT(sizeof(_data.m[_Idx]) == sizeof(column_type));
+    return *reinterpret_cast<const column_type*>(&_data.m[_Idx][0]);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
+auto TScalarMatrix<T, _Width, _Height>::Column(size_t i) -> column_type& {
+    Assert(i < _Width);
+    STATIC_ASSERT(sizeof(_data.m[0]) == sizeof(column_type));
+    return *reinterpret_cast<column_type*>(&_data.m[i][0]);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
+auto TScalarMatrix<T, _Width, _Height>::Column(size_t i) const -> const column_type& {
+    Assert(i < _Width);
+    STATIC_ASSERT(sizeof(_data.m[0]) == sizeof(column_type));
+    return *reinterpret_cast<const column_type*>(&_data.m[i][0]);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
+void TScalarMatrix<T, _Width, _Height>::SetColumn(size_t i, const column_type& v) {
+    Assert(i < _Width);
+    Column(i) = v;
+}
+#endif
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 template <size_t _Idx>

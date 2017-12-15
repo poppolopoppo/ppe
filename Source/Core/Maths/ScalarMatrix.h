@@ -55,10 +55,20 @@ public:
     template <typename U>
     TScalarMatrix& operator =(const TScalarMatrix<U, _Width, _Height>& other);
 
+#if 0
     template <size_t _Idx>
     FORCE_INLINE column_type Column() const;
     column_type Column(size_t i) const;
     void SetColumn(size_t i, const column_type& v);
+#else
+    template <size_t _Idx>
+    FORCE_INLINE column_type& Column();
+    template <size_t _Idx>
+    FORCE_INLINE const column_type& Column() const;
+    column_type& Column(size_t i);
+    const column_type& Column(size_t i) const;
+    void SetColumn(size_t i, const column_type& v);
+#endif
 
     FORCE_INLINE column_type Column_x() const { return Column<0>(); }
     FORCE_INLINE column_type Column_y() const { return Column<1>(); }
