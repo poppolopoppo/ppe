@@ -124,6 +124,31 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 namespace Fmt {
 template <typename T>
+struct TNotFirstTime {
+    T Outp;
+    bool First = true;
+};
+template <typename T>
+TNotFirstTime<T> NotFirstTime(T&& outp) {
+    return TNotFirstTime<T>{ std::move(outp) };
+}
+} //!namespace Fmt
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Traits, typename T>
+std::basic_ostream<_Char, _Traits>& operator <<(
+    std::basic_ostream<_Char, _Traits>& oss,
+    Fmt::TNotFirstTime<T>& notFirstTime ) {
+    if (Unlikely(notFirstTime.First))
+        notFirstTime.First = false;
+    else
+        oss << notFirstTime.Outp;
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Fmt {
+template <typename T>
 struct TRepeater {
     const T *Value = nullptr;
     size_t Count = 0;
@@ -179,7 +204,7 @@ struct TTernary {
 };
 template <typename _True, typename _False>
 TTernary<_True, _False> Ternary(bool condition, const _True& ifTrue, const _False& ifFalse) {
-    return TTernary<T>{ condition, &ifTrue, &ifFalse };
+    return TTernary<_True, _False>{ condition, &ifTrue, &ifFalse };
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
@@ -190,8 +215,8 @@ std::basic_ostream<_Char, _Traits>& operator <<(
     Assert(ternary.IfTrue);
     Assert(ternary.IfFalse);
     return ((ternary.Condition)
-        ? oss << ternary.IfTrue
-        : oss << ternary.IfFalse );
+        ? oss << (*ternary.IfTrue)
+        : oss << (*ternary.IfFalse) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
