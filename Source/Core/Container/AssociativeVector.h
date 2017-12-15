@@ -123,7 +123,9 @@ public:
 
     void Clear_ReleaseMemory();
 
+    _Value& Add(_Key&& rkey);
     _Value& Add(const _Key& key);
+
     iterator Find(const _Key& key);
     iterator FindOrAdd(const _Key& key, bool* pAdded);
     const_iterator Find(const _Key& key) const;
