@@ -5,8 +5,8 @@
 #include "Core.RTTI/TypeInfos.h"
 
 #include "Core/IO/String_fwd.h"
+#include "Core/Memory/InSituPtr.h"
 #include "Core/Meta/Function.h"
-#include "Core/Meta/InSituPtr.h"
 #include "Core/Meta/TypeTraits.h"
 
 #include <iosfwd>
@@ -63,8 +63,6 @@ public:
     virtual const IListTraits* AsList() const = 0;
     virtual const IDicoTraits* AsDico() const = 0;
 };
-//----------------------------------------------------------------------------
-using PTypeTraits = Meta::TInSituPtr<ITypeTraits>;
 //----------------------------------------------------------------------------
 inline PTypeTraits Traits(Meta::TType<void>) { return PTypeTraits(); }
 //----------------------------------------------------------------------------
