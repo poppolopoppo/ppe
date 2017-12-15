@@ -5,8 +5,8 @@
 #include "FloatImage.h"
 #include "Pixmap_fwd.h"
 
-#include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/PoolAllocator-impl.h"
+#include "Core/Allocator/TrackingMalloc.h"
 #include "Core/Color/Color.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FileSystem.h"
@@ -23,11 +23,11 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_MALLOC(sz) \
-    Core::GetThreadLocalHeap().Malloc(sz)
+    Core::tracking_malloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(sz)
 #define STBI_REALLOC(p,newsz) \
-    Core::GetThreadLocalHeap().Realloc(p, newsz)
+    Core::tracking_realloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p, newsz)
 #define STBI_FREE(p) \
-    Core::GetThreadLocalHeap().Free(p)
+    Core::tracking_free_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p)
 #define STBI_ASSERT(x) \
     Assert("stb_image: ", (x))
 #define STBI_NO_STDIO
@@ -35,11 +35,11 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBIW_MALLOC(sz) \
-    Core::GetThreadLocalHeap().Malloc(sz)
+    Core::tracking_malloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(sz)
 #define STBIW_REALLOC(p,newsz) \
-    Core::GetThreadLocalHeap().Realloc(p, newsz)
+    Core::tracking_realloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p, newsz)
 #define STBIW_FREE(p) \
-    Core::GetThreadLocalHeap().Free(p)
+    Core::tracking_free_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p)
 #define STBIW_ASSERT(x) \
     Assert("stb_image_write: ", (x))
 #define STBI_WRITE_NO_STDIO
@@ -87,7 +87,7 @@ struct TChannelTraits_<EColorDepth::_32bits, _Space> {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-template <EColorMask _Mask> 
+template <EColorMask _Mask>
 struct THomogenizeColorF_ {
     static void _0001(FFloatImage::color_type&) {}
 };
