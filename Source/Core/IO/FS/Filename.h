@@ -87,8 +87,8 @@ public:
     FString ToString() const;
     FWString ToWString() const;
 
-    size_t ToCStr(const TMemoryView<char>& dst) const;
-    size_t ToWCStr(const TMemoryView<wchar_t>& dst) const;
+    FStringView ToCStr(const TMemoryView<char>& dst) const;
+    FWStringView ToWCStr(const TMemoryView<wchar_t>& dst) const;
 
     template <size_t _Dim>
     size_t ToCStr(char (&dst)[_Dim]) const { return ToCStr(dst, _Dim); }

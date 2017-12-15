@@ -79,16 +79,16 @@ FWString FBasename::ToWString() const {
     return Core::ToWString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
-size_t FBasename::ToCStr(char *dst, size_t capacity) const {
+FStringView FBasename::ToCStr(char *dst, size_t capacity) const {
     FOCStrStream oss(dst, capacity);
     oss << *this;
-    return static_cast<size_t>(oss.tellp());
+    return oss.MakeView();
 }
 //----------------------------------------------------------------------------
-size_t FBasename::ToWCStr(wchar_t *dst, size_t capacity) const {
+FWStringView FBasename::ToWCStr(wchar_t *dst, size_t capacity) const {
     FWOCStrStream oss(dst, capacity);
     oss << *this;
-    return static_cast<size_t>(oss.tellp());
+    return oss.MakeView();
 }
 //----------------------------------------------------------------------------
 void FBasename::Swap(FBasename& other) {
@@ -97,8 +97,7 @@ void FBasename::Swap(FBasename& other) {
 }
 //----------------------------------------------------------------------------
 size_t FBasename::HashValue() const {
-    return hash_tuple(  size_t(_basenameNoExt.c_str()),
-                        size_t(_extname.c_str()) );
+    return hash_tuple(_basenameNoExt, _extname);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

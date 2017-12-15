@@ -15,12 +15,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool ParseFilename_(const FileSystem::FStringView& str, FDirpath& dirpath, FBasename& basename) {
+static void ParseFilename_(const FileSystem::FStringView& str, FDirpath& dirpath, FBasename& basename) {
     dirpath = FDirpath();
     basename = FBasename();
 
     if (str.empty())
-        return false;
+        return;
 
     const auto it = str.FindIfR([](FileSystem::char_type ch) {
         return (ch == FileSystem::Separator || ch == FileSystem::AltSeparator );
@@ -33,8 +33,6 @@ static bool ParseFilename_(const FileSystem::FStringView& str, FDirpath& dirpath
         dirpath = FDirpath(str.CutBefore(it));
         basename = str.CutStartingAt(it - 1);
     }
-
-    return true;
 }
 //----------------------------------------------------------------------------
 static bool AppendRelname_(FDirpath& dirpath, FBasename& basename, const FileSystem::FStringView& relname) {
@@ -94,14 +92,12 @@ FFilename& FFilename::operator =(const FFilename& other) {
 }
 //----------------------------------------------------------------------------
 FFilename::FFilename(const FileSystem::FStringView& content) {
-    if (!ParseFilename_(content, _dirpath, _basename))
-        AssertNotReached();
+    ParseFilename_(content, _dirpath, _basename);
 }
 //----------------------------------------------------------------------------
 FFilename& FFilename::operator =(const FileSystem::FStringView& content) {
-    if (!ParseFilename_(content, _dirpath, _basename))
-        AssertNotReached();
-    return *this;
+    ParseFilename_(content, _dirpath, _basename);
+    return (*this);
 }
 //----------------------------------------------------------------------------
 void FFilename::SetMountingPoint(const FMountingPoint& mountingPoint) {
@@ -186,7 +182,7 @@ FFilename FFilename::Relative(const FDirpath& origin) const {
 }
 //----------------------------------------------------------------------------
 size_t FFilename::HashValue() const {
-    return hash_tuple(_dirpath.HashValue(), _basename.HashValue());
+    return hash_tuple(_dirpath, _basename);
 }
 //----------------------------------------------------------------------------
 FString FFilename::ToString() const {
@@ -201,16 +197,16 @@ FWString FFilename::ToWString() const {
     return Core::ToWString(oss.MakeView());
 }
 //----------------------------------------------------------------------------
-size_t FFilename::ToCStr(const TMemoryView<char>& dst) const {
+FStringView FFilename::ToCStr(const TMemoryView<char>& dst) const {
     FOCStrStream oss(dst);
     oss << *this;
-    return static_cast<size_t>(oss.tellp());
+    return oss.MakeView();
 }
 //----------------------------------------------------------------------------
-size_t FFilename::ToWCStr(const TMemoryView<wchar_t>& dst) const {
+FWStringView FFilename::ToWCStr(const TMemoryView<wchar_t>& dst) const {
     FWOCStrStream oss(dst);
     oss << *this;
-    return static_cast<size_t>(oss.tellp());
+    return oss.MakeView();
 }
 //----------------------------------------------------------------------------
 void FFilename::Swap(FFilename& other) {

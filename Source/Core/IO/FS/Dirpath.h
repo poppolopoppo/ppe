@@ -73,8 +73,8 @@ public:
     FString ToString() const;
     FWString ToWString() const;
 
-    size_t ToCStr(char *dst, size_t capacity) const;
-    size_t ToWCStr(wchar_t *dst, size_t capacity) const;
+    FStringView ToCStr(char *dst, size_t capacity) const;
+    FWStringView ToWCStr(wchar_t *dst, size_t capacity) const;
 
     void Swap(FDirpath& other);
 
