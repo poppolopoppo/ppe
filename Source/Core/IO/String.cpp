@@ -106,7 +106,7 @@ FString ToString(const wchar_t *wcstr, size_t length) {
         return FString();
 
     Assert(wcstr);
-    STACKLOCAL_POD_ARRAY(char, buffer, (length * 3)/2);
+    STACKLOCAL_POD_ARRAY(char, buffer, (length * 3)/2 + 1);
 
     size_t written;
     if (0 != ::wcstombs_s(&written, buffer.Pointer(), buffer.SizeInBytes(), wcstr, buffer.SizeInBytes() - sizeof(char)) )
@@ -130,7 +130,7 @@ FWString ToWString(const char *cstr, size_t length) {
         return FWString();
 
     Assert(cstr);
-    STACKLOCAL_POD_ARRAY(wchar_t, buffer, (length * 3)/2);
+    STACKLOCAL_POD_ARRAY(wchar_t, buffer, (length * 3)/2 + 1);
 
     size_t written;
     if (0 != ::mbstowcs_s(&written, buffer.Pointer(), buffer.size(), cstr, buffer.size() - 1) )
