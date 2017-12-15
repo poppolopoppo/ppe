@@ -53,6 +53,7 @@ static bool SplitMulti_(TBasicStringView<_Char>& str, const TBasicStringView<_Ch
 template <typename _Char> struct TAtoN_traits {};
 template <> struct TAtoN_traits<char> {
     enum : char {
+        Pos = '+',
         Neg = '-',
         Dot = '.',
         _0  = '0',
@@ -61,10 +62,13 @@ template <> struct TAtoN_traits<char> {
         f   = 'f',
         A   = 'A',
         F   = 'F',
+        e   = 'e',
+        E   = 'E',
     };
 };
 template <> struct TAtoN_traits<wchar_t> {
     enum : wchar_t {
+        Pos = L'+',
         Neg = L'-',
         Dot = L'.',
         _0  = L'0',
@@ -73,6 +77,8 @@ template <> struct TAtoN_traits<wchar_t> {
         f   = L'f',
         A   = L'A',
         F   = L'F',
+        e   = L'e',
+        E   = L'E',
     };
 };
 //----------------------------------------------------------------------------
@@ -142,6 +148,7 @@ static bool Atof_(T *dst, const TBasicStringView<_Char>& str) {
         integral = integral * 10 + d;
     }
 
+    size_t scientific = INDEX_NONE;
     i64 fractional = 0;
     i64 unit = 1;
     for (size_t i = dot + 1; i < str.size(); ++i, unit *= 10) {
@@ -150,14 +157,36 @@ static bool Atof_(T *dst, const TBasicStringView<_Char>& str) {
         int d = 0;
         if (ch >= traits::_0 && ch <= traits::_9)
             d = ch - traits::_0;
-        else
+        else if (ch == traits::E || ch == traits::e) {
+            scientific = (i + 1);
+            break;
+        }
+        else {
             return false;
+        }
 
         fractional = fractional * 10 + d;
     }
 
-    const double result = integral + fractional/double(unit);
-    *dst = T(neg ? -result : result);
+    double result = integral + fractional/double(unit);
+    if (neg)
+        result = -result;
+
+    if (INDEX_NONE != scientific) {
+        Assert(traits::e == ToLower(str[scientific]));
+
+        if (str[scientific] == traits::Pos)
+            ++scientific; // skip positive sign
+
+        i64 exponent = 0;
+        const TBasicStringView<_Char> substr(str.CutStartingAt(scientific));
+        if (not Atoi_(&exponent, substr, 10))
+            return false;
+
+        result *= std::pow(10., double(exponent));
+    }
+
+    *dst = T(result);
 
     return true;
 }
@@ -1063,6 +1092,112 @@ hash_t hash_stringI(const FWStringView& wstr) {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void Escape(std::basic_ostream<char>& oss, const FStringView& str, EEscape escape) {
+    for (char ch : str) {
+        switch (ch) {
+        case '\\':
+        case '"':
+            oss << '\\' << ch;
+            break;
+        case '\b':
+            oss << "\\b";
+            break;
+        case '\t':
+            oss << "\\t";
+            break;
+        case '\n':
+            oss << "\\n";
+            break;
+        case '\f':
+            oss << "\\f";
+            break;
+        case '\r':
+            oss << "\\r";
+            break;
+        default:
+            if (IsPrint(ch))
+                oss << ch;
+            else {
+                static constexpr char hexdig[] = "0123456789ABCDEF";
+
+                switch (escape)
+                {
+                case Core::EEscape::Octal:
+                    oss.put('\\');
+                    oss << std::oct << (u32(ch) & 0xFF) << std::dec;
+                    break;
+                case Core::EEscape::Hexadecimal:
+                    oss << "\\x";
+                    oss.put(hexdig[u8(ch) >> 4]);
+                    oss.put(hexdig[u8(ch) & 0xF]);
+                    break;
+                case Core::EEscape::Unicode:
+                    oss << "\\u00";
+                    oss.put(hexdig[u8(ch) >> 4]);
+                    oss.put(hexdig[u8(ch) & 0xF]);
+                    break;
+                default:
+                    AssertNotImplemented();
+                    break;
+                }
+            }
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void Escape(std::basic_ostream<wchar_t>& oss, const FWStringView& wstr, EEscape escape) {
+    for (wchar_t ch : wstr) {
+        switch (ch) {
+        case L'\\':
+        case L'"':
+            oss << L'\\' << ch;
+            break;
+        case '\b':
+            oss << L"\\b";
+            break;
+        case '\t':
+            oss << L"\\t";
+            break;
+        case '\n':
+            oss << L"\\n";
+            break;
+        case '\f':
+            oss << L"\\f";
+            break;
+        case '\r':
+            oss << L"\\r";
+            break;
+        default:
+            if (IsPrint(ch))
+                oss << ch;
+            else {
+                static constexpr wchar_t hexdig[] = L"0123456789ABCDEF";
+
+                switch (escape)
+                {
+                case Core::EEscape::Octal:
+                    oss.put(L'\\');
+                    oss << std::oct << (u32(ch) & 0xFF) << std::dec;
+                    break;
+                case Core::EEscape::Hexadecimal:
+                    oss << L"\\x";
+                    oss.put(hexdig[u8(ch) >> 4]);
+                    oss.put(hexdig[u8(ch) & 0xF]);
+                    break;
+                case Core::EEscape::Unicode:
+                    oss << L"\\u00";
+                    oss.put(hexdig[u8(ch) >> 4]);
+                    oss.put(hexdig[u8(ch) & 0xF]);
+                    break;
+                default:
+                    AssertNotImplemented();
+                    break;
+                }
+            }
+        }
+    }
+}
 //----------------------------------------------------------------------------
 std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FStringView& slice) {
     return oss.write(slice.data(), slice.size());

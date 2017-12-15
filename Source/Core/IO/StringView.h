@@ -518,9 +518,16 @@ using TBasicConstCharHashMemoizer = THashMemoizer<
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FStringView& slice);
+enum class EEscape {
+    Octal = 0,
+    Hexadecimal,
+    Unicode,
+};
+CORE_API void Escape(std::basic_ostream<char>& oss, const FStringView& str, EEscape escape);
+CORE_API void Escape(std::basic_ostream<wchar_t>& oss, const FWStringView& wstr, EEscape escape);
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const FWStringView& wslice);
+CORE_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FStringView& slice);
+CORE_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const FWStringView& wslice);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
