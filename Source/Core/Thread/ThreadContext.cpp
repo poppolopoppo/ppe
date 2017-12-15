@@ -39,7 +39,10 @@ public:
 };
 //----------------------------------------------------------------------------
 inline void FThreadLocalContext_::Create(const char* name, size_t tag) {
-    parent_type::Create(name, tag, GNumThreadContext_++);
+    const size_t threadIndex = (GNumThreadContext_++);
+    AssertRelease(threadIndex < CORE_MAX_CORES);
+    GCurrentThreadIndex = threadIndex;
+    parent_type::Create(name, tag, threadIndex);
 }
 //----------------------------------------------------------------------------
 inline void FThreadLocalContext_::CreateMainThread() {
@@ -110,8 +113,8 @@ static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
 //----------------------------------------------------------------------------
 FThreadContext::FThreadContext(const char* name, size_t tag, size_t index)
 :   _tag(tag)
-,   _threadId(std::this_thread::get_id())
-,   _threadIndex(index) {
+,   _threadIndex(index)
+,   _threadId(std::this_thread::get_id()) {
     Assert(name);
 
     const size_t n = Copy(MakeView(_name), MakeStringView(name, Meta::FForceInit{}));
@@ -229,6 +232,8 @@ size_t FThreadContext::NumThreads() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+thread_local size_t GCurrentThreadIndex = INDEX_NONE;
+//----------------------------------------------------------------------------
 const FThreadContext& CurrentThreadContext() {
     return FThreadLocalContext_::Instance();
 }
@@ -241,8 +246,10 @@ void FThreadContextStartup::Start(const char* name, size_t tag) {
     FThreadLocalHeapStartup::Start(false);
     FAllocaStartup::Start(false);
 
+#ifdef USE_DEBUG_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
     LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2})", ctx.Name(), ctx.Tag(), ctx.ThreadId());
+#endif
 }
 //----------------------------------------------------------------------------
 void FThreadContextStartup::Start_MainThread() {
@@ -251,13 +258,17 @@ void FThreadContextStartup::Start_MainThread() {
     FThreadLocalHeapStartup::Start(true);
     FAllocaStartup::Start(true);
 
+#ifdef USE_DEBUG_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
     LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2}) <MainThread>", ctx.Name(), ctx.Tag(), ctx.ThreadId());
+#endif
 }
 //----------------------------------------------------------------------------
 void FThreadContextStartup::Shutdown() {
+#ifdef USE_DEBUG_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
     LOG(Info, L"[Thread] Stop '{0}' with tag = {1} (id:{2})", ctx.Name(), ctx.Tag(), ctx.ThreadId());
+#endif
 
     FAllocaStartup::Shutdown();
     FThreadLocalHeapStartup::Shutdown();

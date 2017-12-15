@@ -2,9 +2,10 @@
 
 #include <emmintrin.h>
 #include <intrin.h>
+#include <pmmintrin.h>
 #include <limits.h>
 
-#ifdef CPP_VISUALSTUDIO
+#if 0 && defined(CPP_VISUALSTUDIO)
 #   pragma intrinsic( __lzcnt )
 #   pragma intrinsic( _tzcnt_u32 )
 #   pragma intrinsic( __popcnt )
@@ -69,13 +70,13 @@ inline u64 popcnt64(u64 v) {
 #endif
 }
 //----------------------------------------------------------------------------
-// load 16 bytes, compare them to match and retourn a 16 bits mask with 1 where equal
+// load 16 bytes, compare them to match and return a 16 bits mask with 1 where equal
 FORCE_INLINE size_t LoadCmpMoveMask8(u8 match, const void* data) {
     __m128i u8_16 = _mm_lddqu_si128((const __m128i*)data);
     return size_t(_mm_movemask_epi8(_mm_cmpeq_epi8(u8_16, _mm_set1_epi8(match))));
 }
 //----------------------------------------------------------------------------
-// load 16 bytes, compare them to match and retourn a 16 bits mask with 1 where equal
+// load 16 bytes, compare them to match and return a 16 bits mask with 1 where equal
 FORCE_INLINE void LoadCmpMoveMask8(
     size_t* mask0, u8 match0,
     size_t* mask1, u8 match1,
@@ -90,7 +91,7 @@ FORCE_INLINE void LoadCmpMoveMask8(
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline constexpr size_t IsPow2(size_t v) {
-    return ((v) >= 2) && (((v) & ((v)-1)) == 0);
+    return ((v) > 0) && (((v) & ((v)-1)) == 0);
 }
 //----------------------------------------------------------------------------
 inline size_t FloorLog2(size_t value) {

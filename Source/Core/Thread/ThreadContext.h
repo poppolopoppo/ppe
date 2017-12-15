@@ -22,7 +22,7 @@ enum class EThreadPriority {
     Lowest,
 };
 //----------------------------------------------------------------------------
-class FThreadContext {
+class CORE_API FThreadContext {
 public:
     FThreadContext(const char* name, size_t tag, size_t index);
     ~FThreadContext();
@@ -32,8 +32,8 @@ public:
 
     const char *Name() const { return _name; }
     size_t Tag() const { return _tag; }
-    std::thread::id ThreadId() const { return _threadId; }
     size_t ThreadIndex() const { return _threadIndex; }
+    std::thread::id ThreadId() const { return _threadId; }
 
     size_t AffinityMask() const;
     void SetAffinityMask(size_t mask) const;
@@ -45,14 +45,16 @@ public:
 
 private:
     const size_t _tag;
-    const std::thread::id _threadId;
     const size_t _threadIndex;
+    const std::thread::id _threadId;
     char _name[64];
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const FThreadContext& CurrentThreadContext();
+extern CORE_API thread_local size_t GCurrentThreadIndex;
+//----------------------------------------------------------------------------
+CORE_API const FThreadContext& CurrentThreadContext();
 //----------------------------------------------------------------------------
 inline bool IsInMainThread() {
     return (CORE_THREADTAG_MAIN == CurrentThreadContext().Tag());
@@ -77,7 +79,7 @@ inline bool IsInLowestPriorityThread() {
 // FThreadContextStartup is the entry and exit point for every thread.
 // Constructed with the same lifetime than every thread associated with.
 //----------------------------------------------------------------------------
-class FThreadContextStartup {
+class CORE_API FThreadContextStartup {
 public:
     static void Start(const char* name, size_t tag);
     static void Start_MainThread();

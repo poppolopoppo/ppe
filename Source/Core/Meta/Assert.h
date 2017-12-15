@@ -2,14 +2,14 @@
 
 #include "Core/Diagnostic/Exception.h"
 
-#ifdef _DEBUG // TODO: debug without asserts
+#if USE_CORE_ASSERTIONS && defined(_DEBUG)
 #   define WITH_CORE_ASSERT
 #endif
 
 #define WITH_CORE_ASSERT_FALLBACK_TO_ASSUME 1 // when enabled every assert becomes an __assume() when !_DEBUG // %_NOCOMMIT%
 #define WITH_CORE_ASSERT_RELEASE_FALLBACK_TO_ASSUME 1 // when enabled every assert release becomes an __assume() when !FINAL_RELEASE // %_NOCOMMIT%
 
-#if !defined(FINAL_RELEASE) && !defined(PROFILING_ENABLED)
+#if USE_CORE_ASSERTIONS && !defined(FINAL_RELEASE) && !defined(PROFILING_ENABLED)
 #   define WITH_CORE_ASSERT_RELEASE
 #endif
 

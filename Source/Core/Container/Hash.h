@@ -72,7 +72,7 @@ struct THash {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, typename _Hash = THash<T>, typename _Equal = Meta::TEqualTo<T> >
+template <typename T, typename _Hash = Meta::THash<T>, typename _Equal = Meta::TEqualTo<T> >
 class THashMemoizer {
 public:
     THashMemoizer() = default;
