@@ -7,13 +7,21 @@ class FMemoryTracking;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void* (malloc)(FMemoryTracking& trackingData, size_t size);
+CORE_API void* (malloc)(FMemoryTracking& trackingData, size_t size);
 //----------------------------------------------------------------------------
-void  (free)(FMemoryTracking& trackingData, void *ptr);
+CORE_API void  (free)(FMemoryTracking& trackingData, void *ptr);
 //----------------------------------------------------------------------------
-void* (calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size);
+CORE_API void* (calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size);
 //----------------------------------------------------------------------------
-void* (realloc)(FMemoryTracking& trackingData, void *ptr, size_t size);
+CORE_API void* (realloc)(FMemoryTracking& trackingData, void *ptr, size_t size);
+//----------------------------------------------------------------------------
+CORE_API void* (malloc_thread_local)(FMemoryTracking& trackingData, size_t size);
+//----------------------------------------------------------------------------
+CORE_API void  (free_thread_local)(FMemoryTracking& trackingData, void *ptr);
+//----------------------------------------------------------------------------
+CORE_API void* (calloc_thread_local)(FMemoryTracking& trackingData, size_t nmemb, size_t size);
+//----------------------------------------------------------------------------
+CORE_API void* (realloc_thread_local)(FMemoryTracking& trackingData, void *ptr, size_t size);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -29,12 +37,24 @@ void* tracking_calloc(size_t nmemb, size_t size);
 template <typename _MemoryDomain>
 void* tracking_realloc(void *ptr, size_t size);
 //----------------------------------------------------------------------------
+template <typename _MemoryDomain>
+void* tracking_malloc_thread_local(size_t size);
+//----------------------------------------------------------------------------
+template <typename _MemoryDomain>
+void  tracking_free_thread_local(void *ptr);
+//----------------------------------------------------------------------------
+template <typename _MemoryDomain>
+void* tracking_calloc_thread_local(size_t nmemb, size_t size);
+//----------------------------------------------------------------------------
+template <typename _MemoryDomain>
+void* tracking_realloc_thread_local(void *ptr, size_t size);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
 //----------------------------------------------------------------------------
 #define CLASS_MEMORY_TRACKING_DEF(T, _Domain) \
-    static Core::FMemoryTrackingData& Class_TrackingData() { \
+    static Core::FMemoryTracking& Class_TrackingData() { \
         return MEMORY_DOMAIN_TRACKING_DATA(_Domain); \
     } \
     \
@@ -60,7 +80,7 @@ void* tracking_realloc(void *ptr, size_t size);
 #else
 //----------------------------------------------------------------------------
 #define CLASS_MEMORY_TRACKING_DEF(T, _Domain) \
-    static FMemoryTrackingData& Class_TrackingData() { \
+    static FMemoryTracking& Class_TrackingData() { \
         return MEMORY_DOMAIN_TRACKING_DATA(_Domain); \
     }
 //----------------------------------------------------------------------------
