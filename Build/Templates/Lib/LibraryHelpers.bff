@@ -60,6 +60,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
             .Defines    + ."Defines_Link_$ConfigLinkType$"
             .Defines    + "BUILDCONFIG_$Platform$_$Config$"
+            .Defines    + "BUILDCONFIG=$Platform$_$Config$"
             .Defines    + .ProjectDefines
 
             ForEach( .define in .Defines )
