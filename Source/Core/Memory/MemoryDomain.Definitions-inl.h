@@ -32,6 +32,7 @@ MEMORY_DOMAIN_IMPL(Token,                               Core)
 MEMORY_DOMAIN_IMPL(VirtualMemory,                       Core)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Alloca,                  VirtualMemory)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Heap,                    VirtualMemory)
+MEMORY_DOMAIN_COLLAPSABLE_IMPL(LinearHeap,              VirtualMemory)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(MallocBinned,            VirtualMemory)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(MemoryPool,              VirtualMemory)
 //------------------------------------------------------------------------------

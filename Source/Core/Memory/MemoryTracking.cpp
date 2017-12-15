@@ -57,6 +57,23 @@ void FMemoryTracking::Deallocate(size_t blockCount, size_t strideInBytes) {
         _parent->Deallocate(blockCount, strideInBytes);
 }
 //----------------------------------------------------------------------------
+void FMemoryTracking::ReleaseAll() {
+    Release(_blockCount, _allocationCount, _totalSizeInBytes);
+}
+//----------------------------------------------------------------------------
+void FMemoryTracking::Release(size_t blockCount, size_t allocationCount, size_t totalSizeInBytes) {
+    Assert(_blockCount >= blockCount);
+    Assert(_allocationCount >= allocationCount);
+    Assert(_totalSizeInBytes >= totalSizeInBytes);
+
+    _blockCount -= blockCount;
+    _allocationCount -= allocationCount;
+    _totalSizeInBytes -= totalSizeInBytes;
+
+    if (_parent)
+        _parent->Release(blockCount, allocationCount, totalSizeInBytes);
+}
+//----------------------------------------------------------------------------
 void FMemoryTracking::Pool_AllocateOneBlock(size_t blockSizeInBytes) {
     ++_blockCount;
 

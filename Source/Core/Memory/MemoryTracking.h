@@ -28,7 +28,7 @@ public:
 
     size_t MaxBlockCount() const { return _maxBlockCount; }
     size_t MaxAllocationCount() const { return _maxAllocationCount; }
-    
+
     size_t MaxStrideInBytes() const { return _maxStrideInBytes; }
     size_t MinStrideInBytes() const { return _minStrideInBytes; }
 
@@ -36,6 +36,10 @@ public:
 
     void Allocate(size_t blockCount, size_t strideInBytes);
     void Deallocate(size_t blockCount, size_t strideInBytes);
+
+    // used by linear heaps :
+    void ReleaseAll();
+    void Release(size_t blockCount, size_t allocationCount, size_t totalSizeInBytes);
 
     // reserved for pool allocation tracking :
     void Pool_AllocateOneBlock(size_t blockSizeInBytes);
