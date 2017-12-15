@@ -28,7 +28,7 @@ namespace Compression {
 namespace {
 //----------------------------------------------------------------------------
 static const FFourCC FILE_MAGIC_     ("LZ4B");
-static const FFourCC FILE_VERSION_   (STRINGIZE(LZ4_VERSION_MAJOR) ".00");
+static const FFourCC FILE_VERSION_   (STRINGIZE(LZ4_VERSION_MAJOR) ".01");
 //----------------------------------------------------------------------------
 struct FFileHeader_ {
     FFourCC     Magic;
@@ -92,8 +92,6 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
 #if USE_CORE_BENCHMARK
     FCompressionBenchmark_ bm;
 #endif
-    STATIC_CONST_INTEGRAL(int, FastAccelerator,  7/* ~21% faster */);
-    STATIC_CONST_INTEGRAL(int, CompressionLevel, 9/* LZ4 default */);
 
     switch (method)
     {
@@ -111,7 +109,7 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
             (char*)datas.Pointer(),
             checked_cast<int>(src.SizeInBytes()),
             checked_cast<int>(datas.SizeInBytes()),
-            FastAccelerator ));
+            7/* ~21% faster */));
         break;
 
     case Core::Compression::HighCompression:
@@ -120,7 +118,7 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
             (char*)datas.Pointer(),
             checked_cast<int>(src.SizeInBytes()),
             checked_cast<int>(datas.SizeInBytes()),
-            CompressionLevel ));
+            LZ4HC_CLEVEL_OPT_MIN/* minimum settings for better compression with HC */));
         break;
 
     default:
@@ -167,10 +165,11 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
 #if USE_CORE_BENCHMARK
     bm.Finished(L"DECOMPRESS", src.SizeInBytes(), pheader->SizeInBytes);
 #endif
+
     const size_t compressedSizeInBytes = dataSizeInBytes + sizeof(FFileHeader_);
     Assert(compressedSizeInBytes <= src.SizeInBytes());
 
-#if WITH_CORE_COMPRESSION_FINGERPRINT
+#if WITH_CORE_COMPRESSION_FINGERPRINT && defined(WITH_CORE_ASSERT_RELEASE)
     const u32 readFingerprint = StreamFingerprint_(dst);
     AssertRelease(readFingerprint == pheader->Fingerpint);
 #endif
