@@ -8,6 +8,9 @@
 #define FOREACH_FILESYSTEMCONSTNAMES(_Macro) \
     _Macro(FDirname,         DotDot,         L"..") \
     \
+    _Macro(FExtname,         Bin,            L".bin") \
+    _Macro(FExtname,         Raw,            L".raw") \
+    \
     _Macro(FExtname,         Json,           L".json") \
     _Macro(FExtname,         Jsonz,          L".jsonz") \
     _Macro(FExtname,         Xml,            L".xml") \

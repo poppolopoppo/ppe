@@ -5,8 +5,6 @@
 #include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/Lexer/Location.h"
 
-#include "Core.RTTI/RTTI_fwd.h"
-
 #include "Core/Container/StringHashMap.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/Filename.h"
@@ -37,12 +35,17 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FJSON {
+class CORE_SERIALIZE_API FJSON {
 public:
     class FValue;
 
     typedef bool FBool;
+#if 0 // digress from JSON std here : need integral literals
     typedef double FNumber;
+#else
+    typedef i64 FInteger;
+    typedef double FFloat;
+#endif
     typedef Core::FString FString;
     typedef VECTOR(JSON, FValue) FArray;
     typedef STRING_HASHMAP(JSON, FValue, ECase::Sensitive) FObject;
@@ -50,7 +53,12 @@ public:
     enum EType {
         Null = 0,
         Bool,
+#if 0 // digress from JSON std here : need integral literals
         Number,
+#else
+        Integer,
+        Float,
+#endif
         String,
         Array,
         Object,
@@ -64,7 +72,9 @@ public:
         explicit FValue(EType type);
 
         explicit FValue(FBool value) : _type(Bool), _bool(value) {}
-        explicit FValue(FNumber value) : _type(Number), _number(value) {}
+        //explicit FValue(FNumber value) : _type(Number), _number(value) {}
+        explicit FValue(FInteger value) : _type(Integer), _integer(value) {}
+        explicit FValue(FFloat value) : _type(Float), _float(value) {}
         explicit FValue(FString&& value) : _type(String), _string(std::move(value)) {}
         explicit FValue(FArray&& value) : _type(Array), _array(std::move(value)) {}
         explicit FValue(FObject&& value) : _type(Object), _object(std::move(value)) {}
@@ -79,31 +89,43 @@ public:
         FValue& SetType(EType type);
 
         void SetValue(FBool value);
-        void SetValue(FNumber value);
+        //void SetValue(FNumber value);
+        void SetValue(FInteger value);
+        void SetValue(FFloat value);
         void SetValue(FString&& value);
         void SetValue(FArray&& value);
         void SetValue(FObject&& value);
 
         bool AsNull() const { return (_type == Null); }
         const FBool* AsBool() const { return (_type == Bool ? &_bool : nullptr); }
-        const FNumber* AsNumber() const { return (_type == Number ? &_number : nullptr); }
+        //const FNumber* AsNumber() const { return (_type == Number ? &_number : nullptr); }
+        const FInteger* AsInteger() const { return (_type == Integer ? &_integer : nullptr); }
+        const FFloat* AsFloat() const { return (_type == Float ? &_float : nullptr); }
         const FString* AsString() const { return (_type == String ? &_string : nullptr); }
         const FArray* AsArray() const { return (_type == Array ? &_array : nullptr); }
         const FObject* AsObject() const { return (_type == Object ? &_object : nullptr); }
 
         FBool& ToBool() { Assert(_type == Bool); return _bool; }
-        FNumber& ToNumber() { Assert(_type == Number); return _number; }
+        //FNumber& ToNumber() { Assert(_type == Number); return _number; }
+        FInteger& ToInteger() { Assert(_type == Integer); return _integer; }
+        FFloat& ToFloat() { Assert(_type == Float); return _float; }
         FString& ToString() { Assert(_type == String); return _string; }
         FArray& ToArray() { Assert(_type == Array); return _array; }
         FObject& ToObject() { Assert(_type == Object); return _object; }
 
         const FBool& ToBool() const { Assert(_type == Bool); return _bool; }
-        const FNumber& ToNumber() const { Assert(_type == Number); return _number; }
+        //const FNumber& ToNumber() const { Assert(_type == Number); return _number; }
+        const FInteger& ToInteger() const { Assert(_type == Integer); return _integer; }
+        const FFloat& ToFloat() const { Assert(_type == Float); return _float; }
         const FString& ToString() const { Assert(_type == String); return _string; }
         const FArray& ToArray() const { Assert(_type == Array); return _array; }
         const FObject& ToObject() const { Assert(_type == Object); return _object; }
 
         void Clear();
+
+        bool Equals(const FValue& other) const;
+        inline friend bool operator ==(const FValue& lhs, const FValue& rhs) { return lhs.Equals(rhs); }
+        inline friend bool operator !=(const FValue& lhs, const FValue& rhs) { return (not operator ==(lhs, rhs)); }
 
         void ToStream(std::basic_ostream<char>& oss, bool minify = true) const;
 
@@ -111,7 +133,9 @@ public:
         EType _type;
         union {
             FBool _bool;
-            FNumber _number;
+            //FNumber _number;
+            FInteger _integer;
+            FFloat _float;
             FString _string;
             FArray _array;
             FObject _object;
@@ -137,23 +161,25 @@ private:
     FValue _root;
 };
 //----------------------------------------------------------------------------
-inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FJSON::FValue& jsonValue) {
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Serialize
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Serialize::FJSON::FValue& jsonValue) {
     jsonValue.ToStream(oss);
     return oss;
 }
 //----------------------------------------------------------------------------
-inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FJSON& json) {
+inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Serialize::FJSON& json) {
     json.ToStream(oss);
     return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RTTItoJSON(FJSON& dst, const TMemoryView<const RTTI::PMetaAtom>& src);
-//----------------------------------------------------------------------------
-void JSONtoRTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaAtom)& dst, const FJSON& src);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-} //!namespace Serialize
 } //!namespace Core

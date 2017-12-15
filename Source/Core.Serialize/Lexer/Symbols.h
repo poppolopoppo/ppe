@@ -50,7 +50,7 @@ public:
 
     static const FSymbol *True;
     static const FSymbol *False;
-    static const FSymbol *Nil;
+    static const FSymbol *Null;
     static const FSymbol *Is;
     static const FSymbol *Extern;
     static const FSymbol *Export;

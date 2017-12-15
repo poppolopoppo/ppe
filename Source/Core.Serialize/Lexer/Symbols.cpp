@@ -4,7 +4,7 @@
 
 #include "Symbol.h"
 
-#include "Core.RTTI/MetaType.Definitions-inl.h"
+#include "Core.RTTI/NativeTypes.h"
 
 namespace Core {
 namespace Lexer {
@@ -47,9 +47,9 @@ static void RegisterSymbol_(
 }
 //----------------------------------------------------------------------------
 static void RegisterRTTITypenames_(FSymbols::hashmap_type& symbols) {
-#define RTTI_INSERT_TYPENAME(_Name, T, _TypeId, _Unused) \
+#define RTTI_INSERT_TYPENAME(_Name, T, _TypeId) \
     InsertSymbol_(symbols, FSymbol::Typename, MakeStringView(STRINGIZE(_Name)), _TypeId);
-    FOREACH_CORE_RTTI_NATIVE_TYPES(RTTI_INSERT_TYPENAME)
+    FOREACH_RTTI_NATIVETYPES(RTTI_INSERT_TYPENAME)
 #undef RTTI_INSERT_TYPENAME
 }
 //----------------------------------------------------------------------------
@@ -104,7 +104,7 @@ FSymbols::FSymbols() {
 
     RegisterSymbol_(&True, _symbols, FSymbol::True, "true");
     RegisterSymbol_(&False, _symbols, FSymbol::False, "false");
-    RegisterSymbol_(&Nil, _symbols, FSymbol::Nil, "nil");
+    RegisterSymbol_(&Null, _symbols, FSymbol::Null, "Null");
     RegisterSymbol_(&Is, _symbols, FSymbol::Is, "is");
     RegisterSymbol_(&Extern, _symbols, FSymbol::Extern, "extern");
     RegisterSymbol_(&Export, _symbols, FSymbol::Export, "export");
@@ -158,7 +158,7 @@ FSymbols::FSymbols() {
 #ifdef WITH_CORE_ASSERT
     CheckSymbol_(_symbols, FSymbols::True);
     CheckSymbol_(_symbols, FSymbols::False);
-    CheckSymbol_(_symbols, FSymbols::Nil);
+    CheckSymbol_(_symbols, FSymbols::Null);
     CheckSymbol_(_symbols, FSymbols::Is);
     CheckSymbol_(_symbols, FSymbols::Extern);
     CheckSymbol_(_symbols, FSymbols::Export);
@@ -204,7 +204,7 @@ FSymbols::FSymbols() {
 FSymbols::~FSymbols() {
     UnregisterSymbol_(_symbols, &True);
     UnregisterSymbol_(_symbols, &False);
-    UnregisterSymbol_(_symbols, &Nil);
+    UnregisterSymbol_(_symbols, &Null);
     UnregisterSymbol_(_symbols, &Is);
     UnregisterSymbol_(_symbols, &Extern);
     UnregisterSymbol_(_symbols, &Export);
@@ -270,7 +270,7 @@ const FSymbol *FSymbols::String = nullptr;
 const FSymbol *FSymbols::Identifier = nullptr;
 const FSymbol *FSymbols::True = nullptr;
 const FSymbol *FSymbols::False = nullptr;
-const FSymbol *FSymbols::Nil = nullptr;
+const FSymbol *FSymbols::Null = nullptr;
 const FSymbol *FSymbols::Is = nullptr;
 const FSymbol *FSymbols::Extern = nullptr;
 const FSymbol *FSymbols::Export = nullptr;

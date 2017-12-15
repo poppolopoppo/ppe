@@ -25,6 +25,8 @@ struct TNumeric {
     TNumeric(const TNumeric& other) : Value(other.Value) {}
     TNumeric& operator =(const TNumeric& other) { Value =other.Value; return *this; }
 
+    bool IsDefaultValue() const { return (_DefaultValue == Value); }
+
     friend bool operator ==(const TNumeric& lhs, const TNumeric& rhs) { return lhs.Value == rhs.Value; }
     friend bool operator !=(const TNumeric& lhs, const TNumeric& rhs) { return lhs.Value != rhs.Value; }
 

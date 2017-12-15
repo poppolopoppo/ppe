@@ -17,6 +17,9 @@ public:
     static const FDirname& DotDot();
 
     // Extnames :
+    static const FExtname& Bin();
+    static const FExtname& Raw();
+
     static const FExtname& Json();
     static const FExtname& Jsonz();
     static const FExtname& Xml();
@@ -54,6 +57,8 @@ public:
     static void Start();
     static void Shutdown();
 };
+//----------------------------------------------------------------------------
+using FFS = FFSConstNames;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

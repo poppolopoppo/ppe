@@ -5,6 +5,8 @@
 #include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/ISerializer.h"
 
+#include "Core.RTTI/RTTI_fwd.h"
+
 namespace Core {
 namespace Serialize {
 //----------------------------------------------------------------------------
@@ -15,7 +17,7 @@ public:
     FJSONSerializerException(const char* what) : FSerializeException(what) {}
 };
 //----------------------------------------------------------------------------
-class FJSONSerializer : public ISerializer {
+class CORE_SERIALIZE_API FJSONSerializer : public ISerializer {
 public:
     FJSONSerializer(bool minify = true);
     virtual ~FJSONSerializer();
@@ -29,6 +31,12 @@ public:
 private:
     bool _minify;
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+CORE_SERIALIZE_API void RTTI_to_JSON(class FJSON& dst, const TMemoryView<const RTTI::PMetaObject>& src);
+//----------------------------------------------------------------------------
+CORE_SERIALIZE_API bool JSON_to_RTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject)& dst, const class FJSON& src);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

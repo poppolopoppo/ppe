@@ -76,6 +76,16 @@ T* RemoveRef_AssertAlive(TRefPtr<T>& ptr) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
+T* RemoveRef_KeepAlive(TRefPtr<T>& ptr) {
+    Assert(ptr);
+    T *const result = ptr.get();
+    result->IncRefCount();
+    ptr.reset();
+    result->DecRefCount_ReturnIfReachZero();
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename T>
 void OnRefCountReachZero(T* ptr) {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     checked_delete(ptr);
@@ -115,8 +125,8 @@ T *RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& ptr) {
     T *const result = ptr.get();
     result->IncRefCount();
     ptr.reset();
-    result->DecRefCount_ReturnIfReachZero();
-    Assert(0 == result->RefCount());
+    if (not result->DecRefCount_ReturnIfReachZero())
+        AssertNotReached();
     return result;
 }
 //----------------------------------------------------------------------------

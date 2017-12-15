@@ -10,7 +10,7 @@
 // Prefered to non intrusive ref counting (std::shared_ptr<>).
 */
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || !defined(NDEBUG) || USE_CORE_MEMORY_DEBUGGING
 #   define WITH_CORE_SAFEPTR
 #endif
 
@@ -64,6 +64,8 @@ protected:
     friend void RemoveRef(T* ptr);
     template <typename T>
     friend T* RemoveRef_AssertAlive(TRefPtr<T>& ptr);
+    template <typename T>
+    friend T* RemoveRef_KeepAlive(TRefPtr<T>& ptr);
     template <typename T>
     friend void OnRefCountReachZero(T* ptr);
     template <typename T>

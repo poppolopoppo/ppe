@@ -140,12 +140,15 @@ void TBasicICStrStreamBuffer<_Char, _Traits>::swap(TBasicICStrStreamBuffer& othe
 template <typename _Char, typename _Traits >
 TBasicOCStrStream<_Char, _Traits>::TBasicOCStrStream(_Char* storage, std::streamsize capacity)
 :   buffer_type(storage, capacity)
-,   stream_type(this) {}
+,   stream_type(this) {
+    exceptions(stream_type::failbit | stream_type::badbit);
+}
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
 TBasicOCStrStream<_Char, _Traits>::TBasicOCStrStream(TBasicOCStrStream&& rvalue)
 :   buffer_type(std::move(rvalue))
 ,   parent_type(this) {
+    exceptions(stream_type::failbit | stream_type::badbit);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
@@ -194,12 +197,15 @@ void TBasicOCStrStream<_Char, _Traits>::swap(TBasicOCStrStream& other){
 template <typename _Char, typename _Traits >
 TBasicICStrStream<_Char, _Traits>::TBasicICStrStream(const _Char* storage, std::streamsize capacity)
     : buffer_type(storage, capacity)
-    , stream_type(this) {}
+    , stream_type(this) {
+    exceptions(stream_type::failbit | stream_type::badbit);
+}
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >
 TBasicICStrStream<_Char, _Traits>::TBasicICStrStream(TBasicICStrStream&& rvalue)
     : buffer_type(std::move(rvalue))
     , parent_type(this) {
+    exceptions(stream_type::failbit | stream_type::badbit);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Traits >

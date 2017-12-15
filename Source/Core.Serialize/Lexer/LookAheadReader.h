@@ -8,7 +8,7 @@
 
 namespace Core {
 class IBufferedStreamReader;
-enum class ESeekOrigin;
+enum class ESeekOrigin : size_t;
 namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

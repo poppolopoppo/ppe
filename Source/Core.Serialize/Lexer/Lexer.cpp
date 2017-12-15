@@ -285,6 +285,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
     else if ('"' == ch)
     {
         FOStringStream oss;
+        oss.exceptions(FOStringStream::failbit | FOStringStream::badbit);
 
         // weak quoting
         ch = reader.Read();
@@ -308,8 +309,6 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                 // http://en.wikipedia.org/wiki/Escape_sequences_in_C
                 switch (ToLower(ch))
                 {
-                case '0': oss.put('\0'); break;
-
                 case 'a': oss.put('\a'); break;
                 case 'b': oss.put('\b'); break;
                 case 'f': oss.put('\f'); break;
@@ -321,19 +320,29 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                 case '\'': oss.put('\''); break;
                 case '\\': oss.put('\\'); break;
 
-                case 'o':
-                    d0 = ToLower(reader.Read());
-                    d1 = ToLower(reader.Read());
+                // octal
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                    d0 = u8(ch - '0');
+                    forrange(i, 0, 3) {
+                        ch = reader.Read();
+                        if (not Octal_(ch))
+                            break;
 
-                    if (!(Octal_(d0) && Octal_(d1)))
-                        CORE_THROW_IT(FLexerException("invalid octal character escaping", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+                        d0 = d0 * 8 + (ch - '0');
+                    }
 
-                    ch = (char)((d0 - '0') * 8 + (d1 - '0') );
-
-                    oss.put(ch);
+                    oss.put(char(d0));
 
                     break;
 
+                // hexadecimal
                 case 'x':
                     d0 = ToLower(reader.Read());
                     d1 = ToLower(reader.Read());
@@ -348,6 +357,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
 
                     break;
 
+                // unicode
                 case 'u':
                     d0 = ToLower(reader.Read());
                     d1 = ToLower(reader.Read());

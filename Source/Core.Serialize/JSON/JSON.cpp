@@ -7,12 +7,6 @@
 #include "Lexer/Symbol.h"
 #include "Lexer/Symbols.h"
 
-#include "Core.RTTI/MetaAtom.h"
-#include "Core.RTTI/MetaClass.h"
-#include "Core.RTTI/MetaObject.h"
-#include "Core.RTTI/MetaProperty.h"
-#include "Core.RTTI/MetaTransaction.h"
-
 #include "Core/Container/RawStorage.h"
 #include "Core/IO/FS/ConstNames.h"
 #include "Core/IO/Format.h"
@@ -27,40 +21,8 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 namespace JSON_ {
 //----------------------------------------------------------------------------
-static void EscapeString_(std::basic_ostream<char>& oss, const FStringView& str) {
-    for (char ch : str) {
-        switch (ch) {
-        case '\\':
-        case '"':
-        case '/':
-            oss << '\\' << ch;
-            break;
-        case '\b':
-            oss << "\\b";
-            break;
-        case '\t':
-            oss << "\\t";
-            break;
-        case '\n':
-            oss << "\\n";
-            break;
-        case '\f':
-            oss << "\\f";
-            break;
-        case '\r':
-            oss << "\\r";
-            break;
-        default:
-            if (IsPrint(ch))
-                oss << ch;
-            else
-                Format(oss, "\\u{0:#4x}", u8(ch));
-        }
-    }
-}
-//----------------------------------------------------------------------------
 static void EscapeString_(std::basic_ostream<char>& oss, const FJSON::FString& str) {
-    EscapeString_(oss, str.MakeView());
+    Escape(oss, str.MakeView(), EEscape::Unicode);
 }
 //----------------------------------------------------------------------------
 static bool ParseValue_(Lexer::FLexer& lexer, FJSON::FValue& value);
@@ -88,7 +50,7 @@ static bool ParseObject_(Lexer::FLexer& lexer, FJSON::FValue& value) {
 }
 //----------------------------------------------------------------------------
 static bool ParseArray_(Lexer::FLexer& lexer, FJSON::FValue& value) {
-    FJSON::FArray& array = value.SetType(FJSON::Array).ToArray();
+    FJSON::FArray& arr = value.SetType(FJSON::Array).ToArray();
 
     FJSON::FValue item;
     for (bool notFirst = false;; notFirst = true)
@@ -97,7 +59,7 @@ static bool ParseArray_(Lexer::FLexer& lexer, FJSON::FValue& value) {
             break;
 
         if (ParseValue_(lexer, item))
-            array.emplace_back(std::move(item));
+            arr.emplace_back(std::move(item));
         else
             break;
     }
@@ -110,6 +72,8 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJSON::FValue& value) {
     if (not lexer.Read(read))
         return false;
 
+    bool unexpectedToken = false;
+
     if (read.Symbol() == Lexer::FSymbols::LBrace) {
         return ParseObject_(lexer, value);
     }
@@ -119,23 +83,58 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJSON::FValue& value) {
     else if (read.Symbol() == Lexer::FSymbols::String) {
         value.SetValue(std::move(read.Value()));
     }
-    else if (read.Symbol() == Lexer::FSymbols::Int) {
+#if 0 // digress from JSON std here : need integral literals
+    else if (read.Symbol() == Lexer::FSymbols::Number) {
         if (not Atod(&value.SetType(FJSON::Number).ToNumber(), read.Value().MakeView()))
             CORE_THROW_IT(FJSONException("malformed int", read.Site()));
     }
+    // TODO : handle negative numbers as bellow VVVVVVV
+#else
+    else if (read.Symbol() == Lexer::FSymbols::Int) {
+        FJSON::FInteger* i = &value.SetType(FJSON::Integer).ToInteger();
+        if (not Atoi64(i, read.Value().MakeView(), 10))
+            CORE_THROW_IT(FJSONException("malformed int", read.Site()));
+    }
     else if (read.Symbol() == Lexer::FSymbols::Float) {
-        if (not Atod(&value.SetType(FJSON::Number).ToNumber(), read.Value().MakeView()))
+        FJSON::FFloat* d = &value.SetType(FJSON::Float).ToFloat();
+        if (not Atod(d, read.Value().MakeView()))
             CORE_THROW_IT(FJSONException("malformed float", read.Site()));
     }
+    // unary minus ?
+    else if (read.Symbol() == Lexer::FSymbols::Sub) {
+        const Lexer::FMatch* const peek = lexer.Peek();
+
+        unexpectedToken = true;
+
+        if (peek && peek->Symbol() == Lexer::FSymbols::Int) {
+            if (ParseValue_(lexer, value)) {
+                value.ToInteger() = -value.ToInteger();
+                unexpectedToken = false;
+            }
+        }
+        else if (peek && peek->Symbol() == Lexer::FSymbols::Float) {
+            if (ParseValue_(lexer, value)) {
+                value.ToFloat() = -value.ToFloat();
+                unexpectedToken = false;
+            }
+        }
+    }
+#endif
     else if (read.Symbol() == Lexer::FSymbols::True) {
         value.SetValue(true);
     }
     else if (read.Symbol() == Lexer::FSymbols::False) {
         value.SetValue(false);
     }
-    else {
-        CORE_THROW_IT(FJSONException("unexpected token", read.Site()));
+    else if (read.Symbol() == Lexer::FSymbols::Null) {
+        value.SetType(FJSON::Null);
     }
+    else {
+        unexpectedToken = true;
+    }
+
+    if (unexpectedToken)
+        CORE_THROW_IT(FJSONException("unexpected token", read.Site()));
 
     return true;
 }
@@ -151,9 +150,18 @@ static void ToStream_(const FJSON::FValue& value, std::basic_ostream<char>& oss,
         oss << (value.ToBool() ? "true" : "false");
         break;
 
+#if 0 // digress from JSON std here : need integral literals
     case Core::Serialize::FJSON::Number:
         oss << value.ToNumber();
         break;
+#else
+    case Core::Serialize::FJSON::Integer:
+        oss << value.ToInteger();
+        break;
+    case Core::Serialize::FJSON::Float:
+        oss << value.ToFloat();
+        break;
+#endif
 
     case Core::Serialize::FJSON::String:
         oss << '"';
@@ -233,9 +241,18 @@ FJSON::FValue::FValue(EType type)
     case Core::Serialize::FJSON::Bool:
         new (&_bool) FBool(false);
         break;
+#if 0 // digress from JSON std here : need integral literals
     case Core::Serialize::FJSON::Number:
         new (&_number) FNumber(0);
         break;
+#else
+    case Core::Serialize::FJSON::Integer:
+        new (&_integer) FInteger(0);
+        break;
+    case Core::Serialize::FJSON::Float:
+        new (&_float) FFloat(0);
+        break;
+#endif
     case Core::Serialize::FJSON::String:
         new (&_string) FString();
         break;
@@ -261,9 +278,18 @@ FJSON::FValue& FJSON::FValue::operator =(const FValue& other) {
     case Core::Serialize::FJSON::Bool:
         _bool = other._bool;
         break;
+#if 0 // digress from JSON std here : need integral literals
     case Core::Serialize::FJSON::Number:
         _number = other._number;
         break;
+#else
+    case Core::Serialize::FJSON::Integer:
+        _integer = other._integer;
+        break;
+    case Core::Serialize::FJSON::Float:
+        _float = other._float;
+        break;
+#endif
     case Core::Serialize::FJSON::String:
         new (&_string) FString(other._string);
         break;
@@ -291,9 +317,18 @@ FJSON::FValue& FJSON::FValue::operator =(FValue&& rvalue) {
     case Core::Serialize::FJSON::Bool:
         _bool = rvalue._bool;
         break;
+#if 0 // digress from JSON std here : need integral literals
     case Core::Serialize::FJSON::Number:
         _number = rvalue._number;
         break;
+#else
+    case Core::Serialize::FJSON::Integer:
+        _integer = rvalue._integer;
+        break;
+    case Core::Serialize::FJSON::Float:
+        _float = rvalue._float;
+        break;
+#endif
     case Core::Serialize::FJSON::String:
         new (&_string) FString(std::move(rvalue._string));
         rvalue._string.~FString();
@@ -328,9 +363,18 @@ FJSON::FValue& FJSON::FValue::SetType(EType type) {
     case Core::Serialize::FJSON::Bool:
         new (&_bool) FBool();
         break;
+#if 0 // digress from JSON std here : need integral literals
     case Core::Serialize::FJSON::Number:
         new (&_number) FNumber();
         break;
+#else
+    case Core::Serialize::FJSON::Integer:
+        new (&_integer) FInteger();
+        break;
+    case Core::Serialize::FJSON::Float:
+        new (&_float) FFloat();
+        break;
+#endif
     case Core::Serialize::FJSON::String:
         new (&_string) FString();
         break;
@@ -349,43 +393,76 @@ FJSON::FValue& FJSON::FValue::SetType(EType type) {
 }
 //----------------------------------------------------------------------------
 void FJSON::FValue::SetValue(FBool value) {
-    if (_type != EType::Null)
-        Clear();
-
+    Clear();
     _type = EType::Bool;
     new (&_bool) FBool(value);
 }
 //----------------------------------------------------------------------------
+#if 0 // digress from JSON std here : need integral literals
 void FJSON::FValue::SetValue(FNumber value) {
-    if (_type != EType::Null)
+    if (NeedsDestructor_(_type))
         Clear();
 
     _type = EType::Number;
     new (&_number) FNumber(value);
 }
+#else
+void FJSON::FValue::SetValue(FInteger value) {
+    Clear();
+    _type = EType::Integer;
+    new (&_integer) FInteger(value);
+}
+void FJSON::FValue::SetValue(FFloat value) {
+    Clear();
+    _type = EType::Float;
+    new (&_float) FFloat(value);
+}
+#endif
 //----------------------------------------------------------------------------
 void FJSON::FValue::SetValue(FString&& value) {
-    if (_type != EType::Null)
-        Clear();
-
+    Clear();
     _type = EType::String;
     new (&_string) FString(std::move(value));
 }
 //----------------------------------------------------------------------------
 void FJSON::FValue::SetValue(FArray&& value) {
-    if (_type != EType::Null)
-        Clear();
-
+    Clear();
     _type = EType::Array;
     new (&_array) FArray(std::move(value));
 }
 //----------------------------------------------------------------------------
 void FJSON::FValue::SetValue(FObject&& value) {
-    if (_type != EType::Null)
-        Clear();
-
+    Clear();
     _type = EType::Object;
     new (&_object) FObject(std::move(value));
+}
+//----------------------------------------------------------------------------
+bool FJSON::FValue::Equals(const FValue& other) const {
+    if (other._type != _type)
+        return false;
+
+    switch (_type)
+    {
+    case Core::Serialize::FJSON::Null:
+        return true;
+    case Core::Serialize::FJSON::Bool:
+        return (_bool == other._bool);
+    case Core::Serialize::FJSON::Integer:
+        return (_integer == other._integer);
+    case Core::Serialize::FJSON::Float:
+        return (_float == other._float);
+    case Core::Serialize::FJSON::String:
+        return (_string == other._string);
+    case Core::Serialize::FJSON::Array:
+        return (_array == other._array);
+    case Core::Serialize::FJSON::Object:
+        return (_object == other._object);
+    default:
+        break;
+    }
+
+    AssertNotImplemented();
+    return false;
 }
 //----------------------------------------------------------------------------
 void FJSON::FValue::Clear() {
@@ -393,8 +470,14 @@ void FJSON::FValue::Clear() {
     case Core::Serialize::FJSON::Null:
         return;
     case Core::Serialize::FJSON::Bool:
+#if 0 // digress from JSON std here : need integral literals
     case Core::Serialize::FJSON::Number:
         break;
+#else
+    case Core::Serialize::FJSON::Integer:
+    case Core::Serialize::FJSON::Float:
+        break;
+#endif
     case Core::Serialize::FJSON::String:
         _string.~FString();
         break;
@@ -414,7 +497,8 @@ void FJSON::FValue::Clear() {
 //----------------------------------------------------------------------------
 void FJSON::FValue::ToStream(std::basic_ostream<char>& oss, bool minify/* = true */) const {
     Fmt::FIndent indent = (minify ? Fmt::FIndent::None() : Fmt::FIndent::TwoSpaces());
-    oss << std::fixed;
+    oss << std::setprecision(std::numeric_limits<long double>::digits10 + 1)
+        << std::defaultfloat << std::setw(0);
     JSON_::ToStream_(*this, oss, indent, minify);
     Assert(0 == indent.Level);
 }
@@ -460,181 +544,6 @@ bool FJSON::Load(FJSON* json, const FFilename& filename, IBufferedStreamReader* 
     })
 
     return true;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-class FRTTItoJSON_ : public RTTI::FMetaAtomWrapCopyVisitor {
-public:
-    void PushHead(FJSON::FValue& value) {
-        Assert(_values.empty());
-        _values.push_back(&value);
-    }
-
-    void PopHead(FJSON::FValue& value) {
-        UNUSED(value);
-        Assert(1 == _values.size());
-        Assert(&value == _values.front());
-        _values.pop_back();
-    }
-
-    virtual void Inspect(const RTTI::IMetaAtomPair* ppair, const RTTI::TPair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair) override {
-        UNUSED(ppair);
-        FJSON::FArray& array = Head_().SetType(FJSON::Array).ToArray();
-        array.resize(2);
-        _values.push_back(&array.front());
-        Append(pair.first.get());
-        _values.pop_back();
-        _values.push_back(&array.back());
-        Append(pair.second.get());
-        _values.pop_back();
-    }
-
-    virtual void Inspect(const RTTI::IMetaAtomVector* pvector, const RTTI::TVector<RTTI::PMetaAtom>& vector) override {
-        UNUSED(pvector);
-        FJSON::FArray& array = Head_().SetType(FJSON::Array).ToArray();
-        array.resize(vector.size());
-        forrange(i, 0, vector.size()) {
-            _values.push_back(&array[i]);
-            Append(vector[i].get());
-            _values.pop_back();
-        }
-    }
-
-    virtual void Inspect(const RTTI::IMetaAtomDictionary* pdictionary, const RTTI::TDictionary<RTTI::PMetaAtom, RTTI::PMetaAtom>& dictionary) override {
-        UNUSED(pdictionary);
-        FJSON::FArray& array = Head_().SetType(FJSON::Array).ToArray();
-        array.resize(dictionary.size());
-        size_t index = 0;
-        for (const auto& it : dictionary) {
-            _values.push_back(&array[index++]);
-            Inspect(nullptr, it);
-            _values.pop_back();
-        }
-    }
-
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-    virtual void Visit(const RTTI::TMetaTypedAtom<T>* scalar) override { \
-        Assert(scalar); \
-        Assert(_TypeId == scalar->TypeInfo().Id); \
-        ToJSON_(scalar->Wrapper()); \
-        /*parent_type::Visit(scalar);*/ \
-    }
-    FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
-#undef DEF_METATYPE_SCALAR
-
-private:
-    VECTOR(Serialize, FJSON::FValue*) _values;
-
-    FJSON::FValue& Head_() const { return (*_values.back()); }
-
-    template <typename T>
-    void ToJSON_(const T& value) {
-        Head_().SetValue(FJSON::FNumber(value));
-    }
-
-    void ToJSON_(const bool& value) {
-        Head_().SetValue(FJSON::FBool(value));
-    }
-
-    void ToJSON_(const FString& str) {
-        Head_().SetValue(FJSON::FString(std::move(str)));
-    }
-
-    void ToJSON_(const FWString& wstr) {
-        Head_().SetValue(FJSON::FString(std::move(ToString(wstr))));
-    }
-
-    void ToJSON_(const RTTI::FName& name) {
-        Head_().SetValue(FJSON::FString(std::move(ToString(name.MakeView()))));
-    }
-
-    void ToJSON_(const RTTI::FBinaryData& rawdata) {
-        Head_().SetValue(ToString(rawdata.MakeView().Cast<const char>()));
-    }
-
-    void ToJSON_(const RTTI::FOpaqueData& opaqueData) {
-        FJSON::FObject& object = Head_().SetType(FJSON::Object).ToObject();
-        object.reserve(opaqueData.size());
-        for (const RTTI::TPair<RTTI::FName, RTTI::PMetaAtom>& pair : opaqueData) {
-            _values.push_back(&object[std::move(ToString(pair.first.MakeView()))]);
-            if (pair.second)
-                Append(pair.second.get());
-            _values.pop_back();
-        }
-    }
-
-    template <typename T, size_t _Dim>
-    void ToJSON_(const TScalarVector<T, _Dim>& v) {
-        FJSON::FArray& array = Head_().SetType(FJSON::Array).ToArray();
-        array.resize(_Dim);
-        forrange(i, 0, _Dim)
-            array[i].SetValue(FJSON::FNumber(v._data[i]));
-    }
-
-    template <typename T, size_t _Width, size_t _Height>
-    void ToJSON_(const TScalarMatrix<T, _Width, _Height>& m) {
-        constexpr size_t Dim = (_Width * _Height);
-        FJSON::FArray& array = Head_().SetType(FJSON::Array).ToArray();
-        array.resize(Dim);
-        forrange(i, 0, Dim)
-            array[i].SetValue(FJSON::FNumber(m._data.raw[i]));
-    }
-
-    void ToJSON_(const RTTI::PMetaAtom& atom) {
-        if (atom) {
-            const RTTI::FMetaTypeId typeId = atom->TypeInfo().Id;
-            switch (typeId)
-            {
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) case _TypeId:
-                FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
-#undef DEF_METATYPE_SCALAR
-                    atom->Accept(this);
-                break;
-
-            default:
-                CORE_THROW_IT(FJSONException("no support for abstract RTTI atoms serialization"));
-            }
-        }
-    }
-
-    void ToJSON_(const RTTI::PMetaObject& metaObject) {
-        FJSON::FObject& jsonObject = Head_().SetType(FJSON::Object).ToObject();
-        if (metaObject) {
-            const RTTI::FMetaClass* MetaClass = metaObject->RTTI_MetaClass();
-            jsonObject["@MetaClass"].SetValue(ToString(MetaClass->Name().MakeView()));
-            for (const RTTI::FMetaProperty* prop : MetaClass->AllProperties()) {
-                if (not prop->IsDefaultValue(metaObject.get())) {
-                    const RTTI::PMetaAtom atom = prop->WrapCopy(metaObject.get());
-                    _values.push_back(&jsonObject[std::move(ToString(prop->Name().MakeView()))]);
-                    atom->Accept(this);
-                    _values.pop_back();
-                }
-            }
-        }
-    }
-};
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-void RTTItoJSON(FJSON& dst, const TMemoryView<const RTTI::PMetaAtom>& src) {
-    FRTTItoJSON_ visitor;
-    FJSON::FArray& array = dst.Root().SetType(FJSON::Array).ToArray();
-    array.resize(src.size());
-    forrange(i, 0, src.size()) {
-        FJSON::FValue& item = array[i];
-        visitor.PushHead(item);
-        visitor.Append(src[i].get());
-        visitor.PopHead(item);
-    }
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void JSONtoRTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaAtom)& dst, const FJSON& src) {
-    AssertNotImplemented(); // TODO
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
