@@ -25,9 +25,9 @@
 
   <Type Name="Core::TMemoryView&lt;*&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
-    <DisplayString>[{_size}]</DisplayString>
+    <DisplayString>{"$T1"} [{_size}] = {_storage}</DisplayString>
     <Expand>
-      <Item Name="Size">_size</Item>
+      <Item Name="[Size]">_size</Item>
       <ArrayItems>
         <Size>_size</Size>
         <ValuePointer>_storage</ValuePointer>
@@ -38,9 +38,9 @@
   <Type Name="Core::TVectorInSitu&lt;*, *, *&gt;">
     <DisplayString>{{ size={_size}, capacity={_capacity}, insitu={_insituCount/sizeof(value_type)} }}</DisplayString>
     <Expand>
-      <Item Name="Size">_size</Item>
-      <Item Name="Capacity">_capacity</Item>
-      <Item Name="Insitu">_insituCount/sizeof(value_type)</Item>
+      <Item Name="[Size]">_size</Item>
+      <Item Name="[Capacity]">_capacity</Item>
+      <Item Name="[Insitu]">_insituCount/sizeof(value_type)</Item>
       <ArrayItems>
         <Size>_size</Size>
         <ValuePointer>_data</ValuePointer>
@@ -50,8 +50,8 @@
   <Type Name="Core::TVector&lt;*, *&gt;">
     <DisplayString>{{ size={_size}, capacity={_capacity} }}</DisplayString>
     <Expand>
-      <Item Name="Size">_size</Item>
-      <Item Name="Capacity">_capacity</Item>
+      <Item Name="[Size]">_size</Item>
+      <Item Name="[Capacity]">_capacity</Item>
       <ArrayItems>
         <Size>_size</Size>
         <ValuePointer>_data</ValuePointer>
@@ -59,23 +59,36 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::THashTable&lt;*, *, *, *, *&gt;">
-    <DisplayString>{{ size={_size_capacityIndex&gt;&gt;5}, capacity={Core::details::HashTableCapacityForValue_[_size_capacityIndex&amp;31]} }}</DisplayString>
+  <Type Name="Core::TBasicHashTable&lt;*, *, *, *&gt;">
+    <DisplayString>{{ size={_data.Size}, capacity={_data.Capacity} }}</DisplayString>
     <Expand>
-      <Item Name="Size">_size_capacityIndex&gt;&gt;5</Item>
-      <Item Name="Capacity for hashes">Core::details::HashTableCapacityForHash_[_size_capacityIndex&amp;31]</Item>
-      <Item Name="Capacity for values">Core::details::HashTableCapacityForValue_[_size_capacityIndex&amp;31]</Item>
-      <ArrayItems>
-        <Size>_size_capacityIndex&gt;&gt;5</Size>
-        <ValuePointer>_values_hashIndices</ValuePointer>
-      </ArrayItems>
+      <Item Name="[Size]">_data.Size</Item>
+      <Item Name="[Capacity]">_data.Capacity</Item>
+      <Item Name="[States]" ExcludeView="simple">(Core::details::FHashTableData_::EState*)_data.StatesAndBuckets, [_data.Capacity ? _data.Capacity + Core::details::FHashTableData_::GGroupSize : 0]</Item>
+      <!-- <Item Name="Offset of Buckets">(((_data.Capacity ? _data.Capacity + Core::details::FHashTableData_::GGroupSize : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type))</Item> -->
+      <Item Name="[Buckets]" ExcludeView="simple">($T1::value_type*)_data.StatesAndBuckets + (((_data.Capacity ? _data.Capacity + Core::details::FHashTableData_::GGroupSize : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type)), [_data.Capacity]</Item>
+      <CustomListItems>
+        <Variable Name="index" InitialValue="0" />
+        <Variable Name="state" InitialValue="(Core::details::FHashTableData_::EState*)_data.StatesAndBuckets" />
+        <Variable Name="bucket" InitialValue="($T1::value_type*)_data.StatesAndBuckets + (((_data.Capacity ? _data.Capacity + Core::details::FHashTableData_::GGroupSize : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type))" />
+        <Size>_data.Size</Size>
+        <Loop>
+            <If Condition="index == _data.Capacity">
+                <Break />
+            </If>
+            <If Condition="(state[index] &amp; Core::details::FHashTableData_::kDeleted) == 0">
+                <Item>bucket[index]</Item>
+            </If>
+            <Exec>++index</Exec>
+        </Loop>
+      </CustomListItems>
     </Expand>
   </Type>
 
   <Type Name="Core::TRawStorage&lt;*, *&gt;">
     <DisplayString>{{ size={_size} }}</DisplayString>
     <Expand>
-      <Item Name="size">_size</Item>
+      <Item Name="[Size]">_size</Item>
       <ArrayItems>
         <Size>_size</Size>
         <ValuePointer>_storage</ValuePointer>
@@ -86,9 +99,9 @@
   <Type Name="Core::TRingBuffer&lt;*, *&gt;">
     <DisplayString>{{ begin={_begin}, size={_size}, capacity={_capacity} }}</DisplayString>
     <Expand>
-      <Item Name="Begin">_begin</Item>
-      <Item Name="Size">_size</Item>
-      <Item Name="Capacity">_capacity</Item>
+      <Item Name="[Begin]">_begin</Item>
+      <Item Name="[Size]">_size</Item>
+      <Item Name="[Capacity]">_capacity</Item>
       <ArrayItems>
         <Size>_capacity</Size>
         <ValuePointer>_storage</ValuePointer>
@@ -99,8 +112,8 @@
   <Type Name="Core::TStack&lt;*, *&gt;">
     <DisplayString>{{ size={_size}, capacity={_capacity} }}</DisplayString>
     <Expand>
-      <Item Name="size">_size</Item>
-      <Item Name="capacity">_capacity</Item>
+      <Item Name="[Size]">_size</Item>
+      <Item Name="[Capacity]">_capacity</Item>
       <ArrayItems>
         <Size>_size</Size>
         <ValuePointer>_storage</ValuePointer>
@@ -111,7 +124,7 @@
   <Type Name="Core::TScalarVector&lt;*, 1&gt;">
     <DisplayString>{{ X={_data[0]} }}[1]</DisplayString>
     <Expand>
-      <Item Name="Dim">1</Item>
+      <Item Name="[Dim]">1</Item>
       <ArrayItems>
         <Size>1</Size>
         <ValuePointer>_data</ValuePointer>
@@ -121,7 +134,7 @@
   <Type Name="Core::TScalarVector&lt;*, 2&gt;">
     <DisplayString>{{ X={_data[0]}, Y={_data[1]} }}[2]</DisplayString>
     <Expand>
-      <Item Name="Dim">2</Item>
+      <Item Name="[Dim]">2</Item>
       <ArrayItems>
         <Size>2</Size>
         <ValuePointer>_data</ValuePointer>
@@ -131,7 +144,7 @@
   <Type Name="Core::TScalarVector&lt;*, 3&gt;">
     <DisplayString>{{ X={_data[0]}, Y={_data[1]}, Z={_data[2]} }}[3]</DisplayString>
     <Expand>
-      <Item Name="Dim">3</Item>
+      <Item Name="[Dim]">3</Item>
       <ArrayItems>
         <Size>3</Size>
         <ValuePointer>_data</ValuePointer>
@@ -141,7 +154,7 @@
   <Type Name="Core::TScalarVector&lt;*, 4&gt;">
     <DisplayString>{{ X={_data[0]}, Y={_data[1]}, Z={_data[2]}, W={_data[3]} }}[4]</DisplayString>
     <Expand>
-      <Item Name="Dim">4</Item>
+      <Item Name="[Dim]">4</Item>
       <ArrayItems>
         <Size>4</Size>
         <ValuePointer>_data</ValuePointer>
@@ -227,6 +240,66 @@
       <Item Name="RefCount" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
       <Item Name="SafeCount" Condition="_ptr != nullptr">_ptr-&gt;_safeRefCount</Item>
       <ExpandedItem>_ptr</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="Core::TInSituPtr&lt;* &gt;">
+    <DisplayString Condition="VTable != 0xDEADF001DEADF001ull &amp;&amp; VTable != 0xDEADF001ul">{($T1*)(&amp;InSitu),na}</DisplayString>
+    <DisplayString>empty</DisplayString>
+    <Expand>
+      <ExpandedItem Condition="VTable != 0xDEADF001DEADF001ull &amp;&amp; VTable != 0xDEADF001ul">($T1*)(&amp;InSitu),na</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="Core::RTTI::ITypeTraits">
+    <DisplayString>[{TypeId()}] {TypeInfos()._name._storage, [TypeInfos()._name._size]}, {TypeInfos()._flags, en} ({TypeInfos()._sizeInBytes}b)</DisplayString>
+  </Type>
+
+  <Type Name="Core::RTTI::FAny">
+    <DisplayString>{Core::RTTI::PrettyString(*this)}</DisplayString>
+    <Expand>
+        <Item Name="Data">Data()</Item>
+        <Item Name="Traits">_traits</Item>
+        <Item Name="PP">Core::RTTI::PrettyString(*this)</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="Core::RTTI::FAtom">
+    <DisplayString>{Core::RTTI::PrettyString(*this)}</DisplayString>
+    <Expand>
+        <Item Name="Data">_data</Item>
+        <Item Name="Traits">_traits</Item>
+        <Item Name="PP">Core::RTTI::PrettyString(*this)</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="Core::RTTI::FMetaObject">
+    <DisplayString>{Core::RTTI::PrettyString(this)}</DisplayString>
+    <Expand>
+        <Item Name="Name">_name</Item>
+        <Item Name="Flags">_flags, en</Item>
+        <Item Name="Class">RTTI_Class(), na</Item>
+        <Item Name="Functions">RTTI_Class()->_functionsAll</Item>
+        <Item Name="Properties">RTTI_Class()->_propertiesAll</Item>
+        <Item Name="PP">Core::RTTI::PrettyString(this)</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="Core::Serialize::FJSON::FValue">
+    <DisplayString Condition="Core::Serialize::FJSON::Null    == _type">null</DisplayString>
+    <DisplayString Condition="Core::Serialize::FJSON::Bool    == _type">Bool {_bool}</DisplayString>
+    <DisplayString Condition="Core::Serialize::FJSON::Integer == _type">Integer {_integer}</DisplayString>
+    <DisplayString Condition="Core::Serialize::FJSON::Float   == _type">Float {_float}</DisplayString>
+    <DisplayString Condition="Core::Serialize::FJSON::String  == _type">String {_string}</DisplayString>
+    <DisplayString Condition="Core::Serialize::FJSON::Array   == _type">Array {_array}</DisplayString>
+    <DisplayString Condition="Core::Serialize::FJSON::Object  == _type">Object {_object}</DisplayString>
+    <Expand>
+      <Item Condition="Core::Serialize::FJSON::Bool    == _type" Name="[Bool]">_bool</Item>
+      <Item Condition="Core::Serialize::FJSON::Integer == _type" Name="[Integer]">_integer</Item>
+      <Item Condition="Core::Serialize::FJSON::Float   == _type" Name="[Float]">_float</Item>
+      <Item Condition="Core::Serialize::FJSON::String  == _type" Name="[String]">_string</Item>
+      <Item Condition="Core::Serialize::FJSON::Array   == _type" Name="[Array]">_array</Item>
+      <Item Condition="Core::Serialize::FJSON::Object  == _type" Name="[Object]">_object</Item>
     </Expand>
   </Type>
 
