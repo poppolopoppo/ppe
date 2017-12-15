@@ -22,6 +22,22 @@ std::tuple<Meta::TRemoveReference<_Args>... > MakeTuple(_Args&&... args) {
     return std::make_tuple(std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
+namespace Meta {
+template <typename... _Args>
+struct TIsPod< TTuple<_Args...> >
+    : public std::integral_constant<bool,
+        true && Meta::TIsPod<_Args>::value... >
+{};
+template <typename... _Args>
+TTuple<_Args...> ForceInitType(TType< TTuple<_Args...> >) {
+    return MakeTuple(ForceInit<_Args...>()...);
+}
+template <typename... _Args>
+void Construct(TTuple<_Args...>* p, FForceInit) {
+    Construct(p, ForceInit<_Args>()...);
+}
+} //!Meta
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
@@ -92,6 +108,15 @@ FORCE_INLINE _Return CallHelper_(_Return(_Class::*member)(_Args...), _Class* src
     return (src->*member)(std::get<_Index>(args)...);
 }
 //----------------------------------------------------------------------------
+template<typename _Return, typename _Class, typename... _Args, typename... _Prms, size_t... _Index>
+FORCE_INLINE _Return CallHelper_(_Return(_Class::*member)(_Args...) const, const _Class* src, const TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
+    return (src->*member)(std::get<_Index>(args)...);
+}
+template<typename _Return, typename _Class, typename... _Args, typename... _Prms, size_t... _Index>
+FORCE_INLINE _Return CallHelper_(_Return(_Class::*member)(_Args...) const, const _Class* src, TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
+    return (src->*member)(std::get<_Index>(args)...);
+}
+//----------------------------------------------------------------------------
 } //!details
 //----------------------------------------------------------------------------
 template<typename _Return, typename... _Args, typename... _Prms>
@@ -112,6 +137,17 @@ _Return Call(_Return (_Class::*member)(_Args...), _Class* src, const TTuple<_Prm
 }
 template<typename _Return, typename _Class, typename... _Args, typename... _Prms>
 _Return Call(_Return(_Class::*member)(_Args...), _Class* src, TTuple<_Prms...>& args) {
+    STATIC_ASSERT(sizeof...(_Args) == sizeof...(_Prms));
+    return details::CallHelper_(member, src, args, std::index_sequence_for<_Args...>{});
+}
+//----------------------------------------------------------------------------
+template<typename _Return, typename _Class, typename... _Args, typename... _Prms>
+_Return Call(_Return(_Class::*member)(_Args...) const, const _Class* src, const TTuple<_Prms...>& args) {
+    STATIC_ASSERT(sizeof...(_Args) == sizeof...(_Prms));
+    return details::CallHelper_(member, src, args, std::index_sequence_for<_Args...>{});
+}
+template<typename _Return, typename _Class, typename... _Args, typename... _Prms>
+_Return Call(_Return(_Class::*member)(_Args...) const, const _Class* src, TTuple<_Prms...>& args) {
     STATIC_ASSERT(sizeof...(_Args) == sizeof...(_Prms));
     return details::CallHelper_(member, src, args, std::index_sequence_for<_Args...>{});
 }

@@ -75,6 +75,12 @@ using TEnableIf = typename std::enable_if< _Test, T >::type;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
+using TPointer = TAddPointer< TRemoveConst< TDecay<T> > >;
+//----------------------------------------------------------------------------
+template <typename T>
+using TConstPointer = TAddPointer< TAddConst< TDecay<T> > >;
+//----------------------------------------------------------------------------
+template <typename T>
 using TReference = TAddReference< TRemoveConst< TDecay<T> > >;
 //----------------------------------------------------------------------------
 template <typename T>
@@ -158,16 +164,22 @@ FORCE_INLINE CONSTEXPR T ForceInit_(std::false_type) { return T{}; }
 template <typename T>
 FORCE_INLINE CONSTEXPR T ForceInit_(std::true_type) { return T{ FForceInit{} }; }
 } //!details
+// can be overload for custom types
+template <typename T>
+T ForceInitType(TType<T>) {
+    return details::ForceInit_<T>(typename has_forceinit_constructor<T>::type{});
+}
+// simpler interface wrapping overloadable ForceInitType()
 template <typename T>
 T ForceInit() {
-    return details::ForceInit_<T>(typename has_forceinit_constructor<T>::type{});
+    return ForceInitType(TType<T>{});
 }
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
-FORCE_INLINE void Construct_(T* p, FForceInit, std::false_type) { new ((void*)p) T(); }
+FORCE_INLINE void Construct_(T* p, FForceInit, std::false_type) { new ((void*)p) T{}; }
 template <typename T>
-FORCE_INLINE void Construct_(T* p, FForceInit init, std::true_type) { new ((void*)p) T(init); }
+FORCE_INLINE void Construct_(T* p, FForceInit init, std::true_type) { new ((void*)p) T{ init }; }
 } //!details
 template <typename T>
 void Construct(T* p, FForceInit init) {
