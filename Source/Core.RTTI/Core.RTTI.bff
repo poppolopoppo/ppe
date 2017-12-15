@@ -8,5 +8,6 @@
     {
         'RTTI.cpp',
     }
+    .UnityNumFiles = 1
     #include "../../Build/Templates/Library.bff"
 }

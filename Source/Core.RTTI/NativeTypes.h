@@ -9,7 +9,10 @@
 
 #include "Core.RTTI/NativeTypes.Definitions-inl.h"
 
+#include "Core/Container/AssociativeVector.h"
 #include "Core/Container/HashMap.h"
+#include "Core/Container/Vector.h"
+#include "Core/Memory/SegregatedMemoryPool.h" // Allocate()/Deallocate()
 
 namespace Core {
 namespace RTTI {
@@ -21,10 +24,14 @@ FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_TRAITS)
 #undef DECL_RTTI_NATIVETYPE_TRAITS
 //----------------------------------------------------------------------------
 enum class ENativeType : FTypeId {
+    Invalid = 0,
 #define DECL_RTTI_NATIVETYPE_ENUM(_Name, T, _TypeId) _Name = _TypeId,
 FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_ENUM)
 #undef DECL_RTTI_NATIVETYPE_ENUM
+    __Count
 }; //!enum class ENativeType
+//----------------------------------------------------------------------------
+PTypeTraits MakeTraits(ENativeType nativeType);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -35,8 +42,15 @@ protected:
     typedef Meta::TAddPointer<T> pointer;
     typedef Meta::TAddPointer<const T> const_pointer;
 
+    using memorypool_type = TTypedSegregatedMemoryPool<POOL_TAG(RTTI), T, false>;
+
 public: // ITypeTraits
+    virtual void* Allocate() const override final;
+    virtual void Deallocate(void* ptr) const override final;
+
     virtual void Create(const FAtom& atom) const override final;
+    virtual void CreateCopy(const FAtom& cpy, const FAtom& other) const override final;
+    virtual void CreateMove(const FAtom& cpy, const FAtom& rvalue) const override final;
     virtual void Destroy(const FAtom& atom) const override final;
 
     //virtual FTypeId TypeId() const override final;
@@ -57,10 +71,17 @@ public: // ITypeTraits
     //virtual bool PromoteCopy(const FAtom& from, const FAtom& to) const override final;
     //virtual bool PromoteMove(const FAtom& from, const FAtom& to) const override final;
 
+    virtual void* Cast(const FAtom& from, const PTypeTraits& to) const override;
+
     virtual hash_t HashValue(const FAtom& atom) const override final;
 
     virtual void Format(std::basic_ostream<char>& oss, const FAtom& atom) const override;
     virtual void Format(std::basic_ostream<wchar_t>& oss, const FAtom& atom) const override;
+};
+//----------------------------------------------------------------------------
+template <typename T>
+class TBaseScalarTraits : public IScalarTraits {
+public: // ITypeTraits
 };
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
@@ -196,7 +217,9 @@ public: // IDicoTraits:
 
     virtual FAtom Find(const FAtom& dico, const FAtom& key) const override final;
 
+    virtual FAtom AddDefault(const FAtom& dico, FAtom&& rkey) const override final;
     virtual FAtom AddDefault(const FAtom& dico, const FAtom& key) const override final;
+
     virtual void AddCopy(const FAtom& dico, const FAtom& key, const FAtom& value) const override final;
     virtual void AddMove(const FAtom& dico, const FAtom& key, const FAtom& value) const override final;
     virtual bool Remove(const FAtom& dico, const FAtom& key) const override final;
@@ -229,7 +252,9 @@ public: // IDicoTraits:
 
     virtual FAtom Find(const FAtom& dico, const FAtom& key) const override final;
 
+    virtual FAtom AddDefault(const FAtom& dico, FAtom&& rkey) const override final;
     virtual FAtom AddDefault(const FAtom& dico, const FAtom& key) const override final;
+
     virtual void AddCopy(const FAtom& dico, const FAtom& key, const FAtom& value) const override final;
     virtual void AddMove(const FAtom& dico, const FAtom& key, const FAtom& value) const override final;
     virtual bool Remove(const FAtom& dico, const FAtom& key) const override final;
@@ -244,6 +269,37 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 PTypeTraits Traits(Meta::TType< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >) {
     return PTypeTraits::Make< THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator> >();
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// RTTI support for enums
+template <typename _Enum>
+PTypeTraits Traits(Meta::TType< _Enum >, Meta::TEnableIf< std::is_enum<_Enum>::value >* = nullptr) {
+    // Beware of the dog !!!
+    // *ALWAYS* specify the size of your enums wrapped in RTTI !
+    return MakeTraits<typename TIntegral<_Enum>::type>();
+}
+//----------------------------------------------------------------------------
+// RTTI support for types derived from FMetaObject
+template <typename _PMetaObject>
+PTypeTraits Traits(Meta::TType<_PMetaObject>, Meta::TEnableIf< std::is_assignable<PMetaObject, _PMetaObject>::value >* = nullptr) {
+    return MakeTraits<PMetaObject>();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// sfinae to detect RTTI support
+namespace details {
+    template <typename T, typename = decltype(Traits(std::declval<Meta::TType<T>>())) >
+    std::true_type IsSupportedType_(int);
+    template <typename T>
+    std::false_type IsSupportedType_(...);
+} //!details
+template <typename T>
+struct TIsSupportedType {
+    using is_supported = decltype(details::IsSupportedType_<T>(0));
+    STATIC_CONST_INTEGRAL(bool, value, not std::is_same<void, T>::value && is_supported::value);
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

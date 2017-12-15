@@ -62,7 +62,7 @@ T* CastChecked(FMetaObject* p) {
     AssertRelease(result);
     return result;
 #else
-    return reinterpret_cast<T*>(result);
+    return reinterpret_cast<T*>(p);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -73,8 +73,18 @@ const T* CastChecked(const FMetaObject* p) {
     AssertRelease(result);
     return result;
 #else
-    return reinterpret_cast<const T*>(result);
+    return reinterpret_cast<const T*>(p);
 #endif
+}
+//----------------------------------------------------------------------------
+template <typename T>
+auto Cast(const PMetaObject& p) {
+    return Cast<T>(p.get());
+}
+//----------------------------------------------------------------------------
+template <typename T>
+auto CastChecked(const PMetaObject& p) {
+    return Cast<T>(p.get());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

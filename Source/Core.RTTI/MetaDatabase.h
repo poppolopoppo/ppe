@@ -5,6 +5,7 @@
 #include "Core.RTTI/Typedefs.h"
 
 #include "Core/Container/HashMap.h"
+#include "Core/Container/Vector.h"
 #include "Core/Meta/Singleton.h"
 #include "Core/Thread/ReadWriteLock.h"
 
@@ -70,7 +71,7 @@ private:
 
     FReadWriteLock _lockRW;
 
-    // dont hold lifetime, must be handled separately
+    // don't hold lifetime, must be handled separately
     HASHMAP(RTTI, FName, SMetaTransaction) _transactions;
     HASHMAP(RTTI, FName, SMetaObject) _objects;
     HASHMAP(RTTI, FName, const FMetaClass*) _classes;

@@ -20,17 +20,25 @@ class FAtom;
 class IAtomVisitor;
 //----------------------------------------------------------------------------
 class ITypeTraits;
+class IScalarTraits;
 class IPairTraits;
 class IListTraits;
 class IDicoTraits;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+using PTypeTraits = TInSituPtr<ITypeTraits>;
+//----------------------------------------------------------------------------
 class ITypeTraits {
 public:
     virtual ~ITypeTraits() {}
 
+    virtual void* Allocate() const = 0;
+    virtual void Deallocate(void* ptr) const = 0;
+
     virtual void Create(const FAtom& atom) const = 0;
+    virtual void CreateCopy(const FAtom& cpy, const FAtom& other) const = 0;
+    virtual void CreateMove(const FAtom& cpy, const FAtom& rvalue) const = 0;
     virtual void Destroy(const FAtom& atom) const = 0;
 
     virtual FTypeId TypeId() const = 0;
@@ -52,6 +60,8 @@ public:
     virtual bool PromoteCopy(const FAtom& from, const FAtom& to) const = 0;
     virtual bool PromoteMove(const FAtom& from, const FAtom& to) const = 0;
 
+    virtual void* Cast(const FAtom& from, const PTypeTraits& to) const = 0;
+
     virtual hash_t HashValue(const FAtom& atom) const = 0;
 
     virtual void Format(std::basic_ostream<char>& oss, const FAtom& atom) const = 0;
@@ -59,6 +69,7 @@ public:
 
     virtual bool Accept(IAtomVisitor* visitor, const FAtom& atom) const = 0;
 
+    virtual const IScalarTraits* AsScalar() const = 0;
     virtual const IPairTraits* AsPair() const = 0;
     virtual const IListTraits* AsList() const = 0;
     virtual const IDicoTraits* AsDico() const = 0;
@@ -87,6 +98,7 @@ public: // ITypeTraits
     virtual ETypeFlags TypeFlags() const override final { return ETypeFlags::Pair; }
 
 private:
+    virtual const IScalarTraits* AsScalar() const override final { return this; }
     virtual const IPairTraits* AsPair() const override final { return nullptr; }
     virtual const IListTraits* AsList() const override final { return nullptr; }
     virtual const IDicoTraits* AsDico() const override final { return nullptr; }
@@ -112,7 +124,8 @@ public:
     virtual void SetSecondMove(const FAtom& pair, const FAtom& second) const = 0;
 
 private:
-    virtual const IPairTraits* AsPair() const override final { return this; }
+    virtual const IScalarTraits* AsScalar() const override final { return nullptr; }
+    virtual const IPairTraits* AsPair() const override final { return (this); }
     virtual const IListTraits* AsList() const override final { return nullptr; }
     virtual const IDicoTraits* AsDico() const override final { return nullptr; }
 };
@@ -145,8 +158,9 @@ public: // IListTraits
     virtual bool ForEach(const FAtom& list, const foreach_fun& foreach) const = 0;
 
 private:
+    virtual const IScalarTraits* AsScalar() const override final { return nullptr; }
     virtual const IPairTraits* AsPair() const override final { return nullptr; }
-    virtual const IListTraits* AsList() const override final { return this; }
+    virtual const IListTraits* AsList() const override final { return (this); }
     virtual const IDicoTraits* AsDico() const override final { return nullptr; }
 };
 //----------------------------------------------------------------------------
@@ -165,7 +179,9 @@ public: // IDicoTraits
 
     virtual FAtom Find(const FAtom& dico, const FAtom& key) const = 0;
 
+    virtual FAtom AddDefault(const FAtom& dico, FAtom&& rkey) const = 0;
     virtual FAtom AddDefault(const FAtom& dico, const FAtom& key) const = 0;
+
     virtual void AddCopy(const FAtom& dico, const FAtom& key, const FAtom& value) const = 0;
     virtual void AddMove(const FAtom& dico, const FAtom& key, const FAtom& value) const = 0;
     virtual bool Remove(const FAtom& dico, const FAtom& key) const = 0;
@@ -177,9 +193,10 @@ public: // IDicoTraits
     virtual bool ForEach(const FAtom& dico, const foreach_fun& foreach) const = 0;
 
 private:
+    virtual const IScalarTraits* AsScalar() const override final { return nullptr; }
     virtual const IPairTraits* AsPair() const override final { return nullptr; }
     virtual const IListTraits* AsList() const override final { return nullptr; }
-    virtual const IDicoTraits* AsDico() const override final { return this; }
+    virtual const IDicoTraits* AsDico() const override final { return (this); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

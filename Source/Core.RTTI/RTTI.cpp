@@ -4,6 +4,8 @@
 #include "RTTI_fwd.h"
 #include "RTTI_Namespace.h"
 #include "RTTI_Namespace-impl.h"
+
+#include "AtomVisitor.h"
 #include "MetaDatabase.h"
 #include "MetaObjectHelpers.h"
 
@@ -282,7 +284,10 @@ static void TestRTTI_() {
         const RTTI::FMetaClass* metaClass = toto2->RTTI_Class();
         metaClass->Property(RTTI::FName("Parent1")).CopyFrom(*toto2, MakeAtom(&toto));
 
-        RTTI::PrettyPrint(FLoggerStream(ELogCategory::Info), MakeAtom(&toto2)) << eol;
+        {
+            FLoggerStream log(ELogCategory::Info);
+            RTTI::PrettyPrint(log, MakeAtom(&toto2)) << eol;
+        }
 
         toto->RTTI_Unexport();
         toto->RTTI_Unload(nullptr);

@@ -17,6 +17,7 @@
 
 namespace Core {
 namespace RTTI {
+class FAtom;
 class FMetaClass;
 class FMetaNamespace;
 class ILoadContext;

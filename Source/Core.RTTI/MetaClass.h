@@ -143,16 +143,6 @@ const FMetaClass* MetaClass() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// RTTI support for types derived from FMetaObject
-//----------------------------------------------------------------------------
-template <typename _PMetaObject>
-Meta::TEnableIf<std::is_assignable<PMetaObject, _PMetaObject>::value, PTypeTraits>
-    Traits(Meta::TType<_PMetaObject>) {
-        return MakeTraits<PMetaObject>();
-    }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 namespace details {
 template <typename T>
 bool CreateMetaObject_(PMetaObject& dst, std::true_type) {

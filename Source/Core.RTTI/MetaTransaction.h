@@ -46,6 +46,9 @@ public:
     const FName& Name() const { return _name; }
     ETransactionFlags Flags() const { return _flags; }
 
+    size_t NumTopObjects() const { return _topObjects.size(); }
+    size_t NumLoadedObjects() const { return _loadedObjects.size(); }
+
     bool IsLoaded() const   { return (_flags == ETransactionFlags::Loaded); }
     bool IsUnloaded() const { return (_flags == ETransactionFlags::Unloaded); }
 
@@ -63,6 +66,10 @@ public:
     const HASHSET(RTTI, SCMetaObject)& LoadedObjects() const {
         return _loadedObjects;
     }
+
+    void reserve(size_t capacity);
+
+    bool DeepEquals(const FMetaTransaction& other) const;
 
 protected: // ILoadContext + IUnloadContxt
     virtual void OnLoadObject(FMetaObject& object) override;

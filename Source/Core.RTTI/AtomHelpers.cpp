@@ -1,24 +1,24 @@
 #include "stdafx.h"
 
-#include "Typedefs.h"
+#include "AtomHelpers.h"
 
-#include "Core/IO/Format.h"
-#include "Core/IO/StringView.h"
+#include "Core/IO/Stream.h"
+#include "Core/IO/String.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const RTTI::FBinaryData& bindata) {
-    oss << "FBinaryData:\"";
-    Escape(oss, FStringView((const char*)bindata.data(), bindata.size()), EEscape::Hexadecimal);
-    return oss << "\"";
+FString ToString(const RTTI::FAtom& atom) {
+    FOStringStream oss;
+    atom.Format(oss);
+    return oss.str();
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const RTTI::FBinaryData& bindata) {
-    oss << L"FBinaryData:\"";
-    Escape(oss, FWStringView((const wchar_t*)bindata.data(), bindata.size()), EEscape::Hexadecimal);
-    return oss << L"\"";
+FWString ToWString(const RTTI::FAtom& atom) {
+    FWOStringStream oss;
+    atom.Format(oss);
+    return oss.str();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

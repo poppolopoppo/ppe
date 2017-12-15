@@ -58,24 +58,24 @@ public:
         return MakeAtom_(obj);
     }
 
-    bool CopyTo(const FMetaObject& obj, const FAtom& dst) const {
+    void CopyTo(const FMetaObject& obj, const FAtom& dst) const {
         CheckPropertyIFN(obj, false);
-        return MakeAtom_(obj).CopyTo(dst);
+        MakeAtom_(obj).Copy(dst);
     }
 
-    bool MoveTo(FMetaObject& obj, const FAtom& dst) const {
+    void MoveTo(FMetaObject& obj, const FAtom& dst) const {
         CheckPropertyIFN(obj, true);
-        return MakeAtom_(obj).MoveTo(dst);
+        MakeAtom_(obj).Move(dst);
     }
 
-    bool CopyFrom(FMetaObject& obj, const FAtom& src) const {
+    void CopyFrom(FMetaObject& obj, const FAtom& src) const {
         CheckPropertyIFN(obj, true);
-        return src.CopyTo(MakeAtom_(obj));
+        src.Copy(MakeAtom_(obj));
     }
 
-    bool MoveFrom(FMetaObject& obj, FAtom& src) const {
+    void MoveFrom(FMetaObject& obj, FAtom& src) const {
         CheckPropertyIFN(obj, true);
-        return src.MoveTo(MakeAtom_(obj));
+        src.Move(MakeAtom_(obj));
     }
 
 private:

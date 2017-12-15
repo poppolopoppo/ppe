@@ -2,10 +2,11 @@
 
 #include "MetaFunction.h"
 
+#include "Core/IO/FormatHelpers.h"
+
 #if USE_CORE_RTTI_CHECKS
 #   include "MetaObject.h"
 #   include "Core/Diagnostic/Logger.h"
-#   include "Core/IO/FormatHelpers.h"
 #endif
 
 namespace Core {
@@ -47,6 +48,17 @@ FMetaFunction::FMetaFunction(
     , _parameters(parameters) {
     Assert(not _name.empty());
     Assert(_invoke);
+
+#if USE_CORE_RTTI_CHECKS
+    // check that optional parameters are all packed ate
+    bool optional = false;
+    for (const FMetaParameter& prm : _parameters) {
+        if (prm.IsOptional())
+            optional = true;
+        else
+            Assert(not optional);
+    }
+#endif
 }
 //----------------------------------------------------------------------------
 FMetaFunction::~FMetaFunction()
@@ -58,7 +70,7 @@ void FMetaFunction::Invoke(
     const TMemoryView<const FAtom>& arguments ) const {
     Assert(_invoke);
     Assert(result || not HasReturnValue());
-    Assert(arguments.size() == _parameters.size());
+    Assert(arguments.size() <= _parameters.size()); // can have optional parameters
 
 #if USE_CORE_RTTI_CHECKS
     if (IsDeprecated()) {
@@ -75,6 +87,12 @@ void FMetaFunction::Invoke(
             }),
             obj.RTTI_Name(),
             obj.RTTI_Flags() );
+    }
+    // still no support for optional parameters even if they're allowed in declaration ...
+    AssertRelease(_parameters.size() == arguments.size());
+    // check that types of given arguments match the parameters
+    forrange(i, 0, arguments.size()) {
+        Assert(arguments[i].Cast(_parameters[i].Traits()));
     }
 #endif
 
@@ -94,10 +112,10 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EPara
     if (flags == RTTI::EParameterFlags::Default)
         return oss << "Default";
 
-    bool s = false;
+    auto sep = Fmt::NotFirstTime('|');
 
-    if (flags & RTTI::EParameterFlags::Output)      { if (s) oss << '|'; else s = true; oss << "Output"; }
-    if (flags & RTTI::EParameterFlags::Optional)    { if (s) oss << '|'; else s = true; oss << "Optional"; }
+    if (flags & RTTI::EParameterFlags::Output)      { oss << sep << "Output"; }
+    if (flags & RTTI::EParameterFlags::Optional)    { oss << sep << "Optional"; }
 
     return oss;
 }
@@ -106,10 +124,10 @@ std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI:
     if (flags == RTTI::EParameterFlags::Default)
         return oss << L"Default";
 
-    bool s = false;
+    auto sep = Fmt::NotFirstTime(L'|');
 
-    if (flags & RTTI::EParameterFlags::Output)      { if (s) oss << L'|'; else s = true; oss << L"Output"; }
-    if (flags & RTTI::EParameterFlags::Optional)    { if (s) oss << L'|'; else s = true; oss << L"Optional"; }
+    if (flags & RTTI::EParameterFlags::Output)      { oss << sep << L"Output"; }
+    if (flags & RTTI::EParameterFlags::Optional)    { oss << sep << L"Optional"; }
 
     return oss;
 }
@@ -117,25 +135,25 @@ std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EFunctionFlags flags) {
-    bool s = false;
+    auto sep = Fmt::NotFirstTime('|');
 
-    if (flags & RTTI::EFunctionFlags::Const)        { if (s) oss << '|'; else s = true; oss << "Const"; }
-    if (flags & RTTI::EFunctionFlags::Public)       { if (s) oss << '|'; else s = true; oss << "Public"; }
-    if (flags & RTTI::EFunctionFlags::Protected)    { if (s) oss << '|'; else s = true; oss << "Protected"; }
-    if (flags & RTTI::EFunctionFlags::Private)      { if (s) oss << '|'; else s = true; oss << "Private"; }
-    if (flags & RTTI::EFunctionFlags::Deprecated)   { if (s) oss << '|'; else s = true; oss << "Deprecated"; }
+    if (flags & RTTI::EFunctionFlags::Const)        { oss << sep << "Const"; }
+    if (flags & RTTI::EFunctionFlags::Public)       { oss << sep << "Public"; }
+    if (flags & RTTI::EFunctionFlags::Protected)    { oss << sep << "Protected"; }
+    if (flags & RTTI::EFunctionFlags::Private)      { oss << sep << "Private"; }
+    if (flags & RTTI::EFunctionFlags::Deprecated)   { oss << sep << "Deprecated"; }
 
     return oss;
 }
 //----------------------------------------------------------------------------
 std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EFunctionFlags flags) {
-    bool s = false;
+    auto sep = Fmt::NotFirstTime(L'|');
 
-    if (flags & RTTI::EFunctionFlags::Const)        { if (s) oss << L'|'; else s = true; oss << L"Const"; }
-    if (flags & RTTI::EFunctionFlags::Public)       { if (s) oss << L'|'; else s = true; oss << L"Public"; }
-    if (flags & RTTI::EFunctionFlags::Protected)    { if (s) oss << L'|'; else s = true; oss << L"Protected"; }
-    if (flags & RTTI::EFunctionFlags::Private)      { if (s) oss << L'|'; else s = true; oss << L"Private"; }
-    if (flags & RTTI::EFunctionFlags::Deprecated)   { if (s) oss << L'|'; else s = true; oss << L"Deprecated"; }
+    if (flags & RTTI::EFunctionFlags::Const)        { oss << sep << L"Const"; }
+    if (flags & RTTI::EFunctionFlags::Public)       { oss << sep << L"Public"; }
+    if (flags & RTTI::EFunctionFlags::Protected)    { oss << sep << L"Protected"; }
+    if (flags & RTTI::EFunctionFlags::Private)      { oss << sep << L"Private"; }
+    if (flags & RTTI::EFunctionFlags::Deprecated)   { oss << sep << L"Deprecated"; }
 
     return oss;
 }

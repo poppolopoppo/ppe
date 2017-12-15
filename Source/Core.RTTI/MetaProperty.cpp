@@ -2,6 +2,8 @@
 
 #include "MetaProperty.h"
 
+#include "Core/IO/FormatHelpers.h"
+
 #ifdef WITH_CORE_RTTI_PROPERTY_CHECKS
 #   include "MetaObject.h"
 #   include "Core/Diagnostic/Logger.h"
@@ -56,29 +58,29 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EPropertyFlags flags) {
-    bool s = false;
+    auto sep = Fmt::NotFirstTime('|');
 
-    if (flags & RTTI::EPropertyFlags::Public)    { if (s) oss << '|'; else s = true; oss << "Public"; }
-    if (flags & RTTI::EPropertyFlags::Protected) { if (s) oss << '|'; else s = true; oss << "Protected"; }
-    if (flags & RTTI::EPropertyFlags::Private)   { if (s) oss << '|'; else s = true; oss << "Private"; }
-    if (flags & RTTI::EPropertyFlags::ReadOnly)  { if (s) oss << '|'; else s = true; oss << "ReadOnly"; }
-    if (flags & RTTI::EPropertyFlags::Deprecated){ if (s) oss << '|'; else s = true; oss << "Deprecated"; }
-    if (flags & RTTI::EPropertyFlags::Member)    { if (s) oss << '|'; else s = true; oss << "Member"; }
-    if (flags & RTTI::EPropertyFlags::Dynamic)   { if (s) oss << '|'; else s = true; oss << "Dynamic"; }
+    if (flags & RTTI::EPropertyFlags::Public)    { oss << sep << "Public"; }
+    if (flags & RTTI::EPropertyFlags::Protected) { oss << sep << "Protected"; }
+    if (flags & RTTI::EPropertyFlags::Private)   { oss << sep << "Private"; }
+    if (flags & RTTI::EPropertyFlags::ReadOnly)  { oss << sep << "ReadOnly"; }
+    if (flags & RTTI::EPropertyFlags::Deprecated){ oss << sep << "Deprecated"; }
+    if (flags & RTTI::EPropertyFlags::Member)    { oss << sep << "Member"; }
+    if (flags & RTTI::EPropertyFlags::Dynamic)   { oss << sep << "Dynamic"; }
 
     return oss;
 }
 //----------------------------------------------------------------------------
 std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EPropertyFlags flags) {
-    bool s = false;
+    auto sep = Fmt::NotFirstTime(L'|');
 
-    if (flags & RTTI::EPropertyFlags::Public)    { if (s) oss << L'|'; else s = true; oss << L"Public"; }
-    if (flags & RTTI::EPropertyFlags::Protected) { if (s) oss << L'|'; else s = true; oss << L"Protected"; }
-    if (flags & RTTI::EPropertyFlags::Private)   { if (s) oss << L'|'; else s = true; oss << L"Private"; }
-    if (flags & RTTI::EPropertyFlags::ReadOnly)  { if (s) oss << L'|'; else s = true; oss << L"ReadOnly"; }
-    if (flags & RTTI::EPropertyFlags::Deprecated){ if (s) oss << L'|'; else s = true; oss << L"Deprecated"; }
-    if (flags & RTTI::EPropertyFlags::Member)    { if (s) oss << L'|'; else s = true; oss << L"Member"; }
-    if (flags & RTTI::EPropertyFlags::Dynamic)   { if (s) oss << L'|'; else s = true; oss << L"Dynamic"; }
+    if (flags & RTTI::EPropertyFlags::Public)    { oss << sep << L"Public"; }
+    if (flags & RTTI::EPropertyFlags::Protected) { oss << sep << L"Protected"; }
+    if (flags & RTTI::EPropertyFlags::Private)   { oss << sep << L"Private"; }
+    if (flags & RTTI::EPropertyFlags::ReadOnly)  { oss << sep << L"ReadOnly"; }
+    if (flags & RTTI::EPropertyFlags::Deprecated){ oss << sep << L"Deprecated"; }
+    if (flags & RTTI::EPropertyFlags::Member)    { oss << sep << L"Member"; }
+    if (flags & RTTI::EPropertyFlags::Dynamic)   { oss << sep << L"Dynamic"; }
 
     return oss;
 }

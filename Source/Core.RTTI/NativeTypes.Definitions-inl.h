@@ -51,4 +51,4 @@
     COMMA_PROTECT(_Macro(Filename,      Core::FFilename,               37 )) \
     COMMA_PROTECT(_Macro(MetaObject,    Core::RTTI::PMetaObject,       38 )) \
     COMMA_PROTECT(_Macro(BinaryData,    Core::RTTI::FBinaryData,       39 )) \
-    /*COMMA_PROTECT(_Macro(OpaqueData,    Core::RTTI::FOpaqueData,       40 ))*/
+    COMMA_PROTECT(_Macro(Any,           Core::RTTI::FAny,              40 ))

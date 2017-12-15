@@ -2,10 +2,7 @@
 
 #include "Core.RTTI/RTTI.h"
 
-#include "Core/Container/AssociativeVector.h"
-#include "Core/Container/Pair.h"
 #include "Core/Container/RawStorage.h"
-#include "Core/Container/Vector.h"
 #include "Core/Container/Token.h"
 
 #include "Core/Maths/PrimeNumbers.h" // FClassId
@@ -25,11 +22,9 @@ public:
 //----------------------------------------------------------------------------
 BASICTOKEN_CLASS_DEF(FName, char, ECase::Insensitive, FNameTokenTraits);
 //----------------------------------------------------------------------------
-INSTANTIATE_CLASS_TYPEDEF(FBinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, 16));
+INSTANTIATE_CLASS_TYPEDEF(FBinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, ALLOCATION_BOUNDARY));
 //----------------------------------------------------------------------------
-//INSTANTIATE_CLASS_TYPEDEF(FOpaqueData, ASSOCIATIVE_VECTOR(RTTI, FName, PMetaAtom));
-//----------------------------------------------------------------------------
-// /!\ not guaranted to be stable : dependant of initialization order
+// /!\ not guaranteed to be stable : depends on initialization order
 using FClassId = TPrimeNumberProduct<class FMetaClass>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

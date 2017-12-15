@@ -72,7 +72,7 @@ void Move(const FMetaObject& src, FMetaObject& dst) {
         FAtom srcValue = prop->Get(src);
         const FAtom dstValue = prop->Get(dst);
 
-        srcValue.MoveTo(dstValue);
+        srcValue.Move(dstValue);
     }
 }
 //----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ void Copy(const FMetaObject& src, FMetaObject& dst) {
         const FAtom srcValue = prop->Get(src);
         const FAtom dstValue = prop->Get(dst);
 
-        srcValue.CopyTo(dstValue);
+        srcValue.Copy(dstValue);
     }
 }
 //----------------------------------------------------------------------------
@@ -120,7 +120,7 @@ void Clone(const FMetaObject& src, PMetaObject& pdst) {
         const FAtom srcValue = prop->Get(src);
         const FAtom dstValue = prop->Get(dst);
 
-        srcValue.CopyTo(dstValue);
+        srcValue.Copy(dstValue);
     }
 }
 //----------------------------------------------------------------------------

@@ -7,6 +7,8 @@
 
 #include "RTTI_Namespace.h"
 
+#include "Core/IO/FormatHelpers.h"
+
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------
@@ -20,7 +22,6 @@ FMetaObject::~FMetaObject() {
     Assert(RTTI_IsUnloaded());
     Assert(not RTTI_IsLoaded());
     Assert(not RTTI_IsExported());
-    Assert(not RTTI_IsTopObject());
 }
 //----------------------------------------------------------------------------
 bool FMetaObject::RTTI_IsA(const FMetaClass& metaClass) const {
@@ -157,13 +158,14 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EObje
     if (flags == RTTI::EObjectFlags::None)
         return oss << "None";
 
-    bool s = false;
-    if (flags & RTTI::EObjectFlags::Loaded)     { if (s) oss << L'|'; else s = true; oss << L"Loaded"; }
-    if (flags & RTTI::EObjectFlags::Unloaded)   { if (s) oss << L'|'; else s = true; oss << L"Unloaded"; }
-    if (flags & RTTI::EObjectFlags::Exported)   { if (s) oss << L'|'; else s = true; oss << L"Exported"; }
-    if (flags & RTTI::EObjectFlags::TopObject)  { if (s) oss << L'|'; else s = true; oss << L"TopObject"; }
+    auto sep = Fmt::NotFirstTime('|');
+
+    if (flags & RTTI::EObjectFlags::Loaded)     { oss << sep << L"Loaded"; }
+    if (flags & RTTI::EObjectFlags::Unloaded)   { oss << sep << L"Unloaded"; }
+    if (flags & RTTI::EObjectFlags::Exported)   { oss << sep << L"Exported"; }
+    if (flags & RTTI::EObjectFlags::TopObject)  { oss << sep << L"TopObject"; }
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-    if (flags & RTTI::EObjectFlags::Verifying)  { if (s) oss << L'|'; else s = true; oss << L"Verifying"; }
+    if (flags & RTTI::EObjectFlags::Verifying)  { oss << sep << L"Verifying"; }
 #endif
 
     return oss;
@@ -173,13 +175,14 @@ std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI:
     if (flags == RTTI::EObjectFlags::None)
         return oss << L"None";
 
-    bool s = false;
-    if (flags & RTTI::EObjectFlags::Loaded)     { if (s) oss << L'|'; else s = true; oss << L"Loaded"; }
-    if (flags & RTTI::EObjectFlags::Unloaded)   { if (s) oss << L'|'; else s = true; oss << L"Unloaded"; }
-    if (flags & RTTI::EObjectFlags::Exported)   { if (s) oss << L'|'; else s = true; oss << L"Exported"; }
-    if (flags & RTTI::EObjectFlags::TopObject)  { if (s) oss << L'|'; else s = true; oss << L"TopObject"; }
+    auto sep = Fmt::NotFirstTime(L'|');
+
+    if (flags & RTTI::EObjectFlags::Loaded)     { oss << sep << L"Loaded"; }
+    if (flags & RTTI::EObjectFlags::Unloaded)   { oss << sep << L"Unloaded"; }
+    if (flags & RTTI::EObjectFlags::Exported)   { oss << sep << L"Exported"; }
+    if (flags & RTTI::EObjectFlags::TopObject)  { oss << sep << L"TopObject"; }
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-    if (flags & RTTI::EObjectFlags::Verifying)  { if (s) oss << L'|'; else s = true; oss << L"Verifying"; }
+    if (flags & RTTI::EObjectFlags::Verifying)  { oss << sep << L"Verifying"; }
 #endif
 
     return oss;

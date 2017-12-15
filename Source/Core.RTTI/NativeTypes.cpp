@@ -4,6 +4,7 @@
 
 #include "TypeInfos.h"
 
+#include "Any.h"
 #include "AtomVisitor.h" // needed for Accept() & PrettyPrint()
 #include "MetaObject.h" // needed for PMetaObject manipulation
 #include "MetaObjectHelpers.h" // needed for DeepEquals()
@@ -20,8 +21,8 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-class TNativeTypeTraits : public TBaseTypeTraits<T, IScalarTraits> {
-    using base_traits = TBaseTypeTraits<T, IScalarTraits>;
+class TNativeTypeTraits : public TBaseTypeTraits<T, TBaseScalarTraits<T> > {
+    using base_traits = TBaseTypeTraits<T, TBaseScalarTraits<T> >;
     using typename base_traits::value_type;
     using typename base_traits::pointer;
     using typename base_traits::const_pointer;
@@ -60,6 +61,10 @@ public:
         }
     }
 
+    virtual void* Cast(const FAtom& from, const PTypeTraits& to) const override final {
+        return base_traits::Cast(from, to);
+    }
+
     virtual bool Accept(IAtomVisitor* visitor, const FAtom& atom) const override final {
         return visitor->Visit(static_cast<const IScalarTraits*>(this), atom.TypedData<T>());
     }
@@ -73,7 +78,16 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+// FAny specializations
+//----------------------------------------------------------------------------
+template <>
+void* TNativeTypeTraits<FAny>::Cast(const FAtom& from, const PTypeTraits& to) const {
+    Assert(from);
+    Assert(from.Traits() == MakeTraits<FAny>());
+    return (from.Traits() == to
+        ? from.Data()
+        : reinterpret_cast<FAny*>(from.Data())->Traits()->Cast(reinterpret_cast<FAny*>(from.Data())->InnerAtom(), to) );
+}
 //----------------------------------------------------------------------------
 // PMetaObject specializations
 //----------------------------------------------------------------------------
@@ -100,16 +114,14 @@ void TNativeTypeTraits<PMetaObject>::DeepCopy(const FAtom& src, const FAtom& dst
 }
 //----------------------------------------------------------------------------
 template <>
-void TNativeTypeTraits<PMetaObject>::Format(std::basic_ostream<char>& oss, const FAtom& atom) const override final {
+void TNativeTypeTraits<PMetaObject>::Format(std::basic_ostream<char>& oss, const FAtom& atom) const {
     PrettyPrint(oss, atom);
 }
 //----------------------------------------------------------------------------
 template <>
-void TNativeTypeTraits<PMetaObject>::Format(std::basic_ostream<wchar_t>& oss, const FAtom& atom) const override final {
+void TNativeTypeTraits<PMetaObject>::Format(std::basic_ostream<wchar_t>& oss, const FAtom& atom) const {
     PrettyPrint(oss, atom);
 }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define DEF_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) \
     /* TNativeTypeTraits<T> */ \
@@ -135,6 +147,30 @@ void TNativeTypeTraits<PMetaObject>::Format(std::basic_ostream<wchar_t>& oss, co
 FOREACH_RTTI_NATIVETYPES(DEF_RTTI_NATIVETYPE_TRAITS)
 
 #undef DEF_RTTI_NATIVETYPE_TRAITS
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PTypeTraits MakeTraits(ENativeType nativeType) {
+    switch (nativeType) {
+#define DEF_RTTI_MAKETRAITS(_Name, T, _TypeId) \
+    case ENativeType::_Name: return MakeTraits<T>();
+    FOREACH_RTTI_NATIVETYPES(DEF_RTTI_MAKETRAITS)
+#undef DEF_RTTI_MAKETRAITS
+    default:
+        AssertNotImplemented();
+        break;
+    }
+    return PTypeTraits();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#define DECL_RTTI_NATIVETYPE_ISSUPPORTED(_Name, T, _TypeId) STATIC_ASSERT(TIsSupportedType<T>::value);
+FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_ISSUPPORTED)
+#undef DECL_RTTI_NATIVETYPE_ISSUPPORTED
+//----------------------------------------------------------------------------
+STATIC_ASSERT(not TIsSupportedType<void>::value);
+STATIC_ASSERT(not TIsSupportedType<FAtom>::value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

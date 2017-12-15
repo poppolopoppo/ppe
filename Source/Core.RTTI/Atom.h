@@ -11,7 +11,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 class FAtom {
 public:
-    FAtom() : FAtom(nullptr, PTypeTraits{}) {}
+    FAtom() : _data(nullptr) {}
     FAtom(const void* data, const PTypeTraits& traits)
         : _data((void*)data)
         , _traits(traits) {
@@ -22,18 +22,22 @@ public:
     void* Data() const { return _data; }
     const PTypeTraits& Traits() const { return _traits; }
 
+    void* Cast(const PTypeTraits& to) const {
+        Assert(_data);
+        return _traits->Cast(*this, to);
+    }
+
     template <typename T>
     T& TypedData() const {
         Assert(_data);
-        Assert(MakeTraits<T>() == _traits);
-        return (*reinterpret_cast<T*>(_data));
+        void* cast = Cast(MakeTraits<T>());
+        Assert(cast);
+        return (*reinterpret_cast<T*>(cast));
     }
 
     template <typename T>
     const T& TypedConstData() const {
-        Assert(_data);
-        Assert(MakeTraits<T>() == _traits);
-        return (*reinterpret_cast<T*>(_data));
+        return TypedData<T>();
     }
 
     FTypeId TypeId() const { return _traits->TypeId(); }
@@ -42,21 +46,15 @@ public:
     bool IsDefaultValue() const { return _traits->IsDefaultValue(*this); }
 
     bool Equals(const FAtom& other) const {
-        return (_traits == other._traits && _traits->Equals(*this, other));
+        return _traits->Equals(*this, other);
     }
 
-    bool CopyTo(const FAtom& dst) const {
-        if (_traits != dst._traits)
-            return false;
+    void Copy(const FAtom& dst) const {
         _traits->Copy(*this, dst);
-        return true;
     }
 
-    bool MoveTo(const FAtom& dst) {
-        if (_traits != dst._traits)
-            return false;
+    void Move(const FAtom& dst) {
         _traits->Move(*this, dst);
-        return true;
     }
 
     bool DeepEquals(const FAtom& other) const {
@@ -99,6 +97,8 @@ private:
     PTypeTraits _traits;
 };
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T>
 FAtom MakeAtom(T* data) {
     return FAtom(data, MakeTraits<T>());
@@ -107,6 +107,18 @@ FAtom MakeAtom(T* data) {
 template <typename T>
 FAtom InplaceAtom(const T& inplace) {
     return FAtom(&inplace, MakeTraits<T>());
+}
+//----------------------------------------------------------------------------
+template <typename T>
+T* Cast(const FAtom& atom) {
+    return (reinterpret_cast<T*>(atom.Traits()
+        ? atom.Cast(MakeTraits<T>())
+        : nullptr ));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+T* CastChecked(const FAtom& atom) {
+    return (&atom.TypedData<T>());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -5,6 +5,7 @@
 #include "MetaNamespace.h"
 
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/FormatHelpers.h"
 
 namespace Core {
 namespace RTTI {
@@ -271,31 +272,31 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EClassFlags flags) {
-    bool s = false;
+    auto sep = Fmt::NotFirstTime('|');
 
-    if (flags & RTTI::EClassFlags::Concrete)    { if (s) oss << '|'; else s = true; oss << "Concrete"; }
-    if (flags & RTTI::EClassFlags::Abstract)    { if (s) oss << '|'; else s = true; oss << "Abstract"; }
-    if (flags & RTTI::EClassFlags::Dynamic)     { if (s) oss << '|'; else s = true; oss << "Dynamic"; }
-    if (flags & RTTI::EClassFlags::Public)      { if (s) oss << '|'; else s = true; oss << "Public"; } else {
-                                                  if (s) oss << '|'; else s = true; oss << "Private"; }
-    if (flags & RTTI::EClassFlags::Mergeable)   { if (s) oss << '|'; else s = true; oss << "Mergeable"; }
-    if (flags & RTTI::EClassFlags::Deprecated)  { if (s) oss << '|'; else s = true; oss << "Deprecated"; }
-    if (flags & RTTI::EClassFlags::Registered)  { if (s) oss << '|'; else s = true; oss << "Registered"; }
+    if (flags & RTTI::EClassFlags::Concrete)    { oss << sep << "Concrete"; }
+    if (flags & RTTI::EClassFlags::Abstract)    { oss << sep << "Abstract"; }
+    if (flags & RTTI::EClassFlags::Dynamic)     { oss << sep << "Dynamic"; }
+    if (flags & RTTI::EClassFlags::Public)      { oss << sep << "Public"; } else {
+                                                  oss << sep << "Private"; }
+    if (flags & RTTI::EClassFlags::Mergeable)   { oss << sep << "Mergeable"; }
+    if (flags & RTTI::EClassFlags::Deprecated)  { oss << sep << "Deprecated"; }
+    if (flags & RTTI::EClassFlags::Registered)  { oss << sep << "Registered"; }
 
     return oss;
 }
 //----------------------------------------------------------------------------
 std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EClassFlags flags) {
-    bool s = false;
+    auto sep = Fmt::NotFirstTime(L'|');
 
-    if (flags & RTTI::EClassFlags::Concrete)    { if (s) oss << L'|'; else s = true; oss << L"Concrete"; }
-    if (flags & RTTI::EClassFlags::Abstract)    { if (s) oss << L'|'; else s = true; oss << L"Abstract"; }
-    if (flags & RTTI::EClassFlags::Dynamic)     { if (s) oss << L'|'; else s = true; oss << L"Dynamic"; }
-    if (flags & RTTI::EClassFlags::Public)      { if (s) oss << L'|'; else s = true; oss << L"Public"; } else {
-                                                  if (s) oss << L'|'; else s = true; oss << L"Private"; }
-    if (flags & RTTI::EClassFlags::Mergeable)   { if (s) oss << L'|'; else s = true; oss << L"Mergeable"; }
-    if (flags & RTTI::EClassFlags::Deprecated)  { if (s) oss << L'|'; else s = true; oss << L"Deprecated"; }
-    if (flags & RTTI::EClassFlags::Registered)  { if (s) oss << L'|'; else s = true; oss << L"Registered"; }
+    if (flags & RTTI::EClassFlags::Concrete)    { oss << sep << L"Concrete"; }
+    if (flags & RTTI::EClassFlags::Abstract)    { oss << sep << L"Abstract"; }
+    if (flags & RTTI::EClassFlags::Dynamic)     { oss << sep << L"Dynamic"; }
+    if (flags & RTTI::EClassFlags::Public)      { oss << sep << L"Public"; } else {
+                                                  oss << sep << L"Private"; }
+    if (flags & RTTI::EClassFlags::Mergeable)   { oss << sep << L"Mergeable"; }
+    if (flags & RTTI::EClassFlags::Deprecated)  { oss << sep << L"Deprecated"; }
+    if (flags & RTTI::EClassFlags::Registered)  { oss << sep << L"Registered"; }
 
     return oss;
 }

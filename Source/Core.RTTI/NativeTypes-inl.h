@@ -10,9 +10,34 @@ namespace RTTI {
 // TBaseTypeTraits<T, _Parent>
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
+void* TBaseTypeTraits<T, _Parent>::Allocate() const {
+    return memorypool_type::Allocate();
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Parent>
+void TBaseTypeTraits<T, _Parent>::Deallocate(void* ptr) const {
+    Assert(ptr);
+    return memorypool_type::Deallocate(ptr);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Parent>
 void TBaseTypeTraits<T, _Parent>::Create(const FAtom& atom) const {
     Assert(atom);
     Meta::Construct(&atom.TypedData<T>(), Meta::FForceInit{});
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Parent>
+void TBaseTypeTraits<T, _Parent>::CreateCopy(const FAtom& cpy, const FAtom& other) const {
+    Assert(cpy);
+    Assert(other);
+    Meta::Construct(&cpy.TypedData<T>(), other.TypedConstData<T>());
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Parent>
+void TBaseTypeTraits<T, _Parent>::CreateMove(const FAtom& cpy, const FAtom& rvalue) const {
+    Assert(cpy);
+    Assert(rvalue);
+    Meta::Construct(&cpy.TypedData<T>(), std::move(rvalue.TypedData<T>()));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
@@ -45,6 +70,11 @@ template <typename T, typename _Parent>
 void TBaseTypeTraits<T, _Parent>::Swap(const FAtom& lhs, const FAtom& rhs) const  {
     using std::swap;
     swap(lhs.TypedData<T>(), rhs.TypedData<T>());
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Parent>
+void* TBaseTypeTraits<T, _Parent>::Cast(const FAtom& from, const PTypeTraits& to) const {
+    return (from.Traits() == to ? from.Data() : nullptr);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
@@ -489,6 +519,13 @@ FAtom TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Find(const FAto
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+FAtom TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddDefault(const FAtom& dico, FAtom&& rkey) const {
+    value_type& d = dico.TypedData<value_type>();
+    _Value& value = d.Add(std::move(rkey.TypedData<_Key>()));
+    return FAtom(&value, MakeTraits<_Value>());
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 FAtom TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddDefault(const FAtom& dico, const FAtom& key) const {
     value_type& d = dico.TypedData<value_type>();
     _Value& value = d.Add(key.TypedConstData<_Key>());
@@ -499,16 +536,14 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddCopy(const FAtom& dico, const FAtom& key, const FAtom& value) const {
     dico.TypedData<value_type>().Insert_AssertUnique(
         key.TypedConstData<_Key>(),
-        value.TypedConstData<_Value>()
-    );
+        value.TypedConstData<_Value>() );
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddMove(const FAtom& dico, const FAtom& key, const FAtom& value) const {
     dico.TypedData<value_type>().Insert_AssertUnique(
         std::move(key.TypedData<_Key>()),
-        std::move(value.TypedData<_Value>())
-    );
+        std::move(value.TypedData<_Value>()) );
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
@@ -567,26 +602,31 @@ FAtom THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Find(const FA
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
+FAtom THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddDefault(const FAtom& dico, FAtom&& rkey) const {
+    value_type& d = dico.TypedData<value_type>();
+    _Value& v = d.Add(std::move(rkey.TypedData<_Key>()));
+    return FAtom(&v, MakeTraits<_Value>());
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 FAtom THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddDefault(const FAtom& dico, const FAtom& key) const {
     value_type& d = dico.TypedData<value_type>();
-    const auto it = d.try_emplace(key.TypedConstData<_Key>()).first;
-    return FAtom(&it->second, MakeTraits<_Value>());
+    _Value& v = d.Add(key.TypedConstData<_Key>());
+    return FAtom(&v, MakeTraits<_Value>());
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddCopy(const FAtom& dico, const FAtom& key, const FAtom& value) const {
     dico.TypedData<value_type>().emplace_AssertUnique(
         key.TypedConstData<_Key>(),
-        value.TypedConstData<_Value>()
-    );
+        value.TypedConstData<_Value>() );
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddMove(const FAtom& dico, const FAtom& key, const FAtom& value) const {
     dico.TypedData<value_type>().emplace_AssertUnique(
         std::move(key.TypedData<_Key>()),
-        std::move(value.TypedData<_Value>())
-    );
+        std::move(value.TypedData<_Value>()) );
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>

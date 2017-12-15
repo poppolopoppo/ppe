@@ -5,6 +5,7 @@
 #include "AtomVisitor.h"
 
 #include "Core/IO/Format.h"
+#include "Core/IO/FormatHelpers.h"
 #include "Core/IO/String.h"
 #include "Core/Memory/HashFunctions.h"
 #include "Core/Memory/MemoryView.h"
@@ -62,25 +63,25 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::ETypeFlags flags) {;
-    bool s = false;;
+    auto sep = Fmt::NotFirstTime('|');
 ;
-    if (flags & RTTI::ETypeFlags::Scalar)   { if (s) oss << '|'; else s = true; oss << "Scalar";; }
-    if (flags & RTTI::ETypeFlags::Pair)     { if (s) oss << '|'; else s = true; oss << "Pair"; ;}
-    if (flags & RTTI::ETypeFlags::List)     { if (s) oss << '|'; else s = true; oss << "List"; }
-    if (flags & RTTI::ETypeFlags::Dico)     { if (s) oss << '|'; else s = true; oss << "Dico"; }
-    if (flags & RTTI::ETypeFlags::Native)   { if (s) oss << '|'; else s = true; oss << "Native"; }
+    if (flags & RTTI::ETypeFlags::Scalar)   { oss << sep << "Scalar";; }
+    if (flags & RTTI::ETypeFlags::Pair)     { oss << sep << "Pair"; ;}
+    if (flags & RTTI::ETypeFlags::List)     { oss << sep << "List"; }
+    if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << "Dico"; }
+    if (flags & RTTI::ETypeFlags::Native)   { oss << sep << "Native"; }
 
     return oss;
 }
 //----------------------------------------------------------------------------
 std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::ETypeFlags flags) {
-    bool s = false;
+    auto sep = Fmt::NotFirstTime(L'|');
 
-    if (flags & RTTI::ETypeFlags::Scalar)   { if (s) oss << L'|'; else s = true; oss << L"Scalar"; }
-    if (flags & RTTI::ETypeFlags::Pair)     { if (s) oss << L'|'; else s = true; oss << L"Pair"; }
-    if (flags & RTTI::ETypeFlags::List)     { if (s) oss << L'|'; else s = true; oss << L"List"; }
-    if (flags & RTTI::ETypeFlags::Dico)     { if (s) oss << L'|'; else s = true; oss << L"Dico"; }
-    if (flags & RTTI::ETypeFlags::Native)   { if (s) oss << L'|'; else s = true; oss << L"Native"; }
+    if (flags & RTTI::ETypeFlags::Scalar)   { oss << sep << L"Scalar"; }
+    if (flags & RTTI::ETypeFlags::Pair)     { oss << sep << L"Pair"; }
+    if (flags & RTTI::ETypeFlags::List)     { oss << sep << L"List"; }
+    if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << L"Dico"; }
+    if (flags & RTTI::ETypeFlags::Native)   { oss << sep << L"Native"; }
 
     return oss;
 }

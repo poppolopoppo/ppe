@@ -7,7 +7,15 @@
 #include "Core.RTTI/TypeTraits.h"
 
 #include "Core/Container/Tuple.h"
+#include "Core/Container/Vector.h"
 #include "Core/Meta/PointerWFlags.h"
+
+// TODO : check if it's useful in future (13/12/2017)
+#ifdef CPP_VISUALSTUDIO
+#   define USE_MSVC17_WORKAROUND_FOR_INTERNALERROR 1
+#else
+#   define USE_MSVC17_WORKAROUND_FOR_INTERNALERROR 0
+#endif
 
 namespace Core {
 namespace RTTI {
@@ -117,8 +125,7 @@ template <typename T> struct TMakeFunction {};
 template <typename _Result, class _Class, typename... _Args>
 struct TMakeFunction<_Result (_Class::*)(_Args...)> {
     template <_Result (_Class::* _Member)(_Args...)>
-    static Meta::TEnableIf<std::is_base_of<FMetaObject, _Class>::value, FMetaFunction>
-        Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) {
+    static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) {
         Assert(sizeof...(_Args) == parametersName.size());
         auto nameIt = std::begin(parametersName);
         return FMetaFunction(
@@ -134,9 +141,13 @@ private:
     template <_Result (_Class::* _Member)(_Args...), typename T = std::false_type>
     struct TMemberFunction_ {
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
-            size_t argIndex = 0;
+            const FAtom* parg = arguments.data();
             result.TypedData<_Result>() = Call(_Member, const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)), TTuple<Meta::TReference<_Args>...>{
-                arguments[argIndex++].TypedData<Meta::TDecay<_Args>>()...
+#if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
+                *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
+#else
+                (*parg++).TypedData<Meta::TDecay<_Arg>>()...
+#endif.
             });
         }
     };
@@ -145,9 +156,13 @@ private:
     struct TMemberFunction_<_Member, std::true_type> {
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
             Assert(not result);
-            size_t argIndex = 0;
+            const FAtom* parg = arguments.data();
             Call(_Member, const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)), TTuple<Meta::TReference<_Args>...>{
-                arguments[argIndex++].TypedData<Meta::TDecay<_Args>>()...
+#if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
+                *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
+#else
+                (*parg++).TypedData<Meta::TDecay<_Arg>>()...
+#endif.
             });
         }
     };
@@ -155,11 +170,48 @@ private:
 //----------------------------------------------------------------------------
 template <typename _Result, class _Class, typename... _Args>
 struct TMakeFunction<_Result (_Class::*)(_Args...) const> {
-    template <_Result (_Class::* _Member)(_Args...) const>
+    template <_Result(_Class::* _Member)(_Args...) const>
     static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) {
-        typedef _Result (_Class::* non_const_type)(_Args...);
-        return TMakeFunction<non_const_type>::Make<(non_const_type)_Member>(name, flags + EFunctionFlags::Const, std::move(parametersName));
+        Assert(sizeof...(_Args) == parametersName.size());
+        auto nameIt = std::begin(parametersName);
+        return FMetaFunction(
+            name,
+            flags,
+            MakeTraits<_Result>(),
+            { MakeParameter(Meta::TType<_Args>{}, *nameIt++)... },
+            &TMemberFunction_<_Member>::Invoke
+        );
     }
+
+private:
+    template <_Result(_Class::* _Member)(_Args...) const, bool = std::is_void<_Result>::value >
+    struct TMemberFunction_ {
+        static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
+            const FAtom* parg = arguments.data();
+            result.TypedData<_Result>() = Call(_Member, RTTI::CastChecked<_Class>(&obj), TTuple<Meta::TReference<_Args>...>{
+#if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
+                *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
+#else
+                (*parg++).TypedData<Meta::TDecay<_Arg>>()...
+#endif
+            });
+        }
+    };
+
+    template <_Result(_Class::* _Member)(_Args...) const>
+    struct TMemberFunction_<_Member, true> {
+        static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
+            Assert(not result);
+            const FAtom* parg = arguments.data();
+            Call(_Member, RTTI::CastChecked<_Class>(&obj), TTuple<Meta::TReference<_Args>...>{
+#if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
+                *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
+#else
+                (*parg++).TypedData<Meta::TDecay<_Arg>>()...
+#endif
+            });
+        }
+    };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -181,3 +233,5 @@ CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
+
+#undef USE_MSVC17_WORKAROUND_FOR_INTERNALERROR

@@ -4,6 +4,7 @@
 
 #include "MetaDatabase.h"
 #include "MetaObject.h"
+#include "MetaObjectHelpers.h" // DeepEquals()
 
 #ifdef WITH_CORE_ASSERT
 #   define WITH_CORE_RTTI_TRANSACTION_CHECKS
@@ -100,6 +101,7 @@ void FMetaTransaction::Load(ILoadContext* context) {
     Assert(_loadedObjects.empty());
 
     _flags = ETransactionFlags::Loading;
+    _loadedObjects.reserve(_topObjects.size());
 
     FCompositeLoadContext_ transactionContext = {
         static_cast<ILoadContext*>(this),
@@ -176,6 +178,26 @@ void FMetaTransaction::OnUnloadObject(FMetaObject& object) {
     Assert(ETransactionFlags::Loading == _flags);
 
     Remove_AssertExists(_loadedObjects, SCMetaObject(&object));
+}
+//----------------------------------------------------------------------------
+void FMetaTransaction::reserve(size_t capacity) {
+    Assert(IsUnloaded());
+
+    _topObjects.reserve(capacity);
+}
+//----------------------------------------------------------------------------
+bool FMetaTransaction::DeepEquals(const FMetaTransaction& other) const {
+    if (other._topObjects.size() != _topObjects.size())
+        return false;
+
+    forrange(i, 0, _topObjects.size()) {
+        const FMetaObject* lhs = _topObjects[i].get();
+        const FMetaObject* rhs = other._topObjects[i].get();
+        if (not RTTI::DeepEquals(*lhs, *rhs))
+            return false;
+    }
+
+    return true;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
