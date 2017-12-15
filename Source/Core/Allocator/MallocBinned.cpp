@@ -115,18 +115,18 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 
     size_t Class() const { return _class; }
     size_t BlockSizeInBytes() const { return GClassesSize[_class]; }
-    size_t BlockTotalCount() const { return (ChunkAvailable / GClassesSize[_class]); }
-    size_t BlockAllocatedCount() const { return (BlockTotalCount() - _freeCount); }
+    size_t BlockTotalCount() const { return _blockTotalCount; }
+    size_t BlockAllocatedCount() const { return _allocatedCount; }
 
     FBinnedThreadCache_* ThreadCache() const { return _threadCache; }
 
-    bool empty() const { return (BlockTotalCount() == _freeCount); }
-    bool HasFreeBlock() const { return (_freeCount > 0); }
+    bool IsCompletelyFree() const { return (0 == _allocatedCount); }
+    bool HasFreeBlock() const { return (_allocatedCount < _blockTotalCount); }
 
     FORCE_INLINE FBlock* Allocate() {
         Assert_NoAssume(CheckCanaries_());
         Assert_NoAssume(CheckThreadSafety_());
-        Assert(_freeCount);
+        Assert(HasFreeBlock());
 
         FBlock* p;
         if (_freeBlock) {
@@ -136,13 +136,12 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
             _freeBlock = p->Next;
         }
         else {
-            Assert(_usedCount < BlockTotalCount());
+            Assert(_mappedCount < _blockTotalCount);
 
-            p = BlockAt_(_usedCount++);
+            p = BlockAt_(_mappedCount++);
         }
 
-        Assert(_freeCount);
-        _freeCount--;
+        ++_allocatedCount;
 
         Assert(Meta::IsAligned(Alignment, p));
         ONLY_IF_ASSERT(FillBlockUninitialized_(p, GClassesSize[_class]));
@@ -153,6 +152,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     FORCE_INLINE void Release(FBlock* p) {
         Assert_NoAssume(CheckCanaries_());
         Assert_NoAssume(CheckThreadSafety_());
+        Assert(not IsCompletelyFree());
 
         Assert_NoAssume(p->TestCanary());
         Assert(Meta::IsAligned(Alignment, p));
@@ -164,7 +164,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 
         p->Next = _freeBlock;
         _freeBlock = p;
-        _freeCount++;
+        --_allocatedCount;
     }
 
     void TakeOwn(FBinnedThreadCache_* newCache) {
@@ -190,7 +190,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
         size_t leakedNumBlocks = n;
         size_t leakedSizeInBytes = n * BlockSizeInBytes();
 
-        forrange(i, 0, _usedCount) {
+        forrange(i, 0, _mappedCount) {
             using block_type = FBinnedChunk_::FBlock;
             block_type* const usedBlock = BlockAt_(i);
 
@@ -257,25 +257,26 @@ private:
 
     FBinnedChunk_(FBinnedThreadCache_* threadCache, size_t class_)
         : _class(checked_cast<u32>(class_))
-        , _freeCount(checked_cast<u32>(BlockTotalCount()))
-        , _usedCount(0)
+        , _blockTotalCount(ChunkAvailable / GClassesSize[_class])
+        , _allocatedCount(0)
+        , _mappedCount(0)
         , _freeBlock(nullptr)
         , _threadCache(threadCache) {
         Assert(_threadCache);
         Assert(GClassesSize[_class] > 0);
         Assert(Meta::IsAligned(ChunkSizeInBytes, this));
         Assert((u8*)BlockAt_(0) >= (u8*)(this + 1));
-        Assert((u8*)BlockAt_(BlockTotalCount() - 1) + BlockSizeInBytes() <= (u8*)this + ChunkSizeInBytes);
+        Assert((u8*)BlockAt_(_blockTotalCount - 1) + BlockSizeInBytes() <= (u8*)this + ChunkSizeInBytes);
 
         ONLY_IF_ASSERT(FillBlockUninitialized_((u8*)this + sizeof(*this), CACHELINE_SIZE - sizeof(*this)));
-        ONLY_IF_ASSERT(FillBlockPage_(BlockAt_(0), BlockTotalCount(), BlockSizeInBytes()));
+        ONLY_IF_ASSERT(FillBlockPage_(BlockAt_(0), _blockTotalCount, BlockSizeInBytes()));
     }
 
     FORCE_INLINE FBlock* BlockAt_(size_t index) const {
-        Assert(index < BlockTotalCount());
+        Assert(index < _blockTotalCount);
 
 #if 1 // blocks in chunk are located in such way to achieve a maximum possible alignment
-        FBlock* const pblock = ((FBlock*)((u8*)this + ChunkSizeInBytes - (BlockTotalCount() - index) * BlockSizeInBytes()));
+        FBlock* const pblock = ((FBlock*)((u8*)this + ChunkSizeInBytes - (_blockTotalCount - index) * BlockSizeInBytes()));
 #else
         FBlock* const pblock = ((FBlock*)((u8*)(this + 1) + index * BlockSizeInBytes()));
 #endif
@@ -286,14 +287,15 @@ private:
     }
 
 #ifdef WITH_CORE_ASSERT
-    STATIC_CONST_INTEGRAL(u32, Canary0, 0xA0FACADE);
+    STATIC_CONST_INTEGRAL(u32, Canary0, 0xA0FACADEul);
     const u32 _canary0 = Canary0;
 #endif
 
     const u32 _class;
+    const u32 _blockTotalCount;
 
-    u32 _freeCount;
-    u32 _usedCount;
+    u32 _allocatedCount;
+    u32 _mappedCount;
 
     FBlock* _freeBlock;
 
@@ -305,7 +307,7 @@ private:
 #ifdef WITH_CORE_ASSERT
     std::thread::id _threadId = std::this_thread::get_id();
 
-    STATIC_CONST_INTEGRAL(u32, Canary1, 0xBAADF00D);
+    STATIC_CONST_INTEGRAL(u32, Canary1, 0xBAADF00Dul);
     const u32 _canary1 = Canary1;
 
     bool CheckCanaries_() const { return (_canary0 == Canary0 && _canary1 == Canary1); }
@@ -337,7 +339,7 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
 
             ONLY_IF_ASSERT(chunk->ReportLeaks());
 
-            if (chunk->BlockAllocatedCount() == 0) {
+            if (chunk->IsCompletelyFree()) {
                 ONLY_IF_ASSERT(chunk->~FBinnedChunk_());
                 ONLY_IF_ASSERT(FillBlockDeleted_(chunk, FBinnedChunk_::ChunkSizeInBytes));
 
@@ -457,88 +459,55 @@ struct FBinnedThreadCache_ {
     FBinnedThreadCache_& operator =(const FBinnedThreadCache_&) = delete;
 
     void* Allocate(size_t sizeInBytes) {
-        using list_type = FBinnedChunk_::list_type;
-
         const size_t sizeClass = FBinnedChunk_::MakeClass(sizeInBytes);
         Assert(sizeClass < lengthof(_buckets));
         Assert(sizeInBytes <= FBinnedChunk_::GClassesSize[sizeClass]);
 
         auto& bucket = _buckets[sizeClass];
-        void* p;
 
         // chunks with free blocks are always at head, so if it failed here we need a new page
         FBinnedChunk_* chunk = bucket.Head();
         Assert(!chunk || this == chunk->_threadCache);
 
-        if (chunk && chunk->_freeCount) {
+        if (chunk && chunk->HasFreeBlock()) {
             // allocate from the head chunk
-            p = chunk->Allocate();
+            void* const p = chunk->Allocate();
 
             // push empty chunks to the tail of the bucket list
             // if there is still free space it should be at head after that
-            if (0 == chunk->_freeCount)
+            if (not chunk->HasFreeBlock())
                 bucket.PokeTail(chunk);
 
             return p;
         }
 
-        // try to release pending blocks to get free memory before reserving a new page
-        if (ReleasePendingBlocks())
-            return Allocate(sizeInBytes);
-
-        // register new page at head of buckets
-        chunk = new ((void*)AllocPage_()) FBinnedChunk_(this, sizeClass);
-        bucket.PushFront(chunk);
-
-        p = (void*)chunk->Allocate();
-        Assert(p);
-
-        return p;
+        return AllocateFromNewChunk_(sizeClass);
     }
 
     void Release(void* p) {
-        typedef FBinnedChunk_::list_type list_type;
-
         Assert(p);
         FBinnedChunk_::FBlock* block = (FBinnedChunk_::FBlock*)p;
         ONLY_IF_ASSERT(block->MakeCanary());
         FBinnedChunk_* chunk = block->Owner();
 
-        // Register the block for deletion in another thread
-        if (this != chunk->_threadCache) {
-            if (FBinnedGlobalCache_::Instance().StealDanglingChunk(chunk, this)) {
-                _buckets[chunk->_class].PushFront(chunk);
-            }
-            else {
-                Assert(chunk->_threadCache);
-                chunk->_threadCache->RegisterPendingBlock(block);
-                return;
-            }
-        }
+        // register the block for deletion in another thread
+        if (this != chunk->_threadCache && TryStealDanglingBlock_(chunk, block))
+            return;
 
         // check if the block is freed from the correct thread
         Assert(this == chunk->_threadCache);
         Assert(_buckets[chunk->_class].Contains(chunk));
 
         chunk->Release(block);
-        Assert(chunk->_freeCount);
+        Assert(chunk->HasFreeBlock());
 
-        if (chunk->empty()) {
-            // unregister the chunk from buckets
-            _buckets[chunk->_class].Erase(chunk);
-            ONLY_IF_ASSERT(chunk->~FBinnedChunk_());
-            ONLY_IF_ASSERT(FillBlockDeleted_(chunk, FBinnedChunk_::ChunkSizeInBytes));
-
-            // release page to local or global cache
-            ReleasePage_((FBinnedPage_*)chunk);
-        }
-        else {
-            // poke chunk to head, meaning there's always a free block at head IFP
+        if (chunk->IsCompletelyFree())
+            ReleaseChunk_(chunk);
+        else // poke chunk to head, meaning there's always a free block at head IFP
             _buckets[chunk->_class].PokeFront(chunk);
-        }
     }
 
-    NO_INLINE void RegisterPendingBlock(FBinnedChunk_::FBlock* block) {
+    void RegisterPendingBlock(FBinnedChunk_::FBlock* block) {
         Assert(block);
         Assert_NoAssume(block->TestCanary());
         Assert(this == block->Owner()->_threadCache);
@@ -558,6 +527,7 @@ struct FBinnedThreadCache_ {
         if (0 == _pending.NumBlocks)
             return false;
 
+        // synchronize to release all pending blocks
         const FAtomicSpinLock::FScope scopeLock(_pending.Barrier);
 
         while (_pending.FirstBlock) {
@@ -636,21 +606,41 @@ private:
         LOG(Info, L"[MallocBinned] Start thread cache {0:X}", std::this_thread::get_id());
     }
 
-    FBinnedPage_* AllocPage_() {
-        if (FBinnedPage_* p = _freePages.PopHead()) {
+    // force NO_INLINE for cold path functions (better chance for inlining, better instruction cache)
+
+    NO_INLINE void* AllocateFromNewChunk_(size_t sizeClass) {
+        // try to release pending blocks to get free memory before reserving a new page
+        if (ReleasePendingBlocks())
+            return Allocate(FBinnedChunk_::GClassesSize[sizeClass]);
+
+        FBinnedPage_* page = _freePages.PopHead();
+        if (page) {
             Assert(_freePagesCount);
             _freePagesCount--;
 #ifdef USE_MEMORY_DOMAINS
             MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Deallocate(1, FBinnedPage_::PageSize);
 #endif
-            return p;
         }
         else {
-            return FBinnedGlobalCache_::Instance().AllocPage();
+            page = FBinnedGlobalCache_::Instance().AllocPage();
         }
+
+        // register new page at head of buckets
+        auto* chunk = new ((void*)page) FBinnedChunk_(this, sizeClass);
+        _buckets[sizeClass].PushFront(chunk);
+
+        return chunk->Allocate();
     }
 
-    NO_INLINE void ReleasePage_(FBinnedPage_* page) {
+    NO_INLINE void ReleaseChunk_(FBinnedChunk_* chunk) {
+        // unregister the chunk from buckets
+        _buckets[chunk->_class].Erase(chunk);
+        ONLY_IF_ASSERT(chunk->~FBinnedChunk_());
+        ONLY_IF_ASSERT(FillBlockDeleted_(chunk, FBinnedChunk_::ChunkSizeInBytes));
+
+        // release page to local or global cache
+        auto* page = (FBinnedPage_*)chunk;
+
         if (_freePagesCount == FreePagesMax) {
             FBinnedGlobalCache_::Instance().ReleasePage(page);
         }
@@ -661,6 +651,18 @@ private:
 #ifdef USE_MEMORY_DOMAINS
             MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Allocate(1, FBinnedPage_::PageSize);
 #endif
+        }
+    }
+
+    NO_INLINE bool TryStealDanglingBlock_(FBinnedChunk_* chunk, FBinnedChunk_::FBlock* block) {
+        if (FBinnedGlobalCache_::Instance().StealDanglingChunk(chunk, this)) {
+            _buckets[chunk->_class].PushFront(chunk);
+            return false;
+        }
+        else {
+            Assert(chunk->_threadCache);
+            chunk->_threadCache->RegisterPendingBlock(block);
+            return true;
         }
     }
 };
@@ -706,12 +708,10 @@ struct CACHELINE_ALIGNED FBinnedAllocator_ {
 
     FORCE_INLINE static void Release(void* p) {
         ONLY_IF_ASSERT(const FCheckReentrancy reentrancy);
-        if (Unlikely(nullptr == p))
-            return;
-        else if (Likely(not Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p)))
-            FBinnedThreadCache_::GInstanceTLS.Release(p);
-        else
+        if (Unlikely(Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p)))
             GInstance.ReleaseLargeBlock_(p);
+        else
+            FBinnedThreadCache_::GInstanceTLS.Release(p);
     }
 
     FORCE_INLINE static size_t SnapSize(size_t sizeInBytes) {
@@ -751,6 +751,9 @@ private:
     }
 
     NO_INLINE void ReleaseLargeBlock_(void* p) {
+        if (nullptr == p)
+            return;
+
         const FAtomicSpinLock::FScope scopeLock(_barrier);
         _vm.Free(p);
     }
@@ -809,7 +812,7 @@ void* FMallocBinned::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
 }
 //----------------------------------------------------------------------------
 void FMallocBinned::ReleasePendingBlocks() {
-    FBinnedThreadCache_::InstanceTLS().ReleasePendingBlocks();
+    FBinnedThreadCache_::GInstanceTLS.ReleasePendingBlocks();
 }
 //----------------------------------------------------------------------------
 size_t FMallocBinned::SnapSize(size_t size) {
