@@ -36,6 +36,10 @@ MEMORY_DOMAIN_COLLAPSABLE_IMPL(LinearHeap,              VirtualMemory)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(MallocBinned,            VirtualMemory)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(MemoryPool,              VirtualMemory)
 //------------------------------------------------------------------------------
+MEMORY_DOMAIN_IMPL(External,                            Core)
+MEMORY_DOMAIN_COLLAPSABLE_IMPL(LZ4,                     External)
+MEMORY_DOMAIN_COLLAPSABLE_IMPL(STBImage,                External)
+//------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Serialize,                           Core)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Grammar,                 Serialize)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(JSON,                    Serialize)
