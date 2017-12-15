@@ -13,7 +13,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ISerializer {
+class CORE_SERIALIZE_API ISerializer {
 public:
     typedef VECTOR(RTTI, RTTI::PMetaObject) MetaObjectVector;
 

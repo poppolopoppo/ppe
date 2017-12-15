@@ -17,7 +17,7 @@ public:
     FBinarySerializerException(const char* what) : FSerializeException(what) {}
 };
 //----------------------------------------------------------------------------
-class FBinarySerializer : public ISerializer {
+class CORE_SERIALIZE_API FBinarySerializer : public ISerializer {
 public:
     FBinarySerializer();
     virtual ~FBinarySerializer();

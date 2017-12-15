@@ -3,20 +3,24 @@
 #include "BinarySerializer.h"
 
 #include "Core.RTTI/RTTI_fwd.h"
-#include "Core.RTTI/MetaAtom.h"
-#include "Core.RTTI/MetaAtomVisitor.h"
+#include "Core.RTTI/Any.h"
+#include "Core.RTTI/Atom.h"
+#include "Core.RTTI/AtomVisitor.h"
 #include "Core.RTTI/MetaClass.h"
 #include "Core.RTTI/MetaDatabase.h"
 #include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/MetaProperty.h"
 #include "Core.RTTI/MetaTransaction.h"
-#include "Core.RTTI/MetaType.h"
 
 #include "Core/Container/Deque.h"
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Vector.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/FS/Dirpath.h"
+#include "Core/IO/FS/Filename.h"
 #include "Core/IO/BufferedStreamProvider.h"
+#include "Core/Maths/ScalarMatrix.h"
+#include "Core/Maths/ScalarVector.h"
 #include "Core/Memory/MemoryStream.h"
 #include "Core/Memory/MemoryProvider.h"
 #include "Core/Misc/FourCC.h"
@@ -42,6 +46,8 @@
 #   define BINARYSERIALIZER_DATALOG(...) NOOP()
 #endif
 
+#define USE_BINARYSERIALIZER_NAZIFORMAT 0 // turn to 1 to serialize with more guards (incompatible with regular format !)
+
 namespace Core {
 namespace Serialize {
 //----------------------------------------------------------------------------
@@ -51,16 +57,18 @@ namespace {
 //----------------------------------------------------------------------------
 // Binary file format
 //----------------------------------------------------------------------------
+#if USE_BINARYSERIALIZER_NAZIFORMAT
+static const FFourCC FILE_MAGIC_                 ("BNZI");
+#else
 static const FFourCC FILE_MAGIC_                 ("BINA");
-static const FFourCC FILE_VERSION_               ("1.00");
+#endif
+static const FFourCC FILE_VERSION_               ("1.01");
 //----------------------------------------------------------------------------
-static const FFourCC SECTION_NAMES_              ("#NME");
 static const FFourCC SECTION_STRINGS_            ("#STR");
 static const FFourCC SECTION_WSTRINGS_           ("#WST");
 static const FFourCC SECTION_CLASSES_            ("#CLS");
 static const FFourCC SECTION_PROPERTIES_         ("#PRP");
 static const FFourCC SECTION_TOP_OBJECTS_        ("#TOP");
-static const FFourCC SECTION_OBJECTS_TO_EXPORT_  ("#EXP");
 static const FFourCC SECTION_OBJECTS_HEADER_     ("#OBH");
 static const FFourCC SECTION_OBJECTS_DATA_       ("#OBD");
 static const FFourCC SECTION_END_                ("#END");
@@ -69,11 +77,12 @@ static const FFourCC TAG_OBJECT_EXPORT_          ("OEXP");
 static const FFourCC TAG_OBJECT_IMPORT_          ("OIMP");
 static const FFourCC TAG_OBJECT_PRIVATE_         ("OPRI");
 static const FFourCC TAG_OBJECT_NULL_            ("ONUL");
+//----------------------------------------------------------------------------
+#if USE_BINARYSERIALIZER_NAZIFORMAT
 static const FFourCC TAG_OBJECT_START_           ("OSTA");
 static const FFourCC TAG_OBJECT_METACLASS_       ("OMTC");
 static const FFourCC TAG_OBJECT_END_             ("OEND");
-//----------------------------------------------------------------------------
-static const FFourCC TAG_ATOM_NULL_              ("ANUL");
+#endif
 //----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(FFourCC) == sizeof(u32));
 //----------------------------------------------------------------------------
@@ -91,16 +100,23 @@ struct FSerializedObject_ {
 };
 STATIC_ASSERT(sizeof(FSerializedObject_) == 4 * sizeof(u32));
 //----------------------------------------------------------------------------
-template <typename T> struct TObjectTraits_   { T proxy_(const T& p) const { return p; } };
-template <> struct TObjectTraits_< FString >  { FStringView proxy_(const FString& s) const { return MakeStringView(s); } };
-template <> struct TObjectTraits_< FWString > { FWStringView proxy_(const FWString& s) const { return MakeStringView(s); } };
+template <typename T> struct TObjectTraits_ {
+    typedef Meta::THash<T> hash_type;
+    typedef Meta::TEqualTo<T> equalto_type;
+};
+template <typename _Char> struct TObjectTraits_<TBasicStringView<_Char>> {
+    typedef TStringViewHasher<_Char, ECase::Sensitive> hash_type;
+    typedef TStringViewEqualTo<_Char, ECase::Sensitive> equalto_type;
+};
 //----------------------------------------------------------------------------
 template <typename _Key>
 class TObjectIndexer_ : TObjectTraits_<_Key> {
 public:
     typedef TObjectTraits_<_Key> traits_type;
+    typedef typename traits_type::hash_type hash_type;
+    typedef typename traits_type::equalto_type equalto_type;
     typedef StronglyTyped::TNumeric<u32, TObjectIndexer_, UINT32_MAX> index_t;
-    typedef HASHMAP_THREAD_LOCAL(Serialize, _Key, index_t) hashmap_type;
+    typedef THashMap<_Key, index_t, hash_type, equalto_type, THREAD_LOCAL_ALLOCATOR(Serialize, TPair<_Key, index_t>)> hashmap_type;
 
     hashmap_type Entities;
 
@@ -146,12 +162,12 @@ public:
     void Serialize(IBufferedStreamWriter* writer, _WriteLambda&& lambda) const {
         const u32 count = checked_cast<u32>(Entities.size());
         writer->WritePOD(count);
-        typedef decltype(traits_type::proxy_(std::declval<const _Key&>())) proxy_type;
-        STACKLOCAL_POD_ARRAY(proxy_type, proxies, count);
+        // THashMap isn't preserving insertion order, need to sort by index before serialization  :
+        STACKLOCAL_POD_ARRAY(const _Key*, keysByIndex, count);
         for (const auto& it : Entities)
-            proxies[it.second] = traits_type::proxy_(it.first);
-        for (const proxy_type& proxy : proxies)
-            lambda(proxy);
+            keysByIndex[it.second] = &it.first;
+        for(const _Key* pkey : keysByIndex)
+            lambda(*pkey);
     }
 };
 //----------------------------------------------------------------------------
@@ -269,96 +285,109 @@ private:
     static const RTTI::FMetaClass* RetrieveMetaClass_(const FStringView& str);
     static const RTTI::FMetaProperty* RetrieveMetaProperty_(const RTTI::FMetaClass* metaClass, const FStringView& str);
 
-    RTTI::FMetaObject* CreateObjectFromHeader_(const FSerializedObject_& header);
+    RTTI::PMetaObject CreateObjectFromHeader_(const FSerializedObject_& header);
     void DeserializeObjectData_(IBufferedStreamReader& reader, RTTI::FMetaObject* object);
 
-    class FAtomReader_ : public RTTI::FMetaAtomWrapMoveVisitor {
+    class FAtomReader_ : public RTTI::IAtomVisitor {
     public:
-        typedef RTTI::FMetaAtomWrapMoveVisitor parent_type;
+        typedef RTTI::IAtomVisitor parent_type;
         FAtomReader_(FBinaryDeserialize_* owner, IBufferedStreamReader* reader)
             : _owner(owner), _reader(reader) {}
 
-        using parent_type::Inspect;
-        using parent_type::Visit;
 
-        virtual void Inspect(RTTI::IMetaAtomPair* ppair, RTTI::TPair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair) override {
+        virtual bool Visit(const RTTI::IPairTraits* pair, const RTTI::FAtom& atom) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::TPair<{0}, {1}>",
-                ppair->FirstTypeInfo().Name, ppair->SecondTypeInfo().Name );
+                pair->FirstTraits()->TypeInfos().Name(),
+                pair->SecondTraits()->TypeInfos().Name());
 
-            if (false == _reader->ExpectPOD(ppair->Atom()->TypeInfo().Id) )
-                CORE_THROW_IT(FBinarySerializerException("failed to deserialize a PAIR vector"));
+#if USE_BINARYSERIALIZER_NAZIFORMAT
+            if (false == _reader->ExpectPOD(pair->TypeId()))
+                CORE_THROW_IT(FBinarySerializerException("failed to deserialize a PAIR pair"));
+#endif
 
-            pair.first = ppair->FirstTraits()->CreateDefaultValue();
-            pair.second = ppair->SecondTraits()->CreateDefaultValue();
+            const RTTI::FAtom first = pair->First(atom);
+            const RTTI::FAtom second = pair->Second(atom);
 
-            parent_type::Inspect(ppair, pair);
+            return (first.Accept(this) && second.Accept(this));
         }
 
-        virtual void Inspect(RTTI::IMetaAtomVector* pvector, RTTI::TVector<RTTI::PMetaAtom>& vector) override {
+        virtual bool Visit(const RTTI::IListTraits* list, const RTTI::FAtom& atom) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::TVector<{0}>",
-                pvector->ValueTypeInfo().Name );
+                list->ValueTraits()->TypeInfos().Name() );
 
+#if USE_BINARYSERIALIZER_NAZIFORMAT
+            if (false == _reader->ExpectPOD(list->TypeId()))
+                CORE_THROW_IT(FBinarySerializerException("failed to deserialize a RTTI list"));
+#endif
             u32 count = 0;
-            if (false == _reader->ExpectPOD(pvector->Atom()->TypeInfo().Id) ||
-                false == _reader->ReadPOD(&count) )
-                CORE_THROW_IT(FBinarySerializerException("failed to deserialize a RTTI vector"));
+            if (false == _reader->ReadPOD(&count))
+                CORE_THROW_IT(FBinarySerializerException("failed to deserialize a RTTI list"));
 
-            const RTTI::IMetaTypeVirtualTraits* traits = pvector->ValueTraits();
+            list->Reserve(atom, count);
+            forrange(i, 0, count) {
+                RTTI::FAtom item = list->AddDefault(atom);
+                if (not item.Accept(this))
+                    return false;
+            }
 
-            vector.reserve(count);
-            forrange(i, 0, count)
-                vector.emplace_back(traits->CreateDefaultValue());
-
-            parent_type::Inspect(pvector, vector);
+            return true;
         }
 
-        virtual void Inspect(RTTI::IMetaAtomDictionary* pdictionary, RTTI::TDictionary<RTTI::PMetaAtom, RTTI::PMetaAtom>& dictionary) override {
+        virtual bool Visit(const RTTI::IDicoTraits* dico, const RTTI::FAtom& atom) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::TDictionary<{0}, {1}>",
-                pdictionary->KeyTypeInfo().Name, pdictionary->ValueTypeInfo().Name );
+                dico->KeyTraits()->TypeInfos().Name(),
+                dico->ValueTraits()->TypeInfos().Name() );
 
+#if USE_BINARYSERIALIZER_NAZIFORMAT
+            if (false == _reader->ExpectPOD(dico->TypeId()))
+                CORE_THROW_IT(FBinarySerializerException("failed to deserialize a RTTI dico"));
+#endif
             u32 count = 0;
-            if (false == _reader->ExpectPOD(pdictionary->Atom()->TypeInfo().Id) ||
-                false == _reader->ReadPOD(&count) )
-                CORE_THROW_IT(FBinarySerializerException("failed to deserialize a RTTI dictionary"));
+            if (false == _reader->ReadPOD(&count))
+                CORE_THROW_IT(FBinarySerializerException("failed to deserialize a RTTI dico"));
 
-            const RTTI::IMetaTypeVirtualTraits* keyTraits = pdictionary->KeyTraits();
-            const RTTI::IMetaTypeVirtualTraits* valueTraits = pdictionary->ValueTraits();
+            dico->Reserve(atom, count);
 
-            dictionary.reserve(count);
-            forrange(i, 0, count)
-                dictionary.Vector().emplace_back(
-                    keyTraits->CreateDefaultValue(),
-                    valueTraits->CreateDefaultValue() );
+            RTTI::FAny anyKey;
+            RTTI::FAtom keyAtom = anyKey.Reset(dico->KeyTraits());
 
-            parent_type::Inspect(pdictionary, dictionary);
+            forrange(i, 0, count) {
+                if (not keyAtom.Accept(this))
+                    return false;
+
+                const RTTI::FAtom value = dico->AddDefault(atom, std::move(keyAtom));
+                if (not value.Accept(this))
+                    return false;
+            }
+
+            return true;
         }
 
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-        virtual void Visit(RTTI::TMetaTypedAtom<T>* scalar) override { \
-            Assert(scalar); \
-            Assert(_TypeId == scalar->TypeInfo().Id); \
-            if (false == Visit_(scalar)) \
-                CORE_THROW_IT(FBinarySerializerException("failed to deserialize a RTTI " #T )); \
-            /*parent_type::Visit(scalar);*/ \
+#define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
+        virtual bool Visit(const RTTI::IScalarTraits* traits, T& value) override final { \
+            return Visit_(traits, value); \
         }
-        FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
-#undef DEF_METATYPE_SCALAR
+        FOREACH_RTTI_NATIVETYPES(DECL_ATOM_VIRTUAL_VISIT)
+#undef DECL_ATOM_VIRTUAL_VISIT
 
     private:
         template <typename T>
-        bool Visit_(RTTI::TMetaTypedAtom<T>* scalar) {
+        bool Visit_(const RTTI::IScalarTraits* traits, T& value) {
+#if WITH_RTTI_BINARYSERIALIZER_DATALOG
             const std::streamoff dataoff = _reader->TellI();
-            UNUSED(dataoff);
+#endif
 
-            if (false == _reader->ExpectPOD(scalar->TypeInfo().Id))
+#if USE_BINARYSERIALIZER_NAZIFORMAT
+            if (false == _reader->ExpectPOD(traits->TypeId()))
                 return false;
-            if (false == ReadValue_(scalar->Wrapper()))
+#endif
+            if (false == ReadValue_(value))
                 return false;
 
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize scalar {0} = [{1}]",
-                scalar->TypeInfo().Name, scalar->Wrapper() );
+                traits->TypeInfos().Name(), value );
             BINARYSERIALIZER_DATALOG(L"@{2:#8X} : <{0}> = [{1}]",
-                scalar->TypeInfo().Name, scalar->Wrapper(), dataoff );
+                traits->TypeInfos().Name(), value, dataoff );
 
             return true;
         }
@@ -373,27 +402,22 @@ private:
         template <typename T, size_t _Dim>
         bool ReadValue_(TScalarVector<T, _Dim>& value) {
             STATIC_ASSERT(Meta::TIsPod<T>::value);
-            for (size_t i = 0; i < _Dim; ++i)
-                if (false == _reader->ReadPOD(&value[i]))
-                    return false;
-            return true;
+            return _reader->Read(&value, sizeof(value));
         }
 
         template <typename T, size_t _Width, size_t _Height>
         bool ReadValue_(TScalarMatrix<T, _Width, _Height>& value) {
             STATIC_ASSERT(Meta::TIsPod<T>::value);
-            ScalarMatrixData<T, _Width, _Height>& data = value.data();
-            const size_t dim = _Width * _Height;
-            for (size_t i = 0; i < dim; ++i)
-                if (false == _reader->ReadPOD(&data.raw[i]))
-                    return false;
-            return true;
+            return _reader->Read(&value, sizeof(value));
         }
 
         bool ReadValue_(FString& str) {
             index_t string_i;
             if (false == _reader->ReadPOD(&string_i))
                 return false;
+
+            if (string_i.IsDefaultValue())
+                return true;
 
             if (string_i >= _owner->_strings.size())
                 CORE_THROW_IT(FBinarySerializerException("invalid RTTI string index"));
@@ -407,6 +431,9 @@ private:
             if (false == _reader->ReadPOD(&wstring_i))
                 return false;
 
+            if (wstring_i.IsDefaultValue())
+                return true;
+
             if (wstring_i >= _owner->_wstrings.size())
                 CORE_THROW_IT(FBinarySerializerException("invalid RTTI wstring index"));
 
@@ -414,53 +441,40 @@ private:
             return true;
         }
 
-        bool ReadValue_(RTTI::PMetaAtom& atom) {
-            if (_reader->ExpectPOD(TAG_ATOM_NULL_)) {
-                Assert(nullptr == atom);
+        bool ReadValue_(RTTI::FAny& any) {
+            RTTI::ENativeType nativeTypeId;
+            if (false == _reader->ReadPOD(&nativeTypeId))
+                return false;
+
+            if (RTTI::ENativeType::Invalid == nativeTypeId)
                 return true;
-            }
-            else {
-                RTTI::FMetaTypeId typeId;
-                if (false == _reader->ReadPOD(&typeId))
-                    return false;
-                switch (typeId) {
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-                case _TypeId: \
-                    atom = RTTI::MakeAtom( RTTI::TMetaType< T >::DefaultValue() ); \
-                    Assert(atom->IsDefaultValue()); \
-                    atom->Accept(this); \
-                    break;
-                FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
-#undef DEF_METATYPE_SCALAR
-                default:
-                    CORE_THROW_IT(FBinarySerializerException("no support for abstract RTTI atoms deserialization"));
-                }
-                return true;
-            }
+
+            any = RTTI::FAny(nativeTypeId);
+            return any.InnerAtom().Accept(this);
         }
 
         bool ReadValue_(RTTI::PMetaObject& object) {
-            if (_reader->ExpectPOD(TAG_OBJECT_NULL_)) {
-                Assert(nullptr == object);
-                return true;
-            }
-            else {
-                index_t object_i;
-                if (false == _reader->ReadPOD(&object_i))
-                    return false;
+            index_t object_i;
+            if (false == _reader->ReadPOD(&object_i))
+                return false;
 
-                if (object_i >= _owner->_objects.size())
-                    CORE_THROW_IT(FBinarySerializerException("invalid RTTI object index"));
-
-                object = _owner->_objects[object_i];
+            if (object_i.IsDefaultValue())
                 return true;
-            }
+
+            if (object_i >= _owner->_objects.size())
+                CORE_THROW_IT(FBinarySerializerException("invalid RTTI object index"));
+
+            object = _owner->_objects[object_i];
+            return true;
         }
 
         bool ReadValue_(RTTI::FName& name) {
             index_t string_i;
             if (false == _reader->ReadPOD(&string_i))
                 return false;
+
+            if (string_i.IsDefaultValue())
+                return true;
 
             if (string_i >= _owner->_strings.size())
                 CORE_THROW_IT(FBinarySerializerException("invalid RTTI name index"));
@@ -486,27 +500,41 @@ private:
             }
         }
 
-        bool ReadValue_(RTTI::FOpaqueData& opaqueData) {
-            u32 count;
-            if (_reader->ReadPOD(&count)) {
-                if (0 == count) {
-                    return true;
-                }
-                else {
-                    opaqueData.reserve(count);
-                    forrange(i, 0, count) {
-                        opaqueData.Vector().push_back_Default();
-                        TPair<RTTI::FName, RTTI::PMetaAtom>& item = opaqueData.Vector().back();
-                        if (not ReadValue_(item.first) ||
-                            not ReadValue_(item.second) )
-                            return false;
-                    }
-                    return true;
-                }
-            }
-            else {
+        bool ReadValue_(FDirpath& dirpath) {
+            index_t wstring_i;
+            if (false == _reader->ReadPOD(&wstring_i))
                 return false;
-            }
+
+            if (wstring_i.IsDefaultValue())
+                return true;
+
+            if (wstring_i >= _owner->_wstrings.size())
+                CORE_THROW_IT(FBinarySerializerException("invalid RTTI dirpath index"));
+
+            const FWString& wdata = _owner->_wstrings[wstring_i];
+            dirpath = wdata.MakeView();
+            return true;
+        }
+
+        bool ReadValue_(FFilename& filename) {
+            FDirpath dirpath;
+            if (not ReadValue_(dirpath))
+                return false;
+
+            index_t wstring_i;
+            if (false == _reader->ReadPOD(&wstring_i))
+                return false;
+
+            if (not wstring_i.IsDefaultValue())
+                return true;
+
+            if (wstring_i >= _owner->_wstrings.size())
+                CORE_THROW_IT(FBinarySerializerException("invalid RTTI basename index"));
+
+            const FWString& wdata = _owner->_wstrings[wstring_i];
+            FBasename basename = wdata.MakeView();
+            filename = FFilename(std::move(dirpath), std::move(basename));
+            return true;
         }
 
         FBinaryDeserialize_* _owner;
@@ -516,18 +544,15 @@ private:
     FBinarySerializer* _owner;
 
     typedef StronglyTyped::TNumeric<u32, FBinaryDeserialize_, UINT32_MAX> index_t;
-    typedef index_t name_index_t;
     typedef index_t object_index_t;
 
     typedef VECTOR_THREAD_LOCAL(Serialize, const RTTI::FMetaProperty*) properties_type;
 
-    VECTOR_THREAD_LOCAL(Serialize, RTTI::FName) _names;
     VECTOR_THREAD_LOCAL(Serialize, FString) _strings;
     VECTOR_THREAD_LOCAL(Serialize, FWString) _wstrings;
     VECTOR_THREAD_LOCAL(Serialize, const RTTI::FMetaClass*) _metaClasses;
     VECTOR_THREAD_LOCAL(Serialize, properties_type) _properties;
     VECTOR_THREAD_LOCAL(Serialize, object_index_t) _topObjects;
-    VECTOR_THREAD_LOCAL(Serialize, TPair<name_index_t COMMA object_index_t>) _objectsToExport;
     VECTOR_THREAD_LOCAL(Serialize, FSerializedObject_) _headers;
     VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject) _objects;
 };
@@ -538,10 +563,6 @@ void FBinaryDeserialize_::Read(IBufferedStreamReader& reader) {
         CORE_THROW_IT(FBinarySerializerException("invalid file magic"));
     if (false == reader.ExpectPOD(FILE_VERSION_) )
         CORE_THROW_IT(FBinarySerializerException("unsupported file version"));
-
-    if (false == reader.ExpectPOD(SECTION_NAMES_) ||
-        false == DeserializePODArrays_<char>(reader, _names, [](const FStringView& str) { Assert(str.size()); return RTTI::FName(str); }) )
-        CORE_THROW_IT(FBinarySerializerException("invalid names section"));
 
     if (false == reader.ExpectPOD(SECTION_STRINGS_) ||
         false == DeserializePODArrays_<char>(reader, _strings, [](const FStringView& str) { return ToString(str); }) )
@@ -574,10 +595,6 @@ void FBinaryDeserialize_::Read(IBufferedStreamReader& reader) {
     if (false == reader.ExpectPOD(SECTION_TOP_OBJECTS_) ||
         false == DeserializePODs_(reader, _topObjects) )
         CORE_THROW_IT(FBinarySerializerException("expected top objects section"));
-
-    if (false == reader.ExpectPOD(SECTION_OBJECTS_TO_EXPORT_) ||
-        false == DeserializePODs_(reader, _objectsToExport) )
-        CORE_THROW_IT(FBinarySerializerException("expected objects to export section"));
 
     if (false == reader.ExpectPOD(SECTION_OBJECTS_HEADER_) ||
         false == DeserializePODs_(reader, _headers))
@@ -619,30 +636,18 @@ void FBinaryDeserialize_::Read(IBufferedStreamReader& reader) {
 //----------------------------------------------------------------------------
 void FBinaryDeserialize_::Finalize(RTTI::FMetaTransaction* transaction) {
     Assert(transaction);
-
-    for (const TPair<name_index_t, object_index_t>& it : _objectsToExport) {
-        if (it.first > _names.size() ||
-            it.second > _objects.size() )
-            CORE_THROW_IT(FBinarySerializerException("invalid RTTI object export"));
-
-        const RTTI::FName& name = _names[it.first];
-        const RTTI::PMetaObject& object = _objects[it.second];
-
-        object->RTTI_Export(name);
-    }
-
     Assert(_topObjects.size() || 0 == _objects.size());
 
-    transaction->reserve(transaction->size() + _topObjects.size());
+    transaction->reserve(transaction->TopObjects().size() + _topObjects.size());
     for (const object_index_t& object_i : _topObjects)
-        transaction->Add(_objects[object_i].get());
+        transaction->RegisterObject(_objects[object_i].get());
 }
 //----------------------------------------------------------------------------
 const RTTI::FMetaClass* FBinaryDeserialize_::RetrieveMetaClass_(const FStringView& str) {
     const RTTI::FName name(str);
     Assert(!name.empty());
 
-    const RTTI::FMetaClass* metaClass = RTTI::MetaDB().FindClassIFP(name);
+    const RTTI::FMetaClass* metaClass = RTTI::MetaDB().ClassIFP(name);
     if (nullptr == metaClass)
         CORE_THROW_IT(FBinarySerializerException("unknown RTTI metaclass"));
 
@@ -662,15 +667,15 @@ const RTTI::FMetaProperty* FBinaryDeserialize_::RetrieveMetaProperty_(const RTTI
     return metaProperty;
 }
 //----------------------------------------------------------------------------
-RTTI::FMetaObject* FBinaryDeserialize_::CreateObjectFromHeader_(const FSerializedObject_& header) {
+RTTI::PMetaObject FBinaryDeserialize_::CreateObjectFromHeader_(const FSerializedObject_& header) {
+    RTTI::PMetaObject result;
+
     if (TAG_OBJECT_NULL_ == header.Type) {
         Assert(UINT32_MAX == header.MetaClassIndex);
         Assert(UINT32_MAX == header.NameIndex);
         Assert(UINT32_MAX == header.DataOffset);
 
         BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize null object");
-
-        return nullptr;
     }
     else if (TAG_OBJECT_PRIVATE_ == header.Type) {
         Assert(UINT32_MAX != header.MetaClassIndex);
@@ -681,41 +686,50 @@ RTTI::FMetaObject* FBinaryDeserialize_::CreateObjectFromHeader_(const FSerialize
 
         BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize private object <{0}>", metaClass->Name());
 
-        return metaClass->CreateInstance();
+        if (not metaClass->CreateInstance(result))
+            CORE_THROW_IT(FBinarySerializerException("can't create instance of RTTI metaclass"));
     }
     else {
         Assert(UINT32_MAX != header.MetaClassIndex);
         Assert(UINT32_MAX != header.NameIndex);
         Assert(UINT32_MAX != header.DataOffset);
 
-        const RTTI::FName name = _names[header.NameIndex];
+        const RTTI::FName name = RTTI::FName(_strings[header.NameIndex].MakeView());
         const RTTI::FMetaClass* metaClass = _metaClasses[header.MetaClassIndex];
 
         if (TAG_OBJECT_EXPORT_ == header.Type) {
 
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize exported object <{0}> '{1}'", metaClass->Name(), name);
 
-            return metaClass->CreateInstance();
+            if (not metaClass->CreateInstance(result))
+                CORE_THROW_IT(FBinarySerializerException("can't create instance of RTTI metaclass"));
+
+            result->RTTI_Export(name);
         }
         else {
             Assert(TAG_OBJECT_IMPORT_ == header.Type);
 
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize imported object <{0}> '{1}'", metaClass->Name(), name);
 
-            const RTTI::FMetaAtom* patom = RTTI::MetaDB().FindAtomIFP(name);
-            if (nullptr == patom ||
-                nullptr == patom->As<RTTI::PMetaObject>() )
+            result = RTTI::MetaDB().ObjectIFP(name);
+            if (nullptr == result)
                 CORE_THROW_IT(FBinarySerializerException("failed to import RTTI object from database"));
-
-            return patom->Cast<RTTI::PMetaObject>()->Wrapper().get();
         }
+
+        Assert(result->RTTI_Name() == name);
     }
+
+    return result;
 }
 //----------------------------------------------------------------------------
 void FBinaryDeserialize_::DeserializeObjectData_(IBufferedStreamReader& reader, RTTI::FMetaObject* object) {
     u32 metaClassCount = 0;
-    if (false == reader.ExpectPOD(TAG_OBJECT_START_) ||
-        false == reader.ReadPOD(&metaClassCount) )
+
+#if USE_BINARYSERIALIZER_NAZIFORMAT
+    if (false == reader.ExpectPOD(TAG_OBJECT_START_))
+        CORE_THROW_IT(FBinarySerializerException("failed to read RTTI object header"));
+#endif
+    if (false == reader.ReadPOD(&metaClassCount))
         CORE_THROW_IT(FBinarySerializerException("failed to read RTTI object header"));
 
     BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize object data for @{0}", reader.TellI());
@@ -725,10 +739,14 @@ void FBinaryDeserialize_::DeserializeObjectData_(IBufferedStreamReader& reader, 
     forrange(i, 0, metaClassCount) {
         index_t class_i;
         u32 propertyCount = 0;
-        if (false == reader.ExpectPOD(TAG_OBJECT_METACLASS_) ||
-            false == reader.ReadPOD(&class_i) ||
+
+#if USE_BINARYSERIALIZER_NAZIFORMAT
+        if (false == reader.ExpectPOD(TAG_OBJECT_METACLASS_)))
+            CORE_THROW_IT(FBinarySerializerException("failed to read RTTI object metaclass"));
+#endif
+        if (false == reader.ReadPOD(&class_i) ||
             false == reader.ReadPOD(&propertyCount) )
-            CORE_THROW_IT(FBinarySerializerException("failed to read RTTI obect metaclass"));
+            CORE_THROW_IT(FBinarySerializerException("failed to read RTTI object metaclass"));
 
         Assert(0 < propertyCount);
 
@@ -736,8 +754,9 @@ void FBinaryDeserialize_::DeserializeObjectData_(IBufferedStreamReader& reader, 
             CORE_THROW_IT(FBinarySerializerException("invalid RTTI metaclass index"));
         Assert(_metaClasses.size() == _properties.size());
 
+#if WITH_RTTI_BINARYSERIALIZER_LOG
         const RTTI::FMetaClass* metaClass = _metaClasses[class_i];
-        UNUSED(metaClass);
+#endif
 
         const properties_type& properties = _properties[class_i];
 
@@ -752,22 +771,21 @@ void FBinaryDeserialize_::DeserializeObjectData_(IBufferedStreamReader& reader, 
             const RTTI::FMetaProperty* metaProperty = properties[prop_i];
 
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize property data <{0}> '{1}'",
-                metaProperty->TypeInfo().Name, metaProperty->Name());
+                metaProperty->Traits()->TypeInfos().Name(), metaProperty->Name());
 
-            const RTTI::PMetaAtom atom = metaProperty->Traits()->CreateDefaultValue();
+            const RTTI::FAtom atom = metaProperty->Get(*object);
             Assert(atom);
-            Assert(atom->IsDefaultValue());
-            Assert(atom->TypeInfo().Id == metaProperty->TypeInfo().Id);
+            Assert(atom.IsDefaultValue());
 
-            atomReader.Append(atom.get());
-            Assert(false == atom->IsDefaultValue());
-
-            metaProperty->UnwrapMove(object, atom.get());
+            atom.Accept(&atomReader);
+            Assert(not atom.IsDefaultValue());
         }
     }
 
+#if USE_BINARYSERIALIZER_NAZIFORMAT
     if (false == reader.ExpectPOD(TAG_OBJECT_END_))
         CORE_THROW_IT(FBinarySerializerException("failed to read RTTI object foorter"));
+#endif
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -783,16 +801,14 @@ public:
     typedef TObjectIndexer_<const RTTI::FMetaProperty* > property_indices_type;
     typedef TObjectIndexer_<const RTTI::FMetaClass* > class_indices_type;
     typedef TObjectIndexer_<const RTTI::FMetaObject* > object_indices_type;
-    typedef TObjectIndexer_<FString > string_indices_type;
-    typedef TObjectIndexer_<FWString > wstring_indices_type;
-    typedef TObjectIndexer_<RTTI::FName > name_indices_type;
+    typedef TObjectIndexer_<FStringView> string_indices_type;
+    typedef TObjectIndexer_<FWStringView> wstring_indices_type;
 
     typedef property_indices_type::index_t property_index_t;
     typedef class_indices_type::index_t class_index_t;
     typedef object_indices_type::index_t object_index_t;
     typedef string_indices_type::index_t string_index_t;
     typedef wstring_indices_type::index_t wstring_index_t;
-    typedef name_indices_type::index_t name_index_t;
 
     FBinarySerialize_(const FBinarySerializer* owner, const RTTI::FMetaTransaction* transaction)
         : _owner(owner), _transaction(transaction) {
@@ -810,64 +826,80 @@ public:
     void Finalize(IBufferedStreamWriter* writer);
 
 private:
-    class FAtomWriter_ : public RTTI::FMetaAtomWrapCopyVisitor {
+    class FAtomWriter_ : public RTTI::IAtomVisitor {
     public:
-        typedef RTTI::FMetaAtomWrapCopyVisitor parent_type;
+        typedef RTTI::IAtomVisitor parent_type;
         FAtomWriter_(FBinarySerialize_* owner) : _owner(owner) {}
-
-        using parent_type::Append;
-        using parent_type::Inspect;
-        using parent_type::Visit;
 
         template <typename T>
         void WritePOD(const T& pod) { _owner->_objectStream.WritePOD(pod); }
+        void WriteRaw(const void* ptr, size_t sizeInBytes) { _owner->_objectStream.Write(ptr, sizeInBytes); }
 
-        virtual void Inspect(const RTTI::IMetaAtomPair* ppair, const RTTI::TPair<RTTI::PMetaAtom, RTTI::PMetaAtom>& pair) override {
+        virtual bool Visit(const RTTI::IPairTraits* pair, const RTTI::FAtom& atom) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::TPair<{0}, {1}>",
-                ppair->FirstTypeInfo().Name, ppair->SecondTypeInfo().Name );
+                pair->FirstTraits()->TypeInfos().Name(),
+                pair->SecondTraits()->TypeInfos().Name() );
 
-            WritePOD(ppair->Atom()->TypeInfo().Id);
-            parent_type::Inspect(ppair, pair);
+#if USE_BINARYSERIALIZER_NAZIFORMAT
+            WritePOD(pair->TypeId());
+#endif
+
+            RTTI::FAtom first = pair->First(atom);
+            RTTI::FAtom second = pair->Second(atom);
+
+            return (first.Accept(this) && second.Accept(this));
         }
 
-        virtual void Inspect(const RTTI::IMetaAtomVector* pvector, const RTTI::TVector<RTTI::PMetaAtom>& vector) override {
+        virtual bool Visit(const RTTI::IListTraits* list, const RTTI::FAtom& atom) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::TVector<{0}>",
-                pvector->ValueTypeInfo().Name );
+                list->ValueTraits()->TypeInfos().Name() );
 
-            WritePOD(pvector->Atom()->TypeInfo().Id);
-            WritePOD(checked_cast<u32>(vector.size()));
-            parent_type::Inspect(pvector, vector);
+#if USE_BINARYSERIALIZER_NAZIFORMAT
+            WritePOD(list->TypeId());
+#endif
+            WritePOD(checked_cast<u32>(list->Count(atom)));
+
+            return list->ForEach(atom, [this](const RTTI::FAtom& item) {
+                return item.Accept(this);
+            });
         }
 
-        virtual void Inspect(const RTTI::IMetaAtomDictionary* pdictionary, const RTTI::TDictionary<RTTI::PMetaAtom, RTTI::PMetaAtom>& dictionary) override {
+        virtual bool Visit(const RTTI::IDicoTraits* dico, const RTTI::FAtom& atom) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::TDictionary<{0}, {1}>",
-                pdictionary->KeyTypeInfo().Name, pdictionary->ValueTypeInfo().Name );
+                dico->KeyTraits()->TypeInfos().Name(),
+                dico->ValueTraits()->TypeInfos().Name() );
 
-            WritePOD(pdictionary->Atom()->TypeInfo().Id);
-            WritePOD(checked_cast<u32>(dictionary.size()));
-            parent_type::Inspect(pdictionary, dictionary);
+#if USE_BINARYSERIALIZER_NAZIFORMAT
+            WritePOD(dico->TypeId());
+#endif
+            WritePOD(checked_cast<u32>(dico->Count(atom)));
+
+            return dico->ForEach(atom, [this](const RTTI::FAtom& key, const RTTI::FAtom& value) {
+                return (key.Accept(this) && value.Accept(this));
+            });
         }
 
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) \
-        virtual void Visit(const RTTI::TMetaTypedAtom<T>* scalar) override { \
-            Assert(scalar); \
-            Assert(_TypeId == scalar->TypeInfo().Id); \
-            Visit_(scalar); \
-            /*parent_type::Visit(scalar);*/ \
+#define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
+        virtual bool Visit(const RTTI::IScalarTraits* traits, T& value) override final { \
+            return Write_(traits, value); \
         }
-        FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
-#undef DEF_METATYPE_SCALAR
+        FOREACH_RTTI_NATIVETYPES(DECL_ATOM_VIRTUAL_VISIT)
+#undef DECL_ATOM_VIRTUAL_VISIT
 
     private:
         template <typename T>
-        void Visit_(const RTTI::TMetaTypedAtom<T>* scalar) {
+        bool Write_(const RTTI::IScalarTraits* scalar, const T& value) {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize scalar {0} = [{1}]",
-                scalar->TypeInfo().Name, scalar->Wrapper() );
+                scalar->TypeInfos().Name(), value );
             BINARYSERIALIZER_DATALOG(L"@{2:#8X} : <{0}> = [{1}]",
-                scalar->TypeInfo().Name, scalar->Wrapper(), _owner->_objectStream.TellO() );
+                scalar->TypeInfos().Name(), value, _owner->_objectStream.TellO() );
 
-            WritePOD(scalar->TypeInfo().Id);
-            WriteValue_(scalar->Wrapper());
+#if USE_BINARYSERIALIZER_NAZIFORMAT
+            WritePOD(scalar->TypeId());
+#endif
+            WriteValue_(value);
+
+            return true;
         }
 
         template <typename T>
@@ -879,46 +911,34 @@ private:
         template <typename T, size_t _Dim>
         void WriteValue_(const TScalarVector<T, _Dim>& value) {
             STATIC_ASSERT(Meta::TIsPod<T>::value);
-            for (size_t i = 0; i < _Dim; ++i)
-                WritePOD(value[i]);
+            WriteRaw(&value, sizeof(value));
         }
 
         template <typename T, size_t _Width, size_t _Height>
         void WriteValue_(const TScalarMatrix<T, _Width, _Height>& value) {
             STATIC_ASSERT(Meta::TIsPod<T>::value);
-            const TMemoryView<const T> data = value.MakeView();
-            for (const T& pod : data)
-                WritePOD(pod);
+            WriteRaw(&value, sizeof(value));
         }
 
         void WriteValue_(const FString& str) {
-            const string_index_t string_i = _owner->_stringIndices.IndexOf(str);
+            const string_index_t string_i = _owner->_stringIndices.IndexOf(MakeStringView(str));
             WritePOD(string_i);
         }
 
         void WriteValue_(const FWString& wstr) {
-            const wstring_index_t wstring_i = _owner->_wstringIndices.IndexOf(wstr);
+            const wstring_index_t wstring_i = _owner->_wstringIndices.IndexOf(MakeStringView(wstr));
             WritePOD(wstring_i);
         }
 
-        void WriteValue_(const RTTI::PMetaAtom& atom) {
-            if (atom) {
-                const RTTI::FMetaTypeId typeId = atom->TypeInfo().Id;
-                switch(typeId)
-                {
-#define DEF_METATYPE_SCALAR(_Name, T, _TypeId, _Unused) case _TypeId:
-                FOREACH_CORE_RTTI_NATIVE_TYPES(DEF_METATYPE_SCALAR)
-#undef DEF_METATYPE_SCALAR
-                    WritePOD(typeId);
-                    atom->Accept(this);
-                    break;
-
-                default:
-                    CORE_THROW_IT(FBinarySerializerException("no support for abstract RTTI atoms serialization"));
-                }
+        void WriteValue_(const RTTI::FAny& any) {
+            if (any) {
+                WritePOD(any.Traits()->TypeId());
+                if (not any.InnerAtom().Accept(this))
+                    AssertNotReached();
             }
-            else
-                WritePOD(TAG_ATOM_NULL_);
+            else {
+                WritePOD(RTTI::ENativeType::Invalid);
+            }
         }
 
         void WriteValue_(const RTTI::PMetaObject& object) {
@@ -927,25 +947,40 @@ private:
                 WritePOD(object_i);
             }
             else
-                WritePOD(TAG_OBJECT_NULL_);
+                WritePOD(UINT32_MAX);
         }
 
         void WriteValue_(const RTTI::FName& name) {
-            WriteValue_(ToString(name.MakeView()));
+            const string_index_t string_i = _owner->_stringIndices.IndexOf(name.MakeView());
+            WritePOD(string_i);
         }
 
         void WriteValue_(const RTTI::FBinaryData& rawdata) {
             WritePOD(checked_cast<u32>(rawdata.size()));
             if (rawdata.size())
-                _owner->_objectStream.Write(rawdata.data(), rawdata.SizeInBytes());
+                WriteRaw(rawdata.data(), rawdata.SizeInBytes());
         }
 
-        void WriteValue_(const RTTI::FOpaqueData& opaqueData) {
-            WritePOD(checked_cast<u32>(opaqueData.size()));
-            for (const auto& it : opaqueData) {
-                WriteValue_(it.first);
-                WriteValue_(it.second);
-            }
+        void WriteValue_(const FDirpath& dirpath) {
+            STACKLOCAL_POD_ARRAY(wchar_t, buffer, FileSystem::MaxPathLength);
+            const FWStringView wstr = dirpath.ToWCStr(buffer.data(), buffer.size());
+            const wstring_index_t wstr_i = _owner->_wstringIndices.IndexOf(wstr);
+            WritePOD(wstr_i);
+        }
+
+        void WriteValue_(const FFilename& filename) {
+            // split the path to save space in wstring dictionary
+            wstring_index_t wstr_i;
+            FWStringView wstr;
+            STACKLOCAL_POD_ARRAY(wchar_t, buffer, FileSystem::MaxPathLength);
+            // dirname (high probability of being shared with other filenames)
+            wstr = filename.Dirpath().ToWCStr(buffer.data(), buffer.size());
+            wstr_i = _owner->_wstringIndices.IndexOf(wstr);
+            WritePOD(wstr_i);
+            // basename (high entropy part of the filename)
+            wstr = filename.Basename().ToWCStr(buffer.data(), buffer.size());
+            wstr_i = _owner->_wstringIndices.IndexOf(wstr);
+            WritePOD(wstr_i);
         }
 
         FBinarySerialize_* _owner;
@@ -967,7 +1002,6 @@ private:
     STATIC_ASSERT(sizeof(FFourCC) == sizeof(object_index_t));
     STATIC_ASSERT(sizeof(FFourCC) == sizeof(string_index_t));
     STATIC_ASSERT(sizeof(FFourCC) == sizeof(wstring_index_t));
-    STATIC_ASSERT(sizeof(FFourCC) == sizeof(name_index_t));
 
     string_indices_type _stringIndices;
     wstring_indices_type _wstringIndices;
@@ -978,10 +1012,6 @@ private:
     object_indices_type _objectIndices;
     VECTOR_THREAD_LOCAL(Serialize, object_index_t) _topObjects;
     VECTOR_THREAD_LOCAL(Serialize, FSerializedObject_) _objectsStreamed;
-
-    name_indices_type _nameIndices;
-    HASHMAP_THREAD_LOCAL(Serialize, name_index_t, object_index_t) _namesToExport;
-    HASHMAP_THREAD_LOCAL(Serialize, name_index_t, object_index_t) _namesToImport;
 };
 //----------------------------------------------------------------------------
 void FBinarySerialize_::Append(const RTTI::FMetaObject* object, bool topObject /* = true */) {
@@ -1017,11 +1047,6 @@ void FBinarySerialize_::Finalize(IBufferedStreamWriter* writer) {
     writer->WritePOD(FILE_MAGIC_);
     writer->WritePOD(FILE_VERSION_);
 
-    writer->WritePOD(SECTION_NAMES_);
-    _nameIndices.Serialize(writer, [writer](const RTTI::FName& name) {
-        SerializePODs_(writer, name.MakeView());
-    });
-
     writer->WritePOD(SECTION_STRINGS_);
     _stringIndices.Serialize(writer, [writer](const FStringView& str) {
         SerializePODs_(writer, str);
@@ -1048,9 +1073,6 @@ void FBinarySerialize_::Finalize(IBufferedStreamWriter* writer) {
     writer->WritePOD(SECTION_TOP_OBJECTS_);
     SerializePODs_(writer, MakeConstView(_topObjects));
 
-    writer->WritePOD(SECTION_OBJECTS_TO_EXPORT_);
-    SerializePODs_(writer, _namesToExport);
-
     writer->WritePOD(SECTION_OBJECTS_HEADER_);
     AssertRelease(_objectsStreamed.size() == _objectIndices.size());
     SerializePODs_(writer, MakeConstView(_objectsStreamed));
@@ -1063,9 +1085,9 @@ void FBinarySerialize_::Finalize(IBufferedStreamWriter* writer) {
     UNUSED(dataEnd);
     writer->Write(_objectStream.Pointer(), _objectStream.SizeInBytes());
 
-    const std::streamoff fileEnd = writer->TellO();
-    Assert(fileEnd == dataEnd);
-    UNUSED(fileEnd);
+    ONLY_IF_ASSERT(const std::streamoff fileEnd = writer->TellO());
+    Assert_NoAssume(fileEnd == dataEnd);
+
     writer->WritePOD(SECTION_END_);
 }
 //----------------------------------------------------------------------------
@@ -1115,7 +1137,7 @@ void FBinarySerialize_::ProcessQueue_() {
             header.Type = TAG_OBJECT_NULL_;
         }
         else {
-            const RTTI::FMetaClass* metaClass = object->RTTI_MetaClass();
+            const RTTI::FMetaClass* metaClass = object->RTTI_Class();
             Assert(metaClass);
 
             const class_index_t class_i = AddClass_(metaClass);
@@ -1125,22 +1147,18 @@ void FBinarySerialize_::ProcessQueue_() {
                 const RTTI::FName metaName = object->RTTI_Name();
                 Assert(!metaName.empty());
 
-                const name_index_t name_i = _nameIndices.IndexOf(metaName);
+                const string_index_t name_i = _stringIndices.IndexOf(metaName.MakeView());
 
                 const bool exported = _transaction->Contains(object);
                 if (exported) {
                     BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize exported object <{0}> '{1}'", metaClass->Name(), metaName);
                     header.Type = TAG_OBJECT_EXPORT_;
                     header.NameIndex = name_i;
-                    Insert_AssertUnique(_namesToExport, name_i, object_i);
-                    Assert(_namesToImport.end() == _namesToImport.find(name_i));
                 }
                 else {
                     BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize imported object <{0}> '{1}'", metaClass->Name(), metaName);
                     header.Type = TAG_OBJECT_IMPORT_;
                     header.NameIndex = name_i;
-                    Insert_AssertUnique(_namesToImport, name_i, object_i);
-                    Assert(_namesToExport.end() == _namesToExport.find(name_i));
                     continue; // skip serialization because it does not belong to the current transaction
                 }
             }
@@ -1160,11 +1178,13 @@ void FBinarySerialize_::ProcessQueue_() {
 //----------------------------------------------------------------------------
 void FBinarySerialize_::WriteObject_(FAtomWriter_& atomWriter, const RTTI::FMetaObject* object, const RTTI::FMetaClass* metaClass) {
     Assert(object);
-    Assert(object->RTTI_MetaClass() == metaClass);
+    Assert(object->RTTI_Class() == metaClass);
 
     BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize object data for @{0}", _objectStream.TellI());
 
+#if USE_BINARYSERIALIZER_NAZIFORMAT
     _objectStream.WritePOD(TAG_OBJECT_START_);
+#endif
 
     u32 metaClassCount = 0;
     const std::streamoff metaClassCountOffset = _objectStream.TellO();
@@ -1174,7 +1194,10 @@ void FBinarySerialize_::WriteObject_(FAtomWriter_& atomWriter, const RTTI::FMeta
         BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize metaclass data <{0}>", metaClass->Name());
 
         const std::streamoff metaClassTagOffset = _objectStream.TellO();
+
+#if USE_BINARYSERIALIZER_NAZIFORMAT
         _objectStream.WritePOD(TAG_OBJECT_METACLASS_);
+#endif
 
         const class_index_t class_i = AddClass_(metaClass);
         _objectStream.WritePOD(class_i);
@@ -1185,20 +1208,22 @@ void FBinarySerialize_::WriteObject_(FAtomWriter_& atomWriter, const RTTI::FMeta
 
         property_indices_type& propertyIndices = _propertiesByClassIndex[class_i];
 
-        for (const RTTI::UCMetaProperty& prop : metaClass->Properties()) {
-            if (prop->IsDefaultValue(object))
+        for (const RTTI::FMetaProperty& prop : metaClass->SelfProperties()) {
+            RTTI::FAtom atom = prop.Get(*object);
+
+            if (atom.IsDefaultValue())
                 continue;
 
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize property data <{0}> '{1}'",
-                it.second->TypeInfo().Name, it.second->Name());
+                prop->Traits()->TypeInfos().Name(), prop->Name());
 
             ++propertyCount;
 
-            const property_index_t prop_i = propertyIndices.IndexOf(prop.get());
+            const property_index_t prop_i = propertyIndices.IndexOf(&prop);
             _objectStream.WritePOD(prop_i);
 
-            const RTTI::PMetaAtom atom = prop->WrapCopy(object);
-            atomWriter.Append(atom.get());
+            if (not atom.Accept(&atomWriter))
+                AssertNotReached();
         }
 
         if (0 < propertyCount) {
@@ -1222,7 +1247,9 @@ void FBinarySerialize_::WriteObject_(FAtomWriter_& atomWriter, const RTTI::FMeta
     _objectStream.WritePOD(metaClassCount); // overwrite metaclass count
     _objectStream.SeekO(objectEndOffset, ESeekOrigin::Begin);
 
+#if USE_BINARYSERIALIZER_NAZIFORMAT
     _objectStream.WritePOD(TAG_OBJECT_END_);
+#endif
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -1251,7 +1278,7 @@ void FBinarySerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransa
     Assert(transaction);
 
     FBinarySerialize_ serialize(this, transaction);
-    serialize.Append(transaction->MakeView());
+    serialize.Append(transaction->TopObjects());
 
     UsingBufferedStream(output, [&serialize](IBufferedStreamWriter* buffered) {
         serialize.Finalize(buffered);
