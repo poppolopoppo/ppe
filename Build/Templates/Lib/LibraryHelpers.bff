@@ -226,6 +226,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         // Override project directories for visual studio ONLY
 #if __WINDOWS__
         .ProjectBasePath        = "$ProjectPath$"
+        .BuildLogFile           = "$BinaryDirectory$\$ProjectName$.$Config$.$Platform$.log"
         .Output                 = "$BinaryDirectory$\$ProjectName$.$Config$.$Platform$.$CompilerBinaryExtension$"
         .OutputDirectory        = "$BinaryDirectory$"
         .IntermediateDirectory  = "$IntermediateDirectory$"
