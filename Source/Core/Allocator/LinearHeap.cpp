@@ -115,16 +115,9 @@ private:
 FLinearHeapVMCache_& FLinearHeapVMCache_::GInstance = FLinearHeapVMCache_::Instance();
 #endif
 //----------------------------------------------------------------------------
-static FLinearHeap& GlobalLinearHeap_() {
-    static FLinearHeap GGlobalHeap("Global");
-    return GGlobalHeap;
-}
-//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FLinearHeap& FLinearHeap::GGlobalHeap = GlobalLinearHeap_();
 //----------------------------------------------------------------------------
 FLinearHeap::FLinearHeap(const char* name)
     : _smallBlocksTLS{ 0 }
