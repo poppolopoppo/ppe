@@ -84,58 +84,37 @@ bool FHttpServerImpl::Serve_ReturnIfQuit(const FMilliseconds& timeout) {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class FHttpServicingTask_ : public FTask {
-public:
-    FHttpServicingTask_(const FHttpServerImpl* server, FSocketBuffered&& socket);
-    virtual ~FHttpServicingTask_();
+void HttpServicingTask_(ITaskContext& ctx, const FHttpServerImpl* server, FSocketBuffered& socket) {
+    Assert(server);
+    Assert(socket.IsConnected());
 
-protected:
-    virtual void Run(ITaskContext& ctx) override;
-
-private:
-    const FHttpServerImpl* _server;
-    FSocketBuffered _socket;
-};
-//----------------------------------------------------------------------------
-FHttpServicingTask_::FHttpServicingTask_(const FHttpServerImpl* server, FSocketBuffered&& socket)
-:   _server(server)
-,   _socket(std::move(socket)) {
-    Assert(_socket.IsConnected());
-}
-//----------------------------------------------------------------------------
-FHttpServicingTask_::~FHttpServicingTask_() {
-    Assert(_socket.IsConnected());
-    _socket.Disconnect();
-}
-//----------------------------------------------------------------------------
-void FHttpServicingTask_::Run(ITaskContext& ctx) {
-    _server->OnAccept(_socket);
+    server->OnAccept(socket);
 
     CORE_TRY {
         FHttpRequest request;
-        FHttpRequest::Read(&request, _socket, _server->MaxContentLength());
+        FHttpRequest::Read(&request, socket, server->MaxContentLength());
 
         LOG(Info, L"[HTTP] Server request : method={0}, uri={1} from {2}:{3}",
             request.Method(), request.Uri(),
-            _socket.Remote().Host(), _socket.Remote().Port() );
+            socket.Remote().Host(), socket.Remote().Port() );
 
-        _server->OnRequest(_socket, request);
+        server->OnRequest(socket, request);
     }
     CORE_CATCH(FHttpException e)
     CORE_CATCH_BLOCK({
         LOG(Error, L"[HTTP] Server error : status={0}, reason={1} on {2}:{3}",
             e.Status(), e.what(),
-            _socket.Local().Host(), _socket.Local().Port() );
+            socket.Local().Host(), socket.Local().Port() );
 
         FHttpResponse response;
         response.Clear();
         response.SetStatus(e.Status());
         response.SetReason(e.what());
 
-        FHttpResponse::Write(&_socket, response);
+        FHttpResponse::Write(&socket, response);
     })
 
-    _server->OnDisconnect(_socket);
+    server->OnDisconnect(socket);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -157,8 +136,11 @@ static void HttpServicingThreadLaunchPad_(FHttpServer* owner) {
 }
 //----------------------------------------------------------------------------
 static void HttpServicingHandleConnection_(const FHttpServerImpl* server, FSocketBuffered&& socket) {
-    FHttpServicingTask_* const fireAndForget = new FHttpServicingTask_(server, std::move(socket));
-    FIOThreadPool::Instance().Run(*fireAndForget);
+    FSocketBuffered* psocket = new FSocketBuffered(std::move(socket));
+    FIOThreadPool::Instance().Run([server, psocket](ITaskContext& ctx) {
+        HttpServicingTask_(ctx, server, *psocket);
+        checked_delete(psocket);
+    });
 }
 //----------------------------------------------------------------------------
 } //!namespace
