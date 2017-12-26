@@ -106,6 +106,18 @@ bool IsNANorINF(const TScalarMatrix<T, _Width, _Height>& m) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
+bool NearlyEquals(  const TScalarMatrix<T, _Width, _Height>& lhs,
+                    const TScalarMatrix<T, _Width, _Height>& rhs,
+                    float maxRelDiff/* = F_Epsilon */) {
+    forrange(i, 0, lengthof(lhs._data.raw))
+        if (not NearlyEquals(lhs._data.raw[i], rhs._data.raw[i], maxRelDiff))
+            return false;
+    return true;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
 TScalarMatrix<T, _Width, _Height> Abs(const TScalarMatrix<T, _Width, _Height>& m) {
     TScalarMatrix<T, _Width, _Height> result;
     for (size_t i = 0; i < TScalarMatrix<T, _Width, _Height>::Dim; ++i)

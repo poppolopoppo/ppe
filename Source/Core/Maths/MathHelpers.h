@@ -6,6 +6,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+constexpr float D_Epsilon = 1e-5;
+//----------------------------------------------------------------------------
 constexpr float F_Epsilon = 1e-3f;
 constexpr float F_EpsilonSQ = 1e-9f;
 constexpr float F_SmallEpsilon = 1e-6f;
@@ -136,6 +138,7 @@ constexpr void SinCos(T radians, T *fsin, T *fcos);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool NearlyEquals(float A, float B, float maxRelDiff = F_Epsilon);
+bool NearlyEquals(double A, double B, double maxRelDiff = D_Epsilon);
 //----------------------------------------------------------------------------
 inline bool IsINF(float f)  { return std::isinf(f); }
 inline bool IsINF(double d) { return std::isinf(d); }

@@ -164,9 +164,19 @@ inline bool NearlyEquals(float A, float B, float maxRelDiff/* = F_Epsilon */) {
     // Find the largest
     float largest = (B > A) ? B : A;
 
-    if (diff <= largest * maxRelDiff)
-        return true;
-    return false;
+    return (diff <= largest * maxRelDiff);
+}
+//----------------------------------------------------------------------------
+inline bool NearlyEquals(double A, double B, double maxRelDiff/* = D_Epsilon */) {
+    // Calculate the difference.
+    const double diff = Abs(A - B);
+    A = Abs(A);
+    B = Abs(B);
+
+    // Find the largest
+    double largest = (B > A) ? B : A;
+
+    return (diff <= largest * maxRelDiff);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

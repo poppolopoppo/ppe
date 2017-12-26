@@ -49,6 +49,13 @@ bool IsNANorINF(const TScalarMatrix<T, _Width, _Height>& m);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
+bool NearlyEquals(  const TScalarMatrix<T, _Width, _Height>& lhs,
+                    const TScalarMatrix<T, _Width, _Height>& rhs,
+                    float maxRelDiff = F_Epsilon);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Width, size_t _Height>
 TScalarMatrix<T, _Width, _Height> Abs(const TScalarMatrix<T, _Width, _Height>& m);
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
@@ -149,7 +156,7 @@ TScalarMatrix<T, _Height, _Width> InvertTranspose(const TScalarMatrix<T, _Width,
 // * RH <=> Right Handed
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakeBillboardMatrix(  const TScalarVector<T, 3>& objectPosition,
+TScalarMatrix<T, 4, 4> MakeBillboardMatrix( const TScalarVector<T, 3>& objectPosition,
                                             const TScalarVector<T, 3>& cameraPosition,
                                             const TScalarVector<T, 3>& cameraUpVector,
                                             const TScalarVector<T, 3>& cemaraForward);
@@ -165,7 +172,7 @@ TScalarMatrix<T, 4, 4> MakeLookAtRHMatrix(   const TScalarVector<T, 3>& eye,
                                             const TScalarVector<T, 3>& up );
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakeOrthographicLHMatrix( T width,
+TScalarMatrix<T, 4, 4> MakeOrthographicLHMatrix(T width,
                                                 T height,
                                                 T znear,
                                                 T zfar );
@@ -193,7 +200,7 @@ TScalarMatrix<T, 4, 4> MakeOrthographicOffCenterRHMatrix(T left,
                                                         T zfar );
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakePerspectiveLHMatrix(  T width,
+TScalarMatrix<T, 4, 4> MakePerspectiveLHMatrix( T width,
                                                 T height,
                                                 T znear,
                                                 T zfar );
@@ -221,13 +228,13 @@ TScalarMatrix<T, 4, 4> MakePerspectiveOffCenterRHMatrix( T left,
                                                         T zfar );
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakePerspectiveFovLHMatrix(   T fov,
+TScalarMatrix<T, 4, 4> MakePerspectiveFovLHMatrix(  T fov,
                                                     T aspect,
                                                     T znear,
                                                     T zfar );
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakePerspectiveFovRHMatrix(   T fov,
+TScalarMatrix<T, 4, 4> MakePerspectiveFovRHMatrix(  T fov,
                                                     T aspect,
                                                     T znear,
                                                     T zfar );
