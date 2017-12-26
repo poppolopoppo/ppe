@@ -1,6 +1,6 @@
-// stdafx.h : fichier Include pour les fichiers Include système standard,
-// ou les fichiers Include spécifiques aux projets qui sont utilisés fréquemment,
-// et sont rarement modifiés
+// stdafx.hA?A?: fichier Include pour les fichiers Include systA?A?me standard,
+// ou les fichiers Include spA?A?cifiques aux projets qui sont utilisA?A?s frA?A?quemment,
+// et sont rarement modifiA?A?s
 //
 
 #pragma once

@@ -1,14 +1,16 @@
 #pragma once
 
+#include "Core/Meta/Aliases.h"
+
 #ifdef PLATFORM_WINDOWS
 // /W3
-#pragma warning(disable: 4127) // L'expression conditionnelle est une constante
-#pragma warning(disable: 4201) // Extension non standard utilisée: struct/union sans nom.
-#pragma warning(disable: 4503) // Longueur du nom décoré dépassée, le nom a été tronqué
-#pragma warning(disable: 4714) // Fonction 'XXX' marquée comme __forceinline non inline
+#pragma warning(disable: 4127) // conditional expression is constant
+#pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
+#pragma warning(disable: 4503) // 'identifier' : decorated name length exceeded, name was truncated
+#pragma warning(disable: 4714) // function 'function' marked as __forceinline not inlined
 // /analyze
 #pragma warning(disable: 6054) // String 'XXX' might not be zero-terminated.
-#pragma warning(disable: 6255) // _alloca signale un échec en levant une exception de dépassement de capacité de la pile. Utilisez _malloca à la place.
+#pragma warning(disable: 6255) // _alloca indicates failure by raising a stack overflow exception. Consider using _malloca instead
 #pragma warning(disable: 6326) // Potential comparison of a constant with another constant.
 #endif
 

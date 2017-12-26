@@ -3,8 +3,8 @@
 #include "Core/Maths/ScalarVectorHelpers.h"
 
 #pragma warning(push)
-#pragma warning(disable: 6201) // L'index 'XXX' est en dehors de la plage d'index valide 'XXX' à 'XXX' pour la mémoire tampon 'XXX' allouée sans doute par la pile.
-#pragma warning(disable: 6294) // Boucle mal définie : la condition initiale ne satisfait pas les tests. Le corps de la boucle n'est pas exécuté.
+#pragma warning(disable: 6201) // L'index 'XXX' est en dehors de la plage d'index valide 'XXX' A?A? 'XXX' pour la mA?A?moire tampon 'XXX' allouA?A?e sans doute par la pile.
+#pragma warning(disable: 6294) // Boucle mal dA?A?finie : la condition initiale ne satisfait pas les tests. Le corps de la boucle n'est pas exA?A?cutA?A?.
 
 
 namespace Core {

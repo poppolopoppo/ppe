@@ -114,7 +114,7 @@ static void LoadModules_(const FDbghelpWrapper::FLocked& dbghelp) {
         return;
 
 #pragma warning( push )
-#pragma warning( disable : 4826 ) // warning C4826: La conversion de 'unsigned char *const ' en 'DWORD64' est de type signe �tendu.
+#pragma warning( disable : 4826 ) // warning C4826: convert unsigned char* to DWORD64
     BOOL module_found = ::Module32First(snap, &module_entry);
     while (module_found) {
         DWORD64 succeed = dbghelp.SymLoadModuleExW()(
@@ -221,7 +221,7 @@ bool FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
     line64.SizeOfStruct = sizeof(IMAGEHLP_LINEW64);
 
 #pragma warning( push )
-#pragma warning( disable : 4826 ) // warning C4826: La conversion de 'unsigned char *const ' en 'DWORD64' est de type signe �tendu.
+#pragma warning( disable : 4826 ) // warning C4826: convert unsigned char* to DWORD64
     void* const* address = frames.data();
     auto frame = reinterpret_cast<FDecodedCallstack::FFrame *>(&decoded->_frames);
     for (size_t i = 0; i < frames.size(); ++i, ++frame, ++address) {

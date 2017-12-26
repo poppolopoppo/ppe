@@ -11,7 +11,7 @@
 #include <mutex>
 
 #pragma warning(push)
-#pragma warning(disable: 4091) // 'typedef '�: ignor� � gauche de '' quand aucune variable n'est d�clar�e
+#pragma warning(disable: 4091) // 'typedef : ignored left of '' when not variable is declared
 
 #include "Misc/DLLWrapper.h"
 #include "Misc/Platform_Windows.h"

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Core/Maths/ScalarMatrixHelpers.h"
 
@@ -170,9 +170,9 @@ template <typename T>
 TScalarMatrix<T, 4, 4> Orthogonalize(const TScalarMatrix<T, 4, 4>& m) {
     //Uses the modified Gram-Schmidt process.
     //q1 = m1
-    //q2 = m2 - ((q1 ⋅ m2) / (q1 ⋅ q1)) * q1
-    //q3 = m3 - ((q1 ⋅ m3) / (q1 ⋅ q1)) * q1 - ((q2 ⋅ m3) / (q2 ⋅ q2)) * q2
-    //q4 = m4 - ((q1 ⋅ m4) / (q1 ⋅ q1)) * q1 - ((q2 ⋅ m4) / (q2 ⋅ q2)) * q2 - ((q3 ⋅ m4) / (q3 ⋅ q3)) * q3
+    //q2 = m2 - ((q1 * m2) / (q1 * q1)) * q1
+    //q3 = m3 - ((q1 * m3) / (q1 * q1)) * q1 - ((q2 * m3) / (q2 * q2)) * q2
+    //q4 = m4 - ((q1 * m4) / (q1 * q1)) * q1 - ((q2 * m4) / (q2 * q2)) * q2 - ((q3 * m4) / (q3 * q3)) * q3
 
     //By separating the above algorithm into multiple lines, we actually increase accuracy.
     TScalarMatrix<T, 4, 4> result(m);
@@ -195,9 +195,9 @@ TScalarMatrix<T, 4, 4> Orthonormalize(const TScalarMatrix<T, 4, 4>& m) {
     //Because we are making unit vectors, we can optimize the math for orthogonalization
     //and simplify the projection operation to remove the division.
     //q1 = m1 / |m1|
-    //q2 = (m2 - (q1 ⋅ m2) * q1) / |m2 - (q1 ⋅ m2) * q1|
-    //q3 = (m3 - (q1 ⋅ m3) * q1 - (q2 ⋅ m3) * q2) / |m3 - (q1 ⋅ m3) * q1 - (q2 ⋅ m3) * q2|
-    //q4 = (m4 - (q1 ⋅ m4) * q1 - (q2 ⋅ m4) * q2 - (q3 ⋅ m4) * q3) / |m4 - (q1 ⋅ m4) * q1 - (q2 ⋅ m4) * q2 - (q3 ⋅ m4) * q3|
+    //q2 = (m2 - (q1 * m2) * q1) / |m2 - (q1 * m2) * q1|
+    //q3 = (m3 - (q1 * m3) * q1 - (q2 * m3) * q2) / |m3 - (q1 * m3) * q1 - (q2 * m3) * q2|
+    //q4 = (m4 - (q1 * m4) * q1 - (q2 * m4) * q2 - (q3 * m4) * q3) / |m4 - (q1 * m4) * q1 - (q2 * m4) * q2 - (q3 * m4) * q3|
 
     //By separating the above algorithm into multiple lines, we actually increase accuracy.
     TScalarMatrix<T, 4, 4> result(m);

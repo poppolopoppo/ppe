@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #pragma warning( push )
-#pragma warning( disable : 4503) // C4503 'XXX'�: longueur du nom d�cor� d�pass�e, le nom a �t� tronqu�
+#pragma warning( disable : 4503) // C4503 'XXX': decorated name is too long
 
 #include "Grammar.h"
 

@@ -18,7 +18,7 @@
 #endif
 
 #pragma warning( push )
-#pragma warning( disable : 4100 ) // C4100 'XXX'�: param�tre formel non r�f�renc�
+#pragma warning( disable : 4100 ) // C4100 'XXX': unreferenced formal parameter
 
 namespace Core {
 namespace Engine {

@@ -1,6 +1,4 @@
 //{{NO_DEPENDENCIES}}
-// Fichier Include généré de Microsoft Visual C++.
-// Utilisé par Core.Test.rc
 //
 #define IDI_WINDOW_ICON                 101
 #define IDI_APP_ICON                    101
