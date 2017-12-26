@@ -24,7 +24,6 @@ void FDiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, const wch
     FDbghelpWrapper::Create();
 #endif
     FCallstack::Start();
-    FMemoryDomainStartup::Start();
     MiniDump::Start();
 #ifdef WITH_CORE_PROFILING
     FProfiler::FStartup();
@@ -38,7 +37,6 @@ void FDiagnosticsStartup::Shutdown() {
     FProfiler::Shutdown();
 #endif
     MiniDump::Shutdown();
-    FMemoryDomainStartup::Shutdown();
     FCallstack::Shutdown();
 #ifdef PLATFORM_WINDOWS
     FDbghelpWrapper::Destroy();

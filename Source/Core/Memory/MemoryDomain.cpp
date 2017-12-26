@@ -8,12 +8,12 @@
 #include "Diagnostic/Logger.h"
 
 #ifdef USE_MEMORY_DOMAINS
-#   include <algorithm>
-#   include <iostream>
-#   include <mutex>
 #   include "Container/Vector.h"
 #   include "Diagnostic/CrtDebug.h"
 #   include "IO/FormatHelpers.h"
+#   include "Thread/AtomicSpinLock.h"
+
+#   include <algorithm>
 #endif
 
 namespace Core {
@@ -75,16 +75,18 @@ namespace {
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
 struct FAdditionalTrackingData {
-    std::mutex Barrier;
-    STATIC_CONST_INTEGRAL(size_t, Capacity, 2048);
-    VECTORINSITU(Internal, FMemoryTracking*, Capacity) Datas;
+    FAtomicSpinLock Barrier;
+    VECTOR(Internal, FMemoryTracking*) Datas;
     FAdditionalTrackingData() {
         // don't want to allocate on other threads :
-        Datas.reserve_AssumeEmpty(Capacity);
+        Datas.reserve_AssumeEmpty(1024);
     }
 };
-static FAdditionalTrackingData* GAllAdditionalTrackingData = nullptr;
-#endif
+static FAdditionalTrackingData& AllAdditionalTrackingData_() {
+    static FAdditionalTrackingData GInstance;
+    return GInstance;
+}
+#endif //!USE_MEMORY_DOMAINS
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -112,11 +114,11 @@ void ReportDomainTrackingData() {
 void RegisterAdditionalTrackingData(FMemoryTracking *pTrackingData) {
 #ifdef USE_MEMORY_DOMAINS
     Assert(pTrackingData);
-    AssertRelease(GAllAdditionalTrackingData);
     SKIP_MEMORY_LEAKS_IN_SCOPE();
-    std::unique_lock<std::mutex> scopeLock(GAllAdditionalTrackingData->Barrier);
-    Assert(not Contains(GAllAdditionalTrackingData->Datas, pTrackingData));
-    GAllAdditionalTrackingData->Datas.push_back_AssumeNoGrow(pTrackingData);
+    FAdditionalTrackingData& Additional = AllAdditionalTrackingData_();
+    const FAtomicSpinLock::FScope scopeLock(Additional.Barrier);
+    Assert(not Contains(Additional.Datas, pTrackingData));
+    Additional.Datas.push_back_AssumeNoGrow(pTrackingData);
 #else
     UNUSED(pTrackingData);
 #endif
@@ -125,10 +127,10 @@ void RegisterAdditionalTrackingData(FMemoryTracking *pTrackingData) {
 void UnregisterAdditionalTrackingData(FMemoryTracking *pTrackingData) {
 #ifdef USE_MEMORY_DOMAINS
     Assert(pTrackingData);
-    AssertRelease(GAllAdditionalTrackingData);
     SKIP_MEMORY_LEAKS_IN_SCOPE();
-    std::unique_lock<std::mutex> scopeLock(GAllAdditionalTrackingData->Barrier);
-    Remove_AssertExists(GAllAdditionalTrackingData->Datas, pTrackingData);
+    FAdditionalTrackingData& Additional = AllAdditionalTrackingData_();
+    const FAtomicSpinLock::FScope scopeLock(Additional.Barrier);
+    Remove_AssertExists(Additional.Datas, pTrackingData);
 #else
     UNUSED(pTrackingData);
 #endif
@@ -136,11 +138,11 @@ void UnregisterAdditionalTrackingData(FMemoryTracking *pTrackingData) {
 //----------------------------------------------------------------------------
 void ReportAdditionalTrackingData() {
 #if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
-    AssertRelease(GAllAdditionalTrackingData);
     SKIP_MEMORY_LEAKS_IN_SCOPE();
     FLoggerStream log(ELogCategory::Debug);
-    std::unique_lock<std::mutex> scopeLock(GAllAdditionalTrackingData->Barrier);
-    ReportTrackingDatas(log, L"Additional", GAllAdditionalTrackingData->Datas.MakeConstView());
+    FAdditionalTrackingData& Additional = AllAdditionalTrackingData_();
+    const FAtomicSpinLock::FScope scopeLock(Additional.Barrier);
+    ReportTrackingDatas(log, L"Additional", Additional.Datas.MakeConstView());
 #endif
 }
 //----------------------------------------------------------------------------
@@ -190,22 +192,6 @@ void ReportAllocationHistogram() {
 
         GPrevAllocations[i] = allocations[i];
     }
-#endif
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void FMemoryDomainStartup::Start() {
-#ifdef USE_MEMORY_DOMAINS
-    Assert(nullptr == GAllAdditionalTrackingData);
-    GAllAdditionalTrackingData = new FAdditionalTrackingData();
-#endif
-}
-//----------------------------------------------------------------------------
-void FMemoryDomainStartup::Shutdown() {
-#ifdef USE_MEMORY_DOMAINS
-    Assert(nullptr != GAllAdditionalTrackingData);
-    checked_delete_ref(GAllAdditionalTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------
