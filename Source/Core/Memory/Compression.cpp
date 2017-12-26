@@ -52,7 +52,7 @@ struct FCompressionBenchmark_ {
     FCompressionBenchmark_() : StartedAt(FTimepoint::Now()) {}
     void Finished(const wchar_t* msg, size_t a, size_t b) {
         const FTimespan elapsed = FTimepoint::ElapsedSince(StartedAt);
-        LOG(Profiling, L" {0:20} | {1:8} | {2:10} ==> {3:10} : {4:10f2}% = {5:10f2} Mb/s",
+        LOG(Profiling, L" {0:20} | {1:8} | {2:10} ===> {3:10} : {4:10f2}% = {5:10f2} Mb/s",
             msg,
             elapsed,
             Fmt::FSizeInBytes{ a },
