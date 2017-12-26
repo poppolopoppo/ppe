@@ -350,8 +350,8 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1)))
                         CORE_THROW_IT(FLexerException("invalid hexadecimal character escaping", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
-                    ch = (char)((d0 <= '9' ? d0 - '0' : d0 - 'a') * 16 +
-                                (d1 <= '9' ? d1 - '0' : d1 - 'a') );
+                    ch = (char)((d0 <= '9' ? d0 - '0' : d0 - 'a' + 10) * 16 +
+                                (d1 <= '9' ? d1 - '0' : d1 - 'a' + 10) );
 
                     oss.put(ch);
 
@@ -367,10 +367,10 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1) && Hexadecimal_(d2) && Hexadecimal_(d3)))
                         CORE_THROW_IT(FLexerException("invalid unicode character escaping", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell())));
 
-                    unicode =   u16(d0 <= '9' ? d0 - '0' : d0 - 'a') * (16 * 16 * 16) +
-                                u16(d1 <= '9' ? d1 - '0' : d1 - 'a') * (16 * 16) +
-                                u16(d2 <= '9' ? d2 - '0' : d2 - 'a') * (16) +
-                                u16(d3 <= '9' ? d3 - '0' : d3 - 'a');
+                    unicode =   u16(d0 <= '9' ? d0 - '0' : d0 - 'a' + 10) * (16 * 16 * 16) +
+                                u16(d1 <= '9' ? d1 - '0' : d1 - 'a' + 10) * (16 * 16) +
+                                u16(d2 <= '9' ? d2 - '0' : d2 - 'a' + 10) * (16) +
+                                u16(d3 <= '9' ? d3 - '0' : d3 - 'a' + 10);
 
                     if (unicode <= 0xFF) {
                         oss.put(char(unicode));
