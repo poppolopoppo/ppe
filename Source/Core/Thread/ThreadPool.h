@@ -26,7 +26,7 @@ public:
     static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
-void AsyncWork(const FTaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
+void AsyncWork(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -45,7 +45,7 @@ public:
     static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
-void AsyncIO(const FTaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
+void AsyncIO(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -64,7 +64,7 @@ public:
     static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
-void AsyncLowestPriority(const FTaskDelegate& task, ETaskPriority priority = ETaskPriority::Normal);
+void AsyncLowestPriority(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

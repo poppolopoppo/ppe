@@ -7,7 +7,6 @@
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
 #include "IO/Format.h"
-#include "Meta/Delegate.h"
 #include "Meta/PointerWFlags.h"
 #include "Meta/ThreadResource.h"
 
@@ -69,10 +68,9 @@ typedef TFixedSizeRingBuffer<FFiberQueued_, GFiberQueueCapacity_> FFiberQueue_;
 STATIC_ASSERT(sizeof(FFiberQueue_) == (4 + 2 * GFiberQueueCapacity_) * sizeof(uintptr_t));
 //----------------------------------------------------------------------------
 struct FTaskQueued_ {
-    FTaskDelegate Pending;
+    FTaskFunc Pending;
     STaskCounter Counter;
 };
-STATIC_ASSERT(sizeof(FTaskQueued_) == 3 * sizeof(uintptr_t));
 #if WITH_CORE_NONBLOCKING_TASKPRIORITYQUEUE
 typedef TMPMCPriorityQueue<
     TMPMCBoundedQueue<FTaskQueued_>,
@@ -135,9 +133,10 @@ public:
     void Start(const TMemoryView<const size_t>& threadAffinities);
     void Shutdown();
 
-    virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority) override final;
+    virtual void Run(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority) override final;
+    virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override final;
     virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) override final;
-    virtual void RunAndWaitFor(const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority, ITaskContext* resume) override final;
+    virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority, ITaskContext* resume) override final;
 
 private:
     FTaskPriorityQueue_ _queue;
@@ -181,6 +180,8 @@ public:
 
     void QueueResumeFiber(FFiber& fiber);
     void ResumeFiberIFP();
+
+    void DutyCycle();
 
     void YieldFiber();
 
@@ -361,6 +362,11 @@ void FWorkerContext_::ResumeFiberIFP() {
     fiber.Reset(); // forget fiber pimpl to prevent destruction (the fiber is already recycled or destroyed)
 }
 //----------------------------------------------------------------------------
+void FWorkerContext_::DutyCycle() {
+    ReleaseFiberIFP();
+    ResumeFiberIFP();
+}
+//----------------------------------------------------------------------------
 void FWorkerContext_::YieldFiber() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
@@ -404,28 +410,35 @@ void STDCALL FWorkerContext_::WorkerEntryPoint_(void* pArg) {
     Assert(manager.Pimpl());
     FTaskManagerImpl& impl = *manager.Pimpl();
 
-    FTaskQueued_ task;
     while (true) {
-        Instance().ReleaseFiberIFP();
-        Instance().ResumeFiberIFP();
+        Instance().DutyCycle();
 
         malloc_release_pending_blocks();
 
+        {
+            // need to destroy FTaskFunc immediately :
+            // keeping it alive outside the loop could hold resources until a next
+            // task is processed on this worker, which could never happen until worker deletion !
+            FTaskQueued_ task;
+
 #if WITH_CORE_NONBLOCKING_TASKPRIORITYQUEUE
-        while (not impl.Queue().Consume(&task))
-            std::this_thread::yield();
+            while (not impl.Queue().Consume(&task))
+                std::this_thread::yield();
 #else
-        impl.Queue().Consume(&task);
+            impl.Queue().Consume(&task);
 #endif
 
-        Assert(task.Pending.Valid());
-        {
-            const FTaskManagerImpl::FTaskScope taskScope(&impl);
+            Assert(task.Pending.Valid());
+            {
+                const FTaskManagerImpl::FTaskScope taskScope(&impl);
 
-            task.Pending.Invoke(impl);
+                task.Pending.Invoke(impl);
 
-            if (task.Counter)
-                Decrement_ResumeWaitingTasksIfZero(task.Counter);
+                // Decrement the counter and resume waiting tasks if any.
+                // Won't steal the thread from this fiber, so the loop can safely finish
+                if (task.Counter)
+                    Decrement_ResumeWaitingTasksIfZero(task.Counter);
+            }
         }
     }
 }
@@ -439,7 +452,7 @@ namespace {
 static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, size_t affinityMask) {
     Assert(pmanager);
 
-    char workerName[256];
+    char workerName[128];
     Format(workerName, "{0}_Worker#{1}", pmanager->Name(), workerIndex);
     const FThreadContextStartup threadStartup(workerName, pmanager->ThreadTag());
 
@@ -455,7 +468,7 @@ static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, s
 }
 //----------------------------------------------------------------------------
 struct FRunAndWaitFor_ {
-    TMemoryView<const FTaskDelegate> Tasks;
+    TMemoryView<const FTaskFunc> Tasks;
     ETaskPriority Priority;
     bool Available;
 
@@ -486,12 +499,12 @@ struct FWaitForAll_ {
     static void Task(ITaskContext& context, FWaitForAll_* pArgs) {
         Assert(pArgs);
 
-        FTaskDelegate task = TDelegate(&Noop, nullptr);
+        FTaskFunc noop = [](ITaskContext&){};
         FTaskManagerImpl& impl = *FWorkerContext_::Instance().Manager().Pimpl();
 
         while (impl.TaskRunningCount() > 1) {
             FTaskWaitHandle waitHandle;
-            context.RunOne(&waitHandle, task, ETaskPriority::_Reserved);
+            context.RunOne(&waitHandle, noop, ETaskPriority::_Internal);
             context.WaitFor(waitHandle);
         }
 
@@ -548,12 +561,11 @@ void FTaskManagerImpl::Shutdown() {
     AssertRelease(n == _threads.size());
 
     {
-        STACKLOCAL_POD_ARRAY(FTaskDelegate, exitTasks, n);
-        forrange(i, 0, n) {
-            exitTasks[i] = TDelegate(&FWorkerContext_::ExitWorkerTask, nullptr);
-        }
+        STACKLOCAL_POD_ARRAY(FTaskFunc, exitTasks, n);
+        forrange(i, 0, n)
+            exitTasks[i] = &FWorkerContext_::ExitWorkerTask;
 
-        Run(nullptr, exitTasks, ETaskPriority::_Reserved);
+        Run(nullptr, exitTasks, ETaskPriority::_Internal);
     }
 
     forrange(i, 0, n) {
@@ -564,7 +576,32 @@ void FTaskManagerImpl::Shutdown() {
     _threads.clear();
 }
 //----------------------------------------------------------------------------
-void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) {
+void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority) {
+    FTaskCounter* pcounter = nullptr;
+
+    if (phandle) {
+        Assert(not phandle->Valid());
+
+        *phandle = FTaskWaitHandle(priority, FWorkerContext_::Instance().CreateCounter());
+        Assert(phandle->Valid());
+        Assert(phandle->Counter());
+
+        pcounter = const_cast<FTaskCounter*>(phandle->Counter());
+        pcounter->Start(1);
+    }
+
+#if WITH_CORE_NONBLOCKING_TASKPRIORITYQUEUE
+    FTaskQueued_ queued{ std::move(rtask), pcounter };
+    while (false == _queue.Produce(size_t(priority), std::move(queued)))
+        ::_mm_pause();
+#else
+    _queue.Produce(
+        int(priority),
+        FTaskQueued_{ std::move(rtask), pcounter } );
+#endif
+}
+//----------------------------------------------------------------------------
+void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) {
     FTaskCounter* pcounter = nullptr;
 
     if (phandle) {
@@ -605,7 +642,7 @@ void FTaskManagerImpl::WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) {
         FWorkerContext_::Instance().YieldFiber();
 }
 //----------------------------------------------------------------------------
-void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority, ITaskContext* resume) {
+void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority, ITaskContext* resume) {
     FTaskWaitHandle handle;
     Run(&handle, tasks, priority);
     WaitFor(handle, resume);
@@ -671,8 +708,11 @@ NO_INLINE void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef) {
     if (0 == --saferef->_count) {
         FFiberQueued_ waiting;
         while (saferef->_queue.pop_front(&waiting)) {
-            const FTaskDelegate task(TDelegate(&FWorkerContext_::ResumeFiberTask, waiting.Halted().Pimpl()));
-            waiting.TaskContext()->RunOne(nullptr, task, waiting.Priority());
+            void* fiber = waiting.Halted().Pimpl();
+            FTaskFunc resume = [fiber](ITaskContext& ctx) {
+                FWorkerContext_::ResumeFiberTask(ctx, fiber);
+            };
+            waiting.TaskContext()->RunOne(nullptr, resume, waiting.Priority());
             waiting.Halted().Reset();
         }
     }
@@ -758,7 +798,15 @@ ITaskContext* FTaskManager::Context() const {
     return _pimpl.get();
 }
 //----------------------------------------------------------------------------
-void FTaskManager::Run(const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
+void FTaskManager::Run(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
+    Assert(not FFiber::IsInFiber());
+    Assert(rtask);
+    Assert(nullptr != _pimpl);
+
+    _pimpl->Run(nullptr, std::move(rtask), priority);
+}
+//----------------------------------------------------------------------------
+void FTaskManager::Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert(not FFiber::IsInFiber());
     Assert(not tasks.empty());
     Assert(nullptr != _pimpl);
@@ -766,36 +814,58 @@ void FTaskManager::Run(const TMemoryView<const FTaskDelegate>& tasks, ETaskPrior
     _pimpl->Run(nullptr, tasks, priority);
 }
 //----------------------------------------------------------------------------
-void FTaskManager::RunAndWaitFor(const TMemoryView<const FTaskDelegate>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
+void FTaskManager::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert(not FFiber::IsInFiber());
     Assert(not tasks.empty());
     Assert(nullptr != _pimpl);
 
     FRunAndWaitFor_ args{ tasks, priority, false };
-    const FTaskDelegate utility = TDelegate(&FRunAndWaitFor_::Task, &args);
+    const FTaskFunc utility = [&args](ITaskContext& ctx) {
+        FRunAndWaitFor_::Task(ctx, &args);
+    };
     {
         std::unique_lock<std::mutex> scopeLock(args.Barrier);
         _pimpl->RunOne(nullptr, utility, priority);
         args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
+        Assert(args.Available);
     }
 }
 //----------------------------------------------------------------------------
-void FTaskManager::RunAndWaitFor(const TMemoryView<FTask* const>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
-    STACKLOCAL_POD_ARRAY(FTaskDelegate, delegates, tasks.size());
-    forrange(i, 0, tasks.size())
-        delegates[i] = *tasks[i];
+void FTaskManager::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, const FTaskFunc& whileWaiting, ETaskPriority priority /* = ETaskPriority::Normal */) const {
+    Assert(not FFiber::IsInFiber());
+    Assert(not tasks.empty());
+    Assert(whileWaiting);
+    Assert(nullptr != _pimpl);
 
-    RunAndWaitFor(delegates.AddConst(), priority);
+    FRunAndWaitFor_ args{ tasks, priority, false };
+    const FTaskFunc utility = [&args](ITaskContext& ctx) {
+        FRunAndWaitFor_::Task(ctx, &args);
+    };
+    {
+        _pimpl->RunOne(nullptr, utility, priority);
+
+        whileWaiting(*_pimpl);
+
+        std::unique_lock<std::mutex> scopeLock(args.Barrier);
+        if (not args.Available)
+            args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
+
+        Assert(args.Available);
+    }
 }
 //----------------------------------------------------------------------------
 void FTaskManager::WaitForAll() const {
     Assert(nullptr != _pimpl);
 
     FWaitForAll_ args{ false };
-    const FTaskDelegate utility = TDelegate(&FWaitForAll_::Task, &args);
+    const FTaskFunc utility = [&args](ITaskContext& ctx) {
+        FWaitForAll_::Task(ctx, &args);
+    };
+    // trigger a task with lowest priority and wait for it
+    // should wait for all other tasks since _Internal is reserved
     {
         std::unique_lock<std::mutex> scopeLock(args.Barrier);
-        _pimpl->RunOne(nullptr, utility, ETaskPriority::_Reserved);
+        _pimpl->RunOne(nullptr, utility, ETaskPriority::_Internal);
         args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
     }
 }

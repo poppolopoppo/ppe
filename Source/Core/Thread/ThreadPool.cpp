@@ -71,7 +71,7 @@ TMemoryView<const size_t> FGlobalThreadPool::ThreadAffinities() {
     return MakeView(GlobalWorkerThreadAffinities);
 }
 //----------------------------------------------------------------------------
-void AsyncWork(const FTaskDelegate& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
+void AsyncWork(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
     FGlobalThreadPool::Instance().Run(task, priority);
 }
 //----------------------------------------------------------------------------
@@ -93,7 +93,7 @@ TMemoryView<const size_t> FIOThreadPool::ThreadAffinities() {
     return MakeView(IOWorkerThreadAffinities);
 }
 //----------------------------------------------------------------------------
-void AsyncIO(const FTaskDelegate& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
+void AsyncIO(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
     FIOThreadPool::Instance().Run(task, priority);
 }
 //----------------------------------------------------------------------------
@@ -114,7 +114,7 @@ TMemoryView<const size_t> FLowestPriorityThreadPool::ThreadAffinities() {
     return MakeView(LowestPriorityWorkerThreadAffinities);
 }
 //----------------------------------------------------------------------------
-void AsyncLowestPriority(const FTaskDelegate& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
+void AsyncLowestPriority(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
     FLowestPriorityThreadPool::Instance().Run(task, priority);
 }
 //----------------------------------------------------------------------------

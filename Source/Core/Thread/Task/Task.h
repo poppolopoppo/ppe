@@ -4,7 +4,7 @@
 
 #include "Core/Container/Stack.h"
 #include "Core/Memory/RefPtr.h"
-#include "Core/Meta/Delegate.h"
+#include "Core/Meta/Function.h"
 
 #include <functional>
 
@@ -14,35 +14,17 @@ class FTaskManager;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef void (*FTaskFunc)(ITaskContext& context);
-typedef TDelegate<FTaskFunc> FTaskDelegate;
-//----------------------------------------------------------------------------
 enum class ETaskPriority : u32 {
     High = 0,
     Normal,
     Low,
 
-    _Reserved, // used internally, do not use for userland tasks
+    _Internal, // Do not use for userland tasks !
 
     _Count
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FWD_REFPTR(Task);
-class FTask : public FRefCountable {
-public:
-    // Won't be deleted if the task was never run !
-
-    virtual ~FTask() = default;
-
-    operator FTaskDelegate ();
-
-    void RunAndSuicide(ITaskContext& ctx);
-
-protected:
-    virtual void Run(ITaskContext& ctx) = 0;
-};
+using FTaskFunc = Meta::TFunction<void(ITaskContext&)>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
