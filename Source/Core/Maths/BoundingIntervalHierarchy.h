@@ -6,7 +6,7 @@
 #include "Core/Allocator/NodeBasedContainerAllocator.h"
 #include "Core/Maths/ScalarBoundingBox.h"
 #include "Core/Memory/MemoryView.h"
-#include "Core/Meta/Delegate.h"
+#include "Core/Meta/Function.h"
 
 namespace Core {
 enum class EContainmentType;
@@ -65,10 +65,10 @@ public:
         u32 Item;
     };
 
-    typedef TDelegate<void(*)(const FHitResult&/* hit */)> onhit_delegate;
-    typedef TDelegate<void(*)(size_t/* begin */, size_t/* end */, EContainmentType/* collision */)> hitrange_delegate;
-    typedef TDelegate<bool(*)(const FRay&/* ray */, size_t/* begin */, size_t/* end */, FHitResult* /* firstHit */)> raycast_item_delegate;
-    typedef TDelegate<bool(*)(const FRay&/* ray */, size_t/* begin */, size_t/* end */, const onhit_delegate&/* onhit */)> raycast_onhit_delegate;
+    typedef Meta::TFunction<void(const FHitResult&/* hit */)> onhit_delegate;
+    typedef Meta::TFunction<void(size_t/* begin */, size_t/* end */, EContainmentType/* collision */)> hitrange_delegate;
+    typedef Meta::TFunction<bool(const FRay&/* ray */, size_t/* begin */, size_t/* end */, FHitResult* /* firstHit */)> raycast_item_delegate;
+    typedef Meta::TFunction<bool(const FRay&/* ray */, size_t/* begin */, size_t/* end */, const onhit_delegate&/* onhit */)> raycast_onhit_delegate;
 
     void Build(
         size_t maxItemsPerLeaf,
