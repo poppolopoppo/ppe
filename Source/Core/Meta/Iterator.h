@@ -36,7 +36,7 @@ using TIteratorTraits = std::iterator_traits<T>;
 template <typename T, typename _Category = std::forward_iterator_tag>
 using TIterator = std::iterator<
     _Category,
-    TRemoveReference<T>,
+    TRemoveConst<TRemoveReference<T>>,
     ptrdiff_t,
     TAddPointer<T>,
     TAddReference<T>
