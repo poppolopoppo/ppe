@@ -15,7 +15,8 @@
 #include <utility>
 #include <type_traits>
 
-// CppCon 2017: Matt Kulukundis “Designing a Fast, Efficient, Cache-friendly Hash Table, Step by Step”
+// CppCon 2017: Matt Kulukundis
+// Designing a Fast, Efficient, Cache-friendly Hash Table, Step by Step
 // https://www.youtube.com/watch?v=ncHmEUmJZf4
 
 namespace Core {
@@ -182,7 +183,7 @@ public:
     }
 
     const state_t* state() const { return _state; }
-    const TCheckedArrayIterator<value_type>& bucket() const { return _bucket; }
+    const TCheckedArrayIterator<T>& bucket() const { return _bucket; }
 
     pointer data() const { return std::addressof(*_bucket); }
 
@@ -233,7 +234,7 @@ private:
     }
 
     const state_t* _state;
-    TCheckedArrayIterator<value_type> _bucket;
+    TCheckedArrayIterator<T> _bucket;
 };
 } //!details
 //----------------------------------------------------------------------------
@@ -498,8 +499,11 @@ private:
     template <typename _It>
     void insert_(_It first, _It last, std::random_access_iterator_tag);
 
-    void clear_(std::true_type);
-    void clear_(std::false_type);
+    void clear_keepSound_(std::true_type);
+    void clear_keepSound_(std::false_type);
+
+    void clear_leaveDirty_(std::true_type);
+    void clear_leaveDirty_(std::false_type);
 
     void clear_ReleaseMemory_(std::true_type);
     void clear_ReleaseMemory_(std::false_type);
@@ -542,7 +546,7 @@ private:
     const_iterator MakeIterator_(size_t index) const NOEXCEPT {
         return const_iterator(
             (const state_t*)_data.StatesAndBuckets,
-            (typename iterator::pointer)_data.StatesAndBuckets + OffsetOfBuckets_(),
+            (typename const_iterator::pointer)_data.StatesAndBuckets + OffsetOfBuckets_(),
             capacity(),
             index );
     }

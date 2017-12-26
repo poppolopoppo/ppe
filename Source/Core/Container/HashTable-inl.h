@@ -256,7 +256,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear() {
     Assert(CheckInvariants());
 
     if (_data.Size)
-        clear_(typename Meta::TIsPod<value_type>::type{});
+        clear_keepSound_(typename Meta::TIsPod<value_type>::type{});
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -295,11 +295,10 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::swap(TBasicHashTab
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::CheckInvariants() const {
-    STATIC_ASSERT(sizeof(value_type) == sizeof(public_type));
     STATIC_ASSERT(MaxLoadFactor < 100);
+    STATIC_ASSERT(sizeof(value_type) == sizeof(public_type));
     STATIC_ASSERT(sizeof(value_type) >= sizeof(state_t));
-    STATIC_ASSERT(sizeof(public_type) == sizeof(value_type));
-#ifndef NDEBUG
+#ifdef WITH_CORE_ASSERT
     const size_type n = capacity();
     if (0 != n && false == Meta::IsPow2(n))
         return false;
@@ -408,13 +407,13 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_(_It first,
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_(std::true_type) {
+void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_keepSound_(std::true_type) {
     _data.Size = 0;
     _data.ResetStates();
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_(std::false_type) {
+void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_keepSound_(std::false_type) {
     const size_type n = capacity();
     const pointer buckets = BucketAt_(0);
 
@@ -438,6 +437,33 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_(std::false_
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_leaveDirty_(std::true_type) {
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_leaveDirty_(std::false_type) {
+    if (0 == _data.Size)
+        return;
+
+    const size_type n = capacity();
+    const pointer buckets = BucketAt_(0);
+
+    ONLY_IF_ASSERT(size_t sizeCheck = 0);
+
+    for (size_type b = 0; b < n; b += FHTD::GGroupSize) {
+        FBitMask filled = FHTD::MatchFilledBucket(_data.GroupAt_StreamLoad(b));
+
+        while (filled) {
+            const size_type index = (b + filled.PopFront_AssumeNotEmpty())/* can't overflow here due to loop */;
+            allocator_traits::destroy(static_cast<allocator_type&>(*this), buckets + index);
+            ONLY_IF_ASSERT(++sizeCheck);
+        }
+    }
+
+    Assert_NoAssume(sizeCheck == _data.Size);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_ReleaseMemory_(std::true_type) {
     Assert(_data.StatesAndBuckets);
 
@@ -450,16 +476,8 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_ReleaseMemor
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_ReleaseMemory_(std::false_type) {
-    Assert(_data.StatesAndBuckets);
-
-    clear_(std::false_type{});
-
-    Assert(0 == _data.Size);
-
-    allocator_traits::deallocate(static_cast<allocator_type&>(*this), (pointer)_data.StatesAndBuckets, OffsetOfBuckets_() + capacity());
-
-    _data.Capacity = 0;
-    _data.StatesAndBuckets = nullptr;
+    clear_leaveDirty_(std::false_type{});
+    clear_ReleaseMemory_(std::true_type{});
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
