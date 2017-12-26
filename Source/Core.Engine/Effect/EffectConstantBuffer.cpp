@@ -160,7 +160,7 @@ void FEffectConstantBuffer::Clear() {
     _parameters.clear();
     _parameters.shrink_to_fit();
 
-    _rawData.Clear_ReleaseMemory();
+    _rawData.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

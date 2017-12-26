@@ -171,7 +171,7 @@ void FVirtualFileSystemTrie::Clear() {
     for (TPair<FMountingPoint, PVirtualFileSystemComponent>& it : _nodes)
         RemoveRef_AssertReachZero(it.second);
 
-    _nodes.Clear_ReleaseMemory();
+    _nodes.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 void FVirtualFileSystemTrie::Mount(FVirtualFileSystemComponent* component) {

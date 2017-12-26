@@ -70,7 +70,7 @@ void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::clear() {
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Clear_ReleaseMemory() {
+void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::clear_ReleaseMemory() {
     _vector.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------

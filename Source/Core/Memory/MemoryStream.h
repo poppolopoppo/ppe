@@ -41,7 +41,7 @@ public:
 
     TMemoryView<u8> Append(size_t sizeInBytes);
 
-    void Clear_ReleaseMemory();
+    void clear_ReleaseMemory();
     void Clear_StealMemory(storage_type& storage);
 
     const storage_type& Storage() const { return _storage; }
@@ -121,7 +121,7 @@ void TMemoryStream<_Allocator>::resize(size_t count, bool keepData/* = true */) 
         reserve(count);
     }
     else if (count > _storage.size()) {
-        // can only grow, except in shrink_to_fit() or Clear_ReleaseMemory()
+        // can only grow, except in shrink_to_fit() or clear_ReleaseMemory()
         _storage.Resize_DiscardData(count);
     }
 
@@ -137,7 +137,7 @@ void TMemoryStream<_Allocator>::resize(size_t count, bool keepData/* = true */) 
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TMemoryStream<_Allocator>::reserve(size_t count) {
-    if (count > _storage.size()) // can only grow, except in shrink_to_fit() or Clear_ReleaseMemory()
+    if (count > _storage.size()) // can only grow, except in shrink_to_fit() or clear_ReleaseMemory()
         _storage.Resize_KeepData(count);
 }
 //----------------------------------------------------------------------------
@@ -172,15 +172,15 @@ TMemoryView<u8> TMemoryStream<_Allocator>::Append(size_t sizeInBytes) {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-void TMemoryStream<_Allocator>::Clear_ReleaseMemory() {
+void TMemoryStream<_Allocator>::clear_ReleaseMemory() {
     _size = _offsetI = _offsetO = 0;
-    _storage.Clear_ReleaseMemory();
+    _storage.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TMemoryStream<_Allocator>::Clear_StealMemory(storage_type& storage) {
     storage = std::move(_storage);
-    Clear_ReleaseMemory();
+    clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 // IStreamReader

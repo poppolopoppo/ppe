@@ -82,8 +82,8 @@ void FModelMesh::Destroy(Graphics::IDeviceAPIEncapsulator *device) {
 }
 //----------------------------------------------------------------------------
 void FModelMesh::ReleaseCpuMemory() {
-    _indices.Clear_ReleaseMemory();
-    _vertices.Clear_ReleaseMemory();
+    _indices.clear_ReleaseMemory();
+    _vertices.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

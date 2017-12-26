@@ -99,7 +99,7 @@ public:
     }
 
     void Resize(size_type size, bool keepData);
-    void Clear_ReleaseMemory();
+    void clear_ReleaseMemory();
 
     FORCE_INLINE void Resize_DiscardData(size_type size) { Resize(size, false); }
     FORCE_INLINE void Resize_KeepData(size_type size) { Resize(size, true); }
@@ -107,7 +107,7 @@ public:
     template <typename U, typename A>
     typename std::enable_if< sizeof(U) == sizeof(T) >::type Clear_StealData(TRawStorage<U, A>& other) {
         AssertRelease(allocator() == other.allocator());
-        Clear_ReleaseMemory();
+        clear_ReleaseMemory();
         Swap(other);
     }
 

@@ -41,8 +41,8 @@ template <typename _Index, typename _Vertex>
 void TMeshLoader<_Index, _Vertex>::Clear() {
     ResetHeader_();
 
-    _indices.Clear_ReleaseMemory();
-    _vertices.Clear_ReleaseMemory();
+    _indices.clear_ReleaseMemory();
+    _vertices.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 template <typename _Index, typename _Vertex>

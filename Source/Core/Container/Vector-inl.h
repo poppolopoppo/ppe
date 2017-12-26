@@ -740,7 +740,7 @@ void Erase_DontPreserveOrder(TVector<T, _Allocator>& v, const typename TVector<T
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Clear_ReleaseMemory(TVector<T, _Allocator>& v) {
+void clear_ReleaseMemory(TVector<T, _Allocator>& v) {
     v.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------

@@ -121,7 +121,7 @@ public:
     void reserve(size_type capacity);
     void clear();
 
-    void Clear_ReleaseMemory();
+    void clear_ReleaseMemory();
 
     _Value& Add(_Key&& rkey);
     _Value& Add(const _Key& key);

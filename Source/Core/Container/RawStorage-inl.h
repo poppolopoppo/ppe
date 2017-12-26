@@ -37,7 +37,7 @@ TRawStorage<T, _Allocator>::TRawStorage(_It&& begin, _It&& end)
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>::~TRawStorage() {
-    Clear_ReleaseMemory();
+    clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -51,7 +51,7 @@ TRawStorage<T, _Allocator>::TRawStorage(TRawStorage&& rvalue)
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>& TRawStorage<T, _Allocator>::operator =(TRawStorage&& rvalue) {
-    Clear_ReleaseMemory();
+    clear_ReleaseMemory();
     allocator_type::operator =(std::move(rvalue));
     _storage = std::move(rvalue._storage);
     _size = std::move(rvalue._size);
@@ -68,7 +68,7 @@ TRawStorage<T, _Allocator>::TRawStorage(const TRawStorage& other)
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>& TRawStorage<T, _Allocator>::operator =(const TRawStorage& other) {
-    Clear_ReleaseMemory();
+    clear_ReleaseMemory();
     allocator_type::operator =(other);
     insert(end(), other.begin(), other.end());
     return (*this);
@@ -141,7 +141,7 @@ void TRawStorage<T, _Allocator>::insert(iterator after, _It&& begin, _It&& end) 
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void TRawStorage<T, _Allocator>::Clear_ReleaseMemory() {
+void TRawStorage<T, _Allocator>::clear_ReleaseMemory() {
     if (nullptr == _storage) {
         Assert(0 == _size);
         return;

@@ -292,7 +292,7 @@ template <typename T, typename _Allocator>
 void Erase_DontPreserveOrder(TVector<T, _Allocator>& v, const typename TVector<T, _Allocator>::const_iterator& it);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Clear_ReleaseMemory(TVector<T, _Allocator>& v);
+void clear_ReleaseMemory(TVector<T, _Allocator>& v);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 hash_t hash_value(const TVector<T, _Allocator>& vector);

@@ -354,7 +354,7 @@ void FGenericMesh::Clear() {
 //----------------------------------------------------------------------------
 void FGenericMesh::ClearIndices() {
     _indexCount = 0;
-    _indices.Clear_ReleaseMemory();
+    _indices.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 void FGenericMesh::ClearVertices() {

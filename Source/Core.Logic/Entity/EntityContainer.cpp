@@ -88,9 +88,9 @@ EntityID FEntityContainer::IDFromUID(EntityUID uid) const {
 }
 //----------------------------------------------------------------------------
 void FEntityContainer::Clear() {
-    Clear_ReleaseMemory(_entities);
-    Clear_ReleaseMemory(_freeIDs);
-    Clear_ReleaseMemory(_usedIDs);
+    clear_ReleaseMemory(_entities);
+    clear_ReleaseMemory(_freeIDs);
+    clear_ReleaseMemory(_usedIDs);
     _uidToId.clear();
     _nextAvailableID.Value = 0;
 }
