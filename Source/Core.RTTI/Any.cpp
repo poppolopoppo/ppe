@@ -7,6 +7,9 @@
 #include "Core/Maths/ScalarMatrix.h"
 #include "Core/Maths/ScalarVector.h"
 
+// Fall-back to heap allocations when debugging memory to validate memory accesses of FAny
+#define DISABLE_CORE_RTTI_FANY_SSO (USE_CORE_MEMORY_DEBUGGING)
+
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------
@@ -30,6 +33,10 @@ FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_SUPPORTED)
 STATIC_ASSERT(GNumSupportedTypesFittingInSmallBuffer > 0.8f * GNumSupportedTypes);
 } //!namespace
 //----------------------------------------------------------------------------
+static bool AnyCanUseSSO_(const PTypeTraits& traits) {
+    return (!(DISABLE_CORE_RTTI_FANY_SSO || traits->SizeInBytes() > FAny::GSmallBufferSize));
+}
+//----------------------------------------------------------------------------
 FAny::FAny() NOEXCEPT {
     ONLY_IF_ASSERT(::memset(std::addressof(_smallBuffer), 0xDD, sizeof(_smallBuffer)));
 }
@@ -42,7 +49,7 @@ FAny::FAny(const PTypeTraits& traits) NOEXCEPT {
 //----------------------------------------------------------------------------
 void* FAny::Data() {
     if (Likely(_traits))
-        return (_traits->SizeInBytes() <= GSmallBufferSize ? std::addressof(_smallBuffer) : _externalStorage);
+        return (Likely(AnyCanUseSSO_(_traits)) ? std::addressof(_smallBuffer) : _externalStorage);
     else
         return nullptr;
 }
@@ -51,7 +58,7 @@ void FAny::Reset() {
     if (Likely(_traits)) {
         _traits->Destroy(InnerAtom());
 
-        if (_traits->SizeInBytes() > GSmallBufferSize)
+        if (Unlikely(not AnyCanUseSSO_(_traits)))
             _traits->Deallocate(_externalStorage);
 
         _traits.Destroy();
@@ -120,10 +127,9 @@ FAtom FAny::Allocate_(PTypeTraits&& traits) {
 
     _traits = std::move(traits);
 
-    if (Likely(_traits->SizeInBytes() <= GSmallBufferSize))
-        return FAtom(std::addressof(_smallBuffer), _traits);
-    else
-        return FAtom(_externalStorage = _traits->Allocate(), _traits);
+    return (Likely(AnyCanUseSSO_(_traits))
+        ? FAtom(std::addressof(_smallBuffer), _traits)
+        : FAtom(_externalStorage = _traits->Allocate(), _traits) );
 }
 //----------------------------------------------------------------------------
 void FAny::CopyFrom_(const FAny& other) {
