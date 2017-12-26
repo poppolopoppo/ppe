@@ -104,7 +104,7 @@ FSymbols::FSymbols() {
 
     RegisterSymbol_(&True, _symbols, FSymbol::True, "true");
     RegisterSymbol_(&False, _symbols, FSymbol::False, "false");
-    RegisterSymbol_(&Null, _symbols, FSymbol::Null, "Null");
+    RegisterSymbol_(&Null, _symbols, FSymbol::Null, "null");
     RegisterSymbol_(&Is, _symbols, FSymbol::Is, "is");
     RegisterSymbol_(&Extern, _symbols, FSymbol::Extern, "extern");
     RegisterSymbol_(&Export, _symbols, FSymbol::Export, "export");
