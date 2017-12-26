@@ -73,6 +73,11 @@ public:
     virtual const IPairTraits* AsPair() const = 0;
     virtual const IListTraits* AsList() const = 0;
     virtual const IDicoTraits* AsDico() const = 0;
+
+    const IScalarTraits* ToScalar() const { Assert(AsScalar()); return reinterpret_cast<const IScalarTraits*>(this); }
+    const IPairTraits* ToPair() const { Assert(AsPair()); return reinterpret_cast<const IPairTraits*>(this); }
+    const IListTraits* ToList() const { Assert(AsList()); return reinterpret_cast<const IListTraits*>(this); }
+    const IDicoTraits* ToDico() const { Assert(AsDico()); return reinterpret_cast<const IDicoTraits*>(this); }
 };
 //----------------------------------------------------------------------------
 inline PTypeTraits Traits(Meta::TType<void>) { return PTypeTraits(); }
@@ -140,7 +145,7 @@ public: // IListTraits
     virtual PTypeTraits ValueTraits() const = 0;
 
     virtual size_t Count(const FAtom& list) const = 0;
-    virtual bool Empty(const FAtom& list) const = 0;
+    virtual bool IsEmpty(const FAtom& list) const = 0;
 
     virtual FAtom At(const FAtom& list, size_t index) const = 0;
     virtual size_t Find(const FAtom& list, const FAtom& item) const = 0;
@@ -153,6 +158,7 @@ public: // IListTraits
 
     virtual void Reserve(const FAtom& list, size_t capacity) const = 0;
     virtual void Clear(const FAtom& list) const = 0;
+    virtual void Empty(const FAtom& list, size_t capacity) const = 0;
 
     typedef Meta::TFunction<bool(const FAtom&)> foreach_fun;
     virtual bool ForEach(const FAtom& list, const foreach_fun& foreach) const = 0;
@@ -175,7 +181,7 @@ public: // IDicoTraits
     virtual PTypeTraits ValueTraits() const = 0;
 
     virtual size_t Count(const FAtom& dico) const = 0;
-    virtual bool Empty(const FAtom& dico) const = 0;
+    virtual bool IsEmpty(const FAtom& dico) const = 0;
 
     virtual FAtom Find(const FAtom& dico, const FAtom& key) const = 0;
 
@@ -188,6 +194,7 @@ public: // IDicoTraits
 
     virtual void Reserve(const FAtom& dico, size_t capacity) const = 0;
     virtual void Clear(const FAtom& dico) const = 0;
+    virtual void Empty(const FAtom& dico, size_t capacity) const = 0;
 
     typedef Meta::TFunction<bool(const FAtom&, const FAtom&)> foreach_fun;
     virtual bool ForEach(const FAtom& dico, const foreach_fun& foreach) const = 0;

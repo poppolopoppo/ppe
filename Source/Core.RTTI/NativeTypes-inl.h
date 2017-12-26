@@ -198,10 +198,9 @@ bool TBaseListTraits<T>::PromoteCopy(const FAtom& from, const FAtom& to) const {
 
     const size_t n = Count(from);
 
-    toList->Clear(to);
-    toList->Reserve(to, n);
+    toList->Empty(to, n);
 
-    return ForEach(from, [to, toList](const FAtom& src) {
+    return ForEach(from, [&to, toList](const FAtom& src) {
         const FAtom dst = toList->AddDefault(to);
         return (src.PromoteCopy(dst));
     });
@@ -220,10 +219,9 @@ bool TBaseListTraits<T>::PromoteMove(const FAtom& from, const FAtom& to) const {
 
     const size_t n = Count(from);
 
-    toList->Clear(to);
-    toList->Reserve(to, n);
+    toList->Empty(to, n);
 
-    const bool succeed = ForEach(from, [to, toList](const FAtom& src) {
+    const bool succeed = ForEach(from, [&to, toList](const FAtom& src) {
         const FAtom dst = toList->AddDefault(to);
         return (src.PromoteMove(dst));
     });
@@ -313,12 +311,11 @@ bool TBaseDicoTraits<_Key, _Value>::PromoteCopy(const FAtom& from, const FAtom& 
 
     const size_t n = Count(from);
 
-    toDico->Clear(to);
-    toDico->Reserve(to, n);
+    toDico->Empty(to, n);
 
     STACKLOCAL_ATOM(promotedKey, toDico->KeyTraits());
 
-    return ForEach(from, [&promotedKey, to, toDico](const FAtom& key, const FAtom& value) {
+    return ForEach(from, [&promotedKey, &to, toDico](const FAtom& key, const FAtom& value) {
         if (not key.PromoteCopy(promotedKey))
             return false;
 
@@ -341,12 +338,11 @@ bool TBaseDicoTraits<_Key, _Value>::PromoteMove(const FAtom& from, const FAtom& 
 
     const size_t n = Count(from);
 
-    toDico->Clear(to);
-    toDico->Reserve(to, n);
+    toDico->Empty(to, n);
 
     STACKLOCAL_ATOM(promotedKey, toDico->KeyTraits());
 
-    const bool succeed = ForEach(from, [&promotedKey, to, toDico](const FAtom& key, const FAtom& value) {
+    const bool succeed = ForEach(from, [&promotedKey, &to, toDico](const FAtom& key, const FAtom& value) {
         if (not key.PromoteMove(promotedKey))
             return false;
 
@@ -432,7 +428,7 @@ size_t TVectorLikeTraits<_VectorLike>::Count(const FAtom& list) const {
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
-bool TVectorLikeTraits<_VectorLike>::Empty(const FAtom& list) const {
+bool TVectorLikeTraits<_VectorLike>::IsEmpty(const FAtom& list) const {
     return list.TypedConstData<value_type>().empty();
 }
 //----------------------------------------------------------------------------
@@ -484,6 +480,18 @@ void TVectorLikeTraits<_VectorLike>::Clear(const FAtom& list) const {
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
+void TVectorLikeTraits<_VectorLike>::Empty(const FAtom& list, size_t capacity) const {
+    value_type& v = list.TypedData<value_type>();
+    if (capacity) {
+        v.clear();
+        v.reserve(capacity);
+    }
+    else {
+        v.clear_ReleaseMemory();
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _VectorLike>
 bool TVectorLikeTraits<_VectorLike>::ForEach(const FAtom& list, const foreach_fun& foreach) const {
     const PTypeTraits value_traits = MakeTraits<item_type>();
 
@@ -505,7 +513,7 @@ size_t TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Count(const FA
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Empty(const FAtom& dico) const {
+bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::IsEmpty(const FAtom& dico) const {
     return dico.TypedConstData<value_type>().empty();
 }
 //----------------------------------------------------------------------------
@@ -563,6 +571,18 @@ void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Clear(const FAto
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Empty(const FAtom& dico, size_t capacity) const {
+    value_type& d = dico.TypedData<value_type>();
+    if (capacity) {
+        d.clear();
+        d.reserve(capacity);
+    }
+    else {
+        d.clear_ReleaseMemory();
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::ForEach(const FAtom& dico, const foreach_fun& foreach) const {
     const PTypeTraits key_traits = MakeTraits<_Key>();
     const PTypeTraits value_traits = MakeTraits<_Value>();
@@ -588,7 +608,7 @@ size_t THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Count(const 
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-bool THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Empty(const FAtom& dico) const {
+bool THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::IsEmpty(const FAtom& dico) const {
     return dico.TypedConstData<value_type>().empty();
 }
 //----------------------------------------------------------------------------
@@ -643,6 +663,18 @@ void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Reserve(const 
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Clear(const FAtom& dico) const {
     dico.TypedData<value_type>().clear();
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
+void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Empty(const FAtom& dico, size_t capacity) const {
+    value_type& d = dico.TypedData<value_type>();
+    if (capacity) {
+        d.clear();
+        d.reserve(capacity);
+    }
+    else {
+        d.clear_ReleaseMemory();
+    }
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>

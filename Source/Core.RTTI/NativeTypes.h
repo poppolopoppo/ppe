@@ -19,7 +19,8 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define DECL_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) CORE_RTTI_API PTypeTraits Traits(Meta::TType<T>);
+#define DECL_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) \
+    CORE_RTTI_API PTypeTraits Traits(Meta::TType<T>);
 FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_TRAITS)
 #undef DECL_RTTI_NATIVETYPE_TRAITS
 //----------------------------------------------------------------------------
@@ -173,7 +174,7 @@ public: // IListTraits
     using typename base_traits::foreach_fun;
 
     virtual size_t Count(const FAtom& list) const override final;
-    virtual bool Empty(const FAtom& list) const override final;
+    virtual bool IsEmpty(const FAtom& list) const override final;
 
     virtual FAtom At(const FAtom& list, size_t index) const override final;
     virtual size_t Find(const FAtom& list, const FAtom& item) const override final;
@@ -186,6 +187,7 @@ public: // IListTraits
 
     virtual void Reserve(const FAtom& list, size_t capacity) const override final;
     virtual void Clear(const FAtom& list) const override final;
+    virtual void Empty(const FAtom& list, size_t capacaity) const override final;
 
     virtual bool ForEach(const FAtom& list, const foreach_fun& foreach) const override final;
 };
@@ -213,7 +215,7 @@ public: // IDicoTraits:
     using typename base_traits::foreach_fun;
 
     virtual size_t Count(const FAtom& dico) const override final;
-    virtual bool Empty(const FAtom& dico) const override final;
+    virtual bool IsEmpty(const FAtom& dico) const override final;
 
     virtual FAtom Find(const FAtom& dico, const FAtom& key) const override final;
 
@@ -226,6 +228,7 @@ public: // IDicoTraits:
 
     virtual void Reserve(const FAtom& dico, size_t capacity) const override final;
     virtual void Clear(const FAtom& dico) const override final;
+    virtual void Empty(const FAtom& dico, size_t capacity) const override final;
 
     virtual bool ForEach(const FAtom& dico, const foreach_fun& foreach) const override final;
 };
@@ -248,7 +251,7 @@ public: // IDicoTraits:
     using typename base_traits::foreach_fun;
 
     virtual size_t Count(const FAtom& dico) const override final;
-    virtual bool Empty(const FAtom& dico) const override final;
+    virtual bool IsEmpty(const FAtom& dico) const override final;
 
     virtual FAtom Find(const FAtom& dico, const FAtom& key) const override final;
 
@@ -261,6 +264,7 @@ public: // IDicoTraits:
 
     virtual void Reserve(const FAtom& dico, size_t capacity) const override final;
     virtual void Clear(const FAtom& dico) const override final;
+    virtual void Empty(const FAtom& dico, size_t capacity) const override final;
 
     virtual bool ForEach(const FAtom& dico, const foreach_fun& foreach) const override final;
 };
@@ -290,10 +294,10 @@ PTypeTraits Traits(Meta::TType<_PMetaObject>, Meta::TEnableIf< std::is_assignabl
 //----------------------------------------------------------------------------
 // sfinae to detect RTTI support
 namespace details {
-    template <typename T, typename = decltype(Traits(std::declval<Meta::TType<T>>())) >
-    std::true_type IsSupportedType_(int);
-    template <typename T>
-    std::false_type IsSupportedType_(...);
+template <typename T, typename = decltype(Traits(std::declval<Meta::TType<T>>())) >
+std::true_type IsSupportedType_(int);
+template <typename T>
+std::false_type IsSupportedType_(...);
 } //!details
 template <typename T>
 struct TIsSupportedType {

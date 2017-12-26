@@ -11,8 +11,11 @@
 
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/IO/FS/Filename.h"
+#include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/ScalarMatrix.h"
+#include "Core/Maths/ScalarMatrixHelpers.h"
 #include "Core/Maths/ScalarVector.h"
+#include "Core/Maths/ScalarVectorHelpers.h"
 #include "Core/Memory/MemoryView.h"
 
 namespace Core {
