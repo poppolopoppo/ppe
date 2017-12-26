@@ -7,7 +7,13 @@
 #include "MetaObjectHelpers.h" // DeepEquals()
 
 #ifdef WITH_CORE_ASSERT
-#   define WITH_CORE_RTTI_TRANSACTION_CHECKS
+#   define WITH_CORE_RTTI_TRANSACTION_CHECKS 1
+#else
+#   define WITH_CORE_RTTI_TRANSACTION_CHECKS 0
+#endif
+
+#if WITH_CORE_RTTI_TRANSACTION_CHECKS
+#   include "AtomVisitor.h" // HasCircularDependencies()
 #endif
 
 namespace Core {
@@ -123,12 +129,16 @@ void FMetaTransaction::Load(ILoadContext* context) {
 
     _flags = ETransactionFlags::Loaded;
 
-#ifdef WITH_CORE_RTTI_TRANSACTION_CHECKS
+#if WITH_CORE_RTTI_TRANSACTION_CHECKS
     // check that every top object meta class correctly called OnLoadObject()
     for (const PMetaObject& object : _topObjects) {
         Assert(object->RTTI_IsLoaded());
         Assert(_loadedObjects.end() != _loadedObjects.find(SCMetaObject(object.get())));
     }
+
+    // check for circular dependencies which could lead to java-leaking
+    if (HasCircularDependencies(_topObjects))
+        AssertNotReached();
 #endif
 
     metaDB.RegisterTransaction(this);
@@ -142,6 +152,12 @@ void FMetaTransaction::Unload(IUnloadContext* context) {
     _flags = ETransactionFlags::Unloading;
 
     FMetaDatabase& metaDB = MetaDB();
+
+#if WITH_CORE_RTTI_TRANSACTION_CHECKS
+    // check for circular dependencies which could lead to java-leaking
+    if (HasCircularDependencies(_topObjects))
+        AssertNotReached();
+#endif
 
     FCompositeUnloadContext_ transactionContext = {
         context,  // reverse load order
@@ -160,7 +176,7 @@ void FMetaTransaction::Unload(IUnloadContext* context) {
 
     _flags = ETransactionFlags::Unloaded;
 
-#ifdef WITH_CORE_RTTI_TRANSACTION_CHECKS
+#if WITH_CORE_RTTI_TRANSACTION_CHECKS
     // check that each object of the transaction was unloaded (including non top objects)
     Assert(_loadedObjects.empty()); // or else OnUnloadObject() wasn't called by object
 #endif

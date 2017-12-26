@@ -10,9 +10,13 @@
 #include "NativeTypes.h"
 #include "TypeTraits.h"
 
+#include "Core/Container/HashMap.h"
+#include "Core/Container/Vector.h"
+#include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FileSystem.h"
 #include "Core/IO/FormatHelpers.h"
 #include "Core/IO/Stream.h"
+#include "Core/IO/String.h"
 #include "Core/Maths/ScalarMatrix.h"
 #include "Core/Maths/ScalarVector.h"
 
@@ -152,15 +156,17 @@ private:
         }
     }
 
+    void Print_(bool b) { _oss << (b ? "true" : "false"); }
+
+    void Print_(i8 ch) { _oss << int(ch); }
+    void Print_(u8 uch) { _oss << unsigned(uch); }
+
     void Print_(const FName& name) { _oss << name; }
     void Print_(const FString& str) { _oss << '"' << str << '"'; }
     void Print_(const FWString& wstr) { _oss << '"' << wstr << '"'; }
 
     void Print_(const FDirpath& dirpath) { Print_(dirpath.ToString()); }
     void Print_(const FFilename& filename) { Print_(filename.ToString()); }
-
-    void Print_(i8 ch) { _oss << i32(ch); }
-    void Print_(u8 uch) { _oss << u32(uch); }
 
     template <typename T, size_t _Dim>
     void Print_(const TScalarVector<T, _Dim>& vec) {
@@ -195,40 +201,133 @@ private:
     std::basic_ostream<_Char>& _oss;
 };
 //----------------------------------------------------------------------------
+class FCircularReferenceVisitor_ : FBaseAtomVisitor {
+public:
+    FCircularReferenceVisitor_() : _succeed(true) {}
+
+    bool CheckReferences(const FMetaObject& root) {
+        _visiteds.clear();
+        _chainRef.clear();
+        _succeed = true;
+
+        _visiteds.emplace(&root, _chainRef.size());
+        _chainRef.emplace_back(&root, nullptr);
+
+        PMetaObject src(const_cast<FMetaObject*>(&root));
+
+        if (not InplaceAtom(src).Accept(static_cast<FBaseAtomVisitor*>(this)))
+            AssertNotReached();
+
+        Assert(_visiteds.size() == 1);
+        Assert(_chainRef.size() == 1);
+
+        RemoveRef_KeepAlive(src);
+
+        return _succeed;
+    }
+
+private:
+    struct FPropertyRef_ {
+        SCMetaObject Object;
+        const FMetaProperty* Property;
+    };
+
+    virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override {
+        if (pobj) {
+            const auto r = _visiteds.insert(MakePair(pobj.get(), _chainRef.size()));
+            if (not r.second) {
+                Assert(pobj == r.first->first);
+                Assert(r.first->second < _chainRef.size());
+
+                // Circular dependency found !
+                // Printing chain reference :
+                DumpChainReference_(pobj, r.first->second);
+            }
+
+            FMetaObject& obj = (*pobj);
+            const FMetaClass* metaClass = obj.RTTI_Class();
+            Assert(metaClass);
+
+            for (const FMetaProperty* prop : metaClass->AllProperties()) {
+                _chainRef.emplace_back(&obj, prop);
+
+                if (not prop->Get(obj).Accept(static_cast<FBaseAtomVisitor*>(this)))
+                    return false;
+
+                Assert(r.first->second + 1 == _chainRef.size());
+                _chainRef.pop_back();
+            }
+        }
+        return true;
+    }
+
+    void DumpChainReference_(const PMetaObject& pobj, size_t chainIndex) const {
+#ifdef USE_DEBUG_LOGGER
+        FLoggerStream oss(ELogCategory::Error);
+        oss << L"[RTTI] Found circular reference !" << eol;
+
+        Fmt::FIndent indent = Fmt::FIndent::TwoSpaces();
+        forrange(i, chainIndex, _chainRef.size()) {
+            const FPropertyRef_& ref = _chainRef[i];
+            const FMetaClass* metaClass = ref.Object->RTTI_Class();
+
+            oss << indent
+                << L" -> " << (void*)ref.Object.get()
+                << L" : " << metaClass->Name()
+                << " (" << metaClass->Flags()
+                << L") = " << ref.Property->Name()
+                << eol;
+
+            indent.Inc();
+        }
+
+        oss << indent << L" => ";
+        PrettyPrint(oss, InplaceAtom(pobj));
+#else
+        UNUSED(obj);
+        UNUSED(chainIndex);
+#endif
+    }
+
+    bool _succeed;
+    HASHMAP_THREAD_LOCAL(RTTI, const FMetaObject*, size_t) _visiteds;
+    VECTORINSITU_THREAD_LOCAL(RTTI, FPropertyRef_, 32) _chainRef;
+};
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool FBaseAtomVisitor::Visit(const IPairTraits* traits, const FAtom& atom) {
-    const FAtom first = traits->First(atom);
-    const FAtom second = traits->Second(atom);
-    return (first.Accept(this) && second.Accept(this));
+bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IPairTraits* pair, const FAtom& atom) {
+    const FAtom first = pair->First(atom);
+    const FAtom second = pair->Second(atom);
+    return (first.Accept(visitor) && second.Accept(visitor));
 }
 //----------------------------------------------------------------------------
-bool FBaseAtomVisitor::Visit(const IListTraits* traits, const FAtom& atom) {
-    return traits->ForEach(atom, [this](const FAtom& item) {
-        return item.Accept(this);
+bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IListTraits* list, const FAtom& atom) {
+    return list->ForEach(atom, [visitor](const FAtom& item) {
+        return item.Accept(visitor);
     });
 }
 //----------------------------------------------------------------------------
-bool FBaseAtomVisitor::Visit(const IDicoTraits* traits, const FAtom& atom) {
-    return traits->ForEach(atom, [this](const FAtom& key, const FAtom& value) {
-        return (key.Accept(this) && value.Accept(this));
+bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IDicoTraits* dico, const FAtom& atom) {
+    return dico->ForEach(atom, [visitor](const FAtom& key, const FAtom& value) {
+        return (key.Accept(visitor) && value.Accept(visitor));
     });
 }
 //----------------------------------------------------------------------------
-bool FBaseAtomVisitor::Visit(const IScalarTraits* traits, FAny& any) {
-    return (any ? any.InnerAtom().Accept(this) : true);
+bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , FAny& any) {
+    return (any ? any.InnerAtom().Accept(visitor) : true);
 }
 //----------------------------------------------------------------------------
-bool FBaseAtomVisitor::Visit(const IScalarTraits* traits, PMetaObject& pobj) {
+bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* scalar, PMetaObject& pobj) {
     if (pobj) {
         FMetaObject& obj = (*pobj);
         const FMetaClass* metaClass = obj.RTTI_Class();
         Assert(metaClass);
 
         for (const FMetaProperty* prop : metaClass->AllProperties()) {
-            if (not prop->Get(obj).Accept(this))
+            if (not prop->Get(obj).Accept(visitor))
                 return false;
         }
     }
@@ -237,7 +336,20 @@ bool FBaseAtomVisitor::Visit(const IScalarTraits* traits, PMetaObject& pobj) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Use for debugging !
+bool HasCircularDependencies(const FMetaObject& object) {
+    FCircularReferenceVisitor_ circularRef;
+    return circularRef.CheckReferences(object);
+}
+//----------------------------------------------------------------------------
+bool HasCircularDependencies(const TMemoryView<const PMetaObject>& objects) {
+    bool succeed = true;
+    FCircularReferenceVisitor_ circularRef;
+    for (const PMetaObject& object : objects)
+        succeed &= circularRef.CheckReferences(*object);
+    return succeed;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FString PrettyString(const FAny& any) {
     return PrettyString(any.InnerAtom());

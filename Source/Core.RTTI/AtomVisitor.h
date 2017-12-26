@@ -21,28 +21,48 @@ public:
     virtual bool Visit(const IDicoTraits* dico, const FAtom& atom) = 0;
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
-    virtual bool Visit(const IScalarTraits* traits, T& value) = 0;
+    virtual bool Visit(const IScalarTraits* scalar, T& value) = 0;
+    FOREACH_RTTI_NATIVETYPES(DECL_ATOM_VIRTUAL_VISIT)
+#undef DECL_ATOM_VIRTUAL_VISIT
+
+public: // helpers
+    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IPairTraits* pair, const FAtom& atom);
+    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IListTraits* list, const FAtom& atom);
+    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IDicoTraits* dico, const FAtom& atom);
+
+    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IScalarTraits* scalar, FAny& any);
+    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IScalarTraits* scalar, PMetaObject& pobj);
+
+    template <typename T>
+    static bool Accept(IAtomVisitor* , const IScalarTraits* , T& ) { return true; }
+};
+//----------------------------------------------------------------------------
+class FBaseAtomVisitor : public IAtomVisitor {
+public:
+    using IAtomVisitor::Visit;
+
+    virtual bool Visit(const IPairTraits* pair, const FAtom& atom) override { return IAtomVisitor::Accept(this, pair, atom); }
+    virtual bool Visit(const IListTraits* list, const FAtom& atom) override { return IAtomVisitor::Accept(this, list, atom); }
+    virtual bool Visit(const IDicoTraits* dico, const FAtom& atom) override { return IAtomVisitor::Accept(this, dico, atom); }
+
+#define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
+    virtual bool Visit(const IScalarTraits* scalar, T& value) override { return IAtomVisitor::Accept(this, scalar, value); }
     FOREACH_RTTI_NATIVETYPES(DECL_ATOM_VIRTUAL_VISIT)
 #undef DECL_ATOM_VIRTUAL_VISIT
 };
 //----------------------------------------------------------------------------
-class CORE_RTTI_API FBaseAtomVisitor : public IAtomVisitor {
-public:
-    using IAtomVisitor::Visit;
-
-    virtual bool Visit(const IPairTraits* pair, const FAtom& atom) override;
-    virtual bool Visit(const IListTraits* list, const FAtom& atom) override;
-    virtual bool Visit(const IDicoTraits* dico, const FAtom& atom) override;
-
-    virtual bool Visit(const IScalarTraits* traits, FAny& any) override;
-    virtual bool Visit(const IScalarTraits* traits, PMetaObject& pobj) override;
-};
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Useful to avoid java-leaking, which tends to happen with RTTI
+CORE_RTTI_API bool HasCircularDependencies(const FMetaObject& object);
+CORE_RTTI_API bool HasCircularDependencies(const TMemoryView<const PMetaObject>& objects);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Use for debugging and natvis
 CORE_RTTI_API FString PrettyString(const FAny& any);
 CORE_RTTI_API FString PrettyString(const FAtom& atom);
-CORE_RTTI_API FString PrettyString(const FMetaObject* object);
+CORE_RTTI_API FString PrettyString(const FMetaObject& object);
 //----------------------------------------------------------------------------
 CORE_RTTI_API std::basic_ostream<char>& PrettyPrint(std::basic_ostream<char>& oss, const FAtom& atom);
 CORE_RTTI_API std::basic_ostream<wchar_t>& PrettyPrint(std::basic_ostream<wchar_t>& oss, const FAtom& atom);
