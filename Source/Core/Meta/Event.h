@@ -129,6 +129,9 @@ public:
     void Add(const delegate_type& d) { _owner.Add(d); }
     void Remove(const delegate_type& d) { _owner.Remove(d); }
 
+    TPublicEvent& operator <<(const delegate_type& d) { Add(d); return (*this); }
+    TPublicEvent& operator >>(const delegate_type& d) { Remove(d); return (*this); }
+
     template <typename _It>
     void Add(_It begin, _It end) { Add(std::forward<_It>(begin), std::forward<_It>(end)); }
 
