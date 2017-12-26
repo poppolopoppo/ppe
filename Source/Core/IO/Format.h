@@ -91,6 +91,27 @@ TBasicString<_Char, _Traits> StringFormat(const _Char (&format)[_Dim], _Arg0&& a
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _Char, typename _Arg0, typename... _Args>
+TBasicStringView<_Char> StringViewFormat(const TMemoryView<_Char>& buffer, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+    return TBasicStringView<_Char>(
+        buffer.data(),
+        Format(buffer.data(), buffer.size(), format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...));
+}
+//----------------------------------------------------------------------------
+template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
+TBasicStringView<_Char> StringViewFormat(const TMemoryView<_Char>& buffer, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+    return TBasicStringView<_Char>(
+        buffer.data(),
+        Format(buffer.data(), buffer.size(), MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...));
+}
+//----------------------------------------------------------------------------
+#define INLINE_FORMAT(_CAPACITY, _FORMAT, ...) \
+    ::Core::StringViewFormat(INLINE_MALLOCA(char, _CAPACITY).MakeView(), _FORMAT, __VA_ARGS__)
+#define INLINE_WFORMAT(_CAPACITY, _FORMAT, ...) \
+    ::Core::StringViewFormat(INLINE_MALLOCA(wchar_t, _CAPACITY).MakeView(), _FORMAT, __VA_ARGS__)
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Arg>
 FString ToString(_Arg&& arg);
 //----------------------------------------------------------------------------
@@ -99,25 +120,6 @@ FWString ToWString(_Arg&& arg);
 //----------------------------------------------------------------------------
 inline FString ToString(bool b) { return (b ? "true" : "false"); }
 inline FWString ToWString(bool b) { return (b ? L"true" : L"false"); }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#define INPLACE_TO_STRINGVIEW(_OBJ, _CAPACITY) ::Core::ToStringView(INLINE_MALLOCA(char, _CAPACITY), (_OBJ))
-#define INPLACE_TO_WSTRINGVIEW(_OBJ, _CAPACITY) ::Core::ToWStringView(INLINE_MALLOCA(wchar_t, _CAPACITY), (_OBJ))
-//----------------------------------------------------------------------------
-template <typename T>
-FStringView ToStringView(const TMemoryView<char>& buffer, const T& obj) {
-    FOCStrStream oss(buffer);
-    oss << obj;
-    return oss.MakeView();
-}
-//----------------------------------------------------------------------------
-template <typename T>
-FWStringView ToWStringView(const TMemoryView<wchar_t>& buffer, const T& obj) {
-    FWOCStrStream oss(buffer);
-    oss << obj;
-    return oss.MakeView();
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
