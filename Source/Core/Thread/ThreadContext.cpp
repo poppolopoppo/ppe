@@ -56,8 +56,8 @@ inline void FThreadLocalContext_::CreateMainThread() {
 namespace {
 //----------------------------------------------------------------------------
 #pragma warning(push)
-#pragma warning(disable: 6320) // L'expression de filtre d'exception correspond à la constante EXCEPTION_EXECUTE_HANDLER.
-                               // Cela risque de masquer les exceptions qui n'étaient pas destinées à être gérées.
+#pragma warning(disable: 6320) // L'expression de filtre d'exception correspond a la constante EXCEPTION_EXECUTE_HANDLER.
+                               // Cela risque de masquer les exceptions qui n'etaient pas destinees a etre gerees.
 #pragma warning(disable: 6322) // bloc empty _except.
 static void SetWin32ThreadName_(const char* name) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME

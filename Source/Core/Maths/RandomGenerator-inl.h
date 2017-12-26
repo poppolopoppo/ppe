@@ -57,11 +57,10 @@ float TRng<_Generator>::NextFloat01() {
     // Pour rappel, la representation d'un float IEEE 754-2008 est :
     //   [31] : s, [30-23] : e, [22-0] : m
     // dont la valeur est : (-1)^s . (1 + m / 2^23) . 2^(e-127)
-    // Afin de tirer un nombre aléatoire *uniforme* entre 0 et 1, on va d'abord calculer un nombre entre 1 et 2 (2 exclu)
-    // en tirant aléatoirement les bits de la mantisse, mais en fixant l'exposant à 127 et le bit de signe à 0.
-    // Note : 0x3f800000 est la représentation hexadecimale de 1.f
+    // Afin de tirer un nombre aleatoire *uniforme* entre 0 et 1, on va d'abord calculer un nombre entre 1 et 2 (2 exclu)
+    // en tirant aleatoirement les bits de la mantisse, mais en fixant l'exposant a 127 et le bit de signe a 0.
+    // Note : 0x3f800000 est la representation hexadecimale de 1.f
     //        0x007fffff est le masque de la mantisse.
-    // NDP: malin, n'est ce pas ?
 
     const u32 r = u32(_generator.NextU64());
     const u32 iResult = 0x3f800000 | (r & 0x007fffff);
@@ -77,9 +76,8 @@ float TRng<_Generator>::NextFloat01() {
 template <typename _Generator>
 float TRng<_Generator>::NextFloatM11() {
     // On peut optimiser le calcul en tirant un nombre dans [2, 4[ et en supprimant 3, comme dans UnitRand().
-    // Note : 0x40000000 est la représentation hexadecimale de 2.f
+    // Note : 0x40000000 est la representation hexadecimale de 2.f
     //        0x007fffff est le masque de la mantisse.
-    // NDP: re-malin, re-n'est ce pas ?
 
     const u32 r = u32(_generator.NextU64());
     const u32 iResult = 0x40000000 | (r & 0x007fffff);
