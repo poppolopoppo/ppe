@@ -28,7 +28,7 @@ typedef bool (*AssertionHandler)(const char *msg, const wchar_t *file, unsigned 
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT
 //----------------------------------------------------------------------------
-class FAssertException : public FException {
+class CORE_API FAssertException : public FException {
 public:
     FAssertException(const char *msg, const wchar_t *file, unsigned line);
     virtual ~FAssertException();
@@ -41,8 +41,8 @@ private:
     unsigned _line;
 };
 
-void AssertionFailed(const char *msg, const wchar_t *file, unsigned line);
-void SetAssertionHandler(AssertionHandler handler);
+CORE_API void AssertionFailed(const char *msg, const wchar_t *file, unsigned line);
+CORE_API void SetAssertionHandler(AssertionHandler handler);
 
 #   define AssertMessage(_Expression, _Message) \
     (void)( (!!(_Expression)) || (Core::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__), 0) )
@@ -81,7 +81,7 @@ typedef bool (*AssertionReleaseHandler)(const char *msg, const wchar_t *file, un
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT_RELEASE
 //----------------------------------------------------------------------------
-class FAssertReleaseException : public FException {
+class CORE_API FAssertReleaseException : public FException {
 public:
     FAssertReleaseException(const char *msg, const wchar_t *file, unsigned line);
     virtual ~FAssertReleaseException();
@@ -94,11 +94,15 @@ private:
     unsigned _line;
 };
 
-void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line);
-void SetAssertionReleaseHandler(AssertionReleaseHandler handler);
+CORE_API void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line);
+inline void NORETURN AssertionReleaseFailed_NoReturn(const char *msg, const wchar_t *file, unsigned line) { AssertionReleaseFailed(msg, file, line); }
+CORE_API void SetAssertionReleaseHandler(AssertionReleaseHandler handler);
 
 #   define AssertReleaseMessage(_Expression, _Message) \
     (void)( (!!(_Expression)) || (Core::AssertionReleaseFailed(_Message, WIDESTRING(__FILE__), __LINE__), 0) )
+
+#   define AssertReleaseFailed(_Message) \
+    Core::AssertionReleaseFailed_NoReturn(_Message, WIDESTRING(__FILE__), __LINE__)
 
 #   define AssertReleaseMessage_NoAssume(_Expression, _Message) AssertReleaseMessage(_Expression, _Message)
 
@@ -106,9 +110,11 @@ void SetAssertionReleaseHandler(AssertionReleaseHandler handler);
 #else
 //----------------------------------------------------------------------------
 inline void AssertionReleaseFailed(const char *, const wchar_t *, unsigned ) {}
+inline void NORETURN AssertionReleaseFailed_NoReturn(const char *, const wchar_t *, unsigned ) { abort(); }
 inline void SetAssertionReleaseHandler(AssertionReleaseHandler ) {}
 
 #   define AssertReleaseMessage(_Expression, _Message)  NOOP()
+#   define AssertReleaseFailed(_Message) Core::AssertionReleaseFailed_NoReturn(nullptr, nullptr, 0)
 
 #   if WITH_CORE_ASSERT_RELEASE_FALLBACK_TO_ASSUME
 #       define AssertReleaseMessage_NoAssume(_Expression, _Message)  Assume(_Expression)
@@ -126,8 +132,8 @@ inline void SetAssertionReleaseHandler(AssertionReleaseHandler ) {}
 #define AssertRelease(...) AssertReleaseMessage(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
 #define AssertRelease_NoAssume(...) AssertReleaseMessage_NoAssume(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
 
-#define AssertNotReached() AssertReleaseMessage(false, "unreachable state")
-#define AssertNotImplemented() AssertReleaseMessage(false, "not implemented")
+#define AssertNotReached() AssertReleaseFailed("unreachable state")
+#define AssertNotImplemented() AssertReleaseFailed("not implemented")
 
 #ifdef WITH_CORE_ASSERT
 #   define ONLY_IF_ASSERT(_Code) _Code

@@ -76,6 +76,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #if defined(CPP_CLANG)
 #   define NOALIAS
 #   define NOEXCEPT     noexcept
+#   define NORETURN     __declspec(noreturn)
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
 #   define THREAD_LOCAL thread_local
@@ -88,6 +89,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #elif defined(CPP_VISUALSTUDIO) && _MSC_VER >= 1900
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     noexcept
+#   define NORETURN     __declspec(noreturn)
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
 #   define THREAD_LOCAL thread_local
@@ -96,6 +98,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #elif defined (CPP_VISUALSTUDIO)
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     __declspec(nothrow)
+#   define NORETURN     __declspec(noreturn)
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
 #   define THREAD_LOCAL __declspec(thread)
@@ -216,16 +219,16 @@ typedef i32 word;
 typedef u32 uword;
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-constexpr decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Max(_Lhs lhs, _Rhs rhs) { return (lhs < rhs) ? rhs : lhs; }
+constexpr decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Max(_Lhs a, _Rhs b) { return (a < b) ? b : a; }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-constexpr decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Min(_Lhs lhs, _Rhs rhs) { return (lhs < rhs) ? lhs : rhs; }
+constexpr decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Min(_Lhs a, _Rhs b) { return (a < b) ? a : b; }
 //----------------------------------------------------------------------------
 template <typename _A, typename _B, typename _C>
-constexpr decltype(std::declval<_A>() + std::declval<_B>() + std::declval<_C>()) Max3(_A a, _B b, _C c) { return (a < b) ? (b < c ? c : b) : (a < c ? c : a); }
+constexpr decltype(std::declval<_A>() + std::declval<_B>() + std::declval<_C>()) Max3(_A a, _B b, _C c) { return (a < b) ? Max(b, c) : Max(a, c); }
 //----------------------------------------------------------------------------
 template <typename _A, typename _B, typename _C>
-constexpr decltype(std::declval<_A>() + std::declval<_B>() + std::declval<_C>()) Min3(_A a, _B b, _C c) { return (a < b) ? (a < c ? a : c) : (b < c ? b : c); }
+constexpr decltype(std::declval<_A>() + std::declval<_B>() + std::declval<_C>()) Min3(_A a, _B b, _C c) { return (a < b) ? Min(a, c) : Min(b, c); }
 //----------------------------------------------------------------------------
 typedef struct uint128_t {
     u64 lo, hi;
