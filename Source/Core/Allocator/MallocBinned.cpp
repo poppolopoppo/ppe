@@ -469,7 +469,7 @@ struct FBinnedThreadCache_ {
         FBinnedChunk_* chunk = bucket.Head();
         Assert(!chunk || this == chunk->_threadCache);
 
-        if (chunk && chunk->HasFreeBlock()) {
+        if (Likely(chunk) && chunk->HasFreeBlock()) {
             // allocate from the head chunk
             void* const p = chunk->Allocate();
 
@@ -491,7 +491,7 @@ struct FBinnedThreadCache_ {
         FBinnedChunk_* chunk = block->Owner();
 
         // register the block for deletion in another thread
-        if (this != chunk->_threadCache && TryStealDanglingBlock_(chunk, block))
+        if (Unlikely(this != chunk->_threadCache) && TryStealDanglingBlock_(chunk, block))
             return;
 
         // check if the block is freed from the correct thread
