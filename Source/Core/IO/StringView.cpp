@@ -894,31 +894,23 @@ bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
 }
 //----------------------------------------------------------------------------
 bool Equals(const FStringView& lhs, const FStringView& rhs) {
-    return (
-        (lhs.size() == rhs.size()) &&
-        (lhs.data() == rhs.data() || StrEquals_(lhs.data(), rhs.data(), lhs.size()))
-        );
+    return ((lhs.size() == rhs.size()) &&
+            (lhs.data() == rhs.data() || StrEquals_(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
 bool Equals(const FWStringView& lhs, const FWStringView& rhs) {
-    return (
-        (lhs.size() == rhs.size()) &&
-        (lhs.data() == rhs.data() || StrEquals_(lhs.data(), rhs.data(), lhs.size()))
-    );
+    return ((lhs.size() == rhs.size()) &&
+            (lhs.data() == rhs.data() || StrEquals_(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
 bool EqualsI(const FStringView& lhs, const FStringView& rhs) {
-    return (
-        (lhs.size() == rhs.size()) &&
-        (lhs.data() == rhs.data() || StrEqualsI_(lhs.data(), rhs.data(), lhs.size()))
-    );
+    return ((lhs.size() == rhs.size()) &&
+            (lhs.data() == rhs.data() || StrEqualsI_(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
 bool EqualsI(const FWStringView& lhs, const FWStringView& rhs) {
-    return (
-        (lhs.size() == rhs.size()) &&
-        (lhs.data() == rhs.data() || StrEqualsI_(lhs.data(), rhs.data(), lhs.size()))
-    );
+    return ((lhs.size() == rhs.size()) &&
+            (lhs.data() == rhs.data() || StrEqualsI_(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -1121,8 +1113,7 @@ void Escape(std::basic_ostream<char>& oss, const FStringView& str, EEscape escap
             else {
                 static constexpr char hexdig[] = "0123456789ABCDEF";
 
-                switch (escape)
-                {
+                switch (escape) {
                 case Core::EEscape::Octal:
                     oss.put('\\');
                     oss << std::oct << (u32(ch) & 0xFF) << std::dec;
@@ -1174,8 +1165,7 @@ void Escape(std::basic_ostream<wchar_t>& oss, const FWStringView& wstr, EEscape 
             else {
                 static constexpr wchar_t hexdig[] = L"0123456789ABCDEF";
 
-                switch (escape)
-                {
+                switch (escape) {
                 case Core::EEscape::Octal:
                     oss.put(L'\\');
                     oss << std::oct << (u32(ch) & 0xFF) << std::dec;
