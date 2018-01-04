@@ -117,9 +117,10 @@
     + ' /ENTRY:"wWinMainCRTStartup"'
 
     ; utilisés pour généraliser les templates :
-    .CompilerDefineFlag         = ' /D'
+    .CompilerDefineFlag          = ' /D'
     .CompilerIncludeFlag        = ' /I'
     .CompilerPreprocessorFlag   = ' /P /Fi"%2"'
+    .CompilerForceIncludeFlag   = ' /FI'
     .CompilerBinaryExtension    = 'exe'
     .CompilerDllExtension       = 'dll'
     .CompilerLibraryExtension   = 'lib'

@@ -12,27 +12,12 @@
 //----------------------------------------------------------------------------
 // Farmhash for 32/64/128 bit fingerprint hash functions (stable)
 //----------------------------------------------------------------------------
-#ifdef PLATFORM_WINDOWS
-#   pragma warning(push)
-#   pragma warning(disable: 6297) // Arithmetic overflow:  32-bit value is shifted, then cast to 64-bit value.  Results might not be an expected value.
-#endif
-#include "External/farmhash.h"
-#ifdef PLATFORM_WINDOWS
-#   pragma warning(pop)
-#endif
+#include "Core.External/farmhash-external.h"
 
 //----------------------------------------------------------------------------
 // xxHash for fast non crypto 32/64 bits hash functions (may varry accros platforms/versions)
 //----------------------------------------------------------------------------
-#pragma warning(push)
-#pragma push_macro("FORCE_INLINE")
-#undef FORCE_INLINE
-#define XXH_PRIVATE_API
-extern "C" {
-#include "External/xxhash.h"
-} //!extern "C"
-#pragma pop_macro("FORCE_INLINE")
-#pragma warning(pop)
+#include "Core.External/xxHash-external.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

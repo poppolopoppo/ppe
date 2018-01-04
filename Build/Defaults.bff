@@ -8,7 +8,9 @@
 .ProjectDefines = {}
 .ProjectDependencies = {}
 .ProjectExcludedFiles = {}
+.ProjectForcedIncludes = {}
 .ProjectIncludes = {}
+.ProjectInputPattern = { '*.cpp', '*.c' }
 .ProjectIsolatedFiles = {}
 .ProjectLibraries = {}
 .ProjectPostBuild = {}

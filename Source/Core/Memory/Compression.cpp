@@ -10,8 +10,7 @@
 #include "IO/FormatHelpers.h"
 #include "Misc/FourCC.h"
 
-#include "External/lz4.h"
-#include "External/lz4hc.h"
+#include "Core.External/lz4-external.h"
 
 #include "Time/TimedScope.h"
 #if USE_CORE_BENCHMARK

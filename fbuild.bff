@@ -6,6 +6,7 @@
 
 // All projects
 //------------------------------------------------------------------------------
+#include "Source/Core.External/Core.External.bff"
 #include "Source/Core/Core.bff"
 #include "Source/Core.Application/Core.Application.bff"
 #include "Source/Core.Graphics/Core.Graphics.bff"
@@ -22,6 +23,6 @@
 #include "Source/Core.Engine/Core.Engine.bff"
 #include "Source/Core.Test/Core.Test.bff"
 
-.SolutionBuildProject = 'Core.ContentGenerator-proj'
+.SolutionBuildProject = 'Core.Test-proj'
 
 #include "Build/Templates/Solution.bff"

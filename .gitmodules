@@ -1,0 +1,6 @@
+[submodule "Source/Core.External/lz4"]
+	path = Source/Core.External/lz4
+	url = https://github.com/lz4/lz4.git
+[submodule "Source/Core.External/renderdoc"]
+	path = Source/Core.External/renderdoc
+	url = https://github.com/baldurk/renderdoc.git

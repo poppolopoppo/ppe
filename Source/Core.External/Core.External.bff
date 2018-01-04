@@ -1,0 +1,174 @@
+#once
+{
+    .ExternalProjectNames = {}
+    .ProjectName  = 'Core.External'
+    .ProjectSolutionFolder = 'Core.External'
+    .ProjectPath  = '$SourceDirectory$/Core.External'
+    .ProjectPCHConfig = .PCHDisabled ; disable PCH for external libraries
+    .ProjectInputPattern = { '-' } ; disable auto listing of source files
+    .ProjectAllowedFileExtensions = {} ; for VCX projects
+    .ProjectLinkType = 'Lib' ; disable DLL linking for these projects
+    .ProjectUseUnity = 'false' ; disable unity builds for externals (might be not supported by libraries like LZ4)
+//-----------------------------------------------------------------------------
+//  double-conversion
+//-----------------------------------------------------------------------------
+    {
+        .ProjectName + '.double-conversion'
+        .ProjectIncludes + '$ProjectPath$/double-conversion'
+        .ProjectForcedIncludes + '$ProjectPath$/double-conversion-external.h'
+        .ProjectPath + '/double-conversion/double-conversion'
+        .ProjectDefines = { 'EXPORT_CORE_EXTERNAL_DOUBLECONVERSION' }
+        .ProjectFiles =
+        {
+            'bignum.h',
+            'bignum-dtoa.h',
+            'cached-powers.h',
+            'diy-fp.h',
+            'double-conversion.h',
+            'fast-dtoa.h',
+            'fixed-dtoa.h',
+            'ieee.h',
+            'strtod.h',
+            'utils.h',
+        }
+        .ProjectIsolatedFiles =
+        {
+            'bignum.cc',
+            'bignum-dtoa.cc',
+            'cached-powers.cc',
+            'diy-fp.cc',
+            'double-conversion.cc',
+            'fast-dtoa.cc',
+            'fixed-dtoa.cc',
+            'strtod.cc',
+        }
+        #include "../../Build/Templates/Library.bff"
+        ^ExternalProjectNames + .ProjectName
+    }
+//-----------------------------------------------------------------------------
+//  farmhash
+//-----------------------------------------------------------------------------
+    {
+        .ProjectName + '.farmhash'
+        .ProjectForcedIncludes + '$ProjectPath$/farmhash-external.h'
+        .ProjectPath + '/farmhash/src'
+        .ProjectDefines = { 'EXPORT_CORE_EXTERNAL_FARMHASH' }
+        .ProjectFiles =
+        {
+            'farmhash.h',
+        }
+        .ProjectIsolatedFiles =
+        {
+            'farmhash.cc',
+        }
+        #include "../../Build/Templates/Library.bff"
+        ^ExternalProjectNames + .ProjectName
+    }
+//-----------------------------------------------------------------------------
+//  lz4
+//-----------------------------------------------------------------------------
+    {
+        .ProjectName + '.lz4'
+        .ProjectForcedIncludes + '$ProjectPath$/lz4-external.h'
+        .ProjectPath + '/lz4/lib'
+        .ProjectDefines = { 'EXPORT_CORE_EXTERNAL_LZ4' }
+        .ProjectFiles =
+        {
+            'lz4.h',
+            'lz4hc.h',
+            'lz4opt.h',
+        }
+        .ProjectIsolatedFiles =
+        {
+            'lz4.c',
+            'lz4hc.c',
+        }
+        #include "../../Build/Templates/Library.bff"
+        ^ExternalProjectNames + .ProjectName
+    }
+//-----------------------------------------------------------------------------
+//  Renderdoc (headers only)
+//-----------------------------------------------------------------------------
+    {
+        .ProjectName + '.renderdoc'
+        .ProjectForcedIncludes + '$ProjectPath$/renderdoc-external.h'
+        .ProjectPath + '/renderdoc'
+        .ProjectFiles =
+        {
+            'renderdoc\api\app\renderdoc.h',
+        }
+        .ProjectIsolatedFiles =
+        {
+            ; header only library
+        }
+        #include "../../Build/Templates/Library.bff"
+    }
+//-----------------------------------------------------------------------------
+//  stb (headers only)
+//-----------------------------------------------------------------------------
+    {
+        .ProjectName + '.stb'
+        .ProjectPath + '/stb'
+        .ProjectFiles =
+        {
+            'stb_dxt.h',
+            'stb_image.h',
+            'stb_image_resize.h',
+            'stb_image_write.h',
+        }
+        .ProjectIsolatedFiles =
+        {
+            ; header only library
+        }
+        #include "../../Build/Templates/Library.bff"
+    }
+//-----------------------------------------------------------------------------
+//  xxHash
+//-----------------------------------------------------------------------------
+    {
+        .ProjectName + '.xxHash'
+        .ProjectForcedIncludes + '$ProjectPath$/xxHash-external.h'
+        .ProjectPath + '/xxHash'
+        .ProjectDefines = { 'EXPORT_CORE_EXTERNAL_XXHASH' }
+        .ProjectFiles =
+        {
+            'xxhash.h',
+        }
+        .ProjectIsolatedFiles =
+        {
+            'xxhash.c',
+        }
+        #include "../../Build/Templates/Library.bff"
+        ^ExternalProjectNames + .ProjectName
+    }
+//-----------------------------------------------------------------------------
+//  Aliases for building all externals
+//-----------------------------------------------------------------------------
+    {
+        ForEach( .CompileConfig in .AllCompileConfigs )
+        {
+            Using( .CompileConfig )
+
+            Alias( 'Core.External-$Platform$-$Config$' )
+            {
+                .Targets = {}
+                ForEach( .ProjectName in .ExternalProjectNames )
+                {
+                    ^Targets + '$ProjectName$-$Platform$-$Config$'
+                }
+            }
+
+            Alias( 'Core.External-$Platform$-$Config$-Purge' )
+            {
+                .Targets = {}
+                ForEach( .ProjectName in .ExternalProjectNames )
+                {
+                    ^Targets + '$ProjectName$-$Platform$-$Config$-Purge'
+                }
+            }
+        }
+
+        .ProjectName = 'Core.External'
+        #include "../../Build/Templates/Lib/Aliases.bff"
+    }
+}
