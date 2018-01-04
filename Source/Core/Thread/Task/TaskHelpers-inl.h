@@ -75,27 +75,27 @@ void ParallelFor(
         if (!manager)
             manager = &FGlobalThreadPool::Instance();
 
-        // all iterations are dispatch by regular slices to worker threads (less overhead)
-        const size_t worker_count = (manager->WorkerCount() + 1/* current thread */);
-        const size_t worker_tasks = ((count + worker_count - 1) / worker_count);
-
-        const size_t owner_first = (worker_tasks * (worker_count - 1));
-        const size_t owner_count = (count - owner_first);
-
         // less space needed to pass arguments to workers
         const struct loop_t_ {
             _It first, last;
             decltype(foreach) foreach;
         }   loop{ first, last, foreach };
 
+        // all iterations are dispatch by regular slices to worker threads (less overhead)
+        const size_t worker_count = (manager->WorkerCount() + 1/* current thread */);
+        const size_t worker_tasks = Max(1, count / worker_count);
+
+        const size_t owner_first = Min(count - worker_tasks, worker_tasks * (worker_count - 1));
+        Assert(owner_first < count);
+
         // creates tasks for multi-threaded completion
-        STACKLOCAL_STACK(FTaskFunc, tasks, owner_first);
+        STACKLOCAL_STACK(FTaskFunc, tasks, Min(worker_count - 1, owner_first));
 
         // prepare iteration tasks for the manager
         for (size_t i = 0; i != owner_first; i += worker_tasks)
             tasks.Push([&loop, i, j{ i + worker_tasks }](ITaskContext&) {
                 forrange(it, loop.first + i, loop.first + j)
-                    loop.foreach(*it);
+                    loop.foreach(it);
             });
 
         // blocking wait for end of the loop
@@ -103,9 +103,9 @@ void ParallelFor(
         manager->RunAndWaitFor(
             tasks.MakeConstView(),
             // slice processed on current thread while waiting :
-            [&loop, owner_first, count](ITaskContext&) {
-                forrange(it, loop.first + owner_first, loop.first + count)
-                    loop.foreach(*it);
+            [&loop, owner_first](ITaskContext&) {
+                forrange(it, loop.first + owner_first, loop.last)
+                    loop.foreach(it);
             },
             priority );
     }
@@ -131,13 +131,6 @@ void ParallelFor(
         if (!manager)
             manager = &FGlobalThreadPool::Instance();
 
-        // all iterations are dispatch by regular slices to worker threads (less overhead)
-        const size_t worker_count = (manager->WorkerCount() + 1/* current thread */);
-        const size_t worker_tasks = ((count + worker_count - 1) / worker_count);
-
-        const size_t owner_first = (worker_tasks * (worker_count - 1));
-        const size_t owner_count = (count - owner_first);
-
         // less space needed to pass arguments to workers
         const struct loop_t_ {
             const _It first;
@@ -145,8 +138,15 @@ void ParallelFor(
             decltype(foreach_item) foreach_item;
         }   loop{ first, last, foreach_item };
 
+        // all iterations are dispatch by regular slices to worker threads (less overhead)
+        const size_t worker_count = (manager->WorkerCount() + 1/* current thread */);
+        const size_t worker_tasks = Max(1, count / worker_count);
+
+        const size_t owner_first = Min(count - worker_tasks, worker_tasks * (worker_count - 1));
+        Assert(owner_first < count);
+
         // creates tasks for multi-threaded completion
-        STACKLOCAL_STACK(FTaskFunc, tasks, worker_count - 1);
+        STACKLOCAL_STACK(FTaskFunc, tasks, Min(worker_count - 1, owner_first));
 
         // prepare iteration tasks for the manager
         for (size_t i = 0; i != owner_first; i += worker_tasks)
