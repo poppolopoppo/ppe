@@ -4,7 +4,7 @@
     .ProjectPath = '$SourceDirectory$/Core'
     .ProjectSolutionFolder = 'Core'
     .ProjectDefines = { 'EXPORT_CORE' }
-    .UnityNumFiles = 6
+    .UnityNumFiles = 5
     .ProjectDependencies =
     {
         'Core.External.double-conversion',
