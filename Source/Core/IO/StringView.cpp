@@ -3,11 +3,12 @@
 #include "StringView.h"
 
 #include "Allocator/Alloca.h"
+#include "IO/String.h"
+#include "IO/TextWriter.h"
 #include "Memory/HashFunctions.h"
 
 #include <emmintrin.h>
 #include <intrin.h>
-#include <ostream>
 
 #define USE_CORE_SIMD_STRINGOPS 1 // turn to 0 to disable SIMD optimizations %_NOCOMMIT%
 
@@ -1049,6 +1050,18 @@ size_t Copy(const TMemoryView<wchar_t>& dst, const FWStringView& src) {
     return n;
 }
 //----------------------------------------------------------------------------
+const char* NullTerminated(const TMemoryView<char>& dst, const FStringView& src) {
+    const size_t n = Copy(dst, src);
+    dst[n] = '\0';
+    return dst.data();
+}
+//----------------------------------------------------------------------------
+const wchar_t* NullTerminated(const TMemoryView<wchar_t>& dst, const FWStringView& src) {
+    const size_t n = Copy(dst, src);
+    dst[n] = L'\0';
+    return dst.data();
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 hash_t hash_string(const FStringView& str) {
@@ -1085,116 +1098,158 @@ hash_t hash_stringI(const FWStringView& wstr) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Escape(std::basic_ostream<char>& oss, const FStringView& str, EEscape escape) {
+void Escape(FTextWriter& oss, const FStringView& str, EEscape escape) {
+    const FTextFormat fmt = oss.ResetFormat();
+
     for (char ch : str) {
         switch (ch) {
         case '\\':
         case '"':
-            oss << '\\' << ch;
+            oss.Put('\\');
+            oss.Put(ch);
             break;
         case '\b':
-            oss << "\\b";
+            oss.Put("\\b");
             break;
         case '\t':
-            oss << "\\t";
+            oss.Put("\\t");
             break;
         case '\n':
-            oss << "\\n";
+            oss.Put("\\n");
             break;
         case '\f':
-            oss << "\\f";
+            oss.Put("\\f");
             break;
         case '\r':
-            oss << "\\r";
+            oss.Put("\\r");
             break;
         default:
             if (IsPrint(ch))
-                oss << ch;
-            else {
-                static constexpr char hexdig[] = "0123456789ABCDEF";
-
+                oss.Put(ch);
+            else
                 switch (escape) {
                 case Core::EEscape::Octal:
-                    oss.put('\\');
-                    oss << std::oct << (u32(ch) & 0xFF) << std::dec;
+                    oss.Put('\\');
+                    oss << FTextFormat::Octal << (u32(ch) & 0xFF);
                     break;
                 case Core::EEscape::Hexadecimal:
-                    oss << "\\x";
-                    oss.put(hexdig[u8(ch) >> 4]);
-                    oss.put(hexdig[u8(ch) & 0xF]);
+                    oss.Put("\\x");
+                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, '0') << u8(ch);
                     break;
                 case Core::EEscape::Unicode:
-                    oss << "\\u00";
-                    oss.put(hexdig[u8(ch) >> 4]);
-                    oss.put(hexdig[u8(ch) & 0xF]);
+                    oss.Put("\\u00");
+                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, '0') << u8(ch);
                     break;
                 default:
                     AssertNotImplemented();
                     break;
                 }
-            }
         }
     }
+
+    oss.SetFormat(fmt);
 }
 //----------------------------------------------------------------------------
-void Escape(std::basic_ostream<wchar_t>& oss, const FWStringView& wstr, EEscape escape) {
+void Escape(FTextWriter& oss, const FWStringView& wstr, EEscape escape) {
+    Assert(EEscape::Unicode == escape);
+    const FTextFormat fmt = oss.ResetFormat();
+
+    for (wchar_t wch : wstr) {
+        oss.Put("\\u");
+        oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, '0') << u16(wch);
+    }
+
+    oss.SetFormat(fmt);
+}
+//----------------------------------------------------------------------------
+void Escape(FWTextWriter& oss, const FWStringView& wstr, EEscape escape) {
+    const FTextFormat fmt = oss.ResetFormat();
+
     for (wchar_t ch : wstr) {
         switch (ch) {
         case L'\\':
         case L'"':
-            oss << L'\\' << ch;
+            oss.Put(L'\\');
+            oss.Put(ch);
             break;
         case '\b':
-            oss << L"\\b";
+            oss.Put(L"\\b");
             break;
         case '\t':
-            oss << L"\\t";
+            oss.Put(L"\\t");
             break;
         case '\n':
-            oss << L"\\n";
+            oss.Put(L"\\n");
             break;
         case '\f':
-            oss << L"\\f";
+            oss.Put(L"\\f");
             break;
         case '\r':
-            oss << L"\\r";
+            oss.Put(L"\\r");
             break;
         default:
             if (IsPrint(ch))
-                oss << ch;
-            else {
-                static constexpr wchar_t hexdig[] = L"0123456789ABCDEF";
-
+                oss.Put(ch);
+            else
                 switch (escape) {
                 case Core::EEscape::Octal:
-                    oss.put(L'\\');
-                    oss << std::oct << (u32(ch) & 0xFF) << std::dec;
+                    oss.Put(L'\\');
+                    oss << FTextFormat::Octal << (u32(ch) & 0xFFFF);
                     break;
                 case Core::EEscape::Hexadecimal:
-                    oss << L"\\x";
-                    oss.put(hexdig[u8(ch) >> 4]);
-                    oss.put(hexdig[u8(ch) & 0xF]);
+                    oss.Put(L"\\x");
+                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << u8(ch >> 8);
+                    oss.Put(L"\\x");
+                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << u8(ch & 0xFF);
                     break;
                 case Core::EEscape::Unicode:
-                    oss << L"\\u00";
-                    oss.put(hexdig[u8(ch) >> 4]);
-                    oss.put(hexdig[u8(ch) & 0xF]);
+                    oss.Put(L"\\u");
+                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << u16(ch);
                     break;
                 default:
                     AssertNotImplemented();
                     break;
                 }
-            }
         }
     }
+
+    oss.SetFormat(fmt);
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FStringView& slice) {
-    return oss.write(slice.data(), slice.size());
+void Escape(FWTextWriter& oss, const FStringView& str, EEscape escape) {
+    const FTextFormat fmt = oss.ResetFormat();
+
+    for (char ch : str) {
+        switch (escape) {
+        case Core::EEscape::Octal:
+            oss.Put(L'\\');
+            oss << FTextFormat::Octal << (u32(ch) & 0xFF);
+            break;
+        case Core::EEscape::Hexadecimal:
+            oss.Put(L"\\x");
+            oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << u8(ch);
+            break;
+        case Core::EEscape::Unicode:
+            oss.Put(L"\\u00");
+            oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << u8(ch);
+            break;
+        default:
+            AssertNotImplemented();
+            break;
+        }
+    }
+
+    oss.SetFormat(fmt);
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const FWStringView& wslice) {
-    return oss.write(wslice.data(), wslice.size());
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const FWStringView& wslice) {
+    return oss << ToCStr(INLINE_MALLOCA(char, wslice.size() + 1), wslice);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const FStringView& slice) {
+    return oss << ToWCStr(INLINE_MALLOCA(wchar_t, slice.size() + 1), slice);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

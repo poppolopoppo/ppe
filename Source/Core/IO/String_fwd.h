@@ -2,21 +2,30 @@
 
 #include "Core/Core.h"
 
-#include "Core/Allocator/Allocation.h"
-
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <
-    typename _Char,
-    typename _Traits = std::char_traits<_Char>,
-    typename _Allocator = ALLOCATOR(String, _Char)
->
+template <typename T>
+class TMemoryView;
+//----------------------------------------------------------------------------
+template <typename _Char>
+class TBasicStringView;
+//----------------------------------------------------------------------------
+using FStringView = TBasicStringView<char>;
+using FWStringView = TBasicStringView<wchar_t>;
+//----------------------------------------------------------------------------
+template <typename _Char>
 class TBasicString;
 //----------------------------------------------------------------------------
-typedef TBasicString<char>      FString;
-typedef TBasicString<wchar_t>   FWString;
+using FString = TBasicString<char>;
+using FWString = TBasicString<wchar_t>;
+//----------------------------------------------------------------------------
+template <typename _Char>
+class TBasicStringBuilder;
+//----------------------------------------------------------------------------
+using FStringBuilder = TBasicStringBuilder<char>;
+using FWStringBuilder = TBasicStringBuilder<wchar_t>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
