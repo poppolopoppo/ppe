@@ -18,6 +18,7 @@
 
 #ifdef PLATFORM_WINDOWS
 #   pragma warning(push)
+#   pragma warning(disable: 4996) // 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 #   pragma warning(disable: 6001) // warning C6001: Using uninitialized memory 'coutput'
 #endif
 
@@ -29,9 +30,9 @@
 #define STBI_FREE(p) \
     Core::tracking_free_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p)
 #define STBI_ASSERT(x) \
-    Assert("stb_image: ", (x))
+    Assert(NOOP("stb_image: "), (x))
 #define STBI_NO_STDIO
-#include "External/stb_image.h"
+#include "Core.External/stb/stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBIW_MALLOC(sz) \
@@ -41,9 +42,9 @@
 #define STBIW_FREE(p) \
     Core::tracking_free_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p)
 #define STBIW_ASSERT(x) \
-    Assert("stb_image_write: ", (x))
+    Assert(NOOP("stb_image_write: "), (x))
 #define STBI_WRITE_NO_STDIO
-#include "External/stb_image_write.h"
+#include "Core.External/stb/stb_image_write.h"
 
 #ifdef PLATFORM_WINDOWS
 #   pragma warning(pop)

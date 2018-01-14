@@ -5,6 +5,7 @@
 
 #include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/PoolAllocator-impl.h"
+#include "Core/Allocator/TrackingMalloc.h"
 #include "Core/Color/Color.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/Container/BitSet.h"
@@ -13,17 +14,15 @@
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 
-#define STBIR_MALLOC(size,c) \
-    Core::GetThreadLocalHeap().Malloc(size)
-#define STBIR_FREE(ptr,c) \
-    Core::GetThreadLocalHeap().Free(ptr)
+#define STBIR_MALLOC(size,c) Core::tracking_malloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(size)
+#define STBIR_FREE(ptr,c) Core::tracking_free_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(ptr)
 #define STBIR_ASSERT(x) \
-    Assert("stb_image_resize: ", (x))
+    Assert(NOOP("stb_image_resize: "), (x))
 
 #define STBIR_DEFAULT_FILTER_UPSAMPLE     STBIR_FILTER_CATMULLROM
 #define STBIR_DEFAULT_FILTER_DOWNSAMPLE   STBIR_FILTER_CUBICBSPLINE // TODO: workaround invalid alpha with STBIR_FILTER_MITCHELL
 
-#include "External/stb_image_resize.h"
+#include "Core.External/stb/stb_image_resize.h"
 
 namespace Core {
 namespace Pixmap {

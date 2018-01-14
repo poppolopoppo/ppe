@@ -15,7 +15,7 @@
 #define STBD_FABS(_VAL) std::abs(_VAL)
 #define STBD_MEMSET(_DST, _VAL, _SIZE) ::memset((_DST), (_VAL), (_SIZE))
 
-#include "External/stb_dxt.h"
+#include "Core.External/stb/stb_dxt.h"
 
 namespace Core {
 namespace Pixmap {
