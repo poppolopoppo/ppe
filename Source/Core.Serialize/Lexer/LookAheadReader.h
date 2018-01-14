@@ -15,10 +15,10 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 class FLookAheadReader {
 public:
-    FLookAheadReader(IBufferedStreamReader* input, const wchar_t *sourceFileName);
+    FLookAheadReader(IBufferedStreamReader* input, const FWStringView& sourceFileName);
     ~FLookAheadReader();
 
-    const wchar_t *SourceFileName() const { return _sourceFileName; }
+    const FWStringView& SourceFileName() const { return _sourceFileName; }
     size_t SourceLine() const { return _sourceLine; }
     size_t SourceColumn() const { return _sourceColumn; }
 
@@ -36,7 +36,7 @@ public:
     void EatWhiteSpaces();
 
 private:
-    const wchar_t *_sourceFileName;
+    FWStringView _sourceFileName;
     size_t _sourceLine;
     size_t _sourceColumn;
 

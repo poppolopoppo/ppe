@@ -6,16 +6,14 @@
 #include "Core/IO/FS/Extname.h"
 #include "Core/IO/FS/FileSystemProperties.h"
 
-#include "Core/IO/String.h"
-#include "Core/IO/StringView.h"
-
-#include <iosfwd>
+#include "Core/IO/String_fwd.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FBasename {
+class CORE_API FBasename {
 public:
     FBasename() {}
     ~FBasename() {}
@@ -25,6 +23,9 @@ public:
     FBasename(const FBasename& other);
     FBasename& operator =(const FBasename& other);
 
+    FBasename(const FileSystem::FString& content);
+    FBasename& operator =(const FileSystem::FString& content);
+
     FBasename(const FileSystem::FStringView& content);
     FBasename& operator =(const FileSystem::FStringView& content);
 
@@ -32,10 +33,6 @@ public:
     FBasename(const FileSystem::char_type (&content)[_Dim]) : FBasename(MakeStringView(content)) {}
     template <size_t _Dim>
     FBasename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
-
-    template <typename _CharTraits, typename _Allocator>
-    FBasename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : FBasename(MakeStringView(content)) {}
 
     bool empty() const { return _basenameNoExt.empty() && _extname.empty(); }
 
@@ -69,6 +66,10 @@ private:
     FBasenameNoExt _basenameNoExt;
     FExtname _extname;
 };
+//----------------------------------------------------------------------------
+inline FBasename operator +(const FBasenameNoExt& bname, const FExtname& ext) {
+    return FBasename(bname, ext);
+}
 //----------------------------------------------------------------------------
 inline bool FBasename::Equals(const FBasename& other) const {
     return  _basenameNoExt == other._basenameNoExt &&
@@ -107,12 +108,8 @@ inline hash_t hash_value(const FBasename& token) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const Core::FBasename& basename) {
-    return oss << basename.BasenameNoExt() << basename.Extname();
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, const FBasename& basename);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FBasename& basename);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

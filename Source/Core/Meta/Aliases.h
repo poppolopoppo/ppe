@@ -243,12 +243,6 @@ typedef struct uint128_t {
 
     friend void swap(uint128_t& lhs, uint128_t& rhs) { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
 
-    template <typename _Char, typename _Traits>
-    friend std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const uint128_t& v) {
-        const _Char f = oss.fill();
-        const std::streamsize w = oss.width();
-        return oss << std::hex << std::setfill('0') << std::setw(16) << v.hi << v.lo << std::dec << std::setfill(f) << std::setw(w);
-    }
 }   u128;
 //----------------------------------------------------------------------------
 typedef struct uint256_t {
@@ -264,10 +258,6 @@ typedef struct uint256_t {
 
     friend void swap(uint256_t& lhs, uint256_t& rhs) { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
 
-    template <typename _Char, typename _Traits>
-    friend std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const uint256_t& v) {
-        return oss << hi << lo;
-    }
 }   u256;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

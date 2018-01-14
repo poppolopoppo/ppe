@@ -15,16 +15,4 @@ FVirtualFileSystemComponent::FVirtualFileSystemComponent(const FDirpath& alias)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FVirtualFileSystemComponentStartup::Start(FVirtualFileSystemComponent *component) {
-    Assert(component);
-    FVirtualFileSystem::Instance().Mount(component);
-}
-//----------------------------------------------------------------------------
-void FVirtualFileSystemComponentStartup::Shutdown(FVirtualFileSystemComponent *component) {
-    Assert(component);
-    FVirtualFileSystem::Instance().Unmount(component);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 } //!namespace Core

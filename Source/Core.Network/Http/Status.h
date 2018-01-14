@@ -2,7 +2,8 @@
 
 #include "Core.Network/Network.h"
 
-#include "Core/IO/StringView.h"
+#include "Core/IO/String_fwd.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 #define FOREACH_HTTP_STATUSCODE(_MACRO) \
     \
@@ -76,9 +77,9 @@ FOREACH_HTTP_STATUSCODE(HTTP_ERRORCODE_ENUMDEF)
 #undef HTTP_ERRORCODE_ENUMDEF
 };
 //----------------------------------------------------------------------------
-FStringView HttpStatusName(EHttpStatus status);
-FStringView HttpStatusCode(EHttpStatus status);
-FStringView HttpStatusDescription(EHttpStatus status);
+CORE_NETWORK_API FStringView HttpStatusName(EHttpStatus status);
+CORE_NETWORK_API FStringView HttpStatusCode(EHttpStatus status);
+CORE_NETWORK_API FStringView HttpStatusDescription(EHttpStatus status);
 //----------------------------------------------------------------------------
 inline bool HttpIsInformation(EHttpStatus status) { return (size_t(status) >= 100 && size_t(status) < 200); }
 inline bool HttpIsSuccessful (EHttpStatus status) { return (size_t(status) >= 200 && size_t(status) < 300); }
@@ -95,9 +96,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(
+    TBasicTextWriter<_Char>& oss,
     Network::EHttpStatus httpStatus ) {
     return oss
         << Network::HttpStatusCode(httpStatus)

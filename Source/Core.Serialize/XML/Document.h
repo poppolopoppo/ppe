@@ -7,6 +7,7 @@
 #include "Core/Container/StringHashMap.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/IO/VirtualFileSystem_fwd.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/Function.h"
@@ -45,7 +46,7 @@ public:
 
     bool empty() const { return (nullptr != _root); }
 
-    void ToStream(std::basic_ostream<char>& oss) const;
+    void ToStream(FTextWriter& oss) const;
 
     const FElement* XPath(const TMemoryView<const FName>& path) const;
     size_t XPath(const TMemoryView<const FName>& path, const Meta::TFunction<void(const FElement&)>& functor) const;
@@ -64,7 +65,7 @@ private:
     byidentifier_type _byIdentifier;
 };
 //----------------------------------------------------------------------------
-inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FDocument& doc) {
+inline FTextWriter& operator <<(FTextWriter& oss, const FDocument& doc) {
     doc.ToStream(oss);
     return oss;
 }

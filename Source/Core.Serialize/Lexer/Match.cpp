@@ -4,6 +4,8 @@
 
 #include "Symbols.h"
 
+#include "Core/IO/StringView.h"
+
 namespace Core {
 namespace Lexer {
 //----------------------------------------------------------------------------
@@ -11,7 +13,7 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 FMatch::FMatch()
 :   _symbol(FSymbols::Invalid)
-,   _site(nullptr, 0, 0)
+,   _site(FWStringView(), 0, 0)
 ,   _offset(size_t(-1)) {}
 //----------------------------------------------------------------------------
 FMatch::~FMatch() {}

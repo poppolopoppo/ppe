@@ -303,7 +303,7 @@ void* FVirtualMemory::AlignedAlloc(size_t alignment, size_t sizeInBytes) {
 #endif
 
     if (not Meta::IsAligned(alignment, p)) {
-        const size_t allocationGranularity = FPlatform::SystemInfo.AllocationGranularity;
+        const size_t allocationGranularity = FPlatformMisc::SystemInfo.AllocationGranularity;
 
         // Fill "bubbles" (reserve unaligned regions) at the beginning of virtual address space, otherwise there will be always falling back to the slow method
         if ((uintptr_t)p < 16 * 1024 * 1024)
@@ -387,7 +387,7 @@ FVirtualMemoryCache::FVirtualMemoryCache()
     , TotalCacheSizeInBytes(0) {}
 //----------------------------------------------------------------------------
 void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first TRACKINGDATA_ARG_IFP) {
-    const size_t alignment = FPlatform::SystemInfo.AllocationGranularity;
+    const size_t alignment = FPlatformMisc::SystemInfo.AllocationGranularity;
     Assert(Meta::IsAligned(alignment, sizeInBytes));
 
     if (FreePageBlockCount) {
@@ -453,7 +453,7 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
     if (0 == sizeInBytes)
         sizeInBytes = FVirtualMemory::AllocSizeInBytes(ptr);
 
-    Assert(Meta::IsAligned(FPlatform::SystemInfo.AllocationGranularity, sizeInBytes));
+    Assert(Meta::IsAligned(FPlatformMisc::SystemInfo.AllocationGranularity, sizeInBytes));
 
     if (sizeInBytes > maxCacheSizeInBytes) {
         FVirtualMemory::AlignedFree(ptr, sizeInBytes);
@@ -496,7 +496,7 @@ void FVirtualMemoryCache::ReleaseAll(FFreePageBlock* first TRACKINGDATA_ARG_IFP)
     for (   FFreePageBlock* const last = (first + FreePageBlockCount);
             first != last;
             ++first ) {
-        Assert(Meta::IsAligned(FPlatform::SystemInfo.AllocationGranularity, first->Ptr));
+        Assert(Meta::IsAligned(FPlatformMisc::SystemInfo.AllocationGranularity, first->Ptr));
 
         FVirtualMemory::AlignedFree(first->Ptr, first->SizeInBytes);
 

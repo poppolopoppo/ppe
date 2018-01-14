@@ -185,7 +185,7 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
             return false;
         }
 
-        foreign_ip.assign(real_foreign_ip);
+        foreign_ip.assign(MakeStringView(real_foreign_ip, Meta::FForceInit{}));
     }
 
     // get the local ip
@@ -194,7 +194,7 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
         ::sockaddr_in local_info;
         length = sizeof(::sockaddr_in);
         // get the local sockaddr_in structure associated with this new connection
-        if (SOCKET_ERROR == ::getsockname (incoming, reinterpret_cast<::sockaddr*>(&local_info), &length) ) {
+        if (SOCKET_ERROR == ::getsockname(incoming, reinterpret_cast<::sockaddr*>(&local_info), &length)) {
             // an error occurred
             ::closesocket(incoming);
             return false;
@@ -209,7 +209,7 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
             return false;
         }
 
-        local_ip.assign(real_local_ip);
+        local_ip.assign(MakeStringView(real_local_ip, Meta::FForceInit{}));
     }
     else {
         local_ip = _listening.Host();

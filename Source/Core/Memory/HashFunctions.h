@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include <nmmintrin.h>
 #include <type_traits>
 
 namespace Core {

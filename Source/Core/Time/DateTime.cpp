@@ -3,6 +3,7 @@
 #include "DateTime.h"
 
 #include "Timestamp.h"
+#include "IO/TextWriter.h"
 
 #include <time.h>
 
@@ -62,6 +63,42 @@ FDateTime FDateTime::FromTimeUTC(const FTimestamp& t) {
     d.Seconds = lc.tm_sec;
     Assert(lc.tm_sec == d.Seconds);
     return d;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const FDateTime& d) {
+    const char fillch = oss.FillChar();
+    return oss
+        << FTextFormat::PadLeft(4, '0') << d.Year
+        << FTextFormat::PadLeft(1, '0') << '/'
+        << FTextFormat::PadLeft(2, '0') << d.Month
+        << FTextFormat::PadLeft(1, '0') << '/'
+        << FTextFormat::PadLeft(2, '0') << d.Day
+        << FTextFormat::PadLeft(1, '0') << ' '
+        << FTextFormat::PadLeft(2, '0') << d.Hours
+        << FTextFormat::PadLeft(1, '0') << ':'
+        << FTextFormat::PadLeft(2, '0') << d.Minutes
+        << FTextFormat::PadLeft(1, '0') << ':'
+        << FTextFormat::PadLeft(2, '0') << d.Seconds
+        << FTextFormat::SetFill(fillch);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const FDateTime& d) {
+    const wchar_t fillch = oss.FillChar();
+    return oss
+        << FTextFormat::PadLeft(4, L'0') << d.Year
+        << FTextFormat::PadLeft(1, L'0') << L'/'
+        << FTextFormat::PadLeft(2, L'0') << d.Month
+        << FTextFormat::PadLeft(1, L'0') << L'/'
+        << FTextFormat::PadLeft(2, L'0') << d.Day
+        << FTextFormat::PadLeft(1, L'0') << L' '
+        << FTextFormat::PadLeft(2, L'0') << d.Hours
+        << FTextFormat::PadLeft(1, L'0') << L':'
+        << FTextFormat::PadLeft(2, L'0') << d.Minutes
+        << FTextFormat::PadLeft(1, L'0') << L':'
+        << FTextFormat::PadLeft(2, L'0') << d.Seconds
+        << FTextFormat::SetFill(fillch);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

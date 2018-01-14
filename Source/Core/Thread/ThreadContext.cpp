@@ -7,10 +7,16 @@
 #include "Diagnostic/LastError.h"
 #include "Diagnostic/Logger.h"
 #include "IO/StringView.h"
+#include "IO/TextWriter.h"
 #include "Meta/AutoSingleton.h"
 
 #ifndef FINAL_RELEASE
 #   define WITH_CORE_THREADCONTEXT_NAME
+#endif
+
+#ifdef WITH_CORE_THREADCONTEXT_NAME
+#   include "Container/AssociativeVector.h"
+#   include "Thread/ReadWriteLock.h"
 #endif
 
 #ifdef PLATFORM_WINDOWS
@@ -55,12 +61,12 @@ inline void FThreadLocalContext_::CreateMainThread() {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+#ifdef WITH_CORE_THREADCONTEXT_NAME
 #pragma warning(push)
 #pragma warning(disable: 6320) // L'expression de filtre d'exception correspond a la constante EXCEPTION_EXECUTE_HANDLER.
                                // Cela risque de masquer les exceptions qui n'etaient pas destinees a etre gerees.
 #pragma warning(disable: 6322) // bloc empty _except.
 static void SetWin32ThreadName_(const char* name) {
-#ifdef WITH_CORE_THREADCONTEXT_NAME
     /*
     // How to: Set a Thread FName in Native Code
     // http://msdn.microsoft.com/en-us/library/xcb2z8hs.aspx
@@ -89,11 +95,9 @@ static void SetWin32ThreadName_(const char* name) {
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
     }
-#else
-    UNUSED(name);
-#endif
 }
 #pragma warning(pop)
+#endif //!WITH_CORE_THREADCONTEXT_NAME
 //----------------------------------------------------------------------------
 static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
 #ifdef PLATFORM_WINDOWS
@@ -104,6 +108,45 @@ static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
             return;
     }
     LOG(Warning, L"Unable to SetThreadStackGuarantee, TStack Overflows won't be caught properly !");
+#endif
+}
+//----------------------------------------------------------------------------
+#ifdef WITH_CORE_THREADCONTEXT_NAME
+struct FThreadNames_ {
+    FReadWriteLock RWLock;
+    ASSOCIATIVE_VECTORINSITU(Diagnostic, std::thread::id, FStringView, 32) Names;
+    static FThreadNames_& Instance() {
+        static FThreadNames_ GInstance;
+        return GInstance;
+    }
+};
+static FStringView GetThreadName_(std::thread::id thread_id) {
+    FThreadNames_& thread_names = FThreadNames_::Instance();
+    READSCOPELOCK(thread_names.RWLock);
+    const auto it = thread_names.Names.Find(thread_id);
+    return (thread_names.Names.end() == it ? "UnkownThread" : it->second);
+}
+#endif //!WITH_CORE_THREADCONTEXT_NAME
+//----------------------------------------------------------------------------
+static void RegisterThreadName_(std::thread::id thread_id, const char* name) {
+#ifdef WITH_CORE_THREADCONTEXT_NAME
+    SetWin32ThreadName_(name);
+    FThreadNames_& thread_names = FThreadNames_::Instance();
+    WRITESCOPELOCK(thread_names.RWLock);
+    thread_names.Names.Insert_AssertUnique(thread_id, MakeStringView(name, Meta::FForceInit{}));
+#else
+    UNUSED(thread_id);
+    UNUSED(name);
+#endif
+}
+//----------------------------------------------------------------------------
+static void UnregisterThreadName_(std::thread::id thread_id) {
+#ifdef WITH_CORE_THREADCONTEXT_NAME
+    FThreadNames_& thread_names = FThreadNames_::Instance();
+    WRITESCOPELOCK(thread_names.RWLock);
+    thread_names.Names.Remove_AssertExists(thread_id);
+#else
+    UNUSED(thread_id);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -121,11 +164,13 @@ FThreadContext::FThreadContext(const char* name, size_t tag, size_t index)
     Assert(n < lengthof(_name));
     _name[n] = '\0';
 
-    SetWin32ThreadName_(_name);
+    RegisterThreadName_(_threadId, _name);
     GuaranteeStackSizeForStackOverflowRecovery_();
 }
 //----------------------------------------------------------------------------
-FThreadContext::~FThreadContext() {}
+FThreadContext::~FThreadContext() {
+    UnregisterThreadName_(_threadId);
+}
 //----------------------------------------------------------------------------
 size_t FThreadContext::AffinityMask() const {
     Assert(std::this_thread::get_id() == _threadId);
@@ -274,6 +319,24 @@ void FThreadContextStartup::Shutdown() {
     FThreadLocalHeapStartup::Shutdown();
     FThreadLocalContext_::Destroy();
     Meta::FThreadLocalAutoSingletonManager::Shutdown();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, std::thread::id thread_id) {
+#ifdef WITH_CORE_THREADCONTEXT_NAME
+    return oss << "thread_id:" << *(const void**)&thread_id << " '" << GetThreadName_(thread_id) << "'";
+#else
+    return oss << "thread_id:" << *(const void**)&thread_id;
+#endif
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, std::thread::id thread_id) {
+#ifdef WITH_CORE_THREADCONTEXT_NAME
+    return oss << L"thread_id:" << *(const void**)&thread_id << L" '" << GetThreadName_(thread_id) << L"'";
+#else
+    return oss << L"thread_id:" << *(const void**)&thread_id;
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

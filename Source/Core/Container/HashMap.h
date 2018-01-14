@@ -3,8 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Container/HashTable.h"
-
-#include <iosfwd>
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -33,20 +32,20 @@ template <
 >
 using THashMap = TBasicHashTable< details::THashMapTraits_<_Key, _Value>, _Hasher, _EqualTo, _Allocator >;
 //----------------------------------------------------------------------------
-template <
-    typename _Key,
-    typename _Value,
-    typename _Hasher,
-    typename _EqualTo,
-    typename _Allocator,
-    typename _Char,
-    typename _Traits
->
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {
+template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
+FTextWriter& operator <<(FTextWriter& oss, const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {
     oss << "{ ";
     for (const auto& it : hashMap)
         oss << '(' << it.first << ", " << it.second << "), ";
     return oss << '}';
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
+FWTextWriter& operator <<(FWTextWriter& oss, const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {
+    oss << L"{ ";
+    for (const auto& it : hashMap)
+        oss << L'(' << it.first << L", " << it.second << L"), ";
+    return oss << L'}';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

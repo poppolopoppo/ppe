@@ -3,10 +3,8 @@
 #include "Core/Core.h"
 
 #include "Core/IO/Format.h"
-#include "Core/IO/StringView.h"
-
-#include <iosfwd>
-#include <mutex>
+#include "Core/IO/String_fwd.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 #if !defined(FINAL_RELEASE) || USE_CORE_FORCE_LOGGING
 #   define USE_DEBUG_LOGGER
@@ -28,30 +26,29 @@ enum class ELogCategory {
     Callstack,
 };
 //----------------------------------------------------------------------------
-TMemoryView<const ELogCategory> EachLogCategory();
-FWStringView LogCategoryToWCStr(ELogCategory category);
+CORE_API TMemoryView<const ELogCategory> EachLogCategory();
+CORE_API FStringView LogCategoryToCStr(ELogCategory category);
+CORE_API FWStringView LogCategoryToWCStr(ELogCategory category);
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, ELogCategory category) {
-    return oss << LogCategoryToWCStr(category);
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, ELogCategory category);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, ELogCategory category);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class ILogger {
 public:
     virtual ~ILogger() {}
-    virtual void Log(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) = 0;
+    virtual void Log(ELogCategory category, const FWStringView& format, const FWFormatArgList& args) = 0;
     virtual void Flush() = 0;
 };
 //----------------------------------------------------------------------------
-class FAbstractThreadSafeLogger : public ILogger {
+class CORE_API FAbstractThreadSafeLogger : public ILogger {
 public:
     virtual ~FAbstractThreadSafeLogger() {}
-    virtual void Log(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) override;
+    virtual void Log(ELogCategory category, const FWStringView& format, const FWFormatArgList& args) override;
     virtual void Flush() override;
 protected:
-    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) = 0;
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FWFormatArgList& args) = 0;
     virtual void FlushThreadSafe() = 0;
 private:
     std::recursive_mutex _barrier;
@@ -63,79 +60,71 @@ private:
 
 #ifdef USE_DEBUG_LOGGER
 
-#include "Core/IO/Stream.h"
+#include "Core/IO/TextWriter.h"
+#include "Core/Memory/MemoryStream.h"
 
 #include <memory>
-#include <sstream>
+#include <mutex>
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ILogger* SetLoggerImpl(ILogger* logger);
+CORE_API ILogger* SetLoggerImpl(ILogger* logger);
 //----------------------------------------------------------------------------
-void FlushLog();
+CORE_API void FlushLog();
 //----------------------------------------------------------------------------
-void Log(ELogCategory category, const FWStringView& text);
+CORE_API void Log(ELogCategory category, const FWStringView& text);
 //----------------------------------------------------------------------------
-void LogArgs(ELogCategory category, const FWStringView& format, const FFormatArgListW& args);
+CORE_API void LogArgs(ELogCategory category, const FWStringView& format, const FWFormatArgList& args);
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
 void Log(ELogCategory category, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
-    typedef details::TFormatFunctor_<wchar_t> formatfunctor_t;
+    typedef details::TBasicFormatFunctor_<wchar_t> formatfunctor_t;
     const formatfunctor_t functors[] = {
         formatfunctor_t::Make(std::forward<_Arg0>(arg0)),
         formatfunctor_t::Make(std::forward<_Args>(args))...
     };
 
-    LogArgs(category, format, FFormatArgListW(functors));
+    LogArgs(category, format, FWFormatArgList(functors));
 }
 //----------------------------------------------------------------------------
-class FLoggerStream : public TBasicOStringStream<wchar_t, THREAD_LOCAL_ALLOCATOR(Logger, wchar_t)> {
-public:
-    FLoggerStream(ELogCategory category) : _category(category) {}
-    ~FLoggerStream() { Log(_category, MakeStringView(str())); }
-
-private:
-    ELogCategory _category;
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class CORE_API FOutputDebugLogger : public FAbstractThreadSafeLogger {
+protected:
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FWFormatArgList& args) override;
+    virtual void FlushThreadSafe() override;
 };
 //----------------------------------------------------------------------------
-class FStackLocalLoggerStream : public FWOCStrStream {
+class CORE_API FStdoutLogger : public FAbstractThreadSafeLogger {
+protected:
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FWFormatArgList& args) override;
+    virtual void FlushThreadSafe() override;
+};
+//----------------------------------------------------------------------------
+class CORE_API FStderrLogger : public FAbstractThreadSafeLogger {
+protected:
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FWFormatArgList& args) override;
+    virtual void FlushThreadSafe() override;
+};
+//----------------------------------------------------------------------------
+class CORE_API FStreamLogger : public FAbstractThreadSafeLogger {
 public:
-    STATIC_CONST_INTEGRAL(size_t, Capacity, 2048);
+    FStreamLogger(class IBufferedStreamWriter* stream);
+    ~FStreamLogger();
 
-    FStackLocalLoggerStream(ELogCategory category)
-        : FWOCStrStream(_localBuffer), _category(category) {}
-    ~FStackLocalLoggerStream() { Log(_category, FWOCStrStream::MakeView_NullTerminated()); }
+protected:
+    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FWFormatArgList& args) override;
+    virtual void FlushThreadSafe() override;
 
 private:
-    ELogCategory _category;
-    wchar_t _localBuffer[Capacity];
+    class IBufferedStreamWriter* _stream;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FOutputDebugLogger : public FAbstractThreadSafeLogger {
-protected:
-    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) override;
-    virtual void FlushThreadSafe() override;
-};
-//----------------------------------------------------------------------------
-class FStdoutLogger : public FAbstractThreadSafeLogger {
-protected:
-    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) override;
-    virtual void FlushThreadSafe() override;
-};
-//----------------------------------------------------------------------------
-class FStderrLogger : public FAbstractThreadSafeLogger {
-protected:
-    virtual void LogThreadSafe(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) override;
-    virtual void FlushThreadSafe() override;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-class FLoggerStartup {
+class CORE_API FLoggerStartup {
 public:
     static void Start();
     static void Shutdown();

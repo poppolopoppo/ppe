@@ -5,8 +5,12 @@
 #include "Dirname.h"
 
 #include "Container/Hash.h"
-#include "IO/Stream.h"
+#include "IO/StreamProvider.h"
+#include "IO/StringBuilder.h"
 #include "IO/String.h"
+#include "IO/StringView.h"
+#include "IO/TextWriter.h"
+#include "Memory/MemoryProvider.h"
 #include "Memory/UniqueView.h"
 
 namespace Core {
@@ -90,6 +94,14 @@ FFilename& FFilename::operator =(const FFilename& other) {
     _basename = other._basename;
     return *this;
 }
+//----------------------------------------------------------------------------}
+FFilename::FFilename(const FileSystem::FString& content)
+:   FFilename(content.MakeView())
+{}
+//----------------------------------------------------------------------------
+FFilename& FFilename::operator =(const FileSystem::FString& content) {
+    return operator =(content.MakeView());
+}
 //----------------------------------------------------------------------------
 FFilename::FFilename(const FileSystem::FStringView& content) {
     ParseFilename_(content, _dirpath, _basename);
@@ -116,9 +128,10 @@ FFilename FFilename::WithReplacedMountingPoint(const FMountingPoint& mountingPoi
 }
 //----------------------------------------------------------------------------
 void FFilename::AppendBasename(const FileSystem::FStringView& basenameNoExt) {
-    FWString newBasenameNoExt(Core::ToWString(_basename.BasenameNoExt().MakeView()));
-    newBasenameNoExt.append(basenameNoExt.begin(), basenameNoExt.end());
-    _basename.SetBasenameNoExt(newBasenameNoExt);
+    FWStringBuilder oss;
+    oss.reserve(_basename.BasenameNoExt().size() + basenameNoExt.size());
+    oss << _basename.BasenameNoExt() << basenameNoExt;
+    _basename.SetBasenameNoExt(oss.ToString().MakeView());
 }
 //----------------------------------------------------------------------------
 FFilename FFilename::WithAppendBasename(const FileSystem::FStringView& basenameNoExt) const {
@@ -186,32 +199,50 @@ size_t FFilename::HashValue() const {
 }
 //----------------------------------------------------------------------------
 FString FFilename::ToString() const {
-    STACKLOCAL_OCSTRSTREAM(oss, 1024);
+    FStringBuilder oss;
     oss << *this;
-    return Core::ToString(oss.MakeView());
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 FWString FFilename::ToWString() const {
-    STACKLOCAL_WOCSTRSTREAM(oss, 1024);
+    FWStringBuilder oss;
     oss << *this;
-    return Core::ToWString(oss.MakeView());
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 FStringView FFilename::ToCStr(const TMemoryView<char>& dst) const {
-    FOCStrStream oss(dst);
-    oss << *this;
-    return oss.MakeView();
+    FFixedSizeTextWriter oss(dst);
+    oss << *this << Eos;
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
 FWStringView FFilename::ToWCStr(const TMemoryView<wchar_t>& dst) const {
-    FWOCStrStream oss(dst);
-    oss << *this;
-    return oss.MakeView();
+    FWFixedSizeTextWriter oss(dst);
+    oss << *this << Eos;
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
 void FFilename::Swap(FFilename& other) {
     swap(other._dirpath, _dirpath);
     swap(other._basename, _basename);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const FFilename& filename) {
+    if (filename.empty())
+        return oss;
+    if (!filename.Dirpath().empty())
+        oss << filename.Dirpath();
+    return oss << filename.Basename();
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const FFilename& filename) {
+    if (filename.empty())
+        return oss;
+    if (!filename.Dirpath().empty())
+        oss << filename.Dirpath();
+    return oss << filename.Basename();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

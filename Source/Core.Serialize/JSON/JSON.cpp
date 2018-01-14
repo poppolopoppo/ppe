@@ -11,6 +11,7 @@
 #include "Core/IO/FS/ConstNames.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/FormatHelpers.h"
+#include "Core/IO/TextWriter.h"
 #include "Core/IO/VirtualFileSystem.h"
 #include "Core/Memory/MemoryProvider.h"
 
@@ -21,7 +22,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 namespace JSON_ {
 //----------------------------------------------------------------------------
-static void EscapeString_(std::basic_ostream<char>& oss, const FJSON::FString& str) {
+static void EscapeString_(FTextWriter& oss, const FJSON::FString& str) {
     Escape(oss, str.MakeView(), EEscape::Unicode);
 }
 //----------------------------------------------------------------------------
@@ -139,7 +140,7 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJSON::FValue& value) {
     return true;
 }
 //----------------------------------------------------------------------------
-static void ToStream_(const FJSON::FValue& value, std::basic_ostream<char>& oss, Fmt::FIndent& indent, bool minify) {
+static void ToStream_(const FJSON::FValue& value, FTextWriter& oss, Fmt::FIndent& indent, bool minify) {
     switch (value.Type()) {
 
     case Core::Serialize::FJSON::Null:
@@ -174,7 +175,7 @@ static void ToStream_(const FJSON::FValue& value, std::basic_ostream<char>& oss,
             const auto& arr = value.ToArray();
             oss << '[';
             if (not minify)
-                oss << eol;
+                oss << Eol;
             {
                 const Fmt::FIndent::FScope scopeIndent(indent);
 
@@ -185,7 +186,7 @@ static void ToStream_(const FJSON::FValue& value, std::basic_ostream<char>& oss,
                     if (--n)
                         oss << ',';
                     if (not minify)
-                        oss << eol;
+                        oss << Eol;
                 }
             }
             oss << indent << ']';
@@ -200,7 +201,7 @@ static void ToStream_(const FJSON::FValue& value, std::basic_ostream<char>& oss,
             const auto& obj = value.ToObject();
             oss << '{';
             if (not minify)
-                oss << eol;
+                oss << Eol;
             {
                 const Fmt::FIndent::FScope scopeIndent(indent);
 
@@ -213,7 +214,7 @@ static void ToStream_(const FJSON::FValue& value, std::basic_ostream<char>& oss,
                     if (--n)
                         oss << ',';
                     if (not minify)
-                        oss << eol;
+                        oss << Eol;
                 }
             }
             oss << indent << '}';
@@ -495,10 +496,9 @@ void FJSON::FValue::Clear() {
     _type = Null;
 }
 //----------------------------------------------------------------------------
-void FJSON::FValue::ToStream(std::basic_ostream<char>& oss, bool minify/* = true */) const {
+void FJSON::FValue::ToStream(FTextWriter& oss, bool minify/* = true */) const {
     Fmt::FIndent indent = (minify ? Fmt::FIndent::None() : Fmt::FIndent::TwoSpaces());
-    oss << std::setprecision(std::numeric_limits<long double>::digits10 + 1)
-        << std::defaultfloat << std::setw(0);
+    oss << FTextFormat::DefaultFloat;
     JSON_::ToStream_(*this, oss, indent, minify);
     Assert(0 == indent.Level);
 }
@@ -540,7 +540,7 @@ bool FJSON::Load(FJSON* json, const FFilename& filename, IBufferedStreamReader* 
     }
     CORE_CATCH(Lexer::FLexerException e)
     CORE_CATCH_BLOCK({
-        CORE_THROW_IT(FJSONException(e.what(), e.Match().Site()));
+        CORE_THROW_IT(FJSONException(e.What(), e.Match().Site()));
     })
 
     return true;

@@ -2,6 +2,8 @@
 
 #include "Format.h"
 
+#include "TextWriter.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -28,17 +30,15 @@ struct TFormatTraits_<char> {
         fmt_HEX     = 'X',
         fmt_oct     = 'o',
         fmt_OCT     = 'O',
-        fmt_fixed   = 'f',
+        fmt_fixed    = 'f',
         fmt_FIXED   = 'F',
         fmt_scient  = 's',
         fmt_SCIENT  = 'S',
-        fmt_upper   = 'u',
         fmt_UPPER   = 'U',
-        fmt_base    = 'b',
-        fmt_BASE    = 'B',
+        fmt_lower   = 'l',
+        fmt_Capital = 'C',
         fmt_size    = 'z',
         fmt_SIZE    = 'Z',
-        fmt_point   = '.',
         fmt_minus   = '-',
         fmt_sharp   = '#',
     };
@@ -61,14 +61,13 @@ struct TFormatTraits_<wchar_t> {
         fmt_HEX     = L'X',
         fmt_oct     = L'o',
         fmt_OCT     = L'O',
-        fmt_fixed   = L'f',
+        fmt_fixed    = L'f',
         fmt_FIXED   = L'F',
         fmt_scient  = L's',
         fmt_SCIENT  = L'S',
-        fmt_upper   = L'u',
         fmt_UPPER   = L'U',
-        fmt_base    = L'b',
-        fmt_BASE    = L'B',
+        fmt_lower   = L'l',
+        fmt_Capital = L'C',
         fmt_size    = L'z',
         fmt_SIZE    = L'Z',
         fmt_point   = L'.',
@@ -83,56 +82,36 @@ struct TFormatTraits_<wchar_t> {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-struct FFormatProperties_ {
-    int Fill;
-    std::streamsize Width;
-    std::streamsize Precision;
-    std::ios_base::fmtflags Flags;
+template <typename _Char>
+struct TBasicFormatProps_ {
     size_t Repeat;
+    _Char FillChar;
+    FTextFormat Format;
 
-    template <typename _Char, typename _Traits = std::char_traits<_Char> >
-    void From(const std::basic_ostream<_Char, _Traits>& io);
+    inline friend TBasicTextWriter<_Char>& operator >>(TBasicTextWriter<_Char>& in, TBasicFormatProps_& props) {
+        props.Repeat = 1;
+        props.FillChar = in.FillChar();
+        props.Format = in.Format();
+        return in;
+    }
 
-    template <typename _Char, typename _Traits = std::char_traits<_Char> >
-    FFormatProperties_ To(std::basic_ostream<_Char, _Traits>& io) const;
+    inline friend TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& out, const TBasicFormatProps_& props) {
+        out.SetFillChar(props.FillChar);
+        out.SetFormat(props.Format);
+        return out;
+    }
 };
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-void FFormatProperties_::From(const std::basic_ostream<_Char, _Traits>& io) {
-    Fill = checked_cast<int>(io.fill());
-    Width = io.width();
-    Precision = io.precision();
-    Flags = io.flags();
-    Repeat = 1;
-}
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-FFormatProperties_ FFormatProperties_::To(std::basic_ostream<_Char, _Traits>& io) const {
-    return FFormatProperties_ {
-        io.fill(checked_cast<_Char>(Fill)),
-        io.width(Width),
-        io.precision(Precision),
-        io.flags(Flags),
-        Repeat
-    };
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const details::TFormatFunctor_<_Char, _Traits>& functor ) {
-    functor._helper(oss, functor._pArg);
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(
+    TBasicTextWriter<_Char>& oss,
+    const details::TBasicFormatFunctor_<_Char>& functor ) {
+    functor.Helper(oss, functor.Arg);
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Char> *outp, size_t *index, FFormatProperties_& props) {
+static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Char> *outp, size_t *index, TBasicFormatProps_<_Char>& props) {
     typedef typename TFormatTraits_<_Char>::EFlags format_traits;
 
     if (format.empty())
@@ -170,64 +149,63 @@ static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Cha
 
                     switch (format.front()) {
                     case format_traits::fmt_ALPHA:
-                        props.Flags |= std::ios_base::uppercase;
+                        props.Format.SetCase(FTextFormat::Uppercase);
                     case format_traits::fmt_alpha:
-                        props.Flags |= std::ios_base::boolalpha;
+                        props.Format.SetMisc(FTextFormat::BoolAlpha);
                         format = format.ShiftFront();
                         continue;
 
                     case format_traits::fmt_DEC:
                     case format_traits::fmt_dec:
-                        props.Flags = (props.Flags & ~std::ios_base::basefield) | (std::ios_base::dec & std::ios_base::basefield);
+                        props.Format.SetBase(FTextFormat::Decimal);
                         format = format.ShiftFront();
                         continue;
 
                     case format_traits::fmt_HEX:
-                        props.Flags |= std::ios_base::uppercase;
+                        props.Format.SetCase(FTextFormat::Uppercase);
                     case format_traits::fmt_hex:
-                        props.Flags = (props.Flags & ~std::ios_base::basefield) | (std::ios_base::hex & std::ios_base::basefield);
+                        props.Format.SetBase(FTextFormat::Hexadecimal);
                         format = format.ShiftFront();
                         continue;
 
                     case format_traits::fmt_OCT:
                     case format_traits::fmt_oct:
-                        props.Flags = (props.Flags & ~std::ios_base::basefield) | (std::ios_base::oct & std::ios_base::basefield);
+                        props.Format.SetBase(FTextFormat::Octal);
                         format = format.ShiftFront();
                         continue;
 
                     case format_traits::fmt_FIXED:
+                        props.Format.SetCase(FTextFormat::Uppercase);
                     case format_traits::fmt_fixed:
-                        props.Flags = (props.Flags & ~std::ios_base::floatfield) | (std::ios_base::fixed & std::ios_base::floatfield);
+                        props.Format.SetFloat(FTextFormat::FixedFloat);
                         format = format.ShiftFront();
                         fixed = true;
                         continue;
 
                     case format_traits::fmt_SCIENT:
-                        props.Flags |= std::ios_base::uppercase;
+                        props.Format.SetCase(FTextFormat::Uppercase);
                     case format_traits::fmt_scient:
-                        props.Flags = (props.Flags & ~std::ios_base::floatfield) | (std::ios_base::scientific & std::ios_base::floatfield);
+                        props.Format.SetFloat(FTextFormat::ScientificFloat);
                         format = format.ShiftFront();
                         continue;
 
                     case format_traits::fmt_UPPER:
-                    case format_traits::fmt_upper:
-                        props.Flags |= std::ios_base::uppercase;
+                        props.Format.SetCase(FTextFormat::Uppercase);
                         format = format.ShiftFront();
                         continue;
 
-                    case format_traits::fmt_BASE:
-                    case format_traits::fmt_base:
-                        props.Flags |= std::ios_base::showbase;
+                    case format_traits::fmt_lower:
+                        props.Format.SetCase(FTextFormat::Lowercase);
                         format = format.ShiftFront();
                         continue;
 
-                    case format_traits::fmt_point:
-                        props.Flags |= std::ios_base::showpoint;
+                    case format_traits::fmt_Capital:
+                        props.Format.SetCase(FTextFormat::Capitalize);
                         format = format.ShiftFront();
                         continue;
 
                     case format_traits::fmt_sharp:
-                        props.Fill = format_traits::zero;
+                        props.FillChar = format_traits::zero;
                         format = format.ShiftFront();
                         continue;
                     }
@@ -254,19 +232,11 @@ static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Cha
 
                     if (fixed) {
                         AssertRelease(sign > 0); // invalid format : negative precision is not supported
-                        props.Precision = checked_cast<std::streamsize>(parsedScalar);
+                        props.Format.SetPrecision(checked_cast<std::streamsize>(parsedScalar));
                     }
                     else {
-                        props.Width = checked_cast<std::streamsize>(parsedScalar);
-
-                        if (sign < 0) {
-                            props.Flags &= ~std::ios_base::right;
-                            props.Flags |= std::ios_base::left;
-                        }
-                        else {
-                            props.Flags &= ~std::ios_base::left;
-                            props.Flags |= std::ios_base::right;
-                        }
+                        props.Format.SetWidth(checked_cast<std::streamsize>(parsedScalar));
+                        props.Format.SetPadding(sign < 0 ? FTextFormat::Padding_Left : FTextFormat::Padding_Right);
                     }
                 }
                 while (format.size() && format_traits::rbrace != format.front());
@@ -314,44 +284,38 @@ static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Cha
     return true;
 }
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-static void FormatArgs_(
-    std::basic_ostream<_Char, _Traits>& oss,
+template <typename _Char>
+static void FormatArgsImpl_(
+    TBasicTextWriter<_Char>& oss,
     const TBasicStringView<_Char>& format,
-    const TMemoryView<const details::TFormatFunctor_<_Char, _Traits>>& args ) {
+    const TMemoryView<const details::TBasicFormatFunctor_<_Char>>& args ) {
     Assert(format.Pointer());
-    Assert(not oss.bad());
-    Assert(not oss.fail());
 
-    FFormatProperties_ original;
-    original.From(oss); // backups original state
-
-    FFormatProperties_ props = original;
+    TBasicFormatProps_<_Char> props;
     TBasicStringView<_Char> formatIt = format;
     TBasicStringView<_Char> outp;
 
+    oss >> props;
+
+    const TBasicFormatProps_<_Char> original = props;
+
     size_t index = size_t(-1);
     while (FormatParser_(formatIt, &outp, &index, props)) {
-        if (outp.size()) {
-            oss.write(outp.Pointer(), outp.size());
-            Assert(not oss.bad());
-            Assert(not oss.fail());
-        }
+        if (outp.size())
+            oss.Put(outp);
 
-        if (size_t(-1) != index) {
+        if (INDEX_NONE != index) {
+            Assert(props.Repeat);
             AssertRelease(index < args.size()); // detects invalid user input
 
-            for (size_t n = 0; n < props.Repeat; ++n) {
-                props.To(oss);
-                oss << args[index];
-                Assert(not oss.bad());
-                Assert(not oss.fail());
-            }
+            for (size_t n = 0; n < props.Repeat; ++n)
+                oss << props << args[index];
         }
 
-        original.To(oss); // restores original state
         props = original;
     }
+
+    oss << original; // restores original state
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -360,12 +324,12 @@ static void FormatArgs_(
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<char>& oss, const FStringView& format, const TMemoryView<const TFormatFunctor_<char>>& args) {
-    FormatArgs_(oss, format, args);
+void FormatArgs_(FTextWriter& oss, const FStringView& format, const TMemoryView<const FFormatFunctor_>& args) {
+    FormatArgsImpl_(oss, format, args);
 }
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<wchar_t>& oss, const FWStringView& format, const TMemoryView<const TFormatFunctor_<wchar_t>>& args) {
-    FormatArgs_(oss, format, args);
+void FormatArgs_(FWTextWriter& oss, const FWStringView& format, const TMemoryView<const FWFormatFunctor_>& args) {
+    FormatArgsImpl_(oss, format, args);
 }
 //----------------------------------------------------------------------------
 } //!namespace details

@@ -3,6 +3,7 @@
 #include "TargetPlatform.h"
 
 #include "Diagnostic/Logger.h"
+#include "IO/TextWriter.h"
 
 #ifdef PLATFORM_WINDOWS
 #   include "Misc/Platform_Windows.h"
@@ -28,7 +29,7 @@ static constexpr ETargetPlatform GTargetPlatforms[] = {
 };
 //----------------------------------------------------------------------------
 #if     defined(PLATFORM_WINDOWS)
-struct FWindowsSystemInfo_ : FPlatform::FSystemInfo {
+struct FWindowsSystemInfo_ : FPlatformMisc::FSystemInfo {
     FWindowsSystemInfo_() {
         ::SYSTEM_INFO st;
         ::GetSystemInfo(&st);
@@ -71,6 +72,23 @@ FStringView TargetPlatformToCStr(ETargetPlatform platform) {
     return FStringView();
 }
 //----------------------------------------------------------------------------
+FWStringView TargetPlatformToWCStr(ETargetPlatform platform) {
+    switch (platform)
+    {
+    case Core::ETargetPlatform::PC:
+        return FWStringView(L"PC");
+    case Core::ETargetPlatform::PS4:
+        return FWStringView(L"PS4");
+    case Core::ETargetPlatform::XONE:
+        return FWStringView(L"XONE");
+    case Core::ETargetPlatform::MAC:
+        return FWStringView(L"MAC");
+    default:
+        AssertNotImplemented();
+    }
+    return FWStringView();
+}
+//----------------------------------------------------------------------------
 EEndianness TargetPlatformEndianness(ETargetPlatform platform) {
     switch (platform)
     {
@@ -88,11 +106,19 @@ EEndianness TargetPlatformEndianness(ETargetPlatform platform) {
     return EEndianness::LittleEndian;
 }
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, ETargetPlatform platform) {
+    return oss << TargetPlatformToCStr(platform);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, ETargetPlatform platform) {
+    return oss << TargetPlatformToWCStr(platform);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const FPlatform::FSystemInfo& FPlatform::SystemInfo = GSystemInfo;
+const FPlatformMisc::FSystemInfo& FPlatformMisc::SystemInfo = GSystemInfo;
 //----------------------------------------------------------------------------
-void FPlatform::Sleep(size_t ms) {
+void FPlatformMisc::Sleep(size_t ms) {
 #ifdef PLATFORM_WINDOWS
     if (ms)
         ::Sleep((::DWORD)ms);
@@ -104,7 +130,7 @@ void FPlatform::Sleep(size_t ms) {
 }
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
-void FPlatform::CheckMemory() {
+void FPlatformMisc::CheckMemory() {
 #ifdef PLATFORM_WINDOWS
     _CrtCheckMemory();
 #else
@@ -114,7 +140,7 @@ void FPlatform::CheckMemory() {
 #endif
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
-void FPlatform::DebugBreak() {
+void FPlatformMisc::DebugBreak() {
 #ifdef PLATFORM_WINDOWS
     ::DebugBreak();
 #else
@@ -124,7 +150,7 @@ void FPlatform::DebugBreak() {
 #endif
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
-void FPlatform::DebugBreakAttach() {
+void FPlatformMisc::DebugBreakAttach() {
 #ifdef PLATFORM_WINDOWS
     if (::IsDebuggerPresent()) {
         ::DebugBreak();
@@ -136,7 +162,7 @@ void FPlatform::DebugBreakAttach() {
 #endif
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
-bool FPlatform::IsDebuggerAttached() {
+bool FPlatformMisc::IsDebuggerAttached() {
 #if USE_CORE_DEBUGGER_PRESENT
 #   ifdef PLATFORM_WINDOWS
         return ::IsDebuggerPresent() ? true : false;
@@ -150,7 +176,7 @@ bool FPlatform::IsDebuggerAttached() {
 #endif
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
-void FPlatform::OutputDebug(const char* text) {
+void FPlatformMisc::OutputDebug(const char* text) {
 #ifdef PLATFORM_WINDOWS
     return ::OutputDebugStringA(text);
 #else
@@ -160,7 +186,7 @@ void FPlatform::OutputDebug(const char* text) {
 #endif
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
-void FPlatform::OutputDebug(const wchar_t* text) {
+void FPlatformMisc::OutputDebug(const wchar_t* text) {
 #ifdef PLATFORM_WINDOWS
     return ::OutputDebugStringW(text);
 #else
@@ -183,6 +209,38 @@ static int OpenPolicyToPMode_(EOpenPolicy openMode) {
 }
 #endif
 //----------------------------------------------------------------------------
+#ifdef PLATFORM_WINDOWS
+static int AccessPolicyToOFlag_(EAccessPolicy accessFlags) {
+    int oflag = 0;
+
+    if (accessFlags ^ EAccessPolicy::Binary)        oflag |= _O_BINARY;
+    if (accessFlags ^ EAccessPolicy::Text)          oflag |= _O_TEXT;
+    if (accessFlags ^ EAccessPolicy::TextU8)        oflag |= _O_U8TEXT;
+    if (accessFlags ^ EAccessPolicy::TextU16)       oflag |= _O_U16TEXT;
+    if (accessFlags ^ EAccessPolicy::TextW)         oflag |= _O_WTEXT;
+
+    Assert(Meta::popcnt(size_t(oflag)) <= 1); // non overlapping options !
+
+    if (accessFlags ^ EAccessPolicy::Create)        oflag |= _O_CREAT;
+    if (accessFlags ^ EAccessPolicy::Append)        oflag |= _O_APPEND;
+    if (accessFlags ^ EAccessPolicy::Truncate)      oflag |= _O_CREAT | _O_TRUNC;
+
+    if (accessFlags ^ EAccessPolicy::Random)        oflag |= _O_RANDOM;
+    if (accessFlags ^ EAccessPolicy::Sequential)    oflag |= _O_SEQUENTIAL;
+
+    Assert(Meta::popcnt(size_t(oflag) & (_O_RANDOM | _O_SEQUENTIAL)) <= 1); // non overlapping options !
+
+    if (accessFlags ^ EAccessPolicy::ShortLived)    oflag |= _O_SHORT_LIVED;
+    if (accessFlags ^ EAccessPolicy::Temporary)     oflag |= _O_TEMPORARY;
+    if (accessFlags ^ EAccessPolicy::Exclusive)     oflag |= _O_EXCL;
+
+    Assert(Meta::popcnt(size_t(oflag) & (_O_SHORT_LIVED | _O_TEMPORARY)) <= 1); // non overlapping options !
+    Assert(!(oflag & (_O_SHORT_LIVED | _O_TEMPORARY | _O_EXCL)) || (oflag & _O_CREAT)); // must use _O_CREAT with these flags !
+
+    return oflag;
+}
+#endif
+//----------------------------------------------------------------------------
 bool FPlatformIO::Access(const wchar_t* entity, EExistPolicy exists) {
 #ifdef PLATFORM_WINDOWS
     int mode = 0;
@@ -200,31 +258,7 @@ bool FPlatformIO::Access(const wchar_t* entity, EExistPolicy exists) {
 //----------------------------------------------------------------------------
 auto FPlatformIO::Open(const wchar_t* filename, EOpenPolicy openMode, EAccessPolicy accessFlags) -> FHandle {
 #ifdef PLATFORM_WINDOWS
-    int oflag = 0;
-
-    if (accessFlags ^ EAccessPolicy::Binary)        oflag |= _O_BINARY;
-    if (accessFlags ^ EAccessPolicy::Text)          oflag |= _O_TEXT;
-    if (accessFlags ^ EAccessPolicy::TextU8)        oflag |= _O_U8TEXT;
-    if (accessFlags ^ EAccessPolicy::TextU16)       oflag |= _O_U16TEXT;
-    if (accessFlags ^ EAccessPolicy::TextW)         oflag |= _O_WTEXT;
-
-    Assert(Meta::popcnt(size_t(oflag)) <= 1); // non overlapping options !
-
-    if (accessFlags ^ EAccessPolicy::Create)        oflag |= _O_CREAT;
-    if (accessFlags ^ EAccessPolicy::Append)        oflag |= _O_APPEND;
-    if (accessFlags ^ EAccessPolicy::Truncate)      oflag |= _O_CREAT|_O_TRUNC;
-
-    if (accessFlags ^ EAccessPolicy::Random)        oflag |= _O_RANDOM;
-    if (accessFlags ^ EAccessPolicy::Sequential)    oflag |= _O_SEQUENTIAL;
-
-    Assert(Meta::popcnt(size_t(oflag) & (_O_RANDOM | _O_SEQUENTIAL)) <= 1); // non overlapping options !
-
-    if (accessFlags ^ EAccessPolicy::ShortLived)    oflag |= _O_SHORT_LIVED;
-    if (accessFlags ^ EAccessPolicy::Temporary)     oflag |= _O_TEMPORARY;
-    if (accessFlags ^ EAccessPolicy::Exclusive)     oflag |= _O_EXCL;
-
-    Assert(Meta::popcnt(size_t(oflag) & (_O_SHORT_LIVED | _O_TEMPORARY)) <= 1); // non overlapping options !
-    Assert(!(oflag & (_O_SHORT_LIVED | _O_TEMPORARY | _O_EXCL)) || (oflag & _O_CREAT)); // must use _O_CREAT with these flags !
+    int oflag = AccessPolicyToOFlag_(accessFlags);
 
     switch (openMode) {
     case EOpenPolicy::Readable:                     oflag |= _O_RDONLY; break;
@@ -251,6 +285,15 @@ auto FPlatformIO::Open(const wchar_t* filename, EOpenPolicy openMode, EAccessPol
         Assert(InvalidHandle == handle);
     }
     return handle;
+#else
+#   error "no support"
+#endif
+}
+//----------------------------------------------------------------------------
+bool FPlatformIO::SetMode(FHandle handle, EAccessPolicy accessFlags) {
+#ifdef PLATFORM_WINDOWS
+    int oflag = AccessPolicyToOFlag_(accessFlags);
+    return (_setmode(handle, oflag) != -1);
 #else
 #   error "no support"
 #endif

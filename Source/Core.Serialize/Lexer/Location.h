@@ -2,7 +2,8 @@
 
 #include "Core.Serialize/Serialize.h"
 
-#include <iosfwd>
+#include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 namespace Lexer {
@@ -10,11 +11,11 @@ namespace Lexer {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FLocation {
-    FLocation() : FLocation(nullptr, 0, 0) {}
-    FLocation(const wchar_t *fileName, size_t line, size_t column)
-        : FileName(fileName), Line(line), Column(column) {}
+    FLocation() : FLocation(FWStringView(), 0, 0) {}
+    FLocation(const FWStringView& filename, size_t line, size_t column)
+        : Filename(filename), Line(line), Column(column) {}
 
-    const wchar_t *FileName;
+    FWStringView Filename;
     size_t Line;
     size_t Column;
 
@@ -30,9 +31,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const Lexer::FLocation& site) {
-    return oss << site.FileName << '(' << site.Line << ":" << site.Column << ')';
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Lexer::FLocation& site) {
+    return oss << site.Filename << '(' << site.Line << ':' << site.Column << ')';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

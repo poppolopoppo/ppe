@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/IO/FS/FileSystemToken.h"
-#include "Core/IO/StringView.h"
+#include "Core/IO/String_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -16,6 +16,9 @@ public:
     FDirname() {}
     ~FDirname() {}
 
+    FDirname(const FileSystem::FString& content);
+    FDirname& operator =(const FileSystem::FString& content);
+
     FDirname(const FileSystem::FStringView& content);
     FDirname& operator =(const FileSystem::FStringView& content);
 
@@ -23,10 +26,6 @@ public:
     FDirname(const FileSystem::char_type (&content)[_Dim]) : FDirname(MakeStringView(content)) {}
     template <size_t _Dim>
     FDirname& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
-
-    template <typename _CharTraits, typename _Allocator>
-    FDirname(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : FDirname(MakeStringView(content)) {}
 
     FDirname(const FFileSystemToken& token);
     FDirname& operator =(const FFileSystemToken& token);

@@ -3,10 +3,9 @@
 #include "Core/Core.h"
 
 #include "Core/IO/String.h"
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Meta/AlignedStorage.h"
 #include "Core/Memory/MemoryView.h"
-
-#include <iosfwd>
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -14,7 +13,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 class FCallstack;
 //----------------------------------------------------------------------------
-class FDecodedCallstack {
+class CORE_API FDecodedCallstack {
 public:
     friend class FCallstack;
     enum { MaxDeph = 46 };
@@ -73,45 +72,11 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Traits>
-std::basic_ostream<char, _Traits>& operator <<(
-    std::basic_ostream<char, _Traits>& oss,
-    const FDecodedCallstack::FFrame& frame) {
-    return oss
-        << frame.Symbol() << eol
-        << "    " << frame.Filename()
-        << '(' << frame.Line() << ')';
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, const FDecodedCallstack::FFrame& frame);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDecodedCallstack::FFrame& frame);
 //----------------------------------------------------------------------------
-template <typename _Traits>
-std::basic_ostream<wchar_t, _Traits>& operator <<(
-    std::basic_ostream<wchar_t, _Traits>& oss,
-    const FDecodedCallstack::FFrame& frame) {
-    return oss
-        << frame.Symbol() << eol
-        << L"    " << frame.Filename()
-        << L'(' << frame.Line() << L')';
-}
-//----------------------------------------------------------------------------
-template <typename _Traits>
-std::basic_ostream<char, _Traits>& operator <<(
-    std::basic_ostream<char, _Traits>& oss,
-    const FDecodedCallstack& decoded) {
-    const TMemoryView<const FDecodedCallstack::FFrame> frames = decoded.Frames();
-    for (size_t i = 0; i < frames.size(); ++i)
-        oss << '[' << i << "] " << frames[i] << eol;
-    return oss;
-}
-//----------------------------------------------------------------------------
-template <typename _Traits>
-std::basic_ostream<wchar_t, _Traits>& operator <<(
-    std::basic_ostream<wchar_t, _Traits>& oss,
-    const FDecodedCallstack& decoded) {
-    const TMemoryView<const FDecodedCallstack::FFrame> frames = decoded.Frames();
-    for (size_t i = 0; i < frames.size(); ++i)
-        oss << L'[' << i << L"] " << frames[i] << eol;
-    return oss;
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, const FDecodedCallstack& decoded);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDecodedCallstack& decoded);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

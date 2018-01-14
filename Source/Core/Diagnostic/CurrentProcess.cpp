@@ -10,13 +10,13 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv)
-:   _fileName(filename)
+:   _fileName(MakeStringView(filename, Meta::FForceInit{}))
 ,   _args(NewArray<FWString>(argc)), _exitCode(0), _appIcon(0)
 ,   _startedAt(FTimepoint::Now()) {
 
     for (size_t i = 0; i < argc; ++i) {
         Assert(argv[i]);
-        _args[i] = argv[i];
+        _args[i] = MakeStringView(argv[i], Meta::FForceInit{});
     }
 
     size_t dirSep = _fileName.size();
@@ -26,7 +26,7 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
     _applicationHandle = applicationHandle;
     _nShowCmd = nShowCmd;
 #ifndef FINAL_RELEASE
-    _startedWithDebugger = FPlatform::IsDebuggerAttached();
+    _startedWithDebugger = FPlatformMisc::IsDebuggerAttached();
 #else
     _startedWithDebugger = false;
 #endif
@@ -34,7 +34,7 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
 #ifndef FINAL_RELEASE
     if (_args.end() != _args.FindIf([](const FWString& arg) { return EqualsI(arg, L"-WaitForDebugger"); })) {
         _startedWithDebugger = false; // some parts of the code won't detect that the debugger is attached
-        volatile bool bTurnThisOffWhenDebuggerIsAttached = (!FPlatform::IsDebuggerAttached());
+        volatile bool bTurnThisOffWhenDebuggerIsAttached = (!FPlatformMisc::IsDebuggerAttached());
         volatile size_t loopCount = 0;
         while (bTurnThisOffWhenDebuggerIsAttached) {
             LOG(Warning, L"[Process] Waiting for debugger to be attached");

@@ -2,10 +2,8 @@
 
 #include "Core/Core.h"
 
-#include "Core/IO/String.h"
-#include "Core/IO/StringView.h"
-
-#include <iosfwd>
+#include "Core/IO/String_fwd.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 /*
 // Format() usage samples :
@@ -37,89 +35,56 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
-void Format(std::basic_ostream<_Char, _Traits>& oss, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args);
+#define INLINE_FORMAT(_CAPACITY, _FORMAT, ...) \
+    ::Core::Format(INLINE_MALLOCA(char, _CAPACITY).MakeView(), (_FORMAT), __VA_ARGS__)
 //----------------------------------------------------------------------------
-template <typename _Char, size_t _Dim, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
-void Format(std::basic_ostream<_Char, _Traits>& oss, const _Char (&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
-    Format(oss, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-}
+#define INLINE_WFORMAT(_CAPACITY, _FORMAT, ...) \
+    ::Core::Format(INLINE_MALLOCA(wchar_t, _CAPACITY).MakeView(), (_FORMAT), __VA_ARGS__)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-size_t Format(_Char* result, size_t capacity, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args);
+void Format(TMemoryView<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
-template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
-size_t Format(_Char* result, size_t capacity, const _Char (&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
-    return Format(result, capacity, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-}
+template <typename _Char, typename _Arg0, typename... _Args>
+void Format(TBasicString<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
-void Format(TBasicString<_Char, _Traits>& result, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args);
+template <typename _Char, typename _Arg0, typename... _Args>
+void Format(TBasicTextWriter<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
-template <typename _Char, size_t _Dim, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
-void Format(TBasicString<_Char, _Traits>& result, const _Char (&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
-    Format(result, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
-size_t Format(_Char(&staticArray)[_Dim], const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
-    return Format(&staticArray[0], _Dim, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-}
-//----------------------------------------------------------------------------
-template <typename _Char, size_t _Dim, size_t _Dim2, typename _Arg0, typename... _Args>
-size_t Format(_Char(&staticArray)[_Dim], const _Char (&format)[_Dim2], _Arg0&& arg0, _Args&&... args) {
-    return Format(&staticArray[0], _Dim, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-}
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
-TBasicString<_Char, _Traits> StringFormat(const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
-    TBasicString<_Char, _Traits> result;
+template <typename _Char, typename _Arg0, typename... _Args>
+TBasicString<_Char> StringFormat(const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+    TBasicString<_Char> result;
     Format(result, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     return result;
 }
 //----------------------------------------------------------------------------
-template <typename _Char, size_t _Dim, typename _Traits = std::char_traits<_Char>, typename _Arg0, typename... _Args>
-TBasicString<_Char, _Traits> StringFormat(const _Char (&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
-    TBasicString<_Char, _Traits> result;
-    Format(result, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-    return result;
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Arg0, typename... _Args>
-TBasicStringView<_Char> StringViewFormat(const TMemoryView<_Char>& buffer, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
-    return TBasicStringView<_Char>(
-        buffer.data(),
-        Format(buffer.data(), buffer.size(), format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...));
+template <typename _Char, size_t _Dim, size_t _Dim2, typename _Arg0, typename... _Args>
+void Format(_Char(&dst)[_Dim], const _Char(&format)[_Dim2], _Arg0&& arg0, _Args&&... args) {
+    Format(MakeView(dst), MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
-TBasicStringView<_Char> StringViewFormat(const TMemoryView<_Char>& buffer, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
-    return TBasicStringView<_Char>(
-        buffer.data(),
-        Format(buffer.data(), buffer.size(), MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...));
+void Format(TMemoryView<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+    Format(dst, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
-#define INLINE_FORMAT(_CAPACITY, _FORMAT, ...) \
-    ::Core::StringViewFormat(INLINE_MALLOCA(char, _CAPACITY).MakeView(), _FORMAT, __VA_ARGS__)
-#define INLINE_WFORMAT(_CAPACITY, _FORMAT, ...) \
-    ::Core::StringViewFormat(INLINE_MALLOCA(wchar_t, _CAPACITY).MakeView(), _FORMAT, __VA_ARGS__)
+template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
+void Format(TBasicString<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+    Format(dst, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+}
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
+void Format(TBasicTextWriter<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+    Format(dst, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+}
 //----------------------------------------------------------------------------
-template <typename _Arg>
-FString ToString(_Arg&& arg);
-//----------------------------------------------------------------------------
-template <typename _Arg>
-FWString ToWString(_Arg&& arg);
-//----------------------------------------------------------------------------
-inline FString ToString(bool b) { return (b ? "true" : "false"); }
-inline FWString ToWString(bool b) { return (b ? L"true" : L"false"); }
+template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
+TBasicString<_Char> StringFormat(const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+    return StringFormat(MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

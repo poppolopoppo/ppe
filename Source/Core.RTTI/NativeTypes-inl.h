@@ -83,12 +83,12 @@ hash_t TBaseTypeTraits<T, _Parent>::HashValue(const FAtom& atom) const {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
-void TBaseTypeTraits<T, _Parent>::Format(std::basic_ostream<char>& oss, const FAtom& atom) const {
+void TBaseTypeTraits<T, _Parent>::Format(FTextWriter& oss, const FAtom& atom) const {
     oss << atom.TypedConstData<T>();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
-void TBaseTypeTraits<T, _Parent>::Format(std::basic_ostream<wchar_t>& oss, const FAtom& atom) const {
+void TBaseTypeTraits<T, _Parent>::Format(FWTextWriter& oss, const FAtom& atom) const {
     oss << atom.TypedConstData<T>();
 }
 //----------------------------------------------------------------------------

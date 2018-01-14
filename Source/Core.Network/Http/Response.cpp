@@ -9,6 +9,11 @@
 #include "../Socket/SocketBuffered.h"
 #include "../Uri.h"
 
+#include "Core/IO/Format.h"
+#include "Core/IO/String.h"
+#include "Core/IO/StringBuilder.h"
+#include "Core/IO/TextWriter.h"
+
 namespace Core {
 namespace Network {
 //----------------------------------------------------------------------------
@@ -16,7 +21,7 @@ namespace Network {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void ResponseReadUntil_(std::ostream* poss, FSocketBuffered& socket, const char delim = '\n') {
+static void ResponseReadUntil_(FTextWriter* poss, FSocketBuffered& socket, const char delim = '\n') {
     if (not socket.ReadUntil(poss, delim))
         CORE_THROW_IT(FHttpException(EHttpStatus::RequestURITooLong, "HTTP field from client terminated incorrectly"));
 
@@ -42,18 +47,18 @@ bool FHttpResponse::Succeed() const {
 }
 //----------------------------------------------------------------------------
 void FHttpResponse::UpdateContentHeaders(const FStringView& mimeType) {
-    STACKLOCAL_OCSTRSTREAM(oss, 32);
-    oss << Body().SizeInBytes();
+    FString contentLength;
+    Format(contentLength, "{0}", Body().SizeInBytes());
 
-    Add(FHttpConstNames::ContentType(), ToString(mimeType) );
-    Add(FHttpConstNames::ContentLength(), ToString(oss.MakeView()) );
+    Add(FHttpConstNames::ContentType(), ToString(mimeType));
+    Add(FHttpConstNames::ContentLength(), std::move(contentLength));
 }
 //----------------------------------------------------------------------------
 void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size_t maxContentLength) {
     Assert(presponse);
     Assert(socket.IsConnected());
 
-    STACKLOCAL_OCSTRSTREAM(oss, 1024);
+    STACKLOCAL_TEXTWRITER(oss, 1024);
 
     presponse->Clear();
 
@@ -61,7 +66,7 @@ void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size
     {
         ResponseReadUntil_(&oss, socket, ' ');
 
-        const FStringView protocol = Strip(oss.MakeView());
+        const FStringView protocol = Strip(oss.Written());
         if (not EqualsI(protocol, FHttpHeader::ProtocolVersion()) )
             CORE_THROW_IT(FHttpException(EHttpStatus::HTTPVersionNotSupported, "HTTP invalid protocol version, expected HTTP/1.1"));
 
@@ -73,7 +78,7 @@ void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size
         ResponseReadUntil_(&oss, socket, ' ');
 
         i32 statusCodeI = 0;
-        const FStringView statusCodeCstr = Strip(oss.MakeView());
+        const FStringView statusCodeCstr = Strip(oss.Written());
         if (not Atoi32(&statusCodeI, statusCodeCstr, 10))
             CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP invalid status code"));
 
@@ -86,7 +91,7 @@ void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size
     {
         ResponseReadUntil_(&oss, socket);
 
-        const FStringView statusMsgCstr = Strip(oss.MakeView());
+        const FStringView statusMsgCstr = Strip(oss.Written());
         presponse->_reason = ToString(statusMsgCstr);
 
         oss.Reset();

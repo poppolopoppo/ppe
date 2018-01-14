@@ -2,7 +2,8 @@
 
 #include "Core.Network/Network.h"
 
-#include "Core/IO/StringView.h"
+#include "Core/IO/String_fwd.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 namespace Network {
@@ -21,8 +22,8 @@ enum class EHttpMethod {
     Patch,
 };
 //----------------------------------------------------------------------------
-FStringView HttpMethodToCStr(EHttpMethod method);
-bool HttpMethodFromCStr(EHttpMethod* method, const FStringView& str);
+CORE_NETWORK_API FStringView HttpMethodToCStr(EHttpMethod method);
+CORE_NETWORK_API bool HttpMethodFromCStr(EHttpMethod* method, const FStringView& str);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -33,9 +34,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(
+    TBasicTextWriter<_Char>& oss,
     Network::EHttpMethod httpMethod ) {
     return oss << Network::HttpMethodToCStr(httpMethod);
 }

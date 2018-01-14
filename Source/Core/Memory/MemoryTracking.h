@@ -2,9 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Meta/TypeTraits.h"
-
-#include <iosfwd>
 
 namespace Core {
 template <typename T>
@@ -66,7 +65,7 @@ private:
     const char* _name;
 };
 //----------------------------------------------------------------------------
-void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
+void ReportTrackingDatas(   FWTextWriter& oss,
                             const wchar_t *header,
                             const TMemoryView<const FMemoryTracking * const>& datas );
 //----------------------------------------------------------------------------

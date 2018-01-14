@@ -8,106 +8,107 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits = std::char_traits<_Char> >
-struct TFormatFunctor_ {
-    typedef void (*helper_type)(std::basic_ostream<_Char, _Traits>& , const void * );
+template <typename _Char>
+struct TBasicFormatFunctor_ {
+    typedef void (*helper_type)(TBasicTextWriter<_Char>& , const void * );
 
-    helper_type _helper;
-    const void *_pArg;
+    helper_type Helper;
+    const void *Arg;
 
-    TFormatFunctor_(helper_type helper, const void *pArg)
-        : _helper(helper), _pArg(pArg) {}
+    TBasicFormatFunctor_(helper_type helper, const void *arg)
+        : Helper(helper), Arg(arg) {}
 
     template <typename _Value>
-    static void FromValue(std::basic_ostream<_Char, _Traits>& oss, const void *pArg) {
+    static void FromValue(TBasicTextWriter<_Char>& oss, const void *arg) {
         typedef Meta::TAddConst<_Value> value_type;
-        oss << *reinterpret_cast<value_type *>(pArg); // operator <<() resolved through KDL
+        oss << *reinterpret_cast<value_type*>(arg); // operator <<() resolved through KDL
     }
 
     template <typename _Pointer>
-    static void FromPointer(std::basic_ostream<_Char, _Traits>& oss, const void *pArg) {
-        oss << reinterpret_cast<_Pointer>(pArg); // operator <<() resolved through KDL
+    static void FromPointer(TBasicTextWriter<_Char>& oss, const void *arg) {
+        oss << reinterpret_cast<_Pointer>(arg); // operator <<() resolved through KDL
     }
 
     template <typename T>
     static typename std::enable_if<
         not std::is_pointer<T>::value,
-        TFormatFunctor_
+        TBasicFormatFunctor_
     >::type Make(const T& value) {
         typedef Meta::TRemoveReference<T> value_type;
-        return TFormatFunctor_(&FromValue<value_type>, &value);
+        return TBasicFormatFunctor_(&FromValue<value_type>, &value);
     }
 
     template <typename T>
-    static TFormatFunctor_ Make(const T* pointer) {
-        return TFormatFunctor_(&FromPointer<const T*>, pointer);
+    static TBasicFormatFunctor_ Make(const T* pointer) {
+        return TBasicFormatFunctor_(&FromPointer<const T*>, pointer);
     }
 };
 //----------------------------------------------------------------------------
-void _FormatArgs(std::basic_ostream<char>& oss, const FStringView& format, const TMemoryView<const TFormatFunctor_<char>>& args);
-void _FormatArgs(std::basic_ostream<wchar_t>& oss, const FWStringView& format, const TMemoryView<const TFormatFunctor_<wchar_t>>& args);
+using FFormatFunctor_ = TBasicFormatFunctor_<char>;
+using FWFormatFunctor_ = TBasicFormatFunctor_<wchar_t>;
+//----------------------------------------------------------------------------
+CORE_API void FormatArgs_(FTextWriter& oss, const FStringView& format, const TMemoryView<const FFormatFunctor_>& args);
+CORE_API void FormatArgs_(FWTextWriter& oss, const FWStringView& format, const TMemoryView<const FWFormatFunctor_>& args);
 //----------------------------------------------------------------------------
 } //!namespace details
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits = std::char_traits<_Char> >
-using TBasicFormatArgList = TMemoryView< const details::TFormatFunctor_<_Char, _Traits> >;
-typedef TBasicFormatArgList<char>    FFormatArgList;
-typedef TBasicFormatArgList<wchar_t> FFormatArgListW;
+template <typename _Char>
+using TBasicFormatArgList = TMemoryView< const details::TBasicFormatFunctor_<_Char> >;
+using FFormatArgList = TBasicFormatArgList<char>;
+using FWFormatArgList = TBasicFormatArgList<wchar_t>;
 //----------------------------------------------------------------------------
 template <typename _Char>
-void FormatArgs(std::basic_ostream<_Char>& oss, const TBasicStringView<_Char>& format, const TBasicFormatArgList<_Char>& args) {
-    details::_FormatArgs(oss, format, args);
-}
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
-void Format(std::basic_ostream<_Char, _Traits>& oss, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
-    // args are always passed by pointer, wrapped in a void *
-    // this avoids unintended copies and de-correlates from actual types (_FormatArgs is defined in Format.cpp)
-    const details::TFormatFunctor_<_Char, _Traits> functors[] = {
-        details::TFormatFunctor_<_Char, _Traits>::Make(std::forward<_Arg0>(arg0)),
-        details::TFormatFunctor_<_Char, _Traits>::Make(std::forward<_Args>(args))...
-    };
-
-    details::_FormatArgs(oss, format, MakeView(functors));
+void FormatArgs(TBasicTextWriter<_Char>& oss, const TBasicStringView<_Char>& format, const TBasicFormatArgList<_Char>& args) {
+    details::FormatArgs_(oss, format, args);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-size_t Format(_Char* result, size_t capacity, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
-    Assert(result);
-    Assert(capacity);
+void Format(TBasicTextWriter<_Char>& oss, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+    // args are always passed by pointer, wrapped in a void *
+    // this avoids unintended copies and de-correlates from actual types (_FormatArgs is defined in Format.cpp)
+    typedef details::TBasicFormatFunctor_<_Char> formatfunc_type;
+    const formatfunc_type functors[] = {
+        formatfunc_type::Make(std::forward<_Arg0>(arg0)),
+        formatfunc_type::Make(std::forward<_Args>(args))...
+    };
 
-    TBasicOCStrStream<_Char, std::char_traits<_Char>> oss(result, checked_cast<std::streamsize>(capacity));
-    Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-    oss.ForceEOS();
-
-    const size_t n = checked_cast<size_t>(oss.size());
-    Assert('\0' == result[n - 1]);
-    return (n - 1); // skip EOS
+    details::FormatArgs_(oss, format, MakeView(functors));
 }
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename _Arg0, typename... _Args>
-void Format(TBasicString<_Char, _Traits>& result, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
-    STACKLOCAL_BASICOCSTRSTREAM(_Char, oss, 2048);
+template <typename _Char, typename _Arg0, typename... _Args>
+void Format(const TMemoryView<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+    Assert(not dst.empty());
+
+    TBasicFixedSizeTextWriter<_Char> oss(dst);
     Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-    result.assign(oss.data(), checked_cast<size_t>(oss.size()) );
+    oss << Eos;
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Arg0, typename... _Args>
+void Format(TBasicString<_Char>& result, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+    TBasicStringBuilder<_Char> oss(Meta::FForceInit{}, result.clear_StealMemoryUnsafe());
+
+    Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+
+    oss.ToString(result);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Arg>
 FString ToString(_Arg&& arg) {
-    STACKLOCAL_OCSTRSTREAM(oss, 2048);
+    FStringBuilder oss;
     oss << arg;
-    return FString(oss.data(), checked_cast<size_t>(oss.size()) );
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 template <typename _Arg>
 FWString ToWString(_Arg&& arg) {
-    STACKLOCAL_WOCSTRSTREAM(oss, 2048);
+    FWStringBuilder oss;
     oss << arg;
-    return FWString(oss.data(), checked_cast<size_t>(oss.size()) );
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

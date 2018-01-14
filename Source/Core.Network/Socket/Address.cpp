@@ -6,6 +6,7 @@
 
 #include "Core/Diagnostic/LastError.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
 namespace Network {
@@ -105,7 +106,7 @@ bool LocalHostName(FString& hostname) {
         return false;
     }
     else {
-        hostname.assign(temp);
+        hostname.assign(MakeStringView(temp, Meta::FForceInit{}));
         Assert(hostname.size());
         return true;
     }
@@ -119,7 +120,8 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
     hostname.ToNullTerminatedCStr(nodeName);
 
     char serviceName[16];
-    FOCStrStream(serviceName) << port;
+    FFixedSizeTextWriter oss(serviceName);
+    oss << port;
 
     struct ::addrinfo hints;
     memset(&hints, 0, sizeof(hints));
@@ -149,7 +151,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
             nodeName, sizeof(nodeName) );
 
         if (resolvedIpV4) {
-            ip.assign(resolvedIpV4);
+            ip.assign(MakeStringView(resolvedIpV4, Meta::FForceInit{}));
             Assert(ip.size());
             LOG(Info, L"[HostnameToIPv4] Resolved IPv4 : {0}:{1} -> {2}", hostname, port, ip);
             succeed = true;
@@ -197,7 +199,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
         return false;
     }
 
-    hostname.assign(hostinfo);
+    hostname.assign(MakeStringView(hostinfo, Meta::FForceInit{}));
 
     Assert(hostname.size());
     return true;
@@ -212,11 +214,11 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Network::FAddress& addr ) {
+FTextWriter& operator <<(FTextWriter& oss, const Network::FAddress& addr ) {
     return oss << addr.Host() << ':' << addr.Port();
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Network::FAddress& addr ) {
+FWTextWriter& operator <<(FWTextWriter& oss, const Network::FAddress& addr ) {
     return oss << addr.Host() << L':' << addr.Port();
 }
 //----------------------------------------------------------------------------

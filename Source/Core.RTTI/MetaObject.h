@@ -5,6 +5,7 @@
 #include "Core.RTTI/Typedefs.h"
 #include "Core.RTTI/MetaClass.h"
 
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/RefPtr.h"
 
 #if !(defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
@@ -107,8 +108,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EObjectFlags flags);
-CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EObjectFlags flags);
+CORE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, RTTI::EObjectFlags flags);
+CORE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EObjectFlags flags);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

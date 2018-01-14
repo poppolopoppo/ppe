@@ -3,6 +3,7 @@
 #include "Element.h"
 
 #include "Core/Allocator/PoolAllocator-impl.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
 namespace XML {
@@ -11,7 +12,7 @@ namespace XML {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void PrintElement_(std::basic_ostream<char>& oss, const XML::FElement* elt, size_t level = 0) {
+static void PrintElement_(FTextWriter& oss, const XML::FElement* elt, size_t level = 0) {
     forrange(i, 0, level)
         oss << "  ";
     oss << "<" << elt->Type();
@@ -21,22 +22,22 @@ static void PrintElement_(std::basic_ostream<char>& oss, const XML::FElement* el
 
     if (elt->Children().empty()) {
         if (elt->Text().size()) {
-            oss << ">" << elt->Text() << "</" << elt->Type() << ">" << eol;
+            oss << ">" << elt->Text() << "</" << elt->Type() << ">" << Eol;
         }
         else {
-            oss << "/>" << eol;
+            oss << "/>" << Eol;
         }
     }
     else {
         Assert(elt->Text().empty());
-        oss << ">" << eol;
+        oss << ">" << Eol;
 
         for (const XML::PElement& child : elt->Children())
             PrintElement_(oss, child.get(), level + 1);
 
         forrange(i, 0, level)
             oss << "  ";
-        oss << "</" << elt->Type() << ">" << eol;
+        oss << "</" << elt->Type() << ">" << Eol;
     }
 }
 //----------------------------------------------------------------------------
@@ -84,7 +85,7 @@ FElement::~FElement() {
     }
 }
 //----------------------------------------------------------------------------
-void FElement::ToStream(std::basic_ostream<char>& oss) const {
+void FElement::ToStream(FTextWriter& oss) const {
     PrintElement_(oss, this);
 }
 //----------------------------------------------------------------------------

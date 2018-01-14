@@ -10,6 +10,8 @@
 #include "MetaObjectHelpers.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
+#include "Core/IO/StringBuilder.h"
+#include "Core/IO/TextWriter.h"
 
 #if !(defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
 #   define WITH_RTTI_UNITTESTS //%_NOCOMMIT%
@@ -219,7 +221,7 @@ static void RTTIPrintClass_() {
         LOG(Info, L"[RTTI]   - FUNC {0} {1}({2}) : <{3}>",
             it->HasReturnValue() ? it->Result()->TypeInfos().Name() : "void",
             it->Name(),
-            Fmt::FWFormator([&it](std::basic_ostream<wchar_t>& oss) {
+            Fmt::FWFormator([&it](FWTextWriter& oss) {
                 const auto& prms = it->Parameters();
                 forrange(i, 0, prms.size()) {
                     if (i > 0) oss << L", ";
@@ -284,10 +286,7 @@ static void TestRTTI_() {
         const RTTI::FMetaClass* metaClass = toto2->RTTI_Class();
         metaClass->Property(RTTI::FName("Parent1")).CopyFrom(*toto2, MakeAtom(&toto));
 
-        {
-            FLoggerStream log(ELogCategory::Info);
-            RTTI::PrettyPrint(log, MakeAtom(&toto2)) << eol;
-        }
+        LOG(Debug, L"toto2 = {0}", InplaceAtom(toto2));
 
         toto->RTTI_Unexport();
         toto->RTTI_Unload(nullptr);

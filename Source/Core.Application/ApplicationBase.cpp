@@ -11,7 +11,7 @@ namespace Application {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationBase::FApplicationBase(const wchar_t *appname)
-:   _appname(appname) {}
+    : _appname(MakeStringView(appname, Meta::FForceInit{})) {}
 //----------------------------------------------------------------------------
 FApplicationBase::~FApplicationBase() {}
 //----------------------------------------------------------------------------

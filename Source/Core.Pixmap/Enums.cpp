@@ -2,6 +2,8 @@
 
 #include "Enums.h"
 
+#include "Core/IO/StringView.h"
+
 namespace Core {
 namespace Pixmap {
 //----------------------------------------------------------------------------

@@ -6,6 +6,7 @@
 
 #include "Core/Container/HashSet.h"
 #include "Core/Container/Vector.h"
+#include "Core/IO/TextWriter.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
@@ -91,8 +92,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::ETransactionFlags flags);
-CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::ETransactionFlags flags);
+CORE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionFlags flags);
+CORE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionFlags flags);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

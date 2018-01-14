@@ -9,7 +9,7 @@
 #include "Diagnostic/Exception.h"
 #include "Diagnostic/Logger.h"
 
-#include "IO/Stream.h"
+#include "IO/StringBuilder.h"
 #include "IO/StringView.h"
 
 #include "Misc/TargetPlatform.h"
@@ -21,13 +21,13 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 static Dialog::EResult AssertAbortRetryIgnore_(const FWStringView& title, const char *msg, const wchar_t *file, unsigned line) {
-    FThreadLocalWOStringStream oss;
+    FWStringBuilder oss;
 
-    oss << title << crlf
-        << L"----------------------------------------------------------------" << crlf
+    oss << title << Crlf
+        << L"----------------------------------------------------------------" << Crlf
         << file << L'(' << line << L"): " << msg;
 
-    return Dialog::AbortRetryIgnore(MakeStringView(oss.str()), title);
+    return Dialog::AbortRetryIgnore(oss.ToString(), title);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -63,6 +63,8 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
     if (GIgnoreAllAsserts || GIgnoreAssertsInThisThread)
         return;
 
+    LOG(Assertion, L"error: '{0}' failed !\n\t{1}({2})", msg, file, line);
+
     FLUSH_LOG(); // flush log before continuing to get eventual log messages
 
     if (GIsInAssertion)
@@ -72,18 +74,16 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
 
     bool failure = false;
 
-    LOG(Assertion, L"error: '{0}' failed !\n\t{1}({2})", msg, file, line);
-
     AssertionHandler const handler = GAssertionHandler.load();
 
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
-    else if (FPlatform::IsDebuggerAttached()) {
+    else if (FPlatformMisc::IsDebuggerAttached()) {
 #ifdef PLATFORM_WINDOWS // breaking in this frame is much quicker for debugging
         ::DebugBreak();
 #else
-        FPlatform::DebugBreak();
+        FPlatformMisc::DebugBreak();
 #endif
     }
     else {
@@ -92,8 +92,8 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
             failure = true;
             break;
         case Dialog::EResult::Retry:
-            if (FPlatform::IsDebuggerAttached())
-                FPlatform::DebugBreak();
+            if (FPlatformMisc::IsDebuggerAttached())
+                FPlatformMisc::DebugBreak();
             break;
         case Dialog::EResult::Ignore:
             failure = false;
@@ -145,6 +145,8 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
     if (GIgnoreAllAsserts || GIgnoreAssertsInThisThread)
         return;
 
+    LOG(Assertion, L"error: '{0}' failed !\n\t{1}({2})", msg, file, line);
+
     FLUSH_LOG(); // flush log before continuing to get eventual log messages
 
     if (GIsInAssertion)
@@ -154,18 +156,16 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
 
     bool failure = true; // AssertRelease() fails by default
 
-    LOG(Assertion, L"error: '{0}' failed !\n\t{1}({2})", msg, file, line);
-
     AssertionReleaseHandler const handler = GAssertionReleaseHandler.load();
 
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
-    else if (FPlatform::IsDebuggerAttached()) {
+    else if (FPlatformMisc::IsDebuggerAttached()) {
 #ifdef PLATFORM_WINDOWS // breaking in this frame is much quicker for debugging
         ::DebugBreak();
 #else
-        FPlatform::DebugBreak();
+        FPlatformMisc::DebugBreak();
 #endif
     }
     else {
@@ -174,8 +174,8 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
             failure = true;
             break;
         case Dialog::EResult::Retry:
-            if (FPlatform::IsDebuggerAttached())
-                FPlatform::DebugBreak();
+            if (FPlatformMisc::IsDebuggerAttached())
+                FPlatformMisc::DebugBreak();
             break;
         case Dialog::EResult::Ignore:
             failure = false;

@@ -3,8 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/IO/Format.h"
-#include "Core/IO/Stream.h"
-#include "Core/IO/StringView.h"
+#include "Core/IO/StringBuilder.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -59,9 +58,9 @@ namespace Dialog {
 
     template <typename _Arg0, typename... _Args>
     EResult Show(const FWStringView& caption, EType dialogType, Icon iconType, const wchar_t *fmt, _Arg0&& arg0, _Args&&... args) {
-        ThreadLocalWOStringStream oss;
+        FWStringBuilder oss;
         Format(oss, fmt, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-        return Show(MakeStringView(oss.str()), caption, dialogType, iconType);
+        return Show(oss.ToString(), caption, dialogType, iconType);
     }
 };
 //----------------------------------------------------------------------------

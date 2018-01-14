@@ -15,8 +15,10 @@
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FileSystem.h"
 #include "Core/IO/FormatHelpers.h"
-#include "Core/IO/Stream.h"
+#include "Core/IO/StreamProvider.h"
 #include "Core/IO/String.h"
+#include "Core/IO/StringBuilder.h"
+#include "Core/IO/TextWriter.h"
 #include "Core/Maths/ScalarMatrix.h"
 #include "Core/Maths/ScalarVector.h"
 
@@ -30,7 +32,7 @@ namespace {
 template <typename _Char>
 class TPrettyPrinter_ : public IAtomVisitor {
 public:
-    explicit TPrettyPrinter_(std::basic_ostream<_Char>& oss)
+    explicit TPrettyPrinter_(TBasicTextWriter<_Char>& oss)
         : _oss(oss)
     {}
 
@@ -53,14 +55,14 @@ public:
         const bool empty = (list->Count(atom) == 0);
 
         if (not empty)
-            _oss << eol;
+            _oss << Eol;
 
         _indent.Inc();
 
         list->ForEach(atom, [this](const FAtom& item) {
             _oss << _indent;
             item.Accept(this);
-            _oss << ',' << eol;
+            _oss << ',' << Eol;
 
             return true;
         });
@@ -81,7 +83,7 @@ public:
         const bool empty = (dico->Count(atom) == 0);
 
         if (not empty)
-            _oss << eol;
+            _oss << Eol;
 
         _indent.Inc();
 
@@ -90,7 +92,7 @@ public:
             key.Accept(this);
             _oss << ',' << ' ';
             value.Accept(this);
-            _oss << ')' << ',' << eol;
+            _oss << ')' << ',' << Eol;
 
             return true;
         });
@@ -134,14 +136,14 @@ private:
             const bool empty = (metaClass->NumProperties() == 0);
 
             if (not empty)
-                _oss << eol;
+                _oss << Eol;
 
             _indent.Inc();
 
             for (const FMetaProperty* prop : metaClass->AllProperties()) {
                 _oss << _indent << prop->Name() << ' ' << '=' << ' ';
                 prop->Get(obj).Accept(this);
-                _oss << eol;
+                _oss << Eol;
             }
 
             _indent.Dec();
@@ -181,12 +183,12 @@ private:
 
     template <typename T, size_t _W, size_t _H>
     void Print_(const TScalarMatrix<T, _W, _H>& mat) {
-        _oss << '[' << eol;
+        _oss << '[' << Eol;
         _indent.Inc();
         forrange(i, 0, _W) {
             _oss << _indent;
             Print_(mat.Column(i));
-            _oss << ',' << eol;
+            _oss << ',' << Eol;
         }
         _indent.Dec();
         _oss << _indent << ']';
@@ -198,7 +200,7 @@ private:
     }
 
     Fmt::FIndent _indent;
-    std::basic_ostream<_Char>& _oss;
+    TBasicTextWriter<_Char>& _oss;
 };
 //----------------------------------------------------------------------------
 class FCircularReferenceVisitor_ : FBaseAtomVisitor {
@@ -263,8 +265,8 @@ private:
 
     void DumpChainReference_(const PMetaObject& pobj, size_t chainIndex) const {
 #ifdef USE_DEBUG_LOGGER
-        FLoggerStream oss(ELogCategory::Error);
-        oss << L"[RTTI] Found circular reference !" << eol;
+        FWStringBuilder oss;
+        oss << L"[RTTI] Found circular reference !" << Eol;
 
         Fmt::FIndent indent = Fmt::FIndent::TwoSpaces();
         forrange(i, chainIndex, _chainRef.size()) {
@@ -276,13 +278,15 @@ private:
                 << L" : " << metaClass->Name()
                 << " (" << metaClass->Flags()
                 << L") = " << ref.Property->Name()
-                << eol;
+                << Eol;
 
             indent.Inc();
         }
 
         oss << indent << L" => ";
         PrettyPrint(oss, InplaceAtom(pobj));
+
+        LOG(Error, oss.ToString());
 #else
         UNUSED(obj);
         UNUSED(chainIndex);
@@ -356,9 +360,9 @@ FString PrettyString(const FAny& any) {
 }
 //----------------------------------------------------------------------------
 FString PrettyString(const FAtom& atom) {
-    FOStringStream oss;
+    FStringBuilder oss;
     PrettyPrint(oss, atom);
-    return oss.str();
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 FString PrettyString(const FMetaObject* object) {
@@ -368,13 +372,13 @@ FString PrettyString(const FMetaObject* object) {
     return pp;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& PrettyPrint(std::basic_ostream<char>& oss, const FAtom& atom) {
+FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom) {
     TPrettyPrinter_<char> printer(oss);
     atom.Accept(&printer);
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& PrettyPrint(std::basic_ostream<wchar_t>& oss, const FAtom& atom) {
+FWTextWriter& PrettyPrint(FWTextWriter& oss, const FAtom& atom) {
     TPrettyPrinter_<wchar_t> printer(oss);
     atom.Accept(&printer);
     return oss;

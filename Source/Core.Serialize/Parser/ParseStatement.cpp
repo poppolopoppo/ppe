@@ -13,8 +13,6 @@
 #include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/MetaProperty.h"
 
-#include <iostream>
-
 namespace Core {
 namespace Parser {
 //----------------------------------------------------------------------------

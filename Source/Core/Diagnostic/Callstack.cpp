@@ -6,7 +6,7 @@
 #include "LastError.h"
 #include "Logger.h"
 
-#include "IO/Stream.h"
+#include "IO/StreamProvider.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
 
@@ -32,7 +32,7 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
         L"_NT_ALTERNATE_SYMBOL_PATH"
     };
 
-    FWOCStrStream oss{ out_symbol_path, checked_cast<std::streamsize>(max_length) };
+    FWFixedSizeTextWriter oss(out_symbol_path, max_length);
     oss << L".;";
 
     wchar_t temp_buffer[MAX_PATH];
@@ -87,8 +87,8 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
         wchar_t webSymbolsPath[MAX_PATH];
         {
             const wchar_t* webSymbolsDir = L"\\symcache";
-            FWOCStrStream tmp{ webSymbolsPath, checked_cast<std::streamsize>(lengthof(webSymbolsPath)) };
-            tmp << temp_buffer << webSymbolsDir;
+            FWFixedSizeTextWriter tmp(webSymbolsPath);
+            tmp << temp_buffer << webSymbolsDir << Eos;
         }
 
         call_result = ::CreateDirectoryW(webSymbolsPath, NULL);
@@ -205,7 +205,7 @@ bool FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
 
     LoadModules_(dbghelp);
 
-    static const wchar_t* kUnknown = L"????????";
+    static const wchar_t kUnknown[] = L"????????";
 
     decoded->_hash = hash;
     decoded->_depth = frames.size();
@@ -242,7 +242,7 @@ bool FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
         {
             DWORD dwDisplacement = 0;
             if (TRUE == dbghelp.SymGetLineFromAddrW64()(hProcess, (DWORD64)*address, &dwDisplacement, &line64)) {
-                filename = line64.FileName;
+                filename = MakeStringView(line64.FileName, Meta::FForceInit{});
                 line = line64.LineNumber;
             }
             else {

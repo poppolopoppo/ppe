@@ -36,6 +36,11 @@ TRawStorage<T, _Allocator>::TRawStorage(_It&& begin, _It&& end)
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+TRawStorage<T, _Allocator>::TRawStorage(Meta::FForceInit, const TMemoryView<T>& stolen)
+    : _storage(stolen.data()), _size(stolen.size())
+{}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>::~TRawStorage() {
     clear_ReleaseMemory();
 }

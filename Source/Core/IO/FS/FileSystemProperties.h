@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Allocation.h"
+#include "Core/IO/String_fwd.h"
 #include "Core/IO/StringView.h"
 
 namespace Core {
@@ -22,7 +23,8 @@ public:
     bool IsAllowedChar(wchar_t ch) const;
 };
 //----------------------------------------------------------------------------
-typedef TBasicStringView<char_type> FStringView;
+using FString = TBasicString<char_type>;
+using FStringView = TBasicStringView<char_type>;
 //----------------------------------------------------------------------------
 inline FileSystem::FStringView Separators() { return MakeStringView(L"/\\"); }
 //----------------------------------------------------------------------------

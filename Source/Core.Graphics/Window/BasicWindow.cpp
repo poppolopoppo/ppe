@@ -6,8 +6,6 @@
 #include "Core/Diagnostic/LastError.h"
 #include "Core/Diagnostic/Logger.h"
 
-#include <sstream>
-
 #ifdef PLATFORM_WINDOWS
 #   include "Core/Misc/Platform_Windows.h"
 #else
@@ -134,7 +132,7 @@ static void DestroyBasicWindowClass_() {
 //----------------------------------------------------------------------------
 static HWND CreateBasicWindowHandle_(
     FBasicWindow *wnd,
-    const wchar_t *title,
+    const FWStringView& title,
     int left, int top,
     size_t width, size_t height,
     FBasicWindow *parent) {
@@ -144,10 +142,13 @@ static HWND CreateBasicWindowHandle_(
     if (!::AdjustWindowRect(&size, windowStyle, FALSE))
         CORE_THROW_IT(FLastErrorException());
 
+    wchar_t titleCstr[128];
+    title.ToNullTerminatedCStr(titleCstr);
+
     HWND handle = ::CreateWindowEx(
         NULL,
         BASICWINDOW_CLASNAME,
-        title,
+        titleCstr,
         windowStyle,
         left - size.left,
         top - size.top,
@@ -169,7 +170,7 @@ static HWND CreateBasicWindowHandle_(
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FBasicWindow::FBasicWindow(
-    const wchar_t *title,
+    const FWStringView& title,
     int left, int top,
     size_t width, size_t height,
     FBasicWindow *parent/* = nullptr */)
@@ -182,7 +183,7 @@ FBasicWindow::FBasicWindow(
 ,   _wantFocus(false)
 ,   _wantedWidth(width)
 ,   _wantedHeight(height) {
-    Assert(title);
+    Assert(not title.empty());
 
     _handle = CreateBasicWindowHandle_(this, title, left, top, width, height, _parent);
 

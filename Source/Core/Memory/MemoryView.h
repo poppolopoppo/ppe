@@ -2,9 +2,10 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/TextWriter_fwd.h"
+
 #include <algorithm>
 #include <initializer_list>
-#include <iosfwd>
 #include <iterator>
 #include <type_traits>
 
@@ -37,7 +38,7 @@ public:
 
     // enables type promotion between {T(),T(),T()} and TMemoryView<T>
     TMemoryView(std::initializer_list<T> list)
-        : TMemoryView(&*list.begin(), std::distance(list.begin(), list.end())) {}
+        : TMemoryView(list.begin(), std::distance(list.begin(), list.end())) {}
 
     // enables type promotion between T[] and TMemoryView<T>
     template <size_t _Dim>
@@ -354,10 +355,8 @@ void Move(const TMemoryView<T>& dst, const TMemoryView<T>& src) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename T >
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const TMemoryView<T>& view) {
+template <typename _Char, typename T >
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TMemoryView<T>& view) {
     for (const auto& it : view)
         oss << it;
     return oss;

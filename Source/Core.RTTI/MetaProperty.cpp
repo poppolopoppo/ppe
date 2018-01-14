@@ -3,6 +3,7 @@
 #include "MetaProperty.h"
 
 #include "Core/IO/FormatHelpers.h"
+#include "Core/IO/TextWriter.h"
 
 #ifdef WITH_CORE_RTTI_PROPERTY_CHECKS
 #   include "MetaObject.h"
@@ -57,7 +58,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EPropertyFlags flags) {
+FTextWriter& operator <<(FTextWriter& oss, RTTI::EPropertyFlags flags) {
     auto sep = Fmt::NotFirstTime('|');
 
     if (flags & RTTI::EPropertyFlags::Public)    { oss << sep << "Public"; }
@@ -71,7 +72,7 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EProp
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EPropertyFlags flags) {
+FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EPropertyFlags flags) {
     auto sep = Fmt::NotFirstTime(L'|');
 
     if (flags & RTTI::EPropertyFlags::Public)    { oss << sep << L"Public"; }

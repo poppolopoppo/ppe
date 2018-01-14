@@ -2,7 +2,9 @@
 
 #include "Uri.h"
 
-#include "Core/IO/Stream.h"
+#include "Core/IO/StreamProvider.h"
+#include "Core/IO/StringBuilder.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
 namespace Network {
@@ -37,7 +39,7 @@ static char ToHex_(size_t x) {
     return char(x + (x > 9 ? 'A' - 10 : '0'));
 }
 //----------------------------------------------------------------------------
-static bool UriDecode_(FOStream& oss, const FStringView& str) {
+static bool UriDecode_(FTextWriter& oss, const FStringView& str) {
     forrange(i, 0, str.size()) {
         const char ch = str[i];
         if ('+' == ch) {
@@ -62,7 +64,7 @@ static bool UriDecode_(FOStream& oss, const FStringView& str) {
     return true;
 }
 //----------------------------------------------------------------------------
-static bool UriEncode_(FOStream& oss, const FStringView& str) {
+static bool UriEncode_(FTextWriter& oss, const FStringView& str) {
     for (char ch : str) {
         if (DontRequireURIEncoding_(ch)) {
             oss << ch;
@@ -98,7 +100,7 @@ bool FUri::Pack(
     Assert(scheme.size());
     Assert(hostname.size());
 
-    STACKLOCAL_OCSTRSTREAM(oss, 1024);
+    FStringBuilder oss(std::move(dst._str));
 
     if (scheme.size()) {
         if (not IsAlpha(scheme))
@@ -161,7 +163,7 @@ bool FUri::Pack(
     }
     const size_t ianchor = checked_cast<size_t>(oss.size());
 
-    dst._str = ToString(oss.MakeView_NullTerminated());
+    oss.ToString(dst._str);
 
     const FStringView written = MakeStringView(dst._str);
     Assert(written.size() == ianchor);
@@ -295,10 +297,10 @@ bool FUri::Parse(FUri& dst, const FStringView& strview) {
 }
 //----------------------------------------------------------------------------
 bool FUri::Decode(FString& dst, const FStringView& src) {
-    FOStringStream oss;
+    FStringBuilder oss(std::move(dst));
 
     if (UriDecode_(oss, src)) {
-        dst = oss.str();
+        oss.ToString(dst);
         return true;
     }
     else {
@@ -307,10 +309,10 @@ bool FUri::Decode(FString& dst, const FStringView& src) {
 }
 //----------------------------------------------------------------------------
 bool FUri::Encode(FString& dst, const FStringView& src) {
-    FOStringStream oss;
+    FStringBuilder oss(std::move(dst));
 
     if (UriEncode_(oss, src)) {
-        dst = oss.str();
+        oss.ToString(dst);
         return true;
     }
     else {
@@ -318,11 +320,11 @@ bool FUri::Encode(FString& dst, const FStringView& src) {
     }
 }
 //----------------------------------------------------------------------------
-bool FUri::Decode(FOStream& dst, const FStringView& src) {
+bool FUri::Decode(FTextWriter& dst, const FStringView& src) {
     return UriDecode_(dst, src);
 }
 //----------------------------------------------------------------------------
-bool FUri::Encode(FOStream& dst, const FStringView& src) {
+bool FUri::Encode(FTextWriter& dst, const FStringView& src) {
     return UriEncode_(dst, src);
 }
 //----------------------------------------------------------------------------

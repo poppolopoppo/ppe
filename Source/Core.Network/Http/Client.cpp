@@ -22,13 +22,13 @@ namespace Network {
 namespace {
 //----------------------------------------------------------------------------
 static void HttpTypicalRequestHeaders_(FHttpRequest* request) {
-    request->Add(FHttpConstNames::UserAgent(),      "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)");
-    request->Add(FHttpConstNames::Accept(),         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-    request->Add(FHttpConstNames::AcceptLanguage(), "en-us,en;q=0.5");
-    request->Add(FHttpConstNames::AcceptEncoding(), "identity");
-    request->Add(FHttpConstNames::AcceptCharset(),  "utf-8");
-    request->Add(FHttpConstNames::KeepAlive(),      "300");
-    request->Add(FHttpConstNames::CacheControl(),   "no-cache");
+    request->Add(FHttpConstNames::UserAgent(),      FString("Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)"));
+    request->Add(FHttpConstNames::Accept(),         FString("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"));
+    request->Add(FHttpConstNames::AcceptLanguage(), FString("en-us,en;q=0.5"));
+    request->Add(FHttpConstNames::AcceptEncoding(), FString("identity"));
+    request->Add(FHttpConstNames::AcceptCharset(),  FString("utf-8"));
+    request->Add(FHttpConstNames::KeepAlive(),      FString("300"));
+    request->Add(FHttpConstNames::CacheControl(),   FString("no-cache"));
 }
 //----------------------------------------------------------------------------
 static void HttpMakeRequest_(
@@ -56,7 +56,7 @@ static EHttpStatus SafeHttpClient_(const FUri& uri, const _Method& method) {
     }
     CORE_CATCH(FHttpException e)
     CORE_CATCH_BLOCK({
-        LOG(Error, L"[HTTP] {0}: {1}, {2}",  uri.Str(), e.Status(), e.what());
+        LOG(Error, L"[HTTP] {0}: {1}, {2}",  uri.Str(), e.Status(), MakeStringView(e.What(), Meta::FForceInit{}));
         return e.Status();
     })
     return EHttpStatus::OK;

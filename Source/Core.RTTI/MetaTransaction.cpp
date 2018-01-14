@@ -16,6 +16,8 @@
 #   include "AtomVisitor.h" // HasCircularDependencies()
 #endif
 
+#include "Core/IO/TextWriter.h"
+
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------
@@ -225,7 +227,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::ETransactionFlags flags) {
+FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionFlags flags) {
     switch (flags) {
     case RTTI::ETransactionFlags::Unloaded:     return oss << "Unloaded";
     case RTTI::ETransactionFlags::Loading:      return oss << "Loading";
@@ -237,7 +239,7 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::ETran
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::ETransactionFlags flags) {
+FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionFlags flags) {
     switch (flags) {
     case RTTI::ETransactionFlags::Unloaded:     return oss << L"Unloaded";
     case RTTI::ETransactionFlags::Loading:      return oss << L"Loading";

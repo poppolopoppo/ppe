@@ -8,6 +8,7 @@
 #include "Core/Container/StringHashMap.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/Filename.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 class IBufferedStreamReader;
@@ -127,7 +128,7 @@ public:
         inline friend bool operator ==(const FValue& lhs, const FValue& rhs) { return lhs.Equals(rhs); }
         inline friend bool operator !=(const FValue& lhs, const FValue& rhs) { return (not operator ==(lhs, rhs)); }
 
-        void ToStream(std::basic_ostream<char>& oss, bool minify = true) const;
+        void ToStream(FTextWriter& oss, bool minify = true) const;
 
     private:
         EType _type;
@@ -151,7 +152,7 @@ public:
     FValue& Root() { return _root; }
     const FValue& Root() const { return _root; }
 
-    void ToStream(std::basic_ostream<char>& oss, bool minify = false) const { _root.ToStream(oss, minify); }
+    void ToStream(FTextWriter& oss, bool minify = false) const { _root.ToStream(oss, minify); }
 
     static bool Load(FJSON* json, const FFilename& filename);
     static bool Load(FJSON* json, const FFilename& filename, IBufferedStreamReader* input);
@@ -170,12 +171,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Serialize::FJSON::FValue& jsonValue) {
+inline FTextWriter& operator <<(FTextWriter& oss, const Serialize::FJSON::FValue& jsonValue) {
     jsonValue.ToStream(oss);
     return oss;
 }
 //----------------------------------------------------------------------------
-inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Serialize::FJSON& json) {
+inline FTextWriter& operator <<(FTextWriter& oss, const Serialize::FJSON& json) {
     json.ToStream(oss);
     return oss;
 }

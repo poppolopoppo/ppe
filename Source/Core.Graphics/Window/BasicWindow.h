@@ -17,10 +17,10 @@ FWD_REFPTR(BasicWindow);
 //----------------------------------------------------------------------------
 class FBasicWindow : public FRefCountable {
 public:
-    FBasicWindow(const wchar_t *title,
-                int left, int top,
-                size_t width, size_t height,
-                FBasicWindow *parent = nullptr   );
+    FBasicWindow(   const FWStringView& title,
+                    int left, int top,
+                    size_t width, size_t height,
+                    FBasicWindow *parent = nullptr   );
     virtual ~FBasicWindow();
 
     FBasicWindow(const FBasicWindow&) = delete;

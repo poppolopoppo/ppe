@@ -6,6 +6,7 @@
 
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FormatHelpers.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
 namespace RTTI {
@@ -271,14 +272,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EClassFlags flags) {
+FTextWriter& operator <<(FTextWriter& oss, RTTI::EClassFlags flags) {
     auto sep = Fmt::NotFirstTime('|');
 
     if (flags & RTTI::EClassFlags::Concrete)    { oss << sep << "Concrete"; }
     if (flags & RTTI::EClassFlags::Abstract)    { oss << sep << "Abstract"; }
     if (flags & RTTI::EClassFlags::Dynamic)     { oss << sep << "Dynamic"; }
     if (flags & RTTI::EClassFlags::Public)      { oss << sep << "Public"; } else {
-                                                  oss << sep << "Private"; }
+                                                 oss << sep << "Private"; }
     if (flags & RTTI::EClassFlags::Mergeable)   { oss << sep << "Mergeable"; }
     if (flags & RTTI::EClassFlags::Deprecated)  { oss << sep << "Deprecated"; }
     if (flags & RTTI::EClassFlags::Registered)  { oss << sep << "Registered"; }
@@ -286,14 +287,14 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EClas
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EClassFlags flags) {
+FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EClassFlags flags) {
     auto sep = Fmt::NotFirstTime(L'|');
 
     if (flags & RTTI::EClassFlags::Concrete)    { oss << sep << L"Concrete"; }
     if (flags & RTTI::EClassFlags::Abstract)    { oss << sep << L"Abstract"; }
     if (flags & RTTI::EClassFlags::Dynamic)     { oss << sep << L"Dynamic"; }
     if (flags & RTTI::EClassFlags::Public)      { oss << sep << L"Public"; } else {
-                                                  oss << sep << L"Private"; }
+                                                 oss << sep << L"Private"; }
     if (flags & RTTI::EClassFlags::Mergeable)   { oss << sep << L"Mergeable"; }
     if (flags & RTTI::EClassFlags::Deprecated)  { oss << sep << L"Deprecated"; }
     if (flags & RTTI::EClassFlags::Registered)  { oss << sep << L"Registered"; }

@@ -2,6 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/TextWriter_fwd.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -62,10 +64,8 @@ private:
     u64 _value;
 };
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename _Tag>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const TPrimeNumberProduct<_Tag>& number ) {
+template <typename _Char, typename _Tag>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TPrimeNumberProduct<_Tag>& number) {
     return oss << number.Value();
 }
 //----------------------------------------------------------------------------

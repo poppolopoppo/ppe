@@ -2,6 +2,8 @@
 
 #include "Exception.h"
 
+#include "Core/IO/TextWriter.h"
+
 #if WITH_CORE_EXCEPTION_CALLSTACK
 #   include "Callstack.h"
 #   include "DecodedCallstack.h"
@@ -12,8 +14,8 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FException::FException(const char* what) noexcept
-:   parent_type(what) {
-    Assert(what);
+:   _what(what) {
+    Assert(_what);
 #if WITH_CORE_EXCEPTION_CALLSTACK
     _siteHash = 0;
     const size_t depth = Core::FCallstack::Capture(MakeView(_callstack), &_siteHash, 1, lengthof(_callstack));
@@ -34,6 +36,26 @@ FDecodedCallstack FException::Callstack() const {
     return decoded;
 }
 #endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const FException& e) {
+    return oss << e.What()
+#if WITH_CORE_EXCEPTION_CALLSTACK
+        << " (" << (void*)e.SiteHash() << ")" << Eol
+        << e.Callstack()
+#endif
+        ;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const FException& e) {
+    return oss << e.What()
+#if WITH_CORE_EXCEPTION_CALLSTACK
+        << L" (" << (void*)e.SiteHash() << L")" << Eol
+        << e.Callstack()
+#endif
+        ;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

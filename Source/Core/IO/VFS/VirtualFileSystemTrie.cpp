@@ -121,11 +121,11 @@ bool FVirtualFileSystemTrie::RemoveFile(const FFilename& filename) const {
         : false;
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIStream> FVirtualFileSystemTrie::OpenReadable(const FFilename& filename, EAccessPolicy policy) const {
+UStreamReader FVirtualFileSystemTrie::OpenReadable(const FFilename& filename, EAccessPolicy policy) const {
     Assert(!(policy ^ EAccessPolicy::Compress)); // not handled here
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(filename.MountingPoint(), _nodes);
-    TUniquePtr<IVirtualFileSystemIStream> result;
+    UStreamReader result;
     if (readable)
         result = readable->OpenReadable(filename, policy);
     if (not result)
@@ -133,11 +133,11 @@ TUniquePtr<IVirtualFileSystemIStream> FVirtualFileSystemTrie::OpenReadable(const
     return result;
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemTrie::OpenWritable(const FFilename& filename, EAccessPolicy policy) const {
+UStreamWriter FVirtualFileSystemTrie::OpenWritable(const FFilename& filename, EAccessPolicy policy) const {
     Assert(!(policy ^ EAccessPolicy::Compress)); // not handled here
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentWritable* const writable = WritableComponent_(filename.MountingPoint(), _nodes);
-    TUniquePtr<IVirtualFileSystemOStream> result;
+    UStreamWriter result;
     if (writable)
         result = writable->OpenWritable(filename, policy);
     if (not result)
@@ -145,11 +145,11 @@ TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemTrie::OpenWritable(const
     return result;
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIOStream> FVirtualFileSystemTrie::OpenReadWritable(const FFilename& filename, EAccessPolicy policy) const {
+UStreamReadWriter FVirtualFileSystemTrie::OpenReadWritable(const FFilename& filename, EAccessPolicy policy) const {
     Assert(!(policy ^ EAccessPolicy::Compress)); // not handled here
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadWritable* const readWritable = ReadWritableComponent_(filename.MountingPoint(), _nodes);
-    TUniquePtr<IVirtualFileSystemIOStream> result;
+    UStreamReadWriter result;
     if (readWritable)
         result = readWritable->OpenReadWritable(filename, policy);
     if (not result)
@@ -190,9 +190,9 @@ void FVirtualFileSystemTrie::Unmount(FVirtualFileSystemComponent* component) {
     _nodes.Remove_AssertExists(component->Alias().MountingPoint(), component);
 }
 //----------------------------------------------------------------------------
-FVirtualFileSystemComponent* FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, const wchar_t *nativepPath) {
-    Assert(nativepPath);
-    const SVirtualFileSystemComponent component = new FVirtualFileSystemNativeComponent(alias, nativepPath);
+FVirtualFileSystemComponent* FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, const FWStringView& nativepPath) {
+    Assert(not nativepPath.empty());
+    const SVirtualFileSystemComponent component = new FVirtualFileSystemNativeComponent(alias, FWString(nativepPath));
     Mount(component);
     return component;
 }

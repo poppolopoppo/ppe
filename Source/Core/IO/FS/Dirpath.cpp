@@ -11,6 +11,11 @@
 #include "Container/Token.h"
 #include "Container/Stack.h"
 #include "IO/FS/ConstNames.h"
+#include "IO/String.h"
+#include "IO/StringBuilder.h"
+#include "IO/StringView.h"
+#include "IO/TextWriter.h"
+#include "Memory/MemoryProvider.h"
 #include "Memory/UniqueView.h"
 
 #include <algorithm>
@@ -115,6 +120,14 @@ FDirpath::FDirpath(const FDirpath& other, const TMemoryView<const FDirname>& app
     _path = FFileSystemPath::Instance().Concat(other._path, append.Cast<const FFileSystemToken>());
 }
 //----------------------------------------------------------------------------
+FDirpath::FDirpath(const FileSystem::FString& str)
+:   FDirpath(str.MakeView())
+{}
+//----------------------------------------------------------------------------
+FDirpath& FDirpath::operator =(const FileSystem::FString& str) {
+    return operator =(str.MakeView());
+}
+//----------------------------------------------------------------------------
 FDirpath::FDirpath(const FileSystem::FStringView& content) {
     _path = ParseDirpath_(content);
 }
@@ -125,7 +138,6 @@ FDirpath& FDirpath::operator =(const FileSystem::FStringView& content) {
 }
 //----------------------------------------------------------------------------
 FDirpath::FDirpath(std::initializer_list<const FileSystem::char_type *> path)  {
-
     STACKLOCAL_POD_STACK(FFileSystemToken, tokens, path.size());
 
     for (const FileSystem::char_type *wcstr : path) {
@@ -220,27 +232,27 @@ void FDirpath::Concat(const TMemoryView<const FileSystem::char_type>& strview) {
 }
 //----------------------------------------------------------------------------
 FString FDirpath::ToString() const {
-    STACKLOCAL_OCSTRSTREAM(oss, 2048);
+    FStringBuilder oss;
     oss << *this;
-    return Core::ToString(oss.MakeView());
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 FWString FDirpath::ToWString() const {
-    STACKLOCAL_WOCSTRSTREAM(oss, 2048);
+    FWStringBuilder oss;
     oss << *this;
-    return Core::ToWString(oss.MakeView());
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 FStringView FDirpath::ToCStr(char *dst, size_t capacity) const {
-    FOCStrStream oss(dst, capacity);
-    oss << *this;
-    return oss.MakeView();
+    FFixedSizeTextWriter oss(dst, capacity);
+    oss << *this << Eos;
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
 FWStringView FDirpath::ToWCStr(wchar_t *dst, size_t capacity) const {
-    FWOCStrStream oss(dst, capacity);
-    oss << *this;
-    return oss.MakeView();
+    FWFixedSizeTextWriter oss(dst, capacity);
+    oss << *this << Eos;
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
 void FDirpath::Swap(FDirpath& other) {
@@ -373,6 +385,44 @@ bool FDirpath::Relative(FDirpath* relative, const FDirpath& origin, const FDirpa
 
     *relative = FDirpath(FMountingPoint(), relative_dirs.MakeView());
     return true;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FDirpath operator /(const FDirpath& lhs, const FDirname& rhs) {
+    return FDirpath(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+FFilename operator /(const FDirpath& lhs, const FBasename& basename) {
+    return FFilename(lhs, basename);;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const Core::FDirpath& dirpath) {
+    Core::FMountingPoint mountingPoint;
+    STACKLOCAL_POD_ARRAY(FDirname, dirnames, dirpath.Depth());
+    const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
+
+    if (false == mountingPoint.empty())
+        oss << mountingPoint << '/';
+    for (size_t i = 0; i < k; ++i)
+        oss << dirnames[i] << '/';
+
+    return oss;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const Core::FDirpath& dirpath) {
+    Core::FMountingPoint mountingPoint;
+    STACKLOCAL_POD_ARRAY(FDirname, dirnames, dirpath.Depth());
+    const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
+
+    if (false == mountingPoint.empty())
+        oss << mountingPoint << wchar_t(FileSystem::Separator);
+    for (size_t i = 0; i < k; ++i)
+        oss << dirnames[i] << wchar_t(FileSystem::Separator);
+
+    return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

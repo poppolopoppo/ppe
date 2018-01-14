@@ -3,7 +3,9 @@
 #include "Core/Core.h"
 
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Meta/Singleton.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 #include <mutex>
 
@@ -146,9 +148,19 @@ public:
     explicit TToken(const stringview_type& content) : _handle(FindOrAdd_(content)) {}
     TToken& operator =(const stringview_type& content) { _handle = FindOrAdd_(content); return (*this); }
 
-    template <typename _CharTraits, typename _Allocator>
-    explicit TToken(const std::basic_string<_Char, _CharTraits, _Allocator>& content)
-        : TToken(stringview_type(content.c_str(), content.size())) {}
+    explicit TToken(const TBasicString<_Char>& content)
+        : TToken(content.MakeView()) {}
+    TToken& operator = (const TBasicString<_Char>& content) {
+        return operator =(content.MakeView());
+    }
+
+    template <size_t _Dim>
+    explicit TToken(const _Char(&content)[_Dim])
+        : TToken(MakeStringView(content)) {}
+    template <size_t _Dim>
+    TToken& operator =(const _Char(&content)[_Dim]) {
+        return operator =(MakeStringView(content));
+    }
 
     size_t size() const { return (_handle ? _handle->Length : 0); }
     bool empty() const { return (_handle == nullptr); }
@@ -210,18 +222,16 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <
-    typename        _StreamChar,
-    typename        _StreamTraits,
-    typename        _Tag,
-    typename        _TokenChar,
-    ECase            _Sensitive,
-    typename        _TokenTraits
->
-std::basic_ostream<_StreamChar, _StreamTraits>& operator <<(
-    std::basic_ostream<_StreamChar, _StreamTraits>& oss,
-    const TToken<_Tag, _TokenChar, _Sensitive, _TokenTraits>& token) {
-    if (!token.empty())
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
+FTextWriter& operator <<(FTextWriter& oss, const TToken<_Tag, _Char, _Sensitive, _TokenTraits>& token) {
+    if (not token.empty())
+        oss << token.MakeView();
+    return oss;
+}
+//----------------------------------------------------------------------------
+template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
+FWTextWriter& operator <<(FWTextWriter& oss, const TToken<_Tag, _Char, _Sensitive, _TokenTraits>& token) {
+    if (not token.empty())
         oss << token.MakeView();
     return oss;
 }

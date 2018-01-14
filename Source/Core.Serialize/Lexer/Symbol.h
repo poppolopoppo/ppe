@@ -4,8 +4,7 @@
 
 #include "Core/Container/Hash.h"
 #include "Core/IO/StringView.h"
-
-#include <iosfwd>
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 namespace Lexer {
@@ -112,7 +111,7 @@ inline bool operator ==(const FSymbol& lhs, const FSymbol& rhs) {
 }
 //----------------------------------------------------------------------------
 inline bool operator !=(const FSymbol& lhs, const FSymbol& rhs) {
-    return !operator ==(lhs, rhs);
+    return not operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 inline hash_t hash_value(const FSymbol& symbol) {
@@ -128,9 +127,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename T >
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(
+    TBasicTextWriter<_Char>& oss,
     const Lexer::FSymbol& symbol) {
     return oss << symbol.CStr();
 }

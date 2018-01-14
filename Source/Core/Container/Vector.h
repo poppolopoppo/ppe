@@ -5,6 +5,7 @@
 #include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/InSituAllocator.h"
 #include "Core/Container/Hash.h"
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/MemoryView.h"
 
 #include <algorithm>
@@ -121,7 +122,7 @@ public:
     const_reverse_iterator crbegin() const { return const_reverse_iterator(end()); }
     const_reverse_iterator crend() const { return const_reverse_iterator(begin()); }
 
-    allocator_type get_allocator() const { return static_cast<const allocator_type&>(*this); }
+    const allocator_type& get_allocator() const { return static_cast<const allocator_type&>(*this); }
 
     reference at(size_type pos) { Assert(pos < _size); return _data[pos]; }
     const_reference at(size_type pos) const { Assert(pos < _size); return _data[pos]; }
@@ -213,8 +214,7 @@ public:
 #endif
 
 private:
-    allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }
-    const allocator_type& allocator_() const { return static_cast<const allocator_type&>(*this); }
+    allocator_type& get_allocator() { return static_cast<allocator_type&>(*this); }
 
     void allocator_copy_(const allocator_type& other, std::true_type );
     void allocator_copy_(const allocator_type& other, std::false_type ) { UNUSED(other); }
@@ -351,8 +351,11 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator, typename _Char, typename _Traits >
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const Core::TVector<T, _Allocator>& vector);
+template <typename T, typename _Allocator>
+FTextWriter& operator <<(FTextWriter& oss, const TVector<T, _Allocator>& vector);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+FWTextWriter& operator <<(FWTextWriter& oss, const TVector<T, _Allocator>& vector);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

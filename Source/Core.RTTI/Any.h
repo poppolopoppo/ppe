@@ -5,6 +5,7 @@
 #include "Core.RTTI/Atom.h"
 #include "Core.RTTI/NativeTypes.h"
 
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Meta/AlignedStorage.h"
 
 namespace Core {
@@ -132,8 +133,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator << (std::basic_ostream<_Char, _Traits>& oss, const RTTI::FAny& any) {
+template <typename _Char>
+TBasicTextWriter<_Char>& operator << (TBasicTextWriter<_Char>& oss, const RTTI::FAny& any) {
     return oss << any.InnerAtom();
 }
 //----------------------------------------------------------------------------

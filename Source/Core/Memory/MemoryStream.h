@@ -19,6 +19,9 @@ namespace Core {
 #define MEMORYSTREAM_ALIGNED(_DOMAIN, _ALIGNMENT) \
     ::Core::TMemoryStream<ALIGNED_ALLOCATOR(_DOMAIN, u8, _ALIGNMENT)>
 //----------------------------------------------------------------------------
+#define MEMORYSTREAM_STACK(_DOMAIN) \
+    ::Core::TMemoryStream<STACK_ALLOCATOR(_DOMAIN, u8)>
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Allocator = ALLOCATOR(Stream, u8)>
@@ -29,6 +32,11 @@ public:
     TMemoryStream();
     explicit TMemoryStream(storage_type&& storage);
     TMemoryStream(storage_type&& storage, std::streamsize size);
+    TMemoryStream(Meta::FForceInit, const TMemoryView<u8>& stolen);
+
+    u8* Pointer() { return _storage.Pointer(); }
+    const u8* Pointer() const { return _storage.Pointer(); }
+    const storage_type& Storage() const { return _storage; }
 
     size_t size() const { return _size; }
     size_t capacity() const { return _storage.size(); }
@@ -41,14 +49,6 @@ public:
 
     TMemoryView<u8> Append(size_t sizeInBytes);
 
-    void clear_ReleaseMemory();
-    void Clear_StealMemory(storage_type& storage);
-
-    const storage_type& Storage() const { return _storage; }
-
-    u8* Pointer() { return _storage.Pointer(); }
-    const u8* Pointer() const { return _storage.Pointer(); }
-
     TMemoryView<u8> MakeView() { return TMemoryView<u8>(_storage.Pointer(), _size); }
     TMemoryView<u8> MakeView(size_t offset, size_t count) {
         Assert(offset + count < _size);
@@ -59,6 +59,21 @@ public:
     TMemoryView<const u8> MakeView(size_t offset, size_t count) const {
         Assert(offset + count < _size);
         return TMemoryView<const u8>(&_storage[offset], count);
+    }
+
+    void clear_ReleaseMemory();
+    void clear_StealMemory(storage_type& storage);
+
+    // !!! NEED TO DESTROY THE BLOCK AFTERWARDS WITH THE CORRECT ALLOCATOR !!!
+    template <typename U>
+    TMemoryView<U> clear_StealDataUnsafe(size_t* plen = nullptr) {
+        const TMemoryView<U> stolen = _storage.template clear_StealDataUnsafe<U>();
+        if (plen) {
+            Assert(Meta::IsAligned(sizeof(U), _size));
+            *plen = (_size / sizeof(U));
+        }
+        _offsetI = _offsetO = _size = 0;
+        return stolen;
     }
 
 public: // IStreamReader
@@ -114,6 +129,12 @@ TMemoryStream<_Allocator>::TMemoryStream(storage_type&& storage, std::streamsize
     , _storage(std::move(storage)) {
     Assert(_size <= _storage.size());
 }
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+TMemoryStream<_Allocator>::TMemoryStream(Meta::FForceInit, const TMemoryView<u8>& stolen)
+    : _size(0), _offsetI(0), _offsetO(0)
+    , _storage(Meta::FForceInit{}, stolen)
+{}
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TMemoryStream<_Allocator>::resize(size_t count, bool keepData/* = true */) {
@@ -178,9 +199,9 @@ void TMemoryStream<_Allocator>::clear_ReleaseMemory() {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-void TMemoryStream<_Allocator>::Clear_StealMemory(storage_type& storage) {
+void TMemoryStream<_Allocator>::clear_StealMemory(storage_type& storage) {
+    _size = _offsetI = _offsetO = 0;
     storage = std::move(_storage);
-    clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 // IStreamReader

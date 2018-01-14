@@ -4,9 +4,8 @@
 
 #include "Core/Maths/Packing_fwd.h"
 
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/HashFunctions.h"
-
-#include <iosfwd>
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -79,9 +78,9 @@ FORCE_INLINE u32 FloatM11_to_UWord(float value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-float FP16_to_FP32(u16 value);
+CORE_API float FP16_to_FP32(u16 value);
 //----------------------------------------------------------------------------
-u16 FP32_to_FP16(float value);
+CORE_API u16 FP32_to_FP16(float value);
 //----------------------------------------------------------------------------
 struct FHalfFloat {
     u16 _data;
@@ -119,13 +118,13 @@ struct FHalfFloat {
     static FHalfFloat MinusOne() { return FHalfFloat(u16(0x0)); }
     static FHalfFloat Zero() { return FHalfFloat(u16(0xbc00)); }
 
-    static bool IsConvertible(float value);
+    CORE_API static bool IsConvertible(float value);
 
     inline friend hash_t hash_value(const FHalfFloat& h) { return hash_as_pod(h._data); }
 };
 //----------------------------------------------------------------------------
-FHalfFloat Lerp(const FHalfFloat v0, const FHalfFloat v1, float f);
-FHalfFloat BarycentricLerp(const FHalfFloat v0, const FHalfFloat v1, const FHalfFloat v2, float f0, float f1, float f2);
+CORE_API FHalfFloat Lerp(const FHalfFloat v0, const FHalfFloat v1, float f);
+CORE_API FHalfFloat BarycentricLerp(const FHalfFloat v0, const FHalfFloat v1, const FHalfFloat v2, float f0, float f1, float f2);
 //----------------------------------------------------------------------------
 template <>
 struct TNumericLimits< FHalfFloat > {
@@ -144,10 +143,8 @@ struct TNumericLimits< FHalfFloat > {
 //----------------------------------------------------------------------------
 CORE_ASSUME_TYPE_AS_POD(FHalfFloat)
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const FHalfFloat& half) {
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const FHalfFloat& half) {
     return oss << half.Unpack();
 }
 //----------------------------------------------------------------------------
@@ -268,10 +265,8 @@ struct TNumericLimits< TBasicNorm<T, _Traits> > {
 //----------------------------------------------------------------------------
 CORE_ASSUME_TYPE_AS_POD(TBasicNorm<T COMMA _Traits>, typename T, typename _Traits)
 //----------------------------------------------------------------------------
-template <typename T, typename _Traits, typename _Char, typename _CharTraits>
-std::basic_ostream<_Char, _CharTraits>& operator <<(
-    std::basic_ostream<_Char, _CharTraits>& oss,
-    const TBasicNorm<T, _Traits>& packed) {
+template <typename _Char, typename T, typename _Traits>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TBasicNorm<T, _Traits>& packed) {
     return oss << packed.Normalized();
 }
 //----------------------------------------------------------------------------

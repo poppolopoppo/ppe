@@ -4,6 +4,7 @@
 
 #include "Core/IO/StreamProvider.h"
 #include "Core/IO/String.h"
+#include "Core/IO/StringView.h"
 
 #include <locale>
 
@@ -12,13 +13,13 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FLookAheadReader::FLookAheadReader(IBufferedStreamReader* input, const wchar_t *sourceFileName)
+FLookAheadReader::FLookAheadReader(IBufferedStreamReader* input, const FWStringView& sourceFileName)
 :   _sourceFileName(sourceFileName)
 ,   _sourceLine(1)
 ,   _sourceColumn(1)
 ,   _input(input) {
     Assert(input);
-    Assert(sourceFileName);
+    Assert(not _sourceFileName.empty());
 }
 //----------------------------------------------------------------------------
 FLookAheadReader::~FLookAheadReader() {}

@@ -4,6 +4,8 @@
 
 #include "Listener.h"
 
+#include "Core/IO/TextWriter.h"
+
 namespace Core {
 namespace Network {
 //----------------------------------------------------------------------------
@@ -148,7 +150,7 @@ void FSocketBuffered::EatWhiteSpaces() {
     }
 }
 //----------------------------------------------------------------------------
-bool FSocketBuffered::ReadUntil(std::ostream* poss, char delim) {
+bool FSocketBuffered::ReadUntil(FTextWriter* poss, char delim) {
     constexpr size_t maxLength = 64 * 1024;
 
     char ch;
@@ -161,7 +163,7 @@ bool FSocketBuffered::ReadUntil(std::ostream* poss, char delim) {
         if (not Get(ch))
             AssertNotReached();
 
-        poss->put(ch);
+        poss->Put(ch);
     }
 
     if (not Peek(ch))
@@ -176,7 +178,7 @@ void FSocketBuffered::FlushRead(bool block/* = false */) {
 
         const size_t toRead = _sizeI - _offsetI;
 
-        memmove(_bufferI.data(), _bufferI.data() + _offsetI, toRead);
+        ::memmove(_bufferI.data(), _bufferI.data() + _offsetI, toRead);
 
         _sizeI = toRead;
         _offsetI = 0;

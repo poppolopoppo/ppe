@@ -3,8 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Container/HashTable.h"
-
-#include <iosfwd>
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -32,19 +31,20 @@ template <
 >
 using THashSet = TBasicHashTable< details::THashSetTraits_<_Key>, _Hasher, _EqualTo, _Allocator >;
 //----------------------------------------------------------------------------
-template <
-    typename T,
-    typename _Hasher,
-    typename _EqualTo,
-    typename _Allocator,
-    typename _Char,
-    typename _Traits
->
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const THashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
+template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
+FTextWriter& operator <<(FTextWriter& oss, const THashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
     oss << "[ ";
     for (const auto& it : hashSet)
         oss << *it << ", ";
     return oss << ']';
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
+FWTextWriter& operator <<(FWTextWriter& oss, const THashSet<T, _Hasher, _EqualTo, _Allocator>& hashSet) {
+    oss << L"[ ";
+    for (const auto& it : hashSet)
+        oss << *it << L", ";
+    return oss << L']';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

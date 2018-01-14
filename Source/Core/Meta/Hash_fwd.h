@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Core/Meta/Aliases.h"
+#include "Core/Core.h"
 
-#include <iomanip>
+#include "Core/IO/TextWriter_fwd.h"
+#include "Core/Meta/Aliases.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -26,21 +27,8 @@ public:
 
     friend void swap(hash_t& lhs, hash_t& rhs) { std::swap(lhs._value, rhs._value); }
 
-    template <typename _Traits>
-    friend std::basic_ostream<char, _Traits>& operator <<(std::basic_ostream<char, _Traits>& oss, const hash_t& h) {
-        return oss
-            << "#0x"
-            << std::setfill('0') << std::hex << std::setw(sizeof(size_t)<<1) << h._value
-            << std::setfill(' ') << std::dec << std::setw(0);
-    }
-
-    template <typename _Traits>
-    friend std::basic_ostream<wchar_t, _Traits>& operator <<(std::basic_ostream<wchar_t, _Traits>& oss, const hash_t& h) {
-        return oss
-            << L"#0x"
-            << std::setfill(L'0') << std::hex << std::setw(sizeof(size_t)<<1) << h._value
-            << std::setfill(L' ') << std::dec << std::setw(0);
-    }
+    CORE_API friend FTextWriter& operator <<(FTextWriter& oss, const hash_t& h);
+    CORE_API friend FWTextWriter& operator <<(FWTextWriter& oss, const hash_t& h);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

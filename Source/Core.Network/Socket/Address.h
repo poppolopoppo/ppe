@@ -4,6 +4,7 @@
 
 #include "Core/IO/String.h"
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 namespace Network {
@@ -36,7 +37,7 @@ enum class EServiceName : size_t {
     Steam       = 27000,
 };
 //----------------------------------------------------------------------------
-class FAddress {
+class CORE_NETWORK_API FAddress {
 public:
     FAddress();
     ~FAddress();
@@ -91,8 +92,8 @@ public:
         return (not operator <(lhs, rhs));
     }
 
-    template <typename _Char, typename _Traits>
-    inline friend std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const FAddress& a) {
+    template <typename _Char>
+    inline friend TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const FAddress& a) {
         return oss << a.Host() << ':' << a.Port();
     }
 
@@ -103,12 +104,12 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool LocalHostName(FString& hostname);
+CORE_NETWORK_API bool LocalHostName(FString& hostname);
 //----------------------------------------------------------------------------
-bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port);
-bool HostnameToIPv4(FString& ip, const FStringView& hostname, EServiceName service);
+CORE_NETWORK_API bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port);
+CORE_NETWORK_API bool HostnameToIPv4(FString& ip, const FStringView& hostname, EServiceName service);
 //----------------------------------------------------------------------------
-bool IPv4ToHostname(FString& hostname, const FStringView& ip);
+CORE_NETWORK_API bool IPv4ToHostname(FString& hostname, const FStringView& ip);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -119,9 +120,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Network::FAddress& addr );
+CORE_NETWORK_API FTextWriter& operator <<(FTextWriter& oss, const Network::FAddress& addr );
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Network::FAddress& addr );
+CORE_NETWORK_API FWTextWriter& operator <<(FWTextWriter& oss, const Network::FAddress& addr );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

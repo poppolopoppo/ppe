@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/HashFunctions.h"
 
 namespace Core {
@@ -9,7 +10,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FTimestamp;
-class FDateTime {
+class CORE_API FDateTime {
 public:
     FDateTime() : FDateTime(0) {}
     explicit FDateTime(u64 ord) { *reinterpret_cast<u64*>(this) = ord; }
@@ -43,24 +44,8 @@ public:
 STATIC_ASSERT(sizeof(FDateTime) == sizeof(u64));
 CORE_ASSUME_TYPE_AS_POD(FDateTime)
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const FDateTime& d) {
-    const _Char f = oss.fill();
-    const std::streamsize w = oss.width();
-    return oss << std::setfill('0')
-        << std::setw(4) << d.Year
-        << std::setw(1) << "/"
-        << std::setw(2) << d.Month
-        << std::setw(1) << "/"
-        << std::setw(2) << d.Day
-        << std::setw(1) << " "
-        << std::setw(2) << d.Hours
-        << std::setw(1) << ":"
-        << std::setw(2) << d.Minutes
-        << std::setw(1) << ":"
-        << std::setw(2) << d.Seconds
-        << std::setfill(f) << std::setw(w);
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, const FDateTime& d);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDateTime& d);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

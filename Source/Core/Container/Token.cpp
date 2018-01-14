@@ -109,16 +109,16 @@ const FTokenFactory::FEntry* FTokenFactory::Allocate(void* src, size_t len, size
     if (nullptr == head) {
         Assert(nullptr == tail);
 
-        if (FPlatformAtomics::CompareExchange((void**)&_bucketHeads[bucket], result, head) != head)
-            Assert("concurrency problem, some thread might already have the head", 0);
+        // if failed : concurrency problem, some thread might already have the head
+        Verify(FPlatformAtomics::CompareExchange((void**)&_bucketHeads[bucket], result, head) == head);
     }
     else {
         Assert(nullptr != tail);
         Assert_NoAssume(head->TestCanary());
         Assert_NoAssume(tail->TestCanary());
 
-        if (FPlatformAtomics::CompareExchange((void**)&tail->Next, result, nullptr) != nullptr)
-            Assert("concurrency problem, some thread might already have the tail", 0);
+        // if failed : concurrency problem, some thread might already have the tail
+        Verify(FPlatformAtomics::CompareExchange((void**)&tail->Next, result, nullptr) == nullptr);
     }
 
     _bucketTails[bucket] = result; // non-atomically updated since only used when locked

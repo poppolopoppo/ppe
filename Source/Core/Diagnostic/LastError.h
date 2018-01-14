@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Diagnostic/Exception.h"
-#include "Core/IO/String.h"
+#include "Core/IO/String_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------

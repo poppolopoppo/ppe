@@ -8,14 +8,12 @@
 
 #include "Core/Container/Tuple.h"
 #include "Core/Container/Vector.h"
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Meta/PointerWFlags.h"
 
-// TODO : check if it's useful in future (13/12/2017)
-#ifdef CPP_VISUALSTUDIO
-#   define USE_MSVC17_WORKAROUND_FOR_INTERNALERROR 1
-#else
-#   define USE_MSVC17_WORKAROUND_FOR_INTERNALERROR 0
-#endif
+// DONE : check if it's useful in future (13/12/2017)
+// not necessary with latest update (14/01/2017)
+#define USE_MSVC17_WORKAROUND_FOR_INTERNALERROR 0
 
 namespace Core {
 namespace RTTI {
@@ -133,7 +131,7 @@ struct TMakeFunction<_Result (_Class::*)(_Args...)> {
             flags,
             MakeTraits<_Result>(),
             { MakeParameter(Meta::TType<_Args>{}, *nameIt++)... },
-            &TMemberFunction_<_Member, std::is_void<_Result>::type>::Invoke
+            &TMemberFunction_<_Member, typename std::is_void<_Result>::type>::Invoke
         );
     }
 
@@ -146,8 +144,8 @@ private:
 #if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
                 *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
 #else
-                (*parg++).TypedData<Meta::TDecay<_Arg>>()...
-#endif.
+                (*parg++).TypedData<Meta::TDecay<_Args>>()...
+#endif
             });
         }
     };
@@ -161,8 +159,8 @@ private:
 #if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
                 *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
 #else
-                (*parg++).TypedData<Meta::TDecay<_Arg>>()...
-#endif.
+                (*parg++).TypedData<Meta::TDecay<_Args>>()...
+#endif
             });
         }
     };
@@ -192,7 +190,7 @@ private:
 #if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
                 *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
 #else
-                (*parg++).TypedData<Meta::TDecay<_Arg>>()...
+                (*parg++).TypedData<Meta::TDecay<_Args>>()...
 #endif
             });
         }
@@ -207,7 +205,7 @@ private:
 #if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
                 *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
 #else
-                (*parg++).TypedData<Meta::TDecay<_Arg>>()...
+                (*parg++).TypedData<Meta::TDecay<_Args>>()...
 #endif
             });
         }
@@ -224,11 +222,11 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EParameterFlags flags);
-CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EParameterFlags flags);
+CORE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, RTTI::EParameterFlags flags);
+CORE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EParameterFlags flags);
 //----------------------------------------------------------------------------
-CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EFunctionFlags flags);
-CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EFunctionFlags flags);
+CORE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, RTTI::EFunctionFlags flags);
+CORE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EFunctionFlags flags);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

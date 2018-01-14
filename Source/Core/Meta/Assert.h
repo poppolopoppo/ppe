@@ -49,6 +49,8 @@ CORE_API void SetAssertionHandler(AssertionHandler handler);
 
 #   define AssertMessage_NoAssume(_Expression, _Message) AssertMessage(_Expression, _Message)
 
+#   define Verify(...) AssertMessage(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
+
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
@@ -62,6 +64,8 @@ inline void SetAssertionHandler(AssertionHandler ) {}
 #   endif
 
 #   define AssertMessage_NoAssume(_Expression, _Message) NOOP()
+
+#   define Verify(...) __VA_ARGS__
 
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_ASSERT
@@ -106,6 +110,8 @@ CORE_API void SetAssertionReleaseHandler(AssertionReleaseHandler handler);
 
 #   define AssertReleaseMessage_NoAssume(_Expression, _Message) AssertReleaseMessage(_Expression, _Message)
 
+#   define VerifyRelease(...) AssertReleaseMessage(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
+
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
@@ -121,6 +127,8 @@ inline void SetAssertionReleaseHandler(AssertionReleaseHandler ) {}
 #   else
 #       define AssertReleaseMessage_NoAssume(_Expression, _Message)  NOOP()
 #   endif
+
+#   define VerifyRelease(...) __VA_ARGS__
 
 //----------------------------------------------------------------------------
 #endif //!WITH_CORE_ASSERT_RELEASE

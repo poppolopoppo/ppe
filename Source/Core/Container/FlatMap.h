@@ -6,6 +6,7 @@
 #include "Core/Container/Hash.h"
 #include "Core/Container/Pair.h"
 #include "Core/Container/Vector.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -180,28 +181,11 @@ hash_t hash_value(const TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>& flatMa
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <
-    typename _Key,
-    typename _Value,
-    typename _EqualTo,
-    typename _Less,
-    typename _Vector,
-    typename _Char,
-    typename _Traits
->
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>& flatMap) {
-    if (flatMap.empty()) {
-        return oss << "{}";
-    }
-    else {
-        auto it = flatMap.begin();
-        oss << "{(" << it->first << ", " << it->second << ')';
-        ++it;
-        for (const auto end = flatMap.end(); it != end; ++it)
-            oss << ",(" << it->first << ", " << it->second << ')';
-        return oss << '}';
-    }
-}
+template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
+FTextWriter& operator <<(FTextWriter& oss, const TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>& flatMap);
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
+FWTextWriter& operator <<(FWTextWriter& oss, const TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>& flatMap);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

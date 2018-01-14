@@ -5,13 +5,14 @@
 #include "Core/Container/AssociativeVector.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FUri {
+class CORE_NETWORK_API FUri {
 public:
     typedef ASSOCIATIVE_VECTORINSITU(URI, FString, FString, 3) FQueryMap;
 
@@ -51,10 +52,10 @@ public:
     static bool Parse(FUri& dst, const FStringView& strview);
 
     static bool Decode(FString& dst, const FStringView& src);
-    static bool Decode(FOStream& dst, const FStringView& src);
+    static bool Decode(FTextWriter& dst, const FStringView& src);
 
     static bool Encode(FString& dst, const FStringView& src);
-    static bool Encode(FOStream& dst, const FStringView& src);
+    static bool Encode(FTextWriter& dst, const FStringView& src);
 
 private:
     FStringView _scheme;
@@ -78,9 +79,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(
+    TBasicTextWriter<_Char>& oss,
     const Network::FUri& uri ) {
     return oss << uri.Str();
 }

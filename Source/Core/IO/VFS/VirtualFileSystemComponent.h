@@ -7,24 +7,25 @@
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/Function.h"
 
-#include "Core/IO/FS/Policies.h"
-#include "Core/IO/VFS/VirtualFileSystemStream.h"
+#include "Core/IO/StreamPolicies.h"
+#include "Core/IO/StreamProvider.h"
 
 #include <functional>
 
 namespace Core {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FWD_REFPTR(VirtualFileSystemComponent);
 class FDirpath;
 class FFilename;
 class FFileStat;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 class IVirtualFileSystemComponentReadable;
 class IVirtualFileSystemComponentWritable;
 class IVirtualFileSystemComponentReadWritable;
 //----------------------------------------------------------------------------
-class FVirtualFileSystemComponent : public FRefCountable {
+FWD_REFPTR(VirtualFileSystemComponent);
+//----------------------------------------------------------------------------
+class CORE_API FVirtualFileSystemComponent : public FRefCountable {
 public:
     virtual ~FVirtualFileSystemComponent() {}
 
@@ -58,7 +59,7 @@ public:
     virtual size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) = 0;
     virtual size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) = 0;
 
-    virtual TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, EAccessPolicy policy) = 0;
+    virtual UStreamReader OpenReadable(const FFilename& filename, EAccessPolicy policy) = 0;
 };
 //----------------------------------------------------------------------------
 class IVirtualFileSystemComponentWritable {
@@ -69,7 +70,7 @@ public:
     virtual bool RemoveDirectory(const FDirpath& dirpath) = 0;
     virtual bool RemoveFile(const FFilename& filename) = 0;
 
-    virtual TUniquePtr<IVirtualFileSystemOStream> OpenWritable(const FFilename& filename, EAccessPolicy policy) = 0;
+    virtual UStreamWriter OpenWritable(const FFilename& filename, EAccessPolicy policy) = 0;
 };
 //----------------------------------------------------------------------------
 class IVirtualFileSystemComponentReadWritable :
@@ -78,21 +79,7 @@ class IVirtualFileSystemComponentReadWritable :
 public:
     virtual ~IVirtualFileSystemComponentReadWritable() {}
 
-    virtual TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, EAccessPolicy policy) = 0;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-class FVirtualFileSystemComponentStartup {
-public:
-    static void Start(FVirtualFileSystemComponent *component);
-    static void Shutdown(FVirtualFileSystemComponent *component);
-
-    FVirtualFileSystemComponentStartup(FVirtualFileSystemComponent *component) : _component(component) { Start(component); }
-    ~FVirtualFileSystemComponentStartup() { Shutdown(_component.get()); }
-
-private:
-    PVirtualFileSystemComponent _component;
+    virtual UStreamReadWriter OpenReadWritable(const FFilename& filename, EAccessPolicy policy) = 0;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -3,9 +3,12 @@
 #include "MetaObjectHelpers.h"
 
 #include "Atom.h"
+#include "AtomVisitor.h"
 #include "MetaClass.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
+#include "NativeTypes.h"
+#include "TypeTraits.h"
 
 #include "Core/Container/Hash.h"
 #include "Core/Container/Stack.h"
@@ -183,4 +186,26 @@ u128 Fingerprint128(const FMetaObject& obj) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RTTI
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const RTTI::FMetaObject& obj) {
+    RTTI::PMetaObject pobj(const_cast<RTTI::FMetaObject*>(&obj));
+    PrettyPrint(oss, InplaceAtom(pobj));
+    RemoveRef_AssertReachZero_KeepAlive(pobj);
+    return oss;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FMetaObject& obj) {
+    RTTI::PMetaObject pobj(const_cast<RTTI::FMetaObject*>(&obj));
+    PrettyPrint(oss, InplaceAtom(pobj));
+    RemoveRef_AssertReachZero_KeepAlive(pobj);
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

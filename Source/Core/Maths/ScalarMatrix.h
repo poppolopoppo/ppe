@@ -6,7 +6,8 @@
 
 #include "Core/Maths/ScalarVector.h"
 
-#include <iosfwd>
+#include "Core/IO/TextWriter_fwd.h"
+
 #include <initializer_list>
 
 namespace Core {
@@ -244,20 +245,18 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename T, size_t _Width, size_t _Height>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const TScalarMatrix<T, _Width, _Height>& v) {
-    for (size_t i = 0; i < _Height; ++i)
-        oss << v.Row(i) << eol;
-    return oss;
-}
-//----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
 void swap(TScalarMatrix<T, _Width, _Height>& lhs, TScalarMatrix<T, _Width, _Height>& rhs) {
     lhs.Swap(rhs);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char, typename T, size_t _Width, size_t _Height>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TScalarMatrix<T, _Width, _Height>& v) {
+    for (size_t i = 0; i < _Height; ++i)
+        oss << v.Row(i) << Eol;
+    return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -11,6 +11,7 @@
 #include "../Uri.h"
 
 #include "Core/IO/Format.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
 namespace Network {
@@ -19,7 +20,7 @@ namespace Network {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void RequestReadUntil_(std::ostream* poss, FSocketBuffered& socket, const char delim = '\n') {
+static void RequestReadUntil_(FTextWriter* poss, FSocketBuffered& socket, const char delim = '\n') {
     if (not socket.ReadUntil(poss, delim))
         CORE_THROW_IT(FHttpException(EHttpStatus::RequestURITooLong, "HTTP field from client terminated incorrectly"));
 
@@ -43,7 +44,7 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
     Assert(prequest);
     Assert(socket.IsConnected());
 
-    STACKLOCAL_OCSTRSTREAM(oss, 1024);
+    STACKLOCAL_TEXTWRITER(oss, 1024);
 
     prequest->Clear();
 
@@ -51,7 +52,7 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
     {
         RequestReadUntil_(&oss, socket, ' ');
 
-        FStringView requestMethod = oss.MakeView();
+        FStringView requestMethod = oss.Written();
         if (not HttpMethodFromCStr(&prequest->_method, requestMethod))
             CORE_THROW_IT(FHttpException(EHttpStatus::MethodNotAllowed, "HTTP invalid method requested"));
 
@@ -62,7 +63,7 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
     {
         RequestReadUntil_(&oss, socket, ' ');
 
-        if (not FUri::Parse(prequest->_uri, oss.MakeView()))
+        if (not FUri::Parse(prequest->_uri, oss.Written()))
             CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP failed to parse requested path"));
 
         oss.Reset();
@@ -72,7 +73,7 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
     {
         RequestReadUntil_(&oss, socket);
 
-        const FStringView protocol = Strip(oss.MakeView());
+        const FStringView protocol = Strip(oss.Written());
         if (not EqualsI(protocol, FHttpHeader::ProtocolVersion()) )
             CORE_THROW_IT(FHttpException(EHttpStatus::HTTPVersionNotSupported, "HTTP invalid protocol version, expected HTTP/1.1"));
 
@@ -143,11 +144,12 @@ void FHttpRequest::Write(FSocketBuffered* psocket, const FHttpRequest& request) 
     // add content-length header if omitted :
     if (request.GetIFP(FHttpConstNames::ContentLength()).empty()) {
         char tmp[32];
-        const size_t len = Format(tmp, "{0}", request.Body().SizeInBytes());
+        FFixedSizeTextWriter oss(tmp);
+        Format(oss, "{0}", request.Body().SizeInBytes());
 
         psocket->Write(FHttpConstNames::ContentLength().MakeView());
         psocket->Write(": ");
-        psocket->Write(FStringView(tmp, len));
+        psocket->Write(oss.Written());
         psocket->Write("\r\n");
     }
 

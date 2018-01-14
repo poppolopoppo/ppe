@@ -7,16 +7,14 @@
 #include "Core/IO/FS/FileSystemProperties.h"
 #include "Core/IO/FS/MountingPoint.h"
 
-#include "Core/IO/String.h"
-#include "Core/IO/StringView.h"
-
-#include <iosfwd>
+#include "Core/IO/String_fwd.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FFilename {
+class CORE_API FFilename {
 public:
     FFilename() {}
     ~FFilename() {}
@@ -31,6 +29,9 @@ public:
     FFilename(const FFilename& other);
     FFilename& operator =(const FFilename& other);
 
+    FFilename(const FileSystem::FString& content);
+    FFilename& operator =(const FileSystem::FString& content);
+
     FFilename(const FileSystem::FStringView& content);
     FFilename& operator =(const FileSystem::FStringView& content);
 
@@ -38,10 +39,6 @@ public:
     FFilename(const FileSystem::char_type (&content)[_Dim]) : FFilename(MakeStringView(content)) {}
     template <size_t _Dim>
     FFilename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
-
-    template <typename _CharTraits, typename _Allocator>
-    FFilename(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : FFilename(MakeStringView(content)) {}
 
     void Swap(FFilename& other);
 
@@ -141,16 +138,8 @@ inline hash_t hash_value(const FFilename& filename) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const Core::FFilename& filename) {
-    if (filename.empty())
-        return oss;
-    if (!filename.Dirpath().empty())
-        oss << filename.Dirpath();
-    return oss << filename.Basename();
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, const FFilename& filename);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FFilename& filename);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -4,18 +4,19 @@
 
 #include "Core/IO/Format.h"
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const RTTI::FBinaryData& bindata) {
+FTextWriter& operator <<(FTextWriter& oss, const RTTI::FBinaryData& bindata) {
     oss << "FBinaryData:\"";
     Escape(oss, FStringView((const char*)bindata.data(), bindata.size()), EEscape::Hexadecimal);
     return oss << "\"";
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const RTTI::FBinaryData& bindata) {
+FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FBinaryData& bindata) {
     oss << L"FBinaryData:\"";
     Escape(oss, FWStringView((const wchar_t*)bindata.data(), bindata.size()), EEscape::Hexadecimal);
     return oss << L"\"";

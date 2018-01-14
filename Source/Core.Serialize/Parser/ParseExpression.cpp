@@ -11,8 +11,8 @@
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/IO/Format.h"
-
-#include <sstream>
+#include "Core/IO/StringBuilder.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
 namespace Parser {
@@ -87,7 +87,7 @@ RTTI::FMetaAtom *FVariableReference::Eval(FParseContext *context) const {
 }
 //----------------------------------------------------------------------------
 FString FVariableReference::ToString() const {
-    return _name.c_str();
+    return FString(_name.MakeView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -241,12 +241,12 @@ RTTI::FMetaAtom *TArray::Eval(FParseContext *context) const {
 }
 //----------------------------------------------------------------------------
 FString TArray::ToString() const {
-    FOStringStream oss;
+    FStringBuilder oss;
     oss << "TArray[ ";
     for (const auto& it : _items)
         oss << it->ToString() << ", ";
     oss << "]";
-    return oss.str();
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

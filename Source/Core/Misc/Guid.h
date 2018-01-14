@@ -5,6 +5,7 @@
 #include "Core/Container/Hash.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 // Globally Unique Identifier
 // ex: {3F2504E0-4F89-11D3-9A0C-0305E82C3301}
@@ -36,10 +37,10 @@ ALIGN(16) struct FGuid {
 
     static FGuid Zero() { FGuid v; v.Data.as_u64[0] = v.Data.as_u64[1] = 0; return v; }
 
-    static FGuid Generate();
-    static bool TryParse(const FStringView& str, FGuid *guid);
+    CORE_API static FGuid Generate();
+    CORE_API static bool TryParse(const FStringView& str, FGuid *guid);
 
-    static bool TryParse(const char *str, FGuid *guid) { return TryParse(FStringView(str, Length(str)), guid); }
+    inline static bool TryParse(const char *str, FGuid *guid) { return TryParse(FStringView(str, Length(str)), guid); }
     template <size_t _Dim>
     static bool TryParse(const char(&cstr)[_Dim], FGuid *guid) { return TryParse(MakeStringView(cstr), guid); }
 
@@ -85,31 +86,8 @@ inline hash_t hash_value(const FGuid& guid) {
     return hash_as_pod(guid.Data.as_u64);
 }
 //----------------------------------------------------------------------------
-template <typename _Traits>
-std::basic_ostream<char, _Traits>& operator <<(
-    std::basic_ostream<char, _Traits>& oss,
-    const FGuid& guid ) {
-    Format( oss, "{{0:#8X}-{1:#4X}-{2:#4X}-{3:#4X}-{4:#12X}}",
-            guid.Data.as_rfc.G0,
-            guid.Data.as_rfc.G1,
-            guid.Data.as_rfc.G2,
-            guid.Data.as_rfc.G3,
-            guid.Data.as_rfc.G4 );
-    return oss;
-}
-//----------------------------------------------------------------------------
-template <typename _Traits>
-std::basic_ostream<wchar_t, _Traits>& operator <<(
-    std::basic_ostream<wchar_t, _Traits>& oss,
-    const FGuid& guid ) {
-    Format( oss, L"{{0:#8X}-{1:#4X}-{2:#4X}-{3:#4X}-{4:#12X}}",
-            guid.Data.as_rfc.G0,
-            guid.Data.as_rfc.G1,
-            guid.Data.as_rfc.G2,
-            guid.Data.as_rfc.G3,
-            guid.Data.as_rfc.G4 );
-    return oss;
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, const FGuid& guid);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FGuid& guid);
 //----------------------------------------------------------------------------
 CORE_ASSUME_TYPE_AS_POD(FGuid)
 //----------------------------------------------------------------------------

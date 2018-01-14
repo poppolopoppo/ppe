@@ -5,6 +5,7 @@
 #include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/NodeBasedContainerAllocator.h"
 #include "Core/Container/Pair.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 #include <map>
 
@@ -123,19 +124,20 @@ size_t FillMatchingValues_ReturnCount(_Value *pValues, size_t capacity, const TM
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <
-    typename _Key,
-    typename _Value,
-    typename _Pred,
-    typename _Allocator,
-    typename _Char,
-    typename _Traits
->
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {
+template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
+FTextWriter& operator <<(FTextWriter& oss, const TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {
     oss << "{ ";
     for (const auto& it : multiMap)
         oss << '(' << it.first << ", " << it.second << "), ";
     return oss << '}';
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
+FWTextWriter& operator <<(FWTextWriter& oss, const TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {
+    oss << L"{ ";
+    for (const auto& it : multiMap)
+        oss << L'(' << it.first << L", " << it.second << L"), ";
+    return oss << L'}';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

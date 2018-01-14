@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Meta/Cast.h"
 
 namespace Core {
@@ -67,13 +68,6 @@ private:
     value_type _value;
 };
 //----------------------------------------------------------------------------
-template <typename _Unit, typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const TUnit<_Unit>& unit) {
-    return oss << std::fixed << unit.Value();
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Units
@@ -136,26 +130,18 @@ constexpr typename _To::value_type ConvertValue(typename _From::value_type value
 } //!namespace Core
 
 namespace Core {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
+    //----------------------------------------------------------------------------
+    //////////////////////////////////////////////////////////////////////////////
+    //----------------------------------------------------------------------------
 #define UNITS_BEGIN(NAME)
 #define UNITS_END()
 #define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
     typedef Core::Units::TAG::NAME NAME; \
-    extern template class Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >; \
-    template <typename _Traits> \
-    std::basic_ostream<char, _Traits>& operator <<( \
-        std::basic_ostream<char, _Traits>& oss, \
-        const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit ) { \
-        return oss << unit.Value() << " " STRINGIZE(SYMBOL); \
-    } \
-    template <typename _Traits> \
-    std::basic_ostream<wchar_t, _Traits>& operator <<( \
-        std::basic_ostream<wchar_t, _Traits>& oss, \
-        const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit ) { \
-        return oss << unit.Value() << L" " WSTRINGIZE(SYMBOL); \
-    }
+    CORE_API extern template class Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >; \
+    CORE_API FTextWriter& operator <<(FTextWriter& oss, \
+        const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit); \
+    CORE_API FWTextWriter& operator <<(FWTextWriter& oss, \
+        const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit);
 //----------------------------------------------------------------------------
 #include "Core/Maths/Units.Definitions-inl.h"
 //----------------------------------------------------------------------------
@@ -164,6 +150,11 @@ namespace Core {
 #undef UNITS_BEGIN
 //----------------------------------------------------------------------------
 CORE_ASSUME_TYPE_AS_POD(Units::TUnit<_Traits>, typename _Traits)
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Unit>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Units::TUnit<_Unit>& unit) {
+    return oss << unit.Value();
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

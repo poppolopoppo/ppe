@@ -13,15 +13,16 @@
 #include "IO/String.h"
 #include "IO/StringView.h"
 
-#include "Thread/ReadWriteLock.h"
+#ifdef USE_CRT_DEBUG
+#   include "Thread/ReadWriteLock.h"
 
-#include "Misc/Platform_Windows.h"
+#   include "Misc/Platform_Windows.h"
 
-#include <iostream>
-#include <crtdbg.h>
+#   include <crtdbg.h>
 
-#include <thread>
-#include <unordered_map>
+#   include <thread>
+#   include <unordered_map>
+#endif
 
 namespace Core {
 //----------------------------------------------------------------------------

@@ -73,5 +73,5 @@
 */
 #include "Core.Network/Network.h"
 #include "Core.Network/Socket/Address.h"
-#include "core.network/Socket/Socket.h"
+#include "Core.Network/Socket/Socket.h"
 

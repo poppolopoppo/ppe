@@ -4,6 +4,7 @@
 
 #include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/NodeBasedContainerAllocator.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 #include <list>
 
@@ -25,17 +26,20 @@ using TList = std::list< T, _Allocator >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <
-    typename T,
-    typename _Allocator,
-    typename _Char,
-    typename _Traits
->
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TList<T, _Allocator>& list) {
+template <typename T, typename _Allocator>
+FTextWriter& operator <<(FTextWriter& oss, const TList<T, _Allocator>& list) {
     oss << "[ ";
     for (const auto& it : list)
         oss << it << ", ";
     return oss << ']';
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+FWTextWriter& operator <<(FWTextWriter& oss, const TList<T, _Allocator>& list) {
+    oss << L"[ ";
+    for (const auto& it : list)
+        oss << it << L", ";
+    return oss << L']';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

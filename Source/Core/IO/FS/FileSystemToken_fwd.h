@@ -10,10 +10,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FFFileSystemTokenTag;
+struct FFileSystemTokenTag;
 //----------------------------------------------------------------------------
 using FFileSystemToken = Core::TToken<
-    FFFileSystemTokenTag,
+    FFileSystemTokenTag,
     FileSystem::char_type,
     FileSystem::CaseSensitive,
     FileSystem::TTokenTraits

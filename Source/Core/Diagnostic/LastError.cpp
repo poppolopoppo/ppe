@@ -2,7 +2,9 @@
 
 #include "LastError.h"
 
-#include "IO/Stream.h"
+#include "IO/StreamProvider.h"
+#include "IO/String.h"
+#include "IO/StringBuilder.h"
 #include "IO/StringView.h"
 
 #ifdef PLATFORM_WINDOWS
@@ -13,7 +15,6 @@
 
 #   include "IO/Format.h"
 #   include "Misc/Platform_Windows.h"
-#   include <comdef.h>
 #endif
 
 namespace Core {

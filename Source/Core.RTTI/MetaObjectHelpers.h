@@ -4,8 +4,6 @@
 
 #include "Core/Memory/RefPtr.h"
 
-#include <iosfwd>
-
 namespace Core {
 namespace RTTI {
 class FMetaClass;
@@ -96,9 +94,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_RTTI_API std::basic_ostream<char>& operator << (std::basic_ostream<char>& oss, const RTTI::FMetaObject& obj);
-//----------------------------------------------------------------------------
-CORE_RTTI_API std::basic_ostream<wchar_t>& operator << (std::basic_ostream<wchar_t>& oss, const RTTI::FMetaObject& obj);
+CORE_RTTI_API FTextWriter& operator << (FTextWriter& oss, const RTTI::FMetaObject& obj);
+CORE_RTTI_API FWTextWriter& operator << (FWTextWriter& oss, const RTTI::FMetaObject& obj);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

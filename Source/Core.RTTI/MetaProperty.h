@@ -6,6 +6,8 @@
 #include "Core.RTTI/Typedefs.h"
 #include "Core.RTTI/TypeTraits.h"
 
+#include "Core/IO/TextWriter_fwd.h"
+
 #if USE_CORE_RTTI_CHECKS
 #   define WITH_CORE_RTTI_PROPERTY_CHECKS
 #endif
@@ -115,8 +117,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EPropertyFlags flags);
-CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EPropertyFlags flags);
+CORE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, RTTI::EPropertyFlags flags);
+CORE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EPropertyFlags flags);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

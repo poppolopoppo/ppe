@@ -4,6 +4,8 @@
 
 #include "Core.RTTI/TypeTraits.h"
 
+#include "Core/IO/TextWriter_fwd.h"
+
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------
@@ -73,8 +75,8 @@ public:
 
     hash_t HashValue() const { return _traits->HashValue(*this); }
 
-    void Format(std::basic_ostream<char>& oss) const { _traits->Format(oss, *this); }
-    void Format(std::basic_ostream<wchar_t>& oss) const { _traits->Format(oss, *this); }
+    void Format(FTextWriter& oss) const { _traits->Format(oss, *this); }
+    void Format(FWTextWriter& oss) const { _traits->Format(oss, *this); }
 
     void Swap(FAtom& other) {
         std::swap(_data, other._data);
@@ -131,8 +133,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator << (std::basic_ostream<_Char, _Traits>& oss, const RTTI::FAtom& atom) {
+template <typename _Char>
+TBasicTextWriter<_Char>& operator << (TBasicTextWriter<_Char>& oss, const RTTI::FAtom& atom) {
     atom.Format(oss);
     return oss;
 }

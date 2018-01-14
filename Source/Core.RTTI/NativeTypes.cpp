@@ -11,6 +11,8 @@
 
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/IO/FS/Filename.h"
+#include "Core/IO/String.h"
+#include "Core/IO/StringView.h"
 #include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/ScalarMatrix.h"
 #include "Core/Maths/ScalarMatrixHelpers.h"
@@ -72,11 +74,11 @@ public:
         return visitor->Visit(static_cast<const IScalarTraits*>(this), atom.TypedData<T>());
     }
 
-    virtual void Format(std::basic_ostream<char>& oss, const FAtom& atom) const override final {
+    virtual void Format(FTextWriter& oss, const FAtom& atom) const override final {
         base_traits::Format(oss, atom);
     }
 
-    virtual void Format(std::basic_ostream<wchar_t>& oss, const FAtom& atom) const override final {
+    virtual void Format(FWTextWriter& oss, const FAtom& atom) const override final {
         base_traits::Format(oss, atom);
     }
 };
@@ -117,12 +119,12 @@ void TNativeTypeTraits<PMetaObject>::DeepCopy(const FAtom& src, const FAtom& dst
 }
 //----------------------------------------------------------------------------
 template <>
-void TNativeTypeTraits<PMetaObject>::Format(std::basic_ostream<char>& oss, const FAtom& atom) const {
+void TNativeTypeTraits<PMetaObject>::Format(FTextWriter& oss, const FAtom& atom) const {
     PrettyPrint(oss, atom);
 }
 //----------------------------------------------------------------------------
 template <>
-void TNativeTypeTraits<PMetaObject>::Format(std::basic_ostream<wchar_t>& oss, const FAtom& atom) const {
+void TNativeTypeTraits<PMetaObject>::Format(FWTextWriter& oss, const FAtom& atom) const {
     PrettyPrint(oss, atom);
 }
 //----------------------------------------------------------------------------

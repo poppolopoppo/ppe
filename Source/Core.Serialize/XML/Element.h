@@ -8,6 +8,7 @@
 #include "Core/Container/AssociativeVector.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/Function.h"
 
@@ -54,7 +55,7 @@ public:
     const FElement* PrevSibling() const { return _prevSibling.get(); }
     void SetPrevSibling(FElement* value) { _prevSibling.reset(value); }
 
-    void ToStream(std::basic_ostream<char>& oss) const;
+    void ToStream(FTextWriter& oss) const;
 
     FStringView operator [](const XML::FName& name) const; // return the attribute IFP
 
@@ -78,7 +79,7 @@ private:
     children_type _children;
 };
 //----------------------------------------------------------------------------
-inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FElement& elt) {
+inline FTextWriter& operator <<(FTextWriter& oss, const FElement& elt) {
     elt.ToStream(oss);
     return oss;
 }

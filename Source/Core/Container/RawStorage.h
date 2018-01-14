@@ -20,6 +20,9 @@ namespace Core {
 #define RAWSTORAGE_ALIGNED(_DOMAIN, T, _ALIGNMENT) \
     ::Core::TRawStorage<T, ALIGNED_ALLOCATOR(_DOMAIN, T, _ALIGNMENT)>
 //----------------------------------------------------------------------------
+#define RAWSTORAGE_STACK(_DOMAIN, T) \
+    ::Core::TRawStorage<T, STACK_ALLOCATOR(_DOMAIN, T)>
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // No dtor will be called !
@@ -50,6 +53,7 @@ public:
     explicit TRawStorage(size_type size);
     explicit TRawStorage(allocator_type&& allocator);
     TRawStorage(size_type size, allocator_type&& allocator);
+    TRawStorage(Meta::FForceInit, const TMemoryView<T>& stolen);
 
     template <typename _It>
     TRawStorage(_It&& begin, _It&& end);
@@ -104,11 +108,13 @@ public:
     FORCE_INLINE void Resize_DiscardData(size_type size) { Resize(size, false); }
     FORCE_INLINE void Resize_KeepData(size_type size) { Resize(size, true); }
 
-    template <typename U, typename A>
-    typename std::enable_if< sizeof(U) == sizeof(T) >::type Clear_StealData(TRawStorage<U, A>& other) {
-        AssertRelease(allocator() == other.allocator());
-        clear_ReleaseMemory();
-        Swap(other);
+    // !!! NEED TO DESTROY THE BLOCK AFTERWARDS WITH THE CORRECT ALLOCATOR !!!
+    template <typename U>
+    TMemoryView<U> clear_StealDataUnsafe() {
+        const TMemoryView<U> stolen = MakeView().template Cast<U>();
+        _storage = nullptr; // won't delete the block !
+        _size = 0;
+        return stolen;
     }
 
     template <typename _It>

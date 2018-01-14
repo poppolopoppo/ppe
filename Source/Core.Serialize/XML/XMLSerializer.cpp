@@ -10,9 +10,10 @@
 
 #include "Core/Container/HashSet.h"
 #include "Core/Container/Vector.h"
-#include "Core/IO/BufferedStreamProvider.h"
+#include "Core/IO/BufferedStream.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/StreamProvider.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
 namespace Serialize {
@@ -30,8 +31,8 @@ struct FXMLEscaped_ {
         escaped.Serialize_([&output](char  ch) { output.WritePOD(ch); });
     }
 
-    inline friend std::basic_ostream<char>& operator <<(
-        std::basic_ostream<char>& oss,
+    inline friend FTextWriter& operator <<(
+        FTextWriter& oss,
         const FXMLEscaped_& escaped ) {
         escaped.Serialize_([&oss](char  ch) { oss.put(ch); });
         return oss;

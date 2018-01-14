@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/HashFunctions.h"
 
 namespace Core {
@@ -9,7 +10,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FDateTime;
-class FTimestamp {
+class CORE_API FTimestamp {
 public:
     typedef i64 value_type;
 
@@ -41,8 +42,8 @@ private:
 };
 CORE_ASSUME_TYPE_AS_POD(FTimestamp)
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const FTimestamp& t) {
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const FTimestamp& t) {
     return oss << t.ToDateTime();
 }
 //----------------------------------------------------------------------------

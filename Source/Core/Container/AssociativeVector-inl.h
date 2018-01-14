@@ -282,4 +282,36 @@ void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Remove_AssertExists(co
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+FTextWriter& operator <<(FTextWriter& oss, const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
+    if (associativeVector.empty()) {
+        return oss << "{}";
+    }
+    else {
+        auto it = associativeVector.begin();
+        oss << "{(" << it->first << ", " << it->second << ')';
+        ++it;
+        for (const auto end = associativeVector.end(); it != end; ++it)
+            oss << ",(" << it->first << ", " << it->second << ')';
+        return oss << '}';
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+FWTextWriter& operator <<(FWTextWriter& oss, const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
+    if (associativeVector.empty()) {
+        return oss << L"{}";
+    }
+    else {
+        auto it = associativeVector.begin();
+        oss << L"{(" << it->first << L", " << it->second << L')';
+        ++it;
+        for (const auto end = associativeVector.end(); it != end; ++it)
+            oss << L",(" << it->first << L", " << it->second << L')';
+        return oss << L'}';
+    }
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

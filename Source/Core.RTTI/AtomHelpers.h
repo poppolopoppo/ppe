@@ -75,8 +75,8 @@ CORE_RTTI_API FString ToString(const RTTI::FAtom& atom);
 //----------------------------------------------------------------------------
 CORE_RTTI_API FWString ToWString(const RTTI::FAtom& atom);
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator << (std::basic_ostream<_Char, _Traits>& oss, const RTTI::FStackLocalAtom& stackLocalAtom) {
+template <typename _Char>
+TBasicTextWriter<_Char>& operator << (TBasicTextWriter<_Char>& oss, const RTTI::FStackLocalAtom& stackLocalAtom) {
     return oss << stackLocalAtom.MakeAtom();
 }
 //----------------------------------------------------------------------------

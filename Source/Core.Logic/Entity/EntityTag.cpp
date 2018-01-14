@@ -2,6 +2,9 @@
 
 #include "EntityTag.h"
 
+#include "Core/IO/String.h"
+#include "Core/IO/StringView.h"
+
 #include <locale>
 
 namespace Core {
@@ -17,6 +20,14 @@ bool FEntityTagTokenTraits::IsAllowedChar(char ch) const {
 //----------------------------------------------------------------------------
 FEntityTag::FEntityTag(const char *content)
 :   parent_type(content) {}
+//----------------------------------------------------------------------------
+FEntityTag::FEntityTag(const FString& content)
+:   parent_type(content.data(), content.size())
+{}
+//----------------------------------------------------------------------------
+FEntityTag::FEntityTag(const FStringView& content)
+:   parent_type(content.data(), content.size())
+{}
 //----------------------------------------------------------------------------
 FEntityTag::FEntityTag(const char *content, size_t length)
 :   parent_type(content, length) {}

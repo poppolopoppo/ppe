@@ -5,12 +5,11 @@
 #include "Core/IO/FS/Dirname.h"
 #include "Core/IO/FS/FileSystemProperties.h"
 
-#include "Core/IO/String.h"
-#include "Core/IO/StringView.h"
+#include "Core/IO/String_fwd.h"
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/UniqueView.h"
 
 #include <initializer_list>
-#include <iosfwd>
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -20,7 +19,7 @@ class FFilename;
 FWD_REFPTR(FileSystemNode);
 class FMountingPoint;
 //----------------------------------------------------------------------------
-class FDirpath {
+class CORE_API FDirpath {
 public:
     enum : size_t { MaxDepth = 16 };
 
@@ -44,6 +43,9 @@ public:
 
     FDirpath(std::initializer_list<const FileSystem::char_type *> path);
 
+    FDirpath(const FileSystem::FString& str);
+    FDirpath& operator =(const FileSystem::FString& str);
+
     FDirpath(const FileSystem::FStringView& content);
     FDirpath& operator =(const FileSystem::FStringView& content);
 
@@ -51,10 +53,6 @@ public:
     FDirpath(const FileSystem::char_type (&content)[_Dim]) : FDirpath(MakeStringView(content)) {}
     template <size_t _Dim>
     FDirpath& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
-
-    template <typename _CharTraits, typename _Allocator>
-    FDirpath(const std::basic_string<FileSystem::char_type, _CharTraits, _Allocator>& str)
-        : FDirpath(MakeStringView(str)) {}
 
     size_t Depth() const;
     Core::FMountingPoint MountingPoint() const;
@@ -89,6 +87,9 @@ public:
     static bool Normalize(FDirpath* normalized, const FDirpath& path);
     static bool Relative(FDirpath* relative, const FDirpath& origin, const FDirpath& other);
 
+    friend FDirpath operator /(const FDirpath& lhs, const FDirname& rhs);
+    friend FFilename operator /(const FDirpath& lhs, const class FBasename& basename);
+
 private:
     SCFileSystemNode _path;
 };
@@ -119,22 +120,8 @@ inline hash_t hash_value(const FDirpath& dirpath) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const Core::FDirpath& dirpath) {
-
-    Core::FMountingPoint mountingPoint;
-    STACKLOCAL_POD_ARRAY(FDirname, dirnames, dirpath.Depth());
-    const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
-
-    if (false == mountingPoint.empty())
-        oss << mountingPoint << wchar_t(FileSystem::Separator);
-    for (size_t i = 0; i < k; ++i)
-        oss << dirnames[i] << wchar_t(FileSystem::Separator);
-
-    return oss;
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, const FDirpath& dirpath);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDirpath& dirpath);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

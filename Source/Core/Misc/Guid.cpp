@@ -3,6 +3,7 @@
 #include "Guid.h"
 
 #include "IO/String.h"
+#include "IO/TextWriter.h"
 
 #ifdef PLATFORM_WINDOWS
 #   include <Objbase.h>
@@ -66,6 +67,51 @@ bool FGuid::TryParse(const FStringView& str, FGuid *guid) {
     Assert(u64(g4) == guid->Data.as_rfc.G4);
 
     return true;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const FGuid& guid) {
+#if 0
+    Format(oss, "{{0:#8X}-{1:#4X}-{2:#4X}-{3:#4X}-{4:#12X}}",
+        guid.Data.as_rfc.G0,
+        guid.Data.as_rfc.G1,
+        guid.Data.as_rfc.G2,
+        guid.Data.as_rfc.G3,
+        guid.Data.as_rfc.G4);
+#else
+    const FTextFormat fmt = oss.Format();
+    oss << '{'
+        << FTextFormat::Hexadecimal << FTextFormat::PadLeft(8, '0') << guid.Data.as_rfc.G0
+        << '-'
+        << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, '0') << guid.Data.as_rfc.G1
+        << '-'
+        << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, '0') << guid.Data.as_rfc.G2
+        << '-'
+        << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, '0') << guid.Data.as_rfc.G3
+        << '-'
+        << FTextFormat::Hexadecimal << FTextFormat::PadLeft(12, '0') << guid.Data.as_rfc.G4
+        << '}'
+        << fmt;
+#endif
+    return oss;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const FGuid& guid) {
+    const FTextFormat fmt = oss.Format();
+    oss << L'{'
+        << FTextFormat::Hexadecimal << FTextFormat::PadLeft(8, L'0') << guid.Data.as_rfc.G0
+        << L'-'
+        << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << guid.Data.as_rfc.G1
+        << L'-'
+        << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << guid.Data.as_rfc.G2
+        << L'-'
+        << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << guid.Data.as_rfc.G3
+        << L'-'
+        << FTextFormat::Hexadecimal << FTextFormat::PadLeft(12, L'0') << guid.Data.as_rfc.G4
+        << '}'
+        << fmt;
+    return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

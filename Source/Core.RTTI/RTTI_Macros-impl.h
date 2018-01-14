@@ -12,6 +12,8 @@
 #include "Core.RTTI/MetaProperty.h"
 #include "Core.RTTI/NativeTypes.h"
 
+#include "Core/IO/StringView.h"
+
 #include <type_traits>
 
 //----------------------------------------------------------------------------

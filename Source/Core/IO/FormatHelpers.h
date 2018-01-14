@@ -3,11 +3,10 @@
 #include "Core/Core.h"
 
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter.h"
 #include "Core/Memory/MemoryView.h"
-    #include "Core/Meta/Function.h"
+#include "Core/Meta/Function.h"
 #include "Core/Meta/StronglyTyped.h"
-
-#include <iosfwd>
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -19,10 +18,8 @@ void Format(char *buffer, size_t capacity, FCountOfElements count);
 void Format(wchar_t *buffer, size_t capacity, FCountOfElements count);
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const Fmt::FCountOfElements& count) {
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::FCountOfElements& count) {
     _Char buffer[32];
     Fmt::Format(buffer, lengthof(buffer), count);
     return oss << buffer;
@@ -36,10 +33,8 @@ void Format(char *buffer, size_t capacity, FPointer ptr);
 void Format(wchar_t *buffer, size_t capacity, FPointer ptr);
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const Fmt::FPointer& ptr) {
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::FPointer& ptr) {
     _Char buffer[32];
     Fmt::Format(buffer, lengthof(buffer), ptr);
     return oss << buffer;
@@ -53,10 +48,8 @@ void Format(char *buffer, size_t capacity, FSizeInBytes value);
 void Format(wchar_t *buffer, size_t capacity, FSizeInBytes value);
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const Fmt::FSizeInBytes& size) {
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::FSizeInBytes& size) {
     _Char buffer[32];
     Fmt::Format(buffer, lengthof(buffer), size);
     return oss << buffer;
@@ -66,58 +59,29 @@ std::basic_ostream<_Char, _Traits>& operator <<(
 //----------------------------------------------------------------------------
 namespace Fmt {
 template <typename T, typename _Char>
-struct TPadLeft {
-    const T *Value = nullptr;
-    size_t Count = 0;
-    _Char Char = _Char(' ');
+struct TPadded {
+    const T* Outp;
+    FTextFormat::EPadding Align;
+    size_t Width;
+    _Char FillChar;
 };
 template <typename T, typename _Char>
-TPadLeft<T, _Char> PadLeft(const T& value, size_t count, _Char ch = _Char(' ')) {
-    return TPadLeft<T, _Char>{ &value, count, ch };
+TPadded<T, _Char> PadLeft(const T& value, size_t width, _Char ch = _Char(' ')) {
+    return TPadded<T, _Char>{ &value, FTextFormat::Padding_Left, width, ch };
+}
+template <typename T, typename _Char>
+TPadded<T, _Char> PadCenter(const T& value, size_t width, _Char ch = _Char(' ')) {
+    return TPadded<T, _Char>{ &value, FTextFormat::Padding_Center, width, ch };
+}
+template <typename T, typename _Char>
+TPadded<T, _Char> PadRight(const T& value, size_t width, _Char ch = _Char(' ')) {
+    return TPadded<T, _Char>{ &value, FTextFormat::Padding_Right, width, ch };
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename T>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const Fmt::TPadLeft<T, _Char>& pad ) {
-    const _Char fill = oss.fill();
-    const std::streamsize width = oss.width();
-    const std::ios_base::fmtflags flags = oss.flags();
-    oss << std::setfill(pad.Char) << std::right << std::setw(pad.Count) << *pad.Value;
-    oss.fill(fill);
-    oss.width(width);
-    oss.flags(flags);
-    return oss;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace Fmt {
-template <typename T, typename _Char>
-struct TPadRight {
-    const T *Value = nullptr;
-    size_t Count = 0;
-    _Char Char = _Char(' ');
-};
-template <typename T, typename _Char>
-TPadRight<T, _Char> PadRight(const T& value, size_t count, _Char ch = _Char(' ')) {
-    return TPadRight<T, _Char>{ &value, count, ch };
-}
-} //!namespace Fmt
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename T>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const Fmt::TPadRight<T, _Char>& pad ) {
-    const _Char fill = oss.fill();
-    const std::streamsize width = oss.width();
-    const std::ios_base::fmtflags flags = oss.flags();
-    oss << std::setfill(pad.Char) << std::left << std::setw(pad.Count) << *pad.Value;
-    oss.fill(fill);
-    oss.width(width);
-    oss.flags(flags);
-    return oss;
+template <typename _Char, typename T>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TPadded<T, _Char>& padded) {
+    return oss << FTextFormat::Pad(padded.Align, padded.Width, padded.FillChar) << *padded.Outp;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -134,10 +98,8 @@ TNotFirstTime<T> NotFirstTime(T&& outp) {
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename T>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    Fmt::TNotFirstTime<T>& notFirstTime ) {
+template <typename _Char, typename T>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, Fmt::TNotFirstTime<T>& notFirstTime ) {
     if (Unlikely(notFirstTime.First))
         notFirstTime.First = false;
     else
@@ -159,10 +121,8 @@ TRepeater<T> Repeat(const T& value, size_t count) {
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename T>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const Fmt::TRepeater<T>& repeat ) {
+template <typename _Char, typename T>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TRepeater<T>& repeat ) {
     Assert(repeat.Value);
     forrange(i, 0, repeat.Count)
         oss << *repeat.Value;
@@ -183,10 +143,8 @@ TConditional<T> Conditional(const T& value, bool enabled) {
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename T>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const Fmt::TConditional<T>& cond ) {
+template <typename _Char, typename T>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TConditional<T>& cond) {
     Assert(cond.Value);
     if (cond.Enabled)
         oss << *cond.Value;
@@ -208,10 +166,8 @@ TTernary<_True, _False> Ternary(bool condition, const _True& ifTrue, const _Fals
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename _True, typename _False>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const Fmt::TTernary<_True, _False>& ternary ) {
+template <typename _Char, typename _True, typename _False>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TTernary<_True, _False>& ternary ) {
     Assert(ternary.IfTrue);
     Assert(ternary.IfFalse);
     return ((ternary.Condition)
@@ -236,7 +192,7 @@ TJoin<T, const char*> CommaSeparated(const TMemoryView<T>& data) {
 } //!namespace Fmt
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Elt, typename _Sep>
-std::basic_ostream<_Char>& operator <<(std::basic_ostream<_Char>& oss, const Fmt::TJoin<_Elt, _Sep>& join) {
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TJoin<_Elt, _Sep>& join) {
     if (join.Data.size()) {
         oss << join.Data.front();
         forrange(i, 1, join.Data.size())
@@ -256,8 +212,8 @@ struct FHexDump {
 };
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::FHexDump& hexDump);
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Fmt::FHexDump& hexDump);
+CORE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::FHexDump& hexDump);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDump);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -280,24 +236,24 @@ struct FIndent {
 };
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::FIndent& indent);
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Fmt::FIndent& indent);
+CORE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::FIndent& indent);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FIndent& indent);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
 template <typename _Char>
-using TBasicFormator = Meta::TFunction<void (std::basic_ostream<_Char>&)>;
+using TBasicFormator = Meta::TFunction<void (TBasicTextWriter<_Char>&)>;
 using FFormator = TBasicFormator<char>;
 using FWFormator = TBasicFormator<wchar_t>;
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-inline std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::FFormator& formator) {
+inline FTextWriter& operator <<(FTextWriter& oss, const Fmt::FFormator& formator) {
     formator(oss);
     return oss;
 }
 //----------------------------------------------------------------------------
-inline std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& woss, const Fmt::FWFormator& wformator) {
+inline FWTextWriter& operator <<(FWTextWriter& woss, const Fmt::FWFormator& wformator) {
     wformator(woss);
     return woss;
 }

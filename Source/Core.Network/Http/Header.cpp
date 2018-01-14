@@ -9,6 +9,10 @@
 #include "../Socket/SocketBuffered.h"
 #include "../Uri.h"
 
+#include "Core/IO/String.h"
+#include "Core/IO/StringBuilder.h"
+#include "Core/IO/TextWriter.h"
+
 namespace Core {
 namespace Network {
 //----------------------------------------------------------------------------
@@ -16,7 +20,7 @@ namespace Network {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool HeaderReadUntil_(std::ostream* poss, FSocketBuffered& socket, const char delim = '\n') {
+static bool HeaderReadUntil_(FTextWriter* poss, FSocketBuffered& socket, const char delim = '\n') {
     if (socket.ReadUntil(poss, delim)) {
         socket.EatWhiteSpaces();
         return true;
@@ -71,13 +75,13 @@ bool FHttpHeader::Read(FHttpHeader* pheader, FSocketBuffered& socket) {
     Assert(pheader);
     Assert(socket.IsConnected());
 
-    STACKLOCAL_OCSTRSTREAM(oss, 1024);
+    STACKLOCAL_TEXTWRITER(oss, 1024);
 
     char ch;
     while (socket.Peek(ch)) {
         HeaderReadUntil_(&oss, socket);
 
-        const FStringView line = Strip(oss.MakeView());
+        const FStringView line = Strip(oss.Written());
         const auto doublePoint = line.Find(':');
 
         if (line.end() == doublePoint) {
@@ -105,23 +109,23 @@ bool FHttpHeader::Read(FHttpHeader* pheader, FSocketBuffered& socket) {
 void FHttpHeader::PackCookie(FHttpHeader* pheader, const FCookieMap& cookie) {
     Assert(pheader);
 
-    FOStringStream oss;
+    FStringBuilder oss;
 
     bool many = false;
     for (const auto& it : cookie) {
         if (many) {
-            oss.put(';');
-            oss.put(' ');
+            oss.Put(';');
+            oss.Put(' ');
         }
 
         FUri::Encode(oss, it.first.MakeView());
-        oss.put('=');
+        oss.Put('=');
         FUri::Encode(oss, it.second.MakeView());
 
         many = true;
     }
 
-    pheader->Add(FHttpConstNames::Cookie(), oss.str() );
+    pheader->Add(FHttpConstNames::Cookie(), oss.ToString());
 }
 //----------------------------------------------------------------------------
 bool FHttpHeader::UnpackCookie(FCookieMap* pcookie, const FHttpHeader& header) {
@@ -162,21 +166,21 @@ void FHttpHeader::PackPost(FHttpHeader* pheader, const FPostMap& post) {
 
     pheader->_body.clear();
 
-    FStreamWriterOStream oss(&pheader->_body);
+    FTextWriter oss(&pheader->_body);
 
     bool many = false;
     for (const auto& it : post) {
         if (many)
-            oss.put('&');
+            oss.Put('&');
 
         FUri::Encode(oss, it.first.MakeView());
-        oss.put('=');
+        oss.Put('=');
         FUri::Encode(oss, it.second.MakeView());
 
         many = true;
     }
 
-    pheader->Add(FHttpConstNames::ContentType(), "application/x-www-form-urlencoded");
+    pheader->Add(FHttpConstNames::ContentType(), FString("application/x-www-form-urlencoded"));
 }
 //----------------------------------------------------------------------------
 bool FHttpHeader::UnpackPost(FPostMap* ppost, const FHttpHeader& header) {

@@ -4,6 +4,7 @@
 
 #include "Core.Network/Socket/Socket.h"
 
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/UniqueView.h"
 
 namespace Core {
@@ -61,7 +62,7 @@ public:
     bool Put(char ch) { return WritePOD(ch); }
 
     void EatWhiteSpaces();
-    bool ReadUntil(std::ostream* poss, char delim);
+    bool ReadUntil(FTextWriter* poss, char delim);
 
     void FlushRead(bool block = false);
     void FlushWrite();

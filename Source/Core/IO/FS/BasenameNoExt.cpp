@@ -2,6 +2,9 @@
 
 #include "BasenameNoExt.h"
 
+#include "Allocator/Alloca.h"
+#include "IO/String.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -30,8 +33,25 @@ FBasenameNoExt& FBasenameNoExt::operator =(const FFileSystemToken& token) {
     return *this;
 }
 //----------------------------------------------------------------------------
+FBasenameNoExt::FBasenameNoExt(const FileSystem::FString& content)
+    : FBasenameNoExt(content.MakeView())
+{}
+//----------------------------------------------------------------------------
 void FBasenameNoExt::Swap(FBasenameNoExt& other) {
     parent_type::Swap(other);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FBasenameNoExt operator +(const FBasenameNoExt& lhs, const FileSystem::FStringView& rhs) {
+    const size_t len = (lhs.size() + rhs.size());
+    Assert(len);
+
+    STACKLOCAL_POD_ARRAY(FileSystem::char_type, concat, len);
+    ::memcpy(concat.data(), lhs.MakeView().data(), lhs.MakeView().SizeInBytes());
+    ::memcpy(concat.data() + lhs.size(), rhs.data(), rhs.SizeInBytes());
+
+    return FBasenameNoExt(FileSystem::FStringView(concat));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

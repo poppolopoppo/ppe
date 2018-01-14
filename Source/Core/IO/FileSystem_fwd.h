@@ -2,7 +2,6 @@
 
 #include "Core/Core.h"
 
-#include "Core/IO/FS/Policies.h"
 #include "Core/IO/FS/FileSystemToken_fwd.h"
 
 namespace Core {

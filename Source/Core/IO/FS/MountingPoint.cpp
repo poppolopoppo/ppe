@@ -2,9 +2,20 @@
 
 #include "MountingPoint.h"
 
+#include "IO/String.h"
+#include "IO/StringView.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FMountingPoint::FMountingPoint(const FileSystem::FString& content)
+:   FMountingPoint(content.MakeView())
+{}
+//----------------------------------------------------------------------------
+FMountingPoint& FMountingPoint::operator =(const FileSystem::FString& content) {
+    return operator =(content.MakeView());
+}
 //----------------------------------------------------------------------------
 FMountingPoint::FMountingPoint(const FileSystem::FStringView& content)
 :   parent_type(content) {

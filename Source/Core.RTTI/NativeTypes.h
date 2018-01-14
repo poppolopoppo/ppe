@@ -12,6 +12,7 @@
 #include "Core/Container/AssociativeVector.h"
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Vector.h"
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/SegregatedMemoryPool.h" // Allocate()/Deallocate()
 
 namespace Core {
@@ -76,8 +77,8 @@ public: // ITypeTraits
 
     virtual hash_t HashValue(const FAtom& atom) const override final;
 
-    virtual void Format(std::basic_ostream<char>& oss, const FAtom& atom) const override;
-    virtual void Format(std::basic_ostream<wchar_t>& oss, const FAtom& atom) const override;
+    virtual void Format(FTextWriter& oss, const FAtom& atom) const override;
+    virtual void Format(FWTextWriter& oss, const FAtom& atom) const override;
 };
 //----------------------------------------------------------------------------
 template <typename T>

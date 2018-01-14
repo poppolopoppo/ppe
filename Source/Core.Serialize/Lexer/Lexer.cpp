@@ -7,8 +7,9 @@
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 #include "Core/Container/Stack.h"
-#include "Core/IO/Stream.h"
+#include "Core/IO/StreamProvider.h"
 #include "Core/IO/String.h"
+#include "Core/IO/StringBuilder.h"
 
 #include <algorithm>
 #include <locale>
@@ -284,8 +285,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
     }
     else if ('"' == ch)
     {
-        FOStringStream oss;
-        oss.exceptions(FOStringStream::failbit | FOStringStream::badbit);
+        FStringBuilder oss;
 
         // weak quoting
         ch = reader.Read();
@@ -309,16 +309,16 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                 // http://en.wikipedia.org/wiki/Escape_sequences_in_C
                 switch (ToLower(ch))
                 {
-                case 'a': oss.put('\a'); break;
-                case 'b': oss.put('\b'); break;
-                case 'f': oss.put('\f'); break;
-                case 'n': oss.put('\n'); break;
-                case 'r': oss.put('\r'); break;
-                case 't': oss.put('\t'); break;
+                case 'a': oss.Put('\a'); break;
+                case 'b': oss.Put('\b'); break;
+                case 'f': oss.Put('\f'); break;
+                case 'n': oss.Put('\n'); break;
+                case 'r': oss.Put('\r'); break;
+                case 't': oss.Put('\t'); break;
 
-                case '"': oss.put('"'); break;
-                case '\'': oss.put('\''); break;
-                case '\\': oss.put('\\'); break;
+                case '"': oss.Put('"'); break;
+                case '\'': oss.Put('\''); break;
+                case '\\': oss.Put('\\'); break;
 
                 // octal
                 case '0':
@@ -338,7 +338,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                         d0 = d0 * 8 + (ch - '0');
                     }
 
-                    oss.put(char(d0));
+                    oss.Put(char(d0));
 
                     break;
 
@@ -353,7 +353,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     ch = (char)((d0 <= '9' ? d0 - '0' : d0 - 'a' + 10) * 16 +
                                 (d1 <= '9' ? d1 - '0' : d1 - 'a' + 10) );
 
-                    oss.put(ch);
+                    oss.Put(ch);
 
                     break;
 
@@ -373,11 +373,11 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                                 u16(d3 <= '9' ? d3 - '0' : d3 - 'a' + 10);
 
                     if (unicode <= 0xFF) {
-                        oss.put(char(unicode));
+                        oss.Put(char(unicode));
                     }
                     else {
-                        oss.put(char(unicode >> 8));
-                        oss.put(char(unicode & 0xFF));
+                        oss.Put(char(unicode >> 8));
+                        oss.Put(char(unicode & 0xFF));
                     }
 
                     break;
@@ -400,13 +400,13 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
 
                 default:
-                    oss.put(ch);
+                    oss.Put(ch);
                     break;
                 }
             }
         } while (inQuote);
 
-        value = oss.str();
+        oss.ToString(value);
         return true;
     }
 
@@ -440,7 +440,7 @@ static bool Lex_Identifier_(FLookAheadReader& reader, const FSymbol **psymbol, F
 //----------------------------------------------------------------------------
 FLexer::FLexer(IBufferedStreamReader* input, const FWStringView& sourceFileName, bool allowTypenames)
 :   _sourceFileName(sourceFileName.begin(), sourceFileName.end())
-,   _reader(input, _sourceFileName.c_str())
+,   _reader(input, _sourceFileName)
 ,   _allowTypenames(allowTypenames)
 ,   _peeking(false) {
     _lexing.reserve(512);
@@ -480,7 +480,7 @@ bool FLexer::ReadUntil(FMatch& match, const char ch) {
     match._offset = _reader.Tell();
     match._value.clear();
 
-    FOStringStream oss;
+    FStringBuilder oss;
 
     char poken = _reader.Peek(0);
     while ('\0' != poken && ch != poken) {
@@ -495,7 +495,7 @@ bool FLexer::ReadUntil(FMatch& match, const char ch) {
     else {
         Assert(ch == poken);
         match._symbol = FSymbols::String;
-        match._value = oss.str();
+        oss.ToString(match._value);
         return true;
     }
 }

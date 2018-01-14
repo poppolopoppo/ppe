@@ -7,7 +7,7 @@
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/ScalarVectorHelpers.h"
 
-#include <iosfwd>
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -181,18 +181,16 @@ private:
     vector_type _halfExtents;
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename T, size_t _Dim >
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const TScalarBoundingBox<T, _Dim>& v) {
-    return oss << v.Min() << v.Max();
-}
-//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 void swap(TScalarBoundingBox<T, _Dim>& lhs, TScalarBoundingBox<T, _Dim>& rhs) {
     lhs.Swap(rhs);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char, typename T, size_t _Dim>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TScalarBoundingBox<T, _Dim>& v) {
+    return oss << v.Min() << v.Max();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -135,7 +135,7 @@ private:
         }
 
         void WriteValue_(const FString& str) {
-            static const char hexdig[] = "0123456789ABCDEF";
+            static constexpr char hexdig[] = "0123456789ABCDEF";
             _owner->Print("\"");
             for (char c : str) {
                 if (' ' <= c && c <= '~' && c != '\\' && c != '"') {
@@ -151,8 +151,8 @@ private:
                         case '\n': _owner->_writer->WritePOD('n');  break;
                         default:
                             _owner->_writer->WritePOD('x');
-                            _owner->_writer->WritePOD(hexdig[c >> 4]);
-                            _owner->_writer->WritePOD(hexdig[c & 0xF]);
+                            _owner->_writer->WritePOD(hexdig[u8(ch) >> 4]);
+                            _owner->_writer->WritePOD(hexdig[u8(ch) & 0xF]);
                     }
                 }
             }

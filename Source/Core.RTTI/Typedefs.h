@@ -4,10 +4,9 @@
 
 #include "Core/Container/RawStorage.h"
 #include "Core/Container/Token.h"
-
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Maths/PrimeNumbers.h" // FClassId
 
-#include <iosfwd>
 
 namespace Core {
 namespace RTTI {
@@ -36,8 +35,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_RTTI_API std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const RTTI::FBinaryData& bindata);
-CORE_RTTI_API std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const RTTI::FBinaryData& bindata);
+CORE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FBinaryData& bindata);
+CORE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FBinaryData& bindata);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

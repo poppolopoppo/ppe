@@ -18,11 +18,11 @@ bool FVirtualFileSystem::ReadAll(const FFilename& filename, TRawStorage<T, _Allo
 
     policy = policy + EAccessPolicy::Sequential; // we're going to make one read only, fully sequential
 
-    const TUniquePtr<IVirtualFileSystemIStream> istream = Instance().OpenReadable(filename, policy);
+    const UStreamReader reader = Instance().OpenReadable(filename, policy);
 
     bool succeed = false;
-    if (istream) {
-        istream->ReadAll(storage);
+    if (reader) {
+        reader->ReadAll(storage);
 
         if (needDecompress) {
             TRawStorage<u8, typename _Allocator::template rebind<u8>::other > uncompressed;

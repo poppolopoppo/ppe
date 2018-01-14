@@ -5,11 +5,10 @@
 #include "Core.RTTI/TypeInfos.h"
 
 #include "Core/IO/String_fwd.h"
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/InSituPtr.h"
 #include "Core/Meta/Function.h"
 #include "Core/Meta/TypeTraits.h"
-
-#include <iosfwd>
 
 namespace Core {
 namespace RTTI {
@@ -64,8 +63,8 @@ public:
 
     virtual hash_t HashValue(const FAtom& atom) const = 0;
 
-    virtual void Format(std::basic_ostream<char>& oss, const FAtom& atom) const = 0;
-    virtual void Format(std::basic_ostream<wchar_t>& oss, const FAtom& atom) const = 0;
+    virtual void Format(FTextWriter& oss, const FAtom& atom) const = 0;
+    virtual void Format(FWTextWriter& oss, const FAtom& atom) const = 0;
 
     virtual bool Accept(IAtomVisitor* visitor, const FAtom& atom) const = 0;
 
@@ -74,10 +73,10 @@ public:
     virtual const IListTraits* AsList() const = 0;
     virtual const IDicoTraits* AsDico() const = 0;
 
-    const IScalarTraits* ToScalar() const { Assert(AsScalar()); return reinterpret_cast<const IScalarTraits*>(this); }
-    const IPairTraits* ToPair() const { Assert(AsPair()); return reinterpret_cast<const IPairTraits*>(this); }
-    const IListTraits* ToList() const { Assert(AsList()); return reinterpret_cast<const IListTraits*>(this); }
-    const IDicoTraits* ToDico() const { Assert(AsDico()); return reinterpret_cast<const IDicoTraits*>(this); }
+    const IScalarTraits* ToScalar() const { Assert(AsScalar()); return checked_cast<const IScalarTraits*>(this); }
+    const IPairTraits* ToPair() const { Assert(AsPair()); return checked_cast<const IPairTraits*>(this); }
+    const IListTraits* ToList() const { Assert(AsList()); return checked_cast<const IListTraits*>(this); }
+    const IDicoTraits* ToDico() const { Assert(AsDico()); return checked_cast<const IDicoTraits*>(this); }
 };
 //----------------------------------------------------------------------------
 inline PTypeTraits Traits(Meta::TType<void>) { return PTypeTraits(); }

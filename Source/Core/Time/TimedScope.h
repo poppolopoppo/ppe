@@ -11,6 +11,7 @@
 #endif
 
 #if USE_CORE_BENCHMARK
+#   include "Core/IO/StringView.h"
 #   define BENCHMARK_SCOPE(_CATEGORY, _MSG) \
         const ::Core::FBenchmarkScope CONCAT(__benchmarkScope, __LINE__)((_CATEGORY), (_MSG))
 #   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR) \
@@ -38,12 +39,12 @@ private:
 #if USE_CORE_BENCHMARK
 class FBenchmarkScope : public FTimedScope {
 public:
-    FBenchmarkScope(const wchar_t* category, const wchar_t* message);
+    FBenchmarkScope(const FWStringView& category, const FWStringView& message);
     ~FBenchmarkScope();
 
 private:
-    const wchar_t* const _category;
-    const wchar_t* const _message;
+    const FWStringView _category;
+    const FWStringView _message;
     FBenchmarkScope* const _parentIFP;
     const size_t _depth;
     FTimespan _accumulated;
@@ -53,12 +54,12 @@ private:
 #if USE_CORE_BENCHMARK
 class FIOBenchmarkScope : public FTimedScope {
 public:
-    FIOBenchmarkScope(const wchar_t* category, const wchar_t* message, const std::streamsize* pSizeInBytes);
+    FIOBenchmarkScope(const FWStringView& category, const FWStringView& message, const std::streamsize* pSizeInBytes);
     ~FIOBenchmarkScope();
 
 private:
-    const wchar_t* const _category;
-    const wchar_t* const _message;
+    const FWStringView _category;
+    const FWStringView _message;
     const std::streamsize* _pSizeInBytes;
 };
 #endif //!USE_CORE_BENCHMARK

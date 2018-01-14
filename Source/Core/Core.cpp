@@ -8,6 +8,7 @@
 #include "Allocator/NodeBasedContainerAllocator.h"
 #include "Diagnostic/Diagnostics.h"
 #include "Diagnostic/Logger.h"
+#include "IO/FileStream.h"
 #include "IO/FileSystem.h"
 #include "IO/VirtualFileSystem.h"
 #include "Meta/AutoSingleton.h"
@@ -54,14 +55,8 @@ static void CheckMemory_() {
         return;
 
     bInScope = true;
-    AssertRelease(not std::cout.bad());
-    AssertRelease(not std::wcout.bad());
-    AssertRelease(not std::cerr.bad());
-    AssertRelease(not std::wcerr.bad());
-    AssertRelease(not std::cin.bad());
-    AssertRelease(not std::wcin.bad());
 
-    FPlatform::CheckMemory();
+    FPlatformMisc::CheckMemory();
 
     bInScope = false;
 }
@@ -72,6 +67,8 @@ static void CheckMemory_() {
 void FCoreModule::Start(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv) {
     CORE_MODULE_START(Core);
 
+    // 0 - low-level IO
+    FFileStream::Start();
     // 1 - diagnostics
     FDiagnosticsStartup::Start(applicationHandle, nShowCmd, filename, argc, argv);
     // 2 - main thread context
@@ -119,6 +116,8 @@ void FCoreModule::Shutdown() {
     FThreadContextStartup::Shutdown();
     // 1 - diagnostics
     FDiagnosticsStartup::Shutdown();
+    // 0 - low-level IO
+    FFileStream::Shutdown();
 }
 //----------------------------------------------------------------------------
 void FCoreModule::ClearAll_UnusedMemory() {

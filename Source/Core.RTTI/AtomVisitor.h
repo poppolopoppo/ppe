@@ -64,8 +64,8 @@ CORE_RTTI_API FString PrettyString(const FAny& any);
 CORE_RTTI_API FString PrettyString(const FAtom& atom);
 CORE_RTTI_API FString PrettyString(const FMetaObject& object);
 //----------------------------------------------------------------------------
-CORE_RTTI_API std::basic_ostream<char>& PrettyPrint(std::basic_ostream<char>& oss, const FAtom& atom);
-CORE_RTTI_API std::basic_ostream<wchar_t>& PrettyPrint(std::basic_ostream<wchar_t>& oss, const FAtom& atom);
+CORE_RTTI_API FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom);
+CORE_RTTI_API FWTextWriter& PrettyPrint(FWTextWriter& oss, const FAtom& atom);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

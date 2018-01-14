@@ -2,10 +2,12 @@
 
 #include "Logger.h"
 
+#include "IO/BufferedStream.h"
+#include "IO/FileStream.h"
+#include "IO/StringView.h"
+#include "IO/TextWriter.h"
+#include "Memory/MemoryView.h"
 #include "Misc/TargetPlatform.h"
-
-#include <fcntl.h>
-#include <io.h>
 
 #ifdef PLATFORM_WINDOWS
 #   include "Misc/Platform_Windows.h"
@@ -45,6 +47,32 @@ TMemoryView<const ELogCategory> EachLogCategory() {
     return MakeView(sCategories);
 }
 //----------------------------------------------------------------------------
+FStringView LogCategoryToCStr(ELogCategory category) {
+    switch (category)
+    {
+    case Core::ELogCategory::Info:
+        return "Info";
+    case Core::ELogCategory::Emphasis:
+        return "Emphasis";
+    case Core::ELogCategory::Warning:
+        return "Warning";
+    case Core::ELogCategory::Error:
+        return "Error";
+    case Core::ELogCategory::Exception:
+        return "Exception";
+    case Core::ELogCategory::Debug:
+        return "Debug";
+    case Core::ELogCategory::Assertion:
+        return "Assertion";
+    case Core::ELogCategory::Profiling:
+        return "Profiling";
+    case Core::ELogCategory::Callstack:
+        return "Callstack";
+    }
+    AssertNotImplemented();
+    return FStringView();
+}
+//----------------------------------------------------------------------------
 FWStringView LogCategoryToWCStr(ELogCategory category) {
     switch (category)
     {
@@ -71,6 +99,14 @@ FWStringView LogCategoryToWCStr(ELogCategory category) {
     return FWStringView();
 }
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, ELogCategory category) {
+    return oss << LogCategoryToCStr(category);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, ELogCategory category) {
+    return oss << LogCategoryToWCStr(category);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
@@ -81,13 +117,11 @@ FWStringView LogCategoryToWCStr(ELogCategory category) {
 #include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/DecodedCallstack.h"
 
-#include "IO/Stream.h"
+#include "IO/StreamProvider.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
+#include "Memory/MemoryProvider.h"
 #include "Thread/AtomicSpinLock.h"
-
-#include <iostream>
-#include <sstream>
 
 #define CORE_DUMP_CALLSTACK_ON_WARNING  0
 #define CORE_DUMP_CALLSTACK_ON_ERROR    0
@@ -100,7 +134,7 @@ namespace {
 //----------------------------------------------------------------------------
 #if CORE_DUMP_CALLSTACK_ON_WARNING || CORE_DUMP_CALLSTACK_ON_ERROR
 template <typename _Char>
-static void DumpThreadCallstack_(std::basic_ostream<_Char>& oss) {
+static void DumpThreadCallstack_(TBasicTextWriter<_Char>& oss) {
     FCallstack callstack;
     FCallstack::Capture(&callstack, 4);
 
@@ -122,13 +156,13 @@ public:
     {}
 
     // Used before main, no dependencies on allocators
-    virtual void Log(ELogCategory category, const FWStringView& text, const FFormatArgListW& args) override {
-        if (not FPlatform::IsDebuggerAttached())
+    virtual void Log(ELogCategory category, const FWStringView& text, const FWFormatArgList& args) override {
+        if (not FPlatformMisc::IsDebuggerAttached())
             return; // because we are using OutputDebug()
 
         wchar_t buffer[2048];
+        FWFixedSizeTextWriter oss(buffer);
 
-        FWOCStrStream oss(buffer);
         if (ELogCategory::Callstack != category &&
             ELogCategory::Info != category ) {
             Format(oss, L"[{0}][{1}]", _prefix, category);
@@ -137,10 +171,10 @@ public:
             Format(oss, L"[{0}]", _prefix);
         }
         FormatArgs(oss, text, args);
-        oss << eol;
-        AssertRelease(!oss.bad());
 
-        FPlatform::OutputDebug(oss.NullTerminatedStr());
+        oss << Eol << Eos;
+
+        FPlatformMisc::OutputDebug(buffer);
     }
 
     virtual void Flush() override {}
@@ -177,11 +211,11 @@ void FlushLog() {
 void Log(ELogCategory category, const FWStringView& text) {
     if (not text.empty()) {
         Assert('\0' == text.data()[text.size()]); // text must be null terminated !
-        CurrentLogger_()->Log(category, text, FFormatArgListW());
+        CurrentLogger_()->Log(category, text, FWFormatArgList());
     }
 }
 //----------------------------------------------------------------------------
-void LogArgs(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) {
+void LogArgs(ELogCategory category, const FWStringView& format, const FWFormatArgList& args) {
     Assert(format.size());
     Assert('\0' == format.data()[format.size()]); // text must be null terminated !
     CurrentLogger_()->Log(category, format, args);
@@ -189,7 +223,7 @@ void LogArgs(ELogCategory category, const FWStringView& format, const FFormatArg
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FAbstractThreadSafeLogger::Log(ELogCategory category, const FWStringView& format, const FFormatArgListW& args) {
+void FAbstractThreadSafeLogger::Log(ELogCategory category, const FWStringView& format, const FWFormatArgList& args) {
     const std::lock_guard<std::recursive_mutex> scopeLock(_barrier);
     LogThreadSafe(category, format, args);
 }
@@ -201,12 +235,12 @@ void FAbstractThreadSafeLogger::Flush() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FFormatArgListW& args) {
+void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FWFormatArgList& args) {
     if (ELogCategory::Emphasis == category)
-        FPlatform::OutputDebug(L"------------------------------------------------------------------------------\n");
+        FPlatformMisc::OutputDebug(L"------------------------------------------------------------------------------\n");
 
     wchar_t buffer[2048];
-    FWOCStrStream oss(buffer);
+    FWFixedSizeTextWriter oss(buffer);
 
 #if 0
     if (ELogCategory::Callstack != category) {
@@ -220,7 +254,7 @@ void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView
     }
 #endif
 
-    if (text.size() + oss.size() + 16 * args.size() < 2048) {
+    if (text.size() + oss.Written().size() + 16 * args.size() < lengthof(buffer)) {
         // still remaining place in stack buffer
         if (args.empty()) {
             oss << text;
@@ -229,15 +263,17 @@ void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView
             FormatArgs(oss, text, args);
         }
 
-        oss << eol;
+        oss << Eol << Eos;
 
-        FPlatform::OutputDebug(oss.NullTerminatedStr());
+        FPlatformMisc::OutputDebug(buffer);
     }
     else {
         // different strategy for large logs, assuming no args is given for them
         AssertRelease(args.empty()); // TODO : handle splitting formatted texts
 
-        FPlatform::OutputDebug(oss.NullTerminatedStr());
+        oss << Eos;
+
+        FPlatformMisc::OutputDebug(buffer);
 
         FWStringView input = text;
         do {
@@ -248,7 +284,7 @@ void FOutputDebugLogger::LogThreadSafe(ELogCategory category, const FWStringView
             ::memcpy(buffer, print.data(), print.SizeInBytes());
             buffer[amount] = L'\0';
 
-            FPlatform::OutputDebug(buffer);
+            FPlatformMisc::OutputDebug(buffer);
 
         } while (not input.empty());
     }
@@ -258,7 +294,7 @@ void FOutputDebugLogger::FlushThreadSafe() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FFormatArgListW& args) {
+void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FWFormatArgList& args) {
 #ifdef PLATFORM_WINDOWS
     constexpr ::WORD fWhite = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
     constexpr ::WORD fYellow = FOREGROUND_RED | FOREGROUND_GREEN;
@@ -307,81 +343,89 @@ void FStdoutLogger::LogThreadSafe(ELogCategory category, const FWStringView& tex
             ::SetConsoleTextAttribute(hConsole, textAttribute);
         }
         else {
+            AssertNotReached();
             GPreviousTextAttribute = ::WORD(-1);
         }
     }
 #endif
 
+    auto oss = GWStdout;
+
     if (ELogCategory::Callstack != category &&
         ELogCategory::Emphasis != category )
-        Format(std::wcout, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
+        Format(oss, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 
     if (args.empty())
-        std::wcout << text;
+        oss << text;
     else
-        FormatArgs(std::wcout, text, args);
-    Assert(!std::wcout.bad());
+        FormatArgs(oss, text, args);
 
-    std::wcout << eol;
+    oss << Eos;
 
 #if CORE_DUMP_CALLSTACK_ON_WARNING
     if (ELogCategory::Warning == category)
-        DumpThreadCallstack_(std::wcout);
+        DumpThreadCallstack_(oss);
 #endif
 #if CORE_DUMP_CALLSTACK_ON_ERROR
     if (ELogCategory::Error == category)
-        DumpThreadCallstack_(std::wcout);
+        DumpThreadCallstack_(oss);
 #endif
 }
 //----------------------------------------------------------------------------
 void FStdoutLogger::FlushThreadSafe() {
-    std::wcout.flush();
+    GWStdout.Flush();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FStderrLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FFormatArgListW& args) {
+void FStderrLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FWFormatArgList& args) {
+    auto oss = GWStderr;
+
     if (ELogCategory::Callstack != category)
-        Format(std::wcerr, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
+        Format(oss, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 
     if (args.empty())
-        std::wcerr << text;
+        oss << text;
     else
-        FormatArgs(std::wcerr, text, args);
-    Assert(!std::wcerr.bad());
+        FormatArgs(oss, text, args);
 
-    std::wcerr << eol;
+    oss << Eol;
 }
 //----------------------------------------------------------------------------
 void FStderrLogger::FlushThreadSafe() {
-    std::wcerr.flush(); // shouldn't be necessary for cerr which is unbuffered by default, but just in case ...
+    GWStderr.Flush();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifdef PLATFORM_WINDOWS
-class FConsoleWriterW : public std::basic_streambuf<wchar_t> {
-public:
-    explicit FConsoleWriterW(::HANDLE out) : _out(out) {}
+FStreamLogger::FStreamLogger(class IBufferedStreamWriter* stream)
+    : _stream(stream) {
+    Assert(_stream);
+}
+//----------------------------------------------------------------------------
+FStreamLogger::~FStreamLogger() {
+    _stream->Flush();
+}
+//----------------------------------------------------------------------------
+void FStreamLogger::LogThreadSafe(ELogCategory category, const FWStringView& text, const FWFormatArgList& args) {
+    FWTextWriter oss(_stream);
 
-    virtual int_type overflow(int_type c = traits_type::eof()) {
-        ::DWORD written;
-        const wchar_t wch = wchar_t(c);
-        const ::BOOL res = ::WriteConsoleW(_out, &wch, 1, &written, NULL);
-        (void)res;
-        return 1;
-    }
+    if (ELogCategory::Callstack != category)
+        Format(oss, L"[{0:12f}][{1}]", FCurrentProcess::ElapsedSeconds(), category);
 
-    static FConsoleWriterW& Stdout() {
-        static FConsoleWriterW GInstance(::GetStdHandle(STD_OUTPUT_HANDLE));
-        return GInstance;
-    }
+    if (args.empty())
+        oss << text;
+    else
+        FormatArgs(oss, text, args);
 
-private:
-    ::HANDLE _out;
-};
-std::basic_streambuf<wchar_t>* GStdWCoutOriginalReadBuffer = nullptr;
-#endif
+    oss << Eol;
+}
+//----------------------------------------------------------------------------
+void FStreamLogger::FlushThreadSafe() {
+    _stream->Flush();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(FAbstractThreadSafeLogger) == sizeof(FOutputDebugLogger));
 STATIC_ASSERT(sizeof(FAbstractThreadSafeLogger) == sizeof(FStdoutLogger));
@@ -391,34 +435,6 @@ static POD_STORAGE(FAbstractThreadSafeLogger) GLoggerDefaultStorage;
 //----------------------------------------------------------------------------
 void FLoggerStartup::Start() {
     Assert(LowLevelLogger_() == CurrentLogger_());
-
-    // set locale to UTF-8
-    //_setmode(_fileno(stdout), _O_U16TEXT);
-    //_setmode(_fileno(stderr), _O_U16TEXT);
-
-    // don't buffer output
-    if (::setvbuf(stdout, nullptr, _IONBF, 0)) AssertNotReached();
-    if (::setvbuf(stderr, nullptr, _IONBF, 0)) AssertNotReached();
-    /*
-    std::cout .setf(std::ios::unitbuf);
-    std::wcout.setf(std::ios::unitbuf);
-    std::cerr .setf(std::ios::unitbuf);
-    std::wcerr.setf(std::ios::unitbuf);
-    */
-
-    // workaround for windows and unicode
-#if PLATFORM_WINDOWS
-    Assert(nullptr == GStdWCoutOriginalReadBuffer);
-    GStdWCoutOriginalReadBuffer = std::wcout.rdbuf(&FConsoleWriterW::Stdout());
-#endif
-
-    // throw exceptions instead of silently failing
-    std::cout .exceptions(std::ostream::failbit  | std::ostream::badbit );
-    std::wcout.exceptions(std::wostream::failbit | std::wostream::badbit);
-    std::cerr .exceptions(std::ostream::failbit  | std::ostream::badbit );
-    std::wcerr.exceptions(std::wostream::failbit | std::wostream::badbit);
-    std::cin  .exceptions(std::istream::failbit  | std::istream::badbit );
-    std::wcin .exceptions(std::wistream::failbit | std::wistream::badbit);
 
     void* const storage = (void*)std::addressof(GLoggerDefaultStorage);
 
@@ -441,13 +457,6 @@ void FLoggerStartup::Shutdown() {
         logger->~ILogger();
     else
         checked_delete(logger);
-
-    // workaround for windows and unicode
-#if PLATFORM_WINDOWS
-    Assert(GStdWCoutOriginalReadBuffer);
-    std::wcout.rdbuf(GStdWCoutOriginalReadBuffer);
-    GStdWCoutOriginalReadBuffer = nullptr;
-#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

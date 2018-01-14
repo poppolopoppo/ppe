@@ -3,6 +3,7 @@
 #include "DecodedCallstack.h"
 
 #include "Callstack.h"
+#include "IO/TextWriter.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -12,7 +13,10 @@ FDecodedCallstack::FFrame::FFrame()
 : _address(nullptr), _line(0) {}
 //----------------------------------------------------------------------------
 FDecodedCallstack::FFrame::FFrame(void* address, const wchar_t* symbol, const wchar_t* filename, size_t line)
-: _address(address), _symbol(symbol), _filename(filename), _line(line) {}
+: _address(address)
+, _symbol(MakeStringView(symbol, Meta::FForceInit{}))
+, _filename(MakeStringView(filename, Meta::FForceInit{}))
+, _line(line) {}
 //----------------------------------------------------------------------------
 FDecodedCallstack::FFrame::FFrame(void* address, FWString&& symbol, FWString&& filename, size_t line)
 : _address(address), _symbol(std::move(symbol)), _filename(std::move(filename)), _line(line) {}
@@ -83,6 +87,38 @@ FDecodedCallstack& FDecodedCallstack::operator = (FDecodedCallstack&& rvalue) {
     rvalue._depth = 0;
 
     return *this;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const FDecodedCallstack::FFrame& frame) {
+    return oss
+        << frame.Symbol() << Eol
+        << "    " << frame.Filename()
+        << '(' << frame.Line() << ')';
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const FDecodedCallstack::FFrame& frame) {
+    return oss
+        << frame.Symbol() << Eol
+        << L"    " << frame.Filename()
+        << L'(' << frame.Line() << L')';
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const FDecodedCallstack& decoded) {
+    const TMemoryView<const FDecodedCallstack::FFrame> frames = decoded.Frames();
+    for (size_t i = 0; i < frames.size(); ++i)
+        oss << '[' << i << "] " << frames[i] << Eol;
+    return oss;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const FDecodedCallstack& decoded) {
+    const TMemoryView<const FDecodedCallstack::FFrame> frames = decoded.Frames();
+    for (size_t i = 0; i < frames.size(); ++i)
+        oss << '[' << i << "] " << frames[i] << Eol;
+    return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

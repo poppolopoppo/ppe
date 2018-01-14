@@ -3,11 +3,11 @@
 #include "FormatHelpers.h"
 
 #include "Format.h"
-#include "Maths/Units.h"
-#include "Stream.h"
+#include "StreamProvider.h"
 
-#include <iomanip>
-#include <ostream>
+#include "Maths/Units.h"
+#include "Memory/MemoryProvider.h"
+
 
 namespace Core {
 namespace Fmt {
@@ -15,9 +15,10 @@ namespace Fmt {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Format(char *buffer, size_t capacity, Fmt::FCountOfElements count) {
-    TBasicOCStrStream<char> oss(buffer, capacity);
-    oss.precision(2);
-    oss.flags(std::ios_base::fixed);
+    FFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
+
+    oss.Format().SetPrecision(2);
+    oss << FTextFormat::FixedFloat;
 
     if (count > 9e5f)
         oss << (count / 1e6f) << " M";
@@ -28,9 +29,10 @@ void Format(char *buffer, size_t capacity, Fmt::FCountOfElements count) {
 }
 //----------------------------------------------------------------------------
 void Format(wchar_t *buffer, size_t capacity, Fmt::FCountOfElements count) {
-    TBasicOCStrStream<wchar_t> oss(buffer, capacity);
-    oss.precision(2);
-    oss.flags(std::ios_base::fixed);
+    FWFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
+
+    oss.Format().SetPrecision(2);
+    oss << FTextFormat::FixedFloat;
 
     if (count > 9e5f)
         oss << (count / 1e6f) << L" M";
@@ -43,21 +45,22 @@ void Format(wchar_t *buffer, size_t capacity, Fmt::FCountOfElements count) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Format(char *buffer, size_t capacity, Fmt::FPointer ptr) {
-    TBasicOCStrStream<char> oss(buffer, capacity);
-    oss << std::internal << std::hex << std::setw(sizeof(intptr_t)*2+1) << std::setfill('0') << ptr.Value;
+    FFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
+    oss.Write((const void*)ptr.Value);
 }
 //----------------------------------------------------------------------------
 void Format(wchar_t *buffer, size_t capacity, Fmt::FPointer ptr) {
-    TBasicOCStrStream<wchar_t> oss(buffer, capacity);
-    oss << std::internal << std::hex << std::setw(sizeof(intptr_t)*2+1) << std::setfill(L'0') << ptr.Value;
+    FWFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
+    oss.Write((const void*)ptr.Value);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Format(char *buffer, size_t capacity, Fmt::FSizeInBytes size) {
-    TBasicOCStrStream<char> oss(buffer, capacity);
-    oss.precision(2);
-    oss.flags(std::ios_base::fixed);
+    FFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
+
+    oss.Format().SetPrecision(2);
+    oss << FTextFormat::FixedFloat;
 
     const Units::Storage::FBytes bytes(static_cast<double>(size));
 
@@ -82,9 +85,10 @@ void Format(char *buffer, size_t capacity, Fmt::FSizeInBytes size) {
 }
 //----------------------------------------------------------------------------
 void Format(wchar_t *buffer, size_t capacity, Fmt::FSizeInBytes size) {
-    TBasicOCStrStream<wchar_t> oss(buffer, capacity);
-    oss.precision(2);
-    oss.flags(std::ios_base::fixed);
+    FWFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
+
+    oss.Format().SetPrecision(2);
+    oss << FTextFormat::FixedFloat;
 
     const Units::Storage::FBytes bytes(static_cast<double>(size));
 
@@ -118,7 +122,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::FHexDump& hexDump) {
+FTextWriter& operator <<(FTextWriter& oss, const Fmt::FHexDump& hexDump) {
     const size_t totalBytes = hexDump.RawData.SizeInBytes();
     for (size_t offset = 0; offset < totalBytes; ) {
         Core::Format(oss, "0x{0:#8X} ", offset);
@@ -133,12 +137,12 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::
         offset = origin;
         for (size_t row = 0; row < hexDump.BytesPerRow && offset < totalBytes; ++row, ++offset)
             oss << (IsPrint(char(hexDump.RawData[offset])) ? char(hexDump.RawData[offset]) : '.');
-        oss << eol;
+        oss << Eol;
     }
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Fmt::FHexDump& hexDump) {
+FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDump) {
     const size_t totalBytes = hexDump.RawData.SizeInBytes();
     for (size_t offset = 0; offset < totalBytes; ) {
         Core::Format(oss, L"0x{0:#8X} ", offset);
@@ -153,21 +157,21 @@ std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const
         offset = origin;
         for (size_t row = 0; row < hexDump.BytesPerRow && offset < totalBytes; ++row, ++offset)
             oss << (IsPrint(char(hexDump.RawData[offset])) ? char(hexDump.RawData[offset]) : '.');
-        oss << eol;
+        oss << Eol;
     }
     return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const Fmt::FIndent& indent) {
+FTextWriter& operator <<(FTextWriter& oss, const Fmt::FIndent& indent) {
     Assert(indent.Level >= 0);
     forrange(i, 0, indent.Level)
         oss << indent.Tab;
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const Fmt::FIndent& indent) {
+FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FIndent& indent) {
     Assert(indent.Level >= 0);
     forrange(i, 0, indent.Level)
         for(char ch : indent.Tab)

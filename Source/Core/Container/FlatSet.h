@@ -6,6 +6,7 @@
 #include "Core/Container/Hash.h"
 #include "Core/Container/Pair.h"
 #include "Core/Container/Vector.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -145,17 +146,8 @@ hash_t hash_value(const TFlatSet<_Key, _EqualTo, _Less, _Vector>& flatSet) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <
-    typename _Key,
-    typename _EqualTo,
-    typename _Less,
-    typename _Vector,
-    typename _Char,
-    typename _Traits
->
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const TFlatSet<_Key, _EqualTo, _Less, _Vector>& flatSet) {
+template <typename _Char, typename _Key, typename _EqualTo, typename _Less, typename _Vector>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TFlatSet<_Key, _EqualTo, _Less, _Vector>& flatSet) {
     return oss << flatSet.Vector();
 }
 //----------------------------------------------------------------------------

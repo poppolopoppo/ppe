@@ -10,6 +10,7 @@
 #include "Container/RawStorage.h"
 #include "Diagnostic/Logger.h"
 #include "Diagnostic/CurrentProcess.h"
+#include "IO/StringBuilder.h"
 
 #include "VFS/VirtualFileSystemComponent.h"
 #include "VFS/VirtualFileSystemNativeComponent.h"
@@ -37,8 +38,8 @@ FBasename FVirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wch
     ::tm local_tm;
     ::localtime_s(&local_tm, &tt);
 
-    wchar_t buffer[2048];
-    const size_t length = Format(buffer, L"{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}{7}{8}",
+    STACKLOCAL_WTEXTWRITER(buffer, MAX_PATH);
+    Format(buffer, L"{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}{7}{8}",
         prefix,
         local_tm.tm_year,
         local_tm.tm_mon,
@@ -49,8 +50,7 @@ FBasename FVirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wch
         tt,
         ext );
 
-    Assert(length > 0);
-    return FBasename(FileSystem::FStringView(buffer, length - 1));
+    return FBasename(buffer.Written());
 }
 //----------------------------------------------------------------------------
 FFilename FVirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar_t *ext) {
@@ -63,8 +63,8 @@ FFilename FVirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wch
     ::tm local_tm;
     ::localtime_s(&local_tm, &tt);
 
-    wchar_t buffer[2048];
-    const size_t length = Format(buffer, L"Tmp:/{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}{7}{8}",
+    STACKLOCAL_WTEXTWRITER(buffer, MAX_PATH);
+    Format(buffer, L"Tmp:/{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}{7}{8}",
         prefix,
         local_tm.tm_year,
         local_tm.tm_mon,
@@ -75,8 +75,7 @@ FFilename FVirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wch
         tt,
         ext );
 
-    Assert(length > 0);
-    return FFilename(FileSystem::FStringView(buffer, length - 1));
+    return FFilename(buffer.Written());
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TMemoryView<const u8>& storage, EAccessPolicy policy /* = EAccessPolicy::None */) {
@@ -90,16 +89,16 @@ bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TMemoryView<c
 
     policy = policy + EAccessPolicy::Sequential; // we're going to make only 1 write, full sequential
 
-    const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(filename, policy);
+    const UStreamWriter writer = Instance().OpenWritable(filename, policy);
 
-    if (ostream) {
+    if (writer) {
         if (needCompress) {
             RAWSTORAGE_THREAD_LOCAL(Compress, u8) compressed;
             const size_t compressedSizeInBytes = Compression::CompressMemory(compressed, storage, Compression::HighCompression);
-            ostream->Write(compressed.Pointer(), compressedSizeInBytes);
+            writer->Write(compressed.Pointer(), compressedSizeInBytes);
         }
         else {
-            ostream->Write(storage.Pointer(), storage.SizeInBytes());
+            writer->Write(storage.Pointer(), storage.SizeInBytes());
         }
 
         return true;
@@ -116,17 +115,17 @@ bool FVirtualFileSystem::Copy(const FFilename& dst, const FFilename& src, EAcces
     if (src == dst)
         return true;
 
-    const TUniquePtr<IVirtualFileSystemIStream> istream = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate);
-    if (not istream)
+    const UStreamReader reader = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate);
+    if (not reader)
         return false;
 
-    const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate);
-    if (not ostream)
+    const UStreamWriter writer = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate);
+    if (not writer)
         return false;
 
     STACKLOCAL_POD_ARRAY(u8, buffer, ALLOCATION_GRANULARITY);
-    while (size_t read = istream->ReadSome(buffer.data(), 1, buffer.SizeInBytes())) {
-        if (not ostream->Write(buffer.data(), read)) {
+    while (size_t read = reader->ReadSome(buffer.data(), 1, buffer.SizeInBytes())) {
+        if (not writer->Write(buffer.data(), read)) {
             AssertNotReached();
             return false;
         }
@@ -145,11 +144,11 @@ bool FVirtualFileSystem::Compress(const FFilename& dst, const FFilename& src, EA
     size_t compressedSizeInBytes = 0;
     RAWSTORAGE_THREAD_LOCAL(Compress, u8) data;
     {
-        const TUniquePtr<IVirtualFileSystemIStream> istream = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate);
-        if (not istream)
+        const UStreamReader reader = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate);
+        if (not reader)
             return false;
 
-        istream->ReadAll(data);
+        reader->ReadAll(data);
     }
     {
         RAWSTORAGE_THREAD_LOCAL(Compress, u8) compressed;
@@ -158,11 +157,11 @@ bool FVirtualFileSystem::Compress(const FFilename& dst, const FFilename& src, EA
         swap(data, compressed);
     }
     {
-        const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate + EAccessPolicy::Binary);
-        if (not ostream)
+        const UStreamWriter writer = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate + EAccessPolicy::Binary);
+        if (not writer)
             return false;
 
-        if (not ostream->Write(data.Pointer(), compressedSizeInBytes))
+        if (not writer->Write(data.Pointer(), compressedSizeInBytes))
             return false;
     }
 
@@ -178,11 +177,11 @@ bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, 
 
     RAWSTORAGE_THREAD_LOCAL(Compress, u8) data;
     {
-        const TUniquePtr<IVirtualFileSystemIStream> istream = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate + EAccessPolicy::Binary);
-        if (not istream)
+        const UStreamReader reader = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate + EAccessPolicy::Binary);
+        if (not reader)
             return false;
 
-        istream->ReadAll(data);
+        reader->ReadAll(data);
     }
     {
         RAWSTORAGE_THREAD_LOCAL(Compress, u8) uncompressed;
@@ -192,11 +191,11 @@ bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, 
         swap(data, uncompressed);
     }
     {
-        const TUniquePtr<IVirtualFileSystemOStream> ostream = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate);
-        if (not ostream)
+        const UStreamWriter writer = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate);
+        if (not writer)
             return false;
 
-        if (not ostream->Write(data.Pointer(), data.SizeInBytes()))
+        if (not writer->Write(data.Pointer(), data.SizeInBytes()))
             return false;
     }
 
@@ -243,23 +242,27 @@ void FVirtualFileSystemStartup::Start() {
     }
     // user profile path
     {
+        FWStringView userPath;
+
 #if defined(PLATFORM_WINDOWS)
-        wchar_t* userPath = nullptr;
+        wchar_t* userPathPtr = nullptr;
         size_t userPathLen = 0;
-        if (0 != _wdupenv_s(&userPath, &userPathLen, L"USERPROFILE"))
+        if (0 != _wdupenv_s(&userPathPtr, &userPathLen, L"USERPROFILE"))
             AssertNotReached();
+        userPath = FWStringView(userPathPtr, userPathLen);
 #elif defined(PLATFORM_LINUX)
-        const wchar_t* userPath = nullptr;
         const char* userPathA = std::getenv("HOME");
-        FWString userPathW = ToWString(userPath);
-        userPath = userPathW.c_str();
+        const FWString userPathW = ToWString(userPathA);
+        userPath = userPathW.MakeView();
 #else
 #   error "unsupported platform"
 #endif
-        AssertRelease(userPath);
+
+        AssertRelease(not userPath.empty());
         VFS.MountNativePath(L"User:/", userPath);
+
 #if defined(PLATFORM_WINDOWS)
-        ::free(userPath); // must free() the string allocated by _wdupenv_s()
+        ::free(userPathPtr); // must free() the string allocated by _wdupenv_s()
 #endif
     }
 }

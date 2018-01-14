@@ -3,6 +3,7 @@
 #include "DLLWrapper.h"
 
 #include "Diagnostic/Logger.h"
+#include "IO/TextWriter.h"
 
 #ifdef PLATFORM_WINDOWS
 
@@ -57,9 +58,9 @@ struct FDLLWrapperFilename_ {
     FDLLWrapperFilename_(const FDLLWrapper& wrapper) {
         Length = DLLWrapper_LibaryFilename_(wrapper.Handle(), Filename);
     }
-    template <typename _Char, typename _Traits>
-    inline friend std::basic_ostream<_Char, _Traits>& operator <<(
-        std::basic_ostream<_Char, _Traits>& oss,
+    template <typename _Char>
+    inline friend TBasicTextWriter<_Char>& operator <<(
+        TBasicTextWriter<_Char>& oss,
         const FDLLWrapperFilename_& wrapperFilename) {
         return (oss << FStringView(wrapperFilename.Filename, wrapperFilename.Length));
     }

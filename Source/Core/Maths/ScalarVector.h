@@ -5,11 +5,11 @@
 #include "Core/Maths/ScalarVector_fwd.h"
 
 #include "Core/Container/Hash.h"
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Meta/NumericLimits.h"
 
 #include <algorithm>
-#include <iosfwd>
 #include <initializer_list>
 #include <limits>
 #include <type_traits>
@@ -201,12 +201,15 @@ DECL_SCALARVECTOR_OP_RHS(%)
 //----------------------------------------------------------------------------
 #undef DECL_SCALARVECTOR_OP_RHS
 //----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+void swap(TScalarVector<T, _Dim>& lhs, TScalarVector<T, _Dim>& rhs) {
+    lhs.Swap(rhs);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits, typename T, size_t _Dim >
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    const TScalarVector<T, _Dim>& v) {
+template <typename T, size_t _Dim >
+FTextWriter& operator <<(FTextWriter& oss, const TScalarVector<T, _Dim>& v) {
     oss << '[' << v._data[0];
     forrange(i, 1, _Dim)
         oss << ", " << v._data[i];
@@ -214,9 +217,13 @@ std::basic_ostream<_Char, _Traits>& operator <<(
     return oss;
 }
 //----------------------------------------------------------------------------
-template <typename T, size_t _Dim>
-void swap(TScalarVector<T, _Dim>& lhs, TScalarVector<T, _Dim>& rhs) {
-    lhs.Swap(rhs);
+template <typename T, size_t _Dim >
+FWTextWriter& operator <<(FWTextWriter& oss, const TScalarVector<T, _Dim>& v) {
+    oss << L'[' << v._data[0];
+    forrange(i, 1, _Dim)
+        oss << L", " << v._data[i];
+    oss << L']';
+    return oss;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>

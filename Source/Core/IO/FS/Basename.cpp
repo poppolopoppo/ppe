@@ -4,6 +4,10 @@
 
 #include "Container/Hash.h"
 #include "IO/String.h"
+#include "IO/StringBuilder.h"
+#include "IO/StringView.h"
+#include "IO/TextWriter.h"
+#include "Memory/MemoryProvider.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -56,6 +60,14 @@ FBasename& FBasename::operator =(const FBasename& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
+FBasename::FBasename(const FileSystem::FString& content)
+    : FBasename(content.MakeView())
+{}
+//----------------------------------------------------------------------------
+FBasename& FBasename::operator =(const FileSystem::FString& content) {
+    return operator =(content.MakeView());
+}
+//----------------------------------------------------------------------------
 FBasename::FBasename(const FileSystem::FStringView& content) {
     Assert(not content.empty());
     ParseBasename_(content, _basenameNoExt, _extname);
@@ -68,27 +80,27 @@ FBasename& FBasename::operator =(const FileSystem::FStringView& content) {
 }
 //----------------------------------------------------------------------------
 FString FBasename::ToString() const {
-    STACKLOCAL_OCSTRSTREAM(oss, 1024);
+    FStringBuilder oss;
     oss << *this;
-    return Core::ToString(oss.MakeView());
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 FWString FBasename::ToWString() const {
-    STACKLOCAL_WOCSTRSTREAM(oss, 1024);
+    FWStringBuilder oss;
     oss << *this;
-    return Core::ToWString(oss.MakeView());
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 FStringView FBasename::ToCStr(char *dst, size_t capacity) const {
-    FOCStrStream oss(dst, capacity);
-    oss << *this;
-    return oss.MakeView();
+    FFixedSizeTextWriter oss(dst, capacity);
+    oss << *this << Eos;
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
 FWStringView FBasename::ToWCStr(wchar_t *dst, size_t capacity) const {
-    FWOCStrStream oss(dst, capacity);
-    oss << *this;
-    return oss.MakeView();
+    FWFixedSizeTextWriter oss(dst, capacity);
+    oss << *this << Eos;
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
 void FBasename::Swap(FBasename& other) {
@@ -98,6 +110,16 @@ void FBasename::Swap(FBasename& other) {
 //----------------------------------------------------------------------------
 size_t FBasename::HashValue() const {
     return hash_tuple(_basenameNoExt, _extname);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const FBasename& basename) {
+    return oss << basename.BasenameNoExt() << basename.Extname();
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const FBasename& basename) {
+    return oss << basename.BasenameNoExt() << basename.Extname();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -10,6 +10,7 @@
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/ConstNames.h"
 #include "Core/IO/FS/Filename.h"
+#include "Core/IO/TextWriter.h"
 #include "Core/IO/VirtualFileSystem.h"
 #include "Core/Memory/MemoryProvider.h"
 
@@ -366,11 +367,11 @@ bool FDocument::Load(FDocument* document, const FFilename& filename, const FStri
     return Load(document, filename, &reader);
 }
 //----------------------------------------------------------------------------
-void FDocument::ToStream(std::basic_ostream<char>& oss) const {
+void FDocument::ToStream(FTextWriter& oss) const {
     oss << "<?xml version=\"" << _version
         << "\" encoding=\"" << _encoding
         << "\" standalone=\"" << _standalone
-        << "\" ?>" << eol;
+        << "\" ?>" << Eol;
 
     if (_root)
         _root->ToStream(oss);

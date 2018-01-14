@@ -12,7 +12,9 @@
 #include "Container/Vector.h"
 #include "IO/FileSystem.h"
 #include "IO/FormatHelpers.h"
+#include "IO/StringBuilder.h"
 #include "IO/StringView.h"
+#include "IO/TextWriter.h"
 #include "IO/VirtualFileSystem.h"
 #include "Memory/MemoryProvider.h"
 
@@ -104,13 +106,16 @@ static void SetClipboard_(HWND hwndDlg, const FWStringView& content)
 static void ExternalEditor_(const FWStringView& filename, size_t line) {
     Assert(not filename.empty());
 
-      STACKLOCAL_OCSTRSTREAM(oss, 2048);
-    Format(oss, "\"{0}\" \"{1}:{2}\"",
-        "C:\\Program Files\\Sublime Text 3\\sublime_text.exe", // TODO: handle other editors ?
-        filename,
-        line );
-
-    ::WinExec(oss.NullTerminatedStr(), SW_SHOW);
+    char buffer[2048];
+    {
+        FFixedSizeTextWriter oss(buffer);
+        Format(oss, "\"{0}\" \"{1}:{2}\"",
+            "C:\\Program Files\\Sublime Text 3\\sublime_text.exe", // TODO: handle other editors ?
+            filename,
+            line);
+        oss << Eos;
+    }
+    ::WinExec(buffer, SW_SHOW);
 }
 //----------------------------------------------------------------------------
 enum class EAtomClass_ {
@@ -297,17 +302,17 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
                 const FTemplate_DialogContext_* ctx = reinterpret_cast<const FTemplate_DialogContext_*>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
                 Assert(ctx);
 
-                FThreadLocalWOStringStream oss;
-                oss << ctx->Text << crlf
-                    << crlf
-                    << L"----------------------------------------------------------------" << crlf
-                    << L"FCallstack:" << crlf
-                    << L"----------------------------------------------------------------" << crlf;
+                FWStringBuilder oss;
+                oss << ctx->Text << Crlf
+                    << Crlf
+                    << L"----------------------------------------------------------------" << Crlf
+                    << L"FCallstack:" << Crlf
+                    << L"----------------------------------------------------------------" << Crlf;
 
                 for (const FWString& frame : ctx->CallstackFrames)
-                    oss << frame << crlf;
+                    oss << frame << Crlf;
 
-                SetClipboard_(hwndDlg, MakeStringView(oss.str()));
+                SetClipboard_(hwndDlg, oss.ToString());
             }
             return TRUE;
 
@@ -373,13 +378,15 @@ static Dialog::EResult Template_CreateDialogBox_(
         ctx.DecodedCallstack = FDecodedCallstack(callstack);
         callstackFrames.reserve(ctx.DecodedCallstack.Frames().size());
 
-        STACKLOCAL_WOCSTRSTREAM(tmp, 4096);
+        wchar_t buffer[4096];
+        FWFixedSizeTextWriter oss(buffer);
         for (const FDecodedCallstack::FFrame& frame : ctx.DecodedCallstack.Frames()) {
-            tmp << Fmt::FPointer{ reinterpret_cast<intptr_t>(frame.Address()) }
+            oss << Fmt::FPointer{ reinterpret_cast<intptr_t>(frame.Address()) }
                 << L' ' << frame.Filename()
-                << L'(' << frame.Line() << L"): " << frame.Symbol();
-            callstackFrames.emplace_back(tmp.NullTerminatedStr());
-            tmp.Reset();
+                << L'(' << frame.Line() << L"): " << frame.Symbol()
+                << Eos;
+            callstackFrames.emplace_back(oss.Written());
+            oss.Reset();
         }
     }
     ctx.CallstackFrames = callstackFrames.MakeConstView();

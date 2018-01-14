@@ -14,6 +14,7 @@
 #include "../Socket/SocketBuffered.h"
 
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/StringBuilder.h"
 #include "Core/Thread/ThreadContext.h"
 #include "Core/Thread/ThreadPool.h"
 
@@ -103,13 +104,13 @@ void HttpServicingTask_(ITaskContext& ctx, const FHttpServerImpl* server, FSocke
     CORE_CATCH(FHttpException e)
     CORE_CATCH_BLOCK({
         LOG(Error, L"[HTTP] Server error : status={0}, reason={1} on {2}:{3}",
-            e.Status(), e.what(),
+            e.Status(), e.What(),
             socket.Local().Host(), socket.Local().Port() );
 
         FHttpResponse response;
         response.Clear();
         response.SetStatus(e.Status());
-        response.SetReason(e.what());
+        response.SetReason(ToString(e.What()));
 
         FHttpResponse::Write(&socket, response);
     })

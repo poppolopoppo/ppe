@@ -4,8 +4,9 @@
 
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
-#include "IO/Stream.h"
 #include "IO/StringView.h"
+#include "IO/TextWriter.h"
+#include "Memory/MemoryProvider.h"
 #include "Memory/UniqueView.h"
 #include "Meta/OneTimeInitialize.h"
 
@@ -133,7 +134,7 @@ FMemoryTracking& FMemoryTracking::Global() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static void TrackingDataAbsoluteName_(TBasicOCStrStream<char>& oss, const FMemoryTracking& trackingData) {
+static void TrackingDataAbsoluteName_(FTextWriter& oss, const FMemoryTracking& trackingData) {
     if (trackingData.Parent() && trackingData.Parent() != &FMemoryTracking::Global()) {
         TrackingDataAbsoluteName_(oss, *trackingData.Parent());
         oss << "::";
@@ -149,7 +150,7 @@ static bool LessTrackingData_(const FMemoryTracking& lhs, const FMemoryTracking&
                     MakeStringView(rhs.Name(), Meta::FForceInit{})) < 0;
 }
 //----------------------------------------------------------------------------
-void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
+void ReportTrackingDatas(   FWTextWriter& oss,
                             const wchar_t *header,
                             const TMemoryView<const FMemoryTracking * const>& datas ) {
     Assert(header);
@@ -157,7 +158,7 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
     if (datas.empty())
         return;
 
-    oss << L"Reporting tracking data :" << eol;
+    oss << L"Reporting tracking data :" << Eol;
 
     STACKLOCAL_POD_ARRAY(const FMemoryTracking *, sortedDatas, datas.size());
     memcpy(sortedDatas.Pointer(), datas.Pointer(), datas.SizeInBytes());
@@ -178,9 +179,9 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
     const size_t width = 128;
     const wchar_t fmt[] = L" {0:-37}|{1:8} {2:10} |{3:8} {4:11} |{5:8} {6:11} |{7:11} {8:11}\n";
 
-    oss << Fmt::Repeat(L'-', width) << eol
-        << "    " << header << L" (" << datas.size() << L" elements)" << eol
-        << Fmt::Repeat(L'-', width) << eol;
+    oss << Fmt::Repeat(L'-', width) << Eol
+        << "    " << header << L" (" << datas.size() << L" elements)" << Eol
+        << Fmt::Repeat(L'-', width) << Eol;
 
     Format(oss, fmt,    L"Tracking Data FName",
                         L"Block", "Max",
@@ -188,15 +189,15 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
                         L"Stride", "Max",
                         L"Total", "Max" );
 
-    oss << Fmt::Repeat(L'-', width) << eol;
+    oss << Fmt::Repeat(L'-', width) << Eol;
 
-    STACKLOCAL_OCSTRSTREAM(tmp, 256);
+    STACKLOCAL_TEXTWRITER(tmp, 1024);
     for (const FMemoryTracking *data : datas) {
         Assert(data);
         tmp.Reset();
         TrackingDataAbsoluteName_(tmp, *data);
         Format(oss, fmt,
-            tmp.NullTerminatedStr(),
+            FStringView(tmp.Written()),
             Fmt::FCountOfElements{ data->BlockCount() },
             Fmt::FCountOfElements{ data->MaxBlockCount() },
             Fmt::FCountOfElements{ data->AllocationCount() },
@@ -207,7 +208,7 @@ void ReportTrackingDatas(   std::basic_ostream<wchar_t>& oss,
             Fmt::FSizeInBytes{ data->MaxTotalSizeInBytes() });
     }
 
-    oss << Fmt::Repeat(L'-', width) << eol;
+    oss << Fmt::Repeat(L'-', width) << Eol;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

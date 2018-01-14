@@ -2,13 +2,13 @@
 
 #include "VirtualFileSystem_fwd.h"
 
+#include "FileStream.h"
 #include "VirtualFileSystem.h"
 
 #include "Container/RawStorage.h"
 #include "FS/Dirpath.h"
 #include "FS/Filename.h"
 #include "FS/FileStat.h"
-#include "VFS/VirtualFileSystemStream.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -42,31 +42,31 @@ bool VFS_RemoveFile(const FFilename& filename) {
     return FVirtualFileSystem::Instance().RemoveFile(filename);
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIStream> VFS_OpenReadable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
+UStreamReader VFS_OpenReadable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
     return FVirtualFileSystem::Instance().OpenReadable(filename, policy);
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemOStream> VFS_OpenWritable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
+UStreamWriter VFS_OpenWritable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
     return FVirtualFileSystem::Instance().OpenWritable(filename, policy);
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIOStream> VFS_OpenReadWritable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
+UStreamReadWriter VFS_OpenReadWritable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
     return FVirtualFileSystem::Instance().OpenReadWritable(filename, policy);
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIStream> VFS_OpenBinaryReadable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
+UStreamReader VFS_OpenBinaryReadable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
     return VFS_OpenReadable(filename, EAccessPolicy(policy|EAccessPolicy::Binary));
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemOStream> VFS_OpenBinaryWritable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
+UStreamWriter VFS_OpenBinaryWritable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
     return VFS_OpenWritable(filename, EAccessPolicy(policy|EAccessPolicy::Binary));
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIStream> VFS_OpenTextReadable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
+UStreamReader VFS_OpenTextReadable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
     return VFS_OpenReadable(filename, EAccessPolicy(policy|EAccessPolicy::Text));
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemOStream> VFS_OpenTextWritable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
+UStreamWriter VFS_OpenTextWritable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
     return VFS_OpenWritable(filename, EAccessPolicy(policy|EAccessPolicy::Text));
 }
 //----------------------------------------------------------------------------

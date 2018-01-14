@@ -2,7 +2,6 @@
 
 #include "Core/Core.h"
 
-#include <iosfwd>
 #include <type_traits>
 
 /*
@@ -261,18 +260,6 @@ bool operator <(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) {
 template <typename _Lhs, typename _Rhs>
 bool operator >=(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) {
     return !operator <(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template < typename T, typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TRefPtr<T>& refptr) {
-    return oss << refptr.get();
-}
-//----------------------------------------------------------------------------
-template < typename T, typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TSafePtr<T>& safeptr) {
-    return oss << safeptr.get();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

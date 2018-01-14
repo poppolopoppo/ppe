@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Core/IO/TextWriter_fwd.h"
+
 #include <exception>
-#include <iosfwd>
 #include <stdexcept>
 
 #if !(defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
@@ -17,34 +18,27 @@ class FDecodedCallstack;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FException : public std::runtime_error {
+class CORE_API FException {
 public:
-    typedef std::runtime_error parent_type;
-
+    // don't use FStringView to avoid cyclic dependencies in includes
     FException(const char* what) noexcept;
 
+    const char* What() const { return _what; }
 #if WITH_CORE_EXCEPTION_CALLSTACK
     size_t SiteHash() const { return _siteHash; }
     FDecodedCallstack Callstack() const;
 #endif
 
 private:
+    const char* _what;
 #if WITH_CORE_EXCEPTION_CALLSTACK
     size_t _siteHash;
     void* _callstack[8];
 #endif
 };
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const FException& e) {
-    return oss << static_cast<const std::runtime_error&>(e)
-#if WITH_CORE_EXCEPTION_CALLSTACK
-        << " (#0x" << std::hex << std::setfill('0') << std::setw(8) << e.SiteHash()
-        << ")" << std::dec << std::setfill(' ') << std::setw(0) << eol
-        << e.Callstack()
-#endif
-        ;
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, const FException& e);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FException& e);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -5,8 +5,7 @@
 #include "Core.Serialize/Lexer/Location.h"
 #include "Core.Serialize/Lexer/Symbol.h"
 #include "Core/IO/String.h"
-
-#include <iosfwd>
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 namespace Lexer {
@@ -55,8 +54,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const Lexer::FMatch& match) {
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Lexer::FMatch& match) {
     if (match.Symbol())
         return oss << "<" << match.Symbol()->CStr() << "> = \"" << match.Value() << "\"";
     else

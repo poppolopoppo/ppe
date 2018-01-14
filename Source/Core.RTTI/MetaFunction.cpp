@@ -3,6 +3,7 @@
 #include "MetaFunction.h"
 
 #include "Core/IO/FormatHelpers.h"
+#include "Core/IO/TextWriter.h"
 
 #if USE_CORE_RTTI_CHECKS
 #   include "MetaObject.h"
@@ -78,7 +79,7 @@ void FMetaFunction::Invoke(
             _result ? _result->TypeInfos().Name() : "void",
             obj.RTTI_Class()->Name(),
             _name,
-            Fmt::FWFormator([this](std::basic_ostream<wchar_t>& oss) {
+            Fmt::FWFormator([this](FWTextWriter& oss) {
                 const auto& prms = this->Parameters();
                 forrange(i, 0, prms.size()) {
                     if (i > 0) oss << L", ";
@@ -108,7 +109,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EParameterFlags flags) {
+FTextWriter& operator <<(FTextWriter& oss, RTTI::EParameterFlags flags) {
     if (flags == RTTI::EParameterFlags::Default)
         return oss << "Default";
 
@@ -120,7 +121,7 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EPara
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EParameterFlags flags) {
+FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EParameterFlags flags) {
     if (flags == RTTI::EParameterFlags::Default)
         return oss << L"Default";
 
@@ -134,7 +135,7 @@ std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EFunctionFlags flags) {
+FTextWriter& operator <<(FTextWriter& oss, RTTI::EFunctionFlags flags) {
     auto sep = Fmt::NotFirstTime('|');
 
     if (flags & RTTI::EFunctionFlags::Const)        { oss << sep << "Const"; }
@@ -146,7 +147,7 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EFunc
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EFunctionFlags flags) {
+FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EFunctionFlags flags) {
     auto sep = Fmt::NotFirstTime(L'|');
 
     if (flags & RTTI::EFunctionFlags::Const)        { oss << sep << L"Const"; }

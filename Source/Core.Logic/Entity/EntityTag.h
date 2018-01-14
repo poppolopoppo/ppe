@@ -25,21 +25,19 @@ using EntityTagToken = Core::TToken<
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FEntityTag : public EntityTagToken<FEntityTag> {
+class CORE_LOGIC_API FEntityTag : public EntityTagToken<FEntityTag> {
 public:
     typedef EntityTagToken<FEntityTag> parent_type;
 
     FEntityTag() {}
     ~FEntityTag() {}
 
+    FEntityTag(const FString& content);
+    FEntityTag(const FStringView& str);
     FEntityTag(const char *content, size_t length);
 
     FEntityTag(const char *content);
     FEntityTag& operator =(const char *content);
-
-    template <typename _CharTraits, typename _Allocator>
-    FEntityTag(const std::basic_string<char, _CharTraits, _Allocator>& content)
-        : FEntityTag(content.c_str(), content.size()) {}
 
     FEntityTag(const FEntityTag& other);
     FEntityTag& operator =(const FEntityTag& other);

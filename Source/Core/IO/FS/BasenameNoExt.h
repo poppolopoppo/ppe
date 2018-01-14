@@ -3,13 +3,12 @@
 #include "Core/Core.h"
 
 #include "Core/IO/FS/FileSystemToken.h"
-#include "Core/IO/StringView.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FBasenameNoExt : public FFileSystemToken {
+class CORE_API FBasenameNoExt : public FFileSystemToken {
 public:
     typedef FFileSystemToken parent_type;
 
@@ -19,9 +18,7 @@ public:
     FBasenameNoExt(const FileSystem::FStringView& content);
     FBasenameNoExt& operator =(const FileSystem::FStringView& content);
 
-    template <typename _CharTraits, typename _Allocator>
-    FBasenameNoExt(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : FBasenameNoExt(MakeStringView(content)) {}
+    FBasenameNoExt(const FileSystem::FString& content);
 
     FBasenameNoExt(const FFileSystemToken& token);
     FBasenameNoExt& operator =(const FFileSystemToken& token);
@@ -31,6 +28,8 @@ public:
 
     void Swap(FBasenameNoExt& other);
 };
+//----------------------------------------------------------------------------
+CORE_API FBasenameNoExt operator +(const FBasenameNoExt& lhs, const FileSystem::FStringView& rhs);
 //----------------------------------------------------------------------------
 inline void swap(FBasenameNoExt& lhs, FBasenameNoExt& rhs) {
     lhs.Swap(rhs);

@@ -3,11 +3,13 @@
 #include "MetaObject.h"
 
 #include "MetaClass.h"
+#include "MetaObjectHelpers.h"
 #include "MetaTransaction.h"
 
 #include "RTTI_Namespace.h"
 
 #include "Core/IO/FormatHelpers.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
 namespace RTTI {
@@ -154,7 +156,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EObjectFlags flags) {
+FTextWriter& operator <<(FTextWriter& oss, RTTI::EObjectFlags flags) {
     if (flags == RTTI::EObjectFlags::None)
         return oss << "None";
 
@@ -171,7 +173,7 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EObje
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::EObjectFlags flags) {
+FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EObjectFlags flags) {
     if (flags == RTTI::EObjectFlags::None)
         return oss << L"None";
 

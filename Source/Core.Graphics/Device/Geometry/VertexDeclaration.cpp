@@ -11,8 +11,6 @@
 #include "Device/DeviceEncapsulator.h"
 #include "VertexTypes.h"
 
-#include <sstream>
-
 namespace Core {
 namespace Graphics {
 //----------------------------------------------------------------------------

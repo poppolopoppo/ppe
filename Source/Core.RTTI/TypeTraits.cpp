@@ -7,6 +7,8 @@
 #include "Core/IO/Format.h"
 #include "Core/IO/FormatHelpers.h"
 #include "Core/IO/String.h"
+#include "Core/IO/StringBuilder.h"
+#include "Core/IO/TextWriter.h"
 #include "Core/Memory/HashFunctions.h"
 #include "Core/Memory/MemoryView.h"
 
@@ -62,7 +64,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::ETypeFlags flags) {;
+FTextWriter& operator <<(FTextWriter& oss, RTTI::ETypeFlags flags) {;
     auto sep = Fmt::NotFirstTime('|');
 ;
     if (flags & RTTI::ETypeFlags::Scalar)   { oss << sep << "Scalar";; }
@@ -74,7 +76,7 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, RTTI::EType
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, RTTI::ETypeFlags flags) {
+FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETypeFlags flags) {
     auto sep = Fmt::NotFirstTime(L'|');
 
     if (flags & RTTI::ETypeFlags::Scalar)   { oss << sep << L"Scalar"; }

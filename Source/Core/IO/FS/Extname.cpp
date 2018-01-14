@@ -2,9 +2,20 @@
 
 #include "Extname.h"
 
+#include "IO/String.h"
+#include "IO/StringView.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FExtname::FExtname(const FileSystem::FString& content)
+:   FExtname(content.MakeView())
+{}
+//----------------------------------------------------------------------------
+FExtname& FExtname::operator =(const FileSystem::FString& content) {
+    return operator =(content.MakeView());
+}
 //----------------------------------------------------------------------------
 FExtname::FExtname(const FileSystem::FStringView& content)
 :   parent_type(content) {

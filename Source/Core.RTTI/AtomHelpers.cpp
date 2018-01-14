@@ -2,23 +2,22 @@
 
 #include "AtomHelpers.h"
 
-#include "Core/IO/Stream.h"
-#include "Core/IO/String.h"
+#include "Core/IO/StringBuilder.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FString ToString(const RTTI::FAtom& atom) {
-    FOStringStream oss;
+    FStringBuilder oss;
     atom.Format(oss);
-    return oss.str();
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 FWString ToWString(const RTTI::FAtom& atom) {
-    FWOStringStream oss;
+    FWStringBuilder oss;
     atom.Format(oss);
-    return oss.str();
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

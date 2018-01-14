@@ -3,16 +3,16 @@
 #include "Core/Core.h"
 
 #include "Core/IO/FS/Dirpath.h"
+#include "Core/IO/String.h"
 #include "Core/IO/VFS/VirtualFileSystemComponent.h"
 
 #include "Core/Allocator/PoolAllocator.h"
 
 namespace Core {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 class FFilename;
 class FFileStat;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FVirtualFileSystemNativeComponent : public FVirtualFileSystemComponent, IVirtualFileSystemComponentReadWritable {
 public:
@@ -32,8 +32,7 @@ public:
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
-private:
-    // IVirtualFileSystemComponentReadable
+private: // IVirtualFileSystemComponentReadable
     virtual bool DirectoryExists(const FDirpath& dirpath, EExistPolicy policy) override final;
     virtual bool FileExists(const FFilename& filename, EExistPolicy policy) override final;
     virtual bool FileStats(FFileStat* pstat, const FFilename& filename) override final;
@@ -41,17 +40,17 @@ private:
     virtual size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) override final;
     virtual size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) override final;
 
-    virtual TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, EAccessPolicy policy) override final;
+    virtual UStreamReader OpenReadable(const FFilename& filename, EAccessPolicy policy) override final;
 
-    // IVirtualFileSystemComponentWritable
+private: // IVirtualFileSystemComponentWritable
     virtual bool CreateDirectory(const FDirpath& dirpath) override final;
     virtual bool RemoveDirectory(const FDirpath& dirpath) override final;
     virtual bool RemoveFile(const FFilename& filename) override final;
 
-    virtual TUniquePtr<IVirtualFileSystemOStream> OpenWritable(const FFilename& filename, EAccessPolicy policy) override final;
+    virtual UStreamWriter OpenWritable(const FFilename& filename, EAccessPolicy policy) override final;
 
-    // IVirtualFileSystemComponentReadWritable
-    virtual TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, EAccessPolicy policy) override final;
+private: // IVirtualFileSystemComponentReadWritable
+    virtual UStreamReadWriter OpenReadWritable(const FFilename& filename, EAccessPolicy policy) override final;
 
 private:
     const EOpenPolicy _openMode;

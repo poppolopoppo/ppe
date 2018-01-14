@@ -2,12 +2,23 @@
 
 #include "Dirname.h"
 
+#include "IO/String.h"
+#include "IO/StringView.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FDirname::FDirname(const FileSystem::FStringView& content)
 :   parent_type(content) {}
+//----------------------------------------------------------------------------
+FDirname::FDirname(const FileSystem::FString& content)
+:   parent_type(content.MakeView())
+{}
+//----------------------------------------------------------------------------
+FDirname& FDirname::operator =(const FileSystem::FString& content) {
+    return operator =(content.MakeView());
+}
 //----------------------------------------------------------------------------
 FDirname& FDirname::operator =(const FileSystem::FStringView& content) {
     parent_type::operator =(content);

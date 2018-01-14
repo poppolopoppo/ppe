@@ -3,7 +3,6 @@
 #include "Core/Core.h"
 
 #include <functional>
-#include <iosfwd>
 #include <tuple>
 #include <type_traits>
 
@@ -154,14 +153,24 @@ _Return Call(_Return(_Class::*member)(_Args...) const, const _Class* src, TTuple
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-/*template <
-    typename _Char,
-    typename _Traits,
-    typename... _Args
->
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const std::tuple<_Args...>& tuple) {
-    // TODO (01/14) : grmpf
-}*/
+namespace details {
+template <size_t _Index, typename _Char, typename... _Args>
+void PrintTuple_(TBasicTextWriter<_Char>& oss, const TTuple<_Args...>& tuple, std::false_type) {}
+template <size_t _Index, typename _Char, typename... _Args>
+void PrintTuple_(TBasicTextWriter<_Char>& oss, const TTuple<_Args...>& tuple, std::true_type) {
+    oss << std::get<_Index>(tuple);
+    PrintTuple_<_Index + 1>(oss, tuple);
+}
+template <size_t _Index, typename _Char, typename... _Args>
+void PrintTuple_(TBasicTextWriter<_Char>& oss, const TTuple<_Args...>& tuple) {
+    PrintTuple_(oss, tuple, typename std::integral_constant<bool, _Index < sizeof...(_Args)>::type{});
+}
+} //!details
+template <typename _Char, typename... _Args>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TTuple<_Args...>& tuple) {
+    details::PrintTuple_<0>(oss, tuple);
+    return oss;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

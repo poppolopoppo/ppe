@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include <iosfwd>
+#include "Core/IO/TextWriter_fwd.h"
 
 namespace Core {
 namespace Graphics {
@@ -55,9 +55,9 @@ typedef long    MessageResult;
 //----------------------------------------------------------------------------
 FStringView WindowMessageToCStr(EWindowMessage msg);
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(
+    TBasicTextWriter<_Char>& oss,
     EWindowMessage msg) {
     const FStringView cstr = WindowMessageToCStr(msg);
     return (nullptr == cstr.data())

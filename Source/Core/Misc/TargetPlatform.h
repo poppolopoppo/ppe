@@ -2,9 +2,9 @@
 
 #include "Core/Core.h"
 
-#include "Core/IO/FS/Policies.h"
-#include "Core/IO/StringView.h"
-#include "Core/Memory/MemoryView.h"
+#include "Core/IO/StreamPolicies.h"
+#include "Core/IO/String_fwd.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 #include <intrin.h>
 
@@ -43,16 +43,11 @@ enum class ETargetPlatform {
 //----------------------------------------------------------------------------
 CORE_API TMemoryView<const ETargetPlatform> EachTargetPlatform();
 CORE_API FStringView TargetPlatformToCStr(ETargetPlatform platform);
+CORE_API FWStringView TargetPlatformToWCStr(ETargetPlatform platform);
 CORE_API EEndianness TargetPlatformEndianness(ETargetPlatform platform);
+CORE_API FTextWriter& operator <<(FTextWriter& oss, ETargetPlatform platform);
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Traits>
-std::basic_ostream<_Char, _Traits>& operator <<(
-    std::basic_ostream<_Char, _Traits>& oss,
-    ETargetPlatform platform) {
-    return TargetPlatformToCStr(platform);
-}
-//----------------------------------------------------------------------------
-CORE_API struct FPlatform {
+struct CORE_API FPlatformMisc {
     struct FSystemInfo {
         size_t AllocationGranularity;
         size_t PageSize;
@@ -82,7 +77,7 @@ struct FPlatformAtomics {
 #endif
 };
 //----------------------------------------------------------------------------
-struct FPlatformIO {
+struct CORE_API FPlatformIO {
     typedef int FHandle;
 
     static constexpr FHandle Stdin = 0;
@@ -91,7 +86,8 @@ struct FPlatformIO {
     static constexpr FHandle InvalidHandle = int(-1);
 
     static bool Access(const wchar_t* entity, EExistPolicy exists);
-    static FHandle Open(const wchar_t* filename, EOpenPolicy openMode, EAccessPolicy accessFlags);
+    static FHandle Open(const wchar_t* filename, EOpenPolicy open, EAccessPolicy accessFlags);
+    static bool SetMode(FHandle handle, EAccessPolicy accessFlags);
     static bool Close(FHandle handle);
     static bool Eof(FHandle handle);
     static std::streamoff Tell(FHandle handle);

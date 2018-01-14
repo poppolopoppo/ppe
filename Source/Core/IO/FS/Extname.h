@@ -3,25 +3,24 @@
 #include "Core/Core.h"
 
 #include "Core/IO/FS/FileSystemToken.h"
-#include "Core/IO/StringView.h"
+#include "Core/IO/String_fwd.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FExtname : public FFileSystemToken {
+class CORE_API FExtname : public FFileSystemToken {
 public:
     typedef FFileSystemToken parent_type;
 
     FExtname() {}
     ~FExtname() {}
 
+    FExtname(const FileSystem::FString& content);
+    FExtname& operator =(const FileSystem::FString& content);
+
     FExtname(const FileSystem::FStringView& content);
     FExtname& operator =(const FileSystem::FStringView& content);
-
-    template <typename _CharTraits, typename _Allocator>
-    FExtname(const std::basic_string<typename FileSystem::char_type, _CharTraits, _Allocator>& content)
-        : FExtname(content.c_str(), content.size()) {}
 
     FExtname(const FExtname& other);
     FExtname& operator =(const FExtname& other);

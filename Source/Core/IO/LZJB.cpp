@@ -3,7 +3,7 @@
 #include "LZJB.h"
 
 #include "Diagnostic/Logger.h"
-#include "IO/BufferedStreamProvider.h"
+#include "IO/BufferedStream.h"
 #include "IO/FormatHelpers.h"
 #include "Memory/MemoryView.h"
 #include "Misc/FourCC.h"

@@ -2,7 +2,6 @@
 
 #include "VirtualFileSystemNativeComponent.h"
 
-#include "VirtualFileSystemNativeStream.h"
 #include "VirtualFileSystemTrie.h"
 
 #include "Allocator/PoolAllocator-impl.h"
@@ -11,9 +10,12 @@
 #include "IO/FS/FileStat.h"
 #include "IO/FS/FileSystemToken.h"
 #include "IO/FS/FileSystemTrie.h"
+#include "IO/FileStream.h"
 #include "IO/FileSystem.h"
+#include "IO/StringBuilder.h"
+#include "IO/TextWriter.h"
 #include "IO/VirtualFileSystem.h"
-#include "IO/Stream.h"
+#include "Memory/MemoryProvider.h"
 #include "Misc/TargetPlatform.h"
 
 // EnumerateFiles()
@@ -55,7 +57,7 @@ static FWString SanitizeTarget_(const FWString& target) {
 }
 //----------------------------------------------------------------------------
 static void Unalias_(
-    FWOCStrStream& oss,
+    TBasicTextWriter<FileSystem::char_type>& oss,
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target) {
     Assert(alias.PathNode());
@@ -82,21 +84,28 @@ static FWStringView Unalias_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
     const FileSystem::char_type *suffix = nullptr) {
-    FWOCStrStream oss(storage);
+    TBasicFixedSizeTextWriter<FileSystem::char_type> oss(storage);
     Unalias_(oss, aliased, alias, target);
     if (suffix)
         oss << suffix;
-    return oss.MakeView();
+    return oss.Written();
+}
+//----------------------------------------------------------------------------
+static void Unalias_(
+    TBasicTextWriter<FileSystem::char_type>& oss,
+    const FFilename& aliased,
+    const FDirpath& alias, const FWString& target) {
+    Unalias_(oss, aliased.Dirpath(), alias, target);
+    oss << aliased.Basename();
 }
 //----------------------------------------------------------------------------
 static FWStringView Unalias_(
     const TMemoryView<FileSystem::char_type>& storage,
     const FFilename& aliased,
     const FDirpath& alias, const FWString& target) {
-    FWOCStrStream oss(storage);
+    TBasicFixedSizeTextWriter<FileSystem::char_type> oss(storage);
     Unalias_(oss, aliased.Dirpath(), alias, target);
-    oss << aliased.Basename();
-    return oss.MakeView();
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -136,7 +145,7 @@ static size_t GlobFiles_Windows_(
     size_t total = 0;
 
     do {
-        const FileSystem::FStringView fname = MakeStringView(ffd.cFileName, Meta::FForceInit{});
+        const auto fname = MakeStringView(ffd.cFileName, Meta::FForceInit{});
         if (FILE_ATTRIBUTE_DIRECTORY & ffd.dwFileAttributes) {
             if (!recursive)
                 continue;
@@ -264,9 +273,10 @@ IVirtualFileSystemComponentReadWritable* FVirtualFileSystemNativeComponent::Read
 }
 //----------------------------------------------------------------------------
 FWString FVirtualFileSystemNativeComponent::Unalias(const FFilename& aliased) const {
-    FileSystem::char_type nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
+    TBasicStringBuilder<FileSystem::char_type> nativeDirpath;
+    nativeDirpath.reserve(NATIVE_ENTITYNAME_MAXSIZE);
     Unalias_(nativeDirpath, aliased, _alias, _target);
-    return nativeDirpath;
+    return nativeDirpath.ToString();
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::DirectoryExists(const FDirpath& dirpath, EExistPolicy policy) {
@@ -304,17 +314,17 @@ size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, con
     return GlobFiles_(dirpath, _alias, _target, foreach, pattern, recursive);
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIStream> FVirtualFileSystemNativeComponent::OpenReadable(const FFilename& filename, EAccessPolicy policy) {
+UStreamReader FVirtualFileSystemNativeComponent::OpenReadable(const FFilename& filename, EAccessPolicy policy) {
     Assert(_openMode ^ EOpenPolicy::Readable);
 
-    FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
-    Unalias_(nativeFilename, filename, _alias, _target);
-    LOG(Debug, L"[VFS] OpenNativeReadable('{0}')", nativeFilename);
+    FileSystem::char_type buffer[NATIVE_ENTITYNAME_MAXSIZE];
+    const FWStringView nativeFilename = Unalias_(buffer, filename, _alias, _target);
+    LOG(Debug, L"[VFS] OpenNativeReadable('{0}') : {1}", nativeFilename, policy);
 
-    TUniquePtr<IVirtualFileSystemIStream> result;
-    FVirtualFileSystemNativeFileIStream tmp(filename, nativeFilename, policy);
-    if (false == tmp.Bad())
-        result.reset(new FVirtualFileSystemNativeFileIStream(std::move(tmp)));
+    UStreamReader result;
+    FFileStreamReader tmp = FFileStream::OpenRead(nativeFilename, policy);
+    if (tmp.Good())
+        result.reset(new FFileStreamReader(std::move(tmp)));
 
     return result;
 }
@@ -374,10 +384,10 @@ bool FVirtualFileSystemNativeComponent::RemoveFile(const FFilename& filename) {
     return RemoveFile_(nativeFilename);
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& filename, EAccessPolicy policy) {
+UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& filename, EAccessPolicy policy) {
     Assert(_openMode ^ EOpenPolicy::Writable);
 
-    TUniquePtr<IVirtualFileSystemOStream> result;
+    UStreamWriter result;
 
     if (policy ^ EAccessPolicy::Create) {
         if (not CreateDirectory(filename.Dirpath()))
@@ -386,22 +396,34 @@ TUniquePtr<IVirtualFileSystemOStream> FVirtualFileSystemNativeComponent::OpenWri
 
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
-    LOG(Debug, L"[VFS] OpenNativeWritable('{0}')", nativeFilename);
+    LOG(Debug, L"[VFS] OpenNativeWritable('{0}') : {1}", nativeFilename, policy);
 
-    FVirtualFileSystemNativeFileOStream tmp(filename, nativeFilename, policy);
-    if (false == tmp.Bad())
-        result.reset(new FVirtualFileSystemNativeFileOStream(std::move(tmp)));
+    FFileStreamWriter tmp = FFileStream::OpenWrite(nativeFilename, policy);
+    if (tmp.Good())
+        result.reset(new FFileStreamWriter(std::move(tmp)));
 
     return result;
 }
 //----------------------------------------------------------------------------
-TUniquePtr<IVirtualFileSystemIOStream> FVirtualFileSystemNativeComponent::OpenReadWritable(const FFilename&/* filename */, EAccessPolicy/* policy */) {
+UStreamReadWriter FVirtualFileSystemNativeComponent::OpenReadWritable(const FFilename& filename, EAccessPolicy policy) {
     Assert(_openMode == EOpenPolicy::ReadWritable);
 
-    // TODO (12/13) : not supported/required atm
-    AssertNotImplemented();
+    UStreamReadWriter result;
 
-    return nullptr;
+    if (policy ^ EAccessPolicy::Create) {
+        if (not CreateDirectory(filename.Dirpath()))
+            return result;
+    }
+
+    FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
+    Unalias_(nativeFilename, filename, _alias, _target);
+    LOG(Debug, L"[VFS] OpenNativeReadWritable('{0}') : {1}", nativeFilename, policy);
+
+    FFileStreamReadWriter tmp = FFileStream::OpenReadWrite(nativeFilename, policy);
+    if (tmp.Good())
+        result.reset(new FFileStreamReadWriter(std::move(tmp)));
+
+    return result;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

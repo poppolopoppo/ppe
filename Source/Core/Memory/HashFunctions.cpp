@@ -7,7 +7,8 @@
 #define CORE_HASH_XXHASH    2
 #define CORE_HASH_FARMHASH  3
 
-#define CORE_HASH_FUNCTION  CORE_HASH_CRC32 // use CRC32 (SSE4.2) instead of xxHASH (simply faster)
+//#define CORE_HASH_FUNCTION  CORE_HASH_CRC32 // use CRC32 (SSE4.2) instead of xxHASH (simply faster)
+#define CORE_HASH_FUNCTION  CORE_HASH_XXHASH  // use XXHASH since its support for SSE4.2 was enabled
 
 //----------------------------------------------------------------------------
 // Farmhash for 32/64/128 bit fingerprint hash functions (stable)

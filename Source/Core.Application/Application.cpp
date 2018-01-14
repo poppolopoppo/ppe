@@ -14,11 +14,12 @@
 #include "Core/Diagnostic/CurrentProcess.h"
 #include "Core/Diagnostic/DialogBox.h"
 #include "Core/Diagnostic/Logger.h"
-#include "Core/IO/Stream.h"
 #include "Core/Misc/TargetPlatform.h"
 
 #ifdef USE_DEBUG_LOGGER
 #   include "Core/IO/FormatHelpers.h"
+#   include "Core/IO/StreamProvider.h"
+#   include "Core/IO/TextWriter.h"
 #endif
 
 #define WITH_APPLICATION_TRY_CATCH 0 //%_NOCOMMIT%
@@ -33,15 +34,16 @@ POOL_TAG_DEF(Application);
 //----------------------------------------------------------------------------
 #ifdef USE_DEBUG_LOGGER
 static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
-    FStackLocalLoggerStream(ELogCategory::Info)
-        << "Memory statistics :" << eol
-        << " - Total free size          = " << Fmt::FSizeInBytes{ memoryStats.TotalFreeSize } << eol
-        << " - Largest free block       = " << Fmt::FSizeInBytes{ memoryStats.LargestFreeBlockSize } << eol
-        << " - Total used size          = " << Fmt::FSizeInBytes{ memoryStats.TotalUsedSize } << eol
-        << " - Largest used block       = " << Fmt::FSizeInBytes{ memoryStats.LargestUsedBlockSize } << eol
-        << " - Total overhead size      = " << Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize } << eol
-        << " - Total comitted size      = " << Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize + memoryStats.TotalFreeSize + memoryStats.TotalUsedSize } << eol
-        << " - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << "%" << eol;
+    STACKLOCAL_WTEXTWRITER(oss, 1024);
+    oss << L"Memory statistics :" << Eol
+        << L" - Total free size          = " << Fmt::FSizeInBytes{ memoryStats.TotalFreeSize } << Eol
+        << L" - Largest free block       = " << Fmt::FSizeInBytes{ memoryStats.LargestFreeBlockSize } << Eol
+        << L" - Total used size          = " << Fmt::FSizeInBytes{ memoryStats.TotalUsedSize } << Eol
+        << L" - Largest used block       = " << Fmt::FSizeInBytes{ memoryStats.LargestUsedBlockSize } << Eol
+        << L" - Total overhead size      = " << Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize } << Eol
+        << L" - Total committed size     = " << Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize + memoryStats.TotalFreeSize + memoryStats.TotalUsedSize } << Eol
+        << L" - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << L'%' << Eol;
+    LOG(Info, oss.Written());
 }
 #endif
 //----------------------------------------------------------------------------
@@ -106,10 +108,6 @@ void FApplicationModule::ClearAll_UnusedMemory() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationContext::FApplicationContext() {
-    // Much faster cio !
-    // https://gcc.gnu.org/onlinedocs/libstdc++/manual/io_and_c.html
-    std::ios::sync_with_stdio(false);
-
 #ifdef PLATFORM_WINDOWS
     ConfigureCRTHeapForDebugging_();
 #endif
@@ -139,8 +137,8 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
 #if WITH_APPLICATION_TRY_CATCH
         CORE_CATCH(const std::exception& e)
         CORE_CATCH_BLOCK({
-            const FWString wwhat = ToWString(e.what());
-            Dialog::Ok(wwhat.c_str(), L"FException caught while starting !", Dialog::Icon::Exclamation);
+            const FWString wwhat = ToWString(MakeStringView(e.what(), Meta::FForceInit{}));
+            Dialog::Ok(wwhat, L"FException caught while starting !", Dialog::Icon::Exclamation);
             AssertNotReached();
         })
 #endif
@@ -153,9 +151,9 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
         }
 #if WITH_APPLICATION_TRY_CATCH
         CORE_CATCH(const std::exception& e)
-            CORE_CATCH_BLOCK({
-            const FWString wwhat = ToWString(e.what());
-            Dialog::Ok(wwhat.c_str(), L"FException caught while shutting down !", Dialog::Icon::Exclamation);
+        CORE_CATCH_BLOCK({
+            const FWString wwhat = ToWString(MakeStringView(e.what(), Meta::FForceInit{}));
+            Dialog::Ok(wwhat, L"FException caught while shutting down !", Dialog::Icon::Exclamation);
             AssertNotReached();
         })
 #endif

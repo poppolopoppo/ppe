@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/Allocator/Alloca.h"
 #include "Core/IO/StreamProvider.h"
 #include "Core/Memory/MemoryView.h"
 
@@ -9,10 +10,21 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#define STACKLOCAL_STREAMWRITER(_NAME, _COUNT) \
+    MALLOCA(u8, CONCAT(_Alloca_, _NAME), _COUNT); \
+    Core::FMemoryViewWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 class FMemoryViewReader : public IBufferedStreamReader {
 public:
     FMemoryViewReader() : _offsetI(0) {}
-    explicit FMemoryViewReader(const TMemoryView<const u8>& rawData) : _offsetI(0), _rawData(rawData) {}
+
+    template <typename T>
+    explicit FMemoryViewReader(const TMemoryView<const T>& rawData)
+        : _offsetI(0)
+        , _rawData(rawData.template Cast<const u8>())
+    {}
 
     TMemoryView<const u8> Eat(size_t sizeInBytes) {
         AssertRelease(sizeInBytes + _offsetI <= _rawData.SizeInBytes());
@@ -29,6 +41,11 @@ public:
         return true;
     }
 
+    FMemoryViewReader SubRange(size_t offset, size_t sizeInBytes) const {
+        return FMemoryViewReader(_rawData.SubRange(offset, sizeInBytes));
+    }
+
+public: // IStreamReader
     virtual bool Eof() const override final { return _offsetI >= _rawData.SizeInBytes(); }
 
     virtual bool IsSeekableI(ESeekOrigin ) const override final { return true; }
@@ -41,12 +58,9 @@ public:
     virtual bool Read(void* storage, std::streamsize sizeInBytes) override final;
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
 
+public: // IBufferedStreamReader
     virtual bool Peek(char& ch) override final;
     virtual bool Peek(wchar_t& wch) override final;
-
-    FMemoryViewReader SubRange(size_t offset, size_t sizeInBytes) const {
-        return FMemoryViewReader(_rawData.SubRange(offset, sizeInBytes));
-    }
 
 private:
     size_t _offsetI;
@@ -58,16 +72,24 @@ private:
 class FMemoryViewWriter : public IBufferedStreamWriter {
 public:
     FMemoryViewWriter() : _size(0), _offsetO(0) {}
-    explicit FMemoryViewWriter(const TMemoryView<u8>& rawData) : _size(0), _offsetO(0), _rawData(rawData) {}
 
-    virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
+    template <typename T>
+    FMemoryViewWriter(T* ptr, size_t count)
+        : FMemoryViewWriter(TMemoryView<T>(ptr, count))
+    {}
 
-    virtual std::streamoff TellO() const override final;
-    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
+    template <typename T, size_t _Dim>
+    FMemoryViewWriter(T(&staticArray)[_Dim])
+        : FMemoryViewWriter(MakeView(staticArray))
+    {}
 
-    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
-    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
+    template <typename T>
+    explicit FMemoryViewWriter(const TMemoryView<T>& rawData)
+        : _size(0), _offsetO(0)
+        , _rawData(rawData.template Cast<u8>())
+    {}
 
+    size_t size() const { return _size; }
     TMemoryView<u8> Written() const { return _rawData.CutBefore(_size); }
 
     bool WriteAlignmentPadding(size_t boundary, u8 padvalue = 0);
@@ -89,7 +111,20 @@ public:
         return Eat(sizeInBytes);
     }
 
-public:
+    void Reset() {
+        _offsetO = _size = 0;
+    }
+
+public: // IStreamWriter
+    virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
+
+    virtual std::streamoff TellO() const override final;
+    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin policy = ESeekOrigin::Begin) override final;
+
+    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final;
+    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
+
+public: // IBufferedStreamWriter
     virtual void Flush() override final {}
 
 private:

@@ -5,9 +5,10 @@
 #include "Core.Graphics/Name.h"
 
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter_fwd.h"
+#include "Core/Maths/PackedVectors.h"
 #include "Core/Maths/ScalarMatrix.h"
 #include "Core/Maths/ScalarVector.h"
-#include "Core/Maths/PackedVectors.h"
 #include "Core/Memory/MemoryView.h"
 
 #include "Core.Graphics/Value.Definitions-inl.h"
@@ -138,8 +139,8 @@ FOREACH_CORE_GRAPHIC_VALUETYPE(VALUETYPE_UNION_DEF)
         return not operator ==(lhs, rhs);
     }
 
-    friend std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FValue& value);
-    friend std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const FValue& value);
+    friend FTextWriter& operator <<(FTextWriter& oss, const FValue& value);
+    friend FWTextWriter& operator <<(FWTextWriter& oss, const FValue& value);
 
 private:
     EValueType _type;

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Core/Core.h"
+#include "Core/IO/TextWriter_fwd.h"
 
-#include <iosfwd>
 #include <utility>
 
 namespace Core {
@@ -43,12 +43,14 @@ void Construct(TPair<_First, _Second>* p, FForceInit) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <
-    typename _Char,  typename _Traits,
-    typename _First, typename _Second
->
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TPair<_First, _Second>& pair) {
+template <typename _First, typename _Second>
+FTextWriter& operator <<(FTextWriter& oss, const TPair<_First, _Second>& pair) {
     return oss << "( " << pair.first << ", " << pair.second << " )";
+}
+//----------------------------------------------------------------------------
+template <typename _First, typename _Second>
+FWTextWriter& operator <<(FWTextWriter& oss, const TPair<_First, _Second>& pair) {
+    return oss << L"( " << pair.first << L", " << pair.second << L" )";
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

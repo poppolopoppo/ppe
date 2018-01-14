@@ -11,6 +11,7 @@
 #   include "Container/Vector.h"
 #   include "Diagnostic/CrtDebug.h"
 #   include "IO/FormatHelpers.h"
+#   include "IO/StringBuilder.h"
 #   include "Thread/AtomicSpinLock.h"
 
 #   include <algorithm>
@@ -104,8 +105,11 @@ void ReportDomainTrackingData() {
 #if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
     const FMemoryTracking **ptr = (const FMemoryTracking **)&GAllMemoryDomainTrackingData[0];
     const TMemoryView<const FMemoryTracking *> datas(ptr, lengthof(GAllMemoryDomainTrackingData));
-    FLoggerStream log(ELogCategory::Debug);
-    ReportTrackingDatas(log, L"Memory Domains", datas);
+
+    FWStringBuilder oss;
+    ReportTrackingDatas(oss, L"Memory Domains", datas);
+
+    LOG(Debug, oss.ToString());
 #endif
 }
 //----------------------------------------------------------------------------
@@ -139,10 +143,14 @@ void UnregisterAdditionalTrackingData(FMemoryTracking *pTrackingData) {
 void ReportAdditionalTrackingData() {
 #if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
     SKIP_MEMORY_LEAKS_IN_SCOPE();
-    FLoggerStream log(ELogCategory::Debug);
-    FAdditionalTrackingData& Additional = AllAdditionalTrackingData_();
-    const FAtomicSpinLock::FScope scopeLock(Additional.Barrier);
-    ReportTrackingDatas(log, L"Additional", Additional.Datas.MakeConstView());
+
+    FWStringBuilder oss;
+    {
+        FAdditionalTrackingData& Additional = AllAdditionalTrackingData_();
+        const FAtomicSpinLock::FScope scopeLock(Additional.Barrier);
+        ReportTrackingDatas(oss, L"Additional", Additional.Datas.MakeConstView());
+    }
+    LOG(Debug, oss.ToString());
 #endif
 }
 //----------------------------------------------------------------------------

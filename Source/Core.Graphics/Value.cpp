@@ -2,6 +2,8 @@
 
 #include "Value.h"
 
+#include "Core/IO/TextWriter.h"
+
 #include "Core/Memory/HashFunctions.h"
 
 #include "Core/Maths/ScalarVectorHelpers.h"
@@ -579,7 +581,7 @@ void ValueSwap(EValueType type, const TMemoryView<u8>& lhs, const TMemoryView<u8
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FValue& value) {
+FTextWriter& operator <<(FTextWriter& oss, const FValue& value) {
     switch (value.Type()) {
     case EValueType::Void:
         oss << "void";
@@ -595,7 +597,7 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, const FValu
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, const FValue& value) {
+FWTextWriter& operator <<(FWTextWriter& oss, const FValue& value) {
     switch (value.Type()) {
     case EValueType::Void:
         oss << L"void";

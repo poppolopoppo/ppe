@@ -5,6 +5,7 @@
 #include "Core/Allocator/Allocation.h"
 #include "Core/Allocator/NodeBasedContainerAllocator.h"
 #include "Core/Container/Pair.h"
+#include "Core/IO/TextWriter_fwd.h"
 
 #include <map>
 
@@ -96,19 +97,20 @@ void Remove_AssertExistsAndSameValue(TMap<_Key, _Value, _Predicate, _Allocator>&
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <
-    typename _Key,
-    typename _Value,
-    typename _Predicate,
-    typename _Allocator,
-    typename _Char,
-    typename _Traits
->
-std::basic_ostream<_Char, _Traits>& operator <<(std::basic_ostream<_Char, _Traits>& oss, const TMap<_Key, _Value, _Predicate, _Allocator>& map) {
+template <typename _Key, typename _Value, typename _Predicate, typename _Allocator>
+FTextWriter& operator <<(FTextWriter& oss, const TMap<_Key, _Value, _Predicate, _Allocator>& map) {
     oss << "{ ";
     for (const auto& it : map)
         oss << '(' << it.first << ", " << it.second << "), ";
     return oss << '}';
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Predicate, typename _Allocator>
+FWTextWriter& operator <<(FWTextWriter& oss, const TMap<_Key, _Value, _Predicate, _Allocator>& map) {
+    oss << L"{ ";
+    for (const auto& it : map)
+        oss << L'(' << it.first << L", " << it.second << L"), ";
+    return oss << L'}';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

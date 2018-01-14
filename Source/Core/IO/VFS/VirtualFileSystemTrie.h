@@ -40,9 +40,9 @@ public:
     bool RemoveDirectory(const FDirpath& dirpath) const;
     bool RemoveFile(const FFilename& filename) const;
 
-    TUniquePtr<IVirtualFileSystemIStream> OpenReadable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None) const;
-    TUniquePtr<IVirtualFileSystemOStream> OpenWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None) const;
-    TUniquePtr<IVirtualFileSystemIOStream> OpenReadWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None) const;
+    UStreamReader OpenReadable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None) const;
+    UStreamWriter OpenWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None) const;
+    UStreamReadWriter OpenReadWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None) const;
 
     FWString Unalias(const FFilename& aliased) const;
 
@@ -51,7 +51,7 @@ public:
     void Mount(FVirtualFileSystemComponent* component);
     void Unmount(FVirtualFileSystemComponent* component);
 
-    FVirtualFileSystemComponent* MountNativePath(const FDirpath& alias, const wchar_t *nativepPath);
+    FVirtualFileSystemComponent* MountNativePath(const FDirpath& alias, const FWStringView& nativepPath);
     FVirtualFileSystemComponent* MountNativePath(const FDirpath& alias, FWString&& nativepPath);
     FVirtualFileSystemComponent* MountNativePath(const FDirpath& alias, const FWString& nativepPath);
 
