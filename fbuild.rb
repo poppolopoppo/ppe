@@ -27,7 +27,7 @@ class FHeader
     attr_reader :filename, :header
     def initialize(filename)
         @filename = filename
-        @header = File.exists?(@filename) ? File.read(@filename) : nil
+        @header = File.exist?(@filename) ? File.read(@filename) : nil
     end
     def match?(header)
         return (@header == header)
@@ -78,7 +78,7 @@ class FDirectoryDependency < FDependency
     end
 private
     def eval_()
-        return Dir.exists?(@path)
+        return Dir.exist?(@path)
     end
 end
 
@@ -104,7 +104,7 @@ private
         return false if @comntools.nil?
         binpath = File.join(@comntools, '..', '..', 'VC', 'bin')
         '00'.upto('99') do |id|
-            @cluid = "10#{id}" if File.exists?(File.join(binpath, "10#{id}", 'clui.dll'))
+            @cluid = "10#{id}" if File.exist?(File.join(binpath, "10#{id}", 'clui.dll'))
         end
         return !@cluid.nil?
     end
@@ -136,14 +136,14 @@ private
     def eval_()
         @comntools = @default_comntools
         msvcpath = File.join(@comntools, '..', '..', 'VC', 'Tools', 'MSVC')
-        return false unless Dir.exists?(msvcpath)
+        return false unless Dir.exist?(msvcpath)
         versions = Dir.entries(msvcpath)
         return false if versions.empty?
         @versionrc = versions.sort.last
         binpath = File.join(@comntools, '..', '..', 'VC', 'Tools', 'MSVC', @versionrc, 'bin', 'HostX64')
-        return false unless Dir.exists?(binpath)
+        return false unless Dir.exist?(binpath)
         '00'.upto('99') do |id|
-            @cluid = "10#{id}" if File.exists?(File.join(binpath, 'x64', "10#{id}", 'clui.dll'))
+            @cluid = "10#{id}" if File.exist?(File.join(binpath, 'x64', "10#{id}", 'clui.dll'))
         end
         return !@cluid.nil?
     end
@@ -170,11 +170,11 @@ class FWindowsSDK < FDependency
     end
 private
     def eval_()
-        return false unless Dir.exists?(sdkpath)
+        return false unless Dir.exist?(sdkpath)
         libpath = File.join(sdkpath, 'lib')
-        return false unless Dir.exists?(libpath)
+        return false unless Dir.exist?(libpath)
         sdkversions = Dir.entries(libpath)
-        sdkversions.delete_if {|p| !Dir.exists?(File.join(libpath, p, 'um')) }
+        sdkversions.delete_if {|p| !Dir.exist?(File.join(libpath, p, 'um')) }
         raise "Can't find Windows SDK #{@winver} version !" if sdkversions.empty?
         @version = sdkversions.sort.last
         return true
@@ -192,7 +192,7 @@ DEPENDENCIES= [
     [ 'LLVM for Windows x64'    , FDirectoryDependency.new('LLVMFORWINDOWS_X64', 'LLVMBasePathX64', 'C:\Program Files\LLVM') ],
 ]
 
-DEPENDENCIES.each { |(friendly, dep)| dep.eval }
+DEPENDENCIES.each { |it| it[1].eval }
 
 VISUALSTUDIO_DEFINES = %w{
     USE_VISUALSTUDIO_2012
@@ -246,7 +246,7 @@ def git_modified_files()
         fname.gsub!('/', '\\') if RUNNING_ON_WINDOWS
         fname
     end
-    .delete_if {|fname| fname.nil? || fname.length == 0 || !File.exists?(fname) }
+    .delete_if {|fname| fname.nil? || fname.length == 0 || !File.exist?(fname) }
     .sort!
 end
 
@@ -262,6 +262,10 @@ end
 
 END_TIME=Time.now
 $stdout.puts("Spent %5.3f milliseconds in #{__FILE__}" % [(END_TIME - START_TIME)*1000])
+$stdout.puts("#{SOLUTION_FBUILDCMD} #{ARGV.join(' ')}")
 $stdout.flush
-
-exec(SOLUTION_FBUILDCMD, *ARGV)
+unless exec(SOLUTION_FBUILDCMD, *ARGV)
+    $stderr.puts "failed to start fastbuild, command line:"
+    $stderr.puts([SOLUTION_FBUILDCMD, *ARGV].join(' '))
+    exit 5
+end
