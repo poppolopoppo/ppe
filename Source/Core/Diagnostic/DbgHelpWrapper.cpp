@@ -4,7 +4,7 @@
 
 #ifdef PLATFORM_WINDOWS
 
-#include "DbgHelpWrapper.h"
+#include "DbghelpWrapper.h"
 #include "Logger.h"
 
 namespace Core {
@@ -53,7 +53,7 @@ FDbghelpWrapper::FDbghelpWrapper()
         _symLoadModuleExW = (FSymLoadModuleExW)_dbghelp_dll.FunctionAddr("SymLoadModuleExW");
         _symFromAddrW = (FSymFromAddrW)_dbghelp_dll.FunctionAddr("SymFromAddrW");
         _symGetLineFromAddrW64 = (FSymGetLineFromAddrW64)_dbghelp_dll.FunctionAddr("SymGetLineFromAddrW64");
-        
+
         Assert(_symInitializeW);
         Assert(_symCleanup);
         Assert(_symGetOptions);

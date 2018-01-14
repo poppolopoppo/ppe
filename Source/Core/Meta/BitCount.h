@@ -1,7 +1,8 @@
 #pragma once
 
-#include <emmintrin.h>
 #include <intrin.h>
+#include <emmintrin.h>
+#include <immintrin.h>
 #include <pmmintrin.h>
 #include <limits.h>
 

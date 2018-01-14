@@ -14,6 +14,11 @@ template <typename T>
 class TFunction;
 template <typename _Ret, typename... _Args>
 class TFunction<_Ret(_Args...)> {
+    template <typename T, typename _R = decltype(std::declval<T>()(std::declval<_Args>()...)) >
+    static typename std::is_same<_Ret, _R>::type is_callable_(int);
+    template <typename T>
+    static std::false_type is_callable_(...);
+
 public:
     typedef _Ret (*func_type)(_Args...);
 
@@ -87,7 +92,7 @@ public:
             ((IWrapper_*)&_inSitu)->~IWrapper_();
     }
 
-    CORE_FAKEBOOL_OPERATOR_DECL() { return _func; }
+    CORE_FAKEBOOL_OPERATOR_DECL() { return (void*)_func; }
     bool Valid() const { return (nullptr != _func); }
 
     _Ret operator ()(_Args... args) const {
@@ -143,11 +148,6 @@ private:
     static constexpr size_t GInSituSize = (32 - sizeof(intptr_t));
     ALIGNED_STORAGE(GInSituSize, 1) _inSitu;
 
-    template <typename T, typename _R = decltype(std::declval<T>()(std::declval<_Args>()...)) >
-    static typename std::is_same<_Ret, _R>::type is_callable_(int);
-    template <typename T>
-    static std::false_type is_callable_(...);
-
     struct IWrapper_ {
         virtual ~IWrapper_() {}
         virtual void CopyTo(void* dst) const = 0;
@@ -164,7 +164,7 @@ private:
 
     template <typename _Data>
     void assign_wrapped_(_Data&& data) {
-        assign_wrapped_(std::move(data), std::is_trivially_destructible<_Data>::type{});
+        assign_wrapped_(std::move(data), typename std::is_trivially_destructible<_Data>::type{});
     }
 
     template <typename _Data>
