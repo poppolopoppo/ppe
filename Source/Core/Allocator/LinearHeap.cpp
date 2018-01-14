@@ -36,7 +36,7 @@ struct FLinearHeapLargeBlock_ {
     size_t SizeInBytes;
 };
 STATIC_CONST_INTEGRAL(size_t, GLinearHeapLargeBlocksAllocationSize, FLinearHeapSmallBlock_::AllocationSize);
-STATIC_CONST_INTEGRAL(size_t, GLinearHeapLargeBlocksCapacity, GLinearHeapLargeBlocksAllocationSize / sizeof(FLinearHeapLargeBlock_));
+//STATIC_CONST_INTEGRAL(size_t, GLinearHeapLargeBlocksCapacity, GLinearHeapLargeBlocksAllocationSize / sizeof(FLinearHeapLargeBlock_));
 //----------------------------------------------------------------------------
 class FLinearHeapVMCache_ {
 public:
