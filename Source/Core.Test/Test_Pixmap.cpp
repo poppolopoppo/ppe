@@ -17,10 +17,13 @@
 #include "Core/Maths/RandomGenerator.h"
 
 #include "Core/IO/Format.h"
+#include "Core/IO/FS/ConstNames.h"
+#include "Core/IO/String.h"
+#include "Core/IO/StringBuilder.h"
 #include "Core/IO/FS/Filename.h"
 
 namespace Core {
-namespace ContentGenerator {
+namespace Test {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -44,7 +47,8 @@ static void Test_ExpandAlphaMask_(const FFilename& input) {
         Pixmap::FFloatImage cpy = *intermediate;
         cpy.DiscardAlpha();
         img.ConvertFrom(&cpy);
-        if (false == Pixmap::Save(&img, StringFormat(L"{0}/{1}_DiscardAlpha.png", output, input.BasenameNoExt())) )
+        const FFilename fname = output / (input.BasenameNoExt() + L"_DiscardAlpha" + FFSConstNames::Png());
+        if (false == Pixmap::Save(&img, fname))
             AssertNotReached();
     }
 
@@ -55,7 +59,8 @@ static void Test_ExpandAlphaMask_(const FFilename& input) {
         Pixmap::FFloatImage cpy = *intermediate;
         cpy.DiscardAlpha();
         img.ConvertFrom(&cpy);
-        if (false == Pixmap::Save(&img, StringFormat(L"{0}/{1}_ExpandAlphaColor.png", output, input.BasenameNoExt())) )
+        const FFilename fname = output / (input.BasenameNoExt() + L"_ExpandAlphaColor" + FFSConstNames::Png());
+        if (false == Pixmap::Save(&img, fname))
             AssertNotReached();
     }
 
@@ -70,7 +75,9 @@ static void Test_ExpandAlphaMask_(const FFilename& input) {
         //chain[i]->DiscardAlpha();
 
         img.ConvertFrom(chain[i].get());
-        if (false == Pixmap::Save(&img, StringFormat(L"{0}/{1}_Mip{2:#2}.png", output, input.BasenameNoExt(), i)) )
+
+        const FWString fname = StringFormat(L"{0}/{1}_Mip{2:#2}.png", output, input.BasenameNoExt(), i);
+        if (false == Pixmap::Save(&img, fname.MakeView()))
             AssertNotReached();
     }
 }
@@ -85,7 +92,8 @@ static void Test_DistanceField(const FFilename& input) {
 
     Pixmap::DistanceField_DRA(&img, &tmp, AlphaCutoff);
 
-    if (false == Pixmap::Save(&img, StringFormat(L"Process:/{0}_DistanceField.hdr", input.BasenameNoExt())))
+    const FWString fname = StringFormat(L"Process:/{0}_DistanceField.hdr", input.BasenameNoExt());
+    if (false == Pixmap::Save(&img, fname.MakeView()))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
@@ -124,7 +132,9 @@ static void Test_ConvexHull_(const FFilename& input) {
     Pixmap::DrawPolygon(&convexhull, uvs, FLinearColor::Red());
 
     img.ConvertFrom(&convexhull);
-    if (false == Pixmap::Save(&img, StringFormat(L"Process:/{0}_ConvexHull.png", input.BasenameNoExt())))
+
+    const FWString fname = StringFormat(L"Process:/{0}_ConvexHull.png", input.BasenameNoExt());
+    if (false == Pixmap::Save(&img, fname.MakeView()))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
@@ -204,24 +214,24 @@ void Test_Pixmap() {
 
     Test_Binpacking();
 
-    parallel_for(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
+    ParallelFor(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_ConvexHull_(fname);
     });
 
-    parallel_for(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
+    ParallelFor(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_ExpandAlphaMask_(fname);
     });
 
-    parallel_for(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
+    ParallelFor(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_DistanceField(fname);
     });
 
-    parallel_for(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
+    ParallelFor(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_DXTCompression_(fname);
     });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace ContentGenerator
+} //!namespace Test
 } //!namespace Core

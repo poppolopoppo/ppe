@@ -9,6 +9,7 @@
 #include "Core/Container/Vector.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FormatHelpers.h"
+#include "Core/IO/StringView.h"
 #include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/RandomGenerator.h"
 #include "Core/Memory/MemoryView.h"
@@ -20,8 +21,10 @@
 #include <algorithm>
 #include <allocators>
 
+#define USE_TESTALLOCATOR_MEMSET 0
+
 namespace Core {
-namespace ContentGenerator {
+namespace Test {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -44,7 +47,7 @@ static constexpr size_t GSlidingWindow_ = 150;
 #endif
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_ST_(const wchar_t* category, const wchar_t* name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static void Test_Allocator_ST_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
     BENCHMARK_SCOPE(category, name);
@@ -52,30 +55,34 @@ static void Test_Allocator_ST_(const wchar_t* category, const wchar_t* name, _Al
     forrange(loop, 0, GLoopCount_) {
         for (size_t sz : blockSizes) {
             auto* ptr = allocator.allocate(sz);
+#if USE_TESTALLOCATOR_MEMSET
             ::memset(ptr, 0xFA, sizeof(value_type) * sz);
+#endif
             allocator.deallocate(ptr, sz);
         }
     }
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_MT_(const wchar_t* category, const wchar_t* name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static void Test_Allocator_MT_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
     BENCHMARK_SCOPE(category, name);
 
     forrange(loop, 0, GLoopCount_) {
-        parallel_for(blockSizes.begin(), blockSizes.end(), [&allocator](size_t sz) {
+        ParallelFor(blockSizes.begin(), blockSizes.end(), [&allocator](size_t sz) {
             _Alloc alloc(allocator);
             auto* ptr = alloc.allocate(sz);
+#if USE_TESTALLOCATOR_MEMSET
             ::memset(ptr, 0xFB, sizeof(value_type) * sz);
+#endif
             alloc.deallocate(ptr, sz);
         });
     }
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_Sliding_(const wchar_t* category, const wchar_t* name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes, size_t window) {
+static void Test_Allocator_Sliding_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes, size_t window) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
     BENCHMARK_SCOPE(category, name);
@@ -91,7 +98,9 @@ static void Test_Allocator_Sliding_(const wchar_t* category, const wchar_t* name
     forrange(loop, 0, GLoopCount_) {
         for(size_t sz : blockSizes) {
             pointer ptr = allocator.allocate(sz);
+#if USE_TESTALLOCATOR_MEMSET
             ::memset(ptr, 0xFC, sizeof(value_type) * sz);
+#endif
 
             if (blockAddrs.size() == window) {
                 forrange(i, 0, numDeallocs) {
@@ -111,7 +120,7 @@ static void Test_Allocator_Sliding_(const wchar_t* category, const wchar_t* name
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_Trashing_(const wchar_t* category, const wchar_t* name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static void Test_Allocator_Trashing_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
     BENCHMARK_SCOPE(category, name);
@@ -133,7 +142,8 @@ static void Test_Allocator_Trashing_(const wchar_t* category, const wchar_t* nam
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static void Test_Allocator_(const wchar_t* name, _Alloc&& allocator,
+static void Test_Allocator_(
+    const FWStringView& name, _Alloc&& allocator,
     const TMemoryView<const size_t>& smallBlocks,
     const TMemoryView<const size_t>& largeBlocks,
     const TMemoryView<const size_t>& mixedBlocks ) {
@@ -180,7 +190,7 @@ void Test_Allocators() {
 
     constexpr size_t BlockSizeMin = 16;
     constexpr size_t BlockSizeMid = 32736;
-    const size_t BlockSizeMax = FPlatform::SystemInfo.AllocationGranularity;
+    const size_t BlockSizeMax = FPlatformMisc::SystemInfo.AllocationGranularity;
 
     size_t smallBlocksSizeInBytes = 0;
     size_t largeBlocksSizeInBytes = 0;
@@ -222,5 +232,5 @@ void Test_Allocators() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace ContentGenerator
+} //!namespace Test
 } //!namespace Core

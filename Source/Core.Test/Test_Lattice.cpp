@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+/* %_NOCOMMIT% TODO
+
 #include "Core.Lattice/GenericMaterial.h"
 #include "Core.Lattice/GenericMesh.h"
 #include "Core.Lattice/GenericMeshHelpers.h"
@@ -14,7 +16,7 @@
 #include "Core/Thread/Task.h"
 
 namespace Core {
-namespace ContentGenerator {
+namespace Test {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -57,6 +59,7 @@ void Test_Lattice() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace ContentGenerator
+} //!namespace Test
 } //!namespace Core
 
+*/

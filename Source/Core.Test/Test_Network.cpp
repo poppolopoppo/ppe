@@ -17,9 +17,13 @@
 
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FS/Filename.h"
+#include "Core/IO/FileStream.h"
+#include "Core/IO/String.h"
+#include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
-namespace ContentGenerator {
+namespace Test {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -31,31 +35,32 @@ static bool ParseUri_(const FStringView& str) {
     if (not FUri::Parse(uri, str))
         return false;
 
-    std::cout
-        << str << eol
-        << "    Scheme: " << uri.Scheme() << eol
-        << "    Username: " << uri.Username() << eol
-        << "    Hostname: " << uri.Hostname() << eol
-        << "    Port: " << uri.Port() << eol
-        << "    Path: " << uri.Path() << eol
-        << "    Query: " << uri.Query() << eol
-        << "    Anchor: " << uri.Anchor() << eol
-        << eol;
+    GStdout
+        << str << Eol
+        << "    Scheme: " << uri.Scheme() << Eol
+        << "    Username: " << uri.Username() << Eol
+        << "    Hostname: " << uri.Hostname() << Eol
+        << "    Port: " << uri.Port() << Eol
+        << "    Path: " << uri.Path() << Eol
+        << "    Query: " << uri.Query() << Eol
+        << "    Anchor: " << uri.Anchor() << Eol
+        << Eol;
 
     FUri::FQueryMap args;
     if (not FUri::Unpack(args, uri))
         return false;
 
-    std::cout << "Args[" << args.size() << "]:" << eol;
+    GStdout << "Args[" << args.size() << "]:" << Eol;
     for (const auto& it : args)
-        std::cout << "    " << it.first << " = " << it.second << eol;
+        GStdout << "    " << it.first << " = " << it.second << Eol;
 
     FUri test;
     if (not FUri::Pack(test, uri.Scheme(), uri.Username(), uri.Port(), uri.Hostname(), uri.Path(), args, uri.Anchor()) )
         return false;
 
-    std::cout << uri << eol;
-    std::cout << test << eol;
+    GStdout
+        << uri << Eol
+        << test << Endl;
 
     if (test.Str() != uri.Str())
         return false;
@@ -82,29 +87,29 @@ static void Test_SocketAccept_() {
         FSocketBuffered socket;
         socket.SetTimeout(FSeconds(0.3));
 
-        std::cout << "Listening on '" << listener.Listening() << "' ..." << eol;
+        GStdout << "Listening on '" << listener.Listening() << "' ..." << Eol;
 
         if (FSocketBuffered::Accept(socket, listener, FSeconds(5))) {
             succeed = true;
-            std::cout << "Accepted from '" << socket.Local() << "' to '" << socket.Remote() << "' :)" << eol;
+            GStdout << "Accepted from '" << socket.Local() << "' to '" << socket.Remote() << "' :)" << Eol;
 
             CORE_TRY
             {
                 FHttpRequest request;
                 FHttpRequest::Read(&request, socket, maxContentLength);
 
-                std::cout << "Method: " << request.Method() << eol;
-                std::cout << "Uri: " << request.Uri() << eol;
+                GStdout << "Method: " << request.Method() << Eol;
+                GStdout << "Uri: " << request.Uri() << Eol;
 
-                std::cout << "Headers:" << eol;
+                GStdout << "Headers:" << Eol;
                 for (const auto& it : request.Headers())
-                    std::cout << " - '" << it.first << "' : '" << it.second << "'" << eol;
+                    GStdout << " - '" << it.first << "' : '" << it.second << "'" << Eol;
 
                 FHttpRequest::FCookieMap cookies;
                 if (FHttpRequest::UnpackCookie(&cookies, request)) {
-                    std::cout << "Cookies:" << eol;
+                    GStdout << "Cookies:" << Eol;
                     for (const auto& it : cookies)
-                        std::cout << " - '" << it.first << "' : '" << it.second << "'" << eol;
+                        GStdout << " - '" << it.first << "' : '" << it.second << "'" << Eol;
                 }
 
                 FHttpResponse response;
@@ -121,9 +126,11 @@ static void Test_SocketAccept_() {
                 FHttpResponse::Write(&socket, response);
             }
             CORE_CATCH(FHttpException e)
-            {
-                CORE_CATCH_BLOCK(std::cerr << e.Status() << eol << e.what() << eol;)
-            }
+            CORE_CATCH_BLOCK({
+                GStderr
+                    << e.Status() << Eol
+                    << MakeStringView(e.What(), Meta::FForceInit{}) << Endl;
+            });
 
             socket.Disconnect(true);
             break;
@@ -131,36 +138,38 @@ static void Test_SocketAccept_() {
     }
 
     if (not succeed)
-        std::cout << "No incomming connection :'(" << eol;
+        GStdout << "No incoming connection :'(" << Eol;
 }
 //----------------------------------------------------------------------------
 static void Test_HttpGet_() {
     FUri uri;
-    if (not FUri::Parse(uri, "http://freegeoip.net/xml/poppolopoppo.ddns.net"))
+    if (not FUri::Parse(uri, MakeStringView("http://freegeoip.net/xml/poppolopoppo.ddns.net")))
         AssertNotReached();
 
     FHttpResponse response;
     if (EHttpStatus::OK != HttpGet(&response, uri))
         AssertNotReached();
 
-    std::cout << "Status: " << response.Status() << eol;
-    std::cout << "Reason: " << response.Reason() << eol;
+    GStdout << "Status: " << response.Status() << Eol;
+    GStdout << "Reason: " << response.Reason() << Eol;
 
-    std::cout << "Headers:" << eol;
+    GStdout << "Headers:" << Eol;
     for (const auto& it : response.Headers())
-        std::cout << " - '" << it.first << "' : '" << it.second << "'" << eol;
+        GStdout << " - '" << it.first << "' : '" << it.second << "'" << Eol;
 
-    std::cout << "Body:" << eol;
-    std::cout << response.Body().MakeView() << eol;
+    GStdout << "Body:" << Eol;
+    GStdout << response.Body().MakeView() << Endl;
 
     if (response.Status() == Network::EHttpStatus::OK) {
+        /* %_NOCOMMIT% TODO
         XML::FDocument xml;
         IBufferedStreamReader* reader = &response.Body();
         if (not XML::FDocument::Load(&xml, L"network.tmp", reader))
             AssertNotReached();
 
-        std::cout << "XML:" << eol;
-        std::cout << xml << eol;
+        GStdout << "XML:" << Eol;
+        GStdout << xml << Eol;
+        */
     }
     else {
         LOG(Error, L"[Http] Request to '{0}' failed : {1}", uri, response.Status());
@@ -169,29 +178,29 @@ static void Test_HttpGet_() {
 //----------------------------------------------------------------------------
 static void Test_HttpPost_() {
     FUri uri;
-    if (not FUri::Parse(uri, "http://www.w3schools.com/php/demo_form_validation_complete.php"))
+    if (not FUri::Parse(uri, MakeStringView("http://www.w3schools.com/php/demo_form_validation_complete.php")))
         AssertNotReached();
 
     FHttpClient::FPostMap post = {
-        { "name",       "Tom Cum von Bernardo $"},
-        { "email",      "tom.cum@gmail.com"     },
-        { "website",    "www.tom-cum.com"       },
-        { "gender",     "don't be so tacky"     },
+        {"name",       "Tom Cum von Bernardo $" },
+        {"email",      "tom.cum@gmail.com"      },
+        {"website",    "www.tom-cum.com"        },
+        {"gender",     "don't be so tacky"      },
     };
 
     FHttpResponse response;
     if (EHttpStatus::OK != HttpPost(&response, uri, post))
         AssertNotReached();
 
-    std::cout << "Status: " << response.Status() << eol;
-    std::cout << "Reason: " << response.Reason() << eol;
+    GStdout << "Status: " << response.Status() << Eol;
+    GStdout << "Reason: " << response.Reason() << Eol;
 
-    std::cout << "Headers:" << eol;
+    GStdout << "Headers:" << Eol;
     for (const auto& it : response.Headers())
-        std::cout << " - '" << it.first << "' : '" << it.second << "'" << eol;
+        GStdout << " - '" << it.first << "' : '" << it.second << "'" << Eol;
 
-    std::cout << "Body:" << eol;
-    std::cout << response.Body().MakeView() << eol;
+    GStdout << "Body:" << Eol;
+    GStdout << response.Body().MakeView() << Eol;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -216,25 +225,27 @@ private:
         response.SetStatus(EHttpStatus::OK);
         response.SetReason("OK");
 
-        FStreamWriterOStream oss(&response.Body());
+        FTextWriter oss(&response.Body());
 
-        oss << "<html>" << eol
-            << "    <body>" << eol;
+        oss << "<html>" << Eol
+            << "    <body>" << Eol;
 
-        oss << "Method: " << request.Method() << "<br/>" << eol;
-        oss << "Uri   : " << request.Uri() << "<br/>" << eol;
+        oss << "Method: " << request.Method() << "<br/>" << Eol;
+        oss << "Uri   : " << request.Uri() << "<br/>" << Eol;
 
-        oss << "Headers:" << "<br/>" << eol;
+        oss << "Headers:" << "<br/>" << Eol;
         for (const auto& it : request.Headers())
-            oss << " - '" << it.first << "' : '" << it.second << "'" << "<br/>" << eol;
+            oss << " - '" << it.first << "' : '" << it.second << "'" << "<br/>" << Eol;
 
-        oss << "<br/>" << eol;
+        oss << "<br/>" << Eol;
 
-        oss << "Body:" << "<br/>" << eol;
-        oss << request.Body().MakeView() << "<br/>" << eol;
+        oss << "Body:" << "<br/>" << Eol;
+        oss << request.Body().MakeView() << "<br/>" << Eol;
 
-        oss << "    </body>" << eol
-            << "</html>" << eol;
+        oss << "    </body>" << Eol
+            << "</html>" << Eol;
+
+        oss.Flush();
 
         FHttpResponse::Write(&socket, response);
     }
@@ -267,5 +278,5 @@ void Test_Network() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace ContentGenerator
+} //!namespace Test
 } //!namespace Core

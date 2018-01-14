@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+/* %_NOCOMMIT% TODO
 #include "Core.Lattice/Collada.h"
 #include "Core.Lattice/GenericMaterial.h"
 #include "Core.Lattice/GenericMesh.h"
@@ -11,7 +12,7 @@
 #include "Core/IO/FormatHelpers.h"
 
 namespace Core {
-namespace ContentGenerator {
+namespace Test {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -62,5 +63,6 @@ void Test_XML() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace ContentGenerator
+} //!namespace Test
 } //!namespace Core
+*/
