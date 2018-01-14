@@ -5,7 +5,7 @@
     .ProjectSolutionFolder = 'Core.External'
     .ProjectPath  = '$SourceDirectory$/Core.External'
     .ProjectPCHConfig = .PCHDisabled ; disable PCH for external libraries
-    .ProjectInputPattern = { '-' } ; disable auto listing of source files
+    .ProjectInputPattern = { '.none' } ; disable auto listing of source files
     .ProjectAllowedFileExtensions = {} ; for VCX projects
     .ProjectLinkType = 'Lib' ; disable DLL linking for these projects
     .ProjectUseUnity = 'false' ; disable unity builds for externals (might be not supported by libraries like LZ4)
