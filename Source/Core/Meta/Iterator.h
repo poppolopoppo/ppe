@@ -1,9 +1,9 @@
 #pragma once
 
-#include <iterator>
-
 #include "Core/Meta/TypeTraits.h"
 #include "Core/Meta/Warnings.h"
+
+#include <iterator>
 
 namespace Core {
 namespace Meta {
@@ -34,13 +34,13 @@ template <typename T>
 using TIteratorTraits = std::iterator_traits<T>;
 //----------------------------------------------------------------------------
 template <typename T, typename _Category = std::forward_iterator_tag>
-using TIterator = std::iterator<
-    _Category,
-    TRemoveConst<TRemoveReference<T>>,
-    ptrdiff_t,
-    TAddPointer<T>,
-    TAddReference<T>
->;
+struct TIterator {
+    using iterator_category = _Category;
+    using value_type = TRemoveConst<TRemoveReference<T>>;
+    using difference_type = ptrdiff_t;
+    using pointer = TAddPointer<T>;
+    using reference = TAddReference<T>;
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
