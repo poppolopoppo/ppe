@@ -8,6 +8,7 @@
 #include "Memory/VirtualMemory.h"
 #include "Misc/TargetPlatform.h"
 #include "Thread/AtomicSpinLock.h"
+#include "Thread/ThreadContext.h"
 
 #ifdef WITH_CORE_ASSERT
 #   include "Diagnostic/Callstack.h"
@@ -208,7 +209,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
                 size_t blockSizeInBytes = 0;
                 FCallstack callstack;
                 if (FetchMemoryBlockDebugInfos(usedBlock, &callstack, &blockSizeInBytes, true)) {
-                    FPlatform::DebugBreak();
+                    FPlatformMisc::DebugBreak();
 
                     FDecodedCallstack decoded;
                     callstack.Decode(&decoded);
@@ -453,8 +454,6 @@ struct FBinnedThreadCache_ {
         return GInstanceTLS;
     }
 
-    static THREAD_LOCAL FBinnedThreadCache_& GInstanceTLS;
-
     FBinnedThreadCache_(const FBinnedThreadCache_&) = delete;
     FBinnedThreadCache_& operator =(const FBinnedThreadCache_&) = delete;
 
@@ -666,7 +665,6 @@ private:
         }
     }
 };
-THREAD_LOCAL FBinnedThreadCache_& FBinnedThreadCache_::GInstanceTLS = FBinnedThreadCache_::InstanceTLS();
 //----------------------------------------------------------------------------
 struct CACHELINE_ALIGNED FBinnedAllocator_ {
     STATIC_CONST_INTEGRAL(size_t, VMCacheBlocks, 32);
@@ -676,8 +674,6 @@ struct CACHELINE_ALIGNED FBinnedAllocator_ {
         static FBinnedAllocator_ GInstance;
         return GInstance;
     }
-
-    static FBinnedAllocator_& GInstance;
 
 #ifdef WITH_CORE_ASSERT
     static THREAD_LOCAL bool GIsInAllocatorTLS;
@@ -701,17 +697,17 @@ struct CACHELINE_ALIGNED FBinnedAllocator_ {
         if (Unlikely(0 == sizeInBytes))
             return nullptr;
         else if (Likely(sizeInBytes <= FBinnedChunk_::MaxSizeInBytes))
-            return FBinnedThreadCache_::GInstanceTLS.Allocate(sizeInBytes);
+            return FBinnedThreadCache_::InstanceTLS().Allocate(sizeInBytes);
         else
-            return GInstance.AllocLargeBlock_(sizeInBytes);
+            return Instance().AllocLargeBlock_(sizeInBytes);
     }
 
     FORCE_INLINE static void Release(void* p) {
         ONLY_IF_ASSERT(const FCheckReentrancy reentrancy);
         if (Unlikely(Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p)))
-            GInstance.ReleaseLargeBlock_(p);
+            Instance().ReleaseLargeBlock_(p);
         else
-            FBinnedThreadCache_::GInstanceTLS.Release(p);
+            FBinnedThreadCache_::InstanceTLS().Release(p);
     }
 
     FORCE_INLINE static size_t SnapSize(size_t sizeInBytes) {
@@ -758,7 +754,6 @@ private:
         _vm.Free(p);
     }
 };
-FBinnedAllocator_& FBinnedAllocator_::GInstance = FBinnedAllocator_::Instance();
 #ifdef WITH_CORE_ASSERT
 THREAD_LOCAL bool FBinnedAllocator_::GIsInAllocatorTLS = false;
 #endif
@@ -812,7 +807,7 @@ void* FMallocBinned::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
 }
 //----------------------------------------------------------------------------
 void FMallocBinned::ReleasePendingBlocks() {
-    FBinnedThreadCache_::GInstanceTLS.ReleasePendingBlocks();
+    FBinnedThreadCache_::InstanceTLS().ReleasePendingBlocks();
 }
 //----------------------------------------------------------------------------
 size_t FMallocBinned::SnapSize(size_t size) {
