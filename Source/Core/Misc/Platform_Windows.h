@@ -2,6 +2,13 @@
 
 #ifdef PLATFORM_WINDOWS
 
+#   ifdef CPP_CLANG
+#       pragma GCC system_header
+#       pragma clang system_header
+#   endif
+
+#   include <comdef.h>
+#   include <comutil.h>
 #   include <windows.h>
 
 //  Stupid M$ macros removal ...

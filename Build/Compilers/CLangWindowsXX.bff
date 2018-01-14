@@ -12,7 +12,8 @@
 ;#define USE_CLANG_37
 ;#define USE_CLANG_38
 ;#define USE_CLANG_39
-#define USE_CLANG_40
+;#define USE_CLANG_40
+#define USE_CLANG_LATEST // updated too fast, can't keep up :p
 
 //------------------------------------------------------------------------------
 // CLang Windows XX
@@ -45,11 +46,11 @@
     .CLangWindowsXXPCHDisabled      = .CLangWindows39PCHDisabled
 #endif //!USE_CLANG_39
 
-#if USE_CLANG_40
-#   include "CLang/CLangWindows40.bff" ; TODO: Experimental
-    .CLangWindowsXXCompileConfigs   = .CLangWindows40CompileConfigs
-    .CLangWindowsXXPlatformToolset  = .CLangWindows40PlatformToolset
-    .CLangWindowsXXResourceCompiler = .CLangWindows40ResourceCompiler
-    .CLangWindowsXXPCHEnabled       = .CLangWindows40PCHEnabled
-    .CLangWindowsXXPCHDisabled      = .CLangWindows40PCHDisabled
+#if USE_CLANG_LATEST
+#   include "CLang/CLangWindowsLatest.bff" ; TODO: Experimental
+    .CLangWindowsXXCompileConfigs    = .CLangWindowsLatestCompileConfigs
+    .CLangWindowsXXPlatformToolset  = .CLangWindowsLatestPlatformToolset
+    .CLangWindowsXXResourceCompiler = .CLangWindowsLatestResourceCompiler
+    .CLangWindowsXXPCHEnabled       = .CLangWindowsLatestPCHEnabled
+    .CLangWindowsXXPCHDisabled      = .CLangWindowsLatestPCHDisabled
 #endif //!USE_CLANG_39

@@ -11,11 +11,11 @@
 // Windows Compilers
 //------------------------------------------------------------------------------
 #   define USE_VISUALSTUDIO
-;#   define USE_CLANG_WINDOWS
+//#   define USE_CLANG_WINDOWS
 
 #   if USE_VISUALSTUDIO
 #       include "Compilers/MSVC20XX.bff"
-    .WindowsCompileConfigs  = .MSVC20XXCompileConfigs
+    .WindowsCompileConfigs   = .MSVC20XXCompileConfigs
     .PlatformToolset        = .MSVC20XXPlatformToolset
     .ResourceCompiler       = .MSVC20XXResourceCompiler
     .PCHEnabled             = .MSVC20XXPCHEnabled
@@ -24,7 +24,7 @@
 
 #   if USE_CLANG_WINDOWS
 #       include "Compilers/CLangWindowsXX.bff"
-    .WindowsCompileConfigs  = .CLangWindowsXXCompileConfigs
+    .WindowsCompileConfigs   = .CLangWindowsXXCompileConfigs
     .PlatformToolset        = .CLangWindowsXXPlatformToolset
     .ResourceCompiler       = .CLangWindowsXXResourceCompiler
     .PCHEnabled             = .CLangWindowsXXPCHEnabled

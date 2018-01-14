@@ -124,7 +124,7 @@ Compiler( 'Compiler-MSVC2012-x64' )
     .CompilerOptions = ''
     + ' /d2Zi+'         ; https://randomascii.wordpress.com/2013/09/11/debugging-optimized-codenew-in-visual-studio-2012/
 
-    .IncludePaths =
+    .SystemIncludePaths =
     {
         '$VSBasePath$\VC\Include',
         '$WindowsSDKBasePath$\Include\um',

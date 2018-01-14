@@ -27,6 +27,14 @@
 #   pragma warning(disable: 4244) // 'argument': conversion from 'const uc16' to 'char', possible loss of data
 #endif
 
+#ifdef CPP_CLANG
+#    pragma clang system_header
+#endif
+
+#ifdef CPP_GCC
+#    pragma GCC system_header
+#endif
+
 #ifndef EXPORT_CORE_EXTERNAL_DOUBLECONVERSION
 
 #   pragma include_alias(<double-conversion/utils.h>, <Core.External/double-conversion/double-conversion/utils.h>)

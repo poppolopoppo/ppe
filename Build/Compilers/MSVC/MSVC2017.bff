@@ -214,7 +214,7 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
     .LinkerOptions = ''
     + ' /CGTHREADS8'            ; https://msdn.microsoft.com/fr-fr/library/dn631956.aspx
 
-    .IncludePaths =
+    .SystemIncludePaths =
     {
         '$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\include',
         '$VSBasePath$\VC\Auxiliary\VS\include',

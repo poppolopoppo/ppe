@@ -75,15 +75,16 @@ ForEach( .CompileConfig in .AllCompileConfigs )
                 ^PreprocessorDefinitions    + ';$define$'
             }
 
-            // Project and System includes (project includes first, then system includes)
-            .SystemIncludes     = .IncludePaths
-
             // Only for VCXProj
             ForEach( .path in .ProjectIncludes )
             {
                 ^IncludeSearchPath          + ';$path$'
             }
-            ForEach( .path in .SystemIncludes )
+            ForEach( .path in .IncludePaths )
+            {
+                ^IncludeSearchPath          + ';$path$'
+            }
+            ForEach( .path in .SystemIncludePaths )
             {
                 ^IncludeSearchPath          + ';$path$'
             }
@@ -91,19 +92,22 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             // For actual compilation
             .ProjectIncludes    + .SourceDirectory
                                 + .ProjectPath
-
-            .AllIncludes        = .ProjectIncludes + .SystemIncludes
-
-            ForEach( .path in .AllIncludes )
-            {
-                ^CompilerOptions            + ' $CompilerIncludeFlag$"$path$"'
-                ^PreprocessorOptions        + ' $CompilerIncludeFlag$"$path$"'
-            }
+                                + .IncludePaths
 
             ForEach( .path in .ProjectForcedIncludes )
             {
                 ^CompilerOptions            + ' $CompilerForceIncludeFlag$"$path$"'
                 ^PreprocessorOptions        + ' $CompilerForceIncludeFlag$"$path$"'
+            }
+            ForEach( .path in .ProjectIncludes )
+            {
+                ^CompilerOptions            + ' $CompilerIncludeFlag$"$path$"'
+                ^PreprocessorOptions        + ' $CompilerIncludeFlag$"$path$"'
+            }
+            ForEach( .path in .SystemIncludePaths )
+            {
+                ^CompilerOptions            + ' $CompilerSystemIncludeFlag$"$path$"'
+                ^PreprocessorOptions        + ' $CompilerSystemIncludeFlag$"$path$"'
             }
 
 #if USE_VISUALSTUDIO

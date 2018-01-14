@@ -53,8 +53,10 @@
     }
 
     .IncludePaths = {}
+    .SystemIncludePaths = {}
 
     .CompilerOptions = ''
+    + ' /showIncludes'      ; affiche les includes pdt la compilation, pratique pour certa
     + ' /TP'                ; considère que toutes les sources sont du C++
     + ' /nologo'            ; pas de message de copyright lors de la compilation
     + ' /W3'                ; tous les warnings de level 4 sont reportés
@@ -119,6 +121,7 @@
     ; utilisés pour généraliser les templates :
     .CompilerDefineFlag          = ' /D'
     .CompilerIncludeFlag        = ' /I'
+    .CompilerSystemIncludeFlag  = ' /I'
     .CompilerPreprocessorFlag   = ' /P /Fi"%2"'
     .CompilerForceIncludeFlag   = ' /FI'
     .CompilerBinaryExtension    = 'exe'

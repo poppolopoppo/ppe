@@ -1,23 +1,22 @@
 #once
 
-;   _____ _                         _  _    ___
-;  / ____| |                       | || |  / _ \
-; | |    | |     __ _ _ __   __ _  | || |_| | | |
-; | |    | |    / _` | '_ \ / _` | |__   _| | | |
-; | |____| |___| (_| | | | | (_| |    | |_| |_| |
-;  \_____|______\__,_|_| |_|\__, |    |_(_)\___/
-;                            __/ |
+;   _____ _
+;  / ____| |
+; | |    | |     __ _ _ __   __ _
+; | |    | |    / _` | '_ \ / _` |
+; | |____| |___| (_| | | | | (_| |
+;  \_____|______\__,_|_| |_|\__, |
+;                            __/
 ;                           |___/
 
 #include "CLangWindowsBase.bff"
 
-; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
-#define USE_PRECOMPILED_HEADERS
-; utilise les .obj plutôt que les .lib comme input du linker
-#define USE_LIBRARY_DEPENDENCY_INPUT
-; choix entre la version 32-bit ou 64-bit de LLVM
-#define USE_LLVM_40_X64
-
+; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc
+#define USE_PRECOMPILED_HEADER
+; utilise les .obj plutôt que les .lib comme input du link
+#define USE_LIBRARY_DEPENDENCY_INPU
+; choix entre la version 32-bit ou 64-bit de LLV
+#define USE_LLVM_LATEST_X64
 //------------------------------------------------------------------------------
 // Global Properties
 //------------------------------------------------------------------------------
@@ -25,28 +24,28 @@
 #import VS140COMNTOOLS
 
 #if WITH_VISUALSTUDIO_TOOLSET_140
-.CLangWindows40PlatformToolset = 'v140'
+.CLangWindowsLatestPlatformToolset = 'v140'
 #endif
 #if WITH_VISUALSTUDIO_TOOLSET_141
 //#import VS141COMNTOOLS ; TODO
-.CLangWindows40PlatformToolset = 'v141'
+.CLangWindowsLatestPlatformToolset = 'v141'
 #endif
-Print( "Using CLang 4.0 with platform toolset $CLangWindows40PlatformToolset$" )
+Print( "Using CLang latest  with platform toolset $CLangWindowsLatestPlatformToolset$" )
 
 #import VS140COMNTOOLS
 
-.CLangWindows40BasePath =
+.CLangWindowsLatestBasePath =
 [
 #if WITH_LLVMFORWINDOWS_X86
     .LLVMBasePath         = '$LLVMBasePathX86$'
 #endif
 #if WITH_LLVMFORWINDOWS_X64
-#   if USE_LLVM_40_X64
-    Print( "Using CLang 4.0 64-bit version" )
+#   if USE_LLVM_LATEST_X64
+    Print( "Using CLang latest 64-bit version" )
     .LLVMBasePath         = '$LLVMBasePathX64$'
 #   endif
 #endif
-    Print( "Using CLang 4.0 installed in $LLVMBasePath$" )
+    Print( "Using CLang latest  installed in $LLVMBasePath$" )
 #if WITH_VISUALSTUDIO_TOOLSET_140
     .LocalisationUID      = '$VS140CLUID$'
     .VSBasePath           = '$VS140COMNTOOLS$..\..'
@@ -55,20 +54,20 @@ Print( "Using CLang 4.0 with platform toolset $CLangWindows40PlatformToolset$" )
     .LocalisationUID      = '$VS141CLUID$'
     .VSBasePath           = '$VS141COMNTOOLS$..\..'
     .VSToolsVersion       = '$VS141VERSION$'
-    Print( "Using CLang 4.0 with platform toolset 141 version $VSToolsVersion$" )
+    Print( "Using CLang latest  with platform toolset 141 version $VSToolsVersion$" )
 #endif
-    Print( "Using CLang 4.0 with localisation uid $LocalisationUID$" )
+    Print( "Using CLang latest  with localisation uid $LocalisationUID$" )
     .WindowsSDKBasePath   = .WindowsSDKBasePath10
     .WindowsSDKVersion    = .WindowsSDKVersion10
-    Print( "Using CLang 4.0 with Windows 10 SDK $WindowsSDKVersion10$" )
+    Print( "Using CLang latest  with Windows 10 SDK $WindowsSDKVersion10$" )
 ]
 
 //------------------------------------------------------------------------------
 // Windows LLVM CLang
 //------------------------------------------------------------------------------
-Compiler( 'Compiler-CLangWindows40' )
+Compiler( 'Compiler-CLangWindowsLatest' )
 {
-    Using( .CLangWindows40BasePath )
+    Using( .CLangWindowsLatestBasePath )
 
     .Root       = '$LLVMBasePath$\msbuild-bin'
     .Executable = '$Root$\cl.exe'
@@ -78,9 +77,9 @@ Compiler( 'Compiler-CLangWindows40' )
 //------------------------------------------------------------------------------
 // Resource Compiler
 //------------------------------------------------------------------------------
-.CLangWindows40ResourceCompiler =
+.CLangWindowsLatestResourceCompiler =
 [
-    Using( .CLangWindows40BasePath )
+    Using( .CLangWindowsLatestBasePath )
 
     .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
     .CompilerOutputExtension    = '.res'
@@ -90,15 +89,15 @@ Compiler( 'Compiler-CLangWindows40' )
 //------------------------------------------------------------------------------
 // Pre-Compiled Headers Configurations
 //------------------------------------------------------------------------------
-.CLangWindows40PCHEnabled   = .CLangWindowsBasePCHEnabled
-.CLangWindows40PCHDisabled  = .CLangWindowsBasePCHDisabled
+.CLangWindowsLatestPCHEnabled   = .CLangWindowsBasePCHEnabled
+.CLangWindowsLatestPCHDisabled  = .CLangWindowsBasePCHDisabled
 
 //------------------------------------------------------------------------------
 // Base Config
 //------------------------------------------------------------------------------
-.CLangWindows40BaseConfig =
+.CLangWindowsLatestBaseConfig =
 [
-    Using( .CLangWindows40BasePath )
+    Using( .CLangWindowsLatestBasePath )
 
     .Defines = {}
 
@@ -109,24 +108,22 @@ Compiler( 'Compiler-CLangWindows40' )
 #if WITH_VISUALSTUDIO_TOOLSET_141
     .CompilerOptions  = ' -fmsc-version=1910'
 #endif
-    .CompilerOptions  + ' -Wno-dllimport-static-field-def'
-                      + ' -Wno-microsoft-template'
-                      + ' -Xclang -std=c++17' // support for C++ 17
+    .CompilerOptions  + ' -Xclang -std=c++17' // support for C++ 17
 
 #if WITH_VISUALSTUDIO_TOOLSET_140
-    .IncludePaths =
+    .SystemIncludePaths =
     {
         '$VSBasePath$\VC\Include',
     }
 #endif
 #if WITH_VISUALSTUDIO_TOOLSET_141
-    .IncludePaths =
+    .SystemIncludePaths =
     {
         '$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\include',
         '$VSBasePath$\VC\Auxiliary\VS\include',
     }
 #endif
-    .IncludePaths +
+    .SystemIncludePaths +
     {
         '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\ucrt',
         '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\um',
@@ -137,11 +134,11 @@ Compiler( 'Compiler-CLangWindows40' )
 //------------------------------------------------------------------------------
 // Platforms
 //------------------------------------------------------------------------------
-.CLangWindows40PlatformX86 =
+.CLangWindowsLatestPlatformX86 =
 [
-    Using( .CLangWindows40BaseConfig )
+    Using( .CLangWindowsLatestBaseConfig )
 
-    .Compiler           = 'Compiler-CLangWindows40'
+    .Compiler           = 'Compiler-CLangWindowsLatest'
     .ToolsBasePath      = '$LLVMBasePath$\bin'
     .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
     .Linker             = '$ToolsBasePath$\lld-link.exe'
@@ -156,13 +153,13 @@ Compiler( 'Compiler-CLangWindows40' )
     .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x86"'
                         + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
 ]
-.CLangWindows40PlatformX86 + .CLangBasePlatformX86
+.CLangWindowsLatestPlatformX86 + .CLangBasePlatformX86
 
-.CLangWindows40PlatformX64 =
+.CLangWindowsLatestPlatformX64 =
 [
-    Using( .CLangWindows40BaseConfig )
+    Using( .CLangWindowsLatestBaseConfig )
 
-    .Compiler           = 'Compiler-CLangWindows40'
+    .Compiler           = 'Compiler-CLangWindowsLatest'
     .ToolsBasePath      = '$LLVMBasePath$\bin'
 
     .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
@@ -178,36 +175,36 @@ Compiler( 'Compiler-CLangWindows40' )
     .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x64"'
                         + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
 ]
-.CLangWindows40PlatformX64 + .CLangBasePlatformX64
+.CLangWindowsLatestPlatformX64 + .CLangBasePlatformX64
 
 //------------------------------------------------------------------------------
 // Configurations
 //------------------------------------------------------------------------------
-.CLangWindows40_X86Debug         = .CLangWindows40PlatformX86   + .CLangBaseDebugConfig
-.CLangWindows40_X86FastDebug     = .CLangWindows40PlatformX86   + .CLangBaseFastDebugConfig
-.CLangWindows40_X86Release       = .CLangWindows40PlatformX86   + .CLangBaseReleaseConfig
-.CLangWindows40_X86Profiling     = .CLangWindows40PlatformX86   + .CLangBaseProfilingConfig
-.CLangWindows40_X86Final         = .CLangWindows40PlatformX86   + .CLangBaseFinalConfig
+.CLangWindowsLatest_X86Debug         = .CLangWindowsLatestPlatformX86   + .CLangBaseDebugConfig
+.CLangWindowsLatest_X86FastDebug     = .CLangWindowsLatestPlatformX86   + .CLangBaseFastDebugConfig
+.CLangWindowsLatest_X86Release       = .CLangWindowsLatestPlatformX86   + .CLangBaseReleaseConfig
+.CLangWindowsLatest_X86Profiling      = .CLangWindowsLatestPlatformX86   + .CLangBaseProfilingConfig
+.CLangWindowsLatest_X86Final         = .CLangWindowsLatestPlatformX86   + .CLangBaseFinalConfig
 
-.CLangWindows40_X64Debug           = .CLangWindows40PlatformX64     + .CLangBaseDebugConfig
-.CLangWindows40_X64FastDebug       = .CLangWindows40PlatformX64     + .CLangBaseFastDebugConfig
-.CLangWindows40_X64Release         = .CLangWindows40PlatformX64     + .CLangBaseReleaseConfig
-.CLangWindows40_X64Profiling       = .CLangWindows40PlatformX64     + .CLangBaseProfilingConfig
-.CLangWindows40_X64Final           = .CLangWindows40PlatformX64     + .CLangBaseFinalConfig
+.CLangWindowsLatest_X64Debug         = .CLangWindowsLatestPlatformX64   + .CLangBaseDebugConfig
+.CLangWindowsLatest_X64FastDebug     = .CLangWindowsLatestPlatformX64   + .CLangBaseFastDebugConfig
+.CLangWindowsLatest_X64Release       = .CLangWindowsLatestPlatformX64   + .CLangBaseReleaseConfig
+.CLangWindowsLatest_X64Profiling      = .CLangWindowsLatestPlatformX64   + .CLangBaseProfilingConfig
+.CLangWindowsLatest_X64Final         = .CLangWindowsLatestPlatformX64   + .CLangBaseFinalConfig
 
-.CLangWindows40CompileConfigs =
+.CLangWindowsLatestCompileConfigs =
 {
     // X86
-    .CLangWindows40_X86Debug,
-    .CLangWindows40_X86FastDebug,
-    .CLangWindows40_X86Release,
-    .CLangWindows40_X86Profiling,
-    .CLangWindows40_X86Final,
+    .CLangWindowsLatest_X86Debug,
+    .CLangWindowsLatest_X86FastDebug,
+    .CLangWindowsLatest_X86Release,
+    .CLangWindowsLatest_X86Profiling,
+    .CLangWindowsLatest_X86Final,
 
     // X64
-    .CLangWindows40_X64Debug,
-    .CLangWindows40_X64FastDebug,
-    .CLangWindows40_X64Release,
-    .CLangWindows40_X64Profiling,
-    .CLangWindows40_X64Final,
+    .CLangWindowsLatest_X64Debug,
+    .CLangWindowsLatest_X64FastDebug,
+    .CLangWindowsLatest_X64Release,
+    .CLangWindowsLatest_X64Profiling,
+    .CLangWindowsLatest_X64Final,
 }

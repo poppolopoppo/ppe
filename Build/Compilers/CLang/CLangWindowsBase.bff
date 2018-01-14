@@ -18,24 +18,26 @@
 
     .FixWarningsOnWindows = ''
         + ' -Wno-error'
-        + ' -Wno-invalid-noreturn'              // nécessaire pour STL M$
-        + ' -Wno-expansion-to-defined'          // macro expansion producing 'defined' has undefined behavior (nécessaire pour WinAPI)
+        + ' -Wno-unused-command-line-argument'  // ignore les options non suportées par CLANG (sinon échoue a cause de /WError)
         + ' -Wno-ignored-attributes'            // ignore les attributs de classe/fonction non supportées par CLANG (sinon échoue a cause de /WError)
+        + ' -Wno-unknown-pragmas'               // ignore les directives pragma non supportées par CLANG (sinon échoue a cause de /WError)
+        + ' -Wno-unused-local-typedef'          // ignore les typedefs locaux non utilisés (nécessaire pour STATIC_ASSERT(x))
+        + ' -Wno-#pragma-messages'              // don't consider #pragma message as warnings
+        + ' -Wno-invalid-noreturn'              // nécessaire pour STL M$
+        + ' -Wno-dllimport-static-field-def'     // definition of dllimport static field (M$TL)
+#if NO_WORKAROUND_IN_PLATFORM_WINDOWS
+        + ' -Wno-expansion-to-defined'           // macro expansion producing 'defined' has undefined behavior (nécessaire pour WinAPI)
         + ' -Wno-int-to-void-pointer-cast'      // cast to 'void *' from smaller integer type 'unsigned long' (nécessaire pour WinAPI)
-        + ' -Wno-macro-redefined'               // '_MM_HINT_T0' macro redefined (nécessaire pour WinAPI)
+        + ' -Wno-macro-redefined'                // '_MM_HINT_T0' macro redefined (nécessaire pour WinAPI)
         + ' -Wno-microsoft-enum-value'          // ignore les dépassements de valeurs d'enums (nécessaire pour WinAPI)
         + ' -Wno-missing-declarations'          // typedef requires a name (nécessaire pour DbgHelp)
-        + ' -Wno-unknown-pragmas'               // ignore les directives pragma non supportées par CLANG (sinon échoue a cause de /WError)
-        + ' -Wno-unused-command-line-argument'  // ignore les options non suportées par CLANG (sinon échoue a cause de /WError)
-        + ' -Wno-unused-local-typedef'          // ignore les typedefs locaux non utilisés (nécessaire pour STATIC_ASSERT(x))
         + ' -Wno-unused-value'                  // ignore les expressions non utilisées (UNUSED(x) ou CRT)
-        + ' -Wno-#pragma-messages'              // don't consider #pragma message as warnings
         + ' -Wno-nonportable-include-path'      // windows libs are filled with includes not matching file system case, this will ignore those
         + ' -Wno-microsoft-explicit-constructor-call'
+#endif
 
     .CompilerOptions = ''
         + .FixWarningsOnWindows
-        //+ ' -Xclang -msse3'                     // active le support de SSE3 (marche pas : https://llvm.org/bugs/show_bug.cgi?id=20213)
         + ' -fms-compatibility'                 // compatibilité microsoft
         + ' -fms-extensions'                    // extensions spécifiques à microsoft
         + ' -fcolor-diagnostics'
@@ -43,6 +45,7 @@
 
 .CLangWindowsOverrideMSVC =
 [
+    .CompilerSystemIncludeFlag = ' /I'//' /imsvc'
     .LibrarianOptions   = ' /OUT:"%2" "%1"'
                         + ' /llvmlibthin'       // http://llvm.org/docs/CommandGuide/llvm-lib.html
 ]

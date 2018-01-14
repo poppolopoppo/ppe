@@ -32,6 +32,14 @@
 #   endif
 #endif
 
+#ifdef CPP_CLANG
+#    pragma clang system_header
+#endif
+
+#ifdef CPP_GCC
+#    pragma GCC system_header
+#endif
+
 #ifndef EXPORT_CORE_EXTERNAL_LZ4
 
 #   include "Core.External/lz4/lib/lz4.h"

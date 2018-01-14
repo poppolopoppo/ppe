@@ -22,6 +22,14 @@
 #   pragma warning(disable: 6297) // Arithmetic overflow:  32-bit value is shifted, then cast to 64-bit value.  Results might not be an expected value.
 #endif
 
+#ifdef CPP_CLANG
+#    pragma clang system_header
+#endif
+
+#ifdef CPP_GCC
+#    pragma GCC system_header
+#endif
+
 #ifndef EXPORT_CORE_EXTERNAL_FARMHASH
 
 #   include "Core.External/farmhash/src/farmhash.h"
