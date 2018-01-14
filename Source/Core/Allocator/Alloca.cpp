@@ -27,6 +27,7 @@ namespace {
 static void* AllocaFallback_Malloc_(size_t sizeInBytes);
 static void AllocaFallback_Free_(void* p);
 static void* AllocaFallback_Realloc_(void* p, size_t newSizeInBytes, bool keepData);
+static size_t AllocaFallback_SnapSize_(size_t sz);
 //----------------------------------------------------------------------------
 static void* AllocaLocalStorage_Alloc_();
 static void AllocaLocalStorage_Deallocate_(void* p);
@@ -354,8 +355,12 @@ static void* AllocaFallback_Realloc_(void* p, size_t newSizeInBytes, bool keepDa
 #endif
 }
 //----------------------------------------------------------------------------
+static size_t AllocaFallback_SnapSize_(size_t sz) {
+    return GetThreadLocalHeap().SnapSize(sz);
+}
+//----------------------------------------------------------------------------
 static void* AllocaLocalStorage_Alloc_() {
-    void* const p = FVirtualMemory::AlignedAlloc(FPlatform::SystemInfo.AllocationGranularity, FAllocaStorage::Capacity);
+    void* const p = FVirtualMemory::AlignedAlloc(FPlatformMisc::SystemInfo.AllocationGranularity, FAllocaStorage::Capacity);
     AssertRelease(p);
     Assert(Meta::IsAligned(FAllocaStorage::Boundary, p));
 
@@ -368,7 +373,7 @@ static void* AllocaLocalStorage_Alloc_() {
 //----------------------------------------------------------------------------
 static void AllocaLocalStorage_Deallocate_(void* p) {
     Assert(p);
-    Assert(Meta::IsAligned(FPlatform::SystemInfo.AllocationGranularity, p));
+    Assert(Meta::IsAligned(FPlatformMisc::SystemInfo.AllocationGranularity, p));
 
 #ifdef USE_MEMORY_DOMAINS
     MEMORY_DOMAIN_TRACKING_DATA(Alloca).Deallocate(1, FAllocaStorage::Capacity);
@@ -451,6 +456,12 @@ void FreeAlloca(void* ptr) {
     Core::free(ptr);
 
 #endif
+}
+//----------------------------------------------------------------------------
+size_t AllocaSnapSize(size_t sz) {
+    return (sz <= FAllocaStorage::MaxBlockSize
+        ? ROUND_TO_NEXT_16(sz)
+        : AllocaFallback_SnapSize_(sz) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -24,11 +24,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void* Alloca(size_t sizeInBytes);
+CORE_API void* Alloca(size_t sizeInBytes);
 //----------------------------------------------------------------------------
-void* RelocateAlloca(void* ptr, size_t newSizeInBytes, bool keepData);
+CORE_API void* RelocateAlloca(void* ptr, size_t newSizeInBytes, bool keepData);
 //----------------------------------------------------------------------------
-void FreeAlloca(void *ptr);
+CORE_API void FreeAlloca(void *ptr);
+//----------------------------------------------------------------------------
+CORE_API size_t AllocaSnapSize(size_t sz);
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE T *TypedAlloca(size_t count) {
@@ -131,8 +133,8 @@ struct TAllocaBlock {
 //----------------------------------------------------------------------------
 class FAllocaStartup {
 public:
-    static void Start(bool mainThread);
-    static void Shutdown();
+    CORE_API static void Start(bool mainThread);
+    CORE_API static void Shutdown();
 
     FAllocaStartup(bool mainThread) { Start(mainThread); }
     ~FAllocaStartup() { Shutdown(); }

@@ -4,6 +4,7 @@
 
 #include "Core/Allocator/Alloca.h"
 #include "Core/Allocator/Mallocator.h"
+#include "Core/Allocator/StackAllocator.h"
 #include "Core/Allocator/ThreadLocalAllocator.h"
 #include "Core/Allocator/TrackingAllocator.h"
 #include "Core/Memory/MemoryDomain.h"
@@ -36,11 +37,13 @@ using TAllocator = TDecorateAllocator< DEFAULT_ALLOCATOR<T>, _Tag >;
 #define ALIGNED_ALLOCATOR(_Domain, T, _Alignment) \
     DECORATE_ALLOCATOR(_Domain, ::Core::TMallocator<COMMA_PROTECT(T) COMMA _Alignment>)
 //----------------------------------------------------------------------------
-#define BUDDY_ALLOCATOR(_Domain, ...) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::TBuddyAllocator<COMMA_PROTECT(__VA_ARGS__)>)
-//----------------------------------------------------------------------------
 #define THREAD_LOCAL_ALLOCATOR(_Domain, ...) \
     DECORATE_ALLOCATOR(_Domain, ::Core::TThreadLocalAllocator<COMMA_PROTECT(__VA_ARGS__)>)
+//----------------------------------------------------------------------------
+#define STACK_ALLOCATOR(_Domain, T) \
+    /* don't decorate TStackAllocator<> as it would result to double logging */ \
+    /*DECORATE_ALLOCATOR(_Domain, ::Core::TStackAllocator<T>)*/ \
+    ::Core::TStackAllocator<T>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
