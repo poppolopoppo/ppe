@@ -26,6 +26,16 @@ inline TBasicTextWriter<wchar_t>& Eol(TBasicTextWriter<wchar_t>& s) {
     return s;
 }
 //----------------------------------------------------------------------------
+inline TBasicTextWriter<char>& Eos(TBasicTextWriter<char>& s) {
+    s.Put('\0');
+    return s;
+}
+//----------------------------------------------------------------------------
+inline TBasicTextWriter<wchar_t>& Eos(TBasicTextWriter<wchar_t>& s) {
+    s.Put(L'\0');
+    return s;
+}
+//----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Endl(TBasicTextWriter<_Char>& s) {
     s << Eol;
@@ -86,62 +96,28 @@ TBasicTextWriter<_Char>& FTextFormat::DontPad(TBasicTextWriter<_Char>& s) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicTextManipulator<_Char> FTextFormat::PadCenter(size_t width) {
-    return [width](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char>& {
-        s.Format().SetPadding(FTextFormat::Padding_Center);
-        s.Format().SetWidth(width);
-        return s;
-    };
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextManipulator<_Char> FTextFormat::PadLeft(size_t width) {
-    return [width](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char>& {
-        s.Format().SetPadding(FTextFormat::Padding_Left);
-        s.Format().SetWidth(width);
-        return s;
-    };
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextManipulator<_Char> FTextFormat::PadRight(size_t width) {
-    return [width](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char>& {
-        s.Format().SetPadding(FTextFormat::Padding_Right);
-        s.Format().SetWidth(width);
-        return s;
-    };
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextManipulator<_Char> FTextFormat::PadCenter(size_t width, _Char fill) {
-    return [width, fill](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char>& {
-        s.Format().SetPadding(FTextFormat::Padding_Center);
+TBasicTextManipulator<_Char> FTextFormat::Pad(EPadding padding, size_t width, _Char fill) {
+    return [padding, width, fill](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char>& {
+        s.Format().SetPadding(padding);
         s.Format().SetWidth(width);
         s.SetFillChar(fill);
         return s;
     };
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextManipulator<_Char> FTextFormat::PadCenter(size_t width, _Char fill) {
+    return Pad(Padding_Center, width, fill);
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextManipulator<_Char> FTextFormat::PadLeft(size_t width, _Char fill) {
-    return [width, fill](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char>& {
-        s.Format().SetPadding(FTextFormat::Padding_Left);
-        s.Format().SetWidth(width);
-        s.SetFillChar(fill);
-        return s;
-    };
+    return Pad(Padding_Left, width, fill);
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextManipulator<_Char> FTextFormat::PadRight(size_t width, _Char fill) {
-    return [width, fill](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char>& {
-        s.Format().SetPadding(FTextFormat::Padding_Right);
-        s.Format().SetWidth(width);
-        s.SetFillChar(fill);
-        return s;
-    };
+    return Pad(Padding_Right, width, fill);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

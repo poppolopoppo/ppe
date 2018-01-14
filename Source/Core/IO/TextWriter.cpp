@@ -88,8 +88,8 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, const TBasicStringView<_Ch
     forrange(i, 0, pad_right)
         ostream->WritePOD(pad_ch);
 
-    // Reset width after each output to std behavior
-    w.Format().SetWidth(0);
+    // Reset width padding each output to mimic std behavior
+    w.Format().SetPadding(FTextFormat::Padding_None);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -341,6 +341,10 @@ FTextFormat FBaseTextWriter::ResetFormat() {
 //----------------------------------------------------------------------------
 void FBaseTextWriter::Flush() {
     _ostream->Flush();
+}
+//----------------------------------------------------------------------------
+void FBaseTextWriter::Reset() {
+    _ostream->SeekO(0, ESeekOrigin::Begin);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

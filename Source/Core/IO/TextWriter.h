@@ -3,6 +3,8 @@
 #include "Core/Core.h"
 
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter_fwd.h"
+#include "Core/Memory/MemoryProvider.h"
 #include "Core/Meta/Function.h"
 
 namespace Core {
@@ -10,11 +12,15 @@ class IBufferedStreamWriter;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char>
-class TBasicTextWriter;
+#define STACKLOCAL_TEXTWRITER(_NAME, _COUNT) \
+    MALLOCA(char, CONCAT(_Alloca_, _NAME), _COUNT); \
+    FFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
 //----------------------------------------------------------------------------
-using FTextWriter = TBasicTextWriter<char>;
-using FWTextWriter = TBasicTextWriter<wchar_t>;
+#define STACKLOCAL_WTEXTWRITER(_NAME, _COUNT) \
+    MALLOCA(wchar_t, CONCAT(_Alloca_, _NAME), _COUNT); \
+    FWFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
 using TBasicTextManipulator = Meta::TFunction<TBasicTextWriter<_Char>&(TBasicTextWriter<_Char>&)>;
@@ -82,7 +88,7 @@ public:
     void SetBase(EBase v) { _base = v; Assert(v == _base); }
     void SetCase(ECase v) { _case = v; Assert(v == _case); }
     void SetFloat(EFloat v) { _float = v; Assert(v == _float); }
-    void SetMisc(EMisc v) { _misc = v; Assert(v == _misc); }
+    void SetMisc(EMisc v, bool enabled = true) { _misc = (enabled ? _misc + v : _misc - v); }
     void SetPadding(EPadding v) { _padding = v; Assert(v == _padding); }
     void SetWidth(size_t v) { _width = u8(v); Assert(v == _width); } // reset after each output
     void SetPrecision(size_t v) { _precision = u8(v); Assert(v == _precision); }
@@ -101,11 +107,7 @@ public:
     template <typename _Char>
     static TBasicTextWriter<_Char>& DontPad(TBasicTextWriter<_Char>& s);
     template <typename _Char>
-    static TBasicTextManipulator<_Char> PadCenter(size_t width);
-    template <typename _Char>
-    static TBasicTextManipulator<_Char> PadLeft(size_t width);
-    template <typename _Char>
-    static TBasicTextManipulator<_Char> PadRight(size_t width);
+    static TBasicTextManipulator<_Char> Pad(EPadding padding, size_t width, _Char fill);
     template <typename _Char>
     static TBasicTextManipulator<_Char> PadCenter(size_t width, _Char fill);
     template <typename _Char>
@@ -140,6 +142,7 @@ public:
     FTextFormat ResetFormat();
 
     void Flush();
+    void Reset();
 
 protected:
     IBufferedStreamWriter* _ostream;
@@ -151,10 +154,12 @@ class TBasicTextWriter : public FBaseTextWriter {
 public:
     static constexpr _Char DefaultFillChar();
 
-    TBasicTextWriter(IBufferedStreamWriter* s)
+    TBasicTextWriter(IBufferedStreamWriter* s) noexcept
         : FBaseTextWriter(s)
-        , _fillChar(DefaultFillChar()) {}
-    ~TBasicTextWriter() { Flush(); }
+        , _fillChar(DefaultFillChar())
+    {}
+
+    ~TBasicTextWriter() {}
 
     _Char FillChar() const { return _fillChar; }
     void SetFillChar(_Char ch) { _fillChar = ch; }
@@ -214,6 +219,40 @@ private:
 template <> constexpr char TBasicTextWriter<char>::DefaultFillChar() { return ' '; }
 template <> constexpr wchar_t TBasicTextWriter<wchar_t>::DefaultFillChar() { return L' '; }
 //----------------------------------------------------------------------------
+template <> CORE_API void TBasicTextWriter<char>::Put(char ch);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Put(wchar_t ch);
+//----------------------------------------------------------------------------
+template <> CORE_API void TBasicTextWriter<char>::Put(const TBasicStringView<char>& str);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Put(const TBasicStringView<wchar_t>& str);
+//----------------------------------------------------------------------------
+template <> CORE_API void TBasicTextWriter<char>::Write(bool v);
+template <> CORE_API void TBasicTextWriter<char>::Write(i8 v);
+template <> CORE_API void TBasicTextWriter<char>::Write(i16 v);
+template <> CORE_API void TBasicTextWriter<char>::Write(i32 v);
+template <> CORE_API void TBasicTextWriter<char>::Write(i64 v);
+template <> CORE_API void TBasicTextWriter<char>::Write(u8 v);
+template <> CORE_API void TBasicTextWriter<char>::Write(u16 v);
+template <> CORE_API void TBasicTextWriter<char>::Write(u32 v);
+template <> CORE_API void TBasicTextWriter<char>::Write(u64 v);
+template <> CORE_API void TBasicTextWriter<char>::Write(float v);
+template <> CORE_API void TBasicTextWriter<char>::Write(double v);
+template <> CORE_API void TBasicTextWriter<char>::Write(const void* v);
+template <> CORE_API void TBasicTextWriter<char>::Write(const TBasicStringView<char>& v);
+//----------------------------------------------------------------------------
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(bool v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(i8 v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(i16 v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(i32 v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(i64 v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(u8 v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(u16 v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(u32 v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(u64 v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(float v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(double v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(const void* v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v);
+//----------------------------------------------------------------------------
 extern CORE_API template class TBasicTextWriter<char>;
 extern CORE_API template class TBasicTextWriter<wchar_t>;
 //----------------------------------------------------------------------------
@@ -224,6 +263,9 @@ TBasicTextWriter<wchar_t>& Crlf(TBasicTextWriter<wchar_t>& s);
 //----------------------------------------------------------------------------
 TBasicTextWriter<char>& Eol(TBasicTextWriter<char>& s);
 TBasicTextWriter<wchar_t>& Eol(TBasicTextWriter<wchar_t>& s);
+//----------------------------------------------------------------------------
+TBasicTextWriter<char>& Eos(TBasicTextWriter<char>& s);
+TBasicTextWriter<wchar_t>& Eos(TBasicTextWriter<wchar_t>& s);
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Endl(TBasicTextWriter<_Char>& s);
@@ -242,6 +284,43 @@ template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& s, FTextFormat::EMisc v);
 template <typename _Char>
 TBasicTextWriter<_Char>& operator >>(TBasicTextWriter<_Char>& s, FTextFormat::EMisc v);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char>
+class TBasicFixedSizeTextWriter :
+    private FMemoryViewWriter
+,   public TBasicTextWriter<_Char> {
+public:
+    typedef TBasicTextWriter<_Char> textwriter_type;
+
+    explicit TBasicFixedSizeTextWriter(_Char* ptr, size_t count)
+        : FMemoryViewWriter(ptr, count)
+        , textwriter_type(static_cast<FMemoryViewWriter*>(this))
+    {}
+
+    template <size_t _Dim>
+    explicit TBasicFixedSizeTextWriter(_Char(&staticArray)[_Dim])
+        : FMemoryViewWriter(staticArray)
+        , textwriter_type(static_cast<FMemoryViewWriter*>(this))
+    {}
+
+    explicit TBasicFixedSizeTextWriter(const TMemoryView<_Char>& storage)
+        : FMemoryViewWriter(storage)
+        , textwriter_type(static_cast<FMemoryViewWriter*>(this))
+    {}
+
+    TBasicStringView<_Char> Written() const {
+        return FMemoryViewWriter::Written().template Cast<const _Char>();
+    }
+
+    bool empty() const { return Written().empty(); }
+    size_t size() const { return Written().size(); }
+
+    void Reset() { FMemoryViewWriter::Reset(); }
+
+    using textwriter_type::Write;
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
