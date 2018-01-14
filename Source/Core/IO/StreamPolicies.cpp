@@ -1,14 +1,15 @@
 #include "stdafx.h"
 
-#include "Policies.h"
+#include "StreamPolicies.h"
 
 #include "IO/FormatHelpers.h"
+#include "IO/TextWriter.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, EAccessPolicy policy) {
+FTextWriter& operator <<(FTextWriter& oss, EAccessPolicy policy) {
     bool notFirst = false;
     for (size_t i = 0; i < 32; ++i) {
         switch(EAccessPolicy(size_t(policy) & (size_t(1) << i))) {
@@ -36,7 +37,7 @@ std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, EAccessPoli
     return oss;
 }
 //----------------------------------------------------------------------------
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, EAccessPolicy policy) {
+FWTextWriter& operator <<(FWTextWriter& oss, EAccessPolicy policy) {
     bool notFirst = false;
     for (size_t i = 0; i < 32; ++i) {
         switch(EAccessPolicy(size_t(policy) & (size_t(1) << i))) {

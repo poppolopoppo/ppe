@@ -2,6 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/IO/TextWriter_fwd.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -39,8 +41,8 @@ enum class EAccessPolicy : size_t {
     Truncate_Text   = Truncate | Text,
 };
 ENUM_FLAGS(EAccessPolicy);
-std::basic_ostream<char>& operator <<(std::basic_ostream<char>& oss, EAccessPolicy policy);
-std::basic_ostream<wchar_t>& operator <<(std::basic_ostream<wchar_t>& oss, EAccessPolicy policy);
+CORE_API FTextWriter& operator <<(FTextWriter& oss, EAccessPolicy policy);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, EAccessPolicy policy);
 //----------------------------------------------------------------------------
 enum class EExistPolicy : size_t {
     Exists          = 1 << 0,

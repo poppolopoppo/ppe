@@ -1,12 +1,8 @@
 #include "stdafx.h"
 
-#include "BufferedStreamProvider.h"
+#include "BufferedStream.h"
 
 namespace Core {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-static constexpr size_t GStreamBufferSizeInBytes = (4 * ALLOCATION_GRANULARITY); // <=> 256kb
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -16,14 +12,17 @@ FBufferedStreamReader::FBufferedStreamReader()
     , _origin(0)
     , _offset(0)
     , _capacity(0)
+    , _bufferSize(GBufferedStreamDefaultBufferSize)
 {}
 //----------------------------------------------------------------------------
-FBufferedStreamReader::FBufferedStreamReader(IStreamReader* nonBuffered)
+FBufferedStreamReader::FBufferedStreamReader(IStreamReader* nonBuffered, size_t bufferSize/* = GBufferedStreamDefaultBufferSize */)
     : _nonBuffered(nonBuffered)
     , _buffer(nullptr)
     , _origin(_nonBuffered->TellI())
     , _offset(0)
-    , _capacity(0) {
+    , _capacity(0)
+    , _bufferSize(bufferSize) {
+    Assert(_bufferSize);
     Assert(_nonBuffered);
     Assert(_nonBuffered->ToBufferedI() == nullptr);
 }
@@ -31,9 +30,16 @@ FBufferedStreamReader::FBufferedStreamReader(IStreamReader* nonBuffered)
 FBufferedStreamReader::~FBufferedStreamReader() {
     if (_buffer) {
         Assert(_nonBuffered);
-        FBufferedStreamAllocator::deallocate(_buffer, GStreamBufferSizeInBytes);
+        FBufferedStreamAllocator::deallocate(_buffer, _bufferSize);
         ONLY_IF_ASSERT(_buffer = nullptr);
     }
+}
+//----------------------------------------------------------------------------
+void FBufferedStreamReader::SetStream(IStreamReader* nonBuffered) {
+    Assert(nonBuffered->ToBufferedI() == nullptr);
+    _nonBuffered = nonBuffered;
+    _origin = 0;
+    _offset = 0;
 }
 //----------------------------------------------------------------------------
 bool FBufferedStreamReader::Eof() const {
@@ -97,7 +103,7 @@ bool FBufferedStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
 
     u8* pdst = (u8*)storage;
 
-    if (sizeInBytes <= GStreamBufferSizeInBytes) {
+    if (checked_cast<size_t>(sizeInBytes) <= _bufferSize) {
         // Buffered read
 
         u8* pend = pdst + checked_cast<ptrdiff_t>(sizeInBytes);
@@ -209,12 +215,12 @@ bool FBufferedStreamReader::RefillBuffer_() {
 
     if (nullptr == _buffer) {
         // Allocate read buffer lazily
-
-        _buffer = FBufferedStreamAllocator::allocate(GStreamBufferSizeInBytes);
+        Assert(_bufferSize > 0);
+        _buffer = FBufferedStreamAllocator::allocate(_bufferSize);
         AssertRelease(_buffer);
     }
 
-    const size_t count = _nonBuffered->ReadSome(_buffer, 1, GStreamBufferSizeInBytes);
+    const size_t count = _nonBuffered->ReadSome(_buffer, 1, _bufferSize);
 
     _offset = 0;
     _capacity = checked_cast<u32>(count);
@@ -229,13 +235,16 @@ FBufferedStreamWriter::FBufferedStreamWriter()
 :   _nonBuffered(nullptr)
 ,   _buffer(nullptr)
 ,   _origin(0)
+,   _bufferSize(GBufferedStreamDefaultBufferSize)
 {}
 //----------------------------------------------------------------------------
-FBufferedStreamWriter::FBufferedStreamWriter(IStreamWriter* nonBuffered)
+FBufferedStreamWriter::FBufferedStreamWriter(IStreamWriter* nonBuffered, size_t bufferSize/* = GBufferedStreamDefaultBufferSize */)
 :   _nonBuffered(nonBuffered)
 ,   _buffer(nullptr)
 ,   _origin(_nonBuffered->TellO())
-,   _offset(0) {
+,   _offset(0)
+,   _bufferSize(bufferSize) {
+    Assert(_bufferSize);
     Assert(_nonBuffered);
     Assert(_nonBuffered->ToBufferedO() == nullptr);
 }
@@ -244,15 +253,23 @@ FBufferedStreamWriter::~FBufferedStreamWriter() {
     if (_buffer) {
         Assert(_nonBuffered);
         Flush();
-        FBufferedStreamAllocator::deallocate(_buffer, GStreamBufferSizeInBytes);
+        FBufferedStreamAllocator::deallocate(_buffer, _bufferSize);
         ONLY_IF_ASSERT(_buffer = nullptr);
     }
+}
+//----------------------------------------------------------------------------
+void FBufferedStreamWriter::SetStream(IStreamWriter* nonBuffered) {
+    Assert(nonBuffered->ToBufferedO() == nullptr);
+    Flush();
+    Assert(0 == _offset);
+    _nonBuffered = nonBuffered;
+    _origin = _nonBuffered->TellO();
 }
 //----------------------------------------------------------------------------
 std::streamoff FBufferedStreamWriter::TellO() const {
     Assert(_nonBuffered);
     Assert(_origin >= 0);
-    Assert(_offset <= GStreamBufferSizeInBytes);
+    Assert(_offset <= _bufferSize);
     Assert(_nonBuffered->TellO() == _origin);
 
     return (_origin + _offset);
@@ -301,21 +318,22 @@ bool FBufferedStreamWriter::Write(const void* storage, std::streamsize sizeInByt
     Assert(_nonBuffered);
     Assert(_nonBuffered->TellO() == _origin);
 
-    if (sizeInBytes <= GStreamBufferSizeInBytes) {
+    if (checked_cast<size_t>(sizeInBytes) <= _bufferSize) {
         // Buffered write
 
         if (nullptr == _buffer) {
-            _buffer = FBufferedStreamAllocator::allocate(GStreamBufferSizeInBytes);
+            Assert(_bufferSize);
+            _buffer = FBufferedStreamAllocator::allocate(_bufferSize);
             AssertRelease(_buffer);
         }
 
         const u8* psrc = (const u8*)storage;
         const u8* pend = psrc + checked_cast<ptrdiff_t>(sizeInBytes);
         while (psrc != pend) {
-            Assert(_offset <= GStreamBufferSizeInBytes);
+            Assert(_offset <= _bufferSize);
 
-            if (_offset != GStreamBufferSizeInBytes) {
-                const size_t toWrite = Min(checked_cast<size_t>(pend - psrc), GStreamBufferSizeInBytes - _offset);
+            if (_offset != _bufferSize) {
+                const size_t toWrite = Min(checked_cast<size_t>(pend - psrc), _bufferSize - _offset);
                 Assert(toWrite > 0);
 
                 ::memcpy(_buffer + _offset, psrc, toWrite);
@@ -354,8 +372,7 @@ size_t FBufferedStreamWriter::WriteSome(const void* storage, size_t eltsize, siz
 }
 //----------------------------------------------------------------------------
 void FBufferedStreamWriter::Flush() {
-    if (not CommitBuffer_())
-        AssertNotReached();
+    VerifyRelease(CommitBuffer_());
 }
 //----------------------------------------------------------------------------
 bool FBufferedStreamWriter::CommitBuffer_() {

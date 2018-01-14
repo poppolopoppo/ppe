@@ -13,16 +13,23 @@ namespace Core {
 //----------------------------------------------------------------------------
 using FBufferedStreamAllocator = THREAD_LOCAL_ALLOCATOR(Stream, u8);
 //----------------------------------------------------------------------------
-class FBufferedStreamReader : public IBufferedStreamReader, FBufferedStreamAllocator {
+constexpr size_t GBufferedStreamDefaultBufferSize = (4 * ALLOCATION_GRANULARITY); // <=> 256kb
+//----------------------------------------------------------------------------
+class CORE_API FBufferedStreamReader : public IBufferedStreamReader, FBufferedStreamAllocator {
 public:
     FBufferedStreamReader();
-    explicit FBufferedStreamReader(IStreamReader* nonBuffered);
     ~FBufferedStreamReader();
+
+    explicit FBufferedStreamReader(IStreamReader* nonBuffered, size_t bufferSize = GBufferedStreamDefaultBufferSize);
 
     FBufferedStreamReader(const FBufferedStreamReader& ) = delete;
     FBufferedStreamReader& operator =(const FBufferedStreamReader& ) = delete;
 
-    inline friend void swap(FBufferedStreamReader& lhs, FBufferedStreamReader rhs) {
+    size_t BufferSize() const { return _bufferSize; }
+
+    void SetStream(IStreamReader* nonBuffered);
+
+    inline friend void swap(FBufferedStreamReader& lhs, FBufferedStreamReader& rhs) {
         std::swap(lhs._nonBuffered, rhs._nonBuffered);
         std::swap(lhs._buffer, rhs._buffer);
         std::swap(lhs._origin, rhs._origin);
@@ -53,20 +60,26 @@ private:
     std::streamoff _origin;
     u32 _offset;
     u32 _capacity;
+    size_t _bufferSize;
 
     bool RefillBuffer_();
 };
 //----------------------------------------------------------------------------
-class FBufferedStreamWriter : public IBufferedStreamWriter, FBufferedStreamAllocator {
+class CORE_API FBufferedStreamWriter : public IBufferedStreamWriter, FBufferedStreamAllocator {
 public:
     FBufferedStreamWriter();
-    explicit FBufferedStreamWriter(IStreamWriter* nonBuffered);
     ~FBufferedStreamWriter();
+
+    explicit FBufferedStreamWriter(IStreamWriter* nonBuffered, size_t bufferSize = GBufferedStreamDefaultBufferSize);
 
     FBufferedStreamWriter(const FBufferedStreamWriter& ) = delete;
     FBufferedStreamWriter& operator =(const FBufferedStreamWriter& ) = delete;
 
-    inline friend void swap(FBufferedStreamWriter& lhs, FBufferedStreamWriter rhs) {
+    size_t BufferSize() const { return _bufferSize; }
+
+    void SetStream(IStreamWriter* nonBuffered);
+
+    inline friend void swap(FBufferedStreamWriter& lhs, FBufferedStreamWriter& rhs) {
         std::swap(lhs._nonBuffered, rhs._nonBuffered);
         std::swap(lhs._buffer, rhs._buffer);
         std::swap(lhs._origin, rhs._origin);
@@ -90,6 +103,7 @@ private:
     u8* _buffer;
     std::streamoff _origin;
     size_t _offset;
+    size_t _bufferSize;
 
     bool CommitBuffer_();
 };
