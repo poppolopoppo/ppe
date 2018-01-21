@@ -12,6 +12,37 @@
     </Expand>
   </Type>
 
+  <Type Name="Core::TBasicString&lt;char&gt;">
+    <DisplayString Condition="_large.IsLarge == 0">{_small.Buffer,[_small.Size]s} [small:{size_t(_small.Size)}]</DisplayString>
+    <DisplayString Condition="_large.IsLarge != 0">{_large.Storage,[_large.Size]s} [large:{size_t(_large.Size)}]</DisplayString>
+    <StringView Condition="_large.IsLarge == 0">_small.Buffer,[_small.Size]s</StringView>
+    <StringView Condition="_large.IsLarge != 0">_large.Storage,[_large.Size]s</StringView>
+    <Expand>
+      <Item Condition="_large.IsLarge == 0" Name="Content">_small.Buffer,[_small.Size]s</Item>
+      <Item Condition="_large.IsLarge == 0" Name="Size">size_t(_small.Size)</Item>
+      <Item Condition="_large.IsLarge == 0" Name="Capacity">sizeof(_small.Buffer)/sizeof(_small.Buffer[0])</Item>
+      <Item Condition="_large.IsLarge != 0" Name="Content">_large.Storage,[_large.Size]s</Item>
+      <Item Condition="_large.IsLarge != 0" Name="Size">_large.Size</Item>
+      <Item Condition="_large.IsLarge != 0" Name="Capacity">_large.Capacity</Item>
+      <Item Name="SBO">!!!_large.IsLarge</Item>
+    </Expand>
+  </Type>
+  <Type Name="Core::TBasicString&lt;wchar_t&gt;">
+    <DisplayString Condition="_large.IsLarge == 0">{_small.Buffer,[_small.Size]su} [small:{size_t(_small.Size)}]</DisplayString>
+    <DisplayString Condition="_large.IsLarge != 0">{_large.Storage,[_large.Size]su} [large:{size_t(_large.Size)}]</DisplayString>
+    <StringView Condition="_large.IsLarge == 0">_small.Buffer,[_small.Size]su</StringView>
+    <StringView Condition="_large.IsLarge != 0">_large.Storage,[_large.Size]su</StringView>
+    <Expand>
+      <Item Condition="_large.IsLarge == 0" Name="Content">_small.Buffer,[_small.Size]su</Item>
+      <Item Condition="_large.IsLarge == 0" Name="Size">size_t(_small.Size)</Item>
+      <Item Condition="_large.IsLarge == 0" Name="Capacity">sizeof(_small.Buffer)/sizeof(_small.Buffer[0])</Item>
+      <Item Condition="_large.IsLarge != 0" Name="Content">_large.Storage,[_large.Size]su</Item>
+      <Item Condition="_large.IsLarge != 0" Name="Size">_large.Size</Item>
+      <Item Condition="_large.IsLarge != 0" Name="Capacity">_large.Capacity</Item>
+      <Item Name="SBO">!!!_large.IsLarge</Item>
+    </Expand>
+  </Type>
+
   <Type Name="Core::TBasicStringView&lt;char&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
     <DisplayString>{_storage,[_size]s} [{_size}]</DisplayString>
