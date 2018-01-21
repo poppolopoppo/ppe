@@ -1,6 +1,22 @@
+[submodule "Source/Core.External/double-conversion"]
+    path = Source/Core.External/double-conversion
+    url = https://github.com/google/double-conversion.git
+[submodule "Source/Core.External/farmhash"]
+    path = Source/Core.External/farmhash
+    url = https://github.com/google/farmhash.git
+[submodule "Source/Core.External/farmhash"]
+    path = Source/Core.External/farmhash
+    url = https://github.com/google/farmhash.git
 [submodule "Source/Core.External/lz4"]
 	path = Source/Core.External/lz4
 	url = https://github.com/lz4/lz4.git
 [submodule "Source/Core.External/renderdoc"]
 	path = Source/Core.External/renderdoc
 	url = https://github.com/baldurk/renderdoc.git
+[submodule "Source/Core.External/stb"]
+    path = Source/Core.External/stb
+    url = https://github.com/nothings/stb.git
+[submodule "Source/Core.External/xxHash"]
+    path = Source/Core.External/xxHash
+    url = https://github.com/Cyan4973/xxHash.git
+    
