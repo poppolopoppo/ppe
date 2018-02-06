@@ -131,7 +131,7 @@ TMemoryView<T> TMemoryView<T>::SubRange(iterator first, iterator last) const {
     Assert(AliasesToContainer(first));
     Assert(AliasesToContainer(last));
     Assert(first <= last);
-    return SubRange(std::addressof(*first), std::distance(first, last));
+    return SubRange(std::distance(begin(), first), std::distance(first, last));
 }
 //----------------------------------------------------------------------------
 template <typename T>
