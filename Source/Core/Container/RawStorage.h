@@ -52,8 +52,8 @@ public:
 
     explicit TRawStorage(size_type size);
     explicit TRawStorage(allocator_type&& allocator);
-    TRawStorage(size_type size, allocator_type&& allocator);
-    TRawStorage(Meta::FForceInit, const TMemoryView<T>& stolen);
+    TRawStorage(allocator_type&& allocator, size_type size);
+    TRawStorage(allocator_type&& allocator, const TMemoryView<T>& stolen);
 
     template <typename _It>
     TRawStorage(_It&& begin, _It&& end);
@@ -71,7 +71,7 @@ public:
     size_type size() const { return _size; }
     bool empty() const { return 0 == _size; }
 
-    const allocator_type& allocator() const { return *this; }
+    const allocator_type& get_allocator() const { return (*static_cast<const allocator_type*>(this)); }
 
     iterator begin() { return _storage; }
     iterator end() { return _storage + _size; }
@@ -108,10 +108,11 @@ public:
     FORCE_INLINE void Resize_DiscardData(size_type size) { Resize(size, false); }
     FORCE_INLINE void Resize_KeepData(size_type size) { Resize(size, true); }
 
-    // !!! NEED TO DESTROY THE BLOCK AFTERWARDS WITH THE CORRECT ALLOCATOR !!!
-    template <typename U>
-    TMemoryView<U> clear_StealDataUnsafe() {
-        const TMemoryView<U> stolen = MakeView().template Cast<U>();
+    template <typename _OtherAllocator>
+    auto StealDataUnsafe(_OtherAllocator& alloc) {
+        using other_value_type = typename _OtherAllocator::value_type;
+        const TMemoryView<other_value_type> stolen = AllocatorStealBlock(alloc, MakeView(), get_allocator_());
+
         _storage = nullptr; // won't delete the block !
         _size = 0;
         return stolen;
@@ -136,6 +137,8 @@ public:
     inline friend hash_t hash_value(const TRawStorage& storage) { return storage.HashValue(); }
 
 protected:
+    allocator_type& get_allocator_() { return (static_cast<allocator_type&>(*this)); }
+
     pointer _storage;
     size_type _size;
 };

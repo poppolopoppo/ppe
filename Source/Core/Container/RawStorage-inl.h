@@ -22,11 +22,18 @@ TRawStorage<T, _Allocator>::TRawStorage(allocator_type&& allocator)
 ,   _storage(nullptr), _size(0) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-TRawStorage<T, _Allocator>::TRawStorage(size_type size, allocator_type&& allocator)
+TRawStorage<T, _Allocator>::TRawStorage(allocator_type&& allocator, size_type size)
 :   allocator_type(std::move(allocator))
 ,   _storage(nullptr), _size(0) {
     Resize_DiscardData(size);
 }
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+TRawStorage<T, _Allocator>::TRawStorage(allocator_type&& allocator, const TMemoryView<T>& stolen)
+:   allocator_type(std::move(allocator))
+,   _storage(stolen.data())
+,   _size(stolen.size())
+{}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <typename _It>
@@ -34,11 +41,6 @@ TRawStorage<T, _Allocator>::TRawStorage(_It&& begin, _It&& end)
 :   _storage(nullptr), _size(0) {
     insert(this->end(), begin, end);
 }
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
-TRawStorage<T, _Allocator>::TRawStorage(Meta::FForceInit, const TMemoryView<T>& stolen)
-    : _storage(stolen.data()), _size(stolen.size())
-{}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>::~TRawStorage() {

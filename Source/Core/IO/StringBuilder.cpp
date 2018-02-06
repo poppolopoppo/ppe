@@ -2,24 +2,39 @@
 
 #include "StringBuilder.h"
 
+#include "IO/String.h"
+
 namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+template <typename _Char>
+struct TStealBasicString_ {
+    using string_type = typename TBasicStringBuilder<_Char>::string_type;
+    using stream_type = typename TBasicStringBuilder<_Char>::stream_type;
+    using allocator_type = typename TBasicStringBuilder<_Char>::allocator_type;
+    static stream_type StealData(allocator_type&& alloc, string_type&& str) {
+        return stream_type(std::move(alloc), str.StealDataUnsafe(alloc));
+    }
+};
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicStringBuilder<_Char>::TBasicStringBuilder()
-    : TBasicTextWriter<_Char>(static_cast<IBufferedStreamWriter*>(this))
-{}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicStringBuilder<_Char>::TBasicStringBuilder(string_type&& stolen)
-    : stringstream_type(Meta::FForceInit{}, stolen.clear_StealMemoryUnsafe().template Cast<u8>())
+    : stream_type(allocator_type(static_cast<insitu_type&>(*this)))
     , TBasicTextWriter<_Char>(static_cast<IBufferedStreamWriter*>(this))
 {}
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicStringBuilder<_Char>::TBasicStringBuilder(Meta::FForceInit, const TMemoryView<_Char>& stolen)
-    : stringstream_type(Meta::FForceInit{}, stolen.template Cast<u8>())
+TBasicStringBuilder<_Char>::TBasicStringBuilder(string_type&& stolen)
+    : stream_type(TStealBasicString_<_Char>::StealData(
+        allocator_type(static_cast<insitu_type&>(*this)),
+        std::move(stolen) ))
     , TBasicTextWriter<_Char>(static_cast<IBufferedStreamWriter*>(this))
 {}
 //----------------------------------------------------------------------------
@@ -29,7 +44,17 @@ TBasicStringBuilder<_Char>::~TBasicStringBuilder()
 //----------------------------------------------------------------------------
 template <typename _Char>
 void TBasicStringBuilder<_Char>::reserve(size_t count) {
-    stringstream_type::reserve(count * sizeof(_Char) + 1/* null char */);
+    stream_type::reserve(count * sizeof(_Char) + 1/* null char */);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+void TBasicStringBuilder<_Char>::clear() {
+    stream_type::clear();
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+void TBasicStringBuilder<_Char>::clear_ReleaseMemory() {
+    stream_type::clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -41,15 +66,11 @@ auto TBasicStringBuilder<_Char>::ToString() -> string_type {
 //----------------------------------------------------------------------------
 template <typename _Char>
 void TBasicStringBuilder<_Char>::ToString(string_type& output) {
-    if (stringstream_type::MakeView().template Cast<const _Char>().back() != _Char())
+    const TBasicStringView<_Char> str = stream_type::MakeView().template Cast<const _Char>();
+    if (str.empty() || str.back() != _Char())
         *this << Eos;
 
-    size_t len = 0;
-    TMemoryView<_Char> block = stringstream_type::template clear_StealDataUnsafe<_Char>(&len);
-    Assert(len/* null char */);
-    Assert(block[len] == _Char());
-
-    output.assign(Meta::FForceInit{}, block, len);
+    output.assign(std::move(*this));
 }
 //----------------------------------------------------------------------------
 /*CORE_API extern*/ template class TBasicStringBuilder<char>;
