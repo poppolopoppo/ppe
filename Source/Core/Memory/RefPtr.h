@@ -51,10 +51,10 @@ public:
     FRefCountable(const FRefCountable& );
     FRefCountable& operator =(const FRefCountable& );
 
-    size_t RefCount() const { return _refCount; }
+    int RefCount() const { return _refCount; }
 
 #ifdef WITH_CORE_SAFEPTR
-    size_t SafeRefCount() const { return _safeRefCount; }
+    int SafeRefCount() const { return _safeRefCount; }
 #endif
 
 protected:
@@ -76,17 +76,28 @@ protected:
     template <typename T>
     friend T *RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& ptr);
 
+#ifdef WITH_CORE_SAFEPTR
+    friend void AddSafeRef(const FRefCountable* ptr);
+    friend void RemoveSafeRef(const FRefCountable* ptr);
+#else
+    inline friend void AddSafeRef(const FRefCountable*) {}
+    inline friend void RemoveSafeRef(const FRefCountable*) {}
+#endif
+
 private:
     void IncRefCount() const;
     bool DecRefCount_ReturnIfReachZero() const;
 
-    mutable std::atomic<size_t> _refCount;
+    mutable std::atomic<int> _refCount;
 
 #ifdef WITH_CORE_SAFEPTR
     // for debugging purpose : assert if TSafePtr<> are still tracking that object
     template <typename T>
     friend class TSafePtr;
-    mutable std::atomic<size_t> _safeRefCount;
+    mutable std::atomic<int> _safeRefCount;
+
+    void IncSafeRefCount() const;
+    void DecSafeRefCount() const;
 #endif
 };
 //----------------------------------------------------------------------------
@@ -206,6 +217,11 @@ public:
     TSafePtr(TSafePtr<U>&& rvalue);
     template <typename U>
     TSafePtr& operator =(TSafePtr<U>&& rvalue);
+
+    template <typename U>
+    TSafePtr(const TRefPtr<U>& refptr) : TSafePtr(refptr.get()) {}
+    template <typename U>
+    TSafePtr& operator =(const TRefPtr<U>&& refptr) { return operator =(refptr.get()); }
 
     T* get() const { return _ptr; }
     void reset(T* ptr = nullptr);

@@ -40,16 +40,13 @@ inline FRefCountable::FRefCountable(const FRefCountable& )
 inline FRefCountable& FRefCountable::operator =(const FRefCountable& ) { return *this; }
 //----------------------------------------------------------------------------
 inline void FRefCountable::IncRefCount() const {
-    std::atomic_fetch_add_explicit(&_refCount, 1u, std::memory_order_relaxed);
+    _refCount.fetch_add(1);
 }
 //----------------------------------------------------------------------------
 inline bool FRefCountable::DecRefCount_ReturnIfReachZero() const {
-    Assert(_refCount);
-    if (std::atomic_fetch_sub_explicit(&_refCount, 1u, std::memory_order_release) == 1 ) {
-        std::atomic_thread_fence(std::memory_order_acquire);
-        return true;
-    }
-    return false;
+    const int n = _refCount.fetch_sub(1);
+    Assert(n > 0);
+    return (1 == n);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -129,6 +126,23 @@ T *RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& ptr) {
         AssertNotReached();
     return result;
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#ifdef WITH_CORE_SAFEPTR
+inline void AddSafeRef(const FRefCountable* ptr) {
+    ptr->IncSafeRefCount();
+}
+inline void RemoveSafeRef(const FRefCountable* ptr) {
+    ptr->DecSafeRefCount();
+}
+inline void FRefCountable::IncSafeRefCount() const {
+    _safeRefCount.fetch_add(1);
+}
+inline void FRefCountable::DecSafeRefCount() const {
+    Verify(_safeRefCount.fetch_sub(1) > 0);
+}
+#endif //!WITH_CORE_SAFEPTR
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -360,9 +374,8 @@ template <typename T>
 FORCE_INLINE void TSafePtr<T>::IncRefCountIFP() const {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
 #ifdef WITH_CORE_SAFEPTR
-    if (_ptr) {
-        _ptr->_safeRefCount.fetch_add(1u, std::memory_order_seq_cst);
-    }
+    if (_ptr)
+        AddSafeRef(_ptr);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -370,10 +383,8 @@ template <typename T>
 FORCE_INLINE void TSafePtr<T>::DecRefCountIFP() const {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
 #ifdef WITH_CORE_SAFEPTR
-    if (_ptr) {
-        Assert(_ptr->_safeRefCount);
-        _ptr->_safeRefCount.fetch_sub(1u, std::memory_order_seq_cst);
-    }
+    if (_ptr)
+        RemoveSafeRef(_ptr);
 #endif
 }
 //----------------------------------------------------------------------------
