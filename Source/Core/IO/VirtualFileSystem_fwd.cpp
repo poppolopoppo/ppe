@@ -6,9 +6,12 @@
 #include "VirtualFileSystem.h"
 
 #include "Container/RawStorage.h"
+#include "IO/Format.h"
+#include "IO/TextWriter.h"
 #include "FS/Dirpath.h"
 #include "FS/Filename.h"
 #include "FS/FileStat.h"
+#include "Time/DateTime.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -68,6 +71,30 @@ UStreamReader VFS_OpenTextReadable(const FFilename& filename, EAccessPolicy poli
 //----------------------------------------------------------------------------
 UStreamWriter VFS_OpenTextWritable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
     return VFS_OpenWritable(filename, EAccessPolicy(policy|EAccessPolicy::Text));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+UStreamWriter VFS_RollFile(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
+    auto& vfs = FVirtualFileSystem::Instance();
+
+    FFileStat fstat;
+    if (vfs.FileStats(&fstat, filename)) {
+        const FDateTime date = fstat.CreatedAt.ToDateTimeUTC();
+
+        wchar_t buffer[256];
+        FWFixedSizeTextWriter oss(buffer);
+        Format(oss, L"_{0:#4}-{1:#2}-{2:#2}_{3:#2}-{4:#2}-{5:#2}_UTC",
+            date.Year, date.Month, date.Day,
+            date.Hours, date.Minutes, date.Seconds);
+
+        FFilename logroll = filename;
+        logroll.AppendBasename(oss.Written());
+
+        vfs.MoveFile(filename, logroll);
+    }
+
+    return vfs.OpenWritable(filename, policy);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
