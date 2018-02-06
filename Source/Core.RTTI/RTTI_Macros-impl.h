@@ -63,8 +63,8 @@
 #define _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, _Flags) do { \
         char propName[] = STRINGIZE(_Name); \
         STATIC_ASSERT(sizeof(propName) > 2 * sizeof(char)); \
-        Assert(propName[0] == '_'); \
-        Assert(IsAlpha(propName[1])); \
+        Assert_NoAssume(propName[0] == '_'); \
+        Assert_NoAssume(IsAlpha(propName[1])); \
         InplaceToUpper(propName[1]); \
         const FStringView capitalizedWithoutUnderscore(&propName[1], lengthof(propName) - 2); \
         _RTTI_PROPERTY_IMPL(capitalizedWithoutUnderscore, (_Flags), &object_type::_Name); \

@@ -12,6 +12,7 @@
 namespace Core {
 namespace RTTI {
 FWD_REFPTR(MetaObject);
+FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -22,23 +23,7 @@ enum class ETransactionFlags : u32 {
     Unloading   ,
 };
 //----------------------------------------------------------------------------
-class ILoadContext {
-public:
-    virtual ~ILoadContext() {}
-    virtual void OnLoadObject(FMetaObject& object) = 0;
-};
-//----------------------------------------------------------------------------
-class IUnloadContext {
-public:
-    virtual ~IUnloadContext() {}
-    virtual void OnUnloadObject(FMetaObject& object) = 0;
-};
-//----------------------------------------------------------------------------
-FWD_REFPTR(MetaTransaction);
-class CORE_RTTI_API EMPTY_BASES FMetaTransaction
-    : protected ILoadContext
-    , protected IUnloadContext
-    , public FRefCountable {
+class CORE_RTTI_API FMetaTransaction : public FRefCountable {
 public:
     explicit FMetaTransaction(const FName& name);
     FMetaTransaction(const FName& name, VECTOR(RTTI, PMetaObject)&& objects);
@@ -48,39 +33,48 @@ public:
     ETransactionFlags Flags() const { return _flags; }
 
     size_t NumTopObjects() const { return _topObjects.size(); }
-    size_t NumLoadedObjects() const { return _loadedObjects.size(); }
+    size_t NumExportedObjects() const { Assert(IsLoaded()); return _exportedObjects.size(); }
+    size_t NumLoadedObjects() const { Assert(IsLoaded()); return _loadedObjects.size(); }
+    size_t NumImportedTransactions() const { Assert(IsLoaded()); return _importedTransactions.size(); }
 
-    bool IsLoaded() const   { return (_flags == ETransactionFlags::Loaded); }
+    bool IsLoaded() const { return (_flags == ETransactionFlags::Loaded); }
+    bool IsLoading() const { return (_flags == ETransactionFlags::Loading); }
     bool IsUnloaded() const { return (_flags == ETransactionFlags::Unloaded); }
+    bool IsUnloading() const { return (_flags == ETransactionFlags::Unloading); }
 
     bool Contains(const FMetaObject* object) const;
     void RegisterObject(FMetaObject* object);
     void UnregisterObject(FMetaObject* object);
 
-    void Load(ILoadContext* context);
-    void Unload(IUnloadContext* context);
+    void Load();
+    void Unload();
+    void Reload();
 
     TMemoryView<const PMetaObject> TopObjects() const {
         return _topObjects.MakeConstView();
     }
 
-    const HASHSET(RTTI, SCMetaObject)& LoadedObjects() const {
-        return _loadedObjects;
+    const VECTOR(RTTI, SCMetaTransaction)& ImportedTransactions() const {
+        Assert(IsLoaded());
+        return _importedTransactions;
     }
 
     void reserve(size_t capacity);
 
     bool DeepEquals(const FMetaTransaction& other) const;
 
-protected: // ILoadContext + IUnloadContxt
-    virtual void OnLoadObject(FMetaObject& object) override;
-    virtual void OnUnloadObject(FMetaObject& object) override;
-
 private:
     FName _name;
     ETransactionFlags _flags;
     VECTOR(RTTI, PMetaObject) _topObjects;
-    HASHSET(RTTI, SCMetaObject) _loadedObjects;
+
+    HASHSET(RTTI, SMetaObject) _exportedObjects;
+    HASHSET(RTTI, SMetaObject) _loadedObjects;
+
+    VECTOR(RTTI, SCMetaTransaction) _importedTransactions;
+
+    friend class FTransactionLoadContext;
+    friend class FTransactionUnloadContext;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

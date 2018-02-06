@@ -21,8 +21,9 @@ namespace RTTI {
 class FAtom;
 class FMetaClass;
 class FMetaNamespace;
-class ILoadContext;
-class IUnloadContext;
+FWD_REFPTR(MetaTransaction);
+class FLoadContext;
+class FUnloadContext;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -38,6 +39,18 @@ enum class EObjectFlags : u32 {
 };
 ENUM_FLAGS(EObjectFlags);
 //----------------------------------------------------------------------------
+class ILoadContext {
+public:
+    virtual ~ILoadContext() {}
+    virtual void OnLoadObject(FMetaObject& object) = 0;
+};
+//----------------------------------------------------------------------------
+class IUnloadContext {
+public:
+    virtual ~IUnloadContext() {}
+    virtual void OnUnloadObject(FMetaObject& object) = 0;
+};
+//----------------------------------------------------------------------------
 FWD_REFPTR(MetaObject);
 class CORE_RTTI_API FMetaObject : public FRefCountable {
 public:
@@ -52,6 +65,9 @@ public:
     bool RTTI_IsExported() const    { return (_flags ^ EObjectFlags::Exported   ); }
     bool RTTI_IsTopObject() const   { return (_flags ^ EObjectFlags::TopObject  ); }
 
+    const FMetaTransaction* RTTI_Outer() const { return _outer.get(); }
+    void RTTI_SetOuter(const FMetaTransaction* outer, const FMetaTransaction* prevOuterForDbg = nullptr);
+
     bool RTTI_IsA(const FMetaClass& metaClass) const;
     bool RTTI_CastTo(const FMetaClass& metaClass) const;
     bool RTTI_InheritsFrom(const FMetaClass& metaClass) const;
@@ -62,11 +78,11 @@ public:
     void RTTI_Export(const FName& name);
     void RTTI_Unexport();
 
-    virtual void RTTI_Load(ILoadContext* context);
-    virtual void RTTI_Unload(IUnloadContext* context);
+    virtual void RTTI_Load(ILoadContext& context);
+    virtual void RTTI_Unload(IUnloadContext& context);
 
-    void RTTI_CallLoadIFN(ILoadContext* context);
-    void RTTI_CallUnloadIFN(IUnloadContext* context);
+    bool RTTI_CallLoadIFN(ILoadContext& context);
+    bool RTTI_CallUnloadIFN(IUnloadContext& context);
 
     void RTTI_MarkAsTopObject(); // should only be called by FMetaTransaction
     void RTTI_UnmarkAsTopObject(); // should only be called by FMetaTransaction
@@ -99,6 +115,7 @@ private:
 #else
     EObjectFlags _flags;
 #endif
+    SCMetaTransaction _outer;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

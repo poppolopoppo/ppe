@@ -8,6 +8,7 @@
 #include "AtomVisitor.h"
 #include "MetaDatabase.h"
 #include "MetaObjectHelpers.h"
+#include "MetaTransaction.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 #include "Core/IO/StringBuilder.h"
@@ -103,6 +104,8 @@ RTTI_NAMESPACE_DECL(, RTTI_UnitTest);
 RTTI_NAMESPACE_DEF(, RTTI_UnitTest);
 //----------------------------------------------------------------------------
 FWD_REFPTR(Titi);
+FWD_REFPTR(Toto);
+//----------------------------------------------------------------------------
 class FTiti : public Core::RTTI::FMetaObject {
 public:
     FTiti() {}
@@ -119,6 +122,8 @@ public:
     void Out(float f, FString& str) { str = ToString(f); }
     void OutConst(float f, FString& str) const { str = ToString(f); }
     RTTI::PMetaObject OutConstReturn(float f, FString& str) const { str = ToString(f); return PTiti(new FTiti()); }
+    void SetToto(FToto* toto) { _toto = toto; }
+    const PToto& Toto() const { return _toto; }
 private:
     int _count;
     Core::FString _name;
@@ -126,6 +131,7 @@ private:
     VECTOR(Internal, PTiti) _titiesOld;
     VECTOR(Internal, PCTiti) _consttities;
     ASSOCIATIVE_VECTOR(Internal, Core::TPair<int COMMA PTiti>, VECTORINSITU(RTTI, Core::TPair<float COMMA Core::FString>, 2)) _dict;
+    PToto _toto;
 };
 RTTI_CLASS_BEGIN(RTTI_UnitTest, FTiti, RTTI::EClassFlags::Public)
 RTTI_PROPERTY_PRIVATE_FIELD(_count)
@@ -134,6 +140,7 @@ RTTI_PROPERTY_PRIVATE_FIELD(_tities)
 RTTI_PROPERTY_PRIVATE_DEPRECATED(_titiesOld)
 RTTI_PROPERTY_PRIVATE_FIELD(_consttities)
 RTTI_PROPERTY_PRIVATE_FIELD(_dict)
+RTTI_PROPERTY_PRIVATE_FIELD(_toto)
 RTTI_FUNCTION(Id, f)
 RTTI_FUNCTION_DEPRECATED(IdDeprecated, f)
 RTTI_FUNCTION(Func, f)
@@ -190,6 +197,8 @@ class FToto2 : public FToto {
 public:
     FToto2() {}
     virtual ~FToto2() {}
+    void SetParent1(FToto* parent) { _parent1 = parent; }
+    const PToto& Parent1() const { return _parent1; }
     RTTI_CLASS_HEADER(FToto2, FToto);
 private:
     PToto _parent1;
@@ -267,14 +276,21 @@ static void TestRTTI_() {
     RTTIPrintClass_<FToto2>();
 
     {
+        RTTI::FMetaTransaction transaction(RTTI::FName("test"));
+
         PToto toto(new FToto());
         PToto2 toto2(new FToto2());
+        PToto2 toto3(new FToto2());
 
-        toto->RTTI_Load(nullptr);
+        transaction.RegisterObject(toto.get());
+        transaction.RegisterObject(toto2.get());
+        
         toto->RTTI_Export(RTTI::FName("toto"));
+        toto3->RTTI_Export(RTTI::FName("toto3"));
 
-        toto2->RTTI_Load(nullptr);
-        toto2->RTTI_Export(RTTI::FName("toto2"));
+        toto2->SetParent1(toto3.get());
+
+        transaction.Load();
 
         if (not RTTI::Cast<FToto>(toto.get()))
             AssertNotReached();
@@ -286,45 +302,46 @@ static void TestRTTI_() {
         const RTTI::FMetaClass* metaClass = toto2->RTTI_Class();
         metaClass->Property(RTTI::FName("Parent1")).CopyFrom(*toto2, MakeAtom(&toto));
 
-        LOG(Debug, L"toto2 = {0}", InplaceAtom(toto2));
-
-        toto->RTTI_Unexport();
-        toto->RTTI_Unload(nullptr);
-
-        toto2->RTTI_Unexport();
-        toto2->RTTI_Unload(nullptr);
-    }
-    {
-        PTiti titi(new FTiti());
-        titi->RTTI_Load(nullptr);
-        titi->RTTI_Export(RTTI::FName("titi"));
-
-        const RTTI::FMetaClass* metaClass = titi->RTTI_Class();
-
-        if (RTTI::Cast<FToto>(titi.get()))
-            AssertNotReached();
 
         {
-            auto prop = metaClass->Property(RTTI::FName("Dict"));
-            auto value = prop.Get(*titi);
-            LOG(Info, L"[RTTI] {0} = {1}", prop.Name(), value);
-        }
-        {
-            auto func = metaClass->Function(RTTI::FName("OutConstReturn"));
-            STACKLOCAL_ATOM(result, func.Result());
-            FString string;
-            func.Invoke(*titi, result, { RTTI::InplaceAtom(42.0f), RTTI::MakeAtom(&string) });
-            LOG(Info, L"[RTTI] {0} : {1} = {2}", func.Name(), string, result);
-        }
-        {
-            auto func = metaClass->Function(RTTI::FName("IdDeprecated"));
-            STACKLOCAL_ATOM(result, func.Result());
-            func.Invoke(*titi, result, { RTTI::InplaceAtom(69.0f) });
-            LOG(Info, L"[RTTI] {0}({1}) = {2}", func.Name(), 69.0f, result);
+            RTTI::FMetaTransaction transaction2(RTTI::FName("test2"));
+
+            PTiti titi(new FTiti());
+
+            titi->RTTI_Export(RTTI::FName("titi"));
+            titi->SetToto(toto3.get());
+
+            transaction2.RegisterObject(titi.get());
+            transaction2.Load();
+
+            const RTTI::FMetaClass* metaClass = titi->RTTI_Class();
+
+            if (RTTI::Cast<FToto>(titi.get()))
+                AssertNotReached();
+
+            {
+                auto prop = metaClass->Property(RTTI::FName("Dict"));
+                auto value = prop.Get(*titi);
+                LOG(RTTI_UnitTest, Debug, L"{0} = {1}", prop.Name(), value);
+            }
+            {
+                auto func = metaClass->Function(RTTI::FName("OutConstReturn"));
+                STACKLOCAL_ATOM(result, func.Result());
+                FString string;
+                func.Invoke(*titi, result, { RTTI::InplaceAtom(42.0f), RTTI::MakeAtom(&string) });
+                LOG(RTTI_UnitTest, Debug, L"{0} : {1} = {2}", func.Name(), string, result);
+            }
+            {
+                auto func = metaClass->Function(RTTI::FName("IdDeprecated"));
+                STACKLOCAL_ATOM(result, func.Result());
+                func.Invoke(*titi, result, { RTTI::InplaceAtom(69.0f) });
+                LOG(RTTI_UnitTest, Debug, L"{0}({1}) = {2}", func.Name(), 69.0f, result);
+            }
+
+            transaction2.Unload();
         }
 
-        titi->RTTI_Unexport();
-        titi->RTTI_Unload(nullptr);
+        transaction.Unload();
     }
 
     RTTI_NAMESPACE(RTTI_UnitTest).Shutdown();

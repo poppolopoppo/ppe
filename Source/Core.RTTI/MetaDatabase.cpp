@@ -29,7 +29,7 @@ FMetaDatabase::~FMetaDatabase() {
 //----------------------------------------------------------------------------
 void FMetaDatabase::RegisterTransaction(FMetaTransaction* metaTransaction) {
     Assert(metaTransaction);
-    Assert(metaTransaction->IsLoaded());
+    Assert(metaTransaction->IsLoading());
 
     const FName& exportName = metaTransaction->Name();
     Assert(not exportName.empty());
@@ -46,7 +46,7 @@ void FMetaDatabase::RegisterTransaction(FMetaTransaction* metaTransaction) {
 //----------------------------------------------------------------------------
 void FMetaDatabase::UnregisterTransaction(FMetaTransaction* metaTransaction) {
     Assert(metaTransaction);
-    Assert(metaTransaction->IsLoaded());
+    Assert(metaTransaction->IsUnloading());
 
     const FName& exportName = metaTransaction->Name();
     Assert(not exportName.empty());
@@ -58,6 +58,12 @@ void FMetaDatabase::UnregisterTransaction(FMetaTransaction* metaTransaction) {
 
     WRITESCOPELOCK(_lockRW);
 
+#ifdef WITH_CORE_ASSERT
+    // Check that all objects from this transaction were unregistered
+    for (const auto& it : _objects)
+        Assert(it.second->RTTI_Outer() != metaTransaction);
+#endif
+
     Remove_AssertExistsAndSameValue(_transactions, exportName, SMetaTransaction(metaTransaction));
 }
 //----------------------------------------------------------------------------
@@ -65,7 +71,11 @@ FMetaTransaction& FMetaDatabase::Transaction(const FName& name) const {
     Assert(not name.empty());
 
     READSCOPELOCK(_lockRW);
-    return (*_transactions[name]);
+
+    FMetaTransaction& transaction = (*_transactions[name]);
+    Assert(transaction.IsLoaded());
+
+    return transaction;
 }
 //----------------------------------------------------------------------------
 FMetaTransaction* FMetaDatabase::TransactionIFP(const FName& name) const {
@@ -74,8 +84,11 @@ FMetaTransaction* FMetaDatabase::TransactionIFP(const FName& name) const {
     READSCOPELOCK(_lockRW);
 
     const auto it = _transactions.find(name);
+    if (_transactions.end() == it)
+        return nullptr;
 
-    return (_transactions.end() == it ? nullptr : it->second);
+    Assert(it->second->IsLoaded());
+    return it->second.get();
 }
 //----------------------------------------------------------------------------
 FMetaTransaction* FMetaDatabase::TransactionIFP(const FStringView& name) const {
@@ -85,57 +98,83 @@ FMetaTransaction* FMetaDatabase::TransactionIFP(const FStringView& name) const {
 
     const hash_t h = FName::HashValue(name);
     const auto it = _transactions.find_like(name, h);
+    if (_transactions.end() == it)
+        return nullptr;
 
-    return (_transactions.end() == it ? nullptr : it->second);
+    Assert(it->second->IsLoaded());
+    return it->second.get();
 }
 //----------------------------------------------------------------------------
 // Objects
 //----------------------------------------------------------------------------
 void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
     Assert(metaObject);
+    Assert(metaObject->RTTI_Outer());
+    Assert(metaObject->RTTI_Outer()->IsLoading());
 
-    const FName& exportName = metaObject->RTTI_Name();
+    FName exportName = metaObject->RTTI_Name();
     Assert(not exportName.empty());
 
-    LOG(Info, L"[RTTI] Register object in DB : <{0}::{1}> '{2}'",
+    LOG(RTTI, Info, L"register object in DB : <{0}::{1}> '{2}/{3}'",
         metaObject->RTTI_Class()->Namespace()->Name(),
         metaObject->RTTI_Class()->Name(),
+        metaObject->RTTI_Outer()->Name(),
         exportName );
 
     Assert(metaObject->RTTI_IsExported());
+    Assert(metaObject->RTTI_IsLoaded());
 
     WRITESCOPELOCK(_lockRW);
 
     Assert(Contains(_namespaces, metaObject->RTTI_Class()->Namespace()));
 
-    Insert_AssertUnique(_objects, exportName, SMetaObject(metaObject));
+    Insert_AssertUnique(_objects, std::move(exportName), SMetaObject(metaObject));
 }
 //----------------------------------------------------------------------------
 void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
     Assert(metaObject);
+    Assert(metaObject->RTTI_Outer());
+    Assert(metaObject->RTTI_Outer()->IsUnloading());
 
     const FName& exportName = metaObject->RTTI_Name();
     Assert(not exportName.empty());
 
-    LOG(Info, L"[RTTI] Unregister object from DB : <{0}::{1}> '{2}'",
+    LOG(RTTI, Info, L"unregister object from DB : <{0}::{1}> '{2}/{3}'",
         metaObject->RTTI_Class()->Namespace()->Name(),
         metaObject->RTTI_Class()->Name(),
+        metaObject->RTTI_Outer()->Name(),
         exportName );
 
     Assert(metaObject->RTTI_IsExported());
+    Assert(metaObject->RTTI_IsLoaded());
 
     WRITESCOPELOCK(_lockRW);
 
     Assert(Contains(_namespaces, metaObject->RTTI_Class()->Namespace()));
 
-    Remove_AssertExistsAndSameValue(_objects, exportName, SMetaObject(metaObject));
+#ifdef WITH_CORE_ASSERT
+    // check that the object referenced with that name matches the one passed to this function
+    const auto it = _objects.find(exportName);
+    Assert(_objects.end() != it);
+    Assert(it->second == metaObject);
+
+    _objects.erase(it);
+
+#else
+    _objects.erase(exportName);
+
+#endif
 }
 //----------------------------------------------------------------------------
 FMetaObject& FMetaDatabase::Object(const FName& name) const {
     Assert(not name.empty());
 
     READSCOPELOCK(_lockRW);
-    return (*_objects[name]);
+
+    FMetaObject& obj = (*_objects.at(name));
+    Assert(obj.RTTI_IsLoaded());
+
+    return obj;
 }
 //----------------------------------------------------------------------------
 FMetaObject* FMetaDatabase::ObjectIFP(const FName& name) const {
@@ -144,8 +183,11 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FName& name) const {
     READSCOPELOCK(_lockRW);
 
     const auto it = _objects.find(name);
+    if (_objects.end() == it)
+        return nullptr;
 
-    return (_objects.end() == it ? nullptr : it->second);
+    Assert(it->second->RTTI_IsLoaded());
+    return it->second.get();
 }
 //----------------------------------------------------------------------------
 FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& name) const {
@@ -155,8 +197,11 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& name) const {
 
     const hash_t h = FName::HashValue(name);
     const auto it = _objects.find_like(name, h);
+    if (_objects.end() == it)
+        return nullptr;
 
-    return (_objects.end() == it ? nullptr : it->second);
+    Assert(it->second->RTTI_IsLoaded());
+    return it->second.get();
 }
 //----------------------------------------------------------------------------
 // Namespaces
@@ -164,7 +209,7 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& name) const {
 void FMetaDatabase::RegisterNamespace(const FMetaNamespace* metaNamespace) {
     Assert(metaNamespace);
 
-    LOG(Info, L"[RTTI] Register namespace in DB : <{0}>", metaNamespace->Name());
+    LOG(RTTI, Info, L"register namespace in DB : <{0}>", metaNamespace->Name());
 
     Assert(metaNamespace->IsStarted());
 

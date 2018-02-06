@@ -195,6 +195,67 @@ u128 Fingerprint128(const FMetaObject& obj) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+class FReferenceCollector_ : FBaseAtomVisitor {
+public:
+    FReferenceCollector_(size_t maxDepth) 
+        : _maxDepth(maxDepth), _depth(0), _references(nullptr)
+    {}
+
+    void Collect(const FMetaObject& root, TReferencedObjects& references) {
+        Assert(0 == _depth);
+        Assert(nullptr == _references);
+
+        _references = &references;
+
+        PMetaObject src(const_cast<FMetaObject*>(&root));
+
+        if (not InplaceAtom(src).Accept(static_cast<FBaseAtomVisitor*>(this)))
+            AssertNotReached();
+
+        Assert(0 == _depth);
+
+        _references = nullptr;
+        RemoveRef_AssertAlive(src);
+    }
+
+private:
+    const size_t _maxDepth;
+    size_t _depth;
+    TReferencedObjects* _references;
+
+    virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override final {
+        if (pobj) {
+            if (not Contains(*_references, pobj.get())) {
+
+                _references->push_back(pobj.get());
+
+                ++_depth;
+
+                if (_depth <= _maxDepth)
+                    FBaseAtomVisitor::Visit(scalar, pobj); // visits recursively
+
+                Assert(_depth);
+                --_depth;
+            }
+        }
+        return true;
+    }
+};
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+void CollectReferencedObjects(const FMetaObject& root, TReferencedObjects& references, size_t maxDepth/* = INDEX_NONE */) {
+    Assert(references.empty());
+    FReferenceCollector_ collector(maxDepth);
+    collector.Collect(root, references);
+    Assert(references.front() == &root);
+    references.erase_DontPreserveOrder(references.begin());
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace Core
 

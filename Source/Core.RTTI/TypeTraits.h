@@ -46,6 +46,7 @@ public:
     virtual size_t SizeInBytes() const = 0;
 
     virtual bool IsDefaultValue(const FAtom& value) const = 0;
+    virtual void ResetToDefaultValue(const FAtom& value) const = 0;
 
     virtual bool Equals(const FAtom& lhs, const FAtom& rhs) const = 0;
     virtual void Copy(const FAtom& src, const FAtom& dst) const = 0;

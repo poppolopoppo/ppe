@@ -2,6 +2,7 @@
 
 #include "Core.RTTI/RTTI.h"
 
+#include "Core/Container/Vector.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
@@ -88,6 +89,14 @@ template <typename T>
 auto CastChecked(const PMetaObject& p) {
     return Cast<T>(p.get());
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+using TReferencedObjects = VECTORINSITU(RTTI, FMetaObject*, 8);
+CORE_RTTI_API void CollectReferencedObjects(
+    const FMetaObject& root, 
+    TReferencedObjects& references, 
+    size_t maxDepth = INDEX_NONE );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
