@@ -80,7 +80,7 @@ void AsyncWork(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority:
 void FIOThreadPool::Create() {
     // IO should be operated in 2 threads max to prevent slow seeks :
     const size_t count = IOWorkerCount_();
-    parent_type::Create("IOThreadPool", CORE_THREADTAG_IO, count, EThreadPriority::BelowNormal);
+    parent_type::Create("IOThreadPool", CORE_THREADTAG_IO, count, EThreadPriority::AboveNormal);
     parent_type::Instance().Start(ThreadAffinities().CutBefore(count));
 }
 //----------------------------------------------------------------------------
@@ -101,7 +101,7 @@ void AsyncIO(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority::N
 //----------------------------------------------------------------------------
 void FLowestPriorityThreadPool::Create() {
     const size_t count = LowestPriorityWorkerCount_();
-    parent_type::Create("LowestPriorityThreadPool", CORE_THREADTAG_LOWEST_PRIORITY, count, EThreadPriority::Lowest);
+    parent_type::Create("LowestPriorityThreadPool", CORE_THREADTAG_LOWEST_PRIORITY, count, EThreadPriority::BelowNormal);
     parent_type::Instance().Start(ThreadAffinities().CutBefore(count));
 }
 //----------------------------------------------------------------------------
