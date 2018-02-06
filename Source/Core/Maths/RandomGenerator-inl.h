@@ -69,6 +69,7 @@ float TRng<_Generator>::NextFloat01() {
     float result = *(const float*)pChar;
     Assert(result >= 1.f);
     Assert(result < 2.f);
+    Assert(std::isfinite(result));
 
     return result - 1.f;
 }
@@ -86,6 +87,7 @@ float TRng<_Generator>::NextFloatM11() {
     float result = *(const float*)pChar;
     Assert(result >= 2.f);
     Assert(result < 4.f);
+    Assert(std::isfinite(result));
 
     return result - 3.f;
 }

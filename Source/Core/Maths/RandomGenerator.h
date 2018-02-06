@@ -4,6 +4,8 @@
 
 #include "Core/Maths/ScalarVector_fwd.h"
 
+#include <atomic>
+
 // Pseudo-Random Number Generator
 // http://xorshift.di.unimi.it/
 
@@ -12,7 +14,7 @@ namespace Random {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FXorShift64Star {
+struct CORE_API FXorShift64Star {
 
     u64 X;
 
@@ -20,7 +22,7 @@ struct FXorShift64Star {
     u64  NextU64();
 };
 //----------------------------------------------------------------------------
-struct FXorShift128Plus {
+struct CORE_API FXorShift128Plus {
 
     u64 States[2];
 
@@ -28,10 +30,18 @@ struct FXorShift128Plus {
     u64  NextU64();
 };
 //----------------------------------------------------------------------------
-struct FXorShift1024Star {
+struct CORE_API FXorShift1024Star {
 
     u64 N;
     u64 States[16];
+
+    void Reset(u64 seed);
+    u64  NextU64();
+};
+//----------------------------------------------------------------------------
+struct CORE_API FAtomicXorShift64Star {
+
+    std::atomic<u64> X;
 
     void Reset(u64 seed);
     u64  NextU64();
@@ -89,8 +99,9 @@ private:
     generator_type _generator;
 };
 //----------------------------------------------------------------------------
-typedef TRng< FXorShift1024Star > StableRng;
-typedef TRng< FXorShift128Plus >  FastRng;
+typedef TRng< FXorShift1024Star >       FStableRng;
+typedef TRng< FXorShift128Plus >        FFastRng;
+typedef TRng< FAtomicXorShift64Star >   FAtomicRng;
 //----------------------------------------------------------------------------
 u64 MakeSeed(u64 salt = 0);
 //----------------------------------------------------------------------------
@@ -104,7 +115,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // using a struct instead of typedef to be able to fwd declare FRandomGenerator
-INSTANTIATE_CLASS_TYPEDEF(FRandomGenerator, ::Core::Random::StableRng);
+INSTANTIATE_CLASS_TYPEDEF(CORE_API, FRandomGenerator, ::Core::Random::FStableRng);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
