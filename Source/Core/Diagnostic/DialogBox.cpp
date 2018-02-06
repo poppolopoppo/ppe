@@ -91,6 +91,8 @@ static void SetClipboard_(HWND hwndDlg, const FWStringView& content)
     if(handle != NULL)
     {
         wchar_t *pData = (wchar_t *) ::GlobalLock((HGLOBAL)handle);
+        AssertRelease(pData);
+
         ::wcsncpy_s(pData, content.size(), content.Pointer(), content.size());
         Assert(L'\0' == pData[content.size()]);
         ::GlobalUnlock((HGLOBAL)handle);
@@ -106,16 +108,37 @@ static void SetClipboard_(HWND hwndDlg, const FWStringView& content)
 static void ExternalEditor_(const FWStringView& filename, size_t line) {
     Assert(not filename.empty());
 
-    char buffer[2048];
+    wchar_t buffer[2048];
     {
-        FFixedSizeTextWriter oss(buffer);
-        Format(oss, "\"{0}\" \"{1}:{2}\"",
-            "C:\\Program Files\\Sublime Text 3\\sublime_text.exe", // TODO: handle other editors ?
-            filename,
-            line);
+        FWFixedSizeTextWriter oss(buffer);
+        Format(oss, L"\"{0}\" \"{1}:{2}\"",
+            L"C:\\Program Files\\Sublime Text 3\\sublime_text.exe", // TODO: handle other editors ?
+            filename, line);
         oss << Eos;
     }
-    ::WinExec(buffer, SW_SHOW);
+
+    ::STARTUPINFO startupInfo;
+    ::PROCESS_INFORMATION processInfo;
+
+    ZeroMemory(&startupInfo, sizeof(startupInfo));
+    ZeroMemory(&processInfo, sizeof(processInfo));
+
+    startupInfo.cb = sizeof(::STARTUPINFO);
+
+    // create a new process for external editor :
+    if (::CreateProcessW(NULL, buffer,
+        0, 0, FALSE, DETACHED_PROCESS, 0, 0,
+        &startupInfo, &processInfo) == 0) {
+        LOG(Dialog, Error, L"failed to open external editor : {0}\n\t{1}",
+            GetLastErrorToWString(::GetLastError()),
+            MakeCStringView(buffer) );
+    }
+    else {
+        // Immediately close handles since we run detached :
+        ::CloseHandle(processInfo.hThread);
+        ::CloseHandle(processInfo.hProcess);
+    }
+    //::WinExec(buffer, SW_SHOW);
 }
 //----------------------------------------------------------------------------
 enum class EAtomClass_ {
