@@ -9,6 +9,7 @@
 #include "IO/StreamProvider.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
+#include "IO/TextWriter.h"
 
 #include <mutex>
 
@@ -19,6 +20,7 @@
 #endif
 
 namespace Core {
+LOG_CATEGORY(CORE_API, Symbols);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -132,7 +134,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4826) // warning C4826: convert unsigned char* to DW
             0);
 PRAGMA_MSVC_WARNING_POP()
 
-        LOG(Info, L"[PDB] {0} for \"{1}\"",
+        LOG(Symbols, Info, L"{0} for \"{1}\"",
             succeed ? L"Loaded" : L"Failed to load",
             module_entry.szExePath);
         UNUSED(succeed);
@@ -160,7 +162,7 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
     HANDLE process = ::GetCurrentProcess();
     BOOL succeed = dbghelp.SymInitializeW()(process, symbol_path, FALSE);
 
-    LOG(Info, L"[PDB] Path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
+    LOG(Symbols, Info, L"path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
 }
 //----------------------------------------------------------------------------
 } //!namespace

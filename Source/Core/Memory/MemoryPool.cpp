@@ -14,6 +14,7 @@
 #define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC (USE_CORE_MEMORY_DEBUGGING) //%__NOCOMMIT%
 
 namespace Core {
+EXTERN_LOG_CATEGORY(CORE_API, MemoryTracking);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -174,8 +175,8 @@ FMemoryPool::FMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkS
         _currentChunksize *= 2;
     AssertRelease(_currentChunksize <= _maxChunkSize);
 
-    LOG(Info,
-        L"[Pool] New pool with block size = {0}, {1} = {2} per chunk",
+    LOG(MemoryTracking, Info,
+        L"new memory pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
         Fmt::FSizeInBytes{ _currentChunksize },
         BlockCountPerChunk_(_currentChunksize) );
@@ -188,8 +189,8 @@ FMemoryPool::~FMemoryPool() {
     Assert(0 == _totalSize);
     Assert(0 == _chunkCount);
 
-    LOG(Info,
-        L"[Pool] Delete pool with block size = {0}, {1} = {2} per chunk",
+    LOG(MemoryTracking, Info,
+        L"delete memory pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
         Fmt::FSizeInBytes{ _currentChunksize },
         BlockCountPerChunk_(_currentChunksize) );
@@ -200,8 +201,8 @@ void FMemoryPool::GrowChunkSizeIFP_() {
     if (nextChunkSize <= _maxChunkSize) {
         _currentChunksize = checked_cast<u32>(nextChunkSize);
 
-        LOG(Info,
-            L"[Pool] Grow pool with block size = {0}, {3} used pages, {1} = {2} per chunk ({4}/{5})",
+        LOG(MemoryTracking, Info,
+            L"grow memory pool with block size = {0}, {3} used pages, {1} = {2} per chunk ({4}/{5})",
             _blockSize,
             Fmt::FSizeInBytes{ _currentChunksize },
             BlockCountPerChunk_(_currentChunksize),
@@ -373,8 +374,8 @@ FMemoryPoolChunk *FMemoryPool::ReleaseChunk_() {
         _chunkCount--;
         _totalSize = checked_cast<u32>(_totalSize - release->ChunkSize());
 
-        LOG(Info,
-            L"[Pool] Release chunk with block size = {0}, page size = {4} ({5} blocs), {3} remaining pages, {1} = {2} per chunk ({6:f2}%)",
+        LOG(MemoryTracking, Info,
+            L"release memory chunk with block size = {0}, page size = {4} ({5} blocs), {3} remaining pages, {1} = {2} per chunk ({6:f2}%)",
             _blockSize,
             Fmt::FSizeInBytes{ _currentChunksize },
             BlockCountPerChunk_(_currentChunksize),
@@ -559,27 +560,27 @@ void FMemoryPoolThreadLocal::Clear_UnusedMemory() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void* FMemoryPoolThreadSafe::Allocate(FMemoryTracking* trackingData/* = nullptr */) {
-    const std::unique_lock<std::mutex> scopeLock(_barrier);
+    const Meta::FLockGuard scopeLock(_barrier);
     return _pool.Allocate(trackingData);
 }
 //----------------------------------------------------------------------------
 void FMemoryPoolThreadSafe::Deallocate(void *ptr, FMemoryTracking* trackingData/* = nullptr */) {
-    const std::unique_lock<std::mutex> scopeLock(_barrier);
+    const Meta::FLockGuard scopeLock(_barrier);
     _pool.Deallocate(ptr, trackingData);
 }
 //----------------------------------------------------------------------------
 void FMemoryPoolThreadSafe::Clear_AssertCompletelyFree() {
-    const std::unique_lock<std::mutex> scopeLock(_barrier);
+    const Meta::FLockGuard scopeLock(_barrier);
     _pool.Clear_AssertCompletelyFree();
 }
 //----------------------------------------------------------------------------
 void FMemoryPoolThreadSafe::Clear_IgnoreLeaks() {
-    const std::unique_lock<std::mutex> scopeLock(_barrier);
+    const Meta::FLockGuard scopeLock(_barrier);
     _pool.Clear_IgnoreLeaks();
 }
 //----------------------------------------------------------------------------
 void FMemoryPoolThreadSafe::Clear_UnusedMemory() {
-    const std::unique_lock<std::mutex> scopeLock(_barrier);
+    const Meta::FLockGuard scopeLock(_barrier);
     _pool.Clear_UnusedMemory();
 }
 //----------------------------------------------------------------------------

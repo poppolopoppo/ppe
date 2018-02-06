@@ -90,7 +90,13 @@ public:
     {}
 
     size_t size() const { return _size; }
-    TMemoryView<u8> Written() const { return _rawData.CutBefore(_size); }
+    
+    TMemoryView<const u8> Written() const { return _rawData.CutBefore(_size); }
+    TMemoryView<const u8> WrittenSince(std::streamoff off) const {
+        const size_t o = checked_cast<size_t>(off);
+        Assert(o <= _size);
+        return _rawData.SubRange(o, _size - o);
+    }
 
     bool WriteAlignmentPadding(size_t boundary, u8 padvalue = 0);
     bool WriteAligned(const void* storage, std::streamsize sizeInBytes, size_t boundary);

@@ -7,6 +7,7 @@
 
 namespace Core {
 namespace Application {
+EXTERN_LOG_CATEGORY(CORE_APPLICATION_API, Application);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -16,13 +17,13 @@ FApplicationBase::FApplicationBase(const wchar_t *appname)
 FApplicationBase::~FApplicationBase() {}
 //----------------------------------------------------------------------------
 void FApplicationBase::Start() {
-    LOG(Info, L"[Application] Start <{0}>", _appname);
+    LOG(Application, Info, L"start application <{0}>", _appname);
     ReportAllTrackingData();
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::Shutdown() {
     ReportAllTrackingData();
-    LOG(Info, L"[Application] Shutdown <{0}>", _appname);
+    LOG(Application, Info, L"shutdown application <{0}>", _appname);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

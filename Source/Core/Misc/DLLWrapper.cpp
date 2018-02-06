@@ -73,6 +73,7 @@ struct FDLLWrapperFilename_ {
 #endif
 
 namespace Core {
+LOG_CATEGORY(CORE_API, DLL);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -119,7 +120,7 @@ bool FDLLWrapper::Attach(const FStringView& path) {
     if (void* const handle = DLLWrapper_Attach_(path)) {
         _handle.Reset(handle, true, true);
 
-        LOG(Debug, L"[DLL] Attached to module '{0}'", FDLLWrapperFilename_(*this));
+        LOG(DLL, Debug, L"attached to module '{0}'", FDLLWrapperFilename_(*this));
 
         return true;
     }
@@ -134,7 +135,7 @@ bool FDLLWrapper::Load(const FStringView& path) {
     if (void* const handle = DLLWrapper_Load_(path)) {
         _handle.Reset(handle, true, false);
 
-        LOG(Debug, L"[DLL] Loaded module '{0}'", FDLLWrapperFilename_(*this));
+        LOG(DLL, Debug, L"loaded module '{0}'", FDLLWrapperFilename_(*this));
 
         return true;
     }
@@ -147,7 +148,7 @@ void FDLLWrapper::Unload() {
     AssertRelease(IsValid());
     AssertRelease(not IsSharedResource());
 
-    LOG(Debug, L"[DLL] Unloading module '{0}'", FDLLWrapperFilename_(*this));
+    LOG(DLL, Debug, L"unloading module '{0}'", FDLLWrapperFilename_(*this));
 
     DLLWrapper_Unload_(_handle.Get());
 

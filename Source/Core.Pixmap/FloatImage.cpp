@@ -26,6 +26,7 @@
 
 namespace Core {
 namespace Pixmap {
+EXTERN_LOG_CATEGORY(CORE_PIXMAP_API, Pixmap);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -160,7 +161,7 @@ bool Resize(FFloatImage* dst, const FFloatImage* src, size_t width, size_t heigh
     Assert(width > 0);
     Assert(height > 0);
 
-    LOG(Info, L"[Pixmap] Resizing a FFloatImage from {0}x{1} to {2}x{3}",
+    LOG(Pixmap, Info, L"resizing a FFloatImage from {0}x{1} to {2}x{3}",
         src->Width(), src->Height(),
         width, height );
 

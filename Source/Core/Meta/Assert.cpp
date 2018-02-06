@@ -17,10 +17,11 @@
 #include <atomic>
 
 namespace Core {
+LOG_CATEGORY(CORE_API, Assertion);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static Dialog::EResult AssertAbortRetryIgnore_(const FWStringView& title, const char *msg, const wchar_t *file, unsigned line) {
+static Dialog::EResult AssertAbortRetryIgnore_(const FWStringView& title, const wchar_t* msg, const wchar_t *file, unsigned line) {
     FWStringBuilder oss;
 
     oss << title << Crlf
@@ -56,21 +57,21 @@ FAssertException::~FAssertException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
+NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned line) {
     static THREAD_LOCAL bool GIsInAssertion = false;
     static THREAD_LOCAL bool GIgnoreAssertsInThisThread = false;
     static std::atomic<bool> GIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
     if (GIgnoreAllAsserts || GIgnoreAssertsInThisThread)
         return;
 
-    LOG(Assertion, L"error: '{0}' failed !\n\t{1}({2})", msg, file, line);
-
-    FLUSH_LOG(); // flush log before continuing to get eventual log messages
-
     if (GIsInAssertion)
         CORE_THROW_IT(FAssertException("Assert reentrancy !", WIDESTRING(__FILE__), __LINE__));
 
     GIsInAssertion = true;
+
+    LOG(Assertion, Error, L"debug assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
+
+    FLUSH_LOG(); // flush log before continuing to get eventual log messages
 
     bool failure = false;
 
@@ -87,7 +88,7 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
 #endif
     }
     else {
-        switch (AssertAbortRetryIgnore_(MakeStringView(L"Assert debug failed !"), msg, file, line)) {
+        switch (AssertAbortRetryIgnore_(L"Assert debug failed !", msg, file, line)) {
         case Dialog::EResult::Abort:
             failure = true;
             break;
@@ -106,7 +107,7 @@ void AssertionFailed(const char *msg, const wchar_t *file, unsigned line) {
     GIsInAssertion = false;
 
     if (failure)
-        CORE_THROW_IT(FAssertException(msg, file, line));
+        CORE_THROW_IT(FAssertException("Assert debug failed !", file, line));
 }
 //----------------------------------------------------------------------------
 void SetAssertionHandler(AssertionHandler handler) {
@@ -138,21 +139,21 @@ FAssertReleaseException::~FAssertReleaseException() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line) {
+NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, unsigned line) {
     static THREAD_LOCAL bool GIsInAssertion = false;
     static THREAD_LOCAL bool GIgnoreAssertsInThisThread = false;
     static std::atomic<bool> GIgnoreAllAsserts = ATOMIC_VAR_INIT(false);
     if (GIgnoreAllAsserts || GIgnoreAssertsInThisThread)
         return;
 
-    LOG(Assertion, L"error: '{0}' failed !\n\t{1}({2})", msg, file, line);
-
-    FLUSH_LOG(); // flush log before continuing to get eventual log messages
-
     if (GIsInAssertion)
         CORE_THROW_IT(FAssertReleaseException("Assert release reentrancy !", WIDESTRING(__FILE__), __LINE__));
 
     GIsInAssertion = true;
+
+    LOG(Assertion, Error, L"release assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
+
+    FLUSH_LOG(); // flush log before continuing to get eventual log messages
 
     bool failure = true; // AssertRelease() fails by default
 
@@ -169,7 +170,7 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
 #endif
     }
     else {
-        switch (AssertAbortRetryIgnore_(MakeStringView(L"Assert release failed !"), msg, file, line)) {
+        switch (AssertAbortRetryIgnore_(L"Assert release failed !", msg, file, line)) {
         case Dialog::EResult::Abort:
             failure = true;
             break;
@@ -188,7 +189,7 @@ void AssertionReleaseFailed(const char *msg, const wchar_t *file, unsigned line)
     GIsInAssertion = false;
 
     if (failure)
-        CORE_THROW_IT(FAssertReleaseException(msg, file, line));
+        CORE_THROW_IT(FAssertReleaseException("Assert release failed !", file, line));
 }
 //----------------------------------------------------------------------------
 void SetAssertionReleaseHandler(AssertionReleaseHandler handler) {

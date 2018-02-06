@@ -16,6 +16,7 @@
 
 namespace Core {
 namespace Network {
+EXTERN_LOG_CATEGORY(CORE_NETWORK_API, Network);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -56,7 +57,7 @@ static EHttpStatus SafeHttpClient_(const FUri& uri, const _Method& method) {
     }
     CORE_CATCH(FHttpException e)
     CORE_CATCH_BLOCK({
-        LOG(Error, L"[HTTP] {0}: {1}, {2}",  uri.Str(), e.Status(), MakeStringView(e.What(), Meta::FForceInit{}));
+        LOG(Network, Error, L"HTTP {0}: {1}, {2}",  uri.Str(), e.Status(), MakeCStringView(e.What()));
         return e.Status();
     })
     return EHttpStatus::OK;

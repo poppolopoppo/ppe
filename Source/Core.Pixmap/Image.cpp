@@ -48,6 +48,7 @@ PRAGMA_MSVC_WARNING_POP()
 
 namespace Core {
 namespace Pixmap {
+EXTERN_LOG_CATEGORY(CORE_PIXMAP_API, Pixmap);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -504,7 +505,7 @@ bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const TMemoryView<c
     dst->_width = checked_cast<size_t>(width);
     dst->_height = checked_cast<size_t>(height);
 
-    LOG(Info, L"[Pixmap] Loaded a {0}_{1}_{2}:{3}x{4} image",
+    LOG(Pixmap, Info, L"loaded a {0}_{1}_{2}:{3}x{4} image",
         dst->Mask(), dst->Depth(), dst->Space(), dst->Width(), dst->Height() );
 
     const size_t decodedSizeInBytes = (dst->_width*dst->_height*dst->PixelSizeInBytes());
@@ -531,7 +532,7 @@ bool Save(const FImage* src, const FFilename& filename) {
     if (false == Save(src, filename, &writer))
         return false;
 
-    if (false == VFS_WriteAll(filename, writer.MakeView(), EAccessPolicy::Truncate_Binary))
+    if (false == VFS_WriteAll(filename, writer.MakeView(), EAccessPolicy::Create_Binary))
         return false;
 
     return true;
@@ -542,7 +543,7 @@ bool Save(const FImage* src, const FFilename& filename, IStreamWriter* writer) {
     Assert(writer);
     Assert(filename.HasExtname());
 
-    LOG(Info, L"[Pixmap] Saving a {0}_{1}_{2}:{3}x{4} image to '{5}'",
+    LOG(Pixmap, Info, L"saving a {0}_{1}_{2}:{3}x{4} image to '{5}'",
         src->Mask(), src->Depth(), src->Space(), src->Width(), src->Height(),
         filename );
 

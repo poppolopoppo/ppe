@@ -24,10 +24,34 @@
 
 namespace Core {
 namespace RTTI {
+EXTERN_LOG_CATEGORY(CORE_RTTI_API, RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+template <typename _Char>
+struct TPPFormat_;
+template <>
+struct TPPFormat_<char> {
+    using FIndent = Fmt::FIndent;
+    static constexpr const char Export[] = "export";
+    static constexpr const char Is[] = "is";
+    static constexpr const char Nil[] = "nil";
+    static constexpr const char Sep[] = ", ";
+    static constexpr const char True[] = "true";
+    static constexpr const char False[] = "false";
+};
+template <>
+struct TPPFormat_<wchar_t> {
+    using FIndent = Fmt::FWIndent;
+    static constexpr const wchar_t Export[] = L"export";
+    static constexpr const wchar_t Is[] = L"is";
+    static constexpr const wchar_t Nil[] = L"nil";
+    static constexpr const wchar_t Sep[] = L", ";
+    static constexpr const wchar_t True[] = L"true";
+    static constexpr const wchar_t False[] = L"false";
+};
 //----------------------------------------------------------------------------
 template <typename _Char>
 class TPrettyPrinter_ : public IAtomVisitor {
@@ -40,17 +64,17 @@ public:
         const FAtom first = pair->First(atom);
         const FAtom second = pair->Second(atom);
 
-        _oss << '(';
+        _oss << Fmt::LParenthese;
         first.Accept(this);
-        _oss << ',' << ' ';
+        _oss << Fmt::Comma << Fmt::Space;
         second.Accept(this);
-        _oss << ')';
+        _oss << Fmt::RParenthese;
 
         return true;
     }
 
     virtual bool Visit(const IListTraits* list, const FAtom& atom) override final {
-        _oss << '[';
+        _oss << Fmt::LBracket;
 
         const bool empty = (list->Count(atom) == 0);
 
@@ -62,7 +86,7 @@ public:
         list->ForEach(atom, [this](const FAtom& item) {
             _oss << _indent;
             item.Accept(this);
-            _oss << ',' << Eol;
+            _oss << Fmt::Comma << Eol;
 
             return true;
         });
@@ -72,13 +96,13 @@ public:
         if (not empty)
             _oss << _indent;
 
-        _oss << ']';
+        _oss << Fmt::RBracket;
 
         return true;
     }
 
     virtual bool Visit(const IDicoTraits* dico, const FAtom& atom) override final {
-        _oss << '{';
+        _oss << Fmt::LBrace;
 
         const bool empty = (dico->Count(atom) == 0);
 
@@ -88,11 +112,11 @@ public:
         _indent.Inc();
 
         dico->ForEach(atom, [this](const FAtom& key, const FAtom& value) {
-            _oss << _indent << '(';
+            _oss << _indent << Fmt::LParenthese;
             key.Accept(this);
-            _oss << ',' << ' ';
+            _oss << Fmt::Comma << Fmt::Space;
             value.Accept(this);
-            _oss << ')' << ',' << Eol;
+            _oss << Fmt::RParenthese << Fmt::Comma << Eol;
 
             return true;
         });
@@ -102,14 +126,14 @@ public:
         if (not empty)
             _oss << _indent;
 
-        _oss << '}';
+        _oss << Fmt::RBrace;
 
         return true;
     }
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
     virtual bool Visit(const IScalarTraits* scalar, T& value) override final { \
-        _oss << scalar->TypeInfos().Name() << ':'; \
+        _oss << scalar->TypeInfos().Name() << Fmt::Colon; \
         Print_(value); \
         return true; \
     }
@@ -117,6 +141,8 @@ public:
 #undef DECL_ATOM_VIRTUAL_VISIT
 
 private:
+    using PP = TPPFormat_<_Char>;
+
     void Print_(const FAny& any) {
         if (any)
             any.InnerAtom().Accept(this);
@@ -129,9 +155,10 @@ private:
             Assert(metaClass);
 
             if (obj.RTTI_IsExported())
-                _oss << "export " << obj.RTTI_Name() << " is ";
+                _oss << PP::Export << Fmt::Space 
+                     << obj.RTTI_Name() << Fmt::Space << PP::Is << Fmt::Space;
 
-            _oss << metaClass->Name() << ' ' << '{';
+            _oss << metaClass->Name() << Fmt::Space << Fmt::LBrace;
 
             const bool empty = (metaClass->NumProperties() == 0);
 
@@ -141,7 +168,7 @@ private:
             _indent.Inc();
 
             for (const FMetaProperty* prop : metaClass->AllProperties()) {
-                _oss << _indent << prop->Name() << ' ' << '=' << ' ';
+                _oss << _indent << prop->Name() << Fmt::Space << Fmt::Assignment << Fmt::Space;
                 prop->Get(obj).Accept(this);
                 _oss << Eol;
             }
@@ -151,47 +178,47 @@ private:
             if (not empty)
                 _oss << _indent;
 
-            _oss << '}';
+            _oss << Fmt::RBrace;
         }
         else {
-            _oss << "nil";
+            _oss << PP::Nil;
         }
     }
 
-    void Print_(bool b) { _oss << (b ? "true" : "false"); }
+    void Print_(bool b) { _oss << (b ? PP::True : PP::False); }
 
     void Print_(i8 ch) { _oss << int(ch); }
     void Print_(u8 uch) { _oss << unsigned(uch); }
 
     void Print_(const FName& name) { _oss << name; }
-    void Print_(const FString& str) { _oss << '"' << str << '"'; }
-    void Print_(const FWString& wstr) { _oss << '"' << wstr << '"'; }
+    void Print_(const FString& str) { _oss << Fmt::DoubleQuote << str << Fmt::DoubleQuote; }
+    void Print_(const FWString& wstr) { _oss << Fmt::DoubleQuote << wstr << Fmt::DoubleQuote; }
 
     void Print_(const FDirpath& dirpath) { Print_(dirpath.ToString()); }
     void Print_(const FFilename& filename) { Print_(filename.ToString()); }
 
     template <typename T, size_t _Dim>
     void Print_(const TScalarVector<T, _Dim>& vec) {
-        _oss << '[';
-        auto sep = Fmt::NotFirstTime(", ");
+        _oss << Fmt::LBracket;
+        auto sep = Fmt::NotFirstTime(PP::Sep);
         for (T f : vec._data) {
             _oss << sep;
             Print_(f);
         }
-        _oss << ']';
+        _oss << Fmt::RBracket;
     }
 
     template <typename T, size_t _W, size_t _H>
     void Print_(const TScalarMatrix<T, _W, _H>& mat) {
-        _oss << '[' << Eol;
+        _oss << Fmt::LBracket << Eol;
         _indent.Inc();
         forrange(i, 0, _W) {
             _oss << _indent;
             Print_(mat.Column(i));
-            _oss << ',' << Eol;
+            _oss << Fmt::Comma << Eol;
         }
         _indent.Dec();
-        _oss << _indent << ']';
+        _oss << _indent << Fmt::RBracket;
     }
 
     template <typename T>
@@ -199,103 +226,8 @@ private:
         _oss << value;
     }
 
-    Fmt::FIndent _indent;
+    typename PP::FIndent _indent;
     TBasicTextWriter<_Char>& _oss;
-};
-//----------------------------------------------------------------------------
-class FCircularReferenceVisitor_ : FBaseAtomVisitor {
-public:
-    FCircularReferenceVisitor_() : _succeed(true) {}
-
-    bool CheckReferences(const FMetaObject& root) {
-        _visiteds.clear();
-        _chainRef.clear();
-        _succeed = true;
-
-        _visiteds.emplace(&root, _chainRef.size());
-        _chainRef.emplace_back(&root, nullptr);
-
-        PMetaObject src(const_cast<FMetaObject*>(&root));
-
-        if (not InplaceAtom(src).Accept(static_cast<FBaseAtomVisitor*>(this)))
-            AssertNotReached();
-
-        Assert(_visiteds.size() == 1);
-        Assert(_chainRef.size() == 1);
-
-        RemoveRef_KeepAlive(src);
-
-        return _succeed;
-    }
-
-private:
-    struct FPropertyRef_ {
-        SCMetaObject Object;
-        const FMetaProperty* Property;
-    };
-
-    virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override {
-        if (pobj) {
-            const auto r = _visiteds.insert(MakePair(pobj.get(), _chainRef.size()));
-            if (not r.second) {
-                Assert(pobj == r.first->first);
-                Assert(r.first->second < _chainRef.size());
-
-                // Circular dependency found !
-                // Printing chain reference :
-                DumpChainReference_(pobj, r.first->second);
-            }
-
-            FMetaObject& obj = (*pobj);
-            const FMetaClass* metaClass = obj.RTTI_Class();
-            Assert(metaClass);
-
-            for (const FMetaProperty* prop : metaClass->AllProperties()) {
-                _chainRef.emplace_back(&obj, prop);
-
-                if (not prop->Get(obj).Accept(static_cast<FBaseAtomVisitor*>(this)))
-                    return false;
-
-                Assert(r.first->second + 1 == _chainRef.size());
-                _chainRef.pop_back();
-            }
-        }
-        return true;
-    }
-
-    void DumpChainReference_(const PMetaObject& pobj, size_t chainIndex) const {
-#ifdef USE_DEBUG_LOGGER
-        FWStringBuilder oss;
-        oss << L"[RTTI] Found circular reference !" << Eol;
-
-        Fmt::FIndent indent = Fmt::FIndent::TwoSpaces();
-        forrange(i, chainIndex, _chainRef.size()) {
-            const FPropertyRef_& ref = _chainRef[i];
-            const FMetaClass* metaClass = ref.Object->RTTI_Class();
-
-            oss << indent
-                << L" -> " << (void*)ref.Object.get()
-                << L" : " << metaClass->Name()
-                << " (" << metaClass->Flags()
-                << L") = " << ref.Property->Name()
-                << Eol;
-
-            indent.Inc();
-        }
-
-        oss << indent << L" => ";
-        PrettyPrint(oss, InplaceAtom(pobj));
-
-        LOG(Error, oss.ToString());
-#else
-        UNUSED(obj);
-        UNUSED(chainIndex);
-#endif
-    }
-
-    bool _succeed;
-    HASHMAP_THREAD_LOCAL(RTTI, const FMetaObject*, size_t) _visiteds;
-    VECTORINSITU_THREAD_LOCAL(RTTI, FPropertyRef_, 32) _chainRef;
 };
 //----------------------------------------------------------------------------
 } //!namespace
@@ -340,37 +272,28 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* scalar, PM
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool HasCircularDependencies(const FMetaObject& object) {
-    FCircularReferenceVisitor_ circularRef;
-    return circularRef.CheckReferences(object);
-}
-//----------------------------------------------------------------------------
-bool HasCircularDependencies(const TMemoryView<const PMetaObject>& objects) {
-    bool succeed = true;
-    FCircularReferenceVisitor_ circularRef;
-    for (const PMetaObject& object : objects)
-        succeed &= circularRef.CheckReferences(*object);
-    return succeed;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FString PrettyString(const FAny& any) {
+#ifndef FINAL_RELEASE
+PRAGMA_DISABLE_OPTIMIZATION
+NO_INLINE FString PrettyString(const FAny& any) {
     return PrettyString(any.InnerAtom());
 }
 //----------------------------------------------------------------------------
-FString PrettyString(const FAtom& atom) {
+NO_INLINE FString PrettyString(const FAtom& atom) {
     FStringBuilder oss;
     PrettyPrint(oss, atom);
     return oss.ToString();
 }
 //----------------------------------------------------------------------------
-FString PrettyString(const FMetaObject* object) {
+NO_INLINE FString PrettyString(const FMetaObject* object) {
     PMetaObject p(const_cast<FMetaObject*>(object));
     FString pp = PrettyString(MakeAtom(&p));
     RemoveRef_KeepAlive(p);
     return pp;
 }
+PRAGMA_ENABLE_OPTIMIZATION
+#endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom) {
     TPrettyPrinter_<char> printer(oss);

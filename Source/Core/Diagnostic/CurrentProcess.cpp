@@ -6,6 +6,7 @@
 #include "Misc/TargetPlatform.h"
 
 namespace Core {
+LOG_CATEGORY(CORE_API, Process);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -40,7 +41,7 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
         volatile bool bTurnThisOffWhenDebuggerIsAttached = (!FPlatformMisc::IsDebuggerAttached());
         volatile size_t loopCount = 0;
         while (bTurnThisOffWhenDebuggerIsAttached) {
-            LOG(Warning, L"[Process] Waiting for debugger to be attached");
+            LOG(Process, Warning, L"waiting for debugger to be attached");
             std::this_thread::sleep_for(std::chrono::milliseconds(500)); // wait for debugger to be attached
             loopCount++;
         }
@@ -48,18 +49,19 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
 #endif
 
 #ifdef USE_DEBUG_LOGGER
-    LOG(Info, L"[Process] Started '{0}' with {1} parameters.", _fileName, _args.size());
-    LOG(Info, L"[Process] Directory = '{0}'.", _directory);
-    LOG(Info, L"[Process] Build configuration = " WIDESTRING(STRINGIZE(BUILDCONFIG)));
-    LOG(Info, L"[Process] Compiled at = " WIDESTRING(__DATE__) L"  " WIDESTRING(__TIME__));
-    LOG(Info, L"[Process] Application Handle = '{0}', nShowCmd = '{1}'.", _applicationHandle, _nShowCmd);
+    LOG(Process, Info, L"started '{0}' with {1} parameters.", _fileName, _args.size());
+    LOG(Process, Info, L"directory = '{0}'.", _directory);
+    LOG(Process, Info, L"build configuration = " WIDESTRING(STRINGIZE(BUILDCONFIG)));
+    LOG(Process, Info, L"compiled at = " WIDESTRING(__DATE__) L"  " WIDESTRING(__TIME__));
+    LOG(Process, Info, L"started with debugger = '{0:a}'.", _startedWithDebugger);
+    LOG(Process, Info, L"application handle = '{0}', nShowCmd = '{1}'.", _applicationHandle, _nShowCmd);
     forrange(i, 0, _args.size())
-        LOG(Info, L"- [{0:2}] '{1}'", i, _args[i]);
+        LOG(Process, Info, L"- [{0:2}] '{1}'", i, _args[i]);
 #endif
 }
 //----------------------------------------------------------------------------
 FCurrentProcess::~FCurrentProcess() {
-    LOG(Info, L"[Process] Exit with code = {0}.", _exitCode.load());
+    LOG(Process, Info, L"exit with code = {0}.", _exitCode.load());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

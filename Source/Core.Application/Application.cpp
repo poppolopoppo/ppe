@@ -19,6 +19,7 @@
 #ifdef USE_DEBUG_LOGGER
 #   include "Core/IO/FormatHelpers.h"
 #   include "Core/IO/StreamProvider.h"
+#   include "Core/IO/StringView.h"
 #   include "Core/IO/TextWriter.h"
 #endif
 
@@ -29,27 +30,34 @@ PRAGMA_INITSEG_LIB
 namespace Core {
 namespace Application {
 POOL_TAG_DEF(Application);
+LOG_CATEGORY(CORE_APPLICATION_API, Application);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #ifdef USE_DEBUG_LOGGER
 static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
-    STACKLOCAL_WTEXTWRITER(oss, 1024);
-    oss << L"Memory statistics :" << Eol
-        << L" - Total free size          = " << Fmt::FSizeInBytes{ memoryStats.TotalFreeSize } << Eol
-        << L" - Largest free block       = " << Fmt::FSizeInBytes{ memoryStats.LargestFreeBlockSize } << Eol
-        << L" - Total used size          = " << Fmt::FSizeInBytes{ memoryStats.TotalUsedSize } << Eol
-        << L" - Largest used block       = " << Fmt::FSizeInBytes{ memoryStats.LargestUsedBlockSize } << Eol
-        << L" - Total overhead size      = " << Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize } << Eol
-        << L" - Total committed size     = " << Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize + memoryStats.TotalFreeSize + memoryStats.TotalUsedSize } << Eol
-        << L" - External fragmentation   = " << (memoryStats.ExternalFragmentation() * 100) << L'%' << Eol;
-    LOG(Info, oss.Written());
+    LOG(Application, Info,
+        L"Memory statistics :\n"
+        L" - Total free size          = {0}\n"
+        L" - Largest free block       = {1}\n"
+        L" - Total used size          = {2}\n"
+        L" - Largest used block       = {3}\n"
+        L" - Total overhead size      = {4}\n"
+        L" - Total committed size     = {5}\n"
+        L" - External fragmentation   = {6}%",
+        Fmt::FSizeInBytes{ memoryStats.TotalFreeSize },
+        Fmt::FSizeInBytes{ memoryStats.LargestFreeBlockSize },
+        Fmt::FSizeInBytes{ memoryStats.TotalUsedSize },
+        Fmt::FSizeInBytes{ memoryStats.LargestUsedBlockSize },
+        Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize },
+        Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize + memoryStats.TotalFreeSize + memoryStats.TotalUsedSize },
+        (memoryStats.ExternalFragmentation() * 100));
 }
 #endif
 //----------------------------------------------------------------------------
-#ifdef PLATFORM_WINDOWS
+#if PLATFORM_WINDOWS
 static void ConfigureCRTHeapForDebugging_() {
-#   ifdef _DEBUG
+#   if defined(USE_CORE_MEMORY_DEBUGGING) || defined(_DEBUG)
     constexpr int debugHeapEnabled  = _CRTDBG_ALLOC_MEM_DF;
     constexpr int debugCheckMemory  = _CRTDBG_CHECK_EVERY_1024_DF;
     constexpr int debugNecrophilia  = _CRTDBG_DELAY_FREE_MEM_DF;
@@ -66,13 +74,17 @@ static void ConfigureCRTHeapForDebugging_() {
         //| debugNecrophilia //%_NOCOMMIT%
         | debugLeaks;
 
+    UNUSED(debugHeapFlag);
+
     _CrtSetDbgFlag(debugHeapFlag);
 
     // Report errors with a dialog box :
     _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
 
-    //_CrtSetBreakAlloc(1869); // for leak debugging purpose // %_NOCOMMIT%
+    //_CrtSetBreakAlloc(447); // for leak debugging purpose // %_NOCOMMIT%
+    //_CrtSetBreakAlloc(1246); // for leak debugging purpose // %_NOCOMMIT%
+    
 #   endif
 }
 #endif

@@ -12,6 +12,7 @@
 
 #ifdef USE_MEMORY_DOMAINS
 #include "Core/IO/Format.h"
+#include "Core/IO/TextWriter.h"
 #endif
 
 #include <type_traits>
@@ -63,7 +64,7 @@ struct TPoolTracking {
 
     TPoolTracking(const char* tagname, FMemoryTracking* parent = nullptr)
     :   TrackingData(&Name[0], parent) {
-        Format(Name, "{0}<{1},{2}>", tagname, _ThreadLocal, _Size);
+        Format(Name, "{0}<{1:A},{2}>", MakeCStringView(tagname), _ThreadLocal, _Size);
         RegisterAdditionalTrackingData(&TrackingData);
     }
 

@@ -158,7 +158,10 @@ void ReportTrackingDatas(   FWTextWriter& oss,
     if (datas.empty())
         return;
 
-    oss << L"Reporting tracking data :" << Eol;
+    const FTextFormat orgFormat = oss.ResetFormat();
+    const wchar_t orgFillChar = oss.SetFillChar(L' ');
+
+    oss << L"reporting tracking data :" << Eol;
 
     STACKLOCAL_POD_ARRAY(const FMemoryTracking *, sortedDatas, datas.size());
     memcpy(sortedDatas.Pointer(), datas.Pointer(), datas.SizeInBytes());
@@ -177,17 +180,17 @@ void ReportTrackingDatas(   FWTextWriter& oss,
     });
 
     const size_t width = 128;
-    const wchar_t fmt[] = L" {0:-37}|{1:8} {2:10} |{3:8} {4:11} |{5:8} {6:11} |{7:11} {8:11}\n";
+    const wchar_t fmt[] = L" {0:-33}| {1:8} {2:10} | {3:8} {4:11} | {5:9} {6:11} | {7:10} {8:11}\n";
 
     oss << Fmt::Repeat(L'-', width) << Eol
-        << "    " << header << L" (" << datas.size() << L" elements)" << Eol
+        << L"    " << header << L" (" << datas.size() << L" elements)" << Eol
         << Fmt::Repeat(L'-', width) << Eol;
 
-    Format(oss, fmt,    L"Tracking Data FName",
-                        L"Block", "Max",
-                        L"Alloc", "Max",
-                        L"Stride", "Max",
-                        L"Total", "Max" );
+    Format(oss, fmt,    L"Tracking domain",
+                        L"Block", L"Max",
+                        L"Alloc", L"Max",
+                        L"Stride", L"Max",
+                        L"Total", L"Max" );
 
     oss << Fmt::Repeat(L'-', width) << Eol;
 
@@ -209,6 +212,9 @@ void ReportTrackingDatas(   FWTextWriter& oss,
     }
 
     oss << Fmt::Repeat(L'-', width) << Eol;
+
+    oss.SetFormat(orgFormat);
+    oss.SetFillChar(orgFillChar);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

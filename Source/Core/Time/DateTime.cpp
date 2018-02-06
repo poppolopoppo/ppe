@@ -68,8 +68,7 @@ FDateTime FDateTime::FromTimeUTC(const FTimestamp& t) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const FDateTime& d) {
-    const char fillch = oss.FillChar();
-    return oss
+    return (*oss.FormatScope())
         << FTextFormat::PadLeft(4, '0') << d.Year
         << FTextFormat::PadLeft(1, '0') << '/'
         << FTextFormat::PadLeft(2, '0') << d.Month
@@ -80,13 +79,11 @@ FTextWriter& operator <<(FTextWriter& oss, const FDateTime& d) {
         << FTextFormat::PadLeft(1, '0') << ':'
         << FTextFormat::PadLeft(2, '0') << d.Minutes
         << FTextFormat::PadLeft(1, '0') << ':'
-        << FTextFormat::PadLeft(2, '0') << d.Seconds
-        << FTextFormat::SetFill(fillch);
+        << FTextFormat::PadLeft(2, '0') << d.Seconds;
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const FDateTime& d) {
-    const wchar_t fillch = oss.FillChar();
-    return oss
+    return (*oss.FormatScope())
         << FTextFormat::PadLeft(4, L'0') << d.Year
         << FTextFormat::PadLeft(1, L'0') << L'/'
         << FTextFormat::PadLeft(2, L'0') << d.Month
@@ -97,8 +94,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FDateTime& d) {
         << FTextFormat::PadLeft(1, L'0') << L':'
         << FTextFormat::PadLeft(2, L'0') << d.Minutes
         << FTextFormat::PadLeft(1, L'0') << L':'
-        << FTextFormat::PadLeft(2, L'0') << d.Seconds
-        << FTextFormat::SetFill(fillch);
+        << FTextFormat::PadLeft(2, L'0') << d.Seconds;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

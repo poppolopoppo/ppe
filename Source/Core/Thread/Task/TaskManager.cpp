@@ -7,6 +7,7 @@
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
 #include "IO/Format.h"
+#include "IO/TextWriter.h"
 #include "Meta/PointerWFlags.h"
 #include "Meta/ThreadResource.h"
 
@@ -25,6 +26,7 @@
 #include <thread>
 
 namespace Core {
+LOG_CATEGORY(CORE_API, Task);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -782,7 +784,7 @@ FTaskManager::~FTaskManager() {
 void FTaskManager::Start(const TMemoryView<const size_t>& threadAffinities) {
     Assert(nullptr == _pimpl);
 
-    LOG(Info, L"[Task] Start manager #{0} with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
+    LOG(Task, Info, L"start manager <{0}> with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
 
     _pimpl.reset(new FTaskManagerImpl(*this));
     _pimpl->Start(threadAffinities);
@@ -791,7 +793,7 @@ void FTaskManager::Start(const TMemoryView<const size_t>& threadAffinities) {
 void FTaskManager::Shutdown() {
     Assert(nullptr != _pimpl);
 
-    LOG(Info, L"[Task] Shutdown manager #{0} with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
+    LOG(Task, Info, L"shutdown manager <#{0}> with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
 
     _pimpl->Shutdown();
     _pimpl.reset();

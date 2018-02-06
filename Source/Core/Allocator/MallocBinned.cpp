@@ -18,6 +18,7 @@
 PRAGMA_INITSEG_COMPILER
 
 namespace Core {
+LOG_CATEGORY(CORE_API, MallocBinned);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -213,16 +214,16 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 
                     FDecodedCallstack decoded;
                     callstack.Decode(&decoded);
-                    LOG(Error, L"[MallocBinned] leaked block {0} :\n{1}", Fmt::FSizeInBytes{ blockSizeInBytes }, decoded);
+                    LOG(MallocBinned, Error, L"leaked block {0} :\n{1}", Fmt::FSizeInBytes{ blockSizeInBytes }, decoded);
                 }
                 else {
-                    LOG(Warning, L"[MallocBinned] no infos available for leaked memory block, try to turn on CORE_MALLOC_LOGGER_PROXY");
+                    LOG(MallocBinned, Warning, L"no infos available for leaked memory block, try to turn on CORE_MALLOC_LOGGER_PROXY");
                 }
             }
         }
 
         if (leakedNumBlocks) {
-            LOG(Error, L"[MallocBinned] leaked {0} blocks ({1}) in one chunk",
+            LOG(MallocBinned, Error, L"leaked {0} blocks ({1}) in one chunk",
                 Fmt::FCountOfElements{ leakedNumBlocks },
                 Fmt::FSizeInBytes{ leakedSizeInBytes });
 
@@ -548,7 +549,7 @@ struct FBinnedThreadCache_ {
     }
 
     NO_INLINE ~FBinnedThreadCache_() {
-        LOG(Info, L"[MallocBinned] Shutdown thread cache {0:X}", std::this_thread::get_id());
+        LOG(MallocBinned, Info, L"shutdown thread cache {0}", std::this_thread::get_id());
 
         FBinnedGlobalCache_& globalCache = FBinnedGlobalCache_::Instance();
 
@@ -602,7 +603,7 @@ private:
     INTRUSIVESINGLELIST(&FBinnedPage_::Node) _freePages;
 
     FBinnedThreadCache_() {
-        LOG(Info, L"[MallocBinned] Start thread cache {0:X}", std::this_thread::get_id());
+        LOG(MallocBinned, Info, L"start thread cache {0}", std::this_thread::get_id());
     }
 
     // force NO_INLINE for cold path functions (better chance for inlining, better instruction cache)
@@ -732,11 +733,11 @@ private:
 
     FBinnedAllocator_() {
         STATIC_ASSERT(FBinnedPage_::PageSize == FBinnedChunk_::ChunkSizeInBytes);
-        LOG(Info, L"[MallocBinned] Start allocator");
+        LOG(MallocBinned, Info, L"start allocator");
     }
 
     ~FBinnedAllocator_() {
-        LOG(Info, L"[MallocBinned] Shutdown allocator");
+        LOG(MallocBinned, Info, L"shutdown allocator");
     }
 
     NO_INLINE void* AllocLargeBlock_(size_t sizeInBytes) {

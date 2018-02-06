@@ -11,6 +11,7 @@
 // http://stackoverflow.com/questions/1077496/what-is-a-small-and-fast-real-time-compression-technique-like-lz77
 
 namespace Core {
+EXTERN_LOG_CATEGORY(CORE_API, Benchmark);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -180,7 +181,7 @@ void CompressMemory(IBufferedStreamWriter* dst, const TMemoryView<const u8>& src
         }
     }
 
-    LOG(Info, L"[LZJB] Compression ratio : {0} -> {1} = {2:f2}%",
+    LOG(Benchmark, Info, L"LZJB compression ratio : {0} -> {1} = {2:f2}%",
         Fmt::FSizeInBytes(src.SizeInBytes()), Fmt::FSizeInBytes(dst->TellO()), dst->TellO()*100.0f/src.SizeInBytes() );
 }
 //----------------------------------------------------------------------------

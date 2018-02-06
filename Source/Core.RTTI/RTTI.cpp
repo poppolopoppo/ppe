@@ -11,6 +11,7 @@
 #include "MetaTransaction.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
+#include "Core/Diagnostic/Logger.h"
 #include "Core/IO/StringBuilder.h"
 #include "Core/IO/TextWriter.h"
 
@@ -24,6 +25,7 @@ namespace Core {
 namespace RTTI {
 POOL_TAG_DEF(RTTI);
 RTTI_NAMESPACE_DEF(CORE_RTTI_API, RTTI);
+LOG_CATEGORY(CORE_RTTI_API, RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -100,6 +102,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //namespace {
 //----------------------------------------------------------------------------
+LOG_CATEGORY(CORE_RTTI_API, RTTI_UnitTest);
 RTTI_NAMESPACE_DECL(, RTTI_UnitTest);
 RTTI_NAMESPACE_DEF(, RTTI_UnitTest);
 //----------------------------------------------------------------------------
@@ -154,7 +157,6 @@ RTTI_FUNCTION(OutConst, f, str)
 RTTI_FUNCTION(OutConstReturn, f, str)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
-FWD_REFPTR(Toto);
 class FToto : public RTTI::FMetaObject {
 public:
     FToto() {}
@@ -212,7 +214,7 @@ static void RTTIPrintType_() {
     const RTTI::PTypeTraits traits = RTTI::MakeTraits<T>();
     const RTTI::FTypeInfos typeInfos = traits->TypeInfos();
     STACKLOCAL_ATOM(defaultValue, traits);
-    LOG(Debug, L"[RTTI] Id = {0}, Name = {1}, Flags = {2}, Default = {3}",
+    LOG(RTTI_UnitTest, Debug, L"Id = {0}, Name = {1}, Flags = {2}, Default = {3}",
         typeInfos.Id(),
         typeInfos.Name(),
         typeInfos.Flags(),
@@ -224,10 +226,10 @@ static void RTTIPrintClass_() {
     TRefPtr<T> t( new T() );
     const RTTI::FMetaClass *metaClass = t->RTTI_Class();
 
-    LOG(Info, L"[RTTI] TMetaClass<{0}> : {1}", metaClass->Name(), metaClass->Flags());
+    LOG(RTTI_UnitTest, Debug, L"TMetaClass<{0}> : {1}", metaClass->Name(), metaClass->Flags());
 
     for (const auto& it : metaClass->AllFunctions()) {
-        LOG(Info, L"[RTTI]   - FUNC {0} {1}({2}) : <{3}>",
+        LOG(RTTI_UnitTest, Debug, L"   - FUNC {0} {1}({2}) : <{3}>",
             it->HasReturnValue() ? it->Result()->TypeInfos().Name() : "void",
             it->Name(),
             Fmt::FWFormator([&it](FWTextWriter& oss) {
@@ -243,7 +245,7 @@ static void RTTIPrintClass_() {
 
     for (const auto& it : metaClass->AllProperties()) {
         const RTTI::FTypeInfos typeInfos = it->Traits()->TypeInfos();
-        LOG(Info, L"[RTTI]   - PROP {0} : <{1}> -> {2} = {3} [{4}]",
+        LOG(RTTI_UnitTest, Debug, L"   - PROP {0} : <{1}> -> {2} = {3} [{4}]",
             it->Name(),
             it->Flags(),
             typeInfos.Name(),
@@ -302,6 +304,7 @@ static void TestRTTI_() {
         const RTTI::FMetaClass* metaClass = toto2->RTTI_Class();
         metaClass->Property(RTTI::FName("Parent1")).CopyFrom(*toto2, MakeAtom(&toto));
 
+        LOG(RTTI_UnitTest, Debug, L"toto2 = {0}", InplaceAtom(toto2));
 
         {
             RTTI::FMetaTransaction transaction2(RTTI::FName("test2"));
@@ -351,9 +354,9 @@ static void TestRTTI_() {
 //----------------------------------------------------------------------------
 namespace RTTI {
 static void RTTI_UnitTests() {
-    LOG(Debug, L"[RTTI] Begin unit tests");
+    LOG(RTTI_UnitTest, Debug, L"begin unit tests");
     TestRTTI_();
-    LOG(Debug, L"[RTTI] End unit tests");
+    LOG(RTTI_UnitTest, Debug, L"end unit tests");
 }
 } //!namespace
 //----------------------------------------------------------------------------

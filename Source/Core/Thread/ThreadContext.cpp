@@ -25,6 +25,7 @@
 #endif
 
 namespace Core {
+LOG_CATEGORY(CORE_API, Thread);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -108,7 +109,7 @@ static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
         if (::SetThreadStackGuarantee(&stackSizeInBytes))
             return;
     }
-    LOG(Warning, L"Unable to SetThreadStackGuarantee, TStack Overflows won't be caught properly !");
+    LOG(Thread, Warning, L"unable to SetThreadStackGuarantee, TStack Overflows won't be caught properly !");
 #endif
 }
 //----------------------------------------------------------------------------
@@ -320,7 +321,7 @@ void FThreadContextStartup::Start(const char* name, size_t tag) {
 
 #ifdef USE_DEBUG_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
-    LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2})", ctx.Name(), ctx.Tag(), ctx.ThreadId());
+    LOG(Thread, Info, L"start thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
 }
 //----------------------------------------------------------------------------
@@ -332,14 +333,14 @@ void FThreadContextStartup::Start_MainThread() {
 
 #ifdef USE_DEBUG_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
-    LOG(Info, L"[Thread] Start '{0}' with tag = {1} (id:{2}) <MainThread>", ctx.Name(), ctx.Tag(), ctx.ThreadId());
+    LOG(Thread, Info, L"start thread '{0}' with tag = {1} ({2}) <MainThread>", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
 }
 //----------------------------------------------------------------------------
 void FThreadContextStartup::Shutdown() {
 #ifdef USE_DEBUG_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
-    LOG(Info, L"[Thread] Stop '{0}' with tag = {1} (id:{2})", ctx.Name(), ctx.Tag(), ctx.ThreadId());
+    LOG(Thread, Info, L"stop thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
 
     FAllocaStartup::Shutdown();

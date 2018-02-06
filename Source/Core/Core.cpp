@@ -10,6 +10,7 @@
 #include "Diagnostic/Logger.h"
 #include "IO/FileStream.h"
 #include "IO/FileSystem.h"
+#include "IO/TextWriter.h"
 #include "IO/VirtualFileSystem.h"
 #include "Meta/AutoSingleton.h"
 #include "Misc/TargetPlatform.h"
@@ -19,6 +20,7 @@
 PRAGMA_INITSEG_LIB
 
 namespace Core {
+LOG_CATEGORY(CORE_API, Module);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -88,7 +90,7 @@ void FCoreModule::Start(void *applicationHandle, int nShowCmd, const wchar_t* fi
     FVirtualFileSystemStartup::Start();
     // 9 - logger
 #ifdef USE_DEBUG_LOGGER
-    FLoggerStartup::Start();
+    FLogger::Start();
 #endif
 }
 //----------------------------------------------------------------------------
@@ -97,7 +99,7 @@ void FCoreModule::Shutdown() {
 
     // 9 - logger
 #ifdef USE_DEBUG_LOGGER
-    FLoggerStartup::Shutdown();
+    FLogger::Shutdown();
 #endif
     // 8 - virtual file system
     FVirtualFileSystemStartup::Shutdown();
@@ -134,32 +136,32 @@ void FCoreModule::ClearAll_UnusedMemory() {
 #ifndef FINAL_RELEASE
 //----------------------------------------------------------------------------
 OnModuleStart::OnModuleStart(const wchar_t* moduleName) : ModuleName(moduleName) {
-    LOG(Emphasis, L"[{0}] Begin start module", ModuleName);
+    LOG(Module, Emphasis, L"begin start module {0}", ModuleName);
     CheckMemory_();
 }
 //----------------------------------------------------------------------------
 OnModuleStart::~OnModuleStart() {
-    LOG(Emphasis, L"[{0}] End start module", ModuleName);
+    LOG(Module, Emphasis, L"end start module {0}", ModuleName);
     CheckMemory_();
 }
 //----------------------------------------------------------------------------
 OnModuleShutdown::OnModuleShutdown(const wchar_t* moduleName) : ModuleName(moduleName) {
-    LOG(Emphasis, L"[{0}] Begin shutdown module", ModuleName);
+    LOG(Module, Emphasis, L"begin shutdown module {0}", ModuleName);
     CheckMemory_();
 }
 //----------------------------------------------------------------------------
 OnModuleShutdown::~OnModuleShutdown() {
-    LOG(Emphasis, L"[{0}] End shutdown module", ModuleName);
+    LOG(Module, Emphasis, L"end shutdown module {0}", ModuleName);
     CheckMemory_();
 }
 //----------------------------------------------------------------------------
 OnModuleClearAll::OnModuleClearAll(const wchar_t* moduleName) : ModuleName(moduleName) {
-    LOG(Emphasis, L"[{0}] Begin clear all module", ModuleName);
+    LOG(Module, Emphasis, L"begin clear all module {0}", ModuleName);
     CheckMemory_();
 }
 //----------------------------------------------------------------------------
 OnModuleClearAll::~OnModuleClearAll() {
-    LOG(Emphasis, L"[{0}] End clear all module", ModuleName);
+    LOG(Module, Emphasis, L"end clear all module {0}", ModuleName);
     CheckMemory_();
 }
 //----------------------------------------------------------------------------

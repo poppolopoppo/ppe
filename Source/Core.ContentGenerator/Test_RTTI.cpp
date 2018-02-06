@@ -373,8 +373,8 @@ void Test_RTTI() {
 
     RTTI_NAMESPACE(Test).Start();
     {
-        const FFilename filename = L"Process:/robotapp.bin";
-        const FFilename filename2 = L"Process:/robotapp.raw";
+        const FFilename filename = L"Saved:/RTTI/robotapp.bin";
+        const FFilename filename2 = L"Saved:/RTTI/robotapp.raw";
 
         RTTI::FMetaTransaction input;
         {
@@ -388,19 +388,19 @@ void Test_RTTI() {
 
         {
             Serialize::FTextSerializer s;
-            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.cdf", EAccessPolicy::Truncate);
+            auto oss = VFS_OpenBinaryWritable(L"Saved:/RTTI/robotapp.cdf", EAccessPolicy::Create_Binary);
             s.Serialize(oss.get(), &input);
         }
 
         {
             Serialize::FXMLSerializer s;
-            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.xml", EAccessPolicy::Truncate);
+            auto oss = VFS_OpenBinaryWritable(L"Saved:/RTTI/robotapp.xml", EAccessPolicy::Create_Binary);
             s.Serialize(oss.get(), &input);
         }
 
         {
             Serialize::FJSONSerializer s;
-            auto oss = VFS_OpenBinaryWritable(L"Process:/robotapp.json", EAccessPolicy::Truncate);
+            auto oss = VFS_OpenBinaryWritable(L"Saved:/RTTI/robotapp.json", EAccessPolicy::Create_Binary);
             s.Serialize(oss.get(), &input);
         }
 
@@ -428,9 +428,9 @@ void Test_RTTI() {
             for (size_t i = 0; i < k; ++i)
                 Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
 
-            if (false == VFS_WriteAll(filename, compressedView, EAccessPolicy::Truncate_Binary))
+            if (false == VFS_WriteAll(filename, compressedView, EAccessPolicy::Create_Binary))
                 AssertNotReached();
-            if (false == VFS_WriteAll(filename2, decompressed.MakeView(), EAccessPolicy::Truncate_Binary))
+            if (false == VFS_WriteAll(filename2, decompressed.MakeView(), EAccessPolicy::Create_Binary))
                 AssertNotReached();
 
             RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) stored;
@@ -477,7 +477,7 @@ void Test_RTTI() {
             char buffer[1024];
             std::cin.getline(buffer, lengthof(buffer));
 
-            const FStringView line = MakeStringView(buffer, Meta::FForceInit{});
+            const FStringView line = MakeCStringView(buffer);
 
             if (0 == CompareI(MakeStringView("exit"), line))
                 break;

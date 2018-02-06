@@ -19,6 +19,7 @@
 
 namespace Core {
 namespace Pixmap {
+EXTERN_LOG_CATEGORY(CORE_PIXMAP_API, Pixmap);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -245,7 +246,7 @@ void Compress(FCompressedImage* dst, const FImage* src, FCompressedImage::EQuali
         break;
     }
 
-    LOG(Info, L"[Pixmap] Compress {0}_{1}_{2}:{3}x{4} image to {5}",
+    LOG(Pixmap, Info, L"Compress {0}_{1}_{2}:{3}x{4} image to {5}",
         src->Mask(), src->Depth(), src->Space(), src->Width(), src->Height(),
         format );
 

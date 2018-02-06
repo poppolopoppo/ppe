@@ -10,6 +10,7 @@
 
 namespace Core {
 namespace RTTI {
+EXTERN_LOG_CATEGORY(CORE_RTTI_API, RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -50,7 +51,7 @@ void FMetaNamespace::Start() {
     Assert(not IsStarted());
     Assert(_classes.empty());
 
-    LOG(Info, L"[RTTI] Start namespace <{0}> ({1} handles)", _nameCStr, _classCount);
+    LOG(RTTI, Info, L"start namespace <{0}> ({1} handles)", _nameCStr, _classCount);
 
     _nameToken = FName(_nameCStr);
 
@@ -76,7 +77,7 @@ void FMetaNamespace::Start() {
         const FName& metaClassName = metaClass->Name();
         Insert_AssertUnique(_classes, metaClassName, metaClass);
 
-        LOG(Info, L"[RTTI] Create meta class <{0}::{1}> = #{2}", _nameCStr, metaClassName, classId);
+        LOG(RTTI, Info, L"create meta class <{0}::{1}> = #{2}", _nameCStr, metaClassName, classId);
     }
     Assert(index == _classCount);
 
@@ -88,7 +89,7 @@ void FMetaNamespace::Start() {
 
         phandle->_class->CallOnRegister_IFN();
 
-        LOG(Info, L"[RTTI] Register meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
+        LOG(RTTI, Info, L"register meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
     }
 
     MetaDB().RegisterNamespace(this);
@@ -102,7 +103,7 @@ void FMetaNamespace::Shutdown() {
 
     MetaDB().UnregisterNamespace(this);
 
-    LOG(Info, L"[RTTI] Shutdown namespace <{0}> ({1} handles)", _nameCStr, _classCount);
+    LOG(RTTI, Info, L"shutdown namespace <{0}> ({1} handles)", _nameCStr, _classCount);
 
     _nameToken = FName();
 
@@ -112,7 +113,7 @@ void FMetaNamespace::Shutdown() {
         Assert(phandle->_class);
         Assert(phandle->_class->Namespace() == this);
 
-        LOG(Info, L"[RTTI] Unregister meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
+        LOG(RTTI, Info, L"unregister meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
 
         phandle->_class->OnUnregister();
     }
@@ -125,7 +126,7 @@ void FMetaNamespace::Shutdown() {
         Assert(phandle->_class);
         Assert(phandle->_class->Namespace() == this);
 
-        LOG(Info, L"[RTTI] Destroy meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
+        LOG(RTTI, Info, L"destroy meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
 
         phandle->_destroy(phandle->_class);
         phandle->_class = nullptr;

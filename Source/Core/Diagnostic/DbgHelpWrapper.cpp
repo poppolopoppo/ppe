@@ -8,6 +8,7 @@
 #include "Logger.h"
 
 namespace Core {
+EXTERN_LOG_CATEGORY(CORE_API, DLL);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -75,15 +76,15 @@ FDbghelpWrapper::FDbghelpWrapper()
 
         Assert(_miniDumpWriteDump);
 
-        LOG(Info, L"[DbgHelp] Successfully loaded : callstacks and minidumps are available");
+        LOG(DLL, Info, L"dbghelp successfully loaded : callstacks and minidumps are available");
     }
     else {
-        LOG(Warning, L"[DbgHelp] Failed to load : callstacks and minidumps won't be available !");
+        LOG(DLL, Warning, L"dbghelp failed to load : callstacks and minidumps won't be available !");
     }
 }
 //----------------------------------------------------------------------------
 FDbghelpWrapper::~FDbghelpWrapper() {
-    LOG(Info, L"[DbgHelp] Destroying wrapper");
+    LOG(DLL, Info, L"destroying dbghelp wrapper");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

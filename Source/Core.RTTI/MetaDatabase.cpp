@@ -10,15 +10,16 @@
 
 namespace Core {
 namespace RTTI {
+EXTERN_LOG_CATEGORY(CORE_RTTI_API, RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FMetaDatabase::FMetaDatabase() {
-    LOG(Info, L"[RTTI] Create DB");
+    LOG(RTTI, Info, L"create meta database");
 }
 //----------------------------------------------------------------------------
 FMetaDatabase::~FMetaDatabase() {
-    LOG(Info, L"[RTTI] Destroy DB");
+    LOG(RTTI, Info, L"destroy meta database");
 
     Assert(_namespaces.empty());
     Assert(_objects.empty());
@@ -34,10 +35,7 @@ void FMetaDatabase::RegisterTransaction(FMetaTransaction* metaTransaction) {
     const FName& exportName = metaTransaction->Name();
     Assert(not exportName.empty());
 
-    LOG(Info, L"[RTTI] Register transaction in DB : '{0}', {1} top objects, {2} loaded objects",
-        exportName,
-        metaTransaction->TopObjects().size(),
-        metaTransaction->LoadedObjects().size() );
+    LOG(RTTI, Info, L"register transaction in DB : '{0}'", exportName);
 
     WRITESCOPELOCK(_lockRW);
 
@@ -51,10 +49,7 @@ void FMetaDatabase::UnregisterTransaction(FMetaTransaction* metaTransaction) {
     const FName& exportName = metaTransaction->Name();
     Assert(not exportName.empty());
 
-    LOG(Info, L"[RTTI] Unregister transaction in DB : '{0}', {1} top objects, {2} loaded objects",
-        exportName,
-        metaTransaction->TopObjects().size(),
-        metaTransaction->LoadedObjects().size() );
+    LOG(RTTI, Info, L"unregister transaction in DB : '{0}'", exportName);
 
     WRITESCOPELOCK(_lockRW);
 
@@ -229,7 +224,7 @@ void FMetaDatabase::RegisterNamespace(const FMetaNamespace* metaNamespace) {
 void FMetaDatabase::UnregisterNamespace(const FMetaNamespace* metaNamespace) {
     Assert(metaNamespace);
 
-    LOG(Info, L"[RTTI] Unregister namespace from DB : <{0}>", metaNamespace->Name());
+    LOG(RTTI, Info, L"unregister namespace from DB : <{0}>", metaNamespace->Name());
 
     Assert(metaNamespace->IsStarted());
 

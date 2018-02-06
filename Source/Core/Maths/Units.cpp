@@ -2,23 +2,28 @@
 
 #include "Units.h"
 
+#include "IO/Format.h"
 #include "IO/TextWriter.h"
 
 namespace Core {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
+    //----------------------------------------------------------------------------
+    //////////////////////////////////////////////////////////////////////////////
+    //----------------------------------------------------------------------------
 #define UNITS_BEGIN(NAME)
 #define UNITS_END()
 #define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
     template class Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >; \
     FTextWriter& operator <<(FTextWriter& oss, \
         const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit) { \
-            return oss << unit.Value() << " " STRINGIZE(SYMBOL); \
+            return (*oss.FormatScope()) \
+                << unit.Value() \
+                << MakeStringView(" " STRINGIZE(SYMBOL)); \
     } \
     FWTextWriter& operator <<(FWTextWriter& oss, \
         const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit) { \
-            return oss << unit.Value() << L" " WSTRINGIZE(SYMBOL); \
+            return (*oss.FormatScope()) \
+                << unit.Value() \
+                << MakeStringView(L" " WSTRINGIZE(SYMBOL)); \
     }
 //----------------------------------------------------------------------------
 #include "Units.Definitions-inl.h"

@@ -14,6 +14,7 @@
 
 namespace Core {
 namespace Network {
+EXTERN_LOG_CATEGORY(CORE_NETWORK_API, Network);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -102,7 +103,7 @@ bool FListener::Connect() {
 
     _handle = PackSocket_(sock);
 
-    LOG(Info, L"[Network] Started listening to {0}", _listening);
+    LOG(Network, Info, L"started listening to {0}", _listening);
 
     Assert(IsConnected());
     return true;
@@ -118,7 +119,7 @@ bool FListener::Disconnect() {
     if (status == -1)
         return false;
 
-    LOG(Info, L"[Network] Stopped listening to {0}", _listening);
+    LOG(Network, Info, L"stopped listening to {0}", _listening);
 
     Assert(!IsConnected());
     return true;
@@ -230,7 +231,7 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
 
     socket.SetTimeout(socket.Timeout()); // force set the SO_RCVTIMEO socket option
 
-    LOG(Info, L"[Network] Accept socket from {0} to {1}", socket._local, socket._remote );
+    LOG(Network, Info, L"accept socket from {0} to {1}", socket._local, socket._remote );
 
     Assert(socket.IsConnected());
     return true;

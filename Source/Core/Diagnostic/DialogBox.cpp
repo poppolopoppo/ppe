@@ -27,6 +27,7 @@
 
 namespace Core {
 namespace Dialog {
+LOG_CATEGORY(CORE_API, Dialog);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -252,7 +253,7 @@ static LRESULT CALLBACK Template_StackProc_(HWND hwndDlg, UINT message, WPARAM w
                     const FTemplate_DialogContext_* ctx = reinterpret_cast<const FTemplate_DialogContext_*>(::GetWindowLongPtr(window, GWLP_USERDATA));
                     Assert(ctx);
 
-                    LOG(Info, L"double click on frame : >>> {0} <<<", ctx->CallstackFrames[index]);
+                    //LOG(Info, L"double click on frame : >>> {0} <<<", ctx->CallstackFrames[index]);
 
                     ExternalEditor_(MakeStringView(ctx->DecodedCallstack.Frames()[index].Filename()),
                                     ctx->DecodedCallstack.Frames()[index].Line() );
@@ -495,7 +496,6 @@ static Dialog::EResult Template_CreateDialogBox_(
     const INT_PTR ret = DialogBoxIndirectParamW(NULL, (::LPDLGTEMPLATE)hgbl, NULL, (::DLGPROC)Template_DialogProc_, (LPARAM)&ctx);
     if (-1 == ret) {
         const FWString lastError = GetLastErrorToWString(GetLastError());
-        LOG(Error, L"Failed to create dialog box : {0}", lastError);
         AssertNotReached();
     }
 

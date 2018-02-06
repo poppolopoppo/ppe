@@ -16,6 +16,10 @@
 #   ifdef CreateDirectory
 #       undef CreateDirectory
 #   endif
+#   pragma push_macro("MoveFile")
+#   ifdef MoveFile
+#       undef MoveFile
+#   endif
 #   pragma push_macro("RemoveDirectory")
 #   ifdef RemoveDirectory
 #       undef RemoveDirectory

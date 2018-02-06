@@ -28,6 +28,7 @@
 #define NATIVE_ENTITYNAME_MAXSIZE 1024
 
 namespace Core {
+EXTERN_LOG_CATEGORY(CORE_API, VFS);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -433,7 +434,7 @@ UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& f
 
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
-    LOG(Debug, L"[VFS] OpenNativeWritable('{0}') : {1}", nativeFilename, policy);
+    LOG(VFS, Debug, L"open native writable '{0}' : {1}", filename, policy);
 
     FFileStreamWriter tmp = FFileStream::OpenWrite(nativeFilename, policy);
     if (tmp.Good())
@@ -454,7 +455,7 @@ UStreamReadWriter FVirtualFileSystemNativeComponent::OpenReadWritable(const FFil
 
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
-    LOG(Debug, L"[VFS] OpenNativeReadWritable('{0}') : {1}", nativeFilename, policy);
+    LOG(VFS, Debug, L"open native read/writable '{0}' : {1}", filename, policy);
 
     FFileStreamReadWriter tmp = FFileStream::OpenReadWrite(nativeFilename, policy);
     if (tmp.Good())

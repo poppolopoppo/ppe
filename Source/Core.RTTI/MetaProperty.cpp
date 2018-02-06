@@ -8,6 +8,11 @@
 #ifdef WITH_CORE_RTTI_PROPERTY_CHECKS
 #   include "MetaObject.h"
 #   include "Core/Diagnostic/Logger.h"
+namespace Core {
+namespace RTTI {
+EXTERN_LOG_CATEGORY(CORE_RTTI_API, RTTI);
+} //!namespace RTTI
+} //!namespace Core
 #endif
 
 namespace Core {
@@ -32,7 +37,7 @@ FMetaProperty::~FMetaProperty()
 void FMetaProperty::CheckProperty_(const FMetaObject& obj, bool write) const {
 
     if (write && IsReadOnly()) {
-        LOG(Error, L"[RTTI] Writing to readonly property \"{0}::{1}\" on \"{2}\" ({3})",
+        LOG(RTTI, Error, L"writing to readonly property \"{0}::{1}\" on \"{2}\" ({3})",
             obj.RTTI_Class()->Name(),
             _name,
             obj.RTTI_Name(),
@@ -40,7 +45,7 @@ void FMetaProperty::CheckProperty_(const FMetaObject& obj, bool write) const {
     }
 
     if (IsDeprecated()) {
-        LOG(Warning, L"[RTTI] Using deprecated property \"{0}::{1}\" on \"{2}\" ({3})",
+        LOG(RTTI, Warning, L"using deprecated property \"{0}::{1}\" on \"{2}\" ({3})",
             obj.RTTI_Class()->Name(),
             _name,
             obj.RTTI_Name(),

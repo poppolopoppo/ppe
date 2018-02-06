@@ -21,7 +21,7 @@ public:
 //----------------------------------------------------------------------------
 BASICTOKEN_CLASS_DEF(FName, char, ECase::Insensitive, FNameTokenTraits);
 //----------------------------------------------------------------------------
-INSTANTIATE_CLASS_TYPEDEF(FBinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, ALLOCATION_BOUNDARY));
+INSTANTIATE_CLASS_TYPEDEF(CORE_RTTI_API, FBinaryData, RAWSTORAGE_ALIGNED(RTTI, u8, ALLOCATION_BOUNDARY));
 //----------------------------------------------------------------------------
 // /!\ not guaranteed to be stable : depends on initialization order
 using FClassId = TPrimeNumberProduct<class FMetaClass>;

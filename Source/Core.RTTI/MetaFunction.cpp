@@ -8,6 +8,11 @@
 #if USE_CORE_RTTI_CHECKS
 #   include "MetaObject.h"
 #   include "Core/Diagnostic/Logger.h"
+namespace Core {
+namespace RTTI {
+EXTERN_LOG_CATEGORY(CORE_RTTI_API, RTTI);
+} //!namespace RTTI
+} //!namespace Core
 #endif
 
 namespace Core {
@@ -75,7 +80,7 @@ void FMetaFunction::Invoke(
 
 #if USE_CORE_RTTI_CHECKS
     if (IsDeprecated()) {
-        LOG(Warning, L"[RTTI] Using deprecated function \"{0} {1}::{2}({3})\" on \"{4}\" ({5})",
+        LOG(RTTI, Warning, L"using deprecated function \"{0} {1}::{2}({3})\" on \"{4}\" ({5})",
             _result ? _result->TypeInfos().Name() : "void",
             obj.RTTI_Class()->Name(),
             _name,

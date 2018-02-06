@@ -10,6 +10,7 @@
 
 namespace Core {
 namespace Network {
+EXTERN_LOG_CATEGORY(CORE_NETWORK_API, Network);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -131,7 +132,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
 
     struct ::addrinfo* serviceInfo = nullptr;
     if (int errorCode = ::getaddrinfo(nodeName, serviceName, &hints, &serviceInfo)) {
-        LOG(Error, L"[getaddrinfo] error code: {0}, {1}", errorCode, ::gai_strerror(errorCode));
+        LOG(Network, Error, L"getaddrinfo failed: {0}, {1}", errorCode, ::gai_strerror(errorCode));
         return false;
     }
     Assert(serviceInfo);
@@ -153,7 +154,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
         if (resolvedIpV4) {
             ip.assign(MakeCStringView(resolvedIpV4));
             Assert(ip.size());
-            LOG(Info, L"[HostnameToIPv4] Resolved IPv4 : {0}:{1} -> {2}", hostname, port, ip);
+            LOG(Network, Info, L"HostnameToIPv4 resolved IPv4 : {0}:{1} -> {2}", hostname, port, ip);
             succeed = true;
             break;
         }

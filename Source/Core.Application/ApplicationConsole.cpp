@@ -26,32 +26,10 @@ FApplicationConsole::~FApplicationConsole() {}
 //----------------------------------------------------------------------------
 void FApplicationConsole::Start() {
     FApplicationBase::Start();
-
-    RedirectIOToConsole();
 }
 //----------------------------------------------------------------------------
 void FApplicationConsole::Shutdown() {
     FApplicationBase::Shutdown();
-}
-//----------------------------------------------------------------------------
-void FApplicationConsole::RedirectIOToConsole() {
-    LOG(Info, L"[Application] RedirectIOToConsole()");
-
-#ifdef PLATFORM_WINDOWS
-    ::AllocConsole();
-    ::SetConsoleOutputCP(65001/* UTF-8 */);
-#endif
-
-    FILE* fp = nullptr;
-
-    if (0 != ::freopen_s(&fp, "conin$","r", stdin))
-        AssertNotReached();
-
-    if (0 != ::freopen_s(&fp, "conout$","w", stdout))
-        AssertNotReached();
-
-    if (0 != ::freopen_s(&fp, "conout$","w", stderr))
-        AssertNotReached();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

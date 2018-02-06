@@ -12,6 +12,7 @@
 
 namespace Core {
 namespace Pixmap {
+EXTERN_LOG_CATEGORY(CORE_PIXMAP_API, Pixmap);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -93,7 +94,7 @@ static void ScaleAlphaTestCoverage_(FFloatImage* img, float cutoff, float desire
         currentCoverage = AlphaTestCoverage_(img, cutoff, alphaScale);
     }
 
-    LOG(Info, L"[Pixmap] Upscaling alpha coverage of a {0}x{1} FFloatImage from {2} to {3}, desired = {4} (x{5})",
+    LOG(Pixmap, Info, L"upscaling alpha coverage of a {0}x{1} FFloatImage from {2} to {3}, desired = {4} (x{5})",
         img->Width(), img->Height(),
         initialCoverage, currentCoverage, desiredCoverage, alphaScale );
 
@@ -123,7 +124,7 @@ void FMipMapChain::Generate(FFloatImage* topMip, bool hq/* = false */) {
 
     const size_t mipCount = Meta::FloorLog2(Min(topMip->Width(), topMip->Height())) - 1;
 
-    LOG(Info, L"[Pixmap] Generating {2} mips from a FFloatImage {0}x{1}",
+    LOG(Pixmap, Info, L"generate {2} mips from a FFloatImage {0}x{1}",
         topMip->Width(), topMip->Height(),
         mipCount );
 

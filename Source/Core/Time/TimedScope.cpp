@@ -8,6 +8,7 @@
 #   include "Maths/Units.h"
 
 namespace Core {
+LOG_CATEGORY(CORE_API, Benchmark);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -36,10 +37,10 @@ FBenchmarkScope::~FBenchmarkScope() {
     if (_parentIFP)
         _parentIFP->_accumulated.SetValue(*_parentIFP->_accumulated + *elapsed);
 
-    LOG(Profiling, L"{0:28} | {1}{2} | {3:8f2} / {4:8f2}",
+    LOG(Benchmark, Info, L"{0:28} | {1}{2} | {3:8f2} / {4:8f2}",
         _category,
         Fmt::Repeat(L"  ", _depth),
-        Fmt::PadRight(_message, 30 - _depth * 2, L' '),
+        Fmt::PadRight(_message, 28 - _depth * 2, L' '),
         elapsed,
         Fmt::Ternary(*_accumulated > 0, _accumulated, '-') );
 }
@@ -56,7 +57,7 @@ FIOBenchmarkScope::FIOBenchmarkScope(const FWStringView& category, const FWStrin
 FIOBenchmarkScope::~FIOBenchmarkScope() {
     const FTimespan elapsed = Elapsed();
 
-    LOG(Profiling, L" {0:20} | {2:8} | {3:10} = {4:10f2} Mb/s | {1}",
+    LOG(Benchmark, Info, L" {0:20} | {2:8f2} | {3:10f2} = {4:10f2} Mb/s | {1}",
         _category,
         _message,
         elapsed,

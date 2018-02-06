@@ -8,12 +8,14 @@
 #include "Socket/Socket.h"
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
+#include "Core/Diagnostic/Logger.h"
 
 PRAGMA_INITSEG_LIB
 
 namespace Core {
 namespace Network {
 POOL_TAG_DEF(Network);
+LOG_CATEGORY(CORE_NETWORK_API, Network);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

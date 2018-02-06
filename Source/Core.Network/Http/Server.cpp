@@ -20,6 +20,7 @@
 
 namespace Core {
 namespace Network {
+EXTERN_LOG_CATEGORY(CORE_NETWORK_API, Network);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -54,13 +55,13 @@ FHttpServerImpl::FHttpServerImpl(const FHttpServer* owner)
     _listener.Connect();
     Assert(_listener.IsConnected());
 
-    LOG(Info, L"[HTTP] Starting server on {0}:{1}",  _listener.Listening().Host(), _listener.Listening().Port());
+    LOG(Network, Info, L"starting HTTP server on {0}:{1}",  _listener.Listening().Host(), _listener.Listening().Port());
 }
 //----------------------------------------------------------------------------
 FHttpServerImpl::~FHttpServerImpl() {
     Assert(_listener.IsConnected());
 
-    LOG(Info, L"[HTTP] Stopping server on {0}:{1}",  _listener.Listening().Host(), _listener.Listening().Port());
+    LOG(Network, Info, L"stopping HTTP server on {0}:{1}",  _listener.Listening().Host(), _listener.Listening().Port());
 
     _listener.Disconnect();
 }
@@ -95,7 +96,7 @@ void HttpServicingTask_(ITaskContext& ctx, const FHttpServerImpl* server, FSocke
         FHttpRequest request;
         FHttpRequest::Read(&request, socket, server->MaxContentLength());
 
-        LOG(Info, L"[HTTP] Server request : method={0}, uri={1} from {2}:{3}",
+        LOG(Network, Info, L"HTTP server request : method={0}, uri={1} from {2}:{3}",
             request.Method(), request.Uri(),
             socket.Remote().Host(), socket.Remote().Port() );
 
@@ -103,7 +104,7 @@ void HttpServicingTask_(ITaskContext& ctx, const FHttpServerImpl* server, FSocke
     }
     CORE_CATCH(FHttpException e)
     CORE_CATCH_BLOCK({
-        LOG(Error, L"[HTTP] Server error : status={0}, reason={1} on {2}:{3}",
+        LOG(Network, Error, L"HTTP server error : status={0}, reason={1} on {2}:{3}",
             e.Status(), e.What(),
             socket.Local().Host(), socket.Local().Port() );
 

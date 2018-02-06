@@ -10,6 +10,7 @@
 
 namespace Core {
 namespace RTTI {
+EXTERN_LOG_CATEGORY(CORE_RTTI_API, RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -121,7 +122,7 @@ const FMetaFunction* FMetaClass::OnMissingFunction(const FName& name, EFunctionF
     UNUSED(name);
     UNUSED(flags);
 
-    LOG(Error, L"[RTTI] Missing function {0}::{1} !", _name, name);
+    LOG(RTTI, Error, L"missing function {0}::{1} !", _name, name);
 
     AssertNotReached();
     return nullptr;
@@ -201,7 +202,7 @@ const FMetaProperty* FMetaClass::OnMissingProperty(const FName& name, EPropertyF
     UNUSED(name);
     UNUSED(flags);
 
-    LOG(Error, L"[RTTI] Missing property {0}::{1} !", _name, name);
+    LOG(RTTI, Error, L"missing property {0}::{1} !", _name, name);
 
     AssertNotReached();
     return nullptr;

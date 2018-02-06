@@ -1,6 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <stdint.h>
+#include <type_traits>
 
 typedef uint8_t     u8;
 typedef uint16_t    u16;
@@ -53,7 +55,7 @@ typedef int64_t     i64;
 #define STRINGIZE_0(...) EXPAND( STRINGIZE_1(__VA_ARGS__) )
 #define STRINGIZE(...) EXPAND( STRINGIZE_0(__VA_ARGS__) )
 //----------------------------------------------------------------------------
-#define WIDESTRING_2(_X) L ## _X
+#define WIDESTRING_2(_X) L##_X
 #define WIDESTRING_1(_X) WIDESTRING_2(_X)
 #define WIDESTRING_0(_X) WIDESTRING_1(_X)
 #define WIDESTRING(_X) WIDESTRING_0(_X)

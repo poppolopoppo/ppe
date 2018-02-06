@@ -5,6 +5,12 @@
 #include "Diagnostic/Logger.h"
 #include "IO/TextWriter.h"
 
+#ifdef USE_DEBUG_LOGGER
+#   include "IO/FormatHelpers.h"
+#endif
+
+#include <errno.h>
+
 #ifdef PLATFORM_WINDOWS
 #   include "Misc/Platform_Windows.h"
 #   include <fcntl.h>
@@ -15,6 +21,7 @@
 #define USE_CORE_DEBUGGER_PRESENT 1 // set to 0 to fake non-attached to a debugger behavior %_NOCOMMIT%
 
 namespace Core {
+LOG_CATEGORY(CORE_API, Platform);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -46,6 +53,28 @@ static const FWindowsSystemInfo_ GSystemInfo;
 #else
 #   error "unsupported platform"
 #endif
+//----------------------------------------------------------------------------
+#ifdef USE_DEBUG_LOGGER
+struct FErrno_ { 
+    int Num;
+    static FErrno_ LastError() { return FErrno_{ errno }; }
+    inline friend FWTextWriter& operator <<(FWTextWriter& oss, FErrno_ err) {
+        wchar_t buffer[1024];
+        return (_wcserror_s(buffer, err.Num)
+            ? oss << L"unknown error"
+            : oss << MakeCStringView(buffer) );
+    }
+};
+#endif //!USE_DEBUG_LOGGER
+//----------------------------------------------------------------------------
+#ifdef USE_DEBUG_LOGGER
+struct FHandle_ {
+    FPlatformIO::FHandle Handle;
+    inline friend FWTextWriter& operator <<(FWTextWriter& oss, FHandle_ handle) {
+        return oss << L'<' << handle.Handle << L'>';
+    }
+};
+#endif //!USE_DEBUG_LOGGER
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -271,19 +300,10 @@ auto FPlatformIO::Open(const wchar_t* filename, EOpenPolicy openMode, EAccessPol
 
     FHandle handle;
     if (::_wsopen_s(&handle, filename, oflag, _SH_DENYRW, OpenPolicyToPMode_(openMode)) != 0) {
-#ifdef USE_DEBUG_LOGGER
-        const wchar_t* reason;
-        switch (errno) {
-        case EACCES:    reason = L"Given path is a directory, or file is read-only, but an open-for-writing operation was attempted."; break;
-        case EEXIST:    reason = L"_O_CREAT and _O_EXCL flags were specified, but filename already exists."; break;
-        case EINVAL:    reason = L"Invalid oflag, shflag, orpmode argument, or pfh or filename was a null pointer."; break;
-        case ENOENT:    reason = L"File or path not found."; break;
-        default:        reason = L"unknown error"; break;
-        }
-        LOG(Error, L"[IO] Failed to open '{0}': {1}", filename, reason);
-#endif
+        LOG(Platform, Error, L"failed to open file '{0}' : {1}", filename, FErrno_::LastError());
         Assert(InvalidHandle == handle);
     }
+    LOG(Platform, Info, L"opened file '{0}': {1} ({2}) -> {3}", filename, openMode, accessFlags, FHandle_{ handle });
     return handle;
 #else
 #   error "no support"
@@ -293,7 +313,9 @@ auto FPlatformIO::Open(const wchar_t* filename, EOpenPolicy openMode, EAccessPol
 bool FPlatformIO::SetMode(FHandle handle, EAccessPolicy accessFlags) {
 #ifdef PLATFORM_WINDOWS
     int oflag = AccessPolicyToOFlag_(accessFlags);
-    return (_setmode(handle, oflag) != -1);
+    const int res = _setmode(handle, oflag);
+    CLOG(-1 == res, Platform, Error, L"failed to set handle {0} mode to {1} : {2}", FHandle_{ handle }, accessFlags, FErrno_::LastError());
+    return (res != -1);
 #else
 #   error "no support"
 #endif
@@ -302,7 +324,9 @@ bool FPlatformIO::SetMode(FHandle handle, EAccessPolicy accessFlags) {
 bool FPlatformIO::Close(FHandle handle) {
     Assert(InvalidHandle != handle);
 #ifdef PLATFORM_WINDOWS
-    return (0 == ::_close(handle));
+    const int res = ::_close(handle);
+    CLOG(0 != res, Platform, Error, L"failed to close handle {0} : {1}", FHandle_{ handle }, FErrno_::LastError());
+    return (0 == res);
 #else
 #   error "no support"
 #endif
@@ -320,7 +344,9 @@ bool FPlatformIO::Eof(FHandle handle) {
 std::streamoff FPlatformIO::Tell(FHandle handle) {
     Assert(InvalidHandle != handle);
 #ifdef PLATFORM_WINDOWS
-    return ::_telli64(handle);
+    const i64 off = ::_telli64(handle);
+    CLOG(-1L == off, Platform, Error, L"failed to tell handle {0} : {1}", FHandle_{ handle }, FErrno_::LastError());
+    return off;
 #else
 #   error "no support"
 #endif
@@ -339,7 +365,10 @@ std::streamoff FPlatformIO::Seek(FHandle handle, std::streamoff offset, ESeekOri
         _origin = 0;
         break;
     }
-    return ::_lseeki64(handle, checked_cast<int>(offset), _origin);
+
+    const i64 off = ::_lseeki64(handle, checked_cast<int>(offset), _origin);
+    CLOG(-1L == off, Platform, Error, L"failed to seek handle {0} : {1}", FHandle_{ handle }, FErrno_::LastError());
+    return off;
 #else
 #   error "no support"
 #endif
@@ -350,7 +379,9 @@ std::streamsize FPlatformIO::Read(FHandle handle, void* dst, std::streamsize siz
     Assert(dst);
     Assert(sizeInBytes);
 #ifdef PLATFORM_WINDOWS
-    return ::_read(handle, dst, checked_cast<unsigned int>(sizeInBytes));
+    const i64 sz = ::_read(handle, dst, checked_cast<unsigned int>(sizeInBytes));
+    CLOG(-1L == sz, Platform, Error, L"failed to read {0} from handle {1} : {2}", Fmt::SizeInBytes(sizeInBytes), FHandle_{ handle }, FErrno_::LastError());
+    return sz;
 #else
 #   error "no support"
 #endif
@@ -361,7 +392,9 @@ std::streamsize FPlatformIO::Write(FHandle handle, const void* src, std::streams
     Assert(src);
     Assert(sizeInBytes);
 #ifdef PLATFORM_WINDOWS
-    return ::_write(handle, src, checked_cast<unsigned int>(sizeInBytes));
+    const i64 sz = ::_write(handle, src, checked_cast<unsigned int>(sizeInBytes));
+    CLOG(-1L == sz, Platform, Error, L"failed to write {0} to handle {1} : {2}", Fmt::SizeInBytes(sizeInBytes), FHandle_{ handle }, FErrno_::LastError());
+    return sz;
 #else
 #   error "no support"
 #endif
@@ -370,7 +403,9 @@ std::streamsize FPlatformIO::Write(FHandle handle, const void* src, std::streams
 bool FPlatformIO::Commit(FHandle handle) {
     Assert(InvalidHandle != handle);
 #ifdef PLATFORM_WINDOWS
-    return (0 != ::_commit(handle));
+    const int res = ::_commit(handle);
+    CLOG(0 != res, Platform, Error, L"failed to commit handle {0} : {1}", handle, FErrno_::LastError());
+    return (0 == res);
 #else
 #   error "no support"
 #endif

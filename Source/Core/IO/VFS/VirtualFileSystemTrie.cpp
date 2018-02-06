@@ -11,6 +11,7 @@
 #include "VirtualFileSystemNativeComponent.h"
 
 namespace Core {
+LOG_CATEGORY(CORE_API, VFS);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -142,7 +143,7 @@ UStreamReader FVirtualFileSystemTrie::OpenReadable(const FFilename& filename, EA
     if (readable)
         result = readable->OpenReadable(filename, policy);
     if (not result)
-        LOG(Error, L"[VFS] failed to open file '{0}' for read (access flags = {1})", filename, policy);
+        LOG(VFS, Error, L"failed to open file '{0}' for read (access flags = {1})", filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -154,7 +155,7 @@ UStreamWriter FVirtualFileSystemTrie::OpenWritable(const FFilename& filename, EA
     if (writable)
         result = writable->OpenWritable(filename, policy);
     if (not result)
-        LOG(Error, L"[VFS] failed to open file '{0}' for write (access flags = {1})", filename, policy);
+        LOG(VFS, Error, L"failed to open file '{0}' for write (access flags = {1})", filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -166,7 +167,7 @@ UStreamReadWriter FVirtualFileSystemTrie::OpenReadWritable(const FFilename& file
     if (readWritable)
         result = readWritable->OpenReadWritable(filename, policy);
     if (not result)
-        LOG(Error, L"[VFS] failed to open file '{0}' for read/write (access flags = {1})", filename, policy);
+        LOG(VFS, Error, L"failed to open file '{0}' for read/write (access flags = {1})", filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -190,7 +191,6 @@ void FVirtualFileSystemTrie::Clear() {
 void FVirtualFileSystemTrie::Mount(FVirtualFileSystemComponent* component) {
     Assert(component);
     Assert(component->Alias().HasMountingPoint());
-    LOG(Info, L"[VFS] Mount component '{0}'", component->Alias());
     WRITESCOPELOCK(_barrier);
     _nodes.Insert_AssertUnique(component->Alias().MountingPoint(), component);
 }
@@ -198,7 +198,7 @@ void FVirtualFileSystemTrie::Mount(FVirtualFileSystemComponent* component) {
 void FVirtualFileSystemTrie::Unmount(FVirtualFileSystemComponent* component) {
     Assert(component);
     Assert(component->Alias().HasMountingPoint());
-    LOG(Info, L"[VFS] Unmount component '{0}'", component->Alias());
+    LOG(VFS, Info, L"unmount component '{0}'", component->Alias());
     WRITESCOPELOCK(_barrier);
     _nodes.Remove_AssertExists(component->Alias().MountingPoint(), component);
 }
@@ -212,6 +212,7 @@ FVirtualFileSystemComponent* FVirtualFileSystemTrie::MountNativePath(const FDirp
 //----------------------------------------------------------------------------
 FVirtualFileSystemComponent *FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, FWString&& nativepPath) {
     Assert(nativepPath.size());
+    LOG(VFS, Info, L"mount native component '{0}' -> '{1}'", alias, nativepPath);
     FVirtualFileSystemComponent *component = new FVirtualFileSystemNativeComponent(alias, std::move(nativepPath));
     Mount(component);
     return component;
@@ -219,6 +220,7 @@ FVirtualFileSystemComponent *FVirtualFileSystemTrie::MountNativePath(const FDirp
 //----------------------------------------------------------------------------
 FVirtualFileSystemComponent *FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, const FWString& nativepPath) {
     Assert(nativepPath.size());
+    LOG(VFS, Info, L"mount native component '{0}' -> '{1}'", alias, nativepPath);
     FVirtualFileSystemComponent *component = new FVirtualFileSystemNativeComponent(alias, nativepPath);
     Mount(component);
     return component;
