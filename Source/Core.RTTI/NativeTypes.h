@@ -60,6 +60,7 @@ public: // ITypeTraits
     virtual size_t SizeInBytes() const override final { return sizeof(T); }
 
     virtual bool IsDefaultValue(const FAtom& value) const override final;
+    virtual void ResetToDefaultValue(const FAtom& value) const override final;
 
     virtual bool Equals(const FAtom& lhs, const FAtom& rhs) const override final;
     virtual void Copy(const FAtom& src, const FAtom& dst) const override final;

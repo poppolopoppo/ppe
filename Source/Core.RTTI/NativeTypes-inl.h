@@ -52,6 +52,11 @@ bool TBaseTypeTraits<T, _Parent>::IsDefaultValue(const FAtom& value) const {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
+void TBaseTypeTraits<T, _Parent>::ResetToDefaultValue(const FAtom& value) const {
+    value.TypedData<T>() = Meta::ForceInit<T>();
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Parent>
 bool TBaseTypeTraits<T, _Parent>::Equals(const FAtom& lhs, const FAtom& rhs) const {
     return (lhs.TypedConstData<T>() == rhs.TypedConstData<T>());
 }

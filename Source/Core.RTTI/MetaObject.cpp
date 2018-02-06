@@ -42,6 +42,10 @@ bool FMetaObject::RTTI_IsAssignableFrom(const FMetaClass& metaClass) const {
     return RTTI_Class()->IsAssignableFrom(metaClass);
 }
 //----------------------------------------------------------------------------
+void FMetaObject::RTTI_ResetToDefaultValue() {
+    ResetToDefaultValue(*this);
+}
+//----------------------------------------------------------------------------
 void FMetaObject::RTTI_Export(const FName& name) {
     Assert(RTTI_IsLoaded());
     Assert(not RTTI_IsExported());

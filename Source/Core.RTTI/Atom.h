@@ -46,6 +46,7 @@ public:
     FTypeInfos TypeInfos() const { return _traits->TypeInfos(); }
 
     bool IsDefaultValue() const { return _traits->IsDefaultValue(*this); }
+    void ResetToDefaultValue() { _traits->ResetToDefaultValue(*this); }
 
     bool Equals(const FAtom& other) const {
         return _traits->Equals(*this, other);

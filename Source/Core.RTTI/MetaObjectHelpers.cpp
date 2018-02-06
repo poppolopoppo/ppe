@@ -161,6 +161,16 @@ void DeepClone(const FMetaObject& src, PMetaObject& pdst) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void ResetToDefaultValue(FMetaObject& obj) {
+    const FMetaClass* metaClass = obj.RTTI_Class();
+    Assert(metaClass);
+
+    for (const FMetaProperty* prop : metaClass->AllProperties())
+        prop->ResetToDefaultValue(obj);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 hash_t hash_value(const FMetaObject& obj) {
     const FMetaClass* metaClass = obj.RTTI_Class();
     Assert(metaClass);

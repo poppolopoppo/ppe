@@ -57,6 +57,8 @@ public:
     bool RTTI_InheritsFrom(const FMetaClass& metaClass) const;
     bool RTTI_IsAssignableFrom(const FMetaClass& metaClass) const;
 
+    void RTTI_ResetToDefaultValue();
+
     void RTTI_Export(const FName& name);
     void RTTI_Unexport();
 

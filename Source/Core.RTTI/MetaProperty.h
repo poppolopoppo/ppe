@@ -80,6 +80,13 @@ public:
         src.Move(MakeAtom_(obj));
     }
 
+    FAtom ResetToDefaultValue(FMetaObject& obj) const {
+        CheckPropertyIFN(obj, true);
+        FAtom value = MakeAtom_(obj);
+        value.ResetToDefaultValue();
+        return value;
+    }
+
 private:
 #ifdef WITH_CORE_RTTI_PROPERTY_CHECKS
 #   undef CheckPropertyIFN

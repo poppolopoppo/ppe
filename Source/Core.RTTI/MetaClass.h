@@ -103,7 +103,7 @@ public:
 
     virtual const FMetaClass* Parent() const = 0;
 
-    virtual bool CreateInstance(PMetaObject& dst) const = 0;
+    virtual bool CreateInstance(PMetaObject& dst, bool resetToDefaultValue = true) const = 0;
 
     // Called by meta namespace
 
@@ -146,13 +146,15 @@ const FMetaClass* MetaClass() {
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
-bool CreateMetaObject_(PMetaObject& dst, std::true_type) {
+bool CreateMetaObject_(PMetaObject& dst, bool resetToDefaultValue, std::true_type) {
     dst.reset(new T());
     Assert(dst);
+    if (resetToDefaultValue)
+        dst->RTTI_ResetToDefaultValue();
     return true;
 }
 template <typename T>
-FMetaObject* CreateMetaObject_(PMetaObject&, std::false_type) {
+FMetaObject* CreateMetaObject_(PMetaObject&, bool resetToDefaultValue, std::false_type) {
     return false;
 }
 inline void DeleteMetaClass_(FMetaClass* metaClass) {
@@ -173,9 +175,9 @@ public:
         return RTTI::MetaClass<parent_type>();
     }
 
-    virtual bool CreateInstance(PMetaObject& dst) const override final {
+    virtual bool CreateInstance(PMetaObject& dst, bool resetToDefaultValue = true) const override final {
         Assert(not dst);
-        return details::CreateMetaObject_<T>(dst, typename std::is_default_constructible<T>::type{});
+        return details::CreateMetaObject_<T>(dst, resetToDefaultValue, typename std::is_default_constructible<T>::type{});
     }
 
     static const FMetaClass* Instance() {
