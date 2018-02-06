@@ -14,6 +14,8 @@ enum class EOpenPolicy : size_t {
     ReadWritable    = Readable | Writable,
 };
 ENUM_FLAGS(EOpenPolicy);
+CORE_API FTextWriter& operator <<(FTextWriter& oss, EOpenPolicy policy);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, EOpenPolicy policy);
 //----------------------------------------------------------------------------
 enum class EAccessPolicy : size_t {
 
@@ -36,6 +38,9 @@ enum class EAccessPolicy : size_t {
     Temporary       = 1 << 11,  // Delete files after when last descriptor is closed (use with |Create)
     Exclusive       = 1 << 12,  // Fail if the file already exists (use with |Create)
     Compress        = 1 << 13,  // Uses Core::Compression
+
+    Create_Binary   = Create | Binary,
+    Create_Text     = Create | Text,
 
     Truncate_Binary = Truncate | Binary,
     Truncate_Text   = Truncate | Text,

@@ -9,6 +9,38 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, EOpenPolicy policy) {
+    switch (policy)
+    {
+    case Core::EOpenPolicy::ReadWritable:
+        return oss << "ReadWritable";
+    case Core::EOpenPolicy::Readable:
+        return oss << "Readable";
+    case Core::EOpenPolicy::Writable:
+        return oss << "Writable";
+    default:
+        AssertNotImplemented();
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, EOpenPolicy policy) {
+    switch (policy)
+    {
+    case Core::EOpenPolicy::ReadWritable:
+        return oss << L"ReadWritable";
+    case Core::EOpenPolicy::Readable:
+        return oss << L"Readable";
+    case Core::EOpenPolicy::Writable:
+        return oss << L"Writable";
+    default:
+        AssertNotImplemented();
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, EAccessPolicy policy) {
     bool notFirst = false;
     for (size_t i = 0; i < 32; ++i) {
