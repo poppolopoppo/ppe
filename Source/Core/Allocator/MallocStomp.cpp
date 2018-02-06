@@ -4,7 +4,7 @@
 
 #ifdef WITH_CORE_MALLOCSTOMP
 
-#   include "Allocator/VirtualMemory.h"
+#   include "Memory/VirtualMemory.h"
 
 #   define CORE_MALLOCSTOMP_CHECK_OVERRUN 1 // set to 0 to check for underruns
 #   define CORE_MALLOCSTOMP_DELAY_DELETES 1 // set to 1 to check for necrophilia
@@ -63,6 +63,8 @@ STATIC_ASSERT(sizeof(FStompPayload_) == ALLOCATION_BOUNDARY);
 //----------------------------------------------------------------------------
 static void StompFillPadding_(const void* pbegin, const void* pend) {
     constexpr size_t word_size = sizeof(GStompLongCanary);
+    if (pbegin >= pend)
+        return;
 
     u8* const p0 = (u8*)pbegin;
     u8* const p3 = (u8*)pend;
@@ -81,7 +83,7 @@ static void StompFillPadding_(const void* pbegin, const void* pend) {
 }
 //----------------------------------------------------------------------------
 static void StompCheckPadding_(const void* pbegin, const void* pend) {
-    bool succeed = true;
+    Assert(pbegin <= pend);
 
     constexpr size_t word_size = sizeof(GStompLongCanary);
 
@@ -90,6 +92,8 @@ static void StompCheckPadding_(const void* pbegin, const void* pend) {
 
     const u8* const p1 = Meta::RoundToNext(p0, word_size);
     const u8* const p2 = Meta::RoundToPrev(p3, word_size);
+
+    bool succeed = true;
 
     forrange(p, p0, p1)
         succeed &= (0xAA == *p);
@@ -148,9 +152,11 @@ static void* StompVMAlloc_(size_t sizeInBytes) {
 }
 //----------------------------------------------------------------------------
 static void StompVMFree_(void* ptr, size_t sizeInBytes) {
+    if (nullptr == ptr)
+        return;
+
 #ifdef USE_MEMORY_DOMAINS
-    if (ptr)
-        MEMORY_DOMAIN_TRACKING_DATA(Reserved).Deallocate(1, sizeInBytes);
+    MEMORY_DOMAIN_TRACKING_DATA(Reserved).Deallocate(1, sizeInBytes);
 #endif
 #if     defined(PLATFORM_WINDOWS)
     UNUSED(sizeInBytes);
@@ -341,7 +347,7 @@ void  FMallocStomp::AlignedFree(void* ptr) {
         return;
 
     const FStompPayload_* const payload = StompGetPayload_(ptr);
-    void* const allocationPtr = ((u8*)ptr - payload->UserOffset);
+    u8* const allocationPtr = ((u8*)ptr - payload->UserOffset);
 
 #if CORE_MALLOCSTOMP_DELAY_DELETES
     FStompDelayedDeletes_::GInstance.Delete(allocationPtr, payload->AllocationSize);
@@ -355,17 +361,63 @@ void* FMallocStomp::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
         FMallocStomp::AlignedFree(ptr);
         return nullptr;
     }
+    else if (nullptr == ptr) {
+        return FMallocStomp::AlignedMalloc(size, alignment);
+    }
 
     Assert(Meta::IsAligned(alignment, ptr));
 
+#if 1 // much faster path, alas less secure
+    if (ptr) {
+        const FStompPayload_* const payload = StompGetPayload_(ptr);
+        u8* const allocationPtr = ((u8*)ptr - payload->UserOffset);
+
+        Assert(Meta::IsAligned(alignment, ptr));
+
+        const size_t oldUserSize = payload->UserSize;
+        const size_t paddingSize = Meta::RoundToNext(size, alignment) - size;
+        const size_t pageAlignedSize = Meta::RoundToNext(size + paddingSize + sizeof(FStompPayload_), GStompPageSize);
+        const size_t allocationSize = (pageAlignedSize + GStompPageSize); // extra page that will be read/write protected
+
+        if (allocationSize == payload->AllocationSize) {
+#if CORE_MALLOCSTOMP_CHECK_OVERRUN
+            u8* const protectedPtr = (allocationPtr + allocationSize - GStompPageSize);
+            u8* const userPtr = (protectedPtr - paddingSize - size);
+#else // CHECK UNDERRUNS
+            u8* const protectedPtr = allocationPtr;
+            u8* const userPtr = (allocationPtr + GStompPageSize + sizeof(FStompPayload_));
+#endif //!CORE_MALLOCSTOMP_CHECK_OVERRUN
+
+            // keep data, use memmove because of overlapping
+            const size_t moveSize = Min(size, oldUserSize);
+            ::memmove(userPtr, ptr, moveSize);
+
+#if CORE_MALLOCSTOMP_CHECK_OVERRUN
+            StompFillPadding_(allocationPtr, userPtr - sizeof(FStompPayload_)); // padding before
+            StompFillPadding_(userPtr + size, allocationPtr + pageAlignedSize); // padding after
+#else // CHECK UNDERRUNS
+            StompFillPadding_(userPtr + size, allocationPtr + allocationSize); // padding after
+#endif //!CORE_MALLOCSTOMP_CHECK_OVERRUN
+
+            // fill payload data to retrieve needed allocation properties
+            const u32 userOffset = checked_cast<u32>(userPtr - (u8*)allocationPtr);
+            new (userPtr - sizeof(FStompPayload_)) FStompPayload_{ allocationSize, userOffset, size };
+            ONLY_IF_ASSERT(StompGetPayload_(userPtr));
+
+            Assert(userPtr);
+            Assert(Meta::IsAligned(alignment, userPtr));
+            return userPtr;
+        }
+    }
+#endif
+
+    // slow/safe path :
     void* const newPtr = FMallocStomp::AlignedMalloc(size, alignment);
 
-    if (ptr) {
-        const FStompPayload_* payload = StompGetPayload_(ptr);
-        ::memcpy(newPtr, ptr, Min(payload->UserSize, size));
+    const FStompPayload_* payload = StompGetPayload_(ptr);
+    ::memcpy(newPtr, ptr, Min(payload->UserSize, size));
 
-        FMallocStomp::AlignedFree(ptr);
-    }
+    FMallocStomp::AlignedFree(ptr);
 
     return newPtr;
 }
