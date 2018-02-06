@@ -3,6 +3,7 @@
 #include "Timestamp.h"
 
 #include "DateTime.h"
+#include "Memory/HashFunctions.h"
 
 #include <time.h>
 
@@ -16,6 +17,10 @@ FDateTime FTimestamp::ToDateTime() const {
 //----------------------------------------------------------------------------
 FDateTime FTimestamp::ToDateTimeUTC() const {
     return FDateTime::FromTimeUTC(*this);
+}
+//----------------------------------------------------------------------------
+size_t FTimestamp::HashValue() const {
+    return hash_as_pod(_value);
 }
 //----------------------------------------------------------------------------
 FTimestamp FTimestamp::Now() {

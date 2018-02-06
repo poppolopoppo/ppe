@@ -3,7 +3,6 @@
 #include "Core/Core.h"
 
 #include "Core/IO/TextWriter_fwd.h"
-#include "Core/Memory/HashFunctions.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -26,9 +25,11 @@ public:
     FDateTime ToDateTime() const;
     FDateTime ToDateTimeUTC() const;
 
+    size_t HashValue() const;
+
     static FTimestamp Now();
 
-    friend hash_t hash_value(const FTimestamp& t) { return hash_as_pod(t._value); }
+    friend hash_t hash_value(const FTimestamp& t) { return t.HashValue(); }
     friend void swap(FTimestamp& lhs, FTimestamp& rhs) { std::swap(lhs._value, rhs._value); }
 
     friend bool operator ==(const FTimestamp& lhs, const FTimestamp& rhs) { return lhs._value == rhs._value; }
