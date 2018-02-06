@@ -72,31 +72,29 @@ public:
     TConcurentPriorityQueue& operator =(const TConcurentPriorityQueue& ) = delete;
 
     // lower is higher priority
-    void Produce(int priority, T&& rvalue);
+    void Produce(u32 priority, T&& rvalue);
     template <typename _Lambda>
-    void Produce(int priority, size_t count, size_t stride, _Lambda&& lambda);
+    void Produce(u32 priority, size_t count, size_t stride, _Lambda&& lambda);
 
     void Consume(T* pvalue);
     bool TryConsume(T* pvalue);
 
 private:
-    std::condition_variable _empty;
-    std::mutex _barrier;
-
-    typedef TPair<int, T> item_type;
+    typedef TPair<u32, T> item_type;
 
     typedef TVector<
         item_type,
         typename _Allocator::template rebind<item_type>::other
     >   vector_type;
 
-    struct FGreater_ {
-        bool operator ()(const item_type& lhs, const item_type& rhs) const {
-            return (lhs.first > rhs.first); // ordered from min to max
-        }
-    };
+    static bool PrioritySort_(const item_type& lhs, const item_type& rhs) {
+        return (lhs.first > rhs.first);
+    }
 
+    std::condition_variable _empty;
+    std::mutex _barrier;
     vector_type _queue;
+    size_t _counter;
 };
 //----------------------------------------------------------------------------
 #define CONCURRENT_PRIORITY_QUEUE(_DOMAIN, T) \
