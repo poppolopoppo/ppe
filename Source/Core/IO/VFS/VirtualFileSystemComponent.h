@@ -67,6 +67,7 @@ public:
     virtual ~IVirtualFileSystemComponentWritable() {}
 
     virtual bool CreateDirectory(const FDirpath& dirpath) = 0;
+    virtual bool MoveFile(const FFilename& src, const FFilename& dst) = 0;
     virtual bool RemoveDirectory(const FDirpath& dirpath) = 0;
     virtual bool RemoveFile(const FFilename& filename) = 0;
 

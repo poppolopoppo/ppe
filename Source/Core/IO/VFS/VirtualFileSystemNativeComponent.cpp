@@ -41,12 +41,27 @@ static FWString SanitizeTarget_(FWString&& target) {
     static_assert(FileSystem::Separator == L'/', "invalid FileSystem::Separator");
     Assert(target.size());
 
-    const FileSystem::char_type *p = target.c_str();
-    while (nullptr != (p = StrChr(p, L'\\')) )
-        *const_cast<FileSystem::char_type *>(p) = L'/';
+    target.gsub(L'\\', L'/');
+    while (target.gsub(L"//", L"/"));
 
     if (target.back() != L'/')
         target.insert(target.end(), L'/');
+
+    for (;;) {
+        const size_t dotdot = target.find(L"/../");
+        if (dotdot == FWString::npos)
+            break;
+
+        Assert(target[dotdot] == L'/');
+
+        const size_t folder = target.rfind(L'/', dotdot - 1);
+        AssertRelease(folder != FWString::npos);
+        Assert(target[folder] == L'/');
+
+        target.erase(target.begin() + folder, target.begin() + (dotdot + 3));
+    }
+
+    target.shrink_to_fit();
 
     return std::move(target);
 }
@@ -79,18 +94,6 @@ static void Unalias_(
     }
 }
 //----------------------------------------------------------------------------
-static FWStringView Unalias_(
-    const TMemoryView<FileSystem::char_type>& storage,
-    const FDirpath& aliased,
-    const FDirpath& alias, const FWString& target,
-    const FileSystem::char_type *suffix = nullptr) {
-    TBasicFixedSizeTextWriter<FileSystem::char_type> oss(storage);
-    Unalias_(oss, aliased, alias, target);
-    if (suffix)
-        oss << suffix;
-    return oss.Written();
-}
-//----------------------------------------------------------------------------
 static void Unalias_(
     TBasicTextWriter<FileSystem::char_type>& oss,
     const FFilename& aliased,
@@ -99,13 +102,25 @@ static void Unalias_(
     oss << aliased.Basename();
 }
 //----------------------------------------------------------------------------
-static FWStringView Unalias_(
+static void Unalias_(
+    const TMemoryView<FileSystem::char_type>& storage,
+    const FDirpath& aliased,
+    const FDirpath& alias, const FWString& target,
+    const FileSystem::char_type *suffix = nullptr) {
+    TBasicFixedSizeTextWriter<FileSystem::char_type> oss(storage);
+    Unalias_(oss, aliased, alias, target);
+    if (suffix)
+        oss << suffix;
+    oss << Eos;
+}
+//----------------------------------------------------------------------------
+static void Unalias_(
     const TMemoryView<FileSystem::char_type>& storage,
     const FFilename& aliased,
     const FDirpath& alias, const FWString& target) {
     TBasicFixedSizeTextWriter<FileSystem::char_type> oss(storage);
-    Unalias_(oss, aliased.Dirpath(), alias, target);
-    return oss.Written();
+    Unalias_(oss, aliased, alias, target);
+    oss << Eos;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -145,7 +160,7 @@ static size_t GlobFiles_Windows_(
     size_t total = 0;
 
     do {
-        const auto fname = MakeStringView(ffd.cFileName, Meta::FForceInit{});
+        const auto fname = MakeCStringView(ffd.cFileName);
         if (FILE_ATTRIBUTE_DIRECTORY & ffd.dwFileAttributes) {
             if (!recursive)
                 continue;
@@ -197,6 +212,13 @@ static bool RemoveDirectory_(const FileSystem::char_type* nativeDirpath) {
 //----------------------------------------------------------------------------
 static bool RemoveFile_(const FileSystem::char_type* nativeFilename) {
     return (::DeleteFileW(nativeFilename));
+}
+//----------------------------------------------------------------------------
+static bool MoveFile_(const FileSystem::char_type* nativeSrc, const FileSystem::char_type* nativeDst) {
+    return (::MoveFileExW(
+        nativeSrc,
+        nativeDst,
+        MOVEFILE_WRITE_THROUGH | MOVEFILE_COPY_ALLOWED));
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -274,7 +296,6 @@ IVirtualFileSystemComponentReadWritable* FVirtualFileSystemNativeComponent::Read
 //----------------------------------------------------------------------------
 FWString FVirtualFileSystemNativeComponent::Unalias(const FFilename& aliased) const {
     TBasicStringBuilder<FileSystem::char_type> nativeDirpath;
-    nativeDirpath.reserve(NATIVE_ENTITYNAME_MAXSIZE);
     Unalias_(nativeDirpath, aliased, _alias, _target);
     return nativeDirpath.ToString();
 }
@@ -285,7 +306,7 @@ bool FVirtualFileSystemNativeComponent::DirectoryExists(const FDirpath& dirpath,
     FileSystem::char_type nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeDirpath, dirpath, _alias, _target);
 
-    return EntityExists_(nativeDirpath, policy);
+    return EntityExists_(&nativeDirpath[0], policy);
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::FileExists(const FFilename& filename, EExistPolicy policy) {
@@ -317,9 +338,9 @@ size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, con
 UStreamReader FVirtualFileSystemNativeComponent::OpenReadable(const FFilename& filename, EAccessPolicy policy) {
     Assert(_openMode ^ EOpenPolicy::Readable);
 
-    FileSystem::char_type buffer[NATIVE_ENTITYNAME_MAXSIZE];
-    const FWStringView nativeFilename = Unalias_(buffer, filename, _alias, _target);
-    LOG(Debug, L"[VFS] OpenNativeReadable('{0}') : {1}", nativeFilename, policy);
+    FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
+    Unalias_(nativeFilename, filename, _alias, _target);
+    LOG(VFS, Debug, L"open native readable '{0}' : {1}", filename, policy);
 
     UStreamReader result;
     FFileStreamReader tmp = FFileStream::OpenRead(nativeFilename, policy);
@@ -333,28 +354,31 @@ bool FVirtualFileSystemNativeComponent::CreateDirectory(const FDirpath& dirpath)
     Assert(_openMode ^ EOpenPolicy::Writable);
 
     FileSystem::char_type buffer[NATIVE_ENTITYNAME_MAXSIZE];
-    const FWStringView nativeDirpath = Unalias_(buffer, dirpath, _alias, _target);
+    FWFixedSizeTextWriter nativeDirpath(buffer);
+    Unalias_(nativeDirpath, dirpath, _alias, _target);
+    nativeDirpath << Eos;
 
     if (not EntityExists_(nativeDirpath.data(), EExistPolicy::Exists)) {
         bool existed = false;
 
-        if (CreateDirectory_(buffer, existed)) {
-            LOG(Debug, L"[VFS] CreateDirectory('{0}')", nativeDirpath);
+        if (CreateDirectory_(nativeDirpath.data(), existed)) {
+            LOG(VFS, Debug, L"create directory '{0}'", dirpath);
             return true;
         }
 
-        forrange(i, _target.size() - 1, nativeDirpath.size() + 1) {
-            if (nativeDirpath.size() == i || FileSystem::Separators().Contains(nativeDirpath[i])) {
+        const size_t l = nativeDirpath.size();
+        forrange(i, _target.size() - 1, l + 1) {
+            if (l == i || FileSystem::Separators().Contains(buffer[i])) {
                 buffer[i] = L'\0';
 
-                if (CreateDirectory_(buffer, existed)) {
-                    if (nativeDirpath.size() != i)
+                if (CreateDirectory_(nativeDirpath.data(), existed)) {
+                    if (l != i)
                         buffer[i] = FileSystem::Separator;
                     if (not existed)
-                        LOG(Debug, L"[VFS] CreateDirectory('{0}')", nativeDirpath.CutBefore(i));
+                        LOG(VFS, Debug, L"create directory '{0}'", MakeCStringView(buffer));
                 }
                 else {
-                    LOG(Error, L"[VFS] Failed to create directory '{0}'", nativeDirpath.CutBefore(i));
+                    LOG(VFS, Error, L"failed to create directory '{0}'", MakeCStringView(buffer));
                     return false;
                 }
             }
@@ -364,12 +388,25 @@ bool FVirtualFileSystemNativeComponent::CreateDirectory(const FDirpath& dirpath)
     return true;
 }
 //----------------------------------------------------------------------------
+bool FVirtualFileSystemNativeComponent::MoveFile(const FFilename& src, const FFilename& dst) {
+    Assert(_openMode ^ EOpenPolicy::Writable);
+
+    FileSystem::char_type nativeSrc[NATIVE_ENTITYNAME_MAXSIZE];
+    FileSystem::char_type nativeDst[NATIVE_ENTITYNAME_MAXSIZE];
+
+    Unalias_(nativeSrc, src, _alias, _target);
+    Unalias_(nativeDst, dst, _alias, _target);
+    LOG(VFS, Debug, L"move file '{0}' -> '{1}'", src, dst);
+
+    return MoveFile_(nativeSrc, nativeDst);
+}
+//----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::RemoveDirectory(const FDirpath& dirpath) {
     Assert(_openMode ^ EOpenPolicy::Writable);
 
     FileSystem::char_type nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeDirpath, dirpath, _alias, _target);
-    LOG(Debug, L"[VFS] RemoveNaticeDirectory('{0}')", nativeDirpath);
+    LOG(VFS, Debug, L"remove directory '{0}'", dirpath);
 
     return RemoveDirectory_(nativeDirpath);
 }
@@ -379,7 +416,7 @@ bool FVirtualFileSystemNativeComponent::RemoveFile(const FFilename& filename) {
 
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
-    LOG(Debug, L"[VFS] RemoveNativeFile('{0}')", nativeFilename);
+    LOG(VFS, Debug, L"remove file '{0}'", filename);
 
     return RemoveFile_(nativeFilename);
 }

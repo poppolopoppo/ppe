@@ -44,6 +44,7 @@ private: // IVirtualFileSystemComponentReadable
 
 private: // IVirtualFileSystemComponentWritable
     virtual bool CreateDirectory(const FDirpath& dirpath) override final;
+    virtual bool MoveFile(const FFilename& src, const FFilename& dst) override final;
     virtual bool RemoveDirectory(const FDirpath& dirpath) override final;
     virtual bool RemoveFile(const FFilename& filename) override final;
 

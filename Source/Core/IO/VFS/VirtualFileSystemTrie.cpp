@@ -105,6 +105,19 @@ bool FVirtualFileSystemTrie::CreateDirectory(const FDirpath& dirpath) const {
         : false;
 }
 //----------------------------------------------------------------------------
+bool FVirtualFileSystemTrie::MoveFile(const FFilename& src, const FFilename& dst) const {
+    READSCOPELOCK(_barrier);
+    IVirtualFileSystemComponentWritable* const writableSrc = WritableComponent_(src.MountingPoint(), _nodes);
+    IVirtualFileSystemComponentWritable* const writableDst = WritableComponent_(dst.MountingPoint(), _nodes);
+    if (writableSrc != writableDst) {
+        LOG(VFS, Warning, L"can't move a file betwean different filesystem components : {0} -> {1}", src, dst);
+        return false;
+    }
+    else {
+        return writableDst->MoveFile(src, dst);
+    }
+}
+//----------------------------------------------------------------------------
 bool FVirtualFileSystemTrie::RemoveDirectory(const FDirpath& dirpath) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentWritable* const writable = WritableComponent_(dirpath.MountingPoint(), _nodes);

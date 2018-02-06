@@ -37,6 +37,7 @@ public:
     size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) const;
 
     bool CreateDirectory(const FDirpath& dirpath) const;
+    bool MoveFile(const FFilename& src, const FFilename& dst) const;
     bool RemoveDirectory(const FDirpath& dirpath) const;
     bool RemoveFile(const FFilename& filename) const;
 
