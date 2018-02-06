@@ -16,6 +16,10 @@
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Vector.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/FS/Basename.h"
+#include "Core/IO/FS/BasenameNoExt.h"
+#include "Core/IO/FS/Extname.h"
+#include "Core/IO/FS/Dirname.h"
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/BufferedStream.h"
@@ -64,7 +68,7 @@ static const FFourCC FILE_MAGIC_                 ("BNZI");
 #else
 static const FFourCC FILE_MAGIC_                 ("BINA");
 #endif
-static const FFourCC FILE_VERSION_               ("1.01");
+static const FFourCC FILE_VERSION_               ("1.02");
 //----------------------------------------------------------------------------
 static const FFourCC SECTION_STRINGS_            ("#STR");
 static const FFourCC SECTION_WSTRINGS_           ("#WST");
@@ -503,18 +507,28 @@ private:
         }
 
         bool ReadValue_(FDirpath& dirpath) {
-            index_t wstring_i;
-            if (false == _reader->ReadPOD(&wstring_i))
+            index_t k;
+            if (false == _reader->ReadPOD(&k))
                 return false;
 
-            if (wstring_i.IsDefaultValue())
+            if (0 == k) {
+                Assert(dirpath.empty());
                 return true;
+            }
 
-            if (wstring_i >= _owner->_wstrings.size())
-                CORE_THROW_IT(FBinarySerializerException("invalid RTTI dirpath index"));
+            STACKLOCAL_POD_ARRAY(FFileSystemToken, tokenized, k.Value);
+            forrange(i, 0, k.Value) {
+                index_t wstr_i;
+                if (false == _reader->ReadPOD(&wstr_i))
+                    return false;
 
-            const FWString& wdata = _owner->_wstrings[wstring_i];
-            dirpath = wdata.MakeView();
+                if (wstr_i >= _owner->_wstrings.size())
+                    CORE_THROW_IT(FBinarySerializerException("invalid RTTI dirpath token index"));
+
+                tokenized[i] = FFileSystemToken(_owner->_wstrings[wstr_i].MakeView());
+            }
+
+            dirpath.AssignTokens(tokenized);
             return true;
         }
 
@@ -523,19 +537,23 @@ private:
             if (not ReadValue_(dirpath))
                 return false;
 
-            index_t wstring_i;
-            if (false == _reader->ReadPOD(&wstring_i))
+            index_t wstr_i;
+            
+            if (false == _reader->ReadPOD(&wstr_i))
                 return false;
-
-            if (not wstring_i.IsDefaultValue())
-                return true;
-
-            if (wstring_i >= _owner->_wstrings.size())
+            if (wstr_i >= _owner->_wstrings.size())
                 CORE_THROW_IT(FBinarySerializerException("invalid RTTI basename index"));
 
-            const FWString& wdata = _owner->_wstrings[wstring_i];
-            FBasename basename = wdata.MakeView();
-            filename = FFilename(std::move(dirpath), std::move(basename));
+            FBasenameNoExt basenameNoExt(_owner->_wstrings[wstr_i].MakeView());
+
+            if (false == _reader->ReadPOD(&wstr_i))
+                return false;
+            if (wstr_i >= _owner->_wstrings.size())
+                CORE_THROW_IT(FBinarySerializerException("invalid RTTI extname index"));
+
+            FExtname extname(_owner->_wstrings[wstr_i].MakeView());
+
+            filename = FFilename(dirpath, basenameNoExt, extname);
             return true;
         }
 
@@ -964,24 +982,33 @@ private:
         }
 
         void WriteValue_(const FDirpath& dirpath) {
-            STACKLOCAL_POD_ARRAY(wchar_t, buffer, FileSystem::MaxPathLength);
-            const FWStringView wstr = dirpath.ToWCStr(buffer.data(), buffer.size());
-            const wstring_index_t wstr_i = _owner->_wstringIndices.IndexOf(wstr);
-            WritePOD(wstr_i);
+            const size_t k = dirpath.Depth();
+            if (0 == k) {
+                WriteValue_(0);
+                return;
+            }
+
+            STACKLOCAL_POD_ARRAY(FFileSystemToken, tokenized, k);
+            dirpath.ExpandTokens(tokenized);
+            
+            WritePOD(checked_cast<u32>(k));
+
+            for (const FFileSystemToken& token : tokenized) {
+                const wstring_index_t wstr_i = _owner->_wstringIndices.IndexOf(token.MakeView());
+                WritePOD(wstr_i);
+            }
         }
 
         void WriteValue_(const FFilename& filename) {
-            // split the path to save space in wstring dictionary
+            WriteValue_(filename.Dirpath());
+
             wstring_index_t wstr_i;
             FWStringView wstr;
-            STACKLOCAL_POD_ARRAY(wchar_t, buffer, FileSystem::MaxPathLength);
-            // dirname (high probability of being shared with other filenames)
-            wstr = filename.Dirpath().ToWCStr(buffer.data(), buffer.size());
-            wstr_i = _owner->_wstringIndices.IndexOf(wstr);
+            
+            wstr_i = _owner->_wstringIndices.IndexOf(filename.BasenameNoExt().MakeView());
             WritePOD(wstr_i);
-            // basename (high entropy part of the filename)
-            wstr = filename.Basename().ToWCStr(buffer.data(), buffer.size());
-            wstr_i = _owner->_wstringIndices.IndexOf(wstr);
+
+            wstr_i = _owner->_wstringIndices.IndexOf(filename.Extname().MakeView());
             WritePOD(wstr_i);
         }
 
