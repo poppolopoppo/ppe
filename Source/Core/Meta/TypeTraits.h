@@ -226,8 +226,8 @@ typename std::enable_if< not Meta::TIsPod<T>::value >::type Destroy(T* p) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define INSTANTIATE_CLASS_TYPEDEF(_NAME, ...) \
-    class _NAME : public __VA_ARGS__ { \
+#define INSTANTIATE_CLASS_TYPEDEF(_API, _NAME, ...) \
+    class _API _NAME : public __VA_ARGS__ { \
         typedef __VA_ARGS__ parent_type; \
     public: \
         using parent_type::parent_type; \
