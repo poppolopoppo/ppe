@@ -106,7 +106,7 @@ bool LocalHostName(FString& hostname) {
         return false;
     }
     else {
-        hostname.assign(MakeStringView(temp, Meta::FForceInit{}));
+        hostname.assign(MakeCStringView(temp));
         Assert(hostname.size());
         return true;
     }
@@ -151,7 +151,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
             nodeName, sizeof(nodeName) );
 
         if (resolvedIpV4) {
-            ip.assign(MakeStringView(resolvedIpV4, Meta::FForceInit{}));
+            ip.assign(MakeCStringView(resolvedIpV4));
             Assert(ip.size());
             LOG(Info, L"[HostnameToIPv4] Resolved IPv4 : {0}:{1} -> {2}", hostname, port, ip);
             succeed = true;
@@ -199,7 +199,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
         return false;
     }
 
-    hostname.assign(MakeStringView(hostinfo, Meta::FForceInit{}));
+    hostname.assign(MakeCStringView(hostinfo));
 
     Assert(hostname.size());
     return true;

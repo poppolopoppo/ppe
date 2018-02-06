@@ -137,7 +137,7 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
 #if WITH_APPLICATION_TRY_CATCH
         CORE_CATCH(const std::exception& e)
         CORE_CATCH_BLOCK({
-            const FWString wwhat = ToWString(MakeStringView(e.what(), Meta::FForceInit{}));
+            const FWString wwhat = ToWString(MakeCStringView(e.what()));
             Dialog::Ok(wwhat, L"FException caught while starting !", Dialog::Icon::Exclamation);
             AssertNotReached();
         })
@@ -152,7 +152,7 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
 #if WITH_APPLICATION_TRY_CATCH
         CORE_CATCH(const std::exception& e)
         CORE_CATCH_BLOCK({
-            const FWString wwhat = ToWString(MakeStringView(e.what(), Meta::FForceInit{}));
+            const FWString wwhat = ToWString(MakeCStringView(e.what()));
             Dialog::Ok(wwhat, L"FException caught while shutting down !", Dialog::Icon::Exclamation);
             AssertNotReached();
         })

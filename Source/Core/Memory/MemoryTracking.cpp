@@ -146,8 +146,8 @@ static bool LessTrackingData_(const FMemoryTracking& lhs, const FMemoryTracking&
     Assert(lhs.Name());
     Assert(rhs.Name());
     return (lhs.Name() != rhs.Name()) &&
-        CompareI(   MakeStringView(lhs.Name(), Meta::FForceInit{}),
-                    MakeStringView(rhs.Name(), Meta::FForceInit{})) < 0;
+        CompareI(   MakeCStringView(lhs.Name()),
+                    MakeCStringView(rhs.Name())) < 0;
 }
 //----------------------------------------------------------------------------
 void ReportTrackingDatas(   FWTextWriter& oss,

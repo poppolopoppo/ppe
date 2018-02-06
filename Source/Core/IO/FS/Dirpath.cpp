@@ -141,7 +141,7 @@ FDirpath::FDirpath(std::initializer_list<const FileSystem::char_type *> path)  {
     STACKLOCAL_POD_STACK(FFileSystemToken, tokens, path.size());
 
     for (const FileSystem::char_type *wcstr : path) {
-        tokens.Push(MakeStringView(wcstr, Meta::FForceInit{}));
+        tokens.Push(MakeCStringView(wcstr));
         Assert(!tokens.Peek()->empty());
     }
 

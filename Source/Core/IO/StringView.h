@@ -178,7 +178,7 @@ inline size_t Length(const char* string) { return ::strlen(string); }
 inline size_t Length(const wchar_t* string) { return ::wcslen(string); }
 //----------------------------------------------------------------------------
 template <typename _Char>
-FORCE_INLINE TBasicStringView<_Char> MakeStringView(const _Char* cstr, Meta::FForceInit ) {
+FORCE_INLINE TBasicStringView<_Char> MakeCStringView(const _Char* cstr) {
     return (nullptr != cstr)
         ? TBasicStringView<_Char>(cstr, Length(cstr))
         : TBasicStringView<_Char>();

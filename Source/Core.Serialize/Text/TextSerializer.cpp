@@ -406,7 +406,7 @@ void FTextSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamRe
 
     Parser::FParseList parseList;
     UsingBufferedStream(input, [&parseList, sourceName](IBufferedStreamReader* buffered) {
-        Lexer::FLexer lexer(buffered, MakeStringView(sourceName, Meta::FForceInit{}), true);
+        Lexer::FLexer lexer(buffered, MakeCStringView(sourceName), true);
         parseList.Parse(&lexer);
     });
 

@@ -24,8 +24,8 @@ namespace Core {
 FString GetLastErrorToString(long errorCode) {
 #ifdef PLATFORM_WINDOWS
     _com_error com(errorCode);
-    //return ToString(MakeStringView(com.ErrorMessage(), Meta::FForceInit{}));
-    return StringFormat("{0:#4X}: {1}", u32(errorCode), com.ErrorMessage());
+    //return ToString(MakeCStringView(com.ErrorMessage()));
+    return StringFormat("{0:#4X}: {1}", u32(errorCode), MakeCStringView(com.ErrorMessage()));
 
 #else
     return FString();
@@ -36,8 +36,8 @@ FString GetLastErrorToString(long errorCode) {
 FWString GetLastErrorToWString(long errorCode) {
 #ifdef PLATFORM_WINDOWS
     _com_error com(errorCode);
-    //return ToWString(MakeStringView(com.ErrorMessage(), Meta::FForceInit{}));
-    return StringFormat(L"{0:#4X}: {1}", u32(errorCode), com.ErrorMessage());
+    //return ToWString(MakeCStringView(com.ErrorMessage()));
+    return StringFormat(L"{0:#4X}: {1}", u32(errorCode), MakeCStringView(com.ErrorMessage()));
 
 #else
     return FWString();

@@ -173,7 +173,7 @@ bool FSocket::Connect() {
             return false;
         }
 
-        used_local_ip.assign(MakeStringView(real_local_ip, Meta::FForceInit{}));
+        used_local_ip.assign(MakeCStringView(real_local_ip));
     }
     else {
         Assert(_local.IsIPv4());

@@ -41,7 +41,7 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
     call_result = ::GetCurrentDirectory(MAX_PATH, temp_buffer);
 
     if (call_result > 0)
-        oss << temp_buffer << L';';
+        oss << MakeCStringView(temp_buffer) << L';';
 
     call_result = ::GetModuleFileName(NULL, temp_buffer, MAX_PATH);
 
@@ -56,8 +56,10 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
                 break;
             }
         }
-        if (Length(temp_buffer) > 0)
-            oss << temp_buffer << L';';
+
+        FWStringView modulePath = MakeCStringView(temp_buffer);
+        if (not modulePath.empty())
+            oss << modulePath << L';';
     }
 
     for (int variable_id = 0; variable_id < 2; ++variable_id) {
@@ -66,7 +68,7 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
                         temp_buffer,
                         MAX_PATH);
         if (call_result > 0)
-            oss << temp_buffer << L';';
+            oss << MakeCStringView(temp_buffer) << L';';
     }
 
     call_result = ::GetEnvironmentVariable(
@@ -75,7 +77,7 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
                     MAX_PATH);
 
     if (call_result > 0)
-        oss << temp_buffer << L"\\System32;";
+        oss << MakeCStringView(temp_buffer) << L"\\System32;";
 
     call_result = ::GetEnvironmentVariable(
                     L"SYSTEMDRIVE",
@@ -84,14 +86,16 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
 
     if (call_result > 0)
     {
-        wchar_t webSymbolsPath[MAX_PATH];
+        wchar_t webSymbolsBuffer[MAX_PATH];
         {
-            const wchar_t* webSymbolsDir = L"\\symcache";
-            FWFixedSizeTextWriter tmp(webSymbolsPath);
-            tmp << temp_buffer << webSymbolsDir << Eos;
+            FWFixedSizeTextWriter tmp(webSymbolsBuffer);
+            tmp << MakeCStringView(temp_buffer) << L"\\symcache"
+                << Eos;
         }
 
-        call_result = ::CreateDirectoryW(webSymbolsPath, NULL);
+        const FWStringView webSymbolsPath = MakeCStringView(webSymbolsBuffer);
+
+        call_result = ::CreateDirectoryW(webSymbolsPath.data(), NULL);
         if (call_result == 0)
             Assert(ERROR_ALREADY_EXISTS == GetLastError());
 
@@ -113,8 +117,8 @@ static void LoadModules_(const FDbghelpWrapper::FLocked& dbghelp) {
     if (snap == (HANDLE)-1)
         return;
 
-#pragma warning( push )
-#pragma warning( disable : 4826 ) // warning C4826: convert unsigned char* to DWORD64
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4826) // warning C4826: convert unsigned char* to DWORD64
     BOOL module_found = ::Module32First(snap, &module_entry);
     while (module_found) {
         DWORD64 succeed = dbghelp.SymLoadModuleExW()(
@@ -126,7 +130,7 @@ static void LoadModules_(const FDbghelpWrapper::FLocked& dbghelp) {
             module_entry.modBaseSize,
             NULL,
             0);
-#pragma warning( pop )
+PRAGMA_MSVC_WARNING_POP()
 
         LOG(Info, L"[PDB] {0} for \"{1}\"",
             succeed ? L"Loaded" : L"Failed to load",
@@ -220,8 +224,8 @@ bool FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
     IMAGEHLP_LINEW64 line64;
     line64.SizeOfStruct = sizeof(IMAGEHLP_LINEW64);
 
-#pragma warning( push )
-#pragma warning( disable : 4826 ) // warning C4826: convert unsigned char* to DWORD64
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4826) // warning C4826: convert unsigned char* to DWORD64
     void* const* address = frames.data();
     auto frame = reinterpret_cast<FDecodedCallstack::FFrame *>(&decoded->_frames);
     for (size_t i = 0; i < frames.size(); ++i, ++frame, ++address) {
@@ -232,7 +236,7 @@ bool FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
         {
             DWORD64 dw64Displacement = 0;
             if (TRUE == dbghelp.SymFromAddrW()(hProcess, (DWORD64)*address, &dw64Displacement, pSymbol)) {
-                symbol = pSymbol->Name;
+                symbol = MakeCStringView(pSymbol->Name);
             }
             else {
                 const long lastErrorCode = ::GetLastError();
@@ -242,18 +246,18 @@ bool FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
         {
             DWORD dwDisplacement = 0;
             if (TRUE == dbghelp.SymGetLineFromAddrW64()(hProcess, (DWORD64)*address, &dwDisplacement, &line64)) {
-                filename = MakeStringView(line64.FileName, Meta::FForceInit{});
+                filename = MakeCStringView(line64.FileName);
                 line = line64.LineNumber;
             }
             else {
-                filename = kUnknown;
+                filename = MakeStringView(kUnknown);
                 line = 0;
             }
         }
 
         ::new ((void*)frame) FDecodedCallstack::FFrame(*address, std::move(symbol), std::move(filename), line);
     }
-#pragma warning( pop )
+PRAGMA_MSVC_WARNING_POP()
 
     return true;
 }

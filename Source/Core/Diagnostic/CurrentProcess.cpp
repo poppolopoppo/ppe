@@ -10,23 +10,26 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv)
-:   _fileName(MakeStringView(filename, Meta::FForceInit{}))
+:   _fileName(MakeCStringView(filename))
 ,   _args(NewArray<FWString>(argc)), _exitCode(0), _appIcon(0)
 ,   _startedAt(FTimepoint::Now()) {
 
     for (size_t i = 0; i < argc; ++i) {
         Assert(argv[i]);
-        _args[i] = MakeStringView(argv[i], Meta::FForceInit{});
+        _args[i] = MakeCStringView(argv[i]);
     }
 
-    size_t dirSep = _fileName.size();
-    for (; dirSep > 0 && _fileName[dirSep - 1] != L'/' && _fileName[dirSep - 1] != L'\\'; --dirSep);
+    const size_t dirSep = _fileName.find_last_of(L"\\/");
+    AssertRelease(INDEX_NONE != dirSep);
     _directory.assign(_fileName.begin(), _fileName.begin() + dirSep);
 
     _applicationHandle = applicationHandle;
     _nShowCmd = nShowCmd;
 #ifndef FINAL_RELEASE
     _startedWithDebugger = FPlatformMisc::IsDebuggerAttached();
+    if (_args.end() != _args.FindIf([](const FWString& arg) { return EqualsI(arg, L"-IgnoreDebugger"); })) {
+        _startedWithDebugger = false;
+    }
 #else
     _startedWithDebugger = false;
 #endif

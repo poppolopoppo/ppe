@@ -79,28 +79,30 @@ HRESULT STDCALL FDX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType,
     *ppData = nullptr;
     *pBytes = 0;
 
-    if (0 == CompareI(MakeStringView(pFileName, Meta::FForceInit{}), FShaderSource::AppIn_SubstitutionName()) ) {
+    FStringView filename(MakeCStringView(pFileName));
+    if (0 == CompareI(filename, FShaderSource::AppIn_SubstitutionName()) ) {
         GenerateAutomaticSubstitutions_(ppData, pBytes);
         return S_OK;
     }
 
     size_t length = 0;
     FileSystem::char_type buffer[2048];
+    FWFixedSizeTextWriter oss(buffer);
 
     switch (IncludeType)
     {
     case ::D3D_INCLUDE_SYSTEM:
-        length = Format(buffer, L"{0}{1}", _systemDir, pFileName);
+        Format(oss, L"{0}{1}", _systemDir, filename);
         break;
     case ::D3D_INCLUDE_LOCAL:
-        length = Format(buffer, L"{0}{1}", _source->Filename().Dirpath(), pFileName);
+        Format(oss, L"{0}{1}", _source->Filename().Dirpath(), filename);
         break;
     default:
         AssertNotImplemented();
         return E_FAIL;
     }
 
-    const FFilename includeFilename(FileSystem::FStringView(buffer, length));
+    const FFilename includeFilename(oss.Written());
     if (!FVirtualFileSystem::Instance().FileExists(includeFilename))
         return E_FAIL;
 
@@ -357,7 +359,7 @@ static void DX11ReflectShaderBlob_(
 
             const EValueType type = DX11ShaderTypeToValueType_(dx11TypeDesc);
 
-            layout->AddField(   FName(MakeStringView(dx11VariableDesc.Name, Meta::FForceInit{})),
+            layout->AddField(   FName(MakeCStringView(dx11VariableDesc.Name)),
                                 type,
                                 dx11VariableDesc.StartOffset,
                                 dx11VariableDesc.Size,
@@ -366,7 +368,7 @@ static void DX11ReflectShaderBlob_(
 
         Assert(layout->Block().size() > 0);
         AssertRelease(checked_cast<size_t>(dx11ConstantDesc.Size) == layout->Block().SizeInBytes());
-        constants.Insert_AssertUnique(FName(MakeStringView(dx11ConstantDesc.Name, Meta::FForceInit{})), layout);
+        constants.Insert_AssertUnique(FName(MakeCStringView(dx11ConstantDesc.Name)), layout);
     }
 
     for (UINT i = 0; i < dx11ShaderDesc.BoundResources; ++i) {
@@ -380,7 +382,7 @@ static void DX11ReflectShaderBlob_(
         AssertRelease(1 == dx11ResourceDesc.BindCount);
 
         FShaderProgramTexture texture;
-        texture.Name = MakeStringView(dx11ResourceDesc.Name, Meta::FForceInit{});
+        texture.Name = MakeCStringView(dx11ResourceDesc.Name);
 
         switch (dx11ResourceDesc.Dimension)
         {

@@ -14,8 +14,8 @@ FDecodedCallstack::FFrame::FFrame()
 //----------------------------------------------------------------------------
 FDecodedCallstack::FFrame::FFrame(void* address, const wchar_t* symbol, const wchar_t* filename, size_t line)
 : _address(address)
-, _symbol(MakeStringView(symbol, Meta::FForceInit{}))
-, _filename(MakeStringView(filename, Meta::FForceInit{}))
+, _symbol(MakeCStringView(symbol))
+, _filename(MakeCStringView(filename))
 , _line(line) {}
 //----------------------------------------------------------------------------
 FDecodedCallstack::FFrame::FFrame(void* address, FWString&& symbol, FWString&& filename, size_t line)

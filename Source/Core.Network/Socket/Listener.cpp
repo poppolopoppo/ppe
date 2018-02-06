@@ -185,7 +185,7 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
             return false;
         }
 
-        foreign_ip.assign(MakeStringView(real_foreign_ip, Meta::FForceInit{}));
+        foreign_ip.assign(MakeCStringView(real_foreign_ip));
     }
 
     // get the local ip
@@ -209,7 +209,7 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
             return false;
         }
 
-        local_ip.assign(MakeStringView(real_local_ip, Meta::FForceInit{}));
+        local_ip.assign(MakeCStringView(real_local_ip));
     }
     else {
         local_ip = _listening.Host();
