@@ -198,6 +198,20 @@ size_t FDirpath::ExpandPath(FMountingPoint& mountingPoint, const TMemoryView<FDi
     return (k -  beg);
 }
 //----------------------------------------------------------------------------
+void FDirpath::AssignTokens(const TMemoryView<const FFileSystemToken>& tokens) {
+    _path = FFileSystemPath::Instance().GetOrCreate(tokens);
+}
+//----------------------------------------------------------------------------
+void FDirpath::ExpandTokens(const TMemoryView<FFileSystemToken>& tokens) const {
+    if (_path) {
+        Assert(tokens.size() == _path->Depth());
+        FFileSystemPath::Instance().Expand(tokens, _path);
+    }
+    else {
+        Assert(tokens.empty());
+    }
+}
+//----------------------------------------------------------------------------
 bool FDirpath::HasMountingPoint() const {
     return (not MountingPoint().empty());
 }
@@ -243,14 +257,14 @@ FWString FDirpath::ToWString() const {
     return oss.ToString();
 }
 //----------------------------------------------------------------------------
-FStringView FDirpath::ToCStr(char *dst, size_t capacity) const {
-    FFixedSizeTextWriter oss(dst, capacity);
+FStringView FDirpath::ToCStr(const TMemoryView<char>& dst) const {
+    FFixedSizeTextWriter oss(dst);
     oss << *this << Eos;
     return oss.Written();
 }
 //----------------------------------------------------------------------------
-FWStringView FDirpath::ToWCStr(wchar_t *dst, size_t capacity) const {
-    FWFixedSizeTextWriter oss(dst, capacity);
+FWStringView FDirpath::ToWCStr(const TMemoryView<wchar_t>& dst) const {
+    FWFixedSizeTextWriter oss(dst);
     oss << *this << Eos;
     return oss.Written();
 }
@@ -424,6 +438,18 @@ FWTextWriter& operator <<(FWTextWriter& oss, const Core::FDirpath& dirpath) {
 
     return oss;
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Used in natvis/debuggers for printing FDirpath content
+#ifndef FINAL_RELEASE
+PRAGMA_DISABLE_OPTIMIZATION
+CORE_API NO_INLINE FWStringView DebugPrintDirpath(const FDirpath& dirpath) {
+    static wchar_t GDebugBuffer[1024];
+    return dirpath.ToWCStr(GDebugBuffer);
+}
+PRAGMA_ENABLE_OPTIMIZATION
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

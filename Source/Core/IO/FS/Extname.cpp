@@ -19,10 +19,11 @@ FExtname& FExtname::operator =(const FileSystem::FString& content) {
 //----------------------------------------------------------------------------
 FExtname::FExtname(const FileSystem::FStringView& content)
 :   parent_type(content) {
-    Assert(content.size() && L'.' == content[0]);
+    Assert(content.empty() || L'.' == content.front());
 }
 //----------------------------------------------------------------------------
 FExtname& FExtname::operator =(const FileSystem::FStringView& content) {
+    Assert(content.empty() || L'.' == content.front());
     parent_type::operator =(content);
     return *this;
 }
@@ -36,13 +37,13 @@ FExtname& FExtname::operator =(const FExtname& other) {
 }
 //----------------------------------------------------------------------------
 FExtname::FExtname(const FFileSystemToken& token)
-:   parent_type(token) {
-    Assert(token.empty() || L':' == *token.c_str());
+    : parent_type(token) {
+    Assert(token.empty() || L'.' == *token.c_str());
 }
 //----------------------------------------------------------------------------
 FExtname& FExtname::operator =(const FFileSystemToken& token) {
+    Assert(token.empty() || L'.' == *token.c_str());
     parent_type::operator =(token);
-    Assert(token.empty() || L':' == *token.c_str());
     return *this;
 }
 //----------------------------------------------------------------------------

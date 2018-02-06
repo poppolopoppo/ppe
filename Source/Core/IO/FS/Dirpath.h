@@ -57,7 +57,11 @@ public:
     size_t Depth() const;
     Core::FMountingPoint MountingPoint() const;
     Core::FDirname LastDirname() const;
+
     size_t ExpandPath(Core::FMountingPoint& mountingPoint, const TMemoryView<FDirname>& dirnames) const; // returns dirnames size
+
+    void AssignTokens(const TMemoryView<const FFileSystemToken>& tokens);
+    void ExpandTokens(const TMemoryView<FFileSystemToken>& tokens) const;
 
     bool empty() const { return nullptr == _path; }
 
@@ -71,8 +75,8 @@ public:
     FString ToString() const;
     FWString ToWString() const;
 
-    FStringView ToCStr(char *dst, size_t capacity) const;
-    FWStringView ToWCStr(wchar_t *dst, size_t capacity) const;
+    FStringView ToCStr(const TMemoryView<char>& dst) const;
+    FWStringView ToWCStr(const TMemoryView<wchar_t>& dst) const;
 
     void Swap(FDirpath& other);
 

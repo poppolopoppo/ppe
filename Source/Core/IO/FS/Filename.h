@@ -21,6 +21,10 @@ public:
 
     FFilename(FDirpath&& dirpath, FBasename&& basename);
     FFilename(const FDirpath& dirpath, const FBasename& basename);
+
+    FFilename(FDirpath&& dirpath, FBasenameNoExt&& basenameNoExt, FExtname&& extname);
+    FFilename(const FDirpath& dirpath, const FBasenameNoExt& basenameNoExt, const FExtname& extname);
+
     FFilename(const FDirpath& dirpath, const FileSystem::FStringView& relfilename);
 
     FFilename(FFilename&& rvalue);
@@ -86,11 +90,6 @@ public:
 
     FStringView ToCStr(const TMemoryView<char>& dst) const;
     FWStringView ToWCStr(const TMemoryView<wchar_t>& dst) const;
-
-    template <size_t _Dim>
-    size_t ToCStr(char (&dst)[_Dim]) const { return ToCStr(dst, _Dim); }
-    template <size_t _Dim>
-    size_t ToWCStr(wchar_t (&dst)[_Dim]) const { return ToWCStr(dst, _Dim); }
 
 private:
     FDirpath _dirpath;

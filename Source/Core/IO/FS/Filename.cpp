@@ -69,6 +69,12 @@ FFilename::FFilename(FDirpath&& dirpath, FBasename&& basename)
 FFilename::FFilename(const FDirpath& dirpath, const FBasename& basename)
 :   _dirpath(dirpath), _basename(basename) {}
 //----------------------------------------------------------------------------
+FFilename::FFilename(FDirpath&& dirpath, FBasenameNoExt&& basenameNoExt, FExtname&& extname)
+:   _dirpath(std::move(dirpath)), _basename(std::move(basenameNoExt), std::move(extname)) {}
+//----------------------------------------------------------------------------
+FFilename::FFilename(const FDirpath& dirpath, const FBasenameNoExt& basenameNoExt, const FExtname& extname)
+:   _dirpath(dirpath), _basename(basenameNoExt, extname) {}
+//----------------------------------------------------------------------------
 FFilename::FFilename(const FDirpath& dirpath, const FileSystem::FStringView& relfilename)
 :   _dirpath(dirpath) {
     if (!AppendRelname_(_dirpath, _basename, relfilename))
@@ -117,7 +123,6 @@ void FFilename::SetMountingPoint(const FMountingPoint& mountingPoint) {
     STACKLOCAL_POD_ARRAY(FDirname, dirnames, _dirpath.Depth());
     const size_t k = _dirpath.ExpandPath(oldMountingPoint, dirnames);
     Assert(_dirpath.Depth() >= k);
-    UNUSED(k);
     _dirpath = FDirpath(mountingPoint, dirnames.CutBeforeConst(k));
 }
 //----------------------------------------------------------------------------
@@ -244,6 +249,18 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FFilename& filename) {
         oss << filename.Dirpath();
     return oss << filename.Basename();
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Used in natvis/debuggers for printing FFilename content
+#ifndef FINAL_RELEASE
+PRAGMA_DISABLE_OPTIMIZATION
+CORE_API NO_INLINE FWStringView DebugPrintDirpath(const FFilename& filename) {
+    static wchar_t GDebugBuffer[1024];
+    return filename.ToWCStr(GDebugBuffer);
+}
+PRAGMA_ENABLE_OPTIMIZATION
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
