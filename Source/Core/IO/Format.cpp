@@ -41,6 +41,7 @@ struct TFormatTraits_<char> {
         fmt_SIZE    = 'Z',
         fmt_minus   = '-',
         fmt_sharp   = '#',
+        fmt_center  = '@',
     };
 };
 //----------------------------------------------------------------------------
@@ -73,6 +74,7 @@ struct TFormatTraits_<wchar_t> {
         fmt_point   = L'.',
         fmt_minus   = L'-',
         fmt_sharp   = L'#',
+        fmt_center  = L'@',
     };
 };
 //----------------------------------------------------------------------------
@@ -111,7 +113,7 @@ TBasicTextWriter<_Char>& operator <<(
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Char> *outp, size_t *index, TBasicFormatProps_<_Char>& props) {
+NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Char> *outp, size_t *index, TBasicFormatProps_<_Char>& props) {
     typedef typename TFormatTraits_<_Char>::EFlags format_traits;
 
     if (format.empty())
@@ -120,9 +122,9 @@ static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Cha
     *outp = format.CutBefore(format.begin());
     *index = size_t(-1);
 
-    do {
-        bool fixed = false;
+    props.Repeat = 1;
 
+    do {
         if (format_traits::lbrace != format.front() || not IsDigit(format[1]) ) {
             *outp = outp->GrowBack();
             format = format.ShiftFront();
@@ -143,6 +145,7 @@ static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Cha
             }
 
             if (format_traits::colon == format.front()){
+                int alignment = 1;
                 format = format.ShiftFront();
                 do {
                     Assert(format_traits::null != format.front());
@@ -174,14 +177,6 @@ static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Cha
                         format = format.ShiftFront();
                         continue;
 
-                    case format_traits::fmt_FIXED:
-                        props.Format.SetCase(FTextFormat::Uppercase);
-                    case format_traits::fmt_fixed:
-                        props.Format.SetFloat(FTextFormat::FixedFloat);
-                        format = format.ShiftFront();
-                        fixed = true;
-                        continue;
-
                     case format_traits::fmt_SCIENT:
                         props.Format.SetCase(FTextFormat::Uppercase);
                     case format_traits::fmt_scient:
@@ -208,16 +203,38 @@ static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Cha
                         props.FillChar = format_traits::zero;
                         format = format.ShiftFront();
                         continue;
+                    
+                    case format_traits::fmt_center:
+                        alignment = 0;
+                        format = format.ShiftFront();
+                        continue;
                     }
 
-                    int sign = 1;
+                    bool expect_fixed = false;
+                    bool expect_repeat = false;
+                    bool expect_width = false;
                     if (format_traits::fmt_minus == format.front()) {
                         format = format.ShiftFront();
-                        sign = -1;
+                        alignment = -1;
+                        expect_width = true;
+                    }
+                    else if (format_traits::multiply == format.front()) {
+                        format = format.ShiftFront();
+                        expect_repeat = true;
+                    }
+                    else if (format_traits::fmt_FIXED == format.front() ||
+                            format_traits::fmt_fixed == format.front()) {
+                        props.Format.SetFloat(FTextFormat::FixedFloat);
+                        props.Format.SetCase(format_traits::fmt_fixed == format.front() ? FTextFormat::Lowercase : FTextFormat::Uppercase);
+                        format = format.ShiftFront();
+                        expect_fixed = true;
+                    }
+                    else if (IsDigit(format.front())) {
+                        expect_width = true;
                     }
 
                     if (not IsDigit(format.front())) {
-                        AssertRelease(sign > 0); // invalid format : minus without digits
+                        AssertRelease(not (expect_fixed||expect_repeat||expect_width)); // invalid format : expected a number !
                         break;
                     }
 
@@ -230,35 +247,24 @@ static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Cha
                             AssertNotReached();
                     }
 
-                    if (fixed) {
-                        AssertRelease(sign > 0); // invalid format : negative precision is not supported
+                    if (expect_fixed) {
+                        AssertRelease(alignment >= 0); // invalid format : negative precision is not supported
                         props.Format.SetPrecision(checked_cast<std::streamsize>(parsedScalar));
                     }
-                    else {
+                    else if (expect_repeat) {
+                        props.Repeat = checked_cast<size_t>(parsedScalar);
+                    }
+                    else if (expect_width) {
                         props.Format.SetWidth(checked_cast<std::streamsize>(parsedScalar));
-                        props.Format.SetPadding(sign < 0 ? FTextFormat::Padding_Left : FTextFormat::Padding_Right);
+                        props.Format.SetPadding((alignment < 0
+                            ? FTextFormat::Padding_Right
+                            : (alignment == 0 ? FTextFormat::Padding_Center : FTextFormat::Padding_Left)) );
+                    }
+                    else {
+                        AssertNotReached();
                     }
                 }
-                while (format.size() && format_traits::rbrace != format.front());
-            }
-
-            props.Repeat = 1;
-            if (format_traits::multiply == format.front())
-            {
-                format = format.ShiftFront();
-                AssertRelease(IsDigit(format.front())); // invalid format : * must be followed by a digit
-
-                intptr_t parsedRepeat = 0;
-                {
-                    const TBasicStringView<_Char> digits = EatDigits(format);
-                    Assert(digits.data() + digits.size() == format.data());
-
-                    if (not Atoi(&parsedRepeat, digits, 10))
-                        AssertNotReached();
-                }
-
-                Assert(parsedRepeat > 0);
-                props.Repeat = checked_cast<size_t>(parsedRepeat);
+                while (format.size());
             }
 
             if (format_traits::rbrace == format.front())
@@ -285,7 +291,7 @@ static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Cha
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static void FormatArgsImpl_(
+NO_INLINE static void FormatArgsImpl_(
     TBasicTextWriter<_Char>& oss,
     const TBasicStringView<_Char>& format,
     const TMemoryView<const details::TBasicFormatFunctor_<_Char>>& args ) {

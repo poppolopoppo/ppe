@@ -55,17 +55,12 @@ CORE_API void FormatArgs_(FWTextWriter& oss, const FWStringView& format, const T
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
-using TBasicFormatArgList = TMemoryView< const details::TBasicFormatFunctor_<_Char> >;
-using FFormatArgList = TBasicFormatArgList<char>;
-using FWFormatArgList = TBasicFormatArgList<wchar_t>;
-//----------------------------------------------------------------------------
-template <typename _Char>
 void FormatArgs(TBasicTextWriter<_Char>& oss, const TBasicStringView<_Char>& format, const TBasicFormatArgList<_Char>& args) {
     details::FormatArgs_(oss, format, args);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-void Format(TBasicTextWriter<_Char>& oss, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+TBasicTextWriter<_Char>& Format(TBasicTextWriter<_Char>& oss, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     // args are always passed by pointer, wrapped in a void *
     // this avoids unintended copies and de-correlates from actual types (_FormatArgs is defined in Format.cpp)
     typedef details::TBasicFormatFunctor_<_Char> formatfunc_type;
@@ -75,20 +70,24 @@ void Format(TBasicTextWriter<_Char>& oss, const TBasicStringView<_Char>& format,
     };
 
     details::FormatArgs_(oss, format, MakeView(functors));
+
+    return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-void Format(const TMemoryView<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+size_t Format(const TMemoryView<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
     Assert(not dst.empty());
 
     TBasicFixedSizeTextWriter<_Char> oss(dst);
     Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     oss << Eos;
+
+    return oss.size();
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
 void Format(TBasicString<_Char>& result, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
-    TBasicStringBuilder<_Char> oss(Meta::FForceInit{}, result.clear_StealMemoryUnsafe());
+    TBasicStringBuilder<_Char> oss(std::move(result));
 
     Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 
