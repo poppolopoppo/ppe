@@ -117,10 +117,19 @@ public:
     template <typename _Char>
     static TBasicTextManipulator<_Char> SetFill(_Char ch);
 
+    struct FFloat {
+        EFloat Float;
+        size_t Precision;
+    };
+
+    static FFloat Float(EFloat flt, size_t precision) {
+        return FFloat{ flt, precision };
+    }
+
 private:
     EBase _base         : 2;
     ECase _case         : 2;
-    EFloat _float        : 2;
+    EFloat _float       : 2;
     EPadding _padding   : 2;
     EMisc _misc         : 8;
     u32 _width          : 8;
@@ -162,7 +171,7 @@ public:
     ~TBasicTextWriter() {}
 
     _Char FillChar() const { return _fillChar; }
-    void SetFillChar(_Char ch) { _fillChar = ch; }
+    _Char SetFillChar(_Char ch) { _Char old = _fillChar; _fillChar = ch; return old; }
 
     // won't format the text :
     void Put(_Char ch);
@@ -181,6 +190,7 @@ public:
     void Write(float v);
     void Write(double v);
     void Write(const void* v);
+    void Write(const _Char* v);
     void Write(const TBasicStringView<_Char>& v);
 
     inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, bool v) { w.Write(v); return w; }
@@ -195,7 +205,12 @@ public:
     inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, float v) { w.Write(v); return w; }
     inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, double v) { w.Write(v); return w; }
     inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, const void* v) { w.Write(v); return w; }
+    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, const _Char* v) { w.Write(v); return w; }
     inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, const TBasicStringView<_Char>& v) { w.Write(v); return w; }
+
+    // need those for complete support of integral types and remove ambiguous calls :
+    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, long v) { w.Write(checked_cast<i32>(v)); return w; }
+    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, unsigned long v) { w.Write(checked_cast<u32>(v)); return w; }
 
     template <size_t _Dim>
     inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, const _Char(&v)[_Dim]) { w.Write(MakeStringView(v)); return w; }
@@ -210,6 +225,32 @@ public:
         swap(lhs._ostream, rhs._ostream);
         swap(lhs._format, rhs._format);
         swap(lhs._fillChar, rhs._fillChar);
+    }
+
+public:
+    struct FFormatScope {
+        TBasicTextWriter& Owner;
+        const FTextFormat Format;
+        const _Char FillChar;
+        
+        FFormatScope(TBasicTextWriter& owner)
+            : Owner(owner)
+            , Format(owner.Format())
+            , FillChar(owner.FillChar()) 
+        {}
+
+        ~FFormatScope() {
+            Owner.SetFormat(Format);
+            Owner.SetFillChar(FillChar);
+        }
+
+        TBasicTextWriter& operator *() const {
+            return Owner;
+        }
+    };
+
+    FFormatScope FormatScope() {
+        return FFormatScope(*this);
     }
 
 private:
@@ -237,6 +278,7 @@ template <> CORE_API void TBasicTextWriter<char>::Write(u64 v);
 template <> CORE_API void TBasicTextWriter<char>::Write(float v);
 template <> CORE_API void TBasicTextWriter<char>::Write(double v);
 template <> CORE_API void TBasicTextWriter<char>::Write(const void* v);
+template <> CORE_API void TBasicTextWriter<char>::Write(const char* v);
 template <> CORE_API void TBasicTextWriter<char>::Write(const TBasicStringView<char>& v);
 //----------------------------------------------------------------------------
 template <> CORE_API void TBasicTextWriter<wchar_t>::Write(bool v);
@@ -251,6 +293,7 @@ template <> CORE_API void TBasicTextWriter<wchar_t>::Write(u64 v);
 template <> CORE_API void TBasicTextWriter<wchar_t>::Write(float v);
 template <> CORE_API void TBasicTextWriter<wchar_t>::Write(double v);
 template <> CORE_API void TBasicTextWriter<wchar_t>::Write(const void* v);
+template <> CORE_API void TBasicTextWriter<wchar_t>::Write(const wchar_t* v);
 template <> CORE_API void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v);
 //----------------------------------------------------------------------------
 extern CORE_API template class TBasicTextWriter<char>;
@@ -272,6 +315,9 @@ TBasicTextWriter<_Char>& Endl(TBasicTextWriter<_Char>& s);
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& s, const FTextFormat& v);
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& s, const FTextFormat::FFloat& v);
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& s, FTextFormat::EBase v);
@@ -310,16 +356,25 @@ public:
         , textwriter_type(static_cast<FMemoryViewWriter*>(this))
     {}
 
+    bool empty() const { return Written().empty(); }
+    size_t size() const { return Written().size(); }
+    const _Char* data() const { return Written().data(); }
+
+    size_t Tell() const { return Written().size(); }
+    void Reset() { FMemoryViewWriter::Reset(); }
+
     TBasicStringView<_Char> Written() const {
         return FMemoryViewWriter::Written().template Cast<const _Char>();
     }
 
-    bool empty() const { return Written().empty(); }
-    size_t size() const { return Written().size(); }
-
-    void Reset() { FMemoryViewWriter::Reset(); }
+    TBasicStringView<_Char> WrittenSince(size_t off) const {
+        return Written().CutStartingAt(off);
+    }
 
     using textwriter_type::Write;
+
+    FMemoryViewWriter* Stream() { return static_cast<FMemoryViewWriter*>(this); }
+    const FMemoryViewWriter* Stream() const { return static_cast<const FMemoryViewWriter*>(this); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

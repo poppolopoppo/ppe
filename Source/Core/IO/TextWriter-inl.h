@@ -51,6 +51,13 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& s, const FTextForm
     return s;
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& s, const FTextFormat::FFloat& v) {
+    s.Format().SetFloat(v.Float);
+    s.Format().SetPrecision(v.Precision);
+    return s;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>

@@ -104,8 +104,10 @@ constexpr u64 GBasesU64_[] = { 10, 2, 16, 8 };
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim>
 using TFullBaseStr_ = const _Char(&)[_Dim]; // Force to interpret as static char array
-static constexpr TFullBaseStr_<char, 18> FullBaseStr_(Meta::TType<char>) { return "0123456789abcdef-"; }
-static constexpr TFullBaseStr_<wchar_t, 18> FullBaseStr_(Meta::TType<wchar_t>) { return L"0123456789abcdef-"; }
+static constexpr char NegChar_(Meta::TType<char>) { return '-'; }
+static constexpr wchar_t NegChar_(Meta::TType<wchar_t>) { return L'-'; }
+static constexpr TFullBaseStr_<char, 17> FullBaseStr_(Meta::TType<char>) { return "0123456789abcdef"; }
+static constexpr TFullBaseStr_<wchar_t, 17> FullBaseStr_(Meta::TType<wchar_t>) { return L"0123456789abcdef"; }
 //----------------------------------------------------------------------------
 #if 0
 template <typename _Char>
@@ -201,9 +203,8 @@ static void WriteItoa_(TBasicTextWriter<_Char>& w, i64 v) {
     const u64 base = GBasesU64_[w.Format().Base()];
     size_t len;
     if (v < 0) {
-        const auto fullbase = FullBaseStr_(Meta::TType<_Char>{});
-        buffer[0] = fullbase[lengthof(fullbase) - 1];
-        len = Itoa_(w, checked_cast<u64>(-v), base, MakeView(buffer).CutStartingAt(1));
+        buffer[0] = NegChar_(Meta::TType<_Char>{});
+        len = (Itoa_(w, checked_cast<u64>(-v), base, MakeView(buffer).CutStartingAt(1)) + 1);
     }
     else {
         len = Itoa_(w, checked_cast<u64>(v), base, MakeView(buffer));
@@ -298,22 +299,26 @@ static void Write_(Meta::TType<wchar_t>, TBasicTextWriter<wchar_t>& w, bool v) {
 //----------------------------------------------------------------------------
 static void Write_(Meta::TType<char>, TBasicTextWriter<char>& w, const void* v) {
     const FTextFormat org = w.ResetFormat();
+    const char fillChar = w.FillChar();
     w.Put("[0x");
     w << FTextFormat::Hexadecimal;
     w << FTextFormat::PadLeft(sizeof(v) << 1, '0');
     WriteItoa_(w, u64(v));
     w.Put(']');
     w.Format() = org;
+    w.SetFillChar(fillChar);
 }
 //----------------------------------------------------------------------------
 static void Write_(Meta::TType<wchar_t>, TBasicTextWriter<wchar_t>& w, const void* v) {
     const FTextFormat org = w.ResetFormat();
+    const wchar_t fillChar = w.FillChar();
     w.Put(L"[0x");
     w << FTextFormat::Hexadecimal;
     w << FTextFormat::PadLeft(sizeof(v) << 1, L'0');
     WriteItoa_<wchar_t>(w, u64(v));
     w.Put(L']');
     w.Format() = org;
+    w.SetFillChar(fillChar);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -326,7 +331,7 @@ FBaseTextWriter::FBaseTextWriter(IBufferedStreamWriter* ostream)
 }
 //----------------------------------------------------------------------------
 FBaseTextWriter::~FBaseTextWriter() {
-    _ostream->Flush();
+    //_ostream->Flush(); // let the client control Flush()
 }
 //----------------------------------------------------------------------------
 FTextFormat FBaseTextWriter::SetFormat(const FTextFormat& fmt) {
@@ -367,6 +372,7 @@ template <> void TBasicTextWriter<char>::Write(u64 v) { WriteItoa_(*this, u64(v)
 template <> void TBasicTextWriter<char>::Write(float v) { WriteDtoa_(*this, v); }
 template <> void TBasicTextWriter<char>::Write(double v) { WriteDtoa_(*this, v); }
 template <> void TBasicTextWriter<char>::Write(const void* v) { Write_(Meta::TType<char>{}, *this, v); }
+template <> void TBasicTextWriter<char>::Write(const char* v) { WriteWFormat_(*this, MakeCStringView(v)); }
 template <> void TBasicTextWriter<char>::Write(const TBasicStringView<char>& v) { WriteWFormat_(*this, v); }
 //----------------------------------------------------------------------------
 template <> void TBasicTextWriter<wchar_t>::Write(bool v) { Write_(Meta::TType<wchar_t>{}, *this, v); }
@@ -381,6 +387,7 @@ template <> void TBasicTextWriter<wchar_t>::Write(u64 v) { WriteItoa_(*this, u64
 template <> void TBasicTextWriter<wchar_t>::Write(float v) { WriteDtoa_(*this, v); }
 template <> void TBasicTextWriter<wchar_t>::Write(double v) { WriteDtoa_(*this, v); }
 template <> void TBasicTextWriter<wchar_t>::Write(const void* v) { Write_(Meta::TType<wchar_t>{}, *this, v); }
+template <> void TBasicTextWriter<wchar_t>::Write(const wchar_t* v) { WriteWFormat_(*this, MakeCStringView(v)); }
 template <> void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v) { WriteWFormat_(*this, v); }
 //----------------------------------------------------------------------------
 /*extern CORE_API*/ template class TBasicTextWriter<char>;
