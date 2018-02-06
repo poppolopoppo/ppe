@@ -686,9 +686,14 @@ void Add_AssertUnique(TVector<T, _Allocator>& v, T&& elt) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void Add_Unique(TVector<T, _Allocator>& v, T&& elt) {
-    if (not Contains(v, elt))
+bool Add_Unique(TVector<T, _Allocator>& v, T&& elt) {
+    if (not Contains(v, elt)) {
         v.emplace_back(std::move(elt));
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
