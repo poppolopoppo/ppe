@@ -193,7 +193,7 @@ void* FLinearHeap::Relocate(void* ptr, size_t oldSize, size_t newSize, size_t al
     bool releaseSmallBlockTLS = false;
 
     // check if ptr was the last block allocated
-    if (((u8*)(smallBlockTLS + 1) + smallBlockTLS->Last) == ptr) {
+    if (smallBlockTLS && ((u8*)(smallBlockTLS + 1) + smallBlockTLS->Last) == ptr) {
         if (smallBlockTLS->Last + newSize <= GLinearHeapSmallBlocksCapacity) {
             // enough space available, grow/shrink the last allocation
             smallBlockTLS->Offset = checked_cast<u16>(smallBlockTLS->Last + newSize);
