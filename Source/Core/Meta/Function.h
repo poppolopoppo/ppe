@@ -4,6 +4,9 @@
 #include "Core/Meta/TypeTraits.h"
 
 namespace Core {
+class FRefCountable;
+template <typename T>
+class TSafePtr;
 namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -57,13 +60,13 @@ public:
         Assert(obj);
         Assert(member);
         struct member_t {
-            _Class* Obj;
+            TObjectRef_<_Class> Obj;
             _Ret(_Class::*Member)(_Args...);
             _Ret operator ()(_Args... args) const {
-                return (Obj->*Member)(std::forward<_Args>(args)...);
+                return (Obj.Ref->*Member)(std::forward<_Args>(args)...);
             }
         };
-        assign_wrapped_(member_t{ obj, member });
+        assign_wrapped_(member_t{ { obj }, member });
         Assert(is_pod_());
     }
 
@@ -72,13 +75,13 @@ public:
         Assert(obj);
         Assert(member);
         struct member_const_t {
-            const _Class* Obj;
+            TObjectRef_<const _Class> Obj;
             _Ret(_Class::*Member)(_Args...) const;
             _Ret operator ()(_Args... args) const {
-                return (Obj->*Member)(std::forward<_Args>(args)...);
+                return (Obj.Ref->*Member)(std::forward<_Args>(args)...);
             }
         };
-        assign_wrapped_(member_const_t{ obj, member });
+        assign_wrapped_(member_const_t{ { obj }, member });
         Assert(is_pod_());
     }
 
@@ -147,6 +150,16 @@ private:
 
     static constexpr size_t GInSituSize = (32 - sizeof(intptr_t));
     ALIGNED_STORAGE(GInSituSize, 1) _inSitu;
+
+    template <typename T, typename = void>
+    struct TObjectRef_ {
+        T* Ref;
+    };
+
+    template <typename T>
+    struct TObjectRef_<T, Meta::TEnableIf<std::is_base_of_v<FRefCountable, Meta::TDecay<T> >> > {
+        TSafePtr<T> Ref; // safe ref ptr when inheriting FRefCountable to check lifetime
+    };
 
     struct IWrapper_ {
         virtual ~IWrapper_() {}
