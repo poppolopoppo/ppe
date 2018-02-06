@@ -218,19 +218,19 @@ void FVirtualFileSystemStartup::Start() {
         if (!FileSystem::WorkingDirectory(workingPath, lengthof(workingPath)))
             AssertNotReached();
 
-        VFS.MountNativePath(L"Working:/", workingPath);
+        VFS.MountNativePath(L"Working:/", MakeCStringView(workingPath));
     }
     // data directory
     {
         FWString path;
         Format(path, L"{0}/../../Data", FCurrentProcess::Instance().Directory());
-        VFS.MountNativePath(MakeStringView(L"Data:/"), path);
+        VFS.MountNativePath(MakeStringView(L"Data:/"), std::move(path));
     }
     // saved directory
     {
         FWString path;
         Format(path, L"{0}/../../Output/Saved", FCurrentProcess::Instance().Directory());
-        VFS.MountNativePath(MakeStringView(L"Saved:/"), path);
+        VFS.MountNativePath(MakeStringView(L"Saved:/"), std::move(path));
     }
     // system temporary path
     {
@@ -238,7 +238,7 @@ void FVirtualFileSystemStartup::Start() {
         if (!FileSystem::SystemTemporaryDirectory(tmpPath, lengthof(tmpPath)) )
             AssertNotReached();
 
-        VFS.MountNativePath(L"Tmp:/", tmpPath);
+        VFS.MountNativePath(L"Tmp:/", MakeCStringView(tmpPath));
     }
     // user profile path
     {
