@@ -22,12 +22,12 @@ POOL_TAG_DEF(FLexer);
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool ReadCharset_(bool(&charset)(const char), FLookAheadReader& reader, FString& value) {
+static bool ReadCharset_(bool(&charset)(const char), FLookAheadReader& reader, FStringBuilder& value) {
     Assert(value.empty());
 
     char ch = reader.Peek(0);
     while (charset(ch)) {
-        value += ch;
+        value.Put(ch);
         reader.Read();
         ch = reader.Peek(0);
     }
@@ -48,7 +48,7 @@ static bool Hexadecimal_(const char ch) {
 }
 //----------------------------------------------------------------------------
 static bool Float_(const char ch) {
-    return ((ch >= '0') && (ch <= '9')) || (ch == '.');
+    return ((ch >= '0') && (ch <= '9')) || (ch == '.') || (ch == 'e') || (ch == 'E');
 }
 //----------------------------------------------------------------------------
 static bool Identifier_(const char ch) {
@@ -69,7 +69,7 @@ namespace {
 // TODO : Minimize indirect writes
 // https://www.youtube.com/watch?v=o4-CwDo2zpg
 template <size_t _Base>
-static void Itoa_(int64_t value, FString& str) {
+static void Itoa_(int64_t value, FStringBuilder& str) {
     static_assert(1 < _Base && _Base <= 16, "invalid _Base");
     Assert(str.empty());
 
@@ -80,13 +80,13 @@ static void Itoa_(int64_t value, FString& str) {
         const int64_t d = value % _Base;
         const char ch = checked_cast<char>(d + (d > 9 ? ('A'-10) : '0'));
 
-        str += ch;
+        str.Put(ch);
 
         value /= _Base;
     } while (value);
 
     if (neg)
-        str += '-';
+        str.Put('-');
 
     std::reverse(str.begin(), str.end());
 
@@ -132,7 +132,7 @@ static bool Lex_Symbol_(FLookAheadReader& reader, const FSymbol **psymbol, bool 
 
     const FSymbols& symbols = FSymbols::Instance();
 
-    STACKLOCAL_POD_STACK(char, poken, FSymbols::MaxLength);
+    TFixedSizeStack<char, FSymbols::MaxLength> poken;
 
     const FSymbol* result = nullptr;
     do {
@@ -184,7 +184,7 @@ static bool Lex_Symbol_(FLookAheadReader& reader, const FSymbol **psymbol, bool 
     }
 }
 //----------------------------------------------------------------------------
-static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FString& value) {
+static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStringBuilder& value) {
     Assert(psymbol);
     Assert(value.empty());
 
@@ -204,10 +204,10 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
             *psymbol = FSymbols::Int;
 
             if (!ReadCharset_(Hexadecimal_, reader, value))
-                CORE_THROW_IT(FLexerException("invalid hexadecimal int", FMatch(FSymbols::Int, std::move(value), reader.SourceSite(), reader.Tell()) ));
+                CORE_THROW_IT(FLexerException("invalid hexadecimal int", FMatch(FSymbols::Int, value.ToString(), reader.SourceSite(), reader.Tell()) ));
 
             int64_t numeric;
-            if (!Atoi64(&numeric, MakeStringView(value), 16)) {
+            if (!Atoi64(&numeric, value.Written(), 16)) {
                 Assert(false);
                 return false;
             }
@@ -225,10 +225,10 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
             *psymbol = FSymbols::Int;
 
             if (!ReadCharset_(Octal_, reader, value))
-                CORE_THROW_IT(FLexerException("invalid octal int", FMatch(FSymbols::Int, std::move(value), reader.SourceSite(), reader.Tell() )));
+                CORE_THROW_IT(FLexerException("invalid octal int", FMatch(FSymbols::Int, value.ToString(), reader.SourceSite(), reader.Tell() )));
 
             int64_t numeric;
-            if (!Atoi64(&numeric, MakeStringView(value), 8)) {
+            if (!Atoi64(&numeric, value.Written(), 8)) {
                 Assert(false);
                 return false;
             }
@@ -243,13 +243,12 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
     {
         // decimal or float
         if (!ReadCharset_(Float_, reader, value))
-            CORE_THROW_IT(FLexerException("invalid float", FMatch(FSymbols::Float, std::move(value), reader.SourceSite(), reader.Tell() )));
+            CORE_THROW_IT(FLexerException("invalid float", FMatch(FSymbols::Float, value.ToString(), reader.SourceSite(), reader.Tell() )));
 
         Assert(value.size());
 
         // if '.' found then it is a float
-        const size_t n = value.find_first_of('.');
-        *psymbol = (n < value.size())
+        *psymbol = (value.Written().Contains('.'))
             ? FSymbols::Float
             : FSymbols::Int;
 
@@ -262,7 +261,7 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
     return false;
 }
 //----------------------------------------------------------------------------
-static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FString& value) {
+static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStringBuilder& value) {
     Assert(psymbol);
     Assert(value.empty());
 
@@ -279,13 +278,13 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
         ReadCharset_(Until_<'\''>, reader, value);
 
         if ('\'' != (ch = reader.Read()))
-            CORE_THROW_IT(FLexerException("unterminated strong quoted string", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+            CORE_THROW_IT(FLexerException("unterminated strong quoted string", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
 
         return true;
     }
     else if ('"' == ch)
     {
-        FStringBuilder oss;
+        FStringBuilder& oss = value;
 
         // weak quoting
         ch = reader.Read();
@@ -348,7 +347,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     d1 = ToLower(reader.Read());
 
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1)))
-                        CORE_THROW_IT(FLexerException("invalid hexadecimal character escaping", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+                        CORE_THROW_IT(FLexerException("invalid hexadecimal character escaping", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
 
                     ch = (char)((d0 <= '9' ? d0 - '0' : d0 - 'a' + 10) * 16 +
                                 (d1 <= '9' ? d1 - '0' : d1 - 'a' + 10) );
@@ -365,7 +364,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     d3 = ToLower(reader.Read());
 
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1) && Hexadecimal_(d2) && Hexadecimal_(d3)))
-                        CORE_THROW_IT(FLexerException("invalid unicode character escaping", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell())));
+                        CORE_THROW_IT(FLexerException("invalid unicode character escaping", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell())));
 
                     unicode =   u16(d0 <= '9' ? d0 - '0' : d0 - 'a' + 10) * (16 * 16 * 16) +
                                 u16(d1 <= '9' ? d1 - '0' : d1 - 'a' + 10) * (16 * 16) +
@@ -383,10 +382,10 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     break;
 
                 case '\0':
-                    CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+                    CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
 
                 default:
-                    CORE_THROW_IT(FLexerException("invalid character escaping", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+                    CORE_THROW_IT(FLexerException("invalid character escaping", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
                 }
             }
             else
@@ -397,7 +396,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                 case '\\': escaped = true; break;
 
                 case '\0':
-                    CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, std::move(value), reader.SourceSite(), reader.Tell() )));
+                    CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
 
                 default:
                     oss.Put(ch);
@@ -406,7 +405,6 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
             }
         } while (inQuote);
 
-        oss.ToString(value);
         return true;
     }
 
@@ -416,7 +414,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
     return false;
 }
 //----------------------------------------------------------------------------
-static bool Lex_Identifier_(FLookAheadReader& reader, const FSymbol **psymbol, FString& value) {
+static bool Lex_Identifier_(FLookAheadReader& reader, const FSymbol **psymbol, FStringBuilder& value) {
     Assert(psymbol);
     Assert(value.empty());
 
@@ -572,7 +570,7 @@ bool FLexer::NextMatch_(FMatch& match) {
         Assert(FSymbol::Invalid != psymbol->Type());
 
         match._symbol = psymbol;
-        match._value = std::move(_lexing);
+        _lexing.ToString(match._value);
 
         _lexing.clear();
 

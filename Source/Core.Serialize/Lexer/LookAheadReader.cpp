@@ -19,7 +19,6 @@ FLookAheadReader::FLookAheadReader(IBufferedStreamReader* input, const FWStringV
 ,   _sourceColumn(1)
 ,   _input(input) {
     Assert(input);
-    Assert(not _sourceFileName.empty());
 }
 //----------------------------------------------------------------------------
 FLookAheadReader::~FLookAheadReader() {}

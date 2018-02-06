@@ -78,7 +78,7 @@ public:
     static const FSymbol *RShift;
     static const FSymbol *And;
     static const FSymbol *Or;
-    static const FSymbol *TNot;
+    static const FSymbol *Not;
     static const FSymbol *Xor;
     static const FSymbol *Complement;
     static const FSymbol *Assignment;

@@ -9,6 +9,7 @@
 #include "Core.Serialize/Lexer/Match.h"
 
 #include "Core/IO/String.h"
+#include "Core/IO/StringBuilder.h"
 
 #include <stdexcept>
 
@@ -63,7 +64,7 @@ private:
     FWString _sourceFileName;
     FLookAheadReader _reader;
 
-    FString _lexing;
+    FStringBuilder _lexing;
     FMatch _peek;
 
     bool _allowTypenames;

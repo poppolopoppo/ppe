@@ -132,7 +132,7 @@ FSymbols::FSymbols() {
     RegisterSymbol_(&RShift, _symbols, FSymbol::RShift, ">>");
     RegisterSymbol_(&And, _symbols, FSymbol::And, "&");
     RegisterSymbol_(&Or, _symbols, FSymbol::Or, "|");
-    RegisterSymbol_(&TNot, _symbols, FSymbol::TNot, "!");
+    RegisterSymbol_(&Not, _symbols, FSymbol::TNot, "!");
     RegisterSymbol_(&Xor, _symbols, FSymbol::Xor, "^");
     RegisterSymbol_(&Complement, _symbols, FSymbol::Complement, "~");
     RegisterSymbol_(&Assignment, _symbols, FSymbol::Assignment, "=");
@@ -186,7 +186,7 @@ FSymbols::FSymbols() {
     CheckSymbol_(_symbols, FSymbols::RShift);
     CheckSymbol_(_symbols, FSymbols::And);
     CheckSymbol_(_symbols, FSymbols::Or);
-    CheckSymbol_(_symbols, FSymbols::TNot);
+    CheckSymbol_(_symbols, FSymbols::Not);
     CheckSymbol_(_symbols, FSymbols::Xor);
     CheckSymbol_(_symbols, FSymbols::Complement);
     CheckSymbol_(_symbols, FSymbols::Assignment);
@@ -232,7 +232,7 @@ FSymbols::~FSymbols() {
     UnregisterSymbol_(_symbols, &RShift);
     UnregisterSymbol_(_symbols, &And);
     UnregisterSymbol_(_symbols, &Or);
-    UnregisterSymbol_(_symbols, &TNot);
+    UnregisterSymbol_(_symbols, &Not);
     UnregisterSymbol_(_symbols, &Xor);
     UnregisterSymbol_(_symbols, &Complement);
     UnregisterSymbol_(_symbols, &Assignment);
@@ -298,7 +298,7 @@ const FSymbol *FSymbols::LShift = nullptr;
 const FSymbol *FSymbols::RShift = nullptr;
 const FSymbol *FSymbols::And = nullptr;
 const FSymbol *FSymbols::Or = nullptr;
-const FSymbol *FSymbols::TNot = nullptr;
+const FSymbol *FSymbols::Not = nullptr;
 const FSymbol *FSymbols::Xor = nullptr;
 const FSymbol *FSymbols::Complement = nullptr;
 const FSymbol *FSymbols::Assignment = nullptr;
