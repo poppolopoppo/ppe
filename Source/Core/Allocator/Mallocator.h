@@ -117,4 +117,26 @@ size_t AllocatorSnapSize(const TMallocator<T, _Alignment>&, size_t size) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename U, size_t _Alignment, typename V>
+struct allocator_can_steal_from<
+    TMallocator<U, _Alignment>,
+    TMallocator<V, _Alignment>
+>   : Meta::TIntegralConstant<bool, true> {};
+//----------------------------------------------------------------------------
+template <typename T, size_t _Alignment>
+std::true_type/* enabled */AllocatorStealFrom(
+    TMallocator<T, _Alignment>&, 
+    typename TMallocator<T, _Alignment>::pointer, size_t ) {
+    return std::true_type{}; // nothing to do, everything is already checked statically
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Alignment>
+std::true_type/* enabled */AllocatorAcquireStolen(
+    TMallocator<T, _Alignment>&,
+    typename TMallocator<T, _Alignment>::pointer, size_t ) {
+    return std::true_type{}; // nothing to do, everything is already checked statically
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

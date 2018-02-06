@@ -108,7 +108,9 @@ public:
         return *this;
     }
 
-    FMemoryTracking* TrackingData() const { return &(domain_type::TrackingData); }
+    FMemoryTracking* TrackingData() const { return &(domain_type::TrackingData()); }
+
+    _Allocator& WrappedAllocator() { return static_cast<_Allocator&>(*this); }
     const _Allocator& WrappedAllocator() const { return static_cast<const _Allocator&>(*this); }
 
     size_type max_size() const { return base_type::max_size(); }
@@ -128,22 +130,58 @@ public:
             trackingData->Deallocate(n, sizeof(value_type));
     }
 
-    template<typename _D, typename _A>
-    friend bool operator ==(const TTrackingAllocator& lhs, const TTrackingAllocator<_D, _A>& rhs) {
-        return  operator ==(static_cast<const base_type&>(lhs), static_cast<const typename TTrackingAllocator<_D, _A>::base_type&>(rhs));
+    void steal_from(void*, size_type n) {
+        if (FMemoryTracking* const trackingData = TrackingData())
+            trackingData->Deallocate(n, sizeof(value_type));
+    }
+
+    void acquire_stolen(void*, size_type n) {
+        if (FMemoryTracking* const trackingData = TrackingData())
+            trackingData->Allocate(n, sizeof(value_type));
     }
 
     template<typename _D, typename _A>
-    friend bool operator !=(const TTrackingAllocator& lhs, const TTrackingAllocator<_D, _A>& rhs) {
-        return !operator ==(lhs, rhs);
+    inline friend bool operator ==(const TTrackingAllocator& lhs, const TTrackingAllocator<_D, _A>& rhs) {
+        return (lhs.WrappedAllocator() == rhs.WrappedAllocator());
+    }
+
+    template<typename _D, typename _A>
+    inline friend bool operator !=(const TTrackingAllocator& lhs, const TTrackingAllocator<_D, _A>& rhs) {
+        return not operator ==(lhs, rhs);
     }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Domain, typename _Allocator>
-size_t AllocationSnapSize(const TTrackingAllocator<_Domain, _Allocator>& allocator, size_t size) {
-    return AllocationSnapSize(allocator.WrappedAllocator(), size);
+size_t AllocatorSnapSize(const TTrackingAllocator<_Domain, _Allocator>& allocator, size_t size) {
+    return AllocatorSnapSize(allocator.WrappedAllocator(), size);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <
+    typename _DomainDst, typename _AllocatorDst
+,   typename _DomainSrc, typename _AllocatorSrc >
+struct allocator_can_steal_from<
+    TTrackingAllocator<_DomainDst, _AllocatorDst>,
+    TTrackingAllocator<_DomainSrc, _AllocatorSrc>
+>   : allocator_can_steal_from<_AllocatorDst, _AllocatorSrc> {};
+//----------------------------------------------------------------------------
+template <typename _Domain, typename _Allocator>
+auto/* inherited */AllocatorStealFrom(
+    TTrackingAllocator<_Domain, _Allocator>& alloc,
+    typename TTrackingAllocator<_Domain, _Allocator>::pointer ptr, size_t size ) {
+    alloc.steal_from(ptr, size);
+    return AllocatorStealFrom(alloc.WrappedAllocator(), ptr, size);
+}
+//----------------------------------------------------------------------------
+template <typename _Domain, typename _Allocator>
+auto/* inherited */AllocatorAcquireStolen(
+    TTrackingAllocator<_Domain, _Allocator>& alloc,
+    typename TTrackingAllocator<_Domain, _Allocator>::pointer ptr, size_t size ) {
+    alloc.acquire_stolen(ptr, size);
+    return AllocatorAcquireStolen(alloc.WrappedAllocator(), ptr, size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

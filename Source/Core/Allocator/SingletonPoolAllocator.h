@@ -108,7 +108,7 @@ void TSingletonPoolAllocator<T, _ThreadLocal, _PoolTag>::deallocate(void* p, siz
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, bool _ThreadLocal, typename _PoolTag >
-size_t AllocationSnapSize(const TSingletonPoolAllocator<T, _ThreadLocal, _PoolTag>&, size_t size) {
+size_t AllocatorSnapSize(const TSingletonPoolAllocator<T, _ThreadLocal, _PoolTag>&, size_t size) {
     Assert(1 == size);
     return 1;
 }

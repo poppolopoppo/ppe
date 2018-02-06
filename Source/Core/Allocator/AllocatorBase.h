@@ -115,10 +115,10 @@ template <typename _Allocator>
 struct allocator_has_realloc : decltype(details::_allocator_has_realloc( std::declval<_Allocator>() )) {};
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-typename std::enable_if<
+Meta::TEnableIf<
     true  == Meta::TIsPod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>   Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     typedef std::allocator_traits<_Allocator> allocator_traits;
     typedef typename allocator_traits::pointer pointer;
     Assert(0 == oldSize || nullptr != data.Pointer());
@@ -138,10 +138,10 @@ typename std::enable_if<
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-typename std::enable_if<
+Meta::TEnableIf<
     false  == Meta::TIsPod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>   Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     STATIC_ASSERT(std::is_default_constructible<typename _Allocator::value_type>::value);
     STATIC_ASSERT(std::is_move_constructible<typename _Allocator::value_type>::value);
 
@@ -171,30 +171,30 @@ typename std::enable_if<
 //----------------------------------------------------------------------------
 // Best case : T is a pod and _Allocator supports reallocate()
 template <typename _Allocator>
-typename std::enable_if<
+Meta::TEnableIf<
     true  == allocator_has_realloc<_Allocator>::value &&
     true  == Meta::TIsPod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>   Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return static_cast<typename _Allocator::pointer>(allocator.relocate(data.Pointer(), newSize, oldSize));
 }
 //----------------------------------------------------------------------------
 // Worst case : T is a pod but _Allocator does not support relocate()
 template <typename _Allocator>
-typename std::enable_if<
+Meta::TEnableIf<
     false == allocator_has_realloc<_Allocator>::value &&
     true  == Meta::TIsPod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>   Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);
 }
 //----------------------------------------------------------------------------
 // Common case : T is not a pod, whether _Allocator supports relocate() or not
 template <typename _Allocator>
-typename std::enable_if<
+Meta::TEnableIf<
     false == Meta::TIsPod<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
->::type Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>   Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);
 }
 //----------------------------------------------------------------------------
@@ -203,30 +203,68 @@ typename std::enable_if<
 // Use these when T is not a standard POD, but you know it call be treated as one
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-typename std::enable_if<
+Meta::TEnableIf<
     true  == allocator_has_realloc<_Allocator>::value,
     typename _Allocator::pointer
->::type Relocate_AssumePod(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>   Relocate_AssumePod(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return static_cast<typename _Allocator::pointer>(allocator.relocate(data.Pointer(), newSize, oldSize));
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-typename std::enable_if<
+Meta::TEnableIf<
     false == allocator_has_realloc<_Allocator>::value,
     typename _Allocator::pointer
->::type Relocate_AssumePod(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
+>   Relocate_AssumePod(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return Relocate(allocator, data, newSize, oldSize);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Can be overloaded by each allocator,
+// Must be overloaded by each allocator,
 //  - Correctly handle insitu allocations
 //  - Minimize wasted size for heap allocations
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-size_t AllocatorSnapSize(const _Allocator&, size_t size) {
-    return size; // identity by default (<=> no snapping)
+size_t AllocatorSnapSize(const _Allocator&, size_t size) = delete;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Can be overloaded by each allocator,
+//  - Handles stealing a block from an allocator to another
+//  - Used to disable memory stealing when not available and keep track of stolen blocks
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+std::false_type/* disabled */AllocatorStealFrom(_Allocator&, typename _Allocator::pointer, size_t);
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+std::false_type/* disabled */AllocatorAcquireStolen(_Allocator&, typename _Allocator::pointer, size_t);
+//----------------------------------------------------------------------------
+template <typename _AllocatorDst, typename _AllocatorSrc>
+struct allocator_can_steal_from : Meta::TIntegralConstant<bool, false> {};
+//----------------------------------------------------------------------------
+template <typename _AllocatorDst, typename _AllocatorSrc>
+struct allocator_can_steal_block {
+    using stealfrom_type = decltype(AllocatorStealFrom(
+        std::declval<_AllocatorSrc&>(), 
+        std::declval<typename _AllocatorSrc::pointer>(), 0 ));
+    using acquirestolen_type = decltype(AllocatorAcquireStolen(
+        std::declval<_AllocatorDst&>(), 
+        std::declval<typename _AllocatorDst::pointer>(), 0 ));
+    static constexpr bool value =
+        stealfrom_type::value &&
+        acquirestolen_type::value &&
+        allocator_can_steal_from<_AllocatorDst, _AllocatorSrc>::value;
+};
+//----------------------------------------------------------------------------
+template <typename _AllocatorDst, typename _AllocatorSrc>
+Meta::TEnableIf<
+    allocator_can_steal_block<_AllocatorDst, _AllocatorSrc>::value,
+    TMemoryView<typename _AllocatorDst::value_type>
+>   AllocatorStealBlock(_AllocatorDst& dst, const TMemoryView<typename _AllocatorSrc::value_type>& block, _AllocatorSrc& src) {
+    const TMemoryView<typename _AllocatorDst::value_type> stolen = block.template Cast<typename _AllocatorDst::value_type>();
+    AllocatorStealFrom(src, block.data(), block.size());
+    AllocatorAcquireStolen(dst, stolen.data(), stolen.size());
+    return stolen;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

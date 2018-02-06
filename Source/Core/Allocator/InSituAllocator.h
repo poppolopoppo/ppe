@@ -253,6 +253,48 @@ template <typename T, size_t _SizeInBytes, typename _Allocator>
 size_t AllocatorSnapSize(const TInSituAllocator<T, _SizeInBytes, _Allocator>& allocator, size_t size) {
     constexpr size_t GInSituCount = (_SizeInBytes / sizeof(T));
     return (size < GInSituCount ? GInSituCount : AllocatorSnapSize(allocator.FallbackAllocator(), size));
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _SizeInBytes, typename _Allocator, typename U, typename _Allocator2>
+struct allocator_can_steal_from<
+    TInSituAllocator<T, _SizeInBytes, _Allocator>,
+    TInSituAllocator<U, _SizeInBytes, _Allocator2>
+>   : allocator_can_steal_from<_Allocator, _Allocator2> {};
+//----------------------------------------------------------------------------
+template <typename T, size_t _SizeInBytes, typename _Allocator, typename _Allocator2>
+struct allocator_can_steal_from<
+    TInSituAllocator<T, _SizeInBytes, _Allocator>,
+    _Allocator2
+>   : allocator_can_steal_from<_Allocator, _Allocator2> {};
+//----------------------------------------------------------------------------
+template <typename T, size_t _SizeInBytes, typename _Allocator, typename _Allocator2>
+struct allocator_can_steal_from<
+    _Allocator,
+    TInSituAllocator<T, _SizeInBytes, _Allocator2>
+>   : allocator_can_steal_from<_Allocator, _Allocator2> {};
+//----------------------------------------------------------------------------
+template <typename T, size_t _SizeInBytes, typename _Allocator>
+auto/* inherited */AllocatorStealFrom(
+    TInSituAllocator<T, _SizeInBytes, _Allocator>& alloc, 
+    typename TInSituAllocator<T, _SizeInBytes, _Allocator>::pointer ptr, size_t size ) {
+    // checks that we not stealing from insitu storage, which can't be moved
+#if USE_CORE_INSITU_ALLOCATOR
+    Assert(TInSituAllocator<T, _SizeInBytes, _Allocator>::GInSituSize < size);
+#endif
+    Assert(not alloc.InSitu().Contains(ptr));
+    return AllocatorStealFrom(alloc.FallbackAllocator(), ptr, size);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _SizeInBytes, typename _Allocator>
+auto/* inherited */AllocatorAcquireStolen(
+    TInSituAllocator<T, _SizeInBytes, _Allocator>& alloc, 
+    typename TInSituAllocator<T, _SizeInBytes, _Allocator>::pointer ptr, size_t size ) {
+    // checks that the stolen block is larger than insitu storage, we can't break this predicate
+#if USE_CORE_INSITU_ALLOCATOR
+    Assert(TInSituAllocator<T, _SizeInBytes, _Allocator>::GInSituSize < size);
+#endif
+    return AllocatorAcquireStolen(alloc.FallbackAllocator(), ptr, size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

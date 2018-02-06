@@ -92,6 +92,13 @@ public:
     }
 };
 //----------------------------------------------------------------------------
+template <typename T>
+size_t AllocatorSnapSize(const TThreadLocalAllocator<T>& alloc, size_t size) {
+    return AllocatorSnapSize(
+        static_cast<const THeapAllocator<T, Heaps::FThreadLocal>&>(alloc), 
+        size );
+}
+//----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
 template <typename T>
