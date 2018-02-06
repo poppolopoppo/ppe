@@ -18,79 +18,17 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-constexpr size_t GNativeStreamBufferSize_ = (ALLOCATION_GRANULARITY); // <=> 64kb
-//----------------------------------------------------------------------------
-struct FNativeStreamReader_ {
-    FFileStreamReader Native;
-    FBufferedStreamReader Buffered;
-    FNativeStreamReader_(FFileStreamReader&& native)
-        : Native(std::move(native))
-        , Buffered(&Native, GNativeStreamBufferSize_)
-    {}
-};
-//----------------------------------------------------------------------------
-template <typename _Char>
-struct TBasicNativeStreamWriter_ {
-    FFileStreamWriter Native;
-    FBufferedStreamWriter Buffered;
-    TBasicTextWriter<_Char> TextWriter;
-    TBasicNativeStreamWriter_(FFileStreamWriter&& native)
-        : Native(std::move(native))
-        , Buffered(&Native, GNativeStreamBufferSize_)
-        , TextWriter(&Buffered)
-    {}
-};
-using FNativeStreamWriter_ = TBasicNativeStreamWriter_<char>;
-using FWNativeStreamWriter_ = TBasicNativeStreamWriter_<wchar_t>;
-//----------------------------------------------------------------------------
-FNativeStreamReader_& StdinReader_() {
-    ONE_TIME_INITIALIZE_THREAD_LOCAL(FNativeStreamReader_, GStdin_, FFileStream::OpenStdin(EAccessPolicy::TextU8));
-    return GStdin_;
-}
-//----------------------------------------------------------------------------
-FNativeStreamWriter_& StdoutWriter_() {
-    ONE_TIME_INITIALIZE_THREAD_LOCAL(FNativeStreamWriter_, GStdout_, FFileStream::OpenStdout(EAccessPolicy::TextU8));
-    return GStdout_;
-}
-//----------------------------------------------------------------------------
-FNativeStreamWriter_& StderrWriter_() {
-    ONE_TIME_INITIALIZE_THREAD_LOCAL(FNativeStreamWriter_, GStderr_, FFileStream::OpenStderr(EAccessPolicy::TextU8));
-    return GStderr_;
-}
-//----------------------------------------------------------------------------
-FWNativeStreamWriter_& WStdoutWriter_() {
-    ONE_TIME_INITIALIZE_THREAD_LOCAL(FWNativeStreamWriter_, GWStdout_, FFileStream::OpenStdout(EAccessPolicy::TextW));
-    return GWStdout_;
-}
-//----------------------------------------------------------------------------
-FWNativeStreamWriter_& WStderrWriter_() {
-    ONE_TIME_INITIALIZE_THREAD_LOCAL(FWNativeStreamWriter_, GWStderr_, FFileStream::OpenStderr(EAccessPolicy::TextW));
-    return GWStderr_;
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FTextWriter& GStdout = StdoutWriter_().TextWriter;
-//----------------------------------------------------------------------------
-FTextWriter& GStderr = StderrWriter_().TextWriter;
-//----------------------------------------------------------------------------
-FWTextWriter& GWStdout = WStdoutWriter_().TextWriter;
-//----------------------------------------------------------------------------
-FWTextWriter& GWStderr = WStderrWriter_().TextWriter;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 FFileStream::~FFileStream() {
     if (Good())
         VerifyRelease(FPlatformIO::Close(_handle));
 }
 //----------------------------------------------------------------------------
 FFileStream::FFileStream(FFileStream&& rvalue)
-    : _handle(rvalue._handle) {
+    : _handle(rvalue._handle) 
+#if WITH_CORE_FILESTREAM_FILENAMEDBG
+    , _filenameForDebug(std::move(rvalue._filenameForDebug))
+#endif
+{
     rvalue._handle = FPlatformIO::InvalidHandle;
 }
 //----------------------------------------------------------------------------
@@ -100,19 +38,18 @@ FFileStream& FFileStream::operator =(FFileStream&& rvalue) {
 
     Assert(Bad());
     std::swap(_handle, rvalue._handle);
+#if WITH_CORE_FILESTREAM_FILENAMEDBG
+    _filenameForDebug = std::move(rvalue._filenameForDebug);
+#endif
 
     return (*this);
 }
 //----------------------------------------------------------------------------
 bool FFileStream::Good() const {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
     return (FPlatformIO::InvalidHandle != _handle);
 }
 //----------------------------------------------------------------------------
 bool FFileStream::Close() {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
     if (Good()) {
         bool succeed = FPlatformIO::Close(_handle);
         _handle = FPlatformIO::InvalidHandle;
@@ -122,26 +59,24 @@ bool FFileStream::Close() {
 }
 //----------------------------------------------------------------------------
 bool FFileStream::Commit() {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Good());
 
     return FPlatformIO::Commit(_handle);
 }
 //----------------------------------------------------------------------------
 bool FFileStream::Dup2(FFileStream& other) const {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Good());
     Assert(other.Good());
 
     return FPlatformIO::Dup2(_handle, other._handle);
 }
 //----------------------------------------------------------------------------
-FFileStreamReader FFileStream::OpenRead(const FWStringView& filename, EAccessPolicy flags) {
-    Assert(not filename.empty());
+FFileStreamReader FFileStream::OpenRead(const wchar_t* filename, EAccessPolicy flags) {
+    Assert(filename);
 
 #if WITH_CORE_FILESTREAM_FILENAMEDBG
     FWString filenameForDebug;
-    filenameForDebug.assign(filename);
+    filenameForDebug.assign(MakeCStringView(filename));
 
     FFileStreamReader reader(FPlatformIO::Open(filenameForDebug.c_str(), EOpenPolicy::Readable, flags));
     reader._filenameForDebug = std::move(filenameForDebug);
@@ -149,20 +84,17 @@ FFileStreamReader FFileStream::OpenRead(const FWStringView& filename, EAccessPol
     return reader;
 
 #else
-    return FFileStreamReader(FPlatformIO::Open(
-        NullTerminated(INLINE_MALLOCA(wchar_t, filename.size() + 1), filename),
-        EOpenPolicy::Readable,
-        flags ));
+    return FFileStreamReader(FPlatformIO::Open(filename, EOpenPolicy::Readable, flags));
 
 #endif
 }
 //----------------------------------------------------------------------------
-FFileStreamWriter FFileStream::OpenWrite(const FWStringView& filename, EAccessPolicy flags) {
-    Assert(not filename.empty());
+FFileStreamWriter FFileStream::OpenWrite(const wchar_t* filename, EAccessPolicy flags) {
+    Assert(filename);
 
 #if WITH_CORE_FILESTREAM_FILENAMEDBG
     FWString filenameForDebug;
-    filenameForDebug.assign(filename);
+    filenameForDebug.assign(MakeCStringView(filename));
 
     FFileStreamWriter writer(FPlatformIO::Open(filenameForDebug.c_str(), EOpenPolicy::Writable, flags));
     writer._filenameForDebug = std::move(filenameForDebug);
@@ -170,20 +102,17 @@ FFileStreamWriter FFileStream::OpenWrite(const FWStringView& filename, EAccessPo
     return writer;
 
 #else
-    return FFileStreamWriter(FPlatformIO::Open(
-        NullTerminated(INLINE_MALLOCA(wchar_t, filename.size() + 1), filename),
-        EOpenPolicy::Writable,
-        flags ));
+    return FFileStreamWriter(FPlatformIO::Open(filename, EOpenPolicy::Writable, flags));
 
 #endif
 }
 //----------------------------------------------------------------------------
-FFileStreamReadWriter FFileStream::OpenReadWrite(const FWStringView& filename, EAccessPolicy flags) {
-    Assert(not filename.empty());
+FFileStreamReadWriter FFileStream::OpenReadWrite(const wchar_t* filename, EAccessPolicy flags) {
+    Assert(filename);
 
 #if WITH_CORE_FILESTREAM_FILENAMEDBG
     FWString filenameForDebug;
-    filenameForDebug.assign(filename);
+    filenameForDebug.assign(MakeCStringView(filename));
 
     FFileStreamReadWriter readWriter(FPlatformIO::Open(filenameForDebug.c_str(), EOpenPolicy::ReadWritable, flags));
     readWriter._filenameForDebug = std::move(filenameForDebug);
@@ -191,119 +120,49 @@ FFileStreamReadWriter FFileStream::OpenReadWrite(const FWStringView& filename, E
     return readWriter;
 
 #else
-    return FFileStreamReadWriter(FPlatformIO::Open(
-        NullTerminated(INLINE_MALLOCA(wchar_t, filename.size() + 1), filename),
-        EOpenPolicy::ReadWritable,
-        flags ));
+    return FFileStreamReadWriter(FPlatformIO::Open(filename, EOpenPolicy::ReadWritable, flags));
 
 #endif
-}
-//----------------------------------------------------------------------------
-FFileStreamReader FFileStream::OpenStdin(EAccessPolicy flags) {
-    const FPlatformIO::FHandle dup = FPlatformIO::Dup(FPlatformIO::Stdin);
-    AssertRelease(FPlatformIO::InvalidHandle != dup);
-    VerifyRelease(FPlatformIO::SetMode(dup, flags));
-
-    FFileStreamReader reader(dup);
-    Assert(reader.Good());
-
-#if WITH_CORE_FILESTREAM_FILENAMEDBG
-    reader._filenameForDebug = StringFormat(L"$stdin[{0}]", flags);
-#endif
-
-    return reader;
-}
-//----------------------------------------------------------------------------
-FFileStreamWriter FFileStream::OpenStdout(EAccessPolicy flags) {
-    const FPlatformIO::FHandle dup = FPlatformIO::Dup(FPlatformIO::Stdout);
-    AssertRelease(FPlatformIO::InvalidHandle != dup);
-    VerifyRelease(FPlatformIO::SetMode(dup, flags));
-
-    FFileStreamWriter writer(dup);
-    Assert(writer.Good());
-
-#if WITH_CORE_FILESTREAM_FILENAMEDBG
-    writer._filenameForDebug = StringFormat(L"$stdout[{0}]", flags);
-#endif
-
-    return writer;
-}
-//----------------------------------------------------------------------------
-FFileStreamWriter FFileStream::OpenStderr(EAccessPolicy flags) {
-    const FPlatformIO::FHandle dup = FPlatformIO::Dup(FPlatformIO::Stderr);
-    AssertRelease(FPlatformIO::InvalidHandle != dup);
-    VerifyRelease(FPlatformIO::SetMode(dup, flags));
-
-    FFileStreamWriter writer(dup);
-    Assert(writer.Good());
-
-#if WITH_CORE_FILESTREAM_FILENAMEDBG
-    writer._filenameForDebug = StringFormat(L"$stderr[{0}]", flags);
-#endif
-
-    return writer;
-}
-//----------------------------------------------------------------------------
-FBufferedStreamReader* FFileStream::StdinReader() {
-    return (&StdinReader_().Buffered);
-}
-//----------------------------------------------------------------------------
-FBufferedStreamWriter* FFileStream::StdoutWriter() {
-    return (&StdoutWriter_().Buffered);
-}
-//----------------------------------------------------------------------------
-FBufferedStreamWriter* FFileStream::StderrWriter() {
-    return (&StderrWriter_().Buffered);
 }
 //----------------------------------------------------------------------------
 void FFileStream::Start() {
-    // Set std streams mode to wide chars :
-    Verify(FPlatformIO::SetMode(FPlatformIO::Stdin, EAccessPolicy::TextU8));
-    Verify(FPlatformIO::SetMode(FPlatformIO::Stdout, EAccessPolicy::TextU8));
-    Verify(FPlatformIO::SetMode(FPlatformIO::Stderr, EAccessPolicy::TextU8));
+    // Set std streams mode to utf-8 chars :
+    /*
+    Verify(FPlatformIO::SetMode(FPlatformIO::Stdin, EAccessPolicy::Text));
+    Verify(FPlatformIO::SetMode(FPlatformIO::Stdout, EAccessPolicy::Text));
+    Verify(FPlatformIO::SetMode(FPlatformIO::Stderr, EAccessPolicy::Text));
+    */
 }
 //----------------------------------------------------------------------------
 void FFileStream::Shutdown() {
     // Force to commit std streams on exit :
+    /*
     Verify(FPlatformIO::Commit(FPlatformIO::Stdout));
     Verify(FPlatformIO::Commit(FPlatformIO::Stderr));
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FTextWriter Stdout() {
-    return FTextWriter(FFileStream::StdoutWriter());
-}
-//----------------------------------------------------------------------------
-FTextWriter Stderr() {
-    return FTextWriter(FFileStream::StderrWriter());
+    */
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool FFileStreamReader::Eof() const {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Good());
 
     return FPlatformIO::Eof(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReader::TellI() const {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Good());
 
     return FPlatformIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReader::SeekI(std::streamoff offset, ESeekOrigin origin/* = ESeekOrigin::Begin */) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Good());
 
     return FPlatformIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
 std::streamsize FFileStreamReader::SizeInBytes() const {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Good());
 
     const std::streamoff offset = FPlatformIO::Tell(_handle);
@@ -321,7 +180,6 @@ std::streamsize FFileStreamReader::SizeInBytes() const {
 }
 //----------------------------------------------------------------------------
 bool FFileStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(sizeInBytes);
 
     std::streamsize read = sizeInBytes;
@@ -333,7 +191,6 @@ bool FFileStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
 }
 //----------------------------------------------------------------------------
 size_t FFileStreamReader::ReadSome(void* storage, size_t eltsize, size_t count) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(eltsize);
     Assert(count);
 
@@ -348,19 +205,14 @@ size_t FFileStreamReader::ReadSome(void* storage, size_t eltsize, size_t count) 
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamWriter::TellO() const {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
     return FPlatformIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamWriter::SeekO(std::streamoff offset, ESeekOrigin origin) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
     return FPlatformIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
 bool FFileStreamWriter::Write(const void* storage, std::streamsize sizeInBytes) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(sizeInBytes);
 
     std::streamsize written = sizeInBytes;
@@ -372,7 +224,6 @@ bool FFileStreamWriter::Write(const void* storage, std::streamsize sizeInBytes) 
 }
 //----------------------------------------------------------------------------
 size_t FFileStreamWriter::WriteSome(const void* storage, size_t eltsize, size_t count) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(eltsize);
     Assert(count);
 
@@ -388,28 +239,24 @@ size_t FFileStreamWriter::WriteSome(const void* storage, size_t eltsize, size_t 
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool FFileStreamReadWriter::Eof() const {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Good());
 
     return FPlatformIO::Eof(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReadWriter::TellI() const {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Good());
 
     return FPlatformIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReadWriter::SeekI(std::streamoff offset, ESeekOrigin origin/* = ESeekOrigin::Begin */) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Good());
 
     return FPlatformIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
 std::streamsize FFileStreamReadWriter::SizeInBytes() const {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(Good());
 
     const std::streamoff offset = FPlatformIO::Tell(_handle);
@@ -427,7 +274,6 @@ std::streamsize FFileStreamReadWriter::SizeInBytes() const {
 }
 //----------------------------------------------------------------------------
 bool FFileStreamReadWriter::Read(void* storage, std::streamsize sizeInBytes) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(sizeInBytes);
 
     std::streamsize read = sizeInBytes;
@@ -439,7 +285,6 @@ bool FFileStreamReadWriter::Read(void* storage, std::streamsize sizeInBytes) {
 }
 //----------------------------------------------------------------------------
 size_t FFileStreamReadWriter::ReadSome(void* storage, size_t eltsize, size_t count) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(eltsize);
     Assert(count);
 
@@ -452,19 +297,14 @@ size_t FFileStreamReadWriter::ReadSome(void* storage, size_t eltsize, size_t cou
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReadWriter::TellO() const {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
     return FPlatformIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReadWriter::SeekO(std::streamoff offset, ESeekOrigin origin) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
     return FPlatformIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
 bool FFileStreamReadWriter::Write(const void* storage, std::streamsize sizeInBytes) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(sizeInBytes);
 
     std::streamsize written = sizeInBytes;
@@ -476,7 +316,6 @@ bool FFileStreamReadWriter::Write(const void* storage, std::streamsize sizeInByt
 }
 //----------------------------------------------------------------------------
 size_t FFileStreamReadWriter::WriteSome(const void* storage, size_t eltsize, size_t count) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(eltsize);
     Assert(count);
 

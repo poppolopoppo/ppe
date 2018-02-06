@@ -6,7 +6,6 @@
 #include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter_fwd.h"
 #include "Core/Misc/TargetPlatform.h"
-#include "Core/Meta/ThreadResource.h"
 
 #ifndef FINAL_RELEASE
 #   define WITH_CORE_FILESTREAM_FILENAMEDBG 1 // %_NOCOMMIT%
@@ -22,13 +21,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-extern CORE_API FTextWriter& GStdout;
-extern CORE_API FTextWriter& GStderr;
-//----------------------------------------------------------------------------
-extern CORE_API FWTextWriter& GWStdout;
-extern CORE_API FWTextWriter& GWStderr;
-//----------------------------------------------------------------------------
-class CORE_API FFileStream : protected Meta::FThreadResource {
+class CORE_API FFileStream {
 protected:
     explicit FFileStream(FPlatformIO::FHandle handle) : _handle(handle) {}
 public:
@@ -53,17 +46,9 @@ public:
     bool Commit();
     bool Dup2(FFileStream& other) const;
 
-    static class FFileStreamReader OpenRead(const FWStringView& filename, EAccessPolicy flags);
-    static class FFileStreamWriter OpenWrite(const FWStringView& filename, EAccessPolicy flags);
-    static class FFileStreamReadWriter OpenReadWrite(const FWStringView& filename, EAccessPolicy flags);
-
-    static class FFileStreamReader OpenStdin(EAccessPolicy flags = EAccessPolicy::TextU8);
-    static class FFileStreamWriter OpenStdout(EAccessPolicy flags = EAccessPolicy::TextU8);
-    static class FFileStreamWriter OpenStderr(EAccessPolicy flags = EAccessPolicy::TextU8);
-
-    static class FBufferedStreamReader* StdinReader();
-    static class FBufferedStreamWriter* StdoutWriter();
-    static class FBufferedStreamWriter* StderrWriter();
+    static class FFileStreamReader OpenRead(const wchar_t* filename, EAccessPolicy flags);
+    static class FFileStreamWriter OpenWrite(const wchar_t* filename, EAccessPolicy flags);
+    static class FFileStreamReadWriter OpenReadWrite(const wchar_t* filename, EAccessPolicy flags);
 
     static void Start();
     static void Shutdown();
