@@ -28,11 +28,13 @@ template <typename _Allocator = ALLOCATOR(Stream, u8)>
 class TMemoryStream : public IBufferedStreamReader, public IBufferedStreamWriter  {
 public:
     typedef TRawStorage<u8, _Allocator> storage_type;
+    typedef typename storage_type::allocator_type allocator_type;
 
     TMemoryStream();
+    explicit TMemoryStream(allocator_type&& alloc);
     explicit TMemoryStream(storage_type&& storage);
     TMemoryStream(storage_type&& storage, std::streamsize size);
-    TMemoryStream(Meta::FForceInit, const TMemoryView<u8>& stolen);
+    TMemoryStream(allocator_type&& allocator, const TMemoryView<u8>& stolen);
 
     u8* Pointer() { return _storage.Pointer(); }
     const u8* Pointer() const { return _storage.Pointer(); }
@@ -64,13 +66,13 @@ public:
     void clear_ReleaseMemory();
     void clear_StealMemory(storage_type& storage);
 
-    // !!! NEED TO DESTROY THE BLOCK AFTERWARDS WITH THE CORRECT ALLOCATOR !!!
-    template <typename U>
-    TMemoryView<U> clear_StealDataUnsafe(size_t* plen = nullptr) {
-        const TMemoryView<U> stolen = _storage.template clear_StealDataUnsafe<U>();
+    template <typename _OtherAllocator>
+    auto StealDataUnsafe(_OtherAllocator& alloc, size_t* plen = nullptr) {
+        using other_value_type = typename _OtherAllocator::value_type;
+        const TMemoryView<other_value_type> stolen = _storage.StealDataUnsafe(alloc);
         if (plen) {
-            Assert(Meta::IsAligned(sizeof(U), _size));
-            *plen = (_size / sizeof(U));
+            Assert(Meta::IsAligned(sizeof(other_value_type), _size));
+            *plen = (_size / sizeof(other_value_type));
         }
         _offsetI = _offsetO = _size = 0;
         return stolen;
@@ -119,6 +121,11 @@ TMemoryStream<_Allocator>::TMemoryStream()
     : _size(0), _offsetI(0), _offsetO(0) {}
 //----------------------------------------------------------------------------
 template <typename _Allocator>
+TMemoryStream<_Allocator>::TMemoryStream(allocator_type&& alloc)
+    : _size(0), _offsetI(0), _offsetO(0)
+    , _storage(std::move(alloc)) {}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
 TMemoryStream<_Allocator>::TMemoryStream(storage_type&& storage)
     : _size(0), _offsetI(0), _offsetO(0)
     , _storage(std::move(storage)) {}
@@ -131,9 +138,9 @@ TMemoryStream<_Allocator>::TMemoryStream(storage_type&& storage, std::streamsize
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-TMemoryStream<_Allocator>::TMemoryStream(Meta::FForceInit, const TMemoryView<u8>& stolen)
+TMemoryStream<_Allocator>::TMemoryStream(allocator_type&& allocator, const TMemoryView<u8>& stolen)
     : _size(0), _offsetI(0), _offsetO(0)
-    , _storage(Meta::FForceInit{}, stolen)
+    , _storage(std::move(allocator), stolen)
 {}
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -180,7 +187,7 @@ TMemoryView<u8> TMemoryStream<_Allocator>::Append(size_t sizeInBytes) {
     _size = Max(sizeInBytes + _offsetO, _size);
 
     if (_size > _storage.size()) { // doubles the storage size if there is not enough space
-        const size_t newCapacity = AllocatorSnapSize(_storage.allocator(), Max(_size, _storage.size() * 2));
+        const size_t newCapacity = AllocatorSnapSize(_storage.get_allocator(), Max(_size, _storage.size() * 2));
         Assert(newCapacity >= _size);
         _storage.Resize_KeepData(newCapacity);
     }
