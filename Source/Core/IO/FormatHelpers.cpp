@@ -14,7 +14,7 @@ namespace Fmt {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Format(char *buffer, size_t capacity, Fmt::FCountOfElements count) {
+FStringView Format(char *buffer, size_t capacity, Fmt::FCountOfElements count) {
     FFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
 
     oss.Format().SetPrecision(2);
@@ -26,9 +26,11 @@ void Format(char *buffer, size_t capacity, Fmt::FCountOfElements count) {
         oss << (count / 1e3f) << " K";
     else
         oss << count.Value;
+
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
-void Format(wchar_t *buffer, size_t capacity, Fmt::FCountOfElements count) {
+FWStringView Format(wchar_t *buffer, size_t capacity, Fmt::FCountOfElements count) {
     FWFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
 
     oss.Format().SetPrecision(2);
@@ -40,23 +42,27 @@ void Format(wchar_t *buffer, size_t capacity, Fmt::FCountOfElements count) {
         oss << (count / 1e3f) << L" K";
     else
         oss << count.Value;
+
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Format(char *buffer, size_t capacity, Fmt::FPointer ptr) {
+FStringView Format(char *buffer, size_t capacity, Fmt::FPointer ptr) {
     FFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
-    oss.Write((const void*)ptr.Value);
+    oss << (const void*)ptr.Value;
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
-void Format(wchar_t *buffer, size_t capacity, Fmt::FPointer ptr) {
+FWStringView Format(wchar_t *buffer, size_t capacity, Fmt::FPointer ptr) {
     FWFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
-    oss.Write((const void*)ptr.Value);
+    oss << (const void*)ptr.Value;
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void Format(char *buffer, size_t capacity, Fmt::FSizeInBytes size) {
+FStringView Format(char *buffer, size_t capacity, Fmt::FSizeInBytes size) {
     FFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
 
     oss.Format().SetPrecision(2);
@@ -82,9 +88,11 @@ void Format(char *buffer, size_t capacity, Fmt::FSizeInBytes size) {
         oss << Units::Storage::FKilobytes(bytes);
     else
         oss << bytes;
+
+    return oss.Written();
 }
 //----------------------------------------------------------------------------
-void Format(wchar_t *buffer, size_t capacity, Fmt::FSizeInBytes size) {
+FWStringView Format(wchar_t *buffer, size_t capacity, Fmt::FSizeInBytes size) {
     FWFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
 
     oss.Format().SetPrecision(2);
@@ -110,8 +118,9 @@ void Format(wchar_t *buffer, size_t capacity, Fmt::FSizeInBytes size) {
         oss << Units::Storage::FKilobytes(bytes);
     else
         oss << bytes;
-}
 
+    return oss.Written();
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -171,11 +180,188 @@ FTextWriter& operator <<(FTextWriter& oss, const Fmt::FIndent& indent) {
     return oss;
 }
 //----------------------------------------------------------------------------
-FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FIndent& indent) {
+FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FWIndent& indent) {
     Assert(indent.Level >= 0);
     forrange(i, 0, indent.Level)
-        for(char ch : indent.Tab)
-            oss << ch;
+        oss << indent.Tab;
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, Fmt::EChar ch) {
+    switch (ch) {
+    case Core::Fmt::LBrace:
+        return oss << '{';
+    case Core::Fmt::RBrace:
+        return oss << '}';
+    case Core::Fmt::LBracket:
+        return oss << '[';
+    case Core::Fmt::RBracket:
+        return oss << ']';
+    case Core::Fmt::LParenthese:
+        return oss << '(';
+    case Core::Fmt::RParenthese:
+        return oss << ')';
+    case Core::Fmt::Comma:
+        return oss << ',';
+    case Core::Fmt::Colon:
+        return oss << ':';
+    case Core::Fmt::SemiColon:
+        return oss << ';';
+    case Core::Fmt::Dot:
+        return oss << '.';
+    case Core::Fmt::Dollar:
+        return oss << '$';
+    case Core::Fmt::Question:
+        return oss << '?';
+    case Core::Fmt::Add:
+        return oss << '+';
+    case Core::Fmt::Sub:
+        return oss << '-';
+    case Core::Fmt::Mul:
+        return oss << '*';
+    case Core::Fmt::Div:
+        return oss << '/';
+    case Core::Fmt::Mod:
+        return oss << '%';
+    case Core::Fmt::Pow:
+        return oss << "**";
+    case Core::Fmt::Increment:
+        return oss << "++";
+    case Core::Fmt::Decrement:
+        return oss << "--";
+    case Core::Fmt::LShift:
+        return oss << "<<";
+    case Core::Fmt::RShift:
+        return oss << ">>";
+    case Core::Fmt::And:
+        return oss << '&';
+    case Core::Fmt::Or:
+        return oss << '|';
+    case Core::Fmt::Not:
+        return oss << '!';
+    case Core::Fmt::Xor:
+        return oss << '^';
+    case Core::Fmt::Complement:
+        return oss << '~';
+    case Core::Fmt::Assignment:
+        return oss << '=';
+    case Core::Fmt::Equals:
+        return oss << "==";
+    case Core::Fmt::NotEquals:
+        return oss << "!=";
+    case Core::Fmt::Less:
+        return oss << '<';
+    case Core::Fmt::LessOrEqual:
+        return oss << "<=";
+    case Core::Fmt::Greater:
+        return oss << '>';
+    case Core::Fmt::GreaterOrEqual:
+        return oss << ">=";
+    case Core::Fmt::DotDot:
+        return oss << "..";
+    case Core::Fmt::Sharp:
+        return oss << '#';
+    case Core::Fmt::Quote:
+        return oss << '\'';
+    case Core::Fmt::DoubleQuote:
+        return oss << '"';
+    case Core::Fmt::Space:
+        return oss << ' ';
+    case Core::Fmt::Tab:
+        return oss << ' ';
+    default:
+        AssertNotImplemented();
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, Fmt::EChar ch) {
+    switch (ch) {
+    case Core::Fmt::LBrace:
+        return oss << L'{';
+    case Core::Fmt::RBrace:
+        return oss << L'}';
+    case Core::Fmt::LBracket:
+        return oss << L'[';
+    case Core::Fmt::RBracket:
+        return oss << L']';
+    case Core::Fmt::LParenthese:
+        return oss << L'(';
+    case Core::Fmt::RParenthese:
+        return oss << L')';
+    case Core::Fmt::Comma:
+        return oss << L',';
+    case Core::Fmt::Colon:
+        return oss << L':';
+    case Core::Fmt::SemiColon:
+        return oss << L';';
+    case Core::Fmt::Dot:
+        return oss << L'.';
+    case Core::Fmt::Dollar:
+        return oss << L'$';
+    case Core::Fmt::Question:
+        return oss << L'?';
+    case Core::Fmt::Add:
+        return oss << L'+';
+    case Core::Fmt::Sub:
+        return oss << L'-';
+    case Core::Fmt::Mul:
+        return oss << L'*';
+    case Core::Fmt::Div:
+        return oss << L'/';
+    case Core::Fmt::Mod:
+        return oss << L'%';
+    case Core::Fmt::Pow:
+        return oss << L"**";
+    case Core::Fmt::Increment:
+        return oss << L"++";
+    case Core::Fmt::Decrement:
+        return oss << L"--";
+    case Core::Fmt::LShift:
+        return oss << L"<<";
+    case Core::Fmt::RShift:
+        return oss << L">>";
+    case Core::Fmt::And:
+        return oss << L'&';
+    case Core::Fmt::Or:
+        return oss << L'|';
+    case Core::Fmt::Not:
+        return oss << L'!';
+    case Core::Fmt::Xor:
+        return oss << L'^';
+    case Core::Fmt::Complement:
+        return oss << L'~';
+    case Core::Fmt::Assignment:
+        return oss << L'=';
+    case Core::Fmt::Equals:
+        return oss << L"==";
+    case Core::Fmt::NotEquals:
+        return oss << L"!=";
+    case Core::Fmt::Less:
+        return oss << L'<';
+    case Core::Fmt::LessOrEqual:
+        return oss << L"<=";
+    case Core::Fmt::Greater:
+        return oss << L'>';
+    case Core::Fmt::GreaterOrEqual:
+        return oss << L">=";
+    case Core::Fmt::DotDot:
+        return oss << L"..";
+    case Core::Fmt::Sharp:
+        return oss << L'#';
+    case Core::Fmt::Quote:
+        return oss << L'\'';
+    case Core::Fmt::DoubleQuote:
+        return oss << L'"';
+    case Core::Fmt::Space:
+        return oss << L' ';
+    case Core::Fmt::Tab:
+        return oss << L' ';
+    default:
+        AssertNotImplemented();
+    }
     return oss;
 }
 //----------------------------------------------------------------------------

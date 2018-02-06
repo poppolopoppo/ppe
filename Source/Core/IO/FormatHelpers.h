@@ -14,45 +14,52 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace Fmt {
 CORE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, FCountOfElements);
-void Format(char *buffer, size_t capacity, FCountOfElements count);
-void Format(wchar_t *buffer, size_t capacity, FCountOfElements count);
+CORE_API FStringView Format(char *buffer, size_t capacity, FCountOfElements count);
+CORE_API FWStringView Format(wchar_t *buffer, size_t capacity, FCountOfElements count);
+template <typename T>
+Meta::TEnableIf<std::is_integral_v<T>, FCountOfElements> CountOfElements(T n) {
+    return FCountOfElements{ checked_cast<T>(n) };
+}
 } //!namespace Fmt
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::FCountOfElements& count) {
     _Char buffer[32];
-    Fmt::Format(buffer, lengthof(buffer), count);
-    return oss << buffer;
+    return oss << Fmt::Format(buffer, lengthof(buffer), count);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
 CORE_STRONGLYTYPED_NUMERIC_DEF(intptr_t, FPointer);
-void Format(char *buffer, size_t capacity, FPointer ptr);
-void Format(wchar_t *buffer, size_t capacity, FPointer ptr);
+CORE_API FStringView Format(char *buffer, size_t capacity, FPointer ptr);
+CORE_API FWStringView Format(wchar_t *buffer, size_t capacity, FPointer ptr);
+template <typename T>
+FPointer Pointer(T* p) { return FPointer{ p }; }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::FPointer& ptr) {
     _Char buffer[32];
-    Fmt::Format(buffer, lengthof(buffer), ptr);
-    return oss << buffer;
+    return oss << Fmt::Format(buffer, lengthof(buffer), ptr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
 CORE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, FSizeInBytes);
-void Format(char *buffer, size_t capacity, FSizeInBytes value);
-void Format(wchar_t *buffer, size_t capacity, FSizeInBytes value);
+CORE_API FStringView Format(char *buffer, size_t capacity, FSizeInBytes value);
+CORE_API FWStringView Format(wchar_t *buffer, size_t capacity, FSizeInBytes value);
+template <typename T>
+Meta::TEnableIf<std::is_integral_v<T>, FSizeInBytes> SizeInBytes(T n) {
+    return FSizeInBytes{ checked_cast<uint64_t>(n) };
+}
 } //!namespace Fmt
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::FSizeInBytes& size) {
     _Char buffer[32];
-    Fmt::Format(buffer, lengthof(buffer), size);
-    return oss << buffer;
+    return oss << Fmt::Format(buffer, lengthof(buffer), size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -218,26 +225,45 @@ CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDu
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
-struct FIndent {
-    explicit FIndent(const FStringView& tab = "    ") : Tab(tab) {}
-    FStringView Tab;
+template <typename _Char>
+struct TBasicIndent {
+    explicit TBasicIndent(const TBasicStringView<_Char>& tab) : Tab(tab) {}
+    TBasicStringView<_Char> Tab;
     int Level = 0;
     void Inc() { ++Level; }
     void Dec() { Assert(Level > 0); --Level; }
     struct FScope {
-        FIndent& Indent;
-        FScope(FIndent& indent) : Indent(indent) { Indent.Inc(); }
+        TBasicIndent& Indent;
+        FScope(TBasicIndent& indent) : Indent(indent) { Indent.Inc(); }
         ~FScope() { Indent.Dec(); }
     };
-    static FIndent UsingTabs()  { return FIndent{ "\t" }; }
-    static FIndent TwoSpaces()  { return FIndent{ "  " }; }
+};
+struct FIndent : TBasicIndent<char> {
+    using TBasicIndent<char>::FScope;
+
+    explicit FIndent(const FStringView& tab = "    ") 
+        : TBasicIndent<char>(tab) {}
+
+    static FIndent UsingTabs() { return FIndent{ "\t" }; }
+    static FIndent TwoSpaces() { return FIndent{ "  " }; }
     static FIndent FourSpaces() { return FIndent{ "    " }; }
-    static FIndent None()       { return FIndent{ "" }; }
+    static FIndent None() { return FIndent{ "" }; }
+};
+struct FWIndent : TBasicIndent<wchar_t> {
+    using TBasicIndent<wchar_t>::FScope;
+
+    explicit FWIndent(const FWStringView& tab = L"    ") 
+        : TBasicIndent<wchar_t>(tab) {}
+
+    static FWIndent UsingTabs() { return FWIndent{ L"\t" }; }
+    static FWIndent TwoSpaces() { return FWIndent{ L"  " }; }
+    static FWIndent FourSpaces() { return FWIndent{ L"    " }; }
+    static FWIndent None() { return FWIndent{ L"" }; }
 };
 } //!namespace Fmt
 //----------------------------------------------------------------------------
 CORE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::FIndent& indent);
-CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FIndent& indent);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FWIndent& indent);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -257,6 +283,56 @@ inline FWTextWriter& operator <<(FWTextWriter& woss, const Fmt::FWFormator& wfor
     wformator(woss);
     return woss;
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Fmt {
+    enum EChar {
+        LBrace,
+        RBrace,
+        LBracket,
+        RBracket,
+        LParenthese,
+        RParenthese,
+        Comma,
+        Colon,
+        SemiColon,
+        Dot,
+        Dollar,
+        Question,
+        Add,
+        Sub,
+        Mul,
+        Div,
+        Mod,
+        Pow,
+        Increment,
+        Decrement,
+        LShift,
+        RShift,
+        And,
+        Or,
+        Not,
+        Xor,
+        Complement,
+        Assignment,
+        Equals,
+        NotEquals,
+        Less,
+        LessOrEqual,
+        Greater,
+        GreaterOrEqual,
+        DotDot,
+        Sharp,
+        Quote,
+        DoubleQuote,
+        Space,
+        Tab,
+    };
+} //!namespace Fmt
+//----------------------------------------------------------------------------
+CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::EChar ch);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::EChar ch);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
