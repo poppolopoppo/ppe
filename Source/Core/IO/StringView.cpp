@@ -7,6 +7,8 @@
 #include "IO/TextWriter.h"
 #include "Memory/HashFunctions.h"
 
+#include "Core.External/double-conversion-external.h"
+
 #include <emmintrin.h>
 #include <intrin.h>
 
@@ -98,7 +100,7 @@ static bool Atoi_(T *dst, const TBasicStringView<_Char>& str, size_t base) {
     const bool neg = (traits::Neg == str[0]);
 
     i64 v = 0;
-    for (size_t i = neg ? 1 : 0; i < str.size(); ++i) {
+    for (size_t i = size_t(neg); i < str.size(); ++i) {
         const _Char ch = str[i];
 
         int d;
@@ -119,6 +121,7 @@ static bool Atoi_(T *dst, const TBasicStringView<_Char>& str, size_t base) {
     return true;
 }
 //----------------------------------------------------------------------------
+#if 0 // old custom method
 template <typename T, typename _Char>
 static bool Atof_(T *dst, const TBasicStringView<_Char>& str) {
     static_assert(std::is_floating_point<T>::value, "T must be a floating point type");
@@ -191,6 +194,46 @@ static bool Atof_(T *dst, const TBasicStringView<_Char>& str) {
 
     return true;
 }
+#else // but now prefer using double-conversion since it's already integrated for inverse operation
+
+static const double_conversion::StringToDoubleConverter& DefaultStringToDoubleConverter_() {
+    ONE_TIME_INITIALIZE(
+        const double_conversion::StringToDoubleConverter,
+        GStringToDoubleConverter_,
+        double_conversion::StringToDoubleConverter::NO_FLAGS,
+        NAN, NAN, "Inf", "NaN" );
+    return GStringToDoubleConverter_;
+}
+
+const char* StringToDoubleStr_(const char* str) { return str; }
+const u16* StringToDoubleStr_(const wchar_t* str) { 
+    STATIC_ASSERT(sizeof(wchar_t) == sizeof(u16)); 
+    return reinterpret_cast<const u16*>(str);
+}
+
+template <typename _Char>
+static bool Atof_(float *dst, const TBasicStringView<_Char>& str) {
+    int len;
+    *dst = DefaultStringToDoubleConverter_().StringToFloat(
+        StringToDoubleStr_(str.data()), 
+        checked_cast<int>(str.size()), 
+        &len );
+
+    return (len == str.size());
+}
+template <typename _Char>
+static bool Atof_(double *dst, const TBasicStringView<_Char>& str) {
+    int len;
+    *dst = DefaultStringToDoubleConverter_().StringToDouble(
+        StringToDoubleStr_(str.data()), 
+        checked_cast<int>(str.size()), 
+        &len );
+
+    return (len == str.size());
+}
+
+#endif
+
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct TWildChars_ {};
@@ -1126,24 +1169,26 @@ void Escape(FTextWriter& oss, const FStringView& str, EEscape escape) {
         default:
             if (IsPrint(ch))
                 oss.Put(ch);
-            else
+            else {
+                const size_t ord = (size_t(ch) & 0xFF);
                 switch (escape) {
                 case Core::EEscape::Octal:
                     oss.Put('\\');
-                    oss << FTextFormat::Octal << (u32(ch) & 0xFF);
+                    oss << FTextFormat::Octal << ord;
                     break;
                 case Core::EEscape::Hexadecimal:
                     oss.Put("\\x");
-                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, '0') << u8(ch);
+                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, '0') << ord;
                     break;
                 case Core::EEscape::Unicode:
                     oss.Put("\\u00");
-                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, '0') << u8(ch);
+                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, '0') << ord;
                     break;
                 default:
                     AssertNotImplemented();
                     break;
                 }
+            }
         }
     }
 
@@ -1155,8 +1200,9 @@ void Escape(FTextWriter& oss, const FWStringView& wstr, EEscape escape) {
     const FTextFormat fmt = oss.ResetFormat();
 
     for (wchar_t wch : wstr) {
+        const size_t ord = (size_t(wch) & 0xFFFF);
         oss.Put("\\u");
-        oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, '0') << u16(wch);
+        oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, '0') << ord;
     }
 
     oss.SetFormat(fmt);
@@ -1165,12 +1211,12 @@ void Escape(FTextWriter& oss, const FWStringView& wstr, EEscape escape) {
 void Escape(FWTextWriter& oss, const FWStringView& wstr, EEscape escape) {
     const FTextFormat fmt = oss.ResetFormat();
 
-    for (wchar_t ch : wstr) {
-        switch (ch) {
+    for (wchar_t wch : wstr) {
+        switch (wch) {
         case L'\\':
         case L'"':
             oss.Put(L'\\');
-            oss.Put(ch);
+            oss.Put(wch);
             break;
         case '\b':
             oss.Put(L"\\b");
@@ -1188,28 +1234,30 @@ void Escape(FWTextWriter& oss, const FWStringView& wstr, EEscape escape) {
             oss.Put(L"\\r");
             break;
         default:
-            if (IsPrint(ch))
-                oss.Put(ch);
-            else
+            if (IsPrint(wch))
+                oss.Put(wch);
+            else {
+                const size_t ord = (size_t(wch) & 0xFFFF);
                 switch (escape) {
                 case Core::EEscape::Octal:
                     oss.Put(L'\\');
-                    oss << FTextFormat::Octal << (u32(ch) & 0xFFFF);
+                    oss << FTextFormat::Octal << ord;
                     break;
                 case Core::EEscape::Hexadecimal:
                     oss.Put(L"\\x");
-                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << u8(ch >> 8);
+                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << ((ord >> 8) & 0xFF);
                     oss.Put(L"\\x");
-                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << u8(ch & 0xFF);
+                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << (ord & 0xFF);
                     break;
                 case Core::EEscape::Unicode:
                     oss.Put(L"\\u");
-                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << u16(ch);
+                    oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << ord;
                     break;
                 default:
                     AssertNotImplemented();
                     break;
                 }
+            }
         }
     }
 
@@ -1220,18 +1268,19 @@ void Escape(FWTextWriter& oss, const FStringView& str, EEscape escape) {
     const FTextFormat fmt = oss.ResetFormat();
 
     for (char ch : str) {
+        const size_t ord = (size_t(ch) & 0xFF);
         switch (escape) {
         case Core::EEscape::Octal:
             oss.Put(L'\\');
-            oss << FTextFormat::Octal << (u32(ch) & 0xFF);
+            oss << FTextFormat::Octal << ord;
             break;
         case Core::EEscape::Hexadecimal:
             oss.Put(L"\\x");
-            oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << u8(ch);
+            oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << ord;
             break;
         case Core::EEscape::Unicode:
             oss.Put(L"\\u00");
-            oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << u8(ch);
+            oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << ord;
             break;
         default:
             AssertNotImplemented();
