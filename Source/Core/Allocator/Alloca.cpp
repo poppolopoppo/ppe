@@ -228,11 +228,11 @@ void* FAllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) 
             header[2] = HeaderCanary;
             header[3] = HeaderCanary;
 
-            u32* const footer = reinterpret_cast<u32*>((u8*)&header[4] + newSizeInBytes);
-            footer[0] = FooterCanary;
-            footer[1] = FooterCanary;
-            footer[2] = FooterCanary;
-            footer[3] = header[1];
+            u32* const newFooter = reinterpret_cast<u32*>((u8*)&header[4] + newSizeInBytes);
+            newFooter[0] = FooterCanary;
+            newFooter[1] = FooterCanary;
+            newFooter[2] = FooterCanary;
+            newFooter[3] = header[1];
 #endif
         }
         else { // not enough place in the stack local space, fallback to thread local allocation

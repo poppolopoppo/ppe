@@ -123,7 +123,7 @@ struct TAllocaBlock {
         CONCAT(_Count_, _NAME) )
 //----------------------------------------------------------------------------
 #define INLINE_MALLOCA(T, _COUNT) \
-    ::Core::TAllocaBlock<T>( static_cast< T* >(SYSALLOCA_IFP(sizeof(T) * _COUNT)), _COUNT )
+    ::Core::TAllocaBlock<T>( static_cast< T* >(SYSALLOCA_IFP(sizeof(T) * (_COUNT))), (_COUNT) )
 //----------------------------------------------------------------------------
 #define STACKLOCAL_POD_ARRAY(T, _NAME, _COUNT) \
     MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT ); \
