@@ -40,7 +40,6 @@ public:
     STATIC_CONST_INTEGRAL(size_t, npos, INDEX_NONE);
 
     TBasicString() noexcept : _large{0, 0, 0, nullptr} {}
-    TBasicString(Meta::FForceInit, const TMemoryView<_Char>& stolen, size_t len = 0) noexcept;
     ~TBasicString();
 
     TBasicString(const _Char* s, size_t len) : TBasicString() { assign(stringview_type(s, len)); }
@@ -102,6 +101,8 @@ public:
     void assign(size_t n, _Char fill);
     template <typename _It>
     void assign(_It first, _It last);
+    template <size_t _Dim>
+    void assign(const _Char(&staticArray)[_Dim]) { assign(MakeStringView(staticArray)); }
 
     void append(_Char ch) { append(stringview_type(&ch, 1)); }
     void append(const TBasicString& other) { append(other.MakeView()); }
@@ -110,6 +111,8 @@ public:
     void append(size_t n, _Char fill);
     template <typename _It>
     void append(_It first, _It last);
+    template <size_t _Dim>
+    void append(const _Char(&staticArray)[_Dim]) { append(MakeStringView(staticArray)); }
 
     void insert(size_t pos, _Char ch) { insert(pos, stringview_type(&ch, 1)); }
     void insert(size_t pos, const TBasicString& other) { insert(pos, other.MakeView()); }
@@ -118,6 +121,8 @@ public:
     void insert(size_t pos, size_t n, _Char fill);
     template <typename _It>
     void insert(size_t pos, _It first, _It last);
+    template <size_t _Dim>
+    void insert(size_t pos, const _Char(&staticArray)[_Dim]) { insert(pos, MakeStringView(staticArray)); }
 
     void insert(iterator it, _Char ch) { insert(it - begin(), stringview_type(&ch, 1)); }
     void insert(iterator it, const TBasicString& other) { insert(it - begin(), other.MakeView()); }
@@ -126,6 +131,8 @@ public:
     void insert(iterator it, const stringview_type& str) { insert(it - begin(), str); }
     template <typename _It>
     void insert(iterator it, _It first, _It last) { insert(it - begin(), first, last); }
+    template <size_t _Dim>
+    void insert(iterator it, const _Char(&staticArray)[_Dim]) { insert(it, MakeStringView(staticArray)); }
 
     void push_back(_Char ch) { append(ch); }
     void pop_back() { resize(size() - 1); }
@@ -139,6 +146,8 @@ public:
     void replace(size_t pos, size_t len, size_t n, _Char fill);
     template <typename _It>
     void replace(size_t pos, size_t len, _It first, _It last);
+    template <size_t _Dim>
+    void replace(size_t pos, size_t len, const _Char(&staticArray)[_Dim]) { replace(pos, len, MakeStringView(staticArray)); }
 
     void replace(iterator from, iterator to, const TBasicString& other) { replace(from - begin(), to - from, other.MakeView()); }
     void replace(iterator from, iterator to, const stringview_type& str) { replace(from - begin(), to - from, str); }
@@ -146,6 +155,8 @@ public:
     void replace(iterator from, iterator to, size_t n, _Char fill) { replace(from - begin(), to - from, n, fill); }
     template <typename _It>
     void replace(iterator from, iterator to, _It first, _It last) { replace(from - begin(), to - from, first, last); }
+    template <size_t _Dim>
+    void replace(iterator from, iterator to, const _Char(&staticArray)[_Dim]) { replace(from, to, MakeStringView(staticArray)); }
 
     void copy(_Char* s, size_t len, size_t pos = 0) const { std::copy(begin() + pos, end(), MakeCheckedIterator(s, len, 0)); }
     void copy(const TMemoryView<_Char>& dst, size_t pos = 0) const { std::copy(begin() + pos, end(), dst.begin()); }
@@ -158,26 +169,38 @@ public:
     size_t find(const TBasicString& other, size_t pos = 0) const noexcept { return find(other.MakeView(), pos); }
     size_t find(const stringview_type& str, size_t pos = 0) const noexcept;
     size_t find(_Char ch, size_t pos = 0) const noexcept { return find_if([ch](_Char in) { return (in == ch); }, pos); }
+    template <size_t _Dim>
+    size_t find(const _Char(&staticArray)[_Dim], size_t pos = 0) const noexcept { return find(MakeStringView(staticArray), pos); }
 
     size_t rfind(const TBasicString& other, size_t pos = npos) const noexcept { return rfind(other.MakeView(), pos); }
     size_t rfind(const stringview_type& str, size_t pos = npos) const noexcept;
     size_t rfind(_Char ch, size_t pos = npos) const noexcept { return rfind_if([ch](_Char in) { return (in == ch); }, pos); }
+    template <size_t _Dim>
+    size_t rfind(const _Char(&staticArray)[_Dim], size_t pos = npos) const noexcept { return rfind(MakeStringView(staticArray), pos); }
 
     size_t find_first_of(const TBasicString& other, size_t pos = 0) const noexcept { return find_first_of(other.MakeView(), pos); }
     size_t find_first_of(const stringview_type& str, size_t pos = 0) const noexcept { return find_if([&](_Char in) { return str.Contains(in); }, pos); }
     size_t find_first_of(_Char ch, size_t pos = 0) const noexcept { return find(ch, pos); }
+    template <size_t _Dim>
+    size_t find_first_of(const _Char(&staticArray)[_Dim], size_t pos = 0) const noexcept { return find_first_of(MakeStringView(staticArray), pos); }
 
-    size_t find_last_of(const TBasicString& other, size_t pos = 0) const noexcept { return find_last_of(other.MakeView(), pos); }
-    size_t find_last_of(const stringview_type& str, size_t pos = 0) const noexcept { return rfind_if([&](_Char in) { return str.Contains(in); }, pos); }
-    size_t find_last_of(_Char ch, size_t pos = 0) const noexcept { return rfind(ch, pos); }
+    size_t find_last_of(const TBasicString& other, size_t pos = npos) const noexcept { return find_last_of(other.MakeView(), pos); }
+    size_t find_last_of(const stringview_type& str, size_t pos = npos) const noexcept { return rfind_if([&](_Char in) { return str.Contains(in); }, pos); }
+    size_t find_last_of(_Char ch, size_t pos = npos) const noexcept { return rfind(ch, pos); }
+    template <size_t _Dim>
+    size_t find_last_of(const _Char(&staticArray)[_Dim], size_t pos = npos) const noexcept { return find_last_of(MakeStringView(staticArray), pos); }
 
     size_t find_first_not_of(const TBasicString& other, size_t pos = 0) const noexcept { return find_first_not_of(other.MakeView(), pos); }
     size_t find_first_not_of(const stringview_type& str, size_t pos = 0) const noexcept { return find_if([&](_Char in) { return (not str.Contains(in)); }, pos); }
     size_t find_first_not_of(_Char ch, size_t pos = 0) const noexcept { return find_if([ch](_Char in) { return (in != ch); }, pos); }
+    template <size_t _Dim>
+    size_t find_first_not_of(const _Char(&staticArray)[_Dim], size_t pos = 0) const noexcept { return find_first_not_of(MakeStringView(staticArray), pos); }
 
-    size_t find_last_not_of(const TBasicString& other, size_t pos = 0) const noexcept { return find_last_not_of(other.MakeView(), pos); }
-    size_t find_last_not_of(const stringview_type& str, size_t pos = 0) const noexcept { return rfind_if([&](_Char in) { return (not str.Contains(in)); }, pos); }
-    size_t find_last_not_of(_Char ch, size_t pos = 0) const noexcept { return rfind_if([ch](_Char in) { return (in != ch); }, pos); }
+    size_t find_last_not_of(const TBasicString& other, size_t pos = npos) const noexcept { return find_last_not_of(other.MakeView(), pos); }
+    size_t find_last_not_of(const stringview_type& str, size_t pos = npos) const noexcept { return rfind_if([&](_Char in) { return (not str.Contains(in)); }, pos); }
+    size_t find_last_not_of(_Char ch, size_t pos = npos) const noexcept { return rfind_if([ch](_Char in) { return (in != ch); }, pos); }
+    template <size_t _Dim>
+    size_t find_last_not_of(const _Char(&staticArray)[_Dim], size_t pos = npos) const noexcept { return find_last_not_of(MakeStringView(staticArray), pos); }
 
     TBasicString substr(size_t pos = 0, size_t len = npos) const;
 
@@ -190,13 +213,17 @@ public:
     void clear();
     void clear_ReleaseMemory();
 
-    int compare(const stringview_type& str) const { return Compare(MakeView(), str); }
-    int compare(const TBasicString& other) const { return Compare(MakeView(), other.MakeView()); }
+    int compare(const stringview_type& str) const noexcept { return Compare(MakeView(), str); }
+    int compare(const TBasicString& other) const noexcept { return Compare(MakeView(), other.MakeView()); }
+    template <size_t _Dim>
+    int compare(const _Char(&staticArray)[_Dim]) const noexcept { return Compare(MakeView(), MakeStringView(staticArray)); }
 
     TBasicString& operator +=(_Char ch) { append(ch); return (*this); }
     TBasicString& operator +=(const stringview_type& str) { append(str); return (*this); }
     TBasicString& operator +=(const TBasicString& other) { append(other); return (*this); }
     TBasicString& operator +=(std::initializer_list<_Char> il) { append(il.begin(), il.end()); return (*this); }
+    template <size_t _Dim>
+    TBasicString& operator +=(const _Char(&staticArray)[_Dim]) { append(MakeStringView(staticArray)); return (*this); }
 
     inline friend TBasicString operator +(const TBasicString& lhs, const TBasicString& rhs);
     inline friend TBasicString operator +(TBasicString&& lhs, TBasicString&& rhs);
@@ -207,6 +234,15 @@ public:
     inline friend TBasicString operator +(TBasicString&& lhs, const stringview_type& rhs);
     inline friend TBasicString operator +(const stringview_type& lhs, const TBasicString& rhs);
     inline friend TBasicString operator +(const stringview_type& lhs, TBasicString&& rhs);
+
+    template <size_t _Dim>
+    inline friend TBasicString operator +(const TBasicString& lhs, const _Char(&rhs)[_Dim]) { return operator +(lhs, MakeStringView(rhs)); }
+    template <size_t _Dim>
+    inline friend TBasicString operator +(TBasicString&& lhs, const _Char(&rhs)[_Dim]) { return operator +(std::move(lhs), MakeStringView(rhs)); }
+    template <size_t _Dim>
+    inline friend TBasicString operator +(const _Char(&lhs)[_Dim], const TBasicString& rhs) { return operator +(MakeStringView(lhs), rhs); }
+    template <size_t _Dim>
+    inline friend TBasicString operator +(const _Char(&lhs)[_Dim], TBasicString&& rhs) { return operator +(MakeStringView(lhs), std::move(rhs)); }
 
     inline friend TBasicString operator +(const TBasicString& lhs, _Char rhs);
     inline friend TBasicString operator +(TBasicString&& lhs, _Char rhs);
@@ -266,6 +302,14 @@ public:
     inline friend void swap(TBasicString& lhs, TBasicString& rhs) { std::swap(lhs._large, rhs._large); }
 
 public: // non stl
+    // memory stealing between TBasicStringBuilder & TBasicString
+
+    explicit TBasicString(TBasicStringBuilder<_Char>&& sb) noexcept;
+
+    void assign(TBasicStringBuilder<_Char>&& sb);
+
+    template <typename _OtherAllocator>
+    TMemoryView<typename _OtherAllocator::value_type> StealDataUnsafe(_OtherAllocator& alloc, size_t* plen = nullptr);
 
     // can be implicitly casted to TBasicStringView<> since it's cheap and convenient
     operator TBasicStringView<_Char> () const { return MakeView(); }
@@ -277,7 +321,6 @@ public: // non stl
     int compare(const TBasicString& other, ECase sensitive) const { return (sensitive == ECase::Sensitive ? compare(other) : compareI(other)); }
 
     // note : equals() is faster than compare() == 0
-
     bool equals(const stringview_type& str) const { return Equals(MakeView(), str); }
     bool equals(const TBasicString& other) const { return Equals(MakeView(), other.MakeView()); }
 
@@ -290,15 +333,13 @@ public: // non stl
     void to_lower() { InplaceToLower(MutableView()); }
     void to_upper() { InplaceToUpper(MutableView()); }
 
-    void gsub(_Char from, const TBasicString& to) { gsub(from, to.MakeView()); }
-    void gsub(const TBasicString& from, const TBasicString& to) { gsub(from.MakeView(), to.MakeView()); }
-    void gsub(_Char from, _Char to);
-    void gsub(_Char from, const stringview_type& to);
-    void gsub(const stringview_type& from, const stringview_type& to);
-
-    // !!! NEED TO DESTROY THE BLOCK AFTERWARDS WITH THE CORRECT ALLOCATOR !!!
-    TMemoryView<_Char> clear_StealMemoryUnsafe(size_t* plen = nullptr);
-    void assign(Meta::FForceInit, TMemoryView<_Char>& stolen, size_t len = 0);
+    bool gsub(_Char from, const TBasicString& to) { return gsub(from, to.MakeView()); }
+    bool gsub(const TBasicString& from, const TBasicString& to) { return gsub(from.MakeView(), to.MakeView()); }
+    bool gsub(_Char from, _Char to);
+    bool gsub(_Char from, const stringview_type& to);
+    bool gsub(const stringview_type& from, const stringview_type& to);
+    template <size_t _Dim0, size_t _Dim1>
+    bool gsub(const _Char(&from)[_Dim0], const _Char(&to)[_Dim1]) { return gsub(MakeStringView(from), MakeStringView(to)); }
 
     stringview_type MakeView() const {
         return (is_large_()
@@ -361,6 +402,9 @@ private:
         FSmallString_ _small;
         FLargeString_ _large;
     };
+
+public:
+    STATIC_CONST_INTEGRAL(size_t, GInSituSize, FSmallString_::GCapacity);
 };
 //----------------------------------------------------------------------------
 extern CORE_API template class TBasicString<char>;
