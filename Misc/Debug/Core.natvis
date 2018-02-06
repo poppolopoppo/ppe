@@ -3,12 +3,12 @@
   <!-- https://code.msdn.microsoft.com/windowsdesktop/Writing-type-visualizers-2eae77a2 -->
 
   <Type Name="Core::Meta::TPointerWFlags&lt;*&gt;">
-    <DisplayString>{{ ptr={($T1*)(size_t(_pFlags)&amp;~3)} flag0={(_pFlags&amp;1)!=0} flag1={(_pFlags&amp;2)!=0} flag01={_pFlags&amp;3} }}</DisplayString>
+    <DisplayString>{{ ptr={($T1*)(_ptr * 4)} flag0={(_flags&amp;1)!=0} flag1={(_flags&amp;2)!=0} flag01={_flags} }}</DisplayString>
     <Expand>
-      <Item Name="Pointer">($T1*)(size_t(_pFlags)&amp;~3)</Item>
-      <Item Name="Flag0">(_pFlags&amp;1)!=0</Item>
-      <Item Name="Flag1">(_pFlags&amp;2)!=0</Item>
-      <Item Name="Flag01">_pFlags&amp;3</Item>
+      <Item Name="[Pointer]">($T1*)(_ptr * 4)</Item>
+      <Item Name="[Flag0]">(_flags&amp;1)!=0</Item>
+      <Item Name="[Flag1]">(_flags&amp;2)!=0</Item>
+      <Item Name="[Flag01]">_flags</Item>
     </Expand>
   </Type>
 
@@ -18,12 +18,12 @@
     <StringView Condition="_large.IsLarge == 0">_small.Buffer,[_small.Size]s</StringView>
     <StringView Condition="_large.IsLarge != 0">_large.Storage,[_large.Size]s</StringView>
     <Expand>
-      <Item Condition="_large.IsLarge == 0" Name="Content">_small.Buffer,[_small.Size]s</Item>
-      <Item Condition="_large.IsLarge == 0" Name="Size">size_t(_small.Size)</Item>
-      <Item Condition="_large.IsLarge == 0" Name="Capacity">sizeof(_small.Buffer)/sizeof(_small.Buffer[0])</Item>
-      <Item Condition="_large.IsLarge != 0" Name="Content">_large.Storage,[_large.Size]s</Item>
-      <Item Condition="_large.IsLarge != 0" Name="Size">_large.Size</Item>
-      <Item Condition="_large.IsLarge != 0" Name="Capacity">_large.Capacity</Item>
+      <Item Condition="_large.IsLarge == 0" Name="[Content]">_small.Buffer,[_small.Size]s</Item>
+      <Item Condition="_large.IsLarge == 0" Name="[Size]">size_t(_small.Size)</Item>
+      <Item Condition="_large.IsLarge == 0" Name="[Capacity]">sizeof(_small.Buffer)/sizeof(_small.Buffer[0])</Item>
+      <Item Condition="_large.IsLarge != 0" Name="[Content]">_large.Storage,[_large.Size]s</Item>
+      <Item Condition="_large.IsLarge != 0" Name="[Size]">_large.Size</Item>
+      <Item Condition="_large.IsLarge != 0" Name="[Capacity]">_large.Capacity</Item>
       <Item Name="SBO">!!!_large.IsLarge</Item>
     </Expand>
   </Type>
@@ -33,12 +33,12 @@
     <StringView Condition="_large.IsLarge == 0">_small.Buffer,[_small.Size]su</StringView>
     <StringView Condition="_large.IsLarge != 0">_large.Storage,[_large.Size]su</StringView>
     <Expand>
-      <Item Condition="_large.IsLarge == 0" Name="Content">_small.Buffer,[_small.Size]su</Item>
-      <Item Condition="_large.IsLarge == 0" Name="Size">size_t(_small.Size)</Item>
-      <Item Condition="_large.IsLarge == 0" Name="Capacity">sizeof(_small.Buffer)/sizeof(_small.Buffer[0])</Item>
-      <Item Condition="_large.IsLarge != 0" Name="Content">_large.Storage,[_large.Size]su</Item>
-      <Item Condition="_large.IsLarge != 0" Name="Size">_large.Size</Item>
-      <Item Condition="_large.IsLarge != 0" Name="Capacity">_large.Capacity</Item>
+      <Item Condition="_large.IsLarge == 0" Name="[Content]">_small.Buffer,[_small.Size]su</Item>
+      <Item Condition="_large.IsLarge == 0" Name="[Size]">size_t(_small.Size)</Item>
+      <Item Condition="_large.IsLarge == 0" Name="[Capacity]">sizeof(_small.Buffer)/sizeof(_small.Buffer[0])</Item>
+      <Item Condition="_large.IsLarge != 0" Name="[Content]">_large.Storage,[_large.Size]su</Item>
+      <Item Condition="_large.IsLarge != 0" Name="[Size]">_large.Size</Item>
+      <Item Condition="_large.IsLarge != 0" Name="[Capacity]">_large.Capacity</Item>
       <Item Name="SBO">!!!_large.IsLarge</Item>
     </Expand>
   </Type>
@@ -209,9 +209,9 @@
     <DisplayString>empty</DisplayString>
     <StringView>(const char*)(_handle+1),[(int)_handle-&gt;Length]s</StringView>
     <Expand>
-      <Item Name="String" Condition="_handle != nullptr">(const char*)(_handle+1),[(int)_handle-&gt;Length]s</Item>
-      <Item Name="Length" Condition="_handle != nullptr">(int)_handle-&gt;Length</Item>
-      <Item Name="HashValue" Condition="_handle != nullptr">(int)_handle-&gt;HashValue,X</Item>
+      <Item Name="[String]" Condition="_handle != nullptr">(const char*)(_handle+1),[(int)_handle-&gt;Length]s</Item>
+      <Item Name="[Length]" Condition="_handle != nullptr">(int)_handle-&gt;Length</Item>
+      <Item Name="[HashValue]" Condition="_handle != nullptr">(int)_handle-&gt;HashValue,X</Item>
     </Expand>
   </Type>
   <Type Name="Core::TToken&lt;*, wchar_t, *, * &gt;">
@@ -219,16 +219,16 @@
     <DisplayString Condition="_handle == nullptr">empty</DisplayString>
     <StringView>(const wchar_t*)(_handle+1),[(int)_handle-&gt;Length]su</StringView>
     <Expand>
-      <Item Name="String" Condition="_handle != nullptr">(const wchar_t*)(_handle+1),[(int)_handle-&gt;Length]su</Item>
-      <Item Name="Length" Condition="_handle != nullptr">(int)_handle-&gt;Length</Item>
-      <Item Name="HashValue" Condition="_handle != nullptr">(int)_handle-&gt;HashValue,X</Item>
+      <Item Name="[String]" Condition="_handle != nullptr">(const wchar_t*)(_handle+1),[(int)_handle-&gt;Length]su</Item>
+      <Item Name="[Length]" Condition="_handle != nullptr">(int)_handle-&gt;Length</Item>
+      <Item Name="[HashValue]" Condition="_handle != nullptr">(int)_handle-&gt;HashValue,X</Item>
     </Expand>
   </Type>
 
   <Type Name="Core::FFileSystemNode">
     <DisplayString>{_token}</DisplayString>
     <Expand>
-      <Item Name="Depth">_depth</Item>
+      <Item Name="[Depth]">_depth</Item>
       <LinkedListItems>
         <Size>_depth</Size>
         <HeadPointer>this</HeadPointer>
@@ -242,12 +242,10 @@
     <DisplayString>{_basenameNoExt} {_extname}</DisplayString>
   </Type>
   <Type Name="Core::FDirpath">
-    <DisplayString Condition="_path._ptr != nullptr">[{_path._ptr-&gt;_depth}] {*_path._ptr}"</DisplayString>
-    <DisplayString>empty</DisplayString>
-    <Expand>
-      <Item Name="Depth">_path._ptr-&gt;_depth</Item>
-      <Item Name="Path" Condition="_path._ptr != nullptr">*_path._ptr</Item>
-    </Expand>
+    <DisplayString>{DebugPrintDirpath(*this)}</DisplayString>
+  </Type>
+  <Type Name="Core::FFilename">
+    <DisplayString>{DebugPrintFilename(*this)}</DisplayString>
   </Type>
 
   <Type Name="Core::RTTI::TMetaTypeAtom&lt;* &gt;">
@@ -260,7 +258,7 @@
   <Type Name="Core::TRefPtr&lt;* &gt;">
     <DisplayString>{_ptr}</DisplayString>
     <Expand>
-      <Item Name="RefCount" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
+      <Item Name="[RefCount]" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
       <ExpandedItem>_ptr</ExpandedItem>
     </Expand>
   </Type>
@@ -268,8 +266,8 @@
   <Type Name="Core::TSafePtr&lt;* &gt;">
     <DisplayString>{_ptr}</DisplayString>
     <Expand>
-      <Item Name="RefCount" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
-      <Item Name="SafeCount" Condition="_ptr != nullptr">_ptr-&gt;_safeRefCount</Item>
+      <Item Name="[RefCount]" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
+      <Item Name="[SafeCount]" Condition="_ptr != nullptr">_ptr-&gt;_safeRefCount</Item>
       <ExpandedItem>_ptr</ExpandedItem>
     </Expand>
   </Type>
@@ -282,6 +280,31 @@
     </Expand>
   </Type>
 
+  <Type Name="Core::FBitMask">
+    <DisplayString>{Data,x}</DisplayString>
+    <Expand>
+      <Item Name="[Num]">Meta::popcnt(Data)</Item>
+      <Item Name="[Bits]">Data,b</Item>
+      <Item Name="[AllTrue]">Data == size_t(-1)</Item>
+      <Item Name="[AllFalse]">Data == 0</Item>
+      <CustomListItems>
+        <Variable Name="index" InitialValue="0" />
+        <Variable Name="mask" InitialValue="1" />
+        <!-- <Size>sizeof(Data) * 8</Size>-->
+        <Loop>
+            <If Condition="index == sizeof(Data)*8">
+                <Break />
+            </If>
+            <If Condition="(Data &amp; mask) != 0">
+                <Item Name="[{index}]">mask,x</Item>
+            </If>
+            <Exec>++index</Exec>
+            <Exec>mask *= 2</Exec>
+        </Loop>
+      </CustomListItems>
+    </Expand>
+  </Type>
+
   <Type Name="Core::RTTI::ITypeTraits">
     <DisplayString>[{TypeId()}] {TypeInfos()._name._storage, [TypeInfos()._name._size]}, {TypeInfos()._flags, en} ({TypeInfos()._sizeInBytes}b)</DisplayString>
   </Type>
@@ -289,9 +312,9 @@
   <Type Name="Core::RTTI::FAny">
     <DisplayString>{Core::RTTI::PrettyString(*this)}</DisplayString>
     <Expand>
-        <Item Name="Data">Data()</Item>
-        <Item Name="Traits">_traits</Item>
-        <Item Name="PP">Core::RTTI::PrettyString(*this)</Item>
+        <Item Name="[Data]">Data()</Item>
+        <Item Name="[Traits]">_traits</Item>
+        <Item Name="[PP]">Core::RTTI::PrettyString(*this)</Item>
     </Expand>
   </Type>
 
@@ -307,12 +330,12 @@
   <Type Name="Core::RTTI::FMetaObject">
     <DisplayString>{Core::RTTI::PrettyString(this)}</DisplayString>
     <Expand>
-        <Item Name="Name">_name</Item>
-        <Item Name="Flags">_flags, en</Item>
-        <Item Name="Class">RTTI_Class(), na</Item>
-        <Item Name="Functions">RTTI_Class()->_functionsAll</Item>
-        <Item Name="Properties">RTTI_Class()->_propertiesAll</Item>
-        <Item Name="PP">Core::RTTI::PrettyString(this)</Item>
+        <Item Name="[Name]">_name</Item>
+        <Item Name="[Flags]">_flags, en</Item>
+        <Item Name="[Class]">RTTI_Class(), na</Item>
+        <Item Name="[Functions]">RTTI_Class()->_functionsAll</Item>
+        <Item Name="[Properties]">RTTI_Class()->_propertiesAll</Item>
+        <Item Name="[PP]">Core::RTTI::PrettyString(this)</Item>
     </Expand>
   </Type>
 
