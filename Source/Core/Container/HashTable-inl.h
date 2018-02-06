@@ -150,6 +150,20 @@ FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find_
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Add(const key_type& key) -> mapped_reference {
+    auto r = try_emplace(key);
+    Assert(r.second);
+    return table_traits::Value(*r.first);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Add(key_type&& rkey) -> mapped_reference {
+    auto r = try_emplace(std::move(rkey));
+    Assert(r.second);
+    return table_traits::Value(*r.first);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert(const value_type& value) -> TPair<iterator, bool> {
     return InsertIFN_(table_traits::Key(value), value);
 }
@@ -650,7 +664,7 @@ NO_INLINE void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Relocate
     Assert(oldCapacity > 0 && Meta::IsPow2(oldCapacity));
 
     const pointer newBuckets = BucketAt_(0);
-    const_pointer oldBuckets = ((pointer)oldData.StatesAndBuckets + oldOffsetOfBuckets);
+    const pointer oldBuckets = ((pointer)oldData.StatesAndBuckets + oldOffsetOfBuckets);
 
     ONLY_IF_ASSERT(size_t sizeCheck = 0);
 
@@ -663,7 +677,7 @@ NO_INLINE void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Relocate
             const size_type dst = FindEmptyBucket_(table_traits::Key(oldBuckets[src]), hsh);
             Assert(INDEX_NONE != dst);
 
-            Assert(FHTD::H2(hsh) == *oldData.GetState(src)); // checks that the hash function is stable
+            Assert(FHTD::H2(hsh) == *oldData.GetState(src)); // checks that the hash function is stable, could also be caused by a corrupted item
             if (not _data.SetElement(dst, hsh))
                 AssertNotReached();
 

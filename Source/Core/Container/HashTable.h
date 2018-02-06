@@ -362,11 +362,11 @@ public:
 
     mapped_reference_const operator [](const key_type& key) const { return at(key); }
 
-    mapped_reference Add(const key_type& key) { return table_traits::Value(*try_emplace(key).first); }
-    mapped_reference Add(key_type&& rkey) { return table_traits::Value(*try_emplace(std::move(rkey)).first); }
+    mapped_reference Add(const key_type& key);
+    mapped_reference Add(key_type&& rkey);
 
-    mapped_reference operator [](const key_type& key) { return Add(key); }
-    mapped_reference operator [](key_type&& rkey) { return Add(std::move(rkey)); }
+    mapped_reference operator [](const key_type& key) { return table_traits::Value(*try_emplace(key).first); }
+    mapped_reference operator [](key_type&& rkey) { return table_traits::Value(*try_emplace(std::move(rkey)).first); }
 
     TPair<iterator, bool> insert(const value_type& value);
     TPair<iterator, bool> insert(value_type&& rvalue);
@@ -477,7 +477,7 @@ public:
     bool operator !=(const TBasicHashTable& other) const { return (not operator ==(other)); }
 
 private:
-    STATIC_CONST_INTEGRAL(size_type, MaxLoadFactor, 70);
+    STATIC_CONST_INTEGRAL(size_type, MaxLoadFactor, 80);
     STATIC_CONST_INTEGRAL(size_type, SlackFactor, ((100 - MaxLoadFactor) * 128) / 100);
 
     allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }

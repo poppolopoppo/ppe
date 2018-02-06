@@ -22,7 +22,7 @@ auto FHashTableData_::SetState(size_t index, state_t state) -> state_t {
 
     // mirror state ate for first group
     constexpr size_t GGroupSizeM1 = (GGroupSize - 1);
-    if (index < GGroupSizeM1) {
+    if (Unlikely(index < GGroupSizeM1)) {
         Assert(prev == states[Capacity + index]);
         states[Capacity + index] = state;
     }
@@ -63,35 +63,39 @@ size_t FHashTableData_::FirstFilledBucket_ReturnOffset(const state_t* states) {
 
     __m128i kSentinel_16 = _mm_set1_epi8(kSentinel);
 
-    constexpr size_t GTwoGroupsSize = (GGroupSize * 2);
-    for (size_t bucket = 0; ; bucket += GTwoGroupsSize) {
-        group_t group0 = _mm_lddqu_si128((const __m128i*)(states + bucket));
-        group_t group1 = _mm_lddqu_si128((const __m128i*)(states + bucket + GGroupSize));
+    STATIC_ASSERT(sizeof(__m128i) == GGroupSize);
 
-        const FBitMask filled = (MatchFilledBucket(group0) | (MatchFilledBucket(group1) << GGroupSize));
-        const FBitMask sentinel = (Match(group0, kSentinel_16) | (Match(group1, kSentinel_16) << GGroupSize));
+    static constexpr uintptr_t GGroupMask = uintptr_t(GGroupSize - 1);
+    static constexpr uintptr_t GGroupAlign = (~GGroupMask);
 
-        if (filled) {
-            const size_t itm = (bucket + filled.FirstBitSet_AssumeNotEmpty());
-            if (Unlikely(sentinel)) {
-                const size_t snl = bucket + sentinel.FirstBitSet_AssumeNotEmpty();
-                Assert(snl >= GGroupSize - 1);
-                const size_t end = (snl - (GGroupSize - 1));
-                return (itm < end ? itm : end);
-            }
-            return itm;
+    const state_t* aligned = (state_t*)(uintptr_t(states) & GGroupAlign);
+
+    FBitMask visited{ size_t(0xFFFFu) << (size_t(states) & GGroupMask)  }; // don't go back
+
+    for (;;) { 
+        group_t group = _mm_load_si128((const __m128i*)aligned); // benefits from aligned load in this version
+
+#if 1
+        if (Unlikely(Match(group, kSentinel_16))) {
+            Assert(Match(group, kSentinel_16).FirstBitSet_AssumeNotEmpty() == GGroupMask); // always ATE
+            return (aligned - states);
+        }
+#else
+        // TODO: profile with scalar test instead of SSE for sentinel
+        if (Unlikely(kSentinel == aligned[15]))
+            return (aligned - states);
+#endif
+
+        if (FBitMask filled = (MatchFilledBucket(group) & visited)) {
+            const state_t* item = (aligned + filled.PopFront_AssumeNotEmpty());
+            return (item - states);
         }
 
-        if (Unlikely(sentinel)) {
-            const size_t snl = bucket + sentinel.FirstBitSet_AssumeNotEmpty();
-            Assert(snl >= GGroupSize - 1);
-            const size_t end = (snl - (GGroupSize - 1));
-            return end;
-        }
+        aligned += GGroupSize;
+        visited = { 0xFFFFu };
     }
 
     AssertNotReached();
-    return INDEX_NONE;
 }
 //----------------------------------------------------------------------------
 } //!details
