@@ -12,35 +12,36 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Default, TFuture<T>, template <typename 
 //----------------------------------------------------------------------------
 template <typename T>
 TFuture<T>::TFuture(func_type&& func)
-    : _available(0)
-    , _func(std::move(func))
-{}
+    : _state(Idle)
+    , _func(std::move(func)) {
+}
 //----------------------------------------------------------------------------
 template <typename T>
 TFuture<T>::~TFuture() {
-    Assert(_available);
+    Assert(Pending != _state);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 T& TFuture<T>::Result() {
-    while (!_available)
-        ::_mm_pause();
+    Assert(Idle != _state);
+    while (Ready != _state)
+        FPlatformAtomics::ShortSyncWait();
     return _value;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 T* TFuture<T>::ResultIFP() {
-    return (_available ? &_value : nullptr);
+    return (Ready == _state ? &_value : nullptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FTaskFunc TFuture<T>::MakeTask() {
-    // FTaskFunc only checks the lifetime, the user is responsible for TFuture<> lifetime !
-    return FTaskFunc([future{ SFuture<T>(this) }](ITaskContext&) {
-        Assert(not future->_available);
-        future->_value = future->_func();
-        future->_available = true;
-    });
+void TFuture<T>::Async(ETaskPriority priority, FTaskManager* manager) {
+    AddSafeRef(this); // FTaskFunc only checks its kept alive, the client should handle lifetime
+    Core::Async([this](ITaskContext&) { // use a lambda to keep lifetime in check through TSafePtr<>
+        _value = _func();
+        RemoveSafeRef(this);
+        _state = Ready; // set Ready *AFTER* releasing TSafePtr<>
+    },  priority, manager );
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -49,7 +50,7 @@ PFuture<T> Future(
     ETaskPriority priority/* = ETaskPriority::Normal */,
     FTaskManager* manager/* = nullptr *//* uses FGlobalThreadPool by default */) {
     PFuture<T> future(new TFuture<T>(std::move(func)));
-    Async(future->MakeTask(), priority, manager);
+    future->Async(priority, manager);
     return future;
 }
 //----------------------------------------------------------------------------

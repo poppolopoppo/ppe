@@ -12,6 +12,26 @@ class FTaskManager;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+class FFireAndForget {
+public:
+    virtual ~FFireAndForget() {}
+
+    void RunAndSuicide(ITaskContext& ctx) {
+        Run(ctx);
+        checked_delete(this); // WILL BE DELETED HERE !
+    }
+
+protected:
+    virtual void Run(ITaskContext& ctx) = 0;
+};
+//----------------------------------------------------------------------------
+CORE_API void FireAndForget(
+    FFireAndForget* task/* will be deleted in worker thread after Run() */,
+    ETaskPriority priority = ETaskPriority::Normal,
+    FTaskManager* manager = nullptr/* uses FGlobalThreadPool by default */);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T>
 class TFuture : public FRefCountable {
 public:
@@ -23,17 +43,23 @@ public:
     TFuture(const TFuture& ) = delete;
     TFuture& operator =(const TFuture&) = delete;
 
-    bool Available() const { return _available; }
+    bool Available() const { return (Ready == _state); }
 
     T& Result(); // blocking
     T* ResultIFP(); // non blocking
 
-    FTaskFunc MakeTask();
+    void Async(ETaskPriority priority, FTaskManager* manager);
 
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    std::atomic_bool _available;
+    enum EState_ : int {
+        Idle = 0,
+        Pending,
+        Ready,
+    };
+
+    std::atomic<int> _state;
     func_type _func;
     T _value;
 };
