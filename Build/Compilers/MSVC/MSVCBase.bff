@@ -8,9 +8,9 @@
 ; active l'utilisation des guardes de securité au runtime
 #define USE_MSVC_RUNTIME_CHECKS
 ; active l'inlining simple en debug (/Ob1)
-;#define USE_INLINING_IN_DEBUG
+//#define USE_INLINING_IN_DEBUG
 ; active l'utilistion de /analyze pour une meilleure détéction d'erreur (mais des builds bcp plus lent)
-;#define USE_MSVC_ANALYZE
+//#define USE_MSVC_ANALYZE
 ; active le folding des COMDAT en final (exe plus petit, pb pour debugger par contre)
 #define USE_MSVC_IDENTICAL_COMDAT_FOLDING
 
@@ -100,7 +100,6 @@
     + ' /TLBID:1'           ; https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
     + ' /DEBUG'             ; genère les infos de debug pour le binaire
     + ' /IGNORE:4001'       ; https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
-    + ' /DYNAMICBASE:NO'    ; pas de randomisation des adresses
     + ' /NXCOMPAT:NO'       ; indique que le programme n'est pas compatible avec Data Execution Prevention
     + ' /STACK:4194304'     ; augmente la taille de la stack de chaque thread à 4mo
     + ' /LIBPATH:"$BinaryDirectory$"'
@@ -164,7 +163,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .Defines            + .PlatformDefines
 
     .PlatformOptions    = ' /favor:blend'   ; https://msdn.microsoft.com/fr-fr/library/ms173505(v=vs.110).aspx
-                        //+ ' /Zm500'         ; precompiled header size limit
+                        + ' /Zm500'         ; precompiled header size limit
 
     .CompilerOptions    + .PlatformOptions
 
@@ -182,7 +181,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .Defines            + .PlatformDefines
 
     .PlatformOptions    = ' /favor:AMD64'   ; https://msdn.microsoft.com/fr-fr/library/ms173505(v=vs.110).aspx
-                        //+ ' /Zm1000'        ; precompiled header size limit
+                        + ' /Zm1000'        ; precompiled header size limit
 
     .CompilerOptions    + .PlatformOptions
 
@@ -265,6 +264,10 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .CompilerWithoutRTTI        = ' /GR-' ; désactive le support des RTTI std de C++
     .CompilerWithRTTI           = ' /GR'  ; active le support des RTTI std de C++ (RunTime Type Information, nécessaire pour dynamic_cast<> par ex)
 
+    ; ASLR actif uniquement en final
+    .LinkerWithASLR             = ' /DYNAMICBASE'       ; Address Spase Layout Randomization
+    .LinkerWithoutASLR          = ' /DYNAMICBASE:NO'    ; pas de randomisation des adresses
+
 #if !USE_CLANG_WINDOWS
     .CompilerWithoutCache       + ' /FS' ; nécessaire pour lancer plusieurs CL.exe en meme temps sans le cache (https://msdn.microsoft.com/fr-fr/library/dn502518.aspx)
     .CompilerWithCache          + ' /FS' ; nécessaire pour lancer plusieurs CL.exe en meme temps sans le cache (https://msdn.microsoft.com/fr-fr/library/dn502518.aspx)
@@ -289,18 +292,19 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     Using( .SharedDebugConfig )
     Using( .MSVCBaseConfig )
 
-    .ConfigLinkType     = .LibraryLinkType
+    .ConfigLinkType      = .LibraryLinkType
 
-    .ConfigOptions      = .DebugOptimisations
+    .ConfigOptions       = .DebugOptimisations
                         + .CompilerWithCache
 
-    .Defines            = .ConfigDefines
+    .Defines             = .ConfigDefines
                         + .DebugDefines
 
     .CompilerOptions    = .ConfigOptions
                         + .CompilerWithRTTI
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
+                        + .LinkerWithoutASLR
 ]
 
 //------------------------------------------------------------------------------
@@ -311,16 +315,17 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     Using( .SharedFastDebugConfig )
     Using( .MSVCBaseConfig )
 
-    .ConfigOptions      = .FastDebugOptimisations
+    .ConfigOptions       = .FastDebugOptimisations
                         + .CompilerWithCache
 
-    .Defines            = .ConfigDefines
+    .Defines             = .ConfigDefines
                         + .DebugDefines
 
     .CompilerOptions    = .ConfigOptions
                         + .CompilerWithRTTI
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
+                        + .LinkerWithoutASLR
 ]
 
 //------------------------------------------------------------------------------
@@ -331,18 +336,19 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     Using( .SharedReleaseConfig )
     Using( .MSVCBaseConfig )
 
-    .ConfigLinkType     = .LibraryLinkType
+    .ConfigLinkType      = .LibraryLinkType
 
-    .ConfigOptions      = .ReleaseOptimisations
+    .ConfigOptions       = .ReleaseOptimisations
                         + .CompilerWithCache
 
-    .Defines            = .ConfigDefines
+    .Defines             = .ConfigDefines
                         + .ReleaseDefines
 
     .CompilerOptions    = .ConfigOptions
                         + .CompilerWithoutRTTI
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
+                        + .LinkerWithoutASLR
 ]
 
 //------------------------------------------------------------------------------
@@ -353,12 +359,12 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     Using( .SharedProfilingConfig )
     Using( .MSVCBaseConfig )
 
-    .ConfigLinkType     = .LibraryLinkType
+    .ConfigLinkType      = .LibraryLinkType
 
-    .ConfigOptions      = .FinalOptimisations
+    .ConfigOptions       = .FinalOptimisations
                         + .CompilerWithCache
 
-    .Defines            = .ConfigDefines
+    .Defines             = .ConfigDefines
                         + .ReleaseDefines
 
     .CompilerOptions    = .ConfigOptions
@@ -367,6 +373,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .LibrarianOptions   = ' /LTCG'          ; link time code generation
 
     .LinkerOptions      = ' /LTCG'          ; link time code generation
+                        + .LinkerWithoutASLR
 ]
 
 //------------------------------------------------------------------------------
@@ -377,12 +384,12 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     Using( .SharedFinalConfig )
     Using( .MSVCBaseConfig )
 
-    .ConfigLinkType     = .LibraryLinkType
+    .ConfigLinkType      = .LibraryLinkType
 
-    .ConfigOptions      = .FinalOptimisations
+    .ConfigOptions       = .FinalOptimisations
                         + .CompilerWithoutCache
 
-    .Defines            = .ConfigDefines
+    .Defines             = .ConfigDefines
                         + .ReleaseDefines
 
     .CompilerOptions    = .ConfigOptions
@@ -393,6 +400,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .LinkerOptions      = ' /LTCG'          ; link time code generation
                         + ' /OPT:REF'       ; supprime le code non référencé
                         + ' /INCREMENTAL:NO'
+                        + .LinkerWithASLR
 
 #if USE_MSVC_IDENTICAL_COMDAT_FOLDING
     Print( "Using identical comdat folding in final : /OPT:ICF=4" )
