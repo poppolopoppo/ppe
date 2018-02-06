@@ -6,11 +6,13 @@
 #include "MemoryView.h"
 
 #include "Diagnostic/Logger.h"
+#include "Meta/OneTimeInitialize.h"
 
 #ifdef USE_MEMORY_DOMAINS
 #   include "Container/Vector.h"
 #   include "Diagnostic/CrtDebug.h"
 #   include "IO/FormatHelpers.h"
+#   include "IO/String.h"
 #   include "IO/StringBuilder.h"
 #   include "Thread/AtomicSpinLock.h"
 
@@ -18,24 +20,24 @@
 #endif
 
 namespace Core {
+LOG_CATEGORY(CORE_API, MemoryTracking);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Domain {
-    FMemoryTracking& MEMORY_DOMAIN_NAME(Global)::TrackingData = FMemoryTracking::Global();
+    FMemoryTracking& MEMORY_DOMAIN_NAME(Global)::TrackingData() {
+        return FMemoryTracking::Global();
+    }
 }
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
 //----------------------------------------------------------------------------
 #define MEMORY_DOMAIN_IMPL(_Name, _Parent) \
     namespace Domain { \
-        namespace { \
-            static FMemoryTracking CONCAT(GTrackingData, MEMORY_DOMAIN_NAME(_Name)) { \
-                STRINGIZE(_Name), &MEMORY_DOMAIN_TRACKING_DATA(_Parent) \
-            }; \
-        }\
-        FMemoryTracking& MEMORY_DOMAIN_NAME(_Name)::TrackingData = \
-            CONCAT(GTrackingData, MEMORY_DOMAIN_NAME(_Name)); \
+        FMemoryTracking& MEMORY_DOMAIN_NAME(_Name)::TrackingData() { \
+            ONE_TIME_INITIALIZE(FMemoryTracking, GTrackingData, STRINGIZE(_Name), &MEMORY_DOMAIN_TRACKING_DATA(_Parent)); \
+            return GTrackingData; \
+        } \
     }
 
 #ifdef COLLAPSE_MEMORY_DOMAINS
@@ -109,7 +111,7 @@ void ReportDomainTrackingData() {
     FWStringBuilder oss;
     ReportTrackingDatas(oss, L"Memory Domains", datas);
 
-    LOG(Debug, oss.ToString());
+    LOG(MemoryTracking, Info, oss.ToString());
 #endif
 }
 //----------------------------------------------------------------------------
@@ -145,12 +147,12 @@ void ReportAdditionalTrackingData() {
     SKIP_MEMORY_LEAKS_IN_SCOPE();
 
     FWStringBuilder oss;
-    {
-        FAdditionalTrackingData& Additional = AllAdditionalTrackingData_();
-        const FAtomicSpinLock::FScope scopeLock(Additional.Barrier);
-        ReportTrackingDatas(oss, L"Additional", Additional.Datas.MakeConstView());
-    }
-    LOG(Debug, oss.ToString());
+    FAdditionalTrackingData& Additional = AllAdditionalTrackingData_();
+
+    const FAtomicSpinLock::FScope scopeLock(Additional.Barrier);
+    ReportTrackingDatas(oss, L"Additional", Additional.Datas.MakeConstView());
+
+    LOG(MemoryTracking, Info, oss.ToString());
 #endif
 }
 //----------------------------------------------------------------------------
@@ -173,7 +175,8 @@ void ReportAllocationHistogram() {
         allocationScale = Max(allocationScale, distribution(count));
     }
 
-    LOG(Info, L"[Malloc] report allocations size histogram");
+    FWStringBuilder oss;
+    oss << L"report allocations size histogram" << Eol;
 
     static size_t GPrevAllocations[60/* chhh */] = { 0 };
     AssertRelease(lengthof(GPrevAllocations) == classes.size());
@@ -183,13 +186,13 @@ void ReportAllocationHistogram() {
         if (0 == classes[i]) continue;
 
         if (0 == allocations[i])
-            LOG(Info, L" #{0:#2} | {1:9} | {2:9} | {3:5f2}% |",
+            Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5f2}% |",
                 i,
                 Fmt::FSizeInBytes{ classes[i] },
                 Fmt::FSizeInBytes{ totalBytes[i] },
                 100 * float(allocations[i]) / totalCount );
         else
-            LOG(Info, L" #{0:#2} | {1:9} | {2:9} | {3:5f2}% |{4}> {5} +{6}",
+            Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5f2}% |{4}> {5} +{6}",
                 i,
                 Fmt::FSizeInBytes{ classes[i] },
                 Fmt::FSizeInBytes{ totalBytes[i] },
@@ -198,8 +201,12 @@ void ReportAllocationHistogram() {
                 Fmt::FCountOfElements{ allocations[i] },
                 allocations[i] - GPrevAllocations[i] );
 
+        oss << Eol;
+
         GPrevAllocations[i] = allocations[i];
     }
+
+    LOG(MemoryTracking, Info, oss.ToString());
 #endif
 }
 //----------------------------------------------------------------------------

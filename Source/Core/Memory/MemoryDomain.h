@@ -22,11 +22,11 @@ class FMemoryTracking;
 //----------------------------------------------------------------------------
 #define MEMORY_DOMAIN_NAME(_Name) CONCAT(_, _Name)
 #define MEMORY_DOMAIN_TAG(_Name) Core::Domain::MEMORY_DOMAIN_NAME(_Name)
-#define MEMORY_DOMAIN_TRACKING_DATA(_Name) MEMORY_DOMAIN_TAG(_Name)::TrackingData
+#define MEMORY_DOMAIN_TRACKING_DATA(_Name) MEMORY_DOMAIN_TAG(_Name)::TrackingData()
 //----------------------------------------------------------------------------
 namespace Domain {
     struct MEMORY_DOMAIN_NAME(Global) {
-        static FMemoryTracking& TrackingData;
+        static FMemoryTracking& TrackingData();
     };
 }
 //----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ namespace Domain {
 #   define MEMORY_DOMAIN_IMPL(_Name, _Parent) \
     namespace Domain { \
         struct MEMORY_DOMAIN_NAME(_Name) { \
-            static FMemoryTracking& TrackingData; \
+            static FMemoryTracking& TrackingData(); \
         }; \
     }
 #else
