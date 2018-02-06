@@ -47,6 +47,9 @@ public:
 
     static size_t NumThreads();
 
+    static size_t GetThreadHash(std::thread::id thread_id);
+    static FStringView GetThreadName(std::thread::id thread_id);
+
 private:
     const size_t _tag;
     const size_t _threadIndex;

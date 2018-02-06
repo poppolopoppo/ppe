@@ -9,6 +9,7 @@
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
 #include "Meta/AutoSingleton.h"
+#include "Meta/NumericLimits.h"
 
 #ifndef FINAL_RELEASE
 #   define WITH_CORE_THREADCONTEXT_NAME
@@ -62,10 +63,10 @@ inline void FThreadLocalContext_::CreateMainThread() {
 namespace {
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_THREADCONTEXT_NAME
-#pragma warning(push)
-#pragma warning(disable: 6320) // L'expression de filtre d'exception correspond a la constante EXCEPTION_EXECUTE_HANDLER.
-                               // Cela risque de masquer les exceptions qui n'etaient pas destinees a etre gerees.
-#pragma warning(disable: 6322) // bloc empty _except.
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(6320) // L'expression de filtre d'exception correspond a la constante EXCEPTION_EXECUTE_HANDLER.
+                                  // Cela risque de masquer les exceptions qui n'etaient pas destinees a etre gerees.
+PRAGMA_MSVC_WARNING_DISABLE(6322) // bloc empty _except.
 static void SetWin32ThreadName_(const char* name) {
     /*
     // How to: Set a Thread FName in Native Code
@@ -96,7 +97,7 @@ static void SetWin32ThreadName_(const char* name) {
     {
     }
 }
-#pragma warning(pop)
+PRAGMA_MSVC_WARNING_POP()
 #endif //!WITH_CORE_THREADCONTEXT_NAME
 //----------------------------------------------------------------------------
 static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
@@ -116,7 +117,7 @@ struct FThreadNames_ {
     FReadWriteLock RWLock;
     ASSOCIATIVE_VECTORINSITU(Diagnostic, std::thread::id, FStringView, 32) Names;
     static FThreadNames_& Instance() {
-        static FThreadNames_ GInstance;
+        ONE_TIME_DEFAULT_INITIALIZE(FThreadNames_, GInstance);
         return GInstance;
     }
 };
@@ -133,7 +134,7 @@ static void RegisterThreadName_(std::thread::id thread_id, const char* name) {
     SetWin32ThreadName_(name);
     FThreadNames_& thread_names = FThreadNames_::Instance();
     WRITESCOPELOCK(thread_names.RWLock);
-    thread_names.Names.Insert_AssertUnique(thread_id, MakeStringView(name, Meta::FForceInit{}));
+    thread_names.Names.Insert_AssertUnique(thread_id, MakeCStringView(name));
 #else
     UNUSED(thread_id);
     UNUSED(name);
@@ -150,6 +151,14 @@ static void UnregisterThreadName_(std::thread::id thread_id) {
 #endif
 }
 //----------------------------------------------------------------------------
+static auto GetThreadHash_(std::thread::id id) {
+    union UThreadIdIntegral_ {
+        std::thread::id ThreadId;
+        TIntegral<std::thread::id>::type Integral;
+    };
+    return UThreadIdIntegral_{ id }.Integral;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -160,7 +169,7 @@ FThreadContext::FThreadContext(const char* name, size_t tag, size_t index)
 ,   _threadId(std::this_thread::get_id()) {
     Assert(name);
 
-    const size_t n = Copy(MakeView(_name), MakeStringView(name, Meta::FForceInit{}));
+    const size_t n = Copy(MakeView(_name), MakeCStringView(name));
     Assert(n < lengthof(_name));
     _name[n] = '\0';
 
@@ -281,6 +290,18 @@ size_t FThreadContext::NumThreads() {
     return GNumThreadContext_;
 }
 //----------------------------------------------------------------------------
+size_t FThreadContext::GetThreadHash(std::thread::id thread_id) {
+    return checked_cast<size_t>(GetThreadHash_(thread_id));
+}
+//----------------------------------------------------------------------------
+FStringView FThreadContext::GetThreadName(std::thread::id thread_id) {
+#ifdef WITH_CORE_THREADCONTEXT_NAME
+    return GetThreadName_(thread_id);
+#else
+    return FStringView();
+#endif
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 thread_local size_t GCurrentThreadIndex = INDEX_NONE;
@@ -331,17 +352,17 @@ void FThreadContextStartup::Shutdown() {
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, std::thread::id thread_id) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME
-    return oss << "thread_id:" << *(const void**)&thread_id << " '" << GetThreadName_(thread_id) << "'";
+    return Format(oss, "thread_id:{0:#5} \"{1}\"", GetThreadHash_(thread_id), GetThreadName_(thread_id));
 #else
-    return oss << "thread_id:" << *(const void**)&thread_id;
+    return Format(oss, "thread_id:{0:#5}", GetThreadHash_(thread_id));
 #endif
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, std::thread::id thread_id) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME
-    return oss << L"thread_id:" << *(const void**)&thread_id << L" '" << GetThreadName_(thread_id) << L"'";
+    return Format(oss, L"thread_id:{0:#5} \"{1}\"", GetThreadHash_(thread_id), GetThreadName_(thread_id));
 #else
-    return oss << L"thread_id:" << *(const void**)&thread_id;
+    return Format(oss, L"thread_id:{0:#5}", GetThreadHash_(thread_id));
 #endif
 }
 //----------------------------------------------------------------------------
