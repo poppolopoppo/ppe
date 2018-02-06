@@ -25,6 +25,7 @@
         + ' -Wno-#pragma-messages'              // don't consider #pragma message as warnings
         + ' -Wno-invalid-noreturn'              // nécessaire pour STL M$
         + ' -Wno-dllimport-static-field-def'     // definition of dllimport static field (M$TL)
+        + ' -Wno-nonportable-include-path'      // windows libs are filled with includes not matching file system case, this will ignore those
 #if NO_WORKAROUND_IN_PLATFORM_WINDOWS
         + ' -Wno-expansion-to-defined'           // macro expansion producing 'defined' has undefined behavior (nécessaire pour WinAPI)
         + ' -Wno-int-to-void-pointer-cast'      // cast to 'void *' from smaller integer type 'unsigned long' (nécessaire pour WinAPI)
@@ -32,7 +33,6 @@
         + ' -Wno-microsoft-enum-value'          // ignore les dépassements de valeurs d'enums (nécessaire pour WinAPI)
         + ' -Wno-missing-declarations'          // typedef requires a name (nécessaire pour DbgHelp)
         + ' -Wno-unused-value'                  // ignore les expressions non utilisées (UNUSED(x) ou CRT)
-        + ' -Wno-nonportable-include-path'      // windows libs are filled with includes not matching file system case, this will ignore those
         + ' -Wno-microsoft-explicit-constructor-call'
 #endif
 
@@ -47,7 +47,7 @@
 [
     .CompilerSystemIncludeFlag = ' /I'//' /imsvc'
     .LibrarianOptions   = ' /OUT:"%2" "%1"'
-                        + ' /llvmlibthin'       // http://llvm.org/docs/CommandGuide/llvm-lib.html
+                        //+ ' /llvmlibthin'       // http://llvm.org/docs/CommandGuide/llvm-lib.html // NOT COMPATIBLE WITH LINK.EXE !
 ]
 
 //------------------------------------------------------------------------------

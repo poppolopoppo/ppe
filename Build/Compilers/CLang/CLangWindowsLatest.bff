@@ -17,6 +17,8 @@
 #define USE_LIBRARY_DEPENDENCY_INPU
 ; choix entre la version 32-bit ou 64-bit de LLV
 #define USE_LLVM_LATEST_X64
+; active l'utilisation de adress sanitizer
+#define USE_LLVM_ADRESS_SANITIZER
 //------------------------------------------------------------------------------
 // Global Properties
 //------------------------------------------------------------------------------
@@ -109,6 +111,11 @@ Compiler( 'Compiler-CLangWindowsLatest' )
     .CompilerOptions  = ' -fmsc-version=1910'
 #endif
     .CompilerOptions  + ' -Xclang -std=c++17' // support for C++ 17
+#if USE_LLVM_ADRESS_SANITIZER
+    Print( "Using LLVM Address Sanitizer" )
+    .CompilerOptions  + ' -fsanitize=address'
+    .LinkerOptions    = ' -fsanitize=address'
+#endif
 
 #if WITH_VISUALSTUDIO_TOOLSET_140
     .SystemIncludePaths =
