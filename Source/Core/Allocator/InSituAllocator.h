@@ -6,12 +6,14 @@
 
 #include <type_traits>
 
+#define USE_CORE_INSITU_ALLOCATOR (!USE_CORE_MEMORY_DEBUGGING)
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
-class TInSituStorage : Meta::FThreadResource {
+class TInSituStorage {
 public:
     TInSituStorage() noexcept
         : _insituCount(0)
@@ -37,7 +39,6 @@ public:
     FORCE_INLINE bool InSituEmpty() const noexcept { return (0 == _insituCount); }
 
     FORCE_INLINE bool Contains(const void* ptr) const noexcept {
-        THIS_THREADRESOURCE_CHECKACCESS();
         return (InsituData() <= reinterpret_cast<const u8*>(ptr) &&
                 reinterpret_cast<const u8*>(ptr) <= InsituData() + _SizeInBytes);
     }
@@ -59,8 +60,7 @@ private:
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
 void* TInSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
+#if USE_CORE_INSITU_ALLOCATOR
     if (_insituOffset + sizeInBytes > _SizeInBytes)
         return nullptr;
 
@@ -70,12 +70,17 @@ void* TInSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
     _insituOffset = checked_cast<size_type>(_insituOffset + sizeInBytes);
 
     return p;
+
+#else
+    UNUSED(sizeInBytes);
+    return nullptr;
+    
+#endif
 }
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
 bool TInSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) noexcept {
-    THIS_THREADRESOURCE_CHECKACCESS();
-
+#if USE_CORE_INSITU_ALLOCATOR
     const uintptr_t offset = uintptr_t((const u8*)ptr - InsituData());
     if (offset > _insituOffset)
         return false;
@@ -91,11 +96,18 @@ bool TInSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) 
         Assert(0 < _insituCount); // TODO : memory just freed is definitively lost (bubble) ...
 
     return true;
+
+#else
+    UNUSED(ptr);
+    UNUSED(sizeInBytes);
+    return false;
+
+#endif
 }
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
 void* TInSituStorage<_SizeInBytes>::ReallocateIFP(void* ptr, size_t newSizeInBytes, size_t oldSizeInBytes) {
-    THIS_THREADRESOURCE_CHECKACCESS();
+#if USE_CORE_INSITU_ALLOCATOR
     Assert(ptr); // All previously handled :
     Assert(oldSizeInBytes);
     Assert(newSizeInBytes);
@@ -113,6 +125,14 @@ void* TInSituStorage<_SizeInBytes>::ReallocateIFP(void* ptr, size_t newSizeInByt
     else {
         return nullptr;
     }
+
+#else
+    UNUSED(ptr);
+    UNUSED(newSizeInBytes);
+    UNUSED(oldSizeInBytes);
+    return nullptr;
+
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -136,7 +156,8 @@ public:
 
     typedef TInSituStorage<_SizeInBytes> storage_type;
 
-    enum : size_t { InSitu = (_SizeInBytes/sizeof(value_type)) };
+    STATIC_ASSERT((_SizeInBytes % sizeof(T)) == 0);
+    STATIC_CONST_INTEGRAL(size_t, GInSituSize, (_SizeInBytes/sizeof(T)));
 
     template<typename U>
     struct rebind {
@@ -146,6 +167,9 @@ public:
         >   other;
     };
 
+    const storage_type& InSitu() const { return _insitu; }
+
+    fallback_type& FallbackAllocator() { return static_cast<fallback_type&>(*this); }
     const fallback_type& FallbackAllocator() const { return static_cast<const fallback_type&>(*this); }
 
     TInSituAllocator(storage_type& insitu) noexcept : _insitu(insitu) {}
@@ -251,8 +275,13 @@ void* TInSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type
 //----------------------------------------------------------------------------
 template <typename T, size_t _SizeInBytes, typename _Allocator>
 size_t AllocatorSnapSize(const TInSituAllocator<T, _SizeInBytes, _Allocator>& allocator, size_t size) {
-    constexpr size_t GInSituCount = (_SizeInBytes / sizeof(T));
-    return (size < GInSituCount ? GInSituCount : AllocatorSnapSize(allocator.FallbackAllocator(), size));
+#if USE_CORE_INSITU_ALLOCATOR
+    constexpr size_t GInSituSize = TInSituAllocator<T, _SizeInBytes, _Allocator>::GInSituSize;
+    return (size < GInSituSize ? GInSituSize : AllocatorSnapSize(allocator.FallbackAllocator(), size));
+#else
+    return AllocatorSnapSize(allocator.FallbackAllocator(), size);
+#endif
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
