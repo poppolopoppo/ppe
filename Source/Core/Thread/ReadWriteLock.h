@@ -2,6 +2,65 @@
 
 #include "Core/Core.h"
 
+#ifdef PLATFORM_WINDOWS
+
+#   include "Core/Misc/Platform_Windows.h"
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#define READSCOPELOCK(_ReadWriteLock) \
+    const ::Core::FReadWriteLock::FScopeLockRead CONCAT(scopeLockRead_, __LINE__)(_ReadWriteLock)
+//----------------------------------------------------------------------------
+#define WRITESCOPELOCK(_ReadWriteLock) \
+    const ::Core::FReadWriteLock::FScopeLockWrite CONCAT(scopeLockWrite_, __LINE__)(_ReadWriteLock)
+//----------------------------------------------------------------------------
+class FReadWriteLock {
+public:
+    FReadWriteLock() { ::InitializeSRWLock(&_srwLock); }
+
+    FReadWriteLock(const FReadWriteLock&) = delete;
+    FReadWriteLock& operator =(const FReadWriteLock&) = delete;
+
+    void LockRead() const { ::AcquireSRWLockShared(&_srwLock); }
+    bool TryLockRead() const { return ::TryAcquireSRWLockShared(&_srwLock); }
+    void UnlockRead() const { ::ReleaseSRWLockShared(&_srwLock); }
+
+    void LockWrite() { ::AcquireSRWLockExclusive(&_srwLock); }
+    bool TryLockWrite() { return ::TryAcquireSRWLockExclusive(&_srwLock); }
+    void UnlockWrite() { ::ReleaseSRWLockExclusive(&_srwLock); }
+
+    struct FScopeLockRead {
+        const FReadWriteLock& RWLock;
+        FScopeLockRead(const FReadWriteLock& rwlock) : RWLock(rwlock) { RWLock.LockRead(); }
+        ~FScopeLockRead() { RWLock.UnlockRead(); }
+        FScopeLockRead(const FScopeLockRead&) = delete;
+        FScopeLockRead& operator =(const FScopeLockRead&) = delete;
+    };
+
+    struct FScopeLockWrite {
+        FReadWriteLock& RWLock;
+        FScopeLockWrite(FReadWriteLock& rwlock) : RWLock(rwlock) { RWLock.LockWrite(); }
+        ~FScopeLockWrite() { RWLock.UnlockWrite(); }
+        FScopeLockWrite(const FScopeLockWrite&) = delete;
+        FScopeLockWrite& operator =(const FScopeLockWrite&) = delete;
+    };
+
+private:
+    mutable ::SRWLOCK _srwLock;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core
+
+#else 
+#   error "unsupported platform !"
+#endif //!PLATFORM_WINDOWS
+
+#if 0 //deprecated
+
 #include <mutex>
 #include <shared_mutex>
 
@@ -42,3 +101,5 @@ struct FReadWriteLock {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
+
+#endif //!deprecated
