@@ -25,6 +25,7 @@
 
 namespace Core {
 namespace Test {
+LOG_CATEGORY(, Test_Allocators);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -148,7 +149,7 @@ static void Test_Allocator_(
     const TMemoryView<const size_t>& largeBlocks,
     const TMemoryView<const size_t>& mixedBlocks ) {
 
-    LOG(Info, L"{0}", Fmt::Repeat(L"-*=*", 20));
+    LOG(Test_Allocators, Info, L"{0}", Fmt::Repeat(L"-*=*", 20));
 
     BENCHMARK_SCOPE(name, L"Global");
     {
@@ -221,9 +222,9 @@ void Test_Allocators() {
         }
     }
 
-    LOG(Info, L"Small blocks data set = {0} blocks / {1}", smallBlocks.size(), Fmt::FSizeInBytes{ smallBlocksSizeInBytes } );
-    LOG(Info, L"Large blocks data set = {0} blocks / {1}", largeBlocks.size(), Fmt::FSizeInBytes{ largeBlocksSizeInBytes });
-    LOG(Info, L"Mixed blocks data set = {0} blocks / {1}", mixedBlocks.size(), Fmt::FSizeInBytes{ mixedBlocksSizeInBytes });
+    LOG(Test_Allocators, Info, L"Small blocks data set = {0} blocks / {1}", smallBlocks.size(), Fmt::FSizeInBytes{ smallBlocksSizeInBytes } );
+    LOG(Test_Allocators, Info, L"Large blocks data set = {0} blocks / {1}", largeBlocks.size(), Fmt::FSizeInBytes{ largeBlocksSizeInBytes });
+    LOG(Test_Allocators, Info, L"Mixed blocks data set = {0} blocks / {1}", mixedBlocks.size(), Fmt::FSizeInBytes{ mixedBlocksSizeInBytes });
 
     Test_Allocator_(L"std::allocator", std::allocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
     Test_Allocator_(L"TMallocator", TMallocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());

@@ -21,12 +21,14 @@
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Pair.h"
 #include "Core/Container/Vector.h"
+#include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FileStream.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/FS/ConstNames.h"
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/StringBuilder.h"
+#include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter.h"
 #include "Core/IO/VirtualFileSystem.h"
 #include "Core/Maths/RandomGenerator.h"
@@ -40,6 +42,7 @@
 
 namespace Core {
 namespace Test {
+LOG_CATEGORY(, Test_RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -292,7 +295,7 @@ void FRTTIAtomRandomizer_::Randomize(RTTI::FMetaObject* pobject) {
 //----------------------------------------------------------------------------
 static void print_atom(const RTTI::FAtom& atom) {
     const RTTI::FTypeInfos type_info = atom.TypeInfos();
-    Format(GStdout, "{0}[0x{1:#8x}] : {2} = {3} (default:{4:a})\n",
+    LOG(Test_RTTI, Info, L"{0}[0x{1:#8x}] : {2} = {3} (default:{4:a})",
         type_info.Name(),
         type_info.Id(),
         atom.HashValue(),
@@ -363,23 +366,15 @@ static void Test_Any_() {
     RTTI::FAny any;
     any.Assign(42);
     RTTI::FAny anyInt = RTTI::MakeAny(42);
-    GStdout
-        << anyInt << Eol
-        << RTTI::CastChecked<int>(anyInt) << Eol;
+    LOG(Test_RTTI, Debug, L"anyInt: {0} -> {1}", anyInt, RTTI::CastChecked<int>(anyInt));
     RTTI::FAny anyAny = RTTI::MakeAny(42.);
-    GStdout
-        << anyAny << Eol
-        << RTTI::CastChecked<double>(anyAny) << Eol;
+    LOG(Test_RTTI, Debug, L"anyAny: {0} -> {1}", anyAny, RTTI::CastChecked<double>(anyAny));
     Assert(anyAny != anyInt);
     anyAny = anyInt;
-    GStdout
-        << anyAny << Eol
-        << RTTI::CastChecked<int>(anyAny) << Eol;
+    LOG(Test_RTTI, Debug, L"anyAny: {0} -> {1}", anyAny, RTTI::CastChecked<int>(anyAny));
     Assert(anyInt == anyAny);
     anyAny = RTTI::MakeAny(FString("toto"));
-    GStdout
-        << anyAny << Eol
-        << RTTI::CastChecked<FString>(anyAny) << Eol;
+    LOG(Test_RTTI, Debug, L"anyAny: {0} -> {1}", anyAny, RTTI::CastChecked<FString>(anyAny));
     Assert(anyAny != anyInt);
     Assert(nullptr == RTTI::Cast<double>(anyAny));
 
@@ -401,7 +396,7 @@ static void Test_Any_() {
     Assert(dico2);
     anyAny.Assign(toto);
     RTTI::FAtom dico2_anyAny = dico2->Find(datom2, anyAny);
-    GStdout << dico2_anyAny.TypedConstData<float3>() << Eol;
+    LOG(Test_RTTI, Debug, L"dico2_anyAny: {0}", dico2_anyAny.TypedConstData<float3>());
     AssertRelease(RTTI::MakeAny(float3(1, 2, 3)).InnerAtom().Equals(dico2_anyAny));
     //AssertRelease(dico2_anyAny.Equals(RTTI::MakeAny(float3(1, 2, 3)))); %TODO%
 }
@@ -434,9 +429,9 @@ static void Test_Serializer_(const RTTI::FMetaTransaction& input, Serialize::ISe
         for (size_t i = 0; i < k; ++i)
             Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
 
-        if (false == VFS_WriteAll(fname_bin, compressedView, EAccessPolicy::Truncate_Binary))
+        if (false == VFS_WriteAll(fname_bin, compressedView, EAccessPolicy::Create_Binary))
             AssertNotReached();
-        if (false == VFS_WriteAll(fname_raw, decompressed.MakeView(), EAccessPolicy::Truncate_Binary))
+        if (false == VFS_WriteAll(fname_raw, decompressed.MakeView(), EAccessPolicy::Create_Binary))
             AssertNotReached();
 #endif
     }
@@ -508,20 +503,23 @@ static void Test_Serialize_() {
     {
         RTTI::FMetaTransaction input(RTTI::FName(MakeStringView("UnitTest_Input")));
         {
+            FWStringBuilder oss;
             forrange(i, 0, test_count) {
                 TRefPtr<test_type> t = new test_type();
                 rand.Randomize(t.get());
                 input.RegisterObject(t.get());
-                RTTI::PrettyPrint(GStdout, RTTI::MakeAtom(&t));
+                RTTI::PrettyPrint(oss, RTTI::MakeAtom(&t));
+                LOG(Test_RTTI, Info, oss.ToString());
             }
         }
         {
             Serialize::FBinarySerializer binary;
-            Test_Serializer_(input, &binary, L"Process:/robotapp_bin.bin");
+            Test_Serializer_(input, &binary, L"Saved:/RTTI/robotapp_bin.bin");
         }
         {
             Serialize::FJSONSerializer json;
-            Test_Serializer_(input, &json, L"Process:/robotapp_json.json");
+            json.SetMinify(false);
+            Test_Serializer_(input, &json, L"Saved:/RTTI/robotapp_json.json");
         }
     }
 

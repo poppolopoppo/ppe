@@ -24,6 +24,7 @@
 
 namespace Core {
 namespace Test {
+LOG_CATEGORY(, Test_Network);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -35,32 +36,36 @@ static bool ParseUri_(const FStringView& str) {
     if (not FUri::Parse(uri, str))
         return false;
 
-    GStdout
-        << str << Eol
-        << "    Scheme: " << uri.Scheme() << Eol
-        << "    Username: " << uri.Username() << Eol
-        << "    Hostname: " << uri.Hostname() << Eol
-        << "    Port: " << uri.Port() << Eol
-        << "    Path: " << uri.Path() << Eol
-        << "    Query: " << uri.Query() << Eol
-        << "    Anchor: " << uri.Anchor() << Eol
-        << Eol;
+    LOG(Test_Network, Info,
+        L"{0}\n"
+        L"   Scheme: {0}\n"
+        L"   Username: {1}\n"
+        L"   Hostname: {2}\n"
+        L"   Post: {3}\n"
+        L"   Path: {4}\n"
+        L"   Query: {5}\n"
+        L"   Anchor: {6}",
+        uri.Scheme(),
+        uri.Username(),
+        uri.Hostname(),
+        uri.Port(),
+        uri.Path(),
+        uri.Query(),
+        uri.Anchor());
 
     FUri::FQueryMap args;
     if (not FUri::Unpack(args, uri))
         return false;
 
-    GStdout << "Args[" << args.size() << "]:" << Eol;
+    LOG(Test_Network, Info, L"Args[{0}]:", args.size());
     for (const auto& it : args)
-        GStdout << "    " << it.first << " = " << it.second << Eol;
+        LOG(Test_Network, Info, L"    - {0} = '{1}'", it.first, it.second);
 
     FUri test;
-    if (not FUri::Pack(test, uri.Scheme(), uri.Username(), uri.Port(), uri.Hostname(), uri.Path(), args, uri.Anchor()) )
+    if (not FUri::Pack(test, uri.Scheme(), uri.Username(), uri.Port(), uri.Hostname(), uri.Path(), args, uri.Anchor()))
         return false;
 
-    GStdout
-        << uri << Eol
-        << test << Endl;
+    LOG(Test_Network, Info, L"{0}\n -> {1}", uri, test);
 
     if (test.Str() != uri.Str())
         return false;
@@ -87,29 +92,29 @@ static void Test_SocketAccept_() {
         FSocketBuffered socket;
         socket.SetTimeout(FSeconds(0.3));
 
-        GStdout << "Listening on '" << listener.Listening() << "' ..." << Eol;
+        LOG(Test_Network, Info, L"Listening on '{0}'...", listener.Listening());
 
         if (FSocketBuffered::Accept(socket, listener, FSeconds(5))) {
             succeed = true;
-            GStdout << "Accepted from '" << socket.Local() << "' to '" << socket.Remote() << "' :)" << Eol;
+            LOG(Test_Network, Info, L"Accepted from '{0}' to '{1}' :)", socket.Local(), socket.Remote());
 
             CORE_TRY
             {
                 FHttpRequest request;
                 FHttpRequest::Read(&request, socket, maxContentLength);
 
-                GStdout << "Method: " << request.Method() << Eol;
-                GStdout << "Uri: " << request.Uri() << Eol;
-
-                GStdout << "Headers:" << Eol;
+                LOG(Test_Network, Info, L"Method :   {0}", request.Method());
+                LOG(Test_Network, Info, L"Uri    :   {0}", request.Uri());
+                
+                LOG(Test_Network, Info, L"Header :");
                 for (const auto& it : request.Headers())
-                    GStdout << " - '" << it.first << "' : '" << it.second << "'" << Eol;
+                    LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
 
                 FHttpRequest::FCookieMap cookies;
                 if (FHttpRequest::UnpackCookie(&cookies, request)) {
-                    GStdout << "Cookies:" << Eol;
+                    LOG(Test_Network, Info, L"Cookies :");
                     for (const auto& it : cookies)
-                        GStdout << " - '" << it.first << "' : '" << it.second << "'" << Eol;
+                        LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
                 }
 
                 FHttpResponse response;
@@ -127,9 +132,7 @@ static void Test_SocketAccept_() {
             }
             CORE_CATCH(FHttpException e)
             CORE_CATCH_BLOCK({
-                GStderr
-                    << e.Status() << Eol
-                    << MakeStringView(e.What(), Meta::FForceInit{}) << Endl;
+                LOG(Test_Network, Error, L"HTTP error {0} : {1}", e.Status(), MakeCStringView(e.What()));
             });
 
             socket.Disconnect(true);
@@ -138,7 +141,7 @@ static void Test_SocketAccept_() {
     }
 
     if (not succeed)
-        GStdout << "No incoming connection :'(" << Eol;
+        LOG(Test_Network, Warning, L"no incomming HTTP connexion :'(");
 }
 //----------------------------------------------------------------------------
 static void Test_HttpGet_() {
@@ -150,15 +153,14 @@ static void Test_HttpGet_() {
     if (EHttpStatus::OK != HttpGet(&response, uri))
         AssertNotReached();
 
-    GStdout << "Status: " << response.Status() << Eol;
-    GStdout << "Reason: " << response.Reason() << Eol;
+    LOG(Test_Network, Info, L"Status: {0}", response.Status());
+    LOG(Test_Network, Info, L"Reason: {0}", response.Reason());
 
-    GStdout << "Headers:" << Eol;
+    LOG(Test_Network, Info, L"Headers   :");
     for (const auto& it : response.Headers())
-        GStdout << " - '" << it.first << "' : '" << it.second << "'" << Eol;
+        LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
 
-    GStdout << "Body:" << Eol;
-    GStdout << response.Body().MakeView() << Endl;
+    LOG(Test_Network, Info, L"Body({0}) :\n{1}", response.Body().size(), response.Body().MakeView());
 
     if (response.Status() == Network::EHttpStatus::OK) {
         /* %_NOCOMMIT% TODO
@@ -172,7 +174,7 @@ static void Test_HttpGet_() {
         */
     }
     else {
-        LOG(Error, L"[Http] Request to '{0}' failed : {1}", uri, response.Status());
+        LOG(Test_Network, Error, L"HTTP request to '{0}' failed : {1}", uri, response.Status());
     }
 }
 //----------------------------------------------------------------------------
@@ -192,15 +194,14 @@ static void Test_HttpPost_() {
     if (EHttpStatus::OK != HttpPost(&response, uri, post))
         AssertNotReached();
 
-    GStdout << "Status: " << response.Status() << Eol;
-    GStdout << "Reason: " << response.Reason() << Eol;
+    LOG(Test_Network, Info, L"Status: {0}", response.Status());
+    LOG(Test_Network, Info, L"Reason: {0}", response.Reason());
 
-    GStdout << "Headers:" << Eol;
+    LOG(Test_Network, Info, L"Headers   :");
     for (const auto& it : response.Headers())
-        GStdout << " - '" << it.first << "' : '" << it.second << "'" << Eol;
+        LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
 
-    GStdout << "Body:" << Eol;
-    GStdout << response.Body().MakeView() << Eol;
+    LOG(Test_Network, Info, L"Body({0}) :\n{1}", response.Body().size(), response.Body().MakeView());
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -215,11 +216,11 @@ public:
 
 private:
     virtual void OnAccept(FSocketBuffered& socket) const override {
-        LOG(Info, L"[{0}] Accept connection on test server : {1}", socket.Local(), socket.Remote());
+        LOG(Test_Network, Info, L"[{0}] accept connection on test server : {1}", socket.Local(), socket.Remote());
     }
 
     virtual void OnRequest(FSocketBuffered& socket, const FHttpRequest& request) const CORE_THROW() override {
-        LOG(Info, L"[{0}] {1} requested : {2}", socket.Local(), socket.Remote(), request.Uri());
+        LOG(Test_Network, Info, L"[{0}] {1} requested : {2}", socket.Local(), socket.Remote(), request.Uri());
 
         FHttpResponse response;
         response.SetStatus(EHttpStatus::OK);
@@ -251,7 +252,7 @@ private:
     }
 
     virtual void OnDisconnect(FSocketBuffered& socket) const override{
-        LOG(Info, L"[{0}] Disconnected from test server : {1}", socket.Local(), socket.Remote());
+        LOG(Test_Network, Info, L"[{0}] disconnected from test server : {1}", socket.Local(), socket.Remote());
     }
 };
 //----------------------------------------------------------------------------

@@ -30,6 +30,7 @@
 #include <unordered_set>
 
 namespace Core {
+LOG_CATEGORY(, Test_Containers);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -712,7 +713,7 @@ static void Test_Container_POD_(
     static constexpr size_t loops = 1000;
 #endif
 
-    LOG(Info, L"{0}", Fmt::Repeat(L"-*=*", 20));
+    LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L"-*=*"), 20));
     BENCHMARK_SCOPE(name, L"global");
 
     {
@@ -816,7 +817,7 @@ static void Test_Container_Obj_(
     static constexpr size_t loops = 1000;
 #endif
 
-    LOG(Info, L"{0}", Fmt::Repeat(L"-*=*", 20));
+    LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L"-*=*"), 20));
 
     BENCHMARK_SCOPE(name, L"global");
 
@@ -920,35 +921,35 @@ void Test_Containers() {
         const FFilename filename = L"Tmp:/koala/a/Test/../robocop/4/../3/2/1/../a/b/c/../robotapp.bin";
         const FFilename filename2 = L"Tmp:/Test/toto/../chimpanzee/../../koala/a/b/../c/1/../2/3/robotapp.raw";
 
-        GStdout << filename << Eol;
-        GStdout << filename2 << Eol;
+        LOG(Test_Containers, Info, L"{0}", filename);
+        LOG(Test_Containers, Info, L"{0}", filename2);
 
         FFilename normalized = filename.Normalized();
         FFilename normalized2 = filename2.Normalized();
 
-        GStdout << normalized << Eol;
-        GStdout << normalized2 << Eol;
+        LOG(Test_Containers, Info, L"{0}", normalized);
+        LOG(Test_Containers, Info, L"{0}", normalized2);
 
         FFilename relative = filename.Relative(filename2.Dirpath());
         FFilename relative2 = filename2.Relative(filename.Dirpath());
 
-        GStdout << relative << Eol;
-        GStdout << relative2 << Eol;
+        LOG(Test_Containers, Info, L"{0}", relative);
+        LOG(Test_Containers, Info, L"{0}", relative2);
 
         FFilename absolute = relative.Absolute(filename2.Dirpath());
         FFilename absolute2 = relative2.Absolute(filename.Dirpath());
 
-        GStdout << absolute << Eol;
-        GStdout << absolute2 << Eol;
+        LOG(Test_Containers, Info, L"{0}", absolute);
+        LOG(Test_Containers, Info, L"{0}", absolute2);
 
         Assert(absolute == normalized);
         Assert(absolute2 == normalized2);
     }
     {
-        LOG(Info, L"{0}", Fmt::Repeat(L">>=", 20));
-        LOG(Info, L"FStringView collection");
+        LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
+        LOG(Test_Containers, Info, L"FStringView collection");
 
-        const FFilename filename = L"Process:/dico.txt";
+        const FFilename filename = L"Saved:/dico.txt";
 
         static constexpr u32 GMaxWords = 16000;// u32(-1); // no limit
 
@@ -1038,14 +1039,14 @@ void Test_Containers() {
 
             Test_Container_Obj_(L"THashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
 
-            LOG(Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
+            LOG(Test_Containers, Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
         }
         {
             STRINGVIEW_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
 
             Test_Container_Obj_(L"THashSet Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
 
-            LOG(Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
+            LOG(Test_Containers, Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
         }
         {
             CONSTCHAR_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
@@ -1055,7 +1056,7 @@ void Test_Containers() {
                     return FConstChar(str);
                 });
 
-            LOG(Info, L"TConstCharHashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
+            LOG(Test_Containers, Info, L"TConstCharHashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
         }
         {
             std::unordered_set<
@@ -1095,8 +1096,8 @@ void Test_Containers() {
         }*/
     }
     {
-        LOG(Info, L"{0}", Fmt::Repeat(L">>=", 20));
-        LOG(Info, L"Integer collection");
+        LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
+        LOG(Test_Containers, Info, L"Integer collection");
 
         typedef double value_type;
 
@@ -1140,7 +1141,7 @@ void Test_Containers() {
 
             Test_Container_POD_(L"THashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
 
-            LOG(Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
+            LOG(Test_Containers, Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
         }
         {
             std::unordered_set<value_type, Meta::THash<value_type>> set;

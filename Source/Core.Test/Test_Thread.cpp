@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include "Core/Diagnostic/Logger.h"
 #include "Core/IO/BufferedStream.h"
 #include "Core/IO/FileStream.h"
 #include "Core/IO/StringView.h"
@@ -9,6 +10,7 @@
 
 namespace Core {
 namespace Test {
+LOG_CATEGORY(, Test_Thread);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -25,30 +27,26 @@ static void Test_Async_() {
     */
 
     Async([](ITaskContext& ctx) {
-        GStdout
-            << MakeStringView(CurrentThreadContext().Name(), Meta::FForceInit{})
-            << ": async fire and forget with context" << Endl;
+        LOG(Test_Thread, Info, L"{0}: async fire and forget with context",
+            MakeCStringView(CurrentThreadContext().Name()));
     });
 }
 //----------------------------------------------------------------------------
 static void Test_Future_() {
-    auto oss = GStdout;
-
-    oss << "Start future" << Endl;
+    LOG(Test_Thread, Info, L"Start future");
 
     const PFuture<int> future = Future<int>([]() -> int {
-        auto oss = GStdout;
-        auto threadName = MakeStringView(CurrentThreadContext().Name(), Meta::FForceInit{});
-        oss << threadName << ": future start" << Endl;
+        auto threadName = MakeCStringView(CurrentThreadContext().Name());
+        LOG(Test_Thread, Info, L"{0}: future start", threadName);
         std::this_thread::sleep_for(std::chrono::milliseconds(0));
-        oss << threadName << ": future stop" << Endl;
+        LOG(Test_Thread, Info, L"{0}: future stop", threadName);
         return 42;
     });
 
     while (not future->Available())
-        oss << "Waiting for future...\n";
+        LOG(Test_Thread, Debug, L"Waiting for future ...");
 
-    oss << "Result from future : " << future->Result() << Endl;
+    LOG(Test_Thread, Info, L"Result from future = {0}", future->Result());
 
     Assert(42 == future->Result());
 }
@@ -59,13 +57,14 @@ static void Test_ParallelFor_() {
         21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37
     };
 
-    GStdout << "ParallelFor start" << Endl;
-
+    LOG(Test_Thread, Info, L"ParallelFor start");
+    
     ParallelFor(std::begin(values), std::end(values), [](size_t v) {
-        GStdout << MakeStringView(CurrentThreadContext().Name(), Meta::FForceInit{}) << ": " << v << Endl;
+        LOG(Test_Thread, Info, L"ParallelFor: {0} -> {1}", 
+            MakeCStringView(CurrentThreadContext().Name()), v );
     });
 
-    GStdout << "ParallelFor Stop" << Endl;
+    LOG(Test_Thread, Info, L"ParallelFor stop");
 }
 //----------------------------------------------------------------------------
 } //!namespace

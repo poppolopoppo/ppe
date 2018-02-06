@@ -32,7 +32,7 @@ namespace {
 constexpr float AlphaCutoff = 0.33333f;
 //----------------------------------------------------------------------------
 static void Test_ExpandAlphaMask_(const FFilename& input) {
-    const FDirpath output = L"Process:/";
+    const FDirpath output = L"Saved:/Texture/";
 
     Pixmap::FImage img;
     if (false == Pixmap::Load(&img, Pixmap::_8bits, Pixmap::sRGB, input))
@@ -92,7 +92,7 @@ static void Test_DistanceField(const FFilename& input) {
 
     Pixmap::DistanceField_DRA(&img, &tmp, AlphaCutoff);
 
-    const FWString fname = StringFormat(L"Process:/{0}_DistanceField.hdr", input.BasenameNoExt());
+    const FWString fname = StringFormat(L"Saved:/Texture/{0}_DistanceField.hdr", input.BasenameNoExt());
     if (false == Pixmap::Save(&img, fname.MakeView()))
         AssertNotReached();
 }
@@ -133,7 +133,7 @@ static void Test_ConvexHull_(const FFilename& input) {
 
     img.ConvertFrom(&convexhull);
 
-    const FWString fname = StringFormat(L"Process:/{0}_ConvexHull.png", input.BasenameNoExt());
+    const FWString fname = StringFormat(L"Saved:/Texture/{0}_ConvexHull.png", input.BasenameNoExt());
     if (false == Pixmap::Save(&img, fname.MakeView()))
         AssertNotReached();
 }
@@ -195,7 +195,7 @@ void Test_Binpacking() {
 
     Pixmap::FImage img;
     img.ConvertFrom(&intermediate);
-    if (false == Pixmap::Save(&img, L"Process:/BinPacking.png"))
+    if (false == Pixmap::Save(&img, L"Saved:/Texture/BinPacking.png"))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
