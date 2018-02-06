@@ -42,6 +42,10 @@ namespace {
 // Compressed radix trie method from :
 // https://github.com/r-lyeh/ltalloc/blob/4ad53ea91c359a07f97de65d93fb8a7d279354bd/ltalloc.cc
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(6001) // Using uninitialized memory 'XXX'.
+PRAGMA_MSVC_WARNING_DISABLE(6011) // Dereferencing NULL pointer 'XXX'.
+//----------------------------------------------------------------------------
 #if     defined(PLATFORM_WINDOWS)
 #   define BSR(r, v) CODE3264(_BitScanReverse, _BitScanReverse64)((unsigned long*)&r, v)
 #elif   defined(PLATFORM_LINUX)
@@ -206,6 +210,8 @@ static size_t VMReleaseBlockSize_(void* ptr) {
 //----------------------------------------------------------------------------
 #undef BSR
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_POP()
+//----------------------------------------------------------------------------
 } //!namespace
 #endif //!USE_VMALLOC_SIZE_PTRIE
 //----------------------------------------------------------------------------
@@ -287,16 +293,17 @@ bool FVirtualMemory::Protect(void* ptr, size_t sizeInBytes, bool read, bool writ
 //----------------------------------------------------------------------------
 // Keep allocations aligned to OS granularity
 // https://github.com/r-lyeh/ltalloc/blob/master/ltalloc.cc
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(6001) // Using uninitialized memory 'XXX'.
 void* FVirtualMemory::AlignedAlloc(size_t alignment, size_t sizeInBytes) {
     Assert(sizeInBytes);
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
     Assert(Meta::IsPow2(alignment));
 
-    void* p;
 
 #if     defined(PLATFORM_WINDOWS)
     // Optimistically try mapping precisely the right amount before falling back to the slow method :
-    p = ::VirtualAlloc(nullptr, sizeInBytes, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+    void* p = ::VirtualAlloc(nullptr, sizeInBytes, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 #ifdef USE_MEMORY_DOMAINS
     if (p)
         MEMORY_DOMAIN_TRACKING_DATA(Reserved).Allocate(1, sizeInBytes);
@@ -326,7 +333,7 @@ void* FVirtualMemory::AlignedAlloc(size_t alignment, size_t sizeInBytes) {
     }
 
 #elif   defined(PLATFORM_LINUX)
-    p = (void*)(((uintptr_t)::mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0) + 1)&~1);//with the conversion of MAP_FAILED to 0
+    void* p = (void*)(((uintptr_t)::mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0) + 1)&~1);//with the conversion of MAP_FAILED to 0
 
     if (not Meta::IsAligned(alignment, p)) {
         p = VMALLOC(size + alignment - ALLOCATION_GRANULARITY());
@@ -351,6 +358,7 @@ void* FVirtualMemory::AlignedAlloc(size_t alignment, size_t sizeInBytes) {
 
     return p;
 }
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 void FVirtualMemory::AlignedFree(void* ptr, size_t sizeInBytes) {
     Assert(ptr);
@@ -359,6 +367,11 @@ void FVirtualMemory::AlignedFree(void* ptr, size_t sizeInBytes) {
 #ifdef USE_VMALLOC_SIZE_PTRIE
     const size_t regionSize = VMReleaseBlockSize_(ptr);
     Assert(regionSize == sizeInBytes);
+#endif
+
+#ifdef USE_MEMORY_DOMAINS
+    if (ptr)
+        MEMORY_DOMAIN_TRACKING_DATA(Reserved).Deallocate(1, sizeInBytes);
 #endif
 
 #if     defined(PLATFORM_WINDOWS)
@@ -370,13 +383,6 @@ void FVirtualMemory::AlignedFree(void* ptr, size_t sizeInBytes) {
 
 #else
 #   error "unsupported platform"
-#endif
-
-#ifdef USE_MEMORY_DOMAINS
-    if (ptr)
-        MEMORY_DOMAIN_TRACKING_DATA(Reserved).Deallocate(1, sizeInBytes);
-#else
-    UNUSED(sizeInBytes);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -391,6 +397,9 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first TR
     Assert(Meta::IsAligned(alignment, sizeInBytes));
 
     if (FreePageBlockCount) {
+        Assume(first);
+        Assert(first);
+
         FFreePageBlock* cachedBlock = nullptr;
 
         FFreePageBlock* const last = first + FreePageBlockCount;

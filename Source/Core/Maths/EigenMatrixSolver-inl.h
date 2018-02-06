@@ -317,6 +317,8 @@ T TSymmetricEigensolver<T, N>::GetEigenvalue(int c) const
     }
 }
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(6295) // Ill-defined for-loop: 'int' values are always of range '-2147483648' to '2147483647'. Loop executes infinitely.
 template <typename T, size_t N>
 void TSymmetricEigensolver<T, N>::Tridiagonalize()
 {
@@ -414,6 +416,7 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
     }
     mDiagonal[k] = _matrix.data().raw[index];
 }
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 template <typename T, size_t N>
 void TSymmetricEigensolver<T, N>::GetSinCos(T x, T y, T& cs, T& sn)

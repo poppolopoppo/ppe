@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-#pragma warning( push )
-#pragma warning( disable : 4503) // C4503 'XXX': decorated name is too long
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4503) // C4503 'XXX': decorated name is too long
 
 #include "Grammar.h"
 
@@ -171,8 +171,8 @@ DEF_BINARYOPERATOR_COMPARATOR(GreaterOrEqual, >=);
 DEF_BINARYOPERATOR_COMPARATOR(Equals, ==);
 DEF_BINARYOPERATOR_COMPARATOR(NotEquals, !=);
 //----------------------------------------------------------------------------
-#pragma warning(push)
-#pragma warning(disable: 4702) // warning C4702: impossible d'atteindre le code
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4702) // warning C4702: impossible d'atteindre le code
 template <typename T, template <typename > class _Op>
 static bool TryAssignCopy_(const RTTI::FMetaAtom* value, const Parser::FParseExpression *expr, RTTI::PMetaAtom& result) {
     Assert(!result);
@@ -185,7 +185,7 @@ static bool TryAssignCopy_(const RTTI::FMetaAtom* value, const Parser::FParseExp
         return false;
     }
 }
-#pragma warning(pop)
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 template <template <typename > class _Op>
 struct TUnaryOp {
@@ -1100,4 +1100,4 @@ Parser::PCParseItem FGrammarStartup::Parse(Parser::FParseList& input) {
 } //!namespace Serialize
 } //!namespace Core
 
-#pragma warning( pop )
+PRAGMA_MSVC_WARNING_POP()

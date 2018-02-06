@@ -10,14 +10,14 @@
 
 #include <mutex>
 
-#pragma warning(push)
-#pragma warning(disable: 4091) // 'typedef : ignored left of '' when not variable is declared
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4091) // 'typedef : ignored left of '' when not variable is declared
 
 #include "Misc/DLLWrapper.h"
 #include "Misc/Platform_Windows.h"
 #include <DbgHelp.h>
 
-#pragma warning(pop)
+PRAGMA_MSVC_WARNING_POP()
 
 namespace Core {
 //----------------------------------------------------------------------------

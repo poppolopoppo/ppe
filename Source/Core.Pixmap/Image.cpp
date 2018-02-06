@@ -16,11 +16,9 @@
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Memory/MemoryStream.h"
 
-#ifdef PLATFORM_WINDOWS
-#   pragma warning(push)
-#   pragma warning(disable: 4996) // 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-#   pragma warning(disable: 6001) // warning C6001: Using uninitialized memory 'coutput'
-#endif
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4996) // 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+PRAGMA_MSVC_WARNING_DISABLE(6001) // warning C6001: Using uninitialized memory 'coutput'
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_MALLOC(sz) \
@@ -46,9 +44,7 @@
 #define STBI_WRITE_NO_STDIO
 #include "Core.External/stb/stb_image_write.h"
 
-#ifdef PLATFORM_WINDOWS
-#   pragma warning(pop)
-#endif
+PRAGMA_MSVC_WARNING_POP()
 
 namespace Core {
 namespace Pixmap {

@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 
 #ifndef EXPORT_CORE_EXTERNAL_DOUBLECONVERSION
-#   pragma warning(push)
+    PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("ASSERT")
 #   pragma push_macro("UNIMPLEMENTED")
 #   pragma push_macro("UNREACHABLE")
@@ -23,9 +23,7 @@
 #define UNIMPLEMENTED AssertNotImplemented
 #define UNREACHABLE AssertNotReached
 
-#ifdef _MSC_VER
-#   pragma warning(disable: 4244) // 'argument': conversion from 'const uc16' to 'char', possible loss of data
-#endif
+PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'const uc16' to 'char', possible loss of data
 
 #ifdef CPP_CLANG
 #    pragma clang system_header
@@ -46,6 +44,6 @@
 #   pragma pop_macro("UNIMPLEMENTED")
 #   pragma pop_macro("UNREACHABLE")
 
-#   pragma warning(pop)
+    PRAGMA_MSVC_WARNING_POP()
 
 #endif //!EXPORT_CORE_EXTERNAL_DOUBLECONVERSION

@@ -9,7 +9,7 @@
 #endif
 
 #ifndef EXPORT_CORE_EXTERNAL_XXHASH
-#   pragma warning(push)
+    PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("FORCE_INLINE")
 #endif
 
@@ -24,6 +24,6 @@
 
 #   pragma pop_macro("FORCE_INLINE")
 
-#   pragma warning(pop)
+    PRAGMA_MSVC_WARNING_POP()
 
 #endif //!EXPORT_CORE_EXTERNAL_XXHASH

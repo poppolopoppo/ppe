@@ -17,8 +17,8 @@
 #   error "no support"
 #endif
 
-#pragma warning( push )
-#pragma warning( disable : 4100 ) // C4100 'XXX': unreferenced formal parameter
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4100) // C4100 'XXX': unreferenced formal parameter
 
 namespace Core {
 namespace Engine {
@@ -142,4 +142,4 @@ Graphics::MessageResult FMouseInputHandler::OnMouseMButtonUp_(Graphics::IWindowM
 } //!namespace Engine
 } //!namespace Core
 
-#pragma warning( pop )
+PRAGMA_MSVC_WARNING_POP()

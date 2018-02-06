@@ -49,8 +49,8 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#pragma warning(push)
-#pragma warning(disable: 4324) // warning C4324: 'Core::FMemoryPoolChunk' : structure was padded due to __declspec(align())
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // warning C4324: 'Core::FMemoryPoolChunk' : structure was padded due to __declspec(align())
 class ALIGN(16) FMemoryPoolChunk {
 public:
     struct FBlock { FBlock *Next; };
@@ -98,7 +98,7 @@ private:
     typedef INTRUSIVELIST_ACCESSOR(&FMemoryPoolChunk::_node) list_accessor;
 };
 STATIC_ASSERT(Meta::IsAligned(ALLOCATION_BOUNDARY, sizeof(FMemoryPoolChunk)));
-#pragma warning(pop)
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 FMemoryPoolChunk::FMemoryPoolChunk(size_t chunkSize, size_t blockCount)
 :   _blocks(nullptr)

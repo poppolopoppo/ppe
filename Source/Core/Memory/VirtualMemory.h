@@ -73,7 +73,7 @@ public:
 
 #ifdef USE_MEMORY_DOMAINS
     typedef _DomainType domain_type;
-    FMemoryTracking& TrackingData() const { return domain_type::TrackingData; }
+    FMemoryTracking& TrackingData() const { return domain_type::TrackingData(); }
 #   define TRACKINGDATA_ARG_IFP , TrackingData()
 #else
 #   define TRACKINGDATA_ARG_IFP

@@ -5,7 +5,7 @@
 #include "Core/Memory/MemoryDomain.h"
 
 #ifndef EXPORT_CORE_EXTERNAL_LZ4
-#   pragma warning(push)
+    PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("ALLOCATOR")
 #   pragma push_macro("FORCE_INLINE")
 #   pragma push_macro("malloc")
@@ -25,12 +25,8 @@
 #define malloc(sz) Core::tracking_malloc_thread_local<MEMORY_DOMAIN_TAG(LZ4)>(sz)
 #define free(p) Core::tracking_free_thread_local<MEMORY_DOMAIN_TAG(LZ4)>(p)
 
-#ifdef _MSC_VER
-#   pragma warning(disable: 6239) // (<non-zero constant> && <expression>) always evaluates to the result of <expression>.  Did you intend to use the bitwise-and operator?
-#   if _HAS_CXX17
-#       pragma warning(disable: 5033) // 'register' is no longer a supported storage class
-#   endif
-#endif
+PRAGMA_MSVC_WARNING_DISABLE(5033) // 'register' is no longer a supported storage class (C++17)
+PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) always evaluates to the result of <expression>.  Did you intend to use the bitwise-and operator?
 
 #ifdef CPP_CLANG
 #    pragma clang system_header
@@ -52,6 +48,6 @@
 #   pragma pop_macro("malloc")
 #   pragma pop_macro("free")
 
-#   pragma warning(pop)
+    PRAGMA_MSVC_WARNING_POP()
 
 #endif //!EXPORT_CORE_EXTERNAL_LZ4
