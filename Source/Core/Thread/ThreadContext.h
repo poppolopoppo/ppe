@@ -43,6 +43,8 @@ public:
     EThreadPriority Priority() const;
     void SetPriority(EThreadPriority priority) const;
 
+    void DutyCycle() const;
+
     static size_t NumThreads();
 
 private:

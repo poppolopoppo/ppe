@@ -15,13 +15,10 @@ class FTaskManager;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class ETaskPriority : u32 {
-    High = 0,
+    High,
     Normal,
     Low,
-
-    _Internal, // Do not use for userland tasks !
-
-    _Count
+    Internal, // Do not use for userland tasks ! (reserved for system)
 };
 //----------------------------------------------------------------------------
 using FTaskFunc = Meta::TFunction<void(ITaskContext&)>;

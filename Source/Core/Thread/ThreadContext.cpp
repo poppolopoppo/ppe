@@ -271,6 +271,12 @@ Assert(std::this_thread::get_id() == _threadId);
 #endif
 }
 //----------------------------------------------------------------------------
+// you can put here everything you'll want to tick regularly
+void FThreadContext::DutyCycle() const {
+    // chance to cleanup thread local allocator
+    malloc_release_pending_blocks();
+}
+//----------------------------------------------------------------------------
 size_t FThreadContext::NumThreads() {
     return GNumThreadContext_;
 }

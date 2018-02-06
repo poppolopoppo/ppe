@@ -4,9 +4,6 @@
 
 #include "Core/Thread/Task/Task.h"
 
-#include "Core/Container/IntrusiveList.h"
-#include "Core/Container/Vector.h"
-#include "Core/Diagnostic/Exception.h"
 #include "Core/IO/StringView.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Memory/RefPtr.h"
@@ -21,7 +18,7 @@ FWD_REFPTR(TaskCounter);
 class FTaskManager;
 class FTaskManagerImpl;
 //----------------------------------------------------------------------------
-class FTaskWaitHandle {
+class CORE_API FTaskWaitHandle {
 public:
     friend class FTaskManagerImpl;
 
@@ -60,7 +57,7 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-class FTaskManager {
+class CORE_API FTaskManager {
 public:
     FTaskManager(const FStringView& name, size_t threadTag, size_t workerCount, EThreadPriority priority);
     ~FTaskManager();
@@ -104,7 +101,7 @@ private:
     const EThreadPriority _priority;
 };
 //----------------------------------------------------------------------------
-ITaskContext& CurrentTaskContext();
+CORE_API ITaskContext& CurrentTaskContext();
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
