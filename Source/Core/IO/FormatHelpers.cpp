@@ -8,18 +8,11 @@
 #include "Maths/Units.h"
 #include "Memory/MemoryProvider.h"
 
-
 namespace Core {
-namespace Fmt {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FStringView Format(char *buffer, size_t capacity, Fmt::FCountOfElements count) {
-    FFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
-
-    oss.Format().SetPrecision(2);
-    oss << FTextFormat::FixedFloat;
-
+FTextWriter& operator <<(FTextWriter& oss, Fmt::FCountOfElements count) {
     if (count > 9e5f)
         oss << (count / 1e6f) << " M";
     else if (count > 9e2f)
@@ -27,15 +20,10 @@ FStringView Format(char *buffer, size_t capacity, Fmt::FCountOfElements count) {
     else
         oss << count.Value;
 
-    return oss.Written();
+    return oss;
 }
 //----------------------------------------------------------------------------
-FWStringView Format(wchar_t *buffer, size_t capacity, Fmt::FCountOfElements count) {
-    FWFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
-
-    oss.Format().SetPrecision(2);
-    oss << FTextFormat::FixedFloat;
-
+FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FCountOfElements count) {
     if (count > 9e5f)
         oss << (count / 1e6f) << L" M";
     else if (count > 9e2f)
@@ -43,31 +31,22 @@ FWStringView Format(wchar_t *buffer, size_t capacity, Fmt::FCountOfElements coun
     else
         oss << count.Value;
 
-    return oss.Written();
+    return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FStringView Format(char *buffer, size_t capacity, Fmt::FPointer ptr) {
-    FFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
-    oss << (const void*)ptr.Value;
-    return oss.Written();
+FTextWriter& operator <<(FTextWriter& oss, Fmt::FPointer ptr) {
+    return oss << (const void*)ptr.Value;
 }
 //----------------------------------------------------------------------------
-FWStringView Format(wchar_t *buffer, size_t capacity, Fmt::FPointer ptr) {
-    FWFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
-    oss << (const void*)ptr.Value;
-    return oss.Written();
+FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPointer ptr) {
+    return oss << (const void*)ptr.Value;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FStringView Format(char *buffer, size_t capacity, Fmt::FSizeInBytes size) {
-    FFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
-
-    oss.Format().SetPrecision(2);
-    oss << FTextFormat::FixedFloat;
-
+FTextWriter& operator <<(FTextWriter& oss, Fmt::FSizeInBytes size) {
     const Units::Storage::FBytes bytes(static_cast<double>(size));
 
     const Units::Storage::FPetabytes pb(0.8);
@@ -89,15 +68,10 @@ FStringView Format(char *buffer, size_t capacity, Fmt::FSizeInBytes size) {
     else
         oss << bytes;
 
-    return oss.Written();
+    return oss;
 }
 //----------------------------------------------------------------------------
-FWStringView Format(wchar_t *buffer, size_t capacity, Fmt::FSizeInBytes size) {
-    FWFixedSizeTextWriter oss(MakeView(buffer, buffer + capacity));
-
-    oss.Format().SetPrecision(2);
-    oss << FTextFormat::FixedFloat;
-
+FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FSizeInBytes size) {
     const Units::Storage::FBytes bytes(static_cast<double>(size));
 
     const Units::Storage::FPetabytes pb(0.8);
@@ -119,15 +93,48 @@ FWStringView Format(wchar_t *buffer, size_t capacity, Fmt::FSizeInBytes size) {
     else
         oss << bytes;
 
-    return oss.Written();
+    return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Fmt
-} //!namespace Core
+FTextWriter& operator <<(FTextWriter& oss, Fmt::FDurationInMs v) {
+    const Units::Time::FMicroseconds us(v.Value);
 
-namespace Core {
+    const Units::Time::FHours hr(0.8);
+    const Units::Time::FSeconds sc(0.8);
+    const Units::Time::FMilliseconds ms(0.8);
+
+    if (us > hr)
+        oss << Units::Time::FHours(us);
+    else if (us > sc)
+        oss << Units::Time::FSeconds(us);
+    else if (us > ms)
+        oss << Units::Time::FMilliseconds(us);
+    else
+        oss << us;
+
+    return oss;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FDurationInMs v) {
+    const Units::Time::FMicroseconds us(v.Value);
+
+    const Units::Time::FHours hr(0.8);
+    const Units::Time::FSeconds sc(0.8);
+    const Units::Time::FMilliseconds ms(0.8);
+
+    if (us > hr)
+        oss << Units::Time::FHours(us);
+    else if (us > sc)
+        oss << Units::Time::FSeconds(us);
+    else if (us > ms)
+        oss << Units::Time::FMilliseconds(us);
+    else
+        oss << us;
+
+    return oss;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

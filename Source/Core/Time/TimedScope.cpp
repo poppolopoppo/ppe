@@ -41,8 +41,8 @@ FBenchmarkScope::~FBenchmarkScope() {
         _category,
         Fmt::Repeat(L"  ", _depth),
         Fmt::PadRight(_message, 28 - _depth * 2, L' '),
-        elapsed,
-        Fmt::Ternary(*_accumulated > 0, _accumulated, '-') );
+        Fmt::DurationInMs(elapsed),
+        Fmt::Ternary(*_accumulated > 0, _accumulated, L'-') );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -60,8 +60,8 @@ FIOBenchmarkScope::~FIOBenchmarkScope() {
     LOG(Benchmark, Info, L" {0:20} | {2:8f2} | {3:10f2} = {4:10f2} Mb/s | {1}",
         _category,
         _message,
-        elapsed,
-        Fmt::FSizeInBytes{ checked_cast<size_t>(*_pSizeInBytes) },
+        Fmt::DurationInMs(elapsed),
+        Fmt::SizeInBytes(checked_cast<size_t>(*_pSizeInBytes)),
         FMegabytes(FBytes((double)*_pSizeInBytes)).Value() / FSeconds(elapsed).Value() );
 }
 //----------------------------------------------------------------------------

@@ -5,6 +5,7 @@
 #include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter.h"
 #include "Core/Memory/MemoryView.h"
+#include "Core/Maths/Units.h"
 #include "Core/Meta/Function.h"
 #include "Core/Meta/StronglyTyped.h"
 
@@ -14,53 +15,50 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace Fmt {
 CORE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, FCountOfElements);
-CORE_API FStringView Format(char *buffer, size_t capacity, FCountOfElements count);
-CORE_API FWStringView Format(wchar_t *buffer, size_t capacity, FCountOfElements count);
 template <typename T>
 Meta::TEnableIf<std::is_integral_v<T>, FCountOfElements> CountOfElements(T n) {
     return FCountOfElements{ checked_cast<T>(n) };
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::FCountOfElements& count) {
-    _Char buffer[32];
-    return oss << Fmt::Format(buffer, lengthof(buffer), count);
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FCountOfElements count);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FCountOfElements count);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
 CORE_STRONGLYTYPED_NUMERIC_DEF(intptr_t, FPointer);
-CORE_API FStringView Format(char *buffer, size_t capacity, FPointer ptr);
-CORE_API FWStringView Format(wchar_t *buffer, size_t capacity, FPointer ptr);
 template <typename T>
 FPointer Pointer(T* p) { return FPointer{ p }; }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::FPointer& ptr) {
-    _Char buffer[32];
-    return oss << Fmt::Format(buffer, lengthof(buffer), ptr);
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FPointer ptr);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPointer ptr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
 CORE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, FSizeInBytes);
-CORE_API FStringView Format(char *buffer, size_t capacity, FSizeInBytes value);
-CORE_API FWStringView Format(wchar_t *buffer, size_t capacity, FSizeInBytes value);
 template <typename T>
 Meta::TEnableIf<std::is_integral_v<T>, FSizeInBytes> SizeInBytes(T n) {
     return FSizeInBytes{ checked_cast<uint64_t>(n) };
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::FSizeInBytes& size) {
-    _Char buffer[32];
-    return oss << Fmt::Format(buffer, lengthof(buffer), size);
+CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FSizeInBytes size);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FSizeInBytes size);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Fmt {
+struct FDurationInMs { double Value; };
+inline FDurationInMs DurationInMs(FMicroseconds t) {
+    return FDurationInMs{ t.Value() };
 }
+} //!namespace Fmt
+//----------------------------------------------------------------------------
+CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FDurationInMs v);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FDurationInMs v);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -54,9 +54,9 @@ struct FCompressionBenchmark_ {
         const FTimespan elapsed = FTimepoint::ElapsedSince(StartedAt);
         LOG(Benchmark, Info, L" {0:20} | {1:8} | {2:10} ===> {3:10} : {4:10f2}% = {5:10f2} Mb/s",
             msg,
-            elapsed,
-            Fmt::FSizeInBytes{ a },
-            Fmt::FSizeInBytes{ b },
+            Fmt::DurationInMs(elapsed),
+            Fmt::SizeInBytes(a),
+            Fmt::SizeInBytes(b),
             b * 100.0 / a,
             FMegabytes(FBytes((double)Max(a, b))).Value() / FSeconds(elapsed).Value() );
     }

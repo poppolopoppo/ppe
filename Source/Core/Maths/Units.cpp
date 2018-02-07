@@ -17,12 +17,14 @@ namespace Core {
         const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit) { \
             return (*oss.FormatScope()) \
                 << unit.Value() \
+                << FTextFormat::PadRight(3, ' ') \
                 << MakeStringView(" " STRINGIZE(SYMBOL)); \
     } \
     FWTextWriter& operator <<(FWTextWriter& oss, \
         const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit) { \
             return (*oss.FormatScope()) \
                 << unit.Value() \
+                << FTextFormat::PadRight(3, L' ') \
                 << MakeStringView(L" " WSTRINGIZE(SYMBOL)); \
     }
 //----------------------------------------------------------------------------
