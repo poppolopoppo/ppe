@@ -25,7 +25,7 @@ FString GetLastErrorToString(long errorCode) {
 #ifdef PLATFORM_WINDOWS
     _com_error com(errorCode);
     //return ToString(MakeCStringView(com.ErrorMessage()));
-    return StringFormat("{0:#4X}: {1}", u32(errorCode), MakeCStringView(com.ErrorMessage()));
+    return StringFormat("<{0:#4X}> \"{1}\"", u32(errorCode), MakeCStringView(com.ErrorMessage()));
 
 #else
     return FString();
@@ -37,12 +37,24 @@ FWString GetLastErrorToWString(long errorCode) {
 #ifdef PLATFORM_WINDOWS
     _com_error com(errorCode);
     //return ToWString(MakeCStringView(com.ErrorMessage()));
-    return StringFormat(L"{0:#4X}: {1}", u32(errorCode), MakeCStringView(com.ErrorMessage()));
+    return StringFormat(L"<{0:#4X}> \"{1}\"", u32(errorCode), MakeCStringView(com.ErrorMessage()));
 
 #else
     return FWString();
 
 #endif
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FLastError::FLastError() : Code(GetLastError()) {}
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const FLastError& error) {
+    return oss << GetLastErrorToString(error.Code);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const FLastError& error) {
+    return oss << GetLastErrorToWString(error.Code);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
