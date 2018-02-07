@@ -680,7 +680,8 @@ private: // IBufferedStreamWriter
     virtual void Flush() override final {}
 
 private:
-    STATIC_CONST_INTEGRAL(size_t, GBufferSize, ALLOCATION_GRANULARITY*8); // 512k
+    // 1024k, must be large enough to let the asynchronous tasks complete
+    STATIC_CONST_INTEGRAL(size_t, GBufferSize, ALLOCATION_GRANULARITY*16); 
     STATIC_CONST_INTEGRAL(size_t, GBufferMask, GBufferSize - 1);
     STATIC_ASSERT(Meta::IsPow2(GBufferSize));
 
