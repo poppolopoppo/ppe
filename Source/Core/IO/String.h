@@ -466,12 +466,18 @@ struct TStringEqualTo : TStringViewEqualTo <_Char, _Sensitive> {
     bool operator ()(const TBasicString<_Char>& lhs, const TBasicString<_Char>& rhs) const {
         return TStringViewEqualTo<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
     }
+    bool operator ()(const TBasicString<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
+        return TStringViewEqualTo<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs);
+    }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TStringLess : TStringViewLess <_Char, _Sensitive> {
     bool operator ()(const TBasicString<_Char>& lhs, const TBasicString<_Char>& rhs) const {
         return TStringViewLess<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
+    }
+    bool operator ()(const TBasicString<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
+        return TStringViewLess<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs);
     }
 };
 //----------------------------------------------------------------------------
