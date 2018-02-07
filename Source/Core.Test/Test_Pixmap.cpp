@@ -1,9 +1,5 @@
 #include "stdafx.h"
 
-#include "Core/Color/Color.h"
-#include "Core/IO/VirtualFileSystem.h"
-#include "Core/Thread/Task.h"
-
 #include "Core.Pixmap/Drawing.h"
 #include "Core.Pixmap/CompressedImage.h"
 #include "Core.Pixmap/FloatImage.h"
@@ -22,8 +18,14 @@
 #include "Core/IO/StringBuilder.h"
 #include "Core/IO/FS/Filename.h"
 
+#include "Core/Color/Color.h"
+#include "Core/Diagnostic/Logger.h"
+#include "Core/IO/VirtualFileSystem.h"
+#include "Core/Thread/Task.h"
+
 namespace Core {
 namespace Test {
+LOG_CATEGORY(, Test_Pixmap);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -204,6 +206,8 @@ void Test_Binpacking() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_Pixmap() {
+    LOG(Test_Pixmap, Emphasis, L"starting pixmap tests ...");
+
     const FFilename inputs[] = {
         L"Data:/Textures/Tech/Flower.png",
         L"Data:/Textures/Tech/Flower2.png",

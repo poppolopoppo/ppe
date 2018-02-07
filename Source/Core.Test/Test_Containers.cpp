@@ -713,7 +713,7 @@ static void Test_Container_POD_(
     static constexpr size_t loops = 1000;
 #endif
 
-    LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L"-*=*"), 20));
+    LOG(Test_Containers, Emphasis, L"benchmarking <{0}> with POD", name);
     BENCHMARK_SCOPE(name, L"global");
 
     {
@@ -817,7 +817,7 @@ static void Test_Container_Obj_(
     static constexpr size_t loops = 1000;
 #endif
 
-    LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L"-*=*"), 20));
+    LOG(Test_Containers, Emphasis, L"benchmarking <{0}> with non-POD", name);
 
     BENCHMARK_SCOPE(name, L"global");
 
@@ -909,6 +909,7 @@ static void Test_Container_Obj_(
 }
 //----------------------------------------------------------------------------
 void Test_Containers() {
+    LOG(Test_Containers, Emphasis, L"starting container tests ...");
     {
         float4x4 m = Make3DTransformMatrix(float3(1,2,3), 10.0f, float3::Z(), Radians(33.0f));
         float4 p = float4::W();

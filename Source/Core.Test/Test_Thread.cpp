@@ -72,6 +72,8 @@ static void Test_ParallelFor_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_Thread() {
+    LOG(Test_Thread, Emphasis, L"starting thread tests ...");
+
     Test_Async_();
     Test_Future_();
     Test_ParallelFor_();

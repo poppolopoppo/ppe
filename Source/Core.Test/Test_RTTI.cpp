@@ -529,6 +529,8 @@ static void Test_Serialize_() {
 } //!namespace
 //----------------------------------------------------------------------------
 void Test_RTTI() {
+    LOG(Test_RTTI, Emphasis, L"starting rtti tests ...");
+
     Test_Atoms_();
     Test_Any_();
     Test_Serialize_();

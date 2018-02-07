@@ -149,7 +149,7 @@ static void Test_Allocator_(
     const TMemoryView<const size_t>& largeBlocks,
     const TMemoryView<const size_t>& mixedBlocks ) {
 
-    LOG(Test_Allocators, Info, L"{0}", Fmt::Repeat(L"-*=*", 20));
+    LOG(Test_Allocators, Emphasis, L"benchmarking <{0}>", name);
 
     BENCHMARK_SCOPE(name, L"Global");
     {
@@ -187,6 +187,8 @@ static void Test_Allocator_(
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_Allocators() {
+    LOG(Test_Allocators, Emphasis, L"starting allocator tests ...");
+
     typedef u8 value_type;
 
     constexpr size_t BlockSizeMin = 16;

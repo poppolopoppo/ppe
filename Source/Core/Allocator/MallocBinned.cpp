@@ -549,7 +549,7 @@ struct FBinnedThreadCache_ {
     }
 
     NO_INLINE ~FBinnedThreadCache_() {
-        LOG(MallocBinned, Info, L"shutdown thread cache {0}", std::this_thread::get_id());
+        LOG(MallocBinned, Debug, L"shutdown thread cache {0}", std::this_thread::get_id());
 
         FBinnedGlobalCache_& globalCache = FBinnedGlobalCache_::Instance();
 
@@ -603,7 +603,7 @@ private:
     INTRUSIVESINGLELIST(&FBinnedPage_::Node) _freePages;
 
     FBinnedThreadCache_() {
-        LOG(MallocBinned, Info, L"start thread cache {0}", std::this_thread::get_id());
+        LOG(MallocBinned, Debug, L"start thread cache {0}", std::this_thread::get_id());
     }
 
     // force NO_INLINE for cold path functions (better chance for inlining, better instruction cache)
@@ -733,11 +733,11 @@ private:
 
     FBinnedAllocator_() {
         STATIC_ASSERT(FBinnedPage_::PageSize == FBinnedChunk_::ChunkSizeInBytes);
-        LOG(MallocBinned, Info, L"start allocator");
+        LOG(MallocBinned, Debug, L"start allocator");
     }
 
     ~FBinnedAllocator_() {
-        LOG(MallocBinned, Info, L"shutdown allocator");
+        LOG(MallocBinned, Debug, L"shutdown allocator");
     }
 
     NO_INLINE void* AllocLargeBlock_(size_t sizeInBytes) {

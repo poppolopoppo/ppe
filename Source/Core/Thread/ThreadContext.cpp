@@ -321,7 +321,7 @@ void FThreadContextStartup::Start(const char* name, size_t tag) {
 
 #ifdef USE_DEBUG_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
-    LOG(Thread, Info, L"start thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
+    LOG(Thread, Debug, L"start thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
 }
 //----------------------------------------------------------------------------
@@ -333,14 +333,14 @@ void FThreadContextStartup::Start_MainThread() {
 
 #ifdef USE_DEBUG_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
-    LOG(Thread, Info, L"start thread '{0}' with tag = {1} ({2}) <MainThread>", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
+    LOG(Thread, Debug, L"start thread '{0}' with tag = {1} ({2}) <MainThread>", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
 }
 //----------------------------------------------------------------------------
 void FThreadContextStartup::Shutdown() {
 #ifdef USE_DEBUG_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
-    LOG(Thread, Info, L"stop thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
+    LOG(Thread, Debug, L"stop thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
 
     FAllocaStartup::Shutdown();

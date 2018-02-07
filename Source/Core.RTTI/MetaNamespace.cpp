@@ -51,7 +51,7 @@ void FMetaNamespace::Start() {
     Assert(not IsStarted());
     Assert(_classes.empty());
 
-    LOG(RTTI, Info, L"start namespace <{0}> ({1} handles)", _nameCStr, _classCount);
+    LOG(RTTI, Debug, L"start namespace <{0}> ({1} handles)", _nameCStr, _classCount);
 
     _nameToken = FName(_nameCStr);
 
@@ -103,7 +103,7 @@ void FMetaNamespace::Shutdown() {
 
     MetaDB().UnregisterNamespace(this);
 
-    LOG(RTTI, Info, L"shutdown namespace <{0}> ({1} handles)", _nameCStr, _classCount);
+    LOG(RTTI, Debug, L"shutdown namespace <{0}> ({1} handles)", _nameCStr, _classCount);
 
     _nameToken = FName();
 

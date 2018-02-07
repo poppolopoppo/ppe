@@ -17,13 +17,13 @@ FApplicationBase::FApplicationBase(const wchar_t *appname)
 FApplicationBase::~FApplicationBase() {}
 //----------------------------------------------------------------------------
 void FApplicationBase::Start() {
-    LOG(Application, Info, L"start application <{0}>", _appname);
+    LOG(Application, Debug, L"start application <{0}>", _appname);
     ReportAllTrackingData();
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::Shutdown() {
     ReportAllTrackingData();
-    LOG(Application, Info, L"shutdown application <{0}>", _appname);
+    LOG(Application, Debug, L"shutdown application <{0}>", _appname);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
