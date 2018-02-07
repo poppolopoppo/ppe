@@ -34,12 +34,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(
-    TBasicTextWriter<_Char>& oss,
-    Network::EHttpMethod httpMethod ) {
-    return oss << Network::HttpMethodToCStr(httpMethod);
-}
+CORE_NETWORK_API FTextWriter& operator <<(FTextWriter& oss, Network::EHttpMethod httpMethod);
+CORE_NETWORK_API FWTextWriter& operator <<(FWTextWriter& oss, Network::EHttpMethod httpMethod);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

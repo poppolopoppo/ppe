@@ -4,9 +4,17 @@
 
 #include "NetworkIncludes.h"
 
+#include "Core/Container/HashMap.h"
+#include "Core/Container/StringHashMap.h"
 #include "Core/Diagnostic/LastError.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/String.h"
 #include "Core/IO/TextWriter.h"
+#include "Core/Meta/Optional.h"
+#include "Core/Meta/Singleton.h"
+#include "Core/Thread/ReadWriteLock.h"
+
+#define USE_CORE_NETWORK_DNSCACHE 1
 
 namespace Core {
 namespace Network {
@@ -100,10 +108,125 @@ bool FAddress::ParseIPv4(u8 (&ipV4)[4], const FAddress& addr) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+#if USE_CORE_NETWORK_DNSCACHE
+class FDNSCache_ : Meta::TSingleton<FDNSCache_> {
+public: // TSingleton<>
+    typedef Meta::TSingleton<FDNSCache_> parent_type;
+
+    using parent_type::Instance;
+#ifdef WITH_CORE_ASSERT
+    using parent_type::HasInstance;
+#endif
+
+    static void Create() {
+        LOG(Network, Debug, L"starting DNS cache ...");
+        parent_type::Create();
+    }
+
+    static void Destroy() {
+        LOG(Network, Debug, L"stopping DNS cache ...");
+        parent_type::Destroy();
+    }
+
+public: // DNS cache
+    Meta::TOptional<FStringView> HostnameToIPv4(const FStringView& hostname) const {
+        Assert(not hostname.empty());
+        const hash_t h = hash_string(hostname);
+
+        READSCOPELOCK(_barrier);
+        const auto it = _hostnameToIpV4.find_like(hostname, h);
+
+        Meta::TOptional<FStringView> result;
+        if (_hostnameToIpV4.end() != it)
+            result.emplace(it->second.MakeView());
+            
+        return result;
+    }
+
+    Meta::TOptional<FStringView> IPv4ToHostname(const FStringView& ipV4) const {
+        Assert(not ipV4.empty());
+        const hash_t h = hash_string(ipV4);
+        
+        READSCOPELOCK(_barrier);
+        const auto it = _ipV4ToHostname.find_like(ipV4, h);
+        
+        Meta::TOptional<FStringView> result;
+        if (_ipV4ToHostname.end() != it)
+            result.emplace(it->second.MakeView());
+
+        return result;
+    }
+
+    void PutHostnameToIPv4(const FStringView& hostname, const FStringView& ipV4) {
+        Assert(not hostname.empty());
+        Assert(not ipV4.empty());
+        
+        FString key(hostname);
+        FString value(ipV4);
+
+        LOG(Network, Debug, L"put '{0}' => [{1}] in DNS cache", hostname, ipV4);
+        
+        WRITESCOPELOCK(_barrier);
+        
+        _hostnameToIpV4.insert_or_assign(MakePair(std::move(key), std::move(value)));
+    }
+
+    void PutIPv4ToHostname(const FStringView& ipV4, const FStringView& hostname) {
+        Assert(not ipV4.empty());
+        Assert(not hostname.empty());
+
+        FString key(ipV4);
+        FString value(hostname);
+
+        LOG(Network, Debug, L"put [{0}] => '{1}' in DNS cache", ipV4, hostname);
+
+        WRITESCOPELOCK(_barrier);
+        _ipV4ToHostname.insert_or_assign(MakePair(std::move(key), std::move(value)));
+    }
+
+    void Flush() {
+        LOG(Network, Debug, L"flushing DNS cache ...");
+
+        WRITESCOPELOCK(_barrier);
+        _hostnameToIpV4.clear();
+        _ipV4ToHostname.clear();
+    }
+
+private:
+    FReadWriteLock _barrier;
+    STRING_HASHMAP(DNS, FString, ECase::Sensitive) _hostnameToIpV4;
+    STRING_HASHMAP(DNS, FString, ECase::Sensitive) _ipV4ToHostname;
+};
+#endif //!USE_CORE_NETWORK_DNSCACHE
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+void FAddress::Start() {
+#if USE_CORE_NETWORK_DNSCACHE
+    FDNSCache_::Create();
+#endif
+}
+//----------------------------------------------------------------------------
+void FAddress::Shutdown() {
+#if USE_CORE_NETWORK_DNSCACHE
+    FDNSCache_::Destroy();
+#endif
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void FlushDNSCache() {
+#if USE_CORE_NETWORK_DNSCACHE
+    FDNSCache_::Instance().Flush();
+#endif
+}
+//----------------------------------------------------------------------------
 bool LocalHostName(FString& hostname) {
     char temp[NI_MAXHOST];
     if (::gethostname(temp, NI_MAXHOST) == SOCKET_ERROR) {
-        LOG_LAST_ERROR(L"gethostname");
+        LOG_LAST_ERROR(Network, L"gethostname");
         return false;
     }
     else {
@@ -117,12 +240,28 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
     Assert(!hostname.empty());
     Assert(hostname.size() < NI_MAXHOST);
 
-    char nodeName[NI_MAXHOST]; // hostname must be a null terminated string
-    hostname.ToNullTerminatedCStr(nodeName);
+    char buffer[NI_MAXHOST + 16]; // hostname must be a null terminated string
 
-    char serviceName[16];
-    FFixedSizeTextWriter oss(serviceName);
-    oss << port;
+    FFixedSizeTextWriter hostnameWPort(buffer);
+    hostnameWPort << hostname;
+    const size_t offSep = hostnameWPort.Tell();
+    hostnameWPort << ':' << port;
+    const size_t offEnd = hostnameWPort.Tell();
+    hostnameWPort << Eos;
+
+#if USE_CORE_NETWORK_DNSCACHE
+    {
+        const FStringView cacheKey = FStringView(buffer, offEnd);
+        if (const Meta::TOptional<FStringView> cacheValue = FDNSCache_::Instance().HostnameToIPv4(cacheKey)) {
+            ip.assign(*cacheValue);
+            return (not ip.empty()); // negative queries are also cached
+        }
+    }
+#endif
+
+    const char* nodeName = buffer;
+    const char* serviceName = &buffer[offSep + 1];
+    buffer[offSep] = '\0';
 
     struct ::addrinfo hints;
     memset(&hints, 0, sizeof(hints));
@@ -132,12 +271,12 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
 
     struct ::addrinfo* serviceInfo = nullptr;
     if (int errorCode = ::getaddrinfo(nodeName, serviceName, &hints, &serviceInfo)) {
-        LOG(Network, Error, L"getaddrinfo failed: {0}, {1}", errorCode, ::gai_strerror(errorCode));
+        LOG(Network, Error, L"getaddrinfo failed: <{0}> \"{1}\"", errorCode, ::gai_strerror(errorCode));
         return false;
     }
     Assert(serviceInfo);
 
-    STATIC_ASSERT(INET_ADDRSTRLEN <= sizeof(nodeName)); // recycle nodeName buffer
+    STATIC_ASSERT(INET_ADDRSTRLEN <= sizeof(buffer)); // recycle nodeName buffer
 
     bool succeed = false;
     for (struct ::addrinfo* p = serviceInfo; p; p = p->ai_next) {
@@ -149,7 +288,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
         const char* resolvedIpV4 = ::inet_ntop(
             p->ai_family,
             &serviceAddr->sin_addr,
-            nodeName, sizeof(nodeName) );
+            buffer, sizeof(buffer) );
 
         if (resolvedIpV4) {
             ip.assign(MakeCStringView(resolvedIpV4));
@@ -162,6 +301,14 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
 
     ::freeaddrinfo(serviceInfo);
 
+#if USE_CORE_NETWORK_DNSCACHE
+    {
+        hostnameWPort.Reset();
+        hostnameWPort << hostname << ':' << port;
+        FDNSCache_::Instance().PutHostnameToIPv4(hostnameWPort.Written(), succeed ? ip.MakeView() : FStringView());
+    }
+#endif
+
     return succeed;
 }
 //----------------------------------------------------------------------------
@@ -172,7 +319,14 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, EServiceName servi
 bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
     Assert(!ip.empty());
 
-    char temp[NI_MAXHOST]; // hostname must be a null terminated string
+#if USE_CORE_NETWORK_DNSCACHE
+    if (const Meta::TOptional<FStringView> cacheValue = FDNSCache_::Instance().IPv4ToHostname(ip)) {
+        hostname.assign(*cacheValue);
+        return (not hostname.empty()); // negative queries are also cached
+    }
+#endif
+
+    char temp[32]; // hostname must be a null terminated string
     ip.ToNullTerminatedCStr(temp);
 
     ::sockaddr_in sa;
@@ -181,7 +335,10 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
 
     // if inet_pton couldn't convert ip then return an error
     if (1 != ::inet_pton(AF_INET, temp, &sa.sin_addr) ) {
-        LOG_LAST_ERROR(L"inet_pton");
+        LOG_LAST_ERROR(Network, L"inet_pton");
+#if USE_CORE_NETWORK_DNSCACHE
+        FDNSCache_::Instance().PutHostnameToIPv4(ip, FStringView());
+#endif
         return false;
     }
 
@@ -196,11 +353,18 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
 
     // check if gethostbyaddr returned an error
     if (0 != ret) {
-        LOG_LAST_ERROR(L"getnameinfo");
+        LOG_LAST_ERROR(Network, L"getnameinfo");
+#if USE_CORE_NETWORK_DNSCACHE
+        FDNSCache_::Instance().PutHostnameToIPv4(ip, FStringView());
+#endif
         return false;
     }
 
     hostname.assign(MakeCStringView(hostinfo));
+
+#if USE_CORE_NETWORK_DNSCACHE
+    FDNSCache_::Instance().PutHostnameToIPv4(ip, hostname.MakeView());
+#endif
 
     Assert(hostname.size());
     return true;

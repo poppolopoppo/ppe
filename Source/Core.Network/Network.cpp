@@ -26,6 +26,7 @@ void FNetworkModule::Start() {
 
     FName::Start();
     FHttpConstNames::Start();
+    FAddress::Start();
     FSocket::Start();
 }
 //----------------------------------------------------------------------------
@@ -33,6 +34,7 @@ void FNetworkModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Network);
 
     FSocket::Shutdown();
+    FAddress::Shutdown();
     FHttpConstNames::Shutdown();
     FName::Shutdown();
 

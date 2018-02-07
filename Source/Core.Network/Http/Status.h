@@ -96,15 +96,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(
-    TBasicTextWriter<_Char>& oss,
-    Network::EHttpStatus httpStatus ) {
-    return oss
-        << Network::HttpStatusCode(httpStatus)
-        << " - " << Network::HttpStatusName(httpStatus)
-        << " : " << Network::HttpStatusDescription(httpStatus);
-}
+CORE_NETWORK_API FTextWriter& operator <<(FTextWriter& oss, Network::EHttpStatus httpStatus);
+CORE_NETWORK_API FWTextWriter& operator <<(FWTextWriter& oss, Network::EHttpStatus httpStatus);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

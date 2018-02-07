@@ -18,6 +18,7 @@
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/FileStream.h"
+#include "Core/IO/FormatHelpers.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter.h"
@@ -76,7 +77,7 @@ static bool ParseUri_(const FStringView& str) {
 static void Test_ParseUri_() {
     if (not ParseUri_("http://jquery.com/?s=toto+slip+123"))
         AssertNotReached();
-    if (not ParseUri_("https://bek@www.google.fr/search?num=20&safe=off&site=&source=hp&q=mangeur+de+p%C3%AEngouin&oq=mangeur+de+p%C3%AEngouin&gs_l=hp.3..0i22i30k1.1022.5665.0.5988.22.19.1.2.3.0.112.1214.16j3.19.0....0...1c.1.64.hp..0.19.1065.0..0j35i39k1j0i67k1j0i131k1j0i13i30k1.lOSTdUm6eCQ#anchor"))
+    if (not ParseUri_("https://bek@www.google.fr/search?num=20&safe=off&site=&source=hp&q=mangeur+de+pingouin&oq=mangeur+de+pingouin&gs_l=hp.3..0i22i30k1.1022.5665.0.5988.22.19.1.2.3.0.112.1214.16j3.19.0....0...1c.1.64.hp..0.19.1065.0..0j35i39k1j0i67k1j0i131k1j0i13i30k1.lOSTdUm6eCQ#anchor"))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
@@ -149,32 +150,36 @@ static void Test_HttpGet_() {
     if (not FUri::Parse(uri, MakeStringView("http://freegeoip.net/xml/poppolopoppo.ddns.net")))
         AssertNotReached();
 
-    FHttpResponse response;
-    if (EHttpStatus::OK != HttpGet(&response, uri))
-        AssertNotReached();
-
-    LOG(Test_Network, Info, L"Status: {0}", response.Status());
-    LOG(Test_Network, Info, L"Reason: {0}", response.Reason());
-
-    LOG(Test_Network, Info, L"Headers   :");
-    for (const auto& it : response.Headers())
-        LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
-
-    LOG(Test_Network, Info, L"Body({0}) :\n{1}", response.Body().size(), response.Body().MakeView());
-
-    if (response.Status() == Network::EHttpStatus::OK) {
-        /* %_NOCOMMIT% TODO
-        XML::FDocument xml;
-        IBufferedStreamReader* reader = &response.Body();
-        if (not XML::FDocument::Load(&xml, L"network.tmp", reader))
+    forrange(i, 0, 3) {
+        FHttpResponse response;
+        if (EHttpStatus::OK != HttpGet(&response, uri))
             AssertNotReached();
 
-        GStdout << "XML:" << Eol;
-        GStdout << xml << Eol;
-        */
-    }
-    else {
-        LOG(Test_Network, Error, L"HTTP request to '{0}' failed : {1}", uri, response.Status());
+        LOG(Test_Network, Info, L"Status: {0}", response.Status());
+        LOG(Test_Network, Info, L"Reason: {0}", response.Reason());
+
+        LOG(Test_Network, Info, L"Headers   :");
+        for (const auto& it : response.Headers())
+            LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
+
+        LOG(Test_Network, Info, L"Body : {0} =\n{1}",
+            Fmt::FSizeInBytes{ checked_cast<size_t>(response.Body().SizeInBytes()) },
+            response.MakeView());
+
+        if (response.Status() == Network::EHttpStatus::OK) {
+            /* %_NOCOMMIT% TODO
+            XML::FDocument xml;
+            IBufferedStreamReader* reader = &response.Body();
+            if (not XML::FDocument::Load(&xml, L"network.tmp", reader))
+                AssertNotReached();
+
+            GStdout << "XML:" << Eol;
+            GStdout << xml << Eol;
+            */
+        }
+        else {
+            LOG(Test_Network, Error, L"HTTP request to '{0}' failed : {1}", uri, response.Status());
+        }
     }
 }
 //----------------------------------------------------------------------------
@@ -201,7 +206,9 @@ static void Test_HttpPost_() {
     for (const auto& it : response.Headers())
         LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
 
-    LOG(Test_Network, Info, L"Body({0}) :\n{1}", response.Body().size(), response.Body().MakeView());
+    LOG(Test_Network, Info, L"Body : {0} =\n{1}", 
+        Fmt::FSizeInBytes{ checked_cast<size_t>(response.Body().SizeInBytes()) }, 
+        response.MakeView() );
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -241,7 +248,7 @@ private:
         oss << "<br/>" << Eol;
 
         oss << "Body:" << "<br/>" << Eol;
-        oss << request.Body().MakeView() << "<br/>" << Eol;
+        oss << request.MakeView() << "<br/>" << Eol;
 
         oss << "    </body>" << Eol
             << "</html>" << Eol;
@@ -268,6 +275,8 @@ static void Test_HttpServer_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_Network() {
+    LOG(Test_Network, Emphasis, L"starting network tests ...");
+
     Test_ParseUri_();
     Test_HttpGet_();
     Test_HttpPost_();

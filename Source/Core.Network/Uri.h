@@ -79,12 +79,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(
-    TBasicTextWriter<_Char>& oss,
-    const Network::FUri& uri ) {
-    return oss << uri.Str();
-}
+CORE_NETWORK_API FTextWriter& operator <<(FTextWriter& oss, const Network::FUri& uri);
+CORE_NETWORK_API FWTextWriter& operator <<(FWTextWriter& oss, const Network::FUri& uri);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 #include "Status.h"
 
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
 namespace Network {
@@ -42,4 +43,26 @@ FOREACH_HTTP_STATUSCODE(HTTP_STATUSCODE_DESCRIPTION)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Network
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, Network::EHttpStatus httpStatus) {
+    return oss
+        << Network::HttpStatusCode(httpStatus)
+        << " - " << Network::HttpStatusName(httpStatus)
+        << " : " << Network::HttpStatusDescription(httpStatus);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, Network::EHttpStatus httpStatus) {
+    return oss
+        << Network::HttpStatusCode(httpStatus)
+        << L" - " << Network::HttpStatusName(httpStatus)
+        << L" : " << Network::HttpStatusDescription(httpStatus);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

@@ -2,6 +2,8 @@
 
 #include "Method.h"
 
+#include "Core/IO/TextWriter.h"
+
 namespace Core {
 namespace Network {
 //----------------------------------------------------------------------------
@@ -78,4 +80,20 @@ bool HttpMethodFromCStr(EHttpMethod* method, const FStringView& str) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Network
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, Network::EHttpMethod httpMethod) {
+    return oss << Network::HttpMethodToCStr(httpMethod);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, Network::EHttpMethod httpMethod) {
+    return oss << Network::HttpMethodToCStr(httpMethod);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

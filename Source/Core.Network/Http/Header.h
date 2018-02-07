@@ -47,6 +47,8 @@ public:
 
     void Clear();
 
+    FStringView MakeView() const { return _body.MakeView().Cast<const char>(); }
+
     static bool Read(FHttpHeader* pheader, FSocketBuffered& socket);
 
     static void PackCookie(FHttpHeader* pheader, const FCookieMap& cookie);

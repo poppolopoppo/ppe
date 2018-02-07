@@ -36,7 +36,7 @@ void FTestApp::Start() {
     //Test_Lattice(); %_NOCOMMIT%
     Test_Pixmap();
     //Test_XML(); %_NOCOMMIT%
-     //Test_Network(); %_NOCOMMIT%
+    Test_Network();
 }
 //----------------------------------------------------------------------------
 void FTestApp::Shutdown() {

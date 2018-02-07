@@ -70,6 +70,7 @@ MEMORY_DOMAIN_COLLAPSABLE_IMPL(FloatImage,              Pixmap)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(Image,                   Pixmap)
 //------------------------------------------------------------------------------
 MEMORY_DOMAIN_IMPL(Network,                             Core)
+MEMORY_DOMAIN_COLLAPSABLE_IMPL(DNS,                     Network)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(HTTP,                    Network)
 MEMORY_DOMAIN_COLLAPSABLE_IMPL(URI,                     Network)
 //------------------------------------------------------------------------------
