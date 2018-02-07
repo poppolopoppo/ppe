@@ -648,14 +648,11 @@ private: // IStreamWriter
         const size_t off0 = checked_cast<size_t>(_offsetO & GBufferMask);
         const size_t off1 = checked_cast<size_t>((_offsetO + sizeInBytes) & GBufferMask);
 
-        bool needFlush = false;
         while (_sizeInBytes + sizeInBytes > GBufferSize) {
-            needFlush = true;
-            std::this_thread::yield();
+            _barrier.unlock(); // release the lock while flushing
+            Flush(true); // flush synchronous which will wait for all delayed logs
+            _barrier.lock();
         }
-
-        if (needFlush) // flush synchronously to let the logging thread keep up
-            Flush(true); // will be deferred after this write on the same thread
 
         if (off0 < off1) {
             toWrite.CopyTo(_ringBuffer.SubRange(off0, off1 - off0));
