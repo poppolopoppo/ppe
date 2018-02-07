@@ -95,13 +95,13 @@
     <Expand>
       <Item Name="[Size]">_data.Size</Item>
       <Item Name="[Capacity]">_data.Capacity</Item>
-      <Item Name="[States]" ExcludeView="simple">(Core::details::FHashTableData_::EState*)_data.StatesAndBuckets, [_data.Capacity ? _data.Capacity + Core::details::FHashTableData_::GGroupSize : 0]</Item>
-      <!-- <Item Name="Offset of Buckets">(((_data.Capacity ? _data.Capacity + Core::details::FHashTableData_::GGroupSize : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type))</Item> -->
-      <Item Name="[Buckets]" ExcludeView="simple">($T1::value_type*)_data.StatesAndBuckets + (((_data.Capacity ? _data.Capacity + Core::details::FHashTableData_::GGroupSize : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type)), [_data.Capacity]</Item>
+      <Item Name="[States]" ExcludeView="simple">(Core::details::FHashTableData_::EState*)_data.StatesAndBuckets, [_data.Capacity ? _data.Capacity + 16 : 0]</Item>
+      <!-- <Item Name="Offset of Buckets">(((_data.Capacity ? _data.Capacity + 16 : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type))</Item> -->
+      <Item Name="[Buckets]" ExcludeView="simple">($T1::value_type*)_data.StatesAndBuckets + (((_data.Capacity ? _data.Capacity + 16 : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type)), [_data.Capacity]</Item>
       <CustomListItems>
         <Variable Name="index" InitialValue="0" />
         <Variable Name="state" InitialValue="(Core::details::FHashTableData_::EState*)_data.StatesAndBuckets" />
-        <Variable Name="bucket" InitialValue="($T1::value_type*)_data.StatesAndBuckets + (((_data.Capacity ? _data.Capacity + Core::details::FHashTableData_::GGroupSize : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type))" />
+        <Variable Name="bucket" InitialValue="($T1::value_type*)_data.StatesAndBuckets + (((_data.Capacity ? _data.Capacity + 16 : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type))" />
         <Size>_data.Size</Size>
         <Loop>
             <If Condition="index == _data.Capacity">
