@@ -28,9 +28,9 @@ FTestApp::~FTestApp() {}
 void FTestApp::Start() {
     parent_type::Start();
 
-    Test_Format();
     Test_Allocators();
     Test_Containers();
+    Test_Format();
     Test_Thread();
     Test_RTTI();
     //Test_Lattice(); %_NOCOMMIT%
