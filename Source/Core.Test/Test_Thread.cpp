@@ -43,8 +43,10 @@ static void Test_Future_() {
         return 42;
     });
 
-    while (not future->Available())
+    while (not future->Available()) {
         LOG(Test_Thread, Debug, L"Waiting for future ...");
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
 
     LOG(Test_Thread, Info, L"Result from future = {0}", future->Result());
 
