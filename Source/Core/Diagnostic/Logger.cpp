@@ -599,8 +599,7 @@ public:
 
 public: // ILogger
     virtual void Flush(bool synchronous) override final {
-        synchronous &= (not FFiber::IsInFiber());
-        AsyncFlush_(_wrapped, synchronous);
+        FAsynchronousLogger_::SafeFlush(synchronous);
     }
 
 protected: // FAbstractReentrantLogger_
@@ -622,11 +621,12 @@ protected: // FAbstractReentrantLogger_
     }
 
     virtual void SafeFlush(bool synchronous) override final {
-        AssertNotImplemented(); // run without barrier to avoid dead lock
+        synchronous &= (not FFiber::IsInFiber());
+        AsyncFlush_(_wrapped, synchronous);
     }
 
     virtual void SafeClose() override final {
-        AssertNotImplemented(); // shouldn't be closed
+        AsyncFlush_(_wrapped, true);
     }
 
 private: // IStreamWriter
@@ -692,7 +692,7 @@ private:
     std::atomic<size_t> _sizeInBytes;
 
     static FTaskManager& TaskManager_() {
-        FTaskManager& manager = FLowestPriorityThreadPool::Instance();
+        FTaskManager& manager = FBackgroundThreadPool::Instance();
         Assert(manager.WorkerCount() == 1); // wrapped loggers ain't necessarily thread-safe
         return manager;
     }
@@ -820,9 +820,9 @@ static bool SetupAsyncrhonousLogger_(bool immediate) {
         // fall back to low level logger before flushing a second time
         FPreMainOutputDebugLogger_ postAsync;
         GLogger_ = &postAsync;
-        asynchronous->Flush(true);
+        asynchronous->Close();
 
-        // finally restore wrapped logger bestore destroying asynchronous logger
+        // finally restore wrapped logger before destroying asynchronous logger
         GLogger_ = wrapped;
         asynchronous->~FAsynchronousLogger_();
 
