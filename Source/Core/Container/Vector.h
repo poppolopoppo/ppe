@@ -361,10 +361,15 @@ FWTextWriter& operator <<(FWTextWriter& oss, const TVector<T, _Allocator>& vecto
 //----------------------------------------------------------------------------
 } //!namespace Core
 
+//----------------------------------------------------------------------------
+// Use TVector<T> as an inplace allocator :
+//----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void* operator new(size_t sizeInBytes, Core::TVector<T, _Allocator>& vector) {
     Assert(sizeInBytes == sizeof(T));
-    return vector.push_back_Uninitialized();
+    void* const p = vector.push_back_Uninitialized();
+    Assert(Meta::IsAligned(std::alignment_of_v<T>, p));
+    return p;
 }
 
 #include "Core/Container/Vector-inl.h"
