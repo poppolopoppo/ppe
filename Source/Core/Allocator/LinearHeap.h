@@ -191,7 +191,7 @@ bool operator !=(const TLinearHeapAllocator<T, A>& lhs, const TLinearHeapAllocat
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
 size_t AllocatorSnapSize(const TLinearHeapAllocator<T, _Alignment>&, size_t size) {
-    return size; // no padding in the heap
+    return (ROUND_TO_NEXT_16(size + sizeof(T) - 1) / sizeof(T)); // align on 16 bytes boundary
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
