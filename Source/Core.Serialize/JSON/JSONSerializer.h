@@ -22,6 +22,9 @@ public:
     FJSONSerializer(bool minify = true);
     virtual ~FJSONSerializer();
 
+    bool Minify() const { return _minify; }
+    void SetMinify(bool value) { _minify = value; }
+
     using ISerializer::Deserialize;
     using ISerializer::Serialize;
 
@@ -34,7 +37,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_SERIALIZE_API void RTTI_to_JSON(class FJSON& dst, const TMemoryView<const RTTI::PMetaObject>& src);
+CORE_SERIALIZE_API void RTTI_to_JSON(class FJSON& dst, const TMemoryView<const RTTI::PMetaObject>& src, const RTTI::FMetaTransaction* outer = nullptr);
 //----------------------------------------------------------------------------
 CORE_SERIALIZE_API bool JSON_to_RTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject)& dst, const class FJSON& src);
 //----------------------------------------------------------------------------

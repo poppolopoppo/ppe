@@ -5,7 +5,9 @@
 #include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/Lexer/Location.h"
 
+#include "Core/Allocator/LinearHeap.h"
 #include "Core/Container/StringHashMap.h"
+#include "Core/Container/StringHashSet.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/TextWriter_fwd.h"
@@ -40,40 +42,45 @@ class CORE_SERIALIZE_API FJSON {
 public:
     class FValue;
 
-    typedef bool FBool;
-#if 0 // digress from JSON std here : need integral literals
-    typedef double FNumber;
-#else
-    typedef i64 FInteger;
-    typedef double FFloat;
-#endif
-    typedef Core::FString FString;
-    typedef VECTOR(JSON, FValue) FArray;
-    typedef STRING_HASHMAP(JSON, FValue, ECase::Sensitive) FObject;
+    using FBool = bool;
+    using FInteger = i64;
+    using FFloat = double;
+    using FString = FStringView;
+    using FArray = VECTOR_LINEARHEAP(FValue);
+    using FObject = TBasicStringViewHashMap<
+        char, FValue, ECase::Sensitive,
+        TLinearHeapAllocator<TPair<FString, FValue>>
+    >;
 
     enum EType {
         Null = 0,
         Bool,
-#if 0 // digress from JSON std here : need integral literals
-        Number,
-#else
         Integer,
         Float,
-#endif
         String,
         Array,
         Object,
     };
+
+    template <EType _Type>
+    using TType = Meta::TIntegralConstant<EType, _Type>;
+
+    using TypeNull = TType<Null>;
+    using TypeBool = TType<Bool>;
+    using TypeInteger = TType<Integer>;
+    using TypeFloat = TType<Float>;
+    using TypeString = TType<String>;
+    using TypeArray = TType<Array>;
+    using TypeObject = TType<Object>;
 
     class FValue {
     public:
         FValue() : _type(Null) {}
         ~FValue() { Clear(); }
 
-        explicit FValue(EType type);
+        explicit FValue(FJSON& doc, EType type);
 
         explicit FValue(FBool value) : _type(Bool), _bool(value) {}
-        //explicit FValue(FNumber value) : _type(Number), _number(value) {}
         explicit FValue(FInteger value) : _type(Integer), _integer(value) {}
         explicit FValue(FFloat value) : _type(Float), _float(value) {}
         explicit FValue(FString&& value) : _type(String), _string(std::move(value)) {}
@@ -87,10 +94,18 @@ public:
         FValue& operator =(FValue&& rvalue);
 
         EType Type() const { return _type; }
-        FValue& SetType(EType type);
+
+        FValue& SetType(FJSON& doc, EType type);
+
+        void SetType_AssumeNull(FJSON& doc, TType<Null>);
+        FBool& SetType_AssumeNull(FJSON& doc, TType<Bool>);
+        FInteger& SetType_AssumeNull(FJSON& doc, TType<Integer>);
+        FFloat& SetType_AssumeNull(FJSON& doc, TType<Float>);
+        FString& SetType_AssumeNull(FJSON& doc, TType<String>);
+        FArray& SetType_AssumeNull(FJSON& doc, TType<Array>);
+        FObject& SetType_AssumeNull(FJSON& doc, TType<Object>);
 
         void SetValue(FBool value);
-        //void SetValue(FNumber value);
         void SetValue(FInteger value);
         void SetValue(FFloat value);
         void SetValue(FString&& value);
@@ -99,7 +114,6 @@ public:
 
         bool AsNull() const { return (_type == Null); }
         const FBool* AsBool() const { return (_type == Bool ? &_bool : nullptr); }
-        //const FNumber* AsNumber() const { return (_type == Number ? &_number : nullptr); }
         const FInteger* AsInteger() const { return (_type == Integer ? &_integer : nullptr); }
         const FFloat* AsFloat() const { return (_type == Float ? &_float : nullptr); }
         const FString* AsString() const { return (_type == String ? &_string : nullptr); }
@@ -107,7 +121,6 @@ public:
         const FObject* AsObject() const { return (_type == Object ? &_object : nullptr); }
 
         FBool& ToBool() { Assert(_type == Bool); return _bool; }
-        //FNumber& ToNumber() { Assert(_type == Number); return _number; }
         FInteger& ToInteger() { Assert(_type == Integer); return _integer; }
         FFloat& ToFloat() { Assert(_type == Float); return _float; }
         FString& ToString() { Assert(_type == String); return _string; }
@@ -115,7 +128,6 @@ public:
         FObject& ToObject() { Assert(_type == Object); return _object; }
 
         const FBool& ToBool() const { Assert(_type == Bool); return _bool; }
-        //const FNumber& ToNumber() const { Assert(_type == Number); return _number; }
         const FInteger& ToInteger() const { Assert(_type == Integer); return _integer; }
         const FFloat& ToFloat() const { Assert(_type == Float); return _float; }
         const FString& ToString() const { Assert(_type == String); return _string; }
@@ -134,7 +146,6 @@ public:
         EType _type;
         union {
             FBool _bool;
-            //FNumber _number;
             FInteger _integer;
             FFloat _float;
             FString _string;
@@ -144,13 +155,16 @@ public:
     };
 
 public:
-    FJSON() {}
+    FJSON();
+    ~FJSON();
 
     FJSON(const FJSON&) = delete;
     FJSON& operator =(const FJSON&) = delete;
 
     FValue& Root() { return _root; }
     const FValue& Root() const { return _root; }
+
+    FString MakeString(const FStringView& str, bool mergeable = true);
 
     void ToStream(FTextWriter& oss, bool minify = false) const { _root.ToStream(oss, minify); }
 
@@ -159,7 +173,16 @@ public:
     static bool Load(FJSON* json, const FFilename& filename, const FStringView& content);
 
 private:
+    typedef TBasicStringViewHashSet<
+        char, ECase::Sensitive,
+        TLinearHeapAllocator<FStringView>
+    >   stringtable_type;
+
+    FLinearHeap _heap;
     FValue _root;
+    stringtable_type _strings;
+
+    FStringView Tokenize_(const FStringView& str);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

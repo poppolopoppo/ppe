@@ -23,13 +23,13 @@ namespace Serialize {
 namespace JSON_ {
 //----------------------------------------------------------------------------
 static void EscapeString_(FTextWriter& oss, const FJSON::FString& str) {
-    Escape(oss, str.MakeView(), EEscape::Unicode);
+    Escape(oss, str, EEscape::Unicode);
 }
 //----------------------------------------------------------------------------
-static bool ParseValue_(Lexer::FLexer& lexer, FJSON::FValue& value);
+static bool ParseValue_(Lexer::FLexer& lexer, FJSON& doc, FJSON::FValue& value);
 //----------------------------------------------------------------------------
-static bool ParseObject_(Lexer::FLexer& lexer, FJSON::FValue& value) {
-    FJSON::FObject& object = value.SetType(FJSON::Object).ToObject();
+static bool ParseObject_(Lexer::FLexer& lexer, FJSON& doc, FJSON::FValue& value) {
+    FJSON::FObject& object = value.SetType_AssumeNull(doc, FJSON::TypeObject{});
 
     Lexer::FMatch key;
     for (bool notFirst = false;; notFirst = true)
@@ -43,15 +43,15 @@ static bool ParseObject_(Lexer::FLexer& lexer, FJSON::FValue& value) {
         if (not lexer.Expect(Lexer::FSymbols::Colon))
             CORE_THROW_IT(FJSONException("missing comma", key.Site()));
 
-        if (not ParseValue_(lexer, object[std::move(key.Value())]))
+        if (not ParseValue_(lexer, doc, object[doc.MakeString(key.Value())]))
             CORE_THROW_IT(FJSONException("missing value", key.Site()));
     }
 
     return lexer.Expect(Lexer::FSymbols::RBrace);
 }
 //----------------------------------------------------------------------------
-static bool ParseArray_(Lexer::FLexer& lexer, FJSON::FValue& value) {
-    FJSON::FArray& arr = value.SetType(FJSON::Array).ToArray();
+static bool ParseArray_(Lexer::FLexer& lexer, FJSON& doc, FJSON::FValue& value) {
+    FJSON::FArray& arr = value.SetType_AssumeNull(doc, FJSON::TypeArray{});
 
     FJSON::FValue item;
     for (bool notFirst = false;; notFirst = true)
@@ -59,7 +59,7 @@ static bool ParseArray_(Lexer::FLexer& lexer, FJSON::FValue& value) {
         if (notFirst && not lexer.ReadIFN(Lexer::FSymbols::Comma))
             break;
 
-        if (ParseValue_(lexer, item))
+        if (ParseValue_(lexer, doc, item))
             arr.emplace_back(std::move(item));
         else
             break;
@@ -68,7 +68,7 @@ static bool ParseArray_(Lexer::FLexer& lexer, FJSON::FValue& value) {
     return lexer.Expect(Lexer::FSymbols::RBracket);
 }
 //----------------------------------------------------------------------------
-static bool ParseValue_(Lexer::FLexer& lexer, FJSON::FValue& value) {
+static bool ParseValue_(Lexer::FLexer& lexer, FJSON& doc, FJSON::FValue& value) {
     Lexer::FMatch read;
     if (not lexer.Read(read))
         return false;
@@ -76,28 +76,21 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJSON::FValue& value) {
     bool unexpectedToken = false;
 
     if (read.Symbol() == Lexer::FSymbols::LBrace) {
-        return ParseObject_(lexer, value);
+        return ParseObject_(lexer, doc, value);
     }
     else if (read.Symbol() == Lexer::FSymbols::LBracket) {
-        return ParseArray_(lexer, value);
+        return ParseArray_(lexer, doc, value);
     }
     else if (read.Symbol() == Lexer::FSymbols::String) {
-        value.SetValue(std::move(read.Value()));
+        value.SetValue(doc.MakeString(read.Value()));
     }
-#if 0 // digress from JSON std here : need integral literals
-    else if (read.Symbol() == Lexer::FSymbols::Number) {
-        if (not Atod(&value.SetType(FJSON::Number).ToNumber(), read.Value().MakeView()))
-            CORE_THROW_IT(FJSONException("malformed int", read.Site()));
-    }
-    // TODO : handle negative numbers as bellow VVVVVVV
-#else
     else if (read.Symbol() == Lexer::FSymbols::Int) {
-        FJSON::FInteger* i = &value.SetType(FJSON::Integer).ToInteger();
+        FJSON::FInteger* i = &value.SetType_AssumeNull(doc, FJSON::TypeInteger{});
         if (not Atoi64(i, read.Value().MakeView(), 10))
             CORE_THROW_IT(FJSONException("malformed int", read.Site()));
     }
     else if (read.Symbol() == Lexer::FSymbols::Float) {
-        FJSON::FFloat* d = &value.SetType(FJSON::Float).ToFloat();
+        FJSON::FFloat* d = &value.SetType_AssumeNull(doc, FJSON::TypeFloat{});
         if (not Atod(d, read.Value().MakeView()))
             CORE_THROW_IT(FJSONException("malformed float", read.Site()));
     }
@@ -108,27 +101,26 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJSON::FValue& value) {
         unexpectedToken = true;
 
         if (peek && peek->Symbol() == Lexer::FSymbols::Int) {
-            if (ParseValue_(lexer, value)) {
+            if (ParseValue_(lexer, doc, value)) {
                 value.ToInteger() = -value.ToInteger();
                 unexpectedToken = false;
             }
         }
         else if (peek && peek->Symbol() == Lexer::FSymbols::Float) {
-            if (ParseValue_(lexer, value)) {
+            if (ParseValue_(lexer, doc, value)) {
                 value.ToFloat() = -value.ToFloat();
                 unexpectedToken = false;
             }
         }
     }
-#endif
     else if (read.Symbol() == Lexer::FSymbols::True) {
-        value.SetValue(true);
+        value.SetType_AssumeNull(doc, FJSON::TypeBool{}) = true;
     }
     else if (read.Symbol() == Lexer::FSymbols::False) {
-        value.SetValue(false);
+        value.SetType_AssumeNull(doc, FJSON::TypeBool{}) = false;
     }
     else if (read.Symbol() == Lexer::FSymbols::Null) {
-        value.SetType(FJSON::Null);
+        value.SetType_AssumeNull(doc, FJSON::TypeNull{});
     }
     else {
         unexpectedToken = true;
@@ -146,23 +138,15 @@ static void ToStream_(const FJSON::FValue& value, FTextWriter& oss, Fmt::FIndent
     case Core::Serialize::FJSON::Null:
         oss << "null";
         break;
-
     case Core::Serialize::FJSON::Bool:
         oss << (value.ToBool() ? "true" : "false");
         break;
-
-#if 0 // digress from JSON std here : need integral literals
-    case Core::Serialize::FJSON::Number:
-        oss << value.ToNumber();
-        break;
-#else
     case Core::Serialize::FJSON::Integer:
         oss << value.ToInteger();
         break;
     case Core::Serialize::FJSON::Float:
         oss << value.ToFloat();
         break;
-#endif
 
     case Core::Serialize::FJSON::String:
         oss << '"';
@@ -234,39 +218,32 @@ static void ToStream_(const FJSON::FValue& value, FTextWriter& oss, Fmt::FIndent
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FJSON::FValue::FValue(EType type)
+FJSON::FValue::FValue(FJSON& doc, EType type)
     : _type(type) {
     switch (_type) {
     case Core::Serialize::FJSON::Null:
-        break;
+        SetType_AssumeNull(doc, TypeNull{});
+        return;
     case Core::Serialize::FJSON::Bool:
-        new (&_bool) FBool(false);
-        break;
-#if 0 // digress from JSON std here : need integral literals
-    case Core::Serialize::FJSON::Number:
-        new (&_number) FNumber(0);
-        break;
-#else
+        SetType_AssumeNull(doc, TypeBool{});
+        return;
     case Core::Serialize::FJSON::Integer:
-        new (&_integer) FInteger(0);
-        break;
+        SetType_AssumeNull(doc, TypeInteger{});
+        return;
     case Core::Serialize::FJSON::Float:
-        new (&_float) FFloat(0);
-        break;
-#endif
+        SetType_AssumeNull(doc, TypeFloat{});
+        return;
     case Core::Serialize::FJSON::String:
-        new (&_string) FString();
-        break;
+        SetType_AssumeNull(doc, TypeString{});
+        return;
     case Core::Serialize::FJSON::Array:
-        new (&_array) FArray();
-        break;
+        SetType_AssumeNull(doc, TypeArray{});
+        return;
     case Core::Serialize::FJSON::Object:
-        new (&_object) FObject();
-        break;
-    default:
-        AssertNotImplemented();
-        break;
+        SetType_AssumeNull(doc, TypeObject{});
+        return;
     }
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 FJSON::FValue& FJSON::FValue::operator =(const FValue& other) {
@@ -279,18 +256,12 @@ FJSON::FValue& FJSON::FValue::operator =(const FValue& other) {
     case Core::Serialize::FJSON::Bool:
         _bool = other._bool;
         break;
-#if 0 // digress from JSON std here : need integral literals
-    case Core::Serialize::FJSON::Number:
-        _number = other._number;
-        break;
-#else
     case Core::Serialize::FJSON::Integer:
         _integer = other._integer;
         break;
     case Core::Serialize::FJSON::Float:
         _float = other._float;
         break;
-#endif
     case Core::Serialize::FJSON::String:
         new (&_string) FString(other._string);
         break;
@@ -318,29 +289,23 @@ FJSON::FValue& FJSON::FValue::operator =(FValue&& rvalue) {
     case Core::Serialize::FJSON::Bool:
         _bool = rvalue._bool;
         break;
-#if 0 // digress from JSON std here : need integral literals
-    case Core::Serialize::FJSON::Number:
-        _number = rvalue._number;
-        break;
-#else
     case Core::Serialize::FJSON::Integer:
         _integer = rvalue._integer;
         break;
     case Core::Serialize::FJSON::Float:
         _float = rvalue._float;
         break;
-#endif
     case Core::Serialize::FJSON::String:
         new (&_string) FString(std::move(rvalue._string));
-        rvalue._string.~FString();
+        //rvalue._string.~FString();
         break;
     case Core::Serialize::FJSON::Array:
         new (&_array) FArray(std::move(rvalue._array));
-        rvalue._array.~FArray();
+        //rvalue._array.~FArray();
         break;
     case Core::Serialize::FJSON::Object:
         new (&_object) FObject(std::move(rvalue._object));
-        rvalue._object.~FObject();
+        //rvalue._object.~FObject();
         break;
     default:
         AssertNotImplemented();
@@ -352,45 +317,72 @@ FJSON::FValue& FJSON::FValue::operator =(FValue&& rvalue) {
     return (*this);
 }
 //----------------------------------------------------------------------------
-FJSON::FValue& FJSON::FValue::SetType(EType type) {
+FJSON::FValue& FJSON::FValue::SetType(FJSON& doc, EType type) {
     if (_type != FJSON::Null)
         Clear();
 
-    _type = type;
-
     switch (type) {
     case Core::Serialize::FJSON::Null:
-        break;
+        SetType_AssumeNull(doc, TType<Null>{});
+        return (*this);
     case Core::Serialize::FJSON::Bool:
-        new (&_bool) FBool();
-        break;
-#if 0 // digress from JSON std here : need integral literals
-    case Core::Serialize::FJSON::Number:
-        new (&_number) FNumber();
-        break;
-#else
+        SetType_AssumeNull(doc, TType<Bool>{});
+        return (*this);
     case Core::Serialize::FJSON::Integer:
-        new (&_integer) FInteger();
-        break;
+        SetType_AssumeNull(doc, TType<Integer>{});
+        return (*this);
     case Core::Serialize::FJSON::Float:
-        new (&_float) FFloat();
-        break;
-#endif
+        SetType_AssumeNull(doc, TType<Float>{});
+        return (*this);
     case Core::Serialize::FJSON::String:
-        new (&_string) FString();
-        break;
+        SetType_AssumeNull(doc, TType<String>{});
+        return (*this);
     case Core::Serialize::FJSON::Array:
-        new (&_array) FArray();
-        break;
+        SetType_AssumeNull(doc, TType<Array>{});
+        return (*this);
     case Core::Serialize::FJSON::Object:
-        new (&_object) FObject();
-        break;
-    default:
-        AssertNotImplemented();
-        break;
+        SetType_AssumeNull(doc, TType<Object>{});
+        return (*this);
     }
 
-    return (*this);
+    AssertNotImplemented();
+}
+//----------------------------------------------------------------------------
+void FJSON::FValue::SetType_AssumeNull(FJSON& , TType<Null>) { _type = Null; }
+//----------------------------------------------------------------------------
+auto FJSON::FValue::SetType_AssumeNull(FJSON& , TType<Bool>) ->FBool& {
+    Assert(Null == _type);
+    _type = Bool;
+    return (*new (&_bool) FBool);
+}
+//----------------------------------------------------------------------------
+auto FJSON::FValue::SetType_AssumeNull(FJSON& , TType<Integer>) -> FInteger& {
+    Assert(Null == _type);
+    _type = Integer;
+    return (*new (&_integer) FInteger);
+}
+//----------------------------------------------------------------------------
+auto FJSON::FValue::SetType_AssumeNull(FJSON& , TType<Float>) -> FFloat& {
+    Assert(Null == _type);
+    _type = Float;
+    return (*new (&_float) FFloat);
+}
+//----------------------------------------------------------------------------
+auto FJSON::FValue::SetType_AssumeNull(FJSON& , TType<String>) -> FString& {
+    Assert(Null == _type);
+    _type = String;
+    return (*new (&_string) FString);
+}
+//----------------------------------------------------------------------------
+auto FJSON::FValue::SetType_AssumeNull(FJSON& doc, TType<Array>) -> FArray& {
+    Assert(Null == _type);
+    _type = Array;
+    return (*new (&_array) FArray(FArray::allocator_type(doc._heap)));
+}
+//----------------------------------------------------------------------------
+auto FJSON::FValue::SetType_AssumeNull(FJSON& doc, TType<Object>) -> FObject& {
+    _type = Object;
+    return (*new (&_object) FObject(FObject::allocator_type(doc._heap)));
 }
 //----------------------------------------------------------------------------
 void FJSON::FValue::SetValue(FBool value) {
@@ -399,26 +391,17 @@ void FJSON::FValue::SetValue(FBool value) {
     new (&_bool) FBool(value);
 }
 //----------------------------------------------------------------------------
-#if 0 // digress from JSON std here : need integral literals
-void FJSON::FValue::SetValue(FNumber value) {
-    if (NeedsDestructor_(_type))
-        Clear();
-
-    _type = EType::Number;
-    new (&_number) FNumber(value);
-}
-#else
 void FJSON::FValue::SetValue(FInteger value) {
     Clear();
     _type = EType::Integer;
     new (&_integer) FInteger(value);
 }
+//----------------------------------------------------------------------------
 void FJSON::FValue::SetValue(FFloat value) {
     Clear();
     _type = EType::Float;
     new (&_float) FFloat(value);
 }
-#endif
 //----------------------------------------------------------------------------
 void FJSON::FValue::SetValue(FString&& value) {
     Clear();
@@ -467,20 +450,14 @@ bool FJSON::FValue::Equals(const FValue& other) const {
 }
 //----------------------------------------------------------------------------
 void FJSON::FValue::Clear() {
+#if 0 // skip destructor thanks to linear heap
     switch (_type) {
     case Core::Serialize::FJSON::Null:
         return;
     case Core::Serialize::FJSON::Bool:
-#if 0 // digress from JSON std here : need integral literals
-    case Core::Serialize::FJSON::Number:
-        break;
-#else
     case Core::Serialize::FJSON::Integer:
     case Core::Serialize::FJSON::Float:
-        break;
-#endif
     case Core::Serialize::FJSON::String:
-        _string.~FString();
         break;
     case Core::Serialize::FJSON::Array:
         _array.~FArray();
@@ -489,9 +466,10 @@ void FJSON::FValue::Clear() {
         _object.~FObject();
         break;
     default:
-        AssertNotImplemented();
+        
         break;
     }
+#endif
 
     _type = Null;
 }
@@ -504,6 +482,13 @@ void FJSON::FValue::ToStream(FTextWriter& oss, bool minify/* = true */) const {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FJSON::FJSON() 
+    : _heap(LINEARHEAP_DOMAIN_TRACKINGDATA(JSON))
+    , _strings(stringtable_type::allocator_type(_heap))
+{}
+//----------------------------------------------------------------------------
+FJSON::~FJSON() {}
 //----------------------------------------------------------------------------
 bool FJSON::Load(FJSON* json, const FFilename& filename) {
     Assert(json);
@@ -520,6 +505,32 @@ bool FJSON::Load(FJSON* json, const FFilename& filename) {
     return Load(json, filename, content.MakeConstView().Cast<const char>());
 }
 //----------------------------------------------------------------------------
+FStringView FJSON::MakeString(const FStringView& str, bool mergeable/* = true */) {
+    if (str.empty()) {
+        return str;
+    }
+    else if (mergeable) {
+        // tries to pool short to medium strings :
+        const auto it = _strings.insert(str);
+        if (it.second) {
+            void* const storage = _heap.Allocate(str.SizeInBytes(), std::alignment_of_v<char>);
+            ::memcpy(storage, str.data(), str.SizeInBytes());
+            // hack for replacing registered string view with one pointer to linear heap storage
+            const auto allocated = FStringView((char*)storage, str.size());
+            auto& registered = const_cast<FStringView&>(*it.first);
+            Assert(hash_string(allocated) == hash_string(registered));
+            registered = allocated;
+        }
+        return (*it.first);
+    }
+    else {
+        // some strings have too much entropy and won't benefit from merging :
+        void* const storage = _heap.Allocate(str.SizeInBytes(), std::alignment_of_v<char>);
+        ::memcpy(storage, str.data(), str.SizeInBytes());
+        return FStringView((char*)storage, str.size());
+    }
+}
+//----------------------------------------------------------------------------
 bool FJSON::Load(FJSON* json, const FFilename& filename, const FStringView& content) {
     FMemoryViewReader reader(content.Cast<const u8>());
     return Load(json, filename, &reader);
@@ -533,9 +544,10 @@ bool FJSON::Load(FJSON* json, const FFilename& filename, IBufferedStreamReader* 
     Lexer::FLexer lexer(input, filenameStr.MakeView(), false);
 
     json->_root = FValue();
+    json->_strings.reserve(32);
 
     CORE_TRY{
-        if (not JSON_::ParseValue_(lexer, json->_root))
+        if (not JSON_::ParseValue_(lexer, *json, json->_root))
             return false;
     }
     CORE_CATCH(Lexer::FLexerException e)
