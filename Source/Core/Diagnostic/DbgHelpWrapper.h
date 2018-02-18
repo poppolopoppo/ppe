@@ -69,10 +69,10 @@ public:
         PMINIDUMP_CALLBACK_INFORMATION CallbackParam
         );
 
-    class FLocked : std::unique_lock<std::mutex> {
+    class FLocked : std::lock_guard<std::mutex> {
     public:
         explicit FLocked(const FDbghelpWrapper& owner)
-            : std::unique_lock<std::mutex>(owner._barrier)
+            : std::lock_guard<std::mutex>(owner._barrier)
             , _owner(&owner) {
             Assert(_owner->Available());
         }
@@ -97,7 +97,6 @@ public:
     ~FDbghelpWrapper();
 
     bool Available() const { return (_dbghelp_dll.IsValid()); }
-    FLocked Lock() const { return FLocked(*this); }
 
 #ifdef WITH_CORE_ASSERT
     using Meta::TSingleton<FDbghelpWrapper>::HasInstance;

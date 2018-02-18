@@ -209,7 +209,7 @@ bool FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
     if (not FDbghelpWrapper::Instance().Available())
         return false;
 
-    const auto dbghelp(FDbghelpWrapper::Instance().Lock());
+    const FDbghelpWrapper::FLocked dbghelp(FDbghelpWrapper::Instance());
 
     LoadModules_(dbghelp);
 
@@ -312,21 +312,26 @@ void FCallstack::SetFrames(const TMemoryView<void* const>& frames) {
 //----------------------------------------------------------------------------
 void FCallstack::Start() {
     const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
-    if (dbghelp.Available())
-        InitializeSymbols_(dbghelp.Lock());
+    if (dbghelp.Available()) {
+        const FDbghelpWrapper::FLocked threadSafe(dbghelp);
+        InitializeSymbols_(threadSafe);
+    }
 }
 //----------------------------------------------------------------------------
 void FCallstack::ReloadSymbols() {
     const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
-    if (dbghelp.Available())
-        LoadModules_(dbghelp.Lock());
+    if (dbghelp.Available()) {
+        const FDbghelpWrapper::FLocked threadSafe(dbghelp);
+        LoadModules_(threadSafe);
+    }
 }
 //----------------------------------------------------------------------------
 void FCallstack::Shutdown() {
     const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
     if (dbghelp.Available()) {
+        const FDbghelpWrapper::FLocked threadSafe(dbghelp);
         HANDLE hProcess = ::GetCurrentProcess();
-        dbghelp.Lock().SymCleanup()(hProcess);
+        threadSafe.SymCleanup()(hProcess);
     }
 }
 //----------------------------------------------------------------------------

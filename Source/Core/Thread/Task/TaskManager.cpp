@@ -489,7 +489,7 @@ struct FRunAndWaitFor_ {
 
         context.RunAndWaitFor(pArgs->Tasks, pArgs->Priority);
         {
-            std::unique_lock<std::mutex> scopeLock(pArgs->Barrier);
+            Meta::FLockGuard scopeLock(pArgs->Barrier);
             Assert(false == pArgs->Available);
             pArgs->Available = true;
             pArgs->OnFinished.notify_all();
@@ -518,7 +518,7 @@ struct FWaitForAll_ {
         }
 
         {
-            std::unique_lock<std::mutex> scopeLock(pArgs->Barrier);
+            Meta::FLockGuard scopeLock(pArgs->Barrier);
             Assert(false == pArgs->Available);
             pArgs->Available = true;
             pArgs->OnFinished.notify_all();
@@ -851,7 +851,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, cons
 
         whileWaiting(*_pimpl);
 
-        std::unique_lock<std::mutex> scopeLock(args.Barrier);
+        Meta::FUniqueLock scopeLock(args.Barrier);
         args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
         Assert(args.Available);
     }
@@ -865,7 +865,7 @@ void FTaskManager::WaitForAll() const {
     // trigger a task with lowest priority and wait for it
     // should wait for all other tasks since Internal is reserved
     {
-        std::unique_lock<std::mutex> scopeLock(args.Barrier);
+        Meta::FUniqueLock scopeLock(args.Barrier);
         
         _pimpl->RunOne(nullptr, [&args](ITaskContext& ctx) {
             FWaitForAll_::Task(ctx, &args);

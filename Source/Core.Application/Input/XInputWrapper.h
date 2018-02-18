@@ -7,6 +7,7 @@
 #endif
 
 #include "Core/Meta/Singleton.h"
+#include "Core/Meta/ThreadResource.h"
 #include "Core/Misc/DLLWrapper.h"
 #include "Core/Misc/Platform_Windows.h"
 
@@ -36,10 +37,10 @@ public:
         _Out_ ::XINPUT_CAPABILITIES* pCapabilities  // Receives the capabilities
     );
 
-    class FLocked : std::unique_lock<std::mutex> {
+    class FLocked : Meta::FLockGuard {
     public:
         explicit FLocked(const FXInputWrapper& owner)
-            : std::unique_lock<std::mutex>(owner._barrier)
+            : Meta::FLockGuard(owner._barrier)
             , _owner(&owner) {}
 
         bool Available() const { return _owner->Available(); }

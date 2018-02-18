@@ -72,7 +72,7 @@ FTokenFactory::FTokenFactory()
     : _chunks(nullptr) {}
 //----------------------------------------------------------------------------
 FTokenFactory::~FTokenFactory() {
-    const std::unique_lock<std::mutex> scopeLock(_barrier);
+    const Meta::FLockGuard scopeLock(_barrier);
     ReleaseChunks_(_chunks);
 }
 //----------------------------------------------------------------------------
@@ -92,7 +92,7 @@ const FTokenFactory::FEntry* FTokenFactory::Lookup(size_t len, size_t hash, cons
 }
 //----------------------------------------------------------------------------
 const FTokenFactory::FEntry* FTokenFactory::Allocate(void* src, size_t len, size_t stride, size_t hash, const FEntry* tail) {
-    const std::unique_lock<std::mutex> scopeLock(_barrier);
+    const Meta::FLockGuard scopeLock(_barrier);
 
     FEntry* result = const_cast<FEntry*>(Lookup(len, hash, tail)); // check if wasn't allocated by another thread
     if (result)

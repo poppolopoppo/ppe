@@ -197,11 +197,15 @@ DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
         callback.CallbackRoutine = MinidumpFilter_;
 
         // TAfter all that, we can write out the minidump
-        BOOL bRet = FDbghelpWrapper::Instance().Lock().MiniDumpWriteDump()(
-            ::GetCurrentProcess(),
-            ::GetCurrentProcessId(),
-            hFile,
-            (MINIDUMP_TYPE)type, NULL, NULL, &callback );
+        BOOL bRet;
+        {
+            const FDbghelpWrapper::FLocked threadSafe(FDbghelpWrapper::Instance());
+            bRet = threadSafe.MiniDumpWriteDump()(
+                ::GetCurrentProcess(),
+                ::GetCurrentProcessId(),
+                hFile,
+                (MINIDUMP_TYPE)type, NULL, NULL, &callback);
+        }
 
         if (FALSE == ::CloseHandle( hFile ))
             return DWORD(MiniDump::EResult::FailedToCloseHandle);
