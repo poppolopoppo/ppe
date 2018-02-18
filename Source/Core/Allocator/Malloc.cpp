@@ -28,7 +28,7 @@
 #   define CORE_MALLOC_ALLOCATOR            CORE_MALLOC_ALLOCATOR_BINNED
 #endif
 
-#if USE_CORE_MEMORY_DEBUGGING
+#if USE_CORE_MEMORY_DEBUGGING && !CORE_MALLOC_FORCE_STD
 #   define CORE_MALLOC_HISTOGRAM_PROXY      1 // Keep memory histogram available, shouldn't have any influence on debugging
 #   define CORE_MALLOC_LOGGER_PROXY         0 // Disabled since it adds payload to each allocation
 #elif not (defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
@@ -102,7 +102,6 @@ size_t FMalloc_::RegionSize(void* ptr) {
     return 0;
 #   endif
 #endif
-}
 #endif //!CORE_MALLOC_ALLOCATOR_STD
 //----------------------------------------------------------------------------
 #if (CORE_MALLOC_ALLOCATOR == CORE_MALLOC_ALLOCATOR_BINNED)
