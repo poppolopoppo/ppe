@@ -21,7 +21,7 @@
 #define USE_CORE_DEBUGGER_PRESENT 1 // set to 0 to fake non-attached to a debugger behavior %_NOCOMMIT%
 
 namespace Core {
-LOG_CATEGORY(CORE_API, Platform);
+LOG_CATEGORY(CORE_API, Platform)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

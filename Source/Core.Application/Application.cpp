@@ -30,7 +30,7 @@ PRAGMA_INITSEG_LIB
 namespace Core {
 namespace Application {
 POOL_TAG_DEF(Application);
-LOG_CATEGORY(CORE_APPLICATION_API, Application);
+LOG_CATEGORY(CORE_APPLICATION_API, Application)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

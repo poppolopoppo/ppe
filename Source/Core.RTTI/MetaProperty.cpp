@@ -10,7 +10,7 @@
 #   include "Core/Diagnostic/Logger.h"
 namespace Core {
 namespace RTTI {
-EXTERN_LOG_CATEGORY(CORE_RTTI_API, RTTI);
+EXTERN_LOG_CATEGORY(CORE_RTTI_API, RTTI)
 } //!namespace RTTI
 } //!namespace Core
 #endif

@@ -25,7 +25,7 @@ namespace Core {
 namespace RTTI {
 POOL_TAG_DEF(RTTI);
 RTTI_NAMESPACE_DEF(CORE_RTTI_API, RTTI);
-LOG_CATEGORY(CORE_RTTI_API, RTTI);
+LOG_CATEGORY(CORE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -102,7 +102,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //namespace {
 //----------------------------------------------------------------------------
-LOG_CATEGORY(CORE_RTTI_API, RTTI_UnitTest);
+LOG_CATEGORY(CORE_RTTI_API, RTTI_UnitTest)
 RTTI_NAMESPACE_DECL(, RTTI_UnitTest);
 RTTI_NAMESPACE_DEF(, RTTI_UnitTest);
 //----------------------------------------------------------------------------

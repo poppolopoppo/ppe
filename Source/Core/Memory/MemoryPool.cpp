@@ -14,7 +14,7 @@
 #define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC (USE_CORE_MEMORY_DEBUGGING) //%__NOCOMMIT%
 
 namespace Core {
-EXTERN_LOG_CATEGORY(CORE_API, MemoryTracking);
+EXTERN_LOG_CATEGORY(CORE_API, MemoryTracking)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

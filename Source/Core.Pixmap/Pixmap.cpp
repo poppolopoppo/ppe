@@ -13,7 +13,7 @@ PRAGMA_INITSEG_LIB
 namespace Core {
 namespace Pixmap {
 POOL_TAG_DEF(Pixmap);
-LOG_CATEGORY(CORE_PIXMAP_API, Pixmap);
+LOG_CATEGORY(CORE_PIXMAP_API, Pixmap)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

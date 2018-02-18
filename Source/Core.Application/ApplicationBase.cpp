@@ -7,7 +7,7 @@
 
 namespace Core {
 namespace Application {
-EXTERN_LOG_CATEGORY(CORE_APPLICATION_API, Application);
+EXTERN_LOG_CATEGORY(CORE_APPLICATION_API, Application)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

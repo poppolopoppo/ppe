@@ -20,7 +20,7 @@
 #define WITH_CORE_COMPRESSION_FINGERPRINT 1 //%_NOCOMMTI%
 
 namespace Core {
-EXTERN_LOG_CATEGORY(CORE_API, Benchmark);
+EXTERN_LOG_CATEGORY(CORE_API, Benchmark)
 namespace Compression {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -48,7 +48,7 @@ PRAGMA_MSVC_WARNING_POP()
 
 namespace Core {
 namespace Pixmap {
-EXTERN_LOG_CATEGORY(CORE_PIXMAP_API, Pixmap);
+EXTERN_LOG_CATEGORY(CORE_PIXMAP_API, Pixmap)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -110,11 +110,11 @@ CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level)
 } //!namespace Core
 
 #define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY) \
-    _API ::Core::FLogger::FCategory CONCAT(GLogCategory_, _NAME){ WIDESTRING(STRINGIZE(_NAME)), ::Core::FLogger::EVerbosity::_VERBOSITY }
+    _API ::Core::FLogger::FCategory CONCAT(GLogCategory_, _NAME){ WIDESTRING(STRINGIZE(_NAME)), ::Core::FLogger::EVerbosity::_VERBOSITY };
 #define LOG_CATEGORY(_API, _NAME) \
     LOG_CATEGORY_VERBOSITY(_API, _NAME, All)
 #define EXTERN_LOG_CATEGORY(_API, _NAME) \
-    extern _API ::Core::FLogger::FCategory CONCAT(GLogCategory_, _NAME)
+    extern _API ::Core::FLogger::FCategory CONCAT(GLogCategory_, _NAME);
 
 #define LOG(_CATEGORY, _LEVEL, ...) \
     ::Core::FLogger::Log( \
@@ -133,12 +133,12 @@ CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level)
 
 #else
 
-#define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY) NOOP(_NAME, _VERBOSITY)
-#define LOG_CATEGORY(_API, _NAME) NOOP(_NAME)
-#define EXTERN_LOG_CATEGORY(_API, _NAME) NOOP(_API, _NAME)
+#define LOG_CATEGORY_VERBOSITY(...)
+#define LOG_CATEGORY(...)
+#define EXTERN_LOG_CATEGORY(...)
 
-#define LOG(...) NOOP(__VA_ARGS__)
-#define CLOG(...) NOOP(__VA_ARGS__)
+#define LOG(...) NOOP()
+#define CLOG(...) NOOP()
 #define FLUSH_LOG() NOOP()
 
 #endif //!#ifdef USE_DEBUG_LOGGER
