@@ -18,404 +18,331 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-struct FLinearHeapSmallBlock_ {
-    STATIC_CONST_INTEGRAL(size_t, AllocationSize, ALLOCATION_GRANULARITY);
-    STATIC_CONST_INTEGRAL(CODE3264(u64, u32), DefaultCanary, CODE3264(0xAABBDDEEAABBDDEEull, 0xAABBDDEEul));
+STATIC_CONST_INTEGRAL(size_t, GLinearHeapGranularity_, ALLOCATION_GRANULARITY); // 64k
+STATIC_CONST_INTEGRAL(size_t, GLinearHeapAllocationSize, GLinearHeapGranularity_);
+STATIC_CONST_INTEGRAL(size_t, GLinearHeapCapacity, GLinearHeapAllocationSize - ALLOCATION_BOUNDARY);
+STATIC_CONST_INTEGRAL(size_t, GLinearHeapMaxSize, GLinearHeapCapacity);
+//----------------------------------------------------------------------------
+#ifdef WITH_CORE_ASSERT
+#   define AssertCheckCanary(_ITEM) Assert_NoAssume((_ITEM).CheckCanary())
+#else
+#   define AssertCheckCanary(_ITEM) NOOP(_ITEM)
+#endif
+//----------------------------------------------------------------------------
+#if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
+struct FLinearHeapBlock_ {
+    FLinearHeapBlock_* Next;
+    u16 Offset;
+    u16 Last;
 
-    FLinearHeapSmallBlock_* Next = 0;
-    u16 Offset = 0;
-    u16 Last = 0;
+#   ifdef WITH_CORE_ASSERT
+    STATIC_CONST_INTEGRAL(CODE3264(u64, u32), DefaultCanary, CODE3264(0xAABBDDEEAABBDDEEull, 0xAABBDDEEul));
     CODE3264(u64, u32) Canary = DefaultCanary; // serves as padding to align on 16
+    bool CheckCanary() const { return (DefaultCanary == Canary); }
+
+    static bool Contains(const FLinearHeapBlock_* head, const FLinearHeapBlock_* blk) {
+        for (; head; head = head->Next) {
+            AssertCheckCanary(*head);
+            if (head == blk)
+                return true;
+        }
+        return false;
+    }
+
+#   else
+    CODE3264(u64, u32) _Padding;
+#   endif
+
+    size_t OffsetFromPtr(void* ptr) {
+        const size_t off = ((u8*)ptr - (u8*)(this + 1));
+        Assert(off < GLinearHeapCapacity);
+        return off;
+    }
+
+    static FLinearHeapBlock_* BlockFromPtr(void* ptr) {
+        Assert(not Meta::IsAligned(GLinearHeapAllocationSize, ptr));
+        auto* blk = static_cast<FLinearHeapBlock_*>(Meta::RoundToPrev(ptr, GLinearHeapAllocationSize));
+        AssertCheckCanary(*blk);
+        Assert(blk->Last >= blk->OffsetFromPtr(ptr));
+        return blk;
+    }
 };
-STATIC_ASSERT(sizeof(FLinearHeapSmallBlock_) == ALLOCATION_BOUNDARY);
-STATIC_CONST_INTEGRAL(size_t, GLinearHeapSmallBlocksMaxSize, 32736);
-STATIC_CONST_INTEGRAL(size_t, GLinearHeapSmallBlocksCapacity, FLinearHeapSmallBlock_::AllocationSize - sizeof(FLinearHeapSmallBlock_));
-//----------------------------------------------------------------------------
-struct FLinearHeapLargeBlock_ {
-    void* Ptr;
-    size_t SizeInBytes;
+STATIC_ASSERT(sizeof(FLinearHeapBlock_) + GLinearHeapCapacity == GLinearHeapGranularity_);
+#else
+struct FLinearHeapBlock_ {
+    FLinearHeapBlock_* Next;
+    u32 SizeInBytes;
+#ifdef WITH_CORE_ASSERT
+    STATIC_CONST_INTEGRAL(CODE3264(u64, u32), DefaultCanary, CODE3264(0xAABBDDEEAABBDDEEull, 0xAABBDDEEul));
+    CODE3264(u64, u32) Canary = DefaultCanary; // serves as padding to align on 16
+    bool CheckCanary() const { return (DefaultCanary == Canary); }
+#else
+    CODE3264(u64, u32) _Padding;
+#endif
 };
-STATIC_CONST_INTEGRAL(size_t, GLinearHeapLargeBlocksAllocationSize, FLinearHeapSmallBlock_::AllocationSize);
-//STATIC_CONST_INTEGRAL(size_t, GLinearHeapLargeBlocksCapacity, GLinearHeapLargeBlocksAllocationSize / sizeof(FLinearHeapLargeBlock_));
+#endif //!!WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
+STATIC_ASSERT(sizeof(FLinearHeapBlock_) == ALLOCATION_BOUNDARY);
 //----------------------------------------------------------------------------
+#if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
 class FLinearHeapVMCache_ {
 public:
-    STATIC_CONST_INTEGRAL(size_t, VMCacheBlocks, 32);
-    STATIC_CONST_INTEGRAL(size_t, VMCacheSizeInBytes, 16 * 1024 * 1024); // <=> 16 mo global cache for large blocks
+    static NO_INLINE FLinearHeapBlock_* AllocateBlock(FLinearHeapBlock_* next) {
+        void* const ptr = Instance_().Allocate_(GLinearHeapAllocationSize);
+        FLinearHeapBlock_* blk = new (ptr) FLinearHeapBlock_;
+        blk->Offset = blk->Last = 0;
+        blk->Next = next;
+#ifdef WITH_CORE_ASSERT
+        ::memset(blk + 1, 0xCC, GLinearHeapCapacity);
+#endif
+        return blk;
+    }
 
-#if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    static FLinearHeapVMCache_& Instance() {
+    static FLinearHeapBlock_* ReleaseBlock(FLinearHeapBlock_* blk) {
+        AssertCheckCanary(*blk);
+        Assert(blk->Last <= blk->Offset);
+        Assert(blk->Offset <= GLinearHeapCapacity);
+        FLinearHeapBlock_* const next = blk->Next;
+        Instance_().Free_(blk, GLinearHeapAllocationSize);
+        return next;
+    }
+
+private:
+    STATIC_CONST_INTEGRAL(size_t, VMCacheBlocks, 32);
+    STATIC_CONST_INTEGRAL(size_t, VMCacheSizeInBytes, 2 * 1024 * 1024); // <=> 2 mo global cache for large blocks
+
+    FAtomicSpinLock _barrier;
+    VIRTUALMEMORYCACHE(LinearHeap, VMCacheBlocks, VMCacheSizeInBytes) _vm;
+
+    static FLinearHeapVMCache_& Instance_() {
         static FLinearHeapVMCache_ GInstance;
         return GInstance;
     }
 
-    static FLinearHeapVMCache_& GInstance;
-#endif
-
-    NO_INLINE static void* AllocateSmallBlock() {
-#if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-        return Core::malloc(FLinearHeapSmallBlock_::AllocationSize);
-#else
-        FLinearHeapVMCache_& Cache = GInstance;
-        const FAtomicSpinLock::FScope scopeLock(Cache._barrier);
-        return (FLinearHeapSmallBlock_*)Cache._vm.Allocate(FLinearHeapSmallBlock_::AllocationSize);
-#endif
+    void* Allocate_(size_t sizeInBytes) {
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+        return _vm.Allocate(sizeInBytes);
     }
 
-    static void ReleaseSmallBlock(void* smallBlock) {
-        Assert(smallBlock);
-#if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-        Core::free(smallBlock);
-#else
-        FLinearHeapVMCache_& Cache = GInstance;
-        const FAtomicSpinLock::FScope scopeLock(Cache._barrier);
-        Cache._vm.Free(smallBlock, FLinearHeapSmallBlock_::AllocationSize);
-#endif
+    void Free_(void* ptr, size_t sizeInBytes) {
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+        _vm.Free(ptr, sizeInBytes);
     }
-
-    NO_INLINE static void AllocateLargeBlock(FLinearHeapLargeBlock_& largeBlock, size_t sizeInBytes, size_t alignment) {
-        Assert(nullptr == largeBlock.Ptr);
-        Assert(0 == largeBlock.SizeInBytes);
-#if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-        largeBlock.Ptr = Core::aligned_malloc(sizeInBytes, alignment);
-#else
-        FLinearHeapVMCache_& Cache = GInstance;
-        const FAtomicSpinLock::FScope scopeLock(Cache._barrier);
-        largeBlock.Ptr = Cache._vm.Allocate(sizeInBytes);
-#endif
-        largeBlock.SizeInBytes = sizeInBytes;
-
-        Assert(largeBlock.Ptr);
-        Assert(Meta::IsAligned(alignment, largeBlock.Ptr));
-    }
-
-    static void ReleaseLargeBlock(FLinearHeapLargeBlock_& largeBlock) {
-        Assert(largeBlock.Ptr);
-        Assert(largeBlock.SizeInBytes);
-
-#if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-        Core::aligned_free(largeBlock.Ptr);
-#else
-        FLinearHeapVMCache_& Cache = GInstance;
-        const FAtomicSpinLock::FScope scopeLock(Cache._barrier);
-        Cache._vm.Free(largeBlock.Ptr, largeBlock.SizeInBytes);
-#endif
-
-        ONLY_IF_ASSERT(largeBlock.Ptr = nullptr);
-        ONLY_IF_ASSERT(largeBlock.SizeInBytes = 0);
-    }
-
-private:
-#if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    FAtomicSpinLock _barrier;
-    VIRTUALMEMORYCACHE(LinearHeap, VMCacheBlocks, VMCacheSizeInBytes) _vm;
-#endif
 };
-#if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-FLinearHeapVMCache_& FLinearHeapVMCache_::GInstance = FLinearHeapVMCache_::Instance();
-#endif
+#endif //!!WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FLinearHeap::FLinearHeap(const char* name)
-    : _smallBlocksTLS{ 0 }
-    , _largeBlocks(nullptr)
-    , _largeBlocksCount(0)
-#ifdef WITH_CORE_ASSERT
-    , _frozen{ false }
-#endif
+const size_t FLinearHeap::MaxBlockSize = GLinearHeapMaxSize;
+//----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
-    , _trackingData(name, &MEMORY_DOMAIN_TRACKING_DATA(LinearHeap)) {
-    RegisterAdditionalTrackingData(&_trackingData);
+FLinearHeap::FLinearHeap(FMemoryTracking* parent)
 #else
-    {
+FLinearHeap::FLinearHeap()
 #endif
-
-    // Use a small block to store large allocations : 64k / 16 = 4096 entries max on x64, 8192 on x86
-    _largeBlocks = FLinearHeapVMCache_::AllocateSmallBlock();
-    ONLY_IF_ASSERT(::memset(_largeBlocks, 0, GLinearHeapLargeBlocksAllocationSize));
+    : _blocks(nullptr)
+#ifdef USE_MEMORY_DOMAINS
+    , _trackingData("LinearHeap", parent) {
+    RegisterAdditionalTrackingData(&_trackingData);
 }
+#else
+{}
+#endif
 //----------------------------------------------------------------------------
 FLinearHeap::~FLinearHeap() {
     ReleaseAll();
-
-    Assert(_largeBlocks);
-    Assert(0 == _largeBlocksCount);
-    FLinearHeapVMCache_::ReleaseSmallBlock(_largeBlocks);
-    ONLY_IF_ASSERT(_largeBlocks = nullptr); // crash on necrophilia
 
 #ifdef USE_MEMORY_DOMAINS
     UnregisterAdditionalTrackingData(&_trackingData);
 #endif
 }
 //----------------------------------------------------------------------------
-void* FLinearHeap::Allocate(size_t sizeInBytes, size_t alignment/* = ALLOCATION_BOUNDARY */) {
-    Assert(sizeInBytes);
-    Assert(alignment >= sizeof(intptr_t));
-    Assert_NoAssume(!_frozen);
+void* FLinearHeap::Allocate(size_t size, size_t alignment/* = ALLOCATION_BOUNDARY */) {
+    Assert(size);
+    Assert(alignment && alignment <= 16);
+    AssertRelease(size <= MaxBlockSize);
 
-    void* result;
+    alignment = ROUND_TO_NEXT_16(alignment); // force alignment to 16
 
-#if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    if (Likely(sizeInBytes <= GLinearHeapSmallBlocksMaxSize)) {
+    void* ptr;
+#if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
+    auto* blk = new (Core::aligned_malloc(sizeof(FLinearHeapBlock_) + size, alignment)) FLinearHeapBlock_;
+    blk->SizeInBytes = checked_cast<u32>(size);
+    blk->Next = static_cast<FLinearHeapBlock_*>(_blocks);
+    AssertCheckCanary(*blk);
 
-        result = SmallAllocate_(sizeInBytes, alignment);
-    }
-    else
+    _blocks = blk;
+    ptr = (blk + 1);
+
+#else
+    auto* blk = static_cast<FLinearHeapBlock_*>(_blocks);
+    if (Unlikely(nullptr == blk || Meta::RoundToNext(blk->Offset, alignment) + size > GLinearHeapCapacity))
+        _blocks = blk = FLinearHeapVMCache_::AllocateBlock(blk);
+    AssertCheckCanary(*blk);
+
+    const size_t off = Meta::RoundToNext(blk->Offset, alignment);
+    Assert(off + size <= GLinearHeapCapacity);
+
+    blk->Offset = checked_cast<u16>(off + size);
+    blk->Last = u16(off);
+
+    ptr = (&reinterpret_cast<u8*>(blk + 1)[off]);
+
 #endif
-    {
-        result = LargeAllocate_(sizeInBytes, alignment);
-    }
 
-    Assert(Meta::IsAligned(alignment, result));
-    Assert_NoAssume(!_frozen);
+    Assert(ptr);
+    Assert(Meta::IsAligned(alignment, ptr));
+#ifdef USE_MEMORY_DOMAINS
+    _trackingData.Allocate(1, size);
+#endif
 
-#   ifdef USE_MEMORY_DOMAINS
-    _trackingData.Allocate(1, sizeInBytes);
-#   endif
-
-    return result;
+    return ptr;
 }
 //----------------------------------------------------------------------------
-void* FLinearHeap::Relocate(void* ptr, size_t oldSize, size_t newSize, size_t alignment/* = ALLOCATION_BOUNDARY */) {
-    Assert(ptr);
+void* FLinearHeap::Relocate(void* ptr, size_t newSize, size_t oldSize, size_t alignment/* = ALLOCATION_BOUNDARY */) {
     Assert(newSize);
-    Assert(oldSize);
-    Assert(alignment >= sizeof(intptr_t));
-    Assert_NoAssume(!_frozen);
+    Assert(alignment && alignment <= 16);
+    AssertRelease(newSize <= MaxBlockSize);
 
-#if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    auto*& smallBlockTLS = (FLinearHeapSmallBlock_*&)_smallBlocksTLS[GCurrentThreadIndex];
-    Assert(nullptr == smallBlockTLS || FLinearHeapSmallBlock_::DefaultCanary == smallBlockTLS->Canary);
+    if (nullptr == ptr) {
+        Assert(0 == oldSize);
+        return Allocate(newSize, alignment);
+    }
 
-    bool releaseSmallBlockTLS = false;
+    alignment = ROUND_TO_NEXT_16(alignment); // force alignment to 16
 
-    // check if ptr was the last block allocated
-    if (smallBlockTLS && ((u8*)(smallBlockTLS + 1) + smallBlockTLS->Last) == ptr) {
-        if (smallBlockTLS->Last + newSize <= GLinearHeapSmallBlocksCapacity) {
-            // enough space available, grow/shrink the last allocation
-            smallBlockTLS->Offset = checked_cast<u16>(smallBlockTLS->Last + newSize);
+#if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
+    FLinearHeapBlock_* prev = nullptr;
+    for (auto* blk = static_cast<FLinearHeapBlock_*>(_blocks); blk; blk = blk->Next) {
+        AssertCheckCanary(*blk);
+        if (ptr == (blk + 1)) {
+            Assert(nullptr != prev || _blocks == ptr);
+            
+            if (prev)
+                prev->Next = blk->Next;
+            else
+                _blocks = blk->Next;
 
+            void* const newp = Allocate(newSize, alignment);
+            ::memcpy(newp, ptr, Min(oldSize, newSize));
+
+            Core::aligned_free(blk);
 #   ifdef USE_MEMORY_DOMAINS
             _trackingData.Deallocate(1, oldSize);
-            _trackingData.Allocate(1, newSize);
 #   endif
+            return newp;
+        }
+        prev = blk;
+    }
 
+    AssertNotReached(); // block don't belong to this heap :'(
+
+#else
+    if (ptr) {
+        FLinearHeapBlock_* blk = FLinearHeapBlock_::BlockFromPtr(ptr);
+        Assert_NoAssume(FLinearHeapBlock_::Contains(static_cast<FLinearHeapBlock_*>(_blocks), blk));
+        
+        const size_t off = blk->OffsetFromPtr(ptr);
+        if (blk->Last == off && blk->Last + newSize <= GLinearHeapCapacity) {
+            blk->Offset = checked_cast<u16>(blk->Last + newSize);
+#ifdef USE_MEMORY_DOMAINS
+            _trackingData.Deallocate(1, oldSize);
+            _trackingData.Allocate(1, newSize);
+#endif
             return ptr;
         }
         else {
-            // can't allocate here, but dispose of the space afterwards
-            releaseSmallBlockTLS = true;
+            void* const newp = Allocate(newSize, alignment);
+            ::memcpy(newp, ptr, Min(oldSize, newSize));
+            return newp;
         }
     }
 
-    // check if ptr is a large block
-    if (Meta::IsAligned(ALLOCATION_GRANULARITY, ptr)) {
-        // check if enough space thanks to allocation granularity
-        if (ROUND_TO_NEXT_64K(newSize) <= ROUND_TO_NEXT_64K(oldSize))
-            return ptr;
-#else
-    {
-#endif
-        // look for the large block descriptor and relocate
-        auto* largeBlocks = (FLinearHeapLargeBlock_*)_largeBlocks;
-        forrange(plarge, largeBlocks, largeBlocks + _largeBlocksCount) {
-            if (plarge->Ptr == ptr) {
-                Assert(plarge->SizeInBytes >= oldSize);
+    return Allocate(newSize, alignment);
 
-                FLinearHeapLargeBlock_ newBlock;
-                FLinearHeapVMCache_::AllocateLargeBlock(newBlock, ROUND_TO_NEXT_64K(newSize), alignment);
-
-                ::memcpy(newBlock.Ptr, plarge->Ptr, Min(newSize, oldSize));
-
-                FLinearHeapVMCache_::ReleaseLargeBlock(*plarge);
-                *plarge = newBlock;
-
-#   ifdef USE_MEMORY_DOMAINS
-                _trackingData.Deallocate(1, oldSize);
-                _trackingData.Allocate(1, newSize);
-#   endif
-
-                return newBlock.Ptr;
-            }
-        }
-
-        AssertNotReached(); // this pointer don't belong to this linear heap !
-    }
-
-#if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    // fall back to slow path
-    void* const newPtr = Allocate(newSize, alignment);
-    ::memcpy(newPtr, ptr, Min(newSize, oldSize));
-
-    if (releaseSmallBlockTLS) {
-        // release previously occupied space in TLS small block
-        Assert(((u8*)(smallBlockTLS + 1) + smallBlockTLS->Last) == ptr);
-        smallBlockTLS->Offset = smallBlockTLS->Last;
-
-#   ifdef USE_MEMORY_DOMAINS
-        _trackingData.Deallocate(1, oldSize);
-        // _trackingData.Allocate() already done in previous Allocate() upthere
-#   endif
-    }
-    else {
-        // ptr is "leaked", only released by ReleaseAll() later
-    }
-
-    return newPtr;
-#else
-    AssertNotReached();
-    return nullptr;
 #endif
 }
 //----------------------------------------------------------------------------
-void FLinearHeap::Deallocate(void* ptr) {
+void FLinearHeap::Release(void* ptr, size_t size) {
     Assert(nullptr != ptr);
+    Assert(0 != size);
+    AssertRelease(size <= MaxBlockSize);
 
-#if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    if (Meta::IsAligned(ALLOCATION_GRANULARITY, ptr)) {
-#else
-    {
-#endif
-        LargeDeallocate_(ptr);
+#if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
+    FLinearHeapBlock_* prev = nullptr;
+    for (auto* blk = static_cast<FLinearHeapBlock_*>(_blocks); blk; blk = blk->Next) {
+        AssertCheckCanary(*blk);
+        if (ptr == (blk + 1)) {
+            Assert(nullptr != prev || _blocks == ptr);
+            Assert(size == blk->SizeInBytes);
+            
+            if (prev)
+                prev->Next = blk->Next;
+            else
+                _blocks = blk->Next;
+
+#   ifdef USE_MEMORY_DOMAINS
+            _trackingData.Deallocate(1, size);
+#   endif
+
+            Core::aligned_free(blk);
+            return;
+        }
+        prev = blk;
     }
+
+    AssertNotReached();
+
+#else
+    FLinearHeapBlock_* blk = FLinearHeapBlock_::BlockFromPtr(ptr);
+    Assert_NoAssume(FLinearHeapBlock_::Contains(static_cast<FLinearHeapBlock_*>(_blocks), blk));
+
+    const size_t off = blk->OffsetFromPtr(ptr);
+    if (off == blk->Last) {
+        Assert(off < blk->Offset);
+        // reclaim memory :
+        blk->Offset = blk->Last;
+#   ifdef USE_MEMORY_DOMAINS
+        _trackingData.Deallocate(1, size);
+#   endif
+    }
+
+#endif
 }
 //----------------------------------------------------------------------------
 void FLinearHeap::ReleaseAll() {
-    Assert_NoAssume(_frozen); // guarantee that nobody is touching the heap ?
+    auto* blk = static_cast<FLinearHeapBlock_*>(_blocks);
 
-    // Small blocks
-    {
-        forrange(t, 0, lengthof(_smallBlocksTLS)) {
-            auto*& smallBlockTLS = (FLinearHeapSmallBlock_*&)_smallBlocksTLS[t];
 #if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-            AssertRelease(nullptr == smallBlockTLS);
+    while (blk) {
+        AssertCheckCanary(*blk);
+        
+#   ifdef USE_MEMORY_DOMAINS
+        _trackingData.Deallocate(1, blk->SizeInBytes);
+#   endif
+
+        FLinearHeapBlock_* const nxt = blk->Next;
+        Core::aligned_free(blk);
+        blk = nxt;
+    }
+
+    Assert_NoAssume(_trackingData.AllocationCount() == 0);
+
 #else
-            FLinearHeapSmallBlock_* psmall = smallBlockTLS;
-            smallBlockTLS = nullptr;
+    while (blk)
+        blk = FLinearHeapVMCache_::ReleaseBlock(blk);
 
-            while (psmall) {
-                auto* pnext = psmall->Next;
-                FLinearHeapVMCache_::ReleaseSmallBlock(psmall);
-                psmall = pnext;
-            }
-#endif
-        }
-    }
-
-    // Large blocks
-    {
-        auto* largeBlocks = (FLinearHeapLargeBlock_*)_largeBlocks;
-        const size_t largeBlocksCount = _largeBlocksCount.exchange(0);
-        forrange(plarge, largeBlocks, largeBlocks + largeBlocksCount)
-            if (plarge->Ptr) // holes can appear when calling Deallocate()
-                FLinearHeapVMCache_::ReleaseLargeBlock(*plarge);
-            else
-                Assert(0 == plarge->SizeInBytes);
-    }
-
-#ifdef USE_MEMORY_DOMAINS
+    _blocks = nullptr;
+#   ifdef USE_MEMORY_DOMAINS
     _trackingData.ReleaseAll();
+#   endif
+
 #endif
-}
-//----------------------------------------------------------------------------
-void FLinearHeap::Freeze() {
-    Assert_NoAssume(!_frozen);
-    ONLY_IF_ASSERT(_frozen = true);
-}
-//----------------------------------------------------------------------------
-void FLinearHeap::Unfreeze() {
-    Assert_NoAssume(_frozen);
-    ONLY_IF_ASSERT(_frozen = false);
-}
-//----------------------------------------------------------------------------
-size_t FLinearHeap::SnapSize(size_t size) {
-    return (size <= GLinearHeapSmallBlocksMaxSize ? size : ROUND_TO_NEXT_64K(size));
-}
-//----------------------------------------------------------------------------
-void* FLinearHeap::SmallAllocate_(size_t sizeInBytes, size_t alignment) {
-#if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    AssertNotReached();
-    return nullptr;
-
-#else
-    Assert(sizeInBytes <= GLinearHeapSmallBlocksMaxSize);
-    Assert(GCurrentThreadIndex < lengthof(_smallBlocksTLS));
-
-    auto*& smallBlockTLS = (FLinearHeapSmallBlock_*&)_smallBlocksTLS[GCurrentThreadIndex];
-    Assert(nullptr == smallBlockTLS || FLinearHeapSmallBlock_::DefaultCanary == smallBlockTLS->Canary);
-
-    // try to allocate from TLS small block, can fail if no block or not enough space available
-    if (Unlikely(nullptr == smallBlockTLS || Meta::RoundToNext(smallBlockTLS->Offset, alignment) + sizeInBytes > GLinearHeapSmallBlocksCapacity)) {
-        // allocate a new block from dedicated virtual memory cache
-        auto* newBlock = new (FLinearHeapVMCache_::AllocateSmallBlock()) FLinearHeapSmallBlock_();
-        newBlock->Next = smallBlockTLS;
-        smallBlockTLS = newBlock;
-    }
-
-    // Increment the offset of the current small block
-    Assert(FLinearHeapSmallBlock_::DefaultCanary == smallBlockTLS->Canary);
-    const size_t alignedOffset = Meta::RoundToNext(smallBlockTLS->Offset, alignment);
-    smallBlockTLS->Offset = checked_cast<u16>(alignedOffset + sizeInBytes);
-    smallBlockTLS->Last = u16(alignedOffset);
-
-    return ((u8*)(smallBlockTLS + 1) + alignedOffset);
-#endif
-}
-//----------------------------------------------------------------------------
-NO_INLINE void* FLinearHeap::LargeAllocate_(size_t sizeInBytes, size_t alignment) {
-#if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    Assert(sizeInBytes > GLinearHeapSmallBlocksMaxSize);
-#endif
-    STATIC_ASSERT(ALLOCATION_GRANULARITY == 64 * 1024);
-
-    // allocates large blocks from VM cache
-    FLinearHeapLargeBlock_ newBlock;
-    FLinearHeapVMCache_::AllocateLargeBlock(newBlock, ROUND_TO_NEXT_64K(sizeInBytes), ALLOCATION_GRANULARITY);
-
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, newBlock.Ptr));
-
-    // atomically register large blocks for later deletion
-    for (;;) {
-        size_t largeBlockIndex = _largeBlocksCount;
-        if (_largeBlocksCount.compare_exchange_weak(largeBlockIndex, largeBlockIndex + 1, std::memory_order_relaxed)) {
-            auto* plarge = ((FLinearHeapLargeBlock_*)_largeBlocks + largeBlockIndex);
-            Assert(nullptr == plarge->Ptr);
-            Assert(0 == plarge->SizeInBytes);
-            *plarge = newBlock;
-            break;
-        }
-    }
-
-    return newBlock.Ptr;
-}
-//----------------------------------------------------------------------------
-NO_INLINE void FLinearHeap::LargeDeallocate_(void* ptr) {
-#if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
-#endif
-
-    // look for the large block descriptor and relocate
-    auto* largeBlocks = (FLinearHeapLargeBlock_*)_largeBlocks;
-    forrange(plarge, largeBlocks, largeBlocks + _largeBlocksCount) {
-        if (plarge->Ptr == ptr) {
-#ifdef USE_MEMORY_DOMAINS
-            _trackingData.Deallocate(1, plarge->SizeInBytes);
-#endif
-
-            FLinearHeapVMCache_::ReleaseLargeBlock(*plarge);
-            plarge->Ptr = nullptr; // needed for release all
-            plarge->SizeInBytes = 0;
-
-            return;
-        }
-    }
-
-    AssertNotReached(); // this pointer don't belong to this linear heap !
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
+
+#undef AssertCheckCanary
