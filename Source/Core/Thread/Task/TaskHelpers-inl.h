@@ -141,7 +141,7 @@ void ParallelFor(
 
         // all iterations are dispatch by regular slices to worker threads (less overhead)
         const size_t worker_count = (manager->WorkerCount() + 1/* current thread */);
-        const size_t worker_tasks = Max(1, count / worker_count);
+        const size_t worker_tasks = Max(1ul, count / worker_count);
 
         const size_t owner_first = Min(count - worker_tasks, worker_tasks * (worker_count - 1));
         Assert(owner_first < count);

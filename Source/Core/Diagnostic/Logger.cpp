@@ -644,7 +644,7 @@ private: // IStreamWriter
         if (0 == sizeInBytes)
             return true;
         
-        const TMemoryView<const u8> toWrite((const u8*)storage, sizeInBytes);
+        const TMemoryView<const u8> toWrite((const u8*)storage, checked_cast<size_t>(sizeInBytes));
         const size_t off0 = checked_cast<size_t>(_offsetO & GBufferMask);
         const size_t off1 = checked_cast<size_t>((_offsetO + sizeInBytes) & GBufferMask);
 

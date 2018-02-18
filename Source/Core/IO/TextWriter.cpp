@@ -193,7 +193,7 @@ static size_t Itoa_(TBasicTextWriter<_Char>& w, u64 v, u64 base, const TMemoryVi
 #endif
 //----------------------------------------------------------------------------
 template <typename _Char>
-static void WriteItoa_(TBasicTextWriter<_Char>& w, u64 v) {
+static void WriteItoaUnsigned_(TBasicTextWriter<_Char>& w, u64 v) {
     _Char buffer[GItoaCapacity_];
     const u64 base = GBasesU64_[w.Format().Base()];
     const size_t len = Itoa_(w, v, base, MakeView(buffer));
@@ -201,7 +201,7 @@ static void WriteItoa_(TBasicTextWriter<_Char>& w, u64 v) {
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static void WriteItoa_(TBasicTextWriter<_Char>& w, i64 v) {
+static void WriteItoaSigned_(TBasicTextWriter<_Char>& w, i64 v) {
     _Char buffer[GItoaCapacity_];
     const u64 base = GBasesU64_[w.Format().Base()];
     size_t len;
@@ -306,7 +306,7 @@ static void Write_(Meta::TType<char>, TBasicTextWriter<char>& w, const void* v) 
     w.Put("[0x");
     w << FTextFormat::Hexadecimal;
     w << FTextFormat::PadLeft(sizeof(v) << 1, '0');
-    WriteItoa_(w, u64(v));
+    WriteItoaUnsigned_(w, uintptr_t(v));
     w.Put(']');
     w.Format() = org;
     w.SetFillChar(fillChar);
@@ -318,7 +318,7 @@ static void Write_(Meta::TType<wchar_t>, TBasicTextWriter<wchar_t>& w, const voi
     w.Put(L"[0x");
     w << FTextFormat::Hexadecimal;
     w << FTextFormat::PadLeft(sizeof(v) << 1, L'0');
-    WriteItoa_<wchar_t>(w, u64(v));
+    WriteItoaUnsigned_<wchar_t>(w, uintptr_t(v));
     w.Put(L']');
     w.Format() = org;
     w.SetFillChar(fillChar);
@@ -364,14 +364,14 @@ template <> void TBasicTextWriter<char>::Put(const TBasicStringView<char>& str) 
 template <> void TBasicTextWriter<wchar_t>::Put(const TBasicStringView<wchar_t>& str) { _ostream->WriteView(str); }
 //----------------------------------------------------------------------------
 template <> void TBasicTextWriter<char>::Write(bool v) { Write_(Meta::TType<char>{}, *this, v); }
-template <> void TBasicTextWriter<char>::Write(i8 v) { WriteItoa_(*this, i64(v)); }
-template <> void TBasicTextWriter<char>::Write(i16 v) { WriteItoa_(*this, i64(v)); }
-template <> void TBasicTextWriter<char>::Write(i32 v) { WriteItoa_(*this, i64(v)); }
-template <> void TBasicTextWriter<char>::Write(i64 v) { WriteItoa_(*this, i64(v)); }
-template <> void TBasicTextWriter<char>::Write(u8 v) { WriteItoa_(*this, u64(v)); }
-template <> void TBasicTextWriter<char>::Write(u16 v) { WriteItoa_(*this, u64(v)); }
-template <> void TBasicTextWriter<char>::Write(u32 v) { WriteItoa_(*this, u64(v)); }
-template <> void TBasicTextWriter<char>::Write(u64 v) { WriteItoa_(*this, u64(v)); }
+template <> void TBasicTextWriter<char>::Write(i8 v) { WriteItoaSigned_(*this, i64(v)); }
+template <> void TBasicTextWriter<char>::Write(i16 v) { WriteItoaSigned_(*this, i64(v)); }
+template <> void TBasicTextWriter<char>::Write(i32 v) { WriteItoaSigned_(*this, i64(v)); }
+template <> void TBasicTextWriter<char>::Write(i64 v) { WriteItoaSigned_(*this, i64(v)); }
+template <> void TBasicTextWriter<char>::Write(u8 v) { WriteItoaUnsigned_(*this, u64(v)); }
+template <> void TBasicTextWriter<char>::Write(u16 v) { WriteItoaUnsigned_(*this, u64(v)); }
+template <> void TBasicTextWriter<char>::Write(u32 v) { WriteItoaUnsigned_(*this, u64(v)); }
+template <> void TBasicTextWriter<char>::Write(u64 v) { WriteItoaUnsigned_(*this, u64(v)); }
 template <> void TBasicTextWriter<char>::Write(float v) { WriteDtoa_(*this, v); }
 template <> void TBasicTextWriter<char>::Write(double v) { WriteDtoa_(*this, v); }
 template <> void TBasicTextWriter<char>::Write(const void* v) { Write_(Meta::TType<char>{}, *this, v); }
@@ -379,14 +379,14 @@ template <> void TBasicTextWriter<char>::Write(const char* v) { WriteWFormat_(*t
 template <> void TBasicTextWriter<char>::Write(const TBasicStringView<char>& v) { WriteWFormat_(*this, v); }
 //----------------------------------------------------------------------------
 template <> void TBasicTextWriter<wchar_t>::Write(bool v) { Write_(Meta::TType<wchar_t>{}, *this, v); }
-template <> void TBasicTextWriter<wchar_t>::Write(i8 v) { WriteItoa_(*this, i64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(i16 v) { WriteItoa_(*this, i64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(i32 v) { WriteItoa_(*this, i64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(i64 v) { WriteItoa_(*this, i64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(u8 v) { WriteItoa_(*this, u64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(u16 v) { WriteItoa_(*this, u64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(u32 v) { WriteItoa_(*this, u64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(u64 v) { WriteItoa_(*this, u64(v)); }
+template <> void TBasicTextWriter<wchar_t>::Write(i8 v) { WriteItoaSigned_(*this, i64(v)); }
+template <> void TBasicTextWriter<wchar_t>::Write(i16 v) { WriteItoaSigned_(*this, i64(v)); }
+template <> void TBasicTextWriter<wchar_t>::Write(i32 v) { WriteItoaSigned_(*this, i64(v)); }
+template <> void TBasicTextWriter<wchar_t>::Write(i64 v) { WriteItoaSigned_(*this, i64(v)); }
+template <> void TBasicTextWriter<wchar_t>::Write(u8 v) { WriteItoaUnsigned_(*this, u64(v)); }
+template <> void TBasicTextWriter<wchar_t>::Write(u16 v) { WriteItoaUnsigned_(*this, u64(v)); }
+template <> void TBasicTextWriter<wchar_t>::Write(u32 v) { WriteItoaUnsigned_(*this, u64(v)); }
+template <> void TBasicTextWriter<wchar_t>::Write(u64 v) { WriteItoaUnsigned_(*this, u64(v)); }
 template <> void TBasicTextWriter<wchar_t>::Write(float v) { WriteDtoa_(*this, v); }
 template <> void TBasicTextWriter<wchar_t>::Write(double v) { WriteDtoa_(*this, v); }
 template <> void TBasicTextWriter<wchar_t>::Write(const void* v) { Write_(Meta::TType<wchar_t>{}, *this, v); }

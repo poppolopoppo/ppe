@@ -227,7 +227,7 @@ void TBasicString<_Char>::shrink_to_fit() {
                 const size_t largeCapacity = _large.Capacity;
                 ::memcpy(_small.Buffer, _large.Storage, (_large.Size + 1/* null char */) * sizeof(_Char));
                 _small.IsLarge = 0;
-                _small.Size = _large.Size;
+                _small.Size = checked_cast<_Char>(_large.Size);
                 get_allocator_().deallocate(largeStorage, largeCapacity);
             }
             else {
@@ -503,7 +503,7 @@ NO_INLINE TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeNoNullChar_Lar
     else {
         _large.IsLarge = 1;
         _Char* const newStorage = allocator_traits::allocate(get_allocator_(), newCapacity);
-        ::memcpy(newStorage, _small.Buffer, Min(_small.Size, count) * sizeof(_Char));
+        ::memcpy(newStorage, _small.Buffer, Min(size_t(_small.Size), count) * sizeof(_Char));
         _large.Storage = newStorage; // assign after memcpy to don't overwrite insitu storage
     }
 

@@ -249,13 +249,13 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
 
                     if (expect_fixed) {
                         AssertRelease(alignment >= 0); // invalid format : negative precision is not supported
-                        props.Format.SetPrecision(checked_cast<std::streamsize>(parsedScalar));
+                        props.Format.SetPrecision(checked_cast<size_t>(parsedScalar));
                     }
                     else if (expect_repeat) {
                         props.Repeat = checked_cast<size_t>(parsedScalar);
                     }
                     else if (expect_width) {
-                        props.Format.SetWidth(checked_cast<std::streamsize>(parsedScalar));
+                        props.Format.SetWidth(checked_cast<size_t>(parsedScalar));
                         props.Format.SetPadding((alignment < 0
                             ? FTextFormat::Padding_Right
                             : (alignment == 0 ? FTextFormat::Padding_Center : FTextFormat::Padding_Left)) );
