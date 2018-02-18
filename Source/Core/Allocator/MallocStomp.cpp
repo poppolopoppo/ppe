@@ -213,7 +213,7 @@ public:
 
         // queue this block for delayed deletion and possibly delete an older one
         FDeletedBlock_ toDelete;
-        if (_delayeds.push_front_OverflowIFN(&toDelete, delayed)) {
+        if (_delayeds.push_back_OverflowIFN(&toDelete, delayed)) {
             ReleaseDelayedDelete_(toDelete);
         }
 
