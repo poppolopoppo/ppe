@@ -303,7 +303,7 @@ static void print_atom(const RTTI::FAtom& atom) {
         atom.IsDefaultValue());
 }
 //----------------------------------------------------------------------------
-static void Test_Atoms_() {
+static NO_INLINE void Test_Atoms_() {
     int i = 0;
     RTTI::FAtom iatom = RTTI::MakeAtom(&i);
     print_atom(iatom);
@@ -358,7 +358,7 @@ static void Test_Atoms_() {
     print_atom(tatom2);
 }
 //----------------------------------------------------------------------------
-static void Test_Any_() {
+static NO_INLINE void Test_Any_() {
     STATIC_ASSERT(RTTI::TIsSupportedType<decltype(42)>::value);
     STATIC_ASSERT(RTTI::TIsSupportedType<decltype(42.)>::value);
     STATIC_ASSERT(RTTI::TIsSupportedType<FString>::value);
@@ -401,7 +401,7 @@ static void Test_Any_() {
     //AssertRelease(dico2_anyAny.Equals(RTTI::MakeAny(float3(1, 2, 3)))); %TODO%
 }
 //----------------------------------------------------------------------------
-static void Test_Serializer_(const RTTI::FMetaTransaction& input, Serialize::ISerializer* serializer, const FFilename& filename) {
+static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Serialize::ISerializer* serializer, const FFilename& filename) {
     Assert(input.NumTopObjects());
     Assert(serializer);
 
@@ -456,13 +456,12 @@ static void Test_Serializer_(const RTTI::FMetaTransaction& input, Serialize::ISe
     }
 
     AssertRelease(input.NumTopObjects() == output.NumTopObjects());
-#if 1 // disable while fixing json problem with floats %_NOCOMMIT% TODO
+
     if (false == input.DeepEquals(output))
         AssertNotReached();
-#endif
 }
 //----------------------------------------------------------------------------
-static void Test_Serialize_() {
+static NO_INLINE void Test_Serialize_() {
     typedef FRTTITest_ test_type;
     static constexpr size_t test_count = 5;
 
@@ -518,7 +517,7 @@ static void Test_Serialize_() {
         }
         {
             Serialize::FJSONSerializer json;
-            json.SetMinify(false);
+            json.SetMinify(true);
             Test_Serializer_(input, &json, L"Saved:/RTTI/robotapp_json.json");
         }
     }
