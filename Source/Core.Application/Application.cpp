@@ -23,6 +23,9 @@
 #   include "Core/IO/TextWriter.h"
 #endif
 
+#include <clocale>
+#include <locale.h>
+
 #define WITH_APPLICATION_TRY_CATCH 0 //%_NOCOMMIT%
 
 PRAGMA_INITSEG_LIB
@@ -120,6 +123,9 @@ void FApplicationModule::ClearAll_UnusedMemory() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationContext::FApplicationContext() {
+    // Force locale to EN with UTF-8 encoding
+    std::setlocale(LC_ALL, "en_US.UTF-8");
+
 #ifdef PLATFORM_WINDOWS
     ConfigureCRTHeapForDebugging_();
 #endif
