@@ -164,18 +164,21 @@ void ReportAllocationHistogram() {
 
     Assert(classes.size() == allocations.size());
 
-    const auto distribution = [](size_t sz) -> float {
-        return std::log((float)sz + 1.0f) - std::log(1.0f);
-    };
-
-    float totalCount = 0;
-    float allocationScale = 0;
+    size_t totalCount = 0;
+    size_t maxCount = 0;
     for (size_t count : allocations) {
         totalCount += count;
-        allocationScale = Max(allocationScale, distribution(count));
+        maxCount = Max(maxCount, count);
     }
 
+    const auto distribution = [](size_t sz) -> float {
+        return (std::log((float)sz + 1.f) - std::log(1.f));
+    };
+
+    const float distributionScale = distribution(maxCount);
+
     FWStringBuilder oss;
+    oss << FTextFormat::Float(FTextFormat::FixedFloat, 2);
     oss << L"report allocations size histogram" << Eol;
 
     static size_t GPrevAllocations[60/* chhh */] = { 0 };
@@ -186,18 +189,18 @@ void ReportAllocationHistogram() {
         if (0 == classes[i]) continue;
 
         if (0 == allocations[i])
-            Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5f2}% |",
+            Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5}% |",
                 i,
                 Fmt::FSizeInBytes{ classes[i] },
                 Fmt::FSizeInBytes{ totalBytes[i] },
-                100 * float(allocations[i]) / totalCount );
+                0.f );
         else
-            Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5f2}% |{4}> {5} +{6}",
+            Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5}% |{4}> {5} +{6}",
                 i,
                 Fmt::FSizeInBytes{ classes[i] },
                 Fmt::FSizeInBytes{ totalBytes[i] },
                 100 * float(allocations[i]) / totalCount,
-                Fmt::Repeat(L'=', size_t(Min(width, std::round(width * distribution(allocations[i]) / allocationScale)))),
+                Fmt::Repeat(L'=', size_t(std::round(Min(width, width * distribution(allocations[i]) / distributionScale)))),
                 Fmt::FCountOfElements{ allocations[i] },
                 allocations[i] - GPrevAllocations[i] );
 

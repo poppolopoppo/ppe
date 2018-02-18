@@ -11,7 +11,7 @@
 // http://stackoverflow.com/questions/1077496/what-is-a-small-and-fast-real-time-compression-technique-like-lz77
 
 namespace Core {
-EXTERN_LOG_CATEGORY(CORE_API, Benchmark);
+EXTERN_LOG_CATEGORY(CORE_API, Benchmark)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

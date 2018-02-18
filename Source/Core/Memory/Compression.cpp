@@ -5,17 +5,13 @@
 #include "HashFunctions.h"
 #include "MemoryView.h"
 
-
 #include "Container/RawStorage.h"
+#include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
 #include "Misc/FourCC.h"
+#include "Time/TimedScope.h"
 
 #include "Core.External/lz4-external.h"
-
-#include "Time/TimedScope.h"
-#if USE_CORE_BENCHMARK
-#   include "Diagnostic/Logger.h"
-#endif
 
 #define WITH_CORE_COMPRESSION_FINGERPRINT 1 //%_NOCOMMTI%
 
@@ -52,7 +48,7 @@ struct FCompressionBenchmark_ {
     FCompressionBenchmark_() : StartedAt(FTimepoint::Now()) {}
     void Finished(const wchar_t* msg, size_t a, size_t b) {
         const FTimespan elapsed = FTimepoint::ElapsedSince(StartedAt);
-        LOG(Benchmark, Info, L" {0:20} | {1:8} | {2:10} ===> {3:10} : {4:10f2}% = {5:10f2} Mb/s",
+        LOG(Benchmark, Info, L" {0:20} | {1:10f2} | {2:10f2} ==> {3:10f2} : {4:10f2}% = {5:10f2} Mb/s",
             msg,
             Fmt::DurationInMs(elapsed),
             Fmt::SizeInBytes(a),

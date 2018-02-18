@@ -137,7 +137,7 @@ FMemoryTracking& FMemoryTracking::Global() {
 static void TrackingDataAbsoluteName_(FTextWriter& oss, const FMemoryTracking& trackingData) {
     if (trackingData.Parent() && trackingData.Parent() != &FMemoryTracking::Global()) {
         TrackingDataAbsoluteName_(oss, *trackingData.Parent());
-        oss << "::";
+        oss << '/';
     }
     oss << trackingData.Name();
 }
@@ -158,8 +158,12 @@ void ReportTrackingDatas(   FWTextWriter& oss,
     if (datas.empty())
         return;
 
+    
+
     const FTextFormat orgFormat = oss.ResetFormat();
     const wchar_t orgFillChar = oss.SetFillChar(L' ');
+
+    oss << FTextFormat::Float(FTextFormat::FixedFloat, 2);
 
     oss << L"reporting tracking data :" << Eol;
 

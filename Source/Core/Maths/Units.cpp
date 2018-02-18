@@ -15,17 +15,21 @@ namespace Core {
     template class Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >; \
     FTextWriter& operator <<(FTextWriter& oss, \
         const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit) { \
+            if (oss.Format().Width() > 2) \
+                oss.Format().SetWidth(oss.Format().Width() - 3); \
+            oss << unit.Value(); \
             return (*oss.FormatScope()) \
-                << unit.Value() \
                 << FTextFormat::PadRight(3, ' ') \
                 << MakeStringView(" " STRINGIZE(SYMBOL)); \
     } \
     FWTextWriter& operator <<(FWTextWriter& oss, \
         const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit) { \
+            if (oss.Format().Width() > 2) \
+                oss.Format().SetWidth(oss.Format().Width() - 3); \
+            oss << unit.Value(); \
             return (*oss.FormatScope()) \
-                << unit.Value() \
                 << FTextFormat::PadRight(3, L' ') \
-                << MakeStringView(L" " WSTRINGIZE(SYMBOL)); \
+                << MakeStringView(" " WSTRINGIZE(SYMBOL)); \
     }
 //----------------------------------------------------------------------------
 #include "Units.Definitions-inl.h"

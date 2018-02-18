@@ -13,23 +13,29 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, Fmt::FCountOfElements count) {
+    if (oss.Format().Width() > 1)
+        oss.Format().SetWidth(oss.Format().Width() - 2);
+
     if (count > 9e5f)
         oss << (count / 1e6f) << " M";
     else if (count > 9e2f)
         oss << (count / 1e3f) << " K";
     else
-        oss << count.Value;
+        oss << count.Value << "  "/* for alignment */;
 
     return oss;
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FCountOfElements count) {
+    if (oss.Format().Width() > 1)
+        oss.Format().SetWidth(oss.Format().Width() - 2);
+
     if (count > 9e5f)
         oss << (count / 1e6f) << L" M";
     else if (count > 9e2f)
         oss << (count / 1e3f) << L" K";
     else
-        oss << count.Value;
+        oss << count.Value << L"  "/* for alignment */;
 
     return oss;
 }
