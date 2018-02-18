@@ -6,6 +6,7 @@
 #include "Allocator/ThreadLocalHeap.h"
 #include "Diagnostic/LastError.h"
 #include "Diagnostic/Logger.h"
+#include "IO/Format.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
 #include "Meta/AutoSingleton.h"
@@ -48,7 +49,6 @@ public:
 //----------------------------------------------------------------------------
 inline void FThreadLocalContext_::Create(const char* name, size_t tag) {
     const size_t threadIndex = (GNumThreadContext_++);
-    AssertRelease(threadIndex < CORE_MAX_CORES);
     GCurrentThreadIndex = threadIndex;
     parent_type::Create(name, tag, threadIndex);
 }
@@ -188,12 +188,11 @@ size_t FThreadContext::AffinityMask() const {
     HANDLE hThread = ::GetCurrentThread();
     DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, 0xFFul);
     if (0 == affinityMask) {
-        CORE_THROW_IT(FLastErrorException());
+        CORE_THROW_IT(FLastErrorException("SetThreadAffinityMask"));
     }
-    if (0 == ::SetThreadAffinityMask(hThread, affinityMask)) {
-        FLastErrorException e;
-        CORE_THROW_IT(FLastErrorException());
-    }
+    if (0 == ::SetThreadAffinityMask(hThread, affinityMask))
+        CORE_THROW_IT(FLastErrorException("SetThreadAffinityMask"));
+
     return checked_cast<size_t>(affinityMask);
 #else
 #   error "platform not supported"
@@ -208,7 +207,7 @@ void FThreadContext::SetAffinityMask(size_t mask) const {
     HANDLE hThread = ::GetCurrentThread();
     DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, mask);
     if (0 == affinityMask) {
-        CORE_THROW_IT(FLastErrorException());
+        CORE_THROW_IT(FLastErrorException("SetThreadAffinityMask"));
     }
     Assert(mask == AffinityMask());
 #else
@@ -301,6 +300,10 @@ FStringView FThreadContext::GetThreadName(std::thread::id thread_id) {
 #else
     return FStringView();
 #endif
+}
+//----------------------------------------------------------------------------
+size_t FThreadContext::MaxThreadIndex() {
+    return GNumThreadContext_;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -36,7 +36,7 @@ static size_t IOWorkerCount_() {
         Min(MaxIOWorkerCount_, std::thread::hardware_concurrency() - GlobalWorkerCount_()));
 }
 //----------------------------------------------------------------------------
-static size_t LowestPriorityWorkerCount_() {
+static size_t BackgroundWorkerCount_() {
     return 1;
 }
 //----------------------------------------------------------------------------
@@ -48,7 +48,7 @@ static constexpr size_t IOWorkerThreadAffinities[] = {
     (1<<0)|(1<<1), (1<<0)|(1<<1), (1<<0)|(1<<1), (1<<0)|(1<<1) // 1th and 2nd core, allowed to change threads
 };
 //----------------------------------------------------------------------------
-static constexpr size_t LowestPriorityWorkerThreadAffinities[] = {
+static constexpr size_t BackgroundWorkerThreadAffinities[] = {
     0xFF - 1 // all cores except first
 };
 //----------------------------------------------------------------------------
@@ -99,23 +99,23 @@ void AsyncIO(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority::N
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FLowestPriorityThreadPool::Create() {
-    const size_t count = LowestPriorityWorkerCount_();
-    parent_type::Create("LowestPriorityThreadPool", CORE_THREADTAG_LOWEST_PRIORITY, count, EThreadPriority::BelowNormal);
+void FBackgroundThreadPool::Create() {
+    const size_t count = BackgroundWorkerCount_();
+    parent_type::Create("BackgroundThreadPool", CORE_THREADTAG_BACKGROUND, count, EThreadPriority::BelowNormal);
     parent_type::Instance().Start(ThreadAffinities().CutBefore(count));
 }
 //----------------------------------------------------------------------------
-void FLowestPriorityThreadPool::Destroy() {
+void FBackgroundThreadPool::Destroy() {
     parent_type::Instance().Shutdown();
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
-TMemoryView<const size_t> FLowestPriorityThreadPool::ThreadAffinities() {
-    return MakeView(LowestPriorityWorkerThreadAffinities);
+TMemoryView<const size_t> FBackgroundThreadPool::ThreadAffinities() {
+    return MakeView(BackgroundWorkerThreadAffinities);
 }
 //----------------------------------------------------------------------------
-void AsyncLowestPriority(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    FLowestPriorityThreadPool::Instance().Run(task, priority);
+void AsyncBackround(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
+    FBackgroundThreadPool::Instance().Run(task, priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -123,11 +123,11 @@ void AsyncLowestPriority(const FTaskFunc& task, ETaskPriority priority /* = ETas
 void FThreadPoolStartup::Start() {
     FGlobalThreadPool::Create();
     FIOThreadPool::Create();
-    FLowestPriorityThreadPool::Create();
+    FBackgroundThreadPool::Create();
 }
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::Shutdown() {
-    FLowestPriorityThreadPool::Destroy();
+    FBackgroundThreadPool::Destroy();
     FIOThreadPool::Destroy();
     FGlobalThreadPool::Destroy();
 }

@@ -10,7 +10,8 @@
 #define CORE_THREADTAG_MAIN                 size_t(0)
 #define CORE_THREADTAG_WORKER               size_t(1)
 #define CORE_THREADTAG_IO                   size_t(2)
-#define CORE_THREADTAG_LOWEST_PRIORITY      size_t(3)
+#define CORE_THREADTAG_BACKGROUND           size_t(3)
+#define CORE_THREADTAG_OTHER                size_t(4)
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -50,6 +51,8 @@ public:
     static size_t GetThreadHash(std::thread::id thread_id);
     static FStringView GetThreadName(std::thread::id thread_id);
 
+    static size_t MaxThreadIndex();
+
 private:
     const size_t _tag;
     const size_t _threadIndex;
@@ -63,21 +66,11 @@ extern CORE_API thread_local size_t GCurrentThreadIndex;
 //----------------------------------------------------------------------------
 CORE_API const FThreadContext& CurrentThreadContext();
 //----------------------------------------------------------------------------
-inline bool IsInMainThread() {
-    return (CORE_THREADTAG_MAIN == CurrentThreadContext().Tag());
-}
-//----------------------------------------------------------------------------
-inline bool IsInIOThread() {
-    return (CORE_THREADTAG_IO == CurrentThreadContext().Tag());
-}
-//----------------------------------------------------------------------------
-inline bool IsInWorkerThread() {
-    return (CORE_THREADTAG_WORKER == CurrentThreadContext().Tag());
-}
-//----------------------------------------------------------------------------
-inline bool IsInLowestPriorityThread() {
-    return (CORE_THREADTAG_WORKER == CurrentThreadContext().Tag());
-}
+inline bool IsInMainThread()        { return (CORE_THREADTAG_MAIN == CurrentThreadContext().Tag()); }
+inline bool IsInIOThread()          { return (CORE_THREADTAG_IO == CurrentThreadContext().Tag()); }
+inline bool IsInWorkerThread()      { return (CORE_THREADTAG_WORKER == CurrentThreadContext().Tag()); }
+inline bool IsInBackgroundThread()  { return (CORE_THREADTAG_BACKGROUND == CurrentThreadContext().Tag()); }
+inline bool IsInOtherThread()       { return (CORE_THREADTAG_OTHER == CurrentThreadContext().Tag()); }
 //----------------------------------------------------------------------------
 #define AssertIsMainThread() Assert_NoAssume(Core::IsInMainThread())
 //----------------------------------------------------------------------------

@@ -11,7 +11,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FGlobalThreadPool : Meta::TSingleton<FTaskManager, FGlobalThreadPool> {
+class CORE_API FGlobalThreadPool : Meta::TSingleton<FTaskManager, FGlobalThreadPool> {
 public:
     typedef Meta::TSingleton<FTaskManager, FGlobalThreadPool> parent_type;
 
@@ -26,11 +26,11 @@ public:
     static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
-void AsyncWork(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
+CORE_API void AsyncWork(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FIOThreadPool : Meta::TSingleton<FTaskManager, FIOThreadPool> {
+class CORE_API FIOThreadPool : Meta::TSingleton<FTaskManager, FIOThreadPool> {
 public:
     typedef Meta::TSingleton<FTaskManager, FIOThreadPool> parent_type;
 
@@ -45,13 +45,13 @@ public:
     static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
-void AsyncIO(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
+CORE_API void AsyncIO(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FLowestPriorityThreadPool : Meta::TSingleton<FTaskManager, FLowestPriorityThreadPool> {
+class CORE_API FBackgroundThreadPool : Meta::TSingleton<FTaskManager, FBackgroundThreadPool> {
 public:
-    typedef Meta::TSingleton<FTaskManager, FLowestPriorityThreadPool> parent_type;
+    typedef Meta::TSingleton<FTaskManager, FBackgroundThreadPool> parent_type;
 
     using parent_type::Instance;
 #ifdef WITH_CORE_ASSERT
@@ -64,11 +64,11 @@ public:
     static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
-void AsyncLowestPriority(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
+CORE_API void AsyncBackround(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FThreadPoolStartup {
+class CORE_API FThreadPoolStartup {
 public:
     static void Start();
     static void Shutdown();
