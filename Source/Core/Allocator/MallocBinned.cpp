@@ -47,10 +47,10 @@ static void FillBlockPage_(void* p, size_t n, size_t size) {
     }
 }
 #   else
-static void FillBlockDeleted_(void* , size_t ) {}
+static FORCE_INLINE void FillBlockDeleted_(void* , size_t ) {}
 static void FillBlockPending_(void* p, size_t size) { ::memset(p, 0xAA, size); }
-static void FillBlockUninitialized_(void* , size_t ) {}
-static void FillBlockPage_(void* , size_t , size_t ) {}
+static FORCE_INLINE void FillBlockUninitialized_(void* , size_t ) {}
+static FORCE_INLINE void FillBlockPage_(void* , size_t , size_t ) {}
 #   endif
 #endif
 //----------------------------------------------------------------------------
