@@ -131,7 +131,7 @@ static void* StompVMAlloc_(size_t sizeInBytes) {
 #if     defined(PLATFORM_WINDOWS)
     result = (void*)::VirtualAlloc(nullptr, sizeInBytes, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
     if (nullptr == result)
-        CORE_THROW_IT(FLastErrorException());
+        CORE_THROW_IT(FLastErrorException("VirtualAlloc"));
 
 #elif   defined(PLATFORM_LINUX)
     result = (void*)::mmap(nullptr, sizeInBytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -161,7 +161,7 @@ static void StompVMFree_(void* ptr, size_t sizeInBytes) {
 #if     defined(PLATFORM_WINDOWS)
     UNUSED(sizeInBytes);
     if (not ::VirtualFree(ptr, 0, MEM_RELEASE))
-        CORE_THROW_IT(FLastErrorException());
+        CORE_THROW_IT(FLastErrorException("VirtualFree"));
 
 #elif   defined(PLATFORM_LINUX)
     ::munmap(ptr, sizeInBytes);

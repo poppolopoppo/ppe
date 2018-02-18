@@ -21,49 +21,55 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FString GetLastErrorToString(long errorCode) {
-#ifdef PLATFORM_WINDOWS
-    _com_error com(errorCode);
-    //return ToString(MakeCStringView(com.ErrorMessage()));
-    return StringFormat("<{0:#4X}> \"{1}\"", u32(errorCode), MakeCStringView(com.ErrorMessage()));
-
-#else
-    return FString();
-
-#endif
-}
-//----------------------------------------------------------------------------
-FWString GetLastErrorToWString(long errorCode) {
-#ifdef PLATFORM_WINDOWS
-    _com_error com(errorCode);
-    //return ToWString(MakeCStringView(com.ErrorMessage()));
-    return StringFormat(L"<{0:#4X}> \"{1}\"", u32(errorCode), MakeCStringView(com.ErrorMessage()));
-
-#else
-    return FWString();
-
-#endif
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 FLastError::FLastError() : Code(GetLastError()) {}
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const FLastError& error) {
-    return oss << GetLastErrorToString(error.Code);
+#ifdef PLATFORM_WINDOWS
+    char buffer[4096];
+    if (::FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
+        nullptr,
+        error.Code,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
+        buffer,
+        _countof(buffer),
+        nullptr)) {
+        oss << MakeCStringView(buffer) << " (code=";
+    }
+    else
+#endif
+    {
+        oss << "unknown error (code=";
+    }
+    return oss << u32(error.Code) << ')';
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const FLastError& error) {
-    return oss << GetLastErrorToWString(error.Code);
+#ifdef PLATFORM_WINDOWS
+    wchar_t buffer[4096];
+    if (::FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM,
+        nullptr,
+        error.Code,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
+        buffer,
+        _countof(buffer),
+        nullptr)) {
+        oss << MakeCStringView(buffer) << L" (code=";
+    }
+    else 
+#endif
+    {
+        oss << L"unknown error (code=";
+    }
+    return oss << u32(error.Code) << L')';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FLastErrorException::FLastErrorException()
-:   FLastErrorException(GetLastError()) {}
+FLastErrorException::FLastErrorException(const char* what)
+:   FLastErrorException(what, GetLastError()) {}
 //----------------------------------------------------------------------------
-FLastErrorException::FLastErrorException(long errorCode)
-:   FException(GetLastErrorToString(errorCode).c_str())
+FLastErrorException::FLastErrorException(const char* what, long errorCode)
+:   FException(what)
 ,   _errorCode(errorCode) {}
 //----------------------------------------------------------------------------
 FLastErrorException::~FLastErrorException() {}

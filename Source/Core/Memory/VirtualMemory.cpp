@@ -377,7 +377,7 @@ void FVirtualMemory::AlignedFree(void* ptr, size_t sizeInBytes) {
 #if     defined(PLATFORM_WINDOWS)
     UNUSED(sizeInBytes);
     if (0 == ::VirtualFree(ptr, 0, MEM_RELEASE))
-        CORE_THROW_IT(FLastErrorException());
+        CORE_THROW_IT(FLastErrorException("VirtualFree"));
 
 #elif   defined(PLATFORM_LINUX)
 
@@ -390,7 +390,8 @@ void FVirtualMemory::AlignedFree(void* ptr, size_t sizeInBytes) {
 //----------------------------------------------------------------------------
 FVirtualMemoryCache::FVirtualMemoryCache()
     : FreePageBlockCount(0)
-    , TotalCacheSizeInBytes(0) {}
+    , TotalCacheSizeInBytes(0) 
+{}
 //----------------------------------------------------------------------------
 void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first TRACKINGDATA_ARG_IFP) {
     const size_t alignment = FPlatformMisc::SystemInfo.AllocationGranularity;

@@ -131,7 +131,7 @@ static void ExternalEditor_(const FWStringView& filename, size_t line) {
         0, 0, FALSE, DETACHED_PROCESS, 0, 0,
         &startupInfo, &processInfo) == 0) {
         LOG(Dialog, Error, L"failed to open external editor : {0}\n\t{1}",
-            GetLastErrorToWString(::GetLastError()),
+            FLastError(),
             MakeCStringView(buffer) );
     }
     else {
@@ -494,10 +494,8 @@ static Dialog::EResult Template_CreateDialogBox_(
     ::GlobalUnlock(hgbl);
 
     const INT_PTR ret = DialogBoxIndirectParamW(NULL, (::LPDLGTEMPLATE)hgbl, NULL, (::DLGPROC)Template_DialogProc_, (LPARAM)&ctx);
-    if (-1 == ret) {
-        const FWString lastError = GetLastErrorToWString(GetLastError());
-        AssertNotReached();
-    }
+    if (-1 == ret)
+        CORE_THROW_IT(FLastErrorException("DialogBoxIndirectParamW"));
 
     ::GlobalFree(hgbl);
 

@@ -23,6 +23,9 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, const TBasicStringView<_Ch
     if (fmt.Case() == FTextFormat::Original &&
         (fmt.Padding() == FTextFormat::Padding_None || str.size() >= w.Format().Width()) ) {
         ostream->WriteView(str);
+
+        // Reset width padding each output to mimic std behavior
+        w.Format().SetPadding(FTextFormat::Padding_None);
         return;
     }
 

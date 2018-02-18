@@ -6,8 +6,10 @@
 #include "LastError.h"
 #include "Logger.h"
 
+#include "IO/Format.h"
 #include "IO/StreamProvider.h"
 #include "IO/String.h"
+#include "IO/StringBuilder.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
 
@@ -237,13 +239,10 @@ PRAGMA_MSVC_WARNING_DISABLE(4826) // warning C4826: convert unsigned char* to DW
 
         {
             DWORD64 dw64Displacement = 0;
-            if (TRUE == dbghelp.SymFromAddrW()(hProcess, (DWORD64)*address, &dw64Displacement, pSymbol)) {
+            if (TRUE == dbghelp.SymFromAddrW()(hProcess, (DWORD64)*address, &dw64Displacement, pSymbol))
                 symbol = MakeCStringView(pSymbol->Name);
-            }
-            else {
-                const long lastErrorCode = ::GetLastError();
-                symbol = GetLastErrorToWString(lastErrorCode);
-            }
+            else
+                symbol = ToWString(FLastError());
         }
         {
             DWORD dwDisplacement = 0;
