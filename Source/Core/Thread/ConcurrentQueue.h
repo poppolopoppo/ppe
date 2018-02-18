@@ -87,14 +87,22 @@ private:
         typename _Allocator::template rebind<item_type>::other
     >   vector_type;
 
-    static bool PrioritySort_(const item_type& lhs, const item_type& rhs) {
-        return (lhs.first > rhs.first);
-    }
+    struct FPrioritySort_ {
+        bool operator ()(const item_type& lhs, const item_type& rhs) const {
+            return (lhs.first > rhs.first);
+        }
+    };
+
+    typedef std::priority_queue<item_type, vector_type, FPrioritySort_> priority_queue_type;
+
+    std::mutex _barrier;
 
     std::condition_variable _empty;
-    std::mutex _barrier;
-    vector_type _queue;
+    std::condition_variable _overflow;
+    
+    priority_queue_type _queue;
     size_t _counter;
+    const size_t _capacity;
 };
 //----------------------------------------------------------------------------
 #define CONCURRENT_PRIORITY_QUEUE(_DOMAIN, T) \
