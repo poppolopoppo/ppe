@@ -85,8 +85,10 @@ bool FSocket::Connect() {
     ::SOCKET sockfd = ::socket(ai_family, SOCK_STREAM, 0);  // get a new socket
 
     // if socket() returned an error then return OTHER_ERROR
-    if (INVALID_SOCKET == sockfd)
+    if (INVALID_SOCKET == sockfd) {
+        LOG_WSALASTERROR(L"socket()");
         return false;
+    }
 
     // set the foreign socket structure
     foreign_sa.sin_family = ai_family;
@@ -94,7 +96,9 @@ bool FSocket::Connect() {
 
     // if inet_pton couldn't convert the ip then return an error
     if (1 != ::inet_pton(ai_family, _remote.Host().c_str(), &foreign_sa.sin_addr.S_un.S_addr) ) {
-        ::closesocket(sockfd);
+        LOG_WSALASTERROR(L"inet_pton()");
+        if (::closesocket(sockfd))
+            LOG_WSALASTERROR(L"closesocket()");
         return false;
     }
 
@@ -112,7 +116,9 @@ bool FSocket::Connect() {
         // if there is a specific ip to listen on
         // if inet_pton couldn't convert the ip then return an error
         if (1 != ::inet_pton(ai_family, _local.Host().c_str(), &local_sa.sin_addr.S_un.S_addr) ) {
-            ::closesocket(sockfd);
+            LOG_WSALASTERROR(L"inet_pton()");
+            if (::closesocket(sockfd))
+                LOG_WSALASTERROR(L"closesocket()");
             return false;
         }
     }
@@ -123,14 +129,17 @@ bool FSocket::Connect() {
     // bind the new socket to the requested local port and local ip
     if (_local.Port() != size_t(EServiceName::Any)) {
         if (SOCKET_ERROR == ::bind(sockfd, reinterpret_cast<sockaddr*>(&local_sa), sizeof(sockaddr_in)) ) {
-            ::closesocket(sockfd);
+            LOG_WSALASTERROR(L"bind()");
+            if (::closesocket(sockfd))
+                LOG_WSALASTERROR(L"closesocket()");
             return false;
         }
     }
 
     // connect the socket
     if (SOCKET_ERROR == ::connect(sockfd, reinterpret_cast<sockaddr*>(&foreign_sa), sizeof(sockaddr_in)) ) {
-        ::closesocket(sockfd);
+        if (0 != ::closesocket(sockfd))
+            LOG_WSALASTERROR(L"closesocket()");
         return false;
     }
 
@@ -142,7 +151,9 @@ bool FSocket::Connect() {
     if (_local.Port() == size_t(EServiceName::Any)) {
         int length = sizeof(::sockaddr_in);
         if (SOCKET_ERROR == ::getsockname(sockfd, reinterpret_cast<::sockaddr*>(&local_info), &length)) {
-            ::closesocket(sockfd);
+            LOG_WSALASTERROR(L"getsockname()");
+            if (::closesocket(sockfd))
+                LOG_WSALASTERROR(L"closesocket()");
             return false;
         }
 
@@ -158,7 +169,9 @@ bool FSocket::Connect() {
         if (_local.Port() != 0) {
             int length = sizeof(sockaddr_in);
             if (SOCKET_ERROR == ::getsockname(sockfd, reinterpret_cast<::sockaddr*>(&local_info), &length) ) {
-                ::closesocket(sockfd);
+                LOG_WSALASTERROR(L"getsockname()");
+                if (::closesocket(sockfd))
+                    LOG_WSALASTERROR(L"closesocket()");
                 return false;
             }
         }
@@ -169,7 +182,9 @@ bool FSocket::Connect() {
 
         // check if inet_ntop returned an error
         if (nullptr == real_local_ip) {
-            ::closesocket(sockfd);
+            LOG_WSALASTERROR(L"inet_ntop()");
+            if (::closesocket(sockfd))
+                LOG_WSALASTERROR(L"closesocket()");
             return false;
         }
 
@@ -181,10 +196,13 @@ bool FSocket::Connect() {
         used_local_ip = _local.Host();
     }
 
-    // set the SO_OOBINLINE option
+    // Protocol Independent OOB Data
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms740102(v=vs.85).aspx
     int flag_value = 1;
     if (SOCKET_ERROR == ::setsockopt(sockfd, SOL_SOCKET, SO_OOBINLINE, reinterpret_cast<const char*>(&flag_value), sizeof(int)) ) {
-        ::closesocket(sockfd);
+        LOG_WSALASTERROR(L"setsockopt()");
+        if (::closesocket(sockfd))
+            LOG_WSALASTERROR(L"closesocket()");
         return false;
     }
 
@@ -212,9 +230,10 @@ bool FSocket::Disconnect(bool gracefully/* = false */) {
         }
     }
 
-    const int status = ::closesocket(sockfd);
-    if (status == -1)
+    if (::closesocket(sockfd)) {
+        LOG_WSALASTERROR(L"closesocket()");
         return false;
+    }
 
     _handle = GInvalidSocket_;
 
@@ -228,7 +247,13 @@ bool FSocket::DisableNagle() {
     int flag = 1;
     const int status = ::setsockopt(UnpackSocket_(_handle), IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag));
 
-    return (SOCKET_ERROR != status);
+    if (SOCKET_ERROR == status) {
+        LOG_WSALASTERROR(L"setsockopt()");
+        return false;
+    }
+    else {
+        return true;
+    }
 }
 //----------------------------------------------------------------------------
 bool FSocket::ShutdownOutgoing() {
@@ -236,7 +261,13 @@ bool FSocket::ShutdownOutgoing() {
 
     const int status = ::shutdown(UnpackSocket_(_handle), SD_SEND);
 
-    return (status != -1);
+    if (SOCKET_ERROR == status) {
+        LOG_WSALASTERROR(L"shutdown()");
+        return false;
+    }
+    else {
+        return true;
+    }
 }
 //----------------------------------------------------------------------------
 bool FSocket::IsConnected() const {
@@ -263,9 +294,15 @@ bool FSocket::IsReadable(const FMilliseconds& timeout) const {
     // wait on select
     const int status = ::select(0, &read_set, 0, 0, &time_to_wait);
 
-    // if select timed out or there was an error
-    if (status <= 0)
+    // if select timed out
+    if (status == 0)
         return false;
+
+    // if select error
+    if (SOCKET_ERROR == status) {
+        LOG_WSALASTERROR(L"select()");
+        return false;
+    }
 
     // data is ready to be read
     return true;
@@ -283,7 +320,13 @@ size_t FSocket::Read(const TMemoryView<u8>& rawData, bool block/* = false */) {
     const int flags = (block ? MSG_WAITALL : 0);
     const int status = ::recv(UnpackSocket_(_handle), (char*)rawData.data(), length, flags);
 
-    return (SOCKET_ERROR == status ? 0 : status);
+    if (SOCKET_ERROR == status) {
+        LOG_WSALASTERROR(L"recv()");
+        return 0;
+    }
+    else {
+        return status;
+    }
 }
 //----------------------------------------------------------------------------
 size_t FSocket::Read(const TMemoryView<u8>& rawData, const FMilliseconds& timeout) {
@@ -304,8 +347,10 @@ size_t FSocket::Write(const TMemoryView<const u8>& rawData) {
         const int length = (int)Min(MaxSendLength_, rawData.size() - offset);
 
         const int status = ::send(sockfd, (const char*)rawData.data() + offset, length, 0);
-        if (SOCKET_ERROR == status)
+        if (SOCKET_ERROR == status) {
+            LOG_WSALASTERROR(L"send()");
             return offset;
+        }
 
         offset += checked_cast<size_t>(status);
     }
@@ -323,7 +368,7 @@ bool FSocket::SetTimeout(const FMilliseconds& timeout) {
 
 #ifdef PLATFORM_WINDOWS
         // setup a DWORD in milliseconds
-        DWORD time_to_wait = DWORD(_timeout.Value());
+        ::DWORD time_to_wait = ::DWORD(_timeout.Value());
 
         // set timeout on socket
         if (SOCKET_ERROR == ::setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&time_to_wait, sizeof(time_to_wait)) ) {

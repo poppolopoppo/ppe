@@ -51,8 +51,10 @@ bool FListener::Connect() {
     ::SOCKET sock = ::socket(AF_INET, SOCK_STREAM, 0);  // get a new socket
 
     // if socket() returned an error then return OTHER_ERROR
-    if (INVALID_SOCKET == sock)
+    if (INVALID_SOCKET == sock) {
+        LOG_WSALASTERROR(L"socket()");
         return false;
+    }
 
     // set the local socket structure
     sa.sin_family = AF_INET;
@@ -67,24 +69,34 @@ bool FListener::Connect() {
         // if there is a specific ip to listen on
         // if inet_pton couldn't convert the ip then return an error
         if (1 != ::inet_pton(AF_INET, _listening.Host().c_str(), &sa.sin_addr.S_un.S_addr) ) {
-            ::closesocket(sock);
+            LOG_WSALASTERROR(L"inet_pton()");
+            if (::closesocket(sock))
+                LOG_WSALASTERROR(L"closesocket()");
             return false;
         }
     }
 
     // set the SO_REUSEADDR option
     int flag_value = 1;
-    ::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&flag_value), sizeof(int));
+    if (SOCKET_ERROR == ::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&flag_value), sizeof(int))) {
+        LOG_WSALASTERROR(L"setsockopt()");
+        if (::closesocket(sock))
+            LOG_WSALASTERROR(L"closesocket()");
+    }
 
     // bind the new socket to the requested port and ip
     if (SOCKET_ERROR == ::bind(sock, reinterpret_cast<sockaddr*>(&sa), sizeof(::sockaddr_in)) ) {
-        ::closesocket(sock);
+        LOG_WSALASTERROR(L"bind()");
+        if (::closesocket(sock))
+            LOG_WSALASTERROR(L"closesocket()");
         return false;
     }
 
     // tell the new socket to listen
     if (SOCKET_ERROR == ::listen(sock, SOMAXCONN)) {
-        ::closesocket(sock);
+        LOG_WSALASTERROR(L"listen()");
+        if (::closesocket(sock))
+            LOG_WSALASTERROR(L"closesocket()");
         return false;
     }
 
@@ -92,8 +104,11 @@ bool FListener::Connect() {
     if (_listening.Port() == 0) {
         ::sockaddr_in local_info;
         int length = sizeof(::sockaddr_in);
-        if (SOCKET_ERROR == ::getsockname (sock, reinterpret_cast<::sockaddr*>(&local_info), &length) ) {
-            ::closesocket(sock);
+
+        if (SOCKET_ERROR == ::getsockname (sock, reinterpret_cast<sockaddr*>(&local_info), &length) ) {
+            LOG_WSALASTERROR(L"getsockname()");
+            if (::closesocket(sock))
+                LOG_WSALASTERROR(L"closesocket()");
             return false;
         }
 
@@ -160,16 +175,20 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
             return false;
 
         // if select returned an error
-        if (SOCKET_ERROR == status)
+        if (SOCKET_ERROR == status) {
+            LOG_WSALASTERROR(L"select()");
             return false;
+        }
     }
 
     // call accept to get a new connection
     incoming = ::accept(UnpackSocket_(_handle), reinterpret_cast<::sockaddr*>(&incomingAddr), &length);
 
     // if there was an error return OTHER_ERROR
-    if (INVALID_SOCKET == incoming)
+    if (INVALID_SOCKET == incoming) {
+        LOG_WSALASTERROR(L"accept()");
         return false;
+    }
 
     // get the port of the foreign host into foreign_port
     int foreign_port = ::ntohs(incomingAddr.sin_port);
@@ -182,7 +201,9 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
 
         // check if inet_ntop() returned an error
         if (nullptr == real_foreign_ip) {
-            ::closesocket(incoming);
+            LOG_WSALASTERROR(L"inet_ntop()");
+            if (::closesocket(incoming))
+                LOG_WSALASTERROR(L"closesocket()");
             return false;
         }
 
@@ -194,10 +215,12 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
     if (_listening.empty()) {
         ::sockaddr_in local_info;
         length = sizeof(::sockaddr_in);
+
         // get the local sockaddr_in structure associated with this new connection
         if (SOCKET_ERROR == ::getsockname(incoming, reinterpret_cast<::sockaddr*>(&local_info), &length)) {
-            // an error occurred
-            ::closesocket(incoming);
+            LOG_WSALASTERROR(L"getsockname()");
+            if (::closesocket(incoming))
+                LOG_WSALASTERROR(L"closesocket()");
             return false;
         }
 
@@ -206,7 +229,9 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
 
         // check if inet_ntop() returned an error
         if (nullptr == real_local_ip) {
-            ::closesocket(incoming);
+            LOG_WSALASTERROR(L"inet_ntop()");
+            if (::closesocket(incoming))
+                LOG_WSALASTERROR(L"closesocket()");
             return false;
         }
 
@@ -219,7 +244,9 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
     // set the SO_OOBINLINE option
     int flag_value = 1;
     if (SOCKET_ERROR == ::setsockopt(incoming, SOL_SOCKET, SO_OOBINLINE, reinterpret_cast<const char*>(&flag_value), sizeof(int)) ) {
-        ::closesocket(incoming);
+        LOG_WSALASTERROR(L"setsockopt()");
+        if (::closesocket(incoming))
+            LOG_WSALASTERROR(L"closesocket()");
         return false;
     }
 

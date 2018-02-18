@@ -53,22 +53,25 @@ FHttpServerImpl::FHttpServerImpl(const FHttpServer* owner)
 ,   _listener(owner->Localhost())
 ,   _maxContentLength(owner->MaxContentLength()) {
     _listener.Connect();
-    Assert(_listener.IsConnected());
 
-    LOG(Network, Info, L"starting HTTP server on {0}:{1}",  _listener.Listening().Host(), _listener.Listening().Port());
+    LOG(Network, Info, L"starting HTTP server on {0}",  _listener.Listening());
 }
 //----------------------------------------------------------------------------
 FHttpServerImpl::~FHttpServerImpl() {
-    Assert(_listener.IsConnected());
+    LOG(Network, Info, L"stopping HTTP server on {0}",  _listener.Listening());
 
-    LOG(Network, Info, L"stopping HTTP server on {0}:{1}",  _listener.Listening().Host(), _listener.Listening().Port());
-
-    _listener.Disconnect();
+    if (_listener.IsConnected())
+        _listener.Disconnect();
 }
 //----------------------------------------------------------------------------
 bool FHttpServerImpl::Serve_ReturnIfQuit(const FMilliseconds& timeout) {
     if (_owner->_quit)
         return true;
+
+    if (_listener.IsConnected() == false) {
+        LOG(Network, Error, L"got disconnected from HTTP listener on {0}", _listener.Listening());
+        return true;
+    }
 
     FSocketBuffered socket;
     if (_listener.Accept(socket, timeout)) {
@@ -111,7 +114,7 @@ void HttpServicingTask_(ITaskContext& ctx, const FHttpServerImpl* server, FSocke
         FHttpResponse response;
         response.Clear();
         response.SetStatus(e.Status());
-        response.SetReason(ToString(e.What()));
+        response.SetReason(FString(MakeCStringView(e.What())));
 
         FHttpResponse::Write(&socket, response);
     })
@@ -126,7 +129,7 @@ void HttpServicingTask_(ITaskContext& ctx, const FHttpServerImpl* server, FSocke
 namespace {
 //----------------------------------------------------------------------------
 static void HttpServicingThreadLaunchPad_(FHttpServer* owner) {
-    const FThreadContextStartup threadStartup("HttpServer", CORE_THREADTAG_LOWEST_PRIORITY);
+    const FThreadContextStartup threadStartup("HttpServer", CORE_THREADTAG_OTHER);
     threadStartup.Context().SetPriority(EThreadPriority::Lowest);
 
     const FMilliseconds acceptTimeout = FSeconds(1);
@@ -141,6 +144,7 @@ static void HttpServicingHandleConnection_(const FHttpServerImpl* server, FSocke
     FSocketBuffered* psocket = new FSocketBuffered(std::move(socket));
     FIOThreadPool::Instance().Run([server, psocket](ITaskContext& ctx) {
         HttpServicingTask_(ctx, server, *psocket);
+        psocket->Disconnect(true);
         checked_delete(psocket);
     });
 }

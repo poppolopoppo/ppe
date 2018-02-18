@@ -7,6 +7,10 @@
 
 #include "targetver.h"
 
+// Include all network related includes (priority matters)
+#include "Core.Network/NetworkIncludes.h"
+
+
 #if defined(_MSC_VER)
 //  Include this asap to avoid M$ macro substitutions bullshit
 #   include "Core/Misc/Platform_Windows.h"

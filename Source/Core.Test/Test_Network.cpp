@@ -12,8 +12,10 @@
 #include "Core.Network/Socket/SocketBuffered.h"
 #include "Core.Network/Uri.h"
 
+/*
 #include "Core.Serialize/XML/Document.h"
 #include "Core.Serialize/XML/Element.h"
+*/
 
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FS/Filename.h"
@@ -85,6 +87,10 @@ static void Test_SocketAccept_() {
     FListener listener = FListener::Localhost(8123);
 
     const FListener::FConnectionScope connection(listener);
+    if (not connection.Succeed) {
+        LOG(Test_Network, Error, L"failed to open listener on '{0}'", listener.Listening());
+        return;
+    }
 
     const size_t maxContentLength = size_t(FMegabytes(10).Value());
 
@@ -133,6 +139,7 @@ static void Test_SocketAccept_() {
             }
             CORE_CATCH(FHttpException e)
             CORE_CATCH_BLOCK({
+                UNUSED(e);
                 LOG(Test_Network, Error, L"HTTP error {0} : {1}", e.Status(), MakeCStringView(e.What()));
             });
 

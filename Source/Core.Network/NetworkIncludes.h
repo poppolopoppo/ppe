@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Core.Network/Network.h"
-
 #ifndef EXPORT_CORE_NETWORK
 #   error "This file should not be included outside of Core.Network"
 #endif
@@ -27,8 +25,13 @@
 
 #endif
 
+#include "Core.Network/Network.h"
+#include "Core/Diagnostic/LastError.h"
+#include "Core/Diagnostic/Logger.h"
+
 namespace Core {
 namespace Network {
+EXTERN_LOG_CATEGORY(CORE_NETWORK_API, Network)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -48,6 +51,13 @@ constexpr ::SOCKET UnpackSocket_(intptr_t handle) {
     STATIC_ASSERT(sizeof(::SOCKET) <= sizeof(handle));
     return static_cast<::SOCKET>(handle);
 }
+//----------------------------------------------------------------------------
+#if defined(USE_DEBUG_LOGGER) && defined(PLATFORM_WINDOWS)
+#   define LOG_WSALASTERROR(_CONTEXT) \
+        LOG(Network, Error, _CONTEXT "failed, WSA last error : {0}", ::Core::FLastError(::WSAGetLastError()))
+#else
+#   define LOG_WSALASTERROR(_CONTEXT) NOOP()
+#endif
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------

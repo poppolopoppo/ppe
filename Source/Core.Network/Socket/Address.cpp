@@ -141,17 +141,17 @@ public: // DNS cache
         Meta::TOptional<FStringView> result;
         if (_hostnameToIpV4.end() != it)
             result.emplace(it->second.MakeView());
-            
+
         return result;
     }
 
     Meta::TOptional<FStringView> IPv4ToHostname(const FStringView& ipV4) const {
         Assert(not ipV4.empty());
         const hash_t h = hash_string(ipV4);
-        
+
         READSCOPELOCK(_barrier);
         const auto it = _ipV4ToHostname.find_like(ipV4, h);
-        
+
         Meta::TOptional<FStringView> result;
         if (_ipV4ToHostname.end() != it)
             result.emplace(it->second.MakeView());
@@ -162,14 +162,14 @@ public: // DNS cache
     void PutHostnameToIPv4(const FStringView& hostname, const FStringView& ipV4) {
         Assert(not hostname.empty());
         Assert(not ipV4.empty());
-        
+
         FString key(hostname);
         FString value(ipV4);
 
         LOG(Network, Debug, L"put '{0}' => [{1}] in DNS cache", hostname, ipV4);
-        
+
         WRITESCOPELOCK(_barrier);
-        
+
         _hostnameToIpV4.insert_or_assign(MakePair(std::move(key), std::move(value)));
     }
 
@@ -226,7 +226,7 @@ void FlushDNSCache() {
 bool LocalHostName(FString& hostname) {
     char temp[NI_MAXHOST];
     if (::gethostname(temp, NI_MAXHOST) == SOCKET_ERROR) {
-        LOG_LAST_ERROR(Network, L"gethostname");
+        LOG_WSALASTERROR(L"gethostname()");
         return false;
     }
     else {
@@ -293,7 +293,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
         if (resolvedIpV4) {
             ip.assign(MakeCStringView(resolvedIpV4));
             Assert(ip.size());
-            LOG(Network, Info, L"HostnameToIPv4 resolved IPv4 : {0}:{1} -> {2}", hostname, port, ip);
+            LOG(Network, Info, L"resolved IPv4 : {0}:{1} -> {2}", hostname, port, ip);
             succeed = true;
             break;
         }
@@ -335,7 +335,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
 
     // if inet_pton couldn't convert ip then return an error
     if (1 != ::inet_pton(AF_INET, temp, &sa.sin_addr) ) {
-        LOG_LAST_ERROR(Network, L"inet_pton");
+        LOG_WSALASTERROR(L"inet_pton()");
 #if USE_CORE_NETWORK_DNSCACHE
         FDNSCache_::Instance().PutHostnameToIPv4(ip, FStringView());
 #endif
@@ -353,7 +353,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
 
     // check if gethostbyaddr returned an error
     if (0 != ret) {
-        LOG_LAST_ERROR(Network, L"getnameinfo");
+        LOG_WSALASTERROR(L"getnameinfo()");
 #if USE_CORE_NETWORK_DNSCACHE
         FDNSCache_::Instance().PutHostnameToIPv4(ip, FStringView());
 #endif

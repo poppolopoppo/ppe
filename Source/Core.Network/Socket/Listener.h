@@ -13,7 +13,7 @@ class FSocketBuffered;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FListener {
+class CORE_NETWORK_API FListener {
 public:
     FListener();
     explicit FListener(FAddress&& listening);
@@ -43,11 +43,18 @@ public:
 
     struct FConnectionScope {
         FListener& Listener;
-        FConnectionScope(FListener& listener) : Listener(listener) {
-            Listener.Connect();
+        bool Succeed;
+        FConnectionScope(FListener& listener, size_t retries = 3) : Listener(listener) {
+            do {
+                Succeed = Listener.Connect();
+            } while (not Succeed && retries--);
         }
         ~FConnectionScope() {
-            Listener.Disconnect();
+            if (Succeed)
+                Listener.Disconnect();
+        }
+        operator bool() const {
+            return Succeed;
         }
     };
 
