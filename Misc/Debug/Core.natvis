@@ -2,6 +2,14 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <!-- https://code.msdn.microsoft.com/windowsdesktop/Writing-type-visualizers-2eae77a2 -->
 
+  <Type Name="Core::FLastError">
+    <DisplayString>{Code,hr}</DisplayString>
+    <Expand>
+      <Item Name="[Code]">Code</Item>
+      <Item Name="[Description]">Code,hr</Item>
+    </Expand>
+  </Type>
+
   <Type Name="Core::Meta::TPointerWFlags&lt;*&gt;">
     <DisplayString>{{ ptr={($T1*)(_ptr * 4)} flag0={(_flags&amp;1)!=0} flag1={(_flags&amp;2)!=0} flag01={_flags} }}</DisplayString>
     <Expand>
