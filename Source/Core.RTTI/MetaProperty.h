@@ -31,10 +31,7 @@ ENUM_FLAGS(EPropertyFlags);
 //----------------------------------------------------------------------------
 class CORE_RTTI_API FMetaProperty {
 public:
-    typedef FAtom (*makeatom_func)(const FMetaObject&, const PTypeTraits&);
-
     FMetaProperty(const FName& name, EPropertyFlags flags, const PTypeTraits& traits, ptrdiff_t memberOffset);
-    FMetaProperty(const FName& name, EPropertyFlags flags, const PTypeTraits& traits, makeatom_func makeAtom);
     ~FMetaProperty();
 
     const FName& Name() const { return _name; }
