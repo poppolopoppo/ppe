@@ -23,14 +23,14 @@ namespace Core {
 */
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator = ALLOCATOR(Container, T) >
-class TConcurentQueue : _Allocator {
+class TConcurrentQueue : _Allocator {
 public:
-    explicit TConcurentQueue(size_t capacity);
-    TConcurentQueue(size_t capacity, const _Allocator& allocator);
-    ~TConcurentQueue();
+    explicit TConcurrentQueue(size_t capacity);
+    TConcurrentQueue(size_t capacity, const _Allocator& allocator);
+    ~TConcurrentQueue();
 
-    TConcurentQueue(const TConcurentQueue& ) = delete;
-    TConcurentQueue& operator =(const TConcurentQueue& ) = delete;
+    TConcurrentQueue(const TConcurrentQueue& ) = delete;
+    TConcurrentQueue& operator =(const TConcurrentQueue& ) = delete;
 
     void Produce(T&& rvalue);
     void Consume(T* pvalue);
@@ -51,7 +51,7 @@ private:
 };
 //----------------------------------------------------------------------------
 #define CONCURRENT_QUEUE(_DOMAIN, T) \
-    ::Core::TConcurentQueue<T, ALLOCATOR(_DOMAIN, T)>
+    ::Core::TConcurrentQueue<T, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -62,14 +62,17 @@ private:
 */
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator = ALLOCATOR(Container, T) >
-class TConcurentPriorityQueue {
+class TConcurrentPriorityQueue {
 public:
-    explicit TConcurentPriorityQueue(size_t capacity);
-    TConcurentPriorityQueue(size_t capacity, const _Allocator& allocator);
-    ~TConcurentPriorityQueue();
+    explicit TConcurrentPriorityQueue(size_t capacity);
+    TConcurrentPriorityQueue(size_t capacity, const _Allocator& allocator);
+    ~TConcurrentPriorityQueue();
 
-    TConcurentPriorityQueue(const TConcurentPriorityQueue& ) = delete;
-    TConcurentPriorityQueue& operator =(const TConcurentPriorityQueue& ) = delete;
+    TConcurrentPriorityQueue(const TConcurrentPriorityQueue& ) = delete;
+    TConcurrentPriorityQueue& operator =(const TConcurrentPriorityQueue& ) = delete;
+
+    // no lock for empty, should be ok but be careful when you use this
+    bool empty() const { return _queue.empty(); }
 
     // lower is higher priority
     void Produce(u32 priority, T&& rvalue);
@@ -95,6 +98,11 @@ private:
 
     typedef std::priority_queue<item_type, vector_type, FPrioritySort_> priority_queue_type;
 
+#ifdef WITH_CORE_ASSERT
+    STATIC_CONST_INTEGRAL(size_t, CanaryDefault, CODE3264(0xDEADBEEFul, 0xDEADBEEFDEADBEEFul));
+    const size_t _canary0 = CanaryDefault;
+#endif
+
     std::mutex _barrier;
 
     std::condition_variable _empty;
@@ -103,10 +111,18 @@ private:
     priority_queue_type _queue;
     size_t _counter;
     const size_t _capacity;
+
+#ifdef WITH_CORE_ASSERT
+    const size_t _canary1 = CanaryDefault;
+    bool CheckCanary_() const { 
+        return (_canary0 == CanaryDefault &&
+                _canary1 == CanaryDefault );
+    }
+#endif
 };
 //----------------------------------------------------------------------------
 #define CONCURRENT_PRIORITY_QUEUE(_DOMAIN, T) \
-    ::Core::TConcurentPriorityQueue<T, ALLOCATOR(_DOMAIN, T)>
+    ::Core::TConcurrentPriorityQueue<T, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
