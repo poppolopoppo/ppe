@@ -3,6 +3,7 @@
 #include "ThreadContext.h"
 
 #include "Allocator/Alloca.h"
+#include "Allocator/Malloc.h"
 #include "Allocator/ThreadLocalHeap.h"
 #include "Diagnostic/LastError.h"
 #include "Diagnostic/Logger.h"
@@ -246,7 +247,7 @@ EThreadPriority FThreadContext::Priority() const {
 }
 //----------------------------------------------------------------------------
 void FThreadContext::SetPriority(EThreadPriority priority) const {
-Assert(std::this_thread::get_id() == _threadId);
+    Assert(std::this_thread::get_id() == _threadId);
 
 #ifdef PLATFORM_WINDOWS
     HANDLE hThread = ::GetCurrentThread();
@@ -282,6 +283,8 @@ Assert(std::this_thread::get_id() == _threadId);
 //----------------------------------------------------------------------------
 // you can put here everything you'll want to tick regularly
 void FThreadContext::DutyCycle() const {
+    Assert(std::this_thread::get_id() == _threadId);
+
     // chance to cleanup thread local allocator
     malloc_release_pending_blocks();
 }

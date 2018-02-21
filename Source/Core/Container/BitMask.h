@@ -14,6 +14,7 @@ struct FBitMask {
     static constexpr word_t GOne = word_t(1);
     static constexpr word_t GAllMask = word_t(-1);
     static constexpr word_t GBitCount = (sizeof(word_t)<<3);
+    static constexpr word_t GBitMask = (GBitCount - 1);
 
     word_t Data;
 
@@ -75,6 +76,7 @@ struct FBitMask {
 
     template <typename _Func> // LSB to MSB order
     void ForEach(_Func&& each_index) const {
+        if (AllFalse()) return;
         for (word_t w = Data; w; ) {
             const word_t index = Meta::tzcnt(w);
             w &= ~(GOne<<index);
@@ -84,6 +86,7 @@ struct FBitMask {
 
     template <typename _Func> // MSB to LSB order
     void ReverseForEach(_Func&& each_index) const {
+        if (AllFalse()) return;
         for (word_t w = Data; w; ) {
             const word_t index = Meta::lzcnt(w);
             w &= ~(GOne<<index);

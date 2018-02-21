@@ -29,6 +29,10 @@ namespace Meta {
         Assert(RawPointer() == ptr); \
     } \
     \
+    void Reset() { \
+        _raw = nullptr; \
+    } \
+    \
     friend inline void swap(TPointerWFlags& lhs, TPointerWFlags& rhs) { \
         std::swap(lhs._raw, rhs._raw); \
     } \

@@ -18,6 +18,8 @@ FWD_REFPTR(TaskCounter);
 class FTaskManager;
 class FTaskManagerImpl;
 //----------------------------------------------------------------------------
+CORE_API ITaskContext& CurrentTaskContext();
+//----------------------------------------------------------------------------
 class CORE_API FTaskWaitHandle {
 public:
     friend class FTaskManagerImpl;
@@ -100,8 +102,6 @@ private:
     const size_t _workerCount;
     const EThreadPriority _priority;
 };
-//----------------------------------------------------------------------------
-CORE_API ITaskContext& CurrentTaskContext();
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
