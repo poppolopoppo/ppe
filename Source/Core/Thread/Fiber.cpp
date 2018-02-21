@@ -2,6 +2,8 @@
 
 #include "Fiber.h"
 
+#include "Memory/MemoryDomain.h"
+
 #ifdef PLATFORM_WINDOWS
 #   include "Misc/Platform_Windows.h"
 #else
@@ -27,8 +29,7 @@ static THREAD_LOCAL void* GCurrentThreadFiber = nullptr;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FFiber::~FFiber() {
-    if (_pimpl)
-        Destroy();
+    Assert(nullptr == _pimpl); // need explicit Destroy() !
 }
 //----------------------------------------------------------------------------
 FFiber::FFiber(FFiber&& rvalue)
@@ -37,9 +38,6 @@ FFiber::FFiber(FFiber&& rvalue)
 }
 //----------------------------------------------------------------------------
 FFiber& FFiber::operator =(FFiber&& rvalue) {
-    if (_pimpl)
-        Destroy();
-
     Assert(nullptr == _pimpl);
     std::swap(_pimpl, rvalue._pimpl);
 
@@ -49,8 +47,6 @@ FFiber& FFiber::operator =(FFiber&& rvalue) {
 void FFiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */) {
     Assert(!_pimpl);
     Assert(entryPoint);
-    Assert(GCurrentThreadFiber);
-    Assert(::IsThreadAFiber());
 
     if (0 == stackSize)
         stackSize = FiberStackReserveSize;
@@ -63,6 +59,11 @@ void FFiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */)
         arg );
 
     Assert(_pimpl);
+
+#ifdef USE_MEMORY_DOMAINS
+    MEMORY_DOMAIN_TRACKING_DATA(Fibers).Allocate(1, stackSize);
+    MEMORY_DOMAIN_TRACKING_DATA(Reserved).Allocate(1, stackSize); // can't be logged since we don't control the allocation
+#endif
 }
 //----------------------------------------------------------------------------
 void FFiber::Resume() {
@@ -74,12 +75,22 @@ void FFiber::Resume() {
     ::SwitchToFiber(_pimpl);
 }
 //----------------------------------------------------------------------------
-void FFiber::Destroy() {
+void FFiber::Destroy(size_t stackSize) {
     Assert(_pimpl);
     Assert(::GetCurrentFiber() != _pimpl);
 
     ::DeleteFiber(_pimpl);
     _pimpl = nullptr;
+
+#ifdef USE_MEMORY_DOMAINS
+    if (0 == stackSize)
+        stackSize = FiberStackReserveSize;
+
+    MEMORY_DOMAIN_TRACKING_DATA(Fibers).Deallocate(1, stackSize);
+    MEMORY_DOMAIN_TRACKING_DATA(Reserved).Deallocate(1, stackSize); // can't be logged since we don't control the allocation
+#else
+    UNUSED(stackSize);
+#endif
 }
 //----------------------------------------------------------------------------
 void FFiber::Reset(void* pimpl /* = nullptr */) {
@@ -126,6 +137,11 @@ bool FFiber::IsInFiber() {
     const bool result = (nullptr != GCurrentThreadFiber);
     Assert(result == (TRUE == ::IsThreadAFiber()) );
     return result;
+}
+//----------------------------------------------------------------------------
+void* FFiber::CurrentFiberData() {
+    Assert(IsInFiber());
+    return ::GetFiberData();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
