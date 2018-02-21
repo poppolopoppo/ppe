@@ -65,7 +65,7 @@ NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned
         return;
 
     if (GIsInAssertion)
-        CORE_THROW_IT(FAssertException("Assert reentrancy !", WIDESTRING(__FILE__), __LINE__));
+        CORE_THROW_IT(FAssertException("Assert reentrancy !", file, line));
 
     GIsInAssertion = true;
 
@@ -147,7 +147,7 @@ NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, u
         return;
 
     if (GIsInAssertion)
-        CORE_THROW_IT(FAssertReleaseException("Assert release reentrancy !", WIDESTRING(__FILE__), __LINE__));
+        CORE_THROW_IT(FAssertReleaseException("Assert release reentrancy !", file, line));
 
     GIsInAssertion = true;
 
