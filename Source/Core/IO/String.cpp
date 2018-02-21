@@ -219,7 +219,7 @@ void TBasicString<_Char>::resize(size_t newSize, _Char fill) {
 template <typename _Char>
 void TBasicString<_Char>::shrink_to_fit() {
     if (is_large_()) {
-        const size_t newCapacity = AllocatorSnapSize(get_allocator_(), _large.Size + 1/* null char */);
+        const size_t newCapacity = SafeAllocatorSnapSize(get_allocator_(), _large.Size + 1/* null char */);
 
         if (newCapacity < _large.Capacity) {
             if (USE_CORE_BASICSTRING_SBO && newCapacity <= FSmallString_::GCapacity) {
@@ -490,7 +490,7 @@ template <typename _Char>
 NO_INLINE TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeNoNullChar_Large_(size_t count, bool change_size) {
     Assert(CheckInvariants());
 
-    const size_t newCapacity = AllocatorSnapSize(get_allocator_(), count + 1/* null char */);
+    const size_t newCapacity = SafeAllocatorSnapSize(get_allocator_(), count + 1/* null char */);
     Assert(!USE_CORE_BASICSTRING_SBO || newCapacity > FSmallString_::GCapacity);
 
     if (is_large_()) {

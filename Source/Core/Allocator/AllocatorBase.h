@@ -227,6 +227,18 @@ Meta::TEnableIf<
 template <typename _Allocator>
 size_t AllocatorSnapSize(const _Allocator&, size_t size) = delete;
 //----------------------------------------------------------------------------
+template <typename _Allocator>
+size_t SafeAllocatorSnapSize(const _Allocator& alloc, size_t size) {
+#ifdef WITH_CORE_ASSERT
+    const size_t snapped = AllocatorSnapSize(alloc, size);
+    Assert(snapped >= size);
+    Assert(AllocatorSnapSize(alloc, snapped) == snapped);
+    return snapped;
+#else
+    return AllocatorSnapSize(alloc, size);
+#endif
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Can be overloaded by each allocator,

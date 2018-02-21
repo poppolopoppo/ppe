@@ -116,7 +116,7 @@ bool operator !=(const TStackAllocator<U>& lhs, const TStackAllocator<V>& rhs) {
 //----------------------------------------------------------------------------
 template <typename T>
 size_t AllocatorSnapSize(const TStackAllocator<T>&, size_t size) {
-    return AllocaSnapSize((size * sizeof(T) + sizeof(T) - 1) / sizeof(T));
+    return AllocaSnapSize((size * sizeof(T)) / sizeof(T));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

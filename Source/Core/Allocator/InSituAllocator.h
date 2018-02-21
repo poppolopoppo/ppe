@@ -277,7 +277,7 @@ template <typename T, size_t _SizeInBytes, typename _Allocator>
 size_t AllocatorSnapSize(const TInSituAllocator<T, _SizeInBytes, _Allocator>& allocator, size_t size) {
 #if USE_CORE_INSITU_ALLOCATOR
     constexpr size_t GInSituSize = TInSituAllocator<T, _SizeInBytes, _Allocator>::GInSituSize;
-    return (size < GInSituSize ? GInSituSize : AllocatorSnapSize(allocator.FallbackAllocator(), size));
+    return (size <= GInSituSize ? GInSituSize : AllocatorSnapSize(allocator.FallbackAllocator(), size));
 #else
     return AllocatorSnapSize(allocator.FallbackAllocator(), size);
 #endif

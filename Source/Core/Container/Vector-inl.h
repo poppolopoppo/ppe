@@ -411,7 +411,7 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
             Assert(0 < _capacity);
             allocator_traits::deallocate(get_allocator(), _data, _capacity);
         }
-        count = AllocatorSnapSize(get_allocator(), count);
+        count = SafeAllocatorSnapSize(get_allocator(), count);
         _data = allocator_traits::allocate(get_allocator(), count);
         _capacity = checked_cast<u32>(count);
     }
@@ -420,7 +420,7 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::reserve_Exactly(size_type count) {
-    count = AllocatorSnapSize(get_allocator(), count);
+    count = SafeAllocatorSnapSize(get_allocator(), count);
     if (_capacity == count)
         return;
     AssertRelease(count >= _size);
