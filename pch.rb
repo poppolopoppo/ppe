@@ -27,12 +27,20 @@ def patch_bff(filename, src, dst)
     File.write(filename, content)
 end
 
+class Project
+    attr_reader :name, :stdafx_generated
+    def initialize(name, stdafx_generated)
+        @name = name
+        @stdafx_generated = stdafx_generated
+    end
+end
+
 Benchmark.bm(32) do |bm|
 
 $projects = []
 
 # find every stdafx.generated.h in Source/
-bm.report('find all stdafx.generated.h') do
+bm.report('find all stdafx(.XXX)?.generated.h') do
 Find.find(SOURCEDIR) do |path|
     if FileTest.directory?(path)
         if File.basename(path)[0] == ?.
@@ -40,9 +48,10 @@ Find.find(SOURCEDIR) do |path|
         else
             next
         end
-    elsif File.basename(path) == "stdafx.generated.h"
+    elsif m = File.basename(path).match(/^stdafx(\.[\w]+)?\.generated\.h$/i)
         project_name = File.dirname(path).split(/\\|\//).last
-        $projects << project_name
+        project_name << m[1] if m[1]
+        $projects << Project.new(project_name, path)
     end
 end
 end
@@ -51,12 +60,14 @@ end
 unless ARGV.empty?
     filtered_projects = []
     ARGV.each do |project_name|
-        if $projects.any? {|it| it.casecmp(project_name) == 0 }
-            puts "selected project '#{project_name}' from command line"
-            filtered_projects << project_name
-        else
-            $stderr.puts "could not find '#{project_name}' project, ignoring"
+        rexp = /#{project_name}/i
+        found = $projects.each do |project|
+            if project.name.match(rexp)
+                puts "selected project '#{project.name}' from command line (#{rexp})"
+                filtered_projects << project
+            end
         end
+        stderr.puts "could not find '#{project_name}' project, ignoring" unless found
     end
     $projects = filtered_projects
 end
@@ -69,9 +80,8 @@ end
 # regen every stdafx.generated.h to empty files
 if REBUILD
 bm.report('clear previously generated files') do
-$projects.each do |project_name|
-    stdafx = File.join(SOURCEDIR, project_name, "stdafx.generated.h")
-    system("ruby", PCHREFACTORCMD, stdafx, project_name)
+$projects.each do |project|
+    system("ruby", PCHREFACTORCMD, project.stdafx_generated, project.name)
 end
 end
 end
@@ -86,15 +96,14 @@ end
 # rebuild all projects
 if REBUILD
 bm.report('rebuild all projects') do
-system("ruby", FBUILDCMD, '-clean', '-preprocessonly', *$projects)
+system("ruby", FBUILDCMD, '-clean', '-preprocessonly', *$projects.collect{|it| it.name })
 end
 end
 
 # regen every stdafx.generated.h with new dependencies
 bm.report('update stdafx.generated.h') do
-$projects.each do |project_name|
-    stdafx = File.join(SOURCEDIR, project_name, "stdafx.generated.h")
-    system("ruby", PCHREFACTORCMD, stdafx, project_name, *COMPILE_CONFIGS)
+$projects.each do |project|
+    system("ruby", PCHREFACTORCMD, project.stdafx_generated, project.name, *COMPILE_CONFIGS)
 end
 end
 

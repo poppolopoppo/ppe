@@ -2,8 +2,8 @@
 
 require 'set'
 
-VERSION = "1.0" # increment to invalidate all stdafx.generated.h
-PERCENT_INCLUSION_THRESHOLD = 50
+VERSION = "1.1" # increment to invalidate all stdafx.generated.h
+PERCENT_INCLUSION_THRESHOLD = 70
 MIN_INCLUSION_COUNT = 6
 
 require 'rbconfig'

@@ -11,7 +11,3 @@
 //  Include this asap to avoid M$ macro substitutions bullshit
 #   include "Core/Misc/Platform_Windows.h"
 #endif
-
-#include "Core.Application/Application.h"
-
-#include "Core.Application/stdafx.generated.h"

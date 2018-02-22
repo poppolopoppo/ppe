@@ -14,4 +14,18 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core.Application/stdafx.generated.h"
+#if CORE_APPLICATION_CONSOLE && CORE_APPLICATION_GRAPHICS
+#   error "can't compile Core.Application.Console and Core.Application.Graphics at the same time !"
+#endif
+
+#if !(CORE_APPLICATION_CONSOLE || CORE_APPLICATION_GRAPHICS)
+#   error "must select either Core.Application.Console or Core.Application.Graphics !"
+#endif
+
+#if CORE_APPLICATION_CONSOLE
+#   include "Core.Application/stdafx.Console.generated.h"
+#endif
+
+#if CORE_APPLICATION_GRAPHICS
+#   include "Core.Application/stdafx.Graphics.generated.h"
+#endif
