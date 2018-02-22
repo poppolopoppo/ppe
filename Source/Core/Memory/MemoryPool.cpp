@@ -4,6 +4,7 @@
 
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
+#include "Memory/MemoryTracking.h"
 #include "Thread/AtomicSpinLock.h"
 
 #include "VirtualMemory.h"

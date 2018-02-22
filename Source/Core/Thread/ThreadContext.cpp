@@ -123,11 +123,11 @@ struct FThreadNames_ {
         return GInstance;
     }
 };
-static FStringView GetThreadName_(std::thread::id thread_id) {
+static const char* GetThreadName_(std::thread::id thread_id) {
     FThreadNames_& thread_names = FThreadNames_::Instance();
     READSCOPELOCK(thread_names.RWLock);
     const auto it = thread_names.Names.Find(thread_id);
-    return (thread_names.Names.end() == it ? "UnkownThread" : it->second);
+    return (thread_names.Names.end() == it ? "UnkownThread" : it->second.data());
 }
 #endif //!WITH_CORE_THREADCONTEXT_NAME
 //----------------------------------------------------------------------------
@@ -297,11 +297,11 @@ size_t FThreadContext::GetThreadHash(std::thread::id thread_id) {
     return checked_cast<size_t>(GetThreadHash_(thread_id));
 }
 //----------------------------------------------------------------------------
-FStringView FThreadContext::GetThreadName(std::thread::id thread_id) {
+const char* FThreadContext::GetThreadName(std::thread::id thread_id) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME
     return GetThreadName_(thread_id);
 #else
-    return FStringView();
+    return nullptr;
 #endif
 }
 //----------------------------------------------------------------------------

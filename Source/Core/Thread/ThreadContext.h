@@ -49,7 +49,7 @@ public:
     static size_t NumThreads();
 
     static size_t GetThreadHash(std::thread::id thread_id);
-    static FStringView GetThreadName(std::thread::id thread_id);
+    static const char* GetThreadName(std::thread::id thread_id);
 
     static size_t MaxThreadIndex();
 

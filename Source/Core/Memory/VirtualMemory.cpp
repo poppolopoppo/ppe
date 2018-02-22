@@ -4,6 +4,8 @@
 
 #include "Core/Diagnostic/LastError.h"
 #include "Core/Misc/TargetPlatform.h"
+#include "Core/Memory/MemoryDomain.h"
+#include "Core/Memory/MemoryTracking.h"
 
 #if     defined(PLATFORM_WINDOWS)
 #   include "Misc/Platform_Windows.h"
@@ -390,7 +392,7 @@ void FVirtualMemory::AlignedFree(void* ptr, size_t sizeInBytes) {
 //----------------------------------------------------------------------------
 FVirtualMemoryCache::FVirtualMemoryCache()
     : FreePageBlockCount(0)
-    , TotalCacheSizeInBytes(0) 
+    , TotalCacheSizeInBytes(0)
 {}
 //----------------------------------------------------------------------------
 void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first TRACKINGDATA_ARG_IFP) {

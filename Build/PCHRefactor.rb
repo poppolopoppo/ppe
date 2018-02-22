@@ -232,7 +232,9 @@ def process_target_deps(target, define, stds, sdks, prjs)
         end
     end
 
-    ADDITIONAL_INFOS << "Processed dependencies for #{target} : #{std.length} std, #{sdk.length} sdk, #{prj.length} prj, #{sourcefiles_count} src"
+    ADDITIONAL_INFOS << ("%48s | %3s | %3s | %3s | %3s" % [
+        target, std.length, sdk.length, prj.length, sourcefiles_count])
+
     puts ADDITIONAL_INFOS.last
 
     list = stds[std]
@@ -252,9 +254,9 @@ def process_target_deps(target, define, stds, sdks, prjs)
 end
 
 HEADERS = {
-    "Standard" => {},
-    "SDK" => {},
-    "Project" => {}
+    "Standard"  => {},
+    "SDK"       => {},
+    "Project"   => {}
 }
 CONFIGS.each do |config|
     target = "#{TARGET}-#{config}"
@@ -272,6 +274,9 @@ File.open(PCHFILE, 'w') do |oss|
     oss.puts "*/"
     unless ADDITIONAL_INFOS.empty?
         oss.puts
+        oss.puts("// %48s | %3s | %3s | %3s | %3s" % [
+            'Target', 'STD', 'SDK', 'PRJ', 'SRC'])
+        oss.puts("// " << ('-'*(48+3*2*4)))
         ADDITIONAL_INFOS.each do |info|
             oss.puts "// #{info}"
         end

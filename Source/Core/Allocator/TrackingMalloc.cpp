@@ -4,6 +4,7 @@
 
 #include "Malloc.h"
 
+#include "Allocator/ThreadLocalHeap.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 

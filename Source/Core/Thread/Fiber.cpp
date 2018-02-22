@@ -3,6 +3,7 @@
 #include "Fiber.h"
 
 #include "Memory/MemoryDomain.h"
+#include "Memory/MemoryTracking.h"
 
 #ifdef PLATFORM_WINDOWS
 #   include "Misc/Platform_Windows.h"
