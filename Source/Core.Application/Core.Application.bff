@@ -6,7 +6,7 @@
     {
         .ProjectName = 'Core.Application.Console'
         .ProjectPath = '$SourceDirectory$/Core.Application'
-        .ProjectSolutionFolder = 'Core'
+        .ProjectSolutionFolder = 'Core.Application'
         .ProjectDefines =
         {
             'EXPORT_CORE_APPLICATION',
@@ -25,7 +25,7 @@
     {
         .ProjectName = 'Core.Application.Graphics'
         .ProjectPath = '$SourceDirectory$/Core.Application'
-        .ProjectSolutionFolder = 'Core'
+        .ProjectSolutionFolder = 'Core.Application'
         .ProjectDefines =
         {
             'EXPORT_CORE_APPLICATION',
