@@ -6,35 +6,35 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   CORE_API (malloc)(size_t size);
+CORE_API NOALIAS RESTRICT
+void*   (malloc)(size_t size);
 //----------------------------------------------------------------------------
-NOALIAS
-void    CORE_API (free)(void *ptr);
+CORE_API NOALIAS
+void    (free)(void *ptr);
 //----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   CORE_API (calloc)(size_t nmemb, size_t size);
+CORE_API NOALIAS RESTRICT
+void*   (calloc)(size_t nmemb, size_t size);
 //----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   CORE_API (realloc)(void *ptr, size_t size);
+CORE_API NOALIAS RESTRICT
+void*   (realloc)(void *ptr, size_t size);
 //----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   CORE_API (aligned_malloc)(size_t size, size_t alignment);
+CORE_API NOALIAS RESTRICT
+void*   (aligned_malloc)(size_t size, size_t alignment);
 //----------------------------------------------------------------------------
-NOALIAS
-void    CORE_API (aligned_free)(void *ptr);
+CORE_API NOALIAS
+void    (aligned_free)(void *ptr);
 //----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   CORE_API (aligned_calloc)(size_t nmemb, size_t size, size_t alignment);
+CORE_API NOALIAS RESTRICT
+void*   (aligned_calloc)(size_t nmemb, size_t size, size_t alignment);
 //----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   CORE_API (aligned_realloc)(void *ptr, size_t size, size_t alignment);
+CORE_API NOALIAS RESTRICT
+void*   (aligned_realloc)(void *ptr, size_t size, size_t alignment);
 //----------------------------------------------------------------------------
-NOALIAS
-void    CORE_API (malloc_release_pending_blocks)();
+CORE_API NOALIAS
+void    (malloc_release_pending_blocks)();
 //----------------------------------------------------------------------------
-NOALIAS
-size_t  CORE_API (malloc_snap_size)(size_t size);
+CORE_API NOALIAS
+size_t  (malloc_snap_size)(size_t size);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -100,11 +100,11 @@ void* (realloc)(void *ptr, size_t size, Meta::TEnableIf< !Meta::TIsNaturalyAlign
 #ifndef FINAL_RELEASE
 //----------------------------------------------------------------------------
 class ALIGN(16) FCallstack;
-bool FetchMemoryBlockDebugInfos(void* ptr, FCallstack* pCallstack, size_t* pSizeInBytes, bool raw = false);
+CORE_API bool FetchMemoryBlockDebugInfos(void* ptr, FCallstack* pCallstack, size_t* pSizeInBytes, bool raw = false);
 //----------------------------------------------------------------------------
 template <typename T>
 class TMemoryView;
-bool FetchMemoryAllocationHistogram(TMemoryView<const size_t>* classes, TMemoryView<const size_t>* allocations, TMemoryView<const size_t>* totalBytes);
+CORE_API bool FetchMemoryAllocationHistogram(TMemoryView<const size_t>* classes, TMemoryView<const size_t>* allocations, TMemoryView<const size_t>* totalBytes);
 //----------------------------------------------------------------------------
 #endif //!FINAL_RELEASE
 //----------------------------------------------------------------------------

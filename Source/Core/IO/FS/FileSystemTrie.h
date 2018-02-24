@@ -18,7 +18,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(FileSystemNode);
-class FFileSystemNode : public FRefCountable {
+class CORE_API FFileSystemNode : public FRefCountable {
     friend class FFileSystemTrie;
 public:
     FFileSystemNode(const FFileSystemNode *parent, const FFileSystemToken& token);
@@ -49,7 +49,7 @@ private:
     size_t _hashValue;
 };
 //----------------------------------------------------------------------------
-class FFileSystemTrie {
+class CORE_API FFileSystemTrie {
 public:
     FFileSystemTrie();
     ~FFileSystemTrie();

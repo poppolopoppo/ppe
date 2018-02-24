@@ -15,7 +15,7 @@ class TRawStorage;
 //----------------------------------------------------------------------------
 FWD_INTEFARCE_UNIQUEPTR(StreamReader);
 //----------------------------------------------------------------------------
-class IStreamReader {
+class CORE_API IStreamReader {
 public: // virtual interface
     virtual ~IStreamReader() {}
 
@@ -44,7 +44,7 @@ public: // helpers
     bool ReadView(const TMemoryView<T>& dst);
 };
 //----------------------------------------------------------------------------
-class IBufferedStreamReader : public IStreamReader {
+class CORE_API IBufferedStreamReader : public IStreamReader {
     virtual IBufferedStreamReader* ToBufferedI() override final { return this; }
 
 public:
@@ -78,7 +78,7 @@ public: // helpers
 //----------------------------------------------------------------------------
 FWD_INTEFARCE_UNIQUEPTR(StreamWriter);
 //----------------------------------------------------------------------------
-class IStreamWriter {
+class CORE_API IStreamWriter {
 public: // virtual interface
     virtual ~IStreamWriter() {}
 
@@ -103,7 +103,7 @@ public: // helpers
     void WriteView(const TMemoryView<T>& data);
 };
 //----------------------------------------------------------------------------
-class IBufferedStreamWriter : public IStreamWriter {
+class CORE_API IBufferedStreamWriter : public IStreamWriter {
     virtual class IBufferedStreamWriter* ToBufferedO() override final { return this; }
 
 public:
@@ -118,7 +118,7 @@ public: // helpers
 //----------------------------------------------------------------------------
 FWD_INTEFARCE_UNIQUEPTR(StreamReadWriter);
 //----------------------------------------------------------------------------
-class EMPTY_BASES IStreamReadWriter : public IStreamReader, public IStreamWriter {
+class CORE_API EMPTY_BASES IStreamReadWriter : public IStreamReader, public IStreamWriter {
 public:
     virtual ~IStreamReadWriter() {}
 };

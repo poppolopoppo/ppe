@@ -24,7 +24,7 @@ template <typename _Char>
 class TBasicStringBuilder :
     private TStringBuilderAllocator<_Char>::storage_type
 ,   private TMemoryStream< TStringBuilderAllocator<_Char> >
-,   public TBasicTextWriter<_Char> {
+,   public  TBasicTextWriter<_Char> {
 public:
     typedef TBasicString<_Char> string_type;
     typedef TMemoryStream< TStringBuilderAllocator<_Char> > stream_type;
@@ -33,13 +33,12 @@ public:
     typedef typename TStringBuilderAllocator<_Char>::storage_type insitu_type;
 
     TBasicStringBuilder();
+    virtual ~TBasicStringBuilder();
 
     explicit TBasicStringBuilder(string_type&& stolen);
 
     TBasicStringBuilder(const TBasicStringBuilder&) = delete;
     TBasicStringBuilder& operator =(const TBasicStringBuilder&) = delete;
-
-    virtual ~TBasicStringBuilder();
 
     size_t size() const { return (stream_type::size() / sizeof(_Char)); }
     size_t capacity() const { return (stream_type::capacity() / sizeof(_Char)); }

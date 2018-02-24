@@ -4,13 +4,12 @@
 
 #include "Core/Allocator/AllocatorBase.h"
 #include "Core/Allocator/HeapAllocator.h"
+#include "Core/Allocator/ThreadLocalHeap.h"
 #include "Core/Meta/ThreadResource.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-extern FHeap& GetThreadLocalHeap();
 //----------------------------------------------------------------------------
 namespace Heaps {
 //----------------------------------------------------------------------------
@@ -95,7 +94,7 @@ public:
 template <typename T>
 size_t AllocatorSnapSize(const TThreadLocalAllocator<T>& alloc, size_t size) {
     return AllocatorSnapSize(
-        static_cast<const THeapAllocator<T, Heaps::FThreadLocal>&>(alloc), 
+        static_cast<const THeapAllocator<T, Heaps::FThreadLocal>&>(alloc),
         size );
 }
 //----------------------------------------------------------------------------

@@ -27,7 +27,7 @@ using TBasicTextManipulator = Meta::TFunction<TBasicTextWriter<_Char>&(TBasicTex
 using FTextManipulator = TBasicTextManipulator<char>;
 using FWTextManipulator = TBasicTextManipulator<wchar_t>;
 //----------------------------------------------------------------------------
-class FTextFormat {
+class CORE_API FTextFormat {
 public:
     enum EBase : u32 {
         Decimal = 0, // default
