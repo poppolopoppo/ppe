@@ -14,8 +14,8 @@
 #include "Core.RTTI/RTTI_Namespace-impl.h"
 
 #include "Core.Serialize/Binary/BinarySerializer.h"
-#include "Core.Serialize/JSON/JSON.h"
-#include "Core.Serialize/JSON/JSONSerializer.h"
+#include "Core.Serialize/Json/Json.h"
+#include "Core.Serialize/Json/JsonSerializer.h"
 
 #include "Core/Container/AssociativeVector.h"
 #include "Core/Container/HashMap.h"
@@ -471,14 +471,14 @@ static NO_INLINE void Test_Serialize_() {
     {
         STACKLOCAL_TEXTWRITER(serialized, 1024);
 
-        Serialize::FJSON in, out;
+        Serialize::FJson in, out;
         {
             serialized.Reset();
 
             in.Root().SetValue(165674.5454 / 0.666666);
             serialized << in;
 
-            if (not Serialize::FJSON::Load(&out, L"memory", serialized.Written()))
+            if (not Serialize::FJson::Load(&out, L"memory", serialized.Written()))
                 AssertNotReached();
 
             Assert(in.Root() == out.Root());
@@ -493,7 +493,7 @@ static NO_INLINE void Test_Serialize_() {
             in.Root().SetValue(std::move(str));
             serialized << in;
 
-            if (not Serialize::FJSON::Load(&out, L"memory", serialized.Written()))
+            if (not Serialize::FJson::Load(&out, L"memory", serialized.Written()))
                 AssertNotReached();
 
             Assert(in.Root() == out.Root());
@@ -516,7 +516,7 @@ static NO_INLINE void Test_Serialize_() {
             Test_Serializer_(input, &binary, L"Saved:/RTTI/robotapp_bin.bin");
         }
         {
-            Serialize::FJSONSerializer json;
+            Serialize::FJsonSerializer json;
             json.SetMinify(true);
             Test_Serializer_(input, &json, L"Saved:/RTTI/robotapp_json.json");
         }

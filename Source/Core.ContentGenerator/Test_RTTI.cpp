@@ -27,7 +27,7 @@
 #include "Core.Serialize/Lexer/Lexer.h"
 #include "Core.Serialize/Parser/Parser.h"
 #include "Core.Serialize/XML/XMLSerializer.h"
-#include "Core.Serialize/JSON/JSONSerializer.h"
+#include "Core.Serialize/Json/JsonSerializer.h"
 
 namespace Core {
 namespace ContentGenerator {
@@ -399,7 +399,7 @@ void Test_RTTI() {
         }
 
         {
-            Serialize::FJSONSerializer s;
+            Serialize::FJsonSerializer s;
             auto oss = VFS_OpenBinaryWritable(L"Saved:/RTTI/robotapp.json", EAccessPolicy::Create_Binary);
             s.Serialize(oss.get(), &input);
         }

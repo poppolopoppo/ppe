@@ -15,7 +15,7 @@ namespace Core {
 #define VECTOR_LINEARHEAP(T) ::Core::TVector<T, ::Core::TLinearHeapAllocator<T>>
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
-#   define LINEARHEAP_DOMAIN_TRACKINGDATA(_DOMAIN) &MEMORY_DOMAIN_TRACKING_DATA(JSON)
+#   define LINEARHEAP_DOMAIN_TRACKINGDATA(_DOMAIN) &MEMORY_DOMAIN_TRACKING_DATA(Json)
 #else
 #   define LINEARHEAP_DOMAIN_TRACKINGDATA(_DOMAIN)
 #endif
@@ -52,7 +52,7 @@ public:
 
 private:
     void* _blocks;
-    
+
 #ifdef USE_MEMORY_DOMAINS
     FMemoryTracking _trackingData;
 #endif
@@ -98,15 +98,15 @@ public:
     TLinearHeapAllocator(const TLinearHeapAllocator<U>& other) noexcept
         : TLinearHeapAllocator(*other._heap) {}
 
-    TLinearHeapAllocator& operator=(const TLinearHeapAllocator& other) noexcept { 
+    TLinearHeapAllocator& operator=(const TLinearHeapAllocator& other) noexcept {
         _heap = other._heap;
-        return *this; 
+        return *this;
     }
 
     template <typename U>
-    TLinearHeapAllocator& operator=(const TLinearHeapAllocator<U>& other) noexcept { 
+    TLinearHeapAllocator& operator=(const TLinearHeapAllocator<U>& other) noexcept {
         _heap = other._heap;
-        return *this; 
+        return *this;
     }
 
     FLinearHeap* Heap() const { return _heap; }

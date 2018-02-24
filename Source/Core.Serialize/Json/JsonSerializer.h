@@ -12,15 +12,15 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FJSONSerializerException : public FSerializeException {
+class FJsonSerializerException : public FSerializeException {
 public:
-    FJSONSerializerException(const char* what) : FSerializeException(what) {}
+    FJsonSerializerException(const char* what) : FSerializeException(what) {}
 };
 //----------------------------------------------------------------------------
-class CORE_SERIALIZE_API FJSONSerializer : public ISerializer {
+class CORE_SERIALIZE_API FJsonSerializer : public ISerializer {
 public:
-    FJSONSerializer(bool minify = true);
-    virtual ~FJSONSerializer();
+    FJsonSerializer(bool minify = true);
+    virtual ~FJsonSerializer();
 
     bool Minify() const { return _minify; }
     void SetMinify(bool value) { _minify = value; }
@@ -37,9 +37,9 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_SERIALIZE_API void RTTI_to_JSON(class FJSON& dst, const TMemoryView<const RTTI::PMetaObject>& src, const RTTI::FMetaTransaction* outer = nullptr);
+CORE_SERIALIZE_API void RTTI_to_Json(class FJson& dst, const TMemoryView<const RTTI::PMetaObject>& src, const RTTI::FMetaTransaction* outer = nullptr);
 //----------------------------------------------------------------------------
-CORE_SERIALIZE_API bool JSON_to_RTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject)& dst, const class FJSON& src);
+CORE_SERIALIZE_API bool Json_to_RTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject)& dst, const class FJson& src);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

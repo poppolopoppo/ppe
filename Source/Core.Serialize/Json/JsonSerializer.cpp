@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "JSONSerializer.h"
+#include "JsonSerializer.h"
 
-#include "JSON.h"
+#include "Json.h"
 
 #include "Core.RTTI/Any.h"
 #include "Core.RTTI/Atom.h"
@@ -33,35 +33,35 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FJSONSerializer::FJSONSerializer(bool minify/* = true */) : _minify(minify) {}
+FJsonSerializer::FJsonSerializer(bool minify/* = true */) : _minify(minify) {}
 //----------------------------------------------------------------------------
-FJSONSerializer::~FJSONSerializer() {}
+FJsonSerializer::~FJsonSerializer() {}
 //----------------------------------------------------------------------------
-void FJSONSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName/* = nullptr */) {
+void FJsonSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName/* = nullptr */) {
     Assert(transaction);
     Assert(input);
 
-    FJSON json;
+    FJson json;
 
     UsingBufferedStream(input, [&json, sourceName](IBufferedStreamReader* buffered) {
-        if (not FJSON::Load(&json, FFilename(MakeCStringView(sourceName)), buffered))
-            CORE_THROW_IT(FJSONSerializerException("failed to parse JSON document"));
+        if (not FJson::Load(&json, FFilename(MakeCStringView(sourceName)), buffered))
+            CORE_THROW_IT(FJsonSerializerException("failed to parse Json document"));
     });
 
     VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject) parsed;
-    if (not JSON_to_RTTI(parsed, json))
-        CORE_THROW_IT(FJSONSerializerException("failed to convert JSON to RTTI"));
+    if (not Json_to_RTTI(parsed, json))
+        CORE_THROW_IT(FJsonSerializerException("failed to convert Json to RTTI"));
 
     for (const RTTI::PMetaObject& obj : parsed)
         transaction->RegisterObject(obj.get());
 }
 //----------------------------------------------------------------------------
-void FJSONSerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) {
+void FJsonSerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) {
     Assert(output);
     Assert(transaction);
 
-    FJSON json;
-    RTTI_to_JSON(json, transaction->TopObjects(), transaction);
+    FJson json;
+    RTTI_to_Json(json, transaction->TopObjects(), transaction);
 
     UsingBufferedStream(output, [this, &json](IBufferedStreamWriter* buffered) {
         FTextWriter oss(buffered);
@@ -73,177 +73,177 @@ void FJSONSerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransact
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool JSON_IsRTTIToken(const FStringView& str) { return (str.size() > 1 && '$' == str[0]); }
-static FStringView JSON_MetaClass() { return "$RTTI_Class"; };
-static FStringView JSON_Export()    { return "$RTTI_Export"; };
+static bool Json_IsRTTIToken(const FStringView& str) { return (str.size() > 1 && '$' == str[0]); }
+static FStringView Json_MetaClass() { return "$RTTI_Class"; };
+static FStringView Json_Export()    { return "$RTTI_Export"; };
 //----------------------------------------------------------------------------
 template <typename T, class = void>
-struct TJSON_RTTI_traits;
+struct TJson_RTTI_traits;
 template <typename T>
-void RTTI_to_JSON_(FJSON& doc, FJSON::FValue& dst, const T& src) {
-    TJSON_RTTI_traits<T>::JSON(doc, dst, src);
+void RTTI_to_Json_(FJson& doc, FJson::FValue& dst, const T& src) {
+    TJson_RTTI_traits<T>::Json(doc, dst, src);
 }
 template <typename T>
-bool JSON_to_RTTI_(T& dst, const FJSON::FValue& src) {
-    return TJSON_RTTI_traits<T>::RTTI(dst, src);
+bool Json_to_RTTI_(T& dst, const FJson::FValue& src) {
+    return TJson_RTTI_traits<T>::RTTI(dst, src);
 }
 //----------------------------------------------------------------------------
 template <>
-struct TJSON_RTTI_traits<bool> {
-    static void JSON(FJSON&, FJSON::FValue& dst, bool src) {
+struct TJson_RTTI_traits<bool> {
+    static void Json(FJson&, FJson::FValue& dst, bool src) {
         dst.SetValue(src);
     }
-    static bool RTTI(bool& dst, const FJSON::FValue& src) {
-        const FJSON::FBool* boolIFP = src.AsBool();
+    static bool RTTI(bool& dst, const FJson::FValue& src) {
+        const FJson::FBool* boolIFP = src.AsBool();
         if (nullptr == boolIFP) return false;
         dst = *boolIFP;
         return true;
     }
 };
 template <typename T>
-struct TJSON_RTTI_traits<T, Meta::TEnableIf< std::is_integral<T>::value > > {
-    static void JSON(FJSON& , FJSON::FValue& dst, T src) {
-        dst.SetValue(checked_cast<FJSON::FInteger>(src));
+struct TJson_RTTI_traits<T, Meta::TEnableIf< std::is_integral<T>::value > > {
+    static void Json(FJson& , FJson::FValue& dst, T src) {
+        dst.SetValue(checked_cast<FJson::FInteger>(src));
     }
-    static bool RTTI(T& dst, const FJSON::FValue& src) {
-        const FJSON::FInteger* intIFP = src.AsInteger();
+    static bool RTTI(T& dst, const FJson::FValue& src) {
+        const FJson::FInteger* intIFP = src.AsInteger();
         if (nullptr == intIFP) return false;
         dst = T(*intIFP);
         return true;
     }
 };
 template <typename T>
-struct TJSON_RTTI_traits<T, Meta::TEnableIf< std::is_floating_point<T>::value > > {
-    static void JSON(FJSON& , FJSON::FValue& dst, T src) {
-        dst.SetValue(checked_cast<FJSON::FFloat>(src));
+struct TJson_RTTI_traits<T, Meta::TEnableIf< std::is_floating_point<T>::value > > {
+    static void Json(FJson& , FJson::FValue& dst, T src) {
+        dst.SetValue(checked_cast<FJson::FFloat>(src));
     }
-    static bool RTTI(T& dst, const FJSON::FValue& src) {
-        const FJSON::FFloat* floatIFP = src.AsFloat();
+    static bool RTTI(T& dst, const FJson::FValue& src) {
+        const FJson::FFloat* floatIFP = src.AsFloat();
         if (nullptr == floatIFP) return false;
         dst = T(*floatIFP);
         return true;
     }
 };
 template <>
-struct TJSON_RTTI_traits<FString> {
-    static void JSON(FJSON& doc, FJSON::FValue& dst, const FString& src) {
+struct TJson_RTTI_traits<FString> {
+    static void Json(FJson& doc, FJson::FValue& dst, const FString& src) {
         dst.SetValue(doc.MakeString(src));
     }
-    static bool RTTI(FString& dst, const FJSON::FValue& src) {
-        const FJSON::FString* strIFP = src.AsString();
+    static bool RTTI(FString& dst, const FJson::FValue& src) {
+        const FJson::FString* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst = *strIFP;
         return true;
     }
 };
 template <>
-struct TJSON_RTTI_traits<FWString> {
-    static void JSON(FJSON& doc, FJSON::FValue& dst, const FWString& src) {
+struct TJson_RTTI_traits<FWString> {
+    static void Json(FJson& doc, FJson::FValue& dst, const FWString& src) {
         dst.SetValue(doc.MakeString(ToString(src)));
     }
-    static bool RTTI(FWString& dst, const FJSON::FValue& src) {
-        const FJSON::FString* strIFP = src.AsString();
+    static bool RTTI(FWString& dst, const FJson::FValue& src) {
+        const FJson::FString* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst = ToWString(*strIFP);
         return true;
     }
 };
 template <>
-struct TJSON_RTTI_traits<RTTI::FName> {
-    static void JSON(FJSON& doc, FJSON::FValue& dst, const RTTI::FName& src) {
+struct TJson_RTTI_traits<RTTI::FName> {
+    static void Json(FJson& doc, FJson::FValue& dst, const RTTI::FName& src) {
         dst.SetValue(doc.MakeString(src.MakeView()));
     }
-    static bool RTTI(RTTI::FName& dst, const FJSON::FValue& src) {
-        const FJSON::FString* strIFP = src.AsString();
+    static bool RTTI(RTTI::FName& dst, const FJson::FValue& src) {
+        const FJson::FString* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst = RTTI::FName(*strIFP);
         return true;
     }
 };
 template <>
-struct TJSON_RTTI_traits<FDirpath> {
-    static void JSON(FJSON& doc, FJSON::FValue& dst, const FDirpath& src) {
+struct TJson_RTTI_traits<FDirpath> {
+    static void Json(FJson& doc, FJson::FValue& dst, const FDirpath& src) {
         dst.SetValue(doc.MakeString(src.ToString()));
     }
-    static bool RTTI(FDirpath& dst, const FJSON::FValue& src) {
-        const FJSON::FString* strIFP = src.AsString();
+    static bool RTTI(FDirpath& dst, const FJson::FValue& src) {
+        const FJson::FString* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst = ToWString(*strIFP);
         return true;
     }
 };
 template <>
-struct TJSON_RTTI_traits<FFilename> {
-    static void JSON(FJSON& doc, FJSON::FValue& dst, const FFilename& src) {
+struct TJson_RTTI_traits<FFilename> {
+    static void Json(FJson& doc, FJson::FValue& dst, const FFilename& src) {
         dst.SetValue(doc.MakeString(src.ToString()));
     }
-    static bool RTTI(FFilename& dst, const FJSON::FValue& src) {
-        const FJSON::FString* strIFP = src.AsString();
+    static bool RTTI(FFilename& dst, const FJson::FValue& src) {
+        const FJson::FString* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst = ToWString(*strIFP);
         return true;
     }
 };
 template <>
-struct TJSON_RTTI_traits<RTTI::FBinaryData> {
-    static void JSON(FJSON& doc, FJSON::FValue& dst, const RTTI::FBinaryData& src) {
+struct TJson_RTTI_traits<RTTI::FBinaryData> {
+    static void Json(FJson& doc, FJson::FValue& dst, const RTTI::FBinaryData& src) {
         dst.SetValue(doc.MakeString(src.MakeConstView().Cast<const char>(), false/* don't merge */));
     }
-    static bool RTTI(RTTI::FBinaryData& dst, const FJSON::FValue& src) {
-        const FJSON::FString* strIFP = src.AsString();
+    static bool RTTI(RTTI::FBinaryData& dst, const FJson::FValue& src) {
+        const FJson::FString* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst.CopyFrom(strIFP->MakeView().Cast<const u8>());
         return true;
     }
 };
 template <typename T, size_t _Dim>
-struct TJSON_RTTI_traits<TScalarVector<T, _Dim>> {
-    static void JSON(FJSON& doc, FJSON::FValue& dst, const TScalarVector<T, _Dim>& src) {
-        FJSON::FArray& arr = dst.SetType_AssumeNull(doc, FJSON::TypeArray{});
+struct TJson_RTTI_traits<TScalarVector<T, _Dim>> {
+    static void Json(FJson& doc, FJson::FValue& dst, const TScalarVector<T, _Dim>& src) {
+        FJson::FArray& arr = dst.SetType_AssumeNull(doc, FJson::TypeArray{});
         arr.resize(_Dim);
         forrange(i, 0, _Dim)
-            RTTI_to_JSON_(doc, arr[i], src._data[i]);
+            RTTI_to_Json_(doc, arr[i], src._data[i]);
     }
-    static bool RTTI(TScalarVector<T, _Dim>& dst, const FJSON::FValue& src) {
-        const FJSON::FArray* arrIFP = src.AsArray();
+    static bool RTTI(TScalarVector<T, _Dim>& dst, const FJson::FValue& src) {
+        const FJson::FArray* arrIFP = src.AsArray();
         if (nullptr == arrIFP || _Dim != arrIFP->size()) return false;
         forrange(i, 0, _Dim)
-            if (not JSON_to_RTTI_(dst._data[i], arrIFP->at(i)))
+            if (not Json_to_RTTI_(dst._data[i], arrIFP->at(i)))
                 return false;
         return true;
     }
 };
 template <typename T, size_t _W, size_t _H>
-struct TJSON_RTTI_traits<TScalarMatrix<T, _W, _H>> {
-    static void JSON(FJSON& doc, FJSON::FValue& dst, const TScalarMatrix<T, _W, _H>& src) {
-        FJSON::FArray& arr = dst.SetType_AssumeNull(doc, FJSON::TypeArray{});
+struct TJson_RTTI_traits<TScalarMatrix<T, _W, _H>> {
+    static void Json(FJson& doc, FJson::FValue& dst, const TScalarMatrix<T, _W, _H>& src) {
+        FJson::FArray& arr = dst.SetType_AssumeNull(doc, FJson::TypeArray{});
         arr.resize(_W);
         forrange(i, 0, _W)
-            RTTI_to_JSON_(doc, arr[i], src.Column(i));
+            RTTI_to_Json_(doc, arr[i], src.Column(i));
     }
-    static bool RTTI(TScalarMatrix<T, _W, _H>& dst, const FJSON::FValue& src) {
-        const FJSON::FArray* arrIFP = src.AsArray();
+    static bool RTTI(TScalarMatrix<T, _W, _H>& dst, const FJson::FValue& src) {
+        const FJson::FArray* arrIFP = src.AsArray();
         if (nullptr == arrIFP || _W != arrIFP->size()) return false;
         forrange(i, 0, _W)
-            if (not JSON_to_RTTI_(dst.Column(i), arrIFP->at(i)))
+            if (not Json_to_RTTI_(dst.Column(i), arrIFP->at(i)))
                 return false;
         return true;
     }
 };
 //----------------------------------------------------------------------------
-class FRTTI_to_JSON_ : public RTTI::IAtomVisitor {
+class FRTTI_to_Json_ : public RTTI::IAtomVisitor {
 public:
-    FRTTI_to_JSON_(FJSON& doc, const RTTI::FMetaTransaction* outer)
+    FRTTI_to_Json_(FJson& doc, const RTTI::FMetaTransaction* outer)
         : _doc(doc)
         , _outer(outer)
     {}
 
-    void PushHead(FJSON::FValue& value) {
+    void PushHead(FJson::FValue& value) {
         Assert(_values.empty());
         _values.push_back(&value);
     }
 
-    void PopHead(FJSON::FValue& value) {
+    void PopHead(FJson::FValue& value) {
         UNUSED(value);
         Assert(1 == _values.size());
         Assert(&value == _values.front());
@@ -253,7 +253,7 @@ public:
     virtual bool Visit(const RTTI::IPairTraits* pair, const RTTI::FAtom& atom) override final {
         bool result = true;
 
-        FJSON::FArray& arr = Head_().SetType_AssumeNull(_doc, FJSON::TypeArray{});
+        FJson::FArray& arr = Head_().SetType_AssumeNull(_doc, FJson::TypeArray{});
         arr.resize(2);
 
         _values.push_back(&arr.front());
@@ -271,10 +271,10 @@ public:
     }
 
     virtual bool Visit(const RTTI::IListTraits* list, const RTTI::FAtom& atom) override final {
-        FJSON::FArray& arr = Head_().SetType_AssumeNull(_doc, FJSON::TypeArray{});
+        FJson::FArray& arr = Head_().SetType_AssumeNull(_doc, FJson::TypeArray{});
         arr.resize(list->Count(atom));
 
-        FJSON::FValue* pvalue = (&arr[0]);
+        FJson::FValue* pvalue = (&arr[0]);
         return list->ForEach(atom, [this, &pvalue](const RTTI::FAtom& item) {
             _values.push_back(pvalue);
             bool r = item.Accept(this);
@@ -286,12 +286,12 @@ public:
     }
 
     virtual bool Visit(const RTTI::IDicoTraits* dico, const RTTI::FAtom& atom) override {
-        FJSON::FArray& arr = Head_().SetType_AssumeNull(_doc, FJSON::TypeArray{});
+        FJson::FArray& arr = Head_().SetType_AssumeNull(_doc, FJson::TypeArray{});
         arr.resize(dico->Count(atom));
 
-        FJSON::FValue* pvalue = (&arr[0]);
+        FJson::FValue* pvalue = (&arr[0]);
         return dico->ForEach(atom, [this, &pvalue](const RTTI::FAtom& key, const RTTI::FAtom& value) {
-            FJSON::FArray& pair = pvalue->SetType_AssumeNull(_doc, FJSON::TypeArray{});
+            FJson::FArray& pair = pvalue->SetType_AssumeNull(_doc, FJson::TypeArray{});
             pair.resize(2);
             bool r = true;
 
@@ -313,29 +313,29 @@ public:
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
         virtual bool Visit(const RTTI::IScalarTraits* traits, T& value) override final { \
-            ToJSON_(value); \
+            ToJson_(value); \
             return true; \
         }
     FOREACH_RTTI_NATIVETYPES(DECL_ATOM_VIRTUAL_VISIT)
 #undef DECL_ATOM_VIRTUAL_VISIT
 
 private:
-    FJSON& _doc;
+    FJson& _doc;
     const RTTI::FMetaTransaction* _outer;
-    VECTOR(Serialize, FJSON::FValue*) _values;
+    VECTOR(Serialize, FJson::FValue*) _values;
 
-    FJSON::FValue& Head_() const { return (*_values.back()); }
+    FJson::FValue& Head_() const { return (*_values.back()); }
 
     template <typename T>
-    void ToJSON_(const T& value) {
-        RTTI_to_JSON_(_doc, Head_(), value);
+    void ToJson_(const T& value) {
+        RTTI_to_Json_(_doc, Head_(), value);
     }
 
-    void ToJSON_(const RTTI::FAny& any) {
+    void ToJson_(const RTTI::FAny& any) {
         if (any) {
-            FJSON::FArray& jsonArr = Head_().SetType_AssumeNull(_doc, FJSON::TypeArray{});
+            FJson::FArray& jsonArr = Head_().SetType_AssumeNull(_doc, FJson::TypeArray{});
 
-            jsonArr.emplace_back(FJSON::FInteger(any.Traits()->TypeId()));
+            jsonArr.emplace_back(FJson::FInteger(any.Traits()->TypeId()));
             auto& wrapped = jsonArr.push_back_Default();
 
             _values.push_back(&wrapped);
@@ -347,7 +347,7 @@ private:
         }
     }
 
-    void ToJSON_(const RTTI::PMetaObject& metaObject) {
+    void ToJson_(const RTTI::PMetaObject& metaObject) {
         if (metaObject) {
             bool exported = false;
             if (metaObject->RTTI_IsExported()) {
@@ -359,15 +359,15 @@ private:
                 exported = true;
             }
 
-            FJSON::FObject& jsonObject = Head_().SetType_AssumeNull(_doc, FJSON::TypeObject{});
+            FJson::FObject& jsonObject = Head_().SetType_AssumeNull(_doc, FJson::TypeObject{});
 
             const RTTI::FMetaClass* metaClass = metaObject->RTTI_Class();
 
-            jsonObject.Add(JSON_MetaClass()).SetValue(
+            jsonObject.Add(Json_MetaClass()).SetValue(
                 _doc.MakeString(metaClass->Name().MakeView()));
 
             if (exported)
-                jsonObject.Add(JSON_Export()).SetValue(
+                jsonObject.Add(Json_Export()).SetValue(
                     _doc.MakeString(metaObject->RTTI_Name().MakeView()));
 
             for (const RTTI::FMetaProperty* prop : metaClass->AllProperties()) {
@@ -387,14 +387,14 @@ private:
     }
 };
 //----------------------------------------------------------------------------
-class FJSON_to_RTTI_ : public RTTI::IAtomVisitor {
+class FJson_to_RTTI_ : public RTTI::IAtomVisitor {
 public:
-    void PushHead(const FJSON::FValue& value) {
+    void PushHead(const FJson::FValue& value) {
         Assert(_values.empty());
         _values.push_back(&value);
     }
 
-    void PopHead(const FJSON::FValue& value) {
+    void PopHead(const FJson::FValue& value) {
         UNUSED(value);
         Assert(1 == _values.size());
         Assert(&value == _values.front());
@@ -402,7 +402,7 @@ public:
     }
 
     virtual bool Visit(const RTTI::IPairTraits* pair, const RTTI::FAtom& atom) override final {
-        const FJSON::FArray* arrIFP = Head_().AsArray();
+        const FJson::FArray* arrIFP = Head_().AsArray();
         if (nullptr == arrIFP || 2 != arrIFP->size())
             return false;
 
@@ -423,7 +423,7 @@ public:
     }
 
     virtual bool Visit(const RTTI::IListTraits* list, const RTTI::FAtom& atom) override final {
-        const FJSON::FArray* arrIFP = Head_().AsArray();
+        const FJson::FArray* arrIFP = Head_().AsArray();
         if (nullptr == arrIFP)
             return false;
 
@@ -442,7 +442,7 @@ public:
     }
 
     virtual bool Visit(const RTTI::IDicoTraits* dico, const RTTI::FAtom& atom) override {
-        const FJSON::FArray* arrIFP = Head_().AsArray();
+        const FJson::FArray* arrIFP = Head_().AsArray();
         if (nullptr == arrIFP)
             return false;
 
@@ -454,8 +454,8 @@ public:
         const RTTI::FAtom keyAtom = key.Reset(keyTraits);
 
         forrange(i, 0, n) {
-            const FJSON::FValue& jsonIt = arrIFP->at(i);
-            const FJSON::FArray* pairIFP = jsonIt.AsArray();
+            const FJson::FValue& jsonIt = arrIFP->at(i);
+            const FJson::FArray* pairIFP = jsonIt.AsArray();
             if (nullptr == pairIFP || 2 != pairIFP->size())
                 return false;
 
@@ -489,24 +489,24 @@ public:
 #undef DECL_ATOM_VIRTUAL_VISIT
 
 private:
-    VECTOR(Serialize, const FJSON::FValue*) _values;
+    VECTOR(Serialize, const FJson::FValue*) _values;
 
-    const FJSON::FValue& Head_() const { return (*_values.back()); }
+    const FJson::FValue& Head_() const { return (*_values.back()); }
 
     template <typename T>
     bool ToRTTI_(T& value) {
-        return JSON_to_RTTI_(value, Head_());
+        return Json_to_RTTI_(value, Head_());
     }
 
     bool ToRTTI_(RTTI::FAny& any) {
         if (Head_().AsNull())
             return true;
 
-        const FJSON::FArray* arrIFP = Head_().AsArray();
+        const FJson::FArray* arrIFP = Head_().AsArray();
         if (nullptr == arrIFP || 2 != arrIFP->size())
             return false;
 
-        const FJSON::FInteger* numIFP = arrIFP->front().AsInteger();
+        const FJson::FInteger* numIFP = arrIFP->front().AsInteger();
         if (nullptr == numIFP)
             return false;
 
@@ -527,7 +527,7 @@ private:
             return true;
 
         // external reference
-        if (const FJSON::FString* importIFP = Head_().AsString()) {
+        if (const FJson::FString* importIFP = Head_().AsString()) {
             if ('<' != importIFP->front() || '>' != importIFP->back())
                 return false;
 
@@ -535,20 +535,20 @@ private:
 
             metaObject = RTTI::MetaDB().ObjectIFP(name);
             if (nullptr == metaObject)
-                CORE_THROW_IT(FJSONSerializerException("failed to import RTTI object from database"));
+                CORE_THROW_IT(FJsonSerializerException("failed to import RTTI object from database"));
 
             return true;
         }
 
-        const FJSON::FObject* objIFP = Head_().AsObject();
+        const FJson::FObject* objIFP = Head_().AsObject();
         if (nullptr == objIFP || objIFP->empty())
             return false;
 
-        const auto metaClassIt = objIFP->find(JSON_MetaClass());
+        const auto metaClassIt = objIFP->find(Json_MetaClass());
         if (objIFP->end() == metaClassIt)
             return false;
 
-        const FJSON::FString* strIFP = metaClassIt->second.AsString();
+        const FJson::FString* strIFP = metaClassIt->second.AsString();
         if (nullptr == strIFP || strIFP->empty())
             return false;
 
@@ -558,9 +558,9 @@ private:
 
         metaClassIFP->CreateInstance(metaObject);
 
-        const auto exportIt = objIFP->find(JSON_Export());
+        const auto exportIt = objIFP->find(Json_Export());
         if (exportIt != objIFP->end()) {
-            const FJSON::FString* nameIFP = exportIt->second.AsString();
+            const FJson::FString* nameIFP = exportIt->second.AsString();
             if (nameIFP == nullptr || nameIFP->empty())
                 return false;
 
@@ -568,7 +568,7 @@ private:
         }
 
         for (const auto& it : *objIFP) {
-            if (JSON_IsRTTIToken(it.first)) // skip special tokens (already parsed before)
+            if (Json_IsRTTIToken(it.first)) // skip special tokens (already parsed before)
                 continue;
 
             const RTTI::FMetaProperty* propIFP = metaClassIFP->PropertyIFP(it.first.MakeView());
@@ -591,32 +591,32 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void RTTI_to_JSON(FJSON& dst, const TMemoryView<const RTTI::PMetaObject>& src, const RTTI::FMetaTransaction* outer/* = nullptr */) {
-    FJSON::FArray& arr = dst.Root().SetType_AssumeNull(dst, FJSON::TypeArray{});
+void RTTI_to_Json(FJson& dst, const TMemoryView<const RTTI::PMetaObject>& src, const RTTI::FMetaTransaction* outer/* = nullptr */) {
+    FJson::FArray& arr = dst.Root().SetType_AssumeNull(dst, FJson::TypeArray{});
     arr.resize(src.size());
 
-    FRTTI_to_JSON_ toJSON(dst, outer);
+    FRTTI_to_Json_ toJson(dst, outer);
 
     forrange(i, 0, src.size()) {
-        FJSON::FValue& item = arr[i];
+        FJson::FValue& item = arr[i];
 
-        toJSON.PushHead(item);
-        if (not RTTI::MakeAtom(&src[i]).Accept(&toJSON))
+        toJson.PushHead(item);
+        if (not RTTI::MakeAtom(&src[i]).Accept(&toJson))
             AssertNotReached();
-        toJSON.PopHead(item);
+        toJson.PopHead(item);
     }
 }
 //----------------------------------------------------------------------------
-bool JSON_to_RTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject)& dst, const FJSON& src) {
-    const FJSON::FArray* arrIFP = src.Root().AsArray();
+bool Json_to_RTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject)& dst, const FJson& src) {
+    const FJson::FArray* arrIFP = src.Root().AsArray();
     if (nullptr == arrIFP)
         return false;
 
-    FJSON_to_RTTI_ toRTTI;
+    FJson_to_RTTI_ toRTTI;
 
     dst.resize(arrIFP->size());
     forrange(i, 0, arrIFP->size()) {
-        const FJSON::FValue& item = arrIFP->at(i);
+        const FJson::FValue& item = arrIFP->at(i);
 
         toRTTI.PushHead(item);
         bool r = RTTI::MakeAtom(&dst[i]).Accept(&toRTTI);

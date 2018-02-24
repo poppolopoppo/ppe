@@ -18,17 +18,17 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FJSONException : public Core::Serialize::FSerializeException {
+class FJsonException : public Core::Serialize::FSerializeException {
 public:
     typedef Core::Serialize::FSerializeException parent_type;
 
-    FJSONException(const char *what)
-        : FJSONException(what, Lexer::FLocation()) {}
+    FJsonException(const char *what)
+        : FJsonException(what, Lexer::FLocation()) {}
 
-    FJSONException(const char *what, const Lexer::FLocation& site)
+    FJsonException(const char *what, const Lexer::FLocation& site)
         : parent_type(what), _site(site) {}
 
-    virtual ~FJSONException() {}
+    virtual ~FJsonException() {}
 
     const Lexer::FLocation& Site() const { return _site; }
 
@@ -38,7 +38,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class CORE_SERIALIZE_API FJSON {
+class CORE_SERIALIZE_API FJson {
 public:
     class FValue;
 
@@ -78,7 +78,7 @@ public:
         FValue() : _type(Null) {}
         ~FValue() { Clear(); }
 
-        explicit FValue(FJSON& doc, EType type);
+        explicit FValue(FJson& doc, EType type);
 
         explicit FValue(FBool value) : _type(Bool), _bool(value) {}
         explicit FValue(FInteger value) : _type(Integer), _integer(value) {}
@@ -95,15 +95,15 @@ public:
 
         EType Type() const { return _type; }
 
-        FValue& SetType(FJSON& doc, EType type);
+        FValue& SetType(FJson& doc, EType type);
 
-        void SetType_AssumeNull(FJSON& doc, TType<Null>);
-        FBool& SetType_AssumeNull(FJSON& doc, TType<Bool>);
-        FInteger& SetType_AssumeNull(FJSON& doc, TType<Integer>);
-        FFloat& SetType_AssumeNull(FJSON& doc, TType<Float>);
-        FString& SetType_AssumeNull(FJSON& doc, TType<String>);
-        FArray& SetType_AssumeNull(FJSON& doc, TType<Array>);
-        FObject& SetType_AssumeNull(FJSON& doc, TType<Object>);
+        void SetType_AssumeNull(FJson& doc, TType<Null>);
+        FBool& SetType_AssumeNull(FJson& doc, TType<Bool>);
+        FInteger& SetType_AssumeNull(FJson& doc, TType<Integer>);
+        FFloat& SetType_AssumeNull(FJson& doc, TType<Float>);
+        FString& SetType_AssumeNull(FJson& doc, TType<String>);
+        FArray& SetType_AssumeNull(FJson& doc, TType<Array>);
+        FObject& SetType_AssumeNull(FJson& doc, TType<Object>);
 
         void SetValue(FBool value);
         void SetValue(FInteger value);
@@ -155,11 +155,11 @@ public:
     };
 
 public:
-    FJSON();
-    ~FJSON();
+    FJson();
+    ~FJson();
 
-    FJSON(const FJSON&) = delete;
-    FJSON& operator =(const FJSON&) = delete;
+    FJson(const FJson&) = delete;
+    FJson& operator =(const FJson&) = delete;
 
     FValue& Root() { return _root; }
     const FValue& Root() const { return _root; }
@@ -168,9 +168,9 @@ public:
 
     void ToStream(FTextWriter& oss, bool minify = false) const { _root.ToStream(oss, minify); }
 
-    static bool Load(FJSON* json, const FFilename& filename);
-    static bool Load(FJSON* json, const FFilename& filename, IBufferedStreamReader* input);
-    static bool Load(FJSON* json, const FFilename& filename, const FStringView& content);
+    static bool Load(FJson* json, const FFilename& filename);
+    static bool Load(FJson* json, const FFilename& filename, IBufferedStreamReader* input);
+    static bool Load(FJson* json, const FFilename& filename, const FStringView& content);
 
 private:
     typedef TBasicStringViewHashSet<
@@ -192,12 +192,12 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline FTextWriter& operator <<(FTextWriter& oss, const Serialize::FJSON::FValue& jsonValue) {
+inline FTextWriter& operator <<(FTextWriter& oss, const Serialize::FJson::FValue& jsonValue) {
     jsonValue.ToStream(oss);
     return oss;
 }
 //----------------------------------------------------------------------------
-inline FTextWriter& operator <<(FTextWriter& oss, const Serialize::FJSON& json) {
+inline FTextWriter& operator <<(FTextWriter& oss, const Serialize::FJson& json) {
     json.ToStream(oss);
     return oss;
 }
