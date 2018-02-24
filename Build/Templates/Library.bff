@@ -23,10 +23,12 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 {
     Using( .CompileConfig )
 
+    .ProjectLinkType ? .ConfigLinkType
+
     Alias( '$ProjectName$-$Platform$-$Config$' )
     {
         .Targets    = .ProjectPreBuild
-                    + { '$ProjectName$-$ConfigLinkType$-$Platform$-$Config$' }
+                    + { '$ProjectName$-$ProjectLinkType$-$Platform$-$Config$' }
                     + .ProjectPostBuild
     }
 
