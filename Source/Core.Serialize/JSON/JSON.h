@@ -181,8 +181,6 @@ private:
     FLinearHeap _heap;
     FValue _root;
     stringtable_type _strings;
-
-    FStringView Tokenize_(const FStringView& str);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
