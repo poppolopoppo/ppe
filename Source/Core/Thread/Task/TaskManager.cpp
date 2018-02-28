@@ -115,8 +115,8 @@ private:
     static void STDCALL FiberEntryPoint_(void* arg);
 };
 //----------------------------------------------------------------------------
-FFiberPool_::FFiberPool_(FCallback&& callback) 
-    : _callback(std::move(callback)) 
+FFiberPool_::FFiberPool_(FCallback&& callback)
+    : _callback(std::move(callback))
 #ifdef WITH_CORE_ASSERT
     , _numFibersInUse(0)
 #endif
@@ -135,7 +135,7 @@ FFiberPool_::FFiberPool_(FCallback&& callback)
     forrange(i, 0, GCapacity) {
         FHandle& h = _handles[i];
         Assert_NoAssume(h.CheckCanary_());
-        
+
         h._owner = this;
         h._index = i;
         h._released = nullptr;
@@ -222,10 +222,10 @@ void FFiberPool_::YieldCurrentFiber(FHandleRef to, bool release) {
     // prepare data for next fiber
     FHandleRef const current = CurrentHandleRef();
     Assert(this == current->_owner);
-    
+
     ONLY_IF_ASSERT(const size_t w = Word_(current->_index));
     ONLY_IF_ASSERT(const size_t e = Elmt_(current->_index));
-    
+
     if (nullptr == to)
         to = AcquireFiber();
 
@@ -234,13 +234,13 @@ void FFiberPool_::YieldCurrentFiber(FHandleRef to, bool release) {
     Assert(to->_fiber);
     Assert(this == to->_owner);
     Assert(nullptr == to->_released);
-    
+
     if (release)
         to->_released = current;
 #ifdef WITH_CORE_ASSERT
     else {
         const FAtomicSpinLock::FScope scopeLock(_barrier);
-        
+
         Assert(not _available[w][e]);
         Assert(not _hibernated[w][e]);
 
@@ -249,12 +249,12 @@ void FFiberPool_::YieldCurrentFiber(FHandleRef to, bool release) {
 #endif
 
     // <---- yield to another fiber
-    to->_fiber.Resume(); 
+    to->_fiber.Resume();
     // ----> paused or released fiber gets resumed
-    
+
     // wake up, you've been resumed
     Assert(current == CurrentHandleRef());
-    
+
 #ifdef WITH_CORE_ASSERT
     {
         const FAtomicSpinLock::FScope scopeLock(_barrier);
@@ -269,7 +269,7 @@ void FFiberPool_::YieldCurrentFiber(FHandleRef to, bool release) {
         }
     }
 #endif
-    
+
     current->WakeUp_();
 
     // resume what the fiber was doing before being interrupted
@@ -309,7 +309,7 @@ namespace {
 //----------------------------------------------------------------------------
 class FStalledFiber_ {
 public:
-    FStalledFiber_() 
+    FStalledFiber_()
     :   _stalled(nullptr) {
         _taskContextAndPriority.Reset(nullptr, uintptr_t(ETaskPriority::Normal));
     }
@@ -578,7 +578,7 @@ void FWorkerContext_::ExitWorkerTask(ITaskContext&) {
 
     FFiber thread(FFiber::ThreadFiber());
     thread.Resume();
-    
+
     AssertNotReached(); // final state of the fiber, this should never be executed !
 }
 //----------------------------------------------------------------------------
@@ -706,9 +706,9 @@ void FTaskManagerImpl::Shutdown() {
     AssertRelease(n == _threads.size());
 
     {
-        STACKLOCAL_POD_ARRAY(FTaskFunc, exitTasks, n);
+        STACKLOCAL_ASSUMEPOD_ARRAY(FTaskFunc, exitTasks, n);
         forrange(i, 0, n)
-            exitTasks[i] = &FWorkerContext_::ExitWorkerTask;
+            new ((void*)&exitTasks[i]) FTaskFunc(&FWorkerContext_::ExitWorkerTask);
 
         Run(nullptr, exitTasks, ETaskPriority::Internal);
     }
@@ -1027,7 +1027,7 @@ void FTaskManager::WaitForAll() const {
     // should wait for all other tasks since Internal is reserved
     {
         Meta::FUniqueLock scopeLock(args.Barrier);
-        
+
         _pimpl->RunOne(nullptr, [&args](ITaskContext& ctx) {
             FWaitForAll_::Task(ctx, &args);
         },  ETaskPriority::Internal/* this priority is reserved for this particular usage */);
