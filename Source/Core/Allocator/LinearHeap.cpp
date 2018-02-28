@@ -7,12 +7,18 @@
 #include "Thread/AtomicSpinLock.h"
 #include "Thread/ThreadContext.h"
 
+#include "Diagnostic/Logger.h"
+#ifdef USE_DEBUG_LOGGER
+#   include "IO/FormatHelpers.h"
+#endif
+
 //----------------------------------------------------------------------------
 // Turn to 1 to disable linear heap allocations (useful for memory debugging) :
 //----------------------------------------------------------------------------
 #define WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC (USE_CORE_MEMORY_DEBUGGING) //%__NOCOMMIT%
 
 namespace Core {
+EXTERN_LOG_CATEGORY(CORE_API, MemoryTracking)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -20,11 +26,12 @@ namespace {
 //----------------------------------------------------------------------------
 STATIC_CONST_INTEGRAL(size_t, GLinearHeapGranularity_, ALLOCATION_GRANULARITY); // 64k
 STATIC_CONST_INTEGRAL(size_t, GLinearHeapAllocationSize, GLinearHeapGranularity_);
-STATIC_CONST_INTEGRAL(size_t, GLinearHeapCapacity, GLinearHeapAllocationSize - ALLOCATION_BOUNDARY);
-STATIC_CONST_INTEGRAL(size_t, GLinearHeapMaxSize, GLinearHeapCapacity);
+STATIC_CONST_INTEGRAL(size_t, GLinearHeapBlockCapacity, GLinearHeapAllocationSize - ALLOCATION_BOUNDARY);
+STATIC_CONST_INTEGRAL(size_t, GLinearHeapMaxSize, GLinearHeapBlockCapacity);
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_ASSERT
 #   define AssertCheckCanary(_ITEM) Assert_NoAssume((_ITEM).CheckCanary())
+static void FillDeletedBlock_(void* ptr, size_t sizeInBytes) { ::memset(ptr, 0xDD, sizeInBytes); }
 #else
 #   define AssertCheckCanary(_ITEM) NOOP(_ITEM)
 #endif
@@ -55,7 +62,7 @@ struct FLinearHeapBlock_ {
 
     size_t OffsetFromPtr(void* ptr) {
         const size_t off = ((u8*)ptr - (u8*)(this + 1));
-        Assert(off < GLinearHeapCapacity);
+        Assert(off < GLinearHeapBlockCapacity);
         return off;
     }
 
@@ -67,7 +74,7 @@ struct FLinearHeapBlock_ {
         return blk;
     }
 };
-STATIC_ASSERT(sizeof(FLinearHeapBlock_) + GLinearHeapCapacity == GLinearHeapGranularity_);
+STATIC_ASSERT(sizeof(FLinearHeapBlock_) + GLinearHeapBlockCapacity == GLinearHeapGranularity_);
 #else
 struct FLinearHeapBlock_ {
     FLinearHeapBlock_* Next;
@@ -92,7 +99,7 @@ public:
         blk->Offset = blk->Last = 0;
         blk->Next = next;
 #ifdef WITH_CORE_ASSERT
-        ::memset(blk + 1, 0xCC, GLinearHeapCapacity);
+        ::memset(blk + 1, 0xCC, GLinearHeapBlockCapacity);
 #endif
         return blk;
     }
@@ -100,10 +107,14 @@ public:
     static FLinearHeapBlock_* ReleaseBlock(FLinearHeapBlock_* blk) {
         AssertCheckCanary(*blk);
         Assert(blk->Last <= blk->Offset);
-        Assert(blk->Offset <= GLinearHeapCapacity);
+        Assert(blk->Offset <= GLinearHeapBlockCapacity);
         FLinearHeapBlock_* const next = blk->Next;
         Instance_().Free_(blk, GLinearHeapAllocationSize);
         return next;
+    }
+
+    static void ReleaseAll() {
+        Instance_().ReleaseAll_();
     }
 
 private:
@@ -126,6 +137,11 @@ private:
     void Free_(void* ptr, size_t sizeInBytes) {
         const FAtomicSpinLock::FScope scopeLock(_barrier);
         _vm.Free(ptr, sizeInBytes);
+    }
+
+    void ReleaseAll_() {
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+        _vm.ReleaseAll();
     }
 };
 #endif //!!WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
@@ -151,6 +167,27 @@ FLinearHeap::FLinearHeap()
 #endif
 //----------------------------------------------------------------------------
 FLinearHeap::~FLinearHeap() {
+#if defined(USE_DEBUG_LOGGER) && defined(USE_MEMORY_DOMAINS)
+    size_t totalBlockCount = 0;
+    size_t totalSizeInBytes = 0;
+    for (auto* blk = static_cast<FLinearHeapBlock_*>(_blocks);
+        blk; blk = blk->Next) {
+        totalBlockCount++;
+        totalSizeInBytes += GLinearHeapBlockCapacity;
+    }
+
+    LOG(MemoryTracking, Debug, L"linear heap <{0}> allocated {1} blocks using {2} pages, ie {3:f2} / {4:f2} allocated ({5}, max:{6})",
+        _trackingData.Parent()
+            ? MakeCStringView(_trackingData.Parent()->Name())
+            : MakeCStringView(_trackingData.Name()),
+        Fmt::CountOfElements(_trackingData.BlockCount()),
+        totalBlockCount,
+        Fmt::SizeInBytes(_trackingData.TotalSizeInBytes()),
+        Fmt::SizeInBytes(totalSizeInBytes),
+        Fmt::Percentage(_trackingData.TotalSizeInBytes(), totalSizeInBytes),
+        Fmt::Percentage(_trackingData.MaxTotalSizeInBytes(), totalSizeInBytes) );
+#endif
+
     ReleaseAll();
 
 #ifdef USE_MEMORY_DOMAINS
@@ -177,12 +214,24 @@ void* FLinearHeap::Allocate(size_t size, size_t alignment/* = ALLOCATION_BOUNDAR
 
 #else
     auto* blk = static_cast<FLinearHeapBlock_*>(_blocks);
-    if (Unlikely(nullptr == blk || Meta::RoundToNext(blk->Offset, alignment) + size > GLinearHeapCapacity))
-        _blocks = blk = FLinearHeapVMCache_::AllocateBlock(blk);
+    if (Unlikely(nullptr == blk || Meta::RoundToNext(blk->Offset, alignment) + size > GLinearHeapBlockCapacity)) {
+        FLinearHeapBlock_* const prev = blk;
+#if 0
+        // try to look in previous blocks in there's enough space there
+        if (blk)
+            for (blk = blk->Next; blk; blk = blk->Next) {
+                if (Meta::RoundToNext(blk->Offset, alignment) + size <= GLinearHeapBlockCapacity)
+                    break; // yeah fits here !
+            }
+        // allocate a new block if didn't find
+        if (nullptr == blk)
+#endif
+        _blocks = blk = FLinearHeapVMCache_::AllocateBlock(prev);
+    }
     AssertCheckCanary(*blk);
 
     const size_t off = Meta::RoundToNext(blk->Offset, alignment);
-    Assert(off + size <= GLinearHeapCapacity);
+    Assert(off + size <= GLinearHeapBlockCapacity);
 
     blk->Offset = checked_cast<u16>(off + size);
     blk->Last = u16(off);
@@ -218,7 +267,7 @@ void* FLinearHeap::Relocate(void* ptr, size_t newSize, size_t oldSize, size_t al
         AssertCheckCanary(*blk);
         if (ptr == (blk + 1)) {
             Assert(nullptr != prev || _blocks == ptr);
-            
+
             if (prev)
                 prev->Next = blk->Next;
             else
@@ -242,9 +291,9 @@ void* FLinearHeap::Relocate(void* ptr, size_t newSize, size_t oldSize, size_t al
     if (ptr) {
         FLinearHeapBlock_* blk = FLinearHeapBlock_::BlockFromPtr(ptr);
         Assert_NoAssume(FLinearHeapBlock_::Contains(static_cast<FLinearHeapBlock_*>(_blocks), blk));
-        
+
         const size_t off = blk->OffsetFromPtr(ptr);
-        if (blk->Last == off && blk->Last + newSize <= GLinearHeapCapacity) {
+        if (blk->Last == off && blk->Last + newSize <= GLinearHeapBlockCapacity) {
             blk->Offset = checked_cast<u16>(blk->Last + newSize);
 #ifdef USE_MEMORY_DOMAINS
             _trackingData.Deallocate(1, oldSize);
@@ -255,6 +304,7 @@ void* FLinearHeap::Relocate(void* ptr, size_t newSize, size_t oldSize, size_t al
         else {
             void* const newp = Allocate(newSize, alignment);
             ::memcpy(newp, ptr, Min(oldSize, newSize));
+            ONLY_IF_ASSERT(FillDeletedBlock_(ptr, oldSize));
             return newp;
         }
     }
@@ -276,7 +326,7 @@ void FLinearHeap::Release(void* ptr, size_t size) {
         if (ptr == (blk + 1)) {
             Assert(nullptr != prev || _blocks == ptr);
             Assert(size == blk->SizeInBytes);
-            
+
             if (prev)
                 prev->Next = blk->Next;
             else
@@ -308,6 +358,8 @@ void FLinearHeap::Release(void* ptr, size_t size) {
 #   endif
     }
 
+    ONLY_IF_ASSERT(FillDeletedBlock_(ptr, size));
+
 #endif
 }
 //----------------------------------------------------------------------------
@@ -317,7 +369,7 @@ void FLinearHeap::ReleaseAll() {
 #if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
     while (blk) {
         AssertCheckCanary(*blk);
-        
+
 #   ifdef USE_MEMORY_DOMAINS
         _trackingData.Deallocate(1, blk->SizeInBytes);
 #   endif
@@ -339,6 +391,10 @@ void FLinearHeap::ReleaseAll() {
 #   endif
 
 #endif
+}
+//----------------------------------------------------------------------------
+void FLinearHeap::FlushVirtualMemoryCache() {
+    FLinearHeapVMCache_::ReleaseAll();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

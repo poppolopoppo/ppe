@@ -14,8 +14,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 #define VECTOR_LINEARHEAP(T) ::Core::TVector<T, ::Core::TLinearHeapAllocator<T>>
 //----------------------------------------------------------------------------
+#define ASSOCIATIVE_VECTOR_LINEARHEAP(_KEY, _VALUE) ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTOR_LINEARHEAP(::Core::TPair<_KEY COMMA _VALUE>)>
+//----------------------------------------------------------------------------
+#define HASHSET_LINEARHEAP(T) ::Core::THashSet<T, ::Core::Meta::THash<T>, ::Core::Meta::TEqualTo<T>, ::Core::TLinearHeapAllocator<T>>
+//----------------------------------------------------------------------------
+#define HASHMAP_LINEARHEAP(_KEY, _VALUE) ::Core::THashMap<_KEY, _VALUE, ::Core::Meta::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, ::Core::TLinearHeapAllocator<::Core::TPair<_KEY, _VALUE>>>
+//----------------------------------------------------------------------------e
 #ifdef USE_MEMORY_DOMAINS
-#   define LINEARHEAP_DOMAIN_TRACKINGDATA(_DOMAIN) &MEMORY_DOMAIN_TRACKING_DATA(Json)
+#   define LINEARHEAP_DOMAIN_TRACKINGDATA(_DOMAIN) &MEMORY_DOMAIN_TRACKING_DATA(_DOMAIN)
 #else
 #   define LINEARHEAP_DOMAIN_TRACKINGDATA(_DOMAIN)
 #endif
@@ -49,6 +55,7 @@ public:
     void ReleaseAll();
 
     static const size_t MaxBlockSize;
+    static void FlushVirtualMemoryCache();
 
 private:
     void* _blocks;
@@ -117,6 +124,9 @@ public:
 
     // see AllocatorRealloc()
     void* relocate(void* p, size_type newSize, size_type oldSize);
+
+    // overload destroy() to disable destructor calls with heap !
+    void destroy(pointer p) { NOOP(p); }
 
 private:
     FLinearHeap* _heap;
