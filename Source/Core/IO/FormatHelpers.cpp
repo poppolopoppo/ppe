@@ -12,6 +12,34 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, Fmt::FPointer ptr) {
+    return oss << (const void*)ptr.Value;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPointer ptr) {
+    return oss << (const void*)ptr.Value;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, Fmt::FPercentage prc) {
+    return (*oss.FormatScope())
+        << FTextFormat::PadLeft(6, ' ') // 100.00
+        << FTextFormat::Float(FTextFormat::FixedFloat, 2)
+        << prc.Value
+        << '%';
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPercentage prc) {
+    return (*oss.FormatScope())
+        << FTextFormat::PadLeft(6, L' ') // 100.00
+        << FTextFormat::Float(FTextFormat::FixedFloat, 2)
+        << prc.Value
+        << L'%';
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, Fmt::FCountOfElements count) {
     if (oss.Format().Width() > 1)
         oss.Format().SetWidth(oss.Format().Width() - 2);
@@ -38,16 +66,6 @@ FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FCountOfElements count) {
         oss << count.Value << L"  "/* for alignment */;
 
     return oss;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, Fmt::FPointer ptr) {
-    return oss << (const void*)ptr.Value;
-}
-//----------------------------------------------------------------------------
-FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPointer ptr) {
-    return oss << (const void*)ptr.Value;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

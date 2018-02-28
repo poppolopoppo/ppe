@@ -14,6 +14,28 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
+CORE_STRONGLYTYPED_NUMERIC_DEF(intptr_t, FPointer);
+template <typename T>
+FPointer Pointer(T* p) { return FPointer{ intptr_t(p) }; }
+} //!namespace Fmt
+//----------------------------------------------------------------------------
+CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FPointer ptr);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPointer ptr);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Fmt {
+CORE_STRONGLYTYPED_NUMERIC_DEF(float, FPercentage);
+template <typename T, typename = Meta::TEnableIf<std::is_arithmetic_v<T>> >
+FPercentage Percentage(T x, T total) { return FPercentage{ x * 100.f / total }; }
+} //!namespace Fmt
+//----------------------------------------------------------------------------
+CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FPercentage prc);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPercentage prc);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Fmt {
 CORE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, FCountOfElements);
 template <typename T>
 Meta::TEnableIf<std::is_integral_v<T>, FCountOfElements> CountOfElements(T n) {
@@ -23,17 +45,6 @@ Meta::TEnableIf<std::is_integral_v<T>, FCountOfElements> CountOfElements(T n) {
 //----------------------------------------------------------------------------
 CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FCountOfElements count);
 CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FCountOfElements count);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace Fmt {
-CORE_STRONGLYTYPED_NUMERIC_DEF(intptr_t, FPointer);
-template <typename T>
-FPointer Pointer(T* p) { return FPointer{ p }; }
-} //!namespace Fmt
-//----------------------------------------------------------------------------
-CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FPointer ptr);
-CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPointer ptr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -239,7 +250,7 @@ struct TBasicIndent {
 struct FIndent : TBasicIndent<char> {
     using TBasicIndent<char>::FScope;
 
-    explicit FIndent(const FStringView& tab = "    ") 
+    explicit FIndent(const FStringView& tab = "    ")
         : TBasicIndent<char>(tab) {}
 
     static FIndent UsingTabs() { return FIndent{ "\t" }; }
@@ -250,7 +261,7 @@ struct FIndent : TBasicIndent<char> {
 struct FWIndent : TBasicIndent<wchar_t> {
     using TBasicIndent<wchar_t>::FScope;
 
-    explicit FWIndent(const FWStringView& tab = L"    ") 
+    explicit FWIndent(const FWStringView& tab = L"    ")
         : TBasicIndent<wchar_t>(tab) {}
 
     static FWIndent UsingTabs() { return FWIndent{ L"\t" }; }
