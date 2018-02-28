@@ -37,7 +37,7 @@ FBenchmarkScope::~FBenchmarkScope() {
     if (_parentIFP)
         _parentIFP->_accumulated.SetValue(*_parentIFP->_accumulated + *elapsed);
 
-    LOG(Benchmark, Info, L"{0:28} | {1}{2} | {3:10f2} / {4:10f2}",
+    LOG(Benchmark, Info, L"{0:28} | {1}{2} | {3:10f2} / {4:12f2}",
         _category,
         Fmt::Repeat(L"  ", _depth),
         Fmt::PadRight(_message, 28 - _depth * 2, L' '),
