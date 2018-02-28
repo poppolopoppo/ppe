@@ -6,26 +6,27 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace StronglyTyped {
-//----------------------------------------------------------------------------
-template <typename T, typename _Tag, T _DefaultValue = T() >
+template <typename T, typename _Tag>
 struct TNumeric {
-    static_assert(std::is_arithmetic<T>::value, "T must be an arithmetic type");
-
     typedef T value_type;
     typedef _Tag tag_type;
 
-    STATIC_CONST_INTEGRAL(T, DefaultValue, _DefaultValue);
+    static constexpr T DefaultValue() {
+        return tag_type::DefaultValue();
+    }
 
     T Value;
 
-    explicit TNumeric(T value = _DefaultValue) : Value(value) {}
+    explicit TNumeric(T value = DefaultValue()) : Value(value) {
+        STATIC_ASSERT(std::is_arithmetic_v<T>);
+    }
+
     operator T () const { return Value; }
 
     TNumeric(const TNumeric& other) : Value(other.Value) {}
     TNumeric& operator =(const TNumeric& other) { Value =other.Value; return *this; }
 
-    bool IsDefaultValue() const { return (_DefaultValue == Value); }
+    bool IsDefaultValue() const { return (DefaultValue() == Value); }
 
     friend bool operator ==(const TNumeric& lhs, const TNumeric& rhs) { return lhs.Value == rhs.Value; }
     friend bool operator !=(const TNumeric& lhs, const TNumeric& rhs) { return lhs.Value != rhs.Value; }
@@ -44,16 +45,29 @@ struct TNumeric {
     static TNumeric Zero() { return TNumeric(T(0)); }
 };
 //----------------------------------------------------------------------------
-} //!namespace StronglyTyped
+template <typename T, typename _Tag, T _DefaultValue, typename = Meta::TEnableIf<std::is_integral_v<T>/* C++ forbid float as template arg */> >
+struct TNumericDefault : public TNumeric<T, TNumericDefault<T, _Tag, _DefaultValue> > {
+    static constexpr T DefaultValue() { return (_DefaultValue); }
+    using parent_type = TNumeric<T, TNumericDefault>;
+    using parent_type::DefaultValue;
+    using parent_type::parent_type;
+    using parent_type::operator T;
+    using parent_type::IsDefaultValue;
+    using parent_type::MinusOne;
+    using parent_type::One;
+    using parent_type::Zero;
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define CORE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(T, _Name, _DefaultValue) \
-    namespace StronglyTyped { struct _Name {}; } \
-    typedef ::Core::StronglyTyped::TNumeric<T, StronglyTyped::_Name, _DefaultValue > _Name
+    namespace StronglyTyped { struct _Name { \
+        static constexpr T DefaultValue() { return (_DefaultValue); } \
+    }; } \
+    using _Name = ::Core::TNumeric<T, StronglyTyped::_Name>
 //----------------------------------------------------------------------------
 #define CORE_STRONGLYTYPED_NUMERIC_DEF(T, _Name) \
-    CORE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(T, _Name, ((T)0))
+    CORE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(T, _Name, T{})
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

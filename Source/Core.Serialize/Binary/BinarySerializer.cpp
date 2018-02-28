@@ -121,7 +121,7 @@ public:
     typedef TObjectTraits_<_Key> traits_type;
     typedef typename traits_type::hash_type hash_type;
     typedef typename traits_type::equalto_type equalto_type;
-    typedef StronglyTyped::TNumeric<u32, TObjectIndexer_, UINT32_MAX> index_t;
+    typedef TNumericDefault<u32, TObjectIndexer_, UINT32_MAX> index_t;
     typedef THashMap<_Key, index_t, hash_type, equalto_type, THREAD_LOCAL_ALLOCATOR(Serialize, TPair<_Key, index_t>)> hashmap_type;
 
     hashmap_type Entities;
@@ -131,9 +131,9 @@ public:
 
     bool Insert_ReturnIfExists(index_t* pindex, const _Key& key) {
         index_t& incache = Entities[key];
-        if (index_t::DefaultValue == incache) {
+        if (incache.IsDefaultValue()) {
             *pindex = incache = index_t(checked_cast<typename index_t::value_type>(Entities.size() - 1));
-            Assert(index_t::DefaultValue != incache);
+            Assert(not incache.IsDefaultValue());
             return false;
         }
         else {
@@ -563,7 +563,7 @@ private:
 
     FBinarySerializer* _owner;
 
-    typedef StronglyTyped::TNumeric<u32, FBinaryDeserialize_, UINT32_MAX> index_t;
+    typedef TNumericDefault<u32, FBinaryDeserialize_, UINT32_MAX> index_t;
     typedef index_t object_index_t;
 
     typedef VECTOR_THREAD_LOCAL(Serialize, const RTTI::FMetaProperty*) properties_type;
@@ -1127,7 +1127,7 @@ auto FBinarySerialize_::AddClass_(const RTTI::FMetaClass* metaClass) -> class_in
         Assert(_propertiesByClassIndex.size() + 1 == _classIndices.size());
         _propertiesByClassIndex.emplace_back();
     }
-    Assert(class_index_t::DefaultValue != class_i);
+    Assert(not class_i.IsDefaultValue());
     return class_i;
 }
 //----------------------------------------------------------------------------
@@ -1137,7 +1137,7 @@ auto FBinarySerialize_::AddObject_(const RTTI::FMetaObject* object) -> object_in
     if (false == alreadyStreamed)
         _objectQueue.push_back(object);
 
-    Assert(object_index_t::DefaultValue != object_i);
+    Assert(not object_i.IsDefaultValue());
     return object_i;
 }
 //----------------------------------------------------------------------------
