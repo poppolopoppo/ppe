@@ -4,10 +4,10 @@
 
 #include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/Lexer/Location.h"
+#include "Core.Serialize/Lexer/TextHeap.h"
 
 #include "Core/Allocator/LinearHeap.h"
-#include "Core/Container/StringHashMap.h"
-#include "Core/Container/StringHashSet.h"
+#include "Core/Container/AssociativeVector.h"
 #include "Core/Container/Vector.h"
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/TextWriter_fwd.h"
@@ -45,12 +45,9 @@ public:
     using FBool = bool;
     using FInteger = i64;
     using FFloat = double;
-    using FString = FStringView;
+    using FString = FTextHeap::FText;
     using FArray = VECTOR_LINEARHEAP(FValue);
-    using FObject = TBasicStringViewHashMap<
-        char, FValue, ECase::Sensitive,
-        TLinearHeapAllocator<TPair<FString, FValue>>
-    >;
+    using FObject = ASSOCIATIVE_VECTOR_LINEARHEAP(FString, FValue);
 
     enum EType {
         Null = 0,
@@ -173,14 +170,9 @@ public:
     static bool Load(FJson* json, const FFilename& filename, const FStringView& content);
 
 private:
-    typedef TBasicStringViewHashSet<
-        char, ECase::Sensitive,
-        TLinearHeapAllocator<FStringView>
-    >   stringtable_type;
-
     FLinearHeap _heap;
     FValue _root;
-    stringtable_type _strings;
+    FTextHeap _textHeap;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

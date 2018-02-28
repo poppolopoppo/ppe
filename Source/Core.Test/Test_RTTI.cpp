@@ -473,8 +473,6 @@ static NO_INLINE void Test_Serialize_() {
 
         Serialize::FJson in, out;
         {
-            serialized.Reset();
-
             in.Root().SetValue(165674.5454 / 0.666666);
             serialized << in;
 
@@ -483,14 +481,13 @@ static NO_INLINE void Test_Serialize_() {
 
             Assert(in.Root() == out.Root());
         }
+        serialized.Reset();
         {
-            serialized.Reset();
-
             RTTI::FBinaryData binData;
             rand.Randomize(RTTI::MakeAtom(&binData));
 
-            FString str = ToString(binData.MakeConstView().Cast<const char>());
-            in.Root().SetValue(std::move(str));
+            FStringView str = binData.MakeConstView().Cast<const char>();
+            in.Root().SetValue(in.MakeString(str));
             serialized << in;
 
             if (not Serialize::FJson::Load(&out, L"memory", serialized.Written()))

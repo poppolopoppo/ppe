@@ -483,9 +483,13 @@ void FJson::FValue::ToStream(FTextWriter& oss, bool minify/* = true */) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+STATIC_ASSERT(Meta::TCheckSameSize<FJson::FObject, FJson::FArray>::value);
+STATIC_ASSERT(Meta::TCheckSameSize<FJson::FString, FJson::FArray>::value);
+STATIC_ASSERT(Meta::TCheckSameSize<FJson::FObject, FJson::FString>::value);
+//----------------------------------------------------------------------------
 FJson::FJson()
     : _heap(LINEARHEAP_DOMAIN_TRACKINGDATA(Json))
-    , _strings(stringtable_type::allocator_type(_heap))
+    , _textHeap(_heap)
 {}
 //----------------------------------------------------------------------------
 FJson::~FJson() {}
@@ -505,30 +509,8 @@ bool FJson::Load(FJson* json, const FFilename& filename) {
     return Load(json, filename, content.MakeConstView().Cast<const char>());
 }
 //----------------------------------------------------------------------------
-FStringView FJson::MakeString(const FStringView& str, bool mergeable/* = true */) {
-    if (str.empty()) {
-        return str;
-    }
-    else if (mergeable) {
-        // tries to pool short to medium strings :
-        const auto it = _strings.insert(str);
-        if (it.second) {
-            void* const storage = _heap.Allocate(str.SizeInBytes(), std::alignment_of_v<char>);
-            ::memcpy(storage, str.data(), str.SizeInBytes());
-            // hack for replacing registered string view with one pointer to linear heap storage
-            const auto allocated = FStringView((char*)storage, str.size());
-            auto& registered = const_cast<FStringView&>(*it.first);
-            Assert(hash_string(allocated) == hash_string(registered));
-            registered = allocated;
-        }
-        return (*it.first);
-    }
-    else {
-        // some strings have too much entropy and won't benefit from merging :
-        void* const storage = _heap.Allocate(str.SizeInBytes(), std::alignment_of_v<char>);
-        ::memcpy(storage, str.data(), str.SizeInBytes());
-        return FStringView((char*)storage, str.size());
-    }
+auto FJson::MakeString(const FStringView& str, bool mergeable/* = true */) -> FString {
+    return _textHeap.MakeText(str);
 }
 //----------------------------------------------------------------------------
 bool FJson::Load(FJson* json, const FFilename& filename, const FStringView& content) {
@@ -544,7 +526,7 @@ bool FJson::Load(FJson* json, const FFilename& filename, IBufferedStreamReader* 
     Lexer::FLexer lexer(input, filenameStr.MakeView(), false);
 
     json->_root = FValue();
-    json->_strings.reserve(32);
+    json->_textHeap.reserve(32);
 
     CORE_TRY{
         if (not Json_::ParseValue_(lexer, *json, json->_root))

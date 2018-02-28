@@ -74,8 +74,8 @@ void FJsonSerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransact
 namespace {
 //----------------------------------------------------------------------------
 static bool Json_IsRTTIToken(const FStringView& str) { return (str.size() > 1 && '$' == str[0]); }
-static FStringView Json_MetaClass() { return "$RTTI_Class"; };
-static FStringView Json_Export()    { return "$RTTI_Export"; };
+static FTextHeap::FText Json_MetaClass() { return FTextHeap::MakeStaticText("$RTTI_Class"); };
+static FTextHeap::FText Json_Export()    { return FTextHeap::MakeStaticText("$RTTI_Export"); };
 //----------------------------------------------------------------------------
 template <typename T, class = void>
 struct TJson_RTTI_traits;
@@ -528,10 +528,10 @@ private:
 
         // external reference
         if (const FJson::FString* importIFP = Head_().AsString()) {
-            if ('<' != importIFP->front() || '>' != importIFP->back())
+            if ('<' != importIFP->MakeView().front() || '>' != importIFP->MakeView().back())
                 return false;
 
-            const FStringView name = importIFP->ShiftFront().ShiftBack();
+            const FStringView name = importIFP->MakeView().ShiftFront().ShiftBack();
 
             metaObject = RTTI::MetaDB().ObjectIFP(name);
             if (nullptr == metaObject)
