@@ -65,8 +65,6 @@ public:
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton >
 auto THeapAllocator<T, _HeapSingleton>::allocate(size_type n) -> pointer {
-    enum { Alignment = std::alignment_of<T>::value };
-
     // The return value of allocate(0) is unspecified.
     // TMallocator returns NULL in order to avoid depending
     // on malloc(0)'s implementation-defined behavior
@@ -83,7 +81,7 @@ auto THeapAllocator<T, _HeapSingleton>::allocate(size_type n) -> pointer {
         CORE_THROW_IT(std::length_error("THeapAllocator<T, _HeapSingleton>::allocate() - Integer overflow."));
 
     // THeapAllocator wraps FHeap.
-    void * const pv = HeapInstance().Malloc<Alignment>(n * sizeof(T));
+    void * const pv = HeapInstance().Malloc<std::alignment_of<T>::value>(n * sizeof(T));
 
     // Allocators should throw std::bad_alloc in the case of memory allocation failure.
     if (pv == nullptr)
@@ -94,20 +92,18 @@ auto THeapAllocator<T, _HeapSingleton>::allocate(size_type n) -> pointer {
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton >
 void THeapAllocator<T, _HeapSingleton>::deallocate(void* p, size_type n) {
-    enum { Alignment = std::alignment_of<T>::value };
     UNUSED(n);
 
     // THeapAllocator wraps FHeap.
-    HeapInstance().Free<Alignment>(p);
+    HeapInstance().Free<std::alignment_of<T>::value>(p);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _HeapSingleton >
 void* THeapAllocator<T, _HeapSingleton>::relocate(void* p, size_type newSize, size_type oldSize) {
-    enum { Alignment = std::alignment_of<T>::value };
     UNUSED(oldSize);
 
     // THeapAllocator wraps FHeap.
-    void* const newp = HeapInstance().Realloc<Alignment>(p, newSize * sizeof(T));
+    void* const newp = HeapInstance().Realloc<std::alignment_of<T>::value>(p, newSize * sizeof(T));
     if (nullptr == newp && newSize)
         CORE_THROW_IT(std::bad_alloc());
 
