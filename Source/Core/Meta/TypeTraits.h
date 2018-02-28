@@ -19,8 +19,21 @@ namespace Meta {
 template <typename T, T _Value>
 using TIntegralConstant = typename std::integral_constant<T, _Value>::type;
 //----------------------------------------------------------------------------
+// Function overloading helpers to use dummy parameters for specialization :
 template <typename T>
-struct TType {}; // used to overload function base on type without to give an actual value
+struct TType {};
+//----------------------------------------------------------------------------
+// This ugly piece of crap is just used in STATIC_ASSERT() to get to see the
+// actual size of the types when the assertion fails :
+template <typename A, typename B>
+struct TCheckSameSize {
+    template <size_t X, size_t Y>
+    struct TTest {
+        STATIC_CONST_INTEGRAL(bool, value, (X == Y));
+        static_assert(value, "A and B should have the same size !");
+    };
+    STATIC_CONST_INTEGRAL(bool, value, TTest<sizeof(A), sizeof(B)>::value);
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
