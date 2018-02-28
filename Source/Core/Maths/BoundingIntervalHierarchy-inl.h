@@ -76,7 +76,7 @@ void TBIHTree<T, _Traits>::RebuildTree(size_t maxItemsPerLeaf/* = DefaultMaxItem
 
     FBoundingBox bounds;
 
-    STACKLOCAL_POD_ARRAY(FBoundingBox, aabbs, _items.size());
+    STACKLOCAL_ASSUMEPOD_ARRAY(FBoundingBox, aabbs, _items.size());
     forrange(i, 0, _items.size())
         bounds.Add(aabbs[i] = traits_type::MakeBounds(_items[i]));
 

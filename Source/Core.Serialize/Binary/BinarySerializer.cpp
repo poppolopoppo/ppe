@@ -516,7 +516,7 @@ private:
                 return true;
             }
 
-            STACKLOCAL_POD_ARRAY(FFileSystemToken, tokenized, k.Value);
+            STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, tokenized, k.Value);
             forrange(i, 0, k.Value) {
                 index_t wstr_i;
                 if (false == _reader->ReadPOD(&wstr_i))
@@ -538,7 +538,7 @@ private:
                 return false;
 
             index_t wstr_i;
-            
+
             if (false == _reader->ReadPOD(&wstr_i))
                 return false;
             if (wstr_i >= _owner->_wstrings.size())
@@ -988,9 +988,9 @@ private:
                 return;
             }
 
-            STACKLOCAL_POD_ARRAY(FFileSystemToken, tokenized, k);
+            STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, tokenized, k);
             dirpath.ExpandTokens(tokenized);
-            
+
             WritePOD(checked_cast<u32>(k));
 
             for (const FFileSystemToken& token : tokenized) {
@@ -1004,7 +1004,7 @@ private:
 
             wstring_index_t wstr_i;
             FWStringView wstr;
-            
+
             wstr_i = _owner->_wstringIndices.IndexOf(filename.BasenameNoExt().MakeView());
             WritePOD(wstr_i);
 

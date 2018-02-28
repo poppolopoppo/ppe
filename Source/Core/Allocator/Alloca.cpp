@@ -2,6 +2,7 @@
 
 #include "Alloca.h"
 
+#include "Diagnostic/Logger.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Memory/VirtualMemory.h"
@@ -9,6 +10,10 @@
 #include "Misc/TargetPlatform.h"
 
 #include "ThreadLocalHeap.h"
+
+#ifdef USE_DEBUG_LOGGER
+#   include "IO/FormatHelpers.h"
+#endif
 
 #if USE_CORE_MEMORY_DEBUGGING
 #   define WITH_CORE_ALLOCA_FALLBACK_TO_MALLOC
@@ -19,6 +24,7 @@
 #endif
 
 namespace Core {
+LOG_CATEGORY(CORE_API, Alloca);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -89,8 +95,8 @@ private:
 //----------------------------------------------------------------------------
 FAllocaStorage::FAllocaStorage()
 :   _offset(0)
-,   _storage(nullptr)
-{}
+,   _storage(nullptr) {
+}
 //----------------------------------------------------------------------------
 FAllocaStorage::~FAllocaStorage() {
     Assert(0 == _offset); // Check that all used memory has been released
@@ -368,12 +374,20 @@ static void* AllocaLocalStorage_Alloc_() {
     MEMORY_DOMAIN_TRACKING_DATA(Alloca).Allocate(1, FAllocaStorage::Capacity);
 #endif
 
+    LOG(Alloca, Debug, L"allocate storage {0} [{1}]",
+        Fmt::Pointer(p),
+        Fmt::SizeInBytes(size_t(FAllocaStorage::Capacity)) );
+
     return p;
 }
 //----------------------------------------------------------------------------
 static void AllocaLocalStorage_Deallocate_(void* p) {
     Assert(p);
     Assert(Meta::IsAligned(FPlatformMisc::SystemInfo.AllocationGranularity, p));
+
+    LOG(Alloca, Debug, L"release storage {0} [{1}]",
+        Fmt::Pointer(p),
+        Fmt::SizeInBytes(size_t(FAllocaStorage::Capacity)) );
 
 #ifdef USE_MEMORY_DOMAINS
     MEMORY_DOMAIN_TRACKING_DATA(Alloca).Deallocate(1, FAllocaStorage::Capacity);

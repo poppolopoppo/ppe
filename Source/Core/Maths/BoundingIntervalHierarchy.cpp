@@ -57,7 +57,7 @@ static size_t CullBIHTree_(
     };
 
     FBIHCandidate_ it{ root, bounds, 0, checked_cast<u32>(count) };
-    STACKLOCAL_POD_STACK(FBIHCandidate_, candidates, ApproxBIHTreeDepth_(count));
+    STACKLOCAL_ASSUMEPOD_STACK(FBIHCandidate_, candidates, ApproxBIHTreeDepth_(count));
 
     size_t intersections = 0;
 
@@ -166,7 +166,7 @@ void FBasicBIHTree::Build(
     };
 
     FBIHCandidate_ it{ 0, checked_cast<u32>(indices.size()), _root, _bounds, _bounds };
-    STACKLOCAL_POD_STACK(FBIHCandidate_, candidates, ApproxBIHTreeDepth_(indices.size()));
+    STACKLOCAL_ASSUMEPOD_STACK(FBIHCandidate_, candidates, ApproxBIHTreeDepth_(indices.size()));
 
     do {
         Assert(it.Node);
@@ -338,7 +338,7 @@ bool FBasicBIHTree::Intersects(const FRay& ray, FHitResult* firstHit, size_t cou
     float distance;
     FHitResult hit{ FLT_MAX, (decltype(firstHit->Item))-1 };
     FBIHCandidate_ it{ FLT_MAX, _root, _bounds, 0, checked_cast<u32>(count) };
-    STACKLOCAL_POD_HEAP(FBIHCandidate_, FClosestBIHCandidate_{}, candidates, ApproxBIHTreeDepth_(count));
+    STACKLOCAL_ASSUMEPOD_HEAP(FBIHCandidate_, FClosestBIHCandidate_{}, candidates, ApproxBIHTreeDepth_(count));
 
     do {
         Assert(it.Node);
@@ -411,7 +411,7 @@ bool FBasicBIHTree::Intersects(const FRay& ray, const onhit_delegate& onHit, siz
     };
 
     FBIHCandidate_ it{ _root, _bounds, 0, checked_cast<u32>(count) };
-    STACKLOCAL_POD_STACK(FBIHCandidate_, candidates, ApproxBIHTreeDepth_(count));
+    STACKLOCAL_ASSUMEPOD_STACK(FBIHCandidate_, candidates, ApproxBIHTreeDepth_(count));
 
     bool intersected = false;
 
@@ -470,7 +470,7 @@ size_t FBasicBIHTree::BatchIntersects(const TMemoryView<const FRay>& rays, const
     };
 
     FBIHCandidate_ it{ _root, _bounds, 0, checked_cast<u16>(rays.size()), 0, checked_cast<u32>(count) };
-    STACKLOCAL_POD_STACK(FBIHCandidate_, candidates, 32);
+    STACKLOCAL_ASSUMEPOD_STACK(FBIHCandidate_, candidates, 32);
 
     STACKLOCAL_POD_ARRAY(u16, rayIndices, rays.size());
     forrange(i, it.RaysBegin, it.RaysEnd)

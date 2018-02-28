@@ -51,7 +51,7 @@ static const FFileSystemNode *ParseDirpath_(const FileSystem::FStringView& str) 
     if (str.empty())
         return nullptr;
 
-    STACKLOCAL_POD_STACK(FFileSystemToken, path, FDirpath::MaxDepth);
+    STACKLOCAL_ASSUMEPOD_STACK(FFileSystemToken, path, FDirpath::MaxDepth);
 
     const FileSystem::FStringView separators = FileSystem::Separators();
 
@@ -73,7 +73,7 @@ static const FFileSystemNode *DirpathNode_(const FMountingPoint& mountingPoint, 
     if (0 == count)
         return nullptr;
 
-    STACKLOCAL_POD_STACK(FFileSystemToken, tokens, count);
+    STACKLOCAL_ASSUMEPOD_STACK(FFileSystemToken, tokens, count);
 
     if (!mountingPoint.empty())
         tokens.Push(mountingPoint);
@@ -138,7 +138,7 @@ FDirpath& FDirpath::operator =(const FileSystem::FStringView& content) {
 }
 //----------------------------------------------------------------------------
 FDirpath::FDirpath(std::initializer_list<const FileSystem::char_type *> path)  {
-    STACKLOCAL_POD_STACK(FFileSystemToken, tokens, path.size());
+    STACKLOCAL_ASSUMEPOD_STACK(FFileSystemToken, tokens, path.size());
 
     for (const FileSystem::char_type *wcstr : path) {
         tokens.Push(MakeCStringView(wcstr));
@@ -182,7 +182,7 @@ size_t FDirpath::ExpandPath(FMountingPoint& mountingPoint, const TMemoryView<FDi
     if (nullptr == _path)
         return 0;
 
-    STACKLOCAL_POD_ARRAY(FFileSystemToken, tokens, _path->Depth());
+    STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, tokens, _path->Depth());
     const size_t k = FFileSystemPath::Instance().Expand(tokens, _path);
     if (0 == k)
         return 0;
@@ -281,11 +281,11 @@ bool FDirpath::Less(const FDirpath& other) const {
 
     const auto& fsp = FFileSystemPath::Instance();
 
-    STACKLOCAL_POD_ARRAY(FFileSystemToken, p0, _path->Depth() );
+    STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, p0, _path->Depth() );
     const size_t k0 = fsp.Expand(p0, _path);
     Assert(_path->Depth() == k0 );
 
-    STACKLOCAL_POD_ARRAY(FFileSystemToken, p1, other._path->Depth() );
+    STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, p1, other._path->Depth() );
     const size_t k1 = fsp.Expand(p1, other._path);
     Assert(other._path->Depth() == k1 );
 
@@ -309,7 +309,7 @@ bool FDirpath::Absolute(FDirpath* absolute, const FDirpath& origin, const FDirpa
     Assert(origin.HasMountingPoint());
     Assert(not relative.HasMountingPoint());
 
-    STACKLOCAL_POD_ARRAY(FDirname, dirnames, origin.Depth()+relative.Depth());
+    STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, origin.Depth()+relative.Depth());
 
     FMountingPoint origin_mp, relative_mp;
     const size_t origin_s = origin.ExpandPath(origin_mp, dirnames.SubRange(0, origin.Depth()));
@@ -336,7 +336,7 @@ bool FDirpath::Normalize(FDirpath* normalized, const FDirpath& path) {
     }
 
     FMountingPoint mountingPoint;
-    STACKLOCAL_POD_ARRAY(FDirname, dirnames, path.Depth());
+    STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, path.Depth());
     const size_t n = path.ExpandPath(mountingPoint, dirnames);
     Assert(path.Depth() >= n);
 
@@ -362,7 +362,7 @@ bool FDirpath::Relative(FDirpath* relative, const FDirpath& origin, const FDirpa
         return true;
     }
 
-    STACKLOCAL_POD_ARRAY(FDirname, dirnames, origin.Depth()+other.Depth());
+    STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, origin.Depth()+other.Depth());
     TMemoryView<FDirname> origin_dirs = dirnames.SubRange(0, origin.Depth());
     TMemoryView<FDirname> other_dirs = dirnames.SubRange(origin.Depth(), other.Depth());
 
@@ -387,7 +387,7 @@ bool FDirpath::Relative(FDirpath* relative, const FDirpath& origin, const FDirpa
         begin++;
 
     const FDirname dotdot = FFSConstNames::DotDot();
-    STACKLOCAL_POD_STACK(FDirname, relative_dirs, (origin_s-begin)+(other_s-begin));
+    STACKLOCAL_ASSUMEPOD_STACK(FDirname, relative_dirs, (origin_s-begin)+(other_s-begin));
 
     forrange(i, begin, origin_s)
         relative_dirs.Push(dotdot);
@@ -415,7 +415,7 @@ FFilename operator /(const FDirpath& lhs, const FBasename& basename) {
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const Core::FDirpath& dirpath) {
     Core::FMountingPoint mountingPoint;
-    STACKLOCAL_POD_ARRAY(FDirname, dirnames, dirpath.Depth());
+    STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, dirpath.Depth());
     const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
 
     if (false == mountingPoint.empty())
@@ -428,7 +428,7 @@ FTextWriter& operator <<(FTextWriter& oss, const Core::FDirpath& dirpath) {
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const Core::FDirpath& dirpath) {
     Core::FMountingPoint mountingPoint;
-    STACKLOCAL_POD_ARRAY(FDirname, dirnames, dirpath.Depth());
+    STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, dirpath.Depth());
     const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
 
     if (false == mountingPoint.empty())

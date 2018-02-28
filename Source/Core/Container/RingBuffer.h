@@ -13,11 +13,15 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define STACKLOCAL_POD_RINGBUFFER(T, _NAME, _COUNT) \
-    MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT); \
+    MALLOCA_POD(T, CONCAT(_Alloca_, _NAME), _COUNT); \
+    Core::TPodRingBuffer<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+//----------------------------------------------------------------------------
+#define STACKLOCAL_ASSUMEPOD_RINGBUFFER(T, _NAME, _COUNT) \
+    MALLOCA_ASSUMEPOD(T, CONCAT(_Alloca_, _NAME), _COUNT); \
     Core::TPodRingBuffer<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 #define STACKLOCAL_RINGBUFFER(T, _NAME, _COUNT) \
-    MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT); \
+    MALLOCA_ASSUMEPOD(T, CONCAT(_Alloca_, _NAME), _COUNT); \
     Core::TRingBuffer<T> _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

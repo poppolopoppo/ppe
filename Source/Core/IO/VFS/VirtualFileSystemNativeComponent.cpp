@@ -87,7 +87,7 @@ static void Unalias_(
     Assert(aliased.PathNode()->Depth() >= alias.PathNode()->Depth());
     const size_t length = aliased.PathNode()->Depth() - alias.PathNode()->Depth();
     if (length > 0) {
-        STACKLOCAL_POD_ARRAY(FFileSystemToken, subpath, length);
+        STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, subpath, length);
         const size_t k = FFileSystemPath::Instance().Expand(subpath, alias.PathNode(), aliased.PathNode());
 
         for (size_t i = 0; i < k; ++i)

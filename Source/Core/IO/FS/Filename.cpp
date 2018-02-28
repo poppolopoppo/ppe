@@ -120,7 +120,7 @@ FFilename& FFilename::operator =(const FileSystem::FStringView& content) {
 //----------------------------------------------------------------------------
 void FFilename::SetMountingPoint(const FMountingPoint& mountingPoint) {
     FMountingPoint oldMountingPoint;
-    STACKLOCAL_POD_ARRAY(FDirname, dirnames, _dirpath.Depth());
+    STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, _dirpath.Depth());
     const size_t k = _dirpath.ExpandPath(oldMountingPoint, dirnames);
     Assert(_dirpath.Depth() >= k);
     _dirpath = FDirpath(mountingPoint, dirnames.CutBeforeConst(k));

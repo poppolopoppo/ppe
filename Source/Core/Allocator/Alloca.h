@@ -116,17 +116,27 @@ struct TAllocaBlock {
 #   define SYSALLOCA_IFP(_SIZEINBYTES) nullptr
 #endif
 //----------------------------------------------------------------------------
-#define MALLOCA(T, _NAME, _COUNT) \
+#define MALLOCA_ASSUMEPOD(T, _NAME, _COUNT) \
     const size_t CONCAT(_Count_, _NAME) = (_COUNT); \
     const ::Core::TAllocaBlock<T> _NAME( static_cast< T* >( \
         SYSALLOCA_IFP(sizeof(T) * CONCAT(_Count_, _NAME))), \
         CONCAT(_Count_, _NAME) )
 //----------------------------------------------------------------------------
+#define MALLOCA_POD(T, _NAME, _COUNT) \
+    STATIC_ASSERT(/* only POD or classes with FForceInit ctor */ \
+        ::Core::Meta::TIsPod<T>::value || \
+        ::Core::Meta::has_forceinit_constructor<T>::value ); \
+    MALLOCA_ASSUMEPOD(T, _NAME, _COUNT)
+//----------------------------------------------------------------------------
 #define INLINE_MALLOCA(T, _COUNT) \
     ::Core::TAllocaBlock<T>( static_cast< T* >(SYSALLOCA_IFP(sizeof(T) * (_COUNT))), (_COUNT) )
 //----------------------------------------------------------------------------
+#define STACKLOCAL_ASSUMEPOD_ARRAY(T, _NAME, _COUNT) \
+    MALLOCA_ASSUMEPOD(T, CONCAT(_Alloca_, _NAME), _COUNT ); \
+    const ::Core::TMemoryView< T > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+//----------------------------------------------------------------------------
 #define STACKLOCAL_POD_ARRAY(T, _NAME, _COUNT) \
-    MALLOCA(T, CONCAT(_Alloca_, _NAME), _COUNT ); \
+    MALLOCA_POD(T, CONCAT(_Alloca_, _NAME), _COUNT ); \
     const ::Core::TMemoryView< T > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

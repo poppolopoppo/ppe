@@ -13,11 +13,11 @@ class IBufferedStreamWriter;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define STACKLOCAL_TEXTWRITER(_NAME, _COUNT) \
-    MALLOCA(char, CONCAT(_Alloca_, _NAME), _COUNT); \
+    MALLOCA_POD(char, CONCAT(_Alloca_, _NAME), _COUNT); \
     FFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
 //----------------------------------------------------------------------------
 #define STACKLOCAL_WTEXTWRITER(_NAME, _COUNT) \
-    MALLOCA(wchar_t, CONCAT(_Alloca_, _NAME), _COUNT); \
+    MALLOCA_POD(wchar_t, CONCAT(_Alloca_, _NAME), _COUNT); \
     FWFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -232,11 +232,11 @@ public:
         TBasicTextWriter& Owner;
         const FTextFormat Format;
         const _Char FillChar;
-        
+
         FFormatScope(TBasicTextWriter& owner)
             : Owner(owner)
             , Format(owner.Format())
-            , FillChar(owner.FillChar()) 
+            , FillChar(owner.FillChar())
         {}
 
         ~FFormatScope() {
