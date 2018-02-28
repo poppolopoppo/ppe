@@ -12,6 +12,11 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector() {}
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(allocator_type&& alloc)
+    : _vector(std::move(alloc))
+{}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(size_type capacity) {
     _vector.reserve(capacity);
 }

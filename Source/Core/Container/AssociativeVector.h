@@ -39,6 +39,8 @@ public:
     typedef _EqualTo key_equal;
     typedef _Vector vector_type;
 
+    typedef typename vector_type::allocator_type allocator_type;
+
     typedef typename vector_type::pointer pointer;
     typedef typename vector_type::const_pointer const_pointer;
     typedef typename vector_type::reference reference;
@@ -56,6 +58,7 @@ public:
     typedef typename std::random_access_iterator_tag iterator_category;
 
     TAssociativeVector();
+    TAssociativeVector(allocator_type&& alloc);
     explicit TAssociativeVector(size_type capacity);
     ~TAssociativeVector();
 
