@@ -395,13 +395,12 @@ FVirtualMemoryCache::FVirtualMemoryCache()
     , TotalCacheSizeInBytes(0)
 {}
 //----------------------------------------------------------------------------
-void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first TRACKINGDATA_ARG_IFP) {
+void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, size_t maxCacheSizeInBytes TRACKINGDATA_ARG_IFP) {
     const size_t alignment = FPlatformMisc::SystemInfo.AllocationGranularity;
     Assert(Meta::IsAligned(alignment, sizeInBytes));
 
-    if (FreePageBlockCount) {
+    if (FreePageBlockCount && (sizeInBytes <= maxCacheSizeInBytes / 4)) {
         Assume(first);
-        Assert(first);
 
         FFreePageBlock* cachedBlock = nullptr;
 
@@ -414,6 +413,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first TR
             }
         }
 
+#if 0 // this is better to release the chunks which are too large, since the client can't use the extra memory
         if (nullptr == cachedBlock) {
             const size_t sizeTimes4 = sizeInBytes * 4;
 
@@ -425,6 +425,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first TR
                 }
             }
         }
+#endif
 
         if (nullptr != cachedBlock) {
             void* result = cachedBlock->Ptr;
@@ -467,7 +468,7 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
 
     Assert(Meta::IsAligned(FPlatformMisc::SystemInfo.AllocationGranularity, sizeInBytes));
 
-    if (sizeInBytes > maxCacheSizeInBytes) {
+    if (sizeInBytes > maxCacheSizeInBytes / 4) {
         FVirtualMemory::AlignedFree(ptr, sizeInBytes);
         return;
     }
@@ -493,6 +494,8 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
         if (--FreePageBlockCount)
             ::memmove(first, first + 1, sizeof(FFreePageBlock) * FreePageBlockCount);
     }
+
+    ONLY_IF_ASSERT(::memset(ptr, 0xDD, sizeInBytes)); // trash the memory block before caching
 
     first[FreePageBlockCount] = FFreePageBlock{ ptr, sizeInBytes };
     TotalCacheSizeInBytes += sizeInBytes;

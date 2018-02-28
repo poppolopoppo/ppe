@@ -54,7 +54,7 @@ protected:
 #endif
 
     size_t RegionSize(void* ptr) const { return FVirtualMemory::AllocSizeInBytes(ptr); }
-    void* Allocate(size_t sizeInBytes, FFreePageBlock* first TRACKINGDATA_ARG_IFP);
+    void* Allocate(size_t sizeInBytes, FFreePageBlock* first, size_t maxCacheSizeInBytes TRACKINGDATA_ARG_IFP);
     void Free(void* ptr, size_t sizeInBytes, FFreePageBlock* first, size_t cacheBlocksCapacity, size_t maxCacheSizeInBytes TRACKINGDATA_ARG_IFP);
     void ReleaseAll(FFreePageBlock* first TRACKINGDATA_ARG_IFP);
 
@@ -80,7 +80,7 @@ public:
 #endif
 
     size_t RegionSize(void* ptr) const { return FVirtualMemoryCache::RegionSize(ptr); }
-    FORCE_INLINE void* Allocate(size_t sizeInBytes) { return FVirtualMemoryCache::Allocate(sizeInBytes, _freePageBlocks TRACKINGDATA_ARG_IFP); }
+    FORCE_INLINE void* Allocate(size_t sizeInBytes) { return FVirtualMemoryCache::Allocate(sizeInBytes, _freePageBlocks, _MaxCacheSizeInBytes TRACKINGDATA_ARG_IFP); }
     void Free(void* ptr, size_t sizeInBytes = 0) { FVirtualMemoryCache::Free(ptr, sizeInBytes, _freePageBlocks, _CacheBlocksCapacity, _MaxCacheSizeInBytes TRACKINGDATA_ARG_IFP); }
     void ReleaseAll() {  FVirtualMemoryCache::ReleaseAll(_freePageBlocks TRACKINGDATA_ARG_IFP); }
 
