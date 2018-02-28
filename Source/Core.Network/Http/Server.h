@@ -22,7 +22,7 @@ public:
     STATIC_CONST_INTEGRAL(size_t, DefaultMaxContentLength, 10*1024*1024); // 10 mo
 
     FHttpServer(const FStringView& name, FAddress&& localhost, const FMilliseconds& timeout = FSeconds(3), size_t maxContentLength = DefaultMaxContentLength);
-    ~FHttpServer();
+    virtual ~FHttpServer();
 
     FHttpServer(const FHttpServer& ) = delete;
     FHttpServer& operator =(const FHttpServer& ) = delete;
