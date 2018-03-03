@@ -22,6 +22,7 @@ namespace {
 // * Kernel threads can otherwise cause ripple effects across the cores
 // http://www.benicourt.com/blender/wp-content/uploads/2015/03/parallelizing_the_naughty_dog_engine_using_fibers.pdf
 //----------------------------------------------------------------------------
+// For common tasks, keep main thread and second thread out of pool
 STATIC_CONST_INTEGRAL(size_t, MaxGlobalWorkerCount_,    10);
 STATIC_CONST_INTEGRAL(size_t, MinGlobalWorkerCount_,    2 );
 static size_t GlobalWorkerCount_() {
@@ -29,6 +30,7 @@ static size_t GlobalWorkerCount_() {
         Min(MaxGlobalWorkerCount_, std::thread::hardware_concurrency() - 2));
 }
 //----------------------------------------------------------------------------
+// For IO tasks, high priority but uses only the 2 last cores
 STATIC_CONST_INTEGRAL(size_t, MaxIOWorkerCount_,        2 );
 STATIC_CONST_INTEGRAL(size_t, MinIOWorkerCount_,        1 );
 static size_t IOWorkerCount_() {
@@ -36,6 +38,12 @@ static size_t IOWorkerCount_() {
         Min(MaxIOWorkerCount_, std::thread::hardware_concurrency() - GlobalWorkerCount_()));
 }
 //----------------------------------------------------------------------------
+// For blocking tasks which need all available cores
+static size_t HighPriorityWorkerCount_() {
+    return std::thread::hardware_concurrency();
+}
+//----------------------------------------------------------------------------
+// For slow and infrequent tasks running in background only one core (not locked, low priority)
 static size_t BackgroundWorkerCount_() {
     return 1;
 }
@@ -59,7 +67,7 @@ static constexpr size_t BackgroundWorkerThreadAffinities[] = {
 void FGlobalThreadPool::Create() {
     const size_t count = GlobalWorkerCount_();
     parent_type::Create("GlobalThreadPool", CORE_THREADTAG_WORKER, count, EThreadPriority::Normal);
-    parent_type::Instance().Start(ThreadAffinities().CutBefore(count));
+    parent_type::Instance().Start(MakeView(GlobalWorkerThreadAffinities).CutBefore(count));
 }
 //----------------------------------------------------------------------------
 void FGlobalThreadPool::Destroy() {
@@ -67,12 +75,8 @@ void FGlobalThreadPool::Destroy() {
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
-TMemoryView<const size_t> FGlobalThreadPool::ThreadAffinities() {
-    return MakeView(GlobalWorkerThreadAffinities);
-}
-//----------------------------------------------------------------------------
-void AsyncWork(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    FGlobalThreadPool::Instance().Run(task, priority);
+void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
+    FGlobalThreadPool::Instance().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -80,8 +84,8 @@ void AsyncWork(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority:
 void FIOThreadPool::Create() {
     // IO should be operated in 2 threads max to prevent slow seeks :
     const size_t count = IOWorkerCount_();
-    parent_type::Create("IOThreadPool", CORE_THREADTAG_IO, count, EThreadPriority::AboveNormal);
-    parent_type::Instance().Start(ThreadAffinities().CutBefore(count));
+    parent_type::Create("IOThreadPool", CORE_THREADTAG_IO, count, EThreadPriority::Highest);
+    parent_type::Instance().Start(MakeView(IOWorkerThreadAffinities).CutBefore(count));
 }
 //----------------------------------------------------------------------------
 void FIOThreadPool::Destroy() {
@@ -89,12 +93,30 @@ void FIOThreadPool::Destroy() {
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
-TMemoryView<const size_t> FIOThreadPool::ThreadAffinities() {
-    return MakeView(IOWorkerThreadAffinities);
+void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
+    FIOThreadPool::Instance().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
-void AsyncIO(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    FIOThreadPool::Instance().Run(task, priority);
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void FHighPriorityThreadPool::Create() {
+    const size_t count = HighPriorityWorkerCount_();
+    parent_type::Create("HighPriorityThreadPool", CORE_THREADTAG_HIGHPRIORITY, count, EThreadPriority::AboveNormal);
+
+    STACKLOCAL_POD_ARRAY(size_t, affinities, count);
+    forrange(i, 0, count)
+        affinities[i] = (size_t(1) << i);
+
+    parent_type::Instance().Start(affinities);
+}
+//----------------------------------------------------------------------------
+void FHighPriorityThreadPool::Destroy() {
+    parent_type::Instance().Shutdown();
+    parent_type::Destroy();
+}
+//----------------------------------------------------------------------------
+void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
+    FHighPriorityThreadPool::Instance().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -102,7 +124,7 @@ void AsyncIO(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority::N
 void FBackgroundThreadPool::Create() {
     const size_t count = BackgroundWorkerCount_();
     parent_type::Create("BackgroundThreadPool", CORE_THREADTAG_BACKGROUND, count, EThreadPriority::BelowNormal);
-    parent_type::Instance().Start(ThreadAffinities().CutBefore(count));
+    parent_type::Instance().Start(MakeView(BackgroundWorkerThreadAffinities).CutBefore(count));
 }
 //----------------------------------------------------------------------------
 void FBackgroundThreadPool::Destroy() {
@@ -110,12 +132,8 @@ void FBackgroundThreadPool::Destroy() {
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
-TMemoryView<const size_t> FBackgroundThreadPool::ThreadAffinities() {
-    return MakeView(BackgroundWorkerThreadAffinities);
-}
-//----------------------------------------------------------------------------
-void AsyncBackround(const FTaskFunc& task, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    FBackgroundThreadPool::Instance().Run(task, priority);
+void AsyncBackround(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
+    FBackgroundThreadPool::Instance().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -123,11 +141,13 @@ void AsyncBackround(const FTaskFunc& task, ETaskPriority priority /* = ETaskPrio
 void FThreadPoolStartup::Start() {
     FGlobalThreadPool::Create();
     FIOThreadPool::Create();
+    FHighPriorityThreadPool::Create();
     FBackgroundThreadPool::Create();
 }
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::Shutdown() {
     FBackgroundThreadPool::Destroy();
+    FHighPriorityThreadPool::Destroy();
     FIOThreadPool::Destroy();
     FGlobalThreadPool::Destroy();
 }

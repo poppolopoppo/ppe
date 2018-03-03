@@ -10,8 +10,9 @@
 #define CORE_THREADTAG_MAIN                 size_t(0)
 #define CORE_THREADTAG_WORKER               size_t(1)
 #define CORE_THREADTAG_IO                   size_t(2)
-#define CORE_THREADTAG_BACKGROUND           size_t(3)
-#define CORE_THREADTAG_OTHER                size_t(4)
+#define CORE_THREADTAG_HIGHPRIORITY         size_t(3)
+#define CORE_THREADTAG_BACKGROUND           size_t(4)
+#define CORE_THREADTAG_OTHER                size_t(5)
 
 namespace Core {
 //----------------------------------------------------------------------------

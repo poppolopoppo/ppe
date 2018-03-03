@@ -22,11 +22,9 @@ public:
 
     static void Create();
     static void Destroy();
-
-    static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
-CORE_API void AsyncWork(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
+CORE_API void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -41,11 +39,26 @@ public:
 
     static void Create();
     static void Destroy();
-
-    static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
-CORE_API void AsyncIO(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
+CORE_API void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class CORE_API FHighPriorityThreadPool : Meta::TSingleton<FTaskManager, FHighPriorityThreadPool> {
+public:
+    typedef Meta::TSingleton<FTaskManager, FHighPriorityThreadPool> parent_type;
+
+    using parent_type::Instance;
+#ifdef WITH_CORE_ASSERT
+    using parent_type::HasInstance;
+#endif
+
+    static void Create();
+    static void Destroy();
+};
+//----------------------------------------------------------------------------
+CORE_API void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -60,11 +73,9 @@ public:
 
     static void Create();
     static void Destroy();
-
-    static TMemoryView<const size_t> ThreadAffinities();
 };
 //----------------------------------------------------------------------------
-CORE_API void AsyncBackround(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal);
+CORE_API void AsyncBackround(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -305,7 +305,7 @@ size_t FThreadContext::GetThreadHash(std::thread::id thread_id) {
 //----------------------------------------------------------------------------
 const char* FThreadContext::GetThreadName(std::thread::id thread_id) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME
-    return GetThreadName_(thread_id);
+    return GetThreadName_(thread_id).data();
 #else
     return nullptr;
 #endif
