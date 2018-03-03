@@ -143,7 +143,7 @@ bool LeastSquaresFittingGaussian3(float3& center, float3& axis0, float3& axis1, 
 float LeastSquaresFittingQuadratic2(TScalarVector<float, 6>& coefficients, const TMemoryView<const float2>& points) {
     Assert(points.size() > 1);
 
-    TScalarMatrix<float, 6, 6> A(Meta::FForceInit{});
+    TScalarMatrix<float, 6, 6> A(Meta::ForceInit);
     for (const float2& p : points) {
         float x = p[0];
         float y = p[1];
@@ -214,7 +214,7 @@ float LeastSquaresFittingQuadratic2(TScalarVector<float, 6>& coefficients, const
 float LeastSquaresFittingQuadraticCircle2(float2& center, float radius, const TMemoryView<const float2>& points) {
     Assert(points.size() > 1);
 
-    float4x4 A(Meta::FForceInit{});
+    float4x4 A(Meta::ForceInit);
     for (const float2& p : points) {
         float x = p[0];
         float y = p[1];
@@ -281,7 +281,7 @@ float LeastSquaresFittingQuadraticCircle2(float2& center, float radius, const TM
 float LeastSquaresFittingQuadratic3(TScalarVector<float, 10>& coefficients, const TMemoryView<const float3>& points) {
     Assert(points.size() > 1);
 
-    TScalarMatrix<float, 10, 10> A(Meta::FForceInit{});
+    TScalarMatrix<float, 10, 10> A(Meta::ForceInit);
     for (const float3& p : points)
     {
         float x = p[0];
@@ -408,7 +408,7 @@ float LeastSquaresFittingQuadratic3(TScalarVector<float, 10>& coefficients, cons
 float LeastSquaresFittingQuadraticSphere3(float3& center, float radius, const TMemoryView<const float3>& points) {
     Assert(points.size() > 1);
 
-    TScalarMatrix<float, 5, 5> A(Meta::FForceInit{});
+    TScalarMatrix<float, 5, 5> A(Meta::ForceInit);
     for (const float3& p : points)
     {
         float x = p[0];

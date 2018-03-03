@@ -29,11 +29,11 @@ struct TIsPod< TTuple<_Args...> >
 {};
 template <typename... _Args>
 TTuple<_Args...> ForceInitType(TType< TTuple<_Args...> >) {
-    return MakeTuple(ForceInit<_Args...>()...);
+    return MakeTuple(MakeForceInit<_Args...>()...);
 }
 template <typename... _Args>
 void Construct(TTuple<_Args...>* p, FForceInit) {
-    Construct(p, ForceInit<_Args>()...);
+    Construct(p, MakeForceInit<_Args>()...);
 }
 } //!Meta
 //----------------------------------------------------------------------------

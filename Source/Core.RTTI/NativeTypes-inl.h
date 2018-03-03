@@ -23,7 +23,7 @@ void TBaseTypeTraits<T, _Parent>::Deallocate(void* ptr) const {
 template <typename T, typename _Parent>
 void TBaseTypeTraits<T, _Parent>::Create(const FAtom& atom) const {
     Assert(atom);
-    Meta::Construct(&atom.TypedData<T>(), Meta::FForceInit{});
+    Meta::Construct(&atom.TypedData<T>(), Meta::ForceInit);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
@@ -48,12 +48,12 @@ void TBaseTypeTraits<T, _Parent>::Destroy(const FAtom& atom) const {
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
 bool TBaseTypeTraits<T, _Parent>::IsDefaultValue(const FAtom& value) const {
-    return (value.TypedConstData<T>() == Meta::ForceInit<T>());
+    return (value.TypedConstData<T>() == Meta::MakeForceInit<T>());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
 void TBaseTypeTraits<T, _Parent>::ResetToDefaultValue(const FAtom& value) const {
-    value.TypedData<T>() = Meta::ForceInit<T>();
+    value.TypedData<T>() = Meta::MakeForceInit<T>();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>

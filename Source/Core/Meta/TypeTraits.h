@@ -168,6 +168,9 @@ struct has_destructor {
 struct FNoInit {};
 struct FForceInit {};
 //----------------------------------------------------------------------------
+inline constexpr FNoInit NoInit{};
+inline constexpr FForceInit ForceInit{};
+//----------------------------------------------------------------------------
 template <typename T>
 using has_forceinit_constructor = has_constructor<T, Meta::FForceInit>;
 //----------------------------------------------------------------------------
@@ -184,9 +187,11 @@ T ForceInitType(TType<T>) {
 }
 // simpler interface wrapping overloadable ForceInitType()
 template <typename T>
-T ForceInit() {
+T MakeForceInit() {
     return ForceInitType(TType<T>{});
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>

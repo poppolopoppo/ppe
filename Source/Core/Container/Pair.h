@@ -33,11 +33,11 @@ struct TIsPod< TPair<_First, _Second> >
 {};
 template <typename _First, typename _Second>
 TPair<_First, _Second> ForceInitType(TType< TPair<_First, _Second> >) {
-    return MakePair(ForceInit<_First>(), ForceInit<_Second>());
+    return MakePair(MakeForceInit<_First>(), MakeForceInit<_Second>());
 }
 template <typename _First, typename _Second>
 void Construct(TPair<_First, _Second>* p, FForceInit) {
-    Construct(p, ForceInit<_First>(), ForceInit<_Second>());
+    Construct(p, MakeForceInit<_First>(), MakeForceInit<_Second>());
 }
 } //!Meta
 //----------------------------------------------------------------------------
