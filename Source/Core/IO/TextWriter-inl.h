@@ -106,8 +106,13 @@ template <typename _Char>
 TBasicTextManipulator<_Char> FTextFormat::Pad(EPadding padding, size_t width, _Char fill) {
     return [padding, width, fill](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char>& {
         s.Format().SetPadding(padding);
-        s.Format().SetWidth(width);
-        s.SetFillChar(fill);
+
+        if (INDEX_NONE != width)
+            s.Format().SetWidth(width);
+
+        if (_Char() != fill)
+            s.SetFillChar(fill);
+
         return s;
     };
 }

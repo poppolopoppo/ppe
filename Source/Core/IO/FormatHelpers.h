@@ -82,16 +82,28 @@ struct TPadded {
     _Char FillChar;
 };
 template <typename T, typename _Char>
-TPadded<T, _Char> PadLeft(const T& value, size_t width, _Char ch = _Char(' ')) {
+TPadded<T, _Char> PadLeft(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
     return TPadded<T, _Char>{ &value, FTextFormat::Padding_Left, width, ch };
 }
 template <typename T, typename _Char>
-TPadded<T, _Char> PadCenter(const T& value, size_t width, _Char ch = _Char(' ')) {
+TPadded<T, _Char> PadCenter(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
     return TPadded<T, _Char>{ &value, FTextFormat::Padding_Center, width, ch };
 }
 template <typename T, typename _Char>
-TPadded<T, _Char> PadRight(const T& value, size_t width, _Char ch = _Char(' ')) {
+TPadded<T, _Char> PadRight(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
     return TPadded<T, _Char>{ &value, FTextFormat::Padding_Right, width, ch };
+}
+template <typename _Char>
+TPadded<TBasicStringView<_Char>, _Char> AlignLeft(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
+    return TPadded<TBasicStringView<_Char>, _Char>{ &value, FTextFormat::Padding_Right, width, ch };
+}
+template <typename _Char>
+TPadded<TBasicStringView<_Char>, _Char> AlignCenter(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
+    return TPadded<TBasicStringView<_Char>, _Char>{ &value, FTextFormat::Padding_Center, width, ch };
+}
+template <typename _Char>
+TPadded<TBasicStringView<_Char>, _Char> AlignRight(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
+    return TPadded<TBasicStringView<_Char>, _Char>{ &value, FTextFormat::Padding_Left, width, ch };
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------

@@ -107,13 +107,13 @@ public:
     template <typename _Char>
     static TBasicTextWriter<_Char>& DontPad(TBasicTextWriter<_Char>& s);
     template <typename _Char>
-    static TBasicTextManipulator<_Char> Pad(EPadding padding, size_t width, _Char fill);
+    static TBasicTextManipulator<_Char> Pad(EPadding padding, size_t width = INDEX_NONE, _Char fill = _Char());
     template <typename _Char>
-    static TBasicTextManipulator<_Char> PadCenter(size_t width, _Char fill);
+    static TBasicTextManipulator<_Char> PadCenter(size_t width = INDEX_NONE, _Char fill = _Char());
     template <typename _Char>
-    static TBasicTextManipulator<_Char> PadLeft(size_t width, _Char fill);
+    static TBasicTextManipulator<_Char> PadLeft(size_t width = INDEX_NONE, _Char fill = _Char());
     template <typename _Char>
-    static TBasicTextManipulator<_Char> PadRight(size_t width, _Char fill);
+    static TBasicTextManipulator<_Char> PadRight(size_t width = INDEX_NONE, _Char fill = _Char());
     template <typename _Char>
     static TBasicTextManipulator<_Char> SetFill(_Char ch);
 
@@ -171,7 +171,12 @@ public:
     ~TBasicTextWriter() {}
 
     _Char FillChar() const { return _fillChar; }
-    _Char SetFillChar(_Char ch) { _Char old = _fillChar; _fillChar = ch; return old; }
+    _Char SetFillChar(_Char ch) {
+        Assert(_Char() != ch);
+        _Char old = _fillChar;
+        _fillChar = ch;
+        return old;
+    }
 
     // won't format the text :
     void Put(_Char ch);
