@@ -34,7 +34,13 @@ public:
         Fatal       = 1<<5,
 
         None        = 0,
+        NoDebug     = (Info|Emphasis|Warning|Error|Fatal),
+        NoDebugInfo = (Emphasis|Warning|Error|Fatal),
+#ifdef PROFILING_ENABLED
+        All         = NoDebugInfo
+#else
         All         = (Debug|Info|Emphasis|Warning|Error|Fatal)
+#endif
     };
     ENUM_FLAGS_FRIEND(EVerbosity);
 

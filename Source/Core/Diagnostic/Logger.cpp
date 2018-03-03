@@ -71,7 +71,7 @@ static void LogHeader_(FWTextWriter& oss, const ILogger::FCategory& category, IL
     Format(oss, L"[{0}][{1:#5}][{3:-8}][{2:-15}] ", site.Timestamp.ToDateTimeUTC(), FThreadContext::GetThreadHash(site.ThreadId), category.Name, level);
 #   endif
 #else
-    Format(oss, L"[{0}][{2:-8}][{1:-15}] ", site.Timestamp.ToDateTimeUTC(), category.Name, level); 
+    Format(oss, L"[{0}][{2:-8}][{1:-15}] ", site.Timestamp.ToDateTimeUTC(), category.Name, level);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -146,7 +146,7 @@ public: // ILogger
 class FBucketedWriter_ {
 public:
     FBucketedWriter_()
-        : _buffer((u8*)Core::malloc(GBufferSize)) 
+        : _buffer((u8*)Core::malloc(GBufferSize))
         , _bucketMask(GBucketMask) {
         Assert(_buffer);
 #ifdef USE_MEMORY_DOMAINS
@@ -165,7 +165,7 @@ public:
 
     class FBucket {
     public:
-        FBucket() 
+        FBucket()
             : _bucket(INDEX_NONE)
             , _writerCount(0) {}
 
@@ -260,7 +260,7 @@ private:
 // Allows being called recursively
 class FAbstractReentrantLogger_ : public ILogger {
 public:
-    FAbstractReentrantLogger_() 
+    FAbstractReentrantLogger_()
         : _lockDepth(0)
         , _closing(false)
     {}
@@ -531,7 +531,7 @@ static NO_INLINE void SetupPreMainLogger_() {
         SetupInplaceLogger_<FNullLogger_>();
 }
 //----------------------------------------------------------------------------
-static ILogger& Logger_() 
+static ILogger& Logger_()
 {
     // fall back for pre-logger start
     if (Unlikely(nullptr == GLogger_))
@@ -557,12 +557,16 @@ static void HandleFatalLogIFN_(FLogger::EVerbosity level) {
 }
 //----------------------------------------------------------------------------
 void FLogger::Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text) {
-    Logger_().Log(category, level, site, text);
+    if (category.Verbosity & level)
+        Logger_().Log(category, level, site, text);
+
     HandleFatalLogIFN_(level);
 }
 //----------------------------------------------------------------------------
 void FLogger::LogArgs(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) {
-    Logger_().Log(category, level, site, format, args);
+    if (category.Verbosity & level)
+        Logger_().Log(category, level, site, format, args);
+
     HandleFatalLogIFN_(level);
 }
 //----------------------------------------------------------------------------
@@ -633,7 +637,7 @@ private: // IStreamWriter
     virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const override final { UNUSED(origin); return false; }
 
     virtual std::streamoff TellO() const override final { return _offsetO; }
-    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final { 
+    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final {
         UNUSED(offset);
         UNUSED(origin);
         AssertNotImplemented();
@@ -643,7 +647,7 @@ private: // IStreamWriter
         AssertRelease(checked_cast<size_t>(sizeInBytes) < _ringBuffer.SizeInBytes());
         if (0 == sizeInBytes)
             return true;
-        
+
         const TMemoryView<const u8> toWrite((const u8*)storage, checked_cast<size_t>(sizeInBytes));
         const size_t off0 = checked_cast<size_t>(_offsetO & GBufferMask);
         const size_t off1 = checked_cast<size_t>((_offsetO + sizeInBytes) & GBufferMask);
@@ -681,7 +685,7 @@ private: // IBufferedStreamWriter
 
 private:
     // 1024k, must be large enough to let the asynchronous tasks complete
-    STATIC_CONST_INTEGRAL(size_t, GBufferSize, ALLOCATION_GRANULARITY*16); 
+    STATIC_CONST_INTEGRAL(size_t, GBufferSize, ALLOCATION_GRANULARITY*16);
     STATIC_CONST_INTEGRAL(size_t, GBufferMask, GBufferSize - 1);
     STATIC_ASSERT(Meta::IsPow2(GBufferSize));
 
@@ -697,7 +701,7 @@ private:
         return manager;
     }
 
-    static void AsyncFlush_(ILogger* wrapped, bool synchronous) { 
+    static void AsyncFlush_(ILogger* wrapped, bool synchronous) {
         FTaskFunc flushTask = [wrapped](ITaskContext& ctx) {
             wrapped->Flush(true); // flush synchronously in asynchronous task
             Core::malloc_release_pending_blocks(); // not a bad time for releasing some pending blocks
@@ -732,9 +736,9 @@ private:
         void Run(ITaskContext&) {
             Assert_NoAssume(CheckCanary_());
 
-            _logger->_wrapped->Log(*_category, _level, _site, 
-                _logger->_ringBuffer.Cast<const wchar_t>(), 
-                _off0 / sizeof(wchar_t), 
+            _logger->_wrapped->Log(*_category, _level, _site,
+                _logger->_ringBuffer.Cast<const wchar_t>(),
+                _off0 / sizeof(wchar_t),
                 _off1 / sizeof(wchar_t) );
 
             Assert_NoAssume(CheckCanary_());
@@ -778,7 +782,7 @@ private:
         // hack to store async log entry inside text buffer and avoid another allocation
         size_t offEntry = (ROUND_TO_NEXT_16(off1) & GBufferMask);
         size_t sizeFooter = (offEntry - off1 + sizeof(FAsyncLogEntry_));
-        if (((off1 + sizeFooter) & GBufferMask) < offEntry) { // handles wrapping with padding : 
+        if (((off1 + sizeFooter) & GBufferMask) < offEntry) { // handles wrapping with padding :
             const size_t padding = (GBufferSize - offEntry);
             Assert(padding < sizeof(FAsyncLogEntry_));
             Assert(((offEntry + padding) & GBufferMask) == 0);
@@ -830,7 +834,7 @@ static bool SetupAsyncrhonousLogger_(bool immediate) {
     }
     else {
         Assert((void*)GLogger_ != &GAsyncLoggerStorage_);
-        
+
         // flush before installing asynchronous logger
         GLogger_->Flush(true);
 
@@ -1002,7 +1006,7 @@ public:
 
     FConsoleWriterLogger_()
         : _hConsole(nullptr)
-        , _textAttribute(::WORD(-1)) 
+        , _textAttribute(::WORD(-1))
         , _pNewStdout(nullptr)
         , _pNewStderr(nullptr)
         , _pNewStdin(nullptr) {
