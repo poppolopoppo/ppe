@@ -71,7 +71,7 @@ static void Test_Allocator_MT_(const FWStringView& category, const FWStringView&
     BENCHMARK_SCOPE(category, name);
 
     forrange(loop, 0, GLoopCount_) {
-        ParallelFor(blockSizes.begin(), blockSizes.end(), [&allocator](size_t sz) {
+        ParallelForEach(blockSizes.begin(), blockSizes.end(), [&allocator](size_t sz) {
             _Alloc alloc(allocator);
             auto* ptr = alloc.allocate(sz);
 #if USE_TESTALLOCATOR_MEMSET
@@ -228,8 +228,8 @@ void Test_Allocators() {
     LOG(Test_Allocators, Info, L"Large blocks data set = {0} blocks / {1}", largeBlocks.size(), Fmt::FSizeInBytes{ largeBlocksSizeInBytes });
     LOG(Test_Allocators, Info, L"Mixed blocks data set = {0} blocks / {1}", mixedBlocks.size(), Fmt::FSizeInBytes{ mixedBlocksSizeInBytes });
 
-    Test_Allocator_(L"std::allocator", std::allocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
     Test_Allocator_(L"TMallocator", TMallocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
+    Test_Allocator_(L"std::allocator", std::allocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
     Test_Allocator_(L"TThreadLocalAllocator", TThreadLocalAllocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
 }
 //----------------------------------------------------------------------------

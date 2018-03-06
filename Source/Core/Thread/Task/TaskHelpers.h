@@ -87,14 +87,14 @@ void ParallelFor(
     _It first, _It last,
     const Meta::TFunction<void(_It)>& foreach,
     ETaskPriority priority = ETaskPriority::Normal,
-    FTaskManager* manager = nullptr/* uses FGlobalThreadPool by default */);
+    FTaskManager* manager = nullptr/* uses FHighPriorityThreadPool by default */);
 //----------------------------------------------------------------------------
 template <typename _It>
-void ParallelFor(
+void ParallelForEach(
     _It first, _It last,
     const Meta::TFunction<void(decltype(*std::declval<_It>()))>& foreach_item,
     ETaskPriority priority = ETaskPriority::Normal,
-    FTaskManager* manager = nullptr/* uses FGlobalThreadPool by default */);
+    FTaskManager* manager = nullptr/* uses FHighPriorityThreadPool by default */);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -60,9 +60,9 @@ static void Test_ParallelFor_() {
     };
 
     LOG(Test_Thread, Info, L"ParallelFor start");
-    
-    ParallelFor(std::begin(values), std::end(values), [](size_t v) {
-        LOG(Test_Thread, Info, L"ParallelFor: {0} -> {1}", 
+
+    ParallelForEach(std::begin(values), std::end(values), [](size_t v) {
+        LOG(Test_Thread, Info, L"ParallelFor: {0} -> {1}",
             MakeCStringView(CurrentThreadContext().Name()), v );
     });
 

@@ -218,19 +218,19 @@ void Test_Pixmap() {
 
     Test_Binpacking();
 
-    ParallelFor(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
+    ParallelForEach(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_ConvexHull_(fname);
     });
 
-    ParallelFor(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
+    ParallelForEach(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_ExpandAlphaMask_(fname);
     });
 
-    ParallelFor(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
+    ParallelForEach(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_DistanceField(fname);
     });
 
-    ParallelFor(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
+    ParallelForEach(std::begin(inputs), std::end(inputs), [](const FFilename& fname) {
         Test_DXTCompression_(fname);
     });
 }
