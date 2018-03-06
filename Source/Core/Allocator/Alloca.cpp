@@ -261,7 +261,7 @@ void* FAllocaStorage::Relocate(void* ptr, size_t newSizeInBytes, bool keepData) 
 //----------------------------------------------------------------------------
 #ifdef USE_MEMORY_DOMAINS
 constexpr size_t GAllocaFallbackPayload = 4 * sizeof(u32); // keep memory aligned on 16
-constexpr u32 GAllocaFallbackAliveCanary = 0x0A110CA;
+constexpr u32 GAllocaFallbackAliveCanary = 0x0A110CAB;
 constexpr u32 GAllocaFallbackDeadCanary = 0xDEADBEEF;
 #endif
 //----------------------------------------------------------------------------
