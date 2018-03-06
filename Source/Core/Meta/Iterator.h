@@ -30,6 +30,20 @@ struct is_iterator_of<_Iterator, T,
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _It>
+using is_forward_iterator = typename std::is_same<
+    std::forward_iterator_tag,
+    typename std::iterator_traits<_It>::iterator_category
+>::type;
+//----------------------------------------------------------------------------
+template <typename _It>
+using is_random_access_iterator = typename std::is_same<
+    std::random_access_iterator_tag,
+    typename std::iterator_traits<_It>::iterator_category
+>::type;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T>
 using TIteratorTraits = std::iterator_traits<T>;
 //----------------------------------------------------------------------------
