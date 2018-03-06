@@ -15,7 +15,7 @@ class FTaskManager;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class ETaskPriority : u32 {
-    High,
+    High = 0,
     Normal,
     Low,
     Internal, // Do not use for userland tasks ! (reserved for system)

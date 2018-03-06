@@ -50,12 +50,12 @@ public:
     virtual ~ITaskContext() {}
 
     virtual void Run(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
-    virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
+    virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume = nullptr) = 0;
-    virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) = 0;
+    virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) = 0;
 
-    void RunOne(FTaskWaitHandle* phandle, const FTaskFunc& task, ETaskPriority priority) {
-        Run(phandle, MakeView(&task, &task+1), priority);
+    void RunOne(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority) {
+        Run(phandle, MakeView(&rtask, &rtask +1), priority);
     }
 };
 //----------------------------------------------------------------------------
@@ -77,17 +77,14 @@ public:
 
     ITaskContext* Context() const;
 
-    void Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
-    void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
-    void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, const FTaskFunc& whileWaiting, ETaskPriority priority = ETaskPriority::Normal) const;
+    void Run(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) const;
+    void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) const;
+    void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTaskFunc& whileWaiting, ETaskPriority priority = ETaskPriority::Normal) const;
 
     void Run(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
-    void Run(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal) const {
-        Run(MakeView(&task, &task+1), priority);
-    }
 
-    void RunAndWaitFor(const FTaskFunc& task, ETaskPriority priority = ETaskPriority::Normal) const {
-        RunAndWaitFor(MakeView(&task, &task+1), priority);
+    void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const {
+        RunAndWaitFor(MakeView(&rtask, &rtask+1), priority);
     }
 
     void WaitForAll() const;
