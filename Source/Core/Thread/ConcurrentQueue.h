@@ -107,14 +107,14 @@ private:
 
     std::condition_variable _empty;
     std::condition_variable _overflow;
-    
+
     priority_queue_type _queue;
     size_t _counter;
     const size_t _capacity;
 
 #ifdef WITH_CORE_ASSERT
     const size_t _canary1 = CanaryDefault;
-    bool CheckCanary_() const { 
+    bool CheckCanary_() const {
         return (_canary0 == CanaryDefault &&
                 _canary1 == CanaryDefault );
     }
