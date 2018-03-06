@@ -12,6 +12,7 @@
 
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Vector.h"
+#include "Core/Diagnostic/DebugFunction.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FileSystem.h"
 #include "Core/IO/FormatHelpers.h"
@@ -155,7 +156,7 @@ private:
             Assert(metaClass);
 
             if (obj.RTTI_IsExported())
-                _oss << PP::Export << Fmt::Space 
+                _oss << PP::Export << Fmt::Space
                      << obj.RTTI_Name() << Fmt::Space << PP::Is << Fmt::Space;
 
             _oss << metaClass->Name() << Fmt::Space << Fmt::LBrace;
@@ -272,26 +273,22 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* scalar, PM
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifndef FINAL_RELEASE
-PRAGMA_DISABLE_OPTIMIZATION
-NO_INLINE FString PrettyString(const FAny& any) {
-    return PrettyString(any.InnerAtom());
-}
-//----------------------------------------------------------------------------
-NO_INLINE FString PrettyString(const FAtom& atom) {
+DEBUG_FUNCTION(CORE_RTTI_API, DebugPrintAtom, FString, (const FAtom& atom), {
     FStringBuilder oss;
     PrettyPrint(oss, atom);
     return oss.ToString();
-}
+})
 //----------------------------------------------------------------------------
-NO_INLINE FString PrettyString(const FMetaObject* object) {
+DEBUG_FUNCTION(CORE_RTTI_API, DebugPrintObject, FString, (const FMetaObject* object), {
     PMetaObject p(const_cast<FMetaObject*>(object));
-    FString pp = PrettyString(MakeAtom(&p));
+    FString pp = DebugPrintAtom(MakeAtom(&p));
     RemoveRef_KeepAlive(p);
     return pp;
-}
-PRAGMA_ENABLE_OPTIMIZATION
-#endif
+})
+//----------------------------------------------------------------------------
+DEBUG_FUNCTION(CORE_RTTI_API, DebugPrintAny, FString, (const FAny& any), {
+    return DebugPrintAtom(any.InnerAtom());
+})
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -20,6 +20,20 @@
     </Expand>
   </Type>
 
+  <Type Name="Core::Meta::TFunction&lt;*&gt;">
+    <DisplayString Condition="_func == nullptr">empty</DisplayString>
+    <DisplayString Condition="(_wrapper&amp;(intptr_t(sizeof(size_t)==8?0x8000000000000000ull:0x80000000ull)))==0">{_func} [FUNC]</DisplayString>
+    <DisplayString>{((wrapper_type)(_wrapper&amp;~(intptr_t(sizeof(size_t)==8?0xc000000000000000ull:0xc0000000ull))))} [WRAPPER]</DisplayString>
+    <Expand>
+      <Item Name="[POD]">((_wrapper&amp;(intptr_t(sizeof(size_t)==8?0x4000000000000000ull:0x40000000ull)))!=0)</Item>
+      <Item Name="[Wrapped]">((_wrapper&amp;(intptr_t(sizeof(size_t)==8?0x8000000000000000ull:0x80000000ull)))!=0)</Item>
+      <Item Name="[Destructible]">((_wrapper&amp;(intptr_t(sizeof(size_t)==8?0xc000000000000000ull:0xc0000000ull)))==intptr_t(sizeof(size_t)==8?0x8000000000000000ull:0x80000000ull))</Item>
+      <Item Name="[Func]" Condition="(_wrapper&amp;(intptr_t(sizeof(size_t)==8?0x8000000000000000ull:0x80000000ull)))==0">_func</Item>
+      <Item Name="[Wrapper]" Condition="(_wrapper&amp;(intptr_t(sizeof(size_t)==8?0x8000000000000000ull:0x80000000ull)))!=0">((wrapper_type)(_wrapper&amp;~(intptr_t(sizeof(size_t)==8?0xc000000000000000ull:0xc0000000ull))))</Item>
+      <Item Name="[InSitu]" Condition="(_wrapper&amp;(intptr_t(sizeof(size_t)==8?0x8000000000000000ull:0x80000000ull)))!=0">(IWrapper_*)&amp;_inSitu</Item>
+    </Expand>
+  </Type>
+
   <Type Name="Core::TBasicString&lt;char&gt;">
     <DisplayString Condition="_large.IsLarge == 0">{_small.Buffer,[_small.Size]s} [small:{size_t(_small.Size)}]</DisplayString>
     <DisplayString Condition="_large.IsLarge != 0">{_large.Storage,[_large.Size]s} [large:{size_t(_large.Size)}]</DisplayString>
@@ -318,32 +332,32 @@
   </Type>
 
   <Type Name="Core::RTTI::FAny">
-    <DisplayString>{Core::RTTI::PrettyString(*this)}</DisplayString>
+    <DisplayString>{Core::RTTI::DebugPrintAny(*this)}</DisplayString>
     <Expand>
         <Item Name="[Data]">Data()</Item>
         <Item Name="[Traits]">_traits</Item>
-        <Item Name="[PP]">Core::RTTI::PrettyString(*this)</Item>
+        <Item Name="[PP]">Core::RTTI::DebugPrintAny(*this)</Item>
     </Expand>
   </Type>
 
   <Type Name="Core::RTTI::FAtom">
-    <DisplayString>{Core::RTTI::PrettyString(*this)}</DisplayString>
+    <DisplayString>{Core::RTTI::DebugPrintAtom(*this)}</DisplayString>
     <Expand>
         <Item Name="Data">_data</Item>
         <Item Name="Traits">_traits</Item>
-        <Item Name="PP">Core::RTTI::PrettyString(*this)</Item>
+        <Item Name="PP">Core::RTTI::DebugPrintAtom(*this)</Item>
     </Expand>
   </Type>
 
   <Type Name="Core::RTTI::FMetaObject">
-    <DisplayString>{Core::RTTI::PrettyString(this)}</DisplayString>
+    <DisplayString>{Core::RTTI::DebugPrintObject(this)}</DisplayString>
     <Expand>
         <Item Name="[Name]">_name</Item>
         <Item Name="[Flags]">_flags, en</Item>
         <Item Name="[Class]">RTTI_Class(), na</Item>
         <Item Name="[Functions]">RTTI_Class()->_functionsAll</Item>
         <Item Name="[Properties]">RTTI_Class()->_propertiesAll</Item>
-        <Item Name="[PP]">Core::RTTI::PrettyString(this)</Item>
+        <Item Name="[PP]">Core::RTTI::DebugPrintObject(this)</Item>
     </Expand>
   </Type>
 

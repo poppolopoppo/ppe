@@ -5,6 +5,7 @@
 #include "Callstack.h"
 #include "CrtDebug.h"
 #include "CurrentProcess.h"
+#include "DebugFunction.h"
 #include "MiniDump.h"
 #include "Profiling.h"
 
@@ -19,6 +20,8 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FDiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv) {
+    DEBUG_FUNCTION_START();
+
     FCurrentProcess::Create(applicationHandle, nShowCmd, filename, argc, argv);
 #ifdef PLATFORM_WINDOWS
     FDbghelpWrapper::Create();
@@ -42,6 +45,8 @@ void FDiagnosticsStartup::Shutdown() {
     FDbghelpWrapper::Destroy();
 #endif
     FCurrentProcess::Destroy();
+
+    DEBUG_FUNCTION_SHUTDOWN();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

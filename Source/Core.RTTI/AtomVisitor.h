@@ -53,13 +53,6 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Use for debugging and natvis
-#ifndef FINAL_RELEASE
-CORE_RTTI_API FString PrettyString(const FAny& any);
-CORE_RTTI_API FString PrettyString(const FAtom& atom);
-CORE_RTTI_API FString PrettyString(const FMetaObject& object);
-#endif
-//----------------------------------------------------------------------------
 CORE_RTTI_API FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom);
 CORE_RTTI_API FWTextWriter& PrettyPrint(FWTextWriter& oss, const FAtom& atom);
 //----------------------------------------------------------------------------

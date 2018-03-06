@@ -5,6 +5,7 @@
 #include "Dirname.h"
 
 #include "Container/Hash.h"
+#include "Diagnostic/DebugFunction.h"
 #include "IO/StreamProvider.h"
 #include "IO/StringBuilder.h"
 #include "IO/String.h"
@@ -253,14 +254,10 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FFilename& filename) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Used in natvis/debuggers for printing FFilename content
-#ifndef FINAL_RELEASE
-PRAGMA_DISABLE_OPTIMIZATION
-CORE_API NO_INLINE FWStringView DebugPrintDirpath(const FFilename& filename) {
-    static wchar_t GDebugBuffer[1024];
+DEBUG_FUNCTION(CORE_API, DebugPrintFilename, FWStringView, (const FFilename& filename), {
+    static wchar_t GDebugBuffer[FileSystem::MaxPathLength];
     return filename.ToWCStr(GDebugBuffer);
-}
-PRAGMA_ENABLE_OPTIMIZATION
-#endif
+})
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

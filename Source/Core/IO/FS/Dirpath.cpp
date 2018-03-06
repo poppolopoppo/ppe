@@ -10,6 +10,7 @@
 #include "Allocator/Alloca.h"
 #include "Container/Token.h"
 #include "Container/Stack.h"
+#include "Diagnostic/DebugFunction.h"
 #include "IO/FS/ConstNames.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
@@ -442,14 +443,10 @@ FWTextWriter& operator <<(FWTextWriter& oss, const Core::FDirpath& dirpath) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Used in natvis/debuggers for printing FDirpath content
-#ifndef FINAL_RELEASE
-PRAGMA_DISABLE_OPTIMIZATION
-CORE_API NO_INLINE FWStringView DebugPrintDirpath(const FDirpath& dirpath) {
-    static wchar_t GDebugBuffer[1024];
+DEBUG_FUNCTION(CORE_API, DebugPrintDirpath, FWStringView, (const FDirpath& dirpath), {
+    static wchar_t GDebugBuffer[FileSystem::MaxPathLength];
     return dirpath.ToWCStr(GDebugBuffer);
-}
-PRAGMA_ENABLE_OPTIMIZATION
-#endif
+})
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
