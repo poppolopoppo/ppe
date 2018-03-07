@@ -6,8 +6,6 @@
 #include "Core/IO/String.h"
 #include "Core/IO/VFS/VirtualFileSystemComponent.h"
 
-#include "Core/Allocator/PoolAllocator.h"
-
 namespace Core {
 class FFilename;
 class FFileStat;
@@ -29,8 +27,6 @@ public:
     virtual IVirtualFileSystemComponentReadWritable* ReadWritable() override final;
 
     virtual FWString Unalias(const FFilename& aliased) const override final;
-
-    SINGLETON_POOL_ALLOCATED_DECL();
 
 private: // IVirtualFileSystemComponentReadable
     virtual bool DirectoryExists(const FDirpath& dirpath, EExistPolicy policy) override final;

@@ -4,7 +4,6 @@
 
 #include "VirtualFileSystemTrie.h"
 
-#include "Allocator/PoolAllocator-impl.h"
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FS/FileStat.h"
@@ -29,10 +28,6 @@
 
 namespace Core {
 EXTERN_LOG_CATEGORY(CORE_API, VFS)
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(VirtualFileSystem, FVirtualFileSystemNativeComponent, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
