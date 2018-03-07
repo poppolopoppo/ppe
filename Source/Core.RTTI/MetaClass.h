@@ -9,7 +9,14 @@
 
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Vector.h"
+#include "Core/Memory/MemoryDomain.h"
 #include "Core/IO/TextWriter_fwd.h"
+
+#ifdef USE_MEMORY_DOMAINS
+#   define NEW_RTTI(T) new (*::Core::RTTI::MetaClass<T>()) T
+#else
+#   define NEW_RTTI(T) NEW_REF(RTTI, T)
+#endif
 
 namespace Core {
 namespace RTTI {
@@ -124,6 +131,13 @@ private:
 
     VECTORINSITU(RTTI, FMetaProperty, 8) _propertiesSelf;
     VECTORINSITU(RTTI, FMetaFunction, 4) _functionsSelf;
+
+#ifdef USE_MEMORY_DOMAINS
+public:
+    FMemoryTracking& TrackingData() const { return _trackingData; }
+protected: // for access in CreateInstance()
+    mutable FMemoryTracking _trackingData;
+#endif
 };
 //----------------------------------------------------------------------------
 template <typename T>
@@ -146,8 +160,8 @@ const FMetaClass* MetaClass() {
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
-bool CreateMetaObject_(PMetaObject& dst, bool resetToDefaultValue, std::true_type) {
-    dst.reset(new T());
+bool CreateMetaObject_(PMetaObject& dst, bool resetToDefaultValue, std::true_type ) {
+    dst.reset(NEW_RTTI(T)());
     Assert(dst);
     if (resetToDefaultValue)
         dst->RTTI_ResetToDefaultValue();

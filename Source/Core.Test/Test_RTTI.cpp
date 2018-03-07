@@ -501,12 +501,14 @@ static NO_INLINE void Test_Serialize_() {
         {
             FWStringBuilder oss;
             forrange(i, 0, test_count) {
-                TRefPtr<test_type> t = new test_type();
+                TRefPtr<test_type> t = NEW_RTTI(test_type)();
                 rand.Randomize(t.get());
                 input.RegisterObject(t.get());
                 RTTI::PrettyPrint(oss, RTTI::MakeAtom(&t));
                 LOG(Test_RTTI, Info, oss.ToString());
             }
+
+            ReportAllTrackingData(); // inspect this transaction allocations
         }
         {
             Serialize::FBinarySerializer binary;

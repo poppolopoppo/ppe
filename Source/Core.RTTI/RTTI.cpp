@@ -124,7 +124,7 @@ public:
     FString FuncConst(float f) const { return ToString(f); }
     void Out(float f, FString& str) { str = ToString(f); }
     void OutConst(float f, FString& str) const { str = ToString(f); }
-    RTTI::PMetaObject OutConstReturn(float f, FString& str) const { str = ToString(f); return PTiti(new FTiti()); }
+    RTTI::PMetaObject OutConstReturn(float f, FString& str) const { str = ToString(f); return PTiti(NEW_RTTI(FTiti)()); }
     void SetToto(FToto* toto) { _toto = toto; }
     const PToto& Toto() const { return _toto; }
 private:
@@ -223,7 +223,7 @@ static void RTTIPrintType_() {
 //----------------------------------------------------------------------------
 template <typename T>
 static void RTTIPrintClass_() {
-    TRefPtr<T> t( new T() );
+    TRefPtr<T> t(NEW_RTTI(T)());
     const RTTI::FMetaClass *metaClass = t->RTTI_Class();
 
     LOG(RTTI_UnitTest, Debug, L"TMetaClass<{0}> : {1}", metaClass->Name(), metaClass->Flags());
@@ -280,13 +280,13 @@ static void TestRTTI_() {
     {
         RTTI::FMetaTransaction transaction(RTTI::FName("test"));
 
-        PToto toto(new FToto());
-        PToto2 toto2(new FToto2());
-        PToto2 toto3(new FToto2());
+        PToto toto(NEW_RTTI(FToto)());
+        PToto2 toto2(NEW_RTTI(FToto2)());
+        PToto2 toto3(NEW_RTTI(FToto2)());
 
         transaction.RegisterObject(toto.get());
         transaction.RegisterObject(toto2.get());
-        
+
         toto->RTTI_Export(RTTI::FName("toto"));
         toto3->RTTI_Export(RTTI::FName("toto3"));
 
@@ -309,7 +309,7 @@ static void TestRTTI_() {
         {
             RTTI::FMetaTransaction transaction2(RTTI::FName("test2"));
 
-            PTiti titi(new FTiti());
+            PTiti titi(NEW_RTTI(FTiti)());
 
             titi->RTTI_Export(RTTI::FName("titi"));
             titi->SetToto(toto3.get());

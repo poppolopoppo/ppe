@@ -18,7 +18,14 @@ FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const 
     : _id(id)
     , _flags(flags)
     , _name(name)
-    , _namespace(metaNamespace) {
+    , _namespace(metaNamespace)
+#ifdef USE_MEMORY_DOMAINS
+    , _trackingData(name.data(), &MEMORY_DOMAIN_TRACKING_DATA(RTTI))
+{
+    RegisterAdditionalTrackingData(&_trackingData);
+#else
+{
+#endif
     Assert(_id.Value());
     Assert(not _name.empty());
     Assert(_flags != EClassFlags(0));
@@ -28,6 +35,9 @@ FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const 
 FMetaClass::~FMetaClass() {
     Assert(not IsRegistered());
     Assert(_propertiesAll.empty());
+#ifdef USE_MEMORY_DOMAINS
+    UnregisterAdditionalTrackingData(&_trackingData);
+#endif
 }
 //----------------------------------------------------------------------------
 // Cast / Inheritance

@@ -6,6 +6,7 @@
 #include "Core.RTTI/MetaClass.h"
 
 #include "Core/IO/TextWriter_fwd.h"
+#include "Core/Memory/MemoryDomain.h"
 #include "Core/Memory/RefPtr.h"
 
 #if !(defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
@@ -116,6 +117,17 @@ private:
     EObjectFlags _flags;
 #endif
     SCMetaTransaction _outer;
+
+#ifdef USE_MEMORY_DOMAINS
+public: // disable new/delete operators from FRefCountable
+    static void* operator new(size_t sz, FMemoryTracking& trackingData) = delete;
+    static void operator delete(void* p, FMemoryTracking&) = delete;
+public: // add new/delete operators for RTTI objects tracking through metaclass
+    static void* operator new(size_t sz, const FMetaClass& metaClass) { return tracking_malloc(metaClass.TrackingData(), sz); }
+    static void operator delete(void* p, const FMetaClass&) { tracking_free(p); }
+public: // override global delete operator
+    static void operator delete(void* p) { tracking_free(p); }
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
