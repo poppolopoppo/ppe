@@ -53,8 +53,8 @@ public:
         return stream_type::MakeView().template Cast<const _Char>();
     }
 
-    auto begin() { return stream_type::MakeView().Cast<_Char>().begin(); }
-    auto end() { return stream_type::MakeView().Cast<_Char>().end(); }
+    auto begin() { return stream_type::MakeView().template Cast<_Char>().begin(); }
+    auto end() { return stream_type::MakeView().template Cast<_Char>().end(); }
 
     auto begin() const { return Written().begin(); }
     auto end() const { return Written().end(); }
