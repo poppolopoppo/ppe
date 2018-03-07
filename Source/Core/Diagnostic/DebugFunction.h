@@ -24,7 +24,7 @@ struct FDebugFunction {
 
     template <typename _Ret, typename... _Args>
     FDebugFunction(_Ret(*f)(_Args...))
-        : Registered(false), Func(f) {
+        : Registered(false), Func((void*)f) {
         FDebugFunction*& head = Head();
         Next = head;
         head = this;
