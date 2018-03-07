@@ -190,8 +190,8 @@ private:
 FTaskScheduler::FTaskScheduler(size_t numWorkers, size_t maxTasks)
     : _numWorkers(numWorkers)
     , _maxTasks(maxTasks)
-    , _taskRevision(0)
     , _taskInFlight(0)
+    , _taskRevision(0)
     , _globalPriority(INDEX_NONE) {
     Assert(_numWorkers);
     Assert(_maxTasks > _numWorkers);
