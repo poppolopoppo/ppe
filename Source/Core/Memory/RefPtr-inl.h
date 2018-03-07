@@ -8,14 +8,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 inline FRefCountable::FRefCountable()
 :   _refCount(0)
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
 ,   _safeRefCount(0)
 #endif
 {}
 //----------------------------------------------------------------------------
 inline FRefCountable::~FRefCountable() {
     Assert(0 == _refCount);
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     // check if a TSafePtr<> is still holding a reference to this object
     AssertRelease(0 == _safeRefCount);
 #endif
@@ -23,7 +23,7 @@ inline FRefCountable::~FRefCountable() {
 //----------------------------------------------------------------------------
 inline FRefCountable::FRefCountable(FRefCountable&& )
 :   _refCount(0)
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
 ,   _safeRefCount(0)
 #endif
 {}
@@ -32,7 +32,7 @@ inline FRefCountable& FRefCountable::operator =(FRefCountable&& ) { return *this
 //----------------------------------------------------------------------------
 inline FRefCountable::FRefCountable(const FRefCountable& )
 :   _refCount(0)
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
 ,   _safeRefCount(0)
 #endif
 {}
@@ -129,7 +129,7 @@ T *RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& ptr) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
 inline void AddSafeRef(const FRefCountable* ptr) {
     ptr->IncSafeRefCount();
 }
@@ -261,14 +261,14 @@ TSafePtr<T>::TSafePtr()
 template <typename T>
 TSafePtr<T>::TSafePtr(T* ptr)
 :   _ptr(ptr) {
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     IncRefCountIFP();
 #endif
 }
 //----------------------------------------------------------------------------
 template <typename T>
 TSafePtr<T>::~TSafePtr() {
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     DecRefCountIFP();
 #endif
 }
@@ -280,7 +280,7 @@ TSafePtr<T>::TSafePtr(TSafePtr&& rvalue) : _ptr(rvalue._ptr) {
 //----------------------------------------------------------------------------
 template <typename T>
 auto TSafePtr<T>::operator =(TSafePtr&& rvalue) -> TSafePtr& {
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     DecRefCountIFP();
 #endif
     _ptr = rvalue._ptr;
@@ -290,14 +290,14 @@ auto TSafePtr<T>::operator =(TSafePtr&& rvalue) -> TSafePtr& {
 //----------------------------------------------------------------------------
 template <typename T>
 TSafePtr<T>::TSafePtr(const TSafePtr& other) : _ptr(other._ptr) {
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     IncRefCountIFP();
 #endif
 }
 //----------------------------------------------------------------------------
 template <typename T>
 auto TSafePtr<T>::operator =(const TSafePtr& other) -> TSafePtr& {
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     if (other._ptr != _ptr) {
         DecRefCountIFP();
         _ptr = other._ptr;
@@ -313,7 +313,7 @@ template <typename T>
 template <typename U>
 TSafePtr<T>::TSafePtr(const TSafePtr<U>& other)
 :   _ptr(checked_cast<T *>(other.get())) {
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     IncRefCountIFP();
 #endif
 }
@@ -321,7 +321,7 @@ TSafePtr<T>::TSafePtr(const TSafePtr<U>& other)
 template <typename T>
 template <typename U>
 auto TSafePtr<T>::operator =(const TSafePtr<U>& other) -> TSafePtr& {
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     if (other.get() != _ptr) {
         DecRefCountIFP();
         _ptr = checked_cast<T *>(other.get());
@@ -343,7 +343,7 @@ TSafePtr<T>::TSafePtr(TSafePtr<U>&& rvalue)
 template <typename T>
 template <typename U>
 auto TSafePtr<T>::operator =(TSafePtr<U>&& rvalue) -> TSafePtr& {
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     DecRefCountIFP();
 #endif
     _ptr = checked_cast<T *>(rvalue.get());
@@ -353,7 +353,7 @@ auto TSafePtr<T>::operator =(TSafePtr<U>&& rvalue) -> TSafePtr& {
 //----------------------------------------------------------------------------
 template <typename T>
 void TSafePtr<T>::reset(T* ptr/* = nullptr */) {
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     if (ptr != _ptr) {
         DecRefCountIFP();
         _ptr = ptr;
@@ -373,7 +373,7 @@ void TSafePtr<T>::Swap(TSafePtr<U>& other) {
 template <typename T>
 FORCE_INLINE void TSafePtr<T>::IncRefCountIFP() const {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     if (_ptr)
         AddSafeRef(_ptr);
 #endif
@@ -382,7 +382,7 @@ FORCE_INLINE void TSafePtr<T>::IncRefCountIFP() const {
 template <typename T>
 FORCE_INLINE void TSafePtr<T>::DecRefCountIFP() const {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     if (_ptr)
         RemoveSafeRef(_ptr);
 #endif

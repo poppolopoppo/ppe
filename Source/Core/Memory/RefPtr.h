@@ -2,6 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/Memory/MemoryDomain.h"
+
 #include <type_traits>
 
 /*
@@ -10,7 +12,9 @@
 */
 
 #if defined(_DEBUG) || !defined(NDEBUG) || USE_CORE_MEMORY_DEBUGGING
-#   define WITH_CORE_SAFEPTR
+#   define USE_CORE_SAFEPTR 1
+#else
+#   define USE_CORE_SAFEPTR 0
 #endif
 
 #define _FWD_REFPTR_IMPL(T, _PREFIX)                                    \
@@ -23,6 +27,14 @@
 #define FWD_REFPTR(T_WITHOUT_F)             _FWD_REFPTR_IMPL(T_WITHOUT_F, F)
 #define FWD_INTERFACE_REFPTR(T_WITHOUT_I)   _FWD_REFPTR_IMPL(T_WITHOUT_I, I)
 
+// used for tracking memory allocated by instances derived from FRefCountable
+#ifdef USE_MEMORY_DOMAINS
+#   include "Core/Allocator/TrackingMalloc.h"
+#   define NEW_REF(_DOMAIN, T) new (MEMORY_DOMAIN_TRACKING_DATA(_DOMAIN)) T
+#else
+#   include "Core/Allocator/Malloc.h"
+#   define NEW_REF(_DOMAIN, T) new (Meta::ForceInit) T
+#endif
 
 #ifdef SAFEPTR
 #   undef SAFEPTR
@@ -53,9 +65,24 @@ public:
 
     int RefCount() const { return _refCount; }
 
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     int SafeRefCount() const { return _safeRefCount; }
 #endif
+
+public: // override new/delete operators for memory tracking
+#ifdef USE_MEMORY_DOMAINS
+    static void* operator new(size_t sz, FMemoryTracking& trackingData) { return tracking_malloc(trackingData, sz); }
+    static void operator delete(void* p, FMemoryTracking&) { tracking_free(p); }
+    static void operator delete(void* p) { tracking_free(p); }
+#else
+    static void* operator new(size_t sz, Meta::FForceInit/* force to use macro even wout domains */) { return Core::malloc(sz); }
+    static void operator delete(void* p, Meta::FForceInit/* force to use macro even wout domains */) { Core::free(p); }
+    static void operator delete(void* p) { Core::free(p); }
+#endif
+
+    // general allocators are forbidden to force the client to provide metadata
+    static void * operator new(std::size_t) = delete;
+    static void * operator new[](std::size_t) = delete;
 
 protected:
     friend void AddRef(const FRefCountable* ptr);
@@ -76,7 +103,7 @@ protected:
     template <typename T>
     friend T *RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& ptr);
 
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     friend void AddSafeRef(const FRefCountable* ptr);
     friend void RemoveSafeRef(const FRefCountable* ptr);
 #else
@@ -90,7 +117,7 @@ private:
 
     mutable std::atomic<int> _refCount;
 
-#ifdef WITH_CORE_SAFEPTR
+#if USE_CORE_SAFEPTR
     // for debugging purpose : assert if TSafePtr<> are still tracking that object
     template <typename T>
     friend class TSafePtr;
