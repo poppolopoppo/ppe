@@ -23,7 +23,7 @@
 #endif
 
 #define malloc(sz) Core::tracking_malloc_thread_local<MEMORY_DOMAIN_TAG(LZ4)>(sz)
-#define free(p) Core::tracking_free_thread_local<MEMORY_DOMAIN_TAG(LZ4)>(p)
+#define free(p) Core::tracking_free_thread_local(p)
 
 PRAGMA_MSVC_WARNING_DISABLE(5033) // 'register' is no longer a supported storage class (C++17)
 PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) always evaluates to the result of <expression>.  Did you intend to use the bitwise-and operator?

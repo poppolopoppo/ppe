@@ -15,7 +15,7 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 
 #define STBIR_MALLOC(size,c) Core::tracking_malloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(size)
-#define STBIR_FREE(ptr,c) Core::tracking_free_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(ptr)
+#define STBIR_FREE(ptr,c) Core::tracking_free_thread_local(ptr)
 #define STBIR_ASSERT(x) \
     Assert(NOOP("stb_image_resize: "), (x))
 

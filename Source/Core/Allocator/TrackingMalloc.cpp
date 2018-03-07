@@ -51,16 +51,15 @@ static void* tracking_malloc_(FMemoryTracking& trackingData, size_t size, _Mallo
 }
 //----------------------------------------------------------------------------
 template <typename _Free>
-static void tracking_free_(FMemoryTracking& trackingData, void *ptr, _Free freeF) {
+static void tracking_free_(void *ptr, _Free freeF) {
 #ifdef USE_MEMORY_DOMAINS
     if (nullptr == ptr)
         return;
 
-    auto* const pblock = reinterpret_cast<FBlockTracking_*>(ptr) - 1;
-    Assert(&trackingData == pblock->TrackingData);
+    auto* const pblock = (reinterpret_cast<FBlockTracking_*>(ptr) - 1);
     Assert(FBlockTracking_::CanaryValue == pblock->CanaryValue);
 
-    trackingData.Deallocate(1, pblock->SizeInBytes);
+    pblock->TrackingData->Deallocate(1, pblock->SizeInBytes);
     freeF(pblock);
 #else
     freeF(ptr);
@@ -117,35 +116,35 @@ static void* tracking_realloc_(FMemoryTracking& trackingData, void *ptr, size_t 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void* (malloc)(FMemoryTracking& trackingData, size_t size) {
+void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size) {
     return tracking_malloc_(trackingData, size, [](size_t sz) { return Core::malloc(sz); });
 }
 //----------------------------------------------------------------------------
-void  (free)(FMemoryTracking& trackingData, void *ptr) {
-    tracking_free_(trackingData, ptr, [](void* p) { Core::free(p); });
+void  (tracking_free)(void *ptr) {
+    tracking_free_(ptr, [](void* p) { Core::free(p); });
 }
 //----------------------------------------------------------------------------
-void* (calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size) {
+void* (tracking_calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size) {
     return tracking_calloc_(trackingData, nmemb, size, [](size_t n, size_t s) { return Core::calloc(n, s); });
 }
 //----------------------------------------------------------------------------
-void* (realloc)(FMemoryTracking& trackingData, void *ptr, size_t size) {
+void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, size_t size) {
     return tracking_realloc_(trackingData, ptr, size, [](void* p, size_t s) { return Core::realloc(p, s); });
 }
 //----------------------------------------------------------------------------
-void* (malloc_thread_local)(FMemoryTracking& trackingData, size_t size) {
+void* (tracking_malloc_thread_local)(FMemoryTracking& trackingData, size_t size) {
     return tracking_malloc_(trackingData, size, [](size_t sz) { return GetThreadLocalHeap().Malloc(sz); });
 }
 //----------------------------------------------------------------------------
-void  (free_thread_local)(FMemoryTracking& trackingData, void *ptr) {
-    tracking_free_(trackingData, ptr, [](void* p) { GetThreadLocalHeap().Free(p); });
+void  (tracking_free_thread_local)(void *ptr) {
+    tracking_free_(ptr, [](void* p) { GetThreadLocalHeap().Free(p); });
 }
 //----------------------------------------------------------------------------
-void* (calloc_thread_local)(FMemoryTracking& trackingData, size_t nmemb, size_t size) {
+void* (tracking_calloc_thread_local)(FMemoryTracking& trackingData, size_t nmemb, size_t size) {
     return tracking_calloc_(trackingData, nmemb, size, [](size_t n, size_t s) { return GetThreadLocalHeap().Calloc(n, s); });
 }
 //----------------------------------------------------------------------------
-void* (realloc_thread_local)(FMemoryTracking& trackingData, void *ptr, size_t size) {
+void* (tracking_realloc_thread_local)(FMemoryTracking& trackingData, void *ptr, size_t size) {
     return tracking_realloc_(trackingData, ptr, size, [](void* p, size_t s) { return GetThreadLocalHeap().Realloc(p, s); });
 }
 //----------------------------------------------------------------------------

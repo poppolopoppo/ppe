@@ -26,7 +26,7 @@ PRAGMA_MSVC_WARNING_DISABLE(6001) // warning C6001: Using uninitialized memory '
 #define STBI_REALLOC(p,newsz) \
     Core::tracking_realloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p, newsz)
 #define STBI_FREE(p) \
-    Core::tracking_free_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p)
+    Core::tracking_free_thread_local(p)
 #define STBI_ASSERT(x) \
     Assert(NOOP("stb_image: "), (x))
 #define STBI_NO_STDIO
@@ -38,7 +38,7 @@ PRAGMA_MSVC_WARNING_DISABLE(6001) // warning C6001: Using uninitialized memory '
 #define STBIW_REALLOC(p,newsz) \
     Core::tracking_realloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p, newsz)
 #define STBIW_FREE(p) \
-    Core::tracking_free_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p)
+    Core::tracking_free_thread_local(p)
 #define STBIW_ASSERT(x) \
     Assert(NOOP("stb_image_write: "), (x))
 #define STBI_WRITE_NO_STDIO
