@@ -184,7 +184,7 @@ template <typename T>
 void FValue::Set(const T& value) {
     STATIC_ASSERT(TValueTraits<T>::TypeId != EValueType::Void);
     _type = TValueTraits<T>::TypeId;
-    new ((void*)std::addressof(TValueTraits<T>::Get(_data))) T(value);
+    INPLACE_NEW(std::addressof(TValueTraits<T>::Get(_data)), T)(value);
 }
 //----------------------------------------------------------------------------
 template <typename T>

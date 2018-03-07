@@ -36,7 +36,7 @@ static FEntry* AllocateEntry_(FChunk** chunks, size_t len, size_t stride, size_t
     }
 
     if (nullptr == chunkToAllocate) {
-        chunkToAllocate = new (FVirtualMemory::AlignedAlloc(GTokenChunkSize, GTokenChunkSize)) FChunk();
+        chunkToAllocate = INPLACE_NEW(FVirtualMemory::AlignedAlloc(GTokenChunkSize, GTokenChunkSize), FChunk)();
         chunkToAllocate->Next = *chunks;
         *chunks = chunkToAllocate;
     }
@@ -45,7 +45,7 @@ static FEntry* AllocateEntry_(FChunk** chunks, size_t len, size_t stride, size_t
     Assert_NoAssume(chunkToAllocate->TestCanary());
     Assert(chunkToAllocate->WriteOffset + allocSizeInBytes <= chunkSizeInBytes);
 
-    FEntry* entry = new (chunkToAllocate->Data() + chunkToAllocate->WriteOffset) FEntry(len, hash);
+    FEntry* entry = INPLACE_NEW(chunkToAllocate->Data() + chunkToAllocate->WriteOffset, FEntry)(len, hash);
     chunkToAllocate->WriteOffset = checked_cast<u32>(chunkToAllocate->WriteOffset + allocSizeInBytes);
 
 #ifdef USE_MEMORY_DOMAINS

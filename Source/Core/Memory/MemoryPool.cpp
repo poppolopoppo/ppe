@@ -513,7 +513,7 @@ FMemoryPoolChunk* FMemoryPool::AllocateChunk_() {
     const size_t currentChunkSize = CurrentChunkSize();
     const size_t currentBlockCount = BlockCountPerChunk_(currentChunkSize);
     void* const storage = FMemoryPoolAllocator_::Instance().Allocate(currentChunkSize);
-    return new (storage) FMemoryPoolChunk(currentChunkSize, currentBlockCount);
+    return INPLACE_NEW(storage, FMemoryPoolChunk)(currentChunkSize, currentBlockCount);
 
 #endif
 }

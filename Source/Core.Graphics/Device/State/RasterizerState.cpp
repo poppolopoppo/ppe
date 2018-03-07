@@ -73,7 +73,7 @@ namespace {
 void FRasterizerState::Start() {
     Assert(nullptr == CullClockwise);
     {
-        FRasterizerState *const state = new ((void *)&GRasterizerState_CullClockwise) FRasterizerState();
+        FRasterizerState *const state = INPLACE_NEW(&GRasterizerState_CullClockwise, FRasterizerState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"CullClockwise");
@@ -84,7 +84,7 @@ void FRasterizerState::Start() {
     }
     Assert(nullptr == CullCounterClockwise);
     {
-        FRasterizerState *const state = new ((void *)&GRasterizerState_CullCounterClockwise) FRasterizerState();
+        FRasterizerState *const state = INPLACE_NEW(&GRasterizerState_CullCounterClockwise, FRasterizerState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"CullCounterClockwise");
@@ -95,7 +95,7 @@ void FRasterizerState::Start() {
     }
     Assert(nullptr == CullNone);
     {
-        FRasterizerState *const state = new ((void *)&GRasterizerState_CullNone) FRasterizerState();
+        FRasterizerState *const state = INPLACE_NEW(&GRasterizerState_CullNone, FRasterizerState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"CullNone");
@@ -106,7 +106,7 @@ void FRasterizerState::Start() {
     }
     Assert(nullptr == Wireframe);
     {
-        FRasterizerState *const state = new ((void *)&GRasterizerState_Wireframe) FRasterizerState();
+        FRasterizerState *const state = INPLACE_NEW(&GRasterizerState_Wireframe, FRasterizerState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"Wireframe");

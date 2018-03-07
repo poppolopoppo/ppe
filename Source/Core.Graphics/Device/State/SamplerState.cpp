@@ -79,7 +79,7 @@ namespace {
 void FSamplerState::Start() {
     Assert(nullptr == AnisotropicClamp);
     {
-        FSamplerState *const state = new ((void *)&GSamplerState_AnisotropicClamp) FSamplerState();
+        FSamplerState *const state = INPLACE_NEW(&GSamplerState_AnisotropicClamp, FSamplerState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"AnisotropicClamp");
@@ -93,7 +93,7 @@ void FSamplerState::Start() {
     }
     Assert(nullptr == AnisotropicWrap);
     {
-        FSamplerState *const state = new ((void *)&GSamplerState_AnisotropicWrap) FSamplerState();
+        FSamplerState *const state = INPLACE_NEW(&GSamplerState_AnisotropicWrap, FSamplerState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"AnisotropicWrap");
@@ -121,7 +121,7 @@ void FSamplerState::Start() {
     }
     Assert(nullptr == LinearWrap);
     {
-        FSamplerState *const state = new ((void *)&GSamplerState_LinearWrap) FSamplerState();
+        FSamplerState *const state = INPLACE_NEW(&GSamplerState_LinearWrap, FSamplerState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"LinearWrap");
@@ -135,7 +135,7 @@ void FSamplerState::Start() {
     }
     Assert(nullptr == PointClamp);
     {
-        FSamplerState *const state = new ((void *)&GSamplerState_PointClamp) FSamplerState();
+        FSamplerState *const state = INPLACE_NEW(&GSamplerState_PointClamp, FSamplerState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"PointClamp");
@@ -149,7 +149,7 @@ void FSamplerState::Start() {
     }
     Assert(nullptr == PointWrap);
     {
-        FSamplerState *const state = new ((void *)&GSamplerState_PointWrap) FSamplerState();
+        FSamplerState *const state = INPLACE_NEW(&GSamplerState_PointWrap, FSamplerState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"PointWrap");

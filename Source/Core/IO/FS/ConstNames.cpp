@@ -68,7 +68,7 @@ FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_ACCESSOR)
 //----------------------------------------------------------------------------
 void FFSConstNames::Start() {
 #define DEF_FILESYSTEMCONSTNAMES_STARTUP(_Type, _Name, _Content) \
-    new ((void *)&CONCAT(gPod_##_Type##_, _Name)) _Type(MakeStringView(_Content));
+    INPLACE_NEW(&CONCAT(gPod_##_Type##_, _Name), _Type)(MakeStringView(_Content));
     FOREACH_FILESYSTEMCONSTNAMES(DEF_FILESYSTEMCONSTNAMES_STARTUP)
 #undef DEF_FILESYSTEMCONSTNAMES_STARTUP
 }

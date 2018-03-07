@@ -263,13 +263,13 @@ FJson::FValue& FJson::FValue::operator =(const FValue& other) {
         _float = other._float;
         break;
     case Core::Serialize::FJson::String:
-        new (&_string) FString(other._string);
+        INPLACE_NEW(&_string, FString)(other._string);
         break;
     case Core::Serialize::FJson::Array:
-        new (&_array) FArray(other._array);
+        INPLACE_NEW(&_array, FArray)(other._array);
         break;
     case Core::Serialize::FJson::Object:
-        new (&_object) FObject(other._object);
+        INPLACE_NEW(&_object, FObject)(other._object);
         break;
     default:
         AssertNotImplemented();
@@ -296,15 +296,15 @@ FJson::FValue& FJson::FValue::operator =(FValue&& rvalue) {
         _float = rvalue._float;
         break;
     case Core::Serialize::FJson::String:
-        new (&_string) FString(std::move(rvalue._string));
+        INPLACE_NEW(&_string, FString)(std::move(rvalue._string));
         //rvalue._string.~FString();
         break;
     case Core::Serialize::FJson::Array:
-        new (&_array) FArray(std::move(rvalue._array));
+        INPLACE_NEW(&_array, FArray)(std::move(rvalue._array));
         //rvalue._array.~FArray();
         break;
     case Core::Serialize::FJson::Object:
-        new (&_object) FObject(std::move(rvalue._object));
+        INPLACE_NEW(&_object, FObject)(std::move(rvalue._object));
         //rvalue._object.~FObject();
         break;
     default:
@@ -353,72 +353,72 @@ void FJson::FValue::SetType_AssumeNull(FJson& , TType<Null>) { _type = Null; }
 auto FJson::FValue::SetType_AssumeNull(FJson& , TType<Bool>) ->FBool& {
     Assert(Null == _type);
     _type = Bool;
-    return (*new (&_bool) FBool);
+    return (*INPLACE_NEW(&_bool, FBool));
 }
 //----------------------------------------------------------------------------
 auto FJson::FValue::SetType_AssumeNull(FJson& , TType<Integer>) -> FInteger& {
     Assert(Null == _type);
     _type = Integer;
-    return (*new (&_integer) FInteger);
+    return (*INPLACE_NEW(&_integer, FInteger));
 }
 //----------------------------------------------------------------------------
 auto FJson::FValue::SetType_AssumeNull(FJson& , TType<Float>) -> FFloat& {
     Assert(Null == _type);
     _type = Float;
-    return (*new (&_float) FFloat);
+    return (*INPLACE_NEW(&_float, FFloat));
 }
 //----------------------------------------------------------------------------
 auto FJson::FValue::SetType_AssumeNull(FJson& , TType<String>) -> FString& {
     Assert(Null == _type);
     _type = String;
-    return (*new (&_string) FString);
+    return (*INPLACE_NEW(&_string, FString));
 }
 //----------------------------------------------------------------------------
 auto FJson::FValue::SetType_AssumeNull(FJson& doc, TType<Array>) -> FArray& {
     Assert(Null == _type);
     _type = Array;
-    return (*new (&_array) FArray(FArray::allocator_type(doc._heap)));
+    return (*INPLACE_NEW(&_array, FArray)(FArray::allocator_type(doc._heap)));
 }
 //----------------------------------------------------------------------------
 auto FJson::FValue::SetType_AssumeNull(FJson& doc, TType<Object>) -> FObject& {
     _type = Object;
-    return (*new (&_object) FObject(FObject::allocator_type(doc._heap)));
+    return (*INPLACE_NEW(&_object, FObject)(FObject::allocator_type(doc._heap)));
 }
 //----------------------------------------------------------------------------
 void FJson::FValue::SetValue(FBool value) {
     Clear();
     _type = EType::Bool;
-    new (&_bool) FBool(value);
+    INPLACE_NEW(&_bool, FBool)(value);
 }
 //----------------------------------------------------------------------------
 void FJson::FValue::SetValue(FInteger value) {
     Clear();
     _type = EType::Integer;
-    new (&_integer) FInteger(value);
+    INPLACE_NEW(&_integer, FInteger)(value);
 }
 //----------------------------------------------------------------------------
 void FJson::FValue::SetValue(FFloat value) {
     Clear();
     _type = EType::Float;
-    new (&_float) FFloat(value);
+    INPLACE_NEW(&_float, FFloat)(value);
 }
 //----------------------------------------------------------------------------
 void FJson::FValue::SetValue(FString&& value) {
     Clear();
     _type = EType::String;
-    new (&_string) FString(std::move(value));
+    INPLACE_NEW(&_string, FString)(std::move(value));
 }
 //----------------------------------------------------------------------------
 void FJson::FValue::SetValue(FArray&& value) {
     Clear();
     _type = EType::Array;
-    new (&_array) FArray(std::move(value));
+    INPLACE_NEW(&_array, FArray)(std::move(value));
 }
 //----------------------------------------------------------------------------
 void FJson::FValue::SetValue(FObject&& value) {
     Clear();
     _type = EType::Object;
-    new (&_object) FObject(std::move(value));
+    INPLACE_NEW(&_object, FObject)(std::move(value));
 }
 //----------------------------------------------------------------------------
 bool FJson::FValue::Equals(const FValue& other) const {

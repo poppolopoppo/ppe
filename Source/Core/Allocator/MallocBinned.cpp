@@ -626,7 +626,7 @@ private:
         }
 
         // register new page at head of buckets
-        auto* chunk = new ((void*)page) FBinnedChunk_(this, sizeClass);
+        auto* chunk = INPLACE_NEW(page, FBinnedChunk_)(this, sizeClass);
         _buckets[sizeClass].PushFront(chunk);
 
         return chunk->Allocate();

@@ -256,7 +256,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4826) // warning C4826: convert unsigned char* to DW
             }
         }
 
-        ::new ((void*)frame) FDecodedCallstack::FFrame(*address, std::move(symbol), std::move(filename), line);
+        INPLACE_NEW(frame, FDecodedCallstack::FFrame)(*address, std::move(symbol), std::move(filename), line);
     }
 PRAGMA_MSVC_WARNING_POP()
 

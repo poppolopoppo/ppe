@@ -73,7 +73,7 @@ namespace {
 void FDepthStencilState::Start() {
     Assert(nullptr == Default);
     {
-        FDepthStencilState *const state = new ((void *)&GDepthStencilState_Default) FDepthStencilState();
+        FDepthStencilState *const state = INPLACE_NEW(&GDepthStencilState_Default, FDepthStencilState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"Default");
@@ -85,7 +85,7 @@ void FDepthStencilState::Start() {
     }
     Assert(nullptr == DepthRead);
     {
-        FDepthStencilState *const state = new ((void *)&GDepthStencilState_DepthRead) FDepthStencilState();
+        FDepthStencilState *const state = INPLACE_NEW(&GDepthStencilState_DepthRead, FDepthStencilState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"DepthRead");
@@ -97,7 +97,7 @@ void FDepthStencilState::Start() {
     }
     Assert(nullptr == None);
     {
-        FDepthStencilState *const state = new ((void *)&GDepthStencilState_None) FDepthStencilState();
+        FDepthStencilState *const state = INPLACE_NEW(&GDepthStencilState_None, FDepthStencilState)();
         AddRef(state);
 #ifdef WITH_GRAPHICS_DEVICERESOURCE_NAME
         state->SetResourceName(L"None");

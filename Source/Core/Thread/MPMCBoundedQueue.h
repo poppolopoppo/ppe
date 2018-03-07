@@ -103,7 +103,7 @@ bool TMPMCBoundedQueueView<T>::Produce(T&& rdata) {
             pos = _enqueuePos.load(std::memory_order_relaxed);
     }
 
-    new ((void*)std::addressof(cell->_data)) T(std::move(rdata));
+    INPLACE_NEW(std::addressof(cell->_data), T)(std::move(rdata));
     cell->_sequence.store(pos + 1, std::memory_order_release);
 
     return true;

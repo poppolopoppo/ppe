@@ -521,7 +521,7 @@ static void SetupInplaceLogger_() {
     }
 
     STATIC_ASSERT(sizeof(T) <= sizeof(GLoggerStorage_));
-    GLogger_ = static_cast<ILogger*>(new ((void*)&GLoggerStorage_) T);
+    GLogger_ = static_cast<ILogger*>(INPLACE_NEW(&GLoggerStorage_, T));
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void SetupPreMainLogger_() {
@@ -798,7 +798,7 @@ private:
         const size_t off2 = checked_cast<size_t>(_offsetO & GBufferMask);
 
         // will be freed on another thread when _offsetI will be incremented
-        FAsyncLogEntry_* pEntry = new ((void*)&_ringBuffer[offEntry]) FAsyncLogEntry_(
+        FAsyncLogEntry_* pEntry = INPLACE_NEW(&_ringBuffer[offEntry], FAsyncLogEntry_)(
             this, category, level, site, off0, off1, off2 );
 
         Assert((void*)(pEntry + 1) == (void*)(&_ringBuffer[off2]));
@@ -838,7 +838,7 @@ static bool SetupAsyncrhonousLogger_(bool immediate) {
         // flush before installing asynchronous logger
         GLogger_->Flush(true);
 
-        GLogger_ = new ((void*)&GAsyncLoggerStorage_) FAsynchronousLogger_(GLogger_);
+        GLogger_ = INPLACE_NEW(&GAsyncLoggerStorage_, FAsynchronousLogger_)(GLogger_);
 
         return false;
     }

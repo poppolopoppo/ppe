@@ -331,7 +331,7 @@ void* FMallocStomp::AlignedMalloc(size_t size, size_t alignment) {
 
     // fill payload data to retrieve needed allocation properties
     const u32 userOffset = checked_cast<u32>(userPtr - (u8*)allocationPtr);
-    new (userPtr - sizeof(FStompPayload_)) FStompPayload_{ allocationSize, userOffset, size };
+    INPLACE_NEW(userPtr - sizeof(FStompPayload_), FStompPayload_){ allocationSize, userOffset, size };
     ONLY_IF_ASSERT(StompGetPayload_(userPtr));
 
     // can't read or write AFTER user data
@@ -401,7 +401,7 @@ void* FMallocStomp::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
 
             // fill payload data to retrieve needed allocation properties
             const u32 userOffset = checked_cast<u32>(userPtr - (u8*)allocationPtr);
-            new (userPtr - sizeof(FStompPayload_)) FStompPayload_{ allocationSize, userOffset, size };
+            INPLACE_NEW(userPtr - sizeof(FStompPayload_), FStompPayload_){ allocationSize, userOffset, size };
             ONLY_IF_ASSERT(StompGetPayload_(userPtr));
 
             Assert(userPtr);

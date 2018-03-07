@@ -184,7 +184,7 @@ private:
     void assign_wrapped_(_Data&& data, std::true_type) {
         using wrapped_type = _Data;
         STATIC_ASSERT(sizeof(wrapped_type) <= GInSituSize);
-        new (&_inSitu) wrapped_type(std::move(data));
+        new ((void*)&_inSitu) wrapped_type(std::move(data));
         const wrapper_type w = [](const void* inSitu, _Args... args) -> _Ret {
             return (*(wrapped_type*)inSitu)(std::forward<_Args>(args)...);
         };
@@ -196,7 +196,7 @@ private:
     void assign_wrapped_(_Data&& data, std::false_type) {
         using wrapped_type = TWrapper_<_Data>;
         STATIC_ASSERT(sizeof(wrapped_type) <= GInSituSize);
-        new (&_inSitu) wrapped_type(std::move(data));
+        new ((void*)&_inSitu) wrapped_type(std::move(data));
         const wrapper_type w = [](const void* inSitu, _Args... args) -> _Ret {
             return ((wrapped_type*)inSitu)->Data(std::forward<_Args>(args)...);
         };

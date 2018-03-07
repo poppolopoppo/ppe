@@ -41,7 +41,7 @@ struct TInSituPtr {
         STATIC_ASSERT(std::is_base_of<T, U>::value);
         STATIC_ASSERT(sizeof(U) == sizeof(T));
         Assert(not Valid());
-        U* const result = new ((void*)std::addressof(InSitu)) U{ std::forward<_Args>(args)... };
+        U* const result = INPLACE_NEW(std::addressof(InSitu), U){ std::forward<_Args>(args)... };
         Assert(Valid());
         return result;
     }

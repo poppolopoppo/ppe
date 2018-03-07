@@ -51,13 +51,13 @@ public:
     bool empty() const { return (0 == _size); }
     pointer data() const { return _storage; }
 
-    reference push_back_Uninitialized();
+    pointer push_back_Uninitialized();
     template <typename _Arg0, typename... _Args>
     void push_back(_Arg0&& arg0, _Args&&... args);
     template <typename _Arg0, typename... _Args>
     bool push_back_OverflowIFN(pointer overflowIFN, _Arg0&& arg0, _Args&&... args);
 
-    reference push_front_Uninitialized();
+    pointer push_front_Uninitialized();
     template <typename _Arg0, typename... _Args>
     void push_front(_Arg0&& arg0, _Args&&... args);
     template <typename _Arg0, typename... _Args>
@@ -111,17 +111,17 @@ TRingBuffer<T, _IsPod>::TRingBuffer(const TMemoryView<T>& storage)
 :   TRingBuffer(storage.Pointer(), storage.size()) {}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-auto TRingBuffer<T, _IsPod>::push_back_Uninitialized() -> reference {
+auto TRingBuffer<T, _IsPod>::push_back_Uninitialized() -> pointer {
     Assert(_storage);
     Assert(_size < _capacity);
 
-    return (_storage[(_begin + _size++) % _capacity]);
+    return (&_storage[(_begin + _size++) % _capacity]);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
 void TRingBuffer<T, _IsPod>::push_back(_Arg0&& arg0, _Args&&... args) {
-    new (&push_back_Uninitialized()) T{ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
+    INPLACE_NEW(push_back_Uninitialized(), T){ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -141,7 +141,7 @@ bool TRingBuffer<T, _IsPod>::push_back_OverflowIFN(pointer overflowIFN, _Arg0&& 
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
-auto TRingBuffer<T, _IsPod>::push_front_Uninitialized() -> reference {
+auto TRingBuffer<T, _IsPod>::push_front_Uninitialized() -> pointer {
     Assert(_storage);
     Assert(_size < _capacity);
 
@@ -149,13 +149,13 @@ auto TRingBuffer<T, _IsPod>::push_front_Uninitialized() -> reference {
     _begin = (_begin + _capacity - 1) % _capacity;
     _size++;
 
-    return slot;
+    return (&slot);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
 void TRingBuffer<T, _IsPod>::push_front(_Arg0&& arg0, _Args&&... args) {
-    new (&push_front_Uninitialized()) T{ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
+    INPLACE_NEW(push_front_Uninitialized(), T){ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>

@@ -113,7 +113,7 @@ FOREACH_CORE_LATTICE_COLLADATOKEN(COLLADATOKEN_DEF)
 //----------------------------------------------------------------------------
 static void Start() {
 #define COLLADATOKEN_START(_Name, _Unused) \
-    new ((void*)std::addressof(CONCAT(_Storage::g, _Name))) XML::FName(STRINGIZE(_Name));
+    INPLACE_NEW(std::addressof(CONCAT(_Storage::g, _Name)), XML::FName)(STRINGIZE(_Name));
 FOREACH_CORE_LATTICE_COLLADATOKEN(COLLADATOKEN_START)
 #undef COLLADATOKEN_START
 }

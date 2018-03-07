@@ -95,7 +95,7 @@ class FLinearHeapVMCache_ {
 public:
     static NO_INLINE FLinearHeapBlock_* AllocateBlock(FLinearHeapBlock_* next) {
         void* const ptr = Instance_().Allocate_(GLinearHeapAllocationSize);
-        FLinearHeapBlock_* blk = new (ptr) FLinearHeapBlock_;
+        FLinearHeapBlock_* blk = INPLACE_NEW(ptr, FLinearHeapBlock_);
         blk->Offset = blk->Last = 0;
         blk->Next = next;
 #ifdef WITH_CORE_ASSERT
@@ -204,7 +204,7 @@ void* FLinearHeap::Allocate(size_t size, size_t alignment/* = ALLOCATION_BOUNDAR
 
     void* ptr;
 #if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    auto* blk = new (Core::aligned_malloc(sizeof(FLinearHeapBlock_) + size, alignment)) FLinearHeapBlock_;
+    auto* blk = INPLACE_NEW(Core::aligned_malloc(sizeof(FLinearHeapBlock_) + size, alignment), FLinearHeapBlock_);
     blk->SizeInBytes = checked_cast<u32>(size);
     blk->Next = static_cast<FLinearHeapBlock_*>(_blocks);
     AssertCheckCanary(*blk);

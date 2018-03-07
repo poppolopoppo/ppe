@@ -66,9 +66,9 @@ void FProfiler::Start() {
     Assert(nullptr == _gProfilerPtr_Process);
     Assert(nullptr == _gProfilerPtr_Thread);
 
-    _gProfilerPtr_Global = new ((void*)&_gProfilerPOD_Global) FProfiler(FProfiler::GlobalLevel);
-    _gProfilerPtr_Process = new ((void*)&_gProfilerPOD_Process) FProfiler(FProfiler::ProcessLevel);
-    _gProfilerPtr_Thread = new ((void*)&_gProfilerPOD_Thread) FProfiler(FProfiler::ThreadLevel);
+    _gProfilerPtr_Global = INPLACE_NEW(&_gProfilerPOD_Global, FProfiler)(FProfiler::GlobalLevel);
+    _gProfilerPtr_Process = INPLACE_NEW(&_gProfilerPOD_Process, FProfiler)(FProfiler::ProcessLevel);
+    _gProfilerPtr_Thread = INPLACE_NEW(&_gProfilerPOD_Thread, FProfiler)(FProfiler::ThreadLevel);
 
     _gProfilerPtr_Global->Stop(); // profiler is started by default
 }

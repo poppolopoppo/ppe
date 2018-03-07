@@ -117,7 +117,7 @@ FVertexSemantic FVertexSemantic::FromName(const FName& name) {
 //----------------------------------------------------------------------------
 void FVertexDeclaration::Start() {
 #define DEF_VERTEXSEMANTIC_START(_Name) \
-    new ((void*)std::addressof(FVertexSemantic::_Name)) FVertexSemantic(FName(STRINGIZE(_Name)));
+    INPLACE_NEW(std::addressof(FVertexSemantic::_Name), FVertexSemantic)(FName(STRINGIZE(_Name)));
     FOREACH_VERTEXSEMANTIC_NAME(DEF_VERTEXSEMANTIC_START)
 #undef DEF_VERTEXSEMANTIC_START
 

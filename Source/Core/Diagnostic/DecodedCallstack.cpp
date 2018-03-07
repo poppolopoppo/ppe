@@ -79,7 +79,7 @@ FDecodedCallstack& FDecodedCallstack::operator = (FDecodedCallstack&& rvalue) {
     FFrame* dst = reinterpret_cast<FFrame *>(&_frames);
     FFrame* src = reinterpret_cast<FFrame *>(&rvalue._frames);
     for (size_t i = 0; i < _depth; ++i, ++dst, ++src) {
-        new ((void*)dst) FFrame(std::move(*src));
+        INPLACE_NEW(dst, FFrame)(std::move(*src));
         src->~FFrame();
     }
 

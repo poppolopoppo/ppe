@@ -50,7 +50,7 @@ FOREACH_HTTPCONSTNAMES(DEF_HTTPCONSTNAMES_ACCESSOR)
 //----------------------------------------------------------------------------
 void FHttpConstNames::Start() {
 #define DEF_HTTPCONSTNAMES_STARTUP(_Type, _Name, _Content) \
-    new ((void *)&CONCAT(gPod_##_Type##_, _Name)) _Type(MakeStringView(_Content));
+    INPLACE_NEW(&CONCAT(gPod_##_Type##_, _Name), _Type)(MakeStringView(_Content));
     FOREACH_HTTPCONSTNAMES(DEF_HTTPCONSTNAMES_STARTUP)
 #undef DEF_HTTPCONSTNAMES_STARTUP
 }
