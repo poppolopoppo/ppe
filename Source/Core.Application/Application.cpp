@@ -87,7 +87,7 @@ static void ConfigureCRTHeapForDebugging_() {
 
     //_CrtSetBreakAlloc(447); // for leak debugging purpose // %_NOCOMMIT%
     //_CrtSetBreakAlloc(1246); // for leak debugging purpose // %_NOCOMMIT%
-    
+
 #   endif
 }
 #endif
@@ -123,9 +123,13 @@ void FApplicationModule::ClearAll_UnusedMemory() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationContext::FApplicationContext() {
+    // Install crash exception handlers
+    FPlatformCrashDump::SetExceptionHandlers();
+
     // Force locale to EN with UTF-8 encoding
     std::setlocale(LC_ALL, "en_US.UTF-8");
 
+    // Set CRT heap debug options for debugging windows heap
 #ifdef PLATFORM_WINDOWS
     ConfigureCRTHeapForDebugging_();
 #endif

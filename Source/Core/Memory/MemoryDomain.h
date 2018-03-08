@@ -77,22 +77,16 @@ TMemoryTracking<T, _Domain>::~TMemoryTracking() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TMemoryView<FMemoryTracking *> EachDomainTrackingData();
+CORE_API TMemoryView<FMemoryTracking *> EachDomainTrackingData();
 //----------------------------------------------------------------------------
-void ReportDomainTrackingData();
+CORE_API void RegisterAdditionalTrackingData(FMemoryTracking *pTrackingData);
+CORE_API void UnregisterAdditionalTrackingData(FMemoryTracking *pTrackingData);
 //----------------------------------------------------------------------------
-void RegisterAdditionalTrackingData(FMemoryTracking *pTrackingData);
-void UnregisterAdditionalTrackingData(FMemoryTracking *pTrackingData);
+CORE_API void ReportDomainTrackingData(FWTextWriter& oss);
+CORE_API void ReportAdditionalTrackingData(FWTextWriter& oss);
+CORE_API void ReportAllocationHistogram(FWTextWriter& oss);
 //----------------------------------------------------------------------------
-void ReportAdditionalTrackingData();
-//----------------------------------------------------------------------------
-void ReportAllocationHistogram();
-//----------------------------------------------------------------------------
-inline void ReportAllTrackingData() {
-    ReportDomainTrackingData();
-    ReportAdditionalTrackingData();
-    ReportAllocationHistogram();
-}
+CORE_API void ReportAllTrackingData(FWTextWriter* optional = nullptr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -2,7 +2,9 @@
 
 #include "TargetPlatform.h"
 
+#include "Diagnostic/DbgHelpWrapper.h"
 #include "Diagnostic/Logger.h"
+#include "Diagnostic/MiniDump.h"
 #include "IO/TextWriter.h"
 
 #ifdef USE_DEBUG_LOGGER
@@ -19,6 +21,12 @@
 #endif
 
 #define USE_CORE_DEBUGGER_PRESENT 1 // set to 0 to fake non-attached to a debugger behavior %_NOCOMMIT%
+
+#ifndef ARCH_X64
+#   define USE_VECTORED_EXCEPTION_HANDLER 0//1 // bad idea : vectored exception are used internally by windows
+#else
+#   define USE_VECTORED_EXCEPTION_HANDLER 0
+#endif
 
 namespace Core {
 LOG_CATEGORY(CORE_API, Platform)
@@ -55,7 +63,7 @@ static const FWindowsSystemInfo_ GSystemInfo;
 #endif
 //----------------------------------------------------------------------------
 #ifdef USE_DEBUG_LOGGER
-struct FErrno_ { 
+struct FErrno_ {
     int Num;
     static FErrno_ LastError() { return FErrno_{ errno }; }
     inline friend FWTextWriter& operator <<(FWTextWriter& oss, FErrno_ err) {
@@ -428,6 +436,59 @@ bool FPlatformIO::Dup2(FHandle handleSrc, FHandle handleDst) {
 #else
 #   error "no support"
 #endif
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+#ifdef PLATFORM_WINDOWS
+static void DumpException_(PEXCEPTION_POINTERS pExceptionInfo) {
+    time_t tNow = ::time(NULL);
+    struct tm pTm;
+    ::localtime_s(&pTm, &tNow);
+
+    wchar_t filename[MAX_PATH];
+    {
+        wchar_t modulePath[MAX_PATH];
+        if (0 == ::GetModuleFileNameW(NULL, modulePath, MAX_PATH))
+            return;
+
+        ::swprintf_s(filename, MAX_PATH,
+            L"%s.%02d%02d%04d_%02d%02d%02d.dmp",
+            modulePath,
+            pTm.tm_year, pTm.tm_mon, pTm.tm_mday,
+            pTm.tm_hour, pTm.tm_min, pTm.tm_sec);
+    }
+
+    MiniDump::Write(filename, MiniDump::InfoLevel::Large, pExceptionInfo, true);
+
+    ::abort(); // abort program execution forcibly !
+}
+LONG WINAPI OnUnhandledException_(PEXCEPTION_POINTERS pExceptionInfo) {
+    DumpException_(pExceptionInfo);
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+#   if USE_VECTORED_EXCEPTION_HANDLER
+static volatile LPVOID GHandleVectoredExceptionHandler = nullptr;
+LONG WINAPI OnVectoredHandler_(PEXCEPTION_POINTERS pExceptionInfo) {
+    DumpException_(pExceptionInfo);
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+#   endif //!USE_VECTORED_EXCEPTION_HANDLER
+#endif //!PLATFORM_WINDOWS
+} //!namespace
+//----------------------------------------------------------------------------
+void FPlatformCrashDump::SetExceptionHandlers() {
+#ifdef PLATFORM_WINDOWS
+#   if USE_VECTORED_EXCEPTION_HANDLER
+    ::AddVectoredExceptionHandler(0, &OnVectoredHandler_);
+#   endif
+    ::SetUnhandledExceptionFilter(&OnUnhandledException_);
+#endif
+}
+//----------------------------------------------------------------------------
+void FPlatformCrashDump::AbortProgramWithDump() {
+    throw std::runtime_error("abort program with dump");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

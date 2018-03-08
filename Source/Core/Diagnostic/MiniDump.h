@@ -17,6 +17,7 @@ enum class EResult
     DumpFailed,
     FailedToCloseHandle,
     NotAvailable,
+    Reentrancy,
 };
 //----------------------------------------------------------------------------
 enum class InfoLevel {
@@ -24,9 +25,6 @@ enum class InfoLevel {
     Medium,
     Large,
 };
-//----------------------------------------------------------------------------
-void Start();
-void Shutdown();
 //----------------------------------------------------------------------------
 EResult Write(const wchar_t *filename, InfoLevel level,
     const void *exception_ptrs = nullptr,

@@ -99,6 +99,11 @@ struct CORE_API FPlatformIO {
     static bool Dup2(FHandle handleSrc, FHandle handleDst);
 };
 //----------------------------------------------------------------------------
+struct CORE_API FPlatformCrashDump {
+    static void SetExceptionHandlers();
+    static void AbortProgramWithDump();
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core

@@ -6,7 +6,6 @@
 #include "CrtDebug.h"
 #include "CurrentProcess.h"
 #include "DebugFunction.h"
-#include "MiniDump.h"
 #include "Profiling.h"
 
 #include "Memory/MemoryDomain.h"
@@ -27,7 +26,6 @@ void FDiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, const wch
     FDbghelpWrapper::Create();
 #endif
     FCallstack::Start();
-    MiniDump::Start();
 #ifdef WITH_CORE_PROFILING
     FProfiler::FStartup();
 #endif
@@ -39,7 +37,6 @@ void FDiagnosticsStartup::Shutdown() {
 #ifdef WITH_CORE_PROFILING
     FProfiler::Shutdown();
 #endif
-    MiniDump::Shutdown();
     FCallstack::Shutdown();
 #ifdef PLATFORM_WINDOWS
     FDbghelpWrapper::Destroy();

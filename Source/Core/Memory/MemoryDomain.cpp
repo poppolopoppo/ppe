@@ -103,15 +103,11 @@ TMemoryView<FMemoryTracking *> EachDomainTrackingData() {
 #endif
 }
 //----------------------------------------------------------------------------
-void ReportDomainTrackingData() {
+void ReportDomainTrackingData(FWTextWriter& oss) {
 #if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
     const FMemoryTracking **ptr = (const FMemoryTracking **)&GAllMemoryDomainTrackingData[0];
     const TMemoryView<const FMemoryTracking *> datas(ptr, lengthof(GAllMemoryDomainTrackingData));
-
-    FWStringBuilder oss;
     ReportTrackingDatas(oss, L"Memory Domains", datas);
-
-    LOG(MemoryTracking, Info, oss.ToString());
 #endif
 }
 //----------------------------------------------------------------------------
@@ -142,21 +138,17 @@ void UnregisterAdditionalTrackingData(FMemoryTracking *pTrackingData) {
 #endif
 }
 //----------------------------------------------------------------------------
-void ReportAdditionalTrackingData() {
+void ReportAdditionalTrackingData(FWTextWriter& oss) {
 #if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
     SKIP_MEMORY_LEAKS_IN_SCOPE();
 
-    FWStringBuilder oss;
     FAdditionalTrackingData& Additional = AllAdditionalTrackingData_();
-
     const FAtomicSpinLock::FScope scopeLock(Additional.Barrier);
     ReportTrackingDatas(oss, L"Additional", Additional.Datas.MakeConstView());
-
-    LOG(MemoryTracking, Info, oss.ToString());
 #endif
 }
 //----------------------------------------------------------------------------
-void ReportAllocationHistogram() {
+void ReportAllocationHistogram(FWTextWriter& oss) {
 #if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
     TMemoryView<const size_t> classes, allocations, totalBytes;
     if (not FetchMemoryAllocationHistogram(&classes, &allocations, &totalBytes))
@@ -177,7 +169,6 @@ void ReportAllocationHistogram() {
 
     const float distributionScale = distribution(maxCount);
 
-    FWStringBuilder oss;
     oss << FTextFormat::Float(FTextFormat::FixedFloat, 2);
     oss << L"report allocations size histogram" << Eol;
 
@@ -208,8 +199,22 @@ void ReportAllocationHistogram() {
 
         GPrevAllocations[i] = allocations[i];
     }
+#endif
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
+#if defined(USE_MEMORY_DOMAINS)
+    FWStringBuilder sb;
+    FWTextWriter& oss = (optional ? *optional : sb);
 
-    LOG(MemoryTracking, Info, oss.ToString());
+    ReportDomainTrackingData(oss);
+    ReportAdditionalTrackingData(oss);
+    ReportAllocationHistogram(oss);
+
+    if (not optional)
+        LOG(MemoryTracking, Info, sb.ToString());
 #endif
 }
 //----------------------------------------------------------------------------
