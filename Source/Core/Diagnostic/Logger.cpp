@@ -410,6 +410,8 @@ private:
     }
 
     NO_INLINE void RecursiveLog_(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) {
+        AssertRelease(_lockDepth < 10); // or we might have a looping error
+
         FWFixedSizeTextWriter& oss(_bucketWriter.Open());
 
         const size_t offText = oss.Tell();
