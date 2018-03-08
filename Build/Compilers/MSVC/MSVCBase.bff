@@ -13,6 +13,8 @@
 //#define USE_MSVC_ANALYZE
 ; active le folding des COMDAT en final (exe plus petit, pb pour debugger par contre)
 #define USE_MSVC_IDENTICAL_COMDAT_FOLDING
+; link avec la libstd statiquement plutot que dynamiquement
+;#define USE_MSVC_STATIC_RUNTIME
 
 //------------------------------------------------------------------------------
 // Common MSVC Configuration
@@ -216,8 +218,21 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 #endif
     .ReleaseDefines = .WoutSTLIteratorDebuggingDefines
 
+    // https://msdn.microsoft.com/fr-fr/library/2kzt1wy3.aspx
+
+    .SharedLibRuntimeForDebug   = ' /LDd' ; MultiThreaded/Static Debug dll
+    .SharedLibRuntimeForRelease = ' /LD'  ; MultiThreaded/Static dll
+
+    .BinaryRuntimeForDebug      = ' /MDd' ; MultiThreaded Debug exe
+    .BinaryRuntimeForRelease    = ' /MD'  ; MultiThreaded exe
+
+#if USE_MSVC_STATIC_RUNTIME
+    Print( "Using static runtime library (/MT)" )
+    .BinaryRuntimeForDebug      = ' /MTd' ; Static Debug exe
+    .BinaryRuntimeForRelease    = ' /MT'  ; Static exe
+#endif
+
     .DebugOptimisations = ''
-    + ' /MDd'               ; MultiThreaded Debug dll
     + ' /Od'                ; désactive les optimisations (debug)
     + ' /Oy-'               ; n'empêche pas la création des pointeurs de frame sur la pile des appels
     + ' /Gw-'               ; pas d'optimisations des données globales
@@ -235,21 +250,18 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 #endif
 
     .FastDebugOptimisations = ''
-    + ' /MDd'               ; MultiThreaded Debug dll
     + ' /O2'                ; optimisations favorisant la vitesse
     + ' /Oy-'               ; n'empêche pas la création des pointeurs de frame sur la pile des appels
     + ' /GS-'               ; vérification de la sécurité de la mémoire tampon
     + ' /Gw-'               ; pas d'optimisations des données globales
 
     .ReleaseOptimisations = ''
-    + ' /MD'                ; MultiThreaded dll
     + ' /O2'                ; optimisations favorisant la vitesse
     + ' /Oy-'               ; n'empêche pas la création des pointeurs de frame sur la pile des appels
     + ' /GS-'               ; vérification de la sécurité de la mémoire tampon
     + ' /GA'                ; optimisation d'accès aux variables thread-local
 
     .FinalOptimisations = ''
-    + ' /MD'                ; MultiThreaded dll
     + ' /O2'                ; optimisations favorisant la vitesse
     + ' /GS-'               ; vérification de la sécurité de la mémoire tampon
     + ' /Gw'                ; optimisations des données globales
@@ -305,6 +317,9 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
                         + .LinkerWithoutASLR
+
+    .SharedLibRuntime   = .SharedLibRuntimeForDebug
+    .BinaryRuntime      = .BinaryRuntimeForDebug
 ]
 
 //------------------------------------------------------------------------------
@@ -326,6 +341,9 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
                         + .LinkerWithoutASLR
+
+    .SharedLibRuntime   = .SharedLibRuntimeForDebug
+    .BinaryRuntime      = .BinaryRuntimeForDebug
 ]
 
 //------------------------------------------------------------------------------
@@ -349,6 +367,9 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
                         + .LinkerWithoutASLR
+
+    .SharedLibRuntime   = .SharedLibRuntimeForRelease
+    .BinaryRuntime      = .BinaryRuntimeForRelease
 ]
 
 //------------------------------------------------------------------------------
@@ -374,6 +395,9 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .LinkerOptions      = ' /LTCG'          ; link time code generation
                         + .LinkerWithoutASLR
+
+    .SharedLibRuntime   = .SharedLibRuntimeForRelease
+    .BinaryRuntime      = .BinaryRuntimeForRelease
 ]
 
 //------------------------------------------------------------------------------
@@ -408,4 +432,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 #else
     .LinkerOptions      + ' /OPT:NOICF'     ; Désactivé car empeche de debugger
 #endif
+
+    .SharedLibRuntime   = .SharedLibRuntimeForRelease
+    .BinaryRuntime      = .BinaryRuntimeForRelease
 ]

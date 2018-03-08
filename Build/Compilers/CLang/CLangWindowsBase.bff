@@ -26,6 +26,7 @@
         + ' -Wno-invalid-noreturn'              // nécessaire pour STL M$
         + ' -Wno-dllimport-static-field-def'     // definition of dllimport static field (M$TL)
         + ' -Wno-nonportable-include-path'      // windows libs are filled with includes not matching file system case, this will ignore those
+        + ' -Wno-inconsistent-missing-override' // <optional> has a method without override ...
 #if NO_WORKAROUND_IN_PLATFORM_WINDOWS
         + ' -Wno-expansion-to-defined'           // macro expansion producing 'defined' has undefined behavior (nécessaire pour WinAPI)
         + ' -Wno-int-to-void-pointer-cast'      // cast to 'void *' from smaller integer type 'unsigned long' (nécessaire pour WinAPI)

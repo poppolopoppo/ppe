@@ -48,8 +48,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .UnityDirectory         = '$IntermediateDirectory$\Unity'
 
         // For VCXProj
-        .PreprocessorDefinitions    = ''
-        .IncludeSearchPath          = '$SourceDirectory$;$ProjectPath$'
+        .PreprocessorDefinitions = ''
+        .IncludeSearchPath      = '$SourceDirectory$;$ProjectPath$'
 
         // Project compiled config
         .ProjectCompileConfig =
@@ -59,20 +59,28 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .ProjectLinkType   ? .ConfigLinkType
 
             // Project defines
-            .Defines_Link_Obj   = { 'STATIC_LINK' }
-            .Defines_Link_Lib   = { 'STATIC_LINK' }
-            .Defines_Link_Dll   = { 'DYNAMIC_LINK' }
 
-            .Defines    + ."Defines_Link_$ProjectLinkType$"
             .Defines    + "BUILDCONFIG_$Platform$_$Config$"
             .Defines    + "BUILDCONFIG=$Platform$_$Config$"
             .Defines    + .ProjectDefines
+
+            // Select runtime based on project link type
+
+            .Defines_Link_Obj   = { 'STATIC_LINK' }
+            .Defines_Link_Lib   = { 'STATIC_LINK' }
+            .Defines_Link_Dll   = { 'DYNAMIC_LINK' }
+            .Defines            + ."Defines_Link_$ProjectLinkType$"
+
+            .Runtime_Obj       = .BinaryRuntime
+            .Runtime_Lib       = .BinaryRuntime
+            .Runtime_Dll       = .SharedLibRuntime
+            .CompilerOptions   + ."Runtime_$ProjectLinkType$"
 
             ForEach( .define in .Defines )
             {
                 ^CompilerOptions            + ' $CompilerDefineFlag$"$define$"'
                 ^PreprocessorOptions        + ' $CompilerDefineFlag$"$define$"'
-                ^PreprocessorDefinitions    + ';$define$'
+                ^PreprocessorDefinitions     + ';$define$'
             }
 
             // Only for VCXProj
