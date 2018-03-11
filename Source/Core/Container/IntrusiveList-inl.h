@@ -187,51 +187,28 @@ void TIntrusiveListAccessor<T, _Member>::Insert(T** pHead, T** pTailIFP, T* valu
     Assert(value);
 
     node_type& node = Node(value);
-    node.Prev = nullptr;
-    node.Next = nullptr;
 
-    T* p = *pHead;
-    while (p) {
-        node_type& it = Node(p);
-
-        if (pred(*value, *p)) {
-            node.Prev = it.Prev;
-            node.Next = p;
-            it.Prev = value;
-
-            if (node.Prev) {
-                node_type& prev = Node(node.Prev);
-                Assert(p == prev.Next);
-                prev.Next = value;
-            }
-            else {
-                Assert(p == *pHead);
-                *pHead = value;
-            }
-
-            return;
-        }
-        else if (nullptr == it.Next) {
-            Assert(nullptr == pTailIFP || *pTailIFP == p);
-            node.Prev = p;
-            it.Next = value;
-
-            if (pTailIFP) {
-                Assert(p == *pTailIFP);
-                *pTailIFP = value;
-            }
-
-            return;
-        }
-
-        p = it.Next;
+    T* prev = nullptr;
+    for (T* p = *pHead; p; prev = p, p = Next(p)) {
+        if (pred(*value, *p))
+            break;
     }
 
-    Assert(nullptr == *pHead);
-    *pHead = value;
+    if (prev) {
+        T*& next = Node(prev).Next;
+        node.Next = next;
+        next = value;
+    }
+    else {
+        node.Next = *pHead;
+        *pHead = value;
+    }
 
-    if (pTailIFP) {
-        Assert(nullptr == *pTailIFP);
+    if (node.Next) {
+        Node(node.Next).Prev = value;
+    }
+    else if (pTailIFP) {
+        Assert(nullptr == *pTailIFP || node.Prev == *pTailIFP);
         *pTailIFP = value;
     }
 }
@@ -347,40 +324,20 @@ void TIntrusiveSingleListAccessor<T, _Member>::Insert(T** pHead, T* value, const
     node_type& node = Node(value);
 
     T* prev = nullptr;
-    T* curr = *pHead;
-    while (curr) {
-        if (pred(*value, *curr)) {
-            if (prev) {
-                Assert(curr != *pHead);
-                node_type& p = Node(prev);
-                Assert(p.Next == curr);
-                p.Next = value;
-            }
-            else {
-                Assert(curr == *pHead);
-                *pHead = value;
-            }
-            node.Next = curr;
-
-            return;
-        }
-
-        T*& next = Next(curr);
-        if (nullptr == next) {
-            Assert(curr != *pHead);
-            next = value;
-            node.Next = nullptr;
-
-            return;
-        }
-
-        prev = curr;
-        curr = next;
+    for (T* p = *pHead; p; prev = p, p = Next(p)) {
+        if (pred(*value, *p))
+            break;
     }
 
-    Assert(nullptr == *pHead);
-    *pHead = value;
-    node.Next = nullptr;
+    if (prev) {
+        T*& next = Node(prev).Next;
+        node.Next = next;
+        next = value;
+    }
+    else {
+        node.Next = *pHead;
+        *pHead = value;
+    }
 }
 //----------------------------------------------------------------------------
 template <typename T, TIntrusiveSingleListNode<T> T::*_Member>
