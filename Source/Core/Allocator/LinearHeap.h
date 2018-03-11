@@ -59,6 +59,7 @@ public:
 
 private:
     void* _blocks;
+    void* _deleteds;
 
 #ifdef USE_MEMORY_DOMAINS
     FMemoryTracking _trackingData;
