@@ -163,6 +163,7 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
 
     HANDLE process = ::GetCurrentProcess();
     BOOL succeed = dbghelp.SymInitializeW()(process, symbol_path, FALSE);
+    UNUSED(succeed);
 
     LOG(Symbols, Info, L"path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
 }
