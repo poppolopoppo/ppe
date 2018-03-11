@@ -25,6 +25,12 @@
 #include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter.h"
 
+#if (not defined(PROFILING_ENABLED) && not defined(FINAL_RELEASE))
+#   define WITH_CORE_NETWORK_INTERACTIVE_TESTS 1
+#else
+#   define WITH_CORE_NETWORK_INTERACTIVE_TESTS 0
+#endif
+
 namespace Core {
 namespace Test {
 LOG_CATEGORY(, Test_Network)
@@ -60,9 +66,11 @@ static bool ParseUri_(const FStringView& str) {
     if (not FUri::Unpack(args, uri))
         return false;
 
+#ifdef USE_DEBUG_LOGGER
     LOG(Test_Network, Info, L"Args[{0}]:", args.size());
     for (const auto& it : args)
         LOG(Test_Network, Info, L"    - {0} = '{1}'", it.first, it.second);
+#endif
 
     FUri test;
     if (not FUri::Pack(test, uri.Scheme(), uri.Username(), uri.Port(), uri.Hostname(), uri.Path(), args, uri.Anchor()))
@@ -83,6 +91,7 @@ static void Test_ParseUri_() {
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
+#if WITH_CORE_NETWORK_INTERACTIVE_TESTS
 static void Test_SocketAccept_() {
     FListener listener = FListener::Localhost(8123);
 
@@ -110,12 +119,14 @@ static void Test_SocketAccept_() {
                 FHttpRequest request;
                 FHttpRequest::Read(&request, socket, maxContentLength);
 
+#ifdef USE_DEBUG_LOGGER
                 LOG(Test_Network, Info, L"Method :   {0}", request.Method());
                 LOG(Test_Network, Info, L"Uri    :   {0}", request.Uri());
-                
+
                 LOG(Test_Network, Info, L"Header :");
                 for (const auto& it : request.Headers())
                     LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
+#endif
 
                 FHttpRequest::FCookieMap cookies;
                 if (FHttpRequest::UnpackCookie(&cookies, request)) {
@@ -151,6 +162,7 @@ static void Test_SocketAccept_() {
     if (not succeed)
         LOG(Test_Network, Warning, L"no incomming HTTP connexion :'(");
 }
+#endif //!WITH_CORE_NETWORK_INTERACTIVE_TESTS
 //----------------------------------------------------------------------------
 static void Test_HttpGet_() {
     FUri uri;
@@ -213,8 +225,8 @@ static void Test_HttpPost_() {
     for (const auto& it : response.Headers())
         LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
 
-    LOG(Test_Network, Info, L"Body : {0} =\n{1}", 
-        Fmt::FSizeInBytes{ checked_cast<size_t>(response.Body().SizeInBytes()) }, 
+    LOG(Test_Network, Info, L"Body : {0} =\n{1}",
+        Fmt::FSizeInBytes{ checked_cast<size_t>(response.Body().SizeInBytes()) },
         response.MakeView() );
 }
 //----------------------------------------------------------------------------
@@ -270,12 +282,14 @@ private:
     }
 };
 //----------------------------------------------------------------------------
+#if WITH_CORE_NETWORK_INTERACTIVE_TESTS
 static void Test_HttpServer_() {
     FTestHttpServer srv;
     srv.Start();
     std::this_thread::sleep_for(std::chrono::seconds(30));
     srv.Stop();
 }
+#endif //!WITH_CORE_NETWORK_INTERACTIVE_TESTS
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -287,7 +301,7 @@ void Test_Network() {
     Test_ParseUri_();
     Test_HttpGet_();
     Test_HttpPost_();
-#if not defined(PROFILING_ENABLED) && not defined(FINAL_RELEASE)
+#if WITH_CORE_NETWORK_INTERACTIVE_TESTS
     Test_SocketAccept_();
     Test_HttpServer_();
 #endif
