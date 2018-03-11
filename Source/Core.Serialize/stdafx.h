@@ -14,4 +14,6 @@
 
 #include "Core.Serialize/Serialize.h"
 
-#include "Core.Serialize/stdafx.generated.h"
+#if USE_CORE_PRECOMPILEDHEADERS
+#   include "Core.Serialize/stdafx.generated.h"
+#endif
