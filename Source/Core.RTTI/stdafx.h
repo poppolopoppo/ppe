@@ -14,4 +14,6 @@
 
 #include "Core.RTTI/RTTI.h"
 
-#include "Core.RTTI/stdafx.generated.h"
+#if USE_CORE_PRECOMPILEDHEADERS
+#   include "Core.RTTI/stdafx.generated.h"
+#endif

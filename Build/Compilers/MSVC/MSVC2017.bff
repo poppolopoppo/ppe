@@ -25,7 +25,7 @@
 ; supprime un warning de dépréciation de std::iterator
 #define USE_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
-#define USE_PRECOMPILED_HEADERS
+#define USE_PRECOMPILED_HEADERS // %_NOCOMMIT%
 ; utilise les .obj plutôt que les .lib comme input du linker (encore nécessaire ?)
 ;#define USE_LIBRARY_DEPENDENCY_INPUT
 ; utilise le linker incremental en profiling

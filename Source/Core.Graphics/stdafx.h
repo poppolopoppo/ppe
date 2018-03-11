@@ -14,4 +14,6 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#include "Core.Graphics/stdafx.generated.h"
+#if USE_CORE_PRECOMPILEDHEADERS
+#   include "Core.Graphics/stdafx.generated.h"
+#endif

@@ -14,4 +14,6 @@
 
 #include "Core.Lattice/Lattice.h"
 
-#include "Core.Lattice/stdafx.generated.h"
+#if USE_CORE_PRECOMPILEDHEADERS
+#   include "Core.Lattice/stdafx.generated.h"
+#endif

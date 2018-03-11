@@ -14,4 +14,6 @@
 
 #include "Core.Pixmap/Pixmap.h"
 
-#include "Core.Pixmap/stdafx.generated.h"
+#if USE_CORE_PRECOMPILEDHEADERS
+#   include "Core.Pixmap/stdafx.generated.h"
+#endif

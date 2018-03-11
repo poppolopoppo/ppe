@@ -22,10 +22,10 @@
 #   error "must select either Core.Application.Console or Core.Application.Graphics !"
 #endif
 
-#if CORE_APPLICATION_CONSOLE
-#   include "Core.Application/stdafx.Console.generated.h"
-#endif
-
-#if CORE_APPLICATION_GRAPHICS
-#   include "Core.Application/stdafx.Graphics.generated.h"
+#if USE_CORE_PRECOMPILEDHEADERS
+#   if      CORE_APPLICATION_CONSOLE
+#       include "Core.Application/stdafx.Console.generated.h"
+#   elif    CORE_APPLICATION_GRAPHICS
+#       include "Core.Application/stdafx.Graphics.generated.h"
+#   endif
 #endif

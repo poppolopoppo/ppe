@@ -14,4 +14,6 @@
 
 #include "Core.ContentPipeline/ContentPipeline.h"
 
-#include "Core.ContentPipeline/stdafx.generated.h"
+#if USE_CORE_PRECOMPILEDHEADERS
+#   include "Core.ContentPipeline/stdafx.generated.h"
+#endif

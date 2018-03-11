@@ -16,4 +16,6 @@
 
 #include "Core/Core.h"
 
-#include "Core/stdafx.generated.h"
+#if USE_CORE_PRECOMPILEDHEADERS
+#   include "Core/stdafx.generated.h"
+#endif
