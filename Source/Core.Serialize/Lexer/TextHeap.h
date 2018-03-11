@@ -15,6 +15,8 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 class FTextHeap {
 public:
+    STATIC_CONST_INTEGRAL(size_t, GMaxSizeForMerge, 100);
+
     class FText {
     public:
         FText() {
@@ -47,8 +49,8 @@ public:
         // FText use "Small String Optimization" (SSO)
         // - small strings will be stored inlined in the structure (we got 2*sizeof(size_t) storage occupied by FStringView)
         // - large strings will be stored as a FStringView pointing to memory allocated by the heap (or to a string literal)
-        // SSO is lessening the pressure of the hash map and the linear heap by using memory already available.
-        // we might somewhat lose some perf when comparing small strings since it won't benefit from pointer equality quick reject.
+        // SSO is lessening the pressure on the hash map and the linear heap by using memory already available.
+        // we might somewhat lose some perf when comparing small strings since it won't benefit from pointer equality.
 
         struct FLargeText_ {
             size_t IsSmall : 1;
@@ -114,21 +116,23 @@ public:
             return FText::MakeSmall_(str);
         }
 #endif
-        else if (Likely(mergeable)) {
-            // always reserve a minimum size of 32 (avoid wasting relocate)
+        else if (Likely(mergeable && str.size() <= GMaxSizeForMerge)) {
+            // always reserve a minimum size of 64 (avoid wasting too much on relocate)
             if (_texts.capacity() == 0)
-                _texts.reserve(32);
+                _texts.reserve(64);
 
-            FText txt = FText::MakeLarge_(str);
             // tries to pool short to medium strings :
+            FText txt = FText::MakeLarge_(str);
             const auto it = _texts.insert(txt);
+
             if (it.second) {
-                // hack for replacing registered string view with one pointing to linear heap storage
+                // hack the map by replacing registered string view with one pointing to linear heap storage
                 const FStringView allocated = AllocateString_(str);
                 auto& registered = const_cast<FText&>(*it.first);
                 Assert(hash_value(FText::MakeLarge_(allocated)) == hash_value(registered));
                 registered = FText::MakeLarge_(allocated);
             }
+
             return (*it.first);
         }
         else {

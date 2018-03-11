@@ -334,6 +334,7 @@ private:
     void ToJson_(const RTTI::FAny& any) {
         if (any) {
             FJson::FArray& jsonArr = Head_().SetType_AssumeNull(_doc, FJson::TypeArray{});
+            jsonArr.reserve(2);
 
             jsonArr.emplace_back(FJson::FInteger(any.Traits()->TypeId()));
             auto& wrapped = jsonArr.push_back_Default();
@@ -359,9 +360,10 @@ private:
                 exported = true;
             }
 
-            FJson::FObject& jsonObject = Head_().SetType_AssumeNull(_doc, FJson::TypeObject{});
-
             const RTTI::FMetaClass* metaClass = metaObject->RTTI_Class();
+
+            FJson::FObject& jsonObject = Head_().SetType_AssumeNull(_doc, FJson::TypeObject{});
+            jsonObject.reserve(1 + metaClass->NumProperties() + (exported ? 1 : 0));
 
             jsonObject.Add(Json_MetaClass()).SetValue(
                 _doc.MakeString(metaClass->Name().MakeView()));

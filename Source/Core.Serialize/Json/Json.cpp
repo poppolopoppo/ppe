@@ -7,7 +7,9 @@
 #include "Lexer/Symbol.h"
 #include "Lexer/Symbols.h"
 
+#include "Core/Container/AssociativeVector.h"
 #include "Core/Container/RawStorage.h"
+#include "Core/Container/Vector.h"
 #include "Core/IO/FS/ConstNames.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/FormatHelpers.h"
@@ -31,9 +33,13 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value);
 static bool ParseObject_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) {
     FJson::FObject& object = value.SetType_AssumeNull(doc, FJson::TypeObject{});
 
+    if (lexer.ReadIFN(Lexer::FSymbols::RBrace)) // quick reject for empty object
+        return true;
+
+    ASSOCIATIVE_VECTORINSITU_THREAD_LOCAL(Json, FJson::FString, FJson::FValue, 8) tmp; // use temporary dico to don't bloat the linear heap
+
     Lexer::FMatch key;
-    for (bool notFirst = false;; notFirst = true)
-    {
+    for (bool notFirst = false;; notFirst = true) {
         if (notFirst && not lexer.ReadIFN(Lexer::FSymbols::Comma))
             break;
 
@@ -43,9 +49,14 @@ static bool ParseObject_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value)
         if (not lexer.Expect(Lexer::FSymbols::Colon))
             CORE_THROW_IT(FJsonException("missing comma", key.Site()));
 
-        if (not ParseValue_(lexer, doc, object[doc.MakeString(key.Value())]))
+        FJson::FValue& value = tmp.Add(doc.MakeString(key.Value()));
+        if (not ParseValue_(lexer, doc, value))
             CORE_THROW_IT(FJsonException("missing value", key.Site()));
     }
+
+    object.Vector().assign(
+        MakeMoveIterator(tmp.begin()),
+        MakeMoveIterator(tmp.end()) );
 
     return lexer.Expect(Lexer::FSymbols::RBrace);
 }
@@ -53,17 +64,23 @@ static bool ParseObject_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value)
 static bool ParseArray_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) {
     FJson::FArray& arr = value.SetType_AssumeNull(doc, FJson::TypeArray{});
 
-    FJson::FValue item;
-    for (bool notFirst = false;; notFirst = true)
-    {
+    if (lexer.ReadIFN(Lexer::FSymbols::RBracket)) // quick reject for empty array
+        return true;
+
+    VECTORINSITU_THREAD_LOCAL(Json, FJson::FValue, 8) tmp; // use temporary array to don't bloat the linear heap
+
+    for (bool notFirst = false;; notFirst = true) {
         if (notFirst && not lexer.ReadIFN(Lexer::FSymbols::Comma))
             break;
 
-        if (ParseValue_(lexer, doc, item))
-            arr.emplace_back(std::move(item));
-        else
-            break;
+        tmp.push_back_Default();
+        if (not ParseValue_(lexer, doc, tmp.back()))
+            return false;
     }
+
+    arr.assign(
+        MakeMoveIterator(tmp.begin()),
+        MakeMoveIterator(tmp.end()) );
 
     return lexer.Expect(Lexer::FSymbols::RBracket);
 }
@@ -425,8 +442,7 @@ bool FJson::FValue::Equals(const FValue& other) const {
     if (other._type != _type)
         return false;
 
-    switch (_type)
-    {
+    switch (_type) {
     case Core::Serialize::FJson::Null:
         return true;
     case Core::Serialize::FJson::Bool:
