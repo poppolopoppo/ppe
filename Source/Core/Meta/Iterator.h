@@ -441,4 +441,16 @@ TIterable< decltype(std::declval<const T&>().begin()) > MakeConstIterable(const 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _It>
+std::move_iterator<_It> MakeMoveIterator(_It it) {
+    return std::make_move_iterator(it);
+}
+//----------------------------------------------------------------------------
+template <typename _It>
+TIterable<std::move_iterator<_It>> MakeMoveIterable(_It first, _It last) {
+    return MakeIterable(MakeMoveIterator(first), MakeMoveIterator(last));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core
