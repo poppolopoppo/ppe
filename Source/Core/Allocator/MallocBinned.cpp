@@ -5,6 +5,8 @@
 #include "Container/IntrusiveList.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
+#include "Memory/MemoryDomain.h"
+#include "Memory/MemoryTracking.h"
 #include "Memory/VirtualMemory.h"
 #include "Misc/TargetPlatform.h"
 #include "Thread/AtomicSpinLock.h"

@@ -13,6 +13,7 @@
 #include "Core/IO/FS/Filename.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringView.h"
+#include "Core/IO/TextWriter.h"
 #include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/ScalarMatrix.h"
 #include "Core/Maths/ScalarMatrixHelpers.h"
@@ -127,6 +128,8 @@ template <>
 void TNativeTypeTraits<PMetaObject>::Format(FWTextWriter& oss, const FAtom& atom) const {
     PrettyPrint(oss, atom);
 }
+//----------------------------------------------------------------------------
+// Specialize Traits(), TypeId() & TypeInfos() for each native type
 //----------------------------------------------------------------------------
 #define DEF_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) \
     /* TNativeTypeTraits<T> */ \
