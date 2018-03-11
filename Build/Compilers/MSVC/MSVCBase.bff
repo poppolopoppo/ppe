@@ -14,7 +14,9 @@
 ; active le folding des COMDAT en final (exe plus petit, pb pour debugger par contre)
 #define USE_MSVC_IDENTICAL_COMDAT_FOLDING
 ; link avec la libstd statiquement plutot que dynamiquement
-;#define USE_MSVC_STATIC_RUNTIME
+//#define USE_MSVC_STATIC_RUNTIME
+; https://blogs.msdn.microsoft.com/vcblog/2018/01/04/visual-studio-2017-throughput-improvements-and-advice/
+//#define USE_MSVC_COMPILATION_SUMMARY // %_NOCOMMIT%
 
 //------------------------------------------------------------------------------
 // Common MSVC Configuration
@@ -113,6 +115,12 @@
     + ' Comctl32.lib'
     + ' Gdi32.lib'
 
+#if USE_MSVC_COMPILATION_SUMMARY
+    Print( "Using MSVC /d2cgsummary, /d2:-cgsummary & /Bt+ to analyze compilation times")
+    .CompilerOptions    + ' /d2cgsummary /Bt+'
+    .LinkerOptions      + ' /d2:-cgsummary'
+#endif
+
     .DllOptions = ''
     + ' /DLL'               ; https://msdn.microsoft.com/en-us/library/527z7zfs.aspx
 
@@ -136,6 +144,7 @@
 .MSVCBasePCHDisabled    =
 [
     .CompilerOptions    = ' /Fo"%2"'
+    .Defines             = { 'USE_CORE_PRECOMPILEDHEADERS=0' }
 ]
 .MSVCBasePCHEnabled     = .MSVCBasePCHDisabled
 
@@ -151,6 +160,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .PCHOutputFile      = '^$IntermediateDirectory^$\^$ProjectPCHName^$.pch'
     .CompilerOptions    = ' /Yu"^$ProjectPCHName^$.h" /Fp"$PCHOutputFile$"'
                         + ' /Fo"%2"'
+    .Defines             = { 'USE_CORE_PRECOMPILEDHEADERS=1' }
 ]
 #endif
 
