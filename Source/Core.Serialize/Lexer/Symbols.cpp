@@ -4,6 +4,7 @@
 
 #include "Symbol.h"
 
+#include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/NativeTypes.h"
 
 namespace Core {
@@ -132,7 +133,7 @@ FSymbols::FSymbols() {
     RegisterSymbol_(&RShift, _symbols, FSymbol::RShift, ">>");
     RegisterSymbol_(&And, _symbols, FSymbol::And, "&");
     RegisterSymbol_(&Or, _symbols, FSymbol::Or, "|");
-    RegisterSymbol_(&Not, _symbols, FSymbol::TNot, "!");
+    RegisterSymbol_(&Not, _symbols, FSymbol::Not, "!");
     RegisterSymbol_(&Xor, _symbols, FSymbol::Xor, "^");
     RegisterSymbol_(&Complement, _symbols, FSymbol::Complement, "~");
     RegisterSymbol_(&Assignment, _symbols, FSymbol::Assignment, "=");

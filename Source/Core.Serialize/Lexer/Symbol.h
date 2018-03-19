@@ -65,7 +65,7 @@ public:
 
         And             = 1ull<<33,   // &
         Or              = 1ull<<34,   // |
-        TNot             = 1ull<<35,   // !
+        Not             = 1ull<<35,   // !
 
         Xor             = 1ull<<36,   // ^
         Complement      = 1ull<<37,   // ~
