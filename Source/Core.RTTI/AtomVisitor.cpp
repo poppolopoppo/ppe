@@ -61,9 +61,9 @@ public:
         : _oss(oss)
     {}
 
-    virtual bool Visit(const IPairTraits* pair, const FAtom& atom) override final {
-        const FAtom first = pair->First(atom);
-        const FAtom second = pair->Second(atom);
+    virtual bool Visit(const IPairTraits* pair, void* data) override final {
+        const FAtom first = pair->First(data);
+        const FAtom second = pair->Second(data);
 
         _oss << Fmt::LParenthese;
         first.Accept(this);
@@ -74,17 +74,17 @@ public:
         return true;
     }
 
-    virtual bool Visit(const IListTraits* list, const FAtom& atom) override final {
+    virtual bool Visit(const IListTraits* list, void* data) override final {
         _oss << Fmt::LBracket;
 
-        const bool empty = (list->Count(atom) == 0);
+        const bool empty = (list->Count(data) == 0);
 
         if (not empty)
             _oss << Eol;
 
         _indent.Inc();
 
-        list->ForEach(atom, [this](const FAtom& item) {
+        list->ForEach(data, [this](const FAtom& item) {
             _oss << _indent;
             item.Accept(this);
             _oss << Fmt::Comma << Eol;
@@ -102,17 +102,17 @@ public:
         return true;
     }
 
-    virtual bool Visit(const IDicoTraits* dico, const FAtom& atom) override final {
+    virtual bool Visit(const IDicoTraits* dico, void* data) override final {
         _oss << Fmt::LBrace;
 
-        const bool empty = (dico->Count(atom) == 0);
+        const bool empty = (dico->Count(data) == 0);
 
         if (not empty)
             _oss << Eol;
 
         _indent.Inc();
 
-        dico->ForEach(atom, [this](const FAtom& key, const FAtom& value) {
+        dico->ForEach(data, [this](const FAtom& key, const FAtom& value) {
             _oss << _indent << Fmt::LParenthese;
             key.Accept(this);
             _oss << Fmt::Comma << Fmt::Space;
@@ -235,20 +235,20 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IPairTraits* pair, const FAtom& atom) {
-    const FAtom first = pair->First(atom);
-    const FAtom second = pair->Second(atom);
+bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IPairTraits* pair, void* data) {
+    const FAtom first = pair->First(data);
+    const FAtom second = pair->Second(data);
     return (first.Accept(visitor) && second.Accept(visitor));
 }
 //----------------------------------------------------------------------------
-bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IListTraits* list, const FAtom& atom) {
-    return list->ForEach(atom, [visitor](const FAtom& item) {
+bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IListTraits* list, void* data) {
+    return list->ForEach(data, [visitor](const FAtom& item) {
         return item.Accept(visitor);
     });
 }
 //----------------------------------------------------------------------------
-bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IDicoTraits* dico, const FAtom& atom) {
-    return dico->ForEach(atom, [visitor](const FAtom& key, const FAtom& value) {
+bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IDicoTraits* dico, void* data) {
+    return dico->ForEach(data, [visitor](const FAtom& key, const FAtom& value) {
         return (key.Accept(visitor) && value.Accept(visitor));
     });
 }

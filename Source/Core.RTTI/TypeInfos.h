@@ -18,6 +18,7 @@ enum class ETypeFlags : u32 {
     List        = 1<<2,
     Dico        = 1<<3,
     Native      = 1<<4,
+    Object      = 1<<5,
 };
 ENUM_FLAGS(ETypeFlags);
 //----------------------------------------------------------------------------

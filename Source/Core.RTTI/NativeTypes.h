@@ -50,36 +50,33 @@ public: // ITypeTraits
     virtual void* Allocate() const override final;
     virtual void Deallocate(void* ptr) const override final;
 
-    virtual void Create(const FAtom& atom) const override final;
-    virtual void CreateCopy(const FAtom& cpy, const FAtom& other) const override final;
-    virtual void CreateMove(const FAtom& cpy, const FAtom& rvalue) const override final;
-    virtual void Destroy(const FAtom& atom) const override final;
+    virtual void Create(void* data) const override final;
+    virtual void CreateCopy(void* data, const void* other) const override final;
+    virtual void CreateMove(void* data, void* rvalue) const override final;
+    virtual void Destroy(void* data) const override final;
 
     //virtual FTypeId TypeId() const override final;
     //virtual FTypeInfos TypeInfos() const override final;
     virtual size_t SizeInBytes() const override final { return sizeof(T); }
 
-    virtual bool IsDefaultValue(const FAtom& value) const override final;
-    virtual void ResetToDefaultValue(const FAtom& value) const override final;
+    //virtual bool IsDefaultValue(const void* data) const override final;
+    //virtual void ResetToDefaultValue(void* data) const override final;
 
-    virtual bool Equals(const FAtom& lhs, const FAtom& rhs) const override final;
-    virtual void Copy(const FAtom& src, const FAtom& dst) const override final;
-    virtual void Move(const FAtom& src, const FAtom& dst) const override final;
+    virtual bool Equals(const void* lhs, const void* rhs) const override final;
+    virtual void Copy(const void* src, void* dst) const override final;
+    virtual void Move(void* src, void* dst) const override final;
 
-    virtual void Swap(const FAtom& lhs, const FAtom& rhs) const override final;
+    virtual void Swap(void* lhs, void* rhs) const override final;
 
-    //virtual bool DeepEquals(const FAtom& lhs, const FAtom& rhs) const override final;
-    //virtual void DeepCopy(const FAtom& src, const FAtom& dst) const override final;
+    //virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
+    //virtual void DeepCopy(const void* src, void* dst) const override final;
 
-    //virtual bool PromoteCopy(const FAtom& from, const FAtom& to) const override final;
-    //virtual bool PromoteMove(const FAtom& from, const FAtom& to) const override final;
+    //virtual bool PromoteCopy(const void* src, const FAtom& dst) const override final;
+    //virtual bool PromoteMove(void* src, const FAtom& dst) const override final;
 
-    virtual void* Cast(const FAtom& from, const PTypeTraits& to) const override;
+    virtual void* Cast(void* data, const PTypeTraits& dst) const override;
 
-    virtual hash_t HashValue(const FAtom& atom) const override final;
-
-    virtual void Format(FTextWriter& oss, const FAtom& atom) const override;
-    virtual void Format(FWTextWriter& oss, const FAtom& atom) const override;
+    virtual hash_t HashValue(const void* data) const override final;
 };
 //----------------------------------------------------------------------------
 template <typename T>
@@ -93,11 +90,14 @@ public: // ITypeTraits
     virtual FTypeId TypeId() const override final;
     virtual FTypeInfos TypeInfos() const override final;
 
-    virtual bool DeepEquals(const FAtom& lhs, const FAtom& rhs) const override final;
-    virtual void DeepCopy(const FAtom& src, const FAtom& dst) const override final;
+    virtual bool IsDefaultValue(const void* data) const override final;
+    virtual void ResetToDefaultValue(void* data) const override final;
 
-    virtual bool PromoteCopy(const FAtom& from, const FAtom& to) const override final;
-    virtual bool PromoteMove(const FAtom& from, const FAtom& to) const override final;
+    virtual bool DeepEquals(const void* lhs, const void* dst) const override final;
+    virtual void DeepCopy(const void* src, void* dst) const override final;
+
+    virtual bool PromoteCopy(const void* src, const FAtom& dst) const override final;
+    virtual bool PromoteMove(void* src, const FAtom& dst) const override final;
 
 public: // IPairTraits
     virtual PTypeTraits FirstTraits() const override final { return MakeTraits<_First>(); }
@@ -110,11 +110,14 @@ public: // ITypeTraits
     virtual FTypeId TypeId() const override final;
     virtual FTypeInfos TypeInfos() const override final;
 
-    virtual bool DeepEquals(const FAtom& lhs, const FAtom& rhs) const override final;
-    virtual void DeepCopy(const FAtom& src, const FAtom& dst) const override final;
+    virtual bool IsDefaultValue(const void* data) const override final;
+    virtual void ResetToDefaultValue(void* data) const override final;
 
-    virtual bool PromoteCopy(const FAtom& from, const FAtom& to) const override final;
-    virtual bool PromoteMove(const FAtom& from, const FAtom& to) const override final;
+    virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
+    virtual void DeepCopy(const void* src, void* dst) const override final;
+
+    virtual bool PromoteCopy(const void* src, const FAtom& dst) const override final;
+    virtual bool PromoteMove(void* src, const FAtom& dst) const override final;
 
 public: // IListTraits
     virtual PTypeTraits ValueTraits() const override final { return MakeTraits<T>(); }
@@ -126,16 +129,57 @@ public: // ITypeTraits
     virtual FTypeId TypeId() const override final;
     virtual FTypeInfos TypeInfos() const override final;
 
-    virtual bool DeepEquals(const FAtom& lhs, const FAtom& rhs) const override final;
-    virtual void DeepCopy(const FAtom& src, const FAtom& dst) const override final;
+    virtual bool IsDefaultValue(const void* data) const override final;
+    virtual void ResetToDefaultValue(void* data) const override final;
 
-    virtual bool PromoteCopy(const FAtom& from, const FAtom& to) const override final;
-    virtual bool PromoteMove(const FAtom& from, const FAtom& to) const override final;
+    virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
+    virtual void DeepCopy(const void* src, void* dst) const override final;
+
+    virtual bool PromoteCopy(const void* src, const FAtom& dst) const override final;
+    virtual bool PromoteMove(void* src, const FAtom& dst) const override final;
 
 public: // IDicoTraits
     virtual PTypeTraits KeyTraits() const override final { return MakeTraits<_Key>(); }
     virtual PTypeTraits ValueTraits() const override final { return MakeTraits<_Value>(); }
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Add strong typing support for TRefPtr<T> where T inherits from FMetaObject
+class CORE_RTTI_API FBaseObjectTraits : public TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>> {
+public: // ITypeTraits
+    virtual FTypeId TypeId() const override final;
+    virtual FTypeInfos TypeInfos() const override final;
+
+    virtual bool IsDefaultValue(const void* data) const override final;
+    virtual void ResetToDefaultValue(void* data) const override final;
+
+    virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
+    virtual void DeepCopy(const void* src, void* dst) const override final;
+
+    virtual bool PromoteCopy(const void* src, const FAtom& dst) const override final;
+    virtual bool PromoteMove(void* src, const FAtom& dst) const override final;
+
+    virtual void* Cast(void* data, const PTypeTraits& dst) const override final;
+
+    virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
+
+public: // FBaseObjectTraits
+    virtual const FMetaClass* MetaClass() const = 0;
+};
+//----------------------------------------------------------------------------
+template <typename T>
+class TObjectTraits : public FBaseObjectTraits {
+public: // FBaseObjectTraits
+    virtual const FMetaClass* MetaClass() const override final {
+        return RTTI::MetaClass<T>();
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _Class>
+PTypeTraits Traits(Meta::TType< TRefPtr<_Class> >, Meta::TEnableIf< std::is_base_of_v<FMetaObject, _Class> >* = nullptr) {
+    return PTypeTraits::Make< TObjectTraits<Meta::TRemoveConst<_Class>> >();
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -147,14 +191,14 @@ class TPairTraits : public TBaseTypeTraits< TPair<_First, _Second>, TBasePairTra
     using typename base_traits::const_pointer;
 
 public: // IPairTraits
-    virtual FAtom First(const FAtom& pair) const override final;
-    virtual FAtom Second(const FAtom& pair) const override final;
+    virtual FAtom First(void* data) const override final;
+    virtual FAtom Second(void* data) const override final;
 
-    virtual void SetFirstCopy(const FAtom& pair, const FAtom& first) const override final;
-    virtual void SetFirstMove(const FAtom& pair, const FAtom& first) const override final;
+    virtual void SetFirstCopy(void* data, const FAtom& other) const override final;
+    virtual void SetFirstMove(void* data, const FAtom& rvalue) const override final;
 
-    virtual void SetSecondCopy(const FAtom& pair, const FAtom& second) const override final;
-    virtual void SetSecondMove(const FAtom& pair, const FAtom& second) const override final;
+    virtual void SetSecondCopy(void* data, const FAtom& other) const override final;
+    virtual void SetSecondMove(void* data, const FAtom& rvalue) const override final;
 };
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
@@ -175,23 +219,23 @@ class TVectorLikeTraits : public TBaseTypeTraits< _VectorLike, TBaseListTraits<t
 public: // IListTraits
     using typename base_traits::foreach_fun;
 
-    virtual size_t Count(const FAtom& list) const override final;
-    virtual bool IsEmpty(const FAtom& list) const override final;
+    virtual size_t Count(const void* data) const override final;
+    virtual bool IsEmpty(const void* data) const override final;
 
-    virtual FAtom At(const FAtom& list, size_t index) const override final;
-    virtual size_t Find(const FAtom& list, const FAtom& item) const override final;
+    virtual FAtom At(void* data, size_t index) const override final;
+    virtual size_t Find(const void* data, const FAtom& item) const override final;
 
-    virtual FAtom AddDefault(const FAtom& list) const override final;
-    virtual void AddCopy(const FAtom& list, const FAtom& item) const override final;
-    virtual void AddMove(const FAtom& list, const FAtom& item) const override final;
-    virtual void Erase(const FAtom& list, size_t index) const override final;
-    virtual bool Remove(const FAtom& list, const FAtom& item) const override final;
+    virtual FAtom AddDefault(void* data) const override final;
+    virtual void AddCopy(void* data, const FAtom& item) const override final;
+    virtual void AddMove(void* data, const FAtom& item) const override final;
+    virtual void Erase(void* data, size_t index) const override final;
+    virtual bool Remove(void* data, const FAtom& item) const override final;
 
-    virtual void Reserve(const FAtom& list, size_t capacity) const override final;
-    virtual void Clear(const FAtom& list) const override final;
-    virtual void Empty(const FAtom& list, size_t capacaity) const override final;
+    virtual void Reserve(void* data, size_t capacity) const override final;
+    virtual void Clear(void* data) const override final;
+    virtual void Empty(void* data, size_t capacaity) const override final;
 
-    virtual bool ForEach(const FAtom& list, const foreach_fun& foreach) const override final;
+    virtual bool ForEach(void* data, const foreach_fun& foreach) const override final;
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -216,23 +260,23 @@ class TAssociativeVectorTraits : public TBaseTypeTraits< TAssociativeVector<_Key
 public: // IDicoTraits:
     using typename base_traits::foreach_fun;
 
-    virtual size_t Count(const FAtom& dico) const override final;
-    virtual bool IsEmpty(const FAtom& dico) const override final;
+    virtual size_t Count(const void* data) const override final;
+    virtual bool IsEmpty(const void* data) const override final;
 
-    virtual FAtom Find(const FAtom& dico, const FAtom& key) const override final;
+    virtual FAtom Find(const void* data, const FAtom& key) const override final;
 
-    virtual FAtom AddDefault(const FAtom& dico, FAtom&& rkey) const override final;
-    virtual FAtom AddDefault(const FAtom& dico, const FAtom& key) const override final;
+    virtual FAtom AddDefault(void* data, FAtom&& rkey) const override final;
+    virtual FAtom AddDefault(void* data, const FAtom& key) const override final;
 
-    virtual void AddCopy(const FAtom& dico, const FAtom& key, const FAtom& value) const override final;
-    virtual void AddMove(const FAtom& dico, const FAtom& key, const FAtom& value) const override final;
-    virtual bool Remove(const FAtom& dico, const FAtom& key) const override final;
+    virtual void AddCopy(void* data, const FAtom& key, const FAtom& value) const override final;
+    virtual void AddMove(void* data, const FAtom& key, const FAtom& value) const override final;
+    virtual bool Remove(void* data, const FAtom& key) const override final;
 
-    virtual void Reserve(const FAtom& dico, size_t capacity) const override final;
-    virtual void Clear(const FAtom& dico) const override final;
-    virtual void Empty(const FAtom& dico, size_t capacity) const override final;
+    virtual void Reserve(void* data, size_t capacity) const override final;
+    virtual void Clear(void* data) const override final;
+    virtual void Empty(void* data, size_t capacity) const override final;
 
-    virtual bool ForEach(const FAtom& dico, const foreach_fun& foreach) const override final;
+    virtual bool ForEach(void* data, const foreach_fun& foreach) const override final;
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
@@ -252,23 +296,23 @@ class THashMapTraits : public TBaseTypeTraits< THashMap<_Key, _Value, _Hasher, _
 public: // IDicoTraits:
     using typename base_traits::foreach_fun;
 
-    virtual size_t Count(const FAtom& dico) const override final;
-    virtual bool IsEmpty(const FAtom& dico) const override final;
+    virtual size_t Count(const void* data) const override final;
+    virtual bool IsEmpty(const void* data) const override final;
 
-    virtual FAtom Find(const FAtom& dico, const FAtom& key) const override final;
+    virtual FAtom Find(const void* data, const FAtom& key) const override final;
 
-    virtual FAtom AddDefault(const FAtom& dico, FAtom&& rkey) const override final;
-    virtual FAtom AddDefault(const FAtom& dico, const FAtom& key) const override final;
+    virtual FAtom AddDefault(void* data, FAtom&& rkey) const override final;
+    virtual FAtom AddDefault(void* data, const FAtom& key) const override final;
 
-    virtual void AddCopy(const FAtom& dico, const FAtom& key, const FAtom& value) const override final;
-    virtual void AddMove(const FAtom& dico, const FAtom& key, const FAtom& value) const override final;
-    virtual bool Remove(const FAtom& dico, const FAtom& key) const override final;
+    virtual void AddCopy(void* data, const FAtom& key, const FAtom& value) const override final;
+    virtual void AddMove(void* data, const FAtom& key, const FAtom& value) const override final;
+    virtual bool Remove(void* data, const FAtom& key) const override final;
 
-    virtual void Reserve(const FAtom& dico, size_t capacity) const override final;
-    virtual void Clear(const FAtom& dico) const override final;
-    virtual void Empty(const FAtom& dico, size_t capacity) const override final;
+    virtual void Reserve(void* data, size_t capacity) const override final;
+    virtual void Clear(void* data) const override final;
+    virtual void Empty(void* data, size_t capacity) const override final;
 
-    virtual bool ForEach(const FAtom& dico, const foreach_fun& foreach) const override final;
+    virtual bool ForEach(void* data, const foreach_fun& foreach) const override final;
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -280,16 +324,10 @@ PTypeTraits Traits(Meta::TType< THashMap<_Key, _Value, _Hasher, _EqualTo, _Alloc
 //----------------------------------------------------------------------------
 // RTTI support for enums
 template <typename _Enum>
-PTypeTraits Traits(Meta::TType< _Enum >, Meta::TEnableIf< std::is_enum<_Enum>::value >* = nullptr) {
+PTypeTraits Traits(Meta::TType< _Enum >, Meta::TEnableIf< std::is_enum_v<_Enum> >* = nullptr) {
     // Beware of the dog !!!
     // *ALWAYS* specify the size of your enums wrapped in RTTI !
     return MakeTraits<typename TIntegral<_Enum>::type>();
-}
-//----------------------------------------------------------------------------
-// RTTI support for types derived from FMetaObject
-template <typename _PMetaObject>
-PTypeTraits Traits(Meta::TType<_PMetaObject>, Meta::TEnableIf< std::is_assignable<PMetaObject, _PMetaObject>::value >* = nullptr) {
-    return MakeTraits<PMetaObject>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

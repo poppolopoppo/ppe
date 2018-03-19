@@ -26,15 +26,15 @@ public:
 
     void* Cast(const PTypeTraits& to) const {
         Assert(_data);
-        return _traits->Cast(*this, to);
+        return _traits->Cast(_data, to);
     }
 
     template <typename T>
     T& TypedData() const {
-        Assert(_data);
-        void* cast = Cast(MakeTraits<T>());
-        Assert(cast);
-        return (*reinterpret_cast<T*>(cast));
+        const PTypeTraits dst = MakeTraits<T>();
+        void* const casted = ((*dst == *_traits) ? _data : Cast(dst));
+        Assert(casted);
+        return (*reinterpret_cast<T*>(casted));
     }
 
     template <typename T>
@@ -45,39 +45,41 @@ public:
     FTypeId TypeId() const { return _traits->TypeId(); }
     FTypeInfos TypeInfos() const { return _traits->TypeInfos(); }
 
-    bool IsDefaultValue() const { return _traits->IsDefaultValue(*this); }
-    void ResetToDefaultValue() { _traits->ResetToDefaultValue(*this); }
+    bool IsDefaultValue() const { return _traits->IsDefaultValue(_data); }
+    void ResetToDefaultValue() { _traits->ResetToDefaultValue(_data); }
 
     bool Equals(const FAtom& other) const {
         return _traits->Equals(*this, other);
     }
 
     void Copy(const FAtom& dst) const {
-        _traits->Copy(*this, dst);
+        Assert(dst && _traits);
+        Assert(*dst.Traits() == *_traits);
+        _traits->Copy(_data, dst.Data());
     }
 
     void Move(const FAtom& dst) {
-        _traits->Move(*this, dst);
+        Assert(dst && _traits);
+        Assert(*dst.Traits() == *_traits);
+        _traits->Move(_data, dst.Data());
     }
 
     bool DeepEquals(const FAtom& other) const {
-        return (_traits == other._traits && _traits->DeepEquals(*this, other));
+        return (_traits == other._traits && _traits->DeepEquals(_data, other._data));
     }
 
     bool DeepCopy(const FAtom& dst) const {
-        if (_traits != dst._traits)
-            return false;
-        _traits->DeepCopy(*this, dst);
+        if (_traits == dst._traits) {
+            _traits->DeepCopy(_data, dst.Data());
+            return true;
+        }
         return true;
     }
 
-    bool PromoteCopy(const FAtom& dst) const { return _traits->PromoteCopy(*this, dst); }
-    bool PromoteMove(const FAtom& dst) const { return _traits->PromoteMove(*this, dst); }
+    bool PromoteCopy(const FAtom& dst) const { return _traits->PromoteCopy(_data, dst); }
+    bool PromoteMove(const FAtom& dst) const { return _traits->PromoteMove(_data, dst); }
 
-    hash_t HashValue() const { return _traits->HashValue(*this); }
-
-    void Format(FTextWriter& oss) const { _traits->Format(oss, *this); }
-    void Format(FWTextWriter& oss) const { _traits->Format(oss, *this); }
+    hash_t HashValue() const { return _traits->HashValue(_data); }
 
     void Swap(FAtom& other) {
         std::swap(_data, other._data);
@@ -85,12 +87,10 @@ public:
     }
 
     void SwapValue(const FAtom& other) const {
-        _traits->Swap(*this, other);
+        _traits->Swap(_data, other.Data());
     }
 
-    bool Accept(IAtomVisitor* visitor) const {
-        return _traits->Accept(visitor, *this);
-    }
+    bool Accept(IAtomVisitor* visitor) const { return _traits->Accept(visitor, _data); }
 
     inline friend void swap(FAtom& lhs, FAtom& rhs) { lhs.Swap(rhs); }
     inline friend hash_t hash_value(const FAtom& value) { return value.HashValue(); }
@@ -134,11 +134,8 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator << (TBasicTextWriter<_Char>& oss, const RTTI::FAtom& atom) {
-    atom.Format(oss);
-    return oss;
-}
+CORE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FAtom& atom);
+CORE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FAtom& atom);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

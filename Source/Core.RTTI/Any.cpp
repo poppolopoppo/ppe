@@ -2,6 +2,8 @@
 
 #include "Any.h"
 
+#include "MetaObject.h"
+
 #include "Core/IO/FileSystem.h"
 #include "Core/IO/String.h"
 #include "Core/Maths/ScalarMatrix.h"
@@ -43,8 +45,8 @@ FAny::FAny() NOEXCEPT {
 //----------------------------------------------------------------------------
 FAny::FAny(const PTypeTraits& traits) NOEXCEPT {
     FAtom self(Allocate_(PTypeTraits(traits)));
-    _traits->Create(self);
-    Assert(_traits->IsDefaultValue(self));
+    _traits->Create(self.Data());
+    Assert(self.IsDefaultValue());
 }
 //----------------------------------------------------------------------------
 void* FAny::Data() {
@@ -56,7 +58,7 @@ void* FAny::Data() {
 //----------------------------------------------------------------------------
 void FAny::Reset() {
     if (Likely(_traits)) {
-        _traits->Destroy(InnerAtom());
+        _traits->Destroy(Data());
 
         if (Unlikely(not AnyCanUseSSO_(_traits)))
             _traits->Deallocate(_externalStorage);
@@ -76,8 +78,8 @@ FAtom FAny::Reset(const PTypeTraits& traits) {
     }
     else {
         FAtom self(Allocate_(PTypeTraits(traits)));
-        _traits->Create(self);
-        Assert(_traits->IsDefaultValue(self));
+        _traits->Create(self.Data());
+        Assert(self.IsDefaultValue());
         return InnerAtom();
     }
 }
@@ -86,12 +88,12 @@ void FAny::AssignCopy(const FAtom& atom) {
     Assert(atom);
 
     if (atom.Traits() == _traits) {
-        _traits->Copy(atom, InnerAtom());
+        _traits->Copy(atom, Data());
     }
     else {
         Reset();
         FAtom self(Allocate_(PTypeTraits(atom.Traits())));
-        _traits->CreateCopy(self, atom);
+        _traits->CreateCopy(self.Data(), atom);
     }
 }
 //----------------------------------------------------------------------------
@@ -99,24 +101,24 @@ void FAny::AssignMove(const FAtom& atom) {
     Assert(atom);
 
     if (atom.Traits() == _traits) {
-        _traits->Move(atom, InnerAtom());
+        _traits->Move(atom.Data(), Data());
     }
     else {
         Reset();
         FAtom self(Allocate_(PTypeTraits(atom.Traits())));
-        _traits->CreateMove(self, atom);
+        _traits->CreateMove(self.Data(), atom.Data());
     }
 }
 //----------------------------------------------------------------------------
 bool FAny::Equals(const FAny& other) const {
     return ((_traits == other._traits)
-        ? (not _traits || _traits->Equals(InnerAtom(), other.InnerAtom()) )
+        ? (not _traits || _traits->Equals(Data(), other.Data()) )
         : false );
 }
 //----------------------------------------------------------------------------
 hash_t FAny::HashValue() const {
     return ((_traits)
-        ? _traits->HashValue(InnerAtom())
+        ? _traits->HashValue(Data())
         : hash_t(0) );
 }
 //----------------------------------------------------------------------------
@@ -135,14 +137,16 @@ FAtom FAny::Allocate_(PTypeTraits&& traits) {
 void FAny::CopyFrom_(const FAny& other) {
     if (_traits == other._traits) {
         if (_traits)
-            _traits->Copy(other.InnerAtom(), InnerAtom());
+            _traits->Copy(other.Data(), Data());
         else
             NOOP(); // both invalid nothing to do
     }
     else {
         Reset();
-        if (other._traits)
-            other._traits->CreateCopy(Allocate_(PTypeTraits(other._traits)), other.InnerAtom());
+        if (other._traits) {
+            FAtom self(Allocate_(PTypeTraits(other._traits)));
+            other._traits->CreateCopy(self.Data(), other.Data());
+        }
     }
     Assert(Equals(other));
 }

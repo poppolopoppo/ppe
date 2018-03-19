@@ -16,9 +16,9 @@ class IAtomVisitor {
 public:
     virtual ~IAtomVisitor() {}
 
-    virtual bool Visit(const IPairTraits* pair, const FAtom& atom) = 0;
-    virtual bool Visit(const IListTraits* list, const FAtom& atom) = 0;
-    virtual bool Visit(const IDicoTraits* dico, const FAtom& atom) = 0;
+    virtual bool Visit(const IPairTraits* pair, void* data) = 0;
+    virtual bool Visit(const IListTraits* list, void* data) = 0;
+    virtual bool Visit(const IDicoTraits* dico, void* data) = 0;
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
     virtual bool Visit(const IScalarTraits* scalar, T& value) = 0;
@@ -26,9 +26,9 @@ public:
 #undef DECL_ATOM_VIRTUAL_VISIT
 
 public: // helpers
-    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IPairTraits* pair, const FAtom& atom);
-    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IListTraits* list, const FAtom& atom);
-    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IDicoTraits* dico, const FAtom& atom);
+    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IPairTraits* pair, void* data);
+    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IListTraits* list, void* data);
+    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IDicoTraits* dico, void* data);
 
     static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IScalarTraits* scalar, FAny& any);
     static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IScalarTraits* scalar, PMetaObject& pobj);
@@ -41,9 +41,9 @@ class FBaseAtomVisitor : public IAtomVisitor {
 public:
     using IAtomVisitor::Visit;
 
-    virtual bool Visit(const IPairTraits* pair, const FAtom& atom) override { return IAtomVisitor::Accept(this, pair, atom); }
-    virtual bool Visit(const IListTraits* list, const FAtom& atom) override { return IAtomVisitor::Accept(this, list, atom); }
-    virtual bool Visit(const IDicoTraits* dico, const FAtom& atom) override { return IAtomVisitor::Accept(this, dico, atom); }
+    virtual bool Visit(const IPairTraits* pair, void* data) override { return IAtomVisitor::Accept(this, pair, data); }
+    virtual bool Visit(const IListTraits* list, void* data) override { return IAtomVisitor::Accept(this, list, data); }
+    virtual bool Visit(const IDicoTraits* dico, void* data) override { return IAtomVisitor::Accept(this, dico, data); }
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
     virtual bool Visit(const IScalarTraits* scalar, T& value) override { return IAtomVisitor::Accept(this, scalar, value); }

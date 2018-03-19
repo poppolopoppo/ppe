@@ -301,7 +301,7 @@ private:
             : _owner(owner), _reader(reader) {}
 
 
-        virtual bool Visit(const RTTI::IPairTraits* pair, const RTTI::FAtom& atom) override final {
+        virtual bool Visit(const RTTI::IPairTraits* pair, void* data) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::TPair<{0}, {1}>",
                 pair->FirstTraits()->TypeInfos().Name(),
                 pair->SecondTraits()->TypeInfos().Name());
@@ -311,13 +311,13 @@ private:
                 CORE_THROW_IT(FBinarySerializerException("failed to deserialize a PAIR pair"));
 #endif
 
-            const RTTI::FAtom first = pair->First(atom);
-            const RTTI::FAtom second = pair->Second(atom);
+            const RTTI::FAtom first = pair->First(data);
+            const RTTI::FAtom second = pair->Second(data);
 
             return (first.Accept(this) && second.Accept(this));
         }
 
-        virtual bool Visit(const RTTI::IListTraits* list, const RTTI::FAtom& atom) override final {
+        virtual bool Visit(const RTTI::IListTraits* list, void* data) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::TVector<{0}>",
                 list->ValueTraits()->TypeInfos().Name() );
 
@@ -329,9 +329,9 @@ private:
             if (false == _reader->ReadPOD(&count))
                 CORE_THROW_IT(FBinarySerializerException("failed to deserialize a RTTI list"));
 
-            list->Reserve(atom, count);
+            list->Reserve(data, count);
             forrange(i, 0, count) {
-                RTTI::FAtom item = list->AddDefault(atom);
+                RTTI::FAtom item = list->AddDefault(data);
                 if (not item.Accept(this))
                     return false;
             }
@@ -339,7 +339,7 @@ private:
             return true;
         }
 
-        virtual bool Visit(const RTTI::IDicoTraits* dico, const RTTI::FAtom& atom) override final {
+        virtual bool Visit(const RTTI::IDicoTraits* dico, void* data) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Deserialize RTTI::TDictionary<{0}, {1}>",
                 dico->KeyTraits()->TypeInfos().Name(),
                 dico->ValueTraits()->TypeInfos().Name() );
@@ -352,7 +352,7 @@ private:
             if (false == _reader->ReadPOD(&count))
                 CORE_THROW_IT(FBinarySerializerException("failed to deserialize a RTTI dico"));
 
-            dico->Reserve(atom, count);
+            dico->Reserve(data, count);
 
             RTTI::FAny anyKey;
             RTTI::FAtom keyAtom = anyKey.Reset(dico->KeyTraits());
@@ -361,7 +361,7 @@ private:
                 if (not keyAtom.Accept(this))
                     return false;
 
-                const RTTI::FAtom value = dico->AddDefault(atom, std::move(keyAtom));
+                const RTTI::FAtom value = dico->AddDefault(data, std::move(keyAtom));
                 if (not value.Accept(this))
                     return false;
             }
@@ -855,7 +855,7 @@ private:
         void WritePOD(const T& pod) { _owner->_objectStream.WritePOD(pod); }
         void WriteRaw(const void* ptr, size_t sizeInBytes) { _owner->_objectStream.Write(ptr, sizeInBytes); }
 
-        virtual bool Visit(const RTTI::IPairTraits* pair, const RTTI::FAtom& atom) override final {
+        virtual bool Visit(const RTTI::IPairTraits* pair, void* data) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::TPair<{0}, {1}>",
                 pair->FirstTraits()->TypeInfos().Name(),
                 pair->SecondTraits()->TypeInfos().Name() );
@@ -864,27 +864,27 @@ private:
             WritePOD(pair->TypeId());
 #endif
 
-            RTTI::FAtom first = pair->First(atom);
-            RTTI::FAtom second = pair->Second(atom);
+            RTTI::FAtom first = pair->First(data);
+            RTTI::FAtom second = pair->Second(data);
 
             return (first.Accept(this) && second.Accept(this));
         }
 
-        virtual bool Visit(const RTTI::IListTraits* list, const RTTI::FAtom& atom) override final {
+        virtual bool Visit(const RTTI::IListTraits* list, void* data) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::TVector<{0}>",
                 list->ValueTraits()->TypeInfos().Name() );
 
 #if USE_BINARYSERIALIZER_NAZIFORMAT
             WritePOD(list->TypeId());
 #endif
-            WritePOD(checked_cast<u32>(list->Count(atom)));
+            WritePOD(checked_cast<u32>(list->Count(data)));
 
-            return list->ForEach(atom, [this](const RTTI::FAtom& item) {
+            return list->ForEach(data, [this](const RTTI::FAtom& item) {
                 return item.Accept(this);
             });
         }
 
-        virtual bool Visit(const RTTI::IDicoTraits* dico, const RTTI::FAtom& atom) override final {
+        virtual bool Visit(const RTTI::IDicoTraits* dico, void* data) override final {
             BINARYSERIALIZER_LOG(Info, L"[Serialize] Serialize RTTI::TDictionary<{0}, {1}>",
                 dico->KeyTraits()->TypeInfos().Name(),
                 dico->ValueTraits()->TypeInfos().Name() );
@@ -892,9 +892,9 @@ private:
 #if USE_BINARYSERIALIZER_NAZIFORMAT
             WritePOD(dico->TypeId());
 #endif
-            WritePOD(checked_cast<u32>(dico->Count(atom)));
+            WritePOD(checked_cast<u32>(dico->Count(data)));
 
-            return dico->ForEach(atom, [this](const RTTI::FAtom& key, const RTTI::FAtom& value) {
+            return dico->ForEach(data, [this](const RTTI::FAtom& key, const RTTI::FAtom& value) {
                 return (key.Accept(this) && value.Accept(this));
             });
         }

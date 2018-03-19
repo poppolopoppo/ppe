@@ -35,45 +35,52 @@ public:
     virtual void* Allocate() const = 0;
     virtual void Deallocate(void* ptr) const = 0;
 
-    virtual void Create(const FAtom& atom) const = 0;
-    virtual void CreateCopy(const FAtom& cpy, const FAtom& other) const = 0;
-    virtual void CreateMove(const FAtom& cpy, const FAtom& rvalue) const = 0;
-    virtual void Destroy(const FAtom& atom) const = 0;
+    virtual void Create(void* data) const = 0;
+    virtual void CreateCopy(void* data, const void* other) const = 0;
+    virtual void CreateMove(void* data, void* rvalue) const = 0;
+    virtual void Destroy(void* data) const = 0;
 
     virtual FTypeId TypeId() const = 0;
     virtual FTypeInfos TypeInfos() const = 0;
-    virtual ETypeFlags TypeFlags() const = 0;
     virtual size_t SizeInBytes() const = 0;
 
-    virtual bool IsDefaultValue(const FAtom& value) const = 0;
-    virtual void ResetToDefaultValue(const FAtom& value) const = 0;
+    virtual bool IsDefaultValue(const void* data) const = 0;
+    virtual void ResetToDefaultValue(void* data) const = 0;
 
-    virtual bool Equals(const FAtom& lhs, const FAtom& rhs) const = 0;
-    virtual void Copy(const FAtom& src, const FAtom& dst) const = 0;
-    virtual void Move(const FAtom& src, const FAtom& dst) const = 0;
+    virtual bool Equals(const void* lhs, const void* rhs) const = 0;
+    virtual void Copy(const void* src, void* dst) const = 0;
+    virtual void Move(void* src, void* dst) const = 0;
 
-    virtual void Swap(const FAtom& lhs, const FAtom& rhs) const = 0;
+    virtual void Swap(void* lhs, void* rhs) const = 0;
 
-    virtual bool DeepEquals(const FAtom& lhs, const FAtom& rhs) const = 0;
-    virtual void DeepCopy(const FAtom& src, const FAtom& dst) const = 0;
+    virtual bool DeepEquals(const void* lhs, const void* rhs) const = 0;
+    virtual void DeepCopy(const void* src, void* dst) const = 0;
 
-    virtual bool PromoteCopy(const FAtom& from, const FAtom& to) const = 0;
-    virtual bool PromoteMove(const FAtom& from, const FAtom& to) const = 0;
+    virtual bool PromoteCopy(const void* src, const FAtom& dst) const = 0;
+    virtual bool PromoteMove(void* src, const FAtom& dst) const = 0;
 
-    virtual void* Cast(const FAtom& from, const PTypeTraits& to) const = 0;
+    virtual void* Cast(void* data, const PTypeTraits& dst) const = 0;
 
-    virtual hash_t HashValue(const FAtom& atom) const = 0;
+    virtual hash_t HashValue(const void* data) const = 0;
 
-    virtual void Format(FTextWriter& oss, const FAtom& atom) const = 0;
-    virtual void Format(FWTextWriter& oss, const FAtom& atom) const = 0;
-
-    virtual bool Accept(IAtomVisitor* visitor, const FAtom& atom) const = 0;
+    virtual bool Accept(IAtomVisitor* visitor, void* data) const = 0;
 
     virtual const IScalarTraits* AsScalar() const = 0;
     virtual const IPairTraits* AsPair() const = 0;
     virtual const IListTraits* AsList() const = 0;
     virtual const IDicoTraits* AsDico() const = 0;
 
+    inline friend bool operator ==(const ITypeTraits& lhs, const ITypeTraits& rhs) { return (lhs.VTable() == rhs.VTable()); }
+    inline friend bool operator !=(const ITypeTraits& lhs, const ITypeTraits& rhs) { return (lhs.VTable() != rhs.VTable()); }
+
+protected:
+    // only used internally to compare traits together
+    intptr_t VTable() const {
+        STATIC_ASSERT(sizeof(*this) == sizeof(intptr_t));
+        return (*(const intptr_t*)this);
+    }
+
+public: // helpers
     const IScalarTraits* ToScalar() const { Assert(AsScalar()); return checked_cast<const IScalarTraits*>(this); }
     const IPairTraits* ToPair() const { Assert(AsPair()); return checked_cast<const IPairTraits*>(this); }
     const IListTraits* ToList() const { Assert(AsList()); return checked_cast<const IListTraits*>(this); }
@@ -99,9 +106,6 @@ CORE_RTTI_API FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class IScalarTraits : public ITypeTraits {
-public: // ITypeTraits
-    virtual ETypeFlags TypeFlags() const override final { return ETypeFlags::Pair; }
-
 private:
     virtual const IScalarTraits* AsScalar() const override final { return this; }
     virtual const IPairTraits* AsPair() const override final { return nullptr; }
@@ -111,22 +115,20 @@ private:
 //----------------------------------------------------------------------------
 class IPairTraits : public ITypeTraits {
 public: // ITypeTraits
-    virtual ETypeFlags TypeFlags() const override final { return ETypeFlags::Pair; }
-
-    virtual bool Accept(IAtomVisitor* visitor, const FAtom& atom) const override final;
+    virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
 
 public:
     virtual PTypeTraits FirstTraits() const = 0;
     virtual PTypeTraits SecondTraits() const = 0;
 
-    virtual FAtom First(const FAtom& pair) const = 0;
-    virtual FAtom Second(const FAtom& pair) const = 0;
+    virtual FAtom First(void* data) const = 0;
+    virtual FAtom Second(void* data) const = 0;
 
-    virtual void SetFirstCopy(const FAtom& pair, const FAtom& first) const = 0;
-    virtual void SetFirstMove(const FAtom& pair, const FAtom& first) const = 0;
+    virtual void SetFirstCopy(void* data, const FAtom& other) const = 0;
+    virtual void SetFirstMove(void* data, const FAtom& rvalue) const = 0;
 
-    virtual void SetSecondCopy(const FAtom& pair, const FAtom& second) const = 0;
-    virtual void SetSecondMove(const FAtom& pair, const FAtom& second) const = 0;
+    virtual void SetSecondCopy(void* data, const FAtom& other) const = 0;
+    virtual void SetSecondMove(void* data, const FAtom& rvalue) const = 0;
 
 private:
     virtual const IScalarTraits* AsScalar() const override final { return nullptr; }
@@ -137,31 +139,29 @@ private:
 //----------------------------------------------------------------------------
 class IListTraits : public ITypeTraits {
 public: // ITypeTraits
-    virtual ETypeFlags TypeFlags() const override final { return ETypeFlags::List; }
-
-    virtual bool Accept(IAtomVisitor* visitor, const FAtom& atom) const override final;
+    virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
 
 public: // IListTraits
     virtual PTypeTraits ValueTraits() const = 0;
 
-    virtual size_t Count(const FAtom& list) const = 0;
-    virtual bool IsEmpty(const FAtom& list) const = 0;
+    virtual size_t Count(const void* data) const = 0;
+    virtual bool IsEmpty(const void* data) const = 0;
 
-    virtual FAtom At(const FAtom& list, size_t index) const = 0;
-    virtual size_t Find(const FAtom& list, const FAtom& item) const = 0;
+    virtual FAtom At(void* data, size_t index) const = 0;
+    virtual size_t Find(const void* data, const FAtom& item) const = 0;
 
-    virtual FAtom AddDefault(const FAtom& list) const = 0;
-    virtual void AddCopy(const FAtom& list, const FAtom& item) const = 0;
-    virtual void AddMove(const FAtom& list, const FAtom& item) const = 0;
-    virtual void Erase(const FAtom& list, size_t index) const = 0;
-    virtual bool Remove(const FAtom& list, const FAtom& item) const = 0;
+    virtual FAtom AddDefault(void* data) const = 0;
+    virtual void AddCopy(void* data, const FAtom& item) const = 0;
+    virtual void AddMove(void* data, const FAtom& item) const = 0;
+    virtual void Erase(void* data, size_t index) const = 0;
+    virtual bool Remove(void* data, const FAtom& item) const = 0;
 
-    virtual void Reserve(const FAtom& list, size_t capacity) const = 0;
-    virtual void Clear(const FAtom& list) const = 0;
-    virtual void Empty(const FAtom& list, size_t capacity) const = 0;
+    virtual void Reserve(void* data, size_t capacity) const = 0;
+    virtual void Clear(void* data) const = 0;
+    virtual void Empty(void* data, size_t capacity) const = 0;
 
     typedef Meta::TFunction<bool(const FAtom&)> foreach_fun;
-    virtual bool ForEach(const FAtom& list, const foreach_fun& foreach) const = 0;
+    virtual bool ForEach(void* data, const foreach_fun& foreach) const = 0;
 
 private:
     virtual const IScalarTraits* AsScalar() const override final { return nullptr; }
@@ -172,32 +172,30 @@ private:
 //----------------------------------------------------------------------------
 class IDicoTraits : public ITypeTraits {
 public: // ITypeTraits
-    virtual ETypeFlags TypeFlags() const override final { return ETypeFlags::Dico; }
-
-    virtual bool Accept(IAtomVisitor* visitor, const FAtom& atom) const override final;
+    virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
 
 public: // IDicoTraits
     virtual PTypeTraits KeyTraits() const = 0;
     virtual PTypeTraits ValueTraits() const = 0;
 
-    virtual size_t Count(const FAtom& dico) const = 0;
-    virtual bool IsEmpty(const FAtom& dico) const = 0;
+    virtual size_t Count(const void* data) const = 0;
+    virtual bool IsEmpty(const void* data) const = 0;
 
-    virtual FAtom Find(const FAtom& dico, const FAtom& key) const = 0;
+    virtual FAtom Find(const void* data, const FAtom& key) const = 0;
 
-    virtual FAtom AddDefault(const FAtom& dico, FAtom&& rkey) const = 0;
-    virtual FAtom AddDefault(const FAtom& dico, const FAtom& key) const = 0;
+    virtual FAtom AddDefault(void* data, FAtom&& rkey) const = 0;
+    virtual FAtom AddDefault(void* data, const FAtom& key) const = 0;
 
-    virtual void AddCopy(const FAtom& dico, const FAtom& key, const FAtom& value) const = 0;
-    virtual void AddMove(const FAtom& dico, const FAtom& key, const FAtom& value) const = 0;
-    virtual bool Remove(const FAtom& dico, const FAtom& key) const = 0;
+    virtual void AddCopy(void* data, const FAtom& key, const FAtom& value) const = 0;
+    virtual void AddMove(void* data, const FAtom& key, const FAtom& value) const = 0;
+    virtual bool Remove(void* data, const FAtom& key) const = 0;
 
-    virtual void Reserve(const FAtom& dico, size_t capacity) const = 0;
-    virtual void Clear(const FAtom& dico) const = 0;
-    virtual void Empty(const FAtom& dico, size_t capacity) const = 0;
+    virtual void Reserve(void* data, size_t capacity) const = 0;
+    virtual void Clear(void* data) const = 0;
+    virtual void Empty(void* data, size_t capacity) const = 0;
 
     typedef Meta::TFunction<bool(const FAtom&, const FAtom&)> foreach_fun;
-    virtual bool ForEach(const FAtom& dico, const foreach_fun& foreach) const = 0;
+    virtual bool ForEach(void* data, const foreach_fun& foreach) const = 0;
 
 private:
     virtual const IScalarTraits* AsScalar() const override final { return nullptr; }

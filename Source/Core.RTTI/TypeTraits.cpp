@@ -43,16 +43,16 @@ FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool IPairTraits::Accept(IAtomVisitor* visitor, const FAtom& atom) const {
-    return visitor->Visit(this, atom);
+bool IPairTraits::Accept(IAtomVisitor* visitor, void* data) const {
+    return visitor->Visit(this, data);
 }
 //----------------------------------------------------------------------------
-bool IListTraits::Accept(IAtomVisitor* visitor, const FAtom& atom) const {
-    return visitor->Visit(this, atom);
+bool IListTraits::Accept(IAtomVisitor* visitor, void* data) const {
+    return visitor->Visit(this, data);
 }
 //----------------------------------------------------------------------------
-bool IDicoTraits::Accept(IAtomVisitor* visitor, const FAtom& atom) const {
-    return visitor->Visit(this, atom);
+bool IDicoTraits::Accept(IAtomVisitor* visitor, void* data) const {
+    return visitor->Visit(this, data);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -72,6 +72,7 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::ETypeFlags flags) {;
     if (flags & RTTI::ETypeFlags::List)     { oss << sep << "List"; }
     if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << "Dico"; }
     if (flags & RTTI::ETypeFlags::Native)   { oss << sep << "Native"; }
+    if (flags & RTTI::ETypeFlags::Object)   { oss << sep << "Object"; }
 
     return oss;
 }
@@ -84,6 +85,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETypeFlags flags) {
     if (flags & RTTI::ETypeFlags::List)     { oss << sep << L"List"; }
     if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << L"Dico"; }
     if (flags & RTTI::ETypeFlags::Native)   { oss << sep << L"Native"; }
+    if (flags & RTTI::ETypeFlags::Object)   { oss << sep << L"Object"; }
 
     return oss;
 }

@@ -290,7 +290,7 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::EClassFlags flags) {
     if (flags & RTTI::EClassFlags::Abstract)    { oss << sep << "Abstract"; }
     if (flags & RTTI::EClassFlags::Dynamic)     { oss << sep << "Dynamic"; }
     if (flags & RTTI::EClassFlags::Public)      { oss << sep << "Public"; } else {
-                                                 oss << sep << "Private"; }
+                                                  oss << sep << "Private"; }
     if (flags & RTTI::EClassFlags::Mergeable)   { oss << sep << "Mergeable"; }
     if (flags & RTTI::EClassFlags::Deprecated)  { oss << sep << "Deprecated"; }
     if (flags & RTTI::EClassFlags::Registered)  { oss << sep << "Registered"; }
@@ -305,7 +305,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EClassFlags flags) {
     if (flags & RTTI::EClassFlags::Abstract)    { oss << sep << L"Abstract"; }
     if (flags & RTTI::EClassFlags::Dynamic)     { oss << sep << L"Dynamic"; }
     if (flags & RTTI::EClassFlags::Public)      { oss << sep << L"Public"; } else {
-                                                 oss << sep << L"Private"; }
+                                                  oss << sep << L"Private"; }
     if (flags & RTTI::EClassFlags::Mergeable)   { oss << sep << L"Mergeable"; }
     if (flags & RTTI::EClassFlags::Deprecated)  { oss << sep << L"Deprecated"; }
     if (flags & RTTI::EClassFlags::Registered)  { oss << sep << L"Registered"; }

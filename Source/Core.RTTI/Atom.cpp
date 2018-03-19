@@ -1,25 +1,21 @@
 #include "stdafx.h"
 
-#include "AtomHelpers.h"
+#include "Atom.h"
 
 #include "AtomVisitor.h"
-
-#include "Core/IO/StringBuilder.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FString ToString(const RTTI::FAtom& atom) {
-    FStringBuilder oss;
-    RTTI::PrettyPrint(oss, atom);
-    return oss.ToString();
+FTextWriter& operator <<(FTextWriter& oss, const RTTI::FAtom& atom) {
+    PrettyPrint(oss, atom);
+    return oss;
 }
 //----------------------------------------------------------------------------
-FWString ToWString(const RTTI::FAtom& atom) {
-    FWStringBuilder oss;
-    RTTI::PrettyPrint(oss, atom);
-    return oss.ToString();
+FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FAtom& atom) {
+    PrettyPrint(oss, atom);
+    return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

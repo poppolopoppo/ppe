@@ -94,8 +94,8 @@ auto CastChecked(const PMetaObject& p) {
 //----------------------------------------------------------------------------
 using TReferencedObjects = VECTORINSITU(RTTI, FMetaObject*, 8);
 CORE_RTTI_API void CollectReferencedObjects(
-    const FMetaObject& root, 
-    TReferencedObjects& references, 
+    const FMetaObject& root,
+    TReferencedObjects& references,
     size_t maxDepth = INDEX_NONE );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

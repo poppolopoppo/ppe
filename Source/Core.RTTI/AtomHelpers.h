@@ -36,11 +36,11 @@ public:
         Assert(data);
         _data.Reset((void*)data, usingSysAlloca, false/* unused */);
 
-        _traits->Create(MakeAtom());
+        _traits->Create(_data.Get());
     }
 
     ~FStackLocalAtom() {
-        _traits->Destroy(MakeAtom());
+        _traits->Destroy(_data.Get());
 
         if (not UsingSysAlloca())
             FreeAlloca(_data.Get());

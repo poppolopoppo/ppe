@@ -250,32 +250,32 @@ public:
         _values.pop_back();
     }
 
-    virtual bool Visit(const RTTI::IPairTraits* pair, const RTTI::FAtom& atom) override final {
+    virtual bool Visit(const RTTI::IPairTraits* pair, void* data) override final {
         bool result = true;
 
         FJson::FArray& arr = Head_().SetType_AssumeNull(_doc, FJson::TypeArray{});
         arr.resize(2);
 
         _values.push_back(&arr.front());
-        result &= pair->First(atom).Accept(this);
+        result &= pair->First(data).Accept(this);
         _values.pop_back();
 
         if (not result)
             return false;
 
         _values.push_back(&arr.back());
-        result &= pair->Second(atom).Accept(this);
+        result &= pair->Second(data).Accept(this);
         _values.pop_back();
 
         return result;
     }
 
-    virtual bool Visit(const RTTI::IListTraits* list, const RTTI::FAtom& atom) override final {
+    virtual bool Visit(const RTTI::IListTraits* list, void* data) override final {
         FJson::FArray& arr = Head_().SetType_AssumeNull(_doc, FJson::TypeArray{});
-        arr.resize(list->Count(atom));
+        arr.resize(list->Count(data));
 
         FJson::FValue* pvalue = (&arr[0]);
-        return list->ForEach(atom, [this, &pvalue](const RTTI::FAtom& item) {
+        return list->ForEach(data, [this, &pvalue](const RTTI::FAtom& item) {
             _values.push_back(pvalue);
             bool r = item.Accept(this);
             _values.pop_back();
@@ -285,12 +285,12 @@ public:
         });
     }
 
-    virtual bool Visit(const RTTI::IDicoTraits* dico, const RTTI::FAtom& atom) override {
+    virtual bool Visit(const RTTI::IDicoTraits* dico, void* data) override {
         FJson::FArray& arr = Head_().SetType_AssumeNull(_doc, FJson::TypeArray{});
-        arr.resize(dico->Count(atom));
+        arr.resize(dico->Count(data));
 
         FJson::FValue* pvalue = (&arr[0]);
-        return dico->ForEach(atom, [this, &pvalue](const RTTI::FAtom& key, const RTTI::FAtom& value) {
+        return dico->ForEach(data, [this, &pvalue](const RTTI::FAtom& key, const RTTI::FAtom& value) {
             FJson::FArray& pair = pvalue->SetType_AssumeNull(_doc, FJson::TypeArray{});
             pair.resize(2);
             bool r = true;
@@ -403,7 +403,7 @@ public:
         _values.pop_back();
     }
 
-    virtual bool Visit(const RTTI::IPairTraits* pair, const RTTI::FAtom& atom) override final {
+    virtual bool Visit(const RTTI::IPairTraits* pair, void* data) override final {
         const FJson::FArray* arrIFP = Head_().AsArray();
         if (nullptr == arrIFP || 2 != arrIFP->size())
             return false;
@@ -411,30 +411,30 @@ public:
         bool result = true;
 
         _values.push_back(&arrIFP->front());
-        result &= pair->First(atom).Accept(this);
+        result &= pair->First(data).Accept(this);
         _values.pop_back();
 
         if (not result)
             return false;
 
         _values.push_back(&arrIFP->back());
-        result &= pair->Second(atom).Accept(this);
+        result &= pair->Second(data).Accept(this);
         _values.pop_back();
 
         return result;
     }
 
-    virtual bool Visit(const RTTI::IListTraits* list, const RTTI::FAtom& atom) override final {
+    virtual bool Visit(const RTTI::IListTraits* list, void* data) override final {
         const FJson::FArray* arrIFP = Head_().AsArray();
         if (nullptr == arrIFP)
             return false;
 
         const size_t n = arrIFP->size();
-        list->Reserve(atom, n);
+        list->Reserve(data, n);
 
         forrange(i, 0, n) {
             _values.push_back(&(*arrIFP)[i]);
-            bool r = list->AddDefault(atom).Accept(this);
+            bool r = list->AddDefault(data).Accept(this);
             _values.pop_back();
             if (not r)
                 return false;
@@ -443,13 +443,13 @@ public:
         return true;
     }
 
-    virtual bool Visit(const RTTI::IDicoTraits* dico, const RTTI::FAtom& atom) override {
+    virtual bool Visit(const RTTI::IDicoTraits* dico, void* data) override {
         const FJson::FArray* arrIFP = Head_().AsArray();
         if (nullptr == arrIFP)
             return false;
 
         const size_t n = arrIFP->size();
-        dico->Reserve(atom, n);
+        dico->Reserve(data, n);
 
         const RTTI::PTypeTraits keyTraits(dico->KeyTraits());
         RTTI::FAny key;
@@ -470,7 +470,7 @@ public:
             if (not r)
                 return false;
 
-            RTTI::FAtom valueAtom = dico->AddDefault(atom, keyAtom);
+            RTTI::FAtom valueAtom = dico->AddDefault(data, keyAtom);
 
             _values.push_back(&pairIFP->back());
             r &= valueAtom.Accept(this);
