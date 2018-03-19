@@ -15,9 +15,24 @@ namespace Core {
 //----------------------------------------------------------------------------
 class FTaskFiberPool {
 public:
+    class FHandle;
+
     using FCallback = Meta::TFunction<void()>;
+    using FHandleRef = const FHandle*;
 
     class FHandle { // opaque handle, can't be manipulated directly
+    public:
+        void AttachWakeUpCallback(FCallback&& onWakeUp) const {
+            Assert(onWakeUp);
+            Assert(not _onWakeUp);
+
+            _onWakeUp = std::move(onWakeUp);
+        }
+
+        void YieldFiber(FHandleRef to, bool release) const {
+            _owner->YieldCurrentFiber(this, to, release);
+        }
+
     private:
         friend class FTaskFiberPool;
 
@@ -33,7 +48,7 @@ public:
         size_t _index;
         FTaskFiberPool* _owner;
         mutable FFiber _fiber;
-        mutable const FHandle* _released;
+        mutable FCallback _onWakeUp;
 
 #ifdef WITH_CORE_ASSERT
         STATIC_CONST_INTEGRAL(size_t, GCanary, CODE3264(0x7337BEEFul, 0x7337BEEF7337BEEFull));
@@ -41,8 +56,6 @@ public:
         bool CheckCanary_() const { return (GCanary == _canary); }
 #endif
     };
-
-    using FHandleRef = const FHandle*;
 
     FTaskFiberPool(FCallback&& callback);
     ~FTaskFiberPool();
@@ -55,7 +68,7 @@ public:
 
     FHandleRef AcquireFiber();
     void ReleaseFiber(FHandleRef handle);
-    void YieldCurrentFiber(FHandleRef to, bool release);
+    void YieldCurrentFiber(FHandleRef self, FHandleRef to, bool release);
     void StartThread();
 
     static FHandleRef CurrentHandleRef() {
@@ -112,7 +125,6 @@ FTaskFiberPool::FTaskFiberPool(FCallback&& callback)
 
         h._owner = this;
         h._index = i;
-        h._released = nullptr;
         h._fiber.Create(&FiberEntryPoint_, &h, GStackSize);
     }
 }
@@ -136,7 +148,7 @@ FTaskFiberPool::~FTaskFiberPool() {
         FHandle& h = _handles[i];
         Assert_NoAssume(h.CheckCanary_());
         Assert(this == h._owner);
-        Assert(nullptr == h._released); // should have been consumed !
+        Assert(not h._onWakeUp); // should have been consumed !
 
         ONLY_IF_ASSERT(h._owner = nullptr);
         ONLY_IF_ASSERT(h._index = INDEX_NONE);
@@ -153,7 +165,7 @@ auto FTaskFiberPool::AcquireFiber() -> FHandleRef {
             const size_t index = (i * FBitMask::GBitCount + rel - 1);
             const FHandle& h = _handles[index];
             Assert_NoAssume(h.CheckCanary_());
-            Assert(nullptr == h._released);
+            Assert(not h._onWakeUp);
             Assert(not _available[i][rel - 1]);
             Assert_NoAssume(not _hibernated[i][rel - 1]);
             Assert_NoAssume(_numFibersInUse < GCapacity);
@@ -174,7 +186,7 @@ void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
     Assert(this == h._owner);
     Assert(&_handles[h._index] == &h);
 
-    Assert(nullptr == h._released); // shoulda been consumed already !
+    Assert(not h._onWakeUp); // shoulda been consumed already !
 
     const size_t w = Word_(h._index);
     const size_t e = Elmt_(h._index);
@@ -190,7 +202,9 @@ void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
     ONLY_IF_ASSERT(--_numFibersInUse);
 }
 //----------------------------------------------------------------------------
-void FTaskFiberPool::YieldCurrentFiber(FHandleRef to, bool release) {
+void FTaskFiberPool::YieldCurrentFiber(FHandleRef self, FHandleRef to, bool release) {
+    Assert(self);
+    Assert(self == CurrentHandleRef());
     Assert_NoAssume(_numFibersInUse);
 
     // prepare data for next fiber
@@ -200,17 +214,23 @@ void FTaskFiberPool::YieldCurrentFiber(FHandleRef to, bool release) {
     ONLY_IF_ASSERT(const size_t w = Word_(current->_index));
     ONLY_IF_ASSERT(const size_t e = Elmt_(current->_index));
 
-    if (nullptr == to)
+    if (nullptr == to) {
         to = AcquireFiber();
+        Assert(not to->_onWakeUp);
+    }
 
     Assert(to);
     Assert_NoAssume(to->CheckCanary_());
     Assert(to->_fiber);
     Assert(this == to->_owner);
-    Assert(nullptr == to->_released);
 
-    if (release)
-        to->_released = current;
+    if (release) {
+        Assert(not to->_onWakeUp);
+        to->_onWakeUp = [this, released{ current }]() {
+            Assert_NoAssume(released->CheckCanary_());
+            ReleaseFiber(released);
+        };
+    }
 #ifdef WITH_CORE_ASSERT
     else {
         const FAtomicSpinLock::FScope scopeLock(_barrier);
@@ -258,14 +278,8 @@ void FTaskFiberPool::StartThread() {
 void FTaskFiberPool::FHandle::WakeUp_() const {
     Assert(CurrentHandleRef() == this);
 
-    if (_released) {
-        Assert_NoAssume(_released->CheckCanary_());
-        Assert(_released != this);
-        Assert(_released->_owner == _owner);
-
-        _owner->ReleaseFiber(_released);
-        _released = nullptr;
-    }
+    if (_onWakeUp)
+        _onWakeUp.FireAndForget();
 }
 //----------------------------------------------------------------------------
 void STDCALL FTaskFiberPool::FiberEntryPoint_(void* arg) {
