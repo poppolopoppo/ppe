@@ -40,14 +40,16 @@ private:
 //----------------------------------------------------------------------------
 class CORE_SERIALIZE_API FJson {
 public:
+    using FTextHeap = TTextHeap<true/* use padding since FArray & FObject are bigger than FText otherwise */>;
+
     class FValue;
 
     using FBool = bool;
     using FInteger = i64;
     using FFloat = double;
-    using FString = FTextHeap::FText;
+    using FText = FTextHeap::FText;
     using FArray = VECTOR_LINEARHEAP(FValue);
-    using FObject = ASSOCIATIVE_VECTOR_LINEARHEAP(FString, FValue);
+    using FObject = ASSOCIATIVE_VECTOR_LINEARHEAP(FText, FValue);
 
     enum EType {
         Null = 0,
@@ -80,7 +82,7 @@ public:
         explicit FValue(FBool value) : _type(Bool), _bool(value) {}
         explicit FValue(FInteger value) : _type(Integer), _integer(value) {}
         explicit FValue(FFloat value) : _type(Float), _float(value) {}
-        explicit FValue(FString&& value) : _type(String), _string(std::move(value)) {}
+        explicit FValue(FText&& value) : _type(String), _string(std::move(value)) {}
         explicit FValue(FArray&& value) : _type(Array), _array(std::move(value)) {}
         explicit FValue(FObject&& value) : _type(Object), _object(std::move(value)) {}
 
@@ -98,14 +100,14 @@ public:
         FBool& SetType_AssumeNull(FJson& doc, TType<Bool>);
         FInteger& SetType_AssumeNull(FJson& doc, TType<Integer>);
         FFloat& SetType_AssumeNull(FJson& doc, TType<Float>);
-        FString& SetType_AssumeNull(FJson& doc, TType<String>);
+        FText& SetType_AssumeNull(FJson& doc, TType<String>);
         FArray& SetType_AssumeNull(FJson& doc, TType<Array>);
         FObject& SetType_AssumeNull(FJson& doc, TType<Object>);
 
         void SetValue(FBool value);
         void SetValue(FInteger value);
         void SetValue(FFloat value);
-        void SetValue(FString&& value);
+        void SetValue(FText&& value);
         void SetValue(FArray&& value);
         void SetValue(FObject&& value);
 
@@ -113,21 +115,21 @@ public:
         const FBool* AsBool() const { return (_type == Bool ? &_bool : nullptr); }
         const FInteger* AsInteger() const { return (_type == Integer ? &_integer : nullptr); }
         const FFloat* AsFloat() const { return (_type == Float ? &_float : nullptr); }
-        const FString* AsString() const { return (_type == String ? &_string : nullptr); }
+        const FText* AsString() const { return (_type == String ? &_string : nullptr); }
         const FArray* AsArray() const { return (_type == Array ? &_array : nullptr); }
         const FObject* AsObject() const { return (_type == Object ? &_object : nullptr); }
 
         FBool& ToBool() { Assert(_type == Bool); return _bool; }
         FInteger& ToInteger() { Assert(_type == Integer); return _integer; }
         FFloat& ToFloat() { Assert(_type == Float); return _float; }
-        FString& ToString() { Assert(_type == String); return _string; }
+        FText& ToString() { Assert(_type == String); return _string; }
         FArray& ToArray() { Assert(_type == Array); return _array; }
         FObject& ToObject() { Assert(_type == Object); return _object; }
 
         const FBool& ToBool() const { Assert(_type == Bool); return _bool; }
         const FInteger& ToInteger() const { Assert(_type == Integer); return _integer; }
         const FFloat& ToFloat() const { Assert(_type == Float); return _float; }
-        const FString& ToString() const { Assert(_type == String); return _string; }
+        const FText& ToString() const { Assert(_type == String); return _string; }
         const FArray& ToArray() const { Assert(_type == Array); return _array; }
         const FObject& ToObject() const { Assert(_type == Object); return _object; }
 
@@ -138,6 +140,7 @@ public:
         inline friend bool operator !=(const FValue& lhs, const FValue& rhs) { return (not operator ==(lhs, rhs)); }
 
         void ToStream(FTextWriter& oss, bool minify = true) const;
+        void ToStream(FWTextWriter& oss, bool minify = true) const;
 
     private:
         EType _type;
@@ -145,7 +148,7 @@ public:
             FBool _bool;
             FInteger _integer;
             FFloat _float;
-            FString _string;
+            FText _string;
             FArray _array;
             FObject _object;
         };
@@ -161,9 +164,10 @@ public:
     FValue& Root() { return _root; }
     const FValue& Root() const { return _root; }
 
-    FString MakeString(const FStringView& str, bool mergeable = true);
+    FText MakeString(const FStringView& str, bool mergeable = true);
 
     void ToStream(FTextWriter& oss, bool minify = false) const { _root.ToStream(oss, minify); }
+    void ToStream(FWTextWriter& oss, bool minify = false) const { _root.ToStream(oss, minify); }
 
     static bool Load(FJson* json, const FFilename& filename);
     static bool Load(FJson* json, const FFilename& filename, IBufferedStreamReader* input);
@@ -184,12 +188,14 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline FTextWriter& operator <<(FTextWriter& oss, const Serialize::FJson::FValue& jsonValue) {
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Serialize::FJson::FValue& jsonValue) {
     jsonValue.ToStream(oss);
     return oss;
 }
 //----------------------------------------------------------------------------
-inline FTextWriter& operator <<(FTextWriter& oss, const Serialize::FJson& json) {
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Serialize::FJson& json) {
     json.ToStream(oss);
     return oss;
 }

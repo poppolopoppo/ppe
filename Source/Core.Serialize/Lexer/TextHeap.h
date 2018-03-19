@@ -13,7 +13,8 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FTextHeap {
+template <bool _Padded/* padding adds more insitu storage capacity */>
+class TTextHeap {
 public:
     STATIC_CONST_INTEGRAL(size_t, GMaxSizeForMerge, 100);
 
@@ -22,6 +23,7 @@ public:
         FText() {
             _small.IsSmall = true;
             _small.Size = 0;
+            ONLY_IF_ASSERT(::memset(_small.Data, 0, sizeof(_small.Data)));
         }
         ~FText() {}
 
@@ -44,7 +46,7 @@ public:
         inline friend bool operator !=(const FText& lhs, const FText& rhs) { return (not operator ==(lhs, rhs)); }
 
     private:
-        friend class FTextHeap;
+        friend class TTextHeap;
 
         // FText use "Small String Optimization" (SSO)
         // - small strings will be stored inlined in the structure (we got 2*sizeof(size_t) storage occupied by FStringView)
@@ -52,13 +54,18 @@ public:
         // SSO is lessening the pressure on the hash map and the linear heap by using memory already available.
         // we might somewhat lose some perf when comparing small strings since it won't benefit from pointer equality.
 
-        struct FLargeText_ {
+        struct FLargeTextNotPadded_ {
             size_t IsSmall : 1;
             size_t Size : sizeof(size_t) * 8 - 1;
             const char* Data;
-            u64 _Padding_Unused; // padding added to get larger storage in small text (x86/x64 : 11/15 -> 15/23 chars)
             FStringView MakeView() const { return FStringView(Data, Size); }
         };
+
+        struct FLargeTextPadded_ : FLargeTextNotPadded_ {
+            u64 _Padding_Unused; // padding added to get larger storage in small text (x86/x64 : 11/15 -> 15/23 chars)
+        };
+
+        using FLargeText_ = std::conditional_t<_Padded, FLargeTextPadded_, FLargeTextNotPadded_>;
 
         struct FSmallText_ {
             STATIC_CONST_INTEGRAL(size_t, GCapacity, (sizeof(FLargeText_) - sizeof(u8)) / sizeof(char));
@@ -97,15 +104,21 @@ public:
         }
     };
 
-    FTextHeap(FLinearHeap& heap)
+    TTextHeap(FLinearHeap& heap)
         : _texts(TLinearHeapAllocator<FText>(heap)) {
         STATIC_ASSERT(sizeof(FText::FLargeText_) == sizeof(FText::FSmallText_));
-        STATIC_ASSERT(sizeof(FText::FLargeText_) == 2 * sizeof(size_t) + sizeof(u64));
+        STATIC_ASSERT(_Padded
+            ? sizeof(FText::FLargeText_) == 2 * sizeof(size_t) + sizeof(u64)
+            : sizeof(FText::FLargeText_) == 2 * sizeof(size_t) );
     }
 
     bool empty() const { return _texts.empty(); }
     size_t size() const { return _texts.size(); }
     void reserve(size_t capacity) { _texts.reserve(capacity); }
+
+    void Clear() {
+        _texts.clear_ReleaseMemory();
+    }
 
     FText MakeText(const FStringView& str, bool mergeable = true) {
         if (str.empty()) {
@@ -163,4 +176,17 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Serialize
+} //!namespace Core
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char, bool _Padded>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const typename Serialize::TTextHeap<_Padded>::FText& text) {
+    return oss << text.MakeView();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Core

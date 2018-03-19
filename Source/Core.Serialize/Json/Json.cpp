@@ -24,8 +24,12 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 namespace Json_ {
 //----------------------------------------------------------------------------
-static void EscapeString_(FTextWriter& oss, const FJson::FString& str) {
+static void EscapeString_(FTextWriter& oss, const FJson::FText& str) {
     Escape(oss, str, EEscape::Unicode);
+}
+//----------------------------------------------------------------------------
+static void EscapeString_(FWTextWriter& oss, const FJson::FText& str) {
+    Escape(oss, ToWCStr(INLINE_MALLOCA(wchar_t, str.size() + 1), str), EEscape::Unicode);
 }
 //----------------------------------------------------------------------------
 static bool ParseValue_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value);
@@ -36,7 +40,7 @@ static bool ParseObject_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value)
     if (lexer.ReadIFN(Lexer::FSymbols::RBrace)) // quick reject for empty object
         return true;
 
-    ASSOCIATIVE_VECTORINSITU_THREAD_LOCAL(Json, FJson::FString, FJson::FValue, 8) tmp; // use temporary dico to don't bloat the linear heap
+    ASSOCIATIVE_VECTORINSITU_THREAD_LOCAL(Json, FJson::FText, FJson::FValue, 8) tmp; // use temporary dico to don't bloat the linear heap
 
     Lexer::FMatch key;
     for (bool notFirst = false;; notFirst = true) {
@@ -149,14 +153,15 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) 
     return true;
 }
 //----------------------------------------------------------------------------
-static void ToStream_(const FJson::FValue& value, FTextWriter& oss, Fmt::FIndent& indent, bool minify) {
+template <typename _Char>
+static void ToStream_(const FJson::FValue& value, TBasicTextWriter<_Char>& oss, Fmt::TBasicIndent<_Char>& indent, bool minify) {
     switch (value.Type()) {
 
     case Core::Serialize::FJson::Null:
         oss << "null";
         break;
     case Core::Serialize::FJson::Bool:
-        oss << (value.ToBool() ? "true" : "false");
+        oss << value.ToBool();
         break;
     case Core::Serialize::FJson::Integer:
         oss << value.ToInteger();
@@ -166,62 +171,62 @@ static void ToStream_(const FJson::FValue& value, FTextWriter& oss, Fmt::FIndent
         break;
 
     case Core::Serialize::FJson::String:
-        oss << '"';
+        oss << Fmt::DoubleQuote;
         Json_::EscapeString_(oss, value.ToString());
-        oss << '"';
+        oss << Fmt::DoubleQuote;
         break;
 
     case Core::Serialize::FJson::Array:
         if (not value.ToArray().empty()) {
             const auto& arr = value.ToArray();
-            oss << '[';
+            oss << Fmt::LBracket;
             if (not minify)
                 oss << Eol;
             {
-                const Fmt::FIndent::FScope scopeIndent(indent);
+                const Fmt::TBasicIndent<_Char>::FScope scopeIndent(indent);
 
                 size_t n = arr.size();
                 for (const FJson::FValue& item : arr) {
                     oss << indent;
                     ToStream_(item, oss, indent, minify);
                     if (--n)
-                        oss << ',';
+                        oss << Fmt::Comma;
                     if (not minify)
                         oss << Eol;
                 }
             }
-            oss << indent << ']';
+            oss << indent << Fmt::RBracket;
         }
         else {
-            oss << "[]";
+            oss << Fmt::LBracket << Fmt::RBracket;
         }
         break;
 
     case Core::Serialize::FJson::Object:
         if (not value.ToObject().empty()) {
             const auto& obj = value.ToObject();
-            oss << '{';
+            oss << Fmt::LBrace;
             if (not minify)
                 oss << Eol;
             {
-                const Fmt::FIndent::FScope scopeIndent(indent);
+                const Fmt::TBasicIndent<_Char>::FScope scopeIndent(indent);
 
                 size_t n = obj.size();
                 for (const auto& member : obj) {
-                    oss << indent << '"';
+                    oss << indent << Fmt::DoubleQuote;
                     Json_::EscapeString_(oss, member.first);
-                    oss << "\": ";
+                    oss << Fmt::DoubleQuote << Fmt::Colon  << Fmt::Space;
                     ToStream_(member.second, oss, indent, minify);
                     if (--n)
-                        oss << ',';
+                        oss << Fmt::Comma;
                     if (not minify)
                         oss << Eol;
                 }
             }
-            oss << indent << '}';
+            oss << indent << Fmt::RBrace;
         }
         else {
-            oss << "{}";
+            oss << Fmt::LBrace << Fmt::RBrace;
         }
         break;
 
@@ -280,7 +285,7 @@ FJson::FValue& FJson::FValue::operator =(const FValue& other) {
         _float = other._float;
         break;
     case Core::Serialize::FJson::String:
-        INPLACE_NEW(&_string, FString)(other._string);
+        INPLACE_NEW(&_string, FText)(other._string);
         break;
     case Core::Serialize::FJson::Array:
         INPLACE_NEW(&_array, FArray)(other._array);
@@ -313,8 +318,8 @@ FJson::FValue& FJson::FValue::operator =(FValue&& rvalue) {
         _float = rvalue._float;
         break;
     case Core::Serialize::FJson::String:
-        INPLACE_NEW(&_string, FString)(std::move(rvalue._string));
-        //rvalue._string.~FString();
+        INPLACE_NEW(&_string, FText)(std::move(rvalue._string));
+        //rvalue._string.~FText();
         break;
     case Core::Serialize::FJson::Array:
         INPLACE_NEW(&_array, FArray)(std::move(rvalue._array));
@@ -385,10 +390,10 @@ auto FJson::FValue::SetType_AssumeNull(FJson& , TType<Float>) -> FFloat& {
     return (*INPLACE_NEW(&_float, FFloat));
 }
 //----------------------------------------------------------------------------
-auto FJson::FValue::SetType_AssumeNull(FJson& , TType<String>) -> FString& {
+auto FJson::FValue::SetType_AssumeNull(FJson& , TType<String>) -> FText& {
     Assert(Null == _type);
     _type = String;
-    return (*INPLACE_NEW(&_string, FString));
+    return (*INPLACE_NEW(&_string, FText));
 }
 //----------------------------------------------------------------------------
 auto FJson::FValue::SetType_AssumeNull(FJson& doc, TType<Array>) -> FArray& {
@@ -420,10 +425,10 @@ void FJson::FValue::SetValue(FFloat value) {
     INPLACE_NEW(&_float, FFloat)(value);
 }
 //----------------------------------------------------------------------------
-void FJson::FValue::SetValue(FString&& value) {
+void FJson::FValue::SetValue(FText&& value) {
     Clear();
     _type = EType::String;
-    INPLACE_NEW(&_string, FString)(std::move(value));
+    INPLACE_NEW(&_string, FText)(std::move(value));
 }
 //----------------------------------------------------------------------------
 void FJson::FValue::SetValue(FArray&& value) {
@@ -492,7 +497,16 @@ void FJson::FValue::Clear() {
 //----------------------------------------------------------------------------
 void FJson::FValue::ToStream(FTextWriter& oss, bool minify/* = true */) const {
     Fmt::FIndent indent = (minify ? Fmt::FIndent::None() : Fmt::FIndent::TwoSpaces());
-    oss << FTextFormat::DefaultFloat;
+    oss << FTextFormat::DefaultFloat
+        << FTextFormat::BoolAlpha;
+    Json_::ToStream_(*this, oss, indent, minify);
+    Assert(0 == indent.Level);
+}
+//----------------------------------------------------------------------------
+void FJson::FValue::ToStream(FWTextWriter& oss, bool minify/* = true */) const {
+    Fmt::FWIndent indent = (minify ? Fmt::FWIndent::None() : Fmt::FWIndent::TwoSpaces());
+    oss << FTextFormat::DefaultFloat
+        << FTextFormat::BoolAlpha;
     Json_::ToStream_(*this, oss, indent, minify);
     Assert(0 == indent.Level);
 }
@@ -500,8 +514,8 @@ void FJson::FValue::ToStream(FTextWriter& oss, bool minify/* = true */) const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 STATIC_ASSERT(Meta::TCheckSameSize<FJson::FObject, FJson::FArray>::value);
-STATIC_ASSERT(Meta::TCheckSameSize<FJson::FString, FJson::FArray>::value);
-STATIC_ASSERT(Meta::TCheckSameSize<FJson::FObject, FJson::FString>::value);
+STATIC_ASSERT(Meta::TCheckSameSize<FJson::FText, FJson::FArray>::value);
+STATIC_ASSERT(Meta::TCheckSameSize<FJson::FObject, FJson::FText>::value);
 //----------------------------------------------------------------------------
 FJson::FJson()
     : _heap(LINEARHEAP_DOMAIN_TRACKINGDATA(Json))
@@ -525,7 +539,7 @@ bool FJson::Load(FJson* json, const FFilename& filename) {
     return Load(json, filename, content.MakeConstView().Cast<const char>());
 }
 //----------------------------------------------------------------------------
-auto FJson::MakeString(const FStringView& str, bool mergeable/* = true */) -> FString {
+auto FJson::MakeString(const FStringView& str, bool mergeable/* = true */) -> FText {
     return _textHeap.MakeText(str);
 }
 //----------------------------------------------------------------------------
@@ -542,7 +556,8 @@ bool FJson::Load(FJson* json, const FFilename& filename, IBufferedStreamReader* 
     Lexer::FLexer lexer(input, filenameStr.MakeView(), false);
 
     json->_root = FValue();
-    json->_textHeap.reserve(32);
+    json->_textHeap.Clear();
+    json->_heap.ReleaseAll();
 
     CORE_TRY{
         if (not Json_::ParseValue_(lexer, *json, json->_root))

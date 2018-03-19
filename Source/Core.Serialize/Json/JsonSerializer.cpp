@@ -74,8 +74,8 @@ void FJsonSerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransact
 namespace {
 //----------------------------------------------------------------------------
 static bool Json_IsRTTIToken(const FStringView& str) { return (str.size() > 1 && '$' == str[0]); }
-static FTextHeap::FText Json_MetaClass() { return FTextHeap::MakeStaticText("$RTTI_Class"); };
-static FTextHeap::FText Json_Export()    { return FTextHeap::MakeStaticText("$RTTI_Export"); };
+static FJson::FTextHeap::FText Json_MetaClass() { return FJson::FTextHeap::MakeStaticText("$RTTI_Class"); };
+static FJson::FTextHeap::FText Json_Export()    { return FJson::FTextHeap::MakeStaticText("$RTTI_Export"); };
 //----------------------------------------------------------------------------
 template <typename T, class = void>
 struct TJson_RTTI_traits;
@@ -130,7 +130,7 @@ struct TJson_RTTI_traits<FString> {
         dst.SetValue(doc.MakeString(src));
     }
     static bool RTTI(FString& dst, const FJson::FValue& src) {
-        const FJson::FString* strIFP = src.AsString();
+        const FJson::FText* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst = *strIFP;
         return true;
@@ -142,7 +142,7 @@ struct TJson_RTTI_traits<FWString> {
         dst.SetValue(doc.MakeString(ToString(src)));
     }
     static bool RTTI(FWString& dst, const FJson::FValue& src) {
-        const FJson::FString* strIFP = src.AsString();
+        const FJson::FText* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst = ToWString(*strIFP);
         return true;
@@ -154,7 +154,7 @@ struct TJson_RTTI_traits<RTTI::FName> {
         dst.SetValue(doc.MakeString(src.MakeView()));
     }
     static bool RTTI(RTTI::FName& dst, const FJson::FValue& src) {
-        const FJson::FString* strIFP = src.AsString();
+        const FJson::FText* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst = RTTI::FName(*strIFP);
         return true;
@@ -166,7 +166,7 @@ struct TJson_RTTI_traits<FDirpath> {
         dst.SetValue(doc.MakeString(src.ToString()));
     }
     static bool RTTI(FDirpath& dst, const FJson::FValue& src) {
-        const FJson::FString* strIFP = src.AsString();
+        const FJson::FText* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst = ToWString(*strIFP);
         return true;
@@ -178,7 +178,7 @@ struct TJson_RTTI_traits<FFilename> {
         dst.SetValue(doc.MakeString(src.ToString()));
     }
     static bool RTTI(FFilename& dst, const FJson::FValue& src) {
-        const FJson::FString* strIFP = src.AsString();
+        const FJson::FText* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst = ToWString(*strIFP);
         return true;
@@ -190,7 +190,7 @@ struct TJson_RTTI_traits<RTTI::FBinaryData> {
         dst.SetValue(doc.MakeString(src.MakeConstView().Cast<const char>(), false/* don't merge */));
     }
     static bool RTTI(RTTI::FBinaryData& dst, const FJson::FValue& src) {
-        const FJson::FString* strIFP = src.AsString();
+        const FJson::FText* strIFP = src.AsString();
         if (nullptr == strIFP) return false;
         dst.CopyFrom(strIFP->MakeView().Cast<const u8>());
         return true;
@@ -529,7 +529,7 @@ private:
             return true;
 
         // external reference
-        if (const FJson::FString* importIFP = Head_().AsString()) {
+        if (const FJson::FText* importIFP = Head_().AsString()) {
             if ('<' != importIFP->MakeView().front() || '>' != importIFP->MakeView().back())
                 return false;
 
@@ -550,7 +550,7 @@ private:
         if (objIFP->end() == metaClassIt)
             return false;
 
-        const FJson::FString* strIFP = metaClassIt->second.AsString();
+        const FJson::FText* strIFP = metaClassIt->second.AsString();
         if (nullptr == strIFP || strIFP->empty())
             return false;
 
@@ -562,7 +562,7 @@ private:
 
         const auto exportIt = objIFP->find(Json_Export());
         if (exportIt != objIFP->end()) {
-            const FJson::FString* nameIFP = exportIt->second.AsString();
+            const FJson::FText* nameIFP = exportIt->second.AsString();
             if (nameIFP == nullptr || nameIFP->empty())
                 return false;
 
