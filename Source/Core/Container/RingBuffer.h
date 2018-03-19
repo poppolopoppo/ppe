@@ -121,7 +121,7 @@ auto TRingBuffer<T, _IsPod>::push_back_Uninitialized() -> pointer {
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
 void TRingBuffer<T, _IsPod>::push_back(_Arg0&& arg0, _Args&&... args) {
-    INPLACE_NEW(push_back_Uninitialized(), T){ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
+    Meta::Construct(push_back_Uninitialized(), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -155,7 +155,7 @@ auto TRingBuffer<T, _IsPod>::push_front_Uninitialized() -> pointer {
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
 void TRingBuffer<T, _IsPod>::push_front(_Arg0&& arg0, _Args&&... args) {
-    INPLACE_NEW(push_front_Uninitialized(), T){ std::forward<_Arg0>(arg0), std::forward<_Args>(args)... };
+    Meta::Construct(push_front_Uninitialized(), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -187,7 +187,7 @@ bool TRingBuffer<T, _IsPod>::pop_front(pointer pvalue) {
     if(pvalue)
         *pvalue = std::move(elt);
     if (false == _IsPod)
-        elt.~T();
+        Meta::Destroy(&elt);
 
     _begin = ++_begin % _capacity;
     _size--;
@@ -207,7 +207,7 @@ bool TRingBuffer<T, _IsPod>::pop_back(pointer pvalue) {
     if(pvalue)
         *pvalue = std::move(elt);
     if (false == _IsPod)
-        elt.~T();
+        Meta::Destroy(&elt);
 
     _size--;
     return true;
@@ -217,7 +217,7 @@ template <typename T, bool _IsPod>
 void TRingBuffer<T, _IsPod>::clear() {
     if (false == _IsPod) {
         forrange(i, 0, _size)
-            _storage[(_begin + i) % _capacity].~T();
+            Meta::Destroy(&_storage[(_begin + i) % _capacity]);
     }
     _begin = _size = 0;
 }

@@ -69,6 +69,7 @@ public:
     size_type capacity() const { return _capacity; }
     size_type size() const { return _size; }
     bool empty() const { return 0 == _size; }
+    bool full() const { return (_capacity == _size); }
 
     iterator begin() { return MakeCheckedIterator(_storage, _size, 0); }
     iterator end() { return MakeCheckedIterator(_storage, _size, _size); }
@@ -115,7 +116,7 @@ public:
         return (p >= _storage && p < _storage + _size);
     }
 
-private:
+protected:
     size_type _size;
     size_type _capacity;
     pointer _storage;
@@ -149,7 +150,7 @@ auto TStack<T, _IsPod>::Push_Uninitialized() -> pointer {
 template <typename T, bool _IsPod>
 template <typename _Arg0, typename... _Args>
 void TStack<T, _IsPod>::Push(_Arg0&& arg0, _Args&&... args) {
-    TAllocatorBase<T>().construct(Push_Uninitialized(), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    Meta::Construct(Push_Uninitialized(), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
@@ -163,7 +164,7 @@ bool TStack<T, _IsPod>::Pop(pointer pvalue/* = nullptr */) {
     if (pvalue)
         *pvalue = std::move(elt);
     if (false == _IsPod)
-        elt.~T();
+        Meta::Destroy(&elt);
 
     return true;
 }
@@ -198,7 +199,7 @@ bool TStack<T, _IsPod>::DeallocateIFP(pointer p, size_type count) {
 
     if (false == _IsPod) {
         for (size_t i = _size - count; i < _size; ++i)
-            _storage[i].~T();
+            Meta::Destroy(&_storage[i]);
     }
 
     _size -= count;
@@ -215,7 +216,7 @@ template <typename T, bool _IsPod>
 void TStack<T, _IsPod>::clear() {
     if (false == _IsPod) {
         for (size_t i = 0; i < _size; ++i)
-            _storage[i].~T();
+            Meta::Destroy(&_storage[i]);
     }
     _size = 0;
 }
@@ -266,6 +267,14 @@ public:
 
     void Swap(TStack<T>& other) = delete;
 
+    // very special behavior which sets capacity to 0, used by allocators
+    void ForbidFurtherAccess() {
+        Assert(0 == _size);
+        _capacity = 0; // every next call to Push() will fail
+        _storage = nullptr;
+        Assert(full());
+    }
+
 private:
     // /!\ won't call any ctor or dtor, values are considered as undefined
     typename ALIGNED_STORAGE(sizeof(T) * _Capacity, _Alignment) _insitu;
@@ -274,7 +283,7 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Less = Meta::TLess<T>, bool _IsPod = Meta::TIsPod<T>::value>
-class TStackHeapAdapter : _Less {
+class TStackHeapAdapter : private _Less {
 public:
     typedef TStack<T, _IsPod> stack_type;
     typedef typename stack_type::pointer pointer;
