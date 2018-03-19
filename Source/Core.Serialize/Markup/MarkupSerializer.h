@@ -5,26 +5,38 @@
 #include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/ISerializer.h"
 
+#include "Core/IO/String.h"
+
+// TODO
+#error "TODO"
+
 namespace Core {
 namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FXMLSerializerException : public FSerializeException {
+class FJsonSerializerException : public FSerializeException {
 public:
-    FXMLSerializerException(const char* what) : FSerializeException(what) {}
+    FJsonSerializerException(const char* what) : FSerializeException(what) {}
 };
 //----------------------------------------------------------------------------
-class FXMLSerializer : public ISerializer {
+class CORE_SERIALIZE_API FMarkupSerializer : public ISerializer {
 public:
-    FXMLSerializer();
-    virtual ~FXMLSerializer();
+    FMarkupSerializer(bool minify = true);
+    virtual ~FMarkupSerializer();
+
+    bool Minify() const { return _minify; }
+    void SetMinify(bool value) { _minify = value; }
 
     using ISerializer::Deserialize;
     using ISerializer::Serialize;
 
     virtual void Deserialize(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName = nullptr) override;
     virtual void Serialize(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) override;
+
+private:
+    FString _header;
+    bool _minify;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

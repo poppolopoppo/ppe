@@ -8,5 +8,7 @@
     {
         'Serialize.cpp'
     }
+        "Markup/MarkupSerializer.cpp",
+
     #include "../../Build/Templates/Library.bff"
 }

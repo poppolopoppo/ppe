@@ -206,8 +206,8 @@ static const double_conversion::StringToDoubleConverter& DefaultStringToDoubleCo
 }
 
 const char* StringToDoubleStr_(const char* str) { return str; }
-const u16* StringToDoubleStr_(const wchar_t* str) { 
-    STATIC_ASSERT(sizeof(wchar_t) == sizeof(u16)); 
+const u16* StringToDoubleStr_(const wchar_t* str) {
+    STATIC_ASSERT(sizeof(wchar_t) == sizeof(u16));
     return reinterpret_cast<const u16*>(str);
 }
 
@@ -215,8 +215,8 @@ template <typename _Char>
 static bool Atof_(float *dst, const TBasicStringView<_Char>& str) {
     int len;
     *dst = DefaultStringToDoubleConverter_().StringToFloat(
-        StringToDoubleStr_(str.data()), 
-        checked_cast<int>(str.size()), 
+        StringToDoubleStr_(str.data()),
+        checked_cast<int>(str.size()),
         &len );
 
     return (len == str.size());
@@ -225,8 +225,8 @@ template <typename _Char>
 static bool Atof_(double *dst, const TBasicStringView<_Char>& str) {
     int len;
     *dst = DefaultStringToDoubleConverter_().StringToDouble(
-        StringToDoubleStr_(str.data()), 
-        checked_cast<int>(str.size()), 
+        StringToDoubleStr_(str.data()),
+        checked_cast<int>(str.size()),
         &len );
 
     return (len == str.size());

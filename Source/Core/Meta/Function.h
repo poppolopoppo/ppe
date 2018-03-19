@@ -116,6 +116,11 @@ public:
         _func = nullptr;
     }
 
+    void FireAndForget(_Args... args) {
+        Invoke(std::forward<_Args>(args)...);
+        Reset();
+    }
+
     bool Equals(const TFunction& other) const {
         return (_func == _func && _inSitu == other._inSitu);
     }

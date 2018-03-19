@@ -204,14 +204,14 @@ FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDump) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, const Fmt::FIndent& indent) {
+FTextWriter& operator <<(FTextWriter& oss, const Fmt::TBasicIndent<char>& indent) {
     Assert(indent.Level >= 0);
     forrange(i, 0, indent.Level)
         oss << indent.Tab;
     return oss;
 }
 //----------------------------------------------------------------------------
-FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FWIndent& indent) {
+FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::TBasicIndent<wchar_t>& indent) {
     Assert(indent.Level >= 0);
     forrange(i, 0, indent.Level)
         oss << indent.Tab;

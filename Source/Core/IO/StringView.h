@@ -309,6 +309,9 @@ CORE_API bool EqualsI(const FWStringView& lhs, const FWStringView& rhs);
 inline bool EqualsI(char lhs, char rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }
 inline bool EqualsI(wchar_t lhs, wchar_t rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }
 //----------------------------------------------------------------------------
+inline bool Equals(char lhs, char rhs, ECase cmp) { return (ECase::Insensitive == cmp ? ToUpper(lhs) == ToUpper(rhs) : lhs == rhs); }
+inline bool Equals(wchar_t lhs, wchar_t rhs, ECase cmp) { return (ECase::Insensitive == cmp ? ToUpper(lhs) == ToUpper(rhs) : lhs == rhs); }
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 CORE_API bool StartsWith(const FStringView& str, const FStringView& prefix);

@@ -283,8 +283,8 @@ struct FWIndent : TBasicIndent<wchar_t> {
 };
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-CORE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::FIndent& indent);
-CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FWIndent& indent);
+CORE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::TBasicIndent<char>& indent);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::TBasicIndent<wchar_t>& indent);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
