@@ -11,11 +11,11 @@ extern void Test_Allocators();
 extern void Test_Format();
 extern void Test_Containers();
 extern void Test_RTTI();
-//extern void Test_Lattice(); %_NOCOMMIT% TODO
 extern void Test_Network();
 extern void Test_Pixmap();
 extern void Test_Thread();
-//extern void Test_XML(); %_NOCOMMIT% TODO
+extern void Test_XML();
+extern void Test_Lattice();
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -33,9 +33,9 @@ void FTestApp::Start() {
     Test_Format();
     Test_Thread();
     Test_RTTI();
-    //Test_Lattice(); %_NOCOMMIT%
+    Test_XML();
+    Test_Lattice();
     Test_Pixmap();
-    //Test_XML(); %_NOCOMMIT%
     Test_Network();
 }
 //----------------------------------------------------------------------------

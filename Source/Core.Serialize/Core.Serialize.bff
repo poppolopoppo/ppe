@@ -8,7 +8,31 @@
     {
         'Serialize.cpp'
     }
+    .ProjectExcludedFiles = // TODO : commented out while ported to new RTTI
+    {
         "Markup/MarkupSerializer.cpp",
 
+        "Parser/ParseContext.cpp",
+        "Parser/ParseContext.h",
+        "Parser/ParseExpression-inl.h",
+        "Parser/ParseExpression.cpp",
+        "Parser/ParseExpression.h",
+        "Parser/ParseItem.cpp",
+        "Parser/ParseItem.h",
+        "Parser/ParseList.cpp",
+        "Parser/ParseList.h",
+        "Parser/ParseProduction.h",
+        "Parser/Parser.cpp",
+        "Parser/Parser.h",
+        "Parser/ParseResult.h",
+        "Parser/ParseStatement.cpp",
+        "Parser/ParseStatement.h",
+
+        "Text/Grammar.cpp",
+        "Text/Grammar.h",
+        "Text/TextSerializer.cpp",
+        "Text/TextSerializer.h",
+
+    }
     #include "../../Build/Templates/Library.bff"
 }

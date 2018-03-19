@@ -1,18 +1,19 @@
 #include "stdafx.h"
 
-/* %_NOCOMMIT% TODO
+/* TODO
 #include "Core.Lattice/Collada.h"
 #include "Core.Lattice/GenericMaterial.h"
 #include "Core.Lattice/GenericMesh.h"
+*/
 
-#include "Core.Serialize/XML/XML.h"
-#include "Core.Serialize/XML/Document.h"
-#include "Core.Serialize/XML/Element.h"
+#include "Core.Serialize/Markup/Xml.h"
 
+#include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FormatHelpers.h"
 
 namespace Core {
 namespace Test {
+LOG_CATEGORY(, Test_Xml)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -20,11 +21,12 @@ namespace {
 using namespace Core::Serialize;
 //----------------------------------------------------------------------------
 static void Test_XMLLoad_Simple_() {
-    XML::FDocument xml;
-    if (XML::FDocument::Load(&xml, L"Data:/Models/sample.xml"))
-        std::cout << xml << eol;
+    FXml xml;
+    if (FXml::Load(&xml, L"Data:/Models/sample.xml"))
+        LOG(Test_Xml, Info, L"sample.xml:\n{0}", xml);
 }
 //----------------------------------------------------------------------------
+/* TODO
 static void Test_XMLLoad_Collada_() {
     Lattice::FCollada collada;
     if (not Lattice::FCollada::Load(&collada, L"Data:/Models/astroBoy_walk_Maya.dae"))
@@ -51,6 +53,7 @@ static void Test_XMLLoad_Collada_() {
         std::cout << eol;
     }
 }
+*/
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -58,11 +61,10 @@ static void Test_XMLLoad_Collada_() {
 //----------------------------------------------------------------------------
 void Test_XML() {
     Test_XMLLoad_Simple_();
-    Test_XMLLoad_Collada_();
+    //Test_XMLLoad_Collada_();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Test
 } //!namespace Core
-*/

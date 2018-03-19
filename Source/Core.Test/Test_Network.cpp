@@ -12,10 +12,7 @@
 #include "Core.Network/Socket/SocketBuffered.h"
 #include "Core.Network/Uri.h"
 
-/*
-#include "Core.Serialize/XML/Document.h"
-#include "Core.Serialize/XML/Element.h"
-*/
+#include "Core.Serialize/Markup/Xml.h"
 
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FS/Filename.h"
@@ -186,15 +183,12 @@ static void Test_HttpGet_() {
             response.MakeView());
 
         if (response.Status() == Network::EHttpStatus::OK) {
-            /* %_NOCOMMIT% TODO
-            XML::FDocument xml;
+            Serialize::FXml xml;
             IBufferedStreamReader* reader = &response.Body();
-            if (not XML::FDocument::Load(&xml, L"network.tmp", reader))
+            if (not Serialize::FXml::Load(&xml, L"network.tmp", reader))
                 AssertNotReached();
 
-            GStdout << "XML:" << Eol;
-            GStdout << xml << Eol;
-            */
+            LOG(Test_Network, Info, L"request result:\n{0}", xml);
         }
         else {
             LOG(Test_Network, Error, L"HTTP request to '{0}' failed : {1}", uri, response.Status());

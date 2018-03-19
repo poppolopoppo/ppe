@@ -157,33 +157,33 @@ public:
     void Randomize(RTTI::FMetaObject* pobject);
 
 protected:
-    virtual bool Visit(const RTTI::IPairTraits* pair, const RTTI::FAtom& atom) override final {
-        return parent_type::Visit(pair, atom);
+    virtual bool Visit(const RTTI::IPairTraits* pair, void* data) override final {
+        return parent_type::Visit(pair, data);
     }
 
-    virtual bool Visit(const RTTI::IListTraits* list, const RTTI::FAtom& atom) override final {
+    virtual bool Visit(const RTTI::IListTraits* list, void* data) override final {
         const size_t count = NextRandomDim_();
-        list->Reserve(atom, count);
+        list->Reserve(data, count);
         forrange(i, 0, count)
-            list->AddDefault(atom);
+            list->AddDefault(data);
 
-        return parent_type::Visit(list, atom);
+        return parent_type::Visit(list, data);
     }
 
-    virtual bool Visit(const RTTI::IDicoTraits* dico, const RTTI::FAtom& atom) override final {
+    virtual bool Visit(const RTTI::IDicoTraits* dico, void* data) override final {
         RTTI::FAny anyKey;
         RTTI::FAtom keyAtom = anyKey.Reset(dico->KeyTraits());
 
         const size_t count = NextRandomDim_();
-        dico->Reserve(atom, count);
+        dico->Reserve(data, count);
         forrange(i, 0, count) {
             if (not keyAtom.Accept(this))
                 return false;
 
-            if (dico->Find(atom, keyAtom))
+            if (dico->Find(data, keyAtom))
                 continue;
 
-            if (not dico->AddDefault(atom, std::move(keyAtom)).Accept(this))
+            if (not dico->AddDefault(data, std::move(keyAtom)).Accept(this))
                 return false;
         }
 
