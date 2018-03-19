@@ -5,7 +5,6 @@
 #include "Symbol.h"
 #include "Symbols.h"
 
-#include "Core/Allocator/PoolAllocatorTag-impl.h"
 #include "Core/Container/Stack.h"
 #include "Core/IO/StreamProvider.h"
 #include "Core/IO/String.h"
@@ -16,7 +15,6 @@
 
 namespace Core {
 namespace Lexer {
-POOL_TAG_DEF(FLexer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -106,8 +104,7 @@ static bool IsTokenChar_(char ch) {
 static void Lex_Comments_(FLookAheadReader& reader) {
     char ch = reader.Peek(0);
 
-    while ('/' == ch && '/' == reader.Peek(1))
-    {
+    while ('/' == ch && '/' == reader.Peek(1)) {
         char r = reader.Read();
         Assert('/' == r);
 
@@ -466,11 +463,7 @@ bool FLexer::Read(FMatch& match) {
 //----------------------------------------------------------------------------
 bool FLexer::ReadUntil(FMatch& match, const char ch) {
     Assert('\0' != ch);
-
-    if (_peeking) {
-        _peeking = false;
-        _peek = FMatch();
-    }
+    AssertRelease(not _peeking); // because we can't rewind the stream
 
     _reader.EatWhiteSpaces();
 
@@ -501,16 +494,77 @@ bool FLexer::ReadUntil(FMatch& match, const char ch) {
 bool FLexer::SkipUntil(const char ch) {
     Assert('\0' != ch);
 
+    RewindPeekIFN();
+
+    char poken = _reader.Peek(0);
+    while (poken && ch != poken) {
+        _reader.Read();
+        poken = _reader.Peek(0);
+    }
+
+    return (ch == poken);
+}
+//----------------------------------------------------------------------------
+bool FLexer::SkipUntil(const FStringView& str) {
+    Assert(not str.empty());
+
     if (_peeking) {
+        _reader.Reset(_peek.Offset(), _peek.Site());
         _peeking = false;
         _peek = FMatch();
     }
 
-    char poken = _reader.Peek(0);
-    while (poken && ch != poken)
-        _reader.Read();
+    const size_t offset = _reader.Tell();
+    const Lexer::FLocation site = _reader.SourceSite();
 
-    return (ch == poken);
+    for (;;) {
+        char ch = _reader.Peek();
+        if (ch == str[0] && ReadIFN(str))
+            return true;
+
+        if (_reader.Read() == '\0') {
+            _reader.Reset(offset, site);
+            return false;
+        }
+    }
+
+    AssertNotReached();
+}
+//----------------------------------------------------------------------------
+bool FLexer::ReadIFN(char ch, ECase cmp/* = ECase::Insensitive */) {
+    Assert('\0' != ch);
+
+    RewindPeekIFN();
+
+    char poken = _reader.Peek(0);
+    if (not Equals(poken, ch, cmp))
+        return false;
+
+    _reader.Read();
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FLexer::ReadIFN(const FStringView& str, ECase cmp/* = ECase::Insensitive */) {
+    Assert(not str.empty());
+
+    RewindPeekIFN();
+
+    const size_t offset = _reader.Tell();
+    const Lexer::FLocation site = _reader.SourceSite();
+
+    bool match = true;
+    forrange(i, 0, str.size()) {
+        if (not Equals(_reader.Read(), str[i], cmp)) {
+            match = false;
+            break;
+        }
+    }
+
+    if (match)
+        return true;
+
+    _reader.Reset(offset, site);
+    return false;
 }
 //----------------------------------------------------------------------------
 bool FLexer::ReadIFN(const Core::Lexer::FSymbol* expected) {
@@ -523,6 +577,11 @@ bool FLexer::ReadIFN(FMatch& match, const Core::Lexer::FSymbol* expected) {
     return (Peek(expected) ? Expect(match, expected) : false);
 }
 //----------------------------------------------------------------------------
+void FLexer::EatWhiteSpaces() {
+    RewindPeekIFN();
+    _reader.EatWhiteSpaces();
+}
+//----------------------------------------------------------------------------
 bool FLexer::Expect(const Core::Lexer::FSymbol* expected) {
     FMatch match;
     return Expect(match, expected);
@@ -531,6 +590,14 @@ bool FLexer::Expect(const Core::Lexer::FSymbol* expected) {
 bool FLexer::Expect(FMatch& match, const Core::Lexer::FSymbol* expected) {
     Assert(expected);
     return (NextMatch_(match) && match.Symbol() == expected);
+}
+//----------------------------------------------------------------------------
+void FLexer::RewindPeekIFN() {
+    if (_peeking) {
+        _reader.Reset(_peek.Offset(), _peek.Site());
+        _peeking = false;
+        _peek = FMatch();
+    }
 }
 //----------------------------------------------------------------------------
 bool FLexer::NextMatch_(FMatch& match) {
@@ -589,17 +656,14 @@ bool FLexer::NextMatch_(FMatch& match) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FLexerStartup::Start() {
-    POOL_TAG(FLexer)::Start();
     FSymbols::Create();
 }
 //----------------------------------------------------------------------------
 void FLexerStartup::Shutdown() {
     FSymbols::Destroy();
-    POOL_TAG(FLexer)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FLexerStartup::ClearAll_UnusedMemory() {
-    POOL_TAG(FLexer)::ClearAll_UnusedMemory();
+void FLexerStartup::ClearAll_UnusedMemory() {;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

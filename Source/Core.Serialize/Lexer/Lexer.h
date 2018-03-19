@@ -2,8 +2,6 @@
 
 #include "Core.Serialize/Serialize.h"
 
-#include "Core/Allocator/PoolAllocatorTag.h"
-
 #include "Core.Serialize/Exceptions.h"
 #include "Core.Serialize/Lexer/LookAheadReader.h"
 #include "Core.Serialize/Lexer/Match.h"
@@ -16,7 +14,6 @@
 namespace Core {
 class IBufferedStreamReader;
 namespace Lexer {
-POOL_TAG_DECL(FLexer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -49,14 +46,22 @@ public:
     bool Read(FMatch& match);
     bool ReadUntil(FMatch& match, const char ch);
     bool SkipUntil(const char ch);
+    bool SkipUntil(const FStringView& str);
 
+    bool ReadIFN(char ch, ECase cmp = ECase::Insensitive);
+    bool ReadIFN(const FStringView& str, ECase cmp = ECase::Insensitive);
     bool ReadIFN(const Core::Lexer::FSymbol* expected);
     bool ReadIFN(FMatch& match, const Core::Lexer::FSymbol* expected);
+
+    void EatWhiteSpaces();
 
     bool Expect(const Core::Lexer::FSymbol* expected);
     bool Expect(FMatch& match, const Core::Lexer::FSymbol* expected);
 
-    const FWString& SourceFileName() { return _sourceFileName; }
+    void RewindPeekIFN();
+
+    const FWString& SourceFileName() const { return _sourceFileName; }
+    FLocation SourceSite() const { return _reader.SourceSite(); }
 
 private:
     bool NextMatch_(FMatch& match);

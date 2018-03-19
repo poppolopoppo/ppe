@@ -27,6 +27,7 @@ public:
     bool Eof() const;
     size_t Tell() const;
     void SeekFwd(size_t off);
+    void Reset(size_t off, const FLocation& site);
 
     char Peek(size_t n = 0) const;
 

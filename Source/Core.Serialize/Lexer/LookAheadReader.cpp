@@ -35,6 +35,13 @@ void FLookAheadReader::SeekFwd(size_t offset) {
     _input->SeekI(offset, ESeekOrigin::Relative);
 }
 //----------------------------------------------------------------------------
+void FLookAheadReader::Reset(size_t off, const FLocation& site) {
+    Assert(site.Filename == _sourceFileName);
+    _input->SeekI(off, ESeekOrigin::Begin);
+    _sourceLine = site.Line;
+    _sourceColumn = site.Column;
+}
+//----------------------------------------------------------------------------
 char FLookAheadReader::Peek(size_t n/* = 0 */) const {
     char ch;
     bool result;
