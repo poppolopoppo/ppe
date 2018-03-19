@@ -718,7 +718,7 @@ private:
     class FAsyncLogEntry_ {
     public:
         FAsyncLogEntry_(
-            FAsynchronousLogger_ * logger,
+            FAsynchronousLogger_* logger,
             const FCategory& category,
             EVerbosity level,
             FSiteInfo site,
@@ -732,7 +732,7 @@ private:
         ,   _off0(off0)
         ,   _off1(off1)
         ,   _off2(off2) {
-            Assert_NoAssume(CheckCanary_());
+            ONLY_IF_ASSERT(SetupCanaries_());
         }
 
         void Run(ITaskContext&) {
@@ -751,28 +751,37 @@ private:
             Assert(_logger->_sizeInBytes <= GBufferSize);
 
             Assert_NoAssume(CheckCanary_());
+            Assert((_off0 < _off2 ? _off2 - _off0 : GBufferSize - _off0 + _off2) == entrySize); // tracking a weird bug
 
             // after this call this object is no more guaranteed to be valid !
-            if (not _logger->_offsetI.compare_exchange_strong(_off0, _off2))
-                AssertNotReached(); // should be run in order by task manager !
+            size_t off0 = _off0;
+            if (not _logger->_offsetI.compare_exchange_strong(off0, _off2))
+                AssertNotReached(); // should be ran in order by task manager !
+
+            ONLY_IF_ASSERT(_off0 = _off1 = _off2 = INDEX_NONE); // checks that it won't run more than once (will fail canary test)
         }
 
     private:
 #ifdef WITH_CORE_ASSERT
-        STATIC_CONST_INTEGRAL(size_t, Canary, CODE3264(0xdeadbeeful, 0xdeadbeefdeadbeefull));
-        size_t _canary0 = Canary;
+        size_t _canary0;
 #endif
-        FAsynchronousLogger_ * _logger;
-        const FCategory* _category;
-        EVerbosity _level;
-        FSiteInfo _site;
+
+        FAsynchronousLogger_* const _logger;
+        const FCategory* const _category;
+        const EVerbosity _level;
+        const FSiteInfo _site;
         size_t _off0;
         size_t _off1;
         size_t _off2;
+
 #ifdef WITH_CORE_ASSERT
-        size_t _canary1 = Canary;
+        STATIC_CONST_INTEGRAL(size_t, Canary, CODE3264(0xdeadbeeful, 0xdeadbeefdeadbeefull));
+        size_t _canary1;
+        void SetupCanaries_() { _canary0 = _canary1 = MakeCanary_(); }
+        size_t MakeCanary_() const { return hash_tuple(Canary, _off0, _off1, _off2); }
         bool CheckCanary_() const {
-            return (Canary == _canary0 && Canary == _canary1);
+            const size_t chk = MakeCanary_();
+            return (chk == _canary0 && chk == _canary1);
         }
 #endif
     };
