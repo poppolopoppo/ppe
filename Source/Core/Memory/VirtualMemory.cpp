@@ -27,9 +27,15 @@
 #   define TRACKINGDATA_ARG_FWD
 #endif
 
-#define USE_VMALLOC_SIZE_PTRIE // This is faster than ::VirtualQuery()
+#define USE_VMALLOC_SIZE_PTRIE          1// This is faster than ::VirtualQuery()
 
-#ifdef USE_VMALLOC_SIZE_PTRIE
+#if (defined(WITH_CORE_ASSERT) || USE_CORE_MEMORY_DEBUGGING)
+#   define USE_VMCACHE_PAGE_PROTECT     1// Crash when using a VM cached block
+#else
+#   define USE_VMCACHE_PAGE_PROTECT     0
+#endif
+
+#if USE_VMALLOC_SIZE_PTRIE
 #   include "Core/Thread/AtomicSpinLock.h"
     PRAGMA_INITSEG_COMPILER
 #endif
@@ -38,7 +44,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifdef USE_VMALLOC_SIZE_PTRIE
+#if USE_VMALLOC_SIZE_PTRIE
 namespace {
 //----------------------------------------------------------------------------
 // Compressed radix trie method from :
@@ -225,7 +231,7 @@ size_t FVirtualMemory::AllocSizeInBytes(void* ptr) {
 
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
 
-#ifdef USE_VMALLOC_SIZE_PTRIE
+#if USE_VMALLOC_SIZE_PTRIE
     const size_t regionSize = VMFetchBlockSize_(ptr);
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, regionSize));
 
@@ -252,7 +258,7 @@ void* FVirtualMemory::Alloc(size_t sizeInBytes) {
 
     void* const vmem = VMALLOC(sizeInBytes);
 
-#ifdef USE_VMALLOC_SIZE_PTRIE
+#if USE_VMALLOC_SIZE_PTRIE
     VMRegisterBlockSize_(vmem, sizeInBytes);
 #endif
 
@@ -262,7 +268,7 @@ void* FVirtualMemory::Alloc(size_t sizeInBytes) {
 void FVirtualMemory::Free(void* ptr, size_t sizeInBytes) {
     Assert(ptr);
 
-#ifdef USE_VMALLOC_SIZE_PTRIE
+#if USE_VMALLOC_SIZE_PTRIE
     const size_t regionSize = VMReleaseBlockSize_(ptr);
     Assert(regionSize == sizeInBytes);
 #endif
@@ -354,7 +360,7 @@ void* FVirtualMemory::AlignedAlloc(size_t alignment, size_t sizeInBytes) {
 #   error "unsupported platform"
 #endif
 
-#ifdef USE_VMALLOC_SIZE_PTRIE
+#if USE_VMALLOC_SIZE_PTRIE
     VMRegisterBlockSize_(p, sizeInBytes);
 #endif
 
@@ -366,7 +372,7 @@ void FVirtualMemory::AlignedFree(void* ptr, size_t sizeInBytes) {
     Assert(ptr);
     Assert(sizeInBytes);
 
-#ifdef USE_VMALLOC_SIZE_PTRIE
+#if USE_VMALLOC_SIZE_PTRIE
     const size_t regionSize = VMReleaseBlockSize_(ptr);
     Assert(regionSize == sizeInBytes);
 #endif
@@ -428,21 +434,28 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
 #endif
 
         if (nullptr != cachedBlock) {
-            void* result = cachedBlock->Ptr;
+            void* const result = cachedBlock->Ptr;
+            const size_t cachedBlockSize = cachedBlock->SizeInBytes;
             Assert(nullptr != result);
 
             FreePageBlockCount--;
-            TotalCacheSizeInBytes -= cachedBlock->SizeInBytes;
+            TotalCacheSizeInBytes -= cachedBlockSize;
 
 #ifdef USE_MEMORY_DOMAINS
             // Only track overhead due to cached memory, actual blocks in use should be logged in their own domain
-            trackingData.Deallocate(1, cachedBlock->SizeInBytes);
+            trackingData.Deallocate(1, cachedBlockSize);
 #endif
 
             if (cachedBlock + 1 != last)
                 ::memmove(cachedBlock, cachedBlock + 1, sizeof(FFreePageBlock) * (last - cachedBlock - 1));
 
             Assert(Meta::IsAligned(alignment, result));
+
+#if USE_VMCACHE_PAGE_PROTECT
+            // Restore read+write access to pages, so it won't crash in the client
+            FVirtualMemory::Protect(result, cachedBlockSize, true, true);
+#endif
+
             return result;
         }
 
@@ -451,7 +464,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
             return result;
         }
 
-        // Are we holding on to much mem? Release it all.
+        // Are we holding on too much mem? Release it all.
         ReleaseAll(first TRACKINGDATA_ARG_FWD);
     }
 
@@ -504,6 +517,11 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
 #ifdef USE_MEMORY_DOMAINS
     // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
     trackingData.Allocate(1, sizeInBytes);
+#endif
+
+#if USE_VMCACHE_PAGE_PROTECT
+    // Forbid access to cached pages, so it will crash in the client it there's necrophilia attempt (read+write)
+    FVirtualMemory::Protect(ptr, sizeInBytes, false, false);
 #endif
 }
 //----------------------------------------------------------------------------
