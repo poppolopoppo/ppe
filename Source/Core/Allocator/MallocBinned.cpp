@@ -3,6 +3,7 @@
 #include "MallocBinned.h"
 
 #include "Container/IntrusiveList.h"
+#include "Container/Stack.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
 #include "Memory/MemoryDomain.h"
@@ -15,6 +16,12 @@
 #ifdef WITH_CORE_ASSERT
 #   include "Diagnostic/Callstack.h"
 #   include "Diagnostic/DecodedCallstack.h"
+#endif
+
+#if (defined(WITH_CORE_ASSERT) || USE_CORE_MEMORY_DEBUGGING)
+#   define USE_MALLOCBINNED_PAGE_PROTECT    1// Crash when using a cached block
+#else
+#   define USE_MALLOCBINNED_PAGE_PROTECT    0// Crash when using a cached block
 #endif
 
 PRAGMA_INITSEG_COMPILER
@@ -62,7 +69,10 @@ struct CACHELINE_ALIGNED FBinnedPage_ {
     FBinnedPage_(const FBinnedPage_&) = delete;
     FBinnedPage_& operator =(const FBinnedPage_&) = delete;
 
-    TIntrusiveSingleListNode<FBinnedPage_> Node;
+#if USE_MALLOCBINNED_PAGE_PROTECT
+    void ProtectPage() { FVirtualMemory::Protect(this, PageSize, false, false); }
+    void UnprotectPage() { FVirtualMemory::Protect(this, PageSize, true, true); }
+#endif
 
     FORCE_INLINE static FBinnedPage_* Allocate() {
         return (FBinnedPage_*)FVirtualMemory::AlignedAlloc(PageSize, PageSize);
@@ -321,7 +331,7 @@ private:
 STATIC_ASSERT(sizeof(FBinnedChunk_) == CACHELINE_SIZE);
 //----------------------------------------------------------------------------
 struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
-    STATIC_CONST_INTEGRAL(size_t, FreePagesMax, 128); // <=> 8 mo global cache (128 * 64 * 1024)
+    STATIC_CONST_INTEGRAL(size_t, FreePagesMax, 128); // <=> 8 mo global cache (128 * 64 * 1024), 1k table
 
     static FBinnedGlobalCache_& Instance() {
         static FBinnedGlobalCache_ GInstance;
@@ -356,58 +366,57 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
         }
 
         // release pages in cache
-        while (FBinnedPage_* p = _freePages.PopHead()) {
-            Assert(_freePagesCount--);
-
-            FBinnedPage_::Release(p);
-
+        FBinnedPage_* page;
+        while (_globalFreePages.Pop(&page)) {
+            FBinnedPage_::Release(page);
 #ifdef USE_MEMORY_DOMAINS
             MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Deallocate(1, FBinnedPage_::PageSize);
 #endif
         }
 
         // will not try to cache next pages (in case of very late deallocation in another static)
-        _freePagesCount = FreePagesMax;
+        _globalFreePages.ForbidFurtherAccess();
     }
 
     FBinnedPage_* AllocPage() {
-        Likely(_freePagesCount);
-        if (_freePagesCount) {
+        if (Likely(_globalFreePages.size())) {
             const FAtomicSpinLock::FScope scopeLock(_barrier);
 
-            if (FBinnedPage_* p = _freePages.PopHead()) {
-                Assert(_freePagesCount);
-
-                _freePagesCount--;
-
+            FBinnedPage_* page;
+            if (_globalFreePages.Pop(&page)) {
+                Assert(page);
+#if USE_MALLOCBINNED_PAGE_PROTECT
+                page->UnprotectPage();
+#endif
 #ifdef USE_MEMORY_DOMAINS
                 MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Deallocate(1, FBinnedPage_::PageSize);
 #endif
-                return p;
+                return page;
             };
         }
+
         return FBinnedPage_::Allocate();
     }
 
     void ReleasePage(FBinnedPage_* page) {
         Assert(page);
 
-        if (Likely(_freePagesCount != FreePagesMax)) {
-            Assert(_freePagesCount < FreePagesMax);
-
+        if (Likely(not _globalFreePages.full())) {
             const FAtomicSpinLock::FScope scopeLock(_barrier);
 
-            Assert(_freePagesCount < FreePagesMax);
-            _freePages.PushFront(page);
-            _freePagesCount++;
-
-#ifdef USE_MEMORY_DOMAINS
-            MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Allocate(1, FBinnedPage_::PageSize);
+            if (Likely(not _globalFreePages.full())) {
+#if USE_MALLOCBINNED_PAGE_PROTECT
+                page->ProtectPage();
 #endif
+#ifdef USE_MEMORY_DOMAINS
+                MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Allocate(1, FBinnedPage_::PageSize);
+#endif
+                _globalFreePages.Push(page);
+                return;
+            }
         }
-        else {
-            FBinnedPage_::Release(page);
-        }
+
+        FBinnedPage_::Release(page);
     }
 
     NO_INLINE void RegisterDanglingChunk(FBinnedChunk_* chunk) {
@@ -441,12 +450,11 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
     }
 
 private:
-    size_t _freePagesCount;
     FAtomicSpinLock _barrier;
-    INTRUSIVESINGLELIST(&FBinnedPage_::Node) _freePages;
     INTRUSIVELIST(&FBinnedChunk_::_node) _danglingChunks;
+    TFixedSizeStack<FBinnedPage_*, FreePagesMax> _globalFreePages;
 
-    FBinnedGlobalCache_() : _freePagesCount(0) {}
+    FBinnedGlobalCache_() {}
 };
 //----------------------------------------------------------------------------
 struct FBinnedThreadCache_ {
@@ -581,13 +589,12 @@ struct FBinnedThreadCache_ {
         }
 
         // release pages in local cache
-        while (FBinnedPage_* p = _freePages.PopHead()) {
-            Assert(_freePagesCount--);
-            globalCache.ReleasePage(p);
-        }
+        FBinnedPage_* page;
+        while (_localFreePages.Pop(&page))
+            globalCache.ReleasePage(page);
 
         // will not try to cache next pages (in case of very late deallocation in another static)
-        _freePagesCount = FreePagesMax;
+        _localFreePages.ForbidFurtherAccess();
     }
 
 private:
@@ -598,11 +605,8 @@ private:
     };
 
     FPendingBlocks_ _pending;
-
     INTRUSIVELIST(&FBinnedChunk_::_node) _buckets[FBinnedChunk_::NumClasses];
-
-    size_t _freePagesCount = 0;
-    INTRUSIVESINGLELIST(&FBinnedPage_::Node) _freePages;
+    TFixedSizeStack<FBinnedPage_*, FreePagesMax> _localFreePages;
 
     FBinnedThreadCache_() {
         LOG(MallocBinned, Debug, L"start thread cache {0}", std::this_thread::get_id());
@@ -615,10 +619,12 @@ private:
         if (ReleasePendingBlocks())
             return Allocate(FBinnedChunk_::GClassesSize[sizeClass]);
 
-        FBinnedPage_* page = _freePages.PopHead();
-        if (page) {
-            Assert(_freePagesCount);
-            _freePagesCount--;
+        FBinnedPage_* page;
+        if (_localFreePages.Pop(&page)) {
+            Assert(page);
+#if USE_MALLOCBINNED_PAGE_PROTECT
+            page->UnprotectPage();
+#endif
 #ifdef USE_MEMORY_DOMAINS
             MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Deallocate(1, FBinnedPage_::PageSize);
 #endif
@@ -643,16 +649,17 @@ private:
         // release page to local or global cache
         auto* page = (FBinnedPage_*)chunk;
 
-        if (_freePagesCount == FreePagesMax) {
+        if (_localFreePages.full()) {
             FBinnedGlobalCache_::Instance().ReleasePage(page);
         }
         else {
-            Assert(_freePagesCount < FreePagesMax);
-            _freePages.PushFront(page);
-            _freePagesCount++;
+#if USE_MALLOCBINNED_PAGE_PROTECT
+            page->ProtectPage();
+#endif
 #ifdef USE_MEMORY_DOMAINS
             MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Allocate(1, FBinnedPage_::PageSize);
 #endif
+            _localFreePages.Push(page);
         }
     }
 
