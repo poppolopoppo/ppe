@@ -450,6 +450,11 @@ void FLinearHeap::Release(void* ptr, size_t size) {
 }
 //----------------------------------------------------------------------------
 void FLinearHeap::ReleaseAll() {
+    if (nullptr == _blocks) {
+        Assert(nullptr == _deleteds);
+        return; // nothing to do
+    }
+
 #if defined(USE_DEBUG_LOGGER) && defined(USE_MEMORY_DOMAINS)
     size_t totalBlockCount = 0;
     size_t totalSizeInBytes = 0;
