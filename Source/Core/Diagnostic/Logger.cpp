@@ -650,15 +650,15 @@ private: // IStreamWriter
         if (0 == sizeInBytes)
             return true;
 
-        const TMemoryView<const u8> toWrite((const u8*)storage, checked_cast<size_t>(sizeInBytes));
-        const size_t off0 = checked_cast<size_t>(_offsetO & GBufferMask);
-        const size_t off1 = checked_cast<size_t>((_offsetO + sizeInBytes) & GBufferMask);
-
         while (_sizeInBytes + sizeInBytes > GBufferSize) {
             _barrier.unlock(); // release the lock while flushing
             Flush(true); // flush synchronous which will wait for all delayed logs
             _barrier.lock();
         }
+
+        const TMemoryView<const u8> toWrite((const u8*)storage, checked_cast<size_t>(sizeInBytes));
+        const size_t off0 = checked_cast<size_t>(_offsetO & GBufferMask);
+        const size_t off1 = checked_cast<size_t>((_offsetO + sizeInBytes) & GBufferMask);
 
         if (off0 < off1) {
             toWrite.CopyTo(_ringBuffer.SubRange(off0, off1 - off0));
