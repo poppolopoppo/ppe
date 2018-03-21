@@ -35,6 +35,9 @@ namespace Core {
 template <typename T, typename _Allocator = ALLOCATOR(Container, T) >
 class TVector : _Allocator {
 public:
+    template <typename U, typename _OtherAllocator>
+    friend class TVector;
+
     typedef _Allocator allocator_type;
     typedef std::allocator_traits<allocator_type> allocator_traits;
 
@@ -83,6 +86,26 @@ public:
     TVector(const TMemoryView<const value_type>& view) : TVector() { assign(view.begin(), view.end()); }
     TVector(const TMemoryView<const value_type>& view, const allocator_type& alloc) : TVector(alloc) { assign(view.begin(), view.end()); }
     TVector& operator=(const TMemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
+
+    template <typename _OtherAllocator, typename = Meta::TEnableIf<allocator_can_steal_from<_Allocator, _OtherAllocator>::value> >
+    TVector(TVector<T, _OtherAllocator>&& rvalue) : TVector() { operator =(std::move(rvalue)); }
+    template <typename _OtherAllocator, typename = Meta::TEnableIf<allocator_can_steal_from<_Allocator, _OtherAllocator>::value> >
+    TVector& operator =(TVector<T, _OtherAllocator>&& rvalue) {
+        if (_data)
+            clear_ReleaseMemory();
+
+        auto stolen = AllocatorStealBlock(allocator_(), rvalue.allocated_block_(), rvalue.allocator_());
+
+        _capacity = checked_cast<u32>(stolen.size());
+        _size = rvalue._size;
+        _data = stolen.data();
+        Assert(allocated_block_() == stolen);
+
+        rvalue._capacity = rvalue._size = 0;
+        rvalue._data = nullptr;
+
+        return (*this);
+    }
 
     template <typename U>
     explicit TVector(const TMemoryView<U>& view) : TVector() { assign(view); }
@@ -214,7 +237,9 @@ public:
 #endif
 
 private:
-    allocator_type& get_allocator() { return static_cast<allocator_type&>(*this); }
+    allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }
+
+    TMemoryView<T> allocated_block_() const { return TMemoryView<T>(_data, _capacity); }
 
     void allocator_copy_(const allocator_type& other, std::true_type );
     void allocator_copy_(const allocator_type& other, std::false_type ) { UNUSED(other); }

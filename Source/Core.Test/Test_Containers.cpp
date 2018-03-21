@@ -947,6 +947,13 @@ void Test_Containers() {
         Assert(absolute2 == normalized2);
     }
     {
+        // steal allocations from different tracking domains
+
+        VECTOR(RTTI, int) u = { 1, 2, 3 };
+        VECTOR(Container, int) v = u;
+        VECTOR(Container, int) w = std::move(u);
+    }
+    {
         LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
         LOG(Test_Containers, Info, L"FStringView collection");
 

@@ -246,26 +246,28 @@ size_t SafeAllocatorSnapSize(const _Allocator& alloc, size_t size) {
 //  - Used to disable memory stealing when not available and keep track of stolen blocks
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-std::false_type/* disabled */AllocatorStealFrom(_Allocator&, typename _Allocator::pointer, size_t);
+std::false_type/* disabled */ AllocatorStealFrom(_Allocator&, typename _Allocator::pointer, size_t) {}
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-std::false_type/* disabled */AllocatorAcquireStolen(_Allocator&, typename _Allocator::pointer, size_t);
+std::false_type/* disabled */ AllocatorAcquireStolen(_Allocator&, typename _Allocator::pointer, size_t) {}
 //----------------------------------------------------------------------------
 template <typename _AllocatorDst, typename _AllocatorSrc>
-struct allocator_can_steal_from : Meta::TIntegralConstant<bool, false> {};
+struct allocator_can_steal_from : std::is_same<_AllocatorSrc, _AllocatorDst> {};
 //----------------------------------------------------------------------------
 template <typename _AllocatorDst, typename _AllocatorSrc>
 struct allocator_can_steal_block {
     using stealfrom_type = decltype(AllocatorStealFrom(
-        std::declval<_AllocatorSrc&>(), 
+        std::declval<_AllocatorSrc&>(),
         std::declval<typename _AllocatorSrc::pointer>(), 0 ));
     using acquirestolen_type = decltype(AllocatorAcquireStolen(
-        std::declval<_AllocatorDst&>(), 
+        std::declval<_AllocatorDst&>(),
         std::declval<typename _AllocatorDst::pointer>(), 0 ));
-    static constexpr bool value =
+    static constexpr bool implements_stealing =
         stealfrom_type::value &&
         acquirestolen_type::value &&
         allocator_can_steal_from<_AllocatorDst, _AllocatorSrc>::value;
+
+    static constexpr bool value = (std::is_same_v<_AllocatorSrc, _AllocatorDst> || implements_stealing);
 };
 //----------------------------------------------------------------------------
 template <typename _AllocatorDst, typename _AllocatorSrc>

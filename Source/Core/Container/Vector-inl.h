@@ -32,7 +32,7 @@ auto TVector<T, _Allocator>::operator=(TVector&& rvalue) noexcept -> TVector& {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::allocator_copy_(const allocator_type& other, std::true_type ) {
-    if (get_allocator() != other) {
+    if (allocator_() != other) {
         clear_ReleaseMemory();
         Assert(nullptr == _data);
         Assert(0 == _size);
@@ -43,7 +43,7 @@ void TVector<T, _Allocator>::allocator_copy_(const allocator_type& other, std::t
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::allocator_move_(allocator_type&& rvalue, std::true_type ) {
-    if (get_allocator() != rvalue) {
+    if (allocator_() != rvalue) {
         clear_ReleaseMemory();
         Assert(nullptr == _data);
         Assert(0 == _size);
@@ -72,7 +72,7 @@ void TVector<T, _Allocator>::assign_rvalue_(TVector&& rvalue, std::true_type ) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::assign_rvalue_(TVector&& rvalue, std::false_type ) {
-    if (get_allocator() == rvalue.get_allocator())
+    if (allocator_() == rvalue.allocator_())
         assign_rvalue_(std::move(rvalue), std::true_type());
     else
         assign(std::make_move_iterator(rvalue.begin()), std::make_move_iterator(rvalue.end()));
@@ -100,7 +100,7 @@ void TVector<T, _Allocator>::assign_(_It first, _It last, std::input_iterator_ta
             Assert(_size == count);
 
             reserve_AtLeast(++count);
-            allocator_traits::construct(get_allocator(), _data + _size, *first);
+            allocator_traits::construct(allocator_(), _data + _size, *first);
 
             ++_size;
             ++first;
@@ -109,7 +109,7 @@ void TVector<T, _Allocator>::assign_(_It first, _It last, std::input_iterator_ta
     else if (_size > count) {
         Assert(_size >= count);
 
-        Destroy(get_allocator(), TMemoryView<T>(_data + count, _size - count))
+        Destroy(allocator_(), TMemoryView<T>(_data + count, _size - count))
 
         _size = checked_cast<u32>(count);
     }
@@ -146,7 +146,7 @@ void TVector<T, _Allocator>::assign(size_type count, const T& value) {
     if (_size >= count) {
         Assert(count <= _capacity);
 
-        Destroy(get_allocator(), TMemoryView<T>(_data + _size, count - _size));
+        Destroy(allocator_(), TMemoryView<T>(_data + _size, count - _size));
 
         if (0 < count)
             std::fill_n(MakeCheckedIterator(_data, _size, 0), count, value);
@@ -197,7 +197,7 @@ template <typename T, typename _Allocator>
 template <class... _Args>
 void TVector<T, _Allocator>::emplace_back_AssumeNoGrow(_Args&&... args) {
     Assert(_size < _capacity);
-    allocator_traits::construct(get_allocator(), &_data[_size++], std::forward<_Args>(args)...);
+    allocator_traits::construct(allocator_(), &_data[_size++], std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -205,10 +205,10 @@ void TVector<T, _Allocator>::emplace_back_AssumeNoGrow(const T& value) {
     Assert(_size < _capacity);
     if (AliasesToContainer(&value)) {
         T tmp(value); // value points to something in this container
-        allocator_traits::construct(get_allocator(), &_data[_size++], std::move(tmp));
+        allocator_traits::construct(allocator_(), &_data[_size++], std::move(tmp));
     }
     else {
-        allocator_traits::construct(get_allocator(), &_data[_size++], value);
+        allocator_traits::construct(allocator_(), &_data[_size++], value);
     }
 }
 //----------------------------------------------------------------------------
@@ -217,23 +217,23 @@ void TVector<T, _Allocator>::emplace_back_AssumeNoGrow(T&& rvalue) {
     Assert(_size < _capacity);
     if (AliasesToContainer(&rvalue)) {
         T tmp(std::move(rvalue)); // value points to something in this container
-        allocator_traits::construct(get_allocator(), &_data[_size++], std::move(tmp));
+        allocator_traits::construct(allocator_(), &_data[_size++], std::move(tmp));
     }
     else {
-        allocator_traits::construct(get_allocator(), &_data[_size++], std::move(rvalue));
+        allocator_traits::construct(allocator_(), &_data[_size++], std::move(rvalue));
     }
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::push_back_AssumeNoGrow(const T& value) {
     AssertRelease(_size < _capacity);
-    allocator_traits::construct(get_allocator(), &_data[_size++], value);
+    allocator_traits::construct(allocator_(), &_data[_size++], value);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::push_back_AssumeNoGrow(T&& rvalue) {
     AssertRelease(_size < _capacity);
-    allocator_traits::construct(get_allocator(), &_data[_size++], std::move(rvalue));
+    allocator_traits::construct(allocator_(), &_data[_size++], std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -262,7 +262,7 @@ auto TVector<T, _Allocator>::erase(const_iterator first, const_iterator last) ->
     std::rotate(f, l, end());
 
     for (size_type i = _size - n; i < _size; ++i)
-        allocator_traits::destroy(get_allocator(), &_data[i]);
+        allocator_traits::destroy(allocator_(), &_data[i]);
 
     _size -= n;
     return MakeCheckedIterator(_data, _capacity, p);
@@ -305,7 +305,7 @@ auto TVector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, st
 
         reserve_AtLeast(o + count + 1);
 
-        allocator_traits::construct(get_allocator(), &_data[o + count], *first);
+        allocator_traits::construct(allocator_(), &_data[o + count], *first);
         ++_size;
     }
     Assert(p <= count);
@@ -356,7 +356,7 @@ auto TVector<T, _Allocator>::insert(const_iterator pos, size_type count, const T
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::pop_back() {
     AssertRelease(_size > 0);
-    allocator_traits::destroy(get_allocator(), &_data[--_size]);
+    allocator_traits::destroy(allocator_(), &_data[--_size]);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -368,7 +368,7 @@ auto TVector<T, _Allocator>::pop_back_ReturnBack() -> value_type {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::clear() {
-    Destroy(get_allocator(), MakeView());
+    Destroy(allocator_(), MakeView());
     _size = 0;
 }
 //----------------------------------------------------------------------------
@@ -378,7 +378,7 @@ void TVector<T, _Allocator>::clear_ReleaseMemory() {
     Assert(0 == _size);
     if (nullptr != _data) {
         Assert(0 < _capacity);
-        allocator_traits::deallocate(get_allocator(), _data, _capacity);
+        allocator_traits::deallocate(allocator_(), _data, _capacity);
         _data = nullptr;
         _capacity = 0;
     }
@@ -409,10 +409,10 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
     if (_capacity < count) {
         if (_data) {
             Assert(0 < _capacity);
-            allocator_traits::deallocate(get_allocator(), _data, _capacity);
+            allocator_traits::deallocate(allocator_(), _data, _capacity);
         }
-        count = SafeAllocatorSnapSize(get_allocator(), count);
-        _data = allocator_traits::allocate(get_allocator(), count);
+        count = SafeAllocatorSnapSize(allocator_(), count);
+        _data = allocator_traits::allocate(allocator_(), count);
         _capacity = checked_cast<u32>(count);
     }
     Assert(nullptr != _data);
@@ -420,18 +420,18 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::reserve_Exactly(size_type count) {
-    count = SafeAllocatorSnapSize(get_allocator(), count);
+    count = SafeAllocatorSnapSize(allocator_(), count);
     if (_capacity == count)
         return;
     AssertRelease(count >= _size);
 #if 1 //%TODO
-    _data = Relocate(get_allocator(), MakeView(), count, _capacity);
+    _data = Relocate(allocator_(), MakeView(), count, _capacity);
     _capacity = checked_cast<u32>(count);
 #else
     T* newdata = nullptr;
     try {
         newdata = (count > 0)
-            ? reinterpret_cast<T*>(allocator_traits::allocate(get_allocator(), count))
+            ? reinterpret_cast<T*>(allocator_traits::allocate(allocator_(), count))
             : nullptr;
     }
     catch(std::bad_alloc e) {
@@ -440,12 +440,12 @@ void TVector<T, _Allocator>::reserve_Exactly(size_type count) {
 
     Assert((0 == count) || (nullptr != newdata));
     for (size_type i = 0; i < _size; ++i) {
-        allocator_traits::construct(get_allocator(), &newdata[i], std::move(_data[i]));
-        allocator_traits::destroy(get_allocator(), &_data[i]);
+        allocator_traits::construct(allocator_(), &newdata[i], std::move(_data[i]));
+        allocator_traits::destroy(allocator_(), &_data[i]);
     }
 
     if (_data)
-        allocator_traits::deallocate(get_allocator(), _data, _capacity);
+        allocator_traits::deallocate(allocator_(), _data, _capacity);
     else
         Assert(0 == _capacity);
 
@@ -462,9 +462,9 @@ void TVector<T, _Allocator>::resize(size_type count) {
     reserve(count);
 
     if (count < _size)
-        Destroy(get_allocator(), TMemoryView<T>(_data + count, _size - count));
+        Destroy(allocator_(), TMemoryView<T>(_data + count, _size - count));
     else
-        Construct(get_allocator(), TMemoryView<T>(_data + _size, count - _size));
+        Construct(allocator_(), TMemoryView<T>(_data + _size, count - _size));
 
     _size = checked_cast<u32>(count);
     Assert(_size <= _capacity);
@@ -478,7 +478,7 @@ void TVector<T, _Allocator>::resize(size_type count, const_reference value) {
     reserve(count);
 
     if (count < _size)
-        Destroy(get_allocator(), TMemoryView<T>(_data + count, _size - count));
+        Destroy(allocator_(), TMemoryView<T>(_data + count, _size - count));
     else
         std::uninitialized_fill_n(MakeCheckedIterator(_data, _capacity, _size), _capacity - _size, value);
 
@@ -494,7 +494,7 @@ void TVector<T, _Allocator>::resize_Uninitialized(size_type count) {
     reserve(count);
 
     if (count < _size)
-        Destroy(get_allocator(), TMemoryView<T>(_data + count, _size - count));
+        Destroy(allocator_(), TMemoryView<T>(_data + count, _size - count));
 
     _size = checked_cast<u32>(count);
     Assert(_size <= _capacity);
@@ -506,7 +506,7 @@ void TVector<T, _Allocator>::resize_AssumeEmpty(size_type count) {
     Assert(0 == _size);
     Assert(count <= _capacity);
 
-    Construct(get_allocator(), TMemoryView<T>(_data, count));
+    Construct(allocator_(), TMemoryView<T>(_data, count));
 
     _size = checked_cast<u32>(count);
     Assert(_size <= _capacity);
@@ -563,8 +563,8 @@ void TVector<T, _Allocator>::swap_(TVector& other, std::false_type ) {
 
         const size_type n = prhs->_size;
         for (size_type i = plhs->_size; i < n; ++i) {
-            allocator_traits::construct(get_allocator(), plhs->_data + i, std::move(prhs->_data[i]));
-            allocator_traits::destroy(get_allocator(), prhs->_data + i);
+            allocator_traits::construct(allocator_(), plhs->_data + i, std::move(prhs->_data[i]));
+            allocator_traits::destroy(allocator_(), prhs->_data + i);
         }
 
         std::swap(plhs->_size, prhs->_size);

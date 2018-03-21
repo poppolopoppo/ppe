@@ -190,11 +190,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_AssertUniqu
         AssertNotReached();
 
     _data.Size++;
-    allocator_traits::construct(
-        static_cast<allocator_type&>(*this),
-        BucketAt_(index),
-        std::move(rvalue)
-    );
+    allocator_traits::construct(allocator_(), BucketAt_(index), std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -237,7 +233,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::erase(const const_
 
     _data.Size--;
     _data.SetDeleted(index);
-    allocator_traits::destroy(static_cast<allocator_type&>(*this), buckets + index);
+    allocator_traits::destroy(allocator_(), buckets + index);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -260,7 +256,7 @@ bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::erase(const key_ty
     if (pValueIFP)
         *pValueIFP = std::move(*pitem);
 
-    allocator_traits::destroy(static_cast<allocator_type&>(*this), pitem);
+    allocator_traits::destroy(allocator_(), pitem);
 
     return true;
 }
@@ -441,7 +437,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_keepSound_(s
 
             if (not (_data.SetState(index, FHTD::kEmpty) & FHTD::kDeleted)) {
                 ONLY_IF_ASSERT(++sizeCheck);
-                allocator_traits::destroy(static_cast<allocator_type&>(*this), buckets + index);
+                allocator_traits::destroy(allocator_(), buckets + index);
             }
         }
     }
@@ -469,7 +465,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_leaveDirty_(
 
         while (filled) {
             const size_type index = (b + filled.PopFront_AssumeNotEmpty())/* can't overflow here due to loop */;
-            allocator_traits::destroy(static_cast<allocator_type&>(*this), buckets + index);
+            allocator_traits::destroy(allocator_(), buckets + index);
             ONLY_IF_ASSERT(++sizeCheck);
         }
     }
@@ -481,7 +477,7 @@ template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Alloc
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_ReleaseMemory_(std::true_type) {
     Assert(_data.StatesAndBuckets);
 
-    allocator_traits::deallocate(static_cast<allocator_type&>(*this), (pointer)_data.StatesAndBuckets, OffsetOfBuckets_() + capacity());
+    allocator_traits::deallocate(allocator_(), (pointer)_data.StatesAndBuckets, OffsetOfBuckets_() + capacity());
 
     _data.Size = 0;
     _data.Capacity = 0;
@@ -537,10 +533,9 @@ FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Inser
 
     _data.Size++;
     allocator_traits::construct(
-        static_cast<allocator_type&>(*this),
+        allocator_(),
         (pointer)it.data(),
-        table_traits::MakeValue(std::forward<_Args>(args)...)
-    );
+        table_traits::MakeValue(std::forward<_Args>(args)...) );
 
     return MakePair(it, true);
 }
@@ -650,7 +645,7 @@ NO_INLINE void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Relocate
     Assert(oldCapacity != newCapacity);
 
     _data.Capacity = checked_cast<u32>(newCapacity);
-    _data.StatesAndBuckets = allocator_traits::allocate(static_cast<allocator_type&>(*this), OffsetOfBuckets_() + newCapacity);
+    _data.StatesAndBuckets = allocator_traits::allocate(allocator_(), OffsetOfBuckets_() + newCapacity);
     _data.ResetStates();
 
     Assert(Meta::IsAligned(FHTD::GGroupSize, capacity()));
@@ -681,8 +676,8 @@ NO_INLINE void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Relocate
             if (not _data.SetElement(dst, hsh))
                 AssertNotReached();
 
-            allocator_traits::construct(static_cast<allocator_type&>(*this), &newBuckets[dst], std::move(oldBuckets[src]));
-            allocator_traits::destroy(static_cast<allocator_type&>(*this), &oldBuckets[src]);
+            allocator_traits::construct(allocator_(), &newBuckets[dst], std::move(oldBuckets[src]));
+            allocator_traits::destroy(allocator_(), &oldBuckets[src]);
 
             ONLY_IF_ASSERT(++sizeCheck);
         }
@@ -690,7 +685,7 @@ NO_INLINE void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Relocate
 
     Assert_NoAssume(sizeCheck == _data.Size);
 
-    allocator_traits::deallocate(static_cast<allocator_type&>(*this), (pointer)oldData.StatesAndBuckets, oldOffsetOfBuckets + oldCapacity);
+    allocator_traits::deallocate(allocator_(), (pointer)oldData.StatesAndBuckets, oldOffsetOfBuckets + oldCapacity);
 
     Assert(CheckInvariants());
 }

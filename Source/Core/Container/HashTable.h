@@ -249,6 +249,9 @@ template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Alloc
 class EMPTY_BASES TBasicHashTable : _Hasher, _EqualTo, _Allocator {
     using FHTD = typename details::FHashTableData_;
 public:
+    template <typename _Traits2, typename _Hasher2, typename _EqualTo2, typename _Allocator2>
+    friend class TBasicHashTable;
+
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
     typedef typename FHTD::state_t state_t;
@@ -304,6 +307,23 @@ public:
     TBasicHashTable(std::initializer_list<value_type> ilist) : TBasicHashTable() { assign(ilist.begin(), ilist.end()); }
     TBasicHashTable(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TBasicHashTable(alloc) { assign(ilist.begin(), ilist.end()); }
     TBasicHashTable& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
+
+    template <typename _OtherAllocator, typename = Meta::TEnableIf<allocator_can_steal_from<_Allocator, _OtherAllocator>::value> >
+    TBasicHashTable(TBasicHashTable<_Traits, _Hasher, _EqualTo, _OtherAllocator>&& rvalue) : TBasicHashTable() { operator =(std::move(rvalue)); }
+    template <typename _OtherAllocator, typename = Meta::TEnableIf<allocator_can_steal_from<_Allocator, _OtherAllocator>::value> >
+    TBasicHashTable& operator =(TBasicHashTable<_Traits, _Hasher, _EqualTo, _OtherAllocator>&& rvalue) {
+        if (_data.StatesAndBuckets)
+            clear_ReleaseMemory();
+
+        auto stolen = AllocatorStealBlock(allocator_(), rvalue.allocated_block_(), rvalue.allocator_());
+
+        std::swap(_data, rvalue._data);
+        _data.StatesAndBuckets = stolen.data();
+        Assert(allocated_block_() == stolen);
+        Assert(nullptr == rvalue._data.StatesAndBuckets);
+
+        return (*this);
+    }
 
     size_type capacity() const { return (_data.Capacity); }
     bool empty() const { return (0 == _data.Size); }
@@ -482,6 +502,12 @@ private:
 
     allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }
     const allocator_type& allocator_() const { return static_cast<const allocator_type&>(*this); }
+
+    TMemoryView<value_type> allocated_block_() const {
+        return TMemoryView<value_type>(
+            reinterpret_cast<value_type*>(_data.StatesAndBuckets),
+            OffsetOfBuckets_() + _data.Capacity );
+    }
 
     void allocator_copy_(const allocator_type& other, std::true_type);
     void allocator_copy_(const allocator_type& , std::false_type) {}
