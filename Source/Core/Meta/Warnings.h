@@ -32,7 +32,9 @@ CORE_WARNING("Core", "You need to implement CORE_DEPRECATED for this compiler")
 #endif
 
 // /W3
+#if !_HAS_CXX17 // use IF_CONSTEXPR for C++-17
 PRAGMA_MSVC_WARNING_DISABLE(4127) // conditional expression is constant
+#endif
 PRAGMA_MSVC_WARNING_DISABLE(4201) // nonstandard extension used : nameless struct/union
 PRAGMA_MSVC_WARNING_DISABLE(4503) // 'identifier' : decorated name length exceeded, name was truncated
 PRAGMA_MSVC_WARNING_DISABLE(4714) // function 'function' marked as __forceinline not inlined
