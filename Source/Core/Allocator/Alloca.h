@@ -24,13 +24,13 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_API void* Alloca(size_t sizeInBytes);
+CORE_API void* Alloca(size_t size);
 //----------------------------------------------------------------------------
-CORE_API void* RelocateAlloca(void* ptr, size_t newSizeInBytes, bool keepData);
+CORE_API void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData);
 //----------------------------------------------------------------------------
-CORE_API void FreeAlloca(void *ptr);
+CORE_API void FreeAlloca(void *ptr, size_t size);
 //----------------------------------------------------------------------------
-CORE_API size_t AllocaSnapSize(size_t sz);
+CORE_API size_t AllocaSnapSize(size_t size);
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE T *TypedAlloca(size_t count) {
@@ -38,8 +38,9 @@ FORCE_INLINE T *TypedAlloca(size_t count) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE T *TypedRelocateAlloca(T* ptr, size_t count, bool keepData) {
-    return reinterpret_cast<T *>( RelocateAlloca(ptr, count * sizeof(T), keepData) );
+FORCE_INLINE T *TypedRelocateAlloca(T* ptr, size_t newCount, size_t oldCount, bool keepData) {
+    return reinterpret_cast<T *>(
+        RelocateAlloca(ptr, newCount * sizeof(T), oldCount * sizeof(T), keepData) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -69,7 +70,7 @@ struct TAllocaBlock {
 
     ~TAllocaBlock() {
         if (not UsingSysAlloca && RawData)
-            FreeAlloca(RawData);
+            FreeAlloca(RawData, Count * sizeof(T));
     }
 
     TAllocaBlock(const TAllocaBlock& ) = delete;
@@ -95,7 +96,7 @@ struct TAllocaBlock {
     void Relocate(size_t newCount, bool keepData = true) {
         Assert(newCount != Count);
         Assert(!UsingSysAlloca);
-        RawData = TypedRelocateAlloca(RawData, newCount, keepData);
+        RawData = TypedRelocateAlloca(RawData, newCount, Count, keepData);
         Count = newCount;
     }
 
