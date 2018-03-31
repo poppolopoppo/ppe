@@ -2,7 +2,7 @@
 
 #include "Core.Serialize/Serialize.h"
 
-#include "Core/Allocator/LinearHeap.h"
+#include "Core/Allocator/LinearHeapAllocator.h"
 #include "Core/Container/HashSet.h"
 #include "Core/IO/StringView.h"
 
@@ -167,7 +167,7 @@ private:
         Assert(str.size() > FText::FSmallText_::GCapacity);
         FLinearHeap* heap = _texts.get_allocator().Heap();
         Assert(heap);
-        void* const storage = heap->Allocate(str.SizeInBytes(), std::alignment_of_v<char>);
+        void* const storage = heap->Allocate(str.SizeInBytes());
         ::memcpy(storage, str.data(), str.SizeInBytes());
         return FStringView((const char*)storage, str.size());
     }

@@ -6,7 +6,7 @@
 #include "Core.Serialize/Lexer/Location.h"
 #include "Core.Serialize/Lexer/TextHeap.h"
 
-#include "Core/Allocator/LinearHeap.h"
+#include "Core/Allocator/LinearHeapAllocator.h"
 #include "Core/Container/AssociativeVector.h"
 #include "Core/Container/IntrusiveList.h"
 #include "Core/Container/Vector.h"
