@@ -64,7 +64,7 @@ static FORCE_INLINE void FillBlockPage_(void* , size_t , size_t ) {}
 #endif
 //----------------------------------------------------------------------------
 struct CACHELINE_ALIGNED FBinnedPage_ {
-    STATIC_CONST_INTEGRAL(size_t, PageSize, 64 * 1024);
+    STATIC_CONST_INTEGRAL(size_t, PageSize, ALLOCATION_GRANULARITY); // 64 kb
 
     FBinnedPage_(const FBinnedPage_&) = delete;
     FBinnedPage_& operator =(const FBinnedPage_&) = delete;
@@ -75,11 +75,11 @@ struct CACHELINE_ALIGNED FBinnedPage_ {
 #endif
 
     FORCE_INLINE static FBinnedPage_* Allocate() {
-        return (FBinnedPage_*)FVirtualMemory::AlignedAlloc(PageSize, PageSize);
+        return (FBinnedPage_*)FVirtualMemory::Alloc(PageSize);
     }
 
     FORCE_INLINE static void Release(FBinnedPage_* p) {
-        FVirtualMemory::AlignedFree(p, PageSize);
+        FVirtualMemory::Free(p, PageSize);
     }
 };
 //----------------------------------------------------------------------------
@@ -733,7 +733,7 @@ struct CACHELINE_ALIGNED FBinnedAllocator_ {
         else if (Likely(not Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p)))
             return ((FBinnedChunk_::FBlock*)p)->Owner()->BlockSizeInBytes();
         else
-            return FVirtualMemory::AllocSizeInBytes(p);
+            return FVirtualMemory::SizeInBytes(p);
     }
 
 private:

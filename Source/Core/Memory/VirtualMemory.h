@@ -18,16 +18,17 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FVirtualMemory {
+class CORE_API FVirtualMemory {
 public:
-    static size_t   AllocSizeInBytes(void* ptr);
+    static size_t   SizeInBytes(void* ptr);
 
-    static void*    Alloc(size_t sizeInBytes);
+    static void*    Alloc(size_t sizeInBytes) { return Alloc(ALLOCATION_GRANULARITY, sizeInBytes); }
+    static void*    Alloc(size_t alignment, size_t sizeInBytes);
     static void     Free(void* ptr, size_t sizeInBytes);
     static bool     Protect(void* ptr, size_t sizeInBytes, bool read, bool write);
 
-    static void*    AlignedAlloc(size_t alignment, size_t sizeInBytes);
-    static void     AlignedFree(void* ptr, size_t sizeInBytes);
+    static void*    InternalAlloc(size_t sizeInBytes);
+    static void     InternalFree(void* ptr, size_t sizeInBytes);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -53,7 +54,7 @@ protected:
 #   define TRACKINGDATA_ARG_IFP
 #endif
 
-    size_t RegionSize(void* ptr) const { return FVirtualMemory::AllocSizeInBytes(ptr); }
+    size_t RegionSize(void* ptr) const { return FVirtualMemory::SizeInBytes(ptr); }
     void* Allocate(size_t sizeInBytes, FFreePageBlock* first, size_t maxCacheSizeInBytes TRACKINGDATA_ARG_IFP);
     void Free(void* ptr, size_t sizeInBytes, FFreePageBlock* first, size_t cacheBlocksCapacity, size_t maxCacheSizeInBytes TRACKINGDATA_ARG_IFP);
     void ReleaseAll(FFreePageBlock* first TRACKINGDATA_ARG_IFP);

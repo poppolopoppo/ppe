@@ -392,7 +392,7 @@ void* FHeap::Realloc(void *ptr, size_t size) {
         Assert(not Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
     }
     else {
-        const size_t oldSize = FVirtualMemory::AllocSizeInBytes(ptr);
+        const size_t oldSize = FVirtualMemory::SizeInBytes(ptr);
         if (ROUND_TO_NEXT_64K(size) == oldSize)
             return ptr;
 
@@ -469,7 +469,7 @@ void* FHeap::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
         result = Core::aligned_realloc(ptr, size, alignment);
     }
     else {
-        const size_t oldSize = FVirtualMemory::AllocSizeInBytes(ptr);
+        const size_t oldSize = FVirtualMemory::SizeInBytes(ptr);
         if (ROUND_TO_NEXT_64K(size) == oldSize)
             return ptr;
 

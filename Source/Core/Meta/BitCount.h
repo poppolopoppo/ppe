@@ -26,8 +26,8 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// lzcnt:   leading zero count
-// tzcnt:   trailing zero count
+// lzcnt:   leading zero count (MSB)
+// tzcnt:   trailing zero count (LSB)
 // popcnt:  number of bits set to 1
 //
 #if defined(PLATFORM_WINDOWS)
@@ -70,6 +70,18 @@ inline u64 popcnt64(u64 v) {
     return popcnt(v);
 #endif
 }
+//----------------------------------------------------------------------------
+#if defined(PLATFORM_WINDOWS)
+FORCE_INLINE void bit_scan_reverse(u32* r, u32 v) { _BitScanReverse((unsigned long*)r, v); }
+#   ifdef ARCH_X64
+FORCE_INLINE void bit_scan_reverse(u32* r, u64 v) { _BitScanReverse64((unsigned long*)r, v); }
+#   endif
+#else
+FORCE_INLINE void bit_scan_reverse(u32* r, u32 v) { *r = (lzcnt(v) ^ 31); }
+#   ifdef ARCH_X64
+FORCE_INLINE void bit_scan_reverse(u32* r, u64 v) { *r = (lzcnt(v) ^ 63); }
+#   endif
+#endif
 //----------------------------------------------------------------------------
 // load 16 bytes, compare them to match and return a 16 bits mask with 1 where equal
 FORCE_INLINE size_t LoadCmpMoveMask8(u8 match, const void* data) {
