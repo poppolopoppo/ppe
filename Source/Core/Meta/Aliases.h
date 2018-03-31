@@ -109,7 +109,11 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #else
 #   error "unsupported compiler"
 #endif
-#define FORCE_INLINE    __forceinline //__attribute__((always_inline))
+#if !defined(_DEBUG) || defined(NDEBUG)
+#   define FORCE_INLINE    __forceinline //__attribute__((always_inline))
+#else
+#   define FORCE_INLINE    inline // don't want force inline when debugging
+#endif
 #define NO_INLINE       __declspec(noinline)
 #define SIMD_INLINE     FORCE_INLINE _vectorcall
 //----------------------------------------------------------------------------
