@@ -18,8 +18,6 @@
         'Allocator/MallocBinned.cpp',
         'Allocator/MallocStomp.cpp',
         'Allocator/New.cpp',
-        'Maths/SHVector_extern.cpp',
-        'Memory/VirtualMemory.cpp',
     }
     #include "../../Build/Templates/Library.bff"
 }
