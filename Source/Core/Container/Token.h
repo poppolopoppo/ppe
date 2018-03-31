@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/Allocator/LinearHeap.h"
 #include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter_fwd.h"
 #include "Core/Meta/Singleton.h"
@@ -56,26 +57,6 @@ class FTokenFactory {
 public:
     STATIC_CONST_INTEGRAL(size_t, MaxTokenLength, 1024);
 
-    struct ALIGN(16) FChunk {
-        FChunk* Next;
-        u32 WriteOffset;
-#ifdef WITH_CORE_ASSERT
-#   ifdef ARCH_X86
-        u64 Canary = 0xFADEDEADFADEDEADull;
-        bool TestCanary() const { return (0xFADEDEADFADEDEADull == Canary); }
-#   else
-        u32 Canary = 0xFADEDEADul;
-        bool TestCanary() const { return (0xFADEDEADul == Canary); }
-#   endif
-#endif
-        FChunk() : Next(nullptr), WriteOffset(0) {}
-        u8* Data() const {
-            Assert_NoAssume(TestCanary());
-            return (u8*)(this + 1);
-        }
-    };
-    STATIC_ASSERT(sizeof(FChunk) == ALLOCATION_BOUNDARY);
-
     struct FEntry {
         FEntry* Next;
         size_t HashValue;
@@ -113,8 +94,8 @@ private:
     STATIC_CONST_INTEGRAL(size_t, MaskBuckets, 0xFFFF);
     STATIC_CONST_INTEGRAL(size_t, NumBuckets, MaskBuckets + 1);
 
-    FChunk* _chunks;
     std::mutex _barrier;
+    FLinearHeap _heap;
 
     FEntry* _bucketHeads[NumBuckets] = { 0 };
     FEntry* _bucketTails[NumBuckets] = { 0 };
