@@ -38,6 +38,7 @@ enum class EAccessPolicy : size_t {
     Temporary       = 1 << 11,  // Delete files after when last descriptor is closed (use with |Create)
     Exclusive       = 1 << 12,  // Fail if the file already exists (use with |Create)
     Compress        = 1 << 13,  // Uses Core::Compression
+    ShareRead       = 1 << 14,  // Allow other process to read the file while writing
 
     Create_Binary   = Create | Binary,
     Create_Text     = Create | Text,

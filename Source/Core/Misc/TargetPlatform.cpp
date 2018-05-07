@@ -306,8 +306,11 @@ auto FPlatformIO::Open(const wchar_t* filename, EOpenPolicy openMode, EAccessPol
         break;
     }
 
+    // can allow other process to read the file while reading/writing
+    const int shareFlag = (accessFlags ^ EAccessPolicy::ShareRead ? _SH_DENYWR : _SH_DENYRW);
+
     FHandle handle;
-    if (::_wsopen_s(&handle, filename, oflag, _SH_DENYRW, OpenPolicyToPMode_(openMode)) != 0) {
+    if (::_wsopen_s(&handle, filename, oflag, shareFlag, OpenPolicyToPMode_(openMode)) != 0) {
         LOG(Platform, Error, L"failed to open file '{0}' : {1}", filename, FErrno_::LastError());
         Assert(InvalidHandle == handle);
     }
