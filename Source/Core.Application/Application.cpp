@@ -26,7 +26,7 @@
 #include <clocale>
 #include <locale.h>
 
-#define WITH_APPLICATION_TRY_CATCH 0 //%_NOCOMMIT%
+#define USE_APPLICATION_EXCEPTION_TRAP 1 //%_NOCOMMIT%
 
 PRAGMA_INITSEG_LIB
 
@@ -36,6 +36,26 @@ POOL_TAG_DEF(Application);
 LOG_CATEGORY(CORE_APPLICATION_API, Application)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Functor>
+static void ExceptionTrap_(const FWStringView& step, _Functor&& func) {
+#if USE_APPLICATION_EXCEPTION_TRAP
+    CORE_TRY
+#endif
+    {
+        func();
+    }
+#if USE_APPLICATION_EXCEPTION_TRAP
+    CORE_CATCH(const FException& e)
+    CORE_CATCH_BLOCK({
+        LOG(Application, Fatal, L"FException caught while {0} : {1}", step, e);
+    })
+    CORE_CATCH(const std::exception& e)
+    CORE_CATCH_BLOCK({
+        LOG(Application, Fatal, L"std::exception caught while {0} : {1}", step, MakeCStringView(e.what()));
+    })
+#endif
+}
 //----------------------------------------------------------------------------
 #ifdef USE_DEBUG_LOGGER
 static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
@@ -148,40 +168,39 @@ FApplicationContext::~FApplicationContext() {
 int LaunchApplication(const FApplicationContext& context, FApplicationBase* app) {
     UNUSED(context);
     AssertRelease(app);
-
+#ifndef FINAL_RELEASE
+    StartLeakDetector();
+#endif
     {
-#if WITH_APPLICATION_TRY_CATCH
+#if USE_APPLICATION_EXCEPTION_TRAP
         CORE_TRY
 #endif
         {
             app->Start();
         }
-#if WITH_APPLICATION_TRY_CATCH
+#if USE_APPLICATION_EXCEPTION_TRAP
         CORE_CATCH(const std::exception& e)
         CORE_CATCH_BLOCK({
-            const FWString wwhat = ToWString(MakeCStringView(e.what()));
-            Dialog::Ok(wwhat, L"FException caught while starting !", Dialog::Icon::Exclamation);
-            AssertNotReached();
+            LOG(Application, Fatal, L"exception caught while starting : {0}", MakeCStringView(e.what()));
         })
 #endif
 
-#if WITH_APPLICATION_TRY_CATCH
+#if USE_APPLICATION_EXCEPTION_TRAP
         CORE_TRY
 #endif
         {
             app->Shutdown();
         }
-#if WITH_APPLICATION_TRY_CATCH
+#if USE_APPLICATION_EXCEPTION_TRAP
         CORE_CATCH(const std::exception& e)
         CORE_CATCH_BLOCK({
-            const FWString wwhat = ToWString(MakeCStringView(e.what()));
-            Dialog::Ok(wwhat, L"FException caught while shutting down !", Dialog::Icon::Exclamation);
-            AssertNotReached();
+            LOG(Application, Fatal, L"exception caught while shutting down : {0}", MakeCStringView(e.what()));
         })
 #endif
     }
 #ifndef FINAL_RELEASE
     ReportAllTrackingData();
+    ShutdownLeakDetector();
 #endif
     return FCurrentProcess::Instance().ExitCode();
 }
