@@ -350,7 +350,7 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
             {
                 const FFilename process(FCurrentProcess::Instance().FileName());
                 const FFilename vfs(process.Dirpath(),
-                    FVirtualFileSystem::TemporaryBasename(process.BasenameNoExt().c_str(), L".dmp"));
+                    FVirtualFileSystem::TemporaryBasename(process.BasenameNoExt().MakeView(), L".dmp"));
 
                 const FWString path = vfs.ToWString();
 

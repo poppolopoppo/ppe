@@ -17,44 +17,48 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FVirtualFileSystemTrie& VFS() {
+    return FVirtualFileSystem::Instance();
+}
+//----------------------------------------------------------------------------
 bool VFS_DirectoryExists(const FDirpath& dirpath, EExistPolicy policy/* = ExistPolicy::Exists */) {
-    return FVirtualFileSystem::Instance().DirectoryExists(dirpath, policy);
+    return VFS().DirectoryExists(dirpath, policy);
 }
 //----------------------------------------------------------------------------
 bool VFS_FileExists(const FFilename& filename, EExistPolicy policy/* = ExistPolicy::Exists */) {
-    return FVirtualFileSystem::Instance().FileExists(filename, policy);
+    return VFS().FileExists(filename, policy);
 }
 //----------------------------------------------------------------------------
 size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) {
-    return FVirtualFileSystem::Instance().EnumerateFiles(dirpath, recursive, foreach);
+    return VFS().EnumerateFiles(dirpath, recursive, foreach);
 }
 //----------------------------------------------------------------------------
 size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) {
-    return FVirtualFileSystem::Instance().GlobFiles(dirpath, pattern, recursive, foreach);
+    return VFS().GlobFiles(dirpath, pattern, recursive, foreach);
 }
 //----------------------------------------------------------------------------
 bool VFS_CreateDirectory(const FDirpath& dirpath) {
-    return FVirtualFileSystem::Instance().CreateDirectory(dirpath);
+    return VFS().CreateDirectory(dirpath);
 }
 //----------------------------------------------------------------------------
 bool VFS_RemoveDirectory(const FDirpath& dirpath) {
-    return FVirtualFileSystem::Instance().RemoveDirectory(dirpath);
+    return VFS().RemoveDirectory(dirpath);
 }
 //----------------------------------------------------------------------------
 bool VFS_RemoveFile(const FFilename& filename) {
-    return FVirtualFileSystem::Instance().RemoveFile(filename);
+    return VFS().RemoveFile(filename);
 }
 //----------------------------------------------------------------------------
 UStreamReader VFS_OpenReadable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
-    return FVirtualFileSystem::Instance().OpenReadable(filename, policy);
+    return VFS().OpenReadable(filename, policy);
 }
 //----------------------------------------------------------------------------
 UStreamWriter VFS_OpenWritable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
-    return FVirtualFileSystem::Instance().OpenWritable(filename, policy);
+    return VFS().OpenWritable(filename, policy);
 }
 //----------------------------------------------------------------------------
 UStreamReadWriter VFS_OpenReadWritable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
-    return FVirtualFileSystem::Instance().OpenReadWritable(filename, policy);
+    return VFS().OpenReadWritable(filename, policy);
 }
 //----------------------------------------------------------------------------
 UStreamReader VFS_OpenBinaryReadable(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
@@ -76,7 +80,7 @@ UStreamWriter VFS_OpenTextWritable(const FFilename& filename, EAccessPolicy poli
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 UStreamWriter VFS_RollFile(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
-    auto& vfs = FVirtualFileSystem::Instance();
+    auto& vfs = VFS();
 
     FFileStat fstat;
     if (vfs.FileStats(&fstat, filename)) {
@@ -104,11 +108,6 @@ bool VFS_ReadAll(TRawStorage<u8, ALLOCATOR(FileSystem, u8)> *pcontent, const FFi
     return FVirtualFileSystem::ReadAll(filename, *pcontent, policy);
 }
 //----------------------------------------------------------------------------
-STATIC_ASSERT(std::is_same<RAWSTORAGE_THREAD_LOCAL(FileSystem, u8), TRawStorage<u8, THREAD_LOCAL_ALLOCATOR(FileSystem, u8)> >::value);
-bool VFS_ReadAll(TRawStorage<u8, THREAD_LOCAL_ALLOCATOR(FileSystem, u8)> *pcontent, const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
-    return FVirtualFileSystem::ReadAll(filename, *pcontent, policy);
-}
-//----------------------------------------------------------------------------
 bool VFS_WriteAll(const FFilename& filename, const TMemoryView<const u8>& content, EAccessPolicy policy/* = EAccessPolicy::None */) {
     return FVirtualFileSystem::WriteAll(filename, content, policy);
 }
@@ -116,7 +115,7 @@ bool VFS_WriteAll(const FFilename& filename, const TMemoryView<const u8>& conten
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool VFS_FileStats(FFileStat *pstats, const FFilename& filename) {
-    return FVirtualFileSystem::Instance().FileStats(pstats, filename);
+    return VFS().FileStats(pstats, filename);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

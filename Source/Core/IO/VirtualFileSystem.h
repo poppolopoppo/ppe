@@ -31,8 +31,8 @@ public:
 
     static void Create() { parent_type::Create(); }
 
-    static FBasename TemporaryBasename(const wchar_t *prefix, const wchar_t *ext);
-    static FFilename TemporaryFilename(const wchar_t *prefix, const wchar_t *ext);
+    static FBasename TemporaryBasename(const FWStringView& prefix, const FWStringView& ext);
+    static FFilename TemporaryFilename(const FWStringView& prefix, const FWStringView& ext);
 
     template <typename T, typename _Allocator>
     static bool ReadAll(const FFilename& filename, TRawStorage<T, _Allocator>& storage, EAccessPolicy policy = EAccessPolicy::None);

@@ -35,6 +35,7 @@ public:
     TBasicStringBuilder();
     virtual ~TBasicStringBuilder();
 
+    explicit TBasicStringBuilder(size_t capacity);
     explicit TBasicStringBuilder(string_type&& stolen);
 
     TBasicStringBuilder(const TBasicStringBuilder&) = delete;
@@ -66,6 +67,8 @@ public:
     TMemoryView<typename _OtherAllocator::value_type> StealDataUnsafe(_OtherAllocator& alloc, size_t* plen = nullptr) {
         return stream_type::StealDataUnsafe(alloc, plen);
     }
+
+    using TBasicTextWriter<_Char>::Write; // otherwise ambiguous with TMemoryStream<>::Write()
 };
 //----------------------------------------------------------------------------
 CORE_API extern template class TBasicStringBuilder<char>;

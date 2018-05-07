@@ -27,6 +27,7 @@ public:
 
     size_t BufferSize() const { return _bufferSize; }
 
+    void ForceAllocateInnerBuffer(); // use to disable lazy buffer allocation
     void SetStream(IStreamReader* nonBuffered);
 
     inline friend void swap(FBufferedStreamReader& lhs, FBufferedStreamReader& rhs) {
@@ -77,6 +78,7 @@ public:
 
     size_t BufferSize() const { return _bufferSize; }
 
+    void ForceAllocateInnerBuffer(); // use to disable lazy buffer allocation
     void SetStream(IStreamWriter* nonBuffered);
 
     inline friend void swap(FBufferedStreamWriter& lhs, FBufferedStreamWriter& rhs) {

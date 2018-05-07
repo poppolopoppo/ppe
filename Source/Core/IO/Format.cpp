@@ -203,7 +203,7 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                         props.FillChar = format_traits::zero;
                         format = format.ShiftFront();
                         continue;
-                    
+
                     case format_traits::fmt_center:
                         alignment = 0;
                         format = format.ShiftFront();

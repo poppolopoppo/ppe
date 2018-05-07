@@ -28,9 +28,9 @@ POOL_TAG_DEF(VirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBasename FVirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wchar_t *ext) {
-    Assert(prefix);
-    Assert(ext);
+FBasename FVirtualFileSystem::TemporaryBasename(const FWStringView& prefix, const FWStringView& ext) {
+    Assert(not prefix.empty());
+    Assert(not ext.empty());
 
     const auto now = std::chrono::system_clock::now();
     const ::time_t tt = std::chrono::system_clock::to_time_t(now);
@@ -38,7 +38,7 @@ FBasename FVirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wch
     ::tm local_tm;
     ::localtime_s(&local_tm, &tt);
 
-    STACKLOCAL_WTEXTWRITER(buffer, MAX_PATH);
+    STACKLOCAL_WTEXTWRITER(buffer, FileSystem::MaxPathLength);
     Format(buffer, L"{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}{7}{8}",
         prefix,
         local_tm.tm_year,
@@ -53,9 +53,9 @@ FBasename FVirtualFileSystem::TemporaryBasename(const wchar_t *prefix, const wch
     return FBasename(buffer.Written());
 }
 //----------------------------------------------------------------------------
-FFilename FVirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wchar_t *ext) {
-    Assert(prefix);
-    Assert(ext);
+FFilename FVirtualFileSystem::TemporaryFilename(const FWStringView& prefix, const FWStringView& ext) {
+    Assert(not prefix.empty());
+    Assert(not ext.empty());
 
     const auto now = std::chrono::system_clock::now();
     const ::time_t tt = std::chrono::system_clock::to_time_t(now);
@@ -63,7 +63,7 @@ FFilename FVirtualFileSystem::TemporaryFilename(const wchar_t *prefix, const wch
     ::tm local_tm;
     ::localtime_s(&local_tm, &tt);
 
-    STACKLOCAL_WTEXTWRITER(buffer, MAX_PATH);
+    STACKLOCAL_WTEXTWRITER(buffer, FileSystem::MaxPathLength);
     Format(buffer, L"Tmp:/{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}{7}{8}",
         prefix,
         local_tm.tm_year,
@@ -93,7 +93,7 @@ bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TMemoryView<c
 
     if (writer) {
         if (needCompress) {
-            RAWSTORAGE_THREAD_LOCAL(Compress, u8) compressed;
+            RAWSTORAGE(Compress, u8) compressed;
             const size_t compressedSizeInBytes = Compression::CompressMemory(compressed, storage, Compression::HighCompression);
             writer->Write(compressed.Pointer(), compressedSizeInBytes);
         }
@@ -142,7 +142,7 @@ bool FVirtualFileSystem::Compress(const FFilename& dst, const FFilename& src, EA
         return true;
 
     size_t compressedSizeInBytes = 0;
-    RAWSTORAGE_THREAD_LOCAL(Compress, u8) data;
+    RAWSTORAGE(Compress, u8) data;
     {
         const UStreamReader reader = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate);
         if (not reader)
@@ -151,7 +151,7 @@ bool FVirtualFileSystem::Compress(const FFilename& dst, const FFilename& src, EA
         reader->ReadAll(data);
     }
     {
-        RAWSTORAGE_THREAD_LOCAL(Compress, u8) compressed;
+        RAWSTORAGE(Compress, u8) compressed;
         compressedSizeInBytes = Compression::CompressMemory(compressed, data.MakeConstView().Cast<const u8>());
 
         swap(data, compressed);
@@ -175,7 +175,7 @@ bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, 
     if (src == dst)
         return true;
 
-    RAWSTORAGE_THREAD_LOCAL(Compress, u8) data;
+    RAWSTORAGE(Compress, u8) data;
     {
         const UStreamReader reader = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate + EAccessPolicy::Binary);
         if (not reader)
@@ -184,7 +184,7 @@ bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, 
         reader->ReadAll(data);
     }
     {
-        RAWSTORAGE_THREAD_LOCAL(Compress, u8) uncompressed;
+        RAWSTORAGE(Compress, u8) uncompressed;
         if (not Compression::DecompressMemory(uncompressed, data.MakeConstView().Cast<const u8>()))
             return false;
 

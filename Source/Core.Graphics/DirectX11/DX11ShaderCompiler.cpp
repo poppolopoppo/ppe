@@ -68,7 +68,7 @@ FDX11ShaderIncludeHandler_::FDX11ShaderIncludeHandler_(
 :   _systemDir(systemDir)
 ,   _source(source)
 ,   _vertexDeclaration(vertexDeclaration) {
-    Assert(FVirtualFileSystem::Instance().DirectoryExists(_systemDir));
+    Assert(VFS().DirectoryExists(_systemDir));
     Assert(source);
     Assert(vertexDeclaration);
 }
@@ -103,7 +103,7 @@ HRESULT STDCALL FDX11ShaderIncludeHandler_::Open(::D3D_INCLUDE_TYPE IncludeType,
     }
 
     const FFilename includeFilename(oss.Written());
-    if (!FVirtualFileSystem::Instance().FileExists(includeFilename))
+    if (!VFS().FileExists(includeFilename))
         return E_FAIL;
 
     Open_(includeFilename, ppData, pBytes);
@@ -118,7 +118,7 @@ HRESULT STDCALL FDX11ShaderIncludeHandler_::Close(LPCVOID pData) {
 }
 //----------------------------------------------------------------------------
 void FDX11ShaderIncludeHandler_::Open_(const FFilename& filename, LPCVOID *ppData, UINT *pBytes) {
-    const auto file = FVirtualFileSystem::Instance().OpenReadable(filename, EAccessPolicy::Binary);
+    const auto file = VFS().OpenReadable(filename, EAccessPolicy::Binary);
     AssertRelease(file);
 
     const size_t sizeInBytes = checked_cast<size_t>(file->SeekI(0, ESeekOrigin::End)); // Ate
@@ -135,7 +135,7 @@ void FDX11ShaderIncludeHandler_::Open_(const FFilename& filename, LPCVOID *ppDat
 }
 //----------------------------------------------------------------------------
 void FDX11ShaderIncludeHandler_::GenerateAutomaticSubstitutions_(LPCVOID *ppData, UINT *pBytes) {
-    VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>) substitutions;
+    VECTOR(Shader, TPair<FString COMMA FString>) substitutions;
 
     _source->FillSubstitutions(substitutions, _vertexDeclaration);
 

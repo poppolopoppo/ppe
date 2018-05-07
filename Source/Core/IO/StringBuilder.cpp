@@ -31,6 +31,12 @@ TBasicStringBuilder<_Char>::TBasicStringBuilder()
 {}
 //----------------------------------------------------------------------------
 template <typename _Char>
+TBasicStringBuilder<_Char>::TBasicStringBuilder(size_t capacity)
+    : TBasicStringBuilder() {
+    reserve(capacity);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
 TBasicStringBuilder<_Char>::TBasicStringBuilder(string_type&& stolen)
     : stream_type(TStealBasicString_<_Char>::StealData(
         allocator_type(static_cast<insitu_type&>(*this)),

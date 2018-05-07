@@ -21,12 +21,12 @@ struct TBasicFormatFunctor_ {
     template <typename _Value>
     static void FromValue(TBasicTextWriter<_Char>& oss, const void *arg) {
         typedef Meta::TAddConst<_Value> value_type;
-        oss << *reinterpret_cast<value_type*>(arg); // operator <<() resolved through KDL
+        oss << *reinterpret_cast<value_type*>(arg); // operator <<() resolved through ADL
     }
 
     template <typename _Pointer>
     static void FromPointer(TBasicTextWriter<_Char>& oss, const void *arg) {
-        oss << reinterpret_cast<_Pointer>(arg); // operator <<() resolved through KDL
+        oss << reinterpret_cast<_Pointer>(arg); // operator <<() resolved through ADL
     }
 
     template <typename T>

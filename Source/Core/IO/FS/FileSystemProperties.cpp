@@ -21,7 +21,7 @@ size_t WorkingDirectory(char_type *path, size_t capacity) {
     Assert(path);
 
 #ifdef PLATFORM_WINDOWS
-    Assert(capacity >= MAX_PATH);
+    Assert(capacity >= MaxPathLength);
     return checked_cast<size_t>(::GetCurrentDirectoryW(checked_cast<DWORD>(capacity), path));
 
 #else
@@ -35,7 +35,7 @@ size_t SystemTemporaryDirectory(char_type *path, size_t capacity) {
     Assert(path);
 
 #ifdef PLATFORM_WINDOWS
-    Assert(capacity >= MAX_PATH);
+    Assert(capacity >= MaxPathLength);
     return checked_cast<size_t>(::GetTempPathW(checked_cast<DWORD>(capacity), path));
 
 #else

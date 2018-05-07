@@ -35,6 +35,15 @@ FBufferedStreamReader::~FBufferedStreamReader() {
     }
 }
 //----------------------------------------------------------------------------
+void FBufferedStreamReader::ForceAllocateInnerBuffer() {
+    Assert(nullptr == _buffer);
+    Assert(_bufferSize);
+
+    _buffer = FBufferedStreamAllocator::allocate(_bufferSize);
+
+    AssertRelease(_buffer);
+}
+//----------------------------------------------------------------------------
 void FBufferedStreamReader::SetStream(IStreamReader* nonBuffered) {
     Assert(nonBuffered->ToBufferedI() == nullptr);
     _nonBuffered = nonBuffered;
@@ -213,12 +222,8 @@ bool FBufferedStreamReader::RefillBuffer_() {
         _origin = streamoff;
     }
 
-    if (nullptr == _buffer) {
-        // Allocate read buffer lazily
-        Assert(_bufferSize > 0);
-        _buffer = FBufferedStreamAllocator::allocate(_bufferSize);
-        AssertRelease(_buffer);
-    }
+    if (nullptr == _buffer) // allocate read buffer lazily IFN
+        ForceAllocateInnerBuffer();
 
     const size_t count = _nonBuffered->ReadSome(_buffer, 1, _bufferSize);
 
@@ -256,6 +261,15 @@ FBufferedStreamWriter::~FBufferedStreamWriter() {
         FBufferedStreamAllocator::deallocate(_buffer, _bufferSize);
         ONLY_IF_ASSERT(_buffer = nullptr);
     }
+}
+//----------------------------------------------------------------------------
+void FBufferedStreamWriter::ForceAllocateInnerBuffer() {
+    Assert(nullptr == _buffer);
+    Assert(_bufferSize);
+
+    _buffer = FBufferedStreamAllocator::allocate(_bufferSize);
+
+    AssertRelease(_buffer);
 }
 //----------------------------------------------------------------------------
 void FBufferedStreamWriter::SetStream(IStreamWriter* nonBuffered) {
@@ -321,11 +335,8 @@ bool FBufferedStreamWriter::Write(const void* storage, std::streamsize sizeInByt
     if (checked_cast<size_t>(sizeInBytes) <= _bufferSize) {
         // Buffered write
 
-        if (nullptr == _buffer) {
-            Assert(_bufferSize);
-            _buffer = FBufferedStreamAllocator::allocate(_bufferSize);
-            AssertRelease(_buffer);
-        }
+        if (nullptr == _buffer) // allocate write buffer lazily IFN
+            ForceAllocateInnerBuffer();
 
         const u8* psrc = (const u8*)storage;
         const u8* pend = psrc + checked_cast<ptrdiff_t>(sizeInBytes);
