@@ -61,9 +61,8 @@ void FFiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */)
 
     Assert(_pimpl);
 
-#ifdef USE_MEMORY_DOMAINS
-    MEMORY_DOMAIN_TRACKING_DATA(Fibers).Allocate(1, stackSize);
-    MEMORY_DOMAIN_TRACKING_DATA(Reserved).Allocate(1, stackSize); // can't be logged since we don't control the allocation
+#if USE_CORE_MEMORYDOMAINS
+    MEMORYDOMAIN_TRACKING_DATA(Fibers).Allocate(1, stackSize);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -83,12 +82,11 @@ void FFiber::Destroy(size_t stackSize) {
     ::DeleteFiber(_pimpl);
     _pimpl = nullptr;
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
     if (0 == stackSize)
         stackSize = FiberStackReserveSize;
 
-    MEMORY_DOMAIN_TRACKING_DATA(Fibers).Deallocate(1, stackSize);
-    MEMORY_DOMAIN_TRACKING_DATA(Reserved).Deallocate(1, stackSize); // can't be logged since we don't control the allocation
+    MEMORYDOMAIN_TRACKING_DATA(Fibers).Deallocate(1, stackSize);
 #else
     UNUSED(stackSize);
 #endif

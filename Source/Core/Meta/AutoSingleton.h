@@ -71,8 +71,14 @@ protected:
 
 public:
     static T& Instance() {
-        ONE_TIME_INITIALIZE_TPL(T *, GInstance, new T() );
+        ONE_TIME_INITIALIZE_TPL(T*, GInstance, CreateInstance_());
         return *GInstance;
+    }
+
+private:
+    static NO_INLINE T* CreateInstance_() {
+        CORE_LEAKDETECTOR_WHITELIST_SCOPE();
+        return new T();
     }
 };
 //----------------------------------------------------------------------------
@@ -84,8 +90,14 @@ protected:
 
 public:
     static T& Instance() {
-        ONE_TIME_INITIALIZE_THREAD_LOCAL_TPL(T *, GInstanceTLS, new T() );
+        ONE_TIME_INITIALIZE_THREAD_LOCAL_TPL(T*, GInstanceTLS, CreateInstance_());
         return *GInstanceTLS;
+    }
+
+private:
+    static NO_INLINE T* CreateInstance_() {
+        CORE_LEAKDETECTOR_WHITELIST_SCOPE();
+        return new T();
     }
 };
 //----------------------------------------------------------------------------

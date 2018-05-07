@@ -22,6 +22,7 @@ FTypeId MakePairTypeId(const PTypeTraits& first, const PTypeTraits& second) {
 }
 //----------------------------------------------------------------------------
 FString MakePairTypeName(const PTypeTraits& first, const PTypeTraits& second) {
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
     return StringFormat("TPair<{0}, {1}>", first->TypeInfos().Name(), second->TypeInfos().Name());
 }
 //----------------------------------------------------------------------------
@@ -30,6 +31,7 @@ FTypeId MakeListTypeId(const PTypeTraits& value) {
 }
 //----------------------------------------------------------------------------
 FString MakeListTypeName(const PTypeTraits& value) {
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
     return StringFormat("TList<{0}>", value->TypeInfos().Name());
 }
 //----------------------------------------------------------------------------
@@ -38,6 +40,7 @@ FTypeId MakeDicoTypeId(const PTypeTraits& key, const PTypeTraits& value) {
 }
 //----------------------------------------------------------------------------
 FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value) {
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
     return StringFormat("TDico<{0}, {1}>", key->TypeInfos().Name(), value->TypeInfos().Name());
 }
 //----------------------------------------------------------------------------

@@ -98,14 +98,24 @@ void* (realloc)(void *ptr, size_t size, Meta::TEnableIf< !Meta::TIsNaturalyAlign
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
-//----------------------------------------------------------------------------
-class ALIGN(16) FCallstack;
-CORE_API bool FetchMemoryBlockDebugInfos(void* ptr, FCallstack* pCallstack, size_t* pSizeInBytes, bool raw = false);
-//----------------------------------------------------------------------------
 template <typename T>
 class TMemoryView;
-CORE_API bool FetchMemoryAllocationHistogram(TMemoryView<const size_t>* classes, TMemoryView<const size_t>* allocations, TMemoryView<const size_t>* totalBytes);
-//----------------------------------------------------------------------------
+CORE_API void StartLeakDetector();
+CORE_API void ShutdownLeakDetector();
+CORE_API bool SetLeakDetectorWhiteListed(bool ignoreleaks);
+CORE_API void DumpMemoryLeaks(bool onlyNonDeleters = false);
+CORE_API bool FetchMemoryAllocationHistogram(
+    TMemoryView<const size_t>* classes,
+    TMemoryView<const size_t>* allocations,
+    TMemoryView<const size_t>* totalBytes );
+struct FLeakDetectorWhiteListScope {
+    const bool WasIgnoringLeaks;
+    FLeakDetectorWhiteListScope(): WasIgnoringLeaks(SetLeakDetectorWhiteListed(true)) {}
+    ~FLeakDetectorWhiteListScope() { SetLeakDetectorWhiteListed(WasIgnoringLeaks); }
+};
+#   define CORE_LEAKDETECTOR_WHITELIST_SCOPE() const ::Core::FLeakDetectorWhiteListScope ANONYMIZE(_leakDetectorWhiteListScope)
+#else
+#   define CORE_LEAKDETECTOR_WHITELIST_SCOPE() NOOP()
 #endif //!FINAL_RELEASE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

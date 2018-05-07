@@ -9,6 +9,7 @@
 #   include "Memory/MemoryView.h"
 #endif
 
+#include "Diagnostic/LeakDetector.h"
 #include "Meta/Assert.h"
 
 // Lowest level to hook or replace default allocator
@@ -18,7 +19,7 @@
 #define CORE_MALLOC_ALLOCATOR_STOMP         2
 
 #define CORE_MALLOC_FORCE_STD               0 //%_NOCOMMIT%
-#define CORE_MALLOC_FORCE_STOMP             USE_CORE_MEMORY_DEBUGGING //%_NOCOMMIT%
+#define CORE_MALLOC_FORCE_STOMP             (USE_CORE_MEMORY_DEBUGGING) //%_NOCOMMIT%
 
 #if CORE_MALLOC_FORCE_STD
 #   define CORE_MALLOC_ALLOCATOR            CORE_MALLOC_ALLOCATOR_STD
@@ -30,26 +31,16 @@
 
 #if USE_CORE_MEMORY_DEBUGGING && !CORE_MALLOC_FORCE_STD
 #   define CORE_MALLOC_HISTOGRAM_PROXY      1 // Keep memory histogram available, shouldn't have any influence on debugging
-#   define CORE_MALLOC_LOGGER_PROXY         0 // Disabled since it adds payload to each allocation
+#   define CORE_MALLOC_LEAKDETECTOR_PROXY   0 // Disabled since it adds payload to each allocation
 #elif not (defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
-#   define CORE_MALLOC_HISTOGRAM_PROXY      1 //%_NOCOMMIT% // Logs memory statictics in a histogram
-#   define CORE_MALLOC_LOGGER_PROXY         0 //%_NOCOMMIT% // Turn on locally to get infos about leaked memory blocks
+#   define CORE_MALLOC_HISTOGRAM_PROXY      1 //%_NOCOMMIT% // Logs memory allocation size statistics in an histogram
+#   define CORE_MALLOC_LEAKDETECTOR_PROXY   (USE_CORE_MALLOC_LEAKDETECTOR) //%_NOCOMMIT% // Will find leaking code paths
 #else
 #   define CORE_MALLOC_HISTOGRAM_PROXY      0
-#   define CORE_MALLOC_LOGGER_PROXY         0
+#   define CORE_MALLOC_LEAKDETECTOR_PROXY   0
 #endif
 
-#ifdef WITH_CORE_ASSERT
-#   define CORE_MALLOC_POISON_PROXY         (CORE_MALLOC_ALLOCATOR == CORE_MALLOC_ALLOCATOR_BINNED) // other allocators have their own poisoning system
-#else
-#   define CORE_MALLOC_POISON_PROXY         0
-#endif
-
-#define NEED_CORE_MALLOCPROXY               (CORE_MALLOC_HISTOGRAM_PROXY|CORE_MALLOC_POISON_PROXY|CORE_MALLOC_LOGGER_PROXY)
-
-#if CORE_MALLOC_LOGGER_PROXY
-#   include "Diagnostic/Callstack.h"
-#endif
+#define USE_CORE_MALLOC_PROXY               (CORE_MALLOC_HISTOGRAM_PROXY|CORE_MALLOC_LEAKDETECTOR_PROXY)
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -57,7 +48,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-struct FMalloc_ {
+struct FMallocLowLevel {
     FORCE_INLINE static void*   Malloc(size_t size);
     FORCE_INLINE static void    Free(void* ptr);
     FORCE_INLINE static void*   Calloc(size_t nmemb, size_t size);
@@ -78,24 +69,24 @@ struct FMalloc_ {
 };
 //----------------------------------------------------------------------------
 #if (CORE_MALLOC_ALLOCATOR == CORE_MALLOC_ALLOCATOR_STD)
-void* FMalloc_::Malloc(size_t size) { return std::malloc(size); }
-void  FMalloc_::Free(void* ptr) { std::free(ptr); }
-void* FMalloc_::Calloc(size_t nmemb, size_t size) { return std::calloc(nmemb, size); }
-void* FMalloc_::Realloc(void *ptr, size_t size) { return std::realloc(ptr, size); }
-void* FMalloc_::AlignedMalloc(size_t size, size_t alignment) { return _aligned_malloc(size, alignment); }
-void  FMalloc_::AlignedFree(void *ptr) { _aligned_free(ptr); }
-void* FMalloc_::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
+void* FMallocLowLevel::Malloc(size_t size) { return std::malloc(size); }
+void  FMallocLowLevel::Free(void* ptr) { std::free(ptr); }
+void* FMallocLowLevel::Calloc(size_t nmemb, size_t size) { return std::calloc(nmemb, size); }
+void* FMallocLowLevel::Realloc(void *ptr, size_t size) { return std::realloc(ptr, size); }
+void* FMallocLowLevel::AlignedMalloc(size_t size, size_t alignment) { return _aligned_malloc(size, alignment); }
+void  FMallocLowLevel::AlignedFree(void *ptr) { _aligned_free(ptr); }
+void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
     void* const p = _aligned_malloc(size * nmemb, alignment);
     ::memset(p, 0, size * nmemb);
     return p;
 }
-void* FMalloc_::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
+void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return _aligned_realloc(ptr, size, alignment);
 }
-void  FMalloc_::ReleasePendingBlocks() {}
-size_t FMalloc_::SnapSize(size_t size) { return size; }
+void  FMallocLowLevel::ReleasePendingBlocks() {}
+size_t FMallocLowLevel::SnapSize(size_t size) { return size; }
 #ifndef FINAL_RELEASE
-size_t FMalloc_::RegionSize(void* ptr) {
+size_t FMallocLowLevel::RegionSize(void* ptr) {
 #   ifdef PLATFORM_WINDOWS
     return ::_msize(ptr);
 #   else
@@ -105,60 +96,60 @@ size_t FMalloc_::RegionSize(void* ptr) {
 #endif //!CORE_MALLOC_ALLOCATOR_STD
 //----------------------------------------------------------------------------
 #if (CORE_MALLOC_ALLOCATOR == CORE_MALLOC_ALLOCATOR_BINNED)
-void* FMalloc_::Malloc(size_t size) { return FMallocBinned::Malloc(size); }
-void  FMalloc_::Free(void* ptr) { FMallocBinned::Free(ptr); }
-void* FMalloc_::Calloc(size_t nmemb, size_t size) {
+void* FMallocLowLevel::Malloc(size_t size) { return FMallocBinned::Malloc(size); }
+void  FMallocLowLevel::Free(void* ptr) { FMallocBinned::Free(ptr); }
+void* FMallocLowLevel::Calloc(size_t nmemb, size_t size) {
     void* const p = FMallocBinned::Malloc(size * nmemb);
     ::memset(p, 0, size * nmemb);
     return p;
 }
-void* FMalloc_::Realloc(void *ptr, size_t size) { return FMallocBinned::Realloc(ptr, size); }
-void* FMalloc_::AlignedMalloc(size_t size, size_t alignment) { return FMallocBinned::AlignedMalloc(size, alignment); }
-void  FMalloc_::AlignedFree(void *ptr) { FMallocBinned::AlignedFree(ptr); }
-void* FMalloc_::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
+void* FMallocLowLevel::Realloc(void *ptr, size_t size) { return FMallocBinned::Realloc(ptr, size); }
+void* FMallocLowLevel::AlignedMalloc(size_t size, size_t alignment) { return FMallocBinned::AlignedMalloc(size, alignment); }
+void  FMallocLowLevel::AlignedFree(void *ptr) { FMallocBinned::AlignedFree(ptr); }
+void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
     void* const p = FMallocBinned::AlignedMalloc(size * nmemb, alignment);
     ::memset(p, 0, size * nmemb);
     return p;
 }
-void* FMalloc_::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
+void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return FMallocBinned::AlignedRealloc(ptr, size, alignment);
 }
-void  FMalloc_::ReleasePendingBlocks() {
+void  FMallocLowLevel::ReleasePendingBlocks() {
     FMallocBinned::ReleasePendingBlocks();
 }
-size_t FMalloc_::SnapSize(size_t size) {
+size_t FMallocLowLevel::SnapSize(size_t size) {
     return FMallocBinned::SnapSize(size);
 }
 #ifndef FINAL_RELEASE
-size_t FMalloc_::RegionSize(void* ptr) {
+size_t FMallocLowLevel::RegionSize(void* ptr) {
     return FMallocBinned::RegionSize(ptr);
 }
 #endif
 #endif //!CORE_MALLOC_ALLOCATOR_BINNED
 //----------------------------------------------------------------------------
 #if (CORE_MALLOC_ALLOCATOR == CORE_MALLOC_ALLOCATOR_STOMP)
-void* FMalloc_::Malloc(size_t size) { return FMallocStomp::Malloc(size); }
-void  FMalloc_::Free(void* ptr) { FMallocStomp::Free(ptr); }
-void* FMalloc_::Calloc(size_t nmemb, size_t size) {
+void* FMallocLowLevel::Malloc(size_t size) { return FMallocStomp::Malloc(size); }
+void  FMallocLowLevel::Free(void* ptr) { FMallocStomp::Free(ptr); }
+void* FMallocLowLevel::Calloc(size_t nmemb, size_t size) {
     void* const p = FMallocStomp::Malloc(size * nmemb);
     ::memset(p, 0, size * nmemb);
     return p;
 }
-void* FMalloc_::Realloc(void *ptr, size_t size) { return FMallocStomp::Realloc(ptr, size); }
-void* FMalloc_::AlignedMalloc(size_t size, size_t alignment) { return FMallocStomp::AlignedMalloc(size, alignment); }
-void  FMalloc_::AlignedFree(void *ptr) { FMallocStomp::AlignedFree(ptr); }
-void* FMalloc_::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
+void* FMallocLowLevel::Realloc(void *ptr, size_t size) { return FMallocStomp::Realloc(ptr, size); }
+void* FMallocLowLevel::AlignedMalloc(size_t size, size_t alignment) { return FMallocStomp::AlignedMalloc(size, alignment); }
+void  FMallocLowLevel::AlignedFree(void *ptr) { FMallocStomp::AlignedFree(ptr); }
+void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
     void* const p = FMallocStomp::AlignedMalloc(size * nmemb, alignment);
     ::memset(p, 0, size * nmemb);
     return p;
 }
-void* FMalloc_::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
+void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return FMallocStomp::AlignedRealloc(ptr, size, alignment);
 }
-void  FMalloc_::ReleasePendingBlocks() {}
-size_t FMalloc_::SnapSize(size_t size) { return size; }
+void  FMallocLowLevel::ReleasePendingBlocks() {}
+size_t FMallocLowLevel::SnapSize(size_t size) { return size; }
 #ifndef FINAL_RELEASE
-size_t FMalloc_::RegionSize(void* ptr) {
+size_t FMallocLowLevel::RegionSize(void* ptr) {
     return FMallocStomp::RegionSize(ptr);
 }
 #endif
@@ -168,172 +159,23 @@ size_t FMalloc_::RegionSize(void* ptr) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if NEED_CORE_MALLOCPROXY
+#if CORE_MALLOC_LEAKDETECTOR_PROXY
 namespace {
-//----------------------------------------------------------------------------
-struct FMallocFacetId_ {
-    STATIC_CONST_INTEGRAL(size_t, BlockOffset,  0);
-    STATIC_CONST_INTEGRAL(size_t, HeaderSize,   0);
-    STATIC_CONST_INTEGRAL(size_t, FooterSize,   0);
+struct FMallocLeakDetectorFacet {
+    static void A(void* ptr, size_t sizeInBytes) {
 
-    static void MakeBlock(void* ptr, size_t sizeInBytes) { UNUSED(ptr); UNUSED(sizeInBytes); }
-    static void TestBlock(void* ptr) { UNUSED(ptr); }
-};
-//----------------------------------------------------------------------------
-template <typename _Base, size_t _HeaderSize, size_t _FooterSize>
-struct TMallocBaseFacet_ {
-    STATIC_CONST_INTEGRAL(size_t, ThisHeaderSize, _HeaderSize);
-    STATIC_CONST_INTEGRAL(size_t, ThisFooterSize, _FooterSize);
-
-    STATIC_CONST_INTEGRAL(size_t, BlockOffset, _Base::BlockOffset + _Base::HeaderSize);
-    STATIC_CONST_INTEGRAL(size_t, HeaderSize,  _Base::HeaderSize + ThisHeaderSize);
-    STATIC_CONST_INTEGRAL(size_t, FooterSize,  _Base::FooterSize + ThisFooterSize);
-
-    static void MakeBlock(void* ptr, size_t sizeInBytes) { _Base::MakeBlock(ptr, sizeInBytes); }
-    static void TestBlock(void* ptr) { _Base::TestBlock(ptr); }
-};
-//----------------------------------------------------------------------------
-} //!namespace
-#endif //!NEED_CORE_MALLOCPROXY
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#if NEED_CORE_MALLOCPROXY
-namespace {
-//----------------------------------------------------------------------------
-#if CORE_MALLOC_LOGGER_PROXY
-template <typename _Pred, typename _Facet = TMallocBaseFacet_<_Pred, 16 * sizeof(void*), 0> >
-struct TMallocLoggerFacet_ : _Facet {
-    using facet_type = _Facet;
-
-    using facet_type::ThisHeaderSize;
-    using facet_type::ThisFooterSize;
-
-    using facet_type::BlockOffset;
-    using facet_type::HeaderSize;
-    using facet_type::FooterSize;
-
-    struct FDebugData {
-        STATIC_CONST_INTEGRAL(size_t, MaxDepth, 16);
-        void* Frames[MaxDepth];
-    };
-
-    static void MakeBlock(void* ptr, size_t sizeInBytes) {
-        FDebugData* const debugData = (FDebugData*)((u8*)ptr + BlockOffset);
-        const size_t depth = FCallstack::Capture(debugData->Frames, nullptr, 4, FDebugData::MaxDepth);
-
-        // null terminate the frames IFN to deduce its size later
-        if (depth < FDebugData::MaxDepth)
-            debugData->Frames[depth] = nullptr;
-
-        facet_type::MakeBlock(ptr, sizeInBytes);
     }
-
     static void TestBlock(void* ptr) {
-        facet_type::TestBlock(ptr);
+        FLeakDetector::Instance().Release(ptr);
     }
 };
-#endif
-//----------------------------------------------------------------------------
-#if CORE_MALLOC_LOGGER_PROXY
-using FMallocLoggerFacet_ = TMallocLoggerFacet_<FMallocFacetId_>;
-#else
-using FMallocLoggerFacet_ = FMallocFacetId_;
-#endif //!_DEBUG
-//----------------------------------------------------------------------------
 } //!namespace
-#endif //!NEED_CORE_MALLOCPROXY
+#endif //!CORE_MALLOC_LEAKDETECTOR_PROXY
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#if NEED_CORE_MALLOCPROXY
-namespace {
-//----------------------------------------------------------------------------
-#if CORE_MALLOC_POISON_PROXY
-template <typename _Pred = FMallocFacetId_, typename _Facet = TMallocBaseFacet_<_Pred, 64/* should preserve alignment */, 16> >
-struct TMallocPoisonFacet_ : _Facet {
-    using facet_type = _Facet;
-
-    using facet_type::ThisHeaderSize;
-    using facet_type::ThisFooterSize;
-
-    using facet_type::BlockOffset;
-    using facet_type::HeaderSize;
-    using facet_type::FooterSize;
-
-    static u32 MakeCanary_(const u32 seed, const void* p) {
-        return u32(hash_size_t_constexpr(seed, size_t(p)));
-    }
-
-    STATIC_CONST_INTEGRAL(size_t, CanarySize, 16);
-
-    struct FCanary {
-        u32 SizeInBytes;
-        u32 A, B, C;
-
-        void MakeCanaries(size_t sizeInBytes) {
-            SizeInBytes = u32(sizeInBytes);
-            A = MakeCanary_(SizeInBytes, &A);
-            B = MakeCanary_(SizeInBytes, &B);
-            C = MakeCanary_(SizeInBytes, &C);
-        }
-
-        void CheckCanaries() const {
-            Assert(A == MakeCanary_(SizeInBytes, &A));
-            Assert(B == MakeCanary_(SizeInBytes, &B));
-            Assert(C == MakeCanary_(SizeInBytes, &C));
-        }
-    };
-    STATIC_ASSERT(sizeof(FCanary) == CanarySize);
-
-    static void MakeBlock(void* ptr, size_t sizeInBytes) {
-        u8* const pdata = (u8*)ptr + BlockOffset;
-
-        ::memset(pdata, 0xEE, ThisHeaderSize - sizeof(FCanary));
-
-        FCanary* const header = (FCanary*)(pdata + ThisHeaderSize - sizeof(FCanary));
-        FCanary* const footer = (FCanary*)(pdata + ThisHeaderSize + sizeInBytes);
-
-        header->MakeCanaries(sizeInBytes);
-        footer->MakeCanaries(sizeInBytes);
-
-        facet_type::MakeBlock(ptr, sizeInBytes);
-    }
-
-    static void TestBlock(void* ptr) {
-        u8* const pdata = (u8*)ptr + BlockOffset;
-
-        FCanary* const header = (FCanary*)(pdata + ThisHeaderSize - sizeof(FCanary));
-        header->CheckCanaries();
-
-        FCanary* const footer = (FCanary*)(pdata + ThisHeaderSize + header->SizeInBytes);
-        footer->CheckCanaries();
-
-        header->MakeCanaries(0xdeadbeef);
-        footer->MakeCanaries(0xdeadbeef);
-
-        ::memset(pdata, 0xDD, ThisHeaderSize - sizeof(FCanary));
-
-        facet_type::TestBlock(ptr);
-    }
-};
-#endif
-//----------------------------------------------------------------------------
-#if CORE_MALLOC_POISON_PROXY
-using FMallocPoisonFacet_ = TMallocPoisonFacet_<FMallocLoggerFacet_>;
-#else
-using FMallocPoisonFacet_ = FMallocLoggerFacet_;
-#endif //!_DEBUG
-//----------------------------------------------------------------------------
-} //!namespace
-#endif //!NEED_CORE_MALLOCPROXY
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#if NEED_CORE_MALLOCPROXY
-namespace {
 //----------------------------------------------------------------------------
 #if CORE_MALLOC_HISTOGRAM_PROXY
+namespace {
 static constexpr size_t GMallocNumClasses = 60;
 static constexpr size_t GMallocSizeClasses[GMallocNumClasses] = {
     16,       0,        0,        0,        32,       0,
@@ -349,136 +191,152 @@ static constexpr size_t GMallocSizeClasses[GMallocNumClasses] = {
 };
 static size_t GMallocSizeAllocations[GMallocNumClasses] = { 0 };
 static size_t GMallocSizeTotalBytes[GMallocNumClasses] = { 0 };
-template <typename _Pred = FMallocFacetId_, typename _Facet = TMallocBaseFacet_<_Pred, 0, 0>  >
-struct TMallocHistogramFacet_ : _Facet {
-    using facet_type = _Facet;
-
-    using facet_type::ThisHeaderSize;
-    using facet_type::ThisFooterSize;
-
-    using facet_type::BlockOffset;
-    using facet_type::HeaderSize;
-    using facet_type::FooterSize;
-
-    FORCE_INLINE static size_t MakeClass(size_t size) {
+struct FMallocHistogram {
+    FORCE_INLINE static size_t MakeSizeClass(size_t size) {
         constexpr size_t POW_N = 2;
         constexpr size_t MinClassIndex = 19;
         const size_t index = Meta::FloorLog2((size - 1) | 1);
         return ((index << POW_N) + ((size - 1) >> (index - POW_N)) - MinClassIndex);
     }
 
-    static void MakeBlock(void* ptr, size_t sizeInBytes) {
-        const size_t sizeClass = Min(MakeClass(sizeInBytes), GMallocNumClasses - 1);
+    static void Allocate(void* ptr, size_t sizeInBytes) {
+        const size_t sizeClass = Min(MakeSizeClass(sizeInBytes), GMallocNumClasses - 1);
         ++GMallocSizeAllocations[sizeClass];
         GMallocSizeTotalBytes[sizeClass] += sizeInBytes;
-
-        facet_type::MakeBlock(ptr, sizeInBytes);
-    }
-
-    static void TestBlock(void* ptr) {
-        facet_type::TestBlock(ptr);
     }
 };
-#endif
-//----------------------------------------------------------------------------
-#if CORE_MALLOC_HISTOGRAM_PROXY
-using FMallocHistogramFacet_ = TMallocHistogramFacet_<FMallocPoisonFacet_>;
-#else
-using FMallocHistogramFacet_ = FMallocPoisonFacet_;
-#endif //!_DEBUG
-//----------------------------------------------------------------------------
 } //!namespace
-#endif //!NEED_CORE_MALLOCPROXY
+#endif //!CORE_MALLOC_HISTOGRAM_PROXY
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if !NEED_CORE_MALLOCPROXY
-using FMallocProxy_ = FMalloc_;
+#if !USE_CORE_MALLOC_PROXY
+using FMallocProxy = FMallocLowLevel;
 #else
-using FMallocFacet_ = FMallocHistogramFacet_;
-class FMallocProxy_ {
-    STATIC_CONST_INTEGRAL(size_t, OverheadSize, FMallocFacet_::HeaderSize + FMallocFacet_::FooterSize);
+class FMallocProxy {
+public:
+    FORCE_INLINE static void* Malloc(size_t size) { return AllocateBlock(FMallocLowLevel::Malloc(size), size); }
+    FORCE_INLINE static void  Free(void* ptr) { FMallocLowLevel::Free(ReleaseBlock(ptr)); }
+    FORCE_INLINE static void* Calloc(size_t nmemb, size_t size) { return AllocateBlock(FMallocLowLevel::Calloc(nmemb, size), size); }
+    FORCE_INLINE static void* Realloc(void *ptr, size_t size) { return AllocateBlock(FMallocLowLevel::Realloc(ReleaseBlock(ptr), size), size); }
 
-    static void* MakeBlock(void* ptr, size_t size, size_t alignment = 16) {
+    FORCE_INLINE static void* AlignedMalloc(size_t size, size_t alignment) { return AllocateBlock(FMallocLowLevel::AlignedMalloc(size, alignment), size, alignment); }
+    FORCE_INLINE static void  AlignedFree(void *ptr) { FMallocLowLevel::AlignedFree(ReleaseBlock(ptr)); }
+    FORCE_INLINE static void* AlignedCalloc(size_t nmemb, size_t size, size_t alignment) { return AllocateBlock(FMallocLowLevel::AlignedCalloc(nmemb, size, alignment), size, alignment); }
+    FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment) { return AllocateBlock(FMallocLowLevel::AlignedRealloc(ReleaseBlock(ptr, alignment), size, alignment), size, alignment); }
+
+private:
+    static void* AllocateBlock(void* ptr, size_t sizeInBytes, size_t alignment = 16) {
         Assert(Meta::IsPow2(alignment));
         if (nullptr == ptr) return nullptr;
-        FMallocFacet_::MakeBlock(ptr, size);
-        void* const userland = ((u8*)ptr + FMallocFacet_::HeaderSize);
-        Assert(Meta::IsAligned(alignment, userland));
-        return userland;
-    }
-
-    static void* TestBlock(void* userland, size_t alignment = 16) {
-        Assert(Meta::IsPow2(alignment));
-        if (nullptr == userland) return nullptr;
-        Assert(Meta::IsAligned(alignment, userland));
-        void* const ptr = ((u8*)userland - FMallocFacet_::HeaderSize);
-        FMallocFacet_::TestBlock(ptr);
+        Assert(Meta::IsAligned(alignment, ptr));
+#   if CORE_MALLOC_LEAKDETECTOR_PROXY
+        FLeakDetector::Instance().Allocate(ptr, sizeInBytes);
+#   endif
+#   if CORE_MALLOC_HISTOGRAM_PROXY
+        FMallocHistogram::Allocate(ptr, sizeInBytes);
+#   endif
         return ptr;
     }
 
-public:
-    FORCE_INLINE static void* Malloc(size_t size) { return MakeBlock(FMalloc_::Malloc(size + OverheadSize), size); }
-    FORCE_INLINE static void  Free(void* ptr) { FMalloc_::Free(TestBlock(ptr)); }
-    FORCE_INLINE static void* Calloc(size_t nmemb, size_t size) { return MakeBlock(FMalloc_::Calloc(nmemb, size + OverheadSize), size); }
-    FORCE_INLINE static void* Realloc(void *ptr, size_t size) { return MakeBlock(FMalloc_::Realloc(TestBlock(ptr), size + OverheadSize), size); }
-
-    FORCE_INLINE static void* AlignedMalloc(size_t size, size_t alignment) { return MakeBlock(FMalloc_::AlignedMalloc(size + OverheadSize, alignment), size, alignment); }
-    FORCE_INLINE static void  AlignedFree(void *ptr) { FMalloc_::AlignedFree(TestBlock(ptr)); }
-    FORCE_INLINE static void* AlignedCalloc(size_t nmemb, size_t size, size_t alignment) { return MakeBlock(FMalloc_::AlignedCalloc(nmemb, size + OverheadSize, alignment), size, alignment); }
-    FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment) { return MakeBlock(FMalloc_::AlignedRealloc(TestBlock(ptr, alignment), size + OverheadSize, alignment), size, alignment); }
-
-#if CORE_MALLOC_LOGGER_PROXY
-    static const FMallocLoggerFacet_::FDebugData* DebugData(void* ptr) {
-        void* const block = TestBlock(ptr);
-        return (const FMallocLoggerFacet_::FDebugData*)((u8*)block + FMallocLoggerFacet_::BlockOffset);
+    static void* ReleaseBlock(void* ptr, size_t alignment = 16) {
+        Assert(Meta::IsPow2(alignment));
+        Assert(Meta::IsAligned(alignment, ptr));
+        if (nullptr == ptr) return nullptr;
+#   if CORE_MALLOC_LEAKDETECTOR_PROXY
+        FLeakDetector::Instance().Release(ptr);
+#   endif
+        return ptr;
     }
-#endif
-#if CORE_MALLOC_POISON_PROXY
-    static const FMallocPoisonFacet_::FCanary* CanaryHeader(void* ptr) {
-        void* const block = TestBlock(ptr);
-        return (const FMallocPoisonFacet_::FCanary*)((u8*)block + FMallocPoisonFacet_::BlockOffset);
-    }
-#endif
 };
-#endif //!NEED_CORE_MALLOCPROXY
+#endif //!USE_CORE_MALLOC_PROXY
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+NOALIAS RESTRICT
+void*   (malloc)(size_t size) {
+    return FMallocProxy::Malloc(size);
+}
+//----------------------------------------------------------------------------
+NOALIAS
+void    (free)(void *ptr) {
+    return FMallocProxy::Free(ptr);
+}
+//----------------------------------------------------------------------------
+NOALIAS RESTRICT
+void*   (calloc)(size_t nmemb, size_t size) {
+    return FMallocProxy::Calloc(nmemb, size);
+}
+//----------------------------------------------------------------------------
+NOALIAS RESTRICT
+void*   (realloc)(void *ptr, size_t size) {
+    return FMallocProxy::Realloc(ptr, size);
+}
+//----------------------------------------------------------------------------
+NOALIAS RESTRICT
+void*   (aligned_malloc)(size_t size, size_t alignment) {
+    return FMallocProxy::AlignedMalloc(size, alignment);
+}
+//----------------------------------------------------------------------------
+NOALIAS
+void    (aligned_free)(void *ptr) {
+    FMallocProxy::AlignedFree(ptr);
+}
+//----------------------------------------------------------------------------
+NOALIAS RESTRICT
+void*   (aligned_calloc)(size_t nmemb, size_t size, size_t alignment) {
+    return FMallocProxy::AlignedCalloc(nmemb, size, alignment);
+}
+//----------------------------------------------------------------------------
+NOALIAS RESTRICT
+void*   (aligned_realloc)(void *ptr, size_t size, size_t alignment) {
+    return FMallocProxy::AlignedRealloc(ptr, size, alignment);
+}
+//----------------------------------------------------------------------------
+NOALIAS
+void    (malloc_release_pending_blocks)() {
+    FMallocLowLevel::ReleasePendingBlocks();
+}
+//----------------------------------------------------------------------------
+NOALIAS
+size_t  (malloc_snap_size)(size_t size) {
+    return FMallocLowLevel::SnapSize(size);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #ifndef FINAL_RELEASE
-NO_INLINE bool FetchMemoryBlockDebugInfos(void* ptr, class FCallstack* pCallstack, size_t* pSizeInBytes, bool raw/* = false */) {
-#if CORE_MALLOC_LOGGER_PROXY && CORE_MALLOC_POISON_PROXY
-    if (nullptr == ptr)
-        return false;
-
-    Assert(pCallstack || pSizeInBytes);
-
-    const FMallocLoggerFacet_::FDebugData* debugData;
-
-    const FMallocPoisonFacet_::FCanary* canary;
-
-    if (raw) {
-        debugData = (FMallocLoggerFacet_::FDebugData*)((u8*)ptr + FMallocLoggerFacet_::BlockOffset);
-        canary = (FMallocPoisonFacet_::FCanary*)((u8*)ptr + FMallocPoisonFacet_::BlockOffset);
-    }
-    else {
-        debugData = FMallocProxy_::DebugData(ptr);
-        canary = FMallocProxy_::CanaryHeader(ptr);
-    }
-
-    canary->CheckCanaries();
-
-    if (pCallstack)
-        pCallstack->SetFrames(debugData->Frames);
-    if (pSizeInBytes)
-        *pSizeInBytes = canary->SizeInBytes;
-
-    return true;
-
-#else
-    UNUSED(ptr);
-    UNUSED(pCallstack);
-    UNUSED(pSizeInBytes);
-    return false;
-
+void StartLeakDetector() {
+#if CORE_MALLOC_LEAKDETECTOR_PROXY
+    FLeakDetector::Instance().Start();
+#endif
+}
+#endif //!FINAL_RELEASE
+//----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
+void ShutdownLeakDetector() {
+#if CORE_MALLOC_LEAKDETECTOR_PROXY
+    FLeakDetector::Instance().Shutdown();
+#endif
+}
+#endif //!FINAL_RELEASE
+//----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
+bool SetLeakDetectorWhiteListed(bool ignoreleaks) {
+#if CORE_MALLOC_LEAKDETECTOR_PROXY
+    bool& whitelistedTLS = FLeakDetector::WhiteListedTLS();
+    const bool wasIgnoringLeaks = whitelistedTLS;
+    whitelistedTLS = ignoreleaks;
+    return wasIgnoringLeaks;
+#endif
+}
+#endif //!FINAL_RELEASE
+//----------------------------------------------------------------------------
+#ifndef FINAL_RELEASE
+void DumpMemoryLeaks(bool onlyNonDeleters/* = false */) {
+#if CORE_MALLOC_LEAKDETECTOR_PROXY
+    auto& leakDetector = FLeakDetector::Instance();
+    leakDetector.ReportLeaks(onlyNonDeleters);
 #endif
 }
 #endif //!FINAL_RELEASE
@@ -488,7 +346,7 @@ bool FetchMemoryAllocationHistogram(
     TMemoryView<const size_t>* classes,
     TMemoryView<const size_t>* allocations,
     TMemoryView<const size_t>* totalBytes ) {
-#if CORE_MALLOC_HISTOGRAM_PROXY && CORE_MALLOC_POISON_PROXY
+#if CORE_MALLOC_HISTOGRAM_PROXY
     *classes = MakeView(GMallocSizeClasses);
     *allocations = MakeView(GMallocSizeAllocations);
     *totalBytes = MakeView(GMallocSizeTotalBytes);
@@ -498,58 +356,6 @@ bool FetchMemoryAllocationHistogram(
 #endif
 }
 #endif //!FINAL_RELEASE
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   (malloc)(size_t size) {
-    return FMallocProxy_::Malloc(size);
-}
-//----------------------------------------------------------------------------
-NOALIAS
-void    (free)(void *ptr) {
-    return FMallocProxy_::Free(ptr);
-}
-//----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   (calloc)(size_t nmemb, size_t size) {
-    return FMallocProxy_::Calloc(nmemb, size);
-}
-//----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   (realloc)(void *ptr, size_t size) {
-    return FMallocProxy_::Realloc(ptr, size);
-}
-//----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   (aligned_malloc)(size_t size, size_t alignment) {
-    return FMallocProxy_::AlignedMalloc(size, alignment);
-}
-//----------------------------------------------------------------------------
-NOALIAS
-void    (aligned_free)(void *ptr) {
-    FMallocProxy_::AlignedFree(ptr);
-}
-//----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   (aligned_calloc)(size_t nmemb, size_t size, size_t alignment) {
-    return FMallocProxy_::AlignedCalloc(nmemb, size, alignment);
-}
-//----------------------------------------------------------------------------
-NOALIAS RESTRICT
-void*   (aligned_realloc)(void *ptr, size_t size, size_t alignment) {
-    return FMallocProxy_::AlignedRealloc(ptr, size, alignment);
-}
-//----------------------------------------------------------------------------
-NOALIAS
-void    (malloc_release_pending_blocks)() {
-    FMalloc_::ReleasePendingBlocks();
-}
-//----------------------------------------------------------------------------
-NOALIAS
-size_t  (malloc_snap_size)(size_t size) {
-    return FMalloc_::SnapSize(size);
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

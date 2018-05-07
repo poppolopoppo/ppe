@@ -96,14 +96,14 @@ private:
         FLocalQueue_& worker = _workerQueues[workerIndex];
         Meta::FUniqueLock scopeLock(worker.Barrier, std::defer_lock);
 
-        if (scopeLock.try_lock() == false)
+        if (scopeLock.try_lock() && worker.Queue.size() < _maxTasks) {
+            CORE_LEAKDETECTOR_WHITELIST_SCOPE();
+            worker.Queue.emplace(std::move(task));
+            worker.HighestPriority = worker.Queue.top().Priority;
+        }
+        else {
             return false;
-
-        if (worker.Queue.size() >= _maxTasks)
-            return false;
-
-        worker.Queue.emplace(std::move(task));
-        worker.HighestPriority = worker.Queue.top().Priority;
+        }
 
         scopeLock.unlock(); // unlock before notification to minimize mutex contention
         worker.Empty.notify_one(); // notify one consumer thread

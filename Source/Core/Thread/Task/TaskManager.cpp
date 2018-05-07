@@ -229,8 +229,10 @@ PTaskCounter FWorkerContext_::CreateCounter() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     PTaskCounter result;
-    if (not _counters.pop_front(&result))
+    if (not _counters.pop_front(&result)) {
+        CORE_LEAKDETECTOR_WHITELIST_SCOPE(); // because of cached counters
         result.reset(new FTaskCounter());
+    }
 
 #ifdef WITH_CORE_ASSERT
     {

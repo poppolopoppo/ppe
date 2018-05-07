@@ -205,56 +205,6 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 #endif
     }
 
-#ifdef WITH_CORE_ASSERT
-    void ReportLeaks() const {
-        Assert_NoAssume(CheckCanaries_());
-
-        const size_t n = BlockAllocatedCount();
-        Assert(n);
-
-        size_t leakedNumBlocks = n;
-        size_t leakedSizeInBytes = n * BlockSizeInBytes();
-
-        forrange(i, 0, _mappedCount) {
-            using block_type = FBinnedChunk_::FBlock;
-            block_type* const usedBlock = BlockAt_(i);
-
-            bool isLeak = true;
-            for (block_type* freeBlock = _freeBlock; freeBlock; freeBlock = freeBlock->Next) {
-                Assert_NoAssume(freeBlock->TestCanary());
-                if (freeBlock == usedBlock) {
-                    Assert_NoAssume(usedBlock->TestCanary());
-                    isLeak = false;
-                    break;
-                }
-            }
-
-            if (isLeak) {
-                size_t blockSizeInBytes = 0;
-                FCallstack callstack;
-                if (FetchMemoryBlockDebugInfos(usedBlock, &callstack, &blockSizeInBytes, true)) {
-                    FPlatformMisc::DebugBreak();
-
-                    FDecodedCallstack decoded;
-                    callstack.Decode(&decoded);
-                    LOG(MallocBinned, Error, L"leaked block {0} :\n{1}", Fmt::FSizeInBytes{ blockSizeInBytes }, decoded);
-                }
-                else {
-                    LOG(MallocBinned, Warning, L"no infos available for leaked memory block, try to turn on CORE_MALLOC_LOGGER_PROXY");
-                }
-            }
-        }
-
-        if (leakedNumBlocks) {
-            LOG(MallocBinned, Error, L"leaked {0} blocks ({1}) in one chunk",
-                Fmt::FCountOfElements{ leakedNumBlocks },
-                Fmt::FSizeInBytes{ leakedSizeInBytes });
-
-            AssertNotReached();
-        }
-    }
-#endif
-
     static constexpr size_t NumClasses = 45;
 
     static constexpr u16 GClassesSize[NumClasses] = {
@@ -362,8 +312,6 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
         while (FBinnedChunk_* chunk = chunksToRelease.PopHead()) {
             Assert(chunk->_threadCache == nullptr);
 
-            ONLY_IF_ASSERT(chunk->ReportLeaks());
-
             if (chunk->IsCompletelyFree()) {
                 ONLY_IF_ASSERT(chunk->~FBinnedChunk_());
                 ONLY_IF_ASSERT(FillBlockDeleted_(chunk, FBinnedChunk_::ChunkSizeInBytes));
@@ -404,6 +352,7 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
 
     void ReleasePage(FBinnedPage_* page) {
         Assert(page);
+        Assert(not _globalFreePages.Contains(page)); // not thread safe but ok for assert (read only)
 
         if (Likely(not _globalFreePages.full())) {
             const FAtomicSpinLock::FScope scopeLock(_barrier);
@@ -646,6 +595,8 @@ private:
 
         // release page to local or global cache
         auto* page = (FBinnedPage_*)chunk;
+
+        Assert(not _localFreePages.Contains(page));
 
         if (_localFreePages.full()) {
             FBinnedGlobalCache_::Instance().ReleasePage(page);

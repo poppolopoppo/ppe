@@ -13,9 +13,9 @@
 #if USE_CORE_BENCHMARK
 #   include "Core/IO/StringView.h"
 #   define BENCHMARK_SCOPE(_CATEGORY, _MSG) \
-        const ::Core::FBenchmarkScope CONCAT(__benchmarkScope, __LINE__)((_CATEGORY), (_MSG))
+        const ::Core::FBenchmarkScope ANONYMIZE(_benchmarkScope)((_CATEGORY), (_MSG))
 #   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR) \
-        const ::Core::FIOBenchmarkScope CONCAT(__IObenchmarkScope, __LINE__)((_CATEGORY), (_MSG), (_SIZE_IN_BYTES_PTR))
+        const ::Core::FIOBenchmarkScope ANONYMIZE(_IObenchmarkScope)((_CATEGORY), (_MSG), (_SIZE_IN_BYTES_PTR))
 #else
 #   define BENCHMARK_SCOPE(_CATEGORY, _MSG) NOOP()
 #   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR) NOOP()
