@@ -15,14 +15,8 @@ namespace Core {
 #define ASSOCIATIVE_VECTOR(_DOMAIN, _KEY, _VALUE) \
     ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTOR(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
 //----------------------------------------------------------------------------
-#define ASSOCIATIVE_VECTOR_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
-//----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTORINSITU(_DOMAIN, _KEY, _VALUE, _InSituCount) \
     ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTORINSITU(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
-//----------------------------------------------------------------------------
-#define ASSOCIATIVE_VECTORINSITU_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE, _InSituCount) \
-    ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -23,15 +23,8 @@ namespace Core {
     ::Core::TPatriciaTrie<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, ::Core::Meta::TEqualTo<_KEY>, \
         NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TPatriciaNode<_KEY COMMA _VALUE>)) >
 //----------------------------------------------------------------------------
-#define PATRICIATRIE_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TPatriciaTrie<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, ::Core::Meta::TEqualTo<_KEY>, \
-        THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TPatriciaNode<_KEY COMMA _VALUE>)) >
-//----------------------------------------------------------------------------
 #define PATRICIASET(_DOMAIN, _KEY) PATRICIATRIE(_DOMAIN, _KEY, void)
-#define PATRICIASET_THREAD_LOCAL(_DOMAIN, _KEY) PATRICIATRIE_THREAD_LOCAL(_DOMAIN, _KEY, void)
-//----------------------------------------------------------------------------
 #define PATRICIAMAP(_DOMAIN, _KEY, _VALUE) PATRICIATRIE(_DOMAIN, _KEY, _VALUE)
-#define PATRICIAMAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) PATRICIATRIE_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

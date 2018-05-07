@@ -29,8 +29,8 @@ public:
 
     FShaderSource(   FString&& sourceName,
                     const Core::FFilename& filename,
-                    RAWSTORAGE_THREAD_LOCAL(Shader, char)&& sourceCode,
-                    ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, FString, FString)&& defines);
+                    RAWSTORAGE(Shader, char)&& sourceCode,
+                    ASSOCIATIVE_VECTOR(Shader, FString, FString)&& defines);
 
     ~FShaderSource();
 
@@ -42,11 +42,11 @@ public:
     TMemoryView<const char> SourceCode() const { return MakeView(_sourceCode); }
     TMemoryView<const TPair<FString, FString>> Defines() const { return MakeView(_defines); }
 
-    void Preprocess(RAWSTORAGE_THREAD_LOCAL(Shader, char)& preprocessed,
+    void Preprocess(RAWSTORAGE(Shader, char)& preprocessed,
                     const FShaderProgram *program,
                     const FVertexDeclaration *vertexDeclaration) const;
 
-    void FillSubstitutions( VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>)& substitutions,
+    void FillSubstitutions( VECTOR(Shader, TPair<FString COMMA FString>)& substitutions,
                             const FVertexDeclaration *vertexDeclaration) const;
 
     static FShaderSource *LoadFromFileIFP(  const Core::FFilename& filename,
@@ -61,8 +61,8 @@ public:
 private:
     FString _sourceName;
     Core::FFilename _filename;
-    RAWSTORAGE_THREAD_LOCAL(Shader, char) _sourceCode;
-    ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, FString, FString) _defines;
+    RAWSTORAGE(Shader, char) _sourceCode;
+    ASSOCIATIVE_VECTOR(Shader, FString, FString) _defines;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

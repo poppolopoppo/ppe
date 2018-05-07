@@ -39,7 +39,7 @@ private:
 //----------------------------------------------------------------------------
 CORE_SERIALIZE_API void RTTI_to_Json(class FJson& dst, const TMemoryView<const RTTI::PMetaObject>& src, const RTTI::FMetaTransaction* outer = nullptr);
 //----------------------------------------------------------------------------
-CORE_SERIALIZE_API bool Json_to_RTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject)& dst, const class FJson& src);
+CORE_SERIALIZE_API bool Json_to_RTTI(VECTOR(Transient, RTTI::PMetaObject)& dst, const class FJson& src);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -21,9 +21,6 @@ using TList = std::list< T, _Allocator >;
 #define LIST(_DOMAIN, T) \
     ::Core::TList<T, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, T) >
 //----------------------------------------------------------------------------
-#define LIST_THREAD_LOCAL(_DOMAIN, T) \
-    ::Core::TList<T, THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, T) >
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>

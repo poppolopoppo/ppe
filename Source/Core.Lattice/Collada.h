@@ -18,7 +18,7 @@ FWD_REFPTR(GenericMesh);
 class FCollada {
 public:
     template <typename T>
-    using TArray = VECTOR_THREAD_LOCAL(Collada, T);
+    using TArray = VECTOR(Collada, T);
 
     FCollada() : FCollada(nullptr) {}
     explicit FCollada(XML::FDocument* xml);

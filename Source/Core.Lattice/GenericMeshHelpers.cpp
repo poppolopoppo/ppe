@@ -306,8 +306,8 @@ static void ComputeTangentSpace_(
     const TMemoryView<const float2> texcoords2f = sp_texcoord2f.MakeView();
     const TMemoryView<const float3> normals3f = sp_normal3f.MakeView();
 
-    VECTOR_THREAD_LOCAL(GenericMesh, float3) tmpTangents3f;
-    VECTOR_THREAD_LOCAL(GenericMesh, float3) tmpBinormals3f;
+    VECTOR(GenericMesh, float3) tmpTangents3f;
+    VECTOR(GenericMesh, float3) tmpBinormals3f;
 
     TMemoryView<float3> tangents3f;
     TMemoryView<float4> tangents4f;

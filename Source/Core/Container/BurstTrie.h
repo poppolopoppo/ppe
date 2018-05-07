@@ -18,21 +18,11 @@ namespace Core {
     ::Core::TBurstTrie<_CHAR, _VALUE, BURST_TRIE_INSITU, _CASE_SENSITIVE, _CAPACITY, \
         NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TPatriciaNode<_CHAR COMMA _VALUE COMMA BURST_TRIE_INSITU>)) >
 //----------------------------------------------------------------------------
-#define BURST_TRIE_THREAD_LOCAL(_DOMAIN, _CHAR, _VALUE, _CASE_SENSITIVE, _CAPACITY) \
-    ::Core::TBurstTrie<_CHAR, _VALUE, BURST_TRIE_INSITU, _CASE_SENSITIVE, _CAPACITY, \
-        THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TPatriciaNode<_CHAR COMMA _VALUE COMMA BURST_TRIE_INSITU>)) >
-//----------------------------------------------------------------------------
 #define STRINGTRIE_SET(_DOMAIN, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE(_DOMAIN, char, void, _CASE_SENSITIVE, _CAPACITY)
-#define STRINGTRIE_SET_THREAD_LOCAL(_DOMAIN, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE_THREAD_LOCAL(_DOMAIN, char, void, _CASE_SENSITIVE, _CAPACITY)
+#define STRINGTRIE_MAP(_DOMAIN, _VALUE, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE(_DOMAIN, char, _VALUE, _CASE_SENSITIVE, _CAPACITY)
 //----------------------------------------------------------------------------
 #define WSTRINGTRIE_SET(_DOMAIN, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE(_DOMAIN, wchar_t, void, _CASE_SENSITIVE, _CAPACITY)
-#define WSTRINGTRIE_SET_THREAD_LOCAL(_DOMAIN, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE_THREAD_LOCAL(_DOMAIN, wchar_t, void, _CASE_SENSITIVE, _CAPACITY)
-//----------------------------------------------------------------------------
-#define STRINGTRIE_MAP(_DOMAIN, _VALUE, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE(_DOMAIN, char, _VALUE, _CASE_SENSITIVE, _CAPACITY)
-#define STRINGTRIE_MAP_THREAD_LOCAL(_DOMAIN, _VALUE, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE_THREAD_LOCAL(_DOMAIN, char, _VALUE, _CASE_SENSITIVE, _CAPACITY)
-//----------------------------------------------------------------------------
 #define WSTRINGTRIE_MAP(_DOMAIN, _VALUE, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE(_DOMAIN, wchar_t, _VALUE, _CASE_SENSITIVE, _CAPACITY)
-#define WSTRINGTRIE_MAP_THREAD_LOCAL(_DOMAIN, _VALUE, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE_THREAD_LOCAL(_DOMAIN, wchar_t, _VALUE, _CASE_SENSITIVE, _CAPACITY)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

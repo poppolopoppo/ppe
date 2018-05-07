@@ -24,9 +24,6 @@ using TMap = std::map<_Key, _Value, _Predicate, _Allocator >;
 #define MAP(_DOMAIN, _KEY, _VALUE) \
     ::Core::TMap<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>) >
 //----------------------------------------------------------------------------
-#define MAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TMap<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>) >
-//----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
 hash_t hash_value(const TMap<_Key, _Value, _Pred, _Allocator>& map) {
     return hash_range(map.begin(), map.end());

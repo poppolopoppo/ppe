@@ -10,9 +10,9 @@ namespace Pixmap {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define PIXELSTORAGE(_Domain, T) \
-    Core::Pixmap::TPixelStorage< T, MEMORY_DOMAIN_TAG(_Domain) >
+    Core::Pixmap::TPixelStorage< T, ALLOCATOR(_Domain, T) >
 //----------------------------------------------------------------------------
-template <typename T, typename _Domain>
+template <typename T, typename _Allocator>
 class TPixelStorage {
 public:
     TPixelStorage() : _size(0) {}
@@ -52,7 +52,7 @@ public:
     }
 
 private:
-    TRawStorage<T, TAllocator<T, _Domain> > _storage;
+    TRawStorage<T, _Allocator> _storage;
     size_t _size;
 };
 //----------------------------------------------------------------------------

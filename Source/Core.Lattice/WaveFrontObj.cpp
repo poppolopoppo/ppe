@@ -26,7 +26,7 @@ bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename) {
     if (filename.Extname() == FFSConstNames::Objz())
         policy = policy + EAccessPolicy::Compress;
 
-    RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
+    RAWSTORAGE(FileSystem, u8) content;
     if (false == VFS_ReadAll(&content, filename, policy))
         return false;
 
@@ -44,11 +44,11 @@ bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename, const FSt
         u32 Normal   = (u32)-1;
     };
 
-    VECTOR_THREAD_LOCAL(WaveFrontObj, float3) positions;
-    VECTOR_THREAD_LOCAL(WaveFrontObj, float2) texcoords;
-    VECTOR_THREAD_LOCAL(WaveFrontObj, float3) normals;
-    VECTOR_THREAD_LOCAL(WaveFrontObj, float3) colors;
-    VECTOR_THREAD_LOCAL(WaveFrontObj, FVertex_) vertices;
+    VECTOR(WaveFrontObj, float3) positions;
+    VECTOR(WaveFrontObj, float2) texcoords;
+    VECTOR(WaveFrontObj, float3) normals;
+    VECTOR(WaveFrontObj, float3) colors;
+    VECTOR(WaveFrontObj, FVertex_) vertices;
 
     FICStrStream iss(content);
 
@@ -182,7 +182,7 @@ bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename, const FSt
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool FWaveFrontObj::Save(const FGenericMesh* src, const FFilename& filename) {
-    MEMORYSTREAM_THREAD_LOCAL(Image) writer;
+    MEMORYSTREAM(Image) writer;
     if (false == Save(src, filename, &writer))
         return false;
 

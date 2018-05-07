@@ -15,14 +15,8 @@ namespace Core {
 #define FLAT_MAP(_DOMAIN, _KEY, _VALUE) \
     ::Core::TFlatMap<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTOR(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
 //----------------------------------------------------------------------------
-#define FLAT_MAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TFlatMap<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
-//----------------------------------------------------------------------------
 #define FLAT_MAPINSITU(_DOMAIN, _KEY, _VALUE, _InSituCount) \
     ::Core::TFlatMap<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTORINSITU(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
-//----------------------------------------------------------------------------
-#define FLAT_MAPINSITU_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE, _InSituCount) \
-    ::Core::TFlatMap<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, ::Core::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

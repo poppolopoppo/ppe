@@ -24,7 +24,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-using FMarkupStack_ = VECTORINSITU_THREAD_LOCAL(Markup, FMarkup::FElement*, 32);
+using FMarkupStack_ = VECTORINSITU(Markup, FMarkup::FElement*, 32);
 //----------------------------------------------------------------------------
 static void ParseAttributesIFP_(Lexer::FLexer& lexer, FMarkup& markup, FMarkup::FElement& elt) {
     Lexer::FMatch key, value, equals;
@@ -190,8 +190,7 @@ void FMarkup::FElement::ToStream(FWTextWriter& oss, bool minify/* = true */) con
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FMarkup::FMarkup()
-    : _heap(LINEARHEAP_DOMAIN_TRACKINGDATA(Markup))
-    , _root(*this)
+    : _root(*this)
     , _textHeap(_heap)
 {}
 //----------------------------------------------------------------------------
@@ -271,7 +270,7 @@ bool FMarkup::Load(FMarkup* markup, const FFilename& filename) {
     if (filename.Extname() == FFSConstNames::Xmlz())
         policy = policy + EAccessPolicy::Compress;
 
-    RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
+    RAWSTORAGE(FileSystem, u8) content;
     if (not VFS_ReadAll(&content, filename, policy))
         return false;
 

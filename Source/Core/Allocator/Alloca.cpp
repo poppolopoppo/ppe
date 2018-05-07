@@ -3,12 +3,11 @@
 #include "Alloca.h"
 
 #include "Allocator/LinearHeap.h"
+#include "Allocator/LinearHeapAllocator.h"
 #include "Allocator/Malloc.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Meta/Singleton.h"
-
-#include "ThreadLocalHeap.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -16,8 +15,10 @@ namespace Core {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class FAllocaLinearHeapTLS_ : Meta::TThreadLocalSingleton<FLinearHeap, FAllocaLinearHeapTLS_> {
-    typedef Meta::TThreadLocalSingleton<FLinearHeap, FAllocaLinearHeapTLS_> parent_type;
+class FAllocaLinearHeapTLS_
+    : public LINEARHEAP(Alloca)
+    , Meta::TThreadLocalSingleton<FAllocaLinearHeapTLS_> {
+    typedef Meta::TThreadLocalSingleton<FAllocaLinearHeapTLS_> parent_type;
 public:
     using parent_type::Instance;
 #ifdef WITH_CORE_ASSERT
@@ -25,32 +26,24 @@ public:
 #endif
     using parent_type::Destroy;
 
-#ifdef USE_MEMORY_DOMAINS
-    static void Create() { parent_type::Create(&MEMORY_DOMAIN_TRACKING_DATA(Alloca)); }
-#else
     static void Create() { parent_type::Create(); }
-#endif
 
-#if defined(ARCH_X64)
-    STATIC_CONST_INTEGRAL(size_t, GMaxBlockSize, 32 << 10); // 32 kb
-#else
-    STATIC_CONST_INTEGRAL(size_t, GMaxBlockSize, 16 << 10); // 16 kb
-#endif
+    STATIC_CONST_INTEGRAL(size_t, MaxBlockSize, 32 << 10); // 32 kb
 };
 //----------------------------------------------------------------------------
 // Fallback on thread local heap when the block is too large :
 struct FAllocaFallback_ {
     static void* Malloc(size_t size) {
-        return GetThreadLocalHeap().Malloc(size);
+        return Core::malloc(size);
     }
     static void* Realloc(void* ptr, size_t size) {
-        return GetThreadLocalHeap().Realloc(ptr, size);
+        return Core::realloc(ptr, size);
     }
     static void Free(void* ptr) {
-        GetThreadLocalHeap().Free(ptr);
+        Core::free(ptr);
     }
     static size_t SnapSize(size_t size) {
-        return GetThreadLocalHeap().SnapSize(size);
+        return Core::malloc_snap_size(size);
     }
 };
 //----------------------------------------------------------------------------
@@ -62,7 +55,7 @@ void* Alloca(size_t size) {
     if (0 == size)
         return nullptr;
 
-    void* const p = ((size <= FAllocaLinearHeapTLS_::GMaxBlockSize)
+    void* const p = ((size <= FAllocaLinearHeapTLS_::MaxBlockSize)
         ? FAllocaLinearHeapTLS_::Instance().Allocate(size)
         : FAllocaFallback_::Malloc(size) );
 
@@ -80,10 +73,13 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
         return nullptr;
     }
 
+    Assert(ptr);
+    Assert(oldSize);
+
     void* result;
     auto& heap = FAllocaLinearHeapTLS_::Instance();
     if (heap.AliasesToHeap(ptr)) {
-        if (newSize <= FAllocaLinearHeapTLS_::GMaxBlockSize) {
+        if (newSize <= FAllocaLinearHeapTLS_::MaxBlockSize) {
             result = heap.Relocate_AssumeLast(ptr, newSize, oldSize);
         }
         else if (keepData) {
@@ -121,7 +117,7 @@ void FreeAlloca(void* ptr, size_t size) {
 }
 //----------------------------------------------------------------------------
 size_t AllocaSnapSize(size_t size) {
-    return ((size <= FAllocaLinearHeapTLS_::GMaxBlockSize)
+    return ((size <= FAllocaLinearHeapTLS_::MaxBlockSize)
         ? ROUND_TO_NEXT_16(size)
         : FAllocaFallback_::SnapSize(size) );
 }

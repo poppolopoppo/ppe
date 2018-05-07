@@ -95,7 +95,7 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
     FAabb2f root(float2(0), boxes[indices[0]]);
 
     // Fill recursively the bins with the sorted boxes
-    VECTOR_THREAD_LOCAL(Maths, FAabb2f) bins;
+    VECTOR(Maths, FAabb2f) bins;
     bins.reserve(n);
     bins.push_back(root);
 

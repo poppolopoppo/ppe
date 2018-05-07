@@ -12,7 +12,7 @@ namespace Graphics {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FillVertexSubstitutions(   VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>)& defines,
+void FillVertexSubstitutions(   VECTOR(Shader, TPair<FString COMMA FString>)& defines,
                                 const FVertexDeclaration *declaration ) {
     Assert(declaration);
 

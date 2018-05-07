@@ -186,7 +186,7 @@ void FFileSystemTrie::Clear() {
         queue.Push(next);
     }
 
-    VECTOR_THREAD_LOCAL(FileSystem, PFileSystemNode) nodes;
+    VECTOR(FileSystem, PFileSystemNode) nodes;
     nodes.reserve(128);
 
     // first-pass : detach all nodes from each others

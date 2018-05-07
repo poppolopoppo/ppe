@@ -4,7 +4,6 @@
 
 #include "Allocator/Alloca.h"
 #include "Allocator/Malloc.h"
-#include "Allocator/ThreadLocalHeap.h"
 #include "Diagnostic/LastError.h"
 #include "Diagnostic/Logger.h"
 #include "IO/Format.h"
@@ -12,6 +11,7 @@
 #include "IO/TextWriter.h"
 #include "Meta/AutoSingleton.h"
 #include "Meta/NumericLimits.h"
+#include "Meta/Singleton.h"
 
 #ifndef FINAL_RELEASE
 #   define WITH_CORE_THREADCONTEXT_NAME
@@ -324,7 +324,6 @@ const FThreadContext& CurrentThreadContext() {
 void FThreadContextStartup::Start(const char* name, size_t tag) {
     FThreadLocalContext_::Create(name, tag);
     Meta::FThreadLocalAutoSingletonManager::Start();
-    FThreadLocalHeapStartup::Start(false);
     FAllocaStartup::Start(false);
 
 #ifdef USE_DEBUG_LOGGER
@@ -336,7 +335,6 @@ void FThreadContextStartup::Start(const char* name, size_t tag) {
 void FThreadContextStartup::Start_MainThread() {
     FThreadLocalContext_::CreateMainThread();
     Meta::FThreadLocalAutoSingletonManager::Start();
-    FThreadLocalHeapStartup::Start(true);
     FAllocaStartup::Start(true);
 
 #ifdef USE_DEBUG_LOGGER
@@ -352,7 +350,6 @@ void FThreadContextStartup::Shutdown() {
 #endif
 
     FAllocaStartup::Shutdown();
-    FThreadLocalHeapStartup::Shutdown();
     FThreadLocalContext_::Destroy();
     Meta::FThreadLocalAutoSingletonManager::Shutdown();
 }

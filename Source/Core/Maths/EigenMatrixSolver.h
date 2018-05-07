@@ -206,7 +206,7 @@ private:
         T cs, sn;
     };
 
-    VECTOR_THREAD_LOCAL(Maths, FGivensRotation) _givens;  // K*(N-1) elements
+    VECTOR(Maths, FGivensRotation) _givens;  // K*(N-1) elements
 
     // When sorting is requested, the permutation associated with the sort is
     // stored in _permutation.  When sorting is not requested, _permutation[0]

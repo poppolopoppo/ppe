@@ -15,14 +15,8 @@ namespace Core {
 #define FLAT_SET(_DOMAIN, _KEY) \
     ::Core::TFlatSet<_KEY, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTOR(_DOMAIN, _KEY) >
 //----------------------------------------------------------------------------
-#define FLAT_SET_THREAD_LOCAL(_DOMAIN, _KEY) \
-    ::Core::TFlatSet<_KEY, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTOR_THREAD_LOCAL(_DOMAIN, _KEY) >
-//----------------------------------------------------------------------------
 #define FLAT_SETINSITU(_DOMAIN, _KEY, _InSituCount) \
     ::Core::TFlatSet<_KEY, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTORINSITU(_DOMAIN, _KEY, _InSituCount) >
-//----------------------------------------------------------------------------
-#define FLAT_SETINSITU_THREAD_LOCAL(_DOMAIN, _KEY, _InSituCount) \
-    ::Core::TFlatSet<_KEY, ::Core::Meta::TEqualTo<_KEY>, ::Core::Meta::TLess<_KEY>, VECTORINSITU_THREAD_LOCAL(_DOMAIN, _KEY, _InSituCount) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

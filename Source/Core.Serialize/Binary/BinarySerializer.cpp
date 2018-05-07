@@ -122,7 +122,7 @@ public:
     typedef typename traits_type::hash_type hash_type;
     typedef typename traits_type::equalto_type equalto_type;
     typedef TNumericDefault<u32, TObjectIndexer_, UINT32_MAX> index_t;
-    typedef THashMap<_Key, index_t, hash_type, equalto_type, THREAD_LOCAL_ALLOCATOR(Serialize, TPair<_Key, index_t>)> hashmap_type;
+    typedef THashMap<_Key, index_t, hash_type, equalto_type, ALLOCATOR(Binary, TPair<_Key, index_t>)> hashmap_type;
 
     hashmap_type Entities;
 
@@ -213,7 +213,7 @@ static void SerializePODs_(IBufferedStreamWriter* writer, const THashMap<_Key, _
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool DeserializePODs_(IBufferedStreamReader& reader, VECTOR_THREAD_LOCAL(Serialize, T)& results) {
+bool DeserializePODs_(IBufferedStreamReader& reader, VECTOR(Binary, T)& results) {
     u32 arraySize = UINT32_MAX;
     if (false == reader.ReadPOD(&arraySize))
         return false;
@@ -233,7 +233,7 @@ bool DeserializePODs_(IBufferedStreamReader& reader, VECTOR_THREAD_LOCAL(Seriali
 //----------------------------------------------------------------------------
 template <typename _Elt, typename _Result, typename _ReadLambda>
 bool DeserializePODArrays_( IBufferedStreamReader& reader,
-                            VECTOR_THREAD_LOCAL(Serialize, _Result)& results,
+                            VECTOR(Binary, _Result)& results,
                             _ReadLambda&& lambda ) {
     u32 arraySize = UINT32_MAX;
     if (false == reader.ReadPOD(&arraySize))
@@ -566,15 +566,15 @@ private:
     typedef TNumericDefault<u32, FBinaryDeserialize_, UINT32_MAX> index_t;
     typedef index_t object_index_t;
 
-    typedef VECTOR_THREAD_LOCAL(Serialize, const RTTI::FMetaProperty*) properties_type;
+    typedef VECTOR(Binary, const RTTI::FMetaProperty*) properties_type;
 
-    VECTOR_THREAD_LOCAL(Serialize, FString) _strings;
-    VECTOR_THREAD_LOCAL(Serialize, FWString) _wstrings;
-    VECTOR_THREAD_LOCAL(Serialize, const RTTI::FMetaClass*) _metaClasses;
-    VECTOR_THREAD_LOCAL(Serialize, properties_type) _properties;
-    VECTOR_THREAD_LOCAL(Serialize, object_index_t) _topObjects;
-    VECTOR_THREAD_LOCAL(Serialize, FSerializedObject_) _headers;
-    VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject) _objects;
+    VECTOR(Binary, FString) _strings;
+    VECTOR(Binary, FWString) _wstrings;
+    VECTOR(Binary, const RTTI::FMetaClass*) _metaClasses;
+    VECTOR(Binary, properties_type) _properties;
+    VECTOR(Binary, object_index_t) _topObjects;
+    VECTOR(Binary, FSerializedObject_) _headers;
+    VECTOR(Binary, RTTI::PMetaObject) _objects;
 };
 //----------------------------------------------------------------------------
 void FBinaryDeserialize_::Read(IBufferedStreamReader& reader) {
@@ -1023,8 +1023,8 @@ private:
     const FBinarySerializer* _owner;
     const RTTI::FMetaTransaction* _transaction;
 
-    MEMORYSTREAM_THREAD_LOCAL(Serialize) _objectStream;
-    DEQUE_THREAD_LOCAL(Serialize, RTTI::SCMetaObject) _objectQueue;
+    MEMORYSTREAM(Binary) _objectStream;
+    DEQUE(Binary, RTTI::SCMetaObject) _objectQueue;
 
     STATIC_ASSERT(sizeof(FFourCC) == sizeof(property_index_t));
     STATIC_ASSERT(sizeof(FFourCC) == sizeof(class_index_t));
@@ -1036,11 +1036,11 @@ private:
     wstring_indices_type _wstringIndices;
 
     class_indices_type _classIndices;
-    VECTOR_THREAD_LOCAL(Serialize, property_indices_type) _propertiesByClassIndex;
+    VECTOR(Binary, property_indices_type) _propertiesByClassIndex;
 
     object_indices_type _objectIndices;
-    VECTOR_THREAD_LOCAL(Serialize, object_index_t) _topObjects;
-    VECTOR_THREAD_LOCAL(Serialize, FSerializedObject_) _objectsStreamed;
+    VECTOR(Binary, object_index_t) _topObjects;
+    VECTOR(Binary, FSerializedObject_) _objectsStreamed;
 };
 //----------------------------------------------------------------------------
 void FBinarySerialize_::Append(const RTTI::FMetaObject* object, bool topObject /* = true */) {

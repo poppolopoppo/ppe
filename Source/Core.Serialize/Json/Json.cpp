@@ -40,7 +40,7 @@ static bool ParseObject_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value)
     if (lexer.ReadIFN(Lexer::FSymbols::RBrace)) // quick reject for empty object
         return true;
 
-    ASSOCIATIVE_VECTORINSITU_THREAD_LOCAL(Json, FJson::FText, FJson::FValue, 8) tmp; // use temporary dico to don't bloat the linear heap
+    ASSOCIATIVE_VECTORINSITU(Json, FJson::FText, FJson::FValue, 8) tmp; // use temporary dico to don't bloat the linear heap
 
     Lexer::FMatch key;
     for (bool notFirst = false;; notFirst = true) {
@@ -71,7 +71,7 @@ static bool ParseArray_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) 
     if (lexer.ReadIFN(Lexer::FSymbols::RBracket)) // quick reject for empty array
         return true;
 
-    VECTORINSITU_THREAD_LOCAL(Json, FJson::FValue, 8) tmp; // use temporary array to don't bloat the linear heap
+    VECTORINSITU(Json, FJson::FValue, 8) tmp; // use temporary array to don't bloat the linear heap
 
     for (bool notFirst = false;; notFirst = true) {
         if (notFirst && not lexer.ReadIFN(Lexer::FSymbols::Comma))
@@ -532,7 +532,7 @@ bool FJson::Load(FJson* json, const FFilename& filename) {
     if (filename.Extname() == FFSConstNames::Jsonz())
         policy = policy + EAccessPolicy::Compress;
 
-    RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
+    RAWSTORAGE(FileSystem, u8) content;
     if (not VFS_ReadAll(&content, filename, policy))
         return false;
 

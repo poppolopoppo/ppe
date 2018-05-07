@@ -100,11 +100,11 @@ public:
     template <typename T>
     using yolo_pair_type = TPair<T, T>;
     template <typename T>
-    using yolo_dict_type = HASHMAP_THREAD_LOCAL(Container, T, T);
+    using yolo_dict_type = HASHMAP(Container, T, T);
     template <typename T>
-    using yolo_vect_type = VECTOR_THREAD_LOCAL(Container, yolo_dict_type<T>);
+    using yolo_vect_type = VECTOR(Container, yolo_dict_type<T>);
     template <typename T>
-    using yolo_type = HASHMAP_THREAD_LOCAL(Container, yolo_pair_type<T>, yolo_vect_type<T>);
+    using yolo_type = HASHMAP(Container, yolo_pair_type<T>, yolo_vect_type<T>);
 
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId) \
     T _ ## _Name ## Scalar; \
@@ -318,7 +318,7 @@ static NO_INLINE void Test_Atoms_() {
     RTTI::FAtom vatom = RTTI::MakeAtom(&v);
     print_atom(vatom);
 
-    VECTOR(RTTI, float2) v2;
+    VECTOR(NativeTypes, float2) v2;
     RTTI::FAtom vatom2 = RTTI::MakeAtom(&v2);
 
     if (not vatom.PromoteMove(vatom2))
@@ -408,19 +408,19 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
     const FFilename& fname_bin = filename;
     const FFilename fname_raw = filename.WithReplacedExtension(FFS::Raw());
 
-    MEMORYSTREAM_THREAD_LOCAL(Serialize) uncompressed;
+    MEMORYSTREAM(NativeTypes) uncompressed;
     {
         serializer->Serialize(&uncompressed, &input);
 #if 0
         auto compressed = VFS_OpenBinaryWritable(filename, EAccessPolicy::Truncate);
         LZJB::CompressMemory(compressed.get(), uncompressed.MakeView());
 #else
-        RAWSTORAGE_THREAD_LOCAL(Serialize, u8) compressed;
+        RAWSTORAGE(NativeTypes, u8) compressed;
         const size_t compressedSizeInBytes = Compression::CompressMemory(compressed, uncompressed.MakeView(), Compression::HighCompression);
         Assert(compressedSizeInBytes <= compressed.SizeInBytes());
         const TMemoryView<const u8> compressedView = compressed.MakeView().SubRange(0, compressedSizeInBytes);
 
-        RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
+        RAWSTORAGE(Stream, u8) decompressed;
         if (false == Compression::DecompressMemory(decompressed, compressedView))
             AssertNotReached();
 
@@ -439,11 +439,11 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
     RTTI::FMetaTransaction output(RTTI::FName(MakeStringView("UnitTest_Output")));
 
     {
-        RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) compressed;
+        RAWSTORAGE(FileSystem, u8) compressed;
         if (false == VFS_ReadAll(&compressed, fname_bin, EAccessPolicy::Binary))
             AssertNotReached();
 
-        RAWSTORAGE_THREAD_LOCAL(Stream, u8) decompressed;
+        RAWSTORAGE(Stream, u8) decompressed;
         if (false == Compression::DecompressMemory(decompressed, compressed.MakeConstView()))
             AssertNotReached();
 

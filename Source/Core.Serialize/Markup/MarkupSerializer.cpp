@@ -350,8 +350,8 @@ private:
     size_t _indentLevel;
     bool _newLine;
 
-    HASHSET_THREAD_LOCAL(Serialize, RTTI::PCMetaObject) _exported;
-    VECTORINSITU_THREAD_LOCAL(Serialize, RTTI::PCMetaObject, 8) _queue;
+    HASHSET(Serialize, RTTI::PCMetaObject) _exported;
+    VECTORINSITU(Serialize, RTTI::PCMetaObject, 8) _queue;
 };
 //----------------------------------------------------------------------------
 void FXMLSerialize_::QueueObject(const RTTI::FMetaObject* object) {

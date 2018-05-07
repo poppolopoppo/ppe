@@ -948,10 +948,15 @@ void Test_Containers() {
     }
     {
         // steal allocations from different tracking domains
-
-        VECTOR(RTTI, int) u = { 1, 2, 3 };
-        VECTOR(Container, int) v = u;
-        VECTOR(Container, int) w = std::move(u);
+        {
+            VECTOR(NativeTypes, int) u = { 1, 2, 3 };
+            VECTOR(Container, int) v = u;
+            VECTOR(Container, int) w = std::move(u);
+        }
+        {
+            HASHSET(NativeTypes, int) u = { 1, 2, 3 };
+            HASHSET(Container, int) w = std::move(u);
+        }
     }
     {
         LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
@@ -961,7 +966,7 @@ void Test_Containers() {
 
         static constexpr u32 GMaxWords = 16000;// u32(-1); // no limit
 
-        VECTOR_THREAD_LOCAL(Container, FString) words;
+        VECTOR(Container, FString) words;
         {
             const UStreamReader reader = VFS_OpenBinaryReadable(filename);
             if (not reader)
@@ -989,7 +994,7 @@ void Test_Containers() {
         std::random_device rdevice;
         std::mt19937 rand(rdevice());
 
-        VECTOR_THREAD_LOCAL(Container, FStringView) all;
+        VECTOR(Container, FStringView) all;
         all.reserve(words.size());
         for (const FString& word : words)
             all.emplace_back(MakeStringView(word));
@@ -1000,14 +1005,14 @@ void Test_Containers() {
         const auto input = all.MakeConstView().CutBefore(k);
         const auto negative = all.MakeConstView().CutStartingAt(k);
 
-        VECTOR_THREAD_LOCAL(Container, FStringView) search(input);
+        VECTOR(Container, FStringView) search(input);
         std::shuffle(search.begin(), search.end(), rand);
 
-        VECTOR_THREAD_LOCAL(Container, FStringView) todelete(search);
+        VECTOR(Container, FStringView) todelete(search);
         std::shuffle(todelete.begin(), todelete.end(), rand);
         todelete.resize(k / 2);
 
-        VECTOR_THREAD_LOCAL(Container, FStringView) searchafterdelete(input);
+        VECTOR(Container, FStringView) searchafterdelete(input);
         std::shuffle(searchafterdelete.begin(), searchafterdelete.end(), rand);
 
         const hash_t h0 = hash_value(words.front());
@@ -1114,7 +1119,7 @@ void Test_Containers() {
         std::random_device rdevice;
         std::mt19937 rand(rdevice());
 
-        VECTOR_THREAD_LOCAL(Container, value_type) all;
+        VECTOR(Container, value_type) all;
         all.reserve(COUNT);
         forrange(i, 1, COUNT+1)
             all.push_back((value_type)(i/value_type(COUNT)));
@@ -1126,14 +1131,14 @@ void Test_Containers() {
         const auto input = all.MakeConstView().CutBefore(k);
         const auto negative = all.MakeConstView().CutStartingAt(k);
 
-        VECTOR_THREAD_LOCAL(Container, value_type) search(input);
+        VECTOR(Container, value_type) search(input);
         std::shuffle(search.begin(), search.end(), rand);
 
-        VECTOR_THREAD_LOCAL(Container, value_type) todelete(search);
+        VECTOR(Container, value_type) todelete(search);
         std::shuffle(todelete.begin(), todelete.end(), rand);
         todelete.resize(k / 2);
 
-        VECTOR_THREAD_LOCAL(Container, value_type) searchafterdelete(input);
+        VECTOR(Container, value_type) searchafterdelete(input);
         std::shuffle(searchafterdelete.begin(), searchafterdelete.end(), rand);
 
         {

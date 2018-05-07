@@ -24,6 +24,8 @@ FWD_INTEFARCE_UNIQUEPTR(StreamReadWriter);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+CORE_API class FVirtualFileSystemTrie& VFS();
+//----------------------------------------------------------------------------
 CORE_API bool VFS_DirectoryExists(const FDirpath& dirpath, EExistPolicy policy = EExistPolicy::Exists);
 CORE_API bool VFS_FileExists(const FFilename& filename, EExistPolicy policy = EExistPolicy::Exists);
 CORE_API bool VFS_FileStats(FFileStat* pstat, const FFilename& filename);
@@ -48,7 +50,6 @@ CORE_API UStreamWriter VFS_OpenTextWritable(const FFilename& filename, EAccessPo
 CORE_API UStreamWriter VFS_RollFile(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
 //----------------------------------------------------------------------------
 CORE_API bool VFS_ReadAll(TRawStorage<u8, ALLOCATOR(FileSystem, u8)> *pcontent, const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
-CORE_API bool VFS_ReadAll(TRawStorage<u8, THREAD_LOCAL_ALLOCATOR(FileSystem, u8)> *pcontent, const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
 CORE_API bool VFS_WriteAll(const FFilename& filename, const TMemoryView<const u8>& content, EAccessPolicy policy = EAccessPolicy::None);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

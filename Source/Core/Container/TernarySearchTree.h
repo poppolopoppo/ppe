@@ -22,15 +22,8 @@ namespace Core {
     ::Core::TTernarySearchTree<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, ::Core::Meta::TEqualTo<_KEY>, \
         NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TTernarySearchNode<_KEY COMMA _VALUE>)) >
 //----------------------------------------------------------------------------
-#define TERNARYSEARCHTREE_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TTernarySearchTree<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, ::Core::Meta::TEqualTo<_KEY>, \
-        THREAD_LOCAL_NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TTernarySearchNode<_KEY COMMA _VALUE>)) >
-//----------------------------------------------------------------------------
 #define TERNARYSEARCHSET(_DOMAIN, _KEY) TERNARYSEARCHTREE(_DOMAIN, _KEY, void)
-#define TERNARYSEARCHSET_THREAD_LOCAL(_DOMAIN, _KEY) TERNARYSEARCHTREE_THREAD_LOCAL(_DOMAIN, _KEY, void)
-//----------------------------------------------------------------------------
 #define TERNARYSEARCHMAP(_DOMAIN, _KEY, _VALUE) TERNARYSEARCHTREE(_DOMAIN, _KEY, _VALUE)
-#define TERNARYSEARCHMAP_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE) TERNARYSEARCHTREE_THREAD_LOCAL(_DOMAIN, _KEY, _VALUE)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

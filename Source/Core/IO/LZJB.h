@@ -15,7 +15,6 @@ namespace LZJB {
 //----------------------------------------------------------------------------
 void CompressMemory(IBufferedStreamWriter* dst, const TMemoryView<const u8>& src);
 bool DecompressMemory(RAWSTORAGE(Stream, u8)* dst, const TMemoryView<const u8>& src);
-bool DecompressMemory(RAWSTORAGE_THREAD_LOCAL(Stream, u8)* dst, const TMemoryView<const u8>& src);
 //----------------------------------------------------------------------------
 } //!LZJB
 //----------------------------------------------------------------------------

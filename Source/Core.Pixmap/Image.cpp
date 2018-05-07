@@ -22,11 +22,11 @@ PRAGMA_MSVC_WARNING_DISABLE(6001) // warning C6001: Using uninitialized memory '
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_MALLOC(sz) \
-    Core::tracking_malloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(sz)
+    Core::tracking_malloc<MEMORYDOMAIN_TAG(STBImage)>(sz)
 #define STBI_REALLOC(p,newsz) \
-    Core::tracking_realloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p, newsz)
+    Core::tracking_realloc<MEMORYDOMAIN_TAG(STBImage)>(p, newsz)
 #define STBI_FREE(p) \
-    Core::tracking_free_thread_local(p)
+    Core::tracking_free(p)
 #define STBI_ASSERT(x) \
     Assert(NOOP("stb_image: "), (x))
 #define STBI_NO_STDIO
@@ -34,11 +34,11 @@ PRAGMA_MSVC_WARNING_DISABLE(6001) // warning C6001: Using uninitialized memory '
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBIW_MALLOC(sz) \
-    Core::tracking_malloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(sz)
+    Core::tracking_malloc<MEMORYDOMAIN_TAG(STBImage)>(sz)
 #define STBIW_REALLOC(p,newsz) \
-    Core::tracking_realloc_thread_local<MEMORY_DOMAIN_TAG(STBImage)>(p, newsz)
+    Core::tracking_realloc<MEMORYDOMAIN_TAG(STBImage)>(p, newsz)
 #define STBIW_FREE(p) \
-    Core::tracking_free_thread_local(p)
+    Core::tracking_free(p)
 #define STBIW_ASSERT(x) \
     Assert(NOOP("stb_image_write: "), (x))
 #define STBI_WRITE_NO_STDIO
@@ -440,7 +440,7 @@ bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const FFilename& fi
         FFSConstNames::Tga() != ext)
         return false;
 
-    RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
+    RAWSTORAGE(FileSystem, u8) content;
     if (false == VFS_ReadAll(&content, filename, EAccessPolicy::Binary))
         return false;
 
@@ -528,7 +528,7 @@ static void WriteFuncForSTBIW_(void *context, void *data, int size) {
 } //!namespace
 //----------------------------------------------------------------------------
 bool Save(const FImage* src, const FFilename& filename) {
-    MEMORYSTREAM_THREAD_LOCAL(Image) writer;
+    MEMORYSTREAM(Image) writer;
     if (false == Save(src, filename, &writer))
         return false;
 

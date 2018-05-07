@@ -70,8 +70,8 @@ public:
     void Flush(IPrimitiveBatch* other);
 
 private:
-    VECTOR_THREAD_LOCAL(Vertex, index_type) _indices;
-    VECTOR_THREAD_LOCAL(Vertex, vertex_type) _vertices;
+    VECTOR(Vertex, index_type) _indices;
+    VECTOR(Vertex, vertex_type) _vertices;
 };
 //----------------------------------------------------------------------------
 struct FPrimitiveStyle {

@@ -89,7 +89,7 @@ public:
 
     void CopyVertex(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src) const;
 
-    virtual void FillSubstitutions(VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>)& substitutions) const;
+    virtual void FillSubstitutions(VECTOR(Shader, TPair<FString COMMA FString>)& substitutions) const;
 
     static void Start();
     static void Shutdown();

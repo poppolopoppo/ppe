@@ -132,7 +132,7 @@ static size_t GlobFiles_Windows_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
     const Meta::TFunction<void(const FFilename&)>& foreach,
-    VECTOR_THREAD_LOCAL(FileSystem, FDirpath)& subDirectories,
+    VECTORINSITU(FileSystem, FDirpath, 16)& subDirectories,
     const FileSystem::char_type *pattern,
     bool recursive
     ) {
@@ -231,9 +231,7 @@ static size_t GlobFiles_(
     const FWStringView& pattern,
     bool recursive
     ) {
-    VECTOR_THREAD_LOCAL(FileSystem, FDirpath) subDirectories;
-    if (recursive)
-        subDirectories.reserve(32);
+    VECTORINSITU(FileSystem, FDirpath, 16) subDirectories;
 
     subDirectories.push_back(aliased);
 

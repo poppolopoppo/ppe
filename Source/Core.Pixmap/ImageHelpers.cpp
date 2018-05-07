@@ -476,7 +476,7 @@ bool ConvexHull(const TMemoryView<float2>& uvs, const FFloatImage* img, float al
     const size_t w = img->Width();
     const size_t h = img->Height();
 
-    VECTOR_THREAD_LOCAL(FloatImage, float2) points;
+    VECTOR(FloatImage, float2) points;
 
     constexpr size_t BORDER = 4;
 

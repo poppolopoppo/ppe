@@ -291,8 +291,8 @@ private:
     size_t _indent;
     const FTextSerializer* _owner;
     IBufferedStreamWriter* _writer;
-    VECTOR_THREAD_LOCAL(Serialize, RTTI::PCMetaObject) _queue;
-    HASHSET_THREAD_LOCAL(Serialize, RTTI::PCMetaObject) _exported;
+    VECTOR(Serialize, RTTI::PCMetaObject) _queue;
+    HASHSET(Serialize, RTTI::PCMetaObject) _exported;
 };
 //----------------------------------------------------------------------------
 void FTextSerialize_::Append(const RTTI::FMetaObject* object, bool topObject /* = true */) {

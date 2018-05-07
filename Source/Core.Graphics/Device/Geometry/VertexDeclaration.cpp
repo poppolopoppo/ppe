@@ -57,7 +57,7 @@ void FVertexDeclaration::CopyVertex(const TMemoryView<u8>& dst, const TMemoryVie
     _block.Copy(dst, src);
 }
 //----------------------------------------------------------------------------
-void FVertexDeclaration::FillSubstitutions(VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>)& substitutions) const {
+void FVertexDeclaration::FillSubstitutions(VECTOR(Shader, TPair<FString COMMA FString>)& substitutions) const {
     UNUSED(substitutions);
 }
 //----------------------------------------------------------------------------

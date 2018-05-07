@@ -21,14 +21,8 @@ namespace Core {
 #define VECTOR(_DOMAIN, T) \
     ::Core::TVector<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
-#define VECTOR_THREAD_LOCAL(_DOMAIN, T) \
-    ::Core::TVector<COMMA_PROTECT(T), THREAD_LOCAL_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
-//----------------------------------------------------------------------------
 #define VECTORINSITU(_DOMAIN, T, _InSituCount) \
     ::Core::TVectorInSitu<COMMA_PROTECT(T), _InSituCount, ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
-//----------------------------------------------------------------------------
-#define VECTORINSITU_THREAD_LOCAL(_DOMAIN, T, _InSituCount) \
-    ::Core::TVectorInSitu<COMMA_PROTECT(T), _InSituCount, THREAD_LOCAL_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

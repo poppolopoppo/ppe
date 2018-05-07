@@ -1,7 +1,6 @@
 #include "stdafx.h"
 
 #include "Core/Allocator/Mallocator.h"
-#include "Core/Allocator/ThreadLocalAllocator.h"
 
 #include "Core/Container/Pair.h"
 #include "Core/Container/RingBuffer.h"
@@ -230,7 +229,6 @@ void Test_Allocators() {
 
     Test_Allocator_(L"TMallocator", TMallocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
     Test_Allocator_(L"std::allocator", std::allocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
-    Test_Allocator_(L"TThreadLocalAllocator", TThreadLocalAllocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -20,14 +20,13 @@ POOL_TAG_FWD(Parser);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using TEnumerable = VECTOR_THREAD_LOCAL(Parser, T);
+using TEnumerable = VECTOR(Parser, T);
 //----------------------------------------------------------------------------
 template <typename T>
 struct TProduction {
     typedef T value_type;
 
-    typedef SINGLETON_POOL_ALLOCATOR(Parser, int, POOL_TAG(Parser)) allocator_type;
-    typedef Meta::TFunction< TParseResult<T>(FParseList&), allocator_type > lambda_type;
+    typedef Meta::TFunction< TParseResult<T>(FParseList&) > lambda_type;
 
     lambda_type Lambda;
 

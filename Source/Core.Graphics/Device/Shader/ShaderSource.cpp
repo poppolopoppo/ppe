@@ -38,8 +38,8 @@ FShaderSource::FShaderSource( const char *sourceName,
 //----------------------------------------------------------------------------
 FShaderSource::FShaderSource( FString&& sourceName,
                             const Core::FFilename& filename,
-                            RAWSTORAGE_THREAD_LOCAL(Shader, char)&& sourceCode,
-                            ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, FString, FString)&& defines)
+                            RAWSTORAGE(Shader, char)&& sourceCode,
+                            ASSOCIATIVE_VECTOR(Shader, FString, FString)&& defines)
 :   _sourceName(std::move(sourceName))
 ,   _filename(filename)
 ,   _sourceCode(std::move(sourceCode))
@@ -51,12 +51,12 @@ FShaderSource::FShaderSource( FString&& sourceName,
 FShaderSource::~FShaderSource() {}
 //----------------------------------------------------------------------------
 void FShaderSource::Preprocess(
-    RAWSTORAGE_THREAD_LOCAL(Shader, char)& preprocessed,
+    RAWSTORAGE(Shader, char)& preprocessed,
     const FShaderProgram * /* program */,
     const FVertexDeclaration *vertexDeclaration) const {
     Assert(_sourceCode.size());
 
-    VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>) substitutions;
+    VECTOR(Shader, TPair<FString COMMA FString>) substitutions;
     substitutions.reserve(FVertexDeclaration::MaxSubPartCount + _defines.size());
     substitutions.insert(substitutions.end(), _defines.begin(), _defines.end());
     FillVertexSubstitutions(substitutions, vertexDeclaration);
@@ -105,7 +105,7 @@ void FShaderSource::Preprocess(
 }
 //----------------------------------------------------------------------------
 void FShaderSource::FillSubstitutions(
-    VECTOR_THREAD_LOCAL(Shader, TPair<FString COMMA FString>)& substitutions,
+    VECTOR(Shader, TPair<FString COMMA FString>)& substitutions,
     const FVertexDeclaration *vertexDeclaration ) const {
     Assert(vertexDeclaration);
 
@@ -118,14 +118,14 @@ FShaderSource *FShaderSource::LoadFromFileIFP(const Core::FFilename& filename,
                                             const TMemoryView<const TPair<FString, FString>>& defines) {
     Assert(!filename.empty());
 
-    RAWSTORAGE_THREAD_LOCAL(Shader, char) sourceCode;
+    RAWSTORAGE(Shader, char) sourceCode;
     if (false == FVirtualFileSystem::ReadAll(filename, sourceCode, EAccessPolicy::Binary))
         return nullptr;
 
-    ASSOCIATIVE_VECTOR_THREAD_LOCAL(Shader, FString, FString) sourceDefines(defines.size());
+    ASSOCIATIVE_VECTOR(Shader, FString, FString) sourceDefines(defines.size());
     sourceDefines.insert(defines.begin(), defines.end());
 
-    const FWString nativeFilenameW = FVirtualFileSystem::Instance().Unalias(filename);
+    const FWString nativeFilenameW = VFS().Unalias(filename);
 
     return new FShaderSource(ToString(nativeFilenameW), filename, std::move(sourceCode), std::move(sourceDefines));
 }

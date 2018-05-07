@@ -12,14 +12,8 @@ namespace Core {
 #define HASHSET(_DOMAIN, T) \
     ::Core::THashSet<T, ::Core::Meta::THash<T>, ::Core::Meta::TEqualTo<T>, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
-#define HASHSET_THREAD_LOCAL(_DOMAIN, T) \
-    ::Core::THashSet<T, ::Core::Meta::THash<T>, ::Core::Meta::TEqualTo<T>, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T)>
-//----------------------------------------------------------------------------
 #define HASHSET_MEMOIZE(_DOMAIN, T) \
     HASHSET(_DOMAIN, ::Core::THashMemoizer<T>)
-//----------------------------------------------------------------------------
-#define HASHSET_MEMOIZE_THREAD_LOCAL(_DOMAIN, T) \
-    HASHSET_THREAD_LOCAL(_DOMAIN, ::Core::THashMemoizer<T>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

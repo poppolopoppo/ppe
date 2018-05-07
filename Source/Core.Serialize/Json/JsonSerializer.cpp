@@ -48,7 +48,7 @@ void FJsonSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamRe
             CORE_THROW_IT(FJsonSerializerException("failed to parse Json document"));
     });
 
-    VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject) parsed;
+    VECTOR(Transient, RTTI::PMetaObject) parsed;
     if (not Json_to_RTTI(parsed, json))
         CORE_THROW_IT(FJsonSerializerException("failed to convert Json to RTTI"));
 
@@ -322,7 +322,7 @@ public:
 private:
     FJson& _doc;
     const RTTI::FMetaTransaction* _outer;
-    VECTOR(Serialize, FJson::FValue*) _values;
+    VECTOR(Json, FJson::FValue*) _values;
 
     FJson::FValue& Head_() const { return (*_values.back()); }
 
@@ -491,7 +491,7 @@ public:
 #undef DECL_ATOM_VIRTUAL_VISIT
 
 private:
-    VECTOR(Serialize, const FJson::FValue*) _values;
+    VECTOR(Json, const FJson::FValue*) _values;
 
     const FJson::FValue& Head_() const { return (*_values.back()); }
 
@@ -609,7 +609,7 @@ void RTTI_to_Json(FJson& dst, const TMemoryView<const RTTI::PMetaObject>& src, c
     }
 }
 //----------------------------------------------------------------------------
-bool Json_to_RTTI(VECTOR_THREAD_LOCAL(Serialize, RTTI::PMetaObject)& dst, const FJson& src) {
+bool Json_to_RTTI(VECTOR(Transient, RTTI::PMetaObject)& dst, const FJson& src) {
     const FJson::FArray* arrIFP = src.Root().AsArray();
     if (nullptr == arrIFP)
         return false;

@@ -131,7 +131,7 @@ void ConvexHull2D_FixedSize(const TMemoryView<float2>& hull, const TMemoryView<c
         return;
     }
 
-    VECTOR_THREAD_LOCAL(Maths, float2) tmp;
+    VECTOR(Maths, float2) tmp;
     tmp.reserve(indicesSize);
     for (size_t i : indices.CutBefore(indicesSize))
         tmp.push_back(points[i]);

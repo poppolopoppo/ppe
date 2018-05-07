@@ -230,10 +230,6 @@ bool DecompressMemory(RAWSTORAGE(Stream, u8)* dst, const TMemoryView<const u8>& 
     return DecompressMemory_(dst, src);
 }
 //----------------------------------------------------------------------------
-bool DecompressMemory(RAWSTORAGE_THREAD_LOCAL(Stream, u8)* dst, const TMemoryView<const u8>& src) {
-    return DecompressMemory_(dst, src);
-}
-//----------------------------------------------------------------------------
 } //!namespace LZW
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

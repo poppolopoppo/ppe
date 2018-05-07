@@ -40,7 +40,7 @@ bool FBulkMesh::Load(FGenericMesh* dst, const FFilename& filename) {
     if (filename.Extname() == FFSConstNames::Bkmz()) {
         policy = policy + EAccessPolicy::Compress;
 
-        RAWSTORAGE_THREAD_LOCAL(FileSystem, u8) content;
+        RAWSTORAGE(FileSystem, u8) content;
         if (false == VFS_ReadAll(&content, filename, policy))
             return false;
 
@@ -121,7 +121,7 @@ bool FBulkMesh::Save(const FGenericMesh* src, const FFilename& filename) {
     EAccessPolicy policy = EAccessPolicy::Truncate_Binary;
 
     if (filename.Extname() == FFSConstNames::Bkmz()) {
-        MEMORYSTREAM_THREAD_LOCAL(Image) writer;
+        MEMORYSTREAM(Image) writer;
         if (false == Save(src, filename, &writer))
             return false;
 

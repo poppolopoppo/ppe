@@ -341,7 +341,7 @@ public:
             }
         }
         {
-            RAWSTORAGE_THREAD_LOCAL(Vertex, u8) vertexData;
+            RAWSTORAGE(Vertex, u8) vertexData;
             mesh.ExportVertices(VertexDeclaration, vertexData);
 
             Vertices = new Graphics::FVertexBuffer(VertexDeclaration, mesh.VertexCount(),
@@ -350,7 +350,7 @@ public:
             Vertices->Create(device, vertexData.MakeConstView());
         }
         {
-            RAWSTORAGE_THREAD_LOCAL(Index, u32) indexData;
+            RAWSTORAGE(Index, u32) indexData;
             mesh.ExportIndices(indexData);
 
             Indices = new Graphics::FIndexBuffer(Graphics::EIndexElementSize::ThirtyTwoBits, mesh.IndexCount(),

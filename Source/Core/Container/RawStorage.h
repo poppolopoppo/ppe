@@ -14,14 +14,11 @@ namespace Core {
 #define RAWSTORAGE(_DOMAIN, T) \
     ::Core::TRawStorage<T, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
-#define RAWSTORAGE_THREAD_LOCAL(_DOMAIN, T) \
-    ::Core::TRawStorage<T, THREAD_LOCAL_ALLOCATOR(_DOMAIN, T)>
-//----------------------------------------------------------------------------
 #define RAWSTORAGE_ALIGNED(_DOMAIN, T, _ALIGNMENT) \
     ::Core::TRawStorage<T, ALIGNED_ALLOCATOR(_DOMAIN, T, _ALIGNMENT)>
 //----------------------------------------------------------------------------
-#define RAWSTORAGE_STACK(_DOMAIN, T) \
-    ::Core::TRawStorage<T, STACK_ALLOCATOR(_DOMAIN, T)>
+#define RAWSTORAGE_STACK(T) \
+    ::Core::TRawStorage<T, STACK_ALLOCATOR(T)>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
