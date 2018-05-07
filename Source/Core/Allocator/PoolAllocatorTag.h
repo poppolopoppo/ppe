@@ -4,7 +4,7 @@
 
 #include "Core/Memory/MemoryDomain.h"
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
 #   define WITH_CORE_POOL_ALLACATOR_TAGNAME //%__NOCOMMIT%
 #endif
 

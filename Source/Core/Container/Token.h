@@ -95,7 +95,7 @@ private:
     STATIC_CONST_INTEGRAL(size_t, NumBuckets, MaskBuckets + 1);
 
     std::mutex _barrier;
-    FLinearHeap _heap;
+    LINEARHEAP(Token) _heap;
 
     FEntry* _bucketHeads[NumBuckets] = { 0 };
     FEntry* _bucketTails[NumBuckets] = { 0 };

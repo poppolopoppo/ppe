@@ -139,9 +139,9 @@ static void* StompVMAlloc_(size_t sizeInBytes) {
 #else
 #   error "unsupported platform !"
 #endif
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
     if (result)
-        MEMORY_DOMAIN_TRACKING_DATA(Reserved).Allocate(1, sizeInBytes);
+        MEMORYDOMAIN_TRACKING_DATA(LargeBlocks).Allocate(1, sizeInBytes);
 #endif
 
     // may happen since this allocator eats up a large amount of virtual space
@@ -155,8 +155,8 @@ static void StompVMFree_(void* ptr, size_t sizeInBytes) {
     if (nullptr == ptr)
         return;
 
-#ifdef USE_MEMORY_DOMAINS
-    MEMORY_DOMAIN_TRACKING_DATA(Reserved).Deallocate(1, sizeInBytes);
+#if USE_CORE_MEMORYDOMAINS
+    MEMORYDOMAIN_TRACKING_DATA(LargeBlocks).Deallocate(1, sizeInBytes);
 #endif
 #if     defined(PLATFORM_WINDOWS)
     UNUSED(sizeInBytes);

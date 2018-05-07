@@ -113,7 +113,7 @@ private:
     invoke_func _invoke;
     EFunctionFlags _flags;
     PTypeTraits _result;
-    VECTORINSITU(RTTI, FMetaParameter, 4) _parameters;
+    VECTORINSITU(MetaFunction, FMetaParameter, 4) _parameters;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

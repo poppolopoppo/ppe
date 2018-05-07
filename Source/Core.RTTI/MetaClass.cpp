@@ -19,10 +19,10 @@ FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const 
     , _flags(flags)
     , _name(name)
     , _namespace(metaNamespace)
-#ifdef USE_MEMORY_DOMAINS
-    , _trackingData(name.data(), &MEMORY_DOMAIN_TRACKING_DATA(RTTI))
+#if USE_CORE_MEMORYDOMAINS
+    , _trackingData(name.data(), &MEMORYDOMAIN_TRACKING_DATA(MetaObject))
 {
-    RegisterAdditionalTrackingData(&_trackingData);
+    RegisterTrackingData(&_trackingData);
 #else
 {
 #endif
@@ -35,8 +35,8 @@ FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const 
 FMetaClass::~FMetaClass() {
     Assert(not IsRegistered());
     Assert(_propertiesAll.empty());
-#ifdef USE_MEMORY_DOMAINS
-    UnregisterAdditionalTrackingData(&_trackingData);
+#if USE_CORE_MEMORYDOMAINS
+    UnregisterTrackingData(&_trackingData);
 #endif
 }
 //----------------------------------------------------------------------------

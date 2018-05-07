@@ -74,12 +74,23 @@ struct CACHELINE_ALIGNED FBinnedPage_ {
     void UnprotectPage() { FVirtualMemory::Protect(this, PageSize, true, true); }
 #endif
 
-    FORCE_INLINE static FBinnedPage_* Allocate() {
-        return (FBinnedPage_*)FVirtualMemory::Alloc(PageSize);
+    static FBinnedPage_* Allocate() {
+#if USE_CORE_MEMORYDOMAINS
+        auto* p = (FBinnedPage_*)FVirtualMemory::InternalAlloc(PageSize, MEMORYDOMAIN_TRACKING_DATA(SmallTables));
+#else
+        auto* p = (FBinnedPage_*)FVirtualMemory::InternalAlloc(PageSize);
+#endif
+        Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, p));
+        return p;
     }
 
-    FORCE_INLINE static void Release(FBinnedPage_* p) {
-        FVirtualMemory::Free(p, PageSize);
+    static void Release(FBinnedPage_* p) {
+        Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, p));
+#if USE_CORE_MEMORYDOMAINS
+        FVirtualMemory::InternalFree(p, PageSize, MEMORYDOMAIN_TRACKING_DATA(SmallTables));
+#else
+        FVirtualMemory::InternalFree(p, PageSize);
+#endif
     }
 };
 //----------------------------------------------------------------------------
@@ -367,12 +378,8 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
 
         // release pages in cache
         FBinnedPage_* page;
-        while (_globalFreePages.Pop(&page)) {
+        while (_globalFreePages.Pop(&page))
             FBinnedPage_::Release(page);
-#ifdef USE_MEMORY_DOMAINS
-            MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Deallocate(1, FBinnedPage_::PageSize);
-#endif
-        }
 
         // will not try to cache next pages (in case of very late deallocation in another static)
         _globalFreePages.ForbidFurtherAccess();
@@ -387,9 +394,6 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
                 Assert(page);
 #if USE_MALLOCBINNED_PAGE_PROTECT
                 page->UnprotectPage();
-#endif
-#ifdef USE_MEMORY_DOMAINS
-                MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Deallocate(1, FBinnedPage_::PageSize);
 #endif
                 return page;
             };
@@ -407,9 +411,6 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
             if (Likely(not _globalFreePages.full())) {
 #if USE_MALLOCBINNED_PAGE_PROTECT
                 page->ProtectPage();
-#endif
-#ifdef USE_MEMORY_DOMAINS
-                MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Allocate(1, FBinnedPage_::PageSize);
 #endif
                 _globalFreePages.Push(page);
                 return;
@@ -625,9 +626,6 @@ private:
 #if USE_MALLOCBINNED_PAGE_PROTECT
             page->UnprotectPage();
 #endif
-#ifdef USE_MEMORY_DOMAINS
-            MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Deallocate(1, FBinnedPage_::PageSize);
-#endif
         }
         else {
             page = FBinnedGlobalCache_::Instance().AllocPage();
@@ -655,9 +653,6 @@ private:
         else {
 #if USE_MALLOCBINNED_PAGE_PROTECT
             page->ProtectPage();
-#endif
-#ifdef USE_MEMORY_DOMAINS
-            MEMORY_DOMAIN_TRACKING_DATA(MallocBinned).Allocate(1, FBinnedPage_::PageSize);
 #endif
             _localFreePages.Push(page);
         }
@@ -738,7 +733,7 @@ struct CACHELINE_ALIGNED FBinnedAllocator_ {
 
 private:
     FAtomicSpinLock _barrier;
-    VIRTUALMEMORYCACHE(MallocBinned, VMCacheBlocks, VMCacheSizeInBytes) _vm;
+    VIRTUALMEMORYCACHE(LargeBlocks, VMCacheBlocks, VMCacheSizeInBytes) _vm;
 
     FBinnedAllocator_() {
         STATIC_ASSERT(FBinnedPage_::PageSize == FBinnedChunk_::ChunkSizeInBytes);

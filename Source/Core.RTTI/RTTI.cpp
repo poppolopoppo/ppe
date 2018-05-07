@@ -130,10 +130,10 @@ public:
 private:
     int _count;
     Core::FString _name;
-    VECTOR(Internal, PTiti) _tities;
-    VECTOR(Internal, PTiti) _titiesOld;
-    VECTOR(Internal, PCTiti) _consttities;
-    ASSOCIATIVE_VECTOR(Internal, Core::TPair<int COMMA PTiti>, VECTORINSITU(RTTI, Core::TPair<float COMMA Core::FString>, 2)) _dict;
+    VECTOR(NativeTypes, PTiti) _tities;
+    VECTOR(NativeTypes, PTiti) _titiesOld;
+    VECTOR(NativeTypes, PCTiti) _consttities;
+    ASSOCIATIVE_VECTOR(NativeTypes, Core::TPair<int COMMA PTiti>, VECTORINSITU(NativeTypes, Core::TPair<float COMMA Core::FString>, 2)) _dict;
     PToto _toto;
 };
 RTTI_CLASS_BEGIN(RTTI_UnitTest, FTiti, RTTI::EClassFlags::Public)
@@ -166,17 +166,17 @@ private:
     typedef TPair<int, FString> value_type;
     int _count;
     FString _name;
-    VECTOR(Internal, PTiti) _tities;
-    VECTORINSITU(Internal, PTiti, 2) _tities2;
-    VECTOR_THREAD_LOCAL(Internal, FString) _titles;
+    VECTOR(NativeTypes, PTiti) _tities;
+    VECTORINSITU(NativeTypes, PTiti, 2) _tities2;
+    VECTOR(NativeTypes, FString) _titles;
     TRefPtr<FToto> _parent;
     TPair<int, int> _pair;
     TPair<float, float> _fpair;
     TPair<TPair<int, int>, TPair<int, int> > _vpair;
     TPair<TPair<int, int>, TPair<int, float> > _vpair2;
-    HASHMAP_THREAD_LOCAL(Internal, FString, float) _dict;
-    HASHMAP(Internal, FString, value_type) _dict2;
-    HASHMAP(Internal, FString, float) _dict3;
+    HASHMAP(NativeTypes, FString, float) _dict;
+    HASHMAP(NativeTypes, FString, value_type) _dict2;
+    HASHMAP(NativeTypes, FString, float) _dict3;
 };
 RTTI_CLASS_BEGIN(RTTI_UnitTest, FToto, RTTI::EClassFlags::Public)
 RTTI_PROPERTY_FIELD_ALIAS(_count, Count)
@@ -267,10 +267,10 @@ static void TestRTTI_() {
     RTTIPrintType_< TPair<RTTI::FName, float> >();
     RTTIPrintType_< PTiti >();
     RTTIPrintType_< TPair<FWString, PTiti> >();
-    RTTIPrintType_< VECTOR_THREAD_LOCAL(RTTI, PTiti) >();
-    RTTIPrintType_< HASHMAP(RTTI, int, int) >();
-    RTTIPrintType_< HASHMAP(RTTI, FString, PTiti) >();
-    RTTIPrintType_< ASSOCIATIVE_VECTOR(RTTI, FString, PTiti) >();
+    RTTIPrintType_< VECTOR(NativeTypes, PTiti) >();
+    RTTIPrintType_< HASHMAP(NativeTypes, int, int) >();
+    RTTIPrintType_< HASHMAP(NativeTypes, FString, PTiti) >();
+    RTTIPrintType_< ASSOCIATIVE_VECTOR(NativeTypes, FString, PTiti) >();
     //RTTIPrintType_< HASHSET(RTTI, FString) >();
 
     RTTIPrintClass_<FTiti>();

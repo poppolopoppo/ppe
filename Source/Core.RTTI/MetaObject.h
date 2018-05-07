@@ -118,7 +118,7 @@ private:
 #endif
     SCMetaTransaction _outer;
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
 public: // disable new/delete operators from FRefCountable
     static void* operator new(size_t sz, FMemoryTracking& trackingData) = delete;
     static void operator delete(void* p, FMemoryTracking&) = delete;

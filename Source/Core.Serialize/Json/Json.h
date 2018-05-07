@@ -174,7 +174,7 @@ public:
     static bool Load(FJson* json, const FFilename& filename, const FStringView& content);
 
 private:
-    FLinearHeap _heap;
+    LINEARHEAP(Json) _heap;
     FValue _root;
     FTextHeap _textHeap;
 };

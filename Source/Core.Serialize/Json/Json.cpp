@@ -518,8 +518,7 @@ STATIC_ASSERT(Meta::TCheckSameSize<FJson::FText, FJson::FArray>::value);
 STATIC_ASSERT(Meta::TCheckSameSize<FJson::FObject, FJson::FText>::value);
 //----------------------------------------------------------------------------
 FJson::FJson()
-    : _heap(LINEARHEAP_DOMAIN_TRACKINGDATA(Json))
-    , _textHeap(_heap)
+    : _textHeap(_heap)
 {}
 //----------------------------------------------------------------------------
 FJson::~FJson() {}

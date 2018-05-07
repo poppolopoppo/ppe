@@ -61,7 +61,7 @@ public:
 
                 Format(oss, L"[{0:#2}]", i);
                 oss << indent;
-                    
+
                 if (i == prev)
                     oss << L" ==> ";
                 else if (i + 1 == _chainRef.size())
@@ -90,7 +90,7 @@ public:
 
         _chainRef.pop_back();
     }
-    
+
     struct FScope {
         FCheckCircularReference_& Check;
         const FMetaObject* const Object;
@@ -105,8 +105,8 @@ public:
         }
     };
 
-private:    
-    VECTORINSITU_THREAD_LOCAL(RTTI, const FMetaObject*, 8) _chainRef;
+private:
+    VECTORINSITU(MetaTransaction, const FMetaObject*, 8) _chainRef;
 };
 } //!namespace
 #endif //!WITH_CORE_RTTI_TRANSACTION_CHECKS
@@ -159,7 +159,7 @@ public:
                 Assert(refOuter);
                 Assert(refOuter->IsLoaded());
                 Assert(ref->RTTI_IsExported());
-                
+
                 if (Add_Unique(_outer->_importedTransactions, SCMetaTransaction(refOuter))) {
 #if WITH_CORE_RTTI_TRANSACTION_CHECKS
                     if (Contains(refOuter->_importedTransactions, _outer))
@@ -224,7 +224,7 @@ FMetaTransaction::FMetaTransaction(const FName& name)
     , _flags(ETransactionFlags::Unloaded) {
 }
 //----------------------------------------------------------------------------
-FMetaTransaction::FMetaTransaction(const FName& name, VECTOR(RTTI, PMetaObject)&& objects)
+FMetaTransaction::FMetaTransaction(const FName& name, VECTOR(MetaTransaction, PMetaObject)&& objects)
     : FMetaTransaction(name) {
     _topObjects.assign(std::move(objects));
 }
@@ -308,8 +308,8 @@ void FMetaTransaction::Load() {
         size_t index = 0;
         const Fmt::FWIndent::FScope scopeIndent(indent);
         for (const PMetaObject& obj : _topObjects)
-            oss << indent << L'[' 
-                << (index++) << L"]  " 
+            oss << indent << L'['
+                << (index++) << L"]  "
                 << (void*)obj.get() << L" : "
                 << obj->RTTI_Class()->Name() << L" ("
                 << obj->RTTI_Flags() << L')'
@@ -384,7 +384,7 @@ void FMetaTransaction::Unload() {
 }
 //----------------------------------------------------------------------------
 void FMetaTransaction::Reload() {
-    LOG(RTTI, Info, L"reloading transaction '{0}' ({1} top objects)", 
+    LOG(RTTI, Info, L"reloading transaction '{0}' ({1} top objects)",
         _name, _topObjects.size() );
 
     Unload();

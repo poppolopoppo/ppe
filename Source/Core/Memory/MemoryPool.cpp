@@ -15,7 +15,7 @@
 #define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC (USE_CORE_MEMORY_DEBUGGING) //%__NOCOMMIT%
 
 namespace Core {
-EXTERN_LOG_CATEGORY(CORE_API, MemoryTracking)
+EXTERN_LOG_CATEGORY(CORE_API, MemoryDomain)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -176,7 +176,7 @@ FMemoryPool::FMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkS
         _currentChunksize *= 2;
     AssertRelease(_currentChunksize <= _maxChunkSize);
 
-    LOG(MemoryTracking, Info,
+    LOG(MemoryDomain, Info,
         L"new memory pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
         Fmt::FSizeInBytes{ _currentChunksize },
@@ -190,7 +190,7 @@ FMemoryPool::~FMemoryPool() {
     Assert(0 == _totalSize);
     Assert(0 == _chunkCount);
 
-    LOG(MemoryTracking, Info,
+    LOG(MemoryDomain, Info,
         L"delete memory pool with block size = {0}, {1} = {2} per chunk",
         _blockSize,
         Fmt::FSizeInBytes{ _currentChunksize },
@@ -202,7 +202,7 @@ void FMemoryPool::GrowChunkSizeIFP_() {
     if (nextChunkSize <= _maxChunkSize) {
         _currentChunksize = checked_cast<u32>(nextChunkSize);
 
-        LOG(MemoryTracking, Info,
+        LOG(MemoryDomain, Info,
             L"grow memory pool with block size = {0}, {3} used pages, {1} = {2} per chunk ({4}/{5})",
             _blockSize,
             Fmt::FSizeInBytes{ _currentChunksize },
@@ -375,7 +375,7 @@ FMemoryPoolChunk *FMemoryPool::ReleaseChunk_() {
         _chunkCount--;
         _totalSize = checked_cast<u32>(_totalSize - release->ChunkSize());
 
-        LOG(MemoryTracking, Info,
+        LOG(MemoryDomain, Info,
             L"release memory chunk with block size = {0}, page size = {4} ({5} blocs), {3} remaining pages, {1} = {2} per chunk ({6:f2}%)",
             _blockSize,
             Fmt::FSizeInBytes{ _currentChunksize },
@@ -390,7 +390,7 @@ FMemoryPoolChunk *FMemoryPool::ReleaseChunk_() {
 }
 //----------------------------------------------------------------------------
 void* FMemoryPool::Allocate(FMemoryTracking *trackingData /* = nullptr */) {
-#ifndef USE_MEMORY_DOMAINS
+#if !USE_CORE_MEMORYDOMAINS
     UNUSED(trackingData);
 #endif
 #if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
@@ -413,13 +413,13 @@ void* FMemoryPool::Allocate(FMemoryTracking *trackingData /* = nullptr */) {
         ptr = TryAllocate_FailIfNoBlockAvailable_();
         Assert(ptr);
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
         if (trackingData)
             trackingData->Pool_AllocateOneChunk(newChunk->ChunkSize(), newChunk->BlockCount());
 #endif
     }
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
     if (trackingData)
         trackingData->Pool_AllocateOneBlock(BlockSize());
 #endif
@@ -430,7 +430,7 @@ void* FMemoryPool::Allocate(FMemoryTracking *trackingData /* = nullptr */) {
 }
 //----------------------------------------------------------------------------
 void FMemoryPool::Deallocate(void *ptr, FMemoryTracking *trackingData /* = nullptr */) {
-#ifndef USE_MEMORY_DOMAINS
+#if !USE_CORE_MEMORYDOMAINS
     UNUSED(trackingData);
 #endif
 #if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
@@ -442,7 +442,7 @@ void FMemoryPool::Deallocate(void *ptr, FMemoryTracking *trackingData /* = nullp
 #else
     Assert(ptr);
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
     if (trackingData)
         trackingData->Pool_DeallocateOneBlock(BlockSize());
 #endif
@@ -451,7 +451,7 @@ void FMemoryPool::Deallocate(void *ptr, FMemoryTracking *trackingData /* = nullp
     if (nullptr == (chunk = Deallocate_ReturnChunkToRelease_(ptr)))
         return;
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
     if (trackingData)
         trackingData->Pool_DeallocateOneChunk(chunk->ChunkSize(), chunk->BlockCount());
 #endif

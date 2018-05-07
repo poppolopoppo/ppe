@@ -15,7 +15,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 class CORE_SERIALIZE_API ISerializer {
 public:
-    typedef VECTOR(RTTI, RTTI::PMetaObject) MetaObjectVector;
+    typedef VECTOR(Transient, RTTI::PMetaObject) FMetaObjectVector;
 
     ISerializer() {}
     virtual ~ISerializer() {}

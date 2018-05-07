@@ -17,6 +17,7 @@ namespace Core {
 //  - Value must have first lower bit set to 0
 //  - Value can't be 0
 //  - Memory allocated will never be released
+// You shouldn't be using as a regular container, as it's more intended for low level
 //
 class FCompressedRadixTrie {
 public:
@@ -25,16 +26,19 @@ public:
         FNode* Children[2];
     };
 
+#if USE_CORE_MEMORYDOMAINS
+    FCompressedRadixTrie(FMemoryTracking& trackingData)
+        : _root((FNode*)NullSentinel_)
+        , _freeList(nullptr)
+        , _newPageAllocated(nullptr)
+        , _trackingDataRef(&trackingData)
+#else
     FCompressedRadixTrie()
         : _root((FNode*)NullSentinel_)
         , _freeList(nullptr)
         , _newPageAllocated(nullptr)
+#endif
     {}
-
-    ~FCompressedRadixTrie() {
-        // will *NEVER*r release memory allocated
-        // intended only for debugging purposes
-    }
 
     FCompressedRadixTrie(const FCompressedRadixTrie&) = delete;
     FCompressedRadixTrie& operator =(const FCompressedRadixTrie&) = delete;
@@ -46,42 +50,43 @@ public:
         Assert(!(value & 1));
         Assert(value);
 
-        FNode* newNode;
-        _barrier.Lock();
+        const FAtomicOrderedLock::FScope scopeLock(_barrier);
 
+        FNode* newNode;
         if (_freeList) {
             _freeList = *(FNode**)(newNode = _freeList);
         }
         else if (_newPageAllocated) {
             newNode = _newPageAllocated;
-            if (!((uintptr_t)++_newPageAllocated & (ALLOCATION_GRANULARITY - 1)))
+            if (!((uintptr_t)++_newPageAllocated & (TriePageSize_ - 1)))
                 _newPageAllocated = ((FNode**)_newPageAllocated)[-1];
         }
         else {
-            _barrier.Unlock();
+            // !! this memory block will *NEVER* be released !!
+#if USE_CORE_MEMORYDOMAINS
+            FNode* const newPage = (FNode*)FVirtualMemory::InternalAlloc(TriePageSize_, *_trackingDataRef);
+#else
+            FNode* const newPage = (FNode*)FVirtualMemory::InternalAlloc(TriePageSize_);
+#endif
+            AssertRelease(newPage);
 
-            // Memory allocated here will never be freed !
-            // But we're talking about never more than a few megabytes
-            // 1024 * 1024 / 32 = 32768 *ALIVE* allocations for 1 mo on x64 architecture, 65536 for x86
-            newNode = (FNode*)FVirtualMemory::InternalAlloc(ALLOCATION_GRANULARITY);
-            AssertRelease(newNode);
+            // in case if other thread also have just allocated a new page
+            Assert(((char**)((char*)newPage + TriePageSize_))[-1] == nullptr);
+            ((FNode**)((char*)newPage + TriePageSize_))[-1] = _newPageAllocated;
 
-            Assert(((char**)((char*)newNode + ALLOCATION_GRANULARITY))[-1] == 0);
-
-            _barrier.Lock();
-            ((FNode**)((char*)newNode + ALLOCATION_GRANULARITY))[-1] = _newPageAllocated;//in case if other thread also have just allocated a new page
-            _newPageAllocated = newNode + 1;
+            // eat first block and saves the rest for later insertions
+            newNode = newPage;
+            _newPageAllocated = newPage + 1;
         }
 
         Insert_AssumeLocked_(key, value, newNode);
-
-        _barrier.Unlock();
     }
 
     uintptr_t Lookup(uintptr_t key) const {
         Assert(!(key & 0xFF));
 
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
+        const FAtomicOrderedLock::FScope scopeLock(_barrier);
+
         return Lookup_AssumeLocked_(key);
     }
 
@@ -89,24 +94,32 @@ public:
         Assert(!(key & 0xFF));
         Assert(uintptr_t(_root) != NullSentinel_); // can't erase from empty trie !
 
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
+        const FAtomicOrderedLock::FScope scopeLock(_barrier);
+
         return Erase_AssumeLocked_(key);
     }
 
     template <typename _Functor>
     void Foreach(_Functor&& functor) const {
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        const FAtomicOrderedLock::FScope scopeLock(_barrier);
+
         Foreach_AssumeLocked_(functor);
     }
 
 private:
-    static constexpr uintptr_t NullSentinel_ = 1;
+    STATIC_CONST_INTEGRAL(uintptr_t, NullSentinel_, 1);
+    STATIC_CONST_INTEGRAL(size_t, TriePageSize_, ALLOCATION_GRANULARITY);
 
-    mutable FAtomicSpinLock _barrier;
+    mutable FAtomicOrderedLock _barrier;
 
     FNode* _root;
     FNode* _freeList;
     FNode* _newPageAllocated;
+
+#if USE_CORE_MEMORYDOMAINS
+    FMemoryTracking* const _trackingDataRef;
+#endif
 
     void Insert_AssumeLocked_(const uintptr_t key, const uintptr_t value, FNode* const newNode) {
         uintptr_t xcmp = 0;
@@ -121,12 +134,11 @@ private:
 
                 xcmp = (n->Keys[0] ^ key);
 
-
                 if (xcmp & mask) { // prefix doesn't match : insert a new node behind this one
                     nkey = (n->Keys[0] & ~uintptr_t(0xFF));
                     break;
                 }
-                else {// continue the descent
+                else { // continue the descent
                     const uintptr_t branch = ((key >> nbit) & 1);
                     nkey = (n->Keys[branch] & ~uintptr_t(0xFF));
                     parent = &n->Children[branch];
@@ -186,22 +198,22 @@ private:
         for (;;) {
             FNode* n = *parent;
 
-            const uintptr_t branch = ((key >> (n->Keys[0] & 0xFF)) & 1);
-            FNode* const ch0 = n->Children[branch]; // current child node
-            if ((uintptr_t)ch0 & 1) { // leaf
-                FNode* const ch1 = n->Children[branch ^ 1];
+            const size_t branch = ((key >> (n->Keys[0] & 0xFF)) & 1);
+            FNode* const child = n->Children[branch]; // current child node
+            if (uintptr_t(child) & 1) { // leaf
+                FNode* const other = n->Children[branch ^ 1];
 
                 Assert((n->Keys[branch] & ~uintptr_t(0xFF)) == key);
-                Assert(uintptr_t(ch0) != NullSentinel_); // node's key is probably broken :(
+                Assert(uintptr_t(child) != NullSentinel_); // node's key is probably broken :(
 
-                if (((uintptr_t)ch1 & 1) && uintptr_t(ch1) != NullSentinel_) // if other node is not a pointer
+                if ((uintptr_t(other) & 1) && uintptr_t(other) != NullSentinel_) // if other node is not a pointer
                     *pkey = (n->Keys[branch ^ 1] & ~uintptr_t(0xFF)) | ((*pkey) & 0xFF);
 
-                *parent = ch1;
+                *parent = other;
                 *(FNode**)n = _freeList;
                 _freeList = n;
 
-                return ((uintptr_t)ch0 & ~uintptr_t(1));
+                return ((uintptr_t)child & ~uintptr_t(1));
             }
 
             pkey = &n->Keys[branch];

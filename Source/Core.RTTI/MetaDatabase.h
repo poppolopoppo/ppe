@@ -72,11 +72,11 @@ private:
     FReadWriteLock _lockRW;
 
     // don't hold lifetime, must be handled separately
-    HASHMAP(RTTI, FName, SMetaTransaction) _transactions;
-    HASHMAP(RTTI, FName, SMetaObject) _objects;
-    HASHMAP(RTTI, FName, const FMetaClass*) _classes;
+    HASHMAP(MetaDatabase, FName, SMetaTransaction) _transactions;
+    HASHMAP(MetaDatabase, FName, SMetaObject) _objects;
+    HASHMAP(MetaDatabase, FName, const FMetaClass*) _classes;
 
-    VECTORINSITU(RTTI, const FMetaNamespace*, 8) _namespaces;
+    VECTORINSITU(MetaDatabase, const FMetaNamespace*, 8) _namespaces;
 };
 //----------------------------------------------------------------------------
 inline FMetaDatabase& MetaDB() {

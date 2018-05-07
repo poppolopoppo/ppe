@@ -2,24 +2,41 @@
 
 #include "MemoryTracking.h"
 
-#include "IO/Format.h"
-#include "IO/FormatHelpers.h"
-#include "IO/StringView.h"
-#include "IO/TextWriter.h"
-#include "Memory/MemoryProvider.h"
-#include "Memory/UniqueView.h"
-#include "Meta/OneTimeInitialize.h"
+#include "MemoryDomain.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FMemoryTracking& FMemoryTracking::PooledMemory() {
+    return MEMORYDOMAIN_TRACKING_DATA(PooledMemory);
+}
+//----------------------------------------------------------------------------
+FMemoryTracking& FMemoryTracking::UsedMemory() {
+    return MEMORYDOMAIN_TRACKING_DATA(UsedMemory);
+}
+//----------------------------------------------------------------------------
+FMemoryTracking& FMemoryTracking::ReservedMemory() {
+    return MEMORYDOMAIN_TRACKING_DATA(ReservedMemory);
+}
+//----------------------------------------------------------------------------
 FMemoryTracking::FMemoryTracking(
     const char* optionalName /*= "unknown"*/,
     FMemoryTracking* optionalParent /*= nullptr*/)
-:   _blockCount(0), _allocationCount(0), _totalSizeInBytes(0),
-    _maxBlockCount(0), _maxAllocationCount(0), _maxStrideInBytes(0), _minStrideInBytes(UINT32_MAX), _maxTotalSizeInBytes(0),
-    _parent(optionalParent), _name(optionalName) {}
+    : _blockCount(0)
+    , _allocationCount(0)
+    , _totalSizeInBytes(0)
+    , _maxBlockCount(0)
+    , _maxAllocationCount(0)
+    , _maxStrideInBytes(0)
+    , _minStrideInBytes(UINT32_MAX)
+    , _maxTotalSizeInBytes(0)
+    , _parent(optionalParent)
+    , _prev(nullptr)
+    , _next(nullptr)
+    , _name(optionalName)
+    , _level(optionalParent ? optionalParent->_level + 1 : 0)
+{}
 //----------------------------------------------------------------------------
 void FMemoryTracking::Allocate(size_t blockCount, size_t strideInBytes) {
     if (0 == blockCount)
@@ -127,98 +144,13 @@ void FMemoryTracking::Pool_DeallocateOneChunk(size_t chunkSizeInBytes, size_t nu
         _parent->Pool_DeallocateOneChunk(chunkSizeInBytes, numBlocks);
 }
 //----------------------------------------------------------------------------
-FMemoryTracking& FMemoryTracking::Global() {
-    ONE_TIME_INITIALIZE(FMemoryTracking, GGlobalMemoryTrackingData, "$");
-    return GGlobalMemoryTrackingData;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-static void TrackingDataAbsoluteName_(FTextWriter& oss, const FMemoryTracking& trackingData) {
-    if (trackingData.Parent() && trackingData.Parent() != &FMemoryTracking::Global()) {
-        TrackingDataAbsoluteName_(oss, *trackingData.Parent());
-        oss << '/';
-    }
-    oss << trackingData.Name();
-}
-//----------------------------------------------------------------------------
-static bool LessTrackingData_(const FMemoryTracking& lhs, const FMemoryTracking& rhs) {
-    Assert(lhs.Name());
-    Assert(rhs.Name());
-    return (lhs.Name() != rhs.Name()) &&
-        CompareI(   MakeCStringView(lhs.Name()),
-                    MakeCStringView(rhs.Name())) < 0;
-}
-//----------------------------------------------------------------------------
-void ReportTrackingDatas(   FWTextWriter& oss,
-                            const wchar_t *header,
-                            const TMemoryView<const FMemoryTracking * const>& datas ) {
-    Assert(header);
-
-    if (datas.empty())
-        return;
-
-    
-
-    const FTextFormat orgFormat = oss.ResetFormat();
-    const wchar_t orgFillChar = oss.SetFillChar(L' ');
-
-    oss << FTextFormat::Float(FTextFormat::FixedFloat, 2);
-
-    oss << L"reporting tracking data :" << Eol;
-
-    STACKLOCAL_POD_ARRAY(const FMemoryTracking *, sortedDatas, datas.size());
-    memcpy(sortedDatas.Pointer(), datas.Pointer(), datas.SizeInBytes());
-
-    std::stable_sort(sortedDatas.begin(), sortedDatas.end(), [](const FMemoryTracking *lhs, const FMemoryTracking *rhs) {
-        const FMemoryTracking *lhsp = lhs->Parent();
-        const FMemoryTracking *rhsp = rhs->Parent();
-        if (lhsp && rhsp)
-            return (LessTrackingData_(*lhsp, *rhsp) || (lhsp->Name() == rhsp->Name() && LessTrackingData_(*lhs, *rhs)));
-        else if (lhsp)
-            return LessTrackingData_(*lhsp, *rhs);
-        else if (rhsp)
-            return lhs->Name() == rhsp->Name() || LessTrackingData_(*lhs, *rhsp);
-        else
-            return LessTrackingData_(*lhs, *rhs);
-    });
-
-    const size_t width = 128;
-    const wchar_t fmt[] = L" {0:-33}| {1:8} {2:10} | {3:8} {4:11} | {5:9} {6:11} | {7:10} {8:11}\n";
-
-    oss << Fmt::Repeat(L'-', width) << Eol
-        << L"    " << header << L" (" << datas.size() << L" elements)" << Eol
-        << Fmt::Repeat(L'-', width) << Eol;
-
-    Format(oss, fmt,    L"Tracking domain",
-                        L"Block", L"Max",
-                        L"Alloc", L"Max",
-                        L"Stride", L"Max",
-                        L"Total", L"Max" );
-
-    oss << Fmt::Repeat(L'-', width) << Eol;
-
-    STACKLOCAL_TEXTWRITER(tmp, 1024);
-    for (const FMemoryTracking *data : datas) {
-        Assert(data);
-        tmp.Reset();
-        TrackingDataAbsoluteName_(tmp, *data);
-        Format(oss, fmt,
-            FStringView(tmp.Written()),
-            Fmt::FCountOfElements{ data->BlockCount() },
-            Fmt::FCountOfElements{ data->MaxBlockCount() },
-            Fmt::FCountOfElements{ data->AllocationCount() },
-            Fmt::FCountOfElements{ data->MaxAllocationCount() },
-            Fmt::FSizeInBytes{ Min(data->MaxStrideInBytes(), data->MinStrideInBytes()) },
-            Fmt::FSizeInBytes{ data->MaxStrideInBytes() },
-            Fmt::FSizeInBytes{ data->TotalSizeInBytes() },
-            Fmt::FSizeInBytes{ data->MaxTotalSizeInBytes() });
-    }
-
-    oss << Fmt::Repeat(L'-', width) << Eol;
-
-    oss.SetFormat(orgFormat);
-    oss.SetFillChar(orgFillChar);
+bool FMemoryTracking::IsChildOf(const FMemoryTracking& other) const {
+    if (&other == this)
+        return true;
+    else if (_parent)
+        return _parent->IsChildOf(other);
+    else
+        return false;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

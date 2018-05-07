@@ -8,9 +8,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
 #   define VIRTUALMEMORYCACHE(_DOMAIN, _NUM_BLOCKS, _MAX_SIZE_IN_BYTES) \
-    Core::TVirtualMemoryCache<_NUM_BLOCKS, _MAX_SIZE_IN_BYTES, MEMORY_DOMAIN_TAG(_DOMAIN)>
+    Core::TVirtualMemoryCache<_NUM_BLOCKS, _MAX_SIZE_IN_BYTES, MEMORYDOMAIN_TAG(_DOMAIN)>
 #else
 #   define VIRTUALMEMORYCACHE(_DOMAIN, _NUM_BLOCKS, _MAX_SIZE_IN_BYTES) \
     Core::TVirtualMemoryCache<_NUM_BLOCKS, _MAX_SIZE_IN_BYTES>
@@ -21,14 +21,24 @@ namespace Core {
 class CORE_API FVirtualMemory {
 public:
     static size_t   SizeInBytes(void* ptr);
-
-    static void*    Alloc(size_t sizeInBytes) { return Alloc(ALLOCATION_GRANULARITY, sizeInBytes); }
-    static void*    Alloc(size_t alignment, size_t sizeInBytes);
-    static void     Free(void* ptr, size_t sizeInBytes);
     static bool     Protect(void* ptr, size_t sizeInBytes, bool read, bool write);
 
-    static void*    InternalAlloc(size_t sizeInBytes);
-    static void     InternalFree(void* ptr, size_t sizeInBytes);
+#if USE_CORE_MEMORYDOMAINS
+#   define TRACKINGDATA_ARG_IFP , FMemoryTracking& trackingData
+#   define TRACKINGDATA_FWD_IFP , trackingData
+#else
+#   define TRACKINGDATA_ARG_IFP
+#   define TRACKINGDATA_FWD_IFP
+#endif
+
+    static void*    Alloc(size_t sizeInBytes TRACKINGDATA_ARG_IFP) { return Alloc(ALLOCATION_GRANULARITY, sizeInBytes TRACKINGDATA_FWD_IFP); }
+    static void*    Alloc(size_t alignment, size_t sizeInBytes TRACKINGDATA_ARG_IFP);
+    static void     Free(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP);
+
+    static void*    InternalAlloc(size_t sizeInBytes TRACKINGDATA_ARG_IFP);
+    static void     InternalFree(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP);
+
+#undef TRACKINGDATA_ARG_IFP
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -48,7 +58,7 @@ protected:
     size_t FreePageBlockCount;
     size_t TotalCacheSizeInBytes;
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
 #   define TRACKINGDATA_ARG_IFP , FMemoryTracking& trackingData
 #else
 #   define TRACKINGDATA_ARG_IFP
@@ -62,7 +72,7 @@ protected:
 #undef TRACKINGDATA_ARG_IFP
 };
 //----------------------------------------------------------------------------
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
 template <size_t _CacheBlocksCapacity, size_t _MaxCacheSizeInBytes, typename _DomainType >
 #else
 template <size_t _CacheBlocksCapacity, size_t _MaxCacheSizeInBytes>
@@ -72,7 +82,7 @@ public:
     TVirtualMemoryCache() { STATIC_ASSERT(_MaxCacheSizeInBytes > 0 && Meta::IsAligned(64 * 1024, _MaxCacheSizeInBytes)); }
     ~TVirtualMemoryCache() { ReleaseAll(); }
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
     typedef _DomainType domain_type;
     FMemoryTracking& TrackingData() const { return domain_type::TrackingData(); }
 #   define TRACKINGDATA_ARG_IFP , TrackingData()

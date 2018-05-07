@@ -8,148 +8,236 @@
 #include "Diagnostic/Logger.h"
 #include "Meta/OneTimeInitialize.h"
 
-#ifdef USE_MEMORY_DOMAINS
-#   include "Container/Vector.h"
+#if USE_CORE_MEMORYDOMAINS
+#   include "Container/Stack.h"
 #   include "Diagnostic/CrtDebug.h"
 #   include "IO/FormatHelpers.h"
 #   include "IO/String.h"
 #   include "IO/StringBuilder.h"
+#   include "IO/TextWriter.h"
 #   include "Thread/AtomicSpinLock.h"
 
 #   include <algorithm>
 #endif
 
 namespace Core {
-LOG_CATEGORY(CORE_API, MemoryTracking)
+LOG_CATEGORY(CORE_API, MemoryDomain)
+constexpr size_t MemoryDomainsMaxCount = 128;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace Domain {
-    FMemoryTracking& MEMORY_DOMAIN_NAME(Global)::TrackingData() {
-        return FMemoryTracking::Global();
+class FMemoryDomain : public FMemoryTracking {
+public:
+    FMemoryDomain(const char* name, FMemoryTracking* parent)
+    :   FMemoryTracking(name, parent) {
+        RegisterTrackingData(this);
+    }
+
+    ~FMemoryDomain() {
+        UnregisterTrackingData(this);
+    }
+
+    FMemoryDomain(const FMemoryDomain&) = delete;
+    FMemoryDomain& operator =(const FMemoryDomain&) = delete;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace MemoryDomain {
+    FMemoryTracking& MEMORYDOMAIN_NAME(PooledMemory)::TrackingData() {
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "PooledMemory", nullptr);
+        return GInstance;
+    }
+    FMemoryTracking& MEMORYDOMAIN_NAME(UsedMemory)::TrackingData() {
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "UsedMemory", nullptr);
+        return GInstance;
+    }
+    FMemoryTracking& MEMORYDOMAIN_NAME(ReservedMemory)::TrackingData() {
+        ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, "ReservedMemory", nullptr);
+        return GInstance;
     }
 }
 //----------------------------------------------------------------------------
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
-#define MEMORY_DOMAIN_IMPL(_Name, _Parent) \
-    namespace Domain { \
-        FMemoryTracking& MEMORY_DOMAIN_NAME(_Name)::TrackingData() { \
-            ONE_TIME_INITIALIZE(FMemoryTracking, GTrackingData, STRINGIZE(_Name), &MEMORY_DOMAIN_TRACKING_DATA(_Parent)); \
-            return GTrackingData; \
+// First pass for groups (which are not declared in header)
+#if !WITH_CORE_MEMORYDOMAINS_FULL_COLLAPSING
+#   define MEMORYDOMAIN_GROUP_IMPL(_Name, _Parent) \
+    namespace MemoryDomain { \
+        struct MEMORYDOMAIN_NAME(_Name) { \
+            static FMemoryTracking& TrackingData(); \
+        }; \
+    }
+#   include "MemoryDomain.Definitions-inl.h"
+#   undef MEMORYDOMAIN_COLLAPSABLE_IMPL
+#   undef MEMORYDOMAIN_GROUP_IMPL
+#   undef MEMORYDOMAIN_IMPL
+#endif
+//----------------------------------------------------------------------------
+// Second pass for definition of everything
+#if !WITH_CORE_MEMORYDOMAINS_FULL_COLLAPSING
+#   define MEMORYDOMAIN_IMPL(_Name, _Parent) \
+    namespace MemoryDomain { \
+        FMemoryTracking& MEMORYDOMAIN_NAME(_Name)::TrackingData() { \
+            ONE_TIME_INITIALIZE(FMemoryDomain, GInstance, STRINGIZE(_Name), &MEMORYDOMAIN_TRACKING_DATA(_Parent)); \
+            return GInstance; \
         } \
     }
-
-#ifdef COLLAPSE_MEMORY_DOMAINS
-#   define MEMORY_DOMAIN_COLLAPSABLE_IMPL(_Name, _Parent)
 #endif
-
-#include "MemoryDomain.Definitions-inl.h"
-
-#undef MEMORY_DOMAIN_COLLAPSABLE_IMPL
-#undef MEMORY_DOMAIN_IMPL
-//----------------------------------------------------------------------------
-#endif //!USE_MEMORY_DOMAINS
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#ifdef USE_MEMORY_DOMAINS
-namespace {
-//----------------------------------------------------------------------------
-#define MEMORY_DOMAIN_IMPL(_Name, _Parent) &MEMORY_DOMAIN_TRACKING_DATA(_Name) COMMA
-
-#ifdef COLLAPSE_MEMORY_DOMAINS
-#   define MEMORY_DOMAIN_COLLAPSABLE_IMPL(_Name, _Parent)
+#if WITH_CORE_MEMORYDOMAINS_COLLAPSING
+#   define MEMORYDOMAIN_COLLAPSABLE_IMPL(_Name, _Parent)
 #endif
-
-static FMemoryTracking *GAllMemoryDomainTrackingData[] = {
 #include "MemoryDomain.Definitions-inl.h"
-};
-
-#undef MEMORY_DOMAIN_COLLAPSABLE_IMPL
-#undef MEMORY_DOMAIN_IMPL
+#undef MEMORYDOMAIN_COLLAPSABLE_IMPL
+#undef MEMORYDOMAIN_GROUP_IMPL
+#undef MEMORYDOMAIN_IMPL
 //----------------------------------------------------------------------------
-} //!namespace
-#endif //!USE_MEMORY_DOMAINS
+#endif //!USE_CORE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#ifdef USE_MEMORY_DOMAINS
-struct FAdditionalTrackingData {
-    FAtomicSpinLock Barrier;
-    VECTOR(Internal, FMemoryTracking*) Datas;
-    FAdditionalTrackingData() {
-        // don't want to allocate on other threads :
-        Datas.reserve_AssumeEmpty(1024);
+#if USE_CORE_MEMORYDOMAINS
+class FTrackingDataRegistry_ {
+public:
+    static FTrackingDataRegistry_& Get() {
+        ONE_TIME_DEFAULT_INITIALIZE(FTrackingDataRegistry_, GInstance);
+        return GInstance;
     }
+
+    void Register(FMemoryTracking* pTrackingData) {
+        Assert(pTrackingData);
+        Assert(nullptr == pTrackingData->Prev());
+        Assert(nullptr == pTrackingData->Next());
+
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        if (_head) {
+            pTrackingData->SetNext(_head);
+            _head->SetPrev(pTrackingData);
+        }
+
+        _head = pTrackingData;
+    }
+
+    void Unregister(FMemoryTracking* pTrackingData) {
+        Assert(pTrackingData);
+
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        if (pTrackingData->Prev()) {
+            Assert(pTrackingData != _head);
+            pTrackingData->Prev()->SetNext(pTrackingData->Next());
+        }
+        else {
+            Assert(pTrackingData == _head);
+            _head = pTrackingData->Next();
+        }
+
+        if (pTrackingData->Next())
+            pTrackingData->Next()->SetPrev(pTrackingData->Prev());
+    }
+
+    using FMemoryDomainsList = TFixedSizeStack<const FMemoryTracking*, MemoryDomainsMaxCount>;
+    void FetchDatas(FMemoryDomainsList* plist) const {
+        Assert(plist);
+
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        for (FMemoryTracking* node = _head; node; node = node->Next())
+            plist->Push(node);
+    }
+
+private:
+    mutable FAtomicSpinLock _barrier;
+    FMemoryTracking* _head;
+
+    FTrackingDataRegistry_() : _head(nullptr) {}
+
+    FTrackingDataRegistry_(const FTrackingDataRegistry_&) = delete;
+    FTrackingDataRegistry_& operator =(const FTrackingDataRegistry_&) = delete;
 };
-static FAdditionalTrackingData& AllAdditionalTrackingData_() {
-    static FAdditionalTrackingData GInstance;
-    return GInstance;
+#endif //!USE_CORE_MEMORYDOMAINS
+//----------------------------------------------------------------------------
+#if USE_CORE_MEMORYDOMAINS
+void ReportTrackingDatas_(
+    FWTextWriter& oss,
+    const wchar_t *header,
+    const TMemoryView<const FMemoryTracking * const>& datas) {
+    Assert(header);
+
+    if (datas.empty())
+        return;
+
+    const FWTextWriter::FFormatScope formatScope(oss);
+
+    oss << FTextFormat::Float(FTextFormat::FixedFloat, 2);
+
+    oss << L"reporting tracking data :" << Eol;
+
+    const size_t width = 128;
+    const wchar_t fmt[] = L" {0:-33}| {1:8} {2:10} | {3:8} {4:11} | {5:9} {6:11} | {7:10} {8:11}\n";
+
+    oss << Fmt::Repeat(L'-', width) << Eol
+        << L"    " << header << L" (" << datas.size() << L" elements)" << Eol
+        << Fmt::Repeat(L'-', width) << Eol;
+
+    Format(oss, fmt, L"Tracking domain",
+        L"Block",   L"Max",
+        L"Alloc",   L"Max",
+        L"Stride",  L"Max",
+        L"Total",   L"Max" );
+
+    oss << Fmt::Repeat(L'-', width) << Eol;
+
+    STACKLOCAL_WTEXTWRITER(tmp, 128);
+
+    for (const FMemoryTracking* data : datas) {
+        Assert(data);
+        tmp.Reset();
+        const FStringView name = MakeCStringView(data->Name());
+        Format(tmp, L"{0}{1}", Fmt::Repeat(L' ', 2 * data->Level()), name);
+        Format(oss, fmt,
+            tmp.Written(),
+            Fmt::FCountOfElements{ data->BlockCount() },
+            Fmt::FCountOfElements{ data->MaxBlockCount() },
+            Fmt::FCountOfElements{ data->AllocationCount() },
+            Fmt::FCountOfElements{ data->MaxAllocationCount() },
+            Fmt::FSizeInBytes{ Min(data->MaxStrideInBytes(), data->MinStrideInBytes()) },
+            Fmt::FSizeInBytes{ data->MaxStrideInBytes() },
+            Fmt::FSizeInBytes{ data->TotalSizeInBytes() },
+            Fmt::FSizeInBytes{ data->MaxTotalSizeInBytes() });
+    }
+
+    oss << Fmt::Repeat(L'-', width) << Eol;
 }
-#endif //!USE_MEMORY_DOMAINS
+#endif //!USE_CORE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TMemoryView<FMemoryTracking *> EachDomainTrackingData() {
-#ifdef USE_MEMORY_DOMAINS
-    return MakeView(GAllMemoryDomainTrackingData);
-#else
-    return TMemoryView<FMemoryTracking *>();
-#endif
-}
-//----------------------------------------------------------------------------
-void ReportDomainTrackingData(FWTextWriter& oss) {
-#if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
-    const FMemoryTracking **ptr = (const FMemoryTracking **)&GAllMemoryDomainTrackingData[0];
-    const TMemoryView<const FMemoryTracking *> datas(ptr, lengthof(GAllMemoryDomainTrackingData));
-    ReportTrackingDatas(oss, L"Memory Domains", datas);
-#endif
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-void RegisterAdditionalTrackingData(FMemoryTracking *pTrackingData) {
-#ifdef USE_MEMORY_DOMAINS
-    Assert(pTrackingData);
+void RegisterTrackingData(FMemoryTracking *pTrackingData) {
+#if USE_CORE_MEMORYDOMAINS
     SKIP_MEMORY_LEAKS_IN_SCOPE();
-    FAdditionalTrackingData& Additional = AllAdditionalTrackingData_();
-    const FAtomicSpinLock::FScope scopeLock(Additional.Barrier);
-    Assert(not Contains(Additional.Datas, pTrackingData));
-    Additional.Datas.push_back_AssumeNoGrow(pTrackingData);
+    FTrackingDataRegistry_::Get().Register(pTrackingData);
 #else
     UNUSED(pTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------
-void UnregisterAdditionalTrackingData(FMemoryTracking *pTrackingData) {
-#ifdef USE_MEMORY_DOMAINS
-    Assert(pTrackingData);
+void UnregisterTrackingData(FMemoryTracking *pTrackingData) {
+#if USE_CORE_MEMORYDOMAINS
     SKIP_MEMORY_LEAKS_IN_SCOPE();
-    FAdditionalTrackingData& Additional = AllAdditionalTrackingData_();
-    const FAtomicSpinLock::FScope scopeLock(Additional.Barrier);
-    Remove_AssertExists(Additional.Datas, pTrackingData);
+    FTrackingDataRegistry_::Get().Unregister(pTrackingData);
 #else
     UNUSED(pTrackingData);
-#endif
-}
-//----------------------------------------------------------------------------
-void ReportAdditionalTrackingData(FWTextWriter& oss) {
-#if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
-    SKIP_MEMORY_LEAKS_IN_SCOPE();
-
-    FAdditionalTrackingData& Additional = AllAdditionalTrackingData_();
-    const FAtomicSpinLock::FScope scopeLock(Additional.Barrier);
-    ReportTrackingDatas(oss, L"Additional", Additional.Datas.MakeConstView());
 #endif
 }
 //----------------------------------------------------------------------------
 void ReportAllocationHistogram(FWTextWriter& oss) {
-#if defined(USE_MEMORY_DOMAINS) && defined(USE_DEBUG_LOGGER)
+#if USE_CORE_MEMORYDOMAINS && defined(USE_DEBUG_LOGGER)
     TMemoryView<const size_t> classes, allocations, totalBytes;
     if (not FetchMemoryAllocationHistogram(&classes, &allocations, &totalBytes))
         return;
@@ -172,8 +260,8 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
     oss << FTextFormat::Float(FTextFormat::FixedFloat, 2);
     oss << L"report allocations size histogram" << Eol;
 
-    static size_t GPrevAllocations[60/* chhh */] = { 0 };
-    AssertRelease(lengthof(GPrevAllocations) == classes.size());
+    static size_t GPrevAllocations[MemoryDomainsMaxCount] = { 0 }; // beware this is not thread safe
+    AssertRelease(lengthof(GPrevAllocations) >= classes.size());
 
     constexpr float width = 80;
     forrange(i, 0, classes.size()) {
@@ -202,19 +290,41 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
 #endif
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
-#if defined(USE_MEMORY_DOMAINS)
+#if USE_CORE_MEMORYDOMAINS
+    FTrackingDataRegistry_::FMemoryDomainsList datas;
+    FTrackingDataRegistry_::Get().FetchDatas(&datas);
+
+    {
+        STACKLOCAL_POD_ARRAY(u32, indices, datas.size());
+        TFixedSizeStack<FString, MemoryDomainsMaxCount> fullnames;
+
+        forrange(i, 0, datas.size()) {
+            indices[i] = u32(i);
+            FString* str = INPLACE_NEW(fullnames.Push_Uninitialized(), FString)();
+            str->reserve(128);
+            for (const FMemoryTracking* p = datas[i]; p; p = p->Parent()) {
+                str->insert(str->begin(), MakeCStringView(p->Name()));
+                if (p == &MEMORYDOMAIN_TRACKING_DATA(PooledMemory))
+                    str->insert(str->begin(), 'Z'); // always listed last
+            }
+        }
+
+        std::stable_sort(indices.begin(), indices.end(), [&](size_t i, size_t j) {
+            return (Compare(fullnames[i], fullnames[j]) < 0);
+        });
+
+        ReindexMemoryView(datas.MakeView(), indices);
+    }
+
     FWStringBuilder sb;
     FWTextWriter& oss = (optional ? *optional : sb);
 
-    ReportDomainTrackingData(oss);
-    ReportAdditionalTrackingData(oss);
+    ReportTrackingDatas_(oss, L"Memory domains", datas.MakeView());
     ReportAllocationHistogram(oss);
 
     if (not optional)
-        LOG(MemoryTracking, Info, sb.ToString());
+        LOG(MemoryDomain, Info, sb.ToString());
 #endif
 }
 //----------------------------------------------------------------------------

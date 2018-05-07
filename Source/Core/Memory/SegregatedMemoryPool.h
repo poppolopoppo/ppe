@@ -9,7 +9,7 @@
 #include "Core/Meta/AutoSingleton.h"
 #include "Core/Meta/OneTimeInitialize.h"
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
 #include "Core/IO/Format.h"
 #include "Core/IO/TextWriter.h"
 #endif
@@ -40,7 +40,7 @@
 #   define SNAP_SIZE_FOR_POOL_SEGREGATION(_Type) sizeof(_Type)
 #endif
 
-#if defined(USE_MEMORY_DOMAINS) && defined(WITH_CORE_POOL_ALLACATOR_TAGNAME)
+#if USE_CORE_MEMORYDOMAINS && defined(WITH_CORE_POOL_ALLACATOR_TAGNAME)
 #   define WITH_CORE_POOL_ALLOCATOR_TRACKING //%__NOCOMMIT%
 #endif
 
@@ -64,11 +64,11 @@ struct TPoolTracking {
     TPoolTracking(const char* tagname, FMemoryTracking* parent = nullptr)
     :   TrackingData(&Name[0], parent) {
         Format(Name, "{0}<{1:A},{2}>", MakeCStringView(tagname), _ThreadLocal, _Size);
-        RegisterAdditionalTrackingData(&TrackingData);
+        RegisterTrackingData(&TrackingData);
     }
 
     ~TPoolTracking() {
-        UnregisterAdditionalTrackingData(&TrackingData);
+        UnregisterTrackingData(&TrackingData);
     }
 };
 //----------------------------------------------------------------------------
@@ -113,7 +113,7 @@ public:
     TSegregatedMemoryPool()
     :   memorypool_type(PoolBlockSize, PoolMinChunkSize, PoolMaxChunkSize)
 #ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
-    ,   _poolTracking(_Tag::Name())
+    ,   _poolTracking(_Tag::Name(), &MEMORYDOMAIN_TRACKING_DATA(PooledMemory))
 #endif
     {
         _Tag::Register(this);

@@ -75,7 +75,7 @@ public:
     }
 
 private:
-    HASHMAP(RTTI, FName, const FMetaClass*) _classes;
+    HASHMAP(MetaNamespace, FName, const FMetaClass*) _classes;
 
     FName _nameToken;
     size_t _classIdOffset;

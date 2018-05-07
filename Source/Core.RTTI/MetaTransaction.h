@@ -26,7 +26,7 @@ enum class ETransactionFlags : u32 {
 class CORE_RTTI_API FMetaTransaction : public FRefCountable {
 public:
     explicit FMetaTransaction(const FName& name);
-    FMetaTransaction(const FName& name, VECTOR(RTTI, PMetaObject)&& objects);
+    FMetaTransaction(const FName& name, VECTOR(MetaTransaction, PMetaObject)&& objects);
     virtual ~FMetaTransaction();
 
     const FName& Name() const { return _name; }
@@ -54,7 +54,7 @@ public:
         return _topObjects.MakeConstView();
     }
 
-    const VECTOR(RTTI, SCMetaTransaction)& ImportedTransactions() const {
+    const VECTOR(MetaTransaction, SCMetaTransaction)& ImportedTransactions() const {
         Assert(IsLoaded());
         return _importedTransactions;
     }
@@ -66,12 +66,12 @@ public:
 private:
     FName _name;
     ETransactionFlags _flags;
-    VECTOR(RTTI, PMetaObject) _topObjects;
+    VECTOR(MetaTransaction, PMetaObject) _topObjects;
 
-    HASHSET(RTTI, SMetaObject) _exportedObjects;
-    HASHSET(RTTI, SMetaObject) _loadedObjects;
+    HASHSET(MetaTransaction, SMetaObject) _exportedObjects;
+    HASHSET(MetaTransaction, SMetaObject) _loadedObjects;
 
-    VECTOR(RTTI, SCMetaTransaction) _importedTransactions;
+    VECTOR(MetaTransaction, SCMetaTransaction) _importedTransactions;
 
     friend class FTransactionLoadContext;
     friend class FTransactionUnloadContext;

@@ -12,10 +12,10 @@
 #include "Core/Memory/MemoryDomain.h"
 #include "Core/IO/TextWriter_fwd.h"
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
 #   define NEW_RTTI(T) new (*::Core::RTTI::MetaClass<T>()) T
 #else
-#   define NEW_RTTI(T) NEW_REF(RTTI, T)
+#   define NEW_RTTI(T) NEW_REF(MetaObject, T)
 #endif
 
 namespace Core {
@@ -126,13 +126,13 @@ private:
     const FName _name;
     const FMetaNamespace* _namespace;
 
-    HASHMAP(RTTI, FName, const FMetaProperty*) _propertiesAll;
-    HASHMAP(RTTI, FName, const FMetaFunction*) _functionsAll;
+    HASHMAP(MetaClass, FName, const FMetaProperty*) _propertiesAll;
+    HASHMAP(MetaClass, FName, const FMetaFunction*) _functionsAll;
 
-    VECTORINSITU(RTTI, FMetaProperty, 8) _propertiesSelf;
-    VECTORINSITU(RTTI, FMetaFunction, 4) _functionsSelf;
+    VECTORINSITU(MetaClass, FMetaProperty, 8) _propertiesSelf;
+    VECTORINSITU(MetaClass, FMetaFunction, 4) _functionsSelf;
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
 public:
     FMemoryTracking& TrackingData() const { return _trackingData; }
 protected: // for access in CreateInstance()

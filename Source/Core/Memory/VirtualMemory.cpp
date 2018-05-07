@@ -20,7 +20,7 @@
 #   error "unsupported platform"
 #endif
 
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
 #   define TRACKINGDATA_ARG_IFP , FMemoryTracking& trackingData
 #   define TRACKINGDATA_ARG_FWD , trackingData
 #else
@@ -47,25 +47,35 @@ namespace Core {
 #if USE_VMALLOC_SIZE_PTRIE
 namespace {
 //----------------------------------------------------------------------------
-// Compressed radix trie method from :
-// https://github.com/r-lyeh/ltalloc/blob/4ad53ea91c359a07f97de65d93fb8a7d279354bd/ltalloc.cc
-//----------------------------------------------------------------------------
-static FCompressedRadixTrie& VirtualMemoryAllocs_() {
-    ONE_TIME_DEFAULT_INITIALIZE(FCompressedRadixTrie, GInstance);
-    return GInstance;
-}
-//----------------------------------------------------------------------------
-static void VMRegisterBlockSize_(void* ptr, size_t sizeInBytes) {
-    VirtualMemoryAllocs_().Insert(uintptr_t(ptr), uintptr_t(sizeInBytes));
-}
-//----------------------------------------------------------------------------
-static size_t VMFetchBlockSize_(void* ptr) {
-    return VirtualMemoryAllocs_().Lookup(uintptr_t(ptr));
-}
-//----------------------------------------------------------------------------
-static size_t VMReleaseBlockSize_(void* ptr) {
-    return VirtualMemoryAllocs_().Erase(uintptr_t(ptr));
-}
+class FVMAllocSizePTrie_ {
+public:
+    static FVMAllocSizePTrie_& Get() {
+        ONE_TIME_DEFAULT_INITIALIZE(FVMAllocSizePTrie_, GInstance);
+        return GInstance;
+    }
+
+    void Register(void* ptr, size_t sizeInBytes) {
+        _allocs.Insert(uintptr_t(ptr), uintptr_t(sizeInBytes));
+    }
+
+    size_t Fetch(void* ptr) const {
+        return size_t(_allocs.Lookup(uintptr_t(ptr)));
+    }
+
+    size_t Erase(void* ptr) {
+        return size_t(_allocs.Erase(uintptr_t(ptr)));
+    }
+
+private:
+    FCompressedRadixTrie _allocs;
+
+#if USE_CORE_MEMORYDOMAINS
+    FVMAllocSizePTrie_() : _allocs(MEMORYDOMAIN_TRACKING_DATA(SizePtrie)) {}
+#else
+    FVMAllocSizePTrie_() {}
+#endif
+    ~FVMAllocSizePTrie_() {}
+};
 //----------------------------------------------------------------------------
 } //!namespace
 #endif //!USE_VMALLOC_SIZE_PTRIE
@@ -79,7 +89,7 @@ size_t FVirtualMemory::SizeInBytes(void* ptr) {
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
 
 #if USE_VMALLOC_SIZE_PTRIE
-    const size_t regionSize = VMFetchBlockSize_(ptr);
+    const size_t regionSize = FVMAllocSizePTrie_::Get().Fetch(ptr);
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, regionSize));
 
     return regionSize;
@@ -127,19 +137,14 @@ bool FVirtualMemory::Protect(void* ptr, size_t sizeInBytes, bool read, bool writ
 // https://github.com/r-lyeh/ltalloc/blob/master/ltalloc.cc
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(6001) // Using uninitialized memory 'XXX'.
-void* FVirtualMemory::Alloc(size_t alignment, size_t sizeInBytes) {
+void* FVirtualMemory::Alloc(size_t alignment, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     Assert(sizeInBytes);
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
     Assert(Meta::IsPow2(alignment));
 
-
 #if     defined(PLATFORM_WINDOWS)
     // Optimistically try mapping precisely the right amount before falling back to the slow method :
     void* p = ::VirtualAlloc(nullptr, sizeInBytes, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-#ifdef USE_MEMORY_DOMAINS
-    if (p)
-        MEMORY_DOMAIN_TRACKING_DATA(Reserved).Allocate(1, sizeInBytes);
-#endif
 
     if (not Meta::IsAligned(alignment, p)) {
         const size_t allocationGranularity = FPlatformMisc::SystemInfo.AllocationGranularity;
@@ -176,7 +181,8 @@ void* FVirtualMemory::Alloc(size_t alignment, size_t sizeInBytes) {
             diff = alignment - ALLOCATION_GRANULARITY() - diff;
             assert((intptr_t)diff >= 0);
             if (diff) VMFREE((void*)(ap + size), diff);
-            return (void*)ap;
+            p = (void*)ap;
+            break;
         }
     }
 
@@ -185,25 +191,29 @@ void* FVirtualMemory::Alloc(size_t alignment, size_t sizeInBytes) {
 #endif
 
 #if USE_VMALLOC_SIZE_PTRIE
-    VMRegisterBlockSize_(p, sizeInBytes);
+    FVMAllocSizePTrie_::Get().Register(p, sizeInBytes);
+#endif
+#if USE_CORE_MEMORYDOMAINS
+    Assert(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
+    trackingData.Allocate(1, sizeInBytes);
 #endif
 
     return p;
 }
 PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
-void FVirtualMemory::Free(void* ptr, size_t sizeInBytes) {
+void FVirtualMemory::Free(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     Assert(ptr);
     Assert(sizeInBytes);
 
 #if USE_VMALLOC_SIZE_PTRIE
-    const size_t regionSize = VMReleaseBlockSize_(ptr);
+    const size_t regionSize = FVMAllocSizePTrie_::Get().Erase(ptr);
     Assert(regionSize == sizeInBytes);
 #endif
 
-#ifdef USE_MEMORY_DOMAINS
-    if (ptr)
-        MEMORY_DOMAIN_TRACKING_DATA(Reserved).Deallocate(1, sizeInBytes);
+#if USE_CORE_MEMORYDOMAINS
+    Assert(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
+    trackingData.Deallocate(1, sizeInBytes);
 #endif
 
 #if     defined(PLATFORM_WINDOWS)
@@ -211,34 +221,36 @@ void FVirtualMemory::Free(void* ptr, size_t sizeInBytes) {
     if (0 == ::VirtualFree(ptr, 0, MEM_RELEASE))
         CORE_THROW_IT(FLastErrorException("VirtualFree"));
 
-#elif   defined(PLATFORM_LINUX)
-
 #else
 #   error "unsupported platform"
 #endif
 }
 //----------------------------------------------------------------------------
-void* FVirtualMemory::InternalAlloc(size_t sizeInBytes) {
+// Won't register in FVMAllocSizePTrie_
+void* FVirtualMemory::InternalAlloc(size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, sizeInBytes));
 
     void* const ptr = VMALLOC(sizeInBytes);
-    Assert(ptr);
+    AssertRelease(ptr);
 
-#ifdef USE_MEMORY_DOMAINS
-    MEMORY_DOMAIN_TRACKING_DATA(Internal).Allocate(1, sizeInBytes);
+#if USE_CORE_MEMORYDOMAINS
+    Assert(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
+    trackingData.Allocate(1, sizeInBytes);
 #endif
 
     return ptr;
 }
 //----------------------------------------------------------------------------
-void FVirtualMemory::InternalFree(void* ptr, size_t sizeInBytes) {
+// Won't register in FVMAllocSizePTrie_
+void FVirtualMemory::InternalFree(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     Assert(ptr);
     Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, sizeInBytes));
 
     VMFREE(ptr, sizeInBytes);
 
-#ifdef USE_MEMORY_DOMAINS
-    MEMORY_DOMAIN_TRACKING_DATA(Internal).Deallocate(1, sizeInBytes);
+#if USE_CORE_MEMORYDOMAINS
+    Assert(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
+    trackingData.Deallocate(1, sizeInBytes);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -289,11 +301,6 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
             FreePageBlockCount--;
             TotalCacheSizeInBytes -= cachedBlockSize;
 
-#ifdef USE_MEMORY_DOMAINS
-            // Only track overhead due to cached memory, actual blocks in use should be logged in their own domain
-            trackingData.Deallocate(1, cachedBlockSize);
-#endif
-
             if (cachedBlock + 1 != last)
                 ::memmove(cachedBlock, cachedBlock + 1, sizeof(FFreePageBlock) * (last - cachedBlock - 1));
 
@@ -307,7 +314,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
             return result;
         }
 
-        if (void* result = FVirtualMemory::Alloc(alignment, sizeInBytes)) {
+        if (void* result = FVirtualMemory::Alloc(alignment, sizeInBytes TRACKINGDATA_ARG_FWD)) {
             Assert(Meta::IsAligned(alignment, result));
             return result;
         }
@@ -316,7 +323,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
         ReleaseAll(first TRACKINGDATA_ARG_FWD);
     }
 
-    void* result = FVirtualMemory::Alloc(alignment, sizeInBytes);
+    void* result = FVirtualMemory::Alloc(alignment, sizeInBytes TRACKINGDATA_ARG_FWD);
     Assert(Meta::IsAligned(alignment, result));
     Assert(FVirtualMemory::SizeInBytes(result) == sizeInBytes);
 
@@ -330,22 +337,17 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
     Assert(Meta::IsAligned(FPlatformMisc::SystemInfo.AllocationGranularity, sizeInBytes));
 
     if (sizeInBytes > maxCacheSizeInBytes / 4) {
-        FVirtualMemory::Free(ptr, sizeInBytes);
+        FVirtualMemory::Free(ptr, sizeInBytes TRACKINGDATA_ARG_FWD);
         return;
     }
 
     while (FreePageBlockCount >= cacheBlocksCapacity || TotalCacheSizeInBytes + sizeInBytes > maxCacheSizeInBytes) {
         Assert(FreePageBlockCount);
 
-        FVirtualMemory::Free(first->Ptr, first->SizeInBytes);
+        FVirtualMemory::Free(first->Ptr, first->SizeInBytes TRACKINGDATA_ARG_FWD);
 
         Assert(TotalCacheSizeInBytes >= first->SizeInBytes);
         TotalCacheSizeInBytes -= first->SizeInBytes;
-
-#ifdef USE_MEMORY_DOMAINS
-        // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
-        trackingData.Deallocate(1, first->SizeInBytes);
-#endif
 
 #ifdef _DEBUG
         first->Ptr = nullptr;
@@ -362,11 +364,6 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
     TotalCacheSizeInBytes += sizeInBytes;
     FreePageBlockCount++;
 
-#ifdef USE_MEMORY_DOMAINS
-    // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
-    trackingData.Allocate(1, sizeInBytes);
-#endif
-
 #if USE_VMCACHE_PAGE_PROTECT
     // Forbid access to cached pages, so it will crash in the client it there's necrophilia attempt (read+write)
     FVirtualMemory::Protect(ptr, sizeInBytes, false, false);
@@ -379,15 +376,10 @@ void FVirtualMemoryCache::ReleaseAll(FFreePageBlock* first TRACKINGDATA_ARG_IFP)
             ++first ) {
         Assert(Meta::IsAligned(FPlatformMisc::SystemInfo.AllocationGranularity, first->Ptr));
 
-        FVirtualMemory::Free(first->Ptr, first->SizeInBytes);
+        FVirtualMemory::Free(first->Ptr, first->SizeInBytes TRACKINGDATA_ARG_FWD);
 
         Assert(TotalCacheSizeInBytes >= first->SizeInBytes);
         TotalCacheSizeInBytes -= first->SizeInBytes;
-
-#ifdef USE_MEMORY_DOMAINS
-        // Only track overhead due to cached memory, actual blocks in use should be logger in their owning domain
-        trackingData.Deallocate(1, first->SizeInBytes);
-#endif
 
 #ifdef _DEBUG
         first->Ptr = nullptr;
@@ -403,3 +395,4 @@ void FVirtualMemoryCache::ReleaseAll(FFreePageBlock* first TRACKINGDATA_ARG_IFP)
 } //!namespace Core
 
 #undef TRACKINGDATA_ARG_IFP
+#undef TRACKINGDATA_ARG_FWD

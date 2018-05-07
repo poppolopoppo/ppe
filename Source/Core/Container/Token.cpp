@@ -12,11 +12,6 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTokenFactory::FTokenFactory()
-#ifdef USE_MEMORY_DOMAINS
-    : _heap(&MEMORY_DOMAIN_TRACKING_DATA(Token))
-#else
-    : _heap()
-#endif
 {}
 //----------------------------------------------------------------------------
 FTokenFactory::~FTokenFactory() {

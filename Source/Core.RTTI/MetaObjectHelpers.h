@@ -92,7 +92,7 @@ auto CastChecked(const PMetaObject& p) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using TReferencedObjects = VECTORINSITU(RTTI, FMetaObject*, 8);
+using TReferencedObjects = VECTORINSITU(MetaObject, FMetaObject*, 8);
 CORE_RTTI_API void CollectReferencedObjects(
     const FMetaObject& root,
     TReferencedObjects& references,

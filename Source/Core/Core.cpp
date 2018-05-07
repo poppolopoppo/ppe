@@ -40,11 +40,6 @@ STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TMallocator<in
 STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TMallocator<int>)>::propagate_on_container_swap::value);
 STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TMallocator<int>)>::is_always_equal::value);
 //----------------------------------------------------------------------------
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, THeapAllocator<int>)>::propagate_on_container_copy_assignment::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, THeapAllocator<int>)>::propagate_on_container_move_assignment::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, THeapAllocator<int>)>::propagate_on_container_swap::value);
-STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, THeapAllocator<int>)>::is_always_equal::value);
-//----------------------------------------------------------------------------
 STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPoolAllocator<int>)>::propagate_on_container_copy_assignment::value);
 STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPoolAllocator<int>)>::propagate_on_container_move_assignment::value);
 STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPoolAllocator<int>)>::propagate_on_container_swap::value);
@@ -75,20 +70,18 @@ void FCoreModule::Start(void *applicationHandle, int nShowCmd, const wchar_t* fi
     FDiagnosticsStartup::Start(applicationHandle, nShowCmd, filename, argc, argv);
     // 2 - main thread context
     FThreadContextStartup::Start_MainThread();
-    // 3 - heap allocators
-    Heaps::Process::Create(FHeap::current_process_t());
-    // 4 - pool allocators
+    // 3 - pool allocators
     POOL_TAG(Default)::Start();
     POOL_TAG(NodeBasedContainer)::Start();
-    // 5 - auto singleton manager
+    // 4 - auto singleton manager
     Meta::FAutoSingletonManager::Start();
-    // 6 - thread pool
+    // 5 - thread pool
     FThreadPoolStartup::Start();
-    // 7 - file system
+    // 6 - file system
     FFileSystemStartup::Start();
-    // 8 - virtual file system
+    // 7 - virtual file system
     FVirtualFileSystemStartup::Start();
-    // 9 - logger
+    // 8 - logger
 #ifdef USE_DEBUG_LOGGER
     FLogger::Start();
 #endif
@@ -97,23 +90,21 @@ void FCoreModule::Start(void *applicationHandle, int nShowCmd, const wchar_t* fi
 void FCoreModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Core);
 
-    // 9 - logger
+    // 8 - logger
 #ifdef USE_DEBUG_LOGGER
     FLogger::Shutdown();
 #endif
-    // 8 - virtual file system
+    // 7 - virtual file system
     FVirtualFileSystemStartup::Shutdown();
-    // 7 - file system
+    // 6 - file system
     FFileSystemStartup::Shutdown();
-    // 6 - thread pool
+    // 5 - thread pool
     FThreadPoolStartup::Shutdown();
-    // 5 - auto singleton manager
+    // 4 - auto singleton manager
     Meta::FAutoSingletonManager::Shutdown();
-    // 4 - pool allocators
+    // 3 - pool allocators
     POOL_TAG(NodeBasedContainer)::Shutdown();
     POOL_TAG(Default)::Shutdown();
-    // 3 - heap allocators
-    Heaps::Process::Destroy();
     // 2 - main thread context
     FThreadContextStartup::Shutdown();
     // 1 - diagnostics

@@ -16,13 +16,8 @@ namespace Core {
 #define HASHSET_LINEARHEAP(T) ::Core::THashSet<T, ::Core::Meta::THash<T>, ::Core::Meta::TEqualTo<T>, ::Core::TLinearHeapAllocator<T>>
 //----------------------------------------------------------------------------
 #define HASHMAP_LINEARHEAP(_KEY, _VALUE) ::Core::THashMap<_KEY, _VALUE, ::Core::Meta::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, ::Core::TLinearHeapAllocator<::Core::TPair<_KEY, _VALUE>>>
-//----------------------------------------------------------------------------e
-#ifdef USE_MEMORY_DOMAINS
-#   define LINEARHEAP_DOMAIN_TRACKINGDATA(_DOMAIN) &MEMORY_DOMAIN_TRACKING_DATA(_DOMAIN)
-#else
-#   define LINEARHEAP_DOMAIN_TRACKINGDATA(_DOMAIN)
-#endif
-
+//----------------------------------------------------------------------------
+#define MEMORYSTREAM_LINEARHEAP() ::Core::TMemoryStream<::Core::TLinearHeapAllocator<u8>>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

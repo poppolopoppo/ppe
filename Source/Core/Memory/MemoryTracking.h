@@ -13,13 +13,21 @@ class TMemoryView;
 //----------------------------------------------------------------------------
 class FMemoryTracking {
 public:
-    FMemoryTracking(const char* optionalName = "unknown",
-                        FMemoryTracking* optionalParent = nullptr);
+    FMemoryTracking(const char* optionalName = "unknown", FMemoryTracking* optionalParent = nullptr);
 
     const char* Name() const { return _name; }
+    size_t Level() const { return _level; }
 
     FMemoryTracking* Parent() { return _parent; }
     const FMemoryTracking* Parent() const { return _parent; }
+
+    FMemoryTracking* Prev() { return _prev; }
+    const FMemoryTracking* Prev() const { return _prev; }
+    void SetPrev(FMemoryTracking* value) { _prev = value; }
+
+    FMemoryTracking* Next() { return _next; }
+    const FMemoryTracking* Next() const { return _next; }
+    void SetNext(FMemoryTracking* value) { _next = value; }
 
     size_t BlockCount() const { return _blockCount; }
     size_t AllocationCount() const { return _allocationCount; }
@@ -32,6 +40,8 @@ public:
     size_t MinStrideInBytes() const { return _minStrideInBytes; }
 
     size_t MaxTotalSizeInBytes() const { return _maxTotalSizeInBytes; }
+
+    bool IsChildOf(const FMemoryTracking& other) const;
 
     void Allocate(size_t blockCount, size_t strideInBytes);
     void Deallocate(size_t blockCount, size_t strideInBytes);
@@ -46,11 +56,14 @@ public:
     void Pool_AllocateOneChunk(size_t chunkSizeInBytes, size_t numBlocks);
     void Pool_DeallocateOneChunk(size_t chunkSizeInBytes, size_t numBlocks);
 
-    static FMemoryTracking& Global();
+    static FMemoryTracking& UsedMemory();
+    static FMemoryTracking& ReservedMemory();
+    static FMemoryTracking& PooledMemory();
 
 private:
     std::atomic<size_t> _blockCount;
     std::atomic<size_t> _allocationCount;
+    std::atomic<size_t> _prevAllocationCount;
     std::atomic<size_t> _totalSizeInBytes;
 
     std::atomic<size_t> _maxBlockCount;
@@ -62,12 +75,13 @@ private:
     std::atomic<size_t> _maxTotalSizeInBytes;
 
     FMemoryTracking* _parent;
+
+    FMemoryTracking* _prev;
+    FMemoryTracking* _next;
+
     const char* _name;
+    size_t _level;
 };
-//----------------------------------------------------------------------------
-void ReportTrackingDatas(   FWTextWriter& oss,
-                            const wchar_t *header,
-                            const TMemoryView<const FMemoryTracking * const>& datas );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
