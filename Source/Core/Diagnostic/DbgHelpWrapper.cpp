@@ -17,7 +17,7 @@ FDbghelpWrapper::FDbghelpWrapper()
 ,   _symCleanup(nullptr)
 ,   _symSetOptions(nullptr)
 ,   _symLoadModuleExW(nullptr)
-,   _symGetModuleInfo64(nullptr)
+,   _symGetModuleInfoW64(nullptr)
 ,   _symFromAddrW(nullptr)
 ,   _symGetLineFromAddrW64(nullptr)
 ,   _miniDumpWriteDump(nullptr) {
@@ -53,7 +53,7 @@ FDbghelpWrapper::FDbghelpWrapper()
         _symGetOptions = (FSymGetOptions)_dbghelp_dll.FunctionAddr("SymGetOptions");
         _symSetOptions = (FSymSetOptions)_dbghelp_dll.FunctionAddr("SymSetOptions");
         _symLoadModuleExW = (FSymLoadModuleExW)_dbghelp_dll.FunctionAddr("SymLoadModuleExW");
-        _symGetModuleInfo64 = (FSymGetModuleInfo64)_dbghelp_dll.FunctionAddr("SymGetModuleInfo64");
+        _symGetModuleInfoW64 = (FSymGetModuleInfoW64)_dbghelp_dll.FunctionAddr("SymGetModuleInfoW64");
         _symFromAddrW = (FSymFromAddrW)_dbghelp_dll.FunctionAddr("SymFromAddrW");
         _symGetLineFromAddrW64 = (FSymGetLineFromAddrW64)_dbghelp_dll.FunctionAddr("SymGetLineFromAddrW64");
 
@@ -62,7 +62,7 @@ FDbghelpWrapper::FDbghelpWrapper()
         Assert(_symGetOptions);
         Assert(_symSetOptions);
         Assert(_symLoadModuleExW);
-        Assert(_symGetModuleInfo64);
+        Assert(_symGetModuleInfoW64);
         Assert(_symFromAddrW);
         Assert(_symGetLineFromAddrW64);
 

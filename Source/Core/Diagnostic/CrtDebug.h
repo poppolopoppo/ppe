@@ -35,10 +35,10 @@ private:
 void CrtCheckGlobalMemoryLeaks(bool enabled);
 //----------------------------------------------------------------------------
 #define CHECK_MEMORY_LEAKS_IN_SCOPE() \
-    const ::Core::FCrtCheckMemoryLeaks CONCAT(checkMemoryLeaksScope_, __LINE__)
+    const ::Core::FCrtCheckMemoryLeaks ANONYMIZE(checkMemoryLeaksScope_)
 //----------------------------------------------------------------------------
 #define SKIP_MEMORY_LEAKS_IN_SCOPE() \
-    const ::Core::FCrtSkipMemoryLeaks CONCAT(skipMemoryLeaksScope_, __LINE__)
+    const ::Core::FCrtSkipMemoryLeaks ANONYMIZE(skipMemoryLeaksScope_)
 //----------------------------------------------------------------------------
 #define GLOBAL_CHECK_MEMORY_LEAKS(_Enabled) \
     ::Core::CrtCheckGlobalMemoryLeaks(_Enabled)

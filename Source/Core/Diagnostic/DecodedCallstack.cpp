@@ -3,6 +3,7 @@
 #include "DecodedCallstack.h"
 
 #include "Callstack.h"
+#include "IO/Format.h"
 #include "IO/TextWriter.h"
 
 namespace Core {
@@ -109,15 +110,15 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FDecodedCallstack::FFrame& fr
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const FDecodedCallstack& decoded) {
     const TMemoryView<const FDecodedCallstack::FFrame> frames = decoded.Frames();
-    for (size_t i = 0; i < frames.size(); ++i)
-        oss << '[' << i << "] " << frames[i] << Eol;
+    forrange(i, 0, frames.size())
+        Format(oss, "[{0:2}] {1}\n", i, frames[i]);
     return oss;
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const FDecodedCallstack& decoded) {
     const TMemoryView<const FDecodedCallstack::FFrame> frames = decoded.Frames();
-    for (size_t i = 0; i < frames.size(); ++i)
-        oss << '[' << i << "] " << frames[i] << Eol;
+    forrange(i, 0, frames.size())
+        Format(oss, L"[{0:2}] {1}\n", i, frames[i]);
     return oss;
 }
 //----------------------------------------------------------------------------

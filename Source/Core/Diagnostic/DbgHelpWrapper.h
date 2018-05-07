@@ -46,10 +46,10 @@ public:
         _In_opt_ DWORD EFlags
         );
 
-    typedef BOOL (WINAPI *FSymGetModuleInfo64)(
-        _In_  HANDLE             hProcess,
-        _In_  DWORD64            dwAddr,
-        _Out_ PIMAGEHLP_MODULE64 ModuleInfo
+    typedef BOOL (WINAPI *FSymGetModuleInfoW64)(
+        _In_  HANDLE hProcess,
+        _In_  DWORD64 dwAddr,
+        _Out_ PIMAGEHLP_MODULEW64 ModuleInfo
     );
     typedef BOOL (WINAPI *FSymGetLineFromAddrW64)(
         _In_ HANDLE hProcess,
@@ -90,7 +90,7 @@ public:
 
         FSymLoadModuleExW SymLoadModuleExW() const { return _owner->_symLoadModuleExW; }
 
-        FSymGetModuleInfo64 SymGetModuleInfo64() const { return _owner->_symGetModuleInfo64; }
+        FSymGetModuleInfoW64 SymGetModuleInfoW64() const { return _owner->_symGetModuleInfoW64; }
         FSymFromAddrW SymFromAddrW() const { return _owner->_symFromAddrW; }
         FSymGetLineFromAddrW64 SymGetLineFromAddrW64() const { return _owner->_symGetLineFromAddrW64; }
 
@@ -129,7 +129,7 @@ private:
     FSymSetOptions _symSetOptions;
     FSymLoadModuleExW _symLoadModuleExW;
 
-    FSymGetModuleInfo64 _symGetModuleInfo64;
+    FSymGetModuleInfoW64 _symGetModuleInfoW64;
     FSymFromAddrW _symFromAddrW;
     FSymGetLineFromAddrW64 _symGetLineFromAddrW64;
 

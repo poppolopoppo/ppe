@@ -252,10 +252,12 @@ PRAGMA_MSVC_WARNING_DISABLE(4826) // warning C4826: convert unsigned char* to DW
                 line = line64.LineNumber;
             }
             else {
-                IMAGEHLP_MODULE64 moduleInfo; // print name of module + address if PDBs are not available
+                IMAGEHLP_MODULEW64 moduleInfo; // print name of module + address if PDBs are not available
+                ::memset(&moduleInfo, 0, sizeof(moduleInfo));
                 moduleInfo.SizeOfStruct = sizeof(moduleInfo);
+
                 if (dbghelp.SymGetModuleInfoW64()(hProcess, (DWORD64)*address, &moduleInfo))
-                    filename = MakeCStringView(moduleInfo.LoadedImageName);
+                    filename = MakeCStringView(moduleInfo.ImageName);
                 else
                     filename = kUnknown;
                 line = size_t(*address);
