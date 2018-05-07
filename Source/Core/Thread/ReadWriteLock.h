@@ -11,10 +11,10 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define READSCOPELOCK(_ReadWriteLock) \
-    const ::Core::FReadWriteLock::FScopeLockRead CONCAT(scopeLockRead_, __LINE__)(_ReadWriteLock)
+    const ::Core::FReadWriteLock::FScopeLockRead ANONYMIZE(_scopeLockRead)(_ReadWriteLock)
 //----------------------------------------------------------------------------
 #define WRITESCOPELOCK(_ReadWriteLock) \
-    const ::Core::FReadWriteLock::FScopeLockWrite CONCAT(scopeLockWrite_, __LINE__)(_ReadWriteLock)
+    const ::Core::FReadWriteLock::FScopeLockWrite ANONYMIZE(_scopeLockWrite)(_ReadWriteLock)
 //----------------------------------------------------------------------------
 class FReadWriteLock {
 public:
@@ -55,7 +55,7 @@ private:
 //----------------------------------------------------------------------------
 } //!namespace Core
 
-#else 
+#else
 #   error "unsupported platform !"
 #endif //!PLATFORM_WINDOWS
 
@@ -69,16 +69,16 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define READSCOPELOCK(_ReadWriteLock) \
-    const auto CONCAT(readScopeLock_, __LINE__) = static_cast<const FReadWriteLock&>(_ReadWriteLock).Read()
+    const auto ANONYMIZE(readScopeLock_) = static_cast<const FReadWriteLock&>(_ReadWriteLock).Read()
 //----------------------------------------------------------------------------
 #define WRITESCOPELOCK(_ReadWriteLock) \
-    const auto CONCAT(writeScopeLock_, __LINE__) = static_cast<FReadWriteLock&>(_ReadWriteLock).Write()
+    const auto ANONYMIZE(writeScopeLock_) = static_cast<FReadWriteLock&>(_ReadWriteLock).Write()
 //----------------------------------------------------------------------------
 #define DEFERREDREADSCOPELOCK(_ReadWriteLock) \
-    const auto CONCAT(readScopeLock_, __LINE__) = static_cast<const FReadWriteLock&>(_ReadWriteLock).DeferredRead()
+    const auto ANONYMIZE(readScopeLock_) = static_cast<const FReadWriteLock&>(_ReadWriteLock).DeferredRead()
 //----------------------------------------------------------------------------
 #define DEFERREDWRITESCOPELOCK(_ReadWriteLock) \
-    const auto CONCAT(writeScopeLock_, __LINE__) = static_cast<FReadWriteLock&>(_ReadWriteLock).DeferredWrite()
+    const auto ANONYMIZE(writeScopeLock_) = static_cast<FReadWriteLock&>(_ReadWriteLock).DeferredWrite()
 //----------------------------------------------------------------------------
 struct FReadWriteLock {
     typedef std::shared_timed_mutex mutex_type;

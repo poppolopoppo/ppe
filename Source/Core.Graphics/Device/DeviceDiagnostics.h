@@ -68,7 +68,7 @@ template <> struct TDiagnostics_EventScope<FAbstractDeviceAPIEncapsulator*> {
 //----------------------------------------------------------------------------
 #define GRAPHICS_DIAGNOSTICS_SCOPEEVENT(_DiagnosticsOrEncapsulator, _Name) \
     const Core::Graphics::details::TDiagnostics_EventScope< Meta::TDecay<decltype(_DiagnosticsOrEncapsulator)> > \
-        CONCAT(Graphics_Diagnostics_ScopeEvent_, __LINE__)((_DiagnosticsOrEncapsulator), (_Name))
+        ANONYMIZE(Graphics_Diagnostics_ScopeEvent)((_DiagnosticsOrEncapsulator), (_Name))
 #define GRAPHICS_DIAGNOSTICS_BEGINEVENT(_DiagnosticsOrEncapsulator, _Name) \
     Core::Graphics::Diagnostics_BeginEvent((_DiagnosticsOrEncapsulator), (_Name))
 #define GRAPHICS_DIAGNOSTICS_ENDEVENT(_DiagnosticsOrEncapsulator) \

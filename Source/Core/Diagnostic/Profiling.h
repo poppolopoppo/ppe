@@ -71,7 +71,7 @@ namespace Core {
 #ifdef WITH_CORE_PROFILING
 //----------------------------------------------------------------------------
 #define PROFILING_SCOPE(_Level, _Marker, _Message) \
-    const Core::FProfilingScope _profilingScope_##__LINE__( \
+    const Core::FProfilingScope ANONYMIZE(_profilingScope)( \
         Core::FProfiler::_Level(), \
         (_Marker), \
         _Message ", " __FILE__ "(" STRINGIZE(__LINE__) ")" )

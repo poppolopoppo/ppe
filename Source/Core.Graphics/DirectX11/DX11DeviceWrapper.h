@@ -78,10 +78,10 @@ void DX11ThrowIfFailed(
     const char *func);
 //----------------------------------------------------------------------------
 #define DX11_THROW_IF_FAILED(_ENCAPSULATOR, _OPTIONAL_RESOURCE, _CALL) { \
-    const HRESULT CONCAT(dx11Result_, __LINE__) = _CALL; \
-    if (FAILED(CONCAT(dx11Result_, __LINE__))) \
+    const HRESULT ANONYMIZE(dx11Result) = _CALL; \
+    if (FAILED(ANONYMIZE(dx11Result))) \
         Core::Graphics::DX11ThrowIfFailed( \
-            _ENCAPSULATOR, CONCAT(dx11Result_, __LINE__), _OPTIONAL_RESOURCE, \
+            _ENCAPSULATOR, ANONYMIZE(dx11Result), _OPTIONAL_RESOURCE, \
             STRINGIZE(_CALL), \
             __FILE__, __LINE__, __FUNCTION__ \
             ); \

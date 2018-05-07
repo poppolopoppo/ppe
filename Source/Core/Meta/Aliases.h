@@ -66,8 +66,10 @@ typedef int64_t     i64;
 #define CONCAT_OO(_ARGS) CONCAT_I ## _ARGS
 #define CONCAT(_X, _Y) CONCAT_I(_X, _Y) //CONCAT_OO((_X, _Y))
 //----------------------------------------------------------------------------
-#define NOOP(...)   __noop(__VA_ARGS__)
-#define UNUSED(x)   (void)(x)
+#define NOOP(...) __noop(__VA_ARGS__)
+#define UNUSED(_X) (void)(_X)
+//----------------------------------------------------------------------------
+#define ANONYMIZE(_X) CONCAT(_X, __LINE__)
 //----------------------------------------------------------------------------
 #define lengthof(_ARRAY) ((sizeof(_ARRAY))/(sizeof(_ARRAY[0])))
 //----------------------------------------------------------------------------
