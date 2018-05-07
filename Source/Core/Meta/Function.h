@@ -63,7 +63,7 @@ public:
             TObjectRef_<_Class> Obj;
             _Ret(_Class::*Member)(_Args...);
             _Ret operator ()(_Args... args) const {
-                return (Obj.Ref->*Member)(std::forward<_Args>(args)...);
+                return (Obj->*Member)(std::forward<_Args>(args)...);
             }
         };
         assign_wrapped_(member_t{ { obj }, member });
@@ -78,7 +78,7 @@ public:
             TObjectRef_<const _Class> Obj;
             _Ret(_Class::*Member)(_Args...) const;
             _Ret operator ()(_Args... args) const {
-                return (Obj.Ref->*Member)(std::forward<_Args>(args)...);
+                return (Obj->*Member)(std::forward<_Args>(args)...);
             }
         };
         assign_wrapped_(member_const_t{ { obj }, member });
@@ -156,15 +156,14 @@ private:
     static constexpr size_t GInSituSize = (32 - sizeof(intptr_t));
     ALIGNED_STORAGE(GInSituSize, 1) _inSitu;
 
-    template <typename T, typename = void>
-    struct TObjectRef_ {
-        T* Ref;
-    };
+    struct TNope;
 
     template <typename T>
-    struct TObjectRef_<T, Meta::TEnableIf<std::is_base_of_v<FRefCountable, Meta::TDecay<T> >> > {
-        TSafePtr<T> Ref; // safe ref ptr when inheriting FRefCountable to check lifetime
-    };
+    using TObjectRef_ = Meta::TConditional<
+        std::is_base_of_v<FRefCountable, Meta::TDecay<T>>,
+        TSafePtr<T>,
+        T*
+    >;
 
     struct IWrapper_ {
         virtual ~IWrapper_() {}

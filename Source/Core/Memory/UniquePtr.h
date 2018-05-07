@@ -8,8 +8,8 @@
 
 #define _FWD_UNIQUEPTR_IMPL(T, _PREFIX)                                     \
     class CONCAT(_PREFIX, T);                                               \
-    typedef Core::TUniquePtr<CONCAT(_PREFIX, T)>           CONCAT(U,  T);   \
-    typedef Core::TUniquePtr<const CONCAT(_PREFIX, T)>     CONCAT(UC, T)
+    typedef ::Core::TUniquePtr<CONCAT(_PREFIX, T)>          CONCAT(U,  T);  \
+    typedef ::Core::TUniquePtr<const CONCAT(_PREFIX, T)>    CONCAT(UC, T)
 
 #define FWD_UNIQUEPTR(T_WITHOUT_F)              _FWD_UNIQUEPTR_IMPL(T_WITHOUT_F, F)
 #define FWD_INTEFARCE_UNIQUEPTR(T_WITHOUT_I)    _FWD_UNIQUEPTR_IMPL(T_WITHOUT_I, I)

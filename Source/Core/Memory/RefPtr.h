@@ -28,9 +28,9 @@
 #define FWD_INTERFACE_REFPTR(T_WITHOUT_I)   _FWD_REFPTR_IMPL(T_WITHOUT_I, I)
 
 // used for tracking memory allocated by instances derived from FRefCountable
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
 #   include "Core/Allocator/TrackingMalloc.h"
-#   define NEW_REF(_DOMAIN, T) new (MEMORY_DOMAIN_TRACKING_DATA(_DOMAIN)) T
+#   define NEW_REF(_DOMAIN, T) new (MEMORYDOMAIN_TRACKING_DATA(_DOMAIN)) T
 #else
 #   include "Core/Allocator/Malloc.h"
 #   define NEW_REF(_DOMAIN, T) new (Meta::ForceInit) T
@@ -70,7 +70,7 @@ public:
 #endif
 
 public: // override new/delete operators for memory tracking
-#ifdef USE_MEMORY_DOMAINS
+#if USE_CORE_MEMORYDOMAINS
     static void* operator new(size_t sz, FMemoryTracking& trackingData) { return tracking_malloc(trackingData, sz); }
     static void operator delete(void* p, FMemoryTracking&) { tracking_free(p); }
     static void operator delete(void* p) { tracking_free(p); }
@@ -128,6 +128,9 @@ private:
 #endif
 };
 //----------------------------------------------------------------------------
+template <typename T>
+using IsRefCountable = std::is_base_of<FRefCountable, Meta::TDecay<T> >;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
@@ -184,6 +187,11 @@ STATIC_ASSERT(sizeof(TRefPtr<FRefCountable>) == sizeof(FRefCountable*));
 //----------------------------------------------------------------------------
 template <typename T> struct IsRefPtr : public std::false_type {};
 template <typename T> struct IsRefPtr<TRefPtr<T>> : public std::true_type {};
+//----------------------------------------------------------------------------
+template <typename T>
+Meta::TEnableIf< IsRefCountable<T>::value, TRefPtr<T> > MakeRefPtr(T* ptr) {
+    return TRefPtr<T>(ptr);
+}
 //----------------------------------------------------------------------------
 template <typename T>
 hash_t hash_value(const TRefPtr<T>& refPtr) {
@@ -274,6 +282,11 @@ private:
 //----------------------------------------------------------------------------
 template <typename T> struct IsSafePtr : public std::false_type {};
 template <typename T> struct IsSafePtr<TSafePtr<T>> : public std::true_type {};
+//----------------------------------------------------------------------------
+template <typename T>
+Meta::TEnableIf< IsRefCountable<T>::value, TSafePtr<T> > MakeSafePtr(T* ptr) {
+    return TSafePtr<T>(ptr);
+}
 //----------------------------------------------------------------------------
 template <typename T>
 hash_t hash_value(const TSafePtr<T>& TSafePtr) {

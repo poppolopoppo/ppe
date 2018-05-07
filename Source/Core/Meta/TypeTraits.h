@@ -85,6 +85,9 @@ using TRemovePointer = typename std::remove_pointer<T>::type;
 template <bool _Test, typename T = void>
 using TEnableIf = typename std::enable_if< _Test, T >::type;
 //----------------------------------------------------------------------------
+template <bool _Test, typename _True, typename _False>
+using TConditional = typename std::conditional< _Test, _True, _False >::type;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
