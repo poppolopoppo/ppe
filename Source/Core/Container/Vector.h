@@ -224,10 +224,10 @@ public:
 
     bool CheckInvariants() const;
 
-    bool AliasesToContainer(const_pointer p) const { return ((p >= _data) && (p <= _data + _size)); }
+    bool AliasesToContainer(const_pointer p) const { return ((p >= _data) && (p < _data + _size)); }
 #if USE_CORE_CHECKEDARRAYITERATOR
-    bool AliasesToContainer(const iterator& it) const { return (it >= begin() && it <= end()); }
-    bool AliasesToContainer(const const_iterator& it) const { return (it >= begin() && it <= end()); }
+    bool AliasesToContainer(const iterator& it) const { return (it >= begin() && it < end()); }
+    bool AliasesToContainer(const const_iterator& it) const { return (it >= begin() && it < end()); }
 #endif
 
 private:

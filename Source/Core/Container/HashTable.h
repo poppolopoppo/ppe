@@ -96,7 +96,7 @@ struct FHashTableData_ {
         return size_t(Capacity ? Capacity + GGroupSize/* sentinel */ : 0);
     }
 
-    const state_t* GetState(size_t index) const {
+    const state_t* State(size_t index) const {
         Assert(index < Capacity);
         return ((const state_t*)StatesAndBuckets + index);
     }
@@ -109,12 +109,12 @@ struct FHashTableData_ {
     CORE_API void ResetStates();
 
     group_t SIMD_INLINE GroupAt(size_t first) const {
-        return _mm_lddqu_si128((const __m128i*)GetState(first));
+        return _mm_lddqu_si128((const __m128i*)State(first));
     }
 
     group_t SIMD_INLINE GroupAt_StreamLoad(size_t first) const {
-        Assert(Meta::IsAligned(16, GetState(first)));
-        return _mm_stream_load_si128((const __m128i*)GetState(first));
+        Assert(Meta::IsAligned(16, State(first)));
+        return _mm_stream_load_si128((const __m128i*)State(first));
     }
 
     static FBitMask SIMD_INLINE Match(group_t group, group_t state) {
@@ -355,6 +355,9 @@ public:
     template <typename _It>
     typename std::enable_if<Meta::is_iterator<_It>::value>::type
         assign(_It first, _It last) {
+        Assert(not AliasesToContainer(&*first));
+        Assert(not AliasesToContainer(&*last));
+
         typedef std::iterator_traits<_It> iterator_traits;
         typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
         clear();
@@ -490,7 +493,8 @@ public:
     allocator_type get_allocator() const { return static_cast<const allocator_type&>(*this); }
 
     bool CheckInvariants() const;
-    bool AliasesToContainer(const_pointer p) const;
+
+    bool AliasesToContainer(const void* p) const;
     bool AliasesToContainer(const_iterator it) const;
 
     bool operator ==(const TBasicHashTable& other) const;
@@ -556,9 +560,12 @@ private:
         return ((_data.NumStates() + (sizeof(value_type) - 1)) / sizeof(value_type));
     }
 
-    pointer BucketAt_(size_t index) const NOEXCEPT {
-        Assert(index < (_data.Capacity));
+    pointer BucketAtUnsafe_(size_t index) const NOEXCEPT {
         return ((pointer)_data.StatesAndBuckets + OffsetOfBuckets_() + index);
+    }
+    pointer BucketAt_(size_t index) const {
+        Assert(index < (_data.Capacity));
+        return BucketAtUnsafe_(index);
     }
 
     iterator MakeIterator_(size_t index) NOEXCEPT {
