@@ -5,8 +5,13 @@
 #include "Core/IO/FileStream.h"
 #include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter.h"
+#include "Core/Memory/MemoryDomain.h"
+#include "Core/Memory/MemoryTracking.h"
+#include "Core/Memory/RefPtr.h"
+#include "Core/Meta/Function.h"
 #include "Core/Thread/Task.h"
 #include "Core/Thread/ThreadContext.h"
+#include "Core/Thread/ThreadPool.h"
 
 namespace Core {
 namespace Test {
@@ -15,6 +20,21 @@ LOG_CATEGORY(, Test_Thread)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+static void Test_Task_() {
+    class FTest : public FRefCountable {
+    public:
+        FTest() {}
+        void Log(ITaskContext&) const {
+            LOG(Test_Thread, Info, L"Test task !");
+        }
+    };
+
+    TRefPtr<FTest> Ptr(NEW_REF(Task, FTest));
+
+    auto& pool = FGlobalThreadPool::Instance();
+    pool.RunAndWaitFor(Meta::MakeFunction(Ptr.get(), &FTest::Log)); // should use a TSafePtr<> inside Meta::TFunction<>
+}
 //----------------------------------------------------------------------------
 static void Test_Async_() {
     // Can't overload with std::function<>: http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2132
