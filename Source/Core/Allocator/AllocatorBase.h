@@ -255,6 +255,9 @@ template <typename _AllocatorDst, typename _AllocatorSrc>
 struct allocator_can_steal_from : std::is_same<_AllocatorSrc, _AllocatorDst> {};
 //----------------------------------------------------------------------------
 template <typename _AllocatorDst, typename _AllocatorSrc>
+bool AllocatorCheckStealing(_AllocatorDst&, _AllocatorSrc&) { return true; }
+//----------------------------------------------------------------------------
+template <typename _AllocatorDst, typename _AllocatorSrc>
 struct allocator_can_steal_block {
     using stealfrom_type = decltype(AllocatorStealFrom(
         std::declval<_AllocatorSrc&>(),
@@ -275,6 +278,7 @@ Meta::TEnableIf<
     allocator_can_steal_block<_AllocatorDst, _AllocatorSrc>::value,
     TMemoryView<typename _AllocatorDst::value_type>
 >   AllocatorStealBlock(_AllocatorDst& dst, const TMemoryView<typename _AllocatorSrc::value_type>& block, _AllocatorSrc& src) {
+    Assert(AllocatorCheckStealing(dst, src));
     const TMemoryView<typename _AllocatorDst::value_type> stolen = block.template Cast<typename _AllocatorDst::value_type>();
     AllocatorStealFrom(src, block.data(), block.size());
     AllocatorAcquireStolen(dst, stolen.data(), stolen.size());

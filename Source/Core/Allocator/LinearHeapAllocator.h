@@ -132,7 +132,7 @@ template <typename T>
 void* TLinearHeapAllocator<T>::relocate(void* p, size_type newSize, size_type oldSize) {
     // TLinearHeapAllocator wraps FLinearHeap
     Assert(_heap);
-    void* const newp = _heap->Relocate(p, newSize, oldSize, _Alignment);
+    void* const newp = _heap->Relocate(p, newSize, oldSize);
     if (nullptr == newp && newSize)
         CORE_THROW_IT(std::bad_alloc());
 
@@ -165,6 +165,11 @@ struct allocator_can_steal_from<
     TLinearHeapAllocator<U>,
     TLinearHeapAllocator<V>
 > : Meta::TIntegralConstant<bool, true> {};
+//----------------------------------------------------------------------------
+template <typename U, typename V>
+bool AllocatorCheckStealing(TLinearHeapAllocator<U>& dst, TLinearHeapAllocator<V>& src) {
+    return (dst.Heap() == src.Heap());
+}
 //----------------------------------------------------------------------------
 template <typename T>
 std::true_type/* enabled */AllocatorStealFrom(
