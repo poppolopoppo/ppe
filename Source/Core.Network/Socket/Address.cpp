@@ -139,8 +139,10 @@ public: // DNS cache
         const auto it = _hostnameToIpV4.find_like(hostname, h);
 
         Meta::TOptional<FStringView> result;
-        if (_hostnameToIpV4.end() != it)
+        if (_hostnameToIpV4.end() != it) {
+            CORE_LEAKDETECTOR_WHITELIST_SCOPE();
             result.emplace(it->second.MakeView());
+        }
 
         return result;
     }
@@ -153,8 +155,10 @@ public: // DNS cache
         const auto it = _ipV4ToHostname.find_like(ipV4, h);
 
         Meta::TOptional<FStringView> result;
-        if (_ipV4ToHostname.end() != it)
+        if (_ipV4ToHostname.end() != it) {
+            CORE_LEAKDETECTOR_WHITELIST_SCOPE();
             result.emplace(it->second.MakeView());
+        }
 
         return result;
     }
@@ -162,6 +166,8 @@ public: // DNS cache
     void PutHostnameToIPv4(const FStringView& hostname, const FStringView& ipV4) {
         Assert(not hostname.empty());
         Assert(not ipV4.empty());
+
+        CORE_LEAKDETECTOR_WHITELIST_SCOPE();
 
         FString key(hostname);
         FString value(ipV4);
@@ -177,6 +183,8 @@ public: // DNS cache
         Assert(not ipV4.empty());
         Assert(not hostname.empty());
 
+        CORE_LEAKDETECTOR_WHITELIST_SCOPE();
+
         FString key(ipV4);
         FString value(hostname);
 
@@ -189,9 +197,11 @@ public: // DNS cache
     void Flush() {
         LOG(Network, Debug, L"flushing DNS cache ...");
 
+        CORE_LEAKDETECTOR_WHITELIST_SCOPE();
+
         WRITESCOPELOCK(_barrier);
-        _hostnameToIpV4.clear();
-        _ipV4ToHostname.clear();
+        _hostnameToIpV4.clear_ReleaseMemory();
+        _ipV4ToHostname.clear_ReleaseMemory();
     }
 
 private:

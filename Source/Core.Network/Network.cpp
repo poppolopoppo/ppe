@@ -33,6 +33,8 @@ void FNetworkModule::Start() {
 void FNetworkModule::Shutdown() {
     CORE_MODULE_SHUTDOWN(Network);
 
+    FlushDNSCache();
+
     FSocket::Shutdown();
     FAddress::Shutdown();
     FHttpConstNames::Shutdown();
@@ -44,6 +46,7 @@ void FNetworkModule::Shutdown() {
 void FNetworkModule::ClearAll_UnusedMemory() {
     CORE_MODULE_CLEARALL(Network);
 
+    FlushDNSCache();
     POOL_TAG(Network)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
