@@ -56,6 +56,7 @@ public: // ITypeTraits
     virtual void Destroy(void* data) const override final;
 
     //virtual FTypeId TypeId() const override final;
+    //virtual ETypeFlags TypeFlags() const override final;
     //virtual FTypeInfos TypeInfos() const override final;
     virtual size_t SizeInBytes() const override final { return sizeof(T); }
 
@@ -88,6 +89,7 @@ template <typename _First, typename _Second>
 class TBasePairTraits : public IPairTraits {
 public: // ITypeTraits
     virtual FTypeId TypeId() const override final;
+    virtual ETypeFlags TypeFlags() const override final;
     virtual FTypeInfos TypeInfos() const override final;
 
     virtual bool IsDefaultValue(const void* data) const override final;
@@ -108,6 +110,7 @@ template <typename T>
 class TBaseListTraits : public IListTraits {
 public: // ITypeTraits
     virtual FTypeId TypeId() const override final;
+    virtual ETypeFlags TypeFlags() const override final;
     virtual FTypeInfos TypeInfos() const override final;
 
     virtual bool IsDefaultValue(const void* data) const override final;
@@ -127,6 +130,7 @@ template <typename _Key, typename _Value>
 class TBaseDicoTraits : public IDicoTraits {
 public: // ITypeTraits
     virtual FTypeId TypeId() const override final;
+    virtual ETypeFlags TypeFlags() const override final;
     virtual FTypeInfos TypeInfos() const override final;
 
     virtual bool IsDefaultValue(const void* data) const override final;
@@ -149,6 +153,7 @@ public: // IDicoTraits
 class CORE_RTTI_API FBaseObjectTraits : public TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>> {
 public: // ITypeTraits
     virtual FTypeId TypeId() const override final;
+    virtual ETypeFlags TypeFlags() const override final;
     virtual FTypeInfos TypeInfos() const override final;
 
     virtual bool IsDefaultValue(const void* data) const override final;

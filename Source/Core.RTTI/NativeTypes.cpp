@@ -151,6 +151,7 @@ class TNativeTypeTraits : public TBaseTypeTraits<T, TBaseScalarTraits<T> > {
 public:
     // specialized explicitly
     virtual FTypeId TypeId() const override final;
+    virtual ETypeFlags TypeFlags() const override final;
     virtual FTypeInfos TypeInfos() const override final;
     // !specialized explicitly
 
@@ -253,18 +254,26 @@ void* TNativeTypeTraits<PMetaObject>::Cast(void* data, const PTypeTraits& dst) c
 // Specialize Traits(), TypeId() & TypeInfos() for each native type
 //----------------------------------------------------------------------------
 #define DEF_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) \
-    /* TNativeTypeTraits<T> */ \
     template <> \
     FTypeId TNativeTypeTraits<T>::TypeId() const { \
         return FTypeId(ENativeType::_Name); \
     } \
     \
     template <> \
+    ETypeFlags TNativeTypeTraits<T>::TypeFlags() const { \
+        constexpr ETypeFlags GTypeFlags = ( \
+            ETypeFlags::Scalar|ETypeFlags::Native|( \
+                Meta::TIsPod<T>::value ? ETypeFlags::POD : ETypeFlags(0)) \
+        ); \
+        return GTypeFlags; \
+    } \
+    \
+    template <> \
     FTypeInfos TNativeTypeTraits<T>::TypeInfos() const { \
         return FTypeInfos( \
             STRINGIZE(_Name), \
-            FTypeId(ENativeType::_Name), \
-            ETypeFlags::Scalar|ETypeFlags::Native, \
+            TNativeTypeTraits<T>::TypeId(), \
+            TNativeTypeTraits<T>::TypeFlags(), \
             sizeof(T)); \
     } \
     \
@@ -298,11 +307,15 @@ FTypeId FBaseObjectTraits::TypeId() const {
     return FTypeId(ENativeType::MetaObject);
 }
 //----------------------------------------------------------------------------
+ETypeFlags FBaseObjectTraits::TypeFlags() const {
+    return (ETypeFlags::Scalar|ETypeFlags::Native|ETypeFlags::Object);
+}
+//----------------------------------------------------------------------------
 FTypeInfos FBaseObjectTraits::TypeInfos() const {
     return FTypeInfos(
         MetaClass()->Name().MakeView(),
-        FTypeId(ENativeType::MetaObject),
-        ETypeFlags::Scalar | ETypeFlags::Native | ETypeFlags::Object,
+        FBaseObjectTraits::TypeId(),
+        FBaseObjectTraits::TypeFlags(),
         sizeof(PMetaObject) );
 }
 //----------------------------------------------------------------------------

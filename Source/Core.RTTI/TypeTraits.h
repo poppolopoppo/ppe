@@ -41,6 +41,7 @@ public:
     virtual void Destroy(void* data) const = 0;
 
     virtual FTypeId TypeId() const = 0;
+    virtual ETypeFlags TypeFlags() const = 0;
     virtual FTypeInfos TypeInfos() const = 0;
     virtual size_t SizeInBytes() const = 0;
 

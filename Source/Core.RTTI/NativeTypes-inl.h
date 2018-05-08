@@ -112,6 +112,17 @@ FTypeId TBasePairTraits<_First, _Second>::TypeId() const {
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
+ETypeFlags TBasePairTraits<_First, _Second>::TypeFlags() const {
+    ONE_TIME_INITIALIZE(const ETypeFlags, GCachedTypeFlags, (
+        ETypeFlags::Pair + (
+            (ETypeFlags::POD & MakeTraits<_First>()->TypeFlags()) &&
+            (ETypeFlags::POD & MakeTraits<_Second>()->TypeFlags())
+                ? ETypeFlags::POD : ETypeFlags(0) )
+    ));
+    return GCachedTypeFlags;
+}
+//----------------------------------------------------------------------------
+template <typename _First, typename _Second>
 FTypeInfos TBasePairTraits<_First, _Second>::TypeInfos() const {
     ONE_TIME_INITIALIZE(const FString, GCachedTypeName, MakePairTypeName(
         MakeTraits<_First>(),
@@ -120,7 +131,7 @@ FTypeInfos TBasePairTraits<_First, _Second>::TypeInfos() const {
     return FTypeInfos(
         GCachedTypeName.MakeView(),
         TBasePairTraits<_First, _Second>::TypeId(),
-        ETypeFlags::Pair,
+        TBasePairTraits<_First, _Second>::TypeFlags(),
         SizeInBytes()
     );
 }
@@ -199,6 +210,11 @@ FTypeId TBaseListTraits<T>::TypeId() const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
+ETypeFlags TBaseListTraits<T>::TypeFlags() const {
+    return ETypeFlags::List;
+}
+//----------------------------------------------------------------------------
+template <typename T>
 FTypeInfos TBaseListTraits<T>::TypeInfos() const {
     ONE_TIME_INITIALIZE(const FString, GCachedTypeName, MakeListTypeName(
         MakeTraits<T>()
@@ -206,7 +222,7 @@ FTypeInfos TBaseListTraits<T>::TypeInfos() const {
     return FTypeInfos(
         GCachedTypeName.MakeView(),
         TBaseListTraits<T>::TypeId(),
-        ETypeFlags::List,
+        TBaseListTraits<T>::TypeFlags(),
         SizeInBytes()
     );
 }
@@ -324,6 +340,11 @@ FTypeId TBaseDicoTraits<_Key, _Value>::TypeId() const {
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
+ETypeFlags TBaseDicoTraits<_Key, _Value>::TypeFlags() const {
+    return ETypeFlags::Dico;
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value>
 FTypeInfos TBaseDicoTraits<_Key, _Value>::TypeInfos() const {
     ONE_TIME_INITIALIZE(const FString, GCachedTypeName, MakeDicoTypeName(
         MakeTraits<_Key>(),
@@ -332,7 +353,7 @@ FTypeInfos TBaseDicoTraits<_Key, _Value>::TypeInfos() const {
     return FTypeInfos(
         GCachedTypeName.MakeView(),
         TBaseDicoTraits<_Key, _Value>::TypeId(),
-        ETypeFlags::Dico,
+        TBaseDicoTraits<_Key, _Value>::TypeFlags(),
         SizeInBytes()
     );
 }
