@@ -113,6 +113,44 @@ void Extract3AxisFromQuaternion(float3 *paxisx, float3 *paxisy, float3 *paxisz,
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Based on:
+// http://lolengine.net/blog/2014/02/24/quaternion-from-two-vectors-final
+// http://www.euclideanspace.com/maths/algebra/vectors/angleBetween/index.htm
+//
+static FQuaternion MakeQuaternionBetween_(const float3& A, const float3& B, float NormAB) {
+    float W = NormAB + Dot3(A, B);
+
+    FQuaternion Q;
+
+    if (W >= F_SmallEpsilon * NormAB) {
+        Q = FQuaternion(
+            A.y() * B.z() - A.z() * B.y(),
+            A.z() * B.x() - A.x() * B.z(),
+            A.x() * B.y() - A.y() * B.x(),
+            W );
+    }
+    else {
+        // A and B point in opposite directions
+        W = 0.f;
+        Q = (Abs(A.x()) > Abs(A.y())
+            ?   FQuaternion(-A.z(), 0.f, A.x(), W)
+            :   FQuaternion(0.f, -A.z(), A.y(), W) );
+    }
+
+    return Q.Normalize();
+}
+//----------------------------------------------------------------------------
+FQuaternion MakeQuaternionBetweenVectors(const float3& v0, const float3& v1) {
+    const float l = Sqrt(LengthSq(v0) * LengthSq(v1));
+    return MakeQuaternionBetween_(v0, v1, l);
+}
+//----------------------------------------------------------------------------
+FQuaternion MakeQuaternionBetweenNormals(const float3& n0, const float3& n1) {
+    return MakeQuaternionBetween_(n0, n1, 1.f);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FQuaternion MakeAxisQuaternion(const float3& axis) {
     return MakeAxisQuaternion(axis, 0.0f, 1.0f); // SinCos(0)
 }

@@ -27,6 +27,14 @@ void Extract3AxisFromQuaternion(float3 *paxisx, float3 *paxisy, float3 *paxisz,
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Generates the 'smallest' (geodesic) rotation between two vectors of arbitrary length
+FQuaternion MakeQuaternionBetweenVectors(const float3& v0, const float3& v1);
+//----------------------------------------------------------------------------
+// Generates the 'smallest' (geodesic) rotation between two normalized vectors
+FQuaternion MakeQuaternionBetweenNormals(const float3& n0, const float3& n1);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FQuaternion MakeAxisQuaternion(const float3& axis);
 //----------------------------------------------------------------------------
 FQuaternion MakeAxisQuaternion(const float3& axis, float radians);
