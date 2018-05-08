@@ -42,6 +42,18 @@ public:
         return TypedData<T>();
     }
 
+    template <typename T>
+    T* TypedDataIFP() const {
+        const PTypeTraits dst = MakeTraits<T>();
+        void* const casted = ((*dst == *_traits) ? _data : Cast(dst));
+        return (casted ? reinterpret_cast<T*>(casted) : nullptr);
+    }
+
+    template <typename T>
+    const T* TypedConstDataIFP() const {
+        return TypedDataIFP<T>();
+    }
+
     FTypeId TypeId() const { return _traits->TypeId(); }
     FTypeInfos TypeInfos() const { return _traits->TypeInfos(); }
 
@@ -140,6 +152,16 @@ namespace Core {
 //----------------------------------------------------------------------------
 CORE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FAtom& atom);
 CORE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FAtom& atom);
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE T& checked_cast(RTTI::FAtom& atom) noexcept {
+    return atom.TypedData<T>();
+}
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE const T& checked_cast(const RTTI::FAtom& atom) noexcept {
+    return atom.TypedConstData<T>();
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
