@@ -326,6 +326,8 @@ void FThreadContextStartup::Start(const char* name, size_t tag) {
     Meta::FThreadLocalAutoSingletonManager::Start();
     FAllocaStartup::Start(false);
 
+    malloc_release_pending_blocks(); // force allocation of malloc TLS
+
 #ifdef USE_DEBUG_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
     LOG(Thread, Debug, L"start thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
