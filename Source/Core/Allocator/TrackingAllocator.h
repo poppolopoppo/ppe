@@ -124,6 +124,8 @@ public:
     }
 
     void deallocate(void* p, size_type n) {
+        Assert(!p || n); // must give the size of blocks or tracking won't work !
+
         traits_type::deallocate(*this, pointer(p), n);
 
         if (FMemoryTracking* const trackingData = TrackingData())
