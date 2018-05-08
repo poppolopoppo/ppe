@@ -4,6 +4,9 @@
 
 #ifdef USE_DEBUG_LOGGER
 
+#   include "Allocator/LinearHeap.h"
+#   include "Allocator/LinearHeapAllocator.h"
+#   include "Allocator/TrackingMalloc.h"
 #   include "Container/Vector.h"
 #   include "Diagnostic/CurrentProcess.h"
 #   include "IO/BufferedStream.h"
@@ -12,18 +15,22 @@
 #   include "IO/FormatHelpers.h"
 #   include "IO/StreamProvider.h"
 #   include "IO/String.h"
+#   include "IO/StringBuilder.h"
 #   include "IO/StringView.h"
 #   include "IO/TextWriter.h"
 #   include "IO/VirtualFileSystem.h"
+#   include "Memory/InSituPtr.h"
 #   include "Memory/MemoryView.h"
+#   include "Memory/UniquePtr.h"
 #   include "Meta/Optional.h"
+#   include "Meta/Singleton.h"
 #   include "Meta/ThreadResource.h"
 #   include "Misc/TargetPlatform.h"
-#   include "Time/DateTime.h"
 #   include "Thread/Task/TaskHelpers.h"
 #   include "Thread/Fiber.h"
 #   include "Thread/ThreadContext.h"
 #   include "Thread/ThreadPool.h"
+#   include "Time/DateTime.h"
 
 #   include <atomic>
 #   include <mutex>
@@ -52,969 +59,506 @@ LOG_CATEGORY(CORE_API, LogDefault)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-// Used before & after main when no debugger is attached, ignores everything
-class FNullLogger_ : public ILogger {
-public: // ILogger
-    virtual void Log(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&) override final {}
-    virtual void Log(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&, size_t, size_t) override final {}
-    virtual void Log(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&, const FWFormatArgList&) override final {}
-
-    virtual void Flush(bool) override final {}
-    virtual void Close() override final {}
+struct FLoggerTypes {
+    using EVerbosity = ILogger::EVerbosity;
+    using FCategory = ILogger::FCategory;
+    using FSiteInfo = ILogger::FSiteInfo;
 };
 //----------------------------------------------------------------------------
-static void LogHeader_(FWTextWriter& oss, const ILogger::FCategory& category, ILogger::EVerbosity level, ILogger::FSiteInfo site) {
-#if CORE_DUMP_THREAD_ID
-#   if CORE_DUMP_THREAD_NAME
-    Format(oss, L"[{0}][{1:20}][{3:-8}][{2:-15}] ", site.Timestamp.ToDateTimeUTC(), FThreadContext::GetThreadName(site.ThreadId), category.Name, level);
-#   else // only thread hash :
-    Format(oss, L"[{0}][{1:#5}][{3:-8}][{2:-15}] ", site.Timestamp.ToDateTimeUTC(), FThreadContext::GetThreadHash(site.ThreadId), category.Name, level);
-#   endif
-#else
-    Format(oss, L"[{0}][{2:-8}][{1:-15}] ", site.Timestamp.ToDateTimeUTC(), category.Name, level);
-#endif
-}
-//----------------------------------------------------------------------------
-static void LogFooter_(FWTextWriter& oss, const ILogger::FCategory& category, ILogger::EVerbosity level, ILogger::FSiteInfo site) {
-#if CORE_DUMP_SITE_ON_LOG
-    Format(oss, L"\n\tat {0}:{1}\n", site.Filename, site.Line);
-#else
-    oss << Eol;
-#endif
-}
-//----------------------------------------------------------------------------
-// Used before & after main when debugger attached, no dependencies on allocators, always immediate
-class FPreMainOutputDebugLogger_ : public ILogger {
-public: // ILogger
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text) override final {
-        Assert(category.Verbosity & level);
-
-        wchar_t tmp[8192];
-        FWFixedSizeTextWriter oss(tmp);
-
-        LogHeader_(oss, category, level, site);
-        oss.Write(text);
-        LogFooter_(oss, category, level, site);
-
-        oss << Eos;
-
-        FPlatformMisc::OutputDebug(tmp);
-    }
-
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& buffer, size_t first, size_t last) override final {
-        Assert(category.Verbosity & level);
-        Assert(first < buffer.size());
-        Assert(last <= buffer.size());
-
-        wchar_t tmp[8192];
-        FWFixedSizeTextWriter oss(tmp);
-
-        LogHeader_(oss, category, level, site);
-        if (first < last) {
-            oss.Write(buffer.SubRange(first, last - first));
-        }
-        else {
-            oss.Write(buffer.CutStartingAt(first));
-            oss.Write(buffer.CutBefore(last));
-        }
-        LogFooter_(oss, category, level, site);
-
-        oss << Eos;
-
-        FPlatformMisc::OutputDebug(tmp);
-    }
-
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) override final {
-        Assert(category.Verbosity & level);
-
-        wchar_t tmp[8192];
-        FWFixedSizeTextWriter oss(tmp);
-
-        LogHeader_(oss, category, level, site);
-        FormatArgs(oss, format, args);
-        LogFooter_(oss, category, level, site);
-
-        oss << Eos;
-
-        FPlatformMisc::OutputDebug(tmp);
-    }
-
-    virtual void Flush(bool) override final {}
-    virtual void Close() override {}
-};
-//----------------------------------------------------------------------------
-class FBucketedWriter_ {
+class ILowLevelLogger : public FLoggerTypes {
 public:
-    FBucketedWriter_()
-        : _buffer((u8*)Core::malloc(GBufferSize))
-        , _bucketMask(GBucketMask) {
-        Assert(_buffer);
-#ifdef USE_MEMORY_DOMAINS
-        MEMORY_DOMAIN_TRACKING_DATA(Diagnostic).Allocate(1, GBufferSize);
-#endif
-    }
+    virtual ~ILowLevelLogger() {}
 
-    ~FBucketedWriter_() {
-        Assert(_buffer);
-        Assert(GBucketMask == _bucketMask);
-#ifdef USE_MEMORY_DOMAINS
-        MEMORY_DOMAIN_TRACKING_DATA(Diagnostic).Allocate(1, GBufferSize);
-#endif
-        Core::free(_buffer);
-    }
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) = 0;
+    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) = 0;
+    virtual void Flush(bool synchronous) = 0;
+};
+//----------------------------------------------------------------------------
+// Use a custom allocator for logger to diminish content, fragmentation and get re-entrancy
+class FLogAllocator : public Meta::TSingleton<FLogAllocator> {
+    friend class Meta::TSingleton<FLogAllocator>;
+    using singleton_type = Meta::TSingleton<FLogAllocator>;
+public:
+    using singleton_type::Create;
+    using singleton_type::Destroy;
+    using singleton_type::Instance;
 
-    class FBucket {
-    public:
-        FBucket()
-            : _bucket(INDEX_NONE)
-            , _writerCount(0) {}
-
+    struct FBucket : TLinearHeapAllocator<u8> {
+        std::recursive_mutex Barrier;
+        LINEARHEAP(Logger) Heap;
+        FBucket() : TLinearHeapAllocator<u8>(Heap) {}
         ~FBucket() {
-            Assert(INDEX_NONE == _bucket);
-            Assert(0 == _writerCount);
+            const Meta::FRecursiveLockGuard scopeLock(Barrier);
+            Heap.ReleaseAll();
         }
-
-        FBucket(const FBucket&) = delete;
-        FBucket& operator =(const FBucket&) = delete;
-
-        FWFixedSizeTextWriter& Open() {
-            if (_writerCount) {
-                Assert(INDEX_NONE != _bucket);
-            }
-            else {
-                Assert(INDEX_NONE == _bucket);
-                auto& instance = Instance_();
-                _bucket = instance.AllocateBucket_();
-                _ossIFP.emplace(instance.MakeView_(_bucket));
-            }
-            ++_writerCount;
-            return (*_ossIFP);
-        }
-
-        void Close() {
-            Assert(INDEX_NONE != _bucket);
-            Assert(0 < _writerCount);
-            if (--_writerCount == 0) {
-                Instance_().ReleaseBucket_(_bucket);
-                _bucket = INDEX_NONE;
-                _ossIFP.reset();
-            }
-        }
-
-    protected:
-        size_t _bucket;
-        int _writerCount;
-        Meta::TOptional<FWFixedSizeTextWriter> _ossIFP;
     };
 
-    class FScope : FBucket {
-    public:
-        FScope() { Open(); }
-        ~FScope() { Close(); }
-        FWFixedSizeTextWriter& Oss() { return (*_ossIFP); }
+    struct FScope {
+        size_t Index;
+        FBucket& Bucket;
+        Meta::FRecursiveLockGuard Lock;
+
+        FLinearHeap& Heap() const { return Bucket.Heap; }
+
+        FScope() : FScope(Instance()) {}
+
+        explicit FScope(size_t index)
+            : Index(index)
+            , Bucket(Instance().OpenBucket_(Index))
+            , Lock(Bucket.Barrier)
+        {}
+
+        explicit FScope(FLogAllocator& alloc)
+            : Index(alloc.NextBucketIndex_())
+            , Bucket(alloc.OpenBucket_(Index))
+            , Lock(Bucket.Barrier)
+        {}
     };
 
 private:
-    STATIC_CONST_INTEGRAL(size_t, GNumBuckets, 4); // independent buckets
-    STATIC_CONST_INTEGRAL(size_t, GBucketMask, GNumBuckets - 1);
-    STATIC_CONST_INTEGRAL(size_t, GBucketSize, ALLOCATION_GRANULARITY); // 64k buckets
-    STATIC_CONST_INTEGRAL(size_t, GBufferSize, GNumBuckets * GBucketSize); // <=> 256k
-    STATIC_ASSERT(Meta::IsPow2(GNumBuckets));
+    STATIC_CONST_INTEGRAL(size_t, NumAllocationBuckets, 8);
+    STATIC_CONST_INTEGRAL(size_t, MaskAllocationBuckets, NumAllocationBuckets - 1);
+    STATIC_ASSERT(Meta::IsPow2(NumAllocationBuckets));
 
-    u8* const _buffer;
-    std::atomic<size_t> _bucketMask;
+    std::atomic<size_t> _revision;
+    FBucket _buckets[NumAllocationBuckets];
 
-    size_t AllocateBucket_() {
-        for (;;) {
-            size_t oldMask = _bucketMask;
-            size_t bucket = Meta::tzcnt(oldMask);
-            Assert(bucket < GNumBuckets);
-            size_t newMask = (oldMask & ~(size_t(1) << bucket));
-            AssertRelease(newMask != oldMask);
-            if (_bucketMask.compare_exchange_strong(oldMask, newMask))
-                return bucket;
-        }
-    }
-
-    void ReleaseBucket_(size_t bucket) {
-        Assert(bucket < GNumBuckets);
-        for (;;) {
-            size_t oldMask = _bucketMask;
-            size_t newMask = (oldMask | (size_t(1) << bucket));
-            AssertRelease(newMask != oldMask);
-            if (_bucketMask.compare_exchange_strong(oldMask, newMask))
-                break;
-        }
-    }
-
-    TMemoryView<wchar_t> MakeView_(size_t bucket) const {
-        return TMemoryView<u8>(_buffer + bucket * GBucketSize, GBucketSize).Cast<wchar_t>();
-    }
-
-    static FBucketedWriter_& Instance_() {
-        ONE_TIME_DEFAULT_INITIALIZE(FBucketedWriter_, GInstance);
-        return GInstance;
-    }
-};
-//----------------------------------------------------------------------------
-// Allows being called recursively
-class FAbstractReentrantLogger_ : public ILogger {
-public:
-    FAbstractReentrantLogger_()
-        : _lockDepth(0)
-        , _closing(false)
+    FLogAllocator()
+        : _revision(0)
     {}
 
-    virtual ~FAbstractReentrantLogger_() {
-        Assert(0 == _lockDepth);
-        Assert(_closing);
-        Assert(_deferredCalls.empty());
+    FBucket& OpenBucket_(size_t index) {
+        Assert(index < NumAllocationBuckets);
+        return _buckets[index];
     }
 
-public: // ILogger
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text) override final {
-        const FScopeLock_ scopeLock(*this);
-
-        if (Unlikely(scopeLock.Closing())) {
-            return; // discard messages after close
-        }
-        else if (Unlikely(scopeLock.Recursive())) {
-            RecursiveLog_(category, level, site, text);
-        }
-        else {
-            SafeLog(category, level, site, text);
-            FlushDeferredCallsIFN_();
-        }
-    }
-
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& buffer, size_t first, size_t last) override final {
-        const FScopeLock_ scopeLock(*this);
-
-        if (Unlikely(scopeLock.Closing())) {
-            return; // discard messages after close
-        }
-        else if (Unlikely(scopeLock.Recursive())) {
-            AssertNotReached(); // logger setup should avoid that
-        }
-        else {
-            SafeLog(category, level, site, buffer, first, last);
-            FlushDeferredCallsIFN_();
-        }
-    }
-
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) override final {
-        const FScopeLock_ scopeLock(*this);
-
-        if (Unlikely(scopeLock.Closing())) {
-            return; // discard messages after close
-        }
-        else if (Unlikely(scopeLock.Recursive())) {
-            RecursiveLog_(category, level, site, format, args);
-        }
-        else {
-            SafeLog(category, level, site, format, args);
-            FlushDeferredCallsIFN_();
-        }
-    }
-
-    virtual void Flush(bool synchronous) override {
-        const FScopeLock_ scopeLock(*this);
-
-        if (Unlikely(scopeLock.Closing())) {
-            return; // discard flush after close
-        }
-        else if (Unlikely(scopeLock.Recursive())) {
-            _deferredCalls.push_back([synchronous](FAbstractReentrantLogger_* logger) {
-                logger->SafeFlush(synchronous);
-            });
-        }
-        else {
-            SafeFlush(synchronous);
-            FlushDeferredCallsIFN_();
-        }
-    }
-
-    virtual void Close() override final {
-        const FScopeLock_ scopeLock(*this);
-
-        if (scopeLock.Recursive()) {
-            AssertNotReached();
-        }
-        else {
-            Assert(not scopeLock.Closing());
-            _closing = true;
-            Assert(scopeLock.Closing());
-
-            SafeFlush(true);
-            FlushDeferredCallsIFN_();
-
-            Assert(_deferredCalls.empty());
-
-            SafeClose();
-
-            Assert(_deferredCalls.empty());
-        }
-    }
-
-protected:
-    virtual void SafeLog(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text) = 0;
-    virtual void SafeLog(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& buffer, size_t first, size_t last) = 0;
-    virtual void SafeLog(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) = 0;
-    virtual void SafeFlush(bool synchronous) = 0;
-    virtual void SafeClose() = 0;
-
-    std::recursive_mutex _barrier;
-
-private:
-    int _lockDepth;
-    bool _closing;
-
-    FBucketedWriter_::FBucket _bucketWriter;
-
-    struct FScopeLock_ {
-        FAbstractReentrantLogger_& Owner;
-        const Meta::FRecursiveLockGuard LockGuard;
-
-        FScopeLock_(FAbstractReentrantLogger_& owner)
-            : Owner(owner)
-            , LockGuard(Owner._barrier) {
-            ++Owner._lockDepth;
-        }
-
-        ~FScopeLock_() {
-            --Owner._lockDepth;
-        }
-
-        bool Closing() const {
-            Assert(Owner._lockDepth);
-            return (Owner._closing);
-        }
-
-        bool Recursive() const {
-            Assert(Owner._lockDepth);
-            return (1 < Owner._lockDepth);
-        }
-    };
-
-    using FDeferredCall_ = Meta::TFunction<void(FAbstractReentrantLogger_*)>;
-    VECTORINSITU(Diagnostic, FDeferredCall_, 8) _deferredCalls;
-
-    NO_INLINE void RecursiveLog_(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text) {
-        FWFixedSizeTextWriter& oss(_bucketWriter.Open());
-
-        const size_t offText = oss.Tell();
-        oss.Write(text);
-        const FWStringView deferredText = oss.WrittenSince(offText);
-
-        DeferLog_(oss, category, level, site, deferredText);
-    }
-
-    NO_INLINE void RecursiveLog_(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) {
-        AssertRelease(_lockDepth < 10); // or we might have a looping error
-
-        FWFixedSizeTextWriter& oss(_bucketWriter.Open());
-
-        const size_t offText = oss.Tell();
-        FormatArgs(oss, format, args);
-        const FWStringView deferredText = oss.WrittenSince(offText);
-
-        DeferLog_(oss, category, level, site, deferredText);
-    }
-
-    struct FDeferredLogEntry_ {
-        const FLogger::FCategory* Category;
-        FLogger::EVerbosity Level;
-        FLogger::FSiteInfo Site;
-        const wchar_t* Text;
-        size_t Length;
-
-        void Send(FAbstractReentrantLogger_* logger) const {
-            logger->SafeLog(*Category, Level, Site, FWStringView(Text, Length));
-            logger->_bucketWriter.Close();
-        }
-    };
-
-    void DeferLog_(FWFixedSizeTextWriter& oss, const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& deferredText) {
-        // hack to store log entry infos inside text buffer and avoid another allocation
-        const std::streamoff offEntry = ROUND_TO_NEXT_16(oss.Stream()->TellO()); // keep entry aligned
-        oss.Stream()->WritePODAligned(FDeferredLogEntry_{ &category, level, site, deferredText.data(), deferredText.size() }, 16);
-
-        // will be freed when closing the bucket
-        const FDeferredLogEntry_* deferredEntry = reinterpret_cast<const FDeferredLogEntry_*>(
-            oss.Stream()->WrittenSince(offEntry).data());
-
-        _deferredCalls.emplace_back(deferredEntry, &FDeferredLogEntry_::Send);
-    }
-
-    void FlushDeferredCallsIFN_() {
-        Assert(_lockDepth);
-        if (_deferredCalls.empty())
-            return;
-
-        // can be muted by deferred calls, hence the slow/safe loop :
-        size_t call = 0;
-        do {
-            _deferredCalls[call++](this);
-        } while (call < _deferredCalls.size());
-
-        _deferredCalls.clear();
+    size_t NextBucketIndex_() {
+        return (_revision++ & MaskAllocationBuckets);
     }
 };
 //----------------------------------------------------------------------------
-// Composite logger managing all logger registrations
-class FLoggerManager_ : public FAbstractReentrantLogger_ {
+// Composite for all loggers supplied through public API
+class FUserLogger : Meta::TSingleton<FUserLogger>, public ILowLevelLogger {
+    friend class Meta::TSingleton<FUserLogger>;
+    using singleton_type = Meta::TSingleton<FUserLogger>;
 public:
-    FLoggerManager_() {}
-    virtual ~FLoggerManager_() {}
+    using singleton_type::Create;
+    using singleton_type::Destroy;
+    using singleton_type::Instance;
 
-    void Register(ILogger* logger) {
+    void Add(const PLogger& logger) {
         Assert(logger);
-        const Meta::FRecursiveLockGuard scopeLock(_barrier);
-        Add_AssertUnique(_logs, logger);
+
+        const Meta::FLockGuard scopeLock(_barrier);
+        Assert(not Contains(_loggers, logger));
+        _loggers.emplace_back(logger);
     }
 
-    void Unregister(ILogger* logger) {
+    void Remove(const PLogger& logger) {
         Assert(logger);
-        const Meta::FRecursiveLockGuard scopeLock(_barrier);
-        Remove_AssertExists(_logs, logger);
-        logger->Flush(true);
+
+        const Meta::FLockGuard scopeLock(_barrier);
+        const auto it = std::find(_loggers.begin(), _loggers.end(), logger);
+        Assert(_loggers.end() != it);
+        _loggers.erase(it);
     }
 
-protected: // FAbstractReentrantLogger_
-    virtual void SafeLog(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text) override final {
-        for (ILogger* logger : _logs)
+public: // ILowLevelLogger
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        const Meta::FLockGuard scopeLock(_barrier);
+        for (const PLogger& logger : _loggers)
             logger->Log(category, level, site, text);
     }
 
-    virtual void SafeLog(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& buffer, size_t first, size_t last) override final {
-        for (ILogger* logger : _logs)
-            logger->Log(category, level, site, buffer, first, last);
+    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
+        const FLogAllocator::FScope scopeAlloc;
+
+        MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc.Heap());
+        FWTextWriter oss(&buf);
+
+        FormatArgs(oss, format, args);
+
+        Log(category, level, site, buf.MakeView().Cast<const wchar_t>());
     }
 
-    virtual void SafeLog(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) override final {
-        for (ILogger* logger : _logs)
-            logger->Log(category, level, site, format, args);
-    }
-
-    virtual void SafeFlush(bool synchronous) override final {
-        for (ILogger* logger : _logs)
+    virtual void Flush(bool synchronous) override final {
+        const Meta::FLockGuard scopeLock(_barrier);
+        for (const PLogger& logger : _loggers)
             logger->Flush(synchronous);
     }
 
-    virtual void SafeClose() override final {
-        for (ILogger* logger : _logs)
-            logger->Close();
+private:
+    FUserLogger() {} // private ctor
+
+    std::mutex _barrier;
+    VECTORINSITU(Logger, PLogger, 8) _loggers;
+};
+//----------------------------------------------------------------------------
+// Asynchronous logger used during the game
+class FBackgroundLogger : Meta::TSingleton<FBackgroundLogger>, public ILowLevelLogger {
+    friend class Meta::TSingleton<FBackgroundLogger>;
+    using singleton_type = Meta::TSingleton<FBackgroundLogger>;
+public:
+    using singleton_type::Create;
+    using singleton_type::Destroy;
+    using singleton_type::Instance;
+
+public: // ILowLevelLogger
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        const FLogAllocator::FScope scopeAlloc;
+
+        const size_t sizeInBytes = (sizeof(FDeferredLog) + text.SizeInBytes());
+        auto* const log = INPLACE_NEW(scopeAlloc.Heap().Allocate(sizeInBytes), FDeferredLog)(scopeAlloc.Heap());
+        log->LowLevelLogger = _userLogger;
+        log->Category = &category;
+        log->Level = level;
+        log->Site = site;
+        log->TextLength = checked_cast<u32>(text.size());
+        log->Bucket = checked_cast<u32>(scopeAlloc.Index);
+        log->AllocSizeInBytes = checked_cast<u32>(sizeInBytes);
+
+        ::memcpy(log + 1, text.data(), text.SizeInBytes());
+
+        TaskManager_().Run(Meta::MakeFunction(log, &FDeferredLog::Log));
+    }
+
+    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
+        const FLogAllocator::FScope scopeAlloc;
+
+        MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc.Heap());
+        buf.reserve(sizeof(FDeferredLog) + format.SizeInBytes());
+        buf.resize(sizeof(FDeferredLog)); // reserve space for FDeferredLog entry
+        buf.SeekO(0, ESeekOrigin::End); // seek at the end of the stream
+        {
+            FWTextWriter oss(&buf);
+            FormatArgs(oss, format, args);
+        }
+        auto* const log = INPLACE_NEW(buf.Pointer(), FDeferredLog)(scopeAlloc.Heap());
+
+        size_t sizeInBytes = 0;
+        const TMemoryView<u8> stolen = buf.StealDataUnsafe(log->get_allocator(), &sizeInBytes);
+        Assert(stolen.data() == (u8*)log);
+
+        log->LowLevelLogger = _userLogger;
+        log->Category = &category;
+        log->Level = level;
+        log->Site = site;
+        log->TextLength = checked_cast<u32>((sizeInBytes - sizeof(FDeferredLog)) / sizeof(wchar_t));
+        log->Bucket = checked_cast<u32>(scopeAlloc.Index);
+        log->AllocSizeInBytes = checked_cast<u32>(stolen.SizeInBytes());
+
+        TaskManager_().Run(Meta::MakeFunction(log, &FDeferredLog::Log));
+    }
+
+    virtual void Flush(bool synchronous) override final {
+        if (synchronous) {
+            TaskManager_().WaitForAll(); // wait for all potential logs before flushing
+            _userLogger->Flush(true);
+        }
+        else {
+            TaskManager_().Run([logger{ _userLogger }](ITaskContext&) {
+                logger->Flush(true); // flush synchronously in asynchronous task
+            },  ETaskPriority::Low );
+        }
     }
 
 private:
-    VECTORINSITU(Diagnostic, ILogger*, 4) _logs;
-};
-//----------------------------------------------------------------------------
-static ILogger* GLogger_ = nullptr;
-static bool GLoggerAvailable_ = false;
-static bool GLoggerImmediate_ = true; // set to false in FLogger::Start() and reverted to false in FLogger::Shutdown()
-static POD_STORAGE(FLoggerManager_) GLoggerStorage_;
-//----------------------------------------------------------------------------
-template <typename T>
-static void SetupInplaceLogger_() {
-    if (GLogger_) {
-        GLogger_->Close();
-        GLogger_->~ILogger();
+    FUserLogger* const _userLogger;
+
+    FBackgroundLogger()
+        : _userLogger(&FUserLogger::Instance())
+    {}
+
+    static FTaskManager& TaskManager_() {
+        return FBackgroundThreadPool::Instance();
     }
 
-    STATIC_ASSERT(sizeof(T) <= sizeof(GLoggerStorage_));
-    GLogger_ = static_cast<ILogger*>(INPLACE_NEW(&GLoggerStorage_, T));
-}
-//----------------------------------------------------------------------------
-static NO_INLINE void SetupPreMainLogger_() {
-    if (FPlatformMisc::IsDebuggerAttached())
-        SetupInplaceLogger_<FPreMainOutputDebugLogger_>();
-    else
-        SetupInplaceLogger_<FNullLogger_>();
-}
-//----------------------------------------------------------------------------
-static ILogger& Logger_()
-{
-    // fall back for pre-logger start
-    if (Unlikely(nullptr == GLogger_))
-        SetupPreMainLogger_();
+    class ALIGN(16) FDeferredLog : public TLinearHeapAllocator<u8> {
+    public:
+        ILowLevelLogger* LowLevelLogger;
+        const FCategory* Category;
+        FSiteInfo Site;
+        EVerbosity Level;
 
-    return (*GLogger_);
-}
-//----------------------------------------------------------------------------
-static FLoggerManager_& LoggerManager_() {
-    Assert(GLoggerAvailable_);
-    return reinterpret_cast<FLoggerManager_&>(GLoggerStorage_);
-}
+        u32 TextLength;
+
+        u32 Bucket;
+        u32 AllocSizeInBytes;
+
+        const FDeferredLog(FLinearHeap& heap) : TLinearHeapAllocator<u8>(heap) {}
+
+        FDeferredLog(const FDeferredLog&) = delete;
+        FDeferredLog& operator =(const FDeferredLog&) = delete;
+
+        FWStringView Text() const { return { (const wchar_t *)(this + 1), TextLength }; }
+
+        void Log(ITaskContext&) {
+            const FSuicideScope_ logScope(this);
+            LowLevelLogger->Log(*Category, Level, Site, Text());
+        }
+
+        TLinearHeapAllocator<u8>& get_allocator() { return *this; }
+    };
+    STATIC_ASSERT(std::is_trivially_destructible_v<FDeferredLog>);
+
+    // used for exception safety :
+    struct FSuicideScope_ : FLogAllocator::FScope {
+        FDeferredLog* Log;
+        FSuicideScope_(FDeferredLog* log)
+            : FLogAllocator::FScope(log->Bucket)
+            , Log(log) {
+            Assert(log);
+        }
+        ~FSuicideScope_() {
+            Heap().Release(Log, Log->AllocSizeInBytes);
+        }
+    };
+};
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static ILowLevelLogger* GLoggerImpl_ = nullptr;
+//----------------------------------------------------------------------------
+static void SetupLoggerImpl_(ILowLevelLogger* pimpl) {
+    ONE_TIME_DEFAULT_INITIALIZE(FAtomicSpinLock, GBarrier);
+
+    const FAtomicSpinLock::FScope scopeLock(GBarrier);
+
+    std::swap(pimpl, GLoggerImpl_);
+
+    if (pimpl)
+        pimpl->Flush(true);
+}
+//----------------------------------------------------------------------------
+class FLogFormat {
+public:
+    static void Header(FWTextWriter& oss, const ILogger::FCategory& category, ILogger::EVerbosity level, const ILogger::FSiteInfo& site) {
+#if CORE_DUMP_THREAD_ID
+#   if CORE_DUMP_THREAD_NAME
+        Format(oss, L"[{0}][{1:20}][{3:-8}][{2:-15}] ", site.Timestamp.ToDateTimeUTC(), FThreadContext::GetThreadName(site.ThreadId), category.Name, level);
+#   else // only thread hash :
+        Format(oss, L"[{0}][{1:#5}][{3:-8}][{2:-15}] ", site.Timestamp.ToDateTimeUTC(), FThreadContext::GetThreadHash(site.ThreadId), category.Name, level);
+#   endif
+#else
+        Format(oss, L"[{0}][{2:-8}][{1:-15}] ", site.Timestamp.ToDateTimeUTC(), category.Name, level);
+#endif
+    }
+
+    static void Footer(FWTextWriter& oss, const ILogger::FCategory& category, ILogger::EVerbosity level, const ILogger::FSiteInfo& site) {
+#if CORE_DUMP_SITE_ON_LOG
+        Format(oss, L"\n\tat {0}:{1}\n", site.Filename, site.Line);
+#else
+        oss << Eol;
+#endif
+    }
+
+    static void Print(FWTextWriter& oss, const ILogger::FCategory& category, ILogger::EVerbosity level, const ILogger::FSiteInfo& site, const FWStringView& text) {
+        Header(oss, category, level, site);
+        oss.Write(text);
+        Footer(oss, category, level, site);
+    }
+};
+//----------------------------------------------------------------------------
+// Used before & after main when no debugger is attached, ignores everything
+class FDevNullLogger : public ILowLevelLogger {
+public:
+    static ILowLevelLogger* Instance() {
+        ONE_TIME_DEFAULT_INITIALIZE(FDevNullLogger, GInstance);
+        return (&GInstance);
+    }
+
+public: // ILowLevelLogger
+    virtual void Log(const FCategory&, EVerbosity, const FSiteInfo&, const FWStringView&) override final {}
+    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {}
+    virtual void Flush(bool) override final {}
+};
+//----------------------------------------------------------------------------
+// Used before & after main when debugger attached, no dependencies on allocators, always immediate
+class FDebuggingLogger : public ILowLevelLogger {
+public:
+    static ILowLevelLogger* Instance() {
+        ONE_TIME_DEFAULT_INITIALIZE(FDebuggingLogger, GInstance);
+        return (&GInstance);
+    }
+
+public: // ILowLevelLogger
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        Assert(category.Verbosity & level);
+
+        wchar_t tmp[8192];
+        FWFixedSizeTextWriter oss(tmp);
+
+        FLogFormat::Header(oss, category, level, site);
+        oss.Write(text);
+        FLogFormat::Footer(oss, category, level, site);
+
+        oss << Eos;
+
+        FPlatformMisc::OutputDebug(tmp);
+    }
+
+    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
+        Assert(category.Verbosity & level);
+
+        wchar_t tmp[8192];
+        FWFixedSizeTextWriter oss(tmp);
+
+        FLogFormat::Header(oss, category, level, site);
+        FormatArgs(oss, format, args);
+        FLogFormat::Footer(oss, category, level, site);
+
+        oss << Eos;
+
+        FPlatformMisc::OutputDebug(tmp);
+    }
+
+    virtual void Flush(bool) override final {} // always synchronous => no need to flush
+};
+//----------------------------------------------------------------------------
+static ILowLevelLogger* LowLevelLogger_() {
+    return (FPlatformMisc::IsDebuggerAttached()
+        ? FDebuggingLogger::Instance()
+        : FDevNullLogger::Instance() );
+}
+//----------------------------------------------------------------------------
+static NO_INLINE void SetupLowLevelLoggerImpl_() {
+    SetupLoggerImpl_(LowLevelLogger_());
+}
+//----------------------------------------------------------------------------
+static ILowLevelLogger& CurrentLogger_() {
+    // fall back for pre-logger start
+    if (Unlikely(nullptr == GLoggerImpl_))
+        SetupLowLevelLoggerImpl_();
+
+    return (*GLoggerImpl_);
+}
+//----------------------------------------------------------------------------
 static void HandleFatalLogIFN_(FLogger::EVerbosity level) {
     if (FLogger::EVerbosity::Fatal == level) {
-        Logger_().Flush(true);
+        CurrentLogger_().Flush(true);
         AssertNotReached();
     }
 }
 //----------------------------------------------------------------------------
-void FLogger::Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text) {
-    if (category.Verbosity & level)
-        Logger_().Log(category, level, site, text);
-
-    HandleFatalLogIFN_(level);
-}
-//----------------------------------------------------------------------------
-void FLogger::LogArgs(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) {
-    if (category.Verbosity & level)
-        Logger_().Log(category, level, site, format, args);
-
-    HandleFatalLogIFN_(level);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-class FAsynchronousLogger_ : public FAbstractReentrantLogger_, private IBufferedStreamWriter {
-public:
-    FAsynchronousLogger_(ILogger* wrapped)
-        : _wrapped(wrapped)
-        , _ringBuffer((u8*)Core::malloc(GBufferSize), GBufferSize)
-        , _offsetO(0)
-        , _offsetI(0)
-        , _sizeInBytes(0) {
-        AssertRelease(_wrapped);
-#ifdef USE_MEMORY_DOMAINS
-        MEMORY_DOMAIN_TRACKING_DATA(Diagnostic).Allocate(1, GBufferSize);
-#endif
-    }
-
-    ~FAsynchronousLogger_() {
-        Assert(_offsetI == checked_cast<size_t>(_offsetO & GBufferMask)); // missing Flush() ?
-#ifdef USE_MEMORY_DOMAINS
-        MEMORY_DOMAIN_TRACKING_DATA(Diagnostic).Deallocate(1, GBufferSize);
-#endif
-        Core::free(_ringBuffer.data());
-    }
-
-    ILogger* Wrapped() const { return _wrapped; }
-    void SetWrapped(ILogger* wrapped) { _wrapped = wrapped; }
-
-    using FAbstractReentrantLogger_::Flush;
-
-public: // ILogger
-    virtual void Flush(bool synchronous) override final {
-        FAsynchronousLogger_::SafeFlush(synchronous);
-    }
-
-protected: // FAbstractReentrantLogger_
-    virtual void SafeLog(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text) override final {
-        const std::streamoff offset = _offsetO;
-        static_cast<IBufferedStreamWriter*>(this)->WriteView(text);
-        AsyncLog_(category, level, site, offset);
-    }
-
-    virtual void SafeLog(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& buffer, size_t first, size_t last) override final {
-        AssertNotImplemented(); // shouldn't be called since only this logger uses this interface
-    }
-
-    virtual void SafeLog(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) override final {
-        const std::streamoff offset = _offsetO;
-        FWTextWriter oss(static_cast<IBufferedStreamWriter*>(this));
-        FormatArgs(oss, format, args);
-        AsyncLog_(category, level, site, offset);
-    }
-
-    virtual void SafeFlush(bool synchronous) override final {
-        synchronous &= (not FFiber::IsInFiber());
-        AsyncFlush_(_wrapped, synchronous);
-    }
-
-    virtual void SafeClose() override final {
-        AsyncFlush_(_wrapped, true);
-    }
-
-private: // IStreamWriter
-    virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const override final { UNUSED(origin); return false; }
-
-    virtual std::streamoff TellO() const override final { return _offsetO; }
-    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final {
-        UNUSED(offset);
-        UNUSED(origin);
-        AssertNotImplemented();
-    }
-
-    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final {
-        AssertRelease(checked_cast<size_t>(sizeInBytes) < _ringBuffer.SizeInBytes());
-        if (0 == sizeInBytes)
-            return true;
-
-        while (_sizeInBytes + sizeInBytes > GBufferSize) {
-            _barrier.unlock(); // release the lock while flushing
-            Flush(true); // flush synchronous which will wait for all delayed logs
-            _barrier.lock();
-        }
-
-        const TMemoryView<const u8> toWrite((const u8*)storage, checked_cast<size_t>(sizeInBytes));
-        const size_t off0 = checked_cast<size_t>(_offsetO & GBufferMask);
-        const size_t off1 = checked_cast<size_t>((_offsetO + sizeInBytes) & GBufferMask);
-
-        if (off0 < off1) {
-            toWrite.CopyTo(_ringBuffer.SubRange(off0, off1 - off0));
-        }
-        else {
-            const size_t split = (GBufferSize - off0);
-            Assert(toWrite.size() - split == off1);
-
-            std::copy(toWrite.begin(), toWrite.begin() + split, _ringBuffer.begin() + off0);
-            std::copy(toWrite.begin() + split, toWrite.end(), _ringBuffer.begin());
-        }
-
-        _offsetO += sizeInBytes;
-        _sizeInBytes += checked_cast<size_t>(sizeInBytes);
-        Assert(_sizeInBytes <= GBufferSize);
-
-        return true;
-    }
-
-    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final {
-        return (FAsynchronousLogger_::Write(storage, eltsize * count) ? count : 0);
-    }
-
-private: // IBufferedStreamWriter
-    virtual void Flush() override final {}
-
-private:
-    // 1024k, must be large enough to let the asynchronous tasks complete
-    STATIC_CONST_INTEGRAL(size_t, GBufferSize, ALLOCATION_GRANULARITY*16);
-    STATIC_CONST_INTEGRAL(size_t, GBufferMask, GBufferSize - 1);
-    STATIC_ASSERT(Meta::IsPow2(GBufferSize));
-
-    ILogger* _wrapped;
-    TMemoryView<u8> _ringBuffer;
-    std::streamoff _offsetO;
-    std::atomic<size_t> _offsetI;
-    std::atomic<size_t> _sizeInBytes;
-
-    static FTaskManager& TaskManager_() {
-        FTaskManager& manager = FBackgroundThreadPool::Instance();
-        Assert(manager.WorkerCount() == 1); // wrapped loggers ain't necessarily thread-safe
-        return manager;
-    }
-
-    static void AsyncFlush_(ILogger* wrapped, bool synchronous) {
-        FTaskFunc flushTask = [wrapped](ITaskContext& ctx) {
-            wrapped->Flush(true); // flush synchronously in asynchronous task
-            Core::malloc_release_pending_blocks(); // not a bad time for releasing some pending blocks
-        };
-        const ETaskPriority flushPriority = ETaskPriority::Low/* low priority to be sure to be executed last */;
-        if (synchronous)
-            TaskManager_().RunAndWaitFor(std::move(flushTask), flushPriority);
-        else
-            TaskManager_().Run(std::move(flushTask), flushPriority);
-    }
-
-    class FAsyncLogEntry_ {
-    public:
-        FAsyncLogEntry_(
-            FAsynchronousLogger_* logger,
-            const FCategory& category,
-            EVerbosity level,
-            FSiteInfo site,
-            size_t off0,
-            size_t off1,
-            size_t off2)
-        :   _logger(logger)
-        ,   _category(&category)
-        ,   _level(level)
-        ,   _site(site)
-        ,   _off0(off0)
-        ,   _off1(off1)
-        ,   _off2(off2) {
-            ONLY_IF_ASSERT(SetupCanaries_());
-        }
-
-        void Run(ITaskContext&) {
-            Assert_NoAssume(CheckCanary_());
-
-            _logger->_wrapped->Log(*_category, _level, _site,
-                _logger->_ringBuffer.Cast<const wchar_t>(),
-                _off0 / sizeof(wchar_t),
-                _off1 / sizeof(wchar_t) );
-
-            Assert_NoAssume(CheckCanary_());
-
-            const size_t entrySize = (_off0 < _off2 ? _off2 - _off0 : GBufferSize - _off0 + _off2);
-            const size_t oldSize = _logger->_sizeInBytes.fetch_sub(entrySize);
-            Assert(oldSize >= entrySize);
-            Assert(_logger->_sizeInBytes <= GBufferSize);
-
-            Assert_NoAssume(CheckCanary_());
-            Assert((_off0 < _off2 ? _off2 - _off0 : GBufferSize - _off0 + _off2) == entrySize); // tracking a weird bug
-
-            // after this call this object is no more guaranteed to be valid !
-            size_t off0 = _off0;
-            if (not _logger->_offsetI.compare_exchange_strong(off0, _off2))
-                AssertNotReached(); // should be ran in order by task manager !
-
-            ONLY_IF_ASSERT(_off0 = _off1 = _off2 = INDEX_NONE); // checks that it won't run more than once (will fail canary test)
-        }
-
-    private:
-#ifdef WITH_CORE_ASSERT
-        size_t _canary0;
-#endif
-
-        FAsynchronousLogger_* const _logger;
-        const FCategory* const _category;
-        const EVerbosity _level;
-        const FSiteInfo _site;
-        size_t _off0;
-        size_t _off1;
-        size_t _off2;
-
-#ifdef WITH_CORE_ASSERT
-        STATIC_CONST_INTEGRAL(size_t, Canary, CODE3264(0xdeadbeeful, 0xdeadbeefdeadbeefull));
-        size_t _canary1;
-        void SetupCanaries_() { _canary0 = _canary1 = MakeCanary_(); }
-        size_t MakeCanary_() const { return hash_tuple(Canary, _off0, _off1, _off2); }
-        bool CheckCanary_() const {
-            const size_t chk = MakeCanary_();
-            return (chk == _canary0 && chk == _canary1);
-        }
-#endif
-    };
-
-    void AsyncLog_(const FCategory& category, EVerbosity level, const FSiteInfo& site, std::streamoff beg) {
-        const size_t off0 = checked_cast<size_t>(beg & GBufferMask);
-        const size_t off1 = checked_cast<size_t>(_offsetO & GBufferMask);
-
-        // hack to store async log entry inside text buffer and avoid another allocation
-        size_t offEntry = (ROUND_TO_NEXT_16(off1) & GBufferMask);
-        size_t sizeFooter = (offEntry - off1 + sizeof(FAsyncLogEntry_));
-        if (((off1 + sizeFooter) & GBufferMask) < offEntry) { // handles wrapping with padding :
-            const size_t padding = (GBufferSize - offEntry);
-            Assert(padding < sizeof(FAsyncLogEntry_));
-            Assert(((offEntry + padding) & GBufferMask) == 0);
-
-            offEntry = 0;
-            sizeFooter += padding;
-        }
-
-        _offsetO += sizeFooter;
-        _sizeInBytes += sizeFooter;
-        Assert(_sizeInBytes <= GBufferSize);
-
-        const size_t off2 = checked_cast<size_t>(_offsetO & GBufferMask);
-
-        // will be freed on another thread when _offsetI will be incremented
-        FAsyncLogEntry_* pEntry = INPLACE_NEW(&_ringBuffer[offEntry], FAsyncLogEntry_)(
-            this, category, level, site, off0, off1, off2 );
-
-        Assert((void*)(pEntry + 1) == (void*)(&_ringBuffer[off2]));
-
-        TaskManager_().Run(FTaskFunc(pEntry, &FAsyncLogEntry_::Run), ETaskPriority::Normal);
-    }
-};
-//----------------------------------------------------------------------------
-static POD_STORAGE(FAsynchronousLogger_) GAsyncLoggerStorage_;
-//----------------------------------------------------------------------------
-static bool SetupAsyncrhonousLogger_(bool immediate) {
-    Assert(GLogger_);
-
-    if (immediate) {
-        Assert((void*)GLogger_ == &GAsyncLoggerStorage_);
-
-        ILogger* const wrapped = checked_cast<FAsynchronousLogger_*>(GLogger_)->Wrapped();
-        FAsynchronousLogger_* const asynchronous = checked_cast<FAsynchronousLogger_*>(GLogger_);
-
-        // flush a first time previous logs
-        asynchronous->Flush(true);
-
-        // fall back to low level logger before flushing a second time
-        FPreMainOutputDebugLogger_ postAsync;
-        GLogger_ = &postAsync;
-        asynchronous->Close();
-
-        // finally restore wrapped logger before destroying asynchronous logger
-        GLogger_ = wrapped;
-        asynchronous->~FAsynchronousLogger_();
-
-        return true;
-    }
-    else {
-        Assert((void*)GLogger_ != &GAsyncLoggerStorage_);
-
-        // flush before installing asynchronous logger
-        GLogger_->Flush(true);
-
-        GLogger_ = INPLACE_NEW(&GAsyncLoggerStorage_, FAsynchronousLogger_)(GLogger_);
-
-        return false;
-    }
-}
-//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void FLogger::Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) {
+    if (category.Verbosity & level)
+        CurrentLogger_().Log(category, level, site, text);
+
+    HandleFatalLogIFN_(level);
+}
+//----------------------------------------------------------------------------
+void FLogger::LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) {
+    if (category.Verbosity & level)
+        CurrentLogger_().LogArgs(category, level, site, format, args);
+
+    HandleFatalLogIFN_(level);
+}
+//----------------------------------------------------------------------------
 void FLogger::Start() {
-    Assert(not GLoggerAvailable_);
-    Assert(GLoggerImmediate_);
+    FLogAllocator::Create();
 
-    GLoggerAvailable_ = true;
-    SetupInplaceLogger_<FLoggerManager_>();
+    FUserLogger::Create();
 
-    RegisterLogger(FCurrentProcess::Instance().StartedWithDebugger()
-        ? FLogger::OutputDebug()
-        : FLogger::Stdout() );
+    RegisterLogger(
+        FCurrentProcess::Instance().StartedWithDebugger()
+            ? FLogger::MakeOutputDebug()
+            : FLogger::MakeStdout() );
 
-    RegisterLogger(FLogger::RollFile(L"Saved:/Log/Core.log"));
+    RegisterLogger(FLogger::MakeRollFile(L"Saved:/Log/Core.log"));
 
-    SetImmediate(false);
+    IF_CONSTEXPR(USE_CORE_MEMORY_DEBUGGING) {
+        SetupLoggerImpl_(&FUserLogger::Instance());
+    }
+    else {
+        FBackgroundLogger::Create();
+        SetupLoggerImpl_(&FBackgroundLogger::Instance());
+    }
 }
 //----------------------------------------------------------------------------
 void FLogger::Shutdown() {
-    Assert(GLoggerAvailable_);
+    SetupLowLevelLoggerImpl_();
 
-    SetImmediate(true);
-    GLoggerAvailable_ = false;
+    IF_CONSTEXPR(not USE_CORE_MEMORY_DEBUGGING) {
+        FBackgroundLogger::Destroy();
+    }
 
-    // revert to low level logger while the program is exiting
-    SetupPreMainLogger_();
-}
-//----------------------------------------------------------------------------
-bool FLogger::SetImmediate(bool immediate) {
-    Assert(GLoggerAvailable_);
-#if USE_CORE_MEMORY_DEBUGGING
-    immediate = true; // forcibly disable asynchronous logger to ease debugging
-#endif
+    FUserLogger::Destroy();
 
-    return (immediate != GLoggerImmediate_)
-        ? not (GLoggerImmediate_ = SetupAsyncrhonousLogger_(immediate))
-        : immediate;
+    FLogAllocator::Destroy();
 }
 //----------------------------------------------------------------------------
 void FLogger::Flush(bool synchronous/* = true */) {
-    if (GLoggerAvailable_)
-        GLogger_->Flush(synchronous);
+    CurrentLogger_().Flush(synchronous);
 }
 //----------------------------------------------------------------------------
-void FLogger::RegisterLogger(ILogger* logger) {
-    Assert(GLoggerAvailable_);
-
-    LoggerManager_().Register(logger);
+void FLogger::RegisterLogger(const PLogger& logger) {
+    FUserLogger::Instance().Add(logger);
 }
 //----------------------------------------------------------------------------
-void FLogger::UnregisterLogger(ILogger* logger) {
-    Assert(GLoggerAvailable_);
-
-    LoggerManager_().Unregister(logger);
+void FLogger::UnregisterLogger(const PLogger& logger) {
+    FUserLogger::Instance().Remove(logger);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class FAbstractSuicideLogger_ : public ILogger {
+class FOutputDebugLogger_ : public ILogger {
 public:
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text) override final {
-        FBucketedWriter_::FScope log;
-        BeginWrite(log.Oss(), category, level, site);
-        log.Oss() << text;
-        EndWrite(log.Oss(), category, level, site);
-    }
-
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& buffer, size_t first, size_t last) override final {
-        FBucketedWriter_::FScope log;
-        BeginWrite(log.Oss(), category, level, site);
-        if (first < last) {
-            log.Oss().Write(buffer.SubRange(first, last - first));
-        }
-        else {
-            log.Oss().Write(buffer.CutStartingAt(first));
-            log.Oss().Write(buffer.CutBefore(last));
-        }
-        EndWrite(log.Oss(), category, level, site);
-    }
-
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) override final {
-        FBucketedWriter_::FScope log;
-        BeginWrite(log.Oss(), category, level, site);
-        FormatArgs(log.Oss(), format, args);
-        EndWrite(log.Oss(), category, level, site);
-    }
-
-    virtual void Close() override final {
-        Flush(true);
-        checked_delete(this);
-    }
-
-protected:
-    virtual void BeginWrite(FWFixedSizeTextWriter& oss, const FCategory& category, EVerbosity level, FSiteInfo site) {
-        LogHeader_(oss, category, level, site);
-    }
-    virtual void EndWrite(FWFixedSizeTextWriter& oss, const FCategory& category, EVerbosity level, FSiteInfo site) {
-        LogFooter_(oss, category, level, site);
-    }
-};
-//----------------------------------------------------------------------------
-class FOutputDebugLogger_ : public FAbstractSuicideLogger_ {
-public:
-    typedef FAbstractSuicideLogger_ parent_type;
-
-    virtual void Flush(bool) override final {}
-
-    virtual void EndWrite(FWFixedSizeTextWriter& oss, const FCategory& category, EVerbosity level, FSiteInfo site) override final {
-        parent_type::EndWrite(oss, category, level, site);
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        FWStringBuilder oss(text.size());
+        FLogFormat::Print(oss, category, level, site, text);
         oss << Eos;
         FPlatformMisc::OutputDebug(oss.Written().data());
     }
+
+    virtual void Flush(bool) override final {} // always synched
 };
 //----------------------------------------------------------------------------
-class FStdoutLogger_ : public FAbstractSuicideLogger_ {
+class FStdoutLogger_ : public ILogger {
 public:
-    typedef FAbstractSuicideLogger_ parent_type;
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        FWStringBuilder oss(text.size());
+        FLogFormat::Print(oss, category, level, site, text);
+        oss << Eol << Eos;
+        fputws(oss.Written().data(), stdout);
+    }
 
     virtual void Flush(bool) override final {
         fflush(stdout);
     }
-
-    virtual void EndWrite(FWFixedSizeTextWriter& oss, const FCategory& category, EVerbosity level, FSiteInfo site) override final {
-        parent_type::EndWrite(oss, category, level, site);
-        oss << Eos;
-        fputws(oss.Written().data(), stdout);
-    }
 };
 //----------------------------------------------------------------------------
-class FFunctorLogger_ : public FAbstractSuicideLogger_ {
+class FFunctorLogger_ : public ILogger {
 public:
-    typedef FAbstractSuicideLogger_ parent_type;
     typedef Meta::TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)> functor_type;
 
     FFunctorLogger_(functor_type&& func)
         : _func(std::move(func))
     {}
 
-    virtual void Flush(bool) override final {}
-
-protected:
-    virtual void BeginWrite(FWFixedSizeTextWriter& oss, const FCategory& category, EVerbosity level, FSiteInfo site) override final {}
-    virtual void EndWrite(FWFixedSizeTextWriter& oss, const FCategory& category, EVerbosity level, FSiteInfo site) override final {
-        parent_type::EndWrite(oss, category, level, site);
-        _func(category, level, site, oss.Written());
+public: // ILogger
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        _func(category, level, site, text);
     }
+
+    virtual void Flush(bool) override final {} // always synched
 
 private:
     functor_type _func;
 };
 //----------------------------------------------------------------------------
 #ifdef PLATFORM_WINDOWS
-class FConsoleWriterLogger_ : public FAbstractSuicideLogger_ {
+class FConsoleWriterLogger_ : public ILogger {
 public:
-    typedef FAbstractSuicideLogger_ parent_type;
-
     FConsoleWriterLogger_()
         : _hConsole(nullptr)
         , _textAttribute(::WORD(-1))
@@ -1059,11 +603,10 @@ public:
         }
     }
 
-    virtual void Flush(bool) override final {}
-
-protected:
-    virtual void EndWrite(FWFixedSizeTextWriter& oss, const FCategory& category, EVerbosity level, FSiteInfo site) override final {
-        parent_type::EndWrite(oss, category, level, site);
+public: // ILogger
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        FWStringBuilder oss(text.size());
+        FLogFormat::Print(oss, category, level, site, text);
 
         constexpr ::WORD fWhite = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
         constexpr ::WORD fYellow = FOREGROUND_RED | FOREGROUND_GREEN;
@@ -1106,6 +649,8 @@ protected:
         Verify(::WriteConsoleW(_hConsole, towrite.data(), written, &written, nullptr));
     }
 
+    virtual void Flush(bool) override final {}
+
 private:
     ::HANDLE _hConsole;
     ::WORD _textAttribute;
@@ -1122,40 +667,14 @@ public:
         , _buffered(_ostream.get())
     {}
 
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text) override final {
+public: // ILogger
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
         FWTextWriter oss(&_buffered);
-        LogHeader_(oss, category, level, site);
-        oss << text;
-        LogFooter_(oss, category, level, site);
-    }
-
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& buffer, size_t first, size_t last) override final {
-        FWTextWriter oss(&_buffered);
-        LogHeader_(oss, category, level, site);
-        if (first < last) {
-            oss.Write(buffer.SubRange(first, last - first));
-        }
-        else {
-            oss.Write(buffer.CutStartingAt(first));
-            oss.Write(buffer.CutBefore(last));
-        }
-        LogFooter_(oss, category, level, site);
-    }
-
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) override final {
-        FWTextWriter oss(&_buffered);
-        LogHeader_(oss, category, level, site);
-        FormatArgs(oss, format, args);
-        LogFooter_(oss, category, level, site);
+        FLogFormat::Print(oss, category, level, site, text);
     }
 
     virtual void Flush(bool) override final {
         _buffered.Flush();
-    }
-
-    virtual void Close() override final {
-        Flush(true);
-        checked_delete(this);
     }
 
 private:
@@ -1167,35 +686,35 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-ILogger* FLogger::Stdout() {
+PLogger FLogger::MakeStdout() {
 #ifdef PLATFORM_WINDOWS
-    return new FConsoleWriterLogger_;
+    return NEW_REF(Logger, FConsoleWriterLogger_);
 #else
-    return new FStdoutLogger_;
+    return NEW_REF(Logger, FStdoutLogger_);
 #endif
 }
 //----------------------------------------------------------------------------
-ILogger* FLogger::OutputDebug() {
-    return new FOutputDebugLogger_;
+PLogger FLogger::MakeOutputDebug() {
+    return NEW_REF(Logger, FOutputDebugLogger_);
 }
 //----------------------------------------------------------------------------
-ILogger* FLogger::AppendFile(const wchar_t* filename) {
+PLogger FLogger::MakeAppendFile(const wchar_t* filename) {
     const FFilename fname(MakeCStringView(filename));
-    UStreamWriter ostream = VFS_OpenWritable(fname, EAccessPolicy::Create|EAccessPolicy::Append|EAccessPolicy::Binary);
+    UStreamWriter ostream = VFS_OpenWritable(fname, EAccessPolicy::Create|EAccessPolicy::Append|EAccessPolicy::Binary|EAccessPolicy::ShareRead);
     AssertRelease(ostream);
-    return new FStreamLogger_(std::move(ostream));
+    return NEW_REF(Logger, FStreamLogger_)(std::move(ostream));
 }
 //----------------------------------------------------------------------------
-ILogger* FLogger::RollFile(const wchar_t* filename) {
+PLogger FLogger::MakeRollFile(const wchar_t* filename) {
     const FFilename fname(MakeCStringView(filename));
-    UStreamWriter ostream = VFS_RollFile(fname, EAccessPolicy::Create|EAccessPolicy::Truncate|EAccessPolicy::Binary);
+    UStreamWriter ostream = VFS_RollFile(fname, EAccessPolicy::Create|EAccessPolicy::Truncate|EAccessPolicy::Binary|EAccessPolicy::ShareRead);
     AssertRelease(ostream);
-    return new FStreamLogger_(std::move(ostream));
+    return NEW_REF(Logger, FStreamLogger_)(std::move(ostream));
 }
 //----------------------------------------------------------------------------
-ILogger* FLogger::Functor(Meta::TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write) {
+PLogger FLogger::MakeFunctor(Meta::TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write) {
     Assert(write);
-    return new FFunctorLogger_(std::move(write));
+    return NEW_REF(Logger, FFunctorLogger_)(std::move(write));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

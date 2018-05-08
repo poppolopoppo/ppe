@@ -2,47 +2,58 @@
 
 #include "Core/Core.h"
 
+#include "Core/Meta/Enum.h"
+
 #if !defined(FINAL_RELEASE) || USE_CORE_FORCE_LOGGING
 #   define USE_DEBUG_LOGGER
 #endif
+
+namespace Core {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+enum class ELoggerVerbosity {
+    Debug       = 1<<0,
+    Info        = 1<<1,
+    Emphasis    = 1<<2,
+    Warning     = 1<<3,
+    Error       = 1<<4,
+    Fatal       = 1<<5,
+
+    None        = 0,
+    NoDebug     = (Info|Emphasis|Warning|Error|Fatal),
+    NoDebugInfo = (Emphasis|Warning|Error|Fatal),
+#ifdef PROFILING_ENABLED
+    All         = NoDebugInfo
+#else
+    All         = (Debug|Info|Emphasis|Warning|Error|Fatal)
+#endif
+};
+ENUM_FLAGS(ELoggerVerbosity);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Core
 
 #ifdef USE_DEBUG_LOGGER
 
 #   include "Core/IO/Format.h"
 #   include "Core/IO/String_fwd.h"
 #   include "Core/IO/TextWriter.h"
-#   include "Core/Meta/Enum.h"
+#   include "Core/Memory/RefPtr.h"
 #   include "Core/Meta/Function.h"
 #   include "Core/Time/Timestamp.h"
 
 #   include <thread>
 
 namespace Core {
+FWD_INTERFACE_REFPTR(Logger);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class ILogger;
-//----------------------------------------------------------------------------
 class FLogger {
 public:
-    enum class EVerbosity {
-        Debug       = 1<<0,
-        Info        = 1<<1,
-        Emphasis    = 1<<2,
-        Warning     = 1<<3,
-        Error       = 1<<4,
-        Fatal       = 1<<5,
-
-        None        = 0,
-        NoDebug     = (Info|Emphasis|Warning|Error|Fatal),
-        NoDebugInfo = (Emphasis|Warning|Error|Fatal),
-#ifdef PROFILING_ENABLED
-        All         = NoDebugInfo
-#else
-        All         = (Debug|Info|Emphasis|Warning|Error|Fatal)
-#endif
-    };
-    ENUM_FLAGS_FRIEND(EVerbosity);
+    using EVerbosity = ELoggerVerbosity;
 
     struct FCategory {
         const wchar_t* Name;
@@ -60,11 +71,11 @@ public:
         }
     };
 
-    static CORE_API void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text);
-    static CORE_API void LogArgs(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args);
+    static CORE_API void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text);
+    static CORE_API void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args);
 
     template <typename _Arg0, typename... _Args>
-    static void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
+    static void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
         typedef details::TBasicFormatFunctor_<wchar_t> formatfunctor_t;
         const formatfunctor_t functors[] = {
             formatfunctor_t::Make(std::forward<_Arg0>(arg0)),
@@ -74,25 +85,24 @@ public:
         LogArgs(category, level, site, format, FWFormatArgList(functors));
     }
 
+    static CORE_API void Flush(bool synchronous = true);
+
 public:
     static CORE_API void Start();
     static CORE_API void Shutdown();
 
-    static CORE_API bool SetImmediate(bool immediate);
-    static CORE_API void Flush(bool synchronous = true);
-
-    static CORE_API void RegisterLogger(ILogger* logger);
-    static CORE_API void UnregisterLogger(ILogger* logger);
+    static CORE_API void RegisterLogger(const PLogger& logger);
+    static CORE_API void UnregisterLogger(const PLogger& logger);
 
 public:
-    static CORE_API ILogger* Stdout();
-    static CORE_API ILogger* OutputDebug();
-    static CORE_API ILogger* AppendFile(const wchar_t* filename);
-    static CORE_API ILogger* RollFile(const wchar_t* filename);
-    static CORE_API ILogger* Functor(Meta::TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write);
+    static CORE_API PLogger MakeStdout();
+    static CORE_API PLogger MakeOutputDebug();
+    static CORE_API PLogger MakeAppendFile(const wchar_t* filename);
+    static CORE_API PLogger MakeRollFile(const wchar_t* filename);
+    static CORE_API PLogger MakeFunctor(Meta::TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write);
 };
 //----------------------------------------------------------------------------
-class ILogger : public FLogger {
+class ILogger : FLogger, public FRefCountable {
 public:
     virtual ~ILogger() {}
 
@@ -100,12 +110,9 @@ public:
     using FLogger::FCategory;
     using FLogger::FSiteInfo;
 
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& text) = 0;
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& buffer, size_t first, size_t last) = 0;
-    virtual void Log(const FCategory& category, EVerbosity level, FSiteInfo site, const FWStringView& format, const FWFormatArgList& args) = 0;
+    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) = 0;
 
     virtual void Flush(bool synchronous) = 0;
-    virtual void Close() = 0;
 };
 //----------------------------------------------------------------------------
 CORE_API FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level);
@@ -131,20 +138,22 @@ CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level)
             __LINE__ ), \
         __VA_ARGS__ )
 
-#define CLOG(_CONDITION, _CATEGORY, _LEVEL, ...) \
-    (void)( (!(_CONDITION)) || (LOG(_CATEGORY, _LEVEL, __VA_ARGS__), 0) )
-
 #define FLUSH_LOG() \
     ::Core::FLogger::Flush()
 
 #else
 
+#   include "Core/Meta/Assert.h"
+
 #define LOG_CATEGORY_VERBOSITY(...)
 #define LOG_CATEGORY(...)
 #define EXTERN_LOG_CATEGORY(...)
-
-#define LOG(...) NOOP()
-#define CLOG(...) NOOP()
 #define FLUSH_LOG() NOOP()
 
+#define LOG(_CATEGORY, _LEVEL, ...) \
+    (void)( (!!(::Core::ELoggerVerbosity::Fatal != ::Core::ELoggerVerbosity::_LEVEL)) || (AssertReleaseFailed(L"log : fatal error"), 0) )
+
 #endif //!#ifdef USE_DEBUG_LOGGER
+
+#define CLOG(_CONDITION, _CATEGORY, _LEVEL, ...) \
+    (void)( (!(_CONDITION)) || (LOG(_CATEGORY, _LEVEL, __VA_ARGS__), 0) )
