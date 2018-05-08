@@ -5,17 +5,25 @@
 #include "Core/Memory/MemoryDomain.h"
 #include "Core/Memory/MemoryTracking.h"
 
+#if USE_CORE_MEMORYDOMAINS
+#   define LINEARHEAP(_DOMAIN) ::Core::TLinearHeap<MEMORYDOMAIN_TAG(_DOMAIN)>
+#else
+#   define LINEARHEAP(_DOMAIN) ::Core::FLinearHeap
+#endif
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class CORE_API FLinearHeap {
-public:
-#ifdef USE_MEMORY_DOMAINS
-    explicit FLinearHeap(FMemoryTracking* parent);
+#if USE_CORE_MEMORYDOMAINS
+protected:
+    explicit FLinearHeap(FMemoryTracking& parent);
 #else
+public:
     FLinearHeap();
 #endif
+public:
 
     ~FLinearHeap();
 
@@ -25,7 +33,9 @@ public:
     FLinearHeap(FLinearHeap&&) = delete;
     FLinearHeap& operator =(FLinearHeap&&) = delete;
 
-#ifdef USE_MEMORY_DOMAINS
+    u32 NumAllocs() const { return _numAllocs; }
+
+#if USE_CORE_MEMORYDOMAINS
     const FMemoryTracking& TrackingData() const { return _trackingData; }
 #endif
 
@@ -40,18 +50,34 @@ public:
 
     void ReleaseAll();
 
+    static const size_t MinBlockSize;
+    static const size_t MinBlockSizeForRecycling;
     static const size_t MaxBlockSize;
-    static void FlushVirtualMemoryCache();
+
     static constexpr size_t SnapSize(size_t sizeInBytes) { return ROUND_TO_NEXT_16(sizeInBytes); }
+    static constexpr size_t SnapSizeForRecycling(size_t sizeInBytes) { return Max(MinBlockSizeForRecycling, SnapSize(sizeInBytes)); }
+
+    static void FlushVirtualMemoryCache();
 
 private:
+    u32 _numAllocs;
     void* _blocks;
     void* _deleteds;
 
-#ifdef USE_MEMORY_DOMAINS
+    void FlushDeleteds_AssumeEmpty();
+
+#if USE_CORE_MEMORYDOMAINS
     FMemoryTracking _trackingData;
 #endif
 };
+//----------------------------------------------------------------------------
+#if USE_CORE_MEMORYDOMAINS
+template <typename _Domain>
+class TLinearHeap : public FLinearHeap {
+public:
+    TLinearHeap() : FLinearHeap(_Domain::TrackingData()) {}
+};
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
