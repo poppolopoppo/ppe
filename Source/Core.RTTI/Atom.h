@@ -79,6 +79,10 @@ public:
     bool PromoteCopy(const FAtom& dst) const { return _traits->PromoteCopy(_data, dst); }
     bool PromoteMove(const FAtom& dst) const { return _traits->PromoteMove(_data, dst); }
 
+    // /!\ slow, obviously
+    FString ToString() const;
+    FWString ToWString() const;
+
     hash_t HashValue() const { return _traits->HashValue(_data); }
 
     void Swap(FAtom& other) {
