@@ -401,7 +401,7 @@ bool TBaseDicoTraits<_Key, _Value>::PromoteMove(void* src, const FAtom& dst) con
     Assert(dst);
 
     if (*dst.Traits() == *this) {
-        Copy(src, dst.Data());
+        Move(src, dst.Data());
         return true;
     }
     else if (const IDicoTraits* const dstDico = dst.Traits()->AsDico()) {
