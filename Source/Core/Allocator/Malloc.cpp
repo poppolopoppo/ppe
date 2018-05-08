@@ -4,12 +4,8 @@
 #include "MallocBinned.h"
 #include "MallocStomp.h"
 
-#ifdef WITH_CORE_ASSERT
-#   include "Diagnostic/Callstack.h"
-#   include "Memory/MemoryView.h"
-#endif
-
 #include "Diagnostic/LeakDetector.h"
+#include "Memory/MemoryView.h"
 #include "Meta/Assert.h"
 
 // Lowest level to hook or replace default allocator
@@ -328,6 +324,8 @@ bool SetLeakDetectorWhiteListed(bool ignoreleaks) {
     const bool wasIgnoringLeaks = whitelistedTLS;
     whitelistedTLS = ignoreleaks;
     return wasIgnoringLeaks;
+#else
+    return false;
 #endif
 }
 #endif //!FINAL_RELEASE

@@ -83,7 +83,7 @@ void TStackAllocator<T>::deallocate(void* p, size_type n) {
     UNUSED(n);
     // TStackAllocator wraps Alloca().
     if (p)
-        FreeAlloca(p);
+        FreeAlloca(p, n * sizeof(T));
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -91,7 +91,7 @@ void* TStackAllocator<T>::relocate(void* p, size_type newSize, size_type oldSize
     UNUSED(oldSize);
 
     // TStackAllocator wraps Alloca()
-    void* const newp = RelocateAlloca(p, newSize * sizeof(T), true);
+    void* const newp = RelocateAlloca(p, newSize * sizeof(T), oldSize * sizeof(T), true);
     Assert(Meta::IsAligned(16, newp));
 
     if (nullptr == newp && newSize)

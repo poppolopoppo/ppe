@@ -33,25 +33,32 @@ namespace MemoryDomain {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if USE_CORE_MEMORYDOMAINS && !WITH_CORE_MEMORYDOMAINS_FULL_COLLAPSING
+#if !USE_CORE_MEMORYDOMAINS
 #   define MEMORYDOMAIN_IMPL(_Name, _Parent) \
+    namespace MemoryDomain { \
+        using MEMORYDOMAIN_NAME(_Name) = MEMORYDOMAIN_NAME(_Parent); \
+    }
+#else
+#   define MEMORYDOMAIN_GROUP_IMPL(_Name, _Parent) /* groups are not publicly visible */
+#   if WITH_CORE_MEMORYDOMAINS_COLLAPSING
+#       define MEMORYDOMAIN_COLLAPSABLE_IMPL(_Name, _Parent) \
+    namespace MemoryDomain { \
+        using MEMORYDOMAIN_NAME(_Name) = MEMORYDOMAIN_NAME(_Parent); \
+    }
+#   endif
+#   if !WITH_CORE_MEMORYDOMAINS_FULL_COLLAPSING
+#       define MEMORYDOMAIN_IMPL(_Name, _Parent) \
     namespace MemoryDomain { \
         struct MEMORYDOMAIN_NAME(_Name) { \
             static CORE_API FMemoryTracking& TrackingData(); \
         }; \
     }
-#else
-#   define MEMORYDOMAIN_IMPL(_Name, _Parent) \
+#   else
+#       define MEMORYDOMAIN_IMPL(_Name, _Parent) \
     namespace MemoryDomain { \
         using MEMORYDOMAIN_NAME(_Name) = MEMORYDOMAIN_NAME(_Parent); \
     }
-#endif
-#define MEMORYDOMAIN_GROUP_IMPL(_Name, _Parent) /* groups are not publicly visible */
-#if WITH_CORE_MEMORYDOMAINS_COLLAPSING
-#   define MEMORYDOMAIN_COLLAPSABLE_IMPL(_Name, _Parent) \
-    namespace MemoryDomain { \
-        using MEMORYDOMAIN_NAME(_Name) = MEMORYDOMAIN_NAME(_Parent); \
-    }
+#   endif
 #endif
 
 #include "Core/Memory/MemoryDomain.Definitions-inl.h"

@@ -43,7 +43,7 @@ public:
         _traits->Destroy(_data.Get());
 
         if (not UsingSysAlloca())
-            FreeAlloca(_data.Get());
+            FreeAlloca(_data.Get(), _traits->SizeInBytes());
     }
 
     FStackLocalAtom(const FStackLocalAtom& ) = delete;
