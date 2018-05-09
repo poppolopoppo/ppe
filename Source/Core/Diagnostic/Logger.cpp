@@ -81,7 +81,7 @@ class FLogAllocator : public Meta::TSingleton<FLogAllocator> {
 public:
     using singleton_type::Create;
     using singleton_type::Destroy;
-    using singleton_type::Instance;
+    using singleton_type::Get;
 
     struct FBucket : TLinearHeapAllocator<u8> {
         std::recursive_mutex Barrier;
@@ -100,11 +100,11 @@ public:
 
         FLinearHeap& Heap() const { return Bucket.Heap; }
 
-        FScope() : FScope(Instance()) {}
+        FScope() : FScope(Get()) {}
 
         explicit FScope(size_t index)
             : Index(index)
-            , Bucket(Instance().OpenBucket_(Index))
+            , Bucket(Get().OpenBucket_(Index))
             , Lock(Bucket.Barrier)
         {}
 
@@ -144,7 +144,7 @@ class FUserLogger : Meta::TSingleton<FUserLogger>, public ILowLevelLogger {
 public:
     using singleton_type::Create;
     using singleton_type::Destroy;
-    using singleton_type::Instance;
+    using singleton_type::Get;
 
     void Add(const PLogger& logger) {
         Assert(logger);
@@ -201,7 +201,7 @@ class FBackgroundLogger : Meta::TSingleton<FBackgroundLogger>, public ILowLevelL
 public:
     using singleton_type::Create;
     using singleton_type::Destroy;
-    using singleton_type::Instance;
+    using singleton_type::Get;
 
 public: // ILowLevelLogger
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
@@ -266,11 +266,11 @@ private:
     FUserLogger* const _userLogger;
 
     FBackgroundLogger()
-        : _userLogger(&FUserLogger::Instance())
+        : _userLogger(&FUserLogger::Get())
     {}
 
     static FTaskManager& TaskManager_() {
-        return FBackgroundThreadPool::Instance();
+        return FBackgroundThreadPool::Get();
     }
 
     class ALIGN(16) FDeferredLog : public TLinearHeapAllocator<u8> {
@@ -366,7 +366,7 @@ public:
 // Used before & after main when no debugger is attached, ignores everything
 class FDevNullLogger : public ILowLevelLogger {
 public:
-    static ILowLevelLogger* Instance() {
+    static ILowLevelLogger* Get() {
         ONE_TIME_DEFAULT_INITIALIZE(FDevNullLogger, GInstance);
         return (&GInstance);
     }
@@ -380,7 +380,7 @@ public: // ILowLevelLogger
 // Used before & after main when debugger attached, no dependencies on allocators, always immediate
 class FDebuggingLogger : public ILowLevelLogger {
 public:
-    static ILowLevelLogger* Instance() {
+    static ILowLevelLogger* Get() {
         ONE_TIME_DEFAULT_INITIALIZE(FDebuggingLogger, GInstance);
         return (&GInstance);
     }
@@ -421,8 +421,8 @@ public: // ILowLevelLogger
 //----------------------------------------------------------------------------
 static ILowLevelLogger* LowLevelLogger_() {
     return (FPlatformMisc::IsDebuggerAttached()
-        ? FDebuggingLogger::Instance()
-        : FDevNullLogger::Instance() );
+        ? FDebuggingLogger::Get()
+        : FDevNullLogger::Get() );
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void SetupLowLevelLoggerImpl_() {
@@ -468,18 +468,18 @@ void FLogger::Start() {
     FUserLogger::Create();
 
     RegisterLogger(
-        FCurrentProcess::Instance().StartedWithDebugger()
+        FCurrentProcess::Get().StartedWithDebugger()
             ? FLogger::MakeOutputDebug()
             : FLogger::MakeStdout() );
 
     RegisterLogger(FLogger::MakeRollFile(L"Saved:/Log/Core.log"));
 
     IF_CONSTEXPR(USE_CORE_MEMORY_DEBUGGING) {
-        SetupLoggerImpl_(&FUserLogger::Instance());
+        SetupLoggerImpl_(&FUserLogger::Get());
     }
     else {
         FBackgroundLogger::Create();
-        SetupLoggerImpl_(&FBackgroundLogger::Instance());
+        SetupLoggerImpl_(&FBackgroundLogger::Get());
     }
 }
 //----------------------------------------------------------------------------
@@ -500,11 +500,11 @@ void FLogger::Flush(bool synchronous/* = true */) {
 }
 //----------------------------------------------------------------------------
 void FLogger::RegisterLogger(const PLogger& logger) {
-    FUserLogger::Instance().Add(logger);
+    FUserLogger::Get().Add(logger);
 }
 //----------------------------------------------------------------------------
 void FLogger::UnregisterLogger(const PLogger& logger) {
-    FUserLogger::Instance().Remove(logger);
+    FUserLogger::Get().Remove(logger);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -25,7 +25,7 @@ public:
 #ifdef WITH_CORE_ASSERT
     using Meta::TSingleton<FMetaDatabase>::HasInstance;
 #endif
-    using Meta::TSingleton<FMetaDatabase>::Instance;
+    using Meta::TSingleton<FMetaDatabase>::Get;
 
     static void Create() { Meta::TSingleton<FMetaDatabase>::Create(); }
     using Meta::TSingleton<FMetaDatabase>::Destroy;
@@ -80,7 +80,7 @@ private:
 };
 //----------------------------------------------------------------------------
 inline FMetaDatabase& MetaDB() {
-    return FMetaDatabase::Instance();
+    return FMetaDatabase::Get();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

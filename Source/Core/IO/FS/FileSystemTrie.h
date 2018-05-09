@@ -80,7 +80,7 @@ class FFileSystemPath : Meta::TSingleton<FFileSystemTrie, FFileSystemPath> {
 public:
     typedef Meta::TSingleton<FFileSystemTrie, FFileSystemPath> parent_type;
 
-    using parent_type::Instance;
+    using parent_type::Get;
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
 #endif

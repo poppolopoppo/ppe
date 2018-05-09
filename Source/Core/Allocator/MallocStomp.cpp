@@ -174,7 +174,7 @@ static void StompVMFree_(void* ptr, size_t sizeInBytes) {
 #if CORE_MALLOCSTOMP_DELAY_DELETES
 class FStompDelayedDeletes_ {
 public:
-    static FStompDelayedDeletes_& Instance() {
+    static FStompDelayedDeletes_& Get() {
         static FStompDelayedDeletes_ GInstance;
         return GInstance;
     }
@@ -283,7 +283,7 @@ private:
         StompVMFree_(toDelete.Ptr, toDelete.SizeInBytes);
     }
 };
-FStompDelayedDeletes_& FStompDelayedDeletes_::GInstance = FStompDelayedDeletes_::Instance();
+FStompDelayedDeletes_& FStompDelayedDeletes_::GInstance = FStompDelayedDeletes_::Get();
 #endif //!CORE_MALLOCSTOMP_DELAY_DELETES
 //----------------------------------------------------------------------------
 } //!namespace

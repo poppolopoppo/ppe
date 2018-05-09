@@ -80,7 +80,7 @@ static void GamepadRumble_(const FGamepadState* pGamepad, ITaskContext& ctx) {
     vibration.wRightMotorSpeed = Float01_to_UShort065535(pGamepad->RightRumble());
 
     const ::DWORD dwUserIndex = checked_cast<::DWORD>(pGamepad->Index());
-    FXInputWrapper::Instance().Lock().XInputSetState()(dwUserIndex, &vibration);
+    FXInputWrapper::Get().Lock().XInputSetState()(dwUserIndex, &vibration);
 }
 #endif
 //----------------------------------------------------------------------------
@@ -113,7 +113,7 @@ void FGamepadInputHandler::UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) {
     UNUSED(wnd);
 
 #ifdef PLATFORM_WINDOWS
-    FXInputWrapper::FLocked& XInputWrapper = FXInputWrapper::Instance().Lock();
+    FXInputWrapper::FLocked& XInputWrapper = FXInputWrapper::Get().Lock();
 #endif
 
     int gamepadIndex = 0;
@@ -207,7 +207,7 @@ void FGamepadInputHandler::UpdateAfterDispatch(Graphics::FBasicWindow *wnd) {
 }
 //----------------------------------------------------------------------------
 void FGamepadInputHandler::Rumble(size_t index, float left, float right) {
-    if (FXInputWrapper::Instance().Available()) {
+    if (FXInputWrapper::Get().Available()) {
         FGamepadState& gamepad = _state.Gamepads()[index];
         Assert(gamepad.IsConnected());
 

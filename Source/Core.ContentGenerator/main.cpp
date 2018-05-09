@@ -46,7 +46,7 @@ static int Bootstrap(void *appHandle, int nShowCmd, const wchar_t* filename, int
     const Application::FApplicationModule moduleApplication;
 
 #if defined(PLATFORM_WINDOWS) && CORE_RESOURCES
-    FCurrentProcess::Instance().SetAppIcon(IDI_WINDOW_ICON);
+    FCurrentProcess::Get().SetAppIcon(IDI_WINDOW_ICON);
 #endif
 
     _Application app;

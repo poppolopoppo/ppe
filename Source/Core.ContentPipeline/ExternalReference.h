@@ -48,7 +48,7 @@ struct TMetaTypeTraitsImpl< Core::ContentPipeline::TExternalReference<_Asset> > 
     typedef TMetaType< wrapper_type > meta_type;
 
     static const TMetaTypeScalarTraits< wrapper_type > *VirtualTraits() {
-        return TMetaTypeScalarTraits< wrapper_type >::Instance();
+        return TMetaTypeScalarTraits< wrapper_type >::Get();
     }
 
     static bool IsDefaultValue(const wrapped_type& value) {

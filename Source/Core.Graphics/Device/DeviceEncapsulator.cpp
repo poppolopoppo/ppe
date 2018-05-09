@@ -50,7 +50,7 @@ IDeviceAPIContext* IDeviceAPIEncapsulator::Immediate() const {
 FDeviceEncapsulator::FDeviceEncapsulator()
 :   _status(EDeviceStatus::Invalid)
 ,   _revision(InvalidDeviceRevision())
-,   _videoMemory("FDeviceEncapsulator", &FGlobalVideoMemory::Instance()) {}
+,   _videoMemory("FDeviceEncapsulator", &FGlobalVideoMemory::Get()) {}
 //----------------------------------------------------------------------------
 FDeviceEncapsulator::~FDeviceEncapsulator() {
     Assert(EDeviceStatus::Invalid == _status);

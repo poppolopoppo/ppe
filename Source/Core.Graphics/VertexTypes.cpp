@@ -58,9 +58,9 @@ public:
         parent_type::Create();
     }
 
-    static wstring_to_vdecl_type& Instance() {
+    static wstring_to_vdecl_type& Get() {
         AssertIsMainThread();
-        return parent_type::Instance();
+        return parent_type::Get();
     }
 
     static void Destroy() {
@@ -302,7 +302,7 @@ void RegisterVertexType(FWString&& name, const FVertexDeclaration* vdecl) {
     Assert(vdecl->Frozen());
 
     PCVertexDeclaration pcvdecl(vdecl);
-    FVertexDeclarationDico_::Instance().emplace_AssertUnique(std::move(name), std::move(pcvdecl));
+    FVertexDeclarationDico_::Get().emplace_AssertUnique(std::move(name), std::move(pcvdecl));
 }
 //----------------------------------------------------------------------------
 void UnregisterVertexType(const FVertexDeclaration* vdecl) {
@@ -310,7 +310,7 @@ void UnregisterVertexType(const FVertexDeclaration* vdecl) {
     Assert(vdecl->Frozen());
     Assert_NoAssume(vdecl->ResourceName() == VertexTypeName_(vdecl));
 
-    auto& vertexDico = FVertexDeclarationDico_::Instance();
+    auto& vertexDico = FVertexDeclarationDico_::Get();
 
     auto erase_it = vertexDico.end();
     for (auto it = vertexDico.begin(); it != vertexDico.end(); ++it) {
@@ -327,7 +327,7 @@ void UnregisterVertexType(const FVertexDeclaration* vdecl) {
 const FVertexDeclaration* VertexTypeByName(const FWStringView& name) {
     PCVertexDeclaration vdecl;
     TBasicStringHashMemoizer<wchar_t, ECase::Sensitive> key(ToWString(name));
-    TryGetValue(FVertexDeclarationDico_::Instance(), key, &vdecl);
+    TryGetValue(FVertexDeclarationDico_::Get(), key, &vdecl);
     return vdecl.get();
 }
 //----------------------------------------------------------------------------

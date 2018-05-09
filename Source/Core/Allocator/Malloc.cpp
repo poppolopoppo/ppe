@@ -162,7 +162,7 @@ struct FMallocLeakDetectorFacet {
 
     }
     static void TestBlock(void* ptr) {
-        FLeakDetector::Instance().Release(ptr);
+        FLeakDetector::Get().Release(ptr);
     }
 };
 } //!namespace
@@ -227,7 +227,7 @@ private:
         if (nullptr == ptr) return nullptr;
         Assert(Meta::IsAligned(alignment, ptr));
 #   if CORE_MALLOC_LEAKDETECTOR_PROXY
-        FLeakDetector::Instance().Allocate(ptr, sizeInBytes);
+        FLeakDetector::Get().Allocate(ptr, sizeInBytes);
 #   endif
 #   if CORE_MALLOC_HISTOGRAM_PROXY
         FMallocHistogram::Allocate(ptr, sizeInBytes);
@@ -240,7 +240,7 @@ private:
         Assert(Meta::IsAligned(alignment, ptr));
         if (nullptr == ptr) return nullptr;
 #   if CORE_MALLOC_LEAKDETECTOR_PROXY
-        FLeakDetector::Instance().Release(ptr);
+        FLeakDetector::Get().Release(ptr);
 #   endif
         return ptr;
     }
@@ -304,7 +304,7 @@ size_t  (malloc_snap_size)(size_t size) {
 #ifndef FINAL_RELEASE
 void StartLeakDetector() {
 #if CORE_MALLOC_LEAKDETECTOR_PROXY
-    FLeakDetector::Instance().Start();
+    FLeakDetector::Get().Start();
 #endif
 }
 #endif //!FINAL_RELEASE
@@ -312,7 +312,7 @@ void StartLeakDetector() {
 #ifndef FINAL_RELEASE
 void ShutdownLeakDetector() {
 #if CORE_MALLOC_LEAKDETECTOR_PROXY
-    FLeakDetector::Instance().Shutdown();
+    FLeakDetector::Get().Shutdown();
 #endif
 }
 #endif //!FINAL_RELEASE
@@ -333,7 +333,7 @@ bool SetLeakDetectorWhiteListed(bool ignoreleaks) {
 #ifndef FINAL_RELEASE
 void DumpMemoryLeaks(bool onlyNonDeleters/* = false */) {
 #if CORE_MALLOC_LEAKDETECTOR_PROXY
-    auto& leakDetector = FLeakDetector::Instance();
+    auto& leakDetector = FLeakDetector::Get();
     leakDetector.ReportLeaks(onlyNonDeleters);
 #endif
 }

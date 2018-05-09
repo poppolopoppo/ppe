@@ -14,7 +14,7 @@ class FGlobalVideoMemory : Meta::TSingleton<FMemoryTracking, FGlobalVideoMemory>
 public:
     typedef Meta::TSingleton<FMemoryTracking, FGlobalVideoMemory> parent_type;
 
-    using parent_type::Instance;
+    using parent_type::Get;
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
 #endif

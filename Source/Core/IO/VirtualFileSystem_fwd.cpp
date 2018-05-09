@@ -18,7 +18,7 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVirtualFileSystemTrie& VFS() {
-    return FVirtualFileSystem::Instance();
+    return FVirtualFileSystem::Get();
 }
 //----------------------------------------------------------------------------
 bool VFS_DirectoryExists(const FDirpath& dirpath, EExistPolicy policy/* = ExistPolicy::Exists */) {

@@ -140,7 +140,7 @@ public:
         ~FWhiteListScope() { WhiteListedTLS() = WasWhiteListed; }
     };
 
-    static FLeakDetector& Instance() {
+    static FLeakDetector& Get() {
         ONE_TIME_DEFAULT_INITIALIZE(FLeakDetector, GInstance);
         return GInstance;
     }

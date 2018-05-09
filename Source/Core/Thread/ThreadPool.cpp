@@ -67,16 +67,16 @@ static constexpr size_t BackgroundWorkerThreadAffinities[] = {
 void FGlobalThreadPool::Create() {
     const size_t count = GlobalWorkerCount_();
     parent_type::Create("GlobalThreadPool", CORE_THREADTAG_WORKER, count, EThreadPriority::Normal);
-    parent_type::Instance().Start(MakeView(GlobalWorkerThreadAffinities).CutBefore(count));
+    parent_type::Get().Start(MakeView(GlobalWorkerThreadAffinities).CutBefore(count));
 }
 //----------------------------------------------------------------------------
 void FGlobalThreadPool::Destroy() {
-    parent_type::Instance().Shutdown();
+    parent_type::Get().Shutdown();
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
 void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    FGlobalThreadPool::Instance().Run(std::move(rtask), priority);
+    FGlobalThreadPool::Get().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -85,16 +85,16 @@ void FIOThreadPool::Create() {
     // IO should be operated in 2 threads max to prevent slow seeks :
     const size_t count = IOWorkerCount_();
     parent_type::Create("IOThreadPool", CORE_THREADTAG_IO, count, EThreadPriority::Highest);
-    parent_type::Instance().Start(MakeView(IOWorkerThreadAffinities).CutBefore(count));
+    parent_type::Get().Start(MakeView(IOWorkerThreadAffinities).CutBefore(count));
 }
 //----------------------------------------------------------------------------
 void FIOThreadPool::Destroy() {
-    parent_type::Instance().Shutdown();
+    parent_type::Get().Shutdown();
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
 void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    FIOThreadPool::Instance().Run(std::move(rtask), priority);
+    FIOThreadPool::Get().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -107,16 +107,16 @@ void FHighPriorityThreadPool::Create() {
     forrange(i, 0, count)
         affinities[i] = (size_t(1) << i);
 
-    parent_type::Instance().Start(affinities);
+    parent_type::Get().Start(affinities);
 }
 //----------------------------------------------------------------------------
 void FHighPriorityThreadPool::Destroy() {
-    parent_type::Instance().Shutdown();
+    parent_type::Get().Shutdown();
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
 void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    FHighPriorityThreadPool::Instance().Run(std::move(rtask), priority);
+    FHighPriorityThreadPool::Get().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -124,16 +124,16 @@ void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPrior
 void FBackgroundThreadPool::Create() {
     const size_t count = BackgroundWorkerCount_();
     parent_type::Create("BackgroundThreadPool", CORE_THREADTAG_BACKGROUND, count, EThreadPriority::BelowNormal);
-    parent_type::Instance().Start(MakeView(BackgroundWorkerThreadAffinities).CutBefore(count));
+    parent_type::Get().Start(MakeView(BackgroundWorkerThreadAffinities).CutBefore(count));
 }
 //----------------------------------------------------------------------------
 void FBackgroundThreadPool::Destroy() {
-    parent_type::Instance().Shutdown();
+    parent_type::Get().Shutdown();
     parent_type::Destroy();
 }
 //----------------------------------------------------------------------------
 void AsyncBackround(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    FBackgroundThreadPool::Instance().Run(std::move(rtask), priority);
+    FBackgroundThreadPool::Get().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

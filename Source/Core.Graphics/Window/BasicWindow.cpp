@@ -57,7 +57,7 @@ static LRESULT CALLBACK BasicWindowProc_(HWND handle, UINT msg, WPARAM wparam, L
         ::SetWindowLongPtr(handle, GWLP_USERDATA, checked_cast<LONG_PTR>(wnd));
         FBasicWindowHelper::SetWindowHandle(wnd, handle);
 
-        const size_t appIcon = FCurrentProcess::Instance().AppIcon();
+        const size_t appIcon = FCurrentProcess::Get().AppIcon();
         if (appIcon) { // set window icon from current process resources
             HMODULE module = ::GetModuleHandle(0);
 
@@ -116,7 +116,7 @@ static void CreateBasicWindowClass_() {
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = BasicWindowProc_;
-    wc.hInstance = reinterpret_cast<HINSTANCE>(FCurrentProcess::Instance().ApplicationHandle());
+    wc.hInstance = reinterpret_cast<HINSTANCE>(FCurrentProcess::Get().ApplicationHandle());
     wc.hCursor = ::LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
     wc.lpszClassName = BASICWINDOW_CLASNAME;
@@ -126,7 +126,7 @@ static void CreateBasicWindowClass_() {
 }
 //----------------------------------------------------------------------------
 static void DestroyBasicWindowClass_() {
-    if (!UnregisterClass(BASICWINDOW_CLASNAME, reinterpret_cast<HINSTANCE>(FCurrentProcess::Instance().ApplicationHandle())))
+    if (!UnregisterClass(BASICWINDOW_CLASNAME, reinterpret_cast<HINSTANCE>(FCurrentProcess::Get().ApplicationHandle())))
         CORE_THROW_IT(FLastErrorException());
 }
 //----------------------------------------------------------------------------
@@ -156,7 +156,7 @@ static HWND CreateBasicWindowHandle_(
         size.bottom - size.top,
         reinterpret_cast<HWND>((parent) ? parent->Handle() : NULL),
         NULL,
-        reinterpret_cast<HINSTANCE>(FCurrentProcess::Instance().ApplicationHandle()),
+        reinterpret_cast<HINSTANCE>(FCurrentProcess::Get().ApplicationHandle()),
         checked_cast<LPVOID>(wnd));
 
     if (!handle)
@@ -260,7 +260,7 @@ void FBasicWindow::Show() {
 
     LOG(Info, L"[Window] Show window {0}", _handle);
 
-    ::ShowWindow(reinterpret_cast<HWND>(_handle), FCurrentProcess::Instance().nShowCmd());
+    ::ShowWindow(reinterpret_cast<HWND>(_handle), FCurrentProcess::Get().nShowCmd());
 }
 //----------------------------------------------------------------------------
 void FBasicWindow::Close() {

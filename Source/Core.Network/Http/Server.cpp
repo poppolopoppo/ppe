@@ -137,12 +137,12 @@ static void HttpServicingThreadLaunchPad_(FHttpServer* owner) {
     FHttpServerImpl server(owner);
     for (; not server.Serve_ReturnIfQuit(acceptTimeout); );
 
-    FIOThreadPool::Instance().WaitForAll(); // wait for eventual pending tasks before leaving
+    FIOThreadPool::Get().WaitForAll(); // wait for eventual pending tasks before leaving
 }
 //----------------------------------------------------------------------------
 static void HttpServicingHandleConnection_(const FHttpServerImpl* server, FSocketBuffered&& socket) {
     FSocketBuffered* psocket = new FSocketBuffered(std::move(socket));
-    FIOThreadPool::Instance().Run([server, psocket](ITaskContext& ctx) {
+    FIOThreadPool::Get().Run([server, psocket](ITaskContext& ctx) {
         HttpServicingTask_(ctx, server, *psocket);
         psocket->Disconnect(true);
         checked_delete(psocket);

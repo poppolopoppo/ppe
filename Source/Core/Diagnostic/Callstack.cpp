@@ -207,10 +207,10 @@ bool FCallstack::Decode(FDecodedCallstack* decoded) const {
 bool FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryView<void* const>& frames) {
     Assert(decoded);
 
-    if (not FDbghelpWrapper::Instance().Available())
+    if (not FDbghelpWrapper::Get().Available())
         return false;
 
-    const FDbghelpWrapper::FLocked dbghelp(FDbghelpWrapper::Instance());
+    const FDbghelpWrapper::FLocked dbghelp(FDbghelpWrapper::Get());
 
     LoadModules_(dbghelp);
 
@@ -319,7 +319,7 @@ void FCallstack::SetFrames(const TMemoryView<void* const>& frames) {
 }
 //----------------------------------------------------------------------------
 void FCallstack::Start() {
-    const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
+    const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Get();
     if (dbghelp.Available()) {
         const FDbghelpWrapper::FLocked threadSafe(dbghelp);
         InitializeSymbols_(threadSafe);
@@ -327,7 +327,7 @@ void FCallstack::Start() {
 }
 //----------------------------------------------------------------------------
 void FCallstack::ReloadSymbols() {
-    const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
+    const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Get();
     if (dbghelp.Available()) {
         const FDbghelpWrapper::FLocked threadSafe(dbghelp);
         LoadModules_(threadSafe);
@@ -335,7 +335,7 @@ void FCallstack::ReloadSymbols() {
 }
 //----------------------------------------------------------------------------
 void FCallstack::Shutdown() {
-    const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Instance();
+    const FDbghelpWrapper& dbghelp = FDbghelpWrapper::Get();
     if (dbghelp.Available()) {
         const FDbghelpWrapper::FLocked threadSafe(dbghelp);
         HANDLE hProcess = ::GetCurrentProcess();

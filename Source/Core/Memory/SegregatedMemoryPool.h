@@ -98,7 +98,7 @@ public:
     using memorypool_type::Deallocate;
     using memorypool_type::Clear_UnusedMemory;
 
-    using singleton_type::Instance;
+    using singleton_type::Get;
 
 #ifdef WITH_CORE_POOL_ALLOCATOR_TRACKING
 private:
@@ -141,18 +141,18 @@ public:
         TSegregatedMemoryPool<_Tag, BlockSize, FMemoryPoolThreadSafe, Meta::TAutoSingleton >
     >::type     segregatedpool_type;
 
-    FORCE_INLINE static void* Allocate() { return segregatedpool_type::Instance().Allocate(TrackingData()); }
-    FORCE_INLINE static void Deallocate(void* ptr) { segregatedpool_type::Instance().Deallocate(ptr, TrackingData()); }
-    FORCE_INLINE static void Clear_UnusedMemory() { segregatedpool_type::Instance().Clear_UnusedMemory(); }
+    FORCE_INLINE static void* Allocate() { return segregatedpool_type::Get().Allocate(TrackingData()); }
+    FORCE_INLINE static void Deallocate(void* ptr) { segregatedpool_type::Get().Deallocate(ptr, TrackingData()); }
+    FORCE_INLINE static void Clear_UnusedMemory() { segregatedpool_type::Get().Clear_UnusedMemory(); }
 
 #if defined(WITH_CORE_POOL_ALLOCATOR_TRACKING_DETAILS)
     static FMemoryTracking* TrackingData() {
         ONE_TIME_INITIALIZE_TPL(TPoolTracking<T COMMA _ThreadLocal>, sPoolTracking,
-            typeid(T).name(), segregatedpool_type::Instance().TrackingData());
+            typeid(T).name(), segregatedpool_type::Get().TrackingData());
         return &sPoolTracking.TrackingData;
     }
 #elif defined(WITH_CORE_POOL_ALLOCATOR_TRACKING)
-    static FMemoryTracking* TrackingData() { return segregatedpool_type::Instance().TrackingData(); }
+    static FMemoryTracking* TrackingData() { return segregatedpool_type::Get().TrackingData(); }
 #else
     static constexpr FMemoryTracking* TrackingData() { return nullptr; }
 #endif

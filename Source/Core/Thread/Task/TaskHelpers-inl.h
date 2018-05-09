@@ -78,7 +78,7 @@ void ParallelFor(
 
     // fall back to global thread pool by default
     if (!manager)
-        manager = &FHighPriorityThreadPool::Instance();
+        manager = &FHighPriorityThreadPool::Get();
 
     // less space needed to pass arguments to Meta::TFunction<>
     const struct loop_t_ {

@@ -147,7 +147,7 @@ namespace details {
 template <typename T>
 static const FMetaClass* MetaClass_(std::false_type) { return nullptr; }
 template <typename T>
-static const FMetaClass* MetaClass_(std::true_type) { return TMetaClass<T>::Instance(); }
+static const FMetaClass* MetaClass_(std::true_type) { return TMetaClass<T>::Get(); }
 } //!details
 template <typename T>
 const FMetaClass* MetaClass() {
@@ -194,7 +194,7 @@ public:
         return details::CreateMetaObject_<T>(dst, resetToDefaultValue, typename std::is_default_constructible<T>::type{});
     }
 
-    static const FMetaClass* Instance() {
+    static const FMetaClass* Get() {
         Assert(GMetaClassHandle.Class());
         return GMetaClassHandle.Class();
     }

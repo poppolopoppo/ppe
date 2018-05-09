@@ -32,7 +32,7 @@ public:
     using singleton_type::Destroy;
 
     static void Create() { singleton_type::Create(); }
-    static const FSymbols& Instance() { return singleton_type::Instance(); }
+    static const FSymbols& Get() { return singleton_type::Get(); }
 
     const hashmap_type& All() const { THIS_THREADRESOURCE_CHECKACCESS(); return _symbols; }
 

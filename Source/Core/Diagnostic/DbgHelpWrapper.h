@@ -107,7 +107,7 @@ public:
 #ifdef WITH_CORE_ASSERT
     using Meta::TSingleton<FDbghelpWrapper>::HasInstance;
 #endif
-    using Meta::TSingleton<FDbghelpWrapper>::Instance;
+    using Meta::TSingleton<FDbghelpWrapper>::Get;
 
     static void Create() { Meta::TSingleton<FDbghelpWrapper>::Create(); }
     using Meta::TSingleton<FDbghelpWrapper>::Destroy;

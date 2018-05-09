@@ -89,7 +89,7 @@ bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TMemoryView<c
 
     policy = policy + EAccessPolicy::Sequential; // we're going to make only 1 write, full sequential
 
-    const UStreamWriter writer = Instance().OpenWritable(filename, policy);
+    const UStreamWriter writer = Get().OpenWritable(filename, policy);
 
     if (writer) {
         if (needCompress) {
@@ -115,11 +115,11 @@ bool FVirtualFileSystem::Copy(const FFilename& dst, const FFilename& src, EAcces
     if (src == dst)
         return true;
 
-    const UStreamReader reader = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate);
+    const UStreamReader reader = Get().OpenReadable(src, policy - EAccessPolicy::Truncate);
     if (not reader)
         return false;
 
-    const UStreamWriter writer = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate);
+    const UStreamWriter writer = Get().OpenWritable(dst, policy + EAccessPolicy::Truncate);
     if (not writer)
         return false;
 
@@ -144,7 +144,7 @@ bool FVirtualFileSystem::Compress(const FFilename& dst, const FFilename& src, EA
     size_t compressedSizeInBytes = 0;
     RAWSTORAGE(Compress, u8) data;
     {
-        const UStreamReader reader = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate);
+        const UStreamReader reader = Get().OpenReadable(src, policy - EAccessPolicy::Truncate);
         if (not reader)
             return false;
 
@@ -157,7 +157,7 @@ bool FVirtualFileSystem::Compress(const FFilename& dst, const FFilename& src, EA
         swap(data, compressed);
     }
     {
-        const UStreamWriter writer = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate + EAccessPolicy::Binary);
+        const UStreamWriter writer = Get().OpenWritable(dst, policy + EAccessPolicy::Truncate + EAccessPolicy::Binary);
         if (not writer)
             return false;
 
@@ -177,7 +177,7 @@ bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, 
 
     RAWSTORAGE(Compress, u8) data;
     {
-        const UStreamReader reader = Instance().OpenReadable(src, policy - EAccessPolicy::Truncate + EAccessPolicy::Binary);
+        const UStreamReader reader = Get().OpenReadable(src, policy - EAccessPolicy::Truncate + EAccessPolicy::Binary);
         if (not reader)
             return false;
 
@@ -191,7 +191,7 @@ bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, 
         swap(data, uncompressed);
     }
     {
-        const UStreamWriter writer = Instance().OpenWritable(dst, policy + EAccessPolicy::Truncate);
+        const UStreamWriter writer = Get().OpenWritable(dst, policy + EAccessPolicy::Truncate);
         if (not writer)
             return false;
 
@@ -207,10 +207,10 @@ bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, 
 void FVirtualFileSystemStartup::Start() {
     POOL_TAG(VirtualFileSystem)::Start();
     FVirtualFileSystem::Create();
-    auto& VFS = FVirtualFileSystem::Instance();
+    auto& VFS = FVirtualFileSystem::Get();
     // current process executable directory
     {
-        VFS.MountNativePath(L"Process:/", FCurrentProcess::Instance().Directory());
+        VFS.MountNativePath(L"Process:/", FCurrentProcess::Get().Directory());
     }
     // current process working directory
     {
@@ -223,13 +223,13 @@ void FVirtualFileSystemStartup::Start() {
     // data directory
     {
         FWString path;
-        Format(path, L"{0}/../../Data", FCurrentProcess::Instance().Directory());
+        Format(path, L"{0}/../../Data", FCurrentProcess::Get().Directory());
         VFS.MountNativePath(MakeStringView(L"Data:/"), std::move(path));
     }
     // saved directory
     {
         FWString path;
-        Format(path, L"{0}/../../Output/Saved", FCurrentProcess::Instance().Directory());
+        Format(path, L"{0}/../../Output/Saved", FCurrentProcess::Get().Directory());
         VFS.MountNativePath(MakeStringView(L"Saved:/"), std::move(path));
     }
     // system temporary path
@@ -273,7 +273,7 @@ void FVirtualFileSystemStartup::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FVirtualFileSystemStartup::Clear() {
-    FVirtualFileSystem::Instance().Clear();
+    FVirtualFileSystem::Get().Clear();
     POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

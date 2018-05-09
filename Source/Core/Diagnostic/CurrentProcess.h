@@ -34,7 +34,7 @@ public:
 
     const FTimepoint& StartedAt() const { return _startedAt; }
 
-    using parent_type::Instance;
+    using parent_type::Get;
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
 #endif
@@ -45,7 +45,7 @@ public:
     }
 
     static FSeconds ElapsedSeconds() {
-        return FSeconds(FTimepoint::ElapsedSince(Instance().StartedAt()));
+        return FSeconds(FTimepoint::ElapsedSince(Get().StartedAt()));
     }
 
 private:
@@ -68,7 +68,7 @@ private:
 };
 //----------------------------------------------------------------------------
 inline const FCurrentProcess& CurrentProcess() {
-    return FCurrentProcess::Instance();
+    return FCurrentProcess::Get();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

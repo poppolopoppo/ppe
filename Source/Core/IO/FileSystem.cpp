@@ -28,7 +28,7 @@ void FFileSystemStartup::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FFileSystemStartup::Clear() {
-    FFileSystemPath::Instance().Clear();
+    FFileSystemPath::Get().Clear();
     POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

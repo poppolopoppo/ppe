@@ -70,7 +70,7 @@ protected:
     virtual ~TAutoSingleton() { FAutoSingletonManager::Unregister(this); }
 
 public:
-    static T& Instance() {
+    static T& Get() {
         ONE_TIME_INITIALIZE_TPL(T*, GInstance, CreateInstance_());
         return *GInstance;
     }
@@ -89,7 +89,7 @@ protected:
     virtual ~TThreadLocalAutoSingleton() { FThreadLocalAutoSingletonManager::Unregister(this); }
 
 public:
-    static T& Instance() {
+    static T& Get() {
         ONE_TIME_INITIALIZE_THREAD_LOCAL_TPL(T*, GInstanceTLS, CreateInstance_());
         return *GInstanceTLS;
     }

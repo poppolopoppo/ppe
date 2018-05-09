@@ -64,7 +64,7 @@ public:
     }
 #endif
 
-    static T& Instance() {
+    static T& Get() {
         Assert_NoAssume(HasInstance());
         return storage_type::Ref();
     }
@@ -101,8 +101,8 @@ public:
     }
 #endif
 
-    static T& Instance() {
-        return (*parent_type::Instance());
+    static T& Get() {
+        return (*parent_type::Get());
     }
 
     template <typename... _Args>

@@ -294,7 +294,7 @@ STATIC_ASSERT(sizeof(FBinnedChunk_) == CACHELINE_SIZE);
 struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
     STATIC_CONST_INTEGRAL(size_t, FreePagesMax, 128); // <=> 8 mo global cache (128 * 64 * 1024), 1k table
 
-    static FBinnedGlobalCache_& Instance() {
+    static FBinnedGlobalCache_& Get() {
         static FBinnedGlobalCache_ GInstance;
         return GInstance;
     }
@@ -511,7 +511,7 @@ struct FBinnedThreadCache_ {
     NO_INLINE ~FBinnedThreadCache_() {
         LOG(MallocBinned, Debug, L"shutdown thread cache {0}", std::this_thread::get_id());
 
-        FBinnedGlobalCache_& globalCache = FBinnedGlobalCache_::Instance();
+        FBinnedGlobalCache_& globalCache = FBinnedGlobalCache_::Get();
 
         // thread safety while releasing pending blocks, alive deallocations will need to still the chunk
         {
@@ -577,7 +577,7 @@ private:
 #endif
         }
         else {
-            page = FBinnedGlobalCache_::Instance().AllocPage();
+            page = FBinnedGlobalCache_::Get().AllocPage();
         }
 
         // register new page at head of buckets
@@ -599,7 +599,7 @@ private:
         Assert(not _localFreePages.Contains(page));
 
         if (_localFreePages.full()) {
-            FBinnedGlobalCache_::Instance().ReleasePage(page);
+            FBinnedGlobalCache_::Get().ReleasePage(page);
         }
         else {
 #if USE_MALLOCBINNED_PAGE_PROTECT
@@ -610,7 +610,7 @@ private:
     }
 
     NO_INLINE bool TryStealDanglingBlock_(FBinnedChunk_* chunk, FBinnedChunk_::FBlock* block) {
-        if (FBinnedGlobalCache_::Instance().StealDanglingChunk(chunk, this)) {
+        if (FBinnedGlobalCache_::Get().StealDanglingChunk(chunk, this)) {
             _buckets[chunk->_class].PushFront(chunk);
             return false;
         }
@@ -626,7 +626,7 @@ struct CACHELINE_ALIGNED FBinnedAllocator_ {
     STATIC_CONST_INTEGRAL(size_t, VMCacheBlocks, 32);
     STATIC_CONST_INTEGRAL(size_t, VMCacheSizeInBytes, 16*1024*1024); // <=> 16 mo global cache for large blocks
 
-    static FBinnedAllocator_& Instance() {
+    static FBinnedAllocator_& Get() {
         static FBinnedAllocator_ GInstance;
         return GInstance;
     }
@@ -655,13 +655,13 @@ struct CACHELINE_ALIGNED FBinnedAllocator_ {
         else if (Likely(sizeInBytes <= FBinnedChunk_::MaxSizeInBytes))
             return FBinnedThreadCache_::InstanceTLS().Allocate(sizeInBytes);
         else
-            return Instance().AllocLargeBlock_(sizeInBytes);
+            return Get().AllocLargeBlock_(sizeInBytes);
     }
 
     FORCE_INLINE static void Release(void* p) {
         ONLY_IF_ASSERT(const FCheckReentrancy reentrancy);
         if (Unlikely(Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p)))
-            Instance().ReleaseLargeBlock_(p);
+            Get().ReleaseLargeBlock_(p);
         else
             FBinnedThreadCache_::InstanceTLS().Release(p);
     }

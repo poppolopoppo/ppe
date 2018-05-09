@@ -115,7 +115,7 @@ class FDNSCache_ : Meta::TSingleton<FDNSCache_> {
 public: // TSingleton<>
     typedef Meta::TSingleton<FDNSCache_> parent_type;
 
-    using parent_type::Instance;
+    using parent_type::Get;
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
 #endif
@@ -229,7 +229,7 @@ void FAddress::Shutdown() {
 //----------------------------------------------------------------------------
 void FlushDNSCache() {
 #if USE_CORE_NETWORK_DNSCACHE
-    FDNSCache_::Instance().Flush();
+    FDNSCache_::Get().Flush();
 #endif
 }
 //----------------------------------------------------------------------------
@@ -262,7 +262,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
 #if USE_CORE_NETWORK_DNSCACHE
     {
         const FStringView cacheKey = FStringView(buffer, offEnd);
-        if (const Meta::TOptional<FStringView> cacheValue = FDNSCache_::Instance().HostnameToIPv4(cacheKey)) {
+        if (const Meta::TOptional<FStringView> cacheValue = FDNSCache_::Get().HostnameToIPv4(cacheKey)) {
             ip.assign(*cacheValue);
             return (not ip.empty()); // negative queries are also cached
         }
@@ -315,7 +315,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
     {
         hostnameWPort.Reset();
         hostnameWPort << hostname << ':' << port;
-        FDNSCache_::Instance().PutHostnameToIPv4(hostnameWPort.Written(), succeed ? ip.MakeView() : FStringView());
+        FDNSCache_::Get().PutHostnameToIPv4(hostnameWPort.Written(), succeed ? ip.MakeView() : FStringView());
     }
 #endif
 
@@ -330,7 +330,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
     Assert(!ip.empty());
 
 #if USE_CORE_NETWORK_DNSCACHE
-    if (const Meta::TOptional<FStringView> cacheValue = FDNSCache_::Instance().IPv4ToHostname(ip)) {
+    if (const Meta::TOptional<FStringView> cacheValue = FDNSCache_::Get().IPv4ToHostname(ip)) {
         hostname.assign(*cacheValue);
         return (not hostname.empty()); // negative queries are also cached
     }
@@ -347,7 +347,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
     if (1 != ::inet_pton(AF_INET, temp, &sa.sin_addr) ) {
         LOG_WSALASTERROR(L"inet_pton()");
 #if USE_CORE_NETWORK_DNSCACHE
-        FDNSCache_::Instance().PutHostnameToIPv4(ip, FStringView());
+        FDNSCache_::Get().PutHostnameToIPv4(ip, FStringView());
 #endif
         return false;
     }
@@ -365,7 +365,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
     if (0 != ret) {
         LOG_WSALASTERROR(L"getnameinfo()");
 #if USE_CORE_NETWORK_DNSCACHE
-        FDNSCache_::Instance().PutHostnameToIPv4(ip, FStringView());
+        FDNSCache_::Get().PutHostnameToIPv4(ip, FStringView());
 #endif
         return false;
     }
@@ -373,7 +373,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
     hostname.assign(MakeCStringView(hostinfo));
 
 #if USE_CORE_NETWORK_DNSCACHE
-    FDNSCache_::Instance().PutHostnameToIPv4(ip, hostname.MakeView());
+    FDNSCache_::Get().PutHostnameToIPv4(ip, hostname.MakeView());
 #endif
 
     Assert(hostname.size());

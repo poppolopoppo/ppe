@@ -45,7 +45,7 @@ public:
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
 #endif
-    using parent_type::Instance;
+    using parent_type::Get;
     using parent_type::Destroy;
 
     static void Create(const char* name, size_t tag);
@@ -122,13 +122,13 @@ static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
 struct FThreadNames_ {
     FReadWriteLock RWLock;
     ASSOCIATIVE_VECTORINSITU(Diagnostic, std::thread::id, FStringView, 32) Names;
-    static FThreadNames_& Instance() {
+    static FThreadNames_& Get() {
         ONE_TIME_DEFAULT_INITIALIZE(FThreadNames_, GInstance);
         return GInstance;
     }
 };
 static FStringView GetThreadName_(std::thread::id thread_id) {
-    FThreadNames_& thread_names = FThreadNames_::Instance();
+    FThreadNames_& thread_names = FThreadNames_::Get();
     READSCOPELOCK(thread_names.RWLock);
     const auto it = thread_names.Names.Find(thread_id);
     return (thread_names.Names.end() == it
@@ -140,7 +140,7 @@ static FStringView GetThreadName_(std::thread::id thread_id) {
 static void RegisterThreadName_(std::thread::id thread_id, const char* name) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME
     SetWin32ThreadName_(name);
-    FThreadNames_& thread_names = FThreadNames_::Instance();
+    FThreadNames_& thread_names = FThreadNames_::Get();
     WRITESCOPELOCK(thread_names.RWLock);
     thread_names.Names.Insert_AssertUnique(thread_id, MakeCStringView(name));
 #else
@@ -151,7 +151,7 @@ static void RegisterThreadName_(std::thread::id thread_id, const char* name) {
 //----------------------------------------------------------------------------
 static void UnregisterThreadName_(std::thread::id thread_id) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME
-    FThreadNames_& thread_names = FThreadNames_::Instance();
+    FThreadNames_& thread_names = FThreadNames_::Get();
     WRITESCOPELOCK(thread_names.RWLock);
     thread_names.Names.Remove_AssertExists(thread_id);
 #else
@@ -316,7 +316,7 @@ size_t FThreadContext::MaxThreadIndex() {
 }
 //----------------------------------------------------------------------------
 const FThreadContext& CurrentThreadContext() {
-    return FThreadLocalContext_::Instance();
+    return FThreadLocalContext_::Get();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

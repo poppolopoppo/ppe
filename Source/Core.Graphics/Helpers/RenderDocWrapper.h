@@ -23,7 +23,7 @@ class FRenderDocWrapper :
 public:
     using Meta::TSingleton<FRenderDocWrapper>::Destroy;
     static void Create() { Meta::TSingleton<FRenderDocWrapper>::Create(); }
-    static const FRenderDocWrapper& Instance() { return Meta::TSingleton<FRenderDocWrapper>::Instance(); }
+    static const FRenderDocWrapper& Get() { return Meta::TSingleton<FRenderDocWrapper>::Get(); }
 
     bool IsAvailable() const;
     bool IsTargetControlConnected() const;

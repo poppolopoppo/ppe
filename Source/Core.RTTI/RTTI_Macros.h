@@ -13,7 +13,7 @@ public: \
     typedef _Parent RTTI_parent_type; \
     \
     virtual const Core::RTTI::FMetaClass *RTTI_Class() const override { \
-        return RTTI_FMetaClass::Instance(); \
+        return RTTI_FMetaClass::Get(); \
     } \
     \
     class RTTI_FMetaClass : public Core::RTTI::TInScopeMetaClass<_Name> { \
@@ -24,7 +24,7 @@ public: \
         typedef _Name object_type; \
         typedef _Parent parent_type; \
         \
-        using metaclass_type::Instance; \
+        using metaclass_type::Get; \
         \
         static Core::RTTI::FMetaNamespace& Namespace(); \
         \

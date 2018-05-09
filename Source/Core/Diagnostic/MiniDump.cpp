@@ -236,7 +236,7 @@ DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
         // TAfter all that, we can write out the minidump
         ::BOOL bRet;
         {
-            const FDbghelpWrapper::FLocked threadSafe(FDbghelpWrapper::Instance());
+            const FDbghelpWrapper::FLocked threadSafe(FDbghelpWrapper::Get());
             bRet = threadSafe.MiniDumpWriteDump()(
                 ::GetCurrentProcess(),
                 ::GetCurrentProcessId(),

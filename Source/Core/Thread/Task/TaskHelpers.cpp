@@ -24,7 +24,7 @@ void Async(
     ETaskPriority priority/* = ETaskPriority::Normal */,
     FTaskManager* manager/* = nullptr */) {
     if (nullptr == manager)
-        manager = &FGlobalThreadPool::Instance();
+        manager = &FGlobalThreadPool::Get();
 
     manager->Run(std::move(task), priority);
 }

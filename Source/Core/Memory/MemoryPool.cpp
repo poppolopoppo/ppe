@@ -23,7 +23,7 @@ namespace {
 //----------------------------------------------------------------------------
 class FMemoryPoolAllocator_ {
 public:
-    static FMemoryPoolAllocator_& Instance() {
+    static FMemoryPoolAllocator_& Get() {
         ONE_TIME_INITIALIZE(FMemoryPoolAllocator_, GInstance, );
         return GInstance;
     }
@@ -512,7 +512,7 @@ FMemoryPoolChunk* FMemoryPool::AllocateChunk_() {
 #else
     const size_t currentChunkSize = CurrentChunkSize();
     const size_t currentBlockCount = BlockCountPerChunk_(currentChunkSize);
-    void* const storage = FMemoryPoolAllocator_::Instance().Allocate(currentChunkSize);
+    void* const storage = FMemoryPoolAllocator_::Get().Allocate(currentChunkSize);
     return INPLACE_NEW(storage, FMemoryPoolChunk)(currentChunkSize, currentBlockCount);
 
 #endif
@@ -526,7 +526,7 @@ void FMemoryPool::DeallocateChunk_(FMemoryPoolChunk *chunk) {
     Assert(chunk);
     const size_t chunkSize = chunk->ChunkSize();
     chunk->~FMemoryPoolChunk();
-    FMemoryPoolAllocator_::Instance().Free(chunk, chunkSize);
+    FMemoryPoolAllocator_::Get().Free(chunk, chunkSize);
 
 #endif
 }

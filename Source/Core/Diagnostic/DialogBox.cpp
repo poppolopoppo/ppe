@@ -348,7 +348,7 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
 
         case DIALOG_ID_MINIDUMP:
             {
-                const FFilename process(FCurrentProcess::Instance().FileName());
+                const FFilename process(FCurrentProcess::Get().FileName());
                 const FFilename vfs(process.Dirpath(),
                     FVirtualFileSystem::TemporaryBasename(process.BasenameNoExt().MakeView(), L".dmp"));
 

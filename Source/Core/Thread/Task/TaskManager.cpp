@@ -178,7 +178,7 @@ public:
 
     void DutyCycle();
 
-    static FWorkerContext_& Instance();
+    static FWorkerContext_& Get();
 
     static void ResumeFiberTask(FTaskFiberRef resume);
     static void ExitWorkerTask(ITaskContext& ctx);
@@ -284,7 +284,7 @@ void FWorkerContext_::DutyCycle() {
         CurrentThreadContext().DutyCycle();
 }
 //----------------------------------------------------------------------------
-NO_INLINE FWorkerContext_& FWorkerContext_::Instance() {
+NO_INLINE FWorkerContext_& FWorkerContext_::Get() {
     Assert(FFiber::IsInFiber());
     Assert(nullptr != _gInstanceTLS);
     return (*_gInstanceTLS);
@@ -300,7 +300,7 @@ void FWorkerContext_::ExitWorkerTask(ITaskContext&) {
     FTaskFiberRef self = FTaskFiberPool::CurrentHandleRef();
     Assert(self);
 
-    FWorkerContext_& workerContext = Instance();
+    FWorkerContext_& workerContext = Get();
     Assert(nullptr == workerContext._fiberToRelease);
     workerContext._fiberToRelease = self; // released in worker context destructor ^^^
 
@@ -373,7 +373,7 @@ struct FWaitForAll_ {
     static void Task(ITaskContext& context, FWaitForAll_* pArgs) {
         Assert(pArgs);
 
-        FTaskManagerImpl& impl = *FWorkerContext_::Instance().Manager().Pimpl();
+        FTaskManagerImpl& impl = *FWorkerContext_::Get().Manager().Pimpl();
 
         do {
             FTaskWaitHandle waitHandle;
@@ -447,7 +447,7 @@ void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPri
     if (phandle) {
         Assert(not phandle->Valid());
 
-        *phandle = FTaskWaitHandle(priority, FWorkerContext_::Instance().CreateCounter());
+        *phandle = FTaskWaitHandle(priority, FWorkerContext_::Get().CreateCounter());
         Assert(phandle->Valid());
         Assert(phandle->Counter());
 
@@ -464,7 +464,7 @@ void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc
     if (phandle) {
         Assert(not phandle->Valid());
 
-        *phandle = FTaskWaitHandle(priority, FWorkerContext_::Instance().CreateCounter());
+        *phandle = FTaskWaitHandle(priority, FWorkerContext_::Get().CreateCounter());
         Assert(phandle->Valid());
         Assert(phandle->Counter());
 
@@ -510,7 +510,7 @@ void FTaskManagerImpl::WorkerLoop_() {
         // task is processed on this worker, which could not happen until task manager destruction !
         FTaskQueued task;
 
-        _scheduler.Consume(FWorkerContext_::Instance().WorkerIndex(), &task);
+        _scheduler.Consume(FWorkerContext_::Get().WorkerIndex(), &task);
 
         Assert(task.Pending.Valid());
         task.Pending.Invoke(*this);
@@ -520,7 +520,7 @@ void FTaskManagerImpl::WorkerLoop_() {
         if (task.Counter)
             Decrement_ResumeWaitingTasksIfZero(task.Counter);
 
-        FWorkerContext_::Instance().DutyCycle();
+        FWorkerContext_::Get().DutyCycle();
     }
 }
 //----------------------------------------------------------------------------
@@ -614,7 +614,7 @@ FTaskWaitHandle::FTaskWaitHandle(ETaskPriority priority, PTaskCounter&& counter)
 FTaskWaitHandle::~FTaskWaitHandle() {
     if (_counter) {
         Assert(_counter->Finished());
-        FWorkerContext_::Instance().DestroyCounter(_counter);
+        FWorkerContext_::Get().DestroyCounter(_counter);
     }
 }
 //----------------------------------------------------------------------------
@@ -755,7 +755,7 @@ void FTaskManager::WaitForAll() const {
 //----------------------------------------------------------------------------
 ITaskContext& CurrentTaskContext() {
     // need to be called from a worker thread ! (asserted by FWorkerContext_)
-    const FTaskManager& manager = FWorkerContext_::Instance().Manager();
+    const FTaskManager& manager = FWorkerContext_::Get().Manager();
     FTaskManagerImpl* const pimpl = manager.Pimpl();
     Assert(pimpl);
     return *pimpl;

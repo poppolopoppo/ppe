@@ -181,6 +181,7 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
 #if USE_APPLICATION_EXCEPTION_TRAP
         CORE_CATCH(const std::exception& e)
         CORE_CATCH_BLOCK({
+            UNUSED(e);
             LOG(Application, Fatal, L"exception caught while starting : {0}", MakeCStringView(e.what()));
         })
 #endif
@@ -194,6 +195,7 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
 #if USE_APPLICATION_EXCEPTION_TRAP
         CORE_CATCH(const std::exception& e)
         CORE_CATCH_BLOCK({
+            UNUSED(e);
             LOG(Application, Fatal, L"exception caught while shutting down : {0}", MakeCStringView(e.what()));
         })
 #endif
@@ -202,7 +204,7 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
     ReportAllTrackingData();
     ShutdownLeakDetector();
 #endif
-    return FCurrentProcess::Instance().ExitCode();
+    return FCurrentProcess::Get().ExitCode();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

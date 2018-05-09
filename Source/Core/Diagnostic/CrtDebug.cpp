@@ -58,7 +58,7 @@ public:
     size_t ChunkCount() const { return _chunkCount; }
     SizeInBytes TotalSizeInBytes() const { return SizeInBytes{ _chunkCount * sizeof(FPoolChunk) }; }
 
-    static FCrtAllocationCallstackLogger* Instance;
+    static FCrtAllocationCallstackLogger* Get;
 
 protected:
     bool NeedNewPoolChunk_() const;
@@ -80,7 +80,7 @@ private:
     FAllocation* _freeAllocation;
 };
 //----------------------------------------------------------------------------
-FCrtAllocationCallstackLogger* FCrtAllocationCallstackLogger::Instance = nullptr;
+FCrtAllocationCallstackLogger* FCrtAllocationCallstackLogger::Get = nullptr;
 //----------------------------------------------------------------------------
 FCrtAllocationCallstackLogger::FCrtAllocationCallstackLogger()
 :   _enabled(true),
@@ -228,7 +228,7 @@ static int __cdecl AllocHook_(
     if (!gEnableCrtAllocationHook)
         return (TRUE);
 
-    auto const log = FCrtAllocationCallstackLogger::Instance;
+    auto const log = FCrtAllocationCallstackLogger::Get;
 
     switch (nAllocType)
     {
@@ -271,7 +271,7 @@ static int __cdecl ReportHook_(int nRptType, char *szMsg, int *retVal) {
         for (int n = 1; i > 0; --i, n *= 10)
             requestNumber += n * (szMsg[i] - '0');
 
-        auto const* log = FCrtAllocationCallstackLogger::Instance;
+        auto const* log = FCrtAllocationCallstackLogger::Get;
         if (log) {
             const FCrtAllocationCallstackLogger::FAllocation* alloc = log->Callstack(requestNumber);
             if (alloc)
@@ -317,7 +317,7 @@ private:
 //----------------------------------------------------------------------------
 FCrtCheckMemoryLeaksImpl::FCrtCheckMemoryLeaksImpl()
     : _log() {
-    FCrtAllocationCallstackLogger::Instance = &_log;
+    FCrtAllocationCallstackLogger::Get = &_log;
     _CrtMemCheckpoint(&_memCheckpoint);
     _allocHook = _CrtSetAllocHook(AllocHook_);
 }
@@ -335,8 +335,8 @@ FCrtCheckMemoryLeaksImpl::~FCrtCheckMemoryLeaksImpl() {
     _CrtMemDumpAllObjectsSince(&_memCheckpoint);
     _CrtSetReportHook(reportHook);
 
-    Assert(FCrtAllocationCallstackLogger::Instance == &_log);
-    FCrtAllocationCallstackLogger::Instance = nullptr;
+    Assert(FCrtAllocationCallstackLogger::Get == &_log);
+    FCrtAllocationCallstackLogger::Get = nullptr;
 
     LOG(Info, L"Allocation logger overhead = {0} ({1})", _log.TotalSizeInBytes(), _log.ChunkCount());
     LOG(Info, L"Total allocation count = {0}", _log.AllocationCount());

@@ -32,7 +32,7 @@ static void Test_Task_() {
 
     TRefPtr<FTest> Ptr(NEW_REF(Task, FTest));
 
-    auto& pool = FGlobalThreadPool::Instance();
+    auto& pool = FGlobalThreadPool::Get();
     pool.RunAndWaitFor(Meta::MakeFunction(Ptr.get(), &FTest::Log)); // should use a TSafePtr<> inside Meta::TFunction<>
 }
 //----------------------------------------------------------------------------

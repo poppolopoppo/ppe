@@ -99,14 +99,14 @@ public: // Meta class
     public:
         typedef FMetaObject object_type;
         typedef void parent_type;
-        using metaclass_type::Instance;
+        using metaclass_type::Get;
         static FMetaNamespace& Namespace();
     private:
         RTTI_FMetaClass(FClassId id, const FMetaNamespace* metaNamespace);
     };
 
     virtual const RTTI::FMetaClass* RTTI_Class() const {
-        return RTTI_FMetaClass::Instance();
+        return RTTI_FMetaClass::Get();
     };
 
 private:

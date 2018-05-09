@@ -13,15 +13,15 @@ namespace Core {
     namespace PoolTag { \
         typedef Core::Meta::TSingleton< Core::FMemoryPoolList, _Name > CONCAT(_Name, _type); \
         \
-        void _Name::Register(IMemoryPool* ppool) { CONCAT(_Name, _type)::Instance().Insert(ppool); } \
-        void _Name::Unregister(IMemoryPool* ppool) { CONCAT(_Name, _type)::Instance().Remove(ppool); } \
+        void _Name::Register(IMemoryPool* ppool) { CONCAT(_Name, _type)::Get().Insert(ppool); } \
+        void _Name::Unregister(IMemoryPool* ppool) { CONCAT(_Name, _type)::Get().Remove(ppool); } \
         \
         void _Name::Start() { CONCAT(_Name, _type)::Create(); } \
         void _Name::Shutdown() { CONCAT(_Name, _type)::Destroy(); } \
         \
-        void _Name::ClearAll_AssertCompletelyFree() { CONCAT(_Name, _type)::Instance().ClearAll_AssertCompletelyFree(); } \
-        void _Name::ClearAll_IgnoreLeaks() { CONCAT(_Name, _type)::Instance().ClearAll_IgnoreLeaks(); } \
-        void _Name::ClearAll_UnusedMemory() { CONCAT(_Name, _type)::Instance().ClearAll_UnusedMemory(); } \
+        void _Name::ClearAll_AssertCompletelyFree() { CONCAT(_Name, _type)::Get().ClearAll_AssertCompletelyFree(); } \
+        void _Name::ClearAll_IgnoreLeaks() { CONCAT(_Name, _type)::Get().ClearAll_IgnoreLeaks(); } \
+        void _Name::ClearAll_UnusedMemory() { CONCAT(_Name, _type)::Get().ClearAll_UnusedMemory(); } \
     }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

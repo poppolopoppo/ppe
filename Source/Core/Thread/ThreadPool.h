@@ -15,7 +15,7 @@ class CORE_API FGlobalThreadPool : Meta::TSingleton<FTaskManager, FGlobalThreadP
 public:
     typedef Meta::TSingleton<FTaskManager, FGlobalThreadPool> parent_type;
 
-    using parent_type::Instance;
+    using parent_type::Get;
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
 #endif
@@ -32,7 +32,7 @@ class CORE_API FIOThreadPool : Meta::TSingleton<FTaskManager, FIOThreadPool> {
 public:
     typedef Meta::TSingleton<FTaskManager, FIOThreadPool> parent_type;
 
-    using parent_type::Instance;
+    using parent_type::Get;
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
 #endif
@@ -49,7 +49,7 @@ class CORE_API FHighPriorityThreadPool : Meta::TSingleton<FTaskManager, FHighPri
 public:
     typedef Meta::TSingleton<FTaskManager, FHighPriorityThreadPool> parent_type;
 
-    using parent_type::Instance;
+    using parent_type::Get;
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
 #endif
@@ -66,7 +66,7 @@ class CORE_API FBackgroundThreadPool : Meta::TSingleton<FTaskManager, FBackgroun
 public:
     typedef Meta::TSingleton<FTaskManager, FBackgroundThreadPool> parent_type;
 
-    using parent_type::Instance;
+    using parent_type::Get;
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
 #endif

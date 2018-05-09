@@ -62,7 +62,7 @@ public:
 #ifdef WITH_CORE_ASSERT
     using Meta::TSingleton<FXInputWrapper>::HasInstance;
 #endif
-    using Meta::TSingleton<FXInputWrapper>::Instance;
+    using Meta::TSingleton<FXInputWrapper>::Get;
 
     static void Create() { Meta::TSingleton<FXInputWrapper>::Create(); }
     using Meta::TSingleton<FXInputWrapper>::Destroy;

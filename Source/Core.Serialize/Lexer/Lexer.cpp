@@ -127,7 +127,7 @@ static bool Lex_Symbol_(FLookAheadReader& reader, const FSymbol **psymbol, bool 
     size_t offset = 0;
     size_t toss = 0;
 
-    const FSymbols& symbols = FSymbols::Instance();
+    const FSymbols& symbols = FSymbols::Get();
 
     TFixedSizeStack<char, FSymbols::MaxLength> poken;
 

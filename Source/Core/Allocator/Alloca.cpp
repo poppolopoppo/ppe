@@ -20,7 +20,7 @@ class FAllocaLinearHeapTLS_
     , Meta::TThreadLocalSingleton<FAllocaLinearHeapTLS_> {
     typedef Meta::TThreadLocalSingleton<FAllocaLinearHeapTLS_> parent_type;
 public:
-    using parent_type::Instance;
+    using parent_type::Get;
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
 #endif
@@ -56,7 +56,7 @@ void* Alloca(size_t size) {
         return nullptr;
 
     void* const p = ((size <= FAllocaLinearHeapTLS_::MaxBlockSize)
-        ? FAllocaLinearHeapTLS_::Instance().Allocate(size)
+        ? FAllocaLinearHeapTLS_::Get().Allocate(size)
         : FAllocaFallback_::Malloc(size) );
 
     Assert(Meta::IsAligned(16, p));
@@ -77,7 +77,7 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
     Assert(oldSize);
 
     void* result;
-    auto& heap = FAllocaLinearHeapTLS_::Instance();
+    auto& heap = FAllocaLinearHeapTLS_::Get();
     if (heap.AliasesToHeap(ptr)) {
         if (newSize <= FAllocaLinearHeapTLS_::MaxBlockSize) {
             result = heap.Relocate_AssumeLast(ptr, newSize, oldSize);
@@ -109,7 +109,7 @@ void FreeAlloca(void* ptr, size_t size) {
     Assert(Meta::IsAligned(16, ptr));
     Assert(size);
 
-    auto& heap = FAllocaLinearHeapTLS_::Instance();
+    auto& heap = FAllocaLinearHeapTLS_::Get();
     if (heap.AliasesToHeap(ptr))
         heap.Release_AssumeLast(ptr, size);
     else

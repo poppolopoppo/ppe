@@ -23,7 +23,7 @@ class FVirtualFileSystem : Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFile
 public:
     typedef Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem> parent_type;
 
-    using parent_type::Instance;
+    using parent_type::Get;
 #ifdef WITH_CORE_ASSERT
     using parent_type::HasInstance;
 #endif

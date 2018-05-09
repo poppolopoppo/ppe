@@ -809,7 +809,7 @@ void FDX11DeviceAPIEncapsulator::EndEvent() {
 //----------------------------------------------------------------------------
 bool FDX11DeviceAPIEncapsulator::IsProfilerAttached() const {
 #ifdef WITH_CORE_RENDERDOC
-    return FRenderDocWrapper::Instance().IsTargetControlConnected();
+    return FRenderDocWrapper::Get().IsTargetControlConnected();
 #else
     return false;
 #endif
@@ -817,7 +817,7 @@ bool FDX11DeviceAPIEncapsulator::IsProfilerAttached() const {
 //----------------------------------------------------------------------------
 bool FDX11DeviceAPIEncapsulator::LaunchProfiler() {
 #ifdef WITH_CORE_RENDERDOC
-    return FRenderDocWrapper::Instance().LaunchReplayUI();
+    return FRenderDocWrapper::Get().LaunchReplayUI();
 #else
     return false;
 #endif
@@ -825,7 +825,7 @@ bool FDX11DeviceAPIEncapsulator::LaunchProfiler() {
 //----------------------------------------------------------------------------
 bool FDX11DeviceAPIEncapsulator::LaunchProfilerAndTriggerCapture() {
 #ifdef WITH_CORE_RENDERDOC
-    const FRenderDocWrapper& RenderDOC = FRenderDocWrapper::Instance();
+    const FRenderDocWrapper& RenderDOC = FRenderDocWrapper::Get();
     if (RenderDOC.IsAvailable()) {
         if (false == RenderDOC.IsTargetControlConnected() &&
             0 == RenderDOC.LaunchReplayUI())
@@ -841,7 +841,7 @@ bool FDX11DeviceAPIEncapsulator::LaunchProfilerAndTriggerCapture() {
 //----------------------------------------------------------------------------
 bool FDX11DeviceAPIEncapsulator::IsCapturingFrame() const {
 #ifdef WITH_CORE_RENDERDOC
-    return FRenderDocWrapper::Instance().IsFrameCapturing();
+    return FRenderDocWrapper::Get().IsFrameCapturing();
 #else
     return false;
 #endif
@@ -849,13 +849,13 @@ bool FDX11DeviceAPIEncapsulator::IsCapturingFrame() const {
 //----------------------------------------------------------------------------
 void FDX11DeviceAPIEncapsulator::SetCaptureWindow(void* hwnd) {
 #ifdef WITH_CORE_RENDERDOC
-    FRenderDocWrapper::Instance().SetActiveWindow(_wrapper.Device(), hwnd);
+    FRenderDocWrapper::Get().SetActiveWindow(_wrapper.Device(), hwnd);
 #endif
 }
 //----------------------------------------------------------------------------
 void FDX11DeviceAPIEncapsulator::TriggerCapture() {
 #ifdef WITH_CORE_RENDERDOC
-    const FRenderDocWrapper& RenderDOC = FRenderDocWrapper::Instance();
+    const FRenderDocWrapper& RenderDOC = FRenderDocWrapper::Get();
     if (RenderDOC.IsAvailable()) {
         _framesToCapture++;
         RenderDOC.TriggerCapture();
@@ -865,7 +865,7 @@ void FDX11DeviceAPIEncapsulator::TriggerCapture() {
 //----------------------------------------------------------------------------
 void FDX11DeviceAPIEncapsulator::TriggerMultiFrameCapture(size_t numFrames) {
 #ifdef WITH_CORE_RENDERDOC
-    const FRenderDocWrapper& RenderDOC = FRenderDocWrapper::Instance();
+    const FRenderDocWrapper& RenderDOC = FRenderDocWrapper::Get();
     if (RenderDOC.IsAvailable()) {
         _framesToCapture += checked_cast<u16>(numFrames);
         RenderDOC.TriggerMultiFrameCapture(numFrames);
