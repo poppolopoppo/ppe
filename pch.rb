@@ -60,7 +60,7 @@ end
 unless ARGV.empty?
     filtered_projects = []
     ARGV.each do |project_name|
-        rexp = /#{project_name}/i
+        rexp = /^#{project_name}$/i
         found = $projects.each do |project|
             if project.name.match(rexp)
                 puts "selected project '#{project.name}' from command line (#{rexp})"
