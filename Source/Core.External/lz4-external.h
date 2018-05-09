@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Core/Allocator/ThreadLocalHeap.h"
 #include "Core/Allocator/TrackingMalloc.h"
 #include "Core/Memory/MemoryDomain.h"
 
 #ifndef EXPORT_CORE_EXTERNAL_LZ4
-    PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("ALLOCATOR")
 #   pragma push_macro("FORCE_INLINE")
 #   pragma push_macro("malloc")
@@ -22,8 +21,8 @@
 #   undef free
 #endif
 
-#define malloc(sz) Core::tracking_malloc_thread_local<MEMORY_DOMAIN_TAG(LZ4)>(sz)
-#define free(p) Core::tracking_free_thread_local(p)
+#define malloc(sz) TRACKING_MALLOC(LZ4, sz)
+#define free(p) Core::tracking_free(p)
 
 PRAGMA_MSVC_WARNING_DISABLE(5033) // 'register' is no longer a supported storage class (C++17)
 PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) always evaluates to the result of <expression>.  Did you intend to use the bitwise-and operator?
