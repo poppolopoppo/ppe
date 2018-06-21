@@ -30,15 +30,7 @@
 #   include <typeinfo>
 #endif
 
-#define WITH_CORE_POOL_ALLOCATOR_SNAPPING //%__NOCOMMIT%
-#ifdef WITH_CORE_POOL_ALLOCATOR_SNAPPING
-#   define SNAP_SIZE_FOR_POOL_SEGREGATION(_Type) \
-    (sizeof(_Type) >= 128 \
-        ? ROUND_TO_NEXT_32(sizeof(_Type)) \
-        : ROUND_TO_NEXT_16(sizeof(_Type)) )
-#else
-#   define SNAP_SIZE_FOR_POOL_SEGREGATION(_Type) sizeof(_Type)
-#endif
+#define USE_CORE_POOL_ALLOCATOR_SNAPPING (1)//%__NOCOMMIT%
 
 #if USE_CORE_MEMORYDOMAINS && defined(WITH_CORE_POOL_ALLACATOR_TAGNAME)
 #   define WITH_CORE_POOL_ALLOCATOR_TRACKING //%__NOCOMMIT%
@@ -63,7 +55,7 @@ struct TPoolTracking {
 
     TPoolTracking(const char* tagname, FMemoryTracking* parent = nullptr)
     :   TrackingData(&Name[0], parent) {
-        Format(Name, "{0}<{1:A},{2}>", MakeCStringView(tagname), _ThreadLocal, _Size);
+        Format(Name, "{0}_{1}<{2}>", MakeCStringView(tagname), _ThreadLocal ? "TLS" : "TSF", _Size);
         RegisterTrackingData(&TrackingData);
     }
 
@@ -126,6 +118,36 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if USE_CORE_POOL_ALLOCATOR_SNAPPING
+namespace details {
+inline constexpr size_t MakePoolSizeClass(size_t snapped, size_t log2) {
+	constexpr size_t POW_N = 2;
+	constexpr size_t MinClassIndex = 19;
+	return ((log2 << POW_N) + ((snapped - 1) >> (log2 - POW_N)) - MinClassIndex);
+}
+constexpr size_t GClassesSize[45] = {
+	16,     0,      0,      0,      32,     0,
+	48,     0,      64,     80,     96,     112,
+	128,    160,    192,    224,    256,    320,
+	384,    448,    512,    640,    768,    896,
+	1024,   1280,   1536,   1792,   2048,   2560,
+	3072,   3584,   4096,   5120,   6144,   7168,
+	8192,   10240,  12288,  14336,  16384,  20480,
+	24576,  28672,  32736,
+};
+inline constexpr size_t FloorLog2_constexpr(size_t n) {
+	return ((n < 2) ? 0 : 1 + FloorLog2_constexpr(n / 2));
+}
+} //!details
+inline constexpr size_t MemoryPoolSnapSize(size_t size) {
+	return details::GClassesSize[details::MakePoolSizeClass(
+		ROUND_TO_NEXT_16(size),
+		details::FloorLog2_constexpr((ROUND_TO_NEXT_16(size) - 1) | 1) )];
+}
+#else
+inline constexpr size_t MemoryPoolSnapSize(size_t size) { return size; }
+#endif //!USE_CORE_POOL_ALLOCATOR_SNAPPING
+//----------------------------------------------------------------------------
 template <typename _Tag, typename T, bool _ThreadLocal >
 class TTypedSegregatedMemoryPool {
 public:
@@ -134,7 +156,8 @@ public:
     TTypedSegregatedMemoryPool() = delete;
     ~TTypedSegregatedMemoryPool() = delete;
 
-    enum : size_t { BlockSize = SNAP_SIZE_FOR_POOL_SEGREGATION(T) };
+    static constexpr size_t BlockSize = MemoryPoolSnapSize(sizeof(T));
+	STATIC_ASSERT(sizeof(T) <= BlockSize);
 
     typedef typename std::conditional<_ThreadLocal,
         TSegregatedMemoryPool<_Tag, BlockSize, FMemoryPoolThreadLocal, Meta::TThreadLocalAutoSingleton >,

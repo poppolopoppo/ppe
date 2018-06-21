@@ -4,6 +4,9 @@
 
 #ifdef WITH_CORE_POOL_ALLOCATOR
 #include "Core/Memory/SegregatedMemoryPool.h"
+#else
+#include "Core/Allocator/TrackingMalloc.h"
+#include "Core/Memory/MemoryTracking.h"
 #endif
 
 //----------------------------------------------------------------------------
@@ -11,7 +14,7 @@
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_POOL_ALLOCATOR
 //----------------------------------------------------------------------------
-#define SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, _Pool) \
+#define SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Tag, _Type, _Prefix, _Pool) \
     _Prefix void *_Type::operator new(size_t size) { \
         UNUSED(size); \
         Assert(sizeof(_Type) == size); \
@@ -29,7 +32,9 @@
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
-#define SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Type, _Prefix, _Pool) \
+#define SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Tag, _Type, _Prefix, _Pool) \
+    _Prefix void *_Type::operator new(size_t size) { return tracking_malloc(MEMORYDOMAIN_TRACKING_DATA(PooledMemory), sizeof(_Type)); } \
+    _Prefix void _Type::operator delete(void *ptr) { tracking_free(ptr); } \
     _Prefix void _Type::Pool_ReleaseMemory() {} \
     _Prefix const FMemoryTracking *_Type::Pool_TrackingData() { return nullptr; }
 //----------------------------------------------------------------------------
@@ -40,11 +45,11 @@
 // _Tag enables user to control segregation
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(_Tag, _Type, _Prefix) \
-    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix), \
+    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Tag, COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix), \
         Core::TTypedSegregatedMemoryPool<POOL_TAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA false>)
 //----------------------------------------------------------------------------
 #define THREAD_LOCAL_SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(_Tag, _Type, _Prefix) \
-    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix), \
+    SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Tag, COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix), \
         Core::TTypedSegregatedMemoryPool<POOL_TAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA true>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

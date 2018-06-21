@@ -2,6 +2,7 @@
 
 #include "MemoryPool.h"
 
+#include "Allocator/Malloc.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
 #include "Memory/MemoryTracking.h"
@@ -12,7 +13,7 @@
 //----------------------------------------------------------------------------
 // Turn to 1 to disable pool allocation (useful for memory debugging) :
 //----------------------------------------------------------------------------
-#define WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC (USE_CORE_MEMORY_DEBUGGING) //%__NOCOMMIT%
+#define USE_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC (USE_CORE_MEMORY_DEBUGGING) //%_NOCOMMIT%
 
 namespace Core {
 EXTERN_LOG_CATEGORY(CORE_API, MemoryDomain)
@@ -390,10 +391,12 @@ FMemoryPoolChunk *FMemoryPool::ReleaseChunk_() {
 }
 //----------------------------------------------------------------------------
 void* FMemoryPool::Allocate(FMemoryTracking *trackingData /* = nullptr */) {
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
+
 #if !USE_CORE_MEMORYDOMAINS
     UNUSED(trackingData);
 #endif
-#if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+#if USE_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     if (trackingData)
         trackingData->Allocate(1, BlockSize());
 
@@ -433,7 +436,7 @@ void FMemoryPool::Deallocate(void *ptr, FMemoryTracking *trackingData /* = nullp
 #if !USE_CORE_MEMORYDOMAINS
     UNUSED(trackingData);
 #endif
-#if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+#if USE_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     Core::aligned_free(ptr);
 
     if (trackingData)
@@ -462,7 +465,7 @@ void FMemoryPool::Deallocate(void *ptr, FMemoryTracking *trackingData /* = nullp
 }
 //----------------------------------------------------------------------------
 void FMemoryPool::Clear_AssertCompletelyFree() {
-#if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+#if USE_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     AssertRelease(0 == _chunkCount);
 
 #else
@@ -475,7 +478,7 @@ void FMemoryPool::Clear_AssertCompletelyFree() {
 }
 //----------------------------------------------------------------------------
 void FMemoryPool::Clear_IgnoreLeaks() {
-#if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+#if USE_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     AssertRelease(0 == _chunkCount);
 
 #else
@@ -488,7 +491,7 @@ void FMemoryPool::Clear_IgnoreLeaks() {
 }
 //----------------------------------------------------------------------------
 void FMemoryPool::Clear_UnusedMemory() {
-#if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+#if USE_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     AssertRelease(0 == _chunkCount);
 
 #else
@@ -505,7 +508,7 @@ size_t FMemoryPool::BlockCountPerChunk_(size_t chunkSize) const {
 }
 //----------------------------------------------------------------------------
 FMemoryPoolChunk* FMemoryPool::AllocateChunk_() {
-#if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+#if USE_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     AssertNotReached();
     return nullptr;
 
@@ -519,7 +522,7 @@ FMemoryPoolChunk* FMemoryPool::AllocateChunk_() {
 }
 //----------------------------------------------------------------------------
 void FMemoryPool::DeallocateChunk_(FMemoryPoolChunk *chunk) {
-#if WITH_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+#if USE_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     AssertNotReached();
 
 #else
