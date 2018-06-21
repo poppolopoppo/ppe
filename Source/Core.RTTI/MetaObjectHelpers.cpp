@@ -199,11 +199,11 @@ namespace {
 //----------------------------------------------------------------------------
 class FReferenceCollector_ : FBaseAtomVisitor {
 public:
-    FReferenceCollector_(size_t maxDepth) 
+    FReferenceCollector_(size_t maxDepth)
         : _maxDepth(maxDepth), _depth(0), _references(nullptr)
     {}
 
-    void Collect(const FMetaObject& root, TReferencedObjects& references) {
+    void Collect(const FMetaObject& root, FReferencedObjects& references) {
         Assert(0 == _depth);
         Assert(nullptr == _references);
 
@@ -223,7 +223,7 @@ public:
 private:
     const size_t _maxDepth;
     size_t _depth;
-    TReferencedObjects* _references;
+    FReferencedObjects* _references;
 
     virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override final {
         if (pobj) {
@@ -246,7 +246,7 @@ private:
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
-void CollectReferencedObjects(const FMetaObject& root, TReferencedObjects& references, size_t maxDepth/* = INDEX_NONE */) {
+void CollectReferencedObjects(const FMetaObject& root, FReferencedObjects& references, size_t maxDepth/* = INDEX_NONE */) {
     Assert(references.empty());
     FReferenceCollector_ collector(maxDepth);
     collector.Collect(root, references);

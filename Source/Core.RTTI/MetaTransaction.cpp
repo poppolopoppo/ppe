@@ -2,11 +2,12 @@
 
 #include "MetaTransaction.h"
 
-#include "AtomVisitor.h" // FCheckCircularReference_
+#include "AtomVisitor.h" // Linearize()
 #include "MetaDatabase.h"
 #include "MetaObject.h"
 #include "MetaObjectHelpers.h" // DeepEquals()
 
+#include "Core/Container/HashSet.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/FormatHelpers.h"
@@ -111,6 +112,38 @@ private:
 } //!namespace
 #endif //!WITH_CORE_RTTI_TRANSACTION_CHECKS
 //----------------------------------------------------------------------------
+namespace {
+class FMetaTransactionLinearizer_ : public FBaseAtomVisitor {
+public:
+    FMetaTransactionLinearizer_(const FMetaTransaction& outer, FLinearizedTransaction& linearized)
+        : _outer(outer)
+        , _linearized(linearized)
+    {}
+
+    void Linearize(const PMetaObject& pobj) {
+        Visit(nullptr, const_cast<PMetaObject&>(pobj));
+    }
+
+public: //FBaseAtomVisitor
+    virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override final {
+        if (pobj && _visiteds.insert_ReturnIfExists(pobj.get()) == false) {
+            const bool result = (pobj->RTTI_Outer() == &_outer
+                ? FBaseAtomVisitor::Visit(scalar, pobj)
+                : true);
+
+            _linearized.emplace_back(pobj.get());
+            return result;
+        }
+        return true;
+    }
+
+private:
+    const FMetaTransaction& _outer;
+    FLinearizedTransaction& _linearized;
+    HASHSET(MetaTransaction, FMetaObject*) _visiteds;
+};
+} //!namespace
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FTransactionLoadContext : public ILoadContext {
@@ -148,7 +181,7 @@ public:
         if (object.RTTI_IsExported())
             _outer->_exportedObjects.emplace_AssertUnique(&object);
 
-        TReferencedObjects children;
+        FReferencedObjects children;
         CollectReferencedObjects(object, children, 1/* only directly referenced objects */);
 
         for (FMetaObject* ref : children) {
@@ -297,9 +330,9 @@ void FMetaTransaction::Load() {
     }
 
 #ifdef USE_DEBUG_LOGGER
-    FWStringBuilder oss;
-    oss << L"loaded transaction '" << _name << L"' :" << Eol;
+    LOG(RTTI, Info, L"loaded transaction '{0}' :", _name);
 
+    FWStringBuilder oss;
     Fmt::FWIndent indent = Fmt::FWIndent::UsingTabs();
     indent.Inc();
 
@@ -309,11 +342,13 @@ void FMetaTransaction::Load() {
         const Fmt::FWIndent::FScope scopeIndent(indent);
         for (const PMetaObject& obj : _topObjects)
             oss << indent << L'['
-                << (index++) << L"]  "
+                << Fmt::PadLeft(index++, 3, L'0') << L"]  "
                 << (void*)obj.get() << L" : "
                 << obj->RTTI_Class()->Name() << L" ("
                 << obj->RTTI_Flags() << L')'
                 << Eol;
+
+        LOG(RTTI, Info, oss.ToString());
     }
     oss << indent << L" - Exported objects : " << _exportedObjects.size() << Eol;
     {
@@ -321,12 +356,14 @@ void FMetaTransaction::Load() {
         const Fmt::FWIndent::FScope scopeIndent(indent);
         for (const SMetaObject& obj : _exportedObjects)
             oss << indent << L'['
-                << (index++) << L"]  "
+                << Fmt::PadLeft(index++, 3, L'0') << L"]  "
                 << (void*)obj.get() << L" : "
                 << obj->RTTI_Class()->Name() << L" = '"
                 << obj->RTTI_Name() << L"' ("
                 << obj->RTTI_Flags() << L')'
                 << Eol;
+
+        LOG(RTTI, Info, oss.ToString());
     }
     oss << indent << L" - Loaded objects : " << _loadedObjects.size() << Eol;
     {
@@ -334,11 +371,13 @@ void FMetaTransaction::Load() {
         const Fmt::FWIndent::FScope scopeIndent(indent);
         for (const SMetaObject& obj : _loadedObjects)
             oss << indent << L'['
-                << (index++) << L"]  "
+                << Fmt::PadLeft(index++, 3, L'0') << L"]  "
                 << (void*)obj.get() << L" : "
                 << obj->RTTI_Class()->Name() << L" ("
                 << obj->RTTI_Flags() << L')'
                 << Eol;
+
+        LOG(RTTI, Info, oss.ToString());
     }
     oss << indent << L" - Imported transactions : " << _importedTransactions.size() << Eol;
     {
@@ -346,14 +385,14 @@ void FMetaTransaction::Load() {
         const Fmt::FWIndent::FScope scopeIndent(indent);
         for (const SCMetaTransaction& outer : _importedTransactions)
             oss << indent << L'['
-                << (index++) << L"]  "
+                << Fmt::PadLeft(index++, 3, L'0') << L"]  "
                 << (void*)outer.get() << L" = '"
                 << outer->Name() << L"' ("
                 << outer->Flags() << L')'
                 << Eol;
-    }
 
-    LOG(RTTI, Info, oss.ToString());
+        LOG(RTTI, Info, oss.ToString());
+    }
 
 #endif
 }
@@ -409,6 +448,29 @@ bool FMetaTransaction::DeepEquals(const FMetaTransaction& other) const {
     }
 
     return true;
+}
+//----------------------------------------------------------------------------
+void FMetaTransaction::Linearize(FLinearizedTransaction* linearized) const {
+    Assert(linearized);
+    Assert(linearized->empty());
+
+    FMetaTransactionLinearizer_ linearizer(*this, *linearized);
+
+    // instrospect each top objects and put each object in linearized in order of discovery
+    for (const auto& topObject : _topObjects)
+        linearizer.Linearize(topObject);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FMetaTransaction::FLoadingScope::FLoadingScope(FMetaTransaction* transaction)
+:   Transaction(transaction) {
+    Assert(transaction);
+    Transaction->Load();
+}
+//----------------------------------------------------------------------------
+FMetaTransaction::FLoadingScope::~FLoadingScope() {
+    Transaction->Unload();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

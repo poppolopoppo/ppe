@@ -23,6 +23,8 @@ enum class ETransactionFlags : u32 {
     Unloading   ,
 };
 //----------------------------------------------------------------------------
+using FLinearizedTransaction = VECTORINSITU(MetaTransaction, SMetaObject, 32);
+//----------------------------------------------------------------------------
 class CORE_RTTI_API FMetaTransaction : public FRefCountable {
 public:
     explicit FMetaTransaction(const FName& name);
@@ -62,6 +64,14 @@ public:
     void reserve(size_t capacity);
 
     bool DeepEquals(const FMetaTransaction& other) const;
+
+    void Linearize(FLinearizedTransaction* linearized) const;
+
+    struct FLoadingScope {
+        SMetaTransaction Transaction;
+        explicit FLoadingScope(FMetaTransaction* transaction);
+        ~FLoadingScope();
+    };
 
 private:
     FName _name;
