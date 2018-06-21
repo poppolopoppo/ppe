@@ -212,7 +212,11 @@ bool FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
 
     const FDbghelpWrapper::FLocked dbghelp(FDbghelpWrapper::Get());
 
-    LoadModules_(dbghelp);
+    static bool GSymbolsLoaded = false;
+    if (not GSymbolsLoaded) {
+        GSymbolsLoaded = true;
+        LoadModules_(dbghelp);
+    }
 
     static const wchar_t kUnknown[] = L"????????";
 
@@ -259,7 +263,8 @@ PRAGMA_MSVC_WARNING_DISABLE(4826) // warning C4826: convert unsigned char* to DW
                 if (dbghelp.SymGetModuleInfoW64()(hProcess, (DWORD64)*address, &moduleInfo))
                     filename = MakeCStringView(moduleInfo.ImageName);
                 else
-                    filename = kUnknown;
+                    filename = MakeStringView(kUnknown);
+
                 line = size_t(*address);
             }
         }
