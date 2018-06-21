@@ -272,12 +272,16 @@ public:
         Assert(0 == _size);
         _capacity = 0; // every next call to Push() will fail
         _storage = nullptr;
-        Assert(full());
+        Assert(parent_type::full());
     }
 
 private:
     // /!\ won't call any ctor or dtor, values are considered as undefined
     typename ALIGNED_STORAGE(sizeof(T) * _Capacity, _Alignment) _insitu;
+
+    using parent_type::_size;
+    using parent_type::_capacity;
+    using parent_type::_storage;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
