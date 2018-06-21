@@ -30,6 +30,12 @@ public:
     }
 
     template <typename T>
+    T& FlatData() const {
+        Assert(*MakeTraits<T>() == *_traits);
+        return (*reinterpret_cast<T*>(_data));
+    }
+
+    template <typename T>
     T& TypedData() const {
         const PTypeTraits dst = MakeTraits<T>();
         void* const casted = ((*dst == *_traits) ? _data : Cast(dst));
@@ -55,7 +61,9 @@ public:
     }
 
     FTypeId TypeId() const { return _traits->TypeId(); }
+    ETypeFlags TypeFlags() const { return _traits->TypeFlags(); }
     FTypeInfos TypeInfos() const { return _traits->TypeInfos(); }
+    size_t SizeInBytes() const { return _traits->SizeInBytes(); }
 
     bool IsDefaultValue() const { return _traits->IsDefaultValue(_data); }
     void ResetToDefaultValue() { _traits->ResetToDefaultValue(_data); }
@@ -106,7 +114,9 @@ public:
         _traits->Swap(_data, other.Data());
     }
 
-    bool Accept(IAtomVisitor* visitor) const { return _traits->Accept(visitor, _data); }
+    bool Accept(IAtomVisitor* visitor) const { 
+        return _traits->Accept(visitor, _data); 
+    }
 
     inline friend void swap(FAtom& lhs, FAtom& rhs) { lhs.Swap(rhs); }
     inline friend hash_t hash_value(const FAtom& value) { return value.HashValue(); }
@@ -154,12 +164,12 @@ CORE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FAtom& atom
 CORE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FAtom& atom);
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE T& checked_cast(RTTI::FAtom& atom) noexcept {
+T& checked_cast(RTTI::FAtom& atom) noexcept {
     return atom.TypedData<T>();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE const T& checked_cast(const RTTI::FAtom& atom) noexcept {
+const T& checked_cast(const RTTI::FAtom& atom) noexcept {
     return atom.TypedConstData<T>();
 }
 //----------------------------------------------------------------------------

@@ -94,7 +94,7 @@ const FMetaFunction* FMetaClass::FunctionIFP(const FName& name, EFunctionFlags f
         });
         if (_functionsSelf.end() == it)
             return nullptr;
-        pfunction = &*it;
+        pfunction = std::addressof(*it);
     }
     Assert(pfunction);
 
@@ -119,7 +119,7 @@ const FMetaFunction* FMetaClass::FunctionIFP(const FStringView& name, EFunctionF
         });
         if (_functionsSelf.end() == it)
             return nullptr;
-        pfunction = &*it;
+        pfunction = std::addressof(*it);
     }
     Assert(pfunction);
 
@@ -174,7 +174,7 @@ const FMetaProperty* FMetaClass::PropertyIFP(const FName& name, EPropertyFlags f
         });
         if (_propertiesSelf.end() == it)
             return nullptr;
-        pproperty = &*it;
+        pproperty = std::addressof(*it);
     }
     Assert(pproperty);
 
@@ -199,7 +199,7 @@ const FMetaProperty* FMetaClass::PropertyIFP(const FStringView& name, EPropertyF
         });
         if (_propertiesSelf.end() == it)
             return nullptr;
-        pproperty = &*it;
+        pproperty = std::addressof(*it);
     }
     Assert(pproperty);
 
