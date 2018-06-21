@@ -17,9 +17,12 @@ struct TInSituPtr {
     STATIC_CONST_INTEGRAL(intptr_t, NullMagick, 0xDEADF001DEADF001ull);
 #endif
     union {
+        intptr_t VTable;
         POD_STORAGE(T) InSitu;
-        intptr_t VTable = NullMagick;
     };
+
+    explicit TInSituPtr(Meta::FNoInit) {}
+    TInSituPtr() : VTable(NullMagick) {}
 
     bool Valid() const { return (VTable != NullMagick); }
     CORE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
@@ -38,12 +41,29 @@ struct TInSituPtr {
 
     template <typename U, typename... _Args>
     U* Create(_Args&&... args) {
+        Assert(not Valid());
+        return Create_AssumeNotValid(std::forward<_Args>(args)...);
+    }
+
+    template <typename U, typename... _Args>
+    U* Create_AssumeNotValid(_Args&&... args) {
         STATIC_ASSERT(std::is_base_of<T, U>::value);
         STATIC_ASSERT(sizeof(U) == sizeof(T));
-        Assert(not Valid());
-        U* const result = INPLACE_NEW(std::addressof(InSitu), U){ std::forward<_Args>(args)... };
+        U* const result = INPLACE_NEW(std::addressof(InSitu), U) { std::forward<_Args>(args)... };
         Assert(Valid());
         return result;
+    }
+
+    void CreateRawCopy(const T& src) {
+        STATIC_ASSERT(std::is_trivially_destructible_v<T>);
+        Assert(not Valid());
+        ::memcpy(&InSitu, (void*)&src, sizeof(T));
+        Assert(Valid());
+    }
+
+    void CreateRawCopy_AssumeNotInitialized(const T& src) {
+        ::memcpy(&InSitu, (void*)&src, sizeof(T));
+        Assert(Valid());
     }
 
     void Destroy() {
@@ -54,8 +74,8 @@ struct TInSituPtr {
 
     template <typename U, typename... _Args>
     static TInSituPtr Make(_Args&&... args) {
-        TInSituPtr p;
-        p.Create<U>(std::forward<_Args>(args)...);
+        TInSituPtr p(Meta::NoInit);
+        p.Create_AssumeNotValid<U>(std::forward<_Args>(args)...);
         return p;
     }
 
@@ -68,6 +88,12 @@ struct TInSituPtr {
         return not operator ==(lhs, rhs);
     }
 };
+//----------------------------------------------------------------------------
+// Consider TInSituPtr<T> as POD if and only if T is considered as POD
+namespace Meta {
+template <typename T>
+struct TIsPod< TInSituPtr<T> > : TIsPod<T> {};
+} //!Meta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
