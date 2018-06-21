@@ -274,102 +274,6 @@ void TBasicString<_Char>::clear_ReleaseMemory() {
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicString<_Char> operator +(const TBasicString<_Char>& lhs, const TBasicString<_Char>& rhs) {
-    const size_t newSize = (lhs.size() + rhs.size());
-    TBasicString<_Char> result;
-    result.reserve(newSize);
-    result.assign(lhs);
-    result.append(rhs);
-    return result;
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicString<_Char> operator +(TBasicString<_Char>&& lhs, TBasicString<_Char>&& rhs) {
-    if (capacity < rhs.capacity()) {
-        rhs.insert(0, lhs);
-        return std::move(rhs);
-    }
-    else {
-        lhs.append(rhs);
-        return std::move(lhs);
-    }
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicString<_Char> operator +(TBasicString<_Char>&& lhs, const TBasicString<_Char>& rhs) {
-    lhs.append(rhs);
-    return std::move(lhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicString<_Char> operator +(const TBasicString<_Char>& lhs, TBasicString<_Char>&& rhs) {
-    rhs.insert(0, lhs);
-    return std::move(rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicString<_Char> operator +(const TBasicString<_Char>& lhs, const TBasicStringView<_Char>& rhs) {
-    const size_t newSize = (lhs.size() + rhs.size());
-    TBasicString<_Char> result;
-    result.reserve(newSize);
-    result.assign(lhs);
-    result.append(rhs);
-    return result;
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicString<_Char> operator +(TBasicString<_Char>&& lhs, const TBasicStringView<_Char>& rhs) {
-    lhs.append(rhs);
-    return std::move(lhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicString<_Char> operator +(const TBasicStringView<_Char>& lhs, const TBasicString<_Char>& rhs) {
-    const size_t newSize = (lhs.size() + rhs.size());
-    TBasicString<_Char> result;
-    result.reserve(newSize);
-    result.assign(lhs);
-    result.append(rhs);
-    return result;
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicString<_Char> operator +(const TBasicStringView<_Char>& lhs, TBasicString<_Char>&& rhs) {
-    rhs.insert(0, lhs);
-    return std::move(rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicString<_Char> operator +(const TBasicString<_Char>& lhs, _Char rhs) {
-    TBasicString<_Char> result;
-    result.reserve(lhs.size() + 1);
-    result.assign(lhs);
-    result.append(rhs);
-    return result;
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicString<_Char> operator +(TBasicString<_Char>&& lhs, _Char rhs) {
-    lhs.append(rhs);
-    return std::move(lhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicString<_Char> operator +(_Char lhs, const TBasicString<_Char>& rhs) {
-    TBasicString<_Char> result;
-    result.reserve(rhs.size() + 1);
-    result.append(lhs);
-    result.append(rhs);
-    return result;
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicString<_Char> operator +(_Char lhs, TBasicString<_Char>&& rhs) {
-    rhs.insert(0, lhs);
-    return std::move(rhs);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
 bool TBasicString<_Char>::gsub(_Char from, _Char to) {
     bool modified = false;
     for (_Char& ch : MutableView()) {
@@ -545,6 +449,104 @@ TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeWNullChar_(size_t count)
     Assert(CheckInvariants());
 
     return dst;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(const TBasicString<_Char>& lhs, const TBasicString<_Char>& rhs) {
+    const size_t newSize = (lhs.size() + rhs.size());
+    TBasicString<_Char> result;
+    result.reserve(newSize);
+    result.assign(lhs);
+    result.append(rhs);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(TBasicString<_Char>&& lhs, TBasicString<_Char>&& rhs) {
+    if (lhs.capacity() < rhs.capacity()) {
+        rhs.insert(rhs.begin(), lhs);
+        return std::move(rhs);
+    }
+    else {
+        lhs.append(rhs);
+        return std::move(lhs);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(TBasicString<_Char>&& lhs, const TBasicString<_Char>& rhs) {
+    lhs.append(rhs);
+    return std::move(lhs);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(const TBasicString<_Char>& lhs, TBasicString<_Char>&& rhs) {
+    rhs.insert(rhs.begin(), lhs);
+    return std::move(rhs);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(const TBasicString<_Char>& lhs, const TBasicStringView<_Char>& rhs) {
+    const size_t newSize = (lhs.size() + rhs.size());
+    TBasicString<_Char> result;
+    result.reserve(newSize);
+    result.assign(lhs);
+    result.append(rhs);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(TBasicString<_Char>&& lhs, const TBasicStringView<_Char>& rhs) {
+    lhs.append(rhs);
+    return std::move(lhs);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(const TBasicStringView<_Char>& lhs, const TBasicString<_Char>& rhs) {
+    const size_t newSize = (lhs.size() + rhs.size());
+    TBasicString<_Char> result;
+    result.reserve(newSize);
+    result.assign(lhs);
+    result.append(rhs);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(const TBasicStringView<_Char>& lhs, TBasicString<_Char>&& rhs) {
+    rhs.insert(rhs.begin(), lhs);
+    return std::move(rhs);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(const TBasicString<_Char>& lhs, _Char rhs) {
+    TBasicString<_Char> result;
+    result.reserve(lhs.size() + 1);
+    result.assign(lhs);
+    result.append(rhs);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(TBasicString<_Char>&& lhs, _Char rhs) {
+    lhs.append(rhs);
+    return std::move(lhs);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(_Char lhs, const TBasicString<_Char>& rhs) {
+    TBasicString<_Char> result;
+    result.reserve(rhs.size() + 1);
+    result.append(lhs);
+    result.append(rhs);
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicString<_Char> TBasicString<_Char>::Concat(_Char lhs, TBasicString<_Char>&& rhs) {
+    rhs.insert(rhs.begin(), lhs);
+    return std::move(rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

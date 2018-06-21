@@ -5,13 +5,25 @@
 #include "StringBuilder.h"
 #include "StringView.h"
 
+#include "Diagnostic/LastError.h"
+#include "Diagnostic/Logger.h"
+#include "IO/FormatHelpers.h"
+
 #if not EXPORT_CORE_STRING
 #   include "String-inl.h"
-/*extern */template class Core::TBasicString<char>;
-/*extern */template class Core::TBasicString<wchar_t>;
+
+#   define CORE_INSTANTIATE_BASICSTRING(_CHAR) \
+    template class Core::TBasicString<_CHAR>;
+
+    CORE_INSTANTIATE_BASICSTRING(char)
+    CORE_INSTANTIATE_BASICSTRING(wchar_t)
+
+#   undef CORE_INSTANTIATE_BASICSTRING
+
 #endif
 
 namespace Core {
+LOG_CATEGORY(CORE_API, String)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -41,6 +53,13 @@ size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr) {
 //----------------------------------------------------------------------------
 size_t ToCStr(char *dst, size_t capacity, const FWString& wstr) {
     return ToCStr(dst, capacity, wstr.c_str(), wstr.size());
+}
+//----------------------------------------------------------------------------
+FStringView ToCStr(const TMemoryView<char>& dst, const FWStringView& wstr) {
+    size_t len = ToCStr(dst.data(), dst.size(), wstr.data(), wstr.size());
+    Assert(0 == len || len - 1 == wstr.size());
+    len = (len ? len - 1/* null char */ : 0);
+    return FStringView(dst.data(), len);
 }
 //----------------------------------------------------------------------------
 size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr, size_t length) {

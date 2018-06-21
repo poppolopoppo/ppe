@@ -47,8 +47,11 @@ public:
     explicit TBasicString(std::initializer_list<_Char> il) : TBasicString() { assign(il); }
     template <typename _It>
     TBasicString(_It first, _It last) : TBasicString() { assign(first, last); }
+
     template <size_t _Dim>
     TBasicString(const _Char(&staticStr)[_Dim]) : TBasicString(MakeStringView(staticStr)) {}
+    template <size_t _Dim>
+    TBasicString& operator =(const _Char(&staticStr)[_Dim]) { assign(MakeStringView(staticStr)); return (*this); }
 
     explicit TBasicString(const stringview_type& str) : TBasicString() { assign(str); }
     TBasicString& operator =(const stringview_type& str) { assign(str); return (*this); }
@@ -225,15 +228,20 @@ public:
     template <size_t _Dim>
     TBasicString& operator +=(const _Char(&staticArray)[_Dim]) { append(MakeStringView(staticArray)); return (*this); }
 
-    inline friend TBasicString operator +(const TBasicString& lhs, const TBasicString& rhs);
-    inline friend TBasicString operator +(TBasicString&& lhs, TBasicString&& rhs);
-    inline friend TBasicString operator +(TBasicString&& lhs, const TBasicString& rhs);
-    inline friend TBasicString operator +(const TBasicString& lhs, TBasicString&& rhs);
+    inline friend TBasicString operator +(const TBasicString& lhs, const TBasicString& rhs) { return Concat(lhs, rhs); }
+    inline friend TBasicString operator +(TBasicString&& lhs, TBasicString&& rhs) { return Concat(std::move(lhs), std::move(rhs)); }
+    inline friend TBasicString operator +(TBasicString&& lhs, const TBasicString& rhs) { return Concat(std::move(lhs), rhs); }
+    inline friend TBasicString operator +(const TBasicString& lhs, TBasicString&& rhs) { return Concat(lhs, std::move(rhs)); }
 
-    inline friend TBasicString operator +(const TBasicString& lhs, const stringview_type& rhs);
-    inline friend TBasicString operator +(TBasicString&& lhs, const stringview_type& rhs);
-    inline friend TBasicString operator +(const stringview_type& lhs, const TBasicString& rhs);
-    inline friend TBasicString operator +(const stringview_type& lhs, TBasicString&& rhs);
+    inline friend TBasicString operator +(const TBasicString& lhs, const stringview_type& rhs) { return Concat(lhs, rhs); }
+    inline friend TBasicString operator +(TBasicString&& lhs, const stringview_type& rhs) { return Concat(std::move(lhs), rhs); }
+    inline friend TBasicString operator +(const stringview_type& lhs, const TBasicString& rhs) { return Concat(lhs, rhs); }
+    inline friend TBasicString operator +(const stringview_type& lhs, TBasicString&& rhs) { return Concat(lhs, std::move(rhs)); }
+
+    inline friend TBasicString operator +(const TBasicString& lhs, _Char rhs) { return Concat(lhs, rhs); }
+    inline friend TBasicString operator +(TBasicString&& lhs, _Char rhs) { return Concat(std::move(lhs), rhs); }
+    inline friend TBasicString operator +(_Char lhs, const TBasicString& rhs) { return Concat(lhs, rhs); }
+    inline friend TBasicString operator +(_Char lhs, TBasicString&& rhs) { return Concat(lhs, std::move(rhs)); }
 
     template <size_t _Dim>
     inline friend TBasicString operator +(const TBasicString& lhs, const _Char(&rhs)[_Dim]) { return operator +(lhs, MakeStringView(rhs)); }
@@ -243,11 +251,6 @@ public:
     inline friend TBasicString operator +(const _Char(&lhs)[_Dim], const TBasicString& rhs) { return operator +(MakeStringView(lhs), rhs); }
     template <size_t _Dim>
     inline friend TBasicString operator +(const _Char(&lhs)[_Dim], TBasicString&& rhs) { return operator +(MakeStringView(lhs), std::move(rhs)); }
-
-    inline friend TBasicString operator +(const TBasicString& lhs, _Char rhs);
-    inline friend TBasicString operator +(TBasicString&& lhs, _Char rhs);
-    inline friend TBasicString operator +(_Char lhs, const TBasicString& rhs);
-    inline friend TBasicString operator +(_Char lhs, TBasicString&& rhs);
 
     inline friend bool operator ==(const TBasicString& lhs, const TBasicString& rhs) { return Equals(lhs.MakeView(), rhs.MakeView()); }
     inline friend bool operator ==(const stringview_type& lhs, const TBasicString& rhs) { return Equals(lhs, rhs.MakeView()); }
@@ -300,6 +303,21 @@ public:
     inline friend bool operator >=(const _Char(&lhs)[_Dim], const TBasicString& rhs) { return (Compare(MakeStringView(lhs), rhs.MakeView()) >= 0); }
 
     inline friend void swap(TBasicString& lhs, TBasicString& rhs) { std::swap(lhs._large, rhs._large); }
+
+    static TBasicString Concat(const TBasicString& lhs, const TBasicString& rhs);
+    static TBasicString Concat(TBasicString&& lhs, TBasicString&& rhs);
+    static TBasicString Concat(TBasicString&& lhs, const TBasicString& rhs);
+    static TBasicString Concat(const TBasicString& lhs, TBasicString&& rhs);
+
+    static TBasicString Concat(const TBasicString& lhs, const stringview_type& rhs);
+    static TBasicString Concat(TBasicString&& lhs, const stringview_type& rhs);
+    static TBasicString Concat(const stringview_type& lhs, const TBasicString& rhs);
+    static TBasicString Concat(const stringview_type& lhs, TBasicString&& rhs);
+
+    static TBasicString Concat(const TBasicString& lhs, _Char rhs);
+    static TBasicString Concat(TBasicString&& lhs, _Char rhs);
+    static TBasicString Concat(_Char lhs, const TBasicString& rhs);
+    static TBasicString Concat(_Char lhs, TBasicString&& rhs);
 
 public: // non stl
     // memory stealing between TBasicStringBuilder & TBasicString
