@@ -81,6 +81,8 @@ void FRTTIModule::ClearAll_UnusedMemory() {
 
 #include "RTTI_fwd.h"
 #include "RTTI_Namespace-impl.h"
+
+#include "Any.h"
 #include "Atom.h"
 #include "AtomVisitor.h"
 #include "MetaObject.h"
@@ -92,7 +94,11 @@ void FRTTIModule::ClearAll_UnusedMemory() {
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/FormatHelpers.h"
+#include "Core/IO/FS/Dirpath.h"
+#include "Core/IO/FS/Filename.h"
 #include "Core/IO/String.h"
+#include "Core/Maths/ScalarMatrix.h"
+#include "Core/Maths/ScalarVector.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -108,6 +114,13 @@ RTTI_NAMESPACE_DEF(, RTTI_UnitTest);
 //----------------------------------------------------------------------------
 FWD_REFPTR(Titi);
 FWD_REFPTR(Toto);
+//----------------------------------------------------------------------------
+struct FAnonymousStructAsTuple {
+    i32 Age;
+    float Ratings;
+    FString Name;
+    float3 Position;
+};
 //----------------------------------------------------------------------------
 class FTiti : public Core::RTTI::FMetaObject {
 public:
@@ -130,6 +143,8 @@ public:
 private:
     int _count;
     Core::FString _name;
+    FAnonymousStructAsTuple _structAsTuple;
+    TVector<FAnonymousStructAsTuple> _structAsTupleVector;
     VECTOR(NativeTypes, PTiti) _tities;
     VECTOR(NativeTypes, PTiti) _titiesOld;
     VECTOR(NativeTypes, PCTiti) _consttities;
@@ -139,6 +154,8 @@ private:
 RTTI_CLASS_BEGIN(RTTI_UnitTest, FTiti, RTTI::EClassFlags::Public)
 RTTI_PROPERTY_PRIVATE_FIELD(_count)
 RTTI_PROPERTY_FIELD_ALIAS(_name, Name)
+RTTI_PROPERTY_PRIVATE_FIELD(_structAsTuple)
+RTTI_PROPERTY_PRIVATE_FIELD(_structAsTupleVector)
 RTTI_PROPERTY_PRIVATE_FIELD(_tities)
 RTTI_PROPERTY_PRIVATE_DEPRECATED(_titiesOld)
 RTTI_PROPERTY_PRIVATE_FIELD(_consttities)
@@ -260,18 +277,24 @@ static void TestRTTI_() {
 
     RTTI_NAMESPACE(RTTI_UnitTest).Start();
 
-    RTTIPrintType_< int >();
-    RTTIPrintType_< size_t >();
-    RTTIPrintType_< FString >();
+#define DECL_RTTI_NATIVETYPE_PRINT(_Name, T, _TypeId) RTTIPrintType_< T >();
+    FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_PRINT)
+#undef DECL_RTTI_NATIVETYPE_PRINT
+
     RTTIPrintType_< TVector<int> >();
     RTTIPrintType_< TPair<RTTI::FName, float> >();
     RTTIPrintType_< PTiti >();
     RTTIPrintType_< TPair<FWString, PTiti> >();
+    RTTIPrintType_< uword2 >();
+    RTTIPrintType_< float3 >();
+    RTTIPrintType_< float3x3 >();
     RTTIPrintType_< VECTOR(NativeTypes, PTiti) >();
     RTTIPrintType_< HASHMAP(NativeTypes, int, int) >();
     RTTIPrintType_< HASHMAP(NativeTypes, FString, PTiti) >();
     RTTIPrintType_< ASSOCIATIVE_VECTOR(NativeTypes, FString, PTiti) >();
     //RTTIPrintType_< HASHSET(RTTI, FString) >();
+    RTTIPrintType_< FAnonymousStructAsTuple >();
+    RTTIPrintType_< TVector<FAnonymousStructAsTuple> >();
 
     RTTIPrintClass_<FTiti>();
     RTTIPrintClass_<FToto>();
