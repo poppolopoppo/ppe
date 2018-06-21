@@ -26,6 +26,10 @@
 #include <clocale>
 #include <locale.h>
 
+#ifdef PLATFORM_WINDOWS
+#   include <mbctype.h>
+#endif
+
 #define USE_APPLICATION_EXCEPTION_TRAP 1 //%_NOCOMMIT%
 
 PRAGMA_INITSEG_LIB
@@ -148,6 +152,12 @@ FApplicationContext::FApplicationContext() {
 
     // Force locale to EN with UTF-8 encoding
     std::setlocale(LC_ALL, "en_US.UTF-8");
+
+#ifdef PLATFORM_WINDOWS
+    // _setmbcp, with an argument of _MB_CP_LOCALE makes the multibyte code page the same as the setlocale code page.
+    // https://docs.microsoft.com/en-us/cpp/c-runtime-library/locale
+    ::_setmbcp(_MB_CP_LOCALE);
+#endif
 
     // Set CRT heap debug options for debugging windows heap
 #ifdef PLATFORM_WINDOWS

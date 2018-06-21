@@ -517,6 +517,31 @@ size_t ToWCStr(wchar_t(&dst)[_Dim], const char *cstr) { return ToWCStr(dst, _Dim
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class ECodePage : int {
+    ACP = 0,
+    UTF_8 = 65001,
+    Windows_1252 = 1252,
+    ANSI = Windows_1252,
+};
+//----------------------------------------------------------------------------
+CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
+CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr);
+CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const FWString& wstr);
+CORE_API FStringView WCHAR_to_CHAR(ECodePage codePage, const TMemoryView<char>& dst, const FWStringView& wstr);
+//----------------------------------------------------------------------------
+CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const char *cstr, size_t length);
+CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const char *cstr);
+CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const FString& str);
+CORE_API FWStringView CHAR_to_WCHAR(ECodePage codePage, const TMemoryView<wchar_t>& dst, const FStringView& str);
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+size_t WCHAR_to_CHAR(ECodePage codePage, char(&dst)[_Dim], const wchar_t *wcstr) { return WCHAR_to_CHAR(codePage, dst, _Dim, wcstr); }
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t(&dst)[_Dim], const char *cstr) { return CHAR_to_WCHAR(codePage, dst, _Dim, cstr); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 CORE_API FString ToString(const wchar_t *wcstr, size_t length);
 CORE_API FString ToString(const wchar_t *wcstr);
 CORE_API FString ToString(const FWString& wstr);
