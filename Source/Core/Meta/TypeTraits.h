@@ -37,6 +37,15 @@ struct TCheckSameSize {
     };
     STATIC_CONST_INTEGRAL(bool, value, TTest<sizeof(A), sizeof(B)>::value);
 };
+template <typename _Size, typename _Capacity>
+struct TCheckFitInSize {
+    template <size_t X, size_t Y>
+    struct TTest {
+        STATIC_CONST_INTEGRAL(bool, value, (X <= Y));
+        static_assert(value, "_Size should be inferior or equal to _Capacity !");
+    };
+    STATIC_CONST_INTEGRAL(bool, value, TTest<sizeof(_Size), sizeof(_Capacity)>::value);
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -272,8 +281,8 @@ void Construct(T* p, _Args&&... args) {
 template <typename T>
 typename std::enable_if<Meta::TIsPod<T>::value >::type Destroy(T* ) {
     // PODs don't have a destructor
-	typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
-	(void) sizeof(type_must_be_complete);
+    typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
+    (void) sizeof(type_must_be_complete);
 }
 //----------------------------------------------------------------------------
 template <typename T>

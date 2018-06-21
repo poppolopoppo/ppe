@@ -40,6 +40,7 @@ MEMORYDOMAIN_IMPL(Task,                                 Core)
 MEMORYDOMAIN_IMPL(Token,                                Core)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(RTTI,                           UsedMemory)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(Any,                      RTTI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Atom,                     RTTI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(MetaClass,                RTTI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(MetaDatabase,             RTTI)

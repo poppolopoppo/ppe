@@ -9,146 +9,414 @@
 #include "Core/Maths/ScalarMatrix.h"
 #include "Core/Maths/ScalarVector.h"
 
-// Fall-back to heap allocations when debugging memory to validate memory accesses of FAny
-#define DISABLE_CORE_RTTI_FANY_SSO (USE_CORE_MEMORY_DEBUGGING)
+#define USE_CORE_RTTI_ANY_INSITU (not USE_CORE_MEMORY_DEBUGGING)
 
 namespace Core {
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// checks for padding
-STATIC_ASSERT(sizeof(FAny) == FAny::GSmallBufferSize + sizeof(intptr_t));
-//----------------------------------------------------------------------------
-// checks that 80% of wrapped types are fitting in small buffer
 namespace {
+//----------------------------------------------------------------------------
+STATIC_ASSERT(sizeof(FAny) == FAny::GInSituSize + sizeof(intptr_t)); // checks for padding
 constexpr size_t GNumSupportedTypes = 0
 #define DECL_RTTI_NATIVETYPE_SUPPORTED(_Name, T, _TypeId) + 1
 FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_SUPPORTED)
 #undef DECL_RTTI_NATIVETYPE_SUPPORTED
     ;
-constexpr size_t GNumSupportedTypesFittingInSmallBuffer = 0
-#define DECL_RTTI_NATIVETYPE_SUPPORTED(_Name, T, _TypeId) + (sizeof(T) <= FAny::GSmallBufferSize ? 1 : 0)
+constexpr size_t GNumSupportedTypesFittingInSitu = 0
+#define DECL_RTTI_NATIVETYPE_SUPPORTED(_Name, T, _TypeId) + (sizeof(T) <= FAny::GInSituSize ? 1 : 0)
 FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_SUPPORTED)
 #undef DECL_RTTI_NATIVETYPE_SUPPORTED
     ;
-STATIC_ASSERT(GNumSupportedTypesFittingInSmallBuffer > 0.8f * GNumSupportedTypes);
+// checks that all types can be wrapped in except for FAny
+STATIC_ASSERT(GNumSupportedTypesFittingInSitu == GNumSupportedTypes - 1/* FAny */);
+STATIC_ASSERT(sizeof(FAny) > sizeof(FAny::GInSituSize));
+//----------------------------------------------------------------------------
+static FORCE_INLINE bool Any_FitInSitu_(size_t sizeInBytes) {
+#if USE_CORE_RTTI_ANY_INSITU
+    return (sizeInBytes <= FAny::GInSituSize);
+#else
+    return false;
+#endif
+}
+//----------------------------------------------------------------------------
+static const ITypeTraits& Any_Traits_() {
+    ONE_TIME_INITIALIZE(const PTypeTraits, GInstance, MakeTraits<FAny>());
+    return (*GInstance);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
-static bool AnyCanUseSSO_(const PTypeTraits& traits) {
-    return (!(DISABLE_CORE_RTTI_FANY_SSO || traits->SizeInBytes() > FAny::GSmallBufferSize));
-}
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FAny::FAny() NOEXCEPT {
-    ONLY_IF_ASSERT(::memset(std::addressof(_smallBuffer), 0xDD, sizeof(_smallBuffer)));
-}
-//----------------------------------------------------------------------------
-FAny::FAny(const PTypeTraits& traits) NOEXCEPT {
-    FAtom self(Allocate_(PTypeTraits(traits)));
-    _traits->Create(self.Data());
-    Assert(self.IsDefaultValue());
-}
-//----------------------------------------------------------------------------
-void* FAny::Data() {
-    if (Likely(_traits))
-        return (Likely(AnyCanUseSSO_(_traits)) ? std::addressof(_smallBuffer) : _externalStorage);
-    else
-        return nullptr;
-}
-//----------------------------------------------------------------------------
-void FAny::Reset() {
-    if (Likely(_traits)) {
-        _traits->Destroy(Data());
+FAny::FAny(const FAny& other) 
+:   _traits(Meta::NoInit) {
 
-        if (Unlikely(not AnyCanUseSSO_(_traits)))
-            _traits->Deallocate(_externalStorage);
-
-        _traits.Destroy();
-
-        ONLY_IF_ASSERT(::memset(std::addressof(_smallBuffer), 0xDD, sizeof(_smallBuffer)));
-    }
-    Assert((void*)CODE3264(0xDDDDDDDDul, 0xDDDDDDDDDDDDDDDDull));
-}
-//----------------------------------------------------------------------------
-FAtom FAny::Reset(const PTypeTraits& traits) {
-    Reset();
-
-    if (traits == MakeTraits<FAny>()) {
-        return RTTI::MakeAtom(this);
+    if (other._traits) {
+        const size_t sizeInBytes = other._traits->SizeInBytes();
+        AssignCopy_AssumeNotInitialized_(other.Data_(sizeInBytes), *other._traits, sizeInBytes);
     }
     else {
-        FAtom self(Allocate_(PTypeTraits(traits)));
-        _traits->Create(self.Data());
-        Assert(self.IsDefaultValue());
-        return InnerAtom();
+        _traits = PTypeTraits();
+        ONLY_IF_ASSERT(::memset(&_inSitu, 0xDD, GInSituSize));
+    }
+
+    Assert(Equals(other));
+}
+//----------------------------------------------------------------------------
+FAny& FAny::operator =(const FAny& other) {
+    if (other._traits) {
+        const size_t sizeInBytes = other._traits->SizeInBytes();
+        AssignCopy_(other.Data_(sizeInBytes), *other._traits, sizeInBytes);
+    }
+    else if (_traits) {
+        Reset_AssumeInitialized_(_traits->SizeInBytes());
+    }
+
+    Assert(Equals(other));
+    return (*this);
+}
+//----------------------------------------------------------------------------
+FAny::FAny(FAny&& rvalue)
+:   _traits(Meta::NoInit) {
+
+    if (rvalue._traits) {
+        const size_t sizeInBytes = rvalue._traits->SizeInBytes();
+        
+        if (Any_FitInSitu_(sizeInBytes)) {
+            AssignMoveDestroy_AssumeNotInitialized_(&rvalue._inSitu, *rvalue._traits, sizeInBytes);
+        }
+        else {
+            _traits = rvalue._traits;
+            _externalBlock = rvalue._externalBlock; // steel the allocation
+        }
+
+        rvalue._traits = PTypeTraits();
+        ONLY_IF_ASSERT(::memset(&rvalue._inSitu, 0xDD, GInSituSize));
+
+        Assert(_traits);
+    }
+    else {
+        _traits = PTypeTraits();
+        ONLY_IF_ASSERT(::memset(&_inSitu, 0xDD, GInSituSize));
     }
 }
 //----------------------------------------------------------------------------
-void FAny::AssignCopy(const FAtom& atom) {
-    Assert(atom);
+FAny& FAny::operator =(FAny&& rvalue) {
+    if (rvalue._traits) {
+        const size_t sizeInBytes = rvalue._traits->SizeInBytes();
+        
+        if (Any_FitInSitu_(sizeInBytes)) {
+            AssignMoveDestroy_(&rvalue._inSitu, *rvalue._traits, sizeInBytes);
+        }
+        else {
+            if (_traits) // release our own allocation in necessary
+                Reset_AssumeInitialized_(_traits->SizeInBytes());
 
-    if (atom.Traits() == _traits) {
-        _traits->Copy(atom, Data());
+            _traits = rvalue._traits;
+            _externalBlock = rvalue._externalBlock; // steel the allocation
+        }
+
+        rvalue._traits = PTypeTraits();
+        ONLY_IF_ASSERT(::memset(&rvalue._inSitu, 0xDD, GInSituSize));
     }
-    else {
-        Reset();
-        FAtom self(Allocate_(PTypeTraits(atom.Traits())));
-        _traits->CreateCopy(self.Data(), atom);
+    else if (_traits) {
+        Reset_AssumeInitialized_(_traits->SizeInBytes());
     }
+
+    return (*this);
 }
 //----------------------------------------------------------------------------
-void FAny::AssignMove(const FAtom& atom) {
-    Assert(atom);
+FAny::FAny(const PTypeTraits& traits) 
+:   _traits(Meta::NoInit) {
+    Assert(traits);
+    Assert(Any_Traits_() != *traits);
+    
+    const size_t sizeInBytes = traits->SizeInBytes();
+    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
+    
+    _traits = traits;
+    _traits->Construct(data);
 
-    if (atom.Traits() == _traits) {
-        _traits->Move(atom.Data(), Data());
+    Assert(_traits->IsDefaultValue(data));
+}
+//----------------------------------------------------------------------------
+FAny::~FAny()  {
+    if (_traits)
+        Reset_AssumeInitialized_(_traits->SizeInBytes());
+}
+//----------------------------------------------------------------------------
+FAny& FAny::Reset(const PTypeTraits& traits) {
+    Assert(traits);
+    Assert(Any_Traits_() != *traits);
+
+    if (_traits == traits) {
+        Assert(_traits);
+
+        _traits->ResetToDefaultValue(Data());
+
+        return (*this);
     }
-    else {
-        Reset();
-        FAtom self(Allocate_(PTypeTraits(atom.Traits())));
-        _traits->CreateMove(self.Data(), atom.Data());
+    
+    const size_t newSize = traits->SizeInBytes();
+
+    if (_traits) {
+        const size_t oldSize = _traits->SizeInBytes();
+
+        if (not Any_FitInSitu_(newSize) &&
+            not Any_FitInSitu_(oldSize) &&
+            newSize <= _externalBlock.SizeInBytes ) {
+
+            _traits->Destroy(_externalBlock.Ptr);
+            _traits = traits;
+            _traits->Construct(_externalBlock.Ptr);
+
+            return (*this);
+        }
+        else {
+            Reset_AssumeInitialized_(oldSize);
+        }
     }
+
+    void* const data = Allocate_AssumeNotInitialized_(newSize);
+
+    _traits = traits;
+    _traits->Construct(data);
+    
+    Assert(_traits->IsDefaultValue(data));
+    return (*this); // can be implicit casted as FAtom for convenience
 }
 //----------------------------------------------------------------------------
 bool FAny::Equals(const FAny& other) const {
-    return ((_traits == other._traits)
-        ? (not _traits || _traits->Equals(Data(), other.Data()) )
-        : false );
+    if (_traits != other._traits)
+        return false;
+    else if (not _traits)
+        return true;
+    else {
+        const size_t sizeInBytes = _traits->SizeInBytes();
+        return (Any_FitInSitu_(sizeInBytes)
+            ? _traits->Equals(&_inSitu, &other._inSitu)
+            : _traits->Equals(_externalBlock.Ptr, other._externalBlock.Ptr) );
+    }
 }
 //----------------------------------------------------------------------------
 hash_t FAny::HashValue() const {
-    return ((_traits)
-        ? _traits->HashValue(Data())
-        : hash_t(0) );
+    return (_traits 
+        ? _traits->HashValue(Data()) 
+        : hash_t(size_t(-1)) );
 }
 //----------------------------------------------------------------------------
-FAtom FAny::Allocate_(PTypeTraits&& traits) {
-    Assert(traits);
-    Assert(MakeTraits<FAny>() != traits); // oh boy, stop this meta infinite loop
+void FAny::Swap(FAny& other) {
+    if (_traits != other._traits) {
+        FAny tmp(std::move(*this));
+        *this = std::move(other);
+        other = std::move(tmp);
+    }
+    else if (_traits) {
+        const size_t sizeInBytes = _traits->SizeInBytes();
+
+        if (Any_FitInSitu_(sizeInBytes))
+            _traits->Swap(&_inSitu, &other._inSitu);
+        else
+            _traits->Swap(&_externalBlock, &other._externalBlock);
+    }
+}
+//----------------------------------------------------------------------------
+void* FAny::Data_(const size_t sizeInBytes) const {
+    Assert(_traits);
+    Assert(_traits->SizeInBytes() == sizeInBytes);
+
+    return (void*)(Any_FitInSitu_(sizeInBytes) ? &_inSitu : _externalBlock.Ptr);
+}
+//----------------------------------------------------------------------------
+void FAny::AssignCopy_(const void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
+    Assert(src);
+    Assert(traits.SizeInBytes() == sizeInBytes);
+
+    if (Any_Traits_() == traits) { // avoid wrapping FAny in FAny
+
+        if (static_cast<const FAny*>(src)->Valid()) {
+            AssignCopy(static_cast<const FAny*>(src)->InnerAtom());
+        }
+        else if (_traits) {
+            Reset_AssumeInitialized_(_traits->SizeInBytes());
+        }
+
+        return;
+    }
+    else if (_traits) {
+
+        if (traits == *_traits) {
+            traits.Copy(src, Data_(sizeInBytes));
+
+            return;
+        }
+
+        const size_t oldSize = _traits->SizeInBytes();
+
+        if (not Any_FitInSitu_(sizeInBytes) &&
+            not Any_FitInSitu_(oldSize) &&
+            sizeInBytes <= _externalBlock.SizeInBytes ) {
+            
+            _traits->Destroy(_externalBlock.Ptr);
+            _traits.CreateRawCopy_AssumeNotInitialized(traits);
+            _traits->ConstructCopy(_externalBlock.Ptr, src);
+
+            return;
+        }
+        
+        Reset_AssumeInitialized_(oldSize);
+    }
     Assert(not _traits);
 
-    _traits = std::move(traits);
+    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
 
-    return (Likely(AnyCanUseSSO_(_traits))
-        ? FAtom(std::addressof(_smallBuffer), _traits)
-        : FAtom(_externalStorage = _traits->Allocate(), _traits) );
+    _traits.CreateRawCopy_AssumeNotInitialized(traits);
+    _traits->ConstructCopy(data, src);
+
+    Assert(traits.Equals(data, src));
 }
 //----------------------------------------------------------------------------
-void FAny::CopyFrom_(const FAny& other) {
-    if (_traits == other._traits) {
-        if (_traits)
-            _traits->Copy(other.Data(), Data());
-        else
-            NOOP(); // both invalid nothing to do
+void FAny::AssignMove_(void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
+    Assert(src);
+    Assert(traits.SizeInBytes() == sizeInBytes);
+
+    if (Any_Traits_() == traits) { // avoid wrapping FAny in FAny
+
+        if (static_cast<FAny*>(src)->Valid()) {
+            AssignMove(static_cast<FAny*>(src)->InnerAtom());
+        }
+        else if (_traits) {
+            Reset_AssumeInitialized_(_traits->SizeInBytes());
+        }
+
+        return;
+    }
+    else if (_traits) {
+        if (traits == *_traits) {
+            traits.Move(src, Data_(sizeInBytes));
+
+            return;
+        }
+
+        Reset_AssumeInitialized_(_traits->SizeInBytes());
+    }
+    Assert(not _traits);
+
+    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
+
+    _traits.CreateRawCopy_AssumeNotInitialized(traits);
+    _traits->ConstructMove(data, src);
+}
+//----------------------------------------------------------------------------
+void FAny::AssignMoveDestroy_(void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
+    Assert(src);
+    Assert(traits.SizeInBytes() == sizeInBytes);
+    Assert(Any_Traits_() != traits);
+
+    if (_traits) {
+        if (traits == *_traits) {
+            traits.Move(src, Data_(sizeInBytes));
+            traits.Destroy(src);
+
+            return;
+        }
+
+        Reset_AssumeInitialized_(_traits->SizeInBytes());
+    }
+    Assert(not _traits);
+
+    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
+
+    _traits.CreateRawCopy_AssumeNotInitialized(traits);
+    _traits->ConstructMoveDestroy(data, src);
+}
+//----------------------------------------------------------------------------
+void FAny::AssignCopy_AssumeNotInitialized_(const void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
+    Assert(src);
+    Assert(traits.SizeInBytes() == sizeInBytes);
+    Assert(Any_Traits_() != traits);
+
+    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
+
+    _traits.CreateRawCopy_AssumeNotInitialized(traits);
+    _traits->ConstructCopy(data, src);
+
+    Assert(traits.Equals(data, src));
+}
+//----------------------------------------------------------------------------
+void FAny::AssignMove_AssumeNotInitialized_(void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
+    Assert(src);
+    Assert(traits.SizeInBytes() == sizeInBytes);
+    Assert(Any_Traits_() != traits);
+
+    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
+
+    _traits.CreateRawCopy_AssumeNotInitialized(traits);
+    _traits->ConstructMove(data, src);
+}
+//----------------------------------------------------------------------------
+void FAny::AssignMoveDestroy_AssumeNotInitialized_(void* src, const ITypeTraits& traits, const size_t sizeInBytes) {
+    Assert(src);
+    Assert(traits.SizeInBytes() == sizeInBytes);
+    Assert(Any_Traits_() != traits);
+
+    void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
+
+    _traits.CreateRawCopy_AssumeNotInitialized(traits);
+    _traits->ConstructMoveDestroy(data, src);
+}
+//----------------------------------------------------------------------------
+void* FAny::Allocate_AssumeNotInitialized_(const size_t sizeInBytes) {
+    Assert(sizeInBytes);
+
+    if (Any_FitInSitu_(sizeInBytes)) {
+        return (&_inSitu);
     }
     else {
-        Reset();
-        if (other._traits) {
-            FAtom self(Allocate_(PTypeTraits(other._traits)));
-            other._traits->CreateCopy(self.Data(), other.Data());
-        }
+        _externalBlock.SizeInBytes = malloc_snap_size(sizeInBytes);
+        _externalBlock.Ptr = Core::malloc(_externalBlock.SizeInBytes);
+
+#if USE_CORE_MEMORYDOMAINS
+        MEMORYDOMAIN_TRACKING_DATA(Any).Allocate(1, _externalBlock.SizeInBytes);
+#endif
+
+        return _externalBlock.Ptr;
     }
-    Assert(Equals(other));
+}
+//----------------------------------------------------------------------------
+void FAny::Reset_AssumeInitialized_(const size_t sizeInBytes) {
+    Assert(_traits);
+    Assert(_traits->SizeInBytes() == sizeInBytes);
+
+    if (Any_FitInSitu_(sizeInBytes)) {
+        _traits->Destroy(&_inSitu);
+    }
+    else {
+        Assert(sizeInBytes <= _externalBlock.SizeInBytes);
+
+        _traits->Destroy(_externalBlock.Ptr);
+
+#if USE_CORE_MEMORYDOMAINS
+        MEMORYDOMAIN_TRACKING_DATA(Any).Deallocate(1, _externalBlock.SizeInBytes);
+#endif
+
+        Core::free(_externalBlock.Ptr);
+    }
+
+    _traits = PTypeTraits(); // don't want to call the dtor
+    ONLY_IF_ASSERT(::memset(&_inSitu, 0xDD, GInSituSize));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void AssignCopy(FAny* dst, const void* src, const ITypeTraits& traits) {
+    dst->AssignCopy(src, traits);
+}
+//----------------------------------------------------------------------------
+void AssignMove(FAny* dst, void* src, const ITypeTraits& traits) {
+    dst->AssignMove(src, traits);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
