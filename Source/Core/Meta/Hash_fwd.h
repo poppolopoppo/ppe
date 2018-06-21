@@ -31,6 +31,11 @@ public:
     CORE_API friend FWTextWriter& operator <<(FWTextWriter& oss, const hash_t& h);
 };
 //----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, hash_t h) {
+    return oss << (const void*)h._value;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace details {
