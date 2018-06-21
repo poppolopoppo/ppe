@@ -23,13 +23,19 @@ std::tuple<Meta::TRemoveReference<_Args>... > MakeTuple(_Args&&... args) {
 //----------------------------------------------------------------------------
 namespace Meta {
 template <typename... _Args>
-struct TIsPod< TTuple<_Args...> >
-    : public std::integral_constant<bool,
-        true && Meta::TIsPod<_Args>::value... >
+struct TIsPod< TTuple<_Args...> > : std::bool_constant< TIsPod_v<_Args...> >
 {};
 template <typename... _Args>
+TTuple<_Args...> NoInitType(TType< TTuple<_Args...> >) {
+	return MakeTuple(MakeNoInit<_Args>()...);
+}
+template <typename... _Args>
 TTuple<_Args...> ForceInitType(TType< TTuple<_Args...> >) {
-    return MakeTuple(MakeForceInit<_Args...>()...);
+    return MakeTuple(MakeForceInit<_Args>()...);
+}
+template <typename... _Args>
+void Construct(TTuple<_Args...>* p, FNoInit) {
+	Construct(p, MakeNoInit<_Args>()...);
 }
 template <typename... _Args>
 void Construct(TTuple<_Args...>* p, FForceInit) {

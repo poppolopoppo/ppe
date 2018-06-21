@@ -32,8 +32,16 @@ struct TIsPod< TPair<_First, _Second> >
         Meta::TIsPod<_Second>::value >
 {};
 template <typename _First, typename _Second>
+TPair<_First, _Second> NoInitType(TType< TPair<_First, _Second> >) {
+    return MakePair(MakeNoInit<_First>(), MakeNoInit<_Second>());
+}
+template <typename _First, typename _Second>
 TPair<_First, _Second> ForceInitType(TType< TPair<_First, _Second> >) {
     return MakePair(MakeForceInit<_First>(), MakeForceInit<_Second>());
+}
+template <typename _First, typename _Second>
+void Construct(TPair<_First, _Second>* p, FNoInit) {
+    Construct(p, MakeNoInit<_First>(), MakeNoInit<_Second>());
 }
 template <typename _First, typename _Second>
 void Construct(TPair<_First, _Second>* p, FForceInit) {

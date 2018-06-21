@@ -181,13 +181,15 @@ inline constexpr FNoInit NoInit{};
 inline constexpr FForceInit ForceInit{};
 //----------------------------------------------------------------------------
 template <typename T>
+using has_noinit_constructor = has_constructor<T, Meta::FNoInit>;
+template <typename T>
 using has_forceinit_constructor = has_constructor<T, Meta::FForceInit>;
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
 FORCE_INLINE CONSTEXPR T ForceInit_(std::false_type) { return T{}; }
 template <typename T>
-FORCE_INLINE CONSTEXPR T ForceInit_(std::true_type) { return T{ FForceInit{} }; }
+FORCE_INLINE CONSTEXPR T ForceInit_(std::true_type) { return T{ ForceInit }; }
 } //!details
 // can be overload for custom types
 template <typename T>
@@ -200,7 +202,36 @@ T MakeForceInit() {
     return ForceInitType(TType<T>{});
 }
 //----------------------------------------------------------------------------
+namespace details {
+template <typename T>
+FORCE_INLINE CONSTEXPR T NoInit_(std::false_type) { return T{}; }
+template <typename T>
+FORCE_INLINE CONSTEXPR T NoInit_(std::true_type) { return T{ NoInit }; }
+} //!details
+// can be overload for custom types
+template <typename T>
+T NoInitType(TType<T>) {
+    return details::NoInit_<T>(typename has_noinit_constructor<T>::type{});
+}
+// simpler interface wrapping overloadable NoInitType()
+template <typename T>
+T MakeNoInit() {
+    return NoInitType(TType<T>{});
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace details {
+template <typename T>
+FORCE_INLINE void Construct_(T* p, FNoInit, std::false_type) { new ((void*)p) T{}; }
+template <typename T>
+FORCE_INLINE void Construct_(T* p, FNoInit noInit, std::true_type) { new ((void*)p) T{ noInit }; }
+} //!details
+template <typename T>
+void Construct(T* p, FNoInit noInit) {
+    Assume(p);
+    details::Construct_(p, noInit, typename has_noinit_constructor<T>::type{});
+}
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
@@ -241,6 +272,8 @@ void Construct(T* p, _Args&&... args) {
 template <typename T>
 typename std::enable_if<Meta::TIsPod<T>::value >::type Destroy(T* ) {
     // PODs don't have a destructor
+	typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
+	(void) sizeof(type_must_be_complete);
 }
 //----------------------------------------------------------------------------
 template <typename T>
