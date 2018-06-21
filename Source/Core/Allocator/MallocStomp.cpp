@@ -4,6 +4,7 @@
 
 #ifdef WITH_CORE_MALLOCSTOMP
 
+#   include "Memory/MemoryTracking.h"
 #   include "Memory/VirtualMemory.h"
 
 #   define CORE_MALLOCSTOMP_CHECK_OVERRUN 1 // set to 0 to check for underruns

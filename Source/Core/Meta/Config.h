@@ -29,3 +29,17 @@
 // Global switch for using stomp allocator, memory guards and turning special allocators off
 //----------------------------------------------------------------------------
 #define USE_CORE_MEMORY_DEBUGGING   0 //%_NOCOMMIT%
+
+//----------------------------------------------------------------------------
+// Determined from build configuration
+//----------------------------------------------------------------------------
+#ifdef PROFILING_ENABLED
+#   define USE_CORE_PROFILING 1
+#else
+#   define USE_CORE_PROFILING 0
+#endif
+#ifdef FINAL_RELEASE
+#   define USE_CORE_FINAL_RELEASE 1
+#else
+#   define USE_CORE_FINAL_RELEASE 0
+#endif

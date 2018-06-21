@@ -3,14 +3,14 @@
 #include "Core/Core.h"
 
 // Memory Domains ON/OFF
-#if not defined(FINAL_RELEASE) && not defined(PROFILING_ENABLED) // %_NOCOMMIT%
+#if not (USE_CORE_FINAL_RELEASE || USE_CORE_PROFILING) // %_NOCOMMIT%
 #   define USE_CORE_MEMORYDOMAINS 1
 #else
 #   define USE_CORE_MEMORYDOMAINS 0
 #endif
 
 // Memory domains collapsing (less codegen)
-#define WITH_CORE_MEMORYDOMAINS_COLLAPSING (USE_CORE_MEMORYDOMAINS && defined(PROFILING_ENABLED)) // %_NOCOMMIT%
+#define WITH_CORE_MEMORYDOMAINS_COLLAPSING (USE_CORE_MEMORYDOMAINS && USE_CORE_PROFILING) // %_NOCOMMIT%
 #define WITH_CORE_MEMORYDOMAINS_FULL_COLLAPSING (WITH_CORE_MEMORYDOMAINS_COLLAPSING && 0) // turn to 1 to collapse all domains to Used/ReservedMemory %_NOCOMMIT%
 
 namespace Core {
