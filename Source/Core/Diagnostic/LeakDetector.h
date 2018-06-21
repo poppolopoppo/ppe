@@ -4,7 +4,7 @@
 
 #ifndef USE_CORE_MALLOC_LEAKDETECTOR
 #   ifdef ARCH_X64
-#       define USE_CORE_MALLOC_LEAKDETECTOR (0) // turn to 1 to detect leaks in the app %_NOCOMMIT%
+#       define USE_CORE_MALLOC_LEAKDETECTOR (0) // turn to 1 to detect leaks in the app, best results with USE_CORE_MEMORY_DEBUGGING=1 %_NOCOMMIT%
 #   else
 #       define USE_CORE_MALLOC_LEAKDETECTOR (0) // not available on 32 bits because of FBlockHeader+FCompressedRadixTrie
 #   endif
@@ -283,6 +283,8 @@ public:
                 (callstackHeader.KnownDeleter != 0),
                 decodedCallstack );
         }
+
+        FLUSH_LOG();
     }
 
 private:
@@ -409,7 +411,7 @@ private:
             Assert(not NativeStream);
 
             const FFilename fname = FVirtualFileSystem::TemporaryFilename(L"LeakDetector", L".bin");
-            NativeStream = VFS().OpenReadWritable(fname, EAccessPolicy::Temporary | EAccessPolicy::Create_Binary);
+            NativeStream = VFS().OpenReadWritable(fname, EAccessPolicy::Temporary | EAccessPolicy::Truncate_Binary);
         }
 
         void Flush() {
