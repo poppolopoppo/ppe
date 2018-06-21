@@ -186,7 +186,6 @@ private:
         _vm.ReleaseAll();
     }
 };
-#endif //!!WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
 //----------------------------------------------------------------------------
 struct FLinearHeapDeleted_ {
     size_t Size;
@@ -194,13 +193,21 @@ struct FLinearHeapDeleted_ {
     FLinearHeapDeleted_* NextBucket = nullptr; // next bucket will have a larger Size
     FLinearHeapDeleted_* NextBlock = nullptr;  // all in the same bucket <=> same Size
 
+#ifdef WITH_CORE_ASSERT
+    static constexpr size_t DefaultCanary = CODE3264(0xDEADCAFEul, 0xDEADCAFEF001BEEFull);
+    const size_t Canary = DefaultCanary;
+    bool CheckCanary() const { return (DefaultCanary == Canary); }
+#endif
+
     static void Delete(void** deleteds, void* ptr, size_t size);
     static void* Recycle(void** deleteds, size_t size);
 
     static NO_INLINE void* TryAllocate(void** deleteds, size_t size, FLinearHeapBlock_* prev) {
         // don't lost remaining memory in current chunk
-        if (prev && (prev->Offset + GLinearHeapMinBlockSizeForRecycling) <= GLinearHeapBlockCapacity)
+        if (prev && (prev->Offset + GLinearHeapMinBlockSizeForRecycling) <= GLinearHeapBlockCapacity) {
             FLinearHeapDeleted_::Delete(deleteds, &reinterpret_cast<u8*>(prev + 1)[prev->Offset], GLinearHeapBlockCapacity - prev->Offset);
+            prev->Offset = GLinearHeapBlockCapacity;
+        }
 
         // try to look for a fit in released blocks linked list
         return (deleteds
@@ -208,7 +215,7 @@ struct FLinearHeapDeleted_ {
             : nullptr);
     }
 };
-STATIC_ASSERT(ROUND_TO_NEXT_16(sizeof(FLinearHeapDeleted_)) >= GLinearHeapMinBlockSizeForRecycling);
+STATIC_ASSERT(ROUND_TO_NEXT_16(sizeof(FLinearHeapDeleted_)) == GLinearHeapMinBlockSizeForRecycling);
 //----------------------------------------------------------------------------
 void FLinearHeapDeleted_::Delete(void** deleteds, void* ptr, size_t size) {
     Assert(size >= GLinearHeapMinBlockSizeForRecycling);
@@ -217,8 +224,15 @@ void FLinearHeapDeleted_::Delete(void** deleteds, void* ptr, size_t size) {
     auto** phead = reinterpret_cast<FLinearHeapDeleted_**>(deleteds);
     auto* deleted = INPLACE_NEW(ptr, FLinearHeapDeleted_) { size };
 
+    Assert(nullptr == deleted->NextBucket);
+    Assert(nullptr == deleted->NextBlock);
+    Assert_NoAssume(deleted->CheckCanary());
+
     FLinearHeapDeleted_* prev = nullptr;
     for (FLinearHeapDeleted_* p = *phead; p; prev = p, p = p->NextBucket) {
+        Assert(ptr != p);
+        Assert_NoAssume(p->CheckCanary());
+
         // insertion sort + bucketing blocks by size
         if (size == p->Size) {
             deleted->NextBlock = p->NextBlock;
@@ -242,9 +256,14 @@ void* FLinearHeapDeleted_::Recycle(void** deleteds, size_t size) {
 
     FLinearHeapDeleted_* prev = nullptr;
     for (FLinearHeapDeleted_* p = *phead; p; prev = p, p = p->NextBucket) {
+        Assert_NoAssume(p->CheckCanary());
+
         // blocks are sorted by asc size => first fit is the best fit
         if (p->Size >= size) {
             if (FLinearHeapDeleted_* s = p->NextBlock) {
+                Assert(s != p);
+                Assert_NoAssume(s->CheckCanary());
+
                 s->NextBucket = p->NextBucket;
                 if (prev)
                     prev->NextBucket = s;
@@ -258,20 +277,28 @@ void* FLinearHeapDeleted_::Recycle(void** deleteds, size_t size) {
                 *phead = p->NextBucket;
             }
 
-            // don't lost the unused part of recycled block
-            if (p->Size > size) {
-                u8* const premain = Meta::RoundToNext((u8*)p + size, 16);
+            // recycle reminder if it's large enough,
+            // note the memory will be lost it's too small !!!
+            // TODO : test avoiding recycling when the reminder will be too small
+            if (p->Size >= size + GLinearHeapMinBlockSizeForRecycling) {
+                Assert(Meta::IsAligned(16, p));
+
+                u8* const premain = ((u8*)p + size);
                 u8* const pend = ((u8*)p + p->Size);
                 Delete(deleteds, premain, pend - premain);
             }
 
+            ONLY_IF_ASSERT(const size_t oldSize = p->Size);
             ONLY_IF_ASSERT(FillUninitializedBlock_(p, size));
+            Assert_NoAssume(oldSize < size + GLinearHeapMinBlockSizeForRecycling || 
+                ((FLinearHeapDeleted_*)((u8*)p + size))->CheckCanary() );
             return (p);
         }
     }
 
     return nullptr;
 }
+#endif //!!WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -286,7 +313,8 @@ FLinearHeap::FLinearHeap(FMemoryTracking& parent)
 #else
 FLinearHeap::FLinearHeap()
 #endif
-    : _blocks(nullptr)
+    : _numAllocs(0)
+    , _blocks(nullptr)
     , _deleteds(nullptr)
 #if USE_CORE_MEMORYDOMAINS
     , _trackingData("LinearHeap", &parent) {
@@ -313,7 +341,7 @@ void* FLinearHeap::Allocate(size_t size) {
     void* ptr;
 
 #if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    void* stg = Core::aligned_malloc(sizeof(FLinearHeapHeader_) + size, alignment);
+    void* stg = Core::aligned_malloc(sizeof(FLinearHeapHeader_) + size, 16);
     auto* blk = INPLACE_NEW(stg, FLinearHeapHeader_)(*this, size);
     AssertCheckCanary(*blk);
 
@@ -346,9 +374,9 @@ void* FLinearHeap::Allocate(size_t size) {
     Assert(ptr);
     Assert(Meta::IsAligned(16, ptr));
 #if USE_CORE_MEMORYDOMAINS
-    _trackingData.Allocate(1, size);
+    _trackingData.Allocate(size / 16, 16);
 #endif
-    ++_numAllocs;
+    _numAllocs++;
 
     return ptr;
 }
@@ -375,11 +403,11 @@ void* FLinearHeap::Relocate(void* ptr, size_t newSize, size_t oldSize) {
 
     prev.Erase(&_blocks);
 
-    void* const newp = Allocate(newSize, alignment);
+    void* const newp = Allocate(newSize);
     ::memcpy(newp, ptr, Min(oldSize, newSize));
 
 #   if USE_CORE_MEMORYDOMAINS
-    _trackingData.Deallocate(1, oldSize);
+    _trackingData.Deallocate(oldSize / 16, 16);
 #   endif
 
     Core::aligned_free(&prev);
@@ -395,8 +423,8 @@ void* FLinearHeap::Relocate(void* ptr, size_t newSize, size_t oldSize) {
     if (blk->Offset == off + oldSize && off + newSize <= GLinearHeapBlockCapacity) {
         blk->Offset = checked_cast<u32>(off + newSize);
 #if USE_CORE_MEMORYDOMAINS
-        _trackingData.Deallocate(1, oldSize);
-        _trackingData.Allocate(1, newSize);
+        _trackingData.Deallocate(oldSize / 16, 16);
+        _trackingData.Allocate(newSize / 16, 16);
 #endif
         return ptr;
     }
@@ -428,7 +456,7 @@ void FLinearHeap::Release(void* ptr, size_t size) {
     blk.Erase(&_blocks);
 
 #   if USE_CORE_MEMORYDOMAINS
-    _trackingData.Deallocate(1, size);
+    _trackingData.Deallocate(size / 16, 16);
 #   endif
 
     Core::aligned_free(&blk);
@@ -450,7 +478,7 @@ void FLinearHeap::Release(void* ptr, size_t size) {
     }
 
 #   if USE_CORE_MEMORYDOMAINS
-    _trackingData.Deallocate(1, size);
+    _trackingData.Deallocate(size / 16, 16);
 #   endif
 
     if (0 == _numAllocs && _deleteds) {
@@ -470,7 +498,7 @@ void* FLinearHeap::Relocate_AssumeLast(void* ptr, size_t newSize, size_t oldSize
     auto& header = FLinearHeapHeader_::FromData(ptr);
     AssertRelease(&header == _blocks); // last block allocated
 
-    return Relocate(ptr, newSize, header.SizeInBytes, alignment);
+    return Relocate(ptr, newSize, header.SizeInBytes);
 
 #else
     Assert(ptr); // you should use Allocate() instead
@@ -493,8 +521,8 @@ void* FLinearHeap::Relocate_AssumeLast(void* ptr, size_t newSize, size_t oldSize
     if (off + newSize <= GLinearHeapBlockCapacity) {
         blk->Offset = checked_cast<u32>(off + newSize);
 #if USE_CORE_MEMORYDOMAINS
-        _trackingData.Deallocate(1, oldSize);
-        _trackingData.Allocate(1, newSize);
+        _trackingData.Deallocate(oldSize / 16, 16);
+        _trackingData.Allocate(newSize / 16, 16);
 #endif
         return ptr;
     }
@@ -565,7 +593,42 @@ void FLinearHeap::ReleaseAll() {
         return; // nothing to do
     }
 
+#if !USE_CORE_FINAL_RELEASE
+    DumpMemoryStats(L"FLinearHeap::ReleaseAll");
+#endif
+
+#if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
+    Assert(nullptr == _deleteds);
+
+    while (_blocks) {
+        auto* blk = static_cast<FLinearHeapHeader_*>(_blocks);
+        Release_AssumeLast(blk->data(), blk->SizeInBytes);
+    }
+
+    Assert_NoAssume(_trackingData.AllocationCount() == 0);
+    Assert(nullptr == _blocks);
+
+#else
+    for (auto* blk = static_cast<FLinearHeapBlock_*>(_blocks); blk; )
+        blk = FLinearHeapVMCache_::ReleaseBlock(blk);
+
+    _numAllocs = 0;
+    _blocks = nullptr;
+    _deleteds = nullptr;
+#   if USE_CORE_MEMORYDOMAINS
+    _trackingData.ReleaseAll();
+#   endif
+
+#endif
+}
+//----------------------------------------------------------------------------
+#if !USE_CORE_FINAL_RELEASE
+void FLinearHeap::DumpMemoryStats(const wchar_t* title) {
 #if defined(USE_DEBUG_LOGGER) && USE_CORE_MEMORYDOMAINS
+    Assert(title);
+
+    LOG(MemoryDomain, Debug, L"dumping memory statis for linear heap : {0}", MakeCStringView(title));
+
     size_t totalBlockCount = 0;
     size_t totalSizeInBytes = 0;
 
@@ -592,6 +655,7 @@ void FLinearHeap::ReleaseAll() {
         Fmt::Percentage(_trackingData.TotalSizeInBytes(), totalSizeInBytes),
         Fmt::Percentage(_trackingData.MaxTotalSizeInBytes(), totalSizeInBytes));
 
+#   if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
     totalBlockCount = 0;
     totalSizeInBytes = 0;
     size_t maxBlockSize = 0;
@@ -604,13 +668,13 @@ void FLinearHeap::ReleaseAll() {
             sizeInBytes += p->Size;
         }
 
-        LOG(MemoryDomain, Debug, L"linear heap <{0}> deleted [{1:4}] : {2} blocks ({3} total memory)",
+        LOG(MemoryDomain, Debug, L"linear heap <{0}> deleted [{1:5}] : {2:4} blocks ({3:10f3} total memory)",
             _trackingData.Parent()
                 ? MakeCStringView(_trackingData.Parent()->Name())
                 : MakeCStringView(_trackingData.Name()),
             blk->Size,
             Fmt::CountOfElements(blockCount),
-            Fmt::SizeInBytes(sizeInBytes) );
+            Fmt::SizeInBytes(sizeInBytes));
 
         maxBlockSize = Max(maxBlockSize, blk->Size);
         minBlockSize = Min(minBlockSize, blk->Size);
@@ -625,31 +689,12 @@ void FLinearHeap::ReleaseAll() {
         totalBlockCount,
         Fmt::SizeInBytes(totalSizeInBytes),
         Fmt::SizeInBytes(minBlockSize),
-        Fmt::SizeInBytes(maxBlockSize) );
-
-#endif
-
-#if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
-    Assert(nullptr == _deleteds);
-
-    while (_blocks)
-        Release_AssumeLast(static_cast<FLinearHeapHeader_*>(_blocks)->data());
-
-    Assert_NoAssume(_trackingData.AllocationCount() == 0);
-    Assert(nullptr == _blocks);
-
-#else
-    for (auto* blk = static_cast<FLinearHeapBlock_*>(_blocks); blk; )
-        blk = FLinearHeapVMCache_::ReleaseBlock(blk);
-
-    _blocks = nullptr;
-    _deleteds = nullptr;
-#   if USE_CORE_MEMORYDOMAINS
-    _trackingData.ReleaseAll();
-#   endif
+        Fmt::SizeInBytes(maxBlockSize));
+#   endif //!WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
 
 #endif
 }
+#endif //!!USE_CORE_FINAL_RELEASE
 //----------------------------------------------------------------------------
 NO_INLINE void FLinearHeap::FlushDeleteds_AssumeEmpty() {
 #if !WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC

@@ -50,12 +50,16 @@ public:
 
     void ReleaseAll();
 
+#if !USE_CORE_FINAL_RELEASE
+	void DumpMemoryStats(const wchar_t* title);
+#endif
+
     static const size_t MinBlockSize;
     static const size_t MinBlockSizeForRecycling;
     static const size_t MaxBlockSize;
 
-    static constexpr size_t SnapSize(size_t sizeInBytes) { return ROUND_TO_NEXT_16(sizeInBytes); }
-    static constexpr size_t SnapSizeForRecycling(size_t sizeInBytes) { return Max(MinBlockSizeForRecycling, SnapSize(sizeInBytes)); }
+    static CONSTEXPR size_t SnapSize(size_t sizeInBytes) { return ROUND_TO_NEXT_16(sizeInBytes); }
+    static CONSTEXPR size_t SnapSizeForRecycling(size_t sizeInBytes) { return Max(MinBlockSizeForRecycling, SnapSize(sizeInBytes)); }
 
     static void FlushVirtualMemoryCache();
 
