@@ -64,12 +64,12 @@ static void CheckMemory_() {
 void FCoreModule::Start(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv) {
     CORE_MODULE_START(Core);
 
-    // 0 - low-level IO
-    FFileStream::Start();
-    // 1 - diagnostics
-    FDiagnosticsStartup::Start(applicationHandle, nShowCmd, filename, argc, argv);
-    // 2 - main thread context
+    // 0 - main thread context
     FThreadContextStartup::Start_MainThread();
+    // 1 - low-level IO
+    FFileStream::Start();
+    // 2 - diagnostics
+    FDiagnosticsStartup::Start(applicationHandle, nShowCmd, filename, argc, argv);
     // 3 - pool allocators
     POOL_TAG(Default)::Start();
     POOL_TAG(NodeBasedContainer)::Start();
@@ -105,12 +105,12 @@ void FCoreModule::Shutdown() {
     // 3 - pool allocators
     POOL_TAG(NodeBasedContainer)::Shutdown();
     POOL_TAG(Default)::Shutdown();
-    // 2 - main thread context
-    FThreadContextStartup::Shutdown();
-    // 1 - diagnostics
+    // 2 - diagnostics
     FDiagnosticsStartup::Shutdown();
-    // 0 - low-level IO
+    // 1 - low-level IO
     FFileStream::Shutdown();
+    // 0 - main thread context
+    FThreadContextStartup::Shutdown();
 }
 //----------------------------------------------------------------------------
 void FCoreModule::ClearAll_UnusedMemory() {
