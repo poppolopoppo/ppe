@@ -79,6 +79,8 @@ public:
                 size_t revision = Order;
                 if (Barrier.Locked.compare_exchange_weak(revision, revision, std::memory_order_acquire))
                     return;
+
+                _mm_pause();
             }
         }
 
