@@ -176,7 +176,7 @@ public:
     template <typename _Pred>
     TMemoryView SplitIfNot(const _Pred& pred) const { return TMemoryView(_storage, FindFirstNot(pred)); }
 
-    bool AliasesToContainer(const_pointer p) const { return (_storage <= p && _storage + _size > p); }
+    bool AliasesToContainer(const_reference v) const { return (_storage <= &v && _storage + _size > &v); }
 #if USE_CORE_CHECKEDARRAYITERATOR
     bool AliasesToContainer(const iterator& it) const { return (begin() <= it && it < end()); }
     bool AliasesToContainer(const reverse_iterator& it) const { return (rbegin() <= it && it < rend()); }
@@ -184,6 +184,7 @@ public:
 
     template <typename U>
     TMemoryView<U> Cast() const;
+    TMemoryView<const u8> RawView() const { return Cast<const u8>(); }
 
     TMemoryView<Meta::TAddConst<value_type>> AddConst() const {
         return TMemoryView<Meta::TAddConst<value_type>>(_storage, _size);
@@ -276,7 +277,7 @@ typename std::enable_if<
 template <typename _VectorLike>
 TMemoryView<typename _VectorLike::value_type> MakeView(_VectorLike& container) {
     if (container.begin() != container.end())
-        return TMemoryView<typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
+        return TMemoryView<typename _VectorLike::value_type>(std::addressof(*std::begin(container)), std::distance(std::begin(container), std::end(container)) );
     else
         return TMemoryView<typename _VectorLike::value_type>();
 }
@@ -284,7 +285,7 @@ TMemoryView<typename _VectorLike::value_type> MakeView(_VectorLike& container) {
 template <typename _VectorLike>
 TMemoryView<const typename _VectorLike::value_type> MakeView(const _VectorLike& container) {
     if (container.begin() != container.end())
-        return TMemoryView<const typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
+        return TMemoryView<const typename _VectorLike::value_type>(std::addressof(*std::begin(container)), std::distance(std::begin(container), std::end(container)) );
     else
         return TMemoryView<const typename _VectorLike::value_type>();
 }
@@ -292,7 +293,7 @@ TMemoryView<const typename _VectorLike::value_type> MakeView(const _VectorLike& 
 template <typename _VectorLike>
 TMemoryView<const typename _VectorLike::value_type> MakeConstView(const _VectorLike& container) {
     if (container.begin() != container.end())
-        return TMemoryView<const typename _VectorLike::value_type>(&*std::begin(container), std::distance(std::begin(container), std::end(container)) );
+        return TMemoryView<const typename _VectorLike::value_type>(std::addressof(*std::begin(container)), std::distance(std::begin(container), std::end(container)) );
     else
         return TMemoryView<const typename _VectorLike::value_type>();
 }

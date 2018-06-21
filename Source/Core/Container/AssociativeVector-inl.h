@@ -17,6 +17,11 @@ TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(allocato
 {}
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(Meta::FForceInit forceInit)
+    : _vector(forceInit)
+{}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(size_type capacity) {
     _vector.reserve(capacity);
 }

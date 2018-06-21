@@ -203,7 +203,7 @@ public:
     }
 
     bool AliasesToContainer(const TMemoryView<const state_t>& states) const {
-        return states.AliasesToContainer(_state);
+        return states.AliasesToContainer(*_state);
     }
 
     template <typename U>
@@ -355,8 +355,8 @@ public:
     template <typename _It>
     typename std::enable_if<Meta::is_iterator<_It>::value>::type
         assign(_It first, _It last) {
-        Assert(not AliasesToContainer(&*first));
-        Assert(not AliasesToContainer(&*last));
+        Assert_NoAssume(not AliasesToContainer(*first));
+        Assert_NoAssume(not AliasesToContainer(*last));
 
         typedef std::iterator_traits<_It> iterator_traits;
         typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
@@ -379,6 +379,8 @@ public:
     iterator find_like(const _KeyLike& keyLike, hash_t hash) NOEXCEPT;
     template <typename _KeyLike>
     const_iterator find_like(const _KeyLike& keyLike, hash_t hash) const NOEXCEPT;
+
+    bool Contains(const key_type& key) const NOEXCEPT { return (end() != find(key)); }
 
     mapped_reference at(const key_type& key) { return table_traits::Value(*find(key)); }
     mapped_reference_const at(const key_type& key) const { return table_traits::Value(*find(key)); }
@@ -495,6 +497,7 @@ public:
     bool CheckInvariants() const;
 
     bool AliasesToContainer(const void* p) const;
+    bool AliasesToContainer(const_reference v) const;
     bool AliasesToContainer(const_iterator it) const;
 
     bool operator ==(const TBasicHashTable& other) const;

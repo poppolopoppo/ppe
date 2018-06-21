@@ -52,7 +52,8 @@ public:
     typedef typename std::random_access_iterator_tag iterator_category;
 
     TAssociativeVector();
-    TAssociativeVector(allocator_type&& alloc);
+    explicit TAssociativeVector(allocator_type&& alloc);
+    explicit TAssociativeVector(Meta::FForceInit);
     explicit TAssociativeVector(size_type capacity);
     ~TAssociativeVector();
 

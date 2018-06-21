@@ -83,7 +83,7 @@ template <typename T, typename _Allocator>
 template <typename _It>
 auto TVector<T, _Allocator>::assign(_It first, _It last)
     -> typename std::enable_if<Meta::is_iterator<_It>::value>::type {
-    Assert(first == last || not AliasesToContainer(&*first));
+    Assert_NoAssume(first == last || not AliasesToContainer(*first));
 
     typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
     assign_(first, last, iterator_category{});
@@ -150,7 +150,7 @@ void TVector<T, _Allocator>::assign_(_It first, _It last, _ItCat ) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::assign(size_type count, const_reference value) {
-    Assert(not AliasesToContainer(&value));
+    Assert_NoAssume(not AliasesToContainer(value));
 
     if (_size >= count) {
         Assert(count <= _capacity);
@@ -192,7 +192,7 @@ void TVector<T, _Allocator>::emplace_back(_Args&&... args) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::emplace_back(const_reference value) {
-    Assert(not AliasesToContainer(&value));
+    Assert_NoAssume(not AliasesToContainer(value));
 
     reserve_Additional(1);
     emplace_back_AssumeNoGrow(value);
@@ -200,7 +200,7 @@ void TVector<T, _Allocator>::emplace_back(const_reference value) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::emplace_back(T&& rvalue) {
-    Assert(not AliasesToContainer(&rvalue));
+    Assert_NoAssume(not AliasesToContainer(rvalue));
 
     reserve_Additional(1);
     emplace_back_AssumeNoGrow(std::move(rvalue));
@@ -218,7 +218,7 @@ template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::emplace_back_AssumeNoGrow(const_reference value) {
     Assert(_size < _capacity);
 
-    if (AliasesToContainer(&value)) {
+    if (AliasesToContainer(value)) {
         T tmp(value); // value points to something in this container
         allocator_traits::construct(allocator_(), &_data[_size++], std::move(tmp));
     }
@@ -231,7 +231,7 @@ template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::emplace_back_AssumeNoGrow(T&& rvalue) {
     Assert(_size < _capacity);
 
-    if (AliasesToContainer(&rvalue)) {
+    if (AliasesToContainer(rvalue)) {
         T tmp(std::move(rvalue)); // value points to something in this container
         allocator_traits::construct(allocator_(), &_data[_size++], std::move(tmp));
     }
@@ -254,7 +254,7 @@ void TVector<T, _Allocator>::push_back_AssumeNoGrow(T&& rvalue) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 auto TVector<T, _Allocator>::erase(const_iterator pos) -> iterator {
-    Assert(end() == pos || AliasesToContainer(pos));
+    Assert_NoAssume(end() == pos || AliasesToContainer(pos));
 
     const iterator& p = (const iterator&)(pos);
     std::rotate(p, p + 1, end());
@@ -265,8 +265,8 @@ auto TVector<T, _Allocator>::erase(const_iterator pos) -> iterator {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 auto TVector<T, _Allocator>::erase(const_iterator first, const_iterator last) -> iterator {
-    Assert(AliasesToContainer(first));
-    Assert(AliasesToContainer(last));
+    Assert_NoAssume(AliasesToContainer(first));
+    Assert_NoAssume(AliasesToContainer(last));
     Assert(first <= last);
 
     const size_type p = std::distance(cbegin(), first);
@@ -286,7 +286,7 @@ auto TVector<T, _Allocator>::erase(const_iterator first, const_iterator last) ->
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::erase_DontPreserveOrder(const_iterator pos) {
-    Assert(AliasesToContainer(pos));
+    Assert_NoAssume(AliasesToContainer(pos));
     Assert(_size > 0);
 
     const iterator& p = (const iterator&)(pos);
@@ -310,9 +310,9 @@ auto TVector<T, _Allocator>::insert(const_iterator pos, _It first, _It last)
 template <typename T, typename _Allocator>
 template <typename _It>
 auto TVector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, std::input_iterator_tag ) -> iterator {
-    Assert(end() == pos || AliasesToContainer(pos));
-    Assert(not AliasesToContainer(&*first));
-    Assert(not AliasesToContainer(&*last));
+    Assert_NoAssume(end() == pos || AliasesToContainer(pos));
+    Assert_NoAssume(not AliasesToContainer(std::addressof(*first)));
+    Assert_NoAssume(not AliasesToContainer(std::addressof(*last)));
 
     const size_type p = std::distance<const_iterator>(begin(), pos);
     const size_type o = _size;
@@ -336,7 +336,7 @@ auto TVector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, st
 template <typename T, typename _Allocator>
 template <typename _It, typename _ItCat>
 auto TVector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, _ItCat ) -> iterator {
-    Assert(end() == pos || AliasesToContainer(pos));
+    Assert_NoAssume(end() == pos || AliasesToContainer(pos));
 
     const size_type p = std::distance<const_iterator>(begin(), pos);
     const u32 count = checked_cast<u32>(std::distance(first, last));
@@ -345,29 +345,33 @@ auto TVector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, _I
     if (0 < count) {
         reserve_Additional(count);
 
-        std::uninitialized_copy(first, last, MakeCheckedIterator(_data, _capacity, _size));
-        std::rotate(begin() + p, begin() + _size, begin() + (_size + count));
-
+        const size_t offset = _size;
         _size += count;
         Assert(_capacity >= _size);
+
+        std::uninitialized_copy(first, last, MakeCheckedIterator(_data, _capacity, offset));
+        std::rotate(begin() + p, begin() + offset, begin() + _size);
     }
     return MakeCheckedIterator(_data, _capacity, p);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 auto TVector<T, _Allocator>::insert(const_iterator pos, size_type count, const T& value) -> iterator {
-    Assert(end() == pos || AliasesToContainer(pos));
-    Assert(not AliasesToContainer(&value));
-
-    reserve_Additional(count);
-
-    std::uninitialized_fill_n(MakeCheckedIterator(_data, _capacity, _size), count, value);
+    Assert_NoAssume(end() == pos || AliasesToContainer(pos));
+    Assert_NoAssume(not AliasesToContainer(value));
 
     const size_type p = std::distance<const_iterator>(begin(), pos);
-    std::rotate(begin() + p, begin() + (p + count), begin() + (_size + count));
 
-    _size += count;
-    Assert(_capacity >= _size);
+    if (count) {
+        reserve_Additional(count);
+
+        const size_t offset = _size;
+        _size += count;
+        Assert(_capacity >= _size);
+
+        std::uninitialized_fill_n(MakeCheckedIterator(_data, _capacity, offset), count, value);
+        std::rotate(begin() + p, begin() + offset, begin() + _size);
+    }
 
     return MakeCheckedIterator(_data, _capacity, p);
 }
@@ -491,7 +495,7 @@ void TVector<T, _Allocator>::resize(size_type count) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::resize(size_type count, const_reference value) {
-    Assert(not AliasesToContainer(&value));
+    Assert_NoAssume(not AliasesToContainer(value));
 
     if (_size == count)
         return;

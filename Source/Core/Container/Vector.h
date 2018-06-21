@@ -57,6 +57,11 @@ public:
     TVector() noexcept : _capacity(0), _size(0), _data(nullptr) {}
     ~TVector() { Assert(CheckInvariants()); clear_ReleaseMemory(); }
 
+	explicit TVector(Meta::FForceInit) noexcept
+		: allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
+		, _capacity(0), _size(0), _data(nullptr) 
+	{}
+
     explicit TVector(allocator_type&& alloc) : allocator_type(std::move(alloc)), _capacity(0), _size(0), _data(nullptr) {}
     explicit TVector(const allocator_type& alloc) : allocator_type(alloc), _capacity(0), _size(0), _data(nullptr) {}
 
@@ -80,6 +85,11 @@ public:
     TVector(const TMemoryView<const value_type>& view) : TVector() { assign(view.begin(), view.end()); }
     TVector(const TMemoryView<const value_type>& view, const allocator_type& alloc) : TVector(alloc) { assign(view.begin(), view.end()); }
     TVector& operator=(const TMemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
+
+    template <typename _OtherAllocator>
+    TVector(const TVector<T, _OtherAllocator>& other) : TVector() { operator =(other); }
+    template <typename _OtherAllocator>
+    TVector& operator =(const TVector<T, _OtherAllocator>& other) { assign(other.MakeView()); return (*this); }
 
     template <typename _OtherAllocator, typename = Meta::TEnableIf<allocator_can_steal_from<_Allocator, _OtherAllocator>::value> >
     TVector(TVector<T, _OtherAllocator>&& rvalue) : TVector() { operator =(std::move(rvalue)); }
@@ -224,7 +234,7 @@ public:
 
     bool CheckInvariants() const;
 
-    bool AliasesToContainer(const_pointer p) const { return ((p >= _data) && (p < _data + _size)); }
+    bool AliasesToContainer(const_reference v) const { return ((&v >= _data) && (&v < _data + _size)); }
 #if USE_CORE_CHECKEDARRAYITERATOR
     bool AliasesToContainer(const iterator& it) const { return (it >= begin() && it < end()); }
     bool AliasesToContainer(const const_iterator& it) const { return (it >= begin() && it < end()); }

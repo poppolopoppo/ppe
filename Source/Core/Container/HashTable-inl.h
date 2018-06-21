@@ -183,7 +183,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_AssertUniqu
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_AssertUnique(value_type&& rvalue) {
-    Assert(not AliasesToContainer(&rvalue));
+    Assert_NoAssume(not AliasesToContainer(&rvalue));
 
     reserve_Additional(1); // TODO: problem here -> we reserve a slot (and potential alloc) even if nothing is inserted
 
@@ -229,7 +229,7 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::try_emplace(key_ty
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::erase(const const_iterator& it) {
-    Assert(AliasesToContainer(it));
+    Assert_NoAssume(AliasesToContainer(it));
     Assert(_data.Size > 0);
 
     pointer const buckets = ((pointer)_data.StatesAndBuckets + OffsetOfBuckets_());;
@@ -329,6 +329,11 @@ bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::CheckInvariants() 
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::AliasesToContainer(const void* p) const {
     return ((u8*)BucketAtUnsafe_(0) <= (u8*)p && (u8*)BucketAtUnsafe_(_data.Capacity/* end */) > (u8*)p);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::AliasesToContainer(const_reference v) const {
+    return ((u8*)BucketAtUnsafe_(0) <= (u8*)&v && (u8*)BucketAtUnsafe_(_data.Capacity/* end */) > (u8*)&v);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -526,8 +531,8 @@ FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Shrin
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 template <typename... _Args>
 FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::InsertIFN_(const key_type& key, _Args&&... args) -> TPair<iterator, bool> {
-    Assert(not AliasesToContainer(&key));
-    Assert(not (0 | ... | AliasesToContainer(&args)));
+    Assert_NoAssume(not AliasesToContainer(&key));
+    Assert_NoAssume(not (0 | ... | AliasesToContainer(&args)));
 
     reserve_Additional(1); // TODO: problem here -> we reserve a slot (and potential alloc) even if nothing is inserted
 
@@ -675,7 +680,7 @@ NO_INLINE void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Relocate
 
         while (filled) {
             const size_type src = (i + filled.PopFront_AssumeNotEmpty())/* can't overflow here due to loop */;
-            const size_type hsh = HashValue_(oldBuckets[src]); // still needs rehashing here, but THashMemoizer<> can amortize this cost
+            const size_type hsh = HashValue_(oldBuckets[src]); // still needs rehashing here, but THashMemoizer<> can amortize this cost for heavy hash functions
             const size_type dst = FindEmptyBucket_(table_traits::Key(oldBuckets[src]), hsh);
             Assert(INDEX_NONE != dst);
 
