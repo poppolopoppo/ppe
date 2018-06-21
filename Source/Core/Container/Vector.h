@@ -57,10 +57,10 @@ public:
     TVector() noexcept : _capacity(0), _size(0), _data(nullptr) {}
     ~TVector() { Assert(CheckInvariants()); clear_ReleaseMemory(); }
 
-	explicit TVector(Meta::FForceInit) noexcept
-		: allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
-		, _capacity(0), _size(0), _data(nullptr) 
-	{}
+    explicit TVector(Meta::FForceInit) noexcept
+        : allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
+        , _capacity(0), _size(0), _data(nullptr) 
+    {}
 
     explicit TVector(allocator_type&& alloc) : allocator_type(std::move(alloc)), _capacity(0), _size(0), _data(nullptr) {}
     explicit TVector(const allocator_type& alloc) : allocator_type(alloc), _capacity(0), _size(0), _data(nullptr) {}

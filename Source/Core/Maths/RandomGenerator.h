@@ -96,18 +96,18 @@ public:
             Randomize(v[i]);
     }
 
-	template <typename T>
-	void Randomize(const TMemoryView<T>& view) {
-		for (T& elt : view)
-			Randomize(elt);
-	}
+    template <typename T>
+    void Randomize(const TMemoryView<T>& view) {
+        for (T& elt : view)
+            Randomize(elt);
+    }
 
-	template <typename T>
-	T& RandomElement(const TMemoryView<T>& view) {
-		Assert(not view.empty());
-		const size_t n = size_t(Next() % view.size());
-		return view[n];
-	}
+    template <typename T>
+    T& RandomElement(const TMemoryView<T>& view) {
+        Assert(not view.empty());
+        const size_t n = size_t(Next() % view.size());
+        return view[n];
+    }
 
 private:
     generator_type _generator;

@@ -41,9 +41,9 @@ class FLeakDetector {
 public:
     struct FBlockHeader {
         // Packing will work for little-endian, beware for big-endian !
-        u32 const Reserved  : 1;	// Must always be == 0 !
-        u32 Enabled         : 1;	// 2
-        u32 SizeInBytes     : 30;	// 32
+        u32 const Reserved  : 1;    // Must always be == 0 !
+        u32 Enabled         : 1;    // 2
+        u32 SizeInBytes     : 30;   // 32
         u32 CallstackUID;
 
         FBlockHeader() : Reserved(0) {}

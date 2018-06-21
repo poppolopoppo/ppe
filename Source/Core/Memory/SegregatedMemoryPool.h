@@ -121,28 +121,28 @@ public:
 #if USE_CORE_POOL_ALLOCATOR_SNAPPING
 namespace details {
 inline constexpr size_t MakePoolSizeClass(size_t snapped, size_t log2) {
-	constexpr size_t POW_N = 2;
-	constexpr size_t MinClassIndex = 19;
-	return ((log2 << POW_N) + ((snapped - 1) >> (log2 - POW_N)) - MinClassIndex);
+    constexpr size_t POW_N = 2;
+    constexpr size_t MinClassIndex = 19;
+    return ((log2 << POW_N) + ((snapped - 1) >> (log2 - POW_N)) - MinClassIndex);
 }
 constexpr size_t GClassesSize[45] = {
-	16,     0,      0,      0,      32,     0,
-	48,     0,      64,     80,     96,     112,
-	128,    160,    192,    224,    256,    320,
-	384,    448,    512,    640,    768,    896,
-	1024,   1280,   1536,   1792,   2048,   2560,
-	3072,   3584,   4096,   5120,   6144,   7168,
-	8192,   10240,  12288,  14336,  16384,  20480,
-	24576,  28672,  32736,
+    16,     0,      0,      0,      32,     0,
+    48,     0,      64,     80,     96,     112,
+    128,    160,    192,    224,    256,    320,
+    384,    448,    512,    640,    768,    896,
+    1024,   1280,   1536,   1792,   2048,   2560,
+    3072,   3584,   4096,   5120,   6144,   7168,
+    8192,   10240,  12288,  14336,  16384,  20480,
+    24576,  28672,  32736,
 };
 inline constexpr size_t FloorLog2_constexpr(size_t n) {
-	return ((n < 2) ? 0 : 1 + FloorLog2_constexpr(n / 2));
+    return ((n < 2) ? 0 : 1 + FloorLog2_constexpr(n / 2));
 }
 } //!details
 inline constexpr size_t MemoryPoolSnapSize(size_t size) {
-	return details::GClassesSize[details::MakePoolSizeClass(
-		ROUND_TO_NEXT_16(size),
-		details::FloorLog2_constexpr((ROUND_TO_NEXT_16(size) - 1) | 1) )];
+    return details::GClassesSize[details::MakePoolSizeClass(
+        ROUND_TO_NEXT_16(size),
+        details::FloorLog2_constexpr((ROUND_TO_NEXT_16(size) - 1) | 1) )];
 }
 #else
 inline constexpr size_t MemoryPoolSnapSize(size_t size) { return size; }
@@ -157,7 +157,7 @@ public:
     ~TTypedSegregatedMemoryPool() = delete;
 
     static constexpr size_t BlockSize = MemoryPoolSnapSize(sizeof(T));
-	STATIC_ASSERT(sizeof(T) <= BlockSize);
+    STATIC_ASSERT(sizeof(T) <= BlockSize);
 
     typedef typename std::conditional<_ThreadLocal,
         TSegregatedMemoryPool<_Tag, BlockSize, FMemoryPoolThreadLocal, Meta::TThreadLocalAutoSingleton >,

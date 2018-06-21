@@ -376,7 +376,7 @@ public:
         return Written().CutStartingAt(off);
     }
 
-	using textwriter_type::Put;
+    using textwriter_type::Put;
     using textwriter_type::Write;
 
     FMemoryViewWriter* Stream() { return static_cast<FMemoryViewWriter*>(this); }

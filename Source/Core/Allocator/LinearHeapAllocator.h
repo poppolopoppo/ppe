@@ -48,12 +48,12 @@ public:
     };
 
     TLinearHeapAllocator(FLinearHeap& heap) noexcept
-    :	_heap(&heap) {
+    :   _heap(&heap) {
         Assert(_heap);
     }
 
     TLinearHeapAllocator(Meta::FForceInit) noexcept
-    :	_heap(nullptr) 
+    :   _heap(nullptr) 
     {}
 
     TLinearHeapAllocator(const TLinearHeapAllocator& other) noexcept

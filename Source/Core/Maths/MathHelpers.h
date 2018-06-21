@@ -160,7 +160,7 @@ float GridSnap(float location, float grid);
 //----------------------------------------------------------------------------
 // https://github.com/lemire/fastrange/blob/master/fastrange.h
 inline constexpr u32 Bounded(u32 x, u32 N) {
-	return (u32)(((u64)x * (u64)N) >> 32);
+    return (u32)(((u64)x * (u64)N) >> 32);
 }
 inline u64 Bounded(u64 x, u64 N) {
 #ifdef __SIZEOF_INT128__ // then we know we have a 128-bit int
