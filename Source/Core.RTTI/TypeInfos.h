@@ -13,15 +13,38 @@ namespace RTTI {
 using FTypeId = u32;
 //----------------------------------------------------------------------------
 enum class ETypeFlags : u32 {
-    Scalar      = 1<<0,
-    Pair        = 1<<1,
-    List        = 1<<2,
-    Dico        = 1<<3,
-    Native      = 1<<4,
-    Object      = 1<<5,
-    POD         = 1<<6,
+    Scalar					= 1<<0,
+    Tuple					= 1<<1,
+    List					= 1<<2,
+    Dico					= 1<<3,
+    Native					= 1<<4,
+    POD						= 1<<5,
+    TriviallyDestructible	= 1<<6,
 };
 ENUM_FLAGS(ETypeFlags);
+//----------------------------------------------------------------------------
+class FSizeAndFlags { // minimal packed type infos
+public:
+    FSizeAndFlags(size_t sizeInBytes, ETypeFlags flags)
+        : _sizeInBytes(checked_cast<u32>(sizeInBytes))
+        , _flags(u32(flags)) {
+        Assert(sizeInBytes == _sizeInBytes);
+        Assert(u32(flags) == _flags);
+    }
+
+    FSizeAndFlags(const FSizeAndFlags& other) { operator =(other); }
+    FSizeAndFlags& operator =(const FSizeAndFlags& other) {
+        *(u32*)this = *(const u32*)&other;
+        return (*this);
+    }
+
+    size_t SizeInBytes() const { return _sizeInBytes; }
+    ETypeFlags Flags() const { return ETypeFlags(_flags); }
+
+private:
+    u32 _sizeInBytes : 24;
+    u32 _flags : 8;
+};
 //----------------------------------------------------------------------------
 class FTypeInfos {
 public:
@@ -67,6 +90,9 @@ namespace Core {
 //----------------------------------------------------------------------------
 CORE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, RTTI::ETypeFlags flags);
 CORE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETypeFlags flags);
+//----------------------------------------------------------------------------
+CORE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FTypeInfos& typeInfos);
+CORE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FTypeInfos& typeInfos);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

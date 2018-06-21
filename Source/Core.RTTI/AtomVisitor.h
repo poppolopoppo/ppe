@@ -16,7 +16,7 @@ class IAtomVisitor {
 public:
     virtual ~IAtomVisitor() {}
 
-    virtual bool Visit(const IPairTraits* pair, void* data) = 0;
+    virtual bool Visit(const ITupleTraits* tuple, void* data) = 0;
     virtual bool Visit(const IListTraits* list, void* data) = 0;
     virtual bool Visit(const IDicoTraits* dico, void* data) = 0;
 
@@ -26,7 +26,7 @@ public:
 #undef DECL_ATOM_VIRTUAL_VISIT
 
 public: // helpers
-    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IPairTraits* pair, void* data);
+    static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const ITupleTraits* tuple, void* data);
     static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IListTraits* list, void* data);
     static CORE_RTTI_API bool Accept(IAtomVisitor* visitor, const IDicoTraits* dico, void* data);
 
@@ -41,7 +41,7 @@ class FBaseAtomVisitor : public IAtomVisitor {
 public:
     using IAtomVisitor::Visit;
 
-    virtual bool Visit(const IPairTraits* pair, void* data) override { return IAtomVisitor::Accept(this, pair, data); }
+    virtual bool Visit(const ITupleTraits* tuple, void* data) override { return IAtomVisitor::Accept(this, tuple, data); }
     virtual bool Visit(const IListTraits* list, void* data) override { return IAtomVisitor::Accept(this, list, data); }
     virtual bool Visit(const IDicoTraits* dico, void* data) override { return IAtomVisitor::Accept(this, dico, data); }
 

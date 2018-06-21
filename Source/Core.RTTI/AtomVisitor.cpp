@@ -61,21 +61,24 @@ public:
         : _oss(oss)
     {}
 
-    virtual bool Visit(const IPairTraits* pair, void* data) override final {
-        const FAtom first = pair->First(data);
-        const FAtom second = pair->Second(data);
+    virtual bool Visit(const ITupleTraits* tuple, void* data) override final {
+        _oss << tuple->TypeInfos().Name() << Fmt::Colon << Fmt::LParenthese;
 
-        _oss << Fmt::LParenthese;
-        first.Accept(this);
-        _oss << Fmt::Comma << Fmt::Space;
-        second.Accept(this);
+        auto sep = Fmt::NotFirstTime(MakeStringView(TPPFormat_<_Char>::Sep));
+        tuple->ForEach(data, [this, &sep](const FAtom& elt) {
+            _oss << sep;
+            elt.Accept(this);
+
+            return true;
+        });
+
         _oss << Fmt::RParenthese;
 
         return true;
     }
 
     virtual bool Visit(const IListTraits* list, void* data) override final {
-        _oss << Fmt::LBracket;
+        _oss << list->TypeInfos().Name() << Fmt::Colon << Fmt::LBracket;
 
         const bool empty = (list->Count(data) == 0);
 
@@ -103,7 +106,7 @@ public:
     }
 
     virtual bool Visit(const IDicoTraits* dico, void* data) override final {
-        _oss << Fmt::LBrace;
+        _oss << dico->TypeInfos().Name() << Fmt::Colon << Fmt::LBrace;
 
         const bool empty = (dico->Count(data) == 0);
 
@@ -198,30 +201,6 @@ private:
     void Print_(const FDirpath& dirpath) { Print_(dirpath.ToString()); }
     void Print_(const FFilename& filename) { Print_(filename.ToString()); }
 
-    template <typename T, size_t _Dim>
-    void Print_(const TScalarVector<T, _Dim>& vec) {
-        _oss << Fmt::LBracket;
-        auto sep = Fmt::NotFirstTime(PP::Sep);
-        for (T f : vec._data) {
-            _oss << sep;
-            Print_(f);
-        }
-        _oss << Fmt::RBracket;
-    }
-
-    template <typename T, size_t _W, size_t _H>
-    void Print_(const TScalarMatrix<T, _W, _H>& mat) {
-        _oss << Fmt::LBracket << Eol;
-        _indent.Inc();
-        forrange(i, 0, _W) {
-            _oss << _indent;
-            Print_(mat.Column(i));
-            _oss << Fmt::Comma << Eol;
-        }
-        _indent.Dec();
-        _oss << _indent << Fmt::RBracket;
-    }
-
     template <typename T>
     void Print_(const T& value) {
         _oss << value;
@@ -235,10 +214,10 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IPairTraits* pair, void* data) {
-    const FAtom first = pair->First(data);
-    const FAtom second = pair->Second(data);
-    return (first.Accept(visitor) && second.Accept(visitor));
+bool IAtomVisitor::Accept(IAtomVisitor* visitor, const ITupleTraits* tuple, void* data) {
+    return tuple->ForEach(data, [visitor](const FAtom& elt) {
+        return elt.Accept(visitor);
+    });
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IListTraits* list, void* data) {
@@ -254,7 +233,9 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IDicoTraits* dico, void* 
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , FAny& any) {
-    return (any ? any.InnerAtom().Accept(visitor) : true);
+    return (any
+        ? any.InnerAtom().Accept(visitor)
+        : true );
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* scalar, PMetaObject& pobj) {
