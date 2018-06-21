@@ -41,7 +41,7 @@ ENUM_FLAGS(ELoggerVerbosity);
 #   include "Core/IO/String_fwd.h"
 #   include "Core/IO/TextWriter.h"
 #   include "Core/Memory/RefPtr.h"
-#   include "Core/Meta/Function.h"
+#   include "Core/Misc/Function.h"
 #   include "Core/Time/Timestamp.h"
 
 #   include <thread>
@@ -95,11 +95,12 @@ public:
     static CORE_API void UnregisterLogger(const PLogger& logger);
 
 public:
+    static CORE_API PLogger MakeConsole();
     static CORE_API PLogger MakeStdout();
     static CORE_API PLogger MakeOutputDebug();
     static CORE_API PLogger MakeAppendFile(const wchar_t* filename);
     static CORE_API PLogger MakeRollFile(const wchar_t* filename);
-    static CORE_API PLogger MakeFunctor(Meta::TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write);
+    static CORE_API PLogger MakeFunctor(TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write);
 };
 //----------------------------------------------------------------------------
 class ILogger : FLogger, public FRefCountable {

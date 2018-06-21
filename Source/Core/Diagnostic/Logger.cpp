@@ -8,6 +8,7 @@
 #   include "Allocator/LinearHeapAllocator.h"
 #   include "Allocator/TrackingMalloc.h"
 #   include "Container/Vector.h"
+#   include "Diagnostic/Console.h"
 #   include "Diagnostic/CurrentProcess.h"
 #   include "IO/BufferedStream.h"
 #   include "IO/FileSystem.h"
@@ -26,6 +27,7 @@
 #   include "Meta/Singleton.h"
 #   include "Meta/ThreadResource.h"
 #   include "Misc/TargetPlatform.h"
+#   include "Thread/AtomicSpinLock.h"
 #   include "Thread/Task/TaskHelpers.h"
 #   include "Thread/Fiber.h"
 #   include "Thread/ThreadContext.h"
@@ -58,6 +60,13 @@ LOG_CATEGORY(CORE_API, LogDefault)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+static THREAD_LOCAL bool GIsInLogger_ = false;
+struct FIsInLoggerScope {
+    const bool WasInLogger;
+    FIsInLoggerScope() : WasInLogger(GIsInLogger_) { GIsInLogger_ = true; }
+    ~FIsInLoggerScope() { GIsInLogger_ = WasInLogger; }
+};
 //----------------------------------------------------------------------------
 struct FLoggerTypes {
     using EVerbosity = ILogger::EVerbosity;
@@ -138,7 +147,7 @@ private:
 };
 //----------------------------------------------------------------------------
 // Composite for all loggers supplied through public API
-class FUserLogger : Meta::TSingleton<FUserLogger>, public ILowLevelLogger {
+class FUserLogger final : Meta::TSingleton<FUserLogger>, public ILowLevelLogger {
     friend class Meta::TSingleton<FUserLogger>;
     using singleton_type = Meta::TSingleton<FUserLogger>;
 public:
@@ -165,12 +174,19 @@ public:
 
 public: // ILowLevelLogger
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+        const FReentrancyProtection_ scopeReentrant;
+        if (scopeReentrant.WasLocked)
+            return;
+
         const Meta::FLockGuard scopeLock(_barrier);
         for (const PLogger& logger : _loggers)
             logger->Log(category, level, site, text);
     }
 
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
+        if (FReentrancyProtection_::GLockTLS) // skip Format() if already locked, but don't acquire the lock here
+            return;
+
         const FLogAllocator::FScope scopeAlloc;
 
         MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc.Heap());
@@ -182,20 +198,38 @@ public: // ILowLevelLogger
     }
 
     virtual void Flush(bool synchronous) override final {
+        const FReentrancyProtection_ scopeReentrant;
+        if (scopeReentrant.WasLocked)
+            return;
+
         const Meta::FLockGuard scopeLock(_barrier);
         for (const PLogger& logger : _loggers)
             logger->Flush(synchronous);
     }
 
 private:
+    // Need to avoid reentrancy when we're not using FBackgroundLogger as the frontend
+    struct FReentrancyProtection_ {
+        static THREAD_LOCAL bool GLockTLS;
+        const bool WasLocked;
+        FReentrancyProtection_()
+        :   WasLocked(GLockTLS) {
+            GLockTLS = true;
+        }
+        ~FReentrancyProtection_() {
+            GLockTLS = WasLocked;
+        }
+    };
+
     FUserLogger() {} // private ctor
 
     std::mutex _barrier;
     VECTORINSITU(Logger, PLogger, 8) _loggers;
 };
+THREAD_LOCAL bool FUserLogger::FReentrancyProtection_::GLockTLS{ false };
 //----------------------------------------------------------------------------
 // Asynchronous logger used during the game
-class FBackgroundLogger : Meta::TSingleton<FBackgroundLogger>, public ILowLevelLogger {
+class FBackgroundLogger final : Meta::TSingleton<FBackgroundLogger>, public ILowLevelLogger {
     friend class Meta::TSingleton<FBackgroundLogger>;
     using singleton_type = Meta::TSingleton<FBackgroundLogger>;
 public:
@@ -219,7 +253,7 @@ public: // ILowLevelLogger
 
         ::memcpy(log + 1, text.data(), text.SizeInBytes());
 
-        TaskManager_().Run(Meta::MakeFunction(log, &FDeferredLog::Log));
+        TaskManager_().Run(MakeFunction(log, &FDeferredLog::Log));
     }
 
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
@@ -247,11 +281,11 @@ public: // ILowLevelLogger
         log->Bucket = checked_cast<u32>(scopeAlloc.Index);
         log->AllocSizeInBytes = checked_cast<u32>(stolen.SizeInBytes());
 
-        TaskManager_().Run(Meta::MakeFunction(log, &FDeferredLog::Log));
+        TaskManager_().Run(MakeFunction(log, &FDeferredLog::Log));
     }
 
     virtual void Flush(bool synchronous) override final {
-        if (synchronous) {
+        if (synchronous && not GIsInLogger_) {
             TaskManager_().WaitForAll(); // wait for all potential logs before flushing
             _userLogger->Flush(true);
         }
@@ -285,7 +319,7 @@ private:
         u32 Bucket;
         u32 AllocSizeInBytes;
 
-        const FDeferredLog(FLinearHeap& heap) : TLinearHeapAllocator<u8>(heap) {}
+        FDeferredLog(FLinearHeap& heap) : TLinearHeapAllocator<u8>(heap) {}
 
         FDeferredLog(const FDeferredLog&) = delete;
         FDeferredLog& operator =(const FDeferredLog&) = delete;
@@ -378,7 +412,7 @@ public: // ILowLevelLogger
 };
 //----------------------------------------------------------------------------
 // Used before & after main when debugger attached, no dependencies on allocators, always immediate
-class FDebuggingLogger : public ILowLevelLogger {
+class FDebuggingLogger final : public ILowLevelLogger {
 public:
     static ILowLevelLogger* Get() {
         ONE_TIME_DEFAULT_INITIALIZE(FDebuggingLogger, GInstance);
@@ -449,6 +483,8 @@ static void HandleFatalLogIFN_(FLogger::EVerbosity level) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FLogger::Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) {
+    const FIsInLoggerScope loggerScope;
+
     if (category.Verbosity & level)
         CurrentLogger_().Log(category, level, site, text);
 
@@ -456,6 +492,8 @@ void FLogger::Log(const FCategory& category, EVerbosity level, const FSiteInfo& 
 }
 //----------------------------------------------------------------------------
 void FLogger::LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) {
+    const FIsInLoggerScope loggerScope;
+
     if (category.Verbosity & level)
         CurrentLogger_().LogArgs(category, level, site, format, args);
 
@@ -511,7 +549,7 @@ void FLogger::UnregisterLogger(const PLogger& logger) {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-class FOutputDebugLogger_ : public ILogger {
+class FOutputDebugLogger_ final : public ILogger {
 public:
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
         FWStringBuilder oss(text.size());
@@ -523,7 +561,7 @@ public:
     virtual void Flush(bool) override final {} // always synched
 };
 //----------------------------------------------------------------------------
-class FStdoutLogger_ : public ILogger {
+class FStdoutLogger_ final : public ILogger {
 public:
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
         FWStringBuilder oss(text.size());
@@ -537,9 +575,9 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-class FFunctorLogger_ : public ILogger {
+class FFunctorLogger_ final : public ILogger {
 public:
-    typedef Meta::TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)> functor_type;
+    typedef TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)> functor_type;
 
     FFunctorLogger_(functor_type&& func)
         : _func(std::move(func))
@@ -557,50 +595,14 @@ private:
 };
 //----------------------------------------------------------------------------
 #ifdef PLATFORM_WINDOWS
-class FConsoleWriterLogger_ : public ILogger {
+class FConsoleWriterLogger_ final : public ILogger {
 public:
-    FConsoleWriterLogger_()
-        : _hConsole(nullptr)
-        , _textAttribute(::WORD(-1))
-        , _pNewStdout(nullptr)
-        , _pNewStderr(nullptr)
-        , _pNewStdin(nullptr) {
-        if (::AllocConsole()) {
-            Verify(_hConsole = ::GetStdHandle(STD_OUTPUT_HANDLE));
-
-            ::SetConsoleMode(_hConsole, ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS);
-            ::SetConsoleOutputCP(CP_UTF8);
-
-            // Redirect CRT standard input, output and error handles to the console window.
-            ::freopen_s(&_pNewStdout, "CONOUT$", "w", stdout);
-            ::freopen_s(&_pNewStderr, "CONOUT$", "w", stderr);
-            ::freopen_s(&_pNewStdin, "CONIN$", "r", stdin);
-
-            // Clear the error state for all of the C++ standard streams. Attempting to accessing the streams before they refer
-            // to a valid target causes the stream to enter an error state. Clearing the error state will fix this problem,
-            // which seems to occur in newer version of Visual Studio even when the console has not been read from or written
-            // to yet.
-            std::cout.clear();
-            std::cerr.clear();
-            std::cin.clear();
-
-            std::wcout.clear();
-            std::wcerr.clear();
-            std::wcin.clear();
-        }
+    FConsoleWriterLogger_() {
+        FConsole::Open();
     }
 
     ~FConsoleWriterLogger_() {
-        if (_hConsole) {
-#if 0
-            // Redirect back CRT standard input, output and error handles
-            ::freopen_s(&_pNewStdout, "CONOUT$", "w", stdout);
-            ::freopen_s(&_pNewStderr, "CONOUT$", "w", stderr);
-            ::freopen_s(&_pNewStdin, "CONIN$", "r", stdin);
-#endif
-
-            ::FreeConsole();
-        }
+        FConsole::Close();
     }
 
 public: // ILogger
@@ -608,59 +610,40 @@ public: // ILogger
         FWStringBuilder oss(text.size());
         FLogFormat::Print(oss, category, level, site, text);
 
-        constexpr ::WORD fWhite = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-        constexpr ::WORD fYellow = FOREGROUND_RED | FOREGROUND_GREEN;
-        constexpr ::WORD fCyan = FOREGROUND_GREEN | FOREGROUND_BLUE;
-        constexpr ::WORD bBlack = 0;
+        FConsole::EAttribute attrs;
 
-        ::WORD textAttribute;
-        switch (level)
-        {
-        case EVerbosity::Info:
-            textAttribute = (fWhite | bBlack);
+        switch (level) {
+        case ELoggerVerbosity::Info:
+            attrs = FConsole::WHITE_ON_BLACK;
             break;
-        case EVerbosity::Emphasis:
-            textAttribute = (FOREGROUND_GREEN | BACKGROUND_BLUE | FOREGROUND_INTENSITY);
+        case ELoggerVerbosity::Emphasis:
+            attrs = (FConsole::FG_GREEN | FConsole::BG_BLUE | FConsole::FG_INTENSITY);
             break;
-        case EVerbosity::Warning:
-            textAttribute = (fYellow | bBlack | FOREGROUND_INTENSITY);
+        case ELoggerVerbosity::Warning:
+            attrs = (FConsole::FG_YELLOW | FConsole::BG_BLACK | FConsole::FG_INTENSITY);
             break;
-        case EVerbosity::Error:
-            textAttribute = (FOREGROUND_RED | bBlack);
+        case ELoggerVerbosity::Error:
+            attrs = (FConsole::FG_RED | FConsole::BG_BLACK);
             break;
-        case EVerbosity::Debug:
-            textAttribute = (fCyan | bBlack);
+        case ELoggerVerbosity::Debug:
+            attrs = (FConsole::FG_CYAN | FConsole::BG_BLACK);
             break;
-        case EVerbosity::Fatal:
-            textAttribute = (fWhite | BACKGROUND_RED | BACKGROUND_INTENSITY);
+        case ELoggerVerbosity::Fatal:
+            attrs = (FConsole::FG_WHITE | FConsole::BG_RED | FConsole::BG_INTENSITY);
             break;
         default:
-            textAttribute = (fWhite | bBlack);
+            attrs = (FConsole::FG_WHITE | FConsole::BG_BLACK);
             break;
         }
 
-        if (_textAttribute != textAttribute) {
-            _textAttribute = textAttribute;
-            Verify(::SetConsoleTextAttribute(_hConsole, textAttribute));
-        }
-
-        const FWStringView towrite = oss.Written();
-        ::DWORD written = checked_cast<::DWORD>(towrite.size());
-        Verify(::WriteConsoleW(_hConsole, towrite.data(), written, &written, nullptr));
+        FConsole::Write(oss.Written(), attrs);
     }
 
     virtual void Flush(bool) override final {}
-
-private:
-    ::HANDLE _hConsole;
-    ::WORD _textAttribute;
-    ::FILE* _pNewStdout = nullptr;
-    ::FILE* _pNewStderr = nullptr;
-    ::FILE* _pNewStdin = nullptr;
 };
 #endif //!PLATFORM_WINDOWS
 //----------------------------------------------------------------------------
-class FStreamLogger_ : public ILogger {
+class FStreamLogger_ final : public ILogger {
 public:
     FStreamLogger_(UStreamWriter&& ostream)
         : _ostream(std::move(ostream))
@@ -712,7 +695,7 @@ PLogger FLogger::MakeRollFile(const wchar_t* filename) {
     return NEW_REF(Logger, FStreamLogger_)(std::move(ostream));
 }
 //----------------------------------------------------------------------------
-PLogger FLogger::MakeFunctor(Meta::TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write) {
+PLogger FLogger::MakeFunctor(TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write) {
     Assert(write);
     return NEW_REF(Logger, FFunctorLogger_)(std::move(write));
 }
