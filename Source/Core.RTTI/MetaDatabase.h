@@ -6,6 +6,7 @@
 
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Vector.h"
+#include "Core/IO/TextWriter_fwd.h"
 #include "Core/Meta/Singleton.h"
 #include "Core/Thread/ReadWriteLock.h"
 
@@ -44,9 +45,9 @@ public:
     void RegisterObject(FMetaObject* metaObject);
     void UnregisterObject(FMetaObject* metaObject);
 
-    FMetaObject& Object(const FName& name) const;
-    FMetaObject* ObjectIFP(const FName& name) const;
-    FMetaObject* ObjectIFP(const FStringView& name) const;
+    FMetaObject& Object(const FPathName& pathName) const;
+    FMetaObject* ObjectIFP(const FPathName& pathName) const;
+    FMetaObject* ObjectIFP(const FStringView& text) const;
 
     /* Namespaces */
 
@@ -73,7 +74,7 @@ private:
 
     // don't hold lifetime, must be handled separately
     HASHMAP(MetaDatabase, FName, SMetaTransaction) _transactions;
-    HASHMAP(MetaDatabase, FName, SMetaObject) _objects;
+    HASHMAP(MetaDatabase, FPathName, SMetaObject) _objects;
     HASHMAP(MetaDatabase, FName, const FMetaClass*) _classes;
 
     VECTORINSITU(MetaDatabase, const FMetaNamespace*, 8) _namespaces;

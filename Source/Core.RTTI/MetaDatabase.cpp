@@ -7,6 +7,7 @@
 #include "MetaTransaction.h"
 
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/TextWriter.h"
 
 namespace Core {
 namespace RTTI {
@@ -38,6 +39,8 @@ void FMetaDatabase::RegisterTransaction(FMetaTransaction* metaTransaction) {
     LOG(RTTI, Info, L"register transaction in DB : '{0}'", exportName);
 
     WRITESCOPELOCK(_lockRW);
+    
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
 
     Insert_AssertUnique(_transactions, exportName, SMetaTransaction(metaTransaction));
 }
@@ -58,6 +61,8 @@ void FMetaDatabase::UnregisterTransaction(FMetaTransaction* metaTransaction) {
     for (const auto& it : _objects)
         Assert(it.second->RTTI_Outer() != metaTransaction);
 #endif
+
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
 
     Remove_AssertExistsAndSameValue(_transactions, exportName, SMetaTransaction(metaTransaction));
 }
@@ -107,14 +112,12 @@ void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
     Assert(metaObject->RTTI_Outer());
     Assert(metaObject->RTTI_Outer()->IsLoading());
 
-    FName exportName = metaObject->RTTI_Name();
-    Assert(not exportName.empty());
+    const FPathName exportPath{ *metaObject };
 
-    LOG(RTTI, Info, L"register object in DB : <{0}::{1}> '{2}/{3}'",
+    LOG(RTTI, Info, L"register object in DB : <{0}::{1}> '{2}'",
         metaObject->RTTI_Class()->Namespace()->Name(),
         metaObject->RTTI_Class()->Name(),
-        metaObject->RTTI_Outer()->Name(),
-        exportName );
+        exportPath );
 
     Assert(metaObject->RTTI_IsExported());
     Assert(metaObject->RTTI_IsLoaded());
@@ -122,8 +125,11 @@ void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
     WRITESCOPELOCK(_lockRW);
 
     Assert(Contains(_namespaces, metaObject->RTTI_Class()->Namespace()));
+    Assert(_transactions.Contains(exportPath.Transaction));
 
-    Insert_AssertUnique(_objects, std::move(exportName), SMetaObject(metaObject));
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
+
+    Insert_AssertUnique(_objects, exportPath, SMetaObject(metaObject));
 }
 //----------------------------------------------------------------------------
 void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
@@ -131,14 +137,12 @@ void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
     Assert(metaObject->RTTI_Outer());
     Assert(metaObject->RTTI_Outer()->IsUnloading());
 
-    const FName& exportName = metaObject->RTTI_Name();
-    Assert(not exportName.empty());
+    const FPathName exportPath{ *metaObject };
 
-    LOG(RTTI, Info, L"unregister object from DB : <{0}::{1}> '{2}/{3}'",
+    LOG(RTTI, Info, L"unregister object from DB : <{0}::{1}> '{2}'",
         metaObject->RTTI_Class()->Namespace()->Name(),
         metaObject->RTTI_Class()->Name(),
-        metaObject->RTTI_Outer()->Name(),
-        exportName );
+        exportPath );
 
     Assert(metaObject->RTTI_IsExported());
     Assert(metaObject->RTTI_IsLoaded());
@@ -146,38 +150,36 @@ void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
     WRITESCOPELOCK(_lockRW);
 
     Assert(Contains(_namespaces, metaObject->RTTI_Class()->Namespace()));
+    Assert(_transactions.Contains(exportPath.Transaction));
+
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
 
 #ifdef WITH_CORE_ASSERT
-    // check that the object referenced with that name matches the one passed to this function
-    const auto it = _objects.find(exportName);
-    Assert(_objects.end() != it);
-    Assert(it->second == metaObject);
-
-    _objects.erase(it);
-
+    Remove_AssertExistsAndSameValue(_objects, exportPath, SMetaObject{ metaObject });
 #else
-    _objects.erase(exportName);
-
+    _objects.erase(exportPath);
 #endif
 }
 //----------------------------------------------------------------------------
-FMetaObject& FMetaDatabase::Object(const FName& name) const {
-    Assert(not name.empty());
+FMetaObject& FMetaDatabase::Object(const FPathName& pathName) const {
+    Assert(not pathName.empty());
+    Assert(not pathName.Transaction.empty());
 
     READSCOPELOCK(_lockRW);
 
-    FMetaObject& obj = (*_objects.at(name));
+    FMetaObject& obj = (*_objects.at(pathName));
     Assert(obj.RTTI_IsLoaded());
 
     return obj;
 }
 //----------------------------------------------------------------------------
-FMetaObject* FMetaDatabase::ObjectIFP(const FName& name) const {
-    Assert(not name.empty());
+FMetaObject* FMetaDatabase::ObjectIFP(const FPathName& pathName) const {
+    Assert(not pathName.empty());
+    Assert(not pathName.Transaction.empty());
 
     READSCOPELOCK(_lockRW);
 
-    const auto it = _objects.find(name);
+    const auto it = _objects.find(pathName);
     if (_objects.end() == it)
         return nullptr;
 
@@ -185,18 +187,13 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FName& name) const {
     return it->second.get();
 }
 //----------------------------------------------------------------------------
-FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& name) const {
-    Assert(not name.empty());
+FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& text) const {
+    Assert(not text.empty());
 
-    READSCOPELOCK(_lockRW);
+    FPathName pathName;
+    VerifyRelease(FPathName::Parse(&pathName, text));
 
-    const hash_t h = FName::HashValue(name);
-    const auto it = _objects.find_like(name, h);
-    if (_objects.end() == it)
-        return nullptr;
-
-    Assert(it->second->RTTI_IsLoaded());
-    return it->second.get();
+    return ObjectIFP(pathName);
 }
 //----------------------------------------------------------------------------
 // Namespaces
@@ -209,6 +206,8 @@ void FMetaDatabase::RegisterNamespace(const FMetaNamespace* metaNamespace) {
     Assert(metaNamespace->IsStarted());
 
     WRITESCOPELOCK(_lockRW);
+
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
 
     Add_AssertUnique(_namespaces, metaNamespace);
 
@@ -229,6 +228,8 @@ void FMetaDatabase::UnregisterNamespace(const FMetaNamespace* metaNamespace) {
     Assert(metaNamespace->IsStarted());
 
     WRITESCOPELOCK(_lockRW);
+
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
 
     for (const FMetaClass* metaClass : metaNamespace->Classes()) {
         Assert(metaClass);
