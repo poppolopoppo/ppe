@@ -13,13 +13,13 @@ namespace RTTI {
 using FTypeId = u32;
 //----------------------------------------------------------------------------
 enum class ETypeFlags : u32 {
-    Scalar					= 1<<0,
-    Tuple					= 1<<1,
-    List					= 1<<2,
-    Dico					= 1<<3,
-    Native					= 1<<4,
-    POD						= 1<<5,
-    TriviallyDestructible	= 1<<6,
+    Scalar                  = 1<<0,
+    Tuple                   = 1<<1,
+    List                    = 1<<2,
+    Dico                    = 1<<3,
+    Native                  = 1<<4,
+    POD                     = 1<<5,
+    TriviallyDestructible   = 1<<6,
 };
 ENUM_FLAGS(ETypeFlags);
 //----------------------------------------------------------------------------
