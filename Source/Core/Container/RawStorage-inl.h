@@ -96,7 +96,7 @@ auto TRawStorage<T, _Allocator>::at(size_type index) const -> const_reference {
 template <typename T, typename _Allocator>
 void TRawStorage<T, _Allocator>::CopyFrom(const TMemoryView<const T>& src) {
     Resize_DiscardData(src.size());
-    src.CopyTo(MakeView());
+    src.template Cast<const u8>().CopyTo(MakeView());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
