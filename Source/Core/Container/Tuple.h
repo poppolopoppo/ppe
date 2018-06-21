@@ -45,6 +45,21 @@ void Construct(TTuple<_Args...>* p, FForceInit) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
+template <typename... _Args, size_t... _Idx>
+hash_t hash_tuple_(const TTuple<_Args...>& tuple, std::index_sequence<_Idx...>) {
+    hash_t h{ CORE_HASH_VALUE_SEED };
+    hash_combine(h, std::get<_Idx>(tuple)...);
+    return h;
+}
+} //!details
+template <typename... _Args>
+FORCE_INLINE hash_t hash_value(const TTuple<_Args...>& tuple) {
+    return details::hash_tuple_(tuple, std::index_sequence_for<_Args...>{});
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
 struct TTupleMerger {
     template <typename T>
