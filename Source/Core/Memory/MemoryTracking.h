@@ -63,7 +63,6 @@ public:
 private:
     std::atomic<size_t> _blockCount;
     std::atomic<size_t> _allocationCount;
-    std::atomic<size_t> _prevAllocationCount;
     std::atomic<size_t> _totalSizeInBytes;
 
     std::atomic<size_t> _maxBlockCount;
