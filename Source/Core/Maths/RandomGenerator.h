@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Maths/ScalarVector_fwd.h"
+#include "Core/Memory/MemoryView.h"
 
 #include <atomic>
 
@@ -94,6 +95,19 @@ public:
         for (size_t i = 0; i < _Dim; ++i)
             Randomize(v[i]);
     }
+
+	template <typename T>
+	void Randomize(const TMemoryView<T>& view) {
+		for (T& elt : view)
+			Randomize(elt);
+	}
+
+	template <typename T>
+	T& RandomElement(const TMemoryView<T>& view) {
+		Assert(not view.empty());
+		const size_t n = size_t(Next() % view.size());
+		return view[n];
+	}
 
 private:
     generator_type _generator;
