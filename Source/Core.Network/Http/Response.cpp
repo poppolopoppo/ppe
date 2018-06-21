@@ -79,7 +79,7 @@ void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size
 
         i32 statusCodeI = 0;
         const FStringView statusCodeCstr = Strip(oss.Written());
-        if (not Atoi32(&statusCodeI, statusCodeCstr, 10))
+        if (not Atoi(&statusCodeI, statusCodeCstr, 10))
             CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP invalid status code"));
 
         presponse->_status = EHttpStatus(statusCodeI);
@@ -109,7 +109,7 @@ void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size
 
         if (contentLengthCStr.size()) {
             i64 contentLengthI = 0;
-            if (not Atoi64(&contentLengthI, contentLengthCStr, 10))
+            if (not Atoi(&contentLengthI, contentLengthCStr, 10))
                 CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP invalid content length"));
 
             const size_t contentLength = checked_cast<size_t>(contentLengthI);

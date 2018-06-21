@@ -92,7 +92,7 @@ void FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
 
         if (contentLengthCStr.size()) {
             i64 contentLengthI = 0;
-            if (not Atoi64(&contentLengthI, contentLengthCStr, 10))
+            if (not Atoi(&contentLengthI, contentLengthCStr, 10))
                 CORE_THROW_IT(FHttpException(EHttpStatus::BadRequest, "HTTP invalid content length"));
 
             const size_t contentLength = checked_cast<size_t>(contentLengthI);

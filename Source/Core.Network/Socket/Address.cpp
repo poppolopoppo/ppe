@@ -85,7 +85,7 @@ bool FAddress::ParseIPv4(u8 (&ipV4)[4], const FAddress& addr) {
                 return false;
 
             i32 n;
-            if (not Atoi32(&n, MakeStringView(first, it), 10))
+            if (not Atoi(&n, MakeStringView(first, it), 10))
                 return false;
 
             if (n < 0 || n > 255)

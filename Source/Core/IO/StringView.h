@@ -336,27 +336,15 @@ CORE_API bool Split(FWStringView& wstr, const FWStringView& separators, FWString
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CORE_API bool Atoi32(i32* dst, const FStringView& str, size_t base);
-CORE_API bool Atoi64(i64* dst, const FStringView& str, size_t base);
+CORE_API bool Atoi(i32* dst, const FStringView& str, size_t base);
+CORE_API bool Atoi(u32* dst, const FStringView& str, size_t base);
+CORE_API bool Atoi(i64* dst, const FStringView& str, size_t base);
+CORE_API bool Atoi(u64* dst, const FStringView& str, size_t base);
 //----------------------------------------------------------------------------
-CORE_API bool Atoi32(i32* dst, const FWStringView& wstr, size_t base);
-CORE_API bool Atoi64(i64* dst, const FWStringView& wstr, size_t base);
-//----------------------------------------------------------------------------
-template <typename _Char>
-bool Atoi(intptr_t* dst, const TBasicStringView<_Char>& str, size_t base) {
-#ifdef ARCH_X64
-    STATIC_ASSERT(sizeof(intptr_t) == sizeof(i64));
-    return Atoi64(dst, str, base);
-#else
-    STATIC_ASSERT(sizeof(intptr_t) == sizeof(i32));
-    return Atoi32(dst, str, base);
-#endif
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-bool Atoi(size_t* dst, const TBasicStringView<_Char>& str, size_t base) {
-    return Atoi((intptr_t*)dst, str, base);
-}
+CORE_API bool Atoi(i32* dst, const FWStringView& wstr, size_t base);
+CORE_API bool Atoi(u32* dst, const FWStringView& wstr, size_t base);
+CORE_API bool Atoi(i64* dst, const FWStringView& wstr, size_t base);
+CORE_API bool Atoi(u64* dst, const FWStringView& wstr, size_t base);
 //----------------------------------------------------------------------------
 CORE_API bool Atof(float* dst, const FStringView& str);
 CORE_API bool Atod(double* dst, const FStringView& str);

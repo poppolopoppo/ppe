@@ -43,15 +43,15 @@ bool FGuid::TryParse(const FStringView& str, FGuid *guid) {
     i32 g1, g2, g3 = 0;
     i64 g4 = 0;
 
-    if (not Atoi32(&g0, FStringView(str.SubRange(1, 8)), 16))
+    if (not Atoi(&g0, FStringView(str.SubRange(1, 8)), 16))
         return false;
-    if (not Atoi32(&g1, FStringView(str.SubRange(10, 4)), 16))
+    if (not Atoi(&g1, FStringView(str.SubRange(10, 4)), 16))
         return false;
-    if (not Atoi32(&g2, FStringView(str.SubRange(15, 4)), 16))
+    if (not Atoi(&g2, FStringView(str.SubRange(15, 4)), 16))
         return false;
-    if (not Atoi32(&g3, FStringView(str.SubRange(20, 4)), 16))
+    if (not Atoi(&g3, FStringView(str.SubRange(20, 4)), 16))
         return false;
-    if (not Atoi64(&g4, FStringView(str.SubRange(25, 12)), 16))
+    if (not Atoi(&g4, FStringView(str.SubRange(25, 12)), 16))
         return false;
 
     guid->Data.as_rfc.G0 = g0;

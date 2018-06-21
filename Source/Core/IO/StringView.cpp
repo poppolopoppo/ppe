@@ -98,6 +98,7 @@ static bool Atoi_(T *dst, const TBasicStringView<_Char>& str, size_t base) {
         return false;
 
     const bool neg = (traits::Neg == str[0]);
+    Assert(not neg || not std::is_unsigned_v<T>);
 
     i64 v = 0;
     for (size_t i = size_t(neg); i < str.size(); ++i) {
@@ -114,7 +115,7 @@ static bool Atoi_(T *dst, const TBasicStringView<_Char>& str, size_t base) {
             return false;
 
         Assert(d < checked_cast<int>(base));
-        v = v * base + d;
+        v = T(v * base + d);
     }
 
     *dst = checked_cast<T>(neg ? -v : v);
@@ -443,7 +444,7 @@ bool EndsWithI_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char
     return (str.size() >= suffix.size() && EqualsI(str.LastNElements(suffix.size()), suffix) );
 }
 //----------------------------------------------------------------------------
-// returns < 0 if less (not necessarly -1), > 0 if greater (not necessarly +1) and 0 if equals
+// returns < 0 if less (not necessarly -1), > 0 if greater (not necessarily +1) and 0 if equals
 // 1x-2x faster with SIMD on x64 :
 static int StrNCmp_(const char* lhs, const char* rhs, size_t len) {
 #if defined(ARCH_X64) && USE_CORE_SIMD_STRINGOPS
@@ -462,7 +463,7 @@ static int StrNCmp_(const char* lhs, const char* rhs, size_t len) {
 
         size_t mask = size_t(::_mm_movemask_epi8(::_mm_cmpgt_epi8(::_mm_abs_epi8(cmpsg), ::_mm_setzero_si128())));
         if (mask)
-            return cmpsg.m128i_i8[Meta::tzcnt(mask)];
+            return ((i8*)&cmpsg)[Meta::tzcnt(mask)];
     }
 
     for (; len > offset; ++offset) {
@@ -1011,19 +1012,35 @@ bool Split(FWStringView& wstr, const FWStringView& separators, FWStringView& sli
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool Atoi32(i32* dst, const FStringView& str, size_t base) {
+bool Atoi(i32* dst, const FStringView& str, size_t base) {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi64(i64* dst, const FStringView& str, size_t base) {
+bool Atoi(u32* dst, const FStringView& str, size_t base) {
     return Atoi_(dst, str, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi32(i32* dst, const FWStringView& wstr, size_t base) {
+bool Atoi(i64* dst, const FStringView& str, size_t base) {
+    return Atoi_(dst, str, base);
+}
+//----------------------------------------------------------------------------
+bool Atoi(u64* dst, const FStringView& str, size_t base) {
+    return Atoi_(dst, str, base);
+}
+//----------------------------------------------------------------------------
+bool Atoi(i32* dst, const FWStringView& wstr, size_t base) {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------
-bool Atoi64(i64* dst, const FWStringView& wstr, size_t base) {
+bool Atoi(u32* dst, const FWStringView& wstr, size_t base) {
+    return Atoi_(dst, wstr, base);
+}
+//----------------------------------------------------------------------------
+bool Atoi(i64* dst, const FWStringView& wstr, size_t base) {
+    return Atoi_(dst, wstr, base);
+}
+//----------------------------------------------------------------------------
+bool Atoi(u64* dst, const FWStringView& wstr, size_t base) {
     return Atoi_(dst, wstr, base);
 }
 //----------------------------------------------------------------------------
@@ -1294,11 +1311,11 @@ void Escape(FWTextWriter& oss, const FStringView& str, EEscape escape) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const FWStringView& wslice) {
-    return oss << ToCStr(INLINE_MALLOCA(char, wslice.size() + 1), wslice);
+    return oss << WCHAR_to_CHAR(ECodePage::ACP, INLINE_MALLOCA(char, (wslice.size() * 130)/100/* for multi bytes chars */ + 1), wslice);
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const FStringView& slice) {
-    return oss << ToWCStr(INLINE_MALLOCA(wchar_t, slice.size() + 1), slice);
+    return oss << CHAR_to_WCHAR(ECodePage::ACP, INLINE_MALLOCA(wchar_t, slice.size() + 1), slice);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
