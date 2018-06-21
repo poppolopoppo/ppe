@@ -20,8 +20,8 @@ template <typename _Allocator, typename _Tag>
 using TDecorateAllocator = _Allocator;
 #endif
 //----------------------------------------------------------------------------
-#define DECORATE_ALLOCATOR(_Domain, _Allocator) \
-    ::Core::TDecorateAllocator< COMMA_PROTECT(_Allocator), MEMORYDOMAIN_TAG(_Domain) >
+#define DECORATE_ALLOCATOR(_Domain, ...) \
+    ::Core::TDecorateAllocator< COMMA_PROTECT(__VA_ARGS__), MEMORYDOMAIN_TAG(_Domain) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
