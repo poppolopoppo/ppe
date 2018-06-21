@@ -48,9 +48,13 @@ public:
     };
 
     TLinearHeapAllocator(FLinearHeap& heap) noexcept
-        : _heap(&heap) {
+    :	_heap(&heap) {
         Assert(_heap);
     }
+
+    TLinearHeapAllocator(Meta::FForceInit) noexcept
+    :	_heap(nullptr) 
+    {}
 
     TLinearHeapAllocator(const TLinearHeapAllocator& other) noexcept
         : TLinearHeapAllocator(*other._heap) {}
@@ -79,8 +83,10 @@ public:
     // see AllocatorRealloc()
     void* relocate(void* p, size_type newSize, size_type oldSize);
 
+#if 0 // nooope this is leaking blocks !
     // overload destroy() to disable destructor calls with heap !
     void destroy(pointer p) { NOOP(p); }
+#endif
 
 private:
     FLinearHeap* _heap;
@@ -88,6 +94,8 @@ private:
 //----------------------------------------------------------------------------
 template <typename T>
 auto TLinearHeapAllocator<T>::allocate(size_type n) -> pointer {
+    Assert(_heap);
+
     // The return value of allocate(0) is unspecified.
     // TLinearHeapAllocator returns NULL in order to avoid depending
     // on malloc(0)'s implementation-defined behavior
@@ -104,13 +112,13 @@ auto TLinearHeapAllocator<T>::allocate(size_type n) -> pointer {
         CORE_THROW_IT(std::length_error("TLinearHeapAllocator<T>::allocate() - Integer overflow."));
 
     // TLinearHeapAllocator wraps FLinearHeap
-    Assert(_heap);
     void * const pv = _heap->Allocate(n * sizeof(T));
 
     // Allocators should throw std::bad_alloc in the case of memory allocation failure.
     if (pv == nullptr)
         CORE_THROW_IT(std::bad_alloc());
 
+    Assert(Meta::IsAligned(16, pv));
     return static_cast<T *>(pv);
 }
 //----------------------------------------------------------------------------
@@ -120,6 +128,8 @@ void TLinearHeapAllocator<T>::deallocate(void* p, size_type n) {
 
     if (p) {
         Assert(n);
+        Assert(Meta::IsAligned(16, p));
+
         // TLinearHeapAllocator wraps FLinearHeap
         _heap->Release(p, n * sizeof(T));
     }
@@ -130,12 +140,15 @@ void TLinearHeapAllocator<T>::deallocate(void* p, size_type n) {
 //----------------------------------------------------------------------------
 template <typename T>
 void* TLinearHeapAllocator<T>::relocate(void* p, size_type newSize, size_type oldSize) {
-    // TLinearHeapAllocator wraps FLinearHeap
     Assert(_heap);
-    void* const newp = _heap->Relocate(p, newSize, oldSize);
+    Assert(not p || Meta::IsAligned(16, p));
+
+    // TLinearHeapAllocator wraps FLinearHeap
+    void* const newp = _heap->Relocate(p, newSize * sizeof(T), oldSize * sizeof(T));
     if (nullptr == newp && newSize)
         CORE_THROW_IT(std::bad_alloc());
 
+    Assert(Meta::IsAligned(16, newp));
     return newp;
 }
 //----------------------------------------------------------------------------
@@ -155,7 +168,7 @@ bool operator !=(const TLinearHeapAllocator<U>& lhs, const TLinearHeapAllocator<
 //----------------------------------------------------------------------------
 template <typename T>
 size_t AllocatorSnapSize(const TLinearHeapAllocator<T>&, size_t size) {
-    return (FLinearHeap::SnapSize(size * sizeof(T)) / sizeof(T)); // align on 16 bytes boundary
+    return (FLinearHeap::SnapSizeForRecycling(size * sizeof(T)) / sizeof(T)); // align on 16 bytes boundary
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
