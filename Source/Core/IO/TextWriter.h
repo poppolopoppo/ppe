@@ -5,7 +5,7 @@
 #include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter_fwd.h"
 #include "Core/Memory/MemoryProvider.h"
-#include "Core/Meta/Function.h"
+#include "Core/Misc/Function.h"
 
 namespace Core {
 class IBufferedStreamWriter;
@@ -23,7 +23,7 @@ class IBufferedStreamWriter;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
-using TBasicTextManipulator = Meta::TFunction<TBasicTextWriter<_Char>&(TBasicTextWriter<_Char>&)>;
+using TBasicTextManipulator = TFunction<TBasicTextWriter<_Char>&(TBasicTextWriter<_Char>&)>;
 using FTextManipulator = TBasicTextManipulator<char>;
 using FWTextManipulator = TBasicTextManipulator<wchar_t>;
 //----------------------------------------------------------------------------
@@ -376,6 +376,7 @@ public:
         return Written().CutStartingAt(off);
     }
 
+	using textwriter_type::Put;
     using textwriter_type::Write;
 
     FMemoryViewWriter* Stream() { return static_cast<FMemoryViewWriter*>(this); }

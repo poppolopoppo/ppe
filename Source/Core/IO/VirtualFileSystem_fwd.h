@@ -5,7 +5,7 @@
 #include "Core/IO/FileSystem_fwd.h"
 #include "Core/IO/StreamPolicies.h"
 #include "Core/Memory/UniquePtr.h"
-#include "Core/Meta/Function.h"
+#include "Core/Misc/Function.h"
 
 #include <functional>
 
@@ -30,8 +30,8 @@ CORE_API bool VFS_DirectoryExists(const FDirpath& dirpath, EExistPolicy policy =
 CORE_API bool VFS_FileExists(const FFilename& filename, EExistPolicy policy = EExistPolicy::Exists);
 CORE_API bool VFS_FileStats(FFileStat* pstat, const FFilename& filename);
 //----------------------------------------------------------------------------
-CORE_API size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach);
-CORE_API size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach);
+CORE_API size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach);
+CORE_API size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach);
 //----------------------------------------------------------------------------
 CORE_API bool VFS_CreateDirectory(const FDirpath& dirpath);
 CORE_API bool VFS_RemoveDirectory(const FDirpath& dirpath);

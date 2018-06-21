@@ -46,7 +46,7 @@ void TFuture<T>::Async(ETaskPriority priority, FTaskManager* manager) {
 //----------------------------------------------------------------------------
 template <typename T>
 PFuture<T> Future(
-    Meta::TFunction<T()>&& func,
+    TFunction<T()>&& func,
     ETaskPriority priority/* = ETaskPriority::Normal */,
     FTaskManager* manager/* = nullptr *//* uses FGlobalThreadPool by default */) {
     PFuture<T> future(new TFuture<T>(std::move(func)));
@@ -59,7 +59,7 @@ PFuture<T> Future(
 template <typename _It>
 void ParallelFor(
     _It first, _It last,
-    const Meta::TFunction<void(_It)>& foreach,
+    const TFunction<void(_It)>& foreach,
     ETaskPriority priority/* = ETaskPriority::Normal */,
     FTaskManager* manager/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
     STATIC_ASSERT(Meta::is_random_access_iterator<_It>::value);
@@ -80,7 +80,7 @@ void ParallelFor(
     if (!manager)
         manager = &FHighPriorityThreadPool::Get();
 
-    // less space needed to pass arguments to Meta::TFunction<>
+    // less space needed to pass arguments to TFunction<>
     const struct loop_t_ {
         _It first, last;
         decltype(foreach) foreach;
@@ -134,10 +134,10 @@ void ParallelFor(
 template <typename _It>
 void ParallelForEach(
     _It first, _It last,
-    const Meta::TFunction<void(decltype(*std::declval<_It>()))>& foreach_item,
+    const TFunction<void(decltype(*std::declval<_It>()))>& foreach_item,
     ETaskPriority priority/* = ETaskPriority::Normal */,
     FTaskManager* manager/* = nullptr */) {
-    const Meta::TFunction<void(_It)> foreach = [&foreach_item](_It it) { foreach_item(*it); };
+    const TFunction<void(_It)> foreach = [&foreach_item](_It it) { foreach_item(*it); };
     ParallelFor(first, last, foreach, priority, manager);
 }
 //----------------------------------------------------------------------------

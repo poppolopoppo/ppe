@@ -8,7 +8,7 @@
 #include "Core/Memory/MemoryDomain.h"
 #include "Core/Memory/MemoryTracking.h"
 #include "Core/Memory/RefPtr.h"
-#include "Core/Meta/Function.h"
+#include "Core/Misc/Function.h"
 #include "Core/Thread/Task.h"
 #include "Core/Thread/ThreadContext.h"
 #include "Core/Thread/ThreadPool.h"
@@ -33,7 +33,7 @@ static void Test_Task_() {
     TRefPtr<FTest> Ptr(NEW_REF(Task, FTest));
 
     auto& pool = FGlobalThreadPool::Get();
-    pool.RunAndWaitFor(Meta::MakeFunction(Ptr.get(), &FTest::Log)); // should use a TSafePtr<> inside Meta::TFunction<>
+    pool.RunAndWaitFor(MakeFunction(Ptr.get(), &FTest::Log)); // should use a TSafePtr<> inside TFunction<>
 }
 //----------------------------------------------------------------------------
 static void Test_Async_() {
@@ -99,6 +99,7 @@ void Test_Thread() {
     Test_Async_();
     Test_Future_();
     Test_ParallelFor_();
+    Test_Task_();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -131,7 +131,7 @@ namespace {
 static size_t GlobFiles_Windows_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
-    const Meta::TFunction<void(const FFilename&)>& foreach,
+    const TFunction<void(const FFilename&)>& foreach,
     VECTORINSITU(FileSystem, FDirpath, 16)& subDirectories,
     const FileSystem::char_type *pattern,
     bool recursive
@@ -227,7 +227,7 @@ namespace {
 static size_t GlobFiles_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& destination,
-    const Meta::TFunction<void(const FFilename&)>& foreach,
+    const TFunction<void(const FFilename&)>& foreach,
     const FWStringView& pattern,
     bool recursive
     ) {
@@ -318,12 +318,12 @@ bool FVirtualFileSystemNativeComponent::FileStats(FFileStat* pstat, const FFilen
     return FFileStat::FromNativePath(pstat, nativeFilename);
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemNativeComponent::EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) {
+size_t FVirtualFileSystemNativeComponent::EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
     Assert(_openMode ^ EOpenPolicy::Readable);
     return GlobFiles_(dirpath, _alias, _target, foreach, L"*", recursive);
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) {
+size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
     Assert(_openMode ^ EOpenPolicy::Readable);
     Assert(pattern.size());
     return GlobFiles_(dirpath, _alias, _target, foreach, pattern, recursive);
@@ -420,7 +420,7 @@ UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& f
 
     UStreamWriter result;
 
-    if (policy ^ EAccessPolicy::Create) {
+    if (policy ^ (EAccessPolicy::Create + EAccessPolicy::Truncate)) {
         if (not CreateDirectory(filename.Dirpath()))
             return result;
     }
@@ -441,7 +441,7 @@ UStreamReadWriter FVirtualFileSystemNativeComponent::OpenReadWritable(const FFil
 
     UStreamReadWriter result;
 
-    if (policy ^ EAccessPolicy::Create) {
+    if (policy ^ (EAccessPolicy::Create + EAccessPolicy::Truncate)) {
         if (not CreateDirectory(filename.Dirpath()))
             return result;
     }

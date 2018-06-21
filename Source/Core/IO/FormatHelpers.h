@@ -6,7 +6,7 @@
 #include "Core/IO/TextWriter.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Maths/Units.h"
-#include "Core/Meta/Function.h"
+#include "Core/Misc/Function.h"
 #include "Core/Meta/StronglyTyped.h"
 
 namespace Core {
@@ -290,7 +290,7 @@ CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::TBasicIndent<wc
 //----------------------------------------------------------------------------
 namespace Fmt {
 template <typename _Char>
-using TBasicFormator = Meta::TFunction<void (TBasicTextWriter<_Char>&)>;
+using TBasicFormator = TFunction<void (TBasicTextWriter<_Char>&)>;
 using FFormator = TBasicFormator<char>;
 using FWFormator = TBasicFormator<wchar_t>;
 } //!namespace Fmt

@@ -185,7 +185,6 @@ public:
 
 private:
     STATIC_CONST_INTEGRAL(size_t, CacheSize, 32); // 32 kb
-    STATIC_CONST_INTEGRAL(size_t, StackSize, 1024<<10); // 1 mb
 
     TFixedSizeRingBuffer<PTaskCounter, CacheSize> _counters;
 
@@ -399,7 +398,7 @@ struct FWaitForAll_ {
 FTaskManagerImpl::FTaskManagerImpl(FTaskManager& manager)
 :   _manager(manager)
 ,   _scheduler(_manager.WorkerCount(), GTaskManagerQueueCapacity)
-,   _fibers(Meta::MakeFunction(this, &FTaskManagerImpl::WorkerLoop_))
+,   _fibers(MakeFunction(this, &FTaskManagerImpl::WorkerLoop_))
 #ifdef WITH_CORE_ASSERT
 ,   _countersInUse(0)
 ,   _fibersInUse(0)

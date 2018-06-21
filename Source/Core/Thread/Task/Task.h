@@ -4,7 +4,7 @@
 
 #include "Core/Container/Stack.h"
 #include "Core/Memory/RefPtr.h"
-#include "Core/Meta/Function.h"
+#include "Core/Misc/Function.h"
 
 #include <functional>
 
@@ -21,7 +21,7 @@ enum class ETaskPriority : u32 {
     Internal, // Do not use for userland tasks ! (reserved for system)
 };
 //----------------------------------------------------------------------------
-using FTaskFunc = Meta::TFunction<void(ITaskContext&)>;
+using FTaskFunc = TFunction<void(ITaskContext&)>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

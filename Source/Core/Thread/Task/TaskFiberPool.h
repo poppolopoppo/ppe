@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Container/BitMask.h"
-#include "Core/Meta/Function.h"
+#include "Core/Misc/Function.h"
 #include "Core/Thread/AtomicSpinLock.h"
 #include "Core/Thread/Fiber.h"
 
@@ -17,7 +17,7 @@ class FTaskFiberPool {
 public:
     class FHandle;
 
-    using FCallback = Meta::TFunction<void()>;
+    using FCallback = TFunction<void()>;
     using FHandleRef = const FHandle*;
 
     class FHandle { // opaque handle, can't be manipulated directly

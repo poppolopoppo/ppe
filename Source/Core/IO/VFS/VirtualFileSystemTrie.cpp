@@ -82,7 +82,7 @@ bool FVirtualFileSystemTrie::FileStats(FFileStat* pstat, const FFilename& filena
         : false;
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemTrie::EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) const {
+size_t FVirtualFileSystemTrie::EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
     return (readable)
@@ -90,7 +90,7 @@ size_t FVirtualFileSystemTrie::EnumerateFiles(const FDirpath& dirpath, bool recu
         : 0;
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemTrie::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) const {
+size_t FVirtualFileSystemTrie::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
     return (readable)

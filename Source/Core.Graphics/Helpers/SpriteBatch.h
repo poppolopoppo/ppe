@@ -54,7 +54,7 @@ public:
         const FSamplerState* samplerState = nullptr,
         const FDepthStencilState* depthStencilState = nullptr,
         const FRasterizerState* rasterizerState = nullptr,
-        Meta::TFunction<void()> customContext = nullptr,
+        TFunction<void()> customContext = nullptr,
         const FTransform& transform = FTransform::Identity );
     virtual void End();
 

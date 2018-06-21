@@ -4,7 +4,7 @@
 
 #include "Core/Allocator/PoolAllocator.h"
 #include "Core/Allocator/PoolAllocator-impl.h"
-#include "Core/Meta/Function.h"
+#include "Core/Misc/Function.h"
 #include "Core/Thread/Task/Task.h"
 
 namespace Core {
@@ -35,7 +35,7 @@ CORE_API void FireAndForget(
 template <typename T>
 class TFuture : public FRefCountable {
 public:
-    typedef Meta::TFunction<T()> func_type;
+    typedef TFunction<T()> func_type;
 
     explicit TFuture(func_type&& func);
     ~TFuture();
@@ -78,21 +78,21 @@ CORE_API void Async(
 //----------------------------------------------------------------------------
 template <typename T>
 PFuture<T> Future(
-    Meta::TFunction<T()>&& func,
+    TFunction<T()>&& func,
     ETaskPriority priority = ETaskPriority::Normal,
     FTaskManager* manager = nullptr/* uses FGlobalThreadPool by default */);
 //----------------------------------------------------------------------------
 template <typename _It>
 void ParallelFor(
     _It first, _It last,
-    const Meta::TFunction<void(_It)>& foreach,
+    const TFunction<void(_It)>& foreach,
     ETaskPriority priority = ETaskPriority::Normal,
     FTaskManager* manager = nullptr/* uses FHighPriorityThreadPool by default */);
 //----------------------------------------------------------------------------
 template <typename _It>
 void ParallelForEach(
     _It first, _It last,
-    const Meta::TFunction<void(decltype(*std::declval<_It>()))>& foreach_item,
+    const TFunction<void(decltype(*std::declval<_It>()))>& foreach_item,
     ETaskPriority priority = ETaskPriority::Normal,
     FTaskManager* manager = nullptr/* uses FHighPriorityThreadPool by default */);
 //----------------------------------------------------------------------------

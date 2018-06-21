@@ -29,11 +29,11 @@ bool VFS_FileExists(const FFilename& filename, EExistPolicy policy/* = ExistPoli
     return VFS().FileExists(filename, policy);
 }
 //----------------------------------------------------------------------------
-size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) {
+size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
     return VFS().EnumerateFiles(dirpath, recursive, foreach);
 }
 //----------------------------------------------------------------------------
-size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const Meta::TFunction<void(const FFilename&)>& foreach) {
+size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
     return VFS().GlobFiles(dirpath, pattern, recursive, foreach);
 }
 //----------------------------------------------------------------------------
