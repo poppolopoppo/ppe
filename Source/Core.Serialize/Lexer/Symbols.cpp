@@ -148,7 +148,8 @@ FSymbols::FSymbols() {
 
     FSymbols::Invalid = new FSymbol(FSymbol::Invalid, "%invalid%");
     FSymbols::Eof = new FSymbol(FSymbol::Eof, "Eof");
-    FSymbols::Int = new FSymbol(FSymbol::Int, "Int");
+    FSymbols::Integer = new FSymbol(FSymbol::Integer, "Integer");
+    FSymbols::Unsigned = new FSymbol(FSymbol::Unsigned, "Unsigned");
     FSymbols::Float = new FSymbol(FSymbol::Float, "Float");
     FSymbols::String = new FSymbol(FSymbol::String, "String");
     FSymbols::Identifier = new FSymbol(FSymbol::Identifier, "Identifier");
@@ -248,7 +249,8 @@ FSymbols::~FSymbols() {
 
     Assert(nullptr != FSymbols::Invalid);
     Assert(nullptr != FSymbols::Eof);
-    Assert(nullptr != FSymbols::Int);
+    Assert(nullptr != FSymbols::Integer);
+    Assert(nullptr != FSymbols::Unsigned);
     Assert(nullptr != FSymbols::Float);
     Assert(nullptr != FSymbols::String);
     Assert(nullptr != FSymbols::Identifier);
@@ -256,7 +258,8 @@ FSymbols::~FSymbols() {
 
     checked_delete_ref(FSymbols::Invalid);
     checked_delete_ref(FSymbols::Eof);
-    checked_delete_ref(FSymbols::Int);
+    checked_delete_ref(FSymbols::Integer);
+    checked_delete_ref(FSymbols::Unsigned);
     checked_delete_ref(FSymbols::Float);
     checked_delete_ref(FSymbols::String);
     checked_delete_ref(FSymbols::Identifier);
@@ -265,7 +268,8 @@ FSymbols::~FSymbols() {
 //----------------------------------------------------------------------------
 const FSymbol *FSymbols::Invalid = nullptr;
 const FSymbol *FSymbols::Eof = nullptr;
-const FSymbol *FSymbols::Int = nullptr;
+const FSymbol *FSymbols::Integer = nullptr;
+const FSymbol *FSymbols::Unsigned = nullptr;
 const FSymbol *FSymbols::Float = nullptr;
 const FSymbol *FSymbols::String = nullptr;
 const FSymbol *FSymbols::Identifier = nullptr;

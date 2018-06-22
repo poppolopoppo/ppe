@@ -19,72 +19,74 @@ public:
 
         Eof             = 1ull<< 0,
 
-        Int             = 1ull<< 1,   // 42 or 033 or 0xFE
-        Float           = 1ull<< 2,   // 0.5 or 1e5
-        String          = 1ull<< 3,   // "dsf\"dsfs" or 'sdfdsf'
-        Identifier      = 1ull<< 4,   // [_a-zA-Z][\w\d]*
+        Integer         = 1ull<< 1,   // 42 or 033 or 0xFE
+        Unsigned        = 1ull<< 2,   // 42u or 033U or 0xFEu
 
-        True            = 1ull<< 5,   // true
-        False           = 1ull<< 6,   // false
+        Float           = 1ull<< 3,   // 0.5 or 1e5
+        String          = 1ull<< 4,   // "dsf\"dsfs" or 'sdfdsf'
+        Identifier      = 1ull<< 5,   // [_a-zA-Z][\w\d]*
 
-        Null            = 1ull<< 7,   // null
+        True            = 1ull<< 6,   // true
+        False           = 1ull<< 7,   // false
 
-        Is              = 1ull<< 8,   // is
-        Extern          = 1ull<< 9,   // extern
-        Export          = 1ull<<10,   // export
+        Null            = 1ull<< 8,   // null
 
-        LBrace          = 1ull<<11,   // {
-        RBrace          = 1ull<<12,   // }
+        Is              = 1ull<< 9,   // is
+        Extern          = 1ull<<10,   // extern
+        Export          = 1ull<<11,   // export
 
-        LBracket        = 1ull<<13,   // [
-        RBracket        = 1ull<<14,   // ]
+        LBrace          = 1ull<<12,   // {
+        RBrace          = 1ull<<13,   // }
 
-        LParenthese     = 1ull<<15,   // (
-        RParenthese     = 1ull<<16,   // )
+        LBracket        = 1ull<<14,   // [
+        RBracket        = 1ull<<15,   // ]
 
-        Comma           = 1ull<<17,   // ,
-        Colon           = 1ull<<18,   // :
-        SemiColon       = 1ull<<19,   // ;
-        Dot             = 1ull<<20,   // .
-        Dollar          = 1ull<<21,   // $
-        Question        = 1ull<<22,   // ?
+        LParenthese     = 1ull<<16,   // (
+        RParenthese     = 1ull<<17,   // )
 
-        Add             = 1ull<<23,   // +
-        Sub             = 1ull<<24,   // -
-        Mul             = 1ull<<25,   // *
-        Div             = 1ull<<26,   // /
+        Comma           = 1ull<<18,   // ,
+        Colon           = 1ull<<19,   // :
+        SemiColon       = 1ull<<20,   // ;
+        Dot             = 1ull<<21,   // .
+        Dollar          = 1ull<<22,   // $
+        Question        = 1ull<<23,   // ?
 
-        Mod             = 1ull<<27,   // %
-        Pow             = 1ull<<28,   // **
+        Add             = 1ull<<24,   // +
+        Sub             = 1ull<<25,   // -
+        Mul             = 1ull<<26,   // *
+        Div             = 1ull<<27,   // /
 
-        Increment       = 1ull<<29,   // ++
-        Decrement       = 1ull<<30,   // --
+        Mod             = 1ull<<28,   // %
+        Pow             = 1ull<<29,   // **
 
-        LShift          = 1ull<<31,   // <<
-        RShift          = 1ull<<32,   // >>
+        Increment       = 1ull<<30,   // ++
+        Decrement       = 1ull<<31,   // --
 
-        And             = 1ull<<33,   // &
-        Or              = 1ull<<34,   // |
-        Not             = 1ull<<35,   // !
+        LShift          = 1ull<<32,   // <<
+        RShift          = 1ull<<33,   // >>
 
-        Xor             = 1ull<<36,   // ^
-        Complement      = 1ull<<37,   // ~
+        And             = 1ull<<34,   // &
+        Or              = 1ull<<35,   // |
+        Not             = 1ull<<36,   // !
 
-        Assignment      = 1ull<<38,   // =
+        Xor             = 1ull<<37,   // ^
+        Complement      = 1ull<<38,   // ~
 
-        Equals          = 1ull<<39,   // ==
-        NotEquals       = 1ull<<40,   // !=
+        Assignment      = 1ull<<39,   // =
 
-        Less            = 1ull<<41,   // <
-        LessOrEqual     = 1ull<<42,   // <=
+        Equals          = 1ull<<40,   // ==
+        NotEquals       = 1ull<<41,   // !=
 
-        Greater         = 1ull<<43,   // >
-        GreaterOrEqual  = 1ull<<44,   // >=
+        Less            = 1ull<<42,   // <
+        LessOrEqual     = 1ull<<43,   // <=
 
-        DotDot          = 1ull<<45,   // ..
-        Sharp           = 1ull<<46,   // #
+        Greater         = 1ull<<44,   // >
+        GreaterOrEqual  = 1ull<<45,   // >=
 
-        Typename        = 1ull<<50,   // float2,byte4,etc...
+        DotDot          = 1ull<<46,   // ..
+        Sharp           = 1ull<<47,   // #
+
+        Typename        = 1ull<<50,   // Any,BinaryData,Name...
 
         Prefix          = 1ull<<63,   // for FSymbols class
     };

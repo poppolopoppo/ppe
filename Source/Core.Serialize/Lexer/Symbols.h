@@ -43,7 +43,8 @@ public:
 
     static const FSymbol *Eof;
 
-    static const FSymbol *Int;
+    static const FSymbol *Integer;
+    static const FSymbol *Unsigned;
     static const FSymbol *Float;
     static const FSymbol *String;
     static const FSymbol *Identifier;

@@ -9,6 +9,7 @@
 #include "Core/IO/StreamProvider.h"
 #include "Core/IO/String.h"
 #include "Core/IO/StringBuilder.h"
+#include "Core/IO/TextWriter.h"
 
 #include <algorithm>
 #include <locale>
@@ -56,39 +57,6 @@ static bool Identifier_(const char ch) {
 template <char _Ch>
 static bool Until_(const char ch) {
     return '\0' != ch && _Ch != ch;
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-// TODO : Minimize indirect writes
-// https://www.youtube.com/watch?v=o4-CwDo2zpg
-template <size_t _Base>
-static void Itoa_(int64_t value, FStringBuilder& str) {
-    static_assert(1 < _Base && _Base <= 16, "invalid _Base");
-    Assert(str.empty());
-
-    const bool neg = (value < 0);
-    value = std::abs(value);
-
-    do {
-        const int64_t d = value % _Base;
-        const char ch = checked_cast<char>(d + (d > 9 ? ('A'-10) : '0'));
-
-        str.Put(ch);
-
-        value /= _Base;
-    } while (value);
-
-    if (neg)
-        str.Put('-');
-
-    std::reverse(str.begin(), str.end());
-
-    Assert(str.size());
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -196,21 +164,39 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
             Assert('0' == ch);
 
             ch = reader.Read();
-            Assert('x' == ch);
-
-            *psymbol = FSymbols::Int;
+            Assert('x' == ToLower(ch));
 
             if (!ReadCharset_(Hexadecimal_, reader, value))
-                CORE_THROW_IT(FLexerException("invalid hexadecimal int", FMatch(FSymbols::Int, value.ToString(), reader.SourceSite(), reader.Tell()) ));
+                CORE_THROW_IT(FLexerException("invalid hexadecimal int", FMatch(FSymbols::Integer, value.ToString(), reader.SourceSite(), reader.Tell()) ));
 
-            int64_t numeric;
-            if (!Atoi64(&numeric, value.Written(), 16)) {
-                Assert(false);
-                return false;
+            if ('u' == ToLower(reader.Peek())) {
+                ch = reader.Read();
+                Assert('u' == ToLower(ch));
+
+                uint64_t u;
+                if (!Atoi(&u, value.Written(), 16)) {
+                    AssertNotReached();
+                    return false;
+                }
+
+                // reformat as base 10 unsigned int
+                value.clear();
+                value << u;
+                *psymbol = FSymbols::Unsigned;
+            }
+            else {
+                int64_t i;
+                if (!Atoi(&i, value.Written(), 16)) {
+                    AssertNotReached();
+                    return false;
+                }
+
+                // reformat as base 10 signed int
+                value.clear();
+                value << i;
+                *psymbol = FSymbols::Integer;
             }
 
-            value.clear();
-            Itoa_<10>(numeric, value);
             return true;
         }
         else if (IsDigit(reader.Peek(1)) )
@@ -219,19 +205,37 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
             ch = reader.Read();
             Assert('0' == ch);
 
-            *psymbol = FSymbols::Int;
-
             if (!ReadCharset_(Octal_, reader, value))
-                CORE_THROW_IT(FLexerException("invalid octal int", FMatch(FSymbols::Int, value.ToString(), reader.SourceSite(), reader.Tell() )));
+                CORE_THROW_IT(FLexerException("invalid octal int", FMatch(FSymbols::Integer, value.ToString(), reader.SourceSite(), reader.Tell() )));
 
-            int64_t numeric;
-            if (!Atoi64(&numeric, value.Written(), 8)) {
-                Assert(false);
-                return false;
+            if ('u' == ToLower(reader.Peek())) {
+                ch = reader.Read();
+                Assert('u' == ToLower(ch));
+
+                uint64_t u;
+                if (!Atoi(&u, value.Written(), 8)) {
+                    AssertNotReached();
+                    return false;
+                }
+
+                // reformat as base 10 unsigned int
+                value.clear();
+                value << u;
+                *psymbol = FSymbols::Unsigned;
+            }
+            else {
+                int64_t i;
+                if (!Atoi(&i, value.Written(), 8)) {
+                    AssertNotReached();
+                    return false;
+                }
+
+                // reformat as base 10 signed int
+                value.clear();
+                value << i;
+                *psymbol = FSymbols::Integer;
             }
 
-            value.clear();
-            Itoa_<10>(numeric, value);
             return true;
         }
     }
@@ -245,9 +249,24 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
         Assert(value.size());
 
         // if '.' found then it is a float
-        *psymbol = (value.Written().Contains('.'))
-            ? FSymbols::Float
-            : FSymbols::Int;
+        int is_float = 0;
+        for (char ch : value.Written()) {
+            if (ch == '.' && ++is_float > 1) // can't have several '.'
+                CORE_THROW_IT(FLexerException("float can have only one decimal separator", FMatch(FSymbols::Float, value.ToString(), reader.SourceSite(), reader.Tell())));
+        }
+
+        if ('u' == ToLower(reader.Peek())) {
+            ch = reader.Read();
+            Assert('u' == ToLower(ch));
+
+            if (is_float)
+                CORE_THROW_IT(FLexerException("float can't be unsigned", FMatch(FSymbols::Float, value.ToString(), reader.SourceSite(), reader.Tell())));
+
+            *psymbol = FSymbols::Unsigned;
+        }
+        else {
+            *psymbol = (is_float ? FSymbols::Float : FSymbols::Integer);
+        }
 
         return true;
     }
@@ -439,9 +458,12 @@ FLexer::FLexer(IBufferedStreamReader* input, const FWStringView& sourceFileName,
 ,   _allowTypenames(allowTypenames)
 ,   _peeking(false) {
     _lexing.reserve(512);
+    _lexing << FTextFormat::Decimal;
 }
 //----------------------------------------------------------------------------
-FLexer::~FLexer() {}
+FLexer::~FLexer() {
+    Assert(_lexing.Format().Base() == FTextFormat::Decimal);
+}
 //----------------------------------------------------------------------------
 const FMatch *FLexer::Peek() {
     if (!_peeking) {
