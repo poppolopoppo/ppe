@@ -20,8 +20,8 @@
 #define USE_VISUAL2017_UT8_CHARSET
 ; choisit le standard C++ utilisé (C++14 par défaut)
 ;#define USE_VISUAL2017_STD_2014
-;#define USE_VISUAL2017_STD_2017
-#define USE_VISUAL2017_STD_LATEST
+#define USE_VISUAL2017_STD_2017
+;#define USE_VISUAL2017_STD_LATEST
 ; supprime un warning de dépréciation de std::iterator
 #define USE_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
