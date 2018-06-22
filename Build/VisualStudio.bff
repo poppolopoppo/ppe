@@ -10,7 +10,7 @@
 ;.VisualStudioOutputDirectory        =
 ;.VisualStudioIntermediateDirectory  = '^$(SolutionDir)\Intermediate\^$(Platform)\^$(Configuration)\^$(ProjectName)'
 ;
-.VisualStudioFBuildCommand      = 'cd "^$(SolutionDir)\.." &amp; fbuild.rb -config fbuild.bff -vs'
+.VisualStudioFBuildCommand      = 'cd "^$(SolutionDir)\.." &amp; ruby fbuild.rb -config fbuild.bff -vs'
 #if WITH_FASTBUILD_MONITOR
 Print('Support for FastBuild Monitor : - monitor')
 .VisualStudioFBuildCommand      + ' -monitor'
