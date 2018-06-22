@@ -122,12 +122,14 @@ static void EscapeString_(FWTextWriter& oss, const FMarkup::FText& str) {
 //----------------------------------------------------------------------------
 template <typename _Char>
 static void ToStream_(const FMarkup::FElement& elt, TBasicTextWriter<_Char>& oss, Fmt::TBasicIndent<_Char>& indent, bool minify) {
+    using FIndentScope_ = typename Fmt::TBasicIndent<_Char>::FScope;
+
     Assert(not elt.Name().empty());
 
     oss << Fmt::Less << elt.Name();
 
     if (elt.Attributes().size()) {
-        const Fmt::TBasicIndent<_Char>::FScope indentScope(indent);
+        const FIndentScope_ indentScope(indent);
         for (const auto& it : elt.Attributes()) {
             oss << Fmt::Space << it.first << Fmt::Assignment << Fmt::DoubleQuote;
             EscapeString_(oss, it.second);
@@ -140,7 +142,7 @@ static void ToStream_(const FMarkup::FElement& elt, TBasicTextWriter<_Char>& oss
         if (not minify)
             oss << Eol;
         {
-            const Fmt::TBasicIndent<_Char>::FScope indentScope(indent);
+            const FIndentScope_ indentScope(indent);
 
             const FMarkup::FElement* child = elt.Depth().Next;
             Assert(nullptr == child->Breadth().Prev);
