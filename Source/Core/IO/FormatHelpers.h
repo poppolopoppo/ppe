@@ -139,6 +139,28 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, Fmt::TNotFirs
 //----------------------------------------------------------------------------
 namespace Fmt {
 template <typename T>
+struct TNotLastTime {
+    T Outp;
+    size_t Count;
+    size_t Index = 0;
+};
+template <typename T>
+TNotLastTime<T> NotLastTime(T&& outp, size_t count) {
+    return TNotLastTime<T>{ std::move(outp), count };
+}
+} //!namespace Fmt
+//----------------------------------------------------------------------------
+template <typename _Char, typename T>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, Fmt::TNotLastTime<T>& notLastTime ) {
+    if (Likely(++notLastTime.Index < notLastTime.Count))
+        oss << notLastTime.Outp;
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Fmt {
+template <typename T>
 struct TRepeater {
     const T *Value = nullptr;
     size_t Count = 0;
@@ -238,6 +260,14 @@ struct FHexDump {
     FHexDump(const TMemoryView<const u8>& rawData, size_t bytesPerRow = 16)
         : RawData(rawData), BytesPerRow(bytesPerRow) {}
 };
+template <typename T>
+FHexDump HexDump(const TMemoryView<T>& data) {
+    return FHexDump(data.template Cast<const u8>());
+}
+template <typename T>
+FHexDump HexDump(T* data, size_t n) {
+    return HexDump(TMemoryView<T>(data, n));
+}
 } //!namespace Fmt
 //----------------------------------------------------------------------------
 CORE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::FHexDump& hexDump);

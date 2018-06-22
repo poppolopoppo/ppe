@@ -24,12 +24,12 @@ public:
 
     TParseResult(T&& rvalue, const Lexer::FLocation& site)
         : _succeed(true), _value(std::move(rvalue)), _message(nullptr), _site(site) {
-        Assert(_site.FileName);
+        Assert(not _site.Filename.empty());
     }
 
     TParseResult(const char *message, Lexer::FSymbol::ETypeId expected, const Lexer::FLocation& site)
         : _succeed(false), _message(message), _expected(expected), _site(site) {
-        Assert(_site.FileName);
+        Assert(not _site.Filename.empty());
     }
 
     ~TParseResult() {}

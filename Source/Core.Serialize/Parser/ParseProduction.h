@@ -8,7 +8,8 @@
 
 #include "Core/Allocator/SingletonPoolAllocator.h"
 #include "Core/Container/Tuple.h"
-#include "Core/Meta/Function.h"
+#include "Core/Container/Vector.h"
+#include "Core/Misc/Function.h"
 
 #include <functional>
 #include <type_traits>
@@ -20,23 +21,25 @@ POOL_TAG_FWD(Parser);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using TEnumerable = VECTOR(Parser, T);
+using TEnumerable = VECTORINSITU(Parser, T, 4);
 //----------------------------------------------------------------------------
 template <typename T>
 struct TProduction {
     typedef T value_type;
 
-    typedef Meta::TFunction< TParseResult<T>(FParseList&) > lambda_type;
+    typedef TFunction< TParseResult<T>(FParseList&) > lambda_type;
 
     lambda_type Lambda;
 
-    template <typename _Func>
-    explicit TProduction(_Func&& lambda) {
-        Lambda.assign(std::move(lambda));
-    }
+    explicit TProduction(lambda_type&& lambda)
+    :   Lambda(std::move(lambda))
+    {}
+    explicit TProduction(const lambda_type& lambda)
+    :   Lambda(lambda)
+    {}
 
     TProduction(const TProduction& other) { operator =(other); }
-    TProduction& operator =(const TProduction& other) { Lambda.assign(other.Lambda); return *this; }
+    TProduction& operator =(const TProduction& other) { Lambda = other.Lambda; return *this; }
 
     TProduction(TProduction&& rvalue) : Lambda(std::move(rvalue.Lambda)) {}
     TProduction& operator =(TProduction&& rvalue) { Lambda = std::move(rvalue.Lambda); return *this; }
@@ -77,7 +80,7 @@ struct TProduction {
     }
 
     template <typename U>
-    TProduction<U> Then(Meta::TFunction< TProduction<U>(T&&) >&& then) const {
+    TProduction<U> Then(TFunction< TProduction<U>(T&&) >&& then) const {
         const TProduction& first = *this;
         return TProduction<U>{[first, then](FParseList& input) -> TParseResult<U> {
             TParseResult<T> result = first(input);
@@ -88,7 +91,7 @@ struct TProduction {
     }
 
     template <typename U>
-    TProduction<U> Select(Meta::TFunction< U(T&&) >&& convert) const {
+    TProduction<U> Select(TFunction< U(T&&) >&& convert) const {
         const TProduction& first = *this;
         return TProduction<U>{[first, convert](FParseList& input) -> TParseResult<U> {
             TParseResult<T> result = first(input);

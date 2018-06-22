@@ -4,6 +4,7 @@
 
 #include "ParseExpression.h"
 
+#include "Core.RTTI/Any.h"
 #include "Core.RTTI/MetaClass.h"
 #include "Core.RTTI/MetaDatabase.h"
 #include "Core.RTTI/MetaObject.h"
@@ -11,6 +12,7 @@
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/IO/Format.h"
+#include "Core/IO/FormatHelpers.h"
 #include "Core/IO/StringBuilder.h"
 #include "Core/IO/TextWriter.h"
 
@@ -37,19 +39,18 @@ FVariableExport::FVariableExport(const RTTI::FName& name, const PCParseExpressio
 //----------------------------------------------------------------------------
 FVariableExport::~FVariableExport() {}
 //----------------------------------------------------------------------------
-RTTI::FMetaAtom *FVariableExport::Eval(FParseContext *context) const {
+RTTI::FAtom FVariableExport::Eval(FParseContext* context) const {
     Assert(context);
 
-    const RTTI::PMetaAtom atom = _value->Eval(context);
+    const RTTI::FAtom atom = _value->Eval(context);
 
-    switch (_scope)
-    {
+    switch (_scope) {
     case FVariableExport::Public:
-        context->AddLocal(this, _name, atom.get());
+        context->AddLocal(this, _name, atom);
         break;
 
     case FVariableExport::Global:
-        context->AddGlobal(this, _name, atom.get());
+        context->AddGlobal(this, _name, atom);
         break;
 
     default:
@@ -57,37 +58,51 @@ RTTI::FMetaAtom *FVariableExport::Eval(FParseContext *context) const {
         break;
     }
 
-    return atom.get();
+    return atom;
 }
 //----------------------------------------------------------------------------
 FString FVariableExport::ToString() const {
-    return _name.c_str();
+    return FString(_name.MakeView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FVariableReference, )
 //----------------------------------------------------------------------------
-FVariableReference::FVariableReference(const RTTI::FName& name, const Lexer::FLocation& site)
+FVariableReference::FVariableReference(const RTTI::FPathName& pathName, const Lexer::FLocation& site)
 :   FParseExpression(site)
-,   _name(name) {
-    Assert(!name.empty());
+,   _pathName(pathName) {
+    Assert(not _pathName.empty());
 }
 //----------------------------------------------------------------------------
 FVariableReference::~FVariableReference() {}
 //----------------------------------------------------------------------------
-RTTI::FMetaAtom *FVariableReference::Eval(FParseContext *context) const {
+RTTI::FAtom FVariableReference::Eval(FParseContext* context) const {
     Assert(context);
 
-    RTTI::FMetaAtom *const value = context->GetAny(_name);
-    if (!value)
-        CORE_THROW_IT(FParserException("unknown variable name", this));
+    RTTI::FAtom value;
+    
+    if (_pathName.Transaction.empty()) { // local ?
+        value = context->GetAny(_pathName.Identifier);
 
+        if (not value)
+            CORE_THROW_IT(FParserException("unknown variable name", this));
+    }
+    else { // global :
+        RTTI::PMetaObject objIFP{ RTTI::MetaDB().ObjectIFP(_pathName) };
+
+        if (not objIFP)
+            CORE_THROW_IT(FParserException("unknown object path", this));
+
+        value = context->CreateAtomFrom(std::move(objIFP));
+    }
+
+    Assert(value);
     return value;
 }
 //----------------------------------------------------------------------------
 FString FVariableReference::ToString() const {
-    return FString(_name.MakeView());
+    return Core::ToString(_pathName);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -97,7 +112,7 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FObjectDefinition, )
 FObjectDefinition::FObjectDefinition(const RTTI::FName& name, const Lexer::FLocation& site)
 :   FParseExpression(site)
 ,   _name(name) {
-    Assert(!name.empty());
+    Assert(not name.empty());
 }
 //----------------------------------------------------------------------------
 FObjectDefinition::~FObjectDefinition() {}
@@ -108,14 +123,15 @@ void FObjectDefinition::AddStatement(const FParseStatement *statement) {
     _statements.emplace_back(statement);
 }
 //----------------------------------------------------------------------------
-RTTI::FMetaAtom *FObjectDefinition::Eval(FParseContext *context) const {
+RTTI::FAtom FObjectDefinition::Eval(FParseContext* context) const {
     Assert(context);
 
-    const RTTI::FMetaClass *metaclass = RTTI::MetaDB().FindClassIFP(_name);
-    if (!metaclass)
+    const RTTI::FMetaClass *metaclass = RTTI::MetaDB().ClassIFP(_name);
+    if (not metaclass)
         CORE_THROW_IT(FParserException("unknown metaclass", this));
 
-    const RTTI::PMetaObject obj = metaclass->CreateInstance();
+    RTTI::PMetaObject obj;
+    Verify(metaclass->CreateInstance(obj));
     Assert(obj);
 
     const RTTI::PMetaObject parent = context->ScopeObject();
@@ -126,11 +142,11 @@ RTTI::FMetaAtom *FObjectDefinition::Eval(FParseContext *context) const {
 
     context->SetScopeObject(parent.get());
 
-    return RTTI::MakeAtom(obj);
+    return context->CreateAtomFrom(std::move(obj));
 }
 //----------------------------------------------------------------------------
 FString FObjectDefinition::ToString() const {
-    return _name.c_str();
+    return FString(_name.MakeView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -149,30 +165,28 @@ FPropertyReference::FPropertyReference(
 //----------------------------------------------------------------------------
 FPropertyReference::~FPropertyReference() {}
 //----------------------------------------------------------------------------
-RTTI::FMetaAtom *FPropertyReference::Eval(FParseContext *context) const {
+RTTI::FAtom FPropertyReference::Eval(FParseContext* context) const {
     Assert(context);
 
-    const RTTI::PCMetaAtom atom = _object->Eval(context);
+    const RTTI::FAtom atom = _object->Eval(context);
     Assert(atom);
 
-    const auto *typed_atom = atom->As<RTTI::PMetaObject>();
-    if (!typed_atom)
+    const RTTI::PMetaObject* ppobj = atom.TypedDataIFP<RTTI::PMetaObject>();
+    if (not ppobj)
         CORE_THROW_IT(FParserException("invalid object", _object.get()));
 
-    const RTTI::PMetaObject object = typed_atom->Wrapper();
-    if (!object)
+    const RTTI::PMetaObject pobj = (*ppobj);
+    if (not pobj)
         CORE_THROW_IT(FParserException("object is null", _object.get()));
 
-    const RTTI::FMetaClass *metaclass = object->RTTI_MetaClass();
+    const RTTI::FMetaClass* metaclass = pobj->RTTI_Class();
     Assert(metaclass);
 
-    const RTTI::FMetaProperty *metaproperty = metaclass->PropertyIFP(_member);
-    if (!metaproperty)
+    const RTTI::FMetaProperty* metaproperty = metaclass->PropertyIFP(_member);
+    if (not metaproperty)
         CORE_THROW_IT(FParserException("invalid member name", this));
 
-    RTTI::FMetaAtom *const pvalue = metaproperty->WrapCopy(object.get());
-
-    return pvalue;
+    return metaproperty->Get(*pobj);
 }
 //----------------------------------------------------------------------------
 FString FPropertyReference::ToString() const {
@@ -181,149 +195,184 @@ FString FPropertyReference::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TPair, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FTupleExpr, )
 //----------------------------------------------------------------------------
-TPair::TPair(
-    const PCParseExpression& lhs,
-    const PCParseExpression& rhs,
-    const Lexer::FLocation& site)
-:   FParseExpression(site),
-    _lhs(lhs), _rhs(rhs) {
-    Assert(lhs);
-    Assert(rhs);
+FTupleExpr::FTupleExpr(const Lexer::FLocation& site)
+:   FParseExpression(site)
+{}
+//----------------------------------------------------------------------------
+FTupleExpr::FTupleExpr(elements_type&& relements, const Lexer::FLocation& site)
+    : FParseExpression(site)
+    , _elements(std::move(relements)) {
+#ifdef WITH_CORE_ASSERT
+    Assert(_elements.size() > 1);
+    for (const auto& expr : _elements)
+        Assert(expr);
+#endif
 }
 //----------------------------------------------------------------------------
-TPair::~TPair() {}
+FTupleExpr::~FTupleExpr() {}
 //----------------------------------------------------------------------------
-RTTI::FMetaAtom *TPair::Eval(FParseContext *context) const {
+RTTI::FAtom FTupleExpr::Eval(FParseContext* context) const {
     Assert(context);
 
-    RTTI::PMetaAtom lhs_atom = _lhs->Eval(context);
-    Assert(lhs_atom);
-    RTTI::PMetaAtom rhs_atom = _rhs->Eval(context);
-    Assert(rhs_atom);
+    const RTTI::PTypeTraits traits = RTTI::MakeAnyTuple(_elements.size());
+    const RTTI::ITupleTraits& tupleTraits = traits->ToTuple();
 
-    Core::TPair<RTTI::PMetaAtom, RTTI::PMetaAtom> pair(lhs_atom, rhs_atom);
+    const RTTI::FAtom result = context->CreateAtom(traits);
 
-    return RTTI::MakeAtom(pair);
+    forrange(i, 0, _elements.size()) {
+        const auto& expr = _elements[i];
+
+        const RTTI::FAtom src = expr->Eval(context);
+        Assert(src);
+        const RTTI::FAtom dst = tupleTraits.At(result.Data(), i);
+        Assert(dst);
+
+        dst.FlatData<RTTI::FAny>().AssignMove(src);
+    }
+
+    return result;
 }
 //----------------------------------------------------------------------------
-FString TPair::ToString() const {
-    return StringFormat("({0}, {1})", _lhs->ToString(), _rhs->ToString());
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TArray, )
-//----------------------------------------------------------------------------
-TArray::TArray(const Lexer::FLocation& site)
-:   FParseExpression(site) {}
-//----------------------------------------------------------------------------
-TArray::TArray(
-    const TMemoryView<const PCParseExpression>& items,
-    const Lexer::FLocation& site)
-:   FParseExpression(site) {
-    _items.insert(_items.end(), items.begin(), items.end());
-}
-//----------------------------------------------------------------------------
-TArray::~TArray() {}
-//----------------------------------------------------------------------------
-RTTI::FMetaAtom *TArray::Eval(FParseContext *context) const {
-    Assert(context);
-
-    VECTOR(Parser, RTTI::PMetaAtom) atom_items;
-    atom_items.reserve(_items.size());
-
-    for (const auto& it : _items)
-        atom_items.push_back(it->Eval(context));
-
-    return RTTI::MakeAtom(atom_items);
-}
-//----------------------------------------------------------------------------
-FString TArray::ToString() const {
+FString FTupleExpr::ToString() const {
     FStringBuilder oss;
-    oss << "TArray[ ";
-    for (const auto& it : _items)
-        oss << it->ToString() << ", ";
-    oss << "]";
+    auto sep = Fmt::NotFirstTime(", ");
+    oss << "Tuple:( ";
+    for (const auto& elt : _elements)
+        oss << sep << elt->ToString();
+    oss << " )";
     return oss.ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TDictionary, )
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FArrayExpr, )
 //----------------------------------------------------------------------------
-TDictionary::TDictionary(const Lexer::FLocation& site)
+FArrayExpr::FArrayExpr(const Lexer::FLocation& site)
 :   FParseExpression(site) {}
 //----------------------------------------------------------------------------
-TDictionary::TDictionary(
-    const TMemoryView<const Core::TPair<PCParseExpression, PCParseExpression>>& items,
-    const Lexer::FLocation& site)
-:   FParseExpression(site) {
-    _items.insert(items.begin(), items.end());
-}
+FArrayExpr::FArrayExpr(items_type&& ritems, const Lexer::FLocation& site)
+:   FParseExpression(site)
+,   _items(std::move(ritems))
+{}
 //----------------------------------------------------------------------------
-TDictionary::~TDictionary() {}
+FArrayExpr::~FArrayExpr() {}
 //----------------------------------------------------------------------------
-RTTI::FMetaAtom *TDictionary::Eval(FParseContext *context) const {
+RTTI::FAtom FArrayExpr::Eval(FParseContext* context) const {
     Assert(context);
 
-    ASSOCIATIVE_VECTOR(Parser, RTTI::PMetaAtom, RTTI::PMetaAtom) atom_items;
-    atom_items.reserve(_items.size());
+    using any_vector = VECTOR_LINEARHEAP(RTTI::FAny);
 
-    for (const auto& it : _items) {
-        const RTTI::PMetaAtom key = it.first->Eval(context);
-        const RTTI::PMetaAtom value = it.second->Eval(context);
-        atom_items.Insert_AssertUnique(std::move(key), std::move(value));
+    any_vector result{ context->CreateHeapContainer<any_vector>() };
+    result.resize(_items.size());
+
+    forrange(i, 0, _items.size()) {
+        const RTTI::FAtom atom = _items[i]->Eval(context);
+        Assert(atom);
+
+        result[i].AssignMove(atom);
     }
 
-    return RTTI::MakeAtom(atom_items);
+    return context->CreateAtomFrom(std::move(result));
 }
 //----------------------------------------------------------------------------
-FString TDictionary::ToString() const {
-    FOStringStream oss;
-    oss << "TDictionary{ ";
+FString FArrayExpr::ToString() const {
+    FStringBuilder oss;
+    auto sep = Fmt::NotFirstTime(", ");
+    oss << "Array:[ ";
     for (const auto& it : _items)
-        oss << it.first->ToString() << " => " << it.second->ToString() << ", ";
-    oss << "}";
-    return oss.str();
+        oss << sep << it->ToString();
+    oss << " ]";
+    return oss.ToString();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FDictionaryExpr, )
+//----------------------------------------------------------------------------
+FDictionaryExpr::FDictionaryExpr(const Lexer::FLocation& site)
+:   FParseExpression(site) {}
+//----------------------------------------------------------------------------
+FDictionaryExpr::FDictionaryExpr(dico_type&& rdico, const Lexer::FLocation& site)
+:   FParseExpression(site)
+,   _dico(std::move(rdico))
+{}
+//----------------------------------------------------------------------------
+FDictionaryExpr::~FDictionaryExpr() {}
+//----------------------------------------------------------------------------
+RTTI::FAtom FDictionaryExpr::Eval(FParseContext* context) const {
+    Assert(context);
+
+    using any_dico = ASSOCIATIVE_VECTOR_LINEARHEAP(RTTI::FAny, RTTI::FAny);
+
+    any_dico result{ context->CreateHeapContainer<any_dico>() };
+    result.Vector().resize(_dico.size());
+
+    forrange(i, 0, _dico.size()) {
+        const auto& it = _dico.Vector()[i];
+        const RTTI::FAtom key = it.first->Eval(context);
+        const RTTI::FAtom value = it.second->Eval(context);
+
+        Assert(key);
+
+        Core::TPair<RTTI::FAny, RTTI::FAny>& pair = result.Vector()[i];
+
+        pair.first.AssignMove(key);
+        pair.second.AssignMove(value);
+    }
+
+    return context->CreateAtomFrom(std::move(result));
+}
+//----------------------------------------------------------------------------
+FString FDictionaryExpr::ToString() const {
+    FStringBuilder oss;
+    auto sep = Fmt::NotFirstTime(", ");
+    oss << "DictionaryExpr:{ ";
+    for (const auto& it : _dico)
+        oss << sep << it.first->ToString() << " => " << it.second->ToString() << ", ";
+    oss << " }";
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FCastExpr, )
 //----------------------------------------------------------------------------
-FCastExpr::FCastExpr(RTTI::FMetaTypeId typeId, const FParseExpression* expr, const Lexer::FLocation& site)
+FCastExpr::FCastExpr(RTTI::ENativeType typeId, const FParseExpression* expr, const Lexer::FLocation& site)
 :   FParseExpression(site)
 ,   _typeId(typeId)
 ,   _expr(expr) {
-    Assert(_typeId);
     Assert(_expr);
 }
 //----------------------------------------------------------------------------
 FCastExpr::~FCastExpr() {}
 //----------------------------------------------------------------------------
-RTTI::FMetaAtom *FCastExpr::Eval(FParseContext *context) const {
+RTTI::FAtom FCastExpr::Eval(FParseContext* context) const {
     Assert(context);
 
-    RTTI::PMetaAtom atom = _expr->Eval(context);
-    if (nullptr == atom)
-        return nullptr;
+    RTTI::FAtom atom = _expr->Eval(context);
 
-    RTTI::PMetaAtom cast = RTTI::ScalarTraitsFromTypeId(_typeId)->CreateDefaultValue();
-    Assert(cast);
+    if (atom) {
+        const RTTI::PTypeTraits dst = RTTI::MakeTraits(_typeId);
 
-    if (false == cast->Traits()->AssignMove(cast.get(), atom.get()))
-        CORE_THROW_IT(FParserException("invalid cast", this));
+        if (dst != atom.Traits()) {
+            RTTI::FAtom casted = context->CreateAtom(dst);
+            if (false == atom.PromoteMove(casted))
+                CORE_THROW_IT(FParserException("invalid cast", this));
 
-    return RemoveRef_AssertReachZero_KeepAlive(cast);
+            atom = casted;
+        }
+    }
+
+    return atom;
 }
 //----------------------------------------------------------------------------
 FString FCastExpr::ToString() const {
-    FOStringStream oss;
-    oss << RTTI::ScalarTypeInfoFromTypeId(_typeId).Name << ": ";
+    FStringBuilder oss;
+    oss << RTTI::MakeTraits(_typeId)->TypeInfos().Name() << ": ";
     oss << _expr->ToString();
-    return oss.str();
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

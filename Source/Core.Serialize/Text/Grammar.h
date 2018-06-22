@@ -8,8 +8,9 @@
 #include "Core/Meta/Singleton.h"
 
 namespace Core { namespace Parser {
-    FWD_REFPTR(ParseItem);
-    class FParseList;
+FWD_REFPTR(ParseExpression);
+FWD_REFPTR(ParseStatement);
+class FParseList;
 }}
 
 namespace Core {
@@ -19,12 +20,13 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 class FGrammarStartup {
 public:
-    static void Start();
-    static void Shutdown();
+    CORE_SERIALIZE_API static void Start();
+    CORE_SERIALIZE_API static void Shutdown();
 
-    static void ClearAll_UnusedMemory();
+    CORE_SERIALIZE_API static void ClearAll_UnusedMemory();
 
-    static Parser::PCParseItem Parse(Parser::FParseList& input);
+    CORE_SERIALIZE_API static Parser::PCParseExpression ParseExpression(Parser::FParseList& input);
+    CORE_SERIALIZE_API static Parser::PCParseStatement ParseStatement(Parser::FParseList& input);
 
     FGrammarStartup()  { Start(); }
     ~FGrammarStartup() { Shutdown(); }

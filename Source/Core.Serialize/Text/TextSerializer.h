@@ -17,14 +17,21 @@ public:
 //----------------------------------------------------------------------------
 class FTextSerializer : public ISerializer {
 public:
-    FTextSerializer();
+    explicit FTextSerializer(bool minify = true);
     virtual ~FTextSerializer();
 
     using ISerializer::Deserialize;
     using ISerializer::Serialize;
 
-    virtual void Deserialize(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName = nullptr) override;
-    virtual void Serialize(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) override;
+    bool Minify() const { return _minify; }
+    void SetMinify(bool value) { _minify = value; }
+
+protected: //ISerializer
+    virtual void DeserializeImpl(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName) override;
+    virtual void SerializeImpl(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) override;
+
+private:
+    bool _minify;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

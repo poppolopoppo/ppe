@@ -46,7 +46,7 @@ bool FParseList::Parse(Lexer::FLexer* lexer /* = nullptr */) {
     if (_matches.size())
         _site = _matches.front().Site();
     else
-        _site.FileName = lexer->SourceFileName().c_str();
+        _site.Filename = lexer->SourceFileName();
 
     Reset();
 

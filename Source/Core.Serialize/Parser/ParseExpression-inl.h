@@ -16,23 +16,26 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TLiteral<T>, template <typename 
 template <typename T>
 TLiteral<T>::TLiteral(T&& rvalue, const Lexer::FLocation& site)
 :   FParseExpression(site)
-,   _literal(RTTI::MakeAtom(std::move(rvalue))) {
-    Assert(_literal);
+,   _literal(std::move(rvalue)) {
+}
+//----------------------------------------------------------------------------
+template <typename T>
+TLiteral<T>::TLiteral(const T& value, const Lexer::FLocation& site)
+:   FParseExpression(site)
+,   _literal(value) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
 TLiteral<T>::~TLiteral() {}
 //----------------------------------------------------------------------------
 template <typename T>
-RTTI::FMetaAtom *TLiteral<T>::Eval(FParseContext * /* context */) const {
-    Assert(_literal);
-    return _literal.get();
+RTTI::FAtom TLiteral<T>::Eval(FParseContext* context) const {
+    return context->CreateAtomFrom(T(_literal));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 FString TLiteral<T>::ToString() const {
-    Assert(_literal);
-    return _literal->ToString();
+    return RTTI::MakeAtom(&_literal).ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -50,7 +53,7 @@ template <typename _Functor>
 TUnaryFunction<_Functor>::~TUnaryFunction() {}
 //----------------------------------------------------------------------------
 template <typename _Functor>
-RTTI::FMetaAtom *TUnaryFunction<_Functor>::Eval(FParseContext *context) const {
+RTTI::FAtom TUnaryFunction<_Functor>::Eval(FParseContext *context) const {
     Assert(_expr);
 
     return _functor(context, _expr.get());
@@ -72,7 +75,7 @@ template <typename _Functor>
 TBinaryFunction<_Functor>::~TBinaryFunction() {}
 //----------------------------------------------------------------------------
 template <typename _Functor>
-RTTI::FMetaAtom *TBinaryFunction<_Functor>::Eval(FParseContext *context) const {
+RTTI::FAtom TBinaryFunction<_Functor>::Eval(FParseContext *context) const {
     Assert(_lhs);
     Assert(_rhs);
 
@@ -97,7 +100,7 @@ template <typename _Test>
 TTernary<_Test>::~TTernary() {}
 //----------------------------------------------------------------------------*
 template <typename _Test>
-RTTI::FMetaAtom *TTernary<_Test>::Eval(FParseContext *context) const {
+RTTI::FAtom TTernary<_Test>::Eval(FParseContext *context) const {
     Assert(_if);
     Assert(_true);
     Assert(_false);

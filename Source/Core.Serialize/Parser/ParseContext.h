@@ -2,50 +2,65 @@
 
 #include "Core.Serialize/Serialize.h"
 
+#include "Core.RTTI/RTTI_fwd.h"
+
 #include "Core/Container/HashMap.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
-namespace RTTI {
-    FWD_REFPTR(MetaAtom);
-    FWD_REFPTR(MetaObject);
-    FWD_REFPTR(MetaTransaction);
-    class FName;
-}}
-
-namespace Core {
+class FLinearHeap;
 namespace Parser {
 FWD_REFPTR(ParseExpression);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FParseContext {
+class CORE_SERIALIZE_API FParseContext {
 public:
-    explicit FParseContext(const FParseContext *parent = nullptr);
+    explicit FParseContext(Meta::FForceInit);
+    explicit FParseContext(const RTTI::PAtomHeap& atomHeap);
+    explicit FParseContext(const FParseContext* parent);
+
     virtual ~FParseContext();
 
-    const FParseContext *Parent() const { return _parent; }
+    const FParseContext* Parent() const { return _parent; }
+    const FParseContext* GlobalScope() const;
 
-    RTTI::FMetaObject *ScopeObject() const { return _scopeObject.get(); }
+    RTTI::FMetaObject* ScopeObject() const { return _scopeObject.get(); }
     void SetScopeObject(RTTI::FMetaObject *object);
 
-    RTTI::FMetaAtom *GetLocal(const RTTI::FName& name) const;
+    RTTI::FAtom GetLocal(const RTTI::FName& name) const;
 
-    void AddLocal(const FParseExpression* expr, const RTTI::FName& name, RTTI::FMetaAtom *value);
-    void RemoveLocal(const FParseExpression* expr, const RTTI::FName& name, RTTI::FMetaAtom *value);
+    void AddLocal(const FParseExpression* expr, const RTTI::FName& name, const RTTI::FAtom& value);
+    void RemoveLocal(const FParseExpression* expr, const RTTI::FName& name, const RTTI::FAtom& value);
 
-    RTTI::FMetaAtom *GetGlobal(const RTTI::FName& name) const;
+    RTTI::FAtom GetGlobal(const RTTI::FName& name) const;
 
-    void AddGlobal(const FParseExpression* expr, const RTTI::FName& name, RTTI::FMetaAtom *value);
-    void RemoveGlobal(const FParseExpression* expr, const RTTI::FName& name, RTTI::FMetaAtom *value);
+    void AddGlobal(const FParseExpression* expr, const RTTI::FName& name, const RTTI::FAtom& value);
+    void RemoveGlobal(const FParseExpression* expr, const RTTI::FName& name, const RTTI::FAtom& value);
 
-    RTTI::FMetaAtom *GetAny(const RTTI::FName& name) const;
+    RTTI::FAtom GetAny(const RTTI::FName& name) const;
+
+    RTTI::FAtom CreateAtom(const RTTI::PTypeTraits& traits);
+    RTTI::FAtom CreateAtom(const RTTI::PTypeTraits& traits, void* rvalue);
+
+    template <typename T>
+    RTTI::FAtom CreateAtomFrom(T&& rvalue) {
+        return CreateAtom(RTTI::MakeTraits<T>(), &rvalue);
+    }
+
+    template <typename _Container>
+    typename _Container::allocator_type CreateHeapContainer() {
+        return typename _Container::allocator_type(LinearHeap_());
+    }
 
 private:
-    const FParseContext *_parent;
+    const FParseContext* const _parent;
+    const RTTI::PAtomHeap _atomHeap;
+
     RTTI::PMetaObject _scopeObject;
-    HASHMAP_THREAD_LOCAL(Parser, RTTI::FName, RTTI::PMetaAtom) _localScope;
-    mutable HASHMAP_THREAD_LOCAL(Parser, RTTI::FName, RTTI::PMetaAtom) _globalScope;
+    HASHMAP(Parser, RTTI::FName, RTTI::FAtom) _localScope;
+
+    FLinearHeap& LinearHeap_() const;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
