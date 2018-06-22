@@ -37,14 +37,14 @@ FJsonSerializer::FJsonSerializer(bool minify/* = true */) : _minify(minify) {}
 //----------------------------------------------------------------------------
 FJsonSerializer::~FJsonSerializer() {}
 //----------------------------------------------------------------------------
-void FJsonSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName/* = nullptr */) {
+void FJsonSerializer::DeserializeImpl(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName) {
     Assert(transaction);
     Assert(input);
 
     FJson json;
 
     UsingBufferedStream(input, [&json, sourceName](IBufferedStreamReader* buffered) {
-        if (not FJson::Load(&json, FFilename(MakeCStringView(sourceName)), buffered))
+        if (not FJson::Load(&json, MakeCStringView(sourceName), buffered))
             CORE_THROW_IT(FJsonSerializerException("failed to parse Json document"));
     });
 
@@ -56,7 +56,7 @@ void FJsonSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamRe
         transaction->RegisterObject(obj.get());
 }
 //----------------------------------------------------------------------------
-void FJsonSerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) {
+void FJsonSerializer::SerializeImpl(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) {
     Assert(output);
     Assert(transaction);
 
@@ -250,29 +250,33 @@ public:
         _values.pop_back();
     }
 
-    virtual bool Visit(const RTTI::IPairTraits* pair, void* data) override final {
-        bool result = true;
+    virtual bool Visit(const RTTI::ITupleTraits* tuple, void* data) override final {
+        const size_t n = tuple->Arity();
 
         FJson::FArray& arr = Head_().SetType_AssumeNull(_doc, FJson::TypeArray{});
-        arr.resize(2);
+        arr.resize(n);
 
-        _values.push_back(&arr.front());
-        result &= pair->First(data).Accept(this);
-        _values.pop_back();
+        if (arr.empty())
+            return true;
 
-        if (not result)
-            return false;
+        forrange(i, 0, n) {
+            _values.push_back(&arr[i]);
+            const bool result = tuple->At(data, i).Accept(this);
+            _values.pop_back();
 
-        _values.push_back(&arr.back());
-        result &= pair->Second(data).Accept(this);
-        _values.pop_back();
+            if (not result)
+                return false;
+        }
 
-        return result;
+        return true;
     }
 
     virtual bool Visit(const RTTI::IListTraits* list, void* data) override final {
         FJson::FArray& arr = Head_().SetType_AssumeNull(_doc, FJson::TypeArray{});
         arr.resize(list->Count(data));
+
+        if (arr.empty())
+            return true;
 
         FJson::FValue* pvalue = (&arr[0]);
         return list->ForEach(data, [this, &pvalue](const RTTI::FAtom& item) {
@@ -288,6 +292,9 @@ public:
     virtual bool Visit(const RTTI::IDicoTraits* dico, void* data) override {
         FJson::FArray& arr = Head_().SetType_AssumeNull(_doc, FJson::TypeArray{});
         arr.resize(dico->Count(data));
+
+        if (arr.empty())
+            return true;
 
         FJson::FValue* pvalue = (&arr[0]);
         return dico->ForEach(data, [this, &pvalue](const RTTI::FAtom& key, const RTTI::FAtom& value) {
@@ -354,7 +361,8 @@ private:
             if (metaObject->RTTI_IsExported()) {
                 Assert(not metaObject->RTTI_Name().empty());
                 if (_outer && metaObject->RTTI_Outer() != _outer) {
-                    Head_().SetValue(_doc.MakeString(StringFormat("<{0}>", metaObject->RTTI_Name())));
+                    const RTTI::FPathName pathName{ *metaObject };
+                    Head_().SetValue(_doc.MakeString( ToString(pathName) ));
                     return;
                 }
                 exported = true;
@@ -403,25 +411,25 @@ public:
         _values.pop_back();
     }
 
-    virtual bool Visit(const RTTI::IPairTraits* pair, void* data) override final {
+    virtual bool Visit(const RTTI::ITupleTraits* tuple, void* data) override final {
         const FJson::FArray* arrIFP = Head_().AsArray();
-        if (nullptr == arrIFP || 2 != arrIFP->size())
+        if (nullptr == arrIFP)
             return false;
 
-        bool result = true;
-
-        _values.push_back(&arrIFP->front());
-        result &= pair->First(data).Accept(this);
-        _values.pop_back();
-
-        if (not result)
+        const size_t n = tuple->Arity();
+        if (n != arrIFP->size())
             return false;
 
-        _values.push_back(&arrIFP->back());
-        result &= pair->Second(data).Accept(this);
-        _values.pop_back();
+        forrange(i, 0, n) {
+            _values.push_back(&(*arrIFP)[i]);
+            const bool result = tuple->At(data, i).Accept(this);
+            _values.pop_back();
 
-        return result;
+            if (not result)
+                return false;
+        }
+
+        return true;
     }
 
     virtual bool Visit(const RTTI::IListTraits* list, void* data) override final {
@@ -434,9 +442,10 @@ public:
 
         forrange(i, 0, n) {
             _values.push_back(&(*arrIFP)[i]);
-            bool r = list->AddDefault(data).Accept(this);
+            const bool result = list->AddDefault(data).Accept(this);
             _values.pop_back();
-            if (not r)
+
+            if (not result)
                 return false;
         }
 
@@ -451,9 +460,8 @@ public:
         const size_t n = arrIFP->size();
         dico->Reserve(data, n);
 
-        const RTTI::PTypeTraits keyTraits(dico->KeyTraits());
-        RTTI::FAny key;
-        const RTTI::FAtom keyAtom = key.Reset(keyTraits);
+        STACKLOCAL_ATOM(keyData, dico->KeyTraits());
+        RTTI::FAtom keyAtom = keyData.MakeAtom();
 
         forrange(i, 0, n) {
             const FJson::FValue& jsonIt = arrIFP->at(i);
@@ -470,7 +478,7 @@ public:
             if (not r)
                 return false;
 
-            RTTI::FAtom valueAtom = dico->AddDefault(data, keyAtom);
+            RTTI::FAtom valueAtom = dico->AddDefaultMove(data, keyAtom);
 
             _values.push_back(&pairIFP->back());
             r &= valueAtom.Accept(this);
@@ -478,6 +486,8 @@ public:
 
             if (not r)
                 return false;
+
+            keyAtom.ResetToDefaultValue();
         }
 
         return true;
@@ -530,12 +540,7 @@ private:
 
         // external reference
         if (const FJson::FText* importIFP = Head_().AsString()) {
-            if ('<' != importIFP->MakeView().front() || '>' != importIFP->MakeView().back())
-                return false;
-
-            const FStringView name = importIFP->MakeView().ShiftFront().ShiftBack();
-
-            metaObject = RTTI::MetaDB().ObjectIFP(name);
+            metaObject = RTTI::MetaDB().ObjectIFP(importIFP->MakeView());
             if (nullptr == metaObject)
                 CORE_THROW_IT(FJsonSerializerException("failed to import RTTI object from database"));
 

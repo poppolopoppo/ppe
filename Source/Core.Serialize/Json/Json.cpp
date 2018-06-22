@@ -105,10 +105,17 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) 
     else if (read.Symbol() == Lexer::FSymbols::String) {
         value.SetValue(doc.MakeString(read.Value()));
     }
-    else if (read.Symbol() == Lexer::FSymbols::Int) {
+    else if (read.Symbol() == Lexer::FSymbols::Integer) {
         FJson::FInteger* i = &value.SetType_AssumeNull(doc, FJson::TypeInteger{});
-        if (not Atoi64(i, read.Value().MakeView(), 10))
+        if (not Atoi(i, read.Value().MakeView(), 10))
             CORE_THROW_IT(FJsonException("malformed int", read.Site()));
+    }
+    else if (read.Symbol() == Lexer::FSymbols::Unsigned) {
+        FJson::FInteger* i = &value.SetType_AssumeNull(doc, FJson::TypeInteger{});
+        u64 u;
+        if (not Atoi(&u, read.Value().MakeView(), 10))
+            CORE_THROW_IT(FJsonException("malformed int", read.Site()));
+        *i = i64(u);
     }
     else if (read.Symbol() == Lexer::FSymbols::Float) {
         FJson::FFloat* d = &value.SetType_AssumeNull(doc, FJson::TypeFloat{});
@@ -121,7 +128,15 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) 
 
         unexpectedToken = true;
 
-        if (peek && peek->Symbol() == Lexer::FSymbols::Int) {
+        if (peek && peek->Symbol() == Lexer::FSymbols::Integer) {
+            if (ParseValue_(lexer, doc, value)) {
+                value.ToInteger() = -value.ToInteger();
+                unexpectedToken = false;
+            }
+        }
+        else if (peek && peek->Symbol() == Lexer::FSymbols::Unsigned) {
+            AssertNotReached(); // -unsigned isn't supported !
+
             if (ParseValue_(lexer, doc, value)) {
                 value.ToInteger() = -value.ToInteger();
                 unexpectedToken = false;
@@ -183,7 +198,7 @@ static void ToStream_(const FJson::FValue& value, TBasicTextWriter<_Char>& oss, 
             if (not minify)
                 oss << Eol;
             {
-                const Fmt::TBasicIndent<_Char>::FScope scopeIndent(indent);
+                const typename Fmt::TBasicIndent<_Char>::FScope scopeIndent(indent);
 
                 size_t n = arr.size();
                 for (const FJson::FValue& item : arr) {
@@ -209,7 +224,7 @@ static void ToStream_(const FJson::FValue& value, TBasicTextWriter<_Char>& oss, 
             if (not minify)
                 oss << Eol;
             {
-                const Fmt::TBasicIndent<_Char>::FScope scopeIndent(indent);
+                const typename Fmt::TBasicIndent<_Char>::FScope scopeIndent(indent);
 
                 size_t n = obj.size();
                 for (const auto& member : obj) {
@@ -535,24 +550,23 @@ bool FJson::Load(FJson* json, const FFilename& filename) {
     if (not VFS_ReadAll(&content, filename, policy))
         return false;
 
-    return Load(json, filename, content.MakeConstView().Cast<const char>());
+    return Load(json, filename.ToWString(), content.MakeConstView().Cast<const char>());
 }
 //----------------------------------------------------------------------------
 auto FJson::MakeString(const FStringView& str, bool mergeable/* = true */) -> FText {
     return _textHeap.MakeText(str);
 }
 //----------------------------------------------------------------------------
-bool FJson::Load(FJson* json, const FFilename& filename, const FStringView& content) {
+bool FJson::Load(FJson* json, const FWStringView& filename, const FStringView& content) {
     FMemoryViewReader reader(content.Cast<const u8>());
     return Load(json, filename, &reader);
 }
 //----------------------------------------------------------------------------
-bool FJson::Load(FJson* json, const FFilename& filename, IBufferedStreamReader* input) {
+bool FJson::Load(FJson* json, const FWStringView& filename, IBufferedStreamReader* input) {
     Assert(json);
     Assert(input);
 
-    const FWString filenameStr(filename.ToWString());
-    Lexer::FLexer lexer(input, filenameStr.MakeView(), false);
+    Lexer::FLexer lexer(input, filename, false);
 
     json->_root = FValue();
     json->_textHeap.Clear();
