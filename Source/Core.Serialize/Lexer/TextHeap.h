@@ -105,11 +105,11 @@ public:
     };
 
     TTextHeap(FLinearHeap& heap)
-        : _texts(TLinearHeapAllocator<FText>(heap)) {
-        STATIC_ASSERT(sizeof(FText::FLargeText_) == sizeof(FText::FSmallText_));
+        : _heap(heap) {
+        STATIC_ASSERT(sizeof(typename FText::FLargeText_) == sizeof(typename FText::FSmallText_));
         STATIC_ASSERT(_Padded
-            ? sizeof(FText::FLargeText_) == 2 * sizeof(size_t) + sizeof(u64)
-            : sizeof(FText::FLargeText_) == 2 * sizeof(size_t) );
+            ? sizeof(typename FText::FLargeText_) == 2 * sizeof(size_t) + sizeof(u64)
+            : sizeof(typename FText::FLargeText_) == 2 * sizeof(size_t) );
     }
 
     bool empty() const { return _texts.empty(); }
@@ -161,13 +161,15 @@ public:
     }
 
 private:
-    HASHSET_LINEARHEAP(FText) _texts;
+    FLinearHeap& _heap;
+    HASHSET(Transient, FText) _texts;
 
     FStringView AllocateString_(const FStringView& str) {
+#if USE_CORE_SERIALIZE_TEXTHEAP_SSO
         Assert(str.size() > FText::FSmallText_::GCapacity);
-        FLinearHeap* heap = _texts.get_allocator().Heap();
-        Assert(heap);
-        void* const storage = heap->Allocate(str.SizeInBytes());
+#endif
+
+        void* const storage = _heap.Allocate(str.SizeInBytes());
         ::memcpy(storage, str.data(), str.SizeInBytes());
         return FStringView((const char*)storage, str.size());
     }
