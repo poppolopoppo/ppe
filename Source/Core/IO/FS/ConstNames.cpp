@@ -9,6 +9,7 @@
     _Macro(FDirname,         DotDot,         L"..") \
     \
     _Macro(FExtname,         Bin,            L".bin") \
+    _Macro(FExtname,         BinZ,           L".binZ") \
     _Macro(FExtname,         Raw,            L".raw") \
     \
     _Macro(FExtname,         Json,           L".json") \

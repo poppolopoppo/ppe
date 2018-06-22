@@ -18,6 +18,7 @@ public:
 
     // Extnames :
     static const FExtname& Bin();
+    static const FExtname& BinZ();
     static const FExtname& Raw();
 
     static const FExtname& Json();

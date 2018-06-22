@@ -16,11 +16,17 @@
 #include "Core.Serialize/Binary/BinarySerializer.h"
 #include "Core.Serialize/Json/Json.h"
 #include "Core.Serialize/Json/JsonSerializer.h"
+#include "Core.Serialize/Text/TextSerializer.h"
+
+#include "Core.Serialize/Text/Grammar.h"
+#include "Core.Serialize/Lexer/Lexer.h"
+#include "Core.Serialize/Parser/Parser.h"
 
 #include "Core/Container/AssociativeVector.h"
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Pair.h"
 #include "Core/Container/Vector.h"
+#include "Core/Diagnostic/Console.h"
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FileStream.h"
 #include "Core/IO/Format.h"
@@ -40,6 +46,8 @@
 
 #define USE_RTTI_TEST_YOLOTYPES 0
 
+#include <iostream> // Test_InteractiveConsole_
+
 namespace Core {
 namespace Test {
 LOG_CATEGORY(, Test_RTTI)
@@ -50,6 +58,44 @@ namespace {
 //----------------------------------------------------------------------------
 RTTI_NAMESPACE_DECL(, RTTI_UnitTest);
 RTTI_NAMESPACE_DEF(, RTTI_UnitTest);
+//----------------------------------------------------------------------------
+struct FStructAsTuple {
+    float3 Position;
+    FString Name;
+    TVector<int> Weights;
+};
+//----------------------------------------------------------------------------
+FWD_REFPTR(RTTITestSimple_);
+class FRTTITestSimple_ : public RTTI::FMetaObject {
+public:
+    enum ETest : u32 {
+        A, B, C, D
+    };
+
+    RTTI_CLASS_HEADER(FRTTITestSimple_, RTTI::FMetaObject);
+
+    FRTTITestSimple_() {}
+
+private:
+    bool _b;
+    int _i;
+    float _f;
+    double _d;
+    float3 _vec3;
+    TVector<float4> _rots;
+    TAssociativeVector<ETest, FString> _assoc;
+    TAssociativeVector<u64, u64> _uInt64Dico;
+};
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTITestSimple_, RTTI::EClassFlags::Concrete)
+RTTI_PROPERTY_PRIVATE_FIELD(_b)
+RTTI_PROPERTY_PRIVATE_FIELD(_i)
+RTTI_PROPERTY_PRIVATE_FIELD(_f)
+RTTI_PROPERTY_PRIVATE_FIELD(_d)
+RTTI_PROPERTY_PRIVATE_FIELD(_vec3)
+RTTI_PROPERTY_PRIVATE_FIELD(_rots)
+RTTI_PROPERTY_PRIVATE_FIELD(_assoc)
+RTTI_PROPERTY_PRIVATE_FIELD(_uInt64Dico)
+RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 FWD_REFPTR(RTTITestParent_);
 class FRTTITestParent_ : public RTTI::FMetaObject {
@@ -77,12 +123,14 @@ private:
     ETestEnum32 _testEnum32;
     ETestEnum64 _testEnum64;
     PRTTITestParent_ _child;
+    FStructAsTuple _structAsTuple;
 };
 RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTITestParent_, RTTI::EClassFlags::Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_sourceName)
     RTTI_PROPERTY_PRIVATE_FIELD(_testEnum32)
     RTTI_PROPERTY_PRIVATE_FIELD(_testEnum64)
     RTTI_PROPERTY_PRIVATE_FIELD(_child)
+    RTTI_PROPERTY_PRIVATE_FIELD(_structAsTuple)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 FWD_REFPTR(RTTITest_);
@@ -146,7 +194,11 @@ RTTI_CLASS_END()
 class FRTTIAtomRandomizer_ : protected RTTI::FBaseAtomVisitor {
     typedef RTTI::FBaseAtomVisitor parent_type;
 public:
-    FRTTIAtomRandomizer_(size_t maxDim, u64 seed) : _maxDim(maxDim), _depth(0), _rand(seed) {
+    FRTTIAtomRandomizer_(size_t maxDim, u64 seed) 
+    :   _maxDim(maxDim)
+    ,   _depth(0)
+    ,   _rand(seed)
+    ,   _import(nullptr) {
         AssertRelease(_maxDim > 0);
     }
 
@@ -154,11 +206,11 @@ public:
         atom.Accept(this);
     }
 
-    void Randomize(RTTI::FMetaObject* pobject);
+    void Randomize(RTTI::FMetaObject* pobject, const RTTI::FMetaTransaction* import = nullptr);
 
 protected:
-    virtual bool Visit(const RTTI::IPairTraits* pair, void* data) override final {
-        return parent_type::Visit(pair, data);
+    virtual bool Visit(const RTTI::ITupleTraits* tuple, void* data) override final {
+        return parent_type::Visit(tuple, data);
     }
 
     virtual bool Visit(const RTTI::IListTraits* list, void* data) override final {
@@ -171,8 +223,8 @@ protected:
     }
 
     virtual bool Visit(const RTTI::IDicoTraits* dico, void* data) override final {
-        RTTI::FAny anyKey;
-        RTTI::FAtom keyAtom = anyKey.Reset(dico->KeyTraits());
+        STACKLOCAL_ATOM(keyData, dico->KeyTraits());
+        const RTTI::FAtom keyAtom = keyData.MakeAtom();
 
         const size_t count = NextRandomDim_();
         dico->Reserve(data, count);
@@ -183,7 +235,7 @@ protected:
             if (dico->Find(data, keyAtom))
                 continue;
 
-            if (not dico->AddDefault(data, std::move(keyAtom)).Accept(this))
+            if (not dico->AddDefaultMove(data, std::move(keyAtom)).Accept(this))
                 return false;
         }
 
@@ -202,6 +254,7 @@ private:
     const size_t _maxDim;
     size_t _depth;
     FRandomGenerator _rand;
+    const RTTI::FMetaTransaction* _import;
 
     size_t NextRandomDim_() { return (_rand.Next() % _maxDim); }
 
@@ -243,7 +296,7 @@ private:
         const size_t count = NextRandomDim_()*10;
         rawdata.Resize_DiscardData(count);
         forrange(i, 0, count)
-            rawdata[i] = u8(_rand.Next());
+            rawdata[i] = u8(_rand.Next() | 1);
     }
 
     void Randomize_(RTTI::FAny& any) {
@@ -257,6 +310,7 @@ private:
     void Randomize_(FFilename& ) {}
 
     void Randomize_(RTTI::PMetaObject& obj) {
+#if 0
         UNUSED(obj);
         // can't do anything since we don't know the metaclass, this is no trivial task ...
         /*
@@ -272,12 +326,18 @@ private:
         }
         Randomize(object.get());
         */
+#else
+        if (_import && _rand.NextFloat01() < 0.7f)
+            obj = _rand.RandomElement(_import->TopObjects());
+#endif
     }
 
 };
 //----------------------------------------------------------------------------
-void FRTTIAtomRandomizer_::Randomize(RTTI::FMetaObject* pobject) {
+void FRTTIAtomRandomizer_::Randomize(RTTI::FMetaObject* pobject, const RTTI::FMetaTransaction* import) {
     Assert(pobject);
+
+    _import = import;
 
     ++_depth;
 
@@ -291,6 +351,8 @@ void FRTTIAtomRandomizer_::Randomize(RTTI::FMetaObject* pobject) {
 
     Assert(0 < _depth);
     --_depth;
+
+    _import = nullptr;
 }
 //----------------------------------------------------------------------------
 static void print_atom(const RTTI::FAtom& atom) {
@@ -405,8 +467,8 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
     Assert(input.NumTopObjects());
     Assert(serializer);
 
-    const FFilename& fname_bin = filename;
-    const FFilename fname_raw = filename.WithReplacedExtension(FFS::Raw());
+    const FFilename fname_binz = filename.WithReplacedExtension(FFS::BinZ());
+    const FFilename& fname_raw = filename;
 
     MEMORYSTREAM(NativeTypes) uncompressed;
     {
@@ -429,9 +491,9 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
         for (size_t i = 0; i < k; ++i)
             Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
 
-        if (false == VFS_WriteAll(fname_bin, compressedView, EAccessPolicy::Create_Binary))
+        if (false == VFS_WriteAll(fname_binz, compressedView, EAccessPolicy::Truncate_Binary))
             AssertNotReached();
-        if (false == VFS_WriteAll(fname_raw, decompressed.MakeView(), EAccessPolicy::Create_Binary))
+        if (false == VFS_WriteAll(fname_raw, decompressed.MakeView(), EAccessPolicy::Truncate_Binary))
             AssertNotReached();
 #endif
     }
@@ -440,7 +502,7 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
 
     {
         RAWSTORAGE(FileSystem, u8) compressed;
-        if (false == VFS_ReadAll(&compressed, fname_bin, EAccessPolicy::Binary))
+        if (false == VFS_ReadAll(&compressed, fname_binz, EAccessPolicy::Binary))
             AssertNotReached();
 
         RAWSTORAGE(Stream, u8) decompressed;
@@ -461,15 +523,80 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
+static NO_INLINE void Test_InteractiveConsole_() {
+    FLUSH_LOG();
+
+    char buffer[1024];
+    Parser::FParseContext globalContext(Meta::ForceInit);
+
+    const FConsole::FScope consoleScope;
+    do
+    {
+        FConsole::Write("$>", FConsole::BLACK_ON_WHITE);
+        FConsole::Write("  ", FConsole::WHITE_ON_BLACK);
+
+        const size_t length = FConsole::Read(buffer);
+
+        FStringView line{ buffer, length };
+        line = Strip(Chomp(line));
+
+        if (line.empty()) {
+            continue;
+        }
+        else if (0 == CompareI(MakeStringView("exit"), line)) {
+            break;
+        }
+
+        const wchar_t filename[] = L"@in_memory";
+
+        try {
+            FMemoryViewReader reader(line.Cast<const u8>());
+            Lexer::FLexer lexer(&reader, filename, true);
+
+            Parser::FParseList input;
+            input.Parse(&lexer);
+
+            Parser::PCParseExpression expr = Serialize::FGrammarStartup::ParseExpression(input);
+            AssertRelease(expr);
+
+            const RTTI::FAtom value = expr->Eval(&globalContext);
+            Assert(value);
+            
+            FConsole::Write(StringFormat(" => {0}\n", value), FConsole::FG_GREEN | FConsole::FG_INTENSITY);
+        }
+        catch (const Parser::FParserException& e) {
+            if (e.Item())
+                FConsole::Write(StringFormat(" !! Parser error : <{0}> {1}, {2}.\n", e.Item()->ToString(), MakeCStringView(e.What()), e.Site()), FConsole::FG_RED);
+            else
+                FConsole::Write(StringFormat(" !! Parser error : {0}, {1}.\n", MakeCStringView(e.What()), e.Site()), FConsole::FG_RED | FConsole::FG_INTENSITY);
+        }
+        catch (const Lexer::FLexerException& e) {
+            FConsole::Write(StringFormat(" ?? Lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site()), FConsole::FG_YELLOW);
+        }
+
+    } while (true);
+}
+//----------------------------------------------------------------------------
 static NO_INLINE void Test_Serialize_() {
-    typedef FRTTITest_ test_type;
+#if 1
+    using test_type = FRTTITest_;
+#else
+    using test_type = FRTTITestSimple_;
+#endif
+#ifdef WITH_CORE_ASSERT
+    static constexpr bool minify = false;
     static constexpr size_t test_count = 5;
+#else
+    static constexpr bool minify = true;
+    static constexpr size_t test_count = 50;
+#endif
 
     FRTTIAtomRandomizer_ rand(test_count, 0xabadcafedeadbeefull);
 
+
     RTTI_NAMESPACE(RTTI_UnitTest).Start();
     {
-        STACKLOCAL_TEXTWRITER(serialized, 1024);
+        FStringBuilder serialized;
 
         Serialize::FJson in, out;
         {
@@ -497,31 +624,88 @@ static NO_INLINE void Test_Serialize_() {
         }
     }
     {
-        RTTI::FMetaTransaction input(RTTI::FName(MakeStringView("UnitTest_Input")));
+        RTTI::FMetaTransaction import(RTTI::FName(MakeStringView("UnitTest_Import"))); 
         {
             FWStringBuilder oss;
+
             forrange(i, 0, test_count) {
                 TRefPtr<test_type> t = NEW_RTTI(test_type)();
                 rand.Randomize(t.get());
+                t->RTTI_Export(RTTI::FName(StringFormat("import_{0}", intptr_t(t.get()))));
+                import.RegisterObject(t.get());
+            }
+        }
+        const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(&import);
+        RTTI::FMetaTransaction input(RTTI::FName(MakeStringView("UnitTest_Input")));
+        {
+            FWStringBuilder oss;
+
+            forrange(i, 0, test_count) {
+                TRefPtr<test_type> t = NEW_RTTI(test_type)();
+                rand.Randomize(t.get(), &import);
                 input.RegisterObject(t.get());
-                RTTI::PrettyPrint(oss, RTTI::MakeAtom(&t));
-                LOG(Test_RTTI, Info, oss.ToString());
             }
 
             ReportAllTrackingData(); // inspect this transaction allocations
         }
+        const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(&input);
         {
             Serialize::FBinarySerializer binary;
             Test_Serializer_(input, &binary, L"Saved:/RTTI/robotapp_bin.bin");
         }
         {
             Serialize::FJsonSerializer json;
-            json.SetMinify(true);
+            json.SetMinify(minify);
             Test_Serializer_(input, &json, L"Saved:/RTTI/robotapp_json.json");
+        }
+        {
+            Serialize::FTextSerializer text;
+            text.SetMinify(minify);
+            Test_Serializer_(input, &text, L"Saved:/RTTI/robotapp_text.txt");
         }
     }
 
     RTTI_NAMESPACE(RTTI_UnitTest).Shutdown();
+}
+//----------------------------------------------------------------------------
+static RTTI::FAtom EvalExpr_(Parser::FParseContext* context, const FStringView& input) {
+    LOG(Test_RTTI, Info, L"EvalExpr('{0}') :", input);
+    try
+    {
+        FMemoryViewReader reader(input.RawView());
+        Lexer::FLexer lexer(&reader, L"@memory", true);
+
+        Parser::FParseList parser;
+        parser.Parse(&lexer);
+
+        Parser::PCParseExpression expr = Serialize::FGrammarStartup::ParseExpression(parser);
+        AssertRelease(expr);
+
+        const RTTI::FAtom result = expr->Eval(context);
+
+        LOG(Test_RTTI, Info, L" -> {1}", input, result);
+
+        return result;
+    }
+    catch (const Parser::FParserException& e) {
+        UNUSED(e);
+        if (e.Item())
+            LOG(Test_RTTI, Error, L" !! Parser error : <{0}> {1}, {2}.\n", e.Item()->ToString(), MakeCStringView(e.What()), e.Site());
+        else
+            LOG(Test_RTTI, Error, L" !! Parser error : {0}, {1}.\n", MakeCStringView(e.What()), e.Site());
+    }
+    catch (const Lexer::FLexerException& e) {
+        UNUSED(e);
+        LOG(Test_RTTI, Error, L" ?? Lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site());
+    }
+
+    return RTTI::FAtom();
+}
+static void Test_Grammar_() {
+    Parser::FParseContext context(Meta::ForceInit);
+    EvalExpr_(&context, "(Any:\"toto\",Any:42,Any:3.456)");
+    EvalExpr_(&context, "[Any:42]");
+    EvalExpr_(&context, "Any:[Any:[Any:\"totototototototototototototoot\"]]");
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -531,7 +715,11 @@ void Test_RTTI() {
 
     Test_Atoms_();
     Test_Any_();
+    Test_Grammar_();
     Test_Serialize_();
+#if !USE_CORE_PROFILING
+    Test_InteractiveConsole_();
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
