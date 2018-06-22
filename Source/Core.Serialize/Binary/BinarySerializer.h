@@ -25,8 +25,9 @@ public:
     using ISerializer::Deserialize;
     using ISerializer::Serialize;
 
-    virtual void Deserialize(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName = nullptr) override;
-    virtual void Serialize(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) override;
+protected: //ISerializer
+    virtual void DeserializeImpl(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName) override;
+    virtual void SerializeImpl(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
