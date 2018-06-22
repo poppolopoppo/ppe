@@ -4,6 +4,8 @@
 
 ; Fallback to cl.exe when clang-cl.exe failed (http://blog.llvm.org/2013/11/the-clang-cl-fallback-mode.html)
 #define USE_CLANGCL_FALLBACK
+; Need a number for workaround to compile M$ STL, CRT & SDK ...
+#define USE_WORKAROUND_FOR_MICROSOFT
 
 //------------------------------------------------------------------------------
 // Common CLang Configuration
@@ -15,9 +17,16 @@
         'CPP_CLANG',
         'LLVM_FOR_WINDOWS'
     }
+#if USE_WORKAROUND_FOR_MICROSOFT
+    +
+    {
+        '_CRT_SECURE_NO_WARNINGS'
+    }
+#endif
 
     .FixWarningsOnWindows = ''
         + ' -Wno-error'
+        + ' -Wno-ignored-pragma-optimize'       // pragma optimize n'est pas supporté
         + ' -Wno-unused-command-line-argument'  // ignore les options non suportées par CLANG (sinon échoue a cause de /WError)
         + ' -Wno-ignored-attributes'            // ignore les attributs de classe/fonction non supportées par CLANG (sinon échoue a cause de /WError)
         + ' -Wno-unknown-pragmas'               // ignore les directives pragma non supportées par CLANG (sinon échoue a cause de /WError)
@@ -27,7 +36,7 @@
         + ' -Wno-dllimport-static-field-def'     // definition of dllimport static field (M$TL)
         + ' -Wno-nonportable-include-path'      // windows libs are filled with includes not matching file system case, this will ignore those
         + ' -Wno-inconsistent-missing-override' // <optional> has a method without override ...
-#if NO_WORKAROUND_IN_PLATFORM_WINDOWS
+#if USE_WORKAROUND_FOR_MICROSOFT
         + ' -Wno-expansion-to-defined'           // macro expansion producing 'defined' has undefined behavior (nécessaire pour WinAPI)
         + ' -Wno-int-to-void-pointer-cast'      // cast to 'void *' from smaller integer type 'unsigned long' (nécessaire pour WinAPI)
         + ' -Wno-macro-redefined'                // '_MM_HINT_T0' macro redefined (nécessaire pour WinAPI)
@@ -35,6 +44,7 @@
         + ' -Wno-missing-declarations'          // typedef requires a name (nécessaire pour DbgHelp)
         + ' -Wno-unused-value'                  // ignore les expressions non utilisées (UNUSED(x) ou CRT)
         + ' -Wno-microsoft-explicit-constructor-call'
+        + ' -Wno-pragma-pack'
 #endif
 
     .CompilerOptions = ''
@@ -42,6 +52,7 @@
         + ' -fms-compatibility'                 // compatibilité microsoft
         + ' -fms-extensions'                    // extensions spécifiques à microsoft
         + ' -fcolor-diagnostics'
+        + ' -msse4.2'
 ]
 
 .CLangWindowsOverrideMSVC =

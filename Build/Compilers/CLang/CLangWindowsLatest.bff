@@ -18,14 +18,13 @@
 ; choix entre la version 32-bit ou 64-bit de LLV
 #define USE_LLVM_LATEST_X64
 ; active l'utilisation de adress sanitizer
-#define USE_LLVM_ADRESS_SANITIZER
+;#define USE_LLVM_ADRESS_SANITIZER
 //------------------------------------------------------------------------------
 // Global Properties
 //------------------------------------------------------------------------------
 
-#import VS140COMNTOOLS
-
 #if WITH_VISUALSTUDIO_TOOLSET_140
+#import VS140COMNTOOLS
 .CLangWindowsLatestPlatformToolset = 'v140'
 #endif
 #if WITH_VISUALSTUDIO_TOOLSET_141
@@ -33,8 +32,6 @@
 .CLangWindowsLatestPlatformToolset = 'v141'
 #endif
 Print( "Using CLang latest  with platform toolset $CLangWindowsLatestPlatformToolset$" )
-
-#import VS140COMNTOOLS
 
 .CLangWindowsLatestBasePath =
 [
@@ -83,7 +80,7 @@ Compiler( 'Compiler-CLangWindowsLatest' )
 [
     Using( .CLangWindowsLatestBasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath$\Bin\$WindowsSDKVersion$\x64\RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]
@@ -190,13 +187,13 @@ Compiler( 'Compiler-CLangWindowsLatest' )
 .CLangWindowsLatest_X86Debug         = .CLangWindowsLatestPlatformX86   + .CLangBaseDebugConfig
 .CLangWindowsLatest_X86FastDebug     = .CLangWindowsLatestPlatformX86   + .CLangBaseFastDebugConfig
 .CLangWindowsLatest_X86Release       = .CLangWindowsLatestPlatformX86   + .CLangBaseReleaseConfig
-.CLangWindowsLatest_X86Profiling      = .CLangWindowsLatestPlatformX86   + .CLangBaseProfilingConfig
+.CLangWindowsLatest_X86Profiling     = .CLangWindowsLatestPlatformX86   + .CLangBaseProfilingConfig
 .CLangWindowsLatest_X86Final         = .CLangWindowsLatestPlatformX86   + .CLangBaseFinalConfig
 
 .CLangWindowsLatest_X64Debug         = .CLangWindowsLatestPlatformX64   + .CLangBaseDebugConfig
 .CLangWindowsLatest_X64FastDebug     = .CLangWindowsLatestPlatformX64   + .CLangBaseFastDebugConfig
 .CLangWindowsLatest_X64Release       = .CLangWindowsLatestPlatformX64   + .CLangBaseReleaseConfig
-.CLangWindowsLatest_X64Profiling      = .CLangWindowsLatestPlatformX64   + .CLangBaseProfilingConfig
+.CLangWindowsLatest_X64Profiling     = .CLangWindowsLatestPlatformX64   + .CLangBaseProfilingConfig
 .CLangWindowsLatest_X64Final         = .CLangWindowsLatestPlatformX64   + .CLangBaseFinalConfig
 
 .CLangWindowsLatestCompileConfigs =
