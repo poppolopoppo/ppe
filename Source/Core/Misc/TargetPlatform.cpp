@@ -28,6 +28,8 @@
 #   define USE_VECTORED_EXCEPTION_HANDLER 0
 #endif
 
+// TODO : split in several files, one for each platform
+
 namespace Core {
 LOG_CATEGORY(CORE_API, Platform)
 //----------------------------------------------------------------------------
