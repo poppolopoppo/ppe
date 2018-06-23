@@ -73,7 +73,7 @@ FValueBlock::FField* FValueBlock::FindByNameIFP(const Graphics::FName& name) {
     const auto it = std::find_if(_fields.begin(), _fields.end(), [=](const FValueBlock::FField& field) {
         return (field.Name() == name);
     });
-    return (it != _fields.end() ? &*it : nullptr);
+    return (it != _fields.end() ? std::addressof(*it) : nullptr);
 }
 //----------------------------------------------------------------------------
 FValueBlock::FField& FValueBlock::FindByNameAndIndex(const Graphics::FName& name, size_t index) {
@@ -86,7 +86,7 @@ FValueBlock::FField* FValueBlock::FindByNameAndIndexIFP(const Graphics::FName& n
     const auto it = std::find_if(_fields.begin(), _fields.end(), [=](const FValueBlock::FField& field) {
         return (field.Name() == name && field.Index() == index);
     });
-    return (it != _fields.end() ? &*it : nullptr);
+    return (it != _fields.end() ? std::addressof(*it) : nullptr);
 }
 //----------------------------------------------------------------------------
 hash_t FValueBlock::HashValue(const TMemoryView<const u8>& data) const {
