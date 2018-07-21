@@ -63,7 +63,7 @@
     + ' /showIncludes'      ; affiche les includes pdt la compilation, pratique pour certa
     + ' /TP'                ; considère que toutes les sources sont du C++
     + ' /nologo'            ; pas de message de copyright lors de la compilation
-    + ' /W3'                ; tous les warnings de level 4 sont reportés
+    + ' /W4'                ; tous les warnings de level 4 sont reportés
     + ' /WX'                ; les warnings génèrent des erreurs !
     + ' /Gm-'               ; minimal rebuild est incompatible avec FastBuild qui gère cette feature lui même
     + ' /GF'                ; fusion des chaînes de caractères identiques (string pooling)
@@ -99,7 +99,7 @@
 
     .LinkerOptions = ''
     + ' /nologo'            ; pas de message de copyright lors de la compilation
-    + ' /errorreport:prompt'; affiche une boite de dialogue en cas de crash du compilo
+    ;+ ' /errorreport:prompt'; affiche une boite de dialogue en cas de crash du compilo
     + ' /LARGEADDRESSAWARE' ; l'application gère les adresses de taille supérieure à 2 gigaoctets
     + ' /TLBID:1'           ; https://msdn.microsoft.com/fr-fr/library/b1kw34cb.aspx
     + ' /DEBUG'             ; genère les infos de debug pour le binaire
