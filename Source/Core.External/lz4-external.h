@@ -24,6 +24,8 @@ PRAGMA_MSVC_WARNING_PUSH()
 #define malloc(sz) TRACKING_MALLOC(LZ4, sz)
 #define free(p) Core::tracking_free(p)
 
+PRAGMA_MSVC_WARNING_DISABLE(4244) // conversion from 'XXX' to 'YYY', possible loss of data
+PRAGMA_MSVC_WARNING_DISABLE(4505) // 'XXX' unreferenced local function has been removed
 PRAGMA_MSVC_WARNING_DISABLE(5033) // 'register' is no longer a supported storage class (C++17)
 PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) always evaluates to the result of <expression>.  Did you intend to use the bitwise-and operator?
 
