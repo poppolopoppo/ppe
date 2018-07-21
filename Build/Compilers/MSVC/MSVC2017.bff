@@ -19,9 +19,13 @@
 ; définit l'encoding des sources et du binaires en UTF-8 par défaut
 #define USE_VISUAL2017_UT8_CHARSET
 ; choisit le standard C++ utilisé (C++14 par défaut)
-;#define USE_VISUAL2017_STD_2014
+//#define USE_VISUAL2017_STD_2014
 #define USE_VISUAL2017_STD_2017
-;#define USE_VISUAL2017_STD_LATEST
+//#define USE_VISUAL2017_STD_LATEST
+; considere les include <> comme headers systèmes et ignore leurs warnings
+#define USE_VISUAL2017_EXTERNAL_ANGLEBRACKETS // TODO : this is still experimental
+; de nouveaux warnings expérimentaux ont été ajoutés dans 15.3.0
+#define USE_VISUAL2017_DIAGNOSTIC_IMPROVEMENTS
 ; supprime un warning de dépréciation de std::iterator
 #define USE_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
@@ -184,14 +188,21 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
 
     .CompilerOptions = ''
     + ' /Zo'                    ; https://msdn.microsoft.com/fr-fr/library/dn785163.aspx
-    + ' /Zc:inline'             ; https://msdn.microsoft.com/fr-fr/library/dn642448.aspx
-    + ' /Zc:implicitNoexcept'   ; https://msdn.microsoft.com/fr-fr/library/dn818588.aspx
-    + ' /Zc:rvalueCast'         ; https://msdn.microsoft.com/fr-fr/library/dn449507.aspx
-    + ' /Zc:strictStrings'      ; https://msdn.microsoft.com/fr-fr/library/dn449508.aspx
     + ' /diagnostics:caret'     ; https://docs.microsoft.com/en-us/cpp/build/reference/diagnostics-compiler-diagnostic-options
     + ' /arch:AVX'              ; active le support AVX
 
     .AdditionalOptions = ''
+    + ' /Zc:inline'             ; https://msdn.microsoft.com/fr-fr/library/dn642448.aspx
+    + ' /Zc:implicitNoexcept'   ; https://msdn.microsoft.com/fr-fr/library/dn818588.aspx
+    + ' /Zc:rvalueCast'         ; https://msdn.microsoft.com/fr-fr/library/dn449507.aspx
+    + ' /Zc:strictStrings'      ; https://msdn.microsoft.com/fr-fr/library/dn449508.aspx
+
+#if USE_VISUAL2017_DIAGNOSTIC_IMPROVEMENTS
+    ; https://blogs.msdn.microsoft.com/vcblog/2017/07/21/diagnostic-improvements-in-vs2017-15-3-0/
+    Print( "Using Visual 2017 diagnostic improvements added in 15.3.0" )
+    .AdditionalOptions + ' /w15038' ; Order of Members Initialization
+                       + ' /permissive-' ; https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
+#endif
 #if USE_VISUAL2017_UT8_CHARSET
     Print( "Using Visual 2017 with utf-8 as defaut source and execution charset" )
     .AdditionalOptions + ' /utf-8'; https://docs.microsoft.com/fr-fr/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
@@ -207,6 +218,10 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
 #if USE_VISUAL2017_STD_LATEST
     Print( "Using Visual 2017 with latest C++ standard (>= C++17)" )
     .AdditionalOptions + ' /std:c++latest' ; https://docs.microsoft.com/fr-fr/cpp/build/reference/std-specify-language-standard-version
+#endif
+#if USE_VISUAL2017_EXTERNAL_ANGLEBRACKETS
+    Print( "Using Visual 2017 experimental external angle brackets" )
+    .AdditionalOptions + ' /experimental:external /external:anglebrackets' ; https://blogs.msdn.microsoft.com/vcblog/2017/12/13/broken-warnings-theory/
 #endif
 
     .CompilerOptions + .AdditionalOptions
