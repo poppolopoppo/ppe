@@ -278,6 +278,26 @@ CORE_API FWStringView EatPrints(FWStringView& wstr);
 CORE_API FStringView EatSpaces(FStringView& str);
 CORE_API FWStringView EatSpaces(FWStringView& wstr);
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+CORE_API FStringView TrimStart(const FStringView& str, char ch);
+CORE_API FWStringView TrimStart(const FWStringView& wstr, wchar_t wch);
+//----------------------------------------------------------------------------
+CORE_API FStringView TrimStart(const FStringView& str, const FStringView& chars);
+CORE_API FWStringView TrimStart(const FWStringView& wstr, const FWStringView& wchars);
+//----------------------------------------------------------------------------
+CORE_API FStringView TrimEnd(const FStringView& str, char ch);
+CORE_API FWStringView TrimEnd(const FWStringView& wstr, wchar_t wch);
+//----------------------------------------------------------------------------
+CORE_API FStringView TrimEnd(const FStringView& str, const FStringView& chars);
+CORE_API FWStringView TrimEnd(const FWStringView& wstr, const FWStringView& wchars);
+//----------------------------------------------------------------------------
+CORE_API FStringView Trim(const FStringView& str, char ch);
+CORE_API FWStringView Trim(const FWStringView& wstr, wchar_t wch);
+//----------------------------------------------------------------------------
+CORE_API FStringView Trim(const FStringView& str, const FStringView& chars);
+CORE_API FWStringView Trim(const FWStringView& wstr, const FWStringView& wchars);
+//----------------------------------------------------------------------------
 CORE_API FStringView Chomp(const FStringView& str);
 CORE_API FWStringView Chomp(const FWStringView& wstr);
 //----------------------------------------------------------------------------

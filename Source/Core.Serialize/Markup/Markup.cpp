@@ -203,7 +203,7 @@ FMarkup::~FMarkup() {
 }
 //----------------------------------------------------------------------------
 auto FMarkup::MakeString(const FStringView& str, bool mergeable/* = true */) -> FText {
-    return _textHeap.MakeText(str);
+    return _textHeap.MakeText(str, mergeable);
 }
 //----------------------------------------------------------------------------
 auto FMarkup::MakeElement(const FText& name, FElement* parent) -> FElement* {

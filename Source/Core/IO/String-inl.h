@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Core/IO/String.h"
+
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/IO/StringBuilder.h"
 #include "Core/IO/StringView.h"
 
@@ -221,15 +223,18 @@ void TBasicString<_Char>::shrink_to_fit() {
         const size_t newCapacity = SafeAllocatorSnapSize(get_allocator_(), _large.Size + 1/* null char */);
 
         if (newCapacity < _large.Capacity) {
-            if (USE_CORE_BASICSTRING_SBO && newCapacity <= FSmallString_::GCapacity) {
+#if USE_CORE_BASICSTRING_SBO
+            if (newCapacity <= FSmallString_::GCapacity) {
                 _Char* const largeStorage = _large.Storage;
                 const size_t largeCapacity = _large.Capacity;
-                ::memcpy(_small.Buffer, _large.Storage, (_large.Size + 1/* null char */) * sizeof(_Char));
+                FPlatformMemory::Memcpy(_small.Buffer, _large.Storage, (_large.Size + 1/* null char */) * sizeof(_Char));
                 _small.IsLarge = 0;
                 _small.Size = checked_cast<_Char>(_large.Size);
                 get_allocator_().deallocate(largeStorage, largeCapacity);
             }
-            else {
+            else
+#endif //!USE_CORE_BASICSTRING_SBO
+            {
                 _large.Storage = Relocate_AssumePod(
                     get_allocator_(),
                     mutableview_type(_large.Storage, _large.Size + 1/* null char */),
@@ -323,14 +328,17 @@ void TBasicString<_Char>::assign(TBasicStringBuilder<_Char>&& sb) {
     const stringview_type written = sb.Written();
     Assert(written.back() == _Char());
 
-    if (USE_CORE_BASICSTRING_SBO && written.size() <= FSmallString_::GCapacity) {
+#if USE_CORE_BASICSTRING_SBO
+    if (written.size() <= FSmallString_::GCapacity) {
         _small.IsLarge = 0;
         _small.Size = checked_cast<_Char>(written.size() - 1);
-        ::memcpy(_small.Buffer, written.data(), written.size() * sizeof(_Char)/* also copies the null char */);
+        FPlatformMemory::Memcpy(_small.Buffer, written.data(), written.size() * sizeof(_Char)/* also copies the null char */);
 
         sb.clear();
     }
-    else {
+    else
+#endif //!USE_CORE_BASICSTRING_SBO
+    {
         size_t len;
         auto stolen = sb.StealDataUnsafe(get_allocator_(), &len);
         Assert(stolen[len - 1] == _Char()); // check that the buffer is null terminated
@@ -361,10 +369,13 @@ bool TBasicString<_Char>::CheckInvariants() const {
             */
     }
     else {
-        if (!USE_CORE_BASICSTRING_SBO && _small.Size)
+#   if !USE_CORE_BASICSTRING_SBO
+        if (_small.Size != 0)
             return false;
+#   else
         if (_small.Size >= FSmallString_::GCapacity)
             return false;
+#   endif //!!USE_CORE_BASICSTRING_SBO
         if (_small.Buffer[size_t(_small.Size)] != _Char())
             return false;
     }
@@ -384,9 +395,13 @@ void TBasicString<_Char>::reserve(size_t count) {
 //----------------------------------------------------------------------------
 template <typename _Char>
 TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeNoNullChar_(size_t count, bool change_size/* = true */) {
+#if USE_CORE_BASICSTRING_SBO
     return ((USE_CORE_BASICSTRING_SBO && count < FSmallString_::GCapacity)
         ? resizeNoNullChar_Small_(count, change_size)
         : resizeNoNullChar_Large_(count, change_size) );
+#else
+    return resizeNoNullChar_Large_(count, change_size);
+#endif
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -394,7 +409,9 @@ NO_INLINE TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeNoNullChar_Lar
     Assert(CheckInvariants());
 
     const size_t newCapacity = SafeAllocatorSnapSize(get_allocator_(), count + 1/* null char */);
-    Assert(!USE_CORE_BASICSTRING_SBO || newCapacity > FSmallString_::GCapacity);
+#if USE_CORE_BASICSTRING_SBO
+    Assert(newCapacity > FSmallString_::GCapacity);
+#endif
 
     if (is_large_()) {
         _large.Storage = Relocate_AssumePod(
@@ -406,7 +423,7 @@ NO_INLINE TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeNoNullChar_Lar
     else {
         _large.IsLarge = 1;
         _Char* const newStorage = allocator_traits::allocate(get_allocator_(), newCapacity);
-        ::memcpy(newStorage, _small.Buffer, Min(size_t(_small.Size), count) * sizeof(_Char));
+        FPlatformMemory::Memcpy(newStorage, _small.Buffer, Min(size_t(_small.Size), count) * sizeof(_Char));
         _large.Storage = newStorage; // assign after memcpy to don't overwrite insitu storage
     }
 
@@ -429,13 +446,13 @@ NO_INLINE TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeNoNullChar_Sma
         _small.IsLarge = 0;
         _Char* const prev_ptr = _large.Storage;
         const size_t prev_capacity = _large.Capacity;
-        ::memcpy(_small.Buffer, prev_ptr, Min(_large.Size, count) * sizeof(_Char));
+        FPlatformMemory::Memcpy(_small.Buffer, prev_ptr, Min(_large.Size, count) * sizeof(_Char));
         allocator_traits::deallocate(get_allocator_(), prev_ptr, prev_capacity);
     }
 
     if (change_size) {
         _small.Size = checked_cast<_Char>(count);
-        Assert(_small.Size == count);
+        Assert(checked_cast<size_t>(_small.Size) == count);
     }
 
     return MakeCheckedIterator(_small.Buffer, count + 1/* null char */, 0);

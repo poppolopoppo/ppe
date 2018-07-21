@@ -2,6 +2,8 @@
 
 #include "MemoryProvider.h"
 
+#include "HAL/PlatformMemory.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -26,9 +28,8 @@ std::streamoff FMemoryViewReader::SeekI(std::streamoff offset, ESeekOrigin origi
             return std::streamoff(-1);
         _offsetI = checked_cast<size_t>(_rawData.SizeInBytes() + offset);
         break;
-    default:
-        AssertNotImplemented();
-        return std::streamoff(-1);
+    case ESeekOrigin::All:
+        AssertNotReached();
     }
     Assert(_offsetI <= _rawData.SizeInBytes());
     return checked_cast<std::streamoff>(_offsetI);
@@ -40,7 +41,7 @@ bool FMemoryViewReader::Read(void* storage, std::streamsize sizeInBytes) {
         return false;
 
     Assert(storage);
-    memcpy(storage, _rawData.Pointer() + _offsetI, sizeT);
+    FPlatformMemory::Memcpy(storage, _rawData.Pointer() + _offsetI, sizeT);
 
     _offsetI += sizeT;
     return true;
@@ -103,9 +104,8 @@ std::streamoff FMemoryViewWriter::SeekO(std::streamoff offset, ESeekOrigin polic
             return std::streamoff(-1);
         _offsetO = checked_cast<size_t>(_size + offset);
         break;
-    default:
-        AssertNotImplemented();
-        return std::streamoff(-1);
+    case ESeekOrigin::All:
+        AssertNotReached();
     }
     Assert(_offsetO <= _size);
     return checked_cast<std::streamoff>(_offsetO);
@@ -114,12 +114,9 @@ std::streamoff FMemoryViewWriter::SeekO(std::streamoff offset, ESeekOrigin polic
 bool FMemoryViewWriter::Write(const void* storage, std::streamsize sizeInBytes) {
     const size_t sizeT = checked_cast<size_t>(sizeInBytes);
 
-    if (_offsetO + sizeT > _rawData.SizeInBytes()) {
-        AssertNotReached();
-        return false;
-    }
+    AssertRelease(_offsetO + sizeT <= _rawData.SizeInBytes());
 
-    memcpy(_rawData.Pointer() + _offsetO, storage, sizeT);
+    FPlatformMemory::Memcpy(_rawData.Pointer() + _offsetO, storage, sizeT);
 
     _offsetO += sizeT;
     _size = std::max(_offsetO, _size);
@@ -136,16 +133,15 @@ bool FMemoryViewWriter::WriteAligned(const void* storage, std::streamsize sizeIn
 //----------------------------------------------------------------------------
 bool FMemoryViewWriter::WriteAlignmentPadding(size_t boundary, u8 padvalue /* = 0 */) {
     Assert(boundary > 0 && Meta::IsPow2(boundary));
+
     const size_t offset = (_offsetO + boundary - 1) & ~(boundary - 1);
-    if (offset > _rawData.SizeInBytes()) {
-        AssertNotReached();
-        return false;
-    }
+
+    AssertRelease(offset <= _rawData.SizeInBytes());
 
     if (_offsetO != offset) {
         Assert(_offsetO < offset);
         _size = std::max(_size, offset);
-        memset(_rawData.Pointer() + _offsetO, padvalue, offset - _offsetO);
+        FPlatformMemory::Memset(_rawData.Pointer() + _offsetO, padvalue, offset - _offsetO);
         _offsetO = offset;
     }
 

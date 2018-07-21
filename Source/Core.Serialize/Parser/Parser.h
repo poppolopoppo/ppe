@@ -5,13 +5,8 @@
 #include "Core/Allocator/PoolAllocatorTag.h"
 
 #include "Core.Serialize/Exceptions.h"
-#include "Core.Serialize/Parser/ParseContext.h"
-#include "Core.Serialize/Parser/ParseExpression.h"
+#include "Core.Serialize/Lexer/Location.h"
 #include "Core.Serialize/Parser/ParseItem.h"
-#include "Core.Serialize/Parser/ParseList.h"
-#include "Core.Serialize/Parser/ParseProduction.h"
-#include "Core.Serialize/Parser/ParseResult.h"
-#include "Core.Serialize/Parser/ParseStatement.h"
 
 namespace Core {
 namespace Parser {

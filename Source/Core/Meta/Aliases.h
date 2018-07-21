@@ -65,6 +65,7 @@ typedef int64_t     i64;
 #define CONCAT_I(_X, _Y) _X ## _Y
 #define CONCAT_OO(_ARGS) CONCAT_I ## _ARGS
 #define CONCAT(_X, _Y) CONCAT_I(_X, _Y) //CONCAT_OO((_X, _Y))
+#define CONCAT3(_X, _Y, _Z) CONCAT(_X, CONCAT(_Y, _Z))
 //----------------------------------------------------------------------------
 #define NOOP(...) __noop(__VA_ARGS__)
 #define UNUSED(_X) (void)(_X)
@@ -131,10 +132,10 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   error "unsupported compiler"
 #endif
 //----------------------------------------------------------------------------
-#if _HAS_CXX14
+#if _HAS_CXX14 || _HAS_CXX17
 #   define CONSTEXPR constexpr
 #else
-#   define CONSTEXPR const
+#   define CONSTEXPR
 #endif
 //----------------------------------------------------------------------------
 #if _HAS_CXX17
@@ -240,6 +241,11 @@ constexpr decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Max(_Lhs a, _Rhs b
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
 constexpr decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Min(_Lhs a, _Rhs b) { return (a < b) ? a : b; }
+//----------------------------------------------------------------------------
+template <typename T, typename _Min, typename _Max>
+constexpr decltype(std::declval<T>() + std::declval<_Min>() + std::declval<_Max>()) Clamp(T value, _Min vmin, _Max vmax) {
+    return Min(vmax, Max(vmin, value));
+}
 //----------------------------------------------------------------------------
 template <typename _A, typename _B, typename _C>
 constexpr decltype(std::declval<_A>() + std::declval<_B>() + std::declval<_C>()) Max3(_A a, _B b, _C c) { return (a < b) ? Max(b, c) : Max(a, c); }

@@ -5,6 +5,7 @@
 #include "Core/Maths/Packing_fwd.h"
 
 #include "Core/IO/TextWriter_fwd.h"
+#include "Core/Maths/MathHelpers.h"
 #include "Core/Memory/HashFunctions.h"
 
 namespace Core {

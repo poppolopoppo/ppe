@@ -12,8 +12,8 @@ namespace RTTI {
 FAtomHeap::FAtomHeap()
 {}
 //----------------------------------------------------------------------------
-FAtomHeap::~FAtomHeap() { 
-    ReleaseAll(); 
+FAtomHeap::~FAtomHeap() {
+    ReleaseAll();
     Assert(_destructibles.empty());
 }
 //----------------------------------------------------------------------------
@@ -21,7 +21,7 @@ NO_INLINE void FAtomHeap::ReleaseAll() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
 #if !USE_CORE_FINAL_RELEASE
-    _heap.DumpMemoryStats(L"FAtomHeap::ReleaseAll");
+    _heap.DumpMemoryStats();
 #endif
 
     // destroy non-trivial type instances :

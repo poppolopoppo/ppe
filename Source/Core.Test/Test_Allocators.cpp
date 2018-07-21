@@ -9,10 +9,10 @@
 #include "Core/Diagnostic/Logger.h"
 #include "Core/IO/FormatHelpers.h"
 #include "Core/IO/StringView.h"
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/RandomGenerator.h"
 #include "Core/Memory/MemoryView.h"
-#include "Core/Misc/TargetPlatform.h"
 #include "Core/Time/TimedScope.h"
 #include "Core/Thread/Task/TaskHelpers.h"
 #include "Core/Thread/ThreadPool.h"
@@ -49,13 +49,14 @@ template <typename _Alloc>
 static void Test_Allocator_ST_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
+    NOOP(category, name);
     BENCHMARK_SCOPE(category, name);
 
     forrange(loop, 0, GLoopCount_) {
         for (size_t sz : blockSizes) {
             auto* ptr = allocator.allocate(sz);
 #if USE_TESTALLOCATOR_MEMSET
-            ::memset(ptr, 0xFA, sizeof(value_type) * sz);
+            FPlatformMemory::Memset(ptr, 0xFA, sizeof(value_type) * sz);
 #endif
             allocator.deallocate(ptr, sz);
         }
@@ -66,6 +67,7 @@ template <typename _Alloc>
 static void Test_Allocator_MT_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
+    NOOP(category, name);
     BENCHMARK_SCOPE(category, name);
 
     forrange(loop, 0, GLoopCount_) {
@@ -73,7 +75,7 @@ static void Test_Allocator_MT_(const FWStringView& category, const FWStringView&
             _Alloc alloc(allocator);
             auto* ptr = alloc.allocate(sz);
 #if USE_TESTALLOCATOR_MEMSET
-            ::memset(ptr, 0xFB, sizeof(value_type) * sz);
+            FPlatformMemory::Memset(ptr, 0xFB, sizeof(value_type) * sz);
 #endif
             alloc.deallocate(ptr, sz);
         });
@@ -84,6 +86,7 @@ template <typename _Alloc>
 static void Test_Allocator_Sliding_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes, size_t window) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
+    NOOP(category, name);
     BENCHMARK_SCOPE(category, name);
 
     const size_t numDeallocs = Max(size_t(1), window / 10);
@@ -98,7 +101,7 @@ static void Test_Allocator_Sliding_(const FWStringView& category, const FWString
         for(size_t sz : blockSizes) {
             pointer ptr = allocator.allocate(sz);
 #if USE_TESTALLOCATOR_MEMSET
-            ::memset(ptr, 0xFC, sizeof(value_type) * sz);
+            FPlatformMemory::Memset(ptr, 0xFC, sizeof(value_type) * sz);
 #endif
 
             if (blockAddrs.size() == window) {
@@ -122,6 +125,7 @@ template <typename _Alloc>
 static void Test_Allocator_Trashing_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     typedef typename std::allocator_traits<_Alloc>::value_type value_type;
 
+    NOOP(category, name);
     BENCHMARK_SCOPE(category, name);
 
     using value_type = typename std::allocator_traits<_Alloc>::value_type;
@@ -191,7 +195,7 @@ void Test_Allocators() {
 
     constexpr size_t BlockSizeMin = 16;
     constexpr size_t BlockSizeMid = 32736;
-    const size_t BlockSizeMax = FPlatformMisc::SystemInfo.AllocationGranularity;
+    const size_t BlockSizeMax = checked_cast<size_t>(FPlatformMemory::Constants().AllocationGranularity);
 
     size_t smallBlocksSizeInBytes = 0;
     size_t largeBlocksSizeInBytes = 0;

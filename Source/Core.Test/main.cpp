@@ -19,7 +19,7 @@ typedef Core::Test::FTestApp application_type;
 
 #if defined(PLATFORM_WINDOWS) && CORE_RESOURCES
 //  Retrieves application icon for windows
-#   include "Core/Misc/Platform_Windows.h"
+#   include "Core/HAL/PlatformIncludes.h"
 #   include "resource.h"
 #endif
 
@@ -47,7 +47,6 @@ static int Bootstrap(void *appHandle, int nShowCmd, const wchar_t* filename, int
 }
 
 #ifdef PLATFORM_WINDOWS
-#   include "Core/Misc/Platform_Windows.h"
 #   include <shellapi.h>
 #   include <tchar.h>
 int APIENTRY wWinMain(

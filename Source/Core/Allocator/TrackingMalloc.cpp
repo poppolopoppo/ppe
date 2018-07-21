@@ -4,6 +4,7 @@
 
 #include "Malloc.h"
 
+#include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 
@@ -49,6 +50,7 @@ void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size) {
 
     return (pblock + 1);
 #else
+    NOOP(trackingData);
     return Core::malloc(size);
 #endif
 }
@@ -70,7 +72,7 @@ void  (tracking_free)(void *ptr) {
 //----------------------------------------------------------------------------
 void* (tracking_calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size) {
     void* ptr = tracking_malloc(trackingData, nmemb * size);
-    ::memset(ptr, 0, nmemb * size);
+    FPlatformMemory::Memzero(ptr, nmemb * size);
     return ptr;
 }
 //----------------------------------------------------------------------------
@@ -102,6 +104,7 @@ void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, size_t size) 
         return (pblock + 1);
     }
 #else
+    NOOP(trackingData);
     return Core::realloc(ptr, size);
 #endif
 }

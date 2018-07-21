@@ -119,11 +119,11 @@ bool FVirtualFileSystemTrie::MoveFile(const FFilename& src, const FFilename& dst
     }
 }
 //----------------------------------------------------------------------------
-bool FVirtualFileSystemTrie::RemoveDirectory(const FDirpath& dirpath) const {
+bool FVirtualFileSystemTrie::RemoveDirectory(const FDirpath& dirpath, bool force/* = true */) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentWritable* const writable = WritableComponent_(dirpath.MountingPoint(), _nodes);
     return (writable)
-        ? writable->RemoveDirectory(dirpath)
+        ? writable->RemoveDirectory(dirpath, force)
         : false;
 }
 //----------------------------------------------------------------------------

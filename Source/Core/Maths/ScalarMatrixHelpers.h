@@ -11,7 +11,7 @@
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/ScalarVectorHelpers.h"
 
-#include "Core/Misc/Endianness.h"
+#include "Core/HAL/PlatformEndian.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -361,11 +361,9 @@ TScalarVector<T, 4> Transform4(const TScalarMatrix<T, 4, 4>& m, const TScalarVec
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
-TScalarMatrix<T, _Width, _Height> SwapEndianness(const TScalarMatrix<T, _Width, _Height>& value) {
-    TScalarMatrix<T, _Width, _Height> r;
-    forrange(i, 0, lengthof(r._data.raw))
-        r._data.raw[i] = SwapEndianness(value._data.raw[i]);
-    return r;
+void SwapEndiannessInPlace(TScalarMatrix<T, _Width, _Height>* value) {
+    forrange(i, 0, lengthof(value->_data.raw))
+        FPlatformEndian::SwapInPlace(&value->_data.raw[i]);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

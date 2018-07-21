@@ -2,8 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/HAL/PlatformProcess.h"
 #include "Core/Memory/RefPtr.h"
-#include "Core/Misc/TargetPlatform.h"
 #include "Core/Thread/Task/Task.h"
 
 #define USE_CORE_THREAD_WORKSTEALINGQUEUE 1 // %_NOCOMMIT%
@@ -75,6 +75,8 @@ private:
         FPrioritySort_
     >   priority_queue_type;
 
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // 'FLocalQueue_': structure was padded due to alignment specifier
     struct CACHELINE_ALIGNED FLocalQueue_ {
         size_t HighestPriority = INDEX_NONE;
 
@@ -85,6 +87,7 @@ private:
 
         priority_queue_type Queue;
     };
+PRAGMA_MSVC_WARNING_POP()
 
     const size_t _maxTasks;
     std::atomic<size_t> _taskInFlight;
@@ -257,8 +260,9 @@ void FTaskScheduler::SignalExitToWorkers(const FTaskFunc& exitTask) {
     forrange(i, 0, _numWorkers) {
         // make sure that each worker is getting his exit task
         FTaskQueued queuedExit{ INDEX_NONE/* lowest priority */, exitTask, nullptr };
+        size_t backoff = 0;
         while (not WorkerTryPush_(i, queuedExit))
-            FPlatformAtomics::ShortSyncWait();
+            FPlatformProcess::SleepForSpinning(backoff);
     }
 }
 //----------------------------------------------------------------------------

@@ -51,7 +51,7 @@ public:
     void ReleaseAll();
 
 #if !USE_CORE_FINAL_RELEASE
-    void DumpMemoryStats(const wchar_t* title);
+    void DumpMemoryStats();
 #endif
 
     static const size_t MinBlockSize;

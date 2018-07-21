@@ -26,15 +26,10 @@ public:
     friend bool operator !=(const hash_t& lhs, const hash_t& rhs) { return lhs._value != rhs._value; }
 
     friend void swap(hash_t& lhs, hash_t& rhs) { std::swap(lhs._value, rhs._value); }
-
-    CORE_API friend FTextWriter& operator <<(FTextWriter& oss, const hash_t& h);
-    CORE_API friend FWTextWriter& operator <<(FWTextWriter& oss, const hash_t& h);
 };
 //----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, hash_t h) {
-    return oss << (const void*)h._value;
-}
+CORE_API FTextWriter& operator <<(FTextWriter& oss, hash_t h);
+CORE_API FWTextWriter& operator <<(FWTextWriter& oss, hash_t h);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

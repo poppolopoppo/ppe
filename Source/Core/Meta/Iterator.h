@@ -110,13 +110,22 @@ public:
     TCheckedArrayIterator& operator=(const TCheckedArrayIterator&) = default;
 
     template <typename U, class = Meta::TEnableIf< std::is_convertible<U*, T*>::value> >
-    TCheckedArrayIterator(const TCheckedArrayIterator<U>& other) : parent_type(reinterpret_cast<const parent_type&>(other)) {}
+    TCheckedArrayIterator(const TCheckedArrayIterator<U>& other)
+        : parent_type(reinterpret_cast<const parent_type&>(other))
+    {}
+
     template <typename U, class = Meta::TEnableIf< std::is_convertible<U*, T*>::value> >
-    TCheckedArrayIterator& operator=(const TCheckedArrayIterator<U>& other) { parent_type::operator=(reinterpret_cast<const parent_type&>(other)); return *this }
+    TCheckedArrayIterator& operator=(const TCheckedArrayIterator<U>& other) {
+        parent_type::operator=(reinterpret_cast<const parent_type&>(other));
+        return *this;
+    }
 
     // needed for implicit conversion
     TCheckedArrayIterator(const parent_type& other) : parent_type(other) {}
-    TCheckedArrayIterator& operator =(const parent_type& other) { parent_type::operator=(other); return *this }
+    TCheckedArrayIterator& operator =(const parent_type& other) {
+        parent_type::operator=(other);
+        return *this;
+    }
 
     // overload stdext::checked_array_iterator<> for this constructor
     // std needs iterator = const_iterator which is supported by default

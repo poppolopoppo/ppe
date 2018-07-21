@@ -4,6 +4,7 @@
 
 #include "Listener.h"
 
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/IO/TextWriter.h"
 
 namespace Core {
@@ -88,24 +89,20 @@ size_t FSocketBuffered::Read(const TMemoryView<u8>& rawData) {
 
     size_t read = 0;
 
-    if (_offsetI < _sizeI)
-    {
+    if (_offsetI < _sizeI) {
         read += ReadFromBuffer_(rawData);
         Assert(read <= rawData.size());
     }
 
-    if (rawData.size() != read) // if there is still some data to read
-    {
+    if (rawData.size() != read) { // if there is still some data to read
         Assert(read < rawData.size());
         Assert(_sizeI == _offsetI); // the buffer must be empty
 
-        if (rawData.size() - read > _bufferCapacity)
-        {
+        if (rawData.size() - read > _bufferCapacity) {
             // fallback to unbuffered read when we query a block larger than buffer capacity
             read += _socket.Read(rawData.CutStartingAt(read));
         }
-        else
-        {
+        else {
             FlushRead(); // refill the buffer
             read += ReadFromBuffer_(rawData.CutStartingAt(read));
         }
@@ -134,7 +131,7 @@ size_t FSocketBuffered::Write(const TMemoryView<const u8>& rawData) {
 
         Assert(toWrite <= _bufferCapacity - _sizeO);
 
-        memcpy(_bufferO.data() + _sizeO, rawData.data(), toWrite);
+        FPlatformMemory::Memcpy(_bufferO.data() + _sizeO, rawData.data(), toWrite);
         _sizeO += toWrite;
 
         return toWrite;
@@ -154,9 +151,7 @@ bool FSocketBuffered::ReadUntil(FTextWriter* poss, char delim) {
     constexpr size_t maxLength = 64 * 1024;
 
     char ch;
-    for(size_t len = 0;
-        Peek(ch) && ch != delim && ch != '\n';
-        ++len ) {
+    for(size_t len = 0; Peek(ch) && ch != delim && ch != '\n'; ++len ) {
         if (len == maxLength)
             return false;
 

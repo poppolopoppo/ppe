@@ -90,6 +90,8 @@ private:
     static constexpr size_t Elmt_(size_t index) { return (index & FBitMask::GBitMask); }
     static constexpr size_t Word_(size_t index) { return (index / FBitMask::GBitCount); }
 
+    const FCallback _callback;
+
     FAtomicSpinLock _barrier;
     FBitMask _available[GBitSetSize];
 #ifdef WITH_CORE_ASSERT
@@ -98,7 +100,6 @@ private:
 #endif
     FHandle _handles[GCapacity];
 
-    const FCallback _callback;
     static void STDCALL FiberEntryPoint_(void* arg);
 };
 //----------------------------------------------------------------------------
@@ -284,9 +285,11 @@ void FTaskFiberPool::FHandle::WakeUp_() const {
 //----------------------------------------------------------------------------
 void STDCALL FTaskFiberPool::FiberEntryPoint_(void* arg) {
     FHandleRef const self = CurrentHandleRef();
+    Assert(self == arg);
     self->WakeUp_(); // need potentially to do something with previous thread
     self->_owner->_callback();
     AssertNotReached(); // a pooled fiber should never exit, or it won't be reusable !
+    NOOP(arg);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

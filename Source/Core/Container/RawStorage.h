@@ -94,7 +94,7 @@ public:
 
     template <typename U, typename A>
     typename std::enable_if< sizeof(U) == sizeof(T) >::type Swap(TRawStorage<U, A>& other) {
-        AssertRelease(allocator() == other.allocator());
+        AssertRelease(get_allocator() == other.get_allocator());
         std::swap((void*&)_storage, (void*&)other._storage);
         std::swap(_size, other._size);
     }

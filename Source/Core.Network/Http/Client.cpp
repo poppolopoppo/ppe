@@ -23,13 +23,12 @@ EXTERN_LOG_CATEGORY(CORE_NETWORK_API, Network)
 namespace {
 //----------------------------------------------------------------------------
 static void HttpTypicalRequestHeaders_(FHttpRequest* request) {
-    request->Add(FHttpConstNames::UserAgent(),      FString("Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)"));
+    request->Add(FHttpConstNames::UserAgent(),      FString("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"));
     request->Add(FHttpConstNames::Accept(),         FString("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"));
     request->Add(FHttpConstNames::AcceptLanguage(), FString("en-us,en;q=0.5"));
     request->Add(FHttpConstNames::AcceptEncoding(), FString("identity"));
-    request->Add(FHttpConstNames::AcceptCharset(),  FString("utf-8"));
-    request->Add(FHttpConstNames::KeepAlive(),      FString("300"));
-    request->Add(FHttpConstNames::CacheControl(),   FString("no-cache"));
+    request->Add(FHttpConstNames::Connection(),     FString("keep-alive"));
+    request->Add(FHttpConstNames::CacheControl(),   FString("max-age=0"));
 }
 //----------------------------------------------------------------------------
 static void HttpMakeRequest_(
@@ -74,7 +73,7 @@ FHttpClient::FHttpClient(FAddress&& address, size_t maxContentLength/* = Default
     Assert(_maxContentLength > 0);
 
     if (not FSocketBuffered::MakeConnection(_socket, _address))
-        CORE_THROW_IT(FHttpException(EHttpStatus::ServiceUnavailable, "Failed to open connection"));
+        CORE_THROW_IT(FHttpException(EHttpStatus::ServiceUnavailable, "failed to open connection"));
 }
 //----------------------------------------------------------------------------
 FHttpClient::FHttpClient(const FAddress& address, size_t maxContentLength/* = DefaultMaxContentLength */)

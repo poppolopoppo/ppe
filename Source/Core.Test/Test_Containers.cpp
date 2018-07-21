@@ -18,6 +18,7 @@
 #include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter.h"
 #include "Core/IO/VirtualFileSystem.h"
+#include "Core/HAL/PlatformMaths.h"
 #include "Core/Maths/Maths.h"
 #include "Core/Maths/PrimeNumbers.h"
 #include "Core/Maths/RandomGenerator.h"
@@ -393,7 +394,7 @@ public:
         if (atleast > _capacity) {
             //Assert(atleast <= Primes_[31]);
             const size_type oldcapacity = _capacity;
-            _capacity = Meta::NextPow2(atleast);
+            _capacity = FPlatformMaths::NextPow2(atleast);
             /*forrange(i, 0, 32)
                 if (atleast <= Primes_[i]) {
                     _capacity = Primes_[i];
@@ -706,6 +707,7 @@ static void Test_Container_POD_(
     const TMemoryView<const T>& todelete,
     const TMemoryView<const T>& searchafterdelete
 ) {
+    NOOP(name);
 
 #ifdef WITH_CORE_ASSERT
     static constexpr size_t loops = 100;
@@ -810,6 +812,7 @@ static void Test_Container_Obj_(
     const TMemoryView<const T>& searchafterdelete,
     const _Adaptor& adaptor
 ) {
+    NOOP(name);
 
 #ifdef WITH_CORE_ASSERT
     static constexpr size_t loops = 10;

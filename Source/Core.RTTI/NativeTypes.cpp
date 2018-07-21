@@ -258,14 +258,14 @@ const FMetaClass* TNativeTypeTraits<PMetaObject>::ObjectClass() const {
 template <>
 bool TNativeTypeTraits<PMetaObject>::DeepEquals(const void* lhs, const void* rhs) const {
     return DeepEqualsObject(
-        *reinterpret_cast<const PMetaObject*>(lhs), 
+        *reinterpret_cast<const PMetaObject*>(lhs),
         *reinterpret_cast<const PMetaObject*>(rhs) );
 }
 //----------------------------------------------------------------------------
 template <>
 void TNativeTypeTraits<PMetaObject>::DeepCopy(const void* src, void* dst) const {
-    DeepCopyObject(*this, 
-        *reinterpret_cast<const PMetaObject*>(src), 
+    DeepCopyObject(*this,
+        *reinterpret_cast<const PMetaObject*>(src),
         *reinterpret_cast<PMetaObject*>(dst) );
 }
 //----------------------------------------------------------------------------
@@ -322,7 +322,7 @@ void* TNativeTypeTraits<PMetaObject>::Cast(void* data, const PTypeTraits& dst) c
     } \
     \
     /* Global helper for MakeTraits<T>() */ \
-    PTypeTraits Traits(Meta::TType<T>) noexcept { \
+    PTypeTraits Traits(Meta::TType<T>) NOEXCEPT { \
         return PTypeTraits::Make< TNativeTypeTraits<T> >(); \
     }
 
@@ -340,9 +340,7 @@ PTypeTraits MakeTraits(ENativeType nativeType) {
 #undef DEF_RTTI_MAKETRAITS
     default:
         AssertNotImplemented();
-        break;
     }
-    return PTypeTraits();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -379,7 +377,7 @@ bool DeepEqualsObject(const PMetaObject& lhs, const PMetaObject& rhs) {
         return RTTI::DeepEquals(*lhs, *rhs);
 }
 //----------------------------------------------------------------------------
-void DeepCopyObject(const IScalarTraits& self, const PMetaObject& src, PMetaObject& dst) {
+void DeepCopyObject(const IScalarTraits& , const PMetaObject& src, PMetaObject& dst) {
     if (src == dst) {
         return;
     }

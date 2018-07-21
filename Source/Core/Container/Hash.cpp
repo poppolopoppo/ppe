@@ -8,11 +8,11 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, const hash_t& h) {
+FTextWriter& operator <<(FTextWriter& oss, hash_t h) {
     return oss << '#' << (const void*)h._value;
 }
 //----------------------------------------------------------------------------
-FWTextWriter& operator <<(FWTextWriter& oss, const hash_t& h) {
+FWTextWriter& operator <<(FWTextWriter& oss, hash_t h) {
     return oss << L'#' << (const void*)h._value;
 }
 //----------------------------------------------------------------------------

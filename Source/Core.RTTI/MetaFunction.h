@@ -11,10 +11,6 @@
 #include "Core/IO/TextWriter_fwd.h"
 #include "Core/Meta/PointerWFlags.h"
 
-// DONE : check if it's useful in future (13/12/2017)
-// not necessary with latest update (14/01/2017)
-#define USE_MSVC17_WORKAROUND_FOR_INTERNALERROR 0
-
 namespace Core {
 namespace RTTI {
 class FMetaObject;
@@ -126,6 +122,7 @@ struct TMakeFunction<_Result (_Class::*)(_Args...)> {
     static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) {
         Assert(sizeof...(_Args) == parametersName.size());
         auto nameIt = std::begin(parametersName);
+        NOOP(nameIt);
         return FMetaFunction(
             name,
             flags,
@@ -140,13 +137,12 @@ private:
     struct TMemberFunction_ {
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
             const FAtom* parg = arguments.data();
-            result.TypedData<_Result>() = Call(_Member, const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)), TTuple<Meta::TReference<_Args>...>{
-#if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
-                *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
-#else
-                (*parg++).TypedData<Meta::TDecay<_Args>>()...
-#endif
-            });
+            NOOP(parg);
+            result.TypedData<_Result>() = Call(_Member,
+                const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)),
+                TTuple<Meta::TReference<_Args>...>{
+                    (*parg++).TypedData<Meta::TDecay<_Args>>()...
+                });
         }
     };
 
@@ -155,13 +151,12 @@ private:
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
             Assert(not result);
             const FAtom* parg = arguments.data();
-            Call(_Member, const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)), TTuple<Meta::TReference<_Args>...>{
-#if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
-                *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
-#else
-                (*parg++).TypedData<Meta::TDecay<_Args>>()...
-#endif
-            });
+            NOOP(parg);
+            Call(_Member,
+                const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)),
+                TTuple<Meta::TReference<_Args>...>{
+                    (*parg++).TypedData<Meta::TDecay<_Args>>()...
+                });
         }
     };
 };
@@ -172,6 +167,7 @@ struct TMakeFunction<_Result (_Class::*)(_Args...) const> {
     static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) {
         Assert(sizeof...(_Args) == parametersName.size());
         auto nameIt = std::begin(parametersName);
+        NOOP(nameIt);
         return FMetaFunction(
             name,
             flags,
@@ -186,13 +182,12 @@ private:
     struct TMemberFunction_ {
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
             const FAtom* parg = arguments.data();
-            result.TypedData<_Result>() = Call(_Member, RTTI::CastChecked<_Class>(&obj), TTuple<Meta::TReference<_Args>...>{
-#if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
-                *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
-#else
-                (*parg++).TypedData<Meta::TDecay<_Args>>()...
-#endif
-            });
+            NOOP(parg);
+            result.TypedData<_Result>() = Call(_Member,
+                RTTI::CastChecked<_Class>(&obj),
+                TTuple<Meta::TReference<_Args>...>{
+                    (*parg++).TypedData<Meta::TDecay<_Args>>()...
+                });
         }
     };
 
@@ -201,13 +196,12 @@ private:
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
             Assert(not result);
             const FAtom* parg = arguments.data();
-            Call(_Member, RTTI::CastChecked<_Class>(&obj), TTuple<Meta::TReference<_Args>...>{
-#if USE_MSVC17_WORKAROUND_FOR_INTERNALERROR
-                *reinterpret_cast<Meta::TPointer<_Args>>((*parg++).Data())...
-#else
-                (*parg++).TypedData<Meta::TDecay<_Args>>()...
-#endif
-            });
+            NOOP(parg);
+            Call(_Member,
+                RTTI::CastChecked<_Class>(&obj),
+                TTuple<Meta::TReference<_Args>...>{
+                    (*parg++).TypedData<Meta::TDecay<_Args>>()...
+                });
         }
     };
 };

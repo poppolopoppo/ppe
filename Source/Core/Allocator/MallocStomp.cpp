@@ -4,8 +4,8 @@
 
 #ifdef WITH_CORE_MALLOCSTOMP
 
+#   include "HAL/PlatformMemory.h"
 #   include "Memory/MemoryTracking.h"
-#   include "Memory/VirtualMemory.h"
 
 #   define CORE_MALLOCSTOMP_CHECK_OVERRUN 1 // set to 0 to check for underruns
 #   define CORE_MALLOCSTOMP_DELAY_DELETES 1 // set to 1 to check for necrophilia
@@ -15,10 +15,6 @@
 #       include "Container/RingBuffer.h"
 #       include "Thread/AtomicSpinLock.h"
         PRAGMA_INITSEG_COMPILER
-#   endif
-
-#   ifdef PLATFORM_WINDOWS
-#       include "Diagnostic/LastError.h"
 #   endif
 
 namespace Core {
@@ -127,57 +123,12 @@ static const FStompPayload_* StompGetPayload_(const void* userPtr) {
     return payload;
 }
 //----------------------------------------------------------------------------
-static void* StompVMAlloc_(size_t sizeInBytes) {
-    void* result;
-#if     defined(PLATFORM_WINDOWS)
-    result = (void*)::VirtualAlloc(nullptr, sizeInBytes, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-    if (nullptr == result)
-        CORE_THROW_IT(FLastErrorException("VirtualAlloc"));
-
-#elif   defined(PLATFORM_LINUX)
-    result = (void*)::mmap(nullptr, sizeInBytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-
-#else
-#   error "unsupported platform !"
-#endif
-#if USE_CORE_MEMORYDOMAINS
-    if (result)
-        MEMORYDOMAIN_TRACKING_DATA(LargeBlocks).Allocate(1, sizeInBytes);
-#endif
-
-    // may happen since this allocator eats up a large amount of virtual space
-    if (nullptr == result)
-        CORE_THROW_IT(std::bad_alloc());
-
-    return result;
-}
-//----------------------------------------------------------------------------
-static void StompVMFree_(void* ptr, size_t sizeInBytes) {
-    if (nullptr == ptr)
-        return;
-
-#if USE_CORE_MEMORYDOMAINS
-    MEMORYDOMAIN_TRACKING_DATA(LargeBlocks).Deallocate(1, sizeInBytes);
-#endif
-#if     defined(PLATFORM_WINDOWS)
-    UNUSED(sizeInBytes);
-    if (not ::VirtualFree(ptr, 0, MEM_RELEASE))
-        CORE_THROW_IT(FLastErrorException("VirtualFree"));
-
-#elif   defined(PLATFORM_LINUX)
-    ::munmap(ptr, sizeInBytes);
-
-#else
-#   error "unsupported platform !"
-#endif
-}
-//----------------------------------------------------------------------------
 #if CORE_MALLOCSTOMP_DELAY_DELETES
 class FStompDelayedDeletes_ {
 public:
     static FStompDelayedDeletes_& Get() {
-        static FStompDelayedDeletes_ GInstance;
-        return GInstance;
+        static FStompDelayedDeletes_ GLocalInstance;
+        return GLocalInstance;
     }
 
     static FStompDelayedDeletes_& GInstance;
@@ -188,7 +139,7 @@ public:
 
         // blocks too large are immediately freed to limit memory consumption
         if (sizeInBytes > MaxBlockSizeInBytes) {
-            StompVMFree_(ptr, sizeInBytes);
+            FPlatformMemory::PageFree(ptr, sizeInBytes);
             return;
         }
 
@@ -196,7 +147,7 @@ public:
         const FDeletedBlock_ delayed{ ptr, sizeInBytes };
 
         // can't read or write any of this deleted block now
-        FVirtualMemory::Protect(ptr, sizeInBytes, false, false);
+        FPlatformMemory::PageProtect(ptr, sizeInBytes, false, false);
 
         // need thread safety from here
         const FAtomicSpinLock::FScope scopeLock(_barrier);
@@ -259,7 +210,7 @@ private:
     size_t _delayedSizeInBytes;
 
     FStompDelayedDeletes_()
-        : _delayeds((FDeletedBlock_*)StompVMAlloc_(sizeof(FDeletedBlock_) * MaxDelayedDeletes), MaxDelayedDeletes)
+        : _delayeds((FDeletedBlock_*)FPlatformMemory::VirtualAlloc(sizeof(FDeletedBlock_) * MaxDelayedDeletes), MaxDelayedDeletes)
         , _delayedSizeInBytes(0)
     {}
 
@@ -274,14 +225,14 @@ private:
 
         Assert(0 == _delayedSizeInBytes);
 
-        StompVMFree_(_delayeds.data(), sizeof(FDeletedBlock_) * MaxDelayedDeletes);
+        FPlatformMemory::VirtualFree(_delayeds.data(), sizeof(FDeletedBlock_) * MaxDelayedDeletes);
     }
 
     void ReleaseDelayedDelete_(const FDeletedBlock_& toDelete) {
         Assert(toDelete.SizeInBytes <= _delayedSizeInBytes);
         _delayedSizeInBytes -= toDelete.SizeInBytes;
 
-        StompVMFree_(toDelete.Ptr, toDelete.SizeInBytes);
+        FPlatformMemory::PageFree(toDelete.Ptr, toDelete.SizeInBytes);
     }
 };
 FStompDelayedDeletes_& FStompDelayedDeletes_::GInstance = FStompDelayedDeletes_::Get();
@@ -313,7 +264,7 @@ void* FMallocStomp::AlignedMalloc(size_t size, size_t alignment) {
     const size_t pageAlignedSize = Meta::RoundToNext(size + paddingSize + sizeof(FStompPayload_), GStompPageSize);
     const size_t allocationSize = (pageAlignedSize + GStompPageSize); // extra page that will be read/write protected
 
-    u8* const allocationPtr = (u8*)StompVMAlloc_(allocationSize);
+    u8* const allocationPtr = (u8*)FPlatformMemory::PageAlloc(allocationSize);
 
 #if CORE_MALLOCSTOMP_CHECK_OVERRUN
     u8* const protectedPtr = (allocationPtr + allocationSize - GStompPageSize);
@@ -336,7 +287,7 @@ void* FMallocStomp::AlignedMalloc(size_t size, size_t alignment) {
     ONLY_IF_ASSERT(StompGetPayload_(userPtr));
 
     // can't read or write AFTER user data
-    FVirtualMemory::Protect(protectedPtr, GStompPageSize, false, false);
+    FPlatformMemory::PageProtect(protectedPtr, GStompPageSize, false, false);
 
     Assert(userPtr);
     Assert(Meta::IsAligned(alignment, userPtr));
@@ -391,7 +342,7 @@ void* FMallocStomp::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
 
             // keep data, use memmove because of overlapping
             const size_t moveSize = Min(size, oldUserSize);
-            ::memmove(userPtr, ptr, moveSize);
+            FPlatformMemory::Memmove(userPtr, ptr, moveSize);
 
 #if CORE_MALLOCSTOMP_CHECK_OVERRUN
             StompFillPadding_(allocationPtr, userPtr - sizeof(FStompPayload_)); // padding before
@@ -416,7 +367,7 @@ void* FMallocStomp::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
     void* const newPtr = FMallocStomp::AlignedMalloc(size, alignment);
 
     const FStompPayload_* payload = StompGetPayload_(ptr);
-    ::memcpy(newPtr, ptr, Min(payload->UserSize, size));
+    FPlatformMemory::Memcpy(newPtr, ptr, Min(payload->UserSize, size));
 
     FMallocStomp::AlignedFree(ptr);
 

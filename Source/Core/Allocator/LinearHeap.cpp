@@ -2,6 +2,7 @@
 
 #include "LinearHeap.h"
 
+#include "HAL/PlatformMemory.h"
 #include "Memory/MemoryTracking.h"
 #include "Memory/VirtualMemory.h"
 #include "Thread/AtomicSpinLock.h"
@@ -35,10 +36,12 @@ STATIC_CONST_INTEGRAL(size_t, GLinearHeapBlockCapacity, GLinearHeapAllocationSiz
 STATIC_CONST_INTEGRAL(size_t, GLinearHeapMaxSize, GLinearHeapBlockCapacity);
 STATIC_CONST_INTEGRAL(size_t, GLinearHeapMinBlockSizeForRecycling, CODE3264(16, 32));
 //----------------------------------------------------------------------------
-#ifdef WITH_CORE_ASSERT
+#if defined(WITH_CORE_ASSERT)
 #   define AssertCheckCanary(_ITEM) Assert_NoAssume((_ITEM).CheckCanary())
-static void FillUninitializedBlock_(void* ptr, size_t sizeInBytes) { ::memset(ptr, 0xCC, sizeInBytes); }
-static void FillDeletedBlock_(void* ptr, size_t sizeInBytes) { ::memset(ptr, 0xDD, sizeInBytes); }
+#   if !USE_CORE_MEMORY_DEBUGGING
+static void FillUninitializedBlock_(void* ptr, size_t sizeInBytes) { FPlatformMemory::Memset(ptr, 0xCC, sizeInBytes); }
+static void FillDeletedBlock_(void* ptr, size_t sizeInBytes) { FPlatformMemory::Memset(ptr, 0xDD, sizeInBytes); }
+#   endif
 #else
 #   define AssertCheckCanary(_ITEM) NOOP(_ITEM)
 #endif
@@ -53,10 +56,11 @@ struct FLinearHeapBlock_ {
         , Offset(0)
     {}
 
+    using padding_type = CODE3264(u64, u32);
 #   ifdef WITH_CORE_ASSERT
-    STATIC_CONST_INTEGRAL(CODE3264(u64, u32), DefaultCanary, CODE3264(0xAABBDDEEAABBDDEEull, 0xAABBDDEEul));
-    CODE3264(u64, u32) Canary = DefaultCanary; // serves as padding to align on 16
-    bool CheckCanary() const { return (DefaultCanary == Canary); }
+    STATIC_CONST_INTEGRAL(padding_type, __GDefaultCanary, CODE3264(0xAABBDDEEAABBDDEEull, 0xAABBDDEEul));
+    const padding_type __Canary = __GDefaultCanary; // serves as padding to align on 16
+    bool CheckCanary() const { return (__GDefaultCanary == __Canary); }
 
     static bool Contains(const FLinearHeapBlock_* head, const FLinearHeapBlock_* blk) {
         for (; head; head = head->Next) {
@@ -68,7 +72,7 @@ struct FLinearHeapBlock_ {
     }
 
 #   else
-    CODE3264(u64, u32) _Padding;
+    padding_type __Padding_FreeToUse;
 #   endif
 
     FORCE_INLINE size_t OffsetFromPtr(void* ptr) {
@@ -99,23 +103,24 @@ struct FLinearHeapHeader_ {
     typedef INTRUSIVELIST_ACCESSOR(&FLinearHeapHeader_::Node) list_type;
 
 #ifdef WITH_CORE_ASSERT
-    const u32 SizeInBytes;
-    const u32 Canary;
-    STATIC_CONST_INTEGRAL(size_t, GDefaultCanary, 0xAABBCCDD);
-    bool CheckCanary() const { return (GDefaultCanary == Canary); }
+    bool CheckCanary() const { return ((hash_tuple(Owner, SizeInBytes) & 0xFF) == __Canary); }
+    const size_t SizeInBytes    : (sizeof(size_t)<<3) - 8;
+    const size_t __Canary       : 8;
 #else
     const size_t SizeInBytes;
 #endif
 
     FLinearHeapHeader_(FLinearHeap& owner, size_t sizeInBytes)
         : Owner(&owner)
-#ifdef WITH_CORE_ASSERT
-        , SizeInBytes(checked_cast<u32>(sizeInBytes))
-        , Canary(GDefaultCanary)
-#else
         , SizeInBytes(sizeInBytes)
-#endif
+#ifdef WITH_CORE_ASSERT
+        , __Canary(hash_tuple(Owner, SizeInBytes)) {
+        Assert(sizeInBytes == SizeInBytes);
+        AssertCheckCanary(*this);
+    }
+#else
     {}
+#endif
 
     void Add(void** pHead) {
         list_type::PushFront(reinterpret_cast<FLinearHeapHeader_**>(pHead), nullptr, this);
@@ -142,7 +147,7 @@ public:
         void* const ptr = Get_().Allocate_(GLinearHeapAllocationSize);
         FLinearHeapBlock_* blk = INPLACE_NEW(ptr, FLinearHeapBlock_){ next };
 #ifdef WITH_CORE_ASSERT
-        ::memset(blk + 1, 0xCC, GLinearHeapBlockCapacity);
+        FPlatformMemory::Memset(blk + 1, 0xCC, GLinearHeapBlockCapacity);
 #endif
         return blk;
     }
@@ -290,7 +295,7 @@ void* FLinearHeapDeleted_::Recycle(void** deleteds, size_t size) {
 
             ONLY_IF_ASSERT(const size_t oldSize = p->Size);
             ONLY_IF_ASSERT(FillUninitializedBlock_(p, size));
-            Assert_NoAssume(oldSize < size + GLinearHeapMinBlockSizeForRecycling || 
+            Assert_NoAssume(oldSize < size + GLinearHeapMinBlockSizeForRecycling ||
                 ((FLinearHeapDeleted_*)((u8*)p + size))->CheckCanary() );
             return (p);
         }
@@ -353,8 +358,8 @@ void* FLinearHeap::Allocate(size_t size) {
     auto* blk = static_cast<FLinearHeapBlock_*>(_blocks);
     if (Unlikely(nullptr == blk || blk->Offset + size > GLinearHeapBlockCapacity)) {
         // try to look for a fit in released blocks linked list
-        if (void* ptr = FLinearHeapDeleted_::TryAllocate(&_deleteds, size, blk))
-            return ptr;
+        if (void* recycled = FLinearHeapDeleted_::TryAllocate(&_deleteds, size, blk))
+            return recycled;
 
         // finally can't avoid allocating a new block for the heap
         _blocks = blk = FLinearHeapVMCache_::AllocateBlock(blk);
@@ -404,7 +409,7 @@ void* FLinearHeap::Relocate(void* ptr, size_t newSize, size_t oldSize) {
     prev.Erase(&_blocks);
 
     void* const newp = Allocate(newSize);
-    ::memcpy(newp, ptr, Min(oldSize, newSize));
+    FPlatformMemory::Memstream(newp, ptr, Min(oldSize, newSize));
 
 #   if USE_CORE_MEMORYDOMAINS
     _trackingData.Deallocate(oldSize / 16, 16);
@@ -430,7 +435,7 @@ void* FLinearHeap::Relocate(void* ptr, size_t newSize, size_t oldSize) {
     }
     else {
         void* const newp = Allocate(newSize);
-        ::memcpy(newp, ptr, Min(oldSize, newSize));
+        FPlatformMemory::Memstream(newp, ptr, Min(oldSize, newSize));
         Release(ptr, oldSize);
         return newp;
     }
@@ -494,6 +499,7 @@ void FLinearHeap::Release(void* ptr, size_t size) {
 void* FLinearHeap::Relocate_AssumeLast(void* ptr, size_t newSize, size_t oldSize) {
 #if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
     Assert(ptr);
+    NOOP(oldSize);
 
     auto& header = FLinearHeapHeader_::FromData(ptr);
     AssertRelease(&header == _blocks); // last block allocated
@@ -528,7 +534,7 @@ void* FLinearHeap::Relocate_AssumeLast(void* ptr, size_t newSize, size_t oldSize
     }
     else {
         void* const newp = Allocate(newSize);
-        ::memcpy(newp, ptr, Min(oldSize, newSize));
+        FPlatformMemory::Memcpy(newp, ptr, Min(oldSize, newSize));
         Release(ptr, oldSize);
         return newp;
     }
@@ -594,7 +600,7 @@ void FLinearHeap::ReleaseAll() {
     }
 
 #if !USE_CORE_FINAL_RELEASE
-    DumpMemoryStats(L"FLinearHeap::ReleaseAll");
+    DumpMemoryStats();
 #endif
 
 #if WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
@@ -623,12 +629,8 @@ void FLinearHeap::ReleaseAll() {
 }
 //----------------------------------------------------------------------------
 #if !USE_CORE_FINAL_RELEASE
-void FLinearHeap::DumpMemoryStats(const wchar_t* title) {
+void FLinearHeap::DumpMemoryStats() {
 #if defined(USE_DEBUG_LOGGER) && USE_CORE_MEMORYDOMAINS
-    Assert(title);
-
-    LOG(MemoryDomain, Debug, L"dumping memory statis for linear heap : {0}", MakeCStringView(title));
-
     size_t totalBlockCount = 0;
     size_t totalSizeInBytes = 0;
 
@@ -682,17 +684,19 @@ void FLinearHeap::DumpMemoryStats(const wchar_t* title) {
         totalSizeInBytes += sizeInBytes;
     }
 
-    LOG(MemoryDomain, Debug, L"linear heap <{0}> had {1} deleted blocks, total of {2} recyclable ({3} -> {4})",
-        _trackingData.Parent()
-            ? MakeCStringView(_trackingData.Parent()->Name())
-            : MakeCStringView(_trackingData.Name()),
-        totalBlockCount,
-        Fmt::SizeInBytes(totalSizeInBytes),
-        Fmt::SizeInBytes(minBlockSize),
-        Fmt::SizeInBytes(maxBlockSize));
-#   endif //!WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
+    if (totalBlockCount) {
+        LOG(MemoryDomain, Debug, L"linear heap <{0}> had {1} deleted blocks, total of {2} recyclable ({3} -> {4})",
+            _trackingData.Parent()
+                ? MakeCStringView(_trackingData.Parent()->Name())
+                : MakeCStringView(_trackingData.Name()),
+            totalBlockCount,
+            Fmt::SizeInBytes(totalSizeInBytes),
+            Fmt::SizeInBytes(minBlockSize),
+            Fmt::SizeInBytes(maxBlockSize));
+    }
 
-#endif
+#   endif //!WITH_CORE_LINEARHEAP_FALLBACK_TO_MALLOC
+#endif //!defined(USE_DEBUG_LOGGER) && USE_CORE_MEMORYDOMAINS
 }
 #endif //!!USE_CORE_FINAL_RELEASE
 //----------------------------------------------------------------------------

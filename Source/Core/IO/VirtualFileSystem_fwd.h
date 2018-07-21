@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/Allocator/Allocation.h"
 #include "Core/IO/FileSystem_fwd.h"
 #include "Core/IO/StreamPolicies.h"
 #include "Core/Memory/UniquePtr.h"
@@ -11,7 +12,9 @@
 
 namespace Core {
 
-class FFileStat;
+struct FGenericPlatformFileStat;
+using FFileStat = FGenericPlatformFileStat;
+
 template <typename T>
 class TMemoryView;
 template <typename T, typename _Allocator>
@@ -24,6 +27,8 @@ FWD_INTEFARCE_UNIQUEPTR(StreamReadWriter);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+using FRawStorage = TRawStorage<u8, ALLOCATOR(FileSystem, u8)>;
+//----------------------------------------------------------------------------
 CORE_API class FVirtualFileSystemTrie& VFS();
 //----------------------------------------------------------------------------
 CORE_API bool VFS_DirectoryExists(const FDirpath& dirpath, EExistPolicy policy = EExistPolicy::Exists);
@@ -34,7 +39,7 @@ CORE_API size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, cons
 CORE_API size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach);
 //----------------------------------------------------------------------------
 CORE_API bool VFS_CreateDirectory(const FDirpath& dirpath);
-CORE_API bool VFS_RemoveDirectory(const FDirpath& dirpath);
+CORE_API bool VFS_RemoveDirectory(const FDirpath& dirpath, bool force = true);
 CORE_API bool VFS_RemoveFile(const FFilename& filename);
 //----------------------------------------------------------------------------
 CORE_API UStreamReader VFS_OpenReadable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
@@ -49,7 +54,7 @@ CORE_API UStreamWriter VFS_OpenTextWritable(const FFilename& filename, EAccessPo
 //----------------------------------------------------------------------------
 CORE_API UStreamWriter VFS_RollFile(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
 //----------------------------------------------------------------------------
-CORE_API bool VFS_ReadAll(TRawStorage<u8, ALLOCATOR(FileSystem, u8)> *pcontent, const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
+CORE_API bool VFS_ReadAll(FRawStorage* pcontent, const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
 CORE_API bool VFS_WriteAll(const FFilename& filename, const TMemoryView<const u8>& content, EAccessPolicy policy = EAccessPolicy::None);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

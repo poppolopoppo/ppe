@@ -98,7 +98,7 @@ template <typename _Char, typename _Value, size_t _InSitu, ECase _Sensitive, siz
 bool TBurstTrie<_Char, _Value, _InSitu, _Sensitive, _Capacity, _Allocator>::Insert_ReturnIfExists(node_type** pnode, const sequence_type& keys) {
     if (false == Tree_(Hash_(keys.front())).Insert_ReturnIfExists(pnode, keys)) {
         ++_size;
-        return false:
+        return false;
     }
     else {
         return true;

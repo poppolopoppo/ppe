@@ -16,10 +16,8 @@ enum EBlockFormat {
     DXT5    = 16,
 };
 CORE_PIXMAP_API FStringView BlockFormatToCStr(EBlockFormat value);
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, EBlockFormat value) {
-    return oss << BlockFormatToCStr(value);
-}
+CORE_PIXMAP_API FTextWriter& operator <<(FTextWriter& oss, EBlockFormat value);
+CORE_PIXMAP_API FWTextWriter& operator <<(FWTextWriter& oss, EBlockFormat value);
 //----------------------------------------------------------------------------
 enum EColorDepth {
     _8bits  = 8,
@@ -27,10 +25,8 @@ enum EColorDepth {
     _32bits = 32,
 };
 CORE_PIXMAP_API FStringView ColorDepthToCStr(EColorDepth value);
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, EColorDepth value) {
-    return oss << ColorDepthToCStr(value);
-}
+CORE_PIXMAP_API FTextWriter& operator <<(FTextWriter& oss, EColorDepth value);
+CORE_PIXMAP_API FWTextWriter& operator <<(FWTextWriter& oss, EColorDepth value);
 //----------------------------------------------------------------------------
 enum EColorMask {
     R       = 1,
@@ -39,10 +35,8 @@ enum EColorMask {
     RGBA    = 4,
 };
 CORE_PIXMAP_API FStringView ColorMaskToCStr(EColorMask value);
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, EColorMask value) {
-    return oss << ColorMaskToCStr(value);
-}
+CORE_PIXMAP_API FTextWriter& operator <<(FTextWriter& oss, EColorMask value);
+CORE_PIXMAP_API FWTextWriter& operator <<(FWTextWriter& oss, EColorMask value);
 //----------------------------------------------------------------------------
 enum EColorSpace {
     Linear  = 0,
@@ -50,10 +44,8 @@ enum EColorSpace {
     YCoCg,
 };
 CORE_PIXMAP_API FStringView ColorSpaceToCStr(EColorSpace value);
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, EColorSpace value) {
-    return oss << ColorSpaceToCStr(value);
-}
+CORE_PIXMAP_API FTextWriter& operator <<(FTextWriter& oss, EColorSpace value);
+CORE_PIXMAP_API FWTextWriter& operator <<(FWTextWriter& oss, EColorSpace value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

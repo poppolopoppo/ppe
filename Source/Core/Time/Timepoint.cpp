@@ -2,52 +2,28 @@
 
 #include "Timepoint.h"
 
-#ifdef PLATFORM_WINDOWS
-#   include "Misc/Platform_Windows.h"
-#else
-#   error "no support !"
-#endif
+#include "HAL/PlatformTime.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-    // Retrieves QPC frequency one time per run
-
-    struct FQueryPerformanceCounterContext {
-        FQueryPerformanceCounterContext();
-        LARGE_INTEGER Frequency;
-        STATIC_ASSERT(sizeof(LARGE_INTEGER) == sizeof(FTimepoint));
-    };
-
-    FQueryPerformanceCounterContext::FQueryPerformanceCounterContext() {
-        QueryPerformanceFrequency(&Frequency);
-    }
-
-    static const FQueryPerformanceCounterContext GQPC_Context;
-} //!namespace
-//----------------------------------------------------------------------------
 FTimepoint FTimepoint::Now() {
-    LARGE_INTEGER now;
-    QueryPerformanceCounter(&now);
-    return *reinterpret_cast<const value_type *>(&now);
+    return FTimepoint(FPlatformTime::Cycles());
 }
 //----------------------------------------------------------------------------
 FTimepoint::value_type FTimepoint::Ticks(const FTimespan& duration) {
-    const double d = (duration.Value() * GQPC_Context.Frequency.QuadPart)/1000000;
-    return static_cast<FTimepoint::value_type>(d);
+    Assert(duration.Value() >= 0);
+
+    return FPlatformTime::ToTicks(duration.Value());
 }
 //----------------------------------------------------------------------------
 FTimespan FTimepoint::Duration(const FTimepoint& start, const FTimepoint& stop) {
-    LARGE_INTEGER elapsedMicroS;
-    elapsedMicroS.QuadPart = reinterpret_cast<const LARGE_INTEGER *>(&stop)->QuadPart -
-                             reinterpret_cast<const LARGE_INTEGER *>(&start)->QuadPart;
+    Assert(start.Value() <= stop.Value());
 
-    elapsedMicroS.QuadPart *= 1000000;
-    elapsedMicroS.QuadPart /= GQPC_Context.Frequency.QuadPart;
+    const FTimepoint cycles = (stop.Value() - start.Value());
 
-    return FMicroseconds(static_cast<double>(elapsedMicroS.QuadPart));
+    return (FPlatformTime::ToSeconds(cycles.Value()) * 1000.0);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -5,7 +5,6 @@
 #include "Allocator/Alloca.h"
 #include "IO/BufferedStream.h"
 #include "IO/TextWriter.h"
-#include "Misc/TargetPlatform.h"
 
 #include "Time/TimedScope.h"
 
@@ -20,21 +19,21 @@ namespace Core {
 //----------------------------------------------------------------------------
 FFileStream::~FFileStream() {
     if (Good())
-        VerifyRelease(FPlatformIO::Close(_handle));
+        VerifyRelease(FPlatformLowLevelIO::Close(_handle));
 }
 //----------------------------------------------------------------------------
 FFileStream::FFileStream(FFileStream&& rvalue)
-    : _handle(rvalue._handle) 
+    : _handle(rvalue._handle)
 #if WITH_CORE_FILESTREAM_FILENAMEDBG
     , _filenameForDebug(std::move(rvalue._filenameForDebug))
 #endif
 {
-    rvalue._handle = FPlatformIO::InvalidHandle;
+    rvalue._handle = FPlatformLowLevelIO::InvalidHandle;
 }
 //----------------------------------------------------------------------------
 FFileStream& FFileStream::operator =(FFileStream&& rvalue) {
     if (Good())
-        VerifyRelease(FPlatformIO::Close(_handle));
+        VerifyRelease(FPlatformLowLevelIO::Close(_handle));
 
     Assert(Bad());
     std::swap(_handle, rvalue._handle);
@@ -46,13 +45,13 @@ FFileStream& FFileStream::operator =(FFileStream&& rvalue) {
 }
 //----------------------------------------------------------------------------
 bool FFileStream::Good() const {
-    return (FPlatformIO::InvalidHandle != _handle);
+    return (FPlatformLowLevelIO::InvalidHandle != _handle);
 }
 //----------------------------------------------------------------------------
 bool FFileStream::Close() {
     if (Good()) {
-        bool succeed = FPlatformIO::Close(_handle);
-        _handle = FPlatformIO::InvalidHandle;
+        bool succeed = FPlatformLowLevelIO::Close(_handle);
+        _handle = FPlatformLowLevelIO::InvalidHandle;
         return succeed;
     }
     return false;
@@ -61,14 +60,14 @@ bool FFileStream::Close() {
 bool FFileStream::Commit() {
     Assert(Good());
 
-    return FPlatformIO::Commit(_handle);
+    return FPlatformLowLevelIO::Commit(_handle);
 }
 //----------------------------------------------------------------------------
 bool FFileStream::Dup2(FFileStream& other) const {
     Assert(Good());
     Assert(other.Good());
 
-    return FPlatformIO::Dup2(_handle, other._handle);
+    return FPlatformLowLevelIO::Dup2(_handle, other._handle);
 }
 //----------------------------------------------------------------------------
 FFileStreamReader FFileStream::OpenRead(const wchar_t* filename, EAccessPolicy flags) {
@@ -78,13 +77,13 @@ FFileStreamReader FFileStream::OpenRead(const wchar_t* filename, EAccessPolicy f
     FWString filenameForDebug;
     filenameForDebug.assign(MakeCStringView(filename));
 
-    FFileStreamReader reader(FPlatformIO::Open(filenameForDebug.c_str(), EOpenPolicy::Readable, flags));
+    FFileStreamReader reader(FPlatformLowLevelIO::Open(filenameForDebug.c_str(), EOpenPolicy::Readable, flags));
     reader._filenameForDebug = std::move(filenameForDebug);
 
     return reader;
 
 #else
-    return FFileStreamReader(FPlatformIO::Open(filename, EOpenPolicy::Readable, flags));
+    return FFileStreamReader(FPlatformLowLevelIO::Open(filename, EOpenPolicy::Readable, flags));
 
 #endif
 }
@@ -96,13 +95,13 @@ FFileStreamWriter FFileStream::OpenWrite(const wchar_t* filename, EAccessPolicy 
     FWString filenameForDebug;
     filenameForDebug.assign(MakeCStringView(filename));
 
-    FFileStreamWriter writer(FPlatformIO::Open(filenameForDebug.c_str(), EOpenPolicy::Writable, flags));
+    FFileStreamWriter writer(FPlatformLowLevelIO::Open(filenameForDebug.c_str(), EOpenPolicy::Writable, flags));
     writer._filenameForDebug = std::move(filenameForDebug);
 
     return writer;
 
 #else
-    return FFileStreamWriter(FPlatformIO::Open(filename, EOpenPolicy::Writable, flags));
+    return FFileStreamWriter(FPlatformLowLevelIO::Open(filename, EOpenPolicy::Writable, flags));
 
 #endif
 }
@@ -114,13 +113,13 @@ FFileStreamReadWriter FFileStream::OpenReadWrite(const wchar_t* filename, EAcces
     FWString filenameForDebug;
     filenameForDebug.assign(MakeCStringView(filename));
 
-    FFileStreamReadWriter readWriter(FPlatformIO::Open(filenameForDebug.c_str(), EOpenPolicy::ReadWritable, flags));
+    FFileStreamReadWriter readWriter(FPlatformLowLevelIO::Open(filenameForDebug.c_str(), EOpenPolicy::ReadWritable, flags));
     readWriter._filenameForDebug = std::move(filenameForDebug);
 
     return readWriter;
 
 #else
-    return FFileStreamReadWriter(FPlatformIO::Open(filename, EOpenPolicy::ReadWritable, flags));
+    return FFileStreamReadWriter(FPlatformLowLevelIO::Open(filename, EOpenPolicy::ReadWritable, flags));
 
 #endif
 }
@@ -128,17 +127,17 @@ FFileStreamReadWriter FFileStream::OpenReadWrite(const wchar_t* filename, EAcces
 void FFileStream::Start() {
     // Set std streams mode to utf-8 chars :
     /*
-    Verify(FPlatformIO::SetMode(FPlatformIO::Stdin, EAccessPolicy::Text));
-    Verify(FPlatformIO::SetMode(FPlatformIO::Stdout, EAccessPolicy::Text));
-    Verify(FPlatformIO::SetMode(FPlatformIO::Stderr, EAccessPolicy::Text));
+    Verify(FPlatformLowLevelIO::SetMode(FPlatformLowLevelIO::Stdin, EAccessPolicy::Text));
+    Verify(FPlatformLowLevelIO::SetMode(FPlatformLowLevelIO::Stdout, EAccessPolicy::Text));
+    Verify(FPlatformLowLevelIO::SetMode(FPlatformLowLevelIO::Stderr, EAccessPolicy::Text));
     */
 }
 //----------------------------------------------------------------------------
 void FFileStream::Shutdown() {
     // Force to commit std streams on exit :
     /*
-    Verify(FPlatformIO::Commit(FPlatformIO::Stdout));
-    Verify(FPlatformIO::Commit(FPlatformIO::Stderr));
+    Verify(FPlatformLowLevelIO::Commit(FPlatformLowLevelIO::Stdout));
+    Verify(FPlatformLowLevelIO::Commit(FPlatformLowLevelIO::Stderr));
     */
 }
 //----------------------------------------------------------------------------
@@ -147,31 +146,31 @@ void FFileStream::Shutdown() {
 bool FFileStreamReader::Eof() const {
     Assert(Good());
 
-    return FPlatformIO::Eof(_handle);
+    return FPlatformLowLevelIO::Eof(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReader::TellI() const {
     Assert(Good());
 
-    return FPlatformIO::Tell(_handle);
+    return FPlatformLowLevelIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReader::SeekI(std::streamoff offset, ESeekOrigin origin/* = ESeekOrigin::Begin */) {
     Assert(Good());
 
-    return FPlatformIO::Seek(_handle, offset, origin);
+    return FPlatformLowLevelIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
 std::streamsize FFileStreamReader::SizeInBytes() const {
     Assert(Good());
 
-    const std::streamoff offset = FPlatformIO::Tell(_handle);
-    const std::streamoff ate = FPlatformIO::Seek(_handle, 0, ESeekOrigin::End);
+    const std::streamoff offset = FPlatformLowLevelIO::Tell(_handle);
+    const std::streamoff ate = FPlatformLowLevelIO::Seek(_handle, 0, ESeekOrigin::End);
 
     Assert(ate != std::streamoff(-1));
 
     if (ate != offset) {
-        const std::streamoff restored = FPlatformIO::Seek(_handle, offset, ESeekOrigin::Begin);
+        const std::streamoff restored = FPlatformLowLevelIO::Seek(_handle, offset, ESeekOrigin::Begin);
         Assert(restored == offset);
     }
 
@@ -185,7 +184,7 @@ bool FFileStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
     std::streamsize read = sizeInBytes;
     IOBENCHMARK_SCOPE(L"NATIVE-READ", FilenameForDebug(), &read);
 
-    read = FPlatformIO::Read(_handle, storage, read);
+    read = FPlatformLowLevelIO::Read(_handle, storage, read);
 
     return (sizeInBytes == read);
 }
@@ -197,7 +196,7 @@ size_t FFileStreamReader::ReadSome(void* storage, size_t eltsize, size_t count) 
     std::streamsize read = checked_cast<std::streamsize>(eltsize * count);
     IOBENCHMARK_SCOPE(L"NATIVE-READ", FilenameForDebug(), &read);
 
-    read = FPlatformIO::Read(_handle, storage, read);
+    read = FPlatformLowLevelIO::Read(_handle, storage, read);
 
     return checked_cast<size_t>(read / eltsize);
 }
@@ -205,11 +204,11 @@ size_t FFileStreamReader::ReadSome(void* storage, size_t eltsize, size_t count) 
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamWriter::TellO() const {
-    return FPlatformIO::Tell(_handle);
+    return FPlatformLowLevelIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamWriter::SeekO(std::streamoff offset, ESeekOrigin origin) {
-    return FPlatformIO::Seek(_handle, offset, origin);
+    return FPlatformLowLevelIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
 bool FFileStreamWriter::Write(const void* storage, std::streamsize sizeInBytes) {
@@ -218,7 +217,7 @@ bool FFileStreamWriter::Write(const void* storage, std::streamsize sizeInBytes) 
     std::streamsize written = sizeInBytes;
     IOBENCHMARK_SCOPE(L"NATIVE-WRITE", FilenameForDebug(), &written);
 
-    written = FPlatformIO::Write(_handle, storage, sizeInBytes);
+    written = FPlatformLowLevelIO::Write(_handle, storage, sizeInBytes);
 
     return (sizeInBytes == written);
 }
@@ -230,7 +229,7 @@ size_t FFileStreamWriter::WriteSome(const void* storage, size_t eltsize, size_t 
     std::streamsize written = checked_cast<std::streamsize>(eltsize * count);
     IOBENCHMARK_SCOPE(L"NATIVE-WRITE", FilenameForDebug(), &written);
 
-    written = FPlatformIO::Write(_handle, storage, written);
+    written = FPlatformLowLevelIO::Write(_handle, storage, written);
 
     return checked_cast<size_t>(written / eltsize);
 }
@@ -241,31 +240,31 @@ size_t FFileStreamWriter::WriteSome(const void* storage, size_t eltsize, size_t 
 bool FFileStreamReadWriter::Eof() const {
     Assert(Good());
 
-    return FPlatformIO::Eof(_handle);
+    return FPlatformLowLevelIO::Eof(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReadWriter::TellI() const {
     Assert(Good());
 
-    return FPlatformIO::Tell(_handle);
+    return FPlatformLowLevelIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReadWriter::SeekI(std::streamoff offset, ESeekOrigin origin/* = ESeekOrigin::Begin */) {
     Assert(Good());
 
-    return FPlatformIO::Seek(_handle, offset, origin);
+    return FPlatformLowLevelIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
 std::streamsize FFileStreamReadWriter::SizeInBytes() const {
     Assert(Good());
 
-    const std::streamoff offset = FPlatformIO::Tell(_handle);
-    const std::streamoff ate = FPlatformIO::Seek(_handle, 0, ESeekOrigin::End);
+    const std::streamoff offset = FPlatformLowLevelIO::Tell(_handle);
+    const std::streamoff ate = FPlatformLowLevelIO::Seek(_handle, 0, ESeekOrigin::End);
 
     Assert(ate != std::streamoff(-1));
 
     if (ate != offset) {
-        const std::streamoff restored = FPlatformIO::Seek(_handle, offset, ESeekOrigin::Begin);
+        const std::streamoff restored = FPlatformLowLevelIO::Seek(_handle, offset, ESeekOrigin::Begin);
         Assert(restored == offset);
     }
 
@@ -279,7 +278,7 @@ bool FFileStreamReadWriter::Read(void* storage, std::streamsize sizeInBytes) {
     std::streamsize read = sizeInBytes;
     IOBENCHMARK_SCOPE(L"NATIVE-READ", FilenameForDebug(), &read);
 
-    read = FPlatformIO::Read(_handle, storage, read);
+    read = FPlatformLowLevelIO::Read(_handle, storage, read);
 
     return (sizeInBytes == read);
 }
@@ -291,17 +290,17 @@ size_t FFileStreamReadWriter::ReadSome(void* storage, size_t eltsize, size_t cou
     std::streamsize read = checked_cast<std::streamsize>(eltsize * count);
     IOBENCHMARK_SCOPE(L"NATIVE-READ", FilenameForDebug(), &read);
 
-    read = FPlatformIO::Read(_handle, storage, read);
+    read = FPlatformLowLevelIO::Read(_handle, storage, read);
 
     return checked_cast<size_t>(read / eltsize);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReadWriter::TellO() const {
-    return FPlatformIO::Tell(_handle);
+    return FPlatformLowLevelIO::Tell(_handle);
 }
 //----------------------------------------------------------------------------
 std::streamoff FFileStreamReadWriter::SeekO(std::streamoff offset, ESeekOrigin origin) {
-    return FPlatformIO::Seek(_handle, offset, origin);
+    return FPlatformLowLevelIO::Seek(_handle, offset, origin);
 }
 //----------------------------------------------------------------------------
 bool FFileStreamReadWriter::Write(const void* storage, std::streamsize sizeInBytes) {
@@ -310,7 +309,7 @@ bool FFileStreamReadWriter::Write(const void* storage, std::streamsize sizeInByt
     std::streamsize written = sizeInBytes;
     IOBENCHMARK_SCOPE(L"NATIVE-WRITE", FilenameForDebug(), &written);
 
-    written = FPlatformIO::Write(_handle, storage, sizeInBytes);
+    written = FPlatformLowLevelIO::Write(_handle, storage, sizeInBytes);
 
     return (sizeInBytes == written);
 }
@@ -322,7 +321,7 @@ size_t FFileStreamReadWriter::WriteSome(const void* storage, size_t eltsize, siz
     std::streamsize written = checked_cast<std::streamsize>(eltsize * count);
     IOBENCHMARK_SCOPE(L"NATIVE-WRITE", FilenameForDebug(), &written);
 
-    written = FPlatformIO::Write(_handle, storage, written);
+    written = FPlatformLowLevelIO::Write(_handle, storage, written);
 
     return checked_cast<size_t>(written / eltsize);
 }

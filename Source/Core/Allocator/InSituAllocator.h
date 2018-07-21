@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/AllocatorBase.h"
+#include "Core/HAL/PlatformMemory.h"
 
 #include <type_traits>
 
@@ -74,7 +75,7 @@ void* TInSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
 #else
     UNUSED(sizeInBytes);
     return nullptr;
-    
+
 #endif
 }
 //----------------------------------------------------------------------------
@@ -232,7 +233,7 @@ void* TInSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type
     STATIC_ASSERT(Meta::TIsPod<value_type>::value);
     Assert(nullptr == p || 0 < oldSize);
 
-    if (Unlikely(0 == oldSize)) {
+    if (Likely(0 == oldSize)) {
         Assert(nullptr == p);
         return allocate(newSize);
     }
@@ -262,7 +263,7 @@ void* TInSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type
 
         // This is a POD type, so this is safe :
         const size_t cpySize = Min(oldSize, newSize);
-        ::memcpy(newp, p, cpySize * sizeof(value_type));
+        FPlatformMemory::Memcpy(newp, p, cpySize * sizeof(value_type));
 
         if (not _insitu.DeallocateIFP(p, oldSize * sizeof(value_type)))
             AssertNotReached();
@@ -305,7 +306,7 @@ struct allocator_can_steal_from<
 //----------------------------------------------------------------------------
 template <typename T, size_t _SizeInBytes, typename _Allocator>
 auto/* inherited */AllocatorStealFrom(
-    TInSituAllocator<T, _SizeInBytes, _Allocator>& alloc, 
+    TInSituAllocator<T, _SizeInBytes, _Allocator>& alloc,
     typename TInSituAllocator<T, _SizeInBytes, _Allocator>::pointer ptr, size_t size ) {
     // checks that we not stealing from insitu storage, which can't be moved
 #if USE_CORE_INSITU_ALLOCATOR
@@ -317,7 +318,7 @@ auto/* inherited */AllocatorStealFrom(
 //----------------------------------------------------------------------------
 template <typename T, size_t _SizeInBytes, typename _Allocator>
 auto/* inherited */AllocatorAcquireStolen(
-    TInSituAllocator<T, _SizeInBytes, _Allocator>& alloc, 
+    TInSituAllocator<T, _SizeInBytes, _Allocator>& alloc,
     typename TInSituAllocator<T, _SizeInBytes, _Allocator>::pointer ptr, size_t size ) {
     // checks that the stolen block is larger than insitu storage, we can't break this predicate
 #if USE_CORE_INSITU_ALLOCATOR

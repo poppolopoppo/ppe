@@ -74,6 +74,8 @@ class TTernarySearchNode : public TTernarySearchNodeBase<_Key, _Value> {
 public:
     typedef TTernarySearchNodeBase<_Key, _Value> parent_type;
 
+    using parent_type::HasValue;
+
     explicit TTernarySearchNode(_Key&& rkey) : parent_type(std::move(rkey)) {}
     explicit TTernarySearchNode(const _Key& key) : parent_type(key) {}
     ~TTernarySearchNode() {}

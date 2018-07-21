@@ -128,7 +128,11 @@ Meta::TEnableIf<
     if (copyRange) {
         Assert(p);
         Assert(newp);
+#if 0
         std::copy(p, p + copyRange, MakeCheckedIterator(newp, newSize, 0));
+#else
+        FPlatformMemory::MemcpyLarge(newp, p, copyRange * sizeof(*p));
+#endif
     }
     if (data.Pointer()) {
         Assert(0 < oldSize);
@@ -224,8 +228,9 @@ Meta::TEnableIf<
 //  - Correctly handle insitu allocations
 //  - Minimize wasted size for heap allocations
 //----------------------------------------------------------------------------
+// never defined, it should be specialized for each allocator
 template <typename _Allocator>
-size_t AllocatorSnapSize(const _Allocator&, size_t size) = delete;
+size_t AllocatorSnapSize(const _Allocator&, size_t size);
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 size_t SafeAllocatorSnapSize(const _Allocator& alloc, size_t size) {

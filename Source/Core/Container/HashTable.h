@@ -6,6 +6,7 @@
 #include "Core/Container/BitMask.h"
 #include "Core/Container/Hash.h"
 #include "Core/Container/Pair.h"
+#include "Core/HAL/PlatformMaths.h"
 #include "Core/Memory/MemoryView.h"
 #include "Core/Meta/Iterator.h"
 
@@ -552,8 +553,12 @@ private:
 
     template <typename _KeyLike>
     size_type FindFilledBucket_(const _KeyLike& key, size_t hash) const NOEXCEPT;
+#ifdef WITH_CORE_ASSERT
     template <typename _KeyLike>
     size_type FindEmptyBucket_(const _KeyLike& key, size_t hash) const NOEXCEPT;
+#else
+    size_type FindEmptyBucket_(size_t hash) const NOEXCEPT;
+#endif
     template <typename _KeyLike>
     size_type FindOrAllocateBucket_(const _KeyLike& key, size_t hash) const NOEXCEPT;
 

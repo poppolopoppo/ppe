@@ -8,8 +8,10 @@
 #   include "Allocator/LinearHeapAllocator.h"
 #   include "Allocator/TrackingMalloc.h"
 #   include "Container/Vector.h"
-#   include "Diagnostic/Console.h"
 #   include "Diagnostic/CurrentProcess.h"
+#   include "HAL/PlatformConsole.h"
+#   include "HAL/PlatformDebug.h"
+#   include "HAL/PlatformMemory.h"
 #   include "IO/BufferedStream.h"
 #   include "IO/FileSystem.h"
 #   include "IO/FileStream.h"
@@ -26,8 +28,8 @@
 #   include "Meta/Optional.h"
 #   include "Meta/Singleton.h"
 #   include "Meta/ThreadResource.h"
-#   include "Misc/TargetPlatform.h"
 #   include "Thread/AtomicSpinLock.h"
+#   include "Thread/Task/TaskManager.h"
 #   include "Thread/Task/TaskHelpers.h"
 #   include "Thread/Fiber.h"
 #   include "Thread/ThreadContext.h"
@@ -47,11 +49,6 @@
 #   if (CORE_DUMP_CALLSTACK_ON_ERROR || CORE_DUMP_CALLSTACK_ON_WARNING)
 #       include "Diagnostic/Callstack.h"
 #       include "Diagnostic/DecodedCallstack.h"
-#   endif
-
-#   ifdef PLATFORM_WINDOWS
-#       include "Misc/Platform_Windows.h"
-#       include <wincon.h>
 #   endif
 
 namespace Core {
@@ -251,7 +248,7 @@ public: // ILowLevelLogger
         log->Bucket = checked_cast<u32>(scopeAlloc.Index);
         log->AllocSizeInBytes = checked_cast<u32>(sizeInBytes);
 
-        ::memcpy(log + 1, text.data(), text.SizeInBytes());
+        FPlatformMemory::Memcpy(log + 1, text.data(), text.SizeInBytes());
 
         TaskManager_().Run(MakeFunction(log, &FDeferredLog::Log));
     }
@@ -286,7 +283,7 @@ public: // ILowLevelLogger
 
     virtual void Flush(bool synchronous) override final {
         if (synchronous && not GIsInLogger_) {
-            TaskManager_().WaitForAll(); // wait for all potential logs before flushing
+            TaskManager_().WaitForAll(1000/* 1 second */); // wait for all potential logs before flushing
             _userLogger->Flush(true);
         }
         else {
@@ -307,6 +304,8 @@ private:
         return FBackgroundThreadPool::Get();
     }
 
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
     class ALIGN(16) FDeferredLog : public TLinearHeapAllocator<u8> {
     public:
         ILowLevelLogger* LowLevelLogger;
@@ -334,6 +333,7 @@ private:
         TLinearHeapAllocator<u8>& get_allocator() { return *this; }
     };
     STATIC_ASSERT(std::is_trivially_destructible_v<FDeferredLog>);
+PRAGMA_MSVC_WARNING_POP()
 
     // used for exception safety :
     struct FSuicideScope_ : FLogAllocator::FScope {
@@ -386,6 +386,7 @@ public:
 #if CORE_DUMP_SITE_ON_LOG
         Format(oss, L"\n\tat {0}:{1}\n", site.Filename, site.Line);
 #else
+        NOOP(category, level, site);
         oss << Eol;
 #endif
     }
@@ -407,11 +408,12 @@ public:
 
 public: // ILowLevelLogger
     virtual void Log(const FCategory&, EVerbosity, const FSiteInfo&, const FWStringView&) override final {}
-    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {}
+    virtual void LogArgs(const FCategory&, EVerbosity, const FSiteInfo&, const FWStringView&, const FWFormatArgList&) override final {}
     virtual void Flush(bool) override final {}
 };
 //----------------------------------------------------------------------------
 // Used before & after main when debugger attached, no dependencies on allocators, always immediate
+#if USE_CORE_PLATFORM_DEBUG
 class FDebuggingLogger final : public ILowLevelLogger {
 public:
     static ILowLevelLogger* Get() {
@@ -432,7 +434,7 @@ public: // ILowLevelLogger
 
         oss << Eos;
 
-        FPlatformMisc::OutputDebug(tmp);
+        FPlatformDebug::OutputDebug(tmp);
     }
 
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
@@ -447,16 +449,21 @@ public: // ILowLevelLogger
 
         oss << Eos;
 
-        FPlatformMisc::OutputDebug(tmp);
+        FPlatformDebug::OutputDebug(tmp);
     }
 
     virtual void Flush(bool) override final {} // always synchronous => no need to flush
 };
+#endif //!USE_CORE_PLATFORM_DEBUG
 //----------------------------------------------------------------------------
 static ILowLevelLogger* LowLevelLogger_() {
-    return (FPlatformMisc::IsDebuggerAttached()
+#if USE_CORE_PLATFORM_DEBUG
+    return (FPlatformDebug::IsDebuggerPresent()
         ? FDebuggingLogger::Get()
         : FDevNullLogger::Get() );
+#else
+    return FDevNullLogger::Get();
+#endif
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void SetupLowLevelLoggerImpl_() {
@@ -538,10 +545,13 @@ void FLogger::Flush(bool synchronous/* = true */) {
 }
 //----------------------------------------------------------------------------
 void FLogger::RegisterLogger(const PLogger& logger) {
-    FUserLogger::Get().Add(logger);
+    if (logger)
+        FUserLogger::Get().Add(logger);
 }
 //----------------------------------------------------------------------------
 void FLogger::UnregisterLogger(const PLogger& logger) {
+    Assert(logger);
+
     FUserLogger::Get().Remove(logger);
 }
 //----------------------------------------------------------------------------
@@ -549,17 +559,19 @@ void FLogger::UnregisterLogger(const PLogger& logger) {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+#if USE_CORE_PLATFORM_DEBUG
 class FOutputDebugLogger_ final : public ILogger {
 public:
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
         FWStringBuilder oss(text.size());
         FLogFormat::Print(oss, category, level, site, text);
         oss << Eos;
-        FPlatformMisc::OutputDebug(oss.Written().data());
+        FPlatformDebug::OutputDebug(oss.Written().data());
     }
 
     virtual void Flush(bool) override final {} // always synched
 };
+#endif //!USE_CORE_PLATFORM_DEBUG
 //----------------------------------------------------------------------------
 class FStdoutLogger_ final : public ILogger {
 public:
@@ -594,15 +606,14 @@ private:
     functor_type _func;
 };
 //----------------------------------------------------------------------------
-#ifdef PLATFORM_WINDOWS
 class FConsoleWriterLogger_ final : public ILogger {
 public:
     FConsoleWriterLogger_() {
-        FConsole::Open();
+        FPlatformConsole::Open();
     }
 
     ~FConsoleWriterLogger_() {
-        FConsole::Close();
+        FPlatformConsole::Close();
     }
 
 public: // ILogger
@@ -610,38 +621,37 @@ public: // ILogger
         FWStringBuilder oss(text.size());
         FLogFormat::Print(oss, category, level, site, text);
 
-        FConsole::EAttribute attrs;
+        FPlatformConsole::EAttribute attrs;
 
         switch (level) {
         case ELoggerVerbosity::Info:
-            attrs = FConsole::WHITE_ON_BLACK;
+            attrs = FPlatformConsole::WHITE_ON_BLACK;
             break;
         case ELoggerVerbosity::Emphasis:
-            attrs = (FConsole::FG_GREEN | FConsole::BG_BLUE | FConsole::FG_INTENSITY);
+            attrs = (FPlatformConsole::FG_GREEN | FPlatformConsole::BG_BLUE | FPlatformConsole::FG_INTENSITY);
             break;
         case ELoggerVerbosity::Warning:
-            attrs = (FConsole::FG_YELLOW | FConsole::BG_BLACK | FConsole::FG_INTENSITY);
+            attrs = (FPlatformConsole::FG_YELLOW | FPlatformConsole::BG_BLACK | FPlatformConsole::FG_INTENSITY);
             break;
         case ELoggerVerbosity::Error:
-            attrs = (FConsole::FG_RED | FConsole::BG_BLACK);
+            attrs = (FPlatformConsole::FG_RED | FPlatformConsole::BG_BLACK);
             break;
         case ELoggerVerbosity::Debug:
-            attrs = (FConsole::FG_CYAN | FConsole::BG_BLACK);
+            attrs = (FPlatformConsole::FG_CYAN | FPlatformConsole::BG_BLACK);
             break;
         case ELoggerVerbosity::Fatal:
-            attrs = (FConsole::FG_WHITE | FConsole::BG_RED | FConsole::BG_INTENSITY);
+            attrs = (FPlatformConsole::FG_WHITE | FPlatformConsole::BG_RED | FPlatformConsole::BG_INTENSITY);
             break;
         default:
-            attrs = (FConsole::FG_WHITE | FConsole::BG_BLACK);
+            attrs = (FPlatformConsole::FG_WHITE | FPlatformConsole::BG_BLACK);
             break;
         }
 
-        FConsole::Write(oss.Written(), attrs);
+        FPlatformConsole::Write(oss.Written(), attrs);
     }
 
     virtual void Flush(bool) override final {}
 };
-#endif //!PLATFORM_WINDOWS
 //----------------------------------------------------------------------------
 class FStreamLogger_ final : public ILogger {
 public:
@@ -670,15 +680,17 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PLogger FLogger::MakeStdout() {
-#ifdef PLATFORM_WINDOWS
-    return NEW_REF(Logger, FConsoleWriterLogger_);
-#else
-    return NEW_REF(Logger, FStdoutLogger_);
-#endif
+    return (FPlatformConsole::HasConsole
+        ? PLogger(NEW_REF(Logger, FConsoleWriterLogger_))
+        : PLogger(NEW_REF(Logger, FStdoutLogger_)) );
 }
 //----------------------------------------------------------------------------
 PLogger FLogger::MakeOutputDebug() {
+#if USE_CORE_PLATFORM_DEBUG
     return NEW_REF(Logger, FOutputDebugLogger_);
+#else
+    return PLogger();
+#endif
 }
 //----------------------------------------------------------------------------
 PLogger FLogger::MakeAppendFile(const wchar_t* filename) {

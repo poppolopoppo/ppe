@@ -10,7 +10,6 @@
 
 #if USE_CORE_MEMORYDOMAINS
 #   include "Container/Stack.h"
-#   include "Diagnostic/CrtDebug.h"
 #   include "IO/FormatHelpers.h"
 #   include "IO/String.h"
 #   include "IO/StringBuilder.h"
@@ -220,19 +219,19 @@ void ReportTrackingDatas_(
 //----------------------------------------------------------------------------
 void RegisterTrackingData(FMemoryTracking *pTrackingData) {
 #if USE_CORE_MEMORYDOMAINS
-    SKIP_MEMORY_LEAKS_IN_SCOPE();
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
     FTrackingDataRegistry_::Get().Register(pTrackingData);
 #else
-    UNUSED(pTrackingData);
+    NOOP(pTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------
 void UnregisterTrackingData(FMemoryTracking *pTrackingData) {
 #if USE_CORE_MEMORYDOMAINS
-    SKIP_MEMORY_LEAKS_IN_SCOPE();
+    CORE_LEAKDETECTOR_WHITELIST_SCOPE();
     FTrackingDataRegistry_::Get().Unregister(pTrackingData);
 #else
-    UNUSED(pTrackingData);
+    NOOP(pTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -287,6 +286,8 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
 
         GPrevAllocations[i] = allocations[i];
     }
+#else
+    NOOP(oss);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -325,6 +326,8 @@ void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
 
     if (not optional)
         LOG(MemoryDomain, Info, sb.ToString());
+#else
+    NOOP(optional);
 #endif
 }
 //----------------------------------------------------------------------------

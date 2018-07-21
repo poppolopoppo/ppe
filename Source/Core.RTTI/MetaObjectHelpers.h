@@ -2,6 +2,8 @@
 
 #include "Core.RTTI/RTTI.h"
 
+#include "Core.RTTI/RTTI_fwd.h"
+
 #include "Core/Container/Vector.h"
 #include "Core/Memory/RefPtr.h"
 

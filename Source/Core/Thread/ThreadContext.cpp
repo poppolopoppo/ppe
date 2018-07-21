@@ -4,26 +4,23 @@
 
 #include "Allocator/Alloca.h"
 #include "Allocator/Malloc.h"
-#include "Diagnostic/LastError.h"
 #include "Diagnostic/Logger.h"
 #include "IO/Format.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
+#include "HAL/PlatformDebug.h"
+#include "HAL/PlatformThread.h"
 #include "Meta/AutoSingleton.h"
 #include "Meta/NumericLimits.h"
 #include "Meta/Singleton.h"
 
-#ifndef FINAL_RELEASE
+#if USE_CORE_PLATFORM_DEBUG
 #   define WITH_CORE_THREADCONTEXT_NAME
 #endif
 
 #ifdef WITH_CORE_THREADCONTEXT_NAME
 #   include "Container/AssociativeVector.h"
 #   include "Thread/ReadWriteLock.h"
-#endif
-
-#ifdef PLATFORM_WINDOWS
-#   include "Misc/Platform_Windows.h"
 #endif
 
 namespace Core {
@@ -52,71 +49,53 @@ public:
     static void CreateMainThread();
 };
 //----------------------------------------------------------------------------
-inline void FThreadLocalContext_::Create(const char* name, size_t tag) {
+void FThreadLocalContext_::Create(const char* name, size_t tag) {
     const size_t threadIndex = (GNumThreadContext_++);
     GCurrentThreadIndex = threadIndex;
     parent_type::Create(name, tag, threadIndex);
 }
 //----------------------------------------------------------------------------
-inline void FThreadLocalContext_::CreateMainThread() {
+void FThreadLocalContext_::CreateMainThread() {
     FThreadLocalContext_::Create("MainThread", CORE_THREADTAG_MAIN);
 }
+//----------------------------------------------------------------------------
+#ifdef USE_DEBUG_LOGGER
+static FWTextWriter& operator <<(FWTextWriter& oss, EThreadPriority priority) {
+    switch (priority)
+    {
+    case Core::EThreadPriority::Realtime:
+        oss << L"Realtime";
+        break;
+    case Core::EThreadPriority::Highest:
+        oss << L"Highest";
+        break;
+    case Core::EThreadPriority::AboveNormal:
+        oss << L"AboveNormal";
+        break;
+    case Core::EThreadPriority::Normal:
+        oss << L"Normal";
+        break;
+    case Core::EThreadPriority::BelowNormal:
+        oss << L"BelowNormal";
+        break;
+    case Core::EThreadPriority::Lowest:
+        oss << L"Lowest";
+        break;
+    case Core::EThreadPriority::Idle:
+        oss << L"Idle";
+        break;
+    default:
+        AssertNotImplemented();
+    }
+    return oss;
+}
+#endif //!USE_DEBUG_LOGGER
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
-//----------------------------------------------------------------------------
-#ifdef WITH_CORE_THREADCONTEXT_NAME
-PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(6320) // L'expression de filtre d'exception correspond a la constante EXCEPTION_EXECUTE_HANDLER.
-                                  // Cela risque de masquer les exceptions qui n'etaient pas destinees a etre gerees.
-PRAGMA_MSVC_WARNING_DISABLE(6322) // bloc empty _except.
-static void SetWin32ThreadName_(const char* name) {
-    /*
-    // How to: Set a Thread FName in Native Code
-    // http://msdn.microsoft.com/en-us/library/xcb2z8hs.aspx
-    */
-    const DWORD MS_VC_EXCEPTION = 0x406D1388;
-#   pragma pack(push,8)
-    typedef struct tagTHREADNAME_INFO
-    {
-        DWORD dwType; // Must be 0x1000.
-        LPCSTR szName; // Pointer to name (in user addr space).
-        DWORD dwThreadID; // Thread ID (-1=caller thread).
-        DWORD dwFlags; // Reserved for future use, must be zero.
-    }   THREADNAME_INFO;
-#   pragma pack(pop)
-
-    THREADNAME_INFO info;
-    info.dwType = 0x1000;
-    info.szName = name;
-    info.dwThreadID = checked_cast<DWORD>(-1);
-    info.dwFlags = 0;
-
-    __try
-    {
-        ::RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
-    }
-    __except (EXCEPTION_EXECUTE_HANDLER)
-    {
-    }
-}
-PRAGMA_MSVC_WARNING_POP()
-#endif //!WITH_CORE_THREADCONTEXT_NAME
-//----------------------------------------------------------------------------
-static NO_INLINE void GuaranteeStackSizeForStackOverflowRecovery_() {
-#ifdef PLATFORM_WINDOWS
-    ULONG stackSizeInBytes = 0;
-    if(::SetThreadStackGuarantee(&stackSizeInBytes)) {
-        stackSizeInBytes += 64*1024;
-        if (::SetThreadStackGuarantee(&stackSizeInBytes))
-            return;
-    }
-    LOG(Thread, Warning, L"unable to SetThreadStackGuarantee, TStack Overflows won't be caught properly !");
-#endif
-}
 //----------------------------------------------------------------------------
 #ifdef WITH_CORE_THREADCONTEXT_NAME
 struct FThreadNames_ {
@@ -139,7 +118,7 @@ static FStringView GetThreadName_(std::thread::id thread_id) {
 //----------------------------------------------------------------------------
 static void RegisterThreadName_(std::thread::id thread_id, const char* name) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME
-    SetWin32ThreadName_(name);
+    FPlatformDebug::SetThreadDebugName(name);
     FThreadNames_& thread_names = FThreadNames_::Get();
     WRITESCOPELOCK(thread_names.RWLock);
     thread_names.Names.Insert_AssertUnique(thread_id, MakeCStringView(name));
@@ -182,109 +161,43 @@ FThreadContext::FThreadContext(const char* name, size_t tag, size_t index)
     _name[n] = '\0';
 
     RegisterThreadName_(_threadId, _name);
-    GuaranteeStackSizeForStackOverflowRecovery_();
+
+#if USE_CORE_PLATFORM_DEBUG
+    FPlatformDebug::GuaranteeStackSizeForStackOverflowRecovery();
+#endif
 }
 //----------------------------------------------------------------------------
 FThreadContext::~FThreadContext() {
     UnregisterThreadName_(_threadId);
 }
 //----------------------------------------------------------------------------
-size_t FThreadContext::AffinityMask() const {
+u64 FThreadContext::AffinityMask() const {
     Assert(std::this_thread::get_id() == _threadId);
-#ifdef PLATFORM_WINDOWS
-    HANDLE hThread = ::GetCurrentThread();
-    DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, 0xFFul);
-    if (0 == affinityMask) {
-        CORE_THROW_IT(FLastErrorException("SetThreadAffinityMask"));
-    }
-    if (0 == ::SetThreadAffinityMask(hThread, affinityMask))
-        CORE_THROW_IT(FLastErrorException("SetThreadAffinityMask"));
 
-    return checked_cast<size_t>(affinityMask);
-#else
-#   error "platform not supported"
-#endif
+    return FPlatformThread::AffinityMask();
 }
 //----------------------------------------------------------------------------
-void FThreadContext::SetAffinityMask(size_t mask) const {
+void FThreadContext::SetAffinityMask(u64 mask) const {
     Assert(0 != mask);
     Assert(std::this_thread::get_id() == _threadId);
 
-#ifdef PLATFORM_WINDOWS
-    HANDLE hThread = ::GetCurrentThread();
-    DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, mask);
-    if (0 == affinityMask) {
-        CORE_THROW_IT(FLastErrorException("SetThreadAffinityMask"));
-    }
-    Assert(mask == AffinityMask());
-#else
-#   error "platform not supported"
-#endif
+    LOG(Thread, Debug, L"set thread {0} affinity mask to {1:#64b}", ThreadId(), mask);
+
+    FPlatformThread::SetAffinityMask(u64(mask));
 }
 //----------------------------------------------------------------------------
 EThreadPriority FThreadContext::Priority() const {
     Assert(std::this_thread::get_id() == _threadId);
 
-#ifdef PLATFORM_WINDOWS
-    HANDLE hThread = ::GetCurrentThread();
-    switch (::GetThreadPriority(hThread))
-    {
-    case THREAD_PRIORITY_HIGHEST:
-        return EThreadPriority::Highest;
-    case THREAD_PRIORITY_ABOVE_NORMAL:
-        return EThreadPriority::AboveNormal;
-    case THREAD_PRIORITY_NORMAL:
-        return EThreadPriority::Normal;
-    case THREAD_PRIORITY_BELOW_NORMAL:
-        return EThreadPriority::BelowNormal;
-    case THREAD_PRIORITY_LOWEST:
-        return EThreadPriority::Lowest;
-    case THREAD_PRIORITY_ERROR_RETURN:
-        AssertNotReached();
-        break;
-    default:
-        AssertNotImplemented();
-        break;
-    }
-    return EThreadPriority::Normal;
-#else
-#   error "platform not supported"
-#endif
+    return FPlatformThread::Priority();
 }
 //----------------------------------------------------------------------------
 void FThreadContext::SetPriority(EThreadPriority priority) const {
     Assert(std::this_thread::get_id() == _threadId);
 
-#ifdef PLATFORM_WINDOWS
-    HANDLE hThread = ::GetCurrentThread();
-    int priorityWin32;
-    switch (priority)
-    {
-    case Core::EThreadPriority::Highest:
-        priorityWin32 = THREAD_PRIORITY_HIGHEST;
-        break;
-    case Core::EThreadPriority::AboveNormal:
-        priorityWin32 = THREAD_PRIORITY_ABOVE_NORMAL;
-        break;
-    case Core::EThreadPriority::Normal:
-        priorityWin32 = THREAD_PRIORITY_NORMAL;
-        break;
-    case Core::EThreadPriority::BelowNormal:
-        priorityWin32 = THREAD_PRIORITY_BELOW_NORMAL;
-        break;
-    case Core::EThreadPriority::Lowest:
-        priorityWin32 = THREAD_PRIORITY_LOWEST;
-        break;
-    default:
-        AssertNotImplemented();
-        return;
-    }
+    LOG(Thread, Debug, L"set thread {0} priority to {1}", ThreadId(), priority);
 
-    if (0 == ::SetThreadPriority(hThread, priorityWin32))
-        AssertNotReached();
-#else
-#   error "platform not supported"
-#endif
+    return FPlatformThread::SetPriority(priority);
 }
 //----------------------------------------------------------------------------
 // you can put here everything you'll want to tick regularly
@@ -307,6 +220,7 @@ const char* FThreadContext::GetThreadName(std::thread::id thread_id) {
 #ifdef WITH_CORE_THREADCONTEXT_NAME
     return GetThreadName_(thread_id).data();
 #else
+    NOOP(thread_id);
     return nullptr;
 #endif
 }
@@ -343,6 +257,10 @@ void FThreadContextStartup::Start_MainThread() {
     const FThreadContext& ctx = CurrentThreadContext();
     LOG(Thread, Debug, L"start thread '{0}' with tag = {1} ({2}) <MainThread>", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
+
+    FThreadContext& mainThread = FThreadLocalContext_::Get();
+    mainThread.SetPriority(EThreadPriority::Realtime);
+    mainThread.SetAffinityMask(FGenericPlatformThread::MainThreadAffinity);
 }
 //----------------------------------------------------------------------------
 void FThreadContextStartup::Shutdown() {

@@ -16,6 +16,7 @@ extern void Test_Pixmap();
 extern void Test_Thread();
 extern void Test_XML();
 extern void Test_Lattice();
+extern void Test_VFS();
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -32,6 +33,7 @@ void FTestApp::Start() {
     Test_Containers();
     Test_Format();
     Test_Thread();
+    Test_VFS();
     Test_RTTI();
     Test_XML();
     Test_Lattice();

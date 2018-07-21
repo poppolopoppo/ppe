@@ -10,11 +10,11 @@
 #endif
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
-#include "Core/Diagnostic/CrtDebug.h"
 #include "Core/Diagnostic/CurrentProcess.h"
-#include "Core/Diagnostic/DialogBox.h"
 #include "Core/Diagnostic/Logger.h"
-#include "Core/Misc/TargetPlatform.h"
+#include "Core/HAL/PlatformCrash.h"
+#include "Core/HAL/PlatformMisc.h"
+#include "Core/HAL/PlatformProcess.h"
 
 #ifdef USE_DEBUG_LOGGER
 #   include "Core/IO/FormatHelpers.h"
@@ -61,61 +61,6 @@ static void ExceptionTrap_(const FWStringView& step, _Functor&& func) {
 #endif
 }
 //----------------------------------------------------------------------------
-#ifdef USE_DEBUG_LOGGER
-static void PrintMemStats_(const Core::FCrtMemoryStats& memoryStats) {
-    LOG(Application, Info,
-        L"Memory statistics :\n"
-        L" - Total free size          = {0}\n"
-        L" - Largest free block       = {1}\n"
-        L" - Total used size          = {2}\n"
-        L" - Largest used block       = {3}\n"
-        L" - Total overhead size      = {4}\n"
-        L" - Total committed size     = {5}\n"
-        L" - External fragmentation   = {6}%",
-        Fmt::FSizeInBytes{ memoryStats.TotalFreeSize },
-        Fmt::FSizeInBytes{ memoryStats.LargestFreeBlockSize },
-        Fmt::FSizeInBytes{ memoryStats.TotalUsedSize },
-        Fmt::FSizeInBytes{ memoryStats.LargestUsedBlockSize },
-        Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize },
-        Fmt::FSizeInBytes{ memoryStats.TotalOverheadSize + memoryStats.TotalFreeSize + memoryStats.TotalUsedSize },
-        (memoryStats.ExternalFragmentation() * 100));
-}
-#endif
-//----------------------------------------------------------------------------
-#if PLATFORM_WINDOWS
-static void ConfigureCRTHeapForDebugging_() {
-#   if defined(USE_CORE_MEMORY_DEBUGGING) || defined(_DEBUG)
-    constexpr int debugHeapEnabled  = _CRTDBG_ALLOC_MEM_DF;
-    constexpr int debugCheckMemory  = _CRTDBG_CHECK_EVERY_1024_DF;
-    constexpr int debugNecrophilia  = _CRTDBG_DELAY_FREE_MEM_DF;
-    constexpr int debugLeaks        = _CRTDBG_LEAK_CHECK_DF;
-
-    UNUSED(debugHeapEnabled);
-    UNUSED(debugCheckMemory);
-    UNUSED(debugNecrophilia);
-    UNUSED(debugLeaks);
-
-    int debugHeapFlag = 0
-        | debugHeapEnabled
-        //| debugCheckMemory //%_NOCOMMIT%
-        //| debugNecrophilia //%_NOCOMMIT%
-        | debugLeaks;
-
-    UNUSED(debugHeapFlag);
-
-    _CrtSetDbgFlag(debugHeapFlag);
-
-    // Report errors with a dialog box :
-    _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
-    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG | _CRTDBG_MODE_WNDW);
-
-    //_CrtSetBreakAlloc(447); // for leak debugging purpose // %_NOCOMMIT%
-    //_CrtSetBreakAlloc(1246); // for leak debugging purpose // %_NOCOMMIT%
-
-#   endif
-}
-#endif
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FApplicationModule::Start() {
@@ -147,32 +92,17 @@ void FApplicationModule::ClearAll_UnusedMemory() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationContext::FApplicationContext() {
+    // Signal platform specific code of application start
+    FPlatformProcess::OnProcessStart();
     // Install crash exception handlers
-    FPlatformCrashDump::SetExceptionHandlers();
-
+    FPlatformCrash::SetExceptionHandlers();
     // Force locale to EN with UTF-8 encoding
-    std::setlocale(LC_ALL, "en_US.UTF-8");
-
-#ifdef PLATFORM_WINDOWS
-    // _setmbcp, with an argument of _MB_CP_LOCALE makes the multibyte code page the same as the setlocale code page.
-    // https://docs.microsoft.com/en-us/cpp/c-runtime-library/locale
-    ::_setmbcp(_MB_CP_LOCALE);
-#endif
-
-    // Set CRT heap debug options for debugging windows heap
-#ifdef PLATFORM_WINDOWS
-    ConfigureCRTHeapForDebugging_();
-#endif
+    FPlatformMisc::SetUTF8Output();
 }
 //----------------------------------------------------------------------------
 FApplicationContext::~FApplicationContext() {
-#ifdef USE_DEBUG_LOGGER
-#   if defined(PLATFORM_WINDOWS)
-    FCrtMemoryStats memoryStats;
-    CrtDumpMemoryStats(&memoryStats);
-#   endif
-    PrintMemStats_(memoryStats);
-#endif
+    // Signal platform specific code of application shutdown
+    FPlatformProcess::OnProcessShutdown();
 }
 //----------------------------------------------------------------------------
 int LaunchApplication(const FApplicationContext& context, FApplicationBase* app) {

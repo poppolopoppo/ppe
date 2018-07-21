@@ -101,7 +101,7 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, const TBasicStringView<_Ch
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-STATIC_CONST_INTEGRAL(size_t, GItoaCapacity_, 24);
+STATIC_CONST_INTEGRAL(size_t, GItoaCapacity_, 64+1/* <=> 64 bits for base 2 */);
 //----------------------------------------------------------------------------
 constexpr u64 GBasesU64_[] = { 10, 2, 16, 8 };
 //----------------------------------------------------------------------------
@@ -154,10 +154,11 @@ FORCE_INLINE static u32 BaseDigits_(u64 v) {
     }
 }
 template <typename _Char, u64 _Base>
-NO_INLINE static size_t ItoaBase_(TBasicTextWriter<_Char>& w, u64 v, const TMemoryView<_Char>& buffer) {
+NO_INLINE static size_t ItoaBase_(u64 v, const TMemoryView<_Char>& buffer) {
     const auto fullbase = FullBaseStr_(Meta::TType<_Char>{});
 
     const auto len = BaseDigits_<_Base>(v);
+    Assert(len <= buffer.size());
 
     // WARNING: using size_t or pointer arithmetic for pos slows down
     // the loop below 20x. This is because several 32-bit ops can be
@@ -175,19 +176,18 @@ NO_INLINE static size_t ItoaBase_(TBasicTextWriter<_Char>& w, u64 v, const TMemo
     return len;
 }
 template <typename _Char>
-static size_t Itoa_(TBasicTextWriter<_Char>& w, u64 v, u64 base, const TMemoryView<_Char>& buffer) {
+static size_t Itoa_(u64 v, u64 base, const TMemoryView<_Char>& buffer) {
     switch (base) {
     case 2:
-        return ItoaBase_<_Char, 2>(w, v, buffer);
+        return ItoaBase_<_Char, 2>(v, buffer);
     case 8:
-        return ItoaBase_<_Char, 8>(w, v, buffer);
+        return ItoaBase_<_Char, 8>(v, buffer);
     case 10:
-        return ItoaBase_<_Char, 10>(w, v, buffer);
+        return ItoaBase_<_Char, 10>(v, buffer);
     case 16:
-        return ItoaBase_<_Char, 16>(w, v, buffer);
+        return ItoaBase_<_Char, 16>(v, buffer);
     default:
         AssertNotImplemented();
-        return INDEX_NONE;
     }
 }
 #endif
@@ -196,7 +196,7 @@ template <typename _Char>
 static void WriteItoaUnsigned_(TBasicTextWriter<_Char>& w, u64 v) {
     _Char buffer[GItoaCapacity_];
     const u64 base = GBasesU64_[w.Format().Base()];
-    const size_t len = Itoa_(w, v, base, MakeView(buffer));
+    const size_t len = Itoa_(v, base, MakeView(buffer));
     WriteWFormat_(w, TBasicStringView<_Char>(buffer, len));
 }
 //----------------------------------------------------------------------------
@@ -207,10 +207,10 @@ static void WriteItoaSigned_(TBasicTextWriter<_Char>& w, i64 v) {
     size_t len;
     if (v < 0) {
         buffer[0] = NegChar_(Meta::TType<_Char>{});
-        len = (Itoa_(w, checked_cast<u64>(-v), base, MakeView(buffer).CutStartingAt(1)) + 1);
+        len = (Itoa_(checked_cast<u64>(-v), base, MakeView(buffer).CutStartingAt(1)) + 1);
     }
     else {
-        len = Itoa_(w, checked_cast<u64>(v), base, MakeView(buffer));
+        len = Itoa_(checked_cast<u64>(v), base, MakeView(buffer));
     }
     WriteWFormat_(w, TBasicStringView<_Char>(buffer, len));
 }

@@ -2,9 +2,9 @@
 
 #include "Core/Core.h"
 
+#include "Core/HAL/PlatformEndian.h"
 #include "Core/Memory/HashFunctions.h"
 #include "Core/Memory/MemoryView.h"
-#include "Core/Misc/Endianness.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -53,8 +53,8 @@ private:
     };
 };
 //----------------------------------------------------------------------------
-inline FFourCC SwapEndianness(const FFourCC& value) {
-    return FFourCC(SwapEndianness(value.AsU32()));
+inline void SwapEndiannessInPlace(FFourCC& value) {
+    FPlatformEndian::SwapInPlace((u32*)&value);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

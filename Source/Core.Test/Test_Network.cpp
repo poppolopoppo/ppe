@@ -12,6 +12,7 @@
 #include "Core.Network/Socket/SocketBuffered.h"
 #include "Core.Network/Uri.h"
 
+#include "Core.Serialize/Json/Json.h"
 #include "Core.Serialize/Markup/Xml.h"
 
 #include "Core/Diagnostic/Logger.h"
@@ -163,7 +164,7 @@ static void Test_SocketAccept_() {
 //----------------------------------------------------------------------------
 static void Test_HttpGet_() {
     FUri uri;
-    if (not FUri::Parse(uri, MakeStringView("http://freegeoip.net/xml/poppolopoppo.ddns.net")))
+    if (not FUri::Parse(uri, MakeStringView("http://freemusicarchive.org/api/trackSearch?q=deerhoof&limit=10")))
         AssertNotReached();
 
     forrange(i, 0, 3) {
@@ -171,24 +172,27 @@ static void Test_HttpGet_() {
         if (EHttpStatus::OK != HttpGet(&response, uri))
             AssertNotReached();
 
+#ifdef USE_DEBUG_LOGGER
         LOG(Test_Network, Info, L"Status: {0}", response.Status());
         LOG(Test_Network, Info, L"Reason: {0}", response.Reason());
 
         LOG(Test_Network, Info, L"Headers   :");
-        for (const auto& it : response.Headers())
+        for (const auto& it : response.Headers()) {
             LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
+        }
 
         LOG(Test_Network, Info, L"Body : {0} =\n{1}",
             Fmt::FSizeInBytes{ checked_cast<size_t>(response.Body().SizeInBytes()) },
             response.MakeView());
+#endif
 
         if (response.Status() == Network::EHttpStatus::OK) {
-            Serialize::FXml xml;
+            Serialize::FJson json;
             IBufferedStreamReader* reader = &response.Body();
-            if (not Serialize::FXml::Load(&xml, L"network.tmp", reader))
+            if (not Serialize::FJson::Load(&json, L"network.tmp", reader))
                 AssertNotReached();
 
-            LOG(Test_Network, Info, L"request result:\n{0}", xml);
+            LOG(Test_Network, Info, L"request result:\n{0}", json);
         }
         else {
             LOG(Test_Network, Error, L"HTTP request to '{0}' failed : {1}", uri, response.Status());
@@ -212,6 +216,7 @@ static void Test_HttpPost_() {
     if (EHttpStatus::OK != HttpPost(&response, uri, post))
         AssertNotReached();
 
+#ifdef USE_DEBUG_LOGGER
     LOG(Test_Network, Info, L"Status: {0}", response.Status());
     LOG(Test_Network, Info, L"Reason: {0}", response.Reason());
 
@@ -222,6 +227,7 @@ static void Test_HttpPost_() {
     LOG(Test_Network, Info, L"Body : {0} =\n{1}",
         Fmt::FSizeInBytes{ checked_cast<size_t>(response.Body().SizeInBytes()) },
         response.MakeView() );
+#endif
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -236,6 +242,7 @@ public:
 
 private:
     virtual void OnAccept(FSocketBuffered& socket) const override {
+        NOOP(socket);
         LOG(Test_Network, Info, L"[{0}] accept connection on test server : {1}", socket.Local(), socket.Remote());
     }
 
@@ -272,6 +279,7 @@ private:
     }
 
     virtual void OnDisconnect(FSocketBuffered& socket) const override{
+        NOOP(socket);
         LOG(Test_Network, Info, L"[{0}] disconnected from test server : {1}", socket.Local(), socket.Remote());
     }
 };

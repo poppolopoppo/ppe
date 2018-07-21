@@ -171,6 +171,9 @@ public:
 
     iterator FindSubRange(const TMemoryView<T>& subrange) const;
 
+    bool EndsWith(const TMemoryView<T>& suffix) const;
+    bool StartsWith(const TMemoryView<T>& prefix) const;
+
     template <typename _Pred>
     TMemoryView SplitIf(const _Pred& pred) const { return TMemoryView(_storage, FindFirst(pred)); }
     template <typename _Pred>
@@ -251,6 +254,8 @@ Meta::TEnableIf< std::is_integral<_Index>::value > ReindexMemoryView(const TMemo
         data[j] = std::move(x);
     }
 }
+//----------------------------------------------------------------------------
+using FRawMemory = TMemoryView<const u8>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

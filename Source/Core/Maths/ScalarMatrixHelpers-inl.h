@@ -19,7 +19,7 @@ bool IsInversible(const TScalarMatrix<T, _Width, _Height>& m, float epsilon/* = 
     float norm = 0;
     for (size_t j = 0; j < _Height; ++j)
         for (size_t i = 0; i < _Width; ++i)
-            norm += m.at_(j, i) * m.(i, j);
+            norm += m.at_(j, i) * m.at_(i, j);
 
     norm = std::sqrt(norm);
     if (norm <= epsilon)
@@ -233,7 +233,7 @@ TScalarMatrix<T, 4, 4> Orthonormalize(const TScalarMatrix<T, 4, 4>& m) {
 //----------------------------------------------------------------------------
 template <typename T>
 void DecomposeQR(const TScalarMatrix<T, 4, 4>& m, TScalarMatrix<T, 4, 4>& q, TScalarMatrix<T, 4, 4>& r) {
-    // Decomposes a matrix into an orthonormalized matrix Q and a right traingular matrix R.
+    // Decomposes a matrix into an ortho-normalized matrix Q and a right triangular matrix R.
 
     q = Orthonormalize(m.Transpose()).Transpose();
 
@@ -256,25 +256,25 @@ void DecomposeQR(const TScalarMatrix<T, 4, 4>& m, TScalarMatrix<T, 4, 4>& q, TSc
 //----------------------------------------------------------------------------
 template <typename T>
 void DecomposeLQ(const TScalarMatrix<T, 4, 4>& m, TScalarMatrix<T, 4, 4>& l, TScalarMatrix<T, 4, 4>& q) {
-    // Decomposes a matrix into a lower triangular matrix L and an orthonormalized matrix Q.
+    // Decomposes a matrix into a lower triangular matrix L and an ortho-normalized matrix Q.
 
     q = Orthonormalize(m);
 
     l.SetBroadcast(0);
 
-    l._11() = Dot4(q.Row_x(), Row_x());
+    l._11() = Dot4(q.Row_x(), m_.Row_x());
 
-    l._21() = Dot4(q.Row_x(), Row_y());
-    l._22() = Dot4(q.Row_y(), Row_y());
+    l._21() = Dot4(q.Row_x(), m.Row_y());
+    l._22() = Dot4(q.Row_y(), m.Row_y());
 
-    l._31() = Dot4(q.Row_x(), Row_z());
-    l._32() = Dot4(q.Row_y(), Row_z());
-    l._33() = Dot4(q.Row_z(), Row_z());
+    l._31() = Dot4(q.Row_x(), m.Row_z());
+    l._32() = Dot4(q.Row_y(), m.Row_z());
+    l._33() = Dot4(q.Row_z(), m.Row_z());
 
-    l._41() = Dot4(q.Row_x(), Row_w());
-    l._42() = Dot4(q.Row_y(), Row_w());
-    l._43() = Dot4(q.Row_z(), Row_w());
-    l._44() = Dot4(q.Row_w(), Row_w());
+    l._41() = Dot4(q.Row_x(), m.Row_w());
+    l._42() = Dot4(q.Row_y(), m.Row_w());
+    l._43() = Dot4(q.Row_z(), m.Row_w());
+    l._44() = Dot4(q.Row_w(), m.Row_w());
 }
 //----------------------------------------------------------------------------
 template <typename T>

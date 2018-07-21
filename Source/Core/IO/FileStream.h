@@ -5,7 +5,7 @@
 #include "Core/IO/StreamProvider.h"
 #include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter_fwd.h"
-#include "Core/Misc/TargetPlatform.h"
+#include "Core/HAL/PlatformLowLevelIO.h"
 
 #ifndef FINAL_RELEASE
 #   define WITH_CORE_FILESTREAM_FILENAMEDBG 1 // %_NOCOMMIT%
@@ -22,8 +22,10 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class CORE_API FFileStream {
+public:
+    using FFileHandle = FPlatformLowLevelIO::FHandle;
 protected:
-    explicit FFileStream(FPlatformIO::FHandle handle) : _handle(handle) {}
+    explicit FFileStream(FFileHandle handle) : _handle(handle) {}
 public:
     ~FFileStream();
 
@@ -33,7 +35,7 @@ public:
     FFileStream(FFileStream&& rvalue);
     FFileStream& operator =(FFileStream&& rvalue);
 
-    FPlatformIO::FHandle Handle() const { return _handle; }
+    FFileHandle Handle() const { return _handle; }
 
 #if WITH_CORE_FILESTREAM_FILENAMEDBG
     FWStringView FilenameForDebug() const { return MakeStringView(_filenameForDebug); }
@@ -54,7 +56,7 @@ public:
     static void Shutdown();
 
 protected:
-    FPlatformIO::FHandle _handle;
+    FFileHandle _handle;
 #if WITH_CORE_FILESTREAM_FILENAMEDBG
 private:
     FWString _filenameForDebug;
@@ -63,12 +65,13 @@ private:
 //----------------------------------------------------------------------------
 class CORE_API FFileStreamReader : public IStreamReader, public FFileStream {
 public:
-    explicit FFileStreamReader(FPlatformIO::FHandle handle) : FFileStream(handle) {}
+    using FFileStream::FFileHandle;
+    explicit FFileStreamReader(FFileHandle handle) : FFileStream(handle) {}
 
 public: // IStreamReader
     virtual bool Eof() const override final;
 
-    virtual bool IsSeekableI(ESeekOrigin origin = ESeekOrigin::All) const override final { return true; }
+    virtual bool IsSeekableI(ESeekOrigin = ESeekOrigin::All) const override final { return true; }
 
     virtual std::streamoff TellI() const override final;
     virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
@@ -81,10 +84,11 @@ public: // IStreamReader
 //----------------------------------------------------------------------------
 class CORE_API FFileStreamWriter : public IStreamWriter, public FFileStream {
 public:
-    explicit FFileStreamWriter(FPlatformIO::FHandle handle) : FFileStream(handle) {}
+    using FFileStream::FFileHandle;
+    explicit FFileStreamWriter(FFileHandle handle) : FFileStream(handle) {}
 
 public: // IStreamWriter
-    virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const override final { return true; }
+    virtual bool IsSeekableO(ESeekOrigin = ESeekOrigin::All) const override final { return true; }
 
     virtual std::streamoff TellO() const override final;
     virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
@@ -95,12 +99,13 @@ public: // IStreamWriter
 //----------------------------------------------------------------------------
 class CORE_API EMPTY_BASES FFileStreamReadWriter : public IStreamReadWriter, public FFileStream {
 public:
-    explicit FFileStreamReadWriter(FPlatformIO::FHandle handle) : FFileStream(handle) {}
+    using FFileStream::FFileHandle;
+    explicit FFileStreamReadWriter(FFileHandle handle) : FFileStream(handle) {}
 
 public: // IStreamReader
     virtual bool Eof() const override final;
 
-    virtual bool IsSeekableI(ESeekOrigin origin = ESeekOrigin::All) const override final { return true; }
+    virtual bool IsSeekableI(ESeekOrigin = ESeekOrigin::All) const override final { return true; }
 
     virtual std::streamoff TellI() const override final;
     virtual std::streamoff SeekI(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;
@@ -111,7 +116,7 @@ public: // IStreamReader
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
 
 public: // IStreamWriter
-    virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const override final { return true; }
+    virtual bool IsSeekableO(ESeekOrigin = ESeekOrigin::All) const override final { return true; }
 
     virtual std::streamoff TellO() const override final;
     virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final;

@@ -72,7 +72,7 @@ public:
     size_t WorkerCount() const { return _workerCount; }
     EThreadPriority Priority() const { return _priority; }
 
-    void Start(const TMemoryView<const size_t>& threadAffinities);
+    void Start(const TMemoryView<const u64>& threadAffinities);
     void Shutdown();
 
     ITaskContext* Context() const;
@@ -88,6 +88,7 @@ public:
     }
 
     void WaitForAll() const;
+    void WaitForAll(int timeoutMS) const; // can timeout, recommended over WaitForAll() to avoid blocking the program
 
     FTaskManagerImpl* Pimpl() const { return _pimpl.get(); }
 

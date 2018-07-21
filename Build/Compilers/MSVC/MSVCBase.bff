@@ -114,6 +114,10 @@
     + ' Shell32.lib'
     + ' Comctl32.lib'
     + ' Gdi32.lib'
+    + ' userenv.lib'
+    + ' advapi32.lib'
+    + ' version.lib'
+    + ' Shlwapi.lib'
 
 #if USE_MSVC_COMPILATION_SUMMARY
     Print( "Using MSVC /d2cgsummary, /d2:-cgsummary & /Bt+ to analyze compilation times")

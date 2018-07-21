@@ -4,6 +4,7 @@
 
 #include "MetaObject.h"
 
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/IO/FileSystem.h"
 #include "Core/IO/String.h"
 #include "Core/Maths/ScalarMatrix.h"
@@ -37,6 +38,7 @@ static FORCE_INLINE bool Any_FitInSitu_(size_t sizeInBytes) {
 #if USE_CORE_RTTI_ANY_INSITU
     return (sizeInBytes <= FAny::GInSituSize);
 #else
+    NOOP(sizeInBytes);
     return false;
 #endif
 }
@@ -50,7 +52,7 @@ static const ITypeTraits& Any_Traits_() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FAny::FAny(const FAny& other) 
+FAny::FAny(const FAny& other)
 :   _traits(Meta::NoInit) {
 
     if (other._traits) {
@@ -59,7 +61,7 @@ FAny::FAny(const FAny& other)
     }
     else {
         _traits = PTypeTraits();
-        ONLY_IF_ASSERT(::memset(&_inSitu, 0xDD, GInSituSize));
+        ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xDD, GInSituSize));
     }
 
     Assert(Equals(other));
@@ -83,7 +85,7 @@ FAny::FAny(FAny&& rvalue)
 
     if (rvalue._traits) {
         const size_t sizeInBytes = rvalue._traits->SizeInBytes();
-        
+
         if (Any_FitInSitu_(sizeInBytes)) {
             AssignMoveDestroy_AssumeNotInitialized_(&rvalue._inSitu, *rvalue._traits, sizeInBytes);
         }
@@ -93,20 +95,20 @@ FAny::FAny(FAny&& rvalue)
         }
 
         rvalue._traits = PTypeTraits();
-        ONLY_IF_ASSERT(::memset(&rvalue._inSitu, 0xDD, GInSituSize));
+        ONLY_IF_ASSERT(FPlatformMemory::Memset(&rvalue._inSitu, 0xDD, GInSituSize));
 
         Assert(_traits);
     }
     else {
         _traits = PTypeTraits();
-        ONLY_IF_ASSERT(::memset(&_inSitu, 0xDD, GInSituSize));
+        ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xDD, GInSituSize));
     }
 }
 //----------------------------------------------------------------------------
 FAny& FAny::operator =(FAny&& rvalue) {
     if (rvalue._traits) {
         const size_t sizeInBytes = rvalue._traits->SizeInBytes();
-        
+
         if (Any_FitInSitu_(sizeInBytes)) {
             AssignMoveDestroy_(&rvalue._inSitu, *rvalue._traits, sizeInBytes);
         }
@@ -119,7 +121,7 @@ FAny& FAny::operator =(FAny&& rvalue) {
         }
 
         rvalue._traits = PTypeTraits();
-        ONLY_IF_ASSERT(::memset(&rvalue._inSitu, 0xDD, GInSituSize));
+        ONLY_IF_ASSERT(FPlatformMemory::Memset(&rvalue._inSitu, 0xDD, GInSituSize));
     }
     else if (_traits) {
         Reset_AssumeInitialized_(_traits->SizeInBytes());
@@ -128,18 +130,22 @@ FAny& FAny::operator =(FAny&& rvalue) {
     return (*this);
 }
 //----------------------------------------------------------------------------
-FAny::FAny(const PTypeTraits& traits) 
+FAny::FAny(const PTypeTraits& traits)
 :   _traits(Meta::NoInit) {
     Assert(traits);
     Assert(Any_Traits_() != *traits);
-    
+
     const size_t sizeInBytes = traits->SizeInBytes();
     void* const data = Allocate_AssumeNotInitialized_(sizeInBytes);
-    
+
     _traits = traits;
     _traits->Construct(data);
 
     Assert(_traits->IsDefaultValue(data));
+}
+//----------------------------------------------------------------------------
+FAny::FAny() NOEXCEPT {
+    ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xDD, GInSituSize));
 }
 //----------------------------------------------------------------------------
 FAny::~FAny()  {
@@ -158,7 +164,7 @@ FAny& FAny::Reset(const PTypeTraits& traits) {
 
         return (*this);
     }
-    
+
     const size_t newSize = traits->SizeInBytes();
 
     if (_traits) {
@@ -183,7 +189,7 @@ FAny& FAny::Reset(const PTypeTraits& traits) {
 
     _traits = traits;
     _traits->Construct(data);
-    
+
     Assert(_traits->IsDefaultValue(data));
     return (*this); // can be implicit casted as FAtom for convenience
 }
@@ -202,8 +208,8 @@ bool FAny::Equals(const FAny& other) const {
 }
 //----------------------------------------------------------------------------
 hash_t FAny::HashValue() const {
-    return (_traits 
-        ? _traits->HashValue(Data()) 
+    return (_traits
+        ? _traits->HashValue(Data())
         : hash_t(size_t(-1)) );
 }
 //----------------------------------------------------------------------------
@@ -258,14 +264,14 @@ void FAny::AssignCopy_(const void* src, const ITypeTraits& traits, const size_t 
         if (not Any_FitInSitu_(sizeInBytes) &&
             not Any_FitInSitu_(oldSize) &&
             sizeInBytes <= _externalBlock.SizeInBytes ) {
-            
+
             _traits->Destroy(_externalBlock.Ptr);
             _traits.CreateRawCopy_AssumeNotInitialized(traits);
             _traits->ConstructCopy(_externalBlock.Ptr, src);
 
             return;
         }
-        
+
         Reset_AssumeInitialized_(oldSize);
     }
     Assert(not _traits);
@@ -385,7 +391,7 @@ void* FAny::Allocate_AssumeNotInitialized_(const size_t sizeInBytes) {
         return _externalBlock.Ptr;
     }
 }
-//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------FPlatformMemory::Memset
 void FAny::Reset_AssumeInitialized_(const size_t sizeInBytes) {
     Assert(_traits);
     Assert(_traits->SizeInBytes() == sizeInBytes);
@@ -406,7 +412,7 @@ void FAny::Reset_AssumeInitialized_(const size_t sizeInBytes) {
     }
 
     _traits = PTypeTraits(); // don't want to call the dtor
-    ONLY_IF_ASSERT(::memset(&_inSitu, 0xDD, GInSituSize));
+    ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xDD, GInSituSize));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

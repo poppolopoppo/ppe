@@ -140,7 +140,7 @@ public: //RTTI::IAtomVisitor
     }
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
-    virtual bool Visit(const RTTI::IScalarTraits* scalar, T& value) override final { \
+    virtual bool Visit(const RTTI::IScalarTraits* , T& value) override final { \
         Print_(value); \
         return true; \
     }
@@ -153,7 +153,7 @@ private:
 
         RTTI::FAtom inner = any.InnerAtom();
         _oss << inner.TypeInfos().Name() << ':';
-        inner.Accept(this);    
+        inner.Accept(this);
     }
 
     void Print_(const RTTI::PMetaObject& pobj) {
@@ -301,7 +301,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextSerializer::FTextSerializer(bool minify/* = true */) 
+FTextSerializer::FTextSerializer(bool minify/* = true */)
     : _minify(minify)
 {}
 //----------------------------------------------------------------------------

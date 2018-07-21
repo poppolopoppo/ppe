@@ -38,7 +38,7 @@ using TDecorateAllocator = _Allocator;
 //----------------------------------------------------------------------------
 #define OVERRIDE_CLASS_ALLOCATOR(_Allocator) \
 public: \
-    void* operator new(size_t size) { \
+    void* operator new(size_t ) { \
         return _Allocator().allocate(1); \
     } \
     void* operator new(size_t, void* ptr) { \

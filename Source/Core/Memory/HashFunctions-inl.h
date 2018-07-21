@@ -108,4 +108,22 @@ FORCE_INLINE size_t hash_as_pod_range(_It&& first, _It&& last) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FORCE_INLINE u32 hash_mem32(const void *ptr, size_t sizeInBytes) {
+    return FPlatformHash::HashMem32(CORE_HASH_VALUE_SEED_32, ptr, sizeInBytes);
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE u32 hash_mem32(const void *ptr, size_t sizeInBytes, u32 seed) {
+    return FPlatformHash::HashMem32(seed, ptr, sizeInBytes);
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE u64 hash_mem64(const void *ptr, size_t sizeInBytes) {
+    return FPlatformHash::HashMem64(CORE_HASH_VALUE_SEED_64, ptr, sizeInBytes);
+}
+//----------------------------------------------------------------------------
+FORCE_INLINE u64 hash_mem64(const void *ptr, size_t sizeInBytes, u64 seed) {
+    return FPlatformHash::HashMem64(seed, ptr, sizeInBytes);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 }

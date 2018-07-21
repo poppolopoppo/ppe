@@ -127,10 +127,10 @@ public:
     FTiti() {}
     virtual ~FTiti() {}
     RTTI_CLASS_HEADER(FTiti, Core::RTTI::FMetaObject);
-    void Proc(int a, float b, const FString& c) {}
+    void Proc(int a, float b, const FString& c) { NOOP(a, b, c); }
     float Id(float f) { return f; }
     float IdDeprecated(float f) { return f; }
-    void ProcConst(int a, float b, const FString& c) const {}
+    void ProcConst(int a, float b, const FString& c) const { NOOP(a, b, c); }
     int Getter() { return 42; }
     int GetterConst() const { return 69;  }
     FString Func(float f) { return ToString(f); }
@@ -324,10 +324,12 @@ static void TestRTTI_() {
         if (not RTTI::Cast<FToto2>(toto2.get()))
             AssertNotReached();
 
-        const RTTI::FMetaClass* metaClass = toto2->RTTI_Class();
-        metaClass->Property(RTTI::FName("Parent1")).CopyFrom(*toto2, MakeAtom(&toto));
+        {
+            const RTTI::FMetaClass* metaClass = toto2->RTTI_Class();
+            metaClass->Property(RTTI::FName("Parent1")).CopyFrom(*toto2, MakeAtom(&toto));
 
-        LOG(RTTI_UnitTest, Debug, L"toto2 = {0}", InplaceAtom(toto2));
+            LOG(RTTI_UnitTest, Debug, L"toto2 = {0}", InplaceAtom(toto2));
+        }
 
         {
             RTTI::FMetaTransaction transaction2(RTTI::FName("test2"));

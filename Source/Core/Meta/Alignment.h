@@ -17,6 +17,8 @@ namespace Meta {
 //----------------------------------------------------------------------------
 #define ALIGN(_BOUNDARY) __declspec(align(_BOUNDARY))
 //----------------------------------------------------------------------------
+inline constexpr bool IsPow2(size_t u) { return ((u & (u - 1)) == 0 && u); }
+//----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
 inline constexpr bool IsAligned(const size_t alignment, const uintptr_t v) {
     return (0 == (v & (alignment - 1)));

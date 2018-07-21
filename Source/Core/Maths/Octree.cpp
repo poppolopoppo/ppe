@@ -3,6 +3,7 @@
 #include "Octree.h"
 
 #include "Container/Stack.h"
+#include "HAL/PlatformMaths.h"
 
 #include "Ray.h"
 #include "ScalarBoundingBox.h"
@@ -133,7 +134,7 @@ static bool RayIntersectsOctree_(
     const FOctreeNode* root, float voxelSize, int dimension ) {
     Assert(root);
 
-    STACKLOCAL_POD_HEAP(FOctreeCandidateWDist_, FOctreeClosestCandidate_{}, candidates, Meta::CeilLog2((size_t)dimension) * 2);
+    STACKLOCAL_POD_HEAP(FOctreeCandidateWDist_, FOctreeClosestCandidate_{}, candidates, FPlatformMaths::CeilLog2((size_t)dimension) * 2);
 
     return RayIntersectsOctree_(ray, firstHit, root, voxelSize, dimension, candidates);
 }
@@ -146,7 +147,7 @@ static bool BatchRaysIntersectsOctree_(
     Assert(root);
     Assert(rays.size() == firstHits.size() || firstHits.empty());
 
-    STACKLOCAL_POD_HEAP(FOctreeCandidateWDist_, FOctreeClosestCandidate_{}, candidates, Meta::CeilLog2((size_t)dimension) * 2);
+    STACKLOCAL_POD_HEAP(FOctreeCandidateWDist_, FOctreeClosestCandidate_{}, candidates, FPlatformMaths::CeilLog2((size_t)dimension) * 2);
 
     size_t intersections = 0;
 

@@ -7,7 +7,13 @@
 [
     Using( .SharedBasePlatform )
 
-    .PlatformDefines + { 'PLATFORM_POSIX', 'PLATFORM_MACOSX' }
+    .TargetPlatform = 'MacOS'
+    .PlatformDefines +
+    {
+        'PLATFORM_POSIX',
+        'PLATFORM_MACOSX',
+        'TARGET_PLATFORM=$TargetPlatform$'
+    }
 ]
 
 //------------------------------------------------------------------------------

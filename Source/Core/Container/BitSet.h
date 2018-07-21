@@ -3,8 +3,6 @@
 #include "Core/Core.h"
 
 #include "Core/Allocator/Alloca.h"
-#include "Core/Memory/UniqueView.h"
-#include "Core/Meta/BitCount.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -61,7 +59,7 @@ protected:
     const word_t& Word_(size_t index) const { Assert(index < _size); return _storage[index >> WordBitShift]; }
 
 private:
-    word_t *_storage;
+    word_t* _storage;
     size_t _size;
 };
 //----------------------------------------------------------------------------

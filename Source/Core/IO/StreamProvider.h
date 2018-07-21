@@ -6,6 +6,7 @@
 #include "Core/IO/String_fwd.h"
 #include "Core/IO/StringView.h"
 #include "Core/Memory/UniquePtr.h"
+#include "Core/Meta/AlignedStorage.h"
 
 namespace Core {
 template <typename T, typename _Allocator>

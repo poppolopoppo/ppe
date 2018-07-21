@@ -54,12 +54,12 @@ public:
     template <size_t _Idx>
     FORCE_INLINE Meta::TEnableIf<_Idx < _Dim, T&> get() { return _data[_Idx]; }
     template <size_t _Idx>
-    FORCE_INLINE Meta::TEnableIf<_Idx < _Dim, const T&> get() const { return _data[_Idx]; }
+    FORCE_INLINE Meta::TEnableIf<_Idx < _Dim, T> get() const { return _data[_Idx]; }
 
-    FORCE_INLINE const T& x() const { return get<0>(); };
-    FORCE_INLINE const T& y() const { return get<1>(); };
-    FORCE_INLINE const T& z() const { return get<2>(); };
-    FORCE_INLINE const T& w() const { return get<3>(); };
+    FORCE_INLINE T x() const { return get<0>(); };
+    FORCE_INLINE T y() const { return get<1>(); };
+    FORCE_INLINE T z() const { return get<2>(); };
+    FORCE_INLINE T w() const { return get<3>(); };
 
     FORCE_INLINE T& x() { return get<0>(); };
     FORCE_INLINE T& y() { return get<1>(); };
@@ -67,7 +67,7 @@ public:
     FORCE_INLINE T& w() { return get<3>(); };
 
     FORCE_INLINE T& operator [](size_t i);
-    FORCE_INLINE const T& operator [](size_t i) const;
+    FORCE_INLINE T operator [](size_t i) const;
 
 #define DECL_SCALARVECTOR_OP_SELF_LHS(_Op) \
     TScalarVector&   operator _Op (T scalar); \
@@ -110,7 +110,7 @@ public:
     TMemoryView<T> MakeView() { return Core::MakeView(_data); }
     TMemoryView<const T> MakeView() const { return Core::MakeView(_data); }
 
-    friend hash_t hash_value(const TScalarVector& v) { return hash_as_pod(v._data); }
+    friend hash_t hash_value(const TScalarVector& v) { return hash_as_pod_array(v._data); }
 
     TScalarVector<T, _Dim - 1> Dehomogenize() const;
     TScalarVector<T, _Dim + 1> Extend(T value) const;

@@ -6,6 +6,7 @@
 #include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/NativeTypes.h"
 
+#include "Core.Serialize/Parser/Parser.h"
 #include "Core.Serialize/Parser/ParseItem.h"
 
 #include "Core/Allocator/LinearHeapAllocator.h"

@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/IO/TextWriter_fwd.h"
+#include "Core/HAL/PlatformThread.h"
 
 #include <thread>
 
@@ -18,14 +19,6 @@ namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EThreadPriority {
-    Highest = 0,
-    AboveNormal,
-    Normal,
-    BelowNormal,
-    Lowest,
-};
-//----------------------------------------------------------------------------
 class CORE_API FThreadContext {
 public:
     FThreadContext(const char* name, size_t tag, size_t index);
@@ -39,8 +32,8 @@ public:
     size_t ThreadIndex() const { return _threadIndex; }
     std::thread::id ThreadId() const { return _threadId; }
 
-    size_t AffinityMask() const;
-    void SetAffinityMask(size_t mask) const;
+    u64 AffinityMask() const;
+    void SetAffinityMask(u64 mask) const;
 
     EThreadPriority Priority() const;
     void SetPriority(EThreadPriority priority) const;

@@ -107,6 +107,24 @@ auto TMemoryView<T>::FindSubRange(const TMemoryView<T>& subrange) const -> itera
 }
 //----------------------------------------------------------------------------
 template <typename T>
+bool TMemoryView<T>::EndsWith(const TMemoryView<T>& suffix) const {
+    if (suffix.size() > _size)
+        return false;
+
+    const auto slice = LastNElements(suffix.size());
+    return std::equal(slice.begin(), slice.end(), suffix.begin());
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool TMemoryView<T>::StartsWith(const TMemoryView<T>& prefix) const {
+    if (prefix.size() > _size)
+        return false;
+
+    const auto slice = FirstNElements(prefix.size());
+    return std::equal(slice.begin(), slice.end(), suffix.begin());
+}
+//----------------------------------------------------------------------------
+template <typename T>
 void TMemoryView<T>::CopyTo(const TMemoryView<Meta::TRemoveConst<T>>& dst) const {
     Assert(dst.size() == size());
     std::copy(begin(), end(), dst.begin());

@@ -6,6 +6,7 @@
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Misc/Function.h"
 #include "Core/Thread/Task/Task.h"
+#include "Core/Thread/Task/TaskManager.h"
 
 namespace Core {
 class FTaskManager;

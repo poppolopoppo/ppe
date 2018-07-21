@@ -113,7 +113,7 @@ void TVector<T, _Allocator>::assign_(_It first, _It last, std::input_iterator_ta
     else if (_size > count) {
         Assert(_size >= count);
 
-        Destroy(allocator_(), TMemoryView<T>(_data + count, _size - count))
+        Destroy(allocator_(), TMemoryView<T>(_data + count, _size - count));
 
         _size = checked_cast<u32>(count);
     }

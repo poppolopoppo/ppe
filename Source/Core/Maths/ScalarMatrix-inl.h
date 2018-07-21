@@ -72,7 +72,7 @@ TScalarMatrix<T, _Width, _Height>::TScalarMatrix(const TScalarMatrix<T, _Width, 
 template <typename T, size_t _Width, size_t _Height>
 TScalarMatrix<T, _Width, _Height>::TScalarMatrix(const TMemoryView<const T>& data) {
     Assert(data.size() == lengthof(_data.raw));
-    memcpy(_data.raw, data.Pointer(), lengthof(_data.raw)*sizeof(T));
+    FPlatformMemory::Memcpy(_data.raw, data.Pointer(), lengthof(_data.raw)*sizeof(T));
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>

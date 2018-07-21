@@ -52,7 +52,7 @@ public:
 
     FClassId Id() const { return _id; }
     const FName& Name() const { return _name; }
-    const EClassFlags Flags() const { return _flags; }
+    EClassFlags Flags() const { return _flags; }
     const FMetaNamespace* Namespace() const { return _namespace; }
 
     // Status
@@ -154,6 +154,11 @@ const FMetaClass* MetaClass() {
     return details::MetaClass_< Meta::TDecay<T> >(
         typename std::is_base_of< FMetaObject, Meta::TDecay<T> >::type {}
     );
+}
+//----------------------------------------------------------------------------
+inline FStringView MetaClassName(const FMetaClass* metaClass) {
+    Assert(metaClass);
+    return metaClass->Name().MakeView();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

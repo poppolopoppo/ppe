@@ -6,7 +6,7 @@
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/ScalarVectorHelpers.h"
 
-#include "Core/Misc/Endianness.h"
+#include "Core/HAL/PlatformEndian.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -49,11 +49,9 @@ TScalarBoundingBox<T, _Dim> MakeBoundingBox(const TMemoryView<const TScalarVecto
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-TScalarBoundingBox<T, _Dim> SwapEndianness(const TScalarBoundingBox<T, _Dim>& value) {
-    return TScalarBoundingBox<T, _Dim>(
-        SwapEndianness(value.Min()),
-        SwapEndianness(value.Max())
-        );
+void SwapEndiannessInPlace(TScalarBoundingBox<T, _Dim>* value) {
+    SwapEndiannessInPlace(value->Min());
+    SwapEndiannessInPlace(value->Max());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

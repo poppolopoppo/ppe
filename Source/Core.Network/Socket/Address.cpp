@@ -6,9 +6,10 @@
 
 #include "Core/Container/HashMap.h"
 #include "Core/Container/StringHashMap.h"
-#include "Core/Diagnostic/LastError.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/IO/String.h"
+#include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter.h"
 #include "Core/Meta/Optional.h"
 #include "Core/Meta/Singleton.h"
@@ -274,7 +275,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
     buffer[offSep] = '\0';
 
     struct ::addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
+    FPlatformMemory::Memzero(&hints, sizeof(hints));
     hints.ai_family = AF_INET; // IP v4
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_NUMERICSERV; // Port is a string containing a number

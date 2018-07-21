@@ -114,8 +114,8 @@ public:
         _traits->Swap(_data, other.Data());
     }
 
-    bool Accept(IAtomVisitor* visitor) const { 
-        return _traits->Accept(visitor, _data); 
+    bool Accept(IAtomVisitor* visitor) const {
+        return _traits->Accept(visitor, _data);
     }
 
     inline friend void swap(FAtom& lhs, FAtom& rhs) { lhs.Swap(rhs); }

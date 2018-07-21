@@ -16,12 +16,11 @@ FStringView BlockFormatToCStr(EBlockFormat value) {
         return "DXT1";
     case Core::Pixmap::EBlockFormat::DXT5:
         return "DXT5";
-    default:
-        AssertNotImplemented();
-        break;
     }
-    return FStringView();
+    AssertNotImplemented();
 }
+FTextWriter& operator <<(FTextWriter& oss, EBlockFormat value) { return oss << BlockFormatToCStr(value); }
+FWTextWriter& operator <<(FWTextWriter& oss, EBlockFormat value) { return oss << BlockFormatToCStr(value); }
 //----------------------------------------------------------------------------
 FStringView ColorDepthToCStr(EColorDepth value) {
     switch (value)
@@ -32,12 +31,11 @@ FStringView ColorDepthToCStr(EColorDepth value) {
         return "16";
     case Core::Pixmap::EColorDepth::_32bits:
         return "32";
-    default:
-        AssertNotImplemented();
-        break;
     }
-    return FStringView();
+    AssertNotImplemented();
 }
+FTextWriter& operator <<(FTextWriter& oss, EColorDepth value) { return oss << ColorDepthToCStr(value); }
+FWTextWriter& operator <<(FWTextWriter& oss, EColorDepth value) { return oss << ColorDepthToCStr(value); }
 //----------------------------------------------------------------------------
 FStringView ColorMaskToCStr(EColorMask value) {
     switch (value)
@@ -50,12 +48,11 @@ FStringView ColorMaskToCStr(EColorMask value) {
         return "RGB";
     case Core::Pixmap::EColorMask::RGBA:
         return "RGBA";
-    default:
-        AssertNotImplemented();
-        break;
     }
-    return FStringView();
+    AssertNotImplemented();
 }
+FTextWriter& operator <<(FTextWriter& oss, EColorMask value) { return oss << ColorMaskToCStr(value); }
+FWTextWriter& operator <<(FWTextWriter& oss, EColorMask value) { return oss << ColorMaskToCStr(value); }
 //----------------------------------------------------------------------------
 FStringView ColorSpaceToCStr(EColorSpace value) {
     switch (value)
@@ -66,12 +63,11 @@ FStringView ColorSpaceToCStr(EColorSpace value) {
         return "sRGB";
     case Core::Pixmap::EColorSpace::YCoCg:
         return "YCoCg";
-    default:
-        AssertNotImplemented();
-        break;
     }
-    return FStringView();
+    AssertNotImplemented();
 }
+FTextWriter& operator <<(FTextWriter& oss, EColorSpace value) { return oss << ColorSpaceToCStr(value); }
+FWTextWriter& operator <<(FWTextWriter& oss, EColorSpace value) { return oss << ColorSpaceToCStr(value); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

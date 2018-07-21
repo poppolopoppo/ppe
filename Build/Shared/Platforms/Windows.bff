@@ -7,12 +7,14 @@
 [
     Using( .SharedBasePlatform )
 
+    .TargetPlatform = 'Windows'
     .PlatformDefines +
     {
         'PLATFORM_PC',
         'PLATFORM_WINDOWS',
         'WIN32',
         '__WINDOWS__',
+        'TARGET_PLATFORM=$TargetPlatform$'
     }
 ]
 

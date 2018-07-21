@@ -23,7 +23,7 @@ public:
         not std::is_same_v<FAny, T> // forbid to wrap FAny in another FAny
     >;
 
-    FAny() NOEXCEPT { ONLY_IF_ASSERT(::memset(&_inSitu, 0xDD, GInSituSize)); }
+    FAny() NOEXCEPT;
     ~FAny();
 
     FAny(const FAny& other);
@@ -36,13 +36,13 @@ public:
     explicit FAny(const PTypeTraits& type);
 
     template <typename T, class = TWrapable<T> >
-    explicit FAny(T&& rvalue) : _traits(Meta::NoInit) { 
+    explicit FAny(T&& rvalue) : _traits(Meta::NoInit) {
         const PTypeTraits traits = MakeTraits<T>();
         AssignMove_AssumeNotInitialized_(&rvalue, *traits, traits->SizeInBytes());
     }
 
     template <typename T, class = TWrapable<T> >
-    explicit FAny(const T& value) : _traits(Meta::NoInit) { 
+    explicit FAny(const T& value) : _traits(Meta::NoInit) {
         const PTypeTraits traits = MakeTraits<T>();
         AssignCopy_AssumeNotInitialized_(&value, *traits, traits->SizeInBytes());
     }

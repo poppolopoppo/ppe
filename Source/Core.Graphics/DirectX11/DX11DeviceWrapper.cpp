@@ -13,8 +13,8 @@
 #include "Device/PresentationParameters.h"
 #include "Device/Texture/SurfaceFormat.h"
 
-#include "Core/Diagnostic/LastError.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/HAL/Windows/LastError.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/String.h"
 

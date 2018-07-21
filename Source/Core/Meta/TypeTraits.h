@@ -257,25 +257,25 @@ void Construct(T* p, FForceInit init) {
 template <typename T>
 void Construct(T* p) {
     Assume(p);
-    ::new ((void*)p) T();
+    INPLACE_NEW(p, T)();
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void Construct(T* p, T&& rvalue) {
     Assume(p);
-    ::new ((void*)p) T(std::move(rvalue));
+    INPLACE_NEW(p, T)(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void Construct(T* p, const T& other) {
     Assume(p);
-    ::new ((void*)p) T(other);
+    INPLACE_NEW(p, T)(other);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
 void Construct(T* p, _Args&&... args) {
     Assume(p);
-    ::new((void*)p) T{ std::forward<_Args>(args)... };
+    INPLACE_NEW(p, T){ std::forward<_Args>(args)... };
 }
 //----------------------------------------------------------------------------
 template <typename T>

@@ -2,6 +2,8 @@
 
 #include "HashTable.h"
 
+#include "HAL/PlatformMemory.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -52,7 +54,7 @@ void FHashTableData_::ResetStates() {
     Assert(numStates);
     Assert(NumBuckets() >= GGroupSize);
 
-    ::memset(StatesAndBuckets, kEmpty, (numStates - 1) * sizeof(state_t));
+    FPlatformMemory::Memset(StatesAndBuckets, u8(kEmpty), (numStates - 1) * sizeof(state_t));
 
     // used by iterators to stop looking for a new filled bucket
     ((state_t*)StatesAndBuckets)[numStates - 1] = kSentinel;
@@ -72,7 +74,7 @@ size_t FHashTableData_::FirstFilledBucket_ReturnOffset(const state_t* states) {
 
     FBitMask visited{ size_t(0xFFFFu) << (size_t(states) & GGroupMask)  }; // don't go back
 
-    for (;;) { 
+    for (;;) {
         group_t group = _mm_load_si128((const __m128i*)aligned); // benefits from aligned load in this version
 
 #if 1
@@ -94,8 +96,6 @@ size_t FHashTableData_::FirstFilledBucket_ReturnOffset(const state_t* states) {
         aligned += GGroupSize;
         visited = { 0xFFFFu };
     }
-
-    AssertNotReached();
 }
 //----------------------------------------------------------------------------
 } //!details

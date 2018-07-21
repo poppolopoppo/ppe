@@ -3,6 +3,7 @@
 #include "Core.Serialize/Serialize.h"
 
 #include "Core.RTTI/RTTI_fwd.h"
+#include "Core.RTTI/TypeTraits.h"
 
 #include "Core/Container/HashMap.h"
 #include "Core/Memory/RefPtr.h"

@@ -71,7 +71,7 @@ inline void QuaternionToTangentSpace(   float3 *ptangent, float3 *pbinormal, flo
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline bool NearlyEquals(const FQuaternion& a, const FQuaternion& b, float maxRelDiff = F_Epsilon) {
-    return NearlyEquals(a.Value(), b.Value());
+    return NearlyEquals(a.Value(), b.Value(), maxRelDiff);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

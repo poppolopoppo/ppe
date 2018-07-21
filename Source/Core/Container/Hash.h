@@ -2,6 +2,7 @@
 
 #include "Core/Core.h"
 
+#include "Core/HAL/PlatformHash.h"
 #include "Core/Memory/HashFunctions.h"
 #include "Core/Meta/Hash_fwd.h"
 
@@ -22,8 +23,8 @@ FORCE_INLINE hash_t hash_value(i64 v)   { return hash_uint(u64(v)); }
 FORCE_INLINE hash_t hash_value(u64 v)   { return hash_uint(v); }
 FORCE_INLINE hash_t hash_value(u128 v)  { return hash_uint(v); }
 FORCE_INLINE hash_t hash_value(u256 v)  { return hash_as_pod(v); }
-FORCE_INLINE hash_t hash_value(float v) { return (0 == v ? 0 : hash_uint(*(u32*)&v)); } // 0.0f and -0.0f must have the same hash
-FORCE_INLINE hash_t hash_value(double v){ return (0 == v ? 0 : hash_uint(*(u64*)&v)); } // 0.0  and -0.0  must have the same hash
+FORCE_INLINE hash_t hash_value(float v) { return hash_uint(*(u32*)&v); }
+FORCE_INLINE hash_t hash_value(double v){ return hash_uint(*(u64*)&v); }
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE hash_t hash_value(const T *ptr) {

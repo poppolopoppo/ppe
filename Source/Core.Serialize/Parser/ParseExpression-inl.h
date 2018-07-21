@@ -6,6 +6,8 @@
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 
+#include "Parser.h"
+
 namespace Core {
 namespace Parser {
 //----------------------------------------------------------------------------

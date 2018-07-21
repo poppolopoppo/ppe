@@ -286,7 +286,6 @@ FMemoryPoolChunk *FMemoryPool::Deallocate_ReturnChunkToRelease_(void *ptr) {
     }
 
     AssertNotReached(); // ptr doesn't belong to this pool
-    return nullptr;
 }
 //----------------------------------------------------------------------------
 FMemoryPoolChunk *FMemoryPool::ClearOneChunk_AssertCompletelyFree_() {
@@ -510,7 +509,6 @@ size_t FMemoryPool::BlockCountPerChunk_(size_t chunkSize) const {
 FMemoryPoolChunk* FMemoryPool::AllocateChunk_() {
 #if USE_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
     AssertNotReached();
-    return nullptr;
 
 #else
     const size_t currentChunkSize = CurrentChunkSize();
@@ -521,8 +519,9 @@ FMemoryPoolChunk* FMemoryPool::AllocateChunk_() {
 #endif
 }
 //----------------------------------------------------------------------------
-void FMemoryPool::DeallocateChunk_(FMemoryPoolChunk *chunk) {
+void FMemoryPool::DeallocateChunk_(FMemoryPoolChunk* chunk) {
 #if USE_CORE_MEMORYPOOL_FALLBACK_TO_MALLOC
+    NOOP(chunk);
     AssertNotReached();
 
 #else

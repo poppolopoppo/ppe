@@ -7,15 +7,21 @@
 
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/MathHelpers.h"
 
 #define STB_DXT_IMPLEMENTATION
 #define STBD_ABS(_VAL) std::abs(_VAL)
 #define STBD_FABS(_VAL) std::abs(_VAL)
-#define STBD_MEMSET(_DST, _VAL, _SIZE) ::memset((_DST), (_VAL), (_SIZE))
+#define STBD_MEMSET(_DST, _VAL, _SIZE) ::Core::FPlatformMemory::Memset((_DST), (_VAL), (_SIZE))
+
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4244) // 'return': conversion from 'XXX' to 'YYY', possible loss of data
 
 #include "Core.External/stb/stb_dxt.h"
+
+PRAGMA_MSVC_WARNING_POP()
 
 namespace Core {
 namespace Pixmap {
@@ -193,7 +199,7 @@ void FCompressedImage::CopyTo(FCompressedImage* dst) const {
     Assert(dst->_data.size() == _data.size());
     Assert(((BlockSizeInBytes()*_width*_height)>>4) == _data.size());
 
-    ::memcpy(dst->_data.data(), _data.data(), _data.size());
+    FPlatformMemory::MemcpyLarge(dst->_data.data(), _data.data(), _data.size());
 }
 //----------------------------------------------------------------------------
 void FCompressedImage::Resize_DiscardData(const uint2& size, EBlockFormat format, EColorSpace space) {

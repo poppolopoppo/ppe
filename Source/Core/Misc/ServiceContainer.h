@@ -4,6 +4,7 @@
 
 #include "Core/Container/FlatMap.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/StringView.h"
 #include "Core/Memory/UniquePtr.h"
 #include "Core/Meta/TypeHash.h"
 #include "Core/Thread/ReadWriteLock.h"
@@ -11,6 +12,7 @@
 #include <type_traits>
 
 namespace Core {
+EXTERN_LOG_CATEGORY(CORE_API, Services)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -57,10 +59,10 @@ private:
         return Meta::TTypeHash<_Interface>::value();
     }
 
-    class TService {
+    class FServiceHolder {
     public:
-        TService() : TService(0, nullptr, FStringView()) {}
-        TService(FServiceId id, void* pimpl, const FStringView& name)
+        FServiceHolder() : FServiceHolder(0, nullptr, FStringView()) {}
+        FServiceHolder(FServiceId id, void* pimpl, const FStringView& name)
             : _id(id), _pimpl(pimpl), _name(name) {}
 
         FServiceId Id() const { return _id; }
@@ -73,7 +75,7 @@ private:
         FStringView _name;
     };
 
-    typedef FLAT_MAPINSITU(Internal, FServiceId, TService, 8) services_type;
+    typedef FLAT_MAPINSITU(Internal, FServiceId, FServiceHolder, 8) services_type;
 
     FReadWriteLock _barrierRW;
     services_type _services;
@@ -102,7 +104,7 @@ void FServiceContainer::Register(T* service) {
     _Interface* const pimpl = service; // important before casting to (void*)
     _services.Emplace_AssertUnique(serviceId, serviceId, (void*)pimpl, serviceName);
 
-    LOG(Info, L"[Service] Register <{0}> with <{1}> (id={2:x})",
+    LOG(Services, Info, L"[Service] Register <{0}> with <{1}> (id={2:x})",
         serviceName, typeid(T).name(), hash_t(serviceId));
 }
 //----------------------------------------------------------------------------
@@ -115,7 +117,7 @@ void FServiceContainer::Unregister(T* service) {
 
     WRITESCOPELOCK(_barrierRW);
 
-    LOG(Info, L"[Service] Unregister <{0}> with <{1}> (id={2})",
+    LOG(Services, Info, L"[Service] Unregister <{0}> with <{1}> (id={2})",
         typeid(_Interface).name(), typeid(T).name(), hash_t(serviceId) );
 
 #ifdef WITH_CORE_ASSERT
@@ -129,7 +131,7 @@ void FServiceContainer::Unregister(T* service) {
     _services.Erase(it);
 #else
     if (not _services.Erase(serviceId))
-        AssertNotReached(); // service should have beed registered !
+        AssertNotReached(); // service should have been already registered !
 #endif
 }
 //----------------------------------------------------------------------------
@@ -149,7 +151,7 @@ _Interface* FServiceContainer::GetIFP() const {
     const auto it = _services.Find(serviceId);
 
     if (_services.end() == it) {
-        LOG(Warning, L"[Service] Unknown service <{0}> ! (id={1})",
+        LOG(Services, Warning, L"[Service] Unknown service <{0}> ! (id={1})",
             typeid(_Interface).name(), hash_t(serviceId) );
 
         return nullptr;

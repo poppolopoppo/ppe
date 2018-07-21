@@ -178,7 +178,7 @@ struct TProduction {
     }
 };
 //----------------------------------------------------------------------------
-inline TProduction<const Lexer::FMatch *> Expect(Lexer::FSymbol::ETypeId symbol, const char *message = nullptr) {
+inline TProduction<const Lexer::FMatch *> Expect(Lexer::FSymbol::ETypeId symbol) {
     return TProduction<const Lexer::FMatch *>{[symbol](FParseList& input) -> TParseResult<const Lexer::FMatch *> {
         const Lexer::FMatch *match = input.Read();
 
@@ -188,7 +188,7 @@ inline TProduction<const Lexer::FMatch *> Expect(Lexer::FSymbol::ETypeId symbol,
     }};
 }
 //----------------------------------------------------------------------------
-inline TProduction<const Lexer::FMatch *> ExpectMask(uint64_t symbolMask, const char *message = nullptr) {
+inline TProduction<const Lexer::FMatch *> ExpectMask(uint64_t symbolMask) {
     return TProduction<const Lexer::FMatch *>{[symbolMask](FParseList& input) -> TParseResult<const Lexer::FMatch *> {
         const Lexer::FMatch *match = input.Read();
 

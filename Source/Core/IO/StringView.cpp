@@ -3,16 +3,13 @@
 #include "StringView.h"
 
 #include "Allocator/Alloca.h"
+#include "HAL/PlatformMemory.h"
 #include "IO/String.h"
 #include "IO/TextWriter.h"
+#include "HAL/PlatformString.h"
 #include "Memory/HashFunctions.h"
 
 #include "Core.External/double-conversion-external.h"
-
-#include <emmintrin.h>
-#include <intrin.h>
-
-#define USE_CORE_SIMD_STRINGOPS 1 // turn to 0 to disable SIMD optimizations %_NOCOMMIT%
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -220,7 +217,7 @@ static bool Atof_(float *dst, const TBasicStringView<_Char>& str) {
         checked_cast<int>(str.size()),
         &len );
 
-    return (len == str.size());
+    return (checked_cast<size_t>(len) == str.size());
 }
 template <typename _Char>
 static bool Atof_(double *dst, const TBasicStringView<_Char>& str) {
@@ -230,7 +227,7 @@ static bool Atof_(double *dst, const TBasicStringView<_Char>& str) {
         checked_cast<int>(str.size()),
         &len );
 
-    return (len == str.size());
+    return (checked_cast<size_t>(len) == str.size());
 }
 
 #endif
@@ -444,203 +441,6 @@ bool EndsWithI_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char
     return (str.size() >= suffix.size() && EqualsI(str.LastNElements(suffix.size()), suffix) );
 }
 //----------------------------------------------------------------------------
-// returns < 0 if less (not necessarly -1), > 0 if greater (not necessarily +1) and 0 if equals
-// 1x-2x faster with SIMD on x64 :
-static int StrNCmp_(const char* lhs, const char* rhs, size_t len) {
-#if defined(ARCH_X64) && USE_CORE_SIMD_STRINGOPS
-    size_t fast = len / sizeof(__m128i);
-    size_t offset = fast * sizeof(__m128i);
-    size_t current_block = 0;
-
-    const __m128i* lhs_128i = (const __m128i*)lhs;
-    const __m128i* rhs_128i = (const __m128i*)rhs;
-
-    for (; current_block < fast; ++current_block) {
-        __m128i cmpsg = ::_mm_sub_epi8(
-            ::_mm_lddqu_si128(lhs_128i + current_block),
-            ::_mm_lddqu_si128(rhs_128i + current_block)
-        );
-
-        size_t mask = size_t(::_mm_movemask_epi8(::_mm_cmpgt_epi8(::_mm_abs_epi8(cmpsg), ::_mm_setzero_si128())));
-        if (mask)
-            return ((i8*)&cmpsg)[Meta::tzcnt(mask)];
-    }
-
-    for (; len > offset; ++offset) {
-        if (lhs[offset] ^ rhs[offset])
-            return (int)((unsigned char)lhs[offset] - (unsigned char)rhs[offset]);
-    }
-
-    return 0;
-#else
-    return ::strncmp(lhs, rhs, len);
-#endif
-}
-static int StrNCmp_(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
-#if defined(ARCH_X64) && USE_CORE_SIMD_STRINGOPS && 0 // some ops are not available for epi16
-    size_t fast = (len * sizeof(wchar_t)) / sizeof(__m128i);
-    size_t offset = fast * sizeof(__m128i);
-    size_t current_block = 0;
-
-    const __m128i* lhs_128i = (const __m128i*)lhs;
-    const __m128i* rhs_128i = (const __m128i*)rhs;
-
-    for (; current_block < fast; ++current_block) {
-        __m128i cmpsg = ::_mm_sub_epi16(
-            ::_mm_lddqu_si128(lhs_128i + current_block),
-            ::_mm_lddqu_si128(rhs_128i + current_block)
-        );
-
-        size_t mask = size_t(::_mm_movemask_epi16(::_mm_cmpgt_epi16(::_mm_abs_epi16(cmpsg), ::_mm_setzero_si128())));
-        if (mask)
-            return cmpsg.m128i_i16[Meta::tzcnt(mask)];
-    }
-
-    for (; len > offset; ++offset) {
-        if (lhs[offset] ^ rhs[offset])
-            return (int)(lhs[offset] - rhs[offset]);
-    }
-
-    return 0;
-#else
-    return ::wcsncmp(lhs, rhs, len);
-#endif
-}
-//----------------------------------------------------------------------------
-// 2x-3x faster than ::strncmp() == 0
-static bool StrEquals_(const char* lhs, const char* rhs, size_t len) {
-#if USE_CORE_SIMD_STRINGOPS
-    size_t fast = len / sizeof(__m128i);
-    size_t offset = fast * sizeof(__m128i);
-    size_t current_block = 0;
-
-    for (; current_block < fast; ++current_block) {
-        __m128i lhs_epi8 = ::_mm_lddqu_si128((const __m128i*)lhs + current_block);
-        __m128i rhs_epi8 = ::_mm_lddqu_si128((const __m128i*)rhs + current_block);
-
-        if (::_mm_movemask_epi8(::_mm_cmpeq_epi8(lhs_epi8, rhs_epi8)) != 0xFFFF)
-            return false;
-    }
-
-    for (; len > offset; ++offset) {
-        if (lhs[offset] ^ rhs[offset])
-            return false;
-    }
-
-    return true;
-#else
-    return (0 == ::strncmp(lhs, rhs, len));
-#endif
-}
-static bool StrEquals_(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
-#if USE_CORE_SIMD_STRINGOPS && 0 // some ops are not available for epi16
-    size_t fast = (len * sizeof(wchar_t)) / sizeof(__m128i);
-    size_t offset = fast * sizeof(__m128i);
-    size_t current_block = 0;
-
-    for (; current_block < fast; ++current_block) {
-        __m128i lhs_epi16 = ::_mm_lddqu_si128((const __m128i*)lhs + current_block);
-        __m128i rhs_epi16 = ::_mm_lddqu_si128((const __m128i*)rhs + current_block);
-
-        if (::_mm_movemask_epi16(::_mm_cmpeq_epi16(lhs_epi16, rhs_epi16)) != 0xFF)
-            return false;
-    }
-
-    for (; len > offset; ++offset) {
-        if (lhs[offset] ^ rhs[offset])
-            return false;
-    }
-
-    return true;
-#else
-    return (0 == ::wcsncmp(lhs, rhs, len));
-#endif
-}
-//----------------------------------------------------------------------------
-// 2x-3x faster than ::strncmp() == 0
-static bool StrEqualsI_(const char* lhs, const char* rhs, size_t len) {
-#if USE_CORE_SIMD_STRINGOPS
-    size_t fast = len / sizeof(__m128i);
-    size_t offset = fast * sizeof(__m128i);
-    size_t current_block = 0;
-
-    for (; current_block < fast; ++current_block) {
-        __m128i lhs_epi8 = ::_mm_lddqu_si128((const __m128i*)lhs + current_block);
-        __m128i rhs_epi8 = ::_mm_lddqu_si128((const __m128i*)rhs + current_block);
-
-        __m128i lower_lhs_epi8 = ::_mm_blendv_epi8(
-            lhs_epi8,
-            ::_mm_add_epi8(_mm_sub_epi8(lhs_epi8, ::_mm_set1_epi8('A')), ::_mm_set1_epi8('a')),
-            ::_mm_and_si128(
-                ::_mm_cmpgt_epi8(lhs_epi8, ::_mm_set1_epi8('A' - 1)),
-                ::_mm_cmplt_epi8(lhs_epi8, ::_mm_set1_epi8('Z' + 1))
-            )
-        );
-        __m128i lower_rhs_epi8 = _mm_blendv_epi8(
-            rhs_epi8,
-            ::_mm_add_epi8(_mm_sub_epi8(rhs_epi8, ::_mm_set1_epi8('A')), ::_mm_set1_epi8('a')),
-            ::_mm_and_si128(
-                ::_mm_cmpgt_epi8(rhs_epi8, ::_mm_set1_epi8('A' - 1)),
-                ::_mm_cmplt_epi8(rhs_epi8, ::_mm_set1_epi8('Z' + 1))
-            )
-        );
-
-        if (::_mm_movemask_epi8(::_mm_cmpeq_epi8(lower_lhs_epi8, lower_rhs_epi8)) != 0xFFFF)
-            return false;
-    }
-
-    for (; len > offset; ++offset) {
-        if (ToLower(lhs[offset]) ^ ToLower(rhs[offset]))
-            return false;
-    }
-
-    return true;
-#else
-    return (0 == ::_strnicmp(lhs, rhs, len));
-#endif
-}
-static bool StrEqualsI_(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
-#if USE_CORE_SIMD_STRINGOPS && 0 // some ops are not available for epi16
-    size_t fast = (len * sizeof(wchar_t)) / sizeof(__m128i);
-    size_t offset = fast * sizeof(__m128i);
-    size_t current_block = 0;
-
-    for (; current_block < fast; ++current_block) {
-        __m128i lhs_epi16 = ::_mm_lddqu_si128((const __m128i*)lhs + current_block);
-        __m128i rhs_epi16 = ::_mm_lddqu_si128((const __m128i*)rhs + current_block);
-
-        __m128i lower_lhs_epi16 = ::_mm_blend_epi16(
-            lhs_epi16,
-            ::_mm_add_epi16(_mm_sub_epi16(lhs_epi16, ::_mm_set1_epi16(L'A')), ::_mm_set1_epi16(L'a')),
-            ::_mm_and_si128(
-                ::_mm_cmpgt_epi16(lhs_epi16, ::_mm_set1_epi16(L'A' - 1)),
-                ::_mm_cmplt_epi16(lhs_epi16, ::_mm_set1_epi16(L'Z' + 1))
-            )
-        );
-        __m128i lower_rhs_epi16 = ::_mm_blend_epi16(
-            rhs_epi16,
-            ::_mm_add_epi16(_mm_sub_epi16(rhs_epi16, ::_mm_set1_epi16(L'A')), ::_mm_set1_epi16(L'a')),
-            ::_mm_and_si128(
-                ::_mm_cmpgt_epi16(rhs_epi16, ::_mm_set1_epi16(L'A' - 1)),
-                ::_mm_cmplt_epi16(rhs_epi16, ::_mm_set1_epi16(L'Z' + 1))
-            )
-        );
-
-        if (::_mm_movemask_epi8(::_mm_cmpeq_epi16(lower_lhs_epi16, lower_rhs_epi16)) != 0xFF)
-            return false;
-    }
-
-    for (; len > offset; ++offset) {
-        if (ToLower(lhs[offset]) ^ ToLower(rhs[offset]))
-            return false;
-    }
-
-    return true;
-#else
-    return (0 == ::_wcsnicmp(lhs, rhs, len));
-#endif
-}
-//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -650,141 +450,25 @@ static bool StrEqualsI_(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
 void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src) {
     Assert(dst.size() == src.size());
 
-    const char* sbegin = src.data();
-    const char* send = (sbegin + src.size());
-    char* dbegin = dst.data();
-
-#if USE_CORE_SIMD_STRINGOPS
-    size_t fast = (send - sbegin) / sizeof(__m128i);
-    size_t offset = fast * sizeof(__m128i);
-    size_t current_block = 0;
-
-    for (; current_block < fast; ++current_block) {
-        __m128i src_epi8 = ::_mm_lddqu_si128((const __m128i*)sbegin + current_block);
-
-        __m128i lower_epi8 = ::_mm_blendv_epi8(
-            src_epi8,
-            ::_mm_add_epi8(_mm_sub_epi8(src_epi8, ::_mm_set1_epi8('A')), ::_mm_set1_epi8('a')),
-            ::_mm_and_si128(
-                ::_mm_cmpgt_epi8(src_epi8, ::_mm_set1_epi8('A' - 1)),
-                ::_mm_cmplt_epi8(src_epi8, ::_mm_set1_epi8('Z' + 1))
-            )
-        );
-
-        ::_mm_storeu_si128((__m128i*)dbegin + current_block, lower_epi8);
-    }
-
-    sbegin += offset;
-    dbegin += offset;
-#endif
-
-    for (; sbegin != send; ++sbegin, ++dbegin)
-        *dbegin = ToLower(*sbegin);
+    FPlatformString::ToLower(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
 void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) {
     Assert(dst.size() == src.size());
 
-    const wchar_t* sbegin = src.data();
-    const wchar_t* send = (sbegin + src.size());
-    wchar_t* dbegin = dst.data();
-
-#if USE_CORE_SIMD_STRINGOPS && 0 // some ops are not available for epi16
-    size_t fast = ((send - sbegin) * sizeof(wchar_t)) / sizeof(__m128i);
-    size_t offset = fast * sizeof(__m128i);
-    size_t current_block = 0;
-
-    for (; current_block < fast; ++current_block) {
-        __m128i src_epi16 = ::_mm_lddqu_si128((const __m128i*)sbegin + current_block);
-
-        __m128i lower_epi16 = ::_mm_blendv_epi16(
-            src_epi16,
-            ::_mm_add_epi16(_mm_sub_epi16(src_epi16, ::_mm_set1_epi16(L'A')), ::_mm_set1_epi16(L'a')),
-            ::_mm_and_si128(
-                ::_mm_cmpgt_epi16(src_epi16, ::_mm_set1_epi16(L'A' - 1)),
-                ::_mm_cmplt_epi16(src_epi16, ::_mm_set1_epi16(L'Z' + 1))
-            )
-        );
-
-        ::_mm_storeu_si128((__m128i*)dbegin + current_block, lower_epi8);
-    }
-
-    sbegin += offset;
-    dbegin += offset;
-#endif
-
-    for (; sbegin != send; ++sbegin, ++dbegin)
-        *dbegin = ToLower(*sbegin);
+    FPlatformString::ToLower(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
 void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src) {
     Assert(dst.size() == src.size());
 
-    const char* sbegin = src.data();
-    const char* send = (sbegin + src.size());
-    char* dbegin = dst.data();
-
-#if USE_CORE_SIMD_STRINGOPS
-    size_t fast = (send - sbegin) / sizeof(__m128i);
-    size_t offset = fast * sizeof(__m128i);
-    size_t current_block = 0;
-
-    for (; current_block < fast; ++current_block) {
-        __m128i src_epi8 = ::_mm_lddqu_si128((const __m128i*)sbegin + current_block);
-
-        __m128i lower_epi8 = ::_mm_blendv_epi8(
-            src_epi8,
-            ::_mm_add_epi8(_mm_sub_epi8(src_epi8, ::_mm_set1_epi8('a')), ::_mm_set1_epi8('A')),
-            ::_mm_and_si128(
-                ::_mm_cmpgt_epi8(src_epi8, ::_mm_set1_epi8('a' - 1)),
-                ::_mm_cmplt_epi8(src_epi8, ::_mm_set1_epi8('z' + 1))
-            )
-        );
-
-        ::_mm_storeu_si128((__m128i*)dbegin + current_block, lower_epi8);
-    }
-
-    sbegin += offset;
-    dbegin += offset;
-#endif
-
-    for (; sbegin != send; ++sbegin, ++dbegin)
-        *dbegin = ToUpper(*sbegin);
+    FPlatformString::ToUpper(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
 void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) {
     Assert(dst.size() == src.size());
 
-    const wchar_t* sbegin = src.data();
-    const wchar_t* send = (sbegin + src.size());
-    wchar_t* dbegin = dst.data();
-
-#if USE_CORE_SIMD_STRINGOPS && 0 // some ops are not available for epi16
-    size_t fast = ((send - sbegin) * sizeof(wchar_t)) / sizeof(__m128i);
-    size_t offset = fast * sizeof(__m128i);
-    size_t current_block = 0;
-
-    for (; current_block < fast; ++current_block) {
-        __m128i src_epi16 = ::_mm_lddqu_si128((const __m128i*)sbegin + current_block);
-
-        __m128i lower_epi16 = ::_mm_blendv_epi16(
-            src_epi16,
-            ::_mm_add_epi16(_mm_sub_epi16(src_epi16, ::_mm_set1_epi16(L'a')), ::_mm_set1_epi16(L'A')),
-            ::_mm_and_si128(
-                ::_mm_cmpgt_epi16(src_epi16, ::_mm_set1_epi16(L'a' - 1)),
-                ::_mm_cmplt_epi16(src_epi16, ::_mm_set1_epi16(L'z' + 1))
-            )
-        );
-
-        ::_mm_storeu_si128((__m128i*)dbegin + current_block, lower_epi8);
-    }
-
-    sbegin += offset;
-    dbegin += offset;
-#endif
-
-    for (; sbegin != send; ++sbegin, ++dbegin)
-        *dbegin = ToUpper(*sbegin);
+    FPlatformString::ToUpper(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -841,24 +525,71 @@ FWStringView EatPrints(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(
 FStringView EatSpaces(FStringView& str) { return SplitInplaceIf_ReturnEaten_(str, &IsSpace); }
 FWStringView EatSpaces(FWStringView& wstr) { return SplitInplaceIf_ReturnEaten_(wstr, &IsSpace); }
 //----------------------------------------------------------------------------
-FStringView Chomp(const FStringView& str) { return SplitIf_(str, &IsEndLine); }
-FWStringView Chomp(const FWStringView& wstr) { return SplitIf_(wstr, &IsEndLine); }
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FStringView Strip(const FStringView& str) {
-    size_t first = 0;
-    size_t last = str.size();
-    for(; first < last && IsSpace(str[first]); ++first);
-    for(; first < last && IsSpace(str[last - 1]); --last);
-    return str.SubRange(first, last - first);
+template <typename _Char>
+static TBasicStringView<_Char> TrimStart_(const TBasicStringView<_Char>& str, _Char ch) {
+    size_t begin = 0;
+    for (; begin < str.size() && str[begin] == ch; ++begin);
+    return str.CutStartingAt(begin);
 }
 //----------------------------------------------------------------------------
-FWStringView Strip(const FWStringView& wstr) {
-    size_t first = 0;
-    size_t last = wstr.size();
-    for(; first < last && IsSpace(wstr[first]); ++first);
-    for(; first < last && IsSpace(wstr[last - 1]); --last);
-    return wstr.SubRange(first, last - first);
+template <typename _Char>
+static TBasicStringView<_Char> TrimStart_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char>& chars) {
+    Assert(not chars.empty());
+    size_t begin = 0;
+    for (; begin < str.size() && chars.Contains(str[begin]); ++begin);
+    return str.CutStartingAt(begin);
 }
+//----------------------------------------------------------------------------
+template <typename _Char>
+static TBasicStringView<_Char> TrimEnd_(const TBasicStringView<_Char>& str, _Char ch) {
+    size_t end = str.size();
+    for (; end > 0 && str[end - 1] == ch; --end);
+    return str.CutBefore(end);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+static TBasicStringView<_Char> TrimEnd_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char>& chars) {
+    Assert(not chars.empty());
+    size_t end = str.size();
+    for (; end > 0 && chars.Contains(str[end - 1]); --end);
+    return str.CutBefore(end);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+static TBasicStringView<_Char> Trim_(const TBasicStringView<_Char>& str, _Char ch) {
+    return TrimEnd_(TrimStart_(str, ch), ch);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+static TBasicStringView<_Char> Trim_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char>& chars) {
+    return TrimEnd_(TrimStart_(str, chars), chars);
+}
+//----------------------------------------------------------------------------
+FStringView TrimStart(const FStringView& str, char ch) { return TrimStart_(str, ch); }
+FWStringView TrimStart(const FWStringView& wstr, wchar_t wch) { return TrimStart_(wstr, wch); }
+//----------------------------------------------------------------------------
+FStringView TrimStart(const FStringView& str, const FStringView& chars) { return TrimStart_(str, chars); }
+FWStringView TrimStart(const FWStringView& wstr, const FWStringView& wchars) { return TrimStart_(wstr, wchars); }
+//----------------------------------------------------------------------------
+FStringView TrimEnd(const FStringView& str, char ch) { return TrimEnd_(str, ch); }
+FWStringView TrimEnd(const FWStringView& wstr, wchar_t wch) { return TrimEnd_(wstr, wch); }
+//----------------------------------------------------------------------------
+FStringView TrimEnd(const FStringView& str, const FStringView& chars) { return TrimEnd_(str, chars); }
+FWStringView TrimEnd(const FWStringView& wstr, const FWStringView& wchars) { return TrimEnd_(wstr, wchars); }
+//----------------------------------------------------------------------------
+FStringView Trim(const FStringView& str, char ch) { return Trim_(str, ch); }
+FWStringView Trim(const FWStringView& wstr, wchar_t wch) { return Trim_(wstr, wch); }
+//----------------------------------------------------------------------------
+FStringView Trim(const FStringView& str, const FStringView& chars) { return Trim_(str, chars); }
+FWStringView Trim(const FWStringView& wstr, const FWStringView& wchars) { return Trim_(wstr, wchars); }
+//----------------------------------------------------------------------------
+FStringView Chomp(const FStringView& str) { return TrimEnd_(str, MakeStringView("\n\r")); }
+FWStringView Chomp(const FWStringView& wstr) { return TrimEnd_(wstr, MakeStringView(L"\n\r")); }
+//----------------------------------------------------------------------------
+FStringView Strip(const FStringView& str) { return Trim_(str, MakeStringView(" \t\r")); }
+FWStringView Strip(const FWStringView& wstr) { return Trim_(wstr, MakeStringView(L" \t\r")); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -866,7 +597,11 @@ int Compare(const FStringView& lhs, const FStringView& rhs) {
     if (lhs == rhs)
         return 0;
 
-    const int cmp = StrNCmp_(lhs.data(), rhs.data(), std::min(lhs.size(), rhs.size()));
+    const size_t sz = Min(lhs.size(), rhs.size());
+    if (0 == sz)
+        return 0;
+
+    const int cmp = FPlatformString::NCmp(lhs.data(), rhs.data(), sz);
 
     if (cmp)
         return cmp;
@@ -880,7 +615,11 @@ int Compare(const FWStringView& lhs, const FWStringView& rhs) {
     if (lhs == rhs)
         return 0;
 
-    const int cmp = StrNCmp_(lhs.data(), rhs.data(), std::min(lhs.size(), rhs.size()));
+    const size_t sz = Min(lhs.size(), rhs.size());
+    if (0 == sz)
+        return 0;
+
+    const int cmp = FPlatformString::NCmp(lhs.data(), rhs.data(), sz);
 
     if (cmp)
         return cmp;
@@ -894,8 +633,11 @@ int CompareI(const FStringView& lhs, const FStringView& rhs) {
     if (lhs == rhs)
         return 0;
 
-    // Faster than SIMD on MSVC
-    const int cmp = ::_strnicmp(lhs.data(), rhs.data(), std::min(lhs.size(), rhs.size()));
+    const size_t sz = Min(lhs.size(), rhs.size());
+    if (0 == sz)
+        return 0;
+
+    const int cmp = FPlatformString::NCmpI(lhs.data(), rhs.data(), sz);
 
     if (cmp)
         return cmp;
@@ -909,8 +651,11 @@ int CompareI(const FWStringView& lhs, const FWStringView& rhs) {
     if (lhs == rhs)
         return 0;
 
-    // Faster than SIMD on MSVC
-    const int cmp = ::_wcsnicmp(lhs.data(), rhs.data(), std::min(lhs.size(), rhs.size()));
+    const size_t sz = Min(lhs.size(), rhs.size());
+    if (0 == sz)
+        return 0;
+
+    const int cmp = FPlatformString::NCmpI(lhs.data(), rhs.data(), sz);
 
     if (cmp)
         return cmp;
@@ -923,39 +668,39 @@ int CompareI(const FWStringView& lhs, const FWStringView& rhs) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool EqualsN(const char* lhs, const char* rhs, size_t len) {
-    return StrEquals_(lhs, rhs, len);
+    return (lhs == rhs || 0 == len || FPlatformString::Equals(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
 bool EqualsNI(const char* lhs, const char* rhs, size_t len) {
-    return StrEqualsI_(lhs, rhs, len);
+    return (lhs == rhs || 0 == len || FPlatformString::EqualsI(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
 bool EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
-    return StrEquals_(lhs, rhs, len);
+    return (lhs == rhs || 0 == len || FPlatformString::Equals(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
 bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
-    return StrEqualsI_(lhs, rhs, len);
+    return (lhs == rhs || 0 == len || FPlatformString::EqualsI(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
 bool Equals(const FStringView& lhs, const FStringView& rhs) {
     return ((lhs.size() == rhs.size()) &&
-            (lhs.data() == rhs.data() || StrEquals_(lhs.data(), rhs.data(), lhs.size())) );
+            (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::Equals(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
 bool Equals(const FWStringView& lhs, const FWStringView& rhs) {
     return ((lhs.size() == rhs.size()) &&
-            (lhs.data() == rhs.data() || StrEquals_(lhs.data(), rhs.data(), lhs.size())) );
+            (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::Equals(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
 bool EqualsI(const FStringView& lhs, const FStringView& rhs) {
     return ((lhs.size() == rhs.size()) &&
-            (lhs.data() == rhs.data() || StrEqualsI_(lhs.data(), rhs.data(), lhs.size())) );
+            (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::EqualsI(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
 bool EqualsI(const FWStringView& lhs, const FWStringView& rhs) {
     return ((lhs.size() == rhs.size()) &&
-            (lhs.data() == rhs.data() || StrEqualsI_(lhs.data(), rhs.data(), lhs.size())) );
+            (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::EqualsI(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -1099,13 +844,13 @@ size_t EditDistanceI(const FWStringView& lhs, const FWStringView& rhs) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 size_t Copy(const TMemoryView<char>& dst, const FStringView& src) {
-    const size_t n = std::min(dst.size(), src.size());
+    const size_t n = Min(dst.size(), src.size());
     std::copy(src.begin(), src.begin() + n, dst.begin());
     return n;
 }
 //----------------------------------------------------------------------------
 size_t Copy(const TMemoryView<wchar_t>& dst, const FWStringView& src) {
-    const size_t n = std::min(dst.size(), src.size());
+    const size_t n = Min(dst.size(), src.size());
     std::copy(src.begin(), src.begin() + n, dst.begin());
     return n;
 }
@@ -1139,7 +884,7 @@ hash_t hash_stringI(const FStringView& str) {
 #else
     const size_t sz = str.size();
     STACKLOCAL_POD_ARRAY(u8, istr, sz);
-    ::memcpy(istr.data(), str.data(), sz);
+    FPlatformMemory::Memcpy(istr.data(), str.data(), sz);
     return hash_mem(istr.data(), sz);
 #endif
 }

@@ -6,10 +6,11 @@
 #include "Container/Stack.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
+#include "HAL/PlatformMaths.h"
+#include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Memory/VirtualMemory.h"
-#include "Misc/TargetPlatform.h"
 #include "Thread/AtomicSpinLock.h"
 #include "Thread/ThreadContext.h"
 
@@ -25,6 +26,9 @@
 #endif
 
 PRAGMA_INITSEG_COMPILER
+
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
 
 namespace Core {
 LOG_CATEGORY(CORE_API, MallocBinned)
@@ -44,26 +48,26 @@ struct FBinnedAllocator_;
 #ifdef WITH_CORE_ASSERT
 #   define WITH_MALLOCBINNED_FILLBLOCK //%_NOCOMMIT%
 #   ifdef WITH_MALLOCBINNED_FILLBLOCK
-static void FillBlockDeleted_(void* p, size_t size) { ::memset(p, 0xDD, size); }
-static void FillBlockPending_(void* p, size_t size) { ::memset(p, 0xBB, size); }
-static void FillBlockUninitialized_(void* p, size_t size) { ::memset(p, 0xCC, size); }
+static void FillBlockDeleted_(void* p, size_t size) { FPlatformMemory::Memset(p, 0xDD, size); }
+static void FillBlockPending_(void* p, size_t size) { FPlatformMemory::Memset(p, 0xBB, size); }
+static void FillBlockUninitialized_(void* p, size_t size) { FPlatformMemory::Memset(p, 0xCC, size); }
 static void FillBlockPage_(void* p, size_t n, size_t size) {
     u8* block = (u8*)p;
     forrange(i, 0, n) {
         *(u16*)block = u16(i);
-        ::memset(block + sizeof(u16), 0xAA, size - sizeof(u16));
+        FPlatformMemory::Memset(block + sizeof(u16), 0xAA, size - sizeof(u16));
         block += size;
     }
 }
 #   else
 static FORCE_INLINE void FillBlockDeleted_(void* , size_t ) {}
-static void FillBlockPending_(void* p, size_t size) { ::memset(p, 0xAA, size); }
+static void FillBlockPending_(void* p, size_t size) { FPlatformMemory::Memset(p, 0xAA, size); }
 static FORCE_INLINE void FillBlockUninitialized_(void* , size_t ) {}
 static FORCE_INLINE void FillBlockPage_(void* , size_t , size_t ) {}
 #   endif
 #endif
 //----------------------------------------------------------------------------
-struct CACHELINE_ALIGNED FBinnedPage_ {
+struct FBinnedPage_ {
     STATIC_CONST_INTEGRAL(size_t, PageSize, ALLOCATION_GRANULARITY); // 64 kb
 
     FBinnedPage_(const FBinnedPage_&) = delete;
@@ -222,7 +226,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
         constexpr size_t POW_N = 2;
         constexpr size_t MinClassIndex = 19;
         size = ROUND_TO_NEXT_16(size);
-        const size_t index = Meta::FloorLog2((size - 1) | 1);
+        const size_t index = FPlatformMaths::FloorLog2((size - 1) | 1);
         return ((index << POW_N) + ((size - 1) >> (index - POW_N)) - MinClassIndex);
     }
 
@@ -291,7 +295,7 @@ private:
 };
 STATIC_ASSERT(sizeof(FBinnedChunk_) == CACHELINE_SIZE);
 //----------------------------------------------------------------------------
-struct CACHELINE_ALIGNED FBinnedGlobalCache_ {
+struct FBinnedGlobalCache_ {
     STATIC_CONST_INTEGRAL(size_t, FreePagesMax, 128); // <=> 8 mo global cache (128 * 64 * 1024), 1k table
 
     static FBinnedGlobalCache_& Get() {
@@ -407,7 +411,7 @@ private:
     FBinnedGlobalCache_() {}
 };
 //----------------------------------------------------------------------------
-struct FBinnedThreadCache_ {
+struct CACHELINE_ALIGNED FBinnedThreadCache_ {
     STATIC_CONST_INTEGRAL(size_t, FreePagesMax, 16); // <=> 1 mo cache per thread (16 * 64 * 1024)
 
     static FBinnedThreadCache_& InstanceTLS() {
@@ -622,7 +626,7 @@ private:
     }
 };
 //----------------------------------------------------------------------------
-struct CACHELINE_ALIGNED FBinnedAllocator_ {
+struct FBinnedAllocator_ {
     STATIC_CONST_INTEGRAL(size_t, VMCacheBlocks, 32);
     STATIC_CONST_INTEGRAL(size_t, VMCacheSizeInBytes, 16*1024*1024); // <=> 16 mo global cache for large blocks
 
@@ -738,7 +742,7 @@ void* FMallocBinned::Realloc(void* ptr, size_t size) {
 
         if (const size_t cpy = Min(old, size)) {
             Assert(result);
-            ::memcpy(result, ptr, cpy);
+            FPlatformMemory::Memstream(result, ptr, cpy);
         }
 
         FBinnedAllocator_::Release(ptr);
@@ -779,3 +783,4 @@ size_t FMallocBinned::RegionSize(void* ptr) {
 //----------------------------------------------------------------------------
 } //!namespace Core
 
+PRAGMA_MSVC_WARNING_POP()

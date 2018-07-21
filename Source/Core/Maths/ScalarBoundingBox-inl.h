@@ -96,37 +96,55 @@ void TScalarBoundingBox<T, _Dim>::Add(const TScalarBoundingBox& other) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::Contains(const vector_type& v) const {
-    return _min.AllLessOrEqual(v) && _max.AllGreaterOrEqual(v);
+    return (_min.AllLessOrEqual(v) &&
+            _max.AllGreaterOrEqual(v) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::ContainsStrict(const vector_type& v) const {
-    return _min.AllLessThan(v) && _max.AllGreaterThan(v);
+    return (_min.AllLessThan(v) &&
+            _max.AllGreaterThan(v) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const vector_type& v) const {
-    return _min.AllLessOrEqual(v) && _max.AllGreaterThan(v);
+    return (_min.AllLessOrEqual(v) &&
+            _max.AllGreaterThan(v) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::Contains(const TScalarBoundingBox& other) const {
-    return _min.AllLessOrEqual(other._min) && _max.AllGreaterOrEqual(other._max);
+    return (_min.AllLessOrEqual(other._min) &&
+            _max.AllGreaterOrEqual(other._max) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::ContainsStrict(const TScalarBoundingBox& other) const {
-    return _min.AllLessThan(other._min) && _max.AllGreaterThan(other._max);
+    return (_min.AllLessThan(other._min) &&
+            _max.AllGreaterThan(other._max) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const TScalarBoundingBox& other) const {
-    return _min.AllLessOrEqual(other._min) && _max.AllGreaterThan(other._max);
+    return (_min.AllLessOrEqual(other._min) &&
+            _max.AllGreaterThan(other._max) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::Intersects(const TScalarBoundingBox& other) const {
+#if 0
     return (Abs(Center() - other.Center()) * 2).AllLessThan(Extents() + other.Extents());
+#else
+    for (size_t i = 0; i < _Dim; ++i) {
+        const T m = Core::Min(_min._data[i], other._min._data[i]);
+        const T M = Core::Max(_max._data[i], other._max._data[i]);
+        const T e = (_max._data[i] - _min._data[i]) +
+            (other._max._data[i] - other._min._data[i]);
+        if (M - m >= e)
+            return false;
+    }
+    return true;
+#endif
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>

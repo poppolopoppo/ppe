@@ -2,14 +2,9 @@
 
 #include "Fiber.h"
 
+#include "HAL/PlatformThread.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
-
-#ifdef PLATFORM_WINDOWS
-#   include "Misc/Platform_Windows.h"
-#else
-#   error "OS not yet supported"
-#endif
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -20,7 +15,6 @@ namespace {
 enum : size_t {
     FiberStackCommitSize    = 0,
     FiberStackReserveSize   = (2048/* kb */<<10),
-    FiberFlags              = FIBER_FLAG_FLOAT_SWITCH,
 };
 //----------------------------------------------------------------------------
 static THREAD_LOCAL void* GCurrentThreadFiber = nullptr;
@@ -52,10 +46,9 @@ void FFiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */)
     if (0 == stackSize)
         stackSize = FiberStackReserveSize;
 
-    _pimpl = ::CreateFiberEx(
+    _pimpl = FPlatformThread::CreateFiber(
         FiberStackCommitSize,
         stackSize,
-        FiberFlags,
         entryPoint,
         arg );
 
@@ -69,17 +62,17 @@ void FFiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */)
 void FFiber::Resume() {
     Assert(_pimpl);
     Assert(GCurrentThreadFiber);
-    Assert(::IsThreadAFiber());
-    Assert(::GetCurrentFiber() != _pimpl);
+    Assert(FPlatformThread::IsInFiber());
+    Assert(FPlatformThread::CurrentFiber() != _pimpl);
 
-    ::SwitchToFiber(_pimpl);
+    FPlatformThread::SwitchToFiber(_pimpl);
 }
 //----------------------------------------------------------------------------
 void FFiber::Destroy(size_t stackSize) {
     Assert(_pimpl);
-    Assert(::GetCurrentFiber() != _pimpl);
+    Assert(FPlatformThread::CurrentFiber() != _pimpl);
 
-    ::DeleteFiber(_pimpl);
+    FPlatformThread::DestroyFiber(_pimpl);
     _pimpl = nullptr;
 
 #if USE_CORE_MEMORYDOMAINS
@@ -98,49 +91,50 @@ void FFiber::Reset(void* pimpl /* = nullptr */) {
 //----------------------------------------------------------------------------
 void FFiber::Start() {
     Assert(!GCurrentThreadFiber);
-    Assert(!::IsThreadAFiber());
+    Assert(!FPlatformThread::IsInFiber());
 
-    GCurrentThreadFiber = ::ConvertThreadToFiberEx(nullptr, FiberFlags);
+    GCurrentThreadFiber = FPlatformThread::ConvertCurrentThreadToFiber();
 }
 //----------------------------------------------------------------------------
 void FFiber::Shutdown() {
     Assert(GCurrentThreadFiber);
-    Assert(::IsThreadAFiber());
-    Assert(::GetCurrentFiber() == GCurrentThreadFiber);
+    Assert(FPlatformThread::IsInFiber());
+    Assert(FPlatformThread::CurrentFiber() == GCurrentThreadFiber);
 
-    ::ConvertFiberToThread();
+    FPlatformThread::RevertCurrentFiberToThread(GCurrentThreadFiber);
     GCurrentThreadFiber = nullptr;
 }
 //----------------------------------------------------------------------------
 void* FFiber::ThreadFiber() {
     Assert(GCurrentThreadFiber);
-    Assert(::IsThreadAFiber());
+    Assert(FPlatformThread::IsInFiber());
 
     return GCurrentThreadFiber;
 }
 //----------------------------------------------------------------------------
 void* FFiber::RunningFiber() {
     Assert(GCurrentThreadFiber);
-    Assert(::IsThreadAFiber());
+    Assert(FPlatformThread::IsInFiber());
 
-    return ::GetCurrentFiber();
+    return FPlatformThread::CurrentFiber();
 }
 //----------------------------------------------------------------------------
 void* FFiber::RunningFiberIFP() {
-    return ::IsThreadAFiber()
-        ? ::GetCurrentFiber()
-        : nullptr;
+    return (FPlatformThread::IsInFiber()
+        ? FPlatformThread::CurrentFiber()
+        : nullptr );
 }
 //----------------------------------------------------------------------------
 bool FFiber::IsInFiber() {
     const bool result = (nullptr != GCurrentThreadFiber);
-    Assert(result == (TRUE == ::IsThreadAFiber()) );
+    Assert(result == (TRUE == FPlatformThread::IsInFiber()) );
     return result;
 }
 //----------------------------------------------------------------------------
 void* FFiber::CurrentFiberData() {
     Assert(IsInFiber());
-    return ::GetFiberData();
+
+    return FPlatformThread::FiberData();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

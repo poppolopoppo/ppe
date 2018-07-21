@@ -89,7 +89,7 @@ bool FHttpServerImpl::Serve_ReturnIfQuit(const FMilliseconds& timeout) {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-void HttpServicingTask_(ITaskContext& ctx, const FHttpServerImpl* server, FSocketBuffered& socket) {
+void HttpServicingTask_(ITaskContext& , const FHttpServerImpl* server, FSocketBuffered& socket) {
     Assert(server);
     Assert(socket.IsConnected());
 
@@ -158,7 +158,8 @@ FHttpServer::FHttpServer(
     FAddress&& localhost,
     const FMilliseconds& timeout/* = FSeconds(3) */,
     size_t maxContentLength/* = DefaultMaxContentLength */)
-:   _localhost(std::move(localhost))
+:   _name(name)
+,   _localhost(std::move(localhost))
 ,   _timeout(timeout)
 ,   _maxContentLength(maxContentLength)
 ,   _userData(nullptr)

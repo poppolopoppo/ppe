@@ -3,6 +3,7 @@
 #include "Core.Serialize/Serialize.h"
 
 #include "Core/Container/Hash.h"
+#include "Core/HAL/PlatformMaths.h"
 #include "Core/IO/StringView.h"
 #include "Core/IO/TextWriter_fwd.h"
 
@@ -95,7 +96,7 @@ public:
     FSymbol() : _type(Invalid), _ord(0) {}
     FSymbol(ETypeId type, const FStringView& cstr, u64 ord = 0) : _type(type), _cstr(cstr), _ord(ord) {}
 
-    bool IsValid() const { return (Meta::popcnt64(u64(_type)) == 1); }
+    bool IsValid() const { return (FPlatformMaths::popcnt64(u64(_type)) == 1); }
     bool IsPrefix() const { return (_type ^ Prefix); }
 
     ETypeId Type() const { return _type; }

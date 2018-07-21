@@ -188,7 +188,11 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_AssertUniqu
     reserve_Additional(1); // TODO: problem here -> we reserve a slot (and potential alloc) even if nothing is inserted
 
     const size_type hash = HashValue_(rvalue);
+#ifdef WITH_CORE_ASSERT
     const size_type index = FindEmptyBucket_(table_traits::Key(rvalue), hash);
+#else
+    const size_type index = FindEmptyBucket_(hash);
+#endif
 
     if (not _data.SetElement(index, hash))
         AssertNotReached();
@@ -283,7 +287,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_ReleaseMemor
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::rehash(size_type count) {
-    const size_type newCapacity = Meta::NextPow2(count);
+    const size_type newCapacity = FPlatformMaths::NextPow2(count);
     if (newCapacity > capacity())
         RelocateRehash_(newCapacity);
 }
@@ -350,10 +354,11 @@ bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::operator ==(const 
     else if (0 == _data.Size)
         return true;
 
-    const size_type n = capacity();
+    const size_type c = capacity();
     const pointer buckets = BucketAt_(0);
 
-    for (size_type i = 0; i <= n; i += FHTD::GGroupSize) {
+    ONLY_IF_ASSERT(size_t n = 0);
+    for (size_type i = 0; i < c; i += FHTD::GGroupSize) {
         FBitMask filled = FHTD::MatchFilledBucket(_data.GroupAt_StreamLoad(i));
 
         while (filled) {
@@ -363,9 +368,12 @@ bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::operator ==(const 
 
             if (INDEX_NONE == rhs)
                 return false;
+
+            ONLY_IF_ASSERT(n++);
         }
     }
 
+    Assert_NoAssume(n == size());
     return true;
 }
 //----------------------------------------------------------------------------
@@ -516,7 +524,7 @@ template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Alloc
 FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::GrowIFN_ReturnNewCapacity_(size_type atleast) const -> size_type {
     atleast += (atleast * SlackFactor) >> 7;// (atleast * (100 - MaxLoadFactor))/100;
     // if not empty can't be smaller than GGroupSize
-    return ((atleast > 0 && atleast > (_data.Capacity)) ? Max(FHTD::GGroupSize, Meta::NextPow2(atleast)) : 0);
+    return ((atleast > 0 && atleast > (_data.Capacity)) ? Max(FHTD::GGroupSize, FPlatformMaths::NextPow2(atleast)) : 0);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -524,7 +532,7 @@ FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Shrin
     if (atleast == 0) return 0;
     atleast += (atleast * SlackFactor) >> 7;// (atleast * (100 - MaxLoadFactor))/100;
     // if not empty can't be smaller than GGroupSize
-    atleast = Max(FHTD::GGroupSize, Meta::NextPow2(atleast));
+    atleast = Max(FHTD::GGroupSize, FPlatformMaths::NextPow2(atleast));
     return ((atleast < (_data.Capacity)) ? atleast : 0);
 }
 //----------------------------------------------------------------------------
@@ -582,8 +590,12 @@ auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindF
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+#ifdef WITH_CORE_ASSERT
 template <typename _KeyLike>
-auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindEmptyBucket_(const _KeyLike& keyLike, size_t hash) const NOEXCEPT -> size_type {
+auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindEmptyBucket_(const _KeyLike& keyLikeForAssert, size_t hash) const NOEXCEPT -> size_type {
+#else
+auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindEmptyBucket_(size_t hash) const NOEXCEPT -> size_type {
+#endif
     Assert(_data.Capacity > 0);
     Assert(_data.Size < _data.Capacity);
 
@@ -602,16 +614,13 @@ auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindE
         FBitMask match = FHTD::Match(group, h2_16);
         while (size_type offsetP1 = match.PopFront()) {
             const size_type index = (bucket + offsetP1 - 1);
-            if (Unlikely(static_cast<const _EqualTo&>(*this)(table_traits::Key(*BucketAt_(index)), keyLike)))
+            if (Unlikely(static_cast<const _EqualTo&>(*this)(table_traits::Key(*BucketAt_(index)), keyLikeForAssert)))
                 AssertNotReached(); // key already exists !
         }
 #endif
 
         bucket = (bucket + FHTD::GGroupSize) & capacityM1;
     }
-
-    AssertNotReached(); // guaranteed to have a free slot if size < capacity !
-    return INDEX_NONE;
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -641,9 +650,6 @@ auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindO
 
         start = ((start + FHTD::GGroupSize) & capacityM1);
     }
-
-    AssertNotReached(); // guaranteed to have a free slot if size < capacity !
-    return INDEX_NONE;
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -680,12 +686,17 @@ NO_INLINE void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Relocate
 
         while (filled) {
             const size_type src = (i + filled.PopFront_AssumeNotEmpty())/* can't overflow here due to loop */;
-            const size_type hsh = HashValue_(oldBuckets[src]); // still needs rehashing here, but THashMemoizer<> can amortize this cost for heavy hash functions
-            const size_type dst = FindEmptyBucket_(table_traits::Key(oldBuckets[src]), hsh);
+            const size_t hash = HashValue_(oldBuckets[src]); // still needs rehashing here, but THashMemoizer<> can amortize this cost for heavy hash functions
+
+#ifdef WITH_CORE_ASSERT
+            const size_type dst = FindEmptyBucket_(table_traits::Key(oldBuckets[src]), hash);
+#else
+            const size_type dst = FindEmptyBucket_(hash);
+#endif
             Assert(INDEX_NONE != dst);
 
-            Assert(FHTD::H2(hsh) == *oldData.State(src)); // checks that the hash function is stable, could also be caused by a corrupted item
-            if (not _data.SetElement(dst, hsh))
+            Assert(FHTD::H2(hash) == *oldData.State(src)); // checks that the hash function is stable, could also be caused by a corrupted item
+            if (not _data.SetElement(dst, hash))
                 AssertNotReached();
 
             allocator_traits::construct(allocator_(), &newBuckets[dst], std::move(oldBuckets[src]));

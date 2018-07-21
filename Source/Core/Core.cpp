@@ -8,12 +8,12 @@
 #include "Allocator/NodeBasedContainerAllocator.h"
 #include "Diagnostic/Diagnostics.h"
 #include "Diagnostic/Logger.h"
+#include "HAL/PlatformDebug.h"
 #include "IO/FileStream.h"
 #include "IO/FileSystem.h"
 #include "IO/TextWriter.h"
 #include "IO/VirtualFileSystem.h"
 #include "Meta/AutoSingleton.h"
-#include "Misc/TargetPlatform.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
 
@@ -53,7 +53,9 @@ static void CheckMemory_() {
 
     bInScope = true;
 
-    FPlatformMisc::CheckMemory();
+#   if USE_CORE_PLATFORM_DEBUG
+    FPlatformDebug::CheckMemory();
+#   endif
 
     bInScope = false;
 }

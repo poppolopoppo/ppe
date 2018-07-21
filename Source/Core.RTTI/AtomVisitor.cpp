@@ -238,7 +238,7 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , FAny& an
         : true );
 }
 //----------------------------------------------------------------------------
-bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* scalar, PMetaObject& pobj) {
+bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , PMetaObject& pobj) {
     if (pobj) {
         FMetaObject& obj = (*pobj);
         const FMetaClass* metaClass = obj.RTTI_Class();

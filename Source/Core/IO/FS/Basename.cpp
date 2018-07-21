@@ -94,13 +94,13 @@ FWString FBasename::ToWString() const {
 FStringView FBasename::ToCStr(char *dst, size_t capacity) const {
     FFixedSizeTextWriter oss(dst, capacity);
     oss << *this << Eos;
-    return oss.Written();
+    return oss.Written().ShiftBack();
 }
 //----------------------------------------------------------------------------
 FWStringView FBasename::ToWCStr(wchar_t *dst, size_t capacity) const {
     FWFixedSizeTextWriter oss(dst, capacity);
     oss << *this << Eos;
-    return oss.Written();
+    return oss.Written().ShiftBack();
 }
 //----------------------------------------------------------------------------
 void FBasename::Swap(FBasename& other) {

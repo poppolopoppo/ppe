@@ -4,6 +4,7 @@
 
 #include "Core/Allocator/LinearHeapAllocator.h"
 #include "Core/Container/HashSet.h"
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/IO/StringView.h"
 
 #define USE_CORE_SERIALIZE_TEXTHEAP_SSO (not USE_CORE_MEMORY_DEBUGGING)
@@ -23,7 +24,7 @@ public:
         FText() {
             _small.IsSmall = true;
             _small.Size = 0;
-            ONLY_IF_ASSERT(::memset(_small.Data, 0, sizeof(_small.Data)));
+            ONLY_IF_ASSERT(FPlatformMemory::Memzero(_small.Data, sizeof(_small.Data)));
         }
         ~FText() {}
 
@@ -85,7 +86,7 @@ public:
             FText txt;
             txt._small.IsSmall = true;
             txt._small.Size = checked_cast<u8>(str.size());
-            ::memcpy(txt._small.Data, str.data(), str.SizeInBytes());
+            FPlatformMemory::Memcpy(txt._small.Data, str.data(), str.SizeInBytes());
             Assert(txt._small.IsSmall);
             Assert(txt._large.IsSmall);
             Assert(txt._small.Size == str.size());
@@ -170,7 +171,7 @@ private:
 #endif
 
         void* const storage = _heap.Allocate(str.SizeInBytes());
-        ::memcpy(storage, str.data(), str.SizeInBytes());
+        FPlatformMemory::Memcpy(storage, str.data(), str.SizeInBytes());
         return FStringView((const char*)storage, str.size());
     }
 };

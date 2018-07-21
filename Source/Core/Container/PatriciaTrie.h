@@ -87,6 +87,8 @@ public:
     using typename parent_type::node_type;
     using typename parent_type::sequence_type;
 
+    using parent_type::HasValue;
+
     explicit TPatriciaNode(const sequence_type& keys) : parent_type(keys) {}
 
     const _Value& Value() const { Assert(HasValue()); return _value; }
@@ -105,6 +107,8 @@ public:
 
     using typename parent_type::node_type;
     using typename parent_type::sequence_type;
+
+    using parent_type::HasValue;
 
     explicit TPatriciaNode(const sequence_type& keys) : parent_type(keys) {}
 

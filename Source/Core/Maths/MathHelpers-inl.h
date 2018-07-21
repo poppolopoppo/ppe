@@ -26,18 +26,18 @@ inline constexpr bool BarycentricLerp(bool v0, bool v1, bool v2, float f0, float
 }
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr T Clamp(T value, T vmin, T vmax) {
-    return std::min(vmax, std::max(vmin, value));
-}
-//----------------------------------------------------------------------------
-template <typename T>
 constexpr T FMod(T f, T m) {
     return std::fmod(f, m);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 T Frac(T f) {
-    return (f - std::trunc(f));
+    return (f - FloorToFloat(f));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+T Fractional(T f) {
+    return (f - TruncToFloat(f));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename U>
@@ -72,21 +72,21 @@ constexpr double Pow(double d, U n) {
     return std::pow(d, n);
 }
 //----------------------------------------------------------------------------
-#ifdef WITH_CORE_ASSERT
-inline float Rcp(float f) {
-#else
+#ifndef WITH_CORE_ASSERT
 inline constexpr float Rcp(float f) {
-#endif
+#else
+inline float Rcp(float f) {
     Assert(Abs(f) > F_SmallEpsilon);
+#endif
     return (1.f / f);
 }
 //----------------------------------------------------------------------------
-#ifdef WITH_CORE_ASSERT
-inline double Rcp(double d) {
-#else
+#ifndef WITH_CORE_ASSERT
 inline constexpr double Rcp(double d) {
+#else
+inline double Rcp(double d) {
+    Assert(Abs(d) > D_Epsilon);
 #endif
-    Assert(Abs(d) > F_SmallEpsilon);
     return (1. / d);
 }
 //----------------------------------------------------------------------------
@@ -149,8 +149,8 @@ constexpr float Radians(float degrees) {
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr void SinCos(T radians, T *fsin, T *fcos) {
-    *fsin = std::sin(radians);
-    *fcos = std::cos(radians);
+    *fsin = FPlatformMaths::Sin(radians);
+    *fcos = FPlatformMaths::Cos(radians);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -181,13 +181,13 @@ inline bool NearlyEquals(double A, double B, double maxRelDiff/* = D_Epsilon */)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline constexpr float ClampAngle(float degrees) { // [0,360)
+inline float ClampAngle(float degrees) { // [0,360)
     degrees = FMod(degrees, 360.f);
     degrees = (degrees < 0.f ? degrees + 360.f : degrees);
     return degrees;
 }
 //----------------------------------------------------------------------------
-inline constexpr float NormalizeAngle(float degrees) { // (-180,180]
+inline float NormalizeAngle(float degrees) { // (-180,180]
     degrees = ClampAngle(degrees);
     degrees = (degrees > 180.f ? degrees - 360.f : degrees);
     return degrees;
@@ -204,7 +204,7 @@ inline size_t CubeMapFaceID(float x, float y, float z) {
 //----------------------------------------------------------------------------
 inline float GridSnap(float location, float grid) {
     //Assert(Abs(grid) > F_SmallEpsilon); // constexpr :'(
-    return (Floor((location + 0.5f * grid) / grid) * grid);
+    return (FloorToFloat((location + 0.5f * grid) / grid) * grid);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

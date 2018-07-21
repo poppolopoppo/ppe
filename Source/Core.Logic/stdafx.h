@@ -7,10 +7,7 @@
 
 #include "targetver.h"
 
-#if defined(_MSC_VER)
-//  Include this asap to avoid M$ macro substitutions bullshit
-#   include "Core/Misc/Platform_Windows.h"
-#endif
+#include "Core/HAL/PlatformIncludes.h"
 
 #include "Core.Logic/Logic.h"
 

@@ -175,7 +175,6 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
 
                 uint64_t u;
                 if (!Atoi(&u, value.Written(), 16)) {
-                    AssertNotReached();
                     return false;
                 }
 
@@ -187,7 +186,6 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
             else {
                 int64_t i;
                 if (!Atoi(&i, value.Written(), 16)) {
-                    AssertNotReached();
                     return false;
                 }
 
@@ -214,7 +212,6 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
 
                 uint64_t u;
                 if (!Atoi(&u, value.Written(), 8)) {
-                    AssertNotReached();
                     return false;
                 }
 
@@ -226,7 +223,6 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
             else {
                 int64_t i;
                 if (!Atoi(&i, value.Written(), 8)) {
-                    AssertNotReached();
                     return false;
                 }
 
@@ -250,8 +246,8 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
 
         // if '.' found then it is a float
         int is_float = 0;
-        for (char ch : value.Written()) {
-            if (ch == '.' && ++is_float > 1) // can't have several '.'
+        for (char c : value.Written()) {
+            if (c == '.' && ++is_float > 1) // can't have several '.'
                 CORE_THROW_IT(FLexerException("float can have only one decimal separator", FMatch(FSymbols::Float, value.ToString(), reader.SourceSite(), reader.Tell())));
         }
 
@@ -401,7 +397,10 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     CORE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
 
                 default:
-                    CORE_THROW_IT(FLexerException("invalid character escaping", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
+                    //CORE_THROW_IT(FLexerException("invalid character escaping", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
+                    oss.Put('\\'); // put both chars and ignore escaping
+                    oss.Put(ch);
+                    break;
                 }
             }
             else
@@ -549,8 +548,6 @@ bool FLexer::SkipUntil(const FStringView& str) {
             return false;
         }
     }
-
-    AssertNotReached();
 }
 //----------------------------------------------------------------------------
 bool FLexer::ReadIFN(char ch, ECase cmp/* = ECase::Insensitive */) {

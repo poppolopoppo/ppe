@@ -12,6 +12,7 @@
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Container/Hash.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/Maths/ScalarBoundingBox.h"
 
 namespace Core {
@@ -154,9 +155,10 @@ void FGenericMesh::VertexCopy(size_t dst, size_t src) {
 
 #if 1
         // no need for memory semantic, assumes pod and should be faster
-        memcpy( rawData.data() + dst * strideInBytes,
-                rawData.data() + src * strideInBytes,
-                strideInBytes );
+        FPlatformMemory::MemcpyLarge(
+            rawData.data() + dst * strideInBytes,
+            rawData.data() + src * strideInBytes,
+            strideInBytes );
 #else
         const TMemoryView<u8> dstData = rawData.SubRange(dst * strideInBytes, strideInBytes);
         const TMemoryView<const u8> srcData = rawData.SubRange(src * strideInBytes, strideInBytes);
@@ -401,7 +403,7 @@ void FGenericVertexData::CopyVertex(size_t dst, size_t src) {
     const size_t strideInBytes = StrideInBytes();
     const TMemoryView<u8> storage = _stream.MakeView();
 
-    memcpy(&storage[dst * strideInBytes], &storage[src * strideInBytes], strideInBytes);
+    FPlatformMemory::MemcpyLarge(&storage[dst * strideInBytes], &storage[src * strideInBytes], strideInBytes);
 }
 //----------------------------------------------------------------------------
 void FGenericVertexData::ReadVertex(size_t v, Graphics::FValue& dst) const {

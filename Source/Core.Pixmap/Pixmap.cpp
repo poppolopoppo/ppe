@@ -7,6 +7,7 @@
 
 #include "Core/Allocator/PoolAllocatorTag-impl.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/IO/StringView.h"
 
 PRAGMA_INITSEG_LIB
 

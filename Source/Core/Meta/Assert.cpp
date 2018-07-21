@@ -4,31 +4,26 @@
 
 #if defined(WITH_CORE_ASSERT) || defined(WITH_CORE_ASSERT_RELEASE)
 
-#include "Diagnostic/CrtDebug.h"
-#include "Diagnostic/DialogBox.h"
 #include "Diagnostic/Exception.h"
 #include "Diagnostic/Logger.h"
-
+#include "HAL/PlatformDebug.h"
+#include "HAL/PlatformDialog.h"
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
-
-#include "Misc/TargetPlatform.h"
-
-#include <atomic>
 
 namespace Core {
 LOG_CATEGORY(CORE_API, Assertion)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static Dialog::EResult AssertAbortRetryIgnore_(const FWStringView& title, const wchar_t* msg, const wchar_t *file, unsigned line) {
+static FPlatformDialog::EResult AssertAbortRetryIgnore_(const FWStringView& title, const wchar_t* msg, const wchar_t *file, unsigned line) {
     FWStringBuilder oss;
 
     oss << title << Crlf
         << L"----------------------------------------------------------------" << Crlf
         << file << L'(' << line << L"): " << msg;
 
-    return Dialog::AbortRetryIgnore(oss.ToString(), title);
+    return FPlatformDialog::AbortRetryIgnore(oss.ToString(), title);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -80,7 +75,7 @@ NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
-    else if (FPlatformMisc::IsDebuggerAttached()) {
+    else if (FPlatformDebug::IsDebuggerPresent()) {
 #ifdef PLATFORM_WINDOWS // breaking in this frame is much quicker for debugging
         ::DebugBreak();
 #else
@@ -89,14 +84,14 @@ NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned
     }
     else {
         switch (AssertAbortRetryIgnore_(L"Assert debug failed !", msg, file, line)) {
-        case Dialog::EResult::Abort:
+        case FPlatformDialog::Abort:
             failure = true;
             break;
-        case Dialog::EResult::Retry:
-            if (FPlatformMisc::IsDebuggerAttached())
-                FPlatformMisc::DebugBreak();
+        case FPlatformDialog::Retry:
+            if (FPlatformDebug::IsDebuggerPresent())
+                FPlatformDebug::DebugBreak();
             break;
-        case Dialog::EResult::Ignore:
+        case FGenericPlatformDialog::Ignore:
             failure = false;
             break;
         default:
@@ -162,7 +157,7 @@ NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, u
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
-    else if (FPlatformMisc::IsDebuggerAttached()) {
+    else if (FPlatformDebug::IsDebuggerPresent()) {
 #ifdef PLATFORM_WINDOWS // breaking in this frame is much quicker for debugging
         ::DebugBreak();
 #else
@@ -171,14 +166,14 @@ NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, u
     }
     else {
         switch (AssertAbortRetryIgnore_(L"Assert release failed !", msg, file, line)) {
-        case Dialog::EResult::Abort:
+        case FPlatformDialog::Abort:
             failure = true;
             break;
-        case Dialog::EResult::Retry:
-            if (FPlatformMisc::IsDebuggerAttached())
-                FPlatformMisc::DebugBreak();
+        case FPlatformDialog::Retry:
+            if (FPlatformDebug::IsDebuggerPresent())
+                FPlatformDebug::DebugBreak();
             break;
-        case Dialog::EResult::Ignore:
+        case FGenericPlatformDialog::Ignore:
             failure = false;
             break;
         default:

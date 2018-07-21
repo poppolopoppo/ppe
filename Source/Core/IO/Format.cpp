@@ -24,13 +24,15 @@ struct TFormatTraits_<char> {
         zero        = '0',
         fmt_alpha   = 'a',
         fmt_ALPHA   = 'A',
+        fmt_bin     = 'b',
+        fmt_BIN     = 'B',
         fmt_dec     = 'd',
         fmt_DEC     = 'D',
         fmt_hex     = 'x',
         fmt_HEX     = 'X',
         fmt_oct     = 'o',
         fmt_OCT     = 'O',
-        fmt_fixed    = 'f',
+        fmt_fixed   = 'f',
         fmt_FIXED   = 'F',
         fmt_scient  = 's',
         fmt_SCIENT  = 'S',
@@ -56,13 +58,15 @@ struct TFormatTraits_<wchar_t> {
         zero        = L'0',
         fmt_alpha   = L'a',
         fmt_ALPHA   = L'A',
+        fmt_bin     = L'b',
+        fmt_BIN     = L'B',
         fmt_dec     = L'd',
         fmt_DEC     = L'D',
         fmt_hex     = L'x',
         fmt_HEX     = L'X',
         fmt_oct     = L'o',
         fmt_OCT     = L'O',
-        fmt_fixed    = L'f',
+        fmt_fixed   = L'f',
         fmt_FIXED   = L'F',
         fmt_scient  = L's',
         fmt_SCIENT  = L'S',
@@ -155,6 +159,12 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                         props.Format.SetCase(FTextFormat::Uppercase);
                     case format_traits::fmt_alpha:
                         props.Format.SetMisc(FTextFormat::BoolAlpha);
+                        format = format.ShiftFront();
+                        continue;
+
+                    case format_traits::fmt_bin:
+                    case format_traits::fmt_BIN:
+                        props.Format.SetBase(FTextFormat::Binary);
                         format = format.ShiftFront();
                         continue;
 

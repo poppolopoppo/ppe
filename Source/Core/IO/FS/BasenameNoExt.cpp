@@ -3,6 +3,7 @@
 #include "BasenameNoExt.h"
 
 #include "Allocator/Alloca.h"
+#include "HAL/PlatformMemory.h"
 #include "IO/String.h"
 
 namespace Core {
@@ -48,8 +49,8 @@ FBasenameNoExt operator +(const FBasenameNoExt& lhs, const FileSystem::FStringVi
     Assert(len);
 
     STACKLOCAL_POD_ARRAY(FileSystem::char_type, concat, len);
-    ::memcpy(concat.data(), lhs.MakeView().data(), lhs.MakeView().SizeInBytes());
-    ::memcpy(concat.data() + lhs.size(), rhs.data(), rhs.SizeInBytes());
+    FPlatformMemory::Memcpy(concat.data(), lhs.MakeView().data(), lhs.MakeView().SizeInBytes());
+    FPlatformMemory::Memcpy(concat.data() + lhs.size(), rhs.data(), rhs.SizeInBytes());
 
     return FBasenameNoExt(FileSystem::FStringView(concat));
 }

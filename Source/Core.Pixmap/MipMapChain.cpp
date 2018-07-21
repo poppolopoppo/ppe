@@ -8,6 +8,7 @@
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Color/Color.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/HAL/PlatformMaths.h"
 #include "Core/Maths/MathHelpers.h"
 
 namespace Core {
@@ -122,7 +123,7 @@ void FMipMapChain::Generate(FFloatImage* topMip, bool hq/* = false */) {
     Assert( topMip->Width() >= 4 &&
             topMip->Height() >= 4 );
 
-    const size_t mipCount = Meta::FloorLog2(Min(topMip->Width(), topMip->Height())) - 1;
+    const size_t mipCount = FPlatformMaths::FloorLog2(Min(topMip->Width(), topMip->Height())) - 1;
 
     LOG(Pixmap, Info, L"generate {2} mips from a FFloatImage {0}x{1}",
         topMip->Width(), topMip->Height(),

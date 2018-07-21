@@ -17,16 +17,16 @@
 #       error "_WINSOCKAPI_ must be defined to prevent inclusion of winsock.h"
 #   endif
 
-#   include "Core/Misc/Platform_Windows.h"
+#   include "Core/HAL/Windows/LastError.h"
+#   include "Core/HAL/Windows/WindowsPlatformIncludes.h"
 
 #else
 
-#   error "TODO: fix includes, but should be pretty close to the windows version (since M$ stole unix network layer)"
+#   error "#TODO: fix includes, but should be pretty close to the windows version (since M$ stole unix network layer)"
 
 #endif
 
 #include "Core.Network/Network.h"
-#include "Core/Diagnostic/LastError.h"
 #include "Core/Diagnostic/Logger.h"
 
 namespace Core {

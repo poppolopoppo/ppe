@@ -163,7 +163,7 @@ bool TStack<T, _IsPod>::Pop(pointer pvalue/* = nullptr */) {
     T& elt = _storage[--_size];
     if (pvalue)
         *pvalue = std::move(elt);
-    if (false == _IsPod)
+    IF_CONSTEXPR(false == _IsPod)
         Meta::Destroy(&elt);
 
     return true;
@@ -214,7 +214,7 @@ void TStack<T, _IsPod>::Deallocate_AssertLIFO(pointer p, size_type count) {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 void TStack<T, _IsPod>::clear() {
-    if (false == _IsPod) {
+    IF_CONSTEXPR(false == _IsPod) {
         for (size_t i = 0; i < _size; ++i)
             Meta::Destroy(&_storage[i]);
     }

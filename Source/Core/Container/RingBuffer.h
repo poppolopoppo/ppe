@@ -186,7 +186,7 @@ bool TRingBuffer<T, _IsPod>::pop_front(pointer pvalue) {
     T& elt = _storage[_begin];
     if(pvalue)
         *pvalue = std::move(elt);
-    if (false == _IsPod)
+    IF_CONSTEXPR(false == _IsPod)
         Meta::Destroy(&elt);
 
     _begin = ++_begin % _capacity;
@@ -206,7 +206,7 @@ bool TRingBuffer<T, _IsPod>::pop_back(pointer pvalue) {
     T& elt = _storage[(_begin + _size - 1) % _capacity];
     if(pvalue)
         *pvalue = std::move(elt);
-    if (false == _IsPod)
+    IF_CONSTEXPR(false == _IsPod)
         Meta::Destroy(&elt);
 
     _size--;
@@ -215,7 +215,7 @@ bool TRingBuffer<T, _IsPod>::pop_back(pointer pvalue) {
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 void TRingBuffer<T, _IsPod>::clear() {
-    if (false == _IsPod) {
+    IF_CONSTEXPR(false == _IsPod) {
         forrange(i, 0, _size)
             Meta::Destroy(&_storage[(_begin + i) % _capacity]);
     }

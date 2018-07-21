@@ -17,8 +17,8 @@ public: // ITypeTraits
     virtual bool Equals(const void* lhs, const void* rhs) const override final;
     virtual hash_t HashValue(const void* data) const override final;
 
-    virtual bool PromoteCopy(const void* src, const FAtom& dst) const override /*final*/ { return false; }
-    virtual bool PromoteMove(void* src, const FAtom& dst) const override /*final*/ { return false; }
+    virtual bool PromoteCopy(const void* , const FAtom& ) const override /*final*/ { return false; }
+    virtual bool PromoteMove(void* , const FAtom& ) const override /*final*/ { return false; }
 };
 //----------------------------------------------------------------------------
 template <typename T>
@@ -99,9 +99,7 @@ template <typename T>
 class TObjectTraits final : public TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>> {
     using base_traits = TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>>;
 public: // ITypeTraits
-    virtual const FMetaClass* ObjectClass() const override final {
-        return RTTI::MetaClass<T>();
-    }
+    virtual const FMetaClass* ObjectClass() const override final;
 
 public: // ITypeTraits
     virtual FTypeId TypeId() const override final;
@@ -128,6 +126,11 @@ PTypeTraits Traits(Meta::TType< TRefPtr<_Class> >) noexcept {
 }
 //----------------------------------------------------------------------------
 template <typename T>
+const FMetaClass* TObjectTraits<T>::ObjectClass() const {
+    return RTTI::MetaClass<T>();
+}
+//----------------------------------------------------------------------------
+template <typename T>
 FTypeId TObjectTraits<T>::TypeId() const {
     return FTypeId(ENativeType::MetaObject);
 }
@@ -140,7 +143,7 @@ ETypeFlags TObjectTraits<T>::TypeFlags() const {
 template <typename T>
 FTypeInfos TObjectTraits<T>::TypeInfos() const {
     return FTypeInfos(
-        ObjectClass()->Name().MakeView(),
+        MetaClassName(ObjectClass()),
         TObjectTraits<T>::TypeId(),
         TObjectTraits<T>::TypeFlags(),
         sizeof(PMetaObject) );
@@ -149,14 +152,14 @@ FTypeInfos TObjectTraits<T>::TypeInfos() const {
 template <typename T>
 bool TObjectTraits<T>::DeepEquals(const void* lhs, const void* rhs) const {
     return DeepEqualsObject(
-        *reinterpret_cast<const PMetaObject*>(lhs), 
+        *reinterpret_cast<const PMetaObject*>(lhs),
         *reinterpret_cast<const PMetaObject*>(rhs) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void TObjectTraits<T>::DeepCopy(const void* src, void* dst) const {
-    DeepCopyObject(*this, 
-        *reinterpret_cast<const PMetaObject*>(src), 
+    DeepCopyObject(*this,
+        *reinterpret_cast<const PMetaObject*>(src),
         *reinterpret_cast<PMetaObject*>(dst) );
 }
 //----------------------------------------------------------------------------

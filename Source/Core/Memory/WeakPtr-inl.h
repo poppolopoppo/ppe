@@ -24,52 +24,14 @@ inline FWeakAndRefCountable& FWeakAndRefCountable::operator =(const FWeakAndRefC
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline FWeakPtrBase::FWeakPtrBase(void **pptr)
-:   _pptr(pptr)
+inline FWeakPtrBase::FWeakPtrBase()
+:   _weakAndRefCountable(nullptr)
 ,   _next(nullptr)
-,   _prev(nullptr) {
-    Assert(_pptr);
-}
+,   _prev(nullptr)
+{}
 //----------------------------------------------------------------------------
-inline FWeakPtrBase::~FWeakPtrBase() {}
-//----------------------------------------------------------------------------
-template <typename T>
-void FWeakPtrBase::set_(T *ptr) {
-    STATIC_ASSERT(std::is_base_of<FWeakAndRefCountable COMMA T>::value);
-
-    if (*_pptr == (void *)ptr)
-        return;
-
-    if (*_pptr) {
-        T *const pptrAsT = (T *)*_pptr;
-        THREADRESOURCE_CHECKACCESS(pptrAsT);
-
-        if (_prev) _prev->_next = _next;
-        if (_next) _next->_prev = _prev;
-
-        if (this == pptrAsT->_weakPtrs) {
-            Assert(nullptr == _prev);
-            pptrAsT->_weakPtrs = _next;
-        }
-
-        _prev = _next = nullptr;
-        *_pptr = nullptr;
-    }
-
-    Assert(nullptr == *_pptr);
-    Assert(nullptr == _next);
-    Assert(nullptr == _prev);
-
-    if (ptr) {
-        THREADRESOURCE_CHECKACCESS(ptr);
-
-        _next = ptr->_weakPtrs;
-        if (ptr->_weakPtrs)
-            ptr->_weakPtrs->_prev = this;
-
-        ptr->_weakPtrs = this;
-        *_pptr = (void *)ptr;
-    }
+inline FWeakPtrBase::~FWeakPtrBase() {
+    set_(nullptr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -137,7 +99,7 @@ template <typename T>
 template <typename U>
 auto TWeakPtr<T>::operator =(TWeakPtr<U>&& rvalue) -> TWeakPtr& {
     FWeakPtrBase::set_(checked_cast<T *>(rvalue.get()));
-    rvalue.set_<U>(nullptr);
+    rvalue.set_(nullptr);
     return *this;
 }
 //----------------------------------------------------------------------------
@@ -152,14 +114,14 @@ bool TWeakPtr<T>::TryLock(TRefPtr<U> *pLocked) const {
     Assert(pLocked);
     Likely(pLocked);
     pLocked->reset(_ptr);
-    return nullptr != pLocked->get();
+    return (pLocked->get() != nullptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
 void TWeakPtr<T>::Swap(TWeakPtr<U>& other) {
-    T *const lhs = get();
-    U *const rhs = get();
+    T *const lhs = _ptr;
+    U *const rhs = other._ptr;
     FWeakPtrBase::set_(checked_cast<T *>(rhs));
     other.set_(checked_cast<U *>(lhs));
 }

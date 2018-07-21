@@ -16,7 +16,7 @@
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Tag, _Type, _Prefix, _Pool) \
     _Prefix void *_Type::operator new(size_t size) { \
-        UNUSED(size); \
+        NOOP(size); \
         Assert(sizeof(_Type) == size); \
         return _Pool::Allocate(); \
     } \
@@ -33,7 +33,7 @@
 #else
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Tag, _Type, _Prefix, _Pool) \
-    _Prefix void *_Type::operator new(size_t size) { return tracking_malloc(MEMORYDOMAIN_TRACKING_DATA(PooledMemory), sizeof(_Type)); } \
+    _Prefix void *_Type::operator new(size_t ) { return tracking_malloc(MEMORYDOMAIN_TRACKING_DATA(PooledMemory), sizeof(_Type)); } \
     _Prefix void _Type::operator delete(void *ptr) { tracking_free(ptr); } \
     _Prefix void _Type::Pool_ReleaseMemory() {} \
     _Prefix const FMemoryTracking *_Type::Pool_TrackingData() { return nullptr; }

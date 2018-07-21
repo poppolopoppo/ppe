@@ -4,6 +4,9 @@
 
 #include "Lexer/Lexer.h"
 #include "Parser/Parser.h"
+#include "Parser/ParseExpression.h"
+#include "Parser/ParseProduction.h"
+#include "Parser/ParseStatement.h"
 
 #include "Core.RTTI/MetaObject.h"
 #include "Core.RTTI/NativeTypes.h"

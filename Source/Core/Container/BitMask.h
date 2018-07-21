@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-#include "Core/Meta/BitCount.h"
+#include "Core/HAL/PlatformMaths.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -20,7 +20,7 @@ struct FBitMask {
 
     operator word_t () const { return Data; }
 
-    size_t Count() const { return Meta::popcnt(Data); }
+    size_t Count() const { return FPlatformMaths::popcnt(Data); }
 
     template <size_t _Index>
     bool Get() const {
@@ -53,23 +53,23 @@ struct FBitMask {
     FBitMask operator <<(word_t lshift) const { return FBitMask{ Data << lshift }; }
     FBitMask operator >>(word_t rshift) const { return FBitMask{ Data >> rshift }; }
 
-    word_t FirstBitSet_AssumeNotEmpty() const { return Meta::tzcnt(Data); }
-    word_t LastBitSet_AssumeNotEmpty() const { return Meta::lzcnt(Data); }
+    word_t FirstBitSet_AssumeNotEmpty() const { return FPlatformMaths::tzcnt(Data); }
+    word_t LastBitSet_AssumeNotEmpty() const { return FPlatformMaths::lzcnt(Data); }
 
     word_t PopFront() { // return 0 if empty of (LSB index + 1)
-        const size_t front = (Data ? Meta::tzcnt(Data) : INDEX_NONE);
+        const size_t front = (Data ? FPlatformMaths::tzcnt(Data) : INDEX_NONE);
         Data &= ~(GOne<<front); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return (front + 1);
     }
 
     word_t PopFront_AssumeNotEmpty() {
-        const size_t front = Meta::tzcnt(Data);
+        const size_t front = FPlatformMaths::tzcnt(Data);
         Data &= ~(GOne<<front); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return front;
     }
 
     word_t PopBack() { // return 0 if empty of (MSB index + 1)
-        const size_t back = (Data ? Meta::lzcnt(Data) : INDEX_NONE);
+        const size_t back = (Data ? FPlatformMaths::lzcnt(Data) : INDEX_NONE);
         Data &= ~(GOne<<back); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return (back + 1);
     }
@@ -78,7 +78,7 @@ struct FBitMask {
     void ForEach(_Func&& each_index) const {
         if (AllFalse()) return;
         for (word_t w = Data; w; ) {
-            const word_t index = Meta::tzcnt(w);
+            const word_t index = FPlatformMaths::tzcnt(w);
             w &= ~(GOne<<index);
             each_index(index);
         }
@@ -88,7 +88,7 @@ struct FBitMask {
     void ReverseForEach(_Func&& each_index) const {
         if (AllFalse()) return;
         for (word_t w = Data; w; ) {
-            const word_t index = Meta::lzcnt(w);
+            const word_t index = FPlatformMaths::lzcnt(w);
             w &= ~(GOne<<index);
             each_index(index);
         }

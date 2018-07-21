@@ -9,19 +9,21 @@
 
 #include "Core/IO/StreamPolicies.h"
 #include "Core/IO/StreamProvider.h"
+#include "Core/IO/VirtualFileSystem_fwd.h"
 
 #include <functional>
 
 namespace Core {
-class FDirpath;
-class FFilename;
-class FFileStat;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class IVirtualFileSystemComponentReadable;
 class IVirtualFileSystemComponentWritable;
 class IVirtualFileSystemComponentReadWritable;
+//----------------------------------------------------------------------------
+using IVFSReadable = IVirtualFileSystemComponentReadable;
+using IVFSWritable = IVirtualFileSystemComponentWritable;
+using IVFSReadWritable = IVirtualFileSystemComponentReadWritable;
 //----------------------------------------------------------------------------
 FWD_REFPTR(VirtualFileSystemComponent);
 //----------------------------------------------------------------------------
@@ -68,7 +70,7 @@ public:
 
     virtual bool CreateDirectory(const FDirpath& dirpath) = 0;
     virtual bool MoveFile(const FFilename& src, const FFilename& dst) = 0;
-    virtual bool RemoveDirectory(const FDirpath& dirpath) = 0;
+    virtual bool RemoveDirectory(const FDirpath& dirpath, bool force) = 0;
     virtual bool RemoveFile(const FFilename& filename) = 0;
 
     virtual UStreamWriter OpenWritable(const FFilename& filename, EAccessPolicy policy) = 0;

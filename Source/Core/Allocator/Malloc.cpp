@@ -5,6 +5,8 @@
 #include "MallocStomp.h"
 
 #include "Diagnostic/LeakDetector.h"
+#include "HAL/PlatformMaths.h"
+#include "HAL/PlatformMemory.h"
 #include "Memory/MemoryView.h"
 #include "Meta/Assert.h"
 
@@ -73,7 +75,7 @@ void* FMallocLowLevel::AlignedMalloc(size_t size, size_t alignment) { return _al
 void  FMallocLowLevel::AlignedFree(void *ptr) { _aligned_free(ptr); }
 void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
     void* const p = _aligned_malloc(size * nmemb, alignment);
-    ::memset(p, 0, size * nmemb);
+    FPlatformMemory::Memzero(p, size * nmemb);
     return p;
 }
 void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
@@ -96,7 +98,7 @@ void* FMallocLowLevel::Malloc(size_t size) { return FMallocBinned::Malloc(size);
 void  FMallocLowLevel::Free(void* ptr) { FMallocBinned::Free(ptr); }
 void* FMallocLowLevel::Calloc(size_t nmemb, size_t size) {
     void* const p = FMallocBinned::Malloc(size * nmemb);
-    ::memset(p, 0, size * nmemb);
+    FPlatformMemory::Memzero(p, size * nmemb);
     return p;
 }
 void* FMallocLowLevel::Realloc(void *ptr, size_t size) { return FMallocBinned::Realloc(ptr, size); }
@@ -104,7 +106,7 @@ void* FMallocLowLevel::AlignedMalloc(size_t size, size_t alignment) { return FMa
 void  FMallocLowLevel::AlignedFree(void *ptr) { FMallocBinned::AlignedFree(ptr); }
 void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
     void* const p = FMallocBinned::AlignedMalloc(size * nmemb, alignment);
-    ::memset(p, 0, size * nmemb);
+    FPlatformMemory::Memzero(p, size * nmemb);
     return p;
 }
 void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
@@ -128,7 +130,7 @@ void* FMallocLowLevel::Malloc(size_t size) { return FMallocStomp::Malloc(size); 
 void  FMallocLowLevel::Free(void* ptr) { FMallocStomp::Free(ptr); }
 void* FMallocLowLevel::Calloc(size_t nmemb, size_t size) {
     void* const p = FMallocStomp::Malloc(size * nmemb);
-    ::memset(p, 0, size * nmemb);
+    FPlatformMemory::Memzero(p, size * nmemb);
     return p;
 }
 void* FMallocLowLevel::Realloc(void *ptr, size_t size) { return FMallocStomp::Realloc(ptr, size); }
@@ -136,7 +138,7 @@ void* FMallocLowLevel::AlignedMalloc(size_t size, size_t alignment) { return FMa
 void  FMallocLowLevel::AlignedFree(void *ptr) { FMallocStomp::AlignedFree(ptr); }
 void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
     void* const p = FMallocStomp::AlignedMalloc(size * nmemb, alignment);
-    ::memset(p, 0, size * nmemb);
+    FPlatformMemory::Memzero(p, size * nmemb);
     return p;
 }
 void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
@@ -191,11 +193,12 @@ struct FMallocHistogram {
     FORCE_INLINE static size_t MakeSizeClass(size_t size) {
         constexpr size_t POW_N = 2;
         constexpr size_t MinClassIndex = 19;
-        const size_t index = Meta::FloorLog2((size - 1) | 1);
+        const size_t index = FPlatformMaths::FloorLog2((size - 1) | 1);
         return ((index << POW_N) + ((size - 1) >> (index - POW_N)) - MinClassIndex);
     }
 
     static void Allocate(void* ptr, size_t sizeInBytes) {
+        NOOP(ptr);
         const size_t sizeClass = Min(MakeSizeClass(sizeInBytes), GMallocNumClasses - 1);
         ++GMallocSizeAllocations[sizeClass];
         GMallocSizeTotalBytes[sizeClass] += sizeInBytes;
@@ -325,6 +328,7 @@ bool SetLeakDetectorWhiteListed(bool ignoreleaks) {
     whitelistedTLS = ignoreleaks;
     return wasIgnoringLeaks;
 #else
+    NOOP(ignoreleaks);
     return false;
 #endif
 }
@@ -335,6 +339,8 @@ void DumpMemoryLeaks(bool onlyNonDeleters/* = false */) {
 #if CORE_MALLOC_LEAKDETECTOR_PROXY
     auto& leakDetector = FLeakDetector::Get();
     leakDetector.ReportLeaks(onlyNonDeleters);
+#else
+    NOOP(onlyNonDeleters);
 #endif
 }
 #endif //!FINAL_RELEASE
@@ -350,6 +356,7 @@ bool FetchMemoryAllocationHistogram(
     *totalBytes = MakeView(GMallocSizeTotalBytes);
     return true;
 #else
+    NOOP(classes, allocations, totalBytes);
     return false;
 #endif
 }

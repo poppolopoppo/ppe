@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Container/Vector.h"
+#include "Core/HAL/PlatformMemory.h"
 
 #include "Core/Maths/ScalarMatrix_fwd.h"
 #include "Core/Maths/ScalarVector_fwd.h"

@@ -63,6 +63,10 @@ public:
     string_type ToString();
     void ToString(string_type& output);
 
+    TMemoryView<_Char> AppendUninitialized(size_t n) {
+        return stream_type::Append(n * sizeof(_Char)).Cast<_Char>();
+    }
+
     template <typename _OtherAllocator>
     TMemoryView<typename _OtherAllocator::value_type> StealDataUnsafe(_OtherAllocator& alloc, size_t* plen = nullptr) {
         return stream_type::StealDataUnsafe(alloc, plen);
@@ -73,6 +77,22 @@ public:
 //----------------------------------------------------------------------------
 CORE_API extern template class TBasicStringBuilder<char>;
 CORE_API extern template class TBasicStringBuilder<wchar_t>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Arg>
+FString ToString(_Arg&& arg) {
+    FStringBuilder oss;
+    oss << arg;
+    return oss.ToString();
+}
+//----------------------------------------------------------------------------
+template <typename _Arg>
+FWString ToWString(_Arg&& arg) {
+    FWStringBuilder oss;
+    oss << arg;
+    return oss.ToString();
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

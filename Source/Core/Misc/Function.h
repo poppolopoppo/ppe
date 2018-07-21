@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/Memory/RefPtr.h"
 #include "Core/Meta/AlignedStorage.h"
 #include "Core/Meta/TypeTraits.h"
@@ -25,11 +26,11 @@ public:
             Meta::Destroy(get_payload_());
 
         _data = 0;
-        ONLY_IF_ASSERT(::memset(&_inSitu, 0xDD, GInSituSize));
+        ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xDD, GInSituSize));
     }
 
     bool Equals(const FBaseFunction& other) const {
-        return (_data == other._data && ::memcmp(&_inSitu, &other._inSitu, GInSituSize) == 0);
+        return (_data == other._data && FPlatformMemory::Memcmp(&_inSitu, &other._inSitu, GInSituSize) == 0);
     }
 
     void Swap(FBaseFunction& other) {
@@ -63,7 +64,7 @@ protected:
     FBaseFunction() {}
     explicit FBaseFunction(intptr_t data)
         : _data(data) {
-        ONLY_IF_ASSERT(::memset(&_inSitu, 0xCC, GInSituSize));
+        ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xCC, GInSituSize));
     }
 
     FBaseFunction(const FBaseFunction& other) { assign_copy_(other); }
@@ -137,7 +138,7 @@ private:
             if (is_destructible_())
                 ((const IPayload_*)&other._inSitu)->CopyTo(&_inSitu);
             else
-                ::memcpy(&_inSitu, &other._inSitu, sizeof(_inSitu));
+                FPlatformMemory::Memcpy(&_inSitu, &other._inSitu, sizeof(_inSitu));
         }
     }
 

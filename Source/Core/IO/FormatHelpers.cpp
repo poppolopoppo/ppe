@@ -302,10 +302,8 @@ FTextWriter& operator <<(FTextWriter& oss, Fmt::EChar ch) {
         return oss << ' ';
     case Core::Fmt::Tab:
         return oss << ' ';
-    default:
-        AssertNotImplemented();
     }
-    return oss;
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, Fmt::EChar ch) {
@@ -390,10 +388,8 @@ FWTextWriter& operator <<(FWTextWriter& oss, Fmt::EChar ch) {
         return oss << L' ';
     case Core::Fmt::Tab:
         return oss << L' ';
-    default:
-        AssertNotImplemented();
     }
-    return oss;
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

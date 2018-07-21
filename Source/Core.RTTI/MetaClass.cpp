@@ -135,7 +135,6 @@ const FMetaFunction* FMetaClass::OnMissingFunction(const FName& name, EFunctionF
     LOG(RTTI, Error, L"missing function {0}::{1} !", _name, name);
 
     AssertNotReached();
-    return nullptr;
 }
 //----------------------------------------------------------------------------
 // Properties
@@ -215,7 +214,6 @@ const FMetaProperty* FMetaClass::OnMissingProperty(const FName& name, EPropertyF
     LOG(RTTI, Error, L"missing property {0}::{1} !", _name, name);
 
     AssertNotReached();
-    return nullptr;
 }
 //----------------------------------------------------------------------------
 // Called by meta namespace

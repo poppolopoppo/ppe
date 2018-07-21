@@ -9,6 +9,7 @@
 #include "Core/Allocator/TrackingMalloc.h"
 #include "Core/Color/Color.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/IO/FileSystem.h"
 #include "Core/IO/FS/ConstNames.h"
 #include "Core/IO/VirtualFileSystem.h"
@@ -17,6 +18,7 @@
 #include "Core/Memory/MemoryStream.h"
 
 PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4100) // 'XXX': unreferenced formal parameter
 PRAGMA_MSVC_WARNING_DISABLE(4996) // 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 PRAGMA_MSVC_WARNING_DISABLE(6001) // warning C6001: Using uninitialized memory 'coutput'
 
@@ -474,7 +476,6 @@ bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const TMemoryView<c
 
     default:
         AssertNotImplemented();
-        return false;
     }
 
     if (nullptr == decoded)
@@ -499,7 +500,6 @@ bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const TMemoryView<c
 
     default:
         AssertNotImplemented();
-        return false;
     }
 
     dst->_width = checked_cast<size_t>(width);
@@ -512,7 +512,7 @@ bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const TMemoryView<c
 
     dst->_data.Resize_DiscardData(decodedSizeInBytes);
     Assert(dst->TotalSizeInBytes() == decodedSizeInBytes);
-    ::memcpy(dst->_data.data(), decoded, decodedSizeInBytes);
+    FPlatformMemory::MemcpyLarge(dst->_data.data(), decoded, decodedSizeInBytes);
 
     STBI_FREE(decoded);
 

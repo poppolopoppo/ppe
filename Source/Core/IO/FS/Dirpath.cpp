@@ -261,13 +261,13 @@ FWString FDirpath::ToWString() const {
 FStringView FDirpath::ToCStr(const TMemoryView<char>& dst) const {
     FFixedSizeTextWriter oss(dst);
     oss << *this << Eos;
-    return oss.Written();
+    return oss.Written().ShiftBack();
 }
 //----------------------------------------------------------------------------
 FWStringView FDirpath::ToWCStr(const TMemoryView<wchar_t>& dst) const {
     FWFixedSizeTextWriter oss(dst);
     oss << *this << Eos;
-    return oss.Written();
+    return oss.Written().ShiftBack();
 }
 //----------------------------------------------------------------------------
 void FDirpath::Swap(FDirpath& other) {

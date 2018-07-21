@@ -2,9 +2,7 @@
 
 #include "Core/Core.h"
 
-#ifdef PLATFORM_WINDOWS
-
-#   include "Core/Misc/Platform_Windows.h"
+#include "Core/HAL/PlatformThread.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -18,18 +16,19 @@ namespace Core {
 //----------------------------------------------------------------------------
 class FReadWriteLock {
 public:
-    FReadWriteLock() { ::InitializeSRWLock(&_srwLock); }
+    FReadWriteLock() { FPlatformThread::CreateReadWriteLock(&_rwLock); }
+    ~FReadWriteLock() { FPlatformThread::DestroyReadWriteLock(&_rwLock); }
 
     FReadWriteLock(const FReadWriteLock&) = delete;
     FReadWriteLock& operator =(const FReadWriteLock&) = delete;
 
-    void LockRead() const { ::AcquireSRWLockShared(&_srwLock); }
-    bool TryLockRead() const { return ::TryAcquireSRWLockShared(&_srwLock); }
-    void UnlockRead() const { ::ReleaseSRWLockShared(&_srwLock); }
+    void LockRead() const { FPlatformThread::LockRead(_rwLock); }
+    bool TryLockRead() const { return FPlatformThread::TryLockRead(_rwLock); }
+    void UnlockRead() const { FPlatformThread::UnlockRead(_rwLock); }
 
-    void LockWrite() { ::AcquireSRWLockExclusive(&_srwLock); }
-    bool TryLockWrite() { return ::TryAcquireSRWLockExclusive(&_srwLock); }
-    void UnlockWrite() { ::ReleaseSRWLockExclusive(&_srwLock); }
+    void LockWrite() { FPlatformThread::LockWrite(_rwLock); }
+    bool TryLockWrite() { return FPlatformThread::TryLockWrite(_rwLock); }
+    void UnlockWrite() { FPlatformThread::UnlockWrite(_rwLock); }
 
     struct FScopeLockRead {
         const FReadWriteLock& RWLock;
@@ -48,58 +47,9 @@ public:
     };
 
 private:
-    mutable ::SRWLOCK _srwLock;
+    mutable FPlatformThread::FReadWriteLock _rwLock;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Core
-
-#else
-#   error "unsupported platform !"
-#endif //!PLATFORM_WINDOWS
-
-#if 0 //deprecated
-
-#include <mutex>
-#include <shared_mutex>
-
-namespace Core {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#define READSCOPELOCK(_ReadWriteLock) \
-    const auto ANONYMIZE(readScopeLock_) = static_cast<const FReadWriteLock&>(_ReadWriteLock).Read()
-//----------------------------------------------------------------------------
-#define WRITESCOPELOCK(_ReadWriteLock) \
-    const auto ANONYMIZE(writeScopeLock_) = static_cast<FReadWriteLock&>(_ReadWriteLock).Write()
-//----------------------------------------------------------------------------
-#define DEFERREDREADSCOPELOCK(_ReadWriteLock) \
-    const auto ANONYMIZE(readScopeLock_) = static_cast<const FReadWriteLock&>(_ReadWriteLock).DeferredRead()
-//----------------------------------------------------------------------------
-#define DEFERREDWRITESCOPELOCK(_ReadWriteLock) \
-    const auto ANONYMIZE(writeScopeLock_) = static_cast<FReadWriteLock&>(_ReadWriteLock).DeferredWrite()
-//----------------------------------------------------------------------------
-struct FReadWriteLock {
-    typedef std::shared_timed_mutex mutex_type;
-
-    typedef std::shared_lock<mutex_type> readscope_type;
-    typedef std::unique_lock<mutex_type> writescope_type;
-
-    mutable mutex_type Mutex;
-
-    readscope_type Read() const { return readscope_type(Mutex, std::adopt_lock); }
-    writescope_type Write() { return writescope_type(Mutex, std::adopt_lock); }
-
-    readscope_type DeferredRead() const { return readscope_type(Mutex, std::defer_lock); }
-    writescope_type DeferredWrite() { return writescope_type(Mutex, std::defer_lock); }
-
-    readscope_type TryRead() const { return readscope_type(Mutex, std::try_to_lock); }
-    writescope_type TryWrite() { return writescope_type(Mutex, std::try_to_lock); }
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-} //!namespace Core
-
-#endif //!deprecated

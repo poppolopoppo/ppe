@@ -53,8 +53,8 @@ static bool ParseObject_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value)
         if (not lexer.Expect(Lexer::FSymbols::Colon))
             CORE_THROW_IT(FJsonException("missing comma", key.Site()));
 
-        FJson::FValue& value = tmp.Add(doc.MakeString(key.Value()));
-        if (not ParseValue_(lexer, doc, value))
+        FJson::FValue& v = tmp.Add(doc.MakeString(key.Value()));
+        if (not ParseValue_(lexer, doc, v))
             CORE_THROW_IT(FJsonException("missing value", key.Site()));
     }
 
@@ -136,11 +136,12 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) 
         }
         else if (peek && peek->Symbol() == Lexer::FSymbols::Unsigned) {
             AssertNotReached(); // -unsigned isn't supported !
-
+#if 0
             if (ParseValue_(lexer, doc, value)) {
                 value.ToInteger() = -value.ToInteger();
                 unexpectedToken = false;
             }
+#endif
         }
         else if (peek && peek->Symbol() == Lexer::FSymbols::Float) {
             if (ParseValue_(lexer, doc, value)) {
@@ -477,12 +478,9 @@ bool FJson::FValue::Equals(const FValue& other) const {
         return (_array == other._array);
     case Core::Serialize::FJson::Object:
         return (_object == other._object);
-    default:
-        break;
     }
 
     AssertNotImplemented();
-    return false;
 }
 //----------------------------------------------------------------------------
 void FJson::FValue::Clear() {
@@ -554,7 +552,7 @@ bool FJson::Load(FJson* json, const FFilename& filename) {
 }
 //----------------------------------------------------------------------------
 auto FJson::MakeString(const FStringView& str, bool mergeable/* = true */) -> FText {
-    return _textHeap.MakeText(str);
+    return _textHeap.MakeText(str, mergeable);
 }
 //----------------------------------------------------------------------------
 bool FJson::Load(FJson* json, const FWStringView& filename, const FStringView& content) {

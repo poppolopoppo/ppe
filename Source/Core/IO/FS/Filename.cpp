@@ -57,7 +57,7 @@ static bool AppendRelname_(FDirpath& dirpath, FBasename& basename, const FileSys
         basename = relname.CutStartingAt(it - 1);
     }
 
-    return false;
+    return true;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -219,13 +219,13 @@ FWString FFilename::ToWString() const {
 FStringView FFilename::ToCStr(const TMemoryView<char>& dst) const {
     FFixedSizeTextWriter oss(dst);
     oss << *this << Eos;
-    return oss.Written();
+    return oss.Written().ShiftBack();
 }
 //----------------------------------------------------------------------------
 FWStringView FFilename::ToWCStr(const TMemoryView<wchar_t>& dst) const {
     FWFixedSizeTextWriter oss(dst);
     oss << *this << Eos;
-    return oss.Written();
+    return oss.Written().ShiftBack();
 }
 //----------------------------------------------------------------------------
 void FFilename::Swap(FFilename& other) {

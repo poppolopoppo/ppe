@@ -10,33 +10,27 @@ namespace Core {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, EOpenPolicy policy) {
-    switch (policy)
-    {
+    switch (policy) {
     case Core::EOpenPolicy::ReadWritable:
         return oss << "ReadWritable";
     case Core::EOpenPolicy::Readable:
         return oss << "Readable";
     case Core::EOpenPolicy::Writable:
         return oss << "Writable";
-    default:
-        AssertNotImplemented();
     }
-    return oss;
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, EOpenPolicy policy) {
-    switch (policy)
-    {
+    switch (policy) {
     case Core::EOpenPolicy::ReadWritable:
         return oss << L"ReadWritable";
     case Core::EOpenPolicy::Readable:
         return oss << L"Readable";
     case Core::EOpenPolicy::Writable:
         return oss << L"Writable";
-    default:
-        AssertNotImplemented();
     }
-    return oss;
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -45,7 +39,7 @@ FTextWriter& operator <<(FTextWriter& oss, EAccessPolicy policy) {
     bool notFirst = false;
     for (size_t i = 0; i < 32; ++i) {
         switch(EAccessPolicy(size_t(policy) & (size_t(1) << i))) {
-        case EAccessPolicy::None: continue;
+        case EAccessPolicy::None:       continue;
         case EAccessPolicy::Binary:     oss << Fmt::Conditional('|', notFirst) << "Binary"; break;
         case EAccessPolicy::Text:       oss << Fmt::Conditional('|', notFirst) << "Text"; break;
         case EAccessPolicy::TextU8:     oss << Fmt::Conditional('|', notFirst) << "TextU8"; break;
@@ -74,7 +68,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, EAccessPolicy policy) {
     bool notFirst = false;
     for (size_t i = 0; i < 32; ++i) {
         switch(EAccessPolicy(size_t(policy) & (size_t(1) << i))) {
-        case EAccessPolicy::None: continue;
+        case EAccessPolicy::None:       continue;
         case EAccessPolicy::Binary:     oss << Fmt::Conditional(L'|', notFirst) << L"Binary"; break;
         case EAccessPolicy::Text:       oss << Fmt::Conditional(L'|', notFirst) << L"Text"; break;
         case EAccessPolicy::TextU8:     oss << Fmt::Conditional(L'|', notFirst) << L"TextU8"; break;

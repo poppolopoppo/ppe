@@ -6,7 +6,7 @@
 #include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/PackingHelpers.h"
 
-#include "Core/Misc/Endianness.h"
+#include "Core/HAL/PlatformEndian.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -321,11 +321,9 @@ TScalarVector<float, _Dim> FloatM11_to_Float01(const TScalarVector<float, _Dim>&
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-TScalarVector<T, _Dim> SwapEndianness(const TScalarVector<T, _Dim>& value) {
-    TScalarVector<T, _Dim> r;
+void SwapEndiannessInPlace(TScalarVector<T, _Dim>* value) {
     forrange(i, 0, _Dim)
-        r._data[i] = SwapEndianness(value._data[i]);
-    return r;
+        FPlatformEndian::SwapInPlace(&value->_data[i]);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

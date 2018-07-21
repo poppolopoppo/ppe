@@ -7,7 +7,14 @@
 [
     Using( .SharedBasePlatform )
 
-    .PlatformDefines + { 'PLATFORM_POSIX', 'PLATFORM_LINUX', 'PLATFORM_PC' }
+    .TargetPlatform = 'Linux'
+    .PlatformDefines +
+    {
+        'PLATFORM_POSIX',
+        'PLATFORM_LINUX',
+        'PLATFORM_PC',
+        'TARGET_PLATFORM=$TargetPlatform$'
+    }
 ]
 
 //------------------------------------------------------------------------------

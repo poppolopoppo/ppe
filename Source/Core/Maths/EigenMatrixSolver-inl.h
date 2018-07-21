@@ -190,7 +190,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) con
 template <typename T, size_t N>
 bool TSymmetricEigensolver<T, N>::IsRotation() const
 {
-    if (N > 0)
+    IF_CONSTEXPR(N > 0)
     {
         if (_isRotation == -1)
         {
@@ -235,7 +235,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvector(int c, vector_type& eigenvector
         T* y = &_vectorP[0];
 
         // Start with the Euclidean basis vector.
-        memset(x, 0, N*sizeof(T));
+        FPlatformMemory::Memzero(x, N*sizeof(T));
         if (_permutation[c] >= 0)
         {
             x[_permutation[c]] = (T)1;
@@ -290,7 +290,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvector(int c, vector_type& eigenvector
 
         if (x != &eigenvector[0])
         {
-            memcpy(&eigenvector[0], x, N * sizeof(T));
+            FPlatformMemory::Memcpy(&eigenvector[0], x, N * sizeof(T));
         }
     }
 }
@@ -298,7 +298,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvector(int c, vector_type& eigenvector
 template <typename T, size_t N>
 T TSymmetricEigensolver<T, N>::GetEigenvalue(int c) const
 {
-    if (N > 0)
+    IF_CONSTEXPR(N > 0)
     {
         if (_permutation[0] >= 0)
         {

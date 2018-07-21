@@ -7,12 +7,7 @@
 
 #include "targetver.h"
 
-#define WITH_CORE_CRTDBG_MAP_ALLOC 0
-
-#if defined(_MSC_VER)
-//  Include this asap to avoid M$ macro substitutions bullshit
-#   include "Core/Misc/Platform_Windows.h"
-#endif
+#include "Core/HAL/PlatformIncludes.h"
 
 #include "Core/Core.h"
 

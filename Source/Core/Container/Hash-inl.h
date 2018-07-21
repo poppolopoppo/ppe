@@ -9,7 +9,7 @@ namespace Core {
 template <typename T>
 void hash_combine(hash_t& seed, const T& value) {
     using Core::hash_value;
-    seed._value = hash_size_t_constexpr(seed, hash_value(value));
+    seed._value = FPlatformHash::HashCombine(seed, hash_value(value));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -2,6 +2,8 @@
 
 #include "Core/Core.h"
 
+#include "Core/HAL/PlatformMaths.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -29,27 +31,36 @@ constexpr float F_SqrtHalf = F_Sqrt2OO;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+inline float Abs(float f) { return FPlatformMaths::Abs(f); }
+//----------------------------------------------------------------------------
 template <typename T, typename U>
 constexpr T BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2);
 //----------------------------------------------------------------------------
 template <typename T>
-T Ceil(T f) {
+T CeilToFloat(T f) {
     return std::ceil(f);
 }
+inline float CeilToFloat(float f) { return FPlatformMaths::CeilToFloat(f); }
+inline double CeilToFloat(double d) { return FPlatformMaths::CeilToDouble(d); }
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr T Clamp(T value, T vmin, T vmax);
+T FloorToFloat(T f) {
+    return std::floor(f);
+}
+inline float FloorToFloat(float f) { return FPlatformMaths::FloorToFloat(f); }
+inline double FloorToFloat(double d) { return FPlatformMaths::FloorToDouble(d); }
 //----------------------------------------------------------------------------
 template <typename T>
 T Frac(T f);
+inline float Frac(float f) { return FPlatformMaths::Frac(f); }
 //----------------------------------------------------------------------------
 template <typename T>
-T Floor(T f) {
-    return std::floor(f);
-}
+T Fractional(T f);
+inline float Fractional(float f) { return FPlatformMaths::Fractional(f); }
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T FMod(T f, T m);
+inline float FMod(float f, float m) { return FPlatformMaths::Fmod(f, m); }
 //----------------------------------------------------------------------------
 template <typename T, typename U>
 constexpr T Lerp(T v0, T v1, U f);
@@ -68,6 +79,7 @@ constexpr T Pow(T v, U n);
 //----------------------------------------------------------------------------
 template <typename U>
 constexpr float Pow(float f, U n);
+inline float Pow(float f, float n) { return FPlatformMaths::Pow(f, n); }
 //----------------------------------------------------------------------------
 template <typename U>
 constexpr double Pow(double d, U n);
@@ -84,9 +96,12 @@ template <typename T>
 T Round(T f) {
     return std::round(f);
 }
+inline float RoundToFloat(float f) { return FPlatformMaths::RoundToFloat(f); }
+inline double RoundToFloat(double d) { return FPlatformMaths::RoundToDouble(d); }
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T RSqrt(T f);
+inline float RSqrt(float f) { return FPlatformMaths::RSqrt(f); }
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T Saturate(T value) { return Clamp(value, T(0), T(1)); }
@@ -102,6 +117,7 @@ constexpr T Sqr(T x);
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T Sqrt(T x);
+inline float Sqrt(float f) { return FPlatformMaths::Sqrt(f); }
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr T Step(T y, T x);
@@ -115,13 +131,22 @@ constexpr U Smoothstep(T vmin, T vmax, U f);
 template <typename T, typename U>
 constexpr U Smootherstep(T vmin, T vmax, U f);
 //----------------------------------------------------------------------------
+template <typename T>
+T Trunc(T f) {
+    return std::trunc(f);
+}
+inline float TruncToFloat(float f) { return FPlatformMaths::TruncToFloat(f); }
+inline double TruncToFloat(double d) { return FPlatformMaths::TruncToDouble(d); }
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline int CeilToInt(float f) { return int(Ceil(f)); }
+inline int CeilToInt(float f) { return FPlatformMaths::CeilToInt(f); }
 //----------------------------------------------------------------------------
-inline int FloorToInt(float f) { return int(Floor(f)); }
+inline int FloorToInt(float f) { return FPlatformMaths::FloorToInt(f); }
 //----------------------------------------------------------------------------
-inline int RoundToInt(float f) { return int(Round(f)); }
+inline int RoundToInt(float f) { return FPlatformMaths::RoundToInt(f); }
+//----------------------------------------------------------------------------
+inline int TruncToInt(float f) { return FPlatformMaths::TruncToInt(f); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -149,9 +174,9 @@ inline bool IsNAN(double d) { return std::isnan(d); }
 inline bool IsNANorINF(float f)  { return (IsNAN(f) || IsINF(f)); }
 inline bool IsNANorINF(double d) { return (IsNAN(d) || IsINF(d)); }
 //----------------------------------------------------------------------------
-constexpr float ClampAngle(float degrees);
+float ClampAngle(float degrees);
 //----------------------------------------------------------------------------
-constexpr float NormalizeAngle(float degrees);
+float NormalizeAngle(float degrees);
 //----------------------------------------------------------------------------
 // https://michaldrobot.files.wordpress.com/2014/05/gcn_alu_opt_digitaldragons2014.pdf
 size_t CubeMapFaceID(float x, float y, float z);

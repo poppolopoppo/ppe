@@ -2,23 +2,10 @@
 
 #include "VirtualMemory.h"
 
-#include "Core/Diagnostic/LastError.h"
 #include "Core/Container/CompressedRadixTrie.h"
-#include "Core/Misc/TargetPlatform.h"
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/Memory/MemoryDomain.h"
 #include "Core/Memory/MemoryTracking.h"
-
-#if     defined(PLATFORM_WINDOWS)
-#   include "Misc/Platform_Windows.h"
-#   define VMALLOC(_SizeInBytes) ::VirtualAlloc(nullptr, (_SizeInBytes), MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE)
-#   define VMFREE(_Ptr, _SizeInBytes) ::VirtualFree((_Ptr), 0, MEM_RELEASE)
-#elif   defined(PLATFORM_LINUX)
-#   include "Misc/Platform_Linux.h"
-#   define VMALLOC(_SizeInBytes) (void*)(((uintptr_t)mmap(NULL, (_SizeInBytes), PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0)+1)&~1)//with the conversion of MAP_FAILED to 0
-#   define VMFREE(_Ptr, _SizeInBytes) munmap(_Ptr), (_SizeInBytes))
-#else
-#   error "unsupported platform"
-#endif
 
 #if USE_CORE_MEMORYDOMAINS
 #   define TRACKINGDATA_ARG_IFP , FMemoryTracking& trackingData
@@ -95,18 +82,8 @@ size_t FVirtualMemory::SizeInBytes(void* ptr) {
     return regionSize;
 
 #else
-#   if defined(PLATFORM_WINDOWS)
-    //  https://msdn.microsoft.com/en-us/library/windows/desktop/aa366902(v=vs.85).aspx
-    ::MEMORY_BASIC_INFORMATION info;
-    if (0 == ::VirtualQuery(ptr, &info, sizeof(info)))
-        AssertNotReached();
+    return FPlatformMemory::RegionSize(ptr);
 
-    Assert(ptr == info.BaseAddress);
-
-    return info.RegionSize;
-#   else
-#       error "not implemented !"
-#   endif
 #endif
 }
 //----------------------------------------------------------------------------
@@ -114,81 +91,16 @@ bool FVirtualMemory::Protect(void* ptr, size_t sizeInBytes, bool read, bool writ
     Assert(ptr);
     Assert(sizeInBytes);
 
-#if     defined(PLATFORM_WINDOWS)
-    ::DWORD oldProtect, newProtect;
-
-    if (read && write)
-        newProtect = PAGE_READWRITE;
-    else if (write)
-        newProtect = PAGE_READWRITE;
-    else if (read)
-        newProtect = PAGE_READONLY;
-    else
-        newProtect = PAGE_NOACCESS;
-
-    return (0 != ::VirtualProtect(ptr, sizeInBytes, newProtect, &oldProtect));
-
-#else
-#       error "Unsupported platform !"
-#endif
+    return FPlatformMemory::PageProtect(ptr, sizeInBytes, read, write);
 }
 //----------------------------------------------------------------------------
 // Keep allocations aligned to OS granularity
-// https://github.com/r-lyeh/ltalloc/blob/master/ltalloc.cc
-PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(6001) // Using uninitialized memory 'XXX'.
 void* FVirtualMemory::Alloc(size_t alignment, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     Assert(sizeInBytes);
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
     Assert(Meta::IsPow2(alignment));
 
-#if     defined(PLATFORM_WINDOWS)
-    // Optimistically try mapping precisely the right amount before falling back to the slow method :
-    void* p = ::VirtualAlloc(nullptr, sizeInBytes, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-
-    if (not Meta::IsAligned(alignment, p)) {
-        const size_t allocationGranularity = FPlatformMisc::SystemInfo.AllocationGranularity;
-
-        // Fill "bubbles" (reserve unaligned regions) at the beginning of virtual address space, otherwise there will be always falling back to the slow method
-        if ((uintptr_t)p < 16 * 1024 * 1024)
-            ::VirtualAlloc(p, alignment - ((uintptr_t)p & (alignment - 1)), MEM_RESERVE, PAGE_NOACCESS);
-
-        do {
-            p = ::VirtualAlloc(NULL, sizeInBytes + alignment - allocationGranularity, MEM_RESERVE, PAGE_NOACCESS);
-            if (nullptr == p)
-                return nullptr;
-
-            ::VirtualFree(p, 0, MEM_RELEASE);// Unfortunately, WinAPI doesn't support release a part of allocated region, so release a whole region
-
-            p = ::VirtualAlloc(
-                (void*)(((uintptr_t)p + (alignment - 1)) & ~(alignment - 1)),
-                sizeInBytes,
-                MEM_RESERVE|MEM_COMMIT,
-                PAGE_READWRITE );
-
-        } while (nullptr == p);
-    }
-
-#elif   defined(PLATFORM_LINUX)
-    void* p = (void*)(((uintptr_t)::mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0) + 1)&~1);//with the conversion of MAP_FAILED to 0
-
-    if (not Meta::IsAligned(alignment, p)) {
-        p = VMALLOC(size + alignment - ALLOCATION_GRANULARITY());
-        if (p/* != MAP_FAILED*/) {
-            uintptr_t ap = ((uintptr_t)p + (alignment - 1)) & ~(alignment - 1);
-            uintptr_t diff = ap - (uintptr_t)p;
-            if (diff) VMFREE(p, diff);
-            diff = alignment - ALLOCATION_GRANULARITY() - diff;
-            assert((intptr_t)diff >= 0);
-            if (diff) VMFREE((void*)(ap + size), diff);
-            p = (void*)ap;
-            break;
-        }
-    }
-
-#else
-#   error "unsupported platform"
-#endif
+    void* const p = FPlatformMemory::VirtualAlloc(alignment, sizeInBytes);
 
 #if USE_VMALLOC_SIZE_PTRIE
     FVMAllocSizePTrie_::Get().Register(p, sizeInBytes);
@@ -200,7 +112,6 @@ void* FVirtualMemory::Alloc(size_t alignment, size_t sizeInBytes TRACKINGDATA_AR
 
     return p;
 }
-PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 void FVirtualMemory::Free(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     Assert(ptr);
@@ -216,21 +127,14 @@ void FVirtualMemory::Free(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     trackingData.Deallocate(1, sizeInBytes);
 #endif
 
-#if     defined(PLATFORM_WINDOWS)
-    UNUSED(sizeInBytes);
-    if (0 == ::VirtualFree(ptr, 0, MEM_RELEASE))
-        CORE_THROW_IT(FLastErrorException("VirtualFree"));
-
-#else
-#   error "unsupported platform"
-#endif
+    FPlatformMemory::VirtualFree(ptr, sizeInBytes);
 }
 //----------------------------------------------------------------------------
 // Won't register in FVMAllocSizePTrie_
 void* FVirtualMemory::InternalAlloc(size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, sizeInBytes));
 
-    void* const ptr = VMALLOC(sizeInBytes);
+    void* const ptr = FPlatformMemory::VirtualAlloc(sizeInBytes);
     AssertRelease(ptr);
 
 #if USE_CORE_MEMORYDOMAINS
@@ -246,7 +150,7 @@ void FVirtualMemory::InternalFree(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG
     Assert(ptr);
     Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, sizeInBytes));
 
-    VMFREE(ptr, sizeInBytes);
+    FPlatformMemory::VirtualFree(ptr, sizeInBytes);
 
 #if USE_CORE_MEMORYDOMAINS
     Assert(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
@@ -262,7 +166,7 @@ FVirtualMemoryCache::FVirtualMemoryCache()
 {}
 //----------------------------------------------------------------------------
 void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, size_t maxCacheSizeInBytes TRACKINGDATA_ARG_IFP) {
-    const size_t alignment = FPlatformMisc::SystemInfo.AllocationGranularity;
+    constexpr size_t alignment = FPlatformMemory::AllocationGranularity;
     Assert(Meta::IsAligned(alignment, sizeInBytes));
 
     if (FreePageBlockCount && (sizeInBytes <= maxCacheSizeInBytes / 4)) {
@@ -302,7 +206,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
             TotalCacheSizeInBytes -= cachedBlockSize;
 
             if (cachedBlock + 1 != last)
-                ::memmove(cachedBlock, cachedBlock + 1, sizeof(FFreePageBlock) * (last - cachedBlock - 1));
+                FPlatformMemory::Memmove(cachedBlock, cachedBlock + 1, sizeof(FFreePageBlock) * (last - cachedBlock - 1));
 
             Assert(Meta::IsAligned(alignment, result));
 
@@ -334,7 +238,7 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
     if (0 == sizeInBytes)
         sizeInBytes = FVirtualMemory::SizeInBytes(ptr);
 
-    Assert(Meta::IsAligned(FPlatformMisc::SystemInfo.AllocationGranularity, sizeInBytes));
+    Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, sizeInBytes));
 
     if (sizeInBytes > maxCacheSizeInBytes / 4) {
         FVirtualMemory::Free(ptr, sizeInBytes TRACKINGDATA_ARG_FWD);
@@ -355,10 +259,10 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
 #endif
 
         if (--FreePageBlockCount)
-            ::memmove(first, first + 1, sizeof(FFreePageBlock) * FreePageBlockCount);
+            FPlatformMemory::Memmove(first, first + 1, sizeof(FFreePageBlock) * FreePageBlockCount);
     }
 
-    ONLY_IF_ASSERT(::memset(ptr, 0xDD, sizeInBytes)); // trash the memory block before caching
+    ONLY_IF_ASSERT(FPlatformMemory::Memset(ptr, 0xDD, sizeInBytes)); // trash the memory block before caching
 
     first[FreePageBlockCount] = FFreePageBlock{ ptr, sizeInBytes };
     TotalCacheSizeInBytes += sizeInBytes;
@@ -374,7 +278,7 @@ void FVirtualMemoryCache::ReleaseAll(FFreePageBlock* first TRACKINGDATA_ARG_IFP)
     for (   FFreePageBlock* const last = (first + FreePageBlockCount);
             first != last;
             ++first ) {
-        Assert(Meta::IsAligned(FPlatformMisc::SystemInfo.AllocationGranularity, first->Ptr));
+        Assert(Meta::IsAligned(FPlatformMemory::AllocationGranularity, first->Ptr));
 
         FVirtualMemory::Free(first->Ptr, first->SizeInBytes TRACKINGDATA_ARG_FWD);
 

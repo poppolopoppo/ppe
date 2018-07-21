@@ -3,6 +3,7 @@
 #include "BoundingIntervalHierarchy.h"
 
 #include "Container/Stack.h"
+#include "HAL/PlatformMaths.h"
 
 #include "Frustum.h"
 #include "PackingHelpers.h"
@@ -21,7 +22,7 @@ namespace Core {
 namespace {
 //----------------------------------------------------------------------------
 FORCE_INLINE static size_t ApproxBIHTreeDepth_(size_t count) {
-    return (Meta::CeilLog2(count) + 1);
+    return (FPlatformMaths::CeilLog2(count) + 1);
 }
 //----------------------------------------------------------------------------
 FORCE_INLINE static u32 QuantizeClip0_(float value, float vmin, float vmax) {

@@ -3,6 +3,7 @@
 #include "Exception.h"
 
 #include "Core/IO/TextWriter.h"
+#include "Core/Memory/MemoryView.h"
 
 #if USE_CORE_EXCEPTION_CALLSTACK
 #   include "Callstack.h"

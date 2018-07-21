@@ -12,6 +12,7 @@
 //
 */
 
+#include "Core/Allocator/Malloc.h"
 #include "Core/Container/IntrusiveList.h"
 #include "Core/Meta/OneTimeInitialize.h"
 

@@ -74,6 +74,26 @@ CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FDurationInMs v);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
+template <typename T, typename _Quote>
+struct TQuoted {
+    const T* Value;
+    _Quote Quote;
+};
+template <typename T, typename _Quote>
+TQuoted<T, _Quote> Quoted(const T& value, _Quote quote) {
+    return TQuoted<T, _Quote>{ &value, quote };
+}
+} //!namespace Fmt
+//----------------------------------------------------------------------------
+template <typename _Char, typename T, typename _Quote>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TQuoted<T, _Quote>& quoted) {
+    Assert(quoted.Value);
+    return oss << quoted.Quote << *quoted.Value << quoted.Quote;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Fmt {
 template <typename T, typename _Char>
 struct TPadded {
     const T* Outp;
@@ -228,25 +248,38 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TT
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
-template <typename _Elt, typename _Sep>
+template <typename _It, typename _Sep>
 struct TJoin {
-    TMemoryView<_Elt> Data;
+    _It First;
+    _It Last;
     _Sep Separator;
-    TJoin(const TMemoryView<_Elt>& data, _Sep separator)
-        : Data(data), Separator(separator) {}
+    TJoin(_It first, _It last, _Sep separator)
+        : First(first), Last(last), Separator(separator) {}
+};
+template <typename _It, typename _Sep>
+TJoin<_It, _Sep> Join(_It first, _It last, _Sep separator) {
+    return TJoin<_It, _Sep>(first, last, separator);
+}
+template <typename _It, typename _Sep>
+TJoin<_It, _Sep> Join(const TIterable<_It>& iterable, _Sep separator) {
+    return TJoin<_It, _Sep>(iterable.begin(), iterable.end(), separator);
+}
+template <typename T>
+auto CommaSeparated(const TMemoryView<T>& data) {
+    return Join(data.begin(), data.end(), MakeStringView(", "));
 };
 template <typename T>
-TJoin<T, const char*> CommaSeparated(const TMemoryView<T>& data) {
-    return TJoin<T, const char*>(data, ", ");
+auto CommaSeparatedW(const TMemoryView<T>& data) {
+    return Join(data.begin(), data.end(), MakeStringView(L", "));
 };
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-template <typename _Char, typename _Elt, typename _Sep>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TJoin<_Elt, _Sep>& join) {
-    if (join.Data.size()) {
-        oss << join.Data.front();
-        forrange(i, 1, join.Data.size())
-            oss << join.Separator << join.Data[i];
+template <typename _Char, typename _It, typename _Sep>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TJoin<_It, _Sep>& join) {
+    forrange(it, join.First, join.Last) {
+        if (it != join.First)
+            oss << join.Separator;
+        oss << *it;
     }
     return oss;
 }

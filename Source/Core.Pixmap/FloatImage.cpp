@@ -7,8 +7,9 @@
 #include "Core/Allocator/PoolAllocator-impl.h"
 #include "Core/Allocator/TrackingMalloc.h"
 #include "Core/Color/Color.h"
-#include "Core/Diagnostic/Logger.h"
 #include "Core/Container/BitSet.h"
+#include "Core/Diagnostic/Logger.h"
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/Maths/ScalarVector.h"
 #include "Core/Maths/MathHelpers.h"
 
@@ -22,7 +23,12 @@
 #define STBIR_DEFAULT_FILTER_UPSAMPLE     STBIR_FILTER_CATMULLROM
 #define STBIR_DEFAULT_FILTER_DOWNSAMPLE   STBIR_FILTER_CUBICBSPLINE // TODO: workaround invalid alpha with STBIR_FILTER_MITCHELL
 
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4100) // 'XXX': unreferenced formal parameter
+
 #include "Core.External/stb/stb_image_resize.h"
+
+PRAGMA_MSVC_WARNING_POP()
 
 namespace Core {
 namespace Pixmap {
@@ -115,7 +121,7 @@ void FFloatImage::CopyTo(FFloatImage* dst) const {
 
     dst->Resize_DiscardData(_width, _height);
     const auto src = MakeConstView();
-    ::memcpy(dst->_data.data(), src.data(), src.SizeInBytes());
+    FPlatformMemory::MemcpyLarge(dst->_data.data(), src.data(), src.SizeInBytes());
 }
 //----------------------------------------------------------------------------
 void FFloatImage::Resize_DiscardData(const uint2& size) {

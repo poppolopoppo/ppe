@@ -87,7 +87,7 @@ void Remove_AssertExists(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& 
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 _Value Remove_ReturnValue(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key) {
-    THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>::value_type value;
+    typename THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>::value_type value;
     if (not hashmap.erase(key, &value))
         AssertNotReached();
     return value.second;
@@ -105,6 +105,7 @@ void Remove_AssertExistsAndSameValue(THashMap<_Key, _Value, _Hasher, _EqualTo, _
         hashmap.erase(it);
     }
 #else
+    NOOP(value);
     hashmap.erase(key);
 #endif
 }

@@ -2,6 +2,8 @@
 
 #include "BufferedStream.h"
 
+#include "HAL/PlatformMemory.h"
+
 namespace Core {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -86,8 +88,6 @@ std::streamoff FBufferedStreamReader::SeekI(std::streamoff offset, ESeekOrigin o
         break;
     default:
         AssertNotImplemented();
-        newOrigin = std::streamoff(-1);
-        break;
     }
 
     if (newOrigin >= _origin && newOrigin < _origin + _capacity) {
@@ -126,7 +126,7 @@ bool FBufferedStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
                 const u32 toRead = Min(checked_cast<u32>(pend - pdst), _capacity - _offset);
                 Assert(toRead > 0);
 
-                ::memcpy(pdst, _buffer + _offset, toRead);
+                FPlatformMemory::MemcpyLarge(pdst, _buffer + _offset, toRead);
 
                 pdst += toRead;
                 _offset += toRead;
@@ -145,7 +145,7 @@ bool FBufferedStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
             Assert(_buffer);
 
             const size_t toCopy = (_capacity - _offset);
-            ::memcpy(pdst, _buffer + _offset, toCopy);
+            FPlatformMemory::MemcpyLarge(pdst, _buffer + _offset, toCopy);
 
             pdst += toCopy;
             sizeInBytes -= toCopy;
@@ -308,8 +308,6 @@ std::streamoff FBufferedStreamWriter::SeekO(std::streamoff offset, ESeekOrigin o
         break;
     default:
         AssertNotImplemented();
-        newOrigin = std::streamoff(-1);
-        break;
     }
 
     if (newOrigin >= _origin && newOrigin < _origin + checked_cast<std::streamoff>(_offset)) {
@@ -347,7 +345,7 @@ bool FBufferedStreamWriter::Write(const void* storage, std::streamsize sizeInByt
                 const size_t toWrite = Min(checked_cast<size_t>(pend - psrc), _bufferSize - _offset);
                 Assert(toWrite > 0);
 
-                ::memcpy(_buffer + _offset, psrc, toWrite);
+                FPlatformMemory::Memcpy(_buffer + _offset, psrc, toWrite);
 
                 psrc += toWrite;
                 _offset += toWrite;

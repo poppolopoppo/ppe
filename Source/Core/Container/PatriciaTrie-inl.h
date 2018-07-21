@@ -304,8 +304,10 @@ void TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Optimize
         }
     }
 
+    /*
     LOG(Info, L"[Patricia] Merged {0:6} nodes from a total of {1:6} ({2:6} remaining)",
         merged, merged+remaining, remaining );
+        */
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, size_t _InSitu, typename _Less, typename _EqualTo, typename _Allocator>

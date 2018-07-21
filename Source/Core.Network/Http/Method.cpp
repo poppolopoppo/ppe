@@ -10,8 +10,7 @@ namespace Network {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FStringView HttpMethodToCStr(EHttpMethod method) {
-    switch (method)
-    {
+    switch (method) {
     case Core::Network::EHttpMethod::Get:
         return "GET";
     case Core::Network::EHttpMethod::Head:
@@ -31,7 +30,7 @@ FStringView HttpMethodToCStr(EHttpMethod method) {
     case Core::Network::EHttpMethod::Patch:
         return "PATCH";
     }
-    return FStringView();
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 bool HttpMethodFromCStr(EHttpMethod* method, const FStringView& str) {

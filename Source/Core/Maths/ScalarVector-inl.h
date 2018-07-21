@@ -99,7 +99,7 @@ auto TScalarVector<T, _Dim>::operator =(const TScalarVector<U, _Dim>& other) -> 
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-const T& TScalarVector<T, _Dim>::operator [](size_t i) const {
+T TScalarVector<T, _Dim>::operator [](size_t i) const {
     Assert(i < _Dim);
     return _data[i];
 }

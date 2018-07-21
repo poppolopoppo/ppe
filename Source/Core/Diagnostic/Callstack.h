@@ -43,10 +43,6 @@ public:
 
     void SetFrames(const TMemoryView<void* const>& frames);
 
-    static void Start();
-    static void ReloadSymbols();
-    static void Shutdown();
-
 private:
     size_t _hash;
     size_t _depth;

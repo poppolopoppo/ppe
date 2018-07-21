@@ -2,11 +2,10 @@
 
 #include "Core/Core.h"
 
+#include "Core/Diagnostic/Logger_fwd.h"
 #include "Core/Meta/Enum.h"
-
-#if !defined(FINAL_RELEASE) || USE_CORE_FORCE_LOGGING
-#   define USE_DEBUG_LOGGER
-#endif
+#include "Core/Memory/RefPtr.h"
+#include "Core/Time/Timestamp.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -51,14 +50,16 @@ FWD_INTERFACE_REFPTR(Logger);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+struct FLoggerCategory {
+    const wchar_t* Name;
+    ELoggerVerbosity Verbosity = ELoggerVerbosity::All;
+};
+//----------------------------------------------------------------------------
 class FLogger {
 public:
     using EVerbosity = ELoggerVerbosity;
 
-    struct FCategory {
-        const wchar_t* Name;
-        EVerbosity Verbosity = EVerbosity::All;
-    };
+    using FCategory = FLoggerCategory;
 
     struct FSiteInfo {
         FTimestamp Timestamp;
@@ -95,7 +96,6 @@ public:
     static CORE_API void UnregisterLogger(const PLogger& logger);
 
 public:
-    static CORE_API PLogger MakeConsole();
     static CORE_API PLogger MakeStdout();
     static CORE_API PLogger MakeOutputDebug();
     static CORE_API PLogger MakeAppendFile(const wchar_t* filename);
@@ -124,11 +124,9 @@ CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level)
 } //!namespace Core
 
 #define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY) \
-    _API ::Core::FLogger::FCategory CONCAT(GLogCategory_, _NAME){ WIDESTRING(STRINGIZE(_NAME)), ::Core::FLogger::EVerbosity::_VERBOSITY };
+    _API ::Core::FLoggerCategory CONCAT(GLogCategory_, _NAME){ WIDESTRING(STRINGIZE(_NAME)), ::Core::FLogger::EVerbosity::_VERBOSITY };
 #define LOG_CATEGORY(_API, _NAME) \
     LOG_CATEGORY_VERBOSITY(_API, _NAME, All)
-#define EXTERN_LOG_CATEGORY(_API, _NAME) \
-    extern _API ::Core::FLogger::FCategory CONCAT(GLogCategory_, _NAME);
 
 #define LOG(_CATEGORY, _LEVEL, ...) \
     ::Core::FLogger::Log( \
@@ -148,7 +146,6 @@ CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level)
 
 #define LOG_CATEGORY_VERBOSITY(...)
 #define LOG_CATEGORY(...)
-#define EXTERN_LOG_CATEGORY(...)
 #define FLUSH_LOG() NOOP()
 
 #define LOG(_CATEGORY, _LEVEL, ...) \

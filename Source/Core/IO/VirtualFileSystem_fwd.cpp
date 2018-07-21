@@ -10,7 +10,7 @@
 #include "IO/TextWriter.h"
 #include "FS/Dirpath.h"
 #include "FS/Filename.h"
-#include "FS/FileStat.h"
+#include "HAL/PlatformFile.h"
 #include "Time/DateTime.h"
 
 namespace Core {
@@ -41,8 +41,8 @@ bool VFS_CreateDirectory(const FDirpath& dirpath) {
     return VFS().CreateDirectory(dirpath);
 }
 //----------------------------------------------------------------------------
-bool VFS_RemoveDirectory(const FDirpath& dirpath) {
-    return VFS().RemoveDirectory(dirpath);
+bool VFS_RemoveDirectory(const FDirpath& dirpath, bool force/* = true */) {
+    return VFS().RemoveDirectory(dirpath, force);
 }
 //----------------------------------------------------------------------------
 bool VFS_RemoveFile(const FFilename& filename) {
@@ -103,8 +103,8 @@ UStreamWriter VFS_RollFile(const FFilename& filename, EAccessPolicy policy/* = E
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-STATIC_ASSERT(std::is_same<RAWSTORAGE(FileSystem, u8), TRawStorage<u8, ALLOCATOR(FileSystem, u8)> >::value);
-bool VFS_ReadAll(TRawStorage<u8, ALLOCATOR(FileSystem, u8)> *pcontent, const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
+STATIC_ASSERT(std::is_same<RAWSTORAGE(FileSystem, u8), FRawStorage>::value);
+bool VFS_ReadAll(FRawStorage* pcontent, const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
     return FVirtualFileSystem::ReadAll(filename, *pcontent, policy);
 }
 //----------------------------------------------------------------------------

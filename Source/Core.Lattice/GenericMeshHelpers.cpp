@@ -11,6 +11,7 @@
 #include "Core/Container/HashMap.h"
 #include "Core/Container/HashSet.h"
 #include "Core/Container/Vector.h"
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/Maths/MathHelpers.h"
 #include "Core/Maths/PNTriangle.h"
 #include "Core/Maths/ScalarBoundingBox.h"
@@ -1225,7 +1226,7 @@ void OptimizeVerticesOrder(FGenericMesh& mesh) { // also removes unused vertices
     const TMemoryView<u32> old2new = tmpData.SubRange(0, vertexCount);
     const TMemoryView<u32> reindexation = tmpData.SubRange(vertexCount, vertexCount);
     const TMemoryView<u32> tmp = tmpData.SubRange(2*vertexCount, vertexCount);
-    memset(old2new.Pointer(), 0xFF, old2new.SizeInBytes());
+    FPlatformMemory::Memset(old2new.Pointer(), 0xFF, old2new.SizeInBytes());
 
     u32 sortedCount = 0;
 

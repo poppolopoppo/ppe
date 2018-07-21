@@ -2,10 +2,11 @@
 
 #include "Token.h"
 
+#include "HAL/PlatformAtomics.h"
+#include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Memory/VirtualMemory.h"
-#include "Misc/TargetPlatform.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -50,14 +51,14 @@ const FTokenFactory::FEntry* FTokenFactory::Allocate(void* src, size_t len, size
     result = INPLACE_NEW(_heap.Allocate(sizeInBytes), FEntry)(len, hash);
     Assert(Meta::IsAligned(std::alignment_of_v<FEntry>, result));
 
-    ::memcpy(result->Data(), src, len * stride);
-    ::memset(result->Data() + len * stride, 0x00, stride); // null terminate
+    FPlatformMemory::Memcpy(result->Data(), src, len * stride);
+    FPlatformMemory::Memzero(result->Data() + len * stride, stride); // null terminate
 
     if (nullptr == head) {
         Assert(nullptr == tail);
 
         // if failed : concurrency problem, some thread might already have the head
-        Verify(FPlatformAtomics::CompareExchange((void**)&_bucketHeads[bucket], result, head) == head);
+        Verify(FPlatformAtomics::CompareExchangePtr((volatile void**)&_bucketHeads[bucket], (void*)result, (void*)head) == head);
     }
     else {
         Assert(nullptr != tail);
@@ -65,7 +66,7 @@ const FTokenFactory::FEntry* FTokenFactory::Allocate(void* src, size_t len, size
         Assert_NoAssume(tail->TestCanary());
 
         // if failed : concurrency problem, some thread might already have the tail
-        Verify(FPlatformAtomics::CompareExchange((void**)&tail->Next, result, nullptr) == nullptr);
+        Verify(FPlatformAtomics::CompareExchangePtr((volatile void**)&tail->Next, (void*)result, (void*)nullptr) == nullptr);
     }
 
     _bucketTails[bucket] = result; // non-atomically updated since only used when locked

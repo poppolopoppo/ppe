@@ -488,10 +488,8 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionFlags flags) {
     case RTTI::ETransactionFlags::Loading:      return oss << "Loading";
     case RTTI::ETransactionFlags::Loaded:       return oss << "Loaded";
     case RTTI::ETransactionFlags::Unloading:    return oss << "Unloading";
-    default:
-        AssertNotImplemented();
     }
-    return oss;
+    AssertNotReached();
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionFlags flags) {
@@ -500,10 +498,8 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionFlags flags) {
     case RTTI::ETransactionFlags::Loading:      return oss << L"Loading";
     case RTTI::ETransactionFlags::Loaded:       return oss << L"Loaded";
     case RTTI::ETransactionFlags::Unloading:    return oss << L"Unloading";
-    default:
-        AssertNotImplemented();
     }
-    return oss;
+    AssertNotReached();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

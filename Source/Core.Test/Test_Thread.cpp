@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "Core/Diagnostic/Logger.h"
+#include "Core/HAL/PlatformProcess.h"
 #include "Core/IO/BufferedStream.h"
 #include "Core/IO/FileStream.h"
 #include "Core/IO/StringView.h"
@@ -46,7 +47,7 @@ static void Test_Async_() {
     });
     */
 
-    Async([](ITaskContext& ctx) {
+    Async([](ITaskContext&) {
         LOG(Test_Thread, Info, L"{0}: async fire and forget with context",
             MakeCStringView(CurrentThreadContext().Name()));
     });
@@ -82,8 +83,10 @@ static void Test_ParallelFor_() {
     LOG(Test_Thread, Info, L"ParallelFor start");
 
     ParallelForEach(std::begin(values), std::end(values), [](size_t v) {
+        NOOP(v);
         LOG(Test_Thread, Info, L"ParallelFor: {0} -> {1}",
             MakeCStringView(CurrentThreadContext().Name()), v );
+        FPlatformProcess::Sleep(0);
     });
 
     LOG(Test_Thread, Info, L"ParallelFor stop");

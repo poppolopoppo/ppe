@@ -142,7 +142,8 @@ void FHttpRequest::Write(FSocketBuffered* psocket, const FHttpRequest& request) 
     }
 
     // add content-length header if omitted :
-    if (request.GetIFP(FHttpConstNames::ContentLength()).empty()) {
+    if (request.Body().SizeInBytes() &&
+        request.GetIFP(FHttpConstNames::ContentLength()).empty()) {
         char tmp[32];
         FFixedSizeTextWriter oss(tmp);
         Format(oss, "{0}", request.Body().SizeInBytes());

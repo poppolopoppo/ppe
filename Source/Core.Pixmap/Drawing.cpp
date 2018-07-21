@@ -41,7 +41,7 @@ void DrawLine(FFloatImage* img, int x0, int y0, int x1, int y1, const FLinearCol
         FLinearColor c = color;
         float yy = float(y0);
         forrange(x, x0, x1) {
-            const int y = int(Floor(yy));
+            const int y = FloorToInt(yy);
             const float fy = yy - y;
             c.A = color.A * (1.0f - fy);
             DrawPoint(img, x, y, c);
@@ -61,7 +61,7 @@ void DrawLine(FFloatImage* img, int x0, int y0, int x1, int y1, const FLinearCol
         FLinearColor c = color;
         float xx = float(x0);
         forrange(y, y0, y1) {
-            const int x = int(Floor(xx));
+            const int x = FloorToInt(xx);
             const float fx = xx - x;
             c.A = color.A * (1.0f - fx);
             DrawPoint(img, x, y, c);

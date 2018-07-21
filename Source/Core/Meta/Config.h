@@ -3,7 +3,7 @@
 //----------------------------------------------------------------------------
 // Global parameter defining how much cores we handle at max
 //----------------------------------------------------------------------------
-#define CORE_MAX_CORES              32 // Change with care !
+#define CORE_MAX_NUMCORES           64 // Change with care !
 
 //----------------------------------------------------------------------------
 // Global switch for turning of assertions

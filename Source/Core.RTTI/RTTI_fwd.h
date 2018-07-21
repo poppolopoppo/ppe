@@ -3,6 +3,7 @@
 #include "Core.RTTI/RTTI.h"
 
 #include "Core/Allocator/PoolAllocatorTag.h"
+#include "Core/IO/StringView.h"
 #include "Core/Memory/RefPtr.h"
 
 namespace Core {
@@ -28,6 +29,10 @@ class IListTraits;
 class IDicoTraits;
 //----------------------------------------------------------------------------
 class FMetaClass;
+template <typename T>
+const FMetaClass* MetaClass();
+FStringView MetaClassName(const FMetaClass* metaClass);
+//----------------------------------------------------------------------------
 class FMetaFunction;
 class FMetaParameter;
 class FMetaProperty;

@@ -4,6 +4,7 @@
 
 #include "Core.Network/Socket/Address.h"
 
+#include "Core/IO/String.h"
 #include "Core/Maths/Units.h"
 
 #include <atomic>
@@ -27,6 +28,7 @@ public:
     FHttpServer(const FHttpServer& ) = delete;
     FHttpServer& operator =(const FHttpServer& ) = delete;
 
+    const FString& Name() const { return _name; }
     const FAddress& Localhost() const { return _localhost; }
     const FMilliseconds& Timeout() const { return _timeout; }
     size_t MaxContentLength() const { return _maxContentLength; }
@@ -47,6 +49,7 @@ protected:
     virtual void OnDisconnect(FSocketBuffered& socket) const = 0;
 
 private:
+    FString _name;
     FAddress _localhost;
     FMilliseconds _timeout;
     size_t _maxContentLength;

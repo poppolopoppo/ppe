@@ -28,7 +28,7 @@ TUniquePtr<T, _Deleter> MakeUnique(T* ptr) {
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
 Meta::TEnableIf< not std::is_array_v<T>, TUniquePtr<T> > MakeUnique(_Args&&... args) {
-    return TUniquePtr(new T{ std::forward<_Args>(args)... });
+    return TUniquePtr<T>(new T{ std::forward<_Args>(args)... });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

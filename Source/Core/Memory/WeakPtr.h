@@ -48,15 +48,14 @@ public:
     ~FWeakPtrBase();
 
 protected:
-    FWeakPtrBase(void **pptr);
+    FWeakPtrBase();
 
-    template <typename T>
-    void set_(T *ptr);
+    void set_(FWeakAndRefCountable* ptr);
 
 private:
     friend class FWeakAndRefCountable;
 
-    void **_pptr;
+    FWeakAndRefCountable* _weakAndRefCountable;
     FWeakPtrBase *_next, *_prev;
 };
 //----------------------------------------------------------------------------
@@ -69,7 +68,7 @@ public:
     friend class TWeakPtr;
 
     TWeakPtr();
-    TWeakPtr(T* ptr);
+    explicit TWeakPtr(T* ptr);
     ~TWeakPtr();
 
     TWeakPtr(TWeakPtr&& rvalue);
@@ -101,9 +100,8 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-hash_t hash_value(const TWeakPtr<T>& weakPtr) {
-    return hash_value(weakPtr.get());
-}
+hash_t hash_value(const TWeakPtr<T>& weakPtr) = delete; // *NEVER* index on TWeakPtr<>
+// This is completely unsafe since the state of weakPtr can change based of owner lifetime
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
 void swap(const TWeakPtr<_Lhs>& lhs, const TWeakPtr<_Rhs>& rhs) {

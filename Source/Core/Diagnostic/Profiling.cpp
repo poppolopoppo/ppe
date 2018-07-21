@@ -4,6 +4,8 @@
 
 #ifdef WITH_CORE_PROFILING
 
+// #TODO make work and put in FPlatformDebug
+
 #ifdef PLATFORM_WINDOWS
 #   include <VSPerf.h>
 #else

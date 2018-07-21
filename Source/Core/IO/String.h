@@ -5,6 +5,7 @@
 #include "Core/Allocator/Allocation.h"
 #include "Core/IO/String_fwd.h"
 #include "Core/IO/StringView.h"
+#include "Core/HAL/PlatformString.h"
 
 #include <algorithm>
 #include <initializer_list>
@@ -254,7 +255,7 @@ public:
 
     inline friend bool operator ==(const TBasicString& lhs, const TBasicString& rhs) { return Equals(lhs.MakeView(), rhs.MakeView()); }
     inline friend bool operator ==(const stringview_type& lhs, const TBasicString& rhs) { return Equals(lhs, rhs.MakeView()); }
-    inline friend bool operator ==(const TBasicString& lhs, const stringview_type& rhs) { return Equals(lhs.MakeView(), lhs); }
+    inline friend bool operator ==(const TBasicString& lhs, const stringview_type& rhs) { return Equals(lhs.MakeView(), rhs); }
 
     inline friend bool operator !=(const TBasicString& lhs, const TBasicString& rhs) { return (not operator ==(lhs, rhs)); }
     inline friend bool operator !=(const stringview_type& lhs, const TBasicString& rhs) { return (not operator ==(lhs, rhs)); }
@@ -534,13 +535,6 @@ template <size_t _Dim>
 size_t ToWCStr(wchar_t(&dst)[_Dim], const char *cstr) { return ToWCStr(dst, _Dim, cstr); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-enum class ECodePage : int {
-    ACP = 0,
-    UTF_8 = 65001,
-    Windows_1252 = 1252,
-    ANSI = Windows_1252,
-};
 //----------------------------------------------------------------------------
 CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
 CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr);

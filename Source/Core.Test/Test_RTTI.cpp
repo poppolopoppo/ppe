@@ -20,14 +20,17 @@
 
 #include "Core.Serialize/Text/Grammar.h"
 #include "Core.Serialize/Lexer/Lexer.h"
-#include "Core.Serialize/Parser/Parser.h"
+#include "Core.Serialize/Parser/ParseContext.h"
+#include "Core.Serialize/Parser/ParseExpression.h"
+#include "Core.Serialize/Parser/ParseList.h"
+#include "Core.Serialize/Parser/ParseStatement.h"
 
 #include "Core/Container/AssociativeVector.h"
 #include "Core/Container/HashMap.h"
 #include "Core/Container/Pair.h"
 #include "Core/Container/Vector.h"
-#include "Core/Diagnostic/Console.h"
 #include "Core/Diagnostic/Logger.h"
+#include "Core/HAL/PlatformConsole.h"
 #include "Core/IO/FileStream.h"
 #include "Core/IO/Format.h"
 #include "Core/IO/FS/ConstNames.h"
@@ -194,7 +197,7 @@ RTTI_CLASS_END()
 class FRTTIAtomRandomizer_ : protected RTTI::FBaseAtomVisitor {
     typedef RTTI::FBaseAtomVisitor parent_type;
 public:
-    FRTTIAtomRandomizer_(size_t maxDim, u64 seed) 
+    FRTTIAtomRandomizer_(size_t maxDim, u64 seed)
     :   _maxDim(maxDim)
     ,   _depth(0)
     ,   _rand(seed)
@@ -243,7 +246,7 @@ protected:
     }
 
 #define DEF_METATYPE_SCALAR(_Name, T, _TypeId) \
-    virtual bool Visit(const RTTI::IScalarTraits* scalar, T& value) override final { \
+    virtual bool Visit(const RTTI::IScalarTraits* , T& value) override final { \
         Randomize_(value); \
         return true; \
     }
@@ -524,18 +527,20 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_InteractiveConsole_() {
+#if !USE_CORE_PROFILING
     FLUSH_LOG();
 
     char buffer[1024];
     Parser::FParseContext globalContext(Meta::ForceInit);
 
-    const FConsole::FScope consoleScope;
+    FPlatformConsole::Open();
+
     do
     {
-        FConsole::Write("$>", FConsole::BLACK_ON_WHITE);
-        FConsole::Write("  ", FConsole::WHITE_ON_BLACK);
+        FPlatformConsole::Write("$>", FPlatformConsole::BLACK_ON_WHITE);
+        FPlatformConsole::Write("  ", FPlatformConsole::WHITE_ON_BLACK);
 
-        const size_t length = FConsole::Read(buffer);
+        const size_t length = FPlatformConsole::Read(buffer);
 
         FStringView line{ buffer, length };
         line = Strip(Chomp(line));
@@ -561,20 +566,23 @@ static NO_INLINE void Test_InteractiveConsole_() {
 
             const RTTI::FAtom value = expr->Eval(&globalContext);
             Assert(value);
-            
-            FConsole::Write(StringFormat(" => {0}\n", value), FConsole::FG_GREEN | FConsole::FG_INTENSITY);
+
+            FPlatformConsole::Write(StringFormat(" => {0}\n", value), FPlatformConsole::FG_GREEN | FPlatformConsole::FG_INTENSITY);
         }
         catch (const Parser::FParserException& e) {
             if (e.Item())
-                FConsole::Write(StringFormat(" !! Parser error : <{0}> {1}, {2}.\n", e.Item()->ToString(), MakeCStringView(e.What()), e.Site()), FConsole::FG_RED);
+                FPlatformConsole::Write(StringFormat(" !! Parser error : <{0}> {1}, {2}.\n", e.Item()->ToString(), MakeCStringView(e.What()), e.Site()), FPlatformConsole::FG_RED);
             else
-                FConsole::Write(StringFormat(" !! Parser error : {0}, {1}.\n", MakeCStringView(e.What()), e.Site()), FConsole::FG_RED | FConsole::FG_INTENSITY);
+                FPlatformConsole::Write(StringFormat(" !! Parser error : {0}, {1}.\n", MakeCStringView(e.What()), e.Site()), FPlatformConsole::FG_RED | FPlatformConsole::FG_INTENSITY);
         }
         catch (const Lexer::FLexerException& e) {
-            FConsole::Write(StringFormat(" ?? Lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site()), FConsole::FG_YELLOW);
+            FPlatformConsole::Write(StringFormat(" ?? Lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site()), FPlatformConsole::FG_YELLOW);
         }
 
     } while (true);
+
+    FPlatformConsole::Close();
+#endif //!!USE_CORE_PROFILING
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Serialize_() {
@@ -624,7 +632,7 @@ static NO_INLINE void Test_Serialize_() {
         }
     }
     {
-        RTTI::FMetaTransaction import(RTTI::FName(MakeStringView("UnitTest_Import"))); 
+        RTTI::FMetaTransaction import(RTTI::FName(MakeStringView("UnitTest_Import")));
         {
             FWStringBuilder oss;
 
@@ -717,9 +725,7 @@ void Test_RTTI() {
     Test_Any_();
     Test_Grammar_();
     Test_Serialize_();
-#if !USE_CORE_PROFILING
     Test_InteractiveConsole_();
-#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

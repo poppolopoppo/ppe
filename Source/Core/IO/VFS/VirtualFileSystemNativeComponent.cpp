@@ -6,7 +6,8 @@
 
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
-#include "IO/FS/FileStat.h"
+#include "HAL/PlatformFile.h"
+#include "HAL/PlatformLowLevelIO.h"
 #include "IO/FS/FileSystemToken.h"
 #include "IO/FS/FileSystemTrie.h"
 #include "IO/FileStream.h"
@@ -15,16 +16,8 @@
 #include "IO/TextWriter.h"
 #include "IO/VirtualFileSystem.h"
 #include "Memory/MemoryProvider.h"
-#include "Misc/TargetPlatform.h"
 
-// EnumerateFiles()
-#ifdef PLATFORM_WINDOWS
-#   include "Misc/Platform_Windows.h"
-#   include <tchar.h>
-#   include <stdio.h>
-#endif
-
-#define NATIVE_ENTITYNAME_MAXSIZE 1024
+#define NATIVE_ENTITYNAME_MAXSIZE FPlatformFile::MaxPathLength
 
 namespace Core {
 EXTERN_LOG_CATEGORY(CORE_API, VFS)
@@ -33,47 +26,13 @@ EXTERN_LOG_CATEGORY(CORE_API, VFS)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static FWString SanitizeTarget_(FWString&& target) {
-    static_assert(FileSystem::Separator == L'/', "invalid FileSystem::Separator");
-    Assert(target.size());
-
-    target.gsub(L'\\', L'/');
-    while (target.gsub(L"//", L"/"));
-
-    if (target.back() != L'/')
-        target.insert(target.end(), L'/');
-
-    for (;;) {
-        const size_t dotdot = target.find(L"/../");
-        if (dotdot == FWString::npos)
-            break;
-
-        Assert(target[dotdot] == L'/');
-
-        const size_t folder = target.rfind(L'/', dotdot - 1);
-        AssertRelease(folder != FWString::npos);
-        Assert(target[folder] == L'/');
-
-        target.erase(target.begin() + folder, target.begin() + (dotdot + 3));
-    }
-
-    target.shrink_to_fit();
-
-    return std::move(target);
-}
-//----------------------------------------------------------------------------
-static FWString SanitizeTarget_(const FWString& target) {
-    FWString result = target;
-    return SanitizeTarget_(std::move(result));
-}
-//----------------------------------------------------------------------------
 static void Unalias_(
     TBasicTextWriter<FileSystem::char_type>& oss,
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target) {
     Assert(alias.PathNode());
     Assert(aliased.PathNode());
-    Assert(L'/' == target.back());
+    Assert(FileSystem::Separator == target.back());
 
     oss << target;
     if (aliased.PathNode() == alias.PathNode())
@@ -102,10 +61,10 @@ static void Unalias_(
     const TMemoryView<FileSystem::char_type>& storage,
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
-    const FileSystem::char_type *suffix = nullptr) {
+    const FileSystem::FStringView suffix = FileSystem::FStringView() ) {
     TBasicFixedSizeTextWriter<FileSystem::char_type> oss(storage);
     Unalias_(oss, aliased, alias, target);
-    if (suffix)
+    if (not suffix.empty())
         oss << suffix;
     oss << Eos;
 }
@@ -119,143 +78,48 @@ static void Unalias_(
     oss << Eos;
 }
 //----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Windows platform
-//----------------------------------------------------------------------------
-#ifdef PLATFORM_WINDOWS
-namespace {
-//----------------------------------------------------------------------------
-static size_t GlobFiles_Windows_(
-    const FDirpath& aliased,
-    const FDirpath& alias, const FWString& target,
-    const TFunction<void(const FFilename&)>& foreach,
-    VECTORINSITU(FileSystem, FDirpath, 16)& subDirectories,
-    const FileSystem::char_type *pattern,
-    bool recursive
-    ) {
-    WIN32_FIND_DATAW ffd;
-
-    FileSystem::char_type nativeGlob[NATIVE_ENTITYNAME_MAXSIZE];
-    Unalias_(nativeGlob, aliased, alias, target, pattern);
-
-    HANDLE hFind = ::FindFirstFileExW(  nativeGlob,
-                                        FindExInfoBasic,
-                                        &ffd,
-                                        FindExSearchNameMatch,
-                                        NULL,
-                                        FIND_FIRST_EX_LARGE_FETCH);
-
-    if (INVALID_HANDLE_VALUE == hFind) {
-        AssertNotReached();
-        return 0;
-    }
-
-    size_t total = 0;
-
-    do {
-        const auto fname = MakeCStringView(ffd.cFileName);
-        if (FILE_ATTRIBUTE_DIRECTORY & ffd.dwFileAttributes) {
-            if (!recursive)
-                continue;
-
-            if (2 == fname.size() && L'.' == fname[0] && L'.' == fname[1])
-                continue;
-
-            subDirectories.emplace_back(aliased, FDirname(fname));
-        }
-        else {
-            foreach(FFilename(aliased, fname));
-            ++total;
-        }
-    } while (::FindNextFileW(hFind, &ffd));
-
-#ifdef WITH_CORE_ASSERT
-    DWORD dwError = GetLastError();
-    Assert(ERROR_NO_MORE_FILES == dwError);
-#endif
-
-    ::FindClose(hFind);
-    return total;
-}
-//----------------------------------------------------------------------------
-static bool EntityExists_(const FileSystem::char_type *nativeName, EExistPolicy policy) {
-    Assert(nativeName);
-
-    return FPlatformIO::Access(nativeName, policy);
-}
-//----------------------------------------------------------------------------
-static bool CreateDirectory_(const FileSystem::char_type *nativeDirpath, bool& existed) {
-    if (::CreateDirectoryW(nativeDirpath, NULL)) {
-        existed = false;
-        return true;
-    }
-    else if (::GetLastError() == ERROR_ALREADY_EXISTS) {
-        existed = true;
-        return true;
-    }
-    else {
-        existed = false;
-        return false;
-    }
-}
-//----------------------------------------------------------------------------
-static bool RemoveDirectory_(const FileSystem::char_type* nativeDirpath) {
-    return (::RemoveDirectoryW(nativeDirpath));
-}
-//----------------------------------------------------------------------------
-static bool RemoveFile_(const FileSystem::char_type* nativeFilename) {
-    return (::DeleteFileW(nativeFilename));
-}
-//----------------------------------------------------------------------------
-static bool MoveFile_(const FileSystem::char_type* nativeSrc, const FileSystem::char_type* nativeDst) {
-    return (::MoveFileExW(
-        nativeSrc,
-        nativeDst,
-        MOVEFILE_WRITE_THROUGH | MOVEFILE_COPY_ALLOWED));
-}
-//----------------------------------------------------------------------------
-} //!namespace
-#endif //!PLATFORM_WINDOWS
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
 static size_t GlobFiles_(
     const FDirpath& aliased,
-    const FDirpath& alias, const FWString& destination,
+    const FDirpath& alias, const FWString& target,
     const TFunction<void(const FFilename&)>& foreach,
     const FWStringView& pattern,
     bool recursive
     ) {
-    VECTORINSITU(FileSystem, FDirpath, 16) subDirectories;
+    struct FContext_ {
+        size_t Total = 0;
+        FDirpath Dirpath;
+        VECTORINSITU(FileSystem, FDirpath, 16) SubDirectories;
+    }   ctx;
 
-    subDirectories.push_back(aliased);
+    ctx.SubDirectories.push_back(aliased);
 
-    size_t total = 0;
+    const TFunction<void(const FWStringView&)> onFile = [&ctx, &pattern, &foreach](const FWStringView& file) {
+        if (pattern.empty() || WildMatchI(pattern, file)) {
+            ctx.Total++;
+            const FBasename basename(file);
+            foreach(FFilename(ctx.Dirpath, basename));
+        }
+    };
+    TFunction<void(const FWStringView&)> onSubDir;
+    if (recursive) {
+        onSubDir = [&ctx](const FWStringView& subdir) {
+            const FDirname dirname(subdir);
+            ctx.SubDirectories.emplace_back(ctx.Dirpath, dirname);
+        };
+    }
 
+    FileSystem::char_type nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     do {
-        FDirpath dirpath(std::move(subDirectories.back()) );
-        subDirectories.pop_back();
+        ctx.Dirpath = std::move(ctx.SubDirectories.back());
+        ctx.SubDirectories.pop_back();
 
-#ifdef PLATFORM_WINDOWS
-        total += GlobFiles_Windows_(
-            dirpath,
-            alias, destination,
-            foreach,
-            subDirectories,
-            pattern.Pointer(),
-            recursive );
-#else
-        // TODO (12/13) : no uniform support
-#   error "TODO"
-#endif
-    } while (subDirectories.size());
+        Unalias_(nativeDirpath, ctx.Dirpath, alias, target);
 
-    return total;
+        FPlatformFile::EnumerateDir(nativeDirpath, onFile, onSubDir);
+
+    } while (not ctx.SubDirectories.empty());
+
+    return ctx.Total;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -264,14 +128,18 @@ static size_t GlobFiles_(
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeComponent::FVirtualFileSystemNativeComponent(const FDirpath& alias, FWString&& target, EOpenPolicy openMode /* = EOpenPolicy::ReadWritable */)
 :   FVirtualFileSystemComponent(alias)
-,   _openMode(openMode), _target(SanitizeTarget_(std::move(target)) ) {
+,   _openMode(openMode)
+,   _target(std::move(target)) {
     Assert(!_target.empty());
+    Verify(FPlatformFile::NormalizePath(_target));
 }
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeComponent::FVirtualFileSystemNativeComponent(const FDirpath& alias, const FWString& target, EOpenPolicy openMode /* = EOpenPolicy::ReadWritable */)
 :   FVirtualFileSystemComponent(alias)
-,   _openMode(openMode), _target(SanitizeTarget_(target)) {
+,   _openMode(openMode)
+,   _target(target) {
     Assert(!_target.empty());
+    Verify(FPlatformFile::NormalizePath(_target));
 }
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeComponent::~FVirtualFileSystemNativeComponent() {}
@@ -300,7 +168,7 @@ bool FVirtualFileSystemNativeComponent::DirectoryExists(const FDirpath& dirpath,
     FileSystem::char_type nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeDirpath, dirpath, _alias, _target);
 
-    return EntityExists_(&nativeDirpath[0], policy);
+    return FPlatformFile::DirectoryExists(&nativeDirpath[0], policy);
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::FileExists(const FFilename& filename, EExistPolicy policy) {
@@ -309,24 +177,34 @@ bool FVirtualFileSystemNativeComponent::FileExists(const FFilename& filename, EE
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
 
-    return EntityExists_(nativeFilename, policy);
+    return FPlatformFile::FileExists(nativeFilename, policy);
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::FileStats(FFileStat* pstat, const FFilename& filename) {
+    Assert(pstat);
+
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
-    return FFileStat::FromNativePath(pstat, nativeFilename);
+    return FPlatformFile::Stat(pstat, nativeFilename);
 }
 //----------------------------------------------------------------------------
 size_t FVirtualFileSystemNativeComponent::EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
     Assert(_openMode ^ EOpenPolicy::Readable);
-    return GlobFiles_(dirpath, _alias, _target, foreach, L"*", recursive);
+
+    const size_t n = GlobFiles_(dirpath, _alias, _target, foreach, FWStringView(), recursive);
+    LOG(VFS, Debug, L"enumerated {0} files in native directory '{1}' (recursive={2:A})", n, dirpath, recursive);
+
+    return n;
 }
 //----------------------------------------------------------------------------
 size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
     Assert(_openMode ^ EOpenPolicy::Readable);
     Assert(pattern.size());
-    return GlobFiles_(dirpath, _alias, _target, foreach, pattern, recursive);
+
+    const size_t n = GlobFiles_(dirpath, _alias, _target, foreach, pattern, recursive);
+    LOG(VFS, Debug, L"globbed {0} files with pattern '{1}' in native directory '{2}' (recursive={3:A})", n, pattern, dirpath, recursive);
+
+    return n;
 }
 //----------------------------------------------------------------------------
 UStreamReader FVirtualFileSystemNativeComponent::OpenReadable(const FFilename& filename, EAccessPolicy policy) {
@@ -334,12 +212,16 @@ UStreamReader FVirtualFileSystemNativeComponent::OpenReadable(const FFilename& f
 
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
-    LOG(VFS, Debug, L"open native readable '{0}' : {1}", filename, policy);
 
     UStreamReader result;
     FFileStreamReader tmp = FFileStream::OpenRead(nativeFilename, policy);
-    if (tmp.Good())
+    if (tmp.Good()) {
+        LOG(VFS, Debug, L"open native readable '{0}' : {1}", filename, policy);
         result.reset(new FFileStreamReader(std::move(tmp)));
+    }
+    else {
+        LOG(VFS, Error, L"failed to open native readable '{0}' : {1}", filename, policy);
+    }
 
     return result;
 }
@@ -352,11 +234,11 @@ bool FVirtualFileSystemNativeComponent::CreateDirectory(const FDirpath& dirpath)
     Unalias_(nativeDirpath, dirpath, _alias, _target);
     nativeDirpath << Eos;
 
-    if (not EntityExists_(nativeDirpath.data(), EExistPolicy::Exists)) {
+    if (not FPlatformFile::DirectoryExists(nativeDirpath.data(), EExistPolicy::Exists)) {
         bool existed = false;
 
-        if (CreateDirectory_(nativeDirpath.data(), existed)) {
-            LOG(VFS, Debug, L"create directory '{0}'", dirpath);
+        if (FPlatformFile::CreateDirectory(nativeDirpath.data(), &existed)) {
+            LOG(VFS, Debug, L"create native directory '{0}'", dirpath);
             return true;
         }
 
@@ -365,18 +247,21 @@ bool FVirtualFileSystemNativeComponent::CreateDirectory(const FDirpath& dirpath)
             if (l == i || FileSystem::Separators().Contains(buffer[i])) {
                 buffer[i] = L'\0';
 
-                if (CreateDirectory_(nativeDirpath.data(), existed)) {
+                if (FPlatformFile::CreateDirectory(nativeDirpath.data(), &existed)) {
                     if (l != i)
                         buffer[i] = FileSystem::Separator;
                     if (not existed)
-                        LOG(VFS, Debug, L"create directory '{0}'", MakeCStringView(buffer));
+                        LOG(VFS, Debug, L"create native directory '{0}'", MakeCStringView(buffer));
                 }
                 else {
-                    LOG(VFS, Error, L"failed to create directory '{0}'", MakeCStringView(buffer));
+                    LOG(VFS, Error, L"failed to create native directory '{0}'", MakeCStringView(buffer));
                     return false;
                 }
             }
         }
+    }
+    else {
+        LOG(VFS, Debug, L"native directory '{0}' already exists", dirpath);
     }
 
     return true;
@@ -390,19 +275,31 @@ bool FVirtualFileSystemNativeComponent::MoveFile(const FFilename& src, const FFi
 
     Unalias_(nativeSrc, src, _alias, _target);
     Unalias_(nativeDst, dst, _alias, _target);
-    LOG(VFS, Debug, L"move file '{0}' -> '{1}'", src, dst);
 
-    return MoveFile_(nativeSrc, nativeDst);
+    if (FPlatformFile::MoveFile(nativeSrc, nativeDst)) {
+        LOG(VFS, Debug, L"move native file '{0}' -> '{1}'", src, dst);
+        return true;
+    }
+    else {
+        LOG(VFS, Error, L"failed to move native file '{0}' -> '{1}'", src, dst);
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
-bool FVirtualFileSystemNativeComponent::RemoveDirectory(const FDirpath& dirpath) {
+bool FVirtualFileSystemNativeComponent::RemoveDirectory(const FDirpath& dirpath, bool force) {
     Assert(_openMode ^ EOpenPolicy::Writable);
 
     FileSystem::char_type nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeDirpath, dirpath, _alias, _target);
-    LOG(VFS, Debug, L"remove directory '{0}'", dirpath);
 
-    return RemoveDirectory_(nativeDirpath);
+    if (FPlatformFile::RemoveDirectory(nativeDirpath, force)) {
+        LOG(VFS, Debug, L"remove native directory '{0}' (force={1:A})", dirpath, force);
+        return true;
+    }
+    else {
+        LOG(VFS, Error, L"failed remove native directory '{0}' (force={1:A})", dirpath, force);
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::RemoveFile(const FFilename& filename) {
@@ -410,9 +307,15 @@ bool FVirtualFileSystemNativeComponent::RemoveFile(const FFilename& filename) {
 
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
-    LOG(VFS, Debug, L"remove file '{0}'", filename);
 
-    return RemoveFile_(nativeFilename);
+    if (FPlatformFile::RemoveFile(nativeFilename)) {
+        LOG(VFS, Debug, L"remove native file '{0}'", filename);
+        return true;
+    }
+    else {
+        LOG(VFS, Error, L"failed to remove native file '{0}'", filename);
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& filename, EAccessPolicy policy) {
@@ -427,11 +330,15 @@ UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& f
 
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
-    LOG(VFS, Debug, L"open native writable '{0}' : {1}", filename, policy);
 
     FFileStreamWriter tmp = FFileStream::OpenWrite(nativeFilename, policy);
-    if (tmp.Good())
+    if (tmp.Good()) {
+        LOG(VFS, Debug, L"open native writable '{0}' : {1}", filename, policy);
         result.reset(new FFileStreamWriter(std::move(tmp)));
+    }
+    else {
+        LOG(VFS, Error, L"failed to open native writable '{0}' : {1}", filename, policy);
+    }
 
     return result;
 }
@@ -448,11 +355,15 @@ UStreamReadWriter FVirtualFileSystemNativeComponent::OpenReadWritable(const FFil
 
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
-    LOG(VFS, Debug, L"open native read/writable '{0}' : {1}", filename, policy);
 
     FFileStreamReadWriter tmp = FFileStream::OpenReadWrite(nativeFilename, policy);
-    if (tmp.Good())
+    if (tmp.Good()) {
+        LOG(VFS, Debug, L"open native read/writable '{0}' : {1}", filename, policy);
         result.reset(new FFileStreamReadWriter(std::move(tmp)));
+    }
+    else {
+        LOG(VFS, Error, L"failed to open native read/writable '{0}' : {1}", filename, policy);
+    }
 
     return result;
 }

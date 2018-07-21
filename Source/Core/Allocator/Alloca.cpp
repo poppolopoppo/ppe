@@ -5,6 +5,7 @@
 #include "Allocator/LinearHeap.h"
 #include "Allocator/LinearHeapAllocator.h"
 #include "Allocator/Malloc.h"
+#include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Meta/Singleton.h"
@@ -84,7 +85,7 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
         }
         else if (keepData) {
             void* const dst = FAllocaFallback_::Malloc(newSize);
-            ::memcpy(dst, ptr, Min(oldSize, newSize));
+            FPlatformMemory::Memcpy(dst, ptr, Min(oldSize, newSize));
             result = dst;
         }
         else {

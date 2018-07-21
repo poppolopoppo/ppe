@@ -4,11 +4,10 @@
 
 #include "Core/IO/FS/Dirpath.h"
 #include "Core/IO/String.h"
+#include "Core/IO/VirtualFileSystem_fwd.h"
 #include "Core/IO/VFS/VirtualFileSystemComponent.h"
 
 namespace Core {
-class FFilename;
-class FFileStat;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -41,7 +40,7 @@ private: // IVirtualFileSystemComponentReadable
 private: // IVirtualFileSystemComponentWritable
     virtual bool CreateDirectory(const FDirpath& dirpath) override final;
     virtual bool MoveFile(const FFilename& src, const FFilename& dst) override final;
-    virtual bool RemoveDirectory(const FDirpath& dirpath) override final;
+    virtual bool RemoveDirectory(const FDirpath& dirpath, bool force) override final;
     virtual bool RemoveFile(const FFilename& filename) override final;
 
     virtual UStreamWriter OpenWritable(const FFilename& filename, EAccessPolicy policy) override final;
@@ -51,7 +50,7 @@ private: // IVirtualFileSystemComponentReadWritable
 
 private:
     const EOpenPolicy _openMode;
-    const FWString _target;
+    FWString _target;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

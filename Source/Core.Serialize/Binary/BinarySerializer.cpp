@@ -420,6 +420,8 @@ private:
 #if USE_BINARYSERIALIZER_NAZIFORMAT
             if (false == _reader->ExpectPOD(traits->TypeId()))
                 return false;
+#else
+            NOOP(traits);
 #endif
             if (false == ReadValue_(value))
                 return false;
@@ -975,6 +977,8 @@ private:
 
 #if USE_BINARYSERIALIZER_NAZIFORMAT
             WritePOD(scalar->TypeId());
+#else
+            NOOP(scalar);
 #endif
             WriteValue_(value);
 

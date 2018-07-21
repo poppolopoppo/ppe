@@ -319,7 +319,7 @@ public:
     }
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
-        virtual bool Visit(const RTTI::IScalarTraits* traits, T& value) override final { \
+        virtual bool Visit(const RTTI::IScalarTraits* , T& value) override final { \
             ToJson_(value); \
             return true; \
         }
@@ -494,7 +494,7 @@ public:
     }
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
-        virtual bool Visit(const RTTI::IScalarTraits* traits, T& value) override final { \
+        virtual bool Visit(const RTTI::IScalarTraits* , T& value) override final { \
             return ToRTTI_(value); \
         }
     FOREACH_RTTI_NATIVETYPES(DECL_ATOM_VIRTUAL_VISIT)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/Meta/AlignedStorage.h"
 #include "Core/Meta/TypeTraits.h"
 
@@ -57,12 +58,12 @@ struct TInSituPtr {
     void CreateRawCopy(const T& src) {
         STATIC_ASSERT(std::is_trivially_destructible_v<T>);
         Assert(not Valid());
-        ::memcpy(&InSitu, (void*)&src, sizeof(T));
+        FPlatformMemory::Memcpy(&InSitu, (void*)&src, sizeof(T));
         Assert(Valid());
     }
 
     void CreateRawCopy_AssumeNotInitialized(const T& src) {
-        ::memcpy(&InSitu, (void*)&src, sizeof(T));
+        FPlatformMemory::Memcpy(&InSitu, (void*)&src, sizeof(T));
         Assert(Valid());
     }
 

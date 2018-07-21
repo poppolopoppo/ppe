@@ -2,8 +2,6 @@
 
 #include "ParseContext.h"
 
-#include "Parser.h"
-
 #include "Core.RTTI/Atom.h"
 #include "Core.RTTI/AtomHeap.h"
 #include "Core.RTTI/MetaClass.h"
@@ -12,6 +10,9 @@
 #include "Core.RTTI/MetaTransaction.h"
 #include "Core.RTTI/Typedefs.h"
 #include "Core.RTTI/TypeTraits.h"
+
+#include "Parser.h"
+#include "ParseExpression.h"
 
 namespace Core {
 namespace Parser {

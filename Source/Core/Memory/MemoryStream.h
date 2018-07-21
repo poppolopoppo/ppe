@@ -3,6 +3,7 @@
 #include "Core/Core.h"
 
 #include "Core/Container/RawStorage.h"
+#include "Core/HAL/PlatformMemory.h"
 #include "Core/IO/StreamProvider.h"
 #include "Core/Memory/RefPtr.h"
 
@@ -245,7 +246,6 @@ std::streamoff TMemoryStream<_Allocator>::SeekI(std::streamoff offset, ESeekOrig
         break;
     default:
         AssertNotImplemented();
-        return std::streamoff(-1);
     }
     return checked_cast<std::streamoff>(_offsetI);
 }
@@ -262,7 +262,7 @@ bool TMemoryStream<_Allocator>::Read(void* storage, std::streamsize sizeInBytes)
         return false;
 
     Assert(storage);
-    memcpy(storage, _storage.Pointer() + _offsetI, sizeT);
+    FPlatformMemory::Memcpy(storage, _storage.Pointer() + _offsetI, sizeT);
 
     _offsetI += sizeT;
     return true;
@@ -333,7 +333,6 @@ std::streamoff TMemoryStream<_Allocator>::SeekO(std::streamoff offset, ESeekOrig
         break;
     default:
         AssertNotImplemented();
-        return std::streamoff(-1);
     }
     return checked_cast<std::streamoff>(_offsetO);
 }
@@ -343,7 +342,7 @@ bool TMemoryStream<_Allocator>::Write(const void* storage, std::streamsize sizeI
     const TMemoryView<u8> reserved = Append(checked_cast<size_t>(sizeInBytes));
     Assert(std::streamsize(reserved.SizeInBytes()) == sizeInBytes);
 
-    memcpy(reserved.data(), storage, reserved.SizeInBytes());
+    FPlatformMemory::Memcpy(reserved.data(), storage, reserved.SizeInBytes());
     return true;
 }
 //----------------------------------------------------------------------------

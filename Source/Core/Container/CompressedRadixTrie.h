@@ -2,10 +2,10 @@
 
 #include "Core/Core.h"
 
+#include "Core/HAL/PlatformMaths.h"
 #include "Core/Memory/MemoryDomain.h"
 #include "Core/Memory/MemoryTracking.h"
 #include "Core/Memory/VirtualMemory.h"
-#include "Core/Meta/BitCount.h"
 #include "Core/Thread/AtomicSpinLock.h"
 
 namespace Core {
@@ -164,7 +164,7 @@ private:
         Assert(xcmp);
 
         u32 shift = 0;
-        Meta::bit_scan_reverse(&shift, xcmp);
+        FPlatformMaths::bsr(&shift, xcmp);
         Assert((shift & 0xFF) == shift);
 
         const uintptr_t branch = ((key >> shift) & 1);
@@ -219,8 +219,6 @@ private:
             pkey = &n->Keys[branch];
             parent = &n->Children[branch];
         }
-
-        AssertNotReached(); // key does not exists !
     }
 
     template <typename _Functor>

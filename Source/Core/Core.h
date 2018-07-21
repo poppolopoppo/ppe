@@ -19,7 +19,6 @@
 #include "Core/Meta/Aliases.h"
 #include "Core/Meta/Alignment.h"
 #include "Core/Meta/Assert.h"
-#include "Core/Meta/BitCount.h"
 #include "Core/Meta/Cast.h"
 #include "Core/Meta/Delete.h"
 #include "Core/Meta/Enum.h"

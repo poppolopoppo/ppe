@@ -3,6 +3,8 @@
 #include "Core/Thread/Task/TaskHelpers.h"
 
 #include "Core/Container/Stack.h"
+#include "Core/HAL/PlatformMisc.h"
+#include "Core/HAL/PlatformProcess.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -24,8 +26,9 @@ TFuture<T>::~TFuture() {
 template <typename T>
 T& TFuture<T>::Result() {
     Assert(Idle != _state);
+    size_t backoff = 0;
     while (Ready != _state)
-        FPlatformAtomics::ShortSyncWait();
+        FPlatformProcess::SleepForSpinning(backoff);
     return _value;
 }
 //----------------------------------------------------------------------------
@@ -115,7 +118,7 @@ void ParallelFor(
     };
 
     // decide if it's worth to process part of load on the current thread
-    const bool busy_wait = (worker_count < std::thread::hardware_concurrency());
+    const bool busy_wait = (worker_count < FPlatformMisc::NumCoresWHyperThreading());
 
     if (busy_wait) {
         // wait for end of the loop while processing the last slice

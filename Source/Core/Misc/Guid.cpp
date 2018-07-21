@@ -4,12 +4,7 @@
 
 #include "IO/String.h"
 #include "IO/TextWriter.h"
-
-#ifdef PLATFORM_WINDOWS
-#   include <Objbase.h>
-#else
-#   error "no support !"
-#endif
+#include "HAL/PlatformMisc.h"
 
 namespace Core {
 //----------------------------------------------------------------------------
@@ -17,13 +12,7 @@ namespace Core {
 //----------------------------------------------------------------------------
 FGuid FGuid::Generate() {
     FGuid result;
-#ifdef PLATFORM_WINDOWS
-    HRESULT ret = ::CoCreateGuid(reinterpret_cast<::GUID *>(&result));
-    Assert(S_OK == ret);
-    UNUSED(ret);
-#else
-    AssertNotImplemented();
-#endif
+    FPlatformMisc::CreateGuid(result);
     return result;
 }
 //----------------------------------------------------------------------------

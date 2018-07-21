@@ -112,28 +112,34 @@ namespace details {
 //----------------------------------------------------------------------------
 template<typename _Return, typename... _Args, typename... _Prms, size_t... _Index>
 FORCE_INLINE _Return CallHelper_(_Return (*func)(_Args...), const TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
+    NOOP(args);
     return func(std::get<_Index>(args)...);
 }
 template<typename _Return, typename... _Args, typename... _Prms, size_t... _Index>
 FORCE_INLINE _Return CallHelper_(_Return (*func)(_Args...), TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
+    NOOP(args);
     return func(std::get<_Index>(args)...);
 }
 //----------------------------------------------------------------------------
 template<typename _Return, typename _Class, typename... _Args, typename... _Prms, size_t... _Index>
 FORCE_INLINE _Return CallHelper_(_Return (_Class::*member)(_Args...), _Class* src, const TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
+    NOOP(args);
     return (src->*member)(std::get<_Index>(args)...);
 }
 template<typename _Return, typename _Class, typename... _Args, typename... _Prms, size_t... _Index>
 FORCE_INLINE _Return CallHelper_(_Return(_Class::*member)(_Args...), _Class* src, TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
+    NOOP(args);
     return (src->*member)(std::get<_Index>(args)...);
 }
 //----------------------------------------------------------------------------
 template<typename _Return, typename _Class, typename... _Args, typename... _Prms, size_t... _Index>
 FORCE_INLINE _Return CallHelper_(_Return(_Class::*member)(_Args...) const, const _Class* src, const TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
+    NOOP(args);
     return (src->*member)(std::get<_Index>(args)...);
 }
 template<typename _Return, typename _Class, typename... _Args, typename... _Prms, size_t... _Index>
 FORCE_INLINE _Return CallHelper_(_Return(_Class::*member)(_Args...) const, const _Class* src, TTuple<_Prms...>& args, std::index_sequence<_Index...>) {
+    NOOP(args);
     return (src->*member)(std::get<_Index>(args)...);
 }
 //----------------------------------------------------------------------------
@@ -175,14 +181,23 @@ _Return Call(_Return(_Class::*member)(_Args...) const, const _Class* src, TTuple
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace details {
-template <typename _Char, typename... _Args, size_t... _Index>
-void PrintTuple_(TBasicTextWriter<_Char>& oss, const TTuple<_Args...>& tuple, std::index_sequence<_Index...>) {
-    oss << ... << std::get<_Index>(tuple);
-}
+template <size_t _Index, size_t _Dim>
+struct TPrintTuple_ {
+    template <typename _Char, typename... _Args>
+    static void Print(TBasicTextWriter<_Char>& oss, const TTuple<_Args...>& tuple) {
+        oss << std::get<_Index>(tuple);
+        TPrintTuple_<_Index + 1, _Dim>::Print(oss, tuple);
+    }
+};
+template <size_t _Dim>
+struct TPrintTuple_<_Dim, _Dim> {
+    template <typename _Char, typename... _Args>
+    static void Print(TBasicTextWriter<_Char>& , const TTuple<_Args...>& ) {}
+};
 } //!details
 template <typename _Char, typename... _Args>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TTuple<_Args...>& tuple) {
-    details::PrintTuple_(oss, tuple, std::index_sequence_for<_Args...>{});
+    details::TPrintTuple_<0, sizeof...(_Args)>::Print(oss, tuple);
     return oss;
 }
 //----------------------------------------------------------------------------

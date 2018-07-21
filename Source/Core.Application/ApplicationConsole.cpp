@@ -2,13 +2,7 @@
 
 #include "ApplicationConsole.h"
 
-#ifdef PLATFORM_WINDOWS
-#   include "Core/Misc/Platform_Windows.h"
-#else
-#   error "no support"
-#endif
-
-#include "Core/Diagnostic/Logger.h"
+#include "Core/HAL/PlatformConsole.h"
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -26,9 +20,11 @@ FApplicationConsole::~FApplicationConsole() {}
 //----------------------------------------------------------------------------
 void FApplicationConsole::Start() {
     FApplicationBase::Start();
+    FPlatformConsole::Open();
 }
 //----------------------------------------------------------------------------
 void FApplicationConsole::Shutdown() {
+    FPlatformConsole::Close();
     FApplicationBase::Shutdown();
 }
 //----------------------------------------------------------------------------

@@ -1,7 +1,5 @@
 #include "stdafx.h"
 
-#include "Parser.h"
-
 #include "ParseExpression.h"
 
 #include "Core.RTTI/Any.h"
@@ -15,6 +13,9 @@
 #include "Core/IO/FormatHelpers.h"
 #include "Core/IO/StringBuilder.h"
 #include "Core/IO/TextWriter.h"
+
+#include "Parser.h"
+#include "ParseStatement.h"
 
 namespace Core {
 namespace Parser {
@@ -81,7 +82,7 @@ RTTI::FAtom FVariableReference::Eval(FParseContext* context) const {
     Assert(context);
 
     RTTI::FAtom value;
-    
+
     if (_pathName.Transaction.empty()) { // local ?
         value = context->GetAny(_pathName.Identifier);
 
