@@ -1,22 +1,19 @@
-[submodule "Source/Core.External/double-conversion"]
-    path = Source/Core.External/double-conversion
+[submodule "External/double-conversion"]
+	path = Source/External/double-conversion/git
     url = https://github.com/google/double-conversion.git
-[submodule "Source/Core.External/farmhash"]
-    path = Source/Core.External/farmhash
+[submodule "External/farmhash"]
+	path = Source/External/farmhash/git
     url = https://github.com/google/farmhash.git
-[submodule "Source/Core.External/farmhash"]
-    path = Source/Core.External/farmhash
-    url = https://github.com/google/farmhash.git
-[submodule "Source/Core.External/lz4"]
-	path = Source/Core.External/lz4
+[submodule "External/lz4"]
+	path = Source/External/lz4/git
 	url = https://github.com/lz4/lz4.git
-[submodule "Source/Core.External/renderdoc"]
-	path = Source/Core.External/renderdoc
+[submodule "External/renderdoc"]
+	path = Source/External/renderdoc/git
 	url = https://github.com/baldurk/renderdoc.git
-[submodule "Source/Core.External/stb"]
-    path = Source/Core.External/stb
+[submodule "External/stb"]
+	path = Source/External/stb/git
     url = https://github.com/nothings/stb.git
-[submodule "Source/Core.External/xxHash"]
-    path = Source/Core.External/xxHash
+[submodule "External/xxHash"]
+	path = Source/External/xxHash/git
     url = https://github.com/Cyan4973/xxHash.git
     
