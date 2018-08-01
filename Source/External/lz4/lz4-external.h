@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Core/Allocator/TrackingMalloc.h"
-#include "Core/Memory/MemoryDomain.h"
+#include "Allocator/TrackingMalloc.h"
+#include "Memory/MemoryDomain.h"
 
-#ifndef EXPORT_CORE_EXTERNAL_LZ4
+#ifndef EXPORT_PPE_EXTERNAL_LZ4
 PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("ALLOCATOR")
 #   pragma push_macro("FORCE_INLINE")
@@ -37,7 +37,7 @@ PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) alway
 #    pragma GCC system_header
 #endif
 
-#ifndef EXPORT_CORE_EXTERNAL_LZ4
+#ifndef EXPORT_PPE_EXTERNAL_LZ4
 
 #   include "Core.External/lz4/lib/lz4.h"
 #   include "Core.External/lz4/lib/lz4hc.h"
@@ -51,4 +51,4 @@ PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) alway
 
     PRAGMA_MSVC_WARNING_POP()
 
-#endif //!EXPORT_CORE_EXTERNAL_LZ4
+#endif //!EXPORT_PPE_EXTERNAL_LZ4

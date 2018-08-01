@@ -8,7 +8,7 @@
 #    pragma GCC system_header
 #endif
 
-#ifndef EXPORT_CORE_EXTERNAL_XXHASH
+#ifndef EXPORT_PPE_EXTERNAL_XXHASH
     PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("FORCE_INLINE")
 #endif
@@ -16,7 +16,7 @@
 #undef FORCE_INLINE
 #define XXH_NAMESPACE xxHash
 
-#ifndef EXPORT_CORE_EXTERNAL_XXHASH
+#ifndef EXPORT_PPE_EXTERNAL_XXHASH
 
 #   include "Core.External/xxHash/xxhash.h"
 
@@ -26,4 +26,4 @@
 
     PRAGMA_MSVC_WARNING_POP()
 
-#endif //!EXPORT_CORE_EXTERNAL_XXHASH
+#endif //!EXPORT_PPE_EXTERNAL_XXHASH

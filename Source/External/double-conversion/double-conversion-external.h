@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core.h"
 
-#ifndef EXPORT_CORE_EXTERNAL_DOUBLECONVERSION
+#ifndef EXPORT_PPE_EXTERNAL_DOUBLECONVERSION
     PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("ASSERT")
 #   pragma push_macro("UNIMPLEMENTED")
@@ -33,7 +33,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'const uc16' to
 #    pragma GCC system_header
 #endif
 
-#ifndef EXPORT_CORE_EXTERNAL_DOUBLECONVERSION
+#ifndef EXPORT_PPE_EXTERNAL_DOUBLECONVERSION
 
 #   pragma include_alias(<double-conversion/utils.h>, <Core.External/double-conversion/double-conversion/utils.h>)
 #   include "Core.External/double-conversion/double-conversion/double-conversion.h"
@@ -46,4 +46,4 @@ PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'const uc16' to
 
     PRAGMA_MSVC_WARNING_POP()
 
-#endif //!EXPORT_CORE_EXTERNAL_DOUBLECONVERSION
+#endif //!EXPORT_PPE_EXTERNAL_DOUBLECONVERSION
