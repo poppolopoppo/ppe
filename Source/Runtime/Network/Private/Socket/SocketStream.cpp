@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "SocketStream.h"
+#include "Socket/SocketStream.h"
 
-#include "SocketBuffered.h"
+#include "Socket/SocketBuffered.h"
 
 namespace PPE {
 namespace Network {

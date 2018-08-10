@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformFile.h"
+#include "HAL/Windows/WindowsPlatformFile.h"
 
 #ifdef PLATFORM_WINDOWS
 
@@ -11,9 +11,11 @@
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
 #include "HAL/PlatformLowLevelIO.h"
+#include "HAL/PlatformTime.h"
+#include "Time/DateTime.h"
 
-#include "LastError.h"
-#include "WindowsPlatformIncludes.h"
+#include "HAL/Windows/LastError.h"
+#include "HAL/Windows/WindowsPlatformIncludes.h"
 
 #include <sys/stat.h> // _stat64
 
@@ -151,6 +153,13 @@ struct FDirectoryIterator_ {
     FDirectoryIterator_& operator =(FDirectoryIterator_&&) = default;
 };
 //----------------------------------------------------------------------------
+// https://docs.microsoft.com/en-us/windows/desktop/sysinfo/converting-a-time-t-value-to-a-file-time
+void TimetToFileTime_(time_t t, ::LPFILETIME pft) {
+    ::LONGLONG ll = Int32x32To64(t, 10000000) + 116444736000000000;
+    pft->dwLowDateTime = (::DWORD)ll;
+    pft->dwHighDateTime = ll >> 32;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -191,7 +200,7 @@ bool FWindowsPlatformFile::IsAllowedChar(char_type ch) {
         ch == L'_' ||
         ch == L'-' ||
         ch == L':' ||
-        ch == L'.');
+        ch == L'.' );
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformFile::NormalizePath(FWString& path) {
@@ -432,6 +441,96 @@ bool FWindowsPlatformFile::RemoveFile(const char_type* filename) {
 
     LOG_LASTERROR(HAL, L"DeleteFileW()");
     return false;
+}
+//----------------------------------------------------------------------------
+bool FWindowsPlatformFile::SetFileTime(
+    const char_type* filename,
+    const FTimestamp* pCreatedAtIFN,
+    const FTimestamp* pLastAccessIFN,
+    const FTimestamp* pLastModifiedIFN ) {
+    Assert(filename);
+    Assert(pCreatedAtIFN || pLastAccessIFN || pLastModifiedIFN); // should have a side effect
+
+    const ::HANDLE hFile = ::CreateFileW(filename,
+        FILE_WRITE_ATTRIBUTES,    // open only for setting attributes
+        0,                        // do not share
+        NULL,                     // no security
+        OPEN_EXISTING,            // existing file only
+        FILE_ATTRIBUTE_NORMAL,    // normal file
+        NULL );                   // no attr. template
+
+    if (INVALID_HANDLE_VALUE == hFile) {
+        LOG_LASTERROR(HAL, L"CreateFileW()");
+        return false;
+    }
+
+    ::FILETIME createdAtFT;
+    ::FILETIME lastAccessFT;
+    ::FILETIME lastModifiedFT;
+
+    if (pCreatedAtIFN)
+        TimetToFileTime_(pCreatedAtIFN->Value(), &createdAtFT);
+    else
+        ::ZeroMemory(&createdAtFT, sizeof(::FILETIME));
+
+    if (pLastAccessIFN)
+        TimetToFileTime_(pLastAccessIFN->Value(), &lastAccessFT);
+    else
+        ::ZeroMemory(&lastAccessFT, sizeof(::FILETIME));
+
+    if (pLastModifiedIFN)
+        TimetToFileTime_(pLastModifiedIFN->Value(), &lastModifiedFT);
+    else
+        ::ZeroMemory(&lastModifiedFT, sizeof(::FILETIME));
+
+    const ::BOOL succeed = ::SetFileTime(hFile, &createdAtFT, &lastAccessFT, &lastModifiedFT);
+    CLOG_LASTERROR(!succeed, HAL, L"SetFileTime()");
+
+    Verify(::CloseHandle(hFile));
+
+    return (succeed != 0);
+}
+//----------------------------------------------------------------------------
+bool FWindowsPlatformFile::RollFile(const char_type* filename) {
+    Assert(filename);
+
+    FStat fstat;
+    if (Stat(&fstat, filename)) {
+        const FDateTime date = fstat.CreatedAt.ToDateTimeUTC();
+
+        char_type buffer[MaxPathLength + 1];
+        FWFixedSizeTextWriter oss(buffer);
+        Format(oss, L"_{0:#4}-{1:#2}-{2:#2}_{3:#2}-{4:#2}-{5:#2}_UTC",
+            date.Year, date.Month, date.Day,
+            date.Hours, date.Minutes, date.Seconds );
+
+        FWString logroll{ MakeCStringView(filename) };
+        const size_t ext_pos = logroll.find_last_of(L'.');
+        logroll.insert(ext_pos, oss.Written());
+
+        if (not MoveFile(filename, logroll.c_str()))
+            return false;
+    }
+
+    return true;
+}
+//----------------------------------------------------------------------------
+FWString FWindowsPlatformFile::MakeTemporaryFile(const char_type* prefix, const char_type* extname) {
+    Assert(prefix);
+    Assert(extname);
+    Assert(L'.' == *extname);
+
+    u32 year, mon, mday, day, hour, min, sec, msec;
+    FPlatformTime::UtcTime(year, mon, mday, day, hour, min, sec, msec);
+
+    char_type buffer[MaxPathLength + 1];
+    FWFixedSizeTextWriter oss(buffer);
+    oss << TemporaryDirectory() << PathSeparator;
+    Format(oss, L"{0}_{1:#4}{2:#2}{3:#2}{4:#2}{5:#2}{6:#2}_{7}",
+        prefix, year, mon, mday, hour, min, sec, msec );
+    oss << extname;
+
+    return FWString(oss.Written());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

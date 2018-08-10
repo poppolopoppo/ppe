@@ -31,11 +31,11 @@ inline wchar_t ToUpper(wchar_t wch) { return std::towupper(wch); }
 template <typename _Char> void InplaceToLower(_Char& ch) { ch = ToLower(ch); }
 template <typename _Char> void InplaceToUpper(_Char& ch) { ch = ToUpper(ch); }
 //----------------------------------------------------------------------------
-PPE_API void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src);
-PPE_API void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src);
+PPE_CORE_API void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src);
+PPE_CORE_API void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src);
 //----------------------------------------------------------------------------
-PPE_API void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src);
-PPE_API void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src);
+PPE_CORE_API void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src);
+PPE_CORE_API void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src);
 //----------------------------------------------------------------------------
 template <typename _Char> void InplaceToLower(const TMemoryView<_Char>& str) { ToLower(str, str); }
 template <typename _Char> void InplaceToUpper(const TMemoryView<_Char>& str) { ToUpper(str, str); }
@@ -92,12 +92,12 @@ public:
     const parent_type& MakeView() const { return *this; }
 
     auto ToLower() const {
-        _Char(*transform)(_Char) = &Core::ToLower;
+        _Char(*transform)(_Char) = &PPE::ToLower;
         return parent_type::Map(transform);
     }
 
     auto ToUpper() const {
-        _Char(*transform)(_Char) = &Core::ToUpper;
+        _Char(*transform)(_Char) = &PPE::ToUpper;
         return parent_type::Map(transform);
     }
 
@@ -197,14 +197,14 @@ inline const wchar_t *StrStr(const wchar_t* wcstr, const wchar_t* firstOccurence
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API FStringView::iterator StrChr(const FStringView& str, char ch);
-PPE_API FStringView::reverse_iterator StrRChr(const FStringView& str, char ch);
+PPE_CORE_API FStringView::iterator StrChr(const FStringView& str, char ch);
+PPE_CORE_API FStringView::reverse_iterator StrRChr(const FStringView& str, char ch);
 //----------------------------------------------------------------------------
-PPE_API FWStringView::iterator StrChr(const FWStringView& wstr, wchar_t wch);
-PPE_API FWStringView::reverse_iterator StrRChr(const FWStringView& wstr, wchar_t wch);
+PPE_CORE_API FWStringView::iterator StrChr(const FWStringView& wstr, wchar_t wch);
+PPE_CORE_API FWStringView::reverse_iterator StrRChr(const FWStringView& wstr, wchar_t wch);
 //----------------------------------------------------------------------------
-PPE_API FStringView::iterator StrStr(const FStringView& str, const FStringView& firstOccurence);
-PPE_API FWStringView::iterator StrStr(const FWStringView& wstr, const FWStringView& firstOccurence);
+PPE_CORE_API FStringView::iterator StrStr(const FStringView& str, const FStringView& firstOccurence);
+PPE_CORE_API FWStringView::iterator StrStr(const FWStringView& wstr, const FWStringView& firstOccurence);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -237,94 +237,94 @@ FORCE_INLINE bool IsSpace(wchar_t wch) { return 0 != std::iswdigit(wch); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API bool IsAlnum(const FStringView& str);
-PPE_API bool IsAlnum(const FWStringView& wstr);
+PPE_CORE_API bool IsAlnum(const FStringView& str);
+PPE_CORE_API bool IsAlnum(const FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API bool IsAlpha(const FStringView& str);
-PPE_API bool IsAlpha(const FWStringView& wstr);
+PPE_CORE_API bool IsAlpha(const FStringView& str);
+PPE_CORE_API bool IsAlpha(const FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API bool IsDigit(const FStringView& str);
-PPE_API bool IsDigit(const FWStringView& wstr);
+PPE_CORE_API bool IsDigit(const FStringView& str);
+PPE_CORE_API bool IsDigit(const FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API bool IsXDigit(const FStringView& str);
-PPE_API bool IsXDigit(const FWStringView& wstr);
+PPE_CORE_API bool IsXDigit(const FStringView& str);
+PPE_CORE_API bool IsXDigit(const FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API bool IsIdentifier(const FStringView& str);
-PPE_API bool IsIdentifier(const FWStringView& wstr);
+PPE_CORE_API bool IsIdentifier(const FStringView& str);
+PPE_CORE_API bool IsIdentifier(const FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API bool IsPrint(const FStringView& str);
-PPE_API bool IsPrint(const FWStringView& wstr);
+PPE_CORE_API bool IsPrint(const FStringView& str);
+PPE_CORE_API bool IsPrint(const FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API bool IsSpace(const FStringView& str);
-PPE_API bool IsSpace(const FWStringView& wstr);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-PPE_API FStringView EatAlnums(FStringView& str);
-PPE_API FWStringView EatAlnums(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_API FStringView EatAlphas(FStringView& str);
-PPE_API FWStringView EatAlphas(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_API FStringView EatDigits(FStringView& str);
-PPE_API FWStringView EatDigits(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_API FStringView EatXDigits(FStringView& str);
-PPE_API FWStringView EatXDigits(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_API FStringView EatPrints(FStringView& str);
-PPE_API FWStringView EatPrints(FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_API FStringView EatSpaces(FStringView& str);
-PPE_API FWStringView EatSpaces(FWStringView& wstr);
+PPE_CORE_API bool IsSpace(const FStringView& str);
+PPE_CORE_API bool IsSpace(const FWStringView& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API FStringView TrimStart(const FStringView& str, char ch);
-PPE_API FWStringView TrimStart(const FWStringView& wstr, wchar_t wch);
+PPE_CORE_API FStringView EatAlnums(FStringView& str);
+PPE_CORE_API FWStringView EatAlnums(FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API FStringView TrimStart(const FStringView& str, const FStringView& chars);
-PPE_API FWStringView TrimStart(const FWStringView& wstr, const FWStringView& wchars);
+PPE_CORE_API FStringView EatAlphas(FStringView& str);
+PPE_CORE_API FWStringView EatAlphas(FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API FStringView TrimEnd(const FStringView& str, char ch);
-PPE_API FWStringView TrimEnd(const FWStringView& wstr, wchar_t wch);
+PPE_CORE_API FStringView EatDigits(FStringView& str);
+PPE_CORE_API FWStringView EatDigits(FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API FStringView TrimEnd(const FStringView& str, const FStringView& chars);
-PPE_API FWStringView TrimEnd(const FWStringView& wstr, const FWStringView& wchars);
+PPE_CORE_API FStringView EatXDigits(FStringView& str);
+PPE_CORE_API FWStringView EatXDigits(FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API FStringView Trim(const FStringView& str, char ch);
-PPE_API FWStringView Trim(const FWStringView& wstr, wchar_t wch);
+PPE_CORE_API FStringView EatPrints(FStringView& str);
+PPE_CORE_API FWStringView EatPrints(FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API FStringView Trim(const FStringView& str, const FStringView& chars);
-PPE_API FWStringView Trim(const FWStringView& wstr, const FWStringView& wchars);
-//----------------------------------------------------------------------------
-PPE_API FStringView Chomp(const FStringView& str);
-PPE_API FWStringView Chomp(const FWStringView& wstr);
-//----------------------------------------------------------------------------
-PPE_API FStringView Strip(const FStringView& str);
-PPE_API FWStringView Strip(const FWStringView& wstr);
+PPE_CORE_API FStringView EatSpaces(FStringView& str);
+PPE_CORE_API FWStringView EatSpaces(FWStringView& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API int Compare(const FStringView& lhs, const FStringView& rhs);
-PPE_API int Compare(const FWStringView& lhs, const FWStringView& rhs);
+PPE_CORE_API FStringView TrimStart(const FStringView& str, char ch);
+PPE_CORE_API FWStringView TrimStart(const FWStringView& wstr, wchar_t wch);
 //----------------------------------------------------------------------------
-PPE_API int CompareI(const FStringView& lhs, const FStringView& rhs);
-PPE_API int CompareI(const FWStringView& lhs, const FWStringView& rhs);
+PPE_CORE_API FStringView TrimStart(const FStringView& str, const FStringView& chars);
+PPE_CORE_API FWStringView TrimStart(const FWStringView& wstr, const FWStringView& wchars);
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView TrimEnd(const FStringView& str, char ch);
+PPE_CORE_API FWStringView TrimEnd(const FWStringView& wstr, wchar_t wch);
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView TrimEnd(const FStringView& str, const FStringView& chars);
+PPE_CORE_API FWStringView TrimEnd(const FWStringView& wstr, const FWStringView& wchars);
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView Trim(const FStringView& str, char ch);
+PPE_CORE_API FWStringView Trim(const FWStringView& wstr, wchar_t wch);
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView Trim(const FStringView& str, const FStringView& chars);
+PPE_CORE_API FWStringView Trim(const FWStringView& wstr, const FWStringView& wchars);
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView Chomp(const FStringView& str);
+PPE_CORE_API FWStringView Chomp(const FWStringView& wstr);
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView Strip(const FStringView& str);
+PPE_CORE_API FWStringView Strip(const FWStringView& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API bool EqualsN(const char* lhs, const char* rhs, size_t len);
-PPE_API bool EqualsNI(const char* lhs, const char* rhs, size_t len);
+PPE_CORE_API int Compare(const FStringView& lhs, const FStringView& rhs);
+PPE_CORE_API int Compare(const FWStringView& lhs, const FWStringView& rhs);
 //----------------------------------------------------------------------------
-PPE_API bool EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len);
-PPE_API bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len);
+PPE_CORE_API int CompareI(const FStringView& lhs, const FStringView& rhs);
+PPE_CORE_API int CompareI(const FWStringView& lhs, const FWStringView& rhs);
 //----------------------------------------------------------------------------
-PPE_API bool Equals(const FStringView& lhs, const FStringView& rhs);
-PPE_API bool Equals(const FWStringView& lhs, const FWStringView& rhs);
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API bool EqualsI(const FStringView& lhs, const FStringView& rhs);
-PPE_API bool EqualsI(const FWStringView& lhs, const FWStringView& rhs);
+PPE_CORE_API bool EqualsN(const char* lhs, const char* rhs, size_t len);
+PPE_CORE_API bool EqualsNI(const char* lhs, const char* rhs, size_t len);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len);
+PPE_CORE_API bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool Equals(const FStringView& lhs, const FStringView& rhs);
+PPE_CORE_API bool Equals(const FWStringView& lhs, const FWStringView& rhs);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool EqualsI(const FStringView& lhs, const FStringView& rhs);
+PPE_CORE_API bool EqualsI(const FWStringView& lhs, const FWStringView& rhs);
 //----------------------------------------------------------------------------
 inline bool EqualsI(char lhs, char rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }
 inline bool EqualsI(wchar_t lhs, wchar_t rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }
@@ -334,75 +334,75 @@ inline bool Equals(wchar_t lhs, wchar_t rhs, ECase cmp) { return (ECase::Insensi
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API bool StartsWith(const FStringView& str, const FStringView& prefix);
-PPE_API bool StartsWith(const FWStringView& wstr, const FWStringView& wprefix);
+PPE_CORE_API bool StartsWith(const FStringView& str, const FStringView& prefix);
+PPE_CORE_API bool StartsWith(const FWStringView& wstr, const FWStringView& wprefix);
 //----------------------------------------------------------------------------
-PPE_API bool StartsWithI(const FStringView& str, const FStringView& prefix);
-PPE_API bool StartsWithI(const FWStringView& wstr, const FWStringView& wprefix);
+PPE_CORE_API bool StartsWithI(const FStringView& str, const FStringView& prefix);
+PPE_CORE_API bool StartsWithI(const FWStringView& wstr, const FWStringView& wprefix);
 //----------------------------------------------------------------------------
-PPE_API bool EndsWith(const FStringView& str, const FStringView& suffix);
-PPE_API bool EndsWith(const FWStringView& wstr, const FWStringView& wsuffix);
+PPE_CORE_API bool EndsWith(const FStringView& str, const FStringView& suffix);
+PPE_CORE_API bool EndsWith(const FWStringView& wstr, const FWStringView& wsuffix);
 //----------------------------------------------------------------------------
-PPE_API bool EndsWithI(const FStringView& str, const FStringView& suffix);
-PPE_API bool EndsWithI(const FWStringView& wstr, const FWStringView& wsuffix);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-PPE_API bool Split(FStringView& str, char separator, FStringView& slice);
-PPE_API bool Split(FWStringView& wstr, wchar_t separator, FWStringView& slice);
-//----------------------------------------------------------------------------
-PPE_API bool Split(FStringView& str, const FStringView& separators, FStringView& slice);
-PPE_API bool Split(FWStringView& wstr, const FWStringView& separators, FWStringView& slice);
+PPE_CORE_API bool EndsWithI(const FStringView& str, const FStringView& suffix);
+PPE_CORE_API bool EndsWithI(const FWStringView& wstr, const FWStringView& wsuffix);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API bool Atoi(i32* dst, const FStringView& str, size_t base);
-PPE_API bool Atoi(u32* dst, const FStringView& str, size_t base);
-PPE_API bool Atoi(i64* dst, const FStringView& str, size_t base);
-PPE_API bool Atoi(u64* dst, const FStringView& str, size_t base);
+PPE_CORE_API bool Split(FStringView& str, char separator, FStringView& slice);
+PPE_CORE_API bool Split(FWStringView& wstr, wchar_t separator, FWStringView& slice);
 //----------------------------------------------------------------------------
-PPE_API bool Atoi(i32* dst, const FWStringView& wstr, size_t base);
-PPE_API bool Atoi(u32* dst, const FWStringView& wstr, size_t base);
-PPE_API bool Atoi(i64* dst, const FWStringView& wstr, size_t base);
-PPE_API bool Atoi(u64* dst, const FWStringView& wstr, size_t base);
-//----------------------------------------------------------------------------
-PPE_API bool Atof(float* dst, const FStringView& str);
-PPE_API bool Atod(double* dst, const FStringView& str);
-//----------------------------------------------------------------------------
-PPE_API bool Atof(float* dst, const FWStringView& wstr);
-PPE_API bool Atod(double* dst, const FWStringView& wstr);
+PPE_CORE_API bool Split(FStringView& str, const FStringView& separators, FStringView& slice);
+PPE_CORE_API bool Split(FWStringView& wstr, const FWStringView& separators, FWStringView& slice);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API bool WildMatch(const FStringView& pattern, const FStringView& str);
-PPE_API bool WildMatch(const FWStringView& pattern, const FWStringView& wstr);
+PPE_CORE_API bool Atoi(i32* dst, const FStringView& str, size_t base);
+PPE_CORE_API bool Atoi(u32* dst, const FStringView& str, size_t base);
+PPE_CORE_API bool Atoi(i64* dst, const FStringView& str, size_t base);
+PPE_CORE_API bool Atoi(u64* dst, const FStringView& str, size_t base);
 //----------------------------------------------------------------------------
-PPE_API bool WildMatchI(const FStringView& pattern, const FStringView& str);
-PPE_API bool WildMatchI(const FWStringView& pattern, const FWStringView& wstr);
+PPE_CORE_API bool Atoi(i32* dst, const FWStringView& wstr, size_t base);
+PPE_CORE_API bool Atoi(u32* dst, const FWStringView& wstr, size_t base);
+PPE_CORE_API bool Atoi(i64* dst, const FWStringView& wstr, size_t base);
+PPE_CORE_API bool Atoi(u64* dst, const FWStringView& wstr, size_t base);
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+PPE_CORE_API bool Atof(float* dst, const FStringView& str);
+PPE_CORE_API bool Atod(double* dst, const FStringView& str);
 //----------------------------------------------------------------------------
-PPE_API size_t EditDistance(const FStringView& lhs, const FStringView& rhs);
-PPE_API size_t EditDistance(const FWStringView& lhs, const FWStringView& rhs);
-//----------------------------------------------------------------------------
-PPE_API size_t EditDistanceI(const FStringView& lhs, const FStringView& rhs);
-PPE_API size_t EditDistanceI(const FWStringView& lhs, const FWStringView& rhs);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-PPE_API size_t Copy(const TMemoryView<char>& dst, const FStringView& src);
-PPE_API size_t Copy(const TMemoryView<wchar_t>& dst, const FWStringView& src);
-//----------------------------------------------------------------------------
-PPE_API const char* NullTerminated(const TMemoryView<char>& dst, const FStringView& src);
-PPE_API const wchar_t* NullTerminated(const TMemoryView<wchar_t>& dst, const FWStringView& src);
+PPE_CORE_API bool Atof(float* dst, const FWStringView& wstr);
+PPE_CORE_API bool Atod(double* dst, const FWStringView& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API hash_t hash_string(const FStringView& str);
-PPE_API hash_t hash_string(const FWStringView& wstr);
+PPE_CORE_API bool WildMatch(const FStringView& pattern, const FStringView& str);
+PPE_CORE_API bool WildMatch(const FWStringView& pattern, const FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API hash_t hash_stringI(const FStringView& str);
-PPE_API hash_t hash_stringI(const FWStringView& wstr);
+PPE_CORE_API bool WildMatchI(const FStringView& pattern, const FStringView& str);
+PPE_CORE_API bool WildMatchI(const FWStringView& pattern, const FWStringView& wstr);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_CORE_API size_t EditDistance(const FStringView& lhs, const FStringView& rhs);
+PPE_CORE_API size_t EditDistance(const FWStringView& lhs, const FWStringView& rhs);
+//----------------------------------------------------------------------------
+PPE_CORE_API size_t EditDistanceI(const FStringView& lhs, const FStringView& rhs);
+PPE_CORE_API size_t EditDistanceI(const FWStringView& lhs, const FWStringView& rhs);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_CORE_API size_t Copy(const TMemoryView<char>& dst, const FStringView& src);
+PPE_CORE_API size_t Copy(const TMemoryView<wchar_t>& dst, const FWStringView& src);
+//----------------------------------------------------------------------------
+PPE_CORE_API const char* NullTerminated(const TMemoryView<char>& dst, const FStringView& src);
+PPE_CORE_API const wchar_t* NullTerminated(const TMemoryView<wchar_t>& dst, const FWStringView& src);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_CORE_API hash_t hash_string(const FStringView& str);
+PPE_CORE_API hash_t hash_string(const FWStringView& wstr);
+//----------------------------------------------------------------------------
+PPE_CORE_API hash_t hash_stringI(const FStringView& str);
+PPE_CORE_API hash_t hash_stringI(const FWStringView& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -412,14 +412,14 @@ enum class EEscape {
     Unicode,
 };
 //----------------------------------------------------------------------------
-PPE_API void Escape(FTextWriter& oss, const FStringView& str, EEscape escape);
-PPE_API void Escape(FWTextWriter& oss, const FWStringView& str, EEscape escape);
+PPE_CORE_API void Escape(FTextWriter& oss, const FStringView& str, EEscape escape);
+PPE_CORE_API void Escape(FWTextWriter& oss, const FWStringView& str, EEscape escape);
 //----------------------------------------------------------------------------
-PPE_API void Escape(FTextWriter& oss, const FStringView& wstr, EEscape escape);
-PPE_API void Escape(FWTextWriter& oss, const FWStringView& str, EEscape escape);
+PPE_CORE_API void Escape(FTextWriter& oss, const FStringView& wstr, EEscape escape);
+PPE_CORE_API void Escape(FWTextWriter& oss, const FWStringView& str, EEscape escape);
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const FWStringView& wslice);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const FStringView& slice);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FWStringView& wslice);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FStringView& slice);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

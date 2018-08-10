@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "ScalarVector.h"
+#include "Maths/ScalarVector.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

@@ -12,7 +12,6 @@
 #include "IO/FileStream.h"
 #include "IO/FileSystem.h"
 #include "IO/TextWriter.h"
-#include "IO/VirtualFileSystem.h"
 #include "Meta/AutoSingleton.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
@@ -20,7 +19,7 @@
 PRAGMA_INITSEG_LIB
 
 namespace PPE {
-LOG_CATEGORY(PPE_API, Module)
+LOG_CATEGORY(PPE_CORE_API, Module)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -81,9 +80,7 @@ void FCoreModule::Start(void *applicationHandle, int nShowCmd, const wchar_t* fi
     FThreadPoolStartup::Start();
     // 6 - file system
     FFileSystemStartup::Start();
-    // 7 - virtual file system
-    FVirtualFileSystemStartup::Start();
-    // 8 - logger
+    // 7 - logger
 #ifdef USE_DEBUG_LOGGER
     FLogger::Start();
 #endif
@@ -92,12 +89,10 @@ void FCoreModule::Start(void *applicationHandle, int nShowCmd, const wchar_t* fi
 void FCoreModule::Shutdown() {
     PPE_MODULE_SHUTDOWN(Core);
 
-    // 8 - logger
+    // 7 - logger
 #ifdef USE_DEBUG_LOGGER
     FLogger::Shutdown();
 #endif
-    // 7 - virtual file system
-    FVirtualFileSystemStartup::Shutdown();
     // 6 - file system
     FFileSystemStartup::Shutdown();
     // 5 - thread pool
@@ -118,7 +113,6 @@ void FCoreModule::Shutdown() {
 void FCoreModule::ClearAll_UnusedMemory() {
     PPE_MODULE_CLEARALL(Core);
 
-    POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
     POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
     POOL_TAG(NodeBasedContainer)::ClearAll_UnusedMemory();
     POOL_TAG(Default)::ClearAll_UnusedMemory();

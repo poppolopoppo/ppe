@@ -6,27 +6,24 @@
 ; Utilisé aussi par les options du compilo
 ;#define USE_FASTBUILD_CACHE
 ; Désactive l'utilisation des unity builds
-;#define DISABLE_UNITY_BUILDS ; %_NOCOMMIT%
+#define DISABLE_UNITY_BUILDS ; %NOCOMMIT%
 
 #include "_solution_path.bff" ; généré par fbuild.bat, permet d'avoir le rep du sln
 
 //------------------------------------------------------------------------------
 // Default Directories
 //------------------------------------------------------------------------------
-.OutputDirectory        = '$SolutionPath$/Output'
-.SourceDirectory         = '$SolutionPath$/Source'
-
-.BuildDirectory         = '$SolutionPath$/Build'
-.TemplateDirectory      = '$BuildDirectory$/Templates'
-
-.BinaryDirectory        = '$OutputDirectory$/Binary'
-.IntermediateDirectory  = '$OutputDirectory$/Intermediate'
+.OutputPath        = '$SolutionPath$/Output'
+.SourcePath        = '$SolutionPath$/Source'
+.BuildPath         = '$SolutionPath$/Build'
+.BinaryPath        = '$OutputPath$/Binary'
+.IntermediatePath  = '$OutputPath$/Intermediate'
 
 //------------------------------------------------------------------------------
 // Default Unity Options
 //------------------------------------------------------------------------------
 .UnityNumFiles = 5 ; peut être override par projet
-.UnityInputIsolateListFile = '$BuildDirectory$/.modified_files'
+.UnityInputIsolateListFile = '$BuildPath$/.modified_files'
 .UnityInputIsolateWritableFiles = false
 #if DISABLE_UNITY_BUILDS
 .UnityInputIsolateWritableFiles = true

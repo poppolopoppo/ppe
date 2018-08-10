@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Quaternion.h"
+#include "Maths/Quaternion.h"
 
-#include "ScalarVectorHelpers.h"
+#include "Maths/ScalarVectorHelpers.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

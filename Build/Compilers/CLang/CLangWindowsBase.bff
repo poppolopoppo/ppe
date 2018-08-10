@@ -221,7 +221,7 @@
 ;     + ' /DYNAMICBASE:NO'    ; pas de randomisation des adresses
 ;     + ' /NXCOMPAT:NO'       ; indique que le programme n'est pas compatible avec Data Execution Prevention
 ;     + ' /SUBSYSTEM:WINDOWS'
-;     + ' /LIBPATH:"$BinaryDirectory$"'
+;     + ' /LIBPATH:"$BinaryPath$"'
 ;     + ' /OUT:"%2" "%1"'
 ;     + ' kernel32.lib'
 ;     + ' User32.lib'

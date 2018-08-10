@@ -50,7 +50,7 @@ template <typename T, bool _ThreadLocal, size_t _Size = sizeof(T) >
 struct TPoolTracking {
     typedef TPoolTracking<T, _ThreadLocal, _Size> self_type;
 
-    Core::FMemoryTracking TrackingData;
+    PPE::FMemoryTracking TrackingData;
     char Name[256];
 
     TPoolTracking(const char* tagname, FMemoryTracking* parent = nullptr)

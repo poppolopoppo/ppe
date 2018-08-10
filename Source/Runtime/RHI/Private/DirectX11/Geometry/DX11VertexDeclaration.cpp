@@ -46,77 +46,77 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FDX11VertexDeclaration, );
 DXGI_FORMAT VertexFormatToDXGIFormat(FVertexFormat value) {
     switch (value)
     {
-    case Core::Graphics::FVertexFormat::Float:
+    case PPE::Graphics::FVertexFormat::Float:
         return DXGI_FORMAT_R32_FLOAT;
-    case Core::Graphics::FVertexFormat::Float2:
+    case PPE::Graphics::FVertexFormat::Float2:
         return DXGI_FORMAT_R32G32_FLOAT;
-    case Core::Graphics::FVertexFormat::Float3:
+    case PPE::Graphics::FVertexFormat::Float3:
         return DXGI_FORMAT_R32G32B32_FLOAT;
-    case Core::Graphics::FVertexFormat::Float4:
+    case PPE::Graphics::FVertexFormat::Float4:
         return DXGI_FORMAT_R32G32B32A32_FLOAT;
-    case Core::Graphics::FVertexFormat::Byte:
+    case PPE::Graphics::FVertexFormat::Byte:
         return DXGI_FORMAT_R8_SINT;
-    case Core::Graphics::FVertexFormat::Byte2:
+    case PPE::Graphics::FVertexFormat::Byte2:
         return DXGI_FORMAT_R8G8_SINT;
-    case Core::Graphics::FVertexFormat::Byte4:
+    case PPE::Graphics::FVertexFormat::Byte4:
         return DXGI_FORMAT_R8G8B8A8_SINT;
-    case Core::Graphics::FVertexFormat::UByte:
+    case PPE::Graphics::FVertexFormat::UByte:
         return DXGI_FORMAT_R8_UINT;
-    case Core::Graphics::FVertexFormat::UByte2:
+    case PPE::Graphics::FVertexFormat::UByte2:
         return DXGI_FORMAT_R8G8_UINT;
-    case Core::Graphics::FVertexFormat::UByte4:
+    case PPE::Graphics::FVertexFormat::UByte4:
         return DXGI_FORMAT_R8G8B8A8_UINT;
-    case Core::Graphics::FVertexFormat::Short:
+    case PPE::Graphics::FVertexFormat::Short:
         return DXGI_FORMAT_R16_SINT;
-    case Core::Graphics::FVertexFormat::Short2:
+    case PPE::Graphics::FVertexFormat::Short2:
         return DXGI_FORMAT_R16G16_SINT;
-    case Core::Graphics::FVertexFormat::Short4:
+    case PPE::Graphics::FVertexFormat::Short4:
         return DXGI_FORMAT_R16G16B16A16_SINT;
-    case Core::Graphics::FVertexFormat::UShort:
+    case PPE::Graphics::FVertexFormat::UShort:
         return DXGI_FORMAT_R16_UINT;
-    case Core::Graphics::FVertexFormat::UShort2:
+    case PPE::Graphics::FVertexFormat::UShort2:
         return DXGI_FORMAT_R16G16_UINT;
-    case Core::Graphics::FVertexFormat::UShort4:
+    case PPE::Graphics::FVertexFormat::UShort4:
         return DXGI_FORMAT_R16G16B16A16_UINT;
-    case Core::Graphics::FVertexFormat::Word:
+    case PPE::Graphics::FVertexFormat::Word:
         return DXGI_FORMAT_R32_SINT;
-    case Core::Graphics::FVertexFormat::Word2:
+    case PPE::Graphics::FVertexFormat::Word2:
         return DXGI_FORMAT_R32G32_SINT;
-    case Core::Graphics::FVertexFormat::Word3:
+    case PPE::Graphics::FVertexFormat::Word3:
         return DXGI_FORMAT_R32G32B32_SINT;
-    case Core::Graphics::FVertexFormat::Word4:
+    case PPE::Graphics::FVertexFormat::Word4:
         return DXGI_FORMAT_R32G32B32A32_SINT;
-    case Core::Graphics::FVertexFormat::UWord:
+    case PPE::Graphics::FVertexFormat::UWord:
         return DXGI_FORMAT_R32_UINT;
-    case Core::Graphics::FVertexFormat::UWord2:
+    case PPE::Graphics::FVertexFormat::UWord2:
         return DXGI_FORMAT_R32G32_UINT;
-    case Core::Graphics::FVertexFormat::UWord3:
+    case PPE::Graphics::FVertexFormat::UWord3:
         return DXGI_FORMAT_R32G32B32_UINT;
-    case Core::Graphics::FVertexFormat::UWord4:
+    case PPE::Graphics::FVertexFormat::UWord4:
         return DXGI_FORMAT_R32G32B32A32_UINT;
-    case Core::Graphics::FVertexFormat::Half:
+    case PPE::Graphics::FVertexFormat::Half:
         return DXGI_FORMAT_R16_FLOAT;
-    case Core::Graphics::FVertexFormat::Half2:
+    case PPE::Graphics::FVertexFormat::Half2:
         return DXGI_FORMAT_R16G16_FLOAT;
-    case Core::Graphics::FVertexFormat::Half4:
+    case PPE::Graphics::FVertexFormat::Half4:
         return DXGI_FORMAT_R16G16B16A16_FLOAT;
-    case Core::Graphics::FVertexFormat::Byte2N:
+    case PPE::Graphics::FVertexFormat::Byte2N:
         return DXGI_FORMAT_R8G8_SNORM;
-    case Core::Graphics::FVertexFormat::Byte4N:
+    case PPE::Graphics::FVertexFormat::Byte4N:
         return DXGI_FORMAT_R8G8B8A8_SNORM;
-    case Core::Graphics::FVertexFormat::UByte2N:
+    case PPE::Graphics::FVertexFormat::UByte2N:
         return DXGI_FORMAT_R8G8_UNORM;
-    case Core::Graphics::FVertexFormat::UByte4N:
+    case PPE::Graphics::FVertexFormat::UByte4N:
         return DXGI_FORMAT_R8G8B8A8_UNORM;
-    case Core::Graphics::FVertexFormat::Short2N:
+    case PPE::Graphics::FVertexFormat::Short2N:
         return DXGI_FORMAT_R16G16_SNORM;
-    case Core::Graphics::FVertexFormat::Short4N:
+    case PPE::Graphics::FVertexFormat::Short4N:
         return DXGI_FORMAT_R16G16B16A16_SNORM;
-    case Core::Graphics::FVertexFormat::UShort2N:
+    case PPE::Graphics::FVertexFormat::UShort2N:
         return DXGI_FORMAT_R16G16_UNORM;
-    case Core::Graphics::FVertexFormat::UShort4N:
+    case PPE::Graphics::FVertexFormat::UShort4N:
         return DXGI_FORMAT_R16G16B16A16_UNORM;
-    case Core::Graphics::FVertexFormat::UX10Y10Z10W2N:
+    case PPE::Graphics::FVertexFormat::UX10Y10Z10W2N:
         return DXGI_FORMAT_R10G10B10A2_UNORM;
     default:
         AssertNotImplemented();
@@ -129,77 +129,77 @@ FVertexFormat DXGIFormatToVertexFormat(DXGI_FORMAT value) {
     switch (value)
     {
     case DXGI_FORMAT_R32_FLOAT:
-        return Core::Graphics::FVertexFormat::Float;
+        return PPE::Graphics::FVertexFormat::Float;
     case DXGI_FORMAT_R32G32_FLOAT:
-        return Core::Graphics::FVertexFormat::Float2;
+        return PPE::Graphics::FVertexFormat::Float2;
     case DXGI_FORMAT_R32G32B32_FLOAT:
-        return Core::Graphics::FVertexFormat::Float3;
+        return PPE::Graphics::FVertexFormat::Float3;
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
-        return Core::Graphics::FVertexFormat::Float4;
+        return PPE::Graphics::FVertexFormat::Float4;
     case DXGI_FORMAT_R8_SINT:
-        return Core::Graphics::FVertexFormat::Byte;
+        return PPE::Graphics::FVertexFormat::Byte;
     case DXGI_FORMAT_R8G8_SINT:
-        return Core::Graphics::FVertexFormat::Byte2;
+        return PPE::Graphics::FVertexFormat::Byte2;
     case DXGI_FORMAT_R8G8B8A8_SINT:
-        return Core::Graphics::FVertexFormat::Byte4;
+        return PPE::Graphics::FVertexFormat::Byte4;
     case DXGI_FORMAT_R8_UINT:
-        return Core::Graphics::FVertexFormat::UByte;
+        return PPE::Graphics::FVertexFormat::UByte;
     case DXGI_FORMAT_R8G8_UINT:
-        return Core::Graphics::FVertexFormat::UByte2;
+        return PPE::Graphics::FVertexFormat::UByte2;
     case DXGI_FORMAT_R8G8B8A8_UINT:
-        return Core::Graphics::FVertexFormat::UByte4;
+        return PPE::Graphics::FVertexFormat::UByte4;
     case DXGI_FORMAT_R16_SINT:
-        return Core::Graphics::FVertexFormat::Short;
+        return PPE::Graphics::FVertexFormat::Short;
     case DXGI_FORMAT_R16G16_SINT:
-        return Core::Graphics::FVertexFormat::Short2;
+        return PPE::Graphics::FVertexFormat::Short2;
     case DXGI_FORMAT_R16G16B16A16_SINT:
-        return Core::Graphics::FVertexFormat::Short4;
+        return PPE::Graphics::FVertexFormat::Short4;
     case DXGI_FORMAT_R16_UINT:
-        return Core::Graphics::FVertexFormat::UShort;
+        return PPE::Graphics::FVertexFormat::UShort;
     case DXGI_FORMAT_R16G16_UINT:
-        return Core::Graphics::FVertexFormat::UShort2;
+        return PPE::Graphics::FVertexFormat::UShort2;
     case DXGI_FORMAT_R16G16B16A16_UINT:
-        return Core::Graphics::FVertexFormat::UShort4;
+        return PPE::Graphics::FVertexFormat::UShort4;
     case DXGI_FORMAT_R32_SINT:
-        return Core::Graphics::FVertexFormat::Word;
+        return PPE::Graphics::FVertexFormat::Word;
     case DXGI_FORMAT_R32G32_SINT:
-        return Core::Graphics::FVertexFormat::Word2;
+        return PPE::Graphics::FVertexFormat::Word2;
     case DXGI_FORMAT_R32G32B32_SINT:
-        return Core::Graphics::FVertexFormat::Word3;
+        return PPE::Graphics::FVertexFormat::Word3;
     case DXGI_FORMAT_R32G32B32A32_SINT:
-        return Core::Graphics::FVertexFormat::Word4;
+        return PPE::Graphics::FVertexFormat::Word4;
     case DXGI_FORMAT_R32_UINT:
-        return Core::Graphics::FVertexFormat::UWord;
+        return PPE::Graphics::FVertexFormat::UWord;
     case DXGI_FORMAT_R32G32_UINT:
-        return Core::Graphics::FVertexFormat::UWord2;
+        return PPE::Graphics::FVertexFormat::UWord2;
     case DXGI_FORMAT_R32G32B32_UINT:
-        return Core::Graphics::FVertexFormat::UWord3;
+        return PPE::Graphics::FVertexFormat::UWord3;
     case DXGI_FORMAT_R32G32B32A32_UINT:
-        return Core::Graphics::FVertexFormat::UWord4;
+        return PPE::Graphics::FVertexFormat::UWord4;
     case DXGI_FORMAT_R16_FLOAT:
-        return Core::Graphics::FVertexFormat::Half;
+        return PPE::Graphics::FVertexFormat::Half;
     case DXGI_FORMAT_R16G16_FLOAT:
-        return Core::Graphics::FVertexFormat::Half2;
+        return PPE::Graphics::FVertexFormat::Half2;
     case DXGI_FORMAT_R16G16B16A16_FLOAT:
-        return Core::Graphics::FVertexFormat::Half4;
+        return PPE::Graphics::FVertexFormat::Half4;
     case DXGI_FORMAT_R8G8_SNORM:
-        return Core::Graphics::FVertexFormat::Byte2N;
+        return PPE::Graphics::FVertexFormat::Byte2N;
     case DXGI_FORMAT_R8G8B8A8_SNORM:
-        return Core::Graphics::FVertexFormat::Byte4N;
+        return PPE::Graphics::FVertexFormat::Byte4N;
     case DXGI_FORMAT_R8G8_UNORM:
-        return Core::Graphics::FVertexFormat::UByte2N;
+        return PPE::Graphics::FVertexFormat::UByte2N;
     case DXGI_FORMAT_R8G8B8A8_UNORM:
-        return Core::Graphics::FVertexFormat::UByte4N;
+        return PPE::Graphics::FVertexFormat::UByte4N;
     case DXGI_FORMAT_R16G16_SNORM:
-        return Core::Graphics::FVertexFormat::Short2N;
+        return PPE::Graphics::FVertexFormat::Short2N;
     case DXGI_FORMAT_R16G16B16A16_SNORM:
-        return Core::Graphics::FVertexFormat::Short4N;
+        return PPE::Graphics::FVertexFormat::Short4N;
     case DXGI_FORMAT_R16G16_UNORM:
-        return Core::Graphics::FVertexFormat::UShort2N;
+        return PPE::Graphics::FVertexFormat::UShort2N;
     case DXGI_FORMAT_R16G16B16A16_UNORM:
-        return Core::Graphics::FVertexFormat::UShort4N;
+        return PPE::Graphics::FVertexFormat::UShort4N;
     case DXGI_FORMAT_R10G10B10A2_UNORM:
-        return Core::Graphics::FVertexFormat::UX10Y10Z10W2N;
+        return PPE::Graphics::FVertexFormat::UX10Y10Z10W2N;
     default:
         AssertNotImplemented();
     }

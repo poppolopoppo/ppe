@@ -70,7 +70,7 @@ public:
         void* Frames[MaxDepth] = { 0 };
 
         void CaptureBacktrace() {
-            FCallstack::Capture(Core::MakeView(Frames), nullptr, FramesToSkip, MaxDepth);
+            FCallstack::Capture(PPE::MakeView(Frames), nullptr, FramesToSkip, MaxDepth);
         }
 
         void Decode(FDecodedCallstack* decoded) const {
@@ -505,6 +505,7 @@ private:
 
             if (BufferOffset == WriteBufferCapacity)
                 Flush_AssumeLocked();
+            Assert(BufferOffset < WriteBufferCapacity);
 
             return streamOffset;
         }

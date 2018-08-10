@@ -10,7 +10,7 @@ namespace Pixmap {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define PIXELSTORAGE(_Domain, T) \
-    Core::Pixmap::TPixelStorage< T, ALLOCATOR(_Domain, T) >
+    PPE::Pixmap::TPixelStorage< T, ALLOCATOR(_Domain, T) >
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 class TPixelStorage {

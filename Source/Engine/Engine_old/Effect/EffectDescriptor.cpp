@@ -76,17 +76,17 @@ void FEffectDescriptor::SetRenderState(const Engine::FRenderState *value) {
 const FFilename& FEffectDescriptor::ProgramFilename(Graphics::EShaderProgramType programType) const {
     switch (programType)
     {
-    case Core::Graphics::EShaderProgramType::Vertex:
+    case PPE::Graphics::EShaderProgramType::Vertex:
         return _vs;
-    case Core::Graphics::EShaderProgramType::Hull:
+    case PPE::Graphics::EShaderProgramType::Hull:
         return _hs;
-    case Core::Graphics::EShaderProgramType::Domain:
+    case PPE::Graphics::EShaderProgramType::Domain:
         return _ds;
-    case Core::Graphics::EShaderProgramType::Pixel:
+    case PPE::Graphics::EShaderProgramType::Pixel:
         return _ps;
-    case Core::Graphics::EShaderProgramType::Geometry:
+    case PPE::Graphics::EShaderProgramType::Geometry:
         return _gs;
-    case Core::Graphics::EShaderProgramType::Compute:
+    case PPE::Graphics::EShaderProgramType::Compute:
         return _cs;
     default:
         AssertNotImplemented();
@@ -97,22 +97,22 @@ const FFilename& FEffectDescriptor::ProgramFilename(Graphics::EShaderProgramType
 void FEffectDescriptor::SetProgramFilename(Graphics::EShaderProgramType programType, const FFilename& filename) {
     switch (programType)
     {
-    case Core::Graphics::EShaderProgramType::Vertex:
+    case PPE::Graphics::EShaderProgramType::Vertex:
         _vs = filename;
         break;
-    case Core::Graphics::EShaderProgramType::Hull:
+    case PPE::Graphics::EShaderProgramType::Hull:
         _hs = filename;
         break;
-    case Core::Graphics::EShaderProgramType::Domain:
+    case PPE::Graphics::EShaderProgramType::Domain:
         _ds = filename;
         break;
-    case Core::Graphics::EShaderProgramType::Pixel:
+    case PPE::Graphics::EShaderProgramType::Pixel:
         _ps = filename;
         break;
-    case Core::Graphics::EShaderProgramType::Geometry:
+    case PPE::Graphics::EShaderProgramType::Geometry:
         _gs = filename;
         break;
-    case Core::Graphics::EShaderProgramType::Compute:
+    case PPE::Graphics::EShaderProgramType::Compute:
         _cs = filename;
         break;
     default:

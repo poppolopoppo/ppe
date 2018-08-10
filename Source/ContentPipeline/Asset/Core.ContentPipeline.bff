@@ -1,7 +1,7 @@
 #once
 {
     .ProjectName = 'Core.ContentPipeline'
-    .ProjectPath = '$SourceDirectory$/Core.ContentPipeline'
+    .ProjectPath = '$SourcePath$/Core.ContentPipeline'
     .ProjectSolutionFolder = 'Core.Content'
     .ProjectDefines = { 'EXPORT_CORE_CONTENTPIPELINE' }
     .UnityNumFiles = 1
@@ -9,5 +9,5 @@
     {
         'ContentPipeline.cpp'
     }
-    #include "../../Build/Templates/Library.bff"
+    #include "$BuildPath$/Templates/Library.bff"
 }

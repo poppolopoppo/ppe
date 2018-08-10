@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Malloc.h"
+#include "Allocator/Malloc.h"
 
 #define PPE_OVERRIDE_NEW_OPERATORS 1 // turn to 0 to disable global allocator overriding %_NOCOMMIT%
 
@@ -20,43 +20,43 @@
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PPE_RETURN_NOT_NULL void* PPE_DECLSPEC_CALL operator new(size_t size) {
-    return (Core::malloc)(size);
+    return (PPE::malloc)(size);
 }
 //----------------------------------------------------------------------------
 PPE_RETURN_MAYBE_NULL void* PPE_DECLSPEC_CALL operator new(size_t size, std::nothrow_t const& ) noexcept  {
-    return (Core::malloc)(size);
+    return (PPE::malloc)(size);
 }
 //----------------------------------------------------------------------------
 PPE_RETURN_NOT_NULL void* PPE_DECLSPEC_CALL operator new[](size_t size) {
-    return (Core::malloc)(size);
+    return (PPE::malloc)(size);
 }
 //----------------------------------------------------------------------------
 PPE_RETURN_MAYBE_NULL void* PPE_DECLSPEC_CALL operator new[](size_t size,std::nothrow_t const& ) noexcept {
-    return (Core::malloc)(size);
+    return (PPE::malloc)(size);
 }
 //----------------------------------------------------------------------------
 void PPE_DECLSPEC_CALL operator delete(void* block) throw() {
-    (Core::free)(block);
+    (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
 void PPE_DECLSPEC_CALL operator delete(void* block, std::nothrow_t const& ) throw() {
-    (Core::free)(block);
+    (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
 void PPE_DECLSPEC_CALL operator delete[](void* block) throw() {
-    (Core::free)(block);
+    (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
 void PPE_DECLSPEC_CALL operator delete[](void* block, std::nothrow_t const& ) throw() {
-    (Core::free)(block);
+    (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
 void PPE_DECLSPEC_CALL operator delete(void*  block, size_t/* size */) throw() {
-    (Core::free)(block);
+    (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
 void PPE_DECLSPEC_CALL operator delete[](void* block, size_t/* size */) throw() {
-    (Core::free)(block);
+    (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

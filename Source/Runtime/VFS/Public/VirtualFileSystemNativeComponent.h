@@ -1,17 +1,16 @@
 #pragma once
 
-#include "Core.h"
-
-#include "IO/FS/Dirpath.h"
-#include "IO/String.h"
-#include "IO/VirtualFileSystem_fwd.h"
+#include "VirtualFileSystem_fwd.h"
 #include "VirtualFileSystemComponent.h"
+
+#include "IO/Dirpath.h"
+#include "IO/String.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FVirtualFileSystemNativeComponent : public FVirtualFileSystemComponent, IVirtualFileSystemComponentReadWritable {
+class PPE_VFS_API FVirtualFileSystemNativeComponent : public FVirtualFileSystemComponent, IVirtualFileSystemComponentReadWritable {
 public:
     FVirtualFileSystemNativeComponent(const FDirpath& alias, FWString&& target, EOpenPolicy openMode = EOpenPolicy::ReadWritable);
     FVirtualFileSystemNativeComponent(const FDirpath& alias, const FWString& target, EOpenPolicy openMode = EOpenPolicy::ReadWritable);

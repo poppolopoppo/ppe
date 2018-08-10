@@ -1,0 +1,119 @@
+//------------------------------------------------------------------------------
+// Target -> Target-Win32 + Target-Debug + Target-Win32-Debug + ...
+//------------------------------------------------------------------------------
+; Inputs :
+;   <AliasName>             prefix of all aliases
+;   <AliasTargets>          target list used for aliases
+//------------------------------------------------------------------------------
+
+// "All" aliases
+//------------------------------------------------------------------------------
+Alias( '$AliasName$' )
+{
+    .Targets = .AliasTargets
+}
+
+Alias( '$AliasName$-Purge' )
+{
+    .Targets = {}
+    ForEach( .Target in .AliasTargets )
+    {
+        ^Targets + { '$Target$-Purge' }
+    }
+}
+
+// Per platform and config aliases
+//------------------------------------------------------------------------------
+ForEach( .SharedPlatform in .AllSharedPlatforms )
+{
+    Using( .SharedPlatform )
+
+    ForEach( .SharedConfig in .AllSharedConfigs )
+    {
+        Using( .SharedConfig )
+
+        Alias( '$AliasName$-$Platform$-$Config$' )
+        {
+            .Targets = {}
+            ForEach( .Target in .AliasTargets )
+            {
+                ^Targets + { '$Target$-$Platform$-$Config$' }
+            }
+        }
+
+        Alias( '$AliasName$-$Platform$-$Config$-Purge' )
+        {
+            .Targets = {}
+            ForEach( .Target in .AliasTargets )
+            {
+                ^Targets + { '$Target$-$Platform$-$Config$-Purge' }
+            }
+        }
+    }
+}
+
+// Per platform aliases
+//------------------------------------------------------------------------------
+ForEach( .SharedPlatform in .AllSharedPlatforms )
+{
+    Using( .SharedPlatform )
+
+    Alias( '$AliasName$-$Platform$' )
+    {
+        .Targets = {}
+        ForEach( .SharedConfig in .AllSharedConfigs )
+        {
+            Using( .SharedConfig )
+            ForEach( .Target in .AliasTargets )
+            {
+                ^Targets + { '$Target$-$Platform$-$Config$' }
+            }
+        }
+    }
+
+    Alias( '$AliasName$-$Platform$-Purge' )
+    {
+        .Targets = {}
+        ForEach( .SharedConfig in .AllSharedConfigs )
+        {
+            Using( .SharedConfig )
+            ForEach( .Target in .AliasTargets )
+            {
+                ^Targets + { '$Target$-$Platform$-$Config$-Purge' }
+            }
+        }
+    }
+}
+
+// Per config aliases
+//------------------------------------------------------------------------------
+ForEach( .SharedConfig in .AllSharedConfigs )
+{
+    Using( .SharedConfig )
+
+    Alias( '$AliasName$-$Config$' )
+    {
+        .Targets = {}
+        ForEach( .SharedPlatform in .AllSharedPlatforms )
+        {
+            Using( .SharedPlatform )
+            ForEach( .Target in .AliasTargets )
+            {
+                ^Targets + { '$Target$-$Platform$-$Config$' }
+            }
+        }
+    }
+
+    Alias( '$AliasName$-$Config$-Purge' )
+    {
+        .Targets = {}
+        ForEach( .SharedPlatform in .AllSharedPlatforms )
+        {
+            Using( .SharedPlatform )
+            ForEach( .Target in .AliasTargets )
+            {
+                ^Targets + { '$Target$-$Platform$-$Config$-Purge' }
+            }
+        }
+    }
+}

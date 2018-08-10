@@ -40,7 +40,7 @@ T* TFuture<T>::ResultIFP() {
 template <typename T>
 void TFuture<T>::Async(ETaskPriority priority, FTaskManager* manager) {
     AddSafeRef(this); // FTaskFunc only checks its kept alive, the client should handle lifetime
-    Core::Async([this](ITaskContext&) { // use a lambda to keep lifetime in check through TSafePtr<>
+    PPE::Async([this](ITaskContext&) { // use a lambda to keep lifetime in check through TSafePtr<>
         _value = _func();
         RemoveSafeRef(this);
         _state = Ready; // set Ready *AFTER* releasing TSafePtr<>

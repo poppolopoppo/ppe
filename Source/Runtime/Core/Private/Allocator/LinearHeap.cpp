@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "LinearHeap.h"
+#include "Allocator/LinearHeap.h"
 
 #include "HAL/PlatformMemory.h"
 #include "Memory/MemoryTracking.h"
@@ -24,7 +24,7 @@
 #endif
 
 namespace PPE {
-EXTERN_LOG_CATEGORY(PPE_API, MemoryDomain)
+EXTERN_LOG_CATEGORY(PPE_CORE_API, MemoryDomain)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -346,7 +346,7 @@ void* FLinearHeap::Allocate(size_t size) {
     void* ptr;
 
 #if WITH_PPE_LINEARHEAP_FALLBACK_TO_MALLOC
-    void* stg = Core::aligned_malloc(sizeof(FLinearHeapHeader_) + size, 16);
+    void* stg = PPE::aligned_malloc(sizeof(FLinearHeapHeader_) + size, 16);
     auto* blk = INPLACE_NEW(stg, FLinearHeapHeader_)(*this, size);
     AssertCheckCanary(*blk);
 
@@ -415,7 +415,7 @@ void* FLinearHeap::Relocate(void* ptr, size_t newSize, size_t oldSize) {
     _trackingData.Deallocate(oldSize / 16, 16);
 #   endif
 
-    Core::aligned_free(&prev);
+    PPE::aligned_free(&prev);
 
     return newp;
 
@@ -464,7 +464,7 @@ void FLinearHeap::Release(void* ptr, size_t size) {
     _trackingData.Deallocate(size / 16, 16);
 #   endif
 
-    Core::aligned_free(&blk);
+    PPE::aligned_free(&blk);
 
 #else
     ONLY_IF_ASSERT(FillDeletedBlock_(ptr, size));

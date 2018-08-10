@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Json.h"
+#include "Json/Json.h"
 
 #include "Lexer/Lexer.h"
 #include "Lexer/Match.h"
@@ -10,12 +10,12 @@
 #include "Container/AssociativeVector.h"
 #include "Container/RawStorage.h"
 #include "Container/Vector.h"
-#include "IO/FS/ConstNames.h"
+#include "IO/ConstNames.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
-#include "IO/VirtualFileSystem.h"
 #include "Memory/MemoryProvider.h"
+#include "VirtualFileSystem.h"
 
 namespace PPE {
 namespace Serialize {
@@ -173,26 +173,26 @@ template <typename _Char>
 static void ToStream_(const FJson::FValue& value, TBasicTextWriter<_Char>& oss, Fmt::TBasicIndent<_Char>& indent, bool minify) {
     switch (value.Type()) {
 
-    case Core::Serialize::FJson::Null:
+    case PPE::Serialize::FJson::Null:
         oss << "null";
         break;
-    case Core::Serialize::FJson::Bool:
+    case PPE::Serialize::FJson::Bool:
         oss << value.ToBool();
         break;
-    case Core::Serialize::FJson::Integer:
+    case PPE::Serialize::FJson::Integer:
         oss << value.ToInteger();
         break;
-    case Core::Serialize::FJson::Float:
+    case PPE::Serialize::FJson::Float:
         oss << value.ToFloat();
         break;
 
-    case Core::Serialize::FJson::String:
+    case PPE::Serialize::FJson::String:
         oss << Fmt::DoubleQuote;
         Json_::EscapeString_(oss, value.ToString());
         oss << Fmt::DoubleQuote;
         break;
 
-    case Core::Serialize::FJson::Array:
+    case PPE::Serialize::FJson::Array:
         if (not value.ToArray().empty()) {
             const auto& arr = value.ToArray();
             oss << Fmt::LBracket;
@@ -218,7 +218,7 @@ static void ToStream_(const FJson::FValue& value, TBasicTextWriter<_Char>& oss, 
         }
         break;
 
-    case Core::Serialize::FJson::Object:
+    case PPE::Serialize::FJson::Object:
         if (not value.ToObject().empty()) {
             const auto& obj = value.ToObject();
             oss << Fmt::LBrace;
@@ -259,25 +259,25 @@ static void ToStream_(const FJson::FValue& value, TBasicTextWriter<_Char>& oss, 
 FJson::FValue::FValue(FJson& doc, EType type)
     : _type(type) {
     switch (_type) {
-    case Core::Serialize::FJson::Null:
+    case PPE::Serialize::FJson::Null:
         SetType_AssumeNull(doc, TypeNull{});
         return;
-    case Core::Serialize::FJson::Bool:
+    case PPE::Serialize::FJson::Bool:
         SetType_AssumeNull(doc, TypeBool{});
         return;
-    case Core::Serialize::FJson::Integer:
+    case PPE::Serialize::FJson::Integer:
         SetType_AssumeNull(doc, TypeInteger{});
         return;
-    case Core::Serialize::FJson::Float:
+    case PPE::Serialize::FJson::Float:
         SetType_AssumeNull(doc, TypeFloat{});
         return;
-    case Core::Serialize::FJson::String:
+    case PPE::Serialize::FJson::String:
         SetType_AssumeNull(doc, TypeString{});
         return;
-    case Core::Serialize::FJson::Array:
+    case PPE::Serialize::FJson::Array:
         SetType_AssumeNull(doc, TypeArray{});
         return;
-    case Core::Serialize::FJson::Object:
+    case PPE::Serialize::FJson::Object:
         SetType_AssumeNull(doc, TypeObject{});
         return;
     }
@@ -289,24 +289,24 @@ FJson::FValue& FJson::FValue::operator =(const FValue& other) {
 
     _type = other._type;
     switch (other._type) {
-    case Core::Serialize::FJson::Null:
+    case PPE::Serialize::FJson::Null:
         break;
-    case Core::Serialize::FJson::Bool:
+    case PPE::Serialize::FJson::Bool:
         _bool = other._bool;
         break;
-    case Core::Serialize::FJson::Integer:
+    case PPE::Serialize::FJson::Integer:
         _integer = other._integer;
         break;
-    case Core::Serialize::FJson::Float:
+    case PPE::Serialize::FJson::Float:
         _float = other._float;
         break;
-    case Core::Serialize::FJson::String:
+    case PPE::Serialize::FJson::String:
         INPLACE_NEW(&_string, FText)(other._string);
         break;
-    case Core::Serialize::FJson::Array:
+    case PPE::Serialize::FJson::Array:
         INPLACE_NEW(&_array, FArray)(other._array);
         break;
-    case Core::Serialize::FJson::Object:
+    case PPE::Serialize::FJson::Object:
         INPLACE_NEW(&_object, FObject)(other._object);
         break;
     default:
@@ -321,27 +321,27 @@ FJson::FValue& FJson::FValue::operator =(FValue&& rvalue) {
     Clear();
 
     switch (rvalue._type) {
-    case Core::Serialize::FJson::Null:
+    case PPE::Serialize::FJson::Null:
         Assert(Null == _type);
         return (*this);
-    case Core::Serialize::FJson::Bool:
+    case PPE::Serialize::FJson::Bool:
         _bool = rvalue._bool;
         break;
-    case Core::Serialize::FJson::Integer:
+    case PPE::Serialize::FJson::Integer:
         _integer = rvalue._integer;
         break;
-    case Core::Serialize::FJson::Float:
+    case PPE::Serialize::FJson::Float:
         _float = rvalue._float;
         break;
-    case Core::Serialize::FJson::String:
+    case PPE::Serialize::FJson::String:
         INPLACE_NEW(&_string, FText)(std::move(rvalue._string));
         //rvalue._string.~FText();
         break;
-    case Core::Serialize::FJson::Array:
+    case PPE::Serialize::FJson::Array:
         INPLACE_NEW(&_array, FArray)(std::move(rvalue._array));
         //rvalue._array.~FArray();
         break;
-    case Core::Serialize::FJson::Object:
+    case PPE::Serialize::FJson::Object:
         INPLACE_NEW(&_object, FObject)(std::move(rvalue._object));
         //rvalue._object.~FObject();
         break;
@@ -360,25 +360,25 @@ FJson::FValue& FJson::FValue::SetType(FJson& doc, EType type) {
         Clear();
 
     switch (type) {
-    case Core::Serialize::FJson::Null:
+    case PPE::Serialize::FJson::Null:
         SetType_AssumeNull(doc, TType<Null>{});
         return (*this);
-    case Core::Serialize::FJson::Bool:
+    case PPE::Serialize::FJson::Bool:
         SetType_AssumeNull(doc, TType<Bool>{});
         return (*this);
-    case Core::Serialize::FJson::Integer:
+    case PPE::Serialize::FJson::Integer:
         SetType_AssumeNull(doc, TType<Integer>{});
         return (*this);
-    case Core::Serialize::FJson::Float:
+    case PPE::Serialize::FJson::Float:
         SetType_AssumeNull(doc, TType<Float>{});
         return (*this);
-    case Core::Serialize::FJson::String:
+    case PPE::Serialize::FJson::String:
         SetType_AssumeNull(doc, TType<String>{});
         return (*this);
-    case Core::Serialize::FJson::Array:
+    case PPE::Serialize::FJson::Array:
         SetType_AssumeNull(doc, TType<Array>{});
         return (*this);
-    case Core::Serialize::FJson::Object:
+    case PPE::Serialize::FJson::Object:
         SetType_AssumeNull(doc, TType<Object>{});
         return (*this);
     }
@@ -464,19 +464,19 @@ bool FJson::FValue::Equals(const FValue& other) const {
         return false;
 
     switch (_type) {
-    case Core::Serialize::FJson::Null:
+    case PPE::Serialize::FJson::Null:
         return true;
-    case Core::Serialize::FJson::Bool:
+    case PPE::Serialize::FJson::Bool:
         return (_bool == other._bool);
-    case Core::Serialize::FJson::Integer:
+    case PPE::Serialize::FJson::Integer:
         return (_integer == other._integer);
-    case Core::Serialize::FJson::Float:
+    case PPE::Serialize::FJson::Float:
         return (_float == other._float);
-    case Core::Serialize::FJson::String:
+    case PPE::Serialize::FJson::String:
         return (_string == other._string);
-    case Core::Serialize::FJson::Array:
+    case PPE::Serialize::FJson::Array:
         return (_array == other._array);
-    case Core::Serialize::FJson::Object:
+    case PPE::Serialize::FJson::Object:
         return (_object == other._object);
     }
 
@@ -486,17 +486,17 @@ bool FJson::FValue::Equals(const FValue& other) const {
 void FJson::FValue::Clear() {
 #if 0 // skip destructor thanks to linear heap
     switch (_type) {
-    case Core::Serialize::FJson::Null:
+    case PPE::Serialize::FJson::Null:
         return;
-    case Core::Serialize::FJson::Bool:
-    case Core::Serialize::FJson::Integer:
-    case Core::Serialize::FJson::Float:
-    case Core::Serialize::FJson::String:
+    case PPE::Serialize::FJson::Bool:
+    case PPE::Serialize::FJson::Integer:
+    case PPE::Serialize::FJson::Float:
+    case PPE::Serialize::FJson::String:
         break;
-    case Core::Serialize::FJson::Array:
+    case PPE::Serialize::FJson::Array:
         _array.~FArray();
         break;
-    case Core::Serialize::FJson::Object:
+    case PPE::Serialize::FJson::Object:
         _object.~FObject();
         break;
     default:

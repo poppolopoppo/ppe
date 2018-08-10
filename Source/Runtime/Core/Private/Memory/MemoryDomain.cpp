@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "MemoryDomain.h"
+#include "Memory/MemoryDomain.h"
 
-#include "MemoryTracking.h"
-#include "MemoryView.h"
+#include "Memory/MemoryTracking.h"
+#include "Memory/MemoryView.h"
 
 #include "Diagnostic/Logger.h"
 #include "Meta/OneTimeInitialize.h"
@@ -20,7 +20,7 @@
 #endif
 
 namespace PPE {
-LOG_CATEGORY(PPE_API, MemoryDomain)
+LOG_CATEGORY(PPE_CORE_API, MemoryDomain)
 constexpr size_t MemoryDomainsMaxCount = 128;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -67,7 +67,7 @@ namespace MemoryDomain {
             static FMemoryTracking& TrackingData(); \
         }; \
     }
-#   include "MemoryDomain.Definitions-inl.h"
+#   include "Memory/MemoryDomain.Definitions-inl.h"
 #   undef MEMORYDOMAIN_COLLAPSABLE_IMPL
 #   undef MEMORYDOMAIN_GROUP_IMPL
 #   undef MEMORYDOMAIN_IMPL
@@ -86,7 +86,7 @@ namespace MemoryDomain {
 #if WITH_PPE_MEMORYDOMAINS_COLLAPSING
 #   define MEMORYDOMAIN_COLLAPSABLE_IMPL(_Name, _Parent)
 #endif
-#include "MemoryDomain.Definitions-inl.h"
+#include "Memory/MemoryDomain.Definitions-inl.h"
 #undef MEMORYDOMAIN_COLLAPSABLE_IMPL
 #undef MEMORYDOMAIN_GROUP_IMPL
 #undef MEMORYDOMAIN_IMPL

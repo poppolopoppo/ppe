@@ -6,7 +6,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformHash {
+struct PPE_CORE_API FGenericPlatformHash {
 public: // must be defined for every platform
 
     static u32 CRC32(u32 seed, const void* p, size_t size) NOEXCEPT;

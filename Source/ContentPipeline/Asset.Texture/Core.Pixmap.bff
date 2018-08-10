@@ -1,7 +1,7 @@
 #once
 {
     .ProjectName = 'Core.Pixmap'
-    .ProjectPath = '$SourceDirectory$/Core.Pixmap'
+    .ProjectPath = '$SourcePath$/Core.Pixmap'
     .ProjectSolutionFolder = 'Core.Content'
     .ProjectDefines = { 'EXPORT_CORE_PIXMAP' }
     .UnityNumFiles = 1
@@ -10,5 +10,5 @@
         'Pixmap.cpp',
         'Pixmap_extern.cpp',
     }
-    #include "../../Build/Templates/Library.bff"
+    #include "$BuildPath$/Templates/Library.bff"
 }

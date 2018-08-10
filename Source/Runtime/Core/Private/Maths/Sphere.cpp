@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
-#include "Sphere.h"
+#include "Maths/Sphere.h"
 
 #include "Memory/MemoryView.h"
 
-#include "ScalarBoundingBox.h"
+#include "Maths/ScalarBoundingBox.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

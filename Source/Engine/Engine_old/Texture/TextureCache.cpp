@@ -86,7 +86,7 @@ SINGLETON_POOL_ALLOCATED_TAGGED_DEF(Engine, FTextureCache::FTextureData, );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextureCache::FTextureEntry::FTextureEntry(const Core::FFilename& filename, bool useSRGB, bool keepData)
+FTextureCache::FTextureEntry::FTextureEntry(const PPE::FFilename& filename, bool useSRGB, bool keepData)
 :   _filename(filename)
 ,   _prev(nullptr) {
     _nextWFlags.Reset(nullptr, useSRGB, keepData);
@@ -474,7 +474,7 @@ void FTextureCache::ReloadAllTextures() {
     LOG(Info, L"[FTextureCache] Reloading {0} textures ...", textureCount);
 
     struct FTextureQuery {
-        Core::FFilename FFilename;
+        PPE::FFilename FFilename;
         bool KeepData   : 1;
         bool UseSRGB    : 1;
     };
@@ -487,7 +487,7 @@ void FTextureCache::ReloadAllTextures() {
         Assert(pentry);
         Assert(pentry->Filename() == entry.first);
 
-        new ((void *)&queries[i].Filename) Core::FFilename(pentry->Filename());
+        new ((void *)&queries[i].Filename) PPE::FFilename(pentry->Filename());
         queries[i].UseSRGB = pentry->UseSRGB();
         queries[i].KeepData = pentry->KeepData();
 

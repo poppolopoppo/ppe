@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "VirtualMemory.h"
+#include "Memory/VirtualMemory.h"
 
 #include "Container/CompressedRadixTrie.h"
 #include "HAL/PlatformMemory.h"

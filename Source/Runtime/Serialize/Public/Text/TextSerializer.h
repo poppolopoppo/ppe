@@ -2,8 +2,8 @@
 
 #include "Serialize.h"
 
-#include "Exceptions.h"
 #include "ISerializer.h"
+#include "SerializeExceptions.h"
 
 namespace PPE {
 namespace Serialize {

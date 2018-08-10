@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "SocketBuffered.h"
+#include "Socket/SocketBuffered.h"
 
-#include "Listener.h"
+#include "Socket/Listener.h"
 
 #include "HAL/PlatformMemory.h"
 #include "IO/TextWriter.h"

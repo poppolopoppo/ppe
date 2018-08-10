@@ -13,7 +13,7 @@
 #include "IO/TextWriter_fwd.h"
 
 #if USE_PPE_MEMORYDOMAINS
-#   define NEW_RTTI(T) new (*::Core::RTTI::MetaClass<T>()) T
+#   define NEW_RTTI(T) new (*::PPE::RTTI::MetaClass<T>()) T
 #else
 #   define NEW_RTTI(T) NEW_REF(MetaObject, T)
 #endif

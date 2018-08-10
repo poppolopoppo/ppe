@@ -19,10 +19,10 @@
 
 #define _FWD_REFPTR_IMPL(T, _PREFIX)                                    \
     class CONCAT(_PREFIX, T);                                           \
-    typedef Core::TRefPtr<CONCAT(_PREFIX, T)>           CONCAT(P,  T);  \
-    typedef Core::TRefPtr<const CONCAT(_PREFIX, T)>     CONCAT(PC, T);  \
-    typedef Core::TSafePtr<CONCAT(_PREFIX, T)>          CONCAT(S,  T);  \
-    typedef Core::TSafePtr<const CONCAT(_PREFIX, T)>    CONCAT(SC, T)
+    typedef PPE::TRefPtr<CONCAT(_PREFIX, T)>           CONCAT(P,  T);  \
+    typedef PPE::TRefPtr<const CONCAT(_PREFIX, T)>     CONCAT(PC, T);  \
+    typedef PPE::TSafePtr<CONCAT(_PREFIX, T)>          CONCAT(S,  T);  \
+    typedef PPE::TSafePtr<const CONCAT(_PREFIX, T)>    CONCAT(SC, T)
 
 #define FWD_REFPTR(T_WITHOUT_F)             _FWD_REFPTR_IMPL(T_WITHOUT_F, F)
 #define FWD_INTERFACE_REFPTR(T_WITHOUT_I)   _FWD_REFPTR_IMPL(T_WITHOUT_I, I)
@@ -52,7 +52,7 @@ class TSafePtr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FRefCountable {
+class PPE_CORE_API FRefCountable {
 public:
     FRefCountable();
     ~FRefCountable();
@@ -75,9 +75,9 @@ public: // override new/delete operators for memory tracking
     static void operator delete(void* p, FMemoryTracking&) { tracking_free(p); }
     static void operator delete(void* p) { tracking_free(p); }
 #else
-    static void* operator new(size_t sz, Meta::FForceInit/* force to use macro even wout domains */) { return Core::malloc(sz); }
-    static void operator delete(void* p, Meta::FForceInit/* force to use macro even wout domains */) { Core::free(p); }
-    static void operator delete(void* p) { Core::free(p); }
+    static void* operator new(size_t sz, Meta::FForceInit/* force to use macro even wout domains */) { return PPE::malloc(sz); }
+    static void operator delete(void* p, Meta::FForceInit/* force to use macro even wout domains */) { PPE::free(p); }
+    static void operator delete(void* p) { PPE::free(p); }
 #endif
 
     // general allocators are forbidden to force the client to provide metadata

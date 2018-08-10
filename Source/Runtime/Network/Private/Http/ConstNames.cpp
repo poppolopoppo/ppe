@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "ConstNames.h"
+#include "Http/ConstNames.h"
 
 #include "Meta/AlignedStorage.h"
 

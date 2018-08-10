@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
-#include "FileSystem.h"
+#include "IO/FileSystem.h"
 
-#include "FS/ConstNames.h"
-#include "FS/FileSystemToken.h"
-#include "FS/FileSystemTrie.h"
+#include "IO/ConstNames.h"
+#include "IO/FileSystemToken.h"
+#include "IO/FileSystemTrie.h"
 
 #include "Allocator/PoolAllocatorTag-impl.h"
 

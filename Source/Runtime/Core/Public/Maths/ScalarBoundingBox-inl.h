@@ -84,14 +84,14 @@ bool TScalarBoundingBox<T, _Dim>::HasPositiveExtentsStrict() const {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 void TScalarBoundingBox<T, _Dim>::Add(const vector_type& v) {
-    _min = Core::Min(_min, v);
-    _max = Core::Max(_max, v);
+    _min = PPE::Min(_min, v);
+    _max = PPE::Max(_max, v);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 void TScalarBoundingBox<T, _Dim>::Add(const TScalarBoundingBox& other) {
-    _min = Core::Min(_min, other._min);
-    _max = Core::Max(_max, other._max);
+    _min = PPE::Min(_min, other._min);
+    _max = PPE::Max(_max, other._max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
@@ -136,8 +136,8 @@ bool TScalarBoundingBox<T, _Dim>::Intersects(const TScalarBoundingBox& other) co
     return (Abs(Center() - other.Center()) * 2).AllLessThan(Extents() + other.Extents());
 #else
     for (size_t i = 0; i < _Dim; ++i) {
-        const T m = Core::Min(_min._data[i], other._min._data[i]);
-        const T M = Core::Max(_max._data[i], other._max._data[i]);
+        const T m = PPE::Min(_min._data[i], other._min._data[i]);
+        const T M = PPE::Max(_max._data[i], other._max._data[i]);
         const T e = (_max._data[i] - _min._data[i]) +
             (other._max._data[i] - other._min._data[i]);
         if (M - m >= e)
@@ -247,25 +247,25 @@ void TScalarBoundingBox<T, _Dim>::GetCorners(const TMemoryView<vector_type>& poi
 template <typename T, size_t _Dim>
 template <typename U>
 auto TScalarBoundingBox<T, _Dim>::Lerp(U f) const -> vector_type {
-    return Core::Lerp(_min, _max, f);
+    return PPE::Lerp(_min, _max, f);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
 auto TScalarBoundingBox<T, _Dim>::Lerp(const TScalarVector<U, _Dim>& f) const -> vector_type {
-    return Core::Lerp(_min, _max, f);
+    return PPE::Lerp(_min, _max, f);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
 auto TScalarBoundingBox<T, _Dim>::SLerp(U f) const -> vector_type {
-    return Core::SLerp(_min, _max, f);
+    return PPE::SLerp(_min, _max, f);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 template <typename U>
 auto TScalarBoundingBox<T, _Dim>::SLerp(const TScalarVector<U, _Dim>& f) const -> vector_type {
-    return Core::SLerp(_min, _max, f);
+    return PPE::SLerp(_min, _max, f);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>

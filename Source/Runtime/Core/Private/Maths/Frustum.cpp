@@ -1,15 +1,15 @@
 #include "stdafx.h"
 
-#include "Frustum.h"
+#include "Maths/Frustum.h"
 
 #include "Maths/ScalarMatrix.h"
 #include "Maths/ScalarMatrixHelpers.h"
-#include "Ray.h"
-#include "ScalarBoundingBox.h"
-#include "ScalarBoundingBoxHelpers.h"
-#include "ScalarVector.h"
-#include "ScalarVectorHelpers.h"
-#include "Sphere.h"
+#include "Maths/Ray.h"
+#include "Maths/ScalarBoundingBox.h"
+#include "Maths/ScalarBoundingBoxHelpers.h"
+#include "Maths/ScalarVector.h"
+#include "Maths/ScalarVectorHelpers.h"
+#include "Maths/Sphere.h"
 
 #include "Memory/MemoryView.h"
 

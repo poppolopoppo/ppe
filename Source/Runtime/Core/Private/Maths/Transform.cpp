@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
-#include "Transform.h"
+#include "Maths/Transform.h"
 
-#include "ScalarMatrixHelpers.h"
-#include "ScalarVectorHelpers.h"
-#include "QuaternionHelpers.h"
+#include "Maths/ScalarMatrixHelpers.h"
+#include "Maths/ScalarVectorHelpers.h"
+#include "Maths/QuaternionHelpers.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

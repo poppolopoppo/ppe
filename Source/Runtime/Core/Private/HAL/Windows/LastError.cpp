@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "LastError.h"
+#include "HAL/Windows/LastError.h"
 
 #include "IO/StreamProvider.h"
 #include "IO/String.h"
@@ -12,7 +12,7 @@
 #endif
 
 #include "IO/Format.h"
-#include "WindowsPlatformIncludes.h"
+#include "HAL/Windows/WindowsPlatformIncludes.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

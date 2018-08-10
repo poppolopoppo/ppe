@@ -49,15 +49,15 @@ typedef float3 Point;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Constants {
-extern const float2 PPE_API Float2_One;
-extern const float2 PPE_API Float2_Half;
-extern const float2 PPE_API Float2_Zero;
-extern const float3 PPE_API Float3_One;
-extern const float3 PPE_API Float3_Half;
-extern const float3 PPE_API Float3_Zero;
-extern const float4 PPE_API Float4_One;
-extern const float4 PPE_API Float4_Half;
-extern const float4 PPE_API Float4_Zero;
+extern const float2 PPE_CORE_API Float2_One;
+extern const float2 PPE_CORE_API Float2_Half;
+extern const float2 PPE_CORE_API Float2_Zero;
+extern const float3 PPE_CORE_API Float3_One;
+extern const float3 PPE_CORE_API Float3_Half;
+extern const float3 PPE_CORE_API Float3_Zero;
+extern const float4 PPE_CORE_API Float4_One;
+extern const float4 PPE_CORE_API Float4_Half;
+extern const float4 PPE_CORE_API Float4_Zero;
 } //!Constants
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

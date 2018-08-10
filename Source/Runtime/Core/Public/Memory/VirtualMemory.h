@@ -10,15 +10,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS
 #   define VIRTUALMEMORYCACHE(_DOMAIN, _NUM_BLOCKS, _MAX_SIZE_IN_BYTES) \
-    Core::TVirtualMemoryCache<_NUM_BLOCKS, _MAX_SIZE_IN_BYTES, MEMORYDOMAIN_TAG(_DOMAIN)>
+    PPE::TVirtualMemoryCache<_NUM_BLOCKS, _MAX_SIZE_IN_BYTES, MEMORYDOMAIN_TAG(_DOMAIN)>
 #else
 #   define VIRTUALMEMORYCACHE(_DOMAIN, _NUM_BLOCKS, _MAX_SIZE_IN_BYTES) \
-    Core::TVirtualMemoryCache<_NUM_BLOCKS, _MAX_SIZE_IN_BYTES>
+    PPE::TVirtualMemoryCache<_NUM_BLOCKS, _MAX_SIZE_IN_BYTES>
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FVirtualMemory {
+class PPE_CORE_API FVirtualMemory {
 public:
     static size_t   SizeInBytes(void* ptr);
     static bool     Protect(void* ptr, size_t sizeInBytes, bool read, bool write);

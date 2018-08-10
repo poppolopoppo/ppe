@@ -2,14 +2,14 @@
 
 #include "Core.h"
 
-#include "IO/FS/FileSystemToken.h"
+#include "IO/FileSystemToken.h"
 #include "IO/String_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FMountingPoint : public FFileSystemToken {
+class PPE_CORE_API FMountingPoint : public FFileSystemToken {
 public:
     typedef FFileSystemToken parent_type;
 

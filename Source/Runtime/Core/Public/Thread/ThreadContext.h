@@ -7,7 +7,7 @@
 
 #include <thread>
 
-// macro enable extension outside Core::
+// macro enable extension outside PPE::
 #define PPE_THREADTAG_MAIN                 size_t(0)
 #define PPE_THREADTAG_WORKER               size_t(1)
 #define PPE_THREADTAG_IO                   size_t(2)
@@ -19,7 +19,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FThreadContext {
+class PPE_CORE_API FThreadContext {
 public:
     FThreadContext(const char* name, size_t tag, size_t index);
     ~FThreadContext();
@@ -56,7 +56,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API const FThreadContext& CurrentThreadContext();
+PPE_CORE_API const FThreadContext& CurrentThreadContext();
 //----------------------------------------------------------------------------
 inline bool IsInMainThread()        { return (PPE_THREADTAG_MAIN == CurrentThreadContext().Tag()); }
 inline bool IsInIOThread()          { return (PPE_THREADTAG_IO == CurrentThreadContext().Tag()); }
@@ -64,14 +64,14 @@ inline bool IsInWorkerThread()      { return (PPE_THREADTAG_WORKER == CurrentThr
 inline bool IsInBackgroundThread()  { return (PPE_THREADTAG_BACKGROUND == CurrentThreadContext().Tag()); }
 inline bool IsInOtherThread()       { return (PPE_THREADTAG_OTHER == CurrentThreadContext().Tag()); }
 //----------------------------------------------------------------------------
-#define AssertIsMainThread() Assert_NoAssume(Core::IsInMainThread())
+#define AssertIsMainThread() Assert_NoAssume(PPE::IsInMainThread())
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // FThreadContextStartup is the entry and exit point for every thread.
 // Constructed with the same lifetime than every thread associated with.
 //----------------------------------------------------------------------------
-class PPE_API FThreadContextStartup {
+class PPE_CORE_API FThreadContextStartup {
 public:
     static void Start(const char* name, size_t tag);
     static void Start_MainThread();
@@ -85,9 +85,9 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, std::thread::id thread_id);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, std::thread::id thread_id);
 //----------------------------------------------------------------------------
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, std::thread::id thread_id);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, std::thread::id thread_id);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "GenericPlatformMaths.h"
+#include "HAL/Generic/GenericPlatformMaths.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

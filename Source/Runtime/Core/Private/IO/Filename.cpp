@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Filename.h"
+#include "IO/Filename.h"
 
-#include "Dirname.h"
+#include "IO/Dirname.h"
 
 #include "Container/Hash.h"
 #include "Diagnostic/DebugFunction.h"
@@ -200,6 +200,10 @@ FFilename FFilename::Relative(const FDirpath& origin) const {
     return result;
 }
 //----------------------------------------------------------------------------
+FFilename FFilename::RemoveExtname() const {
+    return FFilename(_dirpath, _basename.RemoveExtname());
+}
+//----------------------------------------------------------------------------
 size_t FFilename::HashValue() const {
     return hash_tuple(_dirpath, _basename);
 }
@@ -254,7 +258,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FFilename& filename) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Used in natvis/debuggers for printing FFilename content
-DEBUG_FUNCTION(PPE_API, DebugPrintFilename, FWStringView, (const FFilename& filename), {
+DEBUG_FUNCTION(PPE_CORE_API, DebugPrintFilename, FWStringView, (const FFilename& filename), {
     static wchar_t GDebugBuffer[FileSystem::MaxPathLength];
     return filename.ToWCStr(GDebugBuffer);
 })

@@ -3,7 +3,7 @@
 #include "Core.h"
 
 #include "Container/Token_fwd.h"
-#include "IO/FS/FileSystemProperties.h"
+#include "IO/FileSystemProperties.h"
 #include "IO/StringView.h"
 
 namespace PPE {
@@ -12,7 +12,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 struct FFileSystemTokenTag;
 //----------------------------------------------------------------------------
-using FFileSystemToken = Core::TToken<
+using FFileSystemToken = PPE::TToken<
     FFileSystemTokenTag,
     FileSystem::char_type,
     FileSystem::CaseSensitive,

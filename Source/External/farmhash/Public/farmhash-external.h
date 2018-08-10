@@ -36,9 +36,9 @@ PRAGMA_MSVC_WARNING_DISABLE(6313) // Incorrect operator:  zero-valued flag canno
 
 #ifndef EXPORT_PPE_EXTERNAL_FARMHASH
 
-#   include "Core.External/farmhash/src/farmhash.h"
+#   include "External/farmhash/git/src/farmhash.h"
 
-// clean the mess done by xxHash-config.h :
+// clean the mess done by farmhash.h :
 
 #   undef FARMHASH_NO_BUILTIN_EXPECT
 #   undef FARMHASH_ASSUME_SSE3

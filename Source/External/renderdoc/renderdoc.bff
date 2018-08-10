@@ -1,0 +1,15 @@
+#once
+{
+    .ModuleName = 'renderdoc'
+    .ModuleDefines = { 'EXPORT_PPE_EXTERNAL_RENDERDOC' }
+    .ModuleFiles =
+    {
+        'Public/renderdoc-external.h',
+        'git/renderdoc/api/app/renderdoc.h',
+    }
+    .ModuleIsolatedFiles =
+    {
+        ; header only library
+    }
+    #include "$BuildPath$/Templates/Module.bff"
+}

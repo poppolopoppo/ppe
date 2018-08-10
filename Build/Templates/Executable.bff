@@ -28,8 +28,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     Using( .CompileConfig )
 
     // Project directories
-    .IntermediateDirectory  + '\$Platform$\$Config$\$ProjectName$'
-    .OutputDirectory        = .BinaryDirectory
+    .IntermediatePath  + '\$Platform$\$Config$\$ProjectName$'
+    .OutputPath        = .BinaryPath
 
     // Project Libraries
     ForEach( .Lib in .ProjectLibraries )
@@ -44,16 +44,16 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         Using( .ResourceCompiler )
 
         .CompilerInputFiles     = '$ProjectPath$\$ProjectName$.rc'
-        .CompilerOutputPath     = .IntermediateDirectory
+        .CompilerOutputPath     = .IntermediatePath
 
-        .CompilerOptions = '/i"$SourceDirectory$" /i"$ProjectPath$" $CompilerOptions$'
+        .CompilerOptions = '/I"$SourcePath$" /I"$ProjectPath$" $CompilerOptions$'
     }
 #endif
 
     // Binary executable
     Executable( '$ProjectName$-Exe-$Platform$-$Config$' )
     {
-        .LinkerOutput   = '$BinaryDirectory$\$BinaryPrefix$.$Config$.$Platform$.$CompilerBinaryExtension$'
+        .LinkerOutput   = '$BinaryPath$\$BinaryPrefix$.$Config$.$Platform$.$CompilerBinaryExtension$'
         .LinkerOptions  + .ExecutableOptions
 
 
@@ -84,11 +84,11 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
     RemoveDir( '$ProjectName$-$Platform$-$Config$-Purge' )
     {
-        .RemovePaths          = .BinaryDirectory
+        .RemovePaths          = .BinaryPath
         .RemovePathsPattern   = "$BinaryPrefix$.$Config$.$Platform$.*"
         .PreBuildDependencies = { '$ProjectName$-Purge-$Platform$-$Config$' }
     }
 }
 
-#include "Lib/Aliases.bff"
+#include "Lib/LibraryAliases.bff"
 #include "Lib/RegisterProject.bff"

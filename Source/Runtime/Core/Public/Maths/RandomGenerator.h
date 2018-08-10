@@ -15,7 +15,7 @@ namespace Random {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FXorShift64Star {
+struct PPE_CORE_API FXorShift64Star {
 
     u64 X;
 
@@ -23,7 +23,7 @@ struct PPE_API FXorShift64Star {
     u64  NextU64();
 };
 //----------------------------------------------------------------------------
-struct PPE_API FXorShift128Plus {
+struct PPE_CORE_API FXorShift128Plus {
 
     u64 States[2];
 
@@ -31,7 +31,7 @@ struct PPE_API FXorShift128Plus {
     u64  NextU64();
 };
 //----------------------------------------------------------------------------
-struct PPE_API FXorShift1024Star {
+struct PPE_CORE_API FXorShift1024Star {
 
     u64 N;
     u64 States[16];
@@ -40,7 +40,7 @@ struct PPE_API FXorShift1024Star {
     u64  NextU64();
 };
 //----------------------------------------------------------------------------
-struct PPE_API FAtomicXorShift64Star {
+struct PPE_CORE_API FAtomicXorShift64Star {
 
     std::atomic<u64> X;
 
@@ -129,7 +129,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // using a struct instead of typedef to be able to fwd declare FRandomGenerator
-INSTANTIATE_CLASS_TYPEDEF(PPE_API, FRandomGenerator, ::Core::Random::FStableRng);
+INSTANTIATE_CLASS_TYPEDEF(PPE_CORE_API, FRandomGenerator, ::PPE::Random::FStableRng);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

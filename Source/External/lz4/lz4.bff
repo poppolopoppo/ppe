@@ -1,0 +1,22 @@
+#once
+{
+    .ModuleName = 'lz4'
+    .ModuleDefines = { 'EXPORT_PPE_EXTERNAL_LZ4' }
+    .ModuleFiles =
+    {
+        'Public/lz4-external.h',
+        'git/lib/lz4.h',
+        'git/lib/lz4hc.h',
+        'git/lib/lz4opt.h',
+    }
+    .ModuleForcedIncludes =
+    {
+        'Public/lz4-external.h'
+    }
+    .ModuleIsolatedFiles =
+    {
+        'git/lib/lz4.c',
+        'git/lib/lz4hc.c',
+    }
+    #include "$BuildPath$/Templates/Module.bff"
+}

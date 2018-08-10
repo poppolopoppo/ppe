@@ -13,9 +13,9 @@
 #if USE_PPE_BENCHMARK
 #   include "IO/StringView.h"
 #   define BENCHMARK_SCOPE(_CATEGORY, _MSG) \
-        const ::Core::FBenchmarkScope ANONYMIZE(_benchmarkScope)((_CATEGORY), (_MSG))
+        const ::PPE::FBenchmarkScope ANONYMIZE(_benchmarkScope)((_CATEGORY), (_MSG))
 #   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR) \
-        const ::Core::FIOBenchmarkScope ANONYMIZE(_IObenchmarkScope)((_CATEGORY), (_MSG), (_SIZE_IN_BYTES_PTR))
+        const ::PPE::FIOBenchmarkScope ANONYMIZE(_IObenchmarkScope)((_CATEGORY), (_MSG), (_SIZE_IN_BYTES_PTR))
 #else
 #   define BENCHMARK_SCOPE(_CATEGORY, _MSG) NOOP()
 #   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR) NOOP()

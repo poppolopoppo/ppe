@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "MemoryTracking.h"
+#include "Memory/MemoryTracking.h"
 
-#include "MemoryDomain.h"
+#include "Memory/MemoryDomain.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "GenericPlatformDialog.h"
+#include "HAL/Generic/GenericPlatformDialog.h"
 
 #include "HAL/PlatformDialog.h"
 

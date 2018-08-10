@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Grammar.h"
+#include "Text/Grammar.h"
 
 #include "Lexer/Lexer.h"
 #include "Parser/Parser.h"
@@ -28,7 +28,7 @@ typedef bool                FParseBool;
 typedef i64                 FParseInteger;
 typedef u64                 FParseUnsigned;
 typedef double              FParseFloat;
-typedef Core::FString       FParseString; // TODO - FWString, change FLexer to wchar_t
+typedef PPE::FString       FParseString; // TODO - FWString, change FLexer to wchar_t
 typedef RTTI::FAtom         FParseAtom;
 typedef RTTI::PMetaObject   FParseObject;
 //----------------------------------------------------------------------------

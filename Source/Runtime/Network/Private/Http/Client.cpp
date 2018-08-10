@@ -1,16 +1,16 @@
 #include "stdafx.h"
 
-#include "Client.h"
+#include "Http/Client.h"
 
-#include "ConstNames.h"
-#include "Exceptions.h"
-#include "Method.h"
-#include "Request.h"
-#include "Response.h"
-#include "Status.h"
+#include "Http/ConstNames.h"
+#include "Http/Exceptions.h"
+#include "Http/Method.h"
+#include "Http/Request.h"
+#include "Http/Response.h"
+#include "Http/Status.h"
 
-#include "../Socket/Address.h"
-#include "../Uri.h"
+#include "Socket/Address.h"
+#include "Uri.h"
 
 #include "Diagnostic/Logger.h"
 

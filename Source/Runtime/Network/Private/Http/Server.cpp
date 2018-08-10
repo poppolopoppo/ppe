@@ -1,17 +1,17 @@
 #include "stdafx.h"
 
-#include "Server.h"
+#include "Http/Server.h"
 
-#include "Exceptions.h"
-#include "Method.h"
-#include "Request.h"
-#include "Response.h"
-#include "Status.h"
+#include "Http/Exceptions.h"
+#include "Http/Method.h"
+#include "Http/Request.h"
+#include "Http/Response.h"
+#include "Http/Status.h"
 
-#include "../Network_fwd.h"
-#include "../Socket/Address.h"
-#include "../Socket/Listener.h"
-#include "../Socket/SocketBuffered.h"
+#include "Network_fwd.h"
+#include "Socket/Address.h"
+#include "Socket/Listener.h"
+#include "Socket/SocketBuffered.h"
 
 #include "Diagnostic/Logger.h"
 #include "IO/StringBuilder.h"

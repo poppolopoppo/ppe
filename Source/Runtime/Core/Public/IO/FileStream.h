@@ -21,7 +21,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FFileStream {
+class PPE_CORE_API FFileStream {
 public:
     using FFileHandle = FPlatformLowLevelIO::FHandle;
 protected:
@@ -63,7 +63,7 @@ private:
 #endif
 };
 //----------------------------------------------------------------------------
-class PPE_API FFileStreamReader : public IStreamReader, public FFileStream {
+class PPE_CORE_API FFileStreamReader : public IStreamReader, public FFileStream {
 public:
     using FFileStream::FFileHandle;
     explicit FFileStreamReader(FFileHandle handle) : FFileStream(handle) {}
@@ -82,7 +82,7 @@ public: // IStreamReader
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
 };
 //----------------------------------------------------------------------------
-class PPE_API FFileStreamWriter : public IStreamWriter, public FFileStream {
+class PPE_CORE_API FFileStreamWriter : public IStreamWriter, public FFileStream {
 public:
     using FFileStream::FFileHandle;
     explicit FFileStreamWriter(FFileHandle handle) : FFileStream(handle) {}
@@ -97,7 +97,7 @@ public: // IStreamWriter
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
 };
 //----------------------------------------------------------------------------
-class PPE_API EMPTY_BASES FFileStreamReadWriter : public IStreamReadWriter, public FFileStream {
+class PPE_CORE_API EMPTY_BASES FFileStreamReadWriter : public IStreamReadWriter, public FFileStream {
 public:
     using FFileStream::FFileHandle;
     explicit FFileStreamReadWriter(FFileHandle handle) : FFileStream(handle) {}

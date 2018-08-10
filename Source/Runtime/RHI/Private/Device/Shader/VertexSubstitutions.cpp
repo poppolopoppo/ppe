@@ -77,77 +77,77 @@ void FillVertexSubstitutions(   VECTOR(Shader, TPair<FString COMMA FString>)& de
 FStringView VertexFormatToShaderFormat(FVertexFormat format) {
     switch (format)
     {
-    case Core::Graphics::FVertexFormat::Float:
+    case PPE::Graphics::FVertexFormat::Float:
         return MakeStringView("float");
-    case Core::Graphics::FVertexFormat::Float2:
+    case PPE::Graphics::FVertexFormat::Float2:
         return MakeStringView("float2");
-    case Core::Graphics::FVertexFormat::Float3:
+    case PPE::Graphics::FVertexFormat::Float3:
         return MakeStringView("float3");
-    case Core::Graphics::FVertexFormat::Float4:
+    case PPE::Graphics::FVertexFormat::Float4:
         return MakeStringView("float4");
-    case Core::Graphics::FVertexFormat::Byte:
+    case PPE::Graphics::FVertexFormat::Byte:
         return MakeStringView("byte");
-    case Core::Graphics::FVertexFormat::Byte2:
+    case PPE::Graphics::FVertexFormat::Byte2:
         return MakeStringView("byte2");
-    case Core::Graphics::FVertexFormat::Byte4:
+    case PPE::Graphics::FVertexFormat::Byte4:
         return MakeStringView("byte4");
-    case Core::Graphics::FVertexFormat::UByte:
+    case PPE::Graphics::FVertexFormat::UByte:
         return MakeStringView("ubyte");
-    case Core::Graphics::FVertexFormat::UByte2:
+    case PPE::Graphics::FVertexFormat::UByte2:
         return MakeStringView("ubyte2");
-    case Core::Graphics::FVertexFormat::UByte4:
+    case PPE::Graphics::FVertexFormat::UByte4:
         return MakeStringView("ubyte4");
-    case Core::Graphics::FVertexFormat::Short:
+    case PPE::Graphics::FVertexFormat::Short:
         return MakeStringView("short");
-    case Core::Graphics::FVertexFormat::Short2:
+    case PPE::Graphics::FVertexFormat::Short2:
         return MakeStringView("short2");
-    case Core::Graphics::FVertexFormat::Short4:
+    case PPE::Graphics::FVertexFormat::Short4:
         return MakeStringView("short4");
-    case Core::Graphics::FVertexFormat::UShort:
+    case PPE::Graphics::FVertexFormat::UShort:
         return MakeStringView("ushort");
-    case Core::Graphics::FVertexFormat::UShort2:
+    case PPE::Graphics::FVertexFormat::UShort2:
         return MakeStringView("ushort2");
-    case Core::Graphics::FVertexFormat::UShort4:
+    case PPE::Graphics::FVertexFormat::UShort4:
         return MakeStringView("ushort4");
-    case Core::Graphics::FVertexFormat::Word:
+    case PPE::Graphics::FVertexFormat::Word:
         return MakeStringView("word");
-    case Core::Graphics::FVertexFormat::Word2:
+    case PPE::Graphics::FVertexFormat::Word2:
         return MakeStringView("word2");
-    case Core::Graphics::FVertexFormat::Word3:
+    case PPE::Graphics::FVertexFormat::Word3:
         return MakeStringView("word3");
-    case Core::Graphics::FVertexFormat::Word4:
+    case PPE::Graphics::FVertexFormat::Word4:
         return MakeStringView("word4");
-    case Core::Graphics::FVertexFormat::UWord:
+    case PPE::Graphics::FVertexFormat::UWord:
         return MakeStringView("uword");
-    case Core::Graphics::FVertexFormat::UWord2:
+    case PPE::Graphics::FVertexFormat::UWord2:
         return MakeStringView("uword2");
-    case Core::Graphics::FVertexFormat::UWord3:
+    case PPE::Graphics::FVertexFormat::UWord3:
         return MakeStringView("uword3");
-    case Core::Graphics::FVertexFormat::UWord4:
+    case PPE::Graphics::FVertexFormat::UWord4:
         return MakeStringView("uword4");
-    case Core::Graphics::FVertexFormat::Half:
+    case PPE::Graphics::FVertexFormat::Half:
         return MakeStringView("half");
-    case Core::Graphics::FVertexFormat::Half2:
+    case PPE::Graphics::FVertexFormat::Half2:
         return MakeStringView("half2");
-    case Core::Graphics::FVertexFormat::Half4:
+    case PPE::Graphics::FVertexFormat::Half4:
         return MakeStringView("half4");
-    case Core::Graphics::FVertexFormat::Byte2N:
+    case PPE::Graphics::FVertexFormat::Byte2N:
         return MakeStringView("float2");
-    case Core::Graphics::FVertexFormat::Byte4N:
+    case PPE::Graphics::FVertexFormat::Byte4N:
         return MakeStringView("float4");
-    case Core::Graphics::FVertexFormat::UByte2N:
+    case PPE::Graphics::FVertexFormat::UByte2N:
         return MakeStringView("float2");
-    case Core::Graphics::FVertexFormat::UByte4N:
+    case PPE::Graphics::FVertexFormat::UByte4N:
         return MakeStringView("float4");
-    case Core::Graphics::FVertexFormat::Short2N:
+    case PPE::Graphics::FVertexFormat::Short2N:
         return MakeStringView("float2");
-    case Core::Graphics::FVertexFormat::Short4N:
+    case PPE::Graphics::FVertexFormat::Short4N:
         return MakeStringView("float4");
-    case Core::Graphics::FVertexFormat::UShort2N:
+    case PPE::Graphics::FVertexFormat::UShort2N:
         return MakeStringView("float2");
-    case Core::Graphics::FVertexFormat::UShort4N:
+    case PPE::Graphics::FVertexFormat::UShort4N:
         return MakeStringView("float4");
-    case Core::Graphics::FVertexFormat::UX10Y10Z10W2N:
+    case PPE::Graphics::FVertexFormat::UX10Y10Z10W2N:
         return MakeStringView("float4");
     default:
         AssertNotImplemented();

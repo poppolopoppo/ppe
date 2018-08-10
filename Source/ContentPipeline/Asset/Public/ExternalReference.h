@@ -39,10 +39,10 @@ namespace RTTI {
 // TExternalReference<_Asset> wrapped as a string for RTTI :
 //----------------------------------------------------------------------------
 template <typename _Asset>
-struct TMetaTypeTraitsImpl< Core::ContentPipeline::TExternalReference<_Asset> > {
+struct TMetaTypeTraitsImpl< PPE::ContentPipeline::TExternalReference<_Asset> > {
     typedef TMetaTypeTraitsImpl< FFilename > filename_traits;
 
-    typedef Core::ContentPipeline::TExternalReference<_Asset> wrapped_type;
+    typedef PPE::ContentPipeline::TExternalReference<_Asset> wrapped_type;
     typedef typename filename_traits::wrapper_type wrapper_type;
 
     typedef TMetaType< wrapper_type > meta_type;

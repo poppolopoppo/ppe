@@ -8,7 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformString : FGenericPlatformString {
+struct PPE_CORE_API FWindowsPlatformString : FGenericPlatformString {
 public:
 
     static bool Equals(const char* lhs, const char* rhs, size_t len);

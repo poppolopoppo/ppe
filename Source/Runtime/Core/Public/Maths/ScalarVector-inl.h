@@ -252,7 +252,7 @@ void TScalarVector<T, _Dim>::Broadcast(T scalar) {
 template <typename T, size_t _Dim>
 void TScalarVector<T, _Dim>::Swap(TScalarVector& other) {
     using std::swap;
-    using Core::swap;
+    using PPE::swap;
     for (size_t i = 0; i < _Dim; ++i)
         swap(other._data[i], _data[i]);
 }

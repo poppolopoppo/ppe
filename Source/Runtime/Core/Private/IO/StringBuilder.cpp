@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "StringBuilder.h"
+#include "IO/StringBuilder.h"
 
 #include "IO/String.h"
 
@@ -79,8 +79,8 @@ void TBasicStringBuilder<_Char>::ToString(string_type& output) {
     output.assign(std::move(*this));
 }
 //----------------------------------------------------------------------------
-/*PPE_API extern*/ template class TBasicStringBuilder<char>;
-/*PPE_API extern*/ template class TBasicStringBuilder<wchar_t>;
+/*PPE_CORE_API extern*/ template class TBasicStringBuilder<char>;
+/*PPE_CORE_API extern*/ template class TBasicStringBuilder<wchar_t>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

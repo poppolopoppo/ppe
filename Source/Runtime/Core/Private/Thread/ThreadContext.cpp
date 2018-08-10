@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "ThreadContext.h"
+#include "Thread/ThreadContext.h"
 
 #include "Allocator/Alloca.h"
 #include "Allocator/Malloc.h"
@@ -24,7 +24,7 @@
 #endif
 
 namespace PPE {
-LOG_CATEGORY(PPE_API, Thread)
+LOG_CATEGORY(PPE_CORE_API, Thread)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -63,25 +63,25 @@ void FThreadLocalContext_::CreateMainThread() {
 static FWTextWriter& operator <<(FWTextWriter& oss, EThreadPriority priority) {
     switch (priority)
     {
-    case Core::EThreadPriority::Realtime:
+    case PPE::EThreadPriority::Realtime:
         oss << L"Realtime";
         break;
-    case Core::EThreadPriority::Highest:
+    case PPE::EThreadPriority::Highest:
         oss << L"Highest";
         break;
-    case Core::EThreadPriority::AboveNormal:
+    case PPE::EThreadPriority::AboveNormal:
         oss << L"AboveNormal";
         break;
-    case Core::EThreadPriority::Normal:
+    case PPE::EThreadPriority::Normal:
         oss << L"Normal";
         break;
-    case Core::EThreadPriority::BelowNormal:
+    case PPE::EThreadPriority::BelowNormal:
         oss << L"BelowNormal";
         break;
-    case Core::EThreadPriority::Lowest:
+    case PPE::EThreadPriority::Lowest:
         oss << L"Lowest";
         break;
-    case Core::EThreadPriority::Idle:
+    case PPE::EThreadPriority::Idle:
         oss << L"Idle";
         break;
     default:

@@ -27,7 +27,7 @@ using TBasicTextManipulator = TFunction<TBasicTextWriter<_Char>&(TBasicTextWrite
 using FTextManipulator = TBasicTextManipulator<char>;
 using FWTextManipulator = TBasicTextManipulator<wchar_t>;
 //----------------------------------------------------------------------------
-class PPE_API FTextFormat {
+class PPE_CORE_API FTextFormat {
 public:
     enum EBase : u32 {
         Decimal = 0, // default
@@ -137,7 +137,7 @@ private:
 };
 STATIC_ASSERT(sizeof(FTextFormat) == sizeof(u32));
 //----------------------------------------------------------------------------
-class PPE_API FBaseTextWriter {
+class PPE_CORE_API FBaseTextWriter {
 public:
     FBaseTextWriter(IBufferedStreamWriter* ostream);
     ~FBaseTextWriter();
@@ -265,44 +265,44 @@ private:
 template <> constexpr char TBasicTextWriter<char>::DefaultFillChar() { return ' '; }
 template <> constexpr wchar_t TBasicTextWriter<wchar_t>::DefaultFillChar() { return L' '; }
 //----------------------------------------------------------------------------
-template <> PPE_API void TBasicTextWriter<char>::Put(char ch);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Put(wchar_t ch);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Put(char ch);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Put(wchar_t ch);
 //----------------------------------------------------------------------------
-template <> PPE_API void TBasicTextWriter<char>::Put(const TBasicStringView<char>& str);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Put(const TBasicStringView<wchar_t>& str);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Put(const TBasicStringView<char>& str);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Put(const TBasicStringView<wchar_t>& str);
 //----------------------------------------------------------------------------
-template <> PPE_API void TBasicTextWriter<char>::Write(bool v);
-template <> PPE_API void TBasicTextWriter<char>::Write(i8 v);
-template <> PPE_API void TBasicTextWriter<char>::Write(i16 v);
-template <> PPE_API void TBasicTextWriter<char>::Write(i32 v);
-template <> PPE_API void TBasicTextWriter<char>::Write(i64 v);
-template <> PPE_API void TBasicTextWriter<char>::Write(u8 v);
-template <> PPE_API void TBasicTextWriter<char>::Write(u16 v);
-template <> PPE_API void TBasicTextWriter<char>::Write(u32 v);
-template <> PPE_API void TBasicTextWriter<char>::Write(u64 v);
-template <> PPE_API void TBasicTextWriter<char>::Write(float v);
-template <> PPE_API void TBasicTextWriter<char>::Write(double v);
-template <> PPE_API void TBasicTextWriter<char>::Write(const void* v);
-template <> PPE_API void TBasicTextWriter<char>::Write(const char* v);
-template <> PPE_API void TBasicTextWriter<char>::Write(const TBasicStringView<char>& v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(bool v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(i8 v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(i16 v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(i32 v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(i64 v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(u8 v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(u16 v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(u32 v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(u64 v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(float v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(double v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(const void* v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(const char* v);
+template <> PPE_CORE_API void TBasicTextWriter<char>::Write(const TBasicStringView<char>& v);
 //----------------------------------------------------------------------------
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(bool v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(i8 v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(i16 v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(i32 v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(i64 v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(u8 v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(u16 v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(u32 v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(u64 v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(float v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(double v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(const void* v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(const wchar_t* v);
-template <> PPE_API void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(bool v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(i8 v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(i16 v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(i32 v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(i64 v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(u8 v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(u16 v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(u32 v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(u64 v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(float v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(double v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const void* v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const wchar_t* v);
+template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v);
 //----------------------------------------------------------------------------
-extern PPE_API template class TBasicTextWriter<char>;
-extern PPE_API template class TBasicTextWriter<wchar_t>;
+extern PPE_CORE_API template class TBasicTextWriter<char>;
+extern PPE_CORE_API template class TBasicTextWriter<wchar_t>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

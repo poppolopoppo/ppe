@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "DynamicLibrary.h"
+#include "Misc/DynamicLibrary.h"
 
 #include "Diagnostic/Logger.h"
 #include "IO/String.h"

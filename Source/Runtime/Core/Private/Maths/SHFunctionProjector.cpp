@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "SHFunctionProjector.h"
+#include "Maths/SHFunctionProjector.h"
 
-#include "SHSampleCollection.h"
-#include "SHVector.h"
+#include "Maths/SHSampleCollection.h"
+#include "Maths/SHVector.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

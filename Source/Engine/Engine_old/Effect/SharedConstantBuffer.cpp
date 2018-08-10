@@ -15,7 +15,7 @@ namespace Engine {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 hash_t hash_value(const FSharedConstantBufferKey& key) {
-    return Core::hash_value(key.Name, *key.Layout);
+    return PPE::hash_value(key.Name, *key.Layout);
 }
 //----------------------------------------------------------------------------
 bool operator ==(const FSharedConstantBufferKey& lhs, const FSharedConstantBufferKey& rhs) {

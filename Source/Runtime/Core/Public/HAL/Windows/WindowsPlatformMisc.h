@@ -8,7 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformMisc : FGenericPlatformMisc {
+struct PPE_CORE_API FWindowsPlatformMisc : FGenericPlatformMisc {
 public:
     STATIC_CONST_INTEGRAL(bool, HasFixedHardware, false);
 

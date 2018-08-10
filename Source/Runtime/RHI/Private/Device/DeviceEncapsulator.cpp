@@ -98,11 +98,11 @@ void FDeviceEncapsulator::Create(EDeviceAPI api, void *windowHandle, const FPres
 
     switch (api)
     {
-    case Core::Graphics::EDeviceAPI::DirectX11:
+    case PPE::Graphics::EDeviceAPI::DirectX11:
         _deviceAPIEncapsulator.reset(new FDX11DeviceAPIEncapsulator(this, windowHandle, presentationParameters));
         break;
 
-    case Core::Graphics::EDeviceAPI::OpenGL4:
+    case PPE::Graphics::EDeviceAPI::OpenGL4:
     default:
         AssertNotImplemented();
     }

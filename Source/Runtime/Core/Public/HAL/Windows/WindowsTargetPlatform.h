@@ -6,7 +6,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FWindowsTargetPlatform : public ITargetPlaftorm {
+class PPE_CORE_API FWindowsTargetPlatform : public ITargetPlaftorm {
 public:
     static const FWindowsTargetPlatform& Get();
 

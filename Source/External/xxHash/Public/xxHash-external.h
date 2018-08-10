@@ -18,7 +18,7 @@
 
 #ifndef EXPORT_PPE_EXTERNAL_XXHASH
 
-#   include "Core.External/xxHash/xxhash.h"
+#   include "External/xxHash/git/xxhash.h"
 
 // clean the mess done by xxHash-config.h :
 

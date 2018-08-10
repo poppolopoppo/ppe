@@ -7,7 +7,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformProcess {
+struct PPE_CORE_API FGenericPlatformProcess {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasSemaphore, false);
     STATIC_CONST_INTEGRAL(bool, HasSpawnProcess, false);

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "RandomGenerator.h"
+#include "Maths/RandomGenerator.h"
 
 #include "Container/Hash.h"
 

@@ -11,15 +11,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FLastError {
+struct PPE_CORE_API FLastError {
     long Code;
     FLastError();
     FLastError(long code) : Code(code) {}
 };
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const FLastError& error);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const FLastError& error);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FLastError& error);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FLastError& error);
 //----------------------------------------------------------------------------
-class PPE_API FLastErrorException : public FException {
+class PPE_CORE_API FLastErrorException : public FException {
 public:
     FLastErrorException(const char* what);
     FLastErrorException(const char* what, long errorCode);
@@ -33,9 +33,9 @@ private:
 //----------------------------------------------------------------------------
 #if defined(USE_DEBUG_LOGGER) && defined(PLATFORM_WINDOWS)
 #   define LOG_LASTERROR(_CATEGORY, _CONTEXT) \
-        LOG(_CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::Core::FLastError())
+        LOG(_CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::PPE::FLastError())
 #   define CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) \
-        CLOG(_CONDITION, _CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::Core::FLastError())
+        CLOG(_CONDITION, _CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::PPE::FLastError())
 #else
 #   define LOG_LASTERROR(_CATEGORY, _CONTEXT) NOOP()
 #   define CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) NOOP()

@@ -19,8 +19,8 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define TERNARYSEARCHTREE(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TTernarySearchTree<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, ::Core::Meta::TEqualTo<_KEY>, \
-        NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TTernarySearchNode<_KEY COMMA _VALUE>)) >
+    ::PPE::TTernarySearchTree<_KEY, _VALUE, ::PPE::Meta::TLess<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, \
+        NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::PPE::TTernarySearchNode<_KEY COMMA _VALUE>)) >
 //----------------------------------------------------------------------------
 #define TERNARYSEARCHSET(_DOMAIN, _KEY) TERNARYSEARCHTREE(_DOMAIN, _KEY, void)
 #define TERNARYSEARCHMAP(_DOMAIN, _KEY, _VALUE) TERNARYSEARCHTREE(_DOMAIN, _KEY, _VALUE)

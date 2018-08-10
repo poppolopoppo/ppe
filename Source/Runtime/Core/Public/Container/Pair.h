@@ -20,7 +20,7 @@ FORCE_INLINE TPair< Meta::TRemoveReference<_First>, Meta::TRemoveReference<_Seco
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
 FORCE_INLINE hash_t hash_value(const TPair<_First, _Second>& pair) {
-    using Core::hash_value;
+    using PPE::hash_value;
     return hash_tuple(hash_value(pair.first), hash_value(pair.second));
 }
 //----------------------------------------------------------------------------

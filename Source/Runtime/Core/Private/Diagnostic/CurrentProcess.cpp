@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "CurrentProcess.h"
+#include "Diagnostic/CurrentProcess.h"
 
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformDebug.h"
@@ -10,7 +10,7 @@
 #include "IO/FormatHelpers.h"
 
 namespace PPE {
-LOG_CATEGORY(PPE_API, Process)
+LOG_CATEGORY(PPE_CORE_API, Process)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

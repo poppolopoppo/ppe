@@ -8,7 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformConsole : FGenericPlatformConsole {
+struct PPE_CORE_API FWindowsPlatformConsole : FGenericPlatformConsole {
 public:
     STATIC_CONST_INTEGRAL(bool, HasConsole, true);
 

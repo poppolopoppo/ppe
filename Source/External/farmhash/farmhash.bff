@@ -1,0 +1,19 @@
+#once
+{
+    .ModuleName = 'farmhash'
+    .ModuleDefines = { 'EXPORT_PPE_EXTERNAL_FARMHASH' }
+    .ModuleFiles =
+    {
+        'Public/farmhash-external.h',
+        'git/src/farmhash.h',
+    }
+    .ModuleForcedIncludes =
+    {
+        'Public/farmhash-external.h'
+    }
+    .ModuleIsolatedFiles =
+    {
+        'git/src/farmhash.cc',
+    }
+    #include "$BuildPath$/Templates/Module.bff"
+}

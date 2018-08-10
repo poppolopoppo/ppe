@@ -65,7 +65,7 @@ namespace Meta {
 template <typename T>
 struct THash {
     hash_t operator ()(const T& value) const {
-        using Core::hash_value;
+        using PPE::hash_value;
         return hash_value(value);
     }
 };

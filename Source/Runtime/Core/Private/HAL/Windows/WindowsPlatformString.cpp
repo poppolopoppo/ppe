@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformString.h"
+#include "HAL/Windows/WindowsPlatformString.h"
 
 #ifdef PLATFORM_WINDOWS
 
@@ -8,9 +8,9 @@
 #include "IO/FormatHelpers.h"
 #include "IO/StringView.h"
 
-#include "LastError.h"
-#include "WindowsPlatformIncludes.h"
-#include "WindowsPlatformMaths.h"
+#include "HAL/Windows/LastError.h"
+#include "HAL/Windows/WindowsPlatformIncludes.h"
+#include "HAL/Windows/WindowsPlatformMaths.h"
 
 #include <emmintrin.h>
 #include <intrin.h>
@@ -118,7 +118,7 @@ bool FWindowsPlatformString::EqualsI(const char* lhs, const char* rhs, size_t le
     ::_mm_lfence();
 
     for (; len > offset; ++offset) {
-        if (Core::ToLower(lhs[offset]) ^ Core::ToLower(rhs[offset]))
+        if (PPE::ToLower(lhs[offset]) ^ PPE::ToLower(rhs[offset]))
             return false;
     }
 
@@ -355,7 +355,7 @@ void FWindowsPlatformString::ToLower(char* dst, const char* src, size_t len) {
 #endif
 
     for (; sbegin != send; ++sbegin, ++dbegin)
-        *dbegin = Core::ToLower(*sbegin);
+        *dbegin = PPE::ToLower(*sbegin);
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformString::ToLower(wchar_t* dst, const wchar_t* src, size_t len) {
@@ -393,7 +393,7 @@ void FWindowsPlatformString::ToLower(wchar_t* dst, const wchar_t* src, size_t le
 #endif
 
     for (; sbegin != send; ++sbegin, ++dbegin)
-        *dbegin = Core::ToLower(*sbegin);
+        *dbegin = PPE::ToLower(*sbegin);
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformString::ToUpper(char* dst, const char* src, size_t len) {
@@ -431,7 +431,7 @@ void FWindowsPlatformString::ToUpper(char* dst, const char* src, size_t len) {
 #endif
 
     for (; sbegin != send; ++sbegin, ++dbegin)
-        *dbegin = Core::ToUpper(*sbegin);
+        *dbegin = PPE::ToUpper(*sbegin);
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformString::ToUpper(wchar_t* dst, const wchar_t* src, size_t len) {
@@ -469,7 +469,7 @@ void FWindowsPlatformString::ToUpper(wchar_t* dst, const wchar_t* src, size_t le
 #endif
 
     for (; sbegin != send; ++sbegin, ++dbegin)
-        *dbegin = Core::ToUpper(*sbegin);
+        *dbegin = PPE::ToUpper(*sbegin);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

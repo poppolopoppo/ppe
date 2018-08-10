@@ -24,11 +24,11 @@ PRAGMA_MSVC_WARNING_DISABLE(6001) // warning C6001: Using uninitialized memory '
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_MALLOC(sz) \
-    Core::tracking_malloc<MEMORYDOMAIN_TAG(STBImage)>(sz)
+    PPE::tracking_malloc<MEMORYDOMAIN_TAG(STBImage)>(sz)
 #define STBI_REALLOC(p,newsz) \
-    Core::tracking_realloc<MEMORYDOMAIN_TAG(STBImage)>(p, newsz)
+    PPE::tracking_realloc<MEMORYDOMAIN_TAG(STBImage)>(p, newsz)
 #define STBI_FREE(p) \
-    Core::tracking_free(p)
+    PPE::tracking_free(p)
 #define STBI_ASSERT(x) \
     Assert(NOOP("stb_image: "), (x))
 #define STBI_NO_STDIO
@@ -36,11 +36,11 @@ PRAGMA_MSVC_WARNING_DISABLE(6001) // warning C6001: Using uninitialized memory '
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBIW_MALLOC(sz) \
-    Core::tracking_malloc<MEMORYDOMAIN_TAG(STBImage)>(sz)
+    PPE::tracking_malloc<MEMORYDOMAIN_TAG(STBImage)>(sz)
 #define STBIW_REALLOC(p,newsz) \
-    Core::tracking_realloc<MEMORYDOMAIN_TAG(STBImage)>(p, newsz)
+    PPE::tracking_realloc<MEMORYDOMAIN_TAG(STBImage)>(p, newsz)
 #define STBIW_FREE(p) \
-    Core::tracking_free(p)
+    PPE::tracking_free(p)
 #define STBIW_ASSERT(x) \
     Assert(NOOP("stb_image_write: "), (x))
 #define STBI_WRITE_NO_STDIO
@@ -63,21 +63,21 @@ template <EColorSpace _Space>
 struct TChannelTraits_<EColorDepth::_8bits, _Space> {
     typedef ubyten type;
     static float SRGB_to_Linear(const type& srgb) {
-        return Core::SRGB_to_Linear(srgb._data);
+        return PPE::SRGB_to_Linear(srgb._data);
     }
 };
 template <EColorSpace _Space>
 struct TChannelTraits_<EColorDepth::_16bits, _Space> {
     typedef ushortn type;
     static float SRGB_to_Linear(const type& srgb) {
-        return Core::SRGB_to_Linear(srgb.Normalized());
+        return PPE::SRGB_to_Linear(srgb.Normalized());
     }
 };
 template <EColorSpace _Space>
 struct TChannelTraits_<EColorDepth::_32bits, _Space> {
     typedef uwordn type;
     static float SRGB_to_Linear(const type& srgb) {
-        return Core::SRGB_to_Linear(srgb.Normalized());
+        return PPE::SRGB_to_Linear(srgb.Normalized());
     }
 };
 //----------------------------------------------------------------------------
@@ -201,13 +201,13 @@ template <template <typename> class _Functor, typename _Dst, typename _Src, ECol
 static void TypedMaskConvert_(_Dst* dst, const _Src* src, EColorSpace space ) {
     switch (space)
     {
-    case Core::Pixmap::EColorSpace::Linear:
+    case PPE::Pixmap::EColorSpace::Linear:
         TypedMaskSpaceConvert_<_Functor, _Dst, _Src, _Depth, _Mask, EColorSpace::Linear>(dst, src);
         break;
-    case Core::Pixmap::EColorSpace::sRGB:
+    case PPE::Pixmap::EColorSpace::sRGB:
         TypedMaskSpaceConvert_<_Functor, _Dst, _Src, _Depth, _Mask, EColorSpace::sRGB>(dst, src);
         break;
-    case Core::Pixmap::EColorSpace::YCoCg:
+    case PPE::Pixmap::EColorSpace::YCoCg:
         TypedMaskSpaceConvert_<_Functor, _Dst, _Src, _Depth, _Mask, EColorSpace::YCoCg>(dst, src);
         break;
     default:
@@ -220,16 +220,16 @@ template <template <typename> class _Functor, typename _Dst, typename _Src, ECol
 static void TypedConvert_(_Dst* dst, const _Src* src, EColorMask mask, EColorSpace space ) {
     switch (mask)
     {
-    case Core::Pixmap::EColorMask::R:
+    case PPE::Pixmap::EColorMask::R:
         TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, EColorMask::R>(dst, src, space);
         break;
-    case Core::Pixmap::EColorMask::RG:
+    case PPE::Pixmap::EColorMask::RG:
         TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, EColorMask::RG>(dst, src, space);
         break;
-    case Core::Pixmap::EColorMask::RGB:
+    case PPE::Pixmap::EColorMask::RGB:
         TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, EColorMask::RGB>(dst, src, space);
         break;
-    case Core::Pixmap::EColorMask::RGBA:
+    case PPE::Pixmap::EColorMask::RGBA:
         TypedMaskConvert_<_Functor, _Dst, _Src, _Depth, EColorMask::RGBA>(dst, src, space);
         break;
     default:
@@ -242,13 +242,13 @@ template <template <typename> class _Functor, typename _Dst, typename _Src>
 static void Convert_(_Dst* dst, const _Src* src, EColorDepth depth, EColorMask mask, EColorSpace space ) {
     switch (depth)
     {
-    case Core::Pixmap::EColorDepth::_8bits:
+    case PPE::Pixmap::EColorDepth::_8bits:
         TypedConvert_<_Functor, _Dst, _Src, EColorDepth::_8bits>(dst, src, mask, space);
         break;
-    case Core::Pixmap::EColorDepth::_16bits:
+    case PPE::Pixmap::EColorDepth::_16bits:
         TypedConvert_<_Functor, _Dst, _Src, EColorDepth::_16bits>(dst, src, mask, space);
         break;
-    case Core::Pixmap::EColorDepth::_32bits:
+    case PPE::Pixmap::EColorDepth::_32bits:
         TypedConvert_<_Functor, _Dst, _Src, EColorDepth::_32bits>(dst, src, mask, space);
         break;
     default:
@@ -464,13 +464,13 @@ bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const TMemoryView<c
     void* decoded;
     switch (depth)
     {
-    case Core::Pixmap::EColorDepth::_8bits:
+    case PPE::Pixmap::EColorDepth::_8bits:
         decoded = ::stbi_load_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0);
         break;
-    case Core::Pixmap::EColorDepth::_16bits:
+    case PPE::Pixmap::EColorDepth::_16bits:
         decoded = ::stbi_load_16_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0);
         break;
-    case Core::Pixmap::EColorDepth::_32bits:
+    case PPE::Pixmap::EColorDepth::_32bits:
         decoded = ::stbi_loadf_from_memory(content.data(), contentSizeInBytes, &width, &height, &channelCount, 0);
         break;
 

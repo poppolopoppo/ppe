@@ -9,8 +9,8 @@
 #include "MetaObject.h" // needed for PMetaObject manipulation
 #include "MetaObjectHelpers.h" // needed for DeepEquals()
 
-#include "IO/FS/Dirpath.h"
-#include "IO/FS/Filename.h"
+#include "IO/Dirpath.h"
+#include "IO/Filename.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"

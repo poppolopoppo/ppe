@@ -9,7 +9,7 @@
 #ifdef USE_DEBUG_LOGGER
 
 #define EXTERN_LOG_CATEGORY(_API, _NAME) \
-    extern _API ::Core::FLoggerCategory CONCAT(GLogCategory_, _NAME);
+    extern _API ::PPE::FLoggerCategory CONCAT(GLogCategory_, _NAME);
 
 namespace PPE {
 //----------------------------------------------------------------------------

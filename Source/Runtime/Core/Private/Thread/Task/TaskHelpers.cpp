@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "TaskHelpers.h"
+#include "Thread/Task/TaskHelpers.h"
 
-#include "TaskManager.h"
+#include "Thread/Task/TaskManager.h"
 #include "Thread/Fiber.h"
 #include "Thread/ThreadPool.h"
 

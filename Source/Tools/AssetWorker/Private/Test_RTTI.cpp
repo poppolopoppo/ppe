@@ -325,7 +325,7 @@ private:
         }
     }
 
-    void Randomize_(Core::RTTI::PMetaAtom& atom) {
+    void Randomize_(PPE::RTTI::PMetaAtom& atom) {
         const float f = _rand.NextFloatM11();
         if (f < -0.5f)
             atom = RTTI::MakeAtom(_rand.NextU64());
@@ -512,7 +512,7 @@ void Test_RTTI() {
 
     Serialize::FSerializeModule::ClearAll_UnusedMemory();
     RTTI::FRTTIModule::ClearAll_UnusedMemory();
-    Core::FCoreModule::ClearAll_UnusedMemory();
+    PPE::FCoreModule::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

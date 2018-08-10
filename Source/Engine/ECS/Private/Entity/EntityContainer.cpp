@@ -71,7 +71,7 @@ void FEntityContainer::DestroyEntity(EntityID id) {
 bool FEntityContainer::Contains(EntityID id) const {
     Assert(FEntity::InvalidID != id);
 
-    return Core::Contains(_usedIDs, id);
+    return PPE::Contains(_usedIDs, id);
 }
 //----------------------------------------------------------------------------
 EntityID FEntityContainer::IDFromUID(EntityUID uid) const {

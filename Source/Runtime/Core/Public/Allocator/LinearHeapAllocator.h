@@ -9,15 +9,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define VECTOR_LINEARHEAP(T) ::Core::TVector<T, ::Core::TLinearHeapAllocator<T>>
+#define VECTOR_LINEARHEAP(T) ::PPE::TVector<T, ::PPE::TLinearHeapAllocator<T>>
 //----------------------------------------------------------------------------
-#define ASSOCIATIVE_VECTOR_LINEARHEAP(_KEY, _VALUE) ::Core::TAssociativeVector<_KEY, _VALUE, ::Core::Meta::TEqualTo<_KEY>, VECTOR_LINEARHEAP(::Core::TPair<_KEY COMMA _VALUE>)>
+#define ASSOCIATIVE_VECTOR_LINEARHEAP(_KEY, _VALUE) ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, VECTOR_LINEARHEAP(::PPE::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
-#define HASHSET_LINEARHEAP(T) ::Core::THashSet<T, ::Core::Meta::THash<T>, ::Core::Meta::TEqualTo<T>, ::Core::TLinearHeapAllocator<T>>
+#define HASHSET_LINEARHEAP(T) ::PPE::THashSet<T, ::PPE::Meta::THash<T>, ::PPE::Meta::TEqualTo<T>, ::PPE::TLinearHeapAllocator<T>>
 //----------------------------------------------------------------------------
-#define HASHMAP_LINEARHEAP(_KEY, _VALUE) ::Core::THashMap<_KEY, _VALUE, ::Core::Meta::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, ::Core::TLinearHeapAllocator<::Core::TPair<_KEY, _VALUE>>>
+#define HASHMAP_LINEARHEAP(_KEY, _VALUE) ::PPE::THashMap<_KEY, _VALUE, ::PPE::Meta::THash<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, ::PPE::TLinearHeapAllocator<::PPE::TPair<_KEY, _VALUE>>>
 //----------------------------------------------------------------------------
-#define MEMORYSTREAM_LINEARHEAP() ::Core::TMemoryStream<::Core::TLinearHeapAllocator<u8>>
+#define MEMORYSTREAM_LINEARHEAP() ::PPE::TMemoryStream<::PPE::TLinearHeapAllocator<u8>>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

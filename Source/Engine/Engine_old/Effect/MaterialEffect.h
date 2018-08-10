@@ -55,7 +55,7 @@ public:
     };
 
     struct FTextureBinding {
-        Core::FFilename FFilename;
+        PPE::FFilename FFilename;
         Graphics::WCTexture FTexture;
         PRenderSurfaceLock SurfaceLock;
     };

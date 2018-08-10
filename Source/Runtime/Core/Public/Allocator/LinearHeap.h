@@ -6,16 +6,16 @@
 #include "Memory/MemoryTracking.h"
 
 #if USE_PPE_MEMORYDOMAINS
-#   define LINEARHEAP(_DOMAIN) ::Core::TLinearHeap<MEMORYDOMAIN_TAG(_DOMAIN)>
+#   define LINEARHEAP(_DOMAIN) ::PPE::TLinearHeap<MEMORYDOMAIN_TAG(_DOMAIN)>
 #else
-#   define LINEARHEAP(_DOMAIN) ::Core::FLinearHeap
+#   define LINEARHEAP(_DOMAIN) ::PPE::FLinearHeap
 #endif
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FLinearHeap {
+class PPE_CORE_API FLinearHeap {
 #if USE_PPE_MEMORYDOMAINS
 protected:
     explicit FLinearHeap(FMemoryTracking& parent);
@@ -90,7 +90,7 @@ public:
 //----------------------------------------------------------------------------
 // Use FLinearHeap as an inplace allocator :
 template <typename T>
-void* operator new(size_t sizeInBytes, Core::FLinearHeap& heap) {
+void* operator new(size_t sizeInBytes, PPE::FLinearHeap& heap) {
     Assert(sizeInBytes == sizeof(T));
     return heap.Allocate(sizeInBytes, std::alignment_of_v<T>);
 }

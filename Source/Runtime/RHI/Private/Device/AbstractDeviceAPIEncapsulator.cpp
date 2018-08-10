@@ -47,11 +47,11 @@ void FAbstractDeviceAPIEncapsulator::OnDestroyEntity(const FDeviceResource *reso
 FStringView DeviceAPIToCStr(EDeviceAPI api) {
     switch (api)
     {
-    case Core::Graphics::EDeviceAPI::DirectX11:
+    case PPE::Graphics::EDeviceAPI::DirectX11:
         return MakeStringView("DirectX11");
-    case Core::Graphics::EDeviceAPI::OpenGL4:
+    case PPE::Graphics::EDeviceAPI::OpenGL4:
         return MakeStringView("OpenGL4");
-    case Core::Graphics::EDeviceAPI::Unknown:
+    case PPE::Graphics::EDeviceAPI::Unknown:
         AssertNotReached();
         break;
     default:

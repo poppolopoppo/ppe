@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Dirname.h"
+#include "IO/Dirname.h"
 
 #include "IO/String.h"
 #include "IO/StringView.h"

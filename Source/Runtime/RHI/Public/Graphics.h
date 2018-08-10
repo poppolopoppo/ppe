@@ -19,7 +19,7 @@ POOL_TAG_DECL(Graphics);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// FGraphicsModule is the entry and exit point encapsulating every call to Core::Graphics::.
+// FGraphicsModule is the entry and exit point encapsulating every call to PPE::Graphics::.
 // Constructed with the same lifetime than the program (or application if segregated).
 //----------------------------------------------------------------------------
 class PPE_GRAPHICS_API FGraphicsModule {

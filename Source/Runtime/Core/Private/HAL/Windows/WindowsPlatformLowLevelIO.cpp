@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformLowLevelIO.h"
+#include "HAL/Windows/WindowsPlatformLowLevelIO.h"
 
 #ifdef PLATFORM_WINDOWS
 
@@ -8,7 +8,7 @@
 #include "IO/FormatHelpers.h"
 #include "HAL/PlatformMaths.h"
 
-#include "WindowsPlatformIncludes.h"
+#include "HAL/Windows/WindowsPlatformIncludes.h"
 
 #include <fcntl.h>
 #include <io.h>

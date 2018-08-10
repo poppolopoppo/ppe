@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "AutoSingleton.h"
+#include "Meta/AutoSingleton.h"
 
-#include "Singleton.h"
+#include "Meta/Singleton.h"
 
 #include <mutex>
 #include <type_traits>

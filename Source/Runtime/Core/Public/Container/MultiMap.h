@@ -22,7 +22,7 @@ template <
 using TMultiMap = std::multimap<_Key, _Value, _Predicate, _Allocator >;
 //----------------------------------------------------------------------------
 #define MULTIMAP(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TMultiMap<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>) >
+    ::PPE::TMultiMap<_KEY, _VALUE, ::PPE::Meta::TLess<_KEY>, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::PPE::TPair<_KEY COMMA _VALUE>) >
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
 hash_t hash_value(const TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {

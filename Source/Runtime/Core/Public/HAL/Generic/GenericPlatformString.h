@@ -13,7 +13,7 @@ enum class ECodePage : int {
     ANSI            = Windows_1252,
 };
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformString {
+struct PPE_CORE_API FGenericPlatformString {
 public: // must be defined for every platform
 
     static bool Equals(const char* lhs, const char* rhs, size_t len) = delete;

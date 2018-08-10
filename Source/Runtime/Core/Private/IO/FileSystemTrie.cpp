@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "FileSystemTrie.h"
+#include "IO/FileSystemTrie.h"
 
 #include "Allocator/Alloca.h"
 #include "Allocator/PoolAllocator-impl.h"

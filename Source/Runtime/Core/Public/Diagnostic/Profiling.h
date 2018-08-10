@@ -71,8 +71,8 @@ namespace PPE {
 #ifdef WITH_PPE_PROFILING
 //----------------------------------------------------------------------------
 #define PROFILING_SCOPE(_Level, _Marker, _Message) \
-    const Core::FProfilingScope ANONYMIZE(_profilingScope)( \
-        Core::FProfiler::_Level(), \
+    const PPE::FProfilingScope ANONYMIZE(_profilingScope)( \
+        PPE::FProfiler::_Level(), \
         (_Marker), \
         _Message ", " __FILE__ "(" STRINGIZE(__LINE__) ")" )
 //----------------------------------------------------------------------------

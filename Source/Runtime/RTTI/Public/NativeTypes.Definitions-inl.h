@@ -20,11 +20,11 @@
     COMMA_PROTECT(_Macro(UInt64,        u64,                            9 )) \
     COMMA_PROTECT(_Macro(Float,         float,                         10 )) \
     COMMA_PROTECT(_Macro(Double,        double,                        11 )) \
-    COMMA_PROTECT(_Macro(String,        Core::FString,                 12 )) \
-    COMMA_PROTECT(_Macro(WString,       Core::FWString,                13 )) \
-    COMMA_PROTECT(_Macro(Name,          Core::RTTI::FName,             14 )) \
-    COMMA_PROTECT(_Macro(Dirpath,       Core::FDirpath,                15 )) \
-    COMMA_PROTECT(_Macro(Filename,      Core::FFilename,               16 )) \
-    COMMA_PROTECT(_Macro(MetaObject,    Core::RTTI::PMetaObject,       17 )) \
-    COMMA_PROTECT(_Macro(BinaryData,    Core::RTTI::FBinaryData,       18 )) \
-    COMMA_PROTECT(_Macro(Any,           Core::RTTI::FAny,              19 ))
+    COMMA_PROTECT(_Macro(String,        PPE::FString,                 12 )) \
+    COMMA_PROTECT(_Macro(WString,       PPE::FWString,                13 )) \
+    COMMA_PROTECT(_Macro(Name,          PPE::RTTI::FName,             14 )) \
+    COMMA_PROTECT(_Macro(Dirpath,       PPE::FDirpath,                15 )) \
+    COMMA_PROTECT(_Macro(Filename,      PPE::FFilename,               16 )) \
+    COMMA_PROTECT(_Macro(MetaObject,    PPE::RTTI::PMetaObject,       17 )) \
+    COMMA_PROTECT(_Macro(BinaryData,    PPE::RTTI::FBinaryData,       18 )) \
+    COMMA_PROTECT(_Macro(Any,           PPE::RTTI::FAny,              19 ))

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Basename.h"
+#include "IO/Basename.h"
 
 #include "Container/Hash.h"
 #include "IO/String.h"
@@ -48,7 +48,7 @@ static bool ParseBasename_(const FileSystem::FStringView& str, FBasenameNoExt& b
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBasename::FBasename(const Core::FBasenameNoExt& basenameNoExt, const Core::FExtname& extname)
+FBasename::FBasename(const PPE::FBasenameNoExt& basenameNoExt, const PPE::FExtname& extname)
 :   _basenameNoExt(basenameNoExt), _extname(extname) {}
 //----------------------------------------------------------------------------
 FBasename::FBasename(const FBasename& other)
@@ -77,6 +77,10 @@ FBasename& FBasename::operator =(const FileSystem::FStringView& content) {
     Assert(not content.empty());
     ParseBasename_(content, _basenameNoExt, _extname);
     return *this;
+}
+//----------------------------------------------------------------------------
+FBasename FBasename::RemoveExtname() const {
+    return FBasename(_basenameNoExt, FExtname());
 }
 //----------------------------------------------------------------------------
 FString FBasename::ToString() const {

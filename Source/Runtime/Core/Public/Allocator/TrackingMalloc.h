@@ -2,20 +2,20 @@
 
 #include "Core.h"
 
-#define TRACKING_MALLOC(_DOMAIN, _SIZE) ::Core::tracking_malloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_SIZE)
+#define TRACKING_MALLOC(_DOMAIN, _SIZE) ::PPE::tracking_malloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_SIZE)
 
 namespace PPE {
 class FMemoryTracking;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size);
+PPE_CORE_API void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size);
 //----------------------------------------------------------------------------
-PPE_API void  (tracking_free)(void *ptr);
+PPE_CORE_API void  (tracking_free)(void *ptr);
 //----------------------------------------------------------------------------
-PPE_API void* (tracking_calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size);
+PPE_CORE_API void* (tracking_calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size);
 //----------------------------------------------------------------------------
-PPE_API void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, size_t size);
+PPE_CORE_API void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, size_t size);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

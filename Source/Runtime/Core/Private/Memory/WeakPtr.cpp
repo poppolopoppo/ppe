@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WeakPtr.h"
+#include "Memory/WeakPtr.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

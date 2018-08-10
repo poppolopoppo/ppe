@@ -17,7 +17,7 @@ class FLexer;
 class FMatch {
 public:
     friend class FLexer;
-    typedef Core::Lexer::FSymbol symbol_type;
+    typedef PPE::Lexer::FSymbol symbol_type;
 
     FMatch();
     ~FMatch();

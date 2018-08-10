@@ -26,7 +26,7 @@ protected:
     virtual void Run(ITaskContext& ctx) = 0;
 };
 //----------------------------------------------------------------------------
-PPE_API void FireAndForget(
+PPE_CORE_API void FireAndForget(
     FFireAndForget* task/* will be deleted in worker thread after Run() */,
     ETaskPriority priority = ETaskPriority::Normal,
     FTaskManager* manager = nullptr/* uses FGlobalThreadPool by default */);
@@ -72,7 +72,7 @@ using SFuture = TSafePtr< TFuture<T> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API void Async(
+PPE_CORE_API void Async(
     FTaskFunc&& task,
     ETaskPriority priority = ETaskPriority::Normal,
     FTaskManager* manager = nullptr/* uses FGlobalThreadPool by default */);

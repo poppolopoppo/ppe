@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "LZJB.h"
+#include "IO/LZJB.h"
 
 #include "Diagnostic/Logger.h"
 #include "IO/BufferedStream.h"
@@ -11,7 +11,7 @@
 // http://stackoverflow.com/questions/1077496/what-is-a-small-and-fast-real-time-compression-technique-like-lz77
 
 namespace PPE {
-EXTERN_LOG_CATEGORY(PPE_API, Benchmark)
+EXTERN_LOG_CATEGORY(PPE_CORE_API, Benchmark)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

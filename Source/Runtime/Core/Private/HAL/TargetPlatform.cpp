@@ -1,13 +1,13 @@
 #include "stdafx.h"
 
-#include "TargetPlatform.h"
+#include "HAL/TargetPlatform.h"
 
 #include "Diagnostic/Logger.h"
 
-#include "Windows/WindowsTargetPlatform.h"
+#include "HAL/Windows/WindowsTargetPlatform.h"
 
 namespace PPE {
-LOG_CATEGORY(PPE_API, HAL)
+LOG_CATEGORY(PPE_CORE_API, HAL)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

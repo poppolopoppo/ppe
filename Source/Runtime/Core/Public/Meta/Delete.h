@@ -41,8 +41,8 @@ template<class T> struct checked_deleter {
     typedef void result_type;
     typedef T * argument_type;
     void operator ()(T * x) const {
-        // Core:: disables ADL
-        Core::checked_delete(x);
+        // PPE:: disables ADL
+        PPE::checked_delete(x);
     }
 };
 //----------------------------------------------------------------------------
@@ -50,8 +50,8 @@ template<typename T> struct checked_deleter<T[]> {
     typedef void result_type;
     typedef T argument_type[];
     void operator ()(T x[]) const {
-        // Core:: disables ADL
-        Core::checked_array_delete(x);
+        // PPE:: disables ADL
+        PPE::checked_array_delete(x);
     }
 };
 //----------------------------------------------------------------------------

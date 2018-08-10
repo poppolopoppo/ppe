@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "PackedVectors.h"
+#include "Maths/PackedVectors.h"
 
-#include "ScalarVectorHelpers.h"
-#include "QuaternionHelpers.h"
+#include "Maths/ScalarVectorHelpers.h"
+#include "Maths/QuaternionHelpers.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

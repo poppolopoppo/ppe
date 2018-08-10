@@ -2,7 +2,7 @@
 
 #include "Network.h"
 
-#include "Name.h"
+#include "NetworkName.h"
 
 namespace PPE {
 namespace Network {

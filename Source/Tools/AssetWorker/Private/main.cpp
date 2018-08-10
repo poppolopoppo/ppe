@@ -13,7 +13,7 @@
 
 #include "RobotApp.h"
 
-typedef Core::ContentGenerator::FRobotApp application_type;
+typedef PPE::ContentGenerator::FRobotApp application_type;
 
 #ifdef PLATFORM_WINDOWS
 #   define PPE_RESOURCES 1
@@ -35,7 +35,7 @@ static int Bootstrap(void *appHandle, int nShowCmd, const wchar_t* filename, int
 
     const Application::FApplicationContext appContext;
 
-    const Core::FCoreModule moduleCore{ appHandle, nShowCmd, filename, size_t(argc), argv };
+    const PPE::FCoreModule moduleCore{ appHandle, nShowCmd, filename, size_t(argc), argv };
     const RTTI::FRTTIModule moduleRTTI;
     const Serialize::FSerializeModule moduleSerialize;
     const Graphics::FGraphicsModule moduleGraphics;

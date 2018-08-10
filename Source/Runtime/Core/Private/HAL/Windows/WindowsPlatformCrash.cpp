@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformCrash.h"
+#include "HAL/Windows/WindowsPlatformCrash.h"
 
 #ifdef PLATFORM_WINDOWS
 
@@ -29,8 +29,8 @@
 #   include "Memory/MemoryTracking.h"
 #endif
 
-#include "DbghelpWrapper.h"
-#include "WindowsPlatformIncludes.h"
+#include "HAL/Windows/DbghelpWrapper.h"
+#include "HAL/Windows/WindowsPlatformIncludes.h"
 
 #include <winnt.h>
 #include <time.h>

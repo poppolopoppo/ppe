@@ -1,13 +1,13 @@
 #include "stdafx.h"
 
-#include "Header.h"
+#include "Http/Header.h"
 
-#include "ConstNames.h"
-#include "Exceptions.h"
-#include "Status.h"
+#include "Http/ConstNames.h"
+#include "Http/Exceptions.h"
+#include "Http/Status.h"
 
-#include "../Socket/SocketBuffered.h"
-#include "../Uri.h"
+#include "Socket/SocketBuffered.h"
+#include "Uri.h"
 
 #include "IO/String.h"
 #include "IO/StringBuilder.h"

@@ -152,73 +152,73 @@ void FSurfaceFormat::OnDeviceDestroy(FDeviceEncapsulator *device) {
 const FSurfaceFormat* FSurfaceFormat::FromType(ESurfaceFormatType type) {
     switch (type)
     {
-    case Core::Graphics::ESurfaceFormatType::UNKNOWN:
+    case PPE::Graphics::ESurfaceFormatType::UNKNOWN:
         return FSurfaceFormat::UNKNOWN;
-    case Core::Graphics::ESurfaceFormatType::A8:
+    case PPE::Graphics::ESurfaceFormatType::A8:
         return FSurfaceFormat::A8;
-    case Core::Graphics::ESurfaceFormatType::D16:
+    case PPE::Graphics::ESurfaceFormatType::D16:
         return FSurfaceFormat::D16;
-    case Core::Graphics::ESurfaceFormatType::D24S8:
+    case PPE::Graphics::ESurfaceFormatType::D24S8:
         return FSurfaceFormat::D24S8;
-    case Core::Graphics::ESurfaceFormatType::D32:
+    case PPE::Graphics::ESurfaceFormatType::D32:
         return FSurfaceFormat::D32;
-    case Core::Graphics::ESurfaceFormatType::DXN0:
+    case PPE::Graphics::ESurfaceFormatType::DXN0:
         return FSurfaceFormat::DXN0;
-    case Core::Graphics::ESurfaceFormatType::DXT1:
+    case PPE::Graphics::ESurfaceFormatType::DXT1:
         return FSurfaceFormat::DXT1;
-    case Core::Graphics::ESurfaceFormatType::DXT1_SRGB:
+    case PPE::Graphics::ESurfaceFormatType::DXT1_SRGB:
         return FSurfaceFormat::DXT1_SRGB;
-    case Core::Graphics::ESurfaceFormatType::DXT3:
+    case PPE::Graphics::ESurfaceFormatType::DXT3:
         return FSurfaceFormat::DXT3;
-    case Core::Graphics::ESurfaceFormatType::DXT3_SRGB:
+    case PPE::Graphics::ESurfaceFormatType::DXT3_SRGB:
         return FSurfaceFormat::DXT3_SRGB;
-    case Core::Graphics::ESurfaceFormatType::DXT5:
+    case PPE::Graphics::ESurfaceFormatType::DXT5:
         return FSurfaceFormat::DXT5;
-    case Core::Graphics::ESurfaceFormatType::DXT5_SRGB:
+    case PPE::Graphics::ESurfaceFormatType::DXT5_SRGB:
         return FSurfaceFormat::DXT5_SRGB;
-    case Core::Graphics::ESurfaceFormatType::R5G5B5A1:
+    case PPE::Graphics::ESurfaceFormatType::R5G5B5A1:
         return FSurfaceFormat::R5G5B5A1;
-    case Core::Graphics::ESurfaceFormatType::R5G6B5:
+    case PPE::Graphics::ESurfaceFormatType::R5G6B5:
         return FSurfaceFormat::R5G6B5;
-    case Core::Graphics::ESurfaceFormatType::R8:
+    case PPE::Graphics::ESurfaceFormatType::R8:
         return FSurfaceFormat::R8;
-    case Core::Graphics::ESurfaceFormatType::R8G8:
+    case PPE::Graphics::ESurfaceFormatType::R8G8:
         return FSurfaceFormat::R8G8;
-    case Core::Graphics::ESurfaceFormatType::R8G8B8A8:
+    case PPE::Graphics::ESurfaceFormatType::R8G8B8A8:
         return FSurfaceFormat::R8G8B8A8;
-    case Core::Graphics::ESurfaceFormatType::R8G8B8A8_SRGB:
+    case PPE::Graphics::ESurfaceFormatType::R8G8B8A8_SRGB:
         return FSurfaceFormat::R8G8B8A8_SRGB;
-    case Core::Graphics::ESurfaceFormatType::B8G8R8A8:
+    case PPE::Graphics::ESurfaceFormatType::B8G8R8A8:
         return FSurfaceFormat::B8G8R8A8;
-    case Core::Graphics::ESurfaceFormatType::B8G8R8A8_SRGB:
+    case PPE::Graphics::ESurfaceFormatType::B8G8R8A8_SRGB:
         return FSurfaceFormat::B8G8R8A8_SRGB;
-    case Core::Graphics::ESurfaceFormatType::R10G10B10A2:
+    case PPE::Graphics::ESurfaceFormatType::R10G10B10A2:
         return FSurfaceFormat::R10G10B10A2;
-    case Core::Graphics::ESurfaceFormatType::R11G11B10:
+    case PPE::Graphics::ESurfaceFormatType::R11G11B10:
         return FSurfaceFormat::R11G11B10;
-    case Core::Graphics::ESurfaceFormatType::R16:
+    case PPE::Graphics::ESurfaceFormatType::R16:
         return FSurfaceFormat::R16;
-    case Core::Graphics::ESurfaceFormatType::R16G16:
+    case PPE::Graphics::ESurfaceFormatType::R16G16:
         return FSurfaceFormat::R16G16;
-    case Core::Graphics::ESurfaceFormatType::R16G16B16A16:
+    case PPE::Graphics::ESurfaceFormatType::R16G16B16A16:
         return FSurfaceFormat::R16G16B16A16;
-    case Core::Graphics::ESurfaceFormatType::R16G16B16A16_F:
+    case PPE::Graphics::ESurfaceFormatType::R16G16B16A16_F:
         return FSurfaceFormat::R16G16B16A16_F;
-    case Core::Graphics::ESurfaceFormatType::R16G16_F:
+    case PPE::Graphics::ESurfaceFormatType::R16G16_F:
         return FSurfaceFormat::R16G16_F;
-    case Core::Graphics::ESurfaceFormatType::R16_F:
+    case PPE::Graphics::ESurfaceFormatType::R16_F:
         return FSurfaceFormat::R16_F;
-    case Core::Graphics::ESurfaceFormatType::R32:
+    case PPE::Graphics::ESurfaceFormatType::R32:
         return FSurfaceFormat::R32;
-    case Core::Graphics::ESurfaceFormatType::R32G32:
+    case PPE::Graphics::ESurfaceFormatType::R32G32:
         return FSurfaceFormat::R32G32;
-    case Core::Graphics::ESurfaceFormatType::R32G32B32A32:
+    case PPE::Graphics::ESurfaceFormatType::R32G32B32A32:
         return FSurfaceFormat::R32G32B32A32;
-    case Core::Graphics::ESurfaceFormatType::R32G32B32A32_F:
+    case PPE::Graphics::ESurfaceFormatType::R32G32B32A32_F:
         return FSurfaceFormat::R32G32B32A32_F;
-    case Core::Graphics::ESurfaceFormatType::R32G32_F:
+    case PPE::Graphics::ESurfaceFormatType::R32G32_F:
         return FSurfaceFormat::R32G32_F;
-    case Core::Graphics::ESurfaceFormatType::R32_F:
+    case PPE::Graphics::ESurfaceFormatType::R32_F:
         return FSurfaceFormat::R32_F;
     default:
         AssertNotImplemented();
@@ -231,73 +231,73 @@ const FSurfaceFormat* FSurfaceFormat::FromType(ESurfaceFormatType type) {
 FStringView SurfaceFormatTypeToCStr(ESurfaceFormatType value) {
     switch (value)
     {
-    case Core::Graphics::ESurfaceFormatType::UNKNOWN:
+    case PPE::Graphics::ESurfaceFormatType::UNKNOWN:
         return MakeStringView("UNKNOWN");
-    case Core::Graphics::ESurfaceFormatType::A8:
+    case PPE::Graphics::ESurfaceFormatType::A8:
         return MakeStringView("A8");
-    case Core::Graphics::ESurfaceFormatType::D16:
+    case PPE::Graphics::ESurfaceFormatType::D16:
         return MakeStringView("D16");
-    case Core::Graphics::ESurfaceFormatType::D24S8:
+    case PPE::Graphics::ESurfaceFormatType::D24S8:
         return MakeStringView("D24S8");
-    case Core::Graphics::ESurfaceFormatType::D32:
+    case PPE::Graphics::ESurfaceFormatType::D32:
         return MakeStringView("D32");
-    case Core::Graphics::ESurfaceFormatType::DXN0:
+    case PPE::Graphics::ESurfaceFormatType::DXN0:
         return MakeStringView("DXN0");
-    case Core::Graphics::ESurfaceFormatType::DXT1:
+    case PPE::Graphics::ESurfaceFormatType::DXT1:
         return MakeStringView("DXT1");
-    case Core::Graphics::ESurfaceFormatType::DXT1_SRGB:
+    case PPE::Graphics::ESurfaceFormatType::DXT1_SRGB:
         return MakeStringView("DXT1_SRGB");
-    case Core::Graphics::ESurfaceFormatType::DXT3:
+    case PPE::Graphics::ESurfaceFormatType::DXT3:
         return MakeStringView("DXT3");
-    case Core::Graphics::ESurfaceFormatType::DXT3_SRGB:
+    case PPE::Graphics::ESurfaceFormatType::DXT3_SRGB:
         return MakeStringView("DXT3_SRGB");
-    case Core::Graphics::ESurfaceFormatType::DXT5:
+    case PPE::Graphics::ESurfaceFormatType::DXT5:
         return MakeStringView("DXT5");
-    case Core::Graphics::ESurfaceFormatType::DXT5_SRGB:
+    case PPE::Graphics::ESurfaceFormatType::DXT5_SRGB:
         return MakeStringView("DXT5_SRGB");
-    case Core::Graphics::ESurfaceFormatType::R5G5B5A1:
+    case PPE::Graphics::ESurfaceFormatType::R5G5B5A1:
         return MakeStringView("R5G5B5A1");
-    case Core::Graphics::ESurfaceFormatType::R5G6B5:
+    case PPE::Graphics::ESurfaceFormatType::R5G6B5:
         return MakeStringView("R5G6B5");
-    case Core::Graphics::ESurfaceFormatType::R8:
+    case PPE::Graphics::ESurfaceFormatType::R8:
         return MakeStringView("R8");
-    case Core::Graphics::ESurfaceFormatType::R8G8:
+    case PPE::Graphics::ESurfaceFormatType::R8G8:
         return MakeStringView("R8G8");
-    case Core::Graphics::ESurfaceFormatType::R8G8B8A8:
+    case PPE::Graphics::ESurfaceFormatType::R8G8B8A8:
         return MakeStringView("R8G8B8A8");
-    case Core::Graphics::ESurfaceFormatType::R8G8B8A8_SRGB:
+    case PPE::Graphics::ESurfaceFormatType::R8G8B8A8_SRGB:
         return MakeStringView("R8G8B8A8_SRGB");
-    case Core::Graphics::ESurfaceFormatType::B8G8R8A8:
+    case PPE::Graphics::ESurfaceFormatType::B8G8R8A8:
         return MakeStringView("B8G8R8A8");
-    case Core::Graphics::ESurfaceFormatType::B8G8R8A8_SRGB:
+    case PPE::Graphics::ESurfaceFormatType::B8G8R8A8_SRGB:
         return MakeStringView("B8G8R8A8_SRGB");
-    case Core::Graphics::ESurfaceFormatType::R10G10B10A2:
+    case PPE::Graphics::ESurfaceFormatType::R10G10B10A2:
         return MakeStringView("R10G10B10A2");
-    case Core::Graphics::ESurfaceFormatType::R11G11B10:
+    case PPE::Graphics::ESurfaceFormatType::R11G11B10:
         return MakeStringView("R11G11B10");
-    case Core::Graphics::ESurfaceFormatType::R16:
+    case PPE::Graphics::ESurfaceFormatType::R16:
         return MakeStringView("R16");
-    case Core::Graphics::ESurfaceFormatType::R16G16:
+    case PPE::Graphics::ESurfaceFormatType::R16G16:
         return MakeStringView("R16G16");
-    case Core::Graphics::ESurfaceFormatType::R16G16B16A16:
+    case PPE::Graphics::ESurfaceFormatType::R16G16B16A16:
         return MakeStringView("R16G16B16A16");
-    case Core::Graphics::ESurfaceFormatType::R16G16B16A16_F:
+    case PPE::Graphics::ESurfaceFormatType::R16G16B16A16_F:
         return MakeStringView("R16G16B16A16_F");
-    case Core::Graphics::ESurfaceFormatType::R16G16_F:
+    case PPE::Graphics::ESurfaceFormatType::R16G16_F:
         return MakeStringView("R16G16_F");
-    case Core::Graphics::ESurfaceFormatType::R16_F:
+    case PPE::Graphics::ESurfaceFormatType::R16_F:
         return MakeStringView("R16_F");
-    case Core::Graphics::ESurfaceFormatType::R32:
+    case PPE::Graphics::ESurfaceFormatType::R32:
         return MakeStringView("R32");
-    case Core::Graphics::ESurfaceFormatType::R32G32:
+    case PPE::Graphics::ESurfaceFormatType::R32G32:
         return MakeStringView("R32G32");
-    case Core::Graphics::ESurfaceFormatType::R32G32B32A32:
+    case PPE::Graphics::ESurfaceFormatType::R32G32B32A32:
         return MakeStringView("R32G32B32A32");
-    case Core::Graphics::ESurfaceFormatType::R32G32B32A32_F:
+    case PPE::Graphics::ESurfaceFormatType::R32G32B32A32_F:
         return MakeStringView("R32G32B32A32_F");
-    case Core::Graphics::ESurfaceFormatType::R32G32_F:
+    case PPE::Graphics::ESurfaceFormatType::R32G32_F:
         return MakeStringView("R32G32_F");
-    case Core::Graphics::ESurfaceFormatType::R32_F:
+    case PPE::Graphics::ESurfaceFormatType::R32_F:
         return MakeStringView("R32_F");
     default:
         AssertNotImplemented();

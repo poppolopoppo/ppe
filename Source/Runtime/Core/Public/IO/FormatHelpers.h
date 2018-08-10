@@ -19,8 +19,8 @@ template <typename T>
 FPointer Pointer(T* p) { return FPointer{ intptr_t(p) }; }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FPointer ptr);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPointer ptr);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FPointer ptr);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPointer ptr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -30,8 +30,8 @@ template <typename T, typename = Meta::TEnableIf<std::is_arithmetic_v<T>> >
 FPercentage Percentage(T x, T total) { return FPercentage{ x * 100.f / total }; }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FPercentage prc);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPercentage prc);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FPercentage prc);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPercentage prc);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -43,8 +43,8 @@ Meta::TEnableIf<std::is_integral_v<T>, FCountOfElements> CountOfElements(T n) {
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FCountOfElements count);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FCountOfElements count);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FCountOfElements count);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FCountOfElements count);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -56,8 +56,8 @@ Meta::TEnableIf<std::is_integral_v<T>, FSizeInBytes> SizeInBytes(T n) {
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FSizeInBytes size);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FSizeInBytes size);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FSizeInBytes size);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FSizeInBytes size);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -68,8 +68,8 @@ inline FDurationInMs DurationInMs(FMicroseconds t) {
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FDurationInMs v);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FDurationInMs v);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FDurationInMs v);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FDurationInMs v);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -303,8 +303,8 @@ FHexDump HexDump(T* data, size_t n) {
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::FHexDump& hexDump);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDump);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::FHexDump& hexDump);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDump);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -346,8 +346,8 @@ struct FWIndent : TBasicIndent<wchar_t> {
 };
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::TBasicIndent<char>& indent);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::TBasicIndent<wchar_t>& indent);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const Fmt::TBasicIndent<char>& indent);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::TBasicIndent<wchar_t>& indent);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -415,8 +415,8 @@ namespace Fmt {
     };
 } //!namespace Fmt
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::EChar ch);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::EChar ch);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::EChar ch);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::EChar ch);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

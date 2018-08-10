@@ -10,10 +10,10 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define HASHMAP(_DOMAIN, _KEY, _VALUE) \
-    ::Core::THashMap<_KEY, _VALUE, ::Core::Meta::THash<_KEY>, ::Core::Meta::TEqualTo<_KEY>, ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>)>
+    ::PPE::THashMap<_KEY, _VALUE, ::PPE::Meta::THash<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, ALLOCATOR(_DOMAIN, ::PPE::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define HASHMAP_MEMOIZE(_DOMAIN, _KEY, _VALUE) \
-    HASHMAP(_DOMAIN, ::Core::THashMemoizer<_KEY>, _VALUE)
+    HASHMAP(_DOMAIN, ::PPE::THashMemoizer<_KEY>, _VALUE)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

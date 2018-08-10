@@ -2,7 +2,7 @@
 
 #include "VirtualFileSystemComponent.h"
 
-#include "IO/VirtualFileSystem.h"
+#include "VirtualFileSystem.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 #include "Network.h"
 
-#include "Exceptions.h"
+#include "NetworkExceptions.h"
 
 namespace PPE {
 namespace Network {

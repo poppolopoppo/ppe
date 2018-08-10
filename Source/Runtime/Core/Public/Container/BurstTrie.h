@@ -15,8 +15,8 @@ namespace PPE {
 #define BURST_TRIE_INSITU 12 // no padding with chars
 //----------------------------------------------------------------------------
 #define BURST_TRIE(_DOMAIN, _CHAR, _VALUE, _CASE_SENSITIVE, _CAPACITY) \
-    ::Core::TBurstTrie<_CHAR, _VALUE, BURST_TRIE_INSITU, _CASE_SENSITIVE, _CAPACITY, \
-        NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TPatriciaNode<_CHAR COMMA _VALUE COMMA BURST_TRIE_INSITU>)) >
+    ::PPE::TBurstTrie<_CHAR, _VALUE, BURST_TRIE_INSITU, _CASE_SENSITIVE, _CAPACITY, \
+        NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::PPE::TPatriciaNode<_CHAR COMMA _VALUE COMMA BURST_TRIE_INSITU>)) >
 //----------------------------------------------------------------------------
 #define STRINGTRIE_SET(_DOMAIN, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE(_DOMAIN, char, void, _CASE_SENSITIVE, _CAPACITY)
 #define STRINGTRIE_MAP(_DOMAIN, _VALUE, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE(_DOMAIN, char, _VALUE, _CASE_SENSITIVE, _CAPACITY)

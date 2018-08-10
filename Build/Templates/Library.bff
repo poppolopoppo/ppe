@@ -12,9 +12,7 @@
 ;   [ProjectIncludes]       project specific includes (default value in Defaults.bff)
 ;   [ProjectIsolatedFiles]  project files not included in unity builds but still compiled (default value in Defaults.bff)
 ;   [ProjectLibraries]      project specific libraries (default value in Defaults.bff)
-;   [ProjectPostBuild]      project specific post-build (default value in Defaults.bff)
-;   [ProjectPreBuild]       project specific pre-build (default value in Defaults.bff)
-;   [ProjectPCHConfig]       project Pre-Compiled Headers configuration to enable/disable PCH (default value in Defaults.bff)
+;   [ProjectPCHConfig]      project Pre-Compiled Headers configuration to enable/disable PCH (default value in Defaults.bff)
 //------------------------------------------------------------------------------
 
 #include "Lib/LibraryHelpers.bff"
@@ -27,16 +25,14 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
     Alias( '$ProjectName$-$Platform$-$Config$' )
     {
-        .Targets    = .ProjectPreBuild
-                    + { '$ProjectName$-$ProjectLinkType$-$Platform$-$Config$' }
-                    + .ProjectPostBuild
+        .Targets = '$ProjectName$-$ProjectLinkType$-$Platform$-$Config$'
     }
 
     Alias( '$ProjectName$-$Platform$-$Config$-Purge' )
     {
-        .Targets    = { '$ProjectName$-Purge-$Platform$-$Config$' }
+        .Targets = '$ProjectName$-Purge-$Platform$-$Config$'
     }
 }
 
-#include "Lib/Aliases.bff"
+#include "Lib/LibraryAliases.bff"
 #include "Lib/RegisterProject.bff"

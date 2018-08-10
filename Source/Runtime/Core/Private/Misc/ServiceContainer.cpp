@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "ServiceContainer.h"
+#include "Misc/ServiceContainer.h"
 
 namespace PPE {
-LOG_CATEGORY(PPE_API, Services)
+LOG_CATEGORY(PPE_CORE_API, Services)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

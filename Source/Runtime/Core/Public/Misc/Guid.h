@@ -37,8 +37,8 @@ ALIGN(16) struct FGuid {
 
     static FGuid Zero() { FGuid v; v.Data.as_u64[0] = v.Data.as_u64[1] = 0; return v; }
 
-    PPE_API static FGuid Generate();
-    PPE_API static bool TryParse(const FStringView& str, FGuid *guid);
+    PPE_CORE_API static FGuid Generate();
+    PPE_CORE_API static bool TryParse(const FStringView& str, FGuid *guid);
 
     inline static bool TryParse(const char *str, FGuid *guid) { return TryParse(FStringView(str, Length(str)), guid); }
     template <size_t _Dim>
@@ -86,8 +86,8 @@ inline hash_t hash_value(const FGuid& guid) {
     return hash_as_pod(guid.Data.as_u64);
 }
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const FGuid& guid);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const FGuid& guid);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FGuid& guid);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FGuid& guid);
 //----------------------------------------------------------------------------
 PPE_ASSUME_TYPE_AS_POD(FGuid)
 //----------------------------------------------------------------------------

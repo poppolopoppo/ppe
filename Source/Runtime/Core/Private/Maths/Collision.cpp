@@ -1,18 +1,18 @@
 #include "stdafx.h"
 
-#include "Collision.h"
+#include "Maths/Collision.h"
 
-#include "Plane.h"
-#include "Ray.h"
-#include "Sphere.h"
+#include "Maths/Plane.h"
+#include "Maths/Ray.h"
+#include "Maths/Sphere.h"
 
-#include "ScalarBoundingBox.h"
-#include "ScalarBoundingBoxHelpers.h"
+#include "Maths/ScalarBoundingBox.h"
+#include "Maths/ScalarBoundingBoxHelpers.h"
 
-#include "ScalarVector.h"
-#include "ScalarVectorHelpers.h"
+#include "Maths/ScalarVector.h"
+#include "Maths/ScalarVectorHelpers.h"
 
-#include "MathHelpers.h"
+#include "Maths/MathHelpers.h"
 
 namespace PPE {
 namespace Collision {

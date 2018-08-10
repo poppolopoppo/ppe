@@ -1,11 +1,11 @@
 #include "stdafx.h"
 
-#include "GenericPlatformHash.h"
+#include "HAL/Generic/GenericPlatformHash.h"
 
 //----------------------------------------------------------------------------
 // Farmhash for 32/64/128 bit fingerprint hash functions (stable)
 //----------------------------------------------------------------------------
-#include "Core.External/farmhash-external.h"
+#include "farmhash-external.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

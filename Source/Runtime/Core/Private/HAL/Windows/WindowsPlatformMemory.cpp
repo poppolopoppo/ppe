@@ -1,14 +1,14 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformMemory.h"
+#include "HAL/Windows/WindowsPlatformMemory.h"
 
 #ifdef PLATFORM_WINDOWS
 
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformMaths.h"
 
-#include "LastError.h"
-#include "WindowsPlatformIncludes.h"
+#include "HAL/Windows/LastError.h"
+#include "HAL/Windows/WindowsPlatformIncludes.h"
 
 #include <Psapi.h>
 

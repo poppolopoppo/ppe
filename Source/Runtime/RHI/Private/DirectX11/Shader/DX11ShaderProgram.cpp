@@ -28,7 +28,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
 
     switch (ProgramType())
     {
-    case Core::Graphics::EShaderProgramType::Vertex:
+    case PPE::Graphics::EShaderProgramType::Vertex:
         {
             TComPtr<::ID3D11VertexShader> vertexShader;
             DX11_THROW_IF_FAILED(device, resource, (
@@ -41,7 +41,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
             _abstractShader.Steal(vertexShader);
         }
         break;
-    case Core::Graphics::EShaderProgramType::Hull:
+    case PPE::Graphics::EShaderProgramType::Hull:
         {
             TComPtr<::ID3D11HullShader> hullShader;
             DX11_THROW_IF_FAILED(device, resource, (
@@ -54,7 +54,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
             _abstractShader.Steal(hullShader);
         }
         break;
-    case Core::Graphics::EShaderProgramType::Domain:
+    case PPE::Graphics::EShaderProgramType::Domain:
         {
             TComPtr<::ID3D11DomainShader> domainShader;
             DX11_THROW_IF_FAILED(device, resource, (
@@ -67,7 +67,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
             _abstractShader.Steal(domainShader);
         }
         break;
-    case Core::Graphics::EShaderProgramType::Pixel:
+    case PPE::Graphics::EShaderProgramType::Pixel:
         {
             TComPtr<::ID3D11PixelShader> pixelShader;
             DX11_THROW_IF_FAILED(device, resource, (
@@ -80,7 +80,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
             _abstractShader.Steal(pixelShader);
         }
         break;
-    case Core::Graphics::EShaderProgramType::Geometry:
+    case PPE::Graphics::EShaderProgramType::Geometry:
         {
             TComPtr<::ID3D11GeometryShader> geometryShader;
             DX11_THROW_IF_FAILED(device, resource, (
@@ -93,7 +93,7 @@ FDX11ShaderProgram::FDX11ShaderProgram(IDeviceAPIEncapsulator* device, const FSh
             _abstractShader.Steal(geometryShader);
         }
         break;
-    case Core::Graphics::EShaderProgramType::Compute:
+    case PPE::Graphics::EShaderProgramType::Compute:
         {
             TComPtr<::ID3D11ComputeShader> computeShader;
             DX11_THROW_IF_FAILED(device, resource, (

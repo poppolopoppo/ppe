@@ -40,8 +40,8 @@ struct THashMapTraits_ {
     static const mapped_type& Value(const value_type& value) { return value.second; }
     static mapped_type& Value(public_type& value) { return value.second; }
     static const mapped_type& Value(const public_type& value) { return value.second; }
-    template <typename _It> static TKeyIterator<_It> MakeKeyIterator(_It&& it) { return Core::MakeKeyIterator(std::move(it)); }
-    template <typename _It> static TValueIterator<_It> MakeValueIterator(_It&& it) { return Core::MakeValueIterator(std::move(it)); }
+    template <typename _It> static TKeyIterator<_It> MakeKeyIterator(_It&& it) { return PPE::MakeKeyIterator(std::move(it)); }
+    template <typename _It> static TValueIterator<_It> MakeValueIterator(_It&& it) { return PPE::MakeValueIterator(std::move(it)); }
     static value_type MakeValue(const _Key& key) { return value_type(key, _Value()); }
     static value_type MakeValue(_Key&& rkey) { return value_type(std::move(rkey), _Value()); }
     static value_type MakeValue(const _Key& key, const _Value& value) { return value_type(key, value); }
@@ -102,12 +102,12 @@ struct FHashTableData_ {
         return ((const state_t*)StatesAndBuckets + index);
     }
 
-    PPE_API state_t SetState(size_t index, state_t state);
+    PPE_CORE_API state_t SetState(size_t index, state_t state);
 
     bool SetElement(size_t index, size_t hash);
-    PPE_API void SetDeleted(size_t index);
+    PPE_CORE_API void SetDeleted(size_t index);
 
-    PPE_API void ResetStates();
+    PPE_CORE_API void ResetStates();
 
     group_t SIMD_INLINE GroupAt(size_t first) const {
         return _mm_lddqu_si128((const __m128i*)State(first));
@@ -150,7 +150,7 @@ struct FHashTableData_ {
         return first;
     }
 
-    static PPE_API size_t FirstFilledBucket_ReturnOffset(const state_t* states);
+    static PPE_CORE_API size_t FirstFilledBucket_ReturnOffset(const state_t* states);
 };
 template <typename T>
 class THashTableIterator_ : public Meta::TIterator<T, std::forward_iterator_tag> {

@@ -7,7 +7,7 @@
 #include "Memory/MemoryView.h"
 
 #define PPE_HAL_MAKEINCLUDE(_BASENAME) \
-    STRINGIZE(Core/HAL/TARGET_PLATFORM/CONCAT(TARGET_PLATFORM, _BASENAME).h)
+    STRINGIZE(HAL/TARGET_PLATFORM/CONCAT(TARGET_PLATFORM, _BASENAME).h)
 
 #define PPE_HAL_MAKEALIAS(_BASENAME) \
     namespace PPE { \
@@ -15,7 +15,7 @@
     } //!namespace PPE
 
 namespace PPE {
-EXTERN_LOG_CATEGORY(PPE_API, HAL)
+EXTERN_LOG_CATEGORY(PPE_CORE_API, HAL)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -38,7 +38,7 @@ enum class EPlatformFeature {
     CookedData      = 1<<5,
 };
 //----------------------------------------------------------------------------
-class PPE_API ITargetPlaftorm {
+class PPE_CORE_API ITargetPlaftorm {
 public:
     ITargetPlaftorm() = default;
     virtual ~ITargetPlaftorm() {}
@@ -56,8 +56,8 @@ public:
     virtual bool SupportsFeature(EPlatformFeature feature) const = 0;
 };
 //----------------------------------------------------------------------------
-PPE_API TMemoryView<const ITargetPlaftorm* const> AllTargetPlatforms();
-PPE_API const ITargetPlaftorm& TargetPlatform(ETargetPlatform platform);
+PPE_CORE_API TMemoryView<const ITargetPlaftorm* const> AllTargetPlatforms();
+PPE_CORE_API const ITargetPlaftorm& TargetPlatform(ETargetPlatform platform);
 inline const ITargetPlaftorm& CurrentPlatform() { TargetPlatform(ETargetPlatform::Current); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -11,7 +11,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #define POOL_TAG_DEF(_Name) \
     namespace PoolTag { \
-        typedef Core::Meta::TSingleton< Core::FMemoryPoolList, _Name > CONCAT(_Name, _type); \
+        typedef PPE::Meta::TSingleton< PPE::FMemoryPoolList, _Name > CONCAT(_Name, _type); \
         \
         void _Name::Register(IMemoryPool* ppool) { CONCAT(_Name, _type)::Get().Insert(ppool); } \
         void _Name::Unregister(IMemoryPool* ppool) { CONCAT(_Name, _type)::Get().Remove(ppool); } \

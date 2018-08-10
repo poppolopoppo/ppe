@@ -8,7 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformDialog : FGenericPlatformDialog {
+struct PPE_CORE_API FWindowsPlatformDialog : FGenericPlatformDialog {
 public:
     STATIC_CONST_INTEGRAL(bool, HasDialogBox, true);
 

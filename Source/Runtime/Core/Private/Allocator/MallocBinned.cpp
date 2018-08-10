@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "MallocBinned.h"
+#include "Allocator/MallocBinned.h"
 
 #include "Container/IntrusiveList.h"
 #include "Container/Stack.h"
@@ -31,7 +31,7 @@ PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
 
 namespace PPE {
-LOG_CATEGORY(PPE_API, MallocBinned)
+LOG_CATEGORY(PPE_CORE_API, MallocBinned)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

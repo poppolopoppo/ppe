@@ -1,6 +1,9 @@
 #include "stdafx.h"
 
-#include "ParseContext.h"
+#include "Parser/ParseContext.h"
+
+#include "Parser/Parser.h"
+#include "Parser/ParseExpression.h"
 
 #include "Atom.h"
 #include "AtomHeap.h"
@@ -10,9 +13,6 @@
 #include "MetaTransaction.h"
 #include "Typedefs.h"
 #include "TypeTraits.h"
-
-#include "Parser.h"
-#include "ParseExpression.h"
 
 namespace PPE {
 namespace Parser {

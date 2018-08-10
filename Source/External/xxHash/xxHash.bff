@@ -1,0 +1,19 @@
+#once
+{
+    .ModuleName = 'xxHash'
+    .ModuleDefines = { 'EXPORT_PPE_EXTERNAL_XXHASH' }
+    .ModuleFiles =
+    {
+        'Public/xxHash-external.h',
+        'git/xxhash.h',
+    }
+    .ModuleForcedIncludes =
+    {
+        'Public/xxHash-external.h'
+    }
+    .ModuleIsolatedFiles =
+    {
+        'git/xxhash.c',
+    }
+    #include "$BuildPath$/Templates/Module.bff"
+}

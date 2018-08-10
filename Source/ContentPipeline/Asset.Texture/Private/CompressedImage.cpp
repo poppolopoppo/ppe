@@ -14,7 +14,7 @@
 #define STB_DXT_IMPLEMENTATION
 #define STBD_ABS(_VAL) std::abs(_VAL)
 #define STBD_FABS(_VAL) std::abs(_VAL)
-#define STBD_MEMSET(_DST, _VAL, _SIZE) ::Core::FPlatformMemory::Memset((_DST), (_VAL), (_SIZE))
+#define STBD_MEMSET(_DST, _VAL, _SIZE) ::PPE::FPlatformMemory::Memset((_DST), (_VAL), (_SIZE))
 
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4244) // 'return': conversion from 'XXX' to 'YYY', possible loss of data
@@ -239,12 +239,12 @@ void Compress(FCompressedImage* dst, const FImage* src, FCompressedImage::EQuali
     EBlockFormat format;
     switch (src->Mask())
     {
-    case Core::Pixmap::EColorMask::R:
-    case Core::Pixmap::EColorMask::RGB:
+    case PPE::Pixmap::EColorMask::R:
+    case PPE::Pixmap::EColorMask::RGB:
         format = EBlockFormat::DXT1;
         break;
-    case Core::Pixmap::EColorMask::RG:
-    case Core::Pixmap::EColorMask::RGBA:
+    case PPE::Pixmap::EColorMask::RG:
+    case PPE::Pixmap::EColorMask::RGBA:
         format = EBlockFormat::DXT5;
         break;
     default:

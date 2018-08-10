@@ -3,8 +3,7 @@
 // Create aliases for platforms and configurations (.lib)
 //------------------------------------------------------------------------------
 ; Inputs :
-;   <ProjectName>       name of the project
-;   <ProjectPath>       path containing the source files
+;   <ProjectName>           prefix of the
 //------------------------------------------------------------------------------
 
 // Per platform aliases

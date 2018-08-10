@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Core.h"
-
-#include "IO/VirtualFileSystem_fwd.h"
+#include "VirtualFileSystem_fwd.h"
 #include "VirtualFileSystemTrie.h"
 
 #include "Allocator/PoolAllocatorTag.h"
@@ -19,17 +17,15 @@ POOL_TAG_DECL(VirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FVirtualFileSystem : Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem> {
+class PPE_VFS_API FVirtualFileSystem : Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem> {
 public:
+    friend class FVirtualFileSystemStartup;
     typedef Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem> parent_type;
 
     using parent_type::Get;
 #ifdef WITH_PPE_ASSERT
     using parent_type::HasInstance;
 #endif
-    using parent_type::Destroy;
-
-    static void Create() { parent_type::Create(); }
 
     static FBasename TemporaryBasename(const FWStringView& prefix, const FWStringView& ext);
     static FFilename TemporaryFilename(const FWStringView& prefix, const FWStringView& ext);
@@ -47,7 +43,7 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FVirtualFileSystemStartup {
+class PPE_VFS_API FVirtualFileSystemStartup {
 public:
     static void Start();
     static void Shutdown();
@@ -62,4 +58,4 @@ public:
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#include "IO/VirtualFileSystem-inl.h"
+#include "VirtualFileSystem-inl.h"

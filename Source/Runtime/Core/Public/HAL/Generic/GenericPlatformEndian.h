@@ -12,7 +12,7 @@ enum class EEndianness {
     NetworkEndian   = BigEndian,
 };
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformEndian {
+struct PPE_CORE_API FGenericPlatformEndian {
 public: // must be defined for every platform
 
     STATIC_CONST_INTEGRAL(EEndianness, Endianness, EEndianness::LittleEndian);

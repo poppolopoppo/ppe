@@ -1,0 +1,17 @@
+#once
+{
+    .ModuleName = 'stb'
+    .ModuleDefines = { 'EXPORT_PPE_EXTERNAL_STB' }
+    .ModuleFiles =
+    {
+        'git/stb_dxt.h',
+        'git/stb_image.h',
+        'git/stb_image_resize.h',
+        'git/stb_image_write.h',
+    }
+    .ModuleIsolatedFiles =
+    {
+        ; header only library
+    }
+    #include "$BuildPath$/Templates/Module.bff"
+}

@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "FormatHelpers.h"
+#include "IO/FormatHelpers.h"
 
-#include "Format.h"
-#include "StreamProvider.h"
+#include "IO/Format.h"
+#include "IO/StreamProvider.h"
 
 #include "Maths/Units.h"
 #include "Memory/MemoryProvider.h"
@@ -165,11 +165,11 @@ FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FDurationInMs v) {
 FTextWriter& operator <<(FTextWriter& oss, const Fmt::FHexDump& hexDump) {
     const size_t totalBytes = hexDump.RawData.SizeInBytes();
     for (size_t offset = 0; offset < totalBytes; ) {
-        Core::Format(oss, "0x{0:#8X} ", offset);
+        PPE::Format(oss, "0x{0:#8X} ", offset);
         const size_t origin = offset;
         for (size_t row = 0; row < hexDump.BytesPerRow; ++row, ++offset) {
             if (offset < totalBytes)
-                Core::Format(oss, " {0:#2X}", (unsigned)hexDump.RawData[offset]);
+                PPE::Format(oss, " {0:#2X}", (unsigned)hexDump.RawData[offset]);
             else
                 oss << "   ";
         }
@@ -185,11 +185,11 @@ FTextWriter& operator <<(FTextWriter& oss, const Fmt::FHexDump& hexDump) {
 FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDump) {
     const size_t totalBytes = hexDump.RawData.SizeInBytes();
     for (size_t offset = 0; offset < totalBytes; ) {
-        Core::Format(oss, L"0x{0:#8X} ", offset);
+        PPE::Format(oss, L"0x{0:#8X} ", offset);
         const size_t origin = offset;
         for (size_t row = 0; row < hexDump.BytesPerRow; ++row, ++offset) {
             if (offset < totalBytes)
-                Core::Format(oss, L" {0:#2X}", (unsigned)hexDump.RawData[offset]);
+                PPE::Format(oss, L" {0:#2X}", (unsigned)hexDump.RawData[offset]);
             else
                 oss << L"   ";
         }
@@ -222,85 +222,85 @@ FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::TBasicIndent<wchar_t>& i
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, Fmt::EChar ch) {
     switch (ch) {
-    case Core::Fmt::LBrace:
+    case PPE::Fmt::LBrace:
         return oss << '{';
-    case Core::Fmt::RBrace:
+    case PPE::Fmt::RBrace:
         return oss << '}';
-    case Core::Fmt::LBracket:
+    case PPE::Fmt::LBracket:
         return oss << '[';
-    case Core::Fmt::RBracket:
+    case PPE::Fmt::RBracket:
         return oss << ']';
-    case Core::Fmt::LParenthese:
+    case PPE::Fmt::LParenthese:
         return oss << '(';
-    case Core::Fmt::RParenthese:
+    case PPE::Fmt::RParenthese:
         return oss << ')';
-    case Core::Fmt::Comma:
+    case PPE::Fmt::Comma:
         return oss << ',';
-    case Core::Fmt::Colon:
+    case PPE::Fmt::Colon:
         return oss << ':';
-    case Core::Fmt::SemiColon:
+    case PPE::Fmt::SemiColon:
         return oss << ';';
-    case Core::Fmt::Dot:
+    case PPE::Fmt::Dot:
         return oss << '.';
-    case Core::Fmt::Dollar:
+    case PPE::Fmt::Dollar:
         return oss << '$';
-    case Core::Fmt::Question:
+    case PPE::Fmt::Question:
         return oss << '?';
-    case Core::Fmt::Add:
+    case PPE::Fmt::Add:
         return oss << '+';
-    case Core::Fmt::Sub:
+    case PPE::Fmt::Sub:
         return oss << '-';
-    case Core::Fmt::Mul:
+    case PPE::Fmt::Mul:
         return oss << '*';
-    case Core::Fmt::Div:
+    case PPE::Fmt::Div:
         return oss << '/';
-    case Core::Fmt::Mod:
+    case PPE::Fmt::Mod:
         return oss << '%';
-    case Core::Fmt::Pow:
+    case PPE::Fmt::Pow:
         return oss << "**";
-    case Core::Fmt::Increment:
+    case PPE::Fmt::Increment:
         return oss << "++";
-    case Core::Fmt::Decrement:
+    case PPE::Fmt::Decrement:
         return oss << "--";
-    case Core::Fmt::LShift:
+    case PPE::Fmt::LShift:
         return oss << "<<";
-    case Core::Fmt::RShift:
+    case PPE::Fmt::RShift:
         return oss << ">>";
-    case Core::Fmt::And:
+    case PPE::Fmt::And:
         return oss << '&';
-    case Core::Fmt::Or:
+    case PPE::Fmt::Or:
         return oss << '|';
-    case Core::Fmt::Not:
+    case PPE::Fmt::Not:
         return oss << '!';
-    case Core::Fmt::Xor:
+    case PPE::Fmt::Xor:
         return oss << '^';
-    case Core::Fmt::Complement:
+    case PPE::Fmt::Complement:
         return oss << '~';
-    case Core::Fmt::Assignment:
+    case PPE::Fmt::Assignment:
         return oss << '=';
-    case Core::Fmt::Equals:
+    case PPE::Fmt::Equals:
         return oss << "==";
-    case Core::Fmt::NotEquals:
+    case PPE::Fmt::NotEquals:
         return oss << "!=";
-    case Core::Fmt::Less:
+    case PPE::Fmt::Less:
         return oss << '<';
-    case Core::Fmt::LessOrEqual:
+    case PPE::Fmt::LessOrEqual:
         return oss << "<=";
-    case Core::Fmt::Greater:
+    case PPE::Fmt::Greater:
         return oss << '>';
-    case Core::Fmt::GreaterOrEqual:
+    case PPE::Fmt::GreaterOrEqual:
         return oss << ">=";
-    case Core::Fmt::DotDot:
+    case PPE::Fmt::DotDot:
         return oss << "..";
-    case Core::Fmt::Sharp:
+    case PPE::Fmt::Sharp:
         return oss << '#';
-    case Core::Fmt::Quote:
+    case PPE::Fmt::Quote:
         return oss << '\'';
-    case Core::Fmt::DoubleQuote:
+    case PPE::Fmt::DoubleQuote:
         return oss << '"';
-    case Core::Fmt::Space:
+    case PPE::Fmt::Space:
         return oss << ' ';
-    case Core::Fmt::Tab:
+    case PPE::Fmt::Tab:
         return oss << ' ';
     }
     AssertNotImplemented();
@@ -308,85 +308,85 @@ FTextWriter& operator <<(FTextWriter& oss, Fmt::EChar ch) {
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, Fmt::EChar ch) {
     switch (ch) {
-    case Core::Fmt::LBrace:
+    case PPE::Fmt::LBrace:
         return oss << L'{';
-    case Core::Fmt::RBrace:
+    case PPE::Fmt::RBrace:
         return oss << L'}';
-    case Core::Fmt::LBracket:
+    case PPE::Fmt::LBracket:
         return oss << L'[';
-    case Core::Fmt::RBracket:
+    case PPE::Fmt::RBracket:
         return oss << L']';
-    case Core::Fmt::LParenthese:
+    case PPE::Fmt::LParenthese:
         return oss << L'(';
-    case Core::Fmt::RParenthese:
+    case PPE::Fmt::RParenthese:
         return oss << L')';
-    case Core::Fmt::Comma:
+    case PPE::Fmt::Comma:
         return oss << L',';
-    case Core::Fmt::Colon:
+    case PPE::Fmt::Colon:
         return oss << L':';
-    case Core::Fmt::SemiColon:
+    case PPE::Fmt::SemiColon:
         return oss << L';';
-    case Core::Fmt::Dot:
+    case PPE::Fmt::Dot:
         return oss << L'.';
-    case Core::Fmt::Dollar:
+    case PPE::Fmt::Dollar:
         return oss << L'$';
-    case Core::Fmt::Question:
+    case PPE::Fmt::Question:
         return oss << L'?';
-    case Core::Fmt::Add:
+    case PPE::Fmt::Add:
         return oss << L'+';
-    case Core::Fmt::Sub:
+    case PPE::Fmt::Sub:
         return oss << L'-';
-    case Core::Fmt::Mul:
+    case PPE::Fmt::Mul:
         return oss << L'*';
-    case Core::Fmt::Div:
+    case PPE::Fmt::Div:
         return oss << L'/';
-    case Core::Fmt::Mod:
+    case PPE::Fmt::Mod:
         return oss << L'%';
-    case Core::Fmt::Pow:
+    case PPE::Fmt::Pow:
         return oss << L"**";
-    case Core::Fmt::Increment:
+    case PPE::Fmt::Increment:
         return oss << L"++";
-    case Core::Fmt::Decrement:
+    case PPE::Fmt::Decrement:
         return oss << L"--";
-    case Core::Fmt::LShift:
+    case PPE::Fmt::LShift:
         return oss << L"<<";
-    case Core::Fmt::RShift:
+    case PPE::Fmt::RShift:
         return oss << L">>";
-    case Core::Fmt::And:
+    case PPE::Fmt::And:
         return oss << L'&';
-    case Core::Fmt::Or:
+    case PPE::Fmt::Or:
         return oss << L'|';
-    case Core::Fmt::Not:
+    case PPE::Fmt::Not:
         return oss << L'!';
-    case Core::Fmt::Xor:
+    case PPE::Fmt::Xor:
         return oss << L'^';
-    case Core::Fmt::Complement:
+    case PPE::Fmt::Complement:
         return oss << L'~';
-    case Core::Fmt::Assignment:
+    case PPE::Fmt::Assignment:
         return oss << L'=';
-    case Core::Fmt::Equals:
+    case PPE::Fmt::Equals:
         return oss << L"==";
-    case Core::Fmt::NotEquals:
+    case PPE::Fmt::NotEquals:
         return oss << L"!=";
-    case Core::Fmt::Less:
+    case PPE::Fmt::Less:
         return oss << L'<';
-    case Core::Fmt::LessOrEqual:
+    case PPE::Fmt::LessOrEqual:
         return oss << L"<=";
-    case Core::Fmt::Greater:
+    case PPE::Fmt::Greater:
         return oss << L'>';
-    case Core::Fmt::GreaterOrEqual:
+    case PPE::Fmt::GreaterOrEqual:
         return oss << L">=";
-    case Core::Fmt::DotDot:
+    case PPE::Fmt::DotDot:
         return oss << L"..";
-    case Core::Fmt::Sharp:
+    case PPE::Fmt::Sharp:
         return oss << L'#';
-    case Core::Fmt::Quote:
+    case PPE::Fmt::Quote:
         return oss << L'\'';
-    case Core::Fmt::DoubleQuote:
+    case PPE::Fmt::DoubleQuote:
         return oss << L'"';
-    case Core::Fmt::Space:
+    case PPE::Fmt::Space:
         return oss << L' ';
-    case Core::Fmt::Tab:
+    case PPE::Fmt::Tab:
         return oss << L' ';
     }
     AssertNotImplemented();

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformCallstack.h"
+#include "HAL/Windows/WindowsPlatformCallstack.h"
 
 #ifdef PLATFORM_WINDOWS
 
@@ -8,9 +8,9 @@
 #include "IO/Format.h"
 #include "IO/StringBuilder.h"
 
-#include "DbgHelpWrapper.h"
-#include "LastError.h"
-#include "WindowsPlatformIncludes.h"
+#include "HAL/Windows/DbgHelpWrapper.h"
+#include "HAL/Windows/LastError.h"
+#include "HAL/Windows/WindowsPlatformIncludes.h"
 
 #include <TlHelp32.h>
 #include <wchar.h>

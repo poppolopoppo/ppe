@@ -7,7 +7,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformCrash {
+struct PPE_CORE_API FGenericPlatformCrash {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasCrashDump, false);
     STATIC_CONST_INTEGRAL(bool, HasErrorReport, false);

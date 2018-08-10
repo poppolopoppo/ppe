@@ -8,7 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformCallstack : FGenericPlatformCallstack {
+struct PPE_CORE_API FWindowsPlatformCallstack : FGenericPlatformCallstack {
 public:
     STATIC_CONST_INTEGRAL(bool, HasSymbols, true);
     STATIC_CONST_INTEGRAL(size_t, MaxStackDepth, 62);

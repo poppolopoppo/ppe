@@ -47,7 +47,7 @@ void FBasicWindowHelper::SetWindowSize(FBasicWindow *wnd, void *handle, size_t w
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#define BASICWINDOW_CLASNAME L"Core::Graphics::BasicWindowClass"
+#define BASICWINDOW_CLASNAME L"PPE::Graphics::BasicWindowClass"
 //----------------------------------------------------------------------------
 static LRESULT CALLBACK BasicWindowProc_(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam) {
     FBasicWindow *wnd = nullptr;

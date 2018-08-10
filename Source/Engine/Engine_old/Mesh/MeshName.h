@@ -16,7 +16,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename _Tag>
-using TMeshToken = Core::TToken<
+using TMeshToken = PPE::TToken<
     _Tag,
     char,
     CaseSensitive::False,

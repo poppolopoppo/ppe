@@ -23,10 +23,10 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-typedef Core::TRefPtr<IEffectPasses> PEffectPasses;
-typedef Core::TRefPtr<const IEffectPasses> PCEffectPasses;
-typedef Core::TSafePtr<IEffectPasses> SEffectPasses;
-typedef Core::TSafePtr<const IEffectPasses> SCEffectPasses;
+typedef PPE::TRefPtr<IEffectPasses> PEffectPasses;
+typedef PPE::TRefPtr<const IEffectPasses> PCEffectPasses;
+typedef PPE::TSafePtr<IEffectPasses> SEffectPasses;
+typedef PPE::TSafePtr<const IEffectPasses> SCEffectPasses;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

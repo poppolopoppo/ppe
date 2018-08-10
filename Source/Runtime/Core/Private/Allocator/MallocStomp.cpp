@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "MallocStomp.h"
+#include "Allocator/MallocStomp.h"
 
 #ifdef WITH_PPE_MALLOCSTOMP
 

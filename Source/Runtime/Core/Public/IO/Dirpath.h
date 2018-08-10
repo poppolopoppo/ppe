@@ -2,8 +2,8 @@
 
 #include "Core.h"
 
-#include "IO/FS/Dirname.h"
-#include "IO/FS/FileSystemProperties.h"
+#include "IO/Dirname.h"
+#include "IO/FileSystemProperties.h"
 
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
@@ -19,7 +19,7 @@ class FFilename;
 FWD_REFPTR(FileSystemNode);
 class FMountingPoint;
 //----------------------------------------------------------------------------
-class PPE_API FDirpath {
+class PPE_CORE_API FDirpath {
 public:
     enum : size_t { MaxDepth = 16 };
 
@@ -32,13 +32,13 @@ public:
     FDirpath(const FDirpath& other);
     FDirpath& operator =(const FDirpath& other);
 
-    FDirpath(const Core::FMountingPoint& mountingPoint, const TMemoryView<const FDirname>& path);
+    FDirpath(const PPE::FMountingPoint& mountingPoint, const TMemoryView<const FDirname>& path);
 
     FDirpath(const FDirpath& other, const FDirname& append);
     FDirpath(const FDirpath& other, const TMemoryView<const FDirname>& append);
 
     template <typename _It>
-    FDirpath(const Core::FMountingPoint& mountingPoint, _It&& ibegin, _It&& iend)
+    FDirpath(const PPE::FMountingPoint& mountingPoint, _It&& ibegin, _It&& iend)
     :   FDirpath(mountingPoint, MakeView(ibegin, iend)) {}
 
     FDirpath(std::initializer_list<const FileSystem::char_type *> path);
@@ -55,10 +55,10 @@ public:
     FDirpath& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
 
     size_t Depth() const;
-    Core::FMountingPoint MountingPoint() const;
-    Core::FDirname LastDirname() const;
+    PPE::FMountingPoint MountingPoint() const;
+    PPE::FDirname LastDirname() const;
 
-    size_t ExpandPath(Core::FMountingPoint& mountingPoint, const TMemoryView<FDirname>& dirnames) const; // returns dirnames size
+    size_t ExpandPath(PPE::FMountingPoint& mountingPoint, const TMemoryView<FDirname>& dirnames) const; // returns dirnames size
 
     void AssignTokens(const TMemoryView<const FFileSystemToken>& tokens);
     void ExpandTokens(const TMemoryView<FFileSystemToken>& tokens) const;
@@ -124,8 +124,8 @@ inline hash_t hash_value(const FDirpath& dirpath) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const FDirpath& dirpath);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDirpath& dirpath);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FDirpath& dirpath);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDirpath& dirpath);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

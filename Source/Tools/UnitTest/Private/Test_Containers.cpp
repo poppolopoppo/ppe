@@ -1172,7 +1172,7 @@ void Test_Containers() {
 
     }
 
-    Core::FCoreModule::ClearAll_UnusedMemory();
+    PPE::FCoreModule::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

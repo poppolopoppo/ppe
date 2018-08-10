@@ -1,13 +1,13 @@
 #include "stdafx.h"
 
-#include "Callstack.h"
+#include "Diagnostic/Callstack.h"
 
 #include "HAL/PlatformCallstack.h"
 #include "HAL/PlatformMemory.h"
 #include "HAL/PlatformHash.h"
 
-#include "DecodedCallstack.h"
-#include "Logger.h"
+#include "Diagnostic/DecodedCallstack.h"
+#include "Diagnostic/Logger.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

@@ -35,8 +35,8 @@ PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'const uc16' to
 
 #ifndef EXPORT_PPE_EXTERNAL_DOUBLECONVERSION
 
-#   pragma include_alias(<double-conversion/utils.h>, <Core.External/double-conversion/double-conversion/utils.h>)
-#   include "Core.External/double-conversion/double-conversion/double-conversion.h"
+#   pragma include_alias(<double-conversion/utils.h>, <External/double-conversion/git/double-conversion/utils.h>)
+#   include "External/double-conversion/git/double-conversion/double-conversion.h"
 
 // clean the mess done by xxHash-config.h :
 

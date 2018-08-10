@@ -1,10 +1,11 @@
 #include "stdafx.h"
 
-#include "Listener.h"
+#include "Socket/Listener.h"
+
+#include "Socket/Socket.h"
+#include "Socket/SocketBuffered.h"
 
 #include "NetworkIncludes.h"
-#include "Socket.h"
-#include "SocketBuffered.h"
 
 #include "Diagnostic/Logger.h"
 

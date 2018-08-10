@@ -2,15 +2,15 @@
 
 #include "Serialize.h"
 
-#include "Exceptions.h"
 #include "Lexer/Location.h"
 #include "Lexer/TextHeap.h"
+#include "SerializeExceptions.h"
 
 #include "Allocator/LinearHeapAllocator.h"
 #include "Container/AssociativeVector.h"
 #include "Container/IntrusiveList.h"
 #include "Container/Vector.h"
-#include "IO/FS/Filename.h"
+#include "IO/Filename.h"
 #include "IO/TextWriter_fwd.h"
 
 namespace PPE {
@@ -20,9 +20,9 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMarkupException : public Core::Serialize::FSerializeException {
+class FMarkupException : public PPE::Serialize::FSerializeException {
 public:
-    typedef Core::Serialize::FSerializeException parent_type;
+    typedef PPE::Serialize::FSerializeException parent_type;
 
     FMarkupException(const char *what)
         : FMarkupException(what, Lexer::FLocation()) {}

@@ -1,0 +1,18 @@
+#once
+{
+    .ModuleName = 'Application'
+    .ModuleDefines = { 'EXPORT_PPE_APPLICATION' }
+    .ModulePublicDependencies =
+    {
+        'Runtime/Core',
+    }
+    .ModulePrivateDependencies =
+    {
+    }
+    .ModuleIsolatedFiles =
+    {
+        'Private/Application.cpp'
+    }
+    .UnityNumFiles = 1 // generated
+    #include "$BuildPath$/Templates/Module.bff"
+}

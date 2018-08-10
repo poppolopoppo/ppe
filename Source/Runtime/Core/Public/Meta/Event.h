@@ -14,11 +14,11 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #define PUBLIC_EVENT(_NAME, _RET, ...) \
     public: \
-        Core::TPublicEvent< TDelegate<_RET (*)(__VA_ARGS__)> > _NAME() { \
-            return Core::TPublicEvent< TDelegate<_RET (*)(__VA_ARGS__)> >( CONCAT(_, _NAME) ); \
+        PPE::TPublicEvent< TDelegate<_RET (*)(__VA_ARGS__)> > _NAME() { \
+            return PPE::TPublicEvent< TDelegate<_RET (*)(__VA_ARGS__)> >( CONCAT(_, _NAME) ); \
         } \
     private: \
-        Core::TEvent< TDelegate<_RET (*)(__VA_ARGS__)> > CONCAT(_, _NAME)
+        PPE::TEvent< TDelegate<_RET (*)(__VA_ARGS__)> > CONCAT(_, _NAME)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

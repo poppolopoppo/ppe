@@ -12,10 +12,10 @@
 [
     .ProjectSolutionFolder ? ''
     .Path = .ProjectSolutionFolder
-    .Projects = { "$ProjectName$-Proj" }
+    .Projects = { "$ProjectName$-VCXProject" }
 ]
 
 .ProjectSolutionFolder ? '^$'
 ^SolutionFolders + .SolutionFolder
 
-Print( "Registered project <$ProjectSolutionFolder$/$ProjectName$>" )
+Print( "Registered project <$ProjectName$>" )

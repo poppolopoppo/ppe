@@ -331,7 +331,7 @@ TScalarMatrix<T, _Height, _Width> TScalarMatrix<T, _Width, _Height>::Transpose()
 template <typename T, size_t _Width, size_t _Height>
 void TScalarMatrix<T, _Width, _Height>::Swap(TScalarMatrix& other) {
     using std::swap;
-    using Core::swap;
+    using PPE::swap;
     for (size_t i = 0; i < Dim; ++i)
         swap(_data.raw[i], other._data.raw[i]);
 }

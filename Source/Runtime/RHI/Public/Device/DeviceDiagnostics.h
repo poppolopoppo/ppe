@@ -67,14 +67,14 @@ template <> struct TDiagnostics_EventScope<FAbstractDeviceAPIEncapsulator*> {
 #ifdef WITH_PPE_GRAPHICS_DIAGNOSTICS
 //----------------------------------------------------------------------------
 #define GRAPHICS_DIAGNOSTICS_SCOPEEVENT(_DiagnosticsOrEncapsulator, _Name) \
-    const Core::Graphics::details::TDiagnostics_EventScope< Meta::TDecay<decltype(_DiagnosticsOrEncapsulator)> > \
+    const PPE::Graphics::details::TDiagnostics_EventScope< Meta::TDecay<decltype(_DiagnosticsOrEncapsulator)> > \
         ANONYMIZE(Graphics_Diagnostics_ScopeEvent)((_DiagnosticsOrEncapsulator), (_Name))
 #define GRAPHICS_DIAGNOSTICS_BEGINEVENT(_DiagnosticsOrEncapsulator, _Name) \
-    Core::Graphics::Diagnostics_BeginEvent((_DiagnosticsOrEncapsulator), (_Name))
+    PPE::Graphics::Diagnostics_BeginEvent((_DiagnosticsOrEncapsulator), (_Name))
 #define GRAPHICS_DIAGNOSTICS_ENDEVENT(_DiagnosticsOrEncapsulator) \
-    Core::Graphics::Diagnostics_EndEvent(_DiagnosticsOrEncapsulator)
+    PPE::Graphics::Diagnostics_EndEvent(_DiagnosticsOrEncapsulator)
 #define GRAPHICS_DIAGNOSTICS_SETMARKER(_DiagnosticsOrEncapsulator, _Name) \
-    Core::Graphics::Diagnostics_SetMarker((_DiagnosticsOrEncapsulator), (_Name))
+    PPE::Graphics::Diagnostics_SetMarker((_DiagnosticsOrEncapsulator), (_Name))
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------

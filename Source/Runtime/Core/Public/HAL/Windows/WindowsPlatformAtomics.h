@@ -12,7 +12,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformAtomics : FGenericPlatformAtomics {
+struct PPE_CORE_API FWindowsPlatformAtomics : FGenericPlatformAtomics {
 public:
     STATIC_CONST_INTEGRAL(bool, HasAtomic32, true);
     STATIC_CONST_INTEGRAL(bool, HasAtomic64, sizeof(i64) == sizeof(void*));

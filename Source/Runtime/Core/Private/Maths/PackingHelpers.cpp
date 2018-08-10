@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "PackingHelpers.h"
+#include "Maths/PackingHelpers.h"
 
 #include "Maths/ScalarVectorHelpers.h"
 #include "Maths/Quaternion.h"

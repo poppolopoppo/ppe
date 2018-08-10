@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Assert.h"
+#include "Meta/Assert.h"
 
 #if defined(WITH_PPE_ASSERT) || defined(WITH_PPE_ASSERT_RELEASE)
 
@@ -12,7 +12,7 @@
 #include "IO/StringView.h"
 
 namespace PPE {
-LOG_CATEGORY(PPE_API, Assertion)
+LOG_CATEGORY(PPE_CORE_API, Assertion)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

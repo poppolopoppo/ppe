@@ -1,7 +1,7 @@
 #once
 {
     .ProjectName = 'Core.Lattice'
-    .ProjectPath = '$SourceDirectory$/Core.Lattice'
+    .ProjectPath = '$SourcePath$/Core.Lattice'
     .ProjectSolutionFolder = 'Core.Content'
     .ProjectDefines = { 'EXPORT_CORE_LATTICE' }
     .UnityNumFiles = 1
@@ -10,5 +10,5 @@
         'Lattice.cpp',
         'Lattice_extern.cpp',
     }
-    #include "../../Build/Templates/Library.bff"
+    #include "$BuildPath$/Templates/Library.bff"
 }

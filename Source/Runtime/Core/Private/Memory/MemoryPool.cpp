@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "MemoryPool.h"
+#include "Memory/MemoryPool.h"
 
 #include "Allocator/Malloc.h"
 #include "Diagnostic/Logger.h"
@@ -8,7 +8,7 @@
 #include "Memory/MemoryTracking.h"
 #include "Thread/AtomicSpinLock.h"
 
-#include "VirtualMemory.h"
+#include "Memory/VirtualMemory.h"
 
 //----------------------------------------------------------------------------
 // Turn to 1 to disable pool allocation (useful for memory debugging) :
@@ -16,7 +16,7 @@
 #define USE_PPE_MEMORYPOOL_FALLBACK_TO_MALLOC (USE_PPE_MEMORY_DEBUGGING) //%_NOCOMMIT%
 
 namespace PPE {
-EXTERN_LOG_CATEGORY(PPE_API, MemoryDomain)
+EXTERN_LOG_CATEGORY(PPE_CORE_API, MemoryDomain)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -53,7 +53,7 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(4324) // warning C4324: 'Core::FMemoryPoolChunk' : structure was padded due to __declspec(align())
+PRAGMA_MSVC_WARNING_DISABLE(4324) // warning C4324: 'PPE::FMemoryPoolChunk' : structure was padded due to __declspec(align())
 class ALIGN(16) FMemoryPoolChunk {
 public:
     struct FBlock { FBlock *Next; };
@@ -399,7 +399,7 @@ void* FMemoryPool::Allocate(FMemoryTracking *trackingData /* = nullptr */) {
     if (trackingData)
         trackingData->Allocate(1, BlockSize());
 
-    return Core::aligned_malloc(BlockSize(), ALLOCATION_BOUNDARY);
+    return PPE::aligned_malloc(BlockSize(), ALLOCATION_BOUNDARY);
 
 #else
 
@@ -436,7 +436,7 @@ void FMemoryPool::Deallocate(void *ptr, FMemoryTracking *trackingData /* = nullp
     UNUSED(trackingData);
 #endif
 #if USE_PPE_MEMORYPOOL_FALLBACK_TO_MALLOC
-    Core::aligned_free(ptr);
+    PPE::aligned_free(ptr);
 
     if (trackingData)
         trackingData->Deallocate(1, BlockSize());

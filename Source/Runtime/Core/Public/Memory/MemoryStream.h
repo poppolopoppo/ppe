@@ -12,13 +12,13 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define MEMORYSTREAM(_DOMAIN) \
-    ::Core::TMemoryStream<ALLOCATOR(_DOMAIN, u8) >
+    ::PPE::TMemoryStream<ALLOCATOR(_DOMAIN, u8) >
 //----------------------------------------------------------------------------
 #define MEMORYSTREAM_ALIGNED(_DOMAIN, _ALIGNMENT) \
-    ::Core::TMemoryStream<ALIGNED_ALLOCATOR(_DOMAIN, u8, _ALIGNMENT)>
+    ::PPE::TMemoryStream<ALIGNED_ALLOCATOR(_DOMAIN, u8, _ALIGNMENT)>
 //----------------------------------------------------------------------------
 #define MEMORYSTREAM_STACK() \
-    ::Core::TMemoryStream<STACK_ALLOCATOR(u8)>
+    ::PPE::TMemoryStream<STACK_ALLOCATOR(u8)>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

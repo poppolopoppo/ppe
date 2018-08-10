@@ -8,7 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformFile : FGenericPlatformFile {
+struct PPE_CORE_API FWindowsPlatformFile : FGenericPlatformFile {
 public:
     STATIC_CONST_INTEGRAL(bool, IsCaseSensitive, false);
     STATIC_CONST_INTEGRAL(size_t, MaxPathLength, 260);
@@ -16,7 +16,7 @@ public:
     STATIC_CONST_INTEGRAL(wchar_t, PathSeparatorAlt, L'/');
 
     using char_type = wchar_t;
-    using FStat = FWindowsPlatformFile::FStat;
+    using FStat = FGenericPlatformFile::FStat;
 
     static FWString TemporaryDirectory();
     static FWString UserDirectory();
@@ -41,6 +41,15 @@ public:
 
     static bool RemoveDirectory(const char_type* dirpath, bool force);
     static bool RemoveFile(const char_type* filename);
+
+    static bool SetFileTime(
+        const char_type* filename,
+        const FTimestamp* pCreatedAtIFN,
+        const FTimestamp* pLastAccessIFN,
+        const FTimestamp* pLastModifiedIFN);
+
+    static bool RollFile(const char_type* filename);
+    static FWString MakeTemporaryFile(const char_type* prefix, const char_type* extname);
 
 };
 //----------------------------------------------------------------------------

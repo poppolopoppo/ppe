@@ -554,61 +554,61 @@ EShaderCompilerFlags D3D11CompileFlagsToShaderCompilerFlags(UINT  value) {
 LPCSTR ShaderProfileTypeToD3D11Target(EShaderProgramType program, EShaderProfileType profile) {
     switch (profile)
     {
-    case Core::Graphics::EShaderProfileType::ShaderModel5:
+    case PPE::Graphics::EShaderProfileType::ShaderModel5:
         switch (program)
         {
-        case Core::Graphics::EShaderProgramType::Vertex:
+        case PPE::Graphics::EShaderProgramType::Vertex:
             return "vs_5_0";
-        case Core::Graphics::EShaderProgramType::Hull:
+        case PPE::Graphics::EShaderProgramType::Hull:
             return "hs_5_0";
-        case Core::Graphics::EShaderProgramType::Domain:
+        case PPE::Graphics::EShaderProgramType::Domain:
             return "ds_5_0";
-        case Core::Graphics::EShaderProgramType::Pixel:
+        case PPE::Graphics::EShaderProgramType::Pixel:
             return "ps_5_0";
-        case Core::Graphics::EShaderProgramType::Geometry:
+        case PPE::Graphics::EShaderProgramType::Geometry:
             return "gs_5_0";
-        case Core::Graphics::EShaderProgramType::Compute:
+        case PPE::Graphics::EShaderProgramType::Compute:
             return "cs_5_0";
         default:
             AssertNotImplemented();
         }
         break;
-    case Core::Graphics::EShaderProfileType::ShaderModel4_1:
+    case PPE::Graphics::EShaderProfileType::ShaderModel4_1:
         switch (program)
         {
-        case Core::Graphics::EShaderProgramType::Vertex:
+        case PPE::Graphics::EShaderProgramType::Vertex:
             return "vs_4_1";
-        case Core::Graphics::EShaderProgramType::Pixel:
+        case PPE::Graphics::EShaderProgramType::Pixel:
             return "ps_4_1";
-        case Core::Graphics::EShaderProgramType::Geometry:
+        case PPE::Graphics::EShaderProgramType::Geometry:
             return "gs_4_1";
-        case Core::Graphics::EShaderProgramType::Compute:
+        case PPE::Graphics::EShaderProgramType::Compute:
             return "cs_4_1";
         default:
             AssertNotImplemented();
         }
         break;
-    case Core::Graphics::EShaderProfileType::ShaderModel4:
+    case PPE::Graphics::EShaderProfileType::ShaderModel4:
         switch (program)
         {
-        case Core::Graphics::EShaderProgramType::Vertex:
+        case PPE::Graphics::EShaderProgramType::Vertex:
             return "vs_4_0";
-        case Core::Graphics::EShaderProgramType::Pixel:
+        case PPE::Graphics::EShaderProgramType::Pixel:
             return "ps_4_0";
-        case Core::Graphics::EShaderProgramType::Geometry:
+        case PPE::Graphics::EShaderProgramType::Geometry:
             return "gs_4_0";
-        case Core::Graphics::EShaderProgramType::Compute:
+        case PPE::Graphics::EShaderProgramType::Compute:
             return "cs_4_0";
         default:
             AssertNotImplemented();
         }
         break;
-    case Core::Graphics::EShaderProfileType::ShaderModel3:
+    case PPE::Graphics::EShaderProfileType::ShaderModel3:
         switch (program)
         {
-        case Core::Graphics::EShaderProgramType::Vertex:
+        case PPE::Graphics::EShaderProgramType::Vertex:
             return "vs_3_0";
-        case Core::Graphics::EShaderProgramType::Pixel:
+        case PPE::Graphics::EShaderProgramType::Pixel:
             return "ps_3_0";
         default:
             AssertNotImplemented();

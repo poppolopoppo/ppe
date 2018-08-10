@@ -26,7 +26,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename _Tag>
-using MaterialToken = Core::EToken<
+using MaterialToken = PPE::EToken<
     _Tag,
     char,
     CaseSensitive::False,

@@ -128,173 +128,173 @@ static constexpr EKeyboardKey GEachKeyboardKeys[] = {
 FStringView KeyboardKeyToCStr(EKeyboardKey value) {
     switch (value)
     {
-    case Core::Engine::EKeyboardKey::_0:
+    case PPE::Engine::EKeyboardKey::_0:
         return MakeStringView("0");
-    case Core::Engine::EKeyboardKey::_1:
+    case PPE::Engine::EKeyboardKey::_1:
         return MakeStringView("1");
-    case Core::Engine::EKeyboardKey::_2:
+    case PPE::Engine::EKeyboardKey::_2:
         return MakeStringView("2");
-    case Core::Engine::EKeyboardKey::_3:
+    case PPE::Engine::EKeyboardKey::_3:
         return MakeStringView("3");
-    case Core::Engine::EKeyboardKey::_4:
+    case PPE::Engine::EKeyboardKey::_4:
         return MakeStringView("4");
-    case Core::Engine::EKeyboardKey::_5:
+    case PPE::Engine::EKeyboardKey::_5:
         return MakeStringView("5");
-    case Core::Engine::EKeyboardKey::_6:
+    case PPE::Engine::EKeyboardKey::_6:
         return MakeStringView("6");
-    case Core::Engine::EKeyboardKey::_7:
+    case PPE::Engine::EKeyboardKey::_7:
         return MakeStringView("7");
-    case Core::Engine::EKeyboardKey::_8:
+    case PPE::Engine::EKeyboardKey::_8:
         return MakeStringView("8");
-    case Core::Engine::EKeyboardKey::_9:
+    case PPE::Engine::EKeyboardKey::_9:
         return MakeStringView("9");
-    case Core::Engine::EKeyboardKey::A:
+    case PPE::Engine::EKeyboardKey::A:
         return MakeStringView("A");
-    case Core::Engine::EKeyboardKey::B:
+    case PPE::Engine::EKeyboardKey::B:
         return MakeStringView("B");
-    case Core::Engine::EKeyboardKey::C:
+    case PPE::Engine::EKeyboardKey::C:
         return MakeStringView("C");
-    case Core::Engine::EKeyboardKey::D:
+    case PPE::Engine::EKeyboardKey::D:
         return MakeStringView("D");
-    case Core::Engine::EKeyboardKey::E:
+    case PPE::Engine::EKeyboardKey::E:
         return MakeStringView("E");
-    case Core::Engine::EKeyboardKey::F:
+    case PPE::Engine::EKeyboardKey::F:
         return MakeStringView("F");
-    case Core::Engine::EKeyboardKey::G:
+    case PPE::Engine::EKeyboardKey::G:
         return MakeStringView("G");
-    case Core::Engine::EKeyboardKey::H:
+    case PPE::Engine::EKeyboardKey::H:
         return MakeStringView("H");
-    case Core::Engine::EKeyboardKey::I:
+    case PPE::Engine::EKeyboardKey::I:
         return MakeStringView("I");
-    case Core::Engine::EKeyboardKey::J:
+    case PPE::Engine::EKeyboardKey::J:
         return MakeStringView("J");
-    case Core::Engine::EKeyboardKey::K:
+    case PPE::Engine::EKeyboardKey::K:
         return MakeStringView("K");
-    case Core::Engine::EKeyboardKey::L:
+    case PPE::Engine::EKeyboardKey::L:
         return MakeStringView("L");
-    case Core::Engine::EKeyboardKey::M:
+    case PPE::Engine::EKeyboardKey::M:
         return MakeStringView("M");
-    case Core::Engine::EKeyboardKey::N:
+    case PPE::Engine::EKeyboardKey::N:
         return MakeStringView("N");
-    case Core::Engine::EKeyboardKey::O:
+    case PPE::Engine::EKeyboardKey::O:
         return MakeStringView("O");
-    case Core::Engine::EKeyboardKey::P:
+    case PPE::Engine::EKeyboardKey::P:
         return MakeStringView("P");
-    case Core::Engine::EKeyboardKey::Q:
+    case PPE::Engine::EKeyboardKey::Q:
         return MakeStringView("Q");
-    case Core::Engine::EKeyboardKey::R:
+    case PPE::Engine::EKeyboardKey::R:
         return MakeStringView("R");
-    case Core::Engine::EKeyboardKey::S:
+    case PPE::Engine::EKeyboardKey::S:
         return MakeStringView("S");
-    case Core::Engine::EKeyboardKey::T:
+    case PPE::Engine::EKeyboardKey::T:
         return MakeStringView("T");
-    case Core::Engine::EKeyboardKey::U:
+    case PPE::Engine::EKeyboardKey::U:
         return MakeStringView("U");
-    case Core::Engine::EKeyboardKey::V:
+    case PPE::Engine::EKeyboardKey::V:
         return MakeStringView("V");
-    case Core::Engine::EKeyboardKey::W:
+    case PPE::Engine::EKeyboardKey::W:
         return MakeStringView("W");
-    case Core::Engine::EKeyboardKey::X:
+    case PPE::Engine::EKeyboardKey::X:
         return MakeStringView("X");
-    case Core::Engine::EKeyboardKey::Y:
+    case PPE::Engine::EKeyboardKey::Y:
         return MakeStringView("Y");
-    case Core::Engine::EKeyboardKey::Z:
+    case PPE::Engine::EKeyboardKey::Z:
         return MakeStringView("Z");
-    case Core::Engine::EKeyboardKey::Numpad0:
+    case PPE::Engine::EKeyboardKey::Numpad0:
         return MakeStringView("Numpad0");
-    case Core::Engine::EKeyboardKey::Numpad1:
+    case PPE::Engine::EKeyboardKey::Numpad1:
         return MakeStringView("Numpad1");
-    case Core::Engine::EKeyboardKey::Numpad2:
+    case PPE::Engine::EKeyboardKey::Numpad2:
         return MakeStringView("Numpad2");
-    case Core::Engine::EKeyboardKey::Numpad3:
+    case PPE::Engine::EKeyboardKey::Numpad3:
         return MakeStringView("Numpad3");
-    case Core::Engine::EKeyboardKey::Numpad4:
+    case PPE::Engine::EKeyboardKey::Numpad4:
         return MakeStringView("Numpad4");
-    case Core::Engine::EKeyboardKey::Numpad5:
+    case PPE::Engine::EKeyboardKey::Numpad5:
         return MakeStringView("Numpad5");
-    case Core::Engine::EKeyboardKey::Numpad6:
+    case PPE::Engine::EKeyboardKey::Numpad6:
         return MakeStringView("Numpad6");
-    case Core::Engine::EKeyboardKey::Numpad7:
+    case PPE::Engine::EKeyboardKey::Numpad7:
         return MakeStringView("Numpad7");
-    case Core::Engine::EKeyboardKey::Numpad8:
+    case PPE::Engine::EKeyboardKey::Numpad8:
         return MakeStringView("Numpad8");
-    case Core::Engine::EKeyboardKey::Numpad9:
+    case PPE::Engine::EKeyboardKey::Numpad9:
         return MakeStringView("Numpad9");
-    case Core::Engine::EKeyboardKey::Add:
+    case PPE::Engine::EKeyboardKey::Add:
         return MakeStringView("Add");
-    case Core::Engine::EKeyboardKey::Subtract:
+    case PPE::Engine::EKeyboardKey::Subtract:
         return MakeStringView("Subtract");
-    case Core::Engine::EKeyboardKey::Multiply:
+    case PPE::Engine::EKeyboardKey::Multiply:
         return MakeStringView("Multiply");
-    case Core::Engine::EKeyboardKey::Divide:
+    case PPE::Engine::EKeyboardKey::Divide:
         return MakeStringView("Divide");
-    case Core::Engine::EKeyboardKey::F1:
+    case PPE::Engine::EKeyboardKey::F1:
         return MakeStringView("F1");
-    case Core::Engine::EKeyboardKey::F2:
+    case PPE::Engine::EKeyboardKey::F2:
         return MakeStringView("F2");
-    case Core::Engine::EKeyboardKey::F3:
+    case PPE::Engine::EKeyboardKey::F3:
         return MakeStringView("F3");
-    case Core::Engine::EKeyboardKey::F4:
+    case PPE::Engine::EKeyboardKey::F4:
         return MakeStringView("F4");
-    case Core::Engine::EKeyboardKey::F5:
+    case PPE::Engine::EKeyboardKey::F5:
         return MakeStringView("F5");
-    case Core::Engine::EKeyboardKey::F6:
+    case PPE::Engine::EKeyboardKey::F6:
         return MakeStringView("F6");
-    case Core::Engine::EKeyboardKey::F7:
+    case PPE::Engine::EKeyboardKey::F7:
         return MakeStringView("F7");
-    case Core::Engine::EKeyboardKey::F8:
+    case PPE::Engine::EKeyboardKey::F8:
         return MakeStringView("F8");
-    case Core::Engine::EKeyboardKey::F9:
+    case PPE::Engine::EKeyboardKey::F9:
         return MakeStringView("F9");
-    case Core::Engine::EKeyboardKey::F10:
+    case PPE::Engine::EKeyboardKey::F10:
         return MakeStringView("F10");
-    case Core::Engine::EKeyboardKey::F11:
+    case PPE::Engine::EKeyboardKey::F11:
         return MakeStringView("F11");
-    case Core::Engine::EKeyboardKey::F12:
+    case PPE::Engine::EKeyboardKey::F12:
         return MakeStringView("F12");
-    case Core::Engine::EKeyboardKey::Up:
+    case PPE::Engine::EKeyboardKey::Up:
         return MakeStringView("Up");
-    case Core::Engine::EKeyboardKey::Down:
+    case PPE::Engine::EKeyboardKey::Down:
         return MakeStringView("Down");
-    case Core::Engine::EKeyboardKey::Left:
+    case PPE::Engine::EKeyboardKey::Left:
         return MakeStringView("Left");
-    case Core::Engine::EKeyboardKey::Right:
+    case PPE::Engine::EKeyboardKey::Right:
         return MakeStringView("Right");
-    case Core::Engine::EKeyboardKey::Escape:
+    case PPE::Engine::EKeyboardKey::Escape:
         return MakeStringView("Escape");
-    case Core::Engine::EKeyboardKey::Space:
+    case PPE::Engine::EKeyboardKey::Space:
         return MakeStringView("Space");
-    case Core::Engine::EKeyboardKey::Pause:
+    case PPE::Engine::EKeyboardKey::Pause:
         return MakeStringView("Pause");
-    case Core::Engine::EKeyboardKey::PrintScreen:
+    case PPE::Engine::EKeyboardKey::PrintScreen:
         return MakeStringView("PrintScreen");
-    case Core::Engine::EKeyboardKey::ScrollLock:
+    case PPE::Engine::EKeyboardKey::ScrollLock:
         return MakeStringView("ScrollLock");
-    case Core::Engine::EKeyboardKey::Backspace:
+    case PPE::Engine::EKeyboardKey::Backspace:
         return MakeStringView("Backspace");
-    case Core::Engine::EKeyboardKey::Enter:
+    case PPE::Engine::EKeyboardKey::Enter:
         return MakeStringView("Enter");
-    case Core::Engine::EKeyboardKey::Tab:
+    case PPE::Engine::EKeyboardKey::Tab:
         return MakeStringView("Tab");
-    case Core::Engine::EKeyboardKey::Home:
+    case PPE::Engine::EKeyboardKey::Home:
         return MakeStringView("Home");
-    case Core::Engine::EKeyboardKey::End:
+    case PPE::Engine::EKeyboardKey::End:
         return MakeStringView("End");
-    case Core::Engine::EKeyboardKey::Insert:
+    case PPE::Engine::EKeyboardKey::Insert:
         return MakeStringView("Insert");
-    case Core::Engine::EKeyboardKey::Delete:
+    case PPE::Engine::EKeyboardKey::Delete:
         return MakeStringView("Delete");
-    case Core::Engine::EKeyboardKey::PageUp:
+    case PPE::Engine::EKeyboardKey::PageUp:
         return MakeStringView("PageUp");
-    case Core::Engine::EKeyboardKey::PageDown:
+    case PPE::Engine::EKeyboardKey::PageDown:
         return MakeStringView("PageDown");
-    case Core::Engine::EKeyboardKey::Alt:
+    case PPE::Engine::EKeyboardKey::Alt:
         return MakeStringView("Alt");
-    case Core::Engine::EKeyboardKey::Menu:
+    case PPE::Engine::EKeyboardKey::Menu:
         return MakeStringView("Menu");
-    case Core::Engine::EKeyboardKey::Control:
+    case PPE::Engine::EKeyboardKey::Control:
         return MakeStringView("Control");
-    case Core::Engine::EKeyboardKey::Shift:
+    case PPE::Engine::EKeyboardKey::Shift:
         return MakeStringView("Shift");
     }
     AssertNotImplemented();

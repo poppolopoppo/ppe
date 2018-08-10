@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "JsonSerializer.h"
+#include "Json/JsonSerializer.h"
 
-#include "Json.h"
+#include "Json/Json.h"
 
 #include "Any.h"
 #include "Atom.h"
@@ -19,9 +19,9 @@
 #include "Container/Vector.h"
 #include "IO/BufferedStream.h"
 #include "IO/Format.h"
-#include "IO/FS/ConstNames.h"
-#include "IO/FS/Dirpath.h"
-#include "IO/FS/Filename.h"
+#include "IO/ConstNames.h"
+#include "IO/Dirpath.h"
+#include "IO/Filename.h"
 #include "IO/StreamProvider.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"

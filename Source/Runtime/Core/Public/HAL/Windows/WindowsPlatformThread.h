@@ -10,7 +10,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformThread : FGenericPlatformThread {
+struct PPE_CORE_API FWindowsPlatformThread : FGenericPlatformThread {
 public:
     STATIC_CONST_INTEGRAL(bool, HasReadWriteLock, true);
 

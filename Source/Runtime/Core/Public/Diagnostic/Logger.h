@@ -72,8 +72,8 @@ public:
         }
     };
 
-    static PPE_API void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text);
-    static PPE_API void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args);
+    static PPE_CORE_API void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text);
+    static PPE_CORE_API void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args);
 
     template <typename _Arg0, typename... _Args>
     static void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
@@ -86,21 +86,21 @@ public:
         LogArgs(category, level, site, format, FWFormatArgList(functors));
     }
 
-    static PPE_API void Flush(bool synchronous = true);
+    static PPE_CORE_API void Flush(bool synchronous = true);
 
 public:
-    static PPE_API void Start();
-    static PPE_API void Shutdown();
+    static PPE_CORE_API void Start();
+    static PPE_CORE_API void Shutdown();
 
-    static PPE_API void RegisterLogger(const PLogger& logger);
-    static PPE_API void UnregisterLogger(const PLogger& logger);
+    static PPE_CORE_API void RegisterLogger(const PLogger& logger);
+    static PPE_CORE_API void UnregisterLogger(const PLogger& logger);
 
 public:
-    static PPE_API PLogger MakeStdout();
-    static PPE_API PLogger MakeOutputDebug();
-    static PPE_API PLogger MakeAppendFile(const wchar_t* filename);
-    static PPE_API PLogger MakeRollFile(const wchar_t* filename);
-    static PPE_API PLogger MakeFunctor(TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write);
+    static PPE_CORE_API PLogger MakeStdout();
+    static PPE_CORE_API PLogger MakeOutputDebug();
+    static PPE_CORE_API PLogger MakeAppendFile(const wchar_t* filename);
+    static PPE_CORE_API PLogger MakeRollFile(const wchar_t* filename);
+    static PPE_CORE_API PLogger MakeFunctor(TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write);
 };
 //----------------------------------------------------------------------------
 class ILogger : FLogger, public FRefCountable {
@@ -116,29 +116,29 @@ public:
     virtual void Flush(bool synchronous) = 0;
 };
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
 #define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY) \
-    _API ::Core::FLoggerCategory CONCAT(GLogCategory_, _NAME){ WIDESTRING(STRINGIZE(_NAME)), ::Core::FLogger::EVerbosity::_VERBOSITY };
+    _API ::PPE::FLoggerCategory CONCAT(GLogCategory_, _NAME){ WIDESTRING(STRINGIZE(_NAME)), ::PPE::FLogger::EVerbosity::_VERBOSITY };
 #define LOG_CATEGORY(_API, _NAME) \
     LOG_CATEGORY_VERBOSITY(_API, _NAME, All)
 
 #define LOG(_CATEGORY, _LEVEL, ...) \
-    ::Core::FLogger::Log( \
+    ::PPE::FLogger::Log( \
         CONCAT(GLogCategory_, _CATEGORY), \
-        ::Core::FLogger::EVerbosity::_LEVEL, \
-        ::Core::FLogger::FSiteInfo::Make( \
+        ::PPE::FLogger::EVerbosity::_LEVEL, \
+        ::PPE::FLogger::FSiteInfo::Make( \
             WIDESTRING(__FILE__), \
             __LINE__ ), \
         __VA_ARGS__ )
 
 #define FLUSH_LOG() \
-    ::Core::FLogger::Flush()
+    ::PPE::FLogger::Flush()
 
 #else
 
@@ -149,7 +149,7 @@ PPE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level);
 #define FLUSH_LOG() NOOP()
 
 #define LOG(_CATEGORY, _LEVEL, ...) \
-    (void)( (!!(::Core::ELoggerVerbosity::Fatal != ::Core::ELoggerVerbosity::_LEVEL)) || (AssertReleaseFailed(L"log : fatal error"), 0) )
+    (void)( (!!(::PPE::ELoggerVerbosity::Fatal != ::PPE::ELoggerVerbosity::_LEVEL)) || (AssertReleaseFailed(L"log : fatal error"), 0) )
 
 #endif //!#ifdef USE_DEBUG_LOGGER
 

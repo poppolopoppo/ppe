@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "BufferedStream.h"
+#include "IO/BufferedStream.h"
 
 #include "HAL/PlatformMemory.h"
 
@@ -77,13 +77,13 @@ std::streamoff FBufferedStreamReader::SeekI(std::streamoff offset, ESeekOrigin o
     std::streamoff newOrigin;
     switch (origin)
     {
-    case Core::ESeekOrigin::Begin:
+    case PPE::ESeekOrigin::Begin:
         newOrigin = offset;
         break;
-    case Core::ESeekOrigin::Relative:
+    case PPE::ESeekOrigin::Relative:
         newOrigin = (_origin + _offset) + offset;
         break;
-    case Core::ESeekOrigin::End:
+    case PPE::ESeekOrigin::End:
         newOrigin = std::streamoff(-1);
         break;
     default:
@@ -297,13 +297,13 @@ std::streamoff FBufferedStreamWriter::SeekO(std::streamoff offset, ESeekOrigin o
     std::streamoff newOrigin;
     switch (origin)
     {
-    case Core::ESeekOrigin::Begin:
+    case PPE::ESeekOrigin::Begin:
         newOrigin = offset;
         break;
-    case Core::ESeekOrigin::Relative:
+    case PPE::ESeekOrigin::Relative:
         newOrigin = (_origin + _offset) + offset;
         break;
-    case Core::ESeekOrigin::End:
+    case PPE::ESeekOrigin::End:
         newOrigin = std::streamoff(-1);
         break;
     default:

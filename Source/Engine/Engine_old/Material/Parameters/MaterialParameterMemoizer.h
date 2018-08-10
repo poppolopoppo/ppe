@@ -53,7 +53,7 @@ struct TMaterialFunctor {
 };
 //----------------------------------------------------------------------------
 #define MATERIALPARAMETER_FN(_Variability, _Type, _Fn) \
-    Core::Engine::TMaterialParameterMemoizer< Core::Engine::TMaterialFunctor<_Variability, _Type, _Fn> >
+    PPE::Engine::TMaterialParameterMemoizer< PPE::Engine::TMaterialFunctor<_Variability, _Type, _Fn> >
 //----------------------------------------------------------------------------
 #define MATERIALPARAMETER_FN_DECL(_Variability, _Type, _Name) \
     void _Name(const FMaterialParameterContext& context, _Type& dst); \

@@ -103,15 +103,15 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FDX11ResourceBuffer, );
 D3D11_CPU_ACCESS_FLAG BufferModeToDX11CPUAccessFlags(EBufferMode value) {
     switch (value)
     {
-    case Core::Graphics::EBufferMode::None:
+    case PPE::Graphics::EBufferMode::None:
         return static_cast<D3D11_CPU_ACCESS_FLAG>(0);
-    case Core::Graphics::EBufferMode::Read:
+    case PPE::Graphics::EBufferMode::Read:
         return D3D11_CPU_ACCESS_READ;
-    case Core::Graphics::EBufferMode::Write:
-    case Core::Graphics::EBufferMode::WriteDiscard:
-    case Core::Graphics::EBufferMode::WriteDoNotWait:
+    case PPE::Graphics::EBufferMode::Write:
+    case PPE::Graphics::EBufferMode::WriteDiscard:
+    case PPE::Graphics::EBufferMode::WriteDoNotWait:
         return D3D11_CPU_ACCESS_WRITE;
-    case Core::Graphics::EBufferMode::ReadWrite:
+    case PPE::Graphics::EBufferMode::ReadWrite:
         return static_cast<D3D11_CPU_ACCESS_FLAG>(D3D11_CPU_ACCESS_READ|D3D11_CPU_ACCESS_WRITE);
     default:
         break;
@@ -124,13 +124,13 @@ EBufferMode DX11CPUAccessFlagsToBufferMode(D3D11_CPU_ACCESS_FLAG value) {
     switch (size_t(value))
     {
     case D3D11_CPU_ACCESS_FLAG(0):
-        return Core::Graphics::EBufferMode::None;
+        return PPE::Graphics::EBufferMode::None;
     case D3D11_CPU_ACCESS_READ:
-        return Core::Graphics::EBufferMode::Read;
+        return PPE::Graphics::EBufferMode::Read;
     case D3D11_CPU_ACCESS_WRITE:
-        return Core::Graphics::EBufferMode::Write;
+        return PPE::Graphics::EBufferMode::Write;
     case D3D11_CPU_ACCESS_READ|D3D11_CPU_ACCESS_WRITE:
-        return Core::Graphics::EBufferMode::ReadWrite;
+        return PPE::Graphics::EBufferMode::ReadWrite;
     }
     AssertNotImplemented();
     return static_cast<Graphics::EBufferMode>(-1);
@@ -141,13 +141,13 @@ EBufferMode DX11CPUAccessFlagsToBufferMode(D3D11_CPU_ACCESS_FLAG value) {
 ::D3D11_USAGE BufferUsageToDX11Usage(EBufferUsage value) {
     switch (value)
     {
-    case Core::Graphics::EBufferUsage::Default:
+    case PPE::Graphics::EBufferUsage::Default:
         return D3D11_USAGE_DEFAULT;
-    case Core::Graphics::EBufferUsage::Immutable:
+    case PPE::Graphics::EBufferUsage::Immutable:
         return D3D11_USAGE_IMMUTABLE;
-    case Core::Graphics::EBufferUsage::Dynamic:
+    case PPE::Graphics::EBufferUsage::Dynamic:
         return D3D11_USAGE_DYNAMIC;
-    case Core::Graphics::EBufferUsage::Staging:
+    case PPE::Graphics::EBufferUsage::Staging:
         return D3D11_USAGE_STAGING;
     }
     AssertNotImplemented();
@@ -158,13 +158,13 @@ EBufferUsage DX11UsageToBufferUsage(D3D11_USAGE value) {
     switch (value)
     {
     case D3D11_USAGE_DEFAULT:
-        return Core::Graphics::EBufferUsage::Default;
+        return PPE::Graphics::EBufferUsage::Default;
     case D3D11_USAGE_IMMUTABLE:
-        return Core::Graphics::EBufferUsage::Immutable;
+        return PPE::Graphics::EBufferUsage::Immutable;
     case D3D11_USAGE_DYNAMIC:
-        return Core::Graphics::EBufferUsage::Dynamic;
+        return PPE::Graphics::EBufferUsage::Dynamic;
     case D3D11_USAGE_STAGING:
-        return Core::Graphics::EBufferUsage::Staging;
+        return PPE::Graphics::EBufferUsage::Staging;
     }
     AssertNotImplemented();
     return static_cast<Graphics::EBufferUsage>(-1);
@@ -175,15 +175,15 @@ EBufferUsage DX11UsageToBufferUsage(D3D11_USAGE value) {
 ::D3D11_BIND_FLAG DeviceResourceTypeToDX11BindFlag(EDeviceResourceType value) {
     switch (value)
     {
-    case Core::Graphics::EDeviceResourceType::Constants:
+    case PPE::Graphics::EDeviceResourceType::Constants:
         return D3D11_BIND_CONSTANT_BUFFER;
-    case Core::Graphics::EDeviceResourceType::Indices:
+    case PPE::Graphics::EDeviceResourceType::Indices:
         return D3D11_BIND_INDEX_BUFFER;
-    case Core::Graphics::EDeviceResourceType::FRenderTarget:
+    case PPE::Graphics::EDeviceResourceType::FRenderTarget:
         return D3D11_BIND_RENDER_TARGET;
-    case Core::Graphics::EDeviceResourceType::FShaderProgram:
+    case PPE::Graphics::EDeviceResourceType::FShaderProgram:
         return D3D11_BIND_SHADER_RESOURCE;
-    case Core::Graphics::EDeviceResourceType::Vertices:
+    case PPE::Graphics::EDeviceResourceType::Vertices:
         return D3D11_BIND_VERTEX_BUFFER;
 
     default:
@@ -196,15 +196,15 @@ EDeviceResourceType DX11BindFlagToDeviceResourceType(::D3D11_BIND_FLAG value) {
     switch (value)
     {
     case D3D11_BIND_CONSTANT_BUFFER:
-        return Core::Graphics::EDeviceResourceType::Constants;
+        return PPE::Graphics::EDeviceResourceType::Constants;
     case D3D11_BIND_INDEX_BUFFER:
-        return Core::Graphics::EDeviceResourceType::Indices;
+        return PPE::Graphics::EDeviceResourceType::Indices;
     case D3D11_BIND_RENDER_TARGET:
-        return Core::Graphics::EDeviceResourceType::FRenderTarget;
+        return PPE::Graphics::EDeviceResourceType::FRenderTarget;
     case D3D11_BIND_SHADER_RESOURCE:
-        return Core::Graphics::EDeviceResourceType::FShaderProgram;
+        return PPE::Graphics::EDeviceResourceType::FShaderProgram;
     case D3D11_BIND_VERTEX_BUFFER:
-        return Core::Graphics::EDeviceResourceType::Vertices;
+        return PPE::Graphics::EDeviceResourceType::Vertices;
     default:
         AssertNotImplemented();
     }

@@ -1,16 +1,16 @@
 #include "stdafx.h"
 
-#include "BoundingIntervalHierarchy.h"
+#include "Maths/BoundingIntervalHierarchy.h"
 
 #include "Container/Stack.h"
 #include "HAL/PlatformMaths.h"
 
-#include "Frustum.h"
-#include "PackingHelpers.h"
-#include "Ray.h"
-#include "ScalarBoundingBoxHelpers.h"
-#include "ScalarVectorHelpers.h"
-#include "Sphere.h"
+#include "Maths/Frustum.h"
+#include "Maths/PackingHelpers.h"
+#include "Maths/Ray.h"
+#include "Maths/ScalarBoundingBoxHelpers.h"
+#include "Maths/ScalarVectorHelpers.h"
+#include "Maths/Sphere.h"
 
 // http://ainc.de/Research/BIH.pdf
 // http://scholarworks.uark.edu/cgi/viewcontent.cgi?article=2054&context=etd
@@ -623,7 +623,7 @@ size_t FBasicBIHTree::Intersects(const FSphere& sphere, const hitrange_delegate&
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <>
-struct PPE_API TBIHTraits<FBoundingBox> {
+struct PPE_CORE_API TBIHTraits<FBoundingBox> {
     static FBoundingBox MakeBounds(const FBoundingBox& volume) { return volume; }
     static bool Intersects(const FRay& ray, const FBoundingBox& volume, float* distance) {
         return ray.Intersects(volume, distance);
@@ -632,7 +632,7 @@ struct PPE_API TBIHTraits<FBoundingBox> {
 template class TBIHTree<FBoundingBox, TBIHTraits<FBoundingBox> >;
 //----------------------------------------------------------------------------
 template <>
-struct PPE_API TBIHTraits<FSphere> {
+struct PPE_CORE_API TBIHTraits<FSphere> {
     static FBoundingBox MakeBounds(const FSphere& volume) { return volume.ToBox(); }
     static bool Intersects(const FRay& ray, const FSphere& volume, float* distance) {
         return ray.Intersects(volume, distance);

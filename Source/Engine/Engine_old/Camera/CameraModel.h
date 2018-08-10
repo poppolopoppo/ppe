@@ -37,7 +37,7 @@ public:
     const float4x4& InvertProjection() const { return _invertView; }
     const float4x4& InvertViewProjection() const { return _invertViewProjection; }
 
-    const Core::FFrustum& FFrustum() const { return _frustum; }
+    const PPE::FFrustum& FFrustum() const { return _frustum; }
     TMemoryView<const float3> FrustumCorners() const { return MakeView(_frustumCorners); }
 
     const FFrustumCameraParams& Parameters() const { return _parameters; }
@@ -58,7 +58,7 @@ private:
     float4x4 _invertProjection;
     float4x4 _invertViewProjection;
 
-    Core::FFrustum _frustum;
+    PPE::FFrustum _frustum;
     float3 _frustumCorners[8];
 
     FFrustumCameraParams _parameters;

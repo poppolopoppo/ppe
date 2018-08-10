@@ -12,19 +12,19 @@ namespace Engine {
 FStringView MaterialVariabilityToCStr(EMaterialVariability value) {
     switch (value)
     {
-    case Core::Engine::EMaterialVariability::Always:
+    case PPE::Engine::EMaterialVariability::Always:
         return MakeStringView("Always");
-    case Core::Engine::EMaterialVariability::Batch:
+    case PPE::Engine::EMaterialVariability::Batch:
         return MakeStringView("Batch");
-    case Core::Engine::EMaterialVariability::FMaterial:
+    case PPE::Engine::EMaterialVariability::FMaterial:
         return MakeStringView("FMaterial");
-    case Core::Engine::EMaterialVariability::FScene:
+    case PPE::Engine::EMaterialVariability::FScene:
         return MakeStringView("FScene");
-    case Core::Engine::EMaterialVariability::FWorld:
+    case PPE::Engine::EMaterialVariability::FWorld:
         return MakeStringView("FWorld");
-    case Core::Engine::EMaterialVariability::FFrame:
+    case PPE::Engine::EMaterialVariability::FFrame:
         return MakeStringView("FFrame");
-    case Core::Engine::EMaterialVariability::Once:
+    case PPE::Engine::EMaterialVariability::Once:
         return MakeStringView("Once");
     default:
         AssertNotImplemented();

@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Format.h"
+#include "IO/Format.h"
 
-#include "TextWriter.h"
+#include "IO/TextWriter.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

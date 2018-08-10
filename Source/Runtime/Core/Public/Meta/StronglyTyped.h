@@ -64,7 +64,7 @@ struct TNumericDefault : public TNumeric<T, TNumericDefault<T, _Tag, _DefaultVal
     namespace StronglyTyped { struct _Name { \
         static constexpr T DefaultValue() { return (_DefaultValue); } \
     }; } \
-    using _Name = ::Core::TNumeric<T, StronglyTyped::_Name>
+    using _Name = ::PPE::TNumeric<T, StronglyTyped::_Name>
 //----------------------------------------------------------------------------
 #define PPE_STRONGLYTYPED_NUMERIC_DEF(T, _Name) \
     PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(T, _Name, T{})

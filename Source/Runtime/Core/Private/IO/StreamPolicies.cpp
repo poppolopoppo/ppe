@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "StreamPolicies.h"
+#include "IO/StreamPolicies.h"
 
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
@@ -11,11 +11,11 @@ namespace PPE {
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, EOpenPolicy policy) {
     switch (policy) {
-    case Core::EOpenPolicy::ReadWritable:
+    case PPE::EOpenPolicy::ReadWritable:
         return oss << "ReadWritable";
-    case Core::EOpenPolicy::Readable:
+    case PPE::EOpenPolicy::Readable:
         return oss << "Readable";
-    case Core::EOpenPolicy::Writable:
+    case PPE::EOpenPolicy::Writable:
         return oss << "Writable";
     }
     AssertNotImplemented();
@@ -23,11 +23,11 @@ FTextWriter& operator <<(FTextWriter& oss, EOpenPolicy policy) {
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, EOpenPolicy policy) {
     switch (policy) {
-    case Core::EOpenPolicy::ReadWritable:
+    case PPE::EOpenPolicy::ReadWritable:
         return oss << L"ReadWritable";
-    case Core::EOpenPolicy::Readable:
+    case PPE::EOpenPolicy::Readable:
         return oss << L"Readable";
-    case Core::EOpenPolicy::Writable:
+    case PPE::EOpenPolicy::Writable:
         return oss << L"Writable";
     }
     AssertNotImplemented();

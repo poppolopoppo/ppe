@@ -8,10 +8,10 @@
 #include <memory>
 #include <type_traits>
 
-#ifdef EXPORT_PPE
-#   define PPE_API DLL_EXPORT
+#ifdef EXPORT_PPE_CORE
+#   define PPE_CORE_API DLL_EXPORT
 #else
-#   define PPE_API DLL_IMPORT
+#   define PPE_CORE_API DLL_IMPORT
 #endif
 
 #include "Meta/Config.h"
@@ -36,10 +36,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// FCoreModule is the entry and exit point encapsulating every call to Core::.
+// FCoreModule is the entry and exit point encapsulating every call to PPE::.
 // Constructed with the same lifetime than the program (or application if segregated).
 //----------------------------------------------------------------------------
-class PPE_API FCoreModule {
+class PPE_CORE_API FCoreModule {
 public:
     static void Start(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv);
     static void Shutdown();
@@ -57,39 +57,39 @@ public:
 //----------------------------------------------------------------------------
 // Called for each module on start
 #ifndef FINAL_RELEASE
-struct PPE_API OnModuleStart {
+struct PPE_CORE_API OnModuleStart {
     const wchar_t* const ModuleName;
     OnModuleStart(const wchar_t* moduleName);
     ~OnModuleStart();
 };
 #define PPE_MODULE_START(_Name) \
-    const Core::OnModuleStart onModuleStart(WSTRINGIZE(_Name))
+    const PPE::OnModuleStart onModuleStart(WSTRINGIZE(_Name))
 #else
 #define PPE_MODULE_START(_Name) NOOP()
 #endif
 //----------------------------------------------------------------------------
 // Called for each module on shutdown
 #ifndef FINAL_RELEASE
-struct PPE_API OnModuleShutdown {
+struct PPE_CORE_API OnModuleShutdown {
     const wchar_t* const ModuleName;
     OnModuleShutdown(const wchar_t* moduleName);
     ~OnModuleShutdown();
 };
 #define PPE_MODULE_SHUTDOWN(_Name) \
-    const Core::OnModuleShutdown onModuleShutdown(WSTRINGIZE(_Name))
+    const PPE::OnModuleShutdown onModuleShutdown(WSTRINGIZE(_Name))
 #else
 #define PPE_MODULE_SHUTDOWN(_Name) NOOP()
 #endif
 //----------------------------------------------------------------------------
 // Called for each module on ClearAll_UnusedMemory
 #ifndef FINAL_RELEASE
-struct PPE_API OnModuleClearAll {
+struct PPE_CORE_API OnModuleClearAll {
     const wchar_t* const ModuleName;
     OnModuleClearAll(const wchar_t* moduleName);
     ~OnModuleClearAll();
 };
 #define PPE_MODULE_CLEARALL(_Name) \
-    const Core::OnModuleClearAll onModuleClearAll(WSTRINGIZE(_Name))
+    const PPE::OnModuleClearAll onModuleClearAll(WSTRINGIZE(_Name))
 #else
 #define PPE_MODULE_CLEARALL(_Name) NOOP()
 #endif

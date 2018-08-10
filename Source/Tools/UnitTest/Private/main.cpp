@@ -2,7 +2,7 @@
 
 #include "TestApp.h"
 
-typedef Core::Test::FTestApp application_type;
+typedef PPE::Test::FTestApp application_type;
 
 #include "Core.h"
 #include "Network.h"
@@ -31,12 +31,12 @@ static int Bootstrap(void *appHandle, int nShowCmd, const wchar_t* filename, int
 
     const Application::FApplicationContext appContext;
 
-    const Core::FCoreModule moduleCore{ appHandle, nShowCmd, filename, size_t(argc), argv };
-    const Core::Network::FNetworkModule moduleNetwork;
-    const Core::RTTI::FRTTIModule moduleRTTI;
-    const Core::Serialize::FSerializeModule moduleSerialize;
-    const Core::Pixmap::FPixmapModule modulePixmap;
-    const Core::Application::FApplicationModule moduleApplication;
+    const PPE::FCoreModule moduleCore{ appHandle, nShowCmd, filename, size_t(argc), argv };
+    const PPE::Network::FNetworkModule moduleNetwork;
+    const PPE::RTTI::FRTTIModule moduleRTTI;
+    const PPE::Serialize::FSerializeModule moduleSerialize;
+    const PPE::Pixmap::FPixmapModule modulePixmap;
+    const PPE::Application::FApplicationModule moduleApplication;
 
 #if defined(PLATFORM_WINDOWS) && PPE_RESOURCES
     FCurrentProcess::Get().SetAppIcon(IDI_WINDOW_ICON);

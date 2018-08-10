@@ -12,7 +12,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #define STACKLOCAL_STREAMWRITER(_NAME, _COUNT) \
     MALLOCA(u8, CONCAT(_Alloca_, _NAME), _COUNT); \
-    Core::FMemoryViewWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
+    PPE::FMemoryViewWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

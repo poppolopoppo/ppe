@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "QuaternionHelpers.h"
+#include "Maths/QuaternionHelpers.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

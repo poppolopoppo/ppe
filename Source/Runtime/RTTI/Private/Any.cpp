@@ -382,7 +382,7 @@ void* FAny::Allocate_AssumeNotInitialized_(const size_t sizeInBytes) {
     }
     else {
         _externalBlock.SizeInBytes = malloc_snap_size(sizeInBytes);
-        _externalBlock.Ptr = Core::malloc(_externalBlock.SizeInBytes);
+        _externalBlock.Ptr = PPE::malloc(_externalBlock.SizeInBytes);
 
 #if USE_PPE_MEMORYDOMAINS
         MEMORYDOMAIN_TRACKING_DATA(Any).Allocate(1, _externalBlock.SizeInBytes);
@@ -408,7 +408,7 @@ void FAny::Reset_AssumeInitialized_(const size_t sizeInBytes) {
         MEMORYDOMAIN_TRACKING_DATA(Any).Deallocate(1, _externalBlock.SizeInBytes);
 #endif
 
-        Core::free(_externalBlock.Ptr);
+        PPE::free(_externalBlock.Ptr);
     }
 
     _traits = PTypeTraits(); // don't want to call the dtor

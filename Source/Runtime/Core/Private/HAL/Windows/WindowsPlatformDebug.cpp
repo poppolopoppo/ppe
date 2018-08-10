@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformDebug.h"
+#include "HAL/Windows/WindowsPlatformDebug.h"
 
 #if USE_PPE_PLATFORM_DEBUG && defined(PLATFORM_WINDOWS)
 

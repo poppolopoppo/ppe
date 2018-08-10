@@ -13,7 +13,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class FCallstack;
 //----------------------------------------------------------------------------
-class PPE_API FDecodedCallstack {
+class PPE_CORE_API FDecodedCallstack {
 public:
     friend class FCallstack;
     enum { MaxDeph = 46 };
@@ -72,11 +72,11 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const FDecodedCallstack::FFrame& frame);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDecodedCallstack::FFrame& frame);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FDecodedCallstack::FFrame& frame);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDecodedCallstack::FFrame& frame);
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const FDecodedCallstack& decoded);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDecodedCallstack& decoded);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FDecodedCallstack& decoded);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDecodedCallstack& decoded);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

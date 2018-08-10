@@ -45,7 +45,7 @@ void swap(FEdge_& lhs, FEdge_& rhs) {
 }
 //----------------------------------------------------------------------------
 hash_t hash_value(const FEdge_& value) {
-    return Core::hash_value(reinterpret_cast<const u64&>(value));
+    return PPE::hash_value(reinterpret_cast<const u64&>(value));
 }
 //----------------------------------------------------------------------------
 } //!namespace

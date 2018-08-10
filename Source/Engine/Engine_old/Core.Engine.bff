@@ -1,12 +1,12 @@
 #once
 {
     .ProjectName = 'Core.Engine'
-    .ProjectPath = '$SourceDirectory$/Core.Engine'
+    .ProjectPath = '$SourcePath$/Core.Engine'
     .ProjectSolutionFolder = 'Core.Engine'
     .ProjectDefines = { 'EXPORT_CORE_ENGINE' }
     .ProjectIsolatedFiles =
     {
         'Engine.cpp'
     }
-    #include "../../Build/Templates/Library.bff"
+    #include "$BuildPath$/Templates/Library.bff"
 }

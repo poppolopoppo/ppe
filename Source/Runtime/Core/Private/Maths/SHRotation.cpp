@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "SHRotation.h"
+#include "Maths/SHRotation.h"
 
-#include "SHVector.h"
+#include "Maths/SHVector.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

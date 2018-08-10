@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformProcess.h"
+#include "HAL/Windows/WindowsPlatformProcess.h"
 
 #ifdef PLATFORM_WINDOWS
 
@@ -13,8 +13,8 @@
 #include "HAL/PlatformMemory.h"
 #include "HAL/PlatformMisc.h"
 
-#include "DbgHelpWrapper.h"
-#include "LastError.h"
+#include "HAL/Windows/DbgHelpWrapper.h"
+#include "HAL/Windows/LastError.h"
 
 #include <Psapi.h>
 #include <shellapi.h>

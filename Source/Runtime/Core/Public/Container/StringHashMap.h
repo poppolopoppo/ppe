@@ -25,16 +25,16 @@ using TBasicStringViewHashMap = THashMap<
 >;
 //----------------------------------------------------------------------------
 #define STRINGVIEW_HASHMAP(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
-    ::Core::TBasicStringViewHashMap<char, _VALUE, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::Core::TPair<::Core::TBasicStringView<char> COMMA _VALUE>)>
+    ::PPE::TBasicStringViewHashMap<char, _VALUE, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::PPE::TPair<::PPE::TBasicStringView<char> COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define WSTRINGVIEW_HASHMAP(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
-    ::Core::TBasicStringViewHashMap<wchar_t, _VALUE, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::Core::TPair<::Core::TBasicStringView<wchar_t> COMMA _VALUE>)>
+    ::PPE::TBasicStringViewHashMap<wchar_t, _VALUE, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::PPE::TPair<::PPE::TBasicStringView<wchar_t> COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define STRINGVIEW_HASHMAP_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
-    HASHMAP(_DOMAIN, ::Core::TBasicStringViewHashMemoizer<char COMMA _CASE_SENSITIVE>, _VALUE)
+    HASHMAP(_DOMAIN, ::PPE::TBasicStringViewHashMemoizer<char COMMA _CASE_SENSITIVE>, _VALUE)
 //----------------------------------------------------------------------------
 #define WSTRINGVIEW_HASHMAP_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
-    HASHMAP(_DOMAIN, ::Core::TBasicStringViewHashMemoizer<wchar_t COMMA _CASE_SENSITIVE>, _VALUE)
+    HASHMAP(_DOMAIN, ::PPE::TBasicStringViewHashMemoizer<wchar_t COMMA _CASE_SENSITIVE>, _VALUE)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -53,16 +53,16 @@ using TBasicStringHashMap = THashMap<
 >;
 //----------------------------------------------------------------------------
 #define STRING_HASHMAP(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
-    ::Core::TBasicStringHashMap<char, _VALUE, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::Core::TPair<::Core::TBasicString<char> COMMA _VALUE>)>
+    ::PPE::TBasicStringHashMap<char, _VALUE, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::PPE::TPair<::PPE::TBasicString<char> COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define WSTRING_HASHMAP(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
-    ::Core::TBasicStringHashMap<wchar_t, _VALUE, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::Core::TPair<::Core::TBasicString<wchar_t> COMMA _VALUE>)>
+    ::PPE::TBasicStringHashMap<wchar_t, _VALUE, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::PPE::TPair<::PPE::TBasicString<wchar_t> COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define STRING_HASHMAP_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
-    HASHMAP(_DOMAIN, ::Core::TBasicStringHashMemoizer<char COMMA _CASE_SENSITIVE>, _VALUE)
+    HASHMAP(_DOMAIN, ::PPE::TBasicStringHashMemoizer<char COMMA _CASE_SENSITIVE>, _VALUE)
 //----------------------------------------------------------------------------
 #define WSTRING_HASHMAP_MEMOIZE(_DOMAIN, _VALUE, _CASE_SENSITIVE) \
-    HASHMAP(_DOMAIN, ::Core::TBasicStringHashMemoizer<wchar_t COMMA _CASE_SENSITIVE>, _VALUE)
+    HASHMAP(_DOMAIN, ::PPE::TBasicStringHashMemoizer<wchar_t COMMA _CASE_SENSITIVE>, _VALUE)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

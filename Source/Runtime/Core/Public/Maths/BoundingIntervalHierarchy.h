@@ -44,7 +44,7 @@ struct FBIHNode {
     STATIC_CONST_INTEGRAL(size_t, MaxNodes, (1 << Child0Bits));
 };
 //----------------------------------------------------------------------------
-class PPE_API FBasicBIHTree : NODEBASED_CONTAINER_ALLOCATOR(Maths, FBIHNode) {
+class PPE_CORE_API FBasicBIHTree : NODEBASED_CONTAINER_ALLOCATOR(Maths, FBIHNode) {
     typedef NODEBASED_CONTAINER_ALLOCATOR(Maths, FBIHNode) allocator_type;
 public:
     FBasicBIHTree();
@@ -159,13 +159,13 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <> struct TBIHTraits<FBoundingBox>;
-extern PPE_API template struct TBIHTraits<FBoundingBox>;
+extern PPE_CORE_API template struct TBIHTraits<FBoundingBox>;
 template <> struct TBIHTraits<FSphere>;
-extern PPE_API template struct TBIHTraits<FSphere>;
+extern PPE_CORE_API template struct TBIHTraits<FSphere>;
 //----------------------------------------------------------------------------
-extern PPE_API template class TBIHTree<FBoundingBox, TBIHTraits<FBoundingBox> >;
+extern PPE_CORE_API template class TBIHTree<FBoundingBox, TBIHTraits<FBoundingBox> >;
 typedef TBIHTree<FBoundingBox, TBIHTraits<FBoundingBox> > FBoundingBoxBIHTree;
-extern PPE_API template class TBIHTree<FSphere, TBIHTraits<FSphere> >;
+extern PPE_CORE_API template class TBIHTree<FSphere, TBIHTraits<FSphere> >;
 typedef TBIHTree<FSphere, TBIHTraits<FSphere> > FSphereBIHTree;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

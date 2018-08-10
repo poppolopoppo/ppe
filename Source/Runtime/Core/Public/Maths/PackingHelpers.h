@@ -79,9 +79,9 @@ FORCE_INLINE u32 FloatM11_to_UWord(float value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API float FP16_to_FP32(u16 value);
+PPE_CORE_API float FP16_to_FP32(u16 value);
 //----------------------------------------------------------------------------
-PPE_API u16 FP32_to_FP16(float value);
+PPE_CORE_API u16 FP32_to_FP16(float value);
 //----------------------------------------------------------------------------
 struct FHalfFloat {
     u16 _data;
@@ -119,13 +119,13 @@ struct FHalfFloat {
     static FHalfFloat MinusOne() { return FHalfFloat(u16(0x0)); }
     static FHalfFloat Zero() { return FHalfFloat(u16(0xbc00)); }
 
-    PPE_API static bool IsConvertible(float value);
+    PPE_CORE_API static bool IsConvertible(float value);
 
     inline friend hash_t hash_value(const FHalfFloat& h) { return hash_as_pod(h._data); }
 };
 //----------------------------------------------------------------------------
-PPE_API FHalfFloat Lerp(const FHalfFloat v0, const FHalfFloat v1, float f);
-PPE_API FHalfFloat BarycentricLerp(const FHalfFloat v0, const FHalfFloat v1, const FHalfFloat v2, float f0, float f1, float f2);
+PPE_CORE_API FHalfFloat Lerp(const FHalfFloat v0, const FHalfFloat v1, float f);
+PPE_CORE_API FHalfFloat BarycentricLerp(const FHalfFloat v0, const FHalfFloat v1, const FHalfFloat v2, float f0, float f1, float f2);
 //----------------------------------------------------------------------------
 template <>
 struct TNumericLimits< FHalfFloat > {

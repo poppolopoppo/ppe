@@ -97,7 +97,7 @@ void TLerp<T, _Eval>::SetRange(const T& v0, const T& v1) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Eval>
 T TLerp<T, _Eval>::Eval(const FTimeline& time) const {
-    return Core::TLerp(_v0, _v1, _Eval::Eval(time));
+    return PPE::TLerp(_v0, _v1, _Eval::Eval(time));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -130,7 +130,7 @@ void TSmoothstep<T, _Eval>::SetRange(const T& v0, const T& v1) {
 template <typename T, typename _Eval>
 T TSmoothstep<T, _Eval>::Eval(const FTimeline& time) const {
     const float t = _Eval::Eval(time);
-    return Core::TLerp(_v0, _v1, t*t*(3 - 2 * t));
+    return PPE::TLerp(_v0, _v1, t*t*(3 - 2 * t));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

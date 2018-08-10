@@ -22,7 +22,7 @@ PRAGMA_MSVC_WARNING_PUSH()
 #endif
 
 #define malloc(sz) TRACKING_MALLOC(LZ4, sz)
-#define free(p) Core::tracking_free(p)
+#define free(p) PPE::tracking_free(p)
 
 PRAGMA_MSVC_WARNING_DISABLE(4244) // conversion from 'XXX' to 'YYY', possible loss of data
 PRAGMA_MSVC_WARNING_DISABLE(4505) // 'XXX' unreferenced local function has been removed
@@ -39,8 +39,8 @@ PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) alway
 
 #ifndef EXPORT_PPE_EXTERNAL_LZ4
 
-#   include "Core.External/lz4/lib/lz4.h"
-#   include "Core.External/lz4/lib/lz4hc.h"
+#   include "External/lz4/git/lib/lz4.h"
+#   include "External/lz4/git/lib/lz4hc.h"
 
 // clean the mess done by lz4-config.h :
 

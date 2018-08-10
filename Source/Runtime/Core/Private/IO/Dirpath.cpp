@@ -1,17 +1,17 @@
 #include "stdafx.h"
 
-#include "Dirpath.h"
+#include "IO/Dirpath.h"
 
-#include "Dirname.h"
-#include "Filename.h"
-#include "FileSystemTrie.h"
-#include "MountingPoint.h"
+#include "IO/Dirname.h"
+#include "IO/Filename.h"
+#include "IO/FileSystemTrie.h"
+#include "IO/MountingPoint.h"
 
 #include "Allocator/Alloca.h"
 #include "Container/Token.h"
 #include "Container/Stack.h"
 #include "Diagnostic/DebugFunction.h"
-#include "IO/FS/ConstNames.h"
+#include "IO/ConstNames.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
@@ -414,8 +414,8 @@ FFilename operator /(const FDirpath& lhs, const FBasename& basename) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, const Core::FDirpath& dirpath) {
-    Core::FMountingPoint mountingPoint;
+FTextWriter& operator <<(FTextWriter& oss, const PPE::FDirpath& dirpath) {
+    PPE::FMountingPoint mountingPoint;
     STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, dirpath.Depth());
     const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
 
@@ -427,8 +427,8 @@ FTextWriter& operator <<(FTextWriter& oss, const Core::FDirpath& dirpath) {
     return oss;
 }
 //----------------------------------------------------------------------------
-FWTextWriter& operator <<(FWTextWriter& oss, const Core::FDirpath& dirpath) {
-    Core::FMountingPoint mountingPoint;
+FWTextWriter& operator <<(FWTextWriter& oss, const PPE::FDirpath& dirpath) {
+    PPE::FMountingPoint mountingPoint;
     STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, dirpath.Depth());
     const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
 
@@ -443,7 +443,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, const Core::FDirpath& dirpath) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Used in natvis/debuggers for printing FDirpath content
-DEBUG_FUNCTION(PPE_API, DebugPrintDirpath, FWStringView, (const FDirpath& dirpath), {
+DEBUG_FUNCTION(PPE_CORE_API, DebugPrintDirpath, FWStringView, (const FDirpath& dirpath), {
     static wchar_t GDebugBuffer[FileSystem::MaxPathLength];
     return dirpath.ToWCStr(GDebugBuffer);
 })

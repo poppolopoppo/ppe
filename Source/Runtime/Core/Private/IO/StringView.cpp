@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "StringView.h"
+#include "IO/StringView.h"
 
 #include "Allocator/Alloca.h"
 #include "HAL/PlatformMemory.h"
@@ -9,7 +9,7 @@
 #include "HAL/PlatformString.h"
 #include "Memory/HashFunctions.h"
 
-#include "Core.External/double-conversion-external.h"
+#include "double-conversion-external.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -934,15 +934,15 @@ void Escape(FTextWriter& oss, const FStringView& str, EEscape escape) {
             else {
                 const size_t ord = (size_t(ch) & 0xFF);
                 switch (escape) {
-                case Core::EEscape::Octal:
+                case PPE::EEscape::Octal:
                     oss.Put('\\');
                     oss << FTextFormat::Octal << ord;
                     break;
-                case Core::EEscape::Hexadecimal:
+                case PPE::EEscape::Hexadecimal:
                     oss.Put("\\x");
                     oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, '0') << ord;
                     break;
-                case Core::EEscape::Unicode:
+                case PPE::EEscape::Unicode:
                     oss.Put("\\u00");
                     oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, '0') << ord;
                     break;
@@ -1001,17 +1001,17 @@ void Escape(FWTextWriter& oss, const FWStringView& wstr, EEscape escape) {
             else {
                 const size_t ord = (size_t(wch) & 0xFFFF);
                 switch (escape) {
-                case Core::EEscape::Octal:
+                case PPE::EEscape::Octal:
                     oss.Put(L'\\');
                     oss << FTextFormat::Octal << ord;
                     break;
-                case Core::EEscape::Hexadecimal:
+                case PPE::EEscape::Hexadecimal:
                     oss.Put(L"\\x");
                     oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << ((ord >> 8) & 0xFF);
                     oss.Put(L"\\x");
                     oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << (ord & 0xFF);
                     break;
-                case Core::EEscape::Unicode:
+                case PPE::EEscape::Unicode:
                     oss.Put(L"\\u");
                     oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << ord;
                     break;
@@ -1032,15 +1032,15 @@ void Escape(FWTextWriter& oss, const FStringView& str, EEscape escape) {
     for (char ch : str) {
         const size_t ord = (size_t(ch) & 0xFF);
         switch (escape) {
-        case Core::EEscape::Octal:
+        case PPE::EEscape::Octal:
             oss.Put(L'\\');
             oss << FTextFormat::Octal << ord;
             break;
-        case Core::EEscape::Hexadecimal:
+        case PPE::EEscape::Hexadecimal:
             oss.Put(L"\\x");
             oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(2, L'0') << ord;
             break;
-        case Core::EEscape::Unicode:
+        case PPE::EEscape::Unicode:
             oss.Put(L"\\u00");
             oss << FTextFormat::Hexadecimal << FTextFormat::PadLeft(4, L'0') << ord;
             break;

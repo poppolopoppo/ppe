@@ -11,7 +11,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FGlobalThreadPool : Meta::TSingleton<FTaskManager, FGlobalThreadPool> {
+class PPE_CORE_API FGlobalThreadPool : Meta::TSingleton<FTaskManager, FGlobalThreadPool> {
 public:
     typedef Meta::TSingleton<FTaskManager, FGlobalThreadPool> parent_type;
 
@@ -24,11 +24,11 @@ public:
     static void Destroy();
 };
 //----------------------------------------------------------------------------
-PPE_API void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
+PPE_CORE_API void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FIOThreadPool : Meta::TSingleton<FTaskManager, FIOThreadPool> {
+class PPE_CORE_API FIOThreadPool : Meta::TSingleton<FTaskManager, FIOThreadPool> {
 public:
     typedef Meta::TSingleton<FTaskManager, FIOThreadPool> parent_type;
 
@@ -41,11 +41,11 @@ public:
     static void Destroy();
 };
 //----------------------------------------------------------------------------
-PPE_API void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
+PPE_CORE_API void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FHighPriorityThreadPool : Meta::TSingleton<FTaskManager, FHighPriorityThreadPool> {
+class PPE_CORE_API FHighPriorityThreadPool : Meta::TSingleton<FTaskManager, FHighPriorityThreadPool> {
 public:
     typedef Meta::TSingleton<FTaskManager, FHighPriorityThreadPool> parent_type;
 
@@ -58,11 +58,11 @@ public:
     static void Destroy();
 };
 //----------------------------------------------------------------------------
-PPE_API void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
+PPE_CORE_API void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FBackgroundThreadPool : Meta::TSingleton<FTaskManager, FBackgroundThreadPool> {
+class PPE_CORE_API FBackgroundThreadPool : Meta::TSingleton<FTaskManager, FBackgroundThreadPool> {
 public:
     typedef Meta::TSingleton<FTaskManager, FBackgroundThreadPool> parent_type;
 
@@ -75,11 +75,11 @@ public:
     static void Destroy();
 };
 //----------------------------------------------------------------------------
-PPE_API void AsyncBackround(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
+PPE_CORE_API void AsyncBackround(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FThreadPoolStartup {
+class PPE_CORE_API FThreadPoolStartup {
 public:
     static void Start();
     static void Shutdown();

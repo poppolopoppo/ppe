@@ -118,7 +118,7 @@ inline bool operator !=(const FSymbol& lhs, const FSymbol& rhs) {
 }
 //----------------------------------------------------------------------------
 inline hash_t hash_value(const FSymbol& symbol) {
-    return Core::hash_value(u64(symbol.Type()) );
+    return PPE::hash_value(u64(symbol.Type()) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

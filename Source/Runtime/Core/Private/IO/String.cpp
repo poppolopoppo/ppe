@@ -1,17 +1,17 @@
 #include "stdafx.h"
 
-#include "String.h"
+#include "IO/String.h"
 
 #include "HAL/PlatformString.h"
 
-#include "StringBuilder.h"
-#include "StringView.h"
+#include "IO/StringBuilder.h"
+#include "IO/StringView.h"
 
 #if not EXPORT_PPE_STRING
-#   include "String-inl.h"
+#   include "IO/String-inl.h"
 
-    template class Core::TBasicString<char>;
-    template class Core::TBasicString<wchar_t>;
+    template class PPE::TBasicString<char>;
+    template class PPE::TBasicString<wchar_t>;
 
 #endif
 

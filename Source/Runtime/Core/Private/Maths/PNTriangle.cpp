@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "PNTriangle.h"
+#include "Maths/PNTriangle.h"
 
 // http://www.gris.informatik.tu-darmstadt.de/lehre/courses/gdvI/_ws0607_/seminar/development_pn_triangles_dasbach.pdf
 // http://ogldev.atspace.co.uk/www/tutorial31/tutorial31.html (mistake in the first link corrected here -> p0 != p300)

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Guid.h"
+#include "Misc/Guid.h"
 
 #include "IO/String.h"
 #include "IO/TextWriter.h"

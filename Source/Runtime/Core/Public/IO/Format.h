@@ -36,10 +36,10 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define INLINE_FORMAT(_CAPACITY, _FORMAT, ...) \
-    ::Core::Format(INLINE_MALLOCA(char, _CAPACITY).MakeView(), (_FORMAT), __VA_ARGS__)
+    ::PPE::Format(INLINE_MALLOCA(char, _CAPACITY).MakeView(), (_FORMAT), __VA_ARGS__)
 //----------------------------------------------------------------------------
 #define INLINE_WFORMAT(_CAPACITY, _FORMAT, ...) \
-    ::Core::Format(INLINE_MALLOCA(wchar_t, _CAPACITY).MakeView(), (_FORMAT), __VA_ARGS__)
+    ::PPE::Format(INLINE_MALLOCA(wchar_t, _CAPACITY).MakeView(), (_FORMAT), __VA_ARGS__)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

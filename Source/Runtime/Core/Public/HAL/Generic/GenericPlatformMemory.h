@@ -24,7 +24,7 @@ struct FGenericPlatformMemoryStats {
     u64 PeakUsedPhysical;
 };
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformMemory {
+struct PPE_CORE_API FGenericPlatformMemory {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(size_t, CacheLineSize, 64);
 

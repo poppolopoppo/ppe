@@ -1,11 +1,11 @@
 #include "stdafx.h"
 
-#include "BinPacking.h"
+#include "Maths/BinPacking.h"
 
-#include "ScalarBoundingBox.h"
-#include "ScalarBoundingBoxHelpers.h"
-#include "ScalarVector.h"
-#include "ScalarVectorHelpers.h"
+#include "Maths/ScalarBoundingBox.h"
+#include "Maths/ScalarBoundingBoxHelpers.h"
+#include "Maths/ScalarVector.h"
+#include "Maths/ScalarVectorHelpers.h"
 
 #include "Allocator/Alloca.h"
 #include "Container/Vector.h"

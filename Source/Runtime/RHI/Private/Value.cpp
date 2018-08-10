@@ -107,7 +107,7 @@ template <typename T>
 struct TValueHash_ {
     static size_t Do(const TMemoryView<const u8>& data) {
         Assert(data.SizeInBytes() >= sizeof(T));
-        using Core::hash_value;
+        using PPE::hash_value;
         return hash_value(*reinterpret_cast<const T*>(data.data()));
     }
 };
@@ -232,22 +232,22 @@ template <template <typename... > class _Functor, typename... _Args>
 static bool ValuePromote_(EValueType dst, EValueType src, _Args&&... args) {
     switch (src)
     {
-    case Core::Graphics::EValueType::Float2:
+    case PPE::Graphics::EValueType::Float2:
         switch (dst)
         {
-        case Core::Graphics::EValueType::Half2:
+        case PPE::Graphics::EValueType::Half2:
             _Functor< half2, float2 >::Do(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::EValueType::Byte2N:
+        case PPE::Graphics::EValueType::Byte2N:
             _Functor< byte2n, float2 >::Do(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::EValueType::UByte2N:
+        case PPE::Graphics::EValueType::UByte2N:
             _Functor< ubyte2n, float2 >::Do(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::EValueType::Short2N:
+        case PPE::Graphics::EValueType::Short2N:
             _Functor< short2n, float2 >::Do(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::EValueType::UShort2N:
+        case PPE::Graphics::EValueType::UShort2N:
             _Functor< ushort2n, float2 >::Do(std::forward<_Args>(args)...);
             return true;
         default:
@@ -255,42 +255,42 @@ static bool ValuePromote_(EValueType dst, EValueType src, _Args&&... args) {
         }
         break;
 
-    case Core::Graphics::EValueType::Half2:
-        if (Core::Graphics::EValueType::Float2 == dst) {
+    case PPE::Graphics::EValueType::Half2:
+        if (PPE::Graphics::EValueType::Float2 == dst) {
             _Functor< float2, half2 >::Do(std::forward<_Args>(args)...);
             return true;
         }
         break;
 
-    case Core::Graphics::EValueType::Byte2N:
-        if (Core::Graphics::EValueType::Float2 == dst) {
+    case PPE::Graphics::EValueType::Byte2N:
+        if (PPE::Graphics::EValueType::Float2 == dst) {
             _Functor< float2, byte2n >::Do(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::EValueType::UByte2N:
-        if (Core::Graphics::EValueType::Float2 == dst) {
+    case PPE::Graphics::EValueType::UByte2N:
+        if (PPE::Graphics::EValueType::Float2 == dst) {
             _Functor< float2, ubyte2n >::Do(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::EValueType::Short2N:
-        if (Core::Graphics::EValueType::Float2 == dst) {
+    case PPE::Graphics::EValueType::Short2N:
+        if (PPE::Graphics::EValueType::Float2 == dst) {
             _Functor< float2, short2n >::Do(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::EValueType::UShort2N:
-        if (Core::Graphics::EValueType::Float2 == dst) {
+    case PPE::Graphics::EValueType::UShort2N:
+        if (PPE::Graphics::EValueType::Float2 == dst) {
             _Functor< float2, ushort2n >::Do(std::forward<_Args>(args)...);
             return true;
         }
         break;
 
-    case Core::Graphics::EValueType::Float3:
+    case PPE::Graphics::EValueType::Float3:
         switch (dst)
         {
-        case Core::Graphics::EValueType::UX10Y10Z10W2N:
+        case PPE::Graphics::EValueType::UX10Y10Z10W2N:
             _Functor< UX10Y10Z10W2N, float3 >::Do(std::forward<_Args>(args)...);
             return true;
         default:
@@ -298,25 +298,25 @@ static bool ValuePromote_(EValueType dst, EValueType src, _Args&&... args) {
         }
         break;
 
-    case Core::Graphics::EValueType::Float4:
+    case PPE::Graphics::EValueType::Float4:
         switch (dst)
         {
-        case Core::Graphics::EValueType::Half4:
+        case PPE::Graphics::EValueType::Half4:
             _Functor< half4, float4 >::Do(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::EValueType::Byte4N:
+        case PPE::Graphics::EValueType::Byte4N:
             _Functor< byte4n, float4 >::Do(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::EValueType::UByte4N:
+        case PPE::Graphics::EValueType::UByte4N:
             _Functor< ubyte4n, float4 >::Do(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::EValueType::Short4N:
+        case PPE::Graphics::EValueType::Short4N:
             _Functor< short4n, float4 >::Do(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::EValueType::UShort4N:
+        case PPE::Graphics::EValueType::UShort4N:
             _Functor< ushort4n, float4 >::Do(std::forward<_Args>(args)...);
             return true;
-        case Core::Graphics::EValueType::UX10Y10Z10W2N:
+        case PPE::Graphics::EValueType::UX10Y10Z10W2N:
             _Functor< UX10Y10Z10W2N, float4 >::Do(std::forward<_Args>(args)...);
             return true;
         default:
@@ -324,43 +324,43 @@ static bool ValuePromote_(EValueType dst, EValueType src, _Args&&... args) {
         }
         break;
 
-    case Core::Graphics::EValueType::Half4:
-        if (Core::Graphics::EValueType::Float4 == dst) {
+    case PPE::Graphics::EValueType::Half4:
+        if (PPE::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, half4 >::Do(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::EValueType::Byte4N:
-        if (Core::Graphics::EValueType::Float4 == dst) {
+    case PPE::Graphics::EValueType::Byte4N:
+        if (PPE::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, byte4n >::Do(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::EValueType::UByte4N:
-        if (Core::Graphics::EValueType::Float4 == dst) {
+    case PPE::Graphics::EValueType::UByte4N:
+        if (PPE::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, ubyte4n >::Do(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::EValueType::Short4N:
-        if (Core::Graphics::EValueType::Float4 == dst) {
+    case PPE::Graphics::EValueType::Short4N:
+        if (PPE::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, short4n >::Do(std::forward<_Args>(args)...);
             return true;
         }
         break;
-    case Core::Graphics::EValueType::UShort4N:
-        if (Core::Graphics::EValueType::Float4 == dst) {
+    case PPE::Graphics::EValueType::UShort4N:
+        if (PPE::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, ushort4n >::Do(std::forward<_Args>(args)...);
             return true;
         }
         break;
 
-    case Core::Graphics::EValueType::UX10Y10Z10W2N:
-        if (Core::Graphics::EValueType::Float3 == dst) {
+    case PPE::Graphics::EValueType::UX10Y10Z10W2N:
+        if (PPE::Graphics::EValueType::Float3 == dst) {
             _Functor< float3, UX10Y10Z10W2N >::Do(std::forward<_Args>(args)...);
             return true;
         }
-        if (Core::Graphics::EValueType::Float4 == dst) {
+        if (PPE::Graphics::EValueType::Float4 == dst) {
             _Functor< float4, UX10Y10Z10W2N >::Do(std::forward<_Args>(args)...);
             return true;
         }
@@ -378,7 +378,7 @@ struct TValueSwap_ {
         Assert(lhs.SizeInBytes() >= sizeof(T));
         Assert(rhs.SizeInBytes() >= sizeof(T));
         using std::swap;
-        using Core::swap;
+        using PPE::swap;
         swap(   *reinterpret_cast<T*>(lhs.data()),
                 *reinterpret_cast<T*>(rhs.data()) );
     }
@@ -395,12 +395,12 @@ _Ret SwitchValue_(EValueType value, _Args&&... args) {
     switch (value)
     {
 #define VALUETYPE_SWITCHVALUE_DEF(_Name, T, _TypeId, _Unused) \
-    case Core::Graphics::EValueType::_Name: \
+    case PPE::Graphics::EValueType::_Name: \
         return _Functor< T >::Do(std::forward<_Args>(args)...);
     FOREACH_PPE_GRAPHIC_VALUETYPE(VALUETYPE_SWITCHVALUE_DEF)
 #undef VALUETYPE_SWITCHVALUE_DEF
 
-    case Core::Graphics::EValueType::Void:
+    case PPE::Graphics::EValueType::Void:
         AssertNotReached();
         break;
     }
@@ -420,87 +420,87 @@ namespace Graphics {
 FStringView ValueTypeToCStr(EValueType value) {
     switch (value)
     {
-    case Core::Graphics::EValueType::Void:
+    case PPE::Graphics::EValueType::Void:
         return "void";
-    case Core::Graphics::EValueType::Float:
+    case PPE::Graphics::EValueType::Float:
         return "float";
-    case Core::Graphics::EValueType::Float2:
+    case PPE::Graphics::EValueType::Float2:
         return "float2";
-    case Core::Graphics::EValueType::Float3:
+    case PPE::Graphics::EValueType::Float3:
         return "float3";
-    case Core::Graphics::EValueType::Float4:
+    case PPE::Graphics::EValueType::Float4:
         return "float4";
-    case Core::Graphics::EValueType::Float3x3:
+    case PPE::Graphics::EValueType::Float3x3:
         return "float3x3";
-    case Core::Graphics::EValueType::Float4x3:
+    case PPE::Graphics::EValueType::Float4x3:
         return "float4x3";
-    case Core::Graphics::EValueType::Float4x4:
+    case PPE::Graphics::EValueType::Float4x4:
         return "float4x4";
-    case Core::Graphics::EValueType::Bool:
+    case PPE::Graphics::EValueType::Bool:
         return "bool";
-    case Core::Graphics::EValueType::Byte:
+    case PPE::Graphics::EValueType::Byte:
         return "byte";
-    case Core::Graphics::EValueType::Byte2:
+    case PPE::Graphics::EValueType::Byte2:
         return "byte2";
-    case Core::Graphics::EValueType::Byte4:
+    case PPE::Graphics::EValueType::Byte4:
         return "byte4";
-    case Core::Graphics::EValueType::UByte:
+    case PPE::Graphics::EValueType::UByte:
         return "ubyte";
-    case Core::Graphics::EValueType::UByte2:
+    case PPE::Graphics::EValueType::UByte2:
         return "ubyte2";
-    case Core::Graphics::EValueType::UByte4:
+    case PPE::Graphics::EValueType::UByte4:
         return "ubyte4";
-    case Core::Graphics::EValueType::Short:
+    case PPE::Graphics::EValueType::Short:
         return "short";
-    case Core::Graphics::EValueType::Short2:
+    case PPE::Graphics::EValueType::Short2:
         return "short2";
-    case Core::Graphics::EValueType::Short4:
+    case PPE::Graphics::EValueType::Short4:
         return "short4";
-    case Core::Graphics::EValueType::UShort:
+    case PPE::Graphics::EValueType::UShort:
         return "ushort";
-    case Core::Graphics::EValueType::UShort2:
+    case PPE::Graphics::EValueType::UShort2:
         return "ushort2";
-    case Core::Graphics::EValueType::UShort4:
+    case PPE::Graphics::EValueType::UShort4:
         return "ushort4";
-    case Core::Graphics::EValueType::Word:
+    case PPE::Graphics::EValueType::Word:
         return "word";
-    case Core::Graphics::EValueType::Word2:
+    case PPE::Graphics::EValueType::Word2:
         return "word2";
-    case Core::Graphics::EValueType::Word3:
+    case PPE::Graphics::EValueType::Word3:
         return "word3";
-    case Core::Graphics::EValueType::Word4:
+    case PPE::Graphics::EValueType::Word4:
         return "word4";
-    case Core::Graphics::EValueType::UWord:
+    case PPE::Graphics::EValueType::UWord:
         return "uword";
-    case Core::Graphics::EValueType::UWord2:
+    case PPE::Graphics::EValueType::UWord2:
         return "uword2";
-    case Core::Graphics::EValueType::UWord3:
+    case PPE::Graphics::EValueType::UWord3:
         return "uword3";
-    case Core::Graphics::EValueType::UWord4:
+    case PPE::Graphics::EValueType::UWord4:
         return "uword4";
-    case Core::Graphics::EValueType::Half:
+    case PPE::Graphics::EValueType::Half:
         return "half";
-    case Core::Graphics::EValueType::Half2:
+    case PPE::Graphics::EValueType::Half2:
         return "half2";
-    case Core::Graphics::EValueType::Half4:
+    case PPE::Graphics::EValueType::Half4:
         return "half4";
-    case Core::Graphics::EValueType::Byte2N:
+    case PPE::Graphics::EValueType::Byte2N:
         return "byte2n";
-    case Core::Graphics::EValueType::Byte4N:
+    case PPE::Graphics::EValueType::Byte4N:
         return "byte4n";
-    case Core::Graphics::EValueType::UByte2N:
+    case PPE::Graphics::EValueType::UByte2N:
         return "ubyte2n";
-    case Core::Graphics::EValueType::UByte4N:
+    case PPE::Graphics::EValueType::UByte4N:
         return "ubyte4n";
-    case Core::Graphics::EValueType::Short2N:
+    case PPE::Graphics::EValueType::Short2N:
         return "short2n";
-    case Core::Graphics::EValueType::Short4N:
+    case PPE::Graphics::EValueType::Short4N:
         return "short4n";
-    case Core::Graphics::EValueType::UShort2N:
+    case PPE::Graphics::EValueType::UShort2N:
         return "ushort2n";
-    case Core::Graphics::EValueType::UShort4N:
+    case PPE::Graphics::EValueType::UShort4N:
         return "ushort4n";
-    case Core::Graphics::EValueType::UX10Y10Z10W2N:
+    case PPE::Graphics::EValueType::UX10Y10Z10W2N:
         return "UX10Y10Z10W2N";
     }
     AssertNotImplemented();

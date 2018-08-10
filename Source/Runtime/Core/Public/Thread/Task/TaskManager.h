@@ -18,9 +18,9 @@ FWD_REFPTR(TaskCounter);
 class FTaskManager;
 class FTaskManagerImpl;
 //----------------------------------------------------------------------------
-PPE_API ITaskContext& CurrentTaskContext();
+PPE_CORE_API ITaskContext& CurrentTaskContext();
 //----------------------------------------------------------------------------
-class PPE_API FTaskWaitHandle {
+class PPE_CORE_API FTaskWaitHandle {
 public:
     friend class FTaskManagerImpl;
 
@@ -59,7 +59,7 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-class PPE_API FTaskManager {
+class PPE_CORE_API FTaskManager {
 public:
     FTaskManager(const FStringView& name, size_t threadTag, size_t workerCount, EThreadPriority priority);
     ~FTaskManager();

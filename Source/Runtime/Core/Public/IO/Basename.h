@@ -2,9 +2,9 @@
 
 #include "Core.h"
 
-#include "IO/FS/BasenameNoExt.h"
-#include "IO/FS/Extname.h"
-#include "IO/FS/FileSystemProperties.h"
+#include "IO/BasenameNoExt.h"
+#include "IO/Extname.h"
+#include "IO/FileSystemProperties.h"
 
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
@@ -13,7 +13,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FBasename {
+class PPE_CORE_API FBasename {
 public:
     FBasename() {}
     ~FBasename() {}
@@ -48,6 +48,8 @@ public:
         other.SetExtname(extName);
         return other;
     }
+
+    FBasename RemoveExtname() const;
 
     bool Equals(const FBasename& other) const;
     bool Less(const FBasename& other) const;
@@ -108,8 +110,8 @@ inline hash_t hash_value(const FBasename& token) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const FBasename& basename);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const FBasename& basename);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FBasename& basename);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FBasename& basename);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

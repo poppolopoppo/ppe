@@ -8,7 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformLowLevelIO {
+struct PPE_CORE_API FGenericPlatformLowLevelIO {
 public: // must be defined for every platform
 
     using FHandle = int;

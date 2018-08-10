@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "SHSample.h"
+#include "Maths/SHSample.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

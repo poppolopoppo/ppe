@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IO/VirtualFileSystem.h"
+#include "VirtualFileSystem.h"
 
 #include "Memory/Compression.h"
 

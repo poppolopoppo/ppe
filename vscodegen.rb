@@ -27,19 +27,23 @@ def fetch_fbuilb_string(filename, key)
 end
 
 def fetch_default_target()
-    #return File.read(File.join(CORE_PATH, 'fbuild.bff')).match(/\.SolutionBuildProject = '([\w\.]+)-proj'/)[1]
+=begin
     target = fetch_fbuilb_string(File.join(CORE_PATH, 'fbuild.bff'), 'SolutionBuildProject')
-    target.gsub!(/-proj$/, '')
+    target.gsub!(/-VCXProject$/, '')
+    puts "default target -> #{target}"
     return target
+=end
+    return 'All'
 end
 
 DEFAULT_TARGET=fetch_default_target()
+puts "Default target = <#{DEFAULT_TARGET}>"
 
 FileUtils.mkdir_p(VCDB_PATH, :verbose => true)
 
 def make_compile_commands(platform, config)
     dirname = File.join(CORE_PATH, 'Output', 'Intermediate', platform, config)
-    FileUtils.mkdir_p(dirname)
+    FileUtils.mkdir_p(dirname, :verbose => true)
     filename = File.join(dirname, "compile_commands.json")
     system('ruby', FBUILD_RB, "-compdb", "#{DEFAULT_TARGET}-#{platform}-#{config}", :out => File::NULL)
     FileUtils.mv(FBUILD_COMPDB, filename)

@@ -18,7 +18,7 @@ class FDecodedCallstack;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FException {
+class PPE_CORE_API FException {
 public:
     // don't use FStringView to avoid cyclic dependencies in includes
     FException(const char* what) noexcept;
@@ -37,13 +37,13 @@ private:
 #endif
 };
 //----------------------------------------------------------------------------
-class PPE_API FFatalException : FException {
+class PPE_CORE_API FFatalException : FException {
 public:
     FFatalException(const char* what) : FException(what) {}
 };
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const FException& e);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const FException& e);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FException& e);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FException& e);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

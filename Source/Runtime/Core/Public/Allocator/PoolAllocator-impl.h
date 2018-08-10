@@ -46,11 +46,11 @@
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(_Tag, _Type, _Prefix) \
     SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Tag, COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix), \
-        Core::TTypedSegregatedMemoryPool<POOL_TAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA false>)
+        PPE::TTypedSegregatedMemoryPool<POOL_TAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA false>)
 //----------------------------------------------------------------------------
 #define THREAD_LOCAL_SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(_Tag, _Type, _Prefix) \
     SINGLETON_POOL_ALLOCATED_DEF_IMPL_(_Tag, COMMA_PROTECT(_Type), COMMA_PROTECT(_Prefix), \
-        Core::TTypedSegregatedMemoryPool<POOL_TAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA true>)
+        PPE::TTypedSegregatedMemoryPool<POOL_TAG(_Tag) COMMA COMMA_PROTECT(_Type) COMMA true>)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

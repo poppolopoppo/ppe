@@ -1,11 +1,11 @@
 #include "stdafx.h"
 
-#include "LeastSquaresFitting.h"
+#include "Maths/LeastSquaresFitting.h"
 
-#include "EigenMatrixSolver.h"
-#include "Plane.h"
-#include "ScalarMatrix.h"
-#include "ScalarVector.h"
+#include "Maths/EigenMatrixSolver.h"
+#include "Maths/Plane.h"
+#include "Maths/ScalarMatrix.h"
+#include "Maths/ScalarVector.h"
 
 // TODO : many interesting maths tools here :
 // http://www.geometrictools.com/Source/Approximation.html

@@ -10,12 +10,12 @@ namespace Meta {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define forrange(_Variable, _Start, _End) \
-    for (   Core::Meta::TDecay<decltype(_End)> _Variable = _Start, CONCAT(_Variable, _END) = _End; \
+    for (   PPE::Meta::TDecay<decltype(_End)> _Variable = _Start, CONCAT(_Variable, _END) = _End; \
             Assert_NoAssume(CONCAT(_Variable, _END) == _End), _Variable != CONCAT(_Variable, _END); \
             ++ _Variable )
 //----------------------------------------------------------------------------
 #define reverseforrange(_Variable, _Start, _End) \
-    for (   Core::Meta::TDecay<decltype(_End)> CONCAT(_Variable, _REV) = _Start, CONCAT(_Variable, _END) = _End, _Variable = CONCAT(_Variable, _END) - 1; \
+    for (   PPE::Meta::TDecay<decltype(_End)> CONCAT(_Variable, _REV) = _Start, CONCAT(_Variable, _END) = _End, _Variable = CONCAT(_Variable, _END) - 1; \
             Assert_NoAssume(CONCAT(_Variable, _END) == _End), CONCAT(_Variable, _REV) != CONCAT(_Variable, _END); \
             ++ CONCAT(_Variable, _REV), -- _Variable )
 //----------------------------------------------------------------------------

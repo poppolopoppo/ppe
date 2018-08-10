@@ -11,6 +11,6 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#if USE_CORE_PRECOMPILEDHEADERS
+#if USE_PPE_PRECOMPILEDHEADERS
 #   include "Core.Graphics/stdafx.generated.h"
 #endif

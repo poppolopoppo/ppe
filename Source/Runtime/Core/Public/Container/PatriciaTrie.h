@@ -20,8 +20,8 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define PATRICIATRIE(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TPatriciaTrie<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, ::Core::Meta::TEqualTo<_KEY>, \
-        NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::Core::TPatriciaNode<_KEY COMMA _VALUE>)) >
+    ::PPE::TPatriciaTrie<_KEY, _VALUE, ::PPE::Meta::TLess<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, \
+        NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::PPE::TPatriciaNode<_KEY COMMA _VALUE>)) >
 //----------------------------------------------------------------------------
 #define PATRICIASET(_DOMAIN, _KEY) PATRICIATRIE(_DOMAIN, _KEY, void)
 #define PATRICIAMAP(_DOMAIN, _KEY, _VALUE) PATRICIATRIE(_DOMAIN, _KEY, _VALUE)

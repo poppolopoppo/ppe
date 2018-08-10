@@ -1,12 +1,12 @@
 #include "stdafx.h"
 
-#include "XMLSerializer.h"
+#include "Markup/XMLSerializer.h"
 
-#include "MetaAtom.h"
-#include "MetaClass.h"
-#include "MetaObject.h"
-#include "MetaProperty.h"
-#include "MetaTransaction.h"
+#include "Markup/MetaAtom.h"
+#include "Markup/MetaClass.h"
+#include "Markup/MetaObject.h"
+#include "Markup/MetaProperty.h"
+#include "Markup/MetaTransaction.h"
 
 #include "Container/HashSet.h"
 #include "Container/Vector.h"

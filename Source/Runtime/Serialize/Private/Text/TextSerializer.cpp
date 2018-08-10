@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "TextSerializer.h"
+#include "Text/TextSerializer.h"
 
-#include "Grammar.h"
+#include "Text/Grammar.h"
 
 #include "Lexer/Lexer.h"
 
@@ -24,8 +24,8 @@
 #include "IO/BufferedStream.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
-#include "IO/FS/Dirpath.h"
-#include "IO/FS/Filename.h"
+#include "IO/Dirpath.h"
+#include "IO/Filename.h"
 #include "IO/String.h"
 #include "IO/TextWriter.h"
 #include "Memory/MemoryStream.h"

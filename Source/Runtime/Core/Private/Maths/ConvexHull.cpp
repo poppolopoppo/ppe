@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
-#include "ConvexHull.h"
+#include "Maths/ConvexHull.h"
 
-#include "Collision.h"
-#include "ScalarVector.h"
-#include "ScalarVectorHelpers.h"
+#include "Maths/Collision.h"
+#include "Maths/ScalarVector.h"
+#include "Maths/ScalarVectorHelpers.h"
 
 #include "Container/Stack.h"
 #include "Container/Vector.h"

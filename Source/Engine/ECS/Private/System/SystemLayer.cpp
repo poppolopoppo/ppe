@@ -52,10 +52,10 @@ void FSystemLayer::Add(ESystemExecution executionType, ISystem *system) {
 
     switch (executionType)
     {
-    case Core::Logic::ESystemExecution::Asynchronous:
+    case PPE::Logic::ESystemExecution::Asynchronous:
         _asynchronous.emplace_back(system);
         break;
-    case Core::Logic::ESystemExecution::Synchronous:
+    case PPE::Logic::ESystemExecution::Synchronous:
         _synchronous.emplace_back(system);
         break;
     default:
@@ -80,8 +80,8 @@ bool FSystemLayer::TryRemove(const PSystem& system) {
 bool FSystemLayer::Contains(const PSystem& system) const {
     Assert(system);
 
-    return  Core::Contains(_asynchronous, system) ||
-            Core::Contains(_synchronous, system);
+    return  PPE::Contains(_asynchronous, system) ||
+            PPE::Contains(_synchronous, system);
 }
 //----------------------------------------------------------------------------
 void FSystemLayer::Process(FSystemContainer& container, const FTimeline& timeline) {

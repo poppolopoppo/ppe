@@ -3,7 +3,7 @@
     .BinaryPrefix = 'Core.Test'
     .ProjectName  = 'Core.Test'
     .ProjectSolutionFolder = 'Core.Test'
-    .ProjectPath  = '$SourceDirectory$/Core.Test'
+    .ProjectPath  = '$SourcePath$/Core.Test'
     .ProjectPCHConfig = .PCHDisabled
     .UnityNumFiles = 1
     .ProjectDependencies =
@@ -26,6 +26,6 @@
     {
         'main.cpp',
     }
-    #include "../../Build/Templates/Executable.bff"
-    #include "../../Build/Templates/CompressedExecutable.bff"
+    #include "$BuildPath$/Templates/Executable.bff"
+    #include "$BuildPath$/Templates/CompressedExecutable.bff"
 }

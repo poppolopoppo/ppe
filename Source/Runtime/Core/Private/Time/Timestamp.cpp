@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Timestamp.h"
+#include "Time/Timestamp.h"
 
-#include "DateTime.h"
+#include "Time/DateTime.h"
 #include "Memory/HashFunctions.h"
 
 #include <time.h>

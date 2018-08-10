@@ -11,6 +11,6 @@
 
 #include "Core.Logic/Logic.h"
 
-#if USE_CORE_PRECOMPILEDHEADERS
+#if USE_PPE_PRECOMPILEDHEADERS
 #   include "Core.Logic/stdafx.generated.h"
 #endif

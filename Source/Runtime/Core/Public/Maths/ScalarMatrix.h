@@ -132,8 +132,8 @@ public:
 
     void Swap(TScalarMatrix& other);
 
-    TMemoryView<T> MakeView() { return Core::MakeView(_data.raw); }
-    TMemoryView<const T> MakeView() const { return Core::MakeView(_data.raw); }
+    TMemoryView<T> MakeView() { return PPE::MakeView(_data.raw); }
+    TMemoryView<const T> MakeView() const { return PPE::MakeView(_data.raw); }
 
     friend hash_t hash_value(const TScalarMatrix& m) { return hash_as_pod_array(m._data.raw); }
 

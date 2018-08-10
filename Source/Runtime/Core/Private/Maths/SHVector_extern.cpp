@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-#include "SHVector.h"
-#include "SHVector_extern.h"
+#include "Maths/SHVector.h"
+#include "Maths/SHVector_extern.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

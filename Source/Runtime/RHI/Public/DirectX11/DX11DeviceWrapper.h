@@ -80,7 +80,7 @@ void DX11ThrowIfFailed(
 #define DX11_THROW_IF_FAILED(_ENCAPSULATOR, _OPTIONAL_RESOURCE, _CALL) { \
     const HRESULT ANONYMIZE(dx11Result) = _CALL; \
     if (FAILED(ANONYMIZE(dx11Result))) \
-        Core::Graphics::DX11ThrowIfFailed( \
+        PPE::Graphics::DX11ThrowIfFailed( \
             _ENCAPSULATOR, ANONYMIZE(dx11Result), _OPTIONAL_RESOURCE, \
             STRINGIZE(_CALL), \
             __FILE__, __LINE__, __FUNCTION__ \

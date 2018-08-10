@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "TimedScope.h"
+#include "Time/TimedScope.h"
 
 #if USE_PPE_BENCHMARK
 #   include "Diagnostic/Logger.h"
@@ -8,7 +8,7 @@
 #   include "Maths/Units.h"
 
 namespace PPE {
-LOG_CATEGORY_VERBOSITY(PPE_API, Benchmark, NoDebug)
+LOG_CATEGORY_VERBOSITY(PPE_CORE_API, Benchmark, NoDebug)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Color.h"
+#include "Color/Color.h"
 
 #include <algorithm>
 
@@ -77,17 +77,17 @@ FColor FLinearColor::Quantize(EGammaSpace gamma) const {
 
     switch (gamma)
     {
-    case Core::EGammaSpace::Linear:
+    case PPE::EGammaSpace::Linear:
         r = Saturate(r);
         g = Saturate(g);
         b = Saturate(b);
         break;
-    case Core::EGammaSpace::Pow22:
+    case PPE::EGammaSpace::Pow22:
         r = Linear_to_Pow22(r);
         g = Linear_to_Pow22(g);
         b = Linear_to_Pow22(b);
         break;
-    case Core::EGammaSpace::sRGB:
+    case PPE::EGammaSpace::sRGB:
         r = Linear_to_SRGB(r);
         g = Linear_to_SRGB(g);
         b = Linear_to_SRGB(b);

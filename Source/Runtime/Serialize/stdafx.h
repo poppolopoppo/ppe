@@ -7,10 +7,10 @@
 
 #include "targetver.h"
 
-#include "Core/HAL/PlatformIncludes.h"
+#include "HAL/PlatformIncludes.h"
 
-#include "Core.Serialize/Serialize.h"
+#include "Serialize.h"
 
-#if USE_CORE_PRECOMPILEDHEADERS
-#   include "Core.Serialize/stdafx.generated.h"
+#if USE_PPE_PRECOMPILEDHEADERS
+#   include "stdafx.generated.h"
 #endif

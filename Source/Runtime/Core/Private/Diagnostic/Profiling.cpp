@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Profiling.h"
+#include "Diagnostic/Profiling.h"
 
 #ifdef WITH_PPE_PROFILING
 

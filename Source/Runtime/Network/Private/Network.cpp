@@ -3,7 +3,7 @@
 #include "Network.h"
 #include "Network_fwd.h"
 
-#include "Name.h"
+#include "NetworkName.h"
 #include "Http/ConstNames.h"
 #include "Socket/Socket.h"
 

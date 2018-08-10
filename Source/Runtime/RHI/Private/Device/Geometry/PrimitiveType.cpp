@@ -10,13 +10,13 @@ namespace Graphics {
 FStringView PrimitiveTypeToCStr(EPrimitiveType primitiveType) {
     switch (primitiveType)
     {
-    case Core::Graphics::EPrimitiveType::LineList:
+    case PPE::Graphics::EPrimitiveType::LineList:
         return MakeStringView("LineList");
-    case Core::Graphics::EPrimitiveType::LineStrip:
+    case PPE::Graphics::EPrimitiveType::LineStrip:
         return MakeStringView("LineStrip");
-    case Core::Graphics::EPrimitiveType::TriangleList:
+    case PPE::Graphics::EPrimitiveType::TriangleList:
         return MakeStringView("TriangleList");
-    case Core::Graphics::EPrimitiveType::TriangleStrip:
+    case PPE::Graphics::EPrimitiveType::TriangleStrip:
         return MakeStringView("TriangleStrip");
     }
 
@@ -30,16 +30,16 @@ size_t PrimitiveCount(EPrimitiveType primitiveType, size_t indexCount) {
 
     switch (primitiveType)
     {
-    case Core::Graphics::EPrimitiveType::LineList:
+    case PPE::Graphics::EPrimitiveType::LineList:
         Assert(0 == (indexCount & 1));
         return indexCount / 2;
-    case Core::Graphics::EPrimitiveType::LineStrip:
+    case PPE::Graphics::EPrimitiveType::LineStrip:
         Assert(1 <= indexCount);
         return indexCount - 1;
-    case Core::Graphics::EPrimitiveType::TriangleList:
+    case PPE::Graphics::EPrimitiveType::TriangleList:
         Assert(0 == (indexCount % 3));
         return indexCount / 3;
-    case Core::Graphics::EPrimitiveType::TriangleStrip:
+    case PPE::Graphics::EPrimitiveType::TriangleStrip:
         Assert(2 >= (indexCount % 3));
         return indexCount - 2;
     }
@@ -54,13 +54,13 @@ size_t IndexCount(EPrimitiveType primitiveType, size_t primitiveCount) {
 
     switch (primitiveType)
     {
-    case Core::Graphics::EPrimitiveType::LineList:
+    case PPE::Graphics::EPrimitiveType::LineList:
         return primitiveCount >> 1;
-    case Core::Graphics::EPrimitiveType::LineStrip:
+    case PPE::Graphics::EPrimitiveType::LineStrip:
         return primitiveCount + 1;
-    case Core::Graphics::EPrimitiveType::TriangleList:
+    case PPE::Graphics::EPrimitiveType::TriangleList:
         return primitiveCount * 3;
-    case Core::Graphics::EPrimitiveType::TriangleStrip:
+    case PPE::Graphics::EPrimitiveType::TriangleStrip:
         return primitiveCount + 2;
     }
 

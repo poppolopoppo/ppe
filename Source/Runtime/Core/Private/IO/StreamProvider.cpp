@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "StreamProvider.h"
+#include "IO/StreamProvider.h"
 
 #include "Container/RawStorage.h"
 #include "IO/StringView.h"

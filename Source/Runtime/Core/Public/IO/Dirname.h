@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#include "IO/FS/FileSystemToken.h"
+#include "IO/FileSystemToken.h"
 #include "IO/String_fwd.h"
 
 namespace PPE {

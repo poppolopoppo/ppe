@@ -16,7 +16,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 class FGamepadState {
 public:
-    friend class FGamepadInputHandler;
+    using FButtonState = TInputState<EGamepadButton, 8>;
 
     class FSmoothAnalog {
     public:
@@ -73,9 +73,9 @@ public:
     float2 TriggersRaw() const { return float2(_leftTrigger.Raw(), _rightTrigger.Raw()); }
     float2 TriggersSmooth() const { return float2(_leftTrigger.Smoothed(), _rightTrigger.Smoothed()); }
 
-    const FGamepadButtonState& ButtonsDown() const { return _buttonsDown; }
-    const FGamepadButtonState& ButtonsPressed() const { return _buttonsPressed; }
-    const FGamepadButtonState& ButtonsUp() const { return _buttonsUp; }
+    const FButtonState& ButtonsDown() const { return _buttonsDown; }
+    const FButtonState& ButtonsPressed() const { return _buttonsPressed; }
+    const FButtonState& ButtonsUp() const { return _buttonsUp; }
 
     bool IsButtonDown(EGamepadButton button) const { return _buttonsDown.Contains(button); }
     bool IsButtonPressed(EGamepadButton button) const { return _buttonsPressed.Contains(button); }
@@ -107,6 +107,37 @@ public:
         _buttonsUp.Clear();
     }
 
+    void SetStatus(bool connected, bool onConnect, bool onDisconnect) {
+        _connected = connected;
+        _onConnect = onConnect;
+        _onDisconnect = onDisconnect;
+    }
+    void SetLeftStick(float x, float y) {
+        _leftStickX.Set(x);
+        _leftStickY.Set(y);
+    }
+    void SetRightStick(float x, float y) {
+        _rightStickX.Set(x);
+        _rightStickY.Set(y);
+    }
+    void SetTrigger(float left, float right) {
+        _leftTrigger.Set(left);
+        _rightTrigger.Set(right);
+    }
+    void SetButtonsDown(FButtonState state) {
+        _buttonsDown = state;
+    }
+    void SetButtonsPressed(FButtonState state) {
+        _buttonsPressed = state;
+    }
+    void SetButtonsUp(FButtonState state) {
+        _buttonsUp = state;
+    }
+    void SetRumble(float left, float right) {
+        _leftRumble = left;
+        _rightRumble = right;
+    }
+
 private:
     bool _connected     : 1;
     bool _onConnect     : 1;
@@ -121,9 +152,9 @@ private:
     FSmoothAnalog _leftTrigger;
     FSmoothAnalog _rightTrigger;
 
-    FGamepadButtonState _buttonsDown;
-    FGamepadButtonState _buttonsPressed;
-    FGamepadButtonState _buttonsUp;
+    FButtonState _buttonsDown;
+    FButtonState _buttonsPressed;
+    FButtonState _buttonsUp;
 
     float _leftRumble;
     float _rightRumble;

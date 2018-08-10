@@ -47,8 +47,8 @@ struct TBasicFormatFunctor_ {
 using FFormatFunctor_ = TBasicFormatFunctor_<char>;
 using FWFormatFunctor_ = TBasicFormatFunctor_<wchar_t>;
 //----------------------------------------------------------------------------
-PPE_API void FormatArgs_(FTextWriter& oss, const FStringView& format, const TMemoryView<const FFormatFunctor_>& args);
-PPE_API void FormatArgs_(FWTextWriter& oss, const FWStringView& format, const TMemoryView<const FWFormatFunctor_>& args);
+PPE_CORE_API void FormatArgs_(FTextWriter& oss, const FStringView& format, const TMemoryView<const FFormatFunctor_>& args);
+PPE_CORE_API void FormatArgs_(FWTextWriter& oss, const FWStringView& format, const TMemoryView<const FWFormatFunctor_>& args);
 //----------------------------------------------------------------------------
 } //!namespace details
 //----------------------------------------------------------------------------

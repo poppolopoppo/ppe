@@ -1,20 +1,20 @@
 #include "stdafx.h"
 
-#include "ParseStatement.h"
+#include "Parser/ParseStatement.h"
 
-#include "ParseContext.h"
-#include "ParseExpression.h"
-#include "Parser.h"
-
-#include "Allocator/PoolAllocator-impl.h"
-#include "Diagnostic/Logger.h"
-#include "IO/Format.h"
-#include "IO/StringBuilder.h"
+#include "Parser/ParseContext.h"
+#include "Parser/ParseExpression.h"
+#include "Parser/Parser.h"
 
 #include "MetaClass.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
 #include "TypeInfos.h"
+
+#include "Allocator/PoolAllocator-impl.h"
+#include "Diagnostic/Logger.h"
+#include "IO/Format.h"
+#include "IO/StringBuilder.h"
 
 namespace PPE {
 namespace Parser {
@@ -84,7 +84,7 @@ void FPropertyAssignment::Execute(FParseContext *context) const {
 }
 //----------------------------------------------------------------------------
 FString FPropertyAssignment::ToString() const {
-    return Core::ToString(_name.MakeView());
+    return PPE::ToString(_name.MakeView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

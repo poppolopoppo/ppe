@@ -3,7 +3,7 @@
     .BinaryPrefix = 'Core.ContentGenerator'
     .ProjectName  = 'Core.ContentGenerator'
     .ProjectSolutionFolder = 'Core.Content'
-    .ProjectPath  = '$SourceDirectory$/Core.ContentGenerator'
+    .ProjectPath  = '$SourcePath$/Core.ContentGenerator'
     .UnityNumFiles = 1
     .ProjectDependencies =
     {
@@ -22,6 +22,6 @@
         'main.cpp',
         'Test_RTTI.cpp',
     }
-    #include "../../Build/Templates/Executable.bff"
-    #include "../../Build/Templates/CompressedExecutable.bff"
+    #include "$BuildPath$/Templates/Executable.bff"
+    #include "$BuildPath$/Templates/CompressedExecutable.bff"
 }

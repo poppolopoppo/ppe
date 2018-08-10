@@ -12,9 +12,9 @@ namespace Pixmap {
 FStringView BlockFormatToCStr(EBlockFormat value) {
     switch (value)
     {
-    case Core::Pixmap::EBlockFormat::DXT1:
+    case PPE::Pixmap::EBlockFormat::DXT1:
         return "DXT1";
-    case Core::Pixmap::EBlockFormat::DXT5:
+    case PPE::Pixmap::EBlockFormat::DXT5:
         return "DXT5";
     }
     AssertNotImplemented();
@@ -25,11 +25,11 @@ FWTextWriter& operator <<(FWTextWriter& oss, EBlockFormat value) { return oss <<
 FStringView ColorDepthToCStr(EColorDepth value) {
     switch (value)
     {
-    case Core::Pixmap::EColorDepth::_8bits:
+    case PPE::Pixmap::EColorDepth::_8bits:
         return "8";
-    case Core::Pixmap::EColorDepth::_16bits:
+    case PPE::Pixmap::EColorDepth::_16bits:
         return "16";
-    case Core::Pixmap::EColorDepth::_32bits:
+    case PPE::Pixmap::EColorDepth::_32bits:
         return "32";
     }
     AssertNotImplemented();
@@ -40,13 +40,13 @@ FWTextWriter& operator <<(FWTextWriter& oss, EColorDepth value) { return oss << 
 FStringView ColorMaskToCStr(EColorMask value) {
     switch (value)
     {
-    case Core::Pixmap::EColorMask::R:
+    case PPE::Pixmap::EColorMask::R:
         return "R";
-    case Core::Pixmap::EColorMask::RG:
+    case PPE::Pixmap::EColorMask::RG:
         return "RG";
-    case Core::Pixmap::EColorMask::RGB:
+    case PPE::Pixmap::EColorMask::RGB:
         return "RGB";
-    case Core::Pixmap::EColorMask::RGBA:
+    case PPE::Pixmap::EColorMask::RGBA:
         return "RGBA";
     }
     AssertNotImplemented();
@@ -57,11 +57,11 @@ FWTextWriter& operator <<(FWTextWriter& oss, EColorMask value) { return oss << C
 FStringView ColorSpaceToCStr(EColorSpace value) {
     switch (value)
     {
-    case Core::Pixmap::EColorSpace::Linear:
+    case PPE::Pixmap::EColorSpace::Linear:
         return "Linear";
-    case Core::Pixmap::EColorSpace::sRGB:
+    case PPE::Pixmap::EColorSpace::sRGB:
         return "sRGB";
-    case Core::Pixmap::EColorSpace::YCoCg:
+    case PPE::Pixmap::EColorSpace::YCoCg:
         return "YCoCg";
     }
     AssertNotImplemented();

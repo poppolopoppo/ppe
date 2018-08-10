@@ -518,15 +518,15 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TBasicS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
-PPE_API size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr);
-PPE_API size_t ToCStr(char *dst, size_t capacity, const FWString& wstr);
-PPE_API FStringView ToCStr(const TMemoryView<char>& dst, const FWStringView& wstr);
+PPE_CORE_API size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
+PPE_CORE_API size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr);
+PPE_CORE_API size_t ToCStr(char *dst, size_t capacity, const FWString& wstr);
+PPE_CORE_API FStringView ToCStr(const TMemoryView<char>& dst, const FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr, size_t length);
-PPE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr);
-PPE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const FString& str);
-PPE_API FWStringView ToWCStr(const TMemoryView<wchar_t>& dst, const FStringView& str);
+PPE_CORE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr, size_t length);
+PPE_CORE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr);
+PPE_CORE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const FString& str);
+PPE_CORE_API FWStringView ToWCStr(const TMemoryView<wchar_t>& dst, const FStringView& str);
 //----------------------------------------------------------------------------
 template <size_t _Dim>
 size_t ToCStr(char(&dst)[_Dim], const wchar_t *wcstr) { return ToCStr(dst, _Dim, wcstr); }
@@ -536,15 +536,15 @@ size_t ToWCStr(wchar_t(&dst)[_Dim], const char *cstr) { return ToWCStr(dst, _Dim
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
-PPE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr);
-PPE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const FWString& wstr);
-PPE_API FStringView WCHAR_to_CHAR(ECodePage codePage, const TMemoryView<char>& dst, const FWStringView& wstr);
+PPE_CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
+PPE_CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr);
+PPE_CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const FWString& wstr);
+PPE_CORE_API FStringView WCHAR_to_CHAR(ECodePage codePage, const TMemoryView<char>& dst, const FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const char *cstr, size_t length);
-PPE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const char *cstr);
-PPE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const FString& str);
-PPE_API FWStringView CHAR_to_WCHAR(ECodePage codePage, const TMemoryView<wchar_t>& dst, const FStringView& str);
+PPE_CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const char *cstr, size_t length);
+PPE_CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const char *cstr);
+PPE_CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const FString& str);
+PPE_CORE_API FWStringView CHAR_to_WCHAR(ECodePage codePage, const TMemoryView<wchar_t>& dst, const FStringView& str);
 //----------------------------------------------------------------------------
 template <size_t _Dim>
 size_t WCHAR_to_CHAR(ECodePage codePage, char(&dst)[_Dim], const wchar_t *wcstr) { return WCHAR_to_CHAR(codePage, dst, _Dim, wcstr); }
@@ -554,16 +554,16 @@ size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t(&dst)[_Dim], const char *cstr) 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API FString ToString(const wchar_t *wcstr, size_t length);
-PPE_API FString ToString(const wchar_t *wcstr);
-PPE_API FString ToString(const FWString& wstr);
+PPE_CORE_API FString ToString(const wchar_t *wcstr, size_t length);
+PPE_CORE_API FString ToString(const wchar_t *wcstr);
+PPE_CORE_API FString ToString(const FWString& wstr);
 inline const FString& ToString(const FString& str) { return str; }
 inline FString ToString(const TMemoryView<const char>& strview) { return FString(strview.Pointer(), strview.size()); }
 inline FString ToString(const TMemoryView<const wchar_t>& strview) { return ToString(strview.Pointer(), strview.size()); }
 //----------------------------------------------------------------------------
-PPE_API FWString ToWString(const char *cstr, size_t length);
-PPE_API FWString ToWString(const char *cstr);
-PPE_API FWString ToWString(const FString& str);
+PPE_CORE_API FWString ToWString(const char *cstr, size_t length);
+PPE_CORE_API FWString ToWString(const char *cstr);
+PPE_CORE_API FWString ToWString(const FString& str);
 inline const FWString& ToWString(const FWString& wstr) { return wstr; }
 inline FWString ToWString(const TMemoryView<const wchar_t>& strview) { return FWString(strview.Pointer(), strview.size()); }
 inline FWString ToWString(const TMemoryView<const char>& strview) { return ToWString(strview.Pointer(), strview.size()); }
@@ -626,6 +626,6 @@ using TBasicStringHashMemoizer = THashMemoizer<
 
 #if EXPORT_PPE_STRING
 #   include "IO/String-inl.h"
-template class PPE_API Core::TBasicString<char>;
-template class PPE_API Core::TBasicString<wchar_t>;
+template class PPE_CORE_API PPE::TBasicString<char>;
+template class PPE_CORE_API PPE::TBasicString<wchar_t>;
 #endif

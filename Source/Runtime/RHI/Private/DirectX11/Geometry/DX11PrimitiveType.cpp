@@ -10,13 +10,13 @@ namespace Graphics {
 D3D11_PRIMITIVE_TOPOLOGY PrimitiveTypeToDX11PrimitiveTopology(EPrimitiveType value) {
     switch (value)
     {
-    case Core::Graphics::EPrimitiveType::LineList:
+    case PPE::Graphics::EPrimitiveType::LineList:
         return D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
-    case Core::Graphics::EPrimitiveType::LineStrip:
+    case PPE::Graphics::EPrimitiveType::LineStrip:
         return D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP;
-    case Core::Graphics::EPrimitiveType::TriangleList:
+    case PPE::Graphics::EPrimitiveType::TriangleList:
         return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-    case Core::Graphics::EPrimitiveType::TriangleStrip:
+    case PPE::Graphics::EPrimitiveType::TriangleStrip:
         return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
     }
     AssertNotImplemented();
@@ -27,13 +27,13 @@ EPrimitiveType DX11PrimitiveTopologyToPrimitiveType(D3D11_PRIMITIVE_TOPOLOGY val
     switch (value)
     {
     case D3D11_PRIMITIVE_TOPOLOGY_LINELIST:
-        return Core::Graphics::EPrimitiveType::LineList;
+        return PPE::Graphics::EPrimitiveType::LineList;
     case D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP:
-        return Core::Graphics::EPrimitiveType::LineStrip;
+        return PPE::Graphics::EPrimitiveType::LineStrip;
     case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
-        return Core::Graphics::EPrimitiveType::TriangleList;
+        return PPE::Graphics::EPrimitiveType::TriangleList;
     case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
-        return Core::Graphics::EPrimitiveType::TriangleStrip;
+        return PPE::Graphics::EPrimitiveType::TriangleStrip;
     default:
         AssertNotImplemented();
     }

@@ -9,10 +9,10 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define READSCOPELOCK(_ReadWriteLock) \
-    const ::Core::FReadWriteLock::FScopeLockRead ANONYMIZE(_scopeLockRead)(_ReadWriteLock)
+    const ::PPE::FReadWriteLock::FScopeLockRead ANONYMIZE(_scopeLockRead)(_ReadWriteLock)
 //----------------------------------------------------------------------------
 #define WRITESCOPELOCK(_ReadWriteLock) \
-    const ::Core::FReadWriteLock::FScopeLockWrite ANONYMIZE(_scopeLockWrite)(_ReadWriteLock)
+    const ::PPE::FReadWriteLock::FScopeLockWrite ANONYMIZE(_scopeLockWrite)(_ReadWriteLock)
 //----------------------------------------------------------------------------
 class FReadWriteLock {
 public:

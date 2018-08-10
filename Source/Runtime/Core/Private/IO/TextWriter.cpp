@@ -1,12 +1,12 @@
 #include "stdafx.h"
 
-#include "TextWriter.h"
+#include "IO/TextWriter.h"
 
-#include "StreamProvider.h"
-#include "String.h"
-#include "StringView.h"
+#include "IO/StreamProvider.h"
+#include "IO/String.h"
+#include "IO/StringView.h"
 
-#include "Core.External/double-conversion-external.h"
+#include "double-conversion-external.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -37,18 +37,18 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, const TBasicStringView<_Ch
     int pad_left;
     int pad_right;
     switch (fmt.Padding()) {
-    case Core::FTextFormat::Padding_None:
+    case PPE::FTextFormat::Padding_None:
         pad_left = pad_right = 0;
         break;
-    case Core::FTextFormat::Padding_Center:
+    case PPE::FTextFormat::Padding_Center:
         pad_left = Max(width - sz, 0) / 2;
         pad_right = Max(width - pad_left - sz, 0);
         break;
-    case Core::FTextFormat::Padding_Left:
+    case PPE::FTextFormat::Padding_Left:
         pad_left = Max(width - sz, 0);
         pad_right = 0;
         break;
-    case Core::FTextFormat::Padding_Right:
+    case PPE::FTextFormat::Padding_Right:
         pad_left = 0;
         pad_right = Max(width - sz, 0);;
         break;
@@ -63,18 +63,18 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, const TBasicStringView<_Ch
         ostream->WritePOD(pad_ch);
 
     switch (fmt.Case()) {
-    case Core::FTextFormat::Original:
+    case PPE::FTextFormat::Original:
         ostream->WriteView(str);
         break;
-    case Core::FTextFormat::Lowercase:
+    case PPE::FTextFormat::Lowercase:
         foreachitem(ch, str)
             ostream->WritePOD(ToLower(*ch));
         break;
-    case Core::FTextFormat::Uppercase:
+    case PPE::FTextFormat::Uppercase:
         foreachitem(ch, str)
             ostream->WritePOD(ToUpper(*ch));
         break;
-    case Core::FTextFormat::Capitalize:
+    case PPE::FTextFormat::Capitalize:
         {
             bool to_lower = false;
             foreachitem(ch, str) {
@@ -243,19 +243,19 @@ static size_t Dtoa_(const TMemoryView<char>& buffer, const FTextFormat& fmt, _Fl
     double_conversion::StringBuilder str_builder(buffer.data(), checked_cast<int>(buffer.size()));
     auto& double_conv = double_conversion::DoubleToStringConverter::EcmaScriptConverter();
     switch (fmt.Float()) {
-    case Core::FTextFormat::EFloat::DefaultFloat:
+    case PPE::FTextFormat::EFloat::DefaultFloat:
         if (not Dtoa_DefaultFloat_(double_conv, str_builder, flt))
             AssertNotReached();
         break;
-    case Core::FTextFormat::EFloat::FixedFloat:
+    case PPE::FTextFormat::EFloat::FixedFloat:
         if (not double_conv.ToFixed(double(flt), checked_cast<int>(fmt.Precision()), &str_builder))
             AssertNotReached();
         break;
-    case Core::FTextFormat::EFloat::PrecisionFloat:
+    case PPE::FTextFormat::EFloat::PrecisionFloat:
         if (not double_conv.ToPrecision(double(flt), checked_cast<int>(fmt.Precision()), &str_builder))
             AssertNotReached();
         break;
-    case Core::FTextFormat::EFloat::ScientificFloat:
+    case PPE::FTextFormat::EFloat::ScientificFloat:
         if (not double_conv.ToExponential(double(flt), checked_cast<int>(fmt.Precision()), &str_builder))
             AssertNotReached();
         break;
@@ -393,8 +393,8 @@ template <> void TBasicTextWriter<wchar_t>::Write(const void* v) { Write_(Meta::
 template <> void TBasicTextWriter<wchar_t>::Write(const wchar_t* v) { WriteWFormat_(*this, MakeCStringView(v)); }
 template <> void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v) { WriteWFormat_(*this, v); }
 //----------------------------------------------------------------------------
-/*extern PPE_API*/ template class TBasicTextWriter<char>;
-/*extern PPE_API*/ template class TBasicTextWriter<wchar_t>;
+/*extern PPE_CORE_API*/ template class TBasicTextWriter<char>;
+/*extern PPE_CORE_API*/ template class TBasicTextWriter<wchar_t>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

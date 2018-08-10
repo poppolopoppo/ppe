@@ -2,20 +2,19 @@
 
 #include "VirtualFileSystem.h"
 
-#include "FileSystem.h"
-#include "Format.h"
-#include "StringView.h"
+#include "VirtualFileSystemComponent.h"
+#include "VirtualFileSystemNativeComponent.h"
+#include "VirtualFileSystemTrie.h"
 
 #include "Allocator/PoolAllocatorTag-impl.h"
 #include "Container/RawStorage.h"
 #include "Diagnostic/Logger.h"
 #include "Diagnostic/CurrentProcess.h"
+#include "IO/FileSystem.h"
+#include "IO/Format.h"
 #include "IO/StringBuilder.h"
+#include "IO/StringView.h"
 #include "HAL/PlatformTime.h"
-
-#include "VFS/VirtualFileSystemComponent.h"
-#include "VFS/VirtualFileSystemNativeComponent.h"
-#include "VFS/VirtualFileSystemTrie.h"
 
 namespace PPE {
 POOL_TAG_DEF(VirtualFileSystem);

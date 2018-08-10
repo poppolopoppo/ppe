@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformMisc.h"
+#include "HAL/Windows/WindowsPlatformMisc.h"
 
 #ifdef PLATFORM_WINDOWS
 
@@ -12,8 +12,8 @@
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
 
-#include "LastError.h"
-#include "WindowsPlatformIncludes.h"
+#include "HAL/Windows/LastError.h"
+#include "HAL/Windows/WindowsPlatformIncludes.h"
 
 #include <clocale>
 #include <io.h>

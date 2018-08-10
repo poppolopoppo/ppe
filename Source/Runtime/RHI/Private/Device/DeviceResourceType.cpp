@@ -10,31 +10,31 @@ namespace Graphics {
 FStringView ResourceTypeToCStr(EDeviceResourceType type) {
     switch (type)
     {
-    case Core::Graphics::EDeviceResourceType::Constants:
+    case PPE::Graphics::EDeviceResourceType::Constants:
         return MakeStringView("Constants");
-    case Core::Graphics::EDeviceResourceType::Indices:
+    case PPE::Graphics::EDeviceResourceType::Indices:
         return MakeStringView("Indices");
-    case Core::Graphics::EDeviceResourceType::FBlendState:
+    case PPE::Graphics::EDeviceResourceType::FBlendState:
         return MakeStringView("FBlendState");
-    case Core::Graphics::EDeviceResourceType::FDepthStencilState:
+    case PPE::Graphics::EDeviceResourceType::FDepthStencilState:
         return MakeStringView("FDepthStencilState");
-    case Core::Graphics::EDeviceResourceType::FRasterizerState:
+    case PPE::Graphics::EDeviceResourceType::FRasterizerState:
         return MakeStringView("FRasterizerState");
-    case Core::Graphics::EDeviceResourceType::FRenderTarget:
+    case PPE::Graphics::EDeviceResourceType::FRenderTarget:
         return MakeStringView("FRenderTarget");
-    case Core::Graphics::EDeviceResourceType::FSamplerState:
+    case PPE::Graphics::EDeviceResourceType::FSamplerState:
         return MakeStringView("FSamplerState");
-    case Core::Graphics::EDeviceResourceType::FShaderEffect:
+    case PPE::Graphics::EDeviceResourceType::FShaderEffect:
         return MakeStringView("FShaderEffect");
-    case Core::Graphics::EDeviceResourceType::FShaderProgram:
+    case PPE::Graphics::EDeviceResourceType::FShaderProgram:
         return MakeStringView("FShaderProgram");
-    case Core::Graphics::EDeviceResourceType::FTexture2D:
+    case PPE::Graphics::EDeviceResourceType::FTexture2D:
         return MakeStringView("FTexture2D");
-    case Core::Graphics::EDeviceResourceType::FTextureCube:
+    case PPE::Graphics::EDeviceResourceType::FTextureCube:
         return MakeStringView("FTextureCube");
-    case Core::Graphics::EDeviceResourceType::FVertexDeclaration:
+    case PPE::Graphics::EDeviceResourceType::FVertexDeclaration:
         return MakeStringView("FVertexDeclaration");
-    case Core::Graphics::EDeviceResourceType::Vertices:
+    case PPE::Graphics::EDeviceResourceType::Vertices:
         return MakeStringView("Vertices");
     default:
         AssertNotImplemented();

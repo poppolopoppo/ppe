@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "MemoryProvider.h"
+#include "Memory/MemoryProvider.h"
 
 #include "HAL/PlatformMemory.h"
 

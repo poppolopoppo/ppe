@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "ThreadPool.h"
+#include "Thread/ThreadPool.h"
 
-#include "ThreadContext.h"
+#include "Thread/ThreadContext.h"
 
 #include "HAL/PlatformThread.h"
 

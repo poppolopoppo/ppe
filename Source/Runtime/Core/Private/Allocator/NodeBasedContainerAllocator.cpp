@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "NodeBasedContainerAllocator.h"
+#include "Allocator/NodeBasedContainerAllocator.h"
 
-#include "PoolAllocatorTag-impl.h"
+#include "Allocator/PoolAllocatorTag-impl.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

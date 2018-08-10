@@ -24,7 +24,7 @@ struct FGenericPlatformCPUInfo {
     }
 };
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformMisc {
+struct PPE_CORE_API FGenericPlatformMisc {
 public: // must be defined for every platform
 
     STATIC_CONST_INTEGRAL(bool, HasFixedHardware, false);

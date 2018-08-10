@@ -1,15 +1,14 @@
 #pragma once
 
-#include "Core.h"
+#include "VirtualFileSystem_fwd.h"
 
-#include "IO/FS/Dirpath.h"
+#include "IO/Dirpath.h"
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
 #include "Misc/Function.h"
 
 #include "IO/StreamPolicies.h"
 #include "IO/StreamProvider.h"
-#include "IO/VirtualFileSystem_fwd.h"
 
 #include <functional>
 
@@ -27,7 +26,7 @@ using IVFSReadWritable = IVirtualFileSystemComponentReadWritable;
 //----------------------------------------------------------------------------
 FWD_REFPTR(VirtualFileSystemComponent);
 //----------------------------------------------------------------------------
-class PPE_API FVirtualFileSystemComponent : public FRefCountable {
+class PPE_VFS_API FVirtualFileSystemComponent : public FRefCountable {
 public:
     virtual ~FVirtualFileSystemComponent() {}
 

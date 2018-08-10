@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformThread.h"
+#include "HAL/Windows/WindowsPlatformThread.h"
 
 #ifdef PLATFORM_WINDOWS
 
-#include "LastError.h"
+#include "HAL/Windows/LastError.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -75,25 +75,25 @@ void FWindowsPlatformThread::SetPriority(EThreadPriority priority) {
 
     int priorityWin32 = 0;
     switch (priority) {
-    case Core::EThreadPriority::Realtime:
+    case PPE::EThreadPriority::Realtime:
         priorityWin32 = THREAD_PRIORITY_TIME_CRITICAL;
         break;
-    case Core::EThreadPriority::Highest:
+    case PPE::EThreadPriority::Highest:
         priorityWin32 = THREAD_PRIORITY_HIGHEST;
         break;
-    case Core::EThreadPriority::AboveNormal:
+    case PPE::EThreadPriority::AboveNormal:
         priorityWin32 = THREAD_PRIORITY_ABOVE_NORMAL;
         break;
-    case Core::EThreadPriority::Normal:
+    case PPE::EThreadPriority::Normal:
         priorityWin32 = THREAD_PRIORITY_NORMAL;
         break;
-    case Core::EThreadPriority::BelowNormal:
+    case PPE::EThreadPriority::BelowNormal:
         priorityWin32 = THREAD_PRIORITY_BELOW_NORMAL;
         break;
-    case Core::EThreadPriority::Lowest:
+    case PPE::EThreadPriority::Lowest:
         priorityWin32 = THREAD_PRIORITY_LOWEST;
         break;
-    case Core::EThreadPriority::Idle:
+    case PPE::EThreadPriority::Idle:
         priorityWin32 = THREAD_PRIORITY_IDLE;
         break;
     }

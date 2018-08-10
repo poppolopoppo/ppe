@@ -106,7 +106,7 @@
     + ' /IGNORE:4001'       ; https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
     + ' /NXCOMPAT:NO'       ; indique que le programme n'est pas compatible avec Data Execution Prevention
     + ' /STACK:4194304'     ; augmente la taille de la stack de chaque thread à 4mo
-    + ' /LIBPATH:"$BinaryDirectory$"'
+    + ' /LIBPATH:"$BinaryPath$"'
     + ' /SUBSYSTEM:WINDOWS'
     + ' /OUT:"%2" "%1"'
     + ' kernel32.lib'
@@ -132,9 +132,9 @@
     + ' /ENTRY:"wWinMainCRTStartup"'
 
     ; utilisés pour généraliser les templates :
-    .CompilerDefineFlag          = ' /D'
-    .CompilerIncludeFlag        = ' /I'
-    .CompilerSystemIncludeFlag  = ' /I'
+    .CompilerDefineFlag         = ' /D'
+    .CompilerIncludeFlag        = ' /I '
+    .CompilerSystemIncludeFlag  = ' /I '
     .CompilerPreprocessorFlag   = ' /P /Fi"%2"'
     .CompilerForceIncludeFlag   = ' /FI'
     .CompilerBinaryExtension    = 'exe'
@@ -147,8 +147,9 @@
 //------------------------------------------------------------------------------
 .MSVCBasePCHDisabled    =
 [
-    .CompilerOptions    = ' /Fo"%2"'
-    .Defines             = { 'USE_CORE_PRECOMPILEDHEADERS=0' }
+    .CompilerOptions        = ' /Fo"%2"'
+    .Defines                = { 'USE_PPE_PRECOMPILEDHEADERS=0' }
+    .PreprocessorDefinitions= ';USE_PPE_PRECOMPILEDHEADERS=0'
 ]
 .MSVCBasePCHEnabled     = .MSVCBasePCHDisabled
 
@@ -156,15 +157,16 @@
 Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 .MSVCBasePCHEnabled =
 [
-    .UnityPCH           = '^$ProjectPCHName^$.h'
-    .PCHOptions         = ' /Fp"%2" /Fo"%3"'
-                        + ' /Yc"^$ProjectPCHName^$.h"'
-                        + '^$CompilerOptions^$'
-    .PCHInputFile       = '^$ProjectPath^$\^$ProjectPCHName^$.cpp'
-    .PCHOutputFile      = '^$IntermediateDirectory^$\^$ProjectPCHName^$.pch'
-    .CompilerOptions    = ' /Yu"^$ProjectPCHName^$.h" /Fp"$PCHOutputFile$"'
-                        + ' /Fo"%2"'
-    .Defines             = { 'USE_CORE_PRECOMPILEDHEADERS=1' }
+    .UnityPCH               = '^$ProjectPCHName^$.h'
+    .PCHOptions             = ' /Fp"%2" /Fo"%3"'
+                            + ' /Yc"^$ProjectPCHName^$.h"'
+                            + '^$CompilerOptions^$'
+    .PCHInputFile           = '^$ProjectPath^$\^$ProjectPCHName^$.cpp'
+    .PCHOutputFile          = '^$IntermediatePath^$\^$ProjectPCHName^$.pch'
+    .CompilerOptions        = ' /Yu"^$ProjectPCHName^$.h" /Fp"$PCHOutputFile$"'
+                            + ' /Fo"%2"'
+    .Defines                = { 'USE_PPE_PRECOMPILEDHEADERS=1' }
+    .PreprocessorDefinitions= ';USE_PPE_PRECOMPILEDHEADERS=1'
 ]
 #endif
 
@@ -186,7 +188,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .LibrarianOptions   + ' /MACHINE:X86'
     .LinkerOptions      + ' /MACHINE:X86'
     + ' /SAFESEH'                           ; image dotée de gestionnaires d'exceptions sécurisés
-    + ' /LIBPATH:"$BinaryDirectory$"'
+    + ' /LIBPATH:"$BinaryPath$"'
 ]
 
 .MSVCBasePlatformX64 =
@@ -203,7 +205,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .LibrarianOptions   + ' /MACHINE:X64'
     .LinkerOptions      + ' /MACHINE:X64'
-    + ' /LIBPATH:"$BinaryDirectory$"'
+    + ' /LIBPATH:"$BinaryPath$"'
 ]
 
 //------------------------------------------------------------------------------

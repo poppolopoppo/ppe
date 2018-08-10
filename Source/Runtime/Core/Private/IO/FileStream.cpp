@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "FileStream.h"
+#include "IO/FileStream.h"
 
 #include "Allocator/Alloca.h"
 #include "IO/BufferedStream.h"

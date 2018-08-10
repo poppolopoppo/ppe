@@ -2,6 +2,8 @@
 
 #include "MetaProperty.h"
 
+#include "RTTIExceptions.h"
+
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 
@@ -41,7 +43,8 @@ void FMetaProperty::CheckProperty_(const FMetaObject& obj, bool write) const {
             obj.RTTI_Class()->Name(),
             _name,
             obj.RTTI_Name(),
-            obj.RTTI_Flags() );
+            obj.RTTI_Flags());
+        PPE_THROW_IT(FPropertyException("writing to readonly property", this));
     }
 
     if (IsDeprecated()) {

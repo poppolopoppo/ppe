@@ -6,7 +6,7 @@
 
 #include "Diagnostic/Logger.h"
 
-#include "DbghelpWrapper.h"
+#include "HAL/Windows/DbghelpWrapper.h"
 
 namespace PPE {
 LOG_CATEGORY(, DbgHelp)

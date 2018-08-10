@@ -107,8 +107,8 @@ public:
 
     void Swap(TScalarVector& other);
 
-    TMemoryView<T> MakeView() { return Core::MakeView(_data); }
-    TMemoryView<const T> MakeView() const { return Core::MakeView(_data); }
+    TMemoryView<T> MakeView() { return PPE::MakeView(_data); }
+    TMemoryView<const T> MakeView() const { return PPE::MakeView(_data); }
 
     friend hash_t hash_value(const TScalarVector& v) { return hash_as_pod_array(v._data); }
 

@@ -1,10 +1,11 @@
 #include "stdafx.h"
 
-#include "Alloca.h"
+#include "Allocator/Alloca.h"
 
 #include "Allocator/LinearHeap.h"
 #include "Allocator/LinearHeapAllocator.h"
 #include "Allocator/Malloc.h"
+
 #include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
@@ -35,16 +36,16 @@ public:
 // Fallback on thread local heap when the block is too large :
 struct FAllocaFallback_ {
     static void* Malloc(size_t size) {
-        return Core::malloc(size);
+        return PPE::malloc(size);
     }
     static void* Realloc(void* ptr, size_t size) {
-        return Core::realloc(ptr, size);
+        return PPE::realloc(ptr, size);
     }
     static void Free(void* ptr) {
-        Core::free(ptr);
+        PPE::free(ptr);
     }
     static size_t SnapSize(size_t size) {
-        return Core::malloc_snap_size(size);
+        return PPE::malloc_snap_size(size);
     }
 };
 //----------------------------------------------------------------------------

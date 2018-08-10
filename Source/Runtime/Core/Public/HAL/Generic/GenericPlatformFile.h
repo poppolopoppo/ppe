@@ -25,7 +25,7 @@ struct FGenericPlatformFileStat {
     FTimestamp LastModified;
 };
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformFile {
+struct PPE_CORE_API FGenericPlatformFile {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, IsCaseSensitive, false);
     STATIC_CONST_INTEGRAL(size_t, MaxPathLength, 0);
@@ -59,6 +59,16 @@ public: // must be defined for every platform
 
     static bool RemoveDirectory(const char_type* dirpath, bool force) = delete;
     static bool RemoveFile(const char_type* filename) = delete;
+
+    static bool SetFileTime(
+        const char_type* filename,
+        const FTimestamp* pCreatedAtIFP,
+        const FTimestamp* pLastAccessIFP,
+        const FTimestamp* pLastModifiedIFP ) = delete;
+
+    static bool RollFile(const char_type* filename) = delete;
+    static FWString MakeTemporaryFile(const char_type* prefix, const char_type* extname) = delete;
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

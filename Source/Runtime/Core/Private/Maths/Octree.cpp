@@ -1,13 +1,13 @@
 #include "stdafx.h"
 
-#include "Octree.h"
+#include "Maths/Octree.h"
 
 #include "Container/Stack.h"
 #include "HAL/PlatformMaths.h"
 
-#include "Ray.h"
-#include "ScalarBoundingBox.h"
-#include "ScalarVector.h"
+#include "Maths/Ray.h"
+#include "Maths/ScalarBoundingBox.h"
+#include "Maths/ScalarVector.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

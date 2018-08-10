@@ -53,23 +53,23 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FDX11SamplerState, );
 D3D11_FILTER TextureFilterToDX11Filter(ETextureFilter value) {
     switch (value)
     {
-    case Core::Graphics::ETextureFilter::Linear:
+    case PPE::Graphics::ETextureFilter::Linear:
         return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    case Core::Graphics::ETextureFilter::Point:
+    case PPE::Graphics::ETextureFilter::Point:
         return D3D11_FILTER_MIN_MAG_MIP_POINT;
-    case Core::Graphics::ETextureFilter::Anisotropic:
+    case PPE::Graphics::ETextureFilter::Anisotropic:
         return D3D11_FILTER_ANISOTROPIC;
-    case Core::Graphics::ETextureFilter::LinearMipPoint:
+    case PPE::Graphics::ETextureFilter::LinearMipPoint:
         return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-    case Core::Graphics::ETextureFilter::PointMipLinear:
+    case PPE::Graphics::ETextureFilter::PointMipLinear:
         return D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR;
-    case Core::Graphics::ETextureFilter::MinLinearMagPointMipLinear:
+    case PPE::Graphics::ETextureFilter::MinLinearMagPointMipLinear:
         return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
-    case Core::Graphics::ETextureFilter::MinLinearMagPointMipPoint:
+    case PPE::Graphics::ETextureFilter::MinLinearMagPointMipPoint:
         return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
-    case Core::Graphics::ETextureFilter::MinPointMagLinearMipLinear:
+    case PPE::Graphics::ETextureFilter::MinPointMagLinearMipLinear:
         return D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR;
-    case Core::Graphics::ETextureFilter::MinPointMagLinearMipPoint:
+    case PPE::Graphics::ETextureFilter::MinPointMagLinearMipPoint:
         return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
     }
     AssertNotImplemented();
@@ -80,23 +80,23 @@ ETextureFilter DX11FilterToTextureFilter(D3D11_FILTER value) {
     switch (value)
     {
     case D3D11_FILTER_MIN_MAG_MIP_LINEAR:
-        return Core::Graphics::ETextureFilter::Linear;
+        return PPE::Graphics::ETextureFilter::Linear;
     case D3D11_FILTER_MIN_MAG_MIP_POINT:
-        return Core::Graphics::ETextureFilter::Point;
+        return PPE::Graphics::ETextureFilter::Point;
     case D3D11_FILTER_ANISOTROPIC:
-        return Core::Graphics::ETextureFilter::Anisotropic;
+        return PPE::Graphics::ETextureFilter::Anisotropic;
     case D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT:
-        return Core::Graphics::ETextureFilter::LinearMipPoint;
+        return PPE::Graphics::ETextureFilter::LinearMipPoint;
     case D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR:
-        return Core::Graphics::ETextureFilter::PointMipLinear;
+        return PPE::Graphics::ETextureFilter::PointMipLinear;
     case D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR:
-        return Core::Graphics::ETextureFilter::MinLinearMagPointMipLinear;
+        return PPE::Graphics::ETextureFilter::MinLinearMagPointMipLinear;
     case D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT:
-        return Core::Graphics::ETextureFilter::MinLinearMagPointMipPoint;
+        return PPE::Graphics::ETextureFilter::MinLinearMagPointMipPoint;
     case D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR:
-        return Core::Graphics::ETextureFilter::MinPointMagLinearMipLinear;
+        return PPE::Graphics::ETextureFilter::MinPointMagLinearMipLinear;
     case D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT:
-        return Core::Graphics::ETextureFilter::MinPointMagLinearMipPoint;
+        return PPE::Graphics::ETextureFilter::MinPointMagLinearMipPoint;
     default:
         AssertNotImplemented();
     }
@@ -108,11 +108,11 @@ ETextureFilter DX11FilterToTextureFilter(D3D11_FILTER value) {
 D3D11_TEXTURE_ADDRESS_MODE TextureAddressModeToDX11TextureAddressMode(ETextureAddressMode value) {
     switch (value)
     {
-    case Core::Graphics::ETextureAddressMode::Clamp:
+    case PPE::Graphics::ETextureAddressMode::Clamp:
         return D3D11_TEXTURE_ADDRESS_CLAMP;
-    case Core::Graphics::ETextureAddressMode::Mirror:
+    case PPE::Graphics::ETextureAddressMode::Mirror:
         return D3D11_TEXTURE_ADDRESS_MIRROR;
-    case Core::Graphics::ETextureAddressMode::Wrap:
+    case PPE::Graphics::ETextureAddressMode::Wrap:
         return D3D11_TEXTURE_ADDRESS_WRAP;
     default:
         AssertNotImplemented();
@@ -124,11 +124,11 @@ ETextureAddressMode DX11TextureAddressModeToTextureAddressMode(D3D11_TEXTURE_ADD
     switch (value)
     {
     case D3D11_TEXTURE_ADDRESS_CLAMP:
-        return Core::Graphics::ETextureAddressMode::Clamp;
+        return PPE::Graphics::ETextureAddressMode::Clamp;
     case D3D11_TEXTURE_ADDRESS_MIRROR:
-        return Core::Graphics::ETextureAddressMode::Mirror;
+        return PPE::Graphics::ETextureAddressMode::Mirror;
     case D3D11_TEXTURE_ADDRESS_WRAP:
-        return Core::Graphics::ETextureAddressMode::Wrap;
+        return PPE::Graphics::ETextureAddressMode::Wrap;
     default:
         AssertNotImplemented();
     }

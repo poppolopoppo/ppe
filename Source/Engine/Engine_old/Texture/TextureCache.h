@@ -61,13 +61,13 @@ public:
         friend class FTextureCache;
         friend class FTextureEntryAsyncJob;
 
-        FTextureEntry(const Core::FFilename& filename, bool useSRGB, bool keepData);
+        FTextureEntry(const PPE::FFilename& filename, bool useSRGB, bool keepData);
         ~FTextureEntry();
 
         FTextureEntry(const FTextureEntry& ) = delete;
         FTextureEntry& operator =(const FTextureEntry& ) = delete;
 
-        const Core::FFilename& FFilename() const { return _filename; }
+        const PPE::FFilename& FFilename() const { return _filename; }
 
         bool UseSRGB() const {return _nextWFlags.Flag0(); }
         bool KeepData() const {return _nextWFlags.Flag1(); }
@@ -96,7 +96,7 @@ public:
         void SetTexture_(Graphics::FTexture *texture);
         void SetKeepData_(bool value);
 
-        const Core::FFilename _filename;
+        const PPE::FFilename _filename;
 
         Graphics::PTexture _texture;
         TUniquePtr<const FTextureData> _data;

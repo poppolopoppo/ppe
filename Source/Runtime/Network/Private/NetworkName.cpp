@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Name.h"
+#include "NetworkName.h"
 
 #include <locale>
 

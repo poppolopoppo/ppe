@@ -68,7 +68,7 @@ auto TMallocator<T, _Alignment>::allocate(size_type n) -> pointer {
         PPE_THROW_IT(std::length_error("TMallocator<T>::allocate() - Integer overflow."));
 
     // TMallocator wraps malloc().
-    void * const pv = Core::malloc<_Alignment>(n * sizeof(T));
+    void * const pv = PPE::malloc<_Alignment>(n * sizeof(T));
 
     // Allocators should throw std::bad_alloc in the case of memory allocation failure.
     if (pv == nullptr)
@@ -81,7 +81,7 @@ template <typename T, size_t _Alignment>
 void TMallocator<T, _Alignment>::deallocate(void* p, size_type n) {
     UNUSED(n);
     // TMallocator wraps malloc().
-    Core::free<_Alignment>(p);
+    PPE::free<_Alignment>(p);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
@@ -89,7 +89,7 @@ void* TMallocator<T, _Alignment>::relocate(void* p, size_type newSize, size_type
     UNUSED(oldSize);
 
     // TMallocator wraps malloc()
-    void* const newp = Core::realloc<_Alignment>(p, newSize * sizeof(T));
+    void* const newp = PPE::realloc<_Alignment>(p, newSize * sizeof(T));
     if (nullptr == newp && newSize)
         PPE_THROW_IT(std::bad_alloc());
 
@@ -112,7 +112,7 @@ bool operator !=(const TMallocator<T, A>& lhs, const TMallocator<U, B>& rhs) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
 size_t AllocatorSnapSize(const TMallocator<T, _Alignment>&, size_t size) {
-    return (Core::malloc_snap_size(size * sizeof(T)) / sizeof(T));
+    return (PPE::malloc_snap_size(size * sizeof(T)) / sizeof(T));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

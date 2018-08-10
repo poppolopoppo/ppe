@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Plane.h"
+#include "Maths/Plane.h"
 
 #include "Maths/Quaternion.h"
 #include "Maths/QuaternionHelpers.h"

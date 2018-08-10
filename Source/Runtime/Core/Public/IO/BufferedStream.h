@@ -15,7 +15,7 @@ using FBufferedStreamAllocator = ALLOCATOR(Stream, u8);
 //----------------------------------------------------------------------------
 constexpr size_t GBufferedStreamDefaultBufferSize = (4 * ALLOCATION_GRANULARITY); // <=> 256kb
 //----------------------------------------------------------------------------
-class PPE_API FBufferedStreamReader : public IBufferedStreamReader, FBufferedStreamAllocator {
+class PPE_CORE_API FBufferedStreamReader : public IBufferedStreamReader, FBufferedStreamAllocator {
 public:
     FBufferedStreamReader();
     ~FBufferedStreamReader();
@@ -66,7 +66,7 @@ private:
     bool RefillBuffer_();
 };
 //----------------------------------------------------------------------------
-class PPE_API FBufferedStreamWriter : public IBufferedStreamWriter, FBufferedStreamAllocator {
+class PPE_CORE_API FBufferedStreamWriter : public IBufferedStreamWriter, FBufferedStreamAllocator {
 public:
     FBufferedStreamWriter();
     ~FBufferedStreamWriter();

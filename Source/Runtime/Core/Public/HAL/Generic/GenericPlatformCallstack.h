@@ -13,7 +13,7 @@ struct FGenericProgramCounterSymbol {
     size_t Line;
 };
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformCallstack {
+struct PPE_CORE_API FGenericPlatformCallstack {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasSymbols, false);
     STATIC_CONST_INTEGRAL(size_t, MaxStackDepth, 0);

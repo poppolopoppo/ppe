@@ -7,10 +7,10 @@
 
 #include "targetver.h"
 
-#include "Core/HAL/PlatformIncludes.h"
+#include "HAL/PlatformIncludes.h"
 
-#include "Core.RTTI/RTTI.h"
+#include "RTTI.h"
 
-#if USE_CORE_PRECOMPILEDHEADERS
-#   include "Core.RTTI/stdafx.generated.h"
+#if USE_PPE_PRECOMPILEDHEADERS
+#   include "stdafx.generated.h"
 #endif

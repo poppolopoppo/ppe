@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Method.h"
+#include "Http/Method.h"
 
 #include "IO/TextWriter.h"
 
@@ -11,23 +11,23 @@ namespace Network {
 //----------------------------------------------------------------------------
 FStringView HttpMethodToCStr(EHttpMethod method) {
     switch (method) {
-    case Core::Network::EHttpMethod::Get:
+    case PPE::Network::EHttpMethod::Get:
         return "GET";
-    case Core::Network::EHttpMethod::Head:
+    case PPE::Network::EHttpMethod::Head:
         return "HEAD";
-    case Core::Network::EHttpMethod::Post:
+    case PPE::Network::EHttpMethod::Post:
         return "POST";
-    case Core::Network::EHttpMethod::Put:
+    case PPE::Network::EHttpMethod::Put:
         return "PUT";
-    case Core::Network::EHttpMethod::Delete:
+    case PPE::Network::EHttpMethod::Delete:
         return "DELETE";
-    case Core::Network::EHttpMethod::Trace:
+    case PPE::Network::EHttpMethod::Trace:
         return "TRACE";
-    case Core::Network::EHttpMethod::Options:
+    case PPE::Network::EHttpMethod::Options:
         return "OPTIONS";
-    case Core::Network::EHttpMethod::Connect:
+    case PPE::Network::EHttpMethod::Connect:
         return "CONNECT";
-    case Core::Network::EHttpMethod::Patch:
+    case PPE::Network::EHttpMethod::Patch:
         return "PATCH";
     }
     AssertNotImplemented();

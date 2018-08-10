@@ -19,10 +19,10 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define VECTOR(_DOMAIN, T) \
-    ::Core::TVector<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+    ::PPE::TVector<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 #define VECTORINSITU(_DOMAIN, T, _InSituCount) \
-    ::Core::TVectorInSitu<COMMA_PROTECT(T), _InSituCount, ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+    ::PPE::TVectorInSitu<COMMA_PROTECT(T), _InSituCount, ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -394,7 +394,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, const TVector<T, _Allocator>& vecto
 // Use TVector<T> as an inplace allocator :
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void* operator new(size_t sizeInBytes, Core::TVector<T, _Allocator>& vector) {
+void* operator new(size_t sizeInBytes, PPE::TVector<T, _Allocator>& vector) {
     Assert(sizeInBytes == sizeof(T));
     void* const p = vector.push_back_Uninitialized();
     Assert(Meta::IsAligned(std::alignment_of_v<T>, p));

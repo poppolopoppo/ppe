@@ -28,8 +28,8 @@ public:
     friend void swap(hash_t& lhs, hash_t& rhs) { std::swap(lhs._value, rhs._value); }
 };
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, hash_t h);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, hash_t h);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, hash_t h);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, hash_t h);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

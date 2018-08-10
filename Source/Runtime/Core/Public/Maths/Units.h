@@ -83,7 +83,7 @@ namespace Units {
 #define UNITS_BEGIN(NAME) namespace NAME {
 #define UNITS_END() }
 #define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
-    typedef Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> > NAME;
+    typedef PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> > NAME;
 //----------------------------------------------------------------------------
 #include "Maths/Units.Definitions-inl.h"
 //----------------------------------------------------------------------------
@@ -136,12 +136,12 @@ namespace PPE {
 #define UNITS_BEGIN(NAME)
 #define UNITS_END()
 #define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
-    typedef Core::Units::TAG::NAME NAME; \
-    PPE_API extern template class Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >; \
-    PPE_API FTextWriter& operator <<(FTextWriter& oss, \
-        const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit); \
-    PPE_API FWTextWriter& operator <<(FWTextWriter& oss, \
-        const Core::Units::TUnit< Core::Units::TUnitTraits<Core::Units::TAG::_Tag, RATIO, SMALLER> >& unit);
+    typedef PPE::Units::TAG::NAME NAME; \
+    PPE_CORE_API extern template class PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >; \
+    PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, \
+        const PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >& unit); \
+    PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, \
+        const PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >& unit);
 //----------------------------------------------------------------------------
 #include "Maths/Units.Definitions-inl.h"
 //----------------------------------------------------------------------------

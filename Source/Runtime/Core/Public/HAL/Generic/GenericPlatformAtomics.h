@@ -6,7 +6,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformAtomics {
+struct PPE_CORE_API FGenericPlatformAtomics {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasAtomic32, false);
     STATIC_CONST_INTEGRAL(bool, HasAtomic64, false);

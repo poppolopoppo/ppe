@@ -9,7 +9,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FDateTime;
-class PPE_API FTimestamp {
+class PPE_CORE_API FTimestamp {
 public:
     typedef i64 value_type;
 

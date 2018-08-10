@@ -22,7 +22,7 @@ template <
 using TMap = std::map<_Key, _Value, _Predicate, _Allocator >;
 //----------------------------------------------------------------------------
 #define MAP(_DOMAIN, _KEY, _VALUE) \
-    ::Core::TMap<_KEY, _VALUE, ::Core::Meta::TLess<_KEY>, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::Core::TPair<_KEY COMMA _VALUE>) >
+    ::PPE::TMap<_KEY, _VALUE, ::PPE::Meta::TLess<_KEY>, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::PPE::TPair<_KEY COMMA _VALUE>) >
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
 hash_t hash_value(const TMap<_Key, _Value, _Pred, _Allocator>& map) {

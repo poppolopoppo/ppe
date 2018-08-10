@@ -6,24 +6,17 @@
 ; Inputs :
 ;   <SolutionName>          name of the solution
 ;   <SolutionPath>          path that will contain the .sln
+;   <ProjectList>           list of registered projects (see Lib/RegisterProject.bff)
 ;   [SolutionBuildProject]  master project to build in the solution
 ;   TODO:[SolutionFolders]       array of structs containing each the path and projects
 //------------------------------------------------------------------------------
 
 // "All" aliases
 //------------------------------------------------------------------------------
-Alias( 'All' )
 {
-    .Targets = .ProjectList
-}
-
-Alias( 'All-Purge' )
-{
-    .Targets = {}
-    ForEach( .ProjectName in .ProjectList )
-    {
-        ^Targets + { '$ProjectName$-Purge' }
-    }
+    .AliasName = 'All'
+    .AliasTargets = .ProjectList
+    #include "Lib/ConfigAliases.bff"
 }
 
 Alias( 'Purge' )
@@ -31,110 +24,14 @@ Alias( 'Purge' )
     .Targets = { 'All-Purge' }
 }
 
-// Per platform and config aliases
-//------------------------------------------------------------------------------
-ForEach( .SharedPlatform in .AllSharedPlatforms )
-{
-    Using( .SharedPlatform )
-
-    ForEach( .SharedConfig in .AllSharedConfigs )
-    {
-        Using( .SharedConfig )
-
-        Alias( 'All-$Platform$-$Config$' )
-        {
-            .Targets = {}
-            ForEach( .ProjectName in .ProjectList )
-            {
-                ^Targets + { '$ProjectName$-$Platform$-$Config$' }
-            }
-        }
-
-        Alias( 'All-$Platform$-$Config$-Purge' )
-        {
-            .Targets = {}
-            ForEach( .ProjectName in .ProjectList )
-            {
-                ^Targets + { '$ProjectName$-$Platform$-$Config$-Purge' }
-            }
-        }
-    }
-}
-
-// Per platform aliases
-//------------------------------------------------------------------------------
-ForEach( .SharedPlatform in .AllSharedPlatforms )
-{
-    Using( .SharedPlatform )
-
-    Alias( 'All-$Platform$' )
-    {
-        .Targets = {}
-        ForEach( .SharedConfig in .AllSharedConfigs )
-        {
-            Using( .SharedConfig )
-            ForEach( .ProjectName in .ProjectList )
-            {
-                ^Targets + { '$ProjectName$-$Platform$-$Config$' }
-            }
-        }
-    }
-
-    Alias( 'All-$Platform$-Purge' )
-    {
-        .Targets = {}
-        ForEach( .SharedConfig in .AllSharedConfigs )
-        {
-            Using( .SharedConfig )
-            ForEach( .ProjectName in .ProjectList )
-            {
-                ^Targets + { '$ProjectName$-$Platform$-$Config$-Purge' }
-            }
-        }
-    }
-}
-
-// Per config aliases
-//------------------------------------------------------------------------------
-ForEach( .SharedConfig in .AllSharedConfigs )
-{
-    Using( .SharedConfig )
-
-    Alias( 'All-$Config$' )
-    {
-        .Targets = {}
-        ForEach( .SharedPlatform in .AllSharedPlatforms )
-        {
-            Using( .SharedPlatform )
-            ForEach( .ProjectName in .ProjectList )
-            {
-                ^Targets + { '$ProjectName$-$Platform$-$Config$' }
-            }
-        }
-    }
-
-    Alias( 'All-$Config$-Purge' )
-    {
-        .Targets = {}
-        ForEach( .SharedPlatform in .AllSharedPlatforms )
-        {
-            Using( .SharedPlatform )
-            ForEach( .ProjectName in .ProjectList )
-            {
-                ^Targets + { '$ProjectName$-$Platform$-$Config$-Purge' }
-            }
-        }
-    }
-}
-
 // VCXProj Generation
 //------------------------------------------------------------------------------
-Alias( 'proj' )
+Alias( 'VCXProject' )
 {
     .Targets = {}
     ForEach( .ProjectName in .ProjectList )
     {
-        ^Targets + { '$ProjectName$-Proj' }
+        ^Targets + { '$ProjectName$-VCXProject' }
     }
 }
 
@@ -142,7 +39,7 @@ Alias( 'proj' )
 //------------------------------------------------------------------------------
 VSSolution( 'sln' )
 {
-    .SolutionOutput = '$OutputDirectory$/$SolutionName$.sln'
+    .SolutionOutput = '$OutputPath$/$SolutionName$.sln'
     .SolutionConfigs = {}
     ForEach( .CompileConfig in .AllCompileConfigs )
     {
@@ -158,6 +55,6 @@ VSSolution( 'sln' )
     .SolutionProjects = {}
     ForEach( .ProjectName in .ProjectList )
     {
-        ^SolutionProjects + '$ProjectName$-Proj'
+        ^SolutionProjects + '$ProjectName$-VCXProject'
     }
 }

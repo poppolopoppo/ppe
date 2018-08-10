@@ -100,10 +100,10 @@ void TSingletonPoolAllocator<T, _ThreadLocal, _PoolTag>::deallocate(void* p, siz
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define SINGLETON_POOL_ALLOCATOR(_Domain, T, _PoolTag) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::TSingletonPoolAllocator<COMMA_PROTECT(T) COMMA false COMMA _PoolTag >)
+    DECORATE_ALLOCATOR(_Domain, ::PPE::TSingletonPoolAllocator<COMMA_PROTECT(T) COMMA false COMMA _PoolTag >)
 //----------------------------------------------------------------------------
 #define THREAD_LOCAL_SINGLETON_POOL_ALLOCATOR(_Domain, T, _PoolTag) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::TSingletonPoolAllocator<COMMA_PROTECT(T) COMMA true  COMMA _PoolTag >)
+    DECORATE_ALLOCATOR(_Domain, ::PPE::TSingletonPoolAllocator<COMMA_PROTECT(T) COMMA true  COMMA _PoolTag >)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

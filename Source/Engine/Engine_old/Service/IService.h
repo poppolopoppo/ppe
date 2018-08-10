@@ -71,7 +71,7 @@ private:
     const FGuid _Name::ServiceGuid = FGuid::FromCStr(STRINGIZE(_Name))
 //----------------------------------------------------------------------------
 #define ENGINESERVICE_CONSTRUCT(_Name) \
-    ENGINESERVICE_NAME(_Name), Core::Engine::ServicePriority::_Name
+    ENGINESERVICE_NAME(_Name), PPE::Engine::ServicePriority::_Name
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

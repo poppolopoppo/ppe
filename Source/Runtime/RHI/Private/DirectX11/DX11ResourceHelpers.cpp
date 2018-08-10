@@ -76,19 +76,19 @@ bool DX11ResourceSetData(
 
     switch (bufferUsage)
     {
-    case Core::Graphics::EBufferUsage::Default:
+    case PPE::Graphics::EBufferUsage::Default:
         if (!DX11UpdateResource(wrapper->ImmediateContext(), resource, subResource, src.data(), rowPitch, depthPitch))
             PPE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to update resource buffer", device));
         break;
 
-    case Core::Graphics::EBufferUsage::Dynamic:
-    case Core::Graphics::EBufferUsage::Staging:
+    case PPE::Graphics::EBufferUsage::Dynamic:
+    case PPE::Graphics::EBufferUsage::Staging:
         Assert(bufferMode ^ EBufferMode::Write);
         if (!DX11MapWrite(wrapper->ImmediateContext(), resource, subResource, offset, src, bufferMode))
             PPE_THROW_IT(FDeviceEncapsulatorException("DX11: failed to map resource buffer for writing", device));
         break;
 
-    case Core::Graphics::EBufferUsage::Immutable:
+    case PPE::Graphics::EBufferUsage::Immutable:
         PPE_THROW_IT(FDeviceEncapsulatorException("DX11: immutable buffer can't be muted", device));
 
     default:

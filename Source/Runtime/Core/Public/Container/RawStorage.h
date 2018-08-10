@@ -12,13 +12,13 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RAWSTORAGE(_DOMAIN, T) \
-    ::Core::TRawStorage<T, ALLOCATOR(_DOMAIN, T)>
+    ::PPE::TRawStorage<T, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 #define RAWSTORAGE_ALIGNED(_DOMAIN, T, _ALIGNMENT) \
-    ::Core::TRawStorage<T, ALIGNED_ALLOCATOR(_DOMAIN, T, _ALIGNMENT)>
+    ::PPE::TRawStorage<T, ALIGNED_ALLOCATOR(_DOMAIN, T, _ALIGNMENT)>
 //----------------------------------------------------------------------------
 #define RAWSTORAGE_STACK(T) \
-    ::Core::TRawStorage<T, STACK_ALLOCATOR(T)>
+    ::PPE::TRawStorage<T, STACK_ALLOCATOR(T)>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

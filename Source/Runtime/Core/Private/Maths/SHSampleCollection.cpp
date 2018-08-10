@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "SHSampleCollection.h"
+#include "Maths/SHSampleCollection.h"
 
 #include "Maths/RandomGenerator.h"
 

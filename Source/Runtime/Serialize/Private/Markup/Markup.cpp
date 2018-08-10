@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Markup.h"
+#include "Markup/Markup.h"
 
 #include "Lexer/Lexer.h"
 #include "Lexer/Match.h"
@@ -10,12 +10,12 @@
 #include "Container/AssociativeVector.h"
 #include "Container/RawStorage.h"
 #include "Container/Vector.h"
-#include "IO/FS/ConstNames.h"
+#include "IO/ConstNames.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
-#include "IO/VirtualFileSystem.h"
 #include "Memory/MemoryProvider.h"
+#include "VirtualFileSystem.h"
 
 namespace PPE {
 namespace Serialize {

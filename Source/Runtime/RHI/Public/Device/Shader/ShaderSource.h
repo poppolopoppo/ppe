@@ -23,12 +23,12 @@ FWD_REFPTR(ShaderSource);
 class FShaderSource : public FRefCountable {
 public:
     FShaderSource(   const char *sourceName,
-                    const Core::FFilename& filename,
+                    const PPE::FFilename& filename,
                     const TMemoryView<const char>& sourceCode,
                     const TMemoryView<const TPair<FString, FString>>& defines);
 
     FShaderSource(   FString&& sourceName,
-                    const Core::FFilename& filename,
+                    const PPE::FFilename& filename,
                     RAWSTORAGE(Shader, char)&& sourceCode,
                     ASSOCIATIVE_VECTOR(Shader, FString, FString)&& defines);
 
@@ -38,7 +38,7 @@ public:
     FShaderSource& operator =(const FShaderSource& ) = delete;
 
     const FString& SourceName() const { return _sourceName; }
-    const Core::FFilename& Filename() const { return _filename; }
+    const PPE::FFilename& Filename() const { return _filename; }
     TMemoryView<const char> SourceCode() const { return MakeView(_sourceCode); }
     TMemoryView<const TPair<FString, FString>> Defines() const { return MakeView(_defines); }
 
@@ -49,7 +49,7 @@ public:
     void FillSubstitutions( VECTOR(Shader, TPair<FString COMMA FString>)& substitutions,
                             const FVertexDeclaration *vertexDeclaration) const;
 
-    static FShaderSource *LoadFromFileIFP(  const Core::FFilename& filename,
+    static FShaderSource *LoadFromFileIFP(  const PPE::FFilename& filename,
                                             const TMemoryView<const TPair<FString, FString>>& defines);
 
     SINGLETON_POOL_ALLOCATED_DECL();
@@ -60,7 +60,7 @@ public:
 
 private:
     FString _sourceName;
-    Core::FFilename _filename;
+    PPE::FFilename _filename;
     RAWSTORAGE(Shader, char) _sourceCode;
     ASSOCIATIVE_VECTOR(Shader, FString, FString) _defines;
 };

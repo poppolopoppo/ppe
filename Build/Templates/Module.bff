@@ -1,0 +1,75 @@
+//------------------------------------------------------------------------------
+// Module Generation (wrapping Library with additional assumptions)
+//------------------------------------------------------------------------------
+; Inputs :
+;   <ModulePath>                path of the module
+;   <ModuleName>                name of the module
+;   [ModuleDefines]             module specific defines
+;   [ModulePublicDependencies]  module specific public dependencies
+;   [ModulePrivateDependencies] module specific private dependencies
+;   [ModuleForcedIncludes]      module specific relative force includes
+;   [ModuleExcludedFiles]       module specific relative excluded files
+;   [ModuleFiles]               module specific relative included files
+;   [ModuleIsolatedFiles]       module relative files not included in unity builds but still compiled
+;   [ModuleIncludePaths]        module specific relative include paths
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// This is simply modeling some asumptions made on modules :
+//  - The project name is the project path in .SourceDir
+//  - All modules have a Public and a Private subfolder
+//  - Private is only accessible in the current module
+//  - All module dependencies give access to the Public folder *ONLY*
+//  - Public module dependencies are viral : consuming modules needs to also consume those
+//  - Private module dependencies are not needed by consuming modules (*SHOULD BE 90% OF THE TIME*)
+//------------------------------------------------------------------------------
+
+.ProjectName = '$ModulePath$/$ModuleName$'
+.ProjectPath = '$SourcePath$/$ProjectName$'
+
+.ModuleDefines ? {}
+.ModulePublicDependencies ? {}
+.ModulePrivateDependencies ? {}
+.ModuleForcedIncludes ? {}
+.ModuleExcludedFiles ? {}
+.ModuleFiles ? {}
+.ModuleIsolatedFiles ? {}
+.ModuleIncludePaths ? {}
+
+.ProjectDefines = .ModuleDefines
+.ProjectExcludedFiles = .ModuleExcludedFiles
+.ProjectFiles = .ModuleFiles
+.ProjectIsolatedFiles = .ModuleIsolatedFiles
+.ProjectSolutionFolder = .ModulePath
+
+.ProjectIncludes ? {}
+.ProjectIncludes +
+{
+    '$ProjectPath$',
+    '$ProjectPath$/Public',
+    '$ProjectPath$/Private'
+}
+ForEach( .Path in .ModuleIncludePaths )
+{
+    ^ProjectIncludes + '$ProjectPath$/$Path$'
+}
+
+.ProjectDependencies = {}
+.ModuleDependencies = .ModulePublicDependencies
+                    + .ModulePrivateDependencies
+ForEach( .Module in .ModuleDependencies )
+{
+    ^ProjectDependencies + .Module
+    ^ProjectIncludes + '$SourcePath$/$Module$/Public'
+}
+
+.ProjectForcedIncludes = {}
+ForEach( .File in .ModuleForcedIncludes )
+{
+    .IncludePath = '$ProjectPath$/$File$'
+    ^ProjectForcedIncludes + .IncludePath
+}
+
+#include "Library.bff"
+
+^ModuleList + .ProjectName

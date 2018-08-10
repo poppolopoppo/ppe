@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Malloc.h"
-#include "MallocBinned.h"
-#include "MallocStomp.h"
+#include "Allocator/Malloc.h"
+#include "Allocator/MallocBinned.h"
+#include "Allocator/MallocStomp.h"
 
 #include "Diagnostic/LeakDetector.h"
 #include "HAL/PlatformMaths.h"

@@ -1,0 +1,14 @@
+#once
+{
+    .ModuleList = {}
+    .ModulePath = 'Runtime'
+
+    #include "Core/Core.bff"
+    #include "VFS/VFS.bff"
+    #include "RTTI/RTTI.bff"
+    #include "Serialize/Serialize.bff"
+    #include "Network/Network.bff"
+    // #include "Application/Application.bff" %NOCOMMIT%
+
+    #include "$BuildPath$/Templates/Namespace.bff"
+}

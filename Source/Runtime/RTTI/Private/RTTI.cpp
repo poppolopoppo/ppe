@@ -92,10 +92,10 @@ void FRTTIModule::ClearAll_UnusedMemory() {
 
 #include "Container/Pair.h"
 #include "Diagnostic/Logger.h"
+#include "IO/Dirpath.h"
+#include "IO/Filename.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
-#include "IO/FS/Dirpath.h"
-#include "IO/FS/Filename.h"
 #include "IO/String.h"
 #include "Maths/ScalarMatrix.h"
 #include "Maths/ScalarVector.h"
@@ -122,11 +122,11 @@ struct FAnonymousStructAsTuple {
     float3 Position;
 };
 //----------------------------------------------------------------------------
-class FTiti : public Core::RTTI::FMetaObject {
+class FTiti : public PPE::RTTI::FMetaObject {
 public:
     FTiti() {}
     virtual ~FTiti() {}
-    RTTI_CLASS_HEADER(FTiti, Core::RTTI::FMetaObject);
+    RTTI_CLASS_HEADER(FTiti, PPE::RTTI::FMetaObject);
     void Proc(int a, float b, const FString& c) { NOOP(a, b, c); }
     float Id(float f) { return f; }
     float IdDeprecated(float f) { return f; }
@@ -142,13 +142,13 @@ public:
     const PToto& Toto() const { return _toto; }
 private:
     int _count;
-    Core::FString _name;
+    PPE::FString _name;
     FAnonymousStructAsTuple _structAsTuple;
     TVector<FAnonymousStructAsTuple> _structAsTupleVector;
     VECTOR(NativeTypes, PTiti) _tities;
     VECTOR(NativeTypes, PTiti) _titiesOld;
     VECTOR(NativeTypes, PCTiti) _consttities;
-    ASSOCIATIVE_VECTOR(NativeTypes, Core::TPair<int COMMA PTiti>, VECTORINSITU(NativeTypes, Core::TPair<float COMMA Core::FString>, 2)) _dict;
+    ASSOCIATIVE_VECTOR(NativeTypes, PPE::TPair<int COMMA PTiti>, VECTORINSITU(NativeTypes, PPE::TPair<float COMMA PPE::FString>, 2)) _dict;
     PToto _toto;
 };
 RTTI_CLASS_BEGIN(RTTI_UnitTest, FTiti, RTTI::EClassFlags::Public)

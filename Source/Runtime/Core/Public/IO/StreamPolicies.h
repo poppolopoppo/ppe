@@ -14,8 +14,8 @@ enum class EOpenPolicy : size_t {
     ReadWritable    = Readable | Writable,
 };
 ENUM_FLAGS(EOpenPolicy);
-PPE_API FTextWriter& operator <<(FTextWriter& oss, EOpenPolicy policy);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, EOpenPolicy policy);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, EOpenPolicy policy);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, EOpenPolicy policy);
 //----------------------------------------------------------------------------
 enum class EAccessPolicy : size_t {
 
@@ -37,7 +37,7 @@ enum class EAccessPolicy : size_t {
     ShortLived      = 1 << 10,  // Temporary file, try as much as possible to don't flush to disk (use with |Create)
     Temporary       = 1 << 11,  // Delete files after when last descriptor is closed (use with |Create)
     Exclusive       = 1 << 12,  // Fail if the file already exists (use with |Create)
-    Compress        = 1 << 13,  // Uses Core::Compression
+    Compress        = 1 << 13,  // Uses PPE::Compression
     ShareRead       = 1 << 14,  // Allow other process to read the file while writing
 
     Create_Binary   = Create | Binary,
@@ -47,8 +47,8 @@ enum class EAccessPolicy : size_t {
     Truncate_Text   = Truncate | Text,
 };
 ENUM_FLAGS(EAccessPolicy);
-PPE_API FTextWriter& operator <<(FTextWriter& oss, EAccessPolicy policy);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, EAccessPolicy policy);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, EAccessPolicy policy);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, EAccessPolicy policy);
 //----------------------------------------------------------------------------
 enum class EExistPolicy : size_t {
     Exists          = 1 << 0,

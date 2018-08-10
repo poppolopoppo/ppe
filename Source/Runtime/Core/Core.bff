@@ -1,23 +1,21 @@
 #once
 {
-    .ProjectName = 'Core'
-    .ProjectPath = '$SourceDirectory$/Core'
-    .ProjectSolutionFolder = 'Core'
-    .ProjectDefines = { 'EXPORT_CORE' }
-    .UnityNumFiles = 5
-    .ProjectDependencies =
+    .ModuleName = 'Core'
+    .ModuleDefines = { 'EXPORT_PPE_CORE' }
+    .ModulePrivateDependencies =
     {
-        'Core.External.double-conversion',
-        'Core.External.farmhash',
-        'Core.External.lz4',
-        'Core.External.xxHash',
+        'External/double-conversion',
+        'External/farmhash',
+        'External/lz4',
+        'External/xxHash',
     }
-    .ProjectIsolatedFiles =
+    .ModuleIsolatedFiles =
     {
-        'Core.cpp'
-        'Allocator/MallocBinned.cpp',
-        'Allocator/MallocStomp.cpp',
-        'Allocator/New.cpp',
+        'Private/Core.cpp'
+        'Private/Allocator/MallocBinned.cpp',
+        'Private/Allocator/MallocStomp.cpp',
+        'Private/Allocator/New.cpp',
     }
-    #include "../../Build/Templates/Library.bff"
+    .UnityNumFiles = 5 // generated
+    #include "$BuildPath$/Templates/Module.bff"
 }

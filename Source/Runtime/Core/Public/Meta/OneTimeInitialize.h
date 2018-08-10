@@ -32,10 +32,10 @@
 #else
 
 #   include "Misc/TargetPlatform.h"
-#   define PPE_INTERLOCKEDCOMPAREEXCHANGE_32(_Var, _Src, _Operand) Core::FPlatformAtomics::CompareExchange((volatile long*)(&(_Var)), static_cast<long>(_Src), static_cast<long>(_Operand))
-#   define PPE_INTERLOCKEDEXCHANGE_PTR(_Var, _Value) Core::FPlatformAtomics::Exchange((void* volatile*)(&(_Var)), _Value)
-#   define PPE_INTERLOCKEDEXCHANGE_32(_Var, _Value) Core::FPlatformAtomics::Exchange((volatile long*)(&(_Var)), static_cast<long>(_Value))
-#   define PPE_SHORTSYNCWAIT() Core::FPlatformAtomics::ShortSyncWait()
+#   define PPE_INTERLOCKEDCOMPAREEXCHANGE_32(_Var, _Src, _Operand) PPE::FPlatformAtomics::CompareExchange((volatile long*)(&(_Var)), static_cast<long>(_Src), static_cast<long>(_Operand))
+#   define PPE_INTERLOCKEDEXCHANGE_PTR(_Var, _Value) PPE::FPlatformAtomics::Exchange((void* volatile*)(&(_Var)), _Value)
+#   define PPE_INTERLOCKEDEXCHANGE_32(_Var, _Value) PPE::FPlatformAtomics::Exchange((volatile long*)(&(_Var)), static_cast<long>(_Value))
+#   define PPE_SHORTSYNCWAIT() PPE::FPlatformAtomics::ShortSyncWait()
 
 #   include "Meta/AlignedStorage.h"
 

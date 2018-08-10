@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "ParseList.h"
+#include "Parser/ParseList.h"
 
 #include "Diagnostic/Logger.h"
 #include "Lexer/Lexer.h"

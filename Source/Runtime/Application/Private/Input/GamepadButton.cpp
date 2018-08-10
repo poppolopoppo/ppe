@@ -33,33 +33,33 @@ static constexpr EGamepadButton GEachGamepadButtons[] = {
 FStringView GamepadButtonToCStr(EGamepadButton value) {
     switch (value)
     {
-    case Core::Application::EGamepadButton::Button0:
+    case PPE::Application::EGamepadButton::Button0:
         return MakeStringView("Button0");
-    case Core::Application::EGamepadButton::Button1:
+    case PPE::Application::EGamepadButton::Button1:
         return MakeStringView("Button1");
-    case Core::Application::EGamepadButton::Button2:
+    case PPE::Application::EGamepadButton::Button2:
         return MakeStringView("Button2");
-    case Core::Application::EGamepadButton::Button3:
+    case PPE::Application::EGamepadButton::Button3:
         return MakeStringView("Button3");
-    case Core::Application::EGamepadButton::Button4:
+    case PPE::Application::EGamepadButton::Button4:
         return MakeStringView("Button4");
-    case Core::Application::EGamepadButton::Button5:
+    case PPE::Application::EGamepadButton::Button5:
         return MakeStringView("Button5");
-    case Core::Application::EGamepadButton::Button6:
+    case PPE::Application::EGamepadButton::Button6:
         return MakeStringView("Button6");
-    case Core::Application::EGamepadButton::Button7:
+    case PPE::Application::EGamepadButton::Button7:
         return MakeStringView("Button7");
-    case Core::Application::EGamepadButton::Button8:
+    case PPE::Application::EGamepadButton::Button8:
         return MakeStringView("Button8");
-    case Core::Application::EGamepadButton::Button9:
+    case PPE::Application::EGamepadButton::Button9:
         return MakeStringView("Button9");
-    case Core::Application::EGamepadButton::DPadUp:
+    case PPE::Application::EGamepadButton::DPadUp:
         return MakeStringView("DPadUp");
-    case Core::Application::EGamepadButton::DPadLeft:
+    case PPE::Application::EGamepadButton::DPadLeft:
         return MakeStringView("DPadLeft");
-    case Core::Application::EGamepadButton::DPadRight:
+    case PPE::Application::EGamepadButton::DPadRight:
         return MakeStringView("DPadRight");
-    case Core::Application::EGamepadButton::DPadDown:
+    case PPE::Application::EGamepadButton::DPadDown:
         return MakeStringView("DPadDown");
     default:
         AssertNotImplemented();
@@ -70,33 +70,33 @@ FStringView GamepadButtonToCStr(EGamepadButton value) {
 FStringView GamepadButtonToXBoxCStr(EGamepadButton value) {
     switch (value)
     {
-    case Core::Application::EGamepadButton::A:
+    case PPE::Application::EGamepadButton::A:
         return MakeStringView("A");
-    case Core::Application::EGamepadButton::B:
+    case PPE::Application::EGamepadButton::B:
         return MakeStringView("B");
-    case Core::Application::EGamepadButton::X:
+    case PPE::Application::EGamepadButton::X:
         return MakeStringView("X");
-    case Core::Application::EGamepadButton::Y:
+    case PPE::Application::EGamepadButton::Y:
         return MakeStringView("Y");
-    case Core::Application::EGamepadButton::LeftThumb:
+    case PPE::Application::EGamepadButton::LeftThumb:
         return MakeStringView("LeftThumb");
-    case Core::Application::EGamepadButton::RightThumb:
+    case PPE::Application::EGamepadButton::RightThumb:
         return MakeStringView("RightThumb");
-    case Core::Application::EGamepadButton::Start:
+    case PPE::Application::EGamepadButton::Start:
         return MakeStringView("Start");
-    case Core::Application::EGamepadButton::Back:
+    case PPE::Application::EGamepadButton::Back:
         return MakeStringView("Back");
-    case Core::Application::EGamepadButton::LeftShoulder:
+    case PPE::Application::EGamepadButton::LeftShoulder:
         return MakeStringView("LeftShoulder");
-    case Core::Application::EGamepadButton::RightShoulder:
+    case PPE::Application::EGamepadButton::RightShoulder:
         return MakeStringView("RightShoulder");
-    case Core::Application::EGamepadButton::DPadUp:
+    case PPE::Application::EGamepadButton::DPadUp:
         return MakeStringView("DPadUp");
-    case Core::Application::EGamepadButton::DPadLeft:
+    case PPE::Application::EGamepadButton::DPadLeft:
         return MakeStringView("DPadLeft");
-    case Core::Application::EGamepadButton::DPadRight:
+    case PPE::Application::EGamepadButton::DPadRight:
         return MakeStringView("DPadRight");
-    case Core::Application::EGamepadButton::DPadDown:
+    case PPE::Application::EGamepadButton::DPadDown:
         return MakeStringView("DPadDown");
     default:
         AssertNotImplemented();

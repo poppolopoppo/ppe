@@ -7,7 +7,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformConsole {
+struct PPE_CORE_API FGenericPlatformConsole {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasConsole, false);
 

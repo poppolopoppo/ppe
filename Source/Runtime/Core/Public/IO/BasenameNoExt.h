@@ -2,13 +2,13 @@
 
 #include "Core.h"
 
-#include "IO/FS/FileSystemToken.h"
+#include "IO/FileSystemToken.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FBasenameNoExt : public FFileSystemToken {
+class PPE_CORE_API FBasenameNoExt : public FFileSystemToken {
 public:
     typedef FFileSystemToken parent_type;
 
@@ -29,7 +29,7 @@ public:
     void Swap(FBasenameNoExt& other);
 };
 //----------------------------------------------------------------------------
-PPE_API FBasenameNoExt operator +(const FBasenameNoExt& lhs, const FileSystem::FStringView& rhs);
+PPE_CORE_API FBasenameNoExt operator +(const FBasenameNoExt& lhs, const FileSystem::FStringView& rhs);
 //----------------------------------------------------------------------------
 inline void swap(FBasenameNoExt& lhs, FBasenameNoExt& rhs) {
     lhs.Swap(rhs);

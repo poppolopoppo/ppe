@@ -7,16 +7,16 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define INTRUSIVELIST_ACCESSOR(_Member) \
-    ::Core::details::TIntrusiveListTraits< decltype(_Member) >::accessor< _Member >::type
+    ::PPE::details::TIntrusiveListTraits< decltype(_Member) >::accessor< _Member >::type
 //----------------------------------------------------------------------------
 #define INTRUSIVELIST(_Member) \
-    ::Core::details::TIntrusiveListTraits< decltype(_Member) >::list< _Member >::type
+    ::PPE::details::TIntrusiveListTraits< decltype(_Member) >::list< _Member >::type
 //----------------------------------------------------------------------------
 #define INTRUSIVESINGLELIST_ACCESSOR(_Member) \
-    ::Core::details::TIntrusiveSingleListTraits< decltype(_Member) >::accessor< _Member >::type
+    ::PPE::details::TIntrusiveSingleListTraits< decltype(_Member) >::accessor< _Member >::type
 //----------------------------------------------------------------------------
 #define INTRUSIVESINGLELIST(_Member) \
-    ::Core::details::TIntrusiveSingleListTraits< decltype(_Member) >::list< _Member >::type
+    ::PPE::details::TIntrusiveSingleListTraits< decltype(_Member) >::list< _Member >::type
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

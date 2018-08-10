@@ -124,8 +124,8 @@ public:
 };
 //----------------------------------------------------------------------------
 #define META_DYNAMIC_CASTABLE_IMPL(_SELF_TYPE) \
-    virtual ::Core::hash_t InnerTypeHash() const override final { return StaticInnerTypeHash; } \
-    STATIC_CONST_INTEGRAL(size_t, StaticInnerTypeHash, ::Core::Meta::TTypeHash<_SELF_TYPE>::value())
+    virtual ::PPE::hash_t InnerTypeHash() const override final { return StaticInnerTypeHash; } \
+    STATIC_CONST_INTEGRAL(size_t, StaticInnerTypeHash, ::PPE::Meta::TTypeHash<_SELF_TYPE>::value())
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

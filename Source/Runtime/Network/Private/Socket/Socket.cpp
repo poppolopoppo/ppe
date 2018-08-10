@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Socket.h"
+#include "Socket/Socket.h"
 
 #include "NetworkIncludes.h"
 

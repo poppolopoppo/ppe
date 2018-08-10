@@ -1,6 +1,9 @@
 #include "stdafx.h"
 
-#include "ParseExpression.h"
+#include "Parser/ParseExpression.h"
+
+#include "Parser/Parser.h"
+#include "Parser/ParseStatement.h"
 
 #include "Any.h"
 #include "MetaClass.h"
@@ -13,9 +16,6 @@
 #include "IO/FormatHelpers.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
-
-#include "Parser.h"
-#include "ParseStatement.h"
 
 namespace PPE {
 namespace Parser {
@@ -103,7 +103,7 @@ RTTI::FAtom FVariableReference::Eval(FParseContext* context) const {
 }
 //----------------------------------------------------------------------------
 FString FVariableReference::ToString() const {
-    return Core::ToString(_pathName);
+    return PPE::ToString(_pathName);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -317,7 +317,7 @@ RTTI::FAtom FDictionaryExpr::Eval(FParseContext* context) const {
 
         Assert(key);
 
-        Core::TPair<RTTI::FAny, RTTI::FAny>& pair = result.Vector()[i];
+        PPE::TPair<RTTI::FAny, RTTI::FAny>& pair = result.Vector()[i];
 
         pair.first.AssignMove(key);
         pair.second.AssignMove(value);

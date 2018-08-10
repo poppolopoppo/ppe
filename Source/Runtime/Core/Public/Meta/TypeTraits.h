@@ -9,7 +9,7 @@
         struct TIsPod< T > : public std::integral_constant<bool, true> {}; \
     } //!Meta
 #define PPE_ASSERT_TYPE_IS_POD(T, ...) \
-    static_assert(::Core::Meta::TIsPod<T>::value, STRINGIZE(T) " is not a POD type");
+    static_assert(::PPE::Meta::TIsPod<T>::value, STRINGIZE(T) " is not a POD type");
 
 namespace PPE {
 namespace Meta {
@@ -312,7 +312,7 @@ typename std::enable_if< not Meta::TIsPod<T>::value >::type Destroy(T* p) {
         \
         template < \
             typename... _Args, \
-            typename = Core::Meta::TEnableIf< Meta::has_constructor<parent_type, _Args...>::value > \
+            typename = PPE::Meta::TEnableIf< Meta::has_constructor<parent_type, _Args...>::value > \
         > \
         explicit _NAME(_Args&&... args) \
             : parent_type(std::forward<_Args>(args)...) {} \

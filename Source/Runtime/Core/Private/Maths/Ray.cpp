@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Ray.h"
+#include "Maths/Ray.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

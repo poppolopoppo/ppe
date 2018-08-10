@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Match.h"
+#include "Lexer/Match.h"
 
-#include "Symbols.h"
+#include "Lexer/Symbols.h"
 
 #include "IO/StringView.h"
 

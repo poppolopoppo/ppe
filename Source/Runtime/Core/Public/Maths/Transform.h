@@ -10,7 +10,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FTransform {
+class PPE_CORE_API FTransform {
 public:
     FORCE_INLINE FTransform()
 #ifdef WITH_PPE_ASSERT
@@ -98,9 +98,9 @@ protected:
     float3 _scale;
 };
 //----------------------------------------------------------------------------
-bool PPE_API IsINF(const FTransform& transform);
-bool PPE_API IsNAN(const FTransform& transform);
-bool PPE_API IsNANorINF(const FTransform& transform);
+bool PPE_CORE_API IsINF(const FTransform& transform);
+bool PPE_CORE_API IsNAN(const FTransform& transform);
+bool PPE_CORE_API IsNANorINF(const FTransform& transform);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

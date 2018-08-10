@@ -14,7 +14,7 @@ template <typename T, typename _Allocator = ALLOCATOR(Container, T)>
 using TDeque = std::deque<T, _Allocator>;
 //----------------------------------------------------------------------------
 #define DEQUE(_DOMAIN, T) \
-    ::Core::TDeque<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+    ::PPE::TDeque<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

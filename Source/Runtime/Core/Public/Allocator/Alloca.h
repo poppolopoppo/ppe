@@ -24,13 +24,13 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API void* Alloca(size_t size);
+PPE_CORE_API void* Alloca(size_t size);
 //----------------------------------------------------------------------------
-PPE_API void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData);
+PPE_CORE_API void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData);
 //----------------------------------------------------------------------------
-PPE_API void FreeAlloca(void *ptr, size_t size);
+PPE_CORE_API void FreeAlloca(void *ptr, size_t size);
 //----------------------------------------------------------------------------
-PPE_API size_t AllocaSnapSize(size_t size);
+PPE_CORE_API size_t AllocaSnapSize(size_t size);
 //----------------------------------------------------------------------------
 template <typename T>
 FORCE_INLINE T *TypedAlloca(size_t count) {
@@ -119,33 +119,33 @@ struct TAllocaBlock {
 //----------------------------------------------------------------------------
 #define MALLOCA_ASSUMEPOD(T, _NAME, _COUNT) \
     const size_t CONCAT(_Count_, _NAME) = (_COUNT); \
-    const ::Core::TAllocaBlock<T> _NAME( static_cast< T* >( \
+    const ::PPE::TAllocaBlock<T> _NAME( static_cast< T* >( \
         SYSALLOCA_IFP(sizeof(T) * CONCAT(_Count_, _NAME))), \
         CONCAT(_Count_, _NAME) )
 //----------------------------------------------------------------------------
 #define MALLOCA_POD(T, _NAME, _COUNT) \
     STATIC_ASSERT(/* only POD or classes with FForceInit ctor */ \
-        ::Core::Meta::TIsPod<T>::value || \
-        ::Core::Meta::has_forceinit_constructor<T>::value ); \
+        ::PPE::Meta::TIsPod<T>::value || \
+        ::PPE::Meta::has_forceinit_constructor<T>::value ); \
     MALLOCA_ASSUMEPOD(T, _NAME, _COUNT)
 //----------------------------------------------------------------------------
 #define INLINE_MALLOCA(T, _COUNT) \
-    ::Core::TAllocaBlock<T>( static_cast< T* >(SYSALLOCA_IFP(sizeof(T) * (_COUNT))), (_COUNT) )
+    ::PPE::TAllocaBlock<T>( static_cast< T* >(SYSALLOCA_IFP(sizeof(T) * (_COUNT))), (_COUNT) )
 //----------------------------------------------------------------------------
 #define STACKLOCAL_ASSUMEPOD_ARRAY(T, _NAME, _COUNT) \
     MALLOCA_ASSUMEPOD(T, CONCAT(_Alloca_, _NAME), _COUNT ); \
-    const ::Core::TMemoryView< T > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+    const ::PPE::TMemoryView< T > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 #define STACKLOCAL_POD_ARRAY(T, _NAME, _COUNT) \
     MALLOCA_POD(T, CONCAT(_Alloca_, _NAME), _COUNT ); \
-    const ::Core::TMemoryView< T > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
+    const ::PPE::TMemoryView< T > _NAME( CONCAT(_Alloca_, _NAME).MakeView() )
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FAllocaStartup {
 public:
-    PPE_API static void Start(bool mainThread);
-    PPE_API static void Shutdown();
+    PPE_CORE_API static void Start(bool mainThread);
+    PPE_CORE_API static void Shutdown();
 
     FAllocaStartup(bool mainThread) { Start(mainThread); }
     ~FAllocaStartup() { Shutdown(); }

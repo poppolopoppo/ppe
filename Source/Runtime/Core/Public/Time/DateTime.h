@@ -10,7 +10,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FTimestamp;
-class PPE_API FDateTime {
+class PPE_CORE_API FDateTime {
 public:
     FDateTime() : FDateTime(0) {}
     explicit FDateTime(u64 ord) { *reinterpret_cast<u64*>(this) = ord; }
@@ -44,8 +44,8 @@ public:
 STATIC_ASSERT(sizeof(FDateTime) == sizeof(u64));
 PPE_ASSUME_TYPE_AS_POD(FDateTime)
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const FDateTime& d);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDateTime& d);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FDateTime& d);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDateTime& d);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

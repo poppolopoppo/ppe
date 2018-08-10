@@ -1,6 +1,5 @@
 #pragma once
 
-#include "HAL/PlatformMemory.h"
 #include "Memory/RefPtr.h"
 #include "Meta/AlignedStorage.h"
 #include "Meta/TypeTraits.h"
@@ -11,32 +10,18 @@ namespace PPE {
 //----------------------------------------------------------------------------
 // TFunction<> is using an insitu storage to avoid allocation, unlike std::function<>
 //----------------------------------------------------------------------------
-class FBaseFunction {
+class PPE_CORE_API FBaseFunction {
 public:
-    ~FBaseFunction() {
-        if (is_destructible_())
-            Meta::Destroy(get_payload_());
-    }
+    ~FBaseFunction();
 
     bool Valid() const { return (0 != _data); }
     PPE_FAKEBOOL_OPERATOR_DECL() { return (void*)_data; }
 
-    void Reset() {
-        if (is_destructible_())
-            Meta::Destroy(get_payload_());
+    void Reset();
 
-        _data = 0;
-        ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xDD, GInSituSize));
-    }
+    bool Equals(const FBaseFunction& other) const;
 
-    bool Equals(const FBaseFunction& other) const {
-        return (_data == other._data && FPlatformMemory::Memcmp(&_inSitu, &other._inSitu, GInSituSize) == 0);
-    }
-
-    void Swap(FBaseFunction& other) {
-        std::swap(_data, other._data);
-        std::swap(_inSitu, other._inSitu);
-    }
+    void Swap(FBaseFunction& other);
 
     inline friend bool operator ==(const FBaseFunction& lhs, const FBaseFunction& rhs) { return (lhs.Equals(rhs)); }
     inline friend bool operator !=(const FBaseFunction& lhs, const FBaseFunction& rhs) { return (not operator ==(lhs, rhs)); }
@@ -62,27 +47,16 @@ protected:
     };
 
     FBaseFunction() {}
-    explicit FBaseFunction(intptr_t data)
-        : _data(data) {
-        ONLY_IF_ASSERT(FPlatformMemory::Memset(&_inSitu, 0xCC, GInSituSize));
-    }
+    explicit FBaseFunction(intptr_t data);
 
     FBaseFunction(const FBaseFunction& other) { assign_copy_(other); }
-    FBaseFunction& operator =(const FBaseFunction& other) {
-        Reset();
-        assign_copy_(other);
-        return (*this);
-    }
+    FBaseFunction& operator =(const FBaseFunction& other);
 
     FBaseFunction(FBaseFunction&& rvalue) : _data(0) { Swap(rvalue); }
-    FBaseFunction& operator =(FBaseFunction&& rvalue) {
-        Reset();
-        Swap(rvalue);
-        return (*this);
-    }
+    FBaseFunction& operator =(FBaseFunction&& rvalue);
 
-    intptr_t get_data_() const { return _data; }
-    IPayload_* get_payload_() const { return ((IPayload_*)&_inSitu); }
+    intptr_t data_() const { return _data; }
+    IPayload_* payload_() const { return ((IPayload_*)&_inSitu); }
 
     bool is_pod_() const { return (0 != (_data&GMaskPOD)); }
     bool is_wrapped_() const { return (0 != (_data&GMaskWrapped)); }
@@ -131,16 +105,7 @@ private:
         }
     };
 
-    void assign_copy_(const FBaseFunction& other) {
-        _data = other._data;
-
-        if (_data && is_wrapped_()) {
-            if (is_destructible_())
-                ((const IPayload_*)&other._inSitu)->CopyTo(&_inSitu);
-            else
-                FPlatformMemory::Memcpy(&_inSitu, &other._inSitu, sizeof(_inSitu));
-        }
-    }
+    void assign_copy_(const FBaseFunction& other);
 
     template <typename T, typename _Ret, typename... _Args>
     void assign_wrapped_(T&& payload, std::true_type, Meta::TType<_Ret(*)(const void*, _Args...)> wrapper) {
@@ -155,7 +120,7 @@ private:
     template <typename _Payload, typename T, typename _Ret, typename... _Args>
     void assign_wrapped_impl_(T&& arg, intptr_t flags, Meta::TType<_Ret(*)(const void*, _Args...)>) {
         STATIC_ASSERT(Meta::TCheckFitInSize<_Payload, decltype(_inSitu)>::value);
-        INPLACE_NEW(get_payload_(), _Payload)(std::move(arg));
+        INPLACE_NEW(payload_(), _Payload)(std::move(arg));
         typedef _Ret(*wrapper_type)(const void*, _Args&&...);
         const wrapper_type w = [](const void* inSitu, _Args&&... args) -> _Ret {
             return (*(_Payload*)inSitu)(std::forward<_Args>(args)...);
@@ -176,6 +141,11 @@ class TFunction<_Ret(_Args...)> : public FBaseFunction {
     static std::false_type is_callable_(...);
 
 public:
+    using FBaseFunction::Equals;
+    using FBaseFunction::Reset;
+    using FBaseFunction::Swap;
+    using FBaseFunction::Valid;
+
     typedef _Ret (*func_type)(_Args...);
 
     template <typename T>
@@ -232,10 +202,10 @@ public:
     }
 
     _Ret Invoke(_Args... args) const {
-        Assert(get_data_());
+        Assert(data_());
         return ((is_wrapped_())
-            ? ((wrapper_type)(get_data_()&~GMaskAll))(get_payload_(), std::forward<_Args>(args)...)
-            : ((func_type)get_data_())(std::forward<_Args>(args)...));
+            ? ((wrapper_type)(data_()&~GMaskAll))(payload_(), std::forward<_Args>(args)...)
+            : ((func_type)data_())(std::forward<_Args>(args)...));
 
         STATIC_ASSERT(sizeof(intptr_t) == sizeof(func_type));
         STATIC_ASSERT(sizeof(intptr_t) == sizeof(wrapper_type));
@@ -245,11 +215,6 @@ public:
         Invoke(std::forward<_Args>(args)...);
         Reset(); // unbind after first call
     }
-
-    using FBaseFunction::Equals;
-    using FBaseFunction::Reset;
-    using FBaseFunction::Swap;
-    using FBaseFunction::Valid;
 
 private:
     typedef _Ret(*wrapper_type)(const void*, _Args&&...);

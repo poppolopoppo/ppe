@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "TaskManager.h"
+#include "Thread/Task/TaskManager.h"
 
-#include "TaskFiberPool.h"
-#include "TaskScheduler.h"
+#include "Thread/Task/TaskFiberPool.h"
+#include "Thread/Task/TaskScheduler.h"
 
 #include "Thread/AtomicSpinLock.h"
 #include "Thread/Fiber.h"
@@ -23,7 +23,7 @@
 #include <algorithm>
 
 namespace PPE {
-LOG_CATEGORY(PPE_API, Task)
+LOG_CATEGORY(PPE_CORE_API, Task)
 STATIC_CONST_INTEGRAL(size_t, GTaskManagerQueueCapacity, 128);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

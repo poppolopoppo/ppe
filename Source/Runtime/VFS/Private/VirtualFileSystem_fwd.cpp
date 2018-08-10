@@ -2,14 +2,14 @@
 
 #include "VirtualFileSystem_fwd.h"
 
-#include "FileStream.h"
 #include "VirtualFileSystem.h"
 
 #include "Container/RawStorage.h"
+#include "IO/Dirpath.h"
+#include "IO/Filename.h"
+#include "IO/FileStream.h"
 #include "IO/Format.h"
 #include "IO/TextWriter.h"
-#include "FS/Dirpath.h"
-#include "FS/Filename.h"
 #include "HAL/PlatformFile.h"
 #include "Time/DateTime.h"
 

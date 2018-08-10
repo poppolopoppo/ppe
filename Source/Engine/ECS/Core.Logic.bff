@@ -1,7 +1,7 @@
 #once
 {
     .ProjectName = 'Core.Logic'
-    .ProjectPath = '$SourceDirectory$/Core.Logic'
+    .ProjectPath = '$SourcePath$/Core.Logic'
     .ProjectSolutionFolder = 'Core'
     .ProjectDefines = { 'EXPORT_CORE_LOGIC' }
     .UnityNumFiles = 1
@@ -9,5 +9,5 @@
     {
         'Logic.cpp'
     }
-    #include "../../Build/Templates/Library.bff"
+    #include "$BuildPath$/Templates/Library.bff"
 }

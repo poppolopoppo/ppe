@@ -2,9 +2,9 @@
 
 #include "Serialize.h"
 
-#include "Exceptions.h"
 #include "Lexer/LookAheadReader.h"
 #include "Lexer/Match.h"
+#include "SerializeExceptions.h"
 
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
@@ -17,9 +17,9 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FLexerException : public Core::Serialize::FSerializeException {
+class FLexerException : public PPE::Serialize::FSerializeException {
 public:
-    typedef Core::Serialize::FSerializeException parent_type;
+    typedef PPE::Serialize::FSerializeException parent_type;
 
     FLexerException(const char *what, FMatch&& match)
         :   parent_type(what)
@@ -27,10 +27,10 @@ public:
 
     virtual ~FLexerException() {}
 
-    const Core::Lexer::FMatch& Match() const { return _match; }
+    const PPE::Lexer::FMatch& Match() const { return _match; }
 
 private:
-    Core::Lexer::FMatch _match;
+    PPE::Lexer::FMatch _match;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -50,13 +50,13 @@ public:
 
     bool ReadIFN(char ch, ECase cmp = ECase::Insensitive);
     bool ReadIFN(const FStringView& str, ECase cmp = ECase::Insensitive);
-    bool ReadIFN(const Core::Lexer::FSymbol* expected);
-    bool ReadIFN(FMatch& match, const Core::Lexer::FSymbol* expected);
+    bool ReadIFN(const PPE::Lexer::FSymbol* expected);
+    bool ReadIFN(FMatch& match, const PPE::Lexer::FSymbol* expected);
 
     void EatWhiteSpaces();
 
-    bool Expect(const Core::Lexer::FSymbol* expected);
-    bool Expect(FMatch& match, const Core::Lexer::FSymbol* expected);
+    bool Expect(const PPE::Lexer::FSymbol* expected);
+    bool Expect(FMatch& match, const PPE::Lexer::FSymbol* expected);
 
     void RewindPeekIFN();
 

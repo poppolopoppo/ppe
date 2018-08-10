@@ -11,7 +11,7 @@ class FMetaNamespace;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RTTI_NAMESPACE_DECL(_Api, _Name) \
-    extern _Api class ::Core::RTTI::FMetaNamespace RTTI_ ## _Name
+    extern _Api class ::PPE::RTTI::FMetaNamespace RTTI_ ## _Name
 //----------------------------------------------------------------------------
 #define RTTI_NAMESPACE(_Name) (RTTI_ ## _Name)
 //----------------------------------------------------------------------------

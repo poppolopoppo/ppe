@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformTime.h"
+#include "HAL/Windows/WindowsPlatformTime.h"
 
 #ifdef PLATFORM_WINDOWS
 

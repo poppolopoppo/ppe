@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "Lexer.h"
+#include "Lexer/Lexer.h"
 
-#include "Symbol.h"
-#include "Symbols.h"
+#include "Lexer/Symbol.h"
+#include "Lexer/Symbols.h"
 
 #include "Container/Stack.h"
 #include "IO/StreamProvider.h"
@@ -586,12 +586,12 @@ bool FLexer::ReadIFN(const FStringView& str, ECase cmp/* = ECase::Insensitive */
     return false;
 }
 //----------------------------------------------------------------------------
-bool FLexer::ReadIFN(const Core::Lexer::FSymbol* expected) {
+bool FLexer::ReadIFN(const PPE::Lexer::FSymbol* expected) {
     FMatch match;
     return ReadIFN(match, expected);
 }
 //----------------------------------------------------------------------------
-bool FLexer::ReadIFN(FMatch& match, const Core::Lexer::FSymbol* expected) {
+bool FLexer::ReadIFN(FMatch& match, const PPE::Lexer::FSymbol* expected) {
     Assert(expected);
     return (Peek(expected) ? Expect(match, expected) : false);
 }
@@ -601,12 +601,12 @@ void FLexer::EatWhiteSpaces() {
     _reader.EatWhiteSpaces();
 }
 //----------------------------------------------------------------------------
-bool FLexer::Expect(const Core::Lexer::FSymbol* expected) {
+bool FLexer::Expect(const PPE::Lexer::FSymbol* expected) {
     FMatch match;
     return Expect(match, expected);
 }
 //----------------------------------------------------------------------------
-bool FLexer::Expect(FMatch& match, const Core::Lexer::FSymbol* expected) {
+bool FLexer::Expect(FMatch& match, const PPE::Lexer::FSymbol* expected) {
     Assert(expected);
     return (NextMatch_(match) && match.Symbol() == expected);
 }

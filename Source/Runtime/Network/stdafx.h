@@ -8,12 +8,12 @@
 #include "targetver.h"
 
 // Include all network related includes (priority matters)
-#include "Core.Network/NetworkIncludes.h"
+#include "NetworkIncludes.h"
 
-#include "Core/HAL/PlatformIncludes.h"
+#include "HAL/PlatformIncludes.h"
 
-#include "Core.Network/Network.h"
+#include "Network.h"
 
-#if USE_CORE_PRECOMPILEDHEADERS
-#   include "Core.Network/stdafx.generated.h"
+#if USE_PPE_PRECOMPILEDHEADERS
+#   include "stdafx.generated.h"
 #endif

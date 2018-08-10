@@ -56,11 +56,11 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Graphics, FDX11RasterizerState, );
 D3D11_CULL_MODE CullModeToDX11CullMode(ECullMode value) {
     switch (value)
     {
-    case Core::Graphics::ECullMode::CullClockwiseFace:
+    case PPE::Graphics::ECullMode::CullClockwiseFace:
         return D3D11_CULL_BACK;
-    case Core::Graphics::ECullMode::CullCounterClockwiseFace:
+    case PPE::Graphics::ECullMode::CullCounterClockwiseFace:
         return D3D11_CULL_FRONT;
-    case Core::Graphics::ECullMode::None:
+    case PPE::Graphics::ECullMode::None:
         return D3D11_CULL_NONE;
     }
     AssertNotImplemented();
@@ -71,11 +71,11 @@ ECullMode DX11CullModeToCullMode(D3D11_CULL_MODE value) {
     switch (value)
     {
     case D3D11_CULL_BACK:
-        return Core::Graphics::ECullMode::CullClockwiseFace;
+        return PPE::Graphics::ECullMode::CullClockwiseFace;
     case D3D11_CULL_FRONT:
-        return Core::Graphics::ECullMode::CullCounterClockwiseFace;
+        return PPE::Graphics::ECullMode::CullCounterClockwiseFace;
     case D3D11_CULL_NONE:
-        return Core::Graphics::ECullMode::None;
+        return PPE::Graphics::ECullMode::None;
     }
     AssertNotImplemented();
     return static_cast<Graphics::ECullMode>(-1);
@@ -86,9 +86,9 @@ ECullMode DX11CullModeToCullMode(D3D11_CULL_MODE value) {
 D3D11_FILL_MODE FillModeToDX11FillMode(EFillMode value) {
     switch (value)
     {
-    case Core::Graphics::EFillMode::Solid:
+    case PPE::Graphics::EFillMode::Solid:
         return D3D11_FILL_SOLID;
-    case Core::Graphics::EFillMode::WireFrame:
+    case PPE::Graphics::EFillMode::WireFrame:
         return D3D11_FILL_WIREFRAME;
     }
     AssertNotImplemented();
@@ -99,9 +99,9 @@ EFillMode DX11FillModeToFillMode(D3D11_FILL_MODE value) {
     switch (value)
     {
     case D3D11_FILL_SOLID:
-        return Core::Graphics::EFillMode::Solid;
+        return PPE::Graphics::EFillMode::Solid;
     case D3D11_FILL_WIREFRAME:
-        return Core::Graphics::EFillMode::WireFrame;
+        return PPE::Graphics::EFillMode::WireFrame;
     }
     AssertNotImplemented();
     return static_cast<Graphics::EFillMode>(-1);

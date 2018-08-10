@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "MountingPoint.h"
+#include "IO/MountingPoint.h"
 
 #include "IO/String.h"
 #include "IO/StringView.h"

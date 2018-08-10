@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "TrackingMalloc.h"
+#include "Allocator/TrackingMalloc.h"
 
-#include "Malloc.h"
+#include "Allocator/Malloc.h"
 
 #include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
@@ -41,7 +41,7 @@ void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size) {
         return nullptr;
 
     trackingData.Allocate(1, size);
-    void* const ptr = Core::malloc(size + sizeof(FBlockTracking_));
+    void* const ptr = PPE::malloc(size + sizeof(FBlockTracking_));
 
     auto* const pblock = reinterpret_cast<FBlockTracking_*>(ptr);
     pblock->TrackingData = &trackingData;
@@ -51,7 +51,7 @@ void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size) {
     return (pblock + 1);
 #else
     NOOP(trackingData);
-    return Core::malloc(size);
+    return PPE::malloc(size);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -64,9 +64,9 @@ void  (tracking_free)(void *ptr) {
     Assert(pblock->CheckCanary());
 
     pblock->TrackingData->Deallocate(1, pblock->SizeInBytes);
-    Core::free(pblock);
+    PPE::free(pblock);
 #else
-    Core::free(ptr);
+    PPE::free(ptr);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -88,13 +88,13 @@ void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, size_t size) 
     }
 
     if (0 == size && pblock) {
-        void* p = Core::realloc(pblock, 0); // fake free() with realloc(0)
+        void* p = PPE::realloc(pblock, 0); // fake free() with realloc(0)
         Assert(nullptr == p); // memory need to be freed !
         return nullptr;
     }
     else {
         trackingData.Allocate(1, size);
-        ptr = Core::realloc(pblock, size + sizeof(FBlockTracking_));
+        ptr = PPE::realloc(pblock, size + sizeof(FBlockTracking_));
 
         pblock = reinterpret_cast<FBlockTracking_*>(ptr);
         pblock->TrackingData = &trackingData;
@@ -105,7 +105,7 @@ void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, size_t size) 
     }
 #else
     NOOP(trackingData);
-    return Core::realloc(ptr, size);
+    return PPE::realloc(ptr, size);
 #endif
 }
 //----------------------------------------------------------------------------

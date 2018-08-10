@@ -11,7 +11,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformMemory : FGenericPlatformMemory {
+struct PPE_CORE_API FWindowsPlatformMemory : FGenericPlatformMemory {
 public:
     STATIC_CONST_INTEGRAL(size_t, PageSize, PAGE_SIZE);
     STATIC_CONST_INTEGRAL(size_t, CacheLineSize, CACHELINE_SIZE);

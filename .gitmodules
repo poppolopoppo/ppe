@@ -10,10 +10,10 @@
 [submodule "External/renderdoc"]
 	path = Source/External/renderdoc/git
 	url = https://github.com/baldurk/renderdoc.git
+	branch = v1.x
 [submodule "External/stb"]
 	path = Source/External/stb/git
     url = https://github.com/nothings/stb.git
 [submodule "External/xxHash"]
 	path = Source/External/xxHash/git
     url = https://github.com/Cyan4973/xxHash.git
-    

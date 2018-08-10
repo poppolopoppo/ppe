@@ -10,7 +10,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformTime : FGenericPlatformTime {
+struct PPE_CORE_API FWindowsPlatformTime : FGenericPlatformTime {
 public:
     STATIC_CONST_INTEGRAL(bool, HasHighPrecision, true);
 

@@ -44,13 +44,13 @@ void FShaderCompilerEncapsulator::Create(EDeviceAPI api) {
 
     switch (_api)
     {
-    case Core::Graphics::EDeviceAPI::DirectX11:
+    case PPE::Graphics::EDeviceAPI::DirectX11:
         _deviceAPIShaderCompiler.reset(new FDX11ShaderCompiler());
         break;
-    case Core::Graphics::EDeviceAPI::OpenGL4:
+    case PPE::Graphics::EDeviceAPI::OpenGL4:
         AssertNotImplemented();
         break;
-    case Core::Graphics::EDeviceAPI::Unknown:
+    case PPE::Graphics::EDeviceAPI::Unknown:
         AssertNotReached();
         break;
     default:

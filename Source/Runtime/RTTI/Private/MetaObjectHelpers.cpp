@@ -190,7 +190,7 @@ u128 Fingerprint128(const FMetaObject& obj) {
     for (const FMetaProperty* prop : metaClass->AllProperties())
         hashValues.Push(prop->Get(obj).HashValue());
 
-    return Core::Fingerprint128(hashValues.MakeConstView());
+    return PPE::Fingerprint128(hashValues.MakeConstView());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

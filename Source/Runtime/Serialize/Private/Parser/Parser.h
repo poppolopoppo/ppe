@@ -4,9 +4,9 @@
 
 #include "Allocator/PoolAllocatorTag.h"
 
-#include "Exceptions.h"
 #include "Lexer/Location.h"
 #include "Parser/ParseItem.h"
+#include "SerializeExceptions.h"
 
 namespace PPE {
 namespace Parser {
@@ -14,9 +14,9 @@ POOL_TAG_DECL(Parser);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FParserException : public Core::Serialize::FSerializeException {
+class FParserException : public PPE::Serialize::FSerializeException {
 public:
-    typedef Core::Serialize::FSerializeException parent_type;
+    typedef PPE::Serialize::FSerializeException parent_type;
 
     FParserException(const char *what, Lexer::FLocation site)
         : parent_type(what), _site(site), _item(nullptr) {}

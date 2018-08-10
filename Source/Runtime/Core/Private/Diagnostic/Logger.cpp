@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Logger.h"
+#include "Diagnostic/Logger.h"
 
 #ifdef USE_DEBUG_LOGGER
 
@@ -11,6 +11,7 @@
 #   include "Diagnostic/CurrentProcess.h"
 #   include "HAL/PlatformConsole.h"
 #   include "HAL/PlatformDebug.h"
+#   include "HAL/PlatformFile.h"
 #   include "HAL/PlatformMemory.h"
 #   include "IO/BufferedStream.h"
 #   include "IO/FileSystem.h"
@@ -21,7 +22,6 @@
 #   include "IO/StringBuilder.h"
 #   include "IO/StringView.h"
 #   include "IO/TextWriter.h"
-#   include "IO/VirtualFileSystem.h"
 #   include "Memory/InSituPtr.h"
 #   include "Memory/MemoryView.h"
 #   include "Memory/UniquePtr.h"
@@ -52,7 +52,7 @@
 #   endif
 
 namespace PPE {
-LOG_CATEGORY(PPE_API, LogDefault)
+LOG_CATEGORY(PPE_CORE_API, LogDefault)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -579,7 +579,7 @@ public:
         FWStringBuilder oss(text.size());
         FLogFormat::Print(oss, category, level, site, text);
         oss << Eol << Eos;
-        fputws(oss.Written().data(), stdout);
+        ::fputws(oss.Written().data(), stdout);
     }
 
     virtual void Flush(bool) override final {
@@ -591,7 +591,7 @@ class FFunctorLogger_ final : public ILogger {
 public:
     typedef TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)> functor_type;
 
-    FFunctorLogger_(functor_type&& func)
+    explicit FFunctorLogger_(functor_type&& func)
         : _func(std::move(func))
     {}
 
@@ -600,7 +600,7 @@ public: // ILogger
         _func(category, level, site, text);
     }
 
-    virtual void Flush(bool) override final {} // always synched
+    virtual void Flush(bool) override final {} // always synced
 
 private:
     functor_type _func;
@@ -653,12 +653,13 @@ public: // ILogger
     virtual void Flush(bool) override final {}
 };
 //----------------------------------------------------------------------------
-class FStreamLogger_ final : public ILogger {
+class FFileStreamLogger_ final : public ILogger {
 public:
-    FStreamLogger_(UStreamWriter&& ostream)
+    explicit FFileStreamLogger_(FFileStreamWriter&& ostream)
         : _ostream(std::move(ostream))
-        , _buffered(_ostream.get())
-    {}
+        , _buffered(&_ostream) {
+        Assert(_ostream.Good());
+    }
 
 public: // ILogger
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
@@ -671,7 +672,7 @@ public: // ILogger
     }
 
 private:
-    UStreamWriter _ostream;
+    FFileStreamWriter _ostream;
     FBufferedStreamWriter _buffered;
 };
 //----------------------------------------------------------------------------
@@ -694,17 +695,16 @@ PLogger FLogger::MakeOutputDebug() {
 }
 //----------------------------------------------------------------------------
 PLogger FLogger::MakeAppendFile(const wchar_t* filename) {
-    const FFilename fname(MakeCStringView(filename));
-    UStreamWriter ostream = VFS_OpenWritable(fname, EAccessPolicy::Create|EAccessPolicy::Append|EAccessPolicy::Binary|EAccessPolicy::ShareRead);
-    AssertRelease(ostream);
-    return NEW_REF(Logger, FStreamLogger_)(std::move(ostream));
+    FFileStreamWriter ostream(
+        FFileStream::OpenWrite(filename,
+            EAccessPolicy::Create|EAccessPolicy::Append|EAccessPolicy::Binary|EAccessPolicy::ShareRead) );
+    AssertRelease(ostream.Good());
+    return NEW_REF(Logger, FFileStreamLogger_)(std::move(ostream));
 }
 //----------------------------------------------------------------------------
 PLogger FLogger::MakeRollFile(const wchar_t* filename) {
-    const FFilename fname(MakeCStringView(filename));
-    UStreamWriter ostream = VFS_RollFile(fname, EAccessPolicy::Create|EAccessPolicy::Truncate|EAccessPolicy::Binary|EAccessPolicy::ShareRead);
-    AssertRelease(ostream);
-    return NEW_REF(Logger, FStreamLogger_)(std::move(ostream));
+    Verify(FPlatformFile::RollFile(filename));
+    return MakeAppendFile(filename);
 }
 //----------------------------------------------------------------------------
 PLogger FLogger::MakeFunctor(TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write) {

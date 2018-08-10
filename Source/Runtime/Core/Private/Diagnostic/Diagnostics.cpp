@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
-#include "Diagnostics.h"
+#include "Diagnostic/Diagnostics.h"
 
-#include "CurrentProcess.h"
-#include "DebugFunction.h"
-#include "Profiling.h"
+#include "Diagnostic/CurrentProcess.h"
+#include "Diagnostic/DebugFunction.h"
+#include "Diagnostic/Profiling.h"
 
 #include "Memory/MemoryDomain.h"
 

@@ -16,7 +16,7 @@ enum class EThreadPriority {
     Idle            = -3,
 };
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformThread {
+struct PPE_CORE_API FGenericPlatformThread {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasReadWriteLock, false);
 

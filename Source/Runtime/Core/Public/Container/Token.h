@@ -14,14 +14,14 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define BEGIN_BASICTOKEN_CLASS_DEF(_NAME, _CHAR, _CASESENSITIVE, _TRAITS) \
-    class _NAME : public Core::TToken< \
+    class _NAME : public PPE::TToken< \
         _NAME, \
         _CHAR, \
         _CASESENSITIVE, \
         _TRAITS \
     > { \
     public: \
-        typedef Core::TToken< \
+        typedef PPE::TToken< \
             _NAME, \
             _CHAR, \
             _CASESENSITIVE, \

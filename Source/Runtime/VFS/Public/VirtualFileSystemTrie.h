@@ -1,15 +1,12 @@
 #pragma once
 
-#include "Core.h"
+#include "VirtualFileSystem_fwd.h"
 
 #include "Container/AssociativeVector.h"
-#include "IO/FS/MountingPoint.h"
+#include "IO/MountingPoint.h"
 #include "IO/String.h"
-#include "IO/VirtualFileSystem_fwd.h"
 #include "Memory/RefPtr.h"
 #include "Thread/ReadWriteLock.h"
-
-#include <functional>
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -17,7 +14,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 FWD_REFPTR(VirtualFileSystemComponent);
 //----------------------------------------------------------------------------
-class FVirtualFileSystemTrie {
+class PPE_VFS_API FVirtualFileSystemTrie {
 public:
     typedef ASSOCIATIVE_VECTORINSITU(FileSystem, FMountingPoint, PVirtualFileSystemComponent, 8) nodes_type;
 

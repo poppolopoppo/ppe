@@ -10,7 +10,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FGenericPlatformDebug {
+struct PPE_CORE_API FGenericPlatformDebug {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasDebugger, false);
 

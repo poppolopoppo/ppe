@@ -3,7 +3,7 @@
 #include "Core.h"
 
 #include "Container/Token.h"
-#include "IO/FS/FileSystemToken_fwd.h"
+#include "IO/FileSystemToken_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

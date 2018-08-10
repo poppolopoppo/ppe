@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WindowsTargetPlatform.h"
+#include "HAL/Windows/WindowsTargetPlatform.h"
 
 #include "HAL/PlatformMisc.h"
 #include "IO/String.h"
@@ -28,17 +28,17 @@ FString FWindowsTargetPlatform::ShortName() const {
 //----------------------------------------------------------------------------
 bool FWindowsTargetPlatform::RequiresFeature(EPlatformFeature feature) const {
     switch (feature) {
-    case Core::EPlatformFeature::Client:
+    case PPE::EPlatformFeature::Client:
         return false;
-    case Core::EPlatformFeature::Server:
+    case PPE::EPlatformFeature::Server:
         return false;
-    case Core::EPlatformFeature::Editor:
+    case PPE::EPlatformFeature::Editor:
         return false;
-    case Core::EPlatformFeature::DataGeneration:
+    case PPE::EPlatformFeature::DataGeneration:
         return false;
-    case Core::EPlatformFeature::HighQuality:
+    case PPE::EPlatformFeature::HighQuality:
         return false;
-    case Core::EPlatformFeature::CookedData:
+    case PPE::EPlatformFeature::CookedData:
         return false;
     }
 
@@ -47,17 +47,17 @@ bool FWindowsTargetPlatform::RequiresFeature(EPlatformFeature feature) const {
 //----------------------------------------------------------------------------
 bool FWindowsTargetPlatform::SupportsFeature(EPlatformFeature feature) const {
     switch (feature) {
-    case Core::EPlatformFeature::Client:
+    case PPE::EPlatformFeature::Client:
         return true;
-    case Core::EPlatformFeature::Server:
+    case PPE::EPlatformFeature::Server:
         return true;
-    case Core::EPlatformFeature::Editor:
+    case PPE::EPlatformFeature::Editor:
         return true;
-    case Core::EPlatformFeature::DataGeneration:
+    case PPE::EPlatformFeature::DataGeneration:
         return true;
-    case Core::EPlatformFeature::HighQuality:
+    case PPE::EPlatformFeature::HighQuality:
         return true;
-    case Core::EPlatformFeature::CookedData:
+    case PPE::EPlatformFeature::CookedData:
         return true;
     }
 

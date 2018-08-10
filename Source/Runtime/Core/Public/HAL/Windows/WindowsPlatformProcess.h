@@ -10,7 +10,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformProcess : FGenericPlatformProcess {
+struct PPE_CORE_API FWindowsPlatformProcess : FGenericPlatformProcess {
 public:
     STATIC_CONST_INTEGRAL(bool, HasSemaphore, true);
     STATIC_CONST_INTEGRAL(bool, HasSpawnProcess, true);

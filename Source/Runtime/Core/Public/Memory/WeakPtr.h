@@ -7,8 +7,8 @@
 
 #define _FWD_WEAKPTR_IMPL(T, _PREFIX)                                   \
     class CONCAT(_PREFIX, T);                                           \
-    typedef Core::TWeakPtr<CONCAT(_PREFIX, T)>           CONCAT(W,  T); \
-    typedef Core::TWeakPtr<const CONCAT(_PREFIX, T)>     CONCAT(WC, T)
+    typedef PPE::TWeakPtr<CONCAT(_PREFIX, T)>           CONCAT(W,  T); \
+    typedef PPE::TWeakPtr<const CONCAT(_PREFIX, T)>     CONCAT(WC, T)
 
 #define FWD_WEAKPTR(T_WITHOUT_F)            _FWD_WEAKPTR_IMPL(T_WITHOUT_F, F)
 #define FWD_INTERFACE_WEAKPTR(T_WITHOUT_I)  _FWD_WEAKPTR_IMPL(T_WITHOUT_I, I)

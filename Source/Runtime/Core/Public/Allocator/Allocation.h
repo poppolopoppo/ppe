@@ -21,18 +21,18 @@ using TDecorateAllocator = _Allocator;
 #endif
 //----------------------------------------------------------------------------
 #define DECORATE_ALLOCATOR(_Domain, ...) \
-    ::Core::TDecorateAllocator< COMMA_PROTECT(__VA_ARGS__), MEMORYDOMAIN_TAG(_Domain) >
+    ::PPE::TDecorateAllocator< COMMA_PROTECT(__VA_ARGS__), MEMORYDOMAIN_TAG(_Domain) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define ALLOCATOR(_Domain, ...) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::TMallocator<__VA_ARGS__>)
+    DECORATE_ALLOCATOR(_Domain, ::PPE::TMallocator<__VA_ARGS__>)
 //----------------------------------------------------------------------------
 #define ALIGNED_ALLOCATOR(_Domain, T, _Alignment) \
-    DECORATE_ALLOCATOR(_Domain, ::Core::TMallocator<COMMA_PROTECT(T) COMMA _Alignment>)
+    DECORATE_ALLOCATOR(_Domain, ::PPE::TMallocator<COMMA_PROTECT(T) COMMA _Alignment>)
 //----------------------------------------------------------------------------
 #define STACK_ALLOCATOR(T) \
-    ::Core::TStackAllocator<T> // don't decorate TStackAllocator<> to avoid double logging with "Alloca" domain
+    ::PPE::TStackAllocator<T> // don't decorate TStackAllocator<> to avoid double logging with "Alloca" domain
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

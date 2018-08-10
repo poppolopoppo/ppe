@@ -23,7 +23,7 @@ FStringView FShaderSource::AppIn_VertexDefinitionName() { return MakeStringView(
 FileSystem::FStringView FShaderSource::SystemDirpath() { return MakeStringView(L"Data:/Shaders/Lib"); }
 //----------------------------------------------------------------------------
 FShaderSource::FShaderSource( const char *sourceName,
-                            const Core::FFilename& filename,
+                            const PPE::FFilename& filename,
                             const TMemoryView<const char>& sourceCode,
                             const TMemoryView<const TPair<FString, FString>>& defines)
 :   _sourceName(sourceName)
@@ -37,7 +37,7 @@ FShaderSource::FShaderSource( const char *sourceName,
 }
 //----------------------------------------------------------------------------
 FShaderSource::FShaderSource( FString&& sourceName,
-                            const Core::FFilename& filename,
+                            const PPE::FFilename& filename,
                             RAWSTORAGE(Shader, char)&& sourceCode,
                             ASSOCIATIVE_VECTOR(Shader, FString, FString)&& defines)
 :   _sourceName(std::move(sourceName))
@@ -114,7 +114,7 @@ void FShaderSource::FillSubstitutions(
     FillVertexSubstitutions(substitutions, vertexDeclaration);
 }
 //----------------------------------------------------------------------------
-FShaderSource *FShaderSource::LoadFromFileIFP(const Core::FFilename& filename,
+FShaderSource *FShaderSource::LoadFromFileIFP(const PPE::FFilename& filename,
                                             const TMemoryView<const TPair<FString, FString>>& defines) {
     Assert(!filename.empty());
 

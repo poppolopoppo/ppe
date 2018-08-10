@@ -1,0 +1,24 @@
+#once
+{
+    .ModuleName = 'Serialize'
+    .ModuleDefines = { 'EXPORT_PPE_SERIALIZE' }
+    .ModulePublicDependencies =
+    {
+        'Runtime/Core',
+        'Runtime/VFS',
+        'Runtime/RTTI',
+    }
+    .ModulePrivateDependencies =
+    {
+    }
+    .ModuleIsolatedFiles =
+    {
+        'Private/Serialize.cpp'
+    }
+    .ModuleExcludedFiles =
+    {
+        'Private/Markup/MarkupSerializer.cpp', // TODO : still need some work, but is it really needed ?
+    }
+    .UnityNumFiles = 1 // generated
+    #include "$BuildPath$/Templates/Module.bff"
+}

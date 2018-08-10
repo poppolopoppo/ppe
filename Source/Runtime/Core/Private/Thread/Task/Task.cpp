@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Task.h"
+#include "Thread/Task/Task.h"
 
-#include "TaskManager.h"
+#include "Thread/Task/TaskManager.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

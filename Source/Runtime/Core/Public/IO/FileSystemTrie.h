@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#include "IO/FS/FileSystemToken.h"
+#include "IO/FileSystemToken.h"
 
 #include "Allocator/PoolAllocator.h"
 #include "Container/AssociativeVector.h"
@@ -18,7 +18,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FWD_REFPTR(FileSystemNode);
-class PPE_API FFileSystemNode : public FRefCountable {
+class PPE_CORE_API FFileSystemNode : public FRefCountable {
     friend class FFileSystemTrie;
 public:
     FFileSystemNode(const FFileSystemNode *parent, const FFileSystemToken& token);
@@ -49,7 +49,7 @@ private:
     size_t _hashValue;
 };
 //----------------------------------------------------------------------------
-class PPE_API FFileSystemTrie {
+class PPE_CORE_API FFileSystemTrie {
 public:
     FFileSystemTrie();
     ~FFileSystemTrie();

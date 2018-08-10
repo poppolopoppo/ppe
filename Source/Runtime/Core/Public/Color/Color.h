@@ -41,7 +41,7 @@ float Pow22_to_Linear(float pow22);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FLinearColor {
+struct PPE_CORE_API FLinearColor {
     float R, G, B, A;
 
     FORCE_INLINE FLinearColor() {}
@@ -237,7 +237,7 @@ FLinearColor LerpUsingHSV(const FLinearColor& from, const FLinearColor& to, floa
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FColor {
+struct PPE_CORE_API FColor {
     union {
         struct { u8  R, G, B, A; };
         u32 DWord;

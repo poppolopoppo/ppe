@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "DecodedCallstack.h"
+#include "Diagnostic/DecodedCallstack.h"
 
-#include "Callstack.h"
+#include "Diagnostic/Callstack.h"
 #include "IO/Format.h"
 #include "IO/TextWriter.h"
 

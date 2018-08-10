@@ -75,8 +75,8 @@ public:
     using TBasicTextWriter<_Char>::Write; // otherwise ambiguous with TMemoryStream<>::Write()
 };
 //----------------------------------------------------------------------------
-PPE_API extern template class TBasicStringBuilder<char>;
-PPE_API extern template class TBasicStringBuilder<wchar_t>;
+PPE_CORE_API extern template class TBasicStringBuilder<char>;
+PPE_CORE_API extern template class TBasicStringBuilder<wchar_t>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

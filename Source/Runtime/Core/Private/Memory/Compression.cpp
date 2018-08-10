@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "Compression.h"
+#include "Memory/Compression.h"
 
-#include "HashFunctions.h"
-#include "MemoryView.h"
+#include "Memory/HashFunctions.h"
+#include "Memory/MemoryView.h"
 
 #include "Container/RawStorage.h"
 #include "Diagnostic/Logger.h"
@@ -11,12 +11,12 @@
 #include "Misc/FourCC.h"
 #include "Time/TimedScope.h"
 
-#include "Core.External/lz4-external.h"
+#include "lz4-external.h"
 
 #define WITH_PPE_COMPRESSION_FINGERPRINT 1 //%_NOCOMMTI%
 
 namespace PPE {
-EXTERN_LOG_CATEGORY(PPE_API, Benchmark)
+EXTERN_LOG_CATEGORY(PPE_CORE_API, Benchmark)
 namespace Compression {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -91,7 +91,7 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
 
     switch (method)
     {
-    case Core::Compression::Default:
+    case PPE::Compression::Default:
         compressedSizeInBytes += checked_cast<int>(::LZ4_compress_default(
             (char*)src.Pointer(),
             (char*)datas.Pointer(),
@@ -99,7 +99,7 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
             checked_cast<int>(datas.SizeInBytes()) ));
         break;
 
-    case Core::Compression::Fast:
+    case PPE::Compression::Fast:
         compressedSizeInBytes += checked_cast<int>(::LZ4_compress_fast(
             (char*)src.Pointer(),
             (char*)datas.Pointer(),
@@ -108,7 +108,7 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
             7/* ~21% faster */));
         break;
 
-    case Core::Compression::HighCompression:
+    case PPE::Compression::HighCompression:
         compressedSizeInBytes += checked_cast<int>(::LZ4_compress_HC(
             (char*)src.Pointer(),
             (char*)datas.Pointer(),

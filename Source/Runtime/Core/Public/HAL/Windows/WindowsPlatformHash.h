@@ -4,15 +4,13 @@
 
 #ifdef PLATFORM_WINDOWS
 
-#include "Core.External/xxHash-external.h"
-
 #include <intrin.h>
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_API FWindowsPlatformHash : FGenericPlatformHash {
+struct PPE_CORE_API FWindowsPlatformHash : FGenericPlatformHash {
 public:
 
     static FORCE_INLINE size_t CRC32(size_t crc32, const void* p, size_t size) {
@@ -31,13 +29,8 @@ public:
         return (crc32 ^ 0xffffffff);
     }
 
-    static FORCE_INLINE u32 HashMem32(u32 seed, const void* p, size_t size) {
-        return XXH32(p, size, seed);
-    }
-
-    static FORCE_INLINE u64 HashMem64(u64 seed, const void* p, size_t size) {
-        return XXH64(p, size, seed);
-    }
+    static u32 HashMem32(u32 seed, const void* p, size_t size);
+    static u64 HashMem64(u64 seed, const void* p, size_t size);
 
     static FORCE_INLINE size_t HashMem(size_t seed, const void* p, size_t size) {
 #ifdef ARCH_X64

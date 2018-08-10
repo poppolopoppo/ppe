@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformDialog.h"
+#include "HAL/Windows/WindowsPlatformDialog.h"
 
 #ifdef PLATFORM_WINDOWS
 
@@ -16,11 +16,11 @@
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
-#include "IO/VirtualFileSystem.h"
 #include "HAL/PlatformCrash.h"
+#include "HAL/PlatformFile.h"
 #include "Memory/MemoryProvider.h"
 
-#include "LastError.h"
+#include "HAL/Windows/LastError.h"
 
 #include <Windowsx.h> // Edit_GetSel()
 
@@ -99,19 +99,19 @@ namespace {
 static LPCWSTR SystemIcon_(FWindowsPlatformDialog::EIcon iconType) {
     switch (iconType)
     {
-    case Core::FWindowsPlatformDialog::EIcon::Hand:
+    case PPE::FWindowsPlatformDialog::EIcon::Hand:
         return IDI_HAND;
-    case Core::FWindowsPlatformDialog::EIcon::Question:
+    case PPE::FWindowsPlatformDialog::EIcon::Question:
         return IDI_QUESTION;
-    case Core::FWindowsPlatformDialog::EIcon::Exclamation:
+    case PPE::FWindowsPlatformDialog::EIcon::Exclamation:
         return IDI_EXCLAMATION;
-    case Core::FWindowsPlatformDialog::EIcon::Aterisk:
+    case PPE::FWindowsPlatformDialog::EIcon::Aterisk:
         return IDI_ASTERISK;
-    case Core::FWindowsPlatformDialog::EIcon::Error:
+    case PPE::FWindowsPlatformDialog::EIcon::Error:
         return IDI_ERROR;
-    case Core::FWindowsPlatformDialog::EIcon::Warning:
+    case PPE::FWindowsPlatformDialog::EIcon::Warning:
         return IDI_WARNING;
-    case Core::FWindowsPlatformDialog::EIcon::Information:
+    case PPE::FWindowsPlatformDialog::EIcon::Information:
         return IDI_INFORMATION;
     default:
         AssertNotImplemented();
@@ -121,25 +121,25 @@ static LPCWSTR SystemIcon_(FWindowsPlatformDialog::EIcon iconType) {
 static FWStringView ResultCaption_(FWindowsPlatformDialog::EResult result) {
     switch (result)
     {
-    case Core::FWindowsPlatformDialog::EResult::Ok:
+    case PPE::FWindowsPlatformDialog::EResult::Ok:
         return L"Ok";
-    case Core::FWindowsPlatformDialog::EResult::Cancel:
+    case PPE::FWindowsPlatformDialog::EResult::Cancel:
         return L"Cancel";
-    case Core::FWindowsPlatformDialog::EResult::Abort:
+    case PPE::FWindowsPlatformDialog::EResult::Abort:
         return L"Abort";
-    case Core::FWindowsPlatformDialog::EResult::Retry:
+    case PPE::FWindowsPlatformDialog::EResult::Retry:
         return L"Retry";
-    case Core::FWindowsPlatformDialog::EResult::Ignore:
+    case PPE::FWindowsPlatformDialog::EResult::Ignore:
         return L"Ignore";
-    case Core::FWindowsPlatformDialog::EResult::Yes:
+    case PPE::FWindowsPlatformDialog::EResult::Yes:
         return L"Yes";
-    case Core::FWindowsPlatformDialog::EResult::No:
+    case PPE::FWindowsPlatformDialog::EResult::No:
         return L"No";
-    case Core::FWindowsPlatformDialog::EResult::TryAgain:
+    case PPE::FWindowsPlatformDialog::EResult::TryAgain:
         return L"Try Again";
-    case Core::FWindowsPlatformDialog::EResult::Continue:
+    case PPE::FWindowsPlatformDialog::EResult::Continue:
         return L"Continue";
-    case Core::FWindowsPlatformDialog::EResult::IgnoreAlways:
+    case PPE::FWindowsPlatformDialog::EResult::IgnoreAlways:
         return L"Ignore Always";
     default:
         AssertNotImplemented();
@@ -352,11 +352,9 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
 
         case DIALOG_ID_MINIDUMP:
             {
-                const FFilename process(FCurrentProcess::Get().FileName());
-                const FFilename vfs(process.Dirpath(),
-                    FVirtualFileSystem::TemporaryBasename(process.BasenameNoExt().MakeView(), L".dmp"));
-
-                const FWString path = vfs.ToWString();
+                const FFilename process = FCurrentProcess::Get().FileName();
+                const FWString prefix = process.RemoveExtname().ToWString();
+                const FWString path = FPlatformFile::MakeTemporaryFile(prefix.c_str(), L".dmp");
 
                 FPlatformCrash::WriteMiniDump(path, FPlatformCrash::Large);
 

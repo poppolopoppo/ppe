@@ -14,7 +14,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 #define STACKLOCAL_ATOM(_NAME, _PTYPE_TRAITS) \
     const size_t CONCAT(_AllocaSizeInBytes_, _NAME) = (_PTYPE_TRAITS)->SizeInBytes(); \
-    const Core::RTTI::FStackLocalAtom _NAME( \
+    const PPE::RTTI::FStackLocalAtom _NAME( \
         SYSALLOCA_IFP( CONCAT(_AllocaSizeInBytes_, _NAME) ), \
         CONCAT(_AllocaSizeInBytes_, _NAME), \
         (_PTYPE_TRAITS) )

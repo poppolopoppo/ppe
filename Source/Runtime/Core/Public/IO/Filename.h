@@ -2,10 +2,10 @@
 
 #include "Core.h"
 
-#include "IO/FS/Basename.h"
-#include "IO/FS/Dirpath.h"
-#include "IO/FS/FileSystemProperties.h"
-#include "IO/FS/MountingPoint.h"
+#include "IO/Basename.h"
+#include "IO/Dirpath.h"
+#include "IO/FileSystemProperties.h"
+#include "IO/MountingPoint.h"
 
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
@@ -14,7 +14,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_API FFilename {
+class PPE_CORE_API FFilename {
 public:
     FFilename() {}
     ~FFilename() {}
@@ -79,6 +79,7 @@ public:
     FFilename Absolute(const FDirpath& origin) const;
     FFilename Normalized() const;
     FFilename Relative(const FDirpath& origin) const;
+    FFilename RemoveExtname() const;
 
     bool Equals(const FFilename& other) const;
     bool Less(const FFilename& other) const;
@@ -137,8 +138,8 @@ inline hash_t hash_value(const FFilename& filename) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API FTextWriter& operator <<(FTextWriter& oss, const FFilename& filename);
-PPE_API FWTextWriter& operator <<(FWTextWriter& oss, const FFilename& filename);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FFilename& filename);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FFilename& filename);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

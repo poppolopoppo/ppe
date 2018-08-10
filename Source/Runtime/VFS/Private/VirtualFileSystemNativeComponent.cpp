@@ -2,25 +2,25 @@
 
 #include "VirtualFileSystemNativeComponent.h"
 
+#include "VirtualFileSystem.h"
 #include "VirtualFileSystemTrie.h"
 
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformFile.h"
 #include "HAL/PlatformLowLevelIO.h"
-#include "IO/FS/FileSystemToken.h"
-#include "IO/FS/FileSystemTrie.h"
+#include "IO/FileSystemToken.h"
+#include "IO/FileSystemTrie.h"
 #include "IO/FileStream.h"
 #include "IO/FileSystem.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
-#include "IO/VirtualFileSystem.h"
 #include "Memory/MemoryProvider.h"
 
 #define NATIVE_ENTITYNAME_MAXSIZE FPlatformFile::MaxPathLength
 
 namespace PPE {
-EXTERN_LOG_CATEGORY(PPE_API, VFS)
+EXTERN_LOG_CATEGORY(PPE_VFS_API, VFS)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

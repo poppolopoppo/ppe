@@ -1,14 +1,14 @@
 #include "stdafx.h"
 
-#include "WindowsPlatformConsole.h"
+#include "HAL/Windows/WindowsPlatformConsole.h"
 
 #ifdef PLATFORM_WINDOWS
 
 #include "Diagnostic/Logger.h"
 #include "IO/StringView.h"
 
-#include "LastError.h"
-#include "WindowsPlatformIncludes.h"
+#include "HAL/Windows/LastError.h"
+#include "HAL/Windows/WindowsPlatformIncludes.h"
 
 #include <iostream>
 

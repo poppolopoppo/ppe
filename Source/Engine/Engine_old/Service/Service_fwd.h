@@ -16,10 +16,10 @@ class IServiceProvider;
 //----------------------------------------------------------------------------
 #define FWD_ENGINESERVICE(_NameWithoutI) \
     class CONCAT(I, _NameWithoutI); \
-    typedef Core::TRefPtr<CONCAT(I, _NameWithoutI)> CONCAT(P, _NameWithoutI); \
-    typedef Core::TRefPtr<const CONCAT(I, _NameWithoutI)> CONCAT(PC, _NameWithoutI); \
-    typedef Core::TSafePtr<CONCAT(I, _NameWithoutI)> CONCAT(S, _NameWithoutI); \
-    typedef Core::TSafePtr<const CONCAT(I, _NameWithoutI)> CONCAT(SC, _NameWithoutI); \
+    typedef PPE::TRefPtr<CONCAT(I, _NameWithoutI)> CONCAT(P, _NameWithoutI); \
+    typedef PPE::TRefPtr<const CONCAT(I, _NameWithoutI)> CONCAT(PC, _NameWithoutI); \
+    typedef PPE::TSafePtr<CONCAT(I, _NameWithoutI)> CONCAT(S, _NameWithoutI); \
+    typedef PPE::TSafePtr<const CONCAT(I, _NameWithoutI)> CONCAT(SC, _NameWithoutI); \
     namespace ServicePriority { enum { CONCAT(I, _NameWithoutI) = __LINE__ }; }
 //----------------------------------------------------------------------------
 // Services from greatest to lowest priority :

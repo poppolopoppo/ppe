@@ -22,13 +22,13 @@ class TMemoryView;
 class FMemoryTracking;
 //----------------------------------------------------------------------------
 #define MEMORYDOMAIN_NAME(_Name) CONCAT(F, _Name)
-#define MEMORYDOMAIN_TAG(_Name) ::Core::MemoryDomain::MEMORYDOMAIN_NAME(_Name)
+#define MEMORYDOMAIN_TAG(_Name) ::PPE::MemoryDomain::MEMORYDOMAIN_NAME(_Name)
 #define MEMORYDOMAIN_TRACKING_DATA(_Name) MEMORYDOMAIN_TAG(_Name)::TrackingData()
 //----------------------------------------------------------------------------
 namespace MemoryDomain {
-    struct MEMORYDOMAIN_NAME(PooledMemory) { static PPE_API FMemoryTracking& TrackingData(); };
-    struct MEMORYDOMAIN_NAME(UsedMemory) { static PPE_API FMemoryTracking& TrackingData(); };
-    struct MEMORYDOMAIN_NAME(ReservedMemory) { static PPE_API FMemoryTracking& TrackingData(); };
+    struct MEMORYDOMAIN_NAME(PooledMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
+    struct MEMORYDOMAIN_NAME(UsedMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
+    struct MEMORYDOMAIN_NAME(ReservedMemory) { static PPE_CORE_API FMemoryTracking& TrackingData(); };
 }   // ^^^ don't use those directly ! always prefer explicit domains vvv
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -50,7 +50,7 @@ namespace MemoryDomain {
 #       define MEMORYDOMAIN_IMPL(_Name, _Parent) \
     namespace MemoryDomain { \
         struct MEMORYDOMAIN_NAME(_Name) { \
-            static PPE_API FMemoryTracking& TrackingData(); \
+            static PPE_CORE_API FMemoryTracking& TrackingData(); \
         }; \
     }
 #   else
@@ -69,12 +69,12 @@ namespace MemoryDomain {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_API void RegisterTrackingData(FMemoryTracking *pTrackingData);
-PPE_API void UnregisterTrackingData(FMemoryTracking *pTrackingData);
+PPE_CORE_API void RegisterTrackingData(FMemoryTracking *pTrackingData);
+PPE_CORE_API void UnregisterTrackingData(FMemoryTracking *pTrackingData);
 //----------------------------------------------------------------------------
-PPE_API void ReportAllocationHistogram(FWTextWriter& oss);
+PPE_CORE_API void ReportAllocationHistogram(FWTextWriter& oss);
 //----------------------------------------------------------------------------
-PPE_API void ReportAllTrackingData(FWTextWriter* optional = nullptr);
+PPE_CORE_API void ReportAllTrackingData(FWTextWriter* optional = nullptr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

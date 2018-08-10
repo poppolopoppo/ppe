@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Hash.h"
+#include "Container/Hash.h"
 
 #include "IO/TextWriter.h"
 

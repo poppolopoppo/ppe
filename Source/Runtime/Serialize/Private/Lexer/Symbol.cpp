@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Symbol.h"
+#include "Lexer/Symbol.h"
 
 namespace PPE {
 namespace Lexer {

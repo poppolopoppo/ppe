@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "LookAheadReader.h"
+#include "Lexer/LookAheadReader.h"
 
 #include "IO/StreamProvider.h"
 #include "IO/String.h"

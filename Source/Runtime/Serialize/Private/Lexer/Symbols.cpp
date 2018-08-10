@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Symbols.h"
+#include "Lexer/Symbols.h"
 
-#include "Symbol.h"
+#include "Lexer/Symbol.h"
 
 #include "MetaObject.h"
 #include "NativeTypes.h"

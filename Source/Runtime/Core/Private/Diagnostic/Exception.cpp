@@ -1,13 +1,13 @@
 #include "stdafx.h"
 
-#include "Exception.h"
+#include "Diagnostic/Exception.h"
 
 #include "IO/TextWriter.h"
 #include "Memory/MemoryView.h"
 
 #if USE_PPE_EXCEPTION_CALLSTACK
-#   include "Callstack.h"
-#   include "DecodedCallstack.h"
+#   include "Diagnostic/Callstack.h"
+#   include "Diagnostic/DecodedCallstack.h"
 #endif
 
 namespace PPE {
@@ -19,7 +19,7 @@ FException::FException(const char* what) noexcept
     Assert(_what);
 #if USE_PPE_EXCEPTION_CALLSTACK
     _siteHash = 0;
-    const size_t depth = Core::FCallstack::Capture(MakeView(_callstack), &_siteHash, 1, lengthof(_callstack));
+    const size_t depth = PPE::FCallstack::Capture(MakeView(_callstack), &_siteHash, 1, lengthof(_callstack));
     if (depth < lengthof(_callstack))
         _callstack[depth] = nullptr;
 #endif
@@ -33,7 +33,7 @@ FDecodedCallstack FException::Callstack() const {
             break;
 
     FDecodedCallstack decoded;
-    Core::FCallstack::Decode(&decoded, _siteHash, TMemoryView<void* const>(_callstack, depth));
+    PPE::FCallstack::Decode(&decoded, _siteHash, TMemoryView<void* const>(_callstack, depth));
     return decoded;
 }
 #endif

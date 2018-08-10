@@ -8,7 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <typename T>
 void hash_combine(hash_t& seed, const T& value) {
-    using Core::hash_value;
+    using PPE::hash_value;
     seed._value = FPlatformHash::HashCombine(seed, hash_value(value));
 }
 //----------------------------------------------------------------------------
