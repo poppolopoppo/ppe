@@ -1,5 +1,6 @@
 #!/bin/env ruby
 
+require 'fileutils'
 require 'ruby-progressbar'
 require 'zip'
 
@@ -7,14 +8,16 @@ NOW=Time.now
 BRANCH='master'
 ROOTDIR=File.expand_path(File.dirname(__FILE__))
 TARNAME=File.basename(ROOTDIR)
-OUTPUTNAME=File.join(ROOTDIR, 
+OUTPUTNAME=File.join(ROOTDIR, "Output", "Backup",
     "#{TARNAME}_#{BRANCH}_%04d-%02d-%02d_%02d-%02d-%02d.zip" % [ 
     NOW.year, NOW.month, NOW.day, NOW.hour, NOW.min, NOW.sec
     ] )
     
-Dir.chdir(ROOTDIR)
 
 puts "Create backup tarball in '#{OUTPUTNAME}' ..."
+
+Dir.chdir(ROOTDIR)
+FileUtils.mkdir_p(File.dirname(OUTPUTNAME), :verbose => true)
 
 def fetch_git_files(branch)
     files = `git ls-tree -r --name-only #{branch}`.split("\n")
@@ -26,13 +29,12 @@ end
 
 input = fetch_git_files(BRANCH)
 puts "Found #{input.length} files to backup"
+$stdout.flush
 
-pbar = ProgressBar.create(:title => "Compress", :starting_at => 0, :total => input.length)
+Zip.default_compression = Zlib::BEST_COMPRESSION
 Zip::File.open(OUTPUTNAME, Zip::File::CREATE) do |zipfile|
     input.each do |filename|
-        #pbar.log filename
         zipfile.add(filename, File.join(ROOTDIR, filename))
-        pbar.increment
      end
 end
 
