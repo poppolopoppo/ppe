@@ -110,6 +110,12 @@ public: // must be defined for every platform
         }
     }
 
+#ifdef WITH_PPE_ASSERT
+    static void Memdeadbeef(void* dst, size_t sizeInBytes) {
+        Memset(dst, 0xDD, sizeInBytes);
+    }
+#endif
+
     //------------------------------------------------------------------------
     // prefetch
 

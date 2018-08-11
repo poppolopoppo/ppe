@@ -49,6 +49,10 @@ public:
     using FGenericPlatformMemory::Memmove;
     using FGenericPlatformMemory::Memswap;
 
+#ifdef WITH_PPE_ASSERT
+    using FGenericPlatformMemory::Memdeadbeef;
+#endif
+
     static FORCE_INLINE void* Memstream(void* __restrict dst, const void* __restrict src, size_t sizeInBytes) {
         Assert(Meta::IsAligned(16, dst)); // everything assumed to be aligned, no reminder
         Assert(Meta::IsAligned(16, src));

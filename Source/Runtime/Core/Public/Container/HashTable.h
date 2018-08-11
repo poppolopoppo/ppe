@@ -7,6 +7,7 @@
 #include "Container/Hash.h"
 #include "Container/Pair.h"
 #include "HAL/PlatformMaths.h"
+#include "HAL/PlatformMemory.h"
 #include "Memory/MemoryView.h"
 #include "Meta/Iterator.h"
 
@@ -286,6 +287,9 @@ public:
     ~TBasicHashTable() {
         Assert(CheckInvariants());
         clear_ReleaseMemory();
+#ifdef WITH_PPE_ASSERT
+        FPlatformMemory::Memdeadbeef(this, sizeof(*this)); // crash if used after destruction
+#endif
     }
 
     explicit TBasicHashTable(allocator_type&& alloc) : allocator_type(std::move(alloc)) {}

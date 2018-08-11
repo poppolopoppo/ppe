@@ -5,6 +5,7 @@
 #include "Allocator/Allocation.h"
 #include "Allocator/InSituAllocator.h"
 #include "Container/Hash.h"
+#include "HAL/PlatformMemory.h"
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryView.h"
 
@@ -55,11 +56,17 @@ public:
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
     TVector() noexcept : _capacity(0), _size(0), _data(nullptr) {}
-    ~TVector() { Assert(CheckInvariants()); clear_ReleaseMemory(); }
+    ~TVector() {
+        Assert(CheckInvariants());
+        clear_ReleaseMemory();
+#ifdef WITH_PPE_ASSERT
+        FPlatformMemory::Memdeadbeef(this, sizeof(*this)); // crash if used after destruction
+#endif
+    }
 
     explicit TVector(Meta::FForceInit) noexcept
         : allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
-        , _capacity(0), _size(0), _data(nullptr) 
+        , _capacity(0), _size(0), _data(nullptr)
     {}
 
     explicit TVector(allocator_type&& alloc) : allocator_type(std::move(alloc)), _capacity(0), _size(0), _data(nullptr) {}

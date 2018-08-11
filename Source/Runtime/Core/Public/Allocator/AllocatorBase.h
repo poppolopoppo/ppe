@@ -246,6 +246,30 @@ size_t SafeAllocatorSnapSize(const _Allocator& alloc, size_t size) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Helpers for allocator copy/move assignment using std::allocator_traits<>
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+Meta::TEnableIf< std::allocator_traits::propagate_on_container_copy_assignment::value >
+    AllocatorPropagateCopy(_Allocator& dst, const _Allocator& src) {
+    dst = src;
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+Meta::TEnableIf< not std::allocator_traits::propagate_on_container_copy_assignment::value >
+    AllocatorPropagateCopy(_Allocator& dst, const _Allocator& src) {}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+Meta::TEnableIf< std::allocator_traits::propagate_on_container_move_assignment::value >
+    AllocatorPropagateMove(_Allocator& dst, _Allocator&& src) {
+    dst = std::move(src);
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+Meta::TEnableIf< not std::allocator_traits::propagate_on_container_move_assignment::value >
+    AllocatorPropagateMove(_Allocator& dst, _Allocator&& src) {}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 // Can be overloaded by each allocator,
 //  - Handles stealing a block from an allocator to another
 //  - Used to disable memory stealing when not available and keep track of stolen blocks
