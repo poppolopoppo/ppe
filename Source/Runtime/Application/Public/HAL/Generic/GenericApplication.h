@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Application.h"
-
-#include "HAL/TargetPlatform.h"
+#include "Application_fwd.h"
 
 #include "IO/String.h"
 #include "Misc/ServiceContainer.h"
@@ -10,24 +8,15 @@
 
 namespace PPE {
 namespace Application {
-class IDisplayAdapterService;
-class IInputService;
-class INotificationService;
-class IWindowService;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_APPLICATION_API FGenericPlatformApplication {
+class PPE_APPLICATION_API FGenericApplication {
 public: // must be defined for every platform
-    virtual ~FGenericPlatformApplication();
+    virtual ~FGenericApplication();
 
     const FString& Name() const { return _name; }
     const FServiceContainer& Services() const { return _services; }
-
-    const IDisplayAdapterService& DisplayAdapter() const;
-    const IInputService& Input() const;
-    const INotificationService& Notification() const;
-    const IWindowService& Window() const;
 
     virtual void Start() {}
     virtual void PumpMessages() {}
@@ -36,7 +25,7 @@ public: // must be defined for every platform
     virtual void Shutdown() {}
 
 protected:
-    FGenericPlatformApplication() {} // this is a base virtual class
+    FGenericApplication() {} // this is a base virtual class
 
     FServiceContainer& Services() { return _services; }
 

@@ -8,7 +8,7 @@
     #include "RTTI/RTTI.bff"
     #include "Serialize/Serialize.bff"
     #include "Network/Network.bff"
-    // #include "Application/Application.bff" %NOCOMMIT%
+    #include "Application/Application.bff"
 
     #include "$BuildPath$/Templates/Namespace.bff"
 }

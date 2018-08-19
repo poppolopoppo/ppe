@@ -1,23 +1,21 @@
 #pragma once
 
-#include "Application_fwd.h"
+#include "Application.h"
 
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_APPLICATION_API FGenericPlatformGamepad {
-public: // must be defined for every platform
-    STATIC_CONST_INTEGRAL(bool, HasGamepad, false);
-    STATIC_CONST_INTEGRAL(size_t, MaxNumGamepad, 0);
-        
-    using FControllerId = size_t;
-
-    static bool Poll(FGenericWindow& window, FControllerId index, FGamepadState* state) = delete;
-    static bool Rumble(FGenericWindow& window, FControllerId index, float left, float right) = delete;
-
-};
+enum class EGamepadButton : u8;
+enum class EKeyboardKey : u8;
+enum class EMouseButton : u8
+//----------------------------------------------------------------------------
+class FKeyboardState;
+class FGamepadState;
+class FMouseState;
+class FGenericApplication;
+class FGenericWindow;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -93,7 +93,9 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(Entity,                   Logic)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(System,                   Logic)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(Application,                    UsedMemory)
-MEMORYDOMAIN_COLLAPSABLE_IMPL(Engine,                   Application)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(Input,                    Application)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(Message,                  Application)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(Survey,                   Application)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Window,                   Application)
 //------------------------------------------------------------------------------
 // External memory

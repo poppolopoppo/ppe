@@ -42,7 +42,7 @@ public:
     // - too low and you would allocate very often.
     // The value is specified as a template parameter to adapt to specific usages.
     STATIC_CONST_INTEGRAL(size_t, ChunkSize, _ChunkSize);
-    STATIC_ASSERT(ChunkSize > 0);
+    STATIC_ASSERT(Meta::IsPow2(ChunkSize));
 
     using FDataId = FSparseDataId;
     using FDataItem = TSparseArrayItem<T>;

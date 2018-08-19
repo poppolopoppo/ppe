@@ -7,15 +7,11 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_APPLICATION_API FGenericPlatformGamepad {
+class PPE_APPLICATION_API FGenericPlatformKeyboard {
 public: // must be defined for every platform
-    STATIC_CONST_INTEGRAL(bool, HasGamepad, false);
-    STATIC_CONST_INTEGRAL(size_t, MaxNumGamepad, 0);
-        
-    using FControllerId = size_t;
+    STATIC_CONST_INTEGRAL(bool, HasKeyboard, false);
 
-    static bool Poll(FGenericWindow& window, FControllerId index, FGamepadState* state) = delete;
-    static bool Rumble(FGenericWindow& window, FControllerId index, float left, float right) = delete;
+    static bool Poll(FGenericWindow& window, FKeyboardState* keyboard) = delete;
 
 };
 //----------------------------------------------------------------------------

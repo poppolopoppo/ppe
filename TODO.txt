@@ -1,0 +1,40 @@
+Application
+
+HAL
+    Generic
+        GenericApplication
+        GenericWindow
+        GenericPlatformDialog
+        GenericPlatformNotification
+        GenericPlatformSplash
+        GenericPlatformKeyboard
+        GenericPlatformMouse
+        GenericPlatformGamepad
+        GenericPlatformSurvey
+    Windows
+        WindowsApplication
+        WindowsWindow
+        WindowsPlatformDialog
+        WindowsPlatformNotification
+        WindowsPlatformSplash
+        WindowsPlatformKeyboard
+        WindowsPlatformGamepad
+        WindowsPlatformMouse
+        WindowsPlatformSurvey
+Input
+    InputState
+    KeyboardState
+    GamepadState
+    MouseState
+Survey
+    DisplayMonitor
+    DisplayAdapter
+    StorageDevice
+Service
+    DisplayService
+    InputService
+    WindowService
+Window
+    MainWindow
+    ToolWindow
+Application
