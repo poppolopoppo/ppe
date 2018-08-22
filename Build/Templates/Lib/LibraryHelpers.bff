@@ -46,7 +46,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .IntermediateRoot      = .IntermediatePath + '\$Platform$\$Config$'
         .IntermediatePath      = '$IntermediateRoot$\$ProjectName$'
         .OutputPath            = .BinaryPath
-        .UnityDirectory        = '$IntermediateRoot$\Unity'
+        .UnityDirectory        = '$IntermediatePath$\Unity'
 
         // Project compiled config
         .ProjectCompileConfig =
@@ -143,6 +143,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .UnityInputPattern          = .ProjectInputPattern
             .UnityOutputPattern         = 'Unity_*_of_$UnityNumFiles$.cpp'
             .UnityInputExcludedFiles    = {}
+
             ForEach( .Filename in .ProjectExcludedFiles )
             {
                 ^UnityInputExcludedFiles + "$ProjectPath$/$Filename$"
