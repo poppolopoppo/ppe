@@ -23,7 +23,7 @@ PPE_RETURN_NOT_NULL void* PPE_DECLSPEC_CALL operator new(size_t size) {
     return (PPE::malloc)(size);
 }
 //----------------------------------------------------------------------------
-PPE_RETURN_MAYBE_NULL void* PPE_DECLSPEC_CALL operator new(size_t size, std::nothrow_t const& ) noexcept  {
+PPE_RETURN_MAYBE_NULL void* PPE_DECLSPEC_CALL operator new(size_t size, std::nothrow_t const&) noexcept  {
     return (PPE::malloc)(size);
 }
 //----------------------------------------------------------------------------
@@ -31,31 +31,31 @@ PPE_RETURN_NOT_NULL void* PPE_DECLSPEC_CALL operator new[](size_t size) {
     return (PPE::malloc)(size);
 }
 //----------------------------------------------------------------------------
-PPE_RETURN_MAYBE_NULL void* PPE_DECLSPEC_CALL operator new[](size_t size,std::nothrow_t const& ) noexcept {
+PPE_RETURN_MAYBE_NULL void* PPE_DECLSPEC_CALL operator new[](size_t size, std::nothrow_t const&) noexcept {
     return (PPE::malloc)(size);
 }
 //----------------------------------------------------------------------------
-void PPE_DECLSPEC_CALL operator delete(void* block) throw() {
+void PPE_DECLSPEC_CALL operator delete(void* block) noexcept {
     (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
-void PPE_DECLSPEC_CALL operator delete(void* block, std::nothrow_t const& ) throw() {
+void PPE_DECLSPEC_CALL operator delete(void* block, std::nothrow_t const& ) noexcept {
     (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
-void PPE_DECLSPEC_CALL operator delete[](void* block) throw() {
+void PPE_DECLSPEC_CALL operator delete[](void* block) noexcept {
     (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
-void PPE_DECLSPEC_CALL operator delete[](void* block, std::nothrow_t const& ) throw() {
+void PPE_DECLSPEC_CALL operator delete[](void* block, std::nothrow_t const& ) noexcept {
     (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
-void PPE_DECLSPEC_CALL operator delete(void*  block, size_t/* size */) throw() {
+void PPE_DECLSPEC_CALL operator delete(void* block, size_t/* size */) noexcept {
     (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
-void PPE_DECLSPEC_CALL operator delete[](void* block, size_t/* size */) throw() {
+void PPE_DECLSPEC_CALL operator delete[](void* block, size_t/* size */) noexcept {
     (PPE::free)(block);
 }
 //----------------------------------------------------------------------------
