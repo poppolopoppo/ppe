@@ -86,6 +86,7 @@ public:
 
     const _Char* c_str() const { return data_(); }
     const _Char* data() const { return data_(); }
+    const _Char* operator *() const { return data_(); }
 
     const TStringAllocator<_Char>& get_allocator() const { return (*this); }
 
