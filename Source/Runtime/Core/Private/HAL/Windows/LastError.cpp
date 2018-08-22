@@ -2,6 +2,8 @@
 
 #include "HAL/Windows/LastError.h"
 
+#ifdef PLATFORM_WINDOWS
+
 #include "IO/StreamProvider.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
@@ -74,3 +76,5 @@ FLastErrorException::~FLastErrorException() {}
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+#endif //!PLATFORM_WINDOWS

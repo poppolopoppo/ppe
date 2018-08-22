@@ -2,6 +2,10 @@
 
 #include "Core.h"
 
+#ifndef PLATFORM_WINDOWS
+#   error "invalid include for current platform"
+#endif
+
 #include "Diagnostic/Exception.h"
 #include "Diagnostic/Logger.h"
 #include "IO/String_fwd.h"
