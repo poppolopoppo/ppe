@@ -30,11 +30,24 @@ def sourcefiles_count(rootpath)
     return count
 end
 
-Dir.entries(SOURCEDIR).each do |project_name|
-    path = File.join(SOURCEDIR, project_name)
-    bff = File.join(path, "#{project_name}.bff")
-    next unless File.exists?(bff)
-    puts "Processing #{project_name}..."
+RE_UNITYNUMFILES=/\.UnityNumFiles\s*=\s*(\d+)/
+def each_project_bff(&block)
+    Find.find(SOURCEDIR) do |path|
+        if FileTest.directory?(path)
+            if File.basename(path)[0] == ?.
+                Find.prune       # Don't look any further into this directory.
+            else
+                next
+            end
+        elsif path =~ /\.bff$/
+            block.call(path)
+        end
+    end
+end
+
+each_project_bff do |bff|
+    puts "Processing #{bff}..."
+    path = File.dirname(bff)
     src_count = sourcefiles_count(path)
     unity_count = (src_count + SOURCESFILES_PER_UNITY - 1) / SOURCESFILES_PER_UNITY
     puts "Found #{src_count} source files => #{unity_count} unity"

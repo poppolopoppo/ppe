@@ -13,6 +13,6 @@
     {
         'Private/Application.cpp'
     }
-    .UnityNumFiles = 1 // generated
+    .UnityNumFiles = 2 // generated
     #include "$BuildPath$/Templates/Module.bff"
 }

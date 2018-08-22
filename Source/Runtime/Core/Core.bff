@@ -16,6 +16,6 @@
         'Private/Allocator/MallocStomp.cpp',
         'Private/Allocator/New.cpp',
     }
-    .UnityNumFiles = 5 // generated
+    .UnityNumFiles = 6 // generated
     #include "$BuildPath$/Templates/Module.bff"
 }
