@@ -66,16 +66,16 @@ void Remove_AssertExists(THashSet<T, _Hasher, _EqualTo, _Allocator>& hashset, co
 template <typename T, typename _Hasher, typename _EqualTo, typename _Allocator>
 void Remove_AssertExistsAndSameValue(THashSet<T, _Hasher, _EqualTo, _Allocator>& hashset, const T& elt) {
 #ifdef WITH_PPE_ASSERT
-    const auto it = hashset.find(key);
+    const auto it = hashset.find(elt);
     if (hashset.end() == it) {
         AssertNotReached();
     }
     else {
-        Assert(it->second == value);
+        Assert(it->second == elt);
         hashset.erase(it);
     }
 #else
-    hashset.erase(it);
+    hashset.erase_AssertExists(elt);
 #endif
 }
 //----------------------------------------------------------------------------

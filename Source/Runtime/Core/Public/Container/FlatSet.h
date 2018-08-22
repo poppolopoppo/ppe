@@ -12,10 +12,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define FLAT_SET(_DOMAIN, _KEY) \
+#define FLATSET(_DOMAIN, _KEY) \
     ::PPE::TFlatSet<_KEY, ::PPE::Meta::TEqualTo<_KEY>, ::PPE::Meta::TLess<_KEY>, VECTOR(_DOMAIN, _KEY) >
 //----------------------------------------------------------------------------
-#define FLAT_SETINSITU(_DOMAIN, _KEY, _InSituCount) \
+#define FLATSET_INSITU(_DOMAIN, _KEY, _InSituCount) \
     ::PPE::TFlatSet<_KEY, ::PPE::Meta::TEqualTo<_KEY>, ::PPE::Meta::TLess<_KEY>, VECTORINSITU(_DOMAIN, _KEY, _InSituCount) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -75,7 +75,7 @@ private:
         FStringView _name;
     };
 
-    typedef FLAT_MAPINSITU(Internal, FServiceId, FServiceHolder, 8) services_type;
+    typedef FLATMAP_INSITU(Internal, FServiceId, FServiceHolder, 8) services_type;
 
     FReadWriteLock _barrierRW;
     services_type _services;
