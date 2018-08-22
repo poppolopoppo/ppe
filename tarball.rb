@@ -38,4 +38,5 @@ Zip::File.open(OUTPUTNAME, Zip::File::CREATE) do |zipfile|
      end
 end
 
-puts "Finished"
+BYTES_TO_MEGABYTES = 1.0 / (1024 * 1024)
+puts("Finished => %6.3f mb" % (File.size(OUTPUTNAME) * BYTES_TO_MEGABYTES))
