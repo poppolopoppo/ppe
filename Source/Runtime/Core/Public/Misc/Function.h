@@ -211,7 +211,7 @@ public:
         STATIC_ASSERT(sizeof(intptr_t) == sizeof(wrapper_type));
     }
 
-    void FireAndForget(_Args&&... args) {
+    void FireAndForget(_Args... args) {
         Invoke(std::forward<_Args>(args)...);
         Reset(); // unbind after first call
     }
