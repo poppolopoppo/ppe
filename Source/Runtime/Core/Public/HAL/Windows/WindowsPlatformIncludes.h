@@ -3,7 +3,9 @@
 #include "HAL/Generic/GenericPlatformIncludes.h"
 
 // WIN32_LEAN_AND_MEAN excludes rarely-used services from windows headers.
-#define WIN32_LEAN_AND_MEAN
+#ifndef WIN32_LEAN_AND_MEAN
+#   define WIN32_LEAN_AND_MEAN
+#endif
 
 // The below excludes some other unused services from the windows headers -- see windows.h for details.
 #define NOGDICAPMASKS			// CC_*, LC_*, PC_*, CP_*, TC_*, RC_
@@ -17,7 +19,7 @@
 //#define NOSYSCOMMANDS			// SC_*
 //#define NORASTEROPS			// Binary and Tertiary raster ops
 //#define NOSHOWWINDOW			// SW_*
-#define OEMRESOURCE				// OEM Resource values
+//#define OEMRESOURCE			// OEM Resource values
 #define NOATOM					// Atom Manager routines
 //#define NOCLIPBOARD			// Clipboard routines
 //#define NOCOLOR				// Screen colors
@@ -30,7 +32,7 @@
 //#define NOMB					// MB_* and MessageBox()
 #define NOMEMMGR				// GMEM_*, LMEM_*, GHND, LHND, associated routines
 #define NOMETAFILE				// typedef METAFILEPICT
-#define NOMINMAX				// Macros min(a,b) and max(a,b)
+//#define NOMINMAX				// Macros min(a,b) and max(a,b)
 //#define NOMSG					// typedef MSG and associated routines
 #define NOOPENFILE				// OpenFile(), OemToAnsi, AnsiToOem, and OF_*
 #define NOSCROLL				// SB_* and scrolling routines
@@ -70,6 +72,10 @@ struct IUnknown;
 #pragma push_macro("CreateSemaphore")
 #ifdef CreateSemaphore
 #   undef CreateSemaphore
+#endif
+#pragma push_macro("CreateWindow")
+#ifdef CreateWindow
+#   undef CreateWindow
 #endif
 #pragma push_macro("MoveFile")
 #ifdef MoveFile
