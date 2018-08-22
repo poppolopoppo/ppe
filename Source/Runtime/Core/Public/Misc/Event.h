@@ -5,11 +5,11 @@
 #include "Container/SparseArray.h"
 #include "Misc/Function.h"
 
-#define PUBLIC_EVENT(_NAME, ...) \
+#define PUBLIC_EVENT(_NAME, _DELEGATE) \
     private: \
-        ::PPE::TEvent<__VA_ARGS__> CONCAT(_, _NAME); \
+        ::PPE::TEvent<_DELEGATE> CONCAT(_, _NAME); \
     public: \
-        ::PPE::TPublicEvent<__VA_ARGS__>& _NAME() { \
+        ::PPE::TPublicEvent<_DELEGATE>& _NAME() { \
             return CONCAT(_, _NAME).Public(); \
         }
 
@@ -18,49 +18,52 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // TEvent<> is equivalent to C# events
-// TEventHandle<> handles registration lifetime
+// FEventHandle handles registration lifetime
 // TPublicEvent<> is the public interface, while TEvent<> allows full control
 //----------------------------------------------------------------------------
-template <typename T>
+template <typename _Delegate>
 class TPublicEvent;
 //----------------------------------------------------------------------------
-template <typename T>
-class TEventHandle {
-    template <>
-    friend class TPublicEvent<T>;
+class FEventHandle {
+    template <typename _Delegate>
+    friend class TPublicEvent;
 
 public:
-    TEventHandle() NOEXCEPT : _id(0) {}
-    explicit TEventHandle(FSparseDataId id) NOEXCEPT
+    FEventHandle() NOEXCEPT : _id(0) {}
+    explicit FEventHandle(FSparseDataId id)
         : _id(id) {
         Assert(_id);
     }
 
-    TEventHandle(const TEventHandle&) = delete;
-    TEventHandle& operator =(const TEventHandle&) = delete;
+    FEventHandle(const FEventHandle&) = delete;
+    FEventHandle& operator =(const FEventHandle&) = delete;
 
-    TEventHandle(TEventHandle&& rvalue)
-        : TEventHandle() {
+    FEventHandle(FEventHandle&& rvalue)
+        : FEventHandle() {
         Swap(rvalue);
     }
 
-    TEventHandle& operator =(const TEventHandle&) {
+    FEventHandle& operator =(FEventHandle&& rvalue) {
         Assert(0 == _id); // don't support assigning to initialized handle !
         Swap(rvalue);
         return (*this);
     }
 
-    ~TEventHandle() {
+    ~FEventHandle() {
         Assert_NoAssume(0 == _id);
     }
 
     PPE_FAKEBOOL_OPERATOR_DECL() { return (_id ? this : nullptr); }
 
-    void Swap(TEventHandle& other) {
+    void Forget() {
+        _id = 0; // won't asset on destruction, use wisely ;O
+    }
+
+    void Swap(FEventHandle& other) {
         std::swap(_id, other._id);
     }
 
-    inline friend bool swap(TEventHandle& lhs, TEventHandle& rhs) {
+    inline friend bool swap(FEventHandle& lhs, FEventHandle& rhs) {
         lhs.Swap(rhs);
     }
 
@@ -68,11 +71,12 @@ private:
     FSparseDataId _id;
 };
 //----------------------------------------------------------------------------
-template <typename T>
+template <typename _Delegate>
 class TPublicEvent {
-    using FDelegate = TFunction<T>;
-    using FHandle = TEventHandle<T>;
-    using FInvocationList = SPARSEARRAY(Event, FDelegate, 8);
+public:
+    using FDelegate = _Delegate;
+    using FHandle = FEventHandle;
+    using FInvocationList = SPARSEARRAY(Event, FDelegate, 4);
 
     TPublicEvent() NOEXCEPT {}
 
@@ -84,12 +88,17 @@ class TPublicEvent {
 
     FHandle Add(FDelegate&& func) {
         Assert(func);
-        return FHandle{ this, _delegates.Emplace(std::move(func)) };
+        return FHandle(_delegates.Emplace(std::move(func)));
+    }
+
+    void Emplace(FDelegate&& func) {
+        Assert(func);
+        _delegates.Emplace(std::move(func));
     }
 
     void Remove(FHandle& handle) {
         Assert(handle);
-        VerifyRelease(_delegates.Remove(handle));
+        VerifyRelease(_delegates.Remove(handle._id));
         handle._id = 0;
     }
 
@@ -98,9 +107,11 @@ protected:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-class TEvent : public TPublicEvent<T> {
+class TEvent;
+template <typename _Ret, typename... _Args>
+class TEvent< TFunction<_Ret(_Args...)> > : public TPublicEvent< TFunction<_Ret(_Args...)> > {
 public:
-    using parent_type = TPublicEvent<T>;
+    using parent_type = TPublicEvent< TFunction<_Ret(_Args...)> >;
 
     using typename parent_type::FDelegate;
     using typename parent_type::FHandle;
@@ -117,14 +128,12 @@ public:
         return (_delegates.empty() ? nullptr : this);
     }
 
-    template <typename... _Args>
     void operator ()(_Args... args) const {
-        return Invoke(std::forward<_Args>(args)...);
+        Invoke(std::forward<_Args>(args)...);
     }
 
-    template <typename... _Args>
-    void Invoke(_Args&&... args) {
-        for (FDelegate& it : _delegates) {
+    void Invoke(_Args... args) const {
+        for (auto& it : _delegates) {
             it(std::forward<_Args>(args)...);
         }
     }
@@ -132,7 +141,16 @@ public:
     void Clear() {
         _delegates.Clear();
     }
+
+private:
+    using parent_type::_delegates;
 };
+//----------------------------------------------------------------------------
+template <typename _Delegate, typename T, class = Meta::TEnableIf<_Delegate::template is_callable_v<T>> >
+TPublicEvent<_Delegate>& operator <<(TPublicEvent<_Delegate>& publicEvent, T&& callback) {
+    publicEvent.Emplace(std::move(callback));
+    return publicEvent;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
