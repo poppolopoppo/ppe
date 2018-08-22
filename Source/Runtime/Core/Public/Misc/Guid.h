@@ -4,6 +4,7 @@
 
 #include "Container/Hash.h"
 #include "IO/Format.h"
+#include "IO/String_fwd.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 
@@ -34,6 +35,9 @@ ALIGN(16) struct FGuid {
     bool empty() const;
 
     u64 ToUID() const { return Data.as_u64[0] ^ Data.as_u64[1]; }
+
+    FString ToString() const;
+    FWString ToWString() const;
 
     static FGuid Zero() { FGuid v; v.Data.as_u64[0] = v.Data.as_u64[1] = 0; return v; }
 

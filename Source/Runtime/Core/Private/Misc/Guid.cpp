@@ -2,13 +2,23 @@
 
 #include "Misc/Guid.h"
 
+#include "IO/Format.h"
 #include "IO/String.h"
+#include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
 #include "HAL/PlatformMisc.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FString FGuid::ToString() const {
+    return StringFormat("{0}", *this);
+}
+//----------------------------------------------------------------------------
+FWString FGuid::ToWString() const {
+    return StringFormat(L"{0}", *this);
+}
 //----------------------------------------------------------------------------
 FGuid FGuid::Generate() {
     FGuid result;
