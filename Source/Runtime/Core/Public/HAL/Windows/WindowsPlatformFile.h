@@ -18,6 +18,7 @@ public:
     using char_type = wchar_t;
     using FStat = FGenericPlatformFile::FStat;
 
+    static FWString SystemDirectory();
     static FWString TemporaryDirectory();
     static FWString UserDirectory();
     static FWString WorkingDirectory();

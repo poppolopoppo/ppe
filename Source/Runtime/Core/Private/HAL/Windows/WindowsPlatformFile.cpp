@@ -164,6 +164,13 @@ void TimetToFileTime_(time_t t, ::LPFILETIME pft) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FWString FWindowsPlatformFile::SystemDirectory() {
+    wchar_t buffer[MAX_PATH + 1];
+    const ::DWORD len = ::GetSystemDirectoryW(buffer, lengthof(buffer));
+    CLOG_LASTERROR(len == 0, HAL, L"GetSystemDirectoryW()");
+    return FWString(buffer, checked_cast<size_t>(len));
+}
+//----------------------------------------------------------------------------
 FWString FWindowsPlatformFile::TemporaryDirectory() {
     wchar_t buffer[MAX_PATH + 1];
     const ::DWORD len = ::GetTempPathW(lengthof(buffer), buffer);
