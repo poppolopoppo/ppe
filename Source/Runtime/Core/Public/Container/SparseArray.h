@@ -11,7 +11,8 @@
 // http://greysphere.tumblr.com/post/31601463396/data-arrays
 
 #define SPARSEARRAY(_DOMAIN, T, _ChunkSize) \
-    ::PPE::TSparseArray<COMMA_PROTECT(T), _ChunkSize, ALLOCATOR(_DOMAIN, COMMA_PROTECT(T)) >
+    ::PPE::TSparseArray<COMMA_PROTECT(T), _ChunkSize, \
+        ALLOCATOR(_DOMAIN, ::PPE::TSparseArrayItem<COMMA_PROTECT(T)>) >
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -46,7 +47,7 @@ public:
 
     using FDataId = FSparseDataId;
     using FDataItem = TSparseArrayItem<T>;
-    using FDataChunk = Meta::TArray<T, _ChunkSize>;
+    using FDataChunk = Meta::TArray<FDataItem, _ChunkSize>;
 
     using value_type = T;
     using pointer = std::add_pointer_t<T>;
@@ -63,8 +64,8 @@ public:
     TBasicSparseArray() NOEXCEPT;
     ~TBasicSparseArray();
 
-    TBasicSparseArray(const TSparseArray&) = delete; // because this container is very specific about lifetime
-    TBasicSparseArray& operator =(const TSparseArray&) = delete;
+    TBasicSparseArray(const TBasicSparseArray&) = delete; // because this container is very specific about lifetime
+    TBasicSparseArray& operator =(const TBasicSparseArray&) = delete;
 
     TBasicSparseArray(TBasicSparseArray&& rvalue) NOEXCEPT; // but you can still move it
     TBasicSparseArray& operator =(TBasicSparseArray&& rvalue);
@@ -114,7 +115,7 @@ protected:
 
     FDataItem* At_(size_t index);
     FORCE_INLINE const FDataItem* At_(size_t index) const {
-        return const_cast<TSparseArray*>(this)->at_(index);
+        return const_cast<TBasicSparseArray*>(this)->At_(index);
     }
 
     size_t GrabFirstFreeBlock_();
@@ -139,7 +140,7 @@ protected:
 #ifdef WITH_PPE_ASSERT
         const UDataId id{ key, index };
         Assert(id.Packed.Key == key);
-        Assert(id.Packed.Index == Index);
+        Assert(id.Packed.Index == index);
         return id.Packed;
 #else
         return UDataId{ key, index }.Packed;
@@ -165,8 +166,8 @@ protected:
 //----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize>
 class TSparseArrayIterator : public Meta::TIterator<T> {
-    template <typename U>
-    friend class TSparseArrayIterator<U, _ChunkSize>;
+    template <typename U, size_t _Sz>
+    friend class TSparseArrayIterator;
 
 public:
     using FSparseArray = TBasicSparseArray<Meta::TRemoveConst<T>, _ChunkSize>;
@@ -287,15 +288,13 @@ public:
     using typename parent_type::const_iterator;
 
     using allocator_type = _Allocator;
-    using allocator_traits = std::allocator_traits_t<_Allocator>;
+    using allocator_traits = std::allocator_traits<_Allocator>;
 
-    static_assert(std::is_same<value_type, typename allocator_traits::value_type>::value,
+    static_assert(std::is_same<FDataItem, typename allocator_traits::value_type>::value,
         "allocator value_type mismatch");
 
-    using iterator = TSparseArrayIterator<T, _ChunkSize>;
-    using const_iterator = TSparseArrayIterator<std::add_const_t<T>, _ChunkSize>;
-
     TSparseArray() NOEXCEPT : parent_type() {}
+    ~TSparseArray();
 
     explicit TSparseArray(Meta::FForceInit) noexcept
         : allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
@@ -359,7 +358,7 @@ private:
 
     using parent_type::GrabFirstFreeBlock_;
 
-    using parent_type::FUnpackedId_;
+    using typename parent_type::FUnpackedId_;
     using parent_type::PackId_;
     using parent_type::UnpackId_;
     using parent_type::At_;
@@ -371,6 +370,10 @@ private:
 
     void ReleaseChunk_(FDataChunk* chunk);
     void ClearReleaseMemory_LeaveDirty_();
+
+    allocator_type& get_allocator_() {
+        return static_cast<allocator_type&>(*this);
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
