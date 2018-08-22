@@ -184,9 +184,10 @@ void* TObjectTraits<T>::Cast(void* data, const PTypeTraits& dst) const {
 //----------------------------------------------------------------------------
 template <typename T>
 bool TObjectTraits<T>::Accept(IAtomVisitor* visitor, void* data) const {
+    Assert(visitor);
     Assert(data);
 
-    return visitor->Visit(static_cast<const IScalarTraits*>(this), *reinterpret_cast<PMetaObject*>(data));
+    return AtomVisit(*visitor, static_cast<const IScalarTraits*>(this), *reinterpret_cast<PMetaObject*>(data));
 }
 //----------------------------------------------------------------------------
 template <typename T>

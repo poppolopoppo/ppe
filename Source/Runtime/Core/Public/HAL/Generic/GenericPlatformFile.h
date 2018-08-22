@@ -36,6 +36,7 @@ public: // must be defined for every platform
     using char_type = wchar_t;
     using FStat = FGenericPlatformFileStat;
 
+    static FWString SystemDirectory() = delete;
     static FWString TemporaryDirectory() = delete;
     static FWString UserDirectory() = delete;
     static FWString WorkingDirectory() = delete;

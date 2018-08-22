@@ -9,6 +9,7 @@
 #include "MetaNamespace.h"
 #include "MetaObject.h"
 #include "MetaFunction.h"
+#include "MetaFunctionHelpers.h"
 #include "MetaProperty.h"
 #include "NativeTypes.h"
 

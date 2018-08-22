@@ -69,14 +69,16 @@ namespace details {
 template <typename _Allocator, typename T>
 void Construct_(_Allocator&, const TMemoryView<T>&, std::true_type) {}
 template <typename _Allocator, typename T, typename _Arg0, typename... _Args>
-void Construct_(_Allocator&, const TMemoryView<T>&, std::true_type, _Arg0&& arg0, _Args&&... args) {
+void Construct_(_Allocator& alloc, const TMemoryView<T>& items, std::true_type, _Arg0&& arg0, _Args&&... args) {
+    using traits = std::allocator_traits<_Allocator>;
     for (T& pod : items)
-        alloc.construct(&pod, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+        traits::construct(alloc, &pod, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 template <typename _Allocator, typename T, typename... _Args>
 void Construct_(_Allocator& alloc, const TMemoryView<T>& items, std::false_type, _Args&&... args) {
+    using traits = std::allocator_traits<_Allocator>;
     for (T& non_pod : items)
-        alloc.construct(&non_pod, std::forward<_Args>(args)...);
+        traits::construct(alloc, &non_pod, std::forward<_Args>(args)...);
 }
 } //!details
 template <typename _Allocator, typename T, typename... _Args>
@@ -89,8 +91,9 @@ template <typename _Allocator, typename T>
 void Destroy_(_Allocator&, const TMemoryView<T>&, std::true_type) {}
 template <typename _Allocator, typename T>
 void Destroy_(_Allocator& alloc, const TMemoryView<T>& items, std::false_type) {
+    using traits = std::allocator_traits<_Allocator>;
     for (T& non_pod : items)
-        alloc.destroy(&non_pod);
+        traits::destroy(alloc, &non_pod);
 }
 } //!details
 template <typename _Allocator, typename T>
@@ -248,24 +251,24 @@ size_t SafeAllocatorSnapSize(const _Allocator& alloc, size_t size) {
 //----------------------------------------------------------------------------
 // Helpers for allocator copy/move assignment using std::allocator_traits<>
 //----------------------------------------------------------------------------
-template <typename _Allocator>
-Meta::TEnableIf< std::allocator_traits::propagate_on_container_copy_assignment::value >
+template <typename _Allocator, class _Traits = std::allocator_traits<_Allocator> >
+Meta::TEnableIf< _Traits::propagate_on_container_copy_assignment::value >
     AllocatorPropagateCopy(_Allocator& dst, const _Allocator& src) {
     dst = src;
 }
 //----------------------------------------------------------------------------
-template <typename _Allocator>
-Meta::TEnableIf< not std::allocator_traits::propagate_on_container_copy_assignment::value >
+template <typename _Allocator, class _Traits = std::allocator_traits<_Allocator> >
+Meta::TEnableIf< not _Traits::propagate_on_container_copy_assignment::value >
     AllocatorPropagateCopy(_Allocator& dst, const _Allocator& src) {}
 //----------------------------------------------------------------------------
-template <typename _Allocator>
-Meta::TEnableIf< std::allocator_traits::propagate_on_container_move_assignment::value >
+template <typename _Allocator, class _Traits = std::allocator_traits<_Allocator> >
+Meta::TEnableIf< _Traits::propagate_on_container_move_assignment::value >
     AllocatorPropagateMove(_Allocator& dst, _Allocator&& src) {
     dst = std::move(src);
 }
 //----------------------------------------------------------------------------
-template <typename _Allocator>
-Meta::TEnableIf< not std::allocator_traits::propagate_on_container_move_assignment::value >
+template <typename _Allocator, class _Traits = std::allocator_traits<_Allocator> >
+Meta::TEnableIf< not _Traits::propagate_on_container_move_assignment::value >
     AllocatorPropagateMove(_Allocator& dst, _Allocator&& src) {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

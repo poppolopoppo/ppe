@@ -345,7 +345,7 @@ public:
     TKeyIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TKeyIterator(jt); }
 
     reference operator*() const { return (_it->first); }
-    pointer operator->() const { return (&it->first); }
+    pointer operator->() const { return (&_it->first); }
 
     void swap(TKeyIterator& other) { std::swap(_it, other._it); }
     inline friend void swap(TKeyIterator& lhs, TKeyIterator& rhs) { lhs.swap(rhs); }
@@ -397,7 +397,7 @@ public:
     TValueIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TValueIterator(jt); }
 
     reference operator*() const { return (_it->second); }
-    pointer operator->() const { return (&it->second); }
+    pointer operator->() const { return (&_it->second); }
 
     void swap(TValueIterator& other) { std::swap(_it, other._it); }
     inline friend void swap(TValueIterator& lhs, TValueIterator& rhs) { lhs.swap(rhs); }

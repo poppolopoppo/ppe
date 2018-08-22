@@ -89,13 +89,13 @@ public: // generic helpers
     template <typename T>
     static FORCE_INLINE void StorePtr(T** dst, T* val) NOEXCEPT {
         Assert(Meta::IsAligned(sizeof(void*), dst));
-        FPlatformAtomics::Store((volatile intptr_t**)src, (intptr_t)val);
+        FPlatformAtomics::Store((volatile intptr_t**)dst, (intptr_t)val);
     }
 
     template <typename T>
     static FORCE_INLINE void StorePtr_Relaxed(T** dst, T* val) NOEXCEPT {
         Assert(Meta::IsAligned(sizeof(void*), dst));
-        FPlatformAtomics::Store_Relaxed((volatile intptr_t*)src, (intptr_t)val);
+        FPlatformAtomics::Store_Relaxed((volatile intptr_t*)dst, (intptr_t)val);
     }
 
 };

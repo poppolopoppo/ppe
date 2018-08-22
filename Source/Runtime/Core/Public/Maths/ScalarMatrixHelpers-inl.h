@@ -262,7 +262,7 @@ void DecomposeLQ(const TScalarMatrix<T, 4, 4>& m, TScalarMatrix<T, 4, 4>& l, TSc
 
     l.SetBroadcast(0);
 
-    l._11() = Dot4(q.Row_x(), m_.Row_x());
+    l._11() = Dot4(q.Row_x(), m.Row_x());
 
     l._21() = Dot4(q.Row_x(), m.Row_y());
     l._22() = Dot4(q.Row_y(), m.Row_y());

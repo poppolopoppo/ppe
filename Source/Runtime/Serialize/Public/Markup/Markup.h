@@ -127,6 +127,11 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Serialize::FMarkup::FText& markupText) {
+    return oss << markupText.MakeView();
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Serialize::FMarkup::FElement& markupElement) {
     markupElement.ToStream(oss);
     return oss;

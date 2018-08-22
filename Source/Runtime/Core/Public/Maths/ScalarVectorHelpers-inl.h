@@ -445,7 +445,7 @@ TScalarVector<U, _Dim> Smoothstep(const TScalarVector<T, _Dim>& vmin, const TSca
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> GridSnap(const TScalarVector<T, _Dim>& location, T grid) {
-    TScalarVector<U, _Dim> result;
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = GridSnap(location._data[i], grid);
     return result;
@@ -453,7 +453,7 @@ TScalarVector<T, _Dim> GridSnap(const TScalarVector<T, _Dim>& location, T grid) 
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarVector<T, _Dim> GridSnap(const TScalarVector<T, _Dim>& location, const TScalarVector<T, _Dim>& grid) {
-    TScalarVector<U, _Dim> result;
+    TScalarVector<T, _Dim> result;
     for (size_t i = 0; i < _Dim; ++i)
         result._data[i] = GridSnap(location._data[i], grid._data[i]);
     return result;
@@ -467,7 +467,6 @@ bool IsNormalized(const TScalarVector<T, _Dim>& v, float epsilon/* = F_Epsilon *
 template <typename T, size_t _Dim>
 bool NearlyEquals(const TScalarVector<T, _Dim>& a, const TScalarVector<T, _Dim>& b, float maxRelDiff/* = F_Epsilon */) {
     for (size_t i = 0; i < _Dim; ++i) {
-
         if (not NearlyEquals(a._data[i], b._data[i], maxRelDiff))
             return false;
     }

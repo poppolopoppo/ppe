@@ -87,7 +87,7 @@ public:
     template <size_t _Dim>
     void CopyTo(Meta::TRemoveConst<T> (&dst)[_Dim]) const {
         Assert(_Dim >= _size);
-        CopyTo(MakeView(dst).CutBefore(_size));
+        CopyTo(TMemoryView<Meta::TRemoveConst<T>>(dst, _size));
     }
 
     TMemoryView<T> SubRange(size_t offset, size_t count) const;

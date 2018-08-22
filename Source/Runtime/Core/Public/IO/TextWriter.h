@@ -198,29 +198,6 @@ public:
     void Write(const _Char* v);
     void Write(const TBasicStringView<_Char>& v);
 
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, bool v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, i8 v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, i16 v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, i32 v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, i64 v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, u8 v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, u16 v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, u32 v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, u64 v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, float v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, double v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, const void* v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, const _Char* v) { w.Write(v); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, const TBasicStringView<_Char>& v) { w.Write(v); return w; }
-
-    // need those for complete support of integral types and remove ambiguous calls :
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, long v) { w.Write(checked_cast<i32>(v)); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, unsigned long v) { w.Write(checked_cast<u32>(v)); return w; }
-
-    template <size_t _Dim>
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, const _Char(&v)[_Dim]) { w.Write(MakeStringView(v)); return w; }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, _Char v) { w.Write(TBasicStringView<_Char>(&v, 1)); return w; }
-
     using FManipulator = TBasicTextManipulator<_Char>;
     inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, const FManipulator& f) { return f(w); }
     inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, TBasicTextWriter& (*f)(TBasicTextWriter&)) { return f(w); }
@@ -306,17 +283,58 @@ extern PPE_CORE_API template class TBasicTextWriter<wchar_t>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-TBasicTextWriter<char>& Crlf(TBasicTextWriter<char>& s);
-TBasicTextWriter<wchar_t>& Crlf(TBasicTextWriter<wchar_t>& s);
-//----------------------------------------------------------------------------
-TBasicTextWriter<char>& Eol(TBasicTextWriter<char>& s);
-TBasicTextWriter<wchar_t>& Eol(TBasicTextWriter<wchar_t>& s);
-//----------------------------------------------------------------------------
-TBasicTextWriter<char>& Eos(TBasicTextWriter<char>& s);
-TBasicTextWriter<wchar_t>& Eos(TBasicTextWriter<wchar_t>& s);
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, bool v) { w.Write(v); return w; }
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicTextWriter<_Char>& Endl(TBasicTextWriter<_Char>& s);
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, i8 v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, i16 v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, i32 v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, i64 v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, u8 v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, u16 v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, u32 v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, u64 v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, float v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, double v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const void* v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const TBasicStringView<_Char>& v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, long v) { w.Write(checked_cast<i32>(v)); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, unsigned long v) { w.Write(checked_cast<u32>(v)); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char, size_t _Dim>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const _Char(&v)[_Dim]) { w.Write(MakeStringView(v)); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, _Char v) { w.Write(TBasicStringView<_Char>(&v, 1)); return w; }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& s, const FTextFormat& v);

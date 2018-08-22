@@ -4,6 +4,7 @@
 
 #include "Typedefs.h"
 #include "MetaClass.h"
+#include "MetaClassHelpers.h"
 
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryDomain.h"
@@ -129,6 +130,56 @@ public: // override global delete operator
     static void operator delete(void* p) { tracking_free(p); }
 #endif
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T>
+T* Cast(FMetaObject* p) {
+    Assert(p);
+    const FMetaClass* const metaClass = MetaClass<T>();
+    Assert(metaClass);
+    return (p->RTTI_CastTo(*metaClass) ? checked_cast<T*>(p) : nullptr);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+const T* Cast(const FMetaObject* p) {
+    Assert(p);
+    const FMetaClass* const metaClass = MetaClass<T>();
+    Assert(metaClass);
+    return (p->RTTI_CastTo(*metaClass) ? checked_cast<const T*>(p) : nullptr);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+T* CastChecked(FMetaObject* p) {
+#ifdef WITH_PPE_ASSERT_RELEASE
+    T* const result = Cast<T>(p);
+    AssertRelease(result);
+    return result;
+#else
+    return reinterpret_cast<T*>(p);
+#endif
+}
+//----------------------------------------------------------------------------
+template <typename T>
+const T* CastChecked(const FMetaObject* p) {
+#ifdef WITH_PPE_ASSERT_RELEASE
+    const T* const result = Cast<T>(p);
+    AssertRelease(result);
+    return result;
+#else
+    return reinterpret_cast<const T*>(p);
+#endif
+}
+//----------------------------------------------------------------------------
+template <typename T>
+auto Cast(const PMetaObject& p) {
+    return Cast<T>(p.get());
+}
+//----------------------------------------------------------------------------
+template <typename T>
+auto CastChecked(const PMetaObject& p) {
+    return Cast<T>(p.get());
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

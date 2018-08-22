@@ -624,6 +624,7 @@ bool operator!=(const TVector<T, _Allocator>& lhs, const TVector<T, _Allocator>&
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 bool operator< (const TVector<T, _Allocator>& lhs, const TVector<T, _Allocator>& rhs) {
+    using size_type = typename TVector<T, _Allocator>::size_type;
     const size_type k = std::min(lhs.size(), rhs.size());
     const T* plhs = lhs.data();
     const T* prhs = rhs.data();
@@ -640,6 +641,7 @@ bool operator>=(const TVector<T, _Allocator>& lhs, const TVector<T, _Allocator>&
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 bool operator> (const TVector<T, _Allocator>& lhs, const TVector<T, _Allocator>& rhs) {
+    using size_type = typename TVector<T, _Allocator>::size_type;
     const size_type k = std::min(lhs.size(), rhs.size());
     const T* plhs = lhs.data();
     const T* prhs = rhs.data();

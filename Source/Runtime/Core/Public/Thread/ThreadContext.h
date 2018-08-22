@@ -86,8 +86,10 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, std::thread::id thread_id);
-//----------------------------------------------------------------------------
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, std::thread::id thread_id);
+//----------------------------------------------------------------------------
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, EThreadPriority thread_id);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, EThreadPriority thread_id);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

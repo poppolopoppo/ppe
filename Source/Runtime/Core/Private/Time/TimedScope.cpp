@@ -5,6 +5,7 @@
 #if USE_PPE_BENCHMARK
 #   include "Diagnostic/Logger.h"
 #   include "IO/FormatHelpers.h"
+#   include "IO/TextWriter.h"
 #   include "Maths/Units.h"
 
 namespace PPE {

@@ -6,6 +6,7 @@
 #include "Container/HashSet.h"
 #include "HAL/PlatformMemory.h"
 #include "IO/StringView.h"
+#include "IO/TextWriter_fwd.h"
 
 #define USE_PPE_SERIALIZE_TEXTHEAP_SSO (not USE_PPE_MEMORY_DEBUGGING)
 

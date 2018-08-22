@@ -4,6 +4,7 @@
 
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
+#include "Memory/MemoryView.h"
 
 /*
 // Format() usage samples :

@@ -121,7 +121,7 @@ bool TMemoryView<T>::StartsWith(const TMemoryView<T>& prefix) const {
         return false;
 
     const auto slice = FirstNElements(prefix.size());
-    return std::equal(slice.begin(), slice.end(), suffix.begin());
+    return std::equal(slice.begin(), slice.end(), prefix.begin());
 }
 //----------------------------------------------------------------------------
 template <typename T>

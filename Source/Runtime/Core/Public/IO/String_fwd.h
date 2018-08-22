@@ -6,6 +6,14 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _Char>
+class TBasicString;
+//----------------------------------------------------------------------------
+using FString = TBasicString<char>;
+using FWString = TBasicString<wchar_t>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T>
 class TMemoryView;
 //----------------------------------------------------------------------------
@@ -15,13 +23,21 @@ class TBasicStringView;
 using FStringView = TBasicStringView<char>;
 using FWStringView = TBasicStringView<wchar_t>;
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+template <typename _Char>
+TBasicStringView<_Char> MakeCStringView(const _Char* cstr);
 //----------------------------------------------------------------------------
 template <typename _Char>
-class TBasicString;
-//----------------------------------------------------------------------------
-using FString = TBasicString<char>;
-using FWString = TBasicString<wchar_t>;
+TBasicStringView<_Char> MakeStringView(const TBasicString<_Char>& str);
+template <size_t _Dim>
+FStringView MakeStringView(const char(&cstr)[_Dim]);
+template <size_t _Dim>
+FWStringView MakeStringView(const wchar_t(&cstr)[_Dim]);
+FStringView MakeStringView(const TMemoryView<const char>& view);
+FWStringView MakeStringView(const TMemoryView<const wchar_t>& view);
+FStringView MakeStringView(const TMemoryView<char>& view);
+FWStringView MakeStringView(const TMemoryView<wchar_t>& view);
+const FStringView& MakeStringView(const FStringView& view);
+const FWStringView& MakeStringView(const FWStringView& view);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

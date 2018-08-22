@@ -53,10 +53,10 @@ private:
     typedef u32 size_type;
 #endif
 
-    typename std::aligned_storage<_SizeInBytes, ALLOCATION_BOUNDARY>::type _insituData;
-
     size_type _insituCount;
     size_type _insituOffset;
+
+    typename std::aligned_storage<_SizeInBytes>::type _insituData;
 };
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
@@ -120,6 +120,7 @@ void* TInSituStorage<_SizeInBytes>::ReallocateIFP(void* ptr, size_t newSizeInByt
     // Try realloc in-place ONLY IF ITS THE LAST BLOCK ALLOCATED
     if (offset + oldSizeInBytes == _insituOffset && offset + newSizeInBytes <= _SizeInBytes) {
         _insituOffset = checked_cast<size_type>(offset + newSizeInBytes);
+
         return ptr;
     }
     // Need to allocate externally and free this block afterwards

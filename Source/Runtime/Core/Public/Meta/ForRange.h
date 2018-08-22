@@ -68,15 +68,15 @@ namespace Meta {
  *
  * Example usage1:
  *     #define FWD_DECLARE_CLASS(cls) class cls;
- *     CALL_MACRO_X_FOR_EACH(FWD_DECLARE_CLASS, Foo, Bar)
+ *     PP_FOREACH(FWD_DECLARE_CLASS, Foo, Bar)
  *
  * Example usage 2:
  *     #define START_NS(ns) namespace ns {
  *     #define END_NS(ns) }
  *     #define MY_NAMESPACES System, Net, Http
- *     CALL_MACRO_X_FOR_EACH(START_NS, MY_NAMESPACES)
+ *     PP_FOREACH(START_NS, MY_NAMESPACES)
  *     typedef foo int;
- *     CALL_MACRO_X_FOR_EACH(END_NS, MY_NAMESPACES)
+ *     PP_FOREACH(END_NS, MY_NAMESPACES)
  */
 #define PP_FOREACH(x, ...) \
     EXPAND( _GET_NTH_ARG("ignored", ##__VA_ARGS__, \

@@ -44,56 +44,6 @@ PPE_RTTI_API u128 Fingerprint128(const FMetaObject& obj);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-T* Cast(FMetaObject* p) {
-    Assert(p);
-    const FMetaClass* const metaClass = MetaClass<T>();
-    Assert(metaClass);
-    return (p->RTTI_CastTo(*metaClass) ? checked_cast<T*>(p) : nullptr);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-const T* Cast(const FMetaObject* p) {
-    Assert(p);
-    const FMetaClass* const metaClass = MetaClass<T>();
-    Assert(metaClass);
-    return (p->RTTI_CastTo(*metaClass) ? checked_cast<const T*>(p) : nullptr);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-T* CastChecked(FMetaObject* p) {
-#ifdef WITH_PPE_ASSERT_RELEASE
-    T* const result = Cast<T>(p);
-    AssertRelease(result);
-    return result;
-#else
-    return reinterpret_cast<T*>(p);
-#endif
-}
-//----------------------------------------------------------------------------
-template <typename T>
-const T* CastChecked(const FMetaObject* p) {
-#ifdef WITH_PPE_ASSERT_RELEASE
-    const T* const result = Cast<T>(p);
-    AssertRelease(result);
-    return result;
-#else
-    return reinterpret_cast<const T*>(p);
-#endif
-}
-//----------------------------------------------------------------------------
-template <typename T>
-auto Cast(const PMetaObject& p) {
-    return Cast<T>(p.get());
-}
-//----------------------------------------------------------------------------
-template <typename T>
-auto CastChecked(const PMetaObject& p) {
-    return Cast<T>(p.get());
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 using FReferencedObjects = VECTORINSITU(MetaObject, FMetaObject*, 8);
 PPE_RTTI_API void CollectReferencedObjects(
     const FMetaObject& root,

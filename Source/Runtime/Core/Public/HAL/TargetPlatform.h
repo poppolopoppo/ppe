@@ -12,7 +12,11 @@
 #define PPE_HAL_MAKEALIAS(_BASENAME) \
     namespace PPE { \
         using CONCAT(F, _BASENAME) = CONCAT3(F, TARGET_PLATFORM, _BASENAME); \
-    } //!namespace PPE
+    }
+#define PPE_HAL_MAKEALIAS_NAMESPACE(_NAMESPACE, _BASENAME) \
+    namespace PPE { namespace _NAMESPACE { \
+        using CONCAT(F, _BASENAME) = CONCAT3(F, TARGET_PLATFORM, _BASENAME); \
+    } }
 
 namespace PPE {
 EXTERN_LOG_CATEGORY(PPE_CORE_API, HAL)
