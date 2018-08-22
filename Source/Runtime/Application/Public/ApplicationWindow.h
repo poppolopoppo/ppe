@@ -3,74 +3,37 @@
 #include "Application.h"
 
 #include "ApplicationBase.h"
-#include "Input/GamepadState.h"
-#include "Input/KeyboardState.h"
-#include "Input/MouseState.h"
-
-#include "Window/BasicWindow.h"
+#include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
-#include "Meta/Delegate.h"
-#include "Meta/Event.h"
 
 namespace PPE {
 namespace Application {
-class FGamepadInputHandler;
-class FKeyboardInputHandler;
-class FMouseInputHandler;
+FWD_REFPTR(WindowBase);
+FWD_INTEFARCE_UNIQUEPTR(InputService);
+FWD_INTEFARCE_UNIQUEPTR(WindowService);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FApplicationWindow :
-    public FApplicationBase
-,   protected Graphics::FBasicWindow
-{
+class FApplicationWindow : public FApplicationBase {
 public:
-    FApplicationWindow(  const wchar_t *appname,
-                        int left, int top,
-                        size_t width, size_t height );
+    explicit FApplicationWindow(FWString&& name);
+    FApplicationWindow(FWString&& name, size_t width, size_t height);
+    FApplicationWindow(FWString&& name, int left, int top, size_t width, size_t height);
     virtual ~FApplicationWindow();
 
-    FGamepadInputHandler& Gamepad() { return *_gamepad; }
-    FKeyboardInputHandler& Keyboard() { return *_keyboard; }
-    FMouseInputHandler& Mouse() { return *_mouse; }
-
-    const FGamepadInputHandler& Gamepad() const { return *_gamepad; }
-    const FKeyboardInputHandler& Keyboard() const { return *_keyboard; }
-    const FMouseInputHandler& Mouse() const { return *_mouse; }
-
-    const Graphics::FBasicWindow& Window() const { return *this; }
+    FWindowBase& Main() const { return *_main; }
+    IInputService& Input() const { return *_input; }
+    IWindowService& Window() const { return *_window; }
 
     virtual void Start() override;
+    virtual void PumpMessages() override;
+    virtual void Tick(FTimespan dt) override;
     virtual void Shutdown() override;
 
-    PUBLIC_EVENT(OnGamepadButtonUp,        void, FApplicationWindow* app, const FGamepadState& gamepad, size_t index);
-    PUBLIC_EVENT(OnGamepadButtonPressed,void, FApplicationWindow* app, const FGamepadState& gamepad, size_t index);
-    PUBLIC_EVENT(OnGamepadButtonDown,    void, FApplicationWindow* app, const FGamepadState& gamepad, size_t index);
-    PUBLIC_EVENT(OnGamepadLeftStick,    void, FApplicationWindow* app, const FGamepadState& gamepad, size_t index);
-    PUBLIC_EVENT(OnGamepadRightStick,    void, FApplicationWindow* app, const FGamepadState& gamepad, size_t index);
-    PUBLIC_EVENT(OnGamepadLeftTrigger,    void, FApplicationWindow* app, const FGamepadState& gamepad, size_t index);
-    PUBLIC_EVENT(OnGamepadRightTrigger,    void, FApplicationWindow* app, const FGamepadState& gamepad, size_t index);
-    PUBLIC_EVENT(OnGamepadConnect,        void, FApplicationWindow* app, const FGamepadState& gamepad, size_t index);
-    PUBLIC_EVENT(OnGamepadDisconnect,    void, FApplicationWindow* app, const FGamepadState& gamepad, size_t index);
-
-    PUBLIC_EVENT(OnKeyboardKeyUp,        void, FApplicationWindow* app, const FKeyboardState& keyboard);
-    PUBLIC_EVENT(OnKeyboardKeyPressed,    void, FApplicationWindow* app, const FKeyboardState& keyboard);
-    PUBLIC_EVENT(OnKeyboardKeyDown,        void, FApplicationWindow* app, const FKeyboardState& keyboard);
-
-    PUBLIC_EVENT(OnMouseButtonUp,        void, FApplicationWindow* app, const FMouseState& mouse);
-    PUBLIC_EVENT(OnMouseButtonPressed,    void, FApplicationWindow* app, const FMouseState& mouse);
-    PUBLIC_EVENT(OnMouseButtonDown,        void, FApplicationWindow* app, const FMouseState& mouse);
-    PUBLIC_EVENT(OnMouseMove,            void, FApplicationWindow* app, const FMouseState& mouse);
-    PUBLIC_EVENT(OnMouseEnter,            void, FApplicationWindow* app, const FMouseState& mouse);
-    PUBLIC_EVENT(OnMouseLeave,            void, FApplicationWindow* app, const FMouseState& mouse);
-
-protected:
-    virtual void Update_AfterDispatch() override;
-
 private:
-    TUniquePtr<FGamepadInputHandler> _gamepad;
-    TUniquePtr<FKeyboardInputHandler> _keyboard;
-    TUniquePtr<FMouseInputHandler> _mouse;
+    PWindowBase _main;
+    UInputService _input;
+    UWindowService _window;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

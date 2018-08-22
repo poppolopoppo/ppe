@@ -3,15 +3,17 @@
 #include "Application_fwd.h"
 
 namespace PPE {
+class FEventHandle;
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_APPLICATION_API FGenericPlatformKeyboard {
+struct PPE_APPLICATION_API FGenericPlatformKeyboard {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasKeyboard, false);
 
-    static bool Poll(FGenericWindow& window, FKeyboardState* keyboard) = delete;
+    static FEventHandle SetupMessageHandler(FGenericWindow& window, FKeyboardState* keyboard) = delete;
+    static void RemoveMessageHandler(FGenericWindow& window, FEventHandle& handle) = delete;
 
 };
 //----------------------------------------------------------------------------

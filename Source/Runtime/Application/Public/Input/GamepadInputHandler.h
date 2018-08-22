@@ -2,37 +2,37 @@
 
 #include "Application.h"
 
+#include "Container/Vector.h"
 #include "Input/GamepadState.h"
-
-#include "Window/WindowMessageHandler.h"
+#include "Time/Timepoint.h"
 
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FGamepadInputHandler :
-    public Graphics::IWindowMessageHandler
-,   public IInputStateProvider<FMultiGamepadState> {
+class FGamepadInputHandler {
 public:
+    using FMultiGamepadState = VECTOR(Input, FGamepadState);
+
     FGamepadInputHandler();
     virtual ~FGamepadInputHandler();
 
     FGamepadInputHandler(const FGamepadInputHandler& ) = delete;
     FGamepadInputHandler& operator =(const FGamepadInputHandler& ) = delete;
 
-    virtual const FMultiGamepadState& State() const override final;
+    const FGamepadState* FirstConnectedIFP() const;
+    const FGamepadState& State(size_t index) const;
+    const FMultiGamepadState& States() const { return _states; }
 
-    virtual void RegisterMessageDelegates(Graphics::FBasicWindow *wnd) override final;
-    virtual void UnregisterMessageDelegates(Graphics::FBasicWindow *wnd) override final;
-
-    virtual void UpdateBeforeDispatch(Graphics::FBasicWindow *wnd) override final;
-    virtual void UpdateAfterDispatch(Graphics::FBasicWindow *wnd) override final;
-
+    void Poll();
+    void Update(FTimespan dt);
     void Rumble(size_t index, float left, float right);
+    void Clear();
 
 private:
-    FMultiGamepadState _state;
+    FMultiGamepadState _states;
+    size_t _firstConnected;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -3,13 +3,12 @@
 #include "Application.h"
 
 #ifndef PLATFORM_WINDOWS
-#   error "invalid include !"
+#   error "invalid include for current platform"
 #endif
 
 #include "Meta/Singleton.h"
 #include "Meta/ThreadResource.h"
-#include "Misc/DLLWrapper.h"
-#include "Misc/Platform_Windows.h"
+#include "Misc/DynamicLibrary.h"
 
 #include <mutex>
 #include <XInput.h>
@@ -45,9 +44,9 @@ public:
 
         bool Available() const { return _owner->Available(); }
 
-        FXInputGetState XInputGetState() const { return _owner->_XInputGetState; }
-        FXInputSetState XInputSetState() const { return _owner->_XInputSetState; }
-        FXInputGetCapabilities XInputGetCapabilities() const { return _owner->_XInputGetCapabilities; }
+        FXInputGetState GetState() const { return _owner->_XInputGetState; }
+        FXInputSetState SetState() const { return _owner->_XInputSetState; }
+        FXInputGetCapabilities GetCapabilities() const { return _owner->_XInputGetCapabilities; }
 
     private:
         const FXInputWrapper* const _owner;
@@ -74,7 +73,7 @@ private:
 
     mutable std::mutex _barrier;
 
-    FDLLWrapper _XInputDLL;
+    FDynamicLibrary _XInputDLL;
 
     FXInputGetState _XInputGetState;
     FXInputSetState _XInputSetState;

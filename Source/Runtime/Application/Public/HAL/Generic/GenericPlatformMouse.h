@@ -3,6 +3,7 @@
 #include "Application_fwd.h"
 
 namespace PPE {
+class FEventHandle;
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -11,49 +12,48 @@ enum class EGenericCursorType {
     AppStarting,
     Arrow,
     Cross,
-    Default,
     Hand,
     Help,
-    HSplit,
     IBeam,
+    Move,
     No,
-    NoMove2D,
-    NoMoveHoriz,
-    NoMoveVert,
-    PanEast,
-    PanNE,
-    PanNorth,
-    PanNW,
-    PanSE,
-    PanSouth,
-    PanSW,
-    PanWest,
+    Pen,
     SizeAll,
-    SizeNESW,
-    SizeNS,
-    SizeNWSE,
-    SizeWE,
-    UpArrow,
-    VSplit,
+    SizeTop,
+    SizeTopLeft,
+    SizeTopRight,
+    SizeBottom,
+    SizeBottomLeft,
+    SizeBottomRight,
+    SizeLeft,
+    SizeRight,
     WaitCursor,
+    Default = Arrow,
 };
 //----------------------------------------------------------------------------
-class PPE_APPLICATION_API FGenericPlatformMouse {
+struct PPE_APPLICATION_API FGenericPlatformMouse {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasKeyboard, false);
 
     using ECursorType = EGenericCursorType;
 
     static ECursorType CursorType() = delete;
-    static void SetCursorType(ECursorType type) = delete;
+    static ECursorType SetCursorType(ECursorType type) = delete;
+    static void ResetCursorType() = delete;
 
     static bool Visible() = delete;
-    static void SetVisible(bool value) = delete;
+    static bool SetVisible(bool value) = delete;
 
     static void ResetCapture() = delete;
-    static void SetCapture(FGenericWindow& window) = delete;
+    static void SetCapture(const FGenericWindow& window) = delete;
 
-    static bool Poll(FGenericWindow& window, FMouseState* mouse) = delete;
+    static bool ClientToScreen(const FGenericWindow& window, int* x, int *y) = delete;
+    static bool ScreenToClient(const FGenericWindow& window, int* x, int *y) = delete;
+
+    static void CenterCursorOnScreen(const FGenericWindow& window) = delete;
+
+    static FEventHandle SetupMessageHandler(FGenericWindow& window, FMouseState* mouse) = delete;
+    static void RemoveMessageHandler(FGenericWindow& window, FEventHandle& handle) = delete;
 
 };
 //----------------------------------------------------------------------------

@@ -4,14 +4,10 @@
 
 #include "ApplicationBase.h"
 
-#if PPE_APPLICATION_GRAPHICS && defined(PLATFORM_WINDOWS)
-#   include "Input/XInputWrapper.h"
-#   define WITH_APPLICATION_XINPUT
-#endif
-
 #include "Allocator/PoolAllocatorTag-impl.h"
 #include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"
+#include "HAL/PlatformApplicationMisc.h"
 #include "HAL/PlatformCrash.h"
 #include "HAL/PlatformMisc.h"
 #include "HAL/PlatformProcess.h"
@@ -21,13 +17,6 @@
 #   include "IO/StreamProvider.h"
 #   include "IO/StringView.h"
 #   include "IO/TextWriter.h"
-#endif
-
-#include <clocale>
-#include <locale.h>
-
-#ifdef PLATFORM_WINDOWS
-#   include <mbctype.h>
 #endif
 
 #define USE_APPLICATION_EXCEPTION_TRAP 1 //%_NOCOMMIT%
@@ -68,17 +57,13 @@ void FApplicationModule::Start() {
 
     POOL_TAG(Application)::Start();
 
-#ifdef WITH_APPLICATION_XINPUT
-    FXInputWrapper::Create();
-#endif
+    FPlatformApplicationMisc::Start();
 }
 //----------------------------------------------------------------------------
 void FApplicationModule::Shutdown() {
     PPE_MODULE_SHUTDOWN(Application);
 
-#ifdef WITH_APPLICATION_XINPUT
-    FXInputWrapper::Destroy();
-#endif
+    FPlatformApplicationMisc::Shutdown();
 
     POOL_TAG(Application)::Shutdown();
 }
@@ -123,6 +108,7 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
         PPE_CATCH_BLOCK({
             UNUSED(e);
             LOG(Application, Fatal, L"exception caught while starting : {0}", MakeCStringView(e.what()));
+            FCurrentProcess::Get().SetExitCode(3);
         })
 #endif
 
@@ -137,6 +123,7 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
         PPE_CATCH_BLOCK({
             UNUSED(e);
             LOG(Application, Fatal, L"exception caught while shutting down : {0}", MakeCStringView(e.what()));
+            FCurrentProcess::Get().SetExitCode(3);
         })
 #endif
     }

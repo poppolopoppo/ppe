@@ -2,6 +2,7 @@
 
 #include "Application.h"
 
+#include "Container/FlatSet.h"
 #include "Memory/MemoryView.h"
 
 namespace PPE {
@@ -14,57 +15,77 @@ class TInputState {
 public:
     STATIC_ASSERT(std::is_enum<T>::value);
 
-    typedef T value_type;
-    enum : size_t { Capacity = _Capacity };
+    TInputState() = default;
 
-    TInputState();
-    ~TInputState();
+    TInputState(const TInputState& other) = default;
+    TInputState& operator =(const TInputState& other) = default;
 
-    TInputState(const TInputState& other);
-    TInputState& operator =(const TInputState& other);
+    TInputState(TInputState&& rvalue) = default;
+    TInputState& operator =(TInputState&& rvalue) = default;
 
-    size_t size() const { return _size; }
-    bool empty() const { return (0 == _size); }
+    size_t size() const { return _events.size(); }
+    bool empty() const { return _events.empty(); }
 
-    bool Contains(const T value) const;
+    bool Contains(const T value) const {
+        return (_events.end() != _events.find(value));
+    }
 
-    bool Add_KeepExisting(T value);
-    void Add_AssertUnique(T value);
+    bool Add_KeepExisting(T value) {
+        bool added;
+        _events.FindOrAdd(value, &added);
+        return added;
+    }
 
-    bool Remove_ReturnIfExists(T value);
-    void Remove_AssertExists(T value);
+    void Add_AssertUnique(T value) {
+        _events.Insert_AssertUnique(value);
+    }
 
-    void Clear();
+    bool Remove_ReturnIfExists(T value) {
+        return _events.Erase(value);
+    }
 
-    TMemoryView<const T> MakeView() const;
+    void Remove_AssertExists(T value) {
+        _events.Remove_AssertExists(value);
+    }
 
-    /*static void Intersect(
-        TInputState& up,
-        TInputState& down,
-        const TInputState& current,
-        const TInputState& previous );*/
+    void Clear() {
+        _events.clear();
+    }
+
+    TMemoryView<const T> MakeView() const {
+        _events.MakeView();
+    }
+
+    bool Update(
+        TInputState* up,
+        TInputState* down,
+        const TInputState& pressed ) {
+        Assert(up);
+        Assert(down);
+
+        up->Clear();
+        down->Clear();
+
+        for (auto e : pressed._events) {
+            if (not Contains(e))
+                down->Add_AssertUnique(e);
+        }
+
+        for (auto e : _events) {
+            if (not pressed.Contains(e))
+                up->Add_AssertUnique(e);
+        }
+
+        _events = pressed._events;
+
+        return (not (up->empty() && down->empty()));
+    }
 
 private:
-    u32 _size;
-    T _events[_Capacity];
+    FLATSET_INSITU(Input, T, _Capacity) _events;
 };
-//----------------------------------------------------------------------------
-template <typename _State>
-class IInputStateProvider {
-public:
-    virtual ~IInputStateProvider() {}
-    virtual const _State& State() const = 0;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-typedef TInputState<EGamepadButton,  8> FGamepadButtonState;
-typedef TInputState<EKeyboardKey,    8> FKeyboardKeyState;
-typedef TInputState<EMouseButton,    8> FMouseButtonState;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Application
 } //!namespace PPE
-
-#include "Input/InputState-inl.h"

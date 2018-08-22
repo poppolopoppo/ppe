@@ -2,11 +2,10 @@
 
 #include "Application.h"
 
+#include "Input/FilteredAnalog.h"
 #include "Input/InputState.h"
 #include "Input/MouseButton.h"
-
-#include "Maths/MathHelpers.h"
-#include "Meta/Optional.h"
+#include "Maths/ScalarVector_fwd.h"
 
 namespace PPE {
 namespace Application {
@@ -15,53 +14,56 @@ namespace Application {
 //----------------------------------------------------------------------------
 class FMouseState {
 public:
-    friend class FMouseInputHandler;
-
-    class FSmoothAxis {
-    public:
-        static constexpr float DefaultSmoothing = 0.7f;
-        FSmoothAxis() : _raw(0), _smoothing(DefaultSmoothing) {}
-        float Raw() const { return _raw; }
-        float Smoothed() const { return (_smoothed.has_value() ? *_smoothed : _raw); }
-        float Smoothing() const { return _smoothing; }
-        void SetSmoothing(float f) { _smoothing = Max(0.1f, Min(f, 1.f)); }
-        void Clear() { _raw = 0; _smoothed.reset(); }
-        void Set(float raw) { _raw = raw; }
-        void Update() { _smoothed = Lerp(Smoothed(), _raw, _smoothing); }
-    private:
-        float _raw;
-        Meta::TOptional<float> _smoothed;
-        float _smoothing;
-    };
+    using FButtonState = TInputState<EMouseButton, 6>;
 
     FMouseState() { Clear(); }
+
+    int2 Screen() const;
+
+    int ScreenX() const { return _screenX; }
+    int ScreenY() const { return _screenY; }
+
+    int2 Client() const;
 
     int ClientX() const { return _clientX; }
     int ClientY() const { return _clientY; }
 
+    float2 Relative() const;
+    float2 RelativeRaw() const;
+    float2 RelativeFiltered() const;
+
+    const FFilteredAnalog& RelativeX() const { return _relativeX; }
+    const FFilteredAnalog& RelativeY() const { return _relativeY; }
+
     int DeltaClientX() const { return _deltaClientX; }
     int DeltaClientY() const { return _deltaClientY; }
 
-    float RelativeX() const { return _relativeX.Raw(); }
-    float RelativeY() const { return _relativeY.Raw(); }
+    int2 DeltaClient() const;
 
-    float DeltaRelativeX() const { return _deltaRelativeX; }
-    float DeltaRelativeY() const { return _deltaRelativeY; }
+    float DeltaRelativeX() const { return _deltaRelativeFilteredX; }
+    float DeltaRelativeY() const { return _deltaRelativeFilteredY; }
 
-    float SmoothRelativeX() const { return _relativeX.Smoothed(); }
-    float SmoothRelativeY() const { return _relativeY.Smoothed(); }
+    float DeltaRelativeRawX() const { return _deltaRelativeRawX; }
+    float DeltaRelativeRawY() const { return _deltaRelativeRawY; }
 
-    float SmoothDeltaRelativeX() const { return _deltaRelativeX; }
-    float SmoothDeltaRelativeY() const { return _deltaRelativeY; }
+    float DeltaRelativeFilteredX() const { return _deltaRelativeFilteredX; }
+    float DeltaRelativeFilteredY() const { return _deltaRelativeFilteredY; }
+
+    float2 DeltaRelative() const;
+    float2 DeltaRelativeRaw() const;
+    float2 DeltaRelativeFiltered() const;
 
     bool HasMoved() const { return (_deltaClientX || _deltaClientY); }
 
+    const FFilteredAnalog& WheelDelta() const { return _wheelDeta; }
+
+    bool Inside() const { return _inside; }
     bool OnEnter() const { return _onEnter; }
     bool OnLeave() const { return _onLeave; }
 
-    const FMouseButtonState& ButtonsDown() const { return _buttonsDown; }
-    const FMouseButtonState& ButtonsPressed() const { return _buttonsPressed; }
-    const FMouseButtonState& ButtonsUp() const { return _buttonsUp; }
+    const FButtonState& ButtonsDown() const { return _buttonsDown; }
+    const FButtonState& ButtonsPressed() const { return _buttonsPressed; }
+    const FButtonState& ButtonsUp() const { return _buttonsUp; }
 
     bool IsButtonDown(EMouseButton button) const { return _buttonsDown.Contains(button); }
     bool IsButtonPressed(EMouseButton button) const { return _buttonsPressed.Contains(button); }
@@ -71,39 +73,42 @@ public:
     bool HasButtonPressed() const { return (not _buttonsPressed.empty()); }
     bool HasButtonUp() const { return (not _buttonsUp.empty()); }
 
-    void Clear() {
-        _clientX = _clientY = 0;
-        _relativeX.Clear();
-        _relativeY.Clear();
-        _prevSmoothRelativeX.reset();
-        _prevSmoothRelativeY.reset();
-        _deltaClientX = _deltaClientX = 0;
-        _deltaRelativeX = _deltaRelativeY = 0;
-        _smoothDeltaRelativeX = _smoothDeltaRelativeY = 0;
-        _onEnter = _onLeave = false;
-        _buttonsDown.Clear();
-        _buttonsPressed.Clear();
-        _buttonsUp.Clear();
-    }
+    void SetInside(bool inside);
+    void SetPosition(int screenX, int screenY, int clientX, int clientY, float relativeX, float relativeY);
+    void SetButtonDown(EMouseButton btn);
+    void SetButtonUp(EMouseButton btn);
+    void SetWheelDelta(int delta);
+
+    void Update(float dt);
+    void Clear();
 
 private:
+    bool _inside    : 1;
+    bool _wasInside : 1;
+
+    bool _onEnter   : 1;
+    bool _onLeave   : 1;
+
+    FFilteredAnalog _wheelDeta;
+    int _wheelDetaAccum;
+
+    int _screenX, _screenY;
     int _clientX, _clientY;
-    FSmoothAxis _relativeX, _relativeY;
-    Meta::TOptional<float> _prevSmoothRelativeX, _prevSmoothRelativeY;
+    FFilteredAnalog _relativeX, _relativeY;
+
+    int _prevClientX, _prevClientY;
+    float _prevRelativeRawX, _prevRelativeRawY;
+    float _prevRelativeFilteredX, _prevRelativeFilteredY;
 
     int _deltaClientX, _deltaClientY;
-    float _deltaRelativeX, _deltaRelativeY;
-    float _smoothDeltaRelativeX, _smoothDeltaRelativeY;
+    float _deltaRelativeRawX, _deltaRelativeRawY;
+    float _deltaRelativeFilteredX, _deltaRelativeFilteredY;
 
-    bool _onEnter;
-    bool _onLeave;
-
-    FMouseButtonState _buttonsDown;
-    FMouseButtonState _buttonsPressed;
-    FMouseButtonState _buttonsUp;
+    FButtonState _buttonsDown;
+    FButtonState _buttonsPressed;
+    FButtonState _buttonsUp;
+    FButtonState _buttonsQueued;
 };
-//----------------------------------------------------------------------------
-typedef IInputStateProvider<FMouseState> IMouseService;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

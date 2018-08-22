@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "GamePadButton.h"
+#include "Input/GamepadButton.h"
 
 namespace PPE {
 namespace Application {
@@ -31,8 +31,7 @@ static constexpr EGamepadButton GEachGamepadButtons[] = {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FStringView GamepadButtonToCStr(EGamepadButton value) {
-    switch (value)
-    {
+    switch (value) {
     case PPE::Application::EGamepadButton::Button0:
         return MakeStringView("Button0");
     case PPE::Application::EGamepadButton::Button1:
@@ -61,15 +60,13 @@ FStringView GamepadButtonToCStr(EGamepadButton value) {
         return MakeStringView("DPadRight");
     case PPE::Application::EGamepadButton::DPadDown:
         return MakeStringView("DPadDown");
-    default:
-        AssertNotImplemented();
     }
-    return FStringView();
+
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 FStringView GamepadButtonToXBoxCStr(EGamepadButton value) {
-    switch (value)
-    {
+    switch (value) {
     case PPE::Application::EGamepadButton::A:
         return MakeStringView("A");
     case PPE::Application::EGamepadButton::B:
@@ -98,10 +95,9 @@ FStringView GamepadButtonToXBoxCStr(EGamepadButton value) {
         return MakeStringView("DPadRight");
     case PPE::Application::EGamepadButton::DPadDown:
         return MakeStringView("DPadDown");
-    default:
-        AssertNotImplemented();
     }
-    return FStringView();
+
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 TMemoryView<const EGamepadButton> EachGamepadButtons() {

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "KeyboardKey.h"
+#include "Input/KeyboardKey.h"
 
 namespace PPE {
 namespace Application {
@@ -297,8 +297,8 @@ FStringView KeyboardKeyToCStr(EKeyboardKey value) {
     case PPE::Application::EKeyboardKey::Shift:
         return MakeStringView("Shift");
     }
+
     AssertNotImplemented();
-    return FStringView();
 }
 //----------------------------------------------------------------------------
 TMemoryView<const EKeyboardKey> EachKeyboardKeys() {

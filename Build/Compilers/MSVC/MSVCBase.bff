@@ -54,6 +54,8 @@
 
         "_HAS_EXCEPTIONS=0",            ; Disable STL exceptions
         ;"_STATIC_CPPLIB",               ; http://stackoverflow.com/questions/553103/can-i-disable-exceptions-in-stl
+
+        "OEMRESOURCE",                  ; https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-setsystemcursor
     }
 
     .IncludePaths = {}

@@ -11,7 +11,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 class FApplicationConsole : public FApplicationBase {
 public:
-    FApplicationConsole(const wchar_t *appname);
+    FApplicationConsole(FWString&& name);
     virtual ~FApplicationConsole();
 
     virtual void Start() override;

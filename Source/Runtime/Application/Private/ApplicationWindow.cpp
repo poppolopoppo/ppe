@@ -2,125 +2,89 @@
 
 #include "ApplicationWindow.h"
 
-#include "Input/GamepadInputHandler.h"
-#include "Input/KeyboardInputHandler.h"
-#include "Input/MouseInputHandler.h"
-
-#include "Window/WindowMessage.h"
-
-#include "Diagnostic/Logger.h"
+#include "Service/InputService.h"
+#include "Service/WindowService.h"
+#include "Window/WindowMain.h"
 
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationWindow::FApplicationWindow(
-    const wchar_t *appname,
-    int left, int top,
-    size_t width, size_t height )
-:   FApplicationBase(appname)
-,   FBasicWindow(appname, left, top, width, height)
-{}
+namespace {
 //----------------------------------------------------------------------------
-FApplicationWindow::~FApplicationWindow() {
-    Assert(nullptr == _keyboard);
-    Assert(nullptr == _mouse);
+template <typename... _Args>
+static void CreateApplicationWindow_(
+    UInputService* input,
+    UWindowService* window,
+    PWindowBase* main,
+    const FWString& name,
+    _Args&&... args) {
+
+    IInputService::MakeDefault(input);
+    IWindowService::MakeDefault(window);
+
+    (*window)->CreateMainWindow(main, FWString(name), std::forward<_Args>(args)...);
+    (*input)->SetupWindow(**main);
 }
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FApplicationWindow::FApplicationWindow(FWString&& name)
+:   FApplicationBase(std::move(name)) {
+    CreateApplicationWindow_(&_input, &_window, &_main, Name());
+}
+//----------------------------------------------------------------------------
+FApplicationWindow::FApplicationWindow(FWString&& name, size_t width, size_t height)
+:   FApplicationBase(std::move(name)) {
+    CreateApplicationWindow_(&_input, &_window, &_main, Name(), width, height);
+}
+//----------------------------------------------------------------------------
+FApplicationWindow::FApplicationWindow(FWString&& name, int left, int top, size_t width, size_t height)
+:   FApplicationBase(std::move(name)) {
+    CreateApplicationWindow_(&_input, &_window, &_main, Name(), left, top, width, height);
+}
+//----------------------------------------------------------------------------
+FApplicationWindow::~FApplicationWindow()
+{}
 //----------------------------------------------------------------------------
 void FApplicationWindow::Start() {
     FApplicationBase::Start();
 
-    FBasicWindow::Show();
+    _window->SetMainWindow(_main.get());
 
-    Services().Create<IGamepadService>(_gamepad);
-    RegisterMessageHandler(_gamepad.get());
+    auto& services = Services();
+    services.Register<IInputService>(_input.get());
+    services.Register<IWindowService>(_window.get());
 
-    Services().Create<IKeyboardService>(_keyboard);
-    RegisterMessageHandler(_keyboard.get());
-
-    Services().Create<IMouseService>(_mouse);
-    RegisterMessageHandler(_mouse.get());
+    _main->Show();
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::Shutdown() {
-    FApplicationBase::Shutdown(); // destroys engine services, including this device service
 
-    UnregisterMessageHandler(_mouse.get());
-    Services().Destroy<IMouseService>(_mouse);
+    _main->Close();
 
-    UnregisterMessageHandler(_keyboard.get());
-    Services().Destroy<IKeyboardService>(_keyboard);
+    auto& services = Services();
+    services.Unregister<IWindowService>(_window.get());
+    services.Unregister<IInputService>(_input.get());
 
-    UnregisterMessageHandler(_gamepad.get());
-    Services().Destroy<IGamepadService>(_gamepad);
+    _window->SetMainWindow(nullptr);
 
-    FBasicWindow::Close();
+    FApplicationBase::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FApplicationWindow::Update_AfterDispatch() {
-    Graphics::FBasicWindow::Update_AfterDispatch();
+void FApplicationWindow::PumpMessages() {
+    FApplicationBase::PumpMessages();
 
-    // Gamepad events
-    forrange(i, 0, FMultiGamepadState::MaxConnected) {
-        const FGamepadState& gamepad = _gamepad->State().Gamepads()[i];
+    _input->Poll();
+}
+//----------------------------------------------------------------------------
+void FApplicationWindow::Tick(FTimespan dt) {
+    FApplicationBase::Tick(dt);
 
-        if (gamepad.OnConnect())
-            _OnGamepadConnect.Invoke(this, gamepad, i);
-
-        if (gamepad.HasButtonDown())
-            _OnGamepadButtonUp.Invoke(this, gamepad, i);
-        if (gamepad.HasButtonPressed())
-            _OnGamepadButtonPressed.Invoke(this, gamepad, i);
-        if (gamepad.HasButtonUp())
-            _OnGamepadButtonUp.Invoke(this, gamepad, i);
-        
-        if (gamepad.LeftStickX().Smoothed() != 0 || gamepad.LeftStickY().Smoothed() != 0)
-            _OnGamepadLeftStick.Invoke(this, gamepad, i);
-        if (gamepad.RightStickX().Smoothed() != 0 || gamepad.RightStickY().Smoothed() != 0)
-            _OnGamepadRightStick.Invoke(this, gamepad, i);
-
-        if (gamepad.LeftTrigger().Smoothed() != 0)
-            _OnGamepadLeftTrigger.Invoke(this, gamepad, i);
-        if (gamepad.RightTrigger().Smoothed() != 0)
-            _OnGamepadRightTrigger.Invoke(this, gamepad, i);
-
-        if (gamepad.OnDisconnect())
-            _OnGamepadDisconnect.Invoke(this, gamepad, i);
-    }
-
-    // Keyboard events
-    {
-        const FKeyboardState& keyboard = _keyboard->State();
-
-        if (keyboard.HasKeyDown())
-            _OnKeyboardKeyDown.Invoke(this, keyboard);
-        if (keyboard.HasKeyPressed())
-            _OnKeyboardKeyPressed.Invoke(this, keyboard);
-        if (keyboard.HasKeyUp())
-            _OnKeyboardKeyUp.Invoke(this, keyboard);
-    }
-
-    // Mouse events
-    {
-        const FMouseState& mouse = _mouse->State();
-
-        if (mouse.OnEnter())
-            _OnMouseEnter.Invoke(this, mouse);
-        
-        if (mouse.HasButtonDown())
-            _OnMouseButtonDown.Invoke(this, mouse);
-        if (mouse.HasButtonPressed())
-            _OnMouseButtonPressed.Invoke(this, mouse);
-        if (mouse.HasButtonUp())
-            _OnMouseButtonUp.Invoke(this, mouse);
-        
-        if (mouse.HasMoved())
-            _OnMouseMove.Invoke(this, mouse);
-
-        if (mouse.OnLeave())
-            _OnMouseLeave.Invoke(this, mouse);
-    }
+    _input->Update(dt);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

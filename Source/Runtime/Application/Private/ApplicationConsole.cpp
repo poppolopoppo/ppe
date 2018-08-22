@@ -4,28 +4,24 @@
 
 #include "HAL/PlatformConsole.h"
 
-#include <stdio.h>
-#include <fcntl.h>
-#include <io.h>
-
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationConsole::FApplicationConsole(const wchar_t *appname)
-:   FApplicationBase(appname) {}
+FApplicationConsole::FApplicationConsole(FWString&& name)
+:   FApplicationBase(std::move(name)) {}
 //----------------------------------------------------------------------------
 FApplicationConsole::~FApplicationConsole() {}
 //----------------------------------------------------------------------------
 void FApplicationConsole::Start() {
-    FApplicationBase::Start();
     FPlatformConsole::Open();
+    FApplicationBase::Start();
 }
 //----------------------------------------------------------------------------
 void FApplicationConsole::Shutdown() {
-    FPlatformConsole::Close();
     FApplicationBase::Shutdown();
+    FPlatformConsole::Close();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

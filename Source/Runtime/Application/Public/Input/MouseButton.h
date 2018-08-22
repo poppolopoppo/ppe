@@ -13,9 +13,6 @@ enum class EMouseButton : u8 {
     Button0 = 0,    // Left (assuming left handed)
     Button1,        // Right
     Button2,        // Middle
-
-    Wheel,          // Scroll
-
     Thumb0,         // Previous
     Thumb1          // Next
 };
