@@ -2,6 +2,10 @@
 
 #include "Core.h"
 
+#ifndef PLATFORM_WINDOWS
+#   error "invalid include for current platform"
+#endif
+
 #include "Memory/RefPtr.h"
 #include "Meta/Assert.h"
 #include "Meta/ThreadResource.h"
@@ -93,4 +97,4 @@ void ReleaseComRef_AssertReachZero(TComPtr<T>& p) {
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#include "Memory/ComPtr-inl.h"
+#include "HAL/Windows/ComPtr-inl.h"

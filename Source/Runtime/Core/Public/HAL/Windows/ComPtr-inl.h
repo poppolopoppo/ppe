@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Memory/ComPtr.h"
+#include "HAL/Windows/ComPtr.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
