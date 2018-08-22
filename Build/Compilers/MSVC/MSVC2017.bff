@@ -28,6 +28,8 @@
 #define USE_VISUAL2017_DIAGNOSTIC_IMPROVEMENTS
 ; supprime un warning de dépréciation de std::iterator
 #define USE_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
+; supprime un warning de changement d'ABI depuis 15.8
+#define USE_VISUAL2017_EXTENDED_ALIGNED_STORAGE
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
 #define USE_PRECOMPILED_HEADERS // %_NOCOMMIT%
 ; utilise les .obj plutôt que les .lib comme input du linker (encore nécessaire ?)
@@ -184,6 +186,20 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
 //  You can define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING or _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS to acknowledge that you have received this warning.
     Print( "Silencing C++17 depreciation warning for std::iterator<>" )
     .Defines + '_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING'
+#endif
+#if USE_VISUAL2017_EXTENDED_ALIGNED_STORAGE
+//  You've instantiated std::aligned_storage<Len, Align> with an extended alignment (in other
+//  words, Align > alignof(max_align_t)). Before VS 2017 15.8, the member type would
+//  non-conformingly have an alignment of only alignof(max_align_t). VS 2017 15.8 was fixed to
+//  handle this correctly, but the fix inherently changes layout and breaks binary compatibility
+//  (*only* for uses of aligned_storage with extended alignments).
+//  Please define either
+//  (1) _ENABLE_EXTENDED_ALIGNED_STORAGE to acknowledge that you understand this message and
+//  that you actually want a type with an extended alignment, or
+//  (2) _DISABLE_EXTENDED_ALIGNED_STORAGE to silence this message and get the old non-conformant
+//  behavior.
+    Print( "Using Visual 2017 15.8 extended aligned storage" )
+    .Defines + '_ENABLE_EXTENDED_ALIGNED_STORAGE'
 #endif
 
     .CompilerOptions = ''
