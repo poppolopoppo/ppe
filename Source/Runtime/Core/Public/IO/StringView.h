@@ -77,9 +77,16 @@ public:
 
     template <size_t _Dim>
     TBasicStringView(const _Char (&staticChars)[_Dim])
-        : parent_type(staticChars, _Dim - 1/* assume null terminated string */) {
+    :   parent_type(staticChars, _Dim - 1/* assume null terminated string */) {
         static_assert(_Dim, "invalid string");
         Assert(not staticChars[_Dim - 1]);
+    }
+
+    template <size_t _Dim>
+    TBasicStringView& operator =(const _Char(&staticChars)[_Dim]) {
+        static_assert(_Dim, "invalid string");
+        Assert(not staticChars[_Dim - 1]);
+        return (*this = TBasicStringView(staticChars, _Dim - 1));
     }
 
     template <size_t _Dim>
