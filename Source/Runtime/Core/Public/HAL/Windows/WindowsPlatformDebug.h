@@ -6,6 +6,8 @@
 
 #include "HAL/Windows/WindowsPlatformIncludes.h"
 
+#define PPE_DEBUG_BREAK() ::_CrtDbgBreak() // more comfy to break in current frame
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

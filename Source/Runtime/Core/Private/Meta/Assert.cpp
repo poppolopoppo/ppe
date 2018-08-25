@@ -39,7 +39,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static std::atomic<AssertionHandler> GAssertionHandler = { nullptr };
+static std::atomic<FAssertHandler> GAssertionHandler = { nullptr };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -70,17 +70,13 @@ NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned
 
     bool failure = false;
 
-    AssertionHandler const handler = GAssertionHandler.load();
+    FAssertHandler const handler = GAssertionHandler.load();
 
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
     else if (FPlatformDebug::IsDebuggerPresent()) {
-#ifdef PLATFORM_WINDOWS // breaking in this frame is much quicker for debugging
-        ::DebugBreak();
-#else
-        FPlatformMisc::DebugBreak();
-#endif
+        PPE_DEBUG_BREAK();
     }
     else {
         switch (AssertAbortRetryIgnore_(L"Assert debug failed !", msg, file, line)) {
@@ -105,7 +101,7 @@ NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned
         PPE_THROW_IT(FAssertException("Assert debug failed !", file, line));
 }
 //----------------------------------------------------------------------------
-void SetAssertionHandler(AssertionHandler handler) {
+void SetAssertionHandler(FAssertHandler handler) {
     GAssertionHandler.store(handler);
 }
 //----------------------------------------------------------------------------
@@ -121,7 +117,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static std::atomic<AssertionReleaseHandler> GAssertionReleaseHandler = { nullptr };
+static std::atomic<FAssertReleaseHandler> GAssertionReleaseHandler = { nullptr };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -152,17 +148,13 @@ NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, u
 
     bool failure = true; // AssertRelease() fails by default
 
-    AssertionReleaseHandler const handler = GAssertionReleaseHandler.load();
+    FAssertReleaseHandler const handler = GAssertionReleaseHandler.load();
 
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
     else if (FPlatformDebug::IsDebuggerPresent()) {
-#ifdef PLATFORM_WINDOWS // breaking in this frame is much quicker for debugging
-        ::DebugBreak();
-#else
-        FPlatformMisc::DebugBreak();
-#endif
+        PPE_DEBUG_BREAK();
     }
     else {
         switch (AssertAbortRetryIgnore_(L"Assert release failed !", msg, file, line)) {
@@ -187,7 +179,7 @@ NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, u
         PPE_THROW_IT(FAssertReleaseException("Assert release failed !", file, line));
 }
 //----------------------------------------------------------------------------
-void SetAssertionReleaseHandler(AssertionReleaseHandler handler) {
+void SetAssertionReleaseHandler(FAssertReleaseHandler handler) {
     GAssertionReleaseHandler.store(handler);
 }
 //----------------------------------------------------------------------------

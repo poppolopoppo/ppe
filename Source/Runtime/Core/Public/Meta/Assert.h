@@ -24,7 +24,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef bool (*AssertionHandler)(const wchar_t* msg, const wchar_t *file, unsigned line);
+typedef bool (*FAssertHandler)(const wchar_t* msg, const wchar_t *file, unsigned line);
 //----------------------------------------------------------------------------
 #ifdef WITH_PPE_ASSERT
 //----------------------------------------------------------------------------
@@ -42,7 +42,7 @@ private:
 };
 
 PPE_CORE_API void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
-PPE_CORE_API void SetAssertionHandler(AssertionHandler handler);
+PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 
 #   define AssertMessage(_Expression, _Message) \
     (void)( (!!(_Expression)) || (PPE::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__), 0) )
@@ -55,7 +55,7 @@ PPE_CORE_API void SetAssertionHandler(AssertionHandler handler);
 #else
 //----------------------------------------------------------------------------
 inline void AssertionFailed(const wchar_t *, const wchar_t *, unsigned ) {}
-inline void SetAssertionHandler(AssertionHandler ) {}
+inline void SetAssertionHandler(FAssertHandler ) {}
 
 #   if WITH_PPE_ASSERT_FALLBACK_TO_ASSUME
 #       define AssertMessage(_Expression, _Message) Assume(_Expression)
@@ -81,7 +81,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef bool (*AssertionReleaseHandler)(const wchar_t* msg, const wchar_t* file, unsigned line);
+typedef bool (*FAssertReleaseHandler)(const wchar_t* msg, const wchar_t* file, unsigned line);
 //----------------------------------------------------------------------------
 #ifdef WITH_PPE_ASSERT_RELEASE
 //----------------------------------------------------------------------------
@@ -100,7 +100,7 @@ private:
 
 PPE_CORE_API void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
 inline void NORETURN AssertionReleaseFailed_NoReturn(const wchar_t* msg, const wchar_t *file, unsigned line) { AssertionReleaseFailed(msg, file, line); }
-PPE_CORE_API void SetAssertionReleaseHandler(AssertionReleaseHandler handler);
+PPE_CORE_API void SetAssertionReleaseHandler(FAssertReleaseHandler handler);
 
 #   define AssertReleaseMessage(_Expression, _Message) \
     (void)( (!!(_Expression)) || (PPE::AssertionReleaseFailed(_Message, WIDESTRING(__FILE__), __LINE__), 0) )
@@ -117,7 +117,7 @@ PPE_CORE_API void SetAssertionReleaseHandler(AssertionReleaseHandler handler);
 //----------------------------------------------------------------------------
 inline void AssertionReleaseFailed(const wchar_t*, const wchar_t*, unsigned ) {}
 inline void NORETURN AssertionReleaseFailed_NoReturn(const wchar_t*, const wchar_t*, unsigned ) { abort(); }
-inline void SetAssertionReleaseHandler(AssertionReleaseHandler ) {}
+inline void SetAssertionReleaseHandler(FAssertReleaseHandler ) {}
 
 #   if WITH_PPE_ASSERT_RELEASE_FALLBACK_TO_ASSUME
 #       define AssertReleaseMessage(_Expression, _Message)  Assume(_Expression)

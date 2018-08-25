@@ -35,4 +35,7 @@ public: // must be defined for every platform
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
+#else
+#   define PPE_DEBUG_BREAK() NOOP()
+
 #endif //!USE_PLATFORM_DEBUG
