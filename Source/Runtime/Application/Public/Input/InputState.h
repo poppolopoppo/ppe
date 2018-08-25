@@ -2,7 +2,7 @@
 
 #include "Application.h"
 
-#include "Container/FlatSet.h"
+#include "Container/FixedSizeHashSet.h"
 #include "Memory/MemoryView.h"
 
 namespace PPE {
@@ -26,35 +26,16 @@ public:
     size_t size() const { return _events.size(); }
     bool empty() const { return _events.empty(); }
 
-    bool Contains(const T value) const {
-        return (_events.end() != _events.find(value));
-    }
+    using const_iterator = typename TFixedSizeHashSet<T, _Capacity>::const_iterator;
+    const_iterator begin() const { return _events.begin(); }
+    const_iterator end() const { return _events.end(); }
 
-    bool Add_KeepExisting(T value) {
-        bool added;
-        _events.FindOrAdd(value, &added);
-        return added;
-    }
-
-    void Add_AssertUnique(T value) {
-        _events.Insert_AssertUnique(value);
-    }
-
-    bool Remove_ReturnIfExists(T value) {
-        return _events.Erase(value);
-    }
-
-    void Remove_AssertExists(T value) {
-        _events.Remove_AssertExists(value);
-    }
-
-    void Clear() {
-        _events.clear();
-    }
-
-    TMemoryView<const T> MakeView() const {
-        _events.MakeView();
-    }
+    bool Contains(const T value) const { return _events.Contains(value); }
+    bool Add_KeepExisting(T value) { return _events.Add_KeepExisting(value); }
+    void Add_AssertUnique(T value) { _events.Add_AssertUnique(value); }
+    bool Remove_ReturnIfExists(T value) { return _events.Remove_ReturnIfExists(value); }
+    void Remove_AssertExists(T value) { _events.Remove_AssertExists(value); }
+    void Clear() { _events.Clear(); }
 
     bool Update(
         TInputState* up,
@@ -82,7 +63,7 @@ public:
     }
 
 private:
-    FLATSET_INSITU(Input, T, _Capacity) _events;
+    TFixedSizeHashSet<T, _Capacity> _events;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

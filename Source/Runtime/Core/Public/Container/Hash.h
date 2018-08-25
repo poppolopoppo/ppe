@@ -69,6 +69,22 @@ struct THash {
         return hash_value(value);
     }
 };
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4309) // 'static_cast': truncation of constant value
+template <typename T>
+constexpr Meta::TEnableIf<std::is_enum_v<T> || std::is_integral_v<T>, T> empty_key() {
+    return static_cast<T>(0xFFFFFFFFFFFFFFFFull);
+}
+PRAGMA_MSVC_WARNING_POP()
+template <typename T>
+constexpr Meta::TEnableIf<std::is_floating_point_v<T>, T> empty_key() {
+    return std::numeric_limits<T>::max();
+}
+template <typename T>
+struct TEmptyKey {
+    STATIC_ASSERT(Meta::TIsPod_v<T>);
+    STATIC_CONST_INTEGRAL(T, value, empty_key<T>());
+};
 } //!namespace Meta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
