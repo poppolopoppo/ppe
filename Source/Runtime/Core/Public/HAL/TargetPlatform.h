@@ -62,7 +62,7 @@ public:
 //----------------------------------------------------------------------------
 PPE_CORE_API TMemoryView<const ITargetPlaftorm* const> AllTargetPlatforms();
 PPE_CORE_API const ITargetPlaftorm& TargetPlatform(ETargetPlatform platform);
-inline const ITargetPlaftorm& CurrentPlatform() { TargetPlatform(ETargetPlatform::Current); }
+inline const ITargetPlaftorm& CurrentPlatform() { return TargetPlatform(ETargetPlatform::Current); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
