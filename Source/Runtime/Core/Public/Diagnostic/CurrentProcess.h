@@ -21,6 +21,9 @@ public:
     const FWString& Directory() const { return _directory; }
     TMemoryView<const FWString> Args() const { return MakeView(_args); }
 
+    const FWString& DataPath() const { return _dataPath; }
+    const FWString& SavedPath() const { return _savedPath; }
+
     void *ApplicationHandle() const { return _applicationHandle; }
     int nShowCmd() const { return _nShowCmd; }
 
@@ -55,6 +58,9 @@ private:
     FWString _fileName;
     FWString _directory;
     TUniqueArray<FWString> _args;
+
+    FWString _dataPath;
+    FWString _savedPath;
 
     void *_applicationHandle;
     int _nShowCmd;

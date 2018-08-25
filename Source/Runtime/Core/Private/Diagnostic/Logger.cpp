@@ -373,12 +373,12 @@ public:
     static void Header(FWTextWriter& oss, const ILogger::FCategory& category, ILogger::EVerbosity level, const ILogger::FSiteInfo& site) {
 #if PPE_DUMP_THREAD_ID
 #   if PPE_DUMP_THREAD_NAME
-        Format(oss, L"[{0}][{1:20}][{3:-8}][{2:-15}] ", site.Timestamp.ToDateTimeUTC(), FThreadContext::GetThreadName(site.ThreadId), category.Name, level);
+        Format(oss, L"[{0}][{1:20}][{3:-8}][{2:-15}] ", site.Timestamp.ToDateTimeUTC(), FThreadContext::GetThreadName(site.ThreadId), MakeCStringView(category.Name), level);
 #   else // only thread hash :
-        Format(oss, L"[{0}][{1:#5}][{3:-8}][{2:-15}] ", site.Timestamp.ToDateTimeUTC(), FThreadContext::GetThreadHash(site.ThreadId), category.Name, level);
+        Format(oss, L"[{0}][{1:#5}][{3:-8}][{2:-15}] ", site.Timestamp.ToDateTimeUTC(), FThreadContext::GetThreadHash(site.ThreadId), MakeCStringView(category.Name), level);
 #   endif
 #else
-        Format(oss, L"[{0}][{2:-8}][{1:-15}] ", site.Timestamp.ToDateTimeUTC(), category.Name, level);
+        Format(oss, L"[{0}][{2:-8}][{1:-15}] ", site.Timestamp.ToDateTimeUTC(), MakeCStringView(category.Name), level);
 #endif
     }
 
@@ -517,7 +517,15 @@ void FLogger::Start() {
             ? FLogger::MakeOutputDebug()
             : FLogger::MakeStdout() );
 
-    RegisterLogger(FLogger::MakeRollFile(L"Saved:/Log/Core.log"));
+    const FWString logPath = FPlatformFile::JoinPath({
+        FCurrentProcess::Get().SavedPath(),
+        L"Log" });
+
+    Verify(FPlatformFile::CreateDirectoryRecursively(*logPath));
+
+    const FWString logFile = FPlatformFile::JoinPath({ logPath, L"PPE.log" });
+
+    RegisterLogger(FLogger::MakeRollFile(*logFile));
 
     IF_CONSTEXPR(USE_PPE_MEMORY_DEBUGGING) {
         SetupLoggerImpl_(&FUserLogger::Get());

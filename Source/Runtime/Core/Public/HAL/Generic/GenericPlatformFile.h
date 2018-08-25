@@ -7,6 +7,8 @@
 #include "Misc/Function.h"
 #include "Time/Timestamp.h"
 
+#include <initializer_list>
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -43,6 +45,7 @@ public: // must be defined for every platform
 
     static bool IsAllowedChar(char_type ch) = delete;
     static bool NormalizePath(FWString& path) = delete;
+    static FWString JoinPath(const std::initializer_list<FWStringView>& parts) = delete;
 
     static bool TotalSizeAndUsage(u64* pTotalSize, u64* pUsedSize, const char_type* path) = delete;
 
@@ -56,6 +59,7 @@ public: // must be defined for every platform
     static void GlobFiles(const char_type* dirpath, const char_type* pattern, bool recursive, const TFunction<void(const FWStringView&)>& onMatch) = delete;
 
     static bool CreateDirectory(const char_type* dirpath, bool* existed) = delete;
+    static bool CreateDirectoryRecursively(const char_type* dirpath) = delete;
     static bool MoveFile(const char_type* src, const char_type* dst) = delete;
 
     static bool RemoveDirectory(const char_type* dirpath, bool force) = delete;

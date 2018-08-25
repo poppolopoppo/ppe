@@ -14,6 +14,7 @@
 #include "IO/Format.h"
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
+#include "HAL/PlatformFile.h"
 #include "HAL/PlatformTime.h"
 
 namespace PPE {
@@ -179,46 +180,47 @@ bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FVirtualFileSystemStartup::Start() {
+void FVirtualFileSystemModule::Start() {
+    PPE_MODULE_START(VirtualFileSystem);
+
     POOL_TAG(VirtualFileSystem)::Start();
     FVirtualFileSystem::Create();
+
     auto& VFS = FVirtualFileSystem::Get();
+    auto& process = FCurrentProcess::Get();
+
     // current process executable directory
-    {
-        VFS.MountNativePath(L"Process:/", FCurrentProcess::Get().Directory());
-    }
-    // current process working directory
-    {
-        VFS.MountNativePath(L"Working:/", FPlatformFile::WorkingDirectory());
-    }
+    VFS.MountNativePath(L"Process:/", process.Directory());
+
     // data directory
-    {
-        FWString path;
-        Format(path, L"{0}/../../Data", FCurrentProcess::Get().Directory());
-        VFS.MountNativePath(MakeStringView(L"Data:/"), std::move(path));
-    }
+    VFS.MountNativePath(MakeStringView(L"Data:/"), process.DataPath());
+
     // saved directory
-    {
-        FWString path;
-        Format(path, L"{0}/../../Output/Saved", FCurrentProcess::Get().Directory());
-        VFS.MountNativePath(MakeStringView(L"Saved:/"), std::move(path));
-    }
+    VFS.MountNativePath(MakeStringView(L"Saved:/"), process.SavedPath());
+
+    // current process working directory
+    VFS.MountNativePath(L"Working:/", FPlatformFile::WorkingDirectory());
+
     // system temporary path
-    {
-        VFS.MountNativePath(L"Tmp:/", FPlatformFile::TemporaryDirectory());
-    }
+    VFS.MountNativePath(L"Tmp:/", FPlatformFile::TemporaryDirectory());
+
     // user profile path
-    {
-        VFS.MountNativePath(L"User:/", FPlatformFile::UserDirectory());
-    }
+    VFS.MountNativePath(L"User:/", FPlatformFile::UserDirectory());
+
+    // system path
+    VFS.MountNativePath(L"System:/", FPlatformFile::SystemDirectory());
 }
 //----------------------------------------------------------------------------
-void FVirtualFileSystemStartup::Shutdown() {
+void FVirtualFileSystemModule::Shutdown() {
+    PPE_MODULE_SHUTDOWN(VirtualFileSystem);
+
     FVirtualFileSystem::Destroy();
     POOL_TAG(VirtualFileSystem)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FVirtualFileSystemStartup::Clear() {
+void FVirtualFileSystemModule::Clear() {
+    PPE_MODULE_CLEARALL(VirtualFileSystem);
+
     FVirtualFileSystem::Get().Clear();
     POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
 }

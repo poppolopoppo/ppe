@@ -7,6 +7,7 @@
 #include "HAL/PlatformFile.h"
 #include "HAL/PlatformMemory.h"
 #include "HAL/PlatformMisc.h"
+#include "HAL/TargetPlatform.h"
 #include "IO/FormatHelpers.h"
 
 namespace PPE {
@@ -30,6 +31,14 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
 
     Verify(FPlatformFile::NormalizePath(_fileName));
     Verify(FPlatformFile::NormalizePath(_directory));
+
+    _dataPath = FPlatformFile::JoinPath({ _directory, L"..", L"..", L"..", L"Data" });
+    _savedPath = FPlatformFile::JoinPath({ _directory, L"..", L"..", L"Saved" });
+
+    Verify(FPlatformFile::NormalizePath(_dataPath));
+    Verify(FPlatformFile::NormalizePath(_savedPath));
+
+    FPlatformFile::CreateDirectory(*_savedPath, nullptr);
 
     _applicationHandle = applicationHandle;
     _nShowCmd = nShowCmd;
@@ -57,9 +66,17 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
 
 #ifdef USE_DEBUG_LOGGER
     auto mem = FPlatformMemory::Constants();
-    LOG(Process, Info, L"platform name = " WIDESTRING(STRINGIZE(PLATFORM_NAME)));
+    auto& platform = CurrentPlatform();
+    LOG(Process, Info, L"platform name = {0} ({1})", platform.DisplayName(), CurrentPlatform().FullName());
     LOG(Process, Info, L"build configuration = " WIDESTRING(STRINGIZE(BUILDCONFIG)));
     LOG(Process, Info, L"compiled at = " WIDESTRING(__DATE__) L"  " WIDESTRING(__TIME__));
+    LOG(Process, Info, L"   Client supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Client));
+    LOG(Process, Info, L"   Server supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Server));
+    LOG(Process, Info, L"   Editor supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Editor));
+    LOG(Process, Info, L"   DataGeneration supported = {0:A}", platform.SupportsFeature(EPlatformFeature::DataGeneration));
+    LOG(Process, Info, L"   HighQuality supported = {0:A}", platform.SupportsFeature(EPlatformFeature::HighQuality));
+    LOG(Process, Info, L"   CookedData supported = {0:A}", platform.SupportsFeature(EPlatformFeature::CookedData));
+
     LOG(Process, Info, L"cpu = {0}, {1}", FPlatformMisc::CPUVendor(), FPlatformMisc::CPUBrand());
     LOG(Process, Info, L"   {0} physical cores ({1} logical)", FPlatformMisc::NumCores(), FPlatformMisc::NumCoresWHyperThreading());
     LOG(Process, Info, L"   allocation granularity = {0}", Fmt::SizeInBytes(mem.AllocationGranularity));
@@ -76,20 +93,29 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
 
     u64 totalSize, usedSize;
     Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, _directory.c_str()));
-    LOG(Process, Info, L"   start directory = '{0}' : {1:f2}/{2:f2} ({3}).", _directory, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
+    LOG(Process, Info, L"   start directory = '{0}' : {1:f2}/{2:f2} ({3})", _directory, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
+
+    Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, _dataPath.c_str()));
+    LOG(Process, Info, L"   data directory = '{0}' : {1:f2}/{2:f2} ({3})", _dataPath, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
+
+    Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, _savedPath.c_str()));
+    LOG(Process, Info, L"   saved directory = '{0}' : {1:f2}/{2:f2} ({3})", _savedPath, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
+
     FWString workingDir = FPlatformFile::WorkingDirectory();
     Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, workingDir.c_str()));
-    LOG(Process, Info, L"   working directory = '{0}' : {1:f2}/{2:f2} ({3}).", workingDir, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
+    LOG(Process, Info, L"   working directory = '{0}' : {1:f2}/{2:f2} ({3})", workingDir, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
+
     FWString userDir = FPlatformFile::UserDirectory();
     Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, userDir.c_str()));
-    LOG(Process, Info, L"   user directory = '{0}' : {1:f2}/{2:f2} ({3}).", userDir, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
+    LOG(Process, Info, L"   user directory = '{0}' : {1:f2}/{2:f2} ({3})", userDir, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
+
     FWString tempDir = FPlatformFile::TemporaryDirectory();
     Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, tempDir.c_str()));
-    LOG(Process, Info, L"   temporary directory = '{0}' : {1:f2}/{2:f2} ({3}).", tempDir, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
+    LOG(Process, Info, L"   temporary directory = '{0}' : {1:f2}/{2:f2} ({3})", tempDir, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
 
-    LOG(Process, Info, L"started with debugger = '{0:a}'.", _startedWithDebugger);
-    LOG(Process, Info, L"application handle = '{0}', nShowCmd = '{1}'.", _applicationHandle, _nShowCmd);
-    LOG(Process, Info, L"started '{0}' with {1} parameters.", _fileName, _args.size());
+    LOG(Process, Info, L"started with debugger = '{0:A}'", _startedWithDebugger);
+    LOG(Process, Info, L"application handle = '{0}', nShowCmd = '{1}'", _applicationHandle, _nShowCmd);
+    LOG(Process, Info, L"started '{0}' with {1} parameters", _fileName, _args.size());
     forrange(i, 0, _args.size())
         LOG(Process, Info, L"   [{0:2}] '{1}'", i, _args[i]);
 

@@ -25,6 +25,7 @@ public:
 
     static bool IsAllowedChar(char_type ch);
     static bool NormalizePath(FWString& path);
+    static FWString JoinPath(const std::initializer_list<FWStringView>& parts);
 
     static bool TotalSizeAndUsage(u64* pTotalSize, u64* pUsedSize, const char_type* path);
 
@@ -38,6 +39,7 @@ public:
     static void GlobFiles(const char_type* dirpath, const char_type* pattern, bool recursive, const TFunction<void(const FWStringView&)>& onMatch);
 
     static bool CreateDirectory(const char_type* dirpath, bool* existed);
+    static bool CreateDirectoryRecursively(const char_type* dirpath);
     static bool MoveFile(const char_type* src, const char_type* dst);
 
     static bool RemoveDirectory(const char_type* dirpath, bool force);

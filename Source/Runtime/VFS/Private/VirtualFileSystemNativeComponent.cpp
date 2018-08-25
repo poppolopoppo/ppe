@@ -132,15 +132,13 @@ FVirtualFileSystemNativeComponent::FVirtualFileSystemNativeComponent(const FDirp
 ,   _target(std::move(target)) {
     Assert(!_target.empty());
     Verify(FPlatformFile::NormalizePath(_target));
+    Assert(FPlatformFile::PathSeparator != _target.back());
+    _target += FPlatformFile::PathSeparator;
 }
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeComponent::FVirtualFileSystemNativeComponent(const FDirpath& alias, const FWString& target, EOpenPolicy openMode /* = EOpenPolicy::ReadWritable */)
-:   FVirtualFileSystemComponent(alias)
-,   _openMode(openMode)
-,   _target(target) {
-    Assert(!_target.empty());
-    Verify(FPlatformFile::NormalizePath(_target));
-}
+:   FVirtualFileSystemNativeComponent(alias, FWString(target), openMode)
+{}
 //----------------------------------------------------------------------------
 FVirtualFileSystemNativeComponent::~FVirtualFileSystemNativeComponent() {}
 //----------------------------------------------------------------------------

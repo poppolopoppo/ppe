@@ -19,7 +19,7 @@ POOL_TAG_DECL(VirtualFileSystem);
 //----------------------------------------------------------------------------
 class PPE_VFS_API FVirtualFileSystem : Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem> {
 public:
-    friend class FVirtualFileSystemStartup;
+    friend class FVirtualFileSystemModule;
     typedef Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem> parent_type;
 
     using parent_type::Get;
@@ -43,15 +43,15 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_VFS_API FVirtualFileSystemStartup {
+class PPE_VFS_API FVirtualFileSystemModule {
 public:
     static void Start();
     static void Shutdown();
 
     static void Clear();
 
-    FVirtualFileSystemStartup() { Start(); }
-    ~FVirtualFileSystemStartup() { Shutdown(); }
+    FVirtualFileSystemModule() { Start(); }
+    ~FVirtualFileSystemModule() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

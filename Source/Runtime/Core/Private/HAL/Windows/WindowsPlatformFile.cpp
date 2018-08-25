@@ -7,6 +7,7 @@
 #include "Container/RingBuffer.h"
 #include "Container/Vector.h"
 #include "IO/Format.h"
+#include "IO/FormatHelpers.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
@@ -24,6 +25,7 @@
 #include <shellapi.h> // SHFileOperation()
 #include <Shlwapi.h> // PathIsDirectory()
 #include <ShlObj.h> // UserDirectory()
+#include <wchar.h> // wcschr()
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -168,14 +170,20 @@ FWString FWindowsPlatformFile::SystemDirectory() {
     wchar_t buffer[MAX_PATH + 1];
     const ::DWORD len = ::GetSystemDirectoryW(buffer, lengthof(buffer));
     CLOG_LASTERROR(len == 0, HAL, L"GetSystemDirectoryW()");
-    return FWString(buffer, checked_cast<size_t>(len));
+
+    FWString result(buffer, checked_cast<size_t>(len));
+    Verify(NormalizePath(result));
+    return result;
 }
 //----------------------------------------------------------------------------
 FWString FWindowsPlatformFile::TemporaryDirectory() {
     wchar_t buffer[MAX_PATH + 1];
     const ::DWORD len = ::GetTempPathW(lengthof(buffer), buffer);
     CLOG_LASTERROR(len == 0, HAL, L"GetTempPathW()");
-    return FWString(buffer, checked_cast<size_t>(len));
+
+    FWString result(buffer, checked_cast<size_t>(len));
+    Verify(NormalizePath(result));
+    return result;
 }
 //----------------------------------------------------------------------------
 FWString FWindowsPlatformFile::UserDirectory() {
@@ -183,9 +191,11 @@ FWString FWindowsPlatformFile::UserDirectory() {
     auto success = ::SHGetKnownFolderPath(FOLDERID_Profile, 0, NULL, &path);
     NOOP(success);
     CLOG_LASTERROR(FAILED(success), HAL, L"SHGetKnownFolderPath()");
+
     if (path) {
         Assert(not FAILED(success));
         FWString result(MakeCStringView(path));
+        Verify(NormalizePath(result));
         ::CoTaskMemFree(path);
         return result;
     }
@@ -199,7 +209,10 @@ FWString FWindowsPlatformFile::WorkingDirectory() {
     wchar_t buffer[MAX_PATH + 1];
     const ::DWORD len = ::GetCurrentDirectoryW(lengthof(buffer), buffer);
     CLOG_LASTERROR(0 == len, HAL, L"GetCurrentDirectoryW()");
-    return FWString(buffer, checked_cast<size_t>(len));
+
+    FWString result(buffer, checked_cast<size_t>(len));
+    Verify(NormalizePath(result));
+    return result;
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformFile::IsAllowedChar(char_type ch) {
@@ -216,9 +229,6 @@ bool FWindowsPlatformFile::NormalizePath(FWString& path) {
     path.gsub(L'/', L'\\');
     while (path.gsub(L"\\\\", L"\\"));
 
-    if (path.back() != L'\\')
-        path.insert(path.end(), L'\\');
-
     for (;;) {
         const size_t dotdot = path.find(L"\\..\\");
         if (dotdot == FWString::npos)
@@ -233,9 +243,22 @@ bool FWindowsPlatformFile::NormalizePath(FWString& path) {
         path.erase(path.begin() + folder, path.begin() + (dotdot + 3));
     }
 
+    while (path.size() && path.back() == PathSeparator || path.back() == PathSeparatorAlt)
+        path.pop_back();
+
     path.shrink_to_fit();
 
     return true;
+}
+//----------------------------------------------------------------------------
+FWString FWindowsPlatformFile::JoinPath(const std::initializer_list<FWStringView>& parts) {
+    FWStringBuilder sb;
+
+    auto sep = Fmt::NotFirstTime(PathSeparator);
+    for (const auto& it : parts)
+        sb << sep << it;
+
+    return sb.ToString();
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformFile::TotalSizeAndUsage(u64* pTotalSize, u64* pUsedSize, const char_type* path) {
@@ -374,19 +397,48 @@ bool FWindowsPlatformFile::CreateDirectory(const char_type* dirpath, bool* exist
     if (::CreateDirectoryW(dirpath, NULL) == TRUE) {
         if (existed)
             *existed = false;
+
+        LOG(HAL, Info, L"successfully created directory '{0}'", MakeCStringView(dirpath));
         return true;
     }
     else if (::GetLastError() == ERROR_ALREADY_EXISTS) {
         if (existed)
             *existed = true;
+
         return true;
     }
     else {
         LOG_LASTERROR(HAL, L"CreateDirectory()");
         if (existed)
             *existed = false;
+
         return false;
     }
+}
+//----------------------------------------------------------------------------
+bool FWindowsPlatformFile::CreateDirectoryRecursively(const char_type* dirpath) {
+    Assert(dirpath);
+
+    size_t sz = 0;
+    wchar_t folder[MAX_PATH + 1];
+
+    FWStringView slice;
+    FWStringView s = MakeCStringView(dirpath);
+    while (Split(s, L"\\/", slice)) {
+        if (sz)
+            folder[sz++] = PathSeparator;
+
+        slice.CopyTo(folder, sz);
+        sz += slice.size();
+
+        Assert(sz < lengthof(folder));
+        folder[sz] = L'\0';
+
+        if (not FWindowsPlatformFile::CreateDirectory(folder, nullptr))
+            return false;
+    }
+
+    return true;
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformFile::MoveFile(const char_type* src, const char_type* dst) {
