@@ -2,7 +2,7 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <!-- https://code.msdn.microsoft.com/windowsdesktop/Writing-type-visualizers-2eae77a2 -->
 
-  <Type Name="Core::FLastError">
+  <Type Name="PPE::FLastError">
     <DisplayString>{Code,hr}</DisplayString>
     <Expand>
       <Item Name="[Code]">Code</Item>
@@ -10,7 +10,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::Meta::TPointerWFlags&lt;*&gt;">
+  <Type Name="PPE::Meta::TPointerWFlags&lt;*&gt;">
     <DisplayString>{{ ptr={($T1*)(_ptr * 4)} flag0={(_flags&amp;1)!=0} flag1={(_flags&amp;2)!=0} flag01={_flags} }}</DisplayString>
     <Expand>
       <Item Name="[Pointer]">($T1*)(_ptr * 4)</Item>
@@ -20,7 +20,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::Meta::TFunction&lt;*&gt;">
+  <Type Name="PPE::Meta::TFunction&lt;*&gt;">
     <DisplayString Condition="_func == nullptr">empty</DisplayString>
     <DisplayString Condition="(_wrapper&amp;(intptr_t(sizeof(size_t)==8?0x8000000000000000ull:0x80000000ull)))==0">{_func} [FUNC]</DisplayString>
     <DisplayString>{((wrapper_type)(_wrapper&amp;~(intptr_t(sizeof(size_t)==8?0xc000000000000000ull:0xc0000000ull))))} [WRAPPER]</DisplayString>
@@ -34,7 +34,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TBasicString&lt;char&gt;">
+  <Type Name="PPE::TBasicString&lt;char&gt;">
     <DisplayString Condition="_large.IsLarge == 0">{_small.Buffer,[_small.Size]s} [small:{size_t(_small.Size)}]</DisplayString>
     <DisplayString Condition="_large.IsLarge != 0">{_large.Storage,[_large.Size]s} [large:{size_t(_large.Size)}]</DisplayString>
     <StringView Condition="_large.IsLarge == 0">_small.Buffer,[_small.Size]s</StringView>
@@ -49,7 +49,7 @@
       <Item Name="SBO">!!!_large.IsLarge</Item>
     </Expand>
   </Type>
-  <Type Name="Core::TBasicString&lt;wchar_t&gt;">
+  <Type Name="PPE::TBasicString&lt;wchar_t&gt;">
     <DisplayString Condition="_large.IsLarge == 0">{_small.Buffer,[_small.Size]su} [small:{size_t(_small.Size)}]</DisplayString>
     <DisplayString Condition="_large.IsLarge != 0">{_large.Storage,[_large.Size]su} [large:{size_t(_large.Size)}]</DisplayString>
     <StringView Condition="_large.IsLarge == 0">_small.Buffer,[_small.Size]su</StringView>
@@ -65,18 +65,18 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TBasicStringView&lt;char&gt;">
+  <Type Name="PPE::TBasicStringView&lt;char&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
     <DisplayString>{_storage,[_size]s} [{_size}]</DisplayString>
     <StringView>_storage,[_size]s</StringView>
   </Type>
-  <Type Name="Core::TBasicStringView&lt;wchar_t&gt;">
+  <Type Name="PPE::TBasicStringView&lt;wchar_t&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
     <DisplayString>{_storage,[_size]su} [{_size}]</DisplayString>
     <StringView>_storage,[_size]su</StringView>
   </Type>
 
-  <Type Name="Core::TMemoryView&lt;*&gt;">
+  <Type Name="PPE::TMemoryView&lt;*&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
     <DisplayString>{"$T1"} [{_size}] = {_storage}</DisplayString>
     <Expand>
@@ -88,7 +88,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TVectorInSitu&lt;*, *, *&gt;">
+  <Type Name="PPE::TVectorInSitu&lt;*, *, *&gt;">
     <DisplayString>{{ size={_size}, capacity={_capacity}, insitu={_insituCount/sizeof(value_type)} }}</DisplayString>
     <Expand>
       <Item Name="[Size]">_size</Item>
@@ -100,7 +100,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="Core::TVector&lt;*, *&gt;">
+  <Type Name="PPE::TVector&lt;*, *&gt;">
     <DisplayString>{{ size={_size}, capacity={_capacity} }}</DisplayString>
     <Expand>
       <Item Name="[Size]">_size</Item>
@@ -112,24 +112,24 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TBasicHashTable&lt;*, *, *, *&gt;">
+  <Type Name="PPE::TBasicHashTable&lt;*, *, *, *&gt;">
     <DisplayString>{{ size={_data.Size}, capacity={_data.Capacity} }}</DisplayString>
     <Expand>
       <Item Name="[Size]">_data.Size</Item>
       <Item Name="[Capacity]">_data.Capacity</Item>
-      <Item Name="[States]" ExcludeView="simple">(Core::details::FHashTableData_::EState*)_data.StatesAndBuckets, [_data.Capacity ? _data.Capacity + 16 : 0]</Item>
+      <Item Name="[States]" ExcludeView="simple">(PPE::details::FHashTableData_::EState*)_data.StatesAndBuckets, [_data.Capacity ? _data.Capacity + 16 : 0]</Item>
       <!-- <Item Name="Offset of Buckets">(((_data.Capacity ? _data.Capacity + 16 : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type))</Item> -->
       <Item Name="[Buckets]" ExcludeView="simple">($T1::value_type*)_data.StatesAndBuckets + (((_data.Capacity ? _data.Capacity + 16 : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type)), [_data.Capacity]</Item>
       <CustomListItems>
         <Variable Name="index" InitialValue="0" />
-        <Variable Name="state" InitialValue="(Core::details::FHashTableData_::EState*)_data.StatesAndBuckets" />
+        <Variable Name="state" InitialValue="(PPE::details::FHashTableData_::EState*)_data.StatesAndBuckets" />
         <Variable Name="bucket" InitialValue="($T1::value_type*)_data.StatesAndBuckets + (((_data.Capacity ? _data.Capacity + 16 : 0) + (sizeof($T1::value_type) - 1)) / sizeof($T1::value_type))" />
         <Size>_data.Size</Size>
         <Loop>
             <If Condition="index == _data.Capacity">
                 <Break />
             </If>
-            <If Condition="(state[index] &amp; Core::details::FHashTableData_::kDeleted) == 0">
+            <If Condition="(state[index] &amp; PPE::details::FHashTableData_::kDeleted) == 0">
                 <Item>bucket[index]</Item>
             </If>
             <Exec>++index</Exec>
@@ -138,7 +138,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TRawStorage&lt;*, *&gt;">
+  <Type Name="PPE::TRawStorage&lt;*, *&gt;">
     <DisplayString>{{ size={_size} }}</DisplayString>
     <Expand>
       <Item Name="[Size]">_size</Item>
@@ -149,7 +149,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TRingBuffer&lt;*, *&gt;">
+  <Type Name="PPE::TRingBuffer&lt;*, *&gt;">
     <DisplayString>{{ begin={_begin}, size={_size}, capacity={_capacity} }}</DisplayString>
     <Expand>
       <Item Name="[Begin]">_begin</Item>
@@ -162,7 +162,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TStack&lt;*, *&gt;">
+  <Type Name="PPE::TStack&lt;*, *&gt;">
     <DisplayString>{{ size={_size}, capacity={_capacity} }}</DisplayString>
     <Expand>
       <Item Name="[Size]">_size</Item>
@@ -174,7 +174,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TScalarVector&lt;*, 1&gt;">
+  <Type Name="PPE::TScalarVector&lt;*, 1&gt;">
     <DisplayString>{{ X={_data[0]} }}[1]</DisplayString>
     <Expand>
       <Item Name="[Dim]">1</Item>
@@ -184,7 +184,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="Core::TScalarVector&lt;*, 2&gt;">
+  <Type Name="PPE::TScalarVector&lt;*, 2&gt;">
     <DisplayString>{{ X={_data[0]}, Y={_data[1]} }}[2]</DisplayString>
     <Expand>
       <Item Name="[Dim]">2</Item>
@@ -194,7 +194,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="Core::TScalarVector&lt;*, 3&gt;">
+  <Type Name="PPE::TScalarVector&lt;*, 3&gt;">
     <DisplayString>{{ X={_data[0]}, Y={_data[1]}, Z={_data[2]} }}[3]</DisplayString>
     <Expand>
       <Item Name="[Dim]">3</Item>
@@ -204,7 +204,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="Core::TScalarVector&lt;*, 4&gt;">
+  <Type Name="PPE::TScalarVector&lt;*, 4&gt;">
     <DisplayString>{{ X={_data[0]}, Y={_data[1]}, Z={_data[2]}, W={_data[3]} }}[4]</DisplayString>
     <Expand>
       <Item Name="[Dim]">4</Item>
@@ -215,7 +215,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TScalarMatrix&lt;*, *, *&gt;">
+  <Type Name="PPE::TScalarMatrix&lt;*, *, *&gt;">
     <Expand>
       <ArrayItems>
         <Direction>Forward</Direction>
@@ -226,7 +226,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TToken&lt;*, char, *, * &gt;">
+  <Type Name="PPE::TToken&lt;*, char, *, * &gt;">
     <DisplayString Condition="_handle != nullptr">{(const char*)(_handle+1),[(int)_handle-&gt;Length]s}</DisplayString>
     <DisplayString>empty</DisplayString>
     <StringView>(const char*)(_handle+1),[(int)_handle-&gt;Length]s</StringView>
@@ -236,7 +236,7 @@
       <Item Name="[HashValue]" Condition="_handle != nullptr">(int)_handle-&gt;HashValue,X</Item>
     </Expand>
   </Type>
-  <Type Name="Core::TToken&lt;*, wchar_t, *, * &gt;">
+  <Type Name="PPE::TToken&lt;*, wchar_t, *, * &gt;">
     <DisplayString Condition="_handle != nullptr">{(const wchar_t*)(_handle+1),[(int)_handle-&gt;Length]su}</DisplayString>
     <DisplayString Condition="_handle == nullptr">empty</DisplayString>
     <StringView>(const wchar_t*)(_handle+1),[(int)_handle-&gt;Length]su</StringView>
@@ -247,7 +247,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::FFileSystemNode">
+  <Type Name="PPE::FFileSystemNode">
     <DisplayString>{_token}</DisplayString>
     <Expand>
       <Item Name="[Depth]">_depth</Item>
@@ -260,24 +260,24 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::FBasename">
+  <Type Name="PPE::FBasename">
     <DisplayString>{_basenameNoExt} {_extname}</DisplayString>
   </Type>
-  <Type Name="Core::FDirpath">
+  <Type Name="PPE::FDirpath">
     <DisplayString>{DebugPrintDirpath(*this)}</DisplayString>
   </Type>
-  <Type Name="Core::FFilename">
+  <Type Name="PPE::FFilename">
     <DisplayString>{DebugPrintFilename(*this)}</DisplayString>
   </Type>
 
-  <Type Name="Core::RTTI::TMetaTypeAtom&lt;* &gt;">
+  <Type Name="PPE::RTTI::TMetaTypeAtom&lt;* &gt;">
     <DisplayString>{_wrapper}</DisplayString>
     <Expand>
       <ExpandedItem>_wrapper</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="Core::TRefPtr&lt;* &gt;">
+  <Type Name="PPE::TRefPtr&lt;* &gt;">
     <DisplayString>{_ptr}</DisplayString>
     <Expand>
       <Item Name="[RefCount]" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
@@ -285,7 +285,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TSafePtr&lt;* &gt;">
+  <Type Name="PPE::TSafePtr&lt;* &gt;">
     <DisplayString>{_ptr}</DisplayString>
     <Expand>
       <Item Name="[RefCount]" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
@@ -294,7 +294,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::TInSituPtr&lt;* &gt;">
+  <Type Name="PPE::TInSituPtr&lt;* &gt;">
     <DisplayString Condition="VTable != 0xDEADF001DEADF001ull &amp;&amp; VTable != 0xDEADF001ul">{($T1*)(&amp;InSitu),na}</DisplayString>
     <DisplayString>empty</DisplayString>
     <Expand>
@@ -302,7 +302,7 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::FBitMask">
+  <Type Name="PPE::FBitMask">
     <DisplayString>{Data,x}</DisplayString>
     <Expand>
       <Item Name="[Num]">Meta::popcnt(Data)</Item>
@@ -327,55 +327,55 @@
     </Expand>
   </Type>
 
-  <Type Name="Core::RTTI::ITypeTraits">
+  <Type Name="PPE::RTTI::ITypeTraits">
     <DisplayString>[{TypeId()}] {TypeInfos()._name._storage, [TypeInfos()._name._size]}, {TypeInfos()._flags, en} ({TypeInfos()._sizeInBytes}b)</DisplayString>
   </Type>
 
-  <Type Name="Core::RTTI::FAny">
-    <DisplayString>{Core::RTTI::DebugPrintAny(*this)}</DisplayString>
+  <Type Name="PPE::RTTI::FAny">
+    <DisplayString>{PPE::RTTI::DebugPrintAny(*this)}</DisplayString>
     <Expand>
         <Item Name="[Data]">Data()</Item>
         <Item Name="[Traits]">_traits</Item>
-        <Item Name="[PP]">Core::RTTI::DebugPrintAny(*this)</Item>
+        <Item Name="[PP]">PPE::RTTI::DebugPrintAny(*this)</Item>
     </Expand>
   </Type>
 
-  <Type Name="Core::RTTI::FAtom">
-    <DisplayString>{Core::RTTI::DebugPrintAtom(*this)}</DisplayString>
+  <Type Name="PPE::RTTI::FAtom">
+    <DisplayString>{PPE::RTTI::DebugPrintAtom(*this)}</DisplayString>
     <Expand>
         <Item Name="Data">_data</Item>
         <Item Name="Traits">_traits</Item>
-        <Item Name="PP">Core::RTTI::DebugPrintAtom(*this)</Item>
+        <Item Name="PP">PPE::RTTI::DebugPrintAtom(*this)</Item>
     </Expand>
   </Type>
 
-  <Type Name="Core::RTTI::FMetaObject">
-    <DisplayString>{Core::RTTI::DebugPrintObject(this)}</DisplayString>
+  <Type Name="PPE::RTTI::FMetaObject">
+    <DisplayString>{PPE::RTTI::DebugPrintObject(this)}</DisplayString>
     <Expand>
         <Item Name="[Name]">_name</Item>
         <Item Name="[Flags]">_flags, en</Item>
         <Item Name="[Class]">RTTI_Class(), na</Item>
         <Item Name="[Functions]">RTTI_Class()->_functionsAll</Item>
         <Item Name="[Properties]">RTTI_Class()->_propertiesAll</Item>
-        <Item Name="[PP]">Core::RTTI::DebugPrintObject(this)</Item>
+        <Item Name="[PP]">PPE::RTTI::DebugPrintObject(this)</Item>
     </Expand>
   </Type>
 
-  <Type Name="Core::Serialize::FJSON::FValue">
-    <DisplayString Condition="Core::Serialize::FJSON::Null    == _type">null</DisplayString>
-    <DisplayString Condition="Core::Serialize::FJSON::Bool    == _type">Bool {_bool}</DisplayString>
-    <DisplayString Condition="Core::Serialize::FJSON::Integer == _type">Integer {_integer}</DisplayString>
-    <DisplayString Condition="Core::Serialize::FJSON::Float   == _type">Float {_float}</DisplayString>
-    <DisplayString Condition="Core::Serialize::FJSON::String  == _type">String {_string}</DisplayString>
-    <DisplayString Condition="Core::Serialize::FJSON::Array   == _type">Array {_array}</DisplayString>
-    <DisplayString Condition="Core::Serialize::FJSON::Object  == _type">Object {_object}</DisplayString>
+  <Type Name="PPE::Serialize::FJSON::FValue">
+    <DisplayString Condition="PPE::Serialize::FJSON::Null    == _type">null</DisplayString>
+    <DisplayString Condition="PPE::Serialize::FJSON::Bool    == _type">Bool {_bool}</DisplayString>
+    <DisplayString Condition="PPE::Serialize::FJSON::Integer == _type">Integer {_integer}</DisplayString>
+    <DisplayString Condition="PPE::Serialize::FJSON::Float   == _type">Float {_float}</DisplayString>
+    <DisplayString Condition="PPE::Serialize::FJSON::String  == _type">String {_string}</DisplayString>
+    <DisplayString Condition="PPE::Serialize::FJSON::Array   == _type">Array {_array}</DisplayString>
+    <DisplayString Condition="PPE::Serialize::FJSON::Object  == _type">Object {_object}</DisplayString>
     <Expand>
-      <Item Condition="Core::Serialize::FJSON::Bool    == _type" Name="[Bool]">_bool</Item>
-      <Item Condition="Core::Serialize::FJSON::Integer == _type" Name="[Integer]">_integer</Item>
-      <Item Condition="Core::Serialize::FJSON::Float   == _type" Name="[Float]">_float</Item>
-      <Item Condition="Core::Serialize::FJSON::String  == _type" Name="[String]">_string</Item>
-      <Item Condition="Core::Serialize::FJSON::Array   == _type" Name="[Array]">_array</Item>
-      <Item Condition="Core::Serialize::FJSON::Object  == _type" Name="[Object]">_object</Item>
+      <Item Condition="PPE::Serialize::FJSON::Bool    == _type" Name="[Bool]">_bool</Item>
+      <Item Condition="PPE::Serialize::FJSON::Integer == _type" Name="[Integer]">_integer</Item>
+      <Item Condition="PPE::Serialize::FJSON::Float   == _type" Name="[Float]">_float</Item>
+      <Item Condition="PPE::Serialize::FJSON::String  == _type" Name="[String]">_string</Item>
+      <Item Condition="PPE::Serialize::FJSON::Array   == _type" Name="[Array]">_array</Item>
+      <Item Condition="PPE::Serialize::FJSON::Object  == _type" Name="[Object]">_object</Item>
     </Expand>
   </Type>
 
