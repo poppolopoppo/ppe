@@ -1,0 +1,10 @@
+#once
+{
+    .ModuleList = {}
+    .ModulePath = 'Tools'
+
+    //#include "AssetWorker/AssetWorker.bff"
+    #include "UnitTest/UnitTest.bff"
+
+    #include "$BuildPath$/Templates/Namespace.bff"
+}

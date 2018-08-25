@@ -13,6 +13,7 @@
 //------------------------------------------------------------------------------
 // Default Directories
 //------------------------------------------------------------------------------
+.DataPath          = '$SolutionPath$/Data'
 .OutputPath        = '$SolutionPath$/Output'
 .SourcePath        = '$SolutionPath$/Source'
 .BuildPath         = '$SolutionPath$/Build'

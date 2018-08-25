@@ -17,5 +17,3 @@
 
 .ProjectSolutionFolder ? '^$'
 ^SolutionFolders + .SolutionFolder
-
-Print( "Registered project <$ProjectName$>" )

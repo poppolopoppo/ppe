@@ -8,7 +8,7 @@
 #include "HAL/PlatformMemory.h"
 #include "IO/FormatHelpers.h"
 #include "IO/FileSystem.h"
-#include "IO/VirtualFileSystem.h"
+#include "VirtualFileSystem.h"
 #include "Maths/RandomGenerator.h"
 
 #include <algorithm>

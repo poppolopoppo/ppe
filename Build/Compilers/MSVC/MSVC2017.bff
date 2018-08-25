@@ -198,7 +198,7 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
 //  that you actually want a type with an extended alignment, or
 //  (2) _DISABLE_EXTENDED_ALIGNED_STORAGE to silence this message and get the old non-conformant
 //  behavior.
-    Print( "Using Visual 2017 15.8 extended aligned storage" )
+    Print( "Using Visual 2017 extended aligned storage added in 15.8.0" )
     .Defines + '_ENABLE_EXTENDED_ALIGNED_STORAGE'
 #endif
 
@@ -228,7 +228,7 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
     .AdditionalOptions + ' /std:c++14' ; https://docs.microsoft.com/fr-fr/cpp/build/reference/std-specify-language-standard-version
 #endif
 #if USE_VISUAL2017_STD_2017
-    Print( "Using Visual 2017 with C++14 standard" )
+    Print( "Using Visual 2017 with C++17 standard" )
     .AdditionalOptions + ' /std:c++17' ; https://docs.microsoft.com/fr-fr/cpp/build/reference/std-specify-language-standard-version
 #endif
 #if USE_VISUAL2017_STD_LATEST

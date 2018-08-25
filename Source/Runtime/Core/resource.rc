@@ -1,5 +1,6 @@
 
+
 // ICONS
-IDI_ERROR_ICON				ICON    "..\\..\\Data\\Icons\\Error.ico"
-IDI_INFO_ICON				ICON    "..\\..\\Data\\Icons\\Info.ico"
-IDI_WARNING_ICON			ICON    "..\\..\\Data\\Icons\\Warning.ico"
+IDI_ERROR_ICON				ICON    "../../../Data/Icons/Error.ico"
+IDI_INFO_ICON				ICON    "../../../Data/Icons/Info.ico"
+IDI_WARNING_ICON			ICON    "../../../Data/Icons/Warning.ico"

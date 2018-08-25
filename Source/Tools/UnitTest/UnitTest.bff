@@ -1,0 +1,33 @@
+#once
+{
+    .ModuleName = 'UnitTest'
+    .ModuleType = 'Executable'
+    .ModuleDefines = { 'EXPORT_PPE_UNITTEST' }
+    .ModulePrivateDependencies =
+    {
+        'External/double-conversion',
+        'External/farmhash',
+        'External/lz4',
+        'External/xxHash',
+    }
+    .ModulePublicDependencies =
+    {
+        'Runtime/Core',
+        'Runtime/VFS',
+        'Runtime/RTTI',
+        'Runtime/Serialize',
+        'Runtime/Network',
+        'Runtime/Application'
+    }
+    .ModuleIsolatedFiles =
+    {
+        'Private/main.cpp'
+    }
+    .ModuleExtraFiles =
+    {
+        'resource.rc'
+    }
+    .ProjectPCHConfig = .PCHDisabled
+    .UnityNumFiles = 1 // generated
+    #include "$BuildPath$/Templates/Module.bff"
+}

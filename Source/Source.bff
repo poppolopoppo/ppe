@@ -6,5 +6,5 @@
     #include "Runtime/Runtime.bff"
     // #include "ContentPipeline/ContentPipeline.bff"
     // #include "Engine/Engine.bff"
-    // #include "Tools/Tools.bff" %NOCOMMIT%
+    #include "Tools/Tools.bff"
 }

@@ -4,12 +4,14 @@
 ; Inputs :
 ;   <ModulePath>                path of the module
 ;   <ModuleName>                name of the module
+;   [ModuleType]                either 'Library' or 'Executable' (default is 'Library')
 ;   [ModuleDefines]             module specific defines
 ;   [ModulePublicDependencies]  module specific public dependencies
 ;   [ModulePrivateDependencies] module specific private dependencies
 ;   [ModuleForcedIncludes]      module specific relative force includes
 ;   [ModuleExcludedFiles]       module specific relative excluded files
 ;   [ModuleFiles]               module specific relative included files
+;   [ModuleExtraFiles]          list of files not build but listed in project file
 ;   [ModuleIsolatedFiles]       module relative files not included in unity builds but still compiled
 ;   [ModuleIncludePaths]        module specific relative include paths
 //------------------------------------------------------------------------------
@@ -27,18 +29,21 @@
 .ProjectName = '$ModulePath$/$ModuleName$'
 .ProjectPath = '$SourcePath$/$ProjectName$'
 
+.ModuleType ? 'Library'
 .ModuleDefines ? {}
 .ModulePublicDependencies ? {}
 .ModulePrivateDependencies ? {}
 .ModuleForcedIncludes ? {}
 .ModuleExcludedFiles ? {}
 .ModuleFiles ? {}
+.ModuleExtraFiles ? {}
 .ModuleIsolatedFiles ? {}
 .ModuleIncludePaths ? {}
 
+.BinaryPrefix ? .ProjectName
 .ProjectDefines = .ModuleDefines
 .ProjectExcludedFiles = .ModuleExcludedFiles
-.ProjectFiles = .ModuleFiles
+.ProjectFiles = .ModuleFiles + .ModuleExtraFiles
 .ProjectIsolatedFiles = .ModuleIsolatedFiles
 .ProjectSolutionFolder = .ModulePath
 
@@ -70,6 +75,8 @@ ForEach( .File in .ModuleForcedIncludes )
     ^ProjectForcedIncludes + .IncludePath
 }
 
-#include "Library.bff"
+#include "$ModuleType$.bff"
 
 ^ModuleList + .ProjectName
+
+Print( "[+] $ModuleType$ module <$ProjectName$>" )

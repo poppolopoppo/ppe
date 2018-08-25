@@ -2,6 +2,7 @@
 
 #include "Container/AssociativeVector.h"
 #include "Container/BurstTrie.h"
+#include "Container/FixedSizeHashSet.h"
 #include "Container/FlatMap.h"
 #include "Container/FlatSet.h"
 #include "Container/HashTable.h"
@@ -11,13 +12,13 @@
 #include "Diagnostic/Profiling.h"
 #include "IO/BufferedStream.h"
 #include "IO/FileStream.h"
+#include "IO/Filename.h"
 #include "IO/FormatHelpers.h"
-#include "IO/FS/Filename.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
-#include "IO/VirtualFileSystem.h"
+#include "VirtualFileSystem.h"
 #include "HAL/PlatformMaths.h"
 #include "Maths/Maths.h"
 #include "Maths/PrimeNumbers.h"
@@ -357,7 +358,7 @@ public:
         }
 
         TIterator& operator++() { return Advance(); }
-        TIterator& operator++(int) { TIterator tmp(*this); Advance(); return (*this); }
+        TIterator& operator++(int) { TIterator tmp(*this); Advance(); return tmp; }
 
         T& operator *() const { Assert(Index < Capacity); return (Ptr[Index]); }
         T* operator ->() const { Assert(Index < Capacity); return (Ptr + Index); }
@@ -740,13 +741,12 @@ static void Test_Container_POD_(
         BENCHMARK_SCOPE(name, L"search");
         forrange(i, 0, loops) {
             volatile size_t count = 0;
-            for (const auto& word : search)
-                if (set.end() == set.find(word)) {
+            for (const auto& word : search) {
+                if (set.end() == set.find(word))
                     AssertNotReached();
-                }
-                else {
+                else
                     ++count;
-                }
+            }
             if (search.size() != count)
                 PPE_THROW_IT(std::exception("invalid set search"));
         }
@@ -755,13 +755,12 @@ static void Test_Container_POD_(
         BENCHMARK_SCOPE(name, L"negative search");
         forrange(i, 0, loops) {
             volatile size_t count = 0;
-            for (const auto& word : negative)
-                if (set.end() != set.find(word)) {
+            for (const auto& word : negative) {
+                if (set.end() != set.find(word))
                     AssertNotReached();
-                }
-                else {
+                else
                     ++count;
-                }
+            }
             if (negative.size() != count)
                 PPE_THROW_IT(std::exception("invalid set negative search"));
         }
@@ -788,13 +787,12 @@ static void Test_Container_POD_(
         forrange(i, 0, loops) {
             volatile size_t pos_count = 0;
             volatile size_t neg_count = 0;
-            for (const auto& word : searchafterdelete)
-                if (set.end() == set.find(word)) {
+            for (const auto& word : searchafterdelete) {
+                if (set.end() == set.find(word))
                     ++neg_count;
-                }
-                else {
+                else
                     ++pos_count;
-                }
+            }
             if (searchafterdelete.size() != pos_count + neg_count)
                 PPE_THROW_IT(std::exception("invalid set search after delete"));
         }
@@ -1112,12 +1110,12 @@ void Test_Containers() {
         }*/
     }
     {
+        const size_t COUNT = 2000;
+
         LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
-        LOG(Test_Containers, Info, L"Integer collection");
+        LOG(Test_Containers, Info, L"Medium double collection ({0})", COUNT);
 
         typedef double value_type;
-
-        const size_t COUNT = 2000;
 
         std::random_device rdevice;
         std::mt19937 rand(rdevice());
@@ -1125,7 +1123,7 @@ void Test_Containers() {
         VECTOR(Container, value_type) all;
         all.reserve(COUNT);
         forrange(i, 1, COUNT+1)
-            all.push_back((value_type)(i/value_type(COUNT)));
+            all.push_back(value_type(i / value_type(COUNT)) + rand() * COUNT);
 
         std::shuffle(all.begin(), all.end(), rand);
 
@@ -1144,6 +1142,132 @@ void Test_Containers() {
         VECTOR(Container, value_type) searchafterdelete(input);
         std::shuffle(searchafterdelete.begin(), searchafterdelete.end(), rand);
 
+        {
+            typedef TCompactHashSet<value_type>   hashtable_type;
+
+            hashtable_type set;
+            set.resize(input.size());
+
+            Test_Container_POD_(L"TCompactHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+        {
+            THashSet<value_type> set;
+
+            Test_Container_POD_(L"THashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+
+            LOG(Test_Containers, Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
+        }
+        {
+            std::unordered_set<value_type, Meta::THash<value_type>> set;
+
+            Test_Container_POD_(L"std::unordered_set", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+        {
+            TFlatSet<value_type> set;
+
+            Test_Container_POD_(L"TFlatSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+
+    }
+    {
+        const size_t COUNT = 28;
+
+        LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
+        LOG(Test_Containers, Info, L"Small integer collection ({0})", COUNT);
+
+        typedef int value_type;
+
+        std::random_device rdevice;
+        std::mt19937 rand(rdevice());
+
+        VECTOR(Container, value_type) all;
+        all.reserve(COUNT);
+        forrange(i, 1, COUNT + 1)
+            all.push_back(value_type(i + Min(rand(), COUNT) * COUNT));
+
+        std::shuffle(all.begin(), all.end(), rand);
+
+        const size_t k = (all.size() * 80) / 100;
+
+        const auto input = all.MakeConstView().CutBefore(k);
+        const auto negative = all.MakeConstView().CutStartingAt(k);
+
+        VECTOR(Container, value_type) search(input);
+        std::shuffle(search.begin(), search.end(), rand);
+
+        VECTOR(Container, value_type) todelete(search);
+        std::shuffle(todelete.begin(), todelete.end(), rand);
+        todelete.resize(k / 2);
+
+        VECTOR(Container, value_type) searchafterdelete(input);
+        std::shuffle(searchafterdelete.begin(), searchafterdelete.end(), rand);
+
+        {
+            typedef TVectorInSitu<value_type, COUNT> vector_type;
+
+            vector_type v;
+
+            struct FAdapter_ {
+                vector_type& v;
+                size_t size() const { return v.size(); }
+                auto begin() const { return v.begin(); }
+                auto end() const { return v.end(); }
+                void insert(value_type i) { v.push_back(i); }
+                auto find(value_type i) const { return std::find(v.begin(), v.end(), i); }
+                bool erase(value_type i) {
+                    auto it = find(i);
+                    if (v.end() == it)
+                        return false;
+                    v.erase_DontPreserveOrder(it);
+                    return true;
+                }
+                void clear() { v.clear(); }
+            };
+
+            FAdapter_ set{ v };
+
+            Test_Container_POD_(L"TVectorInSitu", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+        {
+            typedef TFixedSizeHashSet<value_type, COUNT> set_type;
+
+            set_type s;
+
+            struct FAdapter_ {
+                set_type& s;
+                size_t size() const { return s.size(); }
+                auto begin() const { return s.begin(); }
+                auto end() const { return s.end(); }
+                void insert(value_type i) { s.Add_AssertUnique(i); }
+                auto find(value_type i) const { return s.Find(i); }
+                bool erase(value_type i) { return s.Remove_ReturnIfExists(i); }
+                void clear() { s.Clear(); }
+            };
+
+            FAdapter_ set{ s };
+
+            Test_Container_POD_(L"TFixedSizeHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+        {
+            typedef TFixedSizeHashSet<value_type, ROUND_TO_NEXT_16(COUNT*2)> set_type;
+
+            set_type s;
+
+            struct FAdapter_ {
+                set_type& s;
+                size_t size() const { return s.size(); }
+                auto begin() const { return s.begin(); }
+                auto end() const { return s.end(); }
+                void insert(value_type i) { s.Add_AssertUnique(i); }
+                auto find(value_type i) const { return s.Find(i); }
+                bool erase(value_type i) { return s.Remove_ReturnIfExists(i); }
+                void clear() { s.Clear(); }
+            };
+
+            FAdapter_ set{ s };
+
+            Test_Container_POD_(L"TFixedSizeHashSet2", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
         {
             typedef TCompactHashSet<value_type>   hashtable_type;
 

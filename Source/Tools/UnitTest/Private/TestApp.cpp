@@ -12,7 +12,7 @@ extern void Test_Format();
 extern void Test_Containers();
 extern void Test_RTTI();
 extern void Test_Network();
-extern void Test_Pixmap();
+//extern void Test_Pixmap();
 extern void Test_Thread();
 extern void Test_XML();
 extern void Test_Lattice();
@@ -37,7 +37,7 @@ void FTestApp::Start() {
     Test_RTTI();
     Test_XML();
     Test_Lattice();
-    Test_Pixmap();
+    //Test_Pixmap();  #TODO refactoring the asset generation
     Test_Network();
 }
 //----------------------------------------------------------------------------

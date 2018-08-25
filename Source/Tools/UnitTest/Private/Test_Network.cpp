@@ -16,7 +16,7 @@
 #include "Markup/Xml.h"
 
 #include "Diagnostic/Logger.h"
-#include "IO/FS/Filename.h"
+#include "IO/Filename.h"
 #include "IO/FileStream.h"
 #include "IO/FormatHelpers.h"
 #include "IO/String.h"

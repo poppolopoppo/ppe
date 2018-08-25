@@ -43,7 +43,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     {
         Using( .ResourceCompiler )
 
-        .CompilerInputFiles     = '$ProjectPath$\$ProjectName$.rc'
+        .CompilerInputFiles     = '$ProjectPath$\resource.rc'
         .CompilerOutputPath     = .IntermediatePath
 
         .CompilerOptions = '/I"$SourcePath$" /I"$ProjectPath$" $CompilerOptions$'

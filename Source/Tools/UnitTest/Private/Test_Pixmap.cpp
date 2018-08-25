@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#if 0 // #TODO refactoring the asset generation
+
 #include "Drawing.h"
 #include "CompressedImage.h"
 #include "FloatImage.h"
@@ -239,3 +241,5 @@ void Test_Pixmap() {
 //----------------------------------------------------------------------------
 } //!namespace Test
 } //!namespace PPE
+
+#endif

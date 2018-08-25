@@ -21,7 +21,7 @@ LOG_CATEGORY(, Test_Format)
 namespace {
 //----------------------------------------------------------------------------
 template <typename... _Args>
-static void TestFormat_(const FStringView& expected, const FStringView& format, _Args&&... args) {
+static void TestFormat_(const FStringView& expected, const FStringView& format, _Args... args) {
     const FString str = StringFormat(format, std::forward<_Args>(args)...);
 
     const bool match = (expected == str);
@@ -64,17 +64,17 @@ static void Test_Format_() {
     TestFormat_("----------------",
         "{0:*16}", '-');
     TestFormat_("000000000000test",
-        "{0:#16}", "test");
+        "{0:#16}", MakeStringView("test"));
     TestFormat_("test000000000000",
-        "{0:#-16}", "test");
+        "{0:#-16}", MakeStringView("test"));
     TestFormat_("0042004200420042",
         "{0:#4*4}", 42);
     TestFormat_("true true true ",
         "{0:a-5*3}", true);
     TestFormat_("string =       TEST TEST      , decimal =  BADCAFE 0badcafe, float = -0.123    -0.1235",
-        "string = {0:10U} {0:-10U}, decimal = {1:8X} {1:#8x}, float = {2:f3} {2:10f4}", "test", 0xBADCAFE, -0.123456f);
+        "string = {0:10U} {0:-10U}, decimal = {1:8X} {1:#8x}, float = {2:f3} {2:10f4}", MakeStringView("test"), 0xBADCAFE, -0.123456f);
     TestFormat_("This a neg test 0042004200420042 = test aligned                   ( 1.23)",
-        "This a neg test {0:#4*4} = {1:-30} ({2:5f2})", 42, "test aligned", 1.23456f);
+        "This a neg test {0:#4*4} = {1:-30} ({2:5f2})", 42, MakeStringView("test aligned"), 1.23456f);
 }
 //----------------------------------------------------------------------------
 static void Test_TextWriter_Ansi_() {

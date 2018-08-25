@@ -7,4 +7,4 @@
 
 #include "targetver.h"
 
-#include "Core/HAL/PlatformIncludes.h"
+#include "HAL/PlatformIncludes.h"

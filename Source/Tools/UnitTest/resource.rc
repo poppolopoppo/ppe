@@ -1,0 +1,6 @@
+#include "resource.h"
+
+#include "Runtime/Core/resource.rc"
+
+// ICONS
+IDI_APP_ICON				ICON	"../../../Data/Icons/Test.ico"

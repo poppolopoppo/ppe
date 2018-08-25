@@ -16,6 +16,10 @@
         'Private/Allocator/MallocStomp.cpp',
         'Private/Allocator/New.cpp',
     }
+    .ModuleExtraFiles =
+    {
+        'resource.rc'
+    }
     .UnityNumFiles = 6 // generated
     #include "$BuildPath$/Templates/Module.bff"
 }
