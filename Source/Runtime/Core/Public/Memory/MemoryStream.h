@@ -34,8 +34,12 @@ public:
     TMemoryStream(storage_type&& storage, std::streamsize size);
     TMemoryStream(allocator_type&& allocator, const TMemoryView<u8>& stolen);
 
+    u8* data() { return _storage.data(); }
+    const u8* data() const { return _storage.data(); }
+
     u8* Pointer() { return _storage.Pointer(); }
     const u8* Pointer() const { return _storage.Pointer(); }
+
     const storage_type& Storage() const { return _storage; }
 
     size_t size() const { return _size; }
