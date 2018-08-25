@@ -13,7 +13,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 void FGlobalThreadPool::Create() {
     const auto info = FPlatformThread::GlobalThreadsInfo();
-    parent_type::Create("GlobalThreadPool", PPE_THREADTAG_WORKER, info.NumWorkers, EThreadPriority::Normal);
+    parent_type::Create("Global", PPE_THREADTAG_WORKER, info.NumWorkers, EThreadPriority::Normal);
     parent_type::Get().Start(MakeView(info.Affinities).CutBefore(info.NumWorkers));
 }
 //----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Nor
 void FIOThreadPool::Create() {
     // IO should be operated in 2 threads max to prevent slow seeks :
     const auto info = FPlatformThread::IOThreadsInfo();
-    parent_type::Create("IOThreadPool", PPE_THREADTAG_IO, info.NumWorkers, EThreadPriority::Highest);
+    parent_type::Create("IO", PPE_THREADTAG_IO, info.NumWorkers, EThreadPriority::Highest);
     parent_type::Get().Start(MakeView(info.Affinities).CutBefore(info.NumWorkers));
 }
 //----------------------------------------------------------------------------
@@ -48,7 +48,7 @@ void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Norma
 //----------------------------------------------------------------------------
 void FHighPriorityThreadPool::Create() {
     const auto info = FPlatformThread::HighPriorityThreadsInfo();
-    parent_type::Create("HighPriorityThreadPool", PPE_THREADTAG_HIGHPRIORITY, info.NumWorkers, EThreadPriority::AboveNormal);
+    parent_type::Create("HighPriority", PPE_THREADTAG_HIGHPRIORITY, info.NumWorkers, EThreadPriority::AboveNormal);
     parent_type::Get().Start(MakeView(info.Affinities).CutBefore(info.NumWorkers));
 }
 //----------------------------------------------------------------------------
@@ -65,7 +65,7 @@ void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPrior
 //----------------------------------------------------------------------------
 void FBackgroundThreadPool::Create() {
     const auto info = FPlatformThread::BackgroundThreadsInfo();
-    parent_type::Create("BackgroundThreadPool", PPE_THREADTAG_BACKGROUND, info.NumWorkers, EThreadPriority::BelowNormal);
+    parent_type::Create("Background", PPE_THREADTAG_BACKGROUND, info.NumWorkers, EThreadPriority::BelowNormal);
     parent_type::Get().Start(MakeView(info.Affinities).CutBefore(info.NumWorkers));
 }
 //----------------------------------------------------------------------------
