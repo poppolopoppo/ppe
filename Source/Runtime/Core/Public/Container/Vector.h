@@ -28,7 +28,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator = ALLOCATOR(Container, T) >
-class TVector : _Allocator {
+class TVector : private _Allocator {
 public:
     template <typename U, typename _OtherAllocator>
     friend class TVector;
@@ -55,7 +55,7 @@ public:
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-    TVector() noexcept : _capacity(0), _size(0), _data(nullptr) {}
+    TVector() NOEXCEPT : _capacity(0), _size(0), _data(nullptr) {}
     ~TVector() {
         Assert(CheckInvariants());
         clear_ReleaseMemory();
@@ -64,7 +64,7 @@ public:
 #endif
     }
 
-    explicit TVector(Meta::FForceInit) noexcept
+    explicit TVector(Meta::FForceInit) NOEXCEPT
         : allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
         , _capacity(0), _size(0), _data(nullptr)
     {}
@@ -81,9 +81,9 @@ public:
     TVector(const TVector& other, const allocator_type& alloc) : TVector(alloc) { assign(other.begin(), other.end()); }
     TVector& operator=(const TVector& other);
 
-    TVector(TVector&& rvalue) noexcept : TVector(static_cast<allocator_type&&>(rvalue)) { assign(std::move(rvalue)); }
-    TVector(TVector&& rvalue, const allocator_type& alloc) noexcept : TVector(alloc) { assign_rvalue_(std::move(rvalue), std::false_type()); }
-    TVector& operator=(TVector&& rvalue) noexcept;
+    TVector(TVector&& rvalue) NOEXCEPT : TVector(static_cast<allocator_type&&>(rvalue)) { assign(std::move(rvalue)); }
+    TVector(TVector&& rvalue, const allocator_type& alloc) NOEXCEPT : TVector(alloc) { assign_rvalue_(std::move(rvalue), std::false_type()); }
+    TVector& operator=(TVector&& rvalue) NOEXCEPT;
 
     TVector(std::initializer_list<value_type> ilist) : TVector() { assign(ilist.begin(), ilist.end()); }
     TVector(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TVector(alloc) { assign(ilist.begin(), ilist.end()); }
@@ -337,15 +337,11 @@ hash_t hash_value(const TVector<T, _Allocator>& vector);
 //----------------------------------------------------------------------------
 template <typename T, size_t _InSitu, typename _Allocator = ALLOCATOR(Container, T) >
 class TVectorInSitu :
-    private TInSituAllocator<T, sizeof(T) * _InSitu, _Allocator>::storage_type
-,   public TVector<T, TInSituAllocator<T, sizeof(T) * _InSitu, _Allocator> > {
+    private TAlignedInSituStorage<T, _InSitu>
+,   public TVector<T, TInSituAllocator<TAlignedInSituStorage<T, _InSitu>, _Allocator> > {
 public:
-    static_assert(_InSitu > 0, "insitu size must be greater than 0");
-
-    typedef TInSituAllocator<T, sizeof(T) * _InSitu, _Allocator> allocator_type;
-    typedef TVector<T, allocator_type> vector_type;
-
-    static_assert(std::is_same<allocator_type, typename vector_type::allocator_type>::value, "");
+    using allocator_type = TInSituAllocator<TAlignedInSituStorage<T, _InSitu>, _Allocator>;
+    using vector_type = TVector<T, allocator_type>;
 
     using typename vector_type::allocator_traits;
     using typename vector_type::value_type;
@@ -358,10 +354,11 @@ public:
 
     using vector_type::operator [];
     using vector_type::assign;
+    using vector_type::data;
 
     typedef typename allocator_type::storage_type storage_type;
 
-    TVectorInSitu() noexcept : vector_type(allocator_type(static_cast<storage_type&>(*this))) {}
+    TVectorInSitu() NOEXCEPT : vector_type(allocator_type(static_cast<storage_type&>(*this))) {}
 
     explicit TVectorInSitu(size_type count) : TVectorInSitu() { resize_AssumeEmpty(count); }
     TVectorInSitu(size_type count, const_reference value) : TVectorInSitu() { resize_AssumeEmpty(count, value); }
@@ -369,8 +366,8 @@ public:
     TVectorInSitu(const TVectorInSitu& other) : TVectorInSitu() { assign(other.begin(), other.end()); }
     TVectorInSitu& operator=(const TVectorInSitu& other) { vector_type::operator =(other); return *this; }
 
-    TVectorInSitu(TVectorInSitu&& rvalue) noexcept : TVectorInSitu() { assign(std::move(rvalue)); }
-    TVectorInSitu& operator=(TVectorInSitu&& rvalue) noexcept { vector_type::operator=(std::move(rvalue)); return *this; }
+    TVectorInSitu(TVectorInSitu&& rvalue) NOEXCEPT : TVectorInSitu() { assign(std::move(rvalue)); }
+    TVectorInSitu& operator=(TVectorInSitu&& rvalue) NOEXCEPT { vector_type::operator=(std::move(rvalue)); return *this; }
 
     TVectorInSitu(std::initializer_list<value_type> ilist) : TVectorInSitu() { assign(ilist.begin(), ilist.end()); }
     TVectorInSitu& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
@@ -378,11 +375,19 @@ public:
     TVectorInSitu(const TMemoryView<const value_type>& view) : TVectorInSitu() { assign(view.begin(), view.end()); }
     TVectorInSitu& operator=(const TMemoryView<const value_type>& view) { assign(view.begin(), view.end()); return *this; }
 
-    ~TVectorInSitu() {}
+    bool UseInSitu() const {
+#ifdef WITH_PPE_ASSERT
+        // detects any overlapping
+        return allocator_type::AliasesToAllocator(vector_type::data(), vector_type::capacity());
+#else
+        // but in fact it should alias to insitu only with pointer equality
+        return (vector_type::data() == storage_type::data());
+#endif
+    }
 
-    bool UseInSitu() const { return storage_type::Contains(vector_type::data()); }
-
-    friend hash_t hash_value(const TVectorInSitu& vector) { return hash_value(static_cast<const vector_type&>(vector)); }
+    inline friend hash_t hash_value(const TVectorInSitu& vector) {
+        return hash_value(static_cast<const vector_type&>(vector));
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

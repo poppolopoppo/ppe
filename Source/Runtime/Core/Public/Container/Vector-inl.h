@@ -7,7 +7,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-auto TVector<T, _Allocator>::operator=(const TVector& other) -> TVector& {
+auto TVector<T, _Allocator>::operator =(const TVector& other) -> TVector& {
     if (this == &other)
         return *this;
 
@@ -19,7 +19,7 @@ auto TVector<T, _Allocator>::operator=(const TVector& other) -> TVector& {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-auto TVector<T, _Allocator>::operator=(TVector&& rvalue) noexcept -> TVector& {
+auto TVector<T, _Allocator>::operator =(TVector&& rvalue) NOEXCEPT -> TVector& {
     if (this == &rvalue)
         return *this;
 
@@ -443,38 +443,13 @@ void TVector<T, _Allocator>::reserve_AssumeEmpty(size_type count) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::reserve_Exactly(size_type count) {
-    count = SafeAllocatorSnapSize(allocator_(), count);
+    count = (count ? SafeAllocatorSnapSize(allocator_(), count) : 0);
     if (_capacity == count)
         return;
-    AssertRelease(count >= _size);
-#if 1 //%TODO
+
+    Assert(count >= _size);
     _data = Relocate(allocator_(), MakeView(), count, _capacity);
     _capacity = checked_cast<u32>(count);
-#else
-    T* newdata = nullptr;
-    try {
-        newdata = (count > 0)
-            ? reinterpret_cast<T*>(allocator_traits::allocate(allocator_(), count))
-            : nullptr;
-    }
-    catch(std::bad_alloc e) {
-        return;
-    }
-
-    Assert((0 == count) || (nullptr != newdata));
-    for (size_type i = 0; i < _size; ++i) {
-        allocator_traits::construct(allocator_(), &newdata[i], std::move(_data[i]));
-        allocator_traits::destroy(allocator_(), &_data[i]);
-    }
-
-    if (_data)
-        allocator_traits::deallocate(allocator_(), _data, _capacity);
-    else
-        Assert(0 == _capacity);
-
-    _data = newdata;
-    _capacity = count;
-#endif
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -785,7 +760,6 @@ hash_t hash_value(const TVector<T, _Allocator>& vector) {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 FTextWriter& operator <<(FTextWriter& oss, const TVector<T, _Allocator>& vector) {

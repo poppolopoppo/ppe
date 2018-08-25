@@ -4,6 +4,7 @@
 
 #include "Allocator/AllocatorBase.h"
 #include "HAL/PlatformMemory.h"
+#include "Meta/AlignedStorage.h"
 
 #include <type_traits>
 
@@ -13,138 +14,79 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <size_t _SizeInBytes>
-class TInSituStorage {
-public:
-    TInSituStorage() noexcept
-        : _insituCount(0)
-        , _insituOffset(0) {}
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // TInSituStorage<> : structure was padded due to alignment specifier
+template <typename T, size_t _Capacity>
+struct ALIGN(ALLOCATION_BOUNDARY) TInSituStorage {
+    STATIC_CONST_INTEGRAL(size_t, Capacity, _Capacity);
+
+    using storage_type = Meta::TAlignedStorage<
+        Capacity * sizeof(T),
+        ALLOCATION_BOUNDARY
+    >;
+
+    storage_type InSitu;
+
+    void* data() { return (&InSitu); }
+    const void* data() const { return (&InSitu); }
+
+#ifdef WITH_PPE_ASSERT
+    // Verify that there's only one insitu allocation in flight
+    // This is an important assumption which allows to avoid state tracking in release builds
+    STATIC_CONST_INTEGRAL(size_t, GStateBusy, CODE3264(0x0CC491EDul, 0x0CC491ED0CC491EDul));
+    STATIC_CONST_INTEGRAL(size_t, GStateEmpty, CODE3264(0xFA11BAC4ul, 0xFA11BAC4FA11BAC4ul));
+
+    size_t State; // also acts as a canary
+
+    TInSituStorage()
+    :   State(GStateEmpty) {
+        FPlatformMemory::Memset(&InSitu, 0xCC, sizeof(InSitu));
+    }
 
     ~TInSituStorage() {
-        Assert(InSituEmpty());
-        Assert(0 == _insituOffset);
+        STATIC_ASSERT(_Capacity > 0);
+        STATIC_ASSERT(sizeof(InSitu) >= sizeof(T) * _Capacity);
+        Assert(GStateEmpty == State); // or we are "leaking" an allocation
     }
 
-    TInSituStorage(const TInSituStorage& ) = delete;
-    TInSituStorage& operator=(const TInSituStorage& ) = delete;
+    bool UsesInSitu() const { return (GStateBusy == State); }
 
-    TInSituStorage(TInSituStorage&& ) = delete;
-    TInSituStorage& operator=(TInSituStorage&& ) = delete;
+    void* Allocate() {
+        Assert(GStateEmpty == State);
 
-    FORCE_INLINE const u8* InsituData() const { return reinterpret_cast<const u8*>(&_insituData); }
+        State = GStateBusy;
+        Assert_NoAssume(
+            FPlatformMemory::Memtest(&InSitu, 0xCC, sizeof(InSitu)) ||
+            FPlatformMemory::Memtest(&InSitu, 0xDD, sizeof(InSitu)) );
 
-    void* AllocateIFP(size_t sizeInBytes);
-    bool DeallocateIFP(void* ptr, size_t sizeInBytes) noexcept;
-    void* ReallocateIFP(void* ptr, size_t newSizeInBytes, size_t oldSizeInBytes);
-
-    FORCE_INLINE bool InSituEmpty() const noexcept { return (0 == _insituCount); }
-
-    FORCE_INLINE bool Contains(const void* ptr) const noexcept {
-        return (InsituData() <= reinterpret_cast<const u8*>(ptr) &&
-                reinterpret_cast<const u8*>(ptr) <= InsituData() + _SizeInBytes);
+        return data();
     }
 
-private:
-#ifdef ARCH_X86 // less padding -> pack to u16
-    STATIC_ASSERT(_SizeInBytes < UINT16_MAX);
-    typedef u16 size_type;
+    void Deallocate(void* p) {
+        Assert(data() == p);
+        Assert(GStateBusy == State);
+
+        State = GStateEmpty;
+        FPlatformMemory::Memset(&InSitu, 0xDD, sizeof(InSitu));
+    }
+
 #else
-    STATIC_ASSERT(_SizeInBytes < UINT32_MAX);
-    typedef u32 size_type;
+    void* Allocate() { return data(); }
+    void Deallocate(void*) {}
+
 #endif
-
-    size_type _insituCount;
-    size_type _insituOffset;
-
-    typename std::aligned_storage<_SizeInBytes>::type _insituData;
 };
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
-template <size_t _SizeInBytes>
-void* TInSituStorage<_SizeInBytes>::AllocateIFP(size_t sizeInBytes) {
-#if USE_PPE_INSITU_ALLOCATOR
-    if (_insituOffset + sizeInBytes > _SizeInBytes)
-        return nullptr;
-
-    void* p = (void*)(InsituData() + _insituOffset);
-
-    _insituCount++;
-    _insituOffset = checked_cast<size_type>(_insituOffset + sizeInBytes);
-
-    return p;
-
-#else
-    UNUSED(sizeInBytes);
-    return nullptr;
-
-#endif
-}
+template <typename T, size_t _Capacity>
+using TAlignedInSituStorage = TInSituStorage<
+    T, // avoid wasting alignment memory :
+    ROUND_TO_NEXT_16(sizeof(T) * _Capacity) / sizeof(T)
+>;
 //----------------------------------------------------------------------------
-template <size_t _SizeInBytes>
-bool TInSituStorage<_SizeInBytes>::DeallocateIFP(void* ptr, size_t sizeInBytes) noexcept {
-#if USE_PPE_INSITU_ALLOCATOR
-    const uintptr_t offset = uintptr_t((const u8*)ptr - InsituData());
-    if (offset > _insituOffset)
-        return false;
-
-    Assert(_insituCount > 0);
-    Assert(offset + sizeInBytes <= _insituOffset);
-
-    _insituCount--;
-
-    if (offset + sizeInBytes == _insituOffset)
-        _insituOffset = checked_cast<size_type>(offset);
-    else
-        Assert(0 < _insituCount); // TODO : memory just freed is definitively lost (bubble) ...
-
-    return true;
-
-#else
-    UNUSED(ptr);
-    UNUSED(sizeInBytes);
-    return false;
-
-#endif
-}
-//----------------------------------------------------------------------------
-template <size_t _SizeInBytes>
-void* TInSituStorage<_SizeInBytes>::ReallocateIFP(void* ptr, size_t newSizeInBytes, size_t oldSizeInBytes) {
-#if USE_PPE_INSITU_ALLOCATOR
-    Assert(ptr); // All previously handled :
-    Assert(oldSizeInBytes);
-    Assert(newSizeInBytes);
-
-    const uintptr_t offset = uintptr_t((const u8*)ptr - InsituData());
-    Assert(offset + oldSizeInBytes <= _insituOffset);
-    Assert(_insituCount > 0);
-
-    // Try realloc in-place ONLY IF ITS THE LAST BLOCK ALLOCATED
-    if (offset + oldSizeInBytes == _insituOffset && offset + newSizeInBytes <= _SizeInBytes) {
-        _insituOffset = checked_cast<size_type>(offset + newSizeInBytes);
-
-        return ptr;
-    }
-    // Need to allocate externally and free this block afterwards
-    else {
-        return nullptr;
-    }
-
-#else
-    UNUSED(ptr);
-    UNUSED(newSizeInBytes);
-    UNUSED(oldSizeInBytes);
-    return nullptr;
-
-#endif
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator>
+template <typename _Storage, typename _Allocator>
 class TInSituAllocator : public _Allocator {
 public:
-    template <typename U, size_t N, typename A>
-    friend class TInSituAllocator;
-
     typedef _Allocator fallback_type;
 
     using typename fallback_type::value_type;
@@ -156,27 +98,24 @@ public:
     typedef std::false_type propagate_on_container_swap;
     typedef std::false_type is_always_equal;
 
-    typedef TInSituStorage<_SizeInBytes> storage_type;
+    typedef _Storage storage_type;
 
-    STATIC_ASSERT((_SizeInBytes % sizeof(T)) == 0);
-    STATIC_CONST_INTEGRAL(size_t, GInSituSize, (_SizeInBytes/sizeof(T)));
+#if USE_PPE_INSITU_ALLOCATOR
+    STATIC_CONST_INTEGRAL(size_t, Capacity, storage_type::Capacity);
+#else
+    STATIC_CONST_INTEGRAL(size_t, Capacity, 0); // force fall-back allocation
+#endif
 
     template<typename U>
     struct rebind {
+        STATIC_ASSERT(Meta::IsAligned(sizeof(U), sizeof(storage_type)));
         typedef TInSituAllocator<
-            U, _SizeInBytes,
+            TInSituStorage<U, (sizeof(value_type) * Capacity) / sizeof(U)>,
             typename _Allocator::template rebind<U>::other
         >   other;
     };
 
-    const storage_type& InSitu() const { return _insitu; }
-
-    fallback_type& FallbackAllocator() { return static_cast<fallback_type&>(*this); }
-    const fallback_type& FallbackAllocator() const { return static_cast<const fallback_type&>(*this); }
-
-    TInSituAllocator(storage_type& insitu) noexcept : _insitu(insitu) {}
-    template <typename U, typename A>
-    TInSituAllocator(const TInSituAllocator<U, _SizeInBytes, A>& other) noexcept : _insitu(other._insitu) {}
+    TInSituAllocator(storage_type& insitu) NOEXCEPT : _insitu(insitu) {}
 
     TInSituAllocator(const TInSituAllocator&) = delete;
     TInSituAllocator& operator=(const TInSituAllocator&) = delete;
@@ -184,102 +123,120 @@ public:
     TInSituAllocator(TInSituAllocator&& rvalue) : TInSituAllocator(rvalue._insitu) {}
     TInSituAllocator& operator=(TInSituAllocator&&) = delete;
 
+    const storage_type& InSitu() const { return _insitu; }
+
+    bool AliasesToAllocator(const void* p, size_t sz) const {
+        return FPlatformMemory::Memoverlap(p, sz, &_insitu, sizeof(_insitu));
+    }
+
+    fallback_type& FallbackAllocator() { return static_cast<fallback_type&>(*this); }
+    const fallback_type& FallbackAllocator() const { return static_cast<const fallback_type&>(*this); }
+
     pointer allocate(size_type n);
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
-    void deallocate(pointer p, size_type n) noexcept;
+    void deallocate(pointer p, size_type n) NOEXCEPT;
 
     // see Relocate()
     void* relocate(void* p, size_type newSize, size_type oldSize);
 
-    template <typename U, size_t N>
-    friend bool operator ==(const TInSituAllocator& lhs, const TInSituAllocator<U, N, _Allocator>& rhs) noexcept {
-        return (((N == _SizeInBytes) && (&lhs._insitu == &rhs._insitu)) ||
-                (lhs._insitu.InSituEmpty() && rhs._insitu.InSituEmpty()) );
+    friend bool operator ==(const TInSituAllocator& lhs, const TInSituAllocator& rhs) NOEXCEPT {
+        return (&lhs._insitu == &rhs._insitu);
     }
-
-    template <typename U, size_t N>
-    friend bool operator !=(const TInSituAllocator& lhs, const TInSituAllocator<U, N, _Allocator>& rhs) noexcept {
-        return !operator ==(lhs, rhs);
+    friend bool operator !=(const TInSituAllocator& lhs, const TInSituAllocator& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
     }
 
 private:
     storage_type& _insitu;
 };
 //----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator>
-auto TInSituAllocator<T, _SizeInBytes, _Allocator>::allocate(size_type n) -> pointer {
+template <typename _Storage, typename _Allocator>
+auto TInSituAllocator<_Storage, _Allocator>::allocate(size_type n) -> pointer {
     Assert(n > 0);
     Assert(n < fallback_type::max_size());
 
-    pointer p = reinterpret_cast<pointer>(_insitu.AllocateIFP(n * sizeof(value_type)));
-    if (nullptr == p)
-        p = fallback_type::allocate(n);
+    pointer const p = (n <= Capacity
+        ? reinterpret_cast<pointer>(_insitu.Allocate())
+        : fallback_type::allocate(n) );
 
     Assert(p); // fallback_type should have thrown a std::bad_alloc() exception
+    Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, p));
     return p;
 }
 //----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator>
-void TInSituAllocator<T, _SizeInBytes, _Allocator>::deallocate(pointer p, size_type n) noexcept {
+template <typename _Storage, typename _Allocator>
+void TInSituAllocator<_Storage, _Allocator>::deallocate(pointer p, size_type n) NOEXCEPT {
     Assert(p);
+    Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, p));
     Assert(n > 0);
     Assert(n < fallback_type::max_size());
 
-    if (false == _insitu.DeallocateIFP(p, n * sizeof(value_type)) )
+    if (_insitu.data() == p) {
+        Assert(n <= Capacity);
+        _insitu.Deallocate(p);
+    }
+    else {
+        Assert(n > Capacity);
         fallback_type::deallocate(p, n);
+    }
 }
 //----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator>
-void* TInSituAllocator<T, _SizeInBytes, _Allocator>::relocate(void* p, size_type newSize, size_type oldSize) {
+template <typename _Storage, typename _Allocator>
+void* TInSituAllocator<_Storage, _Allocator>::relocate(void* p, size_type newSize, size_type oldSize) {
     STATIC_ASSERT(Meta::TIsPod<value_type>::value);
     Assert(nullptr == p || 0 < oldSize);
 
-    if (Likely(0 == oldSize)) {
-        Assert(nullptr == p);
+    if (Likely(nullptr == p)) {
+        Assert(newSize); // no realloc(nullptr, 0, 0)
+        Assert(not oldSize);
+
         return allocate(newSize);
     }
-    else if (Unlikely(0 == newSize)) {
-        if (p) {
-            Assert(0 < oldSize);
-            deallocate(static_cast<pointer>(p), oldSize);
-        }
-        return nullptr;
-    }
-    else {
-        Assert(nullptr != p);
 
-        if (not _insitu.Contains(p))
-            return Relocate_AssumePod(
-                static_cast<fallback_type&>(*this),
-                TMemoryView<value_type>(static_cast<pointer>(p), oldSize),
-                newSize, oldSize );
+    void* newp;
+    if (_insitu.data() == p) {
+        Assert(oldSize);
+        Assert(oldSize <= Capacity);
+        Assert_NoAssume(_insitu.UsesInSitu());
 
-        void* newp = _insitu.ReallocateIFP(p, newSize * sizeof(value_type), oldSize * sizeof(value_type));
-        if (newp)
-            return newp;
+        if (0 == newSize)
+            return nullptr; // nothing todo
+        if (newSize <= Capacity)
+            return p;
 
         newp = fallback_type::allocate(newSize);
-        if (nullptr == newp)
-            return nullptr;
+        FPlatformMemory::MemcpyLarge(newp, p, Min(newSize, oldSize) * sizeof(value_type));
 
-        // This is a POD type, so this is safe :
-        const size_t cpySize = Min(oldSize, newSize);
-        FPlatformMemory::Memcpy(newp, p, cpySize * sizeof(value_type));
-
-        if (not _insitu.DeallocateIFP(p, oldSize * sizeof(value_type)))
-            AssertNotReached();
-
-        return newp;
+        _insitu.Deallocate(p);
     }
+    else {
+        Assert(p);
+        Assert(oldSize);
+        Assert(oldSize > Capacity);
+
+        if (Likely(newSize)) {
+            // assuming fall-back allocator has implemented relocate
+            newp = fallback_type::relocate(p, newSize, oldSize);
+        }
+        else {
+            fallback_type::deallocate(p, oldSize);
+            return nullptr;
+        }
+    }
+
+    Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, newp));
+    return newp;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator>
-size_t AllocatorSnapSize(const TInSituAllocator<T, _SizeInBytes, _Allocator>& allocator, size_t size) {
+template <typename _Storage, typename _Allocator>
+size_t AllocatorSnapSize(const TInSituAllocator<_Storage, _Allocator>& allocator, size_t size) {
 #if USE_PPE_INSITU_ALLOCATOR
-    constexpr size_t GInSituSize = TInSituAllocator<T, _SizeInBytes, _Allocator>::GInSituSize;
-    return (size <= GInSituSize ? GInSituSize : AllocatorSnapSize(allocator.FallbackAllocator(), size));
+    Assert(size);
+    return (size > TInSituAllocator<_Storage, _Allocator>::Capacity
+        ? AllocatorSnapSize(allocator.FallbackAllocator(), size)
+        : TInSituAllocator<_Storage, _Allocator>::Capacity );
 #else
     return AllocatorSnapSize(allocator.FallbackAllocator(), size);
 #endif
@@ -287,44 +244,47 @@ size_t AllocatorSnapSize(const TInSituAllocator<T, _SizeInBytes, _Allocator>& al
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator, typename U, typename _Allocator2>
-struct allocator_can_steal_from<
-    TInSituAllocator<T, _SizeInBytes, _Allocator>,
-    TInSituAllocator<U, _SizeInBytes, _Allocator2>
->   : allocator_can_steal_from<_Allocator, _Allocator2> {};
+// Can't steal from insitu, but it may be possible with fall-back allocator :
 //----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator, typename _Allocator2>
+template <typename _Storage, typename _Allocator, typename _Storage2, typename _Allocator2>
 struct allocator_can_steal_from<
-    TInSituAllocator<T, _SizeInBytes, _Allocator>,
+    TInSituAllocator<_Storage, _Allocator>,
+    TInSituAllocator<_Storage2, _Allocator2>
+>   : std::bool_constant<
+    sizeof(_Storage::storage_type) ==
+    sizeof(_Storage2::storage_type) &&
+    allocator_can_steal_from<_Allocator, _Allocator2>::value
+> {};
+//----------------------------------------------------------------------------
+template <typename _Storage, typename _Allocator, typename _Allocator2>
+struct allocator_can_steal_from<
+    TInSituAllocator<_Storage, _Allocator>,
     _Allocator2
 >   : allocator_can_steal_from<_Allocator, _Allocator2> {};
 //----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator, typename _Allocator2>
+template <typename _Storage, typename _Allocator, typename _Allocator2>
 struct allocator_can_steal_from<
     _Allocator,
-    TInSituAllocator<T, _SizeInBytes, _Allocator2>
+    TInSituAllocator<_Storage, _Allocator2>
 >   : allocator_can_steal_from<_Allocator, _Allocator2> {};
 //----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator>
+template <typename _Storage, typename _Allocator>
 auto/* inherited */AllocatorStealFrom(
-    TInSituAllocator<T, _SizeInBytes, _Allocator>& alloc,
-    typename TInSituAllocator<T, _SizeInBytes, _Allocator>::pointer ptr, size_t size ) {
+    TInSituAllocator<_Storage, _Allocator>& alloc,
+    typename TInSituAllocator<_Storage, _Allocator>::pointer ptr, size_t size ) {
     // checks that we not stealing from insitu storage, which can't be moved
-#if USE_PPE_INSITU_ALLOCATOR
-    Assert(TInSituAllocator<T, _SizeInBytes, _Allocator>::GInSituSize < size);
-#endif
-    Assert(not alloc.InSitu().Contains(ptr));
+    Assert(TInSituAllocator<_Storage, _Allocator>::Capacity < size);
+    Assert_NoAssume(not alloc.AliasesToAllocator(ptr, size));
     return AllocatorStealFrom(alloc.FallbackAllocator(), ptr, size);
 }
 //----------------------------------------------------------------------------
-template <typename T, size_t _SizeInBytes, typename _Allocator>
+template <typename _Storage, typename _Allocator>
 auto/* inherited */AllocatorAcquireStolen(
-    TInSituAllocator<T, _SizeInBytes, _Allocator>& alloc,
-    typename TInSituAllocator<T, _SizeInBytes, _Allocator>::pointer ptr, size_t size ) {
+    TInSituAllocator<_Storage, _Allocator>& alloc,
+    typename TInSituAllocator<_Storage, _Allocator>::pointer ptr, size_t size ) {
     // checks that the stolen block is larger than insitu storage, we can't break this predicate
-#if USE_PPE_INSITU_ALLOCATOR
-    Assert(TInSituAllocator<T, _SizeInBytes, _Allocator>::GInSituSize < size);
-#endif
+    Assert(TInSituAllocator<_Storage, _Allocator>::Capacity < size);
+    Assert_NoAssume(not alloc.AliasesToAllocator(ptr, size));
     return AllocatorAcquireStolen(alloc.FallbackAllocator(), ptr, size);
 }
 //----------------------------------------------------------------------------

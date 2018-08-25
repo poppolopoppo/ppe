@@ -111,6 +111,12 @@ public: // must be defined for every platform
     }
 
 #ifdef WITH_PPE_ASSERT
+    static bool Memtest(void* dst, u8 pattern, size_t sizeInBytes) {
+        forrange(it, (u8*)dst, (u8*)dst + sizeInBytes)
+            if (*it != pattern)
+                return false;
+        return true;
+    }
     static void Memdeadbeef(void* dst, size_t sizeInBytes) {
         Memset(dst, 0xDD, sizeInBytes);
     }

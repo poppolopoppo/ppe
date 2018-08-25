@@ -15,9 +15,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <typename _Char>
 using TStringBuilderAllocator = TInSituAllocator<
-    _Char,
-    TBasicString<_Char>::GInSituSize * sizeof(_Char),
-    TRebindAlloc<TStringAllocator<_Char>, u8>
+    TInSituStorage<_Char, TBasicString<_Char>::GInSituSize>,
+    TRebindAlloc< TStringAllocator<_Char>, u8 >
 >;
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -73,6 +72,10 @@ public:
     }
 
     using TBasicTextWriter<_Char>::Write; // otherwise ambiguous with TMemoryStream<>::Write()
+
+    bool UseInSitu() const {
+        return (stream_type::data() == insitu_type::data());
+    }
 };
 //----------------------------------------------------------------------------
 PPE_CORE_API extern template class TBasicStringBuilder<char>;
