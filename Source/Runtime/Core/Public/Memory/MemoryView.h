@@ -85,9 +85,9 @@ public:
     void CopyTo(const TMemoryView<Meta::TRemoveConst<T>>& dst) const;
 
     template <size_t _Dim>
-    void CopyTo(Meta::TRemoveConst<T> (&dst)[_Dim]) const {
-        Assert(_Dim >= _size);
-        CopyTo(TMemoryView<Meta::TRemoveConst<T>>(dst, _size));
+    void CopyTo(Meta::TRemoveConst<T> (&dst)[_Dim], size_t offset = 0) const {
+        Assert(_Dim >= offset + _size);
+        CopyTo(TMemoryView<Meta::TRemoveConst<T>>(dst + offset, _size));
     }
 
     TMemoryView<T> SubRange(size_t offset, size_t count) const;
