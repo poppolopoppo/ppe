@@ -83,7 +83,7 @@ void FWindowsPlatformNotification::ShowSystray() {
     nid.uCallbackMessage = FWindowsPlatformNotification::WM_SYSTRAY;
 
     const FCurrentProcess& process = FCurrentProcess::Get();
-    ::LoadIconMetric(NULL, MAKEINTRESOURCEW(process.AppIcon()), LIM_SMALL, &nid.hIcon);
+    nid.hIcon = ::LoadIcon(NULL, MAKEINTRESOURCEW(process.AppIcon()));
 
     const FPlatformApplication& app = FPlatformApplication::Get();
     nid.hWnd = NULL;// #TODO (app.MainWindow() ? app.MainWindow()->NativeHandle() : NULL);

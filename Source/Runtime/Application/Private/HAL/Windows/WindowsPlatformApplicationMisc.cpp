@@ -7,6 +7,7 @@
 #include "Color/Color.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformIncludes.h"
+#include "HAL/PlatformProcess.h"
 #include "HAL/Windows/LastError.h"
 #include "HAL/Windows/WindowsPlatformNotification.h"
 #include "HAL/Windows/WindowsWindow.h"
@@ -75,15 +76,46 @@ void FWindowsPlatformApplicationMisc::PreventScreenSaver() {
     ::SendInput(1, &Input, sizeof(INPUT));
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformApplicationMisc::SetHighDPIAwareness() {
+bool FWindowsPlatformApplicationMisc::SetHighDPIAwareness() {
+    ::HMODULE const hShcore = FPlatformProcess::AttachToDynamicLibrary(L"Shcore.dll");
+    if (NULL == hShcore)
+        return false;
+
+    typedef ::HRESULT (STDAPICALLTYPE *FSetProcessDpiAwareness)(
+        _In_ ::PROCESS_DPI_AWARENESS value);
+    typedef ::HRESULT (STDAPICALLTYPE *FGetProcessDpiAwareness)(
+        _In_opt_ ::HANDLE hprocess,
+        _Out_ ::PROCESS_DPI_AWARENESS *value);
+    typedef ::HRESULT (STDAPICALLTYPE *FGetDpiForMonitor)(
+        _In_ ::HMONITOR hmonitor,
+        _In_ ::MONITOR_DPI_TYPE dpiType,
+        _Out_ ::UINT *dpiX,
+        _Out_ ::UINT *dpiY);
+
+    auto hSetProcessDpiAwareness = (FSetProcessDpiAwareness)FPlatformProcess::DynamicLibraryFunction(hShcore, "SetProcessDpiAwareness");
+    auto hGetProcessDpiAwareness = (FGetProcessDpiAwareness)FPlatformProcess::DynamicLibraryFunction(hShcore, "GetProcessDpiAwareness");
+    auto hGetDpiForMonitor = (FGetDpiForMonitor)FPlatformProcess::DynamicLibraryFunction(hShcore, "GetDpiForMonitor");
+    if (not (hSetProcessDpiAwareness && hGetProcessDpiAwareness && hGetDpiForMonitor)) {
+        LOG(Application, Warning, L"failed to bind DPI awareness functions from Shcore.dll");
+        return false;
+    }
+
+    bool success = true;
+
     ::PROCESS_DPI_AWARENESS CurrentAwareness = PROCESS_DPI_UNAWARE;
-    ::GetProcessDpiAwareness(NULL, &CurrentAwareness);
+    hGetProcessDpiAwareness(NULL, &CurrentAwareness);
 
     if (CurrentAwareness != PROCESS_PER_MONITOR_DPI_AWARE) {
-        LOG(Application, Debug, TEXT("setting process to per monitor DPI aware"));
-        if (not SUCCEEDED(::SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE))) // PROCESS_PER_MONITOR_DPI_AWARE_VALUE
+        LOG(Application, Info, L"setting application aware of per monitor DPI");
+        if (not SUCCEEDED(hSetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE))) {
             LOG_LASTERROR(Application, L"SetProcessDpiAwareness");
+            success = false;
+        }
     }
+
+    FPlatformProcess::DetachFromDynamicLibrary(hShcore);
+
+    return success;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

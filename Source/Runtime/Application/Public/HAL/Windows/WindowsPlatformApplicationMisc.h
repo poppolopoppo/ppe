@@ -22,7 +22,7 @@ public: // must be defined for every platform
     static bool PickScreenColorAt(int x, int y, FColor* color);
     static bool PickScreenColorUnderMouse(FColor* color);
     static void PreventScreenSaver();
-    static void SetHighDPIAwareness();
+    static bool SetHighDPIAwareness();
 
 };
 //----------------------------------------------------------------------------

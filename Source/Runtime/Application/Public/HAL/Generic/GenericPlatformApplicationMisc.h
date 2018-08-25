@@ -18,7 +18,7 @@ public: // must be defined for every platform
     static bool PickScreenColorAt(int x, int y, FColor* color) = delete;
     static bool PickScreenColorUnderMouse(FColor* color) = delete;
     static void PreventScreenSaver() = delete;
-    static void SetHighDPIAwareness() = delete;
+    static bool SetHighDPIAwareness() = delete;
 
 };
 //----------------------------------------------------------------------------
