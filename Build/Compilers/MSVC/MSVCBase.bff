@@ -108,13 +108,11 @@
     + ' /IGNORE:4001'       ; https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
     + ' /NXCOMPAT:NO'       ; indique que le programme n'est pas compatible avec Data Execution Prevention
     + ' /STACK:4194304'     ; augmente la taille de la stack de chaque thread à 4mo
-    + ' /LIBPATH:"$BinaryPath$"'
     + ' /SUBSYSTEM:WINDOWS'
     + ' /OUT:"%2" "%1"'
     + ' kernel32.lib'
     + ' User32.lib'
     + ' Shell32.lib'
-    + ' Comctl32.lib'
     + ' Gdi32.lib'
     + ' userenv.lib'
     + ' advapi32.lib'
