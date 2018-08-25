@@ -52,7 +52,7 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, float v);
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, double v);
 template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const void* v);
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, void* v);
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const TBasicStringView<_Char>& v);
 template <typename _Char>
@@ -63,6 +63,13 @@ template <typename _Char, size_t _Dim>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const _Char(&v)[_Dim]);
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, _Char v);
+//----------------------------------------------------------------------------
+template <typename _Char, typename T>
+Meta::TEnableIf< // removes ambiguity between const _Char (&)[] and _Char*
+    std::is_same_v<const _Char*, T> &&
+    std::is_array_v<T> == false,
+    TBasicTextWriter<_Char>&
+>   operator <<(TBasicTextWriter<_Char>& w, T v);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

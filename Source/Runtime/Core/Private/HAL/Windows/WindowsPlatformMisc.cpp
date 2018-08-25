@@ -164,7 +164,7 @@ size_t FWindowsPlatformMisc::NumCoresWHyperThreading() {
 }
 //----------------------------------------------------------------------------
 FString FWindowsPlatformMisc::OSName() {
-    const char* osname = nullptr;
+    FStringView osname;
     if (::IsWindowsXPOrGreater())
         osname = "Windows XP";
     if (::IsWindowsXPSP1OrGreater())
@@ -190,11 +190,11 @@ FString FWindowsPlatformMisc::OSName() {
     if (::IsWindows10OrGreater())
         osname = "Windows 10";
 
-    const char* const arch = (Is64bitOperatingSystem()
+    const FStringView arch = (Is64bitOperatingSystem()
         ? "64 bit"
         : "32 bit" );
 
-    const char* clientOrServer = (::IsWindowsServer()
+    const FStringView clientOrServer = (::IsWindowsServer()
         ? "Server"
         : "Client" );
 
