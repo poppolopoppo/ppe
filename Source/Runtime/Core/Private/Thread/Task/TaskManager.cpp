@@ -128,8 +128,6 @@ public:
     OVERRIDE_CLASS_ALLOCATOR(ALIGNED_ALLOCATOR(Task, FTaskCounter, CACHELINE_SIZE))
 
 private:
-    void ResumeStalledFibers_();
-
     mutable FAtomicSpinLock _barrier;
     std::atomic<i32> _taskCount;
     u32 _queueSize;
@@ -139,7 +137,11 @@ private:
 #else
     STATIC_CONST_INTEGRAL(u32, QueueCapacity, CODE3264(14, 15)); // exploit all cache line alignment
 #endif
-    FStalledFiber _queue[QueueCapacity];
+
+    typedef POD_STORAGE(FStalledFiber) FQueueBuffer_[QueueCapacity];
+    FQueueBuffer_ _queue;
+
+    TMemoryView<FStalledFiber> ResumeStalledFibers_(FQueueBuffer_ buffer);
 
 #if USE_PPE_SAFEPTR // _safeCount disapears otherwise
     const size_t _canary_freeToUse = CODE3264(0x01234567ul, 0x0123456789ABCDEFull);
@@ -554,18 +556,21 @@ void FTaskManagerImpl::WorkerLoop_() {
 //----------------------------------------------------------------------------
 bool FTaskCounter::Valid() const {
     Assert_NoAssume(CheckCanary_());
+
     return (0 <= _taskCount);
 }
 //----------------------------------------------------------------------------
 bool FTaskCounter::Finished() const {
     Assert_NoAssume(CheckCanary_());
     Assert(0 <= _taskCount);
+
     return (0 == _taskCount);
 }
 //----------------------------------------------------------------------------
 void FTaskCounter::Start(size_t count) {
     Assert_NoAssume(CheckCanary_());
     Assert(-1 == _taskCount);
+
     _taskCount = checked_cast<i32>(count);
 }
 //----------------------------------------------------------------------------
@@ -582,8 +587,8 @@ bool FTaskCounter::Queue(ITaskContext* resume, FTaskFiberRef fiber, ETaskPriorit
         if (Likely(_taskCount)) {
             // will be resumed by counter when exhausted in Decrement_ResumeWaitingTasksIfZero()
             Assert(_queueSize < QueueCapacity);
-            _queue[_queueSize++] = std::move(stalled);
 
+            INPLACE_NEW(&_queue[_queueSize++], FStalledFiber)(std::move(stalled));
             return true;
         }
     }
@@ -602,37 +607,46 @@ void FTaskCounter::Clear() {
     _taskCount = -1;
 }
 //----------------------------------------------------------------------------
-NO_INLINE void FTaskCounter::ResumeStalledFibers_() {
+NO_INLINE TMemoryView<FStalledFiber> FTaskCounter::ResumeStalledFibers_(FQueueBuffer_ buffer) {
     Assert_NoAssume(CheckCanary_());
 
     const FAtomicSpinLock::FScope scopedLock(_barrier);
 
-    // sort all queued fibers by priority before resuming
-    const TMemoryView<FStalledFiber> fibers(_queue, _queueSize);
-    std::stable_sort(fibers.begin(), fibers.end(),
-        [](const FStalledFiber& lhs, const FStalledFiber& rhs) {
-        return (lhs.Priority() < rhs.Priority());
-    });
+    const TMemoryView<FStalledFiber> resume(reinterpret_cast<FStalledFiber*>(buffer), _queueSize);
+    const TMemoryView<FStalledFiber> queue(reinterpret_cast<FStalledFiber*>(_queue), _queueSize);
 
-    // stalled fibers are resumed through a task to let the current fiber dispatch
-    // all jobs to every worker thread before yielding
-    for (FStalledFiber& fiber : fibers)
-        fiber.Resume(&FWorkerContext_::ResumeFiberTask);
-
+    std::uninitialized_move(queue.begin(), queue.end(), resume.begin());
     _queueSize = 0;
+
+    return resume;
 }
 //----------------------------------------------------------------------------
 void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef) {
     Assert(saferef);
 
     FTaskCounter* const pcounter = saferef.get();
-    Assert_NoAssume(pcounter->CheckCanary_());
-
-    if (Unlikely(0 == --pcounter->_taskCount))
-        pcounter->ResumeStalledFibers_();
-
     Assert(pcounter->Valid());
-    saferef.reset();
+
+    FTaskCounter::FQueueBuffer_ buffer;
+    TMemoryView<FStalledFiber> resume;
+    if (Unlikely(0 == --pcounter->_taskCount))
+        resume = pcounter->ResumeStalledFibers_(buffer);
+
+    saferef.reset(); // need to reset before resuming, lifetime should be guaranteed by owner
+
+    if (resume.empty())
+        return;
+
+    // sort all queued fibers by priority before resuming and outside of the lock
+    std::stable_sort(resume.begin(), resume.end(),
+        [](const FStalledFiber& lhs, const FStalledFiber& rhs) {
+        return (lhs.Priority() < rhs.Priority());
+    });
+
+    // stalled fibers are resumed through a task to let the current fiber dispatch
+    // all jobs to every worker thread before yielding
+    for (FStalledFiber& fiber : resume)
+        fiber.Resume(&FWorkerContext_::ResumeFiberTask);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
