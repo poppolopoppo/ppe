@@ -3,6 +3,9 @@
 #include "Core.h"
 
 #define TRACKING_MALLOC(_DOMAIN, _SIZE) ::PPE::tracking_malloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_SIZE)
+#define TRACKING_CALLOC(_DOMAIN, _NMEMB, _SIZE) ::PPE::tracking_calloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_NMEMB, _SIZE)
+#define TRACKING_REALLOC(_DOMAIN, _PTR, _SIZE) ::PPE::tracking_realloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_PTR, _SIZE)
+#define TRACKING_FREE(_DOMAIN, _PTR) ::PPE::tracking_free(_PTR)
 
 namespace PPE {
 class FMemoryTracking;

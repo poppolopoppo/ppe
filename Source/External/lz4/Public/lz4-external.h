@@ -8,6 +8,7 @@ PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("ALLOCATOR")
 #   pragma push_macro("FORCE_INLINE")
 #   pragma push_macro("malloc")
+#   pragma push_macro("calloc")
 #   pragma push_macro("free")
 #endif
 
@@ -17,12 +18,16 @@ PRAGMA_MSVC_WARNING_PUSH()
 #ifdef malloc
 #   undef malloc
 #endif
+#ifdef calloc
+#   undef calloc
+#endif
 #ifdef free
 #   undef free
 #endif
 
 #define malloc(sz) TRACKING_MALLOC(LZ4, sz)
-#define free(p) PPE::tracking_free(p)
+#define calloc(n, sz) TRACKING_CALLOC(LZ4, n, sz)
+#define free(p) TRACKING_FREE(LZ4, p)
 
 PRAGMA_MSVC_WARNING_DISABLE(4244) // conversion from 'XXX' to 'YYY', possible loss of data
 PRAGMA_MSVC_WARNING_DISABLE(4505) // 'XXX' unreferenced local function has been removed
@@ -47,6 +52,7 @@ PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) alway
 #   pragma pop_macro("ALLOCATOR")
 #   pragma pop_macro("FORCE_INLINE")
 #   pragma pop_macro("malloc")
+#   pragma pop_macro("calloc")
 #   pragma pop_macro("free")
 
     PRAGMA_MSVC_WARNING_POP()
