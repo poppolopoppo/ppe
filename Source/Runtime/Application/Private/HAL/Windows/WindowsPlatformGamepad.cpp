@@ -62,13 +62,13 @@ bool FWindowsPlatformGamepad::Poll(FControllerId index, FGamepadState* gamepad) 
     Assert(gamepad);
 
     ::XINPUT_STATE stateXInput;
-    ::ZeroMemory(&stateXInput, sizeof(::XINPUT_STATE));
-
-    const FXInputWrapper::FLocked XInput(FXInputWrapper::Get());
-
-    if (XInput.GetState()(checked_cast<::DWORD>(index), &stateXInput) != ERROR_SUCCESS) {
-        gamepad->SetStatus(index, false);
-        return false;
+    ::SecureZeroMemory(&stateXInput, sizeof(::XINPUT_STATE));
+    {
+        const FXInputWrapper::FLocked XInput(FXInputWrapper::Get());
+        if (XInput.GetState()(checked_cast<::DWORD>(index), &stateXInput) != ERROR_SUCCESS) {
+            gamepad->SetStatus(index, false);
+            return false;
+        }
     }
 
     gamepad->SetStatus(index, true);
@@ -130,7 +130,9 @@ bool FWindowsPlatformGamepad::Rumble(FControllerId index, float left, float righ
     vibration.wRightMotorSpeed = Float01_to_UShort065535(right);
 
     const ::DWORD dwUserIndex = checked_cast<::DWORD>(index);
-    const ::DWORD dwError = FXInputWrapper::Get().Lock().SetState()(dwUserIndex, &vibration);
+
+    const FXInputWrapper::FLocked XInput(FXInputWrapper::Get());
+    const ::DWORD dwError = XInput.SetState()(dwUserIndex, &vibration);
 
     return (ERROR_SUCCESS == dwError);
 }

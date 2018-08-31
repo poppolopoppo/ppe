@@ -56,8 +56,6 @@ public:
 
     bool Available() const { return (_XInputDLL.IsValid()); }
 
-    FLocked Lock() const { return FLocked(*this); }
-
 #ifdef WITH_PPE_ASSERT
     using Meta::TSingleton<FXInputWrapper>::HasInstance;
 #endif
