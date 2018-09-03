@@ -5,7 +5,7 @@ require 'pathname'
 
 START_TIME=Time.now
 
-VERSION='2.3'
+VERSION='2.3.1'
 VERSION_HEADER="; Version = <#{VERSION}>"
 
 require 'rbconfig'
@@ -120,14 +120,17 @@ private
 end
 
 class FVisualStudio2017 < FVisualStudio
-    attr_reader :versionrc
+    COMNTOOLS_COMMUNITY='C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\\'
+    COMNTOOLS_PROFESSIONAL='C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\Tools\\'
+
+    attr_reader :version
     def initialize()
-        super('141', 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\\')
+        super('141', Dir.exist?(COMNTOOLS_PROFESSIONAL) ? COMNTOOLS_PROFESSIONAL : COMNTOOLS_COMMUNITY)
     end
     def export(oss)
         super(oss)
         if @available
-            oss.puts ".VS141VERSION='#{@versionrc}'"
+            oss.puts ".VS141VERSION='#{@version}'"
         else
             oss.puts ";.VS141VERSION='XXX'"
         end
@@ -139,8 +142,8 @@ private
         return false unless Dir.exist?(msvcpath)
         versions = Dir.entries(msvcpath)
         return false if versions.empty?
-        @versionrc = versions.sort.last
-        binpath = File.join(@comntools, '..', '..', 'VC', 'Tools', 'MSVC', @versionrc, 'bin', 'HostX64')
+        @version = versions.sort.last
+        binpath = File.join(@comntools, '..', '..', 'VC', 'Tools', 'MSVC', @version, 'bin', 'HostX64')
         return false unless Dir.exist?(binpath)
         '00'.upto('99') do |id|
             @cluid = "10#{id}" if File.exist?(File.join(binpath, 'x64', "10#{id}", 'clui.dll'))
