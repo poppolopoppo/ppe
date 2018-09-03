@@ -188,8 +188,8 @@ struct has_destructor {
 struct FNoInit {};
 struct FForceInit {};
 //----------------------------------------------------------------------------
-inline constexpr FNoInit NoInit{};
-inline constexpr FForceInit ForceInit{};
+constexpr FNoInit NoInit{};
+constexpr FForceInit ForceInit{};
 //----------------------------------------------------------------------------
 template <typename T>
 using has_noinit_constructor = has_constructor<T, Meta::FNoInit>;
