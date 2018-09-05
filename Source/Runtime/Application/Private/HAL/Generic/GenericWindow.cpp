@@ -111,12 +111,10 @@ void FGenericWindow::OnMouseMove(int , int ) {}
 void FGenericWindow::OnMouseClick(int , int , EMouseButton ) {}
 void FGenericWindow::OnMouseDoubleClick(int , int , EMouseButton ) {}
 void FGenericWindow::OnMouseWheel(int , int , int ) {}
-void FGenericWindow::OnWindowShow() {
-    Assert(not _visible);
-    _visible = true;
+void FGenericWindow::OnWindowShow(bool visible) {
+    _visible = visible;
 }
 void FGenericWindow::OnWindowClose() {
-    Assert(_visible);
     _visible = false;
 }
 void FGenericWindow::OnWindowMove(int x, int y) {
@@ -144,7 +142,31 @@ void FGenericWindow::MainWindowDefinition(FWindowDefinition* def) {
     def->Centered = true;
     def->Maximized = true;
     def->Fullscreen = false;
+    def->Invisible = false;
     def->HasCloseButton = true;
+    def->HasResizeButton = false;
+    def->HasSystemMenu = false;
+
+    def->Parent = nullptr;
+}
+//----------------------------------------------------------------------------
+void FGenericWindow::HiddenWindowDefinition(FWindowDefinition* def) {
+    Assert(def);
+
+    def->Type = EGenericWindowType::BorderLess;
+
+    def->Left = 0; // overridden by Centered
+    def->Top = 0;
+
+    def->Width = 0; // overridden by Maximized
+    def->Height = 0;
+
+    def->AllowDragDrop = false;
+    def->Centered = false;
+    def->Maximized = false;
+    def->Fullscreen = false;
+    def->Invisible = true;
+    def->HasCloseButton = false;
     def->HasResizeButton = false;
     def->HasSystemMenu = false;
 

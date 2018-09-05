@@ -46,6 +46,7 @@ public: // must be defined for every platform
 
     static FWindowsWindow* ActiveWindow();
     static void MainWindowDefinition(FWindowDefinition* def);
+    static void HiddenWindowDefinition(FWindowDefinition* def);
     static bool CreateWindow(FWindowsWindow* window, FWString&& title, const FWindowDefinition& def);
 
 public: // platform specific

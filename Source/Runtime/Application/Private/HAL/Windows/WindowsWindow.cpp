@@ -9,6 +9,7 @@
 #include "HAL/PlatformIncludes.h"
 #include "HAL/PlatformMessageHandler.h"
 #include "HAL/PlatformMouse.h"
+#include "HAL/PlatformNotification.h"
 #include "HAL/Windows/LastError.h"
 #include "Input/MouseButton.h"
 
@@ -24,7 +25,7 @@ LOG_CATEGORY(, Window)
 namespace {
 //----------------------------------------------------------------------------
 static ::HINSTANCE AppHandleWin32_() {
-    return reinterpret_cast<::HINSTANCE>(FCurrentProcess::Get().ApplicationHandle());
+    return reinterpret_cast<::HINSTANCE>(FCurrentProcess::Get().AppHandle());
 }
 //----------------------------------------------------------------------------
 static const wchar_t GAppWindowClassName_[] = L"PPE::MainWindow";
@@ -330,6 +331,10 @@ void FWindowsWindow::MainWindowDefinition(FWindowDefinition* def) {
     parent_type::MainWindowDefinition(def);
 }
 //----------------------------------------------------------------------------
+void FWindowsWindow::HiddenWindowDefinition(FWindowDefinition* def) {
+    parent_type::HiddenWindowDefinition(def);
+}
+//----------------------------------------------------------------------------
 bool FWindowsWindow::CreateWindow(FWindowsWindow* window, FWString&& title, const FWindowDefinition& def) {
     Assert(window);
     Assert(not window->Handle());
@@ -368,6 +373,11 @@ bool FWindowsWindow::CreateWindow(FWindowsWindow* window, FWString&& title, cons
         dwStyle &= ~WS_SYSMENU;
     if (not def.HasResizeButton)
         dwStyle &= ~(WS_MAXIMIZEBOX|WS_MINIMIZEBOX);
+    if (def.Invisible) {
+        dwStyle &= ~(WS_VISIBLE);    // this works - window become invisible
+        dwStyle |= WS_EX_TOOLWINDOW;   // flags don't work - windows remains in taskbar
+        dwStyle &= ~(WS_EX_APPWINDOW);
+    }
 
     ::RECT wRect = {
         checked_cast<::LONG>(def.Left),
@@ -482,7 +492,7 @@ bool FWindowsWindow::WindowProcWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lPara
 
     // Window events :
     case WM_SHOWWINDOW:
-        OnWindowShow();
+        OnWindowShow(TRUE == wParam);
         return true;
     case WM_CLOSE:
         OnWindowClose();
@@ -498,6 +508,14 @@ bool FWindowsWindow::WindowProcWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lPara
         if (Type() == EWindowType::Main)
             ::PostQuitMessage(0);
         return true;
+
+    case FWindowsPlatformNotification::WM_SYSTRAY:
+        switch (LOWORD(lParam)) {
+        case WM_RBUTTONDOWN:
+            FWindowsPlatformNotification::SummonSystrayPopupMenuWin32(HandleWin32());
+            return true;
+        }
+        break;
 
     default:
         break;

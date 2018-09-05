@@ -31,6 +31,7 @@ struct PPE_APPLICATION_API FGenericWindowDefinition {
     bool Centered           : 1;
     bool Maximized          : 1;
     bool Fullscreen         : 1;
+    bool Invisible          : 1;
     bool HasCloseButton     : 1;
     bool HasResizeButton    : 1;
     bool HasSystemMenu      : 1;
@@ -90,6 +91,7 @@ public: // must be defined for every platform
 
     static FGenericWindow* ActiveWindow() = delete;
     static void MainWindowDefinition(FWindowDefinition* def);
+    static void HiddenWindowDefinition(FWindowDefinition* def);
     static bool CreateWindow(FGenericWindow* window, FWString&& title, const FWindowDefinition& def);
 
 protected:
@@ -108,7 +110,7 @@ protected:
     virtual void OnMouseDoubleClick(int x, int y, EMouseButton btn);
     virtual void OnMouseWheel(int x, int y, int delta);
 
-    virtual void OnWindowShow();
+    virtual void OnWindowShow(bool visible);
     virtual void OnWindowClose();
 
     virtual void OnWindowMove(int x, int y);
