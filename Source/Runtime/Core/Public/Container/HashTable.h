@@ -85,7 +85,7 @@ struct FHashTableData_ {
         kDeleted    = -128,
     };
 
-    typedef __m128i group_t;
+    typedef ::__m128i group_t;
     static constexpr size_t GGroupSize = 16;
 
     size_t NumBuckets() const {
@@ -111,32 +111,32 @@ struct FHashTableData_ {
     PPE_CORE_API void ResetStates();
 
     group_t SIMD_INLINE GroupAt(size_t first) const {
-        return _mm_lddqu_si128((const __m128i*)State(first));
+        return ::_mm_lddqu_si128((const ::__m128i*)State(first));
     }
 
     group_t SIMD_INLINE GroupAt_StreamLoad(size_t first) const {
         Assert(Meta::IsAligned(16, State(first)));
-        return _mm_stream_load_si128((const __m128i*)State(first));
+        return ::_mm_stream_load_si128((const ::__m128i*)State(first));
     }
 
     static FBitMask SIMD_INLINE Match(group_t group, group_t state) {
-        return FBitMask{ size_t(_mm_movemask_epi8(_mm_cmpeq_epi8(group, state))) };
+        return FBitMask{ size_t(::_mm_movemask_epi8(::_mm_cmpeq_epi8(group, state))) };
     }
 
     static FBitMask SIMD_INLINE MatchEmpty(group_t group) {
-        return FBitMask{ size_t(_mm_movemask_epi8(_mm_cmpeq_epi8(group, _mm_set1_epi8(kEmpty)))) };
+        return FBitMask{ size_t(::_mm_movemask_epi8(::_mm_cmpeq_epi8(group, ::_mm_set1_epi8(kEmpty)))) };
     }
 
     static FBitMask SIMD_INLINE MatchNonEmpty(group_t group) {
-        return FBitMask{ (~size_t(_mm_movemask_epi8(_mm_cmpeq_epi8(group, _mm_set1_epi8(kEmpty))))) & 0xFFFFu };
+        return FBitMask{ (~size_t(::_mm_movemask_epi8(::_mm_cmpeq_epi8(group, ::_mm_set1_epi8(kEmpty))))) & 0xFFFFu };
     }
 
     static FBitMask SIMD_INLINE MatchFreeBucket(group_t group) {
-        return FBitMask{ size_t(_mm_movemask_epi8(_mm_and_si128(group, _mm_set1_epi8(kDeleted)))) };
+        return FBitMask{ size_t(::_mm_movemask_epi8(::_mm_and_si128(group, ::_mm_set1_epi8(kDeleted)))) };
     }
 
     static FBitMask SIMD_INLINE MatchFilledBucket(group_t group) {
-        return FBitMask{ size_t(_mm_movemask_epi8(_mm_andnot_si128(group, _mm_set1_epi8(kDeleted)))) };
+        return FBitMask{ size_t(::_mm_movemask_epi8(::_mm_andnot_si128(group, ::_mm_set1_epi8(kDeleted)))) };
     }
 
     void Swap(FHashTableData_& other);

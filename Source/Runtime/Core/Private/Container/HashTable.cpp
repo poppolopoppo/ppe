@@ -63,9 +63,9 @@ void FHashTableData_::ResetStates() {
 size_t FHashTableData_::FirstFilledBucket_ReturnOffset(const state_t* states) {
     Assert(states);
 
-    __m128i kSentinel_16 = _mm_set1_epi8(kSentinel);
+    ::__m128i kSentinel_16 = ::_mm_set1_epi8(kSentinel);
 
-    STATIC_ASSERT(sizeof(__m128i) == GGroupSize);
+    STATIC_ASSERT(sizeof(::__m128i) == GGroupSize);
 
     static constexpr uintptr_t GGroupMask = uintptr_t(GGroupSize - 1);
     static constexpr uintptr_t GGroupAlign = (~GGroupMask);
@@ -75,7 +75,7 @@ size_t FHashTableData_::FirstFilledBucket_ReturnOffset(const state_t* states) {
     FBitMask visited{ size_t(0xFFFFu) << (size_t(states) & GGroupMask)  }; // don't go back
 
     for (;;) {
-        group_t group = _mm_load_si128((const __m128i*)aligned); // benefits from aligned load in this version
+        group_t group = ::_mm_load_si128((const ::__m128i*)aligned); // benefits from aligned load in this version
 
 #if 1
         if (Unlikely(Match(group, kSentinel_16))) {

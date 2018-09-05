@@ -121,7 +121,7 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find_like(const _K
 
     if (Likely(_data.Size)) {
         const size_type capacityM1 = size_type(_data.Capacity - 1);
-        const __m128i h2_16 = _mm_set1_epi8(FHTD::H2(hash));
+        const ::__m128i h2_16 = ::_mm_set1_epi8(FHTD::H2(hash));
 
         size_type start = (FHTD::H1(hash) & capacityM1);
 
