@@ -2,6 +2,9 @@
 
 #include "Core.h"
 
+#include "Allocator/Malloc.h"
+#include "Memory/MemoryDomain.h"
+
 #define TRACKING_MALLOC(_DOMAIN, _SIZE) ::PPE::tracking_malloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_SIZE)
 #define TRACKING_CALLOC(_DOMAIN, _NMEMB, _SIZE) ::PPE::tracking_calloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_NMEMB, _SIZE)
 #define TRACKING_REALLOC(_DOMAIN, _PTR, _SIZE) ::PPE::tracking_realloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_PTR, _SIZE)
@@ -23,16 +26,32 @@ PPE_CORE_API void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, 
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _MemoryDomain>
-void* tracking_malloc(size_t size);
+void* tracking_malloc(size_t size) {
+#if USE_PPE_MEMORYDOMAINS
+    return (tracking_malloc)(_MemoryDomain::TrackingData(), size);
+#else
+    return (PPE::malloc)(size);
+#endif
+}
 //----------------------------------------------------------------------------
 template <typename _MemoryDomain>
-void* tracking_calloc(size_t nmemb, size_t size);
+void* tracking_calloc(size_t nmemb, size_t size) {
+#if USE_PPE_MEMORYDOMAINS
+    return (tracking_calloc)(_MemoryDomain::TrackingData(), nmemb, size);
+#else
+    return (PPE::calloc)(nmemb, size);
+#endif
+}
 //----------------------------------------------------------------------------
 template <typename _MemoryDomain>
-void* tracking_realloc(void *ptr, size_t size);
+void* tracking_realloc(void *ptr, size_t size) {
+#if USE_PPE_MEMORYDOMAINS
+    return (tracking_realloc)(_MemoryDomain::TrackingData(), ptr, size);
+#else
+    return (PPE::realloc)(ptr, size);
+#endif
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-
-#include "TrackingMalloc-inl.h"
