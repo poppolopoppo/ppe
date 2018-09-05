@@ -4,6 +4,7 @@
 
 #ifdef PLATFORM_WINDOWS
 
+#include "Diagnostic/Logger.h"
 #include "IO/StreamProvider.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
@@ -17,6 +18,7 @@
 #include "HAL/Windows/WindowsPlatformIncludes.h"
 
 namespace PPE {
+LOG_CATEGORY(, Exception)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -65,11 +67,16 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FLastError& error) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FLastErrorException::FLastErrorException(const char* what)
-:   FLastErrorException(what, GetLastError()) {}
+:   FLastErrorException(what, GetLastError())
+{}
 //----------------------------------------------------------------------------
 FLastErrorException::FLastErrorException(const char* what, long errorCode)
 :   FException(what)
-,   _errorCode(errorCode) {}
+,   _errorCode(errorCode) {
+#if !USE_PPE_FINAL_RELEASE
+    LOG(Exception, Fatal, L"{0}: {1}", MakeCStringView(what), FLastError(_errorCode));
+#endif
+}
 //----------------------------------------------------------------------------
 FLastErrorException::~FLastErrorException() {}
 //----------------------------------------------------------------------------
