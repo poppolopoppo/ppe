@@ -409,7 +409,7 @@ void* FLinearHeap::Relocate(void* ptr, size_t newSize, size_t oldSize) {
     prev.Erase(&_blocks);
 
     void* const newp = Allocate(newSize);
-    FPlatformMemory::Memstream(newp, ptr, Min(oldSize, newSize));
+    FPlatformMemory::MemcpyLarge(newp, ptr, Min(oldSize, newSize));
 
 #   if USE_PPE_MEMORYDOMAINS
     _trackingData.Deallocate(oldSize / 16, 16);
