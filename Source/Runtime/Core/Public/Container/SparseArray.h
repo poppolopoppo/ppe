@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Allocator/Allocation.h"
+#include "Allocator/MallocBinned.h" // SnapSize()
 #include "HAL/PlatformMemory.h" // Memswap
 #include "Memory/MemoryView.h"
 #include "Meta/Iterator.h"
@@ -11,7 +12,7 @@
 // http://greysphere.tumblr.com/post/31601463396/data-arrays
 
 #define SPARSEARRAY(_DOMAIN, T, _ChunkSize) \
-    ::PPE::TSparseArray<COMMA_PROTECT(T), _ChunkSize, \
+    ::PPE::TAlignedSparseArray<COMMA_PROTECT(T), _ChunkSize, \
         ALLOCATOR(_DOMAIN, ::PPE::TSparseArrayItem<COMMA_PROTECT(T)>) >
 
 namespace PPE {
@@ -43,7 +44,6 @@ public:
     // - too low and you would allocate very often.
     // The value is specified as a template parameter to adapt to specific usages.
     STATIC_CONST_INTEGRAL(size_t, ChunkSize, _ChunkSize);
-    STATIC_ASSERT(Meta::IsPow2(ChunkSize));
 
     using FDataId = FSparseDataId;
     using FDataItem = TSparseArrayItem<T>;
@@ -375,6 +375,14 @@ private:
         return static_cast<allocator_type&>(*this);
     }
 };
+//----------------------------------------------------------------------------
+template <typename T, size_t _ChunkSize, typename _Allocator>
+using TAlignedSparseArray = TSparseArray<T,
+    FMallocBinned::SnapSizeConstexpr(
+        _ChunkSize * sizeof(TSparseArrayItem<T>)) /
+        sizeof(TSparseArrayItem<T>),
+    _Allocator
+>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

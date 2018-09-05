@@ -186,7 +186,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
         Assert_NoAssume(p->TestCanary());
         Assert(Meta::IsAligned(Alignment, p));
 
-        ONLY_IF_ASSERT(FillBlockDeleted_(p, GClassesSize[_class]));
+        ONLY_IF_ASSERT(FillBlockDeleted_(p, FMallocBinned::SizeClasses[_class]));
         ONLY_IF_ASSERT(p->MakeCanary());
 
         Assert_NoAssume(!_freeBlock || _freeBlock->TestCanary());
@@ -209,25 +209,12 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 #endif
     }
 
-    static constexpr size_t NumClasses = 45;
-
-    static constexpr u16 GClassesSize[NumClasses] = {
-        16,     0,      0,      0,      32,     0,
-        48,     0,      64,     80,     96,     112,
-        128,    160,    192,    224,    256,    320,
-        384,    448,    512,    640,    768,    896,
-        1024,   1280,   1536,   1792,   2048,   2560,
-        3072,   3584,   4096,   5120,   6144,   7168,
-        8192,   10240,  12288,  14336,  16384,  20480,
-        24576,  28672,  32736,
-    };
-
-    FORCE_INLINE static size_t MakeClass(size_t size) {
+    FORCE_INLINE static size_t MakeClass(size_t size) NOEXCEPT {
         constexpr size_t POW_N = 2;
-        constexpr size_t MinClassIndex = 19;
+        constexpr size_t MinSizeClass = 19;
         size = ROUND_TO_NEXT_16(size);
         const size_t index = FPlatformMaths::FloorLog2((size - 1) | 1);
-        return ((index << POW_N) + ((size - 1) >> (index - POW_N)) - MinClassIndex);
+        return ((index << POW_N) + ((size - 1) >> (index - POW_N)) - MinSizeClass);
     }
 
 private:
@@ -236,13 +223,13 @@ private:
 
     FBinnedChunk_(FBinnedThreadCache_* threadCache, size_t class_)
         : _class(checked_cast<u32>(class_))
-        , _blockTotalCount(ChunkAvailable / GClassesSize[_class])
+        , _blockTotalCount(ChunkAvailable / FMallocBinned::SizeClasses[_class])
         , _allocatedCount(0)
         , _mappedCount(0)
         , _freeBlock(nullptr)
         , _threadCache(threadCache) {
         Assert(_threadCache);
-        Assert(GClassesSize[_class] > 0);
+        Assert(FMallocBinned::SizeClasses[_class] > 0);
         Assert(Meta::IsAligned(ChunkSizeInBytes, this));
         Assert((u8*)BlockAt_(0) >= (u8*)(this + 1));
         Assert((u8*)BlockAt_(_blockTotalCount - 1) + BlockSizeInBytes() <= (u8*)this + ChunkSizeInBytes);
@@ -425,7 +412,7 @@ struct CACHELINE_ALIGNED FBinnedThreadCache_ {
     void* Allocate(size_t sizeInBytes) {
         const size_t sizeClass = FBinnedChunk_::MakeClass(sizeInBytes);
         Assert(sizeClass < lengthof(_buckets));
-        Assert(sizeInBytes <= FBinnedChunk_::GClassesSize[sizeClass]);
+        Assert(sizeInBytes <= FMallocBinned::SizeClasses[sizeClass]);
 
         auto& bucket = _buckets[sizeClass];
 
@@ -534,7 +521,7 @@ struct CACHELINE_ALIGNED FBinnedThreadCache_ {
             }
 
             // look for chunks still alive
-            forrange(sizeClass, 0, FBinnedChunk_::NumClasses) {
+            forrange(sizeClass, 0, FMallocBinned::NumSizeClasses) {
                 while (FBinnedChunk_* b = _buckets[sizeClass].PopHead()) {
                     // detach the chunk from this thread
                     globalCache.RegisterDanglingChunk(b);
@@ -559,7 +546,7 @@ private:
     };
 
     FPendingBlocks_ _pending;
-    INTRUSIVELIST(&FBinnedChunk_::_node) _buckets[FBinnedChunk_::NumClasses];
+    INTRUSIVELIST(&FBinnedChunk_::_node) _buckets[FMallocBinned::NumSizeClasses];
     TFixedSizeStack<FBinnedPage_*, FreePagesMax> _localFreePages;
 
     FBinnedThreadCache_() {
@@ -571,7 +558,7 @@ private:
     NO_INLINE void* AllocateFromNewChunk_(size_t sizeClass) {
         // try to release pending blocks to get free memory before reserving a new page
         if (ReleasePendingBlocks())
-            return Allocate(FBinnedChunk_::GClassesSize[sizeClass]);
+            return Allocate(FMallocBinned::SizeClasses[sizeClass]);
 
         FBinnedPage_* page;
         if (_localFreePages.Pop(&page)) {
@@ -673,7 +660,7 @@ struct FBinnedAllocator_ {
     FORCE_INLINE static size_t SnapSize(size_t sizeInBytes) {
         STATIC_ASSERT(ALLOCATION_GRANULARITY == 64<<10);
         return (sizeInBytes <= FBinnedChunk_::MaxSizeInBytes
-            ? FBinnedChunk_::GClassesSize[FBinnedChunk_::MakeClass(sizeInBytes)]
+            ? FMallocBinned::SizeClasses[FBinnedChunk_::MakeClass(sizeInBytes)]
             : ROUND_TO_NEXT_64K(sizeInBytes) );
     }
 
