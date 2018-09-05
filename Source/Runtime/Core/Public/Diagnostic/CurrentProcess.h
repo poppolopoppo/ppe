@@ -24,7 +24,7 @@ public:
     const FWString& DataPath() const { return _dataPath; }
     const FWString& SavedPath() const { return _savedPath; }
 
-    void *ApplicationHandle() const { return _applicationHandle; }
+    void *AppHandle() const { return _appHandle; }
     int nShowCmd() const { return _nShowCmd; }
 
     int ExitCode() const { return _exitCode; }
@@ -35,6 +35,9 @@ public:
 
     bool StartedWithDebugger() const { return _startedWithDebugger; }
 
+    void DumpMemoryStats() const;
+    void DumpProcessInfos() const;
+
     const FTimepoint& StartedAt() const { return _startedAt; }
 
     using parent_type::Get;
@@ -43,8 +46,8 @@ public:
 #endif
     using parent_type::Destroy;
 
-    static void Create(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv) {
-        parent_type::Create(applicationHandle, nShowCmd, filename, argc, argv);
+    static void Create(void* appHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv) {
+        parent_type::Create(appHandle, nShowCmd, filename, argc, argv);
     }
 
     static FSeconds ElapsedSeconds() {
@@ -53,7 +56,7 @@ public:
 
 private:
     friend class Meta::TSingleton<FCurrentProcess>;
-    FCurrentProcess(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv);
+    FCurrentProcess(void* appHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv);
 
     FWString _fileName;
     FWString _directory;
@@ -62,7 +65,7 @@ private:
     FWString _dataPath;
     FWString _savedPath;
 
-    void *_applicationHandle;
+    void* _appHandle;
     int _nShowCmd;
 
     std::atomic<int> _exitCode;

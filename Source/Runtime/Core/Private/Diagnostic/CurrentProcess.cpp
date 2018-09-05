@@ -15,7 +15,7 @@ LOG_CATEGORY(PPE_CORE_API, Process)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv)
+FCurrentProcess::FCurrentProcess(void* appHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv)
     : _fileName(MakeCStringView(filename))
     , _args(NewArray<FWString>(argc)), _exitCode(0), _appIcon(0)
     , _startedAt(FTimepoint::Now()) {
@@ -40,7 +40,7 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
 
     FPlatformFile::CreateDirectory(*_savedPath, nullptr);
 
-    _applicationHandle = applicationHandle;
+    _appHandle = appHandle;
     _nShowCmd = nShowCmd;
 #ifndef FINAL_RELEASE
     _startedWithDebugger = FPlatformDebug::IsDebuggerPresent();
@@ -64,6 +64,30 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
     }
 #endif
 
+    DumpProcessInfos();
+}
+//----------------------------------------------------------------------------
+FCurrentProcess::~FCurrentProcess() {
+    LOG(Process, Info, L"exit with code = {0}.", _exitCode.load());
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::DumpMemoryStats() const {
+#ifdef USE_DEBUG_LOGGER
+    auto mem = FPlatformMemory::Stats();
+    LOG(Process, Info, L"Physical memory : {0:8} / {1:8} / {2:8} : {3}",
+        Fmt::SizeInBytes(mem.UsedPhysical),
+        Fmt::SizeInBytes(mem.PeakUsedPhysical),
+        Fmt::SizeInBytes(mem.AvailablePhysical),
+        Fmt::Percentage(mem.UsedPhysical, mem.AvailablePhysical) );
+    LOG(Process, Info, L"Virtual memory  : {0:8} / {1:8} / {2:8} : {3}",
+        Fmt::SizeInBytes(mem.UsedVirtual),
+        Fmt::SizeInBytes(mem.PeakUsedVirtual),
+        Fmt::SizeInBytes(mem.AvailableVirtual),
+        Fmt::Percentage(mem.UsedVirtual, mem.AvailableVirtual) );
+#endif
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::DumpProcessInfos() const {
 #ifdef USE_DEBUG_LOGGER
     auto mem = FPlatformMemory::Constants();
     auto& platform = CurrentPlatform();
@@ -114,17 +138,13 @@ FCurrentProcess::FCurrentProcess(void *applicationHandle, int nShowCmd, const wc
     LOG(Process, Info, L"   temporary directory = '{0}' : {1:f2}/{2:f2} ({3})", tempDir, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
 
     LOG(Process, Info, L"started with debugger = '{0:A}'", _startedWithDebugger);
-    LOG(Process, Info, L"application handle = '{0}', nShowCmd = '{1}'", _applicationHandle, _nShowCmd);
+    LOG(Process, Info, L"application handle = '{0}', nShowCmd = '{1}'", _appHandle, _nShowCmd);
     LOG(Process, Info, L"started '{0}' with {1} parameters", _fileName, _args.size());
     forrange(i, 0, _args.size())
         LOG(Process, Info, L"   [{0:2}] '{1}'", i, _args[i]);
 
     FLUSH_LOG(); // be sure to get those infos in the log
 #endif
-}
-//----------------------------------------------------------------------------
-FCurrentProcess::~FCurrentProcess() {
-    LOG(Process, Info, L"exit with code = {0}.", _exitCode.load());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
