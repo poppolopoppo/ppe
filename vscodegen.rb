@@ -27,13 +27,10 @@ def fetch_fbuilb_string(filename, key)
 end
 
 def fetch_default_target()
-=begin
     target = fetch_fbuilb_string(File.join(CORE_PATH, 'fbuild.bff'), 'SolutionBuildProject')
     target.gsub!(/-VCXProject$/, '')
     puts "default target -> #{target}"
     return target
-=end
-    return 'All'
 end
 
 DEFAULT_TARGET=fetch_default_target()
