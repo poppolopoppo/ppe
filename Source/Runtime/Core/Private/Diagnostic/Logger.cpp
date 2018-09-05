@@ -300,6 +300,10 @@ private:
         : _userLogger(&FUserLogger::Get())
     {}
 
+    ~FBackgroundLogger() {
+        TaskManager_().WaitForAll(); // blocking wait before destroying, avoid necrophilia
+    }
+
     static FTaskManager& TaskManager_() {
         return FBackgroundThreadPool::Get();
     }
