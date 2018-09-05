@@ -99,7 +99,7 @@ public:
     TFixedSizeHashSet() NOEXCEPT;
     ~TFixedSizeHashSet() NOEXCEPT;
 
-    TFixedSizeHashSet(const TFixedSizeHashSet& other) : TFixedSizeHashSet() { operator =(other); }
+    FORCE_INLINE TFixedSizeHashSet(const TFixedSizeHashSet& other) : TFixedSizeHashSet() { operator =(other); }
     TFixedSizeHashSet& operator =(const TFixedSizeHashSet&);
 
     TFixedSizeHashSet(TFixedSizeHashSet&&) = delete;
@@ -112,13 +112,13 @@ public:
     iterator begin() const { return (0 == _size ? end() : FIterator(*this, 0).Advance_(0)); }
     iterator end() const { return FIterator(*this, _Capacity); }
 
-    bool Contains(_Key key) const { return (end() != Find(key)); }
+    FORCE_INLINE bool Contains(_Key key) const { return (end() != Find(key)); }
     iterator Find(_Key key) const;
 
-    void Add_AssertUnique(_Key key) { Verify(Add_KeepExisting(key)); }
+    FORCE_INLINE void Add_AssertUnique(_Key key) { Verify(Add_KeepExisting(key)); }
     bool Add_KeepExisting(_Key key);
 
-    void Remove_AssertExists(_Key key) { Verify(Remove_ReturnIfExists(key)); }
+    FORCE_INLINE void Remove_AssertExists(_Key key) { Verify(Remove_ReturnIfExists(key)); }
     bool Remove_ReturnIfExists(_Key key);
 
     void Erase(const iterator& it);
@@ -129,16 +129,22 @@ private:
     size_t _size;
     _Key _values[_Capacity];
 
-    static size_t InitIndex_(_Key key) {
+    static size_t InitIndex_(_Key key) NOEXCEPT {
         return (hasher()(key) % _Capacity);
     }
-    static size_t NextIndex_(size_t b) {
+    static FORCE_INLINE CONSTEXPR size_t NextIndexImpl_(size_t b, std::true_type) NOEXCEPT {
+        return ((b + 1) % _Capacity);
+    }
+    static FORCE_INLINE CONSTEXPR size_t NextIndexImpl_(size_t b, std::false_type) NOEXCEPT {
         return (b + 1 < _Capacity ? b + 1 : (b + 1) - _Capacity);
     }
-    static size_t DistanceIndexImpl_(size_t a, size_t b) {
+    static CONSTEXPR size_t NextIndex_(size_t b) NOEXCEPT {
+        return NextIndexImpl_(b, std::bool_constant< Meta::IsPow2(_Capacity) >::type{});
+    }
+    static FORCE_INLINE CONSTEXPR size_t DistanceIndexImpl_(size_t a, size_t b) NOEXCEPT {
         return (a <= b ? b - a : b + (_Capacity - a));
     }
-    static size_t DistanceIndex_(_Key key, size_t b) {
+    static size_t DistanceIndex_(_Key key, size_t b) NOEXCEPT {
         return DistanceIndexImpl_(InitIndex_(key), b);
     }
 };
@@ -147,8 +153,7 @@ template <typename _Key, size_t _Capacity, typename _Hash, typename _EmptyKey, t
 TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::TFixedSizeHashSet() NOEXCEPT
 :   _size(0) {
     // need to init table with empty keys
-    for (_Key& value : _values)
-        value = empty_key::value;
+    std::uninitialized_fill(std::begin(_values), std::end(_values), empty_key::value);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
@@ -205,8 +210,9 @@ bool TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::Add_KeepExi
         // keep sorted by probing distance
         const size_t d = DistanceIndex_(_values[bucket], bucket);
         if (dist > d) {
+            using std::swap;
             dist = d;
-            std::swap(key, _values[bucket]);
+            swap(key, _values[bucket]);
         }
 
         dist++;
@@ -233,6 +239,7 @@ bool TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::Remove_Retu
             i > DistanceIndex_(_values[bucket], bucket) )
             return false;
 
+        Assert_NoAssume(i < _Capacity);
         bucket = NextIndex_(bucket);
     }
 
