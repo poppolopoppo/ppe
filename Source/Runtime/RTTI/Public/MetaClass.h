@@ -50,6 +50,9 @@ public:
     FMetaClass(const FMetaClass& ) = delete;
     FMetaClass& operator =(const FMetaClass& ) = delete;
 
+    FMetaClass(FMetaClass&&) = delete;
+    FMetaClass& operator =(FMetaClass&&) = delete;
+
     FClassId Id() const { return _id; }
     const FName& Name() const { return _name; }
     EClassFlags Flags() const { return _flags; }
