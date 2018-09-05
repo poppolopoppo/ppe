@@ -15,13 +15,14 @@ using TPair = std::pair<_First, _Second>;
 template <typename _First, typename _Second>
 FORCE_INLINE TPair< Meta::TRemoveReference<_First>, Meta::TRemoveReference<_Second> > MakePair(_First&& first, _Second&& second) {
     typedef TPair< Meta::TRemoveReference<_First>, Meta::TRemoveReference<_Second> > pair_type;
-    return pair_type(std::forward<_First>(first), std::forward<_Second>(second));
+    return pair_type(
+        std::forward<_First>(first),
+        std::forward<_Second>(second) );
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
 FORCE_INLINE hash_t hash_value(const TPair<_First, _Second>& pair) {
-    using PPE::hash_value;
-    return hash_tuple(hash_value(pair.first), hash_value(pair.second));
+    return hash_tuple(pair.first, pair.second);
 }
 //----------------------------------------------------------------------------
 namespace Meta {
@@ -41,11 +42,15 @@ TPair<_First, _Second> ForceInitType(TType< TPair<_First, _Second> >) {
 }
 template <typename _First, typename _Second>
 void Construct(TPair<_First, _Second>* p, FNoInit) {
-    Construct(p, MakeNoInit<_First>(), MakeNoInit<_Second>());
+    Construct(p,
+        MakeNoInit<_First>(),
+        MakeNoInit<_Second>() );
 }
 template <typename _First, typename _Second>
 void Construct(TPair<_First, _Second>* p, FForceInit) {
-    Construct(p, MakeForceInit<_First>(), MakeForceInit<_Second>());
+    Construct(p,
+        MakeForceInit<_First>(),
+        MakeForceInit<_Second>() );
 }
 } //!Meta
 //----------------------------------------------------------------------------
