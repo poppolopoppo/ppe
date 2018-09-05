@@ -39,6 +39,7 @@ Benchmark.bm(32) do |bm|
 
 $projects = []
 
+=begin
 # find every stdafx.generated.h in Source/
 bm.report('find all stdafx(.XXX)?.generated.h') do
 Find.find(SOURCEDIR) do |path|
@@ -54,6 +55,21 @@ Find.find(SOURCEDIR) do |path|
         $projects << Project.new(project_name, path)
     end
 end
+end
+=end
+$projects = %w{
+    Runtime/Core
+    Runtime/VFS
+    Runtime/RTTI
+    Runtime/Serialize
+    Runtime/Network
+    Runtime/Application
+    Tools/UnitTest
+}
+$projects.collect! do |name|
+    path = File.join(SOURCEDIR, name, 'stdafx.generated.h')
+    puts path
+    Project.new(name, path)
 end
 
 # filter projects by name

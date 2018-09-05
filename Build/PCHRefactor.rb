@@ -96,15 +96,17 @@ end
 RE_SOURCEDIR = SOURCEDIR.downcase.gsub('\\', '/')
 RE_PROJECTDIR = PROJECTDIR.downcase.gsub('\\', '/')
 class FDependency
+    attr_reader :key
     attr_reader :filename
     attr_reader :min_depth, :max_depth, :count
     attr_reader :is_source, :is_project
-    def initialize(filename, depth)
+    def initialize(key, filename, depth)
+        @key = key
         @filename = filename
         @min_depth = @max_depth = depth
         @count = 1
-        @is_source = (@filename.downcase.include? RE_SOURCEDIR)
-        @is_project = @is_source && (@filename.downcase.include? RE_PROJECTDIR)
+        @is_source = (@key.include? RE_SOURCEDIR)
+        @is_project = @is_source && (@key.include? RE_PROJECTDIR)
     end
     def add(depth)
         @min_depth = depth if @min_depth > depth
@@ -119,14 +121,13 @@ RE_FILEDEP = /File\s+(.*)$/
 RE_BINARY = /\.(exe|dll)$/i
 RE_UNITY = /Unity_(\d+)_of_(\d+)\.cpp/
 RE_STDAFX = /(stdafx)|(targetver\.h)/i
+RE_BINARY_OR_UNITY_OR_STDAFX = /\.(exe|dll)$|Unity_(\d+)_of_(\d+)\.cpp&|(stdafx)|(targetver\.h)&/i
 def parse_showdeps(output, depth, dependencies)
     raise "invalid fastbuild output" if output.nil?
     output.scan(RE_FILEDEP) do |match|
         filename = match[0]
         next if filename.nil?
-        next if filename =~ RE_BINARY
-        next if filename =~ RE_UNITY
-        next if filename =~ RE_STDAFX
+        next if filename =~ RE_BINARY_OR_UNITY_OR_STDAFX
 
         filename = Pathname.new(filename).realpath.to_s
         filename.gsub!('\\', '/')
@@ -136,7 +137,7 @@ def parse_showdeps(output, depth, dependencies)
         if dep = dependencies[key]
             dep.add(depth)
         else
-            dep = dependencies[key] = FDependency.new(filename, depth)
+            dep = dependencies[key] = FDependency.new(key, filename, depth)
         end
 
         #dputs("[dep] '#{filename}' : #{dep.count}") if filename =~ /core\.h$/i
@@ -145,14 +146,13 @@ end
 
 RE_CPP = /\.(cpp)|c/i
 RE_CPPINCLUDE = /#\s*include\s+[<'"](.*)[>'"]/
+RE_STDAFX_OR_CPP = /(stdafx)|(targetver\.h)$|\.(cpp)$|c$/i
 INCLUDE_SEARCHDIRS = [PROJECTDIR, SOURCEDIR]
 def parse_source(filename, include_searchdirs, dependencies)
     File.foreach(filename) do |line|
-        line = line.force_encoding('iso-8859-1').encode('utf-8')
         if m = line.match(RE_CPPINCLUDE)
             header = m[1]
-            next if header =~ RE_STDAFX
-            next if header =~ RE_CPP
+            next if header =~ RE_STDAFX_OR_CPP
             next if File.extname(header).empty? # system headers ignored
 
             include_searchdirs.each do |path|
@@ -163,16 +163,31 @@ def parse_source(filename, include_searchdirs, dependencies)
             next unless File.exist?(header) # don't handle #ifdef/#if so it could be an include from another platform/target
 
             header = Pathname.new(header).realpath.to_s
-            dependencies << header.downcase.gsub('\\', '/')
+            header.downcase!
+            header.gsub!('\\', '/')
+            dependencies << header
         end
     end
     return
 end
 
+def run_showdeps(target)
+    lines = []
+    IO.popen([RUBY_INTERPRETER_PATH, FBUILDCMD, '-showdeps', target]) do |io|
+        until io.eof?
+            line = io.readline
+            line.encode!('utf-8', 'iso-8859-1')
+            line.chomp!
+            lines << line
+        end
+    end
+    return lines
+end
+
 def process_target_deps(target, define, stds, sdks, prjs)
     dependencies = {}
 
-    parser = FParser.new(%x("#{RUBY_INTERPRETER_PATH}" "#{FBUILDCMD}" -showdeps "#{target}").split("\n"))
+    parser = FParser.new(run_showdeps(target))
     while parser.next!
         #dputs("[%5d][%3d] %s" % [parser.line, parser.depth, parser.current])
         parse_showdeps(parser.current, parser.depth, dependencies)
@@ -226,9 +241,9 @@ def process_target_deps(target, define, stds, sdks, prjs)
         elsif File.extname(filename).empty?
             basename = File.basename(filename)
             std << "<#{basename}>"
-        elsif filename.split('/')[-2].upcase == 'INCLUDE'
+        elsif filename =~ /\/(inc|include|ucrt|um|shared)\/[^\/]+$/i
             basename = File.basename(filename)
-            sdk << "\"#{basename}\""
+            sdk << "<#{basename}>"
         end
     end
 
