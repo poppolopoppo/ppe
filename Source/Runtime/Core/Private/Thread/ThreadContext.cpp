@@ -130,12 +130,12 @@ FThreadContext::FThreadContext(const char* name, size_t tag, size_t index)
 
     RegisterThreadName_(_threadId, _name);
 
-#if USE_PPE_PLATFORM_DEBUG
-    FPlatformDebug::GuaranteeStackSizeForStackOverflowRecovery();
-#endif
+    FPlatformThread::OnThreadStart();
 }
 //----------------------------------------------------------------------------
 FThreadContext::~FThreadContext() {
+    FPlatformThread::OnThreadShutdown();
+
     UnregisterThreadName_(_threadId);
 }
 //----------------------------------------------------------------------------

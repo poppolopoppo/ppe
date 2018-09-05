@@ -25,6 +25,7 @@ public:
     STATIC_CONST_INTEGRAL(FAffinityMask, ValidAffinityMask, 0xFF);
 
     using FGenericPlatformThread::AllThreadsAffinity;
+    using FGenericPlatformThread::AllButTwoFirstsAffinity;
     using FGenericPlatformThread::MainThreadAffinity;
     using FGenericPlatformThread::SecondaryThreadAffinity;
 

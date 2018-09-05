@@ -5,13 +5,16 @@
 #ifdef PLATFORM_WINDOWS
 
 #include "HAL/Windows/LastError.h"
+#include "HAL/Windows/WindowsPlatformDebug.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FWindowsPlatformThread::OnThreadStart() {
-    NOOP(); // #TODO ?
+#if USE_PPE_PLATFORM_DEBUG
+    FWindowsPlatformDebug::GuaranteeStackSizeForStackOverflowRecovery();
+#endif
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformThread::OnThreadShutdown() {
@@ -105,14 +108,11 @@ void FWindowsPlatformThread::SetPriority(EThreadPriority priority) {
 //----------------------------------------------------------------------------
 // Task groups
 //----------------------------------------------------------------------------
-constexpr FWindowsPlatformThread::FAffinityMask AllButTwoFirsts =
-    (FWindowsPlatformThread::AllThreadsAffinity & (~FWindowsPlatformThread::FAffinityMask(3)));
-//----------------------------------------------------------------------------
 auto FWindowsPlatformThread::BackgroundThreadsInfo() -> FThreadGroupInfo {
     FThreadGroupInfo info;
     info.NumWorkers = 2;
-    info.Affinities[0] = AllButTwoFirsts;
-    info.Affinities[1] = AllButTwoFirsts;
+    info.Affinities[0] = AllButTwoFirstsAffinity;
+    info.Affinities[1] = AllButTwoFirstsAffinity;
     return info;
 }
 //----------------------------------------------------------------------------
@@ -135,8 +135,8 @@ auto FWindowsPlatformThread::HighPriorityThreadsInfo() -> FThreadGroupInfo {
 auto FWindowsPlatformThread::IOThreadsInfo() -> FThreadGroupInfo {
     FThreadGroupInfo info;
     info.NumWorkers = 2;
-    info.Affinities[0] = AllButTwoFirsts;
-    info.Affinities[1] = AllButTwoFirsts;
+    info.Affinities[0] = AllButTwoFirstsAffinity;
+    info.Affinities[1] = AllButTwoFirstsAffinity;
     return info;
 }
 //----------------------------------------------------------------------------

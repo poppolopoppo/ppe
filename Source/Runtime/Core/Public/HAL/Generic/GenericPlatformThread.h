@@ -30,6 +30,7 @@ public: // must be defined for every platform
     STATIC_ASSERT(PPE_MAX_NUMPPES <= sizeof(FAffinityMask)<<3); // should change FAffinityMask type otherwise
 
     STATIC_CONST_INTEGRAL(FAffinityMask, AllThreadsAffinity, FAffinityMask(-1));
+    STATIC_CONST_INTEGRAL(FAffinityMask, AllButTwoFirstsAffinity, AllThreadsAffinity & (~FAffinityMask(3)));
     STATIC_CONST_INTEGRAL(FAffinityMask, MainThreadAffinity, FAffinityMask(1) << 0);
     STATIC_CONST_INTEGRAL(FAffinityMask, SecondaryThreadAffinity, FAffinityMask(1) << 1);
 
