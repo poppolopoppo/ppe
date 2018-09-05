@@ -378,7 +378,7 @@ public:
     bool UseInSitu() const {
 #ifdef WITH_PPE_ASSERT
         // detects any overlapping
-        return allocator_type::AliasesToAllocator(vector_type::data(), vector_type::capacity());
+        return allocator_type::AliasesToInSitu(vector_type::data(), vector_type::capacity());
 #else
         // but in fact it should alias to insitu only with pointer equality
         return (vector_type::data() == storage_type::data());

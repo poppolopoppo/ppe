@@ -14,14 +14,17 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(4324) // TInSituStorage<> : structure was padded due to alignment specifier
 template <typename T, size_t _Capacity>
 struct ALIGN(ALLOCATION_BOUNDARY) TInSituStorage {
     STATIC_CONST_INTEGRAL(size_t, Capacity, _Capacity);
 
     using storage_type = Meta::TAlignedStorage<
+        // keep the storage aligned to avoid any warning about padding
+#if 0
         Capacity * sizeof(T),
+#else
+        Meta::RoundToNext(Capacity * sizeof(T), ALLOCATION_BOUNDARY),
+#endif
         ALLOCATION_BOUNDARY
     >;
 
@@ -76,7 +79,6 @@ struct ALIGN(ALLOCATION_BOUNDARY) TInSituStorage {
 
 #endif
 };
-PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity>
 using TAlignedInSituStorage = TInSituStorage<
@@ -125,7 +127,7 @@ public:
 
     const storage_type& InSitu() const { return _insitu; }
 
-    bool AliasesToAllocator(const void* p, size_t sz) const {
+    bool AliasesToInSitu(const void* p, size_t sz) const {
         return FPlatformMemory::Memoverlap(p, sz, &_insitu, sizeof(_insitu));
     }
 
@@ -274,7 +276,7 @@ auto/* inherited */AllocatorStealFrom(
     typename TInSituAllocator<_Storage, _Allocator>::pointer ptr, size_t size ) {
     // checks that we not stealing from insitu storage, which can't be moved
     Assert(TInSituAllocator<_Storage, _Allocator>::Capacity < size);
-    Assert_NoAssume(not alloc.AliasesToAllocator(ptr, size));
+    Assert_NoAssume(not alloc.AliasesToInSitu(ptr, size));
     return AllocatorStealFrom(alloc.FallbackAllocator(), ptr, size);
 }
 //----------------------------------------------------------------------------
@@ -284,7 +286,7 @@ auto/* inherited */AllocatorAcquireStolen(
     typename TInSituAllocator<_Storage, _Allocator>::pointer ptr, size_t size ) {
     // checks that the stolen block is larger than insitu storage, we can't break this predicate
     Assert(TInSituAllocator<_Storage, _Allocator>::Capacity < size);
-    Assert_NoAssume(not alloc.AliasesToAllocator(ptr, size));
+    Assert_NoAssume(not alloc.AliasesToInSitu(ptr, size));
     return AllocatorAcquireStolen(alloc.FallbackAllocator(), ptr, size);
 }
 //----------------------------------------------------------------------------
