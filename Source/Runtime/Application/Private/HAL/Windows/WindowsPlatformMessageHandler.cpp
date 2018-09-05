@@ -5,7 +5,6 @@
 #ifdef PLATFORM_WINDOWS
 
 #include "HAL/Windows/WindowsWindow.h"
-#include "HAL/Windows/WindowsPlatformNotification.h"
 #include "HAL/PlatformIncludes.h"
 
 namespace PPE {
@@ -19,12 +18,9 @@ bool FWindowsPlatformMessageHandler::PumpMessages(FWindowsWindow* windowIFP) {
     ::MSG msg;
     if (nullptr == windowIFP) {
         if (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE | PM_QS_SENDMESSAGE)) {
-            switch (msg.message) {
+            switch (LOWORD(msg.message)) {
             case WM_QUIT:
                 quit = true;
-                break;
-            case FWindowsPlatformNotification::WM_SYSTRAY:
-                FWindowsPlatformNotification::SummonSystrayPopupMenuWin32(nullptr);
                 break;
             default:
                 break;
@@ -39,12 +35,9 @@ bool FWindowsPlatformMessageHandler::PumpMessages(FWindowsWindow* windowIFP) {
             ::TranslateMessage(&msg);
             ::DispatchMessageW(&msg);
 
-            switch (msg.message) {
+            switch (LOWORD(msg.message)) {
             case WM_QUIT:
                 quit = true;
-                break;
-            case FWindowsPlatformNotification::WM_SYSTRAY:
-                FWindowsPlatformNotification::SummonSystrayPopupMenuWin32(hWnd);
                 break;
             default:
                 break;
