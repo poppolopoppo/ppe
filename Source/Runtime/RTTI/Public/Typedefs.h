@@ -33,21 +33,21 @@ struct PPE_RTTI_API FPathName {
     FName Identifier;
 
     FPathName() NOEXCEPT {}
-    FPathName(const FName& transaction, const FName& identifier) NOEXCEPT 
+    FPathName(const FName& transaction, const FName& identifier) NOEXCEPT
         : Transaction(transaction)
-        , Identifier(identifier) 
+        , Identifier(identifier)
     {}
 
     /* not explicit on purpose */FPathName(const FMetaObject& obj);
 
-    bool empty() const { return (Identifier.empty()); }
+    bool empty() const NOEXCEPT { return (Identifier.empty()); }
 
     static bool Parse(FPathName* pathName, const FStringView& text);
 
-    inline friend bool operator ==(const FPathName& lhs, const FPathName& rhs) {
+    inline friend bool operator ==(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
         return (lhs.Identifier == rhs.Identifier && lhs.Transaction == rhs.Transaction);
     }
-    inline friend bool operator !=(const FPathName& lhs, const FPathName& rhs) {
+    inline friend bool operator !=(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 

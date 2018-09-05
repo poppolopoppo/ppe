@@ -18,12 +18,12 @@ struct FBitMask {
 
     word_t Data;
 
-    operator word_t () const { return Data; }
+    operator word_t () const NOEXCEPT { return Data; }
 
-    size_t Count() const { return FPlatformMaths::popcnt(Data); }
+    size_t Count() const NOEXCEPT { return FPlatformMaths::popcnt(Data); }
 
     template <size_t _Index>
-    bool Get() const {
+    bool Get() const NOEXCEPT {
         STATIC_ASSERT(_Index < GBitCount);
         return (0 != (Data & (word_t(1) << _Index)));
     }
@@ -36,46 +36,46 @@ struct FBitMask {
 
     bool operator [](size_t index) const { return Get(index); }
 
-    bool AllTrue() const { return ((Data & GAllMask) == GAllMask); }
-    bool AllFalse() const { return ((Data & GAllMask) == 0); }
+    bool AllTrue() const NOEXCEPT { return ((Data & GAllMask) == GAllMask); }
+    bool AllFalse() const NOEXCEPT { return ((Data & GAllMask) == 0); }
 
-    bool AnyTrue() const { return (Data != 0); }
-    bool AnyFalse() const { return (Data != GAllMask); }
+    bool AnyTrue() const NOEXCEPT { return (Data != 0); }
+    bool AnyFalse() const NOEXCEPT { return (Data != GAllMask); }
 
-    void ResetAll(bool value) { Data = (value ? GAllMask : 0); }
+    void ResetAll(bool value) NOEXCEPT { Data = (value ? GAllMask : 0); }
 
-    FBitMask Invert() const { return FBitMask{ ~Data }; }
+    FBitMask Invert() const NOEXCEPT { return FBitMask{ ~Data }; }
 
-    FBitMask operator &(FBitMask other) const { return FBitMask{ Data & other.Data }; }
-    FBitMask operator |(FBitMask other) const { return FBitMask{ Data | other.Data }; }
-    FBitMask operator ^(FBitMask other) const { return FBitMask{ Data ^ other.Data }; }
+    FBitMask operator &(FBitMask other) const NOEXCEPT { return FBitMask{ Data & other.Data }; }
+    FBitMask operator |(FBitMask other) const NOEXCEPT { return FBitMask{ Data | other.Data }; }
+    FBitMask operator ^(FBitMask other) const NOEXCEPT { return FBitMask{ Data ^ other.Data }; }
 
-    FBitMask operator <<(word_t lshift) const { return FBitMask{ Data << lshift }; }
-    FBitMask operator >>(word_t rshift) const { return FBitMask{ Data >> rshift }; }
+    FBitMask operator <<(word_t lshift) const NOEXCEPT { return FBitMask{ Data << lshift }; }
+    FBitMask operator >>(word_t rshift) const NOEXCEPT { return FBitMask{ Data >> rshift }; }
 
-    word_t FirstBitSet_AssumeNotEmpty() const { return FPlatformMaths::tzcnt(Data); }
-    word_t LastBitSet_AssumeNotEmpty() const { return FPlatformMaths::lzcnt(Data); }
+    word_t FirstBitSet_AssumeNotEmpty() const NOEXCEPT { return FPlatformMaths::tzcnt(Data); }
+    word_t LastBitSet_AssumeNotEmpty() const NOEXCEPT { return FPlatformMaths::lzcnt(Data); }
 
-    word_t PopFront() { // return 0 if empty of (LSB index + 1)
+    word_t PopFront() NOEXCEPT { // return 0 if empty of (LSB index + 1)
         const size_t front = (Data ? FPlatformMaths::tzcnt(Data) : INDEX_NONE);
         Data &= ~(GOne<<front); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return (front + 1);
     }
 
-    word_t PopFront_AssumeNotEmpty() {
+    word_t PopFront_AssumeNotEmpty() NOEXCEPT {
         const size_t front = FPlatformMaths::tzcnt(Data);
         Data &= ~(GOne<<front); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return front;
     }
 
-    word_t PopBack() { // return 0 if empty of (MSB index + 1)
+    word_t PopBack() NOEXCEPT { // return 0 if empty of (MSB index + 1)
         const size_t back = (Data ? FPlatformMaths::lzcnt(Data) : INDEX_NONE);
         Data &= ~(GOne<<back); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return (back + 1);
     }
 
     template <typename _Func> // LSB to MSB order
-    void ForEach(_Func&& each_index) const {
+    void ForEach(_Func&& each_index) const NOEXCEPT {
         if (AllFalse()) return;
         for (word_t w = Data; w; ) {
             const word_t index = FPlatformMaths::tzcnt(w);
@@ -85,7 +85,7 @@ struct FBitMask {
     }
 
     template <typename _Func> // MSB to LSB order
-    void ReverseForEach(_Func&& each_index) const {
+    void ReverseForEach(_Func&& each_index) const NOEXCEPT {
         if (AllFalse()) return;
         for (word_t w = Data; w; ) {
             const word_t index = FPlatformMaths::lzcnt(w);

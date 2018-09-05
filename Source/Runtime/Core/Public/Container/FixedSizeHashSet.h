@@ -105,9 +105,9 @@ public:
     TFixedSizeHashSet(TFixedSizeHashSet&&) = delete;
     TFixedSizeHashSet& operator =(TFixedSizeHashSet&&) = delete;
 
-    bool empty() const { return (0 == _size); }
-    bool full() const { return (_Capacity == _size); }
-    size_t size() const { return _size; }
+    bool empty() const NOEXCEPT { return (0 == _size); }
+    bool full() const NOEXCEPT { return (_Capacity == _size); }
+    size_t size() const NOEXCEPT { return _size; }
 
     iterator begin() const { return (0 == _size ? end() : FIterator(*this, 0).Advance_(0)); }
     iterator end() const { return FIterator(*this, _Capacity); }
