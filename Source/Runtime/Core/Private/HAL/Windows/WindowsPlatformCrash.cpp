@@ -278,7 +278,7 @@ static void EnumerateThreads_(DWORD (WINAPI *inCallback)( HANDLE ), DWORD inExce
     }
 }
 //----------------------------------------------------------------------------
-static void AbortProgramAndDumpException_(::PEXCEPTION_POINTERS pExceptionInfo) {
+static FWindowsPlatformCrash::EResult DumpException_(::PEXCEPTION_POINTERS pExceptionInfo) {
     time_t tNow = ::time(NULL);
     struct tm pTm;
     ::localtime_s(&pTm, &tNow);
@@ -287,7 +287,7 @@ static void AbortProgramAndDumpException_(::PEXCEPTION_POINTERS pExceptionInfo) 
     {
         wchar_t modulePath[MAX_PATH];
         if (0 == ::GetModuleFileNameW(NULL, modulePath, MAX_PATH))
-            return;
+            return FWindowsPlatformCrash::EResult::InvalidFilename;
 
         ::swprintf_s(filename, MAX_PATH,
             L"%s.%02d%02d%04d_%02d%02d%02d.dmp",
@@ -296,24 +296,26 @@ static void AbortProgramAndDumpException_(::PEXCEPTION_POINTERS pExceptionInfo) 
             pTm.tm_hour, pTm.tm_min, pTm.tm_sec);
     }
 
-    FWindowsPlatformCrash::WriteMiniDump(
+    return FWindowsPlatformCrash::WriteMiniDump(
         MakeCStringView(filename),
         FWindowsPlatformCrash::EInfoLevel::Large,
         pExceptionInfo, true );
-
-    ::abort(); // abort program execution forcibly !
+}
+//----------------------------------------------------------------------------
+static void AbortProgramAndDumpException_(::PEXCEPTION_POINTERS pExceptionInfo) {
+    DumpException_(pExceptionInfo);
 }
 //----------------------------------------------------------------------------
 ::LONG WINAPI OnUnhandledException_(::PEXCEPTION_POINTERS pExceptionInfo) {
     AbortProgramAndDumpException_(pExceptionInfo);
-    return EXCEPTION_CONTINUE_EXECUTION;
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 //----------------------------------------------------------------------------
 #if USE_VECTORED_EXCEPTION_HANDLER
 static volatile LPVOID GHandleVectoredExceptionHandler = nullptr;
 ::LONG WINAPI OnVectoredHandler_(PEXCEPTION_POINTERS pExceptionInfo) {
     AbortProgramAndDumpException_(pExceptionInfo);
-    return EXCEPTION_CONTINUE_EXECUTION;
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 #endif //!USE_VECTORED_EXCEPTION_HANDLER
 //----------------------------------------------------------------------------
@@ -321,24 +323,28 @@ static volatile LPVOID GHandleVectoredExceptionHandler = nullptr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+auto FWindowsPlatformCrash::WriteMiniDump() -> EResult {
+    return DumpException_(NULL);
+}
+//----------------------------------------------------------------------------
 auto FWindowsPlatformCrash::WriteMiniDump(
     const FWStringView& filename,
     EInfoLevel level/* = Medium */,
     const void* exception_ptrs/* = nullptr */,
     bool suspendThreads/* = true */) -> EResult {
 
-    if (filename.empty())
-        return EResult::InvalidFilename;
-
+    // no reentrancy (needed by ::MiniDumpWriteDump !)
+    const FAtomicSpinLock::FTryScope scopeLock(GMinidumpBarrier_);
 #ifdef WITH_PPE_ASSERT
     if (not FDbghelpWrapper::HasInstance())
         return EResult::NoDbgHelpDLL;
 #endif
-
-    // no reentrancy (needed by ::MiniDumpWriteDump !)
-    const FAtomicSpinLock::FTryScope scopeLock(GMinidumpBarrier_);
+    if (not FDbghelpWrapper::Get().Available())
+        return EResult::NoDbgHelpDLL;
     if (not scopeLock.Locked)
         return EResult::Reentrancy;
+    if (filename.empty())
+        return EResult::InvalidFilename;
 
     const FMinidumpParams_ params = {
         ::GetCurrentThreadId(),

@@ -35,6 +35,7 @@ public: // must be defined for every platform
         Balloon,
     };
 
+    static EResult WriteMiniDump();
     static EResult WriteMiniDump(
         const FWStringView& filename,
         EInfoLevel level = Medium,

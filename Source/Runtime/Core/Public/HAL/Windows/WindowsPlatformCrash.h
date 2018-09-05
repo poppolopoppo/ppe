@@ -17,6 +17,7 @@ public: // must be defined for every platform
     using FGenericPlatformCrash::EInfoLevel;
     using FGenericPlatformCrash::EReportMode;
 
+    static EResult WriteMiniDump();
     static EResult WriteMiniDump(
         const FWStringView& filename,
         EInfoLevel level = Medium,
