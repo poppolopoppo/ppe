@@ -80,13 +80,26 @@ public: // must be defined for every platform
     }
 
     static FORCE_INLINE void* MemcpyLarge(void* __restrict dst, const void* __restrict src, size_t sizeInBytes) {
+        // optimized for large blocks on some platforms
         Assert_NoAssume(not Memoverlap(dst, sizeInBytes, src, sizeInBytes));
-        return ::memcpy(dst, src, sizeInBytes); // optimized for large blocks on some platforms
+
+        constexpr size_t w = sizeof(size_t);
+        const u8* ps = (const u8*)src;
+        u8* pd = (u8*)dst;
+        const u8* const pend = (ps + sizeInBytes);
+
+        for (; ps + w <= pend; ps += w, pd += w)
+            *(size_t*)pd = *(const size_t*)ps;
+
+        for (; ps != pend; ++ps, ++pd)
+            *pd = *ps;
+
+        return dst;
     }
 
     static FORCE_INLINE void* Memstream(void* __restrict dst, const void* __restrict src, size_t sizeInBytes) {
-        Assert_NoAssume(not Memoverlap(dst, sizeInBytes, src, sizeInBytes));
-        return ::memcpy(dst, src, sizeInBytes); // on some platform it's possible to avoid trashing L2 cache with streaming intrinsics
+        // on some platform it's possible to avoid trashing L2 cache with streaming intrinsics
+        return MemcpyLarge(dst, src, sizeInBytes);
     }
 
     static FORCE_INLINE void Memswap(void* __restrict lhs, void* __restrict rhs, size_t sizeInBytes) {
