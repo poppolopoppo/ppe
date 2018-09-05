@@ -98,6 +98,10 @@ public:
     bool AliasesToContainer(iterator it) const;
     bool AliasesToContainer(const_iterator it) const;
 
+    static size_t Nth(FDataId id) {
+        return UnpackId_(id).Index;
+    }
+
 protected:
     friend class iterator;
     friend class const_iterator;
@@ -226,7 +230,7 @@ public:
     }
 
     static TSparseArrayIterator Begin(const FSparseArray& owner) {
-        return (owner.empty() // skip linear search when empty
+        return (not owner.empty() // skip linear search when empty
             ? TSparseArrayIterator(owner, 0).GotoFirstItem_()
             : End(owner) );
     }
@@ -368,7 +372,7 @@ private:
 
     void GrabNewChunk_();
 
-    void ReleaseChunk_(FDataChunk* chunk);
+    void ReleaseChunk_(FDataChunk* chunk, size_t offset);
     void ClearReleaseMemory_LeaveDirty_();
 
     allocator_type& get_allocator_() {
