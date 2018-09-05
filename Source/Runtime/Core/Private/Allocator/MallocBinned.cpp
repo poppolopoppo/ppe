@@ -67,6 +67,8 @@ static FORCE_INLINE void FillBlockPage_(void* , size_t , size_t ) {}
 #   endif
 #endif
 //----------------------------------------------------------------------------
+// FBinnedPage_
+//----------------------------------------------------------------------------
 struct FBinnedPage_ {
     STATIC_CONST_INTEGRAL(size_t, PageSize, ALLOCATION_GRANULARITY); // 64 kb
 
@@ -97,6 +99,8 @@ struct FBinnedPage_ {
 #endif
     }
 };
+//----------------------------------------------------------------------------
+// FBinnedChunk_
 //----------------------------------------------------------------------------
 struct FBinnedThreadCache_;
 struct CACHELINE_ALIGNED FBinnedChunk_ {
@@ -142,15 +146,15 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
         Assert_NoAssume(CheckThreadSafety_());
     }
 
-    size_t Class() const { return _class; }
-    size_t BlockSizeInBytes() const { return GClassesSize[_class]; }
-    size_t BlockTotalCount() const { return _blockTotalCount; }
-    size_t BlockAllocatedCount() const { return _allocatedCount; }
+    size_t Class() const NOEXCEPT { return _class; }
+    size_t BlockSizeInBytes() const NOEXCEPT { return FMallocBinned::SizeClasses[_class]; }
+    size_t BlockTotalCount() const NOEXCEPT { return _blockTotalCount; }
+    size_t BlockAllocatedCount() const NOEXCEPT { return _allocatedCount; }
 
-    FBinnedThreadCache_* ThreadCache() const { return _threadCache; }
+    FBinnedThreadCache_* ThreadCache() const NOEXCEPT { return _threadCache; }
 
-    bool IsCompletelyFree() const { return (0 == _allocatedCount); }
-    bool HasFreeBlock() const { return (_allocatedCount < _blockTotalCount); }
+    bool IsCompletelyFree() const NOEXCEPT { return (0 == _allocatedCount); }
+    bool HasFreeBlock() const NOEXCEPT { return (_allocatedCount < _blockTotalCount); }
 
     FORCE_INLINE FBlock* Allocate() {
         Assert_NoAssume(CheckCanaries_());
@@ -173,7 +177,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
         ++_allocatedCount;
 
         Assert(Meta::IsAligned(Alignment, p));
-        ONLY_IF_ASSERT(FillBlockUninitialized_(p, GClassesSize[_class]));
+        ONLY_IF_ASSERT(FillBlockUninitialized_(p, FMallocBinned::SizeClasses[_class]));
 
         return p;
     }
@@ -281,6 +285,8 @@ private:
 #endif
 };
 STATIC_ASSERT(sizeof(FBinnedChunk_) == CACHELINE_SIZE);
+//----------------------------------------------------------------------------
+// FBinnedGlobalCache_
 //----------------------------------------------------------------------------
 struct FBinnedGlobalCache_ {
     STATIC_CONST_INTEGRAL(size_t, FreePagesMax, 128); // <=> 8 mo global cache (128 * 64 * 1024), 1k table
@@ -395,13 +401,15 @@ private:
     INTRUSIVELIST(&FBinnedChunk_::_node) _danglingChunks;
     TFixedSizeStack<FBinnedPage_*, FreePagesMax> _globalFreePages;
 
-    FBinnedGlobalCache_() {}
+    FBinnedGlobalCache_() NOEXCEPT {}
 };
+//----------------------------------------------------------------------------
+// FBinnedThreadCache_
 //----------------------------------------------------------------------------
 struct CACHELINE_ALIGNED FBinnedThreadCache_ {
     STATIC_CONST_INTEGRAL(size_t, FreePagesMax, 16); // <=> 1 mo cache per thread (16 * 64 * 1024)
 
-    static FBinnedThreadCache_& InstanceTLS() {
+    static FBinnedThreadCache_& InstanceTLS() NOEXCEPT {
         static THREAD_LOCAL FBinnedThreadCache_ GInstanceTLS;
         return GInstanceTLS;
     }
@@ -549,7 +557,7 @@ private:
     INTRUSIVELIST(&FBinnedChunk_::_node) _buckets[FMallocBinned::NumSizeClasses];
     TFixedSizeStack<FBinnedPage_*, FreePagesMax> _localFreePages;
 
-    FBinnedThreadCache_() {
+    FBinnedThreadCache_() NOEXCEPT {
         LOG(MallocBinned, Debug, L"start thread cache {0}", std::this_thread::get_id());
     }
 
@@ -613,11 +621,13 @@ private:
     }
 };
 //----------------------------------------------------------------------------
+// FBinnedAllocator_
+//----------------------------------------------------------------------------
 struct FBinnedAllocator_ {
     STATIC_CONST_INTEGRAL(size_t, VMCacheBlocks, 32);
     STATIC_CONST_INTEGRAL(size_t, VMCacheSizeInBytes, 16*1024*1024); // <=> 16 mo global cache for large blocks
 
-    static FBinnedAllocator_& Get() {
+    static FBinnedAllocator_& Get() NOEXCEPT {
         static FBinnedAllocator_ GInstance;
         return GInstance;
     }
@@ -646,18 +656,18 @@ struct FBinnedAllocator_ {
         else if (Likely(sizeInBytes <= FBinnedChunk_::MaxSizeInBytes))
             return FBinnedThreadCache_::InstanceTLS().Allocate(sizeInBytes);
         else
-            return Get().AllocLargeBlock_(sizeInBytes);
+            return AllocLargeBlock_(sizeInBytes);
     }
 
     FORCE_INLINE static void Release(void* p) {
         ONLY_IF_ASSERT(const FCheckReentrancy reentrancy);
         if (Unlikely(Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p)))
-            Get().ReleaseLargeBlock_(p);
+            ReleaseLargeBlock_(p);
         else
             FBinnedThreadCache_::InstanceTLS().Release(p);
     }
 
-    FORCE_INLINE static size_t SnapSize(size_t sizeInBytes) {
+    FORCE_INLINE static size_t SnapSize(size_t sizeInBytes) NOEXCEPT {
         STATIC_ASSERT(ALLOCATION_GRANULARITY == 64<<10);
         return (sizeInBytes <= FBinnedChunk_::MaxSizeInBytes
             ? FMallocBinned::SizeClasses[FBinnedChunk_::MakeClass(sizeInBytes)]
@@ -677,28 +687,31 @@ private:
     FAtomicSpinLock _barrier;
     VIRTUALMEMORYCACHE(LargeBlocks, VMCacheBlocks, VMCacheSizeInBytes) _vm;
 
-    FBinnedAllocator_() {
+    FBinnedAllocator_() NOEXCEPT {
         STATIC_ASSERT(FBinnedPage_::PageSize == FBinnedChunk_::ChunkSizeInBytes);
         LOG(MallocBinned, Debug, L"start allocator");
     }
 
-    ~FBinnedAllocator_() {
+    ~FBinnedAllocator_() NOEXCEPT {
         LOG(MallocBinned, Debug, L"shutdown allocator");
     }
 
-    NO_INLINE void* AllocLargeBlock_(size_t sizeInBytes) {
+    static NO_INLINE void* AllocLargeBlock_(size_t sizeInBytes) {
         STATIC_ASSERT(FBinnedPage_::PageSize == 64 * 1024);
         sizeInBytes = ROUND_TO_NEXT_64K(sizeInBytes);
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
-        return _vm.Allocate(sizeInBytes);
+
+        FBinnedAllocator_& alloc = Get();
+        const FAtomicSpinLock::FScope scopeLock(alloc._barrier);
+        return alloc._vm.Allocate(sizeInBytes);
     }
 
-    NO_INLINE void ReleaseLargeBlock_(void* p) {
+    static NO_INLINE void ReleaseLargeBlock_(void* p) {
         if (nullptr == p)
             return;
 
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
-        _vm.Free(p);
+        FBinnedAllocator_& alloc = Get();
+        const FAtomicSpinLock::FScope scopeLock(alloc._barrier);
+        alloc._vm.Free(p);
     }
 };
 #ifdef WITH_PPE_ASSERT
@@ -727,8 +740,15 @@ void* FMallocBinned::Realloc(void* ptr, size_t size) {
 
         void* const result = FBinnedAllocator_::Allocate(size);
 
-        if (const size_t cpy = Min(old, size)) {
+        if (Likely(size_t cpy = Min(old, size))) {
             Assert(result);
+
+            // need to align on 16 for Memstream()
+            cpy = ROUND_TO_NEXT_16(cpy);
+            Assert_NoAssume(cpy <= FMallocBinned::SizeClasses[
+                FBinnedChunk_::MakeClass(Min(old, size)) ]);
+
+            // copy previous data to new block
             FPlatformMemory::Memstream(result, ptr, cpy);
         }
 
