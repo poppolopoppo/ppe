@@ -555,7 +555,7 @@ bool FWindowsPlatformFile::RollFile(const char_type* filename) {
 
     FStat fstat;
     if (Stat(&fstat, filename)) {
-        const FDateTime date = fstat.CreatedAt.ToDateTimeUTC();
+        const FDateTime date = fstat.LastModified.ToDateTimeUTC();
 
         char_type buffer[MaxPathLength + 1];
         FWFixedSizeTextWriter oss(buffer);
@@ -566,6 +566,19 @@ bool FWindowsPlatformFile::RollFile(const char_type* filename) {
         FWString logroll{ MakeCStringView(filename) };
         const size_t ext_pos = logroll.find_last_of(L'.');
         logroll.insert(ext_pos, oss.Written());
+
+        while (FileExists(logroll.c_str(), EExistPolicy::Exists)) {
+            oss << L"_bak";
+            FWString logroll_bak{ MakeCStringView(filename) };
+            logroll_bak.insert(ext_pos, oss.Written());
+
+            LOG(HAL, Warning, L"file roll failed because '{0}' already exists, trying {1}",
+                logroll, logroll_bak );
+
+            logroll = std::move(logroll_bak);
+        }
+
+        LOG(HAL, Info, L"roll file '{0}' -> '{1}'", MakeCStringView(filename), logroll);
 
         if (not MoveFile(filename, logroll.c_str()))
             return false;
