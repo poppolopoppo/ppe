@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include "targetver.h"
-
 #include "Core/HAL/PlatformIncludes.h"
 
 #include "Core.Pixmap/Pixmap.h"

@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include "targetver.h"
-
 // Include all network related includes (priority matters)
 #include "NetworkIncludes.h"
 

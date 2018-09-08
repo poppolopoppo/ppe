@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include "targetver.h"
-
 #include "Core/stdafx.h"
 #include "Core.Graphics/stdafx.h"
 #include "Core.Logic/stdafx.h"

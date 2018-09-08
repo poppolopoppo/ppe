@@ -140,6 +140,9 @@
     .CompilerBinaryExtension    = 'exe'
     .CompilerDllExtension       = 'dll'
     .CompilerLibraryExtension   = 'lib'
+
+    ; global definition for _WINNT_VERSION (included first with force include)
+    .CompilerOptions    + ' /FI"$SourcePath$/winnt_version.h"'
 ]
 
 //------------------------------------------------------------------------------

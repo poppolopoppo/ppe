@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include "targetver.h"
-
 #include "HAL/PlatformIncludes.h"
 
 #include "VirtualFileSystem_fwd.h"
