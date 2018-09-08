@@ -39,6 +39,11 @@ public:
         VM.Free(ptr, sizeInBytes);
     }
 
+    void ReleaseMemoryInCache() {
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+        VM.ReleaseAll();
+    }
+
 private:
     FMemoryPoolAllocator_() {}
     FMemoryPoolAllocator_(const FMemoryPoolAllocator_&) = delete;
@@ -624,9 +629,12 @@ void FMemoryPoolList::ClearAll_IgnoreLeaks() {
 }
 //----------------------------------------------------------------------------
 void FMemoryPoolList::ClearAll_UnusedMemory() {
-    const FAtomicSpinLock::FScope scopeLock(_barrier);
-    for (IMemoryPool* phead = _pools.Head(); phead; phead = phead->Node().Next )
-        phead->Clear_UnusedMemory();
+    {
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+        for (IMemoryPool* phead = _pools.Head(); phead; phead = phead->Node().Next)
+            phead->Clear_UnusedMemory();
+    }
+    FMemoryPoolAllocator_::Get().ReleaseMemoryInCache();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
