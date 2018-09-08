@@ -13,30 +13,29 @@
 namespace PPE {
 namespace Application {
 POOL_TAG_DECL(Application);
-class FApplicationBase;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FApplicationModule {
+class PPE_APPLICATION_API FApplicationModule : public FModule {
 public:
-    static void Start();
-    static void Shutdown();
+    FApplicationModule();
+    virtual ~FApplicationModule();
 
-    static void ClearAll_UnusedMemory();
-
-    FApplicationModule() { Start(); }
-    ~FApplicationModule() { Shutdown(); }
+protected:
+    virtual void Start(FModuleManager& manager) override final;
+    virtual void Shutdown() override final;
+    virtual void ReleaseMemory() override final;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FApplicationContext {
+class PPE_APPLICATION_API FApplicationContext {
 public:
     FApplicationContext();
     ~FApplicationContext();
 };
 //----------------------------------------------------------------------------
-int LaunchApplication(const FApplicationContext& context, FApplicationBase* app);
+PPE_APPLICATION_API int LaunchApplication(const FApplicationContext& context, class FApplicationBase* app);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

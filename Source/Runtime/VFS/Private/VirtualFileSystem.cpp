@@ -180,8 +180,15 @@ bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FVirtualFileSystemModule::Start() {
-    PPE_MODULE_START(VirtualFileSystem);
+FVirtualFileSystemModule::FVirtualFileSystemModule()
+:   FModule("Runtime/VFS")
+{}
+//----------------------------------------------------------------------------
+FVirtualFileSystemModule::~FVirtualFileSystemModule()
+{}
+//----------------------------------------------------------------------------
+void FVirtualFileSystemModule::Start(FModuleManager& manager) {
+    FModule::Start(manager);
 
     POOL_TAG(VirtualFileSystem)::Start();
     FVirtualFileSystem::Create();
@@ -212,16 +219,15 @@ void FVirtualFileSystemModule::Start() {
 }
 //----------------------------------------------------------------------------
 void FVirtualFileSystemModule::Shutdown() {
-    PPE_MODULE_SHUTDOWN(VirtualFileSystem);
+    FModule::Shutdown();
 
     FVirtualFileSystem::Destroy();
     POOL_TAG(VirtualFileSystem)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FVirtualFileSystemModule::Clear() {
-    PPE_MODULE_CLEARALL(VirtualFileSystem);
+void FVirtualFileSystemModule::ReleaseMemory() {
+    FModule::ReleaseMemory();
 
-    FVirtualFileSystem::Get().Clear();
     POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

@@ -19,8 +19,15 @@ LOG_CATEGORY(PPE_NETWORK_API, Network)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FNetworkModule::Start() {
-    PPE_MODULE_START(Network);
+FNetworkModule::FNetworkModule()
+:   FModule("Runtime/Network")
+{}
+//----------------------------------------------------------------------------
+FNetworkModule::~FNetworkModule()
+{}
+//----------------------------------------------------------------------------
+void FNetworkModule::Start(FModuleManager& manager) {
+    FModule::Start(manager);
 
     POOL_TAG(Network)::Start();
 
@@ -31,7 +38,7 @@ void FNetworkModule::Start() {
 }
 //----------------------------------------------------------------------------
 void FNetworkModule::Shutdown() {
-    PPE_MODULE_SHUTDOWN(Network);
+    FModule::Shutdown();
 
     FlushDNSCache();
 
@@ -43,10 +50,11 @@ void FNetworkModule::Shutdown() {
     POOL_TAG(Network)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FNetworkModule::ClearAll_UnusedMemory() {
-    PPE_MODULE_CLEARALL(Network);
+void FNetworkModule::ReleaseMemory() {
+    FModule::ReleaseMemory();
 
     FlushDNSCache();
+
     POOL_TAG(Network)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

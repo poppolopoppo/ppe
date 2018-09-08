@@ -16,8 +16,15 @@ POOL_TAG_DEF(Serialize);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FSerializeModule::Start() {
-    PPE_MODULE_START(Serialize);
+FSerializeModule::FSerializeModule()
+:   FModule("Runtime/Serialize")
+{}
+//----------------------------------------------------------------------------
+FSerializeModule::~FSerializeModule()
+{}
+//----------------------------------------------------------------------------
+void FSerializeModule::Start(FModuleManager& manager) {
+    FModule::Start(manager);
 
     POOL_TAG(Serialize)::Start();
     Lexer::FLexerStartup::Start();
@@ -26,7 +33,7 @@ void FSerializeModule::Start() {
 }
 //----------------------------------------------------------------------------
 void FSerializeModule::Shutdown() {
-    PPE_MODULE_SHUTDOWN(Serialize);
+    FModule::Shutdown();
 
     FGrammarStartup::Shutdown();
     Parser::FParserStartup::Shutdown();
@@ -34,8 +41,8 @@ void FSerializeModule::Shutdown() {
     POOL_TAG(Serialize)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FSerializeModule::ClearAll_UnusedMemory() {
-    PPE_MODULE_CLEARALL(Serialize);
+void FSerializeModule::ReleaseMemory() {
+    FModule::ReleaseMemory();
 
     Lexer::FLexerStartup::ClearAll_UnusedMemory();
     Parser::FParserStartup::ClearAll_UnusedMemory();

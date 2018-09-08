@@ -19,16 +19,15 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RTTI_API FRTTIModule {
+class PPE_RTTI_API FRTTIModule : public FModule {
 public:
-    static void Start();
-    static void Shutdown();
+    FRTTIModule();
+    virtual ~FRTTIModule();
 
-    static void Clear();
-    static void ClearAll_UnusedMemory();
-
-    FRTTIModule() { Start(); }
-    ~FRTTIModule() { Shutdown(); }
+protected:
+    virtual void Start(FModuleManager& manager) override final;
+    virtual void Shutdown() override final;
+    virtual void ReleaseMemory() override final;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

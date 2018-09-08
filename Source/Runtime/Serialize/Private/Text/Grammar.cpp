@@ -1223,10 +1223,8 @@ void FGrammarStartup::Shutdown() {
     checked_delete_ref(sGrammarImpl);
 }
 //----------------------------------------------------------------------------
-void FGrammarStartup::ClearAll_UnusedMemory() {
-    Lexer::FLexerStartup::ClearAll_UnusedMemory();
-    Parser::FParserStartup::ClearAll_UnusedMemory();
-}
+void FGrammarStartup::ClearAll_UnusedMemory()
+{}
 //----------------------------------------------------------------------------
 Parser::PCParseExpression FGrammarStartup::ParseExpression(Parser::FParseList& input) {
     Assert(sGrammarImpl);

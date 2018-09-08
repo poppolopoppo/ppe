@@ -19,15 +19,15 @@ POOL_TAG_DECL(Serialize);
 // FSerializeModule is the entry and exit point encapsulating every call to PPE::Serialize::.
 // Constructed with the same lifetime than the program (or application if segregated).
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FSerializeModule {
+class PPE_SERIALIZE_API FSerializeModule : public FModule {
 public:
-    static void Start();
-    static void Shutdown();
+    FSerializeModule();
+    virtual ~FSerializeModule();
 
-    static void ClearAll_UnusedMemory();
-
-    FSerializeModule()  { Start(); }
-    ~FSerializeModule() { Shutdown(); }
+protected:
+    virtual void Start(FModuleManager& manager) override final;
+    virtual void Shutdown() override final;
+    virtual void ReleaseMemory() override final;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

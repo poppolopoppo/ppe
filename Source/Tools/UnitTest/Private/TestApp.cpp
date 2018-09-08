@@ -69,6 +69,12 @@ void FTestApp::Start() {
 #endif
     FAppNotify::AddSystrayCommand(
         L"Memory",
+        L"Release memory in modules",
+        []() {
+        ReleaseMemoryInModules();
+    });
+    FAppNotify::AddSystrayCommand(
+        L"Memory",
         L"Report all tracking data",
         []() {
         ReportAllTrackingData();

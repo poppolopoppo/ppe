@@ -43,15 +43,15 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_VFS_API FVirtualFileSystemModule {
+class PPE_VFS_API FVirtualFileSystemModule : public FModule {
 public:
-    static void Start();
-    static void Shutdown();
+    FVirtualFileSystemModule();
+    virtual ~FVirtualFileSystemModule();
 
-    static void Clear();
-
-    FVirtualFileSystemModule() { Start(); }
-    ~FVirtualFileSystemModule() { Shutdown(); }
+protected:
+    virtual void Start(FModuleManager& manager) override final;
+    virtual void Shutdown() override final;
+    virtual void ReleaseMemory() override final;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

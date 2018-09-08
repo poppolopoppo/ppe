@@ -29,11 +29,18 @@ LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FRTTIModule::FRTTIModule()
+:   FModule("Runtime/RTTI")
+{}
+//----------------------------------------------------------------------------
+FRTTIModule::~FRTTIModule()
+{}
+//----------------------------------------------------------------------------
 #ifdef WITH_RTTI_UNITTESTS
 static void RTTI_UnitTests();
 #endif
-void FRTTIModule::Start() {
-    PPE_MODULE_START(RTTI);
+void FRTTIModule::Start(FModuleManager& manager) {
+    FModule::Start(manager);
 
     POOL_TAG(RTTI)::Start();
 
@@ -49,7 +56,7 @@ void FRTTIModule::Start() {
 }
 //----------------------------------------------------------------------------
 void FRTTIModule::Shutdown() {
-    PPE_MODULE_SHUTDOWN(RTTI);
+    FModule::Shutdown();
 
     RTTI_NAMESPACE(RTTI).Shutdown();
 
@@ -60,14 +67,8 @@ void FRTTIModule::Shutdown() {
     POOL_TAG(RTTI)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FRTTIModule::Clear() {
-    PPE_MODULE_CLEARALL(RTTI);
-
-    POOL_TAG(RTTI)::ClearAll_UnusedMemory();
-}
-//----------------------------------------------------------------------------
-void FRTTIModule::ClearAll_UnusedMemory() {
-    PPE_MODULE_CLEARALL(RTTI);
+void FRTTIModule::ReleaseMemory() {
+    FModule::ReleaseMemory();
 
     POOL_TAG(RTTI)::ClearAll_UnusedMemory();
 }

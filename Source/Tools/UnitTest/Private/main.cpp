@@ -4,14 +4,6 @@
 
 typedef PPE::Test::FTestApp application_type;
 
-#include "Core.h"
-#include "VirtualFileSystem.h"
-#include "Network.h"
-#include "RTTI.h"
-#include "Serialize.h"
-//#include "Pixmap.h"  #TODO refactoring the asset generation
-#include "Application.h"
-
 #ifdef PLATFORM_WINDOWS
 #   define PPE_RESOURCES 1
 #else
@@ -27,18 +19,13 @@ typedef PPE::Test::FTestApp application_type;
 #include "Diagnostic/CurrentProcess.h"
 
 template <typename _Application>
-static int Bootstrap(void *appHandle, int nShowCmd, const wchar_t* filename, int argc, const wchar_t** argv) {
+static int Bootstrap(void* appHandle, int showCmd, const wchar_t* filename, int argc, const wchar_t** argv) {
     using namespace PPE;
 
     const Application::FApplicationContext appContext;
 
-    const PPE::FCoreModule moduleCore{ appHandle, nShowCmd, filename, size_t(argc), argv };
-    const PPE::FVirtualFileSystemModule vfsModule;
-    const PPE::Network::FNetworkModule moduleNetwork;
-    const PPE::RTTI::FRTTIModule moduleRTTI;
-    const PPE::Serialize::FSerializeModule moduleSerialize;
-    //const PPE::Pixmap::FPixmapModule modulePixmap;  #TODO refactoring the asset generation
-    const PPE::Application::FApplicationModule moduleApplication;
+    PPE::FModuleManager manager{ appHandle, showCmd, filename, size_t(argc), argv };
+    PPE_STATICMODULES_STARTUP startupStaticModules{ manager };
 
 #if defined(PLATFORM_WINDOWS) && PPE_RESOURCES
     FCurrentProcess::Get().SetAppIcon(IDI_WINDOW_ICON);

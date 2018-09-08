@@ -8,7 +8,6 @@
 #include "Allocator/NodeBasedContainerAllocator.h"
 #include "Diagnostic/Diagnostics.h"
 #include "Diagnostic/Logger.h"
-#include "HAL/PlatformDebug.h"
 #include "IO/FileStream.h"
 #include "IO/FileSystem.h"
 #include "IO/TextWriter.h"
@@ -16,15 +15,13 @@
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
 
+#include "ModuleManager.h"
+
 PRAGMA_INITSEG_LIB
 
 namespace PPE {
-LOG_CATEGORY(PPE_CORE_API, Module)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// VS2013 and VS2015 are still not C++-11 compliant ...
-//static_assert(__cplusplus > 199711L, "Program requires C++11 capable compiler");
 //----------------------------------------------------------------------------
 #if     defined(ARCH_X64)
 static_assert(sizeof(size_t) == sizeof(uint64_t), "incoherent define");
@@ -44,33 +41,27 @@ STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPool
 STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPoolAllocator<int>)>::propagate_on_container_swap::value);
 STATIC_ASSERT(std::allocator_traits<DECORATE_ALLOCATOR(Container, TSingletonPoolAllocator<int>)>::is_always_equal::value);
 //----------------------------------------------------------------------------
-#ifndef FINAL_RELEASE
-static void CheckMemory_() {
-    static THREAD_LOCAL bool bInScope = false;
-    if (bInScope)
-        return;
-
-    bInScope = true;
-
-#   if USE_PPE_PLATFORM_DEBUG
-    FPlatformDebug::CheckMemory();
-#   endif
-
-    bInScope = false;
-}
-#endif //!FINAL_RELEASE
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FCoreModule::Start(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv) {
-    PPE_MODULE_START(Core);
+FCoreModule::FCoreModule()
+:   FModule("Runtime/Core")
+{}
+//----------------------------------------------------------------------------
+FCoreModule::~FCoreModule()
+{}
+//----------------------------------------------------------------------------
+void FCoreModule::Start(FModuleManager& manager) {
+    FModule::Start(manager);
 
     // 0 - main thread context
     FThreadContextStartup::Start_MainThread();
     // 1 - low-level IO
     FFileStream::Start();
     // 2 - diagnostics
-    FDiagnosticsStartup::Start(applicationHandle, nShowCmd, filename, argc, argv);
+    FDiagnosticsStartup::Start(
+        manager.AppHandle(), manager.ShowCmd(),
+        manager.Filename(),
+        manager.Argc(), manager.Argv() );
     // 3 - pool allocators
     POOL_TAG(Default)::Start();
     POOL_TAG(NodeBasedContainer)::Start();
@@ -87,7 +78,7 @@ void FCoreModule::Start(void *applicationHandle, int nShowCmd, const wchar_t* fi
 }
 //----------------------------------------------------------------------------
 void FCoreModule::Shutdown() {
-    PPE_MODULE_SHUTDOWN(Core);
+    FModule::Shutdown();
 
     // 7 - logger
 #ifdef USE_DEBUG_LOGGER
@@ -110,49 +101,15 @@ void FCoreModule::Shutdown() {
     FThreadContextStartup::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FCoreModule::ClearAll_UnusedMemory() {
-    PPE_MODULE_CLEARALL(Core);
+void FCoreModule::ReleaseMemory() {
+    FModule::ReleaseMemory();
 
     POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
     POOL_TAG(NodeBasedContainer)::ClearAll_UnusedMemory();
     POOL_TAG(Default)::ClearAll_UnusedMemory();
+
+    malloc_release_pending_blocks();
 }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#ifndef FINAL_RELEASE
-//----------------------------------------------------------------------------
-OnModuleStart::OnModuleStart(const wchar_t* moduleName) : ModuleName(moduleName) {
-    LOG(Module, Emphasis, L"begin start module {0}", ModuleName);
-    CheckMemory_();
-}
-//----------------------------------------------------------------------------
-OnModuleStart::~OnModuleStart() {
-    LOG(Module, Emphasis, L"end start module {0}", ModuleName);
-    CheckMemory_();
-}
-//----------------------------------------------------------------------------
-OnModuleShutdown::OnModuleShutdown(const wchar_t* moduleName) : ModuleName(moduleName) {
-    LOG(Module, Emphasis, L"begin shutdown module {0}", ModuleName);
-    CheckMemory_();
-}
-//----------------------------------------------------------------------------
-OnModuleShutdown::~OnModuleShutdown() {
-    LOG(Module, Emphasis, L"end shutdown module {0}", ModuleName);
-    CheckMemory_();
-}
-//----------------------------------------------------------------------------
-OnModuleClearAll::OnModuleClearAll(const wchar_t* moduleName) : ModuleName(moduleName) {
-    LOG(Module, Emphasis, L"begin clear all module {0}", ModuleName);
-    CheckMemory_();
-}
-//----------------------------------------------------------------------------
-OnModuleClearAll::~OnModuleClearAll() {
-    LOG(Module, Emphasis, L"end clear all module {0}", ModuleName);
-    CheckMemory_();
-}
-//----------------------------------------------------------------------------
-#endif //!FINAL_RELEASE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

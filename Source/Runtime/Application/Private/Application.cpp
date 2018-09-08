@@ -52,8 +52,15 @@ static void ExceptionTrap_(const FWStringView& step, _Functor&& func) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FApplicationModule::Start() {
-    PPE_MODULE_START(Application);
+FApplicationModule::FApplicationModule()
+:   FModule("Runtime/Application")
+{}
+//----------------------------------------------------------------------------
+FApplicationModule::~FApplicationModule()
+{}
+//----------------------------------------------------------------------------
+void FApplicationModule::Start(FModuleManager& manager) {
+    FModule::Start(manager);
 
     POOL_TAG(Application)::Start();
 
@@ -61,15 +68,15 @@ void FApplicationModule::Start() {
 }
 //----------------------------------------------------------------------------
 void FApplicationModule::Shutdown() {
-    PPE_MODULE_SHUTDOWN(Application);
+    FModule::Shutdown();
 
     FPlatformApplicationMisc::Shutdown();
 
     POOL_TAG(Application)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FApplicationModule::ClearAll_UnusedMemory() {
-    PPE_MODULE_CLEARALL(Application);
+void FApplicationModule::ReleaseMemory() {
+    FModule::ReleaseMemory();
 
     POOL_TAG(Application)::ClearAll_UnusedMemory();
 }
@@ -131,6 +138,7 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
     ReportAllTrackingData();
     ShutdownLeakDetector();
 #endif
+
     return FCurrentProcess::Get().ExitCode();
 }
 //----------------------------------------------------------------------------

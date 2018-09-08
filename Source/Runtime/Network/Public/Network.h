@@ -13,15 +13,15 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_NETWORK_API FNetworkModule {
+class PPE_NETWORK_API FNetworkModule : public FModule {
 public:
-    static void Start();
-    static void Shutdown();
+    FNetworkModule();
+    virtual ~FNetworkModule();
 
-    static void ClearAll_UnusedMemory();
-
-    FNetworkModule() { Start(); }
-    ~FNetworkModule() { Shutdown(); }
+protected:
+    virtual void Start(FModuleManager& manager) override final;
+    virtual void Shutdown() override final;
+    virtual void ReleaseMemory() override final;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

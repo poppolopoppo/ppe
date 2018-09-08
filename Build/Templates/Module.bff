@@ -69,6 +69,10 @@ ForEach( .Module in .ModuleDependencies )
 }
 
 .ProjectForcedIncludes = {}
+ForEach( .Module in .ModulePublicDependencies )
+{
+    ^ProjectForcedIncludes + '$SourcePath$/$Module$/targetmodule.h'
+}
 ForEach( .File in .ModuleForcedIncludes )
 {
     .IncludePath = '$ProjectPath$/$File$'

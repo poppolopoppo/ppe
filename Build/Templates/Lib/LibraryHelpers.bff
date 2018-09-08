@@ -256,7 +256,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .ProjectCleanCommand    = '$VisualStudioFBuildCommand$ $VSCleanOptions$ -clean "$ProjectName$-Purge-$Platform$-$Config$"'
         .Platform               = .SolutionPlatform
 
-        .ForcedIncludes         = ''
+        .ForcedIncludes         = '$SourcePath$/winnt_version.h' ; see MSVCBase.bff
         ForEach( .path in .ProjectForcedIncludes )
         {
             ^ForcedIncludes     + '"$path$";'
@@ -286,10 +286,10 @@ VCXProject( '$ProjectName$-VCXProject' )
     }
     .ProjectFiles = .ProjectFilesAbsolute
 
-    ForEach( .path in .ProjectForcedIncludes )
-    {
-        ^ProjectFiles   + .path
-    }
+    // ForEach( .path in .ProjectForcedIncludes )
+    // {
+    //     ^ProjectFiles   + .path
+    // }
 
     ForEach( .path in .ProjectIsolatedFiles )
     {
