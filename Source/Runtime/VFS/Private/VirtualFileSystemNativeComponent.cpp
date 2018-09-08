@@ -44,8 +44,9 @@ static void Unalias_(
         STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, subpath, length);
         const size_t k = FFileSystemPath::Get().Expand(subpath, alias.PathNode(), aliased.PathNode());
 
-        for (size_t i = 0; i < k; ++i)
+        forrange(i, 0, k - 1)
             oss << subpath[i] << FileSystem::char_type(FileSystem::Separator);
+        oss << subpath[k - 1];
     }
 }
 //----------------------------------------------------------------------------
@@ -54,18 +55,16 @@ static void Unalias_(
     const FFilename& aliased,
     const FDirpath& alias, const FWString& target) {
     Unalias_(oss, aliased.Dirpath(), alias, target);
-    oss << aliased.Basename();
+    oss << FileSystem::char_type(FileSystem::Separator)
+        << aliased.Basename();
 }
 //----------------------------------------------------------------------------
 static void Unalias_(
     const TMemoryView<FileSystem::char_type>& storage,
     const FDirpath& aliased,
-    const FDirpath& alias, const FWString& target,
-    const FileSystem::FStringView suffix = FileSystem::FStringView() ) {
+    const FDirpath& alias, const FWString& target ) {
     TBasicFixedSizeTextWriter<FileSystem::char_type> oss(storage);
     Unalias_(oss, aliased, alias, target);
-    if (not suffix.empty())
-        oss << suffix;
     oss << Eos;
 }
 //----------------------------------------------------------------------------
@@ -100,6 +99,7 @@ static size_t GlobFiles_(
             foreach(FFilename(ctx.Dirpath, basename));
         }
     };
+
     TFunction<void(const FWStringView&)> onSubDir;
     if (recursive) {
         onSubDir = [&ctx](const FWStringView& subdir) {
@@ -140,7 +140,8 @@ FVirtualFileSystemNativeComponent::FVirtualFileSystemNativeComponent(const FDirp
 :   FVirtualFileSystemNativeComponent(alias, FWString(target), openMode)
 {}
 //----------------------------------------------------------------------------
-FVirtualFileSystemNativeComponent::~FVirtualFileSystemNativeComponent() {}
+FVirtualFileSystemNativeComponent::~FVirtualFileSystemNativeComponent()
+{}
 //----------------------------------------------------------------------------
 IVirtualFileSystemComponentReadable* FVirtualFileSystemNativeComponent::Readable() {
     return (_openMode ^ EOpenPolicy::Readable ? this : nullptr);
@@ -155,9 +156,9 @@ IVirtualFileSystemComponentReadWritable* FVirtualFileSystemNativeComponent::Read
 }
 //----------------------------------------------------------------------------
 FWString FVirtualFileSystemNativeComponent::Unalias(const FFilename& aliased) const {
-    TBasicStringBuilder<FileSystem::char_type> nativeDirpath;
-    Unalias_(nativeDirpath, aliased, _alias, _target);
-    return nativeDirpath.ToString();
+    TBasicStringBuilder<FileSystem::char_type> nativePath;
+    Unalias_(nativePath, aliased, _alias, _target);
+    return nativePath.ToString();
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::DirectoryExists(const FDirpath& dirpath, EExistPolicy policy) {
