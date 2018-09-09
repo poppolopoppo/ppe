@@ -57,6 +57,7 @@ struct FMallocLowLevel {
     FORCE_INLINE static void*   AlignedCalloc(size_t nmemb, size_t size, size_t alignment);
     FORCE_INLINE static void*   AlignedRealloc(void *ptr, size_t size, size_t alignment);
 
+    FORCE_INLINE static void    ReleaseCacheMemory();
     FORCE_INLINE static void    ReleasePendingBlocks();
 
     FORCE_INLINE static size_t  SnapSize(size_t size);
@@ -81,6 +82,7 @@ void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment
 void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return _aligned_realloc(ptr, size, alignment);
 }
+void  FMallocLowLevel::ReleaseCacheMemory() {}
 void  FMallocLowLevel::ReleasePendingBlocks() {}
 size_t FMallocLowLevel::SnapSize(size_t size) { return size; }
 #ifndef FINAL_RELEASE
@@ -111,6 +113,9 @@ void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment
 }
 void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return FMallocBinned::AlignedRealloc(ptr, size, alignment);
+}
+void  FMallocLowLevel::ReleaseCacheMemory() {
+    FMallocBinned::ReleaseCacheMemory();
 }
 void  FMallocLowLevel::ReleasePendingBlocks() {
     FMallocBinned::ReleasePendingBlocks();
@@ -144,6 +149,7 @@ void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment
 void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return FMallocStomp::AlignedRealloc(ptr, size, alignment);
 }
+void  FMallocLowLevel::ReleaseCacheMemory() {}
 void  FMallocLowLevel::ReleasePendingBlocks() {}
 size_t FMallocLowLevel::SnapSize(size_t size) { return size; }
 #ifndef FINAL_RELEASE
@@ -161,7 +167,7 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 namespace {
 struct FMallocLeakDetectorFacet {
     static void A(void* ptr, size_t sizeInBytes) {
-
+        NOOP(ptr, sizeInBytes);
     }
     static void TestBlock(void* ptr) {
         FLeakDetector::Get().Release(ptr);
@@ -290,6 +296,11 @@ void*   (aligned_calloc)(size_t nmemb, size_t size, size_t alignment) {
 NOALIAS RESTRICT
 void*   (aligned_realloc)(void *ptr, size_t size, size_t alignment) {
     return FMallocProxy::AlignedRealloc(ptr, size, alignment);
+}
+//----------------------------------------------------------------------------
+NOALIAS
+void    (malloc_release_cache_memory)() {
+    FMallocLowLevel::ReleaseCacheMemory();
 }
 //----------------------------------------------------------------------------
 NOALIAS

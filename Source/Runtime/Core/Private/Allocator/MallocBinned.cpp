@@ -396,6 +396,16 @@ struct FBinnedGlobalCache_ {
         return true;
     }
 
+    void ReleaseFreePages() {
+        LOG(MallocBinned, Debug, L"release global chunk cache");
+
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        FBinnedPage_* page;
+        while (_globalFreePages.Pop(&page))
+            FBinnedPage_::Release(page);
+    }
+
 private:
     FAtomicSpinLock _barrier;
     INTRUSIVELIST(&FBinnedChunk_::_node) _danglingChunks;
@@ -407,9 +417,9 @@ private:
 // FBinnedThreadCache_
 //----------------------------------------------------------------------------
 struct CACHELINE_ALIGNED FBinnedThreadCache_ {
-    STATIC_CONST_INTEGRAL(size_t, FreePagesMax, 16); // <=> 1 mo cache per thread (16 * 64 * 1024)
+    STATIC_CONST_INTEGRAL(size_t, FreePagesMax, 4); // <=> 256 kb cache per thread (4 * 64 * 1024)
 
-    static FBinnedThreadCache_& InstanceTLS() NOEXCEPT {
+    static FBinnedThreadCache_& Get() NOEXCEPT {
         static THREAD_LOCAL FBinnedThreadCache_ GInstanceTLS;
         return GInstanceTLS;
     }
@@ -505,6 +515,23 @@ struct CACHELINE_ALIGNED FBinnedThreadCache_ {
         _pending.NumBlocks = 0;
 
         return true;
+    }
+
+    void ReleaseCachedPages() {
+        ReleasePendingBlocks();
+
+        LOG(MallocBinned, Debug, L"release thread local chunk cache");
+
+        FBinnedGlobalCache_& globalCache = FBinnedGlobalCache_::Get();
+        {
+            const FAtomicSpinLock::FScope scopeLock(_pending.Barrier);
+
+            FBinnedPage_* page;
+            while (_localFreePages.Pop(&page))
+                globalCache.ReleasePage(page);
+        }
+
+        globalCache.ReleaseFreePages();
     }
 
     NO_INLINE ~FBinnedThreadCache_() {
@@ -654,7 +681,7 @@ struct FBinnedAllocator_ {
         if (Unlikely(0 == sizeInBytes))
             return nullptr;
         else if (Likely(sizeInBytes <= FBinnedChunk_::MaxSizeInBytes))
-            return FBinnedThreadCache_::InstanceTLS().Allocate(sizeInBytes);
+            return FBinnedThreadCache_::Get().Allocate(sizeInBytes);
         else
             return AllocLargeBlock_(sizeInBytes);
     }
@@ -664,7 +691,7 @@ struct FBinnedAllocator_ {
         if (Unlikely(Meta::IsAligned(FBinnedChunk_::ChunkSizeInBytes, p)))
             ReleaseLargeBlock_(p);
         else
-            FBinnedThreadCache_::InstanceTLS().Release(p);
+            FBinnedThreadCache_::Get().Release(p);
     }
 
     FORCE_INLINE static size_t SnapSize(size_t sizeInBytes) NOEXCEPT {
@@ -681,6 +708,12 @@ struct FBinnedAllocator_ {
             return ((FBinnedChunk_::FBlock*)p)->Owner()->BlockSizeInBytes();
         else
             return FVirtualMemory::SizeInBytes(p);
+    }
+
+    void ReleaseCacheMemory() {
+        LOG(MallocBinned, Debug, L"release large blocks global memory cache");
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+        _vm.ReleaseAll();
     }
 
 private:
@@ -773,8 +806,13 @@ void* FMallocBinned::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
     return Realloc(ptr, Meta::RoundToNext(size, alignment));
 }
 //----------------------------------------------------------------------------
+void FMallocBinned::ReleaseCacheMemory() {
+    FBinnedAllocator_::Get().ReleaseCacheMemory();
+    FBinnedThreadCache_::Get().ReleaseCachedPages();
+}
+//----------------------------------------------------------------------------
 void FMallocBinned::ReleasePendingBlocks() {
-    FBinnedThreadCache_::InstanceTLS().ReleasePendingBlocks();
+    FBinnedThreadCache_::Get().ReleasePendingBlocks();
 }
 //----------------------------------------------------------------------------
 size_t FMallocBinned::SnapSize(size_t size) {

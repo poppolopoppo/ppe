@@ -16,6 +16,7 @@ public:
     static void     AlignedFree(void* ptr);
     static void*    AlignedRealloc(void* ptr, size_t size, size_t alignment);
 
+    static void     ReleaseCacheMemory();
     static void     ReleasePendingBlocks();
 
     static size_t   SnapSize(size_t size);

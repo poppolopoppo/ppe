@@ -108,7 +108,7 @@ void FCoreModule::ReleaseMemory() {
     POOL_TAG(NodeBasedContainer)::ClearAll_UnusedMemory();
     POOL_TAG(Default)::ClearAll_UnusedMemory();
 
-    malloc_release_pending_blocks();
+    malloc_release_cache_memory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

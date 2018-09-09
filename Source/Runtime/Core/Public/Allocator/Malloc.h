@@ -31,6 +31,9 @@ PPE_CORE_API NOALIAS RESTRICT
 void*   (aligned_realloc)(void *ptr, size_t size, size_t alignment);
 //----------------------------------------------------------------------------
 PPE_CORE_API NOALIAS
+void    (malloc_release_cache_memory)();
+//----------------------------------------------------------------------------
+PPE_CORE_API NOALIAS
 void    (malloc_release_pending_blocks)();
 //----------------------------------------------------------------------------
 PPE_CORE_API NOALIAS
