@@ -54,7 +54,7 @@ constexpr ::SOCKET UnpackSocket_(intptr_t handle) {
 //----------------------------------------------------------------------------
 #if defined(USE_DEBUG_LOGGER) && defined(PLATFORM_WINDOWS)
 #   define LOG_WSALASTERROR(_CONTEXT) \
-        LOG(Network, Error, _CONTEXT "failed, WSA last error : {0}", ::PPE::FLastError(::WSAGetLastError()))
+        LOG(Network, Error, _CONTEXT " failed, WSA last error : {0}", ::PPE::FLastError(::WSAGetLastError()))
 #else
 #   define LOG_WSALASTERROR(_CONTEXT) NOOP()
 #endif
