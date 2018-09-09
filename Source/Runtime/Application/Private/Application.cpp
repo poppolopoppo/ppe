@@ -11,6 +11,7 @@
 #include "HAL/PlatformCrash.h"
 #include "HAL/PlatformMisc.h"
 #include "HAL/PlatformProcess.h"
+#include "HAL/PlatformProfiler.h"
 
 #ifdef USE_DEBUG_LOGGER
 #   include "IO/FormatHelpers.h"
@@ -100,6 +101,9 @@ FApplicationContext::~FApplicationContext() {
 int LaunchApplication(const FApplicationContext& context, FApplicationBase* app) {
     UNUSED(context);
     AssertRelease(app);
+#if USE_PPE_PLATFORM_PROFILER
+    FPlatformProfiler::Name(FPlatformProfiler::ProcessLevel, ToString(app->Name()).data());
+#endif
 #ifndef FINAL_RELEASE
     StartLeakDetector();
 #endif
@@ -108,6 +112,7 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
         PPE_TRY
 #endif
         {
+            PPE_PROFILING_SCOPE("start application");
             app->Start();
         }
 #if USE_APPLICATION_EXCEPTION_TRAP
@@ -118,11 +123,11 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
             FCurrentProcess::Get().SetExitCode(3);
         })
 #endif
-
 #if USE_APPLICATION_EXCEPTION_TRAP
         PPE_TRY
 #endif
         {
+            PPE_PROFILING_SCOPE("shutdown application");
             app->Shutdown();
         }
 #if USE_APPLICATION_EXCEPTION_TRAP

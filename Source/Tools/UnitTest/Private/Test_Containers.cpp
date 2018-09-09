@@ -9,7 +9,6 @@
 #include "Container/StringHashSet.h"
 
 #include "Diagnostic/Logger.h"
-#include "Diagnostic/Profiling.h"
 #include "IO/BufferedStream.h"
 #include "IO/FileStream.h"
 #include "IO/Filename.h"

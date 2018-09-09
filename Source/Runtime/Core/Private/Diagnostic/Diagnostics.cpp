@@ -4,9 +4,13 @@
 
 #include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/DebugFunction.h"
-#include "Diagnostic/Profiling.h"
 
 #include "Memory/MemoryDomain.h"
+#include "HAL/PlatformProfiler.h"
+
+#if USE_PPE_PLATFORM_PROFILER
+#   include "IO/String.h"
+#endif
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -17,15 +21,12 @@ void FDiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, const wch
 
     FCurrentProcess::Create(applicationHandle, nShowCmd, filename, argc, argv);
 
-#ifdef WITH_PPE_PROFILING
-    FProfiler::FStartup();
+#if USE_PPE_PLATFORM_PROFILER
+    FPlatformProfiler::Name(FPlatformProfiler::GlobalLevel, ToString(filename).data());
 #endif
 }
 //----------------------------------------------------------------------------
 void FDiagnosticsStartup::Shutdown() {
-#ifdef WITH_PPE_PROFILING
-    FProfiler::Shutdown();
-#endif
 
     FCurrentProcess::Destroy();
 

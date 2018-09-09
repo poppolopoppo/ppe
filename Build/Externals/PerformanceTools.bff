@@ -18,11 +18,11 @@
 {
     Print( 'Using Visual Studio Performance Tools' )
 
-    .PerfSDK_Win32 =
+    .PerfSDK_Win32  =
     [
         .PerfSDKRelativePath    = 'Team Tools\Performance Tools\PerfSDK'
     ]
-    .PerfSDK_Win64 =
+    .PerfSDK_Win64  =
     [
         .PerfSDKRelativePath    = 'Team Tools\Performance Tools\x64\PerfSDK'
     ]

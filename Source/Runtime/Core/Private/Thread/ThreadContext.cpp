@@ -9,6 +9,7 @@
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
 #include "HAL/PlatformDebug.h"
+#include "HAL/PlatformProfiler.h"
 #include "HAL/PlatformThread.h"
 #include "Meta/AutoSingleton.h"
 #include "Meta/NumericLimits.h"
@@ -86,6 +87,9 @@ static FStringView GetThreadName_(std::thread::id thread_id) {
 //----------------------------------------------------------------------------
 static void RegisterThreadName_(std::thread::id thread_id, const char* name) {
 #ifdef WITH_PPE_THREADCONTEXT_NAME
+#   if USE_PPE_PLATFORM_PROFILER
+    FPlatformProfiler::Name(FPlatformProfiler::ThreadLevel, name);
+#   endif
     FPlatformDebug::SetThreadDebugName(name);
     FThreadNames_& thread_names = FThreadNames_::Get();
     WRITESCOPELOCK(thread_names.RWLock);
