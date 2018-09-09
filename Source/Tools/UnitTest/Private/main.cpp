@@ -2,21 +2,18 @@
 
 #include "TestApp.h"
 
-typedef PPE::Test::FTestApp application_type;
+#include "Diagnostic/CurrentProcess.h"
 
-#ifdef PLATFORM_WINDOWS
+#if defined(PLATFORM_WINDOWS)
+//  Retrieves application icon for windows
+#   include "HAL/PlatformIncludes.h"
+#   include "resource.h"
 #   define PPE_RESOURCES 1
 #else
 #   define PPE_RESOURCES 0
 #endif
 
-#if defined(PLATFORM_WINDOWS) && PPE_RESOURCES
-//  Retrieves application icon for windows
-#   include "HAL/PlatformIncludes.h"
-#   include "resource.h"
-#endif
-
-#include "Diagnostic/CurrentProcess.h"
+typedef PPE::Test::FTestApp application_type;
 
 template <typename _Application>
 static int Bootstrap(void* appHandle, int showCmd, const wchar_t* filename, int argc, const wchar_t** argv) {
@@ -27,7 +24,7 @@ static int Bootstrap(void* appHandle, int showCmd, const wchar_t* filename, int 
     PPE::FModuleManager manager{ appHandle, showCmd, filename, size_t(argc), argv };
     PPE_STATICMODULES_STARTUP startupStaticModules{ manager };
 
-#if defined(PLATFORM_WINDOWS) && PPE_RESOURCES
+#if PPE_RESOURCES
     FCurrentProcess::Get().SetAppIcon(IDI_WINDOW_ICON);
 #endif
 
@@ -45,20 +42,20 @@ int APIENTRY wWinMain(
     _In_ int            nCmdShow ) {
     UNUSED(hPrevInstance);
     UNUSED(lpCmdLine);
-#else
-int main(int argc, const wchar_t* argv[]) {
-#endif
-
-#ifdef PLATFORM_WINDOWS
     int argc = __argc;
     wchar_t* const* argv = __wargv;
+#else
+int main(int argc, const wchar_t* argv[]) {
+    const void* hInstance = nullptr;
+    const int nCmdShow = 0;
 #endif
 
     const wchar_t* filename = argv[0];
     argv = &argv[1];
     argc--;
 
-    int result = 0;
-    result = Bootstrap<application_type>(hInstance, nCmdShow, filename, argc, const_cast<const wchar_t**>(&argv[0]));
-    return result;
+    return Bootstrap<application_type>(
+        hInstance, nCmdShow,
+        filename,
+        argc, const_cast<const wchar_t**>(&argv[0]) );
 }
