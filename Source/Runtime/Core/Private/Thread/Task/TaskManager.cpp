@@ -168,6 +168,7 @@ public:
     virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;
     virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) override final;
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority, ITaskContext* resume) override final;
+    virtual void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) override final;
 
 private:
     FTaskManager& _manager;
@@ -235,7 +236,7 @@ FWorkerContext_::FWorkerContext_(FTaskManager* pmanager, size_t workerIndex)
 ,   _fiberToRelease(nullptr) {
     Assert(pmanager);
     Assert(nullptr == _gInstanceTLS);
-    Assert(not FFiber::IsInFiber());
+    Assert_NoAssume(not FFiber::IsInFiber());
 
     _gInstanceTLS = this;
 }
@@ -244,7 +245,7 @@ FWorkerContext_::~FWorkerContext_() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(this == _gInstanceTLS);
     Assert(_fiberToRelease); // last fiber used to switch back to thread fiber
-    Assert(not FFiber::IsInFiber());
+    Assert_NoAssume(not FFiber::IsInFiber());
 
     _gInstanceTLS = nullptr;
 
@@ -349,9 +350,10 @@ static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, u
 
 #ifndef FINAL_RELEASE
     char workerName[128];
-    Format(workerName, "{0}_Worker#{1}", pmanager->Name(), workerIndex);
+    Format(workerName, "{0}_Worker_{1}_of_{2}",
+        pmanager->Name(), (workerIndex + 1), pmanager->WorkerCount() );
 #else
-    const char* workerName = "";
+    const char* const workerName = "";
 #endif // !FINAL_RELEASE
     const FThreadContextStartup threadStartup(workerName, pmanager->ThreadTag());
 
@@ -367,6 +369,60 @@ static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, u
     }
 }
 //----------------------------------------------------------------------------
+struct FBroadcast_ {
+    const FTaskFunc Broadcast;
+
+    std::mutex FinishedBarrier;
+    size_t NumNotFinished;
+    std::condition_variable OnFinished;
+
+    std::mutex ExecutedBarrier;
+    std::atomic<size_t> NumNotExecuted;
+    std::condition_variable OnExecuted;
+
+    explicit FBroadcast_(FTaskFunc&& broadcast, size_t numWorkers)
+    :   Broadcast(std::move(broadcast))
+    ,   NumNotFinished(numWorkers)
+    ,   NumNotExecuted(numWorkers)
+    {}
+
+    ~FBroadcast_() {
+        Assert_NoAssume(0 == NumNotFinished);
+        Assert_NoAssume(0 == NumNotExecuted);
+    }
+
+    FBroadcast_(const FBroadcast_&) = delete;
+    FBroadcast_& operator =(const FBroadcast_&) = delete;
+
+    FBroadcast_(FBroadcast_&&) = delete;
+    FBroadcast_& operator =(FBroadcast_&&) = delete;
+
+    void Task(ITaskContext& context) {
+        // run the task first
+        Broadcast.Invoke(context);
+
+        // notify callee when every task was executed
+        if (0 == --NumNotExecuted) // this is atomic
+            OnExecuted.notify_all();
+
+        bool notify;
+        {
+            // then lock the barrier to wait for calling thread
+            // since the calling thread has the lock this should block
+            const Meta::FLockGuard scopeLock(FinishedBarrier);
+
+            // finally decrement counter with the lock
+            Assert(NumNotFinished);
+            notify = (0 == --NumNotFinished);
+        }
+
+        // notify outside of the lock to avoid touching anything after this notify
+        // since we can't guarantee the lifetime of (*this) afterwards
+        if (notify)
+            OnFinished.notify_all();
+    }
+};
+//----------------------------------------------------------------------------
 struct FRunAndWaitFor_ {
     TMemoryView<FTaskFunc> Tasks;
     ETaskPriority Priority;
@@ -375,18 +431,16 @@ struct FRunAndWaitFor_ {
     std::mutex Barrier;
     std::condition_variable OnFinished;
 
-    static void Task(ITaskContext& context, FRunAndWaitFor_* pArgs) {
-        Assert(pArgs);
-
-        context.RunAndWaitFor(pArgs->Tasks, pArgs->Priority);
+    void Task(ITaskContext& context) {
+        context.RunAndWaitFor(Tasks, Priority);
 
         {
-            Meta::FLockGuard scopeLock(pArgs->Barrier);
-            Assert(false == pArgs->Available);
-            pArgs->Available = true;
+            Meta::FLockGuard scopeLock(Barrier);
+            Assert(false == Available);
+            Available = true;
         }
 
-        pArgs->OnFinished.notify_all();
+        OnFinished.notify_all();
     }
 };
 //----------------------------------------------------------------------------
@@ -396,27 +450,25 @@ struct FWaitForAll_ {
     std::mutex Barrier;
     std::condition_variable OnFinished;
 
-    static void Noop(ITaskContext& ) { NOOP(); }
-
-    static void Task(ITaskContext& context, FWaitForAll_* pArgs) {
-        Assert(pArgs);
-
+    void Task(ITaskContext& context) {
         FTaskManagerImpl& impl = *FWorkerContext_::Get().Manager().Pimpl();
 
         do {
             FTaskWaitHandle waitHandle;
-            context.RunOne(&waitHandle, [](ITaskContext&) { NOOP(); }, ETaskPriority::Internal);
+            context.RunOne(&waitHandle, [](ITaskContext&) {
+                NOOP();
+            },  ETaskPriority::Internal );
             context.WaitFor(waitHandle);
 
         } while (impl.Scheduler().HasPendingTask());
 
         {
-            Meta::FLockGuard scopeLock(pArgs->Barrier);
-            Assert(false == pArgs->Available);
-            pArgs->Available = true;
+            Meta::FLockGuard scopeLock(Barrier);
+            Assert(false == Available);
+            Available = true;
         }
 
-        pArgs->OnFinished.notify_all();
+        OnFinished.notify_all();
     }
 };
 //----------------------------------------------------------------------------
@@ -459,7 +511,9 @@ void FTaskManagerImpl::Start(const TMemoryView<const u64>& threadAffinities) {
 void FTaskManagerImpl::Shutdown() {
     Assert(_threads.size() == _manager.WorkerCount());
 
-    _scheduler.SignalExitToWorkers(&FWorkerContext_::ExitWorkerTask);
+    _scheduler.BroadcastToEveryWorker(
+        INDEX_NONE, // lowest priority
+        &FWorkerContext_::ExitWorkerTask );
 
     for (std::thread& workerThread : _threads) {
         Assert(workerThread.joinable());
@@ -526,6 +580,39 @@ void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETask
     FTaskWaitHandle handle;
     Run(&handle, rtasks, priority);
     WaitFor(handle, resume);
+}
+//----------------------------------------------------------------------------
+// #NOTE : kinda ugly, but works safely, should only be used in very rare conditions
+// since the scheduler's work to handle dispatching normally (with better granularity hopefully)
+void FTaskManagerImpl::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) {
+    Assert(not FFiber::IsInFiber()); // well won't work if a task is busy handling this logic so no :/
+
+    FBroadcast_ args{ std::move(rtask), _threads.size() };
+    {
+        // first lock the barrier so that every worker thread could not consume more than one task
+        Meta::FUniqueLock scopeLock(args.FinishedBarrier);
+
+        _scheduler.BroadcastToEveryWorker(
+            size_t(priority),
+            MakeFunction(&args, &FBroadcast_::Task) );
+
+        // wait for all task to be executed
+        {
+            Meta::FUniqueLock waitLock(args.ExecutedBarrier);
+            args.OnExecuted.wait(waitLock, [&args]() {
+                return (0 == args.NumNotExecuted);
+            });
+        }
+
+        // then wait for signal and check if every task has been completed
+        // this will actually release the barrier while waiting
+        args.OnFinished.wait(scopeLock, [&args]() {
+            return (0 == args.NumNotFinished);
+        });
+
+        // past this point every worker thread should have leaved the task scope
+        // so this finally safe to destroy args
+    }
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::WorkerLoop_() {
@@ -736,33 +823,40 @@ void FTaskManager::Run(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPrior
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Run(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
-    Assert(not rtasks.empty());
+    Assert_NoAssume(not rtasks.empty());
     Assert(nullptr != _pimpl);
 
     _pimpl->Run(nullptr, rtasks, priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
-    Assert(not FFiber::IsInFiber());
-    Assert(not rtasks.empty());
+    Assert_NoAssume(not FFiber::IsInFiber());
+    Assert_NoAssume(not rtasks.empty());
     Assert(nullptr != _pimpl);
 
     FRunAndWaitFor_ args{ rtasks, priority, false };
     {
         Meta::FUniqueLock scopeLock(args.Barrier);
 
-        _pimpl->RunOne(nullptr, [&args](ITaskContext& ctx) {
-            FRunAndWaitFor_::Task(ctx, &args);
-        }, priority );
+        _pimpl->RunOne(nullptr,
+            MakeFunction(&args, &FRunAndWaitFor_::Task),
+            priority );
 
         args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
         Assert(args.Available);
     }
 }
 //----------------------------------------------------------------------------
+void FTaskManager::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority/* = ETaskPriority::Normal */) const {
+    Assert_NoAssume(rtask);
+    Assert(nullptr != _pimpl);
+
+    _pimpl->BroadcastAndWaitFor(std::move(rtask), priority);
+}
+//----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTaskFunc& whileWaiting, ETaskPriority priority/* = ETaskPriority::Normal */) const {
-    Assert(not FFiber::IsInFiber());
-    Assert(not rtasks.empty());
+    Assert_NoAssume(not FFiber::IsInFiber());
+    Assert_NoAssume(not rtasks.empty());
     Assert(whileWaiting);
     Assert(nullptr != _pimpl);
 
@@ -770,9 +864,9 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTa
     {
         Meta::FUniqueLock scopeLock(args.Barrier);
 
-        _pimpl->RunOne(nullptr, [&args](ITaskContext& ctx) {
-            FRunAndWaitFor_::Task(ctx, &args);
-        }   , priority);
+        _pimpl->RunOne(nullptr,
+            MakeFunction(&args, &FRunAndWaitFor_::Task),
+            priority );
 
         whileWaiting(*_pimpl);
 
@@ -782,7 +876,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTa
 }
 //----------------------------------------------------------------------------
 void FTaskManager::WaitForAll() const {
-    Assert(not FFiber::IsInFiber());
+    Assert_NoAssume(not FFiber::IsInFiber());
     Assert(nullptr != _pimpl);
 
     FWaitForAll_ args{ false };
@@ -791,9 +885,9 @@ void FTaskManager::WaitForAll() const {
     {
         Meta::FUniqueLock scopeLock(args.Barrier);
 
-        _pimpl->RunOne(nullptr, [&args](ITaskContext& ctx) {
-            FWaitForAll_::Task(ctx, &args);
-        },  ETaskPriority::Internal/* this priority is reserved for this particular usage */);
+        _pimpl->RunOne(nullptr,
+            MakeFunction(&args, &FWaitForAll_::Task),
+            ETaskPriority::Internal/* this priority is reserved for this particular usage */);
 
         args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
     }
@@ -811,11 +905,12 @@ void FTaskManager::WaitForAll(int timeoutMS) const {
     {
         Meta::FUniqueLock scopeLock(args.Barrier);
 
-        _pimpl->RunOne(nullptr, [&args](ITaskContext& ctx) {
-            FWaitForAll_::Task(ctx, &args);
-        }, ETaskPriority::Internal/* this priority is reserved for this particular usage */);
+        _pimpl->RunOne(nullptr,
+            MakeFunction(&args, &FWaitForAll_::Task),
+            ETaskPriority::Internal/* this priority is reserved for this particular usage */);
 
-        args.OnFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS),
+        args.OnFinished.wait_for(scopeLock,
+            std::chrono::milliseconds(timeoutMS),
             [&args]() { return args.Available;
         });
     }

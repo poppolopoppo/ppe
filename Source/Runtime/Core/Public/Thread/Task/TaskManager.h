@@ -53,6 +53,7 @@ public:
     virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume = nullptr) = 0;
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) = 0;
+    virtual void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
 
     void RunOne(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority) {
         Run(phandle, MakeView(&rtask, &rtask +1), priority);
@@ -86,6 +87,8 @@ public:
     void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const {
         RunAndWaitFor(MakeView(&rtask, &rtask+1), priority);
     }
+
+    void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
 
     void WaitForAll() const;
     void WaitForAll(int timeoutMS) const; // can timeout, recommended over WaitForAll() to avoid blocking the program

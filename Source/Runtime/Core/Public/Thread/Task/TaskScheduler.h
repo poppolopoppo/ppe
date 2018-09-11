@@ -57,7 +57,7 @@ public:
     void Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FTaskCounter* pcounter);
     void Consume(size_t workerIndex, FTaskQueued* pop);
 
-    void SignalExitToWorkers(const FTaskFunc& exitTask);
+    void BroadcastToEveryWorker(size_t priority, const FTaskFunc& task);
 
 private:
     const size_t _numWorkers;
@@ -253,13 +253,13 @@ void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
         _taskRevision = 0;
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::SignalExitToWorkers(const FTaskFunc& exitTask) {
+void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& task) {
     // track in flight tasks for HasPendingTask() and to reset _taskRevision when the queues are finally empty
     _taskInFlight += _numWorkers;
 
     forrange(i, 0, _numWorkers) {
         // make sure that each worker is getting his exit task
-        FTaskQueued queuedExit{ INDEX_NONE/* lowest priority */, exitTask, nullptr };
+        FTaskQueued queuedExit{ priority, task, nullptr };
         size_t backoff = 0;
         while (not WorkerTryPush_(i, queuedExit))
             FPlatformProcess::SleepForSpinning(backoff);
@@ -306,9 +306,11 @@ void FTaskScheduler::Consume(size_t , FTaskQueued* pop) {
     _tasks.Consume(pop);
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::SignalExitToWorkers(const FTaskFunc& exitTask) {
+void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& task) {
+    Assert(task);
+
     forrange(i, 0, _numWorkers)
-        Produce(ETaskPriority::Internal, FTaskFunc(exitTask), nullptr);
+        Produce(ETaskPriority(priority), FTaskFunc(exitTask), nullptr);
 }
 //----------------------------------------------------------------------------
 #endif //!USE_PPE_THREAD_WORKSTEALINGQUEUE
