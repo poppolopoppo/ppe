@@ -6,6 +6,7 @@
 #include "Memory/RefPtr.h"
 #include "Thread/Task/Task.h"
 
+// #TODO : need to measure real world performance for this
 #define USE_PPE_THREAD_WORKSTEALINGQUEUE 1 // %_NOCOMMIT%
 
 #if USE_PPE_THREAD_WORKSTEALINGQUEUE
@@ -139,7 +140,9 @@ PRAGMA_MSVC_WARNING_POP()
         if (worker.Queue.empty())
             return false;
 
-        worker.Empty.wait(scopeLock, [&worker] { return (not worker.Queue.empty()); });
+        worker.Empty.wait(scopeLock, [&worker] {
+            return (not worker.Queue.empty());
+        });
 
         *ptask = std::move(worker.Queue.top());
 
@@ -159,18 +162,23 @@ PRAGMA_MSVC_WARNING_POP()
 
         // check if there's a higher priority job in another worker
         size_t globalHighest = _globalPriority;
-        if (worker.HighestPriority > globalHighest) {
+        const size_t workerHighest = worker.HighestPriority;
+        if (workerHighest > globalHighest) {
             // look for a queue with a higher priority job to steal
             forrange(i, workerIndex + 1, workerIndex + _numWorkers) {
                 const size_t otherIndex = (i % _numWorkers);
                 FLocalQueue_& other = _workerQueues[otherIndex];
 
-                if (other.HighestPriority < worker.HighestPriority &&
+                if (other.HighestPriority < workerHighest &&
                     WorkerTryPop_(otherIndex, ptask) )
+                    // note that we leave _globalPriority untouched since we didn't fail
                     return true; // stole a job, return
             }
 
-            // found nothing : tell other workers
+            // found nothing : SIGNAL OTHER THREADS
+            // this is how we handle _globalPriority to make sure every worker thread is not starving.
+            // since we can't tell what's the next highest priority (and don't want to pay the price for that),
+            // we must keep this value intact until every possible task was stolen.
             _globalPriority.compare_exchange_weak(globalHighest, INDEX_NONE);
         }
 
@@ -220,22 +228,23 @@ void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<FTaskFunc
 void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FTaskCounter* pcounter) {
     Assert(_taskRevision < 0xFFFF); // just to get sure that we won't be overflowing Priority
 
+    // track in flight tasks for HasPendingTask() and to reset _taskRevision when the queues are finally empty
+    ++_taskInFlight;
+
     // construct insertion priority with _taskRevision
     const size_t insertion_order_preserving_priority = size_t((u64(priority) << 16) | _taskRevision++);
     Assert((insertion_order_preserving_priority >> 16) == size_t(priority));
+
+    FTaskQueued queued{ insertion_order_preserving_priority, std::move(rtask), pcounter };
 
     // used as hint for work stealing : worker will try to steal a job if a more priority task is available
     size_t globalHighest = _globalPriority;
     if (globalHighest > insertion_order_preserving_priority)
         _globalPriority.compare_exchange_weak(globalHighest, insertion_order_preserving_priority);
 
-    // track in flight tasks for HasPendingTask() and to reset _taskRevision when the queues are finally empty
-    ++_taskInFlight;
-
     // push the job to some worker's local queue
-    FTaskQueued queued{ insertion_order_preserving_priority, std::move(rtask), pcounter };
-    for (size_t n = insertion_order_preserving_priority;;) {
-        const size_t workerIndex = (n++ % _numWorkers); // use first 16 bits with previous _taskPushed value
+    for (size_t n = insertion_order_preserving_priority; ; ++n) {
+        const size_t workerIndex = (n % _numWorkers); // use first 16 bits with previous _taskPushed value
         if (WorkerTryPush_(workerIndex, queued))
             break;
     }
@@ -248,7 +257,7 @@ void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
     // at this stage we already consumed a task for execution
 
     // reset _taskRevision when everything is processed to avoid overflows :
-    // having overflow would the insertion order to be inverted and would violate our assumptions
+    // having overflow would cause the insertion order to be inverted and would violate our assumptions
     if (0 == --_taskInFlight)
         _taskRevision = 0;
 }
