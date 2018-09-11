@@ -83,6 +83,7 @@ class PPE_CORE_API FThreadPoolStartup {
 public:
     static void Start();
     static void Shutdown();
+    static void ReleaseMemory();
 
     FThreadPoolStartup() { Start(); }
     ~FThreadPoolStartup() { Shutdown(); }

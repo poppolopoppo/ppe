@@ -108,6 +108,10 @@ void FCoreModule::ReleaseMemory() {
     POOL_TAG(NodeBasedContainer)::ClearAll_UnusedMemory();
     POOL_TAG(Default)::ClearAll_UnusedMemory();
 
+    // will release cached memory in every worker thread
+    FThreadPoolStartup::ReleaseMemory();
+
+    // release cached memory in current thread
     malloc_release_cache_memory();
 }
 //----------------------------------------------------------------------------

@@ -7,7 +7,20 @@
 #include "HAL/PlatformThread.h"
 
 namespace PPE {
-
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static void ReleaseMemoryInWorkerThreads_(FTaskManager& taskManager) {
+    taskManager.BroadcastAndWaitFor(
+        [](ITaskContext&) {
+            malloc_release_cache_memory();
+        },
+        ETaskPriority::Low/* lowest (safe) priority */);
+}
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -92,6 +105,13 @@ void FThreadPoolStartup::Shutdown() {
     FHighPriorityThreadPool::Destroy();
     FIOThreadPool::Destroy();
     FGlobalThreadPool::Destroy();
+}
+//----------------------------------------------------------------------------
+void FThreadPoolStartup::ReleaseMemory() {
+    ReleaseMemoryInWorkerThreads_(FBackgroundThreadPool::Get());
+    ReleaseMemoryInWorkerThreads_(FHighPriorityThreadPool::Get());
+    ReleaseMemoryInWorkerThreads_(FIOThreadPool::Get());
+    ReleaseMemoryInWorkerThreads_(FGlobalThreadPool::Get());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
