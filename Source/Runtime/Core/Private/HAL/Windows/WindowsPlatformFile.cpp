@@ -416,7 +416,7 @@ bool FWindowsPlatformFile::CreateDirectory(const char_type* dirpath, bool* exist
     }
 }
 //----------------------------------------------------------------------------
-bool FWindowsPlatformFile::CreateDirectoryRecursively(const char_type* dirpath) {
+bool FWindowsPlatformFile::CreateDirectoryRecursively(const char_type* dirpath, bool* existed) {
     Assert(dirpath);
 
     size_t sz = 0;
@@ -434,7 +434,7 @@ bool FWindowsPlatformFile::CreateDirectoryRecursively(const char_type* dirpath) 
         Assert(sz < lengthof(folder));
         folder[sz] = L'\0';
 
-        if (not FWindowsPlatformFile::CreateDirectory(folder, nullptr))
+        if (not FWindowsPlatformFile::CreateDirectory(folder, existed))
             return false;
     }
 

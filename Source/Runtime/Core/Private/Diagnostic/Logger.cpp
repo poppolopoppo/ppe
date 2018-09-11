@@ -522,10 +522,9 @@ void FLogger::Start() {
             : FLogger::MakeStdout() );
 
     const FWString logPath = FPlatformFile::JoinPath({
-        FCurrentProcess::Get().SavedPath(),
-        L"Log" });
+        FCurrentProcess::Get().SavedPath(), L"Log" });
 
-    Verify(FPlatformFile::CreateDirectoryRecursively(*logPath));
+    VerifyRelease(FPlatformFile::CreateDirectoryRecursively(*logPath, nullptr));
 
     const FWString logFile = FPlatformFile::JoinPath({ logPath, L"PPE.log" });
 

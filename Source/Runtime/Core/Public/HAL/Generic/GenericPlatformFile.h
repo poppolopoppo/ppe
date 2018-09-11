@@ -59,7 +59,7 @@ public: // must be defined for every platform
     static void GlobFiles(const char_type* dirpath, const char_type* pattern, bool recursive, const TFunction<void(const FWStringView&)>& onMatch) = delete;
 
     static bool CreateDirectory(const char_type* dirpath, bool* existed) = delete;
-    static bool CreateDirectoryRecursively(const char_type* dirpath) = delete;
+    static bool CreateDirectoryRecursively(const char_type* dirpath, bool* existed) = delete;
     static bool MoveFile(const char_type* src, const char_type* dst) = delete;
 
     static bool RemoveDirectory(const char_type* dirpath, bool force) = delete;

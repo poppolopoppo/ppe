@@ -233,34 +233,16 @@ bool FVirtualFileSystemNativeComponent::CreateDirectory(const FDirpath& dirpath)
     Unalias_(nativeDirpath, dirpath, _alias, _target);
     nativeDirpath << Eos;
 
-    if (not FPlatformFile::DirectoryExists(nativeDirpath.data(), EExistPolicy::Exists)) {
-        bool existed = false;
-
-        if (FPlatformFile::CreateDirectory(nativeDirpath.data(), &existed)) {
-            LOG(VFS, Debug, L"create native directory '{0}'", dirpath);
-            return true;
-        }
-
-        const size_t l = nativeDirpath.size();
-        forrange(i, _target.size() - 1, l + 1) {
-            if (l == i || FileSystem::Separators().Contains(buffer[i])) {
-                buffer[i] = L'\0';
-
-                if (FPlatformFile::CreateDirectory(nativeDirpath.data(), &existed)) {
-                    if (l != i)
-                        buffer[i] = FileSystem::Separator;
-                    if (not existed)
-                        LOG(VFS, Debug, L"create native directory '{0}'", MakeCStringView(buffer));
-                }
-                else {
-                    LOG(VFS, Error, L"failed to create native directory '{0}'", MakeCStringView(buffer));
-                    return false;
-                }
-            }
-        }
+    bool existed = false;
+    if (FPlatformFile::CreateDirectoryRecursively(nativeDirpath.data(), &existed)) {
+        CLOG(not existed, VFS, Debug, L"created native directory '{0}'", dirpath);
+        CLOG(existed, VFS, Debug, L"native directory '{0}' already existed", dirpath);
+        return true;
     }
     else {
-        LOG(VFS, Debug, L"native directory '{0}' already exists", dirpath);
+        LOG(VFS, Error, L"failed to create native directory '{0}' ({1})",
+            dirpath, MakeCStringView(buffer));
+        return false;
     }
 
     return true;

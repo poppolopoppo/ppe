@@ -39,7 +39,7 @@ public:
     static void GlobFiles(const char_type* dirpath, const char_type* pattern, bool recursive, const TFunction<void(const FWStringView&)>& onMatch);
 
     static bool CreateDirectory(const char_type* dirpath, bool* existed);
-    static bool CreateDirectoryRecursively(const char_type* dirpath);
+    static bool CreateDirectoryRecursively(const char_type* dirpath, bool* existed);
     static bool MoveFile(const char_type* src, const char_type* dst);
 
     static bool RemoveDirectory(const char_type* dirpath, bool force);
