@@ -2,6 +2,8 @@
 
 #include "Core.h"
 
+#include "HAL/PlatformProcess.h"
+
 #include <atomic>
 #include <emmintrin.h>
 
@@ -22,8 +24,9 @@ public:
     bool TryLock() { return false == State.test_and_set(std::memory_order_acquire); }
 
     void Lock() {
+        size_t backoff = 0;
         while(State.test_and_set(std::memory_order_acquire))
-            _mm_pause();
+            FPlatformProcess::SleepForSpinning(backoff);
     }
 
     struct FScope {

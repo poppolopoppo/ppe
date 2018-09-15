@@ -183,7 +183,7 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
             }
         }
 
-#if 0 // this is better to release the chunks which are too large, since the client can't use the extra memory
+#if 0 // better release the chunks which are too large, since the client can't use the extra memory
         if (nullptr == cachedBlock) {
             const size_t sizeTimes4 = sizeInBytes * 4;
 
