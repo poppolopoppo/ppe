@@ -45,7 +45,7 @@ public:
         // No explicit instruction for 64-bit atomic increment on 32-bit processors; has to be implemented in terms of CMPXCHG8B
         for (;;) {
             i64 old = *dst;
-            if (_InterlockedCompareExchange64(dst, old + 1, old) == old)
+            if (::_InterlockedCompareExchange64(dst, old + 1, old) == old)
                 return (old + 1);
         }
 #endif
@@ -73,7 +73,7 @@ public:
         // No explicit instruction for 64-bit atomic increment on 32-bit processors; has to be implemented in terms of CMPXCHG8B
         for (;;) {
             i64 old = *dst;
-            if (_InterlockedCompareExchange64(dst, old - 1, old) == old)
+            if (::_InterlockedCompareExchange64(dst, old - 1, old) == old)
                 return (old - 1);
         }
 #endif
@@ -101,7 +101,7 @@ public:
         // No explicit instruction for 64-bit atomic increment on 32-bit processors; has to be implemented in terms of CMPXCHG8B
         for (;;) {
             i64 old = *dst;
-            if (_InterlockedCompareExchange64(dst, old + val, old) == old)
+            if (::_InterlockedCompareExchange64(dst, old + val, old) == old)
                 return (old + val);
         }
 #endif
@@ -129,7 +129,7 @@ public:
         // No explicit instruction for 64-bit atomic increment on 32-bit processors; has to be implemented in terms of CMPXCHG8B
         for (;;) {
             i64 old = *dst;
-            if (_InterlockedCompareExchange64(dst, exg, old) == old)
+            if (::_InterlockedCompareExchange64(dst, exg, old) == old)
                 return old;
         }
 #endif

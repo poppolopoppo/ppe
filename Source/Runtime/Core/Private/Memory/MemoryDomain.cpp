@@ -237,20 +237,21 @@ void UnregisterTrackingData(FMemoryTracking *pTrackingData) {
 //----------------------------------------------------------------------------
 void ReportAllocationHistogram(FWTextWriter& oss) {
 #if USE_PPE_MEMORYDOMAINS && defined(USE_DEBUG_LOGGER)
-    TMemoryView<const size_t> classes, allocations, totalBytes;
+    TMemoryView<const size_t> classes;
+    TMemoryView<const i64> allocations, totalBytes;
     if (not FetchMemoryAllocationHistogram(&classes, &allocations, &totalBytes))
         return;
 
     Assert(classes.size() == allocations.size());
 
-    size_t totalCount = 0;
-    size_t maxCount = 0;
-    for (size_t count : allocations) {
+    i64 totalCount = 0;
+    i64 maxCount = 0;
+    for (i64 count : allocations) {
         totalCount += count;
         maxCount = Max(maxCount, count);
     }
 
-    const auto distribution = [](size_t sz) -> float {
+    const auto distribution = [](i64 sz) -> float {
         return (std::log((float)sz + 1.f) - std::log(1.f));
     };
 
@@ -259,7 +260,7 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
     oss << FTextFormat::Float(FTextFormat::FixedFloat, 2);
     oss << L"report allocations size histogram" << Eol;
 
-    static size_t GPrevAllocations[MemoryDomainsMaxCount] = { 0 }; // beware this is not thread safe
+    static i64 GPrevAllocations[MemoryDomainsMaxCount] = { 0 }; // beware this is not thread safe
     AssertRelease(lengthof(GPrevAllocations) >= classes.size());
 
     constexpr float width = 80;
@@ -269,17 +270,17 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
         if (0 == allocations[i])
             Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5}% |",
                 i,
-                Fmt::FSizeInBytes{ classes[i] },
-                Fmt::FSizeInBytes{ totalBytes[i] },
+                Fmt::SizeInBytes(classes[i]),
+                Fmt::SizeInBytes(checked_cast<u64>(totalBytes[i])),
                 0.f );
         else
             Format(oss, L" #{0:#2} | {1:9} | {2:9} | {3:5}% |{4}> {5} +{6}",
                 i,
-                Fmt::FSizeInBytes{ classes[i] },
-                Fmt::FSizeInBytes{ totalBytes[i] },
+                Fmt::SizeInBytes(classes[i]),
+                Fmt::SizeInBytes(checked_cast<u64>(totalBytes[i])),
                 100 * float(allocations[i]) / totalCount,
                 Fmt::Repeat(L'=', size_t(std::round(Min(width, width * distribution(allocations[i]) / distributionScale)))),
-                Fmt::FCountOfElements{ allocations[i] },
+                Fmt::CountOfElements(checked_cast<u64>(allocations[i])),
                 allocations[i] - GPrevAllocations[i] );
 
         oss << Eol;

@@ -100,6 +100,7 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
     return 0;
 #   endif
 #endif
+}
 #endif //!PPE_MALLOC_ALLOCATOR_STD
 //----------------------------------------------------------------------------
 #if (PPE_MALLOC_ALLOCATOR == PPE_MALLOC_ALLOCATOR_BINNED)
@@ -200,8 +201,8 @@ static constexpr size_t GMallocSizeClasses[GMallocNumClasses] = {
     65536,    81920,    98304,    114688,   131072,   163840,
     196608,   229376,   262144,   327680,   393216,   425952,
 };
-static size_t GMallocSizeAllocations[GMallocNumClasses] = { 0 };
-static size_t GMallocSizeTotalBytes[GMallocNumClasses] = { 0 };
+static volatile i64 GMallocSizeAllocations[GMallocNumClasses] = { 0 };
+static volatile i64 GMallocSizeTotalBytes[GMallocNumClasses] = { 0 };
 struct FMallocHistogram {
     FORCE_INLINE static size_t MakeSizeClass(size_t size) {
         constexpr size_t POW_N = 2;
@@ -213,8 +214,8 @@ struct FMallocHistogram {
     static void Allocate(void* ptr, size_t sizeInBytes) {
         NOOP(ptr);
         const size_t sizeClass = Min(MakeSizeClass(sizeInBytes), GMallocNumClasses - 1);
-        ++GMallocSizeAllocations[sizeClass];
-        GMallocSizeTotalBytes[sizeClass] += sizeInBytes;
+        FPlatformAtomics::Increment(&GMallocSizeAllocations[sizeClass]);
+        FPlatformAtomics::Add(&GMallocSizeTotalBytes[sizeClass], sizeInBytes);
     }
 };
 } //!namespace
@@ -372,12 +373,12 @@ void DumpMemoryLeaks(bool onlyNonDeleters/* = false */) {
 #ifndef FINAL_RELEASE
 bool FetchMemoryAllocationHistogram(
     TMemoryView<const size_t>* classes,
-    TMemoryView<const size_t>* allocations,
-    TMemoryView<const size_t>* totalBytes ) {
+    TMemoryView<const i64>* allocations,
+    TMemoryView<const i64>* totalBytes ) {
 #if PPE_MALLOC_HISTOGRAM_PROXY
     *classes = MakeView(GMallocSizeClasses);
-    *allocations = MakeView(GMallocSizeAllocations);
-    *totalBytes = MakeView(GMallocSizeTotalBytes);
+    *allocations = TMemoryView<const i64>((const i64*)&GMallocSizeAllocations, lengthof(GMallocSizeAllocations));
+    *totalBytes = TMemoryView<const i64>((const i64*)&GMallocSizeTotalBytes, lengthof(GMallocSizeTotalBytes));
     return true;
 #else
     NOOP(classes, allocations, totalBytes);

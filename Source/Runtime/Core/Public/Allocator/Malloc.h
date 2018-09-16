@@ -109,8 +109,8 @@ PPE_CORE_API bool SetLeakDetectorWhiteListed(bool ignoreleaks);
 PPE_CORE_API void DumpMemoryLeaks(bool onlyNonDeleters = false);
 PPE_CORE_API bool FetchMemoryAllocationHistogram(
     TMemoryView<const size_t>* classes,
-    TMemoryView<const size_t>* allocations,
-    TMemoryView<const size_t>* totalBytes );
+    TMemoryView<const i64>* allocations,
+    TMemoryView<const i64>* totalBytes );
 struct FLeakDetectorWhiteListScope {
     const bool WasIgnoringLeaks;
     FLeakDetectorWhiteListScope(): WasIgnoringLeaks(SetLeakDetectorWhiteListed(true)) {}
