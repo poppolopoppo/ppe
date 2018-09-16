@@ -11,7 +11,7 @@
 // Prefered to non intrusive ref counting (std::shared_ptr<>).
 */
 
-#if defined(_DEBUG) || !defined(NDEBUG) || USE_PPE_MEMORY_DEBUGGING
+#if USE_PPE_DEBUG || USE_PPE_MEMORY_DEBUGGING
 #   define USE_PPE_SAFEPTR 1
 #else
 #   define USE_PPE_SAFEPTR 0

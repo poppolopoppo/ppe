@@ -33,6 +33,11 @@
 //----------------------------------------------------------------------------
 // Determined from build configuration
 //----------------------------------------------------------------------------
+#if defined(_DEBUG) && !defined(NDEBUG)
+#   define USE_PPE_DEBUG 1
+#else
+#   define USE_PPE_DEBUG 0
+#endif
 #ifdef PROFILING_ENABLED
 #   define USE_PPE_PROFILING 1
 #else

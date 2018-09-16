@@ -235,6 +235,8 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
 }
 //----------------------------------------------------------------------------
 void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* first, size_t cacheBlocksCapacity, size_t maxCacheSizeInBytes TRACKINGDATA_ARG_IFP) {
+    Assert(ptr);
+
     if (0 == sizeInBytes)
         sizeInBytes = FVirtualMemory::SizeInBytes(ptr);
 
@@ -253,7 +255,7 @@ void FVirtualMemoryCache::Free(void* ptr, size_t sizeInBytes, FFreePageBlock* fi
         Assert(TotalCacheSizeInBytes >= first->SizeInBytes);
         TotalCacheSizeInBytes -= first->SizeInBytes;
 
-#ifdef _DEBUG
+#if USE_PPE_DEBUG
         first->Ptr = nullptr;
         first->SizeInBytes = 0;
 #endif
@@ -285,7 +287,7 @@ void FVirtualMemoryCache::ReleaseAll(FFreePageBlock* first TRACKINGDATA_ARG_IFP)
         Assert(TotalCacheSizeInBytes >= first->SizeInBytes);
         TotalCacheSizeInBytes -= first->SizeInBytes;
 
-#ifdef _DEBUG
+#if USE_PPE_DEBUG
         first->Ptr = nullptr;
         first->SizeInBytes = 0;
 #endif

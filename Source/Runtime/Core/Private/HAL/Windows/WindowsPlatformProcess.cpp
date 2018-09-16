@@ -124,7 +124,7 @@ static bool OpenWebURL_(const FWStringView& url) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::OnProcessStart() {
-#   if defined(USE_PPE_MEMORY_DEBUGGING) || defined(_DEBUG)
+#   if USE_PPE_MEMORY_DEBUGGING || USE_PPE_DEBUG
     constexpr int debugHeapEnabled = _CRTDBG_ALLOC_MEM_DF;
     constexpr int debugCheckMemory = _CRTDBG_CHECK_EVERY_1024_DF;
     constexpr int debugNecrophilia = _CRTDBG_DELAY_FREE_MEM_DF;

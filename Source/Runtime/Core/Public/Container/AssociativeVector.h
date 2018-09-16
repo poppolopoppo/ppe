@@ -59,7 +59,7 @@ public:
 
     template <typename _It>
     TAssociativeVector(_It&& begin, _It&& end)
-#ifdef _DEBUG
+#if USE_PPE_DEBUG
         { insert(begin, end); }
 #else
         : _vector(begin, end) {}
@@ -168,7 +168,7 @@ public:
 
     template <typename _It>
     void insert(_It&& begin, _It&& end) {
-#ifdef _DEBUG
+#if USE_PPE_DEBUG
         reserve(std::distance(begin, end));
         for (auto it = begin; end != it; ++it)
             Insert_AssertUnique(it->first, it->second);

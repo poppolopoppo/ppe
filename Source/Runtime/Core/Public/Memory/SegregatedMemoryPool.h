@@ -25,7 +25,7 @@
 #   define POOL_MIN_CHUNKSIZE (  64ul << 10ul) /*  64k */
 #endif
 
-#ifdef _DEBUG
+#if USE_PPE_DEBUG
 #   define WITH_PPE_POOL_ALLOCATOR_VERBOSE
 #   include "Diagnostic/Logger.h"
 #   include <typeinfo>
