@@ -30,15 +30,22 @@
 #if USE_PPE_MEMORY_DEBUGGING && !PPE_MALLOC_FORCE_STD
 #   define PPE_MALLOC_HISTOGRAM_PROXY      1 // Keep memory histogram available, shouldn't have any influence on debugging
 #   define PPE_MALLOC_LEAKDETECTOR_PROXY   0 // Disabled since it adds payload to each allocation
+#   define PPE_MALLOC_POISON_PROXY         1 // Erase all data from blocks when allocating and releasing them, helps to find necrophilia
 #elif not (defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
-#   define PPE_MALLOC_HISTOGRAM_PROXY      1 //%_NOCOMMIT% // Logs memory allocation size statistics in an histogram
-#   define PPE_MALLOC_LEAKDETECTOR_PROXY   (USE_PPE_MALLOC_LEAKDETECTOR) //%_NOCOMMIT% // Will find leaking code paths
+#   define PPE_MALLOC_HISTOGRAM_PROXY      1 // %_NOCOMMIT%
+#   define PPE_MALLOC_LEAKDETECTOR_PROXY   (USE_PPE_MALLOC_LEAKDETECTOR) // %_NOCOMMIT%
+#   define PPE_MALLOC_POISON_PROXY         (USE_PPE_DEBUG) // %_NOCOMMIT%
 #else
 #   define PPE_MALLOC_HISTOGRAM_PROXY      0
 #   define PPE_MALLOC_LEAKDETECTOR_PROXY   0
+#   define PPE_MALLOC_POISON_PROXY         0
 #endif
 
-#define USE_PPE_MALLOC_PROXY               (PPE_MALLOC_HISTOGRAM_PROXY|PPE_MALLOC_LEAKDETECTOR_PROXY)
+#define USE_PPE_MALLOC_PROXY               (PPE_MALLOC_HISTOGRAM_PROXY|PPE_MALLOC_LEAKDETECTOR_PROXY|PPE_MALLOC_POISON_PROXY)
+
+#if PPE_MALLOC_HISTOGRAM_PROXY
+#   include "HAL/PlatformAtomics.h"
+#endif
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -241,6 +248,9 @@ private:
 #   if PPE_MALLOC_HISTOGRAM_PROXY
         FMallocHistogram::Allocate(ptr, sizeInBytes);
 #   endif
+#   if PPE_MALLOC_POISON_PROXY
+        FPlatformMemory::Memset(ptr, 0xCC, sizeInBytes);
+#   endif
         return ptr;
     }
 
@@ -250,6 +260,9 @@ private:
         if (nullptr == ptr) return nullptr;
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
         FLeakDetector::Get().Release(ptr);
+#   endif
+#   if PPE_MALLOC_POISON_PROXY
+        FPlatformMemory::Memset(ptr, 0xDD, FMallocLowLevel::RegionSize(ptr));
 #   endif
         return ptr;
     }
