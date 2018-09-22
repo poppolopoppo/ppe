@@ -126,7 +126,7 @@ auto FWindowsPlatformThread::GlobalThreadsInfo() -> FThreadGroupInfo {
 //----------------------------------------------------------------------------
 auto FWindowsPlatformThread::HighPriorityThreadsInfo() -> FThreadGroupInfo {
     FThreadGroupInfo info;
-    info.NumWorkers = Min(std::thread::hardware_concurrency(), size_t(PPE_MAX_NUMPPES));
+    info.NumWorkers = Min(std::thread::hardware_concurrency(), size_t(PPE_MAX_NUMCPUCORE));
     forrange(i, 0, FAffinityMask(info.NumWorkers))
         info.Affinities[i] = FAffinityMask(1) << i;
     return info;

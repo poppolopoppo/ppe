@@ -3,32 +3,44 @@
 //----------------------------------------------------------------------------
 // Global parameter defining how much cores we handle at max
 //----------------------------------------------------------------------------
-#define PPE_MAX_NUMPPES           64 // Change with care !
+#ifndef PPE_MAX_NUMCPUCORE
+#   define PPE_MAX_NUMCPUCORE         64 // Change with care !
+#endif
 
 //----------------------------------------------------------------------------
 // Global switch for turning of assertions
 //----------------------------------------------------------------------------
-#define USE_PPE_ASSERTIONS         1 //%_NOCOMMIT%
+#ifndef USE_PPE_ASSERTIONS
+#   define USE_PPE_ASSERTIONS         1 //%_NOCOMMIT%
+#endif
 
 //----------------------------------------------------------------------------
 // Global switch for handling or throwing exceptions
 //----------------------------------------------------------------------------
-#define USE_PPE_EXCEPTIONS         1 //%_NOCOMMIT%
+#ifndef USE_PPE_EXCEPTIONS
+#   define USE_PPE_EXCEPTIONS         1 //%_NOCOMMIT%
+#endif
 
 //----------------------------------------------------------------------------
 // Global switch for using Assert() even when it should be disabled
 //----------------------------------------------------------------------------
-#define USE_PPE_FORCE_ASSERTION    0 //%_NOCOMMIT%
+#ifndef USE_PPE_FORCE_ASSERTION
+#   define USE_PPE_FORCE_ASSERTION    0 //%_NOCOMMIT%
+#endif
 
 //----------------------------------------------------------------------------
 // Global switch for using LOG() event it should be disabled
 //----------------------------------------------------------------------------
-#define USE_PPE_FORCE_LOGGING      0 //%_NOCOMMIT%
+#ifndef USE_PPE_FORCE_LOGGING
+#   define USE_PPE_FORCE_LOGGING      0 //%_NOCOMMIT%
+#endif
 
 //----------------------------------------------------------------------------
 // Global switch for using stomp allocator, memory guards and turning special allocators off
 //----------------------------------------------------------------------------
-#define USE_PPE_MEMORY_DEBUGGING   0 //%_NOCOMMIT%
+#ifndef USE_PPE_MEMORY_DEBUGGING
+#   define USE_PPE_MEMORY_DEBUGGING   0 //%_NOCOMMIT%
+#endif
 
 //----------------------------------------------------------------------------
 // Determined from build configuration

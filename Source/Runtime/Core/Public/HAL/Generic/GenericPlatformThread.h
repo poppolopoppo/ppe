@@ -27,7 +27,7 @@ public: // must be defined for every platform
     // thread properties
 
     using FAffinityMask = u64;
-    STATIC_ASSERT(PPE_MAX_NUMPPES <= sizeof(FAffinityMask)<<3); // should change FAffinityMask type otherwise
+    STATIC_ASSERT(PPE_MAX_NUMCPUCORE <= sizeof(FAffinityMask)<<3); // should change FAffinityMask type otherwise
 
     STATIC_CONST_INTEGRAL(FAffinityMask, AllThreadsAffinity, FAffinityMask(-1));
     STATIC_CONST_INTEGRAL(FAffinityMask, AllButTwoFirstsAffinity, AllThreadsAffinity & (~FAffinityMask(3)));
@@ -48,7 +48,7 @@ public: // must be defined for every platform
 
     struct FThreadGroupInfo {
         size_t NumWorkers = INDEX_NONE;
-        FAffinityMask Affinities[PPE_MAX_NUMPPES] = { AllThreadsAffinity };
+        FAffinityMask Affinities[PPE_MAX_NUMCPUCORE] = { AllThreadsAffinity };
     };
 
     static FThreadGroupInfo BackgroundThreadsInfo() = delete;
