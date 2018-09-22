@@ -320,6 +320,28 @@ typename std::enable_if< not Meta::TIsPod<T>::value >::type Destroy(T* p) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+struct FNonCopyable {
+    FNonCopyable() NOEXCEPT = default;
+    FNonCopyable(const FNonCopyable&) = delete;
+    FNonCopyable& operator =(const FNonCopyable&) = delete;
+};
+//----------------------------------------------------------------------------
+struct FNonMovable {
+    FNonMovable() NOEXCEPT = default;
+    FNonMovable(FNonMovable&&) = delete;
+    FNonMovable& operator =(FNonMovable&&) = delete;
+};
+//----------------------------------------------------------------------------
+struct FNonCopyableNorMovable {
+    FNonCopyableNorMovable() NOEXCEPT = default;
+    FNonCopyableNorMovable(const FNonCopyableNorMovable&) = delete;
+    FNonCopyableNorMovable& operator =(const FNonCopyableNorMovable&) = delete;
+    FNonCopyableNorMovable(FNonCopyableNorMovable&&) = delete;
+    FNonCopyableNorMovable& operator =(FNonCopyableNorMovable&&) = delete;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 #define INSTANTIATE_CLASS_TYPEDEF(_API, _NAME, ...) \
     class _API _NAME : public __VA_ARGS__ { \
         typedef __VA_ARGS__ parent_type; \
