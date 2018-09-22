@@ -51,8 +51,13 @@ public:
 
     virtual void Run(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
+    virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
+
     virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume = nullptr) = 0;
+
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) = 0;
+    virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) = 0;
+
     virtual void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
 
     void RunOne(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority) {
@@ -79,8 +84,11 @@ public:
     ITaskContext* Context() const;
 
     void Run(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) const;
+    void Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
+
     void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) const;
     void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTaskFunc& whileWaiting, ETaskPriority priority = ETaskPriority::Normal) const;
+    void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
 
     void Run(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
 

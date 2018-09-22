@@ -166,8 +166,13 @@ public:
 
     virtual void Run(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority) override final;
     virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;
+    virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override final;
+
     virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) override final;
+
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority, ITaskContext* resume) override final;
+    virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority, ITaskContext* resume) override final;
+
     virtual void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) override final;
 
 private:
@@ -303,13 +308,13 @@ void FWorkerContext_::ClearCounters() {
         RemoveRef_AssertReachZero(counter);
     }
 
-    Assert(0 == _counters.size());
+    Assert_NoAssume(0 == _counters.size());
 }
 //----------------------------------------------------------------------------
 void FWorkerContext_::DutyCycle() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    if (++_revision & 15) // every 16 calls
+    if ((++_revision & 31) == 0) // every 32 calls
         CurrentThreadContext().DutyCycle();
 }
 //----------------------------------------------------------------------------
@@ -423,8 +428,11 @@ struct FBroadcast_ {
     }
 };
 //----------------------------------------------------------------------------
-struct FRunAndWaitFor_ {
-    TMemoryView<FTaskFunc> Tasks;
+template <bool _Const>
+struct TRunAndWaitFor_ {
+    using taskfunc_type = std::conditional_t<_Const, const FTaskFunc, FTaskFunc>;
+
+    TMemoryView<taskfunc_type> Tasks;
     ETaskPriority Priority;
     bool Available;
 
@@ -557,6 +565,23 @@ void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc
     _scheduler.Produce(priority, rtasks, pcounter);
 }
 //----------------------------------------------------------------------------
+void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) {
+    FTaskCounter* pcounter = nullptr;
+
+    if (phandle) {
+        Assert(not phandle->Valid());
+
+        *phandle = FTaskWaitHandle(priority, FWorkerContext_::Get().CreateCounter());
+        Assert(phandle->Valid());
+        Assert(phandle->Counter());
+
+        pcounter = const_cast<FTaskCounter*>(phandle->Counter());
+        pcounter->Start(tasks.size());
+    }
+
+    _scheduler.Produce(priority, tasks, pcounter);
+}
+//----------------------------------------------------------------------------
 void FTaskManagerImpl::WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) {
     Assert(FFiber::IsInFiber());
     Assert(handle.Valid());
@@ -579,6 +604,12 @@ void FTaskManagerImpl::WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) {
 void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority, ITaskContext* resume) {
     FTaskWaitHandle handle;
     Run(&handle, rtasks, priority);
+    WaitFor(handle, resume);
+}
+//----------------------------------------------------------------------------
+void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority, ITaskContext* resume) {
+    FTaskWaitHandle handle;
+    Run(&handle, tasks, priority);
     WaitFor(handle, resume);
 }
 //----------------------------------------------------------------------------
@@ -829,17 +860,63 @@ void FTaskManager::Run(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority prior
     _pimpl->Run(nullptr, rtasks, priority);
 }
 //----------------------------------------------------------------------------
+void FTaskManager::Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
+    Assert_NoAssume(not tasks.empty());
+    Assert(nullptr != _pimpl);
+
+    _pimpl->Run(nullptr, tasks, priority);
+}
+//----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(not FFiber::IsInFiber());
     Assert_NoAssume(not rtasks.empty());
     Assert(nullptr != _pimpl);
 
-    FRunAndWaitFor_ args{ rtasks, priority, false };
+    TRunAndWaitFor_<false> args{ rtasks, priority, false };
     {
         Meta::FUniqueLock scopeLock(args.Barrier);
 
         _pimpl->RunOne(nullptr,
-            MakeFunction(&args, &FRunAndWaitFor_::Task),
+            MakeFunction(&args, &TRunAndWaitFor_<false>::Task),
+            priority );
+
+        args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
+        Assert(args.Available);
+    }
+}
+//----------------------------------------------------------------------------
+void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTaskFunc& whileWaiting, ETaskPriority priority/* = ETaskPriority::Normal */) const {
+    Assert_NoAssume(not FFiber::IsInFiber());
+    Assert_NoAssume(not rtasks.empty());
+    Assert(whileWaiting);
+    Assert(nullptr != _pimpl);
+
+    TRunAndWaitFor_<false> args{ rtasks, priority, false };
+    {
+        Meta::FUniqueLock scopeLock(args.Barrier);
+
+        _pimpl->RunOne(nullptr,
+            MakeFunction(&args, &TRunAndWaitFor_<false>::Task),
+            priority );
+
+        whileWaiting(*_pimpl);
+
+        args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
+        Assert(args.Available);
+    }
+}
+//----------------------------------------------------------------------------
+void FTaskManager::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
+    Assert_NoAssume(not FFiber::IsInFiber());
+    Assert_NoAssume(not tasks.empty());
+    Assert(nullptr != _pimpl);
+
+    TRunAndWaitFor_<true> args{ tasks, priority, false };
+    {
+        Meta::FUniqueLock scopeLock(args.Barrier);
+
+        _pimpl->RunOne(nullptr,
+            MakeFunction(&args, &TRunAndWaitFor_<true>::Task),
             priority );
 
         args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
@@ -852,27 +929,6 @@ void FTaskManager::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority
     Assert(nullptr != _pimpl);
 
     _pimpl->BroadcastAndWaitFor(std::move(rtask), priority);
-}
-//----------------------------------------------------------------------------
-void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTaskFunc& whileWaiting, ETaskPriority priority/* = ETaskPriority::Normal */) const {
-    Assert_NoAssume(not FFiber::IsInFiber());
-    Assert_NoAssume(not rtasks.empty());
-    Assert(whileWaiting);
-    Assert(nullptr != _pimpl);
-
-    FRunAndWaitFor_ args{ rtasks, priority, false };
-    {
-        Meta::FUniqueLock scopeLock(args.Barrier);
-
-        _pimpl->RunOne(nullptr,
-            MakeFunction(&args, &FRunAndWaitFor_::Task),
-            priority );
-
-        whileWaiting(*_pimpl);
-
-        args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
-        Assert(args.Available);
-    }
 }
 //----------------------------------------------------------------------------
 void FTaskManager::WaitForAll() const {

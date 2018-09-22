@@ -55,7 +55,11 @@ public:
     bool HasPendingTask() const;
 
     void Produce(ETaskPriority priority, FTaskFunc&& rtask, FTaskCounter* pcounter);
+    void Produce(ETaskPriority priority, const FTaskFunc& task, FTaskCounter* pcounter);
+
     void Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FTaskCounter* pcounter);
+    void Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FTaskCounter* pcounter);
+
     void Consume(size_t workerIndex, FTaskQueued* pop);
 
     void BroadcastToEveryWorker(size_t priority, const FTaskFunc& task);
@@ -70,14 +74,14 @@ private:
         }
     };
 
+    PRAGMA_MSVC_WARNING_PUSH()
+    PRAGMA_MSVC_WARNING_DISABLE(4324) // 'FLocalQueue_': structure was padded due to alignment specifier
     typedef std::priority_queue<
         FTaskQueued,
-        VECTOR(Task, FTaskQueued),
+        VECTORINSITU(Task, FTaskQueued, 8),
         FPrioritySort_
     >   priority_queue_type;
 
-PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(4324) // 'FLocalQueue_': structure was padded due to alignment specifier
     struct CACHELINE_ALIGNED FLocalQueue_ {
         size_t HighestPriority = INDEX_NONE;
 
@@ -88,7 +92,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4324) // 'FLocalQueue_': structure was padded due to
 
         priority_queue_type Queue;
     };
-PRAGMA_MSVC_WARNING_POP()
+    PRAGMA_MSVC_WARNING_POP()
 
     const size_t _maxTasks;
     std::atomic<size_t> _taskInFlight;
@@ -225,6 +229,36 @@ void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<FTaskFunc
         Produce(priority, std::move(rtask), pcounter);
 }
 //----------------------------------------------------------------------------
+void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FTaskCounter* pcounter) {
+    for (const FTaskFunc& task : tasks)
+        Produce(priority, task, pcounter);
+}
+//----------------------------------------------------------------------------
+void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FTaskCounter* pcounter) {
+    Assert(_taskRevision < 0xFFFF); // just to get sure that we won't be overflowing Priority
+
+    // track in flight tasks for HasPendingTask() and to reset _taskRevision when the queues are finally empty
+    ++_taskInFlight;
+
+    // construct insertion priority with _taskRevision
+    const size_t insertion_order_preserving_priority = size_t((u64(priority) << 16) | _taskRevision++);
+    Assert((insertion_order_preserving_priority >> 16) == size_t(priority));
+
+    FTaskQueued queued{ insertion_order_preserving_priority, task, pcounter };
+
+    // used as hint for work stealing : worker will try to steal a job if a more priority task is available
+    size_t globalHighest = _globalPriority;
+    if (globalHighest > insertion_order_preserving_priority)
+        _globalPriority.compare_exchange_weak(globalHighest, insertion_order_preserving_priority);
+
+    // push the job to some worker's local queue
+    for (size_t n = insertion_order_preserving_priority; ; ++n) {
+        const size_t workerIndex = (n % _numWorkers); // use first 16 bits with previous _taskPushed value
+        if (WorkerTryPush_(workerIndex, queued))
+            break;
+    }
+}
+//----------------------------------------------------------------------------
 void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FTaskCounter* pcounter) {
     Assert(_taskRevision < 0xFFFF); // just to get sure that we won't be overflowing Priority
 
@@ -305,9 +339,19 @@ void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FTaskCou
     _tasks.Produce(u32(priority), FTaskQueued{ std::move(rtask), pcounter });
 }
 //----------------------------------------------------------------------------
+void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FTaskCounter* pcounter) {
+    _tasks.Produce(u32(priority), FTaskQueued{ task, pcounter });
+}
+//----------------------------------------------------------------------------
 void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FTaskCounter* pcounter) {
     _tasks.Produce(u32(priority), rtasks.size(), _numWorkers, [rtasks, pcounter](size_t i) {
         return FTaskQueued{ std::move(rtasks[i]), pcounter };
+    });
+}
+//----------------------------------------------------------------------------
+void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FTaskCounter* pcounter) {
+    _tasks.Produce(u32(priority), tasks.size(), _numWorkers, [tasks, pcounter](size_t i) {
+        return FTaskQueued{ tasks[i], pcounter };
     });
 }
 //----------------------------------------------------------------------------
