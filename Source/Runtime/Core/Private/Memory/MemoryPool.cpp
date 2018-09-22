@@ -30,17 +30,14 @@ public:
     }
 
     void* Allocate(size_t sizeInBytes) {
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
         return VM.Allocate(sizeInBytes);
     }
 
     void Free(void* ptr, size_t sizeInBytes) {
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
         VM.Free(ptr, sizeInBytes);
     }
 
     void ReleaseMemoryInCache() {
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
         VM.ReleaseAll();
     }
 
@@ -49,7 +46,6 @@ private:
     FMemoryPoolAllocator_(const FMemoryPoolAllocator_&) = delete;
     FMemoryPoolAllocator_& operator=(const FMemoryPoolAllocator_&) = delete;
 
-    FAtomicSpinLock _barrier;
     VIRTUALMEMORYCACHE(MemoryPool, 32, 16 * 1024 * 1024) VM; // 32 entries caches with max 16 mo
 };
 //----------------------------------------------------------------------------

@@ -4,6 +4,8 @@
 
 #include "Memory/MemoryDomain.h"
 
+#include <mutex>
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -51,10 +53,12 @@ protected:
     };
 
     FVirtualMemoryCache();
+    ~FVirtualMemoryCache();
 
     FVirtualMemoryCache(const FVirtualMemoryCache&) = delete;
     FVirtualMemoryCache& operator =(const FVirtualMemoryCache&) = delete;
 
+    std::mutex Barrier;
     size_t FreePageBlockCount;
     size_t TotalCacheSizeInBytes;
 

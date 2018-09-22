@@ -168,7 +168,6 @@ private:
     STATIC_CONST_INTEGRAL(size_t, VMCacheBlocks, 32);
     STATIC_CONST_INTEGRAL(size_t, VMCacheSizeInBytes, 2 * 1024 * 1024); // <=> 2 mo global cache for large blocks
 
-    FAtomicSpinLock _barrier;
     VIRTUALMEMORYCACHE(LinearHeap, VMCacheBlocks, VMCacheSizeInBytes) _vm;
 
     static FLinearHeapVMCache_& Get_() {
@@ -177,17 +176,14 @@ private:
     }
 
     void* Allocate_(size_t sizeInBytes) {
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
         return _vm.Allocate(sizeInBytes);
     }
 
     void Free_(void* ptr, size_t sizeInBytes) {
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
         _vm.Free(ptr, sizeInBytes);
     }
 
     void ReleaseAll_() {
-        const FAtomicSpinLock::FScope scopeLock(_barrier);
         _vm.ReleaseAll();
     }
 };
