@@ -117,7 +117,7 @@ public:
     static FORCE_INLINE u32 FloorLog2(u32 v) NOEXCEPT {
         // Use BSR to return the log2 of the integer
         unsigned long log2;
-        if (_BitScanReverse(&log2, v) != 0) {
+        if (::_BitScanReverse(&log2, v) != 0) {
             return log2;
         }
         return 0;
@@ -127,7 +127,7 @@ public:
 #ifdef ARCH_X64 // _BitScanReverse64 is not available on x86
         // Use BSR to return the log2 of the integer
         unsigned long log2;
-        if (_BitScanReverse64(&log2, v) != 0) {
+        if (::_BitScanReverse64(&log2, v) != 0) {
             return log2;
         }
         return 0;
@@ -182,22 +182,22 @@ public:
     // tzcnt:   trailing zero count (LSB)
     // popcnt:  number of bits set to 1
 
-    static FORCE_INLINE u32 lzcnt(u32 u) NOEXCEPT { return __lzcnt(u); }
+    static FORCE_INLINE u32 lzcnt(u32 u) NOEXCEPT { return ::__lzcnt(u); }
 #   ifdef __clang__
-    static FORCE_INLINE u32 tzcnt(u32 u) NOEXCEPT { return __tzcnt_u32(u); }
+    static FORCE_INLINE u32 tzcnt(u32 u) NOEXCEPT { return ::__tzcnt_u32(u); }
 #   else
-    static FORCE_INLINE u32 tzcnt(u32 u) NOEXCEPT { return _tzcnt_u32(u); }
+    static FORCE_INLINE u32 tzcnt(u32 u) NOEXCEPT { return ::_tzcnt_u32(u); }
 #   endif
-    static FORCE_INLINE u32 popcnt(u32 u) NOEXCEPT { return __popcnt(u); }
+    static FORCE_INLINE u32 popcnt(u32 u) NOEXCEPT { return ::__popcnt(u); }
 
 #   ifdef ARCH_X64
-    static FORCE_INLINE u64 lzcnt(u64 u) NOEXCEPT { return __lzcnt64(u); }
+    static FORCE_INLINE u64 lzcnt(u64 u) NOEXCEPT { return ::__lzcnt64(u); }
 #       ifdef __clang__
-    static FORCE_INLINE u64 tzcnt(u64 u) NOEXCEPT { return __tzcnt_u64(u); }
+    static FORCE_INLINE u64 tzcnt(u64 u) NOEXCEPT { return ::__tzcnt_u64(u); }
 #       else
-    static FORCE_INLINE u64 tzcnt(u64 u) NOEXCEPT { return _tzcnt_u64(u); }
+    static FORCE_INLINE u64 tzcnt(u64 u) NOEXCEPT { return ::_tzcnt_u64(u); }
 #       endif
-    static FORCE_INLINE u64 popcnt(u64 u) NOEXCEPT { return __popcnt64(u); }
+    static FORCE_INLINE u64 popcnt(u64 u) NOEXCEPT { return ::__popcnt64(u); }
 #   endif
 
     //------------------------------------------------------------------------
@@ -205,14 +205,14 @@ public:
 
     static FORCE_INLINE void bsr(u32* r, u32 v) NOEXCEPT {
         unsigned long index;
-        Verify(_BitScanReverse(&index, v));
+        Verify(::_BitScanReverse(&index, v));
         *r = checked_cast<u32>(index);
     }
 
 #ifdef ARCH_X64
     static FORCE_INLINE void bsr(u32* r, u64 v) NOEXCEPT {
         unsigned long index;
-        Verify(_BitScanReverse64(&index, v));
+        Verify(::_BitScanReverse64(&index, v));
         *r = checked_cast<u32>(index);
     }
 #endif
