@@ -49,14 +49,14 @@ FXInputWrapper::FXInputWrapper()
 :   _XInputGetState(nullptr)
 ,   _XInputSetState(nullptr)
 ,   _XInputGetCapabilities(nullptr) {
-    static const FWStringView GXInputDllPossiblePaths[] = {
+    static const wchar_t* GXInputDllPossiblePaths[] = {
         // Should be L"xinput1_4.dll" for SDK 10, L"xinput9_1_0.dll" for SDK 8.1
         XINPUT_DLL_W,
         // Still fall back to older dll when compiled on SDK 10 but running on older system (API should be binary compatible)
         L"xinput9_1_0.dll",
     };
 
-    for (const FWStringView& filename : GXInputDllPossiblePaths) {
+    for (const wchar_t* filename : GXInputDllPossiblePaths) {
         if (_XInputDLL.AttachOrLoad(filename))
             break;
     }

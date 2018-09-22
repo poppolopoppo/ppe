@@ -104,14 +104,14 @@ public: // must be defined for every platform
 
     using FDynamicLibraryHandle = void*;
 
-    static FDynamicLibraryHandle AttachToDynamicLibrary(const FWStringView& name) = delete;
+    static FDynamicLibraryHandle AttachToDynamicLibrary(const wchar_t* name) = delete;
     static void DetachFromDynamicLibrary(FDynamicLibraryHandle lib) = delete;
 
-    static FDynamicLibraryHandle OpenDynamicLibrary(const FWStringView& name) = delete;
+    static FDynamicLibraryHandle OpenDynamicLibrary(const wchar_t* name) = delete;
     static void CloseDynamicLibrary(FDynamicLibraryHandle lib) = delete;
 
     static FWString DynamicLibraryFilename(FDynamicLibraryHandle lib) = delete;
-    static void* DynamicLibraryFunction(FDynamicLibraryHandle lib, const FStringView& name) = delete;
+    static void* DynamicLibraryFunction(FDynamicLibraryHandle lib, const char* name) = delete;
 
 };
 //----------------------------------------------------------------------------

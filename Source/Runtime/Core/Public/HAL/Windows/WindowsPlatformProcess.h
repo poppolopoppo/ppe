@@ -106,14 +106,14 @@ public:
 
     using FDynamicLibraryHandle = ::HMODULE;
 
-    static FDynamicLibraryHandle AttachToDynamicLibrary(const FWStringView& name);
+    static FDynamicLibraryHandle AttachToDynamicLibrary(const wchar_t* name);
     static void DetachFromDynamicLibrary(FDynamicLibraryHandle lib);
 
-    static FDynamicLibraryHandle OpenDynamicLibrary(const FWStringView& name);
+    static FDynamicLibraryHandle OpenDynamicLibrary(const wchar_t* name);
     static void CloseDynamicLibrary(FDynamicLibraryHandle lib);
 
     static FWString DynamicLibraryFilename(FDynamicLibraryHandle lib);
-    static void* DynamicLibraryFunction(FDynamicLibraryHandle lib, const FStringView& name);
+    static void* DynamicLibraryFunction(FDynamicLibraryHandle lib, const char* name);
 
 };
 //----------------------------------------------------------------------------

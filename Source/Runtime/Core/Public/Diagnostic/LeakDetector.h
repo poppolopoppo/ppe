@@ -19,16 +19,16 @@
 #include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/DecodedCallstack.h"
 #include "Diagnostic/Logger.h"
-#include "IO/FileSystem.h"
+#include "HAL/PlatformFile.h"
+#include "HAL/PlatformLowLevelIO.h"
+#include "IO/FileStream.h"
 #include "IO/FormatHelpers.h"
 #include "IO/StreamProvider.h"
-#include "IO/VirtualFileSystem.h"
 #include "Memory/HashFunctions.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Memory/MemoryView.h"
 #include "Memory/VirtualMemory.h"
-#include "Misc/TargetPlatform.h"
 #include "Thread/AtomicSpinLock.h"
 #include "Thread/ThreadContext.h"
 
@@ -112,16 +112,23 @@ public:
         }
     };
 
+
+    enum EReportMode {
+        ReportOnlyLeaks,
+        ReportOnlyNonDeleters,
+        ReportAllBlocks,
+    };
+
     struct FLeakReport {
-        bool OnlyNonDeleters;
+        EReportMode Mode;
         u32 NumAllocs;
         u32 MinSizeInBytes;
         u32 MaxSizeInBytes;
         u32 TotalSizeInBytes;
         VECTOR(Internal, FCallstackBlocks) Callstacks;
 
-        explicit FLeakReport(bool onlyNonDeleters)
-            : OnlyNonDeleters(onlyNonDeleters)
+        explicit FLeakReport(EReportMode mode)
+            : Mode(mode)
             , NumAllocs(0)
             , MinSizeInBytes(UINT32_MAX)
             , MaxSizeInBytes(0)
@@ -223,8 +230,10 @@ public:
 
         const FRecursiveLockTLS reentrantLock; // make sure
 
-        _blocks.Foreach([&, this, report](void* ptr, const FBlockHeader& alloc) {
-            if (alloc.Enabled && (!report->OnlyNonDeleters || _callstacks.IsNonDeleter(alloc.CallstackUID)) ) {
+        _blocks.Foreach([&, this, report](void* /*ptr*/, const FBlockHeader& alloc) {
+            if (report->Mode == ReportAllBlocks ||
+                (alloc.Enabled && (report->Mode != ReportOnlyNonDeleters ||
+                    _callstacks.IsNonDeleter(alloc.CallstackUID))) ) {
                 report->NumAllocs++;
                 report->MinSizeInBytes = Min(report->MinSizeInBytes, alloc.SizeInBytes);
                 report->MaxSizeInBytes = Max(report->MaxSizeInBytes, alloc.SizeInBytes);
@@ -248,10 +257,10 @@ public:
             });
     }
 
-    void ReportLeaks(bool onlyNonDeleters = false) {
+    void ReportLeaks(EReportMode mode = ReportOnlyLeaks) {
         _callstacks.Flush();
 
-        FLeakReport report(onlyNonDeleters);
+        FLeakReport report(mode);
         FindLeaks(&report);
 
         if (0 == report.NumAllocs) {
@@ -259,12 +268,14 @@ public:
             return;
         }
 
-        LOG(Leaks, Error, L"Found {0} leaking blocks, total {1} [{2}, {3}] (only deleters = {4:a})",
+        LOG(Leaks, Error, L"Found {0} leaking blocks, total {1} [{2}, {3}] (mode = {4})",
             Fmt::CountOfElements(report.NumAllocs),
             Fmt::SizeInBytes(report.TotalSizeInBytes),
             Fmt::SizeInBytes(report.MinSizeInBytes),
             Fmt::SizeInBytes(report.MaxSizeInBytes),
-            report.OnlyNonDeleters );
+            report.Mode == ReportAllBlocks
+                ? "all blocks" : (report.Mode == ReportOnlyNonDeleters
+                    ? "only non deleters" : "all leaks") );
 
         FCallstackHeader callstackHeader;
         FCallstackData callstackData;
@@ -363,7 +374,7 @@ private:
 
         size_t NumCallstacks;
 
-        UStreamReadWriter NativeStream;
+        FPlatformLowLevelIO::FHandle FileHandle;
         u64 NativeOffset;
 
         STATIC_CONST_INTEGRAL(size_t, WriteBufferCapacity, (2 * 1024 * 1024) / sizeof(FCallstackData)); // 2 mb <=> 8192 different callstacks
@@ -381,6 +392,7 @@ private:
 
         FCallstackTracker()
             : NumCallstacks(0)
+            , FileHandle(FPlatformLowLevelIO::InvalidHandle)
             , NativeOffset(0)
             , BufferOffset(0)
 #if USE_PPE_MEMORYDOMAINS
@@ -395,7 +407,10 @@ private:
         ~FCallstackTracker() {
             Flush();
 
-            NativeStream.reset(); // close the stream outside of the lock to avoid dead locking
+            // close the stream outside of the lock to avoid dead locking
+            if (FPlatformLowLevelIO::InvalidHandle != FileHandle)
+                FPlatformLowLevelIO::Close(FileHandle);
+            FileHandle = FPlatformLowLevelIO::InvalidHandle;
 
 #if USE_PPE_MEMORYDOMAINS
             FVirtualMemory::InternalFree(WriteBuffer, WriteBufferSizeInBytes, MEMORYDOMAIN_TRACKING_DATA(LeakDetector));
@@ -408,14 +423,14 @@ private:
 
         void OpenStream() {
             AssertIsMainThread();
-            Assert(not NativeStream);
+            Assert(FPlatformLowLevelIO::InvalidHandle == FileHandle);
 
-            const FFilename fname = FVirtualFileSystem::TemporaryFilename(L"LeakDetector", L".bin");
-            NativeStream = VFS().OpenReadWritable(fname, EAccessPolicy::Temporary | EAccessPolicy::Truncate_Binary);
+            const FWString fname = FPlatformFile::MakeTemporaryFile(L"LeakDetector", L".bin");
+            FileHandle = FPlatformLowLevelIO::Open(fname.data(), EOpenPolicy::ReadWritable, EAccessPolicy::Temporary | EAccessPolicy::Truncate_Binary);
         }
 
         void Flush() {
-            Assert(NativeStream);
+            Assert(FPlatformLowLevelIO::InvalidHandle != FileHandle);
 
             const FAtomicSpinLock::FScope scopeLock(Barrier);
 
@@ -432,15 +447,15 @@ private:
 
             Flush_AssumeLocked();
 
-            const std::streamoff org = NativeStream->TellO();
+            const std::streamoff org = FPlatformLowLevelIO::Tell(FileHandle);
+            FPlatformLowLevelIO::Seek(FileHandle, pheader->StreamOffset, ESeekOrigin::Begin);
 
             *pheader = HashTable[uid];
-            NativeStream->SeekI(pheader->StreamOffset);
-            Verify(NativeStream->Read(pdata, sizeof(FCallstackData)));
+            Verify(FPlatformLowLevelIO::Read(FileHandle, pdata, sizeof(FCallstackData)) == sizeof(FCallstackData));
             Assert(pdata->MakeFingerprint() == pheader->Fingerprint);
 
-            NativeStream->SeekO(org);
-            Assert(NativeStream->TellO() == NativeOffset);
+            FPlatformLowLevelIO::Seek(FileHandle, org, ESeekOrigin::Begin);
+            Assert(checked_cast<u64>(FPlatformLowLevelIO::Tell(FileHandle)) == NativeOffset);
         }
 
         bool IsNonDeleter(u32 uid) const {
@@ -469,7 +484,7 @@ private:
 
             // first search without locking :
 
-            u32 uid;
+            u32 uid = u32(-1);
             forrange(i, 0, HashTableCapacity) {
                 uid = checked_cast<u32>((fingerprint + i) & HashTableMask);
                 const FCallstackHeader& header = HashTable[uid];
@@ -485,12 +500,12 @@ private:
 
     private:
         NO_INLINE void Flush_AssumeLocked() {
-            Assert(NativeStream);
-            Assert(NativeStream->TellO() == NativeOffset);
+            Assert(FPlatformLowLevelIO::InvalidHandle != FileHandle);
+            Assert(checked_cast<u64>(FPlatformLowLevelIO::Tell(FileHandle)) == NativeOffset);
 
             if (BufferOffset) {
-                Verify(NativeStream->Write(WriteBuffer, BufferOffset * sizeof(WriteBuffer[0])));
-                NativeOffset = checked_cast<u64>(NativeStream->TellO());
+                Verify(FPlatformLowLevelIO::Write(FileHandle, WriteBuffer, BufferOffset * sizeof(WriteBuffer[0])));
+                NativeOffset = checked_cast<u64>(FPlatformLowLevelIO::Tell(FileHandle));
                 BufferOffset = 0;
             }
         }
@@ -513,7 +528,7 @@ private:
         NO_INLINE u32 AddIFN_Locked(u64 fingerprint, const FCallstackData& callstack) {
             const FAtomicSpinLock::FScope scopeLock(Barrier);
 
-            u32 uid;
+            u32 uid = u32(-1);
             forrange(i, 0, HashTableCapacity) {
                 uid = checked_cast<u32>((fingerprint + i) & HashTableMask);
                 const FCallstackHeader& header = HashTable[uid];

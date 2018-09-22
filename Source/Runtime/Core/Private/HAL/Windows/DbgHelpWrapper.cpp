@@ -14,7 +14,8 @@ LOG_CATEGORY(, DbgHelp)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FDbghelpWrapper::FDbghelpWrapper()
-:   _symInitializeW(nullptr)
+:   _available(false)
+,   _symInitializeW(nullptr)
 ,   _symCleanup(nullptr)
 ,   _symSetOptions(nullptr)
 ,   _symLoadModuleExW(nullptr)
@@ -22,7 +23,7 @@ FDbghelpWrapper::FDbghelpWrapper()
 ,   _symFromAddrW(nullptr)
 ,   _symGetLineFromAddrW64(nullptr)
 ,   _miniDumpWriteDump(nullptr) {
-    static const FWStringView GDbgHelpDllPossiblePaths[] = {
+    static const wchar_t* GDbgHelpDllPossiblePaths[] = {
         // Windows 10 SDK ships with a dbghelp.dll which handles /DEBUG:fastlink
 #ifdef ARCH_X86
         L"C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\\x86\\dbghelp.dll",
@@ -32,7 +33,7 @@ FDbghelpWrapper::FDbghelpWrapper()
         // Should fallback to c:\windows\system32\dbghelp.dll
         L"dbghelp.dll",
     };
-    static const FWStringView GDbgCoreDllPossiblePaths[] = {
+    static const wchar_t* GDbgCoreDllPossiblePaths[] = {
         // Windows 10 SDK ships with a dbgcore.dll which handles /DEBUG:fastlink
 #ifdef ARCH_X86
         L"C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\\x86\\dbgcore.dll",
@@ -43,7 +44,7 @@ FDbghelpWrapper::FDbghelpWrapper()
         L"dbgcore.dll",
     };
 
-    for (const FWStringView& filename : GDbgHelpDllPossiblePaths) {
+    for (const wchar_t* filename : GDbgHelpDllPossiblePaths) {
         if (_dbghelp_dll.AttachOrLoad(filename))
             break;
     }
@@ -70,7 +71,7 @@ FDbghelpWrapper::FDbghelpWrapper()
         _miniDumpWriteDump = (FMiniDumpWriteDump)_dbghelp_dll.FunctionAddr("MiniDumpWriteDump");
 
         if (nullptr == _miniDumpWriteDump) {
-            for (const FWStringView& filename : GDbgCoreDllPossiblePaths)
+            for (const wchar_t* filename : GDbgCoreDllPossiblePaths)
                 if (_dbgcore_dll.AttachOrLoad(filename))
                     break;
 
@@ -81,6 +82,8 @@ FDbghelpWrapper::FDbghelpWrapper()
         Assert(_miniDumpWriteDump);
 
         LOG(DbgHelp, Info, L"dbghelp successfully loaded : callstacks and minidumps are available");
+
+        _available = true;
     }
     else {
         LOG(DbgHelp, Warning, L"dbghelp failed to load : callstacks and minidumps won't be available !");

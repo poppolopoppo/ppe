@@ -34,7 +34,7 @@ FDynamicLibrary& FDynamicLibrary::operator =(FDynamicLibrary&& rvalue) {
     return (*this);
 }
 //----------------------------------------------------------------------------
-bool FDynamicLibrary::AttachOrLoad(const FWStringView& path) {
+bool FDynamicLibrary::AttachOrLoad(const wchar_t* path) {
     return (Attach(path) || Load(path));
 }
 //----------------------------------------------------------------------------
@@ -49,7 +49,7 @@ bool FDynamicLibrary::UnloadIFP() {
     }
 }
 //----------------------------------------------------------------------------
-bool FDynamicLibrary::Attach(const FWStringView& path) {
+bool FDynamicLibrary::Attach(const wchar_t* path) {
     AssertRelease(not IsValid());
 
     if (auto* const hModule = FPlatformProcess::AttachToDynamicLibrary(path)) {
@@ -64,7 +64,7 @@ bool FDynamicLibrary::Attach(const FWStringView& path) {
     }
 }
 //----------------------------------------------------------------------------
-bool FDynamicLibrary::Load(const FWStringView& path) {
+bool FDynamicLibrary::Load(const wchar_t* path) {
     AssertRelease(not IsValid());
 
     if (auto* const hModule = FPlatformProcess::OpenDynamicLibrary(path)) {
@@ -98,7 +98,7 @@ void FDynamicLibrary::Unload() {
     _handle.Reset(nullptr, false, false);
 }
 //----------------------------------------------------------------------------
-void* FDynamicLibrary::FunctionAddr(const FStringView& funcname) const {
+void* FDynamicLibrary::FunctionAddr(const char* funcname) const {
     Assert(IsValid());
 
     auto* const hModule = (FPlatformProcess::FDynamicLibraryHandle)_handle.Get();

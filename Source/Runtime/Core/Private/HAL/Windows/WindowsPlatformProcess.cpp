@@ -39,6 +39,21 @@ namespace {
 static bool GIsFirstInstance = false;
 static ::HANDLE GNamedMutex = NULL;
 //----------------------------------------------------------------------------
+template <typename _Char>
+struct TBasicNullTerminatedStr_ {
+    _Char Buffer[MAX_PATH + 1];
+    TBasicNullTerminatedStr_(const TBasicStringView<_Char>& str) {
+        Assert(str.size() <= MAX_PATH);
+        FPlatformMemory::Memcpy(Buffer, str.data(), str.SizeInBytes());
+        Buffer[str.size()] = L'\0';
+    }
+    operator const wchar_t* () const {
+        return (&Buffer[0]);
+    }
+};
+using FNullTerminatedStr_ = TBasicNullTerminatedStr_<char>;
+using FWNullTerminatedStr_ = TBasicNullTerminatedStr_<wchar_t>;
+//----------------------------------------------------------------------------
 static void ReleaseNamedMutex_(void) {
     if (GNamedMutex) {
         ::ReleaseMutex(GNamedMutex);
@@ -196,7 +211,7 @@ void FWindowsPlatformProcess::SleepForSpinning(size_t& backoff) {
     else
         ::Sleep(10); // all threads
 
-    backoff += 1;
+    ++backoff;
 }
 //----------------------------------------------------------------------------
 auto FWindowsPlatformProcess::CurrentPID() -> FProcessId {
@@ -815,11 +830,10 @@ bool FWindowsPlatformProcess::DestroySemaphore(FSemaphore semaphore) {
     }
 }
 //----------------------------------------------------------------------------
-auto FWindowsPlatformProcess::AttachToDynamicLibrary(const FWStringView& name) -> FDynamicLibraryHandle {
-    Assert(not name.empty());
+auto FWindowsPlatformProcess::AttachToDynamicLibrary(const wchar_t* name) -> FDynamicLibraryHandle {
+    Assert(name);
 
-    const FWString nullTerminated(name);
-    return ::GetModuleHandleW(nullTerminated.data());
+    return ::GetModuleHandleW(name);
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::DetachFromDynamicLibrary(FDynamicLibraryHandle lib) {
@@ -828,11 +842,10 @@ void FWindowsPlatformProcess::DetachFromDynamicLibrary(FDynamicLibraryHandle lib
     //Verify(::FreeLibrary(lib)); // DO NOT CALL ::FreeLibrary() or the module could be prematurely unloaded !
 }
 //----------------------------------------------------------------------------
-auto FWindowsPlatformProcess::OpenDynamicLibrary(const FWStringView& name) -> FDynamicLibraryHandle {
-    Assert(not name.empty());
+auto FWindowsPlatformProcess::OpenDynamicLibrary(const wchar_t* name) -> FDynamicLibraryHandle {
+    Assert(name);
 
-    const FWString nullTerminated(name);
-    return ::LoadLibraryW(nullTerminated.data());
+    return ::LoadLibraryW(name);
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::CloseDynamicLibrary(FDynamicLibraryHandle lib) {
@@ -851,12 +864,11 @@ FWString FWindowsPlatformProcess::DynamicLibraryFilename(FDynamicLibraryHandle l
     return FWString(buffer, checked_cast<size_t>(len));
 }
 //----------------------------------------------------------------------------
-void* FWindowsPlatformProcess::DynamicLibraryFunction(FDynamicLibraryHandle lib, const FStringView& name) {
+void* FWindowsPlatformProcess::DynamicLibraryFunction(FDynamicLibraryHandle lib, const char* name) {
     Assert(lib);
-    Assert(not name.empty());
+    Assert(name);
 
-    FString nullTerminated(name);
-    return (void*)::GetProcAddress(lib, nullTerminated.c_str());
+    return (void*)::GetProcAddress(lib, name);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

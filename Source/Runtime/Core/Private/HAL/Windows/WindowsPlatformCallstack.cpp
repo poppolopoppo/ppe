@@ -181,14 +181,17 @@ void FWindowsPlatformCallstack::LoadSymbolInfos() {
 
     const FDbghelpWrapper::FLocked dbghelp;
 
-    if (not GWindowsPlatformSymbolsInitialized) {
-        InitializeSymbols_(dbghelp);
-        GWindowsPlatformSymbolsInitialized = true;
+    if (dbghelp.Available()) {
+
+        if (not GWindowsPlatformSymbolsInitialized) {
+            InitializeSymbols_(dbghelp);
+            GWindowsPlatformSymbolsInitialized = true;
+        }
+
+        LoadModules_(dbghelp);
+
+        GWindowsPlatformSymbolsLoaded = true;
     }
-
-    LoadModules_(dbghelp);
-
-    GWindowsPlatformSymbolsLoaded = true;
 }
 //----------------------------------------------------------------------------
 size_t FWindowsPlatformCallstack::CaptureCallstack(const TMemoryView<FProgramCounter>& backtrace, size_t framesToSkip) {

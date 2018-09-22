@@ -355,6 +355,7 @@ size_t FWindowsPlatformNotification::AddSystrayCommand(
     const FWStringView& category,
     const FWStringView& label,
     FSystrayDelegate&& cmd ) {
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
     Assert(not category.empty());
     Assert(not label.empty());
     Assert(cmd);
@@ -373,6 +374,7 @@ size_t FWindowsPlatformNotification::AddSystrayCommand(
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformNotification::RemoveSystrayCommand(size_t index) {
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
     Assert(index != INDEX_NONE);
 
     LOG(Notification, Debug, L"remove systray command #{0}", index);
@@ -435,6 +437,7 @@ void FWindowsPlatformNotification::SummonSystrayPopupMenuWin32(::HWND hWnd) {
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::Start() {
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
     {
         Assert(NULL == GWindowsTaskBar_);
 
@@ -455,6 +458,7 @@ void FWindowsPlatformNotification::Start() {
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::Shutdown() {
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
     {
         FWindowsSystrayCmds_::Destroy();
     }

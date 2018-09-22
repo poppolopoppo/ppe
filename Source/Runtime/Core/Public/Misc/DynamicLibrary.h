@@ -30,15 +30,15 @@ public:
 
     PPE_FAKEBOOL_OPERATOR_DECL() { return _handle.Get(); }
 
-    bool Attach(const FWStringView& path);
-    bool Load(const FWStringView& path);
-    bool AttachOrLoad(const FWStringView& path);
+    bool Attach(const wchar_t* path);
+    bool Load(const wchar_t* path);
+    bool AttachOrLoad(const wchar_t* path);
 
     void Unload();
     bool UnloadIFP();
 
     FWString ModuleName() const;
-    void* FunctionAddr(const FStringView& funcname) const;
+    void* FunctionAddr(const char* funcname) const;
 
     friend inline void swap(FDynamicLibrary& lhs, FDynamicLibrary& rhs) {
         swap(lhs._handle, rhs._handle);

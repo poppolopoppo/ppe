@@ -81,9 +81,10 @@ public:
         FLocked() : FLocked(FDbghelpWrapper::Get()) {}
         explicit FLocked(const FDbghelpWrapper& owner)
             : std::lock_guard<std::mutex>(owner._barrier)
-            , _owner(&owner) {
-            Assert(_owner->Available());
-        }
+            , _owner(&owner)
+        {}
+
+        bool Available() const { return _owner->Available(); }
 
         FSymInitializeW SymInitializeW() const { return _owner->_symInitializeW; }
         FSymCleanup SymCleanup() const { return _owner->_symCleanup; }
@@ -105,7 +106,7 @@ public:
 
     ~FDbghelpWrapper();
 
-    bool Available() const { return (_dbghelp_dll.IsValid()); }
+    bool Available() const { return _available; }
 
 #ifdef WITH_PPE_ASSERT
     using Meta::TSingleton<FDbghelpWrapper>::HasInstance;
@@ -121,6 +122,8 @@ private:
     FDbghelpWrapper();
 
     mutable std::mutex _barrier;
+
+    bool _available;
 
     FDynamicLibrary _dbgcore_dll;
     FDynamicLibrary _dbghelp_dll;
