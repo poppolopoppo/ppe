@@ -231,12 +231,12 @@ public:
     FORCE_INLINE static void* Malloc(size_t size) { return AllocateBlock(FMallocLowLevel::Malloc(size), size); }
     FORCE_INLINE static void  Free(void* ptr) { FMallocLowLevel::Free(ReleaseBlock(ptr)); }
     FORCE_INLINE static void* Calloc(size_t nmemb, size_t size) { return AllocateBlock(FMallocLowLevel::Calloc(nmemb, size), size); }
-    FORCE_INLINE static void* Realloc(void *ptr, size_t size) { return AllocateBlock(FMallocLowLevel::Realloc(ReleaseBlock(ptr), size), size); }
+    FORCE_INLINE static void* Realloc(void *ptr, size_t size) { return ReallocAllocateBlock(FMallocLowLevel::Realloc(ReallocReleaseBlock(ptr), size), size); }
 
     FORCE_INLINE static void* AlignedMalloc(size_t size, size_t alignment) { return AllocateBlock(FMallocLowLevel::AlignedMalloc(size, alignment), size, alignment); }
     FORCE_INLINE static void  AlignedFree(void *ptr) { FMallocLowLevel::AlignedFree(ReleaseBlock(ptr)); }
     FORCE_INLINE static void* AlignedCalloc(size_t nmemb, size_t size, size_t alignment) { return AllocateBlock(FMallocLowLevel::AlignedCalloc(nmemb, size, alignment), size, alignment); }
-    FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment) { return AllocateBlock(FMallocLowLevel::AlignedRealloc(ReleaseBlock(ptr, alignment), size, alignment), size, alignment); }
+    FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment) { return ReallocAllocateBlock(FMallocLowLevel::AlignedRealloc(ReallocReleaseBlock(ptr, alignment), size, alignment), size, alignment); }
 
 private:
     static void* AllocateBlock(void* ptr, size_t sizeInBytes, size_t alignment = 16) {
@@ -264,6 +264,29 @@ private:
 #   endif
 #   if PPE_MALLOC_POISON_PROXY
         FPlatformMemory::Memset(ptr, 0xDD, FMallocLowLevel::RegionSize(ptr));
+#   endif
+        return ptr;
+    }
+
+    static void* ReallocAllocateBlock(void* ptr, size_t sizeInBytes, size_t alignment = 16) {
+        Assert(Meta::IsPow2(alignment));
+        if (nullptr == ptr) return nullptr;
+        Assert(Meta::IsAligned(alignment, ptr));
+#   if PPE_MALLOC_LEAKDETECTOR_PROXY
+        FLeakDetector::Get().Allocate(ptr, sizeInBytes);
+#   endif
+#   if PPE_MALLOC_HISTOGRAM_PROXY
+        FMallocHistogram::Allocate(ptr, sizeInBytes);
+#   endif
+        return ptr;
+    }
+
+    static void* ReallocReleaseBlock(void* ptr, size_t alignment = 16) {
+        Assert(Meta::IsPow2(alignment));
+        Assert(Meta::IsAligned(alignment, ptr));
+        if (nullptr == ptr) return nullptr;
+#   if PPE_MALLOC_LEAKDETECTOR_PROXY
+        FLeakDetector::Get().Release(ptr);
 #   endif
         return ptr;
     }
@@ -363,7 +386,9 @@ bool SetLeakDetectorWhiteListed(bool ignoreleaks) {
 void DumpMemoryLeaks(bool onlyNonDeleters/* = false */) {
 #if PPE_MALLOC_LEAKDETECTOR_PROXY
     auto& leakDetector = FLeakDetector::Get();
-    leakDetector.ReportLeaks(onlyNonDeleters);
+    leakDetector.ReportLeaks(onlyNonDeleters
+        ? FLeakDetector::ReportOnlyNonDeleters
+        : FLeakDetector::ReportOnlyLeaks );
 #else
     NOOP(onlyNonDeleters);
 #endif
