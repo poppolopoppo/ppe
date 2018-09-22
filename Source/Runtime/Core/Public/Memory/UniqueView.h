@@ -26,6 +26,10 @@ public:
     using typename base_type::iterator;
     using typename base_type::iterator_category;
 
+    using base_type::empty;
+    using base_type::size;
+    using base_type::operator [];
+
     TUniqueView();
     ~TUniqueView();
 
@@ -85,7 +89,9 @@ using TUniqueArray = TUniqueView<T, checked_deleter<T[]> >;
 //----------------------------------------------------------------------------
 template <typename T>
 inline TUniqueArray<T> NewArray(size_t count) {
-    return TUniqueArray<T>{ new T[count], count };
+    return (count
+        ? TUniqueArray<T>{ new T[count], count }
+        : TUniqueArray<T>{ nullptr, 0 } );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
