@@ -157,7 +157,21 @@ TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(iterator first, 
     Assert(AliasesToContainer(first));
     Assert(AliasesToContainer(last));
     Assert(first <= last);
-    return SubRange(std::addressof(*first), std::distance(first, last));
+    return SubRangeConst(std::addressof(*first), std::distance(first, last));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+TMemoryView<T> TMemoryView<T>::Slice(size_t index, size_t stride) const {
+    Assert(stride <= _size);
+    Assert(index < (_size + stride - 1) / stride);
+    const size_t offset = index * stride;
+    const size_t count = Min((index + 1) * stride, _size) - offset;
+    return SubRange(offset, count);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SliceConst(size_t index, size_t stride) const {
+    return Slice(index, stride).Cast< Meta::TAddConst<T> >();
 }
 //----------------------------------------------------------------------------
 template <typename T>

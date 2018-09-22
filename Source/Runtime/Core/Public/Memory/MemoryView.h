@@ -90,6 +90,9 @@ public:
         CopyTo(TMemoryView<Meta::TRemoveConst<T>>(dst + offset, _size));
     }
 
+    TMemoryView<T> Slice(size_t index, size_t stride) const;
+    TMemoryView< Meta::TAddConst<T> > SliceConst(size_t index, size_t stride) const;
+
     TMemoryView<T> SubRange(size_t offset, size_t count) const;
     TMemoryView< Meta::TAddConst<T> > SubRangeConst(size_t offset, size_t count) const;
 
