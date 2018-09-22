@@ -13,11 +13,13 @@
 #include "Maths/MathHelpers.h"
 #include "Maths/RandomGenerator.h"
 #include "Memory/MemoryView.h"
+#include "Memory/UniqueView.h"
 #include "Time/TimedScope.h"
 #include "Thread/Task/TaskHelpers.h"
 #include "Thread/ThreadPool.h"
 
 #include <algorithm>
+#include <random>
 
 #define USE_TESTALLOCATOR_MEMSET 0
 
@@ -128,8 +130,8 @@ static void Test_Allocator_Trashing_(const FWStringView& category, const FWStrin
     NOOP(category, name);
     BENCHMARK_SCOPE(category, name);
 
-    using value_type = typename std::allocator_traits<_Alloc>::value_type;
-    STACKLOCAL_POD_ARRAY(value_type*, blockAddrs, blockSizes.size());
+    using pointer = typename std::allocator_traits<_Alloc>::pointer;
+    STACKLOCAL_POD_ARRAY(pointer, blockAddrs, blockSizes.size());
 
     forrange(loop, 0, GLoopCount_) {
         forrange(i, 0, blockSizes.size()) {
@@ -141,6 +143,67 @@ static void Test_Allocator_Trashing_(const FWStringView& category, const FWStrin
         forrange(i, 0, blockSizes.size()) {
             allocator.deallocate(blockAddrs[i], blockSizes[i]);
         }
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Alloc>
+static void Test_Allocator_Dangling_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+    typedef typename std::allocator_traits<_Alloc>::value_type value_type;
+
+    FTaskManager& threadPool = FHighPriorityThreadPool::Get();
+
+    const size_t numWorkers = threadPool.WorkerCount();
+    const size_t allocsPerWorker = (blockSizes.size() / numWorkers);
+
+    using pointer = typename std::allocator_traits<_Alloc>::pointer;
+    using blocks_type = TUniqueArray<pointer>;
+
+    TVector<blocks_type> perWorkerIndex;
+    perWorkerIndex.reserve_AssumeEmpty(numWorkers);
+    forrange(i, 0, numWorkers) {
+        const auto workerSizes = blockSizes.Slice(i, allocsPerWorker);
+        perWorkerIndex.emplace_back_AssumeNoGrow(NewArray<pointer>(workerSizes.size()));
+    }
+
+    TVector<FTaskFunc> allocateTasks;
+    allocateTasks.reserve_AssumeEmpty(numWorkers);
+    TVector<FTaskFunc> deallocateTasks;
+    deallocateTasks.reserve_AssumeEmpty(numWorkers);
+
+    const struct payload_t {
+        _Alloc& Allocator;
+        const TMemoryView<const size_t> BlockSize;
+        const TVector<blocks_type>& PerWorkerIndex;
+    }   payload{ allocator, blockSizes, perWorkerIndex };
+
+    forrange(i, 0, numWorkers) {
+        allocateTasks.emplace_back_AssumeNoGrow([i, allocsPerWorker, &payload](ITaskContext&) {
+            const size_t* sz = payload.BlockSize.data() + i * allocsPerWorker;
+            for (pointer& p : payload.PerWorkerIndex[i])
+                p = payload.Allocator.allocate(*sz++);
+        });
+        deallocateTasks.emplace_back_AssumeNoGrow([i, allocsPerWorker, &payload](ITaskContext&) {
+            const size_t* sz = payload.BlockSize.data() + i * allocsPerWorker;
+            for (pointer p : payload.PerWorkerIndex[i])
+                payload.Allocator.deallocate(p, *sz++);
+        });
+    }
+
+    std::random_device rdevice;
+    std::mt19937 rand(rdevice());
+
+    NOOP(category, name);
+    BENCHMARK_SCOPE(category, name);
+
+    // tries to free blocks from another thread from which they were allocated
+    // this is the worst case for many allocators
+    forrange(loop, 0, GLoopCount_) {
+        // allocate from each worker
+        threadPool.RunAndWaitFor(allocateTasks.MakeConstView());
+        // randomize per allocator blocks
+        std::shuffle(perWorkerIndex.begin(), perWorkerIndex.end(), rand);
+        // deallocate from (hopefully) another allocator
+        threadPool.RunAndWaitFor(deallocateTasks.MakeConstView());
     }
 }
 //----------------------------------------------------------------------------
@@ -182,6 +245,13 @@ static void Test_Allocator_(
         Test_Allocator_Trashing_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
         Test_Allocator_Trashing_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks);
     }
+    {
+        BENCHMARK_SCOPE(name, L"Dangling");
+
+        Test_Allocator_Dangling_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks);
+        Test_Allocator_Dangling_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
+        Test_Allocator_Dangling_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks);
+    }
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -194,7 +264,7 @@ void Test_Allocators() {
     typedef u8 value_type;
 
     constexpr size_t BlockSizeMin = 16;
-    constexpr size_t BlockSizeMid = 32736;
+    constexpr size_t BlockSizeMid = 32768;
     const size_t BlockSizeMax = checked_cast<size_t>(FPlatformMemory::Constants().AllocationGranularity);
 
     size_t smallBlocksSizeInBytes = 0;
@@ -226,12 +296,14 @@ void Test_Allocators() {
         }
     }
 
-    LOG(Test_Allocators, Info, L"Small blocks data set = {0} blocks / {1}", smallBlocks.size(), Fmt::FSizeInBytes{ smallBlocksSizeInBytes } );
-    LOG(Test_Allocators, Info, L"Large blocks data set = {0} blocks / {1}", largeBlocks.size(), Fmt::FSizeInBytes{ largeBlocksSizeInBytes });
-    LOG(Test_Allocators, Info, L"Mixed blocks data set = {0} blocks / {1}", mixedBlocks.size(), Fmt::FSizeInBytes{ mixedBlocksSizeInBytes });
+    LOG(Test_Allocators, Info, L"Small blocks data set = {0} blocks / {1}", smallBlocks.size(), Fmt::SizeInBytes(smallBlocksSizeInBytes) );
+    LOG(Test_Allocators, Info, L"Large blocks data set = {0} blocks / {1}", largeBlocks.size(), Fmt::SizeInBytes(largeBlocksSizeInBytes) );
+    LOG(Test_Allocators, Info, L"Mixed blocks data set = {0} blocks / {1}", mixedBlocks.size(), Fmt::SizeInBytes(mixedBlocksSizeInBytes) );
 
     Test_Allocator_(L"TMallocator", TMallocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
     Test_Allocator_(L"std::allocator", std::allocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
+
+    ReleaseMemoryInModules();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
