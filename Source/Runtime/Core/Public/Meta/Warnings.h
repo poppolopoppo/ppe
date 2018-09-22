@@ -21,7 +21,6 @@ PPE_WARNING("Core", "You need to implement PPE_DEPRECATED for this compiler")
 #   define PRAGMA_MSVC_WARNING_PUSH() \
         __pragma(warning(push))
 #   define PRAGMA_MSVC_WARNING_DISABLE(_WARNING_CODE) \
-        /*__pragma(message(__FILE__ "(" STRINGIZE(__LINE__) ",1): disabled MSVC warning C" STRINGIZE(_WARNING_CODE) ))*/ \
         __pragma(warning(disable: _WARNING_CODE))
 #   define PRAGMA_MSVC_WARNING_POP() \
         __pragma(warning(pop))
