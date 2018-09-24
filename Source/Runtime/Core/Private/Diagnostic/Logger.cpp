@@ -664,12 +664,16 @@ public: // ILogger
     virtual void Flush(bool) override final {}
 };
 //----------------------------------------------------------------------------
-class FFileStreamLogger_ final : public ILogger {
+class FFileHandleLogger_ final : public ILogger, IStreamWriter {
 public:
-    explicit FFileStreamLogger_(FFileStreamWriter&& ostream)
-        : _ostream(std::move(ostream))
-        , _buffered(&_ostream) {
-        Assert(_ostream.Good());
+    explicit FFileHandleLogger_(FPlatformLowLevelIO::FHandle hFile)
+    :   _hFile(hFile)
+    ,   _buffered(this) {
+        Assert(FPlatformLowLevelIO::InvalidHandle != _hFile);
+    }
+
+    virtual ~FFileHandleLogger_() {
+        FPlatformLowLevelIO::Close(_hFile);
     }
 
 public: // ILogger
@@ -682,8 +686,27 @@ public: // ILogger
         _buffered.Flush();
     }
 
+public: // IStreamWriter, implemented to be low level and without calls to LOG()
+    virtual bool IsSeekableO(ESeekOrigin) const override final { return true; }
+
+    virtual std::streamoff TellO() const { return FPlatformLowLevelIO::Tell(_hFile); }
+    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final {
+        return FPlatformLowLevelIO::Seek(_hFile, offset, origin);
+    }
+
+    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final {
+        return (sizeInBytes == FPlatformLowLevelIO::Write(_hFile, storage, sizeInBytes));
+    }
+    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final {
+        std::streamsize written = checked_cast<std::streamsize>(eltsize * count);
+        written = FPlatformLowLevelIO::Write(_hFile, storage, written);
+        return checked_cast<size_t>(written / eltsize);
+    }
+
+    virtual class IBufferedStreamWriter* ToBufferedO() override final { return nullptr; }
+
 private:
-    FFileStreamWriter _ostream;
+    FPlatformLowLevelIO::FHandle _hFile;
     FBufferedStreamWriter _buffered;
 };
 //----------------------------------------------------------------------------
@@ -706,11 +729,11 @@ PLogger FLogger::MakeOutputDebug() {
 }
 //----------------------------------------------------------------------------
 PLogger FLogger::MakeAppendFile(const wchar_t* filename) {
-    FFileStreamWriter ostream(
-        FFileStream::OpenWrite(filename,
-            EAccessPolicy::Create|EAccessPolicy::Append|EAccessPolicy::Binary|EAccessPolicy::ShareRead) );
-    AssertRelease(ostream.Good());
-    return NEW_REF(Logger, FFileStreamLogger_)(std::move(ostream));
+    FPlatformLowLevelIO::FHandle hFile = FPlatformLowLevelIO::Open(filename,
+            EOpenPolicy::Writable,
+            EAccessPolicy::Create|EAccessPolicy::Append|EAccessPolicy::Binary|EAccessPolicy::ShareRead);
+    AssertRelease(FPlatformLowLevelIO::InvalidHandle != hFile);
+    return NEW_REF(Logger, FFileHandleLogger_)(hFile);
 }
 //----------------------------------------------------------------------------
 PLogger FLogger::MakeRollFile(const wchar_t* filename) {
