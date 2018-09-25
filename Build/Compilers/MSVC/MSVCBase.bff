@@ -36,6 +36,10 @@
     + ' /we4905' // wide string literal cast to 'LPSTR'
     + ' /we4906' // string literal cast to 'LPWSTR'
 
+    .IgnoredWarnings = ''
+    + ' /wd4201' // nonstandard extension used: nameless struct/union'
+    ;+ ' /wd4324' // structure was padded due to alignment specifier (giving up on this one for now)
+
     .Defines =
     {
         'CPP_VISUALSTUDIO',             ; identification du compiler dans les sources (custom)
@@ -70,7 +74,7 @@
     + ' /Gm-'               ; minimal rebuild est incompatible avec FastBuild qui gère cette feature lui même
     + ' /GF'                ; fusion des chaînes de caractères identiques (string pooling)
     + ' /GT'                ; fiber safe optimizations (https://msdn.microsoft.com/fr-fr/library/6e298fy4.aspx)
-    + ' /EHsc'              ; active le support des exceptions structurées
+    + ' /EHsc'              ; active le support des exceptions structurées #TODO make it optional/conditional according to config
     //+ ' /fp:precise'        ; opération virgule flottante précises, NECESSAIRE POUR LE DETERMINISME
     + ' /fp:fast'           ; pas de determinisme, utilise des intrinsics (https://msdn.microsoft.com/fr-fr/library/tzkfha43.aspx)
     + ' /bigobj'            ; augmente le nombre des sections qu'un fichier objet peut contenir (les obj peuvent être plus gros)
@@ -89,7 +93,11 @@
 
     .PreprocessorOptions = ''
 
-    .CompilerOptions + .AdditionalWarnings
+    Print( 'Additional warnings :$AdditionalWarnings$')
+    Print( 'Ignored warnings :$IgnoredWarnings$')
+
+    .CompilerOptions    + .AdditionalWarnings
+                        + .IgnoredWarnings
 
     .LibrarianOptions = ''
     + ' /WX'                ; considère les avertissements comme des erreurs
