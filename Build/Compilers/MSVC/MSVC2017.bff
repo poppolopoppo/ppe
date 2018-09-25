@@ -236,8 +236,8 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
     .AdditionalOptions + ' /std:c++latest' ; https://docs.microsoft.com/fr-fr/cpp/build/reference/std-specify-language-standard-version
 #endif
 #if USE_VISUAL2017_EXTERNAL_ANGLEBRACKETS
-    Print( "Using Visual 2017 experimental external angle brackets" )
-    .AdditionalOptions + ' /experimental:external /external:anglebrackets' ; https://blogs.msdn.microsoft.com/vcblog/2017/12/13/broken-warnings-theory/
+    Print( "Using Visual 2017 experimental external angle brackets (/W0)" )
+    .AdditionalOptions + ' /experimental:external /external:anglebrackets /external:W0' ; https://blogs.msdn.microsoft.com/vcblog/2017/12/13/broken-warnings-theory/
     .Defines + { 'USE_PPE_MSVC17_PRAGMA_SYSTEMHEADER' }
 #endif
 
