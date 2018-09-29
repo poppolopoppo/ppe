@@ -39,10 +39,10 @@ class TSparseArrayIterator;
 template <typename T, size_t _ChunkSize>
 class TBasicSparseArray {
 public:
-    // Choose this wisely this parameter wisely :
+    // Choose this parameter wisely :
     // - too high and you would waste lot of memory (can't shrink) ;
     // - too low and you would allocate very often.
-    // The value is specified as a template parameter to adapt to specific usages.
+    // The value is specified as a template parameter to adapt to your specific usage
     STATIC_CONST_INTEGRAL(size_t, ChunkSize, _ChunkSize);
 
     using FDataId = FSparseDataId;
