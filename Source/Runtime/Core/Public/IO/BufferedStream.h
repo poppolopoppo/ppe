@@ -80,6 +80,7 @@ public:
 
     void ForceAllocateInnerBuffer(); // use to disable lazy buffer allocation
     void SetStream(IStreamWriter* nonBuffered);
+    void ResetStream();
 
     inline friend void swap(FBufferedStreamWriter& lhs, FBufferedStreamWriter& rhs) {
         std::swap(lhs._nonBuffered, rhs._nonBuffered);

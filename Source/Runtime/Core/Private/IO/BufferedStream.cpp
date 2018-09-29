@@ -255,9 +255,11 @@ FBufferedStreamWriter::FBufferedStreamWriter(IStreamWriter* nonBuffered, size_t 
 }
 //----------------------------------------------------------------------------
 FBufferedStreamWriter::~FBufferedStreamWriter() {
-    if (_buffer) {
-        Assert(_nonBuffered);
+    if (_nonBuffered) {
         Flush();
+        ONLY_IF_ASSERT(_nonBuffered = nullptr);
+    }
+    if (_buffer) {
         FBufferedStreamAllocator::deallocate(_buffer, _bufferSize);
         ONLY_IF_ASSERT(_buffer = nullptr);
     }
@@ -278,6 +280,14 @@ void FBufferedStreamWriter::SetStream(IStreamWriter* nonBuffered) {
     Assert(0 == _offset);
     _nonBuffered = nonBuffered;
     _origin = _nonBuffered->TellO();
+}
+//----------------------------------------------------------------------------
+void FBufferedStreamWriter::ResetStream() {
+    Assert(_nonBuffered);
+    Flush();
+    Assert(0 == _offset);
+    _nonBuffered = nullptr;
+    _origin = 0;
 }
 //----------------------------------------------------------------------------
 std::streamoff FBufferedStreamWriter::TellO() const {

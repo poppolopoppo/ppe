@@ -673,6 +673,7 @@ public:
     }
 
     virtual ~FFileHandleLogger_() {
+        _buffered.ResetStream();
         FPlatformLowLevelIO::Close(_hFile);
     }
 
