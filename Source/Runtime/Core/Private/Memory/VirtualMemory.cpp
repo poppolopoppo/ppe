@@ -104,7 +104,7 @@ void* FVirtualMemory::Alloc(size_t alignment, size_t sizeInBytes TRACKINGDATA_AR
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
     Assert(Meta::IsPow2(alignment));
 
-    void* const p = FPlatformMemory::VirtualAlloc(alignment, sizeInBytes);
+    void* const p = FPlatformMemory::VirtualAlloc(alignment, sizeInBytes, true);
 
 #if USE_VMALLOC_SIZE_PTRIE
     FVMAllocSizePTrie_::Get().Register(p, sizeInBytes);
@@ -131,14 +131,66 @@ void FVirtualMemory::Free(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     trackingData.Deallocate(1, sizeInBytes);
 #endif
 
-    FPlatformMemory::VirtualFree(ptr, sizeInBytes);
+    FPlatformMemory::VirtualFree(ptr, sizeInBytes, true);
+}
+//----------------------------------------------------------------------------
+void* FVirtualMemory::PageReserve(size_t sizeInBytes) {
+    Assert(sizeInBytes);
+    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+
+    return FPlatformMemory::VirtualAlloc(sizeInBytes, false);
+}
+//----------------------------------------------------------------------------
+void FVirtualMemory::PageCommit(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
+    Assert(ptr);
+    Assert(sizeInBytes);
+    Assert(Meta::IsAligned(PAGE_SIZE, ptr));
+    Assert(Meta::IsAligned(PAGE_SIZE, sizeInBytes));
+
+    FPlatformMemory::VirtualCommit(ptr, sizeInBytes);
+
+#if 0 && USE_VMALLOC_SIZE_PTRIE // shouldn't be necessary
+    FVMAllocSizePTrie_::Get().Register(ptr, sizeInBytes);
+#endif
+#if USE_PPE_MEMORYDOMAINS
+    Assert_NoAssume(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
+    trackingData.Allocate(1, sizeInBytes);
+#endif
+}
+//----------------------------------------------------------------------------
+void FVirtualMemory::PageDecommit(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
+    Assert(ptr);
+    Assert(sizeInBytes);
+    Assert(Meta::IsAligned(PAGE_SIZE, ptr));
+    Assert(Meta::IsAligned(PAGE_SIZE, sizeInBytes));
+
+#if 0 && USE_VMALLOC_SIZE_PTRIE // shouldn't be necessary
+    const size_t regionSize = FVMAllocSizePTrie_::Get().Erase(ptr);
+    Assert(regionSize == sizeInBytes);
+#endif
+
+#if USE_PPE_MEMORYDOMAINS
+    Assert_NoAssume(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
+    trackingData.Deallocate(1, sizeInBytes);
+#endif
+
+    FPlatformMemory::VirtualFree(ptr, sizeInBytes, false);
+}
+//----------------------------------------------------------------------------
+void FVirtualMemory::PageRelease(void* ptr, size_t sizeInBytes) {
+    Assert(ptr);
+    Assert(sizeInBytes);
+    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
+    Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+
+    FPlatformMemory::VirtualFree(ptr, sizeInBytes, true);
 }
 //----------------------------------------------------------------------------
 // Won't register in FVMAllocSizePTrie_
 void* FVirtualMemory::InternalAlloc(size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
     Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, sizeInBytes));
 
-    void* const ptr = FPlatformMemory::VirtualAlloc(sizeInBytes);
+    void* const ptr = FPlatformMemory::VirtualAlloc(sizeInBytes, true);
     AssertRelease(ptr);
 
 #if USE_PPE_MEMORYDOMAINS
@@ -154,7 +206,7 @@ void FVirtualMemory::InternalFree(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG
     Assert(ptr);
     Assert_NoAssume(Meta::IsAligned(ALLOCATION_BOUNDARY, sizeInBytes));
 
-    FPlatformMemory::VirtualFree(ptr, sizeInBytes);
+    FPlatformMemory::VirtualFree(ptr, sizeInBytes, true);
 
 #if USE_PPE_MEMORYDOMAINS
     Assert(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));

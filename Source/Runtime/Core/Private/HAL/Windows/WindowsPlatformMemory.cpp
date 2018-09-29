@@ -110,6 +110,14 @@ void* FWindowsPlatformMemory::PageAlloc(size_t sizeInBytes) {
     Assert(sizeInBytes);
     Assert(Meta::IsAligned(PAGE_SIZE, sizeInBytes));
 
+    // /!\ BEWARE /!\
+    // #TODO : refactor this into a less wasteful page allocator
+    // You're wasting virtual address space with this method
+    // Allocation have a 64k granularity, but this is allocating on 4k boundary, wasting 60k for each alloc
+    // A more efficient way would be to reserve 64k, and then commit 4k pages : in this scenario VirtualAlloc
+    // has a page boundary instead of dwAllocationGranularity boundary
+    // Note : at the time writing this comment only FMallocStomp uses this, but it's critical client since
+    // it already has a massive memory overhead
     void* const ptr = ::VirtualAlloc(nullptr, sizeInBytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
     Assert(Meta::IsAligned(PAGE_SIZE, ptr));
@@ -127,17 +135,20 @@ void FWindowsPlatformMemory::PageFree(void* ptr, size_t sizeInBytes) {
         PPE_THROW_IT(FLastErrorException("VirtualFree"));
 }
 //----------------------------------------------------------------------------
-void* FWindowsPlatformMemory::VirtualAlloc(size_t sizeInBytes) {
-    return FWindowsPlatformMemory::VirtualAlloc(ALLOCATION_GRANULARITY, sizeInBytes);
+void* FWindowsPlatformMemory::VirtualAlloc(size_t sizeInBytes, bool commit) {
+    return FWindowsPlatformMemory::VirtualAlloc(ALLOCATION_GRANULARITY, sizeInBytes, commit);
 }
 //----------------------------------------------------------------------------
-void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes) {
+void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes, bool commit) {
     Assert(sizeInBytes);
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
     Assert(Meta::IsPow2(alignment));
 
+    const ::DWORD flAllocationType = (commit ? MEM_RESERVE | MEM_COMMIT : MEM_RESERVE);
+    const ::DWORD flProtect = (commit ? PAGE_READWRITE : PAGE_NOACCESS);
+
     // Optimistically try mapping precisely the right amount before falling back to the slow method :
-    void* p = ::VirtualAlloc(nullptr, sizeInBytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    void* p = ::VirtualAlloc(nullptr, sizeInBytes, flAllocationType, flProtect);
 
     if (not Meta::IsAligned(alignment, p)) {
 
@@ -154,9 +165,7 @@ void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes)
 
             p = ::VirtualAlloc(
                 (void*)(((uintptr_t)p + (alignment - 1)) & ~(alignment - 1)),
-                sizeInBytes,
-                MEM_RESERVE | MEM_COMMIT,
-                PAGE_READWRITE);
+                sizeInBytes, flAllocationType, flProtect );
 
         } while (nullptr == p);
     }
@@ -167,14 +176,32 @@ RETURN_ALLOC:
     return p;
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformMemory::VirtualFree(void* ptr, size_t sizeInBytes) {
+void FWindowsPlatformMemory::VirtualCommit(void* ptr, size_t sizeInBytes) {
+    Assert(ptr);
+    Assert(sizeInBytes);
+    Assert(Meta::IsAligned(PAGE_SIZE, ptr));
+    Assert(Meta::IsAligned(PAGE_SIZE, sizeInBytes));
+
+    // Remember : memory must be reserved first with VirtualAlloc(sizeInBytes, false)
+
+    Verify(::VirtualAlloc(ptr, sizeInBytes, MEM_COMMIT, PAGE_READWRITE) == ptr);
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformMemory::VirtualFree(void* ptr, size_t sizeInBytes, bool release) {
     Assert(ptr);
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, ptr));
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
 
-    NOOP(sizeInBytes);
+    ::DWORD dwFreeType;
+    if (release) {
+        sizeInBytes = 0;
+        dwFreeType = MEM_RELEASE;
+    }
+    else {
+        dwFreeType = MEM_DECOMMIT;
+    }
 
-    if (0 == ::VirtualFree(ptr, 0, MEM_RELEASE))
+    if (0 == ::VirtualFree(ptr, sizeInBytes, dwFreeType))
         PPE_THROW_IT(FLastErrorException("VirtualFree"));
 }
 //----------------------------------------------------------------------------

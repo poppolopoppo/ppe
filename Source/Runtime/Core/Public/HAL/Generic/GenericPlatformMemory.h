@@ -43,9 +43,10 @@ public: // must be defined for every platform
     static void* PageAlloc(size_t sizeInBytes) = delete; // PageGranularity
     static void PageFree(void* ptr, size_t sizeInBytes) = delete;
 
-    static void* VirtualAlloc(size_t sizeInBytes) = delete; // AllocationGranularity
-    static void* VirtualAlloc(size_t alignment, size_t sizeInBytes) = delete;
-    static void VirtualFree(void* ptr, size_t sizeInBytes) = delete;
+    static void* VirtualAlloc(size_t sizeInBytes, bool commit) = delete; // AllocationGranularity
+    static void* VirtualAlloc(size_t alignment, size_t sizeInBytes, bool commit) = delete;
+    static void VirtualCommit(void* ptr, size_t sizeInBytes) = delete;
+    static void VirtualFree(void* ptr, size_t sizeInBytes, bool release) = delete;
 
     static size_t RegionSize(void* ptr) = delete;
     static bool PageProtect(void* ptr, size_t sizeInBytes, bool read, bool write) = delete;

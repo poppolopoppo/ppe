@@ -4,10 +4,13 @@
 
 #ifdef WITH_PPE_MALLOCSTOMP
 
+// #TODO : should be using a pool of 64k chunks and commit 4 pages out of it
+// this would substantially increase usability on 32 bits builds (overhead falling from 64k to 4k for 16 bytes)
+
 #   include "HAL/PlatformMemory.h"
 #   include "Memory/MemoryTracking.h"
 
-#   define PPE_MALLOCSTOMP_CHECK_OVERRUN 1 // set to 0 to check for underruns
+#   define PPE_MALLOCSTOMP_CHECK_OVERRUN 1 // set to 0 to check for under-runs
 #   define PPE_MALLOCSTOMP_DELAY_DELETES 1 // set to 1 to check for necrophilia
 #   define PPE_MALLOCSTOMP_BLOCK_OVERLAP 0 // need PPE_MALLOCSTOMP_DELAY_DELETES
 

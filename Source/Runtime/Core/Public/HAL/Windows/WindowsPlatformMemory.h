@@ -32,9 +32,10 @@ public:
     static void* PageAlloc(size_t sizeInBytes);
     static void PageFree(void* ptr, size_t sizeInBytes);
 
-    static void* VirtualAlloc(size_t sizeInBytes);
-    static void* VirtualAlloc(size_t alignment, size_t sizeInBytes);
-    static void VirtualFree(void* ptr, size_t sizeInBytes);
+    static void* VirtualAlloc(size_t sizeInBytes, bool commit);
+    static void* VirtualAlloc(size_t alignment, size_t sizeInBytes, bool commit);
+    static void VirtualCommit(void* ptr, size_t sizeInBytes);
+    static void VirtualFree(void* ptr, size_t sizeInBytes, bool release);
 
     static size_t RegionSize(void* ptr);
     static bool PageProtect(void* ptr, size_t sizeInBytes, bool read, bool write);
