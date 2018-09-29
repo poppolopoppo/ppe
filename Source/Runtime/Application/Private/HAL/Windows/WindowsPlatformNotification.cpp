@@ -307,20 +307,25 @@ private:
     static NO_INLINE ::HICON LoadIconForSystray_(::HINSTANCE hInstance, size_t idi) {
         ::HICON hIcon = NULL;
 
-        ::HMODULE const hComctl32 = FPlatformProcess::AttachToDynamicLibrary(L"Comctl32.dll");
-
         typedef ::HRESULT(WINAPI *FLoadIconMetric)(::HINSTANCE hinst, ::PCWSTR pszName, int lims, _Out_::HICON *phico);
 
-        auto hLoadIconMetric = (FLoadIconMetric)FPlatformProcess::DynamicLibraryFunction(hComctl32, "LoadIconMetric");
-        if (hLoadIconMetric) {
-            hLoadIconMetric(hInstance, MAKEINTRESOURCEW(idi), LIM_SMALL, &hIcon);
-        }
-        else {
-            LOG(HAL, Warning, L"failed to bind LoadIconMetric function from Comctl32.dll, fallback on LoadIcon");
-            hIcon = ::LoadIcon(hInstance, MAKEINTRESOURCEW(idi));
+        ::HMODULE const hComctl32 = FPlatformProcess::AttachToDynamicLibrary(L"Comctl32.dll");
+
+        if (hComctl32) {
+            auto* const hLoadIconMetric = (FLoadIconMetric)FPlatformProcess::DynamicLibraryFunction(hComctl32, "LoadIconMetric");
+
+            if (hLoadIconMetric) {
+                hLoadIconMetric(hInstance, MAKEINTRESOURCEW(idi), LIM_SMALL, &hIcon);
+            }
+            else {
+                LOG(HAL, Warning, L"failed to bind LoadIconMetric function from Comctl32.dll, fallback on LoadIcon");
+            }
+
+            FPlatformProcess::DetachFromDynamicLibrary(hComctl32);
         }
 
-        FPlatformProcess::DetachFromDynamicLibrary(hComctl32);
+        if (NULL == hIcon)
+            hIcon = ::LoadIcon(hInstance, MAKEINTRESOURCEW(idi));
 
         if (NULL == hIcon)
             PPE_THROW_IT(FLastErrorException("LoadIcon"));
