@@ -41,6 +41,9 @@ FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPercentage prc) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, Fmt::FCountOfElements count) {
+    if (oss.Format().Width() > 1) // fixes alignment for units
+        oss.Format().SetWidth(oss.Format().Width() - 2);
+
     if (count > 9e5f)
         oss << (count / 1e6f) << " M";
     else if (count > 9e2f)
@@ -52,6 +55,9 @@ FTextWriter& operator <<(FTextWriter& oss, Fmt::FCountOfElements count) {
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FCountOfElements count) {
+    if (oss.Format().Width() > 1) // fixes alignment for units
+        oss.Format().SetWidth(oss.Format().Width() - 2);
+
     if (count > 9e5f)
         oss << (count / 1e6f) << L" M";
     else if (count > 9e2f)
