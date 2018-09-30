@@ -20,38 +20,61 @@ class FAtomicSpinLock {
     std::atomic_flag State = ATOMIC_FLAG_INIT;
 
 public:
-    void Unlock() { State.clear(std::memory_order_release); }
-    bool TryLock() { return false == State.test_and_set(std::memory_order_acquire); }
+    void Unlock() NOEXCEPT { State.clear(std::memory_order_release); }
+    bool TryLock() NOEXCEPT { return (not State.test_and_set(std::memory_order_acquire)); }
 
-    void Lock() {
+    void Lock() NOEXCEPT {
         size_t backoff = 0;
-        while(State.test_and_set(std::memory_order_acquire))
+        while (State.test_and_set(std::memory_order_acquire))
             FPlatformProcess::SleepForSpinning(backoff);
     }
 
-    struct FScope {
+    struct FScope : Meta::FNonCopyableNorMovable {
         FAtomicSpinLock& Barrier;
-        FScope(FAtomicSpinLock& barrier)
-            : Barrier(barrier) {
+        FScope(FAtomicSpinLock& barrier) NOEXCEPT
+        :   Barrier(barrier) {
             Barrier.Lock();
         }
-        ~FScope() {
+        ~FScope() NOEXCEPT {
             Barrier.Unlock();
         }
     };
 
-    struct FTryScope {
+    struct FTryScope : Meta::FNonCopyableNorMovable {
         FAtomicSpinLock& Barrier;
         const bool Locked;
-        FTryScope(FAtomicSpinLock& barrier)
-            : Barrier(barrier)
-            , Locked(barrier.TryLock()) {
+        FTryScope(FAtomicSpinLock& barrier) NOEXCEPT
+        :   Barrier(barrier)
+        ,   Locked(barrier.TryLock()) {
         }
-        ~FTryScope() {
+        ~FTryScope() NOEXCEPT {
             if (Locked)
                 Barrier.Unlock();
         }
     };
+
+    struct FUniqueLock : Meta::FNonCopyableNorMovable {
+        FAtomicSpinLock& Barrier;
+        bool NeedUnlock;
+        FUniqueLock(FAtomicSpinLock& barrier) NOEXCEPT
+        :   Barrier(barrier)
+        ,   NeedUnlock(true) {
+            Barrier.Lock();
+        }
+        ~FUniqueLock() NOEXCEPT {
+            if (NeedUnlock)
+                Barrier.Unlock();
+        }
+        void Lock() NOEXCEPT {
+            Barrier.Lock();
+            NeedUnlock = true;
+        }
+        void Unlock() NOEXCEPT {
+            NeedUnlock = false;
+            Barrier.Unlock();
+        }
+    };
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -63,31 +86,32 @@ class FAtomicOrderedLock {
     std::atomic<size_t> Revision = size_t(-1); // <-- must be == to (Locked - 1)
 
 public:
-    struct FScope {
+    struct FScope : Meta::FNonCopyableNorMovable {
         FAtomicOrderedLock& Barrier;
 #ifdef WITH_PPE_ASSERT
         const size_t Order;
 #endif
 
-        FScope(FAtomicOrderedLock& barrier)
-            : Barrier(barrier)
+        FScope(FAtomicOrderedLock& barrier) NOEXCEPT
+        :   Barrier(barrier)
 #ifdef WITH_PPE_ASSERT
-            , Order(++Barrier.Revision)
+        ,   Order(++Barrier.Revision)
         {
 #else
         {
             const size_t Order = ++Barrier.Revision;
 #endif
+            //size_t backoff = 0;
             for (;;) { // spin for lock
                 size_t revision = Order;
                 if (Barrier.Locked.compare_exchange_weak(revision, revision, std::memory_order_acquire))
                     return;
 
-                _mm_pause();
+                ::_mm_pause();//FPlatformProcess::SleepForSpinning(backoff); <- performs very poorly in this lock :/
             }
         }
 
-        ~FScope() {
+        ~FScope() NOEXCEPT {
             Assert_NoAssume(Barrier.Locked == Order);
 
             ++Barrier.Locked; // release the locks, the next waiting thread will stop spinning
