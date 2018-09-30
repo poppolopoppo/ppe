@@ -264,6 +264,7 @@ public: // generic helpers
 
     template <typename T>
     static FORCE_INLINE CONSTEXPR T popcnt_constexpr(T v) NOEXCEPT {
+        STATIC_ASSERT(std::is_arithmetic_v<T>);
         v = v - ((v >> 1) & (T)~(T)0 / 3);                                // temp
         v = (v & (u64)~(u64)0 / 15 * 3) + ((v >> 2) & (T)~(T)0 / 15 * 3);       // temp
         v = (v + (v >> 4)) & (T)~(T)0 / 255 * 15;                           // temp

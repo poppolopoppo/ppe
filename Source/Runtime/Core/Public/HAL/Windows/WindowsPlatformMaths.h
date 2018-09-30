@@ -238,6 +238,14 @@ public:
 public:
     using FGenericPlatformMaths::popcnt_constexpr;
     using FGenericPlatformMaths::popcnt64;
+
+    static u64 popcnt64(u64 v) NOEXCEPT {
+#   ifdef ARCH_X64
+        return ::__popcnt64(v);
+#   else
+        return (::__popcnt(u32(v)) + ::__popcnt(u32(v >> 32)));
+#   endif
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
