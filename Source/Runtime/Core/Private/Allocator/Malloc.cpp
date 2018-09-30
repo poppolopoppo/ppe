@@ -231,18 +231,25 @@ public:
     FORCE_INLINE static void* Malloc(size_t size) { return AllocateBlock(FMallocLowLevel::Malloc(size), size); }
     FORCE_INLINE static void  Free(void* ptr) { FMallocLowLevel::Free(ReleaseBlock(ptr)); }
     FORCE_INLINE static void* Calloc(size_t nmemb, size_t size) { return AllocateBlock(FMallocLowLevel::Calloc(nmemb, size), size); }
-    FORCE_INLINE static void* Realloc(void *ptr, size_t size) { return ReallocAllocateBlock(FMallocLowLevel::Realloc(ReallocReleaseBlock(ptr), size), size); }
+    FORCE_INLINE static void* Realloc(void *ptr, size_t size) { return ReallocAllocateBlock(FMallocLowLevel::Realloc(ReallocReleaseBlock(ptr), size), ptr, size); }
 
     FORCE_INLINE static void* AlignedMalloc(size_t size, size_t alignment) { return AllocateBlock(FMallocLowLevel::AlignedMalloc(size, alignment), size, alignment); }
     FORCE_INLINE static void  AlignedFree(void *ptr) { FMallocLowLevel::AlignedFree(ReleaseBlock(ptr)); }
     FORCE_INLINE static void* AlignedCalloc(size_t nmemb, size_t size, size_t alignment) { return AllocateBlock(FMallocLowLevel::AlignedCalloc(nmemb, size, alignment), size, alignment); }
-    FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment) { return ReallocAllocateBlock(FMallocLowLevel::AlignedRealloc(ReallocReleaseBlock(ptr, alignment), size, alignment), size, alignment); }
+    FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment) { return ReallocAllocateBlock(FMallocLowLevel::AlignedRealloc(ReallocReleaseBlock(ptr, alignment), size, alignment), ptr , size, alignment); }
+
+    FORCE_INLINE static size_t SnapSize(size_t size) { // must always return a block size larger or equal than user input
+        const size_t snapped = FMallocLowLevel::SnapSize(size);
+        Assert_NoAssume(snapped >= size);
+        return snapped;
+    }
 
 private:
     static void* AllocateBlock(void* ptr, size_t sizeInBytes, size_t alignment = 16) {
         Assert(Meta::IsPow2(alignment));
         if (nullptr == ptr) return nullptr;
         Assert(Meta::IsAligned(alignment, ptr));
+        Assert_NoAssume(FMallocLowLevel::RegionSize(ptr) == SnapSize(sizeInBytes));
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
         FLeakDetector::Get().Allocate(ptr, sizeInBytes);
 #   endif
@@ -268,17 +275,25 @@ private:
         return ptr;
     }
 
-    static void* ReallocAllocateBlock(void* ptr, size_t sizeInBytes, size_t alignment = 16) {
+    static void* ReallocAllocateBlock(void* newp, void* oldp, size_t sizeInBytes, size_t alignment = 16) {
         Assert(Meta::IsPow2(alignment));
-        if (nullptr == ptr) return nullptr;
-        Assert(Meta::IsAligned(alignment, ptr));
+        Assert_NoAssume(newp || 0 == sizeInBytes);
+        if (nullptr == newp) return nullptr;
+        Assert(Meta::IsAligned(alignment, newp));
+        Assert_NoAssume(FMallocLowLevel::RegionSize(newp) == SnapSize(sizeInBytes));
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
-        FLeakDetector::Get().Allocate(ptr, sizeInBytes);
+        FLeakDetector::Get().Allocate(newp, sizeInBytes);
 #   endif
 #   if PPE_MALLOC_HISTOGRAM_PROXY
-        FMallocHistogram::Allocate(ptr, sizeInBytes);
+        FMallocHistogram::Allocate(newp, sizeInBytes);
 #   endif
-        return ptr;
+#   if PPE_MALLOC_POISON_PROXY
+        if (nullptr == oldp)
+            FPlatformMemory::Memset(newp, 0xCC, sizeInBytes);
+#   else
+        UNUSED(oldp);
+#   endif
+        return newp;
     }
 
     static void* ReallocReleaseBlock(void* ptr, size_t alignment = 16) {
@@ -347,7 +362,7 @@ void    (malloc_release_pending_blocks)() {
 //----------------------------------------------------------------------------
 NOALIAS
 size_t  (malloc_snap_size)(size_t size) {
-    return FMallocLowLevel::SnapSize(size);
+    return FMallocProxy::SnapSize(size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
