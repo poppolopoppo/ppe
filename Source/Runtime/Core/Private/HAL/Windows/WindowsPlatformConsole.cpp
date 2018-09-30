@@ -195,7 +195,13 @@ void FWindowsPlatformConsole::Open() {
 
         ::SetConsoleOutputCP(CP_UTF8);
         ::SetConsoleTitleW(L"PPE - " WIDESTRING(STRINGIZE(BUILDCONFIG)));
-        ::SetConsoleMode(win32.Console.hConsoleIn, ENABLE_QUICK_EDIT_MODE | ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_EXTENDED_FLAGS);
+        ::SetConsoleMode(win32.Console.hConsoleIn,
+            ENABLE_QUICK_EDIT_MODE |
+            ENABLE_ECHO_INPUT |
+            ENABLE_LINE_INPUT |
+            ENABLE_PROCESSED_INPUT |
+            ENABLE_INSERT_MODE |
+            ENABLE_EXTENDED_FLAGS );
         ::SetConsoleMode(win32.Console.hConsoleOut, ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS);
 
         // redirect CRT standard input, output and error handles to the console window
