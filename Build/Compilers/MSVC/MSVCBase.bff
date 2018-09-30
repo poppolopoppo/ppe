@@ -245,6 +245,10 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 #endif
     .ReleaseDefines = .WoutSTLIteratorDebuggingDefines
 
+    // https://www.codeproject.com/Tips/1032786/Visual-Studio-Slow-Debugging-and-NO-DEBUG-HEAP
+
+    .ReleaseDefines + "_NO_DEBUG_HEAP=1"
+
     // https://msdn.microsoft.com/fr-fr/library/2kzt1wy3.aspx
 
     .SharedLibRuntimeForDebug   = ' /LDd' ; MultiThreaded/Static Debug dll
