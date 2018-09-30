@@ -240,6 +240,8 @@ public: // must be defined for every platform
     static u64 popcnt(u64 u) NOEXCEPT = delete;
 #endif
 
+    static u64 tzcnt64(u64 u) NOEXCEPT = delete;
+
     //------------------------------------------------------------------------
     // Bit Scan Reverse
 

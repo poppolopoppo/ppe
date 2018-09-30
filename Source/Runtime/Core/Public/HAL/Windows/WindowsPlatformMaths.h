@@ -200,6 +200,16 @@ public:
     static FORCE_INLINE u64 popcnt(u64 u) NOEXCEPT { return ::__popcnt64(u); }
 #   endif
 
+    static u64 tzcnt64(u64 u) NOEXCEPT {
+#   ifdef ARCH_X64
+        return _tzcnt_u64(u);
+#   else
+        return (Unlikely(0 == u32(u))
+            ? 32 + ::_tzcnt_u32(u32(u >> 32))
+            : ::_tzcnt_u32(u32(u)) );
+#   endif
+    }
+
     //------------------------------------------------------------------------
     // Bit Scan Reverse
 
@@ -209,13 +219,13 @@ public:
         *r = checked_cast<u32>(index);
     }
 
-#ifdef ARCH_X64
+#   ifdef ARCH_X64
     static FORCE_INLINE void bsr(u32* r, u64 v) NOEXCEPT {
         unsigned long index;
         Verify(::_BitScanReverse64(&index, v));
         *r = checked_cast<u32>(index);
     }
-#endif
+#   endif
 
     //------------------------------------------------------------------------
     // half float support
