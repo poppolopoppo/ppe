@@ -153,39 +153,47 @@ static void Test_Allocator_Dangling_(const FWStringView& category, const FWStrin
     FTaskManager& threadPool = FHighPriorityThreadPool::Get();
 
     const size_t numWorkers = threadPool.WorkerCount();
-    const size_t allocsPerWorker = (blockSizes.size() / numWorkers);
+    const size_t allocsPerWorker = ((blockSizes.size() + numWorkers - 1) / numWorkers);
+    Assert(numWorkers * allocsPerWorker >= blockSizes.size());
+
+    using alloc_traits = std::allocator_traits<_Alloc>;
+    struct FBlock {
+        typename alloc_traits::pointer Ptr;
+        size_t SizeInBytes;
+    };
 
     using pointer = typename std::allocator_traits<_Alloc>::pointer;
-    using blocks_type = TUniqueArray<pointer>;
+    using blocks_type = TUniqueArray<FBlock>;
 
-    TVector<blocks_type> perWorkerIndex;
-    perWorkerIndex.reserve_AssumeEmpty(numWorkers);
-    forrange(i, 0, numWorkers) {
-        const auto workerSizes = blockSizes.Slice(i, allocsPerWorker);
-        perWorkerIndex.emplace_back_AssumeNoGrow(NewArray<pointer>(workerSizes.size()));
-    }
+    TVector<FBlock> blocks;
+    blocks.reserve(blockSizes.size());
+    for (size_t sz : blockSizes)
+        blocks.emplace_back_AssumeNoGrow(nullptr, sz);
 
     TVector<FTaskFunc> allocateTasks;
     allocateTasks.reserve_AssumeEmpty(numWorkers);
     TVector<FTaskFunc> deallocateTasks;
     deallocateTasks.reserve_AssumeEmpty(numWorkers);
 
-    const struct payload_t {
+    struct payload_t {
         _Alloc& Allocator;
-        const TMemoryView<const size_t> BlockSize;
-        const TVector<blocks_type>& PerWorkerIndex;
-    }   payload{ allocator, blockSizes, perWorkerIndex };
+        TMemoryView<FBlock> Blocks;
+    }   payload{ allocator, blocks.MakeView() };
 
     forrange(i, 0, numWorkers) {
-        allocateTasks.emplace_back_AssumeNoGrow([i, allocsPerWorker, &payload](ITaskContext&) {
-            const size_t* sz = payload.BlockSize.data() + i * allocsPerWorker;
-            for (pointer& p : payload.PerWorkerIndex[i])
-                p = payload.Allocator.allocate(*sz++);
+        u32 bbegin = u32(i * allocsPerWorker);
+        u32 bend = u32(Min(bbegin + allocsPerWorker, blocks.size()));
+
+        if (bbegin >= bend)
+            break;
+
+        allocateTasks.emplace_back_AssumeNoGrow([bbegin, bend, &payload](ITaskContext&) {
+            for (FBlock& b : payload.Blocks.SubRange(bbegin, bend - bbegin))
+                b.Ptr = payload.Allocator.allocate(b.SizeInBytes);
         });
-        deallocateTasks.emplace_back_AssumeNoGrow([i, allocsPerWorker, &payload](ITaskContext&) {
-            const size_t* sz = payload.BlockSize.data() + i * allocsPerWorker;
-            for (pointer p : payload.PerWorkerIndex[i])
-                payload.Allocator.deallocate(p, *sz++);
+        deallocateTasks.emplace_back_AssumeNoGrow([bbegin, bend, &payload](ITaskContext&) {
+            for (FBlock& b : payload.Blocks.SubRange(bbegin, bend - bbegin))
+                payload.Allocator.deallocate(b.Ptr, b.SizeInBytes);
         });
     }
 
@@ -195,13 +203,13 @@ static void Test_Allocator_Dangling_(const FWStringView& category, const FWStrin
     NOOP(category, name);
     BENCHMARK_SCOPE(category, name);
 
-    // tries to free blocks from another thread from which they were allocated
-    // this is the worst case for many allocators
+    // tries to free blocks from another thread from which they were allocated initially
+    // this is the worst case for many allocators and can be *VERY* slow
     forrange(loop, 0, GLoopCount_) {
         // allocate from each worker
         threadPool.RunAndWaitFor(allocateTasks.MakeConstView());
-        // randomize per allocator blocks
-        std::shuffle(perWorkerIndex.begin(), perWorkerIndex.end(), rand);
+        // randomize all blocks, will release from any thread
+        std::shuffle(blocks.begin(), blocks.end(), rand);
         // deallocate from (hopefully) another allocator
         threadPool.RunAndWaitFor(deallocateTasks.MakeConstView());
     }
