@@ -1,0 +1,20 @@
+#once
+{
+    .ModuleName = 'BuildGraph'
+    .ModuleDefines = { 'EXPORT_PPE_BUILDGRAPH' }
+    .ModulePublicDependencies =
+    {
+        'Runtime/Core',
+        'Runtime/RTTI',
+    }
+    .ModulePrivateDependencies =
+    {
+        'Runtime/Serialize'
+    }
+    .ModuleIsolatedFiles =
+    {
+        'Private/BuildGraph.cpp'
+    }
+    .UnityNumFiles = 1 // generated
+    #include "$BuildPath$/Templates/Module.bff"
+}

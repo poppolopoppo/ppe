@@ -4,7 +4,7 @@
 
     #include "External/External.bff"
     #include "Runtime/Runtime.bff"
-    // #include "ContentPipeline/ContentPipeline.bff"
+    #include "ContentPipeline/ContentPipeline.bff"
     // #include "Engine/Engine.bff"
     #include "Tools/Tools.bff"
 }
