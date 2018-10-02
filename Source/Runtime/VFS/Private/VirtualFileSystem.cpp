@@ -6,19 +6,14 @@
 #include "VirtualFileSystemNativeComponent.h"
 #include "VirtualFileSystemTrie.h"
 
-#include "Allocator/PoolAllocatorTag-impl.h"
 #include "Container/RawStorage.h"
-#include "Diagnostic/Logger.h"
-#include "Diagnostic/CurrentProcess.h"
 #include "IO/FileSystem.h"
 #include "IO/Format.h"
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
-#include "HAL/PlatformFile.h"
 #include "HAL/PlatformTime.h"
 
 namespace PPE {
-POOL_TAG_DEF(VirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -176,59 +171,6 @@ bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, 
     }
 
     return true;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FVirtualFileSystemModule::FVirtualFileSystemModule()
-:   FModule("Runtime/VFS")
-{}
-//----------------------------------------------------------------------------
-FVirtualFileSystemModule::~FVirtualFileSystemModule()
-{}
-//----------------------------------------------------------------------------
-void FVirtualFileSystemModule::Start(FModuleManager& manager) {
-    FModule::Start(manager);
-
-    POOL_TAG(VirtualFileSystem)::Start();
-    FVirtualFileSystem::Create();
-
-    auto& VFS = FVirtualFileSystem::Get();
-    auto& process = FCurrentProcess::Get();
-
-    // current process executable directory
-    VFS.MountNativePath(L"Process:/", process.Directory());
-
-    // data directory
-    VFS.MountNativePath(MakeStringView(L"Data:/"), process.DataPath());
-
-    // saved directory
-    VFS.MountNativePath(MakeStringView(L"Saved:/"), process.SavedPath());
-
-    // current process working directory
-    VFS.MountNativePath(L"Working:/", FPlatformFile::WorkingDirectory());
-
-    // system temporary path
-    VFS.MountNativePath(L"Tmp:/", FPlatformFile::TemporaryDirectory());
-
-    // user profile path
-    VFS.MountNativePath(L"User:/", FPlatformFile::UserDirectory());
-
-    // system path
-    VFS.MountNativePath(L"System:/", FPlatformFile::SystemDirectory());
-}
-//----------------------------------------------------------------------------
-void FVirtualFileSystemModule::Shutdown() {
-    FModule::Shutdown();
-
-    FVirtualFileSystem::Destroy();
-    POOL_TAG(VirtualFileSystem)::Shutdown();
-}
-//----------------------------------------------------------------------------
-void FVirtualFileSystemModule::ReleaseMemory() {
-    FModule::ReleaseMemory();
-
-    POOL_TAG(VirtualFileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

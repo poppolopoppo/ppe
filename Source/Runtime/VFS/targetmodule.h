@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "VirtualFileSystem.h"
+#include "VFS.h"
 
 #ifndef PPE_STATICMODULES_STARTUP
 #   error "Runtime/VFS/targetmodule.h can't be included first !"

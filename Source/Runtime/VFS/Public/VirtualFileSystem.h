@@ -3,7 +3,6 @@
 #include "VirtualFileSystem_fwd.h"
 #include "VirtualFileSystemTrie.h"
 
-#include "Allocator/PoolAllocatorTag.h"
 #include "Memory/UniquePtr.h"
 #include "Meta/Singleton.h"
 #include "Thread/ReadWriteLock.h"
@@ -13,7 +12,6 @@
 namespace PPE {
 template <typename T, typename _Allocator>
 class TRawStorage;
-POOL_TAG_DECL(VirtualFileSystem);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -39,19 +37,6 @@ public:
     static bool Copy(const FFilename& dst, const FFilename& src, EAccessPolicy policy = EAccessPolicy::None);
     static bool Compress(const FFilename& dst, const FFilename& src, EAccessPolicy policy = EAccessPolicy::None);
     static bool Decompress(const FFilename& dst, const FFilename& src, EAccessPolicy policy = EAccessPolicy::None);
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-class PPE_VFS_API FVirtualFileSystemModule : public FModule {
-public:
-    FVirtualFileSystemModule();
-    virtual ~FVirtualFileSystemModule();
-
-protected:
-    virtual void Start(FModuleManager& manager) override final;
-    virtual void Shutdown() override final;
-    virtual void ReleaseMemory() override final;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

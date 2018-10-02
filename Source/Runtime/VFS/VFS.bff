@@ -8,7 +8,7 @@
     }
     .ModuleIsolatedFiles =
     {
-        'Private/VirtualFileSystem.cpp'
+        'Private/VFS.cpp'
     }
     .UnityNumFiles = 1 // generated
     #include "$BuildPath$/Templates/Module.bff"
