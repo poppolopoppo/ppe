@@ -59,6 +59,7 @@
     _RTTI_PROPERTY_IMPL(STRINGIZE(_Alias), (_Flags), &object_type::_Name);
 #define RTTI_PROPERTY_FIELD_ALIAS(_Name, _Alias) RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, PPE::RTTI::EPropertyFlags::Public)
 #define RTTI_PROPERTY_DEPRECATED_ALIAS(_Name, _Alias) RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, PPE::RTTI::EPropertyFlags::Public + PPE::RTTI::EPropertyFlags::Deprecated)
+#define RTTI_PROPERTY_READONLY_ALIAS(_Name, _Alias) RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, PPE::RTTI::EPropertyFlags::Public + PPE::RTTI::EPropertyFlags::ReadOnly)
 //----------------------------------------------------------------------------
 // Add a private property "SomeName" from a private field "_someName"
 #define _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, _Flags) do { \
@@ -72,10 +73,12 @@
     } while (0)
 #define RTTI_PROPERTY_PRIVATE_FIELD(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, PPE::RTTI::EPropertyFlags::Private);
 #define RTTI_PROPERTY_PRIVATE_DEPRECATED(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, PPE::RTTI::EPropertyFlags::Private + PPE::RTTI::EPropertyFlags::Deprecated);
+#define RTTI_PROPERTY_PRIVATE_READONLY(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, PPE::RTTI::EPropertyFlags::Private + PPE::RTTI::EPropertyFlags::ReadOnly);
 //----------------------------------------------------------------------------
 // Add a public property "SomeName" from a public field "SomeName"
 #define RTTI_PROPERTY_PUBLIC_FIELD(_Name) RTTI_PROPERTY_FIELD_ALIAS(_Name, _Name);
 #define RTTI_PROPERTY_DEPRECATED_FIELD(_Name) RTTI_PROPERTY_DEPRECATED_ALIAS(_Name, _Name);
+#define RTTI_PROPERTY_READONLY_FIELD(_Name) RTTI_PROPERTY_READONLY_ALIAS(_Name, _Name);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
