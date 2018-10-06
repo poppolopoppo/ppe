@@ -6,6 +6,8 @@
 
 namespace PPE {
 namespace RTTI {
+struct FGuid;
+class PPE_CORE_API FTimestamp;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -84,6 +86,9 @@ PPE_RTTI_API PTypeTraits Traits(Meta::TType<ushortn>);
 PPE_RTTI_API PTypeTraits Traits(Meta::TType<uwordn>);
 PPE_RTTI_API PTypeTraits Traits(Meta::TType<FHalfFloat>);
 PPE_RTTI_API PTypeTraits Traits(Meta::TType<UX10Y10Z10W2N>);
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<FGuid>);
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<FTimestamp>);
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<u128>);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

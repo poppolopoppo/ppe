@@ -24,6 +24,8 @@
 #include "Maths/Quaternion.h"
 #include "Maths/Transform.h"
 #include "Memory/MemoryView.h"
+#include "Misc/Guid.h"
+#include "Time/Timestamp.h"
 
 namespace PPE {
 namespace RTTI {
@@ -363,6 +365,9 @@ DEF_RTTI_ALIASING_TRAITS(ushortn,               u16)
 DEF_RTTI_ALIASING_TRAITS(uwordn,                u32)
 DEF_RTTI_ALIASING_TRAITS(FHalfFloat,            u16)
 DEF_RTTI_ALIASING_TRAITS(UX10Y10Z10W2N,         u32)
+DEF_RTTI_ALIASING_TRAITS(FGuid,                 COMMA_PROTECT(TTuple<u32, u32, u32, u32>))
+DEF_RTTI_ALIASING_TRAITS(FTimestamp,            i64)
+DEF_RTTI_ALIASING_TRAITS(u128,                  COMMA_PROTECT(TPair<u64, u64>))
 //----------------------------------------------------------------------------
 #undef DEF_RTTI_ALIASING_TRAITS
 //----------------------------------------------------------------------------
