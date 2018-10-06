@@ -60,7 +60,7 @@ LOG_CATEGORY(, Test_RTTI)
 namespace {
 //----------------------------------------------------------------------------
 RTTI_NAMESPACE_DECL(, RTTI_UnitTest);
-RTTI_NAMESPACE_DEF(, RTTI_UnitTest);
+RTTI_NAMESPACE_DEF(, RTTI_UnitTest, MetaObject);
 //----------------------------------------------------------------------------
 struct FStructAsTuple {
     float3 Position;

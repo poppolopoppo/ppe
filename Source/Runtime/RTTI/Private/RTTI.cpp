@@ -24,7 +24,7 @@ PRAGMA_INITSEG_LIB
 namespace PPE {
 namespace RTTI {
 POOL_TAG_DEF(RTTI);
-RTTI_NAMESPACE_DEF(PPE_RTTI_API, RTTI);
+RTTI_NAMESPACE_DEF(PPE_RTTI_API, RTTI, MetaObject);
 LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -111,7 +111,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 LOG_CATEGORY(PPE_RTTI_API, RTTI_UnitTest)
 RTTI_NAMESPACE_DECL(, RTTI_UnitTest);
-RTTI_NAMESPACE_DEF(, RTTI_UnitTest);
+RTTI_NAMESPACE_DEF(, RTTI_UnitTest, MetaObject);
 //----------------------------------------------------------------------------
 FWD_REFPTR(Titi);
 FWD_REFPTR(Toto);

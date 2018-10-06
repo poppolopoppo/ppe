@@ -20,7 +20,9 @@ FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const 
     , _name(name)
     , _namespace(metaNamespace)
 #if USE_PPE_MEMORYDOMAINS
-    , _trackingData(name.data(), &MEMORYDOMAIN_TRACKING_DATA(MetaObject))
+    , _trackingData(name.data(), metaNamespace
+        ? &metaNamespace->TrackingData()
+        : &MEMORYDOMAIN_TRACKING_DATA(MetaObject) )
 {
     RegisterTrackingData(&_trackingData);
 #else

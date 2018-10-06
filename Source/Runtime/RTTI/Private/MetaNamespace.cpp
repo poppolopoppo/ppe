@@ -30,11 +30,29 @@ FMetaClassHandle::~FMetaClassHandle() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if USE_PPE_MEMORYDOMAINS
+FMetaNamespace::FMetaNamespace(const FStringView& name, FMemoryTracking& domain)
+#else
 FMetaNamespace::FMetaNamespace(const FStringView& name)
+#endif
     : _classIdOffset(INDEX_NONE)
     , _classCount(0)
-    , _nameCStr(name) {
+    , _nameCStr(name)
+#if USE_PPE_MEMORYDOMAINS
+    , _trackingData(_nameCStr.data(), &domain) {
+    RegisterTrackingData(&_trackingData);
+#else
+    {
+#endif
     Assert(not _nameCStr.empty());
+}
+//----------------------------------------------------------------------------
+FMetaNamespace::~FMetaNamespace() {
+    Assert(not IsStarted());
+    _handles.Clear();
+#if USE_PPE_MEMORYDOMAINS
+    UnregisterTrackingData(&_trackingData);
+#endif
 }
 //----------------------------------------------------------------------------
 void FMetaNamespace::RegisterClass(FMetaClassHandle& handle) {

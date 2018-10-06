@@ -6,6 +6,7 @@
 
 #include "Container/HashMap.h"
 #include "Container/IntrusiveList.h"
+#include "Memory/MemoryDomain.h"
 #include "Meta/ThreadResource.h"
 
 namespace PPE {
@@ -41,14 +42,13 @@ private:
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaNamespace : Meta::FThreadResource {
 public:
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking& TrackingData() const { return _trackingData; }
+    FMetaNamespace(const FStringView& name, FMemoryTracking& domain);
+#else
     explicit FMetaNamespace(const FStringView& name);
-
-#ifdef WITH_PPE_ASSERT
-    ~FMetaNamespace() {
-        Assert(not IsStarted());
-        _handles.Clear();
-    }
 #endif
+    ~FMetaNamespace();
 
     FMetaNamespace(const FMetaNamespace& ) = delete;
     FMetaNamespace& operator =(const FMetaNamespace& ) = delete;
@@ -84,6 +84,10 @@ private:
     const FStringView _nameCStr;
 
     INTRUSIVESINGLELIST(&FMetaClassHandle::_node) _handles;
+
+#if USE_PPE_MEMORYDOMAINS
+    mutable FMemoryTracking _trackingData;
+#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
