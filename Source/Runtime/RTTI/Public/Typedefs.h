@@ -9,7 +9,6 @@
 #include "IO/TextWriter_fwd.h"
 #include "Maths/PrimeNumbers.h" // FClassId
 
-
 namespace PPE {
 namespace RTTI {
 //----------------------------------------------------------------------------
@@ -18,7 +17,7 @@ namespace RTTI {
 class FNameTokenTraits {
 public:
     const std::locale& Locale() const { return std::locale::classic(); }
-    bool IsAllowedChar(char ch) const { return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.'; }
+    bool IsAllowedChar(char ch) const { return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.' || ch == '/'; }
 };
 //----------------------------------------------------------------------------
 BASICTOKEN_CLASS_DEF(FName, char, ECase::Insensitive, FNameTokenTraits);
