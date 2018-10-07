@@ -263,7 +263,9 @@ bool FWindowsPlatformMisc::Is64bitOperatingSystem() {
     PRAGMA_MSVC_WARNING_PUSH()
     PRAGMA_MSVC_WARNING_DISABLE(4191) // unsafe conversion from 'type of expression' to 'type required'
     typedef ::BOOL(WINAPI *LPFN_ISWOW64PROCESS)(::HANDLE, ::PBOOL);
-    LPFN_ISWOW64PROCESS const fnIsWow64Process = (LPFN_ISWOW64PROCESS)::GetProcAddress(::GetModuleHandleA("kernel32"), "IsWow64Process");
+    ::HMODULE const hKernel32 = ::GetModuleHandleA("kernel32");
+    Assert(hKernel32);
+    LPFN_ISWOW64PROCESS const fnIsWow64Process = (LPFN_ISWOW64PROCESS)::GetProcAddress(hKernel32, "IsWow64Process");
     ::BOOL bIsWoW64Process = FALSE;
     if (fnIsWow64Process != NULL) {
         if (fnIsWow64Process(::GetCurrentProcess(), &bIsWoW64Process) == 0)
