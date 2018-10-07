@@ -81,7 +81,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvalues(vector_type& eigenvalues) const
     if (_permutation[0] >= 0)
     {
         // Sorting was requested.
-        for (int i = 0; i < N; ++i)
+        for (int i = 0; i < int(N); ++i)
         {
             int p = _permutation[i];
             eigenvalues[i] = mDiagonal[p];
@@ -112,16 +112,16 @@ void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) con
             _vectorV[r] = (T)0;
         }
         _vectorV[r] = (T)1;
-        for (++r; r < N; ++r)
+        for (++r; r < int(N); ++r)
         {
             _vectorV[r] = column[N*r];
         }
 
         // Compute the w vector.
-        for (r = 0; r < N; ++r)
+        for (r = 0; r < int(N); ++r)
         {
             _vectorW[r] = (T)0;
-            for (c = rmin; c < N; ++c)
+            for (c = rmin; c < int(N); ++c)
             {
                 _vectorW[r] += _vectorV[c]*eigenvectors.data().raw[r + N*c];
             }
@@ -129,9 +129,9 @@ void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) con
         }
 
         // Update the matrix, Q <- Q - v*w^T.
-        for (r = rmin; r < N; ++r)
+        for (r = rmin; r < int(N); ++r)
         {
-            for (c = 0; c < N; ++c)
+            for (c = 0; c < int(N); ++c)
             {
                 eigenvectors.data().raw[c + N*r] -= _vectorV[r]*_vectorW[c];
             }
@@ -141,7 +141,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) con
     // Multiply the Givens rotations.
     for (auto const& givens : _givens)
     {
-        for (r = 0; r < N; ++r)
+        for (r = 0; r < int(N); ++r)
         {
             int j = givens.index + N*r;
             T& q0 = eigenvectors.data().raw[j];
@@ -158,21 +158,21 @@ void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) con
     {
         // Sorting was requested.
         _visited.Broadcast(0);
-        for (int i = 0; i < N; ++i)
+        for (int i = 0; i < int(N); ++i)
         {
             if (_visited[i] == 0 && _permutation[i] != i)
             {
                 // The item starts a cycle with 2 or more elements.
                 _isRotation = 1 - _isRotation;
                 int start = i, current = i, j, next;
-                for (j = 0; j < N; ++j)
+                for (j = 0; j < int(N); ++j)
                 {
                     _vectorP[j] = eigenvectors.data().raw[i + N*j];
                 }
                 while ((next = _permutation[current]) != start)
                 {
                     _visited[current] = 1;
-                    for (j = 0; j < N; ++j)
+                    for (j = 0; j < int(N); ++j)
                     {
                         eigenvectors.data().raw[current + N*j] =
                             eigenvectors.data().raw[next + N*j];
@@ -180,7 +180,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) con
                     current = next;
                 }
                 _visited[current] = 1;
-                for (j = 0; j < N; ++j)
+                for (j = 0; j < int(N); ++j)
                 {
                     eigenvectors.data().raw[current + N*j] = _vectorP[j];
                 }
@@ -203,7 +203,7 @@ bool TSymmetricEigensolver<T, N>::IsRotation() const
                 // With sorting, the matrix is a rotation when the number of
                 // cycles in the permutation is even.
                 _visited.Broadcast(0);
-                for (int i = 0; i < N; ++i)
+                for (int i = 0; i < int(N); ++i)
                 {
                     if (_visited[i] == 0 && _permutation[i] != i)
                     {
@@ -230,7 +230,7 @@ bool TSymmetricEigensolver<T, N>::IsRotation() const
 template <typename T, size_t N>
 void TSymmetricEigensolver<T, N>::GetEigenvector(int c, vector_type& eigenvector) const
 {
-    if (0 <= c && c < N)
+    if (0 <= c && c < int(N))
     {
         // y = H*x, then x and y are swapped for the next H
         T* x = &eigenvector[0];
@@ -272,7 +272,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvector(int c, vector_type& eigenvector
 
             // Compute s = Dot(x,v) * 2/v^T*v.
             T s = x[r];  // r = i+1, v[i+1] = 1
-            for (int j = r + 1; j < N; ++j)
+            for (int j = r + 1; j < int(N); ++j)
             {
                 s += x[j] * column[N*j];
             }
@@ -281,7 +281,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvector(int c, vector_type& eigenvector
             y[r] = x[r] - s;  // v[i+1] = 1
 
             // Compute the remaining components of y.
-            for (++r; r < N; ++r)
+            for (++r; r < int(N); ++r)
             {
                 y[r] = x[r] - s * column[N*r];
             }
@@ -326,7 +326,7 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
 {
     STATIC_ASSERT(N > 1);
     int r, c;
-    for (int i = 0, ip1 = 1; i < N - 2; ++i, ++ip1)
+    for (int i = 0, ip1 = 1; i < int(N) - 2; ++i, ++ip1)
     {
         // Compute the Householder vector.  Read the initial vector from the
         // row of the matrix.
@@ -335,7 +335,7 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
         {
             _vectorV[r] = (T)0;
         }
-        for (r = ip1; r < N; ++r)
+        for (r = ip1; r < int(N); ++r)
         {
             T vr = _matrix.data().raw[r + N*i];
             _vectorV[r] = vr;
@@ -349,7 +349,7 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
             T sgn = (v1 >= (T)0 ? (T)1 : (T)-1);
             T invDenom = ((T)1) / (v1 + sgn * length);
             v1 = (T)1;
-            for (r = ip1 + 1; r < N; ++r)
+            for (r = ip1 + 1; r < int(N); ++r)
             {
                 T& vr = _vectorV[r];
                 vr *= invDenom;
@@ -361,14 +361,14 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
         T invvdv = (T)1 / vdv;
         T twoinvvdv = invvdv * (T)2;
         T pdvtvdv = (T)0;
-        for (r = i; r < N; ++r)
+        for (r = i; r < int(N); ++r)
         {
             _vectorP[r] = (T)0;
             for (c = i; c < r; ++c)
             {
                 _vectorP[r] += _matrix.data().raw[r + N*c] * _vectorV[c];
             }
-            for (/**/; c < N; ++c)
+            for (/**/; c < int(N); ++c)
             {
                 _vectorP[r] += _matrix.data().raw[c + N*r] * _vectorV[c];
             }
@@ -377,19 +377,19 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
         }
 
         pdvtvdv *= invvdv;
-        for (r = i; r < N; ++r)
+        for (r = i; r < int(N); ++r)
         {
             _vectorW[r] = _vectorP[r] - pdvtvdv * _vectorV[r];
         }
 
         // Update the input matrix.
-        for (r = i; r < N; ++r)
+        for (r = i; r < int(N); ++r)
         {
             T vr = _vectorV[r];
             T wr = _vectorW[r];
             T offset = vr * wr * (T)2;
             _matrix.data().raw[r + N*r] -= offset;
-            for (c = r + 1; c < N; ++c)
+            for (c = r + 1; c < int(N); ++c)
             {
                 offset = vr * _vectorW[c] + wr * _vectorV[c];
                 _matrix.data().raw[c + N*r] -= offset;
@@ -402,7 +402,7 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
         // stored for use in eigenvector construction. That construction must
         // take into account the implied components that are not stored.
         _matrix.data().raw[i + N*ip1] = twoinvvdv;
-        for (r = ip1 + 1; r < N; ++r)
+        for (r = ip1 + 1; r < int(N); ++r)
         {
             _matrix.data().raw[i + N*r] = _vectorV[r];
         }
@@ -537,7 +537,7 @@ void TSymmetricEigensolver<T, N>::ComputePermutation(int sortType)
 
     FSortItem items[N];
     int i;
-    for (i = 0; i < N; ++i)
+    for (i = 0; i < int(N); ++i)
     {
         items[i].eigenvalue = mDiagonal[i];
         items[i].index = i;

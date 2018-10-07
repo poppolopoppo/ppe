@@ -373,7 +373,7 @@ bool TBasicString<_Char>::CheckInvariants() const {
         if (_small.Size != 0)
             return false;
 #   else
-        if (_small.Size >= FSmallString_::GCapacity)
+        if (size_t(_small.Size) >= FSmallString_::GCapacity)
             return false;
 #   endif //!!USE_PPE_BASICSTRING_SBO
         if (_small.Buffer[size_t(_small.Size)] != _Char())

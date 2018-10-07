@@ -184,7 +184,7 @@ public:
 
     static FORCE_INLINE u32 lzcnt(u32 u) NOEXCEPT { return ::__lzcnt(u); }
 #   ifdef __clang__
-    static FORCE_INLINE u32 tzcnt(u32 u) NOEXCEPT { return ::__tzcnt_u32(u); }
+    static FORCE_INLINE u32 tzcnt(u32 u) NOEXCEPT { return tzcnt_contexpr(u); } // #TODO : can't find __tzcnt_u32() will llvm windows
 #   else
     static FORCE_INLINE u32 tzcnt(u32 u) NOEXCEPT { return ::_tzcnt_u32(u); }
 #   endif
@@ -193,7 +193,7 @@ public:
 #   ifdef ARCH_X64
     static FORCE_INLINE u64 lzcnt(u64 u) NOEXCEPT { return ::__lzcnt64(u); }
 #       ifdef __clang__
-    static FORCE_INLINE u64 tzcnt(u64 u) NOEXCEPT { return ::__tzcnt_u64(u); }
+    static FORCE_INLINE u32 tzcnt(u64 u) NOEXCEPT { return tzcnt_contexpr(u); } // #TODO : can't find __tzcnt_64() will llvm windows
 #       else
     static FORCE_INLINE u64 tzcnt(u64 u) NOEXCEPT { return ::_tzcnt_u64(u); }
 #       endif
@@ -202,11 +202,11 @@ public:
 
     static u64 tzcnt64(u64 u) NOEXCEPT {
 #   ifdef ARCH_X64
-        return _tzcnt_u64(u);
+        return tzcnt(u);
 #   else
         return (Unlikely(0 == u32(u))
-            ? 32 + ::_tzcnt_u32(u32(u >> 32))
-            : ::_tzcnt_u32(u32(u)) );
+            ? 32 + tzcnt(u32(u >> 32))
+            : tzcnt(u32(u)) );
 #   endif
     }
 

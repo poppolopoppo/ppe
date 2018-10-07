@@ -243,7 +243,7 @@ bool FWindowsPlatformFile::NormalizePath(FWString& path) {
         path.erase(path.begin() + folder, path.begin() + (dotdot + 3));
     }
 
-    while (path.size() && path.back() == PathSeparator || path.back() == PathSeparatorAlt)
+    while (path.size() && (path.back() == PathSeparator || path.back() == PathSeparatorAlt))
         path.pop_back();
 
     path.shrink_to_fit();
@@ -362,7 +362,8 @@ void FWindowsPlatformFile::GlobFiles(const char_type* dirpath, const char_type* 
             FDirectoryIterator_ Directory;
             char_type Buffer[MaxPathLength + 1];
 
-        }   context{ MakeCStringView(pattern) };
+        }   context;
+        context.Pattern = MakeCStringView(pattern);
 
         TFixedSizeRingBuffer<FDirectoryIterator_, 16> stack;
         stack.push_back(MakeCStringView(dirpath));

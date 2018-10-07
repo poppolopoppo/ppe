@@ -96,7 +96,7 @@ public:
 
     static FORCE_INLINE i64 Add(volatile i64* dst, i64 val) {
 #ifdef ARCH_X64
-        return (i64)::_InterlockedExchangeAdd64((volatile long long*)dst, long long(val));
+        return (i64)::_InterlockedExchangeAdd64((volatile long long*)dst, (long long)val);
 #else
         // No explicit instruction for 64-bit atomic increment on 32-bit processors; has to be implemented in terms of CMPXCHG8B
         for (;;) {
@@ -124,7 +124,7 @@ public:
 
     static FORCE_INLINE i64 Exchange(volatile i64* dst, i64 exg) {
 #ifdef ARCH_X64
-        return (i64)::_InterlockedExchange64((volatile long long*)dst, long long(exg));
+        return (i64)::_InterlockedExchange64((volatile long long*)dst, (long long)exg);
 #else
         // No explicit instruction for 64-bit atomic increment on 32-bit processors; has to be implemented in terms of CMPXCHG8B
         for (;;) {
@@ -151,7 +151,7 @@ public:
     }
 
     static FORCE_INLINE i64 CompareExchange(volatile i64* val, i64 exg, i64 cmp) {
-        return (i64)::_InterlockedCompareExchange64((volatile long long*)val, long long(exg), long long(cmp));
+        return (i64)::_InterlockedCompareExchange64((volatile long long*)val, (long long)exg, (long long)cmp);
     }
 
     //------------------------------------------------------------------------

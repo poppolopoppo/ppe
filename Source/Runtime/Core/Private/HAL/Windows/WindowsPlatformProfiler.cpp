@@ -14,9 +14,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-STATIC_ASSERT(::PROFILE_GLOBALLEVEL == FWindowsPlatformProfiler::GlobalLevel);
-STATIC_ASSERT(::PROFILE_PROCESSLEVEL == FWindowsPlatformProfiler::ProcessLevel);
-STATIC_ASSERT(::PROFILE_THREADLEVEL == FWindowsPlatformProfiler::ThreadLevel);
+STATIC_ASSERT(int(::PROFILE_GLOBALLEVEL) == int(FWindowsPlatformProfiler::GlobalLevel));
+STATIC_ASSERT(int(::PROFILE_PROCESSLEVEL) == int(FWindowsPlatformProfiler::ProcessLevel));
+STATIC_ASSERT(int(::PROFILE_THREADLEVEL) == int(FWindowsPlatformProfiler::ThreadLevel));
 //----------------------------------------------------------------------------
 void FWindowsPlatformProfiler::Start(EProfilerLevel level) {
     ::StartProfile((::PROFILE_CONTROL_LEVEL)level, ::PROFILE_CURRENTID);

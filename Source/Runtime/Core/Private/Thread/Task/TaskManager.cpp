@@ -439,6 +439,12 @@ struct TRunAndWaitFor_ {
     std::mutex Barrier;
     std::condition_variable OnFinished;
 
+    TRunAndWaitFor_(const TMemoryView<taskfunc_type>& tasks, ETaskPriority priority)
+        : Tasks(tasks)
+        , Priority(priority)
+        , Available(false)
+    {}
+
     void Task(ITaskContext& context) {
         context.RunAndWaitFor(Tasks, Priority);
 
@@ -457,6 +463,8 @@ struct FWaitForAll_ {
 
     std::mutex Barrier;
     std::condition_variable OnFinished;
+
+    FWaitForAll_() : Available(false) {}
 
     void Task(ITaskContext& context) {
         FTaskManagerImpl& impl = *FWorkerContext_::Get().Manager().Pimpl();
@@ -872,7 +880,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPrio
     Assert_NoAssume(not rtasks.empty());
     Assert(nullptr != _pimpl);
 
-    TRunAndWaitFor_<false> args{ rtasks, priority, false };
+    TRunAndWaitFor_<false> args{ rtasks, priority };
     {
         Meta::FUniqueLock scopeLock(args.Barrier);
 
@@ -891,7 +899,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTa
     Assert(whileWaiting);
     Assert(nullptr != _pimpl);
 
-    TRunAndWaitFor_<false> args{ rtasks, priority, false };
+    TRunAndWaitFor_<false> args{ rtasks, priority };
     {
         Meta::FUniqueLock scopeLock(args.Barrier);
 
@@ -911,7 +919,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETas
     Assert_NoAssume(not tasks.empty());
     Assert(nullptr != _pimpl);
 
-    TRunAndWaitFor_<true> args{ tasks, priority, false };
+    TRunAndWaitFor_<true> args{ tasks, priority };
     {
         Meta::FUniqueLock scopeLock(args.Barrier);
 
@@ -935,7 +943,7 @@ void FTaskManager::WaitForAll() const {
     Assert_NoAssume(not FFiber::IsInFiber());
     Assert(nullptr != _pimpl);
 
-    FWaitForAll_ args{ false };
+    FWaitForAll_ args;
     // trigger a task with lowest priority and wait for it
     // should wait for all other tasks since Internal is reserved
     {
@@ -955,7 +963,7 @@ void FTaskManager::WaitForAll(int timeoutMS) const {
 
     Assert(nullptr != _pimpl);
 
-    FWaitForAll_ args{ false };
+    FWaitForAll_ args;
     // trigger a task with lowest priority and wait for it
     // should wait for all other tasks since Internal is reserved
     {

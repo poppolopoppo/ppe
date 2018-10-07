@@ -479,7 +479,8 @@ static NO_INLINE bool ReleaseDanglingBlocks_(FBinnedThreadCache_& tc) {
     const FAtomicSpinLock::FTryScope scopeLock(tc.DanglingBarrier);
 
     if (scopeLock.Locked) { // lazy locking to minimize thread contention
-        if (Likely(FBinnedBlock_* blk = tc.DanglingBlocks)) {
+        FBinnedBlock_* blk = tc.DanglingBlocks;
+        if (Likely(blk)) {
             do {
                 Assert_NoAssume(uintptr_t(blk) != FBinnedThreadCache_::InvalidBlockRef);
                 FBinnedChunk_* const ch = ChunkFromBlock_(blk);
@@ -1118,7 +1119,8 @@ void* FMallocBinned::Malloc(size_t size) {
     // SizeClass <NumSizeClasses> won't ever be filled, allows to make only one test
     FBinnedBucket_& bk = GBinnedThreadBuckets_[Min(sizeClass, FMallocBinned::NumSizeClasses)];
 
-    if (Likely(FBinnedBlock_* const blk = bk.FreeBlocks)) {
+    FBinnedBlock_* const blk = bk.FreeBlocks;
+    if (Likely(blk)) {
         Assert(bk.NumBlocksAvailable);
         Assert_NoAssume(size <= FMallocBinned::SizeClasses[sizeClass]);
         Assert_NoAssume(bk.UsedChunks->FreeBlocks == (FBinnedBlock_*)intptr_t(-1));

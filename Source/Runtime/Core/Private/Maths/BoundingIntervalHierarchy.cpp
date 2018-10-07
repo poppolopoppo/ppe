@@ -273,7 +273,7 @@ void FBasicBIHTree::Build(
             Assert(child1.Node == 1 + child0.Node); // necessary for packing in FBIHNode
 
             const ptrdiff_t offsetToChild0 = (child0.Node - it.Node);
-            Assert(offsetToChild0 > 0 && offsetToChild0 < FBIHNode::MaxNodes);
+            Assert(offsetToChild0 > 0 && size_t(offsetToChild0) < FBIHNode::MaxNodes);
             it.Node->Child0 = u32(offsetToChild0);
             Assert(it.Node + it.Node->Child0 == child0.Node);
             Assert(it.Node + it.Node->Child0 + 1 == child1.Node);

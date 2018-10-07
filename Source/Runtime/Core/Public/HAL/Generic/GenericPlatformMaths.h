@@ -242,6 +242,19 @@ public: // must be defined for every platform
 
     static u64 tzcnt64(u64 u) NOEXCEPT = delete;
 
+    static CONSTEXPR u32 tzcnt_contexpr(u32 u) NOEXCEPT {
+        for (u32 i = 0; i < 32; ++i)
+            if (u & (u32(1) << i))
+                return i;
+        return 0;
+    }
+    static CONSTEXPR u64 tzcnt_contexpr(u64 u) NOEXCEPT {
+        for (u32 i = 0; i < 64; ++i)
+            if (u & (u64(1) << i))
+                return i;
+        return 0;
+    }
+
     //------------------------------------------------------------------------
     // Bit Scan Reverse
 

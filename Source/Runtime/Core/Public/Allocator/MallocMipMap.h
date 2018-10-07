@@ -354,7 +354,6 @@ void TMallocMipMap<_VMemTraits>::Free(void* ptr) {
     Assert_NoAssume(FPlatformMaths::popcnt64(mipMap.SizeMask & GSizeMasks_[idx]) == 1);
 
     const u32 bit = FirstBitSet_(mipMap.SizeMask & GSizeMasks_[idx]);
-    const u32 lvl = FPlatformMaths::FloorLog2(bit + 1);
 
     Assert_NoAssume((mipMap.MipMask & ~GSetMasks_[bit]) == 0);
     Assert_NoAssume(mipMap.SizeMask & (u64(1) << bit));

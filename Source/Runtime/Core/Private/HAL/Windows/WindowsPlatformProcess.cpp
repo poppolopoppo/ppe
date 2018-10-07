@@ -378,7 +378,7 @@ void FWindowsPlatformProcess::ClosePipe(FPipeHandle read, FPipeHandle write) {
         ::CloseHandle(read);
 
     if (write != NULL && write != INVALID_HANDLE_VALUE)
-        ::CloseHandle(WritePipe);
+        ::CloseHandle(write);
 }
 //----------------------------------------------------------------------------
 auto FWindowsPlatformProcess::CreateProcess(

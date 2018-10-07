@@ -294,15 +294,16 @@ bool FWindowsPlatformMisc::IsRunningOnBatery() {
 //----------------------------------------------------------------------------
 void FWindowsPlatformMisc::PreventScreenSaver() {
 
-    ::INPUT Input = { 0 };
-    Input.type = INPUT_MOUSE;
-    Input.mi.dx = 0;
-    Input.mi.dy = 0;
-    Input.mi.mouseData = 0;
-    Input.mi.dwFlags = MOUSEEVENTF_MOVE;
-    Input.mi.time = 0;
-    Input.mi.dwExtraInfo = 0;
-    ::SendInput(1, &Input, sizeof(INPUT));
+    ::INPUT input;
+    ::ZeroMemory(&input, sizeof(input));
+    input.type = INPUT_MOUSE;
+    input.mi.dx = 0;
+    input.mi.dy = 0;
+    input.mi.mouseData = 0;
+    input.mi.dwFlags = MOUSEEVENTF_MOVE;
+    input.mi.time = 0;
+    input.mi.dwExtraInfo = 0;
+    ::SendInput(1, &input, sizeof(::INPUT));
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformMisc::ClipboardCopy(const char* src) {

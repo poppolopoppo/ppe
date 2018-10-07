@@ -253,8 +253,8 @@ struct allocator_can_steal_from<
     TInSituAllocator<_Storage, _Allocator>,
     TInSituAllocator<_Storage2, _Allocator2>
 >   : std::bool_constant<
-    sizeof(_Storage::storage_type) ==
-    sizeof(_Storage2::storage_type) &&
+    sizeof(typename _Storage::storage_type) ==
+    sizeof(typename _Storage2::storage_type) &&
     allocator_can_steal_from<_Allocator, _Allocator2>::value
 > {};
 //----------------------------------------------------------------------------

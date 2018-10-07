@@ -63,7 +63,7 @@ public:
     void ToString(string_type& output);
 
     TMemoryView<_Char> AppendUninitialized(size_t n) {
-        return stream_type::Append(n * sizeof(_Char)).Cast<_Char>();
+        return stream_type::Append(n * sizeof(_Char)).template Cast<_Char>();
     }
 
     template <typename _OtherAllocator>
