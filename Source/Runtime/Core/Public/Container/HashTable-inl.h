@@ -111,8 +111,6 @@ FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find(
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 template <typename _KeyLike>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::find_like(const _KeyLike& keyLike, hash_t hash) NOEXCEPT -> iterator {
-    Assert(hash);
-
     using public_pointer = typename iterator::pointer;
 
     hash = SeedHash_(hash);
