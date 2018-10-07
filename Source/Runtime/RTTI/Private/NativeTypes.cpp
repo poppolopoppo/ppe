@@ -464,7 +464,11 @@ PTypeTraits Traits(Meta::TType<word3> t)    noexcept { return StaticArrayTraits_
 PTypeTraits Traits(Meta::TType<word4> t)    noexcept { return StaticArrayTraits_(t); }
 PTypeTraits Traits(Meta::TType<uword2> t)   noexcept { return StaticArrayTraits_(t); }
 PTypeTraits Traits(Meta::TType<uword3> t)   noexcept { return StaticArrayTraits_(t); }
+#ifdef _MSC_VER // workaround a weird compiler bug, #TODO check after a few updates if this is still needed
+PTypeTraits Traits(Meta::TType<uword4>)     noexcept { return PTypeTraits::Make< TStaticArrayTraits<uword, 4> >(); }
+#else
 PTypeTraits Traits(Meta::TType<uword4> t)   noexcept { return StaticArrayTraits_(t); }
+#endif
 PTypeTraits Traits(Meta::TType<float2> t)   noexcept { return StaticArrayTraits_(t); }
 PTypeTraits Traits(Meta::TType<float3> t)   noexcept { return StaticArrayTraits_(t); }
 PTypeTraits Traits(Meta::TType<float4> t)   noexcept { return StaticArrayTraits_(t); }

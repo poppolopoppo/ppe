@@ -263,8 +263,8 @@ struct TArrayToTupleTraits {
     template <size_t _Idx>
     using TId = T;
     template <size_t... _Idx>
-    static TBaseTupleTraits<TId<_Idx>...> Bind(std::index_sequence<_Idx...>);
-    using type = decltype(Bind(std::make_index_sequence<_Dim>{}));
+    static TBaseTupleTraits<TId<_Idx>...> SequenceToTuple(std::index_sequence<_Idx...>);
+    using type = decltype(SequenceToTuple(std::declval<std::make_index_sequence<_Dim>>()));
 };
 } //!details
 template <typename T, size_t _Dim>
@@ -293,7 +293,6 @@ PTypeTraits Traits(Meta::TType< TArray<T, _Dim> >) noexcept {
     STATIC_ASSERT(sizeof(TArray<T, _Dim>) == sizeof(typename TStaticArrayTraits<T, _Dim>::value_type));
     return PTypeTraits::Make< TStaticArrayTraits<T, _Dim> >();
 }
-
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 FAtom TStaticArrayTraits<T, _Dim>::At(void* data, size_t index) const {
