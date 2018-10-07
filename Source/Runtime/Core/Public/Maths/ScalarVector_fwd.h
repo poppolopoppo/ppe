@@ -10,9 +10,10 @@ template <typename T, size_t _Dim>
 class TScalarVector;
 //----------------------------------------------------------------------------
 #define DECL_SCALARVECTOR_ALIAS(_Scalar, _ALIAS) \
-    typedef TScalarVector<_Scalar, 2> CONCAT(_ALIAS, 2); \
-    typedef TScalarVector<_Scalar, 3> CONCAT(_ALIAS, 3); \
-    typedef TScalarVector<_Scalar, 4> CONCAT(_ALIAS, 4);
+    using CONCAT(_ALIAS, 2) = TScalarVector<_Scalar, 2>; \
+    using CONCAT(_ALIAS, 3) = TScalarVector<_Scalar, 3>; \
+    using CONCAT(_ALIAS, 4) = TScalarVector<_Scalar, 4>;
+
 #define DECL_SCALARVECTOR(_Scalar) DECL_SCALARVECTOR_ALIAS(_Scalar, _Scalar)
 //----------------------------------------------------------------------------
 DECL_SCALARVECTOR(byte);
@@ -33,18 +34,18 @@ DECL_SCALARVECTOR(u16);
 DECL_SCALARVECTOR(u32);
 DECL_SCALARVECTOR(u64);
 //----------------------------------------------------------------------------
-typedef unsigned2 uint2;
-typedef unsigned3 uint3;
-typedef unsigned4 uint4;
+using uint2 = unsigned2;
+using uint3 = unsigned3;
+using uint4 = unsigned4;
 //----------------------------------------------------------------------------
-typedef TScalarVector<u32, 2> mask2;
-typedef TScalarVector<u32, 3> mask3;
-typedef TScalarVector<u32, 4> mask4;
+using mask2 = TScalarVector<u32, 2>;
+using mask3 = TScalarVector<u32, 3>;
+using mask4 = TScalarVector<u32, 4>;
 //----------------------------------------------------------------------------
 #undef DECL_SCALARVECTOR
 #undef DECL_SCALARVECTOR_ALIAS
 //----------------------------------------------------------------------------
-typedef float3 Point;
+using FPoint = float3;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
