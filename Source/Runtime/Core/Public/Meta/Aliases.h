@@ -144,7 +144,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 //  http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4295.html
 #   define FOLD_EXPR(...) ((__VA_ARGS__), ...)
 #else
-#   define IF_CONSTEXPR if (__VA_ARGS__)
+#   define IF_CONSTEXPR(...) if (__VA_ARGS__)
 //  Workaround from Jason Turner: https://youtu.be/nnY4e4faNp0?t=39m51s
 #   define FOLD_EXPR(...) (void)std::initializer_list<int>{ ((__VA_ARGS__), 0)... }
 #endif //!_HAS_CXX17
