@@ -201,14 +201,15 @@ private:
             const size_t branch = ((key >> (n->Keys[0] & 0xFF)) & 1);
             FNode* const child = n->Children[branch]; // current child node
             if (uintptr_t(child) & 1) { // leaf
-                Assert(pkey);
                 FNode* const other = n->Children[branch ^ 1];
 
                 Assert((n->Keys[branch] & ~uintptr_t(0xFF)) == key);
                 Assert(uintptr_t(child) != NullSentinel_); // node's key is probably broken :(
 
-                if ((uintptr_t(other) & 1) && uintptr_t(other) != NullSentinel_) // if other node is not a pointer
+                if ((uintptr_t(other) & 1) && uintptr_t(other) != NullSentinel_) { // if other node is not a pointer
+                    Assert(pkey);
                     *pkey = (n->Keys[branch ^ 1] & ~uintptr_t(0xFF)) | ((*pkey) & 0xFF);
+                }
 
                 *parent = other;
                 *(FNode**)n = _freeList;
