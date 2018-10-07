@@ -156,7 +156,7 @@ static bool WindowsStorageInfo_(const wchar_t* path, FWindowsPlatformSurvey::FSt
     storage->TotalSizeInBytes = checked_cast<u64>(totalNumberOfBytes.QuadPart);
     storage->CanRead = true;
     storage->CanListFiles = true;
-    storage->CanWrite = !(filesystemFlags | FILE_READ_ONLY_VOLUME);
+    storage->CanWrite = !(filesystemFlags & FILE_READ_ONLY_VOLUME);
     storage->CanCreateDir = storage->CanWrite;
 
     return true;
@@ -323,7 +323,7 @@ bool FWindowsPlatformSurvey::StorageInfos(FStorageInfos* storages) {
     Assert(storages->empty());
 
     wchar_t drivePaths[1024];
-    const ::DWORD bufferSize = ::GetLogicalDriveStringsW(sizeof(drivePaths) - 1, drivePaths);
+    const ::DWORD bufferSize = ::GetLogicalDriveStringsW(lengthof(drivePaths) - 1, drivePaths);
 
     FStorageInfo storage;
     const wchar_t* const driveBegin = drivePaths;

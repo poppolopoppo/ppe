@@ -173,6 +173,7 @@ public:
             ::SetForegroundWindow(hWnd);
         }
 
+        Assert(hWnd);
         const ::UINT cmdIDI = ::TrackPopupMenuEx(
             hSystrayPopup,
             TPM_LEFTALIGN | TPM_BOTTOMALIGN |
@@ -443,12 +444,13 @@ void FWindowsPlatformNotification::SummonSystrayPopupMenuWin32(::HWND hWnd) {
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::Start() {
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+
+    Verify(SUCCEEDED(::CoInitialize(NULL)));
+
     {
         Assert(NULL == GWindowsTaskBar_);
 
         const FAtomicSpinLock::FScope scopeLock(WindowsTaskBarCS_());
-
-        ::CoInitialize(NULL);
 
         ::ITaskbarList3* taskbar = nullptr;
         if (not SUCCEEDED(::CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_ITaskbarList3, (void **)&taskbar)))
@@ -473,6 +475,8 @@ void FWindowsPlatformNotification::Shutdown() {
 
         GWindowsTaskBar_.Reset();
     }
+
+    ::CoUninitialize();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

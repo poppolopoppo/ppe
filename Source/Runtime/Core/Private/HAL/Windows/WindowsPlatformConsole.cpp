@@ -157,7 +157,7 @@ private:
         , WStdin(stdin)
         , WStdout(stdout)
         , WStderr(stderr) {
-        ::InitializeCriticalSectionAndSpinCount(&Barrier, 0x00000400);
+        Verify(::InitializeCriticalSectionAndSpinCount(&Barrier, 0x00000400));
     }
 
     ~FConsoleWin32_() {

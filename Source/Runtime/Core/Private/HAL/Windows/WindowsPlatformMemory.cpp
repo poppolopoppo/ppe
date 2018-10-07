@@ -139,6 +139,8 @@ void* FWindowsPlatformMemory::VirtualAlloc(size_t sizeInBytes, bool commit) {
     return FWindowsPlatformMemory::VirtualAlloc(ALLOCATION_GRANULARITY, sizeInBytes, commit);
 }
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(6001) // Using uninitialized memory 'p'. (no need to worry, we just use the virtual addr)
 void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes, bool commit) {
     Assert(sizeInBytes);
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
@@ -158,8 +160,8 @@ void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes,
 
         do {
             p = ::VirtualAlloc(NULL, sizeInBytes + alignment - ALLOCATION_GRANULARITY, MEM_RESERVE, PAGE_NOACCESS);
-            if (nullptr == p)
-                goto RETURN_ALLOC;
+            if (nullptr == p)// if OOM
+                return nullptr;
 
             ::VirtualFree(p, 0, MEM_RELEASE);// Unfortunately, WinAPI doesn't support release a part of allocated region, so release a whole region
 
@@ -170,11 +172,10 @@ void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes,
         } while (nullptr == p);
     }
 
-RETURN_ALLOC:
-    CLOG(nullptr == p, HAL, Fatal, L"VirtualAlloc({0}, {1}) failed with = {2}", alignment, sizeInBytes, FLastError());
     Assert(Meta::IsAligned(ALLOCATION_GRANULARITY, p));
     return p;
 }
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 void FWindowsPlatformMemory::VirtualCommit(void* ptr, size_t sizeInBytes) {
     Assert(ptr);

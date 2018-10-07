@@ -20,7 +20,8 @@ DWORD WINAPI XInputGetState_Dummy_(
     _In_  DWORD                 dwUserIndex,  // Index of the gamer associated with the device
     _Out_::XINPUT_STATE*        pState        // Receives the current state
 ) {
-    NOOP(dwUserIndex, pState);
+    NOOP(dwUserIndex);
+    pState = nullptr;
     return ERROR_DEVICE_NOT_CONNECTED;
 }
 //----------------------------------------------------------------------------
@@ -37,7 +38,8 @@ DWORD WINAPI XInputGetCapabilities_Dummy_(
     _In_  DWORD                 dwFlags,       // Input flags that identify the device type
     _Out_::XINPUT_CAPABILITIES* pCapabilities  // Receives the capabilities
 ) {
-    NOOP(dwUserIndex, dwFlags, pCapabilities);
+    NOOP(dwUserIndex, dwFlags);
+    pCapabilities = nullptr;
     return ERROR_DEVICE_NOT_CONNECTED;
 }
 //----------------------------------------------------------------------------

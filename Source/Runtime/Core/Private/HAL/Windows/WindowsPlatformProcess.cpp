@@ -488,6 +488,8 @@ auto FWindowsPlatformProcess::CreateProcess(
     return procInfo.hProcess;
 }
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(6387) // 'startupInfoEx.lpAttributeList' could be '0':  this does not adhere to the specification for the function 'UpdateProcThreadAttribute'.
 bool FWindowsPlatformProcess::ExecProcess(
     int* pReturnCode,
     const FWStringView& url,
@@ -613,6 +615,7 @@ bool FWindowsPlatformProcess::ExecProcess(
 
     return succeed;
 }
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 bool FWindowsPlatformProcess::ExecElevatedProcess(
     int* pReturnCode,

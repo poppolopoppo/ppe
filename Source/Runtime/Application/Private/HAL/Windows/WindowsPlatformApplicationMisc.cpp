@@ -21,7 +21,7 @@ EXTERN_LOG_CATEGORY(PPE_APPLICATION_API, Application)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FWindowsPlatformApplicationMisc::Start() {
-    ::CoInitialize(NULL);
+    Verify(SUCCEEDED(::CoInitialize(NULL)));
     FWindowsWindow::Start();
     FWindowsPlatformNotification::Start();
 }

@@ -202,11 +202,11 @@ FString FWindowsPlatformMisc::OSName() {
     // https://docs.microsoft.com/fr-fr/windows/desktop/SysInfo/getting-the-system-version
     const wchar_t* systemDLL = L"kernel32.dll";
 
-    ::DWORD dummy;
+    ::DWORD dummy = 0;
     const ::DWORD cbInfo = ::GetFileVersionInfoSizeExW(FILE_VER_GET_NEUTRAL, systemDLL, &dummy);
 
     STACKLOCAL_POD_ARRAY(u8, buffer, checked_cast<size_t>(cbInfo));
-    ::GetFileVersionInfoExW(FILE_VER_GET_NEUTRAL, systemDLL, dummy, checked_cast<::DWORD>(buffer.size()), buffer.data());
+    ::GetFileVersionInfoExW(FILE_VER_GET_NEUTRAL, systemDLL, 0, checked_cast<::DWORD>(buffer.size()), buffer.data());
 
     void *p = nullptr;
     ::UINT size = 0;
@@ -248,8 +248,8 @@ void FWindowsPlatformMisc::SetUTF8Output() {
     // Force locale to EN with UTF-8 encoding
     std::setlocale(LC_ALL, "en_US.UTF-8");
 
-    ::_setmode(::_fileno(stdout), _O_U8TEXT);
-    ::_setmode(::_fileno(stderr), _O_U8TEXT);
+    Verify(-1 != ::_setmode(::_fileno(stdout), _O_U8TEXT));
+    Verify(-1 != ::_setmode(::_fileno(stderr), _O_U8TEXT));
 
     // _setmbcp, with an argument of _MB_CP_LOCALE makes the multibyte code page the same as the setlocale code page.
     // https://docs.microsoft.com/en-us/cpp/c-runtime-library/locale
@@ -500,6 +500,8 @@ bool FWindowsPlatformMisc::QueryRegKey(const ::HKEY key, const wchar_t* subKey, 
 
     bool succeed = false;
 
+    STACKLOCAL_POD_ARRAY(wchar_t, buffer, 1024);
+
     // Redirect key depending on system
     for (::DWORD regIndex = 0; regIndex < 2 && !succeed; ++regIndex) {
         ::HKEY k = 0;
@@ -509,13 +511,16 @@ bool FWindowsPlatformMisc::QueryRegKey(const ::HKEY key, const wchar_t* subKey, 
             // First, we'll call RegQueryValueEx to find out how large of a buffer we need
             if ((::RegQueryValueExW(k, name, NULL, NULL, NULL, &sz) == ERROR_SUCCESS) && sz) {
                 // Allocate a buffer to hold the value and call the function again to get the data
-                STACKLOCAL_POD_ARRAY(u8, buffer, checked_cast<size_t>(sz));
-                if (::RegQueryValueExW(k, name, NULL, NULL, (::LPBYTE)buffer.data(), &sz) == ERROR_SUCCESS) {
+                ::DWORD writtenInBytes = checked_cast<::DWORD>(buffer.SizeInBytes());
+                if (::RegQueryValueExW(k, name, NULL, NULL, (::LPBYTE)buffer.data(), &writtenInBytes) == ERROR_SUCCESS) {
                     succeed = true;
-                    pValue->assign(MakeCStringView((const wchar_t*)buffer.data()));
+                    pValue->assign(buffer.CutBeforeConst(checked_cast<size_t>(writtenInBytes/sizeof(wchar_t))));
+                }
+                else {
+                    LOG_LASTERROR(HAL, L"RegQueryValueExW()");
                 }
             }
-            ::RegCloseKey(k);
+            Verify(ERROR_SUCCESS == ::RegCloseKey(k));
         }
     }
 
