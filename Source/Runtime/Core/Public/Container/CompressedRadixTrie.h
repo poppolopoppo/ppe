@@ -201,6 +201,7 @@ private:
             const size_t branch = ((key >> (n->Keys[0] & 0xFF)) & 1);
             FNode* const child = n->Children[branch]; // current child node
             if (uintptr_t(child) & 1) { // leaf
+                Assert(pkey);
                 FNode* const other = n->Children[branch ^ 1];
 
                 Assert((n->Keys[branch] & ~uintptr_t(0xFF)) == key);
