@@ -11,10 +11,6 @@
     {
         'Runtime/Serialize'
     }
-    .ModuleIsolatedFiles =
-    {
-        'Private/BuildGraph.cpp'
-    }
     .UnityNumFiles = 1 // generated
     #include "$BuildPath$/Templates/Module.bff"
 }

@@ -11,10 +11,6 @@
     .ModulePrivateDependencies =
     {
     }
-    .ModuleIsolatedFiles =
-    {
-        'Private/Serialize.cpp'
-    }
     .ModuleExcludedFiles =
     {
         'Private/Markup/MarkupSerializer.cpp', // TODO : still need some work, but is it really needed ?

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "VFS.h"
+#include "ModuleExport.h"
 
 #include "VirtualFileSystem.h"
 

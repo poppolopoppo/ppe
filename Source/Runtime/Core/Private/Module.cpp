@@ -24,7 +24,7 @@ EModuleStatus FModule::Status() const { return _status; }
 void FModule::Start(FModuleManager& manager) {
     AssertRelease(EModuleStatus::Initialized == _status);
 
-    NOOP(manager);
+    UNUSED(manager);
 
     _status = EModuleStatus::Started;
 }

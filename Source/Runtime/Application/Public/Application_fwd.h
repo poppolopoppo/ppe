@@ -1,6 +1,12 @@
 #pragma once
 
-#include "Application.h"
+#include "Core.h"
+
+#ifdef EXPORT_PPE_APPLICATION
+#   define PPE_APPLICATION_API DLL_EXPORT
+#else
+#   define PPE_APPLICATION_API DLL_IMPORT
+#endif
 
 #include "Memory/RefPtr.h"
 

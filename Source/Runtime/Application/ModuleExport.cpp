@@ -1,38 +1,50 @@
 #include "stdafx.h"
 
-#include "BuildGraph.h"
+#include "ModuleExport.h"
 
-#include "BuildNode.h"
+#include "ApplicationBase.h"
+
+#include "Allocator/PoolAllocatorTag-impl.h"
+#include "HAL/PlatformApplicationMisc.h"
+
+PRAGMA_INITSEG_LIB
 
 namespace PPE {
-namespace ContentPipeline {
+namespace Application {
+POOL_TAG_DEF(Application);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBuildGraphModule::FBuildGraphModule()
-:   FModule("ContentPipeline/BuildGraph")
+FApplicationModule::FApplicationModule()
+:   FModule("Runtime/Application")
 {}
 //----------------------------------------------------------------------------
-FBuildGraphModule::~FBuildGraphModule()
+FApplicationModule::~FApplicationModule()
 {}
 //----------------------------------------------------------------------------
-void FBuildGraphModule::Start(FModuleManager& manager) {
+void FApplicationModule::Start(FModuleManager& manager) {
     FModule::Start(manager);
 
-    RTTI_NAMESPACE(BuildGraph).Start();
+    POOL_TAG(Application)::Start();
+
+    FPlatformApplicationMisc::Start();
 }
 //----------------------------------------------------------------------------
-void FBuildGraphModule::Shutdown() {
+void FApplicationModule::Shutdown() {
     FModule::Shutdown();
 
-    RTTI_NAMESPACE(BuildGraph).Shutdown();
+    FPlatformApplicationMisc::Shutdown();
+
+    POOL_TAG(Application)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FBuildGraphModule::ReleaseMemory() {
+void FApplicationModule::ReleaseMemory() {
     FModule::ReleaseMemory();
+
+    POOL_TAG(Application)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace ContentPipeline
+} //!namespace Application
 } //!namespace PPE

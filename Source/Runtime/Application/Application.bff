@@ -9,10 +9,6 @@
     .ModulePrivateDependencies =
     {
     }
-    .ModuleIsolatedFiles =
-    {
-        'Private/Application.cpp'
-    }
     .UnityNumFiles = 2 // generated
     #include "$BuildPath$/Templates/Module.bff"
 }

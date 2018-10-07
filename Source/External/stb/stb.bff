@@ -1,6 +1,7 @@
 #once
 {
     .ModuleName = 'stb'
+    .ModuleType = 'External'
     .ModuleDefines = { 'EXPORT_PPE_EXTERNAL_STB' }
     .ModuleFiles =
     {

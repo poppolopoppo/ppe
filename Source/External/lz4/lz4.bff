@@ -1,6 +1,7 @@
 #once
 {
     .ModuleName = 'lz4'
+    .ModuleType = 'External'
     .ModuleDefines = { 'EXPORT_PPE_EXTERNAL_LZ4' }
     .ModuleFiles =
     {

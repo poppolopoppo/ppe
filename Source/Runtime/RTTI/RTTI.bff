@@ -6,10 +6,6 @@
     {
         'Runtime/Core',
     }
-    .ModuleIsolatedFiles =
-    {
-        'Private/RTTI.cpp'
-    }
     .UnityNumFiles = 1 // generated
     #include "$BuildPath$/Templates/Module.bff"
 }

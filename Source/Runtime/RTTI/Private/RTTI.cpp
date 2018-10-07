@@ -1,7 +1,23 @@
 #include "stdafx.h"
 
 #include "RTTI.h"
-#include "RTTI_fwd.h"
+
+#include "Diagnostic/Logger.h"
+
+namespace PPE {
+namespace RTTI {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+LOG_CATEGORY(PPE_RTTI_API, RTTI);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace RTTI
+} //!namespace PPE
+
+#if USE_PPE_RTTI_CHECKS
+
 #include "RTTI_Namespace.h"
 #include "RTTI_Namespace-impl.h"
 
@@ -10,77 +26,11 @@
 #include "MetaObjectHelpers.h"
 #include "MetaTransaction.h"
 
-#include "Allocator/PoolAllocatorTag-impl.h"
 #include "Diagnostic/Logger.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
 
-#if !(defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
-#   define WITH_RTTI_UNITTESTS //%_NOCOMMIT%
-#endif
-
-PRAGMA_INITSEG_LIB
-
-namespace PPE {
-namespace RTTI {
-POOL_TAG_DEF(RTTI);
-RTTI_NAMESPACE_DEF(PPE_RTTI_API, RTTI, MetaObject);
-LOG_CATEGORY(PPE_RTTI_API, RTTI)
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FRTTIModule::FRTTIModule()
-:   FModule("Runtime/RTTI")
-{}
-//----------------------------------------------------------------------------
-FRTTIModule::~FRTTIModule()
-{}
-//----------------------------------------------------------------------------
-#ifdef WITH_RTTI_UNITTESTS
-static void RTTI_UnitTests();
-#endif
-void FRTTIModule::Start(FModuleManager& manager) {
-    FModule::Start(manager);
-
-    POOL_TAG(RTTI)::Start();
-
-    FName::Start();
-
-    FMetaDatabase::Create();
-
-    RTTI_NAMESPACE(RTTI).Start();
-
-#ifdef WITH_RTTI_UNITTESTS
-    RTTI_UnitTests();
-#endif
-}
-//----------------------------------------------------------------------------
-void FRTTIModule::Shutdown() {
-    FModule::Shutdown();
-
-    RTTI_NAMESPACE(RTTI).Shutdown();
-
-    FMetaDatabase::Destroy();
-
-    FName::Shutdown();
-
-    POOL_TAG(RTTI)::Shutdown();
-}
-//----------------------------------------------------------------------------
-void FRTTIModule::ReleaseMemory() {
-    FModule::ReleaseMemory();
-
-    POOL_TAG(RTTI)::ClearAll_UnusedMemory();
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-} //!namespace RTTI
-} //!namespace PPE
-
-#ifdef WITH_RTTI_UNITTESTS
-
-#include "RTTI_fwd.h"
+#include "RTTI_Namespace.h"
 #include "RTTI_Namespace-impl.h"
 
 #include "Any.h"
@@ -92,7 +42,6 @@ void FRTTIModule::ReleaseMemory() {
 #include "RTTI_Macros-impl.h"
 
 #include "Container/Pair.h"
-#include "Diagnostic/Logger.h"
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
 #include "IO/Format.h"
@@ -379,15 +328,15 @@ static void TestRTTI_() {
 //} //!namespace
 //----------------------------------------------------------------------------
 namespace RTTI {
-static void RTTI_UnitTests() {
+void RTTI_UnitTests() {
     LOG(RTTI_UnitTest, Debug, L"begin unit tests");
     TestRTTI_();
     LOG(RTTI_UnitTest, Debug, L"end unit tests");
 }
-} //!namespace
+} //!namespace RTTI
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#endif //!WITH_RTTI_UNITTESTS
+#endif //!USE_PPE_RTTI_CHECKS

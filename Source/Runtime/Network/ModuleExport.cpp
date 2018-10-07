@@ -1,38 +1,65 @@
 #include "stdafx.h"
 
-#include "BuildGraph.h"
+#include "ModuleExport.h"
 
-#include "BuildNode.h"
+#include "Network.h"
+
+#include "NetworkName.h"
+#include "Http/ConstNames.h"
+#include "Socket/Socket.h"
+
+#include "Allocator/PoolAllocatorTag-impl.h"
+#include "Diagnostic/Logger.h"
+
+PRAGMA_INITSEG_LIB
 
 namespace PPE {
-namespace ContentPipeline {
+namespace Network {
+POOL_TAG_DEF(Network);
+LOG_CATEGORY(PPE_NETWORK_API, Network)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBuildGraphModule::FBuildGraphModule()
-:   FModule("ContentPipeline/BuildGraph")
+FNetworkModule::FNetworkModule()
+:   FModule("Runtime/Network")
 {}
 //----------------------------------------------------------------------------
-FBuildGraphModule::~FBuildGraphModule()
+FNetworkModule::~FNetworkModule()
 {}
 //----------------------------------------------------------------------------
-void FBuildGraphModule::Start(FModuleManager& manager) {
+void FNetworkModule::Start(FModuleManager& manager) {
     FModule::Start(manager);
 
-    RTTI_NAMESPACE(BuildGraph).Start();
+    POOL_TAG(Network)::Start();
+
+    FName::Start();
+    FHttpConstNames::Start();
+    FAddress::Start();
+    FSocket::Start();
 }
 //----------------------------------------------------------------------------
-void FBuildGraphModule::Shutdown() {
+void FNetworkModule::Shutdown() {
     FModule::Shutdown();
 
-    RTTI_NAMESPACE(BuildGraph).Shutdown();
+    FlushDNSCache();
+
+    FSocket::Shutdown();
+    FAddress::Shutdown();
+    FHttpConstNames::Shutdown();
+    FName::Shutdown();
+
+    POOL_TAG(Network)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FBuildGraphModule::ReleaseMemory() {
+void FNetworkModule::ReleaseMemory() {
     FModule::ReleaseMemory();
+
+    FlushDNSCache();
+
+    POOL_TAG(Network)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace ContentPipeline
+} //!namespace Network
 } //!namespace PPE

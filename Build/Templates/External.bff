@@ -1,0 +1,8 @@
+
+//------------------------------------------------------------------------------
+// External library Generation (.lib or .dll)
+//------------------------------------------------------------------------------
+
+; #TODO : at the moment it's only a simple wrapper to Library.bff
+
+#include "Library.bff"

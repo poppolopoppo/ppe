@@ -6,10 +6,6 @@
     {
         'Runtime/Core',
     }
-    .ModuleIsolatedFiles =
-    {
-        'Private/VFS.cpp'
-    }
     .UnityNumFiles = 1 // generated
     #include "$BuildPath$/Templates/Module.bff"
 }

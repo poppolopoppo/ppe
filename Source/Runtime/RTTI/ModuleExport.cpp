@@ -1,38 +1,70 @@
 #include "stdafx.h"
 
-#include "BuildGraph.h"
+#include "ModuleExport.h"
 
-#include "BuildNode.h"
+#include "RTTI.h"
+
+#include "RTTI_Namespace.h"
+#include "RTTI_Namespace-impl.h"
+
+#include "MetaDatabase.h"
+
+#include "Allocator/PoolAllocatorTag-impl.h"
+
+PRAGMA_INITSEG_LIB
 
 namespace PPE {
-namespace ContentPipeline {
+namespace RTTI {
+POOL_TAG_DEF(RTTI);
+RTTI_NAMESPACE_DEF(PPE_RTTI_API, RTTI, MetaObject);
+#if USE_PPE_RTTI_CHECKS
+extern void RTTI_UnitTests();
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBuildGraphModule::FBuildGraphModule()
-:   FModule("ContentPipeline/BuildGraph")
+FRTTIModule::FRTTIModule()
+:   FModule("Runtime/RTTI")
 {}
 //----------------------------------------------------------------------------
-FBuildGraphModule::~FBuildGraphModule()
+FRTTIModule::~FRTTIModule()
 {}
 //----------------------------------------------------------------------------
-void FBuildGraphModule::Start(FModuleManager& manager) {
+void FRTTIModule::Start(FModuleManager& manager) {
     FModule::Start(manager);
 
-    RTTI_NAMESPACE(BuildGraph).Start();
+    POOL_TAG(RTTI)::Start();
+
+    FName::Start();
+
+    FMetaDatabase::Create();
+
+    RTTI_NAMESPACE(RTTI).Start();
+
+#if USE_PPE_RTTI_CHECKS
+    RTTI_UnitTests();
+#endif
 }
 //----------------------------------------------------------------------------
-void FBuildGraphModule::Shutdown() {
+void FRTTIModule::Shutdown() {
     FModule::Shutdown();
 
-    RTTI_NAMESPACE(BuildGraph).Shutdown();
+    RTTI_NAMESPACE(RTTI).Shutdown();
+
+    FMetaDatabase::Destroy();
+
+    FName::Shutdown();
+
+    POOL_TAG(RTTI)::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FBuildGraphModule::ReleaseMemory() {
+void FRTTIModule::ReleaseMemory() {
     FModule::ReleaseMemory();
+
+    POOL_TAG(RTTI)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace ContentPipeline
+} //!namespace RTTI
 } //!namespace PPE

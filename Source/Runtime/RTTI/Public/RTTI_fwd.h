@@ -1,16 +1,20 @@
 #pragma once
 
-#include "RTTI.h"
+#include "Core.h"
 
-#include "Allocator/PoolAllocatorTag.h"
 #include "IO/StringView.h"
 #include "Memory/RefPtr.h"
+
+#ifdef EXPORT_PPE_RTTI
+#   define PPE_RTTI_API DLL_EXPORT
+#else
+#   define PPE_RTTI_API DLL_IMPORT
+#endif
 
 namespace PPE {
 template <typename T>
 struct TInSituPtr;
 namespace RTTI {
-POOL_TAG_DECL(RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

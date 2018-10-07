@@ -4,7 +4,7 @@
 ; Inputs :
 ;   <ModulePath>                path of the module
 ;   <ModuleName>                name of the module
-;   [ModuleType]                either 'Library' or 'Executable' (default is 'Library')
+;   [ModuleType]                'Library', 'External' or 'Executable' (default is 'Library')
 ;   [ModuleDefines]             module specific defines
 ;   [ModulePublicDependencies]  module specific public dependencies
 ;   [ModulePrivateDependencies] module specific private dependencies
@@ -40,6 +40,11 @@
 .ModuleIsolatedFiles ? {}
 .ModuleIncludePaths ? {}
 
+.ModuleIsolatedFiles_Executable = .ModuleIsolatedFiles
+.ModuleIsolatedFiles_External = .ModuleIsolatedFiles
+.ModuleIsolatedFiles_Library = .ModuleIsolatedFiles + 'ModuleExport.cpp'
+.ModuleIsolatedFiles = .'ModuleIsolatedFiles_$ModuleType$'
+
 .BinaryPrefix ? .ProjectName
 .ProjectDefines = .ModuleDefines
 .ProjectExcludedFiles = .ModuleExcludedFiles
@@ -71,7 +76,7 @@ ForEach( .Module in .ModuleDependencies )
 .ProjectForcedIncludes = {}
 ForEach( .Module in .ModulePublicDependencies )
 {
-    ^ProjectForcedIncludes + '$SourcePath$/$Module$/targetmodule.h'
+    ^ProjectForcedIncludes + '$SourcePath$/$Module$/ModuleExport.h'
 }
 ForEach( .File in .ModuleForcedIncludes )
 {

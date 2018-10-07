@@ -1,11 +1,16 @@
 #include "stdafx.h"
 
-#include "BuildGraph.h"
+#include "ModuleExport.h"
 
 #include "BuildNode.h"
+#include "Memory/MemoryDomain.h"
+#include "RTTI_Namespace-impl.h"
+
+PRAGMA_INITSEG_LIB
 
 namespace PPE {
 namespace ContentPipeline {
+RTTI_NAMESPACE_DEF(PPE_BUILDGRAPH_API, BuildGraph, BuildGraph);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

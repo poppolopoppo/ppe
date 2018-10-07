@@ -1,13 +1,17 @@
 #pragma once
 
-#include "Network.h"
+#include "Core.h"
 
-#include "Allocator/PoolAllocatorTag.h"
+#ifdef EXPORT_PPE_NETWORK
+#   define PPE_NETWORK_API DLL_EXPORT
+#else
+#   define PPE_NETWORK_API DLL_IMPORT
+#endif
+
 #include "Memory/RefPtr.h"
 
 namespace PPE {
 namespace Network {
-POOL_TAG_DECL(Network);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

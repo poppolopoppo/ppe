@@ -11,7 +11,6 @@
     }
     .ModuleIsolatedFiles =
     {
-        'Private/Core.cpp'
         'Private/Allocator/MallocBinned.cpp',
         'Private/Allocator/MallocStomp.cpp',
         'Private/Allocator/New.cpp',

@@ -1,6 +1,12 @@
 #pragma once
 
-#include "VFS.h"
+#include "Core.h"
+
+#ifdef EXPORT_PPE_VFS
+#   define PPE_VFS_API DLL_EXPORT
+#else
+#   define PPE_VFS_API DLL_IMPORT
+#endif
 
 #include "Allocator/Allocation.h"
 #include "IO/FileSystem_fwd.h"

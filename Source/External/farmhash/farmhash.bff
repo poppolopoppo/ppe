@@ -1,6 +1,7 @@
 #once
 {
     .ModuleName = 'farmhash'
+    .ModuleType = 'External'
     .ModuleDefines = { 'EXPORT_PPE_EXTERNAL_FARMHASH' }
     .ModuleFiles =
     {
