@@ -243,18 +243,23 @@ void FWindowsPlatformMisc::SetGracefulTerminationHandler() {
     ::SetConsoleCtrlHandler(ConsoleCtrlHandler_, TRUE);
 }
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(6031) // Return value ignored: '_setmode'.
 void FWindowsPlatformMisc::SetUTF8Output() {
 
     // Force locale to EN with UTF-8 encoding
     std::setlocale(LC_ALL, "en_US.UTF-8");
 
-    Verify(-1 != ::_setmode(::_fileno(stdout), _O_U8TEXT));
-    Verify(-1 != ::_setmode(::_fileno(stderr), _O_U8TEXT));
+    ::_setmode(_fileno(stdout), _O_U8TEXT);
+    ::_setmode(_fileno(stderr), _O_U8TEXT);
 
     // _setmbcp, with an argument of _MB_CP_LOCALE makes the multibyte code page the same as the setlocale code page.
     // https://docs.microsoft.com/en-us/cpp/c-runtime-library/locale
     ::_setmbcp(_MB_CP_LOCALE);
+
+    ::SetConsoleOutputCP(CP_UTF8);
 }
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 bool FWindowsPlatformMisc::Is64bitOperatingSystem() {
 #ifdef ARCH_X64
