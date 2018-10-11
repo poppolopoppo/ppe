@@ -52,6 +52,41 @@ PPE_RTTI_API void CollectReferencedObjects(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
+template <typename T, typename _Any>
+bool CreateMetaObject_(PMetaObject& dst, std::true_type, _Any) {
+    dst = NEW_RTTI(T) { ConstructorTag };
+    return true;
+}
+template <typename T>
+bool CreateMetaObject_(PMetaObject& dst, std::false_type, std::true_type) {
+    dst = NEW_RTTI(T) {};
+    return true;
+}
+template <typename T>
+bool CreateMetaObject_(PMetaObject&, std::false_type, std::false_type) {
+    return false;
+}
+} //!namespace details
+//----------------------------------------------------------------------------
+template <typename T>
+bool CreateMetaObject(PMetaObject& dst, bool resetToDefaultValue) {
+    if (details::CreateMetaObject_<T>(dst,
+        Meta::has_constructor<T, FConstructorTag>{},
+        typename std::is_default_constructible<T>::type{})) {
+        Assert(dst);
+
+        if (resetToDefaultValue)
+            ResetToDefaultValue(*dst);
+
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace PPE
 

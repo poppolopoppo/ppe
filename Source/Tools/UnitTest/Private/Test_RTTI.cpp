@@ -7,7 +7,6 @@
 #include "NativeTypes.h"
 #include "TypeInfos.h"
 
-
 #include "RTTI_Macros.h"
 #include "RTTI_Macros-impl.h"
 #include "RTTI_Namespace.h"
@@ -28,6 +27,7 @@
 #include "Container/AssociativeVector.h"
 #include "Container/HashMap.h"
 #include "Container/Pair.h"
+#include "Container/Tuple.h"
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformConsole.h"
@@ -47,7 +47,7 @@
 #include "Memory/Compression.h"
 #include "Memory/MemoryStream.h"
 
-#define USE_RTTI_TEST_YOLOTYPES 0
+#define USE_RTTI_TEST_YOLOTYPES 0 //%_NOCOMMIT%
 
 #include <iostream> // Test_InteractiveConsole_
 
@@ -155,14 +155,16 @@ public:
     template <typename T>
     using yolo_vect_type = VECTOR(Container, yolo_dict_type<T>);
     template <typename T>
-    using yolo_type = HASHMAP(Container, yolo_pair_type<T>, yolo_vect_type<T>);
+    using yolo_type = HASHMAP(Container, TPair<T COMMA T>, yolo_vect_type<T>);
 
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId) \
     T _ ## _Name ## Scalar; \
     TVector<T> _ ## _Name ## Vec; \
     TPair<T, T> _ ## _Name ## TPair; \
     TAssociativeVector<T, T> _ ## _Name ## Dico; \
-    yolo_type<T> _ ## _Name ## Yolo;*
+    yolo_vect_type<T> _ ## _Name ## Vect; \
+    yolo_dict_type<T> _ ## _Name ## HashMap; \
+    /*yolo_type<T> _ ## _Name ## MultiMap;*/
 #else
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId) \
     T _ ## _Name ## Scalar; \
@@ -181,7 +183,9 @@ RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTITest_, RTTI::EClassFlags::Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Vec) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## TPair) \
     RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Dico) \
-    RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Yolo)
+    RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## Vect) \
+    RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## HashMap) \
+    /*RTTI_PROPERTY_PRIVATE_FIELD(_ ## _Name ## MultiMap)*/
     FOREACH_RTTI_NATIVETYPES(DEF_METATYPE_SCALAR_IMPL_)
 #else
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId) \
@@ -600,7 +604,6 @@ static NO_INLINE void Test_Serialize_() {
 #endif
 
     FRTTIAtomRandomizer_ rand(test_count, 0xabadcafedeadbeefull);
-
 
     RTTI_NAMESPACE(RTTI_UnitTest).Start();
     {

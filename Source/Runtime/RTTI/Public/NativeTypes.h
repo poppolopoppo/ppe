@@ -4,11 +4,13 @@
 
 #include "Atom.h"
 #include "AtomHelpers.h"
+#include "TypeInfos.h"
 #include "TypeTraits.h"
 #include "Typedefs.h"
 
 #include "NativeTypes.Definitions-inl.h"
 
+#include "IO/String.h"
 #include "IO/TextWriter_fwd.h"
 
 namespace PPE {
