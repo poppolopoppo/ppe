@@ -18,10 +18,10 @@
 #include "Container/RawStorage.h"
 #include "Container/Vector.h"
 #include "IO/BufferedStream.h"
-#include "IO/Format.h"
 #include "IO/ConstNames.h"
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
+#include "IO/Format.h"
 #include "IO/StreamProvider.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
@@ -33,18 +33,22 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FJsonSerializer::FJsonSerializer(bool minify/* = true */) : _minify(minify) {}
+FJsonSerializer::FJsonSerializer(bool minify/* = true */) {
+    SetMinify(minify);
+}
 //----------------------------------------------------------------------------
 FJsonSerializer::~FJsonSerializer() {}
 //----------------------------------------------------------------------------
-void FJsonSerializer::DeserializeImpl(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName) {
-    Assert(transaction);
-    Assert(input);
+void FJsonSerializer::Deserialize(
+    const FWStringView& fragment,
+    IStreamReader& input,
+    RTTI::FMetaTransaction* loaded) const {
+    Assert(loaded);
 
     FJson json;
 
-    UsingBufferedStream(input, [&json, sourceName](IBufferedStreamReader* buffered) {
-        if (not FJson::Load(&json, MakeCStringView(sourceName), buffered))
+    UsingBufferedStream(&input, [&json, fragment](IBufferedStreamReader* buffered) {
+        if (not FJson::Load(&json, fragment, buffered))
             PPE_THROW_IT(FJsonSerializerException("failed to parse Json document"));
     });
 
@@ -53,20 +57,31 @@ void FJsonSerializer::DeserializeImpl(RTTI::FMetaTransaction* transaction, IStre
         PPE_THROW_IT(FJsonSerializerException("failed to convert Json to RTTI"));
 
     for (const RTTI::PMetaObject& obj : parsed)
-        transaction->RegisterObject(obj.get());
+        loaded->RegisterObject(obj.get());
 }
 //----------------------------------------------------------------------------
-void FJsonSerializer::SerializeImpl(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) {
+void FJsonSerializer::Serialize(
+    const FWStringView& fragment,
+    const RTTI::FMetaTransaction& saved,
+    IStreamWriter* output) const {
+    UNUSED(fragment);
     Assert(output);
-    Assert(transaction);
 
     FJson json;
-    RTTI_to_Json(json, transaction->TopObjects(), transaction);
+    RTTI_to_Json(json, saved.TopObjects(), &saved);
 
     UsingBufferedStream(output, [this, &json](IBufferedStreamWriter* buffered) {
         FTextWriter oss(buffered);
-        json.ToStream(oss, _minify);
+        json.ToStream(oss, Minify());
     });
+}
+//----------------------------------------------------------------------------
+FExtname FJsonSerializer::Extname() {
+    return FFSConstNames::Json();
+}
+//----------------------------------------------------------------------------
+PSerializer FJsonSerializer::Get() {
+    return PSerializer::Make<FJsonSerializer>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

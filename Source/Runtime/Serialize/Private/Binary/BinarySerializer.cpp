@@ -18,11 +18,12 @@
 #include "Diagnostic/Logger.h"
 #include "IO/Basename.h"
 #include "IO/BasenameNoExt.h"
+#include "IO/BufferedStream.h"
+#include "IO/ConstNames.h"
 #include "IO/Extname.h"
 #include "IO/Dirname.h"
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
-#include "IO/BufferedStream.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
 #include "Maths/ScalarMatrix.h"
@@ -307,7 +308,7 @@ namespace {
 //----------------------------------------------------------------------------
 class FBinaryDeserialize_ {
 public:
-    FBinaryDeserialize_(FBinarySerializer* owner) : _owner(owner) {}
+    FBinaryDeserialize_(const FBinarySerializer* owner) : _owner(owner) {}
 
     FBinaryDeserialize_(const FBinaryDeserialize_& ) = delete;
     FBinaryDeserialize_& operator =(const FBinaryDeserialize_& ) = delete;
@@ -607,7 +608,7 @@ private:
         IBufferedStreamReader* _reader;
     };
 
-    FBinarySerializer* _owner;
+    const FBinarySerializer* _owner;
 
     typedef TNumericDefault<u32, FBinaryDeserialize_, UINT32_MAX> index_t;
     typedef index_t object_index_t;
@@ -1366,29 +1367,43 @@ FBinarySerializer::FBinarySerializer() {}
 //----------------------------------------------------------------------------
 FBinarySerializer::~FBinarySerializer() {}
 //----------------------------------------------------------------------------
-void FBinarySerializer::DeserializeImpl(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName) {
-    Assert(input);
-    UNUSED(sourceName);
+void FBinarySerializer::Deserialize(
+    const FWStringView& fragment,
+    IStreamReader& input,
+    RTTI::FMetaTransaction* loaded) const {
+    UNUSED(fragment);
+    Assert(loaded);
 
     FBinaryDeserialize_ deserialize(this);
 
-    UsingBufferedStream(input, [&deserialize](IBufferedStreamReader* buffered) {
+    UsingBufferedStream(&input, [&deserialize](IBufferedStreamReader* buffered) {
         deserialize.Read(*buffered);
     });
 
-    deserialize.Finalize(transaction);
+    deserialize.Finalize(loaded);
 }
 //----------------------------------------------------------------------------
-void FBinarySerializer::SerializeImpl(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) {
+void FBinarySerializer::Serialize(
+    const FWStringView& fragment,
+    const RTTI::FMetaTransaction& saved,
+    IStreamWriter* output) const {
+    UNUSED(fragment);
     Assert(output);
-    Assert(transaction);
 
-    FBinarySerialize_ serialize(this, transaction);
-    serialize.Append(transaction->TopObjects());
+    FBinarySerialize_ serialize(this, &saved);
+    serialize.Append(saved.TopObjects());
 
     UsingBufferedStream(output, [&serialize](IBufferedStreamWriter* buffered) {
         serialize.Finalize(buffered);
     });
+}
+//----------------------------------------------------------------------------
+FExtname FBinarySerializer::Extname() {
+    return FFSConstNames::Bnz();
+}
+//----------------------------------------------------------------------------
+PSerializer FBinarySerializer::Get() {
+    return PSerializer::Make<FBinarySerializer>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

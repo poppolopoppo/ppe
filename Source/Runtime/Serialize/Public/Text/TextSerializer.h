@@ -17,21 +17,26 @@ public:
 //----------------------------------------------------------------------------
 class FTextSerializer : public ISerializer {
 public:
-    explicit FTextSerializer(bool minify = true);
     virtual ~FTextSerializer();
 
-    using ISerializer::Deserialize;
-    using ISerializer::Serialize;
+    static FExtname Extname();
+    static PSerializer Get();
 
-    bool Minify() const { return _minify; }
-    void SetMinify(bool value) { _minify = value; }
+public: // ISerializer
+    virtual void Deserialize(
+        const FWStringView& fragment,
+        IStreamReader& input,
+        RTTI::FMetaTransaction* loaded) const override final;
 
-protected: //ISerializer
-    virtual void DeserializeImpl(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName) override;
-    virtual void SerializeImpl(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) override;
+    virtual void Serialize(
+        const FWStringView& fragment,
+        const RTTI::FMetaTransaction& saved,
+        IStreamWriter* output) const override final;
 
 private:
-    bool _minify;
+    friend struct TInSituPtr<ISerializer>;
+
+    explicit FTextSerializer(bool minify = true);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -22,10 +22,11 @@
 #include "Container/HashSet.h"
 #include "Container/Vector.h"
 #include "IO/BufferedStream.h"
-#include "IO/Format.h"
-#include "IO/FormatHelpers.h"
+#include "IO/ConstNames.h"
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
+#include "IO/Format.h"
+#include "IO/FormatHelpers.h"
 #include "IO/String.h"
 #include "IO/TextWriter.h"
 #include "Memory/MemoryStream.h"
@@ -301,19 +302,21 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextSerializer::FTextSerializer(bool minify/* = true */)
-    : _minify(minify)
-{}
+FTextSerializer::FTextSerializer(bool minify/* = true */) {
+    SetMinify(minify);
+}
 //----------------------------------------------------------------------------
 FTextSerializer::~FTextSerializer() {}
 //----------------------------------------------------------------------------
-void FTextSerializer::DeserializeImpl(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName) {
-    Assert(transaction);
-    Assert(input);
+void FTextSerializer::Deserialize(
+    const FWStringView& fragment,
+    IStreamReader& input,
+    RTTI::FMetaTransaction* loaded) const {
+    Assert(loaded);
 
     Parser::FParseList parseList;
-    UsingBufferedStream(input, [&parseList, sourceName](IBufferedStreamReader* buffered) {
-        Lexer::FLexer lexer(buffered, MakeCStringView(sourceName), true);
+    UsingBufferedStream(&input, [&parseList, fragment](IBufferedStreamReader* buffered) {
+        Lexer::FLexer lexer(buffered, fragment, true);
         parseList.Parse(&lexer);
     });
 
@@ -325,19 +328,30 @@ void FTextSerializer::DeserializeImpl(RTTI::FMetaTransaction* transaction, IStre
             const RTTI::PMetaObject* ppobj = atom.TypedConstDataIFP<RTTI::PMetaObject>();
 
             if (ppobj && *ppobj)
-                transaction->RegisterObject(ppobj->get());
+                loaded->RegisterObject(ppobj->get());
         }
     }
 }
 //----------------------------------------------------------------------------
-void FTextSerializer::SerializeImpl(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) {
+void FTextSerializer::Serialize(
+    const FWStringView& fragment,
+    const RTTI::FMetaTransaction& saved,
+    IStreamWriter* output) const {
+    UNUSED(fragment);
     Assert(output);
-    Assert(transaction);
 
-    UsingBufferedStream(output, [this, transaction](IBufferedStreamWriter* buffered) {
-        FTextSerialize_ visitor(buffered, _minify);
-        visitor.Serialize(*transaction);
+    UsingBufferedStream(output, [this, &saved](IBufferedStreamWriter* buffered) {
+        FTextSerialize_ visitor(buffered, Minify());
+        visitor.Serialize(saved);
     });
+}
+//----------------------------------------------------------------------------
+FExtname FTextSerializer::Extname() {
+    return FFSConstNames::Otxt();
+}
+//----------------------------------------------------------------------------
+PSerializer FTextSerializer::Get() {
+    return PSerializer::Make<FTextSerializer>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

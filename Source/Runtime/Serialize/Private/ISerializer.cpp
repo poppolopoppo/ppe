@@ -2,11 +2,11 @@
 
 #include "ISerializer.h"
 
-#include "MetaTransaction.h"
+#include "Binary/BinarySerializer.h"
+#include "Json/JsonSerializer.h"
+#include "Text/TextSerializer.h"
 
-#include "Container/RawStorage.h"
-#include "IO/Filename.h"
-#include "IO/StreamProvider.h"
+#include "IO/Extname.h"
 #include "Memory/MemoryProvider.h"
 
 namespace PPE {
@@ -14,28 +14,28 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void ISerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName/* = nullptr */) {
-    Assert(transaction);
-    Assert(not transaction->IsLoaded());
-    Assert(input);
+void ISerializer::Deserialize(
+    const ISerializer& serializer,
+    const FWStringView& fragment,
+    const TMemoryView<const u8>& rawData,
+    RTTI::FMetaTransaction* loaded) {
+    Assert(not rawData.empty());
 
-    if (nullptr == sourceName)
-        sourceName = L"@memory";
-
-    DeserializeImpl(transaction, input, sourceName);
-}
-//----------------------------------------------------------------------------
-void ISerializer::Deserialize(RTTI::FMetaTransaction* transaction, const TMemoryView<const u8>& rawData, const wchar_t *sourceName/* = nullptr */) {
     FMemoryViewReader reader(rawData);
-    Deserialize(transaction, &reader, sourceName);
+    serializer.Deserialize(fragment, reader, loaded);
 }
 //----------------------------------------------------------------------------
-void ISerializer::Serialize(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) {
-    Assert(output);
-    Assert(transaction);
-    Assert(transaction->IsLoaded());
+PSerializer ISerializer::FromExtname(const FExtname& ext) {
+    Assert(not ext.empty());
 
-    SerializeImpl(output, transaction);
+    if (ext == FBinarySerializer::Extname())
+        return FBinarySerializer::Get();
+    else if (ext == FJsonSerializer::Extname())
+        return FJsonSerializer::Get();
+    else if (ext == FTextSerializer::Extname())
+        return FTextSerializer::Get();
+
+    return PSerializer(); // unknown extension
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

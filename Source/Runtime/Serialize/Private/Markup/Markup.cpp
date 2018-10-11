@@ -269,7 +269,7 @@ bool FMarkup::Load(FMarkup* markup, const FFilename& filename) {
     Assert(not filename.empty());
 
     EAccessPolicy policy = EAccessPolicy::Binary;
-    if (filename.Extname() == FFSConstNames::Xmlz())
+    if (filename.Extname() == FFSConstNames::Z())
         policy = policy + EAccessPolicy::Compress;
 
     RAWSTORAGE(FileSystem, u8) content;

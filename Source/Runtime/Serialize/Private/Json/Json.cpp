@@ -541,7 +541,7 @@ bool FJson::Load(FJson* json, const FFilename& filename) {
     Assert(not filename.empty());
 
     EAccessPolicy policy = EAccessPolicy::Binary;
-    if (filename.Extname() == FFSConstNames::Jsonz())
+    if (filename.Extname() == FFSConstNames::Z())
         policy = policy + EAccessPolicy::Compress;
 
     RAWSTORAGE(FileSystem, u8) content;

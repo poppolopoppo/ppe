@@ -3,8 +3,9 @@
 #include "Serialize.h"
 
 #include "ISerializer.h"
-#include "SerializeExceptions.h"
 
+#include "Container/Vector.h"
+#include "SerializeExceptions.h"
 #include "RTTI_fwd.h"
 
 namespace PPE {
@@ -19,18 +20,26 @@ public:
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FJsonSerializer : public ISerializer {
 public:
-    explicit FJsonSerializer(bool minify = true);
     virtual ~FJsonSerializer();
 
-    bool Minify() const { return _minify; }
-    void SetMinify(bool value) { _minify = value; }
+    static FExtname Extname();
+    static PSerializer Get();
 
-protected: //ISerializer
-    virtual void DeserializeImpl(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName) override;
-    virtual void SerializeImpl(IStreamWriter* output, const RTTI::FMetaTransaction* transaction) override;
+public: // ISerializer
+    virtual void Deserialize(
+        const FWStringView& fragment,
+        IStreamReader& input,
+        RTTI::FMetaTransaction* loaded) const override final;
+
+    virtual void Serialize(
+        const FWStringView& fragment,
+        const RTTI::FMetaTransaction& saved,
+        IStreamWriter* output) const override final;
 
 private:
-    bool _minify;
+    friend struct TInSituPtr<ISerializer>;
+
+    explicit FJsonSerializer(bool minify = true);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
