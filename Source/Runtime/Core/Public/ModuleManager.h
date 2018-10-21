@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Core.h"
-
-#include "Meta/ThreadResource.h"
+#include "Core_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -11,7 +9,7 @@ namespace PPE {
 class FModule;
 struct IModuleStartup;
 //----------------------------------------------------------------------------
-class PPE_CORE_API FModuleManager : Meta::FThreadResource {
+class PPE_CORE_API FModuleManager {
 public:
     FModuleManager(
         void* appHandle, int showCmd,

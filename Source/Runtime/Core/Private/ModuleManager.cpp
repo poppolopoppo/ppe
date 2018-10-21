@@ -2,10 +2,10 @@
 
 #include "ModuleManager.h"
 
+#include "Module.h"
+
 #include "Diagnostic/Logger.h"
 #include "Memory/MemoryTracking.h"
-#include "Module.h"
-#include "Thread/ThreadContext.h"
 
 #ifdef USE_DEBUG_LOGGER
 #   include "IO/Format.h"
@@ -41,14 +41,13 @@ FModuleManager::FModuleManager(
 //----------------------------------------------------------------------------
 FModuleManager::~FModuleManager() {
     Assert(this == GModuleManager_);
+
     GModuleManager_ = nullptr;
 
     LOG(Module, Info, L"destroyed module manager");
 }
 //----------------------------------------------------------------------------
 void FModuleManager::ReleaseMemory(FModule& module) {
-    //THIS_THREADRESOURCE_CHECKACCESS(); // not guaranteed/needed
-
     LOG(Module, Emphasis, L"releasing memory in <{0}> ...", MakeCStringView(module.Name()));
 
 #ifdef USE_DEBUG_LOGGER
@@ -62,7 +61,6 @@ void FModuleManager::ReleaseMemory(FModule& module) {
 }
 //----------------------------------------------------------------------------
 void FModuleManager::PreInit(IModuleStartup& startup) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(nullptr == _startup);
 
     LOG(Module, Emphasis, L"pre init module startup ...");
@@ -71,7 +69,6 @@ void FModuleManager::PreInit(IModuleStartup& startup) {
 }
 //----------------------------------------------------------------------------
 void FModuleManager::PostDestroy(IModuleStartup& startup) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(&startup == _startup);
 
     LOG(Module, Emphasis, L"post destroy module startup ...");
@@ -80,7 +77,7 @@ void FModuleManager::PostDestroy(IModuleStartup& startup) {
 }
 //----------------------------------------------------------------------------
 void FModuleManager::Start(FModule& module) {
-    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(_startup);
 
     LOG(Module, Emphasis, L"starting module <{0}> ...", MakeCStringView(module.Name()));
 
@@ -95,7 +92,7 @@ void FModuleManager::Start(FModule& module) {
 }
 //----------------------------------------------------------------------------
 void FModuleManager::Shutdown(FModule& module) {
-    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(_startup);
 
     LOG(Module, Emphasis, L"shutting down module <{0}> ...", MakeCStringView(module.Name()));
 
@@ -110,7 +107,7 @@ void FModuleManager::Shutdown(FModule& module) {
 }
 //----------------------------------------------------------------------------
 void FModuleManager::ReleaseMemoryInModules() const {
-    //THIS_THREADRESOURCE_CHECKACCESS(); // not guaranteed/needed
+    Assert(_startup);
 
     LOG(Module, Emphasis, L"releasing memory in modules ...");
     LOG(Module, Info, L"used memory before release : {0} blocks / {1}",
@@ -122,6 +119,7 @@ void FModuleManager::ReleaseMemoryInModules() const {
     LOG(Module, Info, L"reserved memory before release : {0} blocks / {1}",
         Fmt::CountOfElements(FMemoryTracking::ReservedMemory().AllocationCount()),
         Fmt::SizeInBytes(FMemoryTracking::ReservedMemory().TotalSizeInBytes()) );
+
 
 #ifdef USE_DEBUG_LOGGER
     const FTimedScope t;

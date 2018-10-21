@@ -17,6 +17,8 @@
 
 #include "ModuleManager.h"
 
+#include <memory_resource>
+
 PRAGMA_INITSEG_LIB
 
 namespace PPE {
