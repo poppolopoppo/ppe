@@ -63,12 +63,18 @@ struct TNumericLimits<u256> {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace Meta {
+namespace details {
 template <typename T, size_t _Sz = sizeof(T)>
-struct TIntegral;
-template <typename T> struct TIntegral<T, 1> { typedef  u8 type; };
-template <typename T> struct TIntegral<T, 2> { typedef u16 type; };
-template <typename T> struct TIntegral<T, 4> { typedef u32 type; };
-template <typename T> struct TIntegral<T, 8> { typedef u64 type; };
+struct TIntegral_;
+template <typename T> struct TIntegral_<T, 1> { typedef  u8 type; };
+template <typename T> struct TIntegral_<T, 2> { typedef u16 type; };
+template <typename T> struct TIntegral_<T, 4> { typedef u32 type; };
+template <typename T> struct TIntegral_<T, 8> { typedef u64 type; };
+} //!details
+template <typename T>
+using TIntegral = typename details::TIntegral_<T>::type;
+} //!namespace Meta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

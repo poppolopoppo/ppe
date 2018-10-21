@@ -31,7 +31,7 @@ LOG_CATEGORY(PPE_CORE_API, Thread)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-thread_local size_t GCurrentThreadIndex = INDEX_NONE;
+THREAD_LOCAL size_t GCurrentThreadIndex = INDEX_NONE;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -115,7 +115,7 @@ static void UnregisterThreadName_(std::thread::id thread_id) {
 static auto GetThreadHash_(std::thread::id id) {
     union UThreadIdIntegral_ {
         std::thread::id ThreadId;
-        TIntegral<std::thread::id>::type Integral;
+        Meta::TIntegral<std::thread::id> Integral;
     };
     return UThreadIdIntegral_{ id }.Integral;
 }
