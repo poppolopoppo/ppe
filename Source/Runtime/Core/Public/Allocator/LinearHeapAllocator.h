@@ -11,6 +11,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #define VECTOR_LINEARHEAP(T) ::PPE::TVector<T, ::PPE::TLinearHeapAllocator<T>>
 //----------------------------------------------------------------------------
+#define SPARSEARRAY_LINEARHEAP(_DOMAIN, T, _ChunkSize) ::PPE::TAlignedSparseArray<T, _ChunkSize, ::PPE::TLinearHeapAllocator<T>>
+//----------------------------------------------------------------------------
 #define ASSOCIATIVE_VECTOR_LINEARHEAP(_KEY, _VALUE) ::PPE::TAssociativeVector<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, VECTOR_LINEARHEAP(::PPE::TPair<_KEY COMMA _VALUE>)>
 //----------------------------------------------------------------------------
 #define HASHSET_LINEARHEAP(T) ::PPE::THashSet<T, ::PPE::Meta::THash<T>, ::PPE::Meta::TEqualTo<T>, ::PPE::TLinearHeapAllocator<T>>
@@ -53,7 +55,7 @@ public:
     }
 
     TLinearHeapAllocator(Meta::FForceInit) noexcept
-    :   _heap(nullptr) 
+    :   _heap(nullptr)
     {}
 
     TLinearHeapAllocator(const TLinearHeapAllocator& other) noexcept

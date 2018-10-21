@@ -183,6 +183,7 @@ public:
 
     using typename parent_type::iterator_category;
     using typename parent_type::difference_type;
+
     using typename parent_type::value_type;
     using typename parent_type::pointer;
     using typename parent_type::reference;
@@ -208,7 +209,8 @@ public:
 
     pointer data() const {
         Assert(_owner);
-        return std::addressof(_owner->At_(_index)->Data);
+        return const_cast<pointer>(// <== better than duping the code
+            std::addressof(_owner->At_(_index)->Data) );
     }
 
     pointer operator->() const { return data(); }
