@@ -7,7 +7,7 @@
 
 #include "HAL/PlatformIncludes.h"
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
 #if USE_PPE_PRECOMPILEDHEADERS
 #   include "stdafx.generated.h"

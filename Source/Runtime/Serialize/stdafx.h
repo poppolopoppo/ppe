@@ -7,7 +7,7 @@
 
 #include "HAL/PlatformIncludes.h"
 
-#include "Serialize.h"
+#include "Serialize_fwd.h"
 
 #if USE_PPE_PRECOMPILEDHEADERS
 #   include "stdafx.generated.h"

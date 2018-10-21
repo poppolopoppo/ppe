@@ -7,6 +7,8 @@
 
 #include "HAL/PlatformIncludes.h"
 
+#include "Application_fwd.h"
+
 #if USE_PPE_PRECOMPILEDHEADERS
 #   include "stdafx.generated.h"
 #endif

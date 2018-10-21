@@ -10,7 +10,7 @@
 
 #include "HAL/PlatformIncludes.h"
 
-#include "Network.h"
+#include "Network_fwd.h"
 
 #if USE_PPE_PRECOMPILEDHEADERS
 #   include "stdafx.generated.h"
