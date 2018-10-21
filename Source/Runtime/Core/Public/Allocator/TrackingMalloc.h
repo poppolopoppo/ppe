@@ -10,6 +10,9 @@
 #define TRACKING_REALLOC(_DOMAIN, _PTR, _SIZE) ::PPE::tracking_realloc<MEMORYDOMAIN_TAG(_DOMAIN)>(_PTR, _SIZE)
 #define TRACKING_FREE(_DOMAIN, _PTR) ::PPE::tracking_free(_PTR)
 
+#define TRACKING_NEW(_DOMAIN, ...) INPLACE_NEW(TRACKING_MALLOC(_DOMAIN, sizeof(__VA_ARGS__)), __VA_ARGS__)
+#define TRACKING_DELETE(_DOMAIN, _PTR) ::PPE::tracking_delete(_PTR)
+
 namespace PPE {
 class FMemoryTracking;
 //----------------------------------------------------------------------------
@@ -50,6 +53,22 @@ void* tracking_realloc(void *ptr, size_t size) {
 #else
     return (PPE::realloc)(ptr, size);
 #endif
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _MemoryDomain, typename T, typename... _Args>
+T* tracking_new(_Args&&... args) {
+    return INPLACE_NEW(tracking_malloc<_MemoryDomain>(sizeof(T)), T) {
+        std::forward<_Args>(args)...
+    };
+}
+//----------------------------------------------------------------------------
+template <typename T>
+void tracking_delete(T* ptr) {
+    Assert(ptr);
+    Meta::Destroy(ptr);
+    tracking_free(ptr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
