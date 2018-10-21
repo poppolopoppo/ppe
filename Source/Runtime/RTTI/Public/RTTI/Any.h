@@ -2,8 +2,8 @@
 
 #include "RTTI.h"
 
-#include "Atom.h"
-#include "NativeTypes.h"
+#include "RTTI/Atom.h"
+#include "RTTI/NativeTypes.h"
 
 #include "IO/TextWriter_fwd.h"
 #include "Meta/AlignedStorage.h"

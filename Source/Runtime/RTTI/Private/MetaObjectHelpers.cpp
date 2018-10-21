@@ -2,13 +2,14 @@
 
 #include "MetaObjectHelpers.h"
 
-#include "Atom.h"
-#include "AtomVisitor.h"
+#include "RTTI/Atom.h"
+#include "RTTI/AtomVisitor.h"
+#include "RTTI/NativeTypes.h"
+#include "RTTI/TypeTraits.h"
+
 #include "MetaClass.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
-#include "NativeTypes.h"
-#include "TypeTraits.h"
 
 #include "Container/Hash.h"
 #include "Container/Stack.h"

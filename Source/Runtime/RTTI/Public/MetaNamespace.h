@@ -1,8 +1,8 @@
 #pragma once
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
-#include "Typedefs.h"
+#include "RTTI/Typedefs.h"
 
 #include "Container/HashMap.h"
 #include "Container/IntrusiveList.h"
@@ -12,20 +12,18 @@
 namespace PPE {
 namespace RTTI {
 class FMetaClass;
+class FMetaEnum;
 class FMetaNamespace;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RTTI_API FMetaClassHandle {
+class PPE_RTTI_API FMetaClassHandle : Meta::FNonCopyableNorMovable {
 public:
     typedef FMetaClass* (*create_func)(FClassId , const FMetaNamespace* );
     typedef void (*destroy_func)(FMetaClass*);
 
-    FMetaClassHandle(class FMetaNamespace& metaNamespace, create_func create, destroy_func destroy);
+    FMetaClassHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy);
     ~FMetaClassHandle();
-
-    FMetaClassHandle(const FMetaClassHandle& ) = delete;
-    FMetaClassHandle& operator =(const FMetaClassHandle& ) = delete;
 
     const FMetaClass* Class() const { return _class; }
 
@@ -38,6 +36,27 @@ private:
     destroy_func const _destroy;
 
     TIntrusiveSingleListNode<FMetaClassHandle> _node;
+};
+//----------------------------------------------------------------------------
+class PPE_RTTI_API FMetaEnumHandle : Meta::FNonCopyableNorMovable {
+public:
+    typedef FMetaEnum* (*create_func)(const FMetaNamespace*);
+    typedef void(*destroy_func)(FMetaEnum*);
+
+    FMetaEnumHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy);
+    ~FMetaEnumHandle();
+
+    const FMetaEnum* Enum() const { return _enum; }
+
+private:
+    friend class FMetaNamespace;
+
+    FMetaEnum* _enum;
+
+    create_func const _create;
+    destroy_func const _destroy;
+
+    TIntrusiveSingleListNode<FMetaEnumHandle> _node;
 };
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaNamespace : Meta::FThreadResource {
@@ -60,10 +79,10 @@ public:
         return _nameToken;
     }
 
-    void RegisterClass(FMetaClassHandle& handle);
-
     void Start();
     void Shutdown();
+
+    /** Classes **/
 
     const FMetaClass& Class(const FName& name) const;
     const FMetaClass* ClassIFP(const FName& name) const;
@@ -74,16 +93,34 @@ public:
         return _classes.Values();
     }
 
+    void RegisterClass(FMetaClassHandle& handle);
+
+    /** Enums **/
+
+    const FMetaEnum& Enum(const FName& name) const;
+    const FMetaEnum* EnumIFP(const FName& name) const;
+    const FMetaEnum* EnumIFP(const FStringView& name) const;
+
+    auto Enums() const {
+        Assert(IsStarted());
+        return _enums.Values();
+    }
+
+    void RegisterEnum(FMetaEnumHandle& handle);
+
 private:
     HASHMAP(MetaNamespace, FName, const FMetaClass*) _classes;
+    HASHMAP(MetaNamespace, FName, const FMetaEnum*) _enums;
 
     FName _nameToken;
     size_t _classIdOffset;
     size_t _classCount;
+    size_t _enumCount;
 
     const FStringView _nameCStr;
 
-    INTRUSIVESINGLELIST(&FMetaClassHandle::_node) _handles;
+    INTRUSIVESINGLELIST(&FMetaClassHandle::_node) _classHandles;
+    INTRUSIVESINGLELIST(&FMetaEnumHandle::_node) _enumHandles;
 
 #if USE_PPE_MEMORYDOMAINS
     mutable FMemoryTracking _trackingData;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RTTI_Namespace.h"
+#include "RTTI/Namespace.h"
 
 #include "MetaNamespace.h"
 #include "Memory/MemoryDomain.h"

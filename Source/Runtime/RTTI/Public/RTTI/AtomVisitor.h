@@ -3,7 +3,7 @@
 #include "RTTI.h"
 
 #include "RTTI_fwd.h"
-#include "NativeTypes.Definitions-inl.h"
+#include "RTTI/NativeTypes.Definitions-inl.h"
 
 #include <iosfwd>
 

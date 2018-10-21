@@ -2,7 +2,7 @@
 
 #include "RTTI.h"
 
-#include "TypeInfos.h"
+#include "RTTI/TypeInfos.h"
 
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
@@ -80,10 +80,10 @@ public:
     virtual const IDicoTraits* AsDico() const = 0;
 
 public: // non-virtual helpers
-    const IScalarTraits& ToScalar() const { Assert(AsScalar()); return (*checked_cast<const IScalarTraits*>(this)); }
-    const ITupleTraits& ToTuple() const { Assert(AsTuple()); return (*checked_cast<const ITupleTraits*>(this)); }
-    const IListTraits& ToList() const { Assert(AsList()); return (*checked_cast<const IListTraits*>(this)); }
-    const IDicoTraits& ToDico() const { Assert(AsDico()); return (*checked_cast<const IDicoTraits*>(this)); }
+    const IScalarTraits& ToScalar() const { Assert_NoAssume(AsScalar()); return (*checked_cast<const IScalarTraits*>(this)); }
+    const ITupleTraits& ToTuple() const { Assert_NoAssume(AsTuple()); return (*checked_cast<const ITupleTraits*>(this)); }
+    const IListTraits& ToList() const { Assert_NoAssume(AsList()); return (*checked_cast<const IListTraits*>(this)); }
+    const IDicoTraits& ToDico() const { Assert_NoAssume(AsDico()); return (*checked_cast<const IDicoTraits*>(this)); }
 
     inline friend bool operator ==(const ITypeTraits& lhs, const ITypeTraits& rhs) { return (lhs.VTable() == rhs.VTable()); }
     inline friend bool operator !=(const ITypeTraits& lhs, const ITypeTraits& rhs) { return (lhs.VTable() != rhs.VTable()); }
@@ -125,6 +125,7 @@ public: // ITypeTraits
     virtual const IDicoTraits* AsDico() const override final { return nullptr; }
 
 public:
+    virtual const FMetaEnum* EnumClass() const = 0;
     virtual const FMetaClass* ObjectClass() const = 0;
 };
 //----------------------------------------------------------------------------

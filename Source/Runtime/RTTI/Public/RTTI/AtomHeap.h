@@ -2,8 +2,8 @@
 
 #include "RTTI.h"
 
-#include "Atom.h"
-#include "NativeTypes.h"
+#include "RTTI/Atom.h"
+#include "RTTI/NativeTypes.h"
 
 #include "Allocator/LinearHeap.h"
 #include "Allocator/LinearHeapAllocator.h"

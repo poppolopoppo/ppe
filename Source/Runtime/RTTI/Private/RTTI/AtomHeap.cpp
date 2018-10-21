@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "AtomHeap.h"
+#include "RTTI/AtomHeap.h"
 
 #include "MetaObject.h"
 

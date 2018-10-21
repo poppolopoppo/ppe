@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Typedefs.h"
+#include "RTTI/Typedefs.h"
 
 #include "MetaObject.h"
 #include "MetaTransaction.h"

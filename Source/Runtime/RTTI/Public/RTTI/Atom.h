@@ -2,7 +2,7 @@
 
 #include "RTTI.h"
 
-#include "TypeTraits.h"
+#include "RTTI/TypeTraits.h"
 
 #include "IO/TextWriter_fwd.h"
 
@@ -31,7 +31,7 @@ public:
 
     template <typename T>
     T& FlatData() const {
-        Assert(*MakeTraits<T>() == *_traits);
+        Assert(MakeTraits<T>()->TypeId() == _traits->TypeId());
         return (*reinterpret_cast<T*>(_data));
     }
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "NativeTypes.h"
+#include "RTTI/NativeTypes.h"
 
-#include "NativeTypes.Tuple-inl.h" // TBaseTupleTraits<...>
+#include "RTTI/NativeTypes.Tuple-inl.h" // TBaseTupleTraits<...>
 
 #include "Container/Tuple.h"
 

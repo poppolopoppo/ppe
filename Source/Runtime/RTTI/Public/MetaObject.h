@@ -1,10 +1,10 @@
 #pragma once
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
-#include "Typedefs.h"
 #include "MetaClass.h"
 #include "MetaClassHelpers.h"
+#include "RTTI/Typedefs.h"
 
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryDomain.h"

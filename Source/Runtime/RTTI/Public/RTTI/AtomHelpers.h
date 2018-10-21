@@ -2,7 +2,7 @@
 
 #include "RTTI.h"
 
-#include "Atom.h"
+#include "RTTI/Atom.h"
 
 #include "Allocator/Alloca.h"
 #include "Meta/PointerWFlags.h"

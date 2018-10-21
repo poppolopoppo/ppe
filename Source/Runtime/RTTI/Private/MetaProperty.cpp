@@ -2,7 +2,7 @@
 
 #include "MetaProperty.h"
 
-#include "RTTIExceptions.h"
+#include "RTTI/Exceptions.h"
 
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"

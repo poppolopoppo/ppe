@@ -4,12 +4,6 @@
 
 #include "Allocator/PoolAllocatorTag.h"
 
-#if !defined(FINAL_RELEASE) && !defined(PROFILING_ENABLED)
-#   define USE_PPE_RTTI_CHECKS 1
-#else
-#   define USE_PPE_RTTI_CHECKS 0
-#endif
-
 namespace PPE {
 namespace RTTI {
 POOL_TAG_DECL(RTTI);

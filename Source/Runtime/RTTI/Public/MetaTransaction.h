@@ -1,8 +1,8 @@
 #pragma once
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
-#include "Typedefs.h"
+#include "RTTI/Typedefs.h"
 
 #include "Container/HashSet.h"
 #include "Container/Vector.h"
@@ -23,7 +23,7 @@ enum class ETransactionFlags : u32 {
     Unloading   ,
 };
 //----------------------------------------------------------------------------
-using FLinearizedTransaction = VECTORINSITU(MetaTransaction, SMetaObject, 32);
+using FLinearizedTransaction = VECTORINSITU(MetaTransaction, SMetaObject, 8);
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaTransaction : public FRefCountable {
 public:
@@ -68,15 +68,15 @@ public:
     void Linearize(FLinearizedTransaction* linearized) const;
 
     struct FLoadingScope {
-        SMetaTransaction Transaction;
-        explicit FLoadingScope(FMetaTransaction* transaction);
+        FMetaTransaction& Transaction;
+        explicit FLoadingScope(FMetaTransaction& transaction);
         ~FLoadingScope();
     };
 
 private:
     FName _name;
     ETransactionFlags _flags;
-    VECTOR(MetaTransaction, PMetaObject) _topObjects;
+    VECTOR(MetaTransaction, PMetaObject) _topObjects; // hold lifetime of top objects only
 
     HASHSET(MetaTransaction, SMetaObject) _exportedObjects;
     HASHSET(MetaTransaction, SMetaObject) _loadedObjects;

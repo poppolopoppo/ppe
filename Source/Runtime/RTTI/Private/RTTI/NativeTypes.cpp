@@ -1,11 +1,12 @@
 #include "stdafx.h"
 
-#include "NativeTypes.h"
+#include "RTTI/NativeTypes.h"
 
-#include "TypeInfos.h"
+#include "RTTI/Any.h"
+#include "RTTI/AtomVisitor.h" // needed for Accept() & PrettyPrint()
+#include "RTTI/TypeInfos.h"
 
-#include "Any.h"
-#include "AtomVisitor.h" // needed for Accept() & PrettyPrint()
+#include "MetaEnum.h" // cast from FName to enum
 #include "MetaObject.h" // needed for PMetaObject manipulation
 #include "MetaObjectHelpers.h" // needed for DeepEquals()
 
@@ -144,6 +145,19 @@ static bool PromoteValue_(const FWString& wstr, const FAtom& dst) {
     }
 }
 //----------------------------------------------------------------------------
+static bool PromoteValue_(const FName& name, const FAtom& dst) {
+    if (dst.TypeFlags() ^ ETypeFlags::Enum) {
+        const FMetaEnum* metaEnum = dst.Traits()->ToScalar().EnumClass();
+        Assert(metaEnum);
+
+        if (const FMetaEnumValue* v = metaEnum->NameToValueIFP(name)) {
+            metaEnum->SetValue(dst, *v);
+            return true;
+        }
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -156,6 +170,10 @@ class TNativeTypeTraits final : public TBaseTypeTraits<T, TBaseScalarTraits<T> >
     using typename base_traits::const_pointer;
 
 public:
+    virtual const FMetaEnum* EnumClass() const override final {
+        return nullptr;
+    }
+
     virtual const FMetaClass* ObjectClass() const override final {
         return nullptr;
     }
@@ -370,6 +388,26 @@ DEF_RTTI_ALIASING_TRAITS(FTimestamp,            i64)
 DEF_RTTI_ALIASING_TRAITS(u128,                  COMMA_PROTECT(TPair<u64, u64>))
 //----------------------------------------------------------------------------
 #undef DEF_RTTI_ALIASING_TRAITS
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool PromoteEnum(const IScalarTraits& traits, i64 src, const FAtom& dst) {
+    if (ENativeType(dst.TypeId()) == ENativeType::Name) {
+        const FMetaEnum* metaEnum = traits.EnumClass();
+        Assert(metaEnum);
+
+        if (const FMetaEnumValue* v = metaEnum->ValueToNameIFP(src)) {
+            dst.TypedData<RTTI::FName>() = v->Name;
+            return true;
+        }
+
+        return false;
+    }
+    else
+    {
+        return PromoteValue_(src, dst);
+    }
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

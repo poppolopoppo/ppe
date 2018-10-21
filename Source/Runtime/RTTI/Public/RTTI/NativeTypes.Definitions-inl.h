@@ -3,7 +3,7 @@
 // Here goes the list of all BASIC types supported by RTTI
 
 #include "RTTI_fwd.h"
-#include "Typedefs.h"
+#include "RTTI/Typedefs.h"
 
 #include "IO/FileSystem_fwd.h"
 #include "IO/String_fwd.h"

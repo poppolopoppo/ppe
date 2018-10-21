@@ -2,13 +2,13 @@
 
 #include "RTTI.h"
 
-#include "Atom.h"
-#include "AtomHelpers.h"
-#include "TypeInfos.h"
-#include "TypeTraits.h"
-#include "Typedefs.h"
+#include "RTTI/Atom.h"
+#include "RTTI/AtomHelpers.h"
+#include "RTTI/TypeInfos.h"
+#include "RTTI/TypeTraits.h"
+#include "RTTI/Typedefs.h"
 
-#include "NativeTypes.Definitions-inl.h"
+#include "RTTI/NativeTypes.Definitions-inl.h"
 
 #include "IO/String.h"
 #include "IO/TextWriter_fwd.h"

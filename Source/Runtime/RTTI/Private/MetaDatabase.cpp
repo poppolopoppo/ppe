@@ -2,6 +2,8 @@
 
 #include "MetaDatabase.h"
 
+#include "MetaClass.h"
+#include "MetaEnum.h"
 #include "MetaObject.h"
 #include "MetaNamespace.h"
 #include "MetaTransaction.h"
@@ -38,8 +40,6 @@ void FMetaDatabase::RegisterTransaction(FMetaTransaction* metaTransaction) {
 
     LOG(RTTI, Info, L"register transaction in DB : '{0}'", exportName);
 
-    WRITESCOPELOCK(_lockRW);
-    
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
     Insert_AssertUnique(_transactions, exportName, SMetaTransaction(metaTransaction));
@@ -53,8 +53,6 @@ void FMetaDatabase::UnregisterTransaction(FMetaTransaction* metaTransaction) {
     Assert(not exportName.empty());
 
     LOG(RTTI, Info, L"unregister transaction in DB : '{0}'", exportName);
-
-    WRITESCOPELOCK(_lockRW);
 
 #ifdef WITH_PPE_ASSERT
     // Check that all objects from this transaction were unregistered
@@ -70,8 +68,6 @@ void FMetaDatabase::UnregisterTransaction(FMetaTransaction* metaTransaction) {
 FMetaTransaction& FMetaDatabase::Transaction(const FName& name) const {
     Assert(not name.empty());
 
-    READSCOPELOCK(_lockRW);
-
     FMetaTransaction& transaction = (*_transactions[name]);
     Assert(transaction.IsLoaded());
 
@@ -80,8 +76,6 @@ FMetaTransaction& FMetaDatabase::Transaction(const FName& name) const {
 //----------------------------------------------------------------------------
 FMetaTransaction* FMetaDatabase::TransactionIFP(const FName& name) const {
     Assert(not name.empty());
-
-    READSCOPELOCK(_lockRW);
 
     const auto it = _transactions.find(name);
     if (_transactions.end() == it)
@@ -93,8 +87,6 @@ FMetaTransaction* FMetaDatabase::TransactionIFP(const FName& name) const {
 //----------------------------------------------------------------------------
 FMetaTransaction* FMetaDatabase::TransactionIFP(const FStringView& name) const {
     Assert(not name.empty());
-
-    READSCOPELOCK(_lockRW);
 
     const hash_t h = FName::HashValue(name);
     const auto it = _transactions.find_like(name, h);
@@ -122,8 +114,6 @@ void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
     Assert(metaObject->RTTI_IsExported());
     Assert(metaObject->RTTI_IsLoaded());
 
-    WRITESCOPELOCK(_lockRW);
-
     Assert(Contains(_namespaces, metaObject->RTTI_Class()->Namespace()));
     Assert(_transactions.Contains(exportPath.Transaction));
 
@@ -147,8 +137,6 @@ void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
     Assert(metaObject->RTTI_IsExported());
     Assert(metaObject->RTTI_IsLoaded());
 
-    WRITESCOPELOCK(_lockRW);
-
     Assert(Contains(_namespaces, metaObject->RTTI_Class()->Namespace()));
     Assert(_transactions.Contains(exportPath.Transaction));
 
@@ -165,8 +153,6 @@ FMetaObject& FMetaDatabase::Object(const FPathName& pathName) const {
     Assert(not pathName.empty());
     Assert(not pathName.Transaction.empty());
 
-    READSCOPELOCK(_lockRW);
-
     FMetaObject& obj = (*_objects.at(pathName));
     Assert(obj.RTTI_IsLoaded());
 
@@ -176,8 +162,6 @@ FMetaObject& FMetaDatabase::Object(const FPathName& pathName) const {
 FMetaObject* FMetaDatabase::ObjectIFP(const FPathName& pathName) const {
     Assert(not pathName.empty());
     Assert(not pathName.Transaction.empty());
-
-    READSCOPELOCK(_lockRW);
 
     const auto it = _objects.find(pathName);
     if (_objects.end() == it)
@@ -205,11 +189,16 @@ void FMetaDatabase::RegisterNamespace(const FMetaNamespace* metaNamespace) {
 
     Assert(metaNamespace->IsStarted());
 
-    WRITESCOPELOCK(_lockRW);
-
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
     Add_AssertUnique(_namespaces, metaNamespace);
+
+    for (const FMetaEnum* metaEnum : metaNamespace->Enums()) {
+        Assert(metaEnum);
+        Assert(metaEnum->Namespace() == metaNamespace);
+
+        Insert_AssertUnique(_enums, metaEnum->Name(), metaEnum);
+    }
 
     for (const FMetaClass* metaClass : metaNamespace->Classes()) {
         Assert(metaClass);
@@ -227,8 +216,6 @@ void FMetaDatabase::UnregisterNamespace(const FMetaNamespace* metaNamespace) {
 
     Assert(metaNamespace->IsStarted());
 
-    WRITESCOPELOCK(_lockRW);
-
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
     for (const FMetaClass* metaClass : metaNamespace->Classes()) {
@@ -237,6 +224,13 @@ void FMetaDatabase::UnregisterNamespace(const FMetaNamespace* metaNamespace) {
         Assert(metaClass->Namespace() == metaNamespace);
 
         Remove_AssertExistsAndSameValue(_classes, metaClass->Name(), metaClass);
+    }
+
+    for (const FMetaEnum* metaEnum : metaNamespace->Enums()) {
+        Assert(metaEnum);
+        Assert(metaEnum->Namespace() == metaNamespace);
+
+        Remove_AssertExistsAndSameValue(_enums, metaEnum->Name(), metaEnum);
     }
 
     Remove_AssertExists(_namespaces, metaNamespace);
@@ -253,8 +247,6 @@ void FMetaDatabase::UnregisterNamespace(const FMetaNamespace* metaNamespace) {
 const FMetaNamespace& FMetaDatabase::Namespace(const FName& name) const {
     Assert(not name.empty());
 
-    READSCOPELOCK(_lockRW);
-
     const auto it = std::find_if(_namespaces.begin(), _namespaces.end(), [&name](const FMetaNamespace* metaNamespace) {
         return (metaNamespace->Name() == name);
     });
@@ -266,8 +258,6 @@ const FMetaNamespace& FMetaDatabase::Namespace(const FName& name) const {
 const FMetaNamespace* FMetaDatabase::NamespaceIFP(const FName& name) const {
     Assert(not name.empty());
 
-    READSCOPELOCK(_lockRW);
-
     const auto it = std::find_if(_namespaces.begin(), _namespaces.end(), [&name](const FMetaNamespace* metaNamespace) {
         return (metaNamespace->Name() == name);
     });
@@ -277,8 +267,6 @@ const FMetaNamespace* FMetaDatabase::NamespaceIFP(const FName& name) const {
 //----------------------------------------------------------------------------
 const FMetaNamespace* FMetaDatabase::NamespaceIFP(const FStringView& name) const {
     Assert(not name.empty());
-
-    READSCOPELOCK(_lockRW);
 
     const auto it = std::find_if(_namespaces.begin(), _namespaces.end(), [&name](const FMetaNamespace* metaNamespace) {
         return (metaNamespace->Name() == name);
@@ -292,15 +280,11 @@ const FMetaNamespace* FMetaDatabase::NamespaceIFP(const FStringView& name) const
 const FMetaClass& FMetaDatabase::Class(const FName& name) const {
     Assert(not name.empty());
 
-    READSCOPELOCK(_lockRW);
-
     return (*_classes.at(name));
 }
 //----------------------------------------------------------------------------
 const FMetaClass* FMetaDatabase::ClassIFP(const FName& name) const {
     Assert(not name.empty());
-
-    READSCOPELOCK(_lockRW);
 
     const auto it = _classes.find(name);
 
@@ -310,12 +294,57 @@ const FMetaClass* FMetaDatabase::ClassIFP(const FName& name) const {
 const FMetaClass* FMetaDatabase::ClassIFP(const FStringView& name) const {
     Assert(not name.empty());
 
-    READSCOPELOCK(_lockRW);
-
     const hash_t h = FName::HashValue(name);
     const auto it = _classes.find_like(name, h);
 
     return (_classes.end() == it ? nullptr : it->second);
+}
+//----------------------------------------------------------------------------
+// Enums
+//----------------------------------------------------------------------------
+const FMetaEnum& FMetaDatabase::Enum(const FName& name) const {
+    Assert(not name.empty());
+
+    return (*_enums.at(name));
+}
+//----------------------------------------------------------------------------
+const FMetaEnum* FMetaDatabase::EnumIFP(const FName& name) const {
+    Assert(not name.empty());
+
+    const auto it = _enums.find(name);
+
+    return (_enums.end() == it ? nullptr : it->second);
+}
+//----------------------------------------------------------------------------
+const FMetaEnum* FMetaDatabase::EnumIFP(const FStringView& name) const {
+    Assert(not name.empty());
+
+    const hash_t h = FName::HashValue(name);
+    const auto it = _enums.find_like(name, h);
+
+    return (_enums.end() == it ? nullptr : it->second);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FMetaDatabaseReadable::FMetaDatabaseReadable()
+:   _db(FMetaDatabase::Get()/* Get() is not public */) {
+    _db._lockRW.LockRead();
+}
+//----------------------------------------------------------------------------
+FMetaDatabaseReadable::~FMetaDatabaseReadable() {
+    _db._lockRW.UnlockRead();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FMetaDatabaseReadWritable::FMetaDatabaseReadWritable()
+:   _db(FMetaDatabase::Get()/* Get() is not public */) {
+    _db._lockRW.LockWrite();
+}
+//----------------------------------------------------------------------------
+FMetaDatabaseReadWritable::~FMetaDatabaseReadWritable() {
+    _db._lockRW.UnlockWrite();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

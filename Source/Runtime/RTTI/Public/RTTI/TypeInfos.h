@@ -17,9 +17,10 @@ enum class ETypeFlags : u32 {
     Tuple                   = 1<<1,
     List                    = 1<<2,
     Dico                    = 1<<3,
-    Native                  = 1<<4,
-    POD                     = 1<<5,
-    TriviallyDestructible   = 1<<6,
+    Enum                    = 1<<4,
+    Native                  = 1<<5,
+    POD                     = 1<<6,
+    TriviallyDestructible   = 1<<7,
 };
 ENUM_FLAGS(ETypeFlags);
 //----------------------------------------------------------------------------

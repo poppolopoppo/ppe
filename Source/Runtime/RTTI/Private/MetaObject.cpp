@@ -6,7 +6,7 @@
 #include "MetaObjectHelpers.h"
 #include "MetaTransaction.h"
 
-#include "RTTI_Namespace.h"
+#include "RTTI/Namespace.h"
 
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
@@ -78,7 +78,7 @@ void FMetaObject::RTTI_Unexport() {
 void FMetaObject::RTTI_Load(ILoadContext& context) {
     Assert(not RTTI_IsLoaded());
     Assert(RTTI_IsUnloaded());
-    
+
     _flags = _flags + EObjectFlags::Loaded - EObjectFlags::Unloaded;
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
@@ -101,7 +101,7 @@ void FMetaObject::RTTI_Load(ILoadContext& context) {
 void FMetaObject::RTTI_Unload(IUnloadContext& context) {
     Assert(RTTI_IsLoaded());
     Assert(not RTTI_IsUnloaded());
-    
+
     context.OnUnloadObject(*this);
 
     _flags = _flags - EObjectFlags::Loaded + EObjectFlags::Unloaded;

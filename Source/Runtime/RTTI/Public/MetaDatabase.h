@@ -1,8 +1,8 @@
 #pragma once
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
-#include "Typedefs.h"
+#include "RTTI/Typedefs.h"
 
 #include "Container/HashMap.h"
 #include "Container/Vector.h"
@@ -19,6 +19,8 @@ FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+class FMetaDatabaseReadable;
+class FMetaDatabaseReadWritable;
 class PPE_RTTI_API FMetaDatabase : Meta::TSingleton<FMetaDatabase> {
 public:
     /* Singleton */
@@ -26,7 +28,6 @@ public:
 #ifdef WITH_PPE_ASSERT
     using Meta::TSingleton<FMetaDatabase>::HasInstance;
 #endif
-    using Meta::TSingleton<FMetaDatabase>::Get;
 
     static void Create() { Meta::TSingleton<FMetaDatabase>::Create(); }
     using Meta::TSingleton<FMetaDatabase>::Destroy;
@@ -64,8 +65,19 @@ public:
     const FMetaClass* ClassIFP(const FName& name) const;
     const FMetaClass* ClassIFP(const FStringView& name) const;
 
+    /* Enums */
+
+    const FMetaEnum& Enum(const FName& name) const;
+    const FMetaEnum* EnumIFP(const FName& name) const;
+    const FMetaEnum* EnumIFP(const FStringView& name) const;
+
 private:
     friend Meta::TSingleton<FMetaDatabase>;
+    friend class FMetaDatabaseReadable;
+    friend class FMetaDatabaseReadWritable;
+
+    // must use FMetaDatabaseReadable or FMetaDatabaseReadWritable helpers (batch your work)
+    //using Meta::TSingleton<FMetaDatabase>::Get;
 
     FMetaDatabase();
     ~FMetaDatabase();
@@ -76,13 +88,35 @@ private:
     HASHMAP(MetaDatabase, FName, SMetaTransaction) _transactions;
     HASHMAP(MetaDatabase, FPathName, SMetaObject) _objects;
     HASHMAP(MetaDatabase, FName, const FMetaClass*) _classes;
+    HASHMAP(MetaDatabase, FName, const FMetaEnum*) _enums;
 
     VECTORINSITU(MetaDatabase, const FMetaNamespace*, 8) _namespaces;
+
 };
 //----------------------------------------------------------------------------
-inline FMetaDatabase& MetaDB() {
-    return FMetaDatabase::Get();
-}
+class FMetaDatabaseReadable : Meta::FNonCopyableNorMovable {
+public:
+    PPE_RTTI_API FMetaDatabaseReadable();
+    PPE_RTTI_API ~FMetaDatabaseReadable();
+
+    const FMetaDatabase& operator *() const { return _db; }
+    const FMetaDatabase* operator ->() const { return &_db; }
+
+private:
+    const FMetaDatabase& _db;
+};
+//----------------------------------------------------------------------------
+class FMetaDatabaseReadWritable : Meta::FNonCopyableNorMovable {
+public:
+    PPE_RTTI_API FMetaDatabaseReadWritable();
+    PPE_RTTI_API ~FMetaDatabaseReadWritable();
+
+    FMetaDatabase& operator *() const { return _db; }
+    FMetaDatabase* operator ->() const { return &_db; }
+
+private:
+    FMetaDatabase& _db;
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

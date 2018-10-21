@@ -1,8 +1,9 @@
 #pragma once
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
 #include "RTTI_fwd.h"
+#include "RTTI/Typedefs.h"
 
 #include "Container/Vector.h"
 #include "Memory/RefPtr.h"

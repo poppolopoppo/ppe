@@ -4,8 +4,8 @@
 
 #include "RTTI.h"
 
-#include "RTTI_Namespace.h"
-#include "RTTI_Namespace-impl.h"
+#include "RTTI/Namespace.h"
+#include "RTTI/Namespace-impl.h"
 
 #include "MetaDatabase.h"
 

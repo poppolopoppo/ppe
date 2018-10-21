@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Atom.h"
+#include "RTTI/AtomHelpers.h"
 
-#include "AtomVisitor.h"
+#include "RTTI/AtomVisitor.h"
 
 #include "IO/StringBuilder.h"
 
@@ -11,16 +11,28 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FString FAtom::ToString() const {
-    FStringBuilder oss;
-    oss << *this;
-    return oss.ToString();
+FStackLocalAtom::FStackLocalAtom(const void* data, size_t sizeInBytes, const PTypeTraits& traits)
+    : _traits(traits) {
+    Assert(_traits);
+    Assert(_traits->SizeInBytes() == sizeInBytes);
+
+    bool usingSysAlloca = true;
+    if (nullptr == data) {
+        usingSysAlloca = false;
+        data = Alloca(sizeInBytes);
+    }
+
+    Assert(data);
+    _data.Reset((void*)data, usingSysAlloca, false/* unused */);
+
+    _traits->Construct(_data.Get());
 }
 //----------------------------------------------------------------------------
-FWString FAtom::ToWString() const {
-    FWStringBuilder oss;
-    oss << *this;
-    return oss.ToString();
+FStackLocalAtom::~FStackLocalAtom() {
+    _traits->Destroy(_data.Get());
+
+    if (not UsingSysAlloca())
+        FreeAlloca(_data.Get(), _traits->SizeInBytes());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -32,14 +44,16 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, const RTTI::FAtom& atom) {
-    PrettyPrint(oss, atom);
-    return oss;
+FString ToString(const RTTI::FAtom& atom) {
+    FStringBuilder oss;
+    RTTI::PrettyPrint(oss, atom);
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
-FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FAtom& atom) {
-    PrettyPrint(oss, atom);
-    return oss;
+FWString ToWString(const RTTI::FAtom& atom) {
+    FWStringBuilder oss;
+    RTTI::PrettyPrint(oss, atom);
+    return oss.ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

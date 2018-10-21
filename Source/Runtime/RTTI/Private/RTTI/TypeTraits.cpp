@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "TypeTraits.h"
+#include "RTTI/TypeTraits.h"
 
-#include "AtomVisitor.h"
+#include "RTTI/AtomVisitor.h"
 
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
@@ -106,6 +106,7 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::ETypeFlags flags) {;
     if (flags & RTTI::ETypeFlags::List)     { oss << sep << "List"; }
     if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << "Dico"; }
     if (flags & RTTI::ETypeFlags::Native)   { oss << sep << "Native"; }
+    if (flags & RTTI::ETypeFlags::Enum)     { oss << sep << "Enum"; }
     if (flags & RTTI::ETypeFlags::POD)      { oss << sep << "POD"; }
     if (flags & RTTI::ETypeFlags::TriviallyDestructible) { oss << sep << "TriviallyDestructible"; }
 
@@ -119,6 +120,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETypeFlags flags) {
     if (flags & RTTI::ETypeFlags::Tuple)    { oss << sep << L"Tuple"; ;}
     if (flags & RTTI::ETypeFlags::List)     { oss << sep << L"List"; }
     if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << L"Dico"; }
+    if (flags & RTTI::ETypeFlags::Enum)     { oss << sep << L"Enum"; }
     if (flags & RTTI::ETypeFlags::Native)   { oss << sep << L"Native"; }
     if (flags & RTTI::ETypeFlags::POD)      { oss << sep << L"POD"; }
     if (flags & RTTI::ETypeFlags::TriviallyDestructible) { oss << sep << L"TriviallyDestructible"; }

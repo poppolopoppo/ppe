@@ -1,10 +1,10 @@
 #pragma once
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
-#include "Atom.h"
-#include "Typedefs.h"
-#include "TypeTraits.h"
+#include "RTTI/Atom.h"
+#include "RTTI/Typedefs.h"
+#include "RTTI/TypeTraits.h"
 
 #include "IO/TextWriter_fwd.h"
 

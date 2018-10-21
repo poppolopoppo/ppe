@@ -2,7 +2,8 @@
 
 #include "MetaTransaction.h"
 
-#include "AtomVisitor.h" // Linearize()
+#include "RTTI/AtomVisitor.h" // Linearize()
+
 #include "MetaDatabase.h"
 #include "MetaObject.h"
 #include "MetaObjectHelpers.h" // DeepEquals()
@@ -321,12 +322,15 @@ void FMetaTransaction::Load() {
 #endif
 
     // finally exports everything to database
-    FMetaDatabase& metaDB = MetaDB();
-    metaDB.RegisterTransaction(this);
+    {
+        const FMetaDatabaseReadWritable metaDB;
 
-    for (const SMetaObject& object : _exportedObjects) {
-        Assert(object->RTTI_Outer() == this);
-        metaDB.RegisterObject(object);
+        metaDB->RegisterTransaction(this);
+
+        for (const SMetaObject& object : _exportedObjects) {
+            Assert(object->RTTI_Outer() == this);
+            metaDB->RegisterObject(object);
+        }
     }
 
 #ifdef USE_DEBUG_LOGGER
@@ -404,14 +408,16 @@ void FMetaTransaction::Unload() {
     FTransactionUnloadContext unloadContext(*this);
 
     // first unregister everything from database
-    FMetaDatabase& metaDB = MetaDB();
+    {
+        const FMetaDatabaseReadWritable metaDB;
 
-    for (const SMetaObject& object : _exportedObjects) {
-        Assert(object->RTTI_Outer() == this);
-        metaDB.UnregisterObject(object);
+        for (const SMetaObject& object : _exportedObjects) {
+            Assert(object->RTTI_Outer() == this);
+            metaDB->UnregisterObject(object);
+        }
+
+        metaDB->UnregisterTransaction(this);
     }
-
-    metaDB.UnregisterTransaction(this);
 
     // unload every loaded object
     for (const SMetaObject& object : _loadedObjects) {
@@ -463,14 +469,13 @@ void FMetaTransaction::Linearize(FLinearizedTransaction* linearized) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaTransaction::FLoadingScope::FLoadingScope(FMetaTransaction* transaction)
+FMetaTransaction::FLoadingScope::FLoadingScope(FMetaTransaction& transaction)
 :   Transaction(transaction) {
-    Assert(transaction);
-    Transaction->Load();
+    Transaction.Load();
 }
 //----------------------------------------------------------------------------
 FMetaTransaction::FLoadingScope::~FLoadingScope() {
-    Transaction->Unload();
+    Transaction.Unload();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

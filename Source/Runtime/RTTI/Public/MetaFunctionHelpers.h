@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
 #include "MetaFunction.h"
 #include "MetaObject.h"

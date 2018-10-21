@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NativeTypes.h"
+#include "RTTI/NativeTypes.h"
 
 #include "Container/AssociativeVector.h"
 #include "Container/Vector.h"

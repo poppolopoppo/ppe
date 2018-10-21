@@ -1,22 +1,16 @@
 #pragma once
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
-#include "Typedefs.h"
 #include "MetaNamespace.h"
 #include "MetaFunction.h"
 #include "MetaProperty.h"
+#include "RTTI/Typedefs.h"
 
 #include "Container/HashMap.h"
 #include "Container/Vector.h"
 #include "Memory/MemoryDomain.h"
 #include "IO/TextWriter_fwd.h"
-
-#if USE_PPE_MEMORYDOMAINS
-#   define NEW_RTTI(T) new (*::PPE::RTTI::MetaClass<T>()) T
-#else
-#   define NEW_RTTI(T) NEW_REF(MetaObject, T)
-#endif
 
 namespace PPE {
 namespace RTTI {
@@ -142,6 +136,8 @@ protected: // for access in CreateInstance()
     mutable FMemoryTracking _trackingData;
 #endif
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
 using TMetaClass = typename T::RTTI_FMetaClass;
