@@ -285,7 +285,7 @@ size_t FWindowsPlatformString::CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, s
     Assert(written >= length);
     Assert(written < capacity);
 
-    dst[written] = L'\0'; // MultiByteToWideChar(() won't use a null terminator since we specified the length of input
+    dst[written] = L'\0'; // MultiByteToWideChar() won't use a null terminator since we specified the length of input
 
     return (written + 1);
 }
@@ -315,7 +315,7 @@ size_t FWindowsPlatformString::WCHAR_to_CHAR(ECodePage codePage, char* dst, size
     Assert(written >= length);
     Assert(written < capacity);
 
-    dst[written] = '\0'; // WideCharToMultiByte(() won't use a null terminator since we specified the length of input
+    dst[written] = '\0'; // WideCharToMultiByte() won't use a null terminator since we specified the length of input
 
     return (written + 1);
 }
