@@ -1,16 +1,15 @@
 #include "stdafx.h"
 
-#include "Any.h"
-#include "Atom.h"
-#include "AtomVisitor.h"
 #include "MetaTransaction.h"
-#include "NativeTypes.h"
-#include "TypeInfos.h"
-
-#include "RTTI_Macros.h"
-#include "RTTI_Macros-impl.h"
-#include "RTTI_Namespace.h"
-#include "RTTI_Namespace-impl.h"
+#include "RTTI/Any.h"
+#include "RTTI/Atom.h"
+#include "RTTI/AtomVisitor.h"
+#include "RTTI/Macros.h"
+#include "RTTI/Macros-impl.h"
+#include "RTTI/Namespace.h"
+#include "RTTI/Namespace-impl.h"
+#include "RTTI/NativeTypes.h"
+#include "RTTI/TypeInfos.h"
 
 #include "Binary/BinarySerializer.h"
 #include "Json/Json.h"
@@ -68,12 +67,21 @@ struct FStructAsTuple {
     TVector<int> Weights;
 };
 //----------------------------------------------------------------------------
+enum ETest : u32 {
+    A, B, C, D
+};
+RTTI_ENUM_HEADER(, ETest);
+RTTI_ENUM_BEGIN(RTTI_UnitTest, ETest)
+RTTI_ENUM_VALUE(A)
+RTTI_ENUM_VALUE(B)
+RTTI_ENUM_VALUE(C)
+RTTI_ENUM_VALUE(D)
+RTTI_ENUM_END()
+//----------------------------------------------------------------------------
 FWD_REFPTR(RTTITestSimple_);
 class FRTTITestSimple_ : public RTTI::FMetaObject {
 public:
-    enum ETest : u32 {
-        A, B, C, D
-    };
+
 
     RTTI_CLASS_HEADER(FRTTITestSimple_, RTTI::FMetaObject);
 
@@ -100,17 +108,29 @@ RTTI_PROPERTY_PRIVATE_FIELD(_assoc)
 RTTI_PROPERTY_PRIVATE_FIELD(_uInt64Dico)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
+enum class ETestEnum32 : u32 {
+    A = 0, B, C
+};
+RTTI_ENUM_HEADER(, ETestEnum32);
+RTTI_ENUM_BEGIN(RTTI_UnitTest, ETestEnum32)
+RTTI_ENUM_VALUE(A)
+RTTI_ENUM_VALUE(B)
+RTTI_ENUM_VALUE(C)
+RTTI_ENUM_END()
+//----------------------------------------------------------------------------
+enum class ETestEnum64 : u64 {
+    A = 1 << 0, B = 1 << 1, C = 1 << 2
+};
+RTTI_ENUM_HEADER(, ETestEnum64);
+RTTI_ENUM_BEGIN(RTTI_UnitTest, ETestEnum64)
+RTTI_ENUM_VALUE(A)
+RTTI_ENUM_VALUE(B)
+RTTI_ENUM_VALUE(C)
+RTTI_ENUM_END()
+//----------------------------------------------------------------------------
 FWD_REFPTR(RTTITestParent_);
 class FRTTITestParent_ : public RTTI::FMetaObject {
 public:
-    enum class ETestEnum32 : u32 {
-        A = 0, B, C
-    };
-
-    enum class ETestEnum64 : u64 {
-        A = 1<<0, B=1<<1, C = 1<<2
-    };
-
     RTTI_CLASS_HEADER(FRTTITestParent_, RTTI::FMetaObject);
 
     FRTTITestParent_() {}
@@ -470,16 +490,15 @@ static NO_INLINE void Test_Any_() {
     //AssertRelease(dico2_anyAny.Equals(RTTI::MakeAny(float3(1, 2, 3)))); %TODO%
 }
 //----------------------------------------------------------------------------
-static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Serialize::ISerializer* serializer, const FFilename& filename) {
+static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Serialize::ISerializer& serializer, const FFilename& filename) {
     Assert(input.NumTopObjects());
-    Assert(serializer);
 
-    const FFilename fname_binz = filename.WithReplacedExtension(FFS::BinZ());
+    const FFilename fname_binz = filename.WithReplacedExtension(FFS::Z());
     const FFilename& fname_raw = filename;
 
     MEMORYSTREAM(NativeTypes) uncompressed;
     {
-        serializer->Serialize(&uncompressed, &input);
+        serializer.Serialize(filename.ToWString(), input, &uncompressed);
 #if 0
         auto compressed = VFS_OpenBinaryWritable(filename, EAccessPolicy::Truncate);
         LZJB::CompressMemory(compressed.get(), uncompressed.MakeView());
@@ -521,7 +540,7 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
         for (size_t i = 0; i < k; ++i)
             Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
 
-        serializer->Deserialize(&output, decompressed.MakeConstView());
+        Serialize::ISerializer::Deserialize(serializer, filename.ToWString(), decompressed.MakeView(), &output);
     }
 
     AssertRelease(input.NumTopObjects() == output.NumTopObjects());
@@ -646,7 +665,7 @@ static NO_INLINE void Test_Serialize_() {
                 import.RegisterObject(t.get());
             }
         }
-        const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(&import);
+        const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(import);
         RTTI::FMetaTransaction input(RTTI::FName(MakeStringView("UnitTest_Input")));
         {
             FWStringBuilder oss;
@@ -659,20 +678,20 @@ static NO_INLINE void Test_Serialize_() {
 
             ReportAllTrackingData(); // inspect this transaction allocations
         }
-        const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(&input);
+        const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(input);
         {
-            Serialize::FBinarySerializer binary;
-            Test_Serializer_(input, &binary, L"Saved:/RTTI/robotapp_bin.bin");
+            Serialize::PSerializer bin{ Serialize::FBinarySerializer::Get() };
+            Test_Serializer_(input, *bin, L"Saved:/RTTI/robotapp_bin.bin");
         }
         {
-            Serialize::FJsonSerializer json;
-            json.SetMinify(minify);
-            Test_Serializer_(input, &json, L"Saved:/RTTI/robotapp_json.json");
+            Serialize::PSerializer json{ Serialize::FJsonSerializer::Get() };
+            json->SetMinify(minify);
+            Test_Serializer_(input, *json, L"Saved:/RTTI/robotapp_json.json");
         }
         {
-            Serialize::FTextSerializer text;
-            text.SetMinify(minify);
-            Test_Serializer_(input, &text, L"Saved:/RTTI/robotapp_text.txt");
+            Serialize::PSerializer text{ Serialize::FTextSerializer::Get() };
+            text->SetMinify(minify);
+            Test_Serializer_(input, *text, L"Saved:/RTTI/robotapp_text.txt");
         }
     }
 
