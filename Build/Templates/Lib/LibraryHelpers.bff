@@ -84,8 +84,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
                 ^PreprocessorDefinitions    + ';$define$'
             }
 
-            .ProjectIncludes    + .IncludePaths
-                                + "$SourcePath$"
+            .ProjectIncludes            + .IncludePaths
+                                        + .SourcePath
 
             // Only for VCXProject
             ForEach( .path in .ProjectIncludes )
@@ -256,12 +256,11 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .ProjectCleanCommand    = '$VisualStudioFBuildCommand$ $VSCleanOptions$ -clean "$ProjectName$-Purge-$Platform$-$Config$"'
         .Platform               = .SolutionPlatform
 
-        .ForcedIncludes         = '$SourcePath$/winnt_version.h' ; see MSVCBase.bff
+        .ForcedIncludes         = '"$SourcePath$/winnt_version.h"' ; see MSVCBase.bff
         ForEach( .path in .ProjectForcedIncludes )
         {
-            ^ForcedIncludes     + '"$path$";'
+            ^ForcedIncludes     + ';"$path$"'
         }
-        .ForcedIncludes         + '^$(NMakeForcedIncludes)'
 #endif
     ]
 

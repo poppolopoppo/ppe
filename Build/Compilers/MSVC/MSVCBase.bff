@@ -10,7 +10,7 @@
 ; active l'inlining simple en debug (/Ob1)
 //#define USE_INLINING_IN_DEBUG
 ; active l'utilistion de /analyze pour une meilleure détéction d'erreur (mais des builds bcp plus lent)
-//#define USE_MSVC_ANALYZE
+;#define USE_MSVC_ANALYZE //%_NOCOMMIT%
 ; active le folding des COMDAT en final (exe plus petit, pb pour debugger par contre)
 #define USE_MSVC_IDENTICAL_COMDAT_FOLDING
 ; link avec la libstd statiquement plutot que dynamiquement
@@ -65,11 +65,15 @@
     .IncludePaths = {}
     .SystemIncludePaths = {}
 
+    .AdditionalOptions = ''
+    + ' /Zc:wchar_t'        ; active le support de wchar_t comme type natif
+    + ' /Zc:forScope'       ; interdit d'acceder à l'iterateur d'un for en dehors de son scope (comportement std)
+    + ' /W4'                ; tous les warnings de level 4 sont reportés
+    + ' /TP'                ; considère que toutes les sources sont du C++
+
     .CompilerOptions = ''
     + ' /showIncludes'      ; affiche les includes pdt la compilation, pratique pour certa
-    + ' /TP'                ; considère que toutes les sources sont du C++
     + ' /nologo'            ; pas de message de copyright lors de la compilation
-    + ' /W4'                ; tous les warnings de level 4 sont reportés
     + ' /WX'                ; les warnings génèrent des erreurs !
     + ' /Gm-'               ; minimal rebuild est incompatible avec FastBuild qui gère cette feature lui même
     + ' /GF'                ; fusion des chaînes de caractères identiques (string pooling)
@@ -80,10 +84,9 @@
     + ' /bigobj'            ; augmente le nombre des sections qu'un fichier objet peut contenir (les obj peuvent être plus gros)
     + ' /openmp-'           ; désactivation du support de openmp (parallèlisation automatique)
     ;+ ' /Za'                ; désactivation des extensions C++ de Visual non ANSI (https://msdn.microsoft.com/fr-fr/library/0k0w269d.aspx) FAIT PETER WINDOWS SDK :/
-    + ' /Zc:wchar_t'        ; active le support de wchar_t comme type natif
-    + ' /Zc:forScope'       ; interdit d'acceder à l'iterateur d'un for en dehors de son scope (comportement std)
     ;+ ' /errorreport:prompt'; affiche une boite de dialogue en cas de crash du compilo
     + ' /c "%1"'
+    + .AdditionalOptions
 
 #if USE_MSVC_ANALYZE
     Print( 'Using common errors detection warnings : /analyze.' )
