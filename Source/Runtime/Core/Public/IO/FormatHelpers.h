@@ -257,12 +257,16 @@ struct TJoin {
         : First(first), Last(last), Separator(separator) {}
 };
 template <typename _It, typename _Sep>
-TJoin<_It, _Sep> Join(_It first, _It last, _Sep separator) {
+auto Join(_It first, _It last, _Sep separator) {
     return TJoin<_It, _Sep>(first, last, separator);
 }
 template <typename _It, typename _Sep>
-TJoin<_It, _Sep> Join(const TIterable<_It>& iterable, _Sep separator) {
+auto Join(const TIterable<_It>& iterable, _Sep separator) {
     return TJoin<_It, _Sep>(iterable.begin(), iterable.end(), separator);
+}
+template <typename T, typename _Sep>
+auto Join(const TMemoryView<T>& view, _Sep separator) {
+    return TJoin<typename TMemoryView<T>::iterator, _Sep>(view.begin(), view.end(), separator);
 }
 template <typename T>
 auto CommaSeparated(const TMemoryView<T>& data) {
