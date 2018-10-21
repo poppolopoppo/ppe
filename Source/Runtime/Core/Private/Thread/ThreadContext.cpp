@@ -24,6 +24,8 @@
 #   include "Thread/ReadWriteLock.h"
 #endif
 
+#include <atomic>
+
 namespace PPE {
 LOG_CATEGORY(PPE_CORE_API, Thread)
 //----------------------------------------------------------------------------

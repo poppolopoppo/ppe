@@ -9,6 +9,8 @@
 #include "HAL/Windows/LastError.h"
 #include "HAL/Windows/WindowsWindow.h"
 
+#include "Diagnostic/Logger.h"
+
 namespace PPE {
 namespace Application {
 LOG_CATEGORY(, Survey);
