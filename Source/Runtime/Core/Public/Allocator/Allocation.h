@@ -15,13 +15,14 @@ namespace PPE {
 #if USE_PPE_MEMORYDOMAINS
 template <typename _Allocator, typename _Tag>
 using TDecorateAllocator = TTrackingAllocator< _Tag, _Allocator >;
+#   define DECORATE_ALLOCATOR(_Domain, ...) \
+        ::PPE::TDecorateAllocator< COMMA_PROTECT(__VA_ARGS__), MEMORYDOMAIN_TAG(_Domain) >
 #else
 template <typename _Allocator, typename _Tag>
 using TDecorateAllocator = _Allocator;
+#   define DECORATE_ALLOCATOR(_Domain, ...) \
+        COMMA_PROTECT(__VA_ARGS__)
 #endif
-//----------------------------------------------------------------------------
-#define DECORATE_ALLOCATOR(_Domain, ...) \
-    ::PPE::TDecorateAllocator< COMMA_PROTECT(__VA_ARGS__), MEMORYDOMAIN_TAG(_Domain) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
