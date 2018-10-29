@@ -60,7 +60,7 @@ typedef int64_t     i64;
 #define WIDESTRING_0(_X) WIDESTRING_1(_X)
 #define WIDESTRING(_X) WIDESTRING_0(_X)
 //----------------------------------------------------------------------------
-#define WSTRINGIZE(_X) WIDESTRING(STRINGIZE(_X))
+#define WSTRINGIZE(...) WIDESTRING(STRINGIZE(__VA_ARGS__))
 //----------------------------------------------------------------------------
 #define CONCAT_I(_X, _Y) _X ## _Y
 #define CONCAT_OO(_ARGS) CONCAT_I ## _ARGS

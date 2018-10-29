@@ -74,8 +74,8 @@ inline void SetAssertionHandler(FAssertHandler ) {}
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#define Assert(...) AssertMessage(COMMA_PROTECT(__VA_ARGS__), WIDESTRING(#__VA_ARGS__))
-#define Assert_NoAssume(...) AssertMessage_NoAssume(COMMA_PROTECT(__VA_ARGS__), WIDESTRING(#__VA_ARGS__))
+#define Assert(...) AssertMessage(COMMA_PROTECT(__VA_ARGS__), WSTRINGIZE(__VA_ARGS__))
+#define Assert_NoAssume(...) AssertMessage_NoAssume(COMMA_PROTECT(__VA_ARGS__), WSTRINGIZE(__VA_ARGS__))
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -137,8 +137,8 @@ inline void SetAssertionReleaseHandler(FAssertReleaseHandler ) {}
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#define AssertRelease(...) AssertReleaseMessage(COMMA_PROTECT(__VA_ARGS__), WIDESTRING(#__VA_ARGS__))
-#define AssertRelease_NoAssume(...) AssertReleaseMessage_NoAssume(COMMA_PROTECT(__VA_ARGS__), WIDESTRING(#__VA_ARGS__))
+#define AssertRelease(...) AssertReleaseMessage(COMMA_PROTECT(__VA_ARGS__), WSTRINGIZE(__VA_ARGS__))
+#define AssertRelease_NoAssume(...) AssertReleaseMessage_NoAssume(COMMA_PROTECT(__VA_ARGS__), WSTRINGIZE(__VA_ARGS__))
 
 #define AssertNotReached() AssertReleaseFailed(L"unreachable state")
 #define AssertNotImplemented() AssertReleaseFailed(L"not implemented")
