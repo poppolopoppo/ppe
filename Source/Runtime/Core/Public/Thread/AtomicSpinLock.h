@@ -42,10 +42,15 @@ public:
 
     struct FTryScope : Meta::FNonCopyableNorMovable {
         FAtomicSpinLock& Barrier;
-        const bool Locked;
+        bool Locked;
         FTryScope(FAtomicSpinLock& barrier) NOEXCEPT
         :   Barrier(barrier)
         ,   Locked(barrier.TryLock()) {
+        }
+        void Unlock() {
+            Assert_NoAssume(Locked);
+            Barrier.Unlock();
+            Locked = false;
         }
         ~FTryScope() NOEXCEPT {
             if (Locked)

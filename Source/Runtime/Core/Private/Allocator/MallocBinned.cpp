@@ -789,7 +789,9 @@ static void DanglingFree_(FBinnedThreadCache_& tc, FBinnedChunk_* ch, FBinnedBlo
     Assert(ch);
     Assert(blk);
     Assert_NoAssume(ch->NumBlocksInUse);
-    {
+
+    // polling to avoid dead lock (it's common to have many thread dying at the same time)
+    for (;;) {
         // first lock the chunk (only useful for dying thread caches)
         FAtomicSpinLock::FUniqueLock lockChunk(ch->ThreadBarrier);
 
@@ -798,7 +800,10 @@ static void DanglingFree_(FBinnedThreadCache_& tc, FBinnedChunk_* ch, FBinnedBlo
             FBinnedThreadCache_& oc = (*ch->ThreadCache);
 
             // then lock the thread cache before adding the pending block
-            const FAtomicSpinLock::FScope lockThread(oc.DanglingBarrier);
+            const FAtomicSpinLock::FTryScope lockThread(oc.DanglingBarrier);
+            if (not lockThread.Locked)
+                continue; // try again, but release the chunk barrier to avoid dead lock
+
             Assert_NoAssume(ch->CheckCanary());
             Assert_NoAssume(&oc == ch->ThreadCache);
             Assert_NoAssume(FBinnedThreadCache_::InvalidBlockRef != uintptr_t(oc.DanglingBlocks));
@@ -812,7 +817,10 @@ static void DanglingFree_(FBinnedThreadCache_& tc, FBinnedChunk_* ch, FBinnedBlo
         else {
             FBinnedGlobalCache_& gc = GBinnedGlobalCache_;
 
-            FAtomicSpinLock::FUniqueLock lockGlobal(gc.Barrier);
+            FAtomicSpinLock::FTryScope lockGlobal(gc.Barrier);
+            if (not lockGlobal.Locked)
+                continue; // try again, but release the chunk barrier to avoid dead lock
+
             Assert_NoAssume(ContainsChunk_(gc.DanglingChunks, ch));
 
             // remove the dangling chunk from the global cache
@@ -869,6 +877,8 @@ static void DanglingFree_(FBinnedThreadCache_& tc, FBinnedChunk_* ch, FBinnedBlo
         bk.UsedChunks = ch;
 
         ONLY_IF_ASSERT(PoisonChunk_(ch));
+
+        break;
     }
 
     // needed to avoid an error due to call to FMallocBinned::Free() below

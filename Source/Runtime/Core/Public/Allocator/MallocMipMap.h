@@ -87,14 +87,14 @@ private:
 
     u64 MipAvailableSizeInBytes_(u32 mipIndex) const;
 
-    // These flags allows to manipulate the binary tree (almost) without recursing
+    // These flags allow to manipulate the binary tree (almost) without recursing
     // - We can store 32 blocks of 1 page which can be hierarchically collapsed up to 1 block of 32 pages
     // - Allocating is O(1) and deallocating is O(log2(level)) (but still very fast due to high memory coherency)
     // - Everything is done atomically, but there's contention when a new chunk of 32 blocks must be committed (amortized in time)
     // - There's a maximum reserved size which can't grow, but it's only consumed if needed and reserved only in virtual memory (don't commit the pages initially)
     //   so don't be afraid to put a fair amount of reserve
     // - You should call GarbageCollect() once in a while to release some committed chunks (can only release the last chunk if empty)
-    // #NOTE: this is templated since the algorithm could fit well inside a VRAM allocator
+    // #NOTE: this is templated since the algorithm could also fit well inside a VRAM allocator
 
     static constexpr u64 GLevelMasks_[6] = {
         0x0000000000000001ull,
@@ -400,11 +400,10 @@ void TMallocMipMap<_VMemTraits>::GarbageCollect() {
     // sadly due to fragmentation blocks maybe too scattered to release a
     // substantial amount of virtual memory
 
-    const FReadWriteLock::FScopeLockWrite GClockWrite(_GClockRW);
+    const FReadWriteLock::FScopeLockWrite GClockWrite(_GClockRW); // this is an exclusive process
 
-    u32 mipIndex = _numMipMaps;
-    while (mipIndex) {
-        FMipMap& mipMap = _mipMaps[--mipIndex];
+    for (u32 mipIndex = _numMipMaps; mipIndex; --mipIndex) {
+        FMipMap& mipMap = _mipMaps[mipIndex];
         if (mipMap.MipMask.load(std::memory_order_relaxed) == GEmptyMipMask_) {
             Assert_NoAssume(0 == mipMap.SizeMask);
 
