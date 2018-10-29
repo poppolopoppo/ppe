@@ -275,7 +275,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     + ' /GS'                ; vérification de la sécurité de la mémoire tampon
     + ' /sdl'               ; Security Development Lifecycle checks (https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx)
     + ' /RTC1'              ; vérifications des erreurs au moment de l'exécution (https://msdn.microsoft.com/fr-fr/library/8wtf2dfz.aspx) ; coute trop cher
-    Print( "Using MSVC runtime security checks : /GS, /sdl, /RTC1" )
+    Print( "Using MSVC runtime security checks in debug : /GS, /sdl, /RTC1" )
 #endif
 #if USE_INLINING_IN_DEBUG
     .DebugOptimisations
@@ -286,8 +286,13 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .FastDebugOptimisations = ''
     + ' /O2'                ; optimisations favorisant la vitesse
     + ' /Oy-'               ; n'empêche pas la création des pointeurs de frame sur la pile des appels
-    + ' /GS-'               ; vérification de la sécurité de la mémoire tampon
     + ' /Gw-'               ; pas d'optimisations des données globales
+#if USE_MSVC_RUNTIME_CHECKS
+    .FastDebugOptimisations
+    + ' /GS'                ; vérification de la sécurité de la mémoire tampon
+    + ' /sdl'               ; Security Development Lifecycle checks (https://msdn.microsoft.com/fr-fr/library/jj161081(v=vs.140).aspx)
+    Print( "Using MSVC runtime security checks in fast debug : /GS, /sdl" )
+#endif
 
     .ReleaseOptimisations = ''
     + ' /O2'                ; optimisations favorisant la vitesse
