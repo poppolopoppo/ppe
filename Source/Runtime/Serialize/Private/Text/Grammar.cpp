@@ -9,13 +9,17 @@
 #include "Parser/ParseStatement.h"
 
 #include "MetaObject.h"
-#include "NativeTypes.h"
+#include "RTTI/Macros-impl.h"
 
 #include "IO/Format.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
 #include "Thread/ThreadContext.h"
+
+// workarounding a bug in Profiling : c4702 unreachable code - #TODO test after a few updates that this is no more necessary
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4702)
 
 namespace PPE {
 namespace Serialize {
@@ -1240,3 +1244,5 @@ Parser::PCParseStatement FGrammarStartup::ParseStatement(Parser::FParseList& inp
 //----------------------------------------------------------------------------
 } //!namespace Serialize
 } //!namespace PPE
+
+PRAGMA_MSVC_WARNING_POP()

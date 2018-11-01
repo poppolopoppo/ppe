@@ -103,8 +103,8 @@ public:
     }
 
 protected:
-    friend class iterator;
-    friend class const_iterator;
+    friend class TSparseArrayIterator<T, _ChunkSize>;
+    friend class TSparseArrayIterator<std::add_const_t<T>, _ChunkSize>;
 
     STATIC_ASSERT(Meta::IsAligned(sizeof(intptr_t), sizeof(FDataChunk)));
     STATIC_CONST_INTEGRAL(u32, InvalidIndex, CODE3264(0xFFFFul, 0xFFFFFFFFul));

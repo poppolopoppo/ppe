@@ -65,7 +65,7 @@ bool FWindowsPlatformApplicationMisc::PickScreenColorUnderMouse(FColor* color) {
 //----------------------------------------------------------------------------
 void FWindowsPlatformApplicationMisc::PreventScreenSaver() {
     // send fake mouse event
-    ::INPUT Input = { 0 };
+    ::INPUT Input;
     Input.type = INPUT_MOUSE;
     Input.mi.dx = 0;
     Input.mi.dy = 0;

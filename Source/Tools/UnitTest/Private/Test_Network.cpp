@@ -242,7 +242,7 @@ public:
 
 private:
     virtual void OnAccept(FSocketBuffered& socket) const override {
-        NOOP(socket);
+        UNUSED(socket);
         LOG(Test_Network, Info, L"[{0}] accept connection on test server : {1}", socket.Local(), socket.Remote());
     }
 
@@ -279,7 +279,7 @@ private:
     }
 
     virtual void OnDisconnect(FSocketBuffered& socket) const override{
-        NOOP(socket);
+        UNUSED(socket);
         LOG(Test_Network, Info, L"[{0}] disconnected from test server : {1}", socket.Local(), socket.Remote());
     }
 };

@@ -206,6 +206,10 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TTuple<
 // Count the number of fields in a structure
 // https://github.com/apolukhin/magic_get/blob/develop/include/boost/pfr/detail/fields_count.hpp
 //----------------------------------------------------------------------------
+#ifdef __clang__
+#   pragma clang diagnostic push
+#   pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#endif
 namespace details {
 template <size_t I>
 using size_t_ = std::integral_constant<size_t, I>;
@@ -213,7 +217,7 @@ using size_t_ = std::integral_constant<size_t, I>;
 struct ubiq_constructor {
     size_t ignored;
     template <class T> constexpr operator T&() const noexcept; // Undefined, allows initialization of reference fields (T& and const T&)
-    //template <class T> constexpr operator T&&() const noexcept; // Undefined, allows initialization of rvalue reference fields and move-only types
+    template <class T> constexpr operator T&&() const noexcept; // Undefined, allows initialization of rvalue reference fields and move-only types
 };
 // Structure that can be converted to reference to anything except reference to T
 template <class T>
@@ -250,6 +254,9 @@ constexpr auto enable_if_constructible_helper(std::index_sequence<I...>) noexcep
 template <class T, size_t N, class /*Enable*/ = decltype(enable_if_constructible_helper<T>(std::make_index_sequence<N>())) >
 using enable_if_constructible_helper_t = size_t;
 } //!details
+#ifdef __clang__
+#   pragma clang diagnostic pop
+#endif
 //----------------------------------------------------------------------------
 namespace details {
 // Deduce fields count from recursive template specialization using binary search

@@ -139,7 +139,7 @@ private:
         return (b + 1 < _Capacity ? b + 1 : (b + 1) - _Capacity);
     }
     static CONSTEXPR size_t NextIndex_(size_t b) NOEXCEPT {
-        return NextIndexImpl_(b, std::bool_constant< Meta::IsPow2(_Capacity) >::type{});
+        return NextIndexImpl_(b, typename std::bool_constant< Meta::IsPow2(_Capacity) >::type{});
     }
     static FORCE_INLINE CONSTEXPR size_t DistanceIndexImpl_(size_t a, size_t b) NOEXCEPT {
         return (a <= b ? b - a : b + (_Capacity - a));

@@ -402,7 +402,7 @@ NO_INLINE void TSparseArray<T, _ChunkSize, _Allocator>::GrabNewChunk_() {
         Assert(Meta::RoundToNext(_numChunks, NumPtrsPerChunk) == _numChunks);
 
         const TMemoryView<FDataChunk*> oldChunks(_chunks, _numChunks);
-        const TMemoryView<FDataItem> aliasedChunks = oldChunks.Cast<FDataItem>();
+        const TMemoryView<FDataItem> aliasedChunks = oldChunks.template Cast<FDataItem>();
 
         _chunks = (FDataChunk**)Relocate_AssumePod( // assume POD to do a simple memcpy (not used a FDataItem*)
             get_allocator_(),
@@ -461,7 +461,7 @@ void TSparseArray<T, _ChunkSize, _Allocator>::ClearReleaseMemory_LeaveDirty_() {
         // release the extra allocation made for storage
         const size_t numChunksReserved = Meta::RoundToNext(_numChunks, NumPtrsPerChunk);
         const TMemoryView<FDataChunk*> storage(_chunks, numChunksReserved);
-        const TMemoryView<FDataItem> aliased = storage.Cast<FDataItem>();
+        const TMemoryView<FDataItem> aliased = storage.template Cast<FDataItem>();
 
         allocator_traits::deallocate(get_allocator_(), aliased.data(), aliased.size());
     }

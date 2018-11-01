@@ -2,7 +2,7 @@
 
 #include "HAL/Generic/GenericPlatformProfiler.h"
 
-#define USE_PPE_PLATFORM_PROFILER (!USE_PPE_FINAL_RELEASE)
+#define USE_PPE_PLATFORM_PROFILER (!USE_PPE_FINAL_RELEASE && !defined(__clang__))
 
 #if USE_PPE_PLATFORM_PROFILER
 

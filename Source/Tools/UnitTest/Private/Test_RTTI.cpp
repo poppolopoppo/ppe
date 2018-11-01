@@ -81,8 +81,6 @@ RTTI_ENUM_END()
 FWD_REFPTR(RTTITestSimple_);
 class FRTTITestSimple_ : public RTTI::FMetaObject {
 public:
-
-
     RTTI_CLASS_HEADER(FRTTITestSimple_, RTTI::FMetaObject);
 
     FRTTITestSimple_() {}
