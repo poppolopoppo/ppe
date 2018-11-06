@@ -524,177 +524,569 @@ private:
     size_type _size;
 };
 //----------------------------------------------------------------------------
-template <typename _Key>
-struct TRobinHoodHashEmptyKey {
-    STATIC_ASSERT(sizeof(_Key) >= sizeof(u32));
-    static constexpr u32 Empty = 0xBADDADD1ul;
-    static bool IsEmpty(const _Key& key) { return (reinterpret_cast<const u32&>(key) == Empty); }
-    static void MarkAsEmpty(_Key* pkey) { reinterpret_cast<u32&>(*pkey) = Empty; }
+struct FDenseHashTableState {
+    u16 Index;
+    u16 Hash;
+    STATIC_CONST_INTEGRAL(u16, EmptyIndex, u16(-1));
+    STATIC_CONST_INTEGRAL(u16, TombIndex, u16(-2));
+    STATIC_CONST_INTEGRAL(u16, EmptyMask, EmptyIndex&TombIndex);
 };
-//----------------------------------------------------------------------------
-template <typename _Key, typename _EmptyKey = TRobinHoodHashEmptyKey<_Key> >
-struct TRobinHoodHashSetTraits {
-    typedef _Key key_type;
-    typedef _Key mapped_type;
-    typedef _Key value_type;
-    typedef _Key public_type;
-    typedef _Key emptykey_type;
-    static _Key& Key(value_type& v) { return v; }
-    static const _Key& Key(const value_type& v) { return v; }
-};
-//----------------------------------------------------------------------------
-/*
+STATIC_ASSERT(Meta::TIsPod_v<FDenseHashTableState>);
 template <
-    typename _Traits
-,   typename _Hash = Meta::THash<typename _Traits::key_type>
-,   typename _EqualTo = Meta::TEqualTo<typename _Traits::key_type>
-,   typename _Allocator = ALLOCATOR(Container, typename _Traits::value_type)
->   class TRobinHoodHashTable : TRebindAlloc< _Allocator, typename _Traits::value_type > {
+    typename _Key
+    , typename _Hash = Meta::THash<_Key>
+    , typename _EqualTo = Meta::TEqualTo<_Key>
+    , typename _Allocator = ALLOCATOR(Container, _Key)
+>   class EMPTY_BASES TDenseHashSet
+:   TRebindAlloc<_Allocator, FDenseHashTableState>
+,   _Allocator {
 public:
-    typedef _Traits traits_type;
-    typedef typename traits_type::key_type key_type;
-    typedef typename traits_type::mapped_type mapped_type;
-    typedef typename traits_type::value_type value_type;
-    typedef typename traits_type::public_type public_type;
-    typedef typename traits_type::public_type public_type;
-    typedef typename traits_type::emptykey_type emptykey_type;
+    using allocator_key = _Allocator;
+    using allocator_state = TRebindAlloc<_Allocator, FDenseHashTableState>;
+
+    using key_traits = std::allocator_traits<allocator_key>;
+    using state_traits = std::allocator_traits<allocator_state>;
+
+    typedef _Key value_type;
 
     typedef _Hash hasher;
     typedef _EqualTo key_equal;
 
-    typedef TRebindAlloc<_Allocator, value_type> allocator_type;
-    typedef std::allocator_traits<allocator_type> allocator_traits;
-
-    typedef Meta::TAddReference<public_type> reference;
-    typedef Meta::TAddReference<const public_type> const_reference;
-    typedef Meta::TAddPointer<public_type> pointer;
-    typedef Meta::TAddPointer<const public_type> const_pointer;
+    typedef value_type& reference;
+    typedef const value_type& const_reference;
+    typedef Meta::TAddPointer<value_type> pointer;
+    typedef Meta::TAddPointer<const value_type> const_pointer;
 
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    static constexpr size_type MaxLoadFactor = 90;
+    using iterator = TCheckedArrayIterator<_Key>;
+    using const_iterator = TCheckedArrayIterator<const _Key>;
 
-    TRobinHoodHashTable() : _values(nullptr), _capacity(0), _size(0) {}
-    ~TRobinHoodHashTable() { clear_ReleaseMemory(); }
+    TDenseHashSet()
+        : _size(0)
+        , _capacity(0)
+        , _elements(nullptr)
+        , _states(nullptr)
+    {}
 
-    size_type size() const { return _size; }
-    bool empty() const { return 0 == _size; }
-    size_type capacity() const { return _capacity; }
+    ~TDenseHashSet() {
+        clear_ReleaseMemory();
+    }
 
-    void resize(size_type atleast) {
-        if (atleast <= (_capacity * MaxLoadFactor) / 100)
-            return;
+    bool empty() const { return (0 == _size); }
+    size_t size() const { return _size; }
+    size_t capacity() const { return _capacity; }
 
-        const pointer oldBuckets = _buckets;
-        const u32 oldCapacity = _capacity;
+    iterator begin() { return MakeCheckedIterator(_elements, _size, 0); }
+    iterator end() { return MakeCheckedIterator(_elements, _size, _size); }
 
-        _capacity = 1;
-        _buckets = allocator_traits::allocate()
+    const_iterator begin() const { return MakeCheckedIterator(_elements, _size, 0); }
+    const_iterator end() const { return MakeCheckedIterator(_elements, _size, _size); }
 
-        forrange(pbucket, oldBuckets, oldBuckets + _capacity) {
-            if (IsEmpty_(*pbucket))
-                continue;
+    TPair<iterator, bool> insert(const _Key& key) {
+        if (Unlikely(_size == _capacity))
+            reserve_Additional(1);
 
-            Insert_(HashValue_(*pbucket), std::move(*pbucket));
-            allocator_traits::destroy(pbucket);
+        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
+        const u32 h = u32(hasher()(key));
+        u32 s = (h & numStatesM1);
+        for (;;) {
+            FDenseHashTableState& it = _states[s];
+            if (Unlikely(it.Hash == u16(h) && key_equal()(key, _elements[it.Index])))
+                return MakePair(MakeCheckedIterator(_elements, _size, it.Index), false);
+            if ((it.Index & FDenseHashTableState::EmptyMask) == FDenseHashTableState::EmptyMask)
+                break;
+
+            // linear probing
+            s = ++s & numStatesM1;
         }
 
-        allocator_traits::deallocate(oldBuckets, _capacity);
+        const u16 index = checked_cast<u16>(_size++);
+        key_traits::construct(key_alloc(), _elements + index, key);
+
+        FDenseHashTableState& st = _states[s];
+        Assert_NoAssume(
+            FDenseHashTableState::EmptyIndex == st.Index ||
+            FDenseHashTableState::TombIndex == st.Index );
+        Assert_NoAssume(
+            FDenseHashTableState::EmptyIndex == st.Hash );
+
+        st.Index = index;
+        st.Hash = u16(h);
+
+        return MakePair(MakeCheckedIterator(_elements, _size, index), true);
     }
 
-    bool insert(const_reference value) {
-        if (_size + 1 > (_capacity * MaxLoadFactor) / 100)
-            resize(_capacity * 2);
+    const_iterator find(const _Key& key) const {
+        if (Unlikely(0 == _size))
+            return end();
+
+        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
+        const u32 h = u32(hasher()(key));
+        u32 s = (h & numStatesM1);
+        for (;;) {
+            const FDenseHashTableState& it = _states[s];
+            if (it.Hash == u16(h) && key_equal()(key, _elements[it.Index]))
+                return MakeCheckedIterator(_elements, _size, it.Index);
+            if (it.Index == FDenseHashTableState::EmptyIndex)
+                return end();
+
+            // linear probing
+            s = ++s & numStatesM1;
+        }
     }
 
-    pointer end() const { return nullptr; }
+    bool erase(const _Key& key) {
+        if (0 == _size)
+            return false;
 
-    pointer find(const_reference value) const {
+        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
+        u32 h = u32(hasher()(key));
+        u32 s = (h & numStatesM1);
+        for (;;) {
+            const FDenseHashTableState& it = _states[s];
+            if (it.Hash == u16(h) && key_equal()(key, _elements[it.Index]))
+                break;
+            if (it.Index == FDenseHashTableState::EmptyIndex)
+                return false;
 
+            // linear probing
+            s = ++s & numStatesM1;
+        }
+
+        FDenseHashTableState& st = _states[s];
+        key_traits::destroy(key_alloc(), _elements + st.Index);
+
+        if (Likely(_size > 1 && st.Index + 1u < _size)) {
+            // need to fill the hole in _elements
+            u16 replace = checked_cast<u16>(_size - 1);
+            h = u32(hasher()(_elements[replace]));
+            s = (h & numStatesM1);
+            for (;;) {
+                const FDenseHashTableState& it = _states[s];
+                if (it.Index == replace)
+                    break;
+
+                // linear probing
+                s = ++s & numStatesM1;
+            }
+
+            Assert_NoAssume(u16(h) == _states[s].Hash);
+            _states[s].Index = st.Index;
+
+            key_traits::construct(key_alloc(), _elements + st.Index, std::move(_elements[replace]));
+            key_traits::destroy(key_alloc(), _elements + replace);
+        }
+
+        st.Index = FDenseHashTableState::TombIndex;
+        st.Hash = FDenseHashTableState::EmptyIndex;
+
+        _size--;
+
+        return true;
     }
 
-    void erase(const_reference value) {
+    void clear_ReleaseMemory() {
+        if (_capacity) {
+            const size_t numStates = NumStates_(_capacity);
+            state_traits::deallocate(state_alloc(), _states, numStates);
 
+            forrange(it, _elements, _elements + _size)
+                key_traits::destroy(key_alloc(), it);
+
+            key_traits::deallocate(key_alloc(), _elements, _capacity);
+
+            _size = 0;
+            _capacity = 0;
+            _elements = nullptr;
+            _states = nullptr;
+        }
+        Assert_NoAssume(0 == _size);
+        Assert_NoAssume(0 == _capacity);
+        Assert_NoAssume(nullptr == _states);
+        Assert_NoAssume(nullptr == _elements);
+    }
+
+    void reserve_Additional(size_t num) { reserve(_size + num); }
+    NO_INLINE void reserve(size_t n) {
+        Assert(n);
+        if (n < _capacity)
+            return;
+
+        const u32 oldCapacity = _capacity;
+        _capacity = checked_cast<u32>(SafeAllocatorSnapSize(key_alloc(), n));
+        Assert_NoAssume(oldCapacity < _capacity);
+
+        const u32 numStates = NumStates_(_capacity);
+        Assert(numStates);
+
+        if (oldCapacity)
+            state_traits::deallocate(state_alloc(), _states, NumStates_(_capacity));
+
+        _states = state_traits::allocate(state_alloc(), numStates);
+        FPlatformMemory::Memset(_states, 0xFF, numStates * sizeof(*_states));
+
+        if (oldCapacity) {
+            _elements = Relocate(
+                key_alloc(),
+                TMemoryView<_Key>(_elements, _size),
+                _capacity, oldCapacity);
+
+            const u32 numStatesM1 = (numStates - 1);
+            forrange(i, 0, checked_cast<u16>(_size)) {
+                const u32 h = u32(hasher()(_elements[i]));
+                u32 s = (h & numStatesM1);
+                for (;;) {
+                    if ((_states[s].Index & FDenseHashTableState::EmptyMask) == FDenseHashTableState::EmptyMask)
+                        break;
+
+                    // linear probing
+                    s = ++s & numStatesM1;
+                }
+
+                FDenseHashTableState& st = _states[s];
+                st.Index = i;
+                st.Hash = u16(h);
+            }
+        }
+        else {
+            Assert_NoAssume(0 == _size);
+            Assert_NoAssume(nullptr == _elements);
+
+            _elements = key_traits::allocate(key_alloc(), _capacity);
+        }
+
+        Assert_NoAssume(n <= _capacity);
+    }
+
+private:
+    u32 _size;
+    u32 _capacity;
+    _Key* _elements;
+    FDenseHashTableState* _states;
+
+    STATIC_CONST_INTEGRAL(u32, KeyStateDensityRatio, 2);
+
+    FORCE_INLINE allocator_key& key_alloc() { return static_cast<allocator_key&>(*this); }
+    FORCE_INLINE allocator_state& state_alloc() { return static_cast<allocator_state&>(*this); }
+
+    static u32 NumStates_(u32 capacity) {
+        return (capacity ? FPlatformMaths::NextPow2(capacity * KeyStateDensityRatio) : 0);
+    }
+};
+//----------------------------------------------------------------------------
+struct FDenseHashTableState2 {
+    u16 Index;
+    u16 Hash;
+    STATIC_CONST_INTEGRAL(u16, EmptyIndex, u16(-1));
+};
+STATIC_ASSERT(Meta::TIsPod_v<FDenseHashTableState2>);
+template <
+    typename _Key
+    , typename _Hash = Meta::THash<_Key>
+    , typename _EqualTo = Meta::TEqualTo<_Key>
+    , typename _Allocator = ALLOCATOR(Container, _Key)
+>   class EMPTY_BASES TDenseHashSet2
+    : TRebindAlloc<_Allocator, FDenseHashTableState2>
+    , _Allocator {
+public:
+    typedef FDenseHashTableState2 state_t;
+    typedef _Key value_type;
+    typedef _Hash hasher;
+    typedef _EqualTo key_equal;
+
+    using allocator_key = _Allocator;
+    using allocator_state = TRebindAlloc<_Allocator, state_t>;
+
+    using key_traits = std::allocator_traits<allocator_key>;
+    using state_traits = std::allocator_traits<allocator_state>;
+
+    typedef value_type& reference;
+    typedef const value_type& const_reference;
+    typedef Meta::TAddPointer<value_type> pointer;
+    typedef Meta::TAddPointer<const value_type> const_pointer;
+
+    typedef size_t size_type;
+    typedef ptrdiff_t difference_type;
+
+    using iterator = TCheckedArrayIterator<_Key>;
+    using const_iterator = TCheckedArrayIterator<const _Key>;
+
+    TDenseHashSet2()
+        : _size(0)
+        , _capacity(0)
+        , _elements(nullptr)
+        , _states(nullptr)
+    {}
+
+    ~TDenseHashSet2() {
+        clear_ReleaseMemory();
+    }
+
+    bool empty() const { return (0 == _size); }
+    size_t size() const { return _size; }
+    size_t capacity() const { return _capacity; }
+
+    iterator begin() { return MakeCheckedIterator(_elements, _size, 0); }
+    iterator end() { return MakeCheckedIterator(_elements, _size, _size); }
+
+    const_iterator begin() const { return MakeCheckedIterator(_elements, _size, 0); }
+    const_iterator end() const { return MakeCheckedIterator(_elements, _size, _size); }
+
+    TPair<iterator, bool> insert(const _Key& key) {
+        if (Unlikely(_size == _capacity))
+            reserve_Additional(1);
+
+        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
+        u16 h = u16(hasher()(key));
+        u32 s = (h & numStatesM1);
+        u16 i = checked_cast<u16>(_size);
+        u32 d = 0;
+        for (;;) {
+            state_t& it = _states[s];
+            if (it.Index == state_t::EmptyIndex)
+                break;
+            if (Unlikely(it.Hash == h && key_equal()(key, _elements[it.Index])))
+                return MakePair(MakeCheckedIterator(_elements, _size, it.Index), false);
+
+            const u32 ds = DistanceIndex_(it, s, numStatesM1);
+            if (ds < d) {
+                d = ds;
+                std::swap(i, it.Index);
+                std::swap(h, it.Hash);
+            }
+
+            // linear probing
+            s = ++s & numStatesM1;
+            d++;
+        }
+
+        state_t& st = _states[s];
+        Assert_NoAssume(state_t::EmptyIndex == st.Index);
+        Assert_NoAssume(state_t::EmptyIndex == st.Hash);
+
+        st.Index = i;
+        st.Hash = h;
+
+        _size++;
+
+        key_traits::construct(key_alloc(), _elements + _size - 1, key);
+        return MakePair(MakeCheckedIterator(_elements, _size, _size - 1), true);
+    }
+
+    const_iterator find(const _Key& key) const {
+        if (Unlikely(0 == _size))
+            return end();
+
+        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
+        u16 h = u16(hasher()(key));
+        u32 s = (h & numStatesM1);
+        u32 d = 0;
+        for (;;) {
+            const state_t& it = _states[s];
+            if (it.Hash == h && key_equal()(key, _elements[it.Index]))
+                return MakeCheckedIterator(_elements, _size, it.Index);
+            if (it.Index == state_t::EmptyIndex ||
+                d > DistanceIndex_(it, s, numStatesM1) )
+                return end();
+
+            // linear probing
+            s = ++s & numStatesM1;
+            d++;
+        }
+    }
+
+    bool erase(const _Key& key) {
+        if (0 == _size)
+            return false;
+
+        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
+        u16 h = u16(hasher()(key));
+        u32 s = (h & numStatesM1);
+        u32 d = 0;
+        for (;;) {
+            const state_t& it = _states[s];
+            if (it.Hash == h && key_equal()(key, _elements[it.Index]))
+                break;
+            if (it.Index == state_t::EmptyIndex ||
+                d > DistanceIndex_(it, s, numStatesM1))
+                return false;
+
+            // linear probing
+            s = ++s & numStatesM1;
+            d++;
+        }
+
+        // destroy the element
+        state_t& st = _states[s];
+        key_traits::destroy(key_alloc(), _elements + st.Index);
+
+        if (Likely(_size > 1 && st.Index + 1u < _size)) {
+            // need to fill the hole in _elements
+            const u16 ri = checked_cast<u16>(_size - 1);
+            const u16 rh = u16(hasher()(_elements[ri]));
+            u32 rs = (rh & numStatesM1);
+            for (;;) {
+                const state_t& it = _states[rs];
+                if (it.Index == ri)
+                    break;
+
+                // linear probing
+                rs = ++rs & numStatesM1;
+            }
+
+            Assert_NoAssume(u16(rh) == _states[rs].Hash);
+            _states[rs].Index = st.Index;
+
+            key_traits::construct(key_alloc(), _elements + st.Index, std::move(_elements[ri]));
+            key_traits::destroy(key_alloc(), _elements + ri);
+        }
+
+        // backward shift deletion to avoid using tombstones
+        forrange(i, 0, numStatesM1) {
+            const u32 prev = (s + i) & numStatesM1;
+            const u32 swap = (s + i + 1) & numStatesM1;
+
+            if (_states[swap].Index == state_t::EmptyIndex ||
+                DistanceIndex_(_states[swap], swap, numStatesM1) == 0) {
+                _states[prev].Index = state_t::EmptyIndex;
+                ONLY_IF_ASSERT(_states[prev].Hash = state_t::EmptyIndex);
+                break;
+            }
+
+            _states[prev] = _states[swap];
+        }
+
+        // finally decrement the size
+        _size--;
+
+        return true;
     }
 
     void clear() {
-        for (value_type& v : MakeView(_values, _values + _capacity)) {
-            if (v.)
+        if (_size) {
+            Assert(_capacity);
+
+            FPlatformMemory::Memset(_states, 0xFF, NumStates_(_capacity));
+
+            IF_CONSTEXPR(not Meta::TIsPod_v<_Key>)
+                forrange(it, _elements, _elements + _size)
+                    key_traits::destroy(key_alloc(), it);
+
+            _size = 0;
         }
     }
 
     void clear_ReleaseMemory() {
-        if (nullptr == _values)
-            return;
+        if (_capacity) {
+            const size_t numStates = NumStates_(_capacity);
+            state_traits::deallocate(state_alloc(), _states, numStates);
 
-        clear();
-        allocator_traits::deallocate(*this, _values);
-        _values = nullptr;
-        _capacity = 0;
+            forrange(it, _elements, _elements + _size)
+                key_traits::destroy(key_alloc(), it);
+
+            key_traits::deallocate(key_alloc(), _elements, _capacity);
+
+            _size = 0;
+            _capacity = 0;
+            _elements = nullptr;
+            _states = nullptr;
+        }
+        Assert_NoAssume(0 == _size);
+        Assert_NoAssume(0 == _capacity);
+        Assert_NoAssume(nullptr == _states);
+        Assert_NoAssume(nullptr == _elements);
     }
 
-    size_type load_factor() const {
-        return ((_size * 100) / _capacity);
+    FORCE_INLINE void reserve_Additional(size_t num) { reserve(_size + num); }
+    NO_INLINE void reserve(size_t n) {
+        Assert(n);
+        if (n < _capacity)
+            return;
+
+        const state_t* oldState = _states;
+        const u32 oldCapacity = _capacity;
+        _capacity = checked_cast<u32>(SafeAllocatorSnapSize(key_alloc(), n));
+        Assert_NoAssume(oldCapacity < _capacity);
+
+        const u32 numStates = NumStates_(_capacity);
+        Assert(numStates);
+
+        _states = state_traits::allocate(state_alloc(), numStates);
+        FPlatformMemory::Memset(_states, 0xFF, numStates * sizeof(*_states));
+
+        if (oldCapacity) {
+            Assert(oldState);
+
+            _elements = Relocate(
+                key_alloc(),
+                TMemoryView<_Key>(_elements, _size),
+                _capacity, oldCapacity);
+
+            // rehash using previous state which already contains the hash keys
+            const u32 numStatesM1 = (numStates - 1);
+            forrange(p, oldState, oldState + NumStates_(oldCapacity)) {
+                u16 i = p->Index;
+                u16 h = p->Hash; // don't need more entropy
+                u32 s = (h & numStatesM1);
+                u32 d = 0;
+                for (;;) {
+                    state_t& it = _states[s];
+                    if (it.Index == state_t::EmptyIndex)
+                        break;
+
+                    Assert_NoAssume(i != it.Index);
+
+                    const u32 ds = DistanceIndex_(it, s, numStatesM1);
+                    if (ds < d) {
+                        d = ds;
+                        std::swap(i, it.Index);
+                        std::swap(h, it.Hash);
+                    }
+
+                    // linear probing
+                    s = ++s & numStatesM1;
+                    d++;
+                }
+
+                state_t& st = _states[s];
+                st.Index = i;
+                st.Hash = h;
+            }
+        }
+        else {
+            Assert_NoAssume(0 == _size);
+            Assert_NoAssume(nullptr == _elements);
+
+            _elements = key_traits::allocate(key_alloc(), _capacity);
+        }
+
+        if (oldState)
+            state_traits::deallocate(state_alloc(), const_cast<state_t*>(oldState), NumStates_(oldCapacity));
+
+        Assert_NoAssume(n <= _capacity);
     }
 
 private:
-    static bool IsEqual_(const value_type& lhs, const value_type& rhs) {
-        return key_equal()(trais_type::Key(lhs), traits_type::Key(rhs));
-    }
-
-    static bool IsEmpty_(const value_type& v) {
-        return emptykey_type::IsEmpty(traits_type::Key(v));
-    }
-
-    static hash_t HashValue_(const value_type& v) {
-        return hasher()(traits_type::Key(v));
-    }
-
-    size_t DesiredPos_(hash_t h) const {
-        return Bounded(u32(h._value), _capacity);
-    }
-
-    size_t ProbeDistance_(hash_t h, size_t pos) {
-        const size_t b = DesiredPos_(h);
-        return (b < pos ? b + _capacity - pos : b - pos);
-    }
-
-    size_t Insert_(hash_t hash, value_type&& value) {
-        Assert(_values);
-        Assert(load_factor() <= MaxLoadFactor);
-
-        size_t dist = 0;
-        for(size_t b = Bounded(hash, _capacity); ; ++dist, b = (b + 1 < _capacity ? b + 1 : 0) ) {
-            value_type& bucket = _buckets[b];
-
-            if (IsEmpty_(bucket)) {
-                allocator_traits::construct(*this, &bucket, std::move(value));
-                _size++;
-                return b;
-            }
-
-            Assert(IsEqual_(value, bucket) == false);
-
-            const hash_t h = HashValue_(bucket);
-            const size_t d = ProbeDistance_(h, b);
-            if (d < dist) {
-                using std::swap;
-                swap(bucket, value);
-                hash = h;
-                dist = d;
-            }
-        }
-
-        AssertNotReached();
-        return size_t(-1);
-    }
-
-    u32 _capacity;
     u32 _size;
-    pointer _buckets;
+    u32 _capacity;
+    _Key* _elements;
+    state_t* _states;
+
+    STATIC_CONST_INTEGRAL(u32, KeyStateDensityRatio, 2);
+
+    FORCE_INLINE allocator_key& key_alloc() NOEXCEPT { return static_cast<allocator_key&>(*this); }
+    FORCE_INLINE allocator_state& state_alloc() NOEXCEPT { return static_cast<allocator_state&>(*this); }
+
+    static FORCE_INLINE u32 NumStates_(u32 capacity) NOEXCEPT {
+        return (capacity ? FPlatformMaths::NextPow2(capacity * KeyStateDensityRatio) : 0);
+    }
+    static FORCE_INLINE CONSTEXPR u32 DistanceIndex_(state_t st, u32 b, u32 numStatesM1) NOEXCEPT {
+        const u32 a = (st.Hash & numStatesM1);
+        return (a <= b ? b - a : b + (numStatesM1 + 1 - a));
+    }
 };
-*/
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -712,7 +1104,7 @@ static void Test_Container_POD_(
 #ifdef WITH_PPE_ASSERT
     static constexpr size_t loops = 100;
 #else
-    static constexpr size_t loops = 1000;
+    static constexpr size_t loops = 10000;
 #endif
 
     LOG(Test_Containers, Emphasis, L"benchmarking <{0}> with POD", name);
@@ -814,7 +1206,7 @@ static void Test_Container_Obj_(
 #ifdef WITH_PPE_ASSERT
     static constexpr size_t loops = 10;
 #else
-    static constexpr size_t loops = 1000;
+    static constexpr size_t loops = 10000;
 #endif
 
     LOG(Test_Containers, Emphasis, L"benchmarking <{0}> with non-POD", name);
@@ -958,9 +1350,10 @@ void Test_Containers() {
             HASHSET(Container, int) w = std::move(u);
         }
     }
+    FLUSH_LOG();
     {
         LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
-        LOG(Test_Containers, Info, L"FStringView collection");
+        LOG(Test_Containers, Emphasis, L"FStringView collection");
 
         const FFilename filename = L"Saved:/dico.txt";
 
@@ -1046,7 +1439,58 @@ void Test_Containers() {
 
             Test_Container_Obj_(L"TCompactHashSet Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
         }*/
+        {
+            typedef TDenseHashSet<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   hashtable_type;
 
+            hashtable_type set;
+            set.reserve(input.size());
+
+            Test_Container_Obj_(L"TDenseHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+        {
+            typedef TDenseHashSet<
+                THashMemoizer<
+                    FStringView,
+                    TStringViewHasher<char, ECase::Sensitive>,
+                    TStringViewEqualTo<char, ECase::Sensitive>
+                >
+            >   hashtable_type;
+
+            hashtable_type set;
+            set.reserve(input.size());
+
+            Test_Container_Obj_(L"TDenseHashSet Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+        {
+            typedef TDenseHashSet2<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   hashtable_type;
+
+            hashtable_type set;
+            set.reserve(input.size());
+
+            Test_Container_Obj_(L"TDenseHashSet2", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+        {
+            typedef TDenseHashSet2<
+                THashMemoizer<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+                >
+            >   hashtable_type;
+
+            hashtable_type set;
+            set.reserve(input.size());
+
+            Test_Container_Obj_(L"TDenseHashSet2 Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
         {
             STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
 
@@ -1108,11 +1552,12 @@ void Test_Containers() {
             Test_Container_Obj_(L"FBulkTrie", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
         }*/
     }
+    FLUSH_LOG();
     {
         const size_t COUNT = 2000;
 
         LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
-        LOG(Test_Containers, Info, L"Medium double collection ({0})", COUNT);
+        LOG(Test_Containers, Emphasis, L"Medium double collection ({0})", COUNT);
 
         typedef double value_type;
 
@@ -1150,6 +1595,22 @@ void Test_Containers() {
             Test_Container_POD_(L"TCompactHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
         }
         {
+            typedef TDenseHashSet<value_type>   hashtable_type;
+
+            hashtable_type set;
+            set.reserve(input.size());
+
+            Test_Container_POD_(L"TDenseHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+        {
+            typedef TDenseHashSet2<value_type>   hashtable_type;
+
+            hashtable_type set;
+            set.reserve(input.size());
+
+            Test_Container_POD_(L"TDenseHashSet2", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+        {
             THashSet<value_type> set;
 
             Test_Container_POD_(L"THashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
@@ -1168,11 +1629,12 @@ void Test_Containers() {
         }
 
     }
+    FLUSH_LOG();
     {
         const size_t COUNT = 28;
 
         LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
-        LOG(Test_Containers, Info, L"Small integer collection ({0})", COUNT);
+        LOG(Test_Containers, Emphasis, L"Small integer collection ({0})", COUNT);
 
         typedef int value_type;
 
@@ -1276,6 +1738,22 @@ void Test_Containers() {
             Test_Container_POD_(L"TCompactHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
         }
         {
+            typedef TDenseHashSet<value_type>   hashtable_type;
+
+            hashtable_type set;
+            set.reserve(input.size());
+
+            Test_Container_POD_(L"TDenseHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+        {
+            typedef TDenseHashSet2<value_type>   hashtable_type;
+
+            hashtable_type set;
+            set.reserve(input.size());
+
+            Test_Container_POD_(L"TDenseHashSet2", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
+        }
+        {
             THashSet<value_type> set;
 
             Test_Container_POD_(L"THashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
@@ -1294,7 +1772,7 @@ void Test_Containers() {
         }
 
     }
-
+    FLUSH_LOG();
     ReleaseMemoryInModules();
 }
 //----------------------------------------------------------------------------
