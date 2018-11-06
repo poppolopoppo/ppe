@@ -242,10 +242,18 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , FAny& an
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , PMetaObject& pobj) {
     if (pobj) {
         FMetaObject& obj = (*pobj);
+
+        if (not visitor->KeepTransient() && obj.RTTI_IsTransient())
+            return true;
+
         const FMetaClass* metaClass = obj.RTTI_Class();
         Assert(metaClass);
 
         for (const FMetaProperty* prop : metaClass->AllProperties()) {
+            if ((not visitor->KeepDeprecated() && prop->IsDeprecated()) ||
+                (not visitor->KeepTransient() && prop->IsTransient()) )
+                continue;
+
             if (not prop->Get(obj).Accept(visitor))
                 return false;
         }

@@ -12,9 +12,22 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class EVisitorFlags : u32 {
+    Default         = 0,
+    KeepDeprecated  = 1<<0,
+    KeepTransient   = 1<<1,
+};
+ENUM_FLAGS(EVisitorFlags);
+//----------------------------------------------------------------------------
 class IAtomVisitor {
 public:
+    explicit IAtomVisitor(EVisitorFlags flags = EVisitorFlags::Default) : _flags(flags) {}
     virtual ~IAtomVisitor() {}
+
+    EVisitorFlags Flags() const { return _flags; }
+
+    bool KeepDeprecated() const { return (_flags ^ EVisitorFlags::KeepDeprecated); }
+    bool KeepTransient() const { return (_flags ^ EVisitorFlags::KeepTransient); }
 
     virtual bool Visit(const ITupleTraits* tuple, void* data) = 0;
     virtual bool Visit(const IListTraits* list, void* data) = 0;
@@ -35,10 +48,16 @@ public: // helpers
 
     template <typename T>
     static bool Accept(IAtomVisitor* , const IScalarTraits* , T& ) { return true; }
+
+protected:
+    EVisitorFlags _flags;
+    bool _keepTransient : 1;
 };
 //----------------------------------------------------------------------------
 class FBaseAtomVisitor : public IAtomVisitor {
 public:
+    explicit FBaseAtomVisitor(EVisitorFlags flags = EVisitorFlags::Default) : IAtomVisitor(flags) {}
+
     using IAtomVisitor::Visit;
 
     virtual bool Visit(const ITupleTraits* tuple, void* data) override { return IAtomVisitor::Accept(this, tuple, data); }
@@ -52,6 +71,8 @@ public:
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Used for manipulating visitors and atoms with fwd decl only :
 //----------------------------------------------------------------------------
 FORCE_INLINE bool AtomVisit(IAtomVisitor& visitor, const ITupleTraits* tuple, void* data) {
     return visitor.Visit(tuple, data);

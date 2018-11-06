@@ -80,7 +80,11 @@ public:
                 indent.Inc();
             }
 
-            LOG(RTTI, Fatal, oss.ToString());
+            FLogger::Log(
+                GLogCategory_RTTI,
+                FLogger::EVerbosity::Fatal,
+                FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+                oss.ToString() );
 #else
             AssertNotReached();
 #endif
@@ -113,16 +117,26 @@ private:
 } //!namespace
 #endif //!WITH_PPE_RTTI_TRANSACTION_CHECKS
 //----------------------------------------------------------------------------
+// Explore object graph and dump them sorted by discover order
 namespace {
 class FMetaTransactionLinearizer_ : public FBaseAtomVisitor {
 public:
     FMetaTransactionLinearizer_(const FMetaTransaction& outer, FLinearizedTransaction& linearized)
-        : _outer(outer)
-        , _linearized(linearized)
-    {}
+        : FBaseAtomVisitor(EVisitorFlags::Default
+            + (outer.KeepDeprecated() ? EVisitorFlags::KeepDeprecated : EVisitorFlags::Default)
+            + (outer.KeepTransient() ? EVisitorFlags::KeepTransient : EVisitorFlags::Default) )
+        , _outer(outer)
+        , _linearized(linearized) {
+        Assert_NoAssume(KeepDeprecated() == _outer.KeepDeprecated());
+        Assert_NoAssume(KeepTransient() == _outer.KeepTransient());
+
+        _visiteds.reserve(Max( // in case outer wasn't loaded
+            outer.NumLoadedObjects(),
+            outer.NumTopObjects()) );
+    }
 
     void Linearize(const PMetaObject& pobj) {
-        Visit(nullptr, const_cast<PMetaObject&>(pobj));
+        FMetaTransactionLinearizer_::Visit(nullptr, const_cast<PMetaObject&>(pobj));
     }
 
 public: //FBaseAtomVisitor
@@ -130,9 +144,12 @@ public: //FBaseAtomVisitor
         if (pobj && _visiteds.insert_ReturnIfExists(pobj.get()) == false) {
             const bool result = (pobj->RTTI_Outer() == &_outer
                 ? FBaseAtomVisitor::Visit(scalar, pobj)
-                : true);
+                : true );
 
-            _linearized.emplace_back(pobj.get());
+            // register after recursive traversal, so we get postfix order :
+            if (_outer.KeepTransient() || not pobj->RTTI_IsTransient())
+                _linearized.emplace_back(pobj.get());
+
             return result;
         }
         return true;
@@ -156,15 +173,15 @@ public:
         Assert(outer._exportedObjects.empty());
         Assert(outer._importedTransactions.empty());
 
-        _outer->_flags = ETransactionFlags::Loading;
+        _outer->_state = ETransactionState::Loading;
     }
 
     ~FTransactionLoadContext() {
-        Assert(ETransactionFlags::Loading == _outer->_flags);
+        Assert(ETransactionState::Loading == _outer->_state);
         Assert(_outer->_loadedObjects.size() >= _outer->_topObjects.size());
         Assert(_outer->_loadedObjects.size() >= _outer->_exportedObjects.size());
 
-        _outer->_flags = ETransactionFlags::Loaded;
+        _outer->_state = ETransactionState::Loaded;
     }
 
     virtual void OnLoadObject(FMetaObject& object) override final {
@@ -222,11 +239,11 @@ public:
         : _outer(&outer) {
         Assert(outer.IsLoaded());
 
-        _outer->_flags = ETransactionFlags::Unloading;
+        _outer->_state = ETransactionState::Unloading;
     }
 
     ~FTransactionUnloadContext() {
-        Assert(ETransactionFlags::Unloading == _outer->_flags);
+        Assert(ETransactionState::Unloading == _outer->_state);
 
 #if WITH_PPE_RTTI_TRANSACTION_CHECKS
         for (const SMetaObject& obj : _outer->_loadedObjects)
@@ -237,7 +254,7 @@ public:
         _outer->_exportedObjects.clear_ReleaseMemory();
         _outer->_importedTransactions.clear_ReleaseMemory();
 
-        _outer->_flags = ETransactionFlags::Unloaded;
+        _outer->_state = ETransactionState::Unloaded;
     }
 
     virtual void OnUnloadObject(FMetaObject& object) override final {
@@ -253,9 +270,12 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaTransaction::FMetaTransaction(const FName& name)
+FMetaTransaction::FMetaTransaction(
+    const FName& name,
+    ETransactionFlags flags/* = ETransactionFlags::Default */)
     : _name(name)
-    , _flags(ETransactionFlags::Unloaded) {
+    , _flags(flags)
+    , _state(ETransactionState::Unloaded) {
 }
 //----------------------------------------------------------------------------
 FMetaTransaction::FMetaTransaction(const FName& name, VECTOR(MetaTransaction, PMetaObject)&& objects)
@@ -479,7 +499,7 @@ void FMetaTransaction::Linearize(FLinearizedTransaction* linearized) const {
 
     FMetaTransactionLinearizer_ linearizer(*this, *linearized);
 
-    // instrospect each top objects and put each object in linearized in order of discovery
+    // descend in each top object and append reference in order of discovery
     for (const auto& topObject : _topObjects)
         linearizer.Linearize(topObject);
 }
@@ -505,21 +525,49 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionFlags flags) {
-    switch (flags) {
-    case RTTI::ETransactionFlags::Unloaded:     return oss << "Unloaded";
-    case RTTI::ETransactionFlags::Loading:      return oss << "Loading";
-    case RTTI::ETransactionFlags::Loaded:       return oss << "Loaded";
-    case RTTI::ETransactionFlags::Unloading:    return oss << "Unloading";
+    auto sep = Fmt::NotFirstTime('|');
+
+    if (flags == RTTI::ETransactionFlags::Default)
+        return oss << "Default";
+    if (flags ^ RTTI::ETransactionFlags::KeepDeprecated)
+        oss << sep << "KeepDeprecated";
+    if (flags ^ RTTI::ETransactionFlags::KeepTransient)
+        oss << sep << "KeepTransient";
+
+    return oss;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionFlags flags) {
+    auto sep = Fmt::NotFirstTime(L'|');
+
+    if (flags == RTTI::ETransactionFlags::Default)
+        return oss << L"Default";
+    if (flags ^ RTTI::ETransactionFlags::KeepDeprecated)
+        oss << sep << L"KeepDeprecated";
+    if (flags ^ RTTI::ETransactionFlags::KeepTransient)
+        oss << sep << L"KeepTransient";
+
+    return oss;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionState state) {
+    switch (state) {
+    case RTTI::ETransactionState::Unloaded:     return oss << "Unloaded";
+    case RTTI::ETransactionState::Loading:      return oss << "Loading";
+    case RTTI::ETransactionState::Loaded:       return oss << "Loaded";
+    case RTTI::ETransactionState::Unloading:    return oss << "Unloading";
     }
     AssertNotReached();
 }
 //----------------------------------------------------------------------------
-FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionFlags flags) {
-    switch (flags) {
-    case RTTI::ETransactionFlags::Unloaded:     return oss << L"Unloaded";
-    case RTTI::ETransactionFlags::Loading:      return oss << L"Loading";
-    case RTTI::ETransactionFlags::Loaded:       return oss << L"Loaded";
-    case RTTI::ETransactionFlags::Unloading:    return oss << L"Unloading";
+FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionState state) {
+    switch (state) {
+    case RTTI::ETransactionState::Unloaded:     return oss << L"Unloaded";
+    case RTTI::ETransactionState::Loading:      return oss << L"Loading";
+    case RTTI::ETransactionState::Loaded:       return oss << L"Loaded";
+    case RTTI::ETransactionState::Unloading:    return oss << L"Unloading";
     }
     AssertNotReached();
 }

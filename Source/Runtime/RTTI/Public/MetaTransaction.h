@@ -16,33 +16,46 @@ FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class ETransactionFlags : u32 {
-    Unloaded    = 0,
-    Loading     ,
-    Loaded      ,
-    Unloading   ,
+enum class ETransactionState : u32 {
+    Unloaded        = 0,
+    Loading         ,
+    Loaded          ,
+    Unloading       ,
 };
+//----------------------------------------------------------------------------
+enum class ETransactionFlags : u32 {
+    Default         = 0,
+    KeepDeprecated  = 1<<0,
+    KeepTransient   = 1<<1,
+};
+ENUM_FLAGS(ETransactionFlags);
 //----------------------------------------------------------------------------
 using FLinearizedTransaction = VECTORINSITU(MetaTransaction, SMetaObject, 8);
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaTransaction : public FRefCountable {
 public:
-    explicit FMetaTransaction(const FName& name);
+    explicit FMetaTransaction(
+        const FName& name,
+        ETransactionFlags flags = ETransactionFlags::Default );
     FMetaTransaction(const FName& name, VECTOR(MetaTransaction, PMetaObject)&& objects);
     virtual ~FMetaTransaction();
 
     const FName& Name() const { return _name; }
     ETransactionFlags Flags() const { return _flags; }
+    ETransactionState State() const { return _state; }
 
     size_t NumTopObjects() const { return _topObjects.size(); }
     size_t NumExportedObjects() const { Assert(IsLoaded()); return _exportedObjects.size(); }
     size_t NumLoadedObjects() const { Assert(IsLoaded()); return _loadedObjects.size(); }
     size_t NumImportedTransactions() const { Assert(IsLoaded()); return _importedTransactions.size(); }
 
-    bool IsLoaded() const { return (_flags == ETransactionFlags::Loaded); }
-    bool IsLoading() const { return (_flags == ETransactionFlags::Loading); }
-    bool IsUnloaded() const { return (_flags == ETransactionFlags::Unloaded); }
-    bool IsUnloading() const { return (_flags == ETransactionFlags::Unloading); }
+    bool KeepDeprecated() const { return (_flags ^ ETransactionFlags::KeepDeprecated); }
+    bool KeepTransient() const { return (_flags ^ ETransactionFlags::KeepTransient); }
+
+    bool IsLoaded() const { return (_state == ETransactionState::Loaded); }
+    bool IsLoading() const { return (_state == ETransactionState::Loading); }
+    bool IsUnloaded() const { return (_state == ETransactionState::Unloaded); }
+    bool IsUnloading() const { return (_state == ETransactionState::Unloading); }
 
     bool Contains(const FMetaObject* object) const;
     void RegisterObject(FMetaObject* object);
@@ -76,12 +89,13 @@ public:
 private:
     FName _name;
     ETransactionFlags _flags;
+    ETransactionState _state;
     VECTOR(MetaTransaction, PMetaObject) _topObjects; // hold lifetime of top objects only
 
     HASHSET(MetaTransaction, SMetaObject) _exportedObjects;
     HASHSET(MetaTransaction, SMetaObject) _loadedObjects;
 
-    VECTOR(MetaTransaction, SCMetaTransaction) _importedTransactions;
+    VECTORINSITU(MetaTransaction, SCMetaTransaction, 3) _importedTransactions;
 
     friend class FTransactionLoadContext;
     friend class FTransactionUnloadContext;
@@ -98,6 +112,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionFlags flags);
 PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionFlags flags);
+//----------------------------------------------------------------------------
+PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionState state);
+PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionState state);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
