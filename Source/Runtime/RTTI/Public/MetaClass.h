@@ -19,7 +19,7 @@ class FMetaNamespace;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EClassFlags {
+enum class EClassFlags : u32 {
     Concrete    = 1<<0,
     Abstract    = 1<<1,
     Dynamic     = 1<<2,
@@ -31,6 +31,8 @@ enum class EClassFlags {
     Deprecated  = 1<<5,
 
     Registered  = 1<<6,
+
+    All         = UINT32_MAX
 };
 ENUM_FLAGS(EClassFlags);
 //----------------------------------------------------------------------------
@@ -79,11 +81,11 @@ public:
 
     TMemoryView<const FMetaFunction> SelfFunctions() const { return _functionsSelf.MakeConstView(); }
 
-    const FMetaFunction& Function(const FName& name, EFunctionFlags flags = EFunctionFlags(0), bool inherited = true) const;
-    const FMetaFunction* FunctionIFP(const FName& name, EFunctionFlags flags = EFunctionFlags(0), bool inherited = true) const;
-    const FMetaFunction* FunctionIFP(const FStringView& name, EFunctionFlags flags = EFunctionFlags(0), bool inherited = true) const;
+    const FMetaFunction& Function(const FName& name, EFunctionFlags flags = EFunctionFlags::All, bool inherited = true) const;
+    const FMetaFunction* FunctionIFP(const FName& name, EFunctionFlags flags = EFunctionFlags::All, bool inherited = true) const;
+    const FMetaFunction* FunctionIFP(const FStringView& name, EFunctionFlags flags = EFunctionFlags::All, bool inherited = true) const;
 
-    virtual const FMetaFunction* OnMissingFunction(const FName& name, EFunctionFlags flags = EFunctionFlags(0)) const;
+    virtual const FMetaFunction* OnMissingFunction(const FName& name, EFunctionFlags flags = EFunctionFlags::All) const;
 
     // Properties
 
@@ -97,11 +99,11 @@ public:
 
     TMemoryView<const FMetaProperty> SelfProperties() const { return _propertiesSelf.MakeConstView(); }
 
-    const FMetaProperty& Property(const FName& name, EPropertyFlags flags = EPropertyFlags(0), bool inherited = true) const;
-    const FMetaProperty* PropertyIFP(const FName& name, EPropertyFlags flags = EPropertyFlags(0), bool inherited = true) const;
-    const FMetaProperty* PropertyIFP(const FStringView& name, EPropertyFlags flags = EPropertyFlags(0), bool inherited = true) const;
+    const FMetaProperty& Property(const FName& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
+    const FMetaProperty* PropertyIFP(const FName& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
+    const FMetaProperty* PropertyIFP(const FStringView& name, EPropertyFlags flags = EPropertyFlags::All, bool inherited = true) const;
 
-    virtual const FMetaProperty* OnMissingProperty(const FName& name, EPropertyFlags flags = EPropertyFlags(0)) const;
+    virtual const FMetaProperty* OnMissingProperty(const FName& name, EPropertyFlags flags = EPropertyFlags::All) const;
 
     // Virtual helpers
 

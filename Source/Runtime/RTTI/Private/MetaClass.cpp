@@ -74,12 +74,12 @@ void FMetaClass::RegisterFunction(FMetaFunction&& function) {
     _functionsSelf.emplace_back(std::move(function));
 }
 //----------------------------------------------------------------------------
-const FMetaFunction& FMetaClass::Function(const FName& name, EFunctionFlags flags/* = EFunctionFlags(0) */, bool inherited/* = true */) const {
+const FMetaFunction& FMetaClass::Function(const FName& name, EFunctionFlags flags/* = EFunctionFlags::All */, bool inherited/* = true */) const {
     const FMetaFunction* pfunction = FunctionIFP(name, flags, inherited);
     return (*(pfunction ? pfunction : OnMissingFunction(name, flags)));
 }
 //----------------------------------------------------------------------------
-const FMetaFunction* FMetaClass::FunctionIFP(const FName& name, EFunctionFlags flags/* = EFunctionFlags(0) */, bool inherited/* = true */) const {
+const FMetaFunction* FMetaClass::FunctionIFP(const FName& name, EFunctionFlags flags/* = EFunctionFlags::All */, bool inherited/* = true */) const {
     Assert(IsRegistered());
     Assert(not name.empty());
 
@@ -103,7 +103,7 @@ const FMetaFunction* FMetaClass::FunctionIFP(const FName& name, EFunctionFlags f
     return (pfunction->Flags() & flags ? pfunction : nullptr);
 }
 //----------------------------------------------------------------------------
-const FMetaFunction* FMetaClass::FunctionIFP(const FStringView& name, EFunctionFlags flags/* = EFunctionFlags(0) */, bool inherited/* = true */) const {
+const FMetaFunction* FMetaClass::FunctionIFP(const FStringView& name, EFunctionFlags flags/* = EFunctionFlags::All */, bool inherited/* = true */) const {
     Assert(IsRegistered());
     Assert(not name.empty());
 
@@ -128,7 +128,7 @@ const FMetaFunction* FMetaClass::FunctionIFP(const FStringView& name, EFunctionF
     return (pfunction->Flags() & flags ? pfunction : nullptr);
 }
 //----------------------------------------------------------------------------
-const FMetaFunction* FMetaClass::OnMissingFunction(const FName& name, EFunctionFlags flags/* = EFunctionFlags(0) */) const {
+const FMetaFunction* FMetaClass::OnMissingFunction(const FName& name, EFunctionFlags flags/* = EFunctionFlags::All */) const {
     Assert(IsRegistered());
     Assert(not name.empty());
     UNUSED(name);
@@ -153,12 +153,12 @@ void FMetaClass::RegisterProperty(FMetaProperty&& property) {
     _propertiesSelf.emplace_back(std::move(property));
 }
 //----------------------------------------------------------------------------
-const FMetaProperty& FMetaClass::Property(const FName& name, EPropertyFlags flags/* = EPropertyFlags(0) */, bool inherited/* = true */) const {
+const FMetaProperty& FMetaClass::Property(const FName& name, EPropertyFlags flags/* = EPropertyFlags::All */, bool inherited/* = true */) const {
     const FMetaProperty* pproperty = PropertyIFP(name, flags, inherited);
     return (*(pproperty ? pproperty : OnMissingProperty(name, flags)));
 }
 //----------------------------------------------------------------------------
-const FMetaProperty* FMetaClass::PropertyIFP(const FName& name, EPropertyFlags flags/* = EPropertyFlags(0) */, bool inherited/* = true */) const {
+const FMetaProperty* FMetaClass::PropertyIFP(const FName& name, EPropertyFlags flags/* = EPropertyFlags::All */, bool inherited/* = true */) const {
     Assert(IsRegistered());
     Assert(not name.empty());
 
@@ -182,7 +182,7 @@ const FMetaProperty* FMetaClass::PropertyIFP(const FName& name, EPropertyFlags f
     return (pproperty->Flags() & flags ? pproperty : nullptr);
 }
 //----------------------------------------------------------------------------
-const FMetaProperty* FMetaClass::PropertyIFP(const FStringView& name, EPropertyFlags flags/* = EPropertyFlags(0) */, bool inherited/* = true */) const {
+const FMetaProperty* FMetaClass::PropertyIFP(const FStringView& name, EPropertyFlags flags/* = EPropertyFlags::All */, bool inherited/* = true */) const {
     Assert(IsRegistered());
     Assert(not name.empty());
 
@@ -207,7 +207,7 @@ const FMetaProperty* FMetaClass::PropertyIFP(const FStringView& name, EPropertyF
     return (pproperty->Flags() & flags ? pproperty : nullptr);
 }
 //----------------------------------------------------------------------------
-const FMetaProperty* FMetaClass::OnMissingProperty(const FName& name, EPropertyFlags flags/* = EPropertyFlags(0) */) const {
+const FMetaProperty* FMetaClass::OnMissingProperty(const FName& name, EPropertyFlags flags/* = EPropertyFlags::All */) const {
     Assert(IsRegistered());
     Assert(not name.empty());
     UNUSED(name);

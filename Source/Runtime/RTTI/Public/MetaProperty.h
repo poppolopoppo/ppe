@@ -26,6 +26,8 @@ enum class EPropertyFlags : u32 {
     Deprecated   = 1<<4,
     Member       = 1<<5,
     Dynamic      = 1<<6,
+
+    All         = UINT32_MAX
 };
 ENUM_FLAGS(EPropertyFlags);
 //----------------------------------------------------------------------------

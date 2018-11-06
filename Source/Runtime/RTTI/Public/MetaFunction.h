@@ -21,6 +21,8 @@ enum class EParameterFlags : u32 {
     Default     = 0,
     Output      = 1<<0,
     Optional    = 1<<1,
+
+    All         = UINT32_MAX
 };
 ENUM_FLAGS(EParameterFlags);
 //----------------------------------------------------------------------------
@@ -56,6 +58,8 @@ enum class EFunctionFlags : u32 {
     Protected   = 1<<2,
     Private     = 1<<3,
     Deprecated  = 1<<4,
+
+    All         = UINT32_MAX
 };
 ENUM_FLAGS(EFunctionFlags);
 //----------------------------------------------------------------------------

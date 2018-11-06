@@ -12,11 +12,7 @@
 #   define PPE_RTTI_API DLL_IMPORT
 #endif
 
-#if !defined(FINAL_RELEASE) && !defined(PROFILING_ENABLED)
-#   define USE_PPE_RTTI_CHECKS 1
-#else
-#   define USE_PPE_RTTI_CHECKS 0
-#endif
+#define USE_PPE_RTTI_CHECKS (!USE_PPE_PROFILING && !USE_PPE_FINAL_RELEASE)
 
 #if USE_PPE_MEMORYDOMAINS
 #   define NEW_RTTI(T) new (*::PPE::RTTI::MetaClass<T>()) T
@@ -45,19 +41,15 @@ class ITupleTraits;
 class IListTraits;
 class IDicoTraits;
 //----------------------------------------------------------------------------
-class FMetaEnum;
-template <typename T>
-const FMetaEnum* MetaEnum();
-FStringView MetaEnumName(const FMetaEnum* metaEnum);
-i64 MetaEnumDefaultValue(const FMetaEnum* metaEnum);
-//----------------------------------------------------------------------------
+enum class EClassFlags : u32;
 class FMetaClass;
-template <typename T>
-const FMetaClass* MetaClass();
-FStringView MetaClassName(const FMetaClass* metaClass);
-//----------------------------------------------------------------------------
+enum class EEnumFlags : u32;
+class FMetaEnum;
+enum class EFunctionFlags : u32;
 class FMetaFunction;
+enum class EParameterFlags : u32;
 class FMetaParameter;
+enum class EPropertyFlags : u32;
 class FMetaProperty;
 //----------------------------------------------------------------------------
 class FMetaClassHandle;
@@ -72,6 +64,15 @@ class FMetaDatabaseReadWritable;
 FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
 FWD_REFPTR(AtomHeap);
+//----------------------------------------------------------------------------
+template <typename T>
+const FMetaEnum* MetaEnum();
+FStringView MetaEnumName(const FMetaEnum* metaEnum);
+i64 MetaEnumDefaultValue(const FMetaEnum* metaEnum);
+//----------------------------------------------------------------------------
+template <typename T>
+const FMetaClass* MetaClass();
+FStringView MetaClassName(const FMetaClass* metaClass);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

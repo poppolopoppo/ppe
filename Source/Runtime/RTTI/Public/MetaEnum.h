@@ -16,6 +16,8 @@ enum class EEnumFlags : u32 {
     None        = 0,
     Flags       = 1<<0,
     Deprecated  = 1<<1,
+
+    All         = UINT32_MAX
 };
 ENUM_FLAGS(EEnumFlags);
 //----------------------------------------------------------------------------

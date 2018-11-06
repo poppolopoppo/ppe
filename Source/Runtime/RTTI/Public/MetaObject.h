@@ -38,6 +38,8 @@ enum class EObjectFlags : u32 {
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     Verifying   = 1<<4,
 #endif
+
+    All         = UINT32_MAX
 };
 ENUM_FLAGS(EObjectFlags);
 //----------------------------------------------------------------------------
