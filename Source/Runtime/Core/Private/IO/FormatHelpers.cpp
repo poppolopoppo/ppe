@@ -302,6 +302,12 @@ FTextWriter& operator <<(FTextWriter& oss, Fmt::EChar ch) {
         return oss << ' ';
     case PPE::Fmt::Tab:
         return oss << ' ';
+    case PPE::Fmt::Zero:
+        return oss << '0';
+    case PPE::Fmt::A:
+        return oss << 'A';
+    case PPE::Fmt::a:
+        return oss << 'a';
     }
     AssertNotImplemented();
 }
@@ -388,6 +394,12 @@ FWTextWriter& operator <<(FWTextWriter& oss, Fmt::EChar ch) {
         return oss << L' ';
     case PPE::Fmt::Tab:
         return oss << L' ';
+    case PPE::Fmt::Zero:
+        return oss << L'0';
+    case PPE::Fmt::A:
+        return oss << L'A';
+    case PPE::Fmt::a:
+        return oss << L'a';
     }
     AssertNotImplemented();
 }

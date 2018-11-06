@@ -22,6 +22,7 @@ enum class ELoggerVerbosity {
     None        = 0,
     NoDebug     = (Info|Emphasis|Warning|Error|Fatal),
     NoDebugInfo = (Emphasis|Warning|Error|Fatal),
+
 #ifdef PROFILING_ENABLED
     All         = NoDebugInfo
 #else
@@ -40,7 +41,6 @@ ENUM_FLAGS(ELoggerVerbosity);
 #   include "IO/String_fwd.h"
 #   include "IO/TextWriter.h"
 #   include "Memory/RefPtr.h"
-#   include "Misc/Function.h"
 #   include "Time/Timestamp.h"
 
 #   include <thread>
@@ -100,7 +100,6 @@ public:
     static PPE_CORE_API PLogger MakeOutputDebug();
     static PPE_CORE_API PLogger MakeAppendFile(const wchar_t* filename);
     static PPE_CORE_API PLogger MakeRollFile(const wchar_t* filename);
-    static PPE_CORE_API PLogger MakeFunctor(TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write);
 };
 //----------------------------------------------------------------------------
 class ILogger : FLogger, public FRefCountable {
@@ -128,14 +127,18 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #define LOG_CATEGORY(_API, _NAME) \
     LOG_CATEGORY_VERBOSITY(_API, _NAME, All)
 
-#define LOG(_CATEGORY, _LEVEL, ...) \
+#define LOG(_CATEGORY, _LEVEL, _FORMAT, ...) do { \
+    static_assert( /* validate format strings statically */ \
+        ::PPE::ValidateFormatString( _FORMAT, PP_NUM_ARGS(__VA_ARGS__) ), \
+        "invalid format : check arguments" ); \
     ::PPE::FLogger::Log( \
         CONCAT(GLogCategory_, _CATEGORY), \
         ::PPE::FLogger::EVerbosity::_LEVEL, \
         ::PPE::FLogger::FSiteInfo::Make( \
             WIDESTRING(__FILE__), \
             __LINE__ ), \
-        __VA_ARGS__ )
+        _FORMAT, __VA_ARGS__ ); \
+    } while (0)
 
 #define FLUSH_LOG() \
     ::PPE::FLogger::Flush()
@@ -148,10 +151,24 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #define LOG_CATEGORY(...)
 #define FLUSH_LOG() NOOP()
 
-#define LOG(_CATEGORY, _LEVEL, ...) \
-    (void)( (!!(::PPE::ELoggerVerbosity::Fatal != ::PPE::ELoggerVerbosity::_LEVEL)) || (AssertReleaseFailed(L"log : fatal error"), 0) )
+#   if USE_PPE_FINAL_RELEASE
+#       define LOG(_CATEGORY, _LEVEL, _FORMAT, ...) NOOP()
+#   else
+#       define _LOG_Debug() NOOP()
+#       define _LOG_Info() NOOP()
+#       define _LOG_Emphasis() NOOP()
+#       define _LOG_Warning() NOOP()
+#       define _LOG_Error() NOOP()
+#       define _LOG_Fatal() AssertReleaseFailed(L"log : fatal error")
+#       define LOG(_CATEGORY, _LEVEL, _FORMAT, ...) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
+#   endif
 
 #endif //!#ifdef USE_DEBUG_LOGGER
 
-#define CLOG(_CONDITION, _CATEGORY, _LEVEL, ...) \
-    (void)( (!(_CONDITION)) || (LOG(_CATEGORY, _LEVEL, __VA_ARGS__), 0) )
+#if USE_PPE_FINAL_RELEASE
+#   define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) NOOP()
+#else
+#   define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) do { \
+        if (!(_CONDITION)) LOG(_CATEGORY, _LEVEL, _FORMAT, __VA_ARGS__); \
+    } while (0)
+#endif

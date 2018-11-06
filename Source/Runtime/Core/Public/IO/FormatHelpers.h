@@ -416,6 +416,9 @@ namespace Fmt {
         DoubleQuote,
         Space,
         Tab,
+        Zero,
+        A,
+        a,
     };
 } //!namespace Fmt
 //----------------------------------------------------------------------------

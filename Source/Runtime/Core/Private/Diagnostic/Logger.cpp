@@ -742,11 +742,6 @@ PLogger FLogger::MakeRollFile(const wchar_t* filename) {
     return MakeAppendFile(filename);
 }
 //----------------------------------------------------------------------------
-PLogger FLogger::MakeFunctor(TFunction<void(const FCategory&, EVerbosity, FSiteInfo, const FWStringView&)>&& write) {
-    Assert(write);
-    return NEW_REF(Logger, FFunctorLogger_)(std::move(write));
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level) {
