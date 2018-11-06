@@ -352,7 +352,11 @@ void FMetaTransaction::Load() {
                 << obj->RTTI_Flags() << L')'
                 << Eol;
 
-        LOG(RTTI, Info, oss.ToString());
+        FLogger::Log(
+            GLogCategory_RTTI,
+            FLogger::EVerbosity::Info,
+            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+            oss.ToString() );
     }
     oss << indent << L" - Exported objects : " << _exportedObjects.size() << Eol;
     {
@@ -367,7 +371,11 @@ void FMetaTransaction::Load() {
                 << obj->RTTI_Flags() << L')'
                 << Eol;
 
-        LOG(RTTI, Info, oss.ToString());
+        FLogger::Log(
+            GLogCategory_RTTI,
+            FLogger::EVerbosity::Info,
+            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+            oss.ToString() );
     }
     oss << indent << L" - Loaded objects : " << _loadedObjects.size() << Eol;
     {
@@ -381,7 +389,11 @@ void FMetaTransaction::Load() {
                 << obj->RTTI_Flags() << L')'
                 << Eol;
 
-        LOG(RTTI, Info, oss.ToString());
+        FLogger::Log(
+            GLogCategory_RTTI,
+            FLogger::EVerbosity::Info,
+            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+            oss.ToString() );
     }
     oss << indent << L" - Imported transactions : " << _importedTransactions.size() << Eol;
     {
@@ -391,11 +403,16 @@ void FMetaTransaction::Load() {
             oss << indent << L'['
                 << Fmt::PadLeft(index++, 3, L'0') << L"]  "
                 << (void*)outer.get() << L" = '"
-                << outer->Name() << L"' ("
+                << outer->Name() << L"' : "
+                << outer->State() << L" ("
                 << outer->Flags() << L')'
                 << Eol;
 
-        LOG(RTTI, Info, oss.ToString());
+        FLogger::Log(
+            GLogCategory_RTTI,
+            FLogger::EVerbosity::Info,
+            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+            oss.ToString() );
     }
 
 #endif

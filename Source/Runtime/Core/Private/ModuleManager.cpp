@@ -30,11 +30,17 @@ FModuleManager::FModuleManager(
     void* appHandle, int showCmd,
     const wchar_t* filename,
     size_t argc, const wchar_t** argv)
-:   _appHandle(appHandle), _showCmd(showCmd)
+:   _appHandle(appHandle)
+,   _showCmd(showCmd)
 ,   _filename(filename)
 ,   _argc(argc), _argv(argv) {
     Assert(nullptr == GModuleManager_);
     GModuleManager_ = this;
+
+    STATIC_ASSERT(PP_NUM_ARGS() == 0);
+    STATIC_ASSERT(PP_NUM_ARGS(1) == 1);
+    STATIC_ASSERT(PP_NUM_ARGS(a, b) == 2);
+    STATIC_ASSERT(PP_NUM_ARGS(a, b, c) == 3);
 
     LOG(Module, Info, L"created module manager");
 }

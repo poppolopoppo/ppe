@@ -265,7 +265,7 @@ static void TestRTTI_() {
         const RTTI::FMetaEnum* metaEnum = RTTI::MetaEnum<ETutut>();
 
         const auto defaultValue = metaEnum->DefaultValue();
-        LOG(RTTI_UnitTest, Debug, L"Enum<{0}> = {1} : {2}",
+        LOG(RTTI_UnitTest, Debug, L"Enum<{0}> : {1} = {2} ({3})",
             metaEnum->Name(),
             defaultValue.Name, defaultValue.Value,
             metaEnum->Flags() );

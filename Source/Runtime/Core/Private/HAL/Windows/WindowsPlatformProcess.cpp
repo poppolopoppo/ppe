@@ -765,7 +765,7 @@ auto FWindowsPlatformProcess::CreateSemaphore(const char* name, bool create, siz
         semaphore = ::CreateSemaphoreA(NULL, checked_cast<long>(maxLocks), checked_cast<long>(maxLocks), name);
         if (NULL == semaphore) {
             LOG(HAL, Error, L"CreateSemaphore(Attrs=NULL, InitialValue={0}, MaxValue={0}, Name='{1}') failed with = {2}",
-                maxLocks, maxLocks, MakeCStringView(name), FLastError() );
+                maxLocks, MakeCStringView(name), FLastError() );
 
             return NULL;
         }

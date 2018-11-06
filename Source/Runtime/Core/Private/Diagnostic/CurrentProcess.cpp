@@ -112,7 +112,7 @@ void FCurrentProcess::DumpProcessInfos() const {
     FString userName = FPlatformMisc::UserName();
     FString machineName = FPlatformMisc::MachineName();
     FString osName = FPlatformMisc::OSName();
-    LOG(Process, Info, L"localhost = {0} @ {1}", userName, machineName, osName);
+    LOG(Process, Info, L"localhost = {0} @ {1}", userName, machineName);
     LOG(Process, Info, L"os = {0}", osName);
 
     u64 totalSize, usedSize;

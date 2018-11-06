@@ -293,7 +293,7 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
 }
 //----------------------------------------------------------------------------
 void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
-#if USE_PPE_MEMORYDOMAINS
+#if USE_PPE_MEMORYDOMAINS && defined(USE_DEBUG_LOGGER)
     FTrackingDataRegistry_::FMemoryDomainsList datas;
     FTrackingDataRegistry_::Get().FetchDatas(&datas);
 
@@ -326,7 +326,11 @@ void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
     ReportAllocationHistogram(oss);
 
     if (not optional)
-        LOG(MemoryDomain, Info, sb.ToString());
+        FLogger::Log(
+            GLogCategory_MemoryDomain,
+            FLogger::EVerbosity::Info,
+            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+            sb.ToString() );
 #else
     NOOP(optional);
 #endif
