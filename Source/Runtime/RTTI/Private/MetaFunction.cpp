@@ -79,6 +79,21 @@ void FMetaFunction::Invoke(
     Assert(arguments.size() <= _parameters.size()); // can have optional parameters
 
 #if USE_PPE_RTTI_CHECKS
+    if (not IsConst() && obj.RTTI_IsFrozen()) {
+        LOG(RTTI, Fatal, L"can't call non-const function \"{0} {1}::{2}({3})\" on frozen \"{4}\" ({5})",
+            _result ? _result->TypeInfos().Name() : "void",
+            obj.RTTI_Class()->Name(),
+            _name,
+            Fmt::FWFormator([this](FWTextWriter& oss) {
+                const auto& prms = this->Parameters();
+                forrange(i, 0, prms.size()) {
+                    if (i > 0) oss << L", ";
+                    oss << prms[i].Name() << L" : " << prms[i].Traits()->TypeInfos().Name() << L" <" << prms[i].Flags() << L'>';
+                }
+            }),
+            obj.RTTI_Name(),
+            obj.RTTI_Flags() );
+    }
     if (IsDeprecated()) {
         LOG(RTTI, Warning, L"using deprecated function \"{0} {1}::{2}({3})\" on \"{4}\" ({5})",
             _result ? _result->TypeInfos().Name() : "void",

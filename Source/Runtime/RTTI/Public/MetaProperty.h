@@ -19,13 +19,14 @@ class FMetaObject;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EPropertyFlags : u32 {
-    Public       = 1<<0,
-    Protected    = 1<<1,
-    Private      = 1<<2,
-    ReadOnly     = 1<<3,
-    Deprecated   = 1<<4,
-    Member       = 1<<5,
-    Dynamic      = 1<<6,
+    Public      = 1<<0,
+    Protected   = 1<<1,
+    Private     = 1<<2,
+    ReadOnly    = 1<<3,
+    Deprecated  = 1<<4,
+    Member      = 1<<5,
+    Dynamic     = 1<<6,
+    Transient   = 1<<7,
 
     All         = UINT32_MAX
 };
@@ -47,48 +48,17 @@ public:
     bool IsDeprecated() const   { return (_flags ^ EPropertyFlags::Deprecated   ); }
     bool IsMember() const       { return (_flags ^ EPropertyFlags::Member       ); }
     bool IsDynamic() const      { return (_flags ^ EPropertyFlags::Dynamic      ); }
+    bool IsTransient() const    { return (_flags ^ EPropertyFlags::Transient    ); }
 
-#ifdef WITH_PPE_RTTI_PROPERTY_CHECKS
-#   define CheckPropertyIFN(obj, write) CheckProperty_(obj, write)
-#else
-#   define CheckPropertyIFN(obj, write) NOOP()
-#endif
-
-    FAtom Get(const FMetaObject& obj) const {
-        CheckPropertyIFN(obj, false);
-        return MakeAtom_(obj);
-    }
-
-    void CopyTo(const FMetaObject& obj, const FAtom& dst) const {
-        CheckPropertyIFN(obj, false);
-        MakeAtom_(obj).Copy(dst);
-    }
-
-    void MoveTo(FMetaObject& obj, const FAtom& dst) const {
-        CheckPropertyIFN(obj, true);
-        MakeAtom_(obj).Move(dst);
-    }
-
-    void CopyFrom(FMetaObject& obj, const FAtom& src) const {
-        CheckPropertyIFN(obj, true);
-        src.Copy(MakeAtom_(obj));
-    }
-
-    void MoveFrom(FMetaObject& obj, FAtom& src) const {
-        CheckPropertyIFN(obj, true);
-        src.Move(MakeAtom_(obj));
-    }
-
-    FAtom ResetToDefaultValue(FMetaObject& obj) const {
-        CheckPropertyIFN(obj, true);
-        FAtom value = MakeAtom_(obj);
-        value.ResetToDefaultValue();
-        return value;
-    }
+    FAtom Get(const FMetaObject& obj) const;
+    void CopyTo(const FMetaObject& obj, const FAtom& dst) const;
+    void MoveTo(FMetaObject& obj, const FAtom& dst) const;
+    void CopyFrom(FMetaObject& obj, const FAtom& src) const;
+    void MoveFrom(FMetaObject& obj, FAtom& src) const;
+    FAtom ResetToDefaultValue(FMetaObject& obj) const;
 
 private:
 #ifdef WITH_PPE_RTTI_PROPERTY_CHECKS
-#   undef CheckPropertyIFN
     void CheckProperty_(const FMetaObject& obj, bool write) const;
 #endif
 

@@ -53,65 +53,83 @@ void FMetaObject::RTTI_ResetToDefaultValue() {
     ResetToDefaultValue(*this);
 }
 //----------------------------------------------------------------------------
+void FMetaObject::RTTI_Freeze() {
+    Assert_NoAssume(not RTTI_IsFrozen());
+
+    _flags = _flags - EObjectFlags::Frozen;
+}
+//----------------------------------------------------------------------------
+void FMetaObject::RTTI_Unfreeze() {
+    Assert_NoAssume(RTTI_IsFrozen());
+
+    _flags = _flags - EObjectFlags::Frozen;
+}
+//----------------------------------------------------------------------------
 void FMetaObject::RTTI_Export(const FName& name) {
-    Assert(not RTTI_IsExported());
-    Assert(not RTTI_IsLoaded());
-    Assert(_name.empty());
+    Assert_NoAssume(not RTTI_IsExported());
+    Assert_NoAssume(not RTTI_IsLoaded());
+    Assert_NoAssume(not RTTI_IsFrozen());
+    Assert_NoAssume(_name.empty());
 
     _flags = _flags + EObjectFlags::Exported;
     _name = name;
 
-    Assert(RTTI_IsExported());
+    Assert_NoAssume(RTTI_IsExported());
 }
 //----------------------------------------------------------------------------
 void FMetaObject::RTTI_Unexport() {
-    Assert(RTTI_IsExported());
-    Assert(not RTTI_IsLoaded());
-    Assert(not _name.empty());
+    Assert_NoAssume(RTTI_IsExported());
+    Assert_NoAssume(not RTTI_IsLoaded());
+    Assert_NoAssume(not RTTI_IsFrozen());
+    Assert_NoAssume(not _name.empty());
 
     _flags = _flags - EObjectFlags::Exported;
     _name = FName();
 
-    Assert(not RTTI_IsExported());
+    Assert_NoAssume(not RTTI_IsExported());
 }
 //----------------------------------------------------------------------------
 void FMetaObject::RTTI_Load(ILoadContext& context) {
-    Assert(not RTTI_IsLoaded());
-    Assert(RTTI_IsUnloaded());
+    Assert_NoAssume(not RTTI_IsLoaded());
+    Assert_NoAssume(not RTTI_IsFrozen());
+    Assert_NoAssume(RTTI_IsUnloaded());
 
     _flags = _flags + EObjectFlags::Loaded - EObjectFlags::Unloaded;
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     // checks that base method was called :
-    Assert(not (_flags ^ EObjectFlags::Verifying));
+    Assert_NoAssume(not (_flags ^ EObjectFlags::Verifying));
 
     _flags = _flags + EObjectFlags::Verifying;
 
     RTTI_VerifyPredicates();
 
-    Assert(not (_flags ^ EObjectFlags::Verifying)); // checks that parent method was called
+    Assert_NoAssume(not (_flags ^ EObjectFlags::Verifying)); // checks that parent method was called
 #endif
 
     context.OnLoadObject(*this);
 
-    Assert(RTTI_IsLoaded());
-    Assert(not RTTI_IsUnloaded());
+    Assert_NoAssume(RTTI_IsLoaded());
+    Assert_NoAssume(not RTTI_IsUnloaded());
 }
 //----------------------------------------------------------------------------
 void FMetaObject::RTTI_Unload(IUnloadContext& context) {
-    Assert(RTTI_IsLoaded());
-    Assert(not RTTI_IsUnloaded());
+    Assert_NoAssume(RTTI_IsLoaded());
+    Assert_NoAssume(not RTTI_IsFrozen());
+    Assert_NoAssume(not RTTI_IsUnloaded());
 
     context.OnUnloadObject(*this);
 
     _flags = _flags - EObjectFlags::Loaded + EObjectFlags::Unloaded;
 
-    Assert(not RTTI_IsLoaded());
-    Assert(RTTI_IsUnloaded());
+    Assert_NoAssume(not RTTI_IsLoaded());
+    Assert_NoAssume(RTTI_IsUnloaded());
     Assert(nullptr == _outer);
 }
 //----------------------------------------------------------------------------
 bool FMetaObject::RTTI_CallLoadIFN(ILoadContext& context) {
+    Assert_NoAssume(not RTTI_IsFrozen());
+
     if (RTTI_IsLoaded()) {
         Assert(not RTTI_IsUnloaded());
         return false;
@@ -123,6 +141,8 @@ bool FMetaObject::RTTI_CallLoadIFN(ILoadContext& context) {
 }
 //----------------------------------------------------------------------------
 bool FMetaObject::RTTI_CallUnloadIFN(IUnloadContext& context) {
+    Assert_NoAssume(not RTTI_IsFrozen());
+
     if (RTTI_IsLoaded()) {
         RTTI_Unload(context);
         return true;
@@ -134,15 +154,17 @@ bool FMetaObject::RTTI_CallUnloadIFN(IUnloadContext& context) {
 }
 //----------------------------------------------------------------------------
 void FMetaObject::RTTI_MarkAsTopObject() {
-    Assert(RTTI_IsUnloaded());
-    Assert(not RTTI_IsTopObject());
+    Assert_NoAssume(RTTI_IsUnloaded());
+    Assert_NoAssume(not RTTI_IsFrozen());
+    Assert_NoAssume(not RTTI_IsTopObject());
 
     _flags = _flags + EObjectFlags::TopObject;
 }
 //----------------------------------------------------------------------------
 void FMetaObject::RTTI_UnmarkAsTopObject() {
-    Assert(RTTI_IsUnloaded());
-    Assert(RTTI_IsTopObject());
+    Assert_NoAssume(RTTI_IsUnloaded());
+    Assert_NoAssume(not RTTI_IsFrozen());
+    Assert_NoAssume(RTTI_IsTopObject());
 
     _flags = _flags - EObjectFlags::TopObject;
 }
@@ -180,12 +202,14 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::EObjectFlags flags) {
 
     auto sep = Fmt::NotFirstTime('|');
 
-    if (flags & RTTI::EObjectFlags::Loaded)     { oss << sep << L"Loaded"; }
-    if (flags & RTTI::EObjectFlags::Unloaded)   { oss << sep << L"Unloaded"; }
-    if (flags & RTTI::EObjectFlags::Exported)   { oss << sep << L"Exported"; }
-    if (flags & RTTI::EObjectFlags::TopObject)  { oss << sep << L"TopObject"; }
+    if (flags & RTTI::EObjectFlags::Loaded)     { oss << sep << "Loaded"; }
+    if (flags & RTTI::EObjectFlags::Unloaded)   { oss << sep << "Unloaded"; }
+    if (flags & RTTI::EObjectFlags::Exported)   { oss << sep << "Exported"; }
+    if (flags & RTTI::EObjectFlags::TopObject)  { oss << sep << "TopObject"; }
+    if (flags & RTTI::EObjectFlags::Transient)  { oss << sep << "Transient"; }
+    if (flags & RTTI::EObjectFlags::Frozen)     { oss << sep << "Frozen"; }
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-    if (flags & RTTI::EObjectFlags::Verifying)  { oss << sep << L"Verifying"; }
+    if (flags & RTTI::EObjectFlags::Verifying)  { oss << sep << "Verifying"; }
 #endif
 
     return oss;
@@ -201,6 +225,8 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EObjectFlags flags) {
     if (flags & RTTI::EObjectFlags::Unloaded)   { oss << sep << L"Unloaded"; }
     if (flags & RTTI::EObjectFlags::Exported)   { oss << sep << L"Exported"; }
     if (flags & RTTI::EObjectFlags::TopObject)  { oss << sep << L"TopObject"; }
+    if (flags & RTTI::EObjectFlags::Transient)  { oss << sep << L"Transient"; }
+    if (flags & RTTI::EObjectFlags::Frozen)     { oss << sep << L"Frozen"; }
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     if (flags & RTTI::EObjectFlags::Verifying)  { oss << sep << L"Verifying"; }
 #endif

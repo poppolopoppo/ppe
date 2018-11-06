@@ -10,12 +10,15 @@
 #ifdef WITH_PPE_RTTI_PROPERTY_CHECKS
 #   include "MetaObject.h"
 #   include "Diagnostic/Logger.h"
+#   define CheckPropertyIFN(obj, write) CheckProperty_(obj, write)
 namespace PPE {
 namespace RTTI {
 EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 } //!namespace RTTI
 } //!namespace PPE
-#endif
+#else
+#   define CheckPropertyIFN(obj, write) NOOP()
+#endif //!WITH_PPE_RTTI_PROPERTY_CHECKS
 
 namespace PPE {
 namespace RTTI {
@@ -35,6 +38,38 @@ FMetaProperty::FMetaProperty(const FName& name, EPropertyFlags flags, const PTyp
 FMetaProperty::~FMetaProperty()
 {}
 //----------------------------------------------------------------------------
+FAtom FMetaProperty::Get(const FMetaObject& obj) const {
+    CheckPropertyIFN(obj, false);
+    return MakeAtom_(obj);
+}
+//----------------------------------------------------------------------------
+void FMetaProperty::CopyTo(const FMetaObject& obj, const FAtom& dst) const {
+    CheckPropertyIFN(obj, false);
+    MakeAtom_(obj).Copy(dst);
+}
+//----------------------------------------------------------------------------
+void FMetaProperty::MoveTo(FMetaObject& obj, const FAtom& dst) const {
+    CheckPropertyIFN(obj, true);
+    MakeAtom_(obj).Move(dst);
+}
+//----------------------------------------------------------------------------
+void FMetaProperty::CopyFrom(FMetaObject& obj, const FAtom& src) const {
+    CheckPropertyIFN(obj, true);
+    src.Copy(MakeAtom_(obj));
+}
+//----------------------------------------------------------------------------
+void FMetaProperty::MoveFrom(FMetaObject& obj, FAtom& src) const {
+    CheckPropertyIFN(obj, true);
+    src.Move(MakeAtom_(obj));
+}
+//----------------------------------------------------------------------------
+FAtom FMetaProperty::ResetToDefaultValue(FMetaObject& obj) const {
+    CheckPropertyIFN(obj, true);
+    FAtom value = MakeAtom_(obj);
+    value.ResetToDefaultValue();
+    return value;
+}
+//----------------------------------------------------------------------------
 #ifdef WITH_PPE_RTTI_PROPERTY_CHECKS
 void FMetaProperty::CheckProperty_(const FMetaObject& obj, bool write) const {
 
@@ -43,7 +78,7 @@ void FMetaProperty::CheckProperty_(const FMetaObject& obj, bool write) const {
             obj.RTTI_Class()->Name(),
             _name,
             obj.RTTI_Name(),
-            obj.RTTI_Flags());
+            obj.RTTI_Flags() );
         PPE_THROW_IT(FPropertyException("writing to readonly property", this));
     }
 
@@ -53,6 +88,15 @@ void FMetaProperty::CheckProperty_(const FMetaObject& obj, bool write) const {
             _name,
             obj.RTTI_Name(),
             obj.RTTI_Flags() );
+    }
+
+    if (write && obj.RTTI_IsFrozen()) {
+        LOG(RTTI, Fatal, L"can't modify property \"{0}::{1}\" on frozen \"{2}\" ({3})",
+            obj.RTTI_Class()->Name(),
+            _name,
+            obj.RTTI_Name(),
+            obj.RTTI_Flags() );
+        PPE_THROW_IT(FPropertyException("writing to readonly property", this));
     }
 }
 #endif
@@ -76,6 +120,7 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::EPropertyFlags flags) {
     if (flags & RTTI::EPropertyFlags::Deprecated){ oss << sep << "Deprecated"; }
     if (flags & RTTI::EPropertyFlags::Member)    { oss << sep << "Member"; }
     if (flags & RTTI::EPropertyFlags::Dynamic)   { oss << sep << "Dynamic"; }
+    if (flags & RTTI::EPropertyFlags::Transient) { oss << sep << "Transient"; }
 
     return oss;
 }
@@ -90,6 +135,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EPropertyFlags flags) {
     if (flags & RTTI::EPropertyFlags::Deprecated){ oss << sep << L"Deprecated"; }
     if (flags & RTTI::EPropertyFlags::Member)    { oss << sep << L"Member"; }
     if (flags & RTTI::EPropertyFlags::Dynamic)   { oss << sep << L"Dynamic"; }
+    if (flags & RTTI::EPropertyFlags::Transient) { oss << sep << L"Transient"; }
 
     return oss;
 }
@@ -97,3 +143,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EPropertyFlags flags) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+#ifdef WITH_PPE_RTTI_PROPERTY_CHECKS
+#   undef CheckPropertyIFN
+#endif

@@ -35,8 +35,10 @@ enum class EObjectFlags : u32 {
     Unloaded    = 1<<1,
     Exported    = 1<<2,
     TopObject   = 1<<3,
+    Transient   = 1<<4,
+    Frozen      = 1<<5,
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-    Verifying   = 1<<4,
+    Verifying   = 1<<6,
 #endif
 
     All         = UINT32_MAX
@@ -67,7 +69,9 @@ public:
     bool RTTI_IsLoaded() const      { return (_flags ^ EObjectFlags::Loaded     ); }
     bool RTTI_IsUnloaded() const    { return (_flags ^ EObjectFlags::Unloaded   ); }
     bool RTTI_IsExported() const    { return (_flags ^ EObjectFlags::Exported   ); }
+    bool RTTI_IsFrozen() const      { return (_flags ^ EObjectFlags::Frozen     ); }
     bool RTTI_IsTopObject() const   { return (_flags ^ EObjectFlags::TopObject  ); }
+    bool RTTI_IsTransient() const   { return (_flags ^ EObjectFlags::Transient  ); }
 
     const FMetaTransaction* RTTI_Outer() const { return _outer.get(); }
     void RTTI_SetOuter(const FMetaTransaction* outer, const FMetaTransaction* prevOuterForDbg = nullptr);
@@ -79,17 +83,20 @@ public:
 
     void RTTI_ResetToDefaultValue();
 
+    void RTTI_Freeze(); // frozen object can't be modified
+    void RTTI_Unfreeze();
+
     void RTTI_Export(const FName& name);
     void RTTI_Unexport();
-
-    virtual void RTTI_Load(ILoadContext& context);
-    virtual void RTTI_Unload(IUnloadContext& context);
 
     bool RTTI_CallLoadIFN(ILoadContext& context);
     bool RTTI_CallUnloadIFN(IUnloadContext& context);
 
     void RTTI_MarkAsTopObject(); // should only be called by FMetaTransaction
     void RTTI_UnmarkAsTopObject(); // should only be called by FMetaTransaction
+
+    virtual void RTTI_Load(ILoadContext& context);
+    virtual void RTTI_Unload(IUnloadContext& context);
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
     virtual void RTTI_VerifyPredicates() const;
