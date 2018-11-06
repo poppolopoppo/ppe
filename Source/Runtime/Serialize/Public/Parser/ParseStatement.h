@@ -4,7 +4,7 @@
 
 #include "Parser/ParseItem.h"
 
-#include "Typedefs.h"
+#include "RTTI/Typedefs.h"
 
 #include "Allocator/PoolAllocator.h"
 

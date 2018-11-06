@@ -2,9 +2,9 @@
 
 #include "Serialize.h"
 
-#include "Atom.h"
+#include "RTTI/Atom.h"
+#include "RTTI/NativeTypes.h"
 #include "MetaObject.h"
-#include "NativeTypes.h"
 
 #include "Parser/Parser.h"
 #include "Parser/ParseItem.h"

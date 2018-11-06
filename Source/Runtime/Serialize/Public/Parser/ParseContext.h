@@ -3,7 +3,7 @@
 #include "Serialize.h"
 
 #include "RTTI_fwd.h"
-#include "TypeTraits.h"
+#include "RTTI/TypeTraits.h"
 
 #include "Container/HashMap.h"
 #include "Memory/RefPtr.h"
