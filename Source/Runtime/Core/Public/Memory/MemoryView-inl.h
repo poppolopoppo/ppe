@@ -7,11 +7,11 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<T>::TMemoryView()
+CONSTEXPR TMemoryView<T>::TMemoryView()
 :   _storage(nullptr), _size(0) {}
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<T>::TMemoryView(pointer storage, size_type size)
+CONSTEXPR TMemoryView<T>::TMemoryView(pointer storage, size_type size)
 :   _storage(storage), _size(size) {
     Assert(storage || 0 == size);
 }
@@ -19,7 +19,7 @@ TMemoryView<T>::TMemoryView(pointer storage, size_type size)
 // enables type promotion between char[] and TMemoryView<char>
 template <>
 template <size_t _Dim>
-TMemoryView<const char>::TMemoryView(const char (&staticString)[_Dim])
+CONSTEXPR TMemoryView<const char>::TMemoryView(const char (&staticString)[_Dim])
 :   TMemoryView(staticString, _Dim - 1) {
     STATIC_ASSERT(0 < _Dim);
     Assert('\0' == staticString[_Dim - 1]);
@@ -28,7 +28,7 @@ TMemoryView<const char>::TMemoryView(const char (&staticString)[_Dim])
 // enables type promotion between wchar_t[] and TMemoryView<wchar_t>
 template <>
 template <size_t _Dim>
-TMemoryView<const wchar_t>::TMemoryView(const wchar_t (&staticString)[_Dim])
+CONSTEXPR TMemoryView<const wchar_t>::TMemoryView(const wchar_t (&staticString)[_Dim])
 :   TMemoryView(staticString, _Dim - 1) {
     STATIC_ASSERT(0 < _Dim);
     Assert('\0' == staticString[_Dim - 1]);

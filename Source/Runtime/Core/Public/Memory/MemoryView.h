@@ -32,17 +32,17 @@ public:
     typedef std::random_access_iterator_tag iterator_category;
     typedef std::reverse_iterator<iterator> reverse_iterator;
 
-    TMemoryView();
-    TMemoryView(pointer storage, size_type size);
+    CONSTEXPR TMemoryView();
+    CONSTEXPR TMemoryView(pointer storage, size_type size);
     ~TMemoryView();
 
     // enables type promotion between {T(),T(),T()} and TMemoryView<T>
-    TMemoryView(std::initializer_list<T> list)
+    CONSTEXPR TMemoryView(std::initializer_list<T> list)
         : TMemoryView(list.begin(), std::distance(list.begin(), list.end())) {}
 
     // enables type promotion between T[] and TMemoryView<T>
     template <size_t _Dim>
-    TMemoryView(value_type (&staticArray)[_Dim])
+    CONSTEXPR TMemoryView(value_type (&staticArray)[_Dim])
         : TMemoryView(staticArray, _Dim) {}
 
     TMemoryView(const iterator& first, const iterator& last)
@@ -263,12 +263,12 @@ using FRawMemory = TMemoryView<const u8>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-TMemoryView<T> MakeView(T(&staticArray)[_Dim]) {
+CONSTEXPR TMemoryView<T> MakeView(T(&staticArray)[_Dim]) {
     return TMemoryView<T>(&staticArray[0], _Dim);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-TMemoryView<Meta::TAddConst<T> > MakeConstView(T(&staticArray)[_Dim]) {
+CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(T(&staticArray)[_Dim]) {
     return TMemoryView<Meta::TAddConst<T> >(&staticArray[0], _Dim);
 }
 //----------------------------------------------------------------------------

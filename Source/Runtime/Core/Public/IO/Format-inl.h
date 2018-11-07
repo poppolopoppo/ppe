@@ -198,7 +198,7 @@ constexpr bool ValidateFormatString(const char* fmt, size_t len, size_t numArgs)
             }
 
             if (fmt[i] == '}') // ignore unclosed/invalid format clauses
-                unusedArgs &= ~(1ul << argIndex);
+                unusedArgs &= ~(size_t(1) << argIndex);
         }
     }
     return (0 == unusedArgs); // each arg should be used at least once
@@ -228,7 +228,7 @@ constexpr bool ValidateFormatString(const wchar_t* fmt, size_t len, size_t numAr
             }
 
             if (fmt[i] == L'}') // ignore unclosed/invalid format clauses
-                unusedArgs &= ~(1ul << argIndex);
+                unusedArgs &= ~(size_t(1) << argIndex);
         }
     }
     return (0 == unusedArgs); // each arg should be used at least once

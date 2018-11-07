@@ -22,7 +22,7 @@ struct TInSituPtr {
         POD_STORAGE(T) InSitu;
     };
 
-    explicit TInSituPtr(Meta::FNoInit) {}
+    FORCE_INLINE explicit TInSituPtr(Meta::FNoInit) {}
     TInSituPtr() : VTable(NullMagick) {}
 
     bool Valid() const { return (VTable != NullMagick); }
@@ -81,9 +81,14 @@ struct TInSituPtr {
     }
 
     inline friend bool operator ==(const TInSituPtr& lhs, const TInSituPtr& rhs) {
+#if 0
         STATIC_ASSERT(sizeof(lhs) == sizeof(intptr_t));
         STATIC_ASSERT(sizeof(rhs) == sizeof(intptr_t));
         return (lhs.VTable == rhs.VTable);
+#else
+        return (FPlatformMemory::Memcmp(&lhs, &rhs, sizeof(TInSituPtr)) == 0);
+
+#endif
     }
     inline friend bool operator !=(const TInSituPtr& lhs, const TInSituPtr& rhs) {
         return not operator ==(lhs, rhs);
