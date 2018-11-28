@@ -16,12 +16,34 @@ void IStreamReader::ReadAll(TRawStorage<T, _Allocator>& dst) {
     typedef typename TRawStorage<T, _Allocator>::size_type size_type;
     const std::streamsize s = SizeInBytes();
 
-    Assert(0 == (s % sizeof(T)) );
+    Assert_NoAssume(0 == (s % sizeof(T)) );
     dst.Resize_DiscardData(checked_cast<size_type>(s / sizeof(T)) );
-    Assert(dst.SizeInBytes() == size_type(s));
+    Assert_NoAssume(dst.SizeInBytes() == size_type(s));
 
     SeekI(0);
-    Read(dst.Pointer(), s);
+    Verify(Read(dst.data(), s));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool IStreamReader::ReadAt(const TMemoryView<T>& dst, std::streamoff absolute) {
+    if (dst.empty())
+        return true;
+
+    SeekI(absolute, ESeekOrigin::Begin);
+    return Read(dst.data(), dst.SizeInBytes());
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+bool IStreamReader::ReadAt(TRawStorage<T, _Allocator>& dst, std::streamoff absolute, std::streamsize sizeInBytes) {
+    if (0 == sizeInBytes)
+        return true;
+
+    Assert_NoAssume(Meta::IsAligned(sizeof(T), size_t(sizeInBytes)));
+    dst.Resize_DiscardData(checked_cast<size_t>(sizeInBytes / sizeof(T)));
+    Assert_NoAssume(dst.SizeInBytes() == size_t(sizeInBytes));
+
+    SeekI(absolute, ESeekOrigin::Begin);
+    return Read(dst.data(), sizeInBytes);
 }
 //----------------------------------------------------------------------------
 template <typename T>

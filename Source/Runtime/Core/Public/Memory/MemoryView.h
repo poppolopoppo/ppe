@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "IO/TextWriter_fwd.h"
 
@@ -174,6 +174,9 @@ public:
 
     iterator FindSubRange(const TMemoryView<T>& subrange) const;
 
+    bool EndsWith(const T& suffix) const;
+    bool StartsWith(const T& prefix) const;
+
     bool EndsWith(const TMemoryView<T>& suffix) const;
     bool StartsWith(const TMemoryView<T>& prefix) const;
 
@@ -258,7 +261,8 @@ Meta::TEnableIf< std::is_integral<_Index>::value > ReindexMemoryView(const TMemo
     }
 }
 //----------------------------------------------------------------------------
-using FRawMemory = TMemoryView<const u8>;
+using FRawMemory = TMemoryView<u8>;
+using FRawMemoryConst = TMemoryView<const u8>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

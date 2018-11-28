@@ -76,6 +76,16 @@ bool FMemoryViewReader::Peek(wchar_t& wch) {
     return true;
 }
 //----------------------------------------------------------------------------
+bool FMemoryViewReader::ReadAt_SkipBuffer(const FRawMemory& storage, std::streamoff absolute) {
+    if (absolute + storage.size() <= _rawData.size()) {
+        _rawData.SubRange(checked_cast<size_t>(absolute), storage.size()).CopyTo(storage);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 std::streamoff FMemoryViewWriter::TellO() const {

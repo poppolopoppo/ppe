@@ -107,6 +107,16 @@ auto TMemoryView<T>::FindSubRange(const TMemoryView<T>& subrange) const -> itera
 }
 //----------------------------------------------------------------------------
 template <typename T>
+bool TMemoryView<T>::EndsWith(const T& suffix) const {
+    return (_size && back() == suffix);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+bool TMemoryView<T>::StartsWith(const T& prefix) const {
+    return (_size && front() == prefix);
+}
+//----------------------------------------------------------------------------
+template <typename T>
 bool TMemoryView<T>::EndsWith(const TMemoryView<T>& suffix) const {
     if (suffix.size() > _size)
         return false;
@@ -179,6 +189,7 @@ template <typename U>
 TMemoryView<U> TMemoryView<T>::Cast() const {
     STATIC_ASSERT(  (0 == (sizeof(T) % sizeof(U)) ) ||
                     (0 == (sizeof(U) % sizeof(T)) ) );
+    Assert_NoAssume(Meta::IsAligned(sizeof(U), _size * sizeof(T)));
 
     return TMemoryView<U>(reinterpret_cast<U *>(_storage), (_size * sizeof(T)) / sizeof(U));
 }

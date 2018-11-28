@@ -2,7 +2,6 @@
 
 #include "Core.h"
 
-#include "Allocator/Alloca.h"
 #include "Memory/MemoryView.h"
 
 namespace PPE {

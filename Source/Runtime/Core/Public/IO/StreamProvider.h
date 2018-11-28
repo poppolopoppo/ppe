@@ -42,6 +42,11 @@ public: // helpers
     void ReadAll(TRawStorage<T, _Allocator>& dst);
 
     template <typename T>
+    bool ReadAt(const TMemoryView<T>& dst, std::streamoff absolute);
+    template <typename T, typename _Allocator>
+    bool ReadAt(TRawStorage<T, _Allocator>& dst, std::streamoff absolute, std::streamsize sizeInBytes);
+
+    template <typename T>
     bool ReadView(const TMemoryView<T>& dst);
 };
 //----------------------------------------------------------------------------
@@ -51,6 +56,9 @@ class PPE_CORE_API IBufferedStreamReader : public IStreamReader {
 public:
     virtual bool Peek(char& ch) = 0;
     virtual bool Peek(wchar_t& ch) = 0;
+
+    // if you're reading a large chunk and need to seek, but don't want to pollute the read buffer
+    virtual bool ReadAt_SkipBuffer(const FRawMemory& storage, std::streamoff absolute) = 0;
 
 public: // helpers
     template <typename T>

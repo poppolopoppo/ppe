@@ -55,6 +55,8 @@ public: // IBufferedStreamReader
     virtual bool Peek(char& ch) override final;
     virtual bool Peek(wchar_t& wch) override final;
 
+    virtual bool ReadAt_SkipBuffer(const FRawMemory& storage, std::streamoff absolute) override final;
+
 private:
     IStreamReader* _nonBuffered;
     u8* _buffer;

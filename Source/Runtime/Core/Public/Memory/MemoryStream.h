@@ -97,6 +97,8 @@ public: // IBufferedStreamReader
     virtual bool Peek(char& ch) override final;
     virtual bool Peek(wchar_t& wch) override final;
 
+    virtual bool ReadAt_SkipBuffer(const FRawMemory& storage, std::streamoff absolute) override final;
+
 public: // IStreamWriter
     virtual bool IsSeekableO(ESeekOrigin ) const override final { return true; }
 
@@ -304,6 +306,17 @@ bool TMemoryStream<_Allocator>::Peek(wchar_t& wch) {
 
     wch = *reinterpret_cast<const wchar_t*>(&_storage[_offsetI]);
     return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+bool TMemoryStream<_Allocator>::ReadAt_SkipBuffer(const FRawMemory& storage, std::streamoff absolute) {
+    if (absolute + storage.size() <= _storage.size()) {
+        _storage.SubRange(checked_cast<size_t>(absolute), storage.size()).CopyTo(storage);
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 // IStreamWriter

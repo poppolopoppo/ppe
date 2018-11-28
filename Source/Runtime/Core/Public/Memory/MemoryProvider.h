@@ -62,9 +62,11 @@ public: // IBufferedStreamReader
     virtual bool Peek(char& ch) override final;
     virtual bool Peek(wchar_t& wch) override final;
 
+    virtual bool ReadAt_SkipBuffer(const FRawMemory& storage, std::streamoff absolute) override final;
+
 private:
     size_t _offsetI;
-    TMemoryView<const u8> _rawData;
+    FRawMemoryConst _rawData;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -90,7 +92,7 @@ public:
     {}
 
     size_t size() const { return _size; }
-    
+
     TMemoryView<const u8> Written() const { return _rawData.CutBefore(_size); }
     TMemoryView<const u8> WrittenSince(std::streamoff off) const {
         const size_t o = checked_cast<size_t>(off);
@@ -136,7 +138,7 @@ public: // IBufferedStreamWriter
 private:
     size_t _size;
     size_t _offsetO;
-    TMemoryView<u8> _rawData;
+    FRawMemory _rawData;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

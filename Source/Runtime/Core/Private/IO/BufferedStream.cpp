@@ -53,6 +53,17 @@ void FBufferedStreamReader::SetStream(IStreamReader* nonBuffered) {
     _offset = 0;
 }
 //----------------------------------------------------------------------------
+bool FBufferedStreamReader::ReadAt_SkipBuffer(const FRawMemory& storage, std::streamoff absolute) {
+    Assert(storage.size());
+
+    const std::streamoff org = _nonBuffered->TellI();
+    const bool success = _nonBuffered->ReadAt(storage, absolute);
+
+    _nonBuffered->SeekI(org, ESeekOrigin::Begin);
+
+    return success;
+}
+//----------------------------------------------------------------------------
 bool FBufferedStreamReader::Eof() const {
     Assert(_nonBuffered);
     Assert(_origin + _capacity == _nonBuffered->TellI());
