@@ -360,13 +360,14 @@ public:
     template <typename _It>
     typename std::enable_if<Meta::is_iterator<_It>::value>::type
         assign(_It first, _It last) {
-        Assert_NoAssume(not AliasesToContainer(*first));
-        Assert_NoAssume(not AliasesToContainer(*last));
-
         typedef std::iterator_traits<_It> iterator_traits;
         typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
         clear();
-        insert_(first, last, iterator_category());
+
+        if (first != last) {
+            Assert_NoAssume(not AliasesToContainer(*first));
+            insert_(first, last, iterator_category());
+        }
     }
 
     void append(const TBasicHashTable& other) {
