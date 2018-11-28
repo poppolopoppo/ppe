@@ -1,6 +1,6 @@
  #pragma once
 
-#include "Serialize.h"
+#include "Serialize_fwd.h"
 
 #include "RTTI_fwd.h"
 #include "RTTI/TypeTraits.h"
@@ -25,6 +25,7 @@ public:
 
     const FParseContext* Parent() const { return _parent; }
     const FParseContext* GlobalScope() const;
+    const auto& LocalScope() const { return _localScope; }
 
     RTTI::FMetaObject* ScopeObject() const { return _scopeObject.get(); }
     void SetScopeObject(RTTI::FMetaObject *object);

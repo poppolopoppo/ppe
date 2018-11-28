@@ -9,7 +9,7 @@
 #include "MetaClass.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
-#include "TypeInfos.h"
+#include "RTTI/TypeInfos.h"
 
 #include "Allocator/PoolAllocator-impl.h"
 #include "Diagnostic/Logger.h"

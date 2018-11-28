@@ -5,7 +5,7 @@
 #include "Lexer/Symbol.h"
 
 #include "MetaObject.h"
-#include "NativeTypes.h"
+#include "RTTI/NativeTypes.h"
 
 namespace PPE {
 namespace Lexer {

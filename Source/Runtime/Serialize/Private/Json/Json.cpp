@@ -560,6 +560,11 @@ bool FJson::Load(FJson* json, const FWStringView& filename, const FStringView& c
     return Load(json, filename, &reader);
 }
 //----------------------------------------------------------------------------
+bool FJson::Load(FJson* json, const FFilename& filename, IBufferedStreamReader* input) {
+    STACKLOCAL_ASSUMEPOD_ARRAY(wchar_t, tmp, FileSystem::MaxPathLength);
+    return Load(json, filename.ToWCStr(tmp), input);
+}
+//----------------------------------------------------------------------------
 bool FJson::Load(FJson* json, const FWStringView& filename, IBufferedStreamReader* input) {
     Assert(json);
     Assert(input);

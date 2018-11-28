@@ -5,7 +5,7 @@
 #include "Parser/Parser.h"
 #include "Parser/ParseStatement.h"
 
-#include "Any.h"
+#include "RTTI/Any.h"
 #include "MetaClass.h"
 #include "MetaDatabase.h"
 #include "MetaObject.h"
@@ -90,7 +90,9 @@ RTTI::FAtom FVariableReference::Eval(FParseContext* context) const {
             PPE_THROW_IT(FParserException("unknown variable name", this));
     }
     else { // global :
-        RTTI::PMetaObject objIFP{ RTTI::MetaDB().ObjectIFP(_pathName) };
+        // #TODO use linker instead for MT ???
+        const RTTI::FMetaDatabaseReadable metaDB;
+        RTTI::PMetaObject objIFP{ metaDB->ObjectIFP(_pathName) };
 
         if (not objIFP)
             PPE_THROW_IT(FParserException("unknown object path", this));
@@ -127,7 +129,9 @@ void FObjectDefinition::AddStatement(const FParseStatement *statement) {
 RTTI::FAtom FObjectDefinition::Eval(FParseContext* context) const {
     Assert(context);
 
-    const RTTI::FMetaClass *metaclass = RTTI::MetaDB().ClassIFP(_name);
+    // #TODO use linker instead for MT ???
+    const RTTI::FMetaDatabaseReadable metaDB;
+    const RTTI::FMetaClass *metaclass = metaDB->ClassIFP(_name);
     if (not metaclass)
         PPE_THROW_IT(FParserException("unknown metaclass", this));
 

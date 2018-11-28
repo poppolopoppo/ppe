@@ -16,13 +16,12 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 void ISerializer::Deserialize(
     const ISerializer& serializer,
-    const FWStringView& fragment,
     const TMemoryView<const u8>& rawData,
-    RTTI::FMetaTransaction* loaded) {
+    FTransactionLinker* linker ) {
     Assert(not rawData.empty());
 
     FMemoryViewReader reader(rawData);
-    serializer.Deserialize(fragment, reader, loaded);
+    serializer.Deserialize(reader, linker);
 }
 //----------------------------------------------------------------------------
 PSerializer ISerializer::FromExtname(const FExtname& ext) {

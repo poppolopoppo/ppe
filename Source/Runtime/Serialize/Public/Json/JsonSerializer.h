@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Serialize.h"
+#include "Serialize_fwd.h"
 
 #include "ISerializer.h"
 
@@ -26,15 +26,8 @@ public:
     static PSerializer Get();
 
 public: // ISerializer
-    virtual void Deserialize(
-        const FWStringView& fragment,
-        IStreamReader& input,
-        RTTI::FMetaTransaction* loaded) const override final;
-
-    virtual void Serialize(
-        const FWStringView& fragment,
-        const RTTI::FMetaTransaction& saved,
-        IStreamWriter* output) const override final;
+    virtual void Deserialize(IStreamReader& input, FTransactionLinker* linker) const override final;
+    virtual void Serialize(const FTransactionSaver& saver, IStreamWriter* output) const override final;
 
 private:
     friend struct TInSituPtr<ISerializer>;
@@ -44,9 +37,9 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_SERIALIZE_API void RTTI_to_Json(class FJson& dst, const TMemoryView<const RTTI::PMetaObject>& src, const RTTI::FMetaTransaction* outer = nullptr);
+PPE_SERIALIZE_API void RTTI_to_Json(const FTransactionSaver& saved, class FJson* dst);
 //----------------------------------------------------------------------------
-PPE_SERIALIZE_API bool Json_to_RTTI(VECTOR(Transient, RTTI::PMetaObject)& dst, const class FJson& src);
+PPE_SERIALIZE_API bool Json_to_RTTI(const class FJson& src, FTransactionLinker* link);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

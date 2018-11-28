@@ -8,6 +8,7 @@
 
 #include "Allocator/SingletonPoolAllocator.h"
 #include "Container/Tuple.h"
+#include "Container/TupleHelpers.h"
 #include "Container/Vector.h"
 #include "Misc/Function.h"
 
@@ -149,8 +150,8 @@ struct TProduction {
     }
 
     template <typename U>
-    TProduction< typename TTupleMerger<T, U>::type > And(TProduction<U>&& other) const {
-        typedef typename TTupleMerger<T, U>::type tuple_type;
+    auto And(TProduction<U>&& other) const {
+        using tuple_type = decltype(MergeTuple(std::declval<T>(), std::declval<U>()));
         const TProduction& first = *this;
         return TProduction<tuple_type>{[first, other](FParseList& input) -> TParseResult<tuple_type> {
             TParseResult<T> a = first.TryParse(input);

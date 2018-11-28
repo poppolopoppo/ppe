@@ -3,10 +3,8 @@
 #include "Serialize.h"
 
 #include "IO/FileSystem_fwd.h"
-#include "IO/StringView.h"
 #include "Memory/InSituPtr.h"
 #include "Meta/enum.h"
-#include "RTTI_fwd.h"
 
 namespace PPE {
 class IStreamReader;
@@ -24,25 +22,18 @@ enum class ESerializeFlag {
 ENUM_FLAGS(ESerializeFlag);
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API ISerializer : Meta::FNonCopyableNorMovable {
-public: // virtual :
+protected: // abstract class :
     explicit ISerializer(ESerializeFlag flags = ESerializeFlag::None)
         : _flags(flags)
     {}
 
+public: // virtual :
     virtual ~ISerializer() {}
 
-    virtual void Deserialize(
-        const FWStringView& fragment,
-        IStreamReader& input,
-        RTTI::FMetaTransaction* loaded ) const = 0;
-
-    virtual void Serialize(
-        const FWStringView& fragment,
-        const RTTI::FMetaTransaction& saved,
-        IStreamWriter* output ) const = 0;
+    virtual void Deserialize(IStreamReader& input, FTransactionLinker* linker) const = 0;
+    virtual void Serialize(const FTransactionSaver& saver, IStreamWriter* output) const = 0;
 
 public: // helpers :
-
     ESerializeFlag Flags() const { return _flags; }
     void SetFlags(ESerializeFlag flags) { _flags = flags; }
 
@@ -51,9 +42,8 @@ public: // helpers :
 
     static void Deserialize(
         const ISerializer& serializer,
-        const FWStringView& fragment,
         const TMemoryView<const u8>& rawData,
-        RTTI::FMetaTransaction* loaded );
+        FTransactionLinker* linker );
 
     static PSerializer FromExtname(const FExtname& ext);
 

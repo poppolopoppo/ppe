@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Serialize.h"
+#include "Serialize_fwd.h"
 
 #include "Diagnostic/Exception.h"
 
@@ -9,7 +9,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FSerializeException : public FException {
+class PPE_SERIALIZE_API FSerializeException : public FException {
 public:
     FSerializeException(const char* what) : FException(what) {}
 };

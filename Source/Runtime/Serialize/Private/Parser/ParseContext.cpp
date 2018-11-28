@@ -2,17 +2,17 @@
 
 #include "Parser/ParseContext.h"
 
-#include "Parser/Parser.h"
-#include "Parser/ParseExpression.h"
-
-#include "Atom.h"
-#include "AtomHeap.h"
+#include "RTTI/Atom.h"
+#include "RTTI/AtomHeap.h"
+#include "RTTI/Typedefs.h"
+#include "RTTI/TypeTraits.h"
 #include "MetaClass.h"
 #include "MetaDatabase.h"
 #include "MetaObject.h"
 #include "MetaTransaction.h"
-#include "Typedefs.h"
-#include "TypeTraits.h"
+
+#include "Parser/Parser.h"
+#include "Parser/ParseExpression.h"
 
 namespace PPE {
 namespace Parser {

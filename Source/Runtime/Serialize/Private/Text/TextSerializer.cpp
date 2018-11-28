@@ -10,13 +10,13 @@
 #include "Parser/ParseItem.h"
 #include "Parser/ParseList.h"
 
-#include "Any.h"
-#include "Atom.h"
-#include "AtomVisitor.h"
 #include "MetaClass.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
 #include "MetaTransaction.h"
+#include "RTTI/Any.h"
+#include "RTTI/Atom.h"
+#include "RTTI/AtomVisitor.h"
 
 #include "Container/HashMap.h"
 #include "Container/HashSet.h"
@@ -31,6 +31,9 @@
 #include "IO/TextWriter.h"
 #include "Memory/MemoryStream.h"
 
+#include "TransactionLinker.h"
+#include "TransactionSaver.h"
+
 namespace PPE {
 namespace Serialize {
 //----------------------------------------------------------------------------
@@ -40,33 +43,74 @@ namespace {
 //----------------------------------------------------------------------------
 class FTextSerialize_ : public RTTI::IAtomVisitor {
 public:
-    FTextSerialize_(IBufferedStreamWriter* ostream, bool minify)
-        : _oss(ostream)
+    FTextSerialize_(const FTransactionSaver& saver, IBufferedStreamWriter& ostream, bool minify)
+        : _saver(saver)
+        , _oss(&ostream)
         , _indent(minify ? FStringView() : MakeStringView("  "))
         , _newLine(minify ? ' ' : '\n')
-        , _rootIndex(INDEX_NONE)
-        , _outer(nullptr)
     {}
 
-    void Serialize(const RTTI::FMetaTransaction& transaction) {
-        Assert(nullptr == _outer);
-        Assert(INDEX_NONE == _rootIndex);
-        Assert(_anons.empty());
+    void Append(const RTTI::FMetaObjectRef& ref) {
+        Assert(ref.Get());
 
-        RTTI::FLinearizedTransaction linearized;
-        transaction.Linearize(&linearized);
+        FString name;
+        if (ref.IsImport()) {
+            Assert_NoAssume(not ref->RTTI_Name().empty());
 
-        _outer = &transaction;
-        _linearized = linearized.MakeConstView();
+#if 0 // TODO : parser doesn't support this yet
+            _oss << "import $/" << obj.RTTI_Outer()->Name() << '/' << obj.RTTI_Name() << '\n';
+#endif
+            return;
+        }
+        else if (ref.IsExport()) {
+            Assert_NoAssume(not ref->RTTI_Name().empty());
 
-        forrange(i, 0, _linearized.size()) {
-            RTTI::PMetaObject ref{ _linearized[_rootIndex = i].get() };
-            Print_(ref);
+            name = StringFormat("~/{0}", ref->RTTI_Name());
+        }
+        else { // generate temporary name (for internal references)
+            Assert_NoAssume(ref->RTTI_Name().empty());
+
+            name = StringFormat("{0}_{1}", ref->RTTI_Class()->Name(), _visiteds.size());
         }
 
-        _anons.clear();
-        _rootIndex = INDEX_NONE;
-        _outer = nullptr;
+        Insert_AssertUnique(_visiteds, RTTI::SMetaObject{ ref.Get() }, name);
+
+        // definition :
+        if (ref.IsExport())
+            _oss << "export ";
+        _oss << name;
+
+        const RTTI::FMetaClass* const klass = ref->RTTI_Class();
+        Assert(klass);
+
+        _oss << " is " << klass->Name() << " (";
+
+        _indent.Inc();
+
+        bool hasProperties = false;
+        for (const RTTI::FMetaProperty* prop : klass->AllProperties()) {
+            const RTTI::FAtom value = prop->Get(*ref);
+            Assert(value);
+
+            if (value.IsDefaultValue())
+                continue;
+
+            if (not hasProperties) {
+                hasProperties = true;
+                _oss << _newLine;
+            }
+
+            _oss << _indent << prop->Name() << " = ";
+            value.Accept(this);
+            _oss << _newLine;
+        }
+
+        _indent.Dec();
+
+        if (hasProperties)
+            _oss << _indent;
+
+        _oss << ')' << _newLine;
     }
 
 public: //RTTI::IAtomVisitor
@@ -157,90 +201,22 @@ private:
         inner.Accept(this);
     }
 
-    void Print_(const RTTI::PMetaObject& pobj) {
-        if (not pobj) {
+    void Print_(const RTTI::PMetaObject& obj) {
+        if (not obj) {
             _oss << "null";
             return;
         }
 
-        RTTI::FMetaObject& obj = (*pobj);
-        Assert(_linearized.end() != _linearized.FindIf([&obj](const RTTI::SMetaObject& o) {
-            return (o.get() == &obj);
-        }));
-
-        // reference ?
-        if (_linearized[_rootIndex].get() != &obj) {
-            if (obj.RTTI_Outer() != _outer) {
-                AssertRelease(obj.RTTI_IsExported()); // can't reference an object from another transaction if it's not exported
-                Assert(obj.RTTI_Outer());
-                Assert(not obj.RTTI_Name().empty());
-
-                _oss << "$/" << obj.RTTI_Outer()->Name() << '/' << obj.RTTI_Name();
-            }
-            else if (obj.RTTI_IsExported()) {
-                Assert(not obj.RTTI_Name().empty());
-
-                _oss << "~/" << obj.RTTI_Name();
-            }
-            else {
-                _oss << "~/" << MakeAnon_(pobj);
-            }
-            return;
-        }
-
-        // definition :
-        if (obj.RTTI_Outer() != _outer) {
-            AssertRelease(obj.RTTI_IsExported()); // can't reference an object from another transaction if it's not exported
-            Assert(obj.RTTI_Outer());
-            Assert(not obj.RTTI_Name().empty());
-
-#if 0 // TODO : parser doesn't support this yet
-            _oss << "import $/" << obj.RTTI_Outer()->Name() << '/' << obj.RTTI_Name() << '\n';
-#endif
-            return; // defined in another transaction
+        const auto it = _visiteds.find(RTTI::SMetaObject{ obj });
+        if (_visiteds.end() == it) {
+            // import
+            const RTTI::FPathName path{ *obj };
+            _oss << path;
         }
         else {
-            if (obj.RTTI_IsExported()) {
-                Assert(not obj.RTTI_Name().empty());
-
-                _oss << "export " << obj.RTTI_Name();
-            }
-            else {
-                _oss << MakeAnon_(pobj);
-            }
+            // internal
+            _oss << it->second;
         }
-
-        const RTTI::FMetaClass* metaClass = obj.RTTI_Class();
-        Assert(metaClass);
-
-        _oss << " is " << metaClass->Name() << " (";
-
-        _indent.Inc();
-
-        bool hasProperties = false;
-        for (const RTTI::FMetaProperty* prop : metaClass->AllProperties()) {
-            const RTTI::FAtom value = prop->Get(obj);
-            Assert(value);
-
-            if (value.IsDefaultValue())
-                continue;
-
-            if (not hasProperties) {
-                hasProperties = true;
-                _oss << _newLine;
-            }
-
-            _oss << _indent << prop->Name() << " = ";
-            value.Accept(this);
-            _oss << _newLine;
-        }
-
-        _indent.Dec();
-
-        if (hasProperties)
-            _oss << _indent;
-
-        _oss << ')' << _newLine;
     }
 
     void Print_(bool b) { _oss << (b ? "true" : "false"); }
@@ -272,30 +248,13 @@ private:
         _oss << value;
     }
 
-    RTTI::FName MakeAnon_(const RTTI::SMetaObject& pobj) {
-        Assert(pobj);
-
-        RTTI::FName& name = _anons[pobj];
-        if (name.empty()) {
-            name = pobj->RTTI_Name();
-            if (name.empty())
-                name = RTTI::FName(StringFormat("anon_{0}_{1}", pobj->RTTI_Class()->Name(), _anons.size()));
-        }
-
-        Assert(not name.empty());
-        return name;
-    }
+    const FTransactionSaver& _saver;
 
     FTextWriter _oss;
     Fmt::FIndent _indent;
     char _newLine;
 
-    size_t _rootIndex;
-
-    const RTTI::FMetaTransaction* _outer;
-    TMemoryView<const RTTI::SMetaObject> _linearized;
-
-    HASHMAP(Transient, RTTI::SMetaObject, RTTI::FName) _anons;
+    HASHMAP(Transient, RTTI::SMetaObject, FString) _visiteds;
 };
 //----------------------------------------------------------------------------
 } //!namespace
@@ -308,15 +267,12 @@ FTextSerializer::FTextSerializer(bool minify/* = true */) {
 //----------------------------------------------------------------------------
 FTextSerializer::~FTextSerializer() {}
 //----------------------------------------------------------------------------
-void FTextSerializer::Deserialize(
-    const FWStringView& fragment,
-    IStreamReader& input,
-    RTTI::FMetaTransaction* loaded) const {
-    Assert(loaded);
+void FTextSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
+    Assert(linker);
 
     Parser::FParseList parseList;
-    UsingBufferedStream(&input, [&parseList, fragment](IBufferedStreamReader* buffered) {
-        Lexer::FLexer lexer(buffered, fragment, true);
+    UsingBufferedStream(&input, [&parseList, linker](IBufferedStreamReader* buffered) {
+        Lexer::FLexer lexer(buffered, linker->Filename().ToWString(), true);
         parseList.Parse(&lexer);
     });
 
@@ -328,21 +284,24 @@ void FTextSerializer::Deserialize(
             const RTTI::PMetaObject* ppobj = atom.TypedConstDataIFP<RTTI::PMetaObject>();
 
             if (ppobj && *ppobj)
-                loaded->RegisterObject(ppobj->get());
+                linker->AddTopObject(ppobj->get());
         }
+    }
+
+    for (const auto& it : parseContext.LocalScope()) {
+        if (const RTTI::PMetaObject* exported = it.second.TypedDataIFP<RTTI::PMetaObject>())
+            linker->AddExport(it.first, *exported);
     }
 }
 //----------------------------------------------------------------------------
-void FTextSerializer::Serialize(
-    const FWStringView& fragment,
-    const RTTI::FMetaTransaction& saved,
-    IStreamWriter* output) const {
-    UNUSED(fragment);
+void FTextSerializer::Serialize(const FTransactionSaver& saver, IStreamWriter* output) const {
     Assert(output);
 
-    UsingBufferedStream(output, [this, &saved](IBufferedStreamWriter* buffered) {
-        FTextSerialize_ visitor(buffered, Minify());
-        visitor.Serialize(saved);
+    UsingBufferedStream(output, [this, &saver](IBufferedStreamWriter* buffered) {
+        FTextSerialize_ visitor(saver, *buffered, Minify());
+
+        for (const RTTI::FMetaObjectRef& ref : saver.Objects())
+            visitor.Append(ref);
     });
 }
 //----------------------------------------------------------------------------

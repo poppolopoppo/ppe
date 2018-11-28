@@ -170,6 +170,7 @@ public:
     void ToStream(FWTextWriter& oss, bool minify = false) const { _root.ToStream(oss, minify); }
 
     static bool Load(FJson* json, const FFilename& filename);
+    static bool Load(FJson* json, const FFilename& filename, IBufferedStreamReader* input);
     static bool Load(FJson* json, const FWStringView& filename, IBufferedStreamReader* input);
     static bool Load(FJson* json, const FWStringView& filename, const FStringView& content);
 
