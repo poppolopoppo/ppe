@@ -214,6 +214,7 @@ ALL_CONFIGURATIONS.each do |configuration|
         },
         "isBackground": true,
         "presentation": {
+            "clear": true,
             "echo": true,
             "reveal": "always",
             "focus": false,
