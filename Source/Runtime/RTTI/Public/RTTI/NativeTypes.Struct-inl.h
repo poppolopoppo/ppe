@@ -5,6 +5,7 @@
 #include "RTTI/NativeTypes.Tuple-inl.h" // TBaseTupleTraits<...>
 
 #include "Container/Tuple.h"
+#include "Container/TupleHelpers.h"
 
 // need C++17 structured bindings
 #define USE_PPE_RTTI_STRUCT_AS_TUPLE _HAS_CXX17
@@ -30,6 +31,8 @@ class TStructAsTupleTraits<T, TTuple<_Args&...>> final : public TBaseTypeTraits<
 public: // ITupleTraits
     using typename base_traits::foreach_fun;
 
+    CONSTEXPR TStructAsTupleTraits() : base_traits(sizeof(T)) {}
+
     virtual FAtom At(void* data, size_t index) const override final;
 
     virtual bool ForEach(void* data, const foreach_fun& foreach) const override final;
@@ -40,7 +43,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Tuple = decltype(tie_as_tuple(std::declval<T&>())) >
-PTypeTraits Traits(Meta::TType< T >) noexcept {
+CONSTEXPR PTypeTraits MakeStruct(Meta::TType< T >) NOEXCEPT {
     return PTypeTraits::Make< TStructAsTupleTraits<T, _Tuple> >();
 }
 //----------------------------------------------------------------------------

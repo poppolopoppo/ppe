@@ -15,6 +15,11 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 template <typename T>
 class TBaseScalarTraits : public IScalarTraits {
+protected:
+    CONSTEXPR TBaseScalarTraits(FTypeId typeId, ETypeFlags flags, size_t sizeInBytes)
+        : IScalarTraits(typeId, flags, sizeInBytes)
+    {}
+
 public: // ITypeTraits
     virtual bool Equals(const void* lhs, const void* rhs) const override final;
     virtual hash_t HashValue(const void* data) const override final;
@@ -57,27 +62,27 @@ FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_ENUM)
 }; //!enum class ENativeType
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr FTypeId NativeTypeId() {
+constexpr FTypeId NativeTypeId() NOEXCEPT {
     return NativeTypeId(Meta::TType<T>{});
 }
 //----------------------------------------------------------------------------
-PPE_RTTI_API PTypeTraits MakeTraits(ENativeType nativeType);
+PPE_RTTI_API PTypeTraits MakeTraits(ENativeType nativeType) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // RTTI support for packed data
 //----------------------------------------------------------------------------
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<byten>);
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<shortn>);
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<wordn>);
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<ubyten>);
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<ushortn>);
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<uwordn>);
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<FHalfFloat>);
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<UX10Y10Z10W2N>);
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<FGuid>);
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<FTimestamp>);
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<u128>);
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<byten>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<shortn>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<wordn>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<ubyten>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<ushortn>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<uwordn>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<FHalfFloat>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<UX10Y10Z10W2N>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<FGuid>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<FTimestamp>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<u128>) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -93,13 +98,22 @@ class TEnumTraits final : public TBaseTypeTraits<TEnum_t<T>, TBaseScalarTraits<T
     using base_traits = TBaseTypeTraits<TEnum_t<T>, TBaseScalarTraits<TEnum_t<T>> >;
 
 public: // ITypeTraits
+    CONSTEXPR TEnumTraits()
+    :   base_traits(
+        NativeTypeId<TEnum_t<T>>(),
+        ETypeFlags::Enum |
+        ETypeFlags::Native |
+        ETypeFlags::POD |
+        ETypeFlags::Scalar |
+        ETypeFlags::TriviallyDestructible,
+        sizeof(TEnum_t<T>) )
+    {}
+
     virtual const FMetaEnum* EnumClass() const override final { return RTTI::MetaEnum<T>(); }
     virtual const FMetaClass* ObjectClass() const override final { return nullptr; }
 
 public: // ITypeTraits
-    virtual FTypeId TypeId() const override final;
-    virtual ETypeFlags TypeFlags() const override final;
-    virtual FTypeInfos TypeInfos() const override final;
+    virtual FStringView TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const override final;
     virtual void ResetToDefaultValue(void* data) const override final;
@@ -121,26 +135,8 @@ PTypeTraits Traits(Meta::TType< _Enum >, Meta::TEnableIf< std::is_enum_v<_Enum> 
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FTypeId TEnumTraits<T>::TypeId() const {
-    return NativeTypeId<TEnum_t<T>>();
-}
-//----------------------------------------------------------------------------
-template <typename T>
-ETypeFlags TEnumTraits<T>::TypeFlags() const {
-    return (ETypeFlags::POD |
-            ETypeFlags::Scalar |
-            ETypeFlags::Enum |
-            ETypeFlags::Native |
-            ETypeFlags::TriviallyDestructible );
-}
-//----------------------------------------------------------------------------
-template <typename T>
-FTypeInfos TEnumTraits<T>::TypeInfos() const {
-    return FTypeInfos(
-        MetaEnumName(TEnumTraits<T>::EnumClass()),
-        TEnumTraits<T>::TypeId(),
-        TEnumTraits<T>::TypeFlags(),
-        sizeof(T) );
+FStringView TEnumTraits<T>::TypeName() const {
+    return MetaEnumName(TEnumTraits<T>::EnumClass());
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -214,14 +210,21 @@ template <typename T>
 class TObjectTraits final : public TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>> {
     using base_traits = TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>>;
 
-public: // ITypeTraits
+public: // IScalarTraits
     virtual const FMetaEnum* EnumClass() const override final { return nullptr; }
     virtual const FMetaClass* ObjectClass() const override final { return RTTI::MetaClass<T>(); }
 
 public: // ITypeTraits
-    virtual FTypeId TypeId() const override final;
-    virtual ETypeFlags TypeFlags() const override final;
-    virtual FTypeInfos TypeInfos() const override final;
+    CONSTEXPR TObjectTraits()
+    :   base_traits(
+        FTypeId(ENativeType::MetaObject),
+        ETypeFlags::Object |
+        ETypeFlags::Native |
+        ETypeFlags::Scalar,
+        sizeof(PMetaObject) )
+    {}
+
+    virtual FStringView TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const override final;
     virtual void ResetToDefaultValue(void* data) const override final;
@@ -243,22 +246,8 @@ PTypeTraits Traits(Meta::TType< TRefPtr<_Class> >) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FTypeId TObjectTraits<T>::TypeId() const {
-    return FTypeId(ENativeType::MetaObject);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-ETypeFlags TObjectTraits<T>::TypeFlags() const {
-    return (ETypeFlags::Scalar | ETypeFlags::Native);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-FTypeInfos TObjectTraits<T>::TypeInfos() const {
-    return FTypeInfos(
-        MetaClassName(TObjectTraits<T>::ObjectClass()),
-        TObjectTraits<T>::TypeId(),
-        TObjectTraits<T>::TypeFlags(),
-        sizeof(PMetaObject) );
+FStringView TObjectTraits<T>::TypeName() const {
+    return MetaClassName(TObjectTraits<T>::ObjectClass());
 }
 //----------------------------------------------------------------------------
 template <typename T>

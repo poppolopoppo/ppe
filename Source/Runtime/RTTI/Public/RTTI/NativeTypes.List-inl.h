@@ -14,10 +14,16 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 template <typename T>
 class TBaseListTraits : public IListTraits {
+protected:
+    CONSTEXPR TBaseListTraits(size_t sizeInBytes)
+        : IListTraits(
+            MakeListTypeId(MakeTraits<T>()),
+            MakeListTypeFlags(MakeTraits<T>()),
+            sizeInBytes )
+    {}
+
 public: // ITypeTraits
-    virtual FTypeId TypeId() const override final;
-    virtual ETypeFlags TypeFlags() const override final;
-    virtual FTypeInfos TypeInfos() const override final;
+    virtual FStringView TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const override final;
     virtual void ResetToDefaultValue(void* data) const override final;
@@ -36,29 +42,11 @@ public: // IListTraits
 };
 //----------------------------------------------------------------------------
 template <typename T>
-FTypeId TBaseListTraits<T>::TypeId() const {
-    ONE_TIME_INITIALIZE(const FTypeId, GCachedTypeId, MakeListTypeId(
-        MakeTraits<T>()
-    ));
-    return GCachedTypeId;
-}
-//----------------------------------------------------------------------------
-template <typename T>
-ETypeFlags TBaseListTraits<T>::TypeFlags() const {
-    return ETypeFlags::List;
-}
-//----------------------------------------------------------------------------
-template <typename T>
-FTypeInfos TBaseListTraits<T>::TypeInfos() const {
+FStringView TBaseListTraits<T>::TypeName() const {
     ONE_TIME_INITIALIZE(const FString, GCachedTypeName, MakeListTypeName(
         MakeTraits<T>()
     ));
-    return FTypeInfos(
-        GCachedTypeName.MakeView(),
-        TBaseListTraits<T>::TypeId(),
-        TBaseListTraits<T>::TypeFlags(),
-        SizeInBytes()
-    );
+    return GCachedTypeName.MakeView();
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -200,6 +188,8 @@ class TVectorLikeTraits final : public TBaseTypeTraits< _VectorLike, TBaseListTr
 
 public: // IListTraits
     using typename base_traits::foreach_fun;
+
+    CONSTEXPR TVectorLikeTraits() : base_traits(sizeof(_VectorLike)) {}
 
     virtual size_t Count(const void* data) const override final;
     virtual bool IsEmpty(const void* data) const override final;

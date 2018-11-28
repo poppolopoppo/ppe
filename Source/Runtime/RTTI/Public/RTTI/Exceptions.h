@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
 #include "Diagnostic/Exception.h"
 
@@ -13,6 +13,16 @@ class FMetaProperty;
 class FRTTIException : public FException {
 public:
     explicit FRTTIException(const char* what) : FException(what) {}
+};
+//----------------------------------------------------------------------------
+class FClassException : public FRTTIException {
+public:
+    FClassException(const char* what, const FMetaClass* klass = nullptr) : FRTTIException(what), _class(klass) {}
+
+    const FMetaClass* Class() const { return _class; }
+
+private:
+    const FMetaClass* _class;
 };
 //----------------------------------------------------------------------------
 class FPropertyException : public FRTTIException {

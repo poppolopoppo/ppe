@@ -2,9 +2,11 @@
 
 #include "RTTI_fwd.h"
 
-#include "Allocator/TrackingMalloc.h"
 #include "MetaClass.h"
 #include "MetaObjectHelpers.h"
+#include "RTTI/TypeTraits.h"
+
+#include "Allocator/TrackingMalloc.h"
 
 namespace PPE {
 namespace RTTI {

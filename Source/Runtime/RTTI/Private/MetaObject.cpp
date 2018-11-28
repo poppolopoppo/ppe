@@ -56,7 +56,7 @@ void FMetaObject::RTTI_ResetToDefaultValue() {
 void FMetaObject::RTTI_Freeze() {
     Assert_NoAssume(not RTTI_IsFrozen());
 
-    _flags = _flags - EObjectFlags::Frozen;
+    _flags = _flags + EObjectFlags::Frozen;
 }
 //----------------------------------------------------------------------------
 void FMetaObject::RTTI_Unfreeze() {

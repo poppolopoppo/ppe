@@ -13,10 +13,16 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
 class TBaseDicoTraits : public IDicoTraits {
+protected:
+    TBaseDicoTraits(size_t sizeInBytes)
+        : IDicoTraits(
+            MakeDicoTypeId(MakeTraits<_Key>(), MakeTraits<_Value>()),
+            MakeDicoTypeFlags(MakeTraits<_Key>(), MakeTraits<_Value>()),
+            sizeInBytes )
+    {}
+
 public: // ITypeTraits
-    virtual FTypeId TypeId() const override final;
-    virtual ETypeFlags TypeFlags() const override final;
-    virtual FTypeInfos TypeInfos() const override final;
+    virtual FStringView TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const override final;
     virtual void ResetToDefaultValue(void* data) const override final;
@@ -36,31 +42,12 @@ public: // IDicoTraits
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-FTypeId TBaseDicoTraits<_Key, _Value>::TypeId() const {
-    ONE_TIME_INITIALIZE(const FTypeId, GCachedTypeId, MakeDicoTypeId(
-        MakeTraits<_Key>(),
-        MakeTraits<_Value>()
-    ));
-    return GCachedTypeId;
-}
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-ETypeFlags TBaseDicoTraits<_Key, _Value>::TypeFlags() const {
-    return ETypeFlags::Dico;
-}
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-FTypeInfos TBaseDicoTraits<_Key, _Value>::TypeInfos() const {
+FStringView TBaseDicoTraits<_Key, _Value>::TypeName() const {
     ONE_TIME_INITIALIZE(const FString, GCachedTypeName, MakeDicoTypeName(
         MakeTraits<_Key>(),
         MakeTraits<_Value>()
     ));
-    return FTypeInfos(
-        GCachedTypeName.MakeView(),
-        TBaseDicoTraits<_Key, _Value>::TypeId(),
-        TBaseDicoTraits<_Key, _Value>::TypeFlags(),
-        SizeInBytes()
-    );
+    return GCachedTypeName.MakeView();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
@@ -189,6 +176,9 @@ class TAssociativeVectorTraits final : public TBaseTypeTraits< TAssociativeVecto
     using typename base_traits::value_type;
     using typename base_traits::pointer;
     using typename base_traits::const_pointer;
+
+public: // ITypeTraits
+    TAssociativeVectorTraits() : base_traits(sizeof(TAssociativeVector<_Key, _Value, _EqualTo, _Vector>)) {}
 
 public: // IDicoTraits:
     using typename base_traits::foreach_fun;
@@ -340,6 +330,9 @@ class THashMapTraits final : public TBaseTypeTraits< THashMap<_Key, _Value, _Has
     using typename base_traits::value_type;
     using typename base_traits::pointer;
     using typename base_traits::const_pointer;
+
+public: // ITypeTraits
+    THashMapTraits() : base_traits(sizeof(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>)) {}
 
 public: // IDicoTraits:
     using typename base_traits::foreach_fun;

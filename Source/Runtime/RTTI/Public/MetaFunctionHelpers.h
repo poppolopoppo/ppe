@@ -5,6 +5,8 @@
 #include "MetaFunction.h"
 #include "MetaObject.h"
 
+#include "Container/TupleHelpers.h" // CallTuple()
+
 namespace PPE {
 namespace RTTI {
 //----------------------------------------------------------------------------
@@ -47,7 +49,7 @@ private:
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
             const FAtom* parg = arguments.data();
             NOOP(parg);
-            result.TypedData<_Result>() = Call(_Member,
+            result.TypedData<_Result>() = CallTuple(_Member,
                 const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)),
                 TTuple<Meta::TReference<_Args>...>{
                     (*parg++).TypedData<Meta::TDecay<_Args>>()...
@@ -61,7 +63,7 @@ private:
             Assert(not result);
             const FAtom* parg = arguments.data();
             NOOP(parg);
-            Call(_Member,
+            CallTuple(_Member,
                 const_cast<_Class*>(RTTI::CastChecked<_Class>(&obj)),
                 TTuple<Meta::TReference<_Args>...>{
                     (*parg++).TypedData<Meta::TDecay<_Args>>()...
@@ -92,7 +94,7 @@ private:
         static void Invoke(const FMetaObject& obj, const FAtom& result, const TMemoryView<const FAtom>& arguments) {
             const FAtom* parg = arguments.data();
             NOOP(parg);
-            result.TypedData<_Result>() = Call(_Member,
+            result.TypedData<_Result>() = CallTuple(_Member,
                 RTTI::CastChecked<_Class>(&obj),
                 TTuple<Meta::TReference<_Args>...>{
                     (*parg++).TypedData<Meta::TDecay<_Args>>()...
@@ -106,7 +108,7 @@ private:
             Assert(not result);
             const FAtom* parg = arguments.data();
             NOOP(parg);
-            Call(_Member,
+            CallTuple(_Member,
                 RTTI::CastChecked<_Class>(&obj),
                 TTuple<Meta::TReference<_Args>...>{
                     (*parg++).TypedData<Meta::TDecay<_Args>>()...

@@ -12,67 +12,80 @@
 #include "Memory/HashFunctions.h"
 #include "Memory/MemoryView.h"
 
+#include <intrin.h> // _mm_crc32_u32
+
 namespace PPE {
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Using _mm_crc32_u32() to be platform agnostic !
+// This is very important since we want this id to be stable across all platforms
+//----------------------------------------------------------------------------
 FTypeId MakeTupleTypeId(const TMemoryView<const PTypeTraits>& elements) {
-    STACKLOCAL_POD_ARRAY(FTypeId, signature, elements.size() + 1);
-    signature[0] = FTypeId(ETypeFlags::Tuple);
+    STATIC_ASSERT(sizeof(FTypeId) == sizeof(u32));
+    u32 h = 0xFFFFFFFF;
+    h = ::_mm_crc32_u32(h, u32(ETypeFlags::Tuple));
 
-    forrange(i, 0, elements.size())
-        signature[i + 1] = elements[i]->TypeId();
+    foreachitem(it, elements)
+        h = ::_mm_crc32_u32(h, (*it)->TypeId());
 
-    return Fingerprint32(signature.Cast<const FTypeId>());
-}
-//----------------------------------------------------------------------------
-ETypeFlags MakeTupleTypeFlags(const TMemoryView<const PTypeTraits>& elements) {
-    ETypeFlags is_pod = ETypeFlags::POD;
-    ETypeFlags is_trivially_destructible = ETypeFlags::TriviallyDestructible;
-
-    foreachitem(elt, elements) {
-        const ETypeFlags elt_flags = (*elt)->TypeFlags();
-        if (not (elt_flags ^ ETypeFlags::POD))
-            is_pod = ETypeFlags(0);
-        if (not (elt_flags ^ ETypeFlags::POD))
-            is_trivially_destructible = ETypeFlags(0);
-    }
-
-    return (ETypeFlags::Tuple + is_pod + is_trivially_destructible);
-}
-//----------------------------------------------------------------------------
-FString MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements) {
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-
-    FStringBuilder oss;
-    oss << "TTuple<";
-
-    auto sep = Fmt::NotFirstTime(", ");
-    for (const auto& elt : elements)
-        oss << sep << elt->TypeInfos().Name();
-
-    oss << '>';
-
-    return oss.ToString();
+    return FTypeId(h);
 }
 //----------------------------------------------------------------------------
 FTypeId MakeListTypeId(const PTypeTraits& value) {
-    return Fingerprint32(TMemoryView<const FTypeId>({FTypeId(ETypeFlags::List), value->TypeId()}));
-}
-//----------------------------------------------------------------------------
-FString MakeListTypeName(const PTypeTraits& value) {
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-    return StringFormat("TList<{0}>", value->TypeInfos().Name());
+    u32 h = 0xFFFFFFFFul;
+    h = ::_mm_crc32_u32(h, u32(ETypeFlags::List));
+    return ::_mm_crc32_u32(h, value->TypeId());
 }
 //----------------------------------------------------------------------------
 FTypeId MakeDicoTypeId(const PTypeTraits& key, const PTypeTraits& value) {
-    return Fingerprint32(TMemoryView<const FTypeId>({FTypeId(ETypeFlags::Dico), key->TypeId(), value->TypeId()}));
+    u32 h = 0xFFFFFFFFul;
+    h = ::_mm_crc32_u32(h, u32(ETypeFlags::Dico));
+    h = ::_mm_crc32_u32(h, key->TypeId());
+    return ::_mm_crc32_u32(h, value->TypeId());
 }
 //----------------------------------------------------------------------------
-FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value) {
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-    return StringFormat("TDico<{0}, {1}>", key->TypeInfos().Name(), value->TypeInfos().Name());
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+ETypeFlags MakeTupleTypeFlags(const TMemoryView<const PTypeTraits>& elements) {
+    ETypeFlags flags =
+        ETypeFlags::POD +
+        ETypeFlags::Tuple +
+        ETypeFlags::TriviallyDestructible;
+
+    for (const PTypeTraits& it : elements) {
+        const ETypeFlags elt_flags = it->TypeFlags();
+
+        if (elt_flags ^ ETypeFlags::Object)
+            flags = flags + ETypeFlags::Object;
+
+        if (not (elt_flags ^ ETypeFlags::POD))
+            flags = flags - ETypeFlags::POD;
+        if (not (elt_flags ^ ETypeFlags::TriviallyDestructible))
+            flags = flags - ETypeFlags::TriviallyDestructible;
+    }
+
+    return flags;
+}
+//----------------------------------------------------------------------------
+ETypeFlags MakeListTypeFlags(const PTypeTraits& value) {
+    ETypeFlags flags = ETypeFlags::List;
+
+    if (value->TypeFlags() ^ ETypeFlags::Object)
+        flags = flags + ETypeFlags::Object;
+
+    return flags;
+}
+//----------------------------------------------------------------------------
+ETypeFlags MakeDicoTypeFlags(const PTypeTraits& key, const PTypeTraits& value) {
+    ETypeFlags flags = ETypeFlags::Dico;
+
+    if (key->TypeFlags() ^ ETypeFlags::Object ||
+        value->TypeFlags() ^ ETypeFlags::Object )
+        flags = flags + ETypeFlags::Object;
+
+    return flags;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

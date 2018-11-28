@@ -10,28 +10,26 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using FTypeId = u32;
-//----------------------------------------------------------------------------
 enum class ETypeFlags : u32 {
+    Default                 = 0,
     Scalar                  = 1<<0,
     Tuple                   = 1<<1,
     List                    = 1<<2,
     Dico                    = 1<<3,
     Enum                    = 1<<4,
-    Native                  = 1<<5,
-    POD                     = 1<<6,
-    TriviallyDestructible   = 1<<7,
+    Object                  = 1<<5,
+    Native                  = 1<<6,
+    POD                     = 1<<7,
+    TriviallyDestructible   = 1<<8,
 };
 ENUM_FLAGS(ETypeFlags);
 //----------------------------------------------------------------------------
 class FSizeAndFlags { // minimal packed type infos
 public:
-    FSizeAndFlags(size_t sizeInBytes, ETypeFlags flags)
-        : _sizeInBytes(checked_cast<u32>(sizeInBytes))
-        , _flags(u32(flags)) {
-        Assert(sizeInBytes == _sizeInBytes);
-        Assert(u32(flags) == _flags);
-    }
+    CONSTEXPR FSizeAndFlags(size_t sizeInBytes, ETypeFlags flags)
+        : _sizeInBytes(u32(sizeInBytes))
+        , _flags(u32(flags))
+    {}
 
     FSizeAndFlags(const FSizeAndFlags& other) { operator =(other); }
     FSizeAndFlags& operator =(const FSizeAndFlags& other) {
@@ -42,9 +40,16 @@ public:
     size_t SizeInBytes() const { return _sizeInBytes; }
     ETypeFlags Flags() const { return ETypeFlags(_flags); }
 
+    inline friend bool operator ==(const FSizeAndFlags& lhs, const FSizeAndFlags& rhs) {
+        return (lhs._sizeInBytes == rhs._sizeInBytes && lhs._flags == rhs._flags);
+    }
+    inline friend bool operator !=(const FSizeAndFlags& lhs, const FSizeAndFlags& rhs) {
+        return not operator ==(lhs, rhs);
+    }
+
 private:
-    u32 _sizeInBytes : 24;
-    u32 _flags : 8;
+    u32 _sizeInBytes : 23;
+    u32 _flags : 9;
 };
 //----------------------------------------------------------------------------
 class FTypeInfos {

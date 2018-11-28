@@ -8,6 +8,7 @@
 #include "Container/Vector.h"
 #include "IO/TextWriter.h"
 #include "Memory/RefPtr.h"
+#include "Meta/PointerWFlags.h"
 
 namespace PPE {
 namespace RTTI {
@@ -30,7 +31,12 @@ enum class ETransactionFlags : u32 {
 };
 ENUM_FLAGS(ETransactionFlags);
 //----------------------------------------------------------------------------
-using FLinearizedTransaction = VECTORINSITU(MetaTransaction, SMetaObject, 8);
+struct FMetaObjectRef : Meta::TPointerWFlags<FMetaObject> {
+    bool IsExport() const { return Flag0(); }
+    bool IsImport() const { return Flag1(); }
+    static FMetaObjectRef Make(FMetaObject* obj, bool intern);
+};
+using FLinearizedTransaction = VECTORINSITU(MetaTransaction, FMetaObjectRef, 8);
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaTransaction : public FRefCountable {
 public:
@@ -69,7 +75,7 @@ public:
         return _topObjects.MakeConstView();
     }
 
-    const VECTOR(MetaTransaction, SCMetaTransaction)& ImportedTransactions() const {
+    const auto& ImportedTransactions() const {
         Assert(IsLoaded());
         return _importedTransactions;
     }
@@ -109,6 +115,8 @@ private:
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_ASSUME_TYPE_AS_POD(RTTI::FMetaObjectRef);
 //----------------------------------------------------------------------------
 PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionFlags flags);
 PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionFlags flags);

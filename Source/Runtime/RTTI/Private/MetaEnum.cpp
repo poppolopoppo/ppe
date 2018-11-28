@@ -120,13 +120,13 @@ void FMetaEnum::SetValue(const FAtom& dst, const FMetaEnumValue& v) const {
 //----------------------------------------------------------------------------
 void FMetaEnum::RegisterValue(FMetaEnumValue&& value) {
     Assert_NoAssume(not value.Name.empty());
-    Assert_NoAssume(
-        "there's already an enum entry with the same name",
+    AssertMessage_NoAssume(
+        L"there's already an enum entry with the same name",
         _values.MakeView().FindIf([&value](const FMetaEnumValue& it) {
             return (it.Name == value.Name);
         }) == _values.MakeConstView().end() );
-    Assert_NoAssume(
-        "there's already an enum entry with the same value",
+    AssertMessage_NoAssume(
+        L"there's already an enum entry with the same value",
         _values.MakeView().FindIf([&value](const FMetaEnumValue& it) {
             return (it.Name == value.Name);
         }) == _values.MakeConstView().end() );

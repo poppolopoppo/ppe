@@ -4,9 +4,9 @@
 
 #include "RTTI/TypeInfos.h"
 
+#include "HAL/PlatformMemory.h"
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
-#include "Memory/InSituPtr.h"
 #include "Misc/Function.h"
 #include "Meta/TypeTraits.h"
 
@@ -34,9 +34,51 @@ bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using PTypeTraits = TInSituPtr<ITypeTraits>;
+namespace details {
+template <typename T> struct TTraitsHolder {
+static const T GInstance;
+};
+template <typename T>
+const T TTraitsHolder<T>::GInstance;
+} //!details
 //----------------------------------------------------------------------------
-class ITypeTraits {
+struct PPE_RTTI_API PTypeTraits {
+    const ITypeTraits* Traits;
+
+    FORCE_INLINE explicit PTypeTraits(Meta::FNoInit) NOEXCEPT {}
+    CONSTEXPR explicit PTypeTraits(const ITypeTraits* traits = nullptr) NOEXCEPT : Traits(traits) {}
+
+    bool Valid() const { return (nullptr != Traits); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Traits; }
+
+    const ITypeTraits* get() const { return Traits; }
+
+    const ITypeTraits& operator *() const { Assert_NoAssume(Valid()); return *Traits; }
+    const ITypeTraits* operator ->() const { Assert_NoAssume(Valid()); return Traits; }
+
+    inline friend bool operator ==(const PTypeTraits& lhs, const PTypeTraits& rhs) {
+        return (lhs.Traits == rhs.Traits);
+    }
+    inline friend bool operator !=(const PTypeTraits& lhs, const PTypeTraits& rhs) {
+        return not operator ==(lhs, rhs);
+    }
+
+    inline friend void swap(PTypeTraits& lhs, PTypeTraits& rhs) {
+        std::swap(lhs.Traits, rhs.Traits);
+    }
+
+    void CreateRawCopy_AssumeNotInitialized(const ITypeTraits& traits) {
+        Traits = &traits;
+    }
+
+    /** creates type traits at compile time, no overhead at runtime **/
+    template <typename T, class = Meta::TEnableIf<std::is_base_of_v<ITypeTraits, T>> >
+    static CONSTEXPR PTypeTraits Make() NOEXCEPT {
+        return PTypeTraits{ &details::TTraitsHolder<T>::GInstance };
+    }
+};
+//----------------------------------------------------------------------------
+class PPE_RTTI_API ITypeTraits {
 public:
     virtual ~ITypeTraits() {}
 
@@ -47,11 +89,7 @@ public:
     virtual void ConstructSwap(void* data, void* other) const = 0;
     virtual void Destroy(void* data) const = 0;
 
-    virtual FTypeId TypeId() const = 0;
-    virtual ETypeFlags TypeFlags() const = 0;
-    virtual FTypeInfos TypeInfos() const = 0;
-    virtual size_t SizeInBytes() const = 0;
-    virtual FSizeAndFlags SizeAndFlags() const = 0;
+    virtual FStringView TypeName() const = 0;
 
     virtual bool IsDefaultValue(const void* data) const = 0;
     virtual void ResetToDefaultValue(void* data) const = 0;
@@ -74,31 +112,46 @@ public:
 
     virtual bool Accept(IAtomVisitor* visitor, void* data) const = 0;
 
-    virtual const IScalarTraits* AsScalar() const = 0;
-    virtual const ITupleTraits* AsTuple() const = 0;
-    virtual const IListTraits* AsList() const = 0;
-    virtual const IDicoTraits* AsDico() const = 0;
-
 public: // non-virtual helpers
-    const IScalarTraits& ToScalar() const { Assert_NoAssume(AsScalar()); return (*checked_cast<const IScalarTraits*>(this)); }
-    const ITupleTraits& ToTuple() const { Assert_NoAssume(AsTuple()); return (*checked_cast<const ITupleTraits*>(this)); }
-    const IListTraits& ToList() const { Assert_NoAssume(AsList()); return (*checked_cast<const IListTraits*>(this)); }
-    const IDicoTraits& ToDico() const { Assert_NoAssume(AsDico()); return (*checked_cast<const IDicoTraits*>(this)); }
+    CONSTEXPR ITypeTraits(FTypeId typeId, ETypeFlags flags, size_t sizeInBytes)
+        : _typeId(typeId)
+        , _sizeAndFlags(sizeInBytes, flags)
+    {}
 
-    inline friend bool operator ==(const ITypeTraits& lhs, const ITypeTraits& rhs) { return (lhs.VTable() == rhs.VTable()); }
-    inline friend bool operator !=(const ITypeTraits& lhs, const ITypeTraits& rhs) { return (lhs.VTable() != rhs.VTable()); }
+    FTypeId TypeId() const { return _typeId; }
+    ETypeFlags TypeFlags() const { return _sizeAndFlags.Flags(); }
+    FTypeInfos TypeInfos() const { return FTypeInfos(TypeName(), TypeId(), TypeFlags(), SizeInBytes()); }
+    size_t SizeInBytes() const { return _sizeAndFlags.SizeInBytes(); }
+    FSizeAndFlags SizeAndFlags() const { return _sizeAndFlags; }
 
-protected:
-    // only used internally to compare traits together
-    intptr_t VTable() const {
-        STATIC_ASSERT(sizeof(*this) == sizeof(intptr_t));
-        return (*(const intptr_t*)this);
+    const IScalarTraits* AsScalar() const { return (TypeFlags() ^ ETypeFlags::Scalar ? checked_cast<const IScalarTraits*>(this) : nullptr); }
+    const ITupleTraits* AsTuple() const { return (TypeFlags() ^ ETypeFlags::Tuple ? checked_cast<const ITupleTraits*>(this) : nullptr); }
+    const IListTraits* AsList() const { return (TypeFlags() ^ ETypeFlags::List ? checked_cast<const IListTraits*>(this) : nullptr); }
+    const IDicoTraits* AsDico() const { return (TypeFlags() ^ ETypeFlags::Dico ? checked_cast<const IDicoTraits*>(this) : nullptr); }
+
+    const IScalarTraits& ToScalar() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Scalar); return (*checked_cast<const IScalarTraits*>(this)); }
+    const ITupleTraits& ToTuple() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Tuple); return (*checked_cast<const ITupleTraits*>(this)); }
+    const IListTraits& ToList() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::List); return (*checked_cast<const IListTraits*>(this)); }
+    const IDicoTraits& ToDico() const { Assert_NoAssume(TypeFlags() ^ ETypeFlags::Dico); return (*checked_cast<const IDicoTraits*>(this)); }
+
+    inline friend bool operator ==(const ITypeTraits& lhs, const ITypeTraits& rhs) {
+#if 0
+        return (lhs._typeId == rhs._typeId && lhs._sizeAndFlags == rhs._sizeAndFlags);
+#else   // need to also compare the vtable : different allocators could be wrapped for instance
+        return (FPlatformMemory::Memcmp(&lhs, &rhs, sizeof(ITypeTraits)) == 0);
+#endif
     }
+    inline friend bool operator !=(const ITypeTraits& lhs, const ITypeTraits& rhs) { return not operator ==(lhs, rhs); }
+
+private:
+    FTypeId _typeId;
+    FSizeAndFlags _sizeAndFlags;
 };
+STATIC_ASSERT(sizeof(ITypeTraits) == sizeof(i64)+sizeof(intptr_t));
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline PTypeTraits Traits(Meta::TType<void>) NOEXCEPT { return PTypeTraits(); }
+CONSTEXPR inline PTypeTraits Traits(Meta::TType<void>) NOEXCEPT { return PTypeTraits(); }
 //----------------------------------------------------------------------------
 template <typename T>
 PTypeTraits MakeTraits() NOEXCEPT; // defined in NativeTypes.h
@@ -106,31 +159,31 @@ PTypeTraits MakeTraits() NOEXCEPT; // defined in NativeTypes.h
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PPE_RTTI_API FTypeId MakeTupleTypeId(const TMemoryView<const PTypeTraits>& elements);
-PPE_RTTI_API ETypeFlags MakeTupleTypeFlags(const TMemoryView<const PTypeTraits>& elements);
-PPE_RTTI_API FString MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements);
-//----------------------------------------------------------------------------
 PPE_RTTI_API FTypeId MakeListTypeId(const PTypeTraits& value);
-PPE_RTTI_API FString MakeListTypeName(const PTypeTraits& value);
-//----------------------------------------------------------------------------
 PPE_RTTI_API FTypeId MakeDicoTypeId(const PTypeTraits& key, const PTypeTraits& value);
-PPE_RTTI_API FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value);
+//----------------------------------------------------------------------------
+PPE_RTTI_API ETypeFlags MakeTupleTypeFlags(const TMemoryView<const PTypeTraits>& elements);
+PPE_RTTI_API ETypeFlags MakeListTypeFlags(const PTypeTraits& value);
+PPE_RTTI_API ETypeFlags MakeDicoTypeFlags(const PTypeTraits& key, const PTypeTraits& value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class IScalarTraits : public ITypeTraits {
-public: // ITypeTraits
-    virtual const IScalarTraits* AsScalar() const override final { return this; }
-    virtual const ITupleTraits* AsTuple() const override final { return nullptr; }
-    virtual const IListTraits* AsList() const override final { return nullptr; }
-    virtual const IDicoTraits* AsDico() const override final { return nullptr; }
-
 public:
+    CONSTEXPR IScalarTraits(FTypeId typeId, ETypeFlags flags, size_t sizeInBytes)
+        : ITypeTraits(typeId, flags + ETypeFlags::Scalar, sizeInBytes)
+    {}
+
     virtual const FMetaEnum* EnumClass() const = 0;
     virtual const FMetaClass* ObjectClass() const = 0;
 };
 //----------------------------------------------------------------------------
 class ITupleTraits : public ITypeTraits {
 public: // ITypeTraits
+    CONSTEXPR ITupleTraits(FTypeId typeId, ETypeFlags flags, size_t sizeInBytes)
+        : ITypeTraits(typeId, flags + ETypeFlags::Tuple, sizeInBytes)
+    {}
+
     virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
 
 public:
@@ -141,16 +194,14 @@ public:
 
     typedef TFunction<bool(const FAtom&)> foreach_fun;
     virtual bool ForEach(void* data, const foreach_fun& foreach) const = 0;
-
-private:
-    virtual const IScalarTraits* AsScalar() const override final { return nullptr; }
-    virtual const ITupleTraits* AsTuple() const override final { return this; }
-    virtual const IListTraits* AsList() const override final { return nullptr; }
-    virtual const IDicoTraits* AsDico() const override final { return nullptr; }
 };
 //----------------------------------------------------------------------------
 class IListTraits : public ITypeTraits {
 public: // ITypeTraits
+    CONSTEXPR IListTraits(FTypeId typeId, ETypeFlags flags, size_t sizeInBytes)
+        : ITypeTraits(typeId, flags + ETypeFlags::List, sizeInBytes)
+    {}
+
     virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
 
 public: // IListTraits
@@ -174,16 +225,14 @@ public: // IListTraits
 
     typedef TFunction<bool(const FAtom&)> foreach_fun;
     virtual bool ForEach(void* data, const foreach_fun& foreach) const = 0;
-
-private:
-    virtual const IScalarTraits* AsScalar() const override final { return nullptr; }
-    virtual const ITupleTraits* AsTuple() const override final { return nullptr; }
-    virtual const IListTraits* AsList() const override final { return (this); }
-    virtual const IDicoTraits* AsDico() const override final { return nullptr; }
 };
 //----------------------------------------------------------------------------
 class IDicoTraits : public ITypeTraits {
 public: // ITypeTraits
+    CONSTEXPR IDicoTraits(FTypeId typeId, ETypeFlags flags, size_t sizeInBytes)
+        : ITypeTraits(typeId, flags + ETypeFlags::Dico, sizeInBytes)
+    {}
+
     virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
 
 public: // IDicoTraits
@@ -208,15 +257,20 @@ public: // IDicoTraits
 
     typedef TFunction<bool(const FAtom&, const FAtom&)> foreach_fun;
     virtual bool ForEach(void* data, const foreach_fun& foreach) const = 0;
-
-private:
-    virtual const IScalarTraits* AsScalar() const override final { return nullptr; }
-    virtual const ITupleTraits* AsTuple() const override final { return nullptr; }
-    virtual const IListTraits* AsList() const override final { return nullptr; }
-    virtual const IDicoTraits* AsDico() const override final { return (this); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RTTI
+} //!namespace PPE
+
+namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Consider PTypeTraits as POD since it's a simple pointer wrapper
+PPE_ASSUME_TYPE_AS_POD(RTTI::PTypeTraits)
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace PPE

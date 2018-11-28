@@ -21,11 +21,11 @@
 #endif
 
 namespace PPE {
-template <typename T>
-struct TInSituPtr;
 namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+using FTypeId = u32;
 //----------------------------------------------------------------------------
 class FName;
 struct FPathName;
@@ -34,12 +34,14 @@ class FAny;
 class FAtom;
 //----------------------------------------------------------------------------
 class ITypeTraits;
-using PTypeTraits = TInSituPtr<ITypeTraits>;
+struct PTypeTraits;
 //----------------------------------------------------------------------------
 class IScalarTraits;
 class ITupleTraits;
 class IListTraits;
 class IDicoTraits;
+//----------------------------------------------------------------------------
+enum class ENativeType : FTypeId;
 //----------------------------------------------------------------------------
 enum class EClassFlags : u32;
 class FMetaClass;

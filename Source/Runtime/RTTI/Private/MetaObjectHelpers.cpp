@@ -15,6 +15,17 @@
 #include "Container/Stack.h"
 #include "Memory/HashFunctions.h"
 
+#if USE_PPE_RTTI_CHECKS
+#   include "Diagnostic/Logger.h"
+#   include "IO/FormatHelpers.h"
+#   include "RTTI/Exceptions.h"
+namespace PPE {
+namespace RTTI {
+EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
+} //!namespace RTTI
+} //!namespace PPE
+#endif
+
 namespace PPE {
 namespace RTTI {
 //----------------------------------------------------------------------------
@@ -201,7 +212,8 @@ namespace {
 class FReferenceCollector_ : FBaseAtomVisitor {
 public:
     FReferenceCollector_(size_t maxDepth)
-        : _maxDepth(maxDepth), _depth(0), _references(nullptr)
+        : FBaseAtomVisitor(EVisitorFlags::OnlyObjects)
+        , _maxDepth(maxDepth), _depth(0), _references(nullptr)
     {}
 
     void Collect(const FMetaObject& root, FReferencedObjects& references) {
@@ -254,6 +266,28 @@ void CollectReferencedObjects(const FMetaObject& root, FReferencedObjects& refer
     Assert(references.front() == &root);
     references.erase_DontPreserveOrder(references.begin());
 }
+//----------------------------------------------------------------------------
+#if USE_PPE_RTTI_CHECKS
+void CheckMetaClassAllocation(const FMetaClass* metaClass) {
+    if (nullptr == metaClass) {
+        LOG(RTTI, Error, L"trying to allocate with a null metaclass");
+        PPE_THROW_IT(FClassException("null metaclass", metaClass));
+    }
+
+    if (metaClass->IsAbstract()) {
+        LOG(RTTI, Error, L"can't allocate a new object with abstract metaclass \"{0}\" ({1})",
+            metaClass->Name(),
+            metaClass->Flags());
+        PPE_THROW_IT(FClassException("abstract metaclass", metaClass));
+    }
+
+    if (metaClass->IsDeprecated()) {
+        LOG(RTTI, Warning, L"allocate a new object using deprecated metaclass \"{0}\" ({1})",
+            metaClass->Name(),
+            metaClass->Flags() );
+    }
+}
+#endif //!USE_PPE_RTTI_CHECKS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

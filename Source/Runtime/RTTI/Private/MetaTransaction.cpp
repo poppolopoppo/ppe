@@ -122,7 +122,7 @@ namespace {
 class FMetaTransactionLinearizer_ : public FBaseAtomVisitor {
 public:
     FMetaTransactionLinearizer_(const FMetaTransaction& outer, FLinearizedTransaction& linearized)
-        : FBaseAtomVisitor(EVisitorFlags::Default
+        : FBaseAtomVisitor(EVisitorFlags::OnlyObjects
             + (outer.KeepDeprecated() ? EVisitorFlags::KeepDeprecated : EVisitorFlags::Default)
             + (outer.KeepTransient() ? EVisitorFlags::KeepTransient : EVisitorFlags::Default) )
         , _outer(outer)
@@ -142,13 +142,14 @@ public:
 public: //FBaseAtomVisitor
     virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override final {
         if (pobj && _visiteds.insert_ReturnIfExists(pobj.get()) == false) {
-            const bool result = (pobj->RTTI_Outer() == &_outer
+            const bool intern = (pobj->RTTI_Outer() == &_outer);
+            const bool result = (intern
                 ? FBaseAtomVisitor::Visit(scalar, pobj)
                 : true );
 
             // register after recursive traversal, so we get postfix order :
             if (_outer.KeepTransient() || not pobj->RTTI_IsTransient())
-                _linearized.emplace_back(pobj.get());
+                _linearized.push_back(FMetaObjectRef::Make(pobj.get(), intern));
 
             return result;
         }
@@ -502,6 +503,14 @@ void FMetaTransaction::Linearize(FLinearizedTransaction* linearized) const {
     // descend in each top object and append reference in order of discovery
     for (const auto& topObject : _topObjects)
         linearizer.Linearize(topObject);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FMetaObjectRef FMetaObjectRef::Make(FMetaObject* obj, bool intern) {
+    FMetaObjectRef ref;
+    ref.Reset(obj, intern && obj->RTTI_IsExported(), not intern);
+    return ref;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

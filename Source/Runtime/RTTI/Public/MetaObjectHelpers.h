@@ -70,8 +70,16 @@ bool CreateMetaObject_(PMetaObject&, std::false_type, std::false_type) {
 }
 } //!namespace details
 //----------------------------------------------------------------------------
+#if USE_PPE_RTTI_CHECKS
+PPE_RTTI_API void CheckMetaClassAllocation(const FMetaClass* metaClass);
+#endif
+//----------------------------------------------------------------------------
 template <typename T>
 bool CreateMetaObject(PMetaObject& dst, bool resetToDefaultValue) {
+#if USE_PPE_RTTI_CHECKS
+    CheckMetaClassAllocation(MetaClass<T>());
+#endif
+
     if (details::CreateMetaObject_<T>(dst,
         Meta::has_constructor<T, FConstructorTag>{},
         typename std::is_default_constructible<T>::type{})) {

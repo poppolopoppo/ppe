@@ -30,6 +30,11 @@ protected:
     typedef Meta::TAddPointer<T> pointer;
     typedef Meta::TAddPointer<const T> const_pointer;
 
+    template <typename... _Args>
+    CONSTEXPR explicit TBaseTypeTraits(_Args&&... args)
+        : _Parent(std::forward<_Args>(args)...)
+    {}
+
 public: // ITypeTraits
     virtual void Construct(void* data) const override final;
     virtual void ConstructCopy(void* data, const void* other) const override final;
@@ -37,12 +42,6 @@ public: // ITypeTraits
     virtual void ConstructMoveDestroy(void* data, void* rvalue) const override final;
     virtual void ConstructSwap(void* data, void* other) const override final;
     virtual void Destroy(void* data) const override final;
-
-    using _Parent::TypeId;//virtual FTypeId TypeId() const override final;
-    using _Parent::TypeFlags;//virtual ETypeFlags TypeFlags() const override final;
-    using _Parent::TypeInfos;//virtual FTypeInfos TypeInfos() const override final;
-    virtual size_t SizeInBytes() const override final { return sizeof(T); }
-    virtual FSizeAndFlags SizeAndFlags() const override final { return FSizeAndFlags(sizeof(T), TypeFlags()); }
 
     using _Parent::IsDefaultValue;//virtual bool IsDefaultValue(const void* data) const override final;
     using _Parent::ResetToDefaultValue;//virtual void ResetToDefaultValue(void* data) const override final;
@@ -184,6 +183,12 @@ void* TBaseTypeTraits<T, _Parent>::Cast(void* data, const PTypeTraits& dst) cons
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PPE_RTTI_API FString MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements);
+PPE_RTTI_API FString MakeListTypeName(const PTypeTraits& value);
+PPE_RTTI_API FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace PPE
 
@@ -201,10 +206,10 @@ namespace RTTI {
 // SFINAE to detect RTTI support (need to be defined at the end of this file for CLANG)
 //----------------------------------------------------------------------------
 namespace details {
-    template <typename T, typename = decltype(Traits(std::declval<Meta::TType<T>>())) >
-    std::true_type IsSupportedType_(int);
-    template <typename T>
-    std::false_type IsSupportedType_(...);
+template <typename T, typename = decltype(Traits(std::declval<Meta::TType<T>>())) >
+std::true_type IsSupportedType_(int);
+template <typename T>
+std::false_type IsSupportedType_(...);
 } //!details
 template <typename T>
 struct TIsSupportedType {

@@ -22,9 +22,14 @@ PPE_RTTI_API PTypeTraits MakeAnyTuple(size_t arity);
 template <typename... _Args>
 class TBaseTupleTraits : public ITupleTraits {
 public: // ITypeTraits
-    virtual FTypeId TypeId() const override final;
-    virtual ETypeFlags TypeFlags() const override final;
-    virtual FTypeInfos TypeInfos() const override final;
+    CONSTEXPR explicit TBaseTupleTraits(size_t sizeInBytes)
+    :   ITupleTraits(
+        MakeTupleTypeId({ MakeTraits<_Args>()... }),
+        MakeTupleTypeFlags({ MakeTraits<_Args>()... }),
+        sizeInBytes )
+    {}
+
+    virtual FStringView TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const override final;
     virtual void ResetToDefaultValue(void* data) const override final;
@@ -44,32 +49,11 @@ public: // ITupleTraits
 };
 //----------------------------------------------------------------------------
 template <typename... _Args>
-FTypeId TBaseTupleTraits<_Args...>::TypeId() const {
-    ONE_TIME_INITIALIZE(const FTypeId, GCachedTypeId, MakeTupleTypeId({
-        MakeTraits<_Args>()...
-        }));
-    return GCachedTypeId;
-}
-//----------------------------------------------------------------------------
-template <typename... _Args>
-ETypeFlags TBaseTupleTraits<_Args...>::TypeFlags() const {
-    ONE_TIME_INITIALIZE(const ETypeFlags, GCachedTypeFlags, MakeTupleTypeFlags({
-        MakeTraits<_Args>()...
-        }));
-    return GCachedTypeFlags;
-}
-//----------------------------------------------------------------------------
-template <typename... _Args>
-FTypeInfos TBaseTupleTraits<_Args...>::TypeInfos() const {
+FStringView TBaseTupleTraits<_Args...>::TypeName() const {
     ONE_TIME_INITIALIZE(const FString, GCachedTypeName, MakeTupleTypeName({
         MakeTraits<_Args>()...
         }));
-    return FTypeInfos(
-        GCachedTypeName.MakeView(),
-        TBaseTupleTraits<_Args...>::TypeId(),
-        TBaseTupleTraits<_Args...>::TypeFlags(),
-        SizeInBytes()
-    );
+    return GCachedTypeName.MakeView();
 }
 //----------------------------------------------------------------------------
 template <typename... _Args>
@@ -221,6 +205,9 @@ class TPairTraits final : public TBaseTypeTraits< TPair<_First, _Second>, TBaseT
     using typename base_traits::pointer;
     using typename base_traits::const_pointer;
 
+public: // ITypeTraits
+    CONSTEXPR TPairTraits() : base_traits(sizeof(TPair<_First, _Second>)) {}
+
 public: // ITupleTraits
     using typename base_traits::foreach_fun;
 
@@ -280,6 +267,9 @@ class TStaticArrayTraits final : public TBaseStaticArrayTraits<T, _Dim> {
     using typename base_traits::pointer;
     using typename base_traits::const_pointer;
 
+public: //ITypeTraits
+    CONSTEXPR TStaticArrayTraits() : base_traits(sizeof(TArray<T, _Dim>)) {}
+
 public: // ITupleTraits
     using typename base_traits::foreach_fun;
 
@@ -316,29 +306,29 @@ bool TStaticArrayTraits<T, _Dim>::ForEach(void* data, const foreach_fun& foreach
 }
 //----------------------------------------------------------------------------
 // extern instantiation for most common types wrapped as a static array :
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<byte2>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<byte4>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<ubyte2>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<ubyte4>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<short2>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<short4>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<ushort2>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<ushort4>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<word2>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<word3>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<word4>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<uword2>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<uword3>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<uword4>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<float2>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<float3>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<float4>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<float2x2>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<float3x3>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<float4x3>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<float4x4>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<FQuaternion>) noexcept;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<FTransform>) noexcept;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<byte2>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<byte4>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<ubyte2>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<ubyte4>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<short2>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<short4>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<ushort2>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<ushort4>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<word2>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<word3>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<word4>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<uword2>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<uword3>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<uword4>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<float2>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<float3>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<float4>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<float2x2>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<float3x3>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<float4x3>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<float4x4>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<FQuaternion>) NOEXCEPT;
+PPE_RTTI_API PTypeTraits Traits(Meta::TType<FTransform>) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -350,6 +340,9 @@ class TTupleTraits final : public TBaseTypeTraits< TTuple<_Args...>, TBaseTupleT
     using typename base_traits::value_type;
     using typename base_traits::pointer;
     using typename base_traits::const_pointer;
+
+public: //ITypeTraits
+    CONSTEXPR TTupleTraits() : base_traits(sizeof(TTuple<_Args...>)) {}
 
 public: // ITupleTraits
     using typename base_traits::foreach_fun;

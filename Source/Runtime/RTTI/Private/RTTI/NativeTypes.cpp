@@ -12,8 +12,10 @@
 
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
+#include "IO/Format.h"
+#include "IO/FormatHelpers.h"
 #include "IO/String.h"
-#include "IO/StringView.h"
+#include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
 #include "Maths/MathHelpers.h"
 #include "Maths/PackedVectors.h"
@@ -64,17 +66,17 @@ static bool IsAssignableObject_(const IScalarTraits& src, const ITypeTraits& dst
 }
 //----------------------------------------------------------------------------
 template <typename T>
-static Meta::TEnableIf< not std::is_integral_v<T>, bool > PromoteValue_(const T&, const FAtom&) noexcept {
+static Meta::TEnableIf< not std::is_integral_v<T>, bool > PromoteValue_(const T&, const FAtom&) NOEXCEPT {
     return false; // can't promote without explicit rules
 }
 //----------------------------------------------------------------------------
 template <typename _From, typename _To>
-static bool PromoteIntegral_(const _From src, _To* dst) noexcept {
+static bool PromoteIntegral_(const _From src, _To* dst) NOEXCEPT {
     *dst = _To(src);
     return (_From(*dst) == src);
 }
 template <typename T>
-static Meta::TEnableIf< std::is_integral_v<T>, bool > PromoteValue_(const T src, const FAtom& dst) noexcept {
+static Meta::TEnableIf< std::is_integral_v<T>, bool > PromoteValue_(const T src, const FAtom& dst) NOEXCEPT {
     switch (ENativeType(dst.TypeId())) {
 
     case ENativeType::Int8:         return PromoteIntegral_(src, &dst.FlatData<i8 >());
@@ -97,7 +99,7 @@ static Meta::TEnableIf< std::is_integral_v<T>, bool > PromoteValue_(const T src,
     }
 }
 //----------------------------------------------------------------------------
-static bool PromoteValue_(float f, const FAtom& dst) noexcept {
+static bool PromoteValue_(float f, const FAtom& dst) NOEXCEPT {
     switch (ENativeType(dst.TypeId())) {
 
     case ENativeType::UInt16:       dst.FlatData<u16>() = FP32_to_FP16(f); return true;
@@ -108,7 +110,7 @@ static bool PromoteValue_(float f, const FAtom& dst) noexcept {
     }
 }
 //----------------------------------------------------------------------------
-static bool PromoteValue_(double d, const FAtom& dst) noexcept {
+static bool PromoteValue_(double d, const FAtom& dst) NOEXCEPT {
     switch (ENativeType(dst.TypeId())) {
 
     case ENativeType::Float:        dst.FlatData<float>() = float(d); return true;
@@ -170,6 +172,9 @@ class TNativeTypeTraits final : public TBaseTypeTraits<T, TBaseScalarTraits<T> >
     using typename base_traits::const_pointer;
 
 public:
+    CONSTEXPR TNativeTypeTraits();
+
+public: // IScalarTraits
     virtual const FMetaEnum* EnumClass() const override final {
         return nullptr;
     }
@@ -179,11 +184,7 @@ public:
     }
 
 public: // ITypeTraits
-    // specialized explicitly
-    virtual FTypeId TypeId() const override final;
-    virtual ETypeFlags TypeFlags() const override final;
-    virtual FTypeInfos TypeInfos() const override final;
-    // !specialized explicitly
+    virtual FStringView TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const override final {
         Assert(data);
@@ -318,27 +319,18 @@ void* TNativeTypeTraits<PMetaObject>::Cast(void* data, const PTypeTraits& dst) c
 //----------------------------------------------------------------------------
 #define DEF_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) \
     template <> \
-    FTypeId TNativeTypeTraits<T>::TypeId() const { \
-        return FTypeId(ENativeType::_Name); \
-    } \
-    \
-    template <> \
-    ETypeFlags TNativeTypeTraits<T>::TypeFlags() const { \
-        constexpr ETypeFlags GTypeFlags = ( \
+    CONSTEXPR TNativeTypeTraits<T>::TNativeTypeTraits() \
+        : base_traits( \
+            FTypeId(ENativeType::_Name), \
             ETypeFlags::Scalar|ETypeFlags::Native|( \
                 Meta::TIsPod<T>::value ? ETypeFlags::POD : ETypeFlags(0))|( \
-                std::is_trivially_destructible_v<T> ? ETypeFlags::TriviallyDestructible : ETypeFlags(0))\
-        ); \
-        return GTypeFlags; \
-    } \
+                std::is_trivially_destructible_v<T> ? ETypeFlags::TriviallyDestructible : ETypeFlags(0)), \
+            sizeof(T) ) \
+    {} \
     \
     template <> \
-    FTypeInfos TNativeTypeTraits<T>::TypeInfos() const { \
-        return FTypeInfos( \
-            STRINGIZE(_Name), \
-            TNativeTypeTraits<T>::TypeId(), \
-            TNativeTypeTraits<T>::TypeFlags(), \
-            sizeof(T)); \
+    FStringView TNativeTypeTraits<T>::TypeName() const { \
+        return STRINGIZE(_Name); \
     } \
     \
     /* Global helper for MakeTraits<T>() */ \
@@ -352,7 +344,7 @@ FOREACH_RTTI_NATIVETYPES(DEF_RTTI_NATIVETYPE_TRAITS)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PTypeTraits MakeTraits(ENativeType nativeType) {
+PTypeTraits MakeTraits(ENativeType nativeType) NOEXCEPT {
     switch (nativeType) {
 #define DEF_RTTI_MAKETRAITS(_Name, T, _TypeId) \
     case ENativeType::_Name: return MakeTraits<T>();
@@ -370,7 +362,7 @@ PTypeTraits MakeTraits(ENativeType nativeType) {
 // - But at least we can still load/save those types.
 //----------------------------------------------------------------------------
 #define DEF_RTTI_ALIASING_TRAITS(_FROM, _TO) \
-    PTypeTraits Traits(Meta::TType<_FROM>) { \
+    PTypeTraits Traits(Meta::TType<_FROM>) NOEXCEPT { \
         STATIC_ASSERT(sizeof(_FROM) == sizeof(_TO)); \
         return Traits(Meta::TType<_TO>{}); \
     }
@@ -478,54 +470,50 @@ void* CastObject(const IScalarTraits& self, PMetaObject& obj, const PTypeTraits&
 //----------------------------------------------------------------------------
 namespace {
 template <typename T, size_t _Dim>
-PTypeTraits StaticArrayTraits_(Meta::TType<TScalarVector<T, _Dim>>) noexcept {
+CONSTEXPR PTypeTraits StaticArrayTraits_(Meta::TType<TScalarVector<T, _Dim>>) NOEXCEPT {
     STATIC_ASSERT(sizeof(TArray<T, _Dim>) == sizeof(TScalarVector<T, _Dim>));
     return PTypeTraits::Make< TStaticArrayTraits<T, _Dim> >();
 }
 template <typename T, size_t _Width, size_t _Height>
-PTypeTraits StaticArrayTraits_(Meta::TType<TScalarMatrix<T, _Width, _Height>>) noexcept {
+CONSTEXPR PTypeTraits StaticArrayTraits_(Meta::TType<TScalarMatrix<T, _Width, _Height>>) NOEXCEPT {
     STATIC_ASSERT(sizeof(TArray<T, _Width * _Height>) == sizeof(TScalarMatrix<T, _Width, _Height>));
     return PTypeTraits::Make< TStaticArrayTraits<T, _Width * _Height> >();
 }
 } //!namespace
 //----------------------------------------------------------------------------
-PTypeTraits Traits(Meta::TType<byte2> t)    noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<byte4> t)    noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<ubyte2> t)   noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<ubyte4> t)   noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<short2> t)   noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<short4> t)   noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<ushort2> t)  noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<ushort4> t)  noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<word2> t)    noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<word3> t)    noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<word4> t)    noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<uword2> t)   noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<uword3> t)   noexcept { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<byte2> t)    NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<byte4> t)    NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<ubyte2> t)   NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<ubyte4> t)   NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<short2> t)   NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<short4> t)   NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<ushort2> t)  NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<ushort4> t)  NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<word2> t)    NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<word3> t)    NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<word4> t)    NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<uword2> t)   NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<uword3> t)   NOEXCEPT { return StaticArrayTraits_(t); }
 #ifdef _MSC_VER // workaround a weird compiler bug, #TODO check after a few updates if this is still needed
-PTypeTraits Traits(Meta::TType<uword4>)     noexcept { return PTypeTraits::Make< TStaticArrayTraits<uword, 4> >(); }
+PTypeTraits Traits(Meta::TType<uword4>)     NOEXCEPT { return PTypeTraits::Make< TStaticArrayTraits<uword, 4> >(); }
 #else
-PTypeTraits Traits(Meta::TType<uword4> t)   noexcept { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<uword4> t)   NOEXCEPT { return StaticArrayTraits_(t); }
 #endif
-PTypeTraits Traits(Meta::TType<float2> t)   noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float3> t)   noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float4> t)   noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float2x2> t) noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float3x3> t) noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float4x3> t) noexcept { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float4x4> t) noexcept { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<float2> t)   NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<float3> t)   NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<float4> t)   NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<float2x2> t) NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<float3x3> t) NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<float4x3> t) NOEXCEPT { return StaticArrayTraits_(t); }
+PTypeTraits Traits(Meta::TType<float4x4> t) NOEXCEPT { return StaticArrayTraits_(t); }
 //----------------------------------------------------------------------------
-PTypeTraits Traits(Meta::TType<FQuaternion>) noexcept {
+PTypeTraits Traits(Meta::TType<FQuaternion>) NOEXCEPT {
     STATIC_ASSERT(sizeof(FQuaternion) == sizeof(TArray<float, 4>));
     return PTypeTraits::Make< TStaticArrayTraits<float, 4> >();
 }
 //----------------------------------------------------------------------------
-PTypeTraits Traits(Meta::TType<FTransform>) noexcept {
-    struct FTransformAsTuple {
-        FQuaternion Rotation;
-        float3 Translation;
-        float3 Scale;
-    };
+PTypeTraits Traits(Meta::TType<FTransform>) NOEXCEPT {
+    using FTransformAsTuple = TTuple<float4, float3, float3>;
     STATIC_ASSERT(sizeof(FTransform) == sizeof(FTransformAsTuple));
     return Traits(Meta::TType<FTransformAsTuple>{});
 }
@@ -570,6 +558,33 @@ FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_ISSUPPORTED)
 //----------------------------------------------------------------------------
 STATIC_ASSERT(not TIsSupportedType<void>::value);
 STATIC_ASSERT(not TIsSupportedType<FAtom>::value);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FString MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements) {
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+
+    FStringBuilder oss;
+    oss << "TTuple<";
+
+    auto sep = Fmt::NotFirstTime(", ");
+    for (const auto& elt : elements)
+        oss << sep << elt->TypeInfos().Name();
+
+    oss << '>';
+
+    return oss.ToString();
+}
+//----------------------------------------------------------------------------
+FString MakeListTypeName(const PTypeTraits& value) {
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+    return StringFormat("TList<{0}>", value->TypeInfos().Name());
+}
+//----------------------------------------------------------------------------
+FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value) {
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+    return StringFormat("TDico<{0}, {1}>", key->TypeInfos().Name(), value->TypeInfos().Name());
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

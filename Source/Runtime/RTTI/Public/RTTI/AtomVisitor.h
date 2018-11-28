@@ -13,9 +13,10 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EVisitorFlags : u32 {
-    Default         = 0,
-    KeepDeprecated  = 1<<0,
-    KeepTransient   = 1<<1,
+    Default             = 0,
+    KeepDeprecated      = 1<<0,
+    KeepTransient       = 1<<1,
+    OnlyObjects         = 1<<2,
 };
 ENUM_FLAGS(EVisitorFlags);
 //----------------------------------------------------------------------------
@@ -28,6 +29,7 @@ public:
 
     bool KeepDeprecated() const { return (_flags ^ EVisitorFlags::KeepDeprecated); }
     bool KeepTransient() const { return (_flags ^ EVisitorFlags::KeepTransient); }
+    bool OnlyObjects() const { return (_flags ^ EVisitorFlags::OnlyObjects); }
 
     virtual bool Visit(const ITupleTraits* tuple, void* data) = 0;
     virtual bool Visit(const IListTraits* list, void* data) = 0;

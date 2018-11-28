@@ -216,18 +216,27 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const ITupleTraits* tuple, void* data) {
+    if (visitor->OnlyObjects() && not (tuple->TypeFlags() ^ ETypeFlags::Object))
+        return true;
+
     return tuple->ForEach(data, [visitor](const FAtom& elt) {
         return elt.Accept(visitor);
     });
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IListTraits* list, void* data) {
+    if (visitor->OnlyObjects() && not (list->TypeFlags() ^ ETypeFlags::Object))
+        return true;
+
     return list->ForEach(data, [visitor](const FAtom& item) {
         return item.Accept(visitor);
     });
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IDicoTraits* dico, void* data) {
+    if (visitor->OnlyObjects() && not (dico->TypeFlags() ^ ETypeFlags::Object))
+        return true;
+
     return dico->ForEach(data, [visitor](const FAtom& key, const FAtom& value) {
         return (key.Accept(visitor) && value.Accept(visitor));
     });
@@ -251,7 +260,8 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , PMetaObj
 
         for (const FMetaProperty* prop : metaClass->AllProperties()) {
             if ((not visitor->KeepDeprecated() && prop->IsDeprecated()) ||
-                (not visitor->KeepTransient() && prop->IsTransient()) )
+                (not visitor->KeepTransient() && prop->IsTransient()) ||
+                (visitor->OnlyObjects() && not (prop->Traits()->TypeFlags() ^ ETypeFlags::Object)) )
                 continue;
 
             if (not prop->Get(obj).Accept(visitor))
