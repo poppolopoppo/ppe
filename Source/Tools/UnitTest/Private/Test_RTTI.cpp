@@ -15,6 +15,8 @@
 #include "Json/Json.h"
 #include "Json/JsonSerializer.h"
 #include "Text/TextSerializer.h"
+#include "TransactionLinker.h"
+#include "TransactionSaver.h"
 
 #include "Text/Grammar.h"
 #include "Lexer/Lexer.h"
@@ -66,6 +68,7 @@ struct FStructAsTuple {
     FString Name;
     TVector<int> Weights;
 };
+RTTI_STRUCT_DEF(, FStructAsTuple);
 //----------------------------------------------------------------------------
 enum ETest : u32 {
     A, B, C, D
@@ -92,7 +95,7 @@ private:
     double _d;
     float3 _vec3;
     TVector<float4> _rots;
-    TAssociativeVector<ETest, FString> _assoc;
+    TAssociativeVector<FString, ETest> _assoc;
     TAssociativeVector<u64, u64> _uInt64Dico;
 };
 RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTITestSimple_, RTTI::EClassFlags::Concrete)
@@ -496,7 +499,8 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
 
     MEMORYSTREAM(NativeTypes) uncompressed;
     {
-        serializer.Serialize(filename.ToWString(), input, &uncompressed);
+        Serialize::FTransactionSaver saver{ input, filename };
+        serializer.Serialize(saver, &uncompressed);
 #if 0
         auto compressed = VFS_OpenBinaryWritable(filename, EAccessPolicy::Truncate);
         LZJB::CompressMemory(compressed.get(), uncompressed.MakeView());
@@ -538,7 +542,8 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
         for (size_t i = 0; i < k; ++i)
             Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
 
-        Serialize::ISerializer::Deserialize(serializer, filename.ToWString(), decompressed.MakeView(), &output);
+        Serialize::FTransactionLinker linker{ &output, filename };
+        Serialize::ISerializer::Deserialize(serializer, decompressed.MakeView(), &linker);
     }
 
     AssertRelease(input.NumTopObjects() == output.NumTopObjects());
@@ -606,12 +611,8 @@ static NO_INLINE void Test_InteractiveConsole_() {
 #endif //!!USE_PPE_PROFILING
 }
 //----------------------------------------------------------------------------
-static NO_INLINE void Test_Serialize_() {
-#if 1
-    using test_type = FRTTITest_;
-#else
-    using test_type = FRTTITestSimple_;
-#endif
+template <typename T>
+static NO_INLINE void Test_TransactionSerialization_() {
 #ifdef WITH_PPE_ASSERT
     static constexpr bool minify = false;
     static constexpr size_t test_count = 5;
@@ -622,6 +623,51 @@ static NO_INLINE void Test_Serialize_() {
 
     FRTTIAtomRandomizer_ rand(test_count, 0xabadcafedeadbeefull);
 
+    RTTI::FMetaTransaction import(RTTI::FName(MakeStringView("UnitTest_Import")));
+    {
+        FWStringBuilder oss;
+
+        forrange(i, 0, test_count) {
+            TRefPtr<T> t = NEW_RTTI(T)();
+            rand.Randomize(t.get());
+            t->RTTI_Export(RTTI::FName(StringFormat("import_{0}", intptr_t(t.get()))));
+            import.RegisterObject(t.get());
+        }
+    }
+    const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(import);
+    RTTI::FMetaTransaction input(RTTI::FName(MakeStringView("UnitTest_Input")));
+    {
+        FWStringBuilder oss;
+
+        forrange(i, 0, test_count) {
+            TRefPtr<T> t = NEW_RTTI(T)();
+            rand.Randomize(t.get(), &import);
+            input.RegisterObject(t.get());
+        }
+
+        ReportAllTrackingData(); // inspect this transaction allocations
+    }
+    const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(input);
+
+    const FWString basePath = StringFormat(L"Saved:/RTTI/robotapp_{0}", RTTI::MetaClass<T>()->Name());
+
+    {
+        Serialize::PSerializer bin{ Serialize::FBinarySerializer::Get() };
+        Test_Serializer_(input, *bin, basePath + L"_bin.bin");
+    }
+    {
+        Serialize::PSerializer json{ Serialize::FJsonSerializer::Get() };
+        json->SetMinify(minify);
+        Test_Serializer_(input, *json, basePath + L"_json.json");
+    }
+    {
+        Serialize::PSerializer text{ Serialize::FTextSerializer::Get() };
+        text->SetMinify(minify);
+        Test_Serializer_(input, *text, basePath + L"_text.txt");
+    }
+}
+//----------------------------------------------------------------------------
+static NO_INLINE void Test_Serialize_() {
     RTTI_NAMESPACE(RTTI_UnitTest).Start();
     {
         FStringBuilder serialized;
@@ -638,6 +684,8 @@ static NO_INLINE void Test_Serialize_() {
         }
         serialized.Reset();
         {
+            FRTTIAtomRandomizer_ rand(128, 123456);
+
             RTTI::FBinaryData binData;
             rand.Randomize(RTTI::MakeAtom(&binData));
 
@@ -652,45 +700,8 @@ static NO_INLINE void Test_Serialize_() {
         }
     }
     {
-        RTTI::FMetaTransaction import(RTTI::FName(MakeStringView("UnitTest_Import")));
-        {
-            FWStringBuilder oss;
-
-            forrange(i, 0, test_count) {
-                TRefPtr<test_type> t = NEW_RTTI(test_type)();
-                rand.Randomize(t.get());
-                t->RTTI_Export(RTTI::FName(StringFormat("import_{0}", intptr_t(t.get()))));
-                import.RegisterObject(t.get());
-            }
-        }
-        const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(import);
-        RTTI::FMetaTransaction input(RTTI::FName(MakeStringView("UnitTest_Input")));
-        {
-            FWStringBuilder oss;
-
-            forrange(i, 0, test_count) {
-                TRefPtr<test_type> t = NEW_RTTI(test_type)();
-                rand.Randomize(t.get(), &import);
-                input.RegisterObject(t.get());
-            }
-
-            ReportAllTrackingData(); // inspect this transaction allocations
-        }
-        const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(input);
-        {
-            Serialize::PSerializer bin{ Serialize::FBinarySerializer::Get() };
-            Test_Serializer_(input, *bin, L"Saved:/RTTI/robotapp_bin.bin");
-        }
-        {
-            Serialize::PSerializer json{ Serialize::FJsonSerializer::Get() };
-            json->SetMinify(minify);
-            Test_Serializer_(input, *json, L"Saved:/RTTI/robotapp_json.json");
-        }
-        {
-            Serialize::PSerializer text{ Serialize::FTextSerializer::Get() };
-            text->SetMinify(minify);
-            Test_Serializer_(input, *text, L"Saved:/RTTI/robotapp_text.txt");
-        }
+        Test_TransactionSerialization_<FRTTITestSimple_>();
+        Test_TransactionSerialization_<FRTTITest_>();
     }
 
     RTTI_NAMESPACE(RTTI_UnitTest).Shutdown();
@@ -711,7 +722,7 @@ static RTTI::FAtom EvalExpr_(Parser::FParseContext* context, const FStringView& 
 
         const RTTI::FAtom result = expr->Eval(context);
 
-        LOG(Test_RTTI, Info, L" -> {1}", input, result);
+        LOG(Test_RTTI, Info, L" -> {0}", result);
 
         return result;
     }

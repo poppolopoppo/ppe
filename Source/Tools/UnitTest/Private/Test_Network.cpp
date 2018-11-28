@@ -189,7 +189,7 @@ static void Test_HttpGet_() {
         if (response.Status() == Network::EHttpStatus::OK) {
             Serialize::FJson json;
             IBufferedStreamReader* reader = &response.Body();
-            if (not Serialize::FJson::Load(&json, L"network.tmp", reader))
+            if (not Serialize::FJson::Load(&json, MakeStringView(L"network.tmp"), reader))
                 LOG(Test_Network, Error, L"request failed for {0}", uri);
             else
                 LOG(Test_Network, Info, L"request result:\n{0}", json);
