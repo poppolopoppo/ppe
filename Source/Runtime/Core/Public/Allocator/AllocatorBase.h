@@ -85,7 +85,9 @@ void Construct_(_Allocator& alloc, const TMemoryView<T>& items, std::false_type,
 } //!details
 template <typename _Allocator, typename T, typename... _Args>
 void Construct(_Allocator& alloc, const TMemoryView<T>& items, _Args&&... args) {
-    details::Construct_(alloc, items, typename Meta::TIsPod<T>{}, std::forward<_Args>(args)...);
+    details::Construct_(alloc, items,
+        std::bool_constant< Meta::has_trivial_constructor<T> >{},
+        std::forward<_Args>(args)... );
 }
 //----------------------------------------------------------------------------
 namespace details {
@@ -100,7 +102,8 @@ void Destroy_(_Allocator& alloc, const TMemoryView<T>& items, std::false_type) {
 } //!details
 template <typename _Allocator, typename T>
 void Destroy(_Allocator& alloc, const TMemoryView<T>& items) {
-    details::Destroy_(alloc, items, typename Meta::TIsPod<T>{});
+    details::Destroy_(alloc, items,
+        std::bool_constant< Meta::has_trivial_destructor<T> >{});
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -121,7 +124,7 @@ struct allocator_has_realloc : decltype(details::_allocator_has_realloc( std::de
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 Meta::TEnableIf<
-    true  == Meta::TIsPod<typename _Allocator::value_type>::value,
+    Meta::has_trivial_move<typename _Allocator::value_type>,
     typename _Allocator::pointer
 >   Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     typedef std::allocator_traits<_Allocator> allocator_traits;
@@ -148,7 +151,7 @@ Meta::TEnableIf<
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 Meta::TEnableIf<
-    false  == Meta::TIsPod<typename _Allocator::value_type>::value,
+    not Meta::has_trivial_move<typename _Allocator::value_type>,
     typename _Allocator::pointer
 >   Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     STATIC_ASSERT(std::is_default_constructible<typename _Allocator::value_type>::value);
@@ -181,8 +184,8 @@ Meta::TEnableIf<
 // Best case : T is a pod and _Allocator supports reallocate()
 template <typename _Allocator>
 Meta::TEnableIf<
-    true  == allocator_has_realloc<_Allocator>::value &&
-    true  == Meta::TIsPod<typename _Allocator::value_type>::value,
+    allocator_has_realloc<_Allocator>::value &&
+    Meta::has_trivial_move<typename _Allocator::value_type>,
     typename _Allocator::pointer
 >   Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return static_cast<typename _Allocator::pointer>(allocator.relocate(data.Pointer(), newSize, oldSize));
@@ -191,8 +194,8 @@ Meta::TEnableIf<
 // Worst case : T is a pod but _Allocator does not support relocate()
 template <typename _Allocator>
 Meta::TEnableIf<
-    false == allocator_has_realloc<_Allocator>::value &&
-    true  == Meta::TIsPod<typename _Allocator::value_type>::value,
+    not allocator_has_realloc<_Allocator>::value &&
+    Meta::has_trivial_move<typename _Allocator::value_type>,
     typename _Allocator::pointer
 >   Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);
@@ -201,7 +204,7 @@ Meta::TEnableIf<
 // Common case : T is not a pod, whether _Allocator supports relocate() or not
 template <typename _Allocator>
 Meta::TEnableIf<
-    false == Meta::TIsPod<typename _Allocator::value_type>::value,
+    not Meta::has_trivial_move<typename _Allocator::value_type>,
     typename _Allocator::pointer
 >   Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
     return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);

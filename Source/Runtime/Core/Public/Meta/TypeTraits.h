@@ -58,7 +58,7 @@ struct TCheckFitInSize {
     struct _NAME { \
         template <typename _Rhs> \
         CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const { \
-            return (rhs _OP lhs); \
+            return (lhs _OP rhs); \
         } \
     }
 //----------------------------------------------------------------------------
@@ -196,6 +196,16 @@ using has_noinit_constructor = has_constructor<T, Meta::FNoInit>;
 template <typename T>
 using has_forceinit_constructor = has_constructor<T, Meta::FForceInit>;
 //----------------------------------------------------------------------------
+template <typename T>
+inline constexpr bool has_trivial_constructor = TIsPod_v<T> || std::is_trivially_constructible_v<T>;
+//----------------------------------------------------------------------------
+template <typename T>
+inline constexpr bool has_trivial_destructor = TIsPod_v<T> || std::is_trivially_destructible_v<T>;
+//----------------------------------------------------------------------------
+template <typename T>
+inline constexpr bool has_trivial_move = TIsPod_v<T> || (
+    std::is_trivially_move_constructible_v<T> && std::is_trivially_destructible_v<T> );
+//----------------------------------------------------------------------------
 namespace details {
 template <typename T>
 FORCE_INLINE CONSTEXPR T ForceInit_(std::false_type) { return T{}; }
@@ -262,6 +272,8 @@ void Construct(T* p, FForceInit init) {
 template <typename T>
 void Construct(T* p) {
     Assume(p);
+    typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
+    (void) sizeof(type_must_be_complete);
 #if USE_PPE_MEMORY_DEBUGGING
     ::memset(p, 0xCC, sizeof(T)); // uninitialized field detection
 #endif
@@ -296,19 +308,7 @@ void Construct(T* p, _Args&&... args) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-typename std::enable_if<Meta::TIsPod<T>::value >::type Destroy(T* p) {
-    // PODs don't have a destructor
-    typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
-    (void) sizeof(type_must_be_complete);
-#if USE_PPE_MEMORY_DEBUGGING
-    ::memset(p, 0xDD, sizeof(T)); // necrophilia detection
-#else
-    NOOP(p);
-#endif
-}
-//----------------------------------------------------------------------------
-template <typename T>
-typename std::enable_if< not Meta::TIsPod<T>::value >::type Destroy(T* p) {
+void Destroy(T* p) {
     Assume(p);
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);
