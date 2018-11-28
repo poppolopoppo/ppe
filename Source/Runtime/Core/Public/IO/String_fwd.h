@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

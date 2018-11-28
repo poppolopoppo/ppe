@@ -69,6 +69,8 @@ public:
     size_t capacity() const { return (is_large_() ? _large.Capacity : FSmallString_::GCapacity); }
     size_t max_size() const { return get_allocator().max_size(); }
 
+    size_t SizeInBytes() const { return (size() * sizeof(_Char)); }
+
     iterator begin() { return MakeIterator_(0); }
     iterator end() { return MakeIterator_(size()); }
 

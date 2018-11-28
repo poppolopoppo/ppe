@@ -21,7 +21,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool FWindowsPlatformString::Equals(const char* lhs, const char* rhs, size_t len) {
+bool FWindowsPlatformString::Equals(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
     Assert(lhs);
     Assert(rhs);
 
@@ -51,7 +51,7 @@ bool FWindowsPlatformString::Equals(const char* lhs, const char* rhs, size_t len
 #endif
 }
 //----------------------------------------------------------------------------
-bool FWindowsPlatformString::Equals(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
+bool FWindowsPlatformString::Equals(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT {
     Assert(lhs);
     Assert(rhs);
 
@@ -81,7 +81,7 @@ bool FWindowsPlatformString::Equals(const wchar_t* lhs, const wchar_t* rhs, size
 #endif
 }
 //----------------------------------------------------------------------------
-bool FWindowsPlatformString::EqualsI(const char* lhs, const char* rhs, size_t len) {
+bool FWindowsPlatformString::EqualsI(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
     Assert(lhs);
     Assert(rhs);
 
@@ -128,7 +128,7 @@ bool FWindowsPlatformString::EqualsI(const char* lhs, const char* rhs, size_t le
 #endif
 }
 //----------------------------------------------------------------------------
-bool FWindowsPlatformString::EqualsI(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
+bool FWindowsPlatformString::EqualsI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT {
     Assert(lhs);
     Assert(rhs);
 
@@ -175,7 +175,7 @@ bool FWindowsPlatformString::EqualsI(const wchar_t* lhs, const wchar_t* rhs, siz
 #endif
 }
 //----------------------------------------------------------------------------
-int FWindowsPlatformString::NCmp(const char* lhs, const char* rhs, size_t len) {
+int FWindowsPlatformString::NCmp(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
     Assert(lhs);
     Assert(rhs);
 
@@ -211,7 +211,7 @@ int FWindowsPlatformString::NCmp(const char* lhs, const char* rhs, size_t len) {
 #endif
 }
 //----------------------------------------------------------------------------
-int FWindowsPlatformString::NCmp(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
+int FWindowsPlatformString::NCmp(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT {
     Assert(lhs);
     Assert(rhs);
 
@@ -247,14 +247,14 @@ int FWindowsPlatformString::NCmp(const wchar_t* lhs, const wchar_t* rhs, size_t 
 #endif
 }
 //----------------------------------------------------------------------------
-int FWindowsPlatformString::NCmpI(const char* lhs, const char* rhs, size_t len) {
+int FWindowsPlatformString::NCmpI(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
     Assert(lhs);
     Assert(rhs);
 
     return ::_strnicmp(lhs, rhs, len); // faster than SIMD
 }
 //----------------------------------------------------------------------------
-int FWindowsPlatformString::NCmpI(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
+int FWindowsPlatformString::NCmpI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT {
     Assert(lhs);
     Assert(rhs);
 
@@ -320,7 +320,7 @@ size_t FWindowsPlatformString::WCHAR_to_CHAR(ECodePage codePage, char* dst, size
     return (written + 1);
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformString::ToLower(char* dst, const char* src, size_t len) {
+void FWindowsPlatformString::ToLower(char* dst, const char* src, size_t len) NOEXCEPT {
     Assert(dst);
     Assert(src);
 
@@ -358,7 +358,7 @@ void FWindowsPlatformString::ToLower(char* dst, const char* src, size_t len) {
         *dbegin = PPE::ToLower(*sbegin);
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformString::ToLower(wchar_t* dst, const wchar_t* src, size_t len) {
+void FWindowsPlatformString::ToLower(wchar_t* dst, const wchar_t* src, size_t len) NOEXCEPT {
     Assert(dst);
     Assert(src);
 
@@ -396,7 +396,7 @@ void FWindowsPlatformString::ToLower(wchar_t* dst, const wchar_t* src, size_t le
         *dbegin = PPE::ToLower(*sbegin);
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformString::ToUpper(char* dst, const char* src, size_t len) {
+void FWindowsPlatformString::ToUpper(char* dst, const char* src, size_t len) NOEXCEPT {
     Assert(dst);
     Assert(src);
 
@@ -434,7 +434,7 @@ void FWindowsPlatformString::ToUpper(char* dst, const char* src, size_t len) {
         *dbegin = PPE::ToUpper(*sbegin);
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformString::ToUpper(wchar_t* dst, const wchar_t* src, size_t len) {
+void FWindowsPlatformString::ToUpper(wchar_t* dst, const wchar_t* src, size_t len) NOEXCEPT {
     Assert(dst);
     Assert(src);
 

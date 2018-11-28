@@ -22,23 +22,23 @@ enum class ECase : bool {
     Insensitive = false,
 };
 //----------------------------------------------------------------------------
-inline char ToLower(char ch) { return ((ch >= 'A') && (ch <= 'Z')) ? 'a' + (ch - 'A') : ch; }
-inline char ToUpper(char ch) { return ((ch >= 'a') && (ch <= 'z')) ? 'A' + (ch - 'a') : ch; }
+inline char ToLower(char ch) NOEXCEPT { return ((ch >= 'A') && (ch <= 'Z')) ? 'a' + (ch - 'A') : ch; }
+inline char ToUpper(char ch) NOEXCEPT { return ((ch >= 'a') && (ch <= 'z')) ? 'A' + (ch - 'a') : ch; }
 //----------------------------------------------------------------------------
-inline wchar_t ToLower(wchar_t wch) { return std::towlower(wch); }
-inline wchar_t ToUpper(wchar_t wch) { return std::towupper(wch); }
+inline wchar_t ToLower(wchar_t wch) NOEXCEPT { return std::towlower(wch); }
+inline wchar_t ToUpper(wchar_t wch) NOEXCEPT { return std::towupper(wch); }
 //----------------------------------------------------------------------------
-template <typename _Char> void InplaceToLower(_Char& ch) { ch = ToLower(ch); }
-template <typename _Char> void InplaceToUpper(_Char& ch) { ch = ToUpper(ch); }
+template <typename _Char> void InplaceToLower(_Char& ch) NOEXCEPT { ch = ToLower(ch); }
+template <typename _Char> void InplaceToUpper(_Char& ch) NOEXCEPT { ch = ToUpper(ch); }
 //----------------------------------------------------------------------------
-PPE_CORE_API void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src);
-PPE_CORE_API void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src);
+PPE_CORE_API void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src) NOEXCEPT;
+PPE_CORE_API void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src);
-PPE_CORE_API void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src);
+PPE_CORE_API void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src) NOEXCEPT;
+PPE_CORE_API void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) NOEXCEPT;
 //----------------------------------------------------------------------------
-template <typename _Char> void InplaceToLower(const TMemoryView<_Char>& str) { ToLower(str, str); }
-template <typename _Char> void InplaceToUpper(const TMemoryView<_Char>& str) { ToUpper(str, str); }
+template <typename _Char> void InplaceToLower(const TMemoryView<_Char>& str) NOEXCEPT { ToLower(str, str); }
+template <typename _Char> void InplaceToUpper(const TMemoryView<_Char>& str) NOEXCEPT { ToUpper(str, str); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -313,31 +313,31 @@ PPE_CORE_API FWStringView Strip(const FWStringView& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API int Compare(const FStringView& lhs, const FStringView& rhs);
-PPE_CORE_API int Compare(const FWStringView& lhs, const FWStringView& rhs);
+PPE_CORE_API int Compare(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
+PPE_CORE_API int Compare(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API int CompareI(const FStringView& lhs, const FStringView& rhs);
-PPE_CORE_API int CompareI(const FWStringView& lhs, const FWStringView& rhs);
+PPE_CORE_API int CompareI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
+PPE_CORE_API int CompareI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API bool EqualsN(const char* lhs, const char* rhs, size_t len);
-PPE_CORE_API bool EqualsNI(const char* lhs, const char* rhs, size_t len);
+PPE_CORE_API bool EqualsN(const char* lhs, const char* rhs, size_t len) NOEXCEPT;
+PPE_CORE_API bool EqualsNI(const char* lhs, const char* rhs, size_t len) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len);
-PPE_CORE_API bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len);
+PPE_CORE_API bool EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT;
+PPE_CORE_API bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool Equals(const FStringView& lhs, const FStringView& rhs);
-PPE_CORE_API bool Equals(const FWStringView& lhs, const FWStringView& rhs);
+PPE_CORE_API bool Equals(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
+PPE_CORE_API bool Equals(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API bool EqualsI(const FStringView& lhs, const FStringView& rhs);
-PPE_CORE_API bool EqualsI(const FWStringView& lhs, const FWStringView& rhs);
+PPE_CORE_API bool EqualsI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
+PPE_CORE_API bool EqualsI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
 //----------------------------------------------------------------------------
-inline bool EqualsI(char lhs, char rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }
-inline bool EqualsI(wchar_t lhs, wchar_t rhs) { return (ToUpper(lhs) == ToUpper(rhs)); }
+inline bool EqualsI(char lhs, char rhs) NOEXCEPT { return (ToUpper(lhs) == ToUpper(rhs)); }
+inline bool EqualsI(wchar_t lhs, wchar_t rhs) NOEXCEPT { return (ToUpper(lhs) == ToUpper(rhs)); }
 //----------------------------------------------------------------------------
-inline bool Equals(char lhs, char rhs, ECase cmp) { return (ECase::Insensitive == cmp ? ToUpper(lhs) == ToUpper(rhs) : lhs == rhs); }
-inline bool Equals(wchar_t lhs, wchar_t rhs, ECase cmp) { return (ECase::Insensitive == cmp ? ToUpper(lhs) == ToUpper(rhs) : lhs == rhs); }
+inline bool Equals(char lhs, char rhs, ECase cmp) NOEXCEPT { return (ECase::Insensitive == cmp ? ToUpper(lhs) == ToUpper(rhs) : lhs == rhs); }
+inline bool Equals(wchar_t lhs, wchar_t rhs, ECase cmp) NOEXCEPT { return (ECase::Insensitive == cmp ? ToUpper(lhs) == ToUpper(rhs) : lhs == rhs); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

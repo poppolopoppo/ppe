@@ -22,16 +22,14 @@ PPE_CORE_API u16 ClosestPrimeU16Floor(u16 val);
 template <typename _Tag>
 class TPrimeNumberProduct {
 public:
-    TPrimeNumberProduct() : TPrimeNumberProduct(0) {}
+    CONSTEXPR TPrimeNumberProduct() : TPrimeNumberProduct(0) {}
 
-    TPrimeNumberProduct(const TPrimeNumberProduct& other) : TPrimeNumberProduct(other._value) {}
-    TPrimeNumberProduct& operator =(const TPrimeNumberProduct& other) { _value = other._value; return (*this); }
+    CONSTEXPR TPrimeNumberProduct(const TPrimeNumberProduct& other) : TPrimeNumberProduct(other._value) {}
+    CONSTEXPR TPrimeNumberProduct& operator =(const TPrimeNumberProduct& other) { _value = other._value; return (*this); }
 
-    u64 Value() const { return _value; }
+    CONSTEXPR u64 Value() const { return _value; }
 
-    bool Contains(const TPrimeNumberProduct& parent) const {
-        Assert(_value != 0);
-        Assert(parent._value != 0);
+    CONSTEXPR bool Contains(const TPrimeNumberProduct& parent) const {
         return ((_value / parent._value) * parent._value == _value);
     }
 
@@ -39,11 +37,11 @@ public:
         std::swap(lhs._value, rhs._value);
     }
 
-    inline friend bool operator ==(TPrimeNumberProduct lhs, TPrimeNumberProduct rhs) {
+    CONSTEXPR inline friend bool operator ==(TPrimeNumberProduct lhs, TPrimeNumberProduct rhs) {
         return (lhs._value == rhs._value);
     }
 
-    inline friend bool operator !=(TPrimeNumberProduct lhs, TPrimeNumberProduct rhs) {
+    CONSTEXPR inline friend bool operator !=(TPrimeNumberProduct lhs, TPrimeNumberProduct rhs) {
         return (lhs._value != rhs._value);
     }
 

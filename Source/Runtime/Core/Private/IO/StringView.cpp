@@ -447,25 +447,25 @@ bool EndsWithI_(const TBasicStringView<_Char>& str, const TBasicStringView<_Char
 //----------------------------------------------------------------------------
 // 6x-8x faster with SIMD :
 //----------------------------------------------------------------------------
-void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src) {
+void ToLower(const TMemoryView<char>& dst, const TMemoryView<const char>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
 
     FPlatformString::ToLower(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
-void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) {
+void ToLower(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
 
     FPlatformString::ToLower(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
-void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src) {
+void ToUpper(const TMemoryView<char>& dst, const TMemoryView<const char>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
 
     FPlatformString::ToUpper(dst.data(), src.data(), src.size());
 }
 //----------------------------------------------------------------------------
-void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) {
+void ToUpper(const TMemoryView<wchar_t>& dst, const TMemoryView<const wchar_t>& src) NOEXCEPT {
     Assert(dst.size() == src.size());
 
     FPlatformString::ToUpper(dst.data(), src.data(), src.size());
@@ -593,112 +593,99 @@ FWStringView Strip(const FWStringView& wstr) { return Trim_(wstr, MakeStringView
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-int Compare(const FStringView& lhs, const FStringView& rhs) {
+template <typename _Char, typename _Cmp>
+FORCE_INLINE static int Compare_(
+    const TBasicStringView<_Char>& lhs,
+    const TBasicStringView<_Char>& rhs,
+    _Cmp compare ) {
     if (lhs == rhs)
         return 0;
 
+    int cmp;
+
     const size_t sz = Min(lhs.size(), rhs.size());
     if (0 == sz)
-        return 0;
+        goto CMP_SIZE;
 
-    const int cmp = FPlatformString::NCmp(lhs.data(), rhs.data(), sz);
-
+    cmp = compare(lhs.data(), rhs.data(), sz);
     if (cmp)
         return cmp;
-    else if (lhs.size() == rhs.size())
+
+CMP_SIZE:
+    if (lhs.size() == rhs.size())
         return 0;
     else
         return (lhs.size() < rhs.size() ? -1 : 1);
 }
 //----------------------------------------------------------------------------
-int Compare(const FWStringView& lhs, const FWStringView& rhs) {
-    if (lhs == rhs)
-        return 0;
-
-    const size_t sz = Min(lhs.size(), rhs.size());
-    if (0 == sz)
-        return 0;
-
-    const int cmp = FPlatformString::NCmp(lhs.data(), rhs.data(), sz);
-
-    if (cmp)
-        return cmp;
-    else if (lhs.size() == rhs.size())
-        return 0;
-    else
-        return (lhs.size() < rhs.size() ? -1 : 1);
+template <typename _Char>
+FORCE_INLINE static int Compare_(
+    const TBasicStringView<_Char>& lhs,
+    const TBasicStringView<_Char>& rhs) {
+    return Compare_(lhs, rhs, [](const _Char* a, const _Char* b, size_t n) {
+        return FPlatformString::NCmp(a, b, n);
+    });
 }
 //----------------------------------------------------------------------------
-int CompareI(const FStringView& lhs, const FStringView& rhs) {
-    if (lhs == rhs)
-        return 0;
-
-    const size_t sz = Min(lhs.size(), rhs.size());
-    if (0 == sz)
-        return 0;
-
-    const int cmp = FPlatformString::NCmpI(lhs.data(), rhs.data(), sz);
-
-    if (cmp)
-        return cmp;
-    else if (lhs.size() == rhs.size())
-        return 0;
-    else
-        return (lhs.size() < rhs.size() ? -1 : 1);
+template <typename _Char>
+FORCE_INLINE static int CompareI_(
+    const TBasicStringView<_Char>& lhs,
+    const TBasicStringView<_Char>& rhs) {
+    return Compare_(lhs, rhs, [](const _Char* a, const _Char* b, size_t n) {
+        return FPlatformString::NCmpI(a, b, n);
+    });
 }
 //----------------------------------------------------------------------------
-int CompareI(const FWStringView& lhs, const FWStringView& rhs) {
-    if (lhs == rhs)
-        return 0;
-
-    const size_t sz = Min(lhs.size(), rhs.size());
-    if (0 == sz)
-        return 0;
-
-    const int cmp = FPlatformString::NCmpI(lhs.data(), rhs.data(), sz);
-
-    if (cmp)
-        return cmp;
-    else if (lhs.size() == rhs.size())
-        return 0;
-    else
-        return (lhs.size() < rhs.size() ? -1 : 1);
+int Compare(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
+    return Compare_(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+int Compare(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
+    return Compare_(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+int CompareI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
+    return CompareI_(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+int CompareI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
+    return CompareI_(lhs, rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool EqualsN(const char* lhs, const char* rhs, size_t len) {
+bool EqualsN(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
     return (lhs == rhs || 0 == len || FPlatformString::Equals(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
-bool EqualsNI(const char* lhs, const char* rhs, size_t len) {
+bool EqualsNI(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
     return (lhs == rhs || 0 == len || FPlatformString::EqualsI(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
-bool EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
+bool EqualsN(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT {
     return (lhs == rhs || 0 == len || FPlatformString::Equals(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
-bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len) {
+bool EqualsNI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT {
     return (lhs == rhs || 0 == len || FPlatformString::EqualsI(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
-bool Equals(const FStringView& lhs, const FStringView& rhs) {
+bool Equals(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
     return ((lhs.size() == rhs.size()) &&
             (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::Equals(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
-bool Equals(const FWStringView& lhs, const FWStringView& rhs) {
+bool Equals(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
     return ((lhs.size() == rhs.size()) &&
             (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::Equals(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
-bool EqualsI(const FStringView& lhs, const FStringView& rhs) {
+bool EqualsI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT {
     return ((lhs.size() == rhs.size()) &&
             (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::EqualsI(lhs.data(), rhs.data(), lhs.size())) );
 }
 //----------------------------------------------------------------------------
-bool EqualsI(const FWStringView& lhs, const FWStringView& rhs) {
+bool EqualsI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT {
     return ((lhs.size() == rhs.size()) &&
             (lhs.size() == 0 || lhs.data() == rhs.data() || FPlatformString::EqualsI(lhs.data(), rhs.data(), lhs.size())) );
 }
@@ -882,6 +869,7 @@ hash_t hash_stringI(const FStringView& str) {
     char (*transform)(char) = &ToLower;
     return hash_fnv1a(MakeOutputIterator(str.begin(), transform), MakeOutputIterator(str.end(), transform));
 #else
+    // #TODO refactor to skip copy, avoid using case insensitive ?
     const size_t sz = str.size();
     STACKLOCAL_POD_ARRAY(u8, istr, sz);
     FPlatformMemory::Memcpy(istr.data(), str.data(), sz);
@@ -894,6 +882,7 @@ hash_t hash_stringI(const FWStringView& wstr) {
     wchar_t (*transform)(wchar_t) = &ToLower;
     return hash_fnv1a(MakeOutputIterator(wstr.begin(), transform), MakeOutputIterator(wstr.end(), transform));
 #else
+    // #TODO refactor to skip copy, avoid using case insensitive ?
     const size_t sz = wstr.size();
     STACKLOCAL_POD_ARRAY(wchar_t, iwstr, sz);
     ToLower(iwstr, wstr);
