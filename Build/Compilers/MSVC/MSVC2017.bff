@@ -26,6 +26,8 @@
 #define USE_VISUAL2017_EXTERNAL_ANGLEBRACKETS // TODO : this is still experimental
 ; de nouveaux warnings expérimentaux ont été ajoutés dans 15.3.0
 #define USE_VISUAL2017_DIAGNOSTIC_IMPROVEMENTS
+; intégre le fichier .natvis au pdb (nouveau dans VS2017)
+#define USE_VISUAL2017_LINK_NATVIS
 ; supprime un warning de dépréciation de std::iterator
 #define USE_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 ; supprime un warning de changement d'ABI depuis 15.8
@@ -202,6 +204,9 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
     .Defines + '_ENABLE_EXTENDED_ALIGNED_STORAGE'
 #endif
 
+    .ExecutableOptions = ''
+    .ExecutableDeps = {}
+
     .CompilerOptions = ''
     + ' /Zo'                    ; https://msdn.microsoft.com/fr-fr/library/dn785163.aspx
     + ' /diagnostics:caret'     ; https://docs.microsoft.com/en-us/cpp/build/reference/diagnostics-compiler-diagnostic-options
@@ -245,6 +250,12 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
 
     .LinkerOptions = ''
     + ' /CGTHREADS8'            ; https://msdn.microsoft.com/fr-fr/library/dn631956.aspx
+#if USE_VISUAL2017_LINK_NATVIS
+    .NatvisSource  = '$SolutionPath$/Extras/Debug/PPE.natvis'
+    Print( "Using Visual 2017 link with natvis file : '$NatvisSource$'")
+    .ExecutableOptions + ' /NATVIS:"$NatvisSource$"'
+    .ExecutableDeps + .NatvisSource
+#endif
 
     .SystemIncludePaths =
     {
