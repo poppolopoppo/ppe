@@ -108,6 +108,11 @@
 .CLangBaseDebugConfig =
 [
     Using( .MSVCBaseDebugConfig )
+
+    ; disable LTCG
+    .LibrarianOptions   = ''
+    .LinkerOptions      = ''
+
 ]
 
 //------------------------------------------------------------------------------
@@ -116,6 +121,10 @@
 .CLangBaseFastDebugConfig =
 [
     Using( .MSVCBaseFastDebugConfig )
+
+    ; disable LTCG
+    .LibrarianOptions   = ''
+    .LinkerOptions      = ''
 ]
 
 //------------------------------------------------------------------------------
@@ -124,6 +133,10 @@
 .CLangBaseReleaseConfig =
 [
     Using( .MSVCBaseReleaseConfig )
+
+    ; disable LTCG
+    .LibrarianOptions   = ''
+    .LinkerOptions      = ''
 ]
 
 //------------------------------------------------------------------------------
@@ -132,6 +145,10 @@
 .CLangBaseProfilingConfig =
 [
     Using( .MSVCBaseProfilingConfig )
+
+    ; disable LTCG
+    .LibrarianOptions   = ''
+    .LinkerOptions      = ''
 ]
 
 //------------------------------------------------------------------------------
@@ -140,6 +157,10 @@
 .CLangBaseFinalConfig =
 [
     Using( .MSVCBaseFinalConfig )
+
+    ; disable LTCG
+    .LibrarianOptions   = ''
+    .LinkerOptions      = ''
 ]
 
 ; //------------------------------------------------------------------------------
