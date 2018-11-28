@@ -101,8 +101,13 @@ namespace Meta {
 * Example usage 2:
 *       PP_COUNT_ARGS() // expanded as 0
 */
-#define PP_NUM_ARGS(...) \
+#if defined(_MSC_VER) && not defined(__clang__)
+#   define PP_NUM_ARGS(...) \
     _GET_NTH_ARG _LPARENTHESIS EXPAND_VA("ignored", ##__VA_ARGS__), 8, 7, 6, 5, 4, 3, 2, 1, 0 _RPARENTHESIS
+#else
+#   define PP_NUM_ARGS(...) \
+    EXPAND( _GET_NTH_ARG("ignored", ##__VA_ARGS__, 8, 7, 6, 5, 4, 3, 2, 1, 0) )
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
