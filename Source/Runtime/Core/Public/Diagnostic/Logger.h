@@ -169,6 +169,6 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #   define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) NOOP()
 #else
 #   define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) do { \
-        if (!(_CONDITION)) LOG(_CATEGORY, _LEVEL, _FORMAT, __VA_ARGS__); \
+        if (_CONDITION) LOG(_CATEGORY, _LEVEL, _FORMAT, __VA_ARGS__); \
     } while (0)
 #endif

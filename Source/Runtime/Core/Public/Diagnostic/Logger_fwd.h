@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #if !defined(FINAL_RELEASE) || USE_PPE_FORCE_LOGGING
 #   define USE_DEBUG_LOGGER
