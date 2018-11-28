@@ -26,6 +26,7 @@ MEMORYDOMAIN_IMPL(SizePtrie,                            ReservedMemory)
 MEMORYDOMAIN_GROUP_IMPL(Core,                           UsedMemory)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_IMPL(Alloca,                               Core)
+MEMORYDOMAIN_IMPL(Benchmark,                            Core)
 MEMORYDOMAIN_IMPL(Compress,                             Core)
 MEMORYDOMAIN_IMPL(Container,                            Core)
 MEMORYDOMAIN_IMPL(Diagnostic,                           Core)
