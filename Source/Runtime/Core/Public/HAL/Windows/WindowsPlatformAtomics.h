@@ -189,8 +189,8 @@ public:
     //------------------------------------------------------------------------
     // Misc
 
-    static FORCE_INLINE void Barrier() {
-        ::MemoryBarrier();
+    static FORCE_INLINE void MemoryBarrier() {
+        ::_mm_mfence(); //::MemoryBarrier();
     }
 
     static FORCE_INLINE void ShortSyncWait() {

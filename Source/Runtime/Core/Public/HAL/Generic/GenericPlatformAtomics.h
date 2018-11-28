@@ -57,7 +57,7 @@ public: // must be defined for every platform
     static void Store_Relaxed(volatile i32* dst, i32 val) NOEXCEPT = delete;
     static void Store_Relaxed(volatile i64* dst, i64 val) NOEXCEPT = delete;
 
-    static void FullBarrier() NOEXCEPT = delete;
+    static void MemoryBarrier() NOEXCEPT = delete;
     static void ShortSyncWait() NOEXCEPT = delete;
 
 public: // generic helpers
