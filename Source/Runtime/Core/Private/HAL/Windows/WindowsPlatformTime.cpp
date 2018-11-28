@@ -16,11 +16,18 @@ static double FetchSecondsPerCycle_() {
     return (1.0 / frequency.QuadPart);
 }
 //----------------------------------------------------------------------------
+static double FetchMicrosecondsPerCycle_() {
+    ::LARGE_INTEGER frequency;
+    Verify(::QueryPerformanceFrequency(&frequency));
+    return (1000000.0 / frequency.QuadPart);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 const double FWindowsPlatformTime::GSecondsPerCycle = FetchSecondsPerCycle_();
+const double FWindowsPlatformTime::GMicrosecondsPerCycle = FetchMicrosecondsPerCycle_();
 //----------------------------------------------------------------------------
 void FWindowsPlatformTime::SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) {
     ::SYSTEMTIME st;

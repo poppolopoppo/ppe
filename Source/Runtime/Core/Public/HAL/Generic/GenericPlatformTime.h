@@ -2,6 +2,8 @@
 
 #include "HAL/TargetPlatform.h"
 
+#include <chrono>
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -14,12 +16,26 @@ public: // must be defined for every platform
     static double Seconds() = delete;
     static double SecondsPerCycle() = delete;
 
+    static u64 ThreadCpuCycles() = delete; // can't convert to time
+
     static double ToSeconds(i64 cycles) = delete;
+    static double ToMicroseconds(i64 cycles) = delete;
+
     static i64 ToTicks(double secs) = delete;
 
     static void SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) = delete;
     static void UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) = delete;
 
+    static double ChronoMicroseconds() NOEXCEPT {
+        using chrono_type = std::conditional_t<
+            std::chrono::high_resolution_clock::is_steady,
+            std::chrono::high_resolution_clock,
+            std::chrono::steady_clock >;
+        using microseconds_type = std::chrono::duration<
+            double,
+            std::chrono::microseconds::period >;
+        return microseconds_type(chrono_type::now().time_since_epoch()).count();
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

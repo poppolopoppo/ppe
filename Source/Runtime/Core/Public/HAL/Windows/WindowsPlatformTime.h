@@ -29,7 +29,16 @@ public:
     static FORCE_INLINE double SecondsPerCycle() NOEXCEPT { return GSecondsPerCycle; }
 
     static FORCE_INLINE double ToSeconds(i64 cycles) NOEXCEPT { return (cycles * GSecondsPerCycle); }
+    static FORCE_INLINE double ToMicroseconds(i64 cycles) NOEXCEPT { return (cycles * GMicrosecondsPerCycle); }
+
     static FORCE_INLINE i64 ToTicks(double secs) NOEXCEPT { return i64(secs / GSecondsPerCycle); }
+
+    static FORCE_INLINE u64 ThreadCpuCycles() {
+        ::HANDLE hThread = ::GetCurrentThread();
+        ::ULONG64 cycleTime;
+        ::QueryThreadCycleTime(hThread, &cycleTime);
+        return cycleTime;
+    }
 
     static void SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec);
     static void UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec);
@@ -37,6 +46,7 @@ public:
 public: // platform specific
 
     static const double GSecondsPerCycle;
+    static const double GMicrosecondsPerCycle;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
