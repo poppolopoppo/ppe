@@ -302,8 +302,9 @@ Print( "Using Visual 2017 incremental LTCG for profiling : no profiling informat
 [
 #if USE_VISUAL2017_GUARD_CF
     Print( "Using Visual 2017 guard CF : control flow protection" )
-    ; https://msdn.microsoft.com/fr-fr/library/dn919635.aspx
+    ; https://docs.microsoft.com/fr-fr/cpp/build/reference/guard-enable-guard-checks?view=vs-2017
     .CompilerOptions    = ' /guard:cf'
+    .LinkerOptions      = ' /guard:cf /DYNAMICBASE'
 #endif
 ]
 
