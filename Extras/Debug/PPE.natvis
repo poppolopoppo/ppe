@@ -10,13 +10,20 @@
     </Expand>
   </Type>
 
-  <Type Name="PPE::Meta::TPointerWFlags&lt;*&gt;">
-    <DisplayString>{{ ptr={($T1*)(_ptr * 4)} flag0={(_flags&amp;1)!=0} flag1={(_flags&amp;2)!=0} flag01={_flags} }}</DisplayString>
+  <Type Name="PPE::TNumeric&lt; *, * &gt;">
+    <DisplayString>{ Value }</DisplayString>
     <Expand>
-      <Item Name="[Pointer]">($T1*)(_ptr * 4)</Item>
-      <Item Name="[Flag0]">(_flags&amp;1)!=0</Item>
-      <Item Name="[Flag1]">(_flags&amp;2)!=0</Item>
-      <Item Name="[Flag01]">_flags</Item>
+      <Item Name="[Value]">Value</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="PPE::Meta::TPointerWFlags&lt;*&gt;">
+    <DisplayString>{{ ptr={($T1*)(_packed._ptr)} flag0={(_packed._flags&amp;1)!=0} flag1={(_packed._flags&amp;2)!=0} flag01={_packed._flags} }}</DisplayString>
+    <Expand>
+      <Item Name="[Pointer]">($T1*)(_packed._ptr * 4)</Item>
+      <Item Name="[Flag0]">(_packed._flags&amp;1)!=0</Item>
+      <Item Name="[Flag1]">(_packed._flags&amp;2)!=0</Item>
+      <Item Name="[Flag01]">_packed._flags</Item>
     </Expand>
   </Type>
 
@@ -328,7 +335,20 @@
   </Type>
 
   <Type Name="PPE::RTTI::ITypeTraits">
-    <DisplayString>[{TypeId()}] {TypeInfos()._name._storage, [TypeInfos()._name._size]}, {TypeInfos()._flags, en} ({TypeInfos()._sizeInBytes}b)</DisplayString>
+    <DisplayString>[{_typeId}] {TypeName()._storage, [TypeName()._size]}, {PPE::RTTI::ETypeFlags(_sizeAndFlags._flags), en} ({_sizeAndFlags._sizeInBytes}b)</DisplayString>
+    <Expand>
+      <Item Name="[Id]">_typeId</Item>
+      <Item Name="[Name]">TypeName()</Item>
+      <Item Name="[Size]">_sizeAndFlags._sizeInBytes</Item>
+      <Item Name="[Flags]">PPE::RTTI::ETypeFlags(_sizeAndFlags._flags), en</Item>
+    </Expand>
+  </Type>
+  <Type Name="PPE::RTTI::PTypeTraits">
+    <DisplayString Condition="Traits == nullptr">null</DisplayString>
+    <DisplayString>{*Traits}</DisplayString>
+    <Expand>
+      <ExpandedItem>Traits</ExpandedItem>
+    </Expand>
   </Type>
 
   <Type Name="PPE::RTTI::FAny">
