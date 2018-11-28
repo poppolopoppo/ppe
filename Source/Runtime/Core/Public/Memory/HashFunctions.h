@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "HAL/PlatformHash.h"
 
@@ -87,13 +87,13 @@ FORCE_INLINE size_t hash_crc32(const void* key, size_t sizeInBytes, size_t crc32
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PPE_CORE_API u128 Fingerprint128(const void *ptr, size_t sizeInBytes);
-template <typename T> u128 Fingerprint128(const TMemoryView<const T>& src) { return Fingerprint128(src.Pointer(), src.SizeInBytes()); }
+template <typename T> u128 Fingerprint128(const TMemoryView<T>& src) { return Fingerprint128(src.Pointer(), src.SizeInBytes()); }
 //----------------------------------------------------------------------------
 PPE_CORE_API u64 Fingerprint64(const void *ptr, size_t sizeInBytes);
-template <typename T> u64 Fingerprint64(const TMemoryView<const T>& src) { return Fingerprint64(src.Pointer(), src.SizeInBytes()); }
+template <typename T> u64 Fingerprint64(const TMemoryView<T>& src) { return Fingerprint64(src.Pointer(), src.SizeInBytes()); }
 //----------------------------------------------------------------------------
 PPE_CORE_API u32 Fingerprint32(const void *ptr, size_t sizeInBytes);
-template <typename T> u32 Fingerprint32(const TMemoryView<const T>& src) { return Fingerprint32(src.Pointer(), src.SizeInBytes()); }
+template <typename T> u32 Fingerprint32(const TMemoryView<T>& src) { return Fingerprint32(src.Pointer(), src.SizeInBytes()); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
