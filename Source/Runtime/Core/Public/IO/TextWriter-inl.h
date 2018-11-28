@@ -132,6 +132,11 @@ TBasicTextManipulator<_Char> FTextFormat::PadRight(size_t width, _Char fill) {
     return Pad(Padding_Right, width, fill);
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextManipulator<_Char> FTextFormat::Trunc(size_t width, _Char fill) {
+    return Pad(Padding_Truncate, width, fill);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>

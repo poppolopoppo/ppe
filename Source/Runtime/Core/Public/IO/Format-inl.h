@@ -96,7 +96,7 @@ void Format(TBasicString<_Char>& result, const TBasicStringView<_Char>& format, 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatManip(char ch) {
+constexpr bool ValidateFormatManip(char ch) noexcept {
     switch (ch) {
     case '*':
     case '0':
@@ -129,13 +129,14 @@ constexpr bool ValidateFormatManip(char ch) {
     case '-':
     case '#':
     case '@':
+    case '/':
         return true;
     default:
         return false;
     }
 }
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatManip(wchar_t ch) {
+constexpr bool ValidateFormatManip(wchar_t ch) noexcept {
     switch (ch) {
     case L'*':
     case L'0':
@@ -168,13 +169,14 @@ constexpr bool ValidateFormatManip(wchar_t ch) {
     case L'-':
     case L'#':
     case L'@':
+    case L'/':
         return true;
     default:
         return false;
     }
 }
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatString(const char* fmt, size_t len, size_t numArgs) {
+constexpr bool ValidateFormatString(const char* fmt, size_t len, size_t numArgs) noexcept {
     size_t unusedArgs = ((1ul << numArgs) - 1);
     for (size_t i = 0; i < len - 2; ++i) {
         if (fmt[i] == '\0') return false;
@@ -204,7 +206,7 @@ constexpr bool ValidateFormatString(const char* fmt, size_t len, size_t numArgs)
     return (0 == unusedArgs); // each arg should be used at least once
 }
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatString(const wchar_t* fmt, size_t len, size_t numArgs) {
+constexpr bool ValidateFormatString(const wchar_t* fmt, size_t len, size_t numArgs) noexcept {
     size_t unusedArgs = ((1ul << numArgs) - 1);
     for (size_t i = 0; i < len - 2; ++i) {
         if (fmt[i] == L'\0') return false;

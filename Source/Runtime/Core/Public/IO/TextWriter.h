@@ -52,6 +52,7 @@ public:
         Padding_Center,
         Padding_Left,
         Padding_Right,
+        Padding_Truncate,
     };
     enum EMisc : u32 {
         BoolAlpha = 1 << 0,
@@ -61,7 +62,6 @@ public:
         //Reserved3 = 1 << 4,
         //Reserved4 = 1 << 5,
         //Reserved5 = 1 << 6,
-        //Reserved6 = 1 << 7,
     };
     ENUM_FLAGS_FRIEND(EMisc);
 
@@ -115,6 +115,8 @@ public:
     template <typename _Char>
     static TBasicTextManipulator<_Char> PadRight(size_t width = INDEX_NONE, _Char fill = _Char());
     template <typename _Char>
+    static TBasicTextManipulator<_Char> Trunc(size_t width = INDEX_NONE, _Char fill = _Char());
+    template <typename _Char>
     static TBasicTextManipulator<_Char> SetFill(_Char ch);
 
     struct FFloat {
@@ -130,8 +132,8 @@ private:
     EBase _base         : 2;
     ECase _case         : 2;
     EFloat _float       : 2;
-    EPadding _padding   : 2;
-    EMisc _misc         : 8;
+    EPadding _padding   : 3;
+    EMisc _misc         : 7;
     u32 _width          : 8;
     u32 _precision      : 8;
 };

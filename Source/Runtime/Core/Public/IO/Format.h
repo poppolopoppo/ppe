@@ -90,14 +90,14 @@ TBasicString<_Char> StringFormat(const _Char(&format)[_Dim], _Arg0&& arg0, _Args
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatManip(char ch);
-constexpr bool ValidateFormatManip(wchar_t ch);
+constexpr bool ValidateFormatManip(char ch) noexcept;
+constexpr bool ValidateFormatManip(wchar_t ch) noexcept;
 //----------------------------------------------------------------------------
-constexpr bool ValidateFormatString(const char* str, size_t len, size_t numArgs);
-constexpr bool ValidateFormatString(const wchar_t* str, size_t len, size_t numArgs);
+constexpr bool ValidateFormatString(const char* str, size_t len, size_t numArgs) noexcept;
+constexpr bool ValidateFormatString(const wchar_t* str, size_t len, size_t numArgs) noexcept;
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim>
-constexpr bool ValidateFormatString(const _Char(&fmt)[_Dim], size_t numArgs) {
+constexpr bool ValidateFormatString(const _Char(&fmt)[_Dim], size_t numArgs) noexcept {
     return ValidateFormatString(fmt, _Dim - 1/* - null char */, numArgs);
 }
 //----------------------------------------------------------------------------

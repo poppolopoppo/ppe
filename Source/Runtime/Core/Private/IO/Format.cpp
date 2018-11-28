@@ -42,6 +42,7 @@ struct TFormatTraits_<char> {
         fmt_minus   = '-',
         fmt_sharp   = '#',
         fmt_center  = '@',
+        fmt_trunc   = '/',
     };
 };
 //----------------------------------------------------------------------------
@@ -75,6 +76,7 @@ struct TFormatTraits_<wchar_t> {
         fmt_minus   = L'-',
         fmt_sharp   = L'#',
         fmt_center  = L'@',
+        fmt_trunc   = L'/',
     };
 };
 //----------------------------------------------------------------------------
@@ -145,8 +147,8 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
             }
 
             if (format_traits::colon == format.front()){
-                int alignment = 1;
                 format = format.ShiftFront();
+
                 do {
                     Assert(format_traits::null != format.front());
 
@@ -209,19 +211,27 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                         props.FillChar = format_traits::zero;
                         format = format.ShiftFront();
                         continue;
-
-                    case format_traits::fmt_center:
-                        alignment = 0;
-                        format = format.ShiftFront();
-                        continue;
                     }
 
                     bool expect_fixed = false;
                     bool expect_repeat = false;
                     bool expect_width = false;
-                    if (format_traits::fmt_minus == format.front()) {
+
+                    FTextFormat::EPadding padding = FTextFormat::Padding_Left;
+
+                    if (format_traits::fmt_center == format.front()) {
                         format = format.ShiftFront();
-                        alignment = -1;
+                        padding = FTextFormat::Padding_Center;
+                        expect_width = true;
+                    }
+                    else if (format_traits::fmt_trunc == format.front()) {
+                        format = format.ShiftFront();
+                        padding = FTextFormat::Padding_Truncate;
+                        expect_width = true;
+                    }
+                    else if (format_traits::fmt_minus == format.front()) {
+                        format = format.ShiftFront();
+                        padding = FTextFormat::Padding_Right;
                         expect_width = true;
                     }
                     else if (format_traits::multiply == format.front()) {
@@ -254,7 +264,7 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                     }
 
                     if (expect_fixed) {
-                        AssertRelease(alignment >= 0); // invalid format : negative precision is not supported
+                        AssertRelease(padding != FTextFormat::Padding_Right); // invalid format : negative precision is not supported
                         props.Format.SetPrecision(checked_cast<size_t>(parsedScalar));
                     }
                     else if (expect_repeat) {
@@ -262,9 +272,7 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                     }
                     else if (expect_width) {
                         props.Format.SetWidth(checked_cast<size_t>(parsedScalar));
-                        props.Format.SetPadding((alignment < 0
-                            ? FTextFormat::Padding_Right
-                            : (alignment == 0 ? FTextFormat::Padding_Center : FTextFormat::Padding_Left)) );
+                        props.Format.SetPadding(padding);
                     }
                     else {
                         AssertNotReached();

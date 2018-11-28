@@ -15,7 +15,7 @@ namespace PPE {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
-static void WriteWFormat_(TBasicTextWriter<_Char>& w, const TBasicStringView<_Char>& str) {
+static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> str) {
     const FTextFormat& fmt = w.Format();
     IBufferedStreamWriter* ostream = w.Stream();
 
@@ -50,7 +50,18 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, const TBasicStringView<_Ch
         break;
     case PPE::FTextFormat::Padding_Right:
         pad_left = 0;
-        pad_right = Max(width - sz, 0);;
+        pad_right = Max(width - sz, 0);
+        break;
+    case PPE::FTextFormat::Padding_Truncate:
+        pad_left = 0;
+        if (sz > width) {
+            str = str.CutBefore(width); // truncate input string
+            pad_right = 0;
+        }
+        else {
+            pad_right = width - sz;
+        }
+        pad_right = Max(width - sz, 0);
         break;
     default:
         AssertNotImplemented();
