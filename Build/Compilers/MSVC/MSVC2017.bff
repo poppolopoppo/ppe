@@ -249,7 +249,8 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
     .CompilerOptions + .AdditionalOptions
 
     .LinkerOptions = ''
-    + ' /CGTHREADS8'            ; https://msdn.microsoft.com/fr-fr/library/dn631956.aspx
+    + ' /CGTHREADS:8'            ; https://msdn.microsoft.com/fr-fr/library/dn631956.aspx
+
 #if USE_VISUAL2017_LINK_NATVIS
     .NatvisSource  = '$SolutionPath$/Extras/Debug/PPE.natvis'
     Print( "Using Visual 2017 link with natvis file : '$NatvisSource$'")
@@ -279,7 +280,11 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
 .MSVC2017LinkTimeCodeGenerationIncremental =
 [
     ; Link Time Code Generation (LTCG) incrémental pour accélérer les builds en FINAL
+    .LinkerOptions      = ' /LTCG'
+#if USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
+    Print( "Using Visual 2017 incremental LTCG for profiling" )
     .LinkerOptions      = ' /LTCG:incremental'
+#endif
     .LibrarianOptions   = ' /LTCG'
 ]
 
