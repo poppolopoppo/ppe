@@ -124,6 +124,16 @@ public:
         return hash_as_pod_array(_storage, _size);
     }
 
+    TMemoryView<T> SubRange(size_t offset, size_t size) {
+        Assert_NoAssume(offset + size <= _size);
+        return TMemoryView<T>(_storage + offset, size);
+    }
+
+    TMemoryView<const T> SubRange(size_t offset, size_t size) const {
+        Assert_NoAssume(offset + size <= _size);
+        return TMemoryView<T>(_storage + offset, size);
+    }
+
     TMemoryView<T> MakeView() { return TMemoryView<T>(_storage, _size); }
     TMemoryView<const T> MakeView() const { return TMemoryView<const T>(_storage, _size); }
     TMemoryView<const T> MakeConstView() const { return TMemoryView<const T>(_storage, _size); }
