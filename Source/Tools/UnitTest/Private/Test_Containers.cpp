@@ -8,7 +8,9 @@
 #include "Container/HashTable.h"
 #include "Container/StringHashSet.h"
 
+#include "Diagnostic/Benchmark.h"
 #include "Diagnostic/Logger.h"
+
 #include "IO/BufferedStream.h"
 #include "IO/FileStream.h"
 #include "IO/Filename.h"
@@ -382,6 +384,40 @@ public:
     TCompactHashSet() : _values(nullptr), _capacity(0), _size(0) {}
     ~TCompactHashSet() { clear(); }
 
+    TCompactHashSet(const TCompactHashSet& other)
+        : TCompactHashSet() {
+        if (other.size()) {
+            reserve(other.size());
+            for (const auto& it : other)
+                insert(it);
+        }
+    }
+
+    TCompactHashSet& operator =(const TCompactHashSet& other) {
+        clear();
+        if (other.size()) {
+            reserve(other.size());
+            for (const auto& it : other)
+                insert(it);
+        }
+        return (*this);
+    }
+
+    TCompactHashSet(TCompactHashSet&& rvalue)
+        : TCompactHashSet() {
+        std::swap(_values, rvalue._values);
+        std::swap(_capacity, rvalue._capacity);
+        std::swap(_size, rvalue._size);
+    }
+
+    TCompactHashSet& operator =(TCompactHashSet&& rvalue) {
+        clear();
+        std::swap(_values, rvalue._values);
+        std::swap(_capacity, rvalue._capacity);
+        std::swap(_size, rvalue._size);
+        return (*this);
+    }
+
     size_type size() const { return _size; }
     bool empty() const { return 0 == _size; }
     size_type capacity() const { return _capacity; }
@@ -389,7 +425,7 @@ public:
     const_iterator begin() const { return const_iterator(_values, _capacity, 0).Advance(0); }
     const_iterator end() const { return const_iterator(_values, _capacity, _capacity); }
 
-    void resize(size_type atleast) {
+    void reserve(size_type atleast) {
         atleast = atleast + ((100-MaxLoadFactor)*atleast)/100;
         if (atleast > _capacity) {
             //Assert(atleast <= Primes_[31]);
@@ -574,6 +610,34 @@ public:
         clear_ReleaseMemory();
     }
 
+    TDenseHashSet(const TDenseHashSet& other) : TDenseHashSet() {
+        operator =(other);
+    }
+    TDenseHashSet& operator =(const TDenseHashSet& other) {
+        clear();
+        if (other.size()) {
+            reserve(other.size());
+            for (const auto& it : other)
+                insert(it);
+        }
+        return (*this);
+    }
+
+    TDenseHashSet(TDenseHashSet&& rvalue) : TDenseHashSet() {
+        std::swap(_size, rvalue._size);
+        std::swap(_capacity, rvalue._capacity);
+        std::swap(_elements, rvalue._elements);
+        std::swap(_states, rvalue._states);
+    }
+    TDenseHashSet& operator =(TDenseHashSet&& rvalue) {
+        clear_ReleaseMemory();
+        std::swap(_size, rvalue._size);
+        std::swap(_capacity, rvalue._capacity);
+        std::swap(_elements, rvalue._elements);
+        std::swap(_states, rvalue._states);
+        return (*this);
+    }
+
     bool empty() const { return (0 == _size); }
     size_t size() const { return _size; }
     size_t capacity() const { return _capacity; }
@@ -687,6 +751,18 @@ public:
         return true;
     }
 
+    void clear() {
+        if (_size) {
+            const size_t numStates = NumStates_(_capacity);
+            FPlatformMemory::Memset(_states, 0xFF, numStates * sizeof(*_states));
+
+            forrange(it, _elements, _elements + _size)
+                key_traits::destroy(key_alloc(), it);
+
+            _size = 0;
+        }
+    }
+
     void clear_ReleaseMemory() {
         if (_capacity) {
             const size_t numStates = NumStates_(_capacity);
@@ -711,7 +787,7 @@ public:
     void reserve_Additional(size_t num) { reserve(_size + num); }
     NO_INLINE void reserve(size_t n) {
         Assert(n);
-        if (n < _capacity)
+        if (n <= _capacity)
             return;
 
         const u32 oldCapacity = _capacity;
@@ -722,7 +798,7 @@ public:
         Assert(numStates);
 
         if (oldCapacity)
-            state_traits::deallocate(state_alloc(), _states, NumStates_(_capacity));
+            state_traits::deallocate(state_alloc(), _states, NumStates_(oldCapacity));
 
         _states = state_traits::allocate(state_alloc(), numStates);
         FPlatformMemory::Memset(_states, 0xFF, numStates * sizeof(*_states));
@@ -815,18 +891,50 @@ public:
 
     TDenseHashSet2()
         : _size(0)
-        , _capacity(0)
+        , _numStates(1)
         , _elements(nullptr)
-        , _states(nullptr)
+        , _states((state_t*)&_elements) // that way we don't have to check if the container is empty
     {}
 
     ~TDenseHashSet2() {
         clear_ReleaseMemory();
     }
 
+    TDenseHashSet2(const TDenseHashSet2& other) : TDenseHashSet2() {
+        if (other.size()) {
+            reserve(other.size());
+            for (const auto& it : other)
+                insert(it);
+        }
+    }
+    TDenseHashSet2& operator =(const TDenseHashSet2& other) {
+        clear();
+        if (other.size()) {
+            reserve(other.size());
+            for (const auto& it : other)
+                insert(it);
+        }
+        return (*this);
+    }
+
+    TDenseHashSet2(TDenseHashSet2&& rvalue) : TDenseHashSet2() {
+        std::swap(_size, rvalue._size);
+        std::swap(_numStates, rvalue._numStates);
+        std::swap(_elements, rvalue._elements);
+        std::swap(_states, rvalue._states);
+    }
+    TDenseHashSet2& operator =(TDenseHashSet2&& rvalue) {
+        clear_ReleaseMemory();
+        std::swap(_size, rvalue._size);
+        std::swap(_numStates, rvalue._numStates);
+        std::swap(_elements, rvalue._elements);
+        std::swap(_states, rvalue._states);
+        return (*this);
+    }
+
     bool empty() const { return (0 == _size); }
     size_t size() const { return _size; }
-    size_t capacity() const { return _capacity; }
+    size_t capacity() const { return Capacity_(_numStates); }
 
     iterator begin() { return MakeCheckedIterator(_elements, _size, 0); }
     iterator end() { return MakeCheckedIterator(_elements, _size, _size); }
@@ -835,36 +943,34 @@ public:
     const_iterator end() const { return MakeCheckedIterator(_elements, _size, _size); }
 
     TPair<iterator, bool> insert(const _Key& key) {
-        if (Unlikely(_size == _capacity))
+        if (Unlikely(_size == Capacity_(_numStates)))
             reserve_Additional(1);
 
-        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
+        Assert_NoAssume(_numStates);
+
+        const u32 numStatesM1 = (_numStates - 1);
         u16 h = u16(hasher()(key));
         u32 s = (h & numStatesM1);
         u16 i = checked_cast<u16>(_size);
-        u32 d = 0;
-        for (;;) {
+        for (u32 d = 0;; s = ++s & numStatesM1, d++) {
             state_t& it = _states[s];
             if (it.Index == state_t::EmptyIndex)
                 break;
-            if (Unlikely(it.Hash == h && key_equal()(key, _elements[it.Index])))
+            else if (Unlikely(it.Hash == h && key_equal()(key, _elements[it.Index])))
                 return MakePair(MakeCheckedIterator(_elements, _size, it.Index), false);
 
+            // minimize distance between desired pos and insertion pos
             const u32 ds = DistanceIndex_(it, s, numStatesM1);
             if (ds < d) {
                 d = ds;
                 std::swap(i, it.Index);
                 std::swap(h, it.Hash);
             }
-
-            // linear probing
-            s = ++s & numStatesM1;
-            d++;
         }
 
         state_t& st = _states[s];
         Assert_NoAssume(state_t::EmptyIndex == st.Index);
-        Assert_NoAssume(state_t::EmptyIndex == st.Hash);
+        Assert_NoAssume(u16(s) == st.Hash);
 
         st.Index = i;
         st.Hash = h;
@@ -876,99 +982,54 @@ public:
     }
 
     const_iterator find(const _Key& key) const {
-        if (Unlikely(0 == _size))
-            return end();
+        const u32 numStatesM1 = (_numStates - 1);
 
-        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
+        u16 i;
         u16 h = u16(hasher()(key));
-        u32 s = (h & numStatesM1);
-        u32 d = 0;
-        for (;;) {
+        for (u32 s = (h & numStatesM1), d = 0;; s = (s + 1) & numStatesM1, ++d) {
             const state_t& it = _states[s];
             if (it.Hash == h && key_equal()(key, _elements[it.Index]))
-                return MakeCheckedIterator(_elements, _size, it.Index);
-            if (it.Index == state_t::EmptyIndex ||
-                d > DistanceIndex_(it, s, numStatesM1) )
-                return end();
-
-            // linear probing
-            s = ++s & numStatesM1;
-            d++;
+                i = it.Index;
+            else if (d > DistanceIndex_(it, s, numStatesM1))
+                i = u16(_size);
+            else
+                continue;
+            break;
         }
+
+        return MakeCheckedIterator(_elements, _size, i);
     }
 
     bool erase(const _Key& key) {
         if (0 == _size)
             return false;
 
-        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
+        Assert_NoAssume(Meta::IsPow2(_numStates));
+        const u32 numStatesM1 = (_numStates - 1);
+
         u16 h = u16(hasher()(key));
         u32 s = (h & numStatesM1);
-        u32 d = 0;
-        for (;;) {
+        for (u32 d = 0;; s = (s + 1) & numStatesM1, ++d) {
             const state_t& it = _states[s];
             if (it.Hash == h && key_equal()(key, _elements[it.Index]))
                 break;
-            if (it.Index == state_t::EmptyIndex ||
-                d > DistanceIndex_(it, s, numStatesM1))
+            else if (d > DistanceIndex_(it, s, numStatesM1))
                 return false;
-
-            // linear probing
-            s = ++s & numStatesM1;
-            d++;
         }
 
-        // destroy the element
-        state_t& st = _states[s];
-        key_traits::destroy(key_alloc(), _elements + st.Index);
-
-        if (Likely(_size > 1 && st.Index + 1u < _size)) {
-            // need to fill the hole in _elements
-            const u16 ri = checked_cast<u16>(_size - 1);
-            const u16 rh = u16(hasher()(_elements[ri]));
-            u32 rs = (rh & numStatesM1);
-            for (;;) {
-                const state_t& it = _states[rs];
-                if (it.Index == ri)
-                    break;
-
-                // linear probing
-                rs = ++rs & numStatesM1;
-            }
-
-            Assert_NoAssume(u16(rh) == _states[rs].Hash);
-            _states[rs].Index = st.Index;
-
-            key_traits::construct(key_alloc(), _elements + st.Index, std::move(_elements[ri]));
-            key_traits::destroy(key_alloc(), _elements + ri);
-        }
-
-        // backward shift deletion to avoid using tombstones
-        forrange(i, 0, numStatesM1) {
-            const u32 prev = (s + i) & numStatesM1;
-            const u32 swap = (s + i + 1) & numStatesM1;
-
-            if (_states[swap].Index == state_t::EmptyIndex ||
-                DistanceIndex_(_states[swap], swap, numStatesM1) == 0) {
-                _states[prev].Index = state_t::EmptyIndex;
-                ONLY_IF_ASSERT(_states[prev].Hash = state_t::EmptyIndex);
-                break;
-            }
-
-            _states[prev] = _states[swap];
-        }
-
-        // finally decrement the size
-        _size--;
-
+        eraseAt_(s);
         return true;
     }
 
     void clear() {
         if (_size) {
-            Assert(_capacity);
+            Assert(_numStates);
 
-            FPlatformMemory::Memset(_states, 0xFF, NumStates_(_capacity));
+            forrange(i, 0, _numStates) {
+                state_t& st = _states[i];
+                st.Index = state_t::EmptyIndex;
+                st.Hash = u16(i);  // reset Hash to Index so DistanceIndex_() == 0
+            }
 
             IF_CONSTEXPR(not Meta::TIsPod_v<_Key>)
                 forrange(it, _elements, _elements + _size)
@@ -979,54 +1040,65 @@ public:
     }
 
     void clear_ReleaseMemory() {
-        if (_capacity) {
-            const size_t numStates = NumStates_(_capacity);
-            state_traits::deallocate(state_alloc(), _states, numStates);
+        if (_elements) {
+            state_traits::deallocate(state_alloc(), _states, _numStates);
 
             forrange(it, _elements, _elements + _size)
                 key_traits::destroy(key_alloc(), it);
 
-            key_traits::deallocate(key_alloc(), _elements, _capacity);
+            key_traits::deallocate(key_alloc(), _elements, Capacity_(_numStates));
 
             _size = 0;
-            _capacity = 0;
+            _numStates = 1;
             _elements = nullptr;
-            _states = nullptr;
+            _states = (state_t*)&_elements; // that way we don't have to check if the container is empty
         }
         Assert_NoAssume(0 == _size);
-        Assert_NoAssume(0 == _capacity);
-        Assert_NoAssume(nullptr == _states);
+        Assert_NoAssume(1 == _numStates);
+        Assert_NoAssume((state_t*)&_elements == _states);
         Assert_NoAssume(nullptr == _elements);
     }
 
     FORCE_INLINE void reserve_Additional(size_t num) { reserve(_size + num); }
     NO_INLINE void reserve(size_t n) {
-        Assert(n);
-        if (n < _capacity)
+        if (n <= Capacity_(_numStates))
             return;
 
-        const state_t* oldState = _states;
-        const u32 oldCapacity = _capacity;
-        _capacity = checked_cast<u32>(SafeAllocatorSnapSize(key_alloc(), n));
-        Assert_NoAssume(oldCapacity < _capacity);
+        Assert(n);
+        Assert_NoAssume(n > Capacity_(_numStates));
 
-        const u32 numStates = NumStates_(_capacity);
-        Assert(numStates);
+        const state_t* oldStates = _states;
+        const u32 oldNumStates = _numStates;
 
-        _states = state_traits::allocate(state_alloc(), numStates);
-        FPlatformMemory::Memset(_states, 0xFF, numStates * sizeof(*_states));
+        _numStates = FPlatformMaths::NextPow2(u32(n) * 2);
+        Assert_NoAssume(oldNumStates < _numStates);
 
-        if (oldCapacity) {
-            Assert(oldState);
+        const u32 capacity = Capacity_(_numStates);
+        Assert(capacity);
+
+        _states = state_traits::allocate(state_alloc(), _numStates);
+
+        forrange(i, 0, _numStates) {
+            state_t& st = _states[i];
+            st.Index = state_t::EmptyIndex;
+            st.Hash = u16(i);  // reset Hash to Index so DistanceIndex_() == 0
+        }
+
+        if (_elements) {
+            Assert(oldStates);
+            Assert_NoAssume((state_t*)&_elements != oldStates);
 
             _elements = Relocate(
                 key_alloc(),
                 TMemoryView<_Key>(_elements, _size),
-                _capacity, oldCapacity);
+                capacity, Capacity_(oldNumStates) );
 
             // rehash using previous state which already contains the hash keys
-            const u32 numStatesM1 = (numStates - 1);
-            forrange(p, oldState, oldState + NumStates_(oldCapacity)) {
+            const u32 numStatesM1 = (_numStates - 1);
+            forrange(p, oldStates, oldStates + oldNumStates) {
+                if (state_t::EmptyIndex == p->Index)
+                    continue;
+
                 u16 i = p->Index;
                 u16 h = p->Hash; // don't need more entropy
                 u32 s = (h & numStatesM1);
@@ -1054,23 +1126,24 @@ public:
                 st.Index = i;
                 st.Hash = h;
             }
+
+            // release previous state vector
+            state_traits::deallocate(state_alloc(), const_cast<state_t*>(oldStates), oldNumStates);
         }
         else {
             Assert_NoAssume(0 == _size);
             Assert_NoAssume(nullptr == _elements);
+            Assert_NoAssume((state_t*)&_elements == oldStates);
 
-            _elements = key_traits::allocate(key_alloc(), _capacity);
+            _elements = key_traits::allocate(key_alloc(), capacity);
         }
 
-        if (oldState)
-            state_traits::deallocate(state_alloc(), const_cast<state_t*>(oldState), NumStates_(oldCapacity));
-
-        Assert_NoAssume(n <= _capacity);
+        Assert_NoAssume(n <= capacity);
     }
 
 private:
     u32 _size;
-    u32 _capacity;
+    u32 _numStates;
     _Key* _elements;
     state_t* _states;
 
@@ -1079,12 +1152,64 @@ private:
     FORCE_INLINE allocator_key& key_alloc() NOEXCEPT { return static_cast<allocator_key&>(*this); }
     FORCE_INLINE allocator_state& state_alloc() NOEXCEPT { return static_cast<allocator_state&>(*this); }
 
-    static FORCE_INLINE u32 NumStates_(u32 capacity) NOEXCEPT {
-        return (capacity ? FPlatformMaths::NextPow2(capacity * KeyStateDensityRatio) : 0);
+    FORCE_INLINE u32 Capacity_(u32 numStates) const NOEXCEPT {
+        return (numStates > 1 ? checked_cast<u32>(SafeAllocatorSnapSize(
+            static_cast<const allocator_key&>(*this), (numStates >> 1) + 1)) : 0);
     }
+
+    NO_INLINE void eraseAt_(u32 s) {
+        Assert_NoAssume(s < _numStates);
+
+        const u32 numStatesM1 = (_numStates - 1);
+
+        // destroy the element
+        state_t& st = _states[s];
+
+        if (_size > 1 && st.Index + 1u != _size) {
+            // need to fill the hole in _elements
+            const u16 ri = checked_cast<u16>(_size - 1);
+            const u16 rh = u16(hasher()(_elements[ri]));
+
+            u32 rs = (rh & numStatesM1);
+            for (;;) {
+                if (_states[rs].Index == ri)
+                    break;
+                rs = ++rs & numStatesM1;
+            }
+
+            Assert_NoAssume(u16(rh) == _states[rs].Hash);
+            _states[rs].Index = st.Index;
+
+            _elements[st.Index] = std::move(_elements[ri]);
+
+            key_traits::destroy(key_alloc(), _elements + ri);
+        }
+        else {
+            key_traits::destroy(key_alloc(), _elements + st.Index);
+        }
+
+        // backward shift deletion to avoid using tombstones
+        forrange(i, 0, numStatesM1) {
+            const u32 prev = (s + i) & numStatesM1;
+            const u32 swap = (s + i + 1) & numStatesM1;
+
+            if (DistanceIndex_(_states[swap], swap, numStatesM1) == 0) {
+                _states[prev].Index = state_t::EmptyIndex;
+                _states[prev].Hash = u16(prev); // reset Hash to Index so DistanceIndex_() == 0
+                break;
+            }
+
+            _states[prev] = _states[swap];
+        }
+
+        // finally decrement the size
+        _size--;
+    }
+
     static FORCE_INLINE CONSTEXPR u32 DistanceIndex_(state_t st, u32 b, u32 numStatesM1) NOEXCEPT {
-        const u32 a = (st.Hash & numStatesM1);
-        return (a <= b ? b - a : b + (numStatesM1 + 1 - a));
+        return ((st.Hash & numStatesM1) <= b
+            ? b - (st.Hash & numStatesM1)
+            : b + (numStatesM1 + 1 - (st.Hash & numStatesM1)) );
     }
 };
 //----------------------------------------------------------------------------
@@ -1300,57 +1425,522 @@ static void Test_Container_Obj_(
     return Test_Container_Obj_(name, set, input, negative, search, todelete, searchafterdelete, identity);
 }
 //----------------------------------------------------------------------------
+#if 1
+template <typename T>
+struct TInputData {
+    TMemoryView<const T> Insert;
+    TMemoryView<const T> Unkown;
+    TMemoryView<const T> Search;
+    TMemoryView<const T> Erase;
+    TMemoryView<const T> Dense;
+    TMemoryView<const T> Sparse;
+
+    template <typename _Container>
+    void FillDense(_Container& c) const {
+        c.reserve(Insert.size());
+        for (const auto& it : Insert)
+            c.insert(it);
+    }
+
+    template <typename _Container>
+    void FillSparse(_Container& c) const {
+        c.reserve(Insert.size());
+        for (const auto& it : Insert)
+            c.insert(it);
+        for (const auto& it : Sparse)
+            c.erase(it);
+    }
+
+};
+
+class construct_noreserve_t : public FBenchmark {
+public:
+    construct_noreserve_t() : FBenchmark{ "ctor_cold" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        for (auto _ : state) {
+            auto c{ archetype };
+            for (const auto& it : input.Insert)
+                c.insert(it);
+            FBenchmark::DoNotOptimize(c);
+        }
+    }
+};
+class construct_reserve_t : public FBenchmark {
+public:
+    construct_reserve_t() : FBenchmark{ "ctor_warm" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        for (auto _ : state) {
+            auto c{ archetype };
+            c.reserve(input.Insert.size());
+            for (const auto& it : input.Insert)
+                c.insert(it);
+            FBenchmark::DoNotOptimize(c);
+        }
+    }
+};
+class copy_empty_t : public FBenchmark {
+public:
+    copy_empty_t() : FBenchmark{ "copy_empty" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillDense(s);
+
+        auto c{ archetype };
+
+        for (auto _ : state) {
+            state.PauseTiming();
+            c.clear();
+            state.ResumeTiming();
+            c = s;
+            FBenchmark::DoNotOptimize(c);
+        }
+    }
+};
+class copy_dense_t : public FBenchmark {
+public:
+    copy_dense_t() : FBenchmark{ "copy_dense" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillDense(s);
+
+        auto c{ s };
+
+        for (auto _ : state) {
+            c = s;
+            FBenchmark::DoNotOptimize(c);
+        }
+    }
+};
+class copy_sparse_t : public FBenchmark {
+public:
+    copy_sparse_t() : FBenchmark{ "copy_sparse" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillSparse(s);
+
+        auto c{ s };
+
+        for (auto _ : state) {
+            c = s;
+            FBenchmark::DoNotOptimize(c);
+        }
+    }
+};
+class iterate_dense_t : public FBenchmark {
+public:
+    iterate_dense_t() : FBenchmark{ "iter_dense" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto c{ archetype };
+        input.FillDense(c);
+
+        for (auto _ : state) {
+            for (const auto& it : c)
+                FBenchmark::DoNotOptimizeLoop(it);
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class iterate_sparse_t : public FBenchmark {
+public:
+    iterate_sparse_t() : FBenchmark{ "iter_sparse" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto c{ archetype };
+        input.FillSparse(c);
+
+        for (auto _ : state) {
+            for (const auto& it : c)
+                FBenchmark::DoNotOptimizeLoop(it);
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class find_dense_pos_t : public FBenchmark {
+public:
+    find_dense_pos_t() : FBenchmark{ "find_dense_pos" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto c{ archetype };
+        input.FillDense(c);
+
+        for (auto _ : state) {
+            for (const auto& it : input.Search)
+                FBenchmark::DoNotOptimizeLoop(c.find(it));
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class find_dense_neg_t : public FBenchmark {
+public:
+    find_dense_neg_t() : FBenchmark{ "find_dense_neg" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto c{ archetype };
+        input.FillSparse(c);
+
+        for (auto _ : state) {
+            for (const auto& it : input.Unkown)
+                FBenchmark::DoNotOptimizeLoop(c.find(it));
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class find_sparse_pos_t : public FBenchmark {
+public:
+    find_sparse_pos_t() : FBenchmark{ "find_sparse_pos" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto c{ archetype };
+        input.FillSparse(c);
+
+        for (auto _ : state) {
+            for (const auto& it : input.Dense)
+                FBenchmark::DoNotOptimizeLoop(c.find(it));
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class find_sparse_neg_t : public FBenchmark {
+public:
+    find_sparse_neg_t() : FBenchmark{ "find_sparse_neg" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto c{ archetype };
+        input.FillSparse(c);
+
+        for (auto _ : state) {
+            for (const auto& it : input.Unkown)
+                FBenchmark::DoNotOptimizeLoop(c.find(it));
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class erase_dense_pos_t : public FBenchmark {
+public:
+    erase_dense_pos_t() : FBenchmark{ "erase_dense_pos" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillDense(s);
+
+        auto c{ archetype };
+        for (auto _ : state) {
+            state.PauseTiming();
+            c = s;
+            state.ResumeTiming();
+            for (const auto& it : input.Search)
+                FBenchmark::DoNotOptimizeLoop(c.erase(it));
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class erase_dense_neg_t : public FBenchmark {
+public:
+    erase_dense_neg_t() : FBenchmark{ "erase_dense_neg" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillDense(s);
+
+        auto c{ archetype };
+        for (auto _ : state) {
+            state.PauseTiming();
+            c = s;
+            state.ResumeTiming();
+            for (const auto& it : input.Unkown)
+                FBenchmark::DoNotOptimizeLoop(c.erase(it));
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class erase_sparse_pos_t : public FBenchmark {
+public:
+    erase_sparse_pos_t() : FBenchmark{ "erase_sparse_pos" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillDense(s);
+
+        auto c{ archetype };
+        for (auto _ : state) {
+            state.PauseTiming();
+            c = s;
+            state.ResumeTiming();
+            for (const auto& it : input.Dense)
+                FBenchmark::DoNotOptimizeLoop(c.erase(it));
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class erase_sparse_neg_t : public FBenchmark {
+public:
+    erase_sparse_neg_t() : FBenchmark{ "erase_sparse_neg" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillDense(s);
+
+        auto c{ archetype };
+        for (auto _ : state) {
+            state.PauseTiming();
+            c = s;
+            state.ResumeTiming();
+            for (const auto& it : input.Unkown)
+                FBenchmark::DoNotOptimizeLoop(c.erase(it));
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class clear_dense_t : public FBenchmark {
+public:
+    clear_dense_t() : FBenchmark{ "clear_dense" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillDense(s);
+
+        auto c{ archetype };
+        for (auto _ : state) {
+            state.PauseTiming();
+            c = s;
+            state.ResumeTiming();
+            c.clear();
+            FBenchmark::DoNotOptimize(c);
+        }
+    }
+};
+class clear_sparse_t : public FBenchmark {
+public:
+    clear_sparse_t() : FBenchmark{ "clear_sparse" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillSparse(s);
+
+        auto c{ archetype };
+        for (auto _ : state) {
+            state.PauseTiming();
+            c = s;
+            state.ResumeTiming();
+            c.clear();
+            FBenchmark::DoNotOptimize(c);
+        }
+    }
+};
+
+template <typename T, typename _Generator, typename _Containers>
+static void Benchmark_Containers_(
+    const FStringView& name, size_t dim,
+    _Generator generator,
+    _Containers tests ) {
+    // prepare input data
+
+    std::random_device rdevice;
+    std::mt19937 rand{ rdevice() };
+
+    VECTOR(Benchmark, T) samples;
+    samples.reserve_Additional(dim * 2);
+    forrange(i, 0, dim * 2)
+        samples.emplace_back(generator(rand));
+
+    std::shuffle(samples.begin(), samples.end(), rand);
+
+    const TMemoryView<const T> insert = samples.MakeConstView().CutBefore(dim);
+    const TMemoryView<const T> unkown = samples.MakeConstView().CutStartingAt(dim);
+
+    constexpr size_t sparse_factor = 70;
+    VECTOR(Benchmark, T) search { insert };
+    VECTOR(Benchmark, T) erase { search };
+    VECTOR(Benchmark, T) sparse {
+        erase
+            .MakeConstView()
+            .CutBeforeConst((sparse_factor * erase.size()) / 100)
+    };
+    VECTOR(Benchmark, T) dense {
+        erase
+            .MakeConstView()
+            .CutStartingAt(sparse.size())
+    };
+
+    std::shuffle(std::begin(erase), std::end(erase), rand);
+    std::shuffle(std::begin(search), std::end(search), rand);
+    std::shuffle(std::begin(dense), std::end(dense), rand);
+    std::shuffle(std::begin(sparse), std::end(sparse), rand);
+
+    using FInputData = TInputData<T>;
+    FInputData input{ insert, search, unkown, erase, dense, sparse };
+    Assert_NoAssume(insert.size());
+    Assert_NoAssume(search.size());
+    Assert_NoAssume(unkown.size());
+    Assert_NoAssume(erase.size());
+    Assert_NoAssume(dense.size());
+    Assert_NoAssume(sparse.size());
+
+    // prepare benchmark table
+
+    auto bm = FBenchmark::MakeTable(
+        name,
+        construct_noreserve_t{},
+        construct_reserve_t{},
+        copy_empty_t{},
+        copy_dense_t{},
+        copy_sparse_t{},
+        iterate_dense_t{},
+        iterate_sparse_t{},
+        find_dense_pos_t{},
+        find_dense_neg_t{},
+        find_sparse_pos_t{},
+        find_sparse_neg_t{},
+        erase_dense_pos_t{},
+        erase_dense_neg_t{},
+        erase_sparse_pos_t{},
+        erase_sparse_neg_t{},
+        clear_dense_t{},
+        clear_sparse_t{} );
+
+    tests(bm, input);
+
+    FBenchmark::Log(bm);
+
+    {
+        const FFilename fname{ StringFormat(L"Saved:/Benchmark/Containers/{0}.csv", name) };
+        FStringBuilder sb;
+        FBenchmark::Csv(bm, sb);
+        FString s{ sb.ToString() };
+        VFS_WriteAll(fname, s.MakeView().RawView(), EAccessPolicy::Truncate_Binary);
+    }
+}
+//----------------------------------------------------------------------------
+static void Test_StringSet_() {
+    auto generator = [](auto& rnd) {
+        constexpr char Charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!-*.$^@#~";
+        constexpr size_t MinSize = 5;
+        constexpr size_t MaxSize = 60;
+
+        const size_t n = (rnd() % (MaxSize - MinSize + 1)) + MinSize;
+
+        FString s;
+        s.reserve(n);
+
+        forrange(i, 0, n)
+            s.append(Charset[rnd() % (lengthof(Charset) - 1)]);
+
+        return s;
+    };
+
+    auto containers = [](auto& bm, const auto& input) {
+        {
+            typedef TDenseHashSet<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   hashtable_type;
+
+            hashtable_type set;
+            bm.Run("DenseHashSet", set, input);
+        }/*
+        {
+            typedef TDenseHashSet<
+                THashMemoizer<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+                >
+            >   hashtable_type;
+
+            hashtable_type set;
+            bm.Run("DenseHashSet_M", set, input);
+        }*/
+        {
+            typedef TDenseHashSet2<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   hashtable_type;
+
+            hashtable_type set;
+            bm.Run("DenseHashSet2", set, input);
+        }/*
+        {
+            typedef TDenseHashSet2<
+                THashMemoizer<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+                >
+            >   hashtable_type;
+
+            hashtable_type set;
+            bm.Run("DenseHashSet2_M", set, input);
+        }*/
+        {
+            STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
+
+            bm.Run("THashSet", set, input);
+        }/*
+        {
+            STRINGVIEW_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
+
+            bm.Run("THashSet_M", set, input);
+        }*//*
+        {
+            CONSTCHAR_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
+
+            bm.Run("TConstCharHashSet_M", set, input);
+        }*/
+        {
+            std::unordered_set<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>,
+                ALLOCATOR(Container, FStringView)
+            >   set;
+
+            bm.Run("unordered_set", set, input);
+        }/*
+        {
+            std::unordered_set<
+                TBasicStringViewHashMemoizer<char, ECase::Sensitive>,
+                Meta::THash< TBasicStringViewHashMemoizer<char, ECase::Sensitive> >
+            >   set;
+
+            bm.Run("unordered_set_M", set, input);
+        }*/
+    };
+
+    Benchmark_Containers_<FString>("Strings20", 20, generator, containers);
+    Benchmark_Containers_<FString>("Strings50", 50, generator, containers);
+    Benchmark_Containers_<FString>("Strings200", 200, generator, containers);
+    Benchmark_Containers_<FString>("Strings2000", 2000, generator, containers);
+}
+#endif
+//----------------------------------------------------------------------------
+static void Test_StealFromDifferentAllocator_() {
+    // steal allocations from different tracking domains
+    {
+        VECTOR(NativeTypes, int) u = { 1, 2, 3 };
+        VECTOR(Container, int) v = u;
+        VECTOR(Container, int) w = std::move(u);
+    }
+    {
+        HASHSET(NativeTypes, int) u = { 1, 2, 3 };
+        HASHSET(Container, int) w = std::move(u);
+    }
+}
+//----------------------------------------------------------------------------
 void Test_Containers() {
     LOG(Test_Containers, Emphasis, L"starting container tests ...");
-    {
-        float4x4 m = Make3DTransformMatrix(float3(1,2,3), 10.0f, float3::Z(), Radians(33.0f));
-        float4 p = float4::W();
-        float4 ws = m.Multiply(p);
-        float4 ss = Transform4(m, p);
-        UNUSED(ws);
-        UNUSED(ss);
-    }
-    {
-        const FFilename filename = L"Tmp:/koala/a/Test/../robocop/4/../3/2/1/../a/b/c/../robotapp.bin";
-        const FFilename filename2 = L"Tmp:/Test/toto/../chimpanzee/../../koala/a/b/../c/1/../2/3/robotapp.raw";
 
-        LOG(Test_Containers, Info, L"{0}", filename);
-        LOG(Test_Containers, Info, L"{0}", filename2);
+    Test_StealFromDifferentAllocator_();
+    Test_StringSet_();
+#if 0
 
-        FFilename normalized = filename.Normalized();
-        FFilename normalized2 = filename2.Normalized();
-
-        LOG(Test_Containers, Info, L"{0}", normalized);
-        LOG(Test_Containers, Info, L"{0}", normalized2);
-
-        FFilename relative = filename.Relative(filename2.Dirpath());
-        FFilename relative2 = filename2.Relative(filename.Dirpath());
-
-        LOG(Test_Containers, Info, L"{0}", relative);
-        LOG(Test_Containers, Info, L"{0}", relative2);
-
-        FFilename absolute = relative.Absolute(filename2.Dirpath());
-        FFilename absolute2 = relative2.Absolute(filename.Dirpath());
-
-        LOG(Test_Containers, Info, L"{0}", absolute);
-        LOG(Test_Containers, Info, L"{0}", absolute2);
-
-        Assert(absolute == normalized);
-        Assert(absolute2 == normalized2);
-    }
-    {
-        // steal allocations from different tracking domains
-        {
-            VECTOR(NativeTypes, int) u = { 1, 2, 3 };
-            VECTOR(Container, int) v = u;
-            VECTOR(Container, int) w = std::move(u);
-        }
-        {
-            HASHSET(NativeTypes, int) u = { 1, 2, 3 };
-            HASHSET(Container, int) w = std::move(u);
-        }
-    }
-    FLUSH_LOG();
     {
         LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
         LOG(Test_Containers, Emphasis, L"FStringView collection");
@@ -1772,6 +2362,8 @@ void Test_Containers() {
         }
 
     }
+#endif //!0
+
     FLUSH_LOG();
     ReleaseMemoryInModules();
 }
