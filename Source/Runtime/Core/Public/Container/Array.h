@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "Memory/MemoryView.h"
 #include "Meta/Iterator.h"
@@ -30,7 +30,9 @@ struct TArray {
     T Data[_Dim];
 
     TArray() = default;
-    TArray(std::initializer_list<T> v) : Data(v) {}
+    TArray(std::initializer_list<T> v) {
+        std::copy(v.begin(), v.end(), std::begin(Data));
+    }
 
     TArray(const TArray&) = default;
     TArray& operator =(const TArray&) = default;
