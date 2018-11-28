@@ -157,6 +157,7 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
     Using( .MSVC2013BasePath )
 
     .Defines = {}
+    .LinkerOptions = ''
     .CompilerOptions = ''
     + ' /Zo'                ; https://msdn.microsoft.com/fr-fr/library/dn785163.aspx
     + ' /Zc:inline'         ; https://msdn.microsoft.com/fr-fr/library/dn642448.aspx
@@ -193,7 +194,7 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
 
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
+    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
 .MSVC2013PlatformX86 + .MSVCBasePlatformX86
@@ -206,7 +207,7 @@ Compiler( 'Compiler-MSVC2013-x64_x86' )
     .ToolsBasePath      = '$VSBasePath$\VC\bin\amd64'
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
+    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
 ]
 .MSVC2013PlatformX64 + .MSVCBasePlatformX64

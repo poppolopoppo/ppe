@@ -40,6 +40,10 @@
     + ' /wd4201' // nonstandard extension used: nameless struct/union'
     ;+ ' /wd4324' // structure was padded due to alignment specifier (giving up on this one for now)
 
+    
+    Print( 'Additional warnings :$AdditionalWarnings$')
+    Print( 'Ignored warnings :$IgnoredWarnings$')
+
     .Defines =
     {
         'CPP_VISUALSTUDIO',             ; identification du compiler dans les sources (custom)
@@ -70,6 +74,8 @@
     + ' /Zc:forScope'       ; interdit d'acceder à l'iterateur d'un for en dehors de son scope (comportement std)
     + ' /W4'                ; tous les warnings de level 4 sont reportés
     + ' /TP'                ; considère que toutes les sources sont du C++
+    + .AdditionalWarnings
+    + .IgnoredWarnings
 
     .CompilerOptions = ''
     + ' /showIncludes'      ; affiche les includes pdt la compilation, pratique pour certa
@@ -96,12 +102,6 @@
 
     .PreprocessorOptions = ''
 
-    Print( 'Additional warnings :$AdditionalWarnings$')
-    Print( 'Ignored warnings :$IgnoredWarnings$')
-
-    .CompilerOptions    + .AdditionalWarnings
-                        + .IgnoredWarnings
-
     .LibrarianOptions = ''
     + ' /WX'                ; considère les avertissements comme des erreurs
     + ' /nologo'            ; pas de message de copyright lors de la compilation
@@ -111,6 +111,7 @@
     + ' /OUT:"%2" "%1"'
 
     .LinkerOptions = ''
+    + ' /WX'                ; considère les avertissements comme des erreurs
     + ' /nologo'            ; pas de message de copyright lors de la compilation
     ;+ ' /errorreport:prompt'; affiche une boite de dialogue en cas de crash du compilo
     + ' /LARGEADDRESSAWARE' ; l'application gère les adresses de taille supérieure à 2 gigaoctets
@@ -141,6 +142,7 @@
 
     .ExecutableOptions = ''
     + ' /ENTRY:"wWinMainCRTStartup"'
+    .ExecutableDeps = {}
 
     ; utilisés pour généraliser les templates :
     .CompilerDefineFlag         = ' /D'

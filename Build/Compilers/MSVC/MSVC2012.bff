@@ -121,6 +121,7 @@ Compiler( 'Compiler-MSVC2012-x64' )
     Using( .MSVC2012BasePath )
 
     .Defines = {}
+    .LinkerOptions = ''
     .CompilerOptions = ''
     + ' /d2Zi+'         ; https://randomascii.wordpress.com/2013/09/11/debugging-optimized-codenew-in-visual-studio-2012/
 
@@ -149,7 +150,7 @@ Compiler( 'Compiler-MSVC2012-x64' )
     .ToolsBasePath      = '$VSBasePath$\VC\bin'
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
+    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib"'
 ]
 .MSVC2012PlatformX86 + .MSVCBasePlatformX86
@@ -162,7 +163,7 @@ Compiler( 'Compiler-MSVC2012-x64' )
     .ToolsBasePath      = '$VSBasePath$\VC\bin\amd64'
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
+    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
                         + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
                         + ' /LIBPATH:"$PerfSDKPath$"'
 ]

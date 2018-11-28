@@ -56,6 +56,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .LinkerOutput   = '$BinaryPath$\$BinaryPrefix$.$Config$.$Platform$.$CompilerBinaryExtension$'
         .LinkerOptions  + .ExecutableOptions
 
+        .PreBuildDependencies = .ExecutableDeps
 
         .Libraries = {}
         ForEach( .ProjectDependency in .ProjectDependencies )

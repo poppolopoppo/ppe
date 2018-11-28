@@ -320,7 +320,7 @@ Print( "Using Visual 2017 incremental LTCG for profiling : no profiling informat
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
 
-    .LinkerOptions      = ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x86"'
+    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x86"'
                         + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x86"'
                         + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
                         + ' /LIBPATH:"$VSBasePath$\VC\Auxiliary\VS\lib\x86"'
@@ -337,7 +337,7 @@ Print( "Using Visual 2017 incremental LTCG for profiling : no profiling informat
     .Librarian          = '$ToolsBasePath$\lib.exe'
     .Linker             = '$ToolsBasePath$\link.exe'
 
-    .LinkerOptions      = ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x64"'
+    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x64"'
                         + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x64"'
                         + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
                         + ' /LIBPATH:"$VSBasePath$\VC\Auxiliary\VS\lib\x64"'
