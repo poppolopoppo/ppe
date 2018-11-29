@@ -70,9 +70,10 @@ Compiler( 'Compiler-CLangWindowsLatest' )
 {
     Using( .CLangWindowsLatestBasePath )
 
-    .Root       = '$LLVMBasePath$\msbuild-bin'
-    .Executable = '$Root$\cl.exe'
-    .ExtraFiles = {}
+    .CompilerFamily = 'msvc'
+    .Root           = '$LLVMBasePath$\bin'
+    .Executable     = '$Root$\clang-cl.exe'
+    .ExtraFiles     = {}
 }
 
 //------------------------------------------------------------------------------
