@@ -1425,7 +1425,7 @@ static void Test_Container_Obj_(
     return Test_Container_Obj_(name, set, input, negative, search, todelete, searchafterdelete, identity);
 }
 //----------------------------------------------------------------------------
-#if 1
+#if USE_PPE_BENCHMARK
 template <typename T>
 struct TInputData {
     TMemoryView<const T> Insert;
@@ -1919,7 +1919,7 @@ static void Test_StringSet_() {
     Benchmark_Containers_<FString>("Strings200", 200, generator, containers);
     Benchmark_Containers_<FString>("Strings2000", 2000, generator, containers);
 }
-#endif
+#endif //!USE_PPE_BENCHMARK
 //----------------------------------------------------------------------------
 static void Test_StealFromDifferentAllocator_() {
     // steal allocations from different tracking domains
@@ -1938,7 +1938,9 @@ void Test_Containers() {
     LOG(Test_Containers, Emphasis, L"starting container tests ...");
 
     Test_StealFromDifferentAllocator_();
+#if USE_PPE_BENCHMARK
     Test_StringSet_();
+#endif
 #if 0
 
     {

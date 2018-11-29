@@ -2,7 +2,7 @@
 
 #include "Diagnostic/Benchmark.h"
 
-#if !(USE_PPE_FINAL_RELEASE)
+#if USE_PPE_BENCHMARK
 
 namespace PPE {
 LOG_CATEGORY_VERBOSITY(PPE_CORE_API, Benchmark, NoDebug)

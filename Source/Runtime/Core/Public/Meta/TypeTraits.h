@@ -129,6 +129,16 @@ struct TIsPod : public std::is_pod<T> {
 template <typename... _Args>
 constexpr bool TIsPod_v{ (TIsPod<_Args>::value && ...) };
 //----------------------------------------------------------------------------
+template <typename T>
+using has_trivial_constructor = std::bool_constant<TIsPod_v<T> || std::is_trivially_constructible<T>::value >;
+//----------------------------------------------------------------------------
+template <typename T>
+using has_trivial_destructor = std::bool_constant<TIsPod_v<T> || std::is_trivially_destructible<T>::value >;
+//----------------------------------------------------------------------------
+template <typename T>
+using has_trivial_move = std::bool_constant<TIsPod_v<T> || (
+    std::is_trivially_move_constructible<T>::value && std::is_trivially_destructible<T>::value)>;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if 0
@@ -195,16 +205,6 @@ template <typename T>
 using has_noinit_constructor = has_constructor<T, Meta::FNoInit>;
 template <typename T>
 using has_forceinit_constructor = has_constructor<T, Meta::FForceInit>;
-//----------------------------------------------------------------------------
-template <typename T>
-inline constexpr bool has_trivial_constructor = TIsPod_v<T> || std::is_trivially_constructible_v<T>;
-//----------------------------------------------------------------------------
-template <typename T>
-inline constexpr bool has_trivial_destructor = TIsPod_v<T> || std::is_trivially_destructible_v<T>;
-//----------------------------------------------------------------------------
-template <typename T>
-inline constexpr bool has_trivial_move = TIsPod_v<T> || (
-    std::is_trivially_move_constructible_v<T> && std::is_trivially_destructible_v<T> );
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>

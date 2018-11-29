@@ -2,7 +2,9 @@
 
 #include "Core_fwd.h"
 
-#if !(USE_PPE_FINAL_RELEASE)
+#define USE_PPE_BENCHMARK (!USE_PPE_FINAL_RELEASE)
+
+#if USE_PPE_BENCHMARK
 
 #include "Container/Array.h"
 #include "Container/Tuple.h"
