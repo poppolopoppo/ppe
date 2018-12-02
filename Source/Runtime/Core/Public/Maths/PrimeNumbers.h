@@ -8,10 +8,24 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-extern PPE_CORE_API const u16 GPrimeNumbersU16[6542];
+constexpr u32 GPrimeNumbersU32Max = 1000000;
 //----------------------------------------------------------------------------
-PPE_CORE_API u16 ClosestPrimeU16Ceil(u16 val);
-PPE_CORE_API u16 ClosestPrimeU16Floor(u16 val);
+extern PPE_CORE_API const u16 GPrimeNumbersU16[6542];
+extern PPE_CORE_API const u32 GPrimeNumbersU32[78498];
+//----------------------------------------------------------------------------
+struct FPrimeNumberU16 {
+using type = u16;
+static PPE_CORE_API const u16 Values[6542];
+static PPE_CORE_API u16 ClosestCeil(u16 v);
+static PPE_CORE_API u16 ClosestFloor(u16 v);
+};
+//----------------------------------------------------------------------------
+struct FPrimeNumberU32 {
+using type = u32;
+static PPE_CORE_API const u32 Values[78498];
+static PPE_CORE_API u32 ClosestCeil(u32 v);
+static PPE_CORE_API u32 ClosestFloor(u32 v);
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -19,15 +33,18 @@ PPE_CORE_API u16 ClosestPrimeU16Floor(u16 val);
 // Leverage prime numbers factorization properties
 // Enables to test efficiently inheritance for instance
 //----------------------------------------------------------------------------
-template <typename _Tag>
+template <typename _Tag, bool _Large = false>
 class TPrimeNumberProduct {
 public:
-    CONSTEXPR TPrimeNumberProduct() : TPrimeNumberProduct(0) {}
+    using FPrimeNumber = Meta::TConditional<_Large, FPrimeNumberU16, FPrimeNumberU32>;
+    using value_type = u64;
+
+    CONSTEXPR TPrimeNumberProduct() : TPrimeNumberProduct(1) {}
 
     CONSTEXPR TPrimeNumberProduct(const TPrimeNumberProduct& other) : TPrimeNumberProduct(other._value) {}
     CONSTEXPR TPrimeNumberProduct& operator =(const TPrimeNumberProduct& other) { _value = other._value; return (*this); }
 
-    CONSTEXPR u64 Value() const { return _value; }
+    CONSTEXPR value_type Value() const { return _value; }
 
     CONSTEXPR bool Contains(const TPrimeNumberProduct& parent) const {
         return ((_value / parent._value) * parent._value == _value);
@@ -46,8 +63,8 @@ public:
     }
 
     static TPrimeNumberProduct Prime(size_t index) {
-        Assert(index < lengthof(GPrimeNumbersU16));
-        return TPrimeNumberProduct(u64(GPrimeNumbersU16[index]));
+        Assert(index < lengthof(FPrimeNumber::Values));
+        return TPrimeNumberProduct(value_type(FPrimeNumber::Values[index]));
     }
 
     static TPrimeNumberProduct Combine(TPrimeNumberProduct lhs, TPrimeNumberProduct rhs) {
@@ -57,9 +74,9 @@ public:
     }
 
 private:
-    explicit TPrimeNumberProduct(u64 value) : _value(value) {}
+    explicit TPrimeNumberProduct(value_type value) : _value(value) {}
 
-    u64 _value;
+    value_type _value;
 };
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Tag>
