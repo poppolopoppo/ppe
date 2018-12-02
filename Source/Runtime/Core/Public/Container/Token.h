@@ -154,7 +154,7 @@ public:
             : stringview_type() );
     }
 
-    size_t HashValue() const { return (_handle ? _handle->HashValue : 0); }
+    hash_t HashValue() const { return (_handle ? _handle->HashValue : 0); }
 
     void Swap(TToken& other) { std::swap(_handle, other._handle); }
 

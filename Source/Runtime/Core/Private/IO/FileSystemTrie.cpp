@@ -19,8 +19,8 @@ namespace {
 //----------------------------------------------------------------------------
 static size_t ExpandFileSystemNode_(
     const TMemoryView<FFileSystemToken>& tokens,
-    const FFileSystemNode *pnode,
-    const FFileSystemNode *proot ) {
+    const FFileSystemNode* pnode,
+    const FFileSystemNode* proot ) {
     if (nullptr == pnode)
         return 0;
 
@@ -40,222 +40,217 @@ static size_t ExpandFileSystemNode_(
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(FileSystem, FFileSystemNode, );
 //----------------------------------------------------------------------------
-FFileSystemNode::FFileSystemNode(const FFileSystemNode *parent, const FFileSystemToken& token)
-:   _parent(parent)
-,   _token(token) {
-    if (_parent) {
-        _depth = _parent->_depth + 1;
-        _hashValue = hash_tuple(_parent->Token().HashValue(), _token.HashValue() );
-    }
-    else {
-        _depth = 0;
-        _hashValue = _token.HashValue();
-    }
+FFileSystemNode::FFileSystemNode()
+:   _parent(nullptr)
+,   _child(nullptr)
+,   _sibbling(nullptr)
+,   _leaf(nullptr)
+,   _depth(0)
+,   _hashValue(PPE_HASH_VALUE_SEED)
+,   _sortValue(-1.0)
+{}
+//----------------------------------------------------------------------------
+FFileSystemNode::FFileSystemNode(FFileSystemNode& parent, const FFileSystemToken& token, double sortValue, size_t uid)
+:   _parent(&parent)
+,   _child(nullptr)
+,   _sibbling(nullptr)
+,   _leaf(nullptr)
+,   _token(token)
+,   _depth(parent._depth + 1)
+,   _hashValue(hash_tuple(parent._hashValue, token))
+,   _sortValue(sortValue)
+,   _genealogy(FGenealogy::Combine(parent._genealogy, FGenealogy::Prime(uid))) {
+    Assert_NoAssume(-1.0 <= _sortValue && _sortValue <= 1.0);
 }
 //----------------------------------------------------------------------------
 FFileSystemNode::~FFileSystemNode() {}
 //----------------------------------------------------------------------------
-bool FFileSystemNode::IsChildOf(const FFileSystemNode *parent) const {
-    Assert(parent);
-
-    const FFileSystemNode *n = _parent.get();
-    for (; n && n != parent; n = n->_parent.get());
-
-    return (n == parent);
+bool FFileSystemNode::Greater(const FFileSystemNode& other) const {
+    return (_sortValue > other._sortValue);
+}
+//----------------------------------------------------------------------------
+bool FFileSystemNode::Less(const FFileSystemNode& other) const {
+    return (_sortValue < other._sortValue);
+}
+//----------------------------------------------------------------------------
+bool FFileSystemNode::IsChildOf(const FFileSystemNode& parent) const {
+    return _genealogy.Contains(parent._genealogy);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FFileSystemTrie::FFileSystemTrie()
-:   _root(new FFileSystemNode(nullptr, FFileSystemToken()))
-{}
-//----------------------------------------------------------------------------
-FFileSystemTrie::~FFileSystemTrie() {
-    Clear();
-    RemoveRef_AssertReachZero(_root);
+:   _numNodes(0) {
+    _root._child = _root._leaf = new FFileSystemNode(_root, FFileSystemToken{}, 1.0, 0);
 }
 //----------------------------------------------------------------------------
-const FFileSystemNode *FFileSystemTrie::GetIFP(const TMemoryView<const FFileSystemToken>& path) const {
-    Assert(!path.empty());
+FFileSystemTrie::~FFileSystemTrie() {
+    Clear_ReleaseMemory_();
+}
+//----------------------------------------------------------------------------
+FFileSystemNode* FFileSystemTrie::CreateNode_(
+    FFileSystemNode& parent,
+    const FFileSystemToken& token,
+    const FFileSystemNode& prev,
+    const FFileSystemNode& next) {
+    const double s = ((prev._sortValue + next._sortValue) * 0.5);
+    return new FFileSystemNode(parent, token, s, token.empty() ? 0 : _numNodes++);
+}
+//----------------------------------------------------------------------------
+const FFileSystemNode* FFileSystemTrie::Get_(const FFileSystemNode& root, const FFileSystemToken& token) const {
+    Assert_NoAssume(not token.empty());
 
-    typedef TMemoryView<const FFileSystemToken>::iterator iterator;
-
-    iterator bpath = path.begin();
-    const iterator epath = path.end();
-
-    READSCOPELOCK(_barrier);
-
-    const FFileSystemNode *node = _root->_child.get();
-    while (node) {
-        Assert(!bpath->empty());
-        for (; node; node = node->_sibbling.get())
-            if (node->Token() == *bpath) {
-                if (++bpath == epath)
-                    return node;
-
-                node = node->_child.get();
-                break;
-            }
+    for (const FFileSystemNode* n = root._child; n != root._leaf; n = n->_sibbling) {
+        if (n->_token == token)
+            return n;
+        else if (token < n->_token)
+            break;
     }
 
     return nullptr;
 }
 //----------------------------------------------------------------------------
-const FFileSystemNode *FFileSystemTrie::Concat(const FFileSystemNode *basedir, const FFileSystemToken& append) {
-    return Concat(basedir, MakeView(&append, &append + 1));
-}
-//----------------------------------------------------------------------------
-const FFileSystemNode *FFileSystemTrie::Concat(const FFileSystemNode *basedir, const TMemoryView<const FFileSystemToken>& path) {
-    if (path.empty())
-        return basedir;
+FFileSystemNode* FFileSystemTrie::GetOrCreate_(FFileSystemNode& root, const FFileSystemToken& token) {
+    Assert_NoAssume(not token.empty());
 
-    Assert(!path.empty());
+    FFileSystemNode* n = root._child;
+    if (nullptr == n) {
+        auto* const l = CreateNode_(root, FFileSystemToken{}, root, *root._sibbling);
+        auto* const r = CreateNode_(root, token, root, *l);
 
-    typedef TMemoryView<const FFileSystemToken>::iterator iterator;
+        root._child = r;
+        root._leaf = l;
+        r->_sibbling = l;
 
-    iterator bpath = path.begin();
-    const iterator epath = path.end();
-    Assert(!bpath->empty());
+        return r;
+    }
+    else if (n->_token.empty() || token < n->_token) {
+        auto* const r = CreateNode_(root, token, root, *n);
 
-    WRITESCOPELOCK(_barrier);
+        r->_sibbling = n;
+        n->_parent->_child = r;
 
-    FFileSystemNode *node = nullptr;
-    FFileSystemNode *parent = nullptr;
-
-    if (nullptr == basedir) {
-        Assert(_root);
-        node = _root->_child.get();
-        parent = _root.get();
+        return r;
     }
     else {
-        node = remove_const(basedir->_child.get());
-        parent = remove_const(basedir);
-    }
-    Assert(parent);
+        FFileSystemNode* p = n;
+        n = n->_sibbling;
 
-    while (node)
-        if (node->Token() == *bpath) {
-            if (++bpath == epath)
-                break;
-
-            Assert(!bpath->empty());
-            parent = node;
-            node = node->_child.get();
-        }
-        else {
-            node = node->_sibbling.get();
+        while (n != root._leaf && n->_token < token) {
+            p = n;
+            n = n->_sibbling;
         }
 
-    if (bpath == epath) {
-        Assert(node);
-        Assert(node->Token() == path.back());
-    }
-    else {
-        Assert(bpath < epath);
-        Assert(parent);
-        Assert(nullptr == node);
+        if (n->_token == token) return n;
+        if (p->_token == token) return p;
 
-        for (; bpath != epath; ++bpath) {
-            Assert(!bpath->empty());
-            node = new FFileSystemNode(parent, *bpath);
-            node->_sibbling = parent->_child;
-            parent->_child = node;
-            parent = node;
-        }
-    }
+        auto* const r = CreateNode_(root, token, p->_leaf ? *p->_leaf : *p, *n);
+        p->_sibbling = r;
+        r->_sibbling = n;
 
-    return node;
+        return r;
+    }
 }
 //----------------------------------------------------------------------------
-void FFileSystemTrie::Clear() {
-    Assert(_root);
+const FFileSystemNode *FFileSystemTrie::GetIFP(const TMemoryView<const FFileSystemToken>& path) const {
+    Assert_NoAssume(not path.empty());
 
-    WRITESCOPELOCK(_barrier);
-
-    Assert(!_root->_sibbling);
-
-    if (!_root->_child)
-        return;
-
-    // we want to check ref count to prevent deleting nodes still referenced
-
-    STACKLOCAL_POD_STACK(FFileSystemNode *, queue, 128); {
-        FFileSystemNode *const next = _root->_child.get();
-        AddRef(next);
-        _root->_child.reset();
-        queue.Push(next);
-    }
-
-    VECTOR(FileSystem, PFileSystemNode) nodes;
-    nodes.reserve(128);
-
-    // first-pass : detach all nodes from each others
-    for (;;) {
-        FFileSystemNode *node = nullptr;
-        if (!queue.Pop(&node))
-            break;
-        Assert(node);
-        Assert(node->_parent);
-
-        if (node->_sibbling) {
-            Assert(node->_sibbling->_parent == node->_parent);
-            FFileSystemNode *const next = node->_sibbling.get();
-            AddRef(next);
-            node->_sibbling.reset();
-            queue.Push(next);
-        }
-
-        if (node->_child) {
-            Assert(node->_child->_parent == node);
-            FFileSystemNode *const next = node->_child.get();
-            AddRef(next);
-            node->_child.reset();
-            queue.Push(next);
-        }
-
-        node->_parent.reset();
-        nodes.push_back(node);
-
-        RemoveRef(node);
-    }
-
-    // second-pass : decrement ref count of each node and assert destruction
-    for (PFileSystemNode& node : nodes)
-        RemoveRef_AssertReachZero(node);
-
-    nodes.clear();
-}
-//----------------------------------------------------------------------------
-const FFileSystemNode* FFileSystemTrie::RootNode(const FFileSystemNode *pnode) const {
-    if (nullptr == pnode)
-        return nullptr;
+    const FFileSystemNode* n = &_root;
 
     READSCOPELOCK(_barrier);
 
-    for (   const FFileSystemNode* pparent = pnode->Parent();
-            pparent != _root;
-            pnode = pparent, pparent = pnode->Parent() ) {
-        Assert(pparent);
+    for (const FFileSystemToken& token : path) {
+        n = Get_(*n, token);
+        if (nullptr == n)
+            return nullptr;
     }
 
-    Assert(pnode);
-    Assert(pnode->Parent() == _root);
-    return pnode;
+    Assert(n);
+    return n;
+}
+//----------------------------------------------------------------------------
+const FFileSystemNode *FFileSystemTrie::Concat(const FFileSystemNode* basedir, const FFileSystemToken& append) {
+    return Concat(basedir, MakeView(&append, &append + 1));
+}
+//----------------------------------------------------------------------------
+const FFileSystemNode *FFileSystemTrie::Concat(const FFileSystemNode* basedir, const TMemoryView<const FFileSystemToken>& path) {
+    if (path.empty())
+        return basedir;
+
+    FFileSystemNode* n = (basedir ? const_cast<FFileSystemNode*>(basedir) : &_root);
+
+    WRITESCOPELOCK(_barrier);
+
+    for (const FFileSystemToken& token : path)
+        n = GetOrCreate_(*n, token);
+
+    return n;
+}
+//----------------------------------------------------------------------------
+void FFileSystemTrie::Clear_ReleaseMemory_() {
+    Assert_NoAssume(_root._child);
+    Assert_NoAssume(not _root._sibbling);
+
+    ONLY_IF_ASSERT(size_t numDeleteds = 0);
+    STACKLOCAL_POD_STACK(FFileSystemNode*, queue, 128);
+
+    WRITESCOPELOCK(_barrier);
+
+    queue.Push(_root._child);
+
+    FFileSystemNode* n;
+    for (;;) {
+        if (not queue.Pop(&n))
+            break;
+
+        Assert(n);
+
+        if (n->_child)
+            queue.Push(n->_child);
+        if (n->_sibbling)
+            queue.Push(n->_sibbling);
+
+        checked_delete(n);
+
+        ONLY_IF_ASSERT(++numDeleteds);
+    }
+
+    Assert_NoAssume(numDeleteds >= _numNodes);
+}
+//----------------------------------------------------------------------------
+void FFileSystemTrie::Clear() {
+    Clear_ReleaseMemory_();
+
+    _numNodes = 0;
+    _root._child = _root._leaf = new FFileSystemNode(_root, FFileSystemToken{}, 1.0, 0);
+}
+//----------------------------------------------------------------------------
+const FFileSystemNode& FFileSystemTrie::FirstNode(const FFileSystemNode& pnode) const {
+    Assert_NoAssume(&_root != &pnode);
+
+    READSCOPELOCK(_barrier);
+
+    const FFileSystemNode* n = &pnode;
+    for (; n->_parent != &_root; n = n->_parent);
+
+    Assert(n);
+    Assert_NoAssume(n->_parent == &_root);
+    return (*n);
 }
 //----------------------------------------------------------------------------
 size_t FFileSystemTrie::Expand(const TMemoryView<FFileSystemToken>& tokens, const FFileSystemNode *pnode) const {
-    Assert(tokens.size() > 0);
+    Assert_NoAssume(not tokens.empty());
 
     if (nullptr == pnode)
         return 0;
 
     READSCOPELOCK(_barrier);
 
-    return ExpandFileSystemNode_(tokens, pnode, _root.get() );
+    return ExpandFileSystemNode_(tokens, pnode, &_root);
 }
 //----------------------------------------------------------------------------
 size_t FFileSystemTrie::Expand(const TMemoryView<FFileSystemToken>& tokens, const FFileSystemNode *pbegin, const FFileSystemNode *pend) const {
-    Assert(tokens.size() > 0);
+    Assert_NoAssume(not tokens.empty());
     Assert(pbegin);
     Assert(pend);
 

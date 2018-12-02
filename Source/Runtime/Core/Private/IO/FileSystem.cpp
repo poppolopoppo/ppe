@@ -16,19 +16,19 @@ POOL_TAG_DEF(FileSystem);
 void FFileSystemStartup::Start() {
     POOL_TAG(FileSystem)::Start();
     FFileSystemToken::Start();
-    FFileSystemPath::Create();
+    FFileSystemTrie::Create();
     FFSConstNames::Start();
 }
 //----------------------------------------------------------------------------
 void FFileSystemStartup::Shutdown() {
     FFSConstNames::Shutdown();
-    FFileSystemPath::Destroy();
+    FFileSystemTrie::Destroy();
     FFileSystemToken::Shutdown();
     POOL_TAG(FileSystem)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void FFileSystemStartup::Clear() {
-    FFileSystemPath::Get().Clear();
+    //FFileSystemTrie::Get().Clear_ReleaseMemory(); // #TODO ref counting ?
     POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------

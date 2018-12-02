@@ -258,10 +258,13 @@
     <DisplayString>{_token}</DisplayString>
     <Expand>
       <Item Name="[Depth]">_depth</Item>
+      <Item Name="[Hash]">_hashValue</Item>
+      <Item Name="[Sort]">_sortValue</Item>
+      <Item Name="[Genealogy]">_genealogy._value</Item>
       <LinkedListItems>
         <Size>_depth</Size>
         <HeadPointer>this</HeadPointer>
-        <NextPointer>_parent._ptr</NextPointer>
+        <NextPointer>_parent</NextPointer>
         <ValueNode>*this</ValueNode>
       </LinkedListItems>
     </Expand>

@@ -63,7 +63,7 @@ static const FFileSystemNode *ParseDirpath_(const FileSystem::FStringView& str) 
             path.Push(slice);
     }
 
-    return FFileSystemPath::Get().GetOrCreate(path.MakeView());
+    return FFileSystemTrie::Get().GetOrCreate(path.MakeView());
 }
 //----------------------------------------------------------------------------
 static const FFileSystemNode *DirpathNode_(const FMountingPoint& mountingPoint, const TMemoryView<const FDirname>& path) {
@@ -82,14 +82,14 @@ static const FFileSystemNode *DirpathNode_(const FMountingPoint& mountingPoint, 
     for (const FDirname& dirname : path)
         tokens.Push(dirname);
 
-    return FFileSystemPath::Get().GetOrCreate(tokens.MakeView());
+    return FFileSystemTrie::Get().GetOrCreate(tokens.MakeView());
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FDirpath::FDirpath() {}
+FDirpath::FDirpath() : _path(nullptr) {}
 //----------------------------------------------------------------------------
 FDirpath::~FDirpath() {}
 //----------------------------------------------------------------------------
@@ -114,11 +114,11 @@ FDirpath::FDirpath(const FMountingPoint& mountingPoint, const TMemoryView<const 
 }
 //----------------------------------------------------------------------------
 FDirpath::FDirpath(const FDirpath& other, const FDirname& append) {
-    _path = FFileSystemPath::Get().Concat(other._path, append);
+    _path = FFileSystemTrie::Get().Concat(other._path, append);
 }
 //----------------------------------------------------------------------------
 FDirpath::FDirpath(const FDirpath& other, const TMemoryView<const FDirname>& append) {
-    _path = FFileSystemPath::Get().Concat(other._path, append.Cast<const FFileSystemToken>());
+    _path = FFileSystemTrie::Get().Concat(other._path, append.Cast<const FFileSystemToken>());
 }
 //----------------------------------------------------------------------------
 FDirpath::FDirpath(const FileSystem::FString& str)
@@ -146,7 +146,7 @@ FDirpath::FDirpath(std::initializer_list<const FileSystem::char_type *> path)  {
         Assert(!tokens.Peek()->empty());
     }
 
-    _path = FFileSystemPath::Get().GetOrCreate(tokens.MakeView());
+    _path = FFileSystemTrie::Get().GetOrCreate(tokens.MakeView());
     Assert(_path);
 }
 //----------------------------------------------------------------------------
@@ -158,14 +158,13 @@ FMountingPoint FDirpath::MountingPoint() const {
     if (nullptr == _path)
         return FMountingPoint();
 
-    const FFileSystemNode* pparent = FFileSystemPath::Get().RootNode(_path);
-    Assert(pparent);
-    Assert(false == pparent->Token().empty());
+    const FFileSystemNode& root = FFileSystemTrie::Get().FirstNode(*_path);
+    Assert(not root.Token().empty());
 
-    if (L':' != pparent->Token().MakeView().back())
+    if (L':' != root.Token().MakeView().back())
         return FMountingPoint();
 
-    return FMountingPoint(pparent->Token());
+    return FMountingPoint(root.Token());
 }
 //----------------------------------------------------------------------------
 FDirname FDirpath::LastDirname() const {
@@ -184,7 +183,7 @@ size_t FDirpath::ExpandPath(FMountingPoint& mountingPoint, const TMemoryView<FDi
         return 0;
 
     STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, tokens, _path->Depth());
-    const size_t k = FFileSystemPath::Get().Expand(tokens, _path);
+    const size_t k = FFileSystemTrie::Get().Expand(tokens, _path);
     if (0 == k)
         return 0;
     Assert(_path->Depth() == k);
@@ -200,13 +199,13 @@ size_t FDirpath::ExpandPath(FMountingPoint& mountingPoint, const TMemoryView<FDi
 }
 //----------------------------------------------------------------------------
 void FDirpath::AssignTokens(const TMemoryView<const FFileSystemToken>& tokens) {
-    _path = FFileSystemPath::Get().GetOrCreate(tokens);
+    _path = FFileSystemTrie::Get().GetOrCreate(tokens);
 }
 //----------------------------------------------------------------------------
 void FDirpath::ExpandTokens(const TMemoryView<FFileSystemToken>& tokens) const {
     if (_path) {
         Assert(tokens.size() == _path->Depth());
-        FFileSystemPath::Get().Expand(tokens, _path);
+        FFileSystemTrie::Get().Expand(tokens, _path);
     }
     else {
         Assert(tokens.empty());
@@ -217,15 +216,22 @@ bool FDirpath::HasMountingPoint() const {
     return (not MountingPoint().empty());
 }
 //----------------------------------------------------------------------------
+bool FDirpath::IsSubdirectory(const FDirpath& other) const {
+    Assert_NoAssume(not empty());
+    Assert_NoAssume(not other.empty());
+
+    return (_path->IsChildOf(*other._path));
+}
+//----------------------------------------------------------------------------
 void FDirpath::Concat(const FDirname& append) {
     Assert(!append.empty());
     const FFileSystemToken *ptoken = &append;
-    _path = FFileSystemPath::Get().Concat(_path, MakeView(ptoken, ptoken + 1));
+    _path = FFileSystemTrie::Get().Concat(_path, MakeView(ptoken, ptoken + 1));
 }
 //----------------------------------------------------------------------------
 void FDirpath::Concat(const TMemoryView<const FDirname>& path) {
     Assert(!path.empty());
-    _path = FFileSystemPath::Get().Concat(_path, path.Cast<const FFileSystemToken>());
+    _path = FFileSystemTrie::Get().Concat(_path, path.Cast<const FFileSystemToken>());
 }
 //----------------------------------------------------------------------------
 void FDirpath::Concat(const FileSystem::char_type *cstr) {
@@ -236,7 +242,7 @@ void FDirpath::Concat(const FileSystem::char_type *cstr) {
 void FDirpath::Concat(const TMemoryView<const FileSystem::char_type>& strview) {
     Assert(strview.Pointer());
 
-    FFileSystemTrie& trie = FFileSystemPath::Get();
+    FFileSystemTrie& trie = FFileSystemTrie::Get();
 
     const TBasicStringView<FileSystem::char_type> separators = FileSystem::Separators();
 
@@ -279,8 +285,14 @@ bool FDirpath::Less(const FDirpath& other) const {
         return false;
     else if (nullptr == _path)
         return true;
+#if 1 // fast method using sort values computed on insertion in trie :
+    else
+        return (_path->SortValue() < other._path->SortValue());
 
-    const auto& fsp = FFileSystemPath::Get();
+#else // slow method expanding the path :
+    const auto& fsp = FFileSystemTrie::Get();
+
+    // #TODO bake sort order in path tree !
 
     STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, p0, _path->Depth() );
     const size_t k0 = fsp.Expand(p0, _path);
@@ -299,10 +311,11 @@ bool FDirpath::Less(const FDirpath& other) const {
     }
 
     return (k0 < k1); // both equals, shortest wins
+#endif
 }
 //----------------------------------------------------------------------------
 size_t FDirpath::HashValue() const {
-    return (_path ? _path->HashValue() : 0);
+    return (_path ? size_t(_path->HashValue()) : 0);
 }
 //----------------------------------------------------------------------------
 bool FDirpath::Absolute(FDirpath* absolute, const FDirpath& origin, const FDirpath& relative) {

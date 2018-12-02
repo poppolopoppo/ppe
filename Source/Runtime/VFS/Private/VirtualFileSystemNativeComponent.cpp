@@ -42,7 +42,7 @@ static void Unalias_(
     const size_t length = aliased.PathNode()->Depth() - alias.PathNode()->Depth();
     if (length > 0) {
         STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, subpath, length);
-        const size_t k = FFileSystemPath::Get().Expand(subpath, alias.PathNode(), aliased.PathNode());
+        const size_t k = FFileSystemTrie::Get().Expand(subpath, alias.PathNode(), aliased.PathNode());
 
         forrange(i, 0, k - 1)
             oss << subpath[i] << FileSystem::char_type(FileSystem::Separator);

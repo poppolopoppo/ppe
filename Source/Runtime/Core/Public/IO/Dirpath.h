@@ -16,7 +16,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FFilename;
-FWD_REFPTR(FileSystemNode);
+class FFileSystemNode;
 class FMountingPoint;
 //----------------------------------------------------------------------------
 class PPE_CORE_API FDirpath {
@@ -66,6 +66,7 @@ public:
     bool empty() const { return nullptr == _path; }
 
     bool HasMountingPoint() const;
+    bool IsSubdirectory(const FDirpath& other) const;
 
     void Concat(const FDirname& append);
     void Concat(const TMemoryView<const FDirname>& path);
@@ -85,7 +86,7 @@ public:
 
     size_t HashValue() const;
 
-    const FFileSystemNode *PathNode() const { return _path.get(); }
+    const FFileSystemNode* PathNode() const { return _path; }
 
     static bool Absolute(FDirpath* absolute, const FDirpath& origin, const FDirpath& relative);
     static bool Normalize(FDirpath* normalized, const FDirpath& path);
@@ -95,7 +96,7 @@ public:
     friend FFilename operator /(const FDirpath& lhs, const class FBasename& basename);
 
 private:
-    SCFileSystemNode _path;
+    const FFileSystemNode* _path;
 };
 //----------------------------------------------------------------------------
 inline bool operator ==(const FDirpath& lhs, const FDirpath& rhs) {

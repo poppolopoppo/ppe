@@ -21,6 +21,20 @@ LOG_CATEGORY(, Test_VFS)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+static void Test_FSTrie() {
+    const FFilename a = L"c:/windows/system32/notepad.exe";
+    const FFilename b = L"c:/windows/temp/log.txt";
+    const FFilename c = L"c:/windows/fonts/arial.ttf";
+    const FFilename d = L"c:/windows/zz/bin.out";
+
+    AssertRelease(a < b);
+    AssertRelease(c < a);
+    AssertRelease(c < b);
+    AssertRelease(a < d);
+    AssertRelease(b < d);
+    AssertRelease(c < d);
+}
+//----------------------------------------------------------------------------
 static void Test_VFSFrontend_() {
     const FDirpath& rootpath = L"Saved:/VFS";
     const FDirpath testpath = rootpath / FDirname(L"VFSComponent");
@@ -195,6 +209,7 @@ static void Test_VFSFrontend_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_VFS() {
+    Test_FSTrie();
     Test_VFSFrontend_();
 }
 //----------------------------------------------------------------------------
