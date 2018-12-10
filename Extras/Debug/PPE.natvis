@@ -248,7 +248,7 @@
     <DisplayString Condition="_handle == nullptr">empty</DisplayString>
     <StringView>(const wchar_t*)(_handle+1),[(int)_handle-&gt;Length]su</StringView>
     <Expand>
-      <Item Name="[String]" Condition="_handle != nullptr">(const wchar_t*)(_handle+1),[(int)_handle-&gt;Length]su</Item>
+      <Item Name="[WString]" Condition="_handle != nullptr">(const wchar_t*)(_handle+1),[(int)_handle-&gt;Length]su</Item>
       <Item Name="[Length]" Condition="_handle != nullptr">(int)_handle-&gt;Length</Item>
       <Item Name="[HashValue]" Condition="_handle != nullptr">(int)_handle-&gt;HashValue,X</Item>
     </Expand>
