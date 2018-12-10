@@ -306,6 +306,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     + ' /O2'                ; optimisations favorisant la vitesse
     + ' /GS-'               ; vérification de la sécurité de la mémoire tampon
     + ' /Gw'                ; optimisations des données globales
+    + ' /Gy'                ; function level linkage (needed for /OPT:[ICF|REF]) http://www.drdobbs.com/cpp/the-most-underused-compiler-switches-in/240166599?pgno=6
     + ' /GL'                ; optimisations du programme globales
     + ' /GA'                ; optimisation d'accès aux variables thread-local
 
@@ -345,12 +346,12 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     Using( .SharedDebugConfig )
     Using( .MSVCBaseConfig )
 
-    .ConfigLinkType      = .LibraryLinkType
+    .ConfigLinkType     = .LibraryLinkType
 
-    .ConfigOptions       = .DebugOptimisations
+    .ConfigOptions      = .DebugOptimisations
                         + .CompilerWithCache
 
-    .Defines             = .ConfigDefines
+    .Defines            = .ConfigDefines
                         + .DebugDefines
 
     .CompilerOptions    = .ConfigOptions
@@ -371,10 +372,10 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     Using( .SharedFastDebugConfig )
     Using( .MSVCBaseConfig )
 
-    .ConfigOptions       = .FastDebugOptimisations
+    .ConfigOptions      = .FastDebugOptimisations
                         + .CompilerWithCache
 
-    .Defines             = .ConfigDefines
+    .Defines            = .ConfigDefines
                         + .DebugDefines
 
     .CompilerOptions    = .ConfigOptions
@@ -395,12 +396,12 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     Using( .SharedReleaseConfig )
     Using( .MSVCBaseConfig )
 
-    .ConfigLinkType      = .LibraryLinkType
+    .ConfigLinkType     = .LibraryLinkType
 
-    .ConfigOptions       = .ReleaseOptimisations
+    .ConfigOptions      = .ReleaseOptimisations
                         + .CompilerWithCache
 
-    .Defines             = .ConfigDefines
+    .Defines            = .ConfigDefines
                         + .ReleaseDefines
 
     .CompilerOptions    = .ConfigOptions
@@ -421,12 +422,12 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     Using( .SharedProfilingConfig )
     Using( .MSVCBaseConfig )
 
-    .ConfigLinkType      = .LibraryLinkType
+    .ConfigLinkType     = .LibraryLinkType
 
-    .ConfigOptions       = .FinalOptimisations
+    .ConfigOptions      = .FinalOptimisations
                         + .CompilerWithCache
 
-    .Defines             = .ConfigDefines
+    .Defines            = .ConfigDefines
                         + .ReleaseDefines
 
     .CompilerOptions    = .ConfigOptions
@@ -449,12 +450,12 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     Using( .SharedFinalConfig )
     Using( .MSVCBaseConfig )
 
-    .ConfigLinkType      = .LibraryLinkType
+    .ConfigLinkType     = .LibraryLinkType
 
-    .ConfigOptions       = .FinalOptimisations
+    .ConfigOptions      = .FinalOptimisations
                         + .CompilerWithoutCache
 
-    .Defines             = .ConfigDefines
+    .Defines            = .ConfigDefines
                         + .ReleaseDefines
 
     .CompilerOptions    = .ConfigOptions
