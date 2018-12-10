@@ -71,11 +71,11 @@ static SHScalar SHAssiociatedLegendrePolynomialScalingFactor_(int l, int m) {
 SHScalar SHPointSampleFunction(int l, int m, const SHSphericalCoord& thetaPhi) {
     const SHScalar sqrt2 = static_cast<SHScalar>(1.41421356237);//std::sqrt(2.0);
     if (m == 0)
-        return SHAssiociatedLegendrePolynomialScalingFactor_(l, 0)*SHAssociatedLegendrePolynomial_(l, m, std::cos(thetaPhi.x()));
+        return SHAssiociatedLegendrePolynomialScalingFactor_(l, 0)*SHAssociatedLegendrePolynomial_(l, m, std::cos(thetaPhi.x));
     else if (m > 0)
-        return sqrt2*SHAssiociatedLegendrePolynomialScalingFactor_(l, m)*std::cos(SHScalar(m)*thetaPhi.y())*SHAssociatedLegendrePolynomial_(l, m, std::cos(thetaPhi.x()));
+        return sqrt2*SHAssiociatedLegendrePolynomialScalingFactor_(l, m)*std::cos(SHScalar(m)*thetaPhi.y)*SHAssociatedLegendrePolynomial_(l, m, std::cos(thetaPhi.x));
     else
-        return sqrt2*SHAssiociatedLegendrePolynomialScalingFactor_(l, -m)*std::sin(-SHScalar(m)*thetaPhi.y())*SHAssociatedLegendrePolynomial_(l, -m, std::cos(thetaPhi.x()));
+        return sqrt2*SHAssiociatedLegendrePolynomialScalingFactor_(l, -m)*std::sin(-SHScalar(m)*thetaPhi.y)*SHAssociatedLegendrePolynomial_(l, -m, std::cos(thetaPhi.x));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

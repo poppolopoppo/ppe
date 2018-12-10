@@ -15,10 +15,10 @@ FBoundingBox FSphere::ToBox() const {
 }
 //----------------------------------------------------------------------------
 FSphere FSphere::FromSegment(const float3& a, const float3& b) {
-    Assert(LengthSq3(a - b) > F_Epsilon);
+    Assert(LengthSq(a - b) > F_Epsilon);
 
     const float3& center = a;
-    const float radius = Length3(b - center);
+    const float radius = Length(b - center);
 
     return FSphere(center, radius);
 }
@@ -37,7 +37,7 @@ FSphere FSphere::FromPoints(const TMemoryView<const float3>& points) {
     for (size_t i = 0; i < points.size(); ++i) {
         //We are doing a relative distance comparasin to find the maximum distance
         //from the center of our sphere.
-        float distance = DistanceSq3(center, points[i]);
+        float distance = DistanceSq(center, points[i]);
 
         if (distance > radius)
             radius = distance;
@@ -53,9 +53,9 @@ FSphere FSphere::FromPoints(const TMemoryView<const float3>& points) {
 FSphere FSphere::FromBox(const FBoundingBox& box) {
     float3 center = box.Center();
 
-    float x = box.Min().x() - box.Max().x();
-    float y = box.Min().y() - box.Max().y();
-    float z = box.Min().z() - box.Max().z();
+    float x = box.Min().x - box.Max().x;
+    float y = box.Min().y - box.Max().y;
+    float z = box.Min().z - box.Max().z;
 
     float distance = std::sqrt((x * x) + (y * y) + (z * z));
 
@@ -65,7 +65,7 @@ FSphere FSphere::FromBox(const FBoundingBox& box) {
 FSphere FSphere::Merge(const FSphere& lhs, const FSphere& rhs) {
     float3 difference = lhs.Center() - rhs.Center();
 
-    float length = Length3(difference);
+    float length = Length(difference);
     float radius = lhs.Radius();
     float radius2 = rhs.Radius();
 

@@ -7,72 +7,72 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline FQuaternion::FQuaternion(Meta::FForceInit)
-:   _value(0.0f, 0.0f, 0.0f, 1.0f) {}
+:   data(0.0f, 0.0f, 0.0f, 1.0f) {}
 //----------------------------------------------------------------------------
 inline FQuaternion::FQuaternion(float broadcast)
-:   _value(broadcast) {}
+:   data(broadcast) {}
 //----------------------------------------------------------------------------
 inline FQuaternion::FQuaternion(const float4& value)
-:   _value(value) {}
+:   data(value) {}
 //----------------------------------------------------------------------------
 inline FQuaternion::FQuaternion(const float3& value, float w)
-:   _value(value, w) {}
+:   data(value, w) {}
 //----------------------------------------------------------------------------
 inline FQuaternion::FQuaternion(const float2& xy, float z, float w)
-:   _value(xy.x(), xy.y(), z, w) {}
+:   data(xy, z, w) {}
 //----------------------------------------------------------------------------
 inline FQuaternion::FQuaternion(float x, float y, float z, float w)
-:   _value(x, y, z, w) {}
+:   data(x, y, z, w) {}
 //----------------------------------------------------------------------------
 inline FQuaternion::FQuaternion(const FQuaternion& other)
-:   _value(other._value) {}
+:   data(other.data) {}
 //----------------------------------------------------------------------------
 inline FQuaternion& FQuaternion::operator =(const FQuaternion& other) {
-    _value = other._value;
+    data = other.data;
     return *this;
 }
 //----------------------------------------------------------------------------
 inline float FQuaternion::Length() const {
-    return Length4(_value);
+    return PPE::Length(data);
 }
 //----------------------------------------------------------------------------
 inline float FQuaternion::LengthSq() const {
-    return LengthSq4(_value);
+    return PPE::LengthSq(data);
 }
 //----------------------------------------------------------------------------
 inline FQuaternion FQuaternion::Conjugate() const {
-    return FQuaternion(-x(), -y(), -z(), w());
+    return FQuaternion(-x, -y, -z, w);
 }
 //----------------------------------------------------------------------------
 inline FQuaternion FQuaternion::Negate() const {
-    return FQuaternion(-_value);
+    return FQuaternion(-data);
 }
 //----------------------------------------------------------------------------
 inline FQuaternion& FQuaternion::operator +=(const FQuaternion& other) {
-    _value += other._value;
+    data += other.data;
     return *this;
 }
 //----------------------------------------------------------------------------
 inline FQuaternion& FQuaternion::operator -=(const FQuaternion& other) {
-    _value -= other._value;
+    data -= other.data;
     return *this;
 }
 //----------------------------------------------------------------------------
 inline FQuaternion FQuaternion::operator +(const FQuaternion& other) const {
-    return FQuaternion(_value + other._value);
+    return FQuaternion(data + other.data);
 }
 //----------------------------------------------------------------------------
 inline FQuaternion FQuaternion::operator -(const FQuaternion& other) const {
-    return FQuaternion(_value - other._value);
+    return FQuaternion(data - other.data);
 }
 //----------------------------------------------------------------------------
 inline FQuaternion& FQuaternion::operator *=(float scale) {
-    _value *= scale;
+    data *= scale;
     return *this;
 }
 //----------------------------------------------------------------------------
 inline FQuaternion FQuaternion::operator *(float scale) const {
-    return FQuaternion(_value * scale);
+    return FQuaternion(data * scale);
 }
 //----------------------------------------------------------------------------
 inline FQuaternion operator *(float scale, const FQuaternion& quaternion) {

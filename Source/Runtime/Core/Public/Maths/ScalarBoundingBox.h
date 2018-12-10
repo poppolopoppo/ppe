@@ -43,7 +43,7 @@ public:
     const vector_type& Max() const { return _max; }
 
     void SetMinMax(const vector_type& vmin, const vector_type& vmax) {
-        Assert(vmin.AllLessOrEqual(vmax));
+        Assert(AllLessEqual(vmin, vmax));
         _min = vmin;
         _max = vmax;
     }
@@ -99,10 +99,10 @@ public:
     template <typename U>
     TScalarBoundingBox<U, _Dim> Cast() const;
 
-    static TScalarBoundingBox<T, _Dim> MaxMinValue() { return TScalarBoundingBox(vector_type::MaxValue(), vector_type::MinValue()); }
-    static TScalarBoundingBox<T, _Dim> MinMaxValue() { return TScalarBoundingBox(vector_type::MinValue(), vector_type::MaxValue()); }
-    static TScalarBoundingBox<T, _Dim> MinusOneOneValue() { return TScalarBoundingBox(vector_type::MinusOne(), vector_type::One()); }
-    static TScalarBoundingBox<T, _Dim> ZeroOneValue() { return TScalarBoundingBox(vector_type::Zero(), vector_type::One()); }
+    static TScalarBoundingBox<T, _Dim> MaxMinValue() { return TScalarBoundingBox(vector_type::MaxValue, vector_type::MinValue); }
+    static TScalarBoundingBox<T, _Dim> MinMaxValue() { return TScalarBoundingBox(vector_type::MinValue, vector_type::MaxValue); }
+    static TScalarBoundingBox<T, _Dim> MinusOneOneValue() { return TScalarBoundingBox(vector_type::MinusOne, vector_type::One); }
+    static TScalarBoundingBox<T, _Dim> ZeroOneValue() { return TScalarBoundingBox(vector_type::Zero(), vector_type::One); }
 
     static TScalarBoundingBox<T, _Dim> DefaultValue() { return MaxMinValue(); }
 

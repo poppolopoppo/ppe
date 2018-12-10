@@ -22,29 +22,29 @@ static void Split_(
     const FAabb2f& parent,
     const float2& box ) {
     Assert(parent.HasPositiveExtentsStrict());
-    Assert(parent.Extents().AllGreaterOrEqual(box));
+    Assert(AllGreaterEqual(parent.Extents(), box));
 
     const float2 bmax = parent.Max();
     const float2 bmin = parent.Min();
     const float2 bcut = bmin + box;
 
     right.SetMinMax(
-        float2(bcut.x(), bmin.y()),
-        float2(bmax.x(), bcut.y()) );
+        float2(bcut.x, bmin.y),
+        float2(bmax.x, bcut.y) );
 
     bottom.SetMinMax(
-        float2(bmin.x(), bcut.y()),
-        float2(bmax.x(), bmax.y()) );
+        float2(bmin.x, bcut.y),
+        float2(bmax.x, bmax.y) );
 
     // Try to minimize narrow features
     if (Area(right) > Area(bottom)) {
         right.SetMinMax(
-            float2(bcut.x(), bmin.y()),
-            float2(bmax.x(), bmax.y()) );
+            float2(bcut.x, bmin.y),
+            float2(bmax.x, bmax.y) );
 
         bottom.SetMinMax(
-            float2(bmin.x(), bcut.y()),
-            float2(bcut.x(), bmax.y()) );
+            float2(bmin.x, bcut.y),
+            float2(bcut.x, bmax.y) );
     }
 
     Assert(parent.Contains(right));
@@ -52,15 +52,15 @@ static void Split_(
 }
 //----------------------------------------------------------------------------
 FORCE_INLINE static bool BoxLessHeuristic_(const float2& extents0, const float2& extents1) {
-    const float e0 = Max(extents0.x(), extents0.y());
-    const float e1 = Max(extents1.x(), extents1.y());
+    const float e0 = Max(extents0.x, extents0.y);
+    const float e1 = Max(extents1.x, extents1.y);
     return ((e1 < e0) || ((e1 ==  e0) &&
-            (Min(extents1.x(), extents1.y()) < Min(extents0.x(), extents0.y())) ));
-    //return (Max(extents1.x(), extents1.y()) < Max(extents0.x(), extents0.y()) ); // Max(w, h)
-    //return ((extents1.x() + extents1.y()) < (extents0.x() + extents0.y())); // perimeter <=> mean
-    //return ((extents1.x() * extents1.y()) < (extents0.x() * extents0.y())); // area
-    //return extents1.x() < extents0.x(); // width
-    //return extents1.y() < extents0.y(); // width
+            (Min(extents1.x, extents1.y) < Min(extents0.x, extents0.y)) ));
+    //return (Max(extents1.x, extents1.y) < Max(extents0.x, extents0.y) ); // Max(w, h)
+    //return ((extents1.x + extents1.y) < (extents0.x + extents0.y)); // perimeter <=> mean
+    //return ((extents1.x * extents1.y) < (extents0.x * extents0.y)); // area
+    //return extents1.x < extents0.x; // width
+    //return extents1.y < extents0.y; // width
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -101,15 +101,15 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
 
     for (size_t i : indices) {
         const float2 box = boxes[i];
-        Assert(box.x() > 0 && box.y() > 0);
+        Assert(box.x > 0 && box.y > 0);
 
         bool found = false;
         forrange(j, 0, bins.size()) {
             FAabb2f bin = bins[j];
             const float2 binExtents = bin.Extents();
-            Assert(binExtents.AllGreaterThan(float2(0)));
+            Assert(AllGreater(binExtents, float2::Zero));
 
-            if (binExtents.AllGreaterOrEqual(box)) {
+            if (AllGreaterEqual(binExtents, box)) {
                 found = true;
 
                 offsets[i] = bin.Min();
@@ -146,13 +146,13 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
 
         // No block found, the binsize will be increased if possible
         if (not found) {
-            const bool canGrowDown  = (box.x() <= root.Extents().x());
-            const bool canGrowRight = (box.y() <= root.Extents().y());
+            const bool canGrowDown  = (box.x <= root.Extents().x);
+            const bool canGrowRight = (box.y <= root.Extents().y);
 
             // Attempt to keep square-ish by growing right when height is much greater than width
-            const bool shouldGrowRight = canGrowRight && (root.Extents().y() >= (root.Extents().x() + box.x()));
+            const bool shouldGrowRight = canGrowRight && (root.Extents().y >= (root.Extents().x + box.x));
             // Attempt to keep square-ish by growing down  when width  is much greater than height
-            const bool shouldGrowDown  = canGrowDown  && (root.Extents().x() >= (root.Extents().y() + box.y()));
+            const bool shouldGrowDown  = canGrowDown  && (root.Extents().x >= (root.Extents().y + box.y));
 
             bool willGrowRight = false;
             bool willGrowDown = false;
@@ -170,7 +170,7 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
 
             //  If we can grow in both directions, choose the largest one
             if (willGrowRight && willGrowDown) {
-                if (box.x() < box.y()) {
+                if (box.x < box.y) {
                     willGrowDown = true;
                     willGrowRight = false;
                 }
@@ -183,8 +183,8 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
             FAabb2f growth;
             if (willGrowRight) {
                 growth = FAabb2f(
-                    float2(root.Max().x(), root.Min().y()),
-                    float2(root.Max().x() + box.x(), root.Max().y()) );
+                    float2(root.Max().x, root.Min().y),
+                    float2(root.Max().x + box.x, root.Max().y) );
 
                 FAabb2f right, bottom;
                 Split_(right, bottom, growth, box);
@@ -195,8 +195,8 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
             }
             else if (willGrowDown) {
                 growth = FAabb2f(
-                    float2(root.Min().x(), root.Max().y()),
-                    float2(root.Max().x(), root.Max().y() + box.y()) );
+                    float2(root.Min().x, root.Max().y),
+                    float2(root.Max().x, root.Max().y + box.y) );
 
                 FAabb2f right, bottom;
                 Split_(right, bottom, growth, box);
@@ -216,7 +216,7 @@ bool BinPacking2D(float2& binsize, const TMemoryView<float2>& offsets, const TMe
         }
     }
 
-    Assert(binsize.AllGreaterThan(float2(0)));
+    Assert(AllGreater(binsize, float2::Zero));
     return true;
 }
 //----------------------------------------------------------------------------

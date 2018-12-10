@@ -67,14 +67,14 @@ static EContainmentType FrustumContainsConvexVolume_(
     // check frustum outside/inside box
     size_t out;
 
-    out=0; for (const float3& p : frustumCorners) out += ((p.x() > convexBounds.Max().x()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
-    out=0; for (const float3& p : frustumCorners) out += ((p.x() < convexBounds.Min().x()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.x > convexBounds.Max().x) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.x < convexBounds.Min().x) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
 
-    out=0; for (const float3& p : frustumCorners) out += ((p.y() > convexBounds.Max().y()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
-    out=0; for (const float3& p : frustumCorners) out += ((p.y() < convexBounds.Min().y()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.y > convexBounds.Max().y) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.y < convexBounds.Min().y) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
 
-    out=0; for (const float3& p : frustumCorners) out += ((p.z() > convexBounds.Max().z()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
-    out=0; for (const float3& p : frustumCorners) out += ((p.z() < convexBounds.Min().z()) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.z > convexBounds.Max().z) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
+    out=0; for (const float3& p : frustumCorners) out += ((p.z < convexBounds.Min().z) ? 1 : 0); if (8 == out) return EContainmentType::Disjoint;
 
     return EContainmentType::Intersects;
 }
@@ -118,44 +118,44 @@ void FFrustum::SetMatrix(const float4x4& viewProjection) {
     FPlane& pfar = _planes[size_t(EFrustumPlane::Far)];
 
     // Left plane
-    pleft.Normal().x()  = _matrix._14() + _matrix._11();
-    pleft.Normal().y()  = _matrix._24() + _matrix._21();
-    pleft.Normal().z()  = _matrix._34() + _matrix._31();
+    pleft.Normal().x  = _matrix._14() + _matrix._11();
+    pleft.Normal().y  = _matrix._24() + _matrix._21();
+    pleft.Normal().z  = _matrix._34() + _matrix._31();
     pleft.D()           = _matrix._44() + _matrix._41();
     pleft = pleft.Normalize();
 
     // Right plane
-    pright.Normal().x() = _matrix._14() - _matrix._11();
-    pright.Normal().y() = _matrix._24() - _matrix._21();
-    pright.Normal().z() = _matrix._34() - _matrix._31();
+    pright.Normal().x = _matrix._14() - _matrix._11();
+    pright.Normal().y = _matrix._24() - _matrix._21();
+    pright.Normal().z = _matrix._34() - _matrix._31();
     pright.D()          = _matrix._44() - _matrix._41();
     pright = pright.Normalize();
 
     // Top plane
-    ptop.Normal().x()   = _matrix._14() - _matrix._12();
-    ptop.Normal().y()   = _matrix._24() - _matrix._22();
-    ptop.Normal().z()   = _matrix._34() - _matrix._32();
+    ptop.Normal().x   = _matrix._14() - _matrix._12();
+    ptop.Normal().y   = _matrix._24() - _matrix._22();
+    ptop.Normal().z   = _matrix._34() - _matrix._32();
     ptop.D()            = _matrix._44() - _matrix._42();
     ptop = ptop.Normalize();
 
     // Bottom plane
-    pbottom.Normal().x()= _matrix._14() + _matrix._12();
-    pbottom.Normal().y()= _matrix._24() + _matrix._22();
-    pbottom.Normal().z()= _matrix._34() + _matrix._32();
+    pbottom.Normal().x= _matrix._14() + _matrix._12();
+    pbottom.Normal().y= _matrix._24() + _matrix._22();
+    pbottom.Normal().z= _matrix._34() + _matrix._32();
     pbottom.D()         = _matrix._44() + _matrix._42();
     pbottom = pbottom.Normalize();
 
     // Near plane
-    pnear.Normal().x()  = _matrix._14() + _matrix._13();
-    pnear.Normal().y()  = _matrix._24() + _matrix._23();
-    pnear.Normal().z()  = _matrix._34() + _matrix._33();
+    pnear.Normal().x  = _matrix._14() + _matrix._13();
+    pnear.Normal().y  = _matrix._24() + _matrix._23();
+    pnear.Normal().z  = _matrix._34() + _matrix._33();
     pnear.D()           = _matrix._44() + _matrix._43();
     pnear = pnear.Normalize();
 
     // Far plane
-    pfar.Normal().x()   = _matrix._14() - _matrix._13();
-    pfar.Normal().y()   = _matrix._24() - _matrix._23();
-    pfar.Normal().z()   = _matrix._34() - _matrix._33();
+    pfar.Normal().x   = _matrix._14() - _matrix._13();
+    pfar.Normal().y   = _matrix._24() - _matrix._23();
+    pfar.Normal().z   = _matrix._34() - _matrix._33();
     pfar.D()            = _matrix._44() - _matrix._43();
     pfar = pfar.Normalize();
 
@@ -174,9 +174,9 @@ void FFrustum::GetCameraParams(FFrustumCameraParams& params) const {
 
     params.Position = FPlane::Get3PlanesInterPoint(pright, ptop, pleft);
     params.LookAtDir = pnear.Normal();
-    params.UpDir = Normalize3(Cross(pright.Normal(), pnear.Normal()));
-    params.FOV = (F_HalfPi - std::acos(Dot3(pnear.Normal(), ptop.Normal()))) * 2;
-    params.AspectRatio = Length3(_corners[6] - _corners[5]) / Length3(_corners[4] - _corners[5]);
+    params.UpDir = Normalize(Cross(pright.Normal(), pnear.Normal()));
+    params.FOV = (F_HalfPi - std::acos(Dot(pnear.Normal(), ptop.Normal()))) * 2;
+    params.AspectRatio = Length(_corners[6] - _corners[5]) / Length(_corners[4] - _corners[5]);
     params.ZNear = fabsf(pnear.DistanceToPoint(params.Position));
     params.ZFar = fabsf(pfar.DistanceToPoint(params.Position));
 }
@@ -312,21 +312,21 @@ bool FFrustum::Intersects(const FRay& ray, float& in, float& out) const {
 }
 //----------------------------------------------------------------------------
 float FFrustum::GetWidthAtDepth(float depth) const {
-    float hAngle = (F_HalfPi - std::acos(Dot3(Near().Normal(), Left().Normal())) );
+    float hAngle = (F_HalfPi - std::acos(Dot(Near().Normal(), Left().Normal())) );
     return std::tan(hAngle) * depth * 2;
 }
 //----------------------------------------------------------------------------
 float FFrustum::GetHeightAtDepth(float depth) const {
-    float vAngle = (F_HalfPi - std::acos(Dot3(Near().Normal(), Top().Normal())) );
+    float vAngle = (F_HalfPi - std::acos(Dot(Near().Normal(), Top().Normal())) );
     return std::tan(vAngle) * depth * 2;
 }
 //----------------------------------------------------------------------------
 float FFrustum::GetZoomToExtentsShiftDistance(const TMemoryView<const float3>& points) const {
-    float vAngle = (F_HalfPi - std::acos(Dot3(Near().Normal(), Top().Normal())) );
+    float vAngle = (F_HalfPi - std::acos(Dot(Near().Normal(), Top().Normal())) );
     float vSin = std::sin(vAngle);
     Assert(std::abs(vSin) > F_Epsilon);
 
-    float hAngle = (F_HalfPi - std::acos(Dot3(Near().Normal(), Left().Normal())) );
+    float hAngle = (F_HalfPi - std::acos(Dot(Near().Normal(), Left().Normal())) );
     float hSin = std::sin(hAngle);
 
     float horizontalToVerticalMapping = vSin / hSin;
@@ -374,7 +374,7 @@ FFrustum FFrustum::FromCamera(const float3& cameraPos, const float3& lookDir, co
     float nearHalfWidth = nearHalfHeight * aspect;
     float farHalfWidth = farHalfHeight * aspect;
 
-    float3 rightDir = Normalize3(Cross(upDir, lookDir));
+    float3 rightDir = Normalize(Cross(upDir, lookDir));
     float3 Near1 = nearCenter - nearHalfHeight * upDir + nearHalfWidth * rightDir;
     float3 Near2 = nearCenter + nearHalfHeight * upDir + nearHalfWidth * rightDir;
     float3 Near3 = nearCenter + nearHalfHeight * upDir - nearHalfWidth * rightDir;
@@ -386,7 +386,7 @@ FFrustum FFrustum::FromCamera(const float3& cameraPos, const float3& lookDir, co
 
     FFrustum result;
 
-    result._matrix =    MakeLookAtLHMatrix(cameraPos, cameraPos + lookDir * 10, upDir) *
+    result._matrix =    MakeLookAtLHMatrix(cameraPos, float3(cameraPos + lookDir * 10), upDir) *
                         MakePerspectiveFovLHMatrix(fov, aspect, znear, zfar);
 
     result._planes[size_t(EFrustumPlane::Near)]      = FPlane::FromTriangle(Near1, Near2, Near3).Normalize();

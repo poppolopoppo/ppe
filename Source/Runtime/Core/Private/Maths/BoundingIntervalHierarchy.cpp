@@ -186,7 +186,7 @@ void FBasicBIHTree::Build(
         iteration++;
         Assert(iteration <= 3);
 
-        const size_t axis = BiggestComponent3(it.Grid.Extents());
+        const size_t axis = MaxComponentIndex(it.Grid.Extents());
         const float splitD = (it.Grid.Min()[axis] + it.Grid.Max()[axis]) * 0.5f;
 
         float clip0 = -FLT_MAX;

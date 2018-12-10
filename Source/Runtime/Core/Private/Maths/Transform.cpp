@@ -12,8 +12,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 const FTransform FTransform::Identity(
     FQuaternion::Identity,
-    float3::Zero(),
-    float3::One() );
+    float3::Zero,
+    float3::One );
 //----------------------------------------------------------------------------
 float3 FTransform::TransformPosition(const float3& p) const {
     Assert(not IsNAN(*this));
@@ -37,20 +37,20 @@ float3 FTransform::TransformVectorNoScale(const float3& v) const {
 //----------------------------------------------------------------------------
 float4 FTransform::Transform(const float4& v) const {
     Assert(not IsNAN(*this));
-    Assert(v.w() == 0 || v.w() == 1); // or it won't work
+    Assert(v.w == 0 || v.w == 1); // or it won't work
 
-    return ((v.w() == 1.f)
-        ? float4(TransformPosition(v.xyz()), 1.f)
-        : float4(TransformVector(v.xyz()), 0.f) );
+    return ((v.w == 1.f)
+        ? float4(TransformPosition(v.xyz), 1.f)
+        : float4(TransformVector(v.xyz), 0.f) );
 }
 //----------------------------------------------------------------------------
 float4 FTransform::TransformNoScale(const float4& v) const {
     Assert(not IsNAN(*this));
-    Assert(v.w() == 0 || v.w() == 1); // or it won't work
+    Assert(v.w == 0 || v.w == 1); // or it won't work
 
-    return ((v.w() == 1.f)
-        ? float4(TransformPositionNoScale(v.xyz()), 1.f)
-        : float4(TransformVectorNoScale(v.xyz()), 0.f));
+    return ((v.w == 1.f)
+        ? float4(TransformPositionNoScale(v.xyz), 1.f)
+        : float4(TransformVectorNoScale(v.xyz), 0.f));
 }
 //----------------------------------------------------------------------------
 FTransform FTransform::Invert() const {
@@ -89,26 +89,26 @@ float3 FTransform::InvertTransformVectorNoScale(const float3& v) const {
 //----------------------------------------------------------------------------
 float4 FTransform::InvertTransform(const float4& v) const {
     Assert(not IsNAN(*this));
-    Assert(v.w() == 0 || v.w() == 1); // or it won't work
+    Assert(v.w == 0 || v.w == 1); // or it won't work
 
-    return ((v.w() == 1.f)
-        ? float4(InvertTransformPosition(v.xyz()), 1.f)
-        : float4(InvertTransformVector(v.xyz()), 0.f) );
+    return ((v.w == 1.f)
+        ? float4(InvertTransformPosition(v.xyz), 1.f)
+        : float4(InvertTransformVector(v.xyz), 0.f) );
 }
 //----------------------------------------------------------------------------
 float4 FTransform::InvertTransformNoScale(const float4& v) const {
     Assert(not IsNAN(*this));
-    Assert(v.w() == 0 || v.w() == 1); // or it won't work
+    Assert(v.w == 0 || v.w == 1); // or it won't work
 
-    return ((v.w() == 1.f)
-        ? float4(InvertTransformPositionNoScale(v.xyz()), 1.f)
-        : float4(InvertTransformVectorNoScale(v.xyz()), 0.f) );
+    return ((v.w == 1.f)
+        ? float4(InvertTransformPositionNoScale(v.xyz), 1.f)
+        : float4(InvertTransformVectorNoScale(v.xyz), 0.f) );
 }
 //----------------------------------------------------------------------------
 float4x4 FTransform::ToMatrixNoScale() const {
     Assert(not IsNAN(*this));
 
-    return Make3DTransformMatrix(_translation, float3::One(), _rotation);
+    return Make3DTransformMatrix(_translation, 1.f, _rotation);
 }
 //----------------------------------------------------------------------------
 float4x4 FTransform::ToMatrixWithScale() const {
@@ -124,7 +124,7 @@ float4x4 FTransform::ToInvertMatrixWithScale() const {
 }
 //----------------------------------------------------------------------------
 bool FTransform::Equals(const FTransform& other, float espilon/* = F_Epsilon */) const {
-    return (NearlyEquals(_rotation.Value(), other._rotation.Value(), espilon) &&
+    return (NearlyEquals(_rotation.data, other._rotation.data, espilon) &&
             NearlyEquals(_translation, other._translation, espilon) &&
             NearlyEquals(_scale, other._scale, espilon) );
 }
@@ -132,7 +132,7 @@ bool FTransform::Equals(const FTransform& other, float espilon/* = F_Epsilon */)
 FTransform& FTransform::Accumulate(const FTransform& delta) {
     Assert(not IsNAN(*this));
 
-    if (Sqr(delta._rotation.w()) < 1.f - F_Delta * F_Delta)
+    if (Sqr(delta._rotation.w) < 1.f - F_Delta * F_Delta)
         _rotation = delta._rotation * _rotation;
 
     _translation += delta._translation;
@@ -144,17 +144,17 @@ FTransform& FTransform::Accumulate(const FTransform& delta) {
 FTransform& FTransform::AccumulateWithShortestRotation(const FTransform& delta) {
     Assert(not IsNAN(*this));
 
-    if (Dot4(_rotation.Value(), delta._rotation.Value()) < 0.f) {
-        _rotation.x() -= delta._rotation.x();
-        _rotation.y() -= delta._rotation.y();
-        _rotation.z() -= delta._rotation.z();
-        _rotation.w() -= delta._rotation.w();
+    if (Dot(_rotation.data, delta._rotation.data) < 0.f) {
+        _rotation.x -= delta._rotation.x;
+        _rotation.y -= delta._rotation.y;
+        _rotation.z -= delta._rotation.z;
+        _rotation.w -= delta._rotation.w;
     }
     else {
-        _rotation.x() += delta._rotation.x();
-        _rotation.y() += delta._rotation.y();
-        _rotation.z() += delta._rotation.z();
-        _rotation.w() += delta._rotation.w();
+        _rotation.x += delta._rotation.x;
+        _rotation.y += delta._rotation.y;
+        _rotation.z += delta._rotation.z;
+        _rotation.w += delta._rotation.w;
     }
 
     _translation += delta._translation;
@@ -166,7 +166,7 @@ FTransform& FTransform::AccumulateWithShortestRotation(const FTransform& delta) 
 FTransform& FTransform::AccumulateWithAdditiveScale(const FTransform& delta) {
     Assert(not IsNAN(*this));
 
-    if (Sqr(delta._rotation.w()) < 1.f - F_Delta * F_Delta)
+    if (Sqr(delta._rotation.w) < 1.f - F_Delta * F_Delta)
         _rotation = delta._rotation * _rotation;
 
     _translation += delta._translation;

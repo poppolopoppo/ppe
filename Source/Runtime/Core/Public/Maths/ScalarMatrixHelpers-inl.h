@@ -286,33 +286,33 @@ void Decompose( const TScalarMatrix<T, 4, 4>& transform,
     //References: http://www.gamedev.net/community/forums/topic.asp?topic_id=441695
 
     //Get the translation.
-    translation.x() = transform._41();
-    translation.y() = transform._42();
-    translation.z() = transform._43();
+    translation.x = transform._41();
+    translation.y = transform._42();
+    translation.z = transform._43();
 
     //Scaling is the length of the rows.
-    scale.x() = std::sqrt((transform._11() * transform._11()) + (transform._12() * transform._12()) + (transform._13() * transform._13()));
-    scale.y() = std::sqrt((transform._21() * transform._21()) + (transform._22() * transform._22()) + (transform._23() * transform._23()));
-    scale.z() = std::sqrt((transform._31() * transform._31()) + (transform._32() * transform._32()) + (transform._33() * transform._33()));
+    scale.x = std::sqrt((transform._11() * transform._11()) + (transform._12() * transform._12()) + (transform._13() * transform._13()));
+    scale.y = std::sqrt((transform._21() * transform._21()) + (transform._22() * transform._22()) + (transform._23() * transform._23()));
+    scale.z = std::sqrt((transform._31() * transform._31()) + (transform._32() * transform._32()) + (transform._33() * transform._33()));
 
     //If any of the scaling factors are zero, than the rotation matrix can not exist.
-    Assert( std::abs(scale.x()) > F_Epsilon &&
-            std::abs(scale.y()) > F_Epsilon &&
-            std::abs(scale.z()) > F_Epsilon );
+    Assert( std::abs(scale.x) > F_Epsilon &&
+            std::abs(scale.y) > F_Epsilon &&
+            std::abs(scale.z) > F_Epsilon );
 
     //The rotation is the left over matrix after dividing out the scaling.
     TScalarMatrix<T, 4, 4> rotationmatrix(0);
-    rotationmatrix._11() = transform._11() / scale.x();
-    rotationmatrix._12() = transform._12() / scale.x();
-    rotationmatrix._13() = transform._13() / scale.x();
+    rotationmatrix._11() = transform._11() / scale.x;
+    rotationmatrix._12() = transform._12() / scale.x;
+    rotationmatrix._13() = transform._13() / scale.x;
 
-    rotationmatrix._21() = transform._21() / scale.y();
-    rotationmatrix._22() = transform._22() / scale.y();
-    rotationmatrix._23() = transform._23() / scale.y();
+    rotationmatrix._21() = transform._21() / scale.y;
+    rotationmatrix._22() = transform._22() / scale.y;
+    rotationmatrix._23() = transform._23() / scale.y;
 
-    rotationmatrix._31() = transform._31() / scale.z();
-    rotationmatrix._32() = transform._32() / scale.z();
-    rotationmatrix._33() = transform._33() / scale.z();
+    rotationmatrix._31() = transform._31() / scale.z;
+    rotationmatrix._32() = transform._32() / scale.z;
+    rotationmatrix._33() = transform._33() / scale.z;
 
     rotationmatrix._44() = 1.0f;
 
@@ -517,23 +517,23 @@ TScalarMatrix<T, 4, 4> Invert_AssumeHomogeneous(const TScalarMatrix<T, 4, 4>& m)
 
     const T ooDet = TRcp(det);
 
-    const TScalarVector<T, 4> ecb_(def_.y(), abc_.z(), abc_.y(), 0.f);
-    const TScalarVector<T, 4> ihf_(ghi_.z(), ghi_.y(), def_.z(), 0.f);
+    const TScalarVector<T, 4> ecb_(def_.y, abc_.z, abc_.y, 0.f);
+    const TScalarVector<T, 4> ihf_(ghi_.z, ghi_.y, def_.z, 0.f);
 
-    const TScalarVector<T, 4> fbc_(def_.z(), abc_.y(), abc_.z(), 0.f);
-    const TScalarVector<T, 4> hie_(ghi_.y(), ghi_.z(), def_.y(), 0.f);
+    const TScalarVector<T, 4> fbc_(def_.z, abc_.y, abc_.z, 0.f);
+    const TScalarVector<T, 4> hie_(ghi_.y, ghi_.z, def_.y, 0.f);
 
-    const TScalarVector<T, 4> fac_(def_.z(), abc_.x(), abc_.z(), 0.f);
-    const TScalarVector<T, 4> gid_(ghi_.x(), ghi_.z(), def_.x(), 0.f);
+    const TScalarVector<T, 4> fac_(def_.z, abc_.x, abc_.z, 0.f);
+    const TScalarVector<T, 4> gid_(ghi_.x, ghi_.z, def_.x, 0.f);
 
-    const TScalarVector<T, 4> dca_(def_.x(), abc_.z(), abc_.x(), 0.f);
-    const TScalarVector<T, 4> igf_(ghi_.z(), ghi_.x(), def_.z(), 0.f);
+    const TScalarVector<T, 4> dca_(def_.x, abc_.z, abc_.x, 0.f);
+    const TScalarVector<T, 4> igf_(ghi_.z, ghi_.x, def_.z, 0.f);
 
-    const TScalarVector<T, 4> dba_(def_.x(), abc_.y(), abc_.x(), 0.f);
-    const TScalarVector<T, 4> hge_(ghi_.y(), ghi_.x(), def_.y(), 0.f);
+    const TScalarVector<T, 4> dba_(def_.x, abc_.y, abc_.x, 0.f);
+    const TScalarVector<T, 4> hge_(ghi_.y, ghi_.x, def_.y, 0.f);
 
-    const TScalarVector<T, 4> eab_(def_.y(), abc_.x(), abc_.y(), 0.f);
-    const TScalarVector<T, 4> ghd_(ghi_.x(), ghi_.y(), def_.x(), 0.f);
+    const TScalarVector<T, 4> eab_(def_.y, abc_.x, abc_.y, 0.f);
+    const TScalarVector<T, 4> ghd_(ghi_.x, ghi_.y, def_.x, 0.f);
 
     const TScalarVector<T, 4> adjointL0 = ecb_ * ihf_ - fbc_ * hie_;
     const TScalarVector<T, 4> adjointL1 = fac_ * gid_ - dca_ * igf_;
@@ -548,9 +548,9 @@ TScalarMatrix<T, 4, 4> Invert_AssumeHomogeneous(const TScalarMatrix<T, 4, 4>& m)
     const T newTy = Dot3(resultL1, minus_t);
     const T newTz = Dot3(resultL2, minus_t);
 
-    resultL0.w() = newTx;
-    resultL1.w() = newTy;
-    resultL2.w() = newTz;
+    resultL0.w = newTx;
+    resultL1.w = newTy;
+    resultL2.w = newTz;
 
     TScalarMatrix<T, 4, 4> result;
     result.SetRow(0, resultL0);
@@ -589,21 +589,21 @@ TScalarMatrix<T, 4, 4> MakeBillboardMatrix(  const TScalarVector<T, 3>& objectPo
     const TScalarVector<T, 3> f = Cross(difference, crossed);
 
     TScalarMatrix<T, 4, 4> result(0);
-    result._11() = crossed.x();
-    result._12() = crossed.y();
-    result._13() = crossed.z();
+    result._11() = crossed.x;
+    result._12() = crossed.y;
+    result._13() = crossed.z;
     result._14() = 0.0f;
-    result._21() = f.x();
-    result._22() = f.y();
-    result._23() = f.z();
+    result._21() = f.x;
+    result._22() = f.y;
+    result._23() = f.z;
     result._24() = 0.0f;
-    result._31() = difference.x();
-    result._32() = difference.y();
-    result._33() = difference.z();
+    result._31() = difference.x;
+    result._32() = difference.y;
+    result._33() = difference.z;
     result._34() = 0.0f;
-    result._41() = objectPosition.x();
-    result._42() = objectPosition.y();
-    result._43() = objectPosition.z();
+    result._41() = objectPosition.x;
+    result._42() = objectPosition.y;
+    result._43() = objectPosition.z;
     result._44() = 1.0f;
 
     return result;
@@ -613,18 +613,18 @@ template <typename T>
 TScalarMatrix<T, 4, 4> MakeLookAtLHMatrix(   const TScalarVector<T, 3>& eye,
                                             const TScalarVector<T, 3>& target,
                                             const TScalarVector<T, 3>& up ) {
-    TScalarVector<T, 3> zaxis = Normalize3(target - eye);
-    TScalarVector<T, 3> xaxis = Normalize3(Cross(up, zaxis));
+    TScalarVector<T, 3> zaxis = Normalize(target - eye);
+    TScalarVector<T, 3> xaxis = Normalize(Cross(up, zaxis));
     TScalarVector<T, 3> yaxis = Cross(zaxis, xaxis);
 
     TScalarMatrix<T, 4, 4> result = TScalarMatrix<T, 4, 4>::Identity();
-    result._11() = xaxis.x(); result._21() = xaxis.y(); result._31() = xaxis.z();
-    result._12() = yaxis.x(); result._22() = yaxis.y(); result._32() = yaxis.z();
-    result._13() = zaxis.x(); result._23() = zaxis.y(); result._33() = zaxis.z();
+    result._11() = xaxis.x; result._21() = xaxis.y; result._31() = xaxis.z;
+    result._12() = yaxis.x; result._22() = yaxis.y; result._32() = yaxis.z;
+    result._13() = zaxis.x; result._23() = zaxis.y; result._33() = zaxis.z;
 
-    result._41() = Dot3(xaxis, eye);
-    result._42() = Dot3(yaxis, eye);
-    result._43() = Dot3(zaxis, eye);
+    result._41() = Dot(xaxis, eye);
+    result._42() = Dot(yaxis, eye);
+    result._43() = Dot(zaxis, eye);
 
     result._41() = -result._41();
     result._42() = -result._42();
@@ -637,14 +637,14 @@ template <typename T>
 TScalarMatrix<T, 4, 4> MakeLookAtRHMatrix(   const TScalarVector<T, 3>& eye,
                                             const TScalarVector<T, 3>& target,
                                             const TScalarVector<T, 3>& up ) {
-    TScalarVector<T, 3> zaxis = Normalize3(eye - target);
-    TScalarVector<T, 3> xaxis = Normalize3(Cross(up, zaxis));
+    TScalarVector<T, 3> zaxis = Normalize(eye - target);
+    TScalarVector<T, 3> xaxis = Normalize(Cross(up, zaxis));
     TScalarVector<T, 3> yaxis = Cross(zaxis, xaxis);
 
     TScalarMatrix<T, 4, 4> result = TScalarMatrix<T, 4, 4>::Identity();
-    result._11() = xaxis.x(); result._21() = xaxis.y(); result._31() = xaxis.z();
-    result._12() = yaxis.x(); result._22() = yaxis.y(); result._32() = yaxis.z();
-    result._13() = zaxis.x(); result._23() = zaxis.y(); result._33() = zaxis.z();
+    result._11() = xaxis.x; result._21() = xaxis.y; result._31() = xaxis.z;
+    result._12() = yaxis.x; result._22() = yaxis.y; result._32() = yaxis.z;
+    result._13() = zaxis.x; result._23() = zaxis.y; result._33() = zaxis.z;
 
     result._41() = Dot3(xaxis, eye);
     result._42() = Dot3(yaxis, eye);
@@ -659,9 +659,9 @@ TScalarMatrix<T, 4, 4> MakeLookAtRHMatrix(   const TScalarVector<T, 3>& eye,
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarMatrix<T, 4, 4> MakeOrthographicLHMatrix( T width,
-                                                T height,
-                                                T znear,
-                                                T zfar ) {
+                                                 T height,
+                                                 T znear,
+                                                 T zfar ) {
     T halfWidth = width * 0.5f;
     T halfHeight = height * 0.5f;
 
@@ -670,9 +670,9 @@ TScalarMatrix<T, 4, 4> MakeOrthographicLHMatrix( T width,
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarMatrix<T, 4, 4> MakeOrthographicRHMatrix( T width,
-                                                T height,
-                                                T znear,
-                                                T zfar ) {
+                                                 T height,
+                                                 T znear,
+                                                 T zfar ) {
     T halfWidth = width * 0.5f;
     T halfHeight = height * 0.5f;
 
@@ -681,11 +681,11 @@ TScalarMatrix<T, 4, 4> MakeOrthographicRHMatrix( T width,
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarMatrix<T, 4, 4> MakeOrthographicOffCenterLHMatrix(T left,
-                                                        T right,
-                                                        T bottom,
-                                                        T top,
-                                                        T znear,
-                                                        T zfar ) {
+                                                         T right,
+                                                         T bottom,
+                                                         T top,
+                                                         T znear,
+                                                         T zfar ) {
     T zRange = 1.0f / (zfar - znear);
 
     TScalarMatrix<T, 4, 4> result = TScalarMatrix<T, 4, 4>::Identity();
@@ -701,18 +701,18 @@ TScalarMatrix<T, 4, 4> MakeOrthographicOffCenterLHMatrix(T left,
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarMatrix<T, 4, 4> MakeOrthographicOffCenterRHMatrix(T left,
-                                                        T right,
-                                                        T bottom,
-                                                        T top,
-                                                        T znear,
-                                                        T zfar ) {
+                                                         T right,
+                                                         T bottom,
+                                                         T top,
+                                                         T znear,
+                                                         T zfar ) {
     TScalarMatrix<T, 4, 4> result = MakeOrthographicOffCenterLHMatrix(left, right, bottom, top, znear, zfar);
     result._33() *= -1.0f;
     return result;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakePerspectiveLHMatrix(  T width,
+TScalarMatrix<T, 4, 4> MakePerspectiveLHMatrix( T width,
                                                 T height,
                                                 T znear,
                                                 T zfar ) {
@@ -723,7 +723,7 @@ TScalarMatrix<T, 4, 4> MakePerspectiveLHMatrix(  T width,
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakePerspectiveRHMatrix(  T width,
+TScalarMatrix<T, 4, 4> MakePerspectiveRHMatrix( T width,
                                                 T height,
                                                 T znear,
                                                 T zfar ) {
@@ -734,7 +734,7 @@ TScalarMatrix<T, 4, 4> MakePerspectiveRHMatrix(  T width,
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakePerspectiveOffCenterLHMatrix( T left,
+TScalarMatrix<T, 4, 4> MakePerspectiveOffCenterLHMatrix(T left,
                                                         T right,
                                                         T bottom,
                                                         T top,
@@ -755,7 +755,7 @@ TScalarMatrix<T, 4, 4> MakePerspectiveOffCenterLHMatrix( T left,
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakePerspectiveOffCenterRHMatrix( T left,
+TScalarMatrix<T, 4, 4> MakePerspectiveOffCenterRHMatrix(T left,
                                                         T right,
                                                         T bottom,
                                                         T top,
@@ -770,7 +770,7 @@ TScalarMatrix<T, 4, 4> MakePerspectiveOffCenterRHMatrix( T left,
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakePerspectiveFovLHMatrix(   T fov,
+TScalarMatrix<T, 4, 4> MakePerspectiveFovLHMatrix(  T fov,
                                                     T aspect,
                                                     T znear,
                                                     T zfar ) {
@@ -784,7 +784,7 @@ TScalarMatrix<T, 4, 4> MakePerspectiveFovLHMatrix(   T fov,
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakePerspectiveFovRHMatrix(   T fov,
+TScalarMatrix<T, 4, 4> MakePerspectiveFovRHMatrix(  T fov,
                                                     T aspect,
                                                     T znear,
                                                     T zfar ) {
@@ -799,9 +799,9 @@ TScalarMatrix<T, 4, 4> MakePerspectiveFovRHMatrix(   T fov,
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarMatrix<T, 4, 4> MakeReflectionMatrix(const FPlane& plane) {
-    T x = plane.Normal().x();
-    T y = plane.Normal().y();
-    T z = plane.Normal().z();
+    T x = plane.Normal().x;
+    T y = plane.Normal().y;
+    T z = plane.Normal().z;
     T x2 = -2.0f * x;
     T y2 = -2.0f * y;
     T z2 = -2.0f * z;
@@ -831,25 +831,25 @@ TScalarMatrix<T, 4, 4> MakeReflectionMatrix(const FPlane& plane) {
 /// W component is 1, the light is a point light.
 template <typename T>
 TScalarMatrix<T, 4, 4> MakeShadowMatrix(const TScalarVector<T, 4>& light, const FPlane& plane) {
-    T dot = (plane.Normal().x() * light.x()) + (plane.Normal().y() * light.y()) + (plane.Normal().z() * light.z()) + (plane.D() * light.W);
-    T x = -plane.Normal().x();
-    T y = -plane.Normal().y();
-    T z = -plane.Normal().z();
+    T dot = (plane.Normal().x * light.x) + (plane.Normal().y * light.y) + (plane.Normal().z * light.z) + (plane.D() * light.W);
+    T x = -plane.Normal().x;
+    T y = -plane.Normal().y;
+    T z = -plane.Normal().z;
     T d = -plane.D();
 
     TScalarMatrix<T, 4, 4> result;
-    result._11() = (x * light.x()) + dot;
-    result._21() = y * light.x();
-    result._31() = z * light.x();
-    result._41() = d * light.x();
-    result._12() = x * light.y();
-    result._22() = (y * light.y()) + dot;
-    result._32() = z * light.y();
-    result._42() = d * light.y();
-    result._13() = x * light.z();
-    result._23() = y * light.z();
-    result._33() = (z * light.z()) + dot;
-    result._43() = d * light.z();
+    result._11() = (x * light.x) + dot;
+    result._21() = y * light.x;
+    result._31() = z * light.x;
+    result._41() = d * light.x;
+    result._12() = x * light.y;
+    result._22() = (y * light.y) + dot;
+    result._32() = z * light.y;
+    result._42() = d * light.y;
+    result._13() = x * light.z;
+    result._23() = y * light.z;
+    result._33() = (z * light.z) + dot;
+    result._43() = d * light.z;
     result._14() = x * light.W;
     result._24() = y * light.W;
     result._34() = z * light.W;
@@ -919,27 +919,27 @@ TScalarMatrix<T, 3, 2> Make2DTransformMatrix(const TScalarVector<T, 2>& translat
 template <typename T>
 TScalarMatrix<T, 3, 2> Make2DTransformMatrix(const TScalarVector<T, 2>& translate, const TScalarVector<T, 2>& scale, T fsin, T fcos) {
     TScalarMatrix<T, 3, 2> result;
-    result.m00() = scale.x()*fcos;
-    result.m10() = scale.x()*fsin;
-    result.m01() = -scale.y()*fsin;
-    result.m11() = scale.y()*fcos;
-    result.m02() = translate.x();
-    result.m12() = translate.y();
+    result.m00() = scale.x*fcos;
+    result.m10() = scale.x*fsin;
+    result.m01() = -scale.y*fsin;
+    result.m11() = scale.y*fcos;
+    result.m02() = translate.x;
+    result.m12() = translate.y;
     return result;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline TScalarMatrix<float, 3, 3> Make3DRotationMatrix(const FQuaternion& rotation) {
-    float xx = rotation.x() * rotation.x();
-    float yy = rotation.y() * rotation.y();
-    float zz = rotation.z() * rotation.z();
-    float xy = rotation.x() * rotation.y();
-    float zw = rotation.z() * rotation.w();
-    float zx = rotation.z() * rotation.x();
-    float yw = rotation.y() * rotation.w();
-    float yz = rotation.y() * rotation.z();
-    float xw = rotation.x() * rotation.w();
+    float xx = rotation.x * rotation.x;
+    float yy = rotation.y * rotation.y;
+    float zz = rotation.z * rotation.z;
+    float xy = rotation.x * rotation.y;
+    float zw = rotation.z * rotation.w;
+    float zx = rotation.z * rotation.x;
+    float yw = rotation.y * rotation.w;
+    float yz = rotation.y * rotation.z;
+    float xw = rotation.x * rotation.w;
 
     TScalarMatrix<float, 3, 3> result = TScalarMatrix<float, 3, 3>::Identity();
     result._11() = 1.0f - (2.0f * (yy + zz));
@@ -971,9 +971,9 @@ template <typename T>
 TScalarMatrix<T, 3, 3> Make3DRotationMatrix(const TScalarVector<T, 3>& axis, T fsin, T fcos) {
     Assert(IsNormalized(axis));
 
-    float x = axis.x();
-    float y = axis.y();
-    float z = axis.z();
+    float x = axis.x;
+    float y = axis.y;
+    float z = axis.z;
     float xx = x * x;
     float yy = y * y;
     float zz = z * z;
@@ -1061,6 +1061,11 @@ TScalarMatrix<T, 4, 4> Make3DTransformMatrix(const TScalarVector<T, 3>& translat
 }
 //----------------------------------------------------------------------------
 template <typename T>
+TScalarMatrix<T, 4, 4> Make3DTransformMatrix(const TScalarVector<T, 3>& translate, T scale, const FQuaternion& rotation) {
+    return Make3DTransformMatrix(translate, TScalarVector<T, 3>(scale), rotation);
+}
+//----------------------------------------------------------------------------
+template <typename T>
 TScalarMatrix<T, 4, 4> Make3DTransformMatrix(const TScalarVector<T, 3>& translate, const TScalarVector<T, 3>& scale, const TScalarVector<T, 3>& axis, T fsin, T fcos) {
     return Make3DTransformMatrix(translate, scale, Make3DRotationMatrix(axis, fsin, fcos).OneExtend());
 }
@@ -1073,10 +1078,10 @@ TScalarMatrix<T, 4, 4> Make3DTransformMatrix(const TScalarVector<T, 3>& translat
 template <typename T>
 TScalarMatrix<T, 4, 4> Make3DTransformMatrix(const TScalarVector<T, 3>& translate, const TScalarVector<T, 3>& scale, const TScalarMatrix<T, 4, 4>& rotation) {
     TScalarMatrix<T, 4, 4> result;
-    result.SetColumn_x(rotation.Column_x() * scale.x());
-    result.SetColumn_y(rotation.Column_y() * scale.y());
-    result.SetColumn_z(rotation.Column_z() * scale.z());
-    result.SetColumn_w(translate.OneExtend());
+    result.SetColumn_x(rotation.Column_x() * scale.x);
+    result.SetColumn_y(rotation.Column_y() * scale.y);
+    result.SetColumn_z(rotation.Column_z() * scale.z);
+    result.SetColumn_w(TScalarVector<T, 4>{ translate, T(1) });
     return result;
 }
 //----------------------------------------------------------------------------
@@ -1123,9 +1128,9 @@ TScalarMatrix<T, 4, 4> Make3DTransformMatrixAroundZ(const TScalarVector<T, 3>& t
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarVector<T, 3> Transform3(const TScalarMatrix<T, 3, 3>& m, const TScalarVector<T, 3>& v) {
-    const float fX = (m.m00()*v.x())+(m.m10()*v.y())+(m.m20()*v.z());
-    const float fY = (m.m01()*v.x())+(m.m11()*v.y())+(m.m21()*v.z());
-    const float fZ = (m.m02()*v.x())+(m.m12()*v.y())+(m.m22()*v.z());
+    const float fX = (m.m00()*v.x)+(m.m10()*v.y)+(m.m20()*v.z);
+    const float fY = (m.m01()*v.x)+(m.m11()*v.y)+(m.m21()*v.z);
+    const float fZ = (m.m02()*v.x)+(m.m12()*v.y)+(m.m22()*v.z);
     return TScalarVector<T, 3>(fX, fY, fZ);
 }
 //----------------------------------------------------------------------------
@@ -1142,28 +1147,28 @@ TScalarVector<T, 3> TransformVector3(const TScalarMatrix<T, 4, 4>& m, const TSca
 template <typename T>
 TScalarVector<T, 4> Transform3_OneExtend(const TScalarMatrix<T, 4, 4>& m, const TScalarVector<T, 3>& v) {
     return TScalarVector<T, 4>(
-        (m.m00()*v.x()) + (m.m10()*v.y()) + (m.m20()*v.z()) + (m.m30()),
-        (m.m01()*v.x()) + (m.m11()*v.y()) + (m.m21()*v.z()) + (m.m31()),
-        (m.m02()*v.x()) + (m.m12()*v.y()) + (m.m22()*v.z()) + (m.m32()),
-        (m.m03()*v.x()) + (m.m13()*v.y()) + (m.m23()*v.z()) + (m.m33()) );
+        (m.m00()*v.x) + (m.m10()*v.y) + (m.m20()*v.z) + (m.m30()),
+        (m.m01()*v.x) + (m.m11()*v.y) + (m.m21()*v.z) + (m.m31()),
+        (m.m02()*v.x) + (m.m12()*v.y) + (m.m22()*v.z) + (m.m32()),
+        (m.m03()*v.x) + (m.m13()*v.y) + (m.m23()*v.z) + (m.m33()) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarVector<T, 4> Transform3_ZeroExtend(const TScalarMatrix<T, 4, 4>& m, const TScalarVector<T, 3>& v) {
     return TScalarVector<T, 4>(
-        (m.m00()*v.x()) + (m.m10()*v.y()) + (m.m20()*v.z()),
-        (m.m01()*v.x()) + (m.m11()*v.y()) + (m.m21()*v.z()),
-        (m.m02()*v.x()) + (m.m12()*v.y()) + (m.m22()*v.z()),
-        (m.m03()*v.x()) + (m.m13()*v.y()) + (m.m23()*v.z()) );
+        (m.m00()*v.x) + (m.m10()*v.y) + (m.m20()*v.z),
+        (m.m01()*v.x) + (m.m11()*v.y) + (m.m21()*v.z),
+        (m.m02()*v.x) + (m.m12()*v.y) + (m.m22()*v.z),
+        (m.m03()*v.x) + (m.m13()*v.y) + (m.m23()*v.z) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarVector<T, 4> Transform4(const TScalarMatrix<T, 4, 4>& m, const TScalarVector<T, 4>& v) {
     return TScalarVector<T, 4>(
-        (m.m00()*v.x()) + (m.m10()*v.y()) + (m.m20()*v.z()) + (m.m30()*v.w()),
-        (m.m01()*v.x()) + (m.m11()*v.y()) + (m.m21()*v.z()) + (m.m31()*v.w()),
-        (m.m02()*v.x()) + (m.m12()*v.y()) + (m.m22()*v.z()) + (m.m32()*v.w()),
-        (m.m03()*v.x()) + (m.m13()*v.y()) + (m.m23()*v.z()) + (m.m33()*v.w()) );
+        (m.m00()*v.x) + (m.m10()*v.y) + (m.m20()*v.z) + (m.m30()*v.w),
+        (m.m01()*v.x) + (m.m11()*v.y) + (m.m21()*v.z) + (m.m31()*v.w),
+        (m.m02()*v.x) + (m.m12()*v.y) + (m.m22()*v.z) + (m.m32()*v.w),
+        (m.m03()*v.x) + (m.m13()*v.y) + (m.m23()*v.z) + (m.m33()*v.w) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

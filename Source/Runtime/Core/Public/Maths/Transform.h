@@ -53,7 +53,7 @@ public:
     static const FTransform Identity;
     bool IsIdentity() const { return Equals(Identity); }
 
-    float Determinant() const { return (_scale.x() * _scale.y() * _scale.z()); }
+    float Determinant() const { return (_scale.x * _scale.y * _scale.z); }
     float Sign() const { return (Determinant() < 0 ? -1.f : 1.f); }
 
     float3 TransformPosition(const float3& p) const;

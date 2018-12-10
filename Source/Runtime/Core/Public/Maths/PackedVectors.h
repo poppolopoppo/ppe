@@ -39,13 +39,13 @@ struct UX10Y10Z10W2N {
     FORCE_INLINE void Unpack_FloatM11(float3& xyz) const;
     FORCE_INLINE void Unpack_FloatM11(float3& xyz, u8& w) const;
 
-    void Pack(const float3& v) { Pack(v.ZeroExtend()); }
+    void Pack(const float3& v) { Pack({ v, 0 }); }
     void Pack(const float4& v);
     float4 Unpack() const;
 
     static UX10Y10Z10W2N DefaultValue() { return UX10Y10Z10W2N(u32(0)); }
 
-    operator float3 () const { return Unpack().xyz(); }
+    operator float3 () const { return Unpack().xyz; }
     operator float4 () const { return Unpack(); }
 
     FORCE_INLINE bool operator ==(const UX10Y10Z10W2N& other) const { return _data == other._data; }

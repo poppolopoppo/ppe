@@ -11,8 +11,8 @@ inline FPlane::FPlane()
 ,   _d(0) {}
 //----------------------------------------------------------------------------
 inline FPlane::FPlane(const float4& normalD)
-:   _normal(normalD.x(), normalD.y(), normalD.z())
-,   _d(normalD.w()) {}
+:   _normal(normalD.x, normalD.y, normalD.z)
+,   _d(normalD.w) {}
 //----------------------------------------------------------------------------
 inline FPlane::FPlane(const float3& normal, float d)
 :   _normal(normal)
@@ -20,7 +20,7 @@ inline FPlane::FPlane(const float3& normal, float d)
 //----------------------------------------------------------------------------
 inline FPlane::FPlane(const float3& normal, const float3& point)
 :   _normal(normal)
-,   _d(-Dot3(normal, point)) {}
+,   _d(-Dot(normal, point)) {}
 //----------------------------------------------------------------------------
 inline FPlane::FPlane(const FPlane& other)
 :   _normal(other._normal)
@@ -37,7 +37,7 @@ inline float3 FPlane::PointOnPlane() const {
 }
 //----------------------------------------------------------------------------
 inline FPlane FPlane::Normalize() const {
-    const float norm = Length3(_normal);
+    const float norm = Length(_normal);
     Assert(fabsf(norm) > F_Epsilon);
     return FPlane(_normal / norm, _d / norm);
 }

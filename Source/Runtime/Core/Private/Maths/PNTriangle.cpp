@@ -12,7 +12,7 @@ namespace PPE {
 namespace {
 //----------------------------------------------------------------------------
 FORCE_INLINE float3 ProjectToPlane_(const float3& p, const float3& plane, const float3& normal) {
-    return (p - normal * Dot3(p - plane, normal));
+    return (p - normal * Dot(p - plane, normal));
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -37,7 +37,7 @@ float3 FPNTriangle::LerpPosition(float u, float v, float w) const {
 }
 //----------------------------------------------------------------------------
 float3 FPNTriangle::LerpNormal(float u, float v, float w) const {
-    return Normalize3(
+    return Normalize(
            _n200 * (w * w) +
            _n020 * (u * u) +
            _n002 * (v * v) +
@@ -87,9 +87,9 @@ void FPNTriangle::FromTriangle(
     const float3 h020 = pn._n200 + pn._n002;
     const float3 h002 = pn._n020 + pn._n200;
 
-    pn._n110 = Normalize3(h200 - e300 * ( 2.0f * Dot3(e300, h200) / Dot3(e300, e300) ));
-    pn._n011 = Normalize3(h020 - e030 * ( 2.0f * Dot3(e030, h020) / Dot3(e030, e030) ));
-    pn._n101 = Normalize3(h002 - e003 * ( 2.0f * Dot3(e003, h002) / Dot3(e003, e003) ));
+    pn._n110 = Normalize(h200 - e300 * ( 2.0f * Dot(e300, h200) / Dot(e300, e300) ));
+    pn._n011 = Normalize(h020 - e030 * ( 2.0f * Dot(e030, h020) / Dot(e030, e030) ));
+    pn._n101 = Normalize(h002 - e003 * ( 2.0f * Dot(e003, h002) / Dot(e003, e003) ));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

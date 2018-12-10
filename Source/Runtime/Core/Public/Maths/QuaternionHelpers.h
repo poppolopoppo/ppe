@@ -71,16 +71,16 @@ inline void QuaternionToTangentSpace(   float3 *ptangent, float3 *pbinormal, flo
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline bool NearlyEquals(const FQuaternion& a, const FQuaternion& b, float maxRelDiff = F_Epsilon) {
-    return NearlyEquals(a.Value(), b.Value(), maxRelDiff);
+    return NearlyEquals(a.data, b.data, maxRelDiff);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline bool IsINF(const FQuaternion& q) { return (IsINF(q.Value())); }
+inline bool IsINF(const FQuaternion& q) { return (IsINF(q.data)); }
 //----------------------------------------------------------------------------
-inline bool IsNAN(const FQuaternion& q) { return (IsNAN(q.Value())); }
+inline bool IsNAN(const FQuaternion& q) { return (IsNAN(q.data)); }
 //----------------------------------------------------------------------------
-inline bool IsNANorINF(const FQuaternion& q) { return (IsNANorINF(q.Value())); }
+inline bool IsNANorINF(const FQuaternion& q) { return (IsNANorINF(q.data)); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -96,38 +96,38 @@ void TScalarBoundingBox<T, _Dim>::Add(const TScalarBoundingBox& other) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::Contains(const vector_type& v) const {
-    return (_min.AllLessOrEqual(v) &&
-            _max.AllGreaterOrEqual(v) );
+    return (AllLessEqual(_min, v) &&
+            AllGreaterEqual(_max, v) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::ContainsStrict(const vector_type& v) const {
-    return (_min.AllLessThan(v) &&
-            _max.AllGreaterThan(v) );
+    return (AllLess(_min, v) &&
+            AllGreater(_max, v) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const vector_type& v) const {
-    return (_min.AllLessOrEqual(v) &&
-            _max.AllGreaterThan(v) );
+    return (AllLessEqual(_min, v) &&
+            AllGreater(_max, v) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::Contains(const TScalarBoundingBox& other) const {
-    return (_min.AllLessOrEqual(other._min) &&
-            _max.AllGreaterOrEqual(other._max) );
+    return (AllLessEqual(_min, other._min) &&
+            AllGreaterEqual(_max, other._max) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::ContainsStrict(const TScalarBoundingBox& other) const {
-    return (_min.AllLessThan(other._min) &&
-            _max.AllGreaterThan(other._max) );
+    return (AllLess(_min, other._min) &&
+            AllGreater(_max, other._max) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 bool TScalarBoundingBox<T, _Dim>::ContainsMaxStrict(const TScalarBoundingBox& other) const {
-    return (_min.AllLessOrEqual(other._min) &&
-            _max.AllGreaterThan(other._max) );
+    return (AllLessEqual(_min, other._min) &&
+            AllGreater(_max, other._max) );
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
@@ -136,10 +136,10 @@ bool TScalarBoundingBox<T, _Dim>::Intersects(const TScalarBoundingBox& other) co
     return (Abs(Center() - other.Center()) * 2).AllLessThan(Extents() + other.Extents());
 #else
     for (size_t i = 0; i < _Dim; ++i) {
-        const T m = PPE::Min(_min._data[i], other._min._data[i]);
-        const T M = PPE::Max(_max._data[i], other._max._data[i]);
-        const T e = (_max._data[i] - _min._data[i]) +
-            (other._max._data[i] - other._min._data[i]);
+        const T m = PPE::Min(_min.data[i], other._min.data[i]);
+        const T M = PPE::Max(_max.data[i], other._max.data[i]);
+        const T e = (_max.data[i] - _min.data[i]) +
+            (other._max.data[i] - other._min.data[i]);
         if (M - m >= e)
             return false;
     }
@@ -179,62 +179,62 @@ template <typename T>
 struct TGetCornersAABB_<T, 1> {
     void operator ()(const TMemoryView<TScalarVector<T, 1>>& points, const TScalarVector<T, 1>& min, const TScalarVector<T, 1>& max) const {
         Assert(points.size() == 2);
-        points[0].x() = min.x();
-        points[1].x() = max.x();
+        points[0].x = min.x;
+        points[1].x = max.x;
     }
 };
 template <typename T>
 struct TGetCornersAABB_<T, 2> {
     void operator ()(const TMemoryView<TScalarVector<T, 2>>& points, const TScalarVector<T, 2>& min, const TScalarVector<T, 2>& max) const {
         Assert(points.size() == 4);
-        points[0].x() = min.x();
-        points[0].y() = min.y();
+        points[0].x = min.x;
+        points[0].y = min.y;
 
-        points[1].x() = max.x();
-        points[1].y() = min.y();
+        points[1].x = max.x;
+        points[1].y = min.y;
 
-        points[2].x() = max.x();
-        points[2].y() = max.y();
+        points[2].x = max.x;
+        points[2].y = max.y;
 
-        points[3].x() = min.x();
-        points[3].y() = max.y();
+        points[3].x = min.x;
+        points[3].y = max.y;
     }
 };
 template <typename T>
 struct TGetCornersAABB_<T, 3> {
     void operator ()(const TMemoryView<TScalarVector<T, 3>>& points, const TScalarVector<T, 3>& min, const TScalarVector<T, 3>& max) const {
         Assert(points.size() == 8);
-        points[0].x() = min.x();
-        points[0].y() = min.y();
-        points[0].z() = min.z();
+        points[0].x = min.x;
+        points[0].y = min.y;
+        points[0].z = min.z;
 
-        points[1].x() = min.x();
-        points[1].y() = min.y();
-        points[1].z() = max.z();
+        points[1].x = min.x;
+        points[1].y = min.y;
+        points[1].z = max.z;
 
-        points[2].x() = min.x();
-        points[2].y() = max.y();
-        points[2].z() = max.z();
+        points[2].x = min.x;
+        points[2].y = max.y;
+        points[2].z = max.z;
 
-        points[3].x() = min.x();
-        points[3].y() = max.y();
-        points[3].z() = min.z();
+        points[3].x = min.x;
+        points[3].y = max.y;
+        points[3].z = min.z;
 
-        points[4].x() = max.x();
-        points[4].y() = min.y();
-        points[4].z() = max.z();
+        points[4].x = max.x;
+        points[4].y = min.y;
+        points[4].z = max.z;
 
-        points[5].x() = max.x();
-        points[5].y() = max.y();
-        points[5].z() = max.z();
+        points[5].x = max.x;
+        points[5].y = max.y;
+        points[5].z = max.z;
 
-        points[6].x() = max.x();
-        points[6].y() = max.y();
-        points[6].z() = min.z();
+        points[6].x = max.x;
+        points[6].y = max.y;
+        points[6].z = min.z;
 
-        points[7].x() = max.x();
-        points[7].y() = max.y();
-        points[7].z() = max.z();
+        points[7].x = max.x;
+        points[7].y = max.y;
+        points[7].z = max.z;
     }
 };
 } //!details
@@ -286,8 +286,8 @@ auto TScalarBoundingBox<T, _Dim>::ClipBelow(size_t axis, T value) const -> TScal
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 void TScalarBoundingBox<T, _Dim>::Swap(TScalarBoundingBox& other) {
-    _min.Swap(other._min);
-    _max.Swap(other._max);
+    swap(_min, other._min);
+    swap(_max, other._max);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>

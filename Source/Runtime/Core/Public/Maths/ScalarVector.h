@@ -10,7 +10,6 @@
 #include "Meta/NumericLimits.h"
 
 #include <algorithm>
-#include <initializer_list>
 #include <limits>
 #include <type_traits>
 
@@ -18,210 +17,970 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Fwd declaration for promotion
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-class TScalarVector {
-public:
-    template <typename U, size_t _Dim2>
-    friend class TScalarVector;
-    template <typename U, size_t _Width, size_t _Height>
-    friend class TScalarMatrix;
-
-    FORCE_INLINE TScalarVector() {}
-    explicit TScalarVector(Meta::FForceInit);
-
-    explicit TScalarVector(T broadcast);
-    template <typename U>
-    explicit TScalarVector(U broadcast) : TScalarVector(checked_cast<T>(broadcast)) {}
-    TScalarVector(std::initializer_list<T> values);
-
-    FORCE_INLINE TScalarVector(T v0, T v1);
-    FORCE_INLINE TScalarVector(T v0, T v1, T v2);
-    FORCE_INLINE TScalarVector(T v0, T v1, T v2, T v3);
-
-    TScalarVector(T extend, const TScalarVector<T, _Dim - 1>& other);
-    TScalarVector(const TScalarVector<T, _Dim - 1>& other, T extend);
-
-    TScalarVector(const TMemoryView<const T>& data);
-
-    TScalarVector(const TScalarVector& other);
-    TScalarVector& operator =(const TScalarVector& other);
+struct TScalarVectorExpr;
+template < typename T, size_t _Dim>
+constexpr auto ExpandScalarVectorExpr(const TScalarVectorExpr<T, _Dim>& v) noexcept;
+template <typename U, typename T, size_t _Dim>
+CONSTEXPR TScalarVector<U, _Dim> PromoteScalarVectorExpr(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+CONSTEXPR auto Length(const TScalarVector<T, _Dim>& v) NOEXCEPT;
+template <typename T, size_t _Dim>
+CONSTEXPR auto LengthSq(const TScalarVector<T, _Dim>& v) NOEXCEPT;
+template <typename T, size_t _Dim>
+CONSTEXPR auto Normalize(const TScalarVector<T, _Dim>& v) NOEXCEPT;
+//----------------------------------------------------------------------------
+// TScalarVectorExpr<> with CRTP
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+struct TScalarVectorExpr {
+    STATIC_ASSERT(_Dim);
+    static CONSTEXPR size_t Dim = _Dim;
 
     template <typename U>
-    TScalarVector(const TScalarVector<U, _Dim>& other);
-    template <typename U>
-    TScalarVector& operator =(const TScalarVector<U, _Dim>& other);
+    CONSTEXPR auto Cast() const NOEXCEPT;
 
     template <size_t _Idx>
-    FORCE_INLINE Meta::TEnableIf<_Idx < _Dim, T&> get() { return _data[_Idx]; }
+    FORCE_INLINE CONSTEXPR auto get() NOEXCEPT { return static_cast<T&>(*this).template get<_Idx>(); }
+
     template <size_t _Idx>
-    FORCE_INLINE Meta::TEnableIf<_Idx < _Dim, T> get() const { return _data[_Idx]; }
+    FORCE_INLINE CONSTEXPR auto get() const NOEXCEPT { return static_cast<const T&>(*this).template get<_Idx>(); }
 
-    FORCE_INLINE T x() const { return get<0>(); };
-    FORCE_INLINE T y() const { return get<1>(); };
-    FORCE_INLINE T z() const { return get<2>(); };
-    FORCE_INLINE T w() const { return get<3>(); };
+    // those functions should expand the expression before operating for performance reasons.
+    // workaround for user-defined conversion not being considered when doing template argument deduction,
+    // using inline friend functions which are hence not templated.
+    // https://stackoverflow.com/questions/3888082/implicit-conversion-not-happening
+    // https://stackoverflow.com/questions/44834415/implicit-template-type-deduction-with-two-arguments-of-different-types
 
-    FORCE_INLINE T& x() { return get<0>(); };
-    FORCE_INLINE T& y() { return get<1>(); };
-    FORCE_INLINE T& z() { return get<2>(); };
-    FORCE_INLINE T& w() { return get<3>(); };
-
-    FORCE_INLINE T& operator [](size_t i);
-    FORCE_INLINE T operator [](size_t i) const;
-
-#define DECL_SCALARVECTOR_OP_SELF_LHS(_Op) \
-    TScalarVector&   operator _Op (T scalar); \
-    TScalarVector&   operator _Op (const TScalarVector& other); \
-    template <typename U> \
-    TScalarVector&   operator _Op (const TScalarVector<U, _Dim>& other);
-
-#define DECL_SCALARVECTOR_OP_LHS(_Op) \
-    TScalarVector    operator _Op (T scalar) const; \
-    TScalarVector    operator _Op (const TScalarVector& other) const; \
-    template <typename U> \
-    TScalarVector    operator _Op (const TScalarVector<U, _Dim>& other) const;
-
-    DECL_SCALARVECTOR_OP_SELF_LHS(+=)
-    DECL_SCALARVECTOR_OP_SELF_LHS(-=)
-    DECL_SCALARVECTOR_OP_SELF_LHS(*=)
-    DECL_SCALARVECTOR_OP_SELF_LHS(/=)
-    DECL_SCALARVECTOR_OP_SELF_LHS(^=)
-    DECL_SCALARVECTOR_OP_SELF_LHS(%=)
-
-    DECL_SCALARVECTOR_OP_LHS(+)
-    DECL_SCALARVECTOR_OP_LHS(-)
-    DECL_SCALARVECTOR_OP_LHS(*)
-    DECL_SCALARVECTOR_OP_LHS(/)
-    DECL_SCALARVECTOR_OP_LHS(^)
-    DECL_SCALARVECTOR_OP_LHS(%)
-
-    TScalarVector    operator -() const;
-
-#undef DECL_SCALARVECTOR_OP_SELF_LHS
-#undef DECL_SCALARVECTOR_OP_LHS
-
-    bool operator ==(const TScalarVector& other) const;
-    bool operator !=(const TScalarVector& other) const { return !operator ==(other); }
-
-    void Broadcast(T scalar);
-
-    void Swap(TScalarVector& other);
-
-    TMemoryView<T> MakeView() { return PPE::MakeView(_data); }
-    TMemoryView<const T> MakeView() const { return PPE::MakeView(_data); }
-
-    friend hash_t hash_value(const TScalarVector& v) { return hash_as_pod_array(v._data); }
-
-    TScalarVector<T, _Dim - 1> Dehomogenize() const;
-    TScalarVector<T, _Dim + 1> Extend(T value) const;
-
-    FORCE_INLINE TScalarVector<T, _Dim + 1> OneExtend() const { return Extend(T(1)); }
-    FORCE_INLINE TScalarVector<T, _Dim + 1> ZeroExtend() const { return Extend(T(0)); }
-
-    bool AllLessThan(const TScalarVector& other) const;
-    bool AllLessOrEqual(const TScalarVector& other) const;
-    bool AllGreaterThan(const TScalarVector& other) const;
-    bool AllGreaterOrEqual(const TScalarVector& other) const;
-
-    template <typename U>
-    TScalarVector<U, _Dim> Cast() const;
-
-    static TScalarVector MinusOne() { return TScalarVector(T(-1)); }
-    static TScalarVector One() { return TScalarVector(T(1)); }
-    static TScalarVector Zero() { return TScalarVector(T(0)); }
-
-    static TScalarVector MaxValue() { return TScalarVector(TNumericLimits<T>::MaxValue()); }
-    static TScalarVector MinValue() { return TScalarVector(TNumericLimits<T>::MinValue()); }
-
-    static TScalarVector Homogeneous() { TScalarVector r(0); r._data[_Dim - 1] = 1; return r; }
-
-    static TScalarVector X() { TScalarVector r(0); r.get<0>() = 1; return r; }
-    static TScalarVector Y() { TScalarVector r(0); r.get<1>() = 1; return r; }
-    static TScalarVector Z() { TScalarVector r(0); r.get<2>() = 1; return r; }
-    static TScalarVector W() { TScalarVector r(0); r.get<3>() = 1; return r; }
-
-    static TScalarVector Left() { STATIC_ASSERT(3 == _Dim); return TScalarVector(-1,0,0); }
-    static TScalarVector Right() { STATIC_ASSERT(3 == _Dim); return TScalarVector(1,0,0); }
-
-    static TScalarVector Up() { STATIC_ASSERT(3 == _Dim); return TScalarVector(0,1,0); }
-    static TScalarVector Down() { STATIC_ASSERT(3 == _Dim); return TScalarVector(0,-1,0); }
-
-    static TScalarVector Forward() { STATIC_ASSERT(3 == _Dim); return TScalarVector(0,0,1); }
-    static TScalarVector Backward() { STATIC_ASSERT(3 == _Dim); return TScalarVector(0,0,-1); }
-
-    template <size_t _Offset, size_t _N>
-    Meta::TEnableIf<_Offset + _N <= _Dim, TScalarVector<T, _N>&> Shuffle0() { return *reinterpret_cast< TScalarVector<T, _N>* >(&_data[_Offset]); }
-    template <size_t _Offset, size_t _N>
-    Meta::TEnableIf<_Offset + _N <= _Dim, const TScalarVector<T,_N>&> Shuffle0() const { return *reinterpret_cast< const TScalarVector<T,_N>* >(&_data[_Offset]); }
-    template <size_t _0, size_t _1>
-    Meta::TEnableIf<_0 < _Dim && _1 < _Dim, TScalarVector<T, 2>> Shuffle2() const { return TScalarVector<T, 2>(get<_0>(), get<_1>()); }
-    template <size_t _0, size_t _1, size_t _2>
-    Meta::TEnableIf<_0 < _Dim && _1 < _Dim && _2 < _Dim, TScalarVector<T, 3>> Shuffle3() const { return TScalarVector<T, 3>(get<_0>(), get<_1>(), get<_2>()); }
-    template <size_t _0, size_t _1, size_t _2, size_t _3>
-    Meta::TEnableIf<_0 < _Dim && _1 < _Dim && _2 < _Dim && _3 < _Dim, TScalarVector<T, 4>> Shuffle4() const { return TScalarVector<T, 4>(get<_0>(), get<_1>(), get<_2>(), get<_3>()); }
-
-public:
-    STATIC_CONST_INTEGRAL(size_t, Dim, _Dim);
-    STATIC_ASSERT(0 < _Dim);
-    T _data[_Dim];
-
-public:
-    // All shuffle specializations :
-
-#define DEF_SCALARVECTOR_SHUFFLE0(_Name, _Offset, _N) \
-    FORCE_INLINE TScalarVector<T,_N>& _Name() { return Shuffle0<_Offset,_N>(); } \
-    FORCE_INLINE const TScalarVector<T,_N>& _Name() const { return Shuffle0<_Offset,_N>(); }
-#define DEF_SCALARVECTOR_SHUFFLE2(_Name, _0, _1) \
-    FORCE_INLINE TScalarVector<T, 2> _Name() const { return Shuffle2<_0, _1>(); }
-#define DEF_SCALARVECTOR_SHUFFLE3(_Name, _0, _1, _2) \
-    FORCE_INLINE TScalarVector<T, 3> _Name() const { return Shuffle3<_0, _1, _2>(); }
-#define DEF_SCALARVECTOR_SHUFFLE4(_Name, _0, _1, _2, _3) \
-    FORCE_INLINE TScalarVector<T, 4> _Name() const { return Shuffle4<_0, _1, _2, _3>(); }
-
-#   include "Maths/ScalarVector.Shuffle-inl.h"
-
-#undef DEF_SCALARVECTOR_SHUFFLE0
-#undef DEF_SCALARVECTOR_SHUFFLE2
-#undef DEF_SCALARVECTOR_SHUFFLE3
-#undef DEF_SCALARVECTOR_SHUFFLE4
+    inline friend constexpr auto Length(const TScalarVectorExpr& v) noexcept {
+        return Length(ExpandScalarVectorExpr(v));
+    }
+    inline friend constexpr auto LengthSq(const TScalarVectorExpr& v) noexcept {
+        return LengthSq(ExpandScalarVectorExpr(v));
+    }
+    inline friend constexpr auto Normalize(const TScalarVectorExpr& v) noexcept {
+        return Normalize(ExpandScalarVectorExpr(v));
+    }
 };
 //----------------------------------------------------------------------------
-#define DECL_SCALARVECTOR_OP_RHS(_Op) \
-    template <typename T, size_t _Dim> \
-    TScalarVector<T, _Dim> operator _Op(T lhs, const TScalarVector<T, _Dim>& rhs); \
-    template <typename U, typename T, size_t _Dim> \
-    TScalarVector<T, _Dim> operator _Op(U lhs, const TScalarVector<T, _Dim>& rhs);
+// TScalarVectorComponent<> : .x, .y, .z & .w
 //----------------------------------------------------------------------------
-DECL_SCALARVECTOR_OP_RHS(+)
-DECL_SCALARVECTOR_OP_RHS(-)
-DECL_SCALARVECTOR_OP_RHS(*)
-DECL_SCALARVECTOR_OP_RHS(/)
-DECL_SCALARVECTOR_OP_RHS(^)
-DECL_SCALARVECTOR_OP_RHS(%)
+template <typename T, size_t _Idx>
+struct TScalarVectorComponent {
+    using component_type = T;
+
+    component_type data[1];
+
+    CONSTEXPR TScalarVectorComponent() NOEXCEPT = default;
+
+#ifndef _MSC_VER
+#   pragma clang diagnostic push
+#   pragma clang diagnostic ignored "-Warray-bounds"
+#endif
+
+    FORCE_INLINE CONSTEXPR TScalarVectorComponent(component_type v) NOEXCEPT {
+        data[_Idx] = v;
+    }
+
+    FORCE_INLINE CONSTEXPR TScalarVectorComponent& operator =(component_type v) NOEXCEPT {
+        data[_Idx] = v;
+        return (*this);
+    }
+
+    FORCE_INLINE CONSTEXPR component_type& get() NOEXCEPT { return data[_Idx]; }
+    FORCE_INLINE CONSTEXPR const component_type& get() const NOEXCEPT { return data[_Idx]; }
+
+    FORCE_INLINE CONSTEXPR operator component_type& () NOEXCEPT { return data[_Idx]; }
+    FORCE_INLINE CONSTEXPR operator const component_type& () const NOEXCEPT { return data[_Idx]; }
+
+#ifndef _MSC_VER
+#   pragma clang diagnostic pop
+#endif
+
+    FORCE_INLINE CONSTEXPR component_type& operator +=(component_type scalar) NOEXCEPT {
+        return (get() += scalar);
+}
+    FORCE_INLINE CONSTEXPR component_type& operator -=(component_type scalar) NOEXCEPT {
+        return (get() -= scalar);
+    }
+    FORCE_INLINE CONSTEXPR component_type& operator *=(component_type scalar) NOEXCEPT {
+        return (get() *= scalar);
+    }
+    FORCE_INLINE CONSTEXPR component_type& operator /=(component_type scalar) NOEXCEPT {
+        return (get() /= scalar);
+    }
+};
 //----------------------------------------------------------------------------
-#undef DECL_SCALARVECTOR_OP_RHS
+// TScalarComponent<> : traits for selecting compatible scalar types
+//----------------------------------------------------------------------------
+template <typename _Expr, typename T>
+using TScalarComponent = Meta::TEnableIf<
+    std::is_arithmetic_v<T>,
+    std::common_type_t<
+        decltype(std::declval<const _Expr&>().template get<0>()), T
+    >
+>;
+//----------------------------------------------------------------------------
+// TScalarVectorConstant<> : wraps a constant value
+//----------------------------------------------------------------------------
+template <typename T, int... _Values>
+struct TScalarVectorConstant : TScalarVectorExpr<TScalarVectorConstant<T, _Values...>, sizeof...(_Values)> {
+    static CONSTEXPR int values[] = { _Values... };
+    using component_type = T;
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR component_type get() const NOEXCEPT { return static_cast<component_type>(values[_Idx]); }
+};
+//----------------------------------------------------------------------------
+// TScalarVectorLiteral<> : expands a scalar value
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+struct TScalarVectorLiteral : TScalarVectorExpr<TScalarVectorLiteral<T, _Dim>, _Dim> {
+    using component_type = T;
+
+    T value;
+
+    FORCE_INLINE CONSTEXPR TScalarVectorLiteral(T _value) NOEXCEPT
+        : value(_value)
+    {}
+
+    template <size_t>
+    FORCE_INLINE CONSTEXPR component_type get() const NOEXCEPT { return value; }
+};
+//----------------------------------------------------------------------------
+// TScalarVectorBinaryOp<> : +, -, * & / used with another vector
+//----------------------------------------------------------------------------
+template <typename _Lhs, typename _Rhs, typename _Op>
+struct TScalarVectorBinaryOp : TScalarVectorExpr<TScalarVectorBinaryOp<_Lhs, _Rhs, _Op>, _Lhs::Dim> {
+    using TScalarVectorExpr<TScalarVectorBinaryOp<_Lhs, _Rhs, _Op>, _Lhs::Dim>::Dim;
+    STATIC_ASSERT(_Lhs::Dim == _Rhs::Dim);
+
+    const _Lhs& lhs;
+    const _Rhs& rhs;
+    _Op op;
+
+    FORCE_INLINE CONSTEXPR TScalarVectorBinaryOp(const _Lhs& _lhs, const _Rhs& _rhs, _Op&& _op) NOEXCEPT
+        : lhs(_lhs)
+        , rhs(_rhs)
+        , op(std::move(_op))
+    {}
+
+    using component_type = std::decay_t<decltype(
+        std::declval<_Op>()(
+            std::declval<const _Lhs&>().template get<0>(),
+            std::declval<const _Rhs&>().template get<0>() )
+    )>;
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR auto get() const NOEXCEPT {
+        return op(lhs.template get<_Idx>(), rhs.template get<_Idx>());
+    }
+};
+//----------------------------------------------------------------------------
+template <typename U, typename V, size_t _Dim>
+CONSTEXPR auto SIMD_INLINE operator +(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return a + b; });
+}
+//----------------------------------------------------------------------------
+template <typename U, typename V, size_t _Dim>
+CONSTEXPR auto SIMD_INLINE operator -(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return a - b; });
+}
+//----------------------------------------------------------------------------
+template <typename U, typename V, size_t _Dim>
+CONSTEXPR auto SIMD_INLINE operator *(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return a * b; });
+}
+//----------------------------------------------------------------------------
+template <typename U, typename V, size_t _Dim>
+CONSTEXPR auto SIMD_INLINE operator /(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return a / b; });
+}
+//----------------------------------------------------------------------------
+// TScalarVectorUnaryOp<> : unary operators or binary operators with scalar
+//----------------------------------------------------------------------------
+template <typename _Expr, typename _Op>
+struct TScalarVectorUnaryOp : TScalarVectorExpr<TScalarVectorUnaryOp<_Expr, _Op>, _Expr::Dim> {
+    using TScalarVectorExpr<TScalarVectorUnaryOp<_Expr, _Op>, _Expr::Dim>::Dim;
+
+    const _Expr& v;
+    _Op op;
+
+    FORCE_INLINE CONSTEXPR TScalarVectorUnaryOp(const _Expr& _v, _Op&& _op) NOEXCEPT
+        : v(_v)
+        , op(std::move(_op))
+    {}
+
+    using component_type = std::decay_t<decltype(
+        std::declval<_Op>()(
+            std::declval<const _Expr&>().template get<0>() )
+    )>;
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR auto get() const NOEXCEPT {
+        return op(v.template get<_Idx>());
+    }
+};
+//----------------------------------------------------------------------------
+template <typename U, size_t _Dim>
+CONSTEXPR auto SIMD_INLINE operator -(const TScalarVectorExpr<U, _Dim>& e) NOEXCEPT {
+    return TScalarVectorUnaryOp(e, [](auto x) CONSTEXPR NOEXCEPT { return (-x); });
+}
+template <typename U, size_t _Dim>
+CONSTEXPR auto SIMD_INLINE  operator ~(const TScalarVectorExpr<U, _Dim>& e) NOEXCEPT {
+    return TScalarVectorUnaryOp(e, [](auto x) CONSTEXPR NOEXCEPT { return (~x); });
+}
+//----------------------------------------------------------------------------
+template <typename U, size_t _Dim, typename T, size_t _Idx>
+CONSTEXPR auto SIMD_INLINE operator +(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(lhs, [&rhs](auto x) CONSTEXPR NOEXCEPT { return (x + rhs); });
+}
+template <typename U, size_t _Dim, typename T, size_t _Idx>
+CONSTEXPR auto SIMD_INLINE operator -(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(lhs, [&rhs](auto x) CONSTEXPR NOEXCEPT { return (x - rhs); });
+}
+template <typename U, size_t _Dim, typename T, size_t _Idx>
+CONSTEXPR auto SIMD_INLINE operator *(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(lhs, [&rhs](auto x) CONSTEXPR NOEXCEPT { return (x * rhs); });
+}
+template <typename U, size_t _Dim, typename T, size_t _Idx>
+CONSTEXPR auto SIMD_INLINE operator /(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(lhs, [&rhs](auto x) CONSTEXPR NOEXCEPT { return (x / rhs); });
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Idx, typename U, size_t _Dim>
+CONSTEXPR auto SIMD_INLINE operator +(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(rhs, [&lhs](auto x) CONSTEXPR NOEXCEPT { return (lhs + x); });
+}
+template <typename T, size_t _Idx, typename U, size_t _Dim>
+CONSTEXPR auto SIMD_INLINE operator -(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(rhs, [&lhs](auto x) CONSTEXPR NOEXCEPT { return (lhs - x); });
+}
+template <typename T, size_t _Idx, typename U, size_t _Dim>
+CONSTEXPR auto SIMD_INLINE operator *(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(rhs, [&lhs](auto x) CONSTEXPR NOEXCEPT { return (lhs * x); });
+}
+template <typename T, size_t _Idx, typename U, size_t _Dim>
+CONSTEXPR auto SIMD_INLINE operator /(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(rhs, [&lhs](auto x) CONSTEXPR NOEXCEPT { return (lhs / x); });
+}
+//----------------------------------------------------------------------------
+template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
+CONSTEXPR auto SIMD_INLINE operator +(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x + rhs); });
+}
+template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
+CONSTEXPR auto SIMD_INLINE operator -(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x - rhs); });
+}
+template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
+CONSTEXPR auto SIMD_INLINE operator *(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x * rhs); });
+}
+template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
+CONSTEXPR auto SIMD_INLINE operator /(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x / rhs); });
+}
+//----------------------------------------------------------------------------
+template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
+CONSTEXPR auto SIMD_INLINE operator +(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs + x); });
+}
+template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
+CONSTEXPR auto SIMD_INLINE operator -(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs - x); });
+}
+template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
+CONSTEXPR auto SIMD_INLINE operator *(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs * x); });
+}
+template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
+CONSTEXPR auto SIMD_INLINE operator /(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+    return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs / x); });
+}
+//----------------------------------------------------------------------------
+// TScalarVectorAssignable<> : =, +=, -=, *= & /=, both with vectors and scalars
+//----------------------------------------------------------------------------
+template <typename _Expr, typename T, size_t _Dim>
+struct TScalarVectorAssignable : TScalarVectorExpr<_Expr, _Dim> {
+    using TScalarVectorExpr<_Expr, _Dim>::Dim;
+    using TScalarVectorExpr<_Expr, _Dim>::get;
+
+    using component_type = T;
+
+    template <typename U>
+    CONSTEXPR auto SIMD_INLINE operator =(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
+        return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst = src; });
+    }
+
+    template <typename U>
+    CONSTEXPR auto SIMD_INLINE operator +=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
+        return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst += src; });
+    }
+    template <typename U>
+    CONSTEXPR auto SIMD_INLINE operator -=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
+        return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst -= src; });
+    }
+    template <typename U>
+    CONSTEXPR auto SIMD_INLINE operator *=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
+        return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst *= src; });
+    }
+    template <typename U>
+    CONSTEXPR auto SIMD_INLINE operator /=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
+        return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst /= src; });
+    }
+
+    template <typename U, typename _Op>
+    CONSTEXPR _Expr& SIMD_INLINE assign(const TScalarVectorExpr<U, Dim>& vec, _Op&& op) NOEXCEPT {
+        Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
+            ((op(static_cast<_Expr&>(*this).template get<idx>(), vec.template get<idx>())), ...);
+        });
+        return static_cast<_Expr&>(*this);
+    }
+
+    FORCE_INLINE CONSTEXPR _Expr& operator +=(component_type scalar) NOEXCEPT {
+        return assign(scalar, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst += src; });
+    }
+    FORCE_INLINE CONSTEXPR _Expr& operator -=(component_type scalar) NOEXCEPT {
+        return assign(scalar, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst -= src; });
+    }
+    FORCE_INLINE CONSTEXPR _Expr& operator *=(component_type scalar) NOEXCEPT {
+        return assign(scalar, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst *= src; });
+    }
+    FORCE_INLINE CONSTEXPR _Expr& operator /=(component_type scalar) NOEXCEPT {
+        return assign(scalar, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst /= src; });
+    }
+
+    template <typename _Op>
+    CONSTEXPR _Expr& assign(component_type scalar, _Op&& op) NOEXCEPT {
+        Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
+            ((op(static_cast<_Expr&>(*this).template get<idx>(), scalar)), ...);
+        });
+        return static_cast<_Expr&>(*this);
+    }
+};
+//----------------------------------------------------------------------------
+// TScalarVectorSwizzle<> : .xy, .yx, .wzyx, ... which are assignable
+//----------------------------------------------------------------------------
+template <typename T, size_t... _Swizzle>
+struct TScalarVectorSwizzle : TScalarVectorAssignable<TScalarVectorSwizzle<T, _Swizzle...>, T, sizeof...(_Swizzle)> {
+    using parent_type = TScalarVectorAssignable<TScalarVectorSwizzle<T, _Swizzle...>, T, sizeof...(_Swizzle)>;
+    using parent_type::Dim;
+    using parent_type::operator =;
+    using parent_type::operator +=;
+    using parent_type::operator -=;
+    using parent_type::operator *=;
+    using parent_type::operator /=;
+
+    using component_type = T;
+
+    component_type data[Dim];
+
+    CONSTEXPR TScalarVectorSwizzle() NOEXCEPT = default;
+
+    static CONSTEXPR size_t indices[Dim] = { _Swizzle... };
+    template <size_t _Idx>
+    static CONSTEXPR size_t swizzled = indices[_Idx];
+
+#ifndef _MSC_VER
+#   pragma clang diagnostic push
+#   pragma clang diagnostic ignored "-Warray-bounds"
+#endif
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR component_type& get() NOEXCEPT { return data[swizzled<_Idx>]; }
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR const component_type& get() const NOEXCEPT { return data[swizzled<_Idx>]; }
+
+#ifndef _MSC_VER
+#   pragma clang diagnostic pop
+#endif
+
+    // specialization for trivial promotions when the swizzle indices are contiguous :
+
+    using promote_type = decltype(PromoteScalarVectorExpr<T>(std::declval<parent_type&>()));
+    using promote_const_type = decltype(PromoteScalarVectorExpr<T>(std::declval<const parent_type&>()));
+
+#ifndef _MSC_VER
+    CONSTEXPR operator promote_type () NOEXCEPT { return PromoteScalarVectorExpr<T>(*this); }
+    CONSTEXPR operator promote_const_type () const NOEXCEPT { return PromoteScalarVectorExpr<T>(*this); }
+
+#else // workaround a bug with MSVC compiler, #TODO remove when fixed since this is not valid C++
+    // https://developercommunity.visualstudio.com/content/problem/149701/c2833-with-operator-decltype.html#reply-152822
+    constexpr operator auto () noexcept -> promote_type { return PromoteScalarVectorExpr<T>(*this); }
+    constexpr operator auto () const noexcept -> promote_const_type { return PromoteScalarVectorExpr<T>(*this); }
+
+#endif //!LOL
+};
+//----------------------------------------------------------------------------
+// Equality comparaisons : ==, !=
+//----------------------------------------------------------------------------
+template <typename _Lhs, size_t _Dim, typename _Rhs>
+CONSTEXPR bool operator ==(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
+    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
+        return ((lhs.template get<idx>() == rhs.template get<idx>()) && ...);
+    });
+}
+//----------------------------------------------------------------------------
+template <typename _Lhs, typename _Rhs, size_t _Dim>
+CONSTEXPR bool operator !=(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
+    return (not operator ==(lhs, rhs));
+}
+//----------------------------------------------------------------------------
+// Explicit cast : implemented as an unary operator
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+template <typename U>
+CONSTEXPR auto TScalarVectorExpr<T, _Dim>::Cast() const NOEXCEPT {
+    return TScalarVectorUnaryOp(*this, [](auto x) -> U { return static_cast<U>(x); });
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+struct TScalarVector;
+//----------------------------------------------------------------------------
+// TScalarVector<T, 1>, silly but needed by some templates
+//----------------------------------------------------------------------------
+template <typename T>
+struct TScalarVector<T, 1> : TScalarVectorAssignable<TScalarVector<T, 1>, T, 1> {
+    static CONSTEXPR size_t Dim = 1;
+    using component_type = T;
+    using parent_type = TScalarVectorAssignable<TScalarVector<T, 1>, T, 1>;
+    using parent_type::operator =;
+    using parent_type::operator +=;
+    using parent_type::operator -=;
+    using parent_type::operator *=;
+    using parent_type::operator /=;
+
+    CONSTEXPR TScalarVector() NOEXCEPT = default;
+    CONSTEXPR TScalarVector(Meta::FForceInit) NOEXCEPT : TScalarVector(Meta::MakeForceInit<T>()) {}
+
+    CONSTEXPR TScalarVector(const TScalarVector& other) NOEXCEPT = default;
+    CONSTEXPR TScalarVector& operator =(const TScalarVector& other) NOEXCEPT = default;
+
+    FORCE_INLINE CONSTEXPR explicit TScalarVector(component_type broadcast) NOEXCEPT
+        : data{ broadcast }
+    {}
+
+    template <typename _Expr>
+    FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 1>& e) NOEXCEPT
+        : data{ e.template get<0>() }
+    {}
+
+    union {
+        component_type data[Dim];
+
+        TScalarVectorComponent<T, 0> x;
+    };
+
+    CONSTEXPR void Broadcast(T v) NOEXCEPT { x = v; }
+
+#ifdef WITH_PPE_ASSERT
+    component_type& operator [](size_t i) NOEXCEPT { Assert(i < Dim); return data[i]; }
+    const component_type& operator [](size_t i) const NOEXCEPT { Assert(i < Dim); return data[i]; }
+#else
+    CONSTEXPR component_type& operator [](size_t i) NOEXCEPT { return data[i]; }
+    CONSTEXPR const component_type& operator [](size_t i) const NOEXCEPT { return data[i]; }
+#endif
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR component_type& get() NOEXCEPT { return data[_Idx]; }
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR const component_type& get() const NOEXCEPT { return data[_Idx]; }
+
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> One{ component_type(1) };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinusOne{ component_type(-1) };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> Zero{ component_type(0) };
+
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MaxValue{ TNumericLimits<component_type>::MaxValue() };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinValue{ TNumericLimits<component_type>::MinValue() };
+};
+//----------------------------------------------------------------------------
+// TScalarVector<T, 2>
+//----------------------------------------------------------------------------
+template <typename T>
+struct TScalarVector<T, 2> : TScalarVectorAssignable<TScalarVector<T, 2>, T, 2> {
+    static CONSTEXPR size_t Dim = 2;
+    using component_type = T;
+    using parent_type = TScalarVectorAssignable<TScalarVector<T, 2>, T, 2>;
+    using parent_type::operator =;
+    using parent_type::operator +=;
+    using parent_type::operator -=;
+    using parent_type::operator *=;
+    using parent_type::operator /=;
+
+    CONSTEXPR TScalarVector() NOEXCEPT = default;
+    CONSTEXPR TScalarVector(Meta::FForceInit) NOEXCEPT : TScalarVector(Meta::MakeForceInit<T>()) {}
+
+    CONSTEXPR TScalarVector(const TScalarVector& other) NOEXCEPT = default;
+    CONSTEXPR TScalarVector& operator =(const TScalarVector& other) NOEXCEPT = default;
+
+    FORCE_INLINE CONSTEXPR explicit TScalarVector(component_type broadcast) NOEXCEPT
+        : data{ broadcast, broadcast }
+    {}
+
+    template <typename _Expr>
+    FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 2>& e) NOEXCEPT
+        : data{ e.template get<0>(),
+                e.template get<1>() }
+    {}
+
+    FORCE_INLINE CONSTEXPR TScalarVector(component_type _x, component_type _y) NOEXCEPT
+        : data{ _x, _y }
+    {}
+
+    union {
+        component_type data[Dim];
+
+        TScalarVectorComponent<T, 0> x;
+        TScalarVectorComponent<T, 1> y;
+
+        TScalarVectorSwizzle<T, 0, 1> xy;
+        TScalarVectorSwizzle<T, 1, 0> yx;
+    };
+
+    CONSTEXPR void Broadcast(T v) NOEXCEPT { x = y = v; }
+
+#ifdef WITH_PPE_ASSERT
+    component_type& operator [](size_t i) NOEXCEPT { Assert(i < Dim); return data[i]; }
+    const component_type& operator [](size_t i) const NOEXCEPT { Assert(i < Dim); return data[i]; }
+#else
+    CONSTEXPR component_type& operator [](size_t i) NOEXCEPT { return data[i]; }
+    CONSTEXPR const component_type& operator [](size_t i) const NOEXCEPT { return data[i]; }
+#endif
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR component_type& get() NOEXCEPT { return data[_Idx]; }
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR const component_type& get() const NOEXCEPT { return data[_Idx]; }
+
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> One{ component_type(1) };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinusOne{ component_type(-1) };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> Zero{ component_type(0) };
+
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MaxValue{ TNumericLimits<component_type>::MaxValue() };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinValue{ TNumericLimits<component_type>::MinValue() };
+
+    static CONSTEXPR TScalarVectorConstant<component_type, 1, 0> X{};
+    static CONSTEXPR TScalarVectorConstant<component_type, 0, 1> Y{};
+};
+//----------------------------------------------------------------------------
+// TScalarVector<T, 3>
+//----------------------------------------------------------------------------
+template <typename T>
+struct TScalarVector<T, 3> : TScalarVectorAssignable<TScalarVector<T, 3>, T, 3> {
+    static CONSTEXPR size_t Dim = 3;
+    using component_type = T;
+    using parent_type = TScalarVectorAssignable<TScalarVector<T, 3>, T, 3>;
+    using parent_type::operator =;
+    using parent_type::operator +=;
+    using parent_type::operator -=;
+    using parent_type::operator *=;
+    using parent_type::operator /=;
+
+    CONSTEXPR TScalarVector() NOEXCEPT = default;
+    CONSTEXPR TScalarVector(Meta::FForceInit) NOEXCEPT : TScalarVector(Meta::MakeForceInit<T>()) {}
+
+    CONSTEXPR TScalarVector(const TScalarVector& other) NOEXCEPT = default;
+    CONSTEXPR TScalarVector& operator =(const TScalarVector& other) NOEXCEPT = default;
+
+    FORCE_INLINE CONSTEXPR explicit TScalarVector(component_type broadcast) NOEXCEPT
+        : data{ broadcast, broadcast, broadcast }
+    {}
+
+    FORCE_INLINE CONSTEXPR TScalarVector(component_type _x, component_type _y, component_type _z) NOEXCEPT
+        : data{ _x, _y, _z }
+    {}
+
+    template <typename _Expr>
+    FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 3>& e) NOEXCEPT
+        : data{ e.template get<0>(),
+                e.template get<1>(),
+                e.template get<2>() }
+    {}
+
+    template <typename _Expr>
+    FORCE_INLINE CONSTEXPR TScalarVector(component_type _x, const TScalarVectorExpr<_Expr, 2>& _yz) NOEXCEPT
+        : data{ _x,
+                _yz.template get<0>(),
+                _yz.template get<1>() }
+    {}
+
+    union {
+        component_type data[Dim];
+
+        TScalarVectorComponent<T, 0> x;
+        TScalarVectorComponent<T, 1> y;
+        TScalarVectorComponent<T, 2> z;
+
+        TScalarVectorSwizzle<T, 0, 1> xy;
+        TScalarVectorSwizzle<T, 0, 2> xz;
+        TScalarVectorSwizzle<T, 1, 0> yx;
+        TScalarVectorSwizzle<T, 1, 2> yz;
+        TScalarVectorSwizzle<T, 2, 0> zx;
+        TScalarVectorSwizzle<T, 2, 1> zy;
+
+        TScalarVectorSwizzle<T, 0, 1, 2> xyz;
+        TScalarVectorSwizzle<T, 0, 2, 1> xzy;
+        TScalarVectorSwizzle<T, 1, 0, 2> yxz;
+        TScalarVectorSwizzle<T, 1, 2, 0> yzx;
+        TScalarVectorSwizzle<T, 2, 0, 1> zxy;
+        TScalarVectorSwizzle<T, 2, 1, 0> zyx;
+    };
+
+    CONSTEXPR void Broadcast(T v) NOEXCEPT { x = y = z = v; }
+
+#ifdef WITH_PPE_ASSERT
+    component_type& operator [](size_t i) NOEXCEPT { Assert(i < Dim); return data[i]; }
+    const component_type& operator [](size_t i) const NOEXCEPT { Assert(i < Dim); return data[i]; }
+#else
+    CONSTEXPR component_type& operator [](size_t i) NOEXCEPT { return data[i]; }
+    CONSTEXPR const component_type& operator [](size_t i) const NOEXCEPT { return data[i]; }
+#endif
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR component_type& get() NOEXCEPT { return data[_Idx]; }
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR const component_type& get() const NOEXCEPT { return data[_Idx]; }
+
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> One{ component_type(1) };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinusOne{ component_type(-1) };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> Zero{ component_type(0) };
+
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MaxValue{ TNumericLimits<component_type>::MaxValue() };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinValue{ TNumericLimits<component_type>::MinValue() };
+
+    static CONSTEXPR TScalarVectorConstant<component_type, 1, 0, 0> X{};
+    static CONSTEXPR TScalarVectorConstant<component_type, 0, 1, 0> Y{};
+    static CONSTEXPR TScalarVectorConstant<component_type, 0, 0, 1> Z{};
+};
+//----------------------------------------------------------------------------
+// TScalarVector<T, 4>
+//----------------------------------------------------------------------------
+template <typename T>
+struct TScalarVector<T, 4> : TScalarVectorAssignable<TScalarVector<T, 4>, T, 4> {
+    static CONSTEXPR size_t Dim = 4;
+    using component_type = T;
+    using parent_type = TScalarVectorAssignable<TScalarVector<T, 4>, T, 4>;
+    using parent_type::operator =;
+    using parent_type::operator +=;
+    using parent_type::operator -=;
+    using parent_type::operator *=;
+    using parent_type::operator /=;
+
+    CONSTEXPR TScalarVector() NOEXCEPT = default;
+    CONSTEXPR TScalarVector(Meta::FForceInit) NOEXCEPT : TScalarVector(Meta::MakeForceInit<T>()) {}
+
+    CONSTEXPR TScalarVector(const TScalarVector& other) NOEXCEPT = default;
+    CONSTEXPR TScalarVector& operator =(const TScalarVector& other) NOEXCEPT = default;
+
+    FORCE_INLINE CONSTEXPR explicit TScalarVector(component_type broadcast) NOEXCEPT
+        : data{ broadcast, broadcast, broadcast, broadcast }
+    {}
+
+    template <typename _Expr>
+    FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 4>& e) NOEXCEPT
+        : data{ e.template get<0>(),
+                e.template get<1>(),
+                e.template get<2>(),
+                e.template get<3>() }
+    {}
+
+    FORCE_INLINE CONSTEXPR TScalarVector(component_type _x, component_type _y, component_type _z, component_type _w) NOEXCEPT
+        : data{ _x, _y, _z, _w }
+    {}
+
+    template <typename _Lo, typename _Hi>
+    FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Lo, 2>& _xy, const TScalarVectorExpr<_Hi, 2>& _zw) NOEXCEPT
+        : data{ _xy.template get<0>(),
+                _xy.template get<1>(),
+                _zw.template get<0>(),
+                _zw.template get<1>() }
+    {}
+
+    template <typename _Expr>
+    FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 2>& _xy, component_type _z, component_type _w) NOEXCEPT
+        : data{ _xy.template get<0>(),
+                _xy.template get<1>(),
+                _z,
+                _w }
+    {}
+
+    template <typename _Expr>
+    FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, 3>& _xyz, component_type _w) NOEXCEPT
+        : data{ _xyz.template get<0>(),
+                _xyz.template get<1>(),
+                _xyz.template get<2>(),
+                _w }
+    {}
+
+    template <typename _Expr>
+    FORCE_INLINE CONSTEXPR TScalarVector(component_type _x, const TScalarVectorExpr<_Expr, 3>& _yzw) NOEXCEPT
+        : data{ _x,
+                _yzw.template get<0>(),
+                _yzw.template get<1>(),
+                _yzw.template get<2>() }
+    {}
+
+    template <typename _Expr>
+    FORCE_INLINE CONSTEXPR TScalarVector(component_type _x, component_type _y, const TScalarVectorExpr<_Expr, 2>& _zw) NOEXCEPT
+        : data{ _x,
+                _y,
+                _zw.template get<0>(),
+                _zw.template get<1>() }
+    {}
+
+    union {
+        component_type data[Dim];
+
+        TScalarVectorComponent<T, 0> x;
+        TScalarVectorComponent<T, 1> y;
+        TScalarVectorComponent<T, 2> z;
+        TScalarVectorComponent<T, 3> w;
+
+        TScalarVectorSwizzle<T, 0, 1> xy;
+        TScalarVectorSwizzle<T, 0, 2> xz;
+        TScalarVectorSwizzle<T, 0, 3> xw;
+        TScalarVectorSwizzle<T, 1, 0> yx;
+        TScalarVectorSwizzle<T, 1, 2> yz;
+        TScalarVectorSwizzle<T, 1, 3> yw;
+        TScalarVectorSwizzle<T, 2, 0> zx;
+        TScalarVectorSwizzle<T, 2, 1> zy;
+        TScalarVectorSwizzle<T, 2, 3> zw;
+        TScalarVectorSwizzle<T, 3, 0> wx;
+        TScalarVectorSwizzle<T, 3, 1> wy;
+        TScalarVectorSwizzle<T, 3, 2> wz;
+
+        TScalarVectorSwizzle<T, 0, 1, 2> xyz;
+        TScalarVectorSwizzle<T, 0, 2, 1> xzy;
+        TScalarVectorSwizzle<T, 0, 1, 3> xyw;
+        TScalarVectorSwizzle<T, 0, 3, 1> xwy;
+        TScalarVectorSwizzle<T, 0, 2, 3> xzw;
+        TScalarVectorSwizzle<T, 0, 3, 2> xwz;
+        TScalarVectorSwizzle<T, 1, 0, 2> yxz;
+        TScalarVectorSwizzle<T, 1, 2, 0> yzx;
+        TScalarVectorSwizzle<T, 1, 0, 3> yxw;
+        TScalarVectorSwizzle<T, 1, 3, 0> ywx;
+        TScalarVectorSwizzle<T, 1, 2, 3> yzw;
+        TScalarVectorSwizzle<T, 1, 3, 2> ywz;
+        TScalarVectorSwizzle<T, 2, 0, 1> zxy;
+        TScalarVectorSwizzle<T, 2, 1, 0> zyx;
+        TScalarVectorSwizzle<T, 2, 0, 3> zxw;
+        TScalarVectorSwizzle<T, 2, 3, 0> zwx;
+        TScalarVectorSwizzle<T, 2, 1, 3> zyw;
+        TScalarVectorSwizzle<T, 2, 3, 1> zwy;
+        TScalarVectorSwizzle<T, 3, 0, 1> wxy;
+        TScalarVectorSwizzle<T, 3, 1, 0> wyx;
+        TScalarVectorSwizzle<T, 3, 0, 2> wxz;
+        TScalarVectorSwizzle<T, 3, 2, 0> wzx;
+        TScalarVectorSwizzle<T, 3, 1, 2> wyz;
+        TScalarVectorSwizzle<T, 3, 2, 1> wzy;
+
+        TScalarVectorSwizzle<T, 0, 1, 2, 3> xyzw;
+        TScalarVectorSwizzle<T, 0, 1, 3, 2> xywz;
+        TScalarVectorSwizzle<T, 0, 2, 1, 3> xzyw;
+        TScalarVectorSwizzle<T, 0, 2, 3, 1> xzwy;
+        TScalarVectorSwizzle<T, 0, 3, 1, 2> xwyz;
+        TScalarVectorSwizzle<T, 0, 3, 2, 1> xwzy;
+        TScalarVectorSwizzle<T, 1, 0, 2, 3> yxzw;
+        TScalarVectorSwizzle<T, 1, 0, 3, 2> yxwz;
+        TScalarVectorSwizzle<T, 1, 2, 0, 3> yzxw;
+        TScalarVectorSwizzle<T, 1, 2, 3, 0> yzwx;
+        TScalarVectorSwizzle<T, 1, 3, 0, 2> ywxz;
+        TScalarVectorSwizzle<T, 1, 3, 2, 0> ywzx;
+        TScalarVectorSwizzle<T, 2, 0, 1, 3> zxyw;
+        TScalarVectorSwizzle<T, 2, 0, 3, 1> zxwy;
+        TScalarVectorSwizzle<T, 2, 1, 0, 3> zyxw;
+        TScalarVectorSwizzle<T, 2, 1, 3, 0> zywx;
+        TScalarVectorSwizzle<T, 2, 3, 0, 1> zwxy;
+        TScalarVectorSwizzle<T, 2, 3, 1, 0> zwyx;
+        TScalarVectorSwizzle<T, 3, 0, 1, 2> wxyz;
+        TScalarVectorSwizzle<T, 3, 0, 2, 1> wxzy;
+        TScalarVectorSwizzle<T, 3, 1, 0, 2> wyxz;
+        TScalarVectorSwizzle<T, 3, 1, 2, 0> wyzx;
+        TScalarVectorSwizzle<T, 3, 2, 0, 1> wzxy;
+        TScalarVectorSwizzle<T, 3, 2, 1, 0> wzyx;
+    };
+
+    CONSTEXPR void Broadcast(T v) NOEXCEPT { x = y = z = w = v; }
+
+#ifdef WITH_PPE_ASSERT
+    component_type& operator [](size_t i) NOEXCEPT { Assert(i < Dim); return data[i]; }
+    const component_type& operator [](size_t i) const NOEXCEPT { Assert(i < Dim); return data[i]; }
+#else
+    CONSTEXPR component_type& operator [](size_t i) NOEXCEPT { return data[i]; }
+    CONSTEXPR const component_type& operator [](size_t i) const NOEXCEPT { return data[i]; }
+#endif
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR component_type& get() NOEXCEPT { return data[_Idx]; }
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR const component_type& get() const NOEXCEPT { return data[_Idx]; }
+
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> One{ component_type(1) };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinusOne{ component_type(-1) };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> Zero{ component_type(0) };
+
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MaxValue{ TNumericLimits<component_type>::MaxValue() };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinValue{ TNumericLimits<component_type>::MinValue() };
+
+    static CONSTEXPR TScalarVectorConstant<component_type, 1, 0, 0, 0> X{};
+    static CONSTEXPR TScalarVectorConstant<component_type, 0, 1, 0, 0> Y{};
+    static CONSTEXPR TScalarVectorConstant<component_type, 0, 0, 1, 0> Z{};
+    static CONSTEXPR TScalarVectorConstant<component_type, 0, 0, 0, 1> W{};
+};
+//----------------------------------------------------------------------------
+// TScalarVector<T, N> : general fallback for larger vectors needed by some templates
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+struct TScalarVector : TScalarVectorAssignable<TScalarVector<T, _Dim>, T, _Dim> {
+    static CONSTEXPR size_t Dim = _Dim;
+    using component_type = T;
+    using parent_type = TScalarVectorAssignable<TScalarVector<T, _Dim>, T, _Dim>;
+    using parent_type::operator =;
+    using parent_type::operator +=;
+    using parent_type::operator -=;
+    using parent_type::operator *=;
+    using parent_type::operator /=;
+
+    CONSTEXPR TScalarVector() NOEXCEPT = default;
+    CONSTEXPR TScalarVector(Meta::FForceInit) NOEXCEPT : TScalarVector(Meta::MakeForceInit<T>()) {}
+
+    CONSTEXPR TScalarVector(const TScalarVector& other) NOEXCEPT = default;
+    CONSTEXPR TScalarVector& operator =(const TScalarVector& other) NOEXCEPT = default;
+
+    FORCE_INLINE CONSTEXPR explicit TScalarVector(component_type broadcast) NOEXCEPT {
+        Broadcast(broadcast);
+    }
+
+    template <typename _Expr>
+    FORCE_INLINE CONSTEXPR TScalarVector(const TScalarVectorExpr<_Expr, _Dim>& e) NOEXCEPT {
+        Meta::static_for<Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
+            ((data[idx] = e.template get<idx>()), ...);
+        });
+    }
+
+    component_type data[Dim];
+
+    CONSTEXPR void Broadcast(T v) NOEXCEPT {
+        Meta::static_for<Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
+            ((data[idx] = v), ...);
+        });
+    }
+
+#ifdef WITH_PPE_ASSERT
+    component_type& operator [](size_t i) NOEXCEPT { Assert(i < _Dim); return data[i]; }
+    const component_type& operator [](size_t i) const NOEXCEPT { Assert(i < _Dim); return data[i]; }
+#else
+    CONSTEXPR component_type& operator [](size_t i) NOEXCEPT { return data[i]; }
+    CONSTEXPR const component_type& operator [](size_t i) const NOEXCEPT { return data[i]; }
+#endif
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR component_type& get() NOEXCEPT { return data[_Idx]; }
+
+    template <size_t _Idx>
+    FORCE_INLINE CONSTEXPR const component_type& get() const NOEXCEPT { return data[_Idx]; }
+
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> One{ component_type(1) };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinusOne{ component_type(-1) };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> Zero{ component_type(0) };
+
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MaxValue{ TNumericLimits<component_type>::MaxValue() };
+    static CONSTEXPR TScalarVectorLiteral<component_type, Dim> MinValue{ TNumericLimits<component_type>::MinValue() };
+};
+//----------------------------------------------------------------------------
+// ExpandScalarVectorExpr() : convert an expression to a vector of deduced type
+//----------------------------------------------------------------------------
+template < typename T, size_t _Dim>
+CONSTEXPR auto ExpandScalarVectorExpr(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT {
+    using component_type = std::decay_t<decltype(
+        std::declval<const TScalarVectorExpr<T, _Dim>&>().template get<0>()
+    )>;
+    return PromoteScalarVectorExpr<component_type>(v);
+}
+//----------------------------------------------------------------------------
+template < typename T, size_t _Dim>
+CONSTEXPR const TScalarVector<T, _Dim>& ExpandScalarVectorExpr(const TScalarVector<T, _Dim>& v) NOEXCEPT {
+    return v; // specialize for TVector<> : skip copy with trivial projection
+}
+//----------------------------------------------------------------------------
+// PromoteScalarVectorExpr() : convert an expression to a vector
+//----------------------------------------------------------------------------
+template <typename U, typename T, size_t _Dim>
+CONSTEXPR TScalarVector<U, _Dim> PromoteScalarVectorExpr(const TScalarVectorExpr<T, _Dim>& v) NOEXCEPT {
+    return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT -> TScalarVector<U, _Dim> {
+        return { v.template get<idx>()... };
+    });
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+CONSTEXPR const TScalarVector<T, _Dim>& PromoteScalarVectorExpr(const TScalarVector<T, _Dim>& v) NOEXCEPT {
+    return v; // avoid copy for TScalarVector<>
+}
+//----------------------------------------------------------------------------
+// PromoteScalarVectorExpr() specializations to avoid copy
+//----------------------------------------------------------------------------
+#define PPE_MATH_PROMOTEVECTOREXPR_NOCOPY_SWIZZLE(_DIM, _OFF, ...) \
+    template <typename T> \
+    FORCE_INLINE CONSTEXPR TScalarVector<T, _DIM>& PromoteScalarVectorExpr(TScalarVectorAssignable<TScalarVectorSwizzle<T, __VA_ARGS__>, T, _DIM>& v) NOEXCEPT { \
+        return reinterpret_cast<TScalarVector<T, _DIM>&>(static_cast<TScalarVectorSwizzle<T, __VA_ARGS__>&>(v).data[_OFF]); \
+    } \
+    template <typename T> \
+    FORCE_INLINE CONSTEXPR const TScalarVector<T, _DIM>& PromoteScalarVectorExpr(const TScalarVectorAssignable<TScalarVectorSwizzle<T, __VA_ARGS__>, T, _DIM>& v) NOEXCEPT { \
+        return reinterpret_cast<const TScalarVector<T, _DIM>&>(static_cast<const TScalarVectorSwizzle<T, __VA_ARGS__>&>(v).data[_OFF]); \
+    }
+
+// All contiguous swizzles :
+
+PPE_MATH_PROMOTEVECTOREXPR_NOCOPY_SWIZZLE(2, 0,/* xy   */0, 1)
+PPE_MATH_PROMOTEVECTOREXPR_NOCOPY_SWIZZLE(2, 1,/* yz   */1, 2)
+PPE_MATH_PROMOTEVECTOREXPR_NOCOPY_SWIZZLE(2, 2,/* zw   */2, 3)
+
+PPE_MATH_PROMOTEVECTOREXPR_NOCOPY_SWIZZLE(3, 0,/* xyz  */0, 1, 2)
+PPE_MATH_PROMOTEVECTOREXPR_NOCOPY_SWIZZLE(3, 1,/* yzw  */1, 2, 3)
+
+PPE_MATH_PROMOTEVECTOREXPR_NOCOPY_SWIZZLE(4, 0,/* xyzw */0, 1, 2, 3)
+
+#undef PPE_MATH_PROMOTEVECTOREXPR_NOCOPY_SWIZZLE
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, size_t _Dim>
+hash_t hash_value(const TScalarVector<T, _Dim>& v) {
+    return hash_as_pod_array(v.data);
+}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 void swap(TScalarVector<T, _Dim>& lhs, TScalarVector<T, _Dim>& rhs) {
-    lhs.Swap(rhs);
+    return std::swap(lhs.data, rhs.data);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim >
 FTextWriter& operator <<(FTextWriter& oss, const TScalarVector<T, _Dim>& v) {
-    oss << '[' << v._data[0];
+    oss << '[' << v.data[0];
     forrange(i, 1, _Dim)
-        oss << ", " << v._data[i];
+        oss << ", " << v.data[i];
     oss << ']';
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim >
 FWTextWriter& operator <<(FWTextWriter& oss, const TScalarVector<T, _Dim>& v) {
-    oss << L'[' << v._data[0];
+    oss << L'[' << v.data[0];
     forrange(i, 1, _Dim)
-        oss << L", " << v._data[i];
+        oss << L", " << v.data[i];
     oss << L']';
     return oss;
 }
@@ -235,13 +994,13 @@ struct TNumericLimits< TScalarVector<T, _Dim> > {
     STATIC_CONST_INTEGRAL(bool, is_modulo,  scalar_type::is_modulo);
     STATIC_CONST_INTEGRAL(bool, is_signed,  scalar_type::is_signed);
 
-    static constexpr value_type DefaultValue() { return value_type( scalar_type::DefaultValue() ); }
-    static constexpr value_type Epsilon() { return value_type( scalar_type::Epsilon() ); }
-    static constexpr value_type Inf() { return value_type( scalar_type::Inf() ); }
-    static constexpr value_type MaxValue() { return value_type( scalar_type::MaxValue() ); }
-    static constexpr value_type MinValue() { return value_type( scalar_type::MinValue() ); }
-    static constexpr value_type Nan() { return value_type( scalar_type::Nan() ); }
-    static constexpr value_type Zero() { return value_type( scalar_type::Zero() ); }
+    static CONSTEXPR value_type DefaultValue() NOEXCEPT { return value_type( scalar_type::DefaultValue() ); }
+    static CONSTEXPR value_type Epsilon() NOEXCEPT { return value_type( scalar_type::Epsilon() ); }
+    static CONSTEXPR value_type Inf() NOEXCEPT { return value_type( scalar_type::Inf() ); }
+    static CONSTEXPR value_type MaxValue() NOEXCEPT { return value_type( scalar_type::MaxValue() ); }
+    static CONSTEXPR value_type MinValue() NOEXCEPT { return value_type( scalar_type::MinValue() ); }
+    static CONSTEXPR value_type Nan() NOEXCEPT { return value_type( scalar_type::Nan() ); }
+    static CONSTEXPR value_type Zero() NOEXCEPT { return value_type( scalar_type::Zero() ); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -253,5 +1012,3 @@ PPE_ASSUME_TYPE_AS_POD(TScalarVector<T COMMA _Dim>, typename T, size_t _Dim)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-
-#include "Maths/ScalarVector-inl.h"

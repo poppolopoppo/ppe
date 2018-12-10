@@ -52,7 +52,7 @@ size_t LongestEdge_(const TMemoryView<const float2>& hull, float2& center) {
         const float2& a = hull[(i + 0) % n];
         const float2& b = hull[(i + 1) % n];
 
-        const float lengthSq = DistanceSq2(a, b);
+        const float lengthSq = DistanceSq(a, b);
         if (lengthSqMax < lengthSq) {
             lengthSqMax = lengthSq;
             edgeIndex = i;
@@ -88,8 +88,8 @@ size_t ConvexHull2D_MonotoneChain(const TMemoryView<size_t>& hull, const TMemory
 
     // Lexicographic sort
     std::sort(indices.begin(), indices.end(), [&points](size_t a, size_t b) {
-        return  (points[a].x() < points[b].x()) ||
-                (points[a].x() == points[b].x() && points[a].y() < points[b].y());
+        return  (points[a].x < points[b].x) ||
+                (points[a].x == points[b].x && points[a].y < points[b].y);
     });
 
     size_t count = 0;

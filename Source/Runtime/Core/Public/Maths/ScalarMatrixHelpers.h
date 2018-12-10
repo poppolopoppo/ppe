@@ -312,6 +312,9 @@ template <typename T>
 TScalarMatrix<T, 4, 4> Make3DTransformMatrix(const TScalarVector<T, 3>& translate, T scale, const TScalarVector<T, 3>& axis, T radians);
 //----------------------------------------------------------------------------
 template <typename T>
+TScalarMatrix<T, 4, 4> Make3DTransformMatrix(const TScalarVector<T, 3>& translate, T scale, const FQuaternion& rotation);
+//----------------------------------------------------------------------------
+template <typename T>
 TScalarMatrix<T, 4, 4> Make3DTransformMatrix(const TScalarVector<T, 3>& translate, const TScalarVector<T, 3>& scale, const TScalarVector<T, 3>& axis, T fsin, T fcos);
 //----------------------------------------------------------------------------
 template <typename T>

@@ -81,6 +81,12 @@ public: // generic helpers
         *(u64*)p = FPlatformEndian::SwapEndianness(*(const u64*)p);
     }
 
+    template <typename T, size_t _Dim>
+    static FORCE_INLINE void SwapInPlace(T (&arr)[_Dim]) NOEXCEPT {
+        for (size_t i = 0; i < _Dim; ++i)
+            SwapInPlace(&arr[i]);
+    }
+
     //------------------------------------------------------------------------
     // These helpers will dodge endianness swapping if it's already match
     // current platform's :

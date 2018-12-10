@@ -26,7 +26,7 @@ using TIntegralConstant = typename std::integral_constant<T, _Value>::type;
 //----------------------------------------------------------------------------
 // Function overloading helpers to use dummy parameters for specialization :
 template <typename T>
-struct TType {};
+struct TType { using type = T; };
 //----------------------------------------------------------------------------
 // This ugly piece of crap is just used in STATIC_ASSERT() to get to see the
 // actual size of the types when the assertion fails :
@@ -320,6 +320,13 @@ void Destroy(T* p) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Tricking the compiler to make implicit conversion with template argument deduction
+// https://stackoverflow.com/questions/45765205/template-function-argument-deduction-with-an-implicit-conversion
+template<class T>
+using TDontDeduce = typename TType<T>::type;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 struct FNonCopyable {
     FNonCopyable() NOEXCEPT = default;
     FNonCopyable(const FNonCopyable&) = delete;
@@ -374,4 +381,8 @@ struct FNonCopyableNorMovable {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Meta
+
+PPE_ASSERT_TYPE_IS_POD(u128);
+PPE_ASSERT_TYPE_IS_POD(u256);
+
 } //!namespace PPE

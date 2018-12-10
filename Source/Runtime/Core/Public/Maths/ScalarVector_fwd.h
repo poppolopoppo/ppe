@@ -7,7 +7,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-class TScalarVector;
+struct TScalarVector;
 //----------------------------------------------------------------------------
 #define DECL_SCALARVECTOR_ALIAS(_Scalar, _ALIAS) \
     using CONCAT(_ALIAS, 2) = TScalarVector<_Scalar, 2>; \

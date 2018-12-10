@@ -25,10 +25,10 @@ FLinearColor::FLinearColor(const FColor& color)
         UByte0255_to_Float01(color.A) ) {}
 //----------------------------------------------------------------------------
 FLinearColor::FLinearColor(const float3& rgb, float a/* = 1.0f */)
-    : FLinearColor(rgb.x(), rgb.y(), rgb.z(), a) {}
+    : FLinearColor(rgb.x, rgb.y, rgb.z, a) {}
 //----------------------------------------------------------------------------
 FLinearColor::FLinearColor(const float4& rgba)
-    : FLinearColor(rgba.x(), rgba.y(), rgba.z(), rgba.w()) {}
+    : FLinearColor(rgba.x, rgba.y, rgba.z, rgba.w) {}
 //----------------------------------------------------------------------------
 FLinearColor FLinearColor::Desaturate(float desaturation) const {
     const float luma = Luminance();
@@ -173,10 +173,10 @@ FLinearColor LerpUsingHSV(const FLinearColor& from, const FLinearColor& to, floa
 const FColor FColor::PaperWhite(0xFF, 0xFF, 0xFF, 0xFF);
 //----------------------------------------------------------------------------
 FColor::FColor(const ubyte3& rgb, u8 a/* = 1.0f */)
-    : R(rgb.x()), G(rgb.y()), B(rgb.z()), A(a) {}
+    : R(rgb.x), G(rgb.y), B(rgb.z), A(a) {}
 //----------------------------------------------------------------------------
 FColor::FColor(const ubyte4& rgba)
-    : R(rgba.x()), G(rgba.y()), B(rgba.z()), A(rgba.w()) {}
+    : R(rgba.x), G(rgba.y), B(rgba.z), A(rgba.w) {}
 //----------------------------------------------------------------------------
 FLinearColor FColor::FromRGBE() const {
     if (A == 0) {
@@ -259,47 +259,48 @@ float3 Hue_to_RGB(float hue) {
 float3 RGB_to_HCV(const float3& rgb) {
     const float Epsilon = 1e-10f;
     // Based on work by Sam Hocevar and Emil Persson
-    float4 P = (rgb.y() < rgb.z()) ? float4(rgb.z(), rgb.y(), -1.0f, 2.0f/3.0f) : float4(rgb.y(), rgb.z(), 0.0f, -1.0f/3.0f);
-    float4 Q = (rgb.x() < P.x()) ? float4(P.xyw(), rgb.x()) : float4(rgb.x(), P.yzx());
-    float C = Q.x() - Min(Q.w(), Q.y());
-    float H = Abs((Q.w() - Q.y()) / (6 * C + Epsilon) + Q.z());
-    return float3(H, C, Q.x());
+    float4 P = (rgb.y < rgb.z) ? float4(rgb.z, rgb.y, -1.0f, 2.0f/3.0f) : float4(rgb.y, rgb.z, 0.0f, -1.0f/3.0f);
+    float4 Q = (rgb.x < P.x) ? float4(P.xyw, rgb.x) : float4(rgb.x, P.yzx);
+    float C = Q.x - Min(Q.w, Q.y);
+    float H = Abs((Q.w - Q.y) / (6 * C + Epsilon) + Q.z);
+    return float3(H, C, Q.x);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 float3 HSV_to_RGB(const float3& hsv) {
-    float3 RGB = Hue_to_RGB(hsv.x());
-    return ((RGB - 1) * hsv.y() + 1) * hsv.z();
+    float3 RGB = Hue_to_RGB(hsv.x);
+    float3 x = RGB * 2.f;
+    return ((RGB - 1) * hsv.y + 1) * hsv.z;
 }
 //----------------------------------------------------------------------------
 float3 RGB_to_HSV(const float3& rgb) {
     const float Epsilon = 1e-10f;
     float3 HCV = RGB_to_HCV(rgb);
-    float S = HCV.y() / (HCV.z() + Epsilon);
-    return float3(HCV.x(), S, HCV.z());
+    float S = HCV.y / (HCV.z + Epsilon);
+    return float3(HCV.x, S, HCV.z);
 }
 //----------------------------------------------------------------------------
 // IQ's goodness
 // https://www.shadertoy.com/view/MsS3Wc
 float3 HSV_to_RGB_smooth(const float3& rgb) {
-    return rgb.z() * (1.f - rgb.y() * Smoothstep(2.f, 1.f, Abs(FMod(rgb.x()*6.f + float3(0, 4, 2), 6.f) - 3.f)));
+    return rgb.z * (1.f - rgb.y * Smoothstep(2.f, 1.f, Abs(FMod(rgb.x*6.f + float3(0, 4, 2), 6.f) - 3.f)));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 float3 HSL_to_RGB(const float3& hsl) {
-    float3 RGB = Hue_to_RGB(hsl.x());
-    float C = (1 - Abs(2 * hsl.z() - 1)) * hsl.y();
-    return (RGB - 0.5f) * C + hsl.z();
+    float3 RGB = Hue_to_RGB(hsl.x);
+    float C = (1 - Abs(2 * hsl.z - 1)) * hsl.y;
+    return (RGB - 0.5f) * C + hsl.z;
 }
 //----------------------------------------------------------------------------
 float3 RGB_to_HSL(const float3& rgb) {
     const float Epsilon = 1e-10f;
     float3 HCV = RGB_to_HCV(rgb);
-    float L = HCV.z() - HCV.y() * 0.5f;
-    float S = HCV.y() / (1 - Abs(L * 2 - 1) + Epsilon);
-    return float3(HCV.x(), S, L);
+    float L = HCV.z - HCV.y * 0.5f;
+    float S = HCV.y / (1 - Abs(L * 2 - 1) + Epsilon);
+    return float3(HCV.x, S, L);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -310,19 +311,19 @@ float3 RGB_to_HSL(const float3& rgb) {
 // https://www.shadertoy.com/view/4dcSRN
 //----------------------------------------------------------------------------
 float3 YCoCg_to_RGB(const float3& yCoCg) {
-    float y = yCoCg.x();
-    float Co = yCoCg.y() + 0.5f;
-    float Cg = yCoCg.z() + 0.5f;
+    float y = yCoCg.x;
+    float Co = yCoCg.y + 0.5f;
+    float Cg = yCoCg.z + 0.5f;
     float r = Co - Cg;
     float b = -Co - Cg;
     return float3(y + r, y + Cg, y + b);
 }
 //----------------------------------------------------------------------------
 float3 RGB_to_YCoCg(const float3& rgb) {
-    float tmp = 0.5f*(rgb.x() + rgb.z());
-    float y = rgb.y() + tmp;
-    float Cg = rgb.y() - tmp;
-    float Co = rgb.x() - rgb.z();
+    float tmp = 0.5f*(rgb.x + rgb.z);
+    float y = rgb.y + tmp;
+    float Cg = rgb.y - tmp;
+    float Co = rgb.x - rgb.z;
     return float3(y * 0.5f, Co*0.5f+0.5f, Cg*0.5f+0.5f);
 }
 //----------------------------------------------------------------------------

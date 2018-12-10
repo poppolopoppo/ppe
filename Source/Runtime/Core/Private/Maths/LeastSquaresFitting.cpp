@@ -23,7 +23,7 @@ bool LeastSquaresFittingGaussian2(float2& center, float2& axis0, float2& axis1, 
         return false;
 
     // Compute the mean of the points.
-    float2 mean = float2::Zero();
+    float2 mean = float2::Zero;
     for (const float2& p : points)
         mean += p;
 
@@ -78,7 +78,7 @@ bool LeastSquaresFittingGaussian3(float3& center, float3& axis0, float3& axis1, 
         return false;
 
     // Compute the mean of the points.
-    float3 mean = float3::Zero();
+    float3 mean = float3::Zero;
     for (const float3& p : points)
         mean += p;
 
@@ -270,7 +270,7 @@ float LeastSquaresFittingQuadraticCircle2(float2& center, float radius, const TM
 
     center[0] = ((float)-0.5) * coefficients[1];
     center[1] = ((float)-0.5) * coefficients[2];
-    radius = Sqrt(Abs(Dot2(center, center) - coefficients[0]));
+    radius = Sqrt(Abs(Dot(center, center) - coefficients[0]));
 
     // For an exact fit, numeric round-off errors might make the minimum
     // eigenvalue just slightly negative.  Return the absolute value since
@@ -476,7 +476,7 @@ float LeastSquaresFittingQuadraticSphere3(float3& center, float radius, const TM
     center[0] = ((float)-0.5) * coefficients[1];
     center[1] = ((float)-0.5) * coefficients[2];
     center[2] = ((float)-0.5) * coefficients[3];
-    radius = Sqrt(Abs(Dot3(center, center) - coefficients[0]));
+    radius = Sqrt(Abs(Dot(center, center) - coefficients[0]));
 
     // For an exact fit, numeric round-off errors might make the minimum
     // eigenvalue just slightly negative.  Return the absolute value since
@@ -491,7 +491,7 @@ bool LeastSquaresFittingOrthogonalLine2(float2& origin, float2& direction, const
         return false;
 
     // Compute the mean of the points.
-    float2 mean = float2::Zero();
+    float2 mean = float2::Zero;
     for (const float2& p : points)
         mean += p;
     mean /= (float)points.size();
@@ -532,7 +532,7 @@ bool LeastSquaresFittingOrthogonalLine3(float3& origin, float3& direction, const
     if (points.size() < 2)
         return false;
 
-    float3 mean = float3::Zero();
+    float3 mean = float3::Zero;
     for (const float3& p : points)
         mean += p;
 

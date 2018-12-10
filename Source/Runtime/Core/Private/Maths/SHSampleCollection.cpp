@@ -50,8 +50,8 @@ void FSHSampleCollection::GenerateSphericalSamples_JiterredStratification(size_t
 
             // spherical coordinate generation
             SHSphericalCoord& thetaPhi = _thetaPhi[sample];
-            thetaPhi.x() = 2 * std::acos(std::sqrt(1-x));
-            thetaPhi.y() = SHScalar(2 * 3.1415926535897932384626433832795 * y);
+            thetaPhi.x = 2 * std::acos(std::sqrt(1-x));
+            thetaPhi.y = SHScalar(2 * 3.1415926535897932384626433832795 * y);
 
             // direction coordinate generation
             SHDirection& direction = _direction[sample];

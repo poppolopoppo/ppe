@@ -40,6 +40,8 @@ enum class EAccessPolicy : size_t {
     Compress        = 1 << 13,  // Uses PPE::Compression
     ShareRead       = 1 << 14,  // Allow other process to read the file while writing
 
+    Roll            = 1 << 15,  // Will role the file if already existings (name_1, name_2, name_3, ...)
+
     Create_Binary   = Create | Binary,
     Create_Text     = Create | Text,
 

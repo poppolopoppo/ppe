@@ -33,10 +33,10 @@ typedef TScalarVector<SHScalar, 2> SHSphericalCoord; // Theta/Phi
 typedef TScalarVector<SHScalar, 3> SHDirection;      // Nx/Ny/Nz
 //----------------------------------------------------------------------------
 inline SHDirection SHSphericalCoordToDirection(const SHSphericalCoord& thetaPhi) {
-    const SHScalar sinTheta = std::sin(thetaPhi.x());
-    return SHDirection( sinTheta * std::cos(thetaPhi.y()),
-                        sinTheta * std::sin(thetaPhi.y()),
-                        std::cos(thetaPhi.x()) );
+    const SHScalar sinTheta = std::sin(thetaPhi.x);
+    return SHDirection( sinTheta * std::cos(thetaPhi.y),
+                        sinTheta * std::sin(thetaPhi.y),
+                        std::cos(thetaPhi.x) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

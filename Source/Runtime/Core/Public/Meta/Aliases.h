@@ -119,7 +119,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define FORCE_INLINE    inline // don't want force inline when debugging
 #endif
 #define NO_INLINE       __declspec(noinline)
-#define SIMD_INLINE     FORCE_INLINE _vectorcall
+#define SIMD_INLINE     _vectorcall
 //----------------------------------------------------------------------------
 #if ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
 #   define Likely(...) (__builtin_expect (!!(__VA_ARGS__),1) )
@@ -237,33 +237,37 @@ typedef u16 ushort;
 typedef i32 word;
 typedef u32 uword;
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-constexpr decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Max(_Lhs a, _Rhs b) { return (a < b) ? b : a; }
+template <typename _Lhs, typename _Rhs, class = decltype(std::declval<_Lhs>() < std::declval<_Rhs>()) >
+CONSTEXPR auto Max(_Lhs a, _Rhs b) NOEXCEPT {
+    return (a < b) ? b : a;
+}
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-constexpr decltype(std::declval<_Lhs>()+std::declval<_Rhs>()) Min(_Lhs a, _Rhs b) { return (a < b) ? a : b; }
+template <typename _Lhs, typename _Rhs, class = decltype(std::declval<_Lhs>() < std::declval<_Rhs>()) >
+CONSTEXPR auto Min(_Lhs a, _Rhs b) NOEXCEPT {
+    return (a < b) ? a : b;
+}
 //----------------------------------------------------------------------------
-template <typename T, typename _Min, typename _Max>
-constexpr decltype(std::declval<T>() + std::declval<_Min>() + std::declval<_Max>()) Clamp(T value, _Min vmin, _Max vmax) {
+template <typename T, typename U, class = decltype(std::declval<T>() < std::declval<U>()) >
+CONSTEXPR auto Clamp(T value, U vmin, U vmax) NOEXCEPT {
     return Min(vmax, Max(vmin, value));
 }
 //----------------------------------------------------------------------------
-template <typename _A, typename _B, typename _C>
-constexpr decltype(std::declval<_A>() + std::declval<_B>() + std::declval<_C>()) Max3(_A a, _B b, _C c) { return (a < b) ? Max(b, c) : Max(a, c); }
+template <typename _A, typename _B, typename _C, class = decltype(std::declval<_A>() < std::declval<_B>()) >
+CONSTEXPR auto Max3(_A a, _B b, _C c) NOEXCEPT { return (a < b ? Max(b, c) : Max(a, c)); }
 //----------------------------------------------------------------------------
-template <typename _A, typename _B, typename _C>
-constexpr decltype(std::declval<_A>() + std::declval<_B>() + std::declval<_C>()) Min3(_A a, _B b, _C c) { return (a < b) ? Min(a, c) : Min(b, c); }
+template <typename _A, typename _B, typename _C, class = decltype(std::declval<_A>() < std::declval<_B>()) >
+CONSTEXPR auto Min3(_A a, _B b, _C c) NOEXCEPT { return (a < b ? Min(a, c) : Min(b, c)); }
 //----------------------------------------------------------------------------
 typedef struct uint128_t {
     u64 lo, hi;
 
-    static uint128_t Zero() { return uint128_t{ 0, 0 }; }
+    CONSTEXPR static uint128_t Zero() { return uint128_t{ 0, 0 }; }
 
-    friend bool operator ==(const uint128_t& lhs, const uint128_t& rhs) { return lhs.hi == rhs.hi && lhs.lo == rhs.lo; }
-    friend bool operator !=(const uint128_t& lhs, const uint128_t& rhs) { return !operator ==(lhs, rhs); }
+    CONSTEXPR friend bool operator ==(const uint128_t& lhs, const uint128_t& rhs) { return lhs.hi == rhs.hi && lhs.lo == rhs.lo; }
+    CONSTEXPR friend bool operator !=(const uint128_t& lhs, const uint128_t& rhs) { return !operator ==(lhs, rhs); }
 
-    friend bool operator < (const uint128_t& lhs, const uint128_t& rhs) { return lhs.hi == rhs.hi ? lhs.lo < rhs.lo : lhs.hi < rhs.hi; }
-    friend bool operator >=(const uint128_t& lhs, const uint128_t& rhs) { return !operator < (lhs, rhs); }
+    CONSTEXPR friend bool operator < (const uint128_t& lhs, const uint128_t& rhs) { return lhs.hi == rhs.hi ? lhs.lo < rhs.lo : lhs.hi < rhs.hi; }
+    CONSTEXPR friend bool operator >=(const uint128_t& lhs, const uint128_t& rhs) { return !operator < (lhs, rhs); }
 
     friend void swap(uint128_t& lhs, uint128_t& rhs) { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
 
@@ -272,13 +276,13 @@ typedef struct uint128_t {
 typedef struct uint256_t {
     uint128_t lo, hi;
 
-    static uint256_t Zero() { return uint256_t{ uint128_t::Zero(), uint128_t::Zero() }; }
+    CONSTEXPR static uint256_t Zero() { return uint256_t{ uint128_t::Zero(), uint128_t::Zero() }; }
 
-    friend bool operator ==(const uint256_t& lhs, const uint256_t& rhs) { return lhs.hi == rhs.hi && lhs.lo == rhs.lo; }
-    friend bool operator !=(const uint256_t& lhs, const uint256_t& rhs) { return !operator ==(lhs, rhs); }
+    CONSTEXPR friend bool operator ==(const uint256_t& lhs, const uint256_t& rhs) { return lhs.hi == rhs.hi && lhs.lo == rhs.lo; }
+    CONSTEXPR friend bool operator !=(const uint256_t& lhs, const uint256_t& rhs) { return !operator ==(lhs, rhs); }
 
-    friend bool operator < (const uint256_t& lhs, const uint256_t& rhs) { return lhs.hi == rhs.hi ? lhs.lo < rhs.lo : lhs.hi < rhs.hi; }
-    friend bool operator >=(const uint256_t& lhs, const uint256_t& rhs) { return !operator < (lhs, rhs); }
+    CONSTEXPR friend bool operator < (const uint256_t& lhs, const uint256_t& rhs) { return lhs.hi == rhs.hi ? lhs.lo < rhs.lo : lhs.hi < rhs.hi; }
+    CONSTEXPR friend bool operator >=(const uint256_t& lhs, const uint256_t& rhs) { return !operator < (lhs, rhs); }
 
     friend void swap(uint256_t& lhs, uint256_t& rhs) { std::swap(lhs.lo, rhs.lo); std::swap(lhs.hi, rhs.hi); }
 

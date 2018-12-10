@@ -9,25 +9,25 @@ namespace PPE {
 template <typename T>
 T Area(const TScalarBoundingBox<T, 2>& aabb) {
     const TScalarVector<T, 2> extents = aabb.Extents();
-    return (extents.x() * extents.y());
+    return (extents.x * extents.y);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 T Area(const TScalarBoxWExtent<T, 2>& aabb) {
     const TScalarVector<T, 2> halfExtents = aabb.HalfExtents();
-    return (halfExtents.x() * halfExtents.y() * 4);
+    return (halfExtents.x * halfExtents.y * 4);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 T Volume(const TScalarBoundingBox<T, 3>& aabb) {
     const TScalarVector<T, 3> extents = aabb.Extents();
-    return (extents.x() * extents.y() * extents.z());
+    return (extents.x * extents.y * extents.z);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 T Volume(const TScalarBoxWExtent<T, 3>& aabb) {
     const TScalarVector<T, 3> halfExtents = aabb.HalfExtents();
-    return (halfExtents.x() * halfExtents.y() * halfExtents.z() * 8);
+    return (halfExtents.x * halfExtents.y * halfExtents.z * 8);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
