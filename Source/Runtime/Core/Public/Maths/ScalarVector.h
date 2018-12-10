@@ -175,7 +175,7 @@ struct TScalarVectorBinaryOp : TScalarVectorExpr<TScalarVectorBinaryOp<_Lhs, _Rh
     )>;
 
     template <size_t _Idx>
-    FORCE_INLINE CONSTEXPR auto get() const NOEXCEPT {
+    FORCE_INLINE CONSTEXPR component_type get() const NOEXCEPT {
         return op(lhs.template get<_Idx>(), rhs.template get<_Idx>());
     }
 };
@@ -220,7 +220,7 @@ struct TScalarVectorUnaryOp : TScalarVectorExpr<TScalarVectorUnaryOp<_Expr, _Op>
     )>;
 
     template <size_t _Idx>
-    FORCE_INLINE CONSTEXPR auto get() const NOEXCEPT {
+    FORCE_INLINE CONSTEXPR component_type get() const NOEXCEPT {
         return op(v.template get<_Idx>());
     }
 };

@@ -110,10 +110,10 @@ template <typename T, typename U, class = Meta::TEnableIf<std::is_arithmetic_v<T
 CONSTEXPR T SMin(T a, Meta::TDontDeduce<T> b, U k) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T, typename U, class = Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>  >
-CONSTEXPR U Smoothstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
+CONSTEXPR auto Smoothstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T, typename U, class = Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>> >
-CONSTEXPR U Smootherstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
+CONSTEXPR auto Smootherstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
 //----------------------------------------------------------------------------
 inline float CeilToFloat(float f) NOEXCEPT { return FPlatformMaths::CeilToFloat(f); }
 inline double CeilToFloat(double d) NOEXCEPT { return FPlatformMaths::CeilToDouble(d); }

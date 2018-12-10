@@ -21,7 +21,7 @@ TScalarVector<T, _Dim> GridSnap(const Meta::TDontDeduce<TScalarVector<T, _Dim>>&
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-bool IsNormalized(const TScalarVectorExpr<float, _Dim>& v, float epsilon/* = F_Epsilon */) NOEXCEPT {
+bool IsNormalized(const TScalarVector<float, _Dim>& v, float epsilon/* = F_Epsilon */) NOEXCEPT {
     return Abs(1.0f - LengthSq(v)) < epsilon;
 }
 //----------------------------------------------------------------------------
