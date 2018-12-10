@@ -64,7 +64,7 @@ hash_t hash_range(_It first, _It last);
 namespace Meta {
 template <typename T>
 struct THash {
-    hash_t operator ()(const T& value) const {
+    hash_t operator ()(const T& value) const NOEXCEPT {
         using PPE::hash_value;
         return hash_value(value);
     }
@@ -72,18 +72,24 @@ struct THash {
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4309) // 'static_cast': truncation of constant value
 template <typename T>
-constexpr Meta::TEnableIf<std::is_enum_v<T> || std::is_integral_v<T>, T> empty_key() {
+CONSTEXPR Meta::TEnableIf<std::is_enum_v<T> || std::is_integral_v<T>, T> empty_key(Meta::TType<T>) NOEXCEPT {
     return static_cast<T>(0xFFFFFFFFFFFFFFFFull);
 }
 PRAGMA_MSVC_WARNING_POP()
 template <typename T>
-constexpr Meta::TEnableIf<std::is_floating_point_v<T>, T> empty_key() {
+CONSTEXPR Meta::TEnableIf<std::is_floating_point_v<T>, T> empty_key(Meta::TType<T>) NOEXCEPT {
     return std::numeric_limits<T>::max();
+}
+inline CONSTEXPR u128 empty_key(Meta::TType<u128>) NOEXCEPT {
+    return { empty_key(Meta::TType<u64>{}), empty_key(Meta::TType<u64>{}) };
+}
+inline CONSTEXPR u256 empty_key(Meta::TType<u256>) NOEXCEPT {
+    return { empty_key(Meta::TType<u128>{}), empty_key(Meta::TType<u128>{}) };
 }
 template <typename T>
 struct TEmptyKey {
     STATIC_ASSERT(Meta::TIsPod_v<T>);
-    STATIC_CONST_INTEGRAL(T, value, empty_key<T>());
+    STATIC_CONST_INTEGRAL(T, value, empty_key(Meta::TType<T>{}));
 };
 } //!namespace Meta
 //----------------------------------------------------------------------------

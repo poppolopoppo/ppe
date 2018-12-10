@@ -11,6 +11,7 @@
 #include "Diagnostic/Benchmark.h"
 #include "Diagnostic/Logger.h"
 
+#include "Allocator/LinearHeap.h"
 #include "IO/BufferedStream.h"
 #include "IO/FileStream.h"
 #include "IO/Filename.h"
@@ -863,6 +864,7 @@ template <
     , typename _Hash = Meta::THash<_Key>
     , typename _EqualTo = Meta::TEqualTo<_Key>
     , typename _Allocator = ALLOCATOR(Container, _Key)
+    , u32 _MaxDistance = 5
 >   class EMPTY_BASES TDenseHashSet2
     : TRebindAlloc<_Allocator, FDenseHashTableState2>
     , _Allocator {
@@ -889,6 +891,8 @@ public:
     using iterator = TCheckedArrayIterator<_Key>;
     using const_iterator = TCheckedArrayIterator<const _Key>;
 
+    static constexpr u32 MaxDistance = _MaxDistance;
+
     TDenseHashSet2()
         : _size(0)
         , _numStates(1)
@@ -901,18 +905,22 @@ public:
     }
 
     TDenseHashSet2(const TDenseHashSet2& other) : TDenseHashSet2() {
-        if (other.size()) {
-            reserve(other.size());
-            for (const auto& it : other)
-                insert(it);
-        }
+        operator =(other);
     }
     TDenseHashSet2& operator =(const TDenseHashSet2& other) {
-        clear();
+        clear_ReleaseMemory();
         if (other.size()) {
-            reserve(other.size());
-            for (const auto& it : other)
-                insert(it);
+            _size = other._size;
+            _numStates = other._numStates;
+
+            _states = state_traits::allocate(state_alloc(), _numStates);
+            _elements = key_traits::allocate(key_alloc(), Capacity_(_numStates));
+
+            FPlatformMemory::MemcpyLarge(_states, other._states, _numStates * sizeof(state_t));
+            std::uninitialized_copy(
+                MakeCheckedIterator(other._elements, _size, 0),
+                MakeCheckedIterator(other._elements, _size, _size),
+                MakeCheckedIterator(_elements, _size, 0));
         }
         return (*this);
     }
@@ -942,6 +950,8 @@ public:
     const_iterator begin() const { return MakeCheckedIterator(_elements, _size, 0); }
     const_iterator end() const { return MakeCheckedIterator(_elements, _size, _size); }
 
+    TMemoryView<const _Key> MakeView() const { return TMemoryView<_Key>(_elements, _size); }
+
     TPair<iterator, bool> insert(const _Key& key) {
         if (Unlikely(_size == Capacity_(_numStates)))
             reserve_Additional(1);
@@ -952,7 +962,8 @@ public:
         u16 h = u16(hasher()(key));
         u32 s = (h & numStatesM1);
         u16 i = checked_cast<u16>(_size);
-        for (u32 d = 0;; s = ++s & numStatesM1, d++) {
+        u32 d = 0;
+        for (;; s = ++s & numStatesM1, d++) {
             state_t& it = _states[s];
             if (it.Index == state_t::EmptyIndex)
                 break;
@@ -978,20 +989,24 @@ public:
         _size++;
 
         key_traits::construct(key_alloc(), _elements + _size - 1, key);
-        return MakePair(MakeCheckedIterator(_elements, _size, _size - 1), true);
+
+        if (Likely(d <= MaxDistance))
+            return MakePair(MakeCheckedIterator(_elements, _size, _size - 1), true);
+        else
+            return MakePair(grow_rehash(key), true);
     }
 
-    const_iterator find(const _Key& key) const {
+    iterator find(const _Key& key) {
         const u32 numStatesM1 = (_numStates - 1);
 
         u16 i;
         u16 h = u16(hasher()(key));
         for (u32 s = (h & numStatesM1), d = 0;; s = (s + 1) & numStatesM1, ++d) {
             const state_t& it = _states[s];
-            if (it.Hash == h && key_equal()(key, _elements[it.Index]))
-                i = it.Index;
-            else if (d > DistanceIndex_(it, s, numStatesM1))
+            if (d > DistanceIndex_(it, s, numStatesM1))
                 i = u16(_size);
+            else if (it.Hash == h && key_equal()(key, _elements[it.Index]))
+                i = it.Index;
             else
                 continue;
             break;
@@ -1000,21 +1015,23 @@ public:
         return MakeCheckedIterator(_elements, _size, i);
     }
 
-    bool erase(const _Key& key) {
-        if (0 == _size)
-            return false;
+    const_iterator find(const _Key& key) const {
+        return const_cast<TDenseHashSet2&>(*this).find(key);
+    }
 
+    bool erase(const _Key& key) {
         Assert_NoAssume(Meta::IsPow2(_numStates));
         const u32 numStatesM1 = (_numStates - 1);
 
-        u16 h = u16(hasher()(key));
+        const u16 h = u16(hasher()(key));
         u32 s = (h & numStatesM1);
         for (u32 d = 0;; s = (s + 1) & numStatesM1, ++d) {
             const state_t& it = _states[s];
-            if (it.Hash == h && key_equal()(key, _elements[it.Index]))
-                break;
-            else if (d > DistanceIndex_(it, s, numStatesM1))
+            if (d > DistanceIndex_(it, s, numStatesM1))
                 return false;
+            else if (it.Hash == h && key_equal()(key, _elements[it.Index]))
+                break;
+            Assert_NoAssume(d <= MaxDistance);
         }
 
         eraseAt_(s);
@@ -1031,9 +1048,7 @@ public:
                 st.Hash = u16(i);  // reset Hash to Index so DistanceIndex_() == 0
             }
 
-            IF_CONSTEXPR(not Meta::TIsPod_v<_Key>)
-                forrange(it, _elements, _elements + _size)
-                    key_traits::destroy(key_alloc(), it);
+            Destroy(key_alloc(), MakeView());
 
             _size = 0;
         }
@@ -1043,8 +1058,7 @@ public:
         if (_elements) {
             state_traits::deallocate(state_alloc(), _states, _numStates);
 
-            forrange(it, _elements, _elements + _size)
-                key_traits::destroy(key_alloc(), it);
+            Destroy(key_alloc(), MakeView());
 
             key_traits::deallocate(key_alloc(), _elements, Capacity_(_numStates));
 
@@ -1059,22 +1073,33 @@ public:
         Assert_NoAssume(nullptr == _elements);
     }
 
+    NO_INLINE iterator grow_rehash(const _Key& key) {
+        rehash(Capacity_(_numStates) + 1); // rounded to next pow2, can be *huge*
+        return find(key);
+    }
+
     FORCE_INLINE void reserve_Additional(size_t num) { reserve(_size + num); }
     NO_INLINE void reserve(size_t n) {
         if (n <= Capacity_(_numStates))
             return;
 
+        rehash(n);
+    }
+
+    void rehash(size_t n) {
         Assert(n);
         Assert_NoAssume(n > Capacity_(_numStates));
 
         const state_t* oldStates = _states;
         const u32 oldNumStates = _numStates;
 
-        _numStates = FPlatformMaths::NextPow2(u32(n) * 2);
+        _numStates = FPlatformMaths::NextPow2(u32(
+            SafeAllocatorSnapSize(state_alloc(), n * 2 + 1)));
         Assert_NoAssume(oldNumStates < _numStates);
 
         const u32 capacity = Capacity_(_numStates);
-        Assert(capacity);
+        Assert(capacity >= n);
+        Assert_NoAssume(capacity <= _numStates);
 
         _states = state_traits::allocate(state_alloc(), _numStates);
 
@@ -1158,6 +1183,7 @@ private:
     }
 
     NO_INLINE void eraseAt_(u32 s) {
+        Assert_NoAssume(_size);
         Assert_NoAssume(s < _numStates);
 
         const u32 numStatesM1 = (_numStates - 1);
@@ -1215,216 +1241,6 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Set, typename T>
-static void Test_Container_POD_(
-    const FWStringView& name, _Set& set,
-    const TMemoryView<const T>& input,
-    const TMemoryView<const T>& negative,
-    const TMemoryView<const T>& search,
-    const TMemoryView<const T>& todelete,
-    const TMemoryView<const T>& searchafterdelete
-) {
-    NOOP(name);
-
-#ifdef WITH_PPE_ASSERT
-    static constexpr size_t loops = 100;
-#else
-    static constexpr size_t loops = 10000;
-#endif
-
-    LOG(Test_Containers, Emphasis, L"benchmarking <{0}> with POD", name);
-    BENCHMARK_SCOPE(name, L"global");
-
-    {
-        BENCHMARK_SCOPE(name, L"construction");
-        for (const auto& word : input)
-            set.insert(word);
-    }
-    Assert(set.size() == input.size());
-    {
-        BENCHMARK_SCOPE(name, L"iteration");
-        forrange(i, 0, loops) {
-            volatile size_t count = 0;
-            for (const auto& it : set) {
-                UNUSED(it);
-                ++count;
-            }
-            if (set.size() != count)
-                PPE_THROW_IT(std::exception("invalid set iteration"));
-        }
-    }
-    {
-        BENCHMARK_SCOPE(name, L"search");
-        forrange(i, 0, loops) {
-            volatile size_t count = 0;
-            for (const auto& word : search) {
-                if (set.end() == set.find(word))
-                    AssertNotReached();
-                else
-                    ++count;
-            }
-            if (search.size() != count)
-                PPE_THROW_IT(std::exception("invalid set search"));
-        }
-    }
-    {
-        BENCHMARK_SCOPE(name, L"negative search");
-        forrange(i, 0, loops) {
-            volatile size_t count = 0;
-            for (const auto& word : negative) {
-                if (set.end() != set.find(word))
-                    AssertNotReached();
-                else
-                    ++count;
-            }
-            if (negative.size() != count)
-                PPE_THROW_IT(std::exception("invalid set negative search"));
-        }
-    }
-    {
-        BENCHMARK_SCOPE(name, L"deletion");
-        for (const auto& word : todelete)
-            set.erase(word);
-    }
-    {
-        BENCHMARK_SCOPE(name, L"iteration after delete");
-        forrange(i, 0, loops) {
-            volatile size_t count = 0;
-            for (const auto& it : set) {
-                UNUSED(it);
-                ++count;
-            }
-            if (set.size() != count)
-                PPE_THROW_IT(std::exception("invalid set iteration"));
-        }
-    }
-    {
-        BENCHMARK_SCOPE(name, L"search after delete");
-        forrange(i, 0, loops) {
-            volatile size_t pos_count = 0;
-            volatile size_t neg_count = 0;
-            for (const auto& word : searchafterdelete) {
-                if (set.end() == set.find(word))
-                    ++neg_count;
-                else
-                    ++pos_count;
-            }
-            if (searchafterdelete.size() != pos_count + neg_count)
-                PPE_THROW_IT(std::exception("invalid set search after delete"));
-        }
-    }
-}
-//----------------------------------------------------------------------------
-template <typename _Set, typename T, typename _Adaptor>
-static void Test_Container_Obj_(
-    const FWStringView& name,
-    _Set& set,
-    const TMemoryView<const T>& input,
-    const TMemoryView<const T>& negative,
-    const TMemoryView<const T>& search,
-    const TMemoryView<const T>& todelete,
-    const TMemoryView<const T>& searchafterdelete,
-    const _Adaptor& adaptor
-) {
-    NOOP(name);
-
-#ifdef WITH_PPE_ASSERT
-    static constexpr size_t loops = 10;
-#else
-    static constexpr size_t loops = 10000;
-#endif
-
-    LOG(Test_Containers, Emphasis, L"benchmarking <{0}> with non-POD", name);
-
-    BENCHMARK_SCOPE(name, L"global");
-
-    {
-        BENCHMARK_SCOPE(name, L"construction");
-        for (const auto& word : input.Map(adaptor))
-            set.insert(word);
-    }
-    Assert(set.size() == input.size());
-    {
-        BENCHMARK_SCOPE(name, L"search");
-        forrange(i, 0, loops) {
-            volatile size_t count = 0;
-            const auto e = set.end();
-            for (const auto& word : search.Map(adaptor))
-                count += (e == set.find(word) ? 0 : 1);
-            if (search.size() != count)
-                PPE_THROW_IT(std::exception("invalid search"));
-        }
-    }
-    {
-        BENCHMARK_SCOPE(name, L"iteration");
-        forrange(i, 0, loops) {
-            volatile size_t count = 0;
-            for (const auto& it : set) {
-                UNUSED(it);
-                ++count;
-            }
-            if (set.size() != count)
-                PPE_THROW_IT(std::exception("invalid set iteration"));
-        }
-    }
-    {
-        BENCHMARK_SCOPE(name, L"negative search");
-        forrange(i, 0, loops) {
-            volatile size_t count = 0;
-            const auto e = set.end();
-            for (const auto& word : negative.Map(adaptor))
-                count += (e == set.find(word) ? 1 : 0);
-            if (negative.size() != count)
-                PPE_THROW_IT(std::exception("invalid negative search"));
-        }
-    }
-    {
-        BENCHMARK_SCOPE(name, L"deletion");
-        volatile size_t count = 0;
-        for (const auto& word : todelete.Map(adaptor))
-            count += (set.erase(word) ? 1 : 0);
-        if (todelete.size() != count)
-            PPE_THROW_IT(std::exception("invalid deletion"));
-    }
-    Assert(set.size() == input.size() - todelete.size());
-    {
-        BENCHMARK_SCOPE(name, L"iteration after delete");
-        forrange(i, 0, loops) {
-            volatile size_t count = 0;
-            for (const auto& it : set) {
-                UNUSED(it);
-                ++count;
-            }
-            if (set.size() != count)
-                PPE_THROW_IT(std::exception("invalid iteration after delete"));
-        }
-    }
-    {
-        BENCHMARK_SCOPE(name, L"search after delete");
-        forrange(i, 0, loops) {
-            volatile size_t count = 0;
-            const auto e = set.end();
-            for (const auto& word : searchafterdelete.Map(adaptor))
-                count += (e == set.find(word) ? 1 : 0);
-            if (set.size() > count)
-                PPE_THROW_IT(std::exception("invalid search after delete"));
-        }
-    }
-}
-//----------------------------------------------------------------------------
-template <typename _Set, typename T>
-static void Test_Container_Obj_(
-    const FWStringView& name, _Set& set,
-    const TMemoryView<const T>& input,
-    const TMemoryView<const T>& negative,
-    const TMemoryView<const T>& search,
-    const TMemoryView<const T>& todelete,
-    const TMemoryView<const T>& searchafterdelete
-) {
-    constexpr auto identity = [](const T& v) -> const T& { return v; };
-    return Test_Container_Obj_(name, set, input, negative, search, todelete, searchafterdelete, identity);
-}
-//----------------------------------------------------------------------------
 #if USE_PPE_BENCHMARK
 template <typename T>
 struct TInputData {
@@ -1452,7 +1268,7 @@ struct TInputData {
     }
 
 };
-
+//----------------------------------------------------------------------------
 class construct_noreserve_t : public FBenchmark {
 public:
     construct_noreserve_t() : FBenchmark{ "ctor_cold" } {}
@@ -1733,13 +1549,15 @@ public:
         }
     }
 };
-
+//----------------------------------------------------------------------------
 template <typename T, typename _Generator, typename _Containers>
 static void Benchmark_Containers_(
     const FStringView& name, size_t dim,
-    _Generator generator,
-    _Containers tests ) {
+    _Generator&& generator,
+    _Containers&& tests ) {
     // prepare input data
+
+    LOG(Benchmark, Emphasis, L"Running benchmark <{0}> with {1} tests :", name, dim);
 
     std::random_device rdevice;
     std::mt19937 rand{ rdevice() };
@@ -1809,33 +1627,114 @@ static void Benchmark_Containers_(
     FBenchmark::Log(bm);
 
     {
-        const FFilename fname{ StringFormat(L"Saved:/Benchmark/Containers/{0}.csv", name) };
+        const FFilename fname{ StringFormat(L"Saved:/Benchmark/{0}/Containers/{1}.csv",
+            MakeStringView(WSTRINGIZE(BUILDCONFIG)), name) };
+
         FStringBuilder sb;
         FBenchmark::Csv(bm, sb);
         FString s{ sb.ToString() };
-        VFS_WriteAll(fname, s.MakeView().RawView(), EAccessPolicy::Truncate_Binary);
+        VFS_WriteAll(fname, s.MakeView().RawView(), EAccessPolicy::Truncate_Binary|EAccessPolicy::Roll);
     }
 }
 //----------------------------------------------------------------------------
+template <typename T, typename _Generator>
+static void Test_PODSet_(const FString& name, const _Generator& generator) {
+    auto containers_large = [](auto& bm, const auto& input) {
+        /*{
+            typedef TDenseHashSet<T> hashtable_type;
+
+            hashtable_type set;
+            bm.Run("DenseHashSet", set, input);
+        }*/
+        {
+            typedef TDenseHashSet2<T> hashtable_type;
+
+            hashtable_type set;
+            bm.Run("DenseHashSet2", set, input);
+        }
+        {
+            THashSet<T> set;
+
+            bm.Run("THashSet", set, input);
+        }
+        {
+            std::unordered_set<T, Meta::THash<T>, Meta::TEqualTo<T>, ALLOCATOR(Container, T)> set;
+
+            bm.Run("unordered_set", set, input);
+        }
+    };
+
+    auto containers_all = [&](auto& bm, const auto& input) {
+        {
+            typedef TVector<T> vector_type;
+
+            vector_type v;
+
+            struct FAdapter_ {
+                vector_type v;
+                size_t size() const { return v.size(); }
+                auto begin() const { return v.begin(); }
+                auto end() const { return v.end(); }
+                void insert(T i) { v.push_back(i); }
+                auto find(T i) const { return std::find(v.begin(), v.end(), i); }
+                void reserve(size_t n) { v.reserve(n); }
+                bool erase(T i) {
+                    auto it = find(i);
+                    if (v.end() == it)
+                        return false;
+                    v.erase_DontPreserveOrder(it);
+                    return true;
+                }
+                void clear() { v.clear(); }
+            };
+
+            FAdapter_ set;
+
+            bm.Run("TVector", set, input);
+        }
+        {
+            TFlatSet<T> set;
+
+            bm.Run("TFlatSet", set, input);
+        }
+        {
+            TFixedSizeHashSet<T, 128> set;
+
+            bm.Run("TFixedSizeHashSet", set, input);
+        }
+        containers_large(bm, input);
+    };
+
+    Benchmark_Containers_<T>(name + "_20", 20, generator, containers_all);
+    Benchmark_Containers_<T>(name + "_50", 50, generator, containers_all);
+#ifndef WITH_PPE_ASSERT
+    Benchmark_Containers_<T>(name + "_200", 200, generator, containers_large);
+    Benchmark_Containers_<T>(name + "_2000", 2000, generator, containers_large);
+    Benchmark_Containers_<T>(name + "_20000", 20000, generator, containers_large);
+#endif
+}
+//----------------------------------------------------------------------------
 static void Test_StringSet_() {
-    auto generator = [](auto& rnd) {
+    TRawStorage<char> stringPool;
+    stringPool.Resize_DiscardData(64 * 1024); // 64k of text
+    FRandomGenerator rnd(42);
+    stringPool.MakeView().Collect([&](size_t, char* pch) {
         constexpr char Charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!-*.$^@#~";
+        *pch = Charset[rnd.Next(lengthof(Charset) - 1/* null char */)];
+    });
+
+    auto generator = [&](auto& rnd) {
         constexpr size_t MinSize = 5;
         constexpr size_t MaxSize = 60;
 
         const size_t n = (rnd() % (MaxSize - MinSize + 1)) + MinSize;
+        const size_t o = (rnd() % (stringPool.size() - n));
 
-        FString s;
-        s.reserve(n);
-
-        forrange(i, 0, n)
-            s.append(Charset[rnd() % (lengthof(Charset) - 1)]);
-
-        return s;
+        return FStringView(&stringPool[o], n);
     };
 
     auto containers = [](auto& bm, const auto& input) {
-        {
+        /*{
             typedef TDenseHashSet<
                 FStringView,
                 TStringViewHasher<char, ECase::Sensitive>,
@@ -1844,7 +1743,7 @@ static void Test_StringSet_() {
 
             hashtable_type set;
             bm.Run("DenseHashSet", set, input);
-        }/*
+        }*//*
         {
             typedef TDenseHashSet<
                 THashMemoizer<
@@ -1866,30 +1765,30 @@ static void Test_StringSet_() {
 
             hashtable_type set;
             bm.Run("DenseHashSet2", set, input);
-        }/*
+        }
         {
             typedef TDenseHashSet2<
                 THashMemoizer<
-                FStringView,
-                TStringViewHasher<char, ECase::Sensitive>,
-                TStringViewEqualTo<char, ECase::Sensitive>
+                    FStringView,
+                    TStringViewHasher<char, ECase::Sensitive>,
+                    TStringViewEqualTo<char, ECase::Sensitive>
                 >
             >   hashtable_type;
 
             hashtable_type set;
             bm.Run("DenseHashSet2_M", set, input);
-        }*/
+        }
         {
             STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
 
             bm.Run("THashSet", set, input);
-        }/*
+        }
         {
             STRINGVIEW_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
 
             bm.Run("THashSet_M", set, input);
-        }*//*
-        {
+        }
+        /*{
             CONSTCHAR_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
 
             bm.Run("TConstCharHashSet_M", set, input);
@@ -1903,7 +1802,7 @@ static void Test_StringSet_() {
             >   set;
 
             bm.Run("unordered_set", set, input);
-        }/*
+        }
         {
             std::unordered_set<
                 TBasicStringViewHashMemoizer<char, ECase::Sensitive>,
@@ -1911,13 +1810,15 @@ static void Test_StringSet_() {
             >   set;
 
             bm.Run("unordered_set_M", set, input);
-        }*/
+        }
     };
 
-    Benchmark_Containers_<FString>("Strings20", 20, generator, containers);
-    Benchmark_Containers_<FString>("Strings50", 50, generator, containers);
-    Benchmark_Containers_<FString>("Strings200", 200, generator, containers);
-    Benchmark_Containers_<FString>("Strings2000", 2000, generator, containers);
+    Benchmark_Containers_<FStringView>("Strings_20", 20, generator, containers);
+    Benchmark_Containers_<FStringView>("Strings_50", 50, generator, containers);
+#ifndef WITH_PPE_ASSERT
+    Benchmark_Containers_<FStringView>("Strings_200", 200, generator, containers);
+    Benchmark_Containers_<FStringView>("Strings_2000", 2000, generator, containers);
+#endif
 }
 #endif //!USE_PPE_BENCHMARK
 //----------------------------------------------------------------------------
@@ -1939,6 +1840,10 @@ void Test_Containers() {
 
     Test_StealFromDifferentAllocator_();
 #if USE_PPE_BENCHMARK
+    Test_PODSet_<u32>("u32", [](auto& rnd) { return u32(rnd()); });
+    Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
+    Test_PODSet_<u128>("u128", [](auto& rnd) { return u128{ u64(rnd()), u64(rnd()) }; });
+    Test_PODSet_<u256>("u256", [](auto& rnd) { return u256{ { u64(rnd()), u64(rnd()) }, { u64(rnd()), u64(rnd()) } }; });
     Test_StringSet_();
 #endif
 #if 0

@@ -112,18 +112,24 @@ public:
     iterator begin() const { return (0 == _size ? end() : FIterator(*this, 0).Advance_(0)); }
     iterator end() const { return FIterator(*this, _Capacity); }
 
-    FORCE_INLINE bool Contains(_Key key) const { return (end() != Find(key)); }
-    iterator Find(_Key key) const;
+    iterator find(_Key key) const;
+    bool insert(_Key key) { return Add_KeepExisting(key); }
+    bool erase(_Key key) { return Remove_ReturnIfExists(key); }
+    void erase(const iterator& it);
+    void clear();
+
+    void reserve(size_t n) {
+        UNUSED(n);
+        Assert_NoAssume(n < _Capacity);
+    }
+
+    FORCE_INLINE bool Contains(_Key key) const { return (end() != find(key)); }
 
     FORCE_INLINE void Add_AssertUnique(_Key key) { Verify(Add_KeepExisting(key)); }
     bool Add_KeepExisting(_Key key);
 
     FORCE_INLINE void Remove_AssertExists(_Key key) { Verify(Remove_ReturnIfExists(key)); }
     bool Remove_ReturnIfExists(_Key key);
-
-    void Erase(const iterator& it);
-
-    void Clear();
 
 private:
     size_t _size;
@@ -167,13 +173,13 @@ template <typename _Key, size_t _Capacity, typename _Hash, typename _EmptyKey, t
 auto TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::operator =(const TFixedSizeHashSet& other) -> TFixedSizeHashSet& {
     // trivial destructor thanks to PODs
     _size = other._size;
-    FPlatformMemory::MemcpyLarge(_values, other._values, sizeof(_values));
+    FPlatformMemory::Memcpy(_values, other._values, sizeof(_values));
 
     return (*this);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
-auto TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::Find(_Key key) const -> iterator {
+auto TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::find(_Key key) const -> iterator {
     Assert(empty_key::value != key);
 
     size_t bucket = InitIndex_(key);
@@ -243,13 +249,13 @@ bool TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::Remove_Retu
         bucket = NextIndex_(bucket);
     }
 
-    Erase(FIterator(*this, bucket));
+    erase(FIterator(*this, bucket));
 
     return true;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
-void TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::Erase(const iterator& it) {
+void TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::erase(const iterator& it) {
     Assert(_size);
     Assert(it._owner == this);
     Assert(it._bucket < _Capacity);
@@ -274,7 +280,7 @@ void TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::Erase(const
 }
 //----------------------------------------------------------------------------
 template <typename _Key, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
-void TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::Clear() {
+void TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::clear() {
     if (_size) {
         _size = 0;
         for (_Key& value : _values)

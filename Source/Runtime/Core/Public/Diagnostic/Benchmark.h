@@ -40,11 +40,12 @@ public:
     FStringView Name{ "none" };
     u32 BatchSize{ 1 };
 #ifdef _DEBUG
-    u32 MaxIterations{ 50000 };
+    u32 MaxIterations{ 5000 };
+    double MaxVarianceError{ 1e-2 };
 #else
     u32 MaxIterations{ 500000 };
-#endif
     double MaxVarianceError{ 1e-3 };
+#endif
 
 public: // Helpers
     template <class Tp>

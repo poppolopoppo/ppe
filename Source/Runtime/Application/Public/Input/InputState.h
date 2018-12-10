@@ -35,7 +35,7 @@ public:
     void Add_AssertUnique(T value) { _events.Add_AssertUnique(value); }
     bool Remove_ReturnIfExists(T value) { return _events.Remove_ReturnIfExists(value); }
     void Remove_AssertExists(T value) { _events.Remove_AssertExists(value); }
-    void Clear() { _events.Clear(); }
+    void Clear() { _events.clear(); }
 
     bool Update(
         TInputState* up,
