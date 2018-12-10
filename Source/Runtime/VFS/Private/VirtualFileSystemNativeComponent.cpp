@@ -300,7 +300,7 @@ bool FVirtualFileSystemNativeComponent::RemoveFile(const FFilename& filename) {
 }
 //----------------------------------------------------------------------------
 UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& filename, EAccessPolicy policy) {
-    Assert(_openMode ^ EOpenPolicy::Writable);
+    Assert_NoAssume(_openMode ^ EOpenPolicy::Writable);
 
     UStreamWriter result;
 
@@ -311,6 +311,13 @@ UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& f
 
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
+
+    if (policy ^ EAccessPolicy::Roll) {
+        if (not FPlatformFile::RollFile(nativeFilename)) {
+            LOG(VFS, Error, L"failed to roll native file '{0}' : {1}", filename, nativeFilename);
+            return result;
+        }
+    }
 
     FFileStreamWriter tmp = FFileStream::OpenWrite(nativeFilename, policy);
     if (tmp.Good()) {

@@ -55,6 +55,7 @@ FTextWriter& operator <<(FTextWriter& oss, EAccessPolicy policy) {
         case EAccessPolicy::Exclusive:  oss << Fmt::Conditional('|', notFirst) << "Exclusive"; break;
         case EAccessPolicy::Compress:   oss << Fmt::Conditional('|', notFirst) << "Compress"; break;
         case EAccessPolicy::ShareRead:  oss << Fmt::Conditional('|', notFirst) << "ShareRead"; break;
+        case EAccessPolicy::Roll:       oss << Fmt::Conditional('|', notFirst) << "Roll"; break;
         default:
             AssertNotImplemented();
             break;
@@ -84,6 +85,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, EAccessPolicy policy) {
         case EAccessPolicy::Exclusive:  oss << Fmt::Conditional(L'|', notFirst) << L"Exclusive"; break;
         case EAccessPolicy::Compress:   oss << Fmt::Conditional(L'|', notFirst) << L"Compress"; break;
         case EAccessPolicy::ShareRead:  oss << Fmt::Conditional(L'|', notFirst) << L"ShareRead"; break;
+        case EAccessPolicy::Roll:       oss << Fmt::Conditional(L'|', notFirst) << L"Roll"; break;
         default:
             AssertNotImplemented();
             break;
