@@ -98,28 +98,26 @@ void FTestApp::Start() {
         L"Starting TestApp",
         L"Unit testing will start with " WSTRINGIZE(BUILDCONFIG) L" build config" );
 
-    constexpr size_t total = 9;
+    typedef void(*test_t)();
+    const test_t tests[] = {
+        &Test_Allocators,
+        &Test_Containers,
+        &Test_Format,
+        &Test_Thread,
+        &Test_VFS,
+        &Test_RTTI,
+        &Test_XML,
+        &Test_Lattice,
+        //&Test_Pixmap, // #TODO refactoring the asset generation pipeline
+        //&Test_Network, %NOCOMMTI%
+    };
 
+    const size_t total = lengthof(tests);
     FAppNotify::SetTaskbarProgress(0, total);
-    Test_Allocators();
-    FAppNotify::SetTaskbarProgress(1, total);
-    Test_Containers();
-    FAppNotify::SetTaskbarProgress(2, total);
-    Test_Format();
-    FAppNotify::SetTaskbarProgress(3, total);
-    Test_Thread();
-    FAppNotify::SetTaskbarProgress(4, total);
-    Test_VFS();
-    FAppNotify::SetTaskbarProgress(5, total);
-    Test_RTTI();
-    FAppNotify::SetTaskbarProgress(6, total);
-    Test_XML();
-    FAppNotify::SetTaskbarProgress(7, total);
-    Test_Lattice();
-    FAppNotify::SetTaskbarProgress(8, total);
-    //Test_Pixmap();  #TODO refactoring the asset generation
-    Test_Network();
-    FAppNotify::SetTaskbarProgress(9, total);
+    forrange(i, 0, total) {
+        tests[i]();
+        FAppNotify::SetTaskbarProgress(i + 1, total);
+    }
 
     FAppNotify::SetTaskbarState(FAppNotify::ETaskbarState::Indeterminate);
 }
