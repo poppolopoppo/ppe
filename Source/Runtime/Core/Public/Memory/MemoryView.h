@@ -185,6 +185,13 @@ public:
     template <typename _Pred>
     TMemoryView SplitIfNot(const _Pred& pred) const { return TMemoryView(_storage, FindFirstNot(pred)); }
 
+    template <typename _Lambda, class = Meta::TEnableIf<not std::is_const_v<T>> >
+    const TMemoryView& Collect(_Lambda&& collect) const {
+        forrange(i, 0, _size)
+            collect(i, &_storage[i]);
+        return (*this);
+    }
+
     bool AliasesToContainer(const_reference v) const { return (_storage <= &v && _storage + _size > &v); }
 #if USE_PPE_CHECKEDARRAYITERATOR
     bool AliasesToContainer(const iterator& it) const { return (begin() <= it && it < end()); }
