@@ -4,6 +4,11 @@
 
 #include "HAL/PlatformMaths.h"
 
+#if defined(_MSC_VER) && defined (_WIN64)
+#include <intrin.h>// should be part of all recent Visual Studio
+#pragma intrinsic(_umul128)
+#endif // defined(_MSC_VER) && defined (_WIN64)
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -166,6 +171,7 @@ u32 CubeMapFaceID(float x, float y, float z) NOEXCEPT;
 //----------------------------------------------------------------------------
 float GridSnap(float location, float grid) NOEXCEPT;
 //----------------------------------------------------------------------------
+// http://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
 // https://github.com/lemire/fastrange/blob/master/fastrange.h
 inline CONSTEXPR u32 Bounded(u32 x, u32 N) NOEXCEPT {
     return (u32)(((u64)x * (u64)N) >> 32);
@@ -176,9 +182,9 @@ inline u64 Bounded(u64 x, u64 N) NOEXCEPT {
 #elif defined(_MSC_VER) && defined(_WIN64)
     // supported in Visual Studio 2005 and better
     u64 highProduct;
-    _umul128(x, N, &highProduct); // ignore output
+    ::_umul128(x, N, &highProduct); // ignore output
     return highProduct;
-    unsigned __int64 _umul128(
+    unsigned __int64 ::_umul128(
         unsigned __int64 Multiplier,
         unsigned __int64 Multiplicand,
         unsigned __int64 *HighProduct
