@@ -28,6 +28,8 @@ TBasicTextWriter<char>& Eos(TBasicTextWriter<char>& s);
 TBasicTextWriter<wchar_t>& Eos(TBasicTextWriter<wchar_t>& s);
 template <typename _Char>
 TBasicTextWriter<_Char>& Endl(TBasicTextWriter<_Char>& s);
+TBasicTextWriter<char>& Tab(TBasicTextWriter<char>& s);
+TBasicTextWriter<wchar_t>& Tab(TBasicTextWriter<wchar_t>& s);
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, bool v);
