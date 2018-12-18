@@ -160,6 +160,8 @@ struct has_constructor : decltype(
 #else
 template <typename T, typename... _Args>
 using has_constructor = typename std::is_constructible<T, _Args...>::type;
+template <typename T>
+using has_default_constructor = typename std::is_constructible<T>::type;
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -214,12 +216,12 @@ FORCE_INLINE CONSTEXPR T ForceInit_(std::true_type) { return T{ ForceInit }; }
 } //!details
 // can be overload for custom types
 template <typename T>
-T ForceInitType(TType<T>) {
+CONSTEXPR T ForceInitType(TType<T>) NOEXCEPT {
     return details::ForceInit_<T>(typename has_forceinit_constructor<T>::type{});
 }
 // simpler interface wrapping overloadable ForceInitType()
 template <typename T>
-T MakeForceInit() {
+CONSTEXPR T MakeForceInit() NOEXCEPT {
     return ForceInitType(TType<T>{});
 }
 //----------------------------------------------------------------------------
