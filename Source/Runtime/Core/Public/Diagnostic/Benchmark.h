@@ -56,7 +56,11 @@ public: // Helpers
 
     template <class Tp>
     static FORCE_INLINE void DoNotOptimizeLoop(Tp const& value) {
+#if 0
         UseCharPointer_(&reinterpret_cast<char const volatile&>(value));
+#else
+        DoNotOptimize(value);
+#endif
     }
 
     static FORCE_INLINE void ClobberMemory() {
