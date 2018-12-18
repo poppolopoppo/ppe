@@ -16,10 +16,13 @@
 #include "Memory/HashFunctions.h"
 #include "Time/Timestamp.h"
 
+#include "Diagnostic/Logger.h"
+
 #include <algorithm>
 
 namespace PPE {
 namespace Serialize {
+EXTERN_LOG_CATEGORY(, Serialize);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -174,7 +177,7 @@ void FBinaryFormatWriter::Finalize(IStreamWriter& outp, bool mergeSort/* = true 
     h.Magic = FBinaryFormat::FILE_MAGIC;
     h.Version = FBinaryFormat::FILE_VERSION;
     h.Flags = _contents.Flags;
-    h.Fingerprint = { 0, 0 };
+    h.Fingerprint = 0;
 
     ExportContents_(h.Contents);
     ExportSections_(h.Sections);
@@ -457,7 +460,7 @@ void FBinaryFormatWriter::ExportSections_(FBinaryFormat::FSections& s) const {
 }
 //----------------------------------------------------------------------------
 void FBinaryFormatWriter::MakeFingerprint_(FBinaryFormat::FHeaders& h) const {
-    h.Fingerprint = u128{ 0, 0 }; // always reset before hashing
+    h.Fingerprint = 0; // always reset before hashing
 
     FBinaryFormat::FSignature s;
     s.Headers = Fingerprint128(&h, sizeof(h));
@@ -474,7 +477,15 @@ void FBinaryFormatWriter::MakeFingerprint_(FBinaryFormat::FHeaders& h) const {
     s.Data = Fingerprint128(_sections.Data.MakeView());
     s.Bulk = Fingerprint128(_sections.Bulk.MakeView());
 
-    h.Fingerprint = Fingerprint128(&s, sizeof(s));
+    h.Fingerprint = Fingerprint32(&s, sizeof(s));
+
+#if USE_PPE_BINA_MARKERS && defined(USE_DEBUG_LOGGER)
+    FLogger::Log(
+        GLogCategory_Serialize,
+        FLogger::EVerbosity::Debug,
+        FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+        FBinaryFormat::DumpInfos(h, s) );
+#endif
 }
 //----------------------------------------------------------------------------
 void FBinaryFormatWriter::WriteFileData_(const FBinaryFormat::FHeaders& h, IStreamWriter& outp) const {

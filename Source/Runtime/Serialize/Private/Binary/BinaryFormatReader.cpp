@@ -136,18 +136,18 @@ void FBinaryFormatReader::Read(IBufferedStreamReader& iss, FTransactionLinker& l
 }
 //----------------------------------------------------------------------------
 bool FBinaryFormatReader::CheckFingerprint(const FBinaryFormat::FHeaders& h) const {
-#if !(USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING)
+#if !(USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING) || USE_PPE_BINA_MARKERS
     TAllocaBlock<char> tmp;
 
     auto sectionFingerprint = [iss=_iss, &tmp](const FBinaryFormat::FRawData& section) -> u128 {
         tmp.RelocateIFP(section.Size, false);
         const auto view = TMemoryView<char>(tmp.RawData, section.Size);
-        iss->ReadAt(view, section.Offset);
+        VerifyRelease(iss->ReadAt(view, section.Offset));
         return Fingerprint128(view);
     };
 
     FBinaryFormat::FHeaders hZero = h;
-    hZero.Fingerprint = u128{ 0, 0 };
+    hZero.Fingerprint = 0;
 
     FBinaryFormat::FSignature s;
     s.Headers = Fingerprint128(&hZero, sizeof(hZero)); // with Fingerpint == 0
@@ -164,7 +164,16 @@ bool FBinaryFormatReader::CheckFingerprint(const FBinaryFormat::FHeaders& h) con
     s.Data = sectionFingerprint(h.Sections.Data);
     s.Bulk = sectionFingerprint(h.Sections.Bulk);
 
-    const u128 fp = Fingerprint128(&s, sizeof(s));
+#if USE_PPE_BINA_MARKERS && defined(USE_DEBUG_LOGGER)
+    FLogger::Log(
+        GLogCategory_Serialize,
+        FLogger::EVerbosity::Debug,
+        FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+        FBinaryFormat::DumpInfos(h, s) );
+    FLogger::Flush(true);
+#endif
+
+    const u32 fp = Fingerprint32(&s, sizeof(s));
     return (fp == h.Fingerprint);
 
 #else
