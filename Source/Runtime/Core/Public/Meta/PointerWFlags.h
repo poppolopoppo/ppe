@@ -109,5 +109,34 @@ STATIC_ASSERT(Meta::TIsPod< TPointerWFlags<void> >::value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+struct FHeapPtrWCounter { // assumed aligned on 16
+    uintptr_t Counter : 4;
+    uintptr_t Data : (sizeof(uintptr_t)<<3) - 4;
+
+    CONSTEXPR void Reset() NOEXCEPT {
+        Counter = Data = 0;
+    }
+
+    CONSTEXPR void Reset(const void* data, size_t n) NOEXCEPT {
+        SetData(data);
+        SetCounter(n);
+    }
+
+    CONSTEXPR void SetCounter(size_t n) NOEXCEPT {
+        Counter = n;
+        Assert_NoAssume(n == Counter);
+    }
+
+    template <typename T>
+    CONSTEXPR T* GetData() const NOEXCEPT { return reinterpret_cast<T*>(Data << 4); }
+    CONSTEXPR void SetData(const void* data) NOEXCEPT {
+        Assert_NoAssume(Meta::IsAligned(16, data));
+        Data = (uintptr_t(data) >> 4);
+        Assert_NoAssume(GetData<void>() == data);
+    }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Meta
 } //!namespace PPE
