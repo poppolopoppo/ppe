@@ -5,6 +5,7 @@
 #include "HAL/PlatformHash.h"
 #include "Memory/HashFunctions.h"
 #include "Meta/Hash_fwd.h"
+#include "Meta/TypeTraits.h"
 
 #include <type_traits>
 
@@ -69,27 +70,50 @@ struct THash {
         return hash_value(value);
     }
 };
-PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(4309) // 'static_cast': truncation of constant value
-template <typename T>
-CONSTEXPR Meta::TEnableIf<std::is_enum_v<T> || std::is_integral_v<T>, T> empty_key(Meta::TType<T>) NOEXCEPT {
-    return static_cast<T>(0xFFFFFFFFFFFFFFFFull);
-}
-PRAGMA_MSVC_WARNING_POP()
-template <typename T>
-CONSTEXPR Meta::TEnableIf<std::is_floating_point_v<T>, T> empty_key(Meta::TType<T>) NOEXCEPT {
-    return std::numeric_limits<T>::max();
-}
-inline CONSTEXPR u128 empty_key(Meta::TType<u128>) NOEXCEPT {
-    return { empty_key(Meta::TType<u64>{}), empty_key(Meta::TType<u64>{}) };
-}
-inline CONSTEXPR u256 empty_key(Meta::TType<u256>) NOEXCEPT {
-    return { empty_key(Meta::TType<u128>{}), empty_key(Meta::TType<u128>{}) };
-}
-template <typename T>
+} //!namespace Meta
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Meta {
+template <typename T, class = void>
 struct TEmptyKey {
-    STATIC_ASSERT(Meta::TIsPod_v<T>);
-    STATIC_CONST_INTEGRAL(T, value, empty_key(Meta::TType<T>{}));
+    static CONSTEXPR bool is_empty(const T& v) NOEXCEPT = delete;
+    static CONSTEXPR void set_empty(T* v) NOEXCEPT = delete;
+};
+template <typename T>
+struct TEmptyKey< T, Meta::TEnableIf<std::is_integral_v<T>> > {
+    STATIC_CONST_INTEGRAL(T, value, std::numeric_limits<T>::max());
+    static CONSTEXPR bool is_empty(const T& v) NOEXCEPT { return (value == v); }
+    static CONSTEXPR void set_empty(T* v) NOEXCEPT { *v = value; }
+};
+template <typename T>
+struct TEmptyKey< T, Meta::TEnableIf<std::is_enum_v<T>> > {
+    STATIC_CONST_INTEGRAL(T, value, static_cast<T>(std::numeric_limits<u64>::max()));
+    static CONSTEXPR bool is_empty(const T& v) NOEXCEPT { return (value == v); }
+    static CONSTEXPR void set_empty(T* v) NOEXCEPT { *v = value; }
+};
+template <typename T>
+struct TEmptyKey< T, Meta::TEnableIf<
+    not std::is_enum_v<T> &&
+    not std::is_integral_v<T> &&
+    Meta::has_default_constructor<T>::value> > {
+    static CONSTEXPR const T value{ Meta::MakeForceInit<T>() };
+    static CONSTEXPR bool is_empty(const T& v) NOEXCEPT { return (value == v); }
+    static CONSTEXPR void set_empty(T* v) NOEXCEPT { *v = value; }
+};
+template <>
+struct TEmptyKey< u128, void > {
+    using empty_u64 = TEmptyKey<u64>;
+    static CONSTEXPR const u128 value{ empty_u64::value, empty_u64::value };
+    static CONSTEXPR bool is_empty(const u128& v) NOEXCEPT { return (value == v); }
+    static CONSTEXPR void set_empty(u128* v) NOEXCEPT { *v = value; }
+};
+template <>
+struct TEmptyKey< u256, void > {
+    using empty_u128 = TEmptyKey<u128>;
+    static CONSTEXPR const u256 value{ empty_u128::value, empty_u128::value };
+    static CONSTEXPR bool is_empty(const u256& v) NOEXCEPT { return (value == v); }
+    static CONSTEXPR void set_empty(u256* v) NOEXCEPT { *v = value; }
 };
 } //!namespace Meta
 //----------------------------------------------------------------------------
