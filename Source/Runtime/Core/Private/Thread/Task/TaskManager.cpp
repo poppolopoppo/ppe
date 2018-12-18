@@ -747,32 +747,34 @@ NO_INLINE TMemoryView<FStalledFiber> FTaskCounter::ResumeStalledFibers_(FQueueBu
     return resume;
 }
 //----------------------------------------------------------------------------
+static NO_INLINE void ResumeWaitingTasks_(const TMemoryView<FStalledFiber>& resume) {
+    // sort all queued fibers by priority before resuming and outside of the lock
+    std::stable_sort(resume.begin(), resume.end(),
+        [](const FStalledFiber& lhs, const FStalledFiber& rhs) {
+            return (lhs.Priority() < rhs.Priority());
+        });
+
+    // stalled fibers are resumed through a task to let the current fiber dispatch
+    // all jobs to every worker thread before yielding
+    for (FStalledFiber& fiber : resume)
+        fiber.Resume(&FWorkerContext_::ResumeFiberTask);
+}
+//----------------------------------------------------------------------------
 void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef) {
     Assert(saferef);
 
     FTaskCounter* const pcounter = saferef.get();
     Assert(pcounter->Valid());
 
+    saferef.reset(); // need to reset before resuming and decrementing, lifetime should be guaranteed by owner
+
     FTaskCounter::FQueueBuffer_ buffer;
     TMemoryView<FStalledFiber> resume;
     if (Unlikely(0 == --pcounter->_taskCount))
         resume = pcounter->ResumeStalledFibers_(buffer);
 
-    saferef.reset(); // need to reset before resuming, lifetime should be guaranteed by owner
-
-    if (resume.empty())
-        return;
-
-    // sort all queued fibers by priority before resuming and outside of the lock
-    std::stable_sort(resume.begin(), resume.end(),
-        [](const FStalledFiber& lhs, const FStalledFiber& rhs) {
-        return (lhs.Priority() < rhs.Priority());
-    });
-
-    // stalled fibers are resumed through a task to let the current fiber dispatch
-    // all jobs to every worker thread before yielding
-    for (FStalledFiber& fiber : resume)
-        fiber.Resume(&FWorkerContext_::ResumeFiberTask);
+    if (Unlikely(not resume.empty()))
+        ResumeWaitingTasks_(resume);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
