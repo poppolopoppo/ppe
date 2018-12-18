@@ -3,6 +3,7 @@
 #include "HAL/TargetPlatform.h"
 
 #include <cmath>
+#include <xmmintrin.h> // SSE + SSE2 : flush to zero
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -10,6 +11,20 @@ namespace PPE {
 //----------------------------------------------------------------------------
 struct PPE_CORE_API FGenericPlatformMaths {
 public: // must be defined for every platform
+
+    //------------------------------------------------------------------------
+    // SSE registers
+
+    static void SetFlushToZeroMode() NOEXCEPT {
+        // "It is strongly recommended to set the flush-to-zero mode unless you have special reasons
+        // to use subnormal numbers.
+        // From : https://www.agner.org/optimize/optimizing_cpp.pdf
+
+        // Set flush-to-zero mode (SSE) :
+        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+        // Set flush-to-zero and denormals-are-zero mode (SSE2) :
+        ::_mm_setcsr(::_mm_getcsr() | 0x8040);
+    }
 
     //------------------------------------------------------------------------
     // Float helpers

@@ -8,6 +8,7 @@
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "HAL/PlatformCrash.h"
+#include "HAL/PlatformMaths.h"
 #include "HAL/PlatformMisc.h"
 #include "HAL/PlatformProcess.h"
 #include "HAL/PlatformProfiler.h"
@@ -52,6 +53,8 @@ static void ExceptionTrap_(const FWStringView& step, _Functor&& func) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationContext::FApplicationContext() {
+    // Set flush-to-zero mode for SSE+SSE2 registers
+    FPlatformMaths::SetFlushToZeroMode();
     // Signal platform specific code of application start
     FPlatformProcess::OnProcessStart();
     // Install crash exception handlers

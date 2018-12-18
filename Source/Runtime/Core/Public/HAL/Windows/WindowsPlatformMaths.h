@@ -17,6 +17,11 @@ struct PPE_CORE_API FWindowsPlatformMaths : FGenericPlatformMaths {
 public:
 
     //------------------------------------------------------------------------
+    // SSE registers
+
+    using FGenericPlatformMaths::SetFlushToZeroMode;
+
+    //------------------------------------------------------------------------
     // Float helpers
 
     static FORCE_INLINE i32 CeilToInt(float f) NOEXCEPT {
