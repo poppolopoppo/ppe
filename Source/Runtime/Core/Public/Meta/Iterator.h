@@ -10,23 +10,29 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template<typename T, typename = void>
+template <typename T, typename = void>
 struct is_iterator : public std::false_type {};
 //----------------------------------------------------------------------------
-template<typename T>
+template <typename T>
 struct is_iterator<T,
     typename std::enable_if< not std::is_same<typename std::iterator_traits<T>::value_type, void>::value >::type
 > : public std::true_type {};
 //----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR bool is_iterator_v = is_iterator<T>::value;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template<typename _Iterator, typename T, typename = void>
+template <typename _Iterator, typename T, typename = void>
 struct is_iterator_of : public std::false_type {};
 //----------------------------------------------------------------------------
-template<typename _Iterator, typename T>
+template <typename _Iterator, typename T>
 struct is_iterator_of<_Iterator, T,
     typename std::enable_if< std::is_same<typename std::iterator_traits<_Iterator>::value_type, T>::value >::type
 > : public std::true_type {};
+//----------------------------------------------------------------------------
+template <typename _Iterator, typename T>
+CONSTEXPR bool is_iterator_of_v = is_iterator_of<_Iterator, T>::value;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -37,10 +43,16 @@ using is_forward_iterator = typename std::is_same<
 >::type;
 //----------------------------------------------------------------------------
 template <typename _It>
+CONSTEXPR bool is_forward_iterator_v = is_forward_iterator<_It>::value;
+//----------------------------------------------------------------------------
+template <typename _It>
 using is_random_access_iterator = typename std::is_same<
     std::random_access_iterator_tag,
     typename std::iterator_traits<_It>::iterator_category
 >::type;
+//----------------------------------------------------------------------------
+template <typename _It>
+CONSTEXPR bool is_random_access_iterator_v = is_random_access_iterator<_It>::value;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
