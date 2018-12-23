@@ -89,6 +89,7 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(HTTP,                     Network)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(URI,                      Network)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(ContentPipeline,                UsedMemory)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(BuildGraph,               ContentPipeline)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Generation,               ContentPipeline)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(Logic,                          UsedMemory)

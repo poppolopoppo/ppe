@@ -1,41 +1,42 @@
-#include "stdafx.h"
-
-#include "ModuleExport.h"
+﻿#include "stdafx.h"
 
 #include "BuildNode.h"
-#include "Memory/MemoryDomain.h"
-#include "RTTI/Namespace-impl.h"
 
-PRAGMA_INITSEG_LIB
+#include "BuildGraph.h"
+
+#include "RTTI_Macros-impl.h"
 
 namespace PPE {
 namespace ContentPipeline {
-RTTI_NAMESPACE_DEF(PPE_BUILDGRAPH_API, BuildGraph, BuildGraph);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBuildGraphModule::FBuildGraphModule()
-:   FModule("ContentPipeline/BuildGraph")
+FBuildNode::FBuildNode(RTTI::FConstructorTag)
+:   _pass(FBuildPass::Zero())
 {}
 //----------------------------------------------------------------------------
-FBuildGraphModule::~FBuildGraphModule()
-{}
+FBuildNode::FBuildNode(RTTI::FName&& name)
+:   _name(std::move(name))
+,   _state(EBuildState::Unbuilt)
+,   _pass(FBuildPass::Zero())
+,   _lastBuilt(0)
+,   _fingerprint(FBuildFingerprint::Zero()) {
+    Assert(not _name.empty());
+}
 //----------------------------------------------------------------------------
-void FBuildGraphModule::Start(FModuleManager& manager) {
-    FModule::Start(manager);
+FBuildNode::~FBuildNode() {
 
-    RTTI_NAMESPACE(BuildGraph).Start();
 }
 //----------------------------------------------------------------------------
-void FBuildGraphModule::Shutdown() {
-    FModule::Shutdown();
-
-    RTTI_NAMESPACE(BuildGraph).Shutdown();
-}
-//----------------------------------------------------------------------------
-void FBuildGraphModule::ReleaseMemory() {
-    FModule::ReleaseMemory();
-}
+RTTI_CLASS_BEGIN(BuildGraph, FBuildNode, RTTI::EClassFlags::Abstract)
+RTTI_PROPERTY_PRIVATE_READONLY(_name)
+RTTI_PROPERTY_PRIVATE_READONLY(_state)
+RTTI_PROPERTY_PRIVATE_READONLY(_lastBuilt)
+RTTI_PROPERTY_PRIVATE_READONLY(_fingerprint)
+RTTI_PROPERTY_PRIVATE_READONLY(_staticDeps)
+RTTI_PROPERTY_PRIVATE_READONLY(_dynamicDeps)
+RTTI_PROPERTY_PRIVATE_READONLY(_runtimeDeps)
+RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

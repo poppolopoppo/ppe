@@ -1,23 +1,13 @@
 #pragma once
 
-#include "Core.h"
-
-#ifdef EXPORT_PPE_BUILDGRAPH
-#   define PPE_BUILDGRAPH_API DLL_EXPORT
-#else
-#   define PPE_BUILDGRAPH_API DLL_IMPORT
-#endif
-
-#include "Memory/RefPtr.h"
+#include "BuildGraph_fwd.h"
 
 namespace PPE {
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_BUILDGRAPH_API FBuildContext;
-FWD_REFPTR(BuildGraph);
-FWD_REFPTR(BuildNode);
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
