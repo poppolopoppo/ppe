@@ -419,19 +419,21 @@ public:
         return (*this);
     }
 
-    size_type size() const { return _size; }
-    bool empty() const { return 0 == _size; }
-    size_type capacity() const { return _capacity; }
+    size_type size() const NOEXCEPT { return _size; }
+    bool empty() const NOEXCEPT { return 0 == _size; }
+    size_type capacity() const NOEXCEPT { return _capacity; }
+
+    static CONSTEXPR size_t capacity_for_n(size_t n) NOEXCEPT { return Max(16, n + ((100 - MaxLoadFactor)*n) / 100); }
 
     const_iterator begin() const { return const_iterator(_values, _capacity, 0).Advance(0); }
     const_iterator end() const { return const_iterator(_values, _capacity, _capacity); }
 
-    void reserve(size_type atleast) {
-        atleast = atleast + ((100-MaxLoadFactor)*atleast)/100;
+    void reserve(size_type n) {
+        const size_t atleast = capacity_for_n(n);
         if (atleast > _capacity) {
             //Assert(atleast <= Primes_[31]);
             const size_type oldcapacity = _capacity;
-            _capacity = FPlatformMaths::NextPow2(atleast);
+            _capacity = Max(size_t(16), FPlatformMaths::NextPow2(atleast));
             /*forrange(i, 0, 32)
                 if (atleast <= Primes_[i]) {
                     _capacity = Primes_[i];
@@ -451,6 +453,9 @@ public:
     }
 
     bool insert(const_reference value) {
+        if (capacity_for_n(_size + 1) > _capacity)
+            reserve(_size + 1);
+
         Assert(0 < _capacity);
         Assert(_size < _capacity);
 
@@ -498,7 +503,7 @@ public:
         return (not key_equal()(_values[bucket], empty_key) ? const_iterator(_values, _capacity, bucket) : end());
     }
 
-    void erase(const_reference value) { // bubble down
+    bool erase(const_reference value) { // bubble down
         Assert(0 < _capacity);
         Assert(_size < _capacity);
         const size_t h = hasher()(value);
@@ -516,7 +521,7 @@ public:
             bucket = (bucket + inc < _capacity ? bucket + inc : (bucket + inc) - _capacity);
 
         if (key_equal()(_values[bucket], empty_key))
-            return;
+            return false;
 
         const size_type todelete = bucket;
 
@@ -532,14 +537,19 @@ public:
         _values[chaintail] = empty_key;
 
         _size--;
+
+        return true;
     }
 
     void clear() {
-        Assert(_values);
         if (_capacity) {
+            Assert(_values);
+
             forrange(i, 0, _capacity)
                 allocator_traits::destroy(*this, _values+i);
+
             allocator_traits::deallocate(*this, _values, _capacity);
+
             _values = nullptr;
             _capacity = _size = 0;
         }
@@ -891,8 +901,6 @@ public:
     using iterator = TCheckedArrayIterator<_Key>;
     using const_iterator = TCheckedArrayIterator<const _Key>;
 
-    static constexpr u32 MaxDistance = _MaxDistance;
-
     TDenseHashSet2()
         : _size(0)
         , _numStates(1)
@@ -917,6 +925,7 @@ public:
             _elements = key_traits::allocate(key_alloc(), Capacity_(_numStates));
 
             FPlatformMemory::MemcpyLarge(_states, other._states, _numStates * sizeof(state_t));
+
             std::uninitialized_copy(
                 MakeCheckedIterator(other._elements, _size, 0),
                 MakeCheckedIterator(other._elements, _size, _size),
@@ -959,11 +968,11 @@ public:
         Assert_NoAssume(_numStates);
 
         const u32 numStatesM1 = (_numStates - 1);
-        u16 h = u16(hasher()(key));
+        u16 h = HashKey_(key);
         u32 s = (h & numStatesM1);
         u16 i = checked_cast<u16>(_size);
         u32 d = 0;
-        for (;; s = ++s & numStatesM1, d++) {
+        for (;; s = (s + 1) & numStatesM1, ++d) {
             state_t& it = _states[s];
             if (it.Index == state_t::EmptyIndex)
                 break;
@@ -1000,13 +1009,13 @@ public:
         const u32 numStatesM1 = (_numStates - 1);
 
         u16 i;
-        u16 h = u16(hasher()(key));
+        const u16 h = HashKey_(key);
         for (u32 s = (h & numStatesM1), d = 0;; s = (s + 1) & numStatesM1, ++d) {
             const state_t& it = _states[s];
-            if (d > DistanceIndex_(it, s, numStatesM1))
-                i = u16(_size);
-            else if (it.Hash == h && key_equal()(key, _elements[it.Index]))
+            if (it.Hash == h && key_equal()(key, _elements[it.Index]))
                 i = it.Index;
+            else if (d > DistanceIndex_(it, s, numStatesM1))
+                i = u16(_size);
             else
                 continue;
             break;
@@ -1023,14 +1032,15 @@ public:
         Assert_NoAssume(Meta::IsPow2(_numStates));
         const u32 numStatesM1 = (_numStates - 1);
 
-        const u16 h = u16(hasher()(key));
+        const u16 h = HashKey_(key);
         u32 s = (h & numStatesM1);
         for (u32 d = 0;; s = (s + 1) & numStatesM1, ++d) {
             const state_t& it = _states[s];
-            if (d > DistanceIndex_(it, s, numStatesM1))
-                return false;
-            else if (it.Hash == h && key_equal()(key, _elements[it.Index]))
+            if (it.Hash == h && key_equal()(key, _elements[it.Index]))
                 break;
+            else if (d > DistanceIndex_(it, s, numStatesM1))
+                return false;
+
             Assert_NoAssume(d <= MaxDistance);
         }
 
@@ -1093,8 +1103,8 @@ public:
         const state_t* oldStates = _states;
         const u32 oldNumStates = _numStates;
 
-        _numStates = FPlatformMaths::NextPow2(u32(
-            SafeAllocatorSnapSize(state_alloc(), n * 2 + 1)));
+        _numStates = checked_cast<u32>(Max(16, FPlatformMaths::NextPow2(
+            SafeAllocatorSnapSize(state_alloc(), n * 2 + 1))));
         Assert_NoAssume(oldNumStates < _numStates);
 
         const u32 capacity = Capacity_(_numStates);
@@ -1128,7 +1138,7 @@ public:
                 u16 h = p->Hash; // don't need more entropy
                 u32 s = (h & numStatesM1);
                 u32 d = 0;
-                for (;;) {
+                for (;; s = (s + 1) & numStatesM1, ++d) {
                     state_t& it = _states[s];
                     if (it.Index == state_t::EmptyIndex)
                         break;
@@ -1141,10 +1151,6 @@ public:
                         std::swap(i, it.Index);
                         std::swap(h, it.Hash);
                     }
-
-                    // linear probing
-                    s = ++s & numStatesM1;
-                    d++;
                 }
 
                 state_t& st = _states[s];
@@ -1172,18 +1178,24 @@ private:
     _Key* _elements;
     state_t* _states;
 
-    STATIC_CONST_INTEGRAL(u32, KeyStateDensityRatio, 2);
+    static constexpr u32 MaxDistance = _MaxDistance;
+    static constexpr u32 MaxLoadFactor = 75;
+    static constexpr u32 SlackFactor = (((100 - MaxLoadFactor) * 128) / 100);
 
     FORCE_INLINE allocator_key& key_alloc() NOEXCEPT { return static_cast<allocator_key&>(*this); }
     FORCE_INLINE allocator_state& state_alloc() NOEXCEPT { return static_cast<allocator_state&>(*this); }
 
+    static FORCE_INLINE u16 HashKey_(const _Key& key) NOEXCEPT {
+        return u16(hasher()(key)); // the index is used to identify empty slots, so use full 16 bits for hash key
+    }
+
     FORCE_INLINE u32 Capacity_(u32 numStates) const NOEXCEPT {
         return (numStates > 1 ? checked_cast<u32>(SafeAllocatorSnapSize(
-            static_cast<const allocator_key&>(*this), (numStates >> 1) + 1)) : 0);
+            static_cast<const allocator_key&>(*this), numStates - ((numStates * SlackFactor) >> 7) + 1)) : 0);
     }
 
     NO_INLINE void eraseAt_(u32 s) {
-        Assert_NoAssume(_size);
+        Assert(_size);
         Assert_NoAssume(s < _numStates);
 
         const u32 numStatesM1 = (_numStates - 1);
@@ -1194,13 +1206,12 @@ private:
         if (_size > 1 && st.Index + 1u != _size) {
             // need to fill the hole in _elements
             const u16 ri = checked_cast<u16>(_size - 1);
-            const u16 rh = u16(hasher()(_elements[ri]));
+            const u16 rh = HashKey_(_elements[ri]);
 
             u32 rs = (rh & numStatesM1);
-            for (;;) {
+            for (;; rs = (rs + 1) & numStatesM1) {
                 if (_states[rs].Index == ri)
                     break;
-                rs = ++rs & numStatesM1;
             }
 
             Assert_NoAssume(u16(rh) == _states[rs].Hash);
@@ -1239,9 +1250,601 @@ private:
     }
 };
 //----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+struct FDenseHashTableState3 {
+    u16 Index;
+    u16 Hash;
+    STATIC_CONST_INTEGRAL(u16, EmptyIndex, u16(-1));
+};
+STATIC_ASSERT(Meta::TIsPod_v<FDenseHashTableState3>);
+template <
+    typename _Key
+    , typename _Hash = Meta::THash<_Key>
+    , typename _EqualTo = Meta::TEqualTo<_Key>
+    , typename _Empty = Meta::TEmptyKey<_Key>
+    , typename _Allocator = ALLOCATOR(Container, _Key)
+>   class EMPTY_BASES TDenseHashSet3
+    : TRebindAlloc<_Allocator, FDenseHashTableState3>
+    , _Allocator {
+public:
+    typedef FDenseHashTableState3 state_t;
+    typedef _Key value_type;
+    typedef _Hash hasher;
+    typedef _Empty key_empty;
+    typedef _EqualTo key_equal;
+
+    using allocator_key = _Allocator;
+    using allocator_state = TRebindAlloc<_Allocator, state_t>;
+
+    using key_traits = std::allocator_traits<allocator_key>;
+    using state_traits = std::allocator_traits<allocator_state>;
+
+    typedef value_type& reference;
+    typedef const value_type& const_reference;
+    typedef Meta::TAddPointer<value_type> pointer;
+    typedef Meta::TAddPointer<const value_type> const_pointer;
+
+    typedef size_t size_type;
+    typedef ptrdiff_t difference_type;
+
+    template <typename U>
+    class TIterator : public Meta::TIteratorTraits<U> {
+    public:
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = U;
+        using difference_type = difference_type;
+        using pointer = Meta::TAddPointer<U>;
+        using reference = Meta::TAddReference<U>;
+
+        CONSTEXPR TIterator() NOEXCEPT
+            : _elements(nullptr), _index(0), _nextFree(0) {}
+
+        TIterator(const TDenseHashSet3& owner, u32 index) NOEXCEPT
+            : _elements(owner._elements.GetData<value_type>())
+            , _index(index)
+            , _nextFree(owner._nextFree) {
+            Assert_NoAssume(_index <= owner._upperBound);
+            if (Unlikely(_index == _nextFree))
+                SkipFree_();
+        }
+
+        TIterator(const TIterator&) NOEXCEPT = default;
+        TIterator& operator =(const TIterator&) NOEXCEPT = default;
+
+        FORCE_INLINE TIterator& operator++() NOEXCEPT { return Next(); }
+        FORCE_INLINE TIterator& operator++(int) NOEXCEPT { TIterator tmp(*this); Next(); return tmp; }
+
+        FORCE_INLINE reference operator *() const NOEXCEPT { return _elements[_index]; }
+        FORCE_INLINE pointer operator ->() const NOEXCEPT { return (_elements + _index); }
+
+        inline friend bool operator ==(const TIterator& lhs, const TIterator& rhs) NOEXCEPT {
+            Assert_NoAssume(lhs._elements == rhs._elements);
+            return (lhs._index == rhs._index);
+        }
+        inline friend bool operator !=(const TIterator& lhs, const TIterator& rhs) NOEXCEPT {
+            return (not operator ==(lhs, rhs));
+        }
+
+        inline friend void swap(TIterator& lhs, TIterator& rhs) NOEXCEPT {
+            std::swap(lhs._elements, rhs._elements);
+            std::swap(lhs._index, rhs._index);
+            std::swap(lhs._nextFree, rhs._nextFree);
+        }
+
+        FORCE_INLINE TIterator& Next() NOEXCEPT {
+            Assert_NoAssume(_elements);
+            ++_index;
+            if (Unlikely(_index == _nextFree))
+                SkipFree_();
+            return (*this);
+        }
+
+    private:
+        pointer _elements;
+        u32 _index;
+        u32 _nextFree;
+
+        NO_INLINE void SkipFree_() NOEXCEPT {
+            Assert_NoAssume(_index == _nextFree);
+            do {
+                Assert_NoAssume(_nextFree < *(const u16*)(_elements + _index));
+                _nextFree = *(const u16*)(_elements + _index);
+                ++_index;
+            } while (Unlikely(_index == _nextFree));
+        }
+    };
+
+    using iterator = TIterator<_Key>;
+    using const_iterator = TIterator<const _Key>;
+
+    TDenseHashSet3() NOEXCEPT
+        : _size(0)
+        , _capacity(0)
+        , _nextFree(UINT16_MAX)
+        , _upperBound(0)
+        , _states((state_t*)this) { // that way we don't have to check if the container is empty
+        _elements.Reset();
+        STATIC_ASSERT(sizeof(_Key) >= sizeof(u16)); // for packing the free list in holes
+    }
+
+    ~TDenseHashSet3() {
+        clear_ReleaseMemory();
+    }
+
+    TDenseHashSet3(const TDenseHashSet3& other) : TDenseHashSet3() {
+        operator =(other);
+    }
+    TDenseHashSet3& operator =(const TDenseHashSet3& other) {
+        clear_ReleaseMemory();
+        if (other._size) {
+            Assert_NoAssume(other.SizeClass_());
+
+            _size = other._size;
+            _capacity = other._capacity;
+            _nextFree = other._nextFree;
+            _upperBound = other._upperBound;
+
+            Assert_NoAssume(other.SizeClass_() < NumSizeClasses);
+            const u32 numStates = NumStates_(other.SizeClass_());
+
+            _states = state_traits::allocate(state_alloc(), numStates);
+            FPlatformMemory::MemcpyLarge(_states, other._states, numStates * sizeof(state_t));
+
+            _elements.Reset(
+                key_traits::allocate(key_alloc(), _capacity),
+                other.SizeClass_() );
+
+            const _Key* const src = other._elements.GetData<const _Key>();
+            _Key* const dst = _elements.GetData<_Key>();
+
+            IF_CONSTEXPR(Meta::TIsPod_v<_Key> || std::is_trivially_copyable_v<_Key>) {
+                FPlatformMemory::MemcpyLarge(dst, src, _upperBound * sizeof(_Key));
+            }
+            else {
+                if (_upperBound == _size) {
+                    std::uninitialized_copy(
+                        MakeCheckedIterator(src, other._size, 0),
+                        MakeCheckedIterator(src, other._size, other._size),
+                        MakeCheckedIterator(dst, _size, 0));
+                }
+                else { // don't try to repack holes here to have a fast copy
+                    u16 nextFree = _nextFree;
+                    forrange(i, 0, u32(other._upperBound)) {
+                        if (i == nextFree) {
+                            Assert_NoAssume(nextFree < *reinterpret_cast<const u16*>(src + i));
+                            nextFree = *reinterpret_cast<const u16*>(src + i);
+                            *reinterpret_cast<u16*>(dst + i) = nextFree;
+                        }
+                        else {
+                            INPLACE_NEW(dst + i, _Key) { src[i] };
+                        }
+                    }
+                }
+            }
+        }
+        return (*this);
+    }
+
+    TDenseHashSet3(TDenseHashSet3&& rvalue) : TDenseHashSet3() {
+        FPlatformMemory::Memswap(this, &rvalue, sizeof(*this));
+    }
+    TDenseHashSet3& operator =(TDenseHashSet3&& rvalue) {
+        Assert(&rvalue != this);
+        clear_ReleaseMemory();
+        FPlatformMemory::Memswap(this, &rvalue, sizeof(*this));
+        return (*this);
+    }
+
+    bool empty() const { return (0 == _size); }
+    size_t size() const { return _size; }
+    size_t capacity() const { return _capacity; }
+
+    iterator begin() { return iterator(*this, 0); }
+    iterator end() { return iterator(*this, _upperBound); }
+
+    const_iterator begin() const { return const_iterator(*this, 0); }
+    const_iterator end() const { return const_iterator(*this, _upperBound); }
+
+    TPair<iterator, bool> insert(const _Key& key) {
+        if (Unlikely(_size == _capacity))
+            Rehash_(SizeClass_() + 1);
+
+        Assert_NoAssume(_size < _capacity);
+        const u32 numStatesM1 = (NumStates_(SizeClass_()) - 1);
+
+        _Key* const keys = _elements.GetData<_Key>();
+
+        const u16 insertAt = (_nextFree < _upperBound ? _nextFree : _size);
+
+        u16 i = insertAt;
+        u16 h = HashKey_(key);
+        u32 s = (h & numStatesM1);
+        u32 d = 0;
+        for (;; s = (s + 1) & numStatesM1, ++d) {
+            state_t& it = _states[s];
+            if (it.Index == state_t::EmptyIndex)
+                break;
+            else if (Unlikely(it.Hash == h && key_equal()(key, keys[it.Index])))
+                return MakePair(iterator(*this, it.Index), false);
+
+            // minimize distance between desired pos and insertion pos
+            const u32 ds = DistanceIndex_(it, s, numStatesM1);
+            if (ds < d) {
+                d = ds;
+                std::swap(i, it.Index);
+                std::swap(h, it.Hash);
+            }
+        }
+
+        // no state alteration before here
+
+        state_t& st = _states[s];
+        Assert_NoAssume(state_t::EmptyIndex == st.Index);
+        Assert_NoAssume(u16(s) == st.Hash);
+
+        st.Index = i;
+        st.Hash = h;
+
+        if (_nextFree == insertAt) // pop used free slot if any
+            _nextFree = *reinterpret_cast<const u16*>(keys + _nextFree);
+        else
+            ++_upperBound;
+
+        _size++;
+
+        key_traits::construct(key_alloc(), keys + insertAt, key);
+
+        if (Likely(d <= MaxDistance))
+            return MakePair(iterator(*this, insertAt), true);
+        else
+            return MakePair(RehashForGrowth_(key), true);
+    }
+
+    iterator find(const _Key& key) NOEXCEPT {
+        Assert(SizeClass_() < NumSizeClasses);
+        const u32 numStatesM1 = (NumStates_(SizeClass_()) - 1);
+
+        _Key* const keys = _elements.GetData<_Key>();
+
+        u16 i;
+        const u16 h = HashKey_(key);
+        for (u32 s = (h & numStatesM1), d = 0;; s = (s + 1) & numStatesM1, ++d) {
+            const state_t& it = _states[s];
+            if (it.Hash == h && key_equal()(key, keys[it.Index]))
+                i = it.Index;
+            else if (d > DistanceIndex_(it, s, numStatesM1))
+                i = u16(_size);
+            else
+                continue;
+            break;
+        }
+
+        return iterator(*this, i);
+    }
+
+    const_iterator find(const _Key& key) const NOEXCEPT {
+        return const_cast<TDenseHashSet3&>(*this).find(key);
+    }
+
+    bool erase(const _Key& key) {
+        Assert(SizeClass_() < NumSizeClasses);
+        const u32 numStatesM1 = (NumStates_(SizeClass_()) - 1);
+
+        _Key* const keys = _elements.GetData<_Key>();
+
+        const u16 h = HashKey_(key);
+        u32 s = (h & numStatesM1);
+        for (u32 d = 0;; s = (s + 1) & numStatesM1, ++d) {
+            const state_t& it = _states[s];
+            if (it.Hash == h && key_equal()(key, keys[it.Index]))
+                break;
+            else if (d > DistanceIndex_(it, s, numStatesM1))
+                return false;
+
+            Assert_NoAssume(d <= MaxDistance);
+        }
+
+        EraseAt_(s, numStatesM1);
+        return true;
+    }
+
+    void clear() {
+        if (_size) {
+            Assert(_capacity);
+            Assert(SizeClass_());
+
+            Assert(SizeClass_() < NumSizeClasses);
+            const u32 numStates = NumStates_(SizeClass_());
+
+            forrange(i, 0, numStates) {
+                state_t& st = _states[i];
+                st.Index = state_t::EmptyIndex;
+                st.Hash = u16(i);  // reset Hash to Index so DistanceIndex_() == 0
+            }
+
+            DestroyElements_();
+
+            _size = _upperBound = 0;
+            _nextFree = UINT16_MAX; // since we reseted the states table
+        }
+    }
+
+    void clear_ReleaseMemory() {
+        if (_elements.Data) {
+            Assert(SizeClass_() < NumSizeClasses);
+            const u32 numStates = NumStates_(SizeClass_());
+
+            DestroyElements_();
+
+            key_traits::deallocate(key_alloc(), _elements.GetData<_Key>(), _capacity);
+            state_traits::deallocate(state_alloc(), _states, numStates);
+
+            _size = 0;
+            _capacity = 0;
+            _nextFree = UINT16_MAX;
+            _upperBound = 0;
+            _states = (state_t*)this; // that way we don't have to check if the container is empty
+            _elements.Reset();
+        }
+        Assert_NoAssume(0 == _size);
+        Assert_NoAssume(0 == _capacity);
+        Assert_NoAssume(0 == _upperBound);
+        Assert_NoAssume(UINT16_MAX == _nextFree);
+        Assert_NoAssume((state_t*)this == _states);
+        Assert_NoAssume(0 == _elements.Counter);
+        Assert_NoAssume(0 == _elements.Data);
+    }
+
+    FORCE_INLINE void reserve_Additional(size_t num) { reserve(_size + num); }
+
+    void reserve(size_t n) {
+        const u32 sizeClass = MakeSizeClass_(checked_cast<u32>(n));
+        if (sizeClass > SizeClass_())
+            Rehash_(sizeClass);
+    }
+
+    // #TODO : fill holes explicitly, could be called after a batch of erase()
+    /*void repack() {
+
+    }*/
+
+private:
+    u16 _size;
+    u16 _capacity;
+    u16 _nextFree;
+    u16 _upperBound;
+    state_t* _states;
+    Meta::FHeapPtrWCounter _elements;
+
+    FORCE_INLINE allocator_key& key_alloc() NOEXCEPT { return static_cast<allocator_key&>(*this); }
+    FORCE_INLINE allocator_state& state_alloc() NOEXCEPT { return static_cast<allocator_state&>(*this); }
+
+    static constexpr u32 MaxDistance = 5;
+    static constexpr u32 MinSizeClass = 3;
+    static constexpr u32 NumSizeClasses = 14;
+    static constexpr u32 MaxLoadFactor = 60;
+    static constexpr u32 SlackFactor = (((100 - MaxLoadFactor) * 128) / 100);
+
+    static FORCE_INLINE u16 HashKey_(const _Key& key) NOEXCEPT {
+        return u16(hasher()(key)); // the index is used to identify empty slots, so use full 16 bits for hash key
+    }
+
+    FORCE_INLINE CONSTEXPR u32 SizeClass_() const NOEXCEPT {
+        return _elements.Counter;
+    }
+
+    FORCE_INLINE CONSTEXPR void SetSizeClass_(u32 sizeClass) NOEXCEPT {
+        _elements.SetCounter(sizeClass);
+    }
+
+    static FORCE_INLINE u8 MakeSizeClass_(u32 size) NOEXCEPT {
+        return checked_cast<u8>(FPlatformMaths::CeilLog2(u32(ROUND_TO_NEXT_16(size))) - MinSizeClass);
+    }
+
+    static FORCE_INLINE CONSTEXPR u32 NumStates_(u32 sizeClass) NOEXCEPT {
+        Assert_NoAssume(sizeClass < NumSizeClasses);
+        return (u32(1) << (sizeClass + MinSizeClass));
+    }
+
+    static FORCE_INLINE CONSTEXPR u32 DistanceIndex_(state_t st, u32 b, u32 numStatesM1) NOEXCEPT {
+        return ((st.Hash & numStatesM1) <= b
+            ? b - (st.Hash & numStatesM1)
+            : b + (numStatesM1 + 1) - (st.Hash & numStatesM1));
+    }
+
+    NO_INLINE void InsertFreeSlot_(u16 index) NOEXCEPT {
+        Assert_NoAssume(index > _nextFree);
+        Assert_NoAssume(_nextFree < _upperBound);
+
+        _Key* const keys = _elements.GetData<_Key>();
+
+        for (u16 i = _nextFree;;) {
+            Assert_NoAssume(i < _upperBound);
+            u16& o = *reinterpret_cast<u16*>(keys + i);
+            Assert_NoAssume(o != index);
+            if (o > index) {
+                *reinterpret_cast<u16*>(keys + index) = o;
+                o = index;
+                break;
+            }
+            i = o;
+        }
+    }
+
+    NO_INLINE void CollapseFreeSlots_() NOEXCEPT {
+        Assert_NoAssume(_nextFree == _upperBound);
+
+        const _Key* const keys = _elements.GetData<const _Key>();
+        do {
+            // reclaim free slot
+            --_upperBound;
+
+            Assert_NoAssume(_nextFree < *reinterpret_cast<const u16*>(keys + _nextFree));
+            _nextFree = *reinterpret_cast<const u16*>(keys + _nextFree);
+
+        } while (_nextFree == _upperBound);
+    }
+
+    void DestroyElements_() {
+        IF_CONSTEXPR(not Meta::TIsPod_v<_Key>) {
+            _Key* const keys = _elements.GetData<_Key>();
+
+            if (_upperBound == _size) {
+                Destroy(key_alloc(), TMemoryView<_Key>(keys, _size));
+            }
+            else {
+                u16 nextFree = _nextFree;
+                forrange(i, 0, u32(_upperBound)) {
+                    if (i == nextFree) {
+                        Assert_NoAssume(nextFree < *reinterpret_cast<const u16*>(keys + i));
+                        nextFree = *reinterpret_cast<const u16*>(keys + i);
+                    }
+                    else {
+                        key_traits::destroy(key_alloc(), keys + i);
+                    }
+                }
+            }
+        }
+    }
+
+    void EraseAt_(u32 s, u32 numStatesM1) {
+        Assert_NoAssume(_size);
+        Assert_NoAssume(_size <= _upperBound);
+
+        // destroy the element
+        state_t& st = _states[s];
+        _Key* const p = _elements.GetData<_Key>() + st.Index;
+        key_traits::destroy(key_alloc(), p);
+
+        if (Likely((_size > 1) & (st.Index + 1 != _upperBound))) {
+            // keep a list of free elements
+            // *THIS LIST MUST BE KEPT SORTED FOR ITERATION*
+            STATIC_ASSERT(sizeof(_Key) >= sizeof(u16));
+            if (Likely(st.Index < _nextFree)) {
+                *reinterpret_cast<u16*>(p) = _nextFree;
+                _nextFree = st.Index;
+            }
+            else {
+                InsertFreeSlot_(st.Index);
+            }
+        }
+        else {
+            --_upperBound; // simply pack the array when erasing the last element
+            if (Unlikely(_nextFree + 1 == _upperBound))
+                CollapseFreeSlots_();
+        }
+
+        // backward shift deletion to avoid using tombstones
+        forrange(i, 0, numStatesM1) {
+            const u32 prev = (s + i) & numStatesM1;
+            const u32 swap = (s + i + 1) & numStatesM1;
+
+            if (DistanceIndex_(_states[swap], swap, numStatesM1) == 0) {
+                _states[prev].Index = state_t::EmptyIndex;
+                _states[prev].Hash = u16(prev); // reset Hash to Index so DistanceIndex_() == 0
+                break;
+            }
+
+            _states[prev] = _states[swap];
+        }
+
+        // finally decrement the size
+        _size--;
+    }
+
+    NO_INLINE iterator RehashForGrowth_(const _Key& key) {
+        Rehash_(SizeClass_() + 1);
+        return find(key);
+    }
+
+    void Rehash_(u32 sizeClass) {
+        Assert_NoAssume(sizeClass < NumSizeClasses);
+
+        const state_t* oldStates = _states;
+        const u32 oldNumStates = NumStates_(SizeClass_());
+
+        const u32 numStates = NumStates_(sizeClass);
+        const u16 capacity = checked_cast<u16>(SafeAllocatorSnapSize(
+            key_alloc(), numStates - ((numStates * SlackFactor) >> 7) ));
+        Assert_NoAssume(capacity <= numStates);
+
+        _states = state_traits::allocate(state_alloc(), numStates);
+
+        forrange(i, 0, numStates) {
+            state_t& st = _states[i];
+            st.Index = state_t::EmptyIndex;
+            st.Hash = u16(i);  // reset Hash to Index so DistanceIndex_() == 0
+        }
+
+        if (_elements.Data) {
+            Assert(oldStates);
+            Assert_NoAssume((state_t*)this != oldStates);
+
+            _Key* const oldElements = _elements.GetData<_Key>();
+            _Key* const newElements = key_traits::allocate(key_alloc(), capacity);
+
+            // rehash using previous state which already contains the hash keys
+            u16 insertAt = 0;
+            const u32 numStatesM1 = (numStates - 1);
+            forrange(p, oldStates, oldStates + oldNumStates) {
+                if (state_t::EmptyIndex == p->Index)
+                    continue;
+
+                u16 i = insertAt; // repacking in case we got holes
+                u16 h = p->Hash; // don't need more entropy, hash table is bounded to 65536 entries
+                u32 s = (h & numStatesM1);
+                u32 d = 0;
+                for (;; s = (s + 1) & numStatesM1, ++d) {
+                    state_t& it = _states[s];
+                    if (Likely(it.Index == state_t::EmptyIndex))
+                        break;
+                    Assert_NoAssume(insertAt != it.Index);
+
+                    const u32 ds = DistanceIndex_(it, s, numStatesM1);
+                    if (ds < d) {
+                        d = ds;
+                        std::swap(i, it.Index);
+                        std::swap(h, it.Hash);
+                    }
+                }
+
+                state_t& st = _states[s];
+                st.Hash = h;
+                st.Index = i;
+
+                INPLACE_NEW(newElements + insertAt, _Key) { std::move(*(oldElements + p->Index)) };
+
+                insertAt++;
+            }
+            Assert_NoAssume(insertAt == _size);
+
+            // release previous key & state vectors (guaranteed to don't take benefit of Rellocate() since we snapped to allocator sizes)
+            key_traits::deallocate(key_alloc(), oldElements, _capacity);
+            state_traits::deallocate(state_alloc(), const_cast<state_t*>(oldStates), oldNumStates);
+
+            _elements.SetData(newElements);
+        }
+        else {
+            Assert_NoAssume(0 == _size);
+            Assert_NoAssume(0 == _elements.Counter);
+            Assert_NoAssume(0 == _elements.Data);
+            Assert_NoAssume((state_t*)this == oldStates);
+
+            _elements.SetData(key_traits::allocate(key_alloc(), capacity));
+        }
+
+        _capacity = capacity;
+        _nextFree = UINT16_MAX; // empty the list we rehashed the table
+        _upperBound = _size;
+        SetSizeClass_(sizeClass);
+    }
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if USE_PPE_BENCHMARK
+//----------------------------------------------------------------------------
+namespace BenchmarkContainers {
 template <typename T>
 struct TInputData {
     TMemoryView<const T> Insert;
@@ -1254,21 +1857,27 @@ struct TInputData {
     template <typename _Container>
     void FillDense(_Container& c) const {
         c.reserve(Insert.size());
+#ifdef WITH_PPE_ASSERT
+        forrange(i, 0, Insert.size()) {
+            c.insert(Insert[i]);
+            forrange(j, 0, i+1)
+                Assert_NoAssume(c.find(Insert[j]) != c.end());
+        }
+
+#else
         for (const auto& it : Insert)
             c.insert(it);
+#endif
     }
 
     template <typename _Container>
     void FillSparse(_Container& c) const {
-        c.reserve(Insert.size());
-        for (const auto& it : Insert)
-            c.insert(it);
+        FillDense(c);
         for (const auto& it : Sparse)
-            c.erase(it);
+            Verify(c.erase(it));
     }
 
 };
-//----------------------------------------------------------------------------
 class construct_noreserve_t : public FBenchmark {
 public:
     construct_noreserve_t() : FBenchmark{ "ctor_cold" } {}
@@ -1298,7 +1907,7 @@ public:
 };
 class copy_empty_t : public FBenchmark {
 public:
-    copy_empty_t() : FBenchmark{ "copy_empty" } {}
+    copy_empty_t() : FBenchmark{ "copy_pty" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto s{ archetype };
@@ -1317,7 +1926,7 @@ public:
 };
 class copy_dense_t : public FBenchmark {
 public:
-    copy_dense_t() : FBenchmark{ "copy_dense" } {}
+    copy_dense_t() : FBenchmark{ "copy_dns" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto s{ archetype };
@@ -1333,7 +1942,7 @@ public:
 };
 class copy_sparse_t : public FBenchmark {
 public:
-    copy_sparse_t() : FBenchmark{ "copy_sparse" } {}
+    copy_sparse_t() : FBenchmark{ "copy_spr" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto s{ archetype };
@@ -1349,7 +1958,7 @@ public:
 };
 class iterate_dense_t : public FBenchmark {
 public:
-    iterate_dense_t() : FBenchmark{ "iter_dense" } {}
+    iterate_dense_t() : FBenchmark{ "iter_dns" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto c{ archetype };
@@ -1364,7 +1973,7 @@ public:
 };
 class iterate_sparse_t : public FBenchmark {
 public:
-    iterate_sparse_t() : FBenchmark{ "iter_sparse" } {}
+    iterate_sparse_t() : FBenchmark{ "iter_spr" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto c{ archetype };
@@ -1379,7 +1988,7 @@ public:
 };
 class find_dense_pos_t : public FBenchmark {
 public:
-    find_dense_pos_t() : FBenchmark{ "find_dense_pos" } {}
+    find_dense_pos_t() : FBenchmark{ "find_dns_+" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto c{ archetype };
@@ -1394,7 +2003,7 @@ public:
 };
 class find_dense_neg_t : public FBenchmark {
 public:
-    find_dense_neg_t() : FBenchmark{ "find_dense_neg" } {}
+    find_dense_neg_t() : FBenchmark{ "find_dns_-" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto c{ archetype };
@@ -1409,7 +2018,7 @@ public:
 };
 class find_sparse_pos_t : public FBenchmark {
 public:
-    find_sparse_pos_t() : FBenchmark{ "find_sparse_pos" } {}
+    find_sparse_pos_t() : FBenchmark{ "find_spr_+" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto c{ archetype };
@@ -1424,7 +2033,7 @@ public:
 };
 class find_sparse_neg_t : public FBenchmark {
 public:
-    find_sparse_neg_t() : FBenchmark{ "find_sparse_neg" } {}
+    find_sparse_neg_t() : FBenchmark{ "find_spr_-" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto c{ archetype };
@@ -1439,7 +2048,7 @@ public:
 };
 class erase_dense_pos_t : public FBenchmark {
 public:
-    erase_dense_pos_t() : FBenchmark{ "erase_dense_pos" } {}
+    erase_dense_pos_t() : FBenchmark{ "erase_dns_+" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto s{ archetype };
@@ -1458,7 +2067,7 @@ public:
 };
 class erase_dense_neg_t : public FBenchmark {
 public:
-    erase_dense_neg_t() : FBenchmark{ "erase_dense_neg" } {}
+    erase_dense_neg_t() : FBenchmark{ "erase_dns_-" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto s{ archetype };
@@ -1477,7 +2086,7 @@ public:
 };
 class erase_sparse_pos_t : public FBenchmark {
 public:
-    erase_sparse_pos_t() : FBenchmark{ "erase_sparse_pos" } {}
+    erase_sparse_pos_t() : FBenchmark{ "erase_spr_+" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto s{ archetype };
@@ -1496,7 +2105,7 @@ public:
 };
 class erase_sparse_neg_t : public FBenchmark {
 public:
-    erase_sparse_neg_t() : FBenchmark{ "erase_sparse_neg" } {}
+    erase_sparse_neg_t() : FBenchmark{ "erase_spr_-" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto s{ archetype };
@@ -1513,9 +2122,63 @@ public:
         }
     }
 };
+class find_erase_dns_t : public FBenchmark {
+public:
+    find_erase_dns_t() : FBenchmark{ "find_erase_dns" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillDense(s);
+
+        const size_t ns = input.Sparse.size();
+        const size_t nu = input.Unkown.size();
+        const size_t nn = Min(nu, ns) >> 1;
+
+        auto c{ archetype };
+        for (auto _ : state) {
+            state.PauseTiming();
+            c = s;
+            state.ResumeTiming();
+            forrange(i, 0, nn) {
+                c.insert(input.Unkown[(i << 1)]);
+                c.insert(input.Unkown[(i << 1) + 1]);
+                c.erase(input.Sparse[i]);
+            }
+            FBenchmark::DoNotOptimize(c.end());
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class find_erase_spr_t : public FBenchmark {
+public:
+    find_erase_spr_t() : FBenchmark{ "find_erase_spr" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillSparse(s);
+
+        const size_t ns = input.Dense.size();
+        const size_t nu = input.Unkown.size();
+        const size_t nn = Min(nu, ns) >> 1;
+
+        auto c{ archetype };
+        for (auto _ : state) {
+            state.PauseTiming();
+            c = s;
+            state.ResumeTiming();
+            forrange(i, 0, nn) {
+                c.insert(input.Unkown[(i << 1)]);
+                c.insert(input.Unkown[(i << 1) + 1]);
+                c.erase(input.Dense[i]);
+            }
+            FBenchmark::DoNotOptimize(c.end());
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
 class clear_dense_t : public FBenchmark {
 public:
-    clear_dense_t() : FBenchmark{ "clear_dense" } {}
+    clear_dense_t() : FBenchmark{ "clear_dns" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto s{ archetype };
@@ -1533,7 +2196,7 @@ public:
 };
 class clear_sparse_t : public FBenchmark {
 public:
-    clear_sparse_t() : FBenchmark{ "clear_sparse" } {}
+    clear_sparse_t() : FBenchmark{ "clear_spr" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
         auto s{ archetype };
@@ -1549,6 +2212,7 @@ public:
         }
     }
 };
+} //!namespace BenchmarkContainers
 //----------------------------------------------------------------------------
 template <typename T, typename _Generator, typename _Containers>
 static void Benchmark_Containers_(
@@ -1561,6 +2225,7 @@ static void Benchmark_Containers_(
 
     std::random_device rdevice;
     std::mt19937 rand{ rdevice() };
+    rand.seed(0x32F9u); // fixed seed for repro
 
     VECTOR(Benchmark, T) samples;
     samples.reserve_Additional(dim * 2);
@@ -1591,6 +2256,8 @@ static void Benchmark_Containers_(
     std::shuffle(std::begin(dense), std::end(dense), rand);
     std::shuffle(std::begin(sparse), std::end(sparse), rand);
 
+    using namespace BenchmarkContainers;
+
     using FInputData = TInputData<T>;
     FInputData input{ insert, search, unkown, erase, dense, sparse };
     Assert_NoAssume(insert.size());
@@ -1619,6 +2286,8 @@ static void Benchmark_Containers_(
         erase_dense_neg_t{},
         erase_sparse_pos_t{},
         erase_sparse_neg_t{},
+        find_erase_dns_t{},
+        find_erase_spr_t{},
         clear_dense_t{},
         clear_sparse_t{} );
 
@@ -1640,18 +2309,38 @@ static void Benchmark_Containers_(
 template <typename T, typename _Generator>
 static void Test_PODSet_(const FString& name, const _Generator& generator) {
     auto containers_large = [](auto& bm, const auto& input) {
-        /*{
-            typedef TDenseHashSet<T> hashtable_type;
+        /*{ // very buggy
+            typedef TCompactHashSet<T> hashtable_type;
 
             hashtable_type set;
-            bm.Run("DenseHashSet", set, input);
+            bm.Run("TCompactHashSet", set, input);
         }*/
         {
             typedef TDenseHashSet2<T> hashtable_type;
 
             hashtable_type set;
-            bm.Run("DenseHashSet2", set, input);
+            bm.Run("TDenseHashSet2", set, input);
         }
+#if 0
+        {
+            typedef TDenseHashSet2<THashMemoizer<T>> hashtable_type;
+
+            hashtable_type set;
+            bm.Run("TDenseHashSet2_M", set, input);
+        }
+        {
+            typedef TDenseHashSet3<T> hashtable_type;
+
+            hashtable_type set;
+            bm.Run("TDenseHashSet3", set, input);
+        }
+        {
+            typedef TDenseHashSet3<THashMemoizer<T>> hashtable_type;
+
+            hashtable_type set;
+            bm.Run("TDenseHashSet3_M", set, input);
+        }
+#endif
         {
             THashSet<T> set;
 
@@ -1707,8 +2396,8 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
 
     Benchmark_Containers_<T>(name + "_20", 20, generator, containers_all);
     Benchmark_Containers_<T>(name + "_50", 50, generator, containers_all);
-#ifndef WITH_PPE_ASSERT
     Benchmark_Containers_<T>(name + "_200", 200, generator, containers_large);
+#ifndef WITH_PPE_ASSERT
     Benchmark_Containers_<T>(name + "_2000", 2000, generator, containers_large);
     Benchmark_Containers_<T>(name + "_20000", 20000, generator, containers_large);
 #endif
@@ -1764,7 +2453,7 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("DenseHashSet2", set, input);
+            bm.Run("TDenseHashSet2", set, input);
         }
         {
             typedef TDenseHashSet2<
@@ -1776,7 +2465,29 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("DenseHashSet2_M", set, input);
+            bm.Run("TDenseHashSet2_M", set, input);
+        }
+        {
+            typedef TDenseHashSet3<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   hashtable_type;
+
+            hashtable_type set;
+            bm.Run("TDenseHashSet3", set, input);
+        }
+        {
+            typedef TDenseHashSet3<
+                THashMemoizer<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+                >
+            >   hashtable_type;
+
+            hashtable_type set;
+            bm.Run("TDenseHashSet3_M", set, input);
         }
         {
             STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
