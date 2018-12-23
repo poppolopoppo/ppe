@@ -46,6 +46,7 @@ public:
     u32 MaxIterations{ 500000 };
     double MaxVarianceError{ 1e-3 };
 #endif
+    u64 RandomSeed{ PPE_HASH_VALUE_SEED_64 };
 
 public: // Helpers
     template <class Tp>
@@ -132,10 +133,13 @@ public: // FState
     public:
         FState(const FBenchmark& benchmark)
             : _benchmark(benchmark)
+            , _rnd(benchmark.RandomSeed)
         {}
 
         FIterator begin();
         FIterator end();
+
+        FRandomGenerator& Random() { return _rnd; }
 
         const FVarianceEstimator& Estimator() const { return _estimator; }
         TMemoryView<const double> Reservoir() const { return _reservoir; }
