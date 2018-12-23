@@ -17,6 +17,7 @@
 //#define USE_MSVC_STATIC_RUNTIME
 ; https://blogs.msdn.microsoft.com/vcblog/2018/01/04/visual-studio-2017-throughput-improvements-and-advice/
 //#define USE_MSVC_COMPILATION_SUMMARY // %_NOCOMMIT%
+#define USE_MSVC_WINDOWS10_SLOW_WORKAROUND // https://randomascii.wordpress.com/2018/12/03/a-not-called-function-can-cause-a-5x-slowdown/
 
 //------------------------------------------------------------------------------
 // Common MSVC Configuration
@@ -40,7 +41,7 @@
     + ' /wd4201' // nonstandard extension used: nameless struct/union'
     ;+ ' /wd4324' // structure was padded due to alignment specifier (giving up on this one for now)
 
-    
+
     Print( 'Additional warnings :$AdditionalWarnings$')
     Print( 'Ignored warnings :$IgnoredWarnings$')
 
@@ -130,6 +131,13 @@
     + ' advapi32.lib'
     + ' version.lib'
     + ' Shlwapi.lib'
+
+#if USE_MSVC_WINDOWS10_SLOW_WORKAROUND
+    Print( "Using MSVC /DELAYLOAD:Shell32.dll for Win10 workaround" )
+    .LinkerOptions          ; https://randomascii.wordpress.com/2018/12/03/a-not-called-function-can-cause-a-5x-slowdown/
+    + ' delayimp.lib'
+    + ' /DELAYLOAD:Shell32.dll'
+#endif
 
 #if USE_MSVC_COMPILATION_SUMMARY
     Print( "Using MSVC /d2cgsummary, /d2:-cgsummary & /Bt+ to analyze compilation times")
