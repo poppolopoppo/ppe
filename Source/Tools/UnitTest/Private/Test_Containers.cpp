@@ -2046,6 +2046,62 @@ public:
         }
     }
 };
+// trying to measure cache misses by avoiding temporal coherency
+// https://www.youtube.com/watch?v=M2fKMP47slQ
+class find_cmiss_pos_t : public FBenchmark {
+public:
+    find_cmiss_pos_t() : FBenchmark{ "find_miss_+" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto c{ archetype };
+        input.FillDense(c);
+
+        auto tables[128] = {
+            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
+            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
+            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
+            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
+        };
+
+        STACKLOCAL_POD_ARRAY(u32, seq, input.Dense.size());
+        for (u32& i : seq)
+            i = state.Random().NextU32(lengthof(tables));
+
+        for (auto _ : state) {
+            const u32* pIndex = seq.data();
+            for (const auto& it : input.Dense)
+                FBenchmark::DoNotOptimizeLoop(tables[*(pIndex++)].find(it));
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
+class find_cmiss_neg_t : public FBenchmark {
+public:
+    find_cmiss_neg_t() : FBenchmark{ "find_miss_-" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto c{ archetype };
+        input.FillSparse(c);
+
+        auto tables[128] = {
+            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
+            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
+            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
+            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
+        };
+
+        STACKLOCAL_POD_ARRAY(u32, seq, input.Unkown.size());
+        for (u32& i : seq)
+            i = state.Random().NextU32(lengthof(tables));
+
+        for (auto _ : state) {
+            const u32* pIndex = seq.data();
+            for (const auto& it : input.Unkown)
+                FBenchmark::DoNotOptimizeLoop(tables[*(pIndex++)].find(it));
+            FBenchmark::ClobberMemory();
+        }
+    }
+};
 class erase_dense_pos_t : public FBenchmark {
 public:
     erase_dense_pos_t() : FBenchmark{ "erase_dns_+" } {}
@@ -2288,6 +2344,8 @@ static void Benchmark_Containers_(
         erase_sparse_neg_t{},
         find_erase_dns_t{},
         find_erase_spr_t{},
+        find_cmiss_pos_t{},
+        find_cmiss_neg_t{},
         clear_dense_t{},
         clear_sparse_t{} );
 
