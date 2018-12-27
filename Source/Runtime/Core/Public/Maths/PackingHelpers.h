@@ -264,7 +264,7 @@ struct TNumericLimits< TBasicNorm<T, _Traits> > {
     static const value_type Zero() { return value_type{ scalar_type::Zero() }; }
 };
 //----------------------------------------------------------------------------
-PPE_ASSUME_TYPE_AS_POD(TBasicNorm<T COMMA _Traits>, typename T, typename _Traits)
+PPE_ASSUME_TEMPLATE_AS_POD(TBasicNorm<T COMMA _Traits>, typename T, typename _Traits)
 //----------------------------------------------------------------------------
 template <typename _Char, typename T, typename _Traits>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TBasicNorm<T, _Traits>& packed) {

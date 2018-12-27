@@ -149,7 +149,7 @@ namespace PPE {
 #undef UNITS_END
 #undef UNITS_BEGIN
 //----------------------------------------------------------------------------
-PPE_ASSUME_TYPE_AS_POD(Units::TUnit<_Traits>, typename _Traits)
+PPE_ASSUME_TEMPLATE_AS_POD(Units::TUnit<_Traits>, typename _Traits)
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Unit>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Units::TUnit<_Unit>& unit) {

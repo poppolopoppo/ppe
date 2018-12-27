@@ -263,7 +263,7 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TScalar
 //----------------------------------------------------------------------------
 // All scalar matrices are considered as pods
 //----------------------------------------------------------------------------
-PPE_ASSUME_TYPE_AS_POD(TScalarMatrix<T COMMA _Width COMMA _Height>, typename T, size_t _Width, size_t _Height)
+PPE_ASSUME_TEMPLATE_AS_POD(TScalarMatrix<T COMMA _Width COMMA _Height>, typename T, size_t _Width, size_t _Height)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

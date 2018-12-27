@@ -27,11 +27,9 @@ FORCE_INLINE hash_t hash_value(const TPair<_First, _Second>& pair) {
 //----------------------------------------------------------------------------
 namespace Meta {
 template <typename _First, typename _Second>
-struct TIsPod< TPair<_First, _Second> >
-    : public std::integral_constant<bool,
-        Meta::TIsPod<_First>::value &&
-        Meta::TIsPod<_Second>::value >
-{};
+CONSTEXPR bool is_pod(TType< TPair<_First, _Second> >) NOEXCEPT {
+    return TIsPod_v<_First, _Second>;
+}
 template <typename _First, typename _Second>
 TPair<_First, _Second> NoInitType(TType< TPair<_First, _Second> >) {
     return MakePair(MakeNoInit<_First>(), MakeNoInit<_Second>());

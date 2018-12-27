@@ -25,8 +25,9 @@ std::tuple<Meta::TRemoveReference<_Args>... > MakeTuple(_Args&&... args) {
 //----------------------------------------------------------------------------
 namespace Meta {
 template <typename... _Args>
-struct TIsPod< TTuple<_Args...> > : std::bool_constant< TIsPod_v<_Args...> >
-{};
+CONSTEXPR bool is_pod(TType< TTuple<_Args...> >) NOEXCEPT {
+    return TIsPod_v<_Args...>;
+}
 template <typename... _Args>
 TTuple<_Args...> NoInitType(TType< TTuple<_Args...> >) {
     return MakeTuple(MakeNoInit<_Args>()...);

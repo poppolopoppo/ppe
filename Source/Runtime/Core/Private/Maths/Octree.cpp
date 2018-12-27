@@ -34,7 +34,7 @@ struct FOctreeCandidate_ {
     bool IsContained() const { return (Node.Flag0()); }
     void SetContained() { Node.SetFlag0(true); }
 };
-PPE_ASSERT_TYPE_IS_POD(FOctreeCandidate_)
+PPE_ASSERT_TYPE_IS_POD(FOctreeCandidate_);
 //----------------------------------------------------------------------------
 struct FOctreeCandidateWDist_ {
     float Distance;
@@ -42,7 +42,7 @@ struct FOctreeCandidateWDist_ {
     u16 Extent;
     const FOctreeNode* Node;
 };
-PPE_ASSERT_TYPE_IS_POD(FOctreeCandidateWDist_)
+PPE_ASSERT_TYPE_IS_POD(FOctreeCandidateWDist_);
 //----------------------------------------------------------------------------
 struct FOctreeClosestCandidate_ {
     bool operator ()(const FOctreeCandidateWDist_& lhs, const FOctreeCandidateWDist_& rhs) const {

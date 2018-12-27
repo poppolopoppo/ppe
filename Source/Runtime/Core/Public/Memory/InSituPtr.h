@@ -98,7 +98,9 @@ struct TInSituPtr {
 // Consider TInSituPtr<T> as POD if and only if T is considered as POD
 namespace Meta {
 template <typename T>
-struct TIsPod< TInSituPtr<T> > : TIsPod<T> {};
+CONSTEXPR bool is_pod(TType< TInSituPtr<T> >) NOEXCEPT {
+    return TIsPod_v<T>;
+}
 } //!Meta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

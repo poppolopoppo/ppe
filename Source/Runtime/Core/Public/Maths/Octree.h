@@ -23,7 +23,7 @@ struct FOctreeNode {
     typedef Meta::TPointerWFlags<FOctreeNode> pointer;
     pointer Children[8];
 };
-PPE_ASSERT_TYPE_IS_POD(FOctreeNode)
+PPE_ASSERT_TYPE_IS_POD(FOctreeNode);
 //----------------------------------------------------------------------------
 class FBasicOctree {
 public:

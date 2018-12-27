@@ -239,7 +239,7 @@ protected:
 //----------------------------------------------------------------------------
 // All memory views are considered as pods
 //----------------------------------------------------------------------------
-PPE_ASSUME_TYPE_AS_POD(TMemoryView<T>, typename T)
+PPE_ASSUME_TEMPLATE_AS_POD(TMemoryView<T>, typename T)
 //----------------------------------------------------------------------------
 // Inplace reindexation, beware that indices will be modified too !
 //----------------------------------------------------------------------------

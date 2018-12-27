@@ -5,13 +5,12 @@
 #include <functional>
 #include <type_traits>
 
-#define PPE_ASSUME_TYPE_AS_POD(T, ...) \
-    namespace Meta { \
-        template < __VA_ARGS__ > \
-        struct TIsPod< T > : public std::integral_constant<bool, true> {}; \
-    } //!Meta
 #define PPE_ASSERT_TYPE_IS_POD(T, ...) \
-    static_assert(::PPE::Meta::TIsPod<T>::value, STRINGIZE(T) " is not a POD type");
+    static_assert(::PPE::Meta::TIsPod_v<T>, STRINGIZE(T) " is not a POD type");
+#define PPE_ASSUME_TYPE_AS_POD(T) \
+    CONSTEXPR bool is_pod(Meta::TType<T>) NOEXCEPT { return true; }
+#define PPE_ASSUME_TEMPLATE_AS_POD(T, ...) \
+    template <__VA_ARGS__> PPE_ASSUME_TYPE_AS_POD(T)
 
 namespace PPE {
 namespace Meta {
@@ -121,10 +120,11 @@ using TConstReference = TAddReference< TAddConst< TDecay<T> > >;
 // Replaces std::is_pod<>, can be overrided for specific types
 //----------------------------------------------------------------------------
 template <typename T>
-struct TIsPod : public std::is_pod<T> {
-    using std::is_pod<T>::value;
-    using typename std::is_pod<T>::value_type;
-};
+CONSTEXPR bool is_pod(TType<T>) NOEXCEPT {
+    return std::is_pod_v<T>;
+}
+template <typename T>
+using TIsPod = std::bool_constant< is_pod(TType<T>{}) >;
 //----------------------------------------------------------------------------
 template <typename... _Args>
 constexpr bool TIsPod_v{ (TIsPod<_Args>::value && ...) };
@@ -134,6 +134,10 @@ using has_trivial_constructor = std::bool_constant<TIsPod_v<T> || std::is_trivia
 //----------------------------------------------------------------------------
 template <typename T>
 using has_trivial_destructor = std::bool_constant<TIsPod_v<T> || std::is_trivially_destructible<T>::value >;
+//----------------------------------------------------------------------------
+template <typename T>
+using has_trivial_copy = std::bool_constant<TIsPod_v<T> || (
+    std::is_trivially_copy_constructible_v<T> && std::is_trivially_copy_assignable_v<T>)>;
 //----------------------------------------------------------------------------
 template <typename T>
 using has_trivial_move = std::bool_constant<TIsPod_v<T> || (

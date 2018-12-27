@@ -119,7 +119,7 @@ static size_t CullBIHTree_(
 //----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(FBIHNode) == sizeof(u64));
 STATIC_ASSERT(64 == (FBIHNode::AxisBits + FBIHNode::Child0Bits + FBIHNode::Clip0Bits + FBIHNode::Clip1Bits + FBIHNode::SplitBits));
-PPE_ASSERT_TYPE_IS_POD(FBIHNode)
+PPE_ASSERT_TYPE_IS_POD(FBIHNode);
 //----------------------------------------------------------------------------
 FBasicBIHTree::FBasicBIHTree()
     : _root(nullptr)
