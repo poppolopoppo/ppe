@@ -151,7 +151,15 @@ public: // FState
         double High() const { return _reservoir[(9*ReservoirSize)/10]; } // 90th percentile
 
         void PauseTiming() { _timer.Stop(); }
-        void ResumeTiming() { _timer.Start(); }
+        void ResumeTiming() {
+            ClobberMemory(); // wait for pending memory read/writes before resuming the timer
+            _timer.Start();
+        }
+        void ResetTiming() { // ignore elapsed time before, resume timer afterwards
+            Assert_NoAssume(1 == _benchmark.BatchSize); // not supported for BatchSize > 1
+            _timer.Reset();
+            ResumeTiming();
+        }
 
         void Finish() {
             // sort the reservoir to deduce the percentiles
