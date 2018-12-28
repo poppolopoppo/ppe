@@ -35,16 +35,18 @@ EXTERN_LOG_CATEGORY(PPE_CORE_API, Benchmark);
 class FBenchmark {
 public:
     static constexpr u32 ReservoirSize = 100;
-    static constexpr u32 MinIterations = ReservoirSize*3;
 
     FStringView Name{ "none" };
+    u32 InputDim{ 1 };
     u32 BatchSize{ 1 };
 #ifdef _DEBUG
     u32 MaxIterations{ 5000 };
     double MaxVarianceError{ 1e-2 };
+    static constexpr u32 MinIterations = ReservoirSize * 3;
 #else
     u32 MaxIterations{ 500000 };
     double MaxVarianceError{ 1e-3 };
+    static constexpr u32 MinIterations = ReservoirSize * 30;
 #endif
     u64 RandomSeed{ PPE_HASH_VALUE_SEED_64 };
 
@@ -119,8 +121,8 @@ private: // FTimer
             StartedAt = 0;
         }
         double Reset() {
-            Assert_NoAssume(0 == StartedAt);
             const double t = Elapsed;
+            StartedAt = 0;
             Elapsed = 0;
             return t;
         }
@@ -145,6 +147,7 @@ public: // FState
         TMemoryView<const double> Reservoir() const { return _reservoir; }
 
         double Mean() const { return _estimator.Mean; }
+        double Median() const { return _reservoir[ReservoirSize/2]; }
 
         // must have call Finish()
         double Low() const { return _reservoir[ReservoirSize/10]; } // 10th percentile
@@ -167,9 +170,10 @@ public: // FState
 
             // log some progress
             LOG(Benchmark, Info,
-                L"{0:/18}: {1:10f4} < {2:10f4} < {3:10f4} µs [{4:6} iterations] -> {5}",
+                L"{0:/18}: {1:10f4} < {2:10f4} < {3:10f4} => {4:10f4} µs  [{5:6} iterations] -> {6:f4}",
                 _benchmark.Name,
                 Low(), Mean(), High(),
+                Median(),
                 _estimator.Count,
                 _estimator.SampleVariance());
         }
@@ -191,7 +195,7 @@ public: // FState
             if (((loop - 1) & (_benchmark.BatchSize - 1)) == 0) {
                 _timer.Stop();
 
-                const double t = _timer.Reset();
+                const double t = (_timer.Reset() / (_benchmark.BatchSize * _benchmark.InputDim));
 
                 if (_estimator.Count < ReservoirSize)
                     _reservoir[_estimator.Count] = t;
@@ -265,7 +269,7 @@ public: // FIterator
 public: // FRun
     struct FRun {
         u64 NumIterations{ 0 };
-        double Mean{ 0 }, Low{ 0 }, High{ 0 };
+        double Median{ 0 }, Mean{ 0 }, Low{ 0 }, High{ 0 };
     };
 
     template <typename _Benchmark, typename... _Args>
@@ -275,6 +279,7 @@ public: // FRun
         state.Finish();
         return FRun{
             state.Estimator().Count,
+            state.Median(),
             state.Mean(),
             state.Low(),
             state.High() };
@@ -364,7 +369,7 @@ public: // export table results
                 oss << L'|'
                     << FTextFormat::Trunc(stride, L' ')
                     << FTextFormat::Float(FTextFormat::FixedFloat, 6)
-                    << c.Mean;
+                    << c.Median;
 
             oss << L'|' << Eol;
         });
@@ -394,7 +399,7 @@ public: // export table results
         table.ForeachEntry([&oss](const auto& x) {
             oss << x.Name;
             for (const auto& c : x.Row)
-                oss << ';' << c.Mean;
+                oss << ';' << c.Median;
             oss << Eol;
         });
     }

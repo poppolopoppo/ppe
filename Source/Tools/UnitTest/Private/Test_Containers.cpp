@@ -2362,6 +2362,162 @@ static void Benchmark_Containers_(
         FString s{ sb.ToString() };
         VFS_WriteAll(fname, s.MakeView().RawView(), EAccessPolicy::Truncate_Binary|EAccessPolicy::Roll);
     }
+#endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
+}
+//----------------------------------------------------------------------------
+namespace BenchmarkContainers {
+template <typename T>
+struct TFindData {
+    TMemoryView<const T> Insert;
+    TMemoryView<const T> Unknown;
+    TMemoryView<const u32> Shuffled;
+};
+class findspeed_dense_pos_t : public FBenchmark {
+public:
+    findspeed_dense_pos_t(size_t n, const FStringView& name) : FBenchmark{ name } {
+        InputDim = checked_cast<u32>(n);
+    }
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TFindData<T>& input) const {
+        auto c{ archetype };
+        c.reserve(InputDim);
+        for (const auto& it : input.Insert.CutBefore(InputDim))
+            c.insert(it);
+
+        STACKLOCAL_STACK(_Container, tables, 128);
+        forrange(i, 0, 128)
+            tables.Push(c);
+
+        for (auto _ : state) {
+            uintptr_t hit = 0;
+            const u32* pIndex = input.Shuffled.data();
+            for (const auto& it : input.Insert.CutBefore(InputDim)) {
+                auto& ht = tables[*(pIndex++)];
+                hit ^= uintptr_t(&*ht.find(it));
+            }
+            FBenchmark::DoNotOptimize(hit);
+        }
+    }
+};
+} //!namespace BenchmarkContainers
+template <typename T, typename _Generator, typename _Containers>
+static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&& generator, _Containers&& tests) {
+    constexpr size_t dim = 4200;
+
+    LOG(Benchmark, Emphasis, L"Running find benchmarks <{0}> with {1} tests :", name, dim);
+
+    // mt19937 has better distribution than FRandomGenerator for generating benchmark data
+    std::random_device rdevice;
+    std::mt19937 rand{ rdevice() };
+    rand.seed(0x2875u); // fixed seed for repro
+
+    VECTOR(Benchmark, T) samples;
+    samples.reserve_Additional(dim * 2);
+    forrange(i, 0, dim * 2)
+        samples.emplace_back(generator(rand));
+
+    std::shuffle(samples.begin(), samples.end(), rand);
+
+    const TMemoryView<const T> insert = samples.MakeConstView().CutBefore(dim);
+    const TMemoryView<const T> unkown = samples.MakeConstView().CutStartingAt(dim);
+
+    VECTOR(Benchmark, u32) shuffled;
+    shuffled.resize_Uninitialized(dim);
+    forrange(i, 0, dim)
+        shuffled[i] = i & 127;
+    std::shuffle(shuffled.begin(), shuffled.end(), rand);
+
+    using namespace BenchmarkContainers;
+
+    TFindData<T> input{ insert, unkown, shuffled };
+
+    auto bm = FBenchmark::MakeTable(
+        name,
+        findspeed_dense_pos_t{ 4, "4" },
+        findspeed_dense_pos_t{ 6, "6" },
+        findspeed_dense_pos_t{ 9, "9" },
+        findspeed_dense_pos_t{ 12, "12" },
+        findspeed_dense_pos_t{ 16, "16" },
+        findspeed_dense_pos_t{ 20, "20" },
+        findspeed_dense_pos_t{ 25, "25" },
+        findspeed_dense_pos_t{ 30, "30" },
+        findspeed_dense_pos_t{ 36, "36" },
+        findspeed_dense_pos_t{ 42, "42" },
+        findspeed_dense_pos_t{ 49, "49" },
+        findspeed_dense_pos_t{ 56, "56" },
+        findspeed_dense_pos_t{ 64, "64" },
+        findspeed_dense_pos_t{ 72, "72" },
+        findspeed_dense_pos_t{ 81, "81" },
+        findspeed_dense_pos_t{ 90, "90" },
+        findspeed_dense_pos_t{ 100, "100" },
+        findspeed_dense_pos_t{ 110, "110" },
+        findspeed_dense_pos_t{ 121, "121" },
+        findspeed_dense_pos_t{ 132, "132" },
+        findspeed_dense_pos_t{ 144, "144" },
+        findspeed_dense_pos_t{ 156, "156" },
+        findspeed_dense_pos_t{ 169, "169" },
+        findspeed_dense_pos_t{ 182, "182" },
+        findspeed_dense_pos_t{ 196, "196" }
+#ifndef WITH_PPE_ASSERT
+        ,
+        findspeed_dense_pos_t{ 210, "210" },
+        findspeed_dense_pos_t{ 225, "225" },
+        findspeed_dense_pos_t{ 240, "240" },
+        findspeed_dense_pos_t{ 256, "256" },
+        findspeed_dense_pos_t{ 272, "272" },
+        findspeed_dense_pos_t{ 289, "289" },
+        findspeed_dense_pos_t{ 306, "306" },
+        findspeed_dense_pos_t{ 324, "324" },
+        findspeed_dense_pos_t{ 342, "342" },
+        findspeed_dense_pos_t{ 361, "361" },
+        findspeed_dense_pos_t{ 380, "380" },
+        findspeed_dense_pos_t{ 400, "400" },
+        findspeed_dense_pos_t{ 420, "420" },
+        findspeed_dense_pos_t{ 441, "441" },
+        findspeed_dense_pos_t{ 462, "462" },
+        findspeed_dense_pos_t{ 484, "484" }
+#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+        ,
+        findspeed_dense_pos_t{ 506, "506" },
+        findspeed_dense_pos_t{ 529, "529" },
+        findspeed_dense_pos_t{ 552, "552" },
+        findspeed_dense_pos_t{ 576, "576" },
+        findspeed_dense_pos_t{ 600, "600" },
+        findspeed_dense_pos_t{ 625, "625" },
+        findspeed_dense_pos_t{ 650, "650" },
+        findspeed_dense_pos_t{ 676, "676" },
+        findspeed_dense_pos_t{ 702, "702" },
+        findspeed_dense_pos_t{ 729, "729" },
+        findspeed_dense_pos_t{ 756, "756" },
+        findspeed_dense_pos_t{ 784, "784" },
+        findspeed_dense_pos_t{ 812, "812" },
+        findspeed_dense_pos_t{ 841, "841" },
+        findspeed_dense_pos_t{ 870, "870" },
+        findspeed_dense_pos_t{ 900, "900" },
+        findspeed_dense_pos_t{ 930, "930" },
+        findspeed_dense_pos_t{ 961, "961" },
+        findspeed_dense_pos_t{ 992, "992" },
+        findspeed_dense_pos_t{ 1024, "1024" },
+        findspeed_dense_pos_t{ 1056, "1056" },
+        findspeed_dense_pos_t{ 1089, "1089" },
+        findspeed_dense_pos_t{ 1122, "1122" }
+#endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#endif //!WITH_PPE_ASSERT
+    );
+
+    tests(bm, input);
+
+    FBenchmark::Log(bm);
+
+    {
+        const FFilename fname{ StringFormat(L"Saved:/Benchmark/{0}/Containers/{1}.csv",
+            MakeStringView(WSTRINGIZE(BUILDCONFIG)), name) };
+
+        FStringBuilder sb;
+        FBenchmark::Csv(bm, sb);
+        FString s{ sb.ToString() };
+        VFS_WriteAll(fname, s.MakeView().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll);
+    }
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Generator>
@@ -2379,18 +2535,18 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
             hashtable_type set;
             bm.Run("TDenseHashSet2", set, input);
         }
+        {
+            typedef TDenseHashSet3<T> hashtable_type;
+
+            hashtable_type set;
+            bm.Run("TDenseHashSet3", set, input);
+        }
 #if 0
         {
             typedef TDenseHashSet2<THashMemoizer<T>> hashtable_type;
 
             hashtable_type set;
             bm.Run("TDenseHashSet2_M", set, input);
-        }
-        {
-            typedef TDenseHashSet3<T> hashtable_type;
-
-            hashtable_type set;
-            bm.Run("TDenseHashSet3", set, input);
         }
         {
             typedef TDenseHashSet3<THashMemoizer<T>> hashtable_type;
@@ -2412,6 +2568,7 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
     };
 
     auto containers_all = [&](auto& bm, const auto& input) {
+#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             typedef TVector<T> vector_type;
 
@@ -2439,25 +2596,28 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
 
             bm.Run("TVector", set, input);
         }
+#endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TFlatSet<T> set;
 
             bm.Run("TFlatSet", set, input);
         }
         {
-            TFixedSizeHashSet<T, 128> set;
+            TFixedSizeHashSet<T, 2048> set;
 
             bm.Run("TFixedSizeHashSet", set, input);
         }
         containers_large(bm, input);
     };
 
-    Benchmark_Containers_<T>(name + "_20", 20, generator, containers_all);
-    Benchmark_Containers_<T>(name + "_50", 50, generator, containers_all);
-    Benchmark_Containers_<T>(name + "_200", 200, generator, containers_large);
+    Benchmark_Containers_FindSpeed_<T>(name + "_find", generator, containers_all);
+
+    Benchmark_Containers_Exhaustive_<T>(name + "_20", 20, generator, containers_all);
+    Benchmark_Containers_Exhaustive_<T>(name + "_50", 50, generator, containers_all);
+    Benchmark_Containers_Exhaustive_<T>(name + "_200", 200, generator, containers_large);
 #ifndef WITH_PPE_ASSERT
-    Benchmark_Containers_<T>(name + "_2000", 2000, generator, containers_large);
-    Benchmark_Containers_<T>(name + "_20000", 20000, generator, containers_large);
+    Benchmark_Containers_Exhaustive_<T>(name + "_2000", 2000, generator, containers_large);
+    Benchmark_Containers_Exhaustive_<T>(name + "_20000", 20000, generator, containers_large);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -2582,11 +2742,13 @@ static void Test_StringSet_() {
         }
     };
 
-    Benchmark_Containers_<FStringView>("Strings_20", 20, generator, containers);
-    Benchmark_Containers_<FStringView>("Strings_50", 50, generator, containers);
+    Benchmark_Containers_FindSpeed_<FStringView>("Strings_find", generator, containers);
+
+    Benchmark_Containers_Exhaustive_<FStringView>("Strings_20", 20, generator, containers);
+    Benchmark_Containers_Exhaustive_<FStringView>("Strings_50", 50, generator, containers);
 #ifndef WITH_PPE_ASSERT
-    Benchmark_Containers_<FStringView>("Strings_200", 200, generator, containers);
-    Benchmark_Containers_<FStringView>("Strings_2000", 2000, generator, containers);
+    Benchmark_Containers_Exhaustive_<FStringView>("Strings_200", 200, generator, containers);
+    Benchmark_Containers_Exhaustive_<FStringView>("Strings_2000", 2000, generator, containers);
 #endif
 }
 #endif //!USE_PPE_BENCHMARK
@@ -2608,6 +2770,7 @@ void Test_Containers() {
     LOG(Test_Containers, Emphasis, L"starting container tests ...");
 
     Test_StealFromDifferentAllocator_();
+
 #if USE_PPE_BENCHMARK
     Test_PODSet_<u32>("u32", [](auto& rnd) { return u32(rnd()); });
     Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
@@ -2615,430 +2778,6 @@ void Test_Containers() {
     Test_PODSet_<u256>("u256", [](auto& rnd) { return u256{ { u64(rnd()), u64(rnd()) }, { u64(rnd()), u64(rnd()) } }; });
     Test_StringSet_();
 #endif
-#if 0
-
-    {
-        LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
-        LOG(Test_Containers, Emphasis, L"FStringView collection");
-
-        const FFilename filename = L"Saved:/dico.txt";
-
-        static constexpr u32 GMaxWords = 16000;// u32(-1); // no limit
-
-        VECTOR(Container, FString) words;
-        {
-            const UStreamReader reader = VFS_OpenBinaryReadable(filename);
-            if (not reader)
-                AssertNotReached();
-
-            UsingBufferedStream(reader.get(), [&words](IBufferedStreamReader* iss) {
-                char buffer[512];
-                while (true) {
-                    const FStringView line = iss->ReadLine(buffer);
-                    if (line.empty())
-                        break;
-
-                    const FStringView word = Chomp(line);
-                    words.push_back_Default().assign(word);
-
-                    if (words.size() == GMaxWords)
-                        break;
-                }
-            });
-        }
-
-        //words.resize((UINT16_MAX*80)/100);
-        //words.resize(8);
-
-        std::random_device rdevice;
-        std::mt19937 rand(rdevice());
-
-        VECTOR(Container, FStringView) all;
-        all.reserve(words.size());
-        for (const FString& word : words)
-            all.emplace_back(MakeStringView(word));
-        std::shuffle(all.begin(), all.end(), rand);
-
-        const size_t k = (all.size() * 80) / 100;
-
-        const auto input = all.MakeConstView().CutBefore(k);
-        const auto negative = all.MakeConstView().CutStartingAt(k);
-
-        VECTOR(Container, FStringView) search(input);
-        std::shuffle(search.begin(), search.end(), rand);
-
-        VECTOR(Container, FStringView) todelete(search);
-        std::shuffle(todelete.begin(), todelete.end(), rand);
-        todelete.resize(k / 2);
-
-        VECTOR(Container, FStringView) searchafterdelete(input);
-        std::shuffle(searchafterdelete.begin(), searchafterdelete.end(), rand);
-
-        const hash_t h0 = hash_value(words.front());
-        const hash_t h1 = hash_string(words.front().MakeView());
-        const hash_t h2 = TConstCharHasher<char, ECase::Sensitive>()(FConstChar(words.front().MakeView()));
-        AssertRelease(h0 == h1);
-        AssertRelease(h1 == h2);
-        /*{
-            typedef TCompactHashSet<
-                FStringView,
-                TStringViewHasher<char, ECase::Sensitive>,
-                TStringViewEqualTo<char, ECase::Sensitive>
-            >   hashtable_type;
-
-            hashtable_type set;
-            set.resize(input.size());
-
-            Test_Container_Obj_(L"TCompactHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            typedef TCompactHashSet<
-                THashMemoizer<
-                    FStringView,
-                    TStringViewHasher<char, ECase::Sensitive>,
-                    TStringViewEqualTo<char, ECase::Sensitive>
-                >
-            >   hashtable_type;
-
-            hashtable_type set;
-            set.resize(input.size());
-
-            Test_Container_Obj_(L"TCompactHashSet Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }*/
-        {
-            typedef TDenseHashSet<
-                FStringView,
-                TStringViewHasher<char, ECase::Sensitive>,
-                TStringViewEqualTo<char, ECase::Sensitive>
-            >   hashtable_type;
-
-            hashtable_type set;
-            set.reserve(input.size());
-
-            Test_Container_Obj_(L"TDenseHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            typedef TDenseHashSet<
-                THashMemoizer<
-                    FStringView,
-                    TStringViewHasher<char, ECase::Sensitive>,
-                    TStringViewEqualTo<char, ECase::Sensitive>
-                >
-            >   hashtable_type;
-
-            hashtable_type set;
-            set.reserve(input.size());
-
-            Test_Container_Obj_(L"TDenseHashSet Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            typedef TDenseHashSet2<
-                FStringView,
-                TStringViewHasher<char, ECase::Sensitive>,
-                TStringViewEqualTo<char, ECase::Sensitive>
-            >   hashtable_type;
-
-            hashtable_type set;
-            set.reserve(input.size());
-
-            Test_Container_Obj_(L"TDenseHashSet2", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            typedef TDenseHashSet2<
-                THashMemoizer<
-                FStringView,
-                TStringViewHasher<char, ECase::Sensitive>,
-                TStringViewEqualTo<char, ECase::Sensitive>
-                >
-            >   hashtable_type;
-
-            hashtable_type set;
-            set.reserve(input.size());
-
-            Test_Container_Obj_(L"TDenseHashSet2 Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
-
-            Test_Container_Obj_(L"THashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-
-            LOG(Test_Containers, Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
-        }
-        {
-            STRINGVIEW_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
-
-            Test_Container_Obj_(L"THashSet Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-
-            LOG(Test_Containers, Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
-        }
-        {
-            CONSTCHAR_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
-
-            Test_Container_Obj_(L"TConstCharHashSet Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView(),
-                [](const FStringView& str) -> FConstChar {
-                    return FConstChar(str);
-                });
-
-            LOG(Test_Containers, Info, L"TConstCharHashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
-        }
-        {
-            std::unordered_set<
-                FStringView,
-                TStringViewHasher<char, ECase::Sensitive>,
-                TStringViewEqualTo<char, ECase::Sensitive>
-            >   set;
-
-            Test_Container_Obj_(L"std::unordered_set", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            std::unordered_set<
-                TBasicStringViewHashMemoizer<char, ECase::Sensitive>,
-                Meta::THash< TBasicStringViewHashMemoizer<char, ECase::Sensitive> >
-            >   set;
-
-            Test_Container_Obj_(L"std::unordered_set Memoize", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        /*{
-            TFlatSet<
-                FStringView,
-                TStringViewEqualTo<char, ECase::Sensitive>,
-                TStringViewLess<char, ECase::Sensitive>
-            >   set;
-
-            Test_Container_Obj_(L"TFlatSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            STRINGTRIE_SET(Container, ECase::Sensitive, 31) set;
-
-            Test_Container_Obj_(L"TBurstTrie", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            FBulkTrie<char, void, 8192, 31> set;
-
-            Test_Container_Obj_(L"FBulkTrie", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }*/
-    }
-    FLUSH_LOG();
-    {
-        const size_t COUNT = 2000;
-
-        LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
-        LOG(Test_Containers, Emphasis, L"Medium double collection ({0})", COUNT);
-
-        typedef double value_type;
-
-        std::random_device rdevice;
-        std::mt19937 rand(rdevice());
-
-        VECTOR(Container, value_type) all;
-        all.reserve(COUNT);
-        forrange(i, 1, COUNT+1)
-            all.push_back(value_type(i / value_type(COUNT)) + rand() * COUNT);
-
-        std::shuffle(all.begin(), all.end(), rand);
-
-        const size_t k = (all.size() * 80) / 100;
-
-        const auto input = all.MakeConstView().CutBefore(k);
-        const auto negative = all.MakeConstView().CutStartingAt(k);
-
-        VECTOR(Container, value_type) search(input);
-        std::shuffle(search.begin(), search.end(), rand);
-
-        VECTOR(Container, value_type) todelete(search);
-        std::shuffle(todelete.begin(), todelete.end(), rand);
-        todelete.resize(k / 2);
-
-        VECTOR(Container, value_type) searchafterdelete(input);
-        std::shuffle(searchafterdelete.begin(), searchafterdelete.end(), rand);
-
-        {
-            typedef TCompactHashSet<value_type>   hashtable_type;
-
-            hashtable_type set;
-            set.resize(input.size());
-
-            Test_Container_POD_(L"TCompactHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            typedef TDenseHashSet<value_type>   hashtable_type;
-
-            hashtable_type set;
-            set.reserve(input.size());
-
-            Test_Container_POD_(L"TDenseHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            typedef TDenseHashSet2<value_type>   hashtable_type;
-
-            hashtable_type set;
-            set.reserve(input.size());
-
-            Test_Container_POD_(L"TDenseHashSet2", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            THashSet<value_type> set;
-
-            Test_Container_POD_(L"THashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-
-            LOG(Test_Containers, Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
-        }
-        {
-            std::unordered_set<value_type, Meta::THash<value_type>> set;
-
-            Test_Container_POD_(L"std::unordered_set", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            TFlatSet<value_type> set;
-
-            Test_Container_POD_(L"TFlatSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-
-    }
-    FLUSH_LOG();
-    {
-        const size_t COUNT = 28;
-
-        LOG(Test_Containers, Info, L"{0}", Fmt::Repeat(MakeStringView(L">>="), 20));
-        LOG(Test_Containers, Emphasis, L"Small integer collection ({0})", COUNT);
-
-        typedef int value_type;
-
-        std::random_device rdevice;
-        std::mt19937 rand(rdevice());
-
-        VECTOR(Container, value_type) all;
-        all.reserve(COUNT);
-        forrange(i, 1, COUNT + 1)
-            all.push_back(value_type(i + Min(rand(), COUNT) * COUNT));
-
-        std::shuffle(all.begin(), all.end(), rand);
-
-        const size_t k = (all.size() * 80) / 100;
-
-        const auto input = all.MakeConstView().CutBefore(k);
-        const auto negative = all.MakeConstView().CutStartingAt(k);
-
-        VECTOR(Container, value_type) search(input);
-        std::shuffle(search.begin(), search.end(), rand);
-
-        VECTOR(Container, value_type) todelete(search);
-        std::shuffle(todelete.begin(), todelete.end(), rand);
-        todelete.resize(k / 2);
-
-        VECTOR(Container, value_type) searchafterdelete(input);
-        std::shuffle(searchafterdelete.begin(), searchafterdelete.end(), rand);
-
-        {
-            typedef TVectorInSitu<value_type, COUNT> vector_type;
-
-            vector_type v;
-
-            struct FAdapter_ {
-                vector_type& v;
-                size_t size() const { return v.size(); }
-                auto begin() const { return v.begin(); }
-                auto end() const { return v.end(); }
-                void insert(value_type i) { v.push_back(i); }
-                auto find(value_type i) const { return std::find(v.begin(), v.end(), i); }
-                bool erase(value_type i) {
-                    auto it = find(i);
-                    if (v.end() == it)
-                        return false;
-                    v.erase_DontPreserveOrder(it);
-                    return true;
-                }
-                void clear() { v.clear(); }
-            };
-
-            FAdapter_ set{ v };
-
-            Test_Container_POD_(L"TVectorInSitu", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            typedef TFixedSizeHashSet<value_type, COUNT> set_type;
-
-            set_type s;
-
-            struct FAdapter_ {
-                set_type& s;
-                size_t size() const { return s.size(); }
-                auto begin() const { return s.begin(); }
-                auto end() const { return s.end(); }
-                void insert(value_type i) { s.Add_AssertUnique(i); }
-                auto find(value_type i) const { return s.Find(i); }
-                bool erase(value_type i) { return s.Remove_ReturnIfExists(i); }
-                void clear() { s.Clear(); }
-            };
-
-            FAdapter_ set{ s };
-
-            Test_Container_POD_(L"TFixedSizeHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            typedef TFixedSizeHashSet<value_type, ROUND_TO_NEXT_16(COUNT*2)> set_type;
-
-            set_type s;
-
-            struct FAdapter_ {
-                set_type& s;
-                size_t size() const { return s.size(); }
-                auto begin() const { return s.begin(); }
-                auto end() const { return s.end(); }
-                void insert(value_type i) { s.Add_AssertUnique(i); }
-                auto find(value_type i) const { return s.Find(i); }
-                bool erase(value_type i) { return s.Remove_ReturnIfExists(i); }
-                void clear() { s.Clear(); }
-            };
-
-            FAdapter_ set{ s };
-
-            Test_Container_POD_(L"TFixedSizeHashSet2", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            typedef TCompactHashSet<value_type>   hashtable_type;
-
-            hashtable_type set;
-            set.resize(input.size());
-
-            Test_Container_POD_(L"TCompactHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            typedef TDenseHashSet<value_type>   hashtable_type;
-
-            hashtable_type set;
-            set.reserve(input.size());
-
-            Test_Container_POD_(L"TDenseHashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            typedef TDenseHashSet2<value_type>   hashtable_type;
-
-            hashtable_type set;
-            set.reserve(input.size());
-
-            Test_Container_POD_(L"TDenseHashSet2", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            THashSet<value_type> set;
-
-            Test_Container_POD_(L"THashSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-
-            LOG(Test_Containers, Info, L"THashSet load_factor = {0:#f2}% max probe dist = {1}", set.load_factor(), set.max_probe_dist());
-        }
-        {
-            std::unordered_set<value_type, Meta::THash<value_type>> set;
-
-            Test_Container_POD_(L"std::unordered_set", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-        {
-            TFlatSet<value_type> set;
-
-            Test_Container_POD_(L"TFlatSet", set, input, negative, search.MakeConstView(), todelete.MakeConstView(), searchafterdelete.MakeConstView());
-        }
-
-    }
-#endif //!0
 
     FLUSH_LOG();
     ReleaseMemoryInModules();
