@@ -1853,6 +1853,7 @@ struct TInputData {
     TMemoryView<const T> Erase;
     TMemoryView<const T> Dense;
     TMemoryView<const T> Sparse;
+    TMemoryView<const u32> Shuffled;
 
     template <typename _Container>
     void FillDense(_Container& c) const {
@@ -1916,9 +1917,8 @@ public:
         auto c{ archetype };
 
         for (auto _ : state) {
-            state.PauseTiming();
             c.clear();
-            state.ResumeTiming();
+            state.ResetTiming();
             c = s;
             FBenchmark::DoNotOptimize(c);
         }
@@ -1952,6 +1952,46 @@ public:
 
         for (auto _ : state) {
             c = s;
+            FBenchmark::DoNotOptimize(c);
+        }
+    }
+};
+class insert_dense_t : public FBenchmark {
+public:
+    insert_dense_t() : FBenchmark{ "insert_dns" } {
+        //BatchSize = 16; // batching for better accuracy
+    }
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillDense(s);
+
+        for (auto _ : state) {
+            state.PauseTiming();
+            auto c = s;
+            const auto& item = state.Random().RandomElement(input.Unkown);
+            state.ResumeTiming();
+            c.insert(item);
+            FBenchmark::DoNotOptimize(c);
+        }
+    }
+};
+class insert_sparse_t : public FBenchmark {
+public:
+    insert_sparse_t() : FBenchmark{ "insert_spr" } {
+        //BatchSize = 16; // batching for better accuracy
+    }
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
+        auto s{ archetype };
+        input.FillSparse(s);
+
+        for (auto _ : state) {
+            state.PauseTiming();
+            auto c = s;
+            const auto& item = state.Random().RandomElement(input.Unkown);
+            state.ResumeTiming();
+            c.insert(item);
             FBenchmark::DoNotOptimize(c);
         }
     }
@@ -2056,21 +2096,16 @@ public:
         auto c{ archetype };
         input.FillDense(c);
 
-        auto tables[128] = {
-            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
-            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
-            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
-            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
-        };
+        STACKLOCAL_STACK(_Container, tables, 128);
+        forrange(i, 0, 128)
+            tables.Push(c);
 
-        STACKLOCAL_POD_ARRAY(u32, seq, input.Dense.size());
-        for (u32& i : seq)
-            i = state.Random().NextU32(lengthof(tables));
+        AssertRelease(input.Unkown.size() == input.Shuffled.size());
 
         for (auto _ : state) {
-            const u32* pIndex = seq.data();
+            const u32* pIndex = input.Shuffled.data();
             for (const auto& it : input.Dense)
-                FBenchmark::DoNotOptimizeLoop(tables[*(pIndex++)].find(it));
+                FBenchmark::DoNotOptimizeLoop(tables[*(pIndex++) & 127].find(it));
             FBenchmark::ClobberMemory();
         }
     }
@@ -2083,21 +2118,16 @@ public:
         auto c{ archetype };
         input.FillSparse(c);
 
-        auto tables[128] = {
-            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
-            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
-            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
-            c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c, c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,c,
-        };
+        STACKLOCAL_STACK(_Container, tables, 128);
+        forrange(i, 0, 128)
+            tables.Push(c);
 
-        STACKLOCAL_POD_ARRAY(u32, seq, input.Unkown.size());
-        for (u32& i : seq)
-            i = state.Random().NextU32(lengthof(tables));
+        AssertRelease(input.Unkown.size() == input.Shuffled.size());
 
         for (auto _ : state) {
-            const u32* pIndex = seq.data();
+            const u32* pIndex = input.Shuffled.data();
             for (const auto& it : input.Unkown)
-                FBenchmark::DoNotOptimizeLoop(tables[*(pIndex++)].find(it));
+                FBenchmark::DoNotOptimizeLoop(tables[*(pIndex++) & 127].find(it));
             FBenchmark::ClobberMemory();
         }
     }
@@ -2112,9 +2142,8 @@ public:
 
         auto c{ archetype };
         for (auto _ : state) {
-            state.PauseTiming();
             c = s;
-            state.ResumeTiming();
+            state.ResetTiming();
             for (const auto& it : input.Search)
                 FBenchmark::DoNotOptimizeLoop(c.erase(it));
             FBenchmark::ClobberMemory();
@@ -2131,9 +2160,8 @@ public:
 
         auto c{ archetype };
         for (auto _ : state) {
-            state.PauseTiming();
             c = s;
-            state.ResumeTiming();
+            state.ResetTiming();
             for (const auto& it : input.Unkown)
                 FBenchmark::DoNotOptimizeLoop(c.erase(it));
             FBenchmark::ClobberMemory();
@@ -2150,9 +2178,8 @@ public:
 
         auto c{ archetype };
         for (auto _ : state) {
-            state.PauseTiming();
             c = s;
-            state.ResumeTiming();
+            state.ResetTiming();
             for (const auto& it : input.Dense)
                 FBenchmark::DoNotOptimizeLoop(c.erase(it));
             FBenchmark::ClobberMemory();
@@ -2169,9 +2196,8 @@ public:
 
         auto c{ archetype };
         for (auto _ : state) {
-            state.PauseTiming();
             c = s;
-            state.ResumeTiming();
+            state.ResetTiming();
             for (const auto& it : input.Unkown)
                 FBenchmark::DoNotOptimizeLoop(c.erase(it));
             FBenchmark::ClobberMemory();
@@ -2192,9 +2218,8 @@ public:
 
         auto c{ archetype };
         for (auto _ : state) {
-            state.PauseTiming();
             c = s;
-            state.ResumeTiming();
+            state.ResetTiming();
             forrange(i, 0, nn) {
                 c.insert(input.Unkown[(i << 1)]);
                 c.insert(input.Unkown[(i << 1) + 1]);
@@ -2219,9 +2244,8 @@ public:
 
         auto c{ archetype };
         for (auto _ : state) {
-            state.PauseTiming();
             c = s;
-            state.ResumeTiming();
+            state.ResetTiming();
             forrange(i, 0, nn) {
                 c.insert(input.Unkown[(i << 1)]);
                 c.insert(input.Unkown[(i << 1) + 1]);
@@ -2242,9 +2266,8 @@ public:
 
         auto c{ archetype };
         for (auto _ : state) {
-            state.PauseTiming();
             c = s;
-            state.ResumeTiming();
+            state.ResetTiming();
             c.clear();
             FBenchmark::DoNotOptimize(c);
         }
@@ -2260,9 +2283,8 @@ public:
 
         auto c{ archetype };
         for (auto _ : state) {
-            state.PauseTiming();
             c = s;
-            state.ResumeTiming();
+            state.ResetTiming();
             c.clear();
             FBenchmark::DoNotOptimize(c);
         }
@@ -2270,15 +2292,23 @@ public:
 };
 } //!namespace BenchmarkContainers
 //----------------------------------------------------------------------------
+#define PPE_RUN_EXHAUSTIVE_BENCHMARKS (0)
 template <typename T, typename _Generator, typename _Containers>
-static void Benchmark_Containers_(
+static void Benchmark_Containers_Exhaustive_(
     const FStringView& name, size_t dim,
     _Generator&& generator,
     _Containers&& tests ) {
+#if !PPE_RUN_EXHAUSTIVE_BENCHMARKS
+    UNUSED(name);
+    UNUSED(dim);
+    UNUSED(generator);
+    UNUSED(tests);
+#else
     // prepare input data
 
     LOG(Benchmark, Emphasis, L"Running benchmark <{0}> with {1} tests :", name, dim);
 
+    // mt19937 has better distribution than FRandomGenerator for generating benchmark data
     std::random_device rdevice;
     std::mt19937 rand{ rdevice() };
     rand.seed(0x32F9u); // fixed seed for repro
@@ -2312,16 +2342,23 @@ static void Benchmark_Containers_(
     std::shuffle(std::begin(dense), std::end(dense), rand);
     std::shuffle(std::begin(sparse), std::end(sparse), rand);
 
+    VECTOR(Benchmark, u32) shuffled;
+    shuffled.resize_Uninitialized(unkown.size());
+    forrange(i, 0, checked_cast<u32>(unkown.size()))
+        shuffled[i] = i;
+    std::shuffle(std::begin(shuffled), std::end(shuffled), rand);
+
     using namespace BenchmarkContainers;
 
     using FInputData = TInputData<T>;
-    FInputData input{ insert, search, unkown, erase, dense, sparse };
+    FInputData input{ insert, search, unkown, erase, dense, sparse, shuffled };
     Assert_NoAssume(insert.size());
     Assert_NoAssume(search.size());
     Assert_NoAssume(unkown.size());
     Assert_NoAssume(erase.size());
     Assert_NoAssume(dense.size());
     Assert_NoAssume(sparse.size());
+    Assert_NoAssume(shuffled.size() == unkown.size());
 
     // prepare benchmark table
 
@@ -2332,20 +2369,22 @@ static void Benchmark_Containers_(
         copy_empty_t{},
         copy_dense_t{},
         copy_sparse_t{},
+        insert_dense_t{},
+        insert_sparse_t{},
         iterate_dense_t{},
         iterate_sparse_t{},
         find_dense_pos_t{},
         find_dense_neg_t{},
         find_sparse_pos_t{},
         find_sparse_neg_t{},
+        find_cmiss_pos_t{},
+        find_cmiss_neg_t{},
+        find_erase_dns_t{},
+        find_erase_spr_t{},
         erase_dense_pos_t{},
         erase_dense_neg_t{},
         erase_sparse_pos_t{},
         erase_sparse_neg_t{},
-        find_erase_dns_t{},
-        find_erase_spr_t{},
-        find_cmiss_pos_t{},
-        find_cmiss_neg_t{},
         clear_dense_t{},
         clear_sparse_t{} );
 
