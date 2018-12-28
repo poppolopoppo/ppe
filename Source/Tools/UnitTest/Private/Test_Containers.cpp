@@ -26,6 +26,7 @@
 #include "Maths/PrimeNumbers.h"
 #include "Maths/RandomGenerator.h"
 #include "Memory/MemoryStream.h"
+#include "Meta/PointerWFlags.h"
 #include "Time/TimedScope.h"
 
 #include <algorithm>
@@ -41,8 +42,8 @@ LOG_CATEGORY(, Test_Containers)
 template class TAssociativeVector<FString, int>;
 template class TFlatMap<FString, int>;
 template class TFlatSet<FString>;
-template class TBasicHashTable< details::THashMapTraits_<FString, int>, Meta::THash<FString>, Meta::TEqualTo<FString>, ALLOCATOR(Container, TPair<FString COMMA int>)>;
-template class TBasicHashTable< details::THashSetTraits_<FString>, Meta::THash<FString>, Meta::TEqualTo<FString>, ALLOCATOR(Container, FString)>;
+//template class TBasicHashTable< details::THashMapTraits_<FString, int>, Meta::THash<FString>, Meta::TEqualTo<FString>, ALLOCATOR(Container, TPair<FString COMMA int>)>;
+//template class TBasicHashTable< details::THashSetTraits_<FString>, Meta::THash<FString>, Meta::TEqualTo<FString>, ALLOCATOR(Container, FString)>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -1255,6 +1256,9 @@ struct FDenseHashTableState3 {
     u16 Index;
     u16 Hash;
     STATIC_CONST_INTEGRAL(u16, EmptyIndex, u16(-1));
+    FORCE_INLINE void swap(FDenseHashTableState3& other) NOEXCEPT {
+        std::swap(reinterpret_cast<u32&>(*this), reinterpret_cast<u32&>(other));
+    }
 };
 STATIC_ASSERT(Meta::TIsPod_v<FDenseHashTableState3>);
 template <
@@ -1264,8 +1268,7 @@ template <
     , typename _Empty = Meta::TEmptyKey<_Key>
     , typename _Allocator = ALLOCATOR(Container, _Key)
 >   class EMPTY_BASES TDenseHashSet3
-    : TRebindAlloc<_Allocator, FDenseHashTableState3>
-    , _Allocator {
+    : _Allocator {
 public:
     typedef FDenseHashTableState3 state_t;
     typedef _Key value_type;
@@ -1273,11 +1276,8 @@ public:
     typedef _Empty key_empty;
     typedef _EqualTo key_equal;
 
-    using allocator_key = _Allocator;
-    using allocator_state = TRebindAlloc<_Allocator, state_t>;
-
-    using key_traits = std::allocator_traits<allocator_key>;
-    using state_traits = std::allocator_traits<allocator_state>;
+    using allocator_type = _Allocator;
+    using allocator_traits = std::allocator_traits<allocator_type>;
 
     typedef value_type& reference;
     typedef const value_type& const_reference;
@@ -1287,84 +1287,15 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    template <typename U>
-    class TIterator : public Meta::TIteratorTraits<U> {
-    public:
-        using iterator_category = std::forward_iterator_tag;
-        using value_type = U;
-        using difference_type = difference_type;
-        using pointer = Meta::TAddPointer<U>;
-        using reference = Meta::TAddReference<U>;
-
-        CONSTEXPR TIterator() NOEXCEPT
-            : _elements(nullptr), _index(0), _nextFree(0) {}
-
-        TIterator(const TDenseHashSet3& owner, u32 index) NOEXCEPT
-            : _elements(owner._elements.GetData<value_type>())
-            , _index(index)
-            , _nextFree(owner._nextFree) {
-            Assert_NoAssume(_index <= owner._upperBound);
-            if (Unlikely(_index == _nextFree))
-                SkipFree_();
-        }
-
-        TIterator(const TIterator&) NOEXCEPT = default;
-        TIterator& operator =(const TIterator&) NOEXCEPT = default;
-
-        FORCE_INLINE TIterator& operator++() NOEXCEPT { return Next(); }
-        FORCE_INLINE TIterator& operator++(int) NOEXCEPT { TIterator tmp(*this); Next(); return tmp; }
-
-        FORCE_INLINE reference operator *() const NOEXCEPT { return _elements[_index]; }
-        FORCE_INLINE pointer operator ->() const NOEXCEPT { return (_elements + _index); }
-
-        inline friend bool operator ==(const TIterator& lhs, const TIterator& rhs) NOEXCEPT {
-            Assert_NoAssume(lhs._elements == rhs._elements);
-            return (lhs._index == rhs._index);
-        }
-        inline friend bool operator !=(const TIterator& lhs, const TIterator& rhs) NOEXCEPT {
-            return (not operator ==(lhs, rhs));
-        }
-
-        inline friend void swap(TIterator& lhs, TIterator& rhs) NOEXCEPT {
-            std::swap(lhs._elements, rhs._elements);
-            std::swap(lhs._index, rhs._index);
-            std::swap(lhs._nextFree, rhs._nextFree);
-        }
-
-        FORCE_INLINE TIterator& Next() NOEXCEPT {
-            Assert_NoAssume(_elements);
-            ++_index;
-            if (Unlikely(_index == _nextFree))
-                SkipFree_();
-            return (*this);
-        }
-
-    private:
-        pointer _elements;
-        u32 _index;
-        u32 _nextFree;
-
-        NO_INLINE void SkipFree_() NOEXCEPT {
-            Assert_NoAssume(_index == _nextFree);
-            do {
-                Assert_NoAssume(_nextFree < *(const u16*)(_elements + _index));
-                _nextFree = *(const u16*)(_elements + _index);
-                ++_index;
-            } while (Unlikely(_index == _nextFree));
-        }
-    };
-
-    using iterator = TIterator<_Key>;
-    using const_iterator = TIterator<const _Key>;
+    using iterator = TCheckedArrayIterator<_Key>;
+    using const_iterator = TCheckedArrayIterator<const _Key>;
 
     TDenseHashSet3() NOEXCEPT
         : _size(0)
+        , _sizeClass(0)
         , _capacity(0)
-        , _nextFree(UINT16_MAX)
-        , _upperBound(0)
-        , _states((state_t*)this) { // that way we don't have to check if the container is empty
-        _elements.Reset();
-        STATIC_ASSERT(sizeof(_Key) >= sizeof(u16)); // for packing the free list in holes
+        , _elements((pointer)this) {
+        // that way we don't have to check if the container is empty
     }
 
     ~TDenseHashSet3() {
@@ -1377,49 +1308,31 @@ public:
     TDenseHashSet3& operator =(const TDenseHashSet3& other) {
         clear_ReleaseMemory();
         if (other._size) {
-            Assert_NoAssume(other.SizeClass_());
-
             _size = other._size;
+            _sizeClass = other._sizeClass;
             _capacity = other._capacity;
-            _nextFree = other._nextFree;
-            _upperBound = other._upperBound;
 
-            Assert_NoAssume(other.SizeClass_() < NumSizeClasses);
-            const u32 numStates = NumStates_(other.SizeClass_());
+            const u32 numAllocatedBlocks = NumAllocatedBlocks_();
+            _elements = allocator_traits::allocate(allocator_(), numAllocatedBlocks);
 
-            _states = state_traits::allocate(state_alloc(), numStates);
-            FPlatformMemory::MemcpyLarge(_states, other._states, numStates * sizeof(state_t));
-
-            _elements.Reset(
-                key_traits::allocate(key_alloc(), _capacity),
-                other.SizeClass_() );
-
-            const _Key* const src = other._elements.GetData<const _Key>();
-            _Key* const dst = _elements.GetData<_Key>();
-
-            IF_CONSTEXPR(Meta::TIsPod_v<_Key> || std::is_trivially_copyable_v<_Key>) {
-                FPlatformMemory::MemcpyLarge(dst, src, _upperBound * sizeof(_Key));
+            // trivial copy, don't try to rehash
+            IF_CONSTEXPR(Meta::has_trivial_copy<_Key>::value) {
+                FPlatformMemory::MemcpyLarge(
+                    _elements,
+                    other._elements,
+                    numAllocatedBlocks * sizeof(_Key) );
             }
             else {
-                if (_upperBound == _size) {
-                    std::uninitialized_copy(
-                        MakeCheckedIterator(src, other._size, 0),
-                        MakeCheckedIterator(src, other._size, other._size),
-                        MakeCheckedIterator(dst, _size, 0));
-                }
-                else { // don't try to repack holes here to have a fast copy
-                    u16 nextFree = _nextFree;
-                    forrange(i, 0, u32(other._upperBound)) {
-                        if (i == nextFree) {
-                            Assert_NoAssume(nextFree < *reinterpret_cast<const u16*>(src + i));
-                            nextFree = *reinterpret_cast<const u16*>(src + i);
-                            *reinterpret_cast<u16*>(dst + i) = nextFree;
-                        }
-                        else {
-                            INPLACE_NEW(dst + i, _Key) { src[i] };
-                        }
-                    }
-                }
+                std::uninitialized_copy(
+                    MakeCheckedIterator(other._elements, _size, 0),
+                    MakeCheckedIterator(other._elements, _size, _size),
+                    MakeCheckedIterator(_elements, _size, 0) );
+
+                const u32 numStates = NumStates_(_sizeClass);
+                FPlatformMemory::MemcpyLarge(
+                    _elements + _capacity,
+                    other._elements + _capacity,
+                    numStates * sizeof(state_t) );
             }
         }
         return (*this);
@@ -1439,78 +1352,68 @@ public:
     size_t size() const { return _size; }
     size_t capacity() const { return _capacity; }
 
-    iterator begin() { return iterator(*this, 0); }
-    iterator end() { return iterator(*this, _upperBound); }
+    iterator begin() { return MakeCheckedIterator(_elements, _size, 0); }
+    iterator end() { return MakeCheckedIterator(_elements, _size, _size); }
 
-    const_iterator begin() const { return const_iterator(*this, 0); }
-    const_iterator end() const { return const_iterator(*this, _upperBound); }
+    const_iterator begin() const { return MakeCheckedIterator(const_cast<const_pointer>(_elements), _size, 0); }
+    const_iterator end() const { return MakeCheckedIterator(const_cast<const_pointer>(_elements), _size, _size); }
+
+    auto MakeView() const { return TMemoryView<const _Key>(_elements, _size); }
 
     TPair<iterator, bool> insert(const _Key& key) {
         if (Unlikely(_size == _capacity))
-            Rehash_(SizeClass_() + 1);
+            Rehash_(_sizeClass + 1);
 
         Assert_NoAssume(_size < _capacity);
-        const u32 numStatesM1 = (NumStates_(SizeClass_()) - 1);
+        const u32 numStatesM1 = (NumStates_(_sizeClass) - 1);
 
-        _Key* const keys = _elements.GetData<_Key>();
+        state_t* const states = reinterpret_cast<state_t*>(_elements + _capacity);
 
-        const u16 insertAt = (_nextFree < _upperBound ? _nextFree : _size);
-
-        u16 i = insertAt;
-        u16 h = HashKey_(key);
-        u32 s = (h & numStatesM1);
+        state_t e{ checked_cast<u16>(_size), HashKey_(key) };
+        u32 s = (e.Hash & numStatesM1);
         u32 d = 0;
         for (;; s = (s + 1) & numStatesM1, ++d) {
-            state_t& it = _states[s];
+            state_t& it = states[s];
             if (it.Index == state_t::EmptyIndex)
                 break;
-            else if (Unlikely(it.Hash == h && key_equal()(key, keys[it.Index])))
-                return MakePair(iterator(*this, it.Index), false);
+            else if (Unlikely(it.Hash == e.Hash && key_equal()(key, _elements[it.Index])))
+                return MakePair(MakeCheckedIterator(_elements, _size, it.Index), false);
 
             // minimize distance between desired pos and insertion pos
             const u32 ds = DistanceIndex_(it, s, numStatesM1);
             if (ds < d) {
                 d = ds;
-                std::swap(i, it.Index);
-                std::swap(h, it.Hash);
+                e.swap(it);
             }
         }
 
         // no state alteration before here
 
-        state_t& st = _states[s];
+        state_t& st = states[s];
         Assert_NoAssume(state_t::EmptyIndex == st.Index);
         Assert_NoAssume(u16(s) == st.Hash);
 
-        st.Index = i;
-        st.Hash = h;
+        st = e;
 
-        if (_nextFree == insertAt) // pop used free slot if any
-            _nextFree = *reinterpret_cast<const u16*>(keys + _nextFree);
-        else
-            ++_upperBound;
-
-        _size++;
-
-        key_traits::construct(key_alloc(), keys + insertAt, key);
+        allocator_traits::construct(allocator_(), _elements + _size++, key);
 
         if (Likely(d <= MaxDistance))
-            return MakePair(iterator(*this, insertAt), true);
+            return MakePair(MakeCheckedIterator(_elements, _size, _size - 1), true);
         else
             return MakePair(RehashForGrowth_(key), true);
     }
 
     iterator find(const _Key& key) NOEXCEPT {
-        Assert(SizeClass_() < NumSizeClasses);
-        const u32 numStatesM1 = (NumStates_(SizeClass_()) - 1);
+        Assert_NoAssume(_sizeClass < NumSizeClasses);
+        const u32 numStatesM1 = (NumStates_(_sizeClass) - 1);
 
-        _Key* const keys = _elements.GetData<_Key>();
+        state_t* const states = reinterpret_cast<state_t*>(_elements + _capacity);
 
         u16 i;
         const u16 h = HashKey_(key);
         for (u32 s = (h & numStatesM1), d = 0;; s = (s + 1) & numStatesM1, ++d) {
-            const state_t& it = _states[s];
-            if (it.Hash == h && key_equal()(key, keys[it.Index]))
+            const state_t& it = states[s];
+            if (it.Hash == h && key_equal()(key, _elements[it.Index]))
                 i = it.Index;
             else if (d > DistanceIndex_(it, s, numStatesM1))
                 i = u16(_size);
@@ -1519,24 +1422,24 @@ public:
             break;
         }
 
-        return iterator(*this, i);
+        return MakeCheckedIterator(_elements, _size, i);
     }
 
-    const_iterator find(const _Key& key) const NOEXCEPT {
+    FORCE_INLINE const_iterator find(const _Key& key) const NOEXCEPT {
         return const_cast<TDenseHashSet3&>(*this).find(key);
     }
 
     bool erase(const _Key& key) {
-        Assert(SizeClass_() < NumSizeClasses);
-        const u32 numStatesM1 = (NumStates_(SizeClass_()) - 1);
+        Assert(_sizeClass < NumSizeClasses);
+        const u32 numStatesM1 = (NumStates_(_sizeClass) - 1);
 
-        _Key* const keys = _elements.GetData<_Key>();
+        state_t* const states = reinterpret_cast<state_t*>(_elements + _capacity);
 
         const u16 h = HashKey_(key);
         u32 s = (h & numStatesM1);
         for (u32 d = 0;; s = (s + 1) & numStatesM1, ++d) {
-            const state_t& it = _states[s];
-            if (it.Hash == h && key_equal()(key, keys[it.Index]))
+            const state_t& it = states[s];
+            if (it.Hash == h && key_equal()(key, _elements[it.Index]))
                 break;
             else if (d > DistanceIndex_(it, s, numStatesM1))
                 return false;
@@ -1550,94 +1453,64 @@ public:
 
     void clear() {
         if (_size) {
+            Assert(_sizeClass);
             Assert(_capacity);
-            Assert(SizeClass_());
+            Assert_NoAssume(_sizeClass < NumSizeClasses);
 
-            Assert(SizeClass_() < NumSizeClasses);
-            const u32 numStates = NumStates_(SizeClass_());
+            const u32 numStates = NumStates_(_sizeClass);
 
-            forrange(i, 0, numStates) {
-                state_t& st = _states[i];
+            state_t* const states = reinterpret_cast<state_t*>(_elements + _capacity);
+
+            forrange(i, 0, numStates) { // #TODO : faster
+                state_t& st = states[i];
                 st.Index = state_t::EmptyIndex;
                 st.Hash = u16(i);  // reset Hash to Index so DistanceIndex_() == 0
             }
 
-            DestroyElements_();
+            Destroy(allocator_(), MakeView());
 
-            _size = _upperBound = 0;
-            _nextFree = UINT16_MAX; // since we reseted the states table
+            _size = 0;
         }
     }
 
-    void clear_ReleaseMemory() {
-        if (_elements.Data) {
-            Assert(SizeClass_() < NumSizeClasses);
-            const u32 numStates = NumStates_(SizeClass_());
-
-            DestroyElements_();
-
-            key_traits::deallocate(key_alloc(), _elements.GetData<_Key>(), _capacity);
-            state_traits::deallocate(state_alloc(), _states, numStates);
-
-            _size = 0;
-            _capacity = 0;
-            _nextFree = UINT16_MAX;
-            _upperBound = 0;
-            _states = (state_t*)this; // that way we don't have to check if the container is empty
-            _elements.Reset();
-        }
+    FORCE_INLINE void clear_ReleaseMemory() {
+        if (_capacity)
+            ReleaseMemory_();
         Assert_NoAssume(0 == _size);
+        Assert_NoAssume(0 == _sizeClass);
         Assert_NoAssume(0 == _capacity);
-        Assert_NoAssume(0 == _upperBound);
-        Assert_NoAssume(UINT16_MAX == _nextFree);
-        Assert_NoAssume((state_t*)this == _states);
-        Assert_NoAssume(0 == _elements.Counter);
-        Assert_NoAssume(0 == _elements.Data);
+        Assert_NoAssume((_Key*)this == _elements);
     }
 
     FORCE_INLINE void reserve_Additional(size_t num) { reserve(_size + num); }
 
     void reserve(size_t n) {
         const u32 sizeClass = MakeSizeClass_(checked_cast<u32>(n));
-        if (sizeClass > SizeClass_())
+        if (sizeClass > _sizeClass)
             Rehash_(sizeClass);
+        Assert_NoAssume(n <= _capacity);
     }
 
-    // #TODO : fill holes explicitly, could be called after a batch of erase()
-    /*void repack() {
-
-    }*/
-
 private:
-    u16 _size;
-    u16 _capacity;
-    u16 _nextFree;
-    u16 _upperBound;
-    state_t* _states;
-    Meta::FHeapPtrWCounter _elements;
+    u32 _size : 28;
+    u32 _sizeClass : 4;
+    u32 _capacity;
+    pointer _elements;
 
-    FORCE_INLINE allocator_key& key_alloc() NOEXCEPT { return static_cast<allocator_key&>(*this); }
-    FORCE_INLINE allocator_state& state_alloc() NOEXCEPT { return static_cast<allocator_state&>(*this); }
+    FORCE_INLINE allocator_type& allocator_() NOEXCEPT { return static_cast<allocator_type&>(*this); }
 
-    static constexpr u32 MaxDistance = 5;
+    static constexpr u32 MaxDistance = (CACHELINE_SIZE / sizeof(state_t)) - 1;
     static constexpr u32 MinSizeClass = 3;
     static constexpr u32 NumSizeClasses = 14;
-    static constexpr u32 MaxLoadFactor = 60;
+    static constexpr u32 MaxLoadFactor = 50;
     static constexpr u32 SlackFactor = (((100 - MaxLoadFactor) * 128) / 100);
 
     static FORCE_INLINE u16 HashKey_(const _Key& key) NOEXCEPT {
         return u16(hasher()(key)); // the index is used to identify empty slots, so use full 16 bits for hash key
     }
 
-    FORCE_INLINE CONSTEXPR u32 SizeClass_() const NOEXCEPT {
-        return _elements.Counter;
-    }
-
-    FORCE_INLINE CONSTEXPR void SetSizeClass_(u32 sizeClass) NOEXCEPT {
-        _elements.SetCounter(sizeClass);
-    }
-
     static FORCE_INLINE u8 MakeSizeClass_(u32 size) NOEXCEPT {
+        size += 2 * ((size * SlackFactor) >> 7);
         return checked_cast<u8>(FPlatformMaths::CeilLog2(u32(ROUND_TO_NEXT_16(size))) - MinSizeClass);
     }
 
@@ -1646,92 +1519,50 @@ private:
         return (u32(1) << (sizeClass + MinSizeClass));
     }
 
+    FORCE_INLINE u32 NumAllocatedBlocks_() const NOEXCEPT {
+        return (_capacity +
+            (NumStates_(_sizeClass) * sizeof(state_t) + sizeof(_Key) - 1) / sizeof(_Key) );
+    }
+
     static FORCE_INLINE CONSTEXPR u32 DistanceIndex_(state_t st, u32 b, u32 numStatesM1) NOEXCEPT {
         return ((st.Hash & numStatesM1) <= b
             ? b - (st.Hash & numStatesM1)
             : b + (numStatesM1 + 1) - (st.Hash & numStatesM1));
     }
 
-    NO_INLINE void InsertFreeSlot_(u16 index) NOEXCEPT {
-        Assert_NoAssume(index > _nextFree);
-        Assert_NoAssume(_nextFree < _upperBound);
-
-        _Key* const keys = _elements.GetData<_Key>();
-
-        for (u16 i = _nextFree;;) {
-            Assert_NoAssume(i < _upperBound);
-            u16& o = *reinterpret_cast<u16*>(keys + i);
-            Assert_NoAssume(o != index);
-            if (o > index) {
-                *reinterpret_cast<u16*>(keys + index) = o;
-                o = index;
-                break;
-            }
-            i = o;
-        }
-    }
-
-    NO_INLINE void CollapseFreeSlots_() NOEXCEPT {
-        Assert_NoAssume(_nextFree == _upperBound);
-
-        const _Key* const keys = _elements.GetData<const _Key>();
-        do {
-            // reclaim free slot
-            --_upperBound;
-
-            Assert_NoAssume(_nextFree < *reinterpret_cast<const u16*>(keys + _nextFree));
-            _nextFree = *reinterpret_cast<const u16*>(keys + _nextFree);
-
-        } while (_nextFree == _upperBound);
-    }
-
-    void DestroyElements_() {
-        IF_CONSTEXPR(not Meta::TIsPod_v<_Key>) {
-            _Key* const keys = _elements.GetData<_Key>();
-
-            if (_upperBound == _size) {
-                Destroy(key_alloc(), TMemoryView<_Key>(keys, _size));
-            }
-            else {
-                u16 nextFree = _nextFree;
-                forrange(i, 0, u32(_upperBound)) {
-                    if (i == nextFree) {
-                        Assert_NoAssume(nextFree < *reinterpret_cast<const u16*>(keys + i));
-                        nextFree = *reinterpret_cast<const u16*>(keys + i);
-                    }
-                    else {
-                        key_traits::destroy(key_alloc(), keys + i);
-                    }
-                }
-            }
-        }
-    }
-
     void EraseAt_(u32 s, u32 numStatesM1) {
-        Assert_NoAssume(_size);
-        Assert_NoAssume(_size <= _upperBound);
+        Assert(_size);
+        Assert_NoAssume(s <= numStatesM1);
+
+        state_t* const states = reinterpret_cast<state_t*>(_elements + _capacity);
 
         // destroy the element
-        state_t& st = _states[s];
-        _Key* const p = _elements.GetData<_Key>() + st.Index;
-        key_traits::destroy(key_alloc(), p);
+        state_t& st = states[s];
 
-        if (Likely((_size > 1) & (st.Index + 1 != _upperBound))) {
-            // keep a list of free elements
-            // *THIS LIST MUST BE KEPT SORTED FOR ITERATION*
-            STATIC_ASSERT(sizeof(_Key) >= sizeof(u16));
-            if (Likely(st.Index < _nextFree)) {
-                *reinterpret_cast<u16*>(p) = _nextFree;
-                _nextFree = st.Index;
+        if (_size > 1 && st.Index + 1u != _size) {
+            // need to fill the hole in _elements
+            const u16 ri = checked_cast<u16>(_size - 1);
+            const u16 rh = HashKey_(_elements[ri]); // #TODO ? rehashing can be very slow, but THashMemoizer<> can lessen the problem
+
+            u32 rs = (rh & numStatesM1);
+            for (;; rs = (rs + 1) & numStatesM1) {
+                if (states[rs].Index == ri)
+                    break;
+            }
+
+            Assert_NoAssume(u16(rh) == states[rs].Hash);
+            states[rs].Index = st.Index;
+
+            IF_CONSTEXPR(Meta::has_trivial_move<_Key>::value) {
+                FPlatformMemory::Memcpy(_elements + st.Index, _elements + ri, sizeof(_Key));
             }
             else {
-                InsertFreeSlot_(st.Index);
+                _elements[st.Index] = std::move(_elements[ri]);
+                allocator_traits::destroy(allocator_(), _elements + ri);
             }
         }
         else {
-            --_upperBound; // simply pack the array when erasing the last element
-            if (Unlikely(_nextFree + 1 == _upperBound))
-                CollapseFreeSlots_();
+            allocator_traits::destroy(allocator_(), _elements + st.Index);
         }
 
         // backward shift deletion to avoid using tombstones
@@ -1739,104 +1570,114 @@ private:
             const u32 prev = (s + i) & numStatesM1;
             const u32 swap = (s + i + 1) & numStatesM1;
 
-            if (DistanceIndex_(_states[swap], swap, numStatesM1) == 0) {
-                _states[prev].Index = state_t::EmptyIndex;
-                _states[prev].Hash = u16(prev); // reset Hash to Index so DistanceIndex_() == 0
+            if (DistanceIndex_(states[swap], swap, numStatesM1) == 0) {
+                states[prev].Index = state_t::EmptyIndex;
+                states[prev].Hash = u16(prev); // reset Hash to Index so DistanceIndex_() == 0
                 break;
             }
 
-            _states[prev] = _states[swap];
+            states[prev] = states[swap];
         }
 
         // finally decrement the size
         _size--;
     }
 
-    NO_INLINE iterator RehashForGrowth_(const _Key& key) {
-        Rehash_(SizeClass_() + 1);
+    iterator RehashForGrowth_(const _Key& key) {
+        Rehash_(_sizeClass + 1);
         return find(key);
     }
 
-    void Rehash_(u32 sizeClass) {
+    NO_INLINE void Rehash_(u32 sizeClass) {
         Assert_NoAssume(sizeClass < NumSizeClasses);
 
-        const state_t* oldStates = _states;
-        const u32 oldNumStates = NumStates_(SizeClass_());
+        pointer const oldElts = _elements;
+        state_t* const oldStates = reinterpret_cast<state_t*>(oldElts + _capacity);
+        const u32 oldNumStates = NumStates_(_sizeClass);
 
         const u32 numStates = NumStates_(sizeClass);
-        const u16 capacity = checked_cast<u16>(SafeAllocatorSnapSize(
-            key_alloc(), numStates - ((numStates * SlackFactor) >> 7) ));
+        const u32 numBlocksForStates = (numStates * sizeof(state_t) + sizeof(_Key) - 1) / sizeof(_Key);
+        u32 numBlocks = numBlocksForStates +
+            (numStates - ((numStates * SlackFactor) >> 7)); // less elements than states, accounting for slack
+        numBlocks = checked_cast<u32>(SafeAllocatorSnapSize(allocator_(), numBlocks));
+        const u32 capacity = checked_cast<u16>(numBlocks - numBlocksForStates);
         Assert_NoAssume(capacity <= numStates);
+        AssertRelease(capacity <= UINT16_MAX); // trade-off limitation of this container
 
-        _states = state_traits::allocate(state_alloc(), numStates);
+        _elements = allocator_traits::allocate(allocator_(), numBlocks);
 
-        forrange(i, 0, numStates) {
-            state_t& st = _states[i];
+        state_t* const states = reinterpret_cast<state_t*>(_elements + capacity);
+
+        forrange(i, 0, numStates) { // #TODO : faster
+            state_t& st = states[i];
             st.Index = state_t::EmptyIndex;
-            st.Hash = u16(i);  // reset Hash to Index so DistanceIndex_() == 0
+            st.Hash = u16(i); // reset Hash to Index so DistanceIndex_() == 0
         }
 
-        if (_elements.Data) {
+        if (_size) {
             Assert(oldStates);
             Assert_NoAssume((state_t*)this != oldStates);
 
-            _Key* const oldElements = _elements.GetData<_Key>();
-            _Key* const newElements = key_traits::allocate(key_alloc(), capacity);
-
+            // copy previous elements at the same indices
+            IF_CONSTEXPR(Meta::has_trivial_move<_Key>::value) {
+                FPlatformMemory::Memcpy(_elements, oldElts, _size * sizeof(_Key));
+            }
+            else {
+                std::uninitialized_move(
+                    MakeCheckedIterator(oldElts, _size, 0),
+                    MakeCheckedIterator(oldElts, _size, _size),
+                    MakeCheckedIterator(_elements, _size, 0) );
+            }
             // rehash using previous state which already contains the hash keys
-            u16 insertAt = 0;
             const u32 numStatesM1 = (numStates - 1);
             forrange(p, oldStates, oldStates + oldNumStates) {
                 if (state_t::EmptyIndex == p->Index)
                     continue;
 
-                u16 i = insertAt; // repacking in case we got holes
-                u16 h = p->Hash; // don't need more entropy, hash table is bounded to 65536 entries
-                u32 s = (h & numStatesM1);
+                // use the same insertion index as before
+                // don't need more entropy, hash table is bounded to 65536 entries
+                state_t e{ p->Index, p->Hash };
+                u32 s = (e.Hash & numStatesM1);
                 u32 d = 0;
                 for (;; s = (s + 1) & numStatesM1, ++d) {
-                    state_t& it = _states[s];
+                    state_t& it = states[s];
                     if (Likely(it.Index == state_t::EmptyIndex))
                         break;
-                    Assert_NoAssume(insertAt != it.Index);
+                    Assert_NoAssume(e.Index != it.Index);
 
                     const u32 ds = DistanceIndex_(it, s, numStatesM1);
                     if (ds < d) {
                         d = ds;
-                        std::swap(i, it.Index);
-                        std::swap(h, it.Hash);
+                        e.swap(it);
                     }
                 }
 
-                state_t& st = _states[s];
-                st.Hash = h;
-                st.Index = i;
-
-                INPLACE_NEW(newElements + insertAt, _Key) { std::move(*(oldElements + p->Index)) };
-
-                insertAt++;
+                states[s] = e;
             }
-            Assert_NoAssume(insertAt == _size);
-
-            // release previous key & state vectors (guaranteed to don't take benefit of Rellocate() since we snapped to allocator sizes)
-            key_traits::deallocate(key_alloc(), oldElements, _capacity);
-            state_traits::deallocate(state_alloc(), const_cast<state_t*>(oldStates), oldNumStates);
-
-            _elements.SetData(newElements);
         }
-        else {
-            Assert_NoAssume(0 == _size);
-            Assert_NoAssume(0 == _elements.Counter);
-            Assert_NoAssume(0 == _elements.Data);
-            Assert_NoAssume((state_t*)this == oldStates);
 
-            _elements.SetData(key_traits::allocate(key_alloc(), capacity));
+        if (_capacity) {
+            // release previous key & state vectors (guaranteed to don't take benefit of Rellocate() since we snapped to allocator sizes)
+            allocator_traits::deallocate(allocator_(), oldElts, NumAllocatedBlocks_());
         }
 
         _capacity = capacity;
-        _nextFree = UINT16_MAX; // empty the list we rehashed the table
-        _upperBound = _size;
-        SetSizeClass_(sizeClass);
+        _sizeClass = sizeClass;
+
+        Assert_NoAssume(NumAllocatedBlocks_() == numBlocks);
+    }
+
+    NO_INLINE void ReleaseMemory_() {
+        Assert_NoAssume(_capacity);
+
+        Destroy(allocator_(), MakeView());
+
+        allocator_traits::deallocate(allocator_(), _elements, NumAllocatedBlocks_());
+
+        _size = 0;
+        _sizeClass = 0;
+        _capacity = 0;
+        _elements = (pointer)this;
     }
 };
 //----------------------------------------------------------------------------
