@@ -35,10 +35,7 @@ CONSTEXPR TMemoryView<const wchar_t>::TMemoryView(const wchar_t (&staticString)[
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<T>::~TMemoryView() {}
-//----------------------------------------------------------------------------
-template <typename T>
-TMemoryView<T>::TMemoryView(TMemoryView&& rvalue)
+CONSTEXPR TMemoryView<T>::TMemoryView(TMemoryView&& rvalue)
 :   _storage(std::move(rvalue._storage))
 ,   _size(std::move(rvalue._size)) {
     rvalue._storage = nullptr;
@@ -46,7 +43,7 @@ TMemoryView<T>::TMemoryView(TMemoryView&& rvalue)
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<T>& TMemoryView<T>::operator =(TMemoryView&& rvalue) {
+CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(TMemoryView&& rvalue) {
     _storage = std::move(rvalue._storage);
     _size = std::move(rvalue._size);
     rvalue._storage = nullptr;
@@ -55,11 +52,11 @@ TMemoryView<T>& TMemoryView<T>::operator =(TMemoryView&& rvalue) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<T>::TMemoryView(const TMemoryView& other)
+CONSTEXPR TMemoryView<T>::TMemoryView(const TMemoryView& other)
 :   _storage(other._storage), _size(other._size) {}
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView& other) {
+CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView& other) {
     _storage = other._storage;
     _size = other._size;
     return (*this);
@@ -67,14 +64,14 @@ TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView& other) {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-TMemoryView<T>::TMemoryView(const TMemoryView<U>& other)
+CONSTEXPR TMemoryView<T>::TMemoryView(const TMemoryView<U>& other)
 :   _storage(other._storage), _size(other._size) {
     STATIC_ASSERT(sizeof(T) == sizeof(U));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView<U>& other) {
+CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView<U>& other) {
     STATIC_ASSERT(sizeof(T) == sizeof(U));
     _storage = other._storage;
     _size = other._size;

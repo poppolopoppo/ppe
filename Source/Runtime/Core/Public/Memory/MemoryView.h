@@ -34,7 +34,6 @@ public:
 
     CONSTEXPR TMemoryView();
     CONSTEXPR TMemoryView(pointer storage, size_type size);
-    ~TMemoryView();
 
     // enables type promotion between {T(),T(),T()} and TMemoryView<T>
     CONSTEXPR TMemoryView(std::initializer_list<T> list)
@@ -48,16 +47,16 @@ public:
     TMemoryView(const iterator& first, const iterator& last)
         : TMemoryView(std::addressof(*first), std::distance(first, last)) {}
 
-    TMemoryView(TMemoryView&& rvalue);
-    TMemoryView& operator =(TMemoryView&& rvalue);
+    CONSTEXPR TMemoryView(TMemoryView&& rvalue);
+    CONSTEXPR TMemoryView& operator =(TMemoryView&& rvalue);
 
-    TMemoryView(const TMemoryView& other);
-    TMemoryView& operator =(const TMemoryView& other);
+    CONSTEXPR TMemoryView(const TMemoryView& other);
+    CONSTEXPR TMemoryView& operator =(const TMemoryView& other);
 
     template <typename U>
-    TMemoryView(const TMemoryView<U>& other);
+    CONSTEXPR TMemoryView(const TMemoryView<U>& other);
     template <typename U>
-    TMemoryView& operator =(const TMemoryView<U>& other);
+    CONSTEXPR TMemoryView& operator =(const TMemoryView<U>& other);
 
     pointer Pointer() const { return _storage; }
     size_t SizeInBytes() const { return _size * sizeof(T); }

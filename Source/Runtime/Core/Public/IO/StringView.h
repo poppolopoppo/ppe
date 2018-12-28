@@ -52,22 +52,22 @@ public:
     using typename parent_type::size_type;
     using typename parent_type::iterator;
 
-    TBasicStringView() = default;
+    CONSTEXPR TBasicStringView() = default;
 
-    TBasicStringView(const TBasicStringView& other) = default;
-    TBasicStringView& operator =(const TBasicStringView& other) = default;
+    CONSTEXPR TBasicStringView(const TBasicStringView& other) = default;
+    CONSTEXPR TBasicStringView& operator =(const TBasicStringView& other) = default;
 
-    TBasicStringView(TBasicStringView&& rvalue) = default;
-    TBasicStringView& operator =(TBasicStringView&& rvalue) = default;
+    CONSTEXPR TBasicStringView(TBasicStringView&& rvalue) = default;
+    CONSTEXPR TBasicStringView& operator =(TBasicStringView&& rvalue) = default;
 
-    TBasicStringView(const parent_type& other) : parent_type(other) {}
-    TBasicStringView& operator =(const parent_type& other) { parent_type::operator =(other); return *this; }
+    CONSTEXPR TBasicStringView(const parent_type& other) : parent_type(other) {}
+    CONSTEXPR TBasicStringView& operator =(const parent_type& other) { parent_type::operator =(other); return *this; }
 
-    TBasicStringView(const TMemoryView<_Char>& other) : parent_type(other) {}
-    TBasicStringView& operator =(const TMemoryView<_Char>& other) { parent_type::operator =(other); return *this; }
+    CONSTEXPR TBasicStringView(const TMemoryView<_Char>& other) : parent_type(other) {}
+    CONSTEXPR TBasicStringView& operator =(const TMemoryView<_Char>& other) { parent_type::operator =(other); return *this; }
 
-    TBasicStringView(parent_type&& rvalue) : parent_type(std::move(rvalue)) {}
-    TBasicStringView& operator =(parent_type&& rvalue) { parent_type::operator =(std::move(rvalue)); return *this; }
+    CONSTEXPR TBasicStringView(parent_type&& rvalue) : parent_type(std::move(rvalue)) {}
+    CONSTEXPR TBasicStringView& operator =(parent_type&& rvalue) { parent_type::operator =(std::move(rvalue)); return *this; }
 
     TBasicStringView(std::initializer_list<value_type> list) : parent_type(list) {}
     TBasicStringView(const iterator& first, const iterator& last) : parent_type(first, last) {}

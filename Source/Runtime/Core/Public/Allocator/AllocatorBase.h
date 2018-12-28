@@ -153,7 +153,6 @@ Meta::TEnableIf<
     not Meta::has_trivial_move<typename _Allocator::value_type>::value,
     typename _Allocator::pointer
 >   Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
-    STATIC_ASSERT(std::is_default_constructible<typename _Allocator::value_type>::value);
     STATIC_ASSERT(std::is_move_constructible<typename _Allocator::value_type>::value);
 
     typedef std::allocator_traits<_Allocator> allocator_traits;
