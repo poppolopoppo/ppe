@@ -109,6 +109,17 @@ public:
         return view[n];
     }
 
+    template <typename T>
+    void Shuffle(const TMemoryView<T>& view) {
+        forrange(i, 0, view.size()) {
+            const size_t target = Next(i + 1);
+            if (target != i) {
+                using std::swap;
+                swap(view[i], view[target]);
+            }
+        }
+    }
+
 private:
     generator_type _generator;
 };

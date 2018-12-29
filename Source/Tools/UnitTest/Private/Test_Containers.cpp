@@ -508,7 +508,7 @@ public:
 };
 } //!namespace BenchmarkContainers
 //----------------------------------------------------------------------------
-#define PPE_RUN_EXHAUSTIVE_BENCHMARKS (0)
+#define PPE_RUN_EXHAUSTIVE_BENCHMARKS (1)
 template <typename T, typename _Generator, typename _Containers>
 static void Benchmark_Containers_Exhaustive_(
     const FStringView& name, size_t dim,
@@ -623,8 +623,12 @@ static void Benchmark_Containers_Exhaustive_(
 namespace BenchmarkContainers {
 template <typename T>
 struct TFindData {
-    TMemoryView<const T> Insert;
-    TMemoryView<const T> Unknown;
+    STATIC_CONST_INTEGRAL(u32, Entropy, 128);
+    struct FSeries {
+        TMemoryView<const T> Insert;
+        TMemoryView<const T> Unknown;
+    };
+    FSeries Series[Entropy];
     TMemoryView<const u32> Shuffled;
 };
 class findspeed_dense_pos_t : public FBenchmark {
@@ -634,21 +638,27 @@ public:
     }
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TFindData<T>& input) const {
-        auto c{ archetype };
-        c.reserve(InputDim);
-        for (const auto& it : input.Insert.CutBefore(InputDim))
-            c.insert(it);
+        Assert_NoAssume(input.Shuffled.size() >= InputDim);
 
-        STACKLOCAL_STACK(_Container, tables, 128);
-        forrange(i, 0, 128)
-            tables.Push(c);
+        STACKLOCAL_STACK(_Container, tables, TFindData<T>::Entropy);
+        forrange(i, 0, TFindData<T>::Entropy) {
+            Assert_NoAssume(input.Series[i].Insert.size() >= InputDim);
+
+            tables.Push(archetype);
+            auto& h = *tables.Peek();
+
+            h.reserve(InputDim);
+            Assert_NoAssume(h.capacity() >= InputDim);
+            for (const auto& it : input.Series[i].Insert.CutBefore(InputDim))
+                h.insert(it);
+        }
 
         for (auto _ : state) {
             uintptr_t hit = 0;
             const u32* pIndex = input.Shuffled.data();
-            for (const auto& it : input.Insert.CutBefore(InputDim)) {
-                auto& ht = tables[*(pIndex++)];
-                hit ^= uintptr_t(&*ht.find(it));
+            forrange(i, 0, InputDim) {
+                const u32 hi = *(pIndex++);
+                hit ^= uintptr_t(&*(tables[hi].find(input.Series[hi].Insert[i])));
             }
             FBenchmark::DoNotOptimize(hit);
         }
@@ -666,25 +676,33 @@ static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&
     std::mt19937 rand{ rdevice() };
     rand.seed(0x2875u); // fixed seed for repro
 
+    using namespace BenchmarkContainers;
+
+    CONSTEXPR const size_t samplesPerSeries = dim * 2;
+    CONSTEXPR const size_t totalSamples = samplesPerSeries * TFindData<T>::Entropy;
+
     VECTOR(Benchmark, T) samples;
-    samples.reserve_Additional(dim * 2);
-    forrange(i, 0, dim * 2)
+    samples.reserve_AssumeEmpty(totalSamples);
+    forrange(i, 0, totalSamples)
         samples.emplace_back(generator(rand));
 
     std::shuffle(samples.begin(), samples.end(), rand);
 
-    const TMemoryView<const T> insert = samples.MakeConstView().CutBefore(dim);
-    const TMemoryView<const T> unkown = samples.MakeConstView().CutStartingAt(dim);
-
     VECTOR(Benchmark, u32) shuffled;
     shuffled.resize_Uninitialized(dim);
     forrange(i, 0, dim)
-        shuffled[i] = i & 127;
+        shuffled[i] = i % TFindData<T>::Entropy;
     std::shuffle(shuffled.begin(), shuffled.end(), rand);
 
-    using namespace BenchmarkContainers;
+    TFindData<T> input;
+    input.Shuffled = shuffled;
 
-    TFindData<T> input{ insert, unkown, shuffled };
+    forrange(i, 0, TFindData<T>::Entropy) {
+        const size_t off = dim * 2 * i;
+        input.Series[i] = {
+            samples.MakeConstView().SubRange(off, dim),
+            samples.MakeConstView().SubRange(off + dim, dim) };
+    }
 
     auto bm = FBenchmark::MakeTable(
         name,
