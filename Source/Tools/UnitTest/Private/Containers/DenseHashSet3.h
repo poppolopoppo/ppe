@@ -348,7 +348,7 @@ private:
     }
 
     NO_INLINE void Rehash_(u32 sizeClass) {
-        Assert_NoAssume(sizeClass < NumSizeClasses);
+        AssertRelease(sizeClass < NumSizeClasses);
 
         pointer const oldElts = _elements;
         state_t* const oldStates = reinterpret_cast<state_t*>(oldElts + _capacity);
