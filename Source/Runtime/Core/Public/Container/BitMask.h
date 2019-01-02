@@ -8,8 +8,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FBitMask {
-    typedef size_t word_t;
+template <typename T = size_t>
+struct TBitMask {
+    STATIC_ASSERT(std::is_integral_v<T>);
+    using word_t = T;
 
     static constexpr word_t GOne = word_t(1);
     static constexpr word_t GAllMask = word_t(-1);
@@ -44,32 +46,32 @@ struct FBitMask {
 
     void ResetAll(bool value) NOEXCEPT { Data = (value ? GAllMask : 0); }
 
-    FBitMask Invert() const NOEXCEPT { return FBitMask{ ~Data }; }
+    TBitMask Invert() const NOEXCEPT { return TBitMask{ ~Data }; }
 
-    FBitMask operator &(FBitMask other) const NOEXCEPT { return FBitMask{ Data & other.Data }; }
-    FBitMask operator |(FBitMask other) const NOEXCEPT { return FBitMask{ Data | other.Data }; }
-    FBitMask operator ^(FBitMask other) const NOEXCEPT { return FBitMask{ Data ^ other.Data }; }
+    TBitMask operator &(TBitMask other) const NOEXCEPT { return TBitMask{ Data & other.Data }; }
+    TBitMask operator |(TBitMask other) const NOEXCEPT { return TBitMask{ Data | other.Data }; }
+    TBitMask operator ^(TBitMask other) const NOEXCEPT { return TBitMask{ Data ^ other.Data }; }
 
-    FBitMask operator <<(word_t lshift) const NOEXCEPT { return FBitMask{ Data << lshift }; }
-    FBitMask operator >>(word_t rshift) const NOEXCEPT { return FBitMask{ Data >> rshift }; }
+    TBitMask operator <<(word_t lshift) const NOEXCEPT { return TBitMask{ Data << lshift }; }
+    TBitMask operator >>(word_t rshift) const NOEXCEPT { return TBitMask{ Data >> rshift }; }
 
     word_t FirstBitSet_AssumeNotEmpty() const NOEXCEPT { return FPlatformMaths::tzcnt(Data); }
     word_t LastBitSet_AssumeNotEmpty() const NOEXCEPT { return FPlatformMaths::lzcnt(Data); }
 
     word_t PopFront() NOEXCEPT { // return 0 if empty of (LSB index + 1)
-        const size_t front = (Data ? FPlatformMaths::tzcnt(Data) : INDEX_NONE);
+        const word_t front = (Data ? FPlatformMaths::tzcnt(Data) : INDEX_NONE);
         Data &= ~(GOne<<front); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return (front + 1);
     }
 
     word_t PopFront_AssumeNotEmpty() NOEXCEPT {
-        const size_t front = FPlatformMaths::tzcnt(Data);
+        const word_t front = FPlatformMaths::tzcnt(Data);
         Data &= ~(GOne<<front); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return front;
     }
 
     word_t PopBack() NOEXCEPT { // return 0 if empty of (MSB index + 1)
-        const size_t back = (Data ? FPlatformMaths::lzcnt(Data) : INDEX_NONE);
+        const word_t back = (Data ? FPlatformMaths::lzcnt(Data) : INDEX_NONE);
         Data &= ~(GOne<<back); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return (back + 1);
     }
@@ -94,6 +96,8 @@ struct FBitMask {
         }
     }
 };
+//----------------------------------------------------------------------------
+using FBitMask = TBitMask<>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

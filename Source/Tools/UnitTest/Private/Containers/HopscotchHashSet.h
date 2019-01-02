@@ -11,12 +11,13 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FHopscotchState {
-    STATIC_CONST_INTEGRAL(u32, NeighborHoodSize, 8);
-    STATIC_CONST_INTEGRAL(u32, NHS, NeighborHoodSize); // shorter alias
+    STATIC_CONST_INTEGRAL(u32, HashMask, 0xFFFF);
+    STATIC_CONST_INTEGRAL(u32, NeighborHoodSize, 15);
+    STATIC_CONST_INTEGRAL(u32, NeighborHoodMask, 0x7FFF);
 
-    u32 Hash    : 24;
-    u32 Bitmap  : 7;
+    u32 Hash    : 16;
     u32 Filled  : 1;
+    u32 Bitmap  : 15;
 };
 STATIC_ASSERT(Meta::TIsPod_v<FHopscotchState>);
 template <
@@ -57,8 +58,8 @@ public:
         TIterator& operator++() { return Advance(); }
         TIterator& operator++(int) { TIterator tmp(*this); Advance(); return tmp; }
 
-        T& operator *() const { Assert(Index < Capacity); return (Owner->_elements[Index]); }
-        T* operator ->() const { Assert(Index < Capacity); return (Owner->_elements + Index); }
+        T& operator *() const { Assert_NoAssume(Index < Owner->_capacity); return (Owner->_elements[Index]); }
+        T* operator ->() const { Assert_NoAssume(Index < Owner->_capacity); return (Owner->_elements + Index); }
 
         inline friend bool operator ==(const TIterator& lhs, const TIterator& rhs) {
             Assert_NoAssume(lhs.Owner == rhs.Owner);
@@ -68,11 +69,16 @@ public:
             return (not operator ==(lhs, rhs));
         }
 
-        TIterator& Advance() {
-            Assert_NoAssume(Index < Owner->_capacity);
+        TIterator& FirstSet() {
+            Assert_NoAssume(Index <= Owner->_capacity);
             const state_t* const states = Owner->states_();
-            for (; (not states[Index].Filled) & (Index < Owner->_capacity); ++Index);
+            for (; Index < Owner->_capacity && not states[Index].Filled; ++Index);
             return (*this);
+        }
+
+        TIterator& Advance() {
+            Index++;
+            return FirstSet();
         }
     };
 
@@ -125,7 +131,7 @@ public:
         return (*this);
     }
 
-    THopscotchHashSet(THopscotchHashSet&& rvalue) : THopscotchHashSet() {
+    CONSTEXPR THopscotchHashSet(THopscotchHashSet&& rvalue) NOEXCEPT : THopscotchHashSet() {
         std::swap(_size, rvalue._size);
         std::swap(_capacity, rvalue._capacity);
         std::swap(_elements, rvalue._elements);
@@ -142,145 +148,94 @@ public:
     size_t size() const { return _size; }
     size_t capacity() const { return _capacity; }
 
-    iterator begin() { return iterator(this, 0).Advance(); }
+    iterator begin() { return iterator(this, 0).FirstSet(); }
     iterator end() { return iterator(this, _capacity); }
 
-    const_iterator begin() const { return const_iterator(this, 0).Advance(); }
+    const_iterator begin() const { return const_iterator(this, 0).FirstSet(); }
     const_iterator end() const { return const_iterator(this, _capacity); }
 
     TPair<iterator, bool> insert(const _Key& key) {
-        if (Unlikely(_size == _capacity))
-            reserve_Additional(1);
+        reserve_Additional(1);
 
-        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
-        const u32 h = u32(hasher()(key));
-        u32 s = (h & numStatesM1);
-        for (;;) {
-            FDenseHashTableState& it = _states[s];
-            if (Unlikely(it.Hash == u16(h) && key_equal()(key, _elements[it.Index])))
-                return MakePair(MakeCheckedIterator(_elements, _size, it.Index), false);
-            if ((it.Index & FDenseHashTableState::EmptyMask) == FDenseHashTableState::EmptyMask)
-                break;
+        const u32 mask = (_capacity - 1);
+        const u32 hash = hash_key_(key);
+        const u32 bk = (hash & mask);
 
-            // linear probing
-            s = ++s & numStatesM1;
+        if (states_()[bk].Bitmap) {
+            const u32 fnd = find_(mask, hash, key);
+            if (fnd < _capacity)
+                return MakePair(iterator{ this, fnd }, false);
         }
 
-        const u16 index = checked_cast<u16>(_size++);
-        key_traits::construct(key_alloc(), _elements + index, key);
+        u32 ins = insert_AssumeUnique_(mask, hash, key);
+        if (Unlikely(_capacity == ins))
+            ins = rehash_ForCollision_(hash, key);
 
-        FDenseHashTableState& st = _states[s];
-        Assert_NoAssume(
-            FDenseHashTableState::EmptyIndex == st.Index ||
-            FDenseHashTableState::TombIndex == st.Index );
-        Assert_NoAssume(
-            FDenseHashTableState::EmptyIndex == st.Hash );
-
-        st.Index = index;
-        st.Hash = u16(h);
-
-        return MakePair(MakeCheckedIterator(_elements, _size, index), true);
+        Assert_NoAssume(ins < _capacity);
+        return MakePair(iterator{ this, ins }, true);
     }
 
-    const_iterator find(const _Key& key) const {
-        if (Unlikely(0 == _size))
-            return end();
+    iterator insert_AssertUnique(const _Key& key) {
+        reserve_Additional(1);
 
-        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
-        const u32 h = u32(hasher()(key));
-        u32 s = (h & numStatesM1);
-        for (;;) {
-            const FDenseHashTableState& it = _states[s];
-            if (it.Hash == u16(h) && key_equal()(key, _elements[it.Index]))
-                return MakeCheckedIterator(_elements, _size, it.Index);
-            if (it.Index == FDenseHashTableState::EmptyIndex)
-                return end();
+        const u32 mask = (_capacity - 1);
+        const u32 hash = hash_key_(key);
+        const u32 bk = (hash & mask);
 
-            // linear probing
-            s = ++s & numStatesM1;
-        }
+        Assert_NoAssume(_capacity == find_(mask, hash, key));
+
+        return insert_AssumeUnique_(mask, hash, key);
+    }
+
+    FORCE_INLINE iterator find(const _Key& key) {
+        const u32 mask = (_capacity - 1);
+        const u32 hash = hash_key_(key);
+        const u32 bk = (hash & mask);
+
+        return iterator{ this, find_(mask, hash, key) };
+    }
+
+    FORCE_INLINE const_iterator find(const _Key& key) const {
+        const u32 mask = (_capacity - 1);
+        const u32 hash = hash_key_(key);
+        const u32 bk = (hash & mask);
+
+        return const_iterator{ this, find_(mask, hash, key) };
     }
 
     bool erase(const _Key& key) {
-        if (0 == _size)
-            return false;
+        const u32 mask = (_capacity - 1);
+        const u32 hash = hash_key_(key);
+        const u32 bk = (hash & mask);
 
-        const u32 numStatesM1 = (NumStates_(_capacity) - 1);
-        u32 h = u32(hasher()(key));
-        u32 s = (h & numStatesM1);
-        for (;;) {
-            const FDenseHashTableState& it = _states[s];
-            if (it.Hash == u16(h) && key_equal()(key, _elements[it.Index]))
-                break;
-            if (it.Index == FDenseHashTableState::EmptyIndex)
-                return false;
-
-            // linear probing
-            s = ++s & numStatesM1;
-        }
-
-        FDenseHashTableState& st = _states[s];
-        key_traits::destroy(key_alloc(), _elements + st.Index);
-
-        if (Likely(_size > 1 && st.Index + 1u < _size)) {
-            // need to fill the hole in _elements
-            u16 replace = checked_cast<u16>(_size - 1);
-            h = u32(hasher()(_elements[replace]));
-            s = (h & numStatesM1);
-            for (;;) {
-                const FDenseHashTableState& it = _states[s];
-                if (it.Index == replace)
-                    break;
-
-                // linear probing
-                s = ++s & numStatesM1;
-            }
-
-            Assert_NoAssume(u16(h) == _states[s].Hash);
-            _states[s].Index = st.Index;
-
-            key_traits::construct(key_alloc(), _elements + st.Index, std::move(_elements[replace]));
-            key_traits::destroy(key_alloc(), _elements + replace);
-        }
-
-        st.Index = FDenseHashTableState::TombIndex;
-        st.Hash = FDenseHashTableState::EmptyIndex;
-
-        _size--;
-
-        return true;
+        const u32 fnd = find_(mask, hash, key);
+        return (fnd < _capacity
+            ? erase_At_(mask, fnd), true
+            : false );
     }
 
-    void clear() {
-        if (_size) {
-            const size_t numStates = NumStates_(_capacity);
-            FPlatformMemory::Memset(_states, 0xFF, numStates * sizeof(*_states));
+    void erase(iterator it) {
+        Assert_NoAssume(this == it.Owner);
+        AssertRelease(it.Index < _capacity);
+        erase_At_(_capacity - 1, it.Index);
+    }
+    void erase(const_iterator it) {
+        Assert_NoAssume(this == it.Owner);
+        AssertRelease(it.Index < _capacity);
+        erase_At_(_capacity - 1, it.Index);
+    }
 
-            forrange(it, _elements, _elements + _size)
-                key_traits::destroy(key_alloc(), it);
-
-            _size = 0;
-        }
+    FORCE_INLINE void clear() {
+        if (_size)
+            clear_AssumeNotEmpty_();
     }
 
     void clear_ReleaseMemory() {
-        if (_capacity) {
-            const size_t numStates = NumStates_(_capacity);
-            state_traits::deallocate(state_alloc(), _states, numStates);
+        if (_size | _capacity)
+            clear_ReleaseMemory_AssumeNotEmpty_();
 
-            forrange(it, _elements, _elements + _size)
-                key_traits::destroy(key_alloc(), it);
-
-            key_traits::deallocate(key_alloc(), _elements, _capacity);
-
-            _size = 0;
-            _capacity = 0;
-            _elements = nullptr;
-            _states = nullptr;
-        }
         Assert_NoAssume(0 == _size);
         Assert_NoAssume(0 == _capacity);
-        Assert_NoAssume(nullptr == _states);
         Assert_NoAssume(nullptr == _elements);
     }
 
@@ -296,24 +251,33 @@ public:
     NO_INLINE void rehash(size_t n) {
         const u32 oldCapacity = _capacity;
         pointer const oldElements = _elements;
-        const state_t const oldStates = states_();
+        const state_t* const oldStates = states_();
 
-        _capacity = FPlatformMaths::NextPow2(n);
+        _capacity = FPlatformMaths::NextPow2(checked_cast<u32>(n));
         _elements = allocator_traits::allocate(allocator_(), allocation_size_(_capacity));
 
         Assert_NoAssume(oldCapacity < _capacity);
+        Assert_NoAssume(n <= _capacity);
+        AssertRelease(_capacity <= state_t::HashMask); // else we would need more bits in state_t::Hash
 
-        state_t* const states = reinterpret_cast<state_t*>(elements + capacity_);
-        FPlatformMemory::Memzero(states, sizeof(state_t) * capacity_);
+        state_t* const states = states_();
+        FPlatformMemory::Memzero(states, sizeof(state_t) * _capacity);
 
         if (_size) {
             Assert_NoAssume(_elements);
             ONLY_IF_ASSERT(const u32 oldSize = _size);
 
+            _size = 0; // reset size before inserting back all elements
+
             const u32 mask = (_capacity - 1);
             forrange(i, 0, oldCapacity) {
-                if (oldStates[i]->Filled)
-                    insert_(mask, oldStates->Hash, std::move(oldElements[i]));
+                if (oldStates[i].Filled) {
+                    VerifyRelease(insert_AssumeUnique_(
+                        mask, oldStates[i].Hash, // reuse stored hash value
+                        std::move(oldElements[i]) )
+                        < _capacity); // already rehashing, can't rehash twice !
+                    Meta::Destroy(oldElements + i);
+                }
             }
 
             Assert_NoAssume(oldSize == _size);
@@ -321,11 +285,6 @@ public:
 
         if (oldElements)
             allocator_traits::deallocate(allocator_(), oldElements, allocation_size_(oldCapacity));
-
-        _capacity = capacity_;
-        _elements = elements;
-
-        Assert_NoAssume(n <= _capacity);
     }
 
 private:
@@ -345,24 +304,191 @@ private:
         return u32((capacity * (sizeof(value_type) + sizeof(state_t)) + sizeof(value_type) - 1) / sizeof(value_type));
     }
 
-    template <typename... _Args
-    u32 insert_(u32 mask, u32 hash, _Args... args) {
+    static FORCE_INLINE u32 hash_key_(const _Key& key) NOEXCEPT {
+        return (u32(hasher()(key)) & state_t::HashMask);
+    }
+
+    static FORCE_INLINE CONSTEXPR u32 distance_(u32 wanted, u32 bucket, u32 numStatesM1) NOEXCEPT {
+        return (wanted <= bucket
+            ? bucket - wanted
+            : bucket + (numStatesM1 + 1) - wanted);
+    }
+
+    FORCE_INLINE u32 find_(u32 mask, u32 hash, const _Key& key) const {
+        // always compare the key first, for fast trivial case with only 1 cache miss
+        return (Likely(_size && key_equal()(_elements[hash & mask], key))
+            ? hash & mask
+            : find_Bitmap_(mask, hash, key) );
+    }
+
+    NO_INLINE u32 find_Bitmap_(u32 mask, u32 hash, const _Key& key) const {
+        if (Likely(_size)) {
+            // follow the bitmap to find the key
+            const state_t* const states = states_();
+
+            const u32 bk = (hash & mask);
+            const state_t& st = states[bk];
+
+            TBitMask<u32> m{ st.Bitmap };
+            while (m) {
+                const u32 off = m.PopFront_AssumeNotEmpty();
+                const u32 idx = (hash + off) & mask;
+                if (states[idx].Hash == hash && key_equal()(_elements[idx], key))
+                    return idx;
+            }
+        }
+        return _capacity;
+    }
+
+    NO_INLINE u32 rehash_ForCollision_(u32 hash, const _Key& key) {
+        const u32 n = _capacity * 2;
+        rehash(n); // rehash table with next power of 2
+        Assert_NoAssume(_capacity == n);
+        return find_(_capacity - 1, hash, key);
+    }
+
+    template <typename... _Args>
+    u32 insert_AssumeUnique_(u32 mask, u32 hash, _Args... args) {
+        _size++;
+
         state_t* const states = states_();
 
-        // first try to find a free slot in neighborhood
-        forrange(i, 0, state_t::NHS) {
-            const u32 b = (hash + i) & mask;
-            if (not states[b].Filled) {
-                states[hash & mask].Bitmap |= u32(1) << i;
-                states[b].Hash = hash;
-                states[b].Filled = true;
-                allocator_traits::construct(allocator_(), _elements[b], std::forward<_Args>(args)...);
-                return b;
+        const u32 bk = (hash & mask);
+        state_t& st = states[bk];
+
+        // trivial case : there's empty space in bucket's neighborhood
+        TBitMask<u32> bits{ ~u32(st.Bitmap) & state_t::NeighborHoodMask };
+        while (Likely(bits.Data)) {
+            const u32 off = bits.PopFront_AssumeNotEmpty();
+            const u32 idx = (bk + off) & mask;
+            state_t& ot = states[idx];
+            if (not ot.Filled) {
+                ot.Hash = hash;
+                ot.Filled = true;
+                st.Bitmap |= (u32(1) << off);
+                Meta::Construct(_elements + idx, std::forward<_Args>(args)...);
+                return idx;
             }
         }
 
-        for (; states[s]->Filled; ++s)
-        if ()
+        // fall back to non-trivial insertion
+        return insert_NonTrivial_(mask, hash, std::forward<_Args>(args)...);
+    }
+
+    template <typename... _Args>
+    NO_INLINE u32 insert_NonTrivial_(u32 mask, u32 hash, _Args... args) {
+        Assert_NoAssume(_size < _capacity); // there must be some free space available
+
+        state_t* const states = states_();
+        const u32 bk = (hash & mask);
+
+#ifdef WITH_PPE_ASSERT
+        // check that everything is filled in the neighborhood (for debug)
+        forrange(off, 0, state_t::NeighborHoodSize) {
+            const u32 idx = (bk + off) & mask;
+            Assert(states[idx].Filled);
+        }
+#endif //!WITH_PPE_ASSERT
+
+        // first we need to find a free slot for insertion
+        u32 off = state_t::NeighborHoodSize;
+        for (;; ++off) {
+            const u32 idx = (bk + off) & mask;
+            if (not states[idx].Filled)
+                break;
+        }
+
+        // recursively switch position (if possible) while not in neighborhood
+        u32 ins = (bk + off) & mask;
+        for (u32 i = off; i; --i) {
+            const u32 swp = (bk + i - 1) & mask;
+            const u32 wnt = (states[swp].Hash & mask);
+            Assert_NoAssume(states[swp].Filled);
+
+            const u32 d_ins = distance_(wnt, ins, mask);
+            Assert_NoAssume(not (states[wnt].Bitmap & (u64(1) << d_ins)));
+
+            if (d_ins < state_t::NeighborHoodSize) {
+                const u32 d_swp = distance_(wnt, swp, mask);
+                Assert_NoAssume(d_swp < d_ins);
+                Assert_NoAssume(states[wnt].Bitmap & (u32(1) << d_swp));
+
+                states[wnt].Bitmap = (states[wnt].Bitmap & ~(u32(1) << d_swp)) | (u32(1) << d_ins);
+                states[ins].Filled = true;
+                states[ins].Hash = states[swp].Hash;
+
+                Meta::Construct(_elements + ins, std::move(_elements[swp]));
+                Meta::Destroy(_elements + swp);
+
+                ins = swp;
+
+                if (i <= state_t::NeighborHoodSize)
+                    break;
+            }
+        }
+
+        const u32 d = distance_(bk, ins, mask);
+
+        states[bk].Bitmap |= (u32(1) << d);
+        states[ins].Filled = true;
+        states[ins].Hash = hash;
+
+        Meta::Construct(_elements + ins, std::forward<_Args>(args)...);
+
+        return (d < state_t::NeighborHoodSize ? ins : _capacity);
+    }
+
+    void erase_At_(u32 mask, u32 index) {
+        Assert(_size);
+        Assert_NoAssume(index < _capacity);
+
+        state_t* const states = states_();
+
+        const u32 bk = (states[index].Hash & mask);
+        const u32 d = distance_(bk, index, mask);
+
+        Assert_NoAssume(states[index].Filled);
+        Assert_NoAssume(states[bk].Bitmap & (u32(1) << d));
+
+        states[bk].Bitmap &= ~(u32(1) << d);
+        states[index].Filled = false;
+        states[index].Hash = 0;
+
+        Meta::Destroy(_elements + index);
+
+        _size--;
+    }
+
+    void clear_AssumeNotEmpty_() {
+        Assert(_size);
+
+        state_t* const states = states_();
+
+        IF_CONSTEXPR(not Meta::has_trivial_destructor<value_type>::value) {
+            ONLY_IF_ASSERT(size_t dbgSize = 0);
+            forrange(b, 0, _capacity) {
+                if (states[b].Filled) {
+                    Meta::Destroy(_elements + b);
+                    ONLY_IF_ASSERT(dbgSize++);
+                }
+            }
+            Assert_NoAssume(dbgSize == _size);
+        }
+
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(_elements, sizeof(value_type) * _capacity));
+
+        FPlatformMemory::Memzero(states, sizeof(state_t) * _capacity);
+
+        _size = 0;
+    }
+
+    void clear_ReleaseMemory_AssumeNotEmpty_() {
+        if (_size)
+            clear_AssumeNotEmpty_();
+
+        allocator_traits::deallocate(allocator_(), _elements, allocation_size_(_capacity));
+        _capacity = 0;
+        _elements = nullptr;
     }
 };
 //----------------------------------------------------------------------------

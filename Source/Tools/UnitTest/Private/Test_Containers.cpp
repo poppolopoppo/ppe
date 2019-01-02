@@ -52,6 +52,7 @@ template class TFlatSet<FString>;
 #include "Containers/DenseHashSet.h"
 #include "Containers/DenseHashSet2.h"
 #include "Containers/DenseHashSet3.h"
+#include "Containers/HopscotchHashSet.h"
 
 namespace PPE {
 namespace Test {
@@ -648,7 +649,6 @@ public:
             auto& h = *tables.Peek();
 
             h.reserve(InputDim);
-            Assert_NoAssume(h.capacity() >= InputDim);
             for (const auto& it : input.Series[i].Insert.CutBefore(InputDim))
                 h.insert(it);
         }
@@ -803,39 +803,33 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
             bm.Run("TCompactHashSet", set, input);
         }*/
         {
-            typedef TDenseHashSet2<T> hashtable_type;
-
-            hashtable_type set;
-            bm.Run("TDenseHashSet2", set, input);
+            TDenseHashSet2<T> set;
+            bm.Run("DenseHashSet2", set, input);
         }
         {
-            typedef TDenseHashSet3<T> hashtable_type;
-
-            hashtable_type set;
-            bm.Run("TDenseHashSet3", set, input);
+            TDenseHashSet3<T> set;
+            bm.Run("DenseHashSet3", set, input);
         }
 #if 0
         {
-            typedef TDenseHashSet2<THashMemoizer<T>> hashtable_type;
-
-            hashtable_type set;
-            bm.Run("TDenseHashSet2_M", set, input);
+            TDenseHashSet2<THashMemoizer<T>> set;
+            bm.Run("DenseHashSet2_M", set, input);
         }
         {
-            typedef TDenseHashSet3<THashMemoizer<T>> hashtable_type;
-
-            hashtable_type set;
-            bm.Run("TDenseHashSet3_M", set, input);
+            TDenseHashSet3<THashMemoizer<T>> set;
+            bm.Run("DenseHashSet3_M", set, input);
         }
 #endif
         {
+            THopscotchHashSet<T> set;
+            bm.Run("Hopscotch", set, input);
+        }
+        {
             THashSet<T> set;
-
-            bm.Run("THashSet", set, input);
+            bm.Run("HashSet", set, input);
         }
         {
             std::unordered_set<T, Meta::THash<T>, Meta::TEqualTo<T>, ALLOCATOR(Container, T)> set;
-
             bm.Run("unordered_set", set, input);
         }
     };
@@ -866,19 +860,16 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
             };
 
             FAdapter_ set;
-
-            bm.Run("TVector", set, input);
+            bm.Run("Vector", set, input);
         }
 #endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TFlatSet<T> set;
-
-            bm.Run("TFlatSet", set, input);
+            bm.Run("FlatSet", set, input);
         }
         {
             TFixedSizeHashSet<T, 2048> set;
-
-            bm.Run("TFixedSizeHashSet", set, input);
+            bm.Run("FixedSizeHashSet", set, input);
         }
         containers_large(bm, input);
     };
@@ -944,7 +935,7 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("TDenseHashSet2", set, input);
+            bm.Run("DenseHashSet2", set, input);
         }
         {
             typedef TDenseHashSet2<
@@ -956,7 +947,7 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("TDenseHashSet2_M", set, input);
+            bm.Run("DenseHashSet2_M", set, input);
         }
         {
             typedef TDenseHashSet3<
@@ -966,7 +957,7 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("TDenseHashSet3", set, input);
+            bm.Run("DenseHashSet3", set, input);
         }
         {
             typedef TDenseHashSet3<
@@ -978,22 +969,44 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("TDenseHashSet3_M", set, input);
+            bm.Run("DenseHashSet3_M", set, input);
+        }
+        {
+            typedef THopscotchHashSet<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   hashtable_type;
+
+            hashtable_type set;
+            bm.Run("HopscotchHashSet", set, input);
+        }
+        {
+            typedef THopscotchHashSet <
+                THashMemoizer<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+                >
+            >   hashtable_type;
+
+            hashtable_type set;
+            bm.Run("HopscotchHashSet_M", set, input);
         }
         {
             STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
 
-            bm.Run("THashSet", set, input);
+            bm.Run("HashSet", set, input);
         }
         {
             STRINGVIEW_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
 
-            bm.Run("THashSet_M", set, input);
+            bm.Run("HashSet_M", set, input);
         }
         /*{
             CONSTCHAR_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
 
-            bm.Run("TConstCharHashSet_M", set, input);
+            bm.Run("ConstCharHashSet_M", set, input);
         }*/
         {
             std::unordered_set<
