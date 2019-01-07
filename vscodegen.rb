@@ -203,16 +203,16 @@ ALL_CONFIGURATIONS.each do |configuration|
     compiletasks << {
         "label" => target,
         "type": "shell",
+        "isBackground": true,
         "command": "ruby",
-        "args": [
-            "${workspaceRoot}\\fbuild.rb",
-            target
-        ],
+        "args": [ "fbuild.rb", target ],
+        "options": {
+            "cwd": '${workspaceRoot}'
+        }
         "group": {
             "kind": "build",
             "isDefault": true
         },
-        "isBackground": true,
         "presentation": {
             "clear": true,
             "echo": true,
