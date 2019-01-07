@@ -135,7 +135,7 @@ public:
             state_t& it = states[s];
             if (it.Index == state_t::EmptyIndex)
                 break;
-            else if (Unlikely(it.Hash == e.Hash && key_equal()(key, _elements[it.Index])))
+            else if (Unlikely(((it.Hash == e.Hash) & (it.Index != state_t::EmptyIndex)) && key_equal()(key, _elements[it.Index])))
                 return MakePair(MakeCheckedIterator(_elements, _size, it.Index), false);
 
             // minimize distance between desired pos and insertion pos
@@ -172,7 +172,7 @@ public:
         const u16 h = HashKey_(key);
         for (u32 s = (h & numStatesM1), d = 0;; s = (s + 1) & numStatesM1, ++d) {
             const state_t& it = states[s];
-            if (it.Hash == h && key_equal()(key, _elements[it.Index]))
+            if (((it.Hash == h) & (it.Index != state_t::EmptyIndex)) && key_equal()(key, _elements[it.Index]))
                 i = it.Index;
             else if (d > DistanceIndex_(it, s, numStatesM1))
                 i = u16(_size);
@@ -198,7 +198,7 @@ public:
         u32 s = (h & numStatesM1);
         for (u32 d = 0;; s = (s + 1) & numStatesM1, ++d) {
             const state_t& it = states[s];
-            if (it.Hash == h && key_equal()(key, _elements[it.Index]))
+            if (((it.Hash == h) & (it.Index != state_t::EmptyIndex)) && key_equal()(key, _elements[it.Index]))
                 break;
             else if (d > DistanceIndex_(it, s, numStatesM1))
                 return false;
@@ -251,8 +251,8 @@ public:
     }
 
 private:
-    u32 _size : 28;
-    u32 _sizeClass : 4;
+    u32 _size : 27;
+    u32 _sizeClass : 5;
     u32 _capacity;
     pointer _elements;
 
