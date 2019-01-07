@@ -122,7 +122,7 @@ struct TEmptyKey< u256, void > {
 template <typename T, typename _Hash = Meta::THash<T>, typename _Equal = Meta::TEqualTo<T> >
 class THashMemoizer {
 public:
-    THashMemoizer() = default;
+    CONSTEXPR THashMemoizer() = default;
 
     THashMemoizer(const T& value)
         : _value(value)
@@ -131,10 +131,10 @@ public:
         : _value(std::move(rvalue))
         , _hash(_Hash()(_value)) {}
 
-    THashMemoizer(const THashMemoizer& other)
+    CONSTEXPR THashMemoizer(const THashMemoizer& other)
         : _value(other._value)
         , _hash(other._hash) {}
-    THashMemoizer& operator =(const THashMemoizer& other) {
+    CONSTEXPR THashMemoizer& operator =(const THashMemoizer& other) {
         _value = other._value;
         _hash = other._hash;
         return *this;
