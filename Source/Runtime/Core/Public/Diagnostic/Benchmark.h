@@ -2,7 +2,7 @@
 
 #include "Core_fwd.h"
 
-#define USE_PPE_BENCHMARK (!USE_PPE_FINAL_RELEASE)
+#include "Time/TimedScope.h"
 
 #if USE_PPE_BENCHMARK
 

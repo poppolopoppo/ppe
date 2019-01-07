@@ -4,7 +4,7 @@
 
 #include "Time/Timepoint.h"
 
-#include "Diagnostic/Benchmark.h"
+#define USE_PPE_BENCHMARK (!USE_PPE_FINAL_RELEASE)
 
 #if USE_PPE_BENCHMARK
 #   include "IO/StringView.h"
