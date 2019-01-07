@@ -11,22 +11,21 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FHopscotchState {
-    STATIC_CONST_INTEGRAL(u32, HashMask, 0xFFFF);
+    STATIC_CONST_INTEGRAL(u32, MinCapacity, 8);
     STATIC_CONST_INTEGRAL(u32, NeighborHoodSize, 15);
-    STATIC_CONST_INTEGRAL(u32, NeighborHoodMask, 0x7FFF);
+    STATIC_CONST_INTEGRAL(u32, NeighborHoodMask, 0x7FFFul);
 
-    u32 Hash    : 16;
-    u32 Filled  : 1;
-    u32 Bitmap  : 15;
+    u16 Filled : 1;
+    u16 Bitmap : 15;
 };
+STATIC_ASSERT(sizeof(FHopscotchState) == sizeof(u16));
 STATIC_ASSERT(Meta::TIsPod_v<FHopscotchState>);
 template <
     typename _Key
 ,   typename _Hash = Meta::THash<_Key>
 ,   typename _EqualTo = Meta::TEqualTo<_Key>
 ,   typename _Allocator = ALLOCATOR(Container, _Key)
->   class EMPTY_BASES THopscotchHashSet
-:   _Allocator {
+>   class THopscotchHashSet : _Allocator {
 public:
     typedef _Key value_type;
     typedef _Hash hasher;
@@ -48,8 +47,8 @@ public:
         const THopscotchHashSet* Owner;
         size_t Index;
 
-        TIterator(THopscotchHashSet* owner, size_t index)
-            : Owner(owner)
+        TIterator(const THopscotchHashSet& owner, size_t index)
+            : Owner(&owner)
             , Index(index) {
             Assert_NoAssume(Owner);
             Assert_NoAssume(Index <= Owner->_capacity);
@@ -96,63 +95,75 @@ public:
     }
 
     THopscotchHashSet(const THopscotchHashSet& other) : THopscotchHashSet() {
-        operator =(other);
+        assign(other);
     }
     THopscotchHashSet& operator =(const THopscotchHashSet& other) {
-        clear();
-        if (other._size) {
-            const u32 allocation_size = allocation_size_(other._capacity);
-
-            _size = other._size;
-            _capacity = other._capacity;
-            _elements = allocator_traits::allocate(allocator_(), allocation_size);
-
-            // trivial copy, don't try to rehash
-            IF_CONSTEXPR(Meta::has_trivial_copy<value_type>::value) {
-                FPlatformMemory::MemcpyLarge(
-                    _elements,
-                    other._elements,
-                    allocation_size * sizeof(value_type) );
-            }
-            else {
-                state_t* const statesDst = states_();
-                const state_t* statesSrc = other.states_();
-
-                forrange(i, 0, _capacity) {
-                    statesDst[i] = statesSrc[i];
-                    if (statesSrc[i].Filled) {
-                        allocator_traits::construct(allocator_(),
-                            _elements + i,
-                            other._elements[i] );
-                    }
-                }
-            }
-        }
+        assign(other);
         return (*this);
     }
 
-    CONSTEXPR THopscotchHashSet(THopscotchHashSet&& rvalue) NOEXCEPT : THopscotchHashSet() {
+    CONSTEXPR THopscotchHashSet(THopscotchHashSet&& rvalue) NOEXCEPT
+    :   THopscotchHashSet() {
         std::swap(_size, rvalue._size);
         std::swap(_capacity, rvalue._capacity);
         std::swap(_elements, rvalue._elements);
     }
     THopscotchHashSet& operator =(THopscotchHashSet&& rvalue) {
+        assign(std::move(rvalue));
+        return (*this);
+    }
+
+    void assign(const THopscotchHashSet& other) {
         clear_ReleaseMemory();
+
+        if (not other._size)
+            return;
+
+        const u32 allocation_size = allocation_size_(other._capacity);
+
+        _size = other._size;
+        _capacity = other._capacity;
+        _elements = allocator_traits::allocate(allocator_(), allocation_size);
+
+        // trivial copy, don't try to rehash
+        IF_CONSTEXPR(Meta::has_trivial_copy<value_type>::value) {
+            FPlatformMemory::MemcpyLarge(
+                _elements,
+                other._elements,
+                allocation_size * sizeof(value_type));
+        }
+        else {
+            FPlatformMemory::Memzero(_elements, allocation_size * sizeof(value_type));
+
+            state_t* const statesDst = states_();
+            const state_t* statesSrc = other.states_();
+
+            forrange(i, 0, _capacity) {
+                statesDst[i] = statesSrc[i];
+                if (statesSrc[i].Filled) {
+                    allocator_traits::construct(allocator_(), _elements + i, other._elements[i]);
+                }
+            }
+        }
+    }
+
+    void assign(THopscotchHashSet&& rvalue) {
+        clear_ReleaseMemory();
+
         std::swap(_size, rvalue._size);
         std::swap(_capacity, rvalue._capacity);
         std::swap(_elements, rvalue._elements);
-        return (*this);
     }
 
     bool empty() const { return (0 == _size); }
     size_t size() const { return _size; }
     size_t capacity() const { return _capacity; }
 
-    iterator begin() { return iterator(this, 0).FirstSet(); }
-    iterator end() { return iterator(this, _capacity); }
+    iterator begin() { return iterator(*this, 0).FirstSet(); }
+    iterator end() { return iterator(*this, _capacity); }
 
-    const_iterator begin() const { return const_iterator(this, 0).FirstSet(); }
-    const_iterator end() const { return const_iterator(this, _capacity); }
+    const_iterator begin() const { return const_iterator(*this, 0).FirstSet(); }
+    const_iterator end() const { return const_iterator(*this, _capacity); }
 
     TPair<iterator, bool> insert(const _Key& key) {
         reserve_Additional(1);
@@ -164,7 +175,7 @@ public:
         if (states_()[bk].Bitmap) {
             const u32 fnd = find_(mask, hash, key);
             if (fnd < _capacity)
-                return MakePair(iterator{ this, fnd }, false);
+                return MakePair(iterator{ *this, fnd }, false);
         }
 
         u32 ins = insert_AssumeUnique_(mask, hash, key);
@@ -172,7 +183,7 @@ public:
             ins = rehash_ForCollision_(hash, key);
 
         Assert_NoAssume(ins < _capacity);
-        return MakePair(iterator{ this, ins }, true);
+        return MakePair(iterator{ *this, ins }, true);
     }
 
     iterator insert_AssertUnique(const _Key& key) {
@@ -184,45 +195,59 @@ public:
 
         Assert_NoAssume(_capacity == find_(mask, hash, key));
 
-        return insert_AssumeUnique_(mask, hash, key);
+        return iterator{ *this, insert_AssumeUnique_(mask, hash, key) };
     }
 
-    FORCE_INLINE iterator find(const _Key& key) {
+    FORCE_INLINE iterator find(const _Key& key) NOEXCEPT {
+        if (0 == _size) return end();
+
         const u32 mask = (_capacity - 1);
         const u32 hash = hash_key_(key);
         const u32 bk = (hash & mask);
 
-        return iterator{ this, find_(mask, hash, key) };
+        return iterator{ *this, find_(mask, hash, key) };
     }
 
-    FORCE_INLINE const_iterator find(const _Key& key) const {
+    FORCE_INLINE const_iterator find(const _Key& key) const NOEXCEPT {
+        if (0 == _size) return end();
+
         const u32 mask = (_capacity - 1);
         const u32 hash = hash_key_(key);
         const u32 bk = (hash & mask);
 
-        return const_iterator{ this, find_(mask, hash, key) };
+        return const_iterator{ *this, find_(mask, hash, key) };
     }
 
     bool erase(const _Key& key) {
+        if (0 == _size) return false;
+
         const u32 mask = (_capacity - 1);
         const u32 hash = hash_key_(key);
         const u32 bk = (hash & mask);
 
         const u32 fnd = find_(mask, hash, key);
         return (fnd < _capacity
-            ? erase_At_(mask, fnd), true
+            ? erase_At_(mask, bk, fnd), true
             : false );
     }
 
     void erase(iterator it) {
         Assert_NoAssume(this == it.Owner);
         AssertRelease(it.Index < _capacity);
-        erase_At_(_capacity - 1, it.Index);
+
+        const u32 mask = (_capacity - 1);
+        const u32 bk = (hash_key_(*it) & mask);
+
+        erase_At_(mask, bk, it.Index);
     }
     void erase(const_iterator it) {
         Assert_NoAssume(this == it.Owner);
         AssertRelease(it.Index < _capacity);
-        erase_At_(_capacity - 1, it.Index);
+
+        const u32 mask = (_capacity - 1);
+        const u32 bk = (hash_key_(*it) & mask);
+
+        erase_At_(mask, bk, it.Index);
     }
 
     FORCE_INLINE void clear() {
@@ -249,38 +274,49 @@ public:
     }
 
     NO_INLINE void rehash(size_t n) {
+        AssertRelease(_size <= n);
+
         const u32 oldCapacity = _capacity;
         pointer const oldElements = _elements;
         const state_t* const oldStates = states_();
 
-        _capacity = FPlatformMaths::NextPow2(checked_cast<u32>(n));
-        _elements = allocator_traits::allocate(allocator_(), allocation_size_(_capacity));
+        _capacity = FPlatformMaths::NextPow2(Max(state_t::MinCapacity, checked_cast<u32>(n)));
 
-        Assert_NoAssume(oldCapacity < _capacity);
+        const u32 allocation_size = allocation_size_(_capacity);
+        _elements = allocator_traits::allocate(allocator_(), allocation_size);
+
+        // memzero elements + states
+        FPlatformMemory::Memzero(_elements, allocation_size * sizeof(value_type));
+
         Assert_NoAssume(n <= _capacity);
-        AssertRelease(_capacity <= state_t::HashMask); // else we would need more bits in state_t::Hash
-
-        state_t* const states = states_();
-        FPlatformMemory::Memzero(states, sizeof(state_t) * _capacity);
 
         if (_size) {
             Assert_NoAssume(_elements);
+
             ONLY_IF_ASSERT(const u32 oldSize = _size);
+            ONLY_IF_ASSERT(size_t dbgSize = 0);
+            ONLY_IF_ASSERT(size_t dbgSize2 = 0);
 
             _size = 0; // reset size before inserting back all elements
 
             const u32 mask = (_capacity - 1);
-            forrange(i, 0, oldCapacity) {
-                if (oldStates[i].Filled) {
-                    VerifyRelease(insert_AssumeUnique_(
-                        mask, oldStates[i].Hash, // reuse stored hash value
-                        std::move(oldElements[i]) )
-                        < _capacity); // already rehashing, can't rehash twice !
-                    Meta::Destroy(oldElements + i);
+            forrange(b, 0, oldCapacity) {
+                ONLY_IF_ASSERT(dbgSize2 += FPlatformMaths::popcnt(u32(oldStates[b].Bitmap)));
+
+                if (oldStates[b].Filled) {
+                    const u32 hash = hash_key_(oldElements[b]); // can be amortized with hash memoizer if the hash function is too heavy
+                    VerifyRelease(insert_AssumeUnique_(mask, hash, std::move(oldElements[b]))
+                        < _capacity ); // already rehashing, can't rehash twice !
+
+                    Meta::Destroy(oldElements + b);
+
+                    ONLY_IF_ASSERT(dbgSize++);
                 }
             }
 
             Assert_NoAssume(oldSize == _size);
+            Assert_NoAssume(oldSize == dbgSize);
+            Assert_NoAssume(oldSize == dbgSize2 || oldSize == dbgSize2 + 1/* when rehasing for collision there should be one missing bit */);
         }
 
         if (oldElements)
@@ -294,7 +330,7 @@ private:
 
     using state_t = FHopscotchState;
 
-    STATIC_CONST_INTEGRAL(u32, MaxLoadFactor, 90);
+    STATIC_CONST_INTEGRAL(u32, MaxLoadFactor, 75);
     STATIC_CONST_INTEGRAL(u32, SlackFactor, ((100 - MaxLoadFactor) * 128) / 100);
 
     FORCE_INLINE allocator_type& allocator_() NOEXCEPT { return static_cast<allocator_type&>(*this); }
@@ -305,7 +341,7 @@ private:
     }
 
     static FORCE_INLINE u32 hash_key_(const _Key& key) NOEXCEPT {
-        return (u32(hasher()(key)) & state_t::HashMask);
+        return u32(hasher()(key));
     }
 
     static FORCE_INLINE CONSTEXPR u32 distance_(u32 wanted, u32 bucket, u32 numStatesM1) NOEXCEPT {
@@ -314,108 +350,102 @@ private:
             : bucket + (numStatesM1 + 1) - wanted);
     }
 
-    FORCE_INLINE u32 find_(u32 mask, u32 hash, const _Key& key) const {
+    FORCE_INLINE u32 find_(u32 mask, u32 hash, const _Key& key) const NOEXCEPT {
         // always compare the key first, for fast trivial case with only 1 cache miss
-        return (Likely(_size && key_equal()(_elements[hash & mask], key))
+        // #TODO ERROR! we assume here than we can compare with an uninitialized key (at least this zero-ed right after allocation, should it skip most of problems ?)
+        return (Likely(key_equal()(_elements[hash & mask], key))
             ? hash & mask
             : find_Bitmap_(mask, hash, key) );
     }
 
-    NO_INLINE u32 find_Bitmap_(u32 mask, u32 hash, const _Key& key) const {
-        if (Likely(_size)) {
-            // follow the bitmap to find the key
-            const state_t* const states = states_();
+    NO_INLINE u32 find_Bitmap_(u32 mask, u32 hash, const _Key& key) const NOEXCEPT {
+        Assert_NoAssume(_size);
 
-            const u32 bk = (hash & mask);
-            const state_t& st = states[bk];
+        // follow the bitmap to find the key
+        const state_t* const states = states_();
+        TBitMask<u32> m{ states[hash & mask].Bitmap & u32(~1)/* remove bit 0 since it was already tested in find_() */ };
 
-            TBitMask<u32> m{ st.Bitmap };
-            while (m) {
-                const u32 off = m.PopFront_AssumeNotEmpty();
-                const u32 idx = (hash + off) & mask;
-                if (states[idx].Hash == hash && key_equal()(_elements[idx], key))
-                    return idx;
+        while (m) {
+            const u32 b = (hash + m.PopFront_AssumeNotEmpty()) & mask;
+            Assert_NoAssume(states[b].Filled);
+            if (key_equal()(_elements[b], key)) {
+                return b;
             }
         }
+
         return _capacity;
     }
 
     NO_INLINE u32 rehash_ForCollision_(u32 hash, const _Key& key) {
-        const u32 n = _capacity * 2;
+        const u32 n = (_capacity * 2);
         rehash(n); // rehash table with next power of 2
         Assert_NoAssume(_capacity == n);
         return find_(_capacity - 1, hash, key);
     }
 
     template <typename... _Args>
-    u32 insert_AssumeUnique_(u32 mask, u32 hash, _Args... args) {
+    FORCE_INLINE u32 insert_AssumeUnique_(u32 mask, u32 hash, _Args... args) {
         _size++;
 
-        state_t* const states = states_();
-
         const u32 bk = (hash & mask);
-        state_t& st = states[bk];
+        state_t& st = states_()[bk];
 
-        // trivial case : there's empty space in bucket's neighborhood
-        TBitMask<u32> bits{ ~u32(st.Bitmap) & state_t::NeighborHoodMask };
-        while (Likely(bits.Data)) {
-            const u32 off = bits.PopFront_AssumeNotEmpty();
-            const u32 idx = (bk + off) & mask;
-            state_t& ot = states[idx];
-            if (not ot.Filled) {
-                ot.Hash = hash;
-                ot.Filled = true;
-                st.Bitmap |= (u32(1) << off);
-                Meta::Construct(_elements + idx, std::forward<_Args>(args)...);
-                return idx;
-            }
+        // trivial case : wanted slot is available
+        if (Likely(not st.Filled)) {
+            Assert_NoAssume(not (st.Bitmap & 1));
+
+            st.Filled = true;
+            st.Bitmap |= 1;
+
+            Meta::Construct(_elements + bk, std::forward<_Args>(args)...);
+
+            return bk;
         }
-
-        // fall back to non-trivial insertion
-        return insert_NonTrivial_(mask, hash, std::forward<_Args>(args)...);
+        else {
+            // fall back to non-trivial insertion
+            return insert_NonTrivial_(mask, hash, std::forward<_Args>(args)...);
+        }
     }
 
-    template <typename... _Args>
-    NO_INLINE u32 insert_NonTrivial_(u32 mask, u32 hash, _Args... args) {
-        Assert_NoAssume(_size < _capacity); // there must be some free space available
-
+    u32 insert_Fixup_(u32 mask, u32 bk, u32 off) {
         state_t* const states = states_();
-        const u32 bk = (hash & mask);
 
-#ifdef WITH_PPE_ASSERT
-        // check that everything is filled in the neighborhood (for debug)
-        forrange(off, 0, state_t::NeighborHoodSize) {
-            const u32 idx = (bk + off) & mask;
-            Assert(states[idx].Filled);
-        }
-#endif //!WITH_PPE_ASSERT
-
-        // first we need to find a free slot for insertion
-        u32 off = state_t::NeighborHoodSize;
+        // look further ahead, we need to find a free slot for insertion
+        u32 ins;
         for (;; ++off) {
-            const u32 idx = (bk + off) & mask;
-            if (not states[idx].Filled)
+            ins = (bk + off) & mask;
+            if (not states[ins].Filled)
                 break;
         }
 
         // recursively switch position (if possible) while not in neighborhood
-        u32 ins = (bk + off) & mask;
         for (u32 i = off; i; --i) {
             const u32 swp = (bk + i - 1) & mask;
-            const u32 wnt = (states[swp].Hash & mask);
             Assert_NoAssume(states[swp].Filled);
+
+            const u32 wnt = (hash_key_(_elements[swp]) & mask);
+            Assert_NoAssume(states[wnt].Bitmap);
+            Assert_NoAssume(distance_(wnt, swp, mask) < state_t::NeighborHoodSize);
 
             const u32 d_ins = distance_(wnt, ins, mask);
             Assert_NoAssume(not (states[wnt].Bitmap & (u64(1) << d_ins)));
 
+            // switch closer item with current is still in it's neighborhood
             if (d_ins < state_t::NeighborHoodSize) {
                 const u32 d_swp = distance_(wnt, swp, mask);
                 Assert_NoAssume(d_swp < d_ins);
                 Assert_NoAssume(states[wnt].Bitmap & (u32(1) << d_swp));
 
+                if (0 == d_swp) // avoid switching when this is head item, since it disables our best case
+                    continue;
+
+                ONLY_IF_ASSERT(const u32 oldBucketSize = FPlatformMaths::popcnt(u32(states[wnt].Bitmap)));
+
                 states[wnt].Bitmap = (states[wnt].Bitmap & ~(u32(1) << d_swp)) | (u32(1) << d_ins);
                 states[ins].Filled = true;
-                states[ins].Hash = states[swp].Hash;
+                states[swp].Filled = false;
+
+                Assert_NoAssume(FPlatformMaths::popcnt(u32(states[wnt].Bitmap)) == oldBucketSize);
 
                 Meta::Construct(_elements + ins, std::move(_elements[swp]));
                 Meta::Destroy(_elements + swp);
@@ -427,32 +457,54 @@ private:
             }
         }
 
-        const u32 d = distance_(bk, ins, mask);
+        return distance_(bk, ins, mask);
+    }
 
-        states[bk].Bitmap |= (u32(1) << d);
+    template <typename... _Args>
+    NO_INLINE u32 insert_NonTrivial_(u32 mask, u32 hash, _Args... args) {
+        Assert_NoAssume(_size <= _capacity); // there must be some free space available (_size already incremented)
+
+        state_t* const states = states_();
+        const u32 bk = (hash & mask);
+
+        // first look in the neighborhood
+        u32 off = state_t::NeighborHoodSize;
+        TBitMask<u32> bits{ ~u32(states[bk].Bitmap) & state_t::NeighborHoodMask };
+        while (bits.Data) {
+            const u32 d = bits.PopFront_AssumeNotEmpty();
+            if (not states[(bk + d) & mask].Filled) {
+                off = d;
+                break;
+            }
+        }
+
+        if (Unlikely(off == state_t::NeighborHoodSize))
+            off = insert_Fixup_(mask, bk, off);
+
+        const u32 ins = (bk + off) & mask;
+        Assert_NoAssume(not states[ins].Filled);
+
+        states[bk].Bitmap |= u32(1) << off;
         states[ins].Filled = true;
-        states[ins].Hash = hash;
 
         Meta::Construct(_elements + ins, std::forward<_Args>(args)...);
 
-        return (d < state_t::NeighborHoodSize ? ins : _capacity);
+        return (off < state_t::NeighborHoodSize ? ins : _capacity/* triggers rehash */);
     }
 
-    void erase_At_(u32 mask, u32 index) {
+    void erase_At_(u32 mask, u32 bucket, u32 index) {
         Assert(_size);
         Assert_NoAssume(index < _capacity);
 
         state_t* const states = states_();
 
-        const u32 bk = (states[index].Hash & mask);
-        const u32 d = distance_(bk, index, mask);
+        const u32 d = distance_(bucket, index, mask);
 
         Assert_NoAssume(states[index].Filled);
-        Assert_NoAssume(states[bk].Bitmap & (u32(1) << d));
+        Assert_NoAssume(states[bucket].Bitmap & (u32(1) << d));
 
-        states[bk].Bitmap &= ~(u32(1) << d);
+        states[bucket].Bitmap &= ~(u32(1) << d);
         states[index].Filled = false;
-        states[index].Hash = 0;
 
         Meta::Destroy(_elements + index);
 
@@ -462,29 +514,35 @@ private:
     void clear_AssumeNotEmpty_() {
         Assert(_size);
 
-        state_t* const states = states_();
-
         IF_CONSTEXPR(not Meta::has_trivial_destructor<value_type>::value) {
+            state_t* const states = states_();
+
             ONLY_IF_ASSERT(size_t dbgSize = 0);
+            ONLY_IF_ASSERT(size_t dbgSize2 = 0);
+
             forrange(b, 0, _capacity) {
+                ONLY_IF_ASSERT(dbgSize2 += FPlatformMaths::popcnt(states[b].Bitmap));
+
                 if (states[b].Filled) {
                     Meta::Destroy(_elements + b);
                     ONLY_IF_ASSERT(dbgSize++);
                 }
             }
+
             Assert_NoAssume(dbgSize == _size);
+            Assert_NoAssume(dbgSize == dbgSize2);
         }
 
-        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(_elements, sizeof(value_type) * _capacity));
-
-        FPlatformMemory::Memzero(states, sizeof(state_t) * _capacity);
-
         _size = 0;
+
+        FPlatformMemory::Memzero(_elements, allocation_size_(_capacity) * sizeof(value_type));
     }
 
     void clear_ReleaseMemory_AssumeNotEmpty_() {
         if (_size)
             clear_AssumeNotEmpty_();
+
+        Assert_NoAssume(0 == _size);
 
         allocator_traits::deallocate(allocator_(), _elements, allocation_size_(_capacity));
         _capacity = 0;
