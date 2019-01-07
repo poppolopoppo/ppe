@@ -869,10 +869,11 @@ hash_t hash_stringI(const FStringView& str) {
     char (*transform)(char) = &ToLower;
     return hash_fnv1a(MakeOutputIterator(str.begin(), transform), MakeOutputIterator(str.end(), transform));
 #else
-    // #TODO refactor to skip copy, avoid using case insensitive ?
+    // NOPE ---> refactor to skip copy, avoid using case insensitive ?
+    // SEEMS TO BE FASTER TO COPY : https://github.com/Cyan4973/xxHash/issues/124
     const size_t sz = str.size();
-    STACKLOCAL_POD_ARRAY(u8, istr, sz);
-    FPlatformMemory::Memcpy(istr.data(), str.data(), sz);
+    MALLOCA_POD(char, istr, sz);
+    ToLower(istr.MakeView(), str);
     return hash_mem(istr.data(), sz);
 #endif
 }
@@ -882,9 +883,10 @@ hash_t hash_stringI(const FWStringView& wstr) {
     wchar_t (*transform)(wchar_t) = &ToLower;
     return hash_fnv1a(MakeOutputIterator(wstr.begin(), transform), MakeOutputIterator(wstr.end(), transform));
 #else
-    // #TODO refactor to skip copy, avoid using case insensitive ?
+    // NOPE ---> refactor to skip copy, avoid using case insensitive ?
+    // SEEMS TO BE FASTER TO COPY : https://github.com/Cyan4973/xxHash/issues/124
     const size_t sz = wstr.size();
-    STACKLOCAL_POD_ARRAY(wchar_t, iwstr, sz);
+    MALLOCA_POD(wchar_t, iwstr, sz);
     ToLower(iwstr, wstr);
     return hash_mem(iwstr.data(), iwstr.SizeInBytes());
 #endif

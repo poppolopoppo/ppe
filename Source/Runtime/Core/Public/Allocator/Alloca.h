@@ -61,11 +61,11 @@ struct TAllocaBlock {
 
     TAllocaBlock(T* rawData, size_t count)
         : RawData(rawData), Count(count), UsingSysAlloca(1) {
-        if (nullptr == RawData) {
+        if (Unlikely(nullptr == RawData)) {
             RawData = TypedAlloca< T >(Count);
             UsingSysAlloca = 0;
         }
-        Assert(RawData || 0 == Count);
+        Assert_NoAssume(RawData || 0 == Count);
     }
 
     ~TAllocaBlock() {
@@ -104,6 +104,9 @@ struct TAllocaBlock {
         if (newCount > Count)
             Relocate(newCount, keepData);
     }
+
+    T* data() const { return RawData; }
+    size_t SizeInBytes() const { return (Count * sizeof(T)); }
 
     operator TMemoryView<T> () const { return MakeView(); }
     TMemoryView<T> MakeView() const { return TMemoryView<T>(RawData, Count); }
