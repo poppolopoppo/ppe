@@ -32,6 +32,9 @@
 #include <random>
 #include <unordered_set>
 
+#define PPE_RUN_EXHAUSTIVE_BENCHMARKS (0) // %_NOCOMMIT%
+#define PPE_RUN_BENCHMARK_ONE_CONTAINER (0) // %_NOCOMMIT%
+
 namespace PPE {
 LOG_CATEGORY(, Test_Containers)
 //----------------------------------------------------------------------------
@@ -221,10 +224,16 @@ public:
         auto c{ archetype };
         input.FillDense(c);
 
+        ONLY_IF_ASSERT(const size_t sz = c.size());
+
         for (auto _ : state) {
-            for (const auto& it : c)
+            size_t n = 0;
+            for (const auto& it : c) {
                 FBenchmark::DoNotOptimizeLoop(it);
-            FBenchmark::ClobberMemory();
+                n++;
+            }
+            Assert_NoAssume(sz == n);
+            FBenchmark::DoNotOptimize(n);
         }
     }
 };
@@ -236,10 +245,16 @@ public:
         auto c{ archetype };
         input.FillSparse(c);
 
+        ONLY_IF_ASSERT(const size_t sz = c.size());
+
         for (auto _ : state) {
-            for (const auto& it : c)
+            size_t n = 0;
+            for (const auto& it : c) {
                 FBenchmark::DoNotOptimizeLoop(it);
-            FBenchmark::ClobberMemory();
+                n++;
+            }
+            Assert_NoAssume(sz == n);
+            FBenchmark::DoNotOptimize(n);
         }
     }
 };
@@ -509,7 +524,6 @@ public:
 };
 } //!namespace BenchmarkContainers
 //----------------------------------------------------------------------------
-#define PPE_RUN_EXHAUSTIVE_BENCHMARKS (1)
 template <typename T, typename _Generator, typename _Containers>
 static void Benchmark_Containers_Exhaustive_(
     const FStringView& name, size_t dim,
@@ -528,7 +542,7 @@ static void Benchmark_Containers_Exhaustive_(
     // mt19937 has better distribution than FRandomGenerator for generating benchmark data
     std::random_device rdevice;
     std::mt19937 rand{ rdevice() };
-    rand.seed(0x32F9u); // fixed seed for repro
+    rand.seed(0x9025u); // fixed seed for repro
 
     VECTOR(Benchmark, T) samples;
     samples.reserve_Additional(dim * 2);
@@ -631,6 +645,25 @@ struct TFindData {
     };
     FSeries Series[Entropy];
     TMemoryView<const u32> Shuffled;
+
+    template <typename _Container, typename _Lambda>
+    void MakeTables(const _Container& archetype, u32 n, _Lambda&& lambda) const {
+        Assert_NoAssume(Shuffled.size() >= n);
+
+        STACKLOCAL_STACK(_Container, tables, Entropy);
+        forrange(i, 0, Entropy) {
+            Assert_NoAssume(Series[i].Insert.size() >= n);
+
+            tables.Push(archetype);
+            auto& h = *tables.Peek();
+
+            h.reserve(n);
+            for (const auto& it : Series[i].Insert.CutBefore(n))
+                h.insert(it);
+        }
+
+        lambda(tables.MakeConstView());
+    }
 };
 class findspeed_dense_pos_t : public FBenchmark {
 public:
@@ -639,32 +672,131 @@ public:
     }
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TFindData<T>& input) const {
-        Assert_NoAssume(input.Shuffled.size() >= InputDim);
-
-        STACKLOCAL_STACK(_Container, tables, TFindData<T>::Entropy);
-        forrange(i, 0, TFindData<T>::Entropy) {
-            Assert_NoAssume(input.Series[i].Insert.size() >= InputDim);
-
-            tables.Push(archetype);
-            auto& h = *tables.Peek();
-
-            h.reserve(InputDim);
-            for (const auto& it : input.Series[i].Insert.CutBefore(InputDim))
-                h.insert(it);
-        }
-
-        for (auto _ : state) {
-            uintptr_t hit = 0;
-            const u32* pIndex = input.Shuffled.data();
-            forrange(i, 0, InputDim) {
-                const u32 hi = *(pIndex++);
-                hit ^= uintptr_t(&*(tables[hi].find(input.Series[hi].Insert[i])));
+        input.MakeTables(archetype, InputDim, [&](const TMemoryView<const _Container>& tables) {
+            for (auto _ : state) {
+                u32 hit = 0;
+                const u32* pIndex = input.Shuffled.data();
+                forrange(i, 0, InputDim) {
+                    const u32 hi = *(pIndex++);
+                    hit += u32(uintptr_t(&*(tables[hi].find(input.Series[hi].Insert[i]))));
+                }
+                FBenchmark::DoNotOptimize(hit);
             }
-            FBenchmark::DoNotOptimize(hit);
-        }
+        });
+    }
+};
+class findspeed_dense_neg_t : public FBenchmark {
+public:
+    findspeed_dense_neg_t(size_t n, const FStringView& name) : FBenchmark{ name } {
+        InputDim = checked_cast<u32>(n);
+    }
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TFindData<T>& input) const {
+        input.MakeTables(archetype, InputDim, [&](const TMemoryView<const _Container>& tables) {
+            for (auto _ : state) {
+                const u32* pIndex = input.Shuffled.data();
+                forrange(i, 0, InputDim) {
+                    const u32 hi = *(pIndex++);
+                    FBenchmark::DoNotOptimize(tables[hi].find(input.Series[hi].Unknown[i]));
+                }
+            }
+        });
     }
 };
 } //!namespace BenchmarkContainers
+template <typename _Test, typename T, typename _Containers>
+static void Benchmark_Containers_FindSpeed_Impl_(
+    const FStringView& name,
+    _Containers& tests,
+    const BenchmarkContainers::TFindData<T>& input ) {
+    auto bm = FBenchmark::MakeTable(
+        name,
+        _Test{ 4, "4" },
+        _Test{ 6, "6" },
+        _Test{ 9, "9" },
+        _Test{ 12, "12" },
+        _Test{ 16, "16" },
+        _Test{ 20, "20" },
+        _Test{ 25, "25" },
+        _Test{ 30, "30" },
+        _Test{ 36, "36" },
+        _Test{ 42, "42" },
+        _Test{ 49, "49" },
+        _Test{ 56, "56" },
+        _Test{ 64, "64" },
+        _Test{ 72, "72" },
+        _Test{ 81, "81" },
+        _Test{ 90, "90" },
+        _Test{ 100, "100" },
+        _Test{ 110, "110" },
+        _Test{ 121, "121" },
+        _Test{ 132, "132" },
+        _Test{ 144, "144" },
+        _Test{ 156, "156" },
+        _Test{ 169, "169" },
+        _Test{ 182, "182" },
+        _Test{ 196, "196" }
+#ifndef WITH_PPE_ASSERT
+        ,
+        _Test{ 210, "210" },
+        _Test{ 225, "225" },
+        _Test{ 240, "240" },
+        _Test{ 256, "256" },
+        _Test{ 272, "272" },
+        _Test{ 289, "289" },
+        _Test{ 306, "306" },
+        _Test{ 324, "324" },
+        _Test{ 342, "342" },
+        _Test{ 361, "361" },
+        _Test{ 380, "380" },
+        _Test{ 400, "400" },
+        _Test{ 420, "420" },
+        _Test{ 441, "441" },
+        _Test{ 462, "462" },
+        _Test{ 484, "484" }
+#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+        ,
+        _Test{ 529, "529" },
+        _Test{ 552, "552" },
+        _Test{ 576, "576" },
+        _Test{ 600, "600" },
+        _Test{ 625, "625" },
+        _Test{ 650, "650" },
+        _Test{ 676, "676" },
+        _Test{ 702, "702" },
+        _Test{ 506, "506" },
+        _Test{ 729, "729" },
+        _Test{ 756, "756" },
+        _Test{ 784, "784" },
+        _Test{ 812, "812" },
+        _Test{ 841, "841" },
+        _Test{ 870, "870" },
+        _Test{ 900, "900" },
+        _Test{ 930, "930" },
+        _Test{ 961, "961" },
+        _Test{ 992, "992" },
+        _Test{ 1024, "1024" },
+        _Test{ 1056, "1056" },
+        _Test{ 1089, "1089" },
+        _Test{ 1122, "1122" }
+#endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#endif //!WITH_PPE_ASSERT
+    );
+
+    tests(bm, input);
+
+    FBenchmark::Log(bm);
+
+    {
+        const FFilename fname{ StringFormat(L"Saved:/Benchmark/{0}/Containers/{1}.csv",
+            MakeStringView(WSTRINGIZE(BUILDCONFIG)), name) };
+
+        FStringBuilder sb;
+        FBenchmark::Csv(bm, sb);
+        FString s{ sb.ToString() };
+        VFS_WriteAll(fname, s.MakeView().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll);
+    }
+}
 template <typename T, typename _Generator, typename _Containers>
 static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&& generator, _Containers&& tests) {
     constexpr size_t dim = 4200;
@@ -674,7 +806,7 @@ static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&
     // mt19937 has better distribution than FRandomGenerator for generating benchmark data
     std::random_device rdevice;
     std::mt19937 rand{ rdevice() };
-    rand.seed(0x2875u); // fixed seed for repro
+    rand.seed(0x565Fu); // fixed seed for repro
 
     using namespace BenchmarkContainers;
 
@@ -704,93 +836,8 @@ static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&
             samples.MakeConstView().SubRange(off + dim, dim) };
     }
 
-    auto bm = FBenchmark::MakeTable(
-        name,
-        findspeed_dense_pos_t{ 4, "4" },
-        findspeed_dense_pos_t{ 6, "6" },
-        findspeed_dense_pos_t{ 9, "9" },
-        findspeed_dense_pos_t{ 12, "12" },
-        findspeed_dense_pos_t{ 16, "16" },
-        findspeed_dense_pos_t{ 20, "20" },
-        findspeed_dense_pos_t{ 25, "25" },
-        findspeed_dense_pos_t{ 30, "30" },
-        findspeed_dense_pos_t{ 36, "36" },
-        findspeed_dense_pos_t{ 42, "42" },
-        findspeed_dense_pos_t{ 49, "49" },
-        findspeed_dense_pos_t{ 56, "56" },
-        findspeed_dense_pos_t{ 64, "64" },
-        findspeed_dense_pos_t{ 72, "72" },
-        findspeed_dense_pos_t{ 81, "81" },
-        findspeed_dense_pos_t{ 90, "90" },
-        findspeed_dense_pos_t{ 100, "100" },
-        findspeed_dense_pos_t{ 110, "110" },
-        findspeed_dense_pos_t{ 121, "121" },
-        findspeed_dense_pos_t{ 132, "132" },
-        findspeed_dense_pos_t{ 144, "144" },
-        findspeed_dense_pos_t{ 156, "156" },
-        findspeed_dense_pos_t{ 169, "169" },
-        findspeed_dense_pos_t{ 182, "182" },
-        findspeed_dense_pos_t{ 196, "196" }
-#ifndef WITH_PPE_ASSERT
-        ,
-        findspeed_dense_pos_t{ 210, "210" },
-        findspeed_dense_pos_t{ 225, "225" },
-        findspeed_dense_pos_t{ 240, "240" },
-        findspeed_dense_pos_t{ 256, "256" },
-        findspeed_dense_pos_t{ 272, "272" },
-        findspeed_dense_pos_t{ 289, "289" },
-        findspeed_dense_pos_t{ 306, "306" },
-        findspeed_dense_pos_t{ 324, "324" },
-        findspeed_dense_pos_t{ 342, "342" },
-        findspeed_dense_pos_t{ 361, "361" },
-        findspeed_dense_pos_t{ 380, "380" },
-        findspeed_dense_pos_t{ 400, "400" },
-        findspeed_dense_pos_t{ 420, "420" },
-        findspeed_dense_pos_t{ 441, "441" },
-        findspeed_dense_pos_t{ 462, "462" },
-        findspeed_dense_pos_t{ 484, "484" }
-#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
-        ,
-        findspeed_dense_pos_t{ 506, "506" },
-        findspeed_dense_pos_t{ 529, "529" },
-        findspeed_dense_pos_t{ 552, "552" },
-        findspeed_dense_pos_t{ 576, "576" },
-        findspeed_dense_pos_t{ 600, "600" },
-        findspeed_dense_pos_t{ 625, "625" },
-        findspeed_dense_pos_t{ 650, "650" },
-        findspeed_dense_pos_t{ 676, "676" },
-        findspeed_dense_pos_t{ 702, "702" },
-        findspeed_dense_pos_t{ 729, "729" },
-        findspeed_dense_pos_t{ 756, "756" },
-        findspeed_dense_pos_t{ 784, "784" },
-        findspeed_dense_pos_t{ 812, "812" },
-        findspeed_dense_pos_t{ 841, "841" },
-        findspeed_dense_pos_t{ 870, "870" },
-        findspeed_dense_pos_t{ 900, "900" },
-        findspeed_dense_pos_t{ 930, "930" },
-        findspeed_dense_pos_t{ 961, "961" },
-        findspeed_dense_pos_t{ 992, "992" },
-        findspeed_dense_pos_t{ 1024, "1024" },
-        findspeed_dense_pos_t{ 1056, "1056" },
-        findspeed_dense_pos_t{ 1089, "1089" },
-        findspeed_dense_pos_t{ 1122, "1122" }
-#endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
-#endif //!WITH_PPE_ASSERT
-    );
-
-    tests(bm, input);
-
-    FBenchmark::Log(bm);
-
-    {
-        const FFilename fname{ StringFormat(L"Saved:/Benchmark/{0}/Containers/{1}.csv",
-            MakeStringView(WSTRINGIZE(BUILDCONFIG)), name) };
-
-        FStringBuilder sb;
-        FBenchmark::Csv(bm, sb);
-        FString s{ sb.ToString() };
-        VFS_WriteAll(fname, s.MakeView().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll);
-    }
+    Benchmark_Containers_FindSpeed_Impl_<findspeed_dense_pos_t>(FString(name) + "_pos", tests, input);
+    Benchmark_Containers_FindSpeed_Impl_<findspeed_dense_neg_t>(FString(name) + "_neg", tests, input);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Generator>
@@ -802,28 +849,37 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
             hashtable_type set;
             bm.Run("TCompactHashSet", set, input);
         }*/
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TDenseHashSet2<T> set;
             bm.Run("DenseHashSet2", set, input);
         }
         {
-            TDenseHashSet3<T> set;
-            bm.Run("DenseHashSet3", set, input);
-        }
-#if 0
-        {
             TDenseHashSet2<THashMemoizer<T>> set;
             bm.Run("DenseHashSet2_M", set, input);
+        }
+#endif
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+        {
+            TDenseHashSet3<T> set;
+            bm.Run("DenseHashSet3", set, input);
         }
         {
             TDenseHashSet3<THashMemoizer<T>> set;
             bm.Run("DenseHashSet3_M", set, input);
         }
 #endif
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER //%_NOCOMMIT%
         {
             THopscotchHashSet<T> set;
             bm.Run("Hopscotch", set, input);
         }
+        {
+            THopscotchHashSet<THashMemoizer<T>> set;
+            bm.Run("Hopscotch_M", set, input);
+        }
+#endif
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             THashSet<T> set;
             bm.Run("HashSet", set, input);
@@ -832,10 +888,11 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
             std::unordered_set<T, Meta::THash<T>, Meta::TEqualTo<T>, ALLOCATOR(Container, T)> set;
             bm.Run("unordered_set", set, input);
         }
+#endif
     };
 
     auto containers_all = [&](auto& bm, const auto& input) {
-#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             typedef TVector<T> vector_type;
 
@@ -863,6 +920,7 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
             bm.Run("Vector", set, input);
         }
 #endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TFlatSet<T> set;
             bm.Run("FlatSet", set, input);
@@ -871,6 +929,7 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
             TFixedSizeHashSet<T, 2048> set;
             bm.Run("FixedSizeHashSet", set, input);
         }
+#endif
         containers_large(bm, input);
     };
 
@@ -927,6 +986,7 @@ static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("DenseHashSet_M", set, input);
         }*/
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             typedef TDenseHashSet2<
                 FStringView,
@@ -949,6 +1009,8 @@ static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("DenseHashSet2_M", set, input);
         }
+#endif
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             typedef TDenseHashSet3<
                 FStringView,
@@ -971,6 +1033,8 @@ static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("DenseHashSet3_M", set, input);
         }
+#endif
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER %_NOCOMMIT%
         {
             typedef THopscotchHashSet<
                 FStringView,
@@ -981,6 +1045,8 @@ static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("HopscotchHashSet", set, input);
         }
+#endif
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER %_NOCOMMIT%
         {
             typedef THopscotchHashSet <
                 THashMemoizer<
@@ -993,6 +1059,8 @@ static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("HopscotchHashSet_M", set, input);
         }
+#endif
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
 
@@ -1003,11 +1071,15 @@ static void Test_StringSet_() {
 
             bm.Run("HashSet_M", set, input);
         }
+#endif
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         /*{
             CONSTCHAR_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
 
             bm.Run("ConstCharHashSet_M", set, input);
         }*/
+#endif
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             std::unordered_set<
                 FStringView,
@@ -1026,6 +1098,7 @@ static void Test_StringSet_() {
 
             bm.Run("unordered_set_M", set, input);
         }
+#endif
     };
 
     Benchmark_Containers_FindSpeed_<FStringView>("Strings_find", generator, containers);
@@ -1058,11 +1131,11 @@ void Test_Containers() {
     Test_StealFromDifferentAllocator_();
 
 #if USE_PPE_BENCHMARK
+    Test_StringSet_();
     Test_PODSet_<u32>("u32", [](auto& rnd) { return u32(rnd()); });
     Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
     Test_PODSet_<u128>("u128", [](auto& rnd) { return u128{ u64(rnd()), u64(rnd()) }; });
     Test_PODSet_<u256>("u256", [](auto& rnd) { return u256{ { u64(rnd()), u64(rnd()) }, { u64(rnd()), u64(rnd()) } }; });
-    Test_StringSet_();
 #endif
 
     FLUSH_LOG();
