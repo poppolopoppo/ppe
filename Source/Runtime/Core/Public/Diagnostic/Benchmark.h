@@ -34,7 +34,8 @@ EXTERN_LOG_CATEGORY(PPE_CORE_API, Benchmark);
 //----------------------------------------------------------------------------
 class FBenchmark {
 public:
-    static constexpr u32 ReservoirSize = 100;
+    static constexpr u32 HistogramSize = 50;
+    static constexpr u32 ReservoirSize = 200;
 
     FStringView Name{ "none" };
     u32 InputDim{ 1 };
@@ -101,11 +102,11 @@ private: // FTimer
         static double ElapsedSince(date_type start) { return static_cast<double>(Now() - start); }
     };
 
-    using FCpuCycles = TCounter<CpuCycles>;
+    using FCpuCycles = TCounter<CpuCycles>; // best resolution
     using FPerfCounter = TCounter<PerfCounter>;
     using FChronoTime = TCounter<ChronoTime>;
 
-    using FCounter = TCounter<CpuCycles>;
+    using FCounter = FCpuCycles;
 
     struct FTimer {
         FCounter::date_type StartedAt{ 0 };
@@ -129,6 +130,8 @@ private: // FTimer
     };
 
 public: // FState
+    using FApproximateHistogram = TApproximateHistogram<double, HistogramSize, ReservoirSize>;
+
     struct FRun;
     class FIterator;
     class FState {
@@ -142,16 +145,15 @@ public: // FState
         FIterator end();
 
         FRandomGenerator& Random() { return _rnd; }
+        const FApproximateHistogram& Histogram() const { return _histogram; }
 
-        const FVarianceEstimator& Estimator() const { return _estimator; }
-        TMemoryView<const double> Reservoir() const { return _reservoir; }
+        double Mean() const { return _histogram.Mean(); }
+        double Low() const { return _histogram.Low(); } // 5th percentile
+        double Median() const { return _histogram.Median(); } // 50th percentile
+        double High() const { return _histogram.High(); } // 90th percentile
+        double WeightedMean() const { return _histogram.WeightedMean(); }
 
-        double Mean() const { return _estimator.Mean; }
-        double Median() const { return _reservoir[ReservoirSize/2]; }
-
-        // must have call Finish()
-        double Low() const { return _reservoir[ReservoirSize/10]; } // 10th percentile
-        double High() const { return _reservoir[(9*ReservoirSize)/10]; } // 90th percentile
+        u64 NumSamples() const { return _histogram.NumSamples(); }
 
         void PauseTiming() { _timer.Stop(); }
         void ResumeTiming() {
@@ -166,7 +168,7 @@ public: // FState
 
         void Finish() {
             // sort the reservoir to deduce the percentiles
-            std::sort(std::begin(_reservoir), std::end(_reservoir));
+            _histogram.Reservoir.Finalize();
 
             // log some progress
             LOG(Benchmark, Info,
@@ -174,8 +176,8 @@ public: // FState
                 _benchmark.Name,
                 Low(), Mean(), High(),
                 Median(),
-                _estimator.Count,
-                _estimator.SampleVariance());
+                _histogram.NumSamples(),
+                _histogram.SampleVariance());
         }
 
     protected:
@@ -197,37 +199,29 @@ public: // FState
 
                 const double t = (_timer.Reset() / (_benchmark.BatchSize * _benchmark.InputDim));
 
-                if (_estimator.Count < ReservoirSize)
-                    _reservoir[_estimator.Count] = t;
-                else {
-                    const size_t r = size_t(_rnd.NextU64(_estimator.Count + 1));
-                    if (r < ReservoirSize)
-                        _reservoir[r] = t;
-                }
-
-                _estimator.Add(t);
+                _histogram.AddSample(t, _rnd);
             }
         }
 
         NO_INLINE u32 RemainingIterations() const {
             return (
-                (_estimator.Count < MinIterations) ||
-                (_estimator.Count < _benchmark.MaxIterations && VarianceError() > _benchmark.MaxVarianceError)
+                (_histogram.NumSamples() < MinIterations) ||
+                (_histogram.NumSamples() < _benchmark.MaxIterations && VarianceError() > _benchmark.MaxVarianceError)
                 ? LoopCount() : 0 );
         }
 
     private:
         const FBenchmark& _benchmark;
+
         FTimer _timer;
-        FVarianceEstimator _estimator;
         FRandomGenerator _rnd;
-        double _reservoir[ReservoirSize];
+        FApproximateHistogram _histogram;
 
         double VarianceError() const {
-            const double variance = _estimator.Variance();
-            const double sampleVariance = _estimator.SampleVariance();
+            const double variance = _histogram.Variance();
+            const double sampleVariance = _histogram.SampleVariance();
 
-            return std::sqrt(std::abs(variance - sampleVariance)) / _estimator.Mean;
+            return std::sqrt(std::abs(variance - sampleVariance)) / _histogram.Mean();
         }
     };
 
@@ -278,9 +272,9 @@ public: // FRun
         bm(state, args...);
         state.Finish();
         return FRun{
-            state.Estimator().Count,
+            state.NumSamples(),
             state.Median(),
-            state.Mean(),
+            state.WeightedMean(),
             state.Low(),
             state.High() };
     }
