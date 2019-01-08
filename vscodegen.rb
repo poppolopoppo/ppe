@@ -208,7 +208,7 @@ ALL_CONFIGURATIONS.each do |configuration|
         "args": [ "fbuild.rb", target ],
         "options": {
             "cwd": '${workspaceRoot}'
-        }
+        },
         "group": {
             "kind": "build",
             "isDefault": true
