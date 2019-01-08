@@ -152,7 +152,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifdef USE_PPE_EXCEPTIONS
+#if USE_PPE_EXCEPTIONS
 #    define PPE_THROW()                throw ()
 #    define PPE_THROW_IT(_EX)          throw _EX
 #    define PPE_THROW_VOID()           throw
