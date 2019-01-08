@@ -2,6 +2,9 @@
 
 #if 0 // #TODO refactoring the asset generation
 
+// #TODO : use AMD Compressonator instead of stb
+// https://gpuopen.com/new-compressonator-3-1-sdk-seamless-integration-asset-toolchains/
+
 #include "Drawing.h"
 #include "CompressedImage.h"
 #include "FloatImage.h"
