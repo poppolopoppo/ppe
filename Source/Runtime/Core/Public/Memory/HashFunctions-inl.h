@@ -25,60 +25,106 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-template <typename T, size_t _Sz = sizeof(T)> struct TPODHash {
+// Any pod size fall back to generic hash_mem()
+template <typename T, size_t _Sz = sizeof(T)>
+struct TPODHash {
     static FORCE_INLINE size_t fn(const T& pod) {
         return hash_mem((const void *)&pod, sizeof(T));
     }
 };
-template <typename T> struct TPODHash<T, sizeof(u8)> {
-    static FORCE_INLINE size_t fn(const T& pod) {
-        return hash_uint(size_t(reinterpret_cast<const u8&>(pod)));
+//----------------------------------------------------------------------------
+// Types with a small aligned size are using specialized hash functions
+template <typename T>
+struct TPODHash<T, sizeof(u8)> {
+    static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return hash_uint(u32(reinterpret_cast<const u8&>(pod)));
     }
 };
-template <typename T> struct TPODHash<T, sizeof(u16)> {
-    static FORCE_INLINE size_t fn(const T& pod) {
-        return hash_uint(size_t(reinterpret_cast<const u16&>(pod)));
+template <typename T>
+struct TPODHash<T, sizeof(u16)> {
+    static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return hash_uint(u32(reinterpret_cast<const u16&>(pod)));
     }
 };
-template <typename T> struct TPODHash<T, sizeof(u32)> {
-    static FORCE_INLINE size_t fn(const T& pod) {
-        return hash_uint(size_t(reinterpret_cast<const u32&>(pod)));
+template <typename T>
+struct TPODHash<T, sizeof(u32)> {
+    static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return hash_uint(u32(reinterpret_cast<const u32&>(pod)));
     }
 };
-template <typename T> struct TPODHash<T, sizeof(u64)> {
-    static FORCE_INLINE size_t fn(const T& pod) {
+template <typename T>
+struct TPODHash<T, sizeof(u64)> {
+    static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
         return hash_uint(reinterpret_cast<const u64&>(pod));
     }
 };
-template <typename T> struct TPODHash<T, sizeof(u128)> {
-    static FORCE_INLINE size_t fn(const T& pod) {
+template <typename T>
+struct TPODHash<T, sizeof(u128)> {
+    static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
         return hash_uint(reinterpret_cast<const u128&>(pod));
     }
 };
-template <typename T> struct TPODHash<T, sizeof(u32)*3> {
+template <typename T>
+struct TPODHash<T, sizeof(u256)> {
+    static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return hash_uint(reinterpret_cast<const u256&>(pod));
+    }
+};
+//----------------------------------------------------------------------------
+// Wrap specialized hash functions for types with a small unaligned size
+template <typename T>
+struct TPODHash<T, sizeof(u32) * 3> {
     struct uint96_t { u64 lo; u32 hi; };
-    static FORCE_INLINE size_t fn(const T& pod) {
-        const uint96_t& uint96 = reinterpret_cast<const uint96_t&>(pod);
-        return hash_uint(u128{ uint96.lo, uint96.hi });
+    STATIC_ASSERT(sizeof(uint96_t) == sizeof(u32) * 3);
+    static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        const auto& u = reinterpret_cast<const uint96_t&>(pod);
+        return hash_uint(u128{ u.lo, u.hi });
+    }
+};
+template <typename T>
+struct TPODHash<T, sizeof(u32) * 5> {
+    struct uint160_t { u128 lo; u32 hi; };
+    STATIC_ASSERT(sizeof(uint160_t) == sizeof(u32) * 5);
+    static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        const auto& u = reinterpret_cast<const uint160_t&>(pod);
+        return hash_uint(u256{ u.lo, { u.hi, 0 } });
+    }
+};
+template <typename T>
+struct TPODHash<T, sizeof(u32) * 6> {
+    struct uint192_t { u128 lo; u64 hi; };
+    STATIC_ASSERT(sizeof(uint192_t) == sizeof(u32) * 6);
+    static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        const auto& u = reinterpret_cast<const uint192_t&>(pod);
+        return hash_uint(u256{ u.lo, { u.hi, 0 } });
+    }
+};
+template <typename T>
+struct TPODHash<T, sizeof(u32) * 7> {
+    struct uint224_t { u128 lo; u64 hi0; u32 hi1; };
+    STATIC_ASSERT(sizeof(uint224_t) == sizeof(u32) * 7);
+    static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        const auto& u = reinterpret_cast<const uint224_t&>(pod);
+        return hash_uint(u256{ u.lo, { u.hi0, u.hi1 } });
     }
 };
 //----------------------------------------------------------------------------
 } //!namespace details
 //----------------------------------------------------------------------------
 template <typename T>
-size_t hash_as_pod(const T& pod) {
+size_t hash_as_pod(const T& pod) NOEXCEPT {
     return details::TPODHash<T>::fn(pod);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE size_t hash_as_pod_array(const T *ptr, size_t count) {
+FORCE_INLINE size_t hash_as_pod_array(const T *ptr, size_t count) NOEXCEPT {
     return hash_mem(ptr, sizeof(T) * count);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-FORCE_INLINE size_t hash_as_pod_array(const T (&staticArray)[_Dim]) {
+FORCE_INLINE size_t hash_as_pod_array(const T (&staticArray)[_Dim]) NOEXCEPT {
     return hash_mem(&staticArray[0], sizeof(T) * _Dim);
 }
 //----------------------------------------------------------------------------
@@ -87,21 +133,21 @@ FORCE_INLINE size_t hash_as_pod_array(const T (&staticArray)[_Dim]) {
 namespace details {
 //----------------------------------------------------------------------------
 template <typename _It, typename _Tag>
-size_t hash_as_pod_range_impl_(_It&& first, _It&& last, _Tag ) {
+size_t hash_as_pod_range_impl_(_It&& first, _It&& last, _Tag ) NOEXCEPT {
     size_t h = PPE_HASH_VALUE_SEED;
     for (; first != last; ++first)
         h = hash_mem(*first, sizeof(*first), h);
     return h;
 }
 template <typename _It>
-size_t hash_as_pod_range_impl_(_It&& first, _It&& last, std::random_access_iterator_tag ) {
+size_t hash_as_pod_range_impl_(_It&& first, _It&& last, std::random_access_iterator_tag ) NOEXCEPT {
     return hash_as_pod_array(&(*first), std::distance(first, last));
 }
 //----------------------------------------------------------------------------
 } //!namespace details
 //----------------------------------------------------------------------------
 template <typename _It>
-FORCE_INLINE size_t hash_as_pod_range(_It&& first, _It&& last) {
+FORCE_INLINE size_t hash_as_pod_range(_It&& first, _It&& last) NOEXCEPT {
     typedef typename std::iterator_traits<_It>::iterator_category category;
     return details::hash_as_pod_range_impl_(std::forward<_It>(first), std::forward<_It>(last), category());
 }

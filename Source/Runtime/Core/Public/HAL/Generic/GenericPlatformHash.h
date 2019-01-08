@@ -29,6 +29,60 @@ public: // must be defined for every platform
         return hash;
     }
 
+    // One of a smallest non-multiplicative One-At-a-Time function
+    // that passes whole SMHasher.
+    // Author: Sokolov Yura aka funny-falcon <funny.falcon@gmail.com>
+    // https://github.com/rurban/smhasher/blob/master/Hashes.cpp
+    static CONSTEXPR u32 GoodOAAT(const void* key, size_t len, u32 seed) NOEXCEPT {
+#define grol(x,n) (((x)<<(n))|((x)>>(32-(n))))
+#define gror(x,n) (((x)>>(n))|((x)<<(32-(n))))
+        u8* str = (u8*)key;
+        const u8* const end = (const u8*)str + len;
+        u32 h1 = seed ^ 0x3b00;
+        u32 h2 = grol(seed, 15);
+        for (; str != end; str++) {
+            h1 += str[0];
+            h1 += h1 << 3; // h1 *= 9
+            h2 += h1;
+            // the rest could be as in MicroOAAT: h1 = grol(h1, 7)
+            // but clang doesn't generate ROTL instruction then.
+            h2 = grol(h2, 7);
+            h2 += h2 << 2; // h2 *= 5
+        }
+        h1 ^= h2;
+        /* now h1 passes all collision checks,
+         * so it is suitable for hash-tables with prime numbers. */
+        h1 += grol(h2, 14);
+        h2 ^= h1; h2 += gror(h1, 6);
+        h1 ^= h2; h1 += grol(h2, 5);
+        h2 ^= h1; h2 += gror(h1, 8);
+        return h2;
+#undef grol
+#undef gror
+    }
+
+    // MicroOAAT suitable for hash-tables using prime numbers.
+    // It passes all collision checks.
+    // Author: Sokolov Yura aka funny-falcon <funny.falcon@gmail.com>
+    // https://github.com/rurban/smhasher/blob/master/Hashes.cpp
+    static CONSTEXPR u32 MicroOAAT(const void* key, size_t len, u32 seed) NOEXCEPT {
+#define grol(x,n) (((x)<<(n))|((x)>>(32-(n))))
+#define gror(x,n) (((x)>>(n))|((x)<<(32-(n))))
+        u8* str = (u8*)key;
+        const u8* const end = (const u8*)str + len;
+        u32 h1 = seed ^ 0x3b00;
+        u32 h2 = grol(seed, 15);
+        for (; str != end; str++) {
+            h1 += str[0];
+            h1 += h1 << 3; // h1 *= 9
+            h2 -= h1;
+            h1 = grol(h1, 7);
+        }
+        return (h1 ^ h2);
+#undef grol
+#undef gror
+    }
+
     static u32 HashMem32(u32 seed, const void* p, size_t size) NOEXCEPT = delete;
     static u64 HashMem64(u64 seed, const void* p, size_t size) NOEXCEPT = delete;
 
@@ -43,44 +97,34 @@ public: // generic helpers
     static u64 Fingeprint64(const void* p, size_t size) NOEXCEPT;
     static u128 Fingeprint128(const void* p, size_t size) NOEXCEPT;
 
-    //------------------------------------------------------------------------
-    // Murmur-inspired hashing: https://github.com/google/farmhash/blob/master/dev/farmhash.h
+    //----------------------------------------------------------------------------
+    // Finalization mix - force all bits of a hash block to avalanche
 
-    static FORCE_INLINE CONSTEXPR u64 HashUInt64(u64 b) NOEXCEPT {
-        b *= 0x9ddfea08eb382d69ULL;
-        b ^= (b >> 44);
-        b *= 0x9ddfea08eb382d69ULL;
-        b ^= (b >> 41);
-        b *= 0x9ddfea08eb382d69ULL;
-        return b;
+    // XXH32_avalanche()
+    static FORCE_INLINE CONSTEXPR u32 FMix32(u32 h32) NOEXCEPT {
+        h32 ^= h32 >> 15;
+        h32 *= 2246822519U;
+        h32 ^= h32 >> 13;
+        h32 *= 3266489917U;
+        h32 ^= h32 >> 16;
+        return h32;
+    }
+
+    // XXH64_avalanche()
+    static FORCE_INLINE CONSTEXPR u64 FMix64(u64 h64) NOEXCEPT {
+        h64 ^= h64 >> 33;
+        h64 *= 14029467366897019727ULL;
+        h64 ^= h64 >> 29;
+        h64 *= 1609587929392839161ULL;
+        h64 ^= h64 >> 32;
+        return h64;
     }
 
     //----------------------------------------------------------------------------
-    // Murmur-inspired hashing: https://github.com/google/farmhash/blob/master/dev/farmhash.h
 
-    static FORCE_INLINE CONSTEXPR u64 HashUInt64(u128 b) NOEXCEPT {
-        b.lo = (b.lo ^ b.hi) * 0x9ddfea08eb382d69ULL;
-        b.lo ^= (b.lo >> 47);
-        b.hi = (b.hi ^ b.lo) * 0x9ddfea08eb382d69ULL;
-        b.hi ^= (b.hi >> 44);
-        b.hi *= 0x9ddfea08eb382d69ULL;
-        b.hi ^= (b.hi >> 41);
-        b.hi *= 0x9ddfea08eb382d69ULL;
-        return b.hi;
-    }
-
-    //----------------------------------------------------------------------------
-    // Burtle, Full avalanche: http://burtleburtle.net/bob/hash/integer.html
-
-    static FORCE_INLINE CONSTEXPR u32 HashUInt32(u32 a) NOEXCEPT {
-        a = (a + 0x7ed55d16) + (a << 12);
-        a = (a ^ 0xc761c23c) ^ (a >> 19);
-        a = (a + 0x165667b1) + (a << 5);
-        a = (a + 0xd3a2646c) ^ (a << 9);
-        a = (a + 0xfd7046c5) + (a << 3);
-        a = (a ^ 0xb55a4f09) ^ (a >> 16);
-        return a;
-    }
+    static FORCE_INLINE CONSTEXPR u32 HashUInt32(u32 key) NOEXCEPT { return FMix32(key); }
+    static FORCE_INLINE CONSTEXPR u64 HashUInt64(u32 key) NOEXCEPT { return FMix64(u64(key)); }
+    static FORCE_INLINE CONSTEXPR u64 HashUInt64(u64 key) NOEXCEPT { return FMix64(key); }
 
     //----------------------------------------------------------------------------
     // Thomas Wang's 64 bit Mix Function: http://web.archive.org/web/20071223173210/http://www.concentric.net/~Ttwang/tech/inthash.htm
@@ -98,34 +142,22 @@ public: // generic helpers
     }
 
     //----------------------------------------------------------------------------
-    // Fall back on Hash64 for simplicity
+    // Murmur-inspired hashing: https://github.com/google/farmhash/blob/master/dev/farmhash.h
+
+    static FORCE_INLINE CONSTEXPR u64 HashUInt64(u128 b) NOEXCEPT {
+        b.lo = (b.lo ^ b.hi) * 0x9ddfea08eb382d69ULL;
+        b.lo ^= (b.lo >> 47);
+        b.hi = (b.hi ^ b.lo) * 0x9ddfea08eb382d69ULL;
+        b.hi ^= (b.hi >> 44);
+        b.hi *= 0x9ddfea08eb382d69ULL;
+        b.hi ^= (b.hi >> 41);
+        b.hi *= 0x9ddfea08eb382d69ULL;
+        return b.hi;
+    }
 
     static FORCE_INLINE CONSTEXPR u32 HashUInt32(u128 value) NOEXCEPT {
         return u32(HashUInt64(value)); // takes lower bits, should be alright
     }
-
-    //----------------------------------------------------------------------------
-    // Finalization mix - force all bits of a hash block to avalanche
-
-    static FORCE_INLINE CONSTEXPR u64 FMix64(u64 k) NOEXCEPT {
-        k ^= k >> 33;
-        k *= 0xff51afd7ed558ccdull;
-        k ^= k >> 33;
-        k *= 0xc4ceb9fe1a85ec53ull;
-        k ^= k >> 33;
-        return k;
-    }
-
-    //----------------------------------------------------------------------------
-#ifdef ARCH_X64
-    static FORCE_INLINE CONSTEXPR u64 HashUInt(u32 value) NOEXCEPT { return HashUInt64(u64(value)); }
-    static FORCE_INLINE CONSTEXPR u64 HashUInt(u64 value) NOEXCEPT { return HashUInt64(value); }
-    static FORCE_INLINE CONSTEXPR u64 HashUInt(u128 value) NOEXCEPT { return HashUInt64(value); }
-#else
-    static FORCE_INLINE CONSTEXPR u32 HashUInt(u32 value) NOEXCEPT { return HashUInt32(value); }
-    static FORCE_INLINE CONSTEXPR u32 HashUInt(u64 value) NOEXCEPT { return HashUInt32(value); }
-    static FORCE_INLINE CONSTEXPR u32 HashUInt(u128 value) NOEXCEPT { return HashUInt32(value); }
-#endif
 
     //------------------------------------------------------------------------
     // https://www.boost.org/doc/libs/1_64_0/boost/functional/hash/hash.hpp
@@ -153,6 +185,29 @@ public: // generic helpers
     static FORCE_INLINE CONSTEXPR size_t HashCombine(size_t seed, size_t value) NOEXCEPT {
         return CODE3264(HashCombine32, HashCombine64)(seed, value);
     }
+
+    //----------------------------------------------------------------------------
+
+    static FORCE_INLINE CONSTEXPR u32 HashUInt32(u256 value) NOEXCEPT {
+        return HashCombine32(HashUInt32(value.lo), HashUInt32(value.hi));
+    }
+
+    static FORCE_INLINE CONSTEXPR u64 HashUInt64(u256 value) NOEXCEPT {
+        return HashCombine64(HashUInt64(value.lo), HashUInt64(value.hi));
+    }
+
+    //----------------------------------------------------------------------------
+#ifdef ARCH_X64
+    static FORCE_INLINE CONSTEXPR u64 HashUInt(u32 value) NOEXCEPT { return HashUInt64(value); }
+    static FORCE_INLINE CONSTEXPR u64 HashUInt(u64 value) NOEXCEPT { return HashUInt64(value); }
+    static FORCE_INLINE CONSTEXPR u64 HashUInt(u128 value) NOEXCEPT { return HashUInt64(value); }
+    static FORCE_INLINE CONSTEXPR u64 HashUInt(u256 value) NOEXCEPT { return HashUInt64(value); }
+#else
+    static FORCE_INLINE CONSTEXPR u32 HashUInt(u32 value) NOEXCEPT { return HashUInt32(value); }
+    static FORCE_INLINE CONSTEXPR u32 HashUInt(u64 value) NOEXCEPT { return HashUInt32(value); }
+    static FORCE_INLINE CONSTEXPR u32 HashUInt(u128 value) NOEXCEPT { return HashUInt32(value); }
+    static FORCE_INLINE CONSTEXPR u32 HashUInt(u256 value) NOEXCEPT { return HashUInt32(value); }
+#endif
 
 };
 //----------------------------------------------------------------------------
