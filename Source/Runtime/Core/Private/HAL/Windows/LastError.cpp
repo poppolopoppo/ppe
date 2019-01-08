@@ -74,7 +74,7 @@ FLastErrorException::FLastErrorException(const char* what, long errorCode)
 :   FException(what)
 ,   _errorCode(errorCode) {
 #if !USE_PPE_FINAL_RELEASE
-    LOG(Exception, Fatal, L"{0}: {1}", MakeCStringView(what), FLastError(_errorCode));
+    LOG(Exception, Error, L"{0}: {1}", MakeCStringView(what), FLastError(_errorCode));
 #endif
 }
 //----------------------------------------------------------------------------
