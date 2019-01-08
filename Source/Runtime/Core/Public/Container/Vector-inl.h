@@ -95,7 +95,7 @@ template <typename T, typename _Allocator>
 template <typename _It>
 void TVector<T, _Allocator>::assign_(_It first, _It last, std::input_iterator_tag ) {
     size_type count = 0;
-    for (; count < _size && first != last; ++count, ++first)
+    for (; (count < _size) & (first != last); ++count, ++first)
         _data[count] = *first;
 
     Assert((first == last) || (count == _size));

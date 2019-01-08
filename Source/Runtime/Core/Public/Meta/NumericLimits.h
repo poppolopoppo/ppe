@@ -67,10 +67,14 @@ namespace Meta {
 namespace details {
 template <typename T, size_t _Sz = sizeof(T)>
 struct TIntegral_;
-template <typename T> struct TIntegral_<T, 1> { typedef  u8 type; };
-template <typename T> struct TIntegral_<T, 2> { typedef u16 type; };
-template <typename T> struct TIntegral_<T, 4> { typedef u32 type; };
-template <typename T> struct TIntegral_<T, 8> { typedef u64 type; };
+template <typename T> struct TIntegral_<T, 1> { typedef   u8 type; };
+template <typename T> struct TIntegral_<T, 2> { typedef  u16 type; };
+template <typename T> struct TIntegral_<T, 4> { typedef  u32 type; };
+template <typename T> struct TIntegral_<T, 8> { typedef  u64 type; };
+/*
+template <typename T> struct TIntegral_<T,16> { typedef u128 type; };
+template <typename T> struct TIntegral_<T,32> { typedef u256 type; };
+*/
 } //!details
 template <typename T>
 using TIntegral = typename details::TIntegral_<T>::type;

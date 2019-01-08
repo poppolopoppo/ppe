@@ -263,7 +263,7 @@ typedef struct uint128_t {
 
     CONSTEXPR static uint128_t Zero() { return uint128_t{ 0, 0 }; }
 
-    CONSTEXPR friend bool operator ==(const uint128_t& lhs, const uint128_t& rhs) { return lhs.hi == rhs.hi && lhs.lo == rhs.lo; }
+    CONSTEXPR friend bool operator ==(const uint128_t& lhs, const uint128_t& rhs) { return ((lhs.hi == rhs.hi) & (lhs.lo == rhs.lo)); }
     CONSTEXPR friend bool operator !=(const uint128_t& lhs, const uint128_t& rhs) { return !operator ==(lhs, rhs); }
 
     CONSTEXPR friend bool operator < (const uint128_t& lhs, const uint128_t& rhs) { return lhs.hi == rhs.hi ? lhs.lo < rhs.lo : lhs.hi < rhs.hi; }
@@ -278,7 +278,7 @@ typedef struct uint256_t {
 
     CONSTEXPR static uint256_t Zero() { return uint256_t{ uint128_t::Zero(), uint128_t::Zero() }; }
 
-    CONSTEXPR friend bool operator ==(const uint256_t& lhs, const uint256_t& rhs) { return lhs.hi == rhs.hi && lhs.lo == rhs.lo; }
+    CONSTEXPR friend bool operator ==(const uint256_t& lhs, const uint256_t& rhs) { return ((lhs.hi == rhs.hi) & (lhs.lo == rhs.lo)); }
     CONSTEXPR friend bool operator !=(const uint256_t& lhs, const uint256_t& rhs) { return !operator ==(lhs, rhs); }
 
     CONSTEXPR friend bool operator < (const uint256_t& lhs, const uint256_t& rhs) { return lhs.hi == rhs.hi ? lhs.lo < rhs.lo : lhs.hi < rhs.hi; }
