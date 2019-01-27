@@ -75,6 +75,8 @@ struct TVarianceEstimator {
         return (M2 / (Count - 1));
     }
 
+    // following central limit theorem
+    // https://en.wikipedia.org/wiki/Central_limit_theorem
     TNormalDistribution<T> MakeNormalDistribution() const {
         return TNormalDistribution<T>{ Mean, Variance() };
     }
@@ -129,29 +131,61 @@ struct TApproximateHistogram {
     STATIC_ASSERT(_Bins> 1);
     STATIC_CONST_INTEGRAL(u32, Bins, _Bins);
     STATIC_CONST_INTEGRAL(u32, Samples, _Samples);
+    STATIC_CONST_INTEGRAL(u32, MinSamples, _Samples * 3);
 
     T ApproximateBias;
     T ApproximateScale;
 
+    u32 NumSamples{ 0 };
     TVarianceEstimator<T> Estimator;
     TVarianceEstimator<T> Histogram[Bins];
     TReservoirSampling<T, _Samples> Reservoir;
-
-    u64 NumSamples() const { return Estimator.Count; }
 
     T Mean() const { return Estimator.Mean; }
     T Variance() const { return Estimator.Variance(); }
     T SampleVariance() const { return Estimator.SampleVariance(); }
 
-    T Low()     const { return Percentile(.02f); }
+    T Min()     const { return Percentile(.00f); }
+    T Q1()      const { return Percentile(.25f); }
     T Median()  const { return Percentile(.50f); }
-    T High()    const { return Percentile(.98f); }
+    T Q3()      const { return Percentile(.75f); }
+    T Max()     const { return Percentile(1.0f); }
+
+    T Mode() const {
+        Assert_NoAssume(Reservoir.Count >= MinSamples);
+        Assert_NoAssume(NumSamples >= Samples);
+
+        u32 mx = 0;
+        forrange(bin, 1, Bins) {
+            if (Histogram[bin].Count > Histogram[mx].Count)
+                mx = bin;
+        }
+
+        return Histogram[mx].Mean;
+    }
+
+    T WeightedMean() const {
+        Assert_NoAssume(Reservoir.Count >= MinSamples);
+        Assert_NoAssume(NumSamples >= Samples);
+
+        T mean{ 0 };
+        ONLY_IF_ASSERT(u64 totalForDbg = 0);
+        forrange(bin, 0, Bins) {
+            ONLY_IF_ASSERT(totalForDbg += Histogram[bin].Count);
+            mean += Histogram[bin].Mean * Histogram[bin].Count;
+        }
+
+        Assert_NoAssume(totalForDbg == NumSamples);
+
+        return (mean / NumSamples);
+    }
 
     T Percentile(float f) const {
         Assert_NoAssume(f >= 0.f && f <= 1.f);
-        Assert_NoAssume(Reservoir.Count >= Samples);
+        Assert_NoAssume(Reservoir.Count >= MinSamples);
+        Assert_NoAssume(NumSamples >= Samples);
 
-        const u64 axis = FPlatformMaths::RoundToInt(f * Reservoir.Count);
+        const u64 axis = checked_cast<u64>(RoundToInt(f * NumSamples));
 
         u32 prv = 0;
         u64 total = 0;
@@ -159,7 +193,7 @@ struct TApproximateHistogram {
             if (not Histogram[bin].Count)
                 continue;
 
-            Assert_NoAssume(total < axis);
+            Assert_NoAssume(total <= axis);
 
             if (total + Histogram[bin].Count >= axis) {
                 if (total) {
@@ -178,59 +212,36 @@ struct TApproximateHistogram {
         AssertNotReached();
     }
 
-    T WeightedMean() const {
-        Assert_NoAssume(Reservoir.Count >= Samples);
-
-        T mean{ 0 };
-        u64 total = 0;
-        forrange(bin, 0, Bins) {
-            total += Histogram[bin].Count;
-            mean += Histogram[bin].Mean * Histogram[bin].Count;
-        }
-
-        return (mean / total);
-    }
-
     template <typename _Rnd>
     void AddSample(T sample, _Rnd& rnd) {
         Estimator.Add(sample);
         Reservoir.Add(sample, rnd);
 
-        if (Unlikely(Reservoir.Count == Samples))
+        if (Unlikely(Reservoir.Count == MinSamples))
             CreateBins();
 
-        if (Likely(Reservoir.Count >= Samples))
+        if (Likely(Reservoir.Count >= MinSamples))
             AddHistogram(sample);
     }
 
     void AddHistogram(T sample) {
-        Assert_NoAssume(Reservoir.Count >= Samples);
+        Assert_NoAssume(Reservoir.Count >= MinSamples);
 
-        const float x = float((sample - ApproximateBias) * ApproximateScale);
-        const i32 bin = Clamp(FPlatformMaths::FloorToInt(x * Bins), i32(0), i32(Bins) - 1);
+        const float f = float((sample - ApproximateBias) * ApproximateScale);
+        const i32 bin = Clamp(FloorToInt(f * Bins), i32(0), i32(Bins) - 1);
 
         // the estimator in each bin gives better precision
         Histogram[bin].Add(sample);
+
+        // increment the number of samples present in the histogram
+        NumSamples++;
     }
 
     NO_INLINE void CreateBins() {
-        Assert_NoAssume(Samples <= Reservoir.Count);
+        Assert_NoAssume(Reservoir.Count >= MinSamples);
 
-        // sort the samples to filter N% lowest and highest samples
-        Reservoir.Finalize();
-
-        // construct a new estimator with filtered reservoir
-        TVarianceEstimator<T> lowpass;
-        const u32 mErr = 1; // ignore lowest and highest samples
-        const u32 mMid = (Samples / 2);
-        reverseforrange(r, mErr, mMid) {
-            // add lowest, then highest, while diverging from mean value
-            lowpass.Add(Reservoir.Samples[r]);
-            lowpass.Add(Reservoir.Samples[Samples - r - 1]);
-        }
-
-        // extract the confidence interval (95%) from this estimator
-        const TNormalDistribution<T> pdf = lowpass.MakeNormalDistribution();
+        // extract the confidence interval (95%) from global estimator
+        const TNormalDistribution<T> pdf = Estimator.MakeNormalDistribution();
         const T smin = pdf.Low();
         const T smax = pdf.High();
         Assert_NoAssume(smin < smax);
@@ -253,6 +264,7 @@ struct TApproximateHistogram {
 // http://www.neuralengine.org//res/kernel.html
 //----------------------------------------------------------------------------
 // #TODO : https://github.com/cooperlab/AdaptiveKDE/blob/master/adaptivekde/ssvkernel.py
+// #TODO : requires FFT
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
