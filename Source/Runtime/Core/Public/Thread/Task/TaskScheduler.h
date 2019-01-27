@@ -16,8 +16,9 @@
 //  https://pdfs.semanticscholar.org/9d1b/eb4d2ca5c07965bb4e309864a9dcbae65fec.pdf
 //  https://github.com/shamsimam/priorityworkstealing
 
-//  But diverged importantly to keep blocking threads where there is no task in flight
+//  But diverged importantly to keep blocking threads when there is no task in flight
 
+#   include "Container/BitMask.h"
 #   include "Container/Vector.h"
 
 #   include <atomic>
@@ -161,30 +162,40 @@ private:
         return true;
     }
 
+    NO_INLINE bool WorkerSteal_(size_t workerIndex, FTaskQueued* ptask) {
+        const size_t workerHighest = _workerQueues[workerIndex].HighestPriority;
+
+        size_t localHighest = workerHighest; // important to let other workers steal our jobs too
+        size_t globalHighest = _globalPriority;
+
+        // look for a queue with a higher priority job to steal
+        forrange(i, workerIndex + 1, workerIndex + _numWorkers) {
+            const size_t otherIndex = (i % _numWorkers);
+            FLocalQueue_& other = _workerQueues[otherIndex];
+
+            if (other.HighestPriority < workerHighest &&
+                WorkerTryPop_(otherIndex, ptask)) {
+                // note that we leave _globalPriority untouched since we didn't fail
+                return true; // stole a job, return
+            }
+
+            localHighest = Min(localHighest, other.HighestPriority);
+        }
+
+        // found nothing, update global priority with local minimum
+        // will naturally converge to INDEX_NONE when all worker queues are empty
+        // this is important to not reset this to avoid letting the last worker finish its queue alone
+        _globalPriority.compare_exchange_weak(globalHighest, localHighest);
+
+        return false;
+    }
+
     bool WorkerStealIFP_(size_t workerIndex, FTaskQueued* ptask) {
         FLocalQueue_& worker = _workerQueues[workerIndex];
 
         // check if there's a higher priority job in another worker
-        size_t globalHighest = _globalPriority;
-        const size_t workerHighest = worker.HighestPriority;
-        if (workerHighest > globalHighest) {
-            // look for a queue with a higher priority job to steal
-            forrange(i, workerIndex + 1, workerIndex + _numWorkers) {
-                const size_t otherIndex = (i % _numWorkers);
-                FLocalQueue_& other = _workerQueues[otherIndex];
-
-                if (other.HighestPriority < workerHighest &&
-                    WorkerTryPop_(otherIndex, ptask) )
-                    // note that we leave _globalPriority untouched since we didn't fail
-                    return true; // stole a job, return
-            }
-
-            // found nothing : SIGNAL OTHER THREADS
-            // this is how we handle _globalPriority to make sure every worker thread is not starving.
-            // since we can't tell what's the next highest priority (and don't want to pay the price for that),
-            // we must keep this value intact until every possible task was stolen.
-            _globalPriority.compare_exchange_weak(globalHighest, INDEX_NONE);
-        }
+        if (worker.HighestPriority > _globalPriority)
+            return WorkerSteal_(workerIndex, ptask); // cold path
 
         return false;
     }
@@ -300,12 +311,25 @@ void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& ta
     // track in flight tasks for HasPendingTask() and to reset _taskRevision when the queues are finally empty
     _taskInFlight += _numWorkers;
 
-    forrange(i, 0, _numWorkers) {
+    // loop until all workers were reached
+    size_t backoff = 0;
+    auto workers = TBitMask<size_t>::SetFirstN(_numWorkers);
+
+    for (;;) {
         // make sure that each worker is getting his exit task
-        FTaskQueued queuedExit{ priority, task, nullptr };
-        size_t backoff = 0;
-        while (not WorkerTryPush_(i, queuedExit))
+        forrange(i, 0, _numWorkers) {
+            if (workers.Get(i)) {
+                FTaskQueued queuedExit{ priority, task, nullptr };
+                if (WorkerTryPush_(i, queuedExit))
+                    workers.SetFalse(i);
+            }
+        }
+
+        // sleep before looping again if not completed
+        if (workers)
             FPlatformProcess::SleepForSpinning(backoff);
+        else
+            break;
     }
 }
 //----------------------------------------------------------------------------
@@ -363,7 +387,7 @@ void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& ta
     Assert(task);
 
     forrange(i, 0, _numWorkers)
-        Produce(ETaskPriority(priority), FTaskFunc(exitTask), nullptr);
+        Produce(ETaskPriority(priority), FTaskFunc(task), nullptr);
 }
 //----------------------------------------------------------------------------
 #endif //!USE_PPE_THREAD_WORKSTEALINGQUEUE
