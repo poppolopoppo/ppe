@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Container/Hash.h"
+#include "Container/Pair.h"
 #include "Meta/AlignedStorage.h"
 
 namespace PPE {
@@ -12,7 +13,7 @@ namespace PPE {
 // Really minimalist hash set with strong assumptions.
 // The user must provide an empty key traits (works from scratch for integral types).
 // Uses robin hood hashing with backward shift deletion instead of tombstones.
-// Very sensitive to hash function speed.
+// Very sensitive to hash function speed, also beware of iteration times which can be slow if the table is large.
 // Consider using THashMemoizer<> when the hash isn't trivial.
 // Currently accepts only POD types, but could easily be extended if needed.
 //----------------------------------------------------------------------------
@@ -113,7 +114,7 @@ public:
     iterator end() const { return FIterator(*this, _Capacity); }
 
     iterator find(_Key key) const;
-    bool insert(_Key key) { return Add_KeepExisting(key); }
+    TPair<iterator, bool> insert(_Key key);
     bool erase(_Key key) { return Remove_ReturnIfExists(key); }
     void erase(const iterator& it);
     void clear();
@@ -229,6 +230,39 @@ bool TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::Add_KeepExi
     _values[bucket] = key;
 
     return true;
+}
+
+//----------------------------------------------------------------------------
+template <typename _Key, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
+auto TFixedSizeHashSet<_Key, _Capacity, _Hash, _EmptyKey, _EqualTo>::insert(_Key key) -> TPair<iterator, bool> {
+    Assert(_size < _Capacity);
+    Assert(empty_key::value != key);
+
+    size_t bucket = InitIndex_(key);
+    size_t dist = 0;
+    for (;;) {
+        if (key_equal()(_values[bucket], empty_key::value))
+            break;
+
+        if (key_equal()(_values[bucket], key))
+            return MakePair(iterator(*this, bucket), false);
+
+        // keep sorted by probing distance
+        const size_t d = DistanceIndex_(_values[bucket], bucket);
+        if (dist > d) {
+            using std::swap;
+            dist = d;
+            swap(key, _values[bucket]);
+        }
+
+        dist++;
+        bucket = NextIndex_(bucket);
+    }
+
+    _size++;
+    _values[bucket] = key;
+
+    return MakePair(iterator(*this, bucket), true);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
