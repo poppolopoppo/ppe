@@ -113,7 +113,11 @@ public:
     template <typename _It>
     void insert(_It&& begin, _It&& end);
     void insert(_Key&& key) { Insert_KeepOldIFN(std::move(key)); }
-    void insert(const _Key& key) { Insert_KeepOldIFN(key); }
+    TPair<iterator, bool> insert(const _Key& key) {
+        bool added = false;
+        iterator it = FindOrAdd(key, &added);
+        return MakePair(it, added);
+    }
 
     iterator find(const _Key& key) { return Find(key); }
     const_iterator find(const _Key& key) const { return Find(key); }
