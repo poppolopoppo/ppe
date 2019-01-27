@@ -64,7 +64,12 @@ protected:
 
     template <typename T, typename _Ret, typename... _Args>
     void assign_wrapped_(T&& payload, Meta::TType<_Ret(*)(const void*, _Args...)> wrapper) {
-        assign_wrapped_(std::move(payload), typename std::is_trivially_destructible<T>::type{}, wrapper);
+        assign_wrapped_(std::move(payload), Meta::has_trivial_destructor<T>{}, wrapper);
+    }
+
+    template <typename T, typename _Ret, typename... _Args>
+    void assign_wrapped_force_payload_(T&& payload, Meta::TType<_Ret(*)(const void*, _Args...)> wrapper) {
+        assign_wrapped_(std::move(payload), std::false_type{}, wrapper);
     }
 
 private:
@@ -195,6 +200,12 @@ public:
     template <typename T, typename = Meta::TEnableIf<is_callable_v<T>> >
     TFunction(T&& lambda) {
         assign_func_(std::move(lambda));
+    }
+
+    template <typename T, typename = Meta::TEnableIf<is_callable_v<T>> >
+    TFunction(Meta::FForceInit, T&& lambda) {
+        // force use of payload even if not destructible, remove size limitations
+        assign_wrapped_force_payload_(std::move(lambda), Meta::TType<wrapper_type>{});
     }
 
     _Ret operator ()(_Args... args) const {
