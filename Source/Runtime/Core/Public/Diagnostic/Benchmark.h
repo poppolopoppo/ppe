@@ -13,10 +13,6 @@
 
 #include "Diagnostic/Logger.h"
 
-#include "Maths/RandomGenerator.h"
-#include "Maths/Units.h"
-#include "Maths/VarianceEstimator.h"
-
 #include "HAL/PlatformAtomics.h"
 #include "HAL/PlatformTime.h"
 
@@ -24,6 +20,13 @@
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
+
+#include "Maths/RandomGenerator.h"
+#include "Maths/Units.h"
+#include "Maths/VarianceEstimator.h"
+
+#include "Thread/Task/TaskHelpers.h"
+#include "Thread/ThreadPool.h"
 
 #include <algorithm>
 
@@ -34,8 +37,10 @@ EXTERN_LOG_CATEGORY(PPE_CORE_API, Benchmark);
 //----------------------------------------------------------------------------
 class FBenchmark {
 public:
-    static constexpr u32 HistogramSize = 50;
+    static constexpr u32 HistogramSize = 20;
     static constexpr u32 ReservoirSize = 200;
+
+    using FApproximateHistogram = TApproximateHistogram<double, HistogramSize, ReservoirSize>;
 
     FStringView Name{ "none" };
     u32 InputDim{ 1 };
@@ -43,11 +48,11 @@ public:
 #ifdef _DEBUG
     u32 MaxIterations{ 5000 };
     double MaxVarianceError{ 1e-2 };
-    static constexpr u32 MinIterations = ReservoirSize * 3;
+    static constexpr u32 MinIterations = FApproximateHistogram::MinSamples;
 #else
     u32 MaxIterations{ 500000 };
     double MaxVarianceError{ 1e-3 };
-    static constexpr u32 MinIterations = ReservoirSize * 30;
+    static constexpr u32 MinIterations = FApproximateHistogram::MinSamples * 2;
 #endif
     u64 RandomSeed{ PPE_HASH_VALUE_SEED_64 };
 
@@ -130,8 +135,6 @@ private: // FTimer
     };
 
 public: // FState
-    using FApproximateHistogram = TApproximateHistogram<double, HistogramSize, ReservoirSize>;
-
     struct FRun;
     class FIterator;
     class FState {
@@ -146,14 +149,6 @@ public: // FState
 
         FRandomGenerator& Random() { return _rnd; }
         const FApproximateHistogram& Histogram() const { return _histogram; }
-
-        double Mean() const { return _histogram.Mean(); }
-        double Low() const { return _histogram.Low(); } // 5th percentile
-        double Median() const { return _histogram.Median(); } // 50th percentile
-        double High() const { return _histogram.High(); } // 90th percentile
-        double WeightedMean() const { return _histogram.WeightedMean(); }
-
-        u64 NumSamples() const { return _histogram.NumSamples(); }
 
         void PauseTiming() { _timer.Stop(); }
         void ResumeTiming() {
@@ -170,7 +165,8 @@ public: // FState
             // sort the reservoir to deduce the percentiles
             _histogram.Reservoir.Finalize();
 
-            // log some progress
+            // log some progress : too heavy for MT, will saturate logging thread
+            /*
             LOG(Benchmark, Info,
                 L"{0:/18}: {1:10f4} < {2:10f4} < {3:10f4} => {4:10f4} µs  [{5:6} iterations] -> {6:f4}",
                 _benchmark.Name,
@@ -178,6 +174,7 @@ public: // FState
                 Median(),
                 _histogram.NumSamples(),
                 _histogram.SampleVariance());
+                */
         }
 
     protected:
@@ -205,8 +202,8 @@ public: // FState
 
         NO_INLINE u32 RemainingIterations() const {
             return (
-                (_histogram.NumSamples() < MinIterations) ||
-                (_histogram.NumSamples() < _benchmark.MaxIterations && VarianceError() > _benchmark.MaxVarianceError)
+                (_histogram.NumSamples < MinIterations) ||
+                (_histogram.NumSamples < _benchmark.MaxIterations && VarianceError() > _benchmark.MaxVarianceError)
                 ? LoopCount() : 0 );
         }
 
@@ -221,7 +218,7 @@ public: // FState
             const double variance = _histogram.Variance();
             const double sampleVariance = _histogram.SampleVariance();
 
-            return std::sqrt(std::abs(variance - sampleVariance)) / _histogram.Mean();
+            return Sqrt(Abs(variance - sampleVariance)) / _histogram.Mean();
         }
     };
 
@@ -263,7 +260,8 @@ public: // FIterator
 public: // FRun
     struct FRun {
         u64 NumIterations{ 0 };
-        double Median{ 0 }, Mean{ 0 }, Low{ 0 }, High{ 0 };
+        double Min, Q1, Median, Q3, Max;
+        double Mode, Mean;
     };
 
     template <typename _Benchmark, typename... _Args>
@@ -271,12 +269,16 @@ public: // FRun
         FState state{ bm };
         bm(state, args...);
         state.Finish();
+        const auto& hist = state.Histogram();
         return FRun{
-            state.NumSamples(),
-            state.Median(),
-            state.WeightedMean(),
-            state.Low(),
-            state.High() };
+            hist.NumSamples,
+            hist.Min(),
+            hist.Q1(),
+            hist.Median(),
+            hist.Q3(),
+            hist.Max(),
+            hist.Mode(),
+            hist.WeightedMean() };
     }
 
 public: // TTable<>
@@ -294,8 +296,11 @@ public: // TTable<>
         using FEntries = VECTORINSITU(Diagnostic, FEntry, 8);
 
         FStringView Name;
+        bool UseMultiThread{ true };
+
         FHeaders Headers;
         FEntries Entries;
+        VECTOR(Benchmark, FTaskFunc) PendingRuns;
 
         size_t dim() const { return Dim; }
 
@@ -304,16 +309,20 @@ public: // TTable<>
             , Headers(std::forward<_Benchmarks>(headers)...)
         {}
 
+        ~TTable() {
+            Flush();
+        }
+
         void Add(const FStringView& name, FRow&& row) {
             Entries.emplace_back(name, std::move(row));
         }
 
         template <typename... _Args>
         void Run(const FStringView& name, const _Args&... args) {
-            LOG(Benchmark, Emphasis, L"running {0} benchmarks for <{1}> ...", Dim, name);
-            Entries.emplace_back(name, MapTuple<FRun>(Headers, [&args...](const auto& bench) {
-                return FBenchmark::Run(bench, args...);
-            }));
+            if (UseMultiThread)
+                RunMT(name, args...);
+            else
+                RunST(name, args...);
         }
 
         template <typename _Lambda>
@@ -326,11 +335,69 @@ public: // TTable<>
             std::for_each(Entries.begin(), Entries.end(), foreach);
         }
 
+        void Flush() {
+            if (not PendingRuns.empty()) {
+                Assert_NoAssume(UseMultiThread);
+                LOG(Benchmark, Debug, L"flushing {0} benchmark tasks...", PendingRuns.size());
+                FTaskManager& threadPool =
+#if 0           // high priority <=> full machine usage
+                    FHighPriorityThreadPool::Get()
+#else           // global <=> all cores but 1, leaves 2 threads idle for your leisure
+                    FGlobalThreadPool::Get()
+#endif
+                    ;
+                FLUSH_LOG();
+                threadPool.RunAndWaitFor(PendingRuns.MakeView());
+                PendingRuns.clear();
+            }
+        }
+
+        template <typename... _Args>
+        NO_INLINE void RunST(const FStringView& name, const _Args&... args) {
+            LOG(Benchmark, Info, L"running {0} benchmarks for <{1}> on a single thread...", Dim, name);
+
+            Entries.emplace_back(name, MapTuple<FRun>(Headers, [&args...](const auto& bench) {
+                return FBenchmark::Run(bench, args...);
+            }));
+        }
+
+        template <typename... _Args>
+        NO_INLINE void RunMT(const FStringView& name, const _Args&... args) {
+            LOG(Benchmark, Info, L"running {0} benchmarks for <{1}> on multiple threads...", Dim, name);
+
+            size_t column = 0;
+            const size_t row = Entries.size();
+
+            Entries.emplace_back(name);
+
+            ForeachHeader([&](const auto& bench) {
+                PendingRuns.emplace_back(Meta::ForceInit/* remove capture size limit */,
+                    [this, row, column, &bench, args...](ITaskContext&) {
+                        FRun run = FBenchmark::Run(bench, args...);
+                        Entries[row].Row[column] = std::move(run);
+                    });
+                column++;
+            });
+
+            Assert_NoAssume(Dim == column);
+        }
+
     };
 
     template <typename... _Benchmarks>
     static TTable<_Benchmarks...> MakeTable(const FStringView& name, _Benchmarks&&... benchmarks) {
         return TTable<_Benchmarks...>(name, std::forward<_Benchmarks>(benchmarks)...);
+    }
+
+    template <typename... _Benchmarks>
+    static void Flush(TTable<_Benchmarks...>& table) {
+        table.Flush();
+    }
+
+    template <typename... _Benchmarks>
+    static void FlushAndLog(TTable<_Benchmarks...>& table) {
+        Flush(table);
+        Log(table);
     }
 
 public: // export table results
@@ -382,18 +449,53 @@ public: // export table results
 
     template <typename... _Benchmarks>
     static void Csv(const TTable<_Benchmarks...>& table, FTextWriter& oss) {
+        Csv(table, oss, [](const FRun& run) {
+            return run.Median;
+        });
+    }
+
+    template <typename... _Benchmarks, typename _Projector>
+    static void Csv(const TTable<_Benchmarks...>& table, FTextWriter& oss, const _Projector& projector) {
         oss << table.Name;
 
-        table.ForeachHeader([&oss](const auto& x) {
+        table.ForeachHeader([&](const auto& x) {
             oss << ';' << x.Name;
         });
 
         oss << Eol;
 
-        table.ForeachEntry([&oss](const auto& x) {
+        table.ForeachEntry([&](const auto& x) {
             oss << x.Name;
             for (const auto& c : x.Row)
-                oss << ';' << c.Median;
+                oss << ';' << projector(c);
+            oss << Eol;
+        });
+    }
+
+    template <typename... _Benchmarks>
+    static void StackedBarCharts(const TTable<_Benchmarks...>& table, FTextWriter& oss) {
+        oss << table.Name << ';' << "Stat";
+        table.ForeachHeader([&oss](const auto& x) {
+            oss << ';' << x.Name;
+        });
+        oss << Eol;
+
+        table.ForeachEntry([&](const auto& x) {
+            oss << x.Name << ";Min";
+            for (const auto& c : x.Row)
+                oss << ';' << c.Min;
+            oss << Eol << x.Name << ";Q1";
+            for (const auto& c : x.Row)
+                oss << ';' << c.Q1;
+            oss << Eol << x.Name << ";Median";
+            for (const auto& c : x.Row)
+                oss << ';' << (c.Median);
+            oss << Eol << x.Name << ";Q3";
+            for (const auto& c : x.Row)
+                oss << ';' << (c.Q3);
+            oss << Eol << x.Name << ";Max";
+            for (const auto& c : x.Row)
+                oss << ';' << (c.Max);
             oss << Eol;
         });
     }
