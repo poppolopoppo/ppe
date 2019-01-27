@@ -33,6 +33,29 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, hash_t h);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if _HAS_CXX14
+//----------------------------------------------------------------------------
+constexpr u32 hash_u32_constexpr(u32 h32) {
+    h32 ^= h32 >> 15; // XXH32_avalanche()
+    h32 *= 2246822519U;
+    h32 ^= h32 >> 13;
+    h32 *= 3266489917U;
+    h32 ^= h32 >> 16;
+    return h32;
+}
+//----------------------------------------------------------------------------
+constexpr u32 hash_u32_constexpr(u32 h, u32 k) {
+    k *= 0xcc9e2d51ul; // https://www.boost.org/doc/libs/1_64_0/boost/functional/hash/hash.hpp
+    k = (k << 15ul) | (k >> (32ul - 15ul));
+    k *= 0x1b873593ul;
+    h ^= k;
+    h = (h << 13ul) | (h >> (32ul - 13ul));
+    h = h * 5ul + 0xe6546b64ul;
+    return h;
+}
+//----------------------------------------------------------------------------
+#else // support for C++11 constexpr :
+//----------------------------------------------------------------------------
 namespace details {
     // http://burtleburtle.net/bob/hash/integer.html
     constexpr u32 hash_u32_constexpr_0_(u32 a) { return u32(a^0xdeadbeefUL + (a<<4ul)); }
@@ -55,12 +78,38 @@ constexpr u32 hash_u32_constexpr(u32 lhs, u32 rhs) {
         + (hash_u32_constexpr(lhs) << 6ul) + (hash_u32_constexpr(rhs) >> 2ul)) );
 }
 //----------------------------------------------------------------------------
+#endif //!_HAS_CXX14
+//----------------------------------------------------------------------------
+// recursion :
 template <typename... _Args>
 constexpr u32 hash_u32_constexpr(u32 h0, u32 h1, u32 h2, _Args... args) {
     return hash_u32_constexpr(hash_u32_constexpr(h0, h1), h2, u32(args)...);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#if _HAS_CXX14
+//----------------------------------------------------------------------------
+constexpr u64 hash_u64_constexpr(u64 h64) {
+    h64 ^= h64 >> 33; // XXH64_avalanche()
+    h64 *= 14029467366897019727ULL;
+    h64 ^= h64 >> 29;
+    h64 *= 1609587929392839161ULL;
+    h64 ^= h64 >> 32;
+    return h64;
+}
+//----------------------------------------------------------------------------
+constexpr u64 hash_u64_constexpr(u64 h, u64 k) {
+    k *= 0xc6a4a7935bd1e995ull; // https://www.boost.org/doc/libs/1_64_0/boost/functional/hash/hash.hpp
+    k ^= k >> 47ull;
+    k *= 0xc6a4a7935bd1e995ull;
+    h ^= k;
+    h *= 0xc6a4a7935bd1e995ull;
+    h += 0xe6546b64ull; // Completely arbitrary number, to prevent 0's from hashing to 0.
+    return h;
+}
+//----------------------------------------------------------------------------
+#else // support for C++11 constexpr :
 //----------------------------------------------------------------------------
 namespace details {
     // http://burtleburtle.net/bob/hash/integer.html
@@ -85,6 +134,8 @@ constexpr u64 hash_u64_constexpr(u64 lhs, u64 rhs) {
     return u64(hash_u64_constexpr(lhs) ^ (hash_u64_constexpr(rhs) + 0X278DDE6E5FD29E00ull // 2^64 / ((1 + sqrt(5)) / 2)
         + (hash_u64_constexpr(lhs) << 6ull) + (hash_u64_constexpr(rhs) >> 2ull)) );
 }
+//----------------------------------------------------------------------------
+#endif //!_HAS_CXX14
 //----------------------------------------------------------------------------
 template <typename... _Args>
 constexpr u64 hash_u64_constexpr(u64 h0, u64 h1, u64 h2, _Args... args) {
