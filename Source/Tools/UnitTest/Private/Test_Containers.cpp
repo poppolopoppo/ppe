@@ -56,6 +56,7 @@ template class TFlatSet<FString>;
 #include "Containers/DenseHashSet2.h"
 #include "Containers/DenseHashSet3.h"
 #include "Containers/HopscotchHashSet.h"
+#include "Containers/HopscotchHashSet2.h"
 
 namespace PPE {
 namespace Test {
@@ -66,460 +67,718 @@ namespace Test {
 //----------------------------------------------------------------------------
 namespace BenchmarkContainers {
 template <typename T>
-struct TInputData {
-    TMemoryView<const T> Insert;
-    TMemoryView<const T> Unkown;
-    TMemoryView<const T> Search;
-    TMemoryView<const T> Erase;
-    TMemoryView<const T> Dense;
-    TMemoryView<const T> Sparse;
-    TMemoryView<const u32> Shuffled;
+struct TSamplePool {
+    struct FSampleData {
+        u32 SeriesIndex;
+        VECTOR(Benchmark, u32) Insert;
+        VECTOR(Benchmark, u32) Unknown;
+        VECTOR(Benchmark, u32) Search;
+        VECTOR(Benchmark, u32) Erase;
+        VECTOR(Benchmark, u32) Dense;
+        VECTOR(Benchmark, u32) Sparse;
 
-    template <typename _Container>
-    void FillDense(_Container& c) const {
-        c.reserve(Insert.size());
+        template <typename _Container>
+        void FillDense(const TSamplePool& pool, _Container& c) const {
+            c.reserve(Insert.size());
 #ifdef WITH_PPE_ASSERT
-        forrange(i, 0, Insert.size()) {
-            c.insert(Insert[i]);
-            forrange(j, 0, i+1)
-                Assert_NoAssume(c.find(Insert[j]) != c.end());
-        }
-
+            forrange(i, 0, Insert.size()) {
+                c.insert(pool.Samples[Insert[i]]);
+                forrange(j, 0, i + 1)
+                    Assert_NoAssume(c.find(pool.Samples[Insert[j]]) != c.end());
+            }
 #else
-        for (const auto& it : Insert)
-            c.insert(it);
+            for (const auto& it : pool.MakeSamples(Insert))
+                c.insert(it);
 #endif
+        }
+
+        template <typename _Container>
+        void FillSparse(const TSamplePool& pool, _Container& c) const {
+            FillDense(pool, c);
+            for (const auto& it : pool.MakeSamples(Sparse))
+                Verify(c.erase(it));
+        }
+    };
+
+    size_t NumSamples;
+    VECTOR(Benchmark, T) Samples;
+    VECTOR(Benchmark, u32) RandomOrder;
+    VECTOR(Benchmark, FSampleData) Series;
+
+    TSamplePool() : NumSamples(0) {}
+
+    TSamplePool(const TSamplePool&) = delete;
+    TSamplePool& operator =(const TSamplePool&) = delete;
+
+    struct FSeriesIterator {
+        const TSamplePool& Generator;
+        u32 Index;
+
+        explicit FSeriesIterator(const TSamplePool& generator)
+            : Generator(generator)
+            , Index(0)
+        {}
+
+        const FSampleData& Next() {
+            const size_t r = Index++ % Generator.RandomOrder.size();
+            return Generator.Series[Generator.RandomOrder[r]];
+        }
+    };
+
+    FSeriesIterator MakeSeries() const { return FSeriesIterator(*this); }
+
+    auto MakeSamples(const TMemoryView<const u32>& sequence) const {
+        auto sample = [this](auto it) { return Samples[it]; };
+        return MakeIterable(
+            MakeOutputIterator(sequence.begin(), sample),
+            MakeOutputIterator(sequence.end(), sample));
     }
 
-    template <typename _Container>
-    void FillSparse(_Container& c) const {
-        FillDense(c);
-        for (const auto& it : Sparse)
-            Verify(c.erase(it));
+    template <typename _Container, typename _Lambda>
+    void MakeDenseTables(const _Container& archetype, _Lambda&& lambda) const {
+        STACKLOCAL_STACK(_Container, tables, Series.size());
+
+        for (const FSampleData& series : Series) {
+            tables.Push(archetype);
+            series.FillDense(*this, *tables.Peek());
+        }
+
+        lambda(tables.MakeView());
     }
 
-};
-class construct_noreserve_t : public FBenchmark {
-public:
-    construct_noreserve_t() : FBenchmark{ "ctor_cold" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        for (auto _ : state) {
-            auto c{ archetype };
-            for (const auto& it : input.Insert)
-                c.insert(it);
-            FBenchmark::DoNotOptimize(c);
+    template <typename _Container, typename _Lambda>
+    void MakeSparseTables(const _Container& archetype, _Lambda&& lambda) const {
+        STACKLOCAL_STACK(_Container, tables, Series.size());
+
+        for (const FSampleData& series : Series) {
+            tables.Push(archetype);
+            series.FillSparse(*this, *tables.Peek());
+        }
+
+        lambda(tables.MakeView());
+    }
+
+    template <typename _Container, typename _Lambda>
+    void MakeTablesN(const _Container& archetype, u32 n, _Lambda&& lambda) const {
+        STACKLOCAL_STACK(_Container, tables, Series.size());
+
+        for (const FSampleData& series : Series) {
+            Assert_NoAssume(series.Insert.size() >= n);
+
+            tables.Push(archetype);
+            auto& h = *tables.Peek();
+
+            h.reserve(n);
+            for (const auto& it : MakeSamples(series.Insert.MakeConstView().CutBefore(n)))
+                h.insert(it);
+        }
+
+        lambda(tables.MakeView());
+    }
+
+    template <typename _Rnd, typename _Generator>
+    void Generate(size_t series, size_t samples, size_t jitter, _Rnd& rnd, const _Generator& generatorArchetype) {
+        _Generator generator{ generatorArchetype }; // copy the generator before generating samples
+
+        NumSamples = samples;
+
+        const size_t totalSamples = (samples * 4); // generate 4x, will be shuffled
+
+        // one pool of generated samples for each series
+        Samples.clear();
+        Samples.reserve(totalSamples);
+        // generate exactly N unique samples
+        forrange(i, 0, totalSamples)
+            Samples.emplace_back(generator(rnd));
+
+        // one random sequence to pick each series randomly
+        RandomOrder.clear();
+        RandomOrder.reserve(samples);
+        forrange(i, 0, samples)
+            RandomOrder.emplace_back(u32(i % series));
+        std::shuffle(RandomOrder.begin(), RandomOrder.end(), rnd);
+
+        // generate random shuffles for each series
+        VECTOR(Benchmark, u32) shuffled;
+        shuffled.reserve(totalSamples);
+        forrange(i, 0, totalSamples)
+            shuffled.emplace_back(u32(i));
+
+        Series.clear();
+        Series.reserve(series);
+        forrange(i, 0, series) {
+            // jitter can be used to vary the size of each series
+            const size_t jitteredSamples = ((jitter)
+                 ? (samples + (rnd() % jitter * 2)) - jitter
+                 : samples );
+            Assert_NoAssume(jitteredSamples > 0);
+
+            Series.emplace_back_AssumeNoGrow();
+            FSampleData& s = Series.back();
+            s.SeriesIndex = checked_cast<u32>(i);
+            {
+                std::shuffle(shuffled.begin(), shuffled.end(), rnd);
+
+                TMemoryView<const u32> pool = shuffled.MakeConstView();
+
+                s.Insert.assign(pool.Eat(jitteredSamples));
+                s.Unknown.assign(pool.Eat(jitteredSamples));
+            }
+
+            constexpr size_t sparse_factor = 70;
+
+            s.Search.assign(s.Insert);
+            std::shuffle(s.Search.begin(), s.Search.end(), rnd);
+
+            s.Erase.assign(s.Search);
+            std::shuffle(s.Erase.begin(), s.Erase.end(), rnd);
+
+            s.Sparse.assign(s.Erase
+                .MakeConstView()
+                .CutBeforeConst((sparse_factor * s.Erase.size()) / 100) );
+            std::shuffle(s.Sparse.begin(), s.Sparse.end(), rnd);
+
+            s.Dense.assign(s.Erase
+                .MakeConstView()
+                .CutStartingAt(s.Sparse.size()) );
+            std::shuffle(s.Dense.begin(), s.Dense.end(), rnd);
         }
     }
-};
-class construct_reserve_t : public FBenchmark {
-public:
-    construct_reserve_t() : FBenchmark{ "ctor_warm" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        for (auto _ : state) {
-            auto c{ archetype };
-            c.reserve(input.Insert.size());
-            for (const auto& it : input.Insert)
-                c.insert(it);
-            FBenchmark::DoNotOptimize(c);
+
+    template <typename _Generator>
+    static auto MakeUniqueGenerator(const _Generator& generator) {
+        return MakeUniqueGenerator(generator, THashSet<T>{});
+    }
+
+    template <typename _Generator, typename _Set>
+    struct TUniqueSampleGenerator {
+        _Generator Generator;
+        _Set Unique;
+        TUniqueSampleGenerator(const _Generator& generator, _Set&& unique)
+            : Generator(generator)
+            , Unique(std::move(unique))
+        {}
+        template <typename _Rnd>
+        auto operator ()(_Rnd& rnd) {
+            using sample_type = decltype(Generator(rnd));
+            sample_type sample;
+            for (;;) {
+                sample = Generator(rnd);
+                if (not Unique.insert_ReturnIfExists(sample))
+                    break;
+            }
+            return sample;
         }
+    };
+
+    template <typename _Generator, typename _Set>
+    static auto MakeUniqueGenerator(const _Generator& generator, _Set&& unique) {
+        return TUniqueSampleGenerator{ generator, std::move(unique) };
     }
 };
-class copy_empty_t : public FBenchmark {
+class FContainerBenchmark : public FBenchmark {
 public:
-    copy_empty_t() : FBenchmark{ "copy_pty" } {}
+    FContainerBenchmark(const FStringView& name)
+    :   FBenchmark{ name } {
+        MaxIterations = Min(MaxIterations, 1000000ul);
+    }
+};
+class construct_noreserve_t : public FContainerBenchmark {
+public:
+    construct_noreserve_t() : FContainerBenchmark{ "ctor_cold" } {}
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillDense(s);
-
-        auto c{ archetype };
-
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        auto series = pool->MakeSeries();
         for (auto _ : state) {
-            c.clear();
+            const auto& s = series.Next();
             state.ResetTiming();
-            c = s;
+
+            auto c{ archetype };
+            for (const auto& it : pool->MakeSamples(s.Insert))
+                Verify(c.insert(it).second);
             FBenchmark::DoNotOptimize(c);
         }
     }
 };
-class copy_dense_t : public FBenchmark {
+class construct_reserve_t : public FContainerBenchmark {
 public:
-    copy_dense_t() : FBenchmark{ "copy_dns" } {}
+    construct_reserve_t() : FContainerBenchmark{ "ctor_warm" } {}
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillDense(s);
-
-        auto c{ s };
-
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        auto series = pool->MakeSeries();
         for (auto _ : state) {
-            c = s;
+            const auto& s = series.Next();
+            state.ResetTiming();
+
+            auto c{ archetype };
+            c.reserve(s.Insert.size());
+            for (const auto& it : pool->MakeSamples(s.Insert))
+                Verify(c.insert(it).second);
             FBenchmark::DoNotOptimize(c);
         }
     }
 };
-class copy_sparse_t : public FBenchmark {
+class copy_empty_t : public FContainerBenchmark {
 public:
-    copy_sparse_t() : FBenchmark{ "copy_spr" } {}
+    copy_empty_t() : FContainerBenchmark{ "copy_pty" } {}
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillSparse(s);
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeDenseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto c{ archetype };
+            auto series = pool->MakeSeries();
 
-        auto c{ s };
+            for (_Container& table : tables)
+                table.clear(); // test traversal times for grown empty tables
 
-        for (auto _ : state) {
-            c = s;
-            FBenchmark::DoNotOptimize(c);
-        }
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                c.clear();
+
+                state.ResetTiming();
+
+                c = tables[s.SeriesIndex];
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
     }
 };
-class insert_dense_t : public FBenchmark {
+class copy_dense_t : public FContainerBenchmark {
 public:
-    insert_dense_t() : FBenchmark{ "insert_dns" } {
+    copy_dense_t() : FContainerBenchmark{ "copy_dns" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeDenseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
+            for (auto _ : state) {
+                const auto& s = series.Next();
+
+                state.ResetTiming();
+
+                auto c{ tables[s.SeriesIndex] };
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
+    }
+};
+class copy_sparse_t : public FContainerBenchmark {
+public:
+    copy_sparse_t() : FContainerBenchmark{ "copy_spr" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeSparseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
+            for (auto _ : state) {
+                const auto& s = series.Next();
+
+                state.ResetTiming();
+
+                auto c{ tables[s.SeriesIndex] };
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
+    }
+};
+class insert_dense_t : public FContainerBenchmark {
+public:
+    insert_dense_t() : FContainerBenchmark{ "insert_dns" } {
         //BatchSize = 16; // batching for better accuracy
     }
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillDense(s);
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeDenseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
 
-        for (auto _ : state) {
-            state.PauseTiming();
-            auto c = s;
-            const auto& item = state.Random().RandomElement(input.Unkown);
-            state.ResumeTiming();
-            c.insert(item);
-            FBenchmark::DoNotOptimize(c);
-        }
+            for (auto _ : state) {
+                state.PauseTiming();
+
+                const auto& s = series.Next();
+                auto c{ tables[s.SeriesIndex] };
+
+                const u32 r = state.Random().RandomElement(s.Unknown.MakeView());
+                const auto& item = pool->Samples[r];
+
+                state.ResumeTiming();
+
+                Verify(c.insert(item).second);
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
     }
 };
-class insert_sparse_t : public FBenchmark {
+class insert_sparse_t : public FContainerBenchmark {
 public:
-    insert_sparse_t() : FBenchmark{ "insert_spr" } {
+    insert_sparse_t() : FContainerBenchmark{ "insert_spr" } {
         //BatchSize = 16; // batching for better accuracy
     }
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillSparse(s);
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeSparseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
 
-        for (auto _ : state) {
-            state.PauseTiming();
-            auto c = s;
-            const auto& item = state.Random().RandomElement(input.Unkown);
-            state.ResumeTiming();
-            c.insert(item);
-            FBenchmark::DoNotOptimize(c);
-        }
-    }
-};
-class iterate_dense_t : public FBenchmark {
-public:
-    iterate_dense_t() : FBenchmark{ "iter_dns" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto c{ archetype };
-        input.FillDense(c);
+            for (auto _ : state) {
+                state.PauseTiming();
 
-        ONLY_IF_ASSERT(const size_t sz = c.size());
+                const auto& s = series.Next();
+                auto c{ tables[s.SeriesIndex] };
 
-        for (auto _ : state) {
-            size_t n = 0;
-            for (const auto& it : c) {
-                FBenchmark::DoNotOptimizeLoop(it);
-                n++;
+                const u32 r = state.Random().RandomElement(s.Unknown.MakeView());
+                const auto& item = pool->Samples[r];
+
+                state.ResumeTiming();
+
+                Verify(c.insert(item).second);
+                FBenchmark::DoNotOptimize(c);
             }
-            Assert_NoAssume(sz == n);
-            FBenchmark::DoNotOptimize(n);
-        }
+        });
     }
 };
-class iterate_sparse_t : public FBenchmark {
+class iterate_dense_t : public FContainerBenchmark {
 public:
-    iterate_sparse_t() : FBenchmark{ "iter_spr" } {}
+    iterate_dense_t() : FContainerBenchmark{ "iter_dns" } {}
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto c{ archetype };
-        input.FillSparse(c);
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeDenseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
 
-        ONLY_IF_ASSERT(const size_t sz = c.size());
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                const auto& c = tables[s.SeriesIndex];
 
-        for (auto _ : state) {
-            size_t n = 0;
-            for (const auto& it : c) {
-                FBenchmark::DoNotOptimizeLoop(it);
-                n++;
+                state.ResetTiming();
+
+                size_t n = 0;
+                for (const auto& it : c) {
+                    FBenchmark::DoNotOptimizeLoop(it);
+                    n++;
+                }
+
+                Assert_NoAssume(c.size() == n);
+                FBenchmark::DoNotOptimize(n);
             }
-            Assert_NoAssume(sz == n);
-            FBenchmark::DoNotOptimize(n);
-        }
+        });
     }
 };
-class find_dense_pos_t : public FBenchmark {
+class iterate_sparse_t : public FContainerBenchmark {
 public:
-    find_dense_pos_t() : FBenchmark{ "find_dns_+" } {}
+    iterate_sparse_t() : FContainerBenchmark{ "iter_spr" } {}
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto c{ archetype };
-        input.FillDense(c);
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeSparseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
 
-        for (auto _ : state) {
-            for (const auto& it : input.Search)
-                FBenchmark::DoNotOptimizeLoop(c.find(it));
-            FBenchmark::ClobberMemory();
-        }
-    }
-};
-class find_dense_neg_t : public FBenchmark {
-public:
-    find_dense_neg_t() : FBenchmark{ "find_dns_-" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto c{ archetype };
-        input.FillSparse(c);
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                const auto& c = tables[s.SeriesIndex];
 
-        for (auto _ : state) {
-            for (const auto& it : input.Unkown)
-                FBenchmark::DoNotOptimizeLoop(c.find(it));
-            FBenchmark::ClobberMemory();
-        }
-    }
-};
-class find_sparse_pos_t : public FBenchmark {
-public:
-    find_sparse_pos_t() : FBenchmark{ "find_spr_+" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto c{ archetype };
-        input.FillSparse(c);
+                state.ResetTiming();
 
-        for (auto _ : state) {
-            for (const auto& it : input.Dense)
-                FBenchmark::DoNotOptimizeLoop(c.find(it));
-            FBenchmark::ClobberMemory();
-        }
-    }
-};
-class find_sparse_neg_t : public FBenchmark {
-public:
-    find_sparse_neg_t() : FBenchmark{ "find_spr_-" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto c{ archetype };
-        input.FillSparse(c);
+                size_t n = 0;
+                for (const auto& it : c) {
+                    FBenchmark::DoNotOptimizeLoop(it);
+                    n++;
+                }
 
-        for (auto _ : state) {
-            for (const auto& it : input.Unkown)
-                FBenchmark::DoNotOptimizeLoop(c.find(it));
-            FBenchmark::ClobberMemory();
-        }
-    }
-};
-// trying to measure cache misses by avoiding temporal coherency
-// https://www.youtube.com/watch?v=M2fKMP47slQ
-class find_cmiss_pos_t : public FBenchmark {
-public:
-    find_cmiss_pos_t() : FBenchmark{ "find_miss_+" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto c{ archetype };
-        input.FillDense(c);
-
-        STACKLOCAL_STACK(_Container, tables, 128);
-        forrange(i, 0, 128)
-            tables.Push(c);
-
-        AssertRelease(input.Unkown.size() == input.Shuffled.size());
-
-        for (auto _ : state) {
-            const u32* pIndex = input.Shuffled.data();
-            for (const auto& it : input.Dense)
-                FBenchmark::DoNotOptimizeLoop(tables[*(pIndex++) & 127].find(it));
-            FBenchmark::ClobberMemory();
-        }
-    }
-};
-class find_cmiss_neg_t : public FBenchmark {
-public:
-    find_cmiss_neg_t() : FBenchmark{ "find_miss_-" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto c{ archetype };
-        input.FillSparse(c);
-
-        STACKLOCAL_STACK(_Container, tables, 128);
-        forrange(i, 0, 128)
-            tables.Push(c);
-
-        AssertRelease(input.Unkown.size() == input.Shuffled.size());
-
-        for (auto _ : state) {
-            const u32* pIndex = input.Shuffled.data();
-            for (const auto& it : input.Unkown)
-                FBenchmark::DoNotOptimizeLoop(tables[*(pIndex++) & 127].find(it));
-            FBenchmark::ClobberMemory();
-        }
-    }
-};
-class erase_dense_pos_t : public FBenchmark {
-public:
-    erase_dense_pos_t() : FBenchmark{ "erase_dns_+" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillDense(s);
-
-        auto c{ archetype };
-        for (auto _ : state) {
-            c = s;
-            state.ResetTiming();
-            for (const auto& it : input.Search)
-                FBenchmark::DoNotOptimizeLoop(c.erase(it));
-            FBenchmark::ClobberMemory();
-        }
-    }
-};
-class erase_dense_neg_t : public FBenchmark {
-public:
-    erase_dense_neg_t() : FBenchmark{ "erase_dns_-" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillDense(s);
-
-        auto c{ archetype };
-        for (auto _ : state) {
-            c = s;
-            state.ResetTiming();
-            for (const auto& it : input.Unkown)
-                FBenchmark::DoNotOptimizeLoop(c.erase(it));
-            FBenchmark::ClobberMemory();
-        }
-    }
-};
-class erase_sparse_pos_t : public FBenchmark {
-public:
-    erase_sparse_pos_t() : FBenchmark{ "erase_spr_+" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillDense(s);
-
-        auto c{ archetype };
-        for (auto _ : state) {
-            c = s;
-            state.ResetTiming();
-            for (const auto& it : input.Dense)
-                FBenchmark::DoNotOptimizeLoop(c.erase(it));
-            FBenchmark::ClobberMemory();
-        }
-    }
-};
-class erase_sparse_neg_t : public FBenchmark {
-public:
-    erase_sparse_neg_t() : FBenchmark{ "erase_spr_-" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillDense(s);
-
-        auto c{ archetype };
-        for (auto _ : state) {
-            c = s;
-            state.ResetTiming();
-            for (const auto& it : input.Unkown)
-                FBenchmark::DoNotOptimizeLoop(c.erase(it));
-            FBenchmark::ClobberMemory();
-        }
-    }
-};
-class find_erase_dns_t : public FBenchmark {
-public:
-    find_erase_dns_t() : FBenchmark{ "find_erase_dns" } {}
-    template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillDense(s);
-
-        const size_t ns = input.Sparse.size();
-        const size_t nu = input.Unkown.size();
-        const size_t nn = Min(nu, ns) >> 1;
-
-        auto c{ archetype };
-        for (auto _ : state) {
-            c = s;
-            state.ResetTiming();
-            forrange(i, 0, nn) {
-                c.insert(input.Unkown[(i << 1)]);
-                c.insert(input.Unkown[(i << 1) + 1]);
-                c.erase(input.Sparse[i]);
+                Assert_NoAssume(c.size() == n);
+                FBenchmark::DoNotOptimize(n);
             }
-            FBenchmark::DoNotOptimize(c.end());
-            FBenchmark::ClobberMemory();
-        }
+        });
     }
 };
-class find_erase_spr_t : public FBenchmark {
+class find_dense_pos_t : public FContainerBenchmark {
 public:
-    find_erase_spr_t() : FBenchmark{ "find_erase_spr" } {}
+    find_dense_pos_t() : FContainerBenchmark{ "find_dns_+" } {}
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillSparse(s);
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeDenseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
 
-        const size_t ns = input.Dense.size();
-        const size_t nu = input.Unkown.size();
-        const size_t nn = Min(nu, ns) >> 1;
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                const auto& c = tables[s.SeriesIndex];
 
-        auto c{ archetype };
-        for (auto _ : state) {
-            c = s;
-            state.ResetTiming();
-            forrange(i, 0, nn) {
-                c.insert(input.Unkown[(i << 1)]);
-                c.insert(input.Unkown[(i << 1) + 1]);
-                c.erase(input.Dense[i]);
+                state.ResetTiming();
+
+                volatile uintptr_t hit = 0;
+                for (const auto& it : pool->MakeSamples(s.Search)) {
+                    auto jt = c.find(it);
+                    FContainerBenchmark::DoNotOptimizeLoop(jt);
+                    hit += uintptr_t(&*jt);
+                }
+
+                FBenchmark::DoNotOptimize(hit);
             }
-            FBenchmark::DoNotOptimize(c.end());
-            FBenchmark::ClobberMemory();
-        }
+        });
     }
 };
-class clear_dense_t : public FBenchmark {
+class find_dense_neg_t : public FContainerBenchmark {
 public:
-    clear_dense_t() : FBenchmark{ "clear_dns" } {}
+    find_dense_neg_t() : FContainerBenchmark{ "find_dns_-" } {}
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillDense(s);
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeDenseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
 
-        auto c{ archetype };
-        for (auto _ : state) {
-            c = s;
-            state.ResetTiming();
-            c.clear();
-            FBenchmark::DoNotOptimize(c);
-        }
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                const auto& c = tables[s.SeriesIndex];
+
+                state.ResetTiming();
+
+                volatile u32 hit = 0;
+                const auto cend = c.end();
+                for (const auto& it : pool->MakeSamples(s.Unknown)) {
+                    auto jt = c.find(it);
+                    FBenchmark::DoNotOptimizeLoop(jt);
+                    if (jt != cend) hit++;
+                }
+
+                Assert_NoAssume(0 == hit);
+                FBenchmark::DoNotOptimize(hit);
+            }
+        });
     }
 };
-class clear_sparse_t : public FBenchmark {
+class find_sparse_pos_t : public FContainerBenchmark {
 public:
-    clear_sparse_t() : FBenchmark{ "clear_spr" } {}
+    find_sparse_pos_t() : FContainerBenchmark{ "find_spr_+" } {}
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TInputData<T>& input) const {
-        auto s{ archetype };
-        input.FillSparse(s);
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeSparseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
 
-        auto c{ archetype };
-        for (auto _ : state) {
-            c = s;
-            state.ResetTiming();
-            c.clear();
-            FBenchmark::DoNotOptimize(c);
-        }
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                const auto& c = tables[s.SeriesIndex];
+
+                state.ResetTiming();
+
+                volatile uintptr_t hit = 0;
+                for (const auto& it : pool->MakeSamples(s.Dense)) {
+                    auto jt = c.find(it);
+                    FContainerBenchmark::DoNotOptimizeLoop(jt);
+                    hit += uintptr_t(&*jt);
+                }
+
+                Assert_NoAssume(s.Dense.size() == hit);
+                FBenchmark::DoNotOptimize(hit);
+            }
+        });
+    }
+};
+class find_sparse_neg_t : public FContainerBenchmark {
+public:
+    find_sparse_neg_t() : FContainerBenchmark{ "find_spr_-" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeSparseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                const auto& c = tables[s.SeriesIndex];
+
+                state.ResetTiming();
+
+                volatile u32 hit = 0;
+                const auto cend = c.end();
+                for (const auto& it : pool->MakeSamples(s.Unknown)) {
+                    auto jt = c.find(it);
+                    FBenchmark::DoNotOptimizeLoop(jt);
+                    if (jt != cend) hit++;
+                }
+
+                Assert_NoAssume(0 == hit);
+                FBenchmark::DoNotOptimize(hit);
+            }
+        });
+    }
+};
+class erase_dense_pos_t : public FContainerBenchmark {
+public:
+    erase_dense_pos_t() : FContainerBenchmark{ "erase_dns_+" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeDenseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                auto c{ tables[s.SeriesIndex] };
+
+                state.ResetTiming();
+
+                for (const auto& it : pool->MakeSamples(s.Search))
+                    Verify(c.erase(it));
+
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
+    }
+};
+class erase_dense_neg_t : public FContainerBenchmark {
+public:
+    erase_dense_neg_t() : FContainerBenchmark{ "erase_dns_-" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeDenseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                auto& c = tables[s.SeriesIndex];
+
+                state.ResetTiming();
+
+                for (const auto& it : pool->MakeSamples(s.Unknown))
+                    Verify(not c.erase(it));
+
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
+    }
+};
+class erase_sparse_pos_t : public FContainerBenchmark {
+public:
+    erase_sparse_pos_t() : FContainerBenchmark{ "erase_spr_+" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeSparseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                auto c{ tables[s.SeriesIndex] };
+
+                state.ResetTiming();
+
+                for (const auto& it : pool->MakeSamples(s.Dense))
+                    Verify(c.erase(it));
+
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
+    }
+};
+class erase_sparse_neg_t : public FContainerBenchmark {
+public:
+    erase_sparse_neg_t() : FContainerBenchmark{ "erase_spr_-" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeSparseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                auto& c = tables[s.SeriesIndex];
+
+                state.ResetTiming();
+
+                for (const auto& it : pool->MakeSamples(s.Unknown))
+                    Verify(not c.erase(it));
+
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
+    }
+};
+class find_erase_dns_t : public FContainerBenchmark {
+public:
+    find_erase_dns_t() : FContainerBenchmark{ "find_erase_dns" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeDenseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                auto c{ tables[s.SeriesIndex] };
+
+                const size_t ns = s.Sparse.size();
+                const size_t nu = s.Unknown.size();
+                const size_t nn = Min(nu, ns);
+
+                state.ResetTiming();
+
+                forrange(i, 0, nn) {
+                    Verify(c.insert(pool->Samples[s.Unknown[i]]).second);
+                    Verify(c.erase(pool->Samples[s.Sparse[i]]));
+                }
+
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
+    }
+};
+class find_erase_spr_t : public FContainerBenchmark {
+public:
+    find_erase_spr_t() : FContainerBenchmark{ "find_erase_spr" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeSparseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                auto c{ tables[s.SeriesIndex] };
+
+                const size_t nd = s.Dense.size();
+                const size_t nu = s.Unknown.size();
+                const size_t nn = Min(nu, nd);
+
+                state.ResetTiming();
+
+                forrange(i, 0, nn) {
+                    Verify(c.insert(pool->Samples[s.Unknown[i]]).second);
+                    Verify(c.erase(pool->Samples[s.Dense[i]]));
+                }
+
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
+    }
+};
+class clear_dense_t : public FContainerBenchmark {
+public:
+    clear_dense_t() : FContainerBenchmark{ "clear_dns" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeDenseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                auto c{ tables[s.SeriesIndex] };
+
+                state.ResetTiming();
+
+                c.clear();
+
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
+    }
+};
+class clear_sparse_t : public FContainerBenchmark {
+public:
+    clear_sparse_t() : FContainerBenchmark{ "clear_spr" } {}
+    template <typename _Container, typename T>
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeSparseTables(archetype, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
+            for (auto _ : state) {
+                const auto& s = series.Next();
+                auto c{ tables[s.SeriesIndex] };
+
+                state.ResetTiming();
+
+                c.clear();
+
+                FBenchmark::DoNotOptimize(c);
+            }
+        });
     }
 };
 } //!namespace BenchmarkContainers
@@ -544,57 +803,20 @@ static void Benchmark_Containers_Exhaustive_(
     std::mt19937 rand{ rdevice() };
     rand.seed(0x9025u); // fixed seed for repro
 
-    VECTOR(Benchmark, T) samples;
-    samples.reserve_Additional(dim * 2);
-    forrange(i, 0, dim * 2)
-        samples.emplace_back(generator(rand));
-
-    std::shuffle(samples.begin(), samples.end(), rand);
-
-    const TMemoryView<const T> insert = samples.MakeConstView().CutBefore(dim);
-    const TMemoryView<const T> unkown = samples.MakeConstView().CutStartingAt(dim);
-
-    constexpr size_t sparse_factor = 70;
-    VECTOR(Benchmark, T) search { insert };
-    VECTOR(Benchmark, T) erase { search };
-    VECTOR(Benchmark, T) sparse {
-        erase
-            .MakeConstView()
-            .CutBeforeConst((sparse_factor * erase.size()) / 100)
-    };
-    VECTOR(Benchmark, T) dense {
-        erase
-            .MakeConstView()
-            .CutStartingAt(sparse.size())
-    };
-
-    std::shuffle(std::begin(erase), std::end(erase), rand);
-    std::shuffle(std::begin(search), std::end(search), rand);
-    std::shuffle(std::begin(dense), std::end(dense), rand);
-    std::shuffle(std::begin(sparse), std::end(sparse), rand);
-
-    VECTOR(Benchmark, u32) shuffled;
-    shuffled.resize_Uninitialized(unkown.size());
-    forrange(i, 0, checked_cast<u32>(unkown.size()))
-        shuffled[i] = i;
-    std::shuffle(std::begin(shuffled), std::end(shuffled), rand);
-
     using namespace BenchmarkContainers;
 
-    using FInputData = TInputData<T>;
-    FInputData input{ insert, search, unkown, erase, dense, sparse, shuffled };
-    Assert_NoAssume(insert.size());
-    Assert_NoAssume(search.size());
-    Assert_NoAssume(unkown.size());
-    Assert_NoAssume(erase.size());
-    Assert_NoAssume(dense.size());
-    Assert_NoAssume(sparse.size());
-    Assert_NoAssume(shuffled.size() == unkown.size());
+    // prepare 128 different samples with random distribution and 10% jitter
+
+    const size_t jitter = (dim * 10 / 100);
+
+    TSamplePool<T> pool;
+    pool.Generate(128, dim, jitter, rand, generator);
 
     // prepare benchmark table
 
     auto bm = FBenchmark::MakeTable(
         name,
+#if 1
         construct_noreserve_t{},
         construct_reserve_t{},
         copy_empty_t{},
@@ -608,97 +830,92 @@ static void Benchmark_Containers_Exhaustive_(
         find_dense_neg_t{},
         find_sparse_pos_t{},
         find_sparse_neg_t{},
-        find_cmiss_pos_t{},
-        find_cmiss_neg_t{},
-        find_erase_dns_t{},
-        find_erase_spr_t{},
         erase_dense_pos_t{},
         erase_dense_neg_t{},
         erase_sparse_pos_t{},
         erase_sparse_neg_t{},
+        find_erase_dns_t{},
+        find_erase_spr_t{},
         clear_dense_t{},
-        clear_sparse_t{} );
+        clear_sparse_t{});
+#else
+        erase_dense_pos_t{},
+        erase_dense_neg_t{},
+        erase_sparse_pos_t{},
+        erase_sparse_neg_t{});
+#endif
 
-    tests(bm, input);
+    tests(bm, &pool);
 
-    FBenchmark::Log(bm);
+    FBenchmark::FlushAndLog(bm);
 
     {
         const FFilename fname{ StringFormat(L"Saved:/Benchmark/{0}/Containers/{1}.csv",
             MakeStringView(WSTRINGIZE(BUILDCONFIG)), name) };
 
         FStringBuilder sb;
-        FBenchmark::Csv(bm, sb);
-        FString s{ sb.ToString() };
-        VFS_WriteAll(fname, s.MakeView().RawView(), EAccessPolicy::Truncate_Binary|EAccessPolicy::Roll);
+        FBenchmark::StackedBarCharts(bm, sb);
+        VFS_WriteAll(fname, sb.Written().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll);
     }
 #endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
 }
 //----------------------------------------------------------------------------
 namespace BenchmarkContainers {
-template <typename T>
-struct TFindData {
-    STATIC_CONST_INTEGRAL(u32, Entropy, 128);
-    struct FSeries {
-        TMemoryView<const T> Insert;
-        TMemoryView<const T> Unknown;
-    };
-    FSeries Series[Entropy];
-    TMemoryView<const u32> Shuffled;
-
-    template <typename _Container, typename _Lambda>
-    void MakeTables(const _Container& archetype, u32 n, _Lambda&& lambda) const {
-        Assert_NoAssume(Shuffled.size() >= n);
-
-        STACKLOCAL_STACK(_Container, tables, Entropy);
-        forrange(i, 0, Entropy) {
-            Assert_NoAssume(Series[i].Insert.size() >= n);
-
-            tables.Push(archetype);
-            auto& h = *tables.Peek();
-
-            h.reserve(n);
-            for (const auto& it : Series[i].Insert.CutBefore(n))
-                h.insert(it);
-        }
-
-        lambda(tables.MakeConstView());
-    }
-};
-class findspeed_dense_pos_t : public FBenchmark {
+class findspeed_dense_pos_t : public FContainerBenchmark {
 public:
-    findspeed_dense_pos_t(size_t n, const FStringView& name) : FBenchmark{ name } {
+    findspeed_dense_pos_t(size_t n, const FStringView& name)
+    :   FContainerBenchmark{ name } {
         InputDim = checked_cast<u32>(n);
     }
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TFindData<T>& input) const {
-        input.MakeTables(archetype, InputDim, [&](const TMemoryView<const _Container>& tables) {
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeTablesN(archetype, InputDim, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
             for (auto _ : state) {
-                u32 hit = 0;
-                const u32* pIndex = input.Shuffled.data();
-                forrange(i, 0, InputDim) {
-                    const u32 hi = *(pIndex++);
-                    hit += u32(uintptr_t(&*(tables[hi].find(input.Series[hi].Insert[i]))));
+                const auto& s = series.Next();
+                const auto& c = tables[s.SeriesIndex];
+
+                state.ResetTiming();
+
+                volatile uintptr_t hit = 0;
+                for (const auto& it : pool->MakeSamples(s.Insert.MakeConstView().CutBefore(InputDim))) {
+                    auto jt = c.find(it);
+                    FContainerBenchmark::DoNotOptimizeLoop(jt);
+                    hit += uintptr_t(&*jt);
                 }
+
                 FBenchmark::DoNotOptimize(hit);
             }
         });
     }
 };
-class findspeed_dense_neg_t : public FBenchmark {
+class findspeed_dense_neg_t : public FContainerBenchmark {
 public:
-    findspeed_dense_neg_t(size_t n, const FStringView& name) : FBenchmark{ name } {
+    findspeed_dense_neg_t(size_t n, const FStringView& name)
+    :   FContainerBenchmark{ name } {
         InputDim = checked_cast<u32>(n);
     }
     template <typename _Container, typename T>
-    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TFindData<T>& input) const {
-        input.MakeTables(archetype, InputDim, [&](const TMemoryView<const _Container>& tables) {
+    void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
+        pool->MakeTablesN(archetype, InputDim, [&](const TMemoryView<_Container>& tables) {
+            auto series = pool->MakeSeries();
+
             for (auto _ : state) {
-                const u32* pIndex = input.Shuffled.data();
-                forrange(i, 0, InputDim) {
-                    const u32 hi = *(pIndex++);
-                    FBenchmark::DoNotOptimize(tables[hi].find(input.Series[hi].Unknown[i]));
+                const auto& s = series.Next();
+                const auto& c = tables[s.SeriesIndex];
+
+                state.ResetTiming();
+
+                volatile u32 hit = 0;
+                const auto cend = c.end();
+                for (const auto& it : pool->MakeSamples(s.Unknown.MakeConstView().CutBefore(InputDim))) {
+                    auto jt = c.find(it);
+                    FBenchmark::DoNotOptimizeLoop(jt);
+                    if (jt != cend) hit++;
                 }
+
+                FBenchmark::DoNotOptimize(hit);
             }
         });
     }
@@ -708,7 +925,7 @@ template <typename _Test, typename T, typename _Containers>
 static void Benchmark_Containers_FindSpeed_Impl_(
     const FStringView& name,
     _Containers& tests,
-    const BenchmarkContainers::TFindData<T>& input ) {
+    const BenchmarkContainers::TSamplePool<T>& pool ) {
     auto bm = FBenchmark::MakeTable(
         name,
         _Test{ 4, "4" },
@@ -756,6 +973,7 @@ static void Benchmark_Containers_FindSpeed_Impl_(
         _Test{ 484, "484" }
 #if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         ,
+        _Test{ 506, "506" },
         _Test{ 529, "529" },
         _Test{ 552, "552" },
         _Test{ 576, "576" },
@@ -764,7 +982,6 @@ static void Benchmark_Containers_FindSpeed_Impl_(
         _Test{ 650, "650" },
         _Test{ 676, "676" },
         _Test{ 702, "702" },
-        _Test{ 506, "506" },
         _Test{ 729, "729" },
         _Test{ 756, "756" },
         _Test{ 784, "784" },
@@ -783,25 +1000,37 @@ static void Benchmark_Containers_FindSpeed_Impl_(
 #endif //!WITH_PPE_ASSERT
     );
 
-    tests(bm, input);
+    tests(bm, &pool);
 
-    FBenchmark::Log(bm);
+    FBenchmark::FlushAndLog(bm);
 
+#if 1
     {
         const FFilename fname{ StringFormat(L"Saved:/Benchmark/{0}/Containers/{1}.csv",
             MakeStringView(WSTRINGIZE(BUILDCONFIG)), name) };
 
         FStringBuilder sb;
-        FBenchmark::Csv(bm, sb);
-        FString s{ sb.ToString() };
-        VFS_WriteAll(fname, s.MakeView().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll);
+        FBenchmark::StackedBarCharts(bm, sb);
+        VFS_WriteAll(fname, sb.Written().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll);
     }
+#else
+    auto graph = [&](const FWStringView& feature, auto projector) {
+        const FFilename fname{ StringFormat(L"Saved:/Benchmark/{0}/Containers/{1}_{2}.csv",
+            MakeStringView(WSTRINGIZE(BUILDCONFIG)), name, feature) };
+
+        FStringBuilder sb;
+        FBenchmark::Csv(bm, sb, projector);
+        VFS_WriteAll(fname, sb.Written().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll);
+    };
+
+    graph(L"mean", [](const auto& run) { return run.Mean; });
+    graph(L"median", [](const auto& run) { return run.Median; });
+    graph(L"mode", [](const auto& run) { return run.Mode; });
+#endif
 }
 template <typename T, typename _Generator, typename _Containers>
 static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&& generator, _Containers&& tests) {
-    constexpr size_t dim = 4200;
-
-    LOG(Benchmark, Emphasis, L"Running find benchmarks <{0}> with {1} tests :", name, dim);
+    LOG(Benchmark, Emphasis, L"Running find speed benchmarks <{0}> :", name);
 
     // mt19937 has better distribution than FRandomGenerator for generating benchmark data
     std::random_device rdevice;
@@ -810,39 +1039,18 @@ static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&
 
     using namespace BenchmarkContainers;
 
-    CONSTEXPR const size_t samplesPerSeries = dim * 2;
-    CONSTEXPR const size_t totalSamples = samplesPerSeries * TFindData<T>::Entropy;
+    // prepare 128 different sample series with random distribution
 
-    VECTOR(Benchmark, T) samples;
-    samples.reserve_AssumeEmpty(totalSamples);
-    forrange(i, 0, totalSamples)
-        samples.emplace_back(generator(rand));
+    TSamplePool<T> pool;
+    pool.Generate(128, 2048, 0/* no jitter */, rand, generator);
 
-    std::shuffle(samples.begin(), samples.end(), rand);
-
-    VECTOR(Benchmark, u32) shuffled;
-    shuffled.resize_Uninitialized(dim);
-    forrange(i, 0, dim)
-        shuffled[i] = i % TFindData<T>::Entropy;
-    std::shuffle(shuffled.begin(), shuffled.end(), rand);
-
-    TFindData<T> input;
-    input.Shuffled = shuffled;
-
-    forrange(i, 0, TFindData<T>::Entropy) {
-        const size_t off = dim * 2 * i;
-        input.Series[i] = {
-            samples.MakeConstView().SubRange(off, dim),
-            samples.MakeConstView().SubRange(off + dim, dim) };
-    }
-
-    Benchmark_Containers_FindSpeed_Impl_<findspeed_dense_pos_t>(FString(name) + "_pos", tests, input);
-    Benchmark_Containers_FindSpeed_Impl_<findspeed_dense_neg_t>(FString(name) + "_neg", tests, input);
+    Benchmark_Containers_FindSpeed_Impl_<findspeed_dense_pos_t>(FString(name) + "_pos", tests, pool);
+    Benchmark_Containers_FindSpeed_Impl_<findspeed_dense_neg_t>(FString(name) + "_neg", tests, pool);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Generator>
-static void Test_PODSet_(const FString& name, const _Generator& generator) {
-    auto containers_large = [](auto& bm, const auto& input) {
+static void Test_PODSet_(const FString& name, const _Generator& samples) {
+    auto containers_large = [](auto& bm, const auto* input) {
         /*{ // very buggy
             typedef TCompactHashSet<T> hashtable_type;
 
@@ -852,24 +1060,24 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TDenseHashSet2<T> set;
-            bm.Run("DenseHashSet2", set, input);
+            bm.Run("Dense2", set, input);
         }
         {
             TDenseHashSet2<THashMemoizer<T>> set;
-            bm.Run("DenseHashSet2_M", set, input);
+            bm.Run("Dense2_M", set, input);
         }
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if 0 && !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TDenseHashSet3<T> set;
-            bm.Run("DenseHashSet3", set, input);
+            bm.Run("Dense3", set, input);
         }
         {
             TDenseHashSet3<THashMemoizer<T>> set;
-            bm.Run("DenseHashSet3_M", set, input);
+            bm.Run("Dense3_M", set, input);
         }
 #endif
-#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER //%_NOCOMMIT%
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             THopscotchHashSet<T> set;
             bm.Run("Hopscotch", set, input);
@@ -881,9 +1089,21 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
+            THopscotchHashSet2<T> set;
+            bm.Run("Hopscotch2", set, input);
+        }
+        {
+            THopscotchHashSet2<THashMemoizer<T>> set;
+            bm.Run("Hopscotch2_M", set, input);
+        }
+#endif
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+        {
             THashSet<T> set;
             bm.Run("HashSet", set, input);
         }
+#endif
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             std::unordered_set<T, Meta::THash<T>, Meta::TEqualTo<T>, ALLOCATOR(Container, T)> set;
             bm.Run("unordered_set", set, input);
@@ -891,7 +1111,7 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
 #endif
     };
 
-    auto containers_all = [&](auto& bm, const auto& input) {
+    auto containers_all = [&](auto& bm, const auto* input) {
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             typedef TVector<T> vector_type;
@@ -927,17 +1147,22 @@ static void Test_PODSet_(const FString& name, const _Generator& generator) {
         }
         {
             TFixedSizeHashSet<T, 2048> set;
-            bm.Run("FixedSizeHashSet", set, input);
+            bm.Run("FixedSize", set, input);
         }
 #endif
         containers_large(bm, input);
     };
+
+    using namespace BenchmarkContainers;
+
+    auto generator = TSamplePool<T>::MakeUniqueGenerator(samples);
 
     Benchmark_Containers_FindSpeed_<T>(name + "_find", generator, containers_all);
 
     Benchmark_Containers_Exhaustive_<T>(name + "_20", 20, generator, containers_all);
     Benchmark_Containers_Exhaustive_<T>(name + "_50", 50, generator, containers_all);
     Benchmark_Containers_Exhaustive_<T>(name + "_200", 200, generator, containers_large);
+
 #ifndef WITH_PPE_ASSERT
     Benchmark_Containers_Exhaustive_<T>(name + "_2000", 2000, generator, containers_large);
     Benchmark_Containers_Exhaustive_<T>(name + "_20000", 20000, generator, containers_large);
@@ -953,7 +1178,7 @@ static void Test_StringSet_() {
         *pch = Charset[rnd.Next(lengthof(Charset) - 1/* null char */)];
     });
 
-    auto generator = [&](auto& rnd) {
+    auto samples = [&](auto& rnd) {
         constexpr size_t MinSize = 5;
         constexpr size_t MaxSize = 60;
 
@@ -963,7 +1188,12 @@ static void Test_StringSet_() {
         return FStringView(&stringPool[o], n);
     };
 
-    auto containers = [](auto& bm, const auto& input) {
+    using namespace BenchmarkContainers;
+
+    auto generator = TSamplePool<FStringView>::MakeUniqueGenerator(samples,
+        STRINGVIEW_HASHSET(Benchmark, ECase::Sensitive){} );
+
+    auto containers = [](auto& bm, const auto* input) {
         /*{
             typedef TDenseHashSet<
                 FStringView,
@@ -972,7 +1202,7 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("DenseHashSet", set, input);
+            bm.Run("Dense", set, input);
         }*//*
         {
             typedef TDenseHashSet<
@@ -984,7 +1214,7 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("DenseHashSet_M", set, input);
+            bm.Run("Dense_M", set, input);
         }*/
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
@@ -995,7 +1225,7 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("DenseHashSet2", set, input);
+            bm.Run("Dense2", set, input);
         }
         {
             typedef TDenseHashSet2<
@@ -1007,10 +1237,10 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("DenseHashSet2_M", set, input);
+            bm.Run("Dense2_M", set, input);
         }
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if 0 && !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             typedef TDenseHashSet3<
                 FStringView,
@@ -1034,7 +1264,7 @@ static void Test_StringSet_() {
             bm.Run("DenseHashSet3_M", set, input);
         }
 #endif
-#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER %_NOCOMMIT%
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             typedef THopscotchHashSet<
                 FStringView,
@@ -1043,10 +1273,8 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("HopscotchHashSet", set, input);
+            bm.Run("Hopscotch", set, input);
         }
-#endif
-#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER %_NOCOMMIT%
         {
             typedef THopscotchHashSet <
                 THashMemoizer<
@@ -1057,8 +1285,44 @@ static void Test_StringSet_() {
             >   hashtable_type;
 
             hashtable_type set;
-            bm.Run("HopscotchHashSet_M", set, input);
+            bm.Run("Hopscotch_M", set, input);
         }
+#endif
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER %_NOCOMMIT%
+        {
+            THopscotchHashSet2<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   set;
+            bm.Run("Hopscotch2", set, input);
+        }
+        {
+            THopscotchHashSet2<
+                THashMemoizer<
+                    FStringView,
+                    TStringViewHasher<char, ECase::Sensitive>,
+                    TStringViewEqualTo<char, ECase::Sensitive>
+                >
+            >   set;
+            bm.Run("Hopscotch2_M", set, input);
+        }
+        /* much slower
+        {
+            struct FGoodOAAT {
+                hash_t operator ()(const FStringView& s) const NOEXCEPT {
+                    return FPlatformHash::GoodOAAT(s.data(), s.SizeInBytes(), PPE_HASH_VALUE_SEED_32);
+                }
+            };
+
+            THopscotchHashSet2<
+                FStringView,
+                FGoodOAAT,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   set;
+            bm.Run("Hopscotch2_OAAT", set, input);
+        }
+        */
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
@@ -1131,11 +1395,11 @@ void Test_Containers() {
     Test_StealFromDifferentAllocator_();
 
 #if USE_PPE_BENCHMARK
-    Test_StringSet_();
     Test_PODSet_<u32>("u32", [](auto& rnd) { return u32(rnd()); });
     Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
     Test_PODSet_<u128>("u128", [](auto& rnd) { return u128{ u64(rnd()), u64(rnd()) }; });
     Test_PODSet_<u256>("u256", [](auto& rnd) { return u256{ { u64(rnd()), u64(rnd()) }, { u64(rnd()), u64(rnd()) } }; });
+    Test_StringSet_();
 #endif
 
     FLUSH_LOG();
