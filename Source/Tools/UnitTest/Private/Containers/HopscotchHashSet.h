@@ -191,7 +191,6 @@ public:
 
         const u32 mask = (_capacity - 1);
         const u32 hash = hash_key_(key);
-        const u32 bk = (hash & mask);
 
         Assert_NoAssume(_capacity == find_(mask, hash, key));
 
@@ -203,7 +202,6 @@ public:
 
         const u32 mask = (_capacity - 1);
         const u32 hash = hash_key_(key);
-        const u32 bk = (hash & mask);
 
         return iterator{ *this, find_(mask, hash, key) };
     }
@@ -213,7 +211,6 @@ public:
 
         const u32 mask = (_capacity - 1);
         const u32 hash = hash_key_(key);
-        const u32 bk = (hash & mask);
 
         return const_iterator{ *this, find_(mask, hash, key) };
     }
@@ -368,9 +365,8 @@ private:
         while (m) {
             const u32 b = (hash + m.PopFront_AssumeNotEmpty()) & mask;
             Assert_NoAssume(states[b].Filled);
-            if (key_equal()(_elements[b], key)) {
+            if (key_equal()(_elements[b], key))
                 return b;
-            }
         }
 
         return _capacity;
