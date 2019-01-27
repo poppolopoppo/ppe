@@ -89,6 +89,14 @@ public:
         CopyTo(TMemoryView<Meta::TRemoveConst<T>>(dst + offset, _size));
     }
 
+    TMemoryView<T> Eat(size_t n) {
+        Assert_NoAssume(n <= _size);
+        const TMemoryView<T> eaten{ _storage, n };
+        _storage += n;
+        _size -= n;
+        return eaten;
+    }
+
     TMemoryView<T> Slice(size_t index, size_t stride) const;
     TMemoryView< Meta::TAddConst<T> > SliceConst(size_t index, size_t stride) const;
 
