@@ -20,12 +20,15 @@ struct TBitMask {
 
     word_t Data;
 
-    operator word_t () const NOEXCEPT { return Data; }
+    static CONSTEXPR TBitMask SetFirstN(word_t n) NOEXCEPT { return TBitMask{ GAllMask >> (GBitCount - n) }; }
+    static CONSTEXPR TBitMask SetLastN(word_t n)  NOEXCEPT { return TBitMask{ ~SetFirstN(GBitCount - n)   }; }
+
+    CONSTEXPR operator word_t () const NOEXCEPT { return Data; }
 
     size_t Count() const NOEXCEPT { return FPlatformMaths::popcnt(Data); }
 
     template <size_t _Index>
-    bool Get() const NOEXCEPT {
+    CONSTEXPR bool Get() const NOEXCEPT {
         STATIC_ASSERT(_Index < GBitCount);
         return (0 != (Data & (word_t(1) << _Index)));
     }
@@ -36,24 +39,24 @@ struct TBitMask {
     void SetTrue(size_t index) { Assert(index < GBitCount); Data |= GOne<<index; }
     void SetFalse(size_t index) { Assert(index < GBitCount); Data &= ~(GOne<<index); }
 
-    bool operator [](size_t index) const { return Get(index); }
+    CONSTEXPR bool operator [](size_t index) const { return Get(index); }
 
-    bool AllTrue() const NOEXCEPT { return ((Data & GAllMask) == GAllMask); }
-    bool AllFalse() const NOEXCEPT { return ((Data & GAllMask) == 0); }
+    CONSTEXPR bool AllTrue() const NOEXCEPT { return ((Data & GAllMask) == GAllMask); }
+    CONSTEXPR bool AllFalse() const NOEXCEPT { return ((Data & GAllMask) == 0); }
 
-    bool AnyTrue() const NOEXCEPT { return (Data != 0); }
-    bool AnyFalse() const NOEXCEPT { return (Data != GAllMask); }
+    CONSTEXPR bool AnyTrue() const NOEXCEPT { return (Data != 0); }
+    CONSTEXPR bool AnyFalse() const NOEXCEPT { return (Data != GAllMask); }
 
-    void ResetAll(bool value) NOEXCEPT { Data = (value ? GAllMask : 0); }
+    CONSTEXPR void ResetAll(bool value) NOEXCEPT { Data = (value ? GAllMask : 0); }
 
-    TBitMask Invert() const NOEXCEPT { return TBitMask{ ~Data }; }
+    CONSTEXPR TBitMask Invert() const NOEXCEPT { return TBitMask{ ~Data }; }
 
-    TBitMask operator &(TBitMask other) const NOEXCEPT { return TBitMask{ Data & other.Data }; }
-    TBitMask operator |(TBitMask other) const NOEXCEPT { return TBitMask{ Data | other.Data }; }
-    TBitMask operator ^(TBitMask other) const NOEXCEPT { return TBitMask{ Data ^ other.Data }; }
+    CONSTEXPR TBitMask operator &(TBitMask other) const NOEXCEPT { return TBitMask{ Data & other.Data }; }
+    CONSTEXPR TBitMask operator |(TBitMask other) const NOEXCEPT { return TBitMask{ Data | other.Data }; }
+    CONSTEXPR TBitMask operator ^(TBitMask other) const NOEXCEPT { return TBitMask{ Data ^ other.Data }; }
 
-    TBitMask operator <<(word_t lshift) const NOEXCEPT { return TBitMask{ Data << lshift }; }
-    TBitMask operator >>(word_t rshift) const NOEXCEPT { return TBitMask{ Data >> rshift }; }
+    CONSTEXPR TBitMask operator <<(word_t lshift) const NOEXCEPT { return TBitMask{ Data << lshift }; }
+    CONSTEXPR TBitMask operator >>(word_t rshift) const NOEXCEPT { return TBitMask{ Data >> rshift }; }
 
     word_t FirstBitSet_AssumeNotEmpty() const NOEXCEPT { return FPlatformMaths::tzcnt(Data); }
     word_t LastBitSet_AssumeNotEmpty() const NOEXCEPT { return FPlatformMaths::lzcnt(Data); }
@@ -74,26 +77,6 @@ struct TBitMask {
         const word_t back = (Data ? FPlatformMaths::lzcnt(Data) : INDEX_NONE);
         Data &= ~(GOne<<back); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return (back + 1);
-    }
-
-    template <typename _Func> // LSB to MSB order
-    void ForEach(_Func&& each_index) const NOEXCEPT {
-        if (AllFalse()) return;
-        for (word_t w = Data; w; ) {
-            const word_t index = FPlatformMaths::tzcnt(w);
-            w &= ~(GOne<<index);
-            each_index(index);
-        }
-    }
-
-    template <typename _Func> // MSB to LSB order
-    void ReverseForEach(_Func&& each_index) const NOEXCEPT {
-        if (AllFalse()) return;
-        for (word_t w = Data; w; ) {
-            const word_t index = FPlatformMaths::lzcnt(w);
-            w &= ~(GOne<<index);
-            each_index(index);
-        }
     }
 };
 //----------------------------------------------------------------------------
