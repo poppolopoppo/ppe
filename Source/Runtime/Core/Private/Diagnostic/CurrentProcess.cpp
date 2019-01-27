@@ -28,6 +28,7 @@ FCurrentProcess::FCurrentProcess(void* appHandle, int nShowCmd, const wchar_t* f
     const size_t dirSep = _fileName.find_last_of(L"\\/");
     AssertRelease(INDEX_NONE != dirSep);
     _directory.assign(_fileName.begin(), _fileName.begin() + dirSep);
+    _executableName.assign(_fileName.begin() + dirSep + 1, _fileName.end());
 
     Verify(FPlatformFile::NormalizePath(_fileName));
     Verify(FPlatformFile::NormalizePath(_directory));

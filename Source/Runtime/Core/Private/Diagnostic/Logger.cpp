@@ -516,19 +516,26 @@ void FLogger::Start() {
 
     FUserLogger::Create();
 
-    RegisterLogger(
-        FCurrentProcess::Get().StartedWithDebugger()
-            ? FLogger::MakeOutputDebug()
-            : FLogger::MakeStdout() );
+    const auto& proc = FCurrentProcess::Get();
 
-    const FWString logPath = FPlatformFile::JoinPath({
-        FCurrentProcess::Get().SavedPath(), L"Log" });
+    // don't create a log file when running with an attached debugger
+    if (proc.StartedWithDebugger()) {
+        RegisterLogger(MakeOutputDebug());
+    }
+    else {
+        RegisterLogger(MakeStdout());
 
-    VerifyRelease(FPlatformFile::CreateDirectoryRecursively(*logPath, nullptr));
+        const FWString logPath = FPlatformFile::JoinPath({
+        proc.SavedPath(), L"Log", MakeStringView(WSTRINGIZE(BUILDCONFIG)) });
 
-    const FWString logFile = FPlatformFile::JoinPath({ logPath, L"PPE.log" });
+        VerifyRelease(FPlatformFile::CreateDirectoryRecursively(*logPath, nullptr));
 
-    RegisterLogger(FLogger::MakeRollFile(*logFile));
+        const FWString logFile = FPlatformFile::JoinPath({
+            logPath, proc.ExecutableName() + L".log" });
+
+        RegisterLogger(FLogger::MakeRollFile(*logFile));
+
+    }
 
     IF_CONSTEXPR(USE_PPE_MEMORY_DEBUGGING) {
         SetupLoggerImpl_(&FUserLogger::Get());
