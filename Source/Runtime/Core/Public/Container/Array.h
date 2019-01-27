@@ -61,9 +61,9 @@ struct TArray {
     constexpr pointer data() { return (&Data[0]); }
     constexpr const_pointer data() const { return (&Data[0]); }
 
-    TMemoryView<T> MakeView() { return MakeView(Data); }
-    TMemoryView<const T> MakeView() const { return MakeView(Data); }
-    TMemoryView<const T> MakeConstView() const { return MakeView(Data); }
+    TMemoryView<T> MakeView() { return PPE::MakeView(Data); }
+    TMemoryView<const T> MakeView() const { return PPE::MakeView(Data); }
+    TMemoryView<const T> MakeConstView() const { return PPE::MakeView(Data); }
 
     inline friend bool operator ==(const TArray& lhs, const TArray& rhs) {
         return std::equal(lhs.begin(), lhs.end(), rhs.Data);
