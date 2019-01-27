@@ -17,6 +17,7 @@ public:
 
     ~FCurrentProcess();
 
+    const FWString& ExecutableName() const { return _executableName; }
     const FWString& FileName() const { return _fileName; }
     const FWString& Directory() const { return _directory; }
     TMemoryView<const FWString> Args() const { return MakeView(_args); }
@@ -58,6 +59,7 @@ private:
     friend class Meta::TSingleton<FCurrentProcess>;
     FCurrentProcess(void* appHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv);
 
+    FWString _executableName;
     FWString _fileName;
     FWString _directory;
     TUniqueArray<FWString> _args;
