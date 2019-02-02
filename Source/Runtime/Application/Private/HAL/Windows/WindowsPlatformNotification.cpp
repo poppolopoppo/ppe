@@ -227,8 +227,8 @@ private:
 
         const FThreadContextStartup threadStartup("WindowsBackgroundSystray", PPE_THREADTAG_OTHER);
 
-        threadStartup.Context().SetAffinityMask(FPlatformThread::AllButTwoFirstsAffinity);
-        threadStartup.Context().SetPriority(EThreadPriority::Lowest);
+        threadStartup.Context().SetAffinityMask(FPlatformThread::SecondaryThreadAffinity());
+        threadStartup.Context().SetPriority(EThreadPriority::Idle);
 
         FPlatformWindow hiddenWindow;
         {

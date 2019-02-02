@@ -12,6 +12,18 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+template <typename _Pool>
+static void CreateThreadPool_(const FStringView& name, size_t threadTag, const FPlatformThread::FThreadGroupInfo& info) {
+    _Pool::Create(name, threadTag, info.NumWorkers, info.Priority);
+    _Pool::Get().Start(MakeView(info.Affinities).CutBefore(info.NumWorkers));
+}
+//----------------------------------------------------------------------------
+template <typename _Pool>
+static void DestroyThreadPool_() {
+    _Pool::Get().Shutdown();
+    _Pool::Destroy();
+}
+//----------------------------------------------------------------------------
 static void ReleaseMemoryInWorkerThreads_(FTaskManager& taskManager) {
     taskManager.BroadcastAndWaitFor(
         [](ITaskContext&) {
@@ -25,14 +37,11 @@ static void ReleaseMemoryInWorkerThreads_(FTaskManager& taskManager) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FGlobalThreadPool::Create() {
-    const auto info = FPlatformThread::GlobalThreadsInfo();
-    parent_type::Create("Global", PPE_THREADTAG_WORKER, info.NumWorkers, EThreadPriority::Normal);
-    parent_type::Get().Start(MakeView(info.Affinities).CutBefore(info.NumWorkers));
+    CreateThreadPool_<parent_type>("Global", PPE_THREADTAG_WORKER, FPlatformThread::GlobalThreadsInfo());
 }
 //----------------------------------------------------------------------------
 void FGlobalThreadPool::Destroy() {
-    parent_type::Get().Shutdown();
-    parent_type::Destroy();
+    DestroyThreadPool_<parent_type>();
 }
 //----------------------------------------------------------------------------
 void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
@@ -42,15 +51,11 @@ void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Nor
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FIOThreadPool::Create() {
-    // IO should be operated in 2 threads max to prevent slow seeks :
-    const auto info = FPlatformThread::IOThreadsInfo();
-    parent_type::Create("IO", PPE_THREADTAG_IO, info.NumWorkers, EThreadPriority::Highest);
-    parent_type::Get().Start(MakeView(info.Affinities).CutBefore(info.NumWorkers));
+    CreateThreadPool_<parent_type>("IO", PPE_THREADTAG_IO, FPlatformThread::IOThreadsInfo());
 }
 //----------------------------------------------------------------------------
 void FIOThreadPool::Destroy() {
-    parent_type::Get().Shutdown();
-    parent_type::Destroy();
+    DestroyThreadPool_<parent_type>();
 }
 //----------------------------------------------------------------------------
 void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
@@ -60,14 +65,11 @@ void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Norma
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FHighPriorityThreadPool::Create() {
-    const auto info = FPlatformThread::HighPriorityThreadsInfo();
-    parent_type::Create("HighPriority", PPE_THREADTAG_HIGHPRIORITY, info.NumWorkers, EThreadPriority::AboveNormal);
-    parent_type::Get().Start(MakeView(info.Affinities).CutBefore(info.NumWorkers));
+    CreateThreadPool_<parent_type>("HighPriority", PPE_THREADTAG_HIGHPRIORITY, FPlatformThread::HighPriorityThreadsInfo());
 }
 //----------------------------------------------------------------------------
 void FHighPriorityThreadPool::Destroy() {
-    parent_type::Get().Shutdown();
-    parent_type::Destroy();
+    DestroyThreadPool_<parent_type>();
 }
 //----------------------------------------------------------------------------
 void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
@@ -77,14 +79,11 @@ void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPrior
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FBackgroundThreadPool::Create() {
-    const auto info = FPlatformThread::BackgroundThreadsInfo();
-    parent_type::Create("Background", PPE_THREADTAG_BACKGROUND, info.NumWorkers, EThreadPriority::BelowNormal);
-    parent_type::Get().Start(MakeView(info.Affinities).CutBefore(info.NumWorkers));
+    CreateThreadPool_<parent_type>("Background", PPE_THREADTAG_BACKGROUND, FPlatformThread::BackgroundThreadsInfo());
 }
 //----------------------------------------------------------------------------
 void FBackgroundThreadPool::Destroy() {
-    parent_type::Get().Shutdown();
-    parent_type::Destroy();
+    DestroyThreadPool_<parent_type>();
 }
 //----------------------------------------------------------------------------
 void AsyncBackround(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {

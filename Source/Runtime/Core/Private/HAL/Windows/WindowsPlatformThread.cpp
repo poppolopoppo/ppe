@@ -6,8 +6,33 @@
 
 #include "HAL/Windows/LastError.h"
 #include "HAL/Windows/WindowsPlatformDebug.h"
+#include "HAL/Windows/WindowsPlatformMisc.h"
 
 namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static FWindowsPlatformThread::FAffinityMask LogicalAffinityMask_(size_t coreMask) {
+    const size_t numCores = FWindowsPlatformMisc::NumCores();
+    const size_t numThreads = FWindowsPlatformMisc::NumCoresWHyperThreading();
+    Assert_NoAssume(numCores <= numThreads);
+
+    // handles hyper threading (HT) :
+    //
+    //  CORE#0 | CORE#1 | CORE#2 | CORE#3 | PHYSICAL CORES
+    //  ------------------------------------------------------
+    //   PU#0  |  PU#1  |  PU#2  |  PU#3  | LOGICAL THREADS
+    //   PU#4  |  PU#5  |  PU#6  |  PU#7  |
+
+    FWindowsPlatformThread::FAffinityMask m = coreMask & ((1ul << numCores) - 1);
+    return ((numCores < numThreads)
+        ? m | (m << (numThreads - numCores))
+        : m );
+}
+//----------------------------------------------------------------------------
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -19,6 +44,14 @@ void FWindowsPlatformThread::OnThreadStart() {
 //----------------------------------------------------------------------------
 void FWindowsPlatformThread::OnThreadShutdown() {
     NOOP(); // #TODO ?
+}
+//----------------------------------------------------------------------------
+FWindowsPlatformThread::FAffinityMask FWindowsPlatformThread::MainThreadAffinity() {
+    return LogicalAffinityMask_(1ul); // only the first core, with HT
+}
+//----------------------------------------------------------------------------
+FWindowsPlatformThread::FAffinityMask FWindowsPlatformThread::SecondaryThreadAffinity() {
+    return LogicalAffinityMask_(~1ul); // all but first core, with HT
 }
 //----------------------------------------------------------------------------
 auto FWindowsPlatformThread::AffinityMask() -> FAffinityMask {
@@ -110,33 +143,37 @@ void FWindowsPlatformThread::SetPriority(EThreadPriority priority) {
 //----------------------------------------------------------------------------
 auto FWindowsPlatformThread::BackgroundThreadsInfo() -> FThreadGroupInfo {
     FThreadGroupInfo info;
-    info.NumWorkers = 2;
-    info.Affinities[0] = AllButTwoFirstsAffinity;
-    info.Affinities[1] = AllButTwoFirstsAffinity;
+    info.Priority = EThreadPriority::Lowest;
+    info.NumWorkers = Min(2, FWindowsPlatformMisc::NumCores() / 2);
+    forrange(i, 0, FAffinityMask(info.NumWorkers))
+        info.Affinities[i] = SecondaryThreadAffinity();
     return info;
 }
 //----------------------------------------------------------------------------
 auto FWindowsPlatformThread::GlobalThreadsInfo() -> FThreadGroupInfo {
     FThreadGroupInfo info;
-    info.NumWorkers = Max(std::thread::hardware_concurrency() - 2ul, 1ul);
+    info.Priority = EThreadPriority::Normal;
+    info.NumWorkers = Max(FWindowsPlatformMisc::NumCores() - 1ul, 1ul);
     forrange(i, 0, FAffinityMask(info.NumWorkers))
-        info.Affinities[i] = FAffinityMask(1) << (2ul + i);
+        info.Affinities[i] = LogicalAffinityMask_(1ull << (i + 1ul));
     return info;
 }
 //----------------------------------------------------------------------------
 auto FWindowsPlatformThread::HighPriorityThreadsInfo() -> FThreadGroupInfo {
     FThreadGroupInfo info;
-    info.NumWorkers = Min(std::thread::hardware_concurrency(), size_t(PPE_MAX_NUMCPUCORE));
+    info.Priority = EThreadPriority::AboveNormal;
+    info.NumWorkers = Min(FWindowsPlatformMisc::NumCoresWHyperThreading(), size_t(PPE_MAX_NUMCPUCORE));
     forrange(i, 0, FAffinityMask(info.NumWorkers))
-        info.Affinities[i] = FAffinityMask(1) << i;
+        info.Affinities[i] = FAffinityMask(1ull << i);
     return info;
 }
 //----------------------------------------------------------------------------
 auto FWindowsPlatformThread::IOThreadsInfo() -> FThreadGroupInfo {
     FThreadGroupInfo info;
-    info.NumWorkers = 2;
-    info.Affinities[0] = AllButTwoFirstsAffinity;
-    info.Affinities[1] = AllButTwoFirstsAffinity;
+    info.Priority = EThreadPriority::Highest; // highest priority to be resumed asap
+    info.NumWorkers = 2; // IO should be operated in 2 threads max to prevent slow seeks
+    forrange(i, 0, FAffinityMask(info.NumWorkers))
+        info.Affinities[i] = FAffinityMask(~1ul); // all but first *thread*, let IO overlap on main thread with HT
     return info;
 }
 //----------------------------------------------------------------------------

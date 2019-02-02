@@ -155,7 +155,7 @@ void FThreadContext::SetAffinityMask(u64 mask) const {
     Assert(0 != mask);
     Assert(std::this_thread::get_id() == _threadId);
 
-    LOG(Thread, Debug, L"set thread {0} affinity mask to {1:X}", ThreadId(), mask);
+    LOG(Thread, Debug, L"set thread {0} affinity mask to {1:#16b}", ThreadId(), mask);
 
     FPlatformThread::SetAffinityMask(u64(mask));
 }
@@ -234,7 +234,7 @@ void FThreadContextStartup::Start_MainThread() {
 
     FThreadContext& mainThread = FThreadLocalContext_::Get();
     mainThread.SetPriority(EThreadPriority::Realtime);
-    mainThread.SetAffinityMask(FGenericPlatformThread::MainThreadAffinity);
+    mainThread.SetAffinityMask(FPlatformThread::MainThreadAffinity());
 }
 //----------------------------------------------------------------------------
 void FThreadContextStartup::Shutdown() {

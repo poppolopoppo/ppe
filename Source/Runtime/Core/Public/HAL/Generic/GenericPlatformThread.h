@@ -30,9 +30,9 @@ public: // must be defined for every platform
     STATIC_ASSERT(PPE_MAX_NUMCPUCORE <= sizeof(FAffinityMask)<<3); // should change FAffinityMask type otherwise
 
     STATIC_CONST_INTEGRAL(FAffinityMask, AllThreadsAffinity, FAffinityMask(-1));
-    STATIC_CONST_INTEGRAL(FAffinityMask, AllButTwoFirstsAffinity, AllThreadsAffinity & (~FAffinityMask(3)));
-    STATIC_CONST_INTEGRAL(FAffinityMask, MainThreadAffinity, FAffinityMask(1) << 0);
-    STATIC_CONST_INTEGRAL(FAffinityMask, SecondaryThreadAffinity, FAffinityMask(1) << 1);
+
+    static FAffinityMask MainThreadAffinity() = delete;
+    static FAffinityMask SecondaryThreadAffinity() = delete;
 
     static FAffinityMask AffinityMask() = delete; // get core affinities for current thread
     static void SetAffinityMask(FAffinityMask mask) = delete; // set core affinities for current thread
@@ -48,6 +48,7 @@ public: // must be defined for every platform
 
     struct FThreadGroupInfo {
         size_t NumWorkers = INDEX_NONE;
+        EThreadPriority Priority = EThreadPriority::Normal;
         FAffinityMask Affinities[PPE_MAX_NUMCPUCORE] = { AllThreadsAffinity };
     };
 

@@ -61,6 +61,7 @@ PPE_CORE_API const FThreadContext& CurrentThreadContext();
 inline bool IsInMainThread()        { return (PPE_THREADTAG_MAIN == CurrentThreadContext().Tag()); }
 inline bool IsInIOThread()          { return (PPE_THREADTAG_IO == CurrentThreadContext().Tag()); }
 inline bool IsInWorkerThread()      { return (PPE_THREADTAG_WORKER == CurrentThreadContext().Tag()); }
+inline bool IsInHighPriorityThread(){ return (PPE_THREADTAG_HIGHPRIORITY == CurrentThreadContext().Tag()); }
 inline bool IsInBackgroundThread()  { return (PPE_THREADTAG_BACKGROUND == CurrentThreadContext().Tag()); }
 inline bool IsInOtherThread()       { return (PPE_THREADTAG_OTHER == CurrentThreadContext().Tag()); }
 //----------------------------------------------------------------------------
