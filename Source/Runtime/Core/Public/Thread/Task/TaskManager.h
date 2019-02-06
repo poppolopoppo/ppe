@@ -101,6 +101,8 @@ public:
     void WaitForAll() const;
     void WaitForAll(int timeoutMS) const; // can timeout, recommended over WaitForAll() to avoid blocking the program
 
+    void ReleaseMemory(); // release potentially unused memory
+
     FTaskManagerImpl* Pimpl() const { return _pimpl.get(); }
 
 private:

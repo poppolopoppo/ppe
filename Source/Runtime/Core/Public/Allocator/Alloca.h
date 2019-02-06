@@ -24,6 +24,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#ifdef WITH_PPE_ASSERT
+PPE_CORE_API u32 AllocaDepth(); // used for detecting live alloca TLS blocks in debug
+#endif
+//----------------------------------------------------------------------------
 PPE_CORE_API void* Alloca(size_t size);
 //----------------------------------------------------------------------------
 PPE_CORE_API void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData);

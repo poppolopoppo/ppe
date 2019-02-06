@@ -73,7 +73,7 @@ struct TBitMask {
         return front;
     }
 
-    word_t PopBack() NOEXCEPT { // return 0 if empty of (MSB index + 1)
+    word_t PopBack() NOEXCEPT { // return 0 if empty or (MSB index + 1)
         const word_t back = (Data ? FPlatformMaths::lzcnt(Data) : INDEX_NONE);
         Data &= ~(GOne<<back); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return (back + 1);

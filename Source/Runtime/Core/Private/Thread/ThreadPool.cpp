@@ -2,6 +2,7 @@
 
 #include "Thread/ThreadPool.h"
 
+#include "Thread/Task/TaskFiberPool.h"
 #include "Thread/ThreadContext.h"
 
 #include "HAL/PlatformThread.h"
@@ -29,7 +30,9 @@ static void ReleaseMemoryInWorkerThreads_(FTaskManager& taskManager) {
         [](ITaskContext&) {
             malloc_release_cache_memory();
         },
-        ETaskPriority::Low/* lowest (safe) priority */);
+        ETaskPriority::High/* highest priority, to avoid block waiting for all the jobs queued before */);
+
+    taskManager.ReleaseMemory(); // release free fiber chunks
 }
 //----------------------------------------------------------------------------
 } //!namespace

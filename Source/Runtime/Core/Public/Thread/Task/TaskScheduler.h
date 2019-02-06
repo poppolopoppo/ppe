@@ -35,12 +35,15 @@
 
 #endif
 
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX': structure was padded due to alignment specifier
+
 namespace PPE {
 FWD_REFPTR(TaskCounter);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FTaskScheduler {
+class CACHELINE_ALIGNED FTaskScheduler {
 public:
     struct FTaskQueued {
 #if USE_PPE_THREAD_WORKSTEALINGQUEUE
@@ -67,6 +70,7 @@ public:
 
 private:
     const size_t _numWorkers;
+    const size_t _maxTasks;
 
 #if USE_PPE_THREAD_WORKSTEALINGQUEUE
     struct FPrioritySort_ {
@@ -74,14 +78,6 @@ private:
             return (lhs.Priority > rhs.Priority); // smaller means higher priority
         }
     };
-
-    PRAGMA_MSVC_WARNING_PUSH()
-    PRAGMA_MSVC_WARNING_DISABLE(4324) // 'FLocalQueue_': structure was padded due to alignment specifier
-    typedef std::priority_queue<
-        FTaskQueued,
-        VECTORINSITU(Task, FTaskQueued, 8),
-        FPrioritySort_
-    >   priority_queue_type;
 
     struct CACHELINE_ALIGNED FLocalQueue_ {
         size_t HighestPriority = INDEX_NONE;
@@ -91,14 +87,21 @@ private:
         std::condition_variable Empty;
         std::condition_variable Overflow;
 
-        priority_queue_type Queue;
+        std::priority_queue<
+            FTaskQueued,
+            VECTORINSITU(Task, FTaskQueued, 8),
+            FPrioritySort_
+        >   Queue;
     };
-    PRAGMA_MSVC_WARNING_POP()
 
-    const size_t _maxTasks;
-    std::atomic<size_t> _taskInFlight;
-    std::atomic<size_t> _taskRevision;
-    std::atomic<size_t> _globalPriority;
+    struct CACHELINE_ALIGNED state_t {
+        std::atomic<size_t> TaskInFlight{ 0 };
+        std::atomic<size_t> TaskRevision{ 0 };
+        std::atomic<size_t> GlobalPriority{ INDEX_NONE };
+    };
+
+    state_t _state;
+
     VECTOR(Task, FLocalQueue_) _workerQueues;
 
     bool WorkerTryPush_(size_t workerIndex, FTaskQueued& task) {
@@ -166,7 +169,7 @@ private:
         const size_t workerHighest = _workerQueues[workerIndex].HighestPriority;
 
         size_t localHighest = workerHighest; // important to let other workers steal our jobs too
-        size_t globalHighest = _globalPriority;
+        size_t globalHighest = _state.GlobalPriority;
 
         // look for a queue with a higher priority job to steal
         forrange(i, workerIndex + 1, workerIndex + _numWorkers) {
@@ -175,7 +178,7 @@ private:
 
             if (other.HighestPriority < workerHighest &&
                 WorkerTryPop_(otherIndex, ptask)) {
-                // note that we leave _globalPriority untouched since we didn't fail
+                // note that we leave _state.GlobalPriority untouched since we didn't fail
                 return true; // stole a job, return
             }
 
@@ -184,8 +187,8 @@ private:
 
         // found nothing, update global priority with local minimum
         // will naturally converge to INDEX_NONE when all worker queues are empty
-        // this is important to not reset this to avoid letting the last worker finish its queue alone
-        _globalPriority.compare_exchange_weak(globalHighest, localHighest);
+        // this is important to not reset the global priority to avoid letting the last worker finish its queue alone
+        _state.GlobalPriority.compare_exchange_weak(globalHighest, localHighest);
 
         return false;
     }
@@ -194,7 +197,7 @@ private:
         FLocalQueue_& worker = _workerQueues[workerIndex];
 
         // check if there's a higher priority job in another worker
-        if (worker.HighestPriority > _globalPriority)
+        if (worker.HighestPriority > _state.GlobalPriority)
             return WorkerSteal_(workerIndex, ptask); // cold path
 
         return false;
@@ -216,10 +219,7 @@ private:
 //----------------------------------------------------------------------------
 FTaskScheduler::FTaskScheduler(size_t numWorkers, size_t maxTasks)
     : _numWorkers(numWorkers)
-    , _maxTasks(maxTasks)
-    , _taskInFlight(0)
-    , _taskRevision(0)
-    , _globalPriority(INDEX_NONE) {
+    , _maxTasks(maxTasks) {
     Assert(_numWorkers);
     Assert(_maxTasks > _numWorkers);
 
@@ -227,12 +227,12 @@ FTaskScheduler::FTaskScheduler(size_t numWorkers, size_t maxTasks)
 }
 //----------------------------------------------------------------------------
 FTaskScheduler::~FTaskScheduler() {
-    Assert(0 == _taskInFlight);
-    Assert(0 == _taskRevision);
+    Assert(0 == _state.TaskInFlight);
+    Assert(0 == _state.TaskRevision);
 }
 //----------------------------------------------------------------------------
 bool FTaskScheduler::HasPendingTask() const {
-    return (_taskInFlight != 0);
+    return (_state.TaskInFlight != 0);
 }
 //----------------------------------------------------------------------------
 void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FTaskCounter* pcounter) {
@@ -246,21 +246,21 @@ void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<const FTa
 }
 //----------------------------------------------------------------------------
 void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FTaskCounter* pcounter) {
-    Assert(_taskRevision < 0xFFFF); // just to get sure that we won't be overflowing Priority
+    Assert(_state.TaskRevision < 0xFFFF); // just to get sure that we won't be overflowing Priority
 
-    // track in flight tasks for HasPendingTask() and to reset _taskRevision when the queues are finally empty
-    ++_taskInFlight;
+    // track in flight tasks for HasPendingTask() and to reset _state.TaskRevision when the queues are finally empty
+    ++_state.TaskInFlight;
 
-    // construct insertion priority with _taskRevision
-    const size_t insertion_order_preserving_priority = size_t((u64(priority) << 16) | _taskRevision++);
+    // construct insertion priority with _state.TaskRevision
+    const size_t insertion_order_preserving_priority = size_t((u64(priority) << 16) | _state.TaskRevision++);
     Assert((insertion_order_preserving_priority >> 16) == size_t(priority));
 
     FTaskQueued queued{ insertion_order_preserving_priority, task, pcounter };
 
     // used as hint for work stealing : worker will try to steal a job if a more priority task is available
-    size_t globalHighest = _globalPriority;
+    size_t globalHighest = _state.GlobalPriority;
     if (globalHighest > insertion_order_preserving_priority)
-        _globalPriority.compare_exchange_weak(globalHighest, insertion_order_preserving_priority);
+        _state.GlobalPriority.compare_exchange_weak(globalHighest, insertion_order_preserving_priority);
 
     // push the job to some worker's local queue
     for (size_t n = insertion_order_preserving_priority; ; ++n) {
@@ -271,21 +271,21 @@ void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FTas
 }
 //----------------------------------------------------------------------------
 void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FTaskCounter* pcounter) {
-    Assert(_taskRevision < 0xFFFF); // just to get sure that we won't be overflowing Priority
+    Assert(_state.TaskRevision < 0xFFFF); // just to get sure that we won't be overflowing Priority
 
-    // track in flight tasks for HasPendingTask() and to reset _taskRevision when the queues are finally empty
-    ++_taskInFlight;
+    // track in flight tasks for HasPendingTask() and to reset _state.TaskRevision when the queues are finally empty
+    ++_state.TaskInFlight;
 
-    // construct insertion priority with _taskRevision
-    const size_t insertion_order_preserving_priority = size_t((u64(priority) << 16) | _taskRevision++);
+    // construct insertion priority with _state.TaskRevision
+    const size_t insertion_order_preserving_priority = size_t((u64(priority) << 16) | _state.TaskRevision++);
     Assert((insertion_order_preserving_priority >> 16) == size_t(priority));
 
     FTaskQueued queued{ insertion_order_preserving_priority, std::move(rtask), pcounter };
 
     // used as hint for work stealing : worker will try to steal a job if a more priority task is available
-    size_t globalHighest = _globalPriority;
+    size_t globalHighest = _state.GlobalPriority;
     if (globalHighest > insertion_order_preserving_priority)
-        _globalPriority.compare_exchange_weak(globalHighest, insertion_order_preserving_priority);
+        _state.GlobalPriority.compare_exchange_weak(globalHighest, insertion_order_preserving_priority);
 
     // push the job to some worker's local queue
     for (size_t n = insertion_order_preserving_priority; ; ++n) {
@@ -301,15 +301,15 @@ void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
 
     // at this stage we already consumed a task for execution
 
-    // reset _taskRevision when everything is processed to avoid overflows :
+    // reset _state.TaskRevision when everything is processed to avoid overflows :
     // having overflow would cause the insertion order to be inverted and would violate our assumptions
-    if (0 == --_taskInFlight)
-        _taskRevision = 0;
+    if (0 == --_state.TaskInFlight)
+        _state.TaskRevision = 0;
 }
 //----------------------------------------------------------------------------
 void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& task) {
-    // track in flight tasks for HasPendingTask() and to reset _taskRevision when the queues are finally empty
-    _taskInFlight += _numWorkers;
+    // track in flight tasks for HasPendingTask() and to reset _state.TaskRevision when the queues are finally empty
+    _state.TaskInFlight += _numWorkers;
 
     // loop until all workers were reached
     size_t backoff = 0;
@@ -395,3 +395,5 @@ void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& ta
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+PRAGMA_MSVC_WARNING_POP()

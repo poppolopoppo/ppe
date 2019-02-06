@@ -132,7 +132,7 @@ private:
     std::atomic<i32> _taskCount;
     u32 _queueSize;
 
-#if USE_PPE_SAFEPTR // _safeCount disapears otherwise
+#if USE_PPE_SAFEPTR // _safeCount disappears otherwise
     STATIC_CONST_INTEGRAL(u32, QueueCapacity, CODE3264(13, 14)); // exploit cache line alignment
 #else
     STATIC_CONST_INTEGRAL(u32, QueueCapacity, CODE3264(14, 15)); // exploit all cache line alignment
@@ -141,9 +141,9 @@ private:
     typedef POD_STORAGE(FStalledFiber) FQueueBuffer_[QueueCapacity];
     FQueueBuffer_ _queue;
 
-    TMemoryView<FStalledFiber> ResumeStalledFibers_(FQueueBuffer_ buffer);
+    NO_INLINE void ResumeStalledFibers_();
 
-#if USE_PPE_SAFEPTR // _safeCount disapears otherwise
+#if USE_PPE_SAFEPTR // _safeCount disappears otherwise
     const size_t _canary_freeToUse = CODE3264(0x01234567ul, 0x0123456789ABCDEFull);
 #   ifdef WITH_PPE_ASSERT
     bool CheckCanary_() const { return (CODE3264(0x01234567ul, 0x0123456789ABCDEFull) == _canary_freeToUse); }
@@ -174,6 +174,8 @@ public:
     virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority, ITaskContext* resume) override final;
 
     virtual void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) override final;
+
+    void ReleaseMemory();
 
 private:
     FTaskManager& _manager;
@@ -621,10 +623,8 @@ void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, 
     WaitFor(handle, resume);
 }
 //----------------------------------------------------------------------------
-// #NOTE : kinda ugly, but works safely, should only be used in very rare conditions
-// since the scheduler's work to handle dispatching normally (with better granularity hopefully)
 void FTaskManagerImpl::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) {
-    Assert(not FFiber::IsInFiber()); // well won't work if a task is busy handling this logic so no :/
+    AssertRelease(not FFiber::IsInFiber()); // well won't work if a task is busy handling this logic so no :/
 
     FBroadcast_ args{ std::move(rtask), _threads.size() };
     {
@@ -652,6 +652,10 @@ void FTaskManagerImpl::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority prio
         // past this point every worker thread should have leaved the task scope
         // so this finally safe to destroy args
     }
+}
+//----------------------------------------------------------------------------
+void FTaskManagerImpl::ReleaseMemory() {
+    _fibers.ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::WorkerLoop_() {
@@ -733,26 +737,37 @@ void FTaskCounter::Clear() {
     _taskCount = -1;
 }
 //----------------------------------------------------------------------------
-NO_INLINE TMemoryView<FStalledFiber> FTaskCounter::ResumeStalledFibers_(FQueueBuffer_ buffer) {
+NO_INLINE void FTaskCounter::ResumeStalledFibers_() {
     Assert_NoAssume(CheckCanary_());
 
-    const FAtomicSpinLock::FScope scopedLock(_barrier);
+    FTaskCounter::FQueueBuffer_ buffer;
+    TMemoryView<FStalledFiber> resume;
 
-    const TMemoryView<FStalledFiber> resume(reinterpret_cast<FStalledFiber*>(buffer), _queueSize);
-    const TMemoryView<FStalledFiber> queue(reinterpret_cast<FStalledFiber*>(_queue), _queueSize);
+    {
+        // simply copy the queue with the lock acquired
+        // avoid reading from this again !
 
-    std::uninitialized_move(queue.begin(), queue.end(), resume.begin());
-    _queueSize = 0;
+        const FAtomicSpinLock::FScope scopedLock(_barrier);
 
-    return resume;
-}
-//----------------------------------------------------------------------------
-static NO_INLINE void ResumeWaitingTasks_(const TMemoryView<FStalledFiber>& resume) {
+        Assert(0 == _taskCount);
+
+        resume = TMemoryView<FStalledFiber>(reinterpret_cast<FStalledFiber*>(buffer), _queueSize);
+        const TMemoryView<FStalledFiber> queue(reinterpret_cast<FStalledFiber*>(_queue), _queueSize);
+
+        std::uninitialized_move(queue.begin(), queue.end(), resume.begin());
+
+#ifdef WITH_PPE_ASSERT
+        FPlatformMemory::Memdeadbeef(queue.data(), queue.SizeInBytes());
+#endif
+
+        _queueSize = 0;
+    }
+
     // sort all queued fibers by priority before resuming and outside of the lock
     std::stable_sort(resume.begin(), resume.end(),
         [](const FStalledFiber& lhs, const FStalledFiber& rhs) {
-            return (lhs.Priority() < rhs.Priority());
-        });
+        return (lhs.Priority() < rhs.Priority());
+    });
 
     // stalled fibers are resumed through a task to let the current fiber dispatch
     // all jobs to every worker thread before yielding
@@ -766,15 +781,10 @@ void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef) {
     FTaskCounter* const pcounter = saferef.get();
     Assert(pcounter->Valid());
 
-    saferef.reset(); // need to reset before resuming and decrementing, lifetime should be guaranteed by owner
+    saferef.reset(); // need to reset just before decrementing, lifetime should be guaranteed by owner
 
-    FTaskCounter::FQueueBuffer_ buffer;
-    TMemoryView<FStalledFiber> resume;
     if (Unlikely(0 == --pcounter->_taskCount))
-        resume = pcounter->ResumeStalledFibers_(buffer);
-
-    if (Unlikely(not resume.empty()))
-        ResumeWaitingTasks_(resume);
+        pcounter->ResumeStalledFibers_();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -799,7 +809,7 @@ FTaskWaitHandle::FTaskWaitHandle(FTaskWaitHandle&& rvalue) {
 }
 //----------------------------------------------------------------------------
 FTaskWaitHandle& FTaskWaitHandle::operator =(FTaskWaitHandle&& rvalue) {
-    Assert(not _counter.valid());
+    AssertRelease(not _counter.valid()); // should call DestroyCounter() to pool the counter
 
     _priority = rvalue._priority;
     _counter = std::move(rvalue._counter);
@@ -980,6 +990,11 @@ void FTaskManager::WaitForAll(int timeoutMS) const {
             [&args]() { return args.Available;
         });
     }
+}
+//----------------------------------------------------------------------------
+void FTaskManager::ReleaseMemory() {
+    if (_pimpl)
+        _pimpl->ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -31,9 +31,36 @@ public:
     static void Create() { parent_type::Create(); }
 
     STATIC_CONST_INTEGRAL(size_t, MaxBlockSize, 32 << 10); // 32 kb
+
+#ifndef WITH_PPE_ASSERT
+    static void* Malloc(size_t sz) {
+        return Get().Allocate(sz);
+    }
+
+    void Free(void* ptr, size_t sz) {
+        return Release_AssumeLast(ptr, sz);
+    }
+
+#else
+    u32 Depth{ 0 };
+
+    static void* Malloc(size_t sz) {
+        auto& heap = Get();
+        heap.Depth++;
+        return heap.Allocate(sz);
+    }
+
+    void Free(void* ptr, size_t sz) {
+        auto& heap = Get();
+        Assert(heap.Depth);
+        heap.Depth--;
+        heap.Release_AssumeLast(ptr, sz);
+    }
+
+#endif //!WITH_PPE_ASSERT
 };
 //----------------------------------------------------------------------------
-// Fallback on thread local heap when the block is too large :
+// Fall back on thread local heap when the block is too large :
 struct FAllocaFallback_ {
     static void* Malloc(size_t size) {
         return PPE::malloc(size);
@@ -53,12 +80,19 @@ struct FAllocaFallback_ {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#ifdef WITH_PPE_ASSERT
+u32 AllocaDepth() {
+    // used for detecting live alloca TLS blocks in debug
+    return FAllocaLinearHeapTLS_::Get().Depth;
+}
+#endif //!WITH_PPE_ASSERT
+//----------------------------------------------------------------------------
 void* Alloca(size_t size) {
     if (0 == size)
         return nullptr;
 
     void* const p = ((size <= FAllocaLinearHeapTLS_::MaxBlockSize)
-        ? FAllocaLinearHeapTLS_::Get().Allocate(size)
+        ? FAllocaLinearHeapTLS_::Malloc(size)
         : FAllocaFallback_::Malloc(size) );
 
     Assert(Meta::IsAligned(16, p));
@@ -90,7 +124,7 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
             result = dst;
         }
         else {
-            heap.Release_AssumeLast(ptr, oldSize);
+            heap.Free(ptr, oldSize);
             result = FAllocaFallback_::Malloc(newSize);
         }
     }
@@ -113,7 +147,7 @@ void FreeAlloca(void* ptr, size_t size) {
 
     auto& heap = FAllocaLinearHeapTLS_::Get();
     if (heap.AliasesToHeap(ptr))
-        heap.Release_AssumeLast(ptr, size);
+        heap.Free(ptr, size);
     else
         FAllocaFallback_::Free(ptr);
 }
