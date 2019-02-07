@@ -355,6 +355,14 @@ struct FNonCopyableNorMovable {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// force wrapping a function call, a functor or a lambda in a function call
+template <typename _FuncLike, typename... _Args>
+NO_INLINE auto unlikely(_FuncLike funcLike, _Args... args) {
+    return funcLike(std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 #define INSTANTIATE_CLASS_TYPEDEF(_API, _NAME, ...) \
     class _API _NAME : public __VA_ARGS__ { \
         typedef __VA_ARGS__ parent_type; \
