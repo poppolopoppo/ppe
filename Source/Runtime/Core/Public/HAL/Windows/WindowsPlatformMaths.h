@@ -198,11 +198,15 @@ public:
 #   ifdef ARCH_X64
     static FORCE_INLINE u64 lzcnt(u64 u) NOEXCEPT { return ::__lzcnt64(u); }
 #       ifdef __clang__
-    static FORCE_INLINE u32 tzcnt(u64 u) NOEXCEPT { return tzcnt_contexpr(u); } // #TODO : can't find __tzcnt_64() will llvm windows
+    static FORCE_INLINE u64 tzcnt(u64 u) NOEXCEPT { return tzcnt_contexpr(u); } // #TODO : can't find __tzcnt_64() will llvm windows
 #       else
     static FORCE_INLINE u64 tzcnt(u64 u) NOEXCEPT { return ::_tzcnt_u64(u); }
 #       endif
     static FORCE_INLINE u64 popcnt(u64 u) NOEXCEPT { return ::__popcnt64(u); }
+#   else
+    static FORCE_INLINE u64 lzcnt(u64 u) NOEXCEPT { return FGenericPlatformMaths::lzcnt(u); }
+    static FORCE_INLINE u64 tzcnt(u64 u) NOEXCEPT { return FGenericPlatformMaths::tzcnt(u); }
+    static FORCE_INLINE u64 popcnt(u64 u) NOEXCEPT { return FGenericPlatformMaths::popcnt(u); }
 #   endif
 
     static u64 tzcnt64(u64 u) NOEXCEPT {

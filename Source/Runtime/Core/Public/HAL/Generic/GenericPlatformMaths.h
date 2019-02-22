@@ -249,21 +249,33 @@ public: // must be defined for every platform
     static u32 tzcnt(u32 u) NOEXCEPT = delete;
     static u32 popcnt(u32 u) NOEXCEPT = delete;
 
-#ifdef ARCH_X64
-    static u64 lzcnt(u64 u) NOEXCEPT = delete;
-    static u64 tzcnt(u64 u) NOEXCEPT = delete;
-    static u64 popcnt(u64 u) NOEXCEPT = delete;
-#endif
+    // fallback when using ARCH_X64 :
+    static u64 lzcnt(u64 u) NOEXCEPT { return lzcnt_constexpr(u); }
+    static u64 tzcnt(u64 u) NOEXCEPT { return tzcnt_constexpr(u); }
+    static u64 popcnt(u64 u) NOEXCEPT { return popcnt_constexpr(u); }
 
     static u64 tzcnt64(u64 u) NOEXCEPT = delete;
 
-    static CONSTEXPR u32 tzcnt_contexpr(u32 u) NOEXCEPT {
+    static CONSTEXPR u32 lzcnt_constexpr(u32 u) NOEXCEPT {
+        for (i32 i = 31; i >= 0; --i)
+            if (u & u32(u32(1) << i))
+                return i;
+        return 0;
+    }
+    static CONSTEXPR u64 lzcnt_constexpr(u64 u) NOEXCEPT {
+        for (i32 i = 31; i >= 0; --i)
+            if (u & u64(u64(1) << i))
+                return i;
+        return 0;
+    }
+
+    static CONSTEXPR u32 tzcnt_constexpr(u32 u) NOEXCEPT {
         for (u32 i = 0; i < 32; ++i)
             if (u & (u32(1) << i))
                 return i;
         return 0;
     }
-    static CONSTEXPR u64 tzcnt_contexpr(u64 u) NOEXCEPT {
+    static CONSTEXPR u64 tzcnt_constexpr(u64 u) NOEXCEPT {
         for (u32 i = 0; i < 64; ++i)
             if (u & (u64(1) << i))
                 return i;
@@ -293,10 +305,10 @@ public: // generic helpers
     template <typename T>
     static FORCE_INLINE CONSTEXPR T popcnt_constexpr(T v) NOEXCEPT {
         STATIC_ASSERT(std::is_arithmetic_v<T>);
-        v = v - ((v >> 1) & (T)~(T)0 / 3);                                // temp
-        v = (v & (u64)~(u64)0 / 15 * 3) + ((v >> 2) & (T)~(T)0 / 15 * 3);       // temp
+        v = v - ((v >> 1) & (T)~(T)0 / 3);                                  // temp
+        v = (v & (u64)~(u64)0 / 15 * 3) + ((v >> 2) & (T)~(T)0 / 15 * 3);   // temp
         v = (v + (v >> 4)) & (T)~(T)0 / 255 * 15;                           // temp
-        return (T)(v * ((T)~(T)0 / 255)) >> (sizeof(T) - 1) * CHAR_BIT;   // count
+        return (T)(v * ((T)~(T)0 / 255)) >> (sizeof(T) - 1) * CHAR_BIT;     // count
     }
 
     //-----------------------------------------------------------------------
