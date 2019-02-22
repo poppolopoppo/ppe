@@ -244,7 +244,7 @@ ALL_CONFIGURATIONS.each do |configuration|
         "stopAtEntry": false,
         "cwd": "${workspaceRoot}\\Output\\Binary",
         "environment": [],
-        "visualizerFile": "${workspaceRoot}\\Misc\\Debug\\PPE.natvis",
+        "visualizerFile": "${workspaceRoot}\\Extras\\Debug\\PPE.natvis",
         "externalConsole": true
     }
 end
