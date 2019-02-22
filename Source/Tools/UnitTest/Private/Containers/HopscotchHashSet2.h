@@ -55,7 +55,6 @@ public:
         TIterator(const THopscotchHashSet2& owner, size_t index)
             : Owner(&owner)
             , Index(index) {
-            Assert_NoAssume(Owner);
             Assert_NoAssume(Index <= Owner->_capacity);
         }
 
@@ -351,7 +350,7 @@ private:
     }
 
     NO_INLINE u32 find_Bitmap_(u32 mask, u32 hash, const _Key& key) const NOEXCEPT {
-        Assert_NoAssume(_size);
+        Assert(_size);
 
         // follow the bitmap to find the key
         const state_t* const states = states_();
@@ -507,11 +506,12 @@ private:
         // insert the item even if failed to repack, it will be fixed afterwards
         const u32 ins = (bk + off) & mask;
         Assert_NoAssume(not states[ins].Filled());
-        Assert_NoAssume(not (states[bk].Bitmap & (u32(1) << off)));
 
         Meta::Construct(_elements + ins, std::forward<_Args>(args)...);
 
         if (Likely(off < state_t::NeighborHoodSize)) { // can overflow when insert_Fixup_() fails to repack
+            Assert_NoAssume(not (states[bk].Bitmap & (u32(1) << off)));
+
             states[ins].DistP1 = (off + 1);
             states[bk].Bitmap |= u32(1) << off;
 

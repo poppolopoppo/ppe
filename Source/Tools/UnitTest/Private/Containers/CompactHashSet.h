@@ -115,7 +115,7 @@ public:
     bool empty() const NOEXCEPT { return 0 == _size; }
     size_type capacity() const NOEXCEPT { return _capacity; }
 
-    static CONSTEXPR size_t capacity_for_n(size_t n) NOEXCEPT { return Max(16, n + ((100 - MaxLoadFactor)*n) / 100); }
+    static CONSTEXPR size_t capacity_for_n(size_t n) NOEXCEPT { return Max(16ul, n + ((100ul - MaxLoadFactor)*n) / 100ul); }
 
     const_iterator begin() const { return const_iterator(_values, _capacity, 0).Advance(0); }
     const_iterator end() const { return const_iterator(_values, _capacity, _capacity); }

@@ -50,7 +50,6 @@ public:
         TIterator(const THopscotchHashSet& owner, size_t index)
             : Owner(&owner)
             , Index(index) {
-            Assert_NoAssume(Owner);
             Assert_NoAssume(Index <= Owner->_capacity);
         }
 
@@ -424,10 +423,11 @@ private:
             Assert_NoAssume(distance_(wnt, swp, mask) < state_t::NeighborHoodSize);
 
             const u32 d_ins = distance_(wnt, ins, mask);
-            Assert_NoAssume(not (states[wnt].Bitmap & (u64(1) << d_ins)));
 
             // switch closer item with current is still in it's neighborhood
             if (d_ins < state_t::NeighborHoodSize) {
+                Assert_NoAssume(not (states[wnt].Bitmap & (u64(1) << d_ins)));
+
                 const u32 d_swp = distance_(wnt, swp, mask);
                 Assert_NoAssume(d_swp < d_ins);
                 Assert_NoAssume(states[wnt].Bitmap & (u32(1) << d_swp));

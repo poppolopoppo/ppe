@@ -251,7 +251,7 @@ public:
         const state_t* oldStates = _states;
         const u32 oldNumStates = _numStates;
 
-        _numStates = checked_cast<u32>(Max(16, FPlatformMaths::NextPow2(
+        _numStates = checked_cast<u32>(Max(16ul, FPlatformMaths::NextPow2(
             SafeAllocatorSnapSize(state_alloc(), n * 2 + 1))));
         Assert_NoAssume(oldNumStates < _numStates);
 

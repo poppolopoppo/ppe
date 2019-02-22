@@ -273,7 +273,7 @@ struct TSamplePool {
 
     template <typename _Generator, typename _Set>
     static auto MakeUniqueGenerator(const _Generator& generator, _Set&& unique) {
-        return TUniqueSampleGenerator{ generator, std::move(unique) };
+        return TUniqueSampleGenerator<_Generator, _Set>{ generator, std::move(unique) };
     }
 };
 class FContainerBenchmark : public FBenchmark {
@@ -281,6 +281,7 @@ public:
     FContainerBenchmark(const FStringView& name)
     :   FBenchmark{ name } {
         MaxIterations = Min(MaxIterations, 1000000ul);
+        ONLY_IF_ASSERT(MaxIterations = Min(MinIterations, MaxIterations));
     }
 };
 class construct_noreserve_t : public FContainerBenchmark {
@@ -554,15 +555,17 @@ public:
 
                 state.ResetTiming();
 
-                volatile uintptr_t hit = 0;
+                ONLY_IF_ASSERT(size_t n = 0);
+                volatile uintptr_t h = 0;
                 for (const auto& it : pool->MakeSamples(s.Dense)) {
                     auto jt = c.find(it);
                     FContainerBenchmark::DoNotOptimizeLoop(jt);
-                    hit += uintptr_t(&*jt);
+                    h += uintptr_t(&*jt);
+                    ONLY_IF_ASSERT(n++);
                 }
 
-                Assert_NoAssume(s.Dense.size() == hit);
-                FBenchmark::DoNotOptimize(hit);
+                Assert_NoAssume(s.Dense.size() == n);
+                FBenchmark::DoNotOptimize(h);
             }
         });
     }
@@ -1157,11 +1160,13 @@ static void Test_PODSet_(const FString& name, const _Generator& samples) {
 
     auto generator = TSamplePool<T>::MakeUniqueGenerator(samples);
 
+#if 1
     Benchmark_Containers_FindSpeed_<T>(name + "_find", generator, containers_all);
 
     Benchmark_Containers_Exhaustive_<T>(name + "_20", 20, generator, containers_all);
     Benchmark_Containers_Exhaustive_<T>(name + "_50", 50, generator, containers_all);
     Benchmark_Containers_Exhaustive_<T>(name + "_200", 200, generator, containers_large);
+#endif
 
 #ifndef WITH_PPE_ASSERT
     Benchmark_Containers_Exhaustive_<T>(name + "_2000", 2000, generator, containers_large);
@@ -1365,10 +1370,12 @@ static void Test_StringSet_() {
 #endif
     };
 
+#if 1
     Benchmark_Containers_FindSpeed_<FStringView>("Strings_find", generator, containers);
 
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_20", 20, generator, containers);
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_50", 50, generator, containers);
+#endif
 #ifndef WITH_PPE_ASSERT
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_200", 200, generator, containers);
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_2000", 2000, generator, containers);
