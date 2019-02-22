@@ -48,7 +48,9 @@ typedef int64_t     i64;
 #define EXPAND(x) x
 #define EXPAND_VA(X, ...)  X, ##__VA_ARGS__
 //----------------------------------------------------------------------------
-#define COMMA ,
+#define COMMA_2 ,
+#define COMMA_1 EXPAND( COMMA_2 )
+#define COMMA COMMA_1
 #define COMMA_PROTECT(...) __VA_ARGS__
 //----------------------------------------------------------------------------
 #define STRINGIZE_2(...) # __VA_ARGS__
