@@ -13,17 +13,17 @@ struct hash_t { // see Hash.h, this is fwd declared here to avoid including Hash
 public:
     size_t _value;
 
-    hash_t()  = default;
+    hash_t() = default;
 
-    hash_t(size_t value) : _value(value) {}
-    operator size_t () const { return _value; }
+    CONSTEXPR hash_t(size_t value) : _value(value) {}
+    CONSTEXPR operator size_t () const { return _value; }
 
     // hash_value(hash_t) = hash_t,
     // will prevent helpers like hash_combine() from hashing twice the value :
-    inline friend hash_t hash_value(hash_t value) { return value; }
+    CONSTEXPR inline friend hash_t hash_value(hash_t value) { return value; }
 
-    friend bool operator ==(const hash_t& lhs, const hash_t& rhs) { return lhs._value == rhs._value; }
-    friend bool operator !=(const hash_t& lhs, const hash_t& rhs) { return lhs._value != rhs._value; }
+    CONSTEXPR friend bool operator ==(const hash_t& lhs, const hash_t& rhs) { return lhs._value == rhs._value; }
+    CONSTEXPR friend bool operator !=(const hash_t& lhs, const hash_t& rhs) { return lhs._value != rhs._value; }
 
     friend void swap(hash_t& lhs, hash_t& rhs) { std::swap(lhs._value, rhs._value); }
 };
@@ -156,7 +156,12 @@ constexpr size_t hash_size_t_constexpr(size_t arg0, _Args... args ) {
     static_assert(sizeof(size_t) == sizeof(u32), "invalid platform !");
     return hash_u32_constexpr(u32(arg0), u32(args)...);
 }
-#endif
+#endif //!ARCH_X64
+//----------------------------------------------------------------------------
+template <typename T, size_t... _Indices>
+constexpr size_t hash_sequence_constexpr(const T* data, std::index_sequence<_Indices...>) {
+    return hash_size_t_constexpr(sizeof...(_Indices)/* handles hash_sequence_constexpr(nullptr, 0) */, data[_Indices]...);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
