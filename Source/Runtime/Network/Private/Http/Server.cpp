@@ -132,7 +132,7 @@ static void HttpServicingThreadLaunchPad_(FHttpServer* owner) {
     const FThreadContextStartup threadStartup("HttpServer", PPE_THREADTAG_OTHER);
     threadStartup.Context().SetPriority(EThreadPriority::Lowest);
 
-    const FMilliseconds acceptTimeout = FSeconds(1);
+    const FMilliseconds acceptTimeout = 1.0_s;
 
     FHttpServerImpl server(owner);
     for (; not server.Serve_ReturnIfQuit(acceptTimeout); );

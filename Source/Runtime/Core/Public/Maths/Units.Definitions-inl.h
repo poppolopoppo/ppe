@@ -1,9 +1,10 @@
 //----------------------------------------------------------------------------
 UNITS_BEGIN(Time)
-UNITS_DECL(Time,        us, FMicroseconds,  1000,   void)
+UNITS_DECL(Time,        ns, FNanoseconds,   1000,   void)
+UNITS_DECL(Time,        us, FMicroseconds,  1000,   PPE::Units::Time::FNanoseconds)
 UNITS_DECL(Time,        ms, FMilliseconds,  1000,   PPE::Units::Time::FMicroseconds)
 UNITS_DECL(Time,         s, FSeconds,       60,     PPE::Units::Time::FMilliseconds)
-UNITS_DECL(Time,         m, FMinutes,       60,     PPE::Units::Time::FSeconds)
+UNITS_DECL(Time,       min, FMinutes,       60,     PPE::Units::Time::FSeconds)
 UNITS_DECL(Time,         h, FHours,         24,     PPE::Units::Time::FMinutes)
 UNITS_DECL(Time,         d, FDays,          1,      PPE::Units::Time::FHours)
 UNITS_END()
