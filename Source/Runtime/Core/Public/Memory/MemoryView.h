@@ -192,13 +192,6 @@ public:
     template <typename _Pred>
     TMemoryView SplitIfNot(const _Pred& pred) const { return TMemoryView(_storage, FindFirstNot(pred)); }
 
-    template <typename _Lambda, class = Meta::TEnableIf<not std::is_const_v<T>> >
-    const TMemoryView& Collect(_Lambda&& collect) const {
-        forrange(i, 0, _size)
-            collect(i, &_storage[i]);
-        return (*this);
-    }
-
     bool AliasesToContainer(const_reference v) const { return (_storage <= &v && _storage + _size > &v); }
 #if USE_PPE_CHECKEDARRAYITERATOR
     bool AliasesToContainer(const iterator& it) const { return (begin() <= it && it < end()); }
@@ -325,13 +318,13 @@ TMemoryView<const typename _VectorLike::value_type> MakeConstView(const _VectorL
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView< T > MakeView(T* pbegin, T* pend) {
+CONSTEXPR TMemoryView< T > MakeView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
     return TMemoryView< T >(pbegin, std::distance(pbegin, pend));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<Meta::TAddConst<T> > MakeConstView(T* pbegin, T* pend) {
+CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
     return TMemoryView<Meta::TAddConst<T> >(pbegin, std::distance(pbegin, pend));
 }
@@ -369,15 +362,21 @@ TMemoryView<const u8> MakeRawConstView(const TMemoryView<T>& assumePods) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename U, typename V>
-void Copy(const TMemoryView<U>& dst, const TMemoryView<V>& src) {
+CONSTEXPR void Copy(const TMemoryView<U>& dst, const TMemoryView<V>& src) {
     Assert(dst.size() == src.size());
     std::copy(src.begin(), src.end(), dst.begin());
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void Move(const TMemoryView<T>& dst, const TMemoryView<T>& src) {
+CONSTEXPR void Move(const TMemoryView<T>& dst, const TMemoryView<T>& src) {
     Assert(dst.size() == src.size());
     std::move(src.begin(), src.end(), dst.begin());
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Lambda>
+CONSTEXPR void Collect(const TMemoryView<T>& dst, _Lambda&& collect) {
+    forrange(i, 0, dst.size())
+        collect(i, &dst[i]);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

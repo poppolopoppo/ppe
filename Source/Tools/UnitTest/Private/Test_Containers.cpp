@@ -1173,7 +1173,7 @@ static void Test_StringSet_() {
     TRawStorage<char> stringPool;
     stringPool.Resize_DiscardData(64 * 1024); // 64k of text
     FRandomGenerator rnd(42);
-    stringPool.MakeView().Collect([&](size_t, char* pch) {
+    Collect(stringPool.MakeView(), [&](size_t, char* pch) {
         constexpr char Charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!-*.$^@#~";
         *pch = Charset[rnd.Next(lengthof(Charset) - 1/* null char */)];
     });
