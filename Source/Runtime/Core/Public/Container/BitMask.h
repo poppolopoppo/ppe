@@ -25,7 +25,7 @@ struct TBitMask {
 
     CONSTEXPR operator word_t () const NOEXCEPT { return Data; }
 
-    size_t Count() const NOEXCEPT { return FPlatformMaths::popcnt(Data); }
+    size_t Count() const NOEXCEPT { return checked_cast<size_t>(FPlatformMaths::popcnt(Data)); }
 
     template <size_t _Index>
     CONSTEXPR bool Get() const NOEXCEPT {
@@ -62,7 +62,7 @@ struct TBitMask {
     word_t LastBitSet_AssumeNotEmpty() const NOEXCEPT { return FPlatformMaths::lzcnt(Data); }
 
     word_t PopFront() NOEXCEPT { // return 0 if empty of (LSB index + 1)
-        const word_t front = (Data ? FPlatformMaths::tzcnt(Data) : INDEX_NONE);
+        const word_t front = (Data ? FPlatformMaths::tzcnt(Data) : word_t(-1));
         Data &= ~(GOne<<front); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return (front + 1);
     }
@@ -74,7 +74,7 @@ struct TBitMask {
     }
 
     word_t PopBack() NOEXCEPT { // return 0 if empty or (MSB index + 1)
-        const word_t back = (Data ? FPlatformMaths::lzcnt(Data) : INDEX_NONE);
+        const word_t back = (Data ? FPlatformMaths::lzcnt(Data) : word_t(-1));
         Data &= ~(GOne<<back); // when empty : 1 << INDEX_NONE = 1 << 0xFFFFFFFF = 0
         return (back + 1);
     }
