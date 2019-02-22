@@ -271,7 +271,7 @@ float3 RGB_to_HCV(const float3& rgb) {
 float3 HSV_to_RGB(const float3& hsv) {
     float3 RGB = Hue_to_RGB(hsv.x);
     float3 x = RGB * 2.f;
-    return ((RGB - 1) * hsv.y + 1) * hsv.z;
+    return ((x - 1) * hsv.y + 1) * hsv.z;
 }
 //----------------------------------------------------------------------------
 float3 RGB_to_HSV(const float3& rgb) {
