@@ -136,8 +136,6 @@ void CompressMemory(IBufferedStreamWriter* dst, const TMemoryView<const u8>& src
     };
     dst->WritePOD(header);
 
-    STACKLOCAL_POD_ARRAY(u8, buffer, 8<<10);
-
     const u8* s_start = src.Pointer();
     const u8* psrc = s_start;
     const size_t s_len = src.SizeInBytes();
