@@ -28,13 +28,16 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define RTTI_CLASS_BEGIN(_Namespace, _Name, _Attributes) \
+#define _RTTI_COMBINE_CLASSFLAGS_IMPL(_Attribute) ::PPE::RTTI::EClassFlags::_Attribute |
+#define RTTI_CLASS_BEGIN(_Namespace, _Name, ...) \
     ::PPE::RTTI::FMetaNamespace& _Name::RTTI_FMetaClass::Namespace() { \
         return RTTI_NAMESPACE(_Namespace); \
     } \
     \
     _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaNamespace* metaNamespace) \
-        : metaclass_type(id, ::PPE::RTTI::FName(STRINGIZE(_Name)), (_Attributes), metaNamespace) { \
+        : metaclass_type(id, ::PPE::RTTI::FName(STRINGIZE(_Name)), \
+            (PP_FOREACH_ARGS(_RTTI_COMBINE_CLASSFLAGS_IMPL, __VA_ARGS__) ::PPE::RTTI::EClassFlags::None), \
+            metaNamespace) { \
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_END() }
 //----------------------------------------------------------------------------

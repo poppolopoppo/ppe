@@ -98,7 +98,7 @@ private:
     TAssociativeVector<FString, ETest> _assoc;
     TAssociativeVector<u64, u64> _uInt64Dico;
 };
-RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTITestSimple_, RTTI::EClassFlags::Concrete)
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTITestSimple_, Concrete)
 RTTI_PROPERTY_PRIVATE_FIELD(_b)
 RTTI_PROPERTY_PRIVATE_FIELD(_i)
 RTTI_PROPERTY_PRIVATE_FIELD(_f)
@@ -149,7 +149,7 @@ private:
     PRTTITestParent_ _child;
     FStructAsTuple _structAsTuple;
 };
-RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTITestParent_, RTTI::EClassFlags::Concrete)
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTITestParent_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_sourceName)
     RTTI_PROPERTY_PRIVATE_FIELD(_testEnum32)
     RTTI_PROPERTY_PRIVATE_FIELD(_testEnum64)
@@ -196,7 +196,7 @@ public:
     FOREACH_RTTI_NATIVETYPES(DEF_METATYPE_SCALAR_IMPL_)
 #undef DEF_METATYPE_SCALAR_IMPL_
 };
-RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTITest_, RTTI::EClassFlags::Concrete)
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTITest_, Concrete)
     RTTI_PROPERTY_PRIVATE_FIELD(_dummy)
 #if USE_RTTI_TEST_YOLOTYPES
 #define DEF_METATYPE_SCALAR_IMPL_(_Name, T, _TypeId) \

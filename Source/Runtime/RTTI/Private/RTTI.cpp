@@ -195,7 +195,7 @@ private:
     PToto _toto;
     ETutut _tutut;
 };
-RTTI_CLASS_BEGIN(RTTI_UnitTest, FTiti, RTTI::EClassFlags::Public)
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FTiti, Public)
 RTTI_PROPERTY_PRIVATE_FIELD(_count)
 RTTI_PROPERTY_FIELD_ALIAS(_name, Name)
 RTTI_PROPERTY_PRIVATE_FIELD(_structAsTuple)
@@ -241,7 +241,7 @@ private:
     HASHMAP(NativeTypes, FString, value_type) _dict2;
     HASHMAP(NativeTypes, FString, float) _dict3;
 };
-RTTI_CLASS_BEGIN(RTTI_UnitTest, FToto, RTTI::EClassFlags::Public)
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FToto, Public)
 RTTI_PROPERTY_FIELD_ALIAS(_count, Count)
 RTTI_PROPERTY_FIELD_ALIAS(_name, Name)
 RTTI_PROPERTY_FIELD_ALIAS(_tities, Tities)
@@ -268,7 +268,7 @@ public:
 private:
     PToto _parent1;
 };
-RTTI_CLASS_BEGIN(RTTI_UnitTest, FToto2, RTTI::EClassFlags::Public)
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FToto2, Public)
 RTTI_PROPERTY_PRIVATE_FIELD(_parent1)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
