@@ -17,6 +17,28 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+struct FNonCopyable {
+    FNonCopyable() NOEXCEPT = default;
+    FNonCopyable(const FNonCopyable&) = delete;
+    FNonCopyable& operator =(const FNonCopyable&) = delete;
+};
+//----------------------------------------------------------------------------
+struct FNonMovable {
+    FNonMovable() NOEXCEPT = default;
+    FNonMovable(FNonMovable&&) = delete;
+    FNonMovable& operator =(FNonMovable&&) = delete;
+};
+//----------------------------------------------------------------------------
+struct FNonCopyableNorMovable {
+    FNonCopyableNorMovable() NOEXCEPT = default;
+    FNonCopyableNorMovable(const FNonCopyableNorMovable&) = delete;
+    FNonCopyableNorMovable& operator =(const FNonCopyableNorMovable&) = delete;
+    FNonCopyableNorMovable(FNonCopyableNorMovable&&) = delete;
+    FNonCopyableNorMovable& operator =(FNonCopyableNorMovable&&) = delete;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 using TArray = T[_Dim];
 //----------------------------------------------------------------------------
@@ -170,6 +192,28 @@ using has_default_constructor = typename std::is_constructible<T>::type;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// SFINAE for detecting if a type implements an operator ==
+//----------------------------------------------------------------------------
+namespace details {
+//----------------------------------------------------------------------------
+struct no_equals_t_ {};
+template <typename U, typename V>
+no_equals_t_ operator ==(const U&, const V&); // dummy for SFINAE
+template <typename U, typename V = U>
+using has_equals_ = std::bool_constant<
+    not std::is_same_v<
+        no_equals_t_,
+        decltype(std::declval<const U&>() == std::declval<const V&>())
+    >
+>;
+//----------------------------------------------------------------------------
+} //!details
+//----------------------------------------------------------------------------
+template <typename T>
+constexpr bool has_equals_v = details::has_equals_<T>::value;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 // Very interesting, but did not work everywhere :'(
 // http://stackoverflow.com/questions/10711952/how-to-detect-existence-of-a-class-using-sfinae
 //----------------------------------------------------------------------------
@@ -237,12 +281,12 @@ FORCE_INLINE CONSTEXPR T NoInit_(std::true_type) { return T{ NoInit }; }
 } //!details
 // can be overload for custom types
 template <typename T>
-T NoInitType(TType<T>) {
+CONSTEXPR T NoInitType(TType<T>) NOEXCEPT {
     return details::NoInit_<T>(typename has_noinit_constructor<T>::type{});
 }
 // simpler interface wrapping overloadable NoInitType()
 template <typename T>
-T MakeNoInit() {
+CONSTEXPR T MakeNoInit() NOEXCEPT {
     return NoInitType(TType<T>{});
 }
 //----------------------------------------------------------------------------
@@ -331,34 +375,29 @@ void Destroy(T* p) {
 template<class T>
 using TDontDeduce = typename TType<T>::type;
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-struct FNonCopyable {
-    FNonCopyable() NOEXCEPT = default;
-    FNonCopyable(const FNonCopyable&) = delete;
-    FNonCopyable& operator =(const FNonCopyable&) = delete;
-};
-//----------------------------------------------------------------------------
-struct FNonMovable {
-    FNonMovable() NOEXCEPT = default;
-    FNonMovable(FNonMovable&&) = delete;
-    FNonMovable& operator =(FNonMovable&&) = delete;
-};
-//----------------------------------------------------------------------------
-struct FNonCopyableNorMovable {
-    FNonCopyableNorMovable() NOEXCEPT = default;
-    FNonCopyableNorMovable(const FNonCopyableNorMovable&) = delete;
-    FNonCopyableNorMovable& operator =(const FNonCopyableNorMovable&) = delete;
-    FNonCopyableNorMovable(FNonCopyableNorMovable&&) = delete;
-    FNonCopyableNorMovable& operator =(FNonCopyableNorMovable&&) = delete;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 // force wrapping a function call, a functor or a lambda in a function call
 template <typename _FuncLike, typename... _Args>
 NO_INLINE auto unlikely(_FuncLike funcLike, _Args... args) {
     return funcLike(std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+// wraps a T& inside a T* to avoid copying T when using value semantics
+template <typename T>
+struct ptr_ref_t {
+    T* Ptr;
+
+    CONSTEXPR ptr_ref_t() noexcept : Ptr(nullptr) {}
+    explicit CONSTEXPR ptr_ref_t(T& ref) NOEXCEPT : Ptr(&ref) {}
+
+    CONSTEXPR ptr_ref_t(const ptr_ref_t&) NOEXCEPT = default;
+    CONSTEXPR ptr_ref_t& operator =(const ptr_ref_t&) noexcept = default;
+
+    CONSTEXPR operator T* () const NOEXCEPT { return Ptr; }
+    CONSTEXPR operator T& () const NOEXCEPT { return (*Ptr); }
+};
+template <typename T>
+CONSTEXPR ptr_ref_t<T> ptr_ref(T& ref) {
+    return ptr_ref_t{ &ref };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
