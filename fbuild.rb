@@ -5,7 +5,7 @@ require 'pathname'
 
 START_TIME=Time.now
 
-VERSION='2.3.1'
+VERSION='2.4'
 VERSION_HEADER="; Version = <#{VERSION}>"
 
 require 'rbconfig'
@@ -184,6 +184,55 @@ private
     end
 end
 
+class FLLVMWindows < FDependency
+    BASEPATH_X86 = 'C:\Program Files (x86)\LLVM'
+    BASEPATH_X64 = 'C:\Program Files\LLVM'
+
+    attr_reader :platform, :llvm_path, :clang_version
+    def initialize()
+        super('LLVM_WINDOWS')
+    end
+    def export(oss)
+        super(oss)
+        if @available
+            oss.puts ".LLVMBasePath#{@platform} = '#{@llvm_path}'"
+            oss.puts ".LLVMClangVer#{@platform} = '#{@clang_version}'"
+            oss.puts ".LLVMWindowsBasePath = .LLVMBasePath#{@platform}"
+            oss.puts ".LLVMWindowsClangVer = .LLVMClangVer#{@platform}"
+        else
+            oss.puts ";.LLVMWindowsBasePath = 'XXX'"
+            oss.puts ";.LLVMWindowsClangVer = 'XXX'"
+        end
+    end
+    def self.fetch_version?(llvm_path)
+        clang_lib_path = File.join(llvm_path, 'lib', 'clang')
+        entries = Dir.entries(clang_lib_path)
+        if entries
+            entries.delete_if{|x| x =~ /^\.+$/}
+            entries.sort!
+            return entries[0]
+        else
+            return nil
+        end
+    end
+private
+    def eval_()
+        if Dir.exist?(BASEPATH_X64)
+            @platform = 'X64'
+            @llvm_path = BASEPATH_X64
+        elsif Dir.exist?(BASEPATH_X86)
+            @platform = 'X86'
+            @llvm_path = BASEPATH_X86
+        else
+            @platform = nil
+            @llvm_path = nil
+            return false
+        end
+        @clang_version = FLLVMWindows.fetch_version?(@llvm_path)
+        return (@clang_version != nil)
+    end
+end
+
 DEPENDENCIES= [
     [ 'Visual Studio 2012'      , FVisualStudio.new('110', 'C:\Program Files (x86)\Microsoft Visual Studio 11.0\Common7\Tools\\')  ],
     [ 'Visual Studio 2013'      , FVisualStudio.new('120', 'C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\Tools\\')  ],
@@ -191,8 +240,7 @@ DEPENDENCIES= [
     [ 'Visual Studio 2017'      , FVisualStudio2017.new()   ],
     [ 'Windows SDK 8.1'         , FWindowsSDK.new('8.1')    ],
     [ 'Windows SDK 10'          , FWindowsSDK.new('10')     ],
-    [ 'LLVM for Windows x86'    , FDirectoryDependency.new('LLVMFORWINDOWS_X86', 'LLVMBasePathX86', 'C:\Program Files (x86)\LLVM') ],
-    [ 'LLVM for Windows x64'    , FDirectoryDependency.new('LLVMFORWINDOWS_X64', 'LLVMBasePathX64', 'C:\Program Files\LLVM') ],
+    [ 'LLVM for Windows'        , FLLVMWindows.new() ],
 ]
 
 DEPENDENCIES.each { |it| it[1].eval }

@@ -42,7 +42,9 @@ def make_compile_commands(platform, config)
     dirname = File.join(CORE_PATH, 'Output', 'Intermediate', platform, config)
     FileUtils.mkdir_p(dirname, :verbose => true)
     filename = File.join(dirname, "compile_commands.json")
-    system('ruby', FBUILD_RB, "-compdb", "#{DEFAULT_TARGET}-#{platform}-#{config}", :out => File::NULL)
+    unless system('ruby', FBUILD_RB, "-compdb", "#{DEFAULT_TARGET}-#{platform}-#{config}", :out => File::NULL)
+        raise "compdb generation failed :'("
+    end
     FileUtils.mv(FBUILD_COMPDB, filename)
     puts " + #{filename}"
     return filename

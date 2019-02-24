@@ -57,7 +57,7 @@
 
 .CLangWindowsOverrideMSVC =
 [
-    .CompilerSystemIncludeFlag = ' /I'//' /imsvc'
+    .CompilerSystemIncludeFlag = ' /imsvc'
     .LibrarianOptions   = ' /OUT:"%2" "%1"'
                         //+ ' /llvmlibthin'       // http://llvm.org/docs/CommandGuide/llvm-lib.html // NOT COMPATIBLE WITH LINK.EXE !
 ]

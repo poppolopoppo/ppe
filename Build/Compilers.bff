@@ -11,7 +11,10 @@
 // Windows Compilers
 //------------------------------------------------------------------------------
 #   define USE_VISUALSTUDIO
-//#   define USE_CLANG_WINDOWS //%_NOCOMMIT%
+
+#if WITH_LLVM_WINDOWS
+;#   define USE_CLANG_WINDOWS // %_NOCOMMIT%
+#endif
 
 #   if USE_VISUALSTUDIO
 #       include "Compilers/MSVC20XX.bff"
