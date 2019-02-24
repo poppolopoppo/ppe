@@ -86,7 +86,7 @@ static void EnumerateDirNonRecursive_(
 static void GlobFilesNonRecursive_(
     const char_type* path,
     const char_type* pattern,
-    const TFunction<void(const FWStringView)>& onMatch ) {
+    const TFunction<void(const FWStringView&)>& onMatch ) {
     Assert(path);
     Assert(pattern);
     Assert(onMatch);
@@ -347,7 +347,7 @@ void FWindowsPlatformFile::EnumerateFiles(const char_type* dirpath, bool recursi
         } while (not stack.empty());
     }
     else {
-        EnumerateDirNonRecursive_(dirpath, onFile, TFunction<void(FWStringView)>{});
+        EnumerateDirNonRecursive_(dirpath, onFile, TFunction<void(const FWStringView&)>{});
     }
 }
 //----------------------------------------------------------------------------

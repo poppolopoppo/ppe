@@ -250,7 +250,7 @@ public: // ILowLevelLogger
 
         FPlatformMemory::Memcpy(log + 1, text.data(), text.SizeInBytes());
 
-        TaskManager_().Run(MakeFunction(log, &FDeferredLog::Log));
+        TaskManager_().Run(MakeFunction<&FDeferredLog::Log>(log));
     }
 
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
@@ -278,7 +278,7 @@ public: // ILowLevelLogger
         log->Bucket = checked_cast<u32>(scopeAlloc.Index);
         log->AllocSizeInBytes = checked_cast<u32>(stolen.SizeInBytes());
 
-        TaskManager_().Run(MakeFunction(log, &FDeferredLog::Log));
+        TaskManager_().Run(MakeFunction<&FDeferredLog::Log>(log));
     }
 
     virtual void Flush(bool synchronous) override final {

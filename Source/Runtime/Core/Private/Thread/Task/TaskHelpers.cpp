@@ -2,6 +2,7 @@
 
 #include "Thread/Task/TaskHelpers.h"
 
+#include "Thread/Task/Task.h"
 #include "Thread/Task/TaskManager.h"
 #include "Thread/Fiber.h"
 #include "Thread/ThreadPool.h"
@@ -15,8 +16,7 @@ void FireAndForget(
     ETaskPriority priority/* = ETaskPriority::Normal */,
     FTaskManager* manager/* = nullptr */) {
     Assert(task);
-
-    Async(FTaskFunc(task, &FFireAndForget::RunAndSuicide), priority, manager);
+    Async(FTaskFunc::Bind<&FFireAndForget::RunAndSuicide>(task), priority, manager);
 }
 //----------------------------------------------------------------------------
 void Async(

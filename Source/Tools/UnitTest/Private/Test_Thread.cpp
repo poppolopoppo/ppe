@@ -34,7 +34,7 @@ static void Test_Task_() {
     TRefPtr<FTest> Ptr(NEW_REF(Task, FTest));
 
     auto& pool = FGlobalThreadPool::Get();
-    pool.RunAndWaitFor(MakeFunction(Ptr.get(), &FTest::Log)); // should use a TSafePtr<> inside TFunction<>
+    pool.RunAndWaitFor(MakeFunction<&FTest::Log>(Ptr.get())); // should use a TSafePtr<> inside TFunction<>
 }
 //----------------------------------------------------------------------------
 static void Test_Async_() {
