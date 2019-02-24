@@ -179,6 +179,9 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .ProjectCompilerInputUnity_false = []
             .ProjectCompilerInputUnity_true = [ .CompilerInputUnity = '$ProjectName$-Unity-$Platform$-$Config$' ]
             Using( ."ProjectCompilerInputUnity_$ProjectUseUnity$" )
+
+            // Deoptimize files containings 'FASTBUILD_DEOPTIMIZE_OBJECT'
+            .DeoptimizeWritableFilesWithToken = true
         }
 
         RemoveDir( '$ProjectName$-Obj-$Platform$-$Config$-Purge' )

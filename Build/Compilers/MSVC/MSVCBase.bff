@@ -365,6 +365,8 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .CompilerOptions    = .ConfigOptions
                         + .CompilerWithRTTI
 
+    .CompilerOptionsDeoptimized = .CompilerOptions - ' /O2' + ' /Od'
+
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
                         + .LinkerWithoutASLR
 
@@ -388,6 +390,8 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .CompilerOptions    = .ConfigOptions
                         + .CompilerWithRTTI
+
+    .CompilerOptionsDeoptimized = .CompilerOptions - ' /O2' + ' /Od'
 
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
                         + .LinkerWithoutASLR
@@ -415,6 +419,8 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .CompilerOptions    = .ConfigOptions
                         + .CompilerWithoutRTTI
 
+    .CompilerOptionsDeoptimized = .CompilerOptions - ' /O2' + ' /Od'
+
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
                         + .LinkerWithoutASLR
 
@@ -440,6 +446,8 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .CompilerOptions    = .ConfigOptions
                         + .CompilerWithoutRTTI
+
+    .CompilerOptionsDeoptimized = .CompilerOptions - ' /O2' + ' /Od'
 
     .LibrarianOptions   = ' /LTCG'          ; link time code generation
 
@@ -468,6 +476,8 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .CompilerOptions    = .ConfigOptions
                         + .CompilerWithoutRTTI
+
+    .CompilerOptionsDeoptimized = .CompilerOptions - ' /O2' + ' /Od /Oy'
 
     .LibrarianOptions   = ' /LTCG'          ; link time code generation
 

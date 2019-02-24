@@ -300,6 +300,8 @@ Print( "Using Visual 2017 incremental LTCG for profiling : no profiling informat
 
 .MSVC2017GuardCF =
 [
+    .CompilerOptions    = ' /guard:no'
+    .LinkerOptions      = ' /guard:no'
 #if USE_VISUAL2017_GUARD_CF
     Print( "Using Visual 2017 guard CF : control flow protection" )
     ; https://docs.microsoft.com/fr-fr/cpp/build/reference/guard-enable-guard-checks?view=vs-2017
