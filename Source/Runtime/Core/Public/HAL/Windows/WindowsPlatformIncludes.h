@@ -2,6 +2,14 @@
 
 #include "HAL/Generic/GenericPlatformIncludes.h"
 
+#ifdef CPP_CLANG
+#    pragma clang system_header
+#endif
+
+#ifdef CPP_GCC
+#    pragma GCC system_header
+#endif
+
 // WIN32_LEAN_AND_MEAN excludes rarely-used services from windows headers.
 #ifndef WIN32_LEAN_AND_MEAN
 #   define WIN32_LEAN_AND_MEAN

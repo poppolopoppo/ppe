@@ -291,6 +291,14 @@ public: // TTable<>
         struct FEntry {
             FStringView Name;
             FRow Row;
+
+            CONSTEXPR explicit FEntry(const FStringView& name) NOEXCEPT : Name(name) {}
+            CONSTEXPR explicit FEntry(const FStringView& name, FRow&& row) NOEXCEPT : Name(name), Row(std::move(row)) {}
+
+            FEntry(const FEntry&) = default;
+            FEntry& operator =(const FEntry&) = default;
+            FEntry(FEntry&&) = default;
+            FEntry& operator =(FEntry&&) = default;
         };
 
         using FEntries = VECTORINSITU(Diagnostic, FEntry, 8);

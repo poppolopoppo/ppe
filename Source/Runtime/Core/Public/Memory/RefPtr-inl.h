@@ -370,23 +370,23 @@ void TSafePtr<T>::Swap(TSafePtr<U>& other) {
     std::swap(other._ptr, _ptr);
 }
 //----------------------------------------------------------------------------
+#if USE_PPE_SAFEPTR
 template <typename T>
 FORCE_INLINE void TSafePtr<T>::IncRefCountIFP() const {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
-#if USE_PPE_SAFEPTR
     if (_ptr)
         AddSafeRef(_ptr);
-#endif
 }
+#endif //!USE_PPE_SAFEPTR
 //----------------------------------------------------------------------------
+#if USE_PPE_SAFEPTR
 template <typename T>
 FORCE_INLINE void TSafePtr<T>::DecRefCountIFP() const {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
-#if USE_PPE_SAFEPTR
     if (_ptr)
         RemoveSafeRef(_ptr);
-#endif
 }
+#endif //!USE_PPE_SAFEPTR
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

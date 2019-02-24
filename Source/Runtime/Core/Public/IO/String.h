@@ -610,13 +610,6 @@ struct TStringHasher : TStringViewHasher<_Char, _Sensitive> {
     }
 };
 //----------------------------------------------------------------------------
-template <typename _Char, ECase _Sensitive>
-using TBasicStringHashMemoizer = THashMemoizer<
-    TBasicString<_Char>,
-    TStringHasher<_Char, _Sensitive>,
-    TStringEqualTo<_Char, _Sensitive>
->;
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

@@ -76,7 +76,7 @@ struct TScalarVectorComponent {
 
     CONSTEXPR TScalarVectorComponent() NOEXCEPT = default;
 
-#ifndef _MSC_VER
+#if defined(CPP_CLANG)
 #   pragma clang diagnostic push
 #   pragma clang diagnostic ignored "-Warray-bounds"
 #endif
@@ -96,7 +96,7 @@ struct TScalarVectorComponent {
     FORCE_INLINE CONSTEXPR operator component_type& () NOEXCEPT { return data[_Idx]; }
     FORCE_INLINE CONSTEXPR operator const component_type& () const NOEXCEPT { return data[_Idx]; }
 
-#ifndef _MSC_VER
+#if defined(CPP_CLANG)
 #   pragma clang diagnostic pop
 #endif
 
@@ -385,7 +385,7 @@ struct TScalarVectorSwizzle : TScalarVectorAssignable<TScalarVectorSwizzle<T, _S
     template <size_t _Idx>
     static CONSTEXPR size_t swizzled = indices[_Idx];
 
-#ifndef _MSC_VER
+#if defined(CPP_CLANG)
 #   pragma clang diagnostic push
 #   pragma clang diagnostic ignored "-Warray-bounds"
 #endif
@@ -396,7 +396,7 @@ struct TScalarVectorSwizzle : TScalarVectorAssignable<TScalarVectorSwizzle<T, _S
     template <size_t _Idx>
     FORCE_INLINE CONSTEXPR const component_type& get() const NOEXCEPT { return data[swizzled<_Idx>]; }
 
-#ifndef _MSC_VER
+#if defined(CPP_CLANG)
 #   pragma clang diagnostic pop
 #endif
 
@@ -405,7 +405,7 @@ struct TScalarVectorSwizzle : TScalarVectorAssignable<TScalarVectorSwizzle<T, _S
     using promote_type = decltype(PromoteScalarVectorExpr<T>(std::declval<parent_type&>()));
     using promote_const_type = decltype(PromoteScalarVectorExpr<T>(std::declval<const parent_type&>()));
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) || defined(CPP_CLANG)
     CONSTEXPR operator promote_type () NOEXCEPT { return PromoteScalarVectorExpr<T>(*this); }
     CONSTEXPR operator promote_const_type () const NOEXCEPT { return PromoteScalarVectorExpr<T>(*this); }
 

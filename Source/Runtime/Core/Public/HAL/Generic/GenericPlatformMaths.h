@@ -245,6 +245,26 @@ public: // must be defined for every platform
     // tzcnt:   trailing zero count (LSB)
     // popcnt:  number of bits set to 1
 
+    // https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+    template <typename T>
+    static FORCE_INLINE CONSTEXPR T popcnt_constexpr(T v) NOEXCEPT {
+        STATIC_ASSERT(std::is_arithmetic_v<T>);
+        v = v - ((v >> 1) & (T)~(T)0 / 3);                                  // temp
+        v = (v & (u64)~(u64)0 / 15 * 3) + ((v >> 2) & (T)~(T)0 / 15 * 3);   // temp
+        v = (v + (v >> 4)) & (T)~(T)0 / 255 * 15;                           // temp
+        return (T)(v * ((T)~(T)0 / 255)) >> (sizeof(T) - 1) * CHAR_BIT;     // count
+    }
+
+    // number of bits set to one (support u64 on ARCH_X86)
+    template <typename T>
+    static FORCE_INLINE u64 popcnt64(T v) NOEXCEPT {
+#ifdef ARCH_X86
+        return popcnt_constexpr(static_cast<u64>(v));
+#else
+        return FPlatformMaths::popcnt(static_cast<u64>(v));
+#endif
+    }
+
     static u32 lzcnt(u32 u) NOEXCEPT = delete;
     static u32 tzcnt(u32 u) NOEXCEPT = delete;
     static u32 popcnt(u32 u) NOEXCEPT = delete;
@@ -298,30 +318,6 @@ public: // must be defined for every platform
     static float FP16_to_FP32(u16 u);
 
 public: // generic helpers
-
-    //------------------------------------------------------------------------
-    // https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
-
-    template <typename T>
-    static FORCE_INLINE CONSTEXPR T popcnt_constexpr(T v) NOEXCEPT {
-        STATIC_ASSERT(std::is_arithmetic_v<T>);
-        v = v - ((v >> 1) & (T)~(T)0 / 3);                                  // temp
-        v = (v & (u64)~(u64)0 / 15 * 3) + ((v >> 2) & (T)~(T)0 / 15 * 3);   // temp
-        v = (v + (v >> 4)) & (T)~(T)0 / 255 * 15;                           // temp
-        return (T)(v * ((T)~(T)0 / 255)) >> (sizeof(T) - 1) * CHAR_BIT;     // count
-    }
-
-    //-----------------------------------------------------------------------
-    // number of bits set to one (support u64 on ARCH_X86)
-
-    template <typename T>
-    static FORCE_INLINE u64 popcnt64(T v) NOEXCEPT {
-#ifdef ARCH_X86
-        return popcnt_constexpr(static_cast<u64>(v));
-#else
-        return FPlatformMaths::popcnt(static_cast<u64>(v));
-#endif
-    }
 
 };
 //----------------------------------------------------------------------------

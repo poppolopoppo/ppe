@@ -94,7 +94,7 @@ struct TReservoirSampling {
     STATIC_ASSERT(_Capacity > 1);
     STATIC_CONST_INTEGRAL(u32, Capacity, _Capacity);
 
-    u64 Count{ 0 };
+    u32 Count{ 0 };
     T SampleMin, SampleMax;
     T Samples[Capacity];
 
@@ -103,7 +103,7 @@ struct TReservoirSampling {
         if (Count < Capacity)
             Samples[Count] = sample;
         else {
-            const u64 r = u64(rnd(Count + 1));
+            const u32 r = checked_cast<u32>(rnd(Count + 1));
             if (r < Capacity)
                 Samples[r] = sample;
 

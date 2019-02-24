@@ -2,6 +2,7 @@
 
 #include "Core.h"
 
+#include "Container/HashHelpers.h"
 #include "Container/HashMap.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
@@ -50,6 +51,13 @@ using TBasicStringHashMap = THashMap<
     TStringHasher<_Char, _Sensitive>,
     TStringEqualTo<_Char, _Sensitive>,
     _Allocator
+>;
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+using TBasicStringHashMemoizer = THashMemoizer<
+    TBasicString<_Char>,
+    TStringHasher<_Char, _Sensitive>,
+    TStringEqualTo<_Char, _Sensitive>
 >;
 //----------------------------------------------------------------------------
 #define STRING_HASHMAP(_DOMAIN, _VALUE, _CASE_SENSITIVE) \

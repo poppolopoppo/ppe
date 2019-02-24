@@ -4,6 +4,14 @@
 #   error "This file should not be included outside of Core.Network"
 #endif
 
+#ifdef CPP_CLANG
+#    pragma clang system_header
+#endif
+
+#ifdef CPP_GCC
+#    pragma GCC system_header
+#endif
+
 #ifdef PLATFORM_WINDOWS
 
 #   ifndef _MSC_VER

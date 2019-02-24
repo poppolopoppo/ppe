@@ -272,10 +272,11 @@ public:
     template <typename U>
     void Swap(TSafePtr<U>& other);
 
+#if USE_PPE_SAFEPTR
 protected:
     void IncRefCountIFP() const;
     void DecRefCountIFP() const;
-
+#endif //!USE_PPE_SAFEPTR
 private:
     T* _ptr;
 };

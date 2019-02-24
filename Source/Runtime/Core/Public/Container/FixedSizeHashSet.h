@@ -3,7 +3,9 @@
 #include "Core.h"
 
 #include "Container/Hash.h"
+#include "Container/HashHelpers.h"
 #include "Container/Pair.h"
+#include "HAL/PlatformMemory.h"
 #include "Meta/AlignedStorage.h"
 
 namespace PPE {

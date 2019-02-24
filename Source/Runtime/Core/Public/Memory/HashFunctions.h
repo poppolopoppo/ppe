@@ -60,7 +60,7 @@ size_t hash_mem(const TMemoryView<T>& src, size_t seed) NOEXCEPT { return hash_m
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CONSTEXPR inline size_t hash_ptr(const void* ptr) NOEXCEPT { return hash_uint(uintptr_t(ptr)); }
+inline size_t hash_ptr(const void* ptr) NOEXCEPT { return hash_uint(uintptr_t(ptr)); }
 //----------------------------------------------------------------------------
 template <typename T>
 size_t hash_as_pod(const T& pod) NOEXCEPT;

@@ -498,13 +498,6 @@ struct TStringViewHasher<_Char, ECase::Insensitive> {
     }
 };
 //----------------------------------------------------------------------------
-template <typename _Char, ECase _Sensitive>
-using TBasicStringViewHashMemoizer = THashMemoizer<
-    TBasicStringView<_Char>,
-    TStringViewHasher<_Char, _Sensitive>,
-    TStringViewEqualTo<_Char, _Sensitive>
->;
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -543,13 +536,6 @@ struct TConstCharHasher : TStringViewHasher<_Char, _Sensitive> {
         return TStringViewHasher<_Char, _Sensitive>::operator ()(cstr.MakeView());
     }
 };
-//----------------------------------------------------------------------------
-template <typename _Char, ECase _Sensitive>
-using TBasicConstCharHashMemoizer = THashMemoizer<
-    TBasicConstChar<_Char>,
-    TConstCharHasher<_Char, _Sensitive>,
-    TConstCharEqualTo<_Char, _Sensitive>
->;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
