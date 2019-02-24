@@ -45,41 +45,18 @@ public:
         _taskContextAndPriority.Reset(taskContext, uintptr_t(priority));
     }
 
-#ifdef WITH_PPE_ASSERT
-    ~FStalledFiber() {
-        Assert(nullptr == _stalled); // should have been resumed !
-    }
-#endif
-
-    FStalledFiber(const FStalledFiber& ) = delete;
-    FStalledFiber& operator =(const FStalledFiber& ) = delete;
-
-    FStalledFiber(FStalledFiber&& rvalue)
-    :   FStalledFiber() {
-        operator =(std::move(rvalue));
-    }
-    FStalledFiber& operator =(FStalledFiber&& rvalue) {
-        Assert(nullptr == _stalled);
-        _taskContextAndPriority = rvalue._taskContextAndPriority;
-        _stalled = rvalue._stalled;
-        rvalue._stalled = nullptr;
-        return (*this);
-    }
-
+    FTaskFiberRef Stalled() const { return _stalled; }
     ETaskPriority Priority() const {
         Assert(_stalled);
 
         return ETaskPriority(_taskContextAndPriority.Flag01());
     }
 
-    void Resume(void (*resume)(FTaskFiberRef)) {
+    void Resume(void (*resume)(FTaskFiberRef)) const {
         Assert(_stalled);
 
-        FTaskFiberRef stalled = _stalled;
-        _stalled = nullptr;
-
         _taskContextAndPriority->RunOne(nullptr,
-            [resume, stalled](ITaskContext& ) {
+            [resume, stalled{ _stalled }](ITaskContext&) {
                 resume(stalled);
             },
             ETaskPriority(_taskContextAndPriority.Flag01()) );
@@ -120,7 +97,7 @@ public:
     bool Valid() const;
     bool Finished() const;
     void Start(size_t count);
-    bool Queue(ITaskContext* resume, FTaskFiberRef fiber, ETaskPriority priority);
+    bool Queue(const FStalledFiber& waiting);
     void Clear();
 
     friend void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef);
@@ -168,7 +145,7 @@ public:
     virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;
     virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override final;
 
-    virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) override final;
+    virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume, ETaskPriority priority) override final;
 
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority, ITaskContext* resume) override final;
     virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority, ITaskContext* resume) override final;
@@ -191,6 +168,8 @@ public: // public since this is complicated to friend FWorkerContext_ due to ano
 
     using FTaskQueued = FTaskScheduler::FTaskQueued;
 
+    static FTaskCounter* MakeCounterIFN_(FTaskWaitHandle* phandle, size_t n);
+
     void WorkerLoop_();
 };
 //----------------------------------------------------------------------------
@@ -210,6 +189,7 @@ public:
     size_t WorkerIndex() const { return _workerIndex; }
 
     PTaskCounter CreateCounter();
+    PTaskCounter StartCounter(size_t n);
     void DestroyCounter(PTaskCounter& pcounter);
     void ClearCounters();
 
@@ -281,10 +261,16 @@ PTaskCounter FWorkerContext_::CreateCounter() {
     return result;
 }
 //----------------------------------------------------------------------------
+PTaskCounter FWorkerContext_::StartCounter(size_t n) {
+    PTaskCounter counter = CreateCounter();
+    counter->Start(n);
+    return counter;
+}
+//----------------------------------------------------------------------------
 void FWorkerContext_::DestroyCounter(PTaskCounter& counter) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(counter);
-    Assert(counter->Finished());
+    Assert_NoAssume(counter->Finished());
 
 #ifdef WITH_PPE_ASSERT
     {
@@ -497,7 +483,7 @@ struct FWaitForAll_ {
 FTaskManagerImpl::FTaskManagerImpl(FTaskManager& manager)
 :   _manager(manager)
 ,   _scheduler(_manager.WorkerCount(), GTaskManagerQueueCapacity)
-,   _fibers(MakeFunction(this, &FTaskManagerImpl::WorkerLoop_))
+,   _fibers(MakeFunction<&FTaskManagerImpl::WorkerLoop_>(this))
 #ifdef WITH_PPE_ASSERT
 ,   _countersInUse(0)
 ,   _fibersInUse(0)
@@ -522,7 +508,7 @@ void FTaskManagerImpl::Start(const TMemoryView<const u64>& threadAffinities) {
 
     forrange(i, 0, n) {
         _threads.emplace_back(&WorkerThreadLaunchpad_, &_manager, i, threadAffinities[i]);
-        Assert(_threads.back().joinable());
+        Assert_NoAssume(_threads.back().joinable());
     }
 }
 //----------------------------------------------------------------------------
@@ -534,7 +520,7 @@ void FTaskManagerImpl::Shutdown() {
         &FWorkerContext_::ExitWorkerTask );
 
     for (std::thread& workerThread : _threads) {
-        Assert(workerThread.joinable());
+        Assert_NoAssume(workerThread.joinable());
         workerThread.join();
     }
 
@@ -542,85 +528,59 @@ void FTaskManagerImpl::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority) {
-    FTaskCounter* pcounter = nullptr;
+    Assert_NoAssume(rtask);
 
-    if (phandle) {
-        Assert(not phandle->Valid());
-
-        *phandle = FTaskWaitHandle(priority, FWorkerContext_::Get().CreateCounter());
-        Assert(phandle->Valid());
-        Assert(phandle->Counter());
-
-        pcounter = const_cast<FTaskCounter*>(phandle->Counter());
-        pcounter->Start(1);
-    }
-
-    _scheduler.Produce(priority, std::move(rtask), pcounter);
+    _scheduler.Produce(priority, std::move(rtask), MakeCounterIFN_(phandle, 1));
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) {
-    FTaskCounter* pcounter = nullptr;
+    Assert_NoAssume(not rtasks.empty());
 
-    if (phandle) {
-        Assert(not phandle->Valid());
-
-        *phandle = FTaskWaitHandle(priority, FWorkerContext_::Get().CreateCounter());
-        Assert(phandle->Valid());
-        Assert(phandle->Counter());
-
-        pcounter = const_cast<FTaskCounter*>(phandle->Counter());
-        pcounter->Start(rtasks.size());
-    }
-
-    _scheduler.Produce(priority, rtasks, pcounter);
+    _scheduler.Produce(priority, rtasks, MakeCounterIFN_(phandle, rtasks.size()));
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) {
-    FTaskCounter* pcounter = nullptr;
+    Assert_NoAssume(not tasks.empty());
 
-    if (phandle) {
-        Assert(not phandle->Valid());
-
-        *phandle = FTaskWaitHandle(priority, FWorkerContext_::Get().CreateCounter());
-        Assert(phandle->Valid());
-        Assert(phandle->Counter());
-
-        pcounter = const_cast<FTaskCounter*>(phandle->Counter());
-        pcounter->Start(tasks.size());
-    }
-
-    _scheduler.Produce(priority, tasks, pcounter);
+    _scheduler.Produce(priority, tasks, MakeCounterIFN_(phandle, tasks.size()));
 }
 //----------------------------------------------------------------------------
-void FTaskManagerImpl::WaitFor(FTaskWaitHandle& handle, ITaskContext* resume) {
-    Assert(FFiber::IsInFiber());
+void FTaskManagerImpl::WaitFor(FTaskWaitHandle& handle, ITaskContext* resume, ETaskPriority priority) {
+    Assert_NoAssume(FFiber::IsInFiber());
     Assert(handle.Valid());
-
-    if (Unlikely(handle.Finished()))
-        return;
 
     if (nullptr == resume)
         resume = this;
 
-    FTaskFiberRef const self = FTaskFiberPool::CurrentHandleRef();
+    FStalledFiber const self{ resume, FTaskFiberPool::CurrentHandleRef(), priority };
     FTaskFiberRef const next = _fibers.AcquireFiber();
-    next->AttachWakeUpCallback([resume, self, &handle]() {
-        handle._counter->Queue(resume, self, handle.Priority());
+    STATIC_ASSERT(sizeof(FStalledFiber) == sizeof(uintptr_t) * 2);
+    STATIC_ASSERT(sizeof(STaskCounter) == sizeof(uintptr_t));
+    next->AttachWakeUpCallback([self, pcounter{ STaskCounter{ handle._counter } }]() {
+        pcounter->Queue(self);
     });
 
-    self->YieldFiber(next, false/* this fiber will be resumed later */);
+    if (Unlikely(handle.Finished())) {
+        // task already finished while we were preparing :
+        next->OnWakeUp.Reset();
+        _fibers.ReleaseFiber(next);
+    }
+    else {
+        // task is still running, yield execution to next fiber :
+        self.Stalled()->YieldFiber(next, false/* this fiber will be resumed later */);
+    }
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority, ITaskContext* resume) {
     FTaskWaitHandle handle;
     Run(&handle, rtasks, priority);
-    WaitFor(handle, resume);
+    WaitFor(handle, resume, priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority, ITaskContext* resume) {
     FTaskWaitHandle handle;
     Run(&handle, tasks, priority);
-    WaitFor(handle, resume);
+    WaitFor(handle, resume, priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) {
@@ -633,7 +593,7 @@ void FTaskManagerImpl::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority prio
 
         _scheduler.BroadcastToEveryWorker(
             size_t(priority),
-            MakeFunction(&args, &FBroadcast_::Task) );
+            MakeFunction<&FBroadcast_::Task>(&args) );
 
         // wait for all task to be executed
         {
@@ -656,6 +616,18 @@ void FTaskManagerImpl::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority prio
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::ReleaseMemory() {
     _fibers.ReleaseMemory();
+}
+//----------------------------------------------------------------------------
+FTaskCounter* FTaskManagerImpl::MakeCounterIFN_(FTaskWaitHandle* phandle, size_t n) {
+    if (phandle) {
+        Assert_NoAssume(not phandle->Valid());
+
+        *phandle = FTaskWaitHandle{ FWorkerContext_::Get().StartCounter(n) };
+        return phandle->_counter.get();
+    }
+    else {
+        return nullptr;
+    }
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::WorkerLoop_() {
@@ -704,13 +676,11 @@ void FTaskCounter::Start(size_t count) {
     _taskCount = checked_cast<i32>(count);
 }
 //----------------------------------------------------------------------------
-bool FTaskCounter::Queue(ITaskContext* resume, FTaskFiberRef fiber, ETaskPriority priority) {
+bool FTaskCounter::Queue(const FStalledFiber& waiting) {
     Assert_NoAssume(CheckCanary_());
-    Assert(resume);
-    Assert(fiber);
-    Assert(fiber != FTaskFiberPool::CurrentHandleRef()); // should be done from another fiber to avoid synchronization issues
+    Assert(waiting.Stalled());
+    Assert_NoAssume(waiting.Stalled() != FTaskFiberPool::CurrentHandleRef()); // should be done from another fiber to avoid synchronization issues
 
-    FStalledFiber stalled(resume, fiber, priority);
     {
         const FAtomicSpinLock::FScope scopedLock(_barrier);
 
@@ -718,13 +688,13 @@ bool FTaskCounter::Queue(ITaskContext* resume, FTaskFiberRef fiber, ETaskPriorit
             // will be resumed by counter when exhausted in Decrement_ResumeWaitingTasksIfZero()
             Assert(_queueSize < QueueCapacity);
 
-            INPLACE_NEW(&_queue[_queueSize++], FStalledFiber)(std::move(stalled));
+            INPLACE_NEW(&_queue[_queueSize++], FStalledFiber)(waiting);
             return true;
         }
     }
 
     // queue for immediate resume if the counter is already exhausted (won't steal execution from current fiber)
-    stalled.Resume(&FWorkerContext_::ResumeFiberTask);
+    waiting.Resume(&FWorkerContext_::ResumeFiberTask);
 
     return false;
 }
@@ -790,16 +760,14 @@ void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTaskWaitHandle::FTaskWaitHandle()
-:   _priority(ETaskPriority::Normal)
-,   _counter(nullptr) {}
+:   _counter(nullptr) {}
 //----------------------------------------------------------------------------
-FTaskWaitHandle::FTaskWaitHandle(ETaskPriority priority, PTaskCounter&& counter)
-:   _priority(priority)
-,   _counter(std::move(counter)) {}
+FTaskWaitHandle::FTaskWaitHandle(PTaskCounter&& counter)
+:   _counter(std::move(counter)) {}
 //----------------------------------------------------------------------------
 FTaskWaitHandle::~FTaskWaitHandle() {
     if (_counter) {
-        Assert(_counter->Finished());
+        Assert_NoAssume(_counter->Finished());
         FWorkerContext_::Get().DestroyCounter(_counter);
     }
 }
@@ -811,17 +779,14 @@ FTaskWaitHandle::FTaskWaitHandle(FTaskWaitHandle&& rvalue) {
 FTaskWaitHandle& FTaskWaitHandle::operator =(FTaskWaitHandle&& rvalue) {
     AssertRelease(not _counter.valid()); // should call DestroyCounter() to pool the counter
 
-    _priority = rvalue._priority;
     _counter = std::move(rvalue._counter);
-
-    rvalue._priority = ETaskPriority::Normal;
-    Assert(not rvalue._counter.valid());
+    Assert_NoAssume(not rvalue._counter.valid());
 
     return *this;
 }
 //----------------------------------------------------------------------------
 bool FTaskWaitHandle::Finished() const {
-    Assert(_counter.valid());
+    Assert_NoAssume(_counter.valid());
 
     return _counter->Finished();
 }
@@ -897,7 +862,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPrio
         Meta::FUniqueLock scopeLock(args.Barrier);
 
         _pimpl->RunOne(nullptr,
-            MakeFunction(&args, &TRunAndWaitFor_<false>::Task),
+            MakeFunction<&TRunAndWaitFor_<false>::Task>(&args),
             priority );
 
         args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
@@ -916,7 +881,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTa
         Meta::FUniqueLock scopeLock(args.Barrier);
 
         _pimpl->RunOne(nullptr,
-            MakeFunction(&args, &TRunAndWaitFor_<false>::Task),
+            MakeFunction<&TRunAndWaitFor_<false>::Task>(&args),
             priority );
 
         whileWaiting(*_pimpl);
@@ -936,7 +901,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETas
         Meta::FUniqueLock scopeLock(args.Barrier);
 
         _pimpl->RunOne(nullptr,
-            MakeFunction(&args, &TRunAndWaitFor_<true>::Task),
+            MakeFunction<&TRunAndWaitFor_<true>::Task>(&args),
             priority );
 
         args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
@@ -962,16 +927,16 @@ void FTaskManager::WaitForAll() const {
         Meta::FUniqueLock scopeLock(args.Barrier);
 
         _pimpl->RunOne(nullptr,
-            MakeFunction(&args, &FWaitForAll_::Task),
+            FTaskFunc::Bind<&FWaitForAll_::Task>(&args),
             ETaskPriority::Internal/* this priority is reserved for this particular usage */);
 
         args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
     }
 }
 //----------------------------------------------------------------------------
-void FTaskManager::WaitForAll(int timeoutMS) const {
+bool FTaskManager::WaitForAll(int timeoutMS) const {
     if (FFiber::IsInFiber())
-        return;
+        return false;
 
     Assert(nullptr != _pimpl);
 
@@ -982,10 +947,10 @@ void FTaskManager::WaitForAll(int timeoutMS) const {
         Meta::FUniqueLock scopeLock(args.Barrier);
 
         _pimpl->RunOne(nullptr,
-            MakeFunction(&args, &FWaitForAll_::Task),
+            FTaskFunc::Bind<&FWaitForAll_::Task>(&args),
             ETaskPriority::Internal/* this priority is reserved for this particular usage */);
 
-        args.OnFinished.wait_for(scopeLock,
+        return args.OnFinished.wait_for(scopeLock,
             std::chrono::milliseconds(timeoutMS),
             [&args]() { return args.Available;
         });

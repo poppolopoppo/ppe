@@ -228,7 +228,8 @@ FTaskFiberPool::~FTaskFiberPool() {
 //----------------------------------------------------------------------------
 auto FTaskFiberPool::AcquireFiber() -> FHandleRef {
     if (Likely(_chunks)) {
-        if (Likely(FHandleRef const h = _chunks->AcquireFiber()))
+        FHandleRef const h = _chunks->AcquireFiber();
+        if (Likely(h))
             return h;
     }
 

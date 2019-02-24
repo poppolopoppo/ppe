@@ -25,7 +25,7 @@ public:
     friend class FTaskManagerImpl;
 
     FTaskWaitHandle();
-    FTaskWaitHandle(ETaskPriority priority, PTaskCounter&& counter);
+    explicit FTaskWaitHandle(PTaskCounter&& counter);
     ~FTaskWaitHandle();
 
     FTaskWaitHandle(const FTaskWaitHandle& other) = delete;
@@ -34,14 +34,12 @@ public:
     FTaskWaitHandle(FTaskWaitHandle&& rvalue);
     FTaskWaitHandle& operator =(FTaskWaitHandle&& rvalue);
 
-    ETaskPriority Priority() const { return _priority; }
     const FTaskCounter* Counter() const { return _counter.get(); }
 
     bool Valid() const { return _counter.valid(); }
     bool Finished() const;
 
 private:
-    ETaskPriority _priority;
     PTaskCounter _counter;
 };
 //----------------------------------------------------------------------------
@@ -53,7 +51,7 @@ public:
     virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
 
-    virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume = nullptr) = 0;
+    virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume = nullptr, ETaskPriority priority = ETaskPriority::Normal) = 0;
 
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) = 0;
     virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) = 0;
@@ -99,7 +97,7 @@ public:
     void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
 
     void WaitForAll() const;
-    void WaitForAll(int timeoutMS) const; // can timeout, recommended over WaitForAll() to avoid blocking the program
+    bool WaitForAll(int timeoutMS) const; // can timeout, recommended over WaitForAll() to avoid blocking the program
 
     void ReleaseMemory(); // release potentially unused memory
 
