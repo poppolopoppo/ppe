@@ -5,7 +5,7 @@
 #include "RTTI/NativeTypes.Tuple-inl.h" // TBaseTupleTraits<...>
 
 #include "Container/Tuple.h"
-#include "Container/TupleHelpers.h"
+#include "Container/TupleTie.h"
 
 // need C++17 structured bindings
 #define USE_PPE_RTTI_STRUCT_AS_TUPLE _HAS_CXX17

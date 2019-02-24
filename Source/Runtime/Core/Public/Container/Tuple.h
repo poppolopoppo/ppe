@@ -19,7 +19,12 @@ template <typename... _Args>
 using TTupleDecay = TTuple< Meta::TDecay<_Args>... >;
 //----------------------------------------------------------------------------
 template <typename... _Args>
-std::tuple<Meta::TRemoveReference<_Args>... > MakeTuple(_Args&&... args) {
+using TTupleMake = std::decay_t<decltype(
+    std::make_tuple(std::declval<_Args>().../* wraps const T& to T */)
+)>;
+//----------------------------------------------------------------------------
+template <typename... _Args>
+CONSTEXPR TTuple<Meta::TRemoveReference<_Args>... > MakeTuple(_Args&&... args) NOEXCEPT {
     return std::make_tuple(std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
@@ -29,19 +34,19 @@ CONSTEXPR bool is_pod(TType< TTuple<_Args...> >) NOEXCEPT {
     return TIsPod_v<_Args...>;
 }
 template <typename... _Args>
-TTuple<_Args...> NoInitType(TType< TTuple<_Args...> >) {
+CONSTEXPR TTuple<_Args...> NoInitType(TType< TTuple<_Args...> >) NOEXCEPT {
     return MakeTuple(MakeNoInit<_Args>()...);
 }
 template <typename... _Args>
-TTuple<_Args...> ForceInitType(TType< TTuple<_Args...> >) {
+CONSTEXPR TTuple<_Args...> ForceInitType(TType< TTuple<_Args...> >) NOEXCEPT {
     return MakeTuple(MakeForceInit<_Args>()...);
 }
 template <typename... _Args>
-void Construct(TTuple<_Args...>* p, FNoInit) {
+CONSTEXPR void Construct(TTuple<_Args...>* p, FNoInit) NOEXCEPT {
     Construct(p, MakeNoInit<_Args>()...);
 }
 template <typename... _Args>
-void Construct(TTuple<_Args...>* p, FForceInit) {
+CONSTEXPR void Construct(TTuple<_Args...>* p, FForceInit) NOEXCEPT {
     Construct(p, MakeForceInit<_Args>()...);
 }
 } //!Meta
