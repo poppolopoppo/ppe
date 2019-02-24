@@ -2,7 +2,7 @@
 
 require 'find'
 
-SOURCESFILES_PER_UNITY = 22
+SOURCESFILES_PER_UNITY = 30
 
 ROOTDIR = File.dirname(__FILE__)
 SOURCEDIR = File.absolute_path(File.join(ROOTDIR, 'Source'))

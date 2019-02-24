@@ -20,6 +20,6 @@
     {
         'resource.rc'
     }
-    .UnityNumFiles = 6 // generated
+    .UnityNumFiles = 5 // generated
     #include "$BuildPath$/Templates/Module.bff"
 }
