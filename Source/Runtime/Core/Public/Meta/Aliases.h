@@ -205,14 +205,14 @@ constexpr size_t INDEX_NONE = size_t(-1);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if     defined(CPP_VISUALSTUDIO)
+#if defined(CPP_VISUALSTUDIO)
 #   define PRAGMA_DISABLE_OPTIMIZATION __pragma(optimize("",off))
 #   define PRAGMA_ENABLE_OPTIMIZATION  __pragma(optimize("",on ))
-#elif   defined(CPP_CLANG)
+#elif defined(CPP_CLANG)
 #   define PRAGMA_DISABLE_OPTIMIZATION __pragma(clang optimize off)
 #   define PRAGMA_ENABLE_OPTIMIZATION  __pragma(clang optimize on )
 #else
-#   error "need to implement pragma optimize !"
+#   error "need to implement PRAGMA_ENABLE/DISABLE_OPTIMIZATION !"
 #endif
 //----------------------------------------------------------------------------
 #if defined(CPP_VISUALSTUDIO)
@@ -223,8 +223,19 @@ constexpr size_t INDEX_NONE = size_t(-1);
     __pragma(warning(disable: 4074)) \
     __pragma(init_seg(compiler))
 #else
-#   error "need to implement pragma initseg lib !"
+#   error "need to implement PRAGMA_INITSEG_LIB/COMPILER !"
 #endif
+//----------------------------------------------------------------------------
+#if defined(__clang__) || defined(__GNUC__)
+#   define PPE_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#elif defined(_MSC_VER)
+#   define PPE_PRETTY_FUNCTION __FUNCSIG__
+#else
+#   error "need to implement PPE_PRETTY_FUNCTION !"
+#endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 
 namespace PPE {
 //----------------------------------------------------------------------------

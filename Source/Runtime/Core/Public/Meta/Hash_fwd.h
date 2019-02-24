@@ -35,7 +35,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, hash_t h);
 //----------------------------------------------------------------------------
 #if _HAS_CXX14
 //----------------------------------------------------------------------------
-constexpr u32 hash_u32_constexpr(u32 h32) {
+constexpr u32 hash_u32_constexpr(u32 h32) noexcept {
     h32 ^= h32 >> 15; // XXH32_avalanche()
     h32 *= 2246822519U;
     h32 ^= h32 >> 13;
@@ -44,7 +44,7 @@ constexpr u32 hash_u32_constexpr(u32 h32) {
     return h32;
 }
 //----------------------------------------------------------------------------
-constexpr u32 hash_u32_constexpr(u32 h, u32 k) {
+constexpr u32 hash_u32_constexpr(u32 h, u32 k) noexcept {
     k *= 0xcc9e2d51ul; // https://www.boost.org/doc/libs/1_64_0/boost/functional/hash/hash.hpp
     k = (k << 15ul) | (k >> (32ul - 15ul));
     k *= 0x1b873593ul;
@@ -82,7 +82,7 @@ constexpr u32 hash_u32_constexpr(u32 lhs, u32 rhs) {
 //----------------------------------------------------------------------------
 // recursion :
 template <typename... _Args>
-constexpr u32 hash_u32_constexpr(u32 h0, u32 h1, u32 h2, _Args... args) {
+constexpr u32 hash_u32_constexpr(u32 h0, u32 h1, u32 h2, _Args... args) noexcept {
     return hash_u32_constexpr(hash_u32_constexpr(h0, h1), h2, u32(args)...);
 }
 //----------------------------------------------------------------------------
@@ -90,7 +90,7 @@ constexpr u32 hash_u32_constexpr(u32 h0, u32 h1, u32 h2, _Args... args) {
 //----------------------------------------------------------------------------
 #if _HAS_CXX14
 //----------------------------------------------------------------------------
-constexpr u64 hash_u64_constexpr(u64 h64) {
+constexpr u64 hash_u64_constexpr(u64 h64) noexcept {
     h64 ^= h64 >> 33; // XXH64_avalanche()
     h64 *= 14029467366897019727ULL;
     h64 ^= h64 >> 29;
@@ -99,7 +99,7 @@ constexpr u64 hash_u64_constexpr(u64 h64) {
     return h64;
 }
 //----------------------------------------------------------------------------
-constexpr u64 hash_u64_constexpr(u64 h, u64 k) {
+constexpr u64 hash_u64_constexpr(u64 h, u64 k) noexcept {
     k *= 0xc6a4a7935bd1e995ull; // https://www.boost.org/doc/libs/1_64_0/boost/functional/hash/hash.hpp
     k ^= k >> 47ull;
     k *= 0xc6a4a7935bd1e995ull;
@@ -138,7 +138,7 @@ constexpr u64 hash_u64_constexpr(u64 lhs, u64 rhs) {
 #endif //!_HAS_CXX14
 //----------------------------------------------------------------------------
 template <typename... _Args>
-constexpr u64 hash_u64_constexpr(u64 h0, u64 h1, u64 h2, _Args... args) {
+constexpr u64 hash_u64_constexpr(u64 h0, u64 h1, u64 h2, _Args... args) noexcept {
     return hash_u64_constexpr(hash_u64_constexpr(h0, h1), h2, u64(args)...);
 }
 //----------------------------------------------------------------------------
@@ -146,20 +146,20 @@ constexpr u64 hash_u64_constexpr(u64 h0, u64 h1, u64 h2, _Args... args) {
 //----------------------------------------------------------------------------
 #ifdef ARCH_X64
 template <typename... _Args>
-constexpr size_t hash_size_t_constexpr(size_t arg0, _Args... args ) {
+constexpr size_t hash_size_t_constexpr(size_t arg0, _Args... args ) noexcept {
     static_assert(sizeof(size_t) == sizeof(u64), "invalid platform !");
     return hash_u64_constexpr(u64(arg0), u64(args)...);
 }
 #else
 template <typename... _Args>
-constexpr size_t hash_size_t_constexpr(size_t arg0, _Args... args ) {
+constexpr size_t hash_size_t_constexpr(size_t arg0, _Args... args ) noexcept {
     static_assert(sizeof(size_t) == sizeof(u32), "invalid platform !");
     return hash_u32_constexpr(u32(arg0), u32(args)...);
 }
 #endif //!ARCH_X64
 //----------------------------------------------------------------------------
 template <typename T, size_t... _Indices>
-constexpr size_t hash_sequence_constexpr(const T* data, std::index_sequence<_Indices...>) {
+constexpr size_t hash_sequence_constexpr(const T* data, std::index_sequence<_Indices...>) noexcept {
     return hash_size_t_constexpr(sizeof...(_Indices)/* handles hash_sequence_constexpr(nullptr, 0) */, data[_Indices]...);
 }
 //----------------------------------------------------------------------------
