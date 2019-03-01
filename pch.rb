@@ -112,7 +112,7 @@ end
 # rebuild all projects
 if REBUILD
 bm.report('rebuild all projects') do
-system("ruby", FBUILDCMD, '-clean', '-preprocessonly', *$projects.collect{|it| it.name })
+system("ruby", FBUILDCMD, '-clean', '-preprocess', *$projects.collect{|it| it.name })
 end
 end
 
