@@ -52,6 +52,7 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(MetaNamespace,            RTTI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(MetaObject,               RTTI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(MetaTransaction,          RTTI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(NativeTypes,              RTTI)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(Script,                   RTTI)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(Serialize,                      UsedMemory)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(Binary,                   Serialize)
