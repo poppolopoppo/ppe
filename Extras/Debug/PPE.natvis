@@ -249,7 +249,8 @@
   </Type>
 
   <Type Name="PPE::FRefCountable">
-    <DisplayString>{(void*)this} [Refs:{_refCount}]</DisplayString>_
+    <DisplayString>{(void*)this} [Refs:{_refCount}]</DisplayString>
+    <Expand>
       <Item Name="[RefCount]">_refCount</Item>
       <Item Name="[SafeCount]">_safeRefCount</Item>
       <ExpandedItem>this</ExpandedItem>
