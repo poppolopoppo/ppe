@@ -45,14 +45,14 @@ public:
     FStringView Name{ "none" };
     u32 InputDim{ 1 };
     u32 BatchSize{ 1 };
-#ifdef _DEBUG
+#ifdef WITH_PPE_ASSERT
     u32 MaxIterations{ 5000 };
     double MaxVarianceError{ 1e-2 };
     static constexpr u32 MinIterations = FApproximateHistogram::MinSamples;
 #else
-    u32 MaxIterations{ 500000 };
+    u32 MaxIterations{ 1000000 };
     double MaxVarianceError{ 1e-3 };
-    static constexpr u32 MinIterations = FApproximateHistogram::MinSamples * 2;
+    static constexpr u32 MinIterations = Max(FApproximateHistogram::MinSamples * 2, 5000ul);
 #endif
     u64 RandomSeed{ PPE_HASH_VALUE_SEED_64 };
 
@@ -202,9 +202,10 @@ public: // FState
 
         NO_INLINE u32 RemainingIterations() const {
             return (
-                (_histogram.NumSamples < MinIterations) ||
-                (_histogram.NumSamples < _benchmark.MaxIterations && VarianceError() > _benchmark.MaxVarianceError)
-                ? LoopCount() : 0 );
+                (_histogram.NumSamples > MinIterations) &&
+                (_histogram.NumSamples > _benchmark.MaxIterations ||
+                 NearlyEquals(_histogram.Mean(), _histogram.WeightedMean(), _benchmark.MaxVarianceError))
+                ? 0 : LoopCount() );
         }
 
     private:
@@ -218,7 +219,7 @@ public: // FState
             const double variance = _histogram.Variance();
             const double sampleVariance = _histogram.SampleVariance();
 
-            return Sqrt(Abs(variance - sampleVariance)) / _histogram.Mean();
+            return NearlyEquals(_histogram.Mean(), _histogram.WeightedMean(), _benchmark.MaxVarianceError);
         }
     };
 
