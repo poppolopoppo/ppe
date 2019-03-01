@@ -83,7 +83,7 @@ public:
         const RTTI::FMetaClass* const klass = ref->RTTI_Class();
         Assert(klass);
 
-        _oss << " is " << klass->Name() << " (";
+        _oss << " is " << klass->Name() << " {";
 
         _indent.Inc();
 
@@ -110,7 +110,7 @@ public:
         if (hasProperties)
             _oss << _indent;
 
-        _oss << ')' << _newLine;
+        _oss << '}' << _newLine;
     }
 
 public: //RTTI::IAtomVisitor
@@ -210,8 +210,7 @@ private:
         const auto it = _visiteds.find(RTTI::SMetaObject{ obj });
         if (_visiteds.end() == it) {
             // import
-            const RTTI::FPathName path{ *obj };
-            _oss << path;
+            _oss << RTTI::FPathName::FromObject(*obj);
         }
         else {
             // internal
@@ -272,7 +271,7 @@ void FTextSerializer::Deserialize(IStreamReader& input, FTransactionLinker* link
 
     Parser::FParseList parseList;
     UsingBufferedStream(&input, [&parseList, linker](IBufferedStreamReader* buffered) {
-        Lexer::FLexer lexer(buffered, linker->Filename().ToWString(), true);
+        Lexer::FLexer lexer(*buffered, linker->Filename().ToWString(), true);
         parseList.Parse(&lexer);
     });
 
