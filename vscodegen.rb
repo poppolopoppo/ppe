@@ -23,18 +23,41 @@ system('ruby', FBUILD_RB, '-version') # make sure _solution_path.bff is generate
 raise "invalid solution path" unless File.exist?(FBUILD_SOLUTION_PATH)
 
 def fetch_fbuilb_string(filename, key)
-    return File.read(filename).match(/\.#{key}\s*=\s*['"]([^'"]*?)['"]/)[1]
+    m = File.read(filename).match(/\.#{key}\s*=\s*['"]([^'"]*?)['"]/)
+    return m.nil? ? nil : m[1]
+end
+
+def fetch_all_modules()
+    modules = []
+    rootpath = File.join(CORE_PATH, 'Source')
+    Dir.glob(File.join(rootpath, '**', '*.bff')).each do |bff|
+        relpath = File.dirname(File.dirname(bff[(rootpath.length+1)..bff.length]))
+        name = fetch_fbuilb_string(bff, 'ModuleName')
+        modules << "#{relpath}/#{name}" unless name.nil?
+    end
+    return modules.sort
 end
 
 def fetch_default_target()
     target = fetch_fbuilb_string(File.join(CORE_PATH, 'fbuild.bff'), 'SolutionBuildProject')
     target.gsub!(/-VCXProject$/, '')
-    puts "default target -> #{target}"
     return target
 end
 
+def fetch_fastbuild_options()
+    opts = fetch_fbuilb_string(File.join(CORE_PATH, 'Build', 'VisualStudio.bff'), 'FastBuildOptions')
+    opts = opts.strip.split(/\s+/)
+    return opts
+end
+
+ALL_MODULES=fetch_all_modules()
 DEFAULT_TARGET=fetch_default_target()
-puts "Default target = <#{DEFAULT_TARGET}>"
+FASTBUILD_OPTIONS=fetch_fastbuild_options()
+
+puts "[Default target]      = <#{DEFAULT_TARGET}>"
+puts "[Fastbuild options]   = #{FASTBUILD_OPTIONS}"
+puts "[All modules]         ="
+puts " - #{ALL_MODULES.join(",\n - ")}"
 
 FileUtils.mkdir_p(VCDB_PATH, :verbose => true)
 
@@ -128,11 +151,11 @@ PLATFORMS=[
 ]
 
 CONFIGS=[
-    Config.new('Debug', "DEBUG", "_DEBUG"),
+    Config.new('Debug',     "DEBUG", "_DEBUG"),
     Config.new('FastDebug', "FASTDEBUG", "_DEBUG", "DEBUG"),
-    Config.new('Release', "RELEASE", "NDEBUG"),
+    Config.new('Release',   "RELEASE", "NDEBUG"),
     Config.new('Profiling', "RELEASE", "NDEBUG", "PROFILING_ENABLED"),
-    Config.new('Final', "FINAL_RELEASE", "RELEASE", "NDEBUG"),
+    Config.new('Final',     "FINAL_RELEASE", "RELEASE", "NDEBUG"),
 ]
 
 # https://github.com/Microsoft/vscode-cpptools/blob/master/Documentation/LanguageServer/c_cpp_properties.json.md
@@ -180,6 +203,10 @@ class C_CPP_Configuration
 
 end #~ C_CPP_Configuration
 
+#-----------------------------------------------------------------------------
+#   Parse all configurations
+#-----------------------------------------------------------------------------
+
 ALL_CONFIGURATIONS = []
 PLATFORMS.each do |p|
     CONFIGS.each do |c|
@@ -199,15 +226,18 @@ c_cpp_properties = JSON.pretty_generate({
 c_cpp_properties.gsub!(CORE_PATH, '${workspaceRoot}')
 make_file(VSCODE_C_CPP_PROPERTIES, c_cpp_properties)
 
+#-----------------------------------------------------------------------------
+#  Create compilation tasks
+#-----------------------------------------------------------------------------
+
 compiletasks = []
-ALL_CONFIGURATIONS.each do |configuration|
-    target = "#{DEFAULT_TARGET}-#{configuration.name}"
+ALL_MODULES.each do |target|
     compiletasks << {
-        "label" => target,
+        "label": target,
         "type": "shell",
         "isBackground": true,
         "command": "ruby",
-        "args": [ "fbuild.rb", target ],
+        "args": [ "fbuild.rb" ] + FASTBUILD_OPTIONS + [ "#{target}-${input:ppe_config}" ],
         "options": {
             "cwd": '${workspaceRoot}'
         },
@@ -228,20 +258,35 @@ ALL_CONFIGURATIONS.each do |configuration|
     }
 end
 
+inputs = [
+    {
+        "id": "ppe_config",
+        "description": "PPE build configuration ?",
+        "default": "Win64-Release",
+        "type": "pickString",
+        "options": ALL_CONFIGURATIONS.collect do |build|
+            "#{build.platform.name}-#{build.config.name}"
+        end
+    }
+]
+
 tasks = JSON.pretty_generate({
     'version' => VSCODE_TASKS_VERSION,
-    'tasks' => compiletasks
+    'tasks' => compiletasks,
+    'inputs' => inputs
 })
 make_file(VSCODE_TASKS, tasks)
 
-launchconfigurations = []
-ALL_CONFIGURATIONS.each do |configuration|
-    binary = "#{DEFAULT_TARGET}.#{configuration.config.name}.#{configuration.platform.name}#{configuration.platform.binaryExtension}"
-    launchconfigurations << {
-        "name": binary,
+#-----------------------------------------------------------------------------
+#  Create debug launch configurations
+#-----------------------------------------------------------------------------
+
+launchconfigurations = [
+    {
+        "name": DEFAULT_TARGET,
         "type": "cppvsdbg",
         "request": "launch",
-        "program": "${workspaceRoot}\\Output\\Binary\\#{binary}",
+        "program": "${workspaceRoot}\\Output\\Binary\\#{DEFAULT_TARGET}.${input:ppe_config}",
         "args": [],
         "stopAtEntry": false,
         "cwd": "${workspaceRoot}\\Output\\Binary",
@@ -249,10 +294,23 @@ ALL_CONFIGURATIONS.each do |configuration|
         "visualizerFile": "${workspaceRoot}\\Extras\\Debug\\PPE.natvis",
         "externalConsole": true
     }
-end
+]
+
+inputs = [
+    {
+        "id": "ppe_config",
+        "description": "PPE build configuration ?",
+        "default": "Release.Win64",
+        "type": "pickString",
+        "options": ALL_CONFIGURATIONS.collect do |build|
+            "#{build.config.name}.#{build.platform.name}.#{build.platform.binaryExtension}"
+        end
+    }
+]
 
 launch = JSON.pretty_generate({
     'version' => VSCODE_LAUNCH_VERSION,
-    'configurations' => launchconfigurations
+    'configurations' => launchconfigurations,
+    'inputs' => inputs
 })
 make_file(VSCODE_LAUNCH, launch)
