@@ -344,6 +344,30 @@ inline FCastExpr *MakeCastExpr(RTTI::ENativeType typeId, const FParseExpression*
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+class PPE_SERIALIZE_API FFunctionCall : public FParseExpression {
+public:
+    using args_type = VECTORINSITU(Parser, PCParseExpression, 4);
+
+    FFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<const PCParseExpression>& args, const Lexer::FSpan& site);
+    virtual ~FFunctionCall();
+
+    virtual RTTI::FAtom Eval(FParseContext *context) const override;
+    virtual FString ToString() const override;
+
+    SINGLETON_POOL_ALLOCATED_DECL();
+
+private:
+    PCParseExpression _obj;
+    RTTI::FName _funcname;
+    args_type _args;
+};
+//----------------------------------------------------------------------------
+inline FFunctionCall *MakeFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<const PCParseExpression>& args, const Lexer::FSpan& site) {
+    return new FFunctionCall(std::move(obj), funcname, args, site);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace Parser
 } //!namespace PPE
 

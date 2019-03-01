@@ -8,6 +8,7 @@
 #include "RTTI/Any.h"
 #include "MetaClass.h"
 #include "MetaDatabase.h"
+#include "MetaFunction.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
 
@@ -84,10 +85,13 @@ RTTI::FAtom FVariableReference::Eval(FParseContext* context) const {
     RTTI::FAtom value;
 
     if (_pathName.Transaction.empty()) { // local ?
-        value = context->GetAny(_pathName.Identifier);
+        const RTTI::FAtom local = context->GetAny(_pathName.Identifier);
 
-        if (not value)
+        if (not local)
             PPE_THROW_IT(FParserException("unknown variable name", this));
+
+        value = context->CreateAtom(local.Traits());
+        local.Copy(value);
     }
     else { // global :
         // #TODO use linker instead for MT ???
@@ -377,6 +381,102 @@ FString FCastExpr::ToString() const {
     FStringBuilder oss;
     oss << RTTI::MakeTraits(_typeId)->TypeInfos().Name() << ": ";
     oss << _expr->ToString();
+    return oss.ToString();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FFunctionCall, )
+//----------------------------------------------------------------------------
+FFunctionCall::FFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<const PCParseExpression>& args, const Lexer::FSpan& site)
+:   FParseExpression(site)
+,   _obj(std::move(obj))
+,   _funcname(funcname)
+,   _args(args) {
+    Assert_NoAssume(_obj);
+    Assert_NoAssume(not _funcname.empty());
+}
+//----------------------------------------------------------------------------
+FFunctionCall::~FFunctionCall() {}
+//----------------------------------------------------------------------------
+RTTI::FAtom FFunctionCall::Eval(FParseContext* context) const {
+    Assert(context);
+
+    RTTI::FAtom atom = _obj->Eval(context);
+
+    if (not atom)
+        PPE_THROW_IT(FParserException("void object reference in function call", _obj->Site(), this));
+
+    const RTTI::PMetaObject* const objIFP = atom.TypedConstDataIFP<RTTI::PMetaObject>();
+
+    if (not objIFP)
+        PPE_THROW_IT(FParserException("can only call functions on objects", _obj->Site(), this));
+    if (not *objIFP)
+        PPE_THROW_IT(FParserException("null object reference in function call", _obj->Site(), this));
+
+    const RTTI::PMetaObject obj{ *objIFP };
+
+    const RTTI::FMetaClass* const klass = obj->RTTI_Class();
+    Assert(klass);
+
+    const RTTI::FMetaFunction* const funcIFP = klass->FunctionIFP(_funcname, RTTI::EFunctionFlags::Public);
+    if (not funcIFP) {
+        if (klass->FunctionIFP(_funcname, RTTI::EFunctionFlags::All))
+            PPE_THROW_IT(FParserException("can't call non public function", this));
+        else
+            PPE_THROW_IT(FParserException("unknown function name", this));
+    }
+
+    const TMemoryView<const RTTI::FMetaParameter> prms = funcIFP->Parameters();
+
+    // #TODO : handle optional parameters
+    if (prms.size() < _args.size())
+        PPE_THROW_IT(FParserException("not enough parameters given to function call", this));
+    else if (prms.size() > _args.size())
+        PPE_THROW_IT(FParserException("too much parameters given to function call", this));
+    Assert(prms.size() == _args.size());
+
+    using atoms_t = VECTOR_LINEARHEAP(RTTI::FAtom);
+    atoms_t evalArgs{ context->CreateHeapContainer<atoms_t>() };
+    evalArgs.reserve(_args.size());
+
+    forrange(i, 0, _args.size()) {
+        RTTI::FAtom v = _args[i]->Eval(context);
+
+        if (v.Traits() != prms[i].Traits()) {
+            // not matching : try promotion
+
+            RTTI::FAtom w = context->CreateAtom(prms[i].Traits());
+            if (v.PromoteMove(w))
+                evalArgs.emplace_back(std::move(w)); // promotion succeeded :)
+            else
+                PPE_THROW_IT(FParserException("invalid parameter type given to function call", _args[i]->Site(), this));
+        }
+        else {
+            // correct type : push as-is
+            evalArgs.emplace_back(std::move(v));
+        }
+    }
+
+    RTTI::FAtom result;
+    if (funcIFP->HasReturnValue())
+        result = context->CreateAtom(funcIFP->Result());
+
+    funcIFP->Invoke(*obj, result, evalArgs.MakeConstView());
+
+    return result;
+}
+//----------------------------------------------------------------------------
+FString FFunctionCall::ToString() const {
+    FStringBuilder oss;
+    oss << _obj->ToString()
+        << '.' << _funcname << '(';
+
+    auto sep = Fmt::NotFirstTime(MakeStringView(", "));
+    for (const PCParseExpression& e : _args)
+        oss << sep << e->ToString();
+
+    oss << ')';
     return oss.ToString();
 }
 //----------------------------------------------------------------------------
