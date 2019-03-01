@@ -4,8 +4,10 @@
 
 #include <algorithm>
 
+#include "Maths/MathHelpers.h"
 #include "Maths/PackingHelpers.h"
 #include "Maths/PackedVectors.h"
+#include "Maths/ScalarMatrix.h"
 #include "Maths/ScalarVector.h"
 #include "Maths/ScalarVectorHelpers.h"
 #include "Memory/MemoryView.h"
@@ -39,6 +41,11 @@ FLinearColor FLinearColor::Desaturate(float desaturation) const {
         A );
 }
 //----------------------------------------------------------------------------
+FLinearColor FLinearColor::SetLuminance(float lum) const {
+    lum /= (F_SmallEpsilon + Luminance()); // normalize with old luminance and rescale with new luminance
+    return FLinearColor{ R * lum, G * lum, B * lum, A };
+}
+//----------------------------------------------------------------------------
 float4 FLinearColor::ToBGRA() const {
     return float4(B, G, R, A);
 }
@@ -69,7 +76,6 @@ FColor FLinearColor::ToRGBE() const {
             Float01_to_UByte0255(B * scale),
             checked_cast<u8>(Clamp(exponent, -128, 127) + 128) );
     }
-
 }
 //----------------------------------------------------------------------------
 FColor FLinearColor::Quantize(EGammaSpace gamma) const {
@@ -92,6 +98,12 @@ FColor FLinearColor::Quantize(EGammaSpace gamma) const {
         g = Linear_to_SRGB(g);
         b = Linear_to_SRGB(b);
         break;
+    case PPE::EGammaSpace::ACES:
+        {
+            const float3 c = ACESFitted(float3{ R, G, B });
+            r = c.x; g = c.y; b = c.z;
+        }
+        break;
     default:
         AssertNotImplemented();
         break;
@@ -102,6 +114,10 @@ FColor FLinearColor::Quantize(EGammaSpace gamma) const {
         Float01_to_UByte0255(g),
         Float01_to_UByte0255(b),
         Float01_to_UByte0255(A) );
+}
+//----------------------------------------------------------------------------
+FLinearColor FLinearColor::FromPastel(float hue, float a/* = 1.0f */) {
+    return FLinearColor(Pastelizer(hue), a);
 }
 //----------------------------------------------------------------------------
 FLinearColor FLinearColor::FromHue(float hue, float a/* = 1.0f */) {
@@ -196,8 +212,8 @@ FLinearColor FColor::ToLinear() const {
         UByte0255_to_Float01(A) );
 }
 //----------------------------------------------------------------------------
-FColor FColor::FromTemperature(float kelvins, float a/* = 1.0f */) {
-    return FLinearColor::FromTemperature(kelvins, a).Quantize(EGammaSpace::sRGB);
+FColor FColor::FromTemperature(float kelvins, float a/* = 1.0f */, EGammaSpace gamma/* = EGammaSpace::sRGB */) {
+    return FLinearColor::FromTemperature(kelvins, a).Quantize(gamma);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -205,7 +221,7 @@ FColor FColor::FromTemperature(float kelvins, float a/* = 1.0f */) {
 namespace {
 //----------------------------------------------------------------------------
 // precomputed with the float version of SRGB_to_Linear() :
-static const float GSRGB_to_Linear[256] = {
+static CONSTEXPR const float GSRGB_to_Linear[256] = {
 0.000000e+00f, 3.035270e-04f, 6.070540e-04f, 9.105810e-04f, 1.214108e-03f, 1.517635e-03f, 1.821162e-03f, 2.124689e-03f,
 2.428216e-03f, 2.731743e-03f, 3.035270e-03f, 3.346536e-03f, 3.676507e-03f, 4.024717e-03f, 4.391442e-03f, 4.776953e-03f,
 5.181517e-03f, 5.605391e-03f, 6.048833e-03f, 6.512091e-03f, 6.995410e-03f, 7.499032e-03f, 8.023193e-03f, 8.568125e-03f,
@@ -247,6 +263,53 @@ float SRGB_to_Linear(u8 srgb) {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// ACES fitted aka HDR scaling
+// from https://github.com/TheRealMJP/BakingLab/blob/master/BakingLab/ACES.hlsl
+//----------------------------------------------------------------------------
+static const float3x3 ACESInputMat {
+    0.59719f, 0.35458f, 0.04823f,
+    0.07600f, 0.90834f, 0.01566f,
+    0.02840f, 0.13383f, 0.83777f
+};
+//----------------------------------------------------------------------------
+// ODT_SAT => XYZ => D60_2_D65 => sRGB
+static const float3x3 ACESOutputMat {
+     1.60475f, -0.53108f, -0.07367f,
+    -0.10208f,  1.10813f, -0.00605f,
+    -0.00327f, -0.07276f,  1.07602f
+};
+//----------------------------------------------------------------------------
+static CONSTEXPR float3 RRTAndODTFit(float3 v) {
+    float3 a = v * (v + 0.0245786f) - 0.000090537f;
+    float3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
+    return a / b;
+}
+//----------------------------------------------------------------------------
+float3 ACESFitted(float3 linear) {
+    linear = ACESInputMat.Multiply(linear);
+
+    // Apply RRT and ODT
+    linear = RRTAndODTFit(linear);
+
+    linear = ACESOutputMat.Multiply(linear);
+
+    // Clamp to [0, 1]
+    linear = Clamp(linear, 0.0f, 1.0f);
+
+    return linear;
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// https://www.shadertoy.com/view/4d3SR4
+float3 Pastelizer(float hue) {
+    hue = Frac(hue + 0.92620819117478f) * 6.2831853071796f;
+    float2 cocg =  0.25f * SinCos(hue);
+    float2 br = float2(-cocg.y, cocg.y) - cocg.x;
+    float3 c = 0.729f + float3(br.y, cocg.x, br.x);
+    return c * c;
+}
 //----------------------------------------------------------------------------
 float3 Hue_to_RGB(float hue) {
     float R = Abs(hue * 6 - 3) - 1;

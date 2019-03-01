@@ -16,7 +16,13 @@ enum class EGammaSpace {
     Pow22,
     /** Use the standard sRGB conversion. */
     sRGB,
+    /** Use the new ACES standard for HDR values. */
+    ACES,
 };
+//----------------------------------------------------------------------------
+float3 ACESFitted(float3 linear);
+//----------------------------------------------------------------------------
+float3 Pastelizer(float hue);
 //----------------------------------------------------------------------------
 float3 Hue_to_RGB(float hue);
 //----------------------------------------------------------------------------
@@ -44,9 +50,9 @@ float Pow22_to_Linear(float pow22);
 struct PPE_CORE_API FLinearColor {
     float R, G, B, A;
 
-    FORCE_INLINE FLinearColor() {}
-    FORCE_INLINE explicit FLinearColor(Meta::FForceInit) : R(0), G(0), B(0), A(0) {}
-    FORCE_INLINE FLinearColor(float r, float g, float b, float a = 1.0f) : R(r), G(g), B(b), A(a) {}
+    FLinearColor() NOEXCEPT {}
+    CONSTEXPR explicit FLinearColor(Meta::FForceInit) NOEXCEPT : R(0), G(0), B(0), A(0) {}
+    CONSTEXPR FLinearColor(float r, float g, float b, float a = 1.0f) NOEXCEPT : R(r), G(g), B(b), A(a) {}
 
     FLinearColor(const FColor& color);
     FLinearColor(const float3& rgb, float a = 1.0f);
@@ -59,9 +65,10 @@ struct PPE_CORE_API FLinearColor {
     float operator [](size_t index) const { Assert(index < 4); return (&R)[index]; }
 
     FLinearColor Desaturate(float desaturation) const;
-    FLinearColor Fade(float alpha) const { return FLinearColor(R, G, B, alpha); }
+    CONSTEXPR FLinearColor Fade(float alpha) const { return FLinearColor(R, G, B, alpha); }
 
-    float Luminance() const { return (R * 0.3f + G * 0.59f + B * 0.11f); }
+    CONSTEXPR float Luminance() const { return (0.2126f * R + 0.7152f * G + 0.0722f * B); }
+    FLinearColor SetLuminance(float lum) const;
 
     float4 ToBGRA() const;
     float3 ToHSL() const;
@@ -71,6 +78,7 @@ struct PPE_CORE_API FLinearColor {
     FColor ToRGBE() const;
     FColor Quantize(EGammaSpace gamma) const;
 
+    static FLinearColor FromPastel(float hue, float a = 1.0f);
     static FLinearColor FromHue(float hue, float a = 1.0f);
     static FLinearColor FromHSL(const float3& hsl, float a = 1.0f);
     static FLinearColor FromHSV(const float3& hsv, float a = 1.0f);
@@ -78,10 +86,10 @@ struct PPE_CORE_API FLinearColor {
     static FLinearColor FromYCoCg(const float3& yCoCg, float a = 1.0f);
     static FLinearColor FromTemperature(float kelvins, float a = 1.0f);
 
-    inline friend bool operator ==(const FLinearColor& lhs, const FLinearColor& rhs) {
+    CONSTEXPR inline friend bool operator ==(const FLinearColor& lhs, const FLinearColor& rhs) {
         return (lhs.R == rhs.R && lhs.G == rhs.G && lhs.B == rhs.B && lhs.A == rhs.A);
     }
-    inline friend bool operator !=(const FLinearColor& lhs, const FLinearColor& rhs) {
+    CONSTEXPR inline friend bool operator !=(const FLinearColor& lhs, const FLinearColor& rhs) {
         return (not operator ==(lhs, rhs));
     }
 
@@ -243,10 +251,10 @@ struct PPE_CORE_API FColor {
         u32 DWord;
     };
 
-    FORCE_INLINE FColor() {}
-    FORCE_INLINE explicit FColor(Meta::FForceInit) : DWord(0) {}
-    FORCE_INLINE explicit FColor(u32 dword) : DWord(dword) {}
-    FORCE_INLINE FColor(u8 r, u8 g, u8 b, u8 a = 0xFF) : R(r), G(g), B(b), A(a) {}
+    FColor() NOEXCEPT {}
+    CONSTEXPR explicit FColor(Meta::FForceInit) NOEXCEPT : DWord(0) {}
+    CONSTEXPR explicit FColor(u32 dword) NOEXCEPT : DWord(dword) {}
+    CONSTEXPR FColor(u8 r, u8 g, u8 b, u8 a = 0xFF) NOEXCEPT : R(r), G(g), B(b), A(a) {}
 
     FColor(const ubyte3& rgb, u8 a = 1.0f);
     FColor(const ubyte4& rgba);
@@ -257,7 +265,7 @@ struct PPE_CORE_API FColor {
     u8& operator [](size_t index) { Assert(index < 4); return (&R)[index]; }
     u8 operator [](size_t index) const { Assert(index < 4); return (&R)[index]; }
 
-    FColor Fade(u8 alpha) const { return FColor(R, G, B, alpha); }
+    CONSTEXPR FColor Fade(u8 alpha) const { return FColor(R, G, B, alpha); }
 
     u32 ToPackedRGBA() const { return DWord;  }
     u32 ToPackedBGRA() const { return ((B << 24) | (G << 16) | (R << 8) | (A << 0)); }
@@ -267,10 +275,10 @@ struct PPE_CORE_API FColor {
     FLinearColor FromRGBE() const;
     FLinearColor ToLinear() const;
 
-    static FColor FromTemperature(float kelvins, float a = 1.0f);
+    static FColor FromTemperature(float kelvins, float a = 1.0f, EGammaSpace gamma = EGammaSpace::sRGB);
 
-    inline friend bool operator ==(const FColor& lhs, const FColor& rhs) { return (lhs.DWord == rhs.DWord); }
-    inline friend bool operator !=(const FColor& lhs, const FColor& rhs) { return (lhs.DWord != rhs.DWord); }
+    CONSTEXPR inline friend bool operator ==(const FColor& lhs, const FColor& rhs) { return (lhs.DWord == rhs.DWord); }
+    CONSTEXPR inline friend bool operator !=(const FColor& lhs, const FColor& rhs) { return (lhs.DWord != rhs.DWord); }
 
     inline hash_t hash_value(const FColor& color) { return (color.DWord); }
 
