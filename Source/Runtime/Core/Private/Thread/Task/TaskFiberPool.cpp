@@ -227,14 +227,15 @@ FTaskFiberPool::~FTaskFiberPool() {
 }
 //----------------------------------------------------------------------------
 auto FTaskFiberPool::AcquireFiber() -> FHandleRef {
-    if (Likely(_chunks)) {
-        FHandleRef const h = _chunks->AcquireFiber();
-        if (Likely(h))
-            return h;
-    }
+    for (;;) {
+        if (Likely(_chunks)) {
+            FHandleRef const h = _chunks->AcquireFiber();
+            if (Likely(h))
+                return h;
+        }
 
-    FTaskFiberChunk* const ch = AcquireChunk_();
-    return (ch ? ch->AcquireFiber() : AcquireFiber()/* recurse to find a fresh block inserted by another thread */);
+        AcquireChunk_();
+    }
 }
 //----------------------------------------------------------------------------
 void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
