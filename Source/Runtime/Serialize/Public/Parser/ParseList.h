@@ -30,7 +30,7 @@ public:
 
     bool empty() const { return _matches.empty(); }
 
-    const Lexer::FLocation& Site() const { return _site; }
+    const Lexer::FSpan& Site() const { return _site; }
 
     const Lexer::FMatch *Peek() const { return _current; }
     Lexer::FSymbol::ETypeId PeekType() const { return (_current) ? _current->Symbol()->Type() : Lexer::FSymbol::Eof; }
@@ -43,7 +43,7 @@ public:
     const Lexer::FMatch *Read();
 
 private:
-    Lexer::FLocation _site;
+    Lexer::FSpan _site;
     const Lexer::FMatch *_current;
     VECTOR(Parser, Lexer::FMatch) _matches;
 };

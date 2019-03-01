@@ -18,22 +18,22 @@ class FParserException : public PPE::Serialize::FSerializeException {
 public:
     typedef PPE::Serialize::FSerializeException parent_type;
 
-    FParserException(const char *what, Lexer::FLocation site)
+    FParserException(const char *what, Lexer::FSpan site)
         : parent_type(what), _site(site), _item(nullptr) {}
 
     FParserException(const char *what, const FParseItem *item)
         : parent_type(what), _site(item->Site()), _item(item) {}
 
-    FParserException(const char *what, Lexer::FLocation site, const FParseItem *item)
+    FParserException(const char *what, Lexer::FSpan site, const FParseItem *item)
         : parent_type(what), _site(site), _item(item) {}
 
     virtual ~FParserException() {}
 
-    const Lexer::FLocation& Site() const { return _site; }
+    const Lexer::FSpan& Site() const { return _site; }
     const FParseItem *Item() const { return _item.get(); }
 
 private:
-    Lexer::FLocation _site;
+    Lexer::FSpan _site;
     PCParseItem _item;
 };
 //----------------------------------------------------------------------------

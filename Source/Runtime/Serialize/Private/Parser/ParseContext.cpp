@@ -65,7 +65,9 @@ RTTI::FAtom FParseContext::GetLocal(const RTTI::FName& name) const {
 //----------------------------------------------------------------------------
 void FParseContext::AddLocal(const FParseExpression* expr, const RTTI::FName& name, const RTTI::FAtom& value) {
     Assert(!name.empty());
-    Assert(value);
+
+    if (not value)
+        PPE_THROW_IT(FParserException("can't assign void to a variable", expr));
 
     if (not _localScope.try_emplace(name, value).second)
         PPE_THROW_IT(FParserException("failed to overwrite local variable", expr));

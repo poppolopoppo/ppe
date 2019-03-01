@@ -11,14 +11,14 @@ namespace Parser {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FParseList::FParseList()
-:   _site(Lexer::FLocation::None())
+:   _site(Lexer::FLocation::None(), 0)
 ,   _current(nullptr)
 {}
 //----------------------------------------------------------------------------
 FParseList::~FParseList() {}
 //----------------------------------------------------------------------------
 FParseList::FParseList(FParseList&& rvalue)
-:   _site(Lexer::FLocation::None())
+:   _site(Lexer::FLocation::None(), 0)
 ,   _current(nullptr)
 ,   _matches(std::move(rvalue._matches)) {
     std::swap(rvalue._current, _current);

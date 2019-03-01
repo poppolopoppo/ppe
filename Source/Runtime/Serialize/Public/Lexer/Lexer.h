@@ -37,7 +37,7 @@ private:
 //----------------------------------------------------------------------------
 class FLexer {
 public:
-    FLexer(IBufferedStreamReader* input, const FWStringView& sourceFileName, bool allowTypenames);
+    FLexer(IBufferedStreamReader& input, const FWStringView& sourceFileName, bool allowTypenames);
     ~FLexer();
 
     const FMatch* Peek();

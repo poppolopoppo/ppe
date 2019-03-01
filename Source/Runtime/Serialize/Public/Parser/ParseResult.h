@@ -20,14 +20,14 @@ public:
     typedef T value_type;
 
     TParseResult()
-        : _succeed(false), _message(nullptr), _site(Lexer::FLocation::None()) {}
+        : _succeed(false), _message(nullptr) {}
 
-    TParseResult(T&& rvalue, const Lexer::FLocation& site)
+    TParseResult(T&& rvalue, const Lexer::FSpan& site)
         : _succeed(true), _value(std::move(rvalue)), _message(nullptr), _site(site) {
         Assert(not _site.Filename.empty());
     }
 
-    TParseResult(const char *message, Lexer::FSymbol::ETypeId expected, const Lexer::FLocation& site)
+    TParseResult(const char *message, Lexer::FSymbol::ETypeId expected, const Lexer::FSpan& site)
         : _succeed(false), _message(message), _expected(expected), _site(site) {
         Assert(not _site.Filename.empty());
     }
@@ -58,18 +58,18 @@ public:
     const char *Message() const { Assert(!_succeed); return _message; }
     Lexer::FSymbol::ETypeId Expected() const { Assert(!_succeed); return _expected; }
 
-    const Lexer::FLocation& Site() const { return _site; }
+    const Lexer::FSpan& Site() const { return _site; }
 
-    static TParseResult Success(T&& rvalue, const Lexer::FLocation& site) {
+    static TParseResult Success(T&& rvalue, const Lexer::FSpan& site) {
         return TParseResult(std::move(rvalue), site);
     }
 
-    static TParseResult Success(const T& value, const Lexer::FLocation& site) {
+    static TParseResult Success(const T& value, const Lexer::FSpan& site) {
         T rvalue(value);
         return TParseResult(std::move(rvalue), site);
     }
 
-    static TParseResult Failure(const char *message, Lexer::FSymbol::ETypeId expected, const Lexer::FLocation& site) {
+    static TParseResult Failure(const char *message, Lexer::FSymbol::ETypeId expected, const Lexer::FSpan& site) {
         return TParseResult(message, expected, site);
     }
 
@@ -85,7 +85,7 @@ private:
     const char *_message;
     Lexer::FSymbol::ETypeId _expected;
 
-    Lexer::FLocation _site;
+    Lexer::FSpan _site;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

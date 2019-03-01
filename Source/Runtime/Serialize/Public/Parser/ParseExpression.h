@@ -28,7 +28,7 @@ FWD_REFPTR(ParseStatement);
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FParseExpression : public FParseItem {
 public:
-    FParseExpression(const Lexer::FLocation& site);
+    FParseExpression(const Lexer::FSpan& site);
     virtual ~FParseExpression();
 
     virtual RTTI::FAtom Eval(FParseContext *context) const = 0;
@@ -40,8 +40,8 @@ public:
 template <typename T>
 class TLiteral : public FParseExpression {
 public:
-    explicit TLiteral(T&& rvalue, const Lexer::FLocation& site);
-    explicit TLiteral(const T& value, const Lexer::FLocation& site);
+    explicit TLiteral(T&& rvalue, const Lexer::FSpan& site);
+    explicit TLiteral(const T& value, const Lexer::FSpan& site);
     virtual ~TLiteral();
 
     virtual RTTI::FAtom Eval(FParseContext *context) const override;
@@ -54,7 +54,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-auto* MakeLiteral(T&& rvalue, const Lexer::FLocation& site) {
+auto* MakeLiteral(T&& rvalue, const Lexer::FSpan& site) {
     return new TLiteral< Meta::TDecay<T> >(std::forward<T>(rvalue), site);
 }
 //----------------------------------------------------------------------------
@@ -68,7 +68,7 @@ public:
         Global,
     };
 
-    explicit FVariableExport(const RTTI::FName& name, const PCParseExpression& value, const EFlags scope, const Lexer::FLocation& site);
+    explicit FVariableExport(const RTTI::FName& name, const PCParseExpression& value, const EFlags scope, const Lexer::FSpan& site);
     virtual ~FVariableExport();
 
     virtual RTTI::FAtom Eval(FParseContext *context) const override;
@@ -82,7 +82,7 @@ private:
     EFlags _scope;
 };
 //----------------------------------------------------------------------------
-inline FVariableExport *MakeVariableExport(const RTTI::FName& name, const PCParseExpression& value, const FVariableExport::EFlags scope, const Lexer::FLocation& site) {
+inline FVariableExport *MakeVariableExport(const RTTI::FName& name, const PCParseExpression& value, const FVariableExport::EFlags scope, const Lexer::FSpan& site) {
     return new FVariableExport(name, value, scope, site);
 }
 //----------------------------------------------------------------------------
@@ -90,7 +90,7 @@ inline FVariableExport *MakeVariableExport(const RTTI::FName& name, const PCPars
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FVariableReference : public FParseExpression {
 public:
-    FVariableReference(const RTTI::FPathName& pathName, const Lexer::FLocation& site);
+    FVariableReference(const RTTI::FPathName& pathName, const Lexer::FSpan& site);
     virtual ~FVariableReference();
 
     virtual RTTI::FAtom Eval(FParseContext *context) const override;
@@ -103,7 +103,7 @@ private:
 
 };
 //----------------------------------------------------------------------------
-inline FVariableReference *MakeVariableReference(const RTTI::FPathName& pathName, const Lexer::FLocation& site) {
+inline FVariableReference *MakeVariableReference(const RTTI::FPathName& pathName, const Lexer::FSpan& site) {
     return new FVariableReference(pathName, site);
 }
 //----------------------------------------------------------------------------
@@ -112,7 +112,7 @@ inline FVariableReference *MakeVariableReference(const RTTI::FPathName& pathName
 template <typename _Functor>
 class TUnaryFunction : public FParseExpression {
 public:
-    explicit TUnaryFunction(_Functor&& functor, const FParseExpression *expr, const Lexer::FLocation& site);
+    explicit TUnaryFunction(_Functor&& functor, const FParseExpression *expr, const Lexer::FSpan& site);
     virtual ~TUnaryFunction();
 
     virtual RTTI::FAtom Eval(FParseContext *context) const override;
@@ -125,7 +125,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-TUnaryFunction<T> *MakeUnaryFunction(T&& functor, const FParseExpression *expr, const Lexer::FLocation& site) {
+TUnaryFunction<T> *MakeUnaryFunction(T&& functor, const FParseExpression *expr, const Lexer::FSpan& site) {
     return new TUnaryFunction<T>(std::move(functor), expr, site);
 }
 //----------------------------------------------------------------------------
@@ -134,7 +134,7 @@ TUnaryFunction<T> *MakeUnaryFunction(T&& functor, const FParseExpression *expr, 
 template <typename _Functor>
 class TBinaryFunction : public FParseExpression {
 public:
-    explicit TBinaryFunction(_Functor&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FLocation& site);
+    explicit TBinaryFunction(_Functor&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site);
     virtual ~TBinaryFunction();
 
     virtual RTTI::FAtom Eval(FParseContext *context) const override;
@@ -148,7 +148,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-TBinaryFunction<T> *MakeBinaryFunction(T&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FLocation& site) {
+TBinaryFunction<T> *MakeBinaryFunction(T&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site) {
     return new TBinaryFunction<T>(std::move(functor), lhs, rhs, site);
 }
 //----------------------------------------------------------------------------
@@ -157,7 +157,7 @@ TBinaryFunction<T> *MakeBinaryFunction(T&& functor, const FParseExpression *lhs,
 template <typename _Test>
 class TTernary : public FParseExpression {
 public:
-    explicit TTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const Lexer::FLocation& site);
+    explicit TTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const Lexer::FSpan& site);
     virtual ~TTernary();
 
     virtual RTTI::FAtom Eval(FParseContext *context) const override;
@@ -172,7 +172,7 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Test>
-TTernary<_Test> *MakeTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const Lexer::FLocation& site) {
+TTernary<_Test> *MakeTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const Lexer::FSpan& site) {
     return new TTernary<_Test>(std::move(test), pif, ptrue, pfalse, site);
 }
 //----------------------------------------------------------------------------
@@ -180,7 +180,7 @@ TTernary<_Test> *MakeTernary(_Test&& test, const FParseExpression *pif, const FP
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FObjectDefinition : public FParseExpression {
 public:
-    FObjectDefinition(const RTTI::FName& name, const Lexer::FLocation& site);
+    FObjectDefinition(const RTTI::FName& name, const Lexer::FSpan& site);
     virtual ~FObjectDefinition();
 
     void AddStatement(const FParseStatement *statement);
@@ -203,7 +203,7 @@ private:
 template <typename _It>
 inline FObjectDefinition *MakeObjectDefinition(
     const RTTI::FName& name,
-    const Lexer::FLocation& site,
+    const Lexer::FSpan& site,
     _It&& statementsBegin, _It&& statementsEnd) {
     FObjectDefinition *const def = new FObjectDefinition(name, site);
     def->AddStatements(statementsBegin, statementsEnd);
@@ -214,7 +214,7 @@ inline FObjectDefinition *MakeObjectDefinition(
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FPropertyReference : public FParseExpression {
 public:
-    FPropertyReference(const PCParseExpression& object, const RTTI::FName& member, const Lexer::FLocation& site);
+    FPropertyReference(const PCParseExpression& object, const RTTI::FName& member, const Lexer::FSpan& site);
     virtual ~FPropertyReference();
 
     virtual RTTI::FAtom Eval(FParseContext *context) const override;
@@ -230,7 +230,7 @@ private:
 inline FPropertyReference *MakePropertyReference(
     const PCParseExpression& object,
     const RTTI::FName& member,
-    const Lexer::FLocation& site) {
+    const Lexer::FSpan& site) {
     return new FPropertyReference(object, member, site);
 }
 //----------------------------------------------------------------------------
@@ -240,8 +240,8 @@ class PPE_SERIALIZE_API FTupleExpr : public FParseExpression {
 public:
     using elements_type = VECTORINSITU(Parser, PCParseExpression, 4);
 
-    explicit FTupleExpr(const Lexer::FLocation& site);
-    FTupleExpr(elements_type&& relements, const Lexer::FLocation& site);
+    explicit FTupleExpr(const Lexer::FSpan& site);
+    FTupleExpr(elements_type&& relements, const Lexer::FSpan& site);
     virtual ~FTupleExpr();
 
     virtual RTTI::FAtom Eval(FParseContext *context) const override;
@@ -253,7 +253,7 @@ private:
     elements_type _elements;
 };
 //----------------------------------------------------------------------------
-inline Parser::FTupleExpr *MakeTupleExpr(FTupleExpr::elements_type&& relements, const Lexer::FLocation& site) {
+inline Parser::FTupleExpr *MakeTupleExpr(FTupleExpr::elements_type&& relements, const Lexer::FSpan& site) {
     return new Parser::FTupleExpr(std::move(relements), site);
 }
 //----------------------------------------------------------------------------
@@ -263,8 +263,8 @@ class PPE_SERIALIZE_API FArrayExpr : public FParseExpression {
 public:
     using items_type = VECTORINSITU(Parser, PCParseExpression, 4);
 
-    explicit FArrayExpr(const Lexer::FLocation& site);
-    FArrayExpr(items_type&& ritems, const Lexer::FLocation& site);
+    explicit FArrayExpr(const Lexer::FSpan& site);
+    FArrayExpr(items_type&& ritems, const Lexer::FSpan& site);
     virtual ~FArrayExpr();
 
     size_t size() const { return _items.size(); }
@@ -281,11 +281,11 @@ private:
     items_type _items;
 };
 //----------------------------------------------------------------------------
-inline Parser::FArrayExpr *MakeArrayExpr(const Lexer::FLocation& site) {
+inline Parser::FArrayExpr *MakeArrayExpr(const Lexer::FSpan& site) {
     return new Parser::FArrayExpr(site);
 }
 //----------------------------------------------------------------------------
-inline Parser::FArrayExpr *MakeArrayExpr(FArrayExpr::items_type&& ritems, const Lexer::FLocation& site) {
+inline Parser::FArrayExpr *MakeArrayExpr(FArrayExpr::items_type&& ritems, const Lexer::FSpan& site) {
     return new Parser::FArrayExpr(std::move(ritems), site);
 }
 //----------------------------------------------------------------------------
@@ -295,8 +295,8 @@ class PPE_SERIALIZE_API FDictionaryExpr : public FParseExpression {
 public:
     using dico_type = ASSOCIATIVE_VECTORINSITU(Parser, PCParseExpression, PCParseExpression, 2);
 
-    explicit FDictionaryExpr(const Lexer::FLocation& site);
-    FDictionaryExpr(dico_type&& rdico, const Lexer::FLocation& site);
+    explicit FDictionaryExpr(const Lexer::FSpan& site);
+    FDictionaryExpr(dico_type&& rdico, const Lexer::FSpan& site);
     virtual ~FDictionaryExpr();
 
     size_t size() const { return _dico.size(); }
@@ -313,11 +313,11 @@ private:
     dico_type _dico;
 };
 //----------------------------------------------------------------------------
-inline Parser::FDictionaryExpr *MakeDictionaryExpr(const Lexer::FLocation& site) {
+inline Parser::FDictionaryExpr *MakeDictionaryExpr(const Lexer::FSpan& site) {
     return new Parser::FDictionaryExpr(site);
 }
 //----------------------------------------------------------------------------
-inline Parser::FDictionaryExpr *MakeDictionaryExpr(FDictionaryExpr::dico_type&& ritems, const Lexer::FLocation& site) {
+inline Parser::FDictionaryExpr *MakeDictionaryExpr(FDictionaryExpr::dico_type&& ritems, const Lexer::FSpan& site) {
     return new Parser::FDictionaryExpr(std::move(ritems), site);
 }
 //----------------------------------------------------------------------------
@@ -325,7 +325,7 @@ inline Parser::FDictionaryExpr *MakeDictionaryExpr(FDictionaryExpr::dico_type&& 
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FCastExpr : public FParseExpression {
 public:
-    FCastExpr(RTTI::ENativeType typeId, const FParseExpression* expr, const Lexer::FLocation& site);
+    FCastExpr(RTTI::ENativeType typeId, const FParseExpression* expr, const Lexer::FSpan& site);
     virtual ~FCastExpr();
 
     virtual RTTI::FAtom Eval(FParseContext *context) const override;
@@ -338,7 +338,7 @@ private:
     PCParseExpression _expr;
 };
 //----------------------------------------------------------------------------
-inline FCastExpr *MakeCastExpr(RTTI::ENativeType typeId, const FParseExpression* expr, const Lexer::FLocation& site) {
+inline FCastExpr *MakeCastExpr(RTTI::ENativeType typeId, const FParseExpression* expr, const Lexer::FSpan& site) {
     return new FCastExpr(typeId, expr, site);
 }
 //----------------------------------------------------------------------------

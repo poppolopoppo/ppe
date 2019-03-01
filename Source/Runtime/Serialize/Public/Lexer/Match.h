@@ -16,23 +16,20 @@ class FLexer;
 //----------------------------------------------------------------------------
 class FMatch {
 public:
-    friend class FLexer;
     typedef PPE::Lexer::FSymbol symbol_type;
 
     FMatch();
     ~FMatch();
 
-    FMatch(const symbol_type *symbol, FString&& rvalue, const FLocation& site, size_t offset);
-    FMatch(const symbol_type *symbol, const FString& value, const FLocation& site, size_t offset);
+    FMatch(const symbol_type *symbol, FString&& rvalue, const FLocation& start, const FLocation& stop);
+    FMatch(const symbol_type *symbol, const FString& value, const FLocation& start, const FLocation& stop)
+        : FMatch(symbol, FString(value), start, stop)
+    {}
 
     const symbol_type *Symbol() const { return _symbol; }
-
     FString& Value() { return _value; }
     const FString& Value() const { return _value; }
-
-    const FLocation& Site() const { return _site; }
-
-    size_t Offset() const { return _offset; }
+    const FSpan& Site() const { return _site; }
 
     FStringView MakeView() const { return MakeStringView(_value); }
 
@@ -41,8 +38,7 @@ public:
 private:
     const symbol_type *_symbol;
     FString _value;
-    FLocation _site;
-    size_t _offset;
+    FSpan _site;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -22,7 +22,7 @@ LOG_CATEGORY(PPE_SERIALIZE_API, Parser)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FParseStatement::FParseStatement(const Lexer::FLocation& site)
+FParseStatement::FParseStatement(const Lexer::FSpan& site)
 :   FParseItem(site) {}
 //----------------------------------------------------------------------------
 FParseStatement::~FParseStatement() {}
@@ -53,8 +53,9 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FPropertyAssignment, )
 //----------------------------------------------------------------------------
 FPropertyAssignment::FPropertyAssignment(
     const RTTI::FName& name,
-    const Parser::PCParseExpression& value)
-:   FParseStatement(value->Site())
+    const Parser::PCParseExpression& value,
+    const Lexer::FSpan& site)
+:   FParseStatement(site)
 ,   _name(name)
 ,   _value(value) {
     Assert(!name.empty());
@@ -78,6 +79,9 @@ void FPropertyAssignment::Execute(FParseContext *context) const {
 
     const RTTI::FAtom src = _value->Eval(context);
     const RTTI::FAtom dst = metaproperty->Get(*obj);
+
+    if (not src)
+        PPE_THROW_IT(FParserException("can't assign void expression", _value.get()));
 
     if (not src.PromoteMove(dst))
         PPE_THROW_IT(FParserException("invalid property assignment", this));

@@ -22,7 +22,7 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FParseExpression::FParseExpression(const Lexer::FLocation& site)
+FParseExpression::FParseExpression(const Lexer::FSpan& site)
 :   FParseItem(site) {}
 //----------------------------------------------------------------------------
 FParseExpression::~FParseExpression() {}
@@ -31,7 +31,7 @@ FParseExpression::~FParseExpression() {}
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FVariableExport, )
 //----------------------------------------------------------------------------
-FVariableExport::FVariableExport(const RTTI::FName& name, const PCParseExpression& value, const EFlags scope, const Lexer::FLocation& site)
+FVariableExport::FVariableExport(const RTTI::FName& name, const PCParseExpression& value, const EFlags scope, const Lexer::FSpan& site)
 :   FParseExpression(site)
 ,   _name(name), _value(value), _scope(scope) {
     Assert(!name.empty());
@@ -70,7 +70,7 @@ FString FVariableExport::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FVariableReference, )
 //----------------------------------------------------------------------------
-FVariableReference::FVariableReference(const RTTI::FPathName& pathName, const Lexer::FLocation& site)
+FVariableReference::FVariableReference(const RTTI::FPathName& pathName, const Lexer::FSpan& site)
 :   FParseExpression(site)
 ,   _pathName(pathName) {
     Assert(not _pathName.empty());
@@ -112,7 +112,7 @@ FString FVariableReference::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FObjectDefinition, )
 //----------------------------------------------------------------------------
-FObjectDefinition::FObjectDefinition(const RTTI::FName& name, const Lexer::FLocation& site)
+FObjectDefinition::FObjectDefinition(const RTTI::FName& name, const Lexer::FSpan& site)
 :   FParseExpression(site)
 ,   _name(name) {
     Assert(not name.empty());
@@ -161,7 +161,7 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FPropertyReference, )
 FPropertyReference::FPropertyReference(
     const PCParseExpression& object,
     const RTTI::FName& member,
-    const Lexer::FLocation& site)
+    const Lexer::FSpan& site)
 :   FParseExpression(site),
     _object(object), _member(member) {
     Assert(object);
@@ -202,11 +202,11 @@ FString FPropertyReference::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FTupleExpr, )
 //----------------------------------------------------------------------------
-FTupleExpr::FTupleExpr(const Lexer::FLocation& site)
+FTupleExpr::FTupleExpr(const Lexer::FSpan& site)
 :   FParseExpression(site)
 {}
 //----------------------------------------------------------------------------
-FTupleExpr::FTupleExpr(elements_type&& relements, const Lexer::FLocation& site)
+FTupleExpr::FTupleExpr(elements_type&& relements, const Lexer::FSpan& site)
     : FParseExpression(site)
     , _elements(std::move(relements)) {
 #ifdef WITH_PPE_ASSERT
@@ -254,10 +254,10 @@ FString FTupleExpr::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FArrayExpr, )
 //----------------------------------------------------------------------------
-FArrayExpr::FArrayExpr(const Lexer::FLocation& site)
+FArrayExpr::FArrayExpr(const Lexer::FSpan& site)
 :   FParseExpression(site) {}
 //----------------------------------------------------------------------------
-FArrayExpr::FArrayExpr(items_type&& ritems, const Lexer::FLocation& site)
+FArrayExpr::FArrayExpr(items_type&& ritems, const Lexer::FSpan& site)
 :   FParseExpression(site)
 ,   _items(std::move(ritems))
 {}
@@ -296,10 +296,10 @@ FString FArrayExpr::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FDictionaryExpr, )
 //----------------------------------------------------------------------------
-FDictionaryExpr::FDictionaryExpr(const Lexer::FLocation& site)
+FDictionaryExpr::FDictionaryExpr(const Lexer::FSpan& site)
 :   FParseExpression(site) {}
 //----------------------------------------------------------------------------
-FDictionaryExpr::FDictionaryExpr(dico_type&& rdico, const Lexer::FLocation& site)
+FDictionaryExpr::FDictionaryExpr(dico_type&& rdico, const Lexer::FSpan& site)
 :   FParseExpression(site)
 ,   _dico(std::move(rdico))
 {}
@@ -344,7 +344,7 @@ FString FDictionaryExpr::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FCastExpr, )
 //----------------------------------------------------------------------------
-FCastExpr::FCastExpr(RTTI::ENativeType typeId, const FParseExpression* expr, const Lexer::FLocation& site)
+FCastExpr::FCastExpr(RTTI::ENativeType typeId, const FParseExpression* expr, const Lexer::FSpan& site)
 :   FParseExpression(site)
 ,   _typeId(typeId)
 ,   _expr(expr) {

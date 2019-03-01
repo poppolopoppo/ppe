@@ -13,31 +13,32 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FLookAheadReader::FLookAheadReader(IBufferedStreamReader* input, const FWStringView& sourceFileName)
+FLookAheadReader::FLookAheadReader(IBufferedStreamReader& input, const FWStringView& sourceFileName)
 :   _sourceFileName(sourceFileName)
 ,   _sourceLine(1)
 ,   _sourceColumn(1)
-,   _input(input) {
-    Assert(input);
-}
+,   _input(input)
+{}
 //----------------------------------------------------------------------------
 FLookAheadReader::~FLookAheadReader() {}
 //----------------------------------------------------------------------------
 bool FLookAheadReader::Eof() const {
-    return _input->Eof();
+    return _input.Eof();
 }
 //----------------------------------------------------------------------------
-size_t FLookAheadReader::Tell() const {
-    return checked_cast<size_t>(_input->TellI());
+FLocation FLookAheadReader::SourceSite() const {
+    return FLocation(_sourceFileName, _sourceLine, _sourceColumn, _input.TellI());
 }
 //----------------------------------------------------------------------------
-void FLookAheadReader::SeekFwd(size_t offset) {
-    _input->SeekI(offset, ESeekOrigin::Relative);
+void FLookAheadReader::SkipFwd(size_t offset) {
+    while (offset--)
+        Read(); // keep location coherent with the stream
 }
 //----------------------------------------------------------------------------
-void FLookAheadReader::Reset(size_t off, const FLocation& site) {
-    Assert(site.Filename == _sourceFileName);
-    _input->SeekI(off, ESeekOrigin::Begin);
+void FLookAheadReader::Reset(const FLocation& site) {
+    Assert_NoAssume(site.Filename == _sourceFileName);
+
+    _input.SeekI(site.Offset, ESeekOrigin::Begin);
     _sourceLine = site.Line;
     _sourceColumn = site.Column;
 }
@@ -46,20 +47,20 @@ char FLookAheadReader::Peek(size_t n/* = 0 */) const {
     char ch;
     bool result;
     if (n == 0) {
-        result = _input->Peek(ch);
+        result = _input.Peek(ch);
     }
     else {
-        const auto origin = _input->TellI();
-        _input->SeekI(n, ESeekOrigin::Relative);
-        result = _input->Peek(ch);
-        _input->SeekI(origin, ESeekOrigin::Begin);
+        const auto origin = _input.TellI();
+        _input.SeekI(n, ESeekOrigin::Relative);
+        result = _input.Peek(ch);
+        _input.SeekI(origin, ESeekOrigin::Begin);
     }
     return (result ? ch : '\0');
 }
 //----------------------------------------------------------------------------
 char FLookAheadReader::Read() {
     char ch;
-    if (not _input->ReadPOD(&ch))
+    if (not _input.ReadPOD(&ch))
         return '\0';
 
     if ('\n' == ch) {

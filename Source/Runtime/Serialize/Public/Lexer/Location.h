@@ -11,15 +11,40 @@ namespace Lexer {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FLocation {
-    FLocation() : FLocation(FWStringView(), 0, 0) {}
-    FLocation(const FWStringView& filename, size_t line, size_t column)
-        : Filename(filename), Line(line), Column(column) {}
+    FLocation() : FLocation(FWStringView(), 0, 0, 0) {}
+    FLocation(const FWStringView& filename, size_t line, size_t column, std::streamoff offset)
+        : Filename(filename)
+        , Line(checked_cast<u32>(line))
+        , Column(checked_cast<u32>(column))
+        , Offset(offset)
+    {}
 
     FWStringView Filename;
-    size_t Line;
-    size_t Column;
+    u32 Line;
+    u32 Column;
+    std::streamoff Offset;
 
     static FLocation None() { return FLocation(); }
+};
+//----------------------------------------------------------------------------
+struct FSpan : FLocation {
+    FSpan() : Length(0) {}
+    FSpan(const FLocation& location, size_t length)
+        : FLocation(location)
+        , Length(checked_cast<u32>(length))
+    {}
+
+    static FSpan FromSite(const FLocation& start, const FLocation& stop) {
+        Assert(stop.Offset >= start.Offset);
+        return FSpan(start, stop.Offset - start.Offset);
+    }
+
+    static FSpan FromSpan(const FSpan& start, const FSpan& stop) {
+        Assert(stop.Offset >= start.Offset);
+        return FSpan(start, (stop.Offset + stop.Length) - start.Offset);
+    }
+
+    u32 Length;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

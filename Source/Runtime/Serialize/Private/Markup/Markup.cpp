@@ -289,7 +289,7 @@ bool FMarkup::Load(FMarkup* markup, const FFilename& filename, IBufferedStreamRe
     Assert(input);
 
     const FWString filenameStr(filename.ToWString());
-    Lexer::FLexer lexer(input, filenameStr.MakeView(), false);
+    Lexer::FLexer lexer(*input, filenameStr.MakeView(), false);
 
     markup->_root = FElement(*markup);
     markup->_textHeap.Clear();

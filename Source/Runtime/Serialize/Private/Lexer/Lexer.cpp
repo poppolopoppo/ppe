@@ -138,7 +138,7 @@ static bool Lex_Symbol_(FLookAheadReader& reader, const FSymbol **psymbol, bool 
             }
             else {
                 Assert(FSymbols::Invalid != *psymbol);
-                reader.SeekFwd(toss);
+                reader.SkipFwd(toss);
                 return true;
             }
         }
@@ -152,6 +152,8 @@ static bool Lex_Symbol_(FLookAheadReader& reader, const FSymbol **psymbol, bool 
 static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStringBuilder& value) {
     Assert(psymbol);
     Assert(value.empty());
+
+    const FLocation origin = reader.SourceSite();
 
     char ch = reader.Peek(0);
 
@@ -167,7 +169,7 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
             Assert('x' == ToLower(ch));
 
             if (!ReadCharset_(Hexadecimal_, reader, value))
-                PPE_THROW_IT(FLexerException("invalid hexadecimal int", FMatch(FSymbols::Integer, value.ToString(), reader.SourceSite(), reader.Tell()) ));
+                PPE_THROW_IT(FLexerException("invalid hexadecimal int", FMatch(FSymbols::Integer, value.ToString(), origin, reader.SourceSite())));
 
             if ('u' == ToLower(reader.Peek())) {
                 ch = reader.Read();
@@ -204,7 +206,7 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
             Assert('0' == ch);
 
             if (!ReadCharset_(Octal_, reader, value))
-                PPE_THROW_IT(FLexerException("invalid octal int", FMatch(FSymbols::Integer, value.ToString(), reader.SourceSite(), reader.Tell() )));
+                PPE_THROW_IT(FLexerException("invalid octal int", FMatch(FSymbols::Integer, value.ToString(), origin, reader.SourceSite())));
 
             if ('u' == ToLower(reader.Peek())) {
                 ch = reader.Read();
@@ -240,7 +242,7 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
     {
         // decimal or float
         if (!ReadCharset_(Float_, reader, value))
-            PPE_THROW_IT(FLexerException("invalid float", FMatch(FSymbols::Float, value.ToString(), reader.SourceSite(), reader.Tell() )));
+            PPE_THROW_IT(FLexerException("invalid float", FMatch(FSymbols::Float, value.ToString(), origin, reader.SourceSite())));
 
         Assert(value.size());
 
@@ -248,7 +250,7 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
         int is_float = 0;
         for (char c : value.Written()) {
             if (c == '.' && ++is_float > 1) // can't have several '.'
-                PPE_THROW_IT(FLexerException("float can have only one decimal separator", FMatch(FSymbols::Float, value.ToString(), reader.SourceSite(), reader.Tell())));
+                PPE_THROW_IT(FLexerException("float can have only one decimal separator", FMatch(FSymbols::Float, value.ToString(), origin, reader.SourceSite())));
         }
 
         if ('u' == ToLower(reader.Peek())) {
@@ -256,7 +258,7 @@ static bool Lex_Numeric_(FLookAheadReader& reader, const FSymbol **psymbol, FStr
             Assert('u' == ToLower(ch));
 
             if (is_float)
-                PPE_THROW_IT(FLexerException("float can't be unsigned", FMatch(FSymbols::Float, value.ToString(), reader.SourceSite(), reader.Tell())));
+                PPE_THROW_IT(FLexerException("float can't be unsigned", FMatch(FSymbols::Float, value.ToString(), origin, reader.SourceSite())));
 
             *psymbol = FSymbols::Unsigned;
         }
@@ -277,6 +279,8 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
     Assert(psymbol);
     Assert(value.empty());
 
+    const FLocation origin = reader.SourceSite();
+
     char ch = reader.Peek(0);
 
     if ('\'' == ch)
@@ -290,7 +294,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
         ReadCharset_(Until_<'\''>, reader, value);
 
         if ('\'' != (ch = reader.Read()))
-            PPE_THROW_IT(FLexerException("unterminated strong quoted string", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
+            PPE_THROW_IT(FLexerException("unterminated strong quoted string", FMatch(FSymbols::String, value.ToString(), origin, reader.SourceSite())));
 
         return true;
     }
@@ -359,7 +363,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     d1 = ToLower(reader.Read());
 
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1)))
-                        PPE_THROW_IT(FLexerException("invalid hexadecimal character escaping", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
+                        PPE_THROW_IT(FLexerException("invalid hexadecimal character escaping", FMatch(FSymbols::String, value.ToString(), origin, reader.SourceSite())));
 
                     ch = (char)((d0 <= '9' ? d0 - '0' : d0 - 'a' + 10) * 16 +
                                 (d1 <= '9' ? d1 - '0' : d1 - 'a' + 10) );
@@ -376,7 +380,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     d3 = ToLower(reader.Read());
 
                     if (!(Hexadecimal_(d0) && Hexadecimal_(d1) && Hexadecimal_(d2) && Hexadecimal_(d3)))
-                        PPE_THROW_IT(FLexerException("invalid unicode character escaping", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell())));
+                        PPE_THROW_IT(FLexerException("invalid unicode character escaping", FMatch(FSymbols::String, value.ToString(), origin, reader.SourceSite())));
 
                     unicode =   u16(d0 <= '9' ? d0 - '0' : d0 - 'a' + 10) * (16 * 16 * 16) +
                                 u16(d1 <= '9' ? d1 - '0' : d1 - 'a' + 10) * (16 * 16) +
@@ -394,10 +398,10 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                     break;
 
                 case '\0':
-                    PPE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
+                    PPE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, value.ToString(), origin, reader.SourceSite())));
 
                 default:
-                    //PPE_THROW_IT(FLexerException("invalid character escaping", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
+                    //PPE_THROW_IT(FLexerException("invalid character escaping", FMatch(FSymbols::String, value.ToString(), reader.SourceSite())));
                     oss.Put('\\'); // put both chars and ignore escaping
                     oss.Put(ch);
                     break;
@@ -411,7 +415,7 @@ static bool Lex_String_(FLookAheadReader& reader, const FSymbol **psymbol, FStri
                 case '\\': escaped = true; break;
 
                 case '\0':
-                    PPE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, value.ToString(), reader.SourceSite(), reader.Tell() )));
+                    PPE_THROW_IT(FLexerException("unterminated weak quoted string", FMatch(FSymbols::String, value.ToString(), origin, reader.SourceSite())));
 
                 default:
                     oss.Put(ch);
@@ -451,7 +455,7 @@ static bool Lex_Identifier_(FLookAheadReader& reader, const FSymbol **psymbol, F
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FLexer::FLexer(IBufferedStreamReader* input, const FWStringView& sourceFileName, bool allowTypenames)
+FLexer::FLexer(IBufferedStreamReader& input, const FWStringView& sourceFileName, bool allowTypenames)
 :   _sourceFileName(sourceFileName.begin(), sourceFileName.end())
 ,   _reader(input, _sourceFileName)
 ,   _allowTypenames(allowTypenames)
@@ -488,12 +492,9 @@ bool FLexer::ReadUntil(FMatch& match, const char ch) {
 
     _reader.EatWhiteSpaces();
 
-    match._site = _reader.SourceSite();
-    match._offset = _reader.Tell();
-    match._value.clear();
+    const FLocation origin = _reader.SourceSite();
 
     FStringBuilder oss;
-
     char poken = _reader.Peek(0);
     while ('\0' != poken && ch != poken) {
         oss << _reader.Read();
@@ -501,13 +502,12 @@ bool FLexer::ReadUntil(FMatch& match, const char ch) {
     }
 
     if (poken == '\0') {
-        match._symbol = FSymbols::Eof;
+        match = FMatch(FSymbols::Eof, FString{}, origin, _reader.SourceSite());
         return false;
     }
     else {
         Assert(ch == poken);
-        match._symbol = FSymbols::String;
-        oss.ToString(match._value);
+        match = FMatch(FSymbols::Eof, oss.ToString(), origin, _reader.SourceSite());
         return true;
     }
 }
@@ -530,12 +530,11 @@ bool FLexer::SkipUntil(const FStringView& str) {
     Assert(not str.empty());
 
     if (_peeking) {
-        _reader.Reset(_peek.Offset(), _peek.Site());
+        _reader.Reset(_peek.Site());
         _peeking = false;
         _peek = FMatch();
     }
 
-    const size_t offset = _reader.Tell();
     const Lexer::FLocation site = _reader.SourceSite();
 
     for (;;) {
@@ -544,7 +543,7 @@ bool FLexer::SkipUntil(const FStringView& str) {
             return true;
 
         if (_reader.Read() == '\0') {
-            _reader.Reset(offset, site);
+            _reader.Reset(site);
             return false;
         }
     }
@@ -568,7 +567,6 @@ bool FLexer::ReadIFN(const FStringView& str, ECase cmp/* = ECase::Insensitive */
 
     RewindPeekIFN();
 
-    const size_t offset = _reader.Tell();
     const Lexer::FLocation site = _reader.SourceSite();
 
     bool match = true;
@@ -582,7 +580,7 @@ bool FLexer::ReadIFN(const FStringView& str, ECase cmp/* = ECase::Insensitive */
     if (match)
         return true;
 
-    _reader.Reset(offset, site);
+    _reader.Reset(site);
     return false;
 }
 //----------------------------------------------------------------------------
@@ -613,7 +611,7 @@ bool FLexer::Expect(FMatch& match, const PPE::Lexer::FSymbol* expected) {
 //----------------------------------------------------------------------------
 void FLexer::RewindPeekIFN() {
     if (_peeking) {
-        _reader.Reset(_peek.Offset(), _peek.Site());
+        _reader.Reset(_peek.Site());
         _peeking = false;
         _peek = FMatch();
     }
@@ -629,18 +627,16 @@ bool FLexer::NextMatch_(FMatch& match) {
 
     _reader.EatWhiteSpaces();
 
+    FLocation origin = _reader.SourceSite();
+
     if ('\0' == _reader.Peek(0)) {
-        match._symbol = FSymbols::Eof;
-        match._value.clear();
-        match._site = _reader.SourceSite();
-        match._offset = _reader.Tell();
+        match = FMatch(FSymbols::Eof, FString{}, origin, _reader.SourceSite());
         return false;
     }
 
     Lex_Comments_(_reader);
 
-    match._site = _reader.SourceSite();
-    match._offset = _reader.Tell();
+    origin = _reader.SourceSite();
 
     const FSymbol *psymbol = nullptr;
     Assert(_lexing.empty());
@@ -655,17 +651,13 @@ bool FLexer::NextMatch_(FMatch& match) {
         Assert(FSymbol::Eof != psymbol->Type());
         Assert(FSymbol::Invalid != psymbol->Type());
 
-        match._symbol = psymbol;
-        _lexing.ToString(match._value);
-
-        _lexing.clear();
+        match = FMatch(psymbol, _lexing.ToString(), origin, _reader.SourceSite());
+        Assert_NoAssume(_lexing.empty()); // should be cleared inside ToString()
 
         return true;
     }
     else {
-        match._symbol = FSymbols::Invalid;
-        match._value.clear();
-
+        match = FMatch(FSymbols::Invalid, FString{}, origin, _reader.SourceSite());
         _lexing.clear();
 
         return false;
@@ -682,7 +674,7 @@ void FLexerStartup::Shutdown() {
     FSymbols::Destroy();
 }
 //----------------------------------------------------------------------------
-void FLexerStartup::ClearAll_UnusedMemory() {;
+void FLexerStartup::ClearAll_UnusedMemory() {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

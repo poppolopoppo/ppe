@@ -19,7 +19,7 @@ FWD_REFPTR(ParseStatement);
 //----------------------------------------------------------------------------
 class FParseStatement : public FParseItem {
 public:
-    FParseStatement(const Lexer::FLocation& site);
+    FParseStatement(const Lexer::FSpan& site);
     virtual ~FParseStatement();
 
     virtual void Execute(FParseContext *context) const = 0;
@@ -51,7 +51,7 @@ inline const FEvalExpr *MakeEvalExpr(const Parser::PCParseExpression& expr) {
 //----------------------------------------------------------------------------
 class FPropertyAssignment : public FParseStatement {
 public:
-    FPropertyAssignment(const RTTI::FName& name, const Parser::PCParseExpression& value);
+    FPropertyAssignment(const RTTI::FName& name, const Parser::PCParseExpression& value, const Lexer::FSpan& site);
     virtual  ~FPropertyAssignment();
 
     const RTTI::FName& Name() const { return _name; }
@@ -69,8 +69,9 @@ private:
 //----------------------------------------------------------------------------
 inline const FPropertyAssignment *MakePropertyAssignment(
     const RTTI::FName& name,
-    const Parser::PCParseExpression& value) {
-    return new FPropertyAssignment(name, value);
+    const Parser::PCParseExpression& value,
+    const Lexer::FSpan& site) {
+    return new FPropertyAssignment(name, value, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
