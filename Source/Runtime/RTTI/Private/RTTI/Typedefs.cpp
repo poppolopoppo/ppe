@@ -14,12 +14,15 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FPathName::FPathName(const FMetaObject& obj) {
+FPathName FPathName::FromObject(const FMetaObject& obj) NOEXCEPT {
     Assert(obj.RTTI_IsExported());
     Assert(obj.RTTI_Outer());
 
-    Transaction = obj.RTTI_Outer()->Name();
-    Identifier = obj.RTTI_Name();
+    FPathName p;
+    p.Transaction = obj.RTTI_Outer()->Name();
+    p.Identifier = obj.RTTI_Name();
+
+    return p;
 }
 //----------------------------------------------------------------------------
 bool FPathName::Parse(FPathName* pathName, const FStringView& text) {
@@ -72,11 +75,15 @@ FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FBinaryData& bindata) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const RTTI::FPathName& pathName) {
-    return oss << '$' << '/' << pathName.Transaction << '/' << pathName.Identifier;
+    if (not pathName.Transaction.empty())
+        oss << '$' << '/' << pathName.Transaction << '/';
+    return oss << pathName.Identifier;
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FPathName& pathName) {
-    return oss << L'$' << L'/' << pathName.Transaction << L'/' << pathName.Identifier;
+    if (not pathName.Transaction.empty())
+        oss << L'$' << L'/' << pathName.Transaction << L'/';
+    return oss << pathName.Identifier;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

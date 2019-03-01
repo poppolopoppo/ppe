@@ -39,7 +39,7 @@ struct TPPFormat_<char> {
     using FIndent = Fmt::FIndent;
     static constexpr const char Export[] = "export";
     static constexpr const char Is[] = "is";
-    static constexpr const char Nil[] = "nil";
+    static constexpr const char Null[] = "null";
     static constexpr const char Sep[] = ", ";
     static constexpr const char True[] = "true";
     static constexpr const char False[] = "false";
@@ -49,7 +49,7 @@ struct TPPFormat_<wchar_t> {
     using FIndent = Fmt::FWIndent;
     static constexpr const wchar_t Export[] = L"export";
     static constexpr const wchar_t Is[] = L"is";
-    static constexpr const wchar_t Nil[] = L"nil";
+    static constexpr const wchar_t Null[] = L"null";
     static constexpr const wchar_t Sep[] = L", ";
     static constexpr const wchar_t True[] = L"true";
     static constexpr const wchar_t False[] = L"false";
@@ -58,8 +58,9 @@ struct TPPFormat_<wchar_t> {
 template <typename _Char>
 class TPrettyPrinter_ : public IAtomVisitor {
 public:
-    explicit TPrettyPrinter_(TBasicTextWriter<_Char>& oss)
+    TPrettyPrinter_(TBasicTextWriter<_Char>& oss, bool showDefaults)
         : _oss(oss)
+        , _showDefaults(showDefaults)
     {}
 
     virtual bool Visit(const ITupleTraits* tuple, void* data) override final {
@@ -165,28 +166,33 @@ private:
 
             _oss << metaClass->Name() << Fmt::Space << Fmt::LBrace;
 
-            const bool empty = (metaClass->NumProperties() == 0);
-
-            if (not empty)
-                _oss << Eol;
-
-            _indent.Inc();
-
+            bool empty = true;
             for (const FMetaProperty* prop : metaClass->AllProperties()) {
+                const RTTI::FAtom val = prop->Get(obj);
+                if (not _showDefaults & val.IsDefaultValue())
+                    continue;
+
+                if (empty) {
+                    empty = false;
+                    _oss << Eol;
+                    _indent.Inc();
+                }
+
                 _oss << _indent << prop->Name() << Fmt::Space << Fmt::Assignment << Fmt::Space;
-                prop->Get(obj).Accept(this);
+
+                val.Accept(this);
                 _oss << Eol;
             }
 
-            _indent.Dec();
-
-            if (not empty)
+            if (not empty) {
+                _indent.Dec();
                 _oss << _indent;
+            }
 
             _oss << Fmt::RBrace;
         }
         else {
-            _oss << PP::Nil;
+            _oss << PP::Null;
         }
     }
 
@@ -209,6 +215,7 @@ private:
 
     typename PP::FIndent _indent;
     TBasicTextWriter<_Char>& _oss;
+    const bool _showDefaults;
 };
 //----------------------------------------------------------------------------
 } //!namespace
@@ -292,14 +299,14 @@ DEBUG_FUNCTION(PPE_RTTI_API, DebugPrintAny, FString, (const FAny& any), {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom) {
-    TPrettyPrinter_<char> printer(oss);
+FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom, bool showDefaults/* = false */) {
+    TPrettyPrinter_<char> printer(oss, showDefaults);
     atom.Accept(&printer);
     return oss;
 }
 //----------------------------------------------------------------------------
-FWTextWriter& PrettyPrint(FWTextWriter& oss, const FAtom& atom) {
-    TPrettyPrinter_<wchar_t> printer(oss);
+FWTextWriter& PrettyPrint(FWTextWriter& oss, const FAtom& atom, bool showDefaults/* = false */) {
+    TPrettyPrinter_<wchar_t> printer(oss, showDefaults);
     atom.Accept(&printer);
     return oss;
 }

@@ -28,16 +28,17 @@ FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const 
 #else
 {
 #endif
-    Assert(_id.Value());
-    Assert(not _name.empty());
-    Assert(_flags != EClassFlags(0));
+    Assert_NoAssume(_id.Value());
+    Assert_NoAssume(not _name.empty());
+    Assert_NoAssume(_flags != EClassFlags(0));
     Assert(_namespace);
 }
 //----------------------------------------------------------------------------
 FMetaClass::~FMetaClass() {
-    Assert(not IsRegistered());
-    Assert(_propertiesAll.empty());
+    Assert_NoAssume(not IsRegistered());
+    Assert_NoAssume(_propertiesAll.empty());
 #if USE_PPE_MEMORYDOMAINS
+    Assert_NoAssume(_trackingData.AllocationCount() == 0); // must be empty upon destruction
     UnregisterTrackingData(&_trackingData);
 #endif
 }

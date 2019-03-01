@@ -95,8 +95,8 @@ FORCE_INLINE bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_RTTI_API FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom);
-PPE_RTTI_API FWTextWriter& PrettyPrint(FWTextWriter& oss, const FAtom& atom);
+PPE_RTTI_API FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom, bool showDefaults = false);
+PPE_RTTI_API FWTextWriter& PrettyPrint(FWTextWriter& oss, const FAtom& atom, bool showDefaults = false);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

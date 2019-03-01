@@ -195,7 +195,7 @@ private:
     PToto _toto;
     ETutut _tutut;
 };
-RTTI_CLASS_BEGIN(RTTI_UnitTest, FTiti, Public)
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FTiti, Public, Concrete)
 RTTI_PROPERTY_PRIVATE_FIELD(_count)
 RTTI_PROPERTY_FIELD_ALIAS(_name, Name)
 RTTI_PROPERTY_PRIVATE_FIELD(_structAsTuple)
@@ -348,6 +348,13 @@ static void TestRTTI_() {
     RTTIPrintClass_<FTiti>();
     RTTIPrintClass_<FToto>();
     RTTIPrintClass_<FToto2>();
+
+    {
+        STATIC_ASSERT(struct_num_fields<RTTI::FPathName>() == 2);
+        STATIC_ASSERT(has_tie_as_tuple<RTTI::FPathName>());
+
+        RTTIPrintType_<RTTI::FPathName>();
+    }
 
     {
         const RTTI::FMetaEnum* metaEnum = RTTI::MetaEnum<ETutut>();

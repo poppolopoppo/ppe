@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "RTTI.h"
@@ -31,16 +32,9 @@ struct PPE_RTTI_API FPathName {
     FName Transaction;
     FName Identifier;
 
-    FPathName() NOEXCEPT {}
-    FPathName(const FName& transaction, const FName& identifier) NOEXCEPT
-        : Transaction(transaction)
-        , Identifier(identifier)
-    {}
-
-    /* not explicit on purpose */FPathName(const FMetaObject& obj);
-
     bool empty() const NOEXCEPT { return (Identifier.empty()); }
 
+    static FPathName FromObject(const FMetaObject& obj) NOEXCEPT;
     static bool Parse(FPathName* pathName, const FStringView& text);
 
     inline friend bool operator ==(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
@@ -48,6 +42,13 @@ struct PPE_RTTI_API FPathName {
     }
     inline friend bool operator !=(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
+    }
+
+    inline friend bool operator < (const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
+        return (lhs.Transaction == rhs.Transaction ? lhs.Identifier < rhs.Identifier : lhs.Transaction < rhs.Transaction);
+    }
+    inline friend bool operator >=(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
+        return (not operator < (lhs, rhs));
     }
 
     inline friend hash_t hash_value(const FPathName& pathName) {

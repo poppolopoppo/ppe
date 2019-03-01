@@ -311,5 +311,117 @@ void TObjectTraits<T>::ResetToDefaultValue(void* data) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// First defined in NativeTypes.h
+//----------------------------------------------------------------------------
+CONSTEXPR bool is_arithmethic(FTypeId typeId) {
+    switch (ENativeType(typeId)) {
+    case ENativeType::Bool:
+    case ENativeType::Int8:
+    case ENativeType::Int16:
+    case ENativeType::Int32:
+    case ENativeType::Int64:
+    case ENativeType::UInt8:
+    case ENativeType::UInt16:
+    case ENativeType::UInt32:
+    case ENativeType::UInt64:
+    case ENativeType::Float:
+    case ENativeType::Double:
+        return true;
+    default:
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+CONSTEXPR bool is_integral(FTypeId typeId) {
+    switch (ENativeType(typeId)) {
+    case ENativeType::Bool:
+    case ENativeType::Int8:
+    case ENativeType::Int16:
+    case ENativeType::Int32:
+    case ENativeType::Int64:
+    case ENativeType::UInt8:
+    case ENativeType::UInt16:
+    case ENativeType::UInt32:
+    case ENativeType::UInt64:
+        return true;
+    default:
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+CONSTEXPR bool is_boolean(FTypeId typeId) {
+    switch (ENativeType(typeId)) {
+    case ENativeType::Bool:
+        return true;
+    default:
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+CONSTEXPR bool is_non_bool_integral(FTypeId typeId) {
+    switch (ENativeType(typeId)) {
+    case ENativeType::Int8:
+    case ENativeType::Int16:
+    case ENativeType::Int32:
+    case ENativeType::Int64:
+    case ENativeType::UInt8:
+    case ENativeType::UInt16:
+    case ENativeType::UInt32:
+    case ENativeType::UInt64:
+        return true;
+    default:
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+CONSTEXPR bool is_signed_integral(FTypeId typeId) {
+    switch (ENativeType(typeId)) {
+    case ENativeType::Int8:
+    case ENativeType::Int16:
+    case ENativeType::Int32:
+    case ENativeType::Int64:
+        return true;
+    default:
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+CONSTEXPR bool is_unsigned_integral(FTypeId typeId) {
+    switch (ENativeType(typeId)) {
+    case ENativeType::UInt8:
+    case ENativeType::UInt16:
+    case ENativeType::UInt32:
+    case ENativeType::UInt64:
+        return true;
+    default:
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+CONSTEXPR bool is_floating_point(FTypeId typeId) {
+    switch (ENativeType(typeId)) {
+    case ENativeType::Float:
+    case ENativeType::Double:
+        return true;
+    default:
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+CONSTEXPR bool is_string(FTypeId typeId) {
+    switch (ENativeType(typeId)) {
+    case ENativeType::String:
+    case ENativeType::WString:
+    case ENativeType::Name:
+    case ENativeType::Dirpath:
+    case ENativeType::Filename:
+        return true;
+    default:
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace PPE

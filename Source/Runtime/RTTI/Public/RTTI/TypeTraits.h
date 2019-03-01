@@ -156,8 +156,6 @@ CONSTEXPR inline PTypeTraits Traits(Meta::TType<void>) NOEXCEPT { return PTypeTr
 template <typename T>
 PTypeTraits MakeTraits() NOEXCEPT; // defined in NativeTypes.h
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 PPE_RTTI_API FTypeId MakeTupleTypeId(const TMemoryView<const PTypeTraits>& elements);
 PPE_RTTI_API FTypeId MakeListTypeId(const PTypeTraits& value);
 PPE_RTTI_API FTypeId MakeDicoTypeId(const PTypeTraits& key, const PTypeTraits& value);

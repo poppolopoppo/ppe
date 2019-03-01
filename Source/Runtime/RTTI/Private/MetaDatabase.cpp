@@ -104,7 +104,7 @@ void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
     Assert(metaObject->RTTI_Outer());
     Assert(metaObject->RTTI_Outer()->IsLoading());
 
-    const FPathName exportPath{ *metaObject };
+    const FPathName exportPath{ FPathName::FromObject(*metaObject) };
 
     LOG(RTTI, Info, L"register object in DB : <{0}::{1}> '{2}'",
         metaObject->RTTI_Class()->Namespace()->Name(),
@@ -127,7 +127,7 @@ void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
     Assert(metaObject->RTTI_Outer());
     Assert(metaObject->RTTI_Outer()->IsUnloading());
 
-    const FPathName exportPath{ *metaObject };
+    const FPathName exportPath{ FPathName::FromObject(*metaObject) };
 
     LOG(RTTI, Info, L"unregister object from DB : <{0}::{1}> '{2}'",
         metaObject->RTTI_Class()->Namespace()->Name(),

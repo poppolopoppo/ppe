@@ -36,7 +36,7 @@
     \
     _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaNamespace* metaNamespace) \
         : metaclass_type(id, ::PPE::RTTI::FName(STRINGIZE(_Name)), \
-            (PP_FOREACH_ARGS(_RTTI_COMBINE_CLASSFLAGS_IMPL, __VA_ARGS__) ::PPE::RTTI::EClassFlags::None), \
+            (PP_FOREACH(_RTTI_COMBINE_CLASSFLAGS_IMPL, __VA_ARGS__) ::PPE::RTTI::EClassFlags::None), \
             metaNamespace) { \
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_END() }

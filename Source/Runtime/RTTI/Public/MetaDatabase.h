@@ -49,6 +49,7 @@ public:
     FMetaObject& Object(const FPathName& pathName) const;
     FMetaObject* ObjectIFP(const FPathName& pathName) const;
     FMetaObject* ObjectIFP(const FStringView& text) const;
+    const auto& Objects() const { return _objects; }
 
     /* Namespaces */
 
@@ -58,18 +59,21 @@ public:
     const FMetaNamespace& Namespace(const FName& name) const;
     const FMetaNamespace* NamespaceIFP(const FName& name) const;
     const FMetaNamespace* NamespaceIFP(const FStringView& name) const;
+    const auto& Namespaces() const { return _namespaces; }
 
     /* Classes */
 
     const FMetaClass& Class(const FName& name) const;
     const FMetaClass* ClassIFP(const FName& name) const;
     const FMetaClass* ClassIFP(const FStringView& name) const;
+    const auto& Classes() const { return _classes; }
 
     /* Enums */
 
     const FMetaEnum& Enum(const FName& name) const;
     const FMetaEnum* EnumIFP(const FName& name) const;
     const FMetaEnum* EnumIFP(const FStringView& name) const;
+    const auto& Enums() const { return _enums; }
 
 private:
     friend Meta::TSingleton<FMetaDatabase>;

@@ -219,6 +219,21 @@ struct TIsSupportedType {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Helpers traits for natives types
+//----------------------------------------------------------------------------
+CONSTEXPR bool is_arithmethic(FTypeId typeId);
+CONSTEXPR bool is_integral(FTypeId typeId);
+CONSTEXPR bool is_boolean(FTypeId typeId);
+CONSTEXPR bool is_non_bool_integral(FTypeId typeId);
+CONSTEXPR bool is_signed_integral(FTypeId typeId);
+CONSTEXPR bool is_unsigned_integral(FTypeId typeId);
+CONSTEXPR bool is_floating_point(FTypeId typeId);
+CONSTEXPR bool is_string(FTypeId typeId);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Should be the only method to acquire the PTypeTraits associated with T
+//----------------------------------------------------------------------------
 template <typename T>
 PTypeTraits MakeTraits() NOEXCEPT {
     return Traits(Meta::TType< Meta::TDecay<T> >{});

@@ -569,7 +569,7 @@ bool FJson::Load(FJson* json, const FWStringView& filename, IBufferedStreamReade
     Assert(json);
     Assert(input);
 
-    Lexer::FLexer lexer(input, filename, false);
+    Lexer::FLexer lexer(*input, filename, false);
 
     json->_root = FValue();
     json->_textHeap.Clear();
