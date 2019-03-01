@@ -8,6 +8,8 @@
 #include "Externals.bff"
 #include "VisualStudio.bff"
 
+#define USE_EXPERIMENTAL_DBMIGRATION
+
 //------------------------------------------------------------------------------
 // Environment Settings
 //------------------------------------------------------------------------------
@@ -22,5 +24,10 @@ Settings
         "SystemRoot=C:\Windows",
         "TMP=C:\Windows\Temp",
     }
+#endif
+
+#if USE_EXPERIMENTAL_DBMIGRATION
+    Print( 'Using Fastbuild experimental database migration.' ) // Should avoid rebuilding all when changing bff
+    .AllowDBMigration_Experimental = true
 #endif
 }
