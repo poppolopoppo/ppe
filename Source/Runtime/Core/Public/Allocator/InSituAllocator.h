@@ -125,10 +125,11 @@ public:
     TInSituAllocator(TInSituAllocator&& rvalue) : TInSituAllocator(rvalue._insitu) {}
     TInSituAllocator& operator=(TInSituAllocator&&) = delete;
 
-    const storage_type& InSitu() const { return _insitu; }
+    size_t InSituCapacity() const { return Capacity; }
+    const storage_type& InSituData() const { return _insitu; }
 
     bool AliasesToInSitu(const void* p, size_t sz) const {
-        return FPlatformMemory::Memoverlap(p, sz, &_insitu, sizeof(_insitu));
+        return FPlatformMemory::Memoverlap(p, sz, &_insitu, sizeof(storage_type));
     }
 
     fallback_type& FallbackAllocator() { return static_cast<fallback_type&>(*this); }
