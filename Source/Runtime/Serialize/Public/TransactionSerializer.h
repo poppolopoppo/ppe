@@ -2,14 +2,16 @@
 
 #include "Serialize.h"
 
-#include "RTTI_fwd.h"
-#include "RTTI/Macros.h"
-
 #include "Container/HashSet.h"
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
 #include "IO/String.h"
 #include "Memory/UniquePtr.h"
+#include "Meta/Optional.h"
+
+#include "RTTI_fwd.h"
+#include "RTTI/Macros.h"
+
 #include "MetaObject.h"
 
 namespace PPE {
@@ -22,6 +24,7 @@ struct FTransactionInputGlobbing {
     VECTORINSITU(MetaSerialize, FWString, 3) Patterns;
     void ListFiles(VECTOR(MetaSerialize, FFilename)* output) const;
 };
+RTTI_STRUCT_DECL(PPE_SERIALIZE_API, FTransactionInputGlobbing);
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FTransactionSerializer : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(FTransactionSerializer, RTTI::FMetaObject);
@@ -61,7 +64,7 @@ private: // transient
     u128 _fingerprint;
     FTimestamp _lastBuilt;
     VECTOR(MetaSerialize, FFilename) _sourceFiles;
-    TUniquePtr<RTTI::FMetaTransaction> _builtTransaction;
+    Meta::TOptional<RTTI::FMetaTransaction> _builtTransaction;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
