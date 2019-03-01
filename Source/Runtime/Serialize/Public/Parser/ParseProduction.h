@@ -11,6 +11,7 @@
 #include "Container/TupleHelpers.h"
 #include "Container/Vector.h"
 #include "Misc/Function.h"
+#include "Meta/Optional.h"
 
 #include <functional>
 #include <type_traits>
@@ -91,8 +92,8 @@ public:
     }
 
     template <typename U>
-    TProduction<U> Then(TFunction< TProduction<U>(T&&) >&& rthen) {
-        return TProduction<U>{ { Meta::ForceInit, [first{ std::move(*this) }, then{ std::move(rthen) }](FParseList& input) -> TParseResult<U> {
+    TProduction<U> Then(TFunction< TProduction<U>(T&&) >&& rthen) const {
+        return TProduction<U>{ { Meta::ForceInit, [first{ *this }, then{ std::move(rthen) }](FParseList& input) -> TParseResult<U> {
             TParseResult<T> result = first(input);
             return (result.Succeed())
                 ? then(std::move(result.Value()))
@@ -101,8 +102,8 @@ public:
     }
 
     template <typename U>
-    TProduction<U> Select(TFunction< U(T&&) >&& rconvert) {
-        return TProduction<U>{ { Meta::ForceInit, [first{ std::move(*this) }, convert{ std::move(rconvert) }](FParseList& input) -> TParseResult<U> {
+    TProduction<U> Select(TFunction< U(T&&) >&& rconvert) const {
+        return TProduction<U>{ { Meta::ForceInit, [first{ *this }, convert{ std::move(rconvert) }](FParseList& input) -> TParseResult<U> {
             TParseResult<T> result = first(input);
             return (result.Succeed())
                 ? TParseResult<U>::Success(convert(std::move(result.Value())), result.Site())
@@ -110,9 +111,9 @@ public:
         }}};
     }
 
-    TProduction< TEnumerable<T> > Many() {
-        return TProduction< TEnumerable<T> >{ { Meta::ForceInit, [parser{ std::move(*this) }](FParseList& input) -> TParseResult< TEnumerable<T> > {
-            const Lexer::FMatch *offset = input.Peek();
+    TProduction< TEnumerable<T> > Many() const {
+        return TProduction< TEnumerable<T> >{ { Meta::ForceInit, [parser{ *this }](FParseList& input) -> TParseResult< TEnumerable<T> > {
+            const Lexer::FMatch* const offset = input.Peek();
 
             TEnumerable<T> many;
             TParseResult<T> result;
@@ -123,9 +124,9 @@ public:
         }}};
     }
 
-    TProduction< TEnumerable<T> > AtLeastOnce() {
-        return TProduction< TEnumerable<T> >{ { Meta::ForceInit, [parser{ std::move(this) }](FParseList& input)->TParseResult< TEnumerable<T> > {
-            const Lexer::FMatch *offset = input.Peek();
+    TProduction< TEnumerable<T> > AtLeastOnce() const {
+        return TProduction< TEnumerable<T> >{ { Meta::ForceInit, [parser{ *this }](FParseList& input)->TParseResult< TEnumerable<T> > {
+            const Lexer::FMatch* const offset = input.Peek();
 
             TEnumerable<T> many;
             TParseResult<T> result;
@@ -138,8 +139,27 @@ public:
         }}};
     }
 
-    TProduction Or(TProduction<T>&& rother) {
-        return TProduction{ { Meta::ForceInit,[first{ std::move(*this) }, other{ std::move(rother) }](FParseList& input)->TParseResult<T> {
+    TProduction< TEnumerable<T> > Join(Lexer::FSymbol::ETypeId symbol) const {
+        return TProduction < TEnumerable<T> >{ { Meta::ForceInit, [parser{ *this }, symbol](FParseList& input) {
+            const Lexer::FMatch* const offset = input.Peek();
+
+            auto delimiter = Parser::Expect(symbol);
+
+            TEnumerable<T> join;
+            TParseResult<T> result;
+            while ((result = parser.TryParse(input)).Succeed()) {
+                join.emplace_back(std::move(result.Value()));
+
+                if (not delimiter.TryParse(input).Succeed())
+                    break;
+            }
+
+            return TParseResult< TEnumerable<T> >::Success(std::move(join), offset ? offset->Site() : input.Site());
+        }}};
+    }
+
+    TProduction Or(TProduction<T>&& rother) const {
+        return TProduction{ { Meta::ForceInit,[first{ *this }, other{ std::move(rother) }](FParseList& input)->TParseResult<T> {
             TParseResult<T> result = first.TryParse(input);
             if (not result.Succeed())
                 result = other(input);
@@ -148,9 +168,29 @@ public:
     }
 
     template <typename U>
-    auto And(TProduction<U>&& rother) {
+    auto Optional(TProduction<U>&& rother) const {
+        using tuple_type = decltype(MergeTuple(std::declval<T>(), Meta::MakeOptional(std::declval<U>())));
+        return TProduction<tuple_type>{ { Meta::ForceInit, [first{ *this }, other{ std::move(rother) }](FParseList& input)->TParseResult<tuple_type> {
+            TParseResult<T> a = first.TryParse(input);
+            if (not a.Succeed())
+                return TParseResult<tuple_type>::Failure(a.Message(), a.Expected(), a.Site());
+
+            TParseResult<U> b = other.TryParse(input);
+
+            Meta::TOptional<U> opt;
+            if (b.Succeed())
+                opt = Meta::MakeOptional(std::move(b.Value()));
+
+            tuple_type merged{ MergeTuple(std::move(a.Value()), std::move(opt)) };
+
+            return TParseResult<tuple_type>::Success(std::move(merged), a.Site());
+        }}};
+    }
+
+    template <typename U>
+    auto And(TProduction<U>&& rother) const {
         using tuple_type = decltype(MergeTuple(std::declval<T>(), std::declval<U>()));
-        return TProduction<tuple_type>{ { Meta::ForceInit, [first{ std::move(*this) }, other{ std::move(rother) }](FParseList& input)->TParseResult<tuple_type> {
+        return TProduction<tuple_type>{ { Meta::ForceInit, [first{ *this }, other{ std::move(rother) }](FParseList& input)->TParseResult<tuple_type> {
             TParseResult<T> a = first.TryParse(input);
             if (not a.Succeed())
                 return TParseResult<tuple_type>::Failure(a.Message(), a.Expected(), a.Site());
@@ -159,14 +199,14 @@ public:
             if (not b.Succeed())
                 return TParseResult<tuple_type>::Failure(b.Message(), b.Expected(), b.Site());
 
-            tuple_type merged = MergeTuple(std::move(a.Value()), std::move(b.Value()));
+            tuple_type merged{ MergeTuple(std::move(a.Value()), std::move(b.Value())) };
 
             return TParseResult<tuple_type>::Success(std::move(merged), a.Site());
         }}};
     }
 
-    TProduction Except(TProduction&& rother) {
-        return TProduction{ [other{ std::move(rother) }, second{ std::move(*this) }](FParseList& input) {
+    TProduction Except(TProduction&& rother) const {
+        return TProduction{ [other{ std::move(rother) }, second{ *this }](FParseList& input) {
             TParseResult<T> result = other.TryParse(input);
             return (result.Succeed())
                 ? TParseResult<T>::Failure("excepted parser succeeded", result.Site())
