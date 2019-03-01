@@ -280,9 +280,9 @@ template <typename T, size_t _Width, size_t _Height>
 TScalarVector<T, _Height> TScalarMatrix<T, _Width, _Height>::Multiply(const TScalarVector<T, _Width>& v) const {
     TScalarVector<T, _Height> result;
     for (size_t j = 0; j < _Height; ++j) {
-        T& x = result._data[j] = 0;
+        T& x = result[j] = 0;
         for (size_t i = 0; i < _Width; ++i)
-            x += v._data[i] * at_(i, j);
+            x += v[i] * at_(i, j);
     }
     return result;
 }
@@ -291,9 +291,9 @@ template <typename T, size_t _Width, size_t _Height>
 TScalarVector<T, _Height> TScalarMatrix<T, _Width, _Height>::Multiply_OneExtend(const TScalarVector<T, _Width-1>& v) const {
     TScalarVector<T, _Height> result;
     for (size_t j = 0; j < _Height; ++j) {
-        T& x = result._data[j] = 0;
+        T& x = result[j] = 0;
         for (size_t i = 0; i < _Width-1; ++i)
-            x += v._data[i] * at_(i, j);
+            x += v[i] * at_(i, j);
         x += at_(_Width-1, j);
     }
     return result;
@@ -303,9 +303,9 @@ template <typename T, size_t _Width, size_t _Height>
 TScalarVector<T, _Height> TScalarMatrix<T, _Width, _Height>::Multiply_ZeroExtend(const TScalarVector<T, _Width-1>& v) const {
     TScalarVector<T, _Height> result;
     for (size_t j = 0; j < _Height; ++j) {
-        T& x = result._data[j] = 0;
+        T& x = result[j] = 0;
         for (size_t i = 0; i < _Width-1; ++i)
-            x += v._data[i] * at_(i, j);
+            x += v[i] * at_(i, j);
     }
     return result;
 }
