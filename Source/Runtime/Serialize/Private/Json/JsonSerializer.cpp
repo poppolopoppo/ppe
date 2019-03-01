@@ -89,12 +89,10 @@ enum class EJsonRTTI_ : u32 {
 };
 ENUM_FLAGS(EJsonRTTI_);
 //----------------------------------------------------------------------------
-static bool Json_IsRTTIToken(const FStringView& str) {
-    return (str.size() > 1 && str.front() == '%' && str.back() == '%');
-}
-static FJson::FTextHeap::FText Json_Class()         { return FJson::FTextHeap::MakeStaticText("%Class%"); };
-static FJson::FTextHeap::FText Json_Name()          { return FJson::FTextHeap::MakeStaticText("%Name%"); };
-static FJson::FTextHeap::FText Json_Flags()         { return FJson::FTextHeap::MakeStaticText("%Flags%"); };
+static FJson::FTextHeap::FText Json_Class()         { return FJson::FTextHeap::MakeStaticText("Class"); };
+static FJson::FTextHeap::FText Json_Name()          { return FJson::FTextHeap::MakeStaticText("Name"); };
+static FJson::FTextHeap::FText Json_Flags()         { return FJson::FTextHeap::MakeStaticText("Flags"); };
+static FJson::FTextHeap::FText Json_Properties()    { return FJson::FTextHeap::MakeStaticText("Properties"); };
 //----------------------------------------------------------------------------
 template <typename T, class = void>
 struct TJson_RTTI_traits;
@@ -278,7 +276,7 @@ public:
         const RTTI::FMetaClass* metaClass = ref->RTTI_Class();
 
         FJson::FObject& jsonObject = value.SetType_AssumeNull(_doc, FJson::TypeObject{});
-        jsonObject.reserve(metaClass->NumProperties() + 1/* class */ + 1/* name */);
+        jsonObject.reserve(1/* class */ + 1/* name */ + 1/* props */);
 
         jsonObject.Add(Json_Class()).SetValue(
             _doc.MakeString(metaClass->Name().MakeView()));
@@ -289,13 +287,18 @@ public:
         if (ref->RTTI_IsTopObject())
             jsonObject.Add(Json_Flags()).SetValue(i64(EJsonRTTI_::TopObject));
 
+        FJson::FObject* jsonProperties = nullptr;
+
         for (const RTTI::FMetaProperty* prop : metaClass->AllProperties()) {
             RTTI::FAtom atom = prop->Get(*ref);
 
             if (atom.IsDefaultValue())
                 continue;
 
-            _values.push_back(&jsonObject.Add(
+            if (nullptr == jsonProperties)
+                jsonProperties = &jsonObject.Add(Json_Properties()).SetType_AssumeNull(_doc, FJson::TypeObject{});
+
+            _values.push_back(&jsonProperties->Add(
                 _doc.MakeString(prop->Name().MakeView()) ));
 
             atom.Accept(this);
@@ -416,7 +419,7 @@ private:
             const auto it = _visiteds.find(obj.get());
             if (_visiteds.end() == it) {
                 // import
-                const RTTI::FPathName path{ *obj };
+                const RTTI::FPathName path{ RTTI::FPathName::FromObject(*obj) };
                 jsonTxt = _doc.MakeString(ToString(path));
             }
             else {
@@ -478,28 +481,33 @@ public:
 
         Insert_AssertUnique(_visiteds, objName->ToString(), rttiObj);
 
-        for (const auto& it : jsonObj) {
-            if (Json_IsRTTIToken(it.first)) // skip special tokens (already parsed before)
-                continue;
-
-            const RTTI::FMetaProperty* const prop = klass->PropertyIFP(it.first.MakeView());
-            if (nullptr == prop) {
-                LOG(Serialize, Error, L"unknown meta property <{0}::{1}>", klassName->ToString(), prop->Name());
+        const FJson::FValue* const objProperties = jsonObj.GetIFP(Json_Properties());
+        if (objProperties) {
+            const FJson::FObject* const jsonProperties = objProperties->AsObject();
+            if (nullptr == jsonProperties) {
+                LOG(Serialize, Error, L"invalid meta object properties");
                 return false;
             }
 
-            Assert_NoAssume(_values.empty());
+            for (const auto& it : *jsonProperties) {
+                const RTTI::FMetaProperty* const prop = klass->PropertyIFP(it.first.MakeView());
+                if (nullptr == prop) {
+                    LOG(Serialize, Error, L"unknown meta property <{0}::{1}>", klassName->ToString(), prop->Name());
+                    return false;
+                }
 
-            _values.push_back(&it.second);
+                Assert_NoAssume(_values.empty());
+                _values.push_back(&it.second);
 
-            const bool r = prop->Get(*rttiObj).Accept(this);
+                const bool r = prop->Get(*rttiObj).Accept(this);
 
-            Assert_NoAssume(1 == _values.size());
-            Assert_NoAssume(&it.second == _values.front());
-            _values.pop_back();
+                Assert_NoAssume(1 == _values.size());
+                Assert_NoAssume(&it.second == _values.front());
+                _values.pop_back();
 
-            if (not r)
-                return false;
+                if (not r)
+                    return false;
+            }
         }
 
         return true;
