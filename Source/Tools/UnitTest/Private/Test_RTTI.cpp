@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include "MetaDatabase.h"
 #include "MetaTransaction.h"
 #include "RTTI/Any.h"
 #include "RTTI/Atom.h"
@@ -552,62 +553,250 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
+FWD_REFPTR(RTTIConsole_);
+class FRTTIConsole_ : public RTTI::FMetaObject {
+public:
+    RTTI_CLASS_HEADER(FRTTIConsole_, RTTI::FMetaObject);
+
+    FRTTIConsole_() {}
+
+    u32 PID;
+    FString Hostname;
+
+    auto classes() const {
+        VECTOR(Script, RTTI::FName) results;
+        const RTTI::FMetaDatabaseReadable db;
+        const auto names = db->Classes().Keys();
+        results.insert(results.end(), names.begin(), names.end());
+        return results;
+    }
+
+    auto enums() const {
+        VECTOR(Script, RTTI::FName) results;
+        const RTTI::FMetaDatabaseReadable db;
+        const auto names = db->Enums().Keys();
+        results.insert(results.end(), names.begin(), names.end());
+        std::sort(results.begin(), results.end());
+        return results;
+    }
+
+    auto objects() const {
+        VECTOR(Script, RTTI::FPathName) results;
+        const RTTI::FMetaDatabaseReadable db;
+        const auto names = db->Objects().Keys();
+        results.insert(results.end(), names.begin(), names.end());
+        std::sort(results.begin(), results.end());
+        return results;
+    }
+
+    auto properties(const RTTI::PMetaObject& obj) const {
+        VECTOR(Script, RTTI::FName) results;
+        if (obj) {
+            const RTTI::FMetaClass* const klass = obj->RTTI_Class();
+            for (const RTTI::FMetaProperty* p : klass->AllProperties())
+                results.push_back(p->Name());
+            std::sort(results.begin(), results.end());
+        }
+        return results;
+    }
+
+    RTTI::PMetaObject object(const RTTI::FPathName& path) const {
+        const RTTI::FMetaDatabaseReadable db;
+        return db->ObjectIFP(path);
+    }
+
+    RTTI::FPathName share(const RTTI::PMetaObject& obj) const {
+        if (not obj || not obj->RTTI_IsExported() || not obj->RTTI_Outer())
+            return RTTI::FPathName{};
+
+        const RTTI::FMetaDatabaseReadWritable db;
+        db->RegisterObject(obj.get());
+
+        return RTTI::FPathName::FromObject(*obj);
+    }
+
+    void inspect(const RTTI::FAny& any) const {
+        FStringBuilder oss;
+        RTTI::PrettyPrint(oss, any.InnerAtom(), true);
+        oss << Endl;
+        SyntaxicHighlight(oss.Written());
+    }
+
+    int mul(int x, int m) const {
+        return x * m;
+    }
+
+    static void SyntaxicHighlight(const FStringView& str) {
+        constexpr auto defaultStyle = FPlatformConsole::WHITE_ON_BLACK;
+        constexpr auto stringStyle = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_YELLOW;
+        constexpr auto literalStyle = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_RED | FPlatformConsole::FG_BLUE | FPlatformConsole::FG_INTENSITY;
+
+        auto style = defaultStyle;
+
+        bool allnum = true;
+        size_t o = 0;
+        size_t s = 0;
+        forrange(i, 0, str.size()) {
+            const char ch = str[i];
+
+            if (s) {
+                if (ch != '"')
+                    continue;
+                FPlatformConsole::Write(str.SubRange(s - 1, 2 + i - s), style);
+                s = 0;
+                o = i + 1;
+                allnum = true;
+                continue;
+            }
+            else if (IsAlnum(ch) || ch == '_') {
+                allnum &= IsDigit(ch);
+                continue;
+            }
+            else if (ch == '"') {
+                allnum = false;
+                s = i + 1;
+                style = stringStyle;
+                continue;
+            }
+
+            if (o != i) {
+                FPlatformConsole::Write(str.SubRange(o, i - o), allnum ? literalStyle : style);
+                style = defaultStyle;
+                allnum = true;
+            }
+
+            o = i + 1;
+
+            switch (ch) {
+            case '$':
+            case '=':
+            case ':':
+                style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_GREEN | FPlatformConsole::FG_INTENSITY; break;
+            case '+':
+            case '-':
+            case '*':
+            case '/':
+            case '<':
+            case '>':
+                style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_RED | FPlatformConsole::FG_INTENSITY; break;
+            case '(':
+            case ')':
+            case '{':
+            case '}':
+            case '[':
+            case ']':
+                style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_CYAN | FPlatformConsole::FG_INTENSITY; break;
+            default:
+                style = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_WHITE | FPlatformConsole::FG_INTENSITY; break;
+            }
+
+            FPlatformConsole::Write(str.SubRange(i, 1), style);
+
+            style = defaultStyle;
+        }
+        Assert_NoAssume(0 == s);
+
+        if (o != str.size())
+            FPlatformConsole::Write(str.SubRange(o, str.size() - o), style);
+    }
+
+};
+RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTIConsole_, Concrete)
+RTTI_PROPERTY_PUBLIC_FIELD(PID)
+RTTI_PROPERTY_PUBLIC_FIELD(Hostname)
+RTTI_FUNCTION(classes)
+RTTI_FUNCTION(objects)
+RTTI_FUNCTION(enums)
+RTTI_FUNCTION(properties, obj)
+RTTI_FUNCTION(object, path)
+RTTI_FUNCTION(share, obj)
+RTTI_FUNCTION(inspect, any)
+RTTI_FUNCTION(mul, x, m)
+RTTI_CLASS_END()
+//----------------------------------------------------------------------------
 static NO_INLINE void Test_InteractiveConsole_() {
 #if !USE_PPE_PROFILING
     FLUSH_LOG();
 
-    char buffer[1024];
-    Parser::FParseContext globalContext(Meta::ForceInit);
-
     FPlatformConsole::Open();
 
-    do
+    auto diagnosticCarret = [](const Lexer::FSpan& site, FPlatformConsole::EAttribute attrs) NOEXCEPT{
+        FPlatformConsole::Write(" ");
+        forrange(i, 0, site.Column)
+            FPlatformConsole::Write(" ");
+        FPlatformConsole::Write(L"\u2558", attrs);
+        forrange(i, 0, Max(site.Length, 1ul))
+            FPlatformConsole::Write(L"\u2550", attrs);
+        FPlatformConsole::Write(L"\u255B", attrs);
+        FPlatformConsole::Write("\n");
+    };
+
+    RTTI_NAMESPACE(RTTI_UnitTest).Start();
     {
-        FPlatformConsole::Write("$>", FPlatformConsole::BLACK_ON_WHITE);
-        FPlatformConsole::Write("  ", FPlatformConsole::WHITE_ON_BLACK);
+        PRTTIConsole_ env{ NEW_RTTI(FRTTIConsole_) };
+        env->PID = u32(FPlatformProcess::CurrentPID());
+        env->Hostname = FPlatformProcess::ProcessName(FPlatformProcess::CurrentPID());
 
-        const size_t length = FPlatformConsole::Read(buffer);
+        char buffer[1024];
+        Parser::FParseContext globalContext(Meta::ForceInit);
+        globalContext.AddGlobal(nullptr, RTTI::FName("_"), RTTI::MakeAtom(&env));
 
-        FStringView line{ buffer, length };
-        line = Strip(Chomp(line));
+        do
+        {
+            FPlatformConsole::Write(L" \u25C0", FPlatformConsole::FG_CYAN | FPlatformConsole::FG_INTENSITY);
+            FPlatformConsole::Write(" ", FPlatformConsole::WHITE_ON_BLACK);
 
-        if (line.empty()) {
-            continue;
-        }
-        else if (0 == CompareI(MakeStringView("exit"), line)) {
-            break;
-        }
+            const size_t length = FPlatformConsole::Read(buffer);
 
-        const wchar_t filename[] = L"@in_memory";
+            FStringView line{ buffer, length };
+            line = Strip(Chomp(line));
 
-        try {
-            FMemoryViewReader reader(line.Cast<const u8>());
-            Lexer::FLexer lexer(&reader, filename, true);
+            if (line.empty())
+                continue;
+            else if (0 == CompareI(MakeStringView("exit"), line))
+                break;
 
-            Parser::FParseList input;
-            input.Parse(&lexer);
+            const wchar_t filename[] = L"@in_memory";
 
-            Parser::PCParseExpression expr = Serialize::FGrammarStartup::ParseExpression(input);
-            AssertRelease(expr);
+            try {
+                FMemoryViewReader reader(line.Cast<const u8>());
+                Lexer::FLexer lexer(reader, filename, true);
 
-            const RTTI::FAtom value = expr->Eval(&globalContext);
-            Assert(value);
+                Parser::FParseList input;
+                input.Parse(&lexer);
 
-            FPlatformConsole::Write(StringFormat(" => {0}\n", value), FPlatformConsole::FG_GREEN | FPlatformConsole::FG_INTENSITY);
-        }
-        catch (const Parser::FParserException& e) {
-            if (e.Item())
-                FPlatformConsole::Write(StringFormat(" !! Parser error : <{0}> {1}, {2}.\n", e.Item()->ToString(), MakeCStringView(e.What()), e.Site()), FPlatformConsole::FG_RED);
-            else
-                FPlatformConsole::Write(StringFormat(" !! Parser error : {0}, {1}.\n", MakeCStringView(e.What()), e.Site()), FPlatformConsole::FG_RED | FPlatformConsole::FG_INTENSITY);
-        }
-        catch (const Lexer::FLexerException& e) {
-            FPlatformConsole::Write(StringFormat(" ?? Lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site()), FPlatformConsole::FG_YELLOW);
-        }
+                Parser::PCParseExpression expr = Serialize::FGrammarStartup::ParseExpression(input);
+                AssertRelease(expr);
 
-    } while (true);
+                const RTTI::FAtom value = expr->Eval(&globalContext);
+
+                FPlatformConsole::Write(L" \u25B6 ", FPlatformConsole::FG_GREEN | FPlatformConsole::FG_INTENSITY);
+
+                if (value)
+                    FPlatformConsole::Write(StringFormat("{0}\n", value), FPlatformConsole::FG_GREEN);
+                else
+                    FPlatformConsole::Write("void\n", FPlatformConsole::FG_GREEN);
+            }
+            catch (const Parser::FParserException& e) {
+                diagnosticCarret(e.Site(), FPlatformConsole::FG_RED | FPlatformConsole::FG_INTENSITY);
+                FPlatformConsole::Write(L" \u203C ", FPlatformConsole::FG_RED | FPlatformConsole::FG_INTENSITY);
+                if (e.Item())
+                    FPlatformConsole::Write(StringFormat("parsing error : <{0}> {1}, {2}.\n", e.Item()->ToString(), MakeCStringView(e.What()), e.Site()), FPlatformConsole::FG_RED);
+                else
+                    FPlatformConsole::Write(StringFormat("parsing error : {0}, {1}.\n", MakeCStringView(e.What()), e.Site()), FPlatformConsole::FG_RED | FPlatformConsole::FG_INTENSITY);
+            }
+            catch (const Lexer::FLexerException& e) {
+                diagnosticCarret(e.Match().Site(), FPlatformConsole::FG_YELLOW | FPlatformConsole::FG_INTENSITY);
+                FPlatformConsole::Write(L" \u00BF ", FPlatformConsole::FG_YELLOW | FPlatformConsole::FG_INTENSITY);
+                FPlatformConsole::Write(StringFormat("lexing error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site()), FPlatformConsole::FG_YELLOW);
+            }
+
+        } while (true);
+    }
+    RTTI_NAMESPACE(RTTI_UnitTest).Shutdown();
 
     FPlatformConsole::Close();
+
 #endif //!!USE_PPE_PROFILING
 }
 //----------------------------------------------------------------------------
@@ -712,7 +901,7 @@ static RTTI::FAtom EvalExpr_(Parser::FParseContext* context, const FStringView& 
     try
     {
         FMemoryViewReader reader(input.RawView());
-        Lexer::FLexer lexer(&reader, L"@memory", true);
+        Lexer::FLexer lexer(reader, L"@memory", true);
 
         Parser::FParseList parser;
         parser.Parse(&lexer);
