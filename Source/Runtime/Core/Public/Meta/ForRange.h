@@ -74,13 +74,13 @@ constexpr auto static_for(F f) {
 // arity of a for-each-style macro.
 #define _PP_FE_0(_call, ...)
 #define _PP_FE_1(_call, x) _call(x)
-#define _PP_FE_2(_call, x, ...) _call(x) , EXPAND( _PP_FE_1(_call, __VA_ARGS__) )
-#define _PP_FE_3(_call, x, ...) _call(x) , EXPAND( _PP_FE_2(_call, __VA_ARGS__) )
-#define _PP_FE_4(_call, x, ...) _call(x) , EXPAND( _PP_FE_3(_call, __VA_ARGS__) )
-#define _PP_FE_5(_call, x, ...) _call(x) , EXPAND( _PP_FE_4(_call, __VA_ARGS__) )
-#define _PP_FE_6(_call, x, ...) _call(x) , EXPAND( _PP_FE_5(_call, __VA_ARGS__) )
-#define _PP_FE_7(_call, x, ...) _call(x) , EXPAND( _PP_FE_6(_call, __VA_ARGS__) )
-#define _PP_FE_8(_call, x, ...) _call(x) , EXPAND( _PP_FE_7(_call, __VA_ARGS__) )
+#define _PP_FE_2(_call, x, ...) _call(x) EXPAND( _PP_FE_1(_call, __VA_ARGS__) )
+#define _PP_FE_3(_call, x, ...) _call(x) EXPAND( _PP_FE_2(_call, __VA_ARGS__) )
+#define _PP_FE_4(_call, x, ...) _call(x) EXPAND( _PP_FE_3(_call, __VA_ARGS__) )
+#define _PP_FE_5(_call, x, ...) _call(x) EXPAND( _PP_FE_4(_call, __VA_ARGS__) )
+#define _PP_FE_6(_call, x, ...) _call(x) EXPAND( _PP_FE_5(_call, __VA_ARGS__) )
+#define _PP_FE_7(_call, x, ...) _call(x) EXPAND( _PP_FE_6(_call, __VA_ARGS__) )
+#define _PP_FE_8(_call, x, ...) _call(x) EXPAND( _PP_FE_7(_call, __VA_ARGS__) )
 //----------------------------------------------------------------------------
 /**
  * Provide a for-each construct for variadic macros. Supports up
