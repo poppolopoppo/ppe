@@ -5,8 +5,11 @@
 #include "Container/HashMap.h"
 #include "IO/Filename.h"
 
+#include "RTTI/Namespace.h"
+
 namespace PPE {
 namespace ContentPipeline {
+RTTI_NAMESPACE_DECL(PPE_BUILDGRAPH_API, BuildGraph);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

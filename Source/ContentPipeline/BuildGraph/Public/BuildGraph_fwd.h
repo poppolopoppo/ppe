@@ -15,7 +15,9 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class EBuildResult;
 class PPE_BUILDGRAPH_API FBuildContext;
+class PPE_BUILDGRAPH_API IBuildExecutor;
 FWD_REFPTR(BuildGraph);
 FWD_REFPTR(BuildNode);
 //----------------------------------------------------------------------------

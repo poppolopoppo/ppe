@@ -6,7 +6,7 @@
 #include "Meta/StronglyTyped.h"
 #include "MetaObject.h"
 #include "Memory/RefPtr.h"
-#include "Time/Timestamp.h"
+
 
 #include "RTTI/Macros.h"
 #include "RTTI/Namespace.h"
@@ -14,9 +14,10 @@
 
 namespace PPE {
 namespace ContentPipeline {
-RTTI_NAMESPACE_DECL(PPE_BUILDGRAPH_API, BuildGraph);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+
 //----------------------------------------------------------------------------
 enum class EBuildState : u32 {
     Unbuilt             = 0,
@@ -27,15 +28,6 @@ enum class EBuildState : u32 {
     UpToDate            ,
     Failed              ,
 };
-//----------------------------------------------------------------------------
-struct FBuildDependency {
-    PBuildNode Node;
-    bool IsWeak;
-};
-//----------------------------------------------------------------------------
-using FBuildDependencies = VECTORINSITU(BuildGraph, FBuildDependency, 3);
-using FBuildFingerprint = u128;
-PPE_STRONGLYTYPED_NUMERIC_DEF(u32, FBuildPass);
 //----------------------------------------------------------------------------
 class PPE_BUILDGRAPH_API FBuildNode : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(FBuildNode, RTTI::FMetaObject);
@@ -61,11 +53,6 @@ protected:
     void AddStaticDeps(FBuildNode& node, bool unique);
     void AddDynamicDeps(FBuildNode& node, bool unique);
     void AddRuntimeDeps(FBuildNode& node, bool unique);
-
-    virtual bool BuildStaticDeps(FBuildContext& ctx);
-    virtual bool BuildDynamicDeps(FBuildContext& ctx);
-    virtual bool BuildRuntimeDeps(FBuildContext& ctx);
-    virtual bool BuildArtefact(FBuildContext& ctx);
 
 private:
     RTTI::FName _name;

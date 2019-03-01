@@ -4,7 +4,7 @@
 
 #include "BuildGraph.h"
 
-#include "RTTI_Macros-impl.h"
+#include "RTTI/Macros-impl.h"
 
 namespace PPE {
 namespace ContentPipeline {
@@ -28,7 +28,7 @@ FBuildNode::~FBuildNode() {
 
 }
 //----------------------------------------------------------------------------
-RTTI_CLASS_BEGIN(BuildGraph, FBuildNode, RTTI::EClassFlags::Abstract)
+RTTI_CLASS_BEGIN(BuildGraph, FBuildNode, Abstract)
 RTTI_PROPERTY_PRIVATE_READONLY(_name)
 RTTI_PROPERTY_PRIVATE_READONLY(_state)
 RTTI_PROPERTY_PRIVATE_READONLY(_lastBuilt)

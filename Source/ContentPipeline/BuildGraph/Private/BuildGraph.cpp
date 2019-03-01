@@ -2,8 +2,11 @@
 
 #include "BuildGraph.h"
 
+#include "RTTI/Namespace-impl.h"
+
 namespace PPE {
 namespace ContentPipeline {
+RTTI_NAMESPACE_DEF(PPE_BUILDGRAPH_API, BuildGraph, BuildGraph);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
