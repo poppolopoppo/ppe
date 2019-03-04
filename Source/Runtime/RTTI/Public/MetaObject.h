@@ -3,7 +3,6 @@
 #include "RTTI_fwd.h"
 
 #include "MetaClass.h"
-#include "MetaClassHelpers.h"
 #include "RTTI/Typedefs.h"
 
 #include "IO/TextWriter_fwd.h"
@@ -103,21 +102,28 @@ public:
 #endif
 
 public: // Meta class
-    class PPE_RTTI_API RTTI_FMetaClass : public TInScopeMetaClass<FMetaObject> {
-        friend class TInScopeMetaClass<FMetaObject>;
-        typedef TInScopeMetaClass<FMetaObject> metaclass_type;
+    class PPE_RTTI_API RTTI_FMetaClass : public FMetaClass {
     public:
         typedef FMetaObject object_type;
         typedef void parent_type;
-        using metaclass_type::Get;
+
+        virtual const FMetaClass* Parent() const override final;
+        virtual bool CreateInstance(PMetaObject& dst, bool resetToDefaultValue = true) const override final;
+        virtual PTypeTraits MakeTraits() const override final;
+
+        static const FMetaClass* Get();
         static FMetaNamespace& Namespace();
+
     private:
-        RTTI_FMetaClass(FClassId id, const FMetaNamespace* metaNamespace);
+        static const FMetaClassHandle GMetaClassHandle;
+        static FMetaClass* CreateMetaClass_(FClassId id, const FMetaNamespace* namespace_);
+
+        RTTI_FMetaClass(FClassId id, const FMetaNamespace* namespace_);
     };
 
     virtual const RTTI::FMetaClass* RTTI_Class() const {
         return RTTI_FMetaClass::Get();
-    };
+    }
 
 private:
     FName _name;

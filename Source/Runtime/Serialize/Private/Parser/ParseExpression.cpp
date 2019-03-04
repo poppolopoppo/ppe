@@ -6,7 +6,9 @@
 #include "Parser/ParseStatement.h"
 
 #include "RTTI/Any.h"
+#include "RTTI/AtomHeap.h"
 #include "MetaClass.h"
+#include "MetaEnum.h"
 #include "MetaDatabase.h"
 #include "MetaFunction.h"
 #include "MetaObject.h"
@@ -348,39 +350,38 @@ FString FDictionaryExpr::ToString() const {
 //----------------------------------------------------------------------------
 SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FCastExpr, )
 //----------------------------------------------------------------------------
-FCastExpr::FCastExpr(RTTI::ENativeType typeId, const FParseExpression* expr, const Lexer::FSpan& site)
+FCastExpr::FCastExpr(const RTTI::PTypeTraits& traits, const FParseExpression* expr, const Lexer::FSpan& site)
 :   FParseExpression(site)
-,   _typeId(typeId)
+,   _traits(traits)
 ,   _expr(expr) {
-    Assert(_expr);
+    Assert(traits);
+    Assert(expr);
 }
 //----------------------------------------------------------------------------
-FCastExpr::~FCastExpr() {}
+FCastExpr::~FCastExpr()
+{}
 //----------------------------------------------------------------------------
 RTTI::FAtom FCastExpr::Eval(FParseContext* context) const {
     Assert(context);
 
     RTTI::FAtom atom = _expr->Eval(context);
 
-    if (atom) {
-        const RTTI::PTypeTraits dst = RTTI::MakeTraits(_typeId);
+    if (atom && _traits != atom.Traits()) {
+        RTTI::FAtom casted = context->CreateAtom(_traits);
 
-        if (dst != atom.Traits()) {
-            RTTI::FAtom casted = context->CreateAtom(dst);
-            if (false == atom.PromoteMove(casted))
-                PPE_THROW_IT(FParserException("invalid cast", this));
+        if (false == atom.PromoteMove(casted))
+            PPE_THROW_IT(FParserException("invalid cast", this));
 
-            atom = casted;
-        }
+        return casted;
     }
-
-    return atom;
+    else {
+        return atom;
+    }
 }
 //----------------------------------------------------------------------------
 FString FCastExpr::ToString() const {
     FStringBuilder oss;
-    oss << RTTI::MakeTraits(_typeId)->TypeInfos().Name() << ": ";
-    oss << _expr->ToString();
+    oss << _traits->TypeInfos().Name() << ": " << _expr->ToString();
     return oss.ToString();
 }
 //----------------------------------------------------------------------------

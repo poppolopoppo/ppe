@@ -15,7 +15,7 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaClassHandle::FMetaClassHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy)
+FMetaClassHandle::FMetaClassHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT
     : _class(nullptr)
     , _create(create)
     , _destroy(destroy) {
@@ -25,13 +25,13 @@ FMetaClassHandle::FMetaClassHandle(FMetaNamespace& metaNamespace, create_func cr
     metaNamespace.RegisterClass(*this);
 }
 //----------------------------------------------------------------------------
-FMetaClassHandle::~FMetaClassHandle() {
+FMetaClassHandle::~FMetaClassHandle() NOEXCEPT {
     Assert(nullptr == _class);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaEnumHandle::FMetaEnumHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy)
+FMetaEnumHandle::FMetaEnumHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT
     : _enum(nullptr)
     , _create(create)
     , _destroy(destroy) {
@@ -41,7 +41,7 @@ FMetaEnumHandle::FMetaEnumHandle(FMetaNamespace& metaNamespace, create_func crea
     metaNamespace.RegisterEnum(*this);
 }
 //----------------------------------------------------------------------------
-FMetaEnumHandle::~FMetaEnumHandle() {
+FMetaEnumHandle::~FMetaEnumHandle() NOEXCEPT {
     Assert(nullptr == _enum);
 }
 //----------------------------------------------------------------------------

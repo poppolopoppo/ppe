@@ -75,10 +75,21 @@ public:
     const FMetaEnum* EnumIFP(const FStringView& name) const;
     const auto& Enums() const { return _enums; }
 
+    /* Traits */
+
+    const PTypeTraits& Traits(const FName& name) const;
+    PTypeTraits TraitsIFP(const FName& name) const;
+    PTypeTraits TraitsIFP(const FStringView& name) const;
+    const auto& Traits() const { return _traits; }
+
 private:
     friend Meta::TSingleton<FMetaDatabase>;
     friend class FMetaDatabaseReadable;
     friend class FMetaDatabaseReadWritable;
+
+    void InitializeNativeTypes_();
+    void RegisterTraits_(const FName& name, const PTypeTraits& traits);
+    void UnregisterTraits_(const FName& name, const PTypeTraits& traits);
 
     // must use FMetaDatabaseReadable or FMetaDatabaseReadWritable helpers (batch your work)
     //using Meta::TSingleton<FMetaDatabase>::Get;
@@ -93,6 +104,7 @@ private:
     HASHMAP(MetaDatabase, FPathName, SMetaObject) _objects;
     HASHMAP(MetaDatabase, FName, const FMetaClass*) _classes;
     HASHMAP(MetaDatabase, FName, const FMetaEnum*) _enums;
+    HASHMAP(MetaDatabase, FName, PTypeTraits) _traits;
 
     VECTORINSITU(MetaDatabase, const FMetaNamespace*, 8) _namespaces;
 

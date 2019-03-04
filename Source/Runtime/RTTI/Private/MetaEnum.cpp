@@ -43,6 +43,17 @@ const FMetaEnumValue* FMetaEnum::NameToValueIFP(const RTTI::FName& name) const {
     return (view.end() == it ? nullptr : std::addressof(*it));
 }
 //----------------------------------------------------------------------------
+const FMetaEnumValue* FMetaEnum::NameToValueIFP(const FStringView& name) const {
+    Assert_NoAssume(not name.empty());
+
+    const auto view = _values.MakeConstView();
+    const auto it = view.FindIf([name](const FMetaEnumValue& v) {
+        return (v.Name == name);
+    });
+
+    return (view.end() == it ? nullptr : std::addressof(*it));
+}
+//----------------------------------------------------------------------------
 const FMetaEnumValue& FMetaEnum::ValueToName(i64 value) const {
     const FMetaEnumValue* const pValue = ValueToNameIFP(value);
     Assert(pValue);
@@ -92,6 +103,45 @@ bool FMetaEnum::ExpandValues(const FAtom& src, FExpansion* expansion) const {
     }
 
     AssertNotImplemented();
+}
+//----------------------------------------------------------------------------
+bool FMetaEnum::IsValidName(const FName& name) const {
+    return (NameToValueIFP(name) != nullptr);
+}
+//----------------------------------------------------------------------------
+bool FMetaEnum::IsValidName(const FAtom& src) const {
+    Assert_NoAssume(src);
+
+    FName name;
+    return (src.PromoteCopy(MakeAtom(&name))
+        ? IsValidName(name)
+        : false );
+}
+//----------------------------------------------------------------------------
+bool FMetaEnum::IsValidValue(i64 value) const {
+    if (IsFlags()) {
+        for (const FMetaEnumValue& it : _values)
+            if ((it.Value & value) == it.Value)
+                value &= ~it.Value;
+
+        return (0 == value); // no unknown values
+    }
+    else {
+        for (const FMetaEnumValue& it : _values)
+            if (it.Value == it.Value)
+                return true;
+
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+bool FMetaEnum::IsValidValue(const FAtom& src) const {
+    Assert_NoAssume(src);
+
+    i64 value = 0;
+    return (src.PromoteCopy(MakeAtom(&value))
+        ? IsValidValue(value)
+        : false );
 }
 //----------------------------------------------------------------------------
 void FMetaEnum::SetValue(const FAtom& dst, const FMetaEnumValue& v) const {

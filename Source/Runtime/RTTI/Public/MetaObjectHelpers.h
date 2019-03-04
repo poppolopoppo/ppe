@@ -80,9 +80,10 @@ bool CreateMetaObject(PMetaObject& dst, bool resetToDefaultValue) {
     CheckMetaClassAllocation(MetaClass<T>());
 #endif
 
-    if (details::CreateMetaObject_<T>(dst,
-        Meta::has_constructor<T, FConstructorTag>{},
-        typename std::is_default_constructible<T>::type{})) {
+    if (details::CreateMetaObject_<T>(
+            dst,
+            Meta::has_constructor<T, FConstructorTag>{},
+            typename std::is_default_constructible<T>::type{})) {
         Assert(dst);
 
         if (resetToDefaultValue)

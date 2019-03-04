@@ -19,6 +19,10 @@ protected:
         STATIC_ASSERT(std::is_enum_v<T>);
     }
 
+    virtual PTypeTraits MakeTraits() const override final {
+        return RTTI::MakeTraits<T>();
+    }
+
 public:
     static const FMetaEnum* Get() {
         Assert(GMetaEnumHandle.Enum());

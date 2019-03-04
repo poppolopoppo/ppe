@@ -130,6 +130,16 @@ static bool PromoteValue_(const FString& str, const FAtom& dst) {
     case ENativeType::WString:      dst.FlatData<FWString>() = ToWString(str); return true;
 
     default:
+        if (dst.TypeFlags() ^ ETypeFlags::Enum) {
+            const FMetaEnum* metaEnum = dst.Traits()->ToScalar().EnumClass();
+            Assert(metaEnum);
+
+            if (const FMetaEnumValue* v = metaEnum->NameToValueIFP(str.MakeView())) {
+                metaEnum->SetValue(dst, *v);
+                return true;
+            }
+        }
+
         return false;
     }
 }

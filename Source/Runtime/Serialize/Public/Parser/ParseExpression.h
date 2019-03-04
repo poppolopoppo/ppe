@@ -253,7 +253,7 @@ private:
     elements_type _elements;
 };
 //----------------------------------------------------------------------------
-inline Parser::FTupleExpr *MakeTupleExpr(FTupleExpr::elements_type&& relements, const Lexer::FSpan& site) {
+inline Parser::FTupleExpr* MakeTupleExpr(FTupleExpr::elements_type&& relements, const Lexer::FSpan& site) {
     return new Parser::FTupleExpr(std::move(relements), site);
 }
 //----------------------------------------------------------------------------
@@ -281,11 +281,11 @@ private:
     items_type _items;
 };
 //----------------------------------------------------------------------------
-inline Parser::FArrayExpr *MakeArrayExpr(const Lexer::FSpan& site) {
+inline Parser::FArrayExpr* MakeArrayExpr(const Lexer::FSpan& site) {
     return new Parser::FArrayExpr(site);
 }
 //----------------------------------------------------------------------------
-inline Parser::FArrayExpr *MakeArrayExpr(FArrayExpr::items_type&& ritems, const Lexer::FSpan& site) {
+inline Parser::FArrayExpr* MakeArrayExpr(FArrayExpr::items_type&& ritems, const Lexer::FSpan& site) {
     return new Parser::FArrayExpr(std::move(ritems), site);
 }
 //----------------------------------------------------------------------------
@@ -313,11 +313,11 @@ private:
     dico_type _dico;
 };
 //----------------------------------------------------------------------------
-inline Parser::FDictionaryExpr *MakeDictionaryExpr(const Lexer::FSpan& site) {
+inline Parser::FDictionaryExpr* MakeDictionaryExpr(const Lexer::FSpan& site) {
     return new Parser::FDictionaryExpr(site);
 }
 //----------------------------------------------------------------------------
-inline Parser::FDictionaryExpr *MakeDictionaryExpr(FDictionaryExpr::dico_type&& ritems, const Lexer::FSpan& site) {
+inline Parser::FDictionaryExpr* MakeDictionaryExpr(FDictionaryExpr::dico_type&& ritems, const Lexer::FSpan& site) {
     return new Parser::FDictionaryExpr(std::move(ritems), site);
 }
 //----------------------------------------------------------------------------
@@ -325,7 +325,7 @@ inline Parser::FDictionaryExpr *MakeDictionaryExpr(FDictionaryExpr::dico_type&& 
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FCastExpr : public FParseExpression {
 public:
-    FCastExpr(RTTI::ENativeType typeId, const FParseExpression* expr, const Lexer::FSpan& site);
+    FCastExpr(const RTTI::PTypeTraits& traits, const FParseExpression* expr, const Lexer::FSpan& site);
     virtual ~FCastExpr();
 
     virtual RTTI::FAtom Eval(FParseContext *context) const override;
@@ -334,12 +334,12 @@ public:
     SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
-    RTTI::ENativeType _typeId;
+    RTTI::PTypeTraits _traits;
     PCParseExpression _expr;
 };
 //----------------------------------------------------------------------------
-inline FCastExpr *MakeCastExpr(RTTI::ENativeType typeId, const FParseExpression* expr, const Lexer::FSpan& site) {
-    return new FCastExpr(typeId, expr, site);
+inline FCastExpr* MakeCastExpr(const RTTI::PTypeTraits& traits, const FParseExpression* expr, const Lexer::FSpan& site) {
+    return new FCastExpr(traits, expr, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -7,6 +7,7 @@
 #include "MetaObject.h"
 #include "MetaNamespace.h"
 #include "MetaTransaction.h"
+#include "RTTI/NativeTypes.h"
 
 #include "Diagnostic/Logger.h"
 #include "IO/TextWriter.h"
@@ -19,6 +20,8 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 FMetaDatabase::FMetaDatabase() {
     LOG(RTTI, Info, L"create meta database");
+
+    InitializeNativeTypes_();
 }
 //----------------------------------------------------------------------------
 FMetaDatabase::~FMetaDatabase() {
@@ -198,6 +201,7 @@ void FMetaDatabase::RegisterNamespace(const FMetaNamespace* metaNamespace) {
         Assert(metaEnum->Namespace() == metaNamespace);
 
         Insert_AssertUnique(_enums, metaEnum->Name(), metaEnum);
+        RegisterTraits_(metaEnum->Name(), metaEnum->MakeTraits());
     }
 
     for (const FMetaClass* metaClass : metaNamespace->Classes()) {
@@ -206,6 +210,7 @@ void FMetaDatabase::RegisterNamespace(const FMetaNamespace* metaNamespace) {
         Assert(metaClass->Namespace() == metaNamespace);
 
         Insert_AssertUnique(_classes, metaClass->Name(), metaClass);
+        RegisterTraits_(metaClass->Name(), metaClass->MakeTraits());
     }
 }
 //----------------------------------------------------------------------------
@@ -223,6 +228,7 @@ void FMetaDatabase::UnregisterNamespace(const FMetaNamespace* metaNamespace) {
         Assert(metaClass->IsRegistered());
         Assert(metaClass->Namespace() == metaNamespace);
 
+        UnregisterTraits_(metaClass->Name(), metaClass->MakeTraits());
         Remove_AssertExistsAndSameValue(_classes, metaClass->Name(), metaClass);
     }
 
@@ -230,6 +236,7 @@ void FMetaDatabase::UnregisterNamespace(const FMetaNamespace* metaNamespace) {
         Assert(metaEnum);
         Assert(metaEnum->Namespace() == metaNamespace);
 
+        UnregisterTraits_(metaEnum->Name(), metaEnum->MakeTraits());
         Remove_AssertExistsAndSameValue(_enums, metaEnum->Name(), metaEnum);
     }
 
@@ -312,7 +319,6 @@ const FMetaEnum* FMetaDatabase::EnumIFP(const FName& name) const {
     Assert(not name.empty());
 
     const auto it = _enums.find(name);
-
     return (_enums.end() == it ? nullptr : it->second);
 }
 //----------------------------------------------------------------------------
@@ -321,8 +327,51 @@ const FMetaEnum* FMetaDatabase::EnumIFP(const FStringView& name) const {
 
     const hash_t h = FName::HashValue(name);
     const auto it = _enums.find_like(name, h);
-
     return (_enums.end() == it ? nullptr : it->second);
+}
+//----------------------------------------------------------------------------
+// Traits
+//----------------------------------------------------------------------------
+const PTypeTraits& FMetaDatabase::Traits(const FName& name) const {
+    Assert(not name.empty());
+
+    return (_traits.at(name));
+}
+//----------------------------------------------------------------------------
+PTypeTraits FMetaDatabase::TraitsIFP(const FName& name) const {
+    Assert(not name.empty());
+
+    const auto it = _traits.find(name);
+    return (_traits.end() == it ? PTypeTraits{} : it->second);
+}
+//----------------------------------------------------------------------------
+PTypeTraits FMetaDatabase::TraitsIFP(const FStringView& name) const {
+    Assert(not name.empty());
+
+    const hash_t h = FName::HashValue(name);
+    const auto it = _traits.find_like(name, h);
+    return (_traits.end() == it ? PTypeTraits{} : it->second);
+}
+//----------------------------------------------------------------------------
+void FMetaDatabase::InitializeNativeTypes_() {
+#define RegisterNativeType_(_NAME, _TYPE, _TYPEID) \
+    RegisterTraits_(RTTI::FName(STRINGIZE(_NAME)), MakeTraits(ENativeType::_NAME));
+    FOREACH_RTTI_NATIVETYPES(RegisterNativeType_)
+#undef RegisterNativeType_
+}
+//----------------------------------------------------------------------------
+void FMetaDatabase::RegisterTraits_(const FName& name, const PTypeTraits& traits) {
+    Assert_NoAssume(not name.empty());
+    Assert(traits);
+
+    Insert_AssertUnique(_traits, name, traits);
+}  
+//----------------------------------------------------------------------------
+void FMetaDatabase::UnregisterTraits_(const FName& name, const PTypeTraits& traits) {
+    Assert_NoAssume(not name.empty());
+    Assert(traits);
+
+    Remove_AssertExistsAndSameValue(_traits, name, traits);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

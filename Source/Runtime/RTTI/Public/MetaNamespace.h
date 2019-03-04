@@ -22,8 +22,8 @@ public:
     typedef FMetaClass* (*create_func)(FClassId , const FMetaNamespace* );
     typedef void (*destroy_func)(FMetaClass*);
 
-    FMetaClassHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy);
-    ~FMetaClassHandle();
+    FMetaClassHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT;
+    ~FMetaClassHandle() NOEXCEPT;
 
     const FMetaClass* Class() const { return _class; }
 
@@ -43,8 +43,8 @@ public:
     typedef FMetaEnum* (*create_func)(const FMetaNamespace*);
     typedef void(*destroy_func)(FMetaEnum*);
 
-    FMetaEnumHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy);
-    ~FMetaEnumHandle();
+    FMetaEnumHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT;
+    ~FMetaEnumHandle() NOEXCEPT;
 
     const FMetaEnum* Enum() const { return _enum; }
 

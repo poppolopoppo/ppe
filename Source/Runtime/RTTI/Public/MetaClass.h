@@ -6,6 +6,7 @@
 #include "MetaFunction.h"
 #include "MetaProperty.h"
 #include "RTTI/Typedefs.h"
+#include "RTTI/TypeTraits.h"
 
 #include "Container/HashMap.h"
 #include "Container/Vector.h"
@@ -110,8 +111,8 @@ public:
     // Virtual helpers
 
     virtual const FMetaClass* Parent() const = 0;
-
     virtual bool CreateInstance(PMetaObject& dst, bool resetToDefaultValue = true) const = 0;
+    virtual PTypeTraits MakeTraits() const = 0;
 
     // Called by meta namespace
 

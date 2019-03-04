@@ -179,13 +179,42 @@ void FMetaObject::RTTI_VerifyPredicates() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FMetaObject::RTTI_FMetaClass::RTTI_FMetaClass(FClassId id, const FMetaNamespace* namespace_)
+:   FMetaClass(id, FName("FMetaObject"), EClassFlags::Abstract, namespace_)
+{}
+//----------------------------------------------------------------------------
+const FMetaClass* FMetaObject::RTTI_FMetaClass::Parent() const {
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+bool FMetaObject::RTTI_FMetaClass::CreateInstance(PMetaObject& dst, bool resetToDefaultValue/* = true */) const {
+    return RTTI::CreateMetaObject<FMetaObject>(dst, resetToDefaultValue);
+}
+//----------------------------------------------------------------------------
+PTypeTraits FMetaObject::RTTI_FMetaClass::MakeTraits() const {
+    return RTTI::MakeTraits<PMetaObject>();
+}
+//----------------------------------------------------------------------------
+const FMetaClass* FMetaObject::RTTI_FMetaClass::Get() {
+    Assert(GMetaClassHandle.Class());
+    return GMetaClassHandle.Class();
+}
+//----------------------------------------------------------------------------
 FMetaNamespace& FMetaObject::RTTI_FMetaClass::Namespace() {
     return RTTI_NAMESPACE(RTTI);
 }
 //----------------------------------------------------------------------------
-FMetaObject::RTTI_FMetaClass::RTTI_FMetaClass(FClassId id, const FMetaNamespace* metaNamespace)
-    : metaclass_type(id, FName("FMetaObject"), EClassFlags::Abstract, metaNamespace)
-{}
+FMetaClass* FMetaObject::RTTI_FMetaClass::CreateMetaClass_(FClassId id, const FMetaNamespace* namespace_) {
+    return TRACKING_NEW(MetaClass, FMetaObject::RTTI_FMetaClass) { id, namespace_ };
+}
+//----------------------------------------------------------------------------
+const FMetaClassHandle FMetaObject::RTTI_FMetaClass::GMetaClassHandle(
+    FMetaObject::RTTI_FMetaClass::Namespace(),
+    &FMetaObject::RTTI_FMetaClass::CreateMetaClass_,
+    [](FMetaClass* metaClass) {
+        TRACKING_DELETE(MetaClass, metaClass);
+    }
+);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -29,7 +29,7 @@ struct FMetaEnumValue {
 class PPE_RTTI_API FMetaEnum : Meta::FNonCopyableNorMovable {
 public:
     FMetaEnum(const FName& name, EEnumFlags flags, size_t sizeInBytes, const FMetaNamespace* metaNamespace);
-    ~FMetaEnum();
+    virtual ~FMetaEnum();
 
     const FName& Name() const { return _name; }
     EEnumFlags Flags() const { return _flags; }
@@ -44,6 +44,7 @@ public:
 
     const FMetaEnumValue& NameToValue(const RTTI::FName& name) const;
     const FMetaEnumValue* NameToValueIFP(const RTTI::FName& name) const;
+    const FMetaEnumValue* NameToValueIFP(const FStringView& name) const;
 
     const FMetaEnumValue& ValueToName(i64 value) const;
     const FMetaEnumValue* ValueToNameIFP(i64 value) const;
@@ -52,9 +53,19 @@ public:
     bool ExpandValues(i64 value, FExpansion* expansion) const;
     bool ExpandValues(const FAtom& src, FExpansion* expansion) const;
 
+    bool IsValidName(const FName& name) const;
+    bool IsValidName(const FAtom& src) const;
+
+    bool IsValidValue(i64 value) const;
+    bool IsValidValue(const FAtom& src) const;
+
     void SetValue(const FAtom& dst, const FMetaEnumValue& v) const;
 
     void RegisterValue(FMetaEnumValue&& value);
+
+    // virtual helpers
+
+    virtual PTypeTraits MakeTraits() const = 0;
 
 private:
     FName _name;

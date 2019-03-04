@@ -9,6 +9,7 @@
 #include "Parser/ParseStatement.h"
 
 #include "MetaObject.h"
+#include "RTTI/AtomHeap.h"
 #include "RTTI/Macros-impl.h"
 
 #include "IO/Format.h"
@@ -32,7 +33,7 @@ typedef bool                FParseBool;
 typedef i64                 FParseInteger;
 typedef u64                 FParseUnsigned;
 typedef double              FParseFloat;
-typedef PPE::FString       FParseString; // TODO - FWString, change FLexer to wchar_t
+typedef PPE::FString        FParseString; // TODO - FWString, change FLexer to wchar_t
 typedef RTTI::FAtom         FParseAtom;
 typedef RTTI::PMetaObject   FParseObject;
 //----------------------------------------------------------------------------
@@ -525,6 +526,27 @@ struct FTernaryOp {
     }
 };
 //----------------------------------------------------------------------------
+using PTypeTraitsWithSite = TPair<RTTI::PTypeTraits, Lexer::FSpan>;
+static Parser::TProduction<PTypeTraitsWithSite> ExpectTypenameRTTI() {
+    return Parser::TProduction<PTypeTraitsWithSite>{
+        [](Parser::FParseList& input) -> Parser::TParseResult<PTypeTraitsWithSite> {
+            const Lexer::FMatch *match = input.Read();
+
+            RTTI::PTypeTraits traits;
+
+            if (match) {
+                if (match->Symbol()->Type() == Lexer::FSymbol::Typename)
+                    traits = RTTI::MakeTraits(RTTI::ENativeType(match->Symbol()->Ord()));
+                else if (match->Symbol()->Type() == Lexer::FSymbol::Identifier)
+                    traits = RTTI::MakeTraitsFromTypename(match->Value().MakeView());
+            }
+
+            return (traits
+                ? Parser::TParseResult<PTypeTraitsWithSite>::Success(MakePair(traits, match->Site()), match->Site())
+                : Parser::TParseResult<PTypeTraitsWithSite>::Unexpected(Lexer::FSymbol::Typename, match, input) );
+        }};
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -675,13 +697,13 @@ FGrammarImpl::FGrammarImpl()
 
 ,   _reference(
         _literal.Ref()
+    .Or(_cast.Ref())
     .Or(_object.Ref())
     .Or(_variable.Ref())
     .Or(Parser::Expect(Lexer::FSymbol::LParenthese).And(_expr.Ref()).And(Parser::Expect(Lexer::FSymbol::RParenthese))
         .Select<Parser::PCParseExpression>([](const TTuple<match_p, Parser::PCParseExpression, match_p>& args) -> Parser::PCParseExpression {
             return std::get<1>(args);
-        }))
-    .Or(_cast.Ref()))
+        })))
 
 ,   _rvalue(
         _reference.Ref()
@@ -1187,22 +1209,20 @@ FGrammarImpl::FGrammarImpl()
     ))
 
 ,   _cast(
-            Parser::Expect(Lexer::FSymbol::Typename)
+            ExpectTypenameRTTI()
     .And(   Parser::Expect(Lexer::FSymbol::Colon))
     .And(   _expr.Ref() )
-        .Select<Parser::PCParseExpression>([](const TTuple<match_p, match_p, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
-            match_p typename_ = std::get<0>(args);
+        .Select<Parser::PCParseExpression>([](const TTuple<PTypeTraitsWithSite, match_p, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
+            const PTypeTraitsWithSite& traitsWSite = std::get<0>(args);
+            match_p const colon = std::get<1>(args);
             const Parser::PCParseExpression& value = std::get<2>(args);
 
-            Assert(typename_);
-            Assert(value);
-
             const Lexer::FSpan site = Lexer::FSpan::FromSpan(
-                typename_->Site(),
-                std::get<1>(args)->Site()
+                traitsWSite.second,
+                colon->Site()
             );
 
-            return Parser::MakeCastExpr(RTTI::ENativeType(typename_->Symbol()->Ord()), value.get(), typename_->Site());
+            return Parser::MakeCastExpr(traitsWSite.first, value.get(), site);
         })
     )
 

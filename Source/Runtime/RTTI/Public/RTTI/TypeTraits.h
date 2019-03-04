@@ -164,6 +164,10 @@ PPE_RTTI_API ETypeFlags MakeTupleTypeFlags(const TMemoryView<const PTypeTraits>&
 PPE_RTTI_API ETypeFlags MakeListTypeFlags(const PTypeTraits& value);
 PPE_RTTI_API ETypeFlags MakeDicoTypeFlags(const PTypeTraits& key, const PTypeTraits& value);
 //----------------------------------------------------------------------------
+// only supports enums and classes :
+PPE_RTTI_API PTypeTraits MakeTraitsFromTypename(const FName& typename_);
+PPE_RTTI_API PTypeTraits MakeTraitsFromTypename(const FStringView& typename_);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class IScalarTraits : public ITypeTraits {

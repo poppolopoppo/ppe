@@ -4,7 +4,7 @@
 
 #include "MetaClass.h"
 #include "MetaObjectHelpers.h"
-#include "RTTI/TypeTraits.h"
+#include "RTTI/NativeTypes.h"
 
 #include "Allocator/TrackingMalloc.h"
 
@@ -17,7 +17,9 @@ template <typename T>
 class TInScopeMetaClass : public FMetaClass {
 protected:
     TInScopeMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaNamespace* metaNamespace)
-    :   FMetaClass(id, name, FlagsForT_(flags), metaNamespace) {
+        : FMetaClass(id, name, std::is_abstract<T>::value
+            ? flags + EClassFlags::Abstract
+            : flags + EClassFlags::Concrete, metaNamespace) {
         STATIC_ASSERT(std::is_base_of_v<FMetaObject, T>);
     }
 
@@ -29,7 +31,11 @@ public:
 
     virtual bool CreateInstance(PMetaObject& dst, bool resetToDefaultValue = true) const override final {
         Assert(not dst);
-        return CreateMetaObject<T>(dst, resetToDefaultValue);
+        return RTTI::CreateMetaObject<T>(dst, resetToDefaultValue);
+    }
+
+    virtual PTypeTraits MakeTraits() const override final {
+        return RTTI::MakeTraits<TRefPtr<T>>();
     }
 
     static const FMetaClass* Get() {
@@ -39,12 +45,6 @@ public:
 
 private:
     static const FMetaClassHandle GMetaClassHandle;
-
-    static constexpr EClassFlags FlagsForT_(EClassFlags flags) {
-        return (std::is_abstract<T>::value
-            ? flags + EClassFlags::Abstract
-            : flags + EClassFlags::Concrete );
-    }
 
     static FMetaClass* CreateMetaClass_(FClassId id, const FMetaNamespace* metaNamespace) {
         return TRACKING_NEW(MetaClass, TMetaClass<T>) { id, metaNamespace };

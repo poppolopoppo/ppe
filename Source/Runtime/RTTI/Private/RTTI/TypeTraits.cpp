@@ -2,7 +2,13 @@
 
 #include "RTTI/TypeTraits.h"
 
+#include "MetaClass.h"
+#include "MetaDatabase.h"
+#include "MetaEnum.h"
+#include "MetaObject.h"
 #include "RTTI/AtomVisitor.h"
+#include "RTTI/NativeTypes.h"
+#include "RTTI/Typedefs.h"
 
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
@@ -100,6 +106,18 @@ bool IListTraits::Accept(IAtomVisitor* visitor, void* data) const {
 //----------------------------------------------------------------------------
 bool IDicoTraits::Accept(IAtomVisitor* visitor, void* data) const {
     return visitor->Visit(this, data);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_RTTI_API PTypeTraits MakeTraitsFromTypename(const FName& typename_) {
+    const FMetaDatabaseReadable db;
+    return db->TraitsIFP(typename_);
+}
+//----------------------------------------------------------------------------
+PPE_RTTI_API PTypeTraits MakeTraitsFromTypename(const FStringView& typename_) {
+    const FMetaDatabaseReadable db;
+    return db->TraitsIFP(typename_);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
