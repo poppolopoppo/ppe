@@ -6,7 +6,8 @@
 .ProjectPCHName = 'stdafx'
 .ProjectPCHConfig = .PCHEnabled
 .ProjectDefines = {}
-.ProjectDependencies = {}
+.ProjectPublicDependencies = {}
+.ProjectPrivateDependencies = {}
 .ProjectExcludedFiles = {}
 .ProjectForcedIncludes = {}
 .ProjectIncludes = {}

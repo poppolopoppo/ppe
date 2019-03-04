@@ -13,7 +13,7 @@
 #define RTTI_STRUCT_DECL(_Api, _Name) \
     _Api ::PPE::RTTI::PTypeTraits Traits(Meta::TType<_Name>)
 //----------------------------------------------------------------------------
-#define RTTI_CLASS_HEADER(_Name, _Parent) \
+#define RTTI_CLASS_HEADER(_Api, _Name, _Parent) \
 public: \
     typedef _Parent RTTI_parent_type; \
     \
@@ -21,7 +21,7 @@ public: \
         return RTTI_FMetaClass::Get(); \
     } \
     \
-    class RTTI_FMetaClass : public ::PPE::RTTI::TInScopeMetaClass<_Name> { \
+    class _Api RTTI_FMetaClass : public ::PPE::RTTI::TInScopeMetaClass<_Name> { \
         friend class ::PPE::RTTI::TInScopeMetaClass<_Name>; \
         typedef ::PPE::RTTI::TInScopeMetaClass<_Name> metaclass_type; \
         \

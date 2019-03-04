@@ -10,10 +10,13 @@ namespace Application {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Dummy wrapper for fwd declaration (FPlatformApplication is a using)
-class FApplicationBase : public FPlatformApplication {
+class PPE_APPLICATION_API FApplicationBase : public FPlatformApplication {
 public:
     explicit FApplicationBase(FWString&& name);
     virtual ~FApplicationBase();
+
+    virtual void Start() override;
+    virtual void Shutdown() override;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

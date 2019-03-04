@@ -104,6 +104,10 @@ struct TFunctionVTable {
     ,   Invoke(invoke)
     {}
 
+    CONSTEXPR bool IsDummy() const NOEXCEPT {
+        return (nullptr == Invoke);
+    }
+
     static CONSTEXPR equals_t phony_equals{
         [](const void*, const void*) CONSTEXPR NOEXCEPT {
             return false;
@@ -220,6 +224,7 @@ struct TFunctionTraits<_Ret(_Args...)> {
             return _FreeFunc(std::forward<_Args>(args)...);
         }
         static CONSTEXPR vtable_type vtable = vtable_type::template phony(&invoke);
+        STATIC_ASSERT(vtable.Invoke);
     };
 
     template <typename _Lambda>
@@ -230,6 +235,7 @@ struct TFunctionTraits<_Ret(_Args...)> {
                 return _Payload::Get(embed)(std::forward<_Args>(args)...);
             }
             static CONSTEXPR vtable_type vtable = vtable_type::template make<typename _Payload::type>(&invoke);
+            STATIC_ASSERT(vtable.Invoke);
         };
     };
 
@@ -248,6 +254,7 @@ struct TFunctionTraits<_Ret(_Args...)> {
                 return CallTupleEx(_ExtraFunc, _Payload::Get(embed), std::forward<_Args>(args)...);
             }
             static CONSTEXPR vtable_type vtable = vtable_type::template make<typename _Payload::type>(&invoke);
+            STATIC_ASSERT(vtable.Invoke);
         };
     };
 
@@ -265,6 +272,7 @@ struct TFunctionTraits<_Ret(_Args...)> {
                 return CallTupleEx(_MemFunc, _Payload::Get(embed), std::forward<_Args>(args)...);
             }
             static CONSTEXPR vtable_type vtable = vtable_type::template make<typename _Payload::type>(&invoke);
+            STATIC_ASSERT(vtable.Invoke);
         };
     };
 
@@ -286,6 +294,7 @@ struct TFunctionTraits<_Ret(_Args...)> {
                 return CallTupleEx(_MemFuncConst, _Payload::Get(embed), std::forward<_Args>(args)...);
             }
             static CONSTEXPR vtable_type vtable = vtable_type::template make<typename _Payload::type>(&invoke);
+            STATIC_ASSERT(vtable.Invoke);
         };
     };
 };
@@ -373,11 +382,11 @@ public:
     }
 
     CONSTEXPR bool Valid() const NOEXCEPT {
-        return (_vtable != &traits_type::dummy_vtable);
+        return (not _vtable->IsDummy());
     }
 
     CONSTEXPR operator const void* () const NOEXCEPT {
-        return (_vtable == &traits_type::dummy_vtable ? nullptr : this);
+        return (_vtable->IsDummy() ? nullptr : this);
     }
 
     CONSTEXPR _Ret operator()(_Args... args) const {

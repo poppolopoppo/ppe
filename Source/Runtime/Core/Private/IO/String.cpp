@@ -7,12 +7,10 @@
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
 
-#if not EXPORT_PPE_STRING
+#if EXPORT_PPE_STRING
 #   include "IO/String-inl.h"
-
-    template class PPE::TBasicString<char>;
-    template class PPE::TBasicString<wchar_t>;
-
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::TBasicString<char>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::TBasicString<wchar_t>;
 #endif
 
 namespace PPE {

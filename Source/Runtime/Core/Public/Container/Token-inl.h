@@ -34,7 +34,7 @@ auto TToken<_Tag, _Char, _Sensitive, _TokenTraits>::FindOrAdd_(const stringview_
 
     const hash_t hash = hasher_type{}(str);
 
-    FTokenFactory& factory = factory_type::Get();
+    FTokenFactory& factory = token_traits::Factory();
     const handle_type* head = nullptr;
     const handle_type* result;
     for (;;) {

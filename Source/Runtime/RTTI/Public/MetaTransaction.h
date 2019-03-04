@@ -31,7 +31,7 @@ enum class ETransactionFlags : u32 {
 };
 ENUM_FLAGS(ETransactionFlags);
 //----------------------------------------------------------------------------
-struct FMetaObjectRef : Meta::TPointerWFlags<FMetaObject> {
+struct PPE_RTTI_API FMetaObjectRef : Meta::TPointerWFlags<FMetaObject> {
     bool IsExport() const { return Flag0(); }
     bool IsImport() const { return Flag1(); }
     static FMetaObjectRef Make(FMetaObject* obj, bool intern);
@@ -86,7 +86,7 @@ public:
 
     void Linearize(FLinearizedTransaction* linearized) const;
 
-    struct FLoadingScope {
+    struct PPE_RTTI_API FLoadingScope {
         FMetaTransaction& Transaction;
         explicit FLoadingScope(FMetaTransaction& transaction);
         ~FLoadingScope();

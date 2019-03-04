@@ -35,7 +35,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FLexer {
+class PPE_SERIALIZE_API FLexer {
 public:
     FLexer(IBufferedStreamReader& input, const FWStringView& sourceFileName, bool allowTypenames);
     ~FLexer();
@@ -79,9 +79,9 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FLexerStartup {
-    static void Start();
-    static void Shutdown();
-    static void ClearAll_UnusedMemory();
+    PPE_SERIALIZE_API static void Start();
+    PPE_SERIALIZE_API static void Shutdown();
+    PPE_SERIALIZE_API static void ClearAll_UnusedMemory();
 
     FLexerStartup() { Start(); }
     ~FLexerStartup() { Shutdown(); }

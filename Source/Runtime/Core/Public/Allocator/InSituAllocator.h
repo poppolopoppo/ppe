@@ -117,19 +117,24 @@ public:
         >   other;
     };
 
-    TInSituAllocator(storage_type& insitu) NOEXCEPT : _insitu(insitu) {}
+    TInSituAllocator() EXPORT_DELETED_FUNCTION;
+    TInSituAllocator(storage_type& insitu) NOEXCEPT : _insituRef(&insitu) {}
 
-    TInSituAllocator(const TInSituAllocator&) = delete;
-    TInSituAllocator& operator=(const TInSituAllocator&) = delete;
+    TInSituAllocator(const TInSituAllocator&) EXPORT_DELETED_FUNCTION;
+    TInSituAllocator& operator=(const TInSituAllocator&) EXPORT_DELETED_FUNCTION;
 
-    TInSituAllocator(TInSituAllocator&& rvalue) : TInSituAllocator(rvalue._insitu) {}
-    TInSituAllocator& operator=(TInSituAllocator&&) = delete;
+    TInSituAllocator(TInSituAllocator&& rvalue)
+    :   _insituRef(rvalue._insituRef) {
+        rvalue._insituRef = nullptr;
+    }
+
+    TInSituAllocator& operator=(TInSituAllocator&&) EXPORT_DELETED_FUNCTION;
 
     size_t InSituCapacity() const { return Capacity; }
-    const storage_type& InSituData() const { return _insitu; }
+    const storage_type& InSituData() const { return (*_insituRef); }
 
     bool AliasesToInSitu(const void* p, size_t sz) const {
-        return FPlatformMemory::Memoverlap(p, sz, &_insitu, sizeof(storage_type));
+        return FPlatformMemory::Memoverlap(p, sz, _insituRef, sizeof(storage_type));
     }
 
     fallback_type& FallbackAllocator() { return static_cast<fallback_type&>(*this); }
@@ -143,23 +148,24 @@ public:
     void* relocate(void* p, size_type newSize, size_type oldSize);
 
     friend bool operator ==(const TInSituAllocator& lhs, const TInSituAllocator& rhs) NOEXCEPT {
-        return (&lhs._insitu == &rhs._insitu);
+        return (lhs._insituRef == rhs._insituRef);
     }
     friend bool operator !=(const TInSituAllocator& lhs, const TInSituAllocator& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
 private:
-    storage_type& _insitu;
+    storage_type* _insituRef = nullptr;
 };
 //----------------------------------------------------------------------------
 template <typename _Storage, typename _Allocator>
 auto TInSituAllocator<_Storage, _Allocator>::allocate(size_type n) -> pointer {
     Assert(n > 0);
     Assert(n < fallback_type::max_size());
+    Assert(_insituRef);
 
     pointer const p = (n <= Capacity
-        ? reinterpret_cast<pointer>(_insitu.Allocate())
+        ? reinterpret_cast<pointer>(_insituRef->Allocate())
         : fallback_type::allocate(n) );
 
     Assert(p); // fallback_type should have thrown a std::bad_alloc() exception
@@ -173,10 +179,11 @@ void TInSituAllocator<_Storage, _Allocator>::deallocate(pointer p, size_type n) 
     Assert(Meta::IsAligned(ALLOCATION_BOUNDARY, p));
     Assert(n > 0);
     Assert(n < fallback_type::max_size());
+    Assert(_insituRef);
 
-    if (_insitu.data() == p) {
+    if (_insituRef->data() == p) {
         Assert(n <= Capacity);
-        _insitu.Deallocate(p);
+        _insituRef->Deallocate(p);
     }
     else {
         Assert(n > Capacity);
@@ -188,6 +195,7 @@ template <typename _Storage, typename _Allocator>
 void* TInSituAllocator<_Storage, _Allocator>::relocate(void* p, size_type newSize, size_type oldSize) {
     STATIC_ASSERT(Meta::TIsPod<value_type>::value);
     Assert(nullptr == p || 0 < oldSize);
+    Assert(_insituRef);
 
     if (Likely(nullptr == p)) {
         Assert(newSize); // no realloc(nullptr, 0, 0)
@@ -197,10 +205,10 @@ void* TInSituAllocator<_Storage, _Allocator>::relocate(void* p, size_type newSiz
     }
 
     void* newp;
-    if (_insitu.data() == p) {
+    if (_insituRef->data() == p) {
         Assert(oldSize);
         Assert(oldSize <= Capacity);
-        Assert_NoAssume(_insitu.UsesInSitu());
+        Assert_NoAssume(_insituRef->UsesInSitu());
 
         if (0 == newSize)
             return nullptr; // nothing todo
@@ -210,7 +218,7 @@ void* TInSituAllocator<_Storage, _Allocator>::relocate(void* p, size_type newSiz
         newp = fallback_type::allocate(newSize);
         FPlatformMemory::MemcpyLarge(newp, p, Min(newSize, oldSize) * sizeof(value_type));
 
-        _insitu.Deallocate(p);
+        _insituRef->Deallocate(p);
     }
     else {
         Assert(p);

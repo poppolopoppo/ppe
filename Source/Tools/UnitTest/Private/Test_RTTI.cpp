@@ -85,7 +85,7 @@ RTTI_ENUM_END()
 FWD_REFPTR(RTTITestSimple_);
 class FRTTITestSimple_ : public RTTI::FMetaObject {
 public:
-    RTTI_CLASS_HEADER(FRTTITestSimple_, RTTI::FMetaObject);
+    RTTI_CLASS_HEADER(, FRTTITestSimple_, RTTI::FMetaObject);
 
     FRTTITestSimple_() {}
 
@@ -133,7 +133,7 @@ RTTI_ENUM_END()
 FWD_REFPTR(RTTITestParent_);
 class FRTTITestParent_ : public RTTI::FMetaObject {
 public:
-    RTTI_CLASS_HEADER(FRTTITestParent_, RTTI::FMetaObject);
+    RTTI_CLASS_HEADER(, FRTTITestParent_, RTTI::FMetaObject);
 
     FRTTITestParent_() {}
 
@@ -161,7 +161,7 @@ RTTI_CLASS_END()
 FWD_REFPTR(RTTITest_);
 class FRTTITest_ : public FRTTITestParent_ {
 public:
-    RTTI_CLASS_HEADER(FRTTITest_, FRTTITestParent_);
+    RTTI_CLASS_HEADER(, FRTTITest_, FRTTITestParent_);
 
     FRTTITest_()
     :   _dummy(0)
@@ -556,7 +556,7 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
 FWD_REFPTR(RTTIConsole_);
 class FRTTIConsole_ : public RTTI::FMetaObject {
 public:
-    RTTI_CLASS_HEADER(FRTTIConsole_, RTTI::FMetaObject);
+    RTTI_CLASS_HEADER(, FRTTIConsole_, RTTI::FMetaObject);
 
     FRTTIConsole_() {}
 

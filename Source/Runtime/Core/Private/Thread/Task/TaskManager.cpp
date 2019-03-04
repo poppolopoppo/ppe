@@ -98,7 +98,6 @@ public:
     bool Finished() const;
     void Start(size_t count);
     bool Queue(const FStalledFiber& waiting);
-    void Clear();
 
     friend void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef);
 
@@ -282,7 +281,7 @@ void FWorkerContext_::DestroyCounter(PTaskCounter& counter) {
 
     FTaskCounter* const pcounter = RemoveRef_AssertReachZero_KeepAlive(counter);
     Assert_NoAssume(pcounter->SafeRefCount() == 0);
-    pcounter->Clear();
+    Assert_NoAssume(pcounter->Finished());
 
     _counters.push_back_OverflowIFN(nullptr, pcounter);
 }
@@ -664,9 +663,9 @@ bool FTaskCounter::Valid() const {
 //----------------------------------------------------------------------------
 bool FTaskCounter::Finished() const {
     Assert_NoAssume(CheckCanary_());
-    Assert(0 <= _taskCount);
+    Assert(-1 <= _taskCount);
 
-    return (0 == _taskCount);
+    return (-1 == _taskCount);
 }
 //----------------------------------------------------------------------------
 void FTaskCounter::Start(size_t count) {
@@ -684,7 +683,7 @@ bool FTaskCounter::Queue(const FStalledFiber& waiting) {
     {
         const FAtomicSpinLock::FScope scopedLock(_barrier);
 
-        if (Likely(_taskCount)) {
+        if (_taskCount > 0) {
             // will be resumed by counter when exhausted in Decrement_ResumeWaitingTasksIfZero()
             Assert(_queueSize < QueueCapacity);
 
@@ -699,14 +698,6 @@ bool FTaskCounter::Queue(const FStalledFiber& waiting) {
     return false;
 }
 //----------------------------------------------------------------------------
-void FTaskCounter::Clear() {
-    Assert_NoAssume(CheckCanary_());
-    Assert(0 == _taskCount);
-    Assert(0 == _queueSize);
-
-    _taskCount = -1;
-}
-//----------------------------------------------------------------------------
 NO_INLINE void FTaskCounter::ResumeStalledFibers_() {
     Assert_NoAssume(CheckCanary_());
 
@@ -718,8 +709,7 @@ NO_INLINE void FTaskCounter::ResumeStalledFibers_() {
         // avoid reading from this again !
 
         const FAtomicSpinLock::FScope scopedLock(_barrier);
-
-        Assert(0 == _taskCount);
+        Assert_NoAssume(0 == _taskCount);
 
         resume = TMemoryView<FStalledFiber>(reinterpret_cast<FStalledFiber*>(buffer), _queueSize);
         const TMemoryView<FStalledFiber> queue(reinterpret_cast<FStalledFiber*>(_queue), _queueSize);
@@ -731,7 +721,10 @@ NO_INLINE void FTaskCounter::ResumeStalledFibers_() {
 #endif
 
         _queueSize = 0;
+        _taskCount = -1;
     }
+
+    Assert_NoAssume(Finished()); // from now on we work only on the stack :
 
     // sort all queued fibers by priority before resuming and outside of the lock
     std::stable_sort(resume.begin(), resume.end(),
@@ -753,8 +746,11 @@ void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef) {
 
     saferef.reset(); // need to reset just before decrementing, lifetime should be guaranteed by owner
 
-    if (Unlikely(0 == --pcounter->_taskCount))
+    const i32 n = (--pcounter->_taskCount);
+    if (Unlikely(n == 0))
         pcounter->ResumeStalledFibers_();
+    else
+        Assert_NoAssume(n > 0);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

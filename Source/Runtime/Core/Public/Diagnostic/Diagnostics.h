@@ -6,7 +6,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FDiagnosticsStartup {
+class PPE_CORE_API FDiagnosticsStartup {
 public:
     FDiagnosticsStartup(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv) { Start(applicationHandle, nShowCmd, filename, argc, argv); }
     ~FDiagnosticsStartup() { Shutdown(); }

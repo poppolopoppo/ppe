@@ -35,7 +35,8 @@
 
     .Config = 'FastDebug'
     .ConfigDefines + { "FASTDEBUG", "_DEBUG", "DEBUG" }
-    .ConfigLinkType = 'Lib' //'Dll' // %_NOCOMMIT% just wwwway too bothersome ...
+    .ConfigLinkType = 'Dll' // ATM this is the only configuration which uses dynamic linking,
+                            // convenient for faster link times and testing application layering.
 ]
 .AllSharedConfigs + .SharedFastDebugConfig
 

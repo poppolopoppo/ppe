@@ -5,11 +5,13 @@
 #include "IO/ConstNames.h"
 #include "IO/FileSystemToken.h"
 #include "IO/FileSystemTrie.h"
+#include "IO/String.h"
 
 #include "Allocator/PoolAllocatorTag-impl.h"
 
 namespace PPE {
 POOL_TAG_DEF(FileSystem);
+BASICTOKEN_CLASS_DEF(FFileSystemToken);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

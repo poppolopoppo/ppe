@@ -259,8 +259,8 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FFilename& filename) {
 //----------------------------------------------------------------------------
 // Used in natvis/debuggers for printing FFilename content
 DEBUG_FUNCTION(PPE_CORE_API, DebugPrintFilename, FWStringView, (const FFilename& filename), {
-    static wchar_t GDebugBuffer[FileSystem::MaxPathLength];
-    return filename.ToWCStr(GDebugBuffer);
+    wchar_t tmp[FileSystem::MaxPathLength];
+    return filename.ToWCStr(tmp);
 })
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

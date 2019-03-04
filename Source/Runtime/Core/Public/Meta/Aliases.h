@@ -203,6 +203,15 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   error "inconsistent configuration"
 #endif
 //----------------------------------------------------------------------------
+#ifdef DYNAMIC_LINK
+#   define EXPORT_DELETED_FUNCTION = default
+#else
+#   define EXPORT_DELETED_FUNCTION = delete
+#endif
+//----------------------------------------------------------------------------
+#define EXTERN_TEMPLATE_CLASS_DECL(_API) extern template class
+#define EXTERN_TEMPLATE_CLASS_DEF(_API) template class _API
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if defined(CPP_VISUALSTUDIO)

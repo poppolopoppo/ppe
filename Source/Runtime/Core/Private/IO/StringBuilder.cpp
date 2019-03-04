@@ -84,8 +84,8 @@ void TBasicStringBuilder<_Char>::ToString(string_type& output) {
     output.assign(std::move(*this));
 }
 //----------------------------------------------------------------------------
-/*PPE_CORE_API extern*/ template class TBasicStringBuilder<char>;
-/*PPE_CORE_API extern*/ template class TBasicStringBuilder<wchar_t>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicStringBuilder<char>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicStringBuilder<wchar_t>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

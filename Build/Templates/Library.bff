@@ -6,7 +6,8 @@
 ;   <ProjectName>           name of the project
 ;   <ProjectPath>           path containing the source files
 ;   [ProjectPCHName]        project specific defines (default value in Defaults.bff)
-;   [ProjectDependencies]   project specific dependencies (default value in Defaults.bff)
+;   [ProjectPublicDependencies]   project specific public dependencies like dll (default value in Defaults.bff)
+;   [ProjectPrivateDependencies]   project specific private dependencies like lib (default value in Defaults.bff)
 ;   [ProjectForcedIncludes] project specific force includes (default value in Defaults.bff)
 ;   [ProjectExcludedFiles]  project specific excluded files (default value in Defaults.bff)
 ;   [ProjectIncludes]       project specific includes (default value in Defaults.bff)

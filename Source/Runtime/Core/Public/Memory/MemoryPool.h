@@ -14,7 +14,7 @@ class FMemoryTracking;
 //----------------------------------------------------------------------------
 class FMemoryPoolChunk;
 //----------------------------------------------------------------------------
-class FMemoryPool {
+class PPE_CORE_API FMemoryPool {
 public:
     FMemoryPool(size_t blockSize, size_t minChunkSize, size_t maxChunkSize);
     virtual ~FMemoryPool();
@@ -78,7 +78,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class IMemoryPool {
+class PPE_CORE_API IMemoryPool {
 public:
     virtual ~IMemoryPool() {
         Assert(nullptr == _node.Next);
@@ -96,7 +96,7 @@ private:
     TIntrusiveListNode<IMemoryPool> _node;
 };
 //----------------------------------------------------------------------------
-class FMemoryPoolThreadLocal : public IMemoryPool, Meta::FThreadResource {
+class PPE_CORE_API FMemoryPoolThreadLocal : public IMemoryPool, Meta::FThreadResource {
 public:
     FMemoryPoolThreadLocal(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
         : _pool(blockSize, minChunkSize, maxChunkSize) {}
@@ -125,7 +125,7 @@ private:
     FMemoryPool _pool;
 };
 //----------------------------------------------------------------------------
-class FMemoryPoolThreadSafe : public IMemoryPool {
+class PPE_CORE_API FMemoryPoolThreadSafe : public IMemoryPool {
 public:
     FMemoryPoolThreadSafe(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
         : _pool(blockSize, minChunkSize, maxChunkSize) {}
@@ -157,7 +157,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMemoryPoolList {
+class PPE_CORE_API FMemoryPoolList {
 public:
     FMemoryPoolList();
     ~FMemoryPoolList();

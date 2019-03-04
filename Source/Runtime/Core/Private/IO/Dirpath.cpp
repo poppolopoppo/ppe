@@ -457,8 +457,8 @@ FWTextWriter& operator <<(FWTextWriter& oss, const PPE::FDirpath& dirpath) {
 //----------------------------------------------------------------------------
 // Used in natvis/debuggers for printing FDirpath content
 DEBUG_FUNCTION(PPE_CORE_API, DebugPrintDirpath, FWStringView, (const FDirpath& dirpath), {
-    static wchar_t GDebugBuffer[FileSystem::MaxPathLength];
-    return dirpath.ToWCStr(GDebugBuffer);
+    wchar_t tmp[FileSystem::MaxPathLength];
+    return dirpath.ToWCStr(tmp);
 })
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

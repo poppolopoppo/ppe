@@ -148,7 +148,7 @@ namespace PPE {
 #define UNITS_END()
 #define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
     using NAME = PPE::Units::TAG::NAME; \
-    PPE_CORE_API extern template class PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >; \
+    EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >; \
     PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, \
         const PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >& unit); \
     PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, \

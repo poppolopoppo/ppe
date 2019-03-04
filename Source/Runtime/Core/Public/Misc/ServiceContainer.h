@@ -16,7 +16,7 @@ EXTERN_LOG_CATEGORY(PPE_CORE_API, Services)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FServiceContainer {
+class PPE_CORE_API FServiceContainer {
 public:
     FServiceContainer();
     ~FServiceContainer();

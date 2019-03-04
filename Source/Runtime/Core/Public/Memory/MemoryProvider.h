@@ -16,7 +16,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMemoryViewReader : public IBufferedStreamReader {
+class PPE_CORE_API FMemoryViewReader : public IBufferedStreamReader {
 public:
     FMemoryViewReader() : _offsetI(0) {}
 
@@ -71,7 +71,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMemoryViewWriter : public IBufferedStreamWriter {
+class PPE_CORE_API FMemoryViewWriter : public IBufferedStreamWriter {
 public:
     FMemoryViewWriter() : _size(0), _offsetO(0) {}
 

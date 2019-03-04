@@ -100,8 +100,8 @@ public:
     bool PromoteMove(const FAtom& dst) const { return _traits->PromoteMove(_data, dst); }
 
     // /!\ slow, obviously
-    FString ToString() const;
-    FWString ToWString() const;
+    PPE_RTTI_API FString ToString() const;
+    PPE_RTTI_API FWString ToWString() const;
 
     hash_t HashValue() const { return _traits->HashValue(_data); }
 

@@ -6,7 +6,7 @@
 #include "Allocator/SingletonPoolAllocator.h"
 
 namespace PPE {
-POOL_TAG_DECL(NodeBasedContainer);
+POOL_TAG_DECL(PPE_CORE_API, NodeBasedContainer);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

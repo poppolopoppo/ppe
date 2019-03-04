@@ -49,7 +49,7 @@ protected:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class IVirtualFileSystemComponentReadable {
+class PPE_VFS_API IVirtualFileSystemComponentReadable {
 public:
     virtual ~IVirtualFileSystemComponentReadable() {}
 
@@ -63,7 +63,7 @@ public:
     virtual UStreamReader OpenReadable(const FFilename& filename, EAccessPolicy policy) = 0;
 };
 //----------------------------------------------------------------------------
-class IVirtualFileSystemComponentWritable {
+class PPE_VFS_API IVirtualFileSystemComponentWritable {
 public:
     virtual ~IVirtualFileSystemComponentWritable() {}
 
@@ -75,7 +75,7 @@ public:
     virtual UStreamWriter OpenWritable(const FFilename& filename, EAccessPolicy policy) = 0;
 };
 //----------------------------------------------------------------------------
-class IVirtualFileSystemComponentReadWritable :
+class PPE_VFS_API IVirtualFileSystemComponentReadWritable :
     public IVirtualFileSystemComponentReadable
 ,   public IVirtualFileSystemComponentWritable {
 public:

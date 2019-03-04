@@ -20,8 +20,7 @@ public:
     const std::locale& Locale() const { return std::locale::classic(); }
     bool IsAllowedChar(char ch) const { return IsAlnum(ch) || ch == '_' || ch == '-' || ch == '.' || ch == '/'; }
 };
-//----------------------------------------------------------------------------
-BASICTOKEN_CLASS_DEF(FName, char, ECase::Insensitive, FNameTokenTraits);
+BASICTOKEN_CLASS_DECL(PPE_RTTI_API, FName, char, ECase::Insensitive, FNameTokenTraits);
 //----------------------------------------------------------------------------
 INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FBinaryData, RAWSTORAGE_ALIGNED(NativeTypes, u8, ALLOCATION_BOUNDARY));
 //----------------------------------------------------------------------------
@@ -62,7 +61,7 @@ struct PPE_RTTI_API FPathName {
 //      ex:     explicit MyClass(FConstructorTag);
 //----------------------------------------------------------------------------
 struct FConstructorTag {};
-constexpr FConstructorTag ConstructorTag;
+CONSTEXPR FConstructorTag ConstructorTag;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

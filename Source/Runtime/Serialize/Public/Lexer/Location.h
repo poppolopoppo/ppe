@@ -14,15 +14,15 @@ struct FLocation {
     FLocation() : FLocation(FWStringView(), 0, 0, 0) {}
     FLocation(const FWStringView& filename, size_t line, size_t column, std::streamoff offset)
         : Filename(filename)
+        , Offset(offset)
         , Line(checked_cast<u32>(line))
         , Column(checked_cast<u32>(column))
-        , Offset(offset)
     {}
 
     FWStringView Filename;
+    std::streamoff Offset;
     u32 Line;
     u32 Column;
-    std::streamoff Offset;
 
     static FLocation None() { return FLocation(); }
 };
@@ -36,12 +36,12 @@ struct FSpan : FLocation {
 
     static FSpan FromSite(const FLocation& start, const FLocation& stop) {
         Assert(stop.Offset >= start.Offset);
-        return FSpan(start, stop.Offset - start.Offset);
+        return FSpan(start, checked_cast<size_t>(stop.Offset - start.Offset));
     }
 
     static FSpan FromSpan(const FSpan& start, const FSpan& stop) {
         Assert(stop.Offset >= start.Offset);
-        return FSpan(start, (stop.Offset + stop.Length) - start.Offset);
+        return FSpan(start, checked_cast<size_t>((stop.Offset + stop.Length) - start.Offset));
     }
 
     u32 Length;

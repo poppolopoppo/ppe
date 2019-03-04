@@ -103,7 +103,7 @@ public:
 #endif
 
 public: // Meta class
-    class RTTI_FMetaClass : public TInScopeMetaClass<FMetaObject> {
+    class PPE_RTTI_API RTTI_FMetaClass : public TInScopeMetaClass<FMetaObject> {
         friend class TInScopeMetaClass<FMetaObject>;
         typedef TInScopeMetaClass<FMetaObject> metaclass_type;
     public:

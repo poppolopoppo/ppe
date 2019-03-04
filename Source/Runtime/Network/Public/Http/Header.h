@@ -17,7 +17,7 @@ class FSocketBuffered;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FHttpHeader {
+class PPE_NETWORK_API FHttpHeader {
 public:
     typedef MEMORYSTREAM(HTTP) FBody;
     typedef ASSOCIATIVE_VECTORINSITU(HTTP, FName, FString, 9/* according to Chrome */) FEntries;

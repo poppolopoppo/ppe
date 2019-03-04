@@ -629,7 +629,7 @@ struct PPE_CORE_API TBIHTraits<FBoundingBox> {
         return ray.Intersects(volume, distance);
     }
 };
-template class TBIHTree<FBoundingBox, TBIHTraits<FBoundingBox> >;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBIHTree<FBoundingBox, TBIHTraits<FBoundingBox> >;
 //----------------------------------------------------------------------------
 template <>
 struct PPE_CORE_API TBIHTraits<FSphere> {
@@ -638,7 +638,7 @@ struct PPE_CORE_API TBIHTraits<FSphere> {
         return ray.Intersects(volume, distance);
     }
 };
-template class TBIHTree<FSphere, TBIHTraits<FSphere> >;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBIHTree<FSphere, TBIHTraits<FSphere> >;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

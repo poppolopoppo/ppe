@@ -11,7 +11,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FCurrentProcess : Meta::TSingleton<FCurrentProcess> {
+class PPE_CORE_API FCurrentProcess : Meta::TSingleton<FCurrentProcess> {
 public:
     typedef Meta::TSingleton<FCurrentProcess> parent_type;
 

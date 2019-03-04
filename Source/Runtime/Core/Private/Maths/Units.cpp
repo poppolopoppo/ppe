@@ -12,7 +12,7 @@ namespace PPE {
 #define UNITS_BEGIN(NAME)
 #define UNITS_END()
 #define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
-    template class PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >; \
+    EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >; \
     FTextWriter& operator <<(FTextWriter& oss, \
         const PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >& unit) { \
             if (oss.Format().Width() > 2) \

@@ -33,8 +33,8 @@ FCurrentProcess::FCurrentProcess(void* appHandle, int nShowCmd, const wchar_t* f
     Verify(FPlatformFile::NormalizePath(_fileName));
     Verify(FPlatformFile::NormalizePath(_directory));
 
-    _dataPath = FPlatformFile::JoinPath({ _directory, L"..", L"..", L"..", L"Data" });
-    _savedPath = FPlatformFile::JoinPath({ _directory, L"..", L"..", L"Saved" });
+    _dataPath = FPlatformFile::JoinPath({ _directory, L"..", L"..", L"Data" });
+    _savedPath = FPlatformFile::JoinPath({ _directory, L"..", L"Saved" });
 
     Verify(FPlatformFile::NormalizePath(_dataPath));
     Verify(FPlatformFile::NormalizePath(_savedPath));

@@ -16,7 +16,7 @@ enum class EHttpStatus;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FHttpClient {
+class PPE_NETWORK_API FHttpClient {
 public:
     typedef ASSOCIATIVE_VECTORINSITU(HTTP, FString, FString, 3) FCookieMap;
     typedef ASSOCIATIVE_VECTORINSITU(HTTP, FString, FString, 3) FPostMap;
@@ -56,11 +56,11 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-EHttpStatus HttpGet(FHttpResponse* presponse, const FUri& uri);
+PPE_NETWORK_API EHttpStatus HttpGet(FHttpResponse* presponse, const FUri& uri);
 //----------------------------------------------------------------------------
-EHttpStatus HttpHead(FHttpResponse* presponse, const FUri& uri);
+PPE_NETWORK_API EHttpStatus HttpHead(FHttpResponse* presponse, const FUri& uri);
 //----------------------------------------------------------------------------
-EHttpStatus HttpPost(FHttpResponse* presponse, const FUri& uri, const FHttpClient::FPostMap& post);
+PPE_NETWORK_API EHttpStatus HttpPost(FHttpResponse* presponse, const FUri& uri, const FHttpClient::FPostMap& post);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

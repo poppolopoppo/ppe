@@ -11,7 +11,7 @@ class TMemoryView;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMemoryTracking {
+class PPE_CORE_API FMemoryTracking {
 public:
     FMemoryTracking(const char* optionalName = "unknown", FMemoryTracking* optionalParent = nullptr);
 

@@ -13,9 +13,9 @@ class IMemoryPool;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define _POOL_TAG_DECL_IMPL(_NameId, _NameStr) \
+#define _POOL_TAG_DECL_IMPL(_Api, _NameId, _NameStr) \
     namespace PoolTag { \
-        struct _NameId { \
+        struct _Api _NameId { \
         public: \
             static const char* Name() { return (_NameStr); } \
             \
@@ -32,16 +32,16 @@ class IMemoryPool;
     }
 //----------------------------------------------------------------------------
 #ifdef WITH_PPE_POOL_ALLACATOR_TAGNAME
-#   define POOL_TAG_DECL(_Name) _POOL_TAG_DECL_IMPL(_Name, STRINGIZE(_Name))
+#   define POOL_TAG_DECL(_Api, _Name) _POOL_TAG_DECL_IMPL(_Api, _Name, STRINGIZE(_Name))
 #else
-#   define POOL_TAG_DECL(_Name) _POOL_TAG_DECL_IMPL(_Name, "")
+#   define POOL_TAG_DECL(_Api, _Name) _POOL_TAG_DECL_IMPL(_Api, _Name, "")
 #endif
 //----------------------------------------------------------------------------
-#define POOL_TAG_FWD(_Name) namespace PoolTag { struct _Name; }
+#define POOL_TAG_FWD(_Api, _Name) namespace PoolTag { struct _Api _Name; }
 //----------------------------------------------------------------------------
 #define POOL_TAG(_Name) PoolTag::_Name
 //----------------------------------------------------------------------------
-POOL_TAG_DECL(Default) // Default tag for Pool segregation
+POOL_TAG_DECL(PPE_CORE_API, Default) // Default tag for Pool segregation
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

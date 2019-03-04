@@ -33,7 +33,8 @@ FModuleManager::FModuleManager(
 :   _appHandle(appHandle)
 ,   _showCmd(showCmd)
 ,   _filename(filename)
-,   _argc(argc), _argv(argv) {
+,   _argc(argc), _argv(argv)
+,   _startup(nullptr) {
     Assert(nullptr == GModuleManager_);
     GModuleManager_ = this;
 

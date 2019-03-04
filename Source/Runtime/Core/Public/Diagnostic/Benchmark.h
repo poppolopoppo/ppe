@@ -77,7 +77,7 @@ public: // Helpers
     }
 
 private:
-    static NO_INLINE void UseCharPointer_(char const volatile*);
+    PPE_CORE_API static NO_INLINE void UseCharPointer_(char const volatile*);
 
 private: // FTimer
     enum ECounterType {

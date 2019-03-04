@@ -92,8 +92,8 @@ public:
     static bool Normalize(FDirpath* normalized, const FDirpath& path);
     static bool Relative(FDirpath* relative, const FDirpath& origin, const FDirpath& other);
 
-    friend FDirpath operator /(const FDirpath& lhs, const FDirname& rhs);
-    friend FFilename operator /(const FDirpath& lhs, const class FBasename& basename);
+    PPE_CORE_API friend FDirpath operator /(const FDirpath& lhs, const FDirname& rhs);
+    PPE_CORE_API friend FFilename operator /(const FDirpath& lhs, const class FBasename& basename);
 
 private:
     const FFileSystemNode* _path;

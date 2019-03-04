@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "Allocator/Malloc.h"
+#include "Allocator/Mallocator.h"
 #include "Allocator/MallocBinned.h"
 #include "Allocator/MallocStomp.h"
 
@@ -48,6 +49,13 @@
 #endif
 
 namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// This is for Dll builds due to export of FStringBuilder & FWStringBuilder (associated declaration in Mallocator.h)
+// #TODO : this might not be necessary, and I still wonder why only this particular instance
+// is found duplicated when tons of other templates pose no problem.
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TMallocator<u8>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

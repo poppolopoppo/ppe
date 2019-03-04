@@ -45,7 +45,7 @@
 .ModuleIsolatedFiles_Library = .ModuleIsolatedFiles + 'ModuleExport.cpp'
 .ModuleIsolatedFiles = .'ModuleIsolatedFiles_$ModuleType$'
 
-.BinaryPrefix ? .ProjectName
+.BinaryPrefix ? .ModuleName
 .ProjectDefines = .ModuleDefines
 .ProjectExcludedFiles = .ModuleExcludedFiles
 .ProjectFiles = .ModuleFiles + .ModuleExtraFiles
@@ -64,12 +64,13 @@ ForEach( .Path in .ModuleIncludePaths )
     ^ProjectIncludes + '$ProjectPath$/$Path$'
 }
 
-.ProjectDependencies = {}
-.ModuleDependencies = .ModulePublicDependencies
-                    + .ModulePrivateDependencies
-ForEach( .Module in .ModuleDependencies )
+.ProjectPrivateDependencies = .ModulePrivateDependencies
+.ProjectPublicDependencies = .ModulePublicDependencies
+
+.ModuleAllDependencies  = .ModulePrivateDependencies
+                        + .ModulePublicDependencies
+ForEach( .Module in .ModuleAllDependencies )
 {
-    ^ProjectDependencies + .Module
     ^ProjectIncludes + '$SourcePath$/$Module$/Public'
 }
 

@@ -9,7 +9,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FDirname : public FFileSystemToken {
+class PPE_CORE_API FDirname : public FFileSystemToken {
 public:
     typedef FFileSystemToken parent_type;
 

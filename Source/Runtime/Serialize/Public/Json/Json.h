@@ -18,7 +18,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FJsonException : public PPE::Serialize::FSerializeException {
+class PPE_SERIALIZE_API FJsonException : public PPE::Serialize::FSerializeException {
 public:
     typedef PPE::Serialize::FSerializeException parent_type;
 
@@ -72,7 +72,7 @@ public:
     using TypeArray = TType<Array>;
     using TypeObject = TType<Object>;
 
-    class FValue {
+    class PPE_SERIALIZE_API FValue {
     public:
         FValue() : _type(Null) {}
         ~FValue() { Clear(); }

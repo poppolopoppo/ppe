@@ -22,12 +22,6 @@ enum : char_type {
     AltSeparator = FPlatformFile::PathSeparatorAlt
 };
 //----------------------------------------------------------------------------
-class TTokenTraits {
-public:
-    const std::locale& Locale() const { return std::locale::classic(); }
-    bool IsAllowedChar(char_type ch) const { return FPlatformFile::IsAllowedChar(ch); }
-};
-//----------------------------------------------------------------------------
 using FString = TBasicString<char_type>;
 using FStringView = TBasicStringView<char_type>;
 //----------------------------------------------------------------------------

@@ -16,7 +16,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FTaskFiberPool;
-class FTaskFiberChunk : Meta::FNonCopyableNorMovable {
+class PPE_CORE_API FTaskFiberChunk : Meta::FNonCopyableNorMovable {
 public:
     STATIC_CONST_INTEGRAL(size_t, StackSize, ALLOCATION_GRANULARITY); // 64 kb
     STATIC_CONST_INTEGRAL(size_t, Capacity, 64); // <=> 64 * 64 kb = 4 mb,

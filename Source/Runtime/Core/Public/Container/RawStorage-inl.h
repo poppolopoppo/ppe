@@ -69,8 +69,9 @@ TRawStorage<T, _Allocator>& TRawStorage<T, _Allocator>::operator =(TRawStorage&&
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>::TRawStorage(const TRawStorage& other)
-:   TRawStorage(other.begin(), other.end() ) {
-    allocator_type::operator =(other);
+:   allocator_type(other)
+,   _storage(nullptr), _size(0) {
+    insert(this->end(), other.begin(), other.end());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>

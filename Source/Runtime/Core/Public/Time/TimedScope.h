@@ -21,7 +21,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FTimedScope {
+class PPE_CORE_API FTimedScope {
 public:
     FTimedScope() : _startedAt(FTimepoint::Now()) {}
 
@@ -33,7 +33,7 @@ private:
 };
 //----------------------------------------------------------------------------
 #if USE_PPE_BENCHMARK
-class FBenchmarkScope : public FTimedScope {
+class PPE_CORE_API FBenchmarkScope : public FTimedScope {
 public:
     FBenchmarkScope(const FWStringView& category, const FWStringView& message);
     ~FBenchmarkScope();
@@ -48,7 +48,7 @@ private:
 #endif //!USE_PPE_BENCHMARK
 //----------------------------------------------------------------------------
 #if USE_PPE_BENCHMARK
-class FIOBenchmarkScope : public FTimedScope {
+class PPE_CORE_API FIOBenchmarkScope : public FTimedScope {
 public:
     FIOBenchmarkScope(const FWStringView& category, const FWStringView& message, const std::streamsize* pSizeInBytes);
     ~FIOBenchmarkScope();

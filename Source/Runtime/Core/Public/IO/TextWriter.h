@@ -280,8 +280,8 @@ template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(void* v);
 template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const wchar_t* v);
 template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v);
 //----------------------------------------------------------------------------
-extern PPE_CORE_API template class TBasicTextWriter<char>;
-extern PPE_CORE_API template class TBasicTextWriter<wchar_t>;
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBasicTextWriter<char>;
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBasicTextWriter<wchar_t>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -43,7 +43,7 @@ private:
     PTaskCounter _counter;
 };
 //----------------------------------------------------------------------------
-class ITaskContext {
+class PPE_CORE_API ITaskContext {
 public:
     virtual ~ITaskContext() {}
 

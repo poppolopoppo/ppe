@@ -22,7 +22,7 @@ using FRecursiveLockGuard = std::lock_guard<std::recursive_mutex>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FThreadResource {
+class PPE_CORE_API FThreadResource {
 public:
 #ifdef WITH_PPE_THREADRESOURCE_CHECKS
     FThreadResource() : FThreadResource(std::this_thread::get_id()) {}

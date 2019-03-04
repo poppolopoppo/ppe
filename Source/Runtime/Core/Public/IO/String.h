@@ -614,14 +614,11 @@ struct TStringHasher : TStringViewHasher<_Char, _Sensitive> {
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#ifdef DYNAMIC_LINK
-#   define EXPORT_PPE_STRING 1
-#else
-#   define EXPORT_PPE_STRING 0
-#endif
+#define EXPORT_PPE_STRING 1
 
 #if EXPORT_PPE_STRING
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::TBasicString<char>;
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::TBasicString<wchar_t>;
+#else
 #   include "IO/String-inl.h"
-template class PPE_CORE_API PPE::TBasicString<char>;
-template class PPE_CORE_API PPE::TBasicString<wchar_t>;
 #endif

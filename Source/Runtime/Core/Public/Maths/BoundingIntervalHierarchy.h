@@ -163,9 +163,9 @@ extern PPE_CORE_API template struct TBIHTraits<FBoundingBox>;
 template <> struct TBIHTraits<FSphere>;
 extern PPE_CORE_API template struct TBIHTraits<FSphere>;
 //----------------------------------------------------------------------------
-extern PPE_CORE_API template class TBIHTree<FBoundingBox, TBIHTraits<FBoundingBox> >;
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBIHTree<FBoundingBox, TBIHTraits<FBoundingBox> >;
 typedef TBIHTree<FBoundingBox, TBIHTraits<FBoundingBox> > FBoundingBoxBIHTree;
-extern PPE_CORE_API template class TBIHTree<FSphere, TBIHTraits<FSphere> >;
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBIHTree<FSphere, TBIHTraits<FSphere> >;
 typedef TBIHTree<FSphere, TBIHTraits<FSphere> > FSphereBIHTree;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

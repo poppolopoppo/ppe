@@ -31,3 +31,12 @@ Settings
     .AllowDBMigration_Experimental = true
 #endif
 }
+
+//------------------------------------------------------------------------------
+// Output all compile configs when parsing the bff
+//------------------------------------------------------------------------------
+ForEach( .CompileConfig in .AllCompileConfigs )
+{
+    Using( .CompileConfig )
+    Print( "[+] Compilation config <$Platform$-$Config$> ($ConfigLinkType$)" )
+}

@@ -168,7 +168,7 @@ class FTiti : public PPE::RTTI::FMetaObject {
 public:
     FTiti() {}
     virtual ~FTiti() {}
-    RTTI_CLASS_HEADER(FTiti, PPE::RTTI::FMetaObject);
+    RTTI_CLASS_HEADER(, FTiti, PPE::RTTI::FMetaObject);
     void Proc(int a, float b, const FString& c) { NOOP(a, b, c); }
     float Id(float f) { return f; }
     float IdDeprecated(float f) { return f; }
@@ -224,7 +224,7 @@ class FToto : public RTTI::FMetaObject {
 public:
     FToto() {}
     virtual ~FToto() {}
-    RTTI_CLASS_HEADER(FToto, RTTI::FMetaObject);
+    RTTI_CLASS_HEADER(, FToto, RTTI::FMetaObject);
 private:
     typedef TPair<int, FString> value_type;
     int _count;
@@ -264,7 +264,7 @@ public:
     virtual ~FToto2() {}
     void SetParent1(FToto* parent) { _parent1 = parent; }
     const PToto& Parent1() const { return _parent1; }
-    RTTI_CLASS_HEADER(FToto2, FToto);
+    RTTI_CLASS_HEADER(, FToto2, FToto);
 private:
     PToto _parent1;
 };

@@ -1,5 +1,5 @@
 #once
-{
+{   DEPRECATED #TODO : migrate to module.bff
     .BinaryPrefix = 'Core.ContentGenerator'
     .ProjectName  = 'Core.ContentGenerator'
     .ProjectSolutionFolder = 'Core.Content'

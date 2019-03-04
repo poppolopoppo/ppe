@@ -39,6 +39,8 @@
 
     .IgnoredWarnings = ''
     + ' /wd4201' // nonstandard extension used: nameless struct/union'
+    + ' /wd4251' // 'XXX' needs to have dll-interface to be used by clients of class 'YYY'
+
     ;+ ' /wd4324' // structure was padded due to alignment specifier (giving up on this one for now)
 
 
@@ -48,8 +50,6 @@
     .Defines =
     {
         'CPP_VISUALSTUDIO',             ; identification du compiler dans les sources (custom)
-
-        "_MT", "_DLL",                  ; https://msdn.microsoft.com/fr-fr/library/abx4dbyh.aspx
 
         "STRICT",                       ; https://msdn.microsoft.com/en-us/library/windows/desktop/aa383681(v=vs.85).aspx
         "NOMINMAX",                     ; https://support.microsoft.com/en-us/kb/143208
@@ -137,6 +137,7 @@
     .LinkerOptions          ; https://randomascii.wordpress.com/2018/12/03/a-not-called-function-can-cause-a-5x-slowdown/
     + ' delayimp.lib'
     + ' /DELAYLOAD:Shell32.dll'
+    + ' /IGNORE:4199'       ; warning LNK4199: /DELAYLOAD:XXX.dll ignored; no imports found from XXX.dll, caused by our added .libs #TODO : handles this more granularly ?
 #endif
 
 #if USE_MSVC_COMPILATION_SUMMARY
@@ -146,10 +147,9 @@
 #endif
 
     .DllOptions = ''
-    + ' /DLL'               ; https://msdn.microsoft.com/en-us/library/527z7zfs.aspx
+    + ' /DLL'                   ; https://msdn.microsoft.com/en-us/library/527z7zfs.aspx
 
     .ExecutableOptions = ''
-    + ' /ENTRY:"wWinMainCRTStartup"'
     .ExecutableDeps = {}
 
     ; utilisés pour généraliser les templates :
@@ -159,6 +159,7 @@
     .CompilerPreprocessorFlag   = ' /P /Fi"%2"'
     .CompilerForceIncludeFlag   = ' /FI'
     .CompilerBinaryExtension    = 'exe'
+    .CompilerSymbolsExtension   = 'pdb'
     .CompilerDllExtension       = 'dll'
     .CompilerLibraryExtension   = 'lib'
 
@@ -264,18 +265,6 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     // https://msdn.microsoft.com/fr-fr/library/2kzt1wy3.aspx
 
-    .SharedLibRuntimeForDebug   = ' /LDd' ; MultiThreaded/Static Debug dll
-    .SharedLibRuntimeForRelease = ' /LD'  ; MultiThreaded/Static dll
-
-    .BinaryRuntimeForDebug      = ' /MDd' ; MultiThreaded Debug exe
-    .BinaryRuntimeForRelease    = ' /MD'  ; MultiThreaded exe
-
-#if USE_MSVC_STATIC_RUNTIME
-    Print( "Using static runtime library (/MT)" )
-    .BinaryRuntimeForDebug      = ' /MTd' ; Static Debug exe
-    .BinaryRuntimeForRelease    = ' /MT'  ; Static exe
-#endif
-
     .DebugOptimisations = ''
     + ' /Od'                ; désactive les optimisations (debug)
     + ' /Oy-'               ; n'empêche pas la création des pointeurs de frame sur la pile des appels
@@ -344,6 +333,35 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .LibraryLinkType = 'Obj'
     Print( "Using library dependency input" )
 #endif
+
+    .StaticLib_RuntimeDebug = [
+        .CompilerOptions    = ' /MTd'
+    ]
+    .StaticLib_RuntimeRelease = [
+        .CompilerOptions    = ' /MT'
+    ]
+
+    .SharedLib_RuntimeDebug = [
+        .CompilerOptions    = ' /MDd'
+    ]
+    .SharedLib_RuntimeRelease = [
+        .CompilerOptions    = ' /MD'
+    ]
+
+    .Dll_RuntimeDebug = [
+        .CompilerOptions    = ' /LDd'
+    ]
+    .Dll_RuntimeRelease = [
+        .CompilerOptions    = ' /LD'
+    ]
+
+    .Lib_RuntimeDebug       = .SharedLib_RuntimeDebug
+    .Lib_RuntimeRelease     = .SharedLib_RuntimeRelease
+#if USE_MSVC_STATIC_RUNTIME
+    Print( "Using static runtime library (/MT)" )
+    .Lib_RuntimeDebug       = .StaticLib_RuntimeDebug
+    .Lib_RuntimeRelease     = .StaticLib_RuntimeRelease
+#endif
 ]
 
 //------------------------------------------------------------------------------
@@ -370,8 +388,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
                         + .LinkerWithoutASLR
 
-    .SharedLibRuntime   = .SharedLibRuntimeForDebug
-    .BinaryRuntime      = .BinaryRuntimeForDebug
+    .CompilerRuntime    = .'$ConfigLinkType$_RuntimeDebug'
 ]
 
 //------------------------------------------------------------------------------
@@ -393,11 +410,10 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .CompilerOptionsDeoptimized = .CompilerOptions - ' /O2' + ' /Od'
 
-    .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
-                        + .LinkerWithoutASLR
+    .LinkerOptions      = .LinkerWithoutASLR
+                        + ' /INCREMENTAL'   ; active le linker incrémental
 
-    .SharedLibRuntime   = .SharedLibRuntimeForDebug
-    .BinaryRuntime      = .BinaryRuntimeForDebug
+    .CompilerRuntime    = .'$ConfigLinkType$_RuntimeDebug'
 ]
 
 //------------------------------------------------------------------------------
@@ -424,8 +440,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
                         + .LinkerWithoutASLR
 
-    .SharedLibRuntime   = .SharedLibRuntimeForRelease
-    .BinaryRuntime      = .BinaryRuntimeForRelease
+    .CompilerRuntime    = .'$ConfigLinkType$_RuntimeRelease'
 ]
 
 //------------------------------------------------------------------------------
@@ -454,8 +469,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .LinkerOptions      = ' /LTCG'          ; link time code generation
                         + .LinkerWithoutASLR
 
-    .SharedLibRuntime   = .SharedLibRuntimeForRelease
-    .BinaryRuntime      = .BinaryRuntimeForRelease
+    .CompilerRuntime    = .'$ConfigLinkType$_RuntimeRelease'
 ]
 
 //------------------------------------------------------------------------------
@@ -493,6 +507,5 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .LinkerOptions      + ' /OPT:NOICF'     ; Désactivé car empeche de debugger
 #endif
 
-    .SharedLibRuntime   = .SharedLibRuntimeForRelease
-    .BinaryRuntime      = .BinaryRuntimeForRelease
+    .CompilerRuntime    = .'$ConfigLinkType$_RuntimeRelease'
 ]

@@ -16,8 +16,8 @@
 namespace PPE {
 namespace RTTI {
 // Needed to manipulate FAny with fwd decl only :
-void AssignCopy(FAny* dst, const void* src, const ITypeTraits& traits);
-void AssignMove(FAny* dst, void* src, const ITypeTraits& traits);
+PPE_RTTI_API void AssignCopy(FAny* dst, const void* src, const ITypeTraits& traits);
+PPE_RTTI_API void AssignMove(FAny* dst, void* src, const ITypeTraits& traits);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

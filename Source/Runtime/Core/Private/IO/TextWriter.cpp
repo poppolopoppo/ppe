@@ -404,8 +404,8 @@ template <> void TBasicTextWriter<wchar_t>::Write(void* v) { Write_(Meta::TType<
 template <> void TBasicTextWriter<wchar_t>::Write(const wchar_t* v) { WriteWFormat_(*this, MakeCStringView(v)); }
 template <> void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v) { WriteWFormat_(*this, v); }
 //----------------------------------------------------------------------------
-/*extern PPE_CORE_API*/ template class TBasicTextWriter<char>;
-/*extern PPE_CORE_API*/ template class TBasicTextWriter<wchar_t>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicTextWriter<char>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicTextWriter<wchar_t>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

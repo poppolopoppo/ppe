@@ -13,46 +13,66 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define BEGIN_BASICTOKEN_CLASS_DEF(_NAME, _CHAR, _CASESENSITIVE, _TRAITS) \
-    class _NAME : public PPE::TToken< \
+// Needs to access the singleton through an exported function for DLLs builds
+//----------------------------------------------------------------------------
+#define BASICTOKEN_CLASS_DECL(_API, _NAME, _CHAR, _CASESENSITIVE, _TRAITS) \
+    class CONCAT(_NAME, ActualTokenTraits) : public _TRAITS { \
+    public: \
+        using _TRAITS::Locale; \
+        using _TRAITS::IsAllowedChar; \
+        _API static void CreateFactory(); \
+        _API static ::PPE::FTokenFactory& Factory() NOEXCEPT; \
+        _API static void DestroyFactory(); \
+    }; \
+    class _API _NAME : public PPE::TToken< \
         _NAME, \
         _CHAR, \
         _CASESENSITIVE, \
-        _TRAITS \
+        CONCAT(_NAME, ActualTokenTraits) \
     > { \
     public: \
         typedef PPE::TToken< \
             _NAME, \
             _CHAR, \
             _CASESENSITIVE, \
-            _TRAITS \
+            CONCAT(_NAME, ActualTokenTraits) \
         >   parent_type; \
         \
         using parent_type::parent_type; \
-        using parent_type::operator =
-//----------------------------------------------------------------------------
-#define END_BASICTOKEN_CLASS_DEF() \
+        using parent_type::operator =; \
     }
 //----------------------------------------------------------------------------
-#define BASICTOKEN_CLASS_DEF(_NAME, _CHAR, _CASESENSITIVE, _TRAITS) \
-    BEGIN_BASICTOKEN_CLASS_DEF(_NAME, _CHAR, _CASESENSITIVE, _TRAITS); \
-    END_BASICTOKEN_CLASS_DEF() \
+#define BASICTOKEN_CLASS_DEF(_NAME) \
+    using CONCAT(_NAME, TokenFactory) = ::PPE::Meta::TIndirectSingleton<::PPE::FTokenFactory, _NAME>; \
+    void CONCAT(_NAME, ActualTokenTraits)::CreateFactory() { \
+        CONCAT(_NAME, TokenFactory)::Create(); \
+    } \
+    ::PPE::FTokenFactory& CONCAT(_NAME, ActualTokenTraits)::Factory() NOEXCEPT { \
+        return CONCAT(_NAME, TokenFactory)::Get(); \
+    } \
+    void CONCAT(_NAME, ActualTokenTraits)::DestroyFactory() { \
+        CONCAT(_NAME, TokenFactory)::Destroy(); \
+    }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char>
+template <typename _Tag, typename _Char>
 class TTokenTraits {
 public:
     const std::locale& Locale() const {  return std::locale::classic(); }
     bool IsAllowedChar(_Char ch) const { return std::isprint(ch, Locale()); }
+
+    static void CreateFactory() = delete;
+    static class FTokenFactory& Factory() = delete;
+    static void DestroyFactory() = delete;
 };
 //----------------------------------------------------------------------------
-template <typename _Char, typename _TokenTraits = TTokenTraits<_Char> >
+template <typename _Char, typename _TokenTraits>
 bool ValidateToken(const TBasicStringView<_Char>& content);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FTokenFactory {
+class PPE_CORE_API FTokenFactory {
 public:
     STATIC_CONST_INTEGRAL(size_t, MaxTokenLength, 1024);
 
@@ -104,7 +124,7 @@ template <
     typename        _Tag,
     typename        _Char,
     ECase            _Sensitive,
-    typename        _TokenTraits = TTokenTraits<_Char>
+    typename        _TokenTraits
 >
 class TToken {
 public:
@@ -127,12 +147,6 @@ public:
 
     explicit TToken(const stringview_type& content) : _handle(FindOrAdd_(content)) {}
     TToken& operator =(const stringview_type& content) { _handle = FindOrAdd_(content); return (*this); }
-
-    explicit TToken(const TBasicString<_Char>& content)
-        : TToken(content.MakeView()) {}
-    TToken& operator = (const TBasicString<_Char>& content) {
-        return operator =(content.MakeView());
-    }
 
     template <size_t _Dim>
     explicit TToken(const _Char(&content)[_Dim])
@@ -184,8 +198,8 @@ public:
     friend bool operator ==(const stringview_type& lhs, const TToken& rhs) { return rhs.Equals(lhs); }
     friend bool operator !=(const stringview_type& lhs, const TToken& rhs) { return !operator ==(lhs, rhs); }
 
-    static void Start() { factory_type::Create(); }
-    static void Shutdown() { factory_type::Destroy(); }
+    static void Start() { token_traits::CreateFactory(); }
+    static void Shutdown() { token_traits::DestroyFactory(); }
 
     static hash_t HashValue(const stringview_type& str) {
         return hasher_type{}(str);
@@ -193,7 +207,6 @@ public:
 
 private:
     typedef FTokenFactory::FEntry handle_type;
-    typedef Meta::TIndirectSingleton<FTokenFactory, _Tag> factory_type;
 
     const handle_type* _handle;
 

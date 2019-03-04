@@ -44,6 +44,7 @@ static void EnumerateDirNonRecursive_(
     Assert(onFile || onSubDir);
 
     ::WIN32_FIND_DATAW ffd;
+    ::ZeroMemory(&ffd, sizeof(ffd));
 
     wchar_t tmp[2048];
     Format(tmp, L"{0}\\*", MakeCStringView(path));
@@ -73,11 +74,14 @@ static void EnumerateDirNonRecursive_(
         else if (onFile) {
             onFile(fname);
         }
-    } while (::FindNextFileW(hFind, &ffd));
+    } while (::FindNextFileW(hFind, &ffd) != 0);
 
 #ifdef WITH_PPE_ASSERT
     ::DWORD dwError = ::GetLastError();
-    Assert(ERROR_NO_MORE_FILES == dwError);
+    if (ERROR_NO_MORE_FILES != dwError) {
+        LOG_LASTERROR(HAL, L"FindNextFileW()");
+        AssertNotReached();
+    }
 #endif
 
     Verify(::FindClose(hFind));

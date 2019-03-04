@@ -19,7 +19,7 @@ namespace RTTI {
         CONCAT(_AllocaSizeInBytes_, _NAME), \
         (_PTYPE_TRAITS) )
 //----------------------------------------------------------------------------
-class FStackLocalAtom {
+class PPE_RTTI_API FStackLocalAtom {
 public:
     FStackLocalAtom(const void* data, size_t sizeInBytes, const PTypeTraits& traits);
     ~FStackLocalAtom();

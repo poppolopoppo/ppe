@@ -9,7 +9,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FApplicationConsole : public FApplicationBase {
+class PPE_APPLICATION_API FApplicationConsole : public FApplicationBase {
 public:
     FApplicationConsole(FWString&& name);
     virtual ~FApplicationConsole();

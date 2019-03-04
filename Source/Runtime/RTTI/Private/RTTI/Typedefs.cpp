@@ -6,11 +6,13 @@
 #include "MetaTransaction.h"
 
 #include "IO/Format.h"
+#include "IO/String.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
 
 namespace PPE {
 namespace RTTI {
+BASICTOKEN_CLASS_DEF(FName);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

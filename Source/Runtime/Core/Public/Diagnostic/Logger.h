@@ -123,7 +123,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 } //!namespace PPE
 
 #define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY) \
-    _API ::PPE::FLoggerCategory CONCAT(GLogCategory_, _NAME){ WIDESTRING(STRINGIZE(_NAME)), ::PPE::FLogger::EVerbosity::_VERBOSITY };
+    _API ::PPE::FLoggerCategory LOG_CATEGORY_GET(_NAME){ WIDESTRING(STRINGIZE(_NAME)), ::PPE::FLogger::EVerbosity::_VERBOSITY };
 #define LOG_CATEGORY(_API, _NAME) \
     LOG_CATEGORY_VERBOSITY(_API, _NAME, All)
 
@@ -132,7 +132,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
         ::PPE::ValidateFormatString( _FORMAT, PP_NUM_ARGS(__VA_ARGS__) ), \
         "invalid format : check arguments" ); \
     ::PPE::FLogger::Log( \
-        CONCAT(GLogCategory_, _CATEGORY), \
+        LOG_CATEGORY_GET(_CATEGORY), \
         ::PPE::FLogger::EVerbosity::_LEVEL, \
         ::PPE::FLogger::FSiteInfo::Make( \
             WIDESTRING(__FILE__), \

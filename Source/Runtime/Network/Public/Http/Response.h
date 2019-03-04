@@ -11,7 +11,7 @@ class FSocketBuffered;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FHttpResponse : public FHttpHeader {
+class PPE_NETWORK_API FHttpResponse : public FHttpHeader {
 public:
     FHttpResponse();
     ~FHttpResponse();

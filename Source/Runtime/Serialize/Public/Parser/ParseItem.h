@@ -14,7 +14,7 @@ namespace Parser {
 class FParseContext;
 FWD_REFPTR(ParseItem);
 //----------------------------------------------------------------------------
-class FParseItem : public FRefCountable {
+class PPE_SERIALIZE_API FParseItem : public FRefCountable {
 public:
     FParseItem(const Lexer::FSpan& site);
     virtual ~FParseItem();

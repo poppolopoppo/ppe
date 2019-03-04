@@ -2,9 +2,6 @@
 
 #include "TestApp.h"
 
-#include "Diagnostic/CurrentProcess.h"
-#include "HAL/PlatformCrash.h"
-#include "HAL/PlatformDebug.h"
 #include "HAL/PlatformNotification.h"
 
 namespace PPE {
@@ -36,68 +33,6 @@ void FTestApp::Start() {
 
     using FAppNotify = Application::FPlatformNotification;
 
-    FAppNotify::ShowSystray();
-
-    FAppNotify::AddSystrayCommand(
-        L"Debug",
-        L"Create mini dump",
-        []() {
-        FPlatformCrash::WriteMiniDump();
-    });
-    FAppNotify::AddSystrayCommand(
-        L"Debug",
-        L"Debug break",
-        []() {
-        PPE_DEBUG_BREAK();
-    });
-
-#if USE_PPE_PLATFORM_DEBUG
-    FAppNotify::AddSystrayCommand(
-        L"Memory",
-        L"Check memory",
-        []() {
-        FPlatformDebug::CheckMemory();
-    });
-#endif
-#if !USE_PPE_FINAL_RELEASE
-    FAppNotify::AddSystrayCommand(
-        L"Memory",
-        L"Dump memory leaks",
-        []() {
-        DumpMemoryLeaks();
-    });
-#endif
-    FAppNotify::AddSystrayCommand(
-        L"Memory",
-        L"Release memory in modules",
-        []() {
-        ReleaseMemoryInModules();
-    });
-    FAppNotify::AddSystrayCommand(
-        L"Memory",
-        L"Report all tracking data",
-        []() {
-        ReportAllTrackingData();
-    });
-
-    FAppNotify::AddSystrayCommand(
-        L"Process",
-        L"Dump process infos",
-        []() {
-        FCurrentProcess::Get().DumpProcessInfos();
-    });
-    FAppNotify::AddSystrayCommand(
-        L"Process",
-        L"Dump process memory",
-        []() {
-        FCurrentProcess::Get().DumpMemoryStats();
-    });
-
-    FAppNotify::NotifySystray(
-        FAppNotify::ENotificationIcon::Info,
-        L"Starting TestApp",
-        L"Unit testing will start with " WSTRINGIZE(BUILDCONFIG) L" build config" );
-
     typedef void(*test_t)();
     const test_t tests[] = {
         &Test_Allocators,
@@ -123,18 +58,16 @@ void FTestApp::Start() {
 }
 //----------------------------------------------------------------------------
 void FTestApp::Shutdown() {
-    parent_type::Shutdown();
-
     using FAppNotify = Application::FPlatformNotification;
-
-    FAppNotify::SetTaskbarState(FAppNotify::ETaskbarState::Normal);
 
     FAppNotify::NotifySystray(
         FAppNotify::ENotificationIcon::Warning,
         L"Shutting down TestApp",
         L"Oh yeah");
 
-    FAppNotify::HideSystray();
+    FAppNotify::SetTaskbarState(FAppNotify::ETaskbarState::Normal);
+
+    parent_type::Shutdown();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

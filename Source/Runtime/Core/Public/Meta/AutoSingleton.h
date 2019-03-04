@@ -44,7 +44,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FAutoSingletonManager {
+class PPE_CORE_API FAutoSingletonManager {
 public:
     static void Start();
     static void Shutdown();
@@ -53,7 +53,7 @@ public:
     static void Unregister(FAbstractAutoSingleton *pinstance);
 };
 //----------------------------------------------------------------------------
-class FThreadLocalAutoSingletonManager {
+class PPE_CORE_API FThreadLocalAutoSingletonManager {
 public:
     static void Start();
     static void Shutdown();

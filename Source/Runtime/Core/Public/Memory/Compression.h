@@ -19,13 +19,13 @@ enum ECompressMethod {
     HighCompression,
 };
 //----------------------------------------------------------------------------
-size_t  CompressedSizeUpperBound(size_t sizeInBytes);
+PPE_CORE_API size_t  CompressedSizeUpperBound(size_t sizeInBytes);
 //----------------------------------------------------------------------------
-size_t  CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src, ECompressMethod method = Default);
+PPE_CORE_API size_t  CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src, ECompressMethod method = Default);
 //----------------------------------------------------------------------------
-size_t  DecompressedSize(const TMemoryView<const u8>& src);
+PPE_CORE_API size_t  DecompressedSize(const TMemoryView<const u8>& src);
 //----------------------------------------------------------------------------
-bool    DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src);
+PPE_CORE_API bool    DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src);
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 size_t CompressMemory(TRawStorage<u8, _Allocator>& dst, const TMemoryView<const u8>& src, ECompressMethod method = Default) {

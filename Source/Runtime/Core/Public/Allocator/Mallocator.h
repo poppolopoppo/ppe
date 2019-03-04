@@ -50,6 +50,8 @@ public:
     void* relocate(void* p, size_type newSize, size_type oldSize);
 };
 //----------------------------------------------------------------------------
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TMallocator<u8>;
+//----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
 auto TMallocator<T, _Alignment>::allocate(size_type n) -> pointer {
     // The return value of allocate(0) is unspecified.

@@ -7,10 +7,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template class TSHVector<1>;
-template class TSHVector<2>;
-template class TSHVector<3>;
-template class TSHVector<4>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TSHVector<1>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TSHVector<2>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TSHVector<3>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TSHVector<4>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

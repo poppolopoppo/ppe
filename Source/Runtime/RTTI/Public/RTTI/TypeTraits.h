@@ -182,7 +182,7 @@ public: // ITypeTraits
         : ITypeTraits(typeId, flags + ETypeFlags::Tuple, sizeInBytes)
     {}
 
-    virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
+    PPE_RTTI_API virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
 
 public:
     virtual size_t Arity() const = 0;
@@ -200,7 +200,7 @@ public: // ITypeTraits
         : ITypeTraits(typeId, flags + ETypeFlags::List, sizeInBytes)
     {}
 
-    virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
+    PPE_RTTI_API virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
 
 public: // IListTraits
     virtual PTypeTraits ValueTraits() const = 0;
@@ -231,7 +231,7 @@ public: // ITypeTraits
         : ITypeTraits(typeId, flags + ETypeFlags::Dico, sizeInBytes)
     {}
 
-    virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
+    PPE_RTTI_API virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
 
 public: // IDicoTraits
     virtual PTypeTraits KeyTraits() const = 0;

@@ -19,7 +19,7 @@ class FTransactionSerializer;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FLinkerException : public FSerializeException {
+class PPE_SERIALIZE_API FLinkerException : public FSerializeException {
 public:
     explicit FLinkerException(const char* what) : FSerializeException(what) {}
 };

@@ -10,6 +10,7 @@
 #include "MetaClass.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
+#include "MetaTransaction.h"
 
 #include "Container/Hash.h"
 #include "Container/Stack.h"
