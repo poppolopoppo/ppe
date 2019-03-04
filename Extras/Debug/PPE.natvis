@@ -235,10 +235,10 @@
     <DisplayString>{_basenameNoExt} {_extname}</DisplayString>
   </Type>
   <Type Name="PPE::FDirpath">
-    <DisplayString>{DebugPrintDirpath(*this)}</DisplayString>
+    <DisplayString>{PPE::DebugPrintDirpath(*this)}</DisplayString>
   </Type>
   <Type Name="PPE::FFilename">
-    <DisplayString>{DebugPrintFilename(*this)}</DisplayString>
+    <DisplayString>{PPE::DebugPrintFilename(*this)}</DisplayString>
   </Type>
 
   <Type Name="PPE::RTTI::TMetaTypeAtom&lt;* &gt;">
@@ -253,7 +253,6 @@
     <Expand>
       <Item Name="[RefCount]">_refCount</Item>
       <Item Name="[SafeCount]">_safeRefCount</Item>
-      <ExpandedItem>this</ExpandedItem>
     </Expand>
   </Type>
 
