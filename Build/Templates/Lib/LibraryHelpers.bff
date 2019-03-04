@@ -254,7 +254,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         Using( .ProjectCompileConfigWithPCH )
 
         .ProjectBasePath        = "$ProjectPath$"
-        .BuildLogFile           = "$BinaryPath$\$BinaryPrefix$.$Config$.$Platform$.log"
+        .BuildLogFile           = "$IntermediateRoot$\$ProjectName$.$Config$.$Platform$.log"
         .Output                 = "$BinaryPath$\$BinaryPrefix$.$Config$.$Platform$.$CompilerBinaryExtension$"
         .OutputDirectory        = "$BinaryPath$"
         .IntermediateDirectory  = "$IntermediatePath$"
