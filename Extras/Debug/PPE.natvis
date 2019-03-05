@@ -351,14 +351,14 @@
         <Item Name="[Classes]">_classCount</Item>
         <LinkedListItems>
           <Size>_classCount</Size>
-          <HeadPointer>_classHandles</HeadPointer>
+          <HeadPointer>_classHandles._head</HeadPointer>
           <NextPointer>_node.Next</NextPointer>
           <ValueNode>_class</ValueNode>
         </LinkedListItems>
         <Item Name="[Enums]">_enumCount</Item>
         <LinkedListItems>
           <Size>_enumCount</Size>
-          <HeadPointer>_enumHandles</HeadPointer>
+          <HeadPointer>_enumHandles._head</HeadPointer>
           <NextPointer>_node.Next</NextPointer>
           <ValueNode>_enum</ValueNode>
         </LinkedListItems>
