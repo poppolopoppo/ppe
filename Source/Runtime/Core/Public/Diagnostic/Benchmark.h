@@ -216,9 +216,6 @@ public: // FState
         FApproximateHistogram _histogram;
 
         double VarianceError() const {
-            const double variance = _histogram.Variance();
-            const double sampleVariance = _histogram.SampleVariance();
-
             return NearlyEquals(_histogram.Mean(), _histogram.WeightedMean(), _benchmark.MaxVarianceError);
         }
     };
