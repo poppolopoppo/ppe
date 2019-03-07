@@ -34,6 +34,11 @@ struct FSpan : FLocation {
         , Length(checked_cast<u32>(length))
     {}
 
+    FSpan SubRange(size_t offset, size_t count) const {
+        Assert_NoAssume(offset + count < Length);
+        return FSpan(FLocation(Filename, Line, Column + offset, Offset + offset), count);
+    }
+
     static FSpan FromSite(const FLocation& start, const FLocation& stop) {
         Assert(stop.Offset >= start.Offset);
         return FSpan(start, checked_cast<size_t>(stop.Offset - start.Offset));

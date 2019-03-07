@@ -7,6 +7,7 @@
 #include "Parser/ParseExpression.h"
 #include "Parser/ParseProduction.h"
 #include "Parser/ParseStatement.h"
+#include "Parser/StringExpansion.h"
 
 #include "MetaObject.h"
 #include "RTTI/AtomHeap.h"
@@ -18,7 +19,9 @@
 #include "IO/TextWriter.h"
 #include "Thread/ThreadContext.h"
 
-// workarounding a bug in Profiling : c4702 unreachable code - #TODO test after a few updates that this is no more necessary
+#include "HAL/PlatformMaths.h"
+
+// workaround a bug in Profiling : c4702 unreachable code - #TODO test after a few updates that this is no more necessary
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4702)
 
@@ -197,15 +200,15 @@ struct TUnaryOp {
 
         switch (value.TypeId()) {
         case PARSEID_BOOL:
-            return context->CreateAtomFrom( _Op< FParseBool     >()(expr, value.TypedConstData<FParseBool       >()) );
+            return context->CreateAtomFrom( _Op< FParseBool     >()(expr, value.FlatData<FParseBool       >()) );
         case PARSEID_INTEGER:
-            return context->CreateAtomFrom( _Op< FParseInteger  >()(expr, value.TypedConstData<FParseInteger    >()) );
+            return context->CreateAtomFrom( _Op< FParseInteger  >()(expr, value.FlatData<FParseInteger    >()) );
         case PARSEID_UNSIGNED:
-            return context->CreateAtomFrom( _Op< FParseUnsigned >()(expr, value.TypedConstData<FParseUnsigned   >()) );
+            return context->CreateAtomFrom( _Op< FParseUnsigned >()(expr, value.FlatData<FParseUnsigned   >()) );
         case PARSEID_FLOAT:
-            return context->CreateAtomFrom( _Op< FParseFloat    >()(expr, value.TypedConstData<FParseFloat      >()) );
+            return context->CreateAtomFrom( _Op< FParseFloat    >()(expr, value.FlatData<FParseFloat      >()) );
         case PARSEID_STRING:
-            return context->CreateAtomFrom( _Op< FParseString   >()(expr, value.TypedConstData<FParseString     >()) );
+            return context->CreateAtomFrom( _Op< FParseString   >()(expr, value.FlatData<FParseString     >()) );
 
         default:
             // now try to cast, i.e not the current type but accessible through meta cast
@@ -239,18 +242,18 @@ struct TBinaryOp {
         if (rhs_type_id == PARSEID_BOOL) {
             return context->CreateAtomFrom( _Op< FParseBool >()(
                 lhs,
-                lhs_value.TypedConstData<FParseBool>(),
-                rhs_value.TypedConstData<FParseBool>() ));
+                lhs_value.FlatData<FParseBool>(),
+                rhs_value.FlatData<FParseBool>() ));
         }
         else {
             FParseBool b{ false };
 
             if (rhs_type_id == PARSEID_INTEGER)
-                b = (FParseInteger(0) != rhs_value.TypedConstData<FParseInteger>());
+                b = (FParseInteger(0) != rhs_value.FlatData<FParseInteger>());
             else if (rhs_type_id == PARSEID_UNSIGNED)
-                b = (FParseUnsigned(0) != rhs_value.TypedConstData<FParseUnsigned>());
+                b = (FParseUnsigned(0) != rhs_value.FlatData<FParseUnsigned>());
             else if (rhs_type_id == PARSEID_FLOAT)
-                b = (FParseFloat(0) != rhs_value.TypedConstData<FParseFloat>());
+                b = (FParseFloat(0) != rhs_value.FlatData<FParseFloat>());
             else {
                 FParseInteger integer;
                 FParseInteger unsign_d;
@@ -270,7 +273,7 @@ struct TBinaryOp {
 
             return context->CreateAtomFrom( _Op< FParseBool >()(
                 lhs,
-                lhs_value.TypedConstData<FParseBool>(),
+                lhs_value.FlatData<FParseBool>(),
                 b ));
         }
     }
@@ -287,16 +290,16 @@ struct TBinaryOp {
 
         if (rhs_type_id == PARSEID_BOOL)
             return context->CreateAtomFrom(
-                _Op< FParseInteger >()(lhs, lhs_value.TypedConstData<FParseInteger>(), rhs_value.TypedConstData<FParseBool>() ? FParseInteger(1) : FParseInteger(0)) );
+                _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseInteger>(), rhs_value.FlatData<FParseBool>() ? FParseInteger(1) : FParseInteger(0)) );
         else if (rhs_type_id == PARSEID_INTEGER)
             return context->CreateAtomFrom(
-                _Op< FParseInteger >()(lhs, lhs_value.TypedConstData<FParseInteger>(), rhs_value.TypedConstData<FParseInteger>()) );
+                _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseInteger>(), rhs_value.FlatData<FParseInteger>()) );
         else if (rhs_type_id == PARSEID_UNSIGNED)
             return context->CreateAtomFrom(
-                _Op< FParseUnsigned >()(lhs, lhs_value.TypedConstData<FParseInteger>(), rhs_value.TypedConstData<FParseUnsigned>()));
+                _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseInteger>(), rhs_value.FlatData<FParseUnsigned>()));
         else if (rhs_type_id == PARSEID_FLOAT)
             return context->CreateAtomFrom(
-                _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.TypedConstData<FParseInteger>()), rhs_value.TypedConstData<FParseFloat>()) );
+                _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseInteger>()), rhs_value.FlatData<FParseFloat>()) );
         else {
             FParseBool b;
             FParseUnsigned u;
@@ -304,16 +307,16 @@ struct TBinaryOp {
 
             if (rhs_value.PromoteCopy(RTTI::MakeAtom(&integer)))
                 return context->CreateAtomFrom(
-                    _Op< FParseInteger >()(lhs, lhs_value.TypedConstData<FParseInteger>(), integer) );
+                    _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseInteger>(), integer) );
             else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&u)))
                 return context->CreateAtomFrom(
-                    _Op< FParseUnsigned >()(lhs, lhs_value.TypedConstData<FParseInteger>(), u) );
+                    _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseInteger>(), u) );
             else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
                 return context->CreateAtomFrom(
-                    _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.TypedConstData<FParseInteger>()), fp) );
+                    _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseInteger>()), fp) );
             else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
                 return context->CreateAtomFrom(
-                    _Op< FParseInteger >()(lhs, lhs_value.TypedConstData<FParseInteger>(), b ? FParseInteger(1) : FParseInteger(0)) );
+                    _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseInteger>(), b ? FParseInteger(1) : FParseInteger(0)) );
             else
                 PPE_THROW_IT(Parser::FParserException("could not convert to integer", rhs));
         }
@@ -331,16 +334,16 @@ struct TBinaryOp {
 
         if (rhs_type_id == PARSEID_BOOL)
             return context->CreateAtomFrom(
-                _Op< FParseInteger >()(lhs, lhs_value.TypedConstData<FParseUnsigned>(), rhs_value.TypedConstData<FParseBool>() ? FParseUnsigned(1) : FParseUnsigned(0)));
+                _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseUnsigned>(), rhs_value.FlatData<FParseBool>() ? FParseUnsigned(1) : FParseUnsigned(0)));
         else if (rhs_type_id == PARSEID_INTEGER)
             return context->CreateAtomFrom(
-                _Op< FParseInteger >()(lhs, lhs_value.TypedConstData<FParseUnsigned>(), rhs_value.TypedConstData<FParseInteger>()));
+                _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseUnsigned>(), rhs_value.FlatData<FParseInteger>()));
         else if (rhs_type_id == PARSEID_UNSIGNED)
             return context->CreateAtomFrom(
-                _Op< FParseUnsigned >()(lhs, lhs_value.TypedConstData<FParseUnsigned>(), rhs_value.TypedConstData<FParseUnsigned>()));
+                _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseUnsigned>(), rhs_value.FlatData<FParseUnsigned>()));
         else if (rhs_type_id == PARSEID_FLOAT)
             return context->CreateAtomFrom(
-                _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.TypedConstData<FParseUnsigned>()), rhs_value.TypedConstData<FParseFloat>()));
+                _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseUnsigned>()), rhs_value.FlatData<FParseFloat>()));
         else {
             FParseBool b;
             FParseInteger i;
@@ -348,16 +351,16 @@ struct TBinaryOp {
 
             if (rhs_value.PromoteCopy(RTTI::MakeAtom(&unsign_d)))
                 return context->CreateAtomFrom(
-                    _Op< FParseInteger >()(lhs, lhs_value.TypedConstData<FParseUnsigned>(), unsign_d));
+                    _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseUnsigned>(), unsign_d));
             else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&i)))
                 return context->CreateAtomFrom(
-                    _Op< FParseUnsigned >()(lhs, lhs_value.TypedConstData<FParseUnsigned>(), i));
+                    _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseUnsigned>(), i));
             else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
                 return context->CreateAtomFrom(
-                    _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.TypedConstData<FParseUnsigned>()), fp));
+                    _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseUnsigned>()), fp));
             else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
                 return context->CreateAtomFrom(
-                    _Op< FParseUnsigned >()(lhs, lhs_value.TypedConstData<FParseUnsigned>(), b ? FParseUnsigned(1) : FParseUnsigned(0)));
+                    _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseUnsigned>(), b ? FParseUnsigned(1) : FParseUnsigned(0)));
             else
                 PPE_THROW_IT(Parser::FParserException("could not convert to integer", rhs));
         }
@@ -374,13 +377,13 @@ struct TBinaryOp {
         FParseFloat f{ 0 };
 
         if (rhs_type_id == PARSEID_FLOAT)
-            f = rhs_value.TypedConstData<FParseFloat>();
+            f = rhs_value.FlatData<FParseFloat>();
         else if (rhs_type_id == PARSEID_INTEGER)
-            f = static_cast<FParseFloat>(rhs_value.TypedConstData<FParseInteger>());
+            f = static_cast<FParseFloat>(rhs_value.FlatData<FParseInteger>());
         else if (rhs_type_id == PARSEID_UNSIGNED)
-            f = static_cast<FParseFloat>(rhs_value.TypedConstData<FParseUnsigned>());
+            f = static_cast<FParseFloat>(rhs_value.FlatData<FParseUnsigned>());
         else if (rhs_type_id == PARSEID_BOOL)
-            f = rhs_value.TypedConstData<FParseBool>() ? FParseFloat(1) : FParseFloat(0);
+            f = rhs_value.FlatData<FParseBool>() ? FParseFloat(1) : FParseFloat(0);
         else {
             FParseInteger i;
             FParseUnsigned u;
@@ -397,7 +400,7 @@ struct TBinaryOp {
         }
 
         return context->CreateAtomFrom(
-            _Op< FParseFloat >()(lhs, lhs_value.TypedConstData<FParseFloat>(), f)
+            _Op< FParseFloat >()(lhs, lhs_value.FlatData<FParseFloat>(), f)
             );
     }
 
@@ -411,19 +414,19 @@ struct TBinaryOp {
 
         if (rhs_type_id == PARSEID_STRING)
             return context->CreateAtomFrom(
-                _Op< FParseString >()(lhs, lhs_value.TypedConstData<FParseString>(), rhs_value.TypedConstData<FParseString>())
+                _Op< FParseString >()(lhs, lhs_value.FlatData<FParseString>(), rhs_value.FlatData<FParseString>())
                 );
 
         FStringBuilder oss;
 
         if (rhs_type_id == PARSEID_BOOL)
-            oss << rhs_value.TypedConstData<FParseBool>();
+            oss << rhs_value.FlatData<FParseBool>();
         else if (rhs_type_id == PARSEID_INTEGER)
-            oss << rhs_value.TypedConstData<FParseInteger>();
+            oss << rhs_value.FlatData<FParseInteger>();
         else if (rhs_type_id == PARSEID_UNSIGNED)
-            oss << rhs_value.TypedConstData<FParseUnsigned>();
+            oss << rhs_value.FlatData<FParseUnsigned>();
         else if (rhs_type_id == PARSEID_FLOAT)
-            oss << rhs_value.TypedConstData<FParseFloat>();
+            oss << rhs_value.FlatData<FParseFloat>();
         else {
             FParseString s;
             FParseInteger i;
@@ -446,7 +449,7 @@ struct TBinaryOp {
         }
 
         return context->CreateAtomFrom(
-            _Op< FParseString >()(lhs, lhs_value.TypedConstData<FParseString>(), oss.ToString())
+            _Op< FParseString >()(lhs, lhs_value.FlatData<FParseString>(), oss.ToString())
             );
     }
 
@@ -470,7 +473,7 @@ struct TBinaryOp {
             return StringOp_(context, lhs, rhs, lhs_value, rhs_value);
 
         default:
-            // now try to cast, i.e not the current type but accessible through meta cast
+            // now try to cast, i.e not the current type but accessible through copy promotion
             {
                 FParseBool b;
                 RTTI::FAtom lhs_bool(RTTI::MakeAtom(&b));
@@ -503,6 +506,33 @@ struct TBinaryOp {
     }
 };
 //----------------------------------------------------------------------------
+// Special behavior for <String> % <Any> which can be used for string interpolation
+template <>
+RTTI::FAtom TBinaryOp<TBinOp_Mod>::StringOp_(
+    Parser::FParseContext* context,
+    const Parser::FParseExpression* lhs,
+    const Parser::FParseExpression*,
+    const RTTI::FAtom& lhs_value, const RTTI::FAtom& rhs_value) {
+
+    FString formated;
+
+    const RTTI::ETypeFlags typeFlags = rhs_value.TypeFlags();
+    if (typeFlags ^ RTTI::ETypeFlags::Tuple)
+        formated = PerformStringExpansion(lhs_value.FlatData<FString>(), rhs_value, rhs_value.Traits()->ToTuple(), lhs->Site());
+    else if (typeFlags ^ RTTI::ETypeFlags::List)
+        formated = PerformStringExpansion(lhs_value.FlatData<FString>(), rhs_value, rhs_value.Traits()->ToList(), lhs->Site());
+#if 0 // #TODO : named format instead of indexes when used against a dico
+    else if (typeFlags ^ RTTI::ETypeFlags::Dico)
+        formated = PerformStringExpansion(lhs_value.FlatData<FString>(), rhs_value, rhs_value.Traits()->ToDico(), lhs->Site());
+#endif
+    else {
+        Assert_NoAssume(typeFlags ^ RTTI::ETypeFlags::Scalar);
+        formated = PerformStringExpansion(lhs_value.FlatData<FString>(), rhs_value, rhs_value.Traits()->ToScalar(), lhs->Site());
+    }
+
+    return context->CreateAtomFrom(std::move(formated));
+}
+//----------------------------------------------------------------------------
 struct FTernaryOp {
     bool operator ()(Parser::FParseContext* context, const Parser::FParseExpression *expr) const {
         const RTTI::FAtom value = expr->Eval(context);
@@ -511,15 +541,15 @@ struct FTernaryOp {
 
         switch (value.TypeId()) {
         case PARSEID_BOOL:
-            return (value.TypedConstData<FParseBool>() != 0);
+            return (value.FlatData<FParseBool>() != 0);
         case PARSEID_INTEGER:
-            return (value.TypedConstData<FParseInteger>() != 0);
+            return (value.FlatData<FParseInteger>() != 0);
         case PARSEID_UNSIGNED:
-            return (value.TypedConstData<FParseUnsigned>() != 0);
+            return (value.FlatData<FParseUnsigned>() != 0);
         case PARSEID_FLOAT:
-            return (value.TypedConstData<FParseFloat>() != 0);
+            return (value.FlatData<FParseFloat>() != 0);
         case PARSEID_STRING:
-            return (value.TypedConstData<FParseString>().empty() != false);
+            return (value.FlatData<FParseString>().empty() != false);
         }
 
         PPE_THROW_IT(Parser::FParserException("invalid atom type for ternary operator", expr));
@@ -698,6 +728,9 @@ FGrammarImpl::FGrammarImpl()
 ,   _reference(
         _literal.Ref()
     .Or(_cast.Ref())
+    .Or(_tuple.Ref())
+    .Or(_array.Ref())
+    .Or(_dictionary.Ref())
     .Or(_object.Ref())
     .Or(_variable.Ref())
     .Or(Parser::Expect(Lexer::FSymbol::LParenthese).And(_expr.Ref()).And(Parser::Expect(Lexer::FSymbol::RParenthese))

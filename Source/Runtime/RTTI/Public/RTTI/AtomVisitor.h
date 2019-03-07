@@ -95,8 +95,17 @@ FORCE_INLINE bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_RTTI_API FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom, bool showDefaults = false);
-PPE_RTTI_API FWTextWriter& PrettyPrint(FWTextWriter& oss, const FAtom& atom, bool showDefaults = false);
+enum class EPrettyPrintFlags : u32 {
+    None            = 0, 
+    ShowDefaults    = 1<<0,
+    ShowTypenames   = 1<<1,
+
+    Default         = ShowTypenames
+};
+ENUM_FLAGS(EPrettyPrintFlags);
+//----------------------------------------------------------------------------
+PPE_RTTI_API FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom, EPrettyPrintFlags flags = EPrettyPrintFlags::Default);
+PPE_RTTI_API FWTextWriter& PrettyPrint(FWTextWriter& oss, const FAtom& atom, EPrettyPrintFlags flags = EPrettyPrintFlags::Default);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

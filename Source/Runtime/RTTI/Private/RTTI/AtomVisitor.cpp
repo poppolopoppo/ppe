@@ -59,9 +59,9 @@ struct TPPFormat_<wchar_t> {
 template <typename _Char>
 class TPrettyPrinter_ : public IAtomVisitor {
 public:
-    TPrettyPrinter_(TBasicTextWriter<_Char>& oss, bool showDefaults)
+    TPrettyPrinter_(TBasicTextWriter<_Char>& oss, EPrettyPrintFlags flags)
         : _oss(oss)
-        , _showDefaults(showDefaults)
+        , _flags(flags)
     {}
 
     virtual bool Visit(const ITupleTraits* tuple, void* data) override final {
@@ -140,8 +140,7 @@ public:
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
     virtual bool Visit(const IScalarTraits* scalar, T& value) override final { \
-        _oss << scalar->TypeInfos().Name() << Fmt::Colon; \
-        Print_(value); \
+        PrintDispatch_(scalar, value);
         return true; \
     }
     FOREACH_RTTI_NATIVETYPES(DECL_ATOM_VIRTUAL_VISIT)
@@ -149,6 +148,14 @@ public:
 
 private:
     using PP = TPPFormat_<_Char>;
+
+    template <typename T>
+    void PrintDispatch_(const IScalarTraits* scalar, const T& value) {
+        if (_flags & EPrettyPrintFlags::ShowTypenames)
+            _oss << scalar->TypeInfos().Name() << Fmt::Colon;
+
+        Print_(value);
+    }
 
     void Print_(const FAny& any) {
         if (any)
@@ -170,7 +177,7 @@ private:
             bool empty = true;
             for (const FMetaProperty* prop : metaClass->AllProperties()) {
                 const RTTI::FAtom val = prop->Get(obj);
-                if (not _showDefaults & val.IsDefaultValue())
+                if (not (_flags & EPrettyPrintFlags::ShowDefaults) && val.IsDefaultValue())
                     continue;
 
                 if (empty) {
@@ -216,7 +223,7 @@ private:
 
     typename PP::FIndent _indent;
     TBasicTextWriter<_Char>& _oss;
-    const bool _showDefaults;
+    const EPrettyPrintFlags _flags;
 };
 //----------------------------------------------------------------------------
 } //!namespace
