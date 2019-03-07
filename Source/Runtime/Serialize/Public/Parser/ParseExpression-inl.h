@@ -22,12 +22,6 @@ TLiteral<T>::TLiteral(T&& rvalue, const Lexer::FSpan& site)
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TLiteral<T>::TLiteral(const T& value, const Lexer::FSpan& site)
-:   FParseExpression(site)
-,   _literal(value) {
-}
-//----------------------------------------------------------------------------
-template <typename T>
 TLiteral<T>::~TLiteral() {}
 //----------------------------------------------------------------------------
 template <typename T>
