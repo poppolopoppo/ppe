@@ -36,7 +36,7 @@ public: // must be defined for every platform
     static FString CPUVendor() = delete;
 
     static size_t NumCores() = delete;
-    static size_t NumCoresWHyperThreading() = delete;
+    static size_t NumCoresWithSMT() = delete;
 
     static FString MachineName() = delete;
     static FString OSName() = delete;

@@ -71,7 +71,7 @@ static size_t FetchNumCores_() {
     return numCores;
 }
 //----------------------------------------------------------------------------
-static size_t FetchNumCoresWHyperThreading_() {
+static size_t FetchNumCoresWithSMT_() {
 
     // Get the number of logical processors, including hyper-threaded ones.
     ::SYSTEM_INFO sys;
@@ -153,13 +153,13 @@ FString FWindowsPlatformMisc::CPUVendor() {
     return FString(Strip(MakeCStringView(vendorResult.Buffer)));
 }
 //----------------------------------------------------------------------------
-size_t FWindowsPlatformMisc::NumCores() {
+size_t FWindowsPlatformMisc::NumCores() NOEXCEPT {
     static const size_t GNumCores = FetchNumCores_();
     return GNumCores;
 }
 //----------------------------------------------------------------------------
-size_t FWindowsPlatformMisc::NumCoresWHyperThreading() {
-    static const size_t GNumCoresWHyperThreading = FetchNumCoresWHyperThreading_();
+size_t FWindowsPlatformMisc::NumCoresWithSMT() NOEXCEPT {
+    static const size_t GNumCoresWHyperThreading = FetchNumCoresWithSMT_();
     return GNumCoresWHyperThreading;
 }
 //----------------------------------------------------------------------------

@@ -22,9 +22,7 @@ public:
 
     using FGenericPlatformThread::FAffinityMask;
 
-    STATIC_CONST_INTEGRAL(FAffinityMask, ValidAffinityMask, FAffinityMask(-1));
-
-    using FGenericPlatformThread::AllThreadsAffinity;
+    static const FAffinityMask AllThreadsAffinity;
 
     static FAffinityMask MainThreadAffinity();
     static FAffinityMask SecondaryThreadAffinity();

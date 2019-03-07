@@ -18,8 +18,8 @@ public:
     static FString CPUBrand();
     static FString CPUVendor();
 
-    static size_t NumCores();
-    static size_t NumCoresWHyperThreading();
+    static size_t NumCores() NOEXCEPT;
+    static size_t NumCoresWithSMT() NOEXCEPT;
 
     static FString MachineName();
     static FString OSName();

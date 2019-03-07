@@ -103,7 +103,7 @@ void FCurrentProcess::DumpProcessInfos() const {
     LOG(Process, Info, L"   CookedData supported = {0:A}", platform.SupportsFeature(EPlatformFeature::CookedData));
 
     LOG(Process, Info, L"cpu = {0}, {1}", FPlatformMisc::CPUVendor(), FPlatformMisc::CPUBrand());
-    LOG(Process, Info, L"   {0} physical cores ({1} logical)", FPlatformMisc::NumCores(), FPlatformMisc::NumCoresWHyperThreading());
+    LOG(Process, Info, L"   {0} physical cores ({1} logical)", FPlatformMisc::NumCores(), FPlatformMisc::NumCoresWithSMT());
     LOG(Process, Info, L"   allocation granularity = {0}", Fmt::SizeInBytes(mem.AllocationGranularity));
     LOG(Process, Info, L"   cache line size = {0}", Fmt::SizeInBytes(mem.CacheLineSize));
     LOG(Process, Info, L"   page size = {0}", Fmt::SizeInBytes(mem.PageSize));

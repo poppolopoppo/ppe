@@ -118,7 +118,7 @@ void ParallelFor(
     };
 
     // decide if it's worth to process part of load on the current thread
-    const bool busy_wait = (worker_count < FPlatformMisc::NumCoresWHyperThreading());
+    const bool busy_wait = (worker_count < FPlatformMisc::NumCoresWithSMT());
 
     if (busy_wait) {
         // wait for end of the loop while processing the last slice
