@@ -76,24 +76,20 @@ bool IBufferedStreamReader::ExpectPOD(const T& pod) {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 void IStreamWriter::WriteArray(const T(&staticArray)[_Dim]) {
-    if (not Write(staticArray, sizeof(T)*_Dim) )
-        AssertNotReached();
+    VerifyRelease(Write(staticArray, sizeof(T)*_Dim));
 }
 //----------------------------------------------------------------------------
 inline void IStreamWriter::WriteView(const FStringView& str) {
-    if (not Write(str.data(), str.SizeInBytes()) )
-        AssertNotReached();
+    VerifyRelease(str.empty() || Write(str.data(), str.SizeInBytes()));
 }
 //----------------------------------------------------------------------------
 inline void IStreamWriter::WriteView(const FWStringView& wstr) {
-    if (not Write(wstr.data(), wstr.SizeInBytes()) )
-        AssertNotReached();
+    VerifyRelease(wstr.empty() || Write(wstr.data(), wstr.SizeInBytes()));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void IStreamWriter::WriteView(const TMemoryView<T>& data) {
-    if (not Write(data.Pointer(), data.SizeInBytes()) )
-        AssertNotReached();
+    VerifyRelease(data.empty() || Write(data.data(), data.SizeInBytes()));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
