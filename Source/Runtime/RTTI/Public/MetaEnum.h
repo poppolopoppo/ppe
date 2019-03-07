@@ -23,7 +23,7 @@ ENUM_FLAGS(EEnumFlags);
 //----------------------------------------------------------------------------
 struct FMetaEnumValue {
     FName Name;
-    i64 Value;
+    FMetaEnumOrd Value;
 };
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaEnum : Meta::FNonCopyableNorMovable {
@@ -46,17 +46,17 @@ public:
     const FMetaEnumValue* NameToValueIFP(const RTTI::FName& name) const;
     const FMetaEnumValue* NameToValueIFP(const FStringView& name) const;
 
-    const FMetaEnumValue& ValueToName(i64 value) const;
-    const FMetaEnumValue* ValueToNameIFP(i64 value) const;
+    const FMetaEnumValue& ValueToName(FMetaEnumOrd value) const;
+    const FMetaEnumValue* ValueToNameIFP(FMetaEnumOrd value) const;
 
     using FExpansion = VECTORINSITU(MetaEnum, const FMetaEnumValue*, 6);
-    bool ExpandValues(i64 value, FExpansion* expansion) const;
+    bool ExpandValues(FMetaEnumOrd value, FExpansion* expansion) const;
     bool ExpandValues(const FAtom& src, FExpansion* expansion) const;
 
     bool IsValidName(const FName& name) const;
     bool IsValidName(const FAtom& src) const;
 
-    bool IsValidValue(i64 value) const;
+    bool IsValidValue(FMetaEnumOrd value) const;
     bool IsValidValue(const FAtom& src) const;
 
     void SetValue(const FAtom& dst, const FMetaEnumValue& v) const;
@@ -96,7 +96,7 @@ inline FStringView MetaEnumName(const FMetaEnum* metaEnum) {
     return metaEnum->Name().MakeView();
 }
 //----------------------------------------------------------------------------
-inline i64 MetaEnumDefaultValue(const FMetaEnum* metaEnum) {
+inline FMetaEnumOrd MetaEnumDefaultValue(const FMetaEnum* metaEnum) {
     Assert(metaEnum);
     return metaEnum->DefaultValue().Value;
 }

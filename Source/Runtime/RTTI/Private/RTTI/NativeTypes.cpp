@@ -393,7 +393,7 @@ DEF_RTTI_ALIASING_TRAITS(u128,                  COMMA_PROTECT(TPair<u64, u64>))
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool PromoteEnum(const IScalarTraits& traits, i64 src, const FAtom& dst) {
+bool PromoteEnum(const IScalarTraits& traits, FMetaEnumOrd src, const FAtom& dst) {
     if (ENativeType(dst.TypeId()) == ENativeType::Name) {
         const FMetaEnum* metaEnum = traits.EnumClass();
         Assert(metaEnum);

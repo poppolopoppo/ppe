@@ -89,24 +89,24 @@ PPE_RTTI_API PTypeTraits Traits(Meta::TType<u128>) NOEXCEPT;
 // TEnumTraits<T>
 //----------------------------------------------------------------------------
 template <typename _Enum/*, class = Meta::TEnableIf<std::is_enum_v<_Enum>> */>
-using TEnum_t = std::underlying_type_t<_Enum>;
+using TEnumOrd = std::underlying_type_t<_Enum>;
 //----------------------------------------------------------------------------
-PPE_RTTI_API bool PromoteEnum(const IScalarTraits& self, i64 src, const FAtom& dst);
+PPE_RTTI_API bool PromoteEnum(const IScalarTraits& self, FMetaEnumOrd src, const FAtom& dst);
 //----------------------------------------------------------------------------
 template <typename T>
-class TEnumTraits final : public TBaseTypeTraits<TEnum_t<T>, TBaseScalarTraits<TEnum_t<T>> > {
-    using base_traits = TBaseTypeTraits<TEnum_t<T>, TBaseScalarTraits<TEnum_t<T>> >;
+class TEnumTraits final : public TBaseTypeTraits<TEnumOrd<T>, TBaseScalarTraits<TEnumOrd<T>> > {
+    using base_traits = TBaseTypeTraits<TEnumOrd<T>, TBaseScalarTraits<TEnumOrd<T>> >;
 
 public: // ITypeTraits
     CONSTEXPR TEnumTraits()
     :   base_traits(
-        NativeTypeId<TEnum_t<T>>(),
+        NativeTypeId<TEnumOrd<T>>(),
         ETypeFlags::Enum |
         ETypeFlags::Native |
         ETypeFlags::POD |
         ETypeFlags::Scalar |
         ETypeFlags::TriviallyDestructible,
-        sizeof(TEnum_t<T>) )
+        sizeof(TEnumOrd<T>) )
     {}
 
     virtual const FMetaEnum* EnumClass() const override final { return RTTI::MetaEnum<T>(); }
@@ -141,27 +141,27 @@ FStringView TEnumTraits<T>::TypeName() const {
 //----------------------------------------------------------------------------
 template <typename T>
 bool TEnumTraits<T>::DeepEquals(const void* lhs, const void* rhs) const {
-    return (*reinterpret_cast<const TEnum_t<T>*>(lhs) ==
-            *reinterpret_cast<const TEnum_t<T>*>(rhs) );
+    return (*reinterpret_cast<const TEnumOrd<T>*>(lhs) ==
+            *reinterpret_cast<const TEnumOrd<T>*>(rhs) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void TEnumTraits<T>::DeepCopy(const void* src, void* dst) const {
-    *reinterpret_cast<TEnum_t<T>*>(dst) =
-        *reinterpret_cast<const TEnum_t<T>*>(src);
+    *reinterpret_cast<TEnumOrd<T>*>(dst) =
+        *reinterpret_cast<const TEnumOrd<T>*>(src);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 bool TEnumTraits<T>::PromoteCopy(const void* src, const FAtom& dst) const {
     return (not base_traits::PromoteCopy(src, dst)
-        ? PromoteEnum(*this, i64(*reinterpret_cast<const TEnum_t<T>*>(src)), dst)
+        ? PromoteEnum(*this, i64(*reinterpret_cast<const TEnumOrd<T>*>(src)), dst)
         : true);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 bool TEnumTraits<T>::PromoteMove(void* src, const FAtom& dst) const {
     return (not base_traits::PromoteMove(src, dst)
-        ? PromoteEnum(*this, i64(*reinterpret_cast<TEnum_t<T>*>(src)), dst)
+        ? PromoteEnum(*this, i64(*reinterpret_cast<TEnumOrd<T>*>(src)), dst)
         : true);
 }
 //----------------------------------------------------------------------------
@@ -177,23 +177,23 @@ bool TEnumTraits<T>::Accept(IAtomVisitor* visitor, void* data) const {
 
     return AtomVisit(*visitor,
         static_cast<const IScalarTraits*>(this),
-        *reinterpret_cast<TEnum_t<T>*>(data) );
+        *reinterpret_cast<TEnumOrd<T>*>(data) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 bool TEnumTraits<T>::IsDefaultValue(const void* data) const {
     Assert(data);
 
-    const auto defaultValue= TEnum_t<T>( MetaEnumDefaultValue(TEnumTraits<T>::EnumClass()) );
-    return (*reinterpret_cast<const TEnum_t<T>*>(data) == defaultValue);
+    const auto defaultValue= TEnumOrd<T>( MetaEnumDefaultValue(TEnumTraits<T>::EnumClass()) );
+    return (*reinterpret_cast<const TEnumOrd<T>*>(data) == defaultValue);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void TEnumTraits<T>::ResetToDefaultValue(void* data) const {
     Assert(data);
 
-    const auto defaultValue = TEnum_t<T>(MetaEnumDefaultValue(TEnumTraits<T>::EnumClass()));
-    *reinterpret_cast<TEnum_t<T>*>(data) = defaultValue;
+    const auto defaultValue = TEnumOrd<T>(MetaEnumDefaultValue(TEnumTraits<T>::EnumClass()));
+    *reinterpret_cast<TEnumOrd<T>*>(data) = defaultValue;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

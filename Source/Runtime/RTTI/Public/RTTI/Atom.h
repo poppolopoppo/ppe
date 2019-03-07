@@ -31,7 +31,7 @@ public:
 
     template <typename T>
     T& FlatData() const {
-        Assert(MakeTraits<T>()->TypeId() == _traits->TypeId());
+        Assert_NoAssume(MakeTraits<T>()->TypeId() == _traits->TypeId());
         return (*reinterpret_cast<T*>(_data));
     }
 

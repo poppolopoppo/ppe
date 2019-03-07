@@ -54,13 +54,13 @@ const FMetaEnumValue* FMetaEnum::NameToValueIFP(const FStringView& name) const {
     return (view.end() == it ? nullptr : std::addressof(*it));
 }
 //----------------------------------------------------------------------------
-const FMetaEnumValue& FMetaEnum::ValueToName(i64 value) const {
+const FMetaEnumValue& FMetaEnum::ValueToName(FMetaEnumOrd value) const {
     const FMetaEnumValue* const pValue = ValueToNameIFP(value);
     Assert(pValue);
     return (*pValue);
 }
 //----------------------------------------------------------------------------
-const FMetaEnumValue* FMetaEnum::ValueToNameIFP(i64 value) const {
+const FMetaEnumValue* FMetaEnum::ValueToNameIFP(FMetaEnumOrd value) const {
     const auto view = _values.MakeConstView();
     const auto it = view.FindIf([value](const FMetaEnumValue& v) {
         return (v.Value == value);
@@ -69,7 +69,7 @@ const FMetaEnumValue* FMetaEnum::ValueToNameIFP(i64 value) const {
     return (view.end() == it ? nullptr : std::addressof(*it));
 }
 //----------------------------------------------------------------------------
-bool FMetaEnum::ExpandValues(i64 value, FExpansion* expansion) const {
+bool FMetaEnum::ExpandValues(FMetaEnumOrd value, FExpansion* expansion) const {
     Assert(expansion);
 
     if (IsFlags()) {
@@ -93,13 +93,13 @@ bool FMetaEnum::ExpandValues(const FAtom& src, FExpansion* expansion) const {
 
     switch (_sizeInBytes) {
     case sizeof(u8) :
-        return ExpandValues(checked_cast<i64>(*reinterpret_cast<u8*>(src.Data())), expansion);
+        return ExpandValues(checked_cast<FMetaEnumOrd>(*reinterpret_cast<u8*>(src.Data())), expansion);
     case sizeof(u16):
-        return ExpandValues(checked_cast<i64>(*reinterpret_cast<u16*>(src.Data())), expansion);
+        return ExpandValues(checked_cast<FMetaEnumOrd>(*reinterpret_cast<u16*>(src.Data())), expansion);
     case sizeof(u32):
-        return ExpandValues(checked_cast<i64>(*reinterpret_cast<u32*>(src.Data())), expansion);
+        return ExpandValues(checked_cast<FMetaEnumOrd>(*reinterpret_cast<u32*>(src.Data())), expansion);
     case sizeof(u64):
-        return ExpandValues(checked_cast<i64>(*reinterpret_cast<u64*>(src.Data())), expansion);
+        return ExpandValues(checked_cast<FMetaEnumOrd>(*reinterpret_cast<u64*>(src.Data())), expansion);
     }
 
     AssertNotImplemented();
@@ -118,7 +118,7 @@ bool FMetaEnum::IsValidName(const FAtom& src) const {
         : false );
 }
 //----------------------------------------------------------------------------
-bool FMetaEnum::IsValidValue(i64 value) const {
+bool FMetaEnum::IsValidValue(FMetaEnumOrd value) const {
     if (IsFlags()) {
         for (const FMetaEnumValue& it : _values)
             if ((it.Value & value) == it.Value)
@@ -138,7 +138,7 @@ bool FMetaEnum::IsValidValue(i64 value) const {
 bool FMetaEnum::IsValidValue(const FAtom& src) const {
     Assert_NoAssume(src);
 
-    i64 value = 0;
+    FMetaEnumOrd value = 0;
     return (src.PromoteCopy(MakeAtom(&value))
         ? IsValidValue(value)
         : false );
