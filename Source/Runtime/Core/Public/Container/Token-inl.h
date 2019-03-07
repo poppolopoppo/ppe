@@ -29,7 +29,7 @@ auto TToken<_Tag, _Char, _Sensitive, _TokenTraits>::FindOrAdd_(const stringview_
     if (str.empty())
         return nullptr;
 
-    Assert(str.empty());
+    Assert(not str.empty());
     Assert_NoAssume(IsValidToken(str));
 
     const hash_t hash = hasher_type{}(str);

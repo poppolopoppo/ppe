@@ -39,7 +39,7 @@ static FWindowsPlatformThread::FAffinityMask LogicalAffinityMask_(size_t coreMas
 static FWindowsPlatformThread::FAffinityMask FetchAllThreadsAffinityMask_() NOEXCEPT {
     using affinity_t = FWindowsPlatformThread::FAffinityMask;
 
-    const size_t numCores = checked_cast<affinity_t>(FWindowsPlatformMisc::NumCoresWithSMT());
+    const affinity_t numCores = checked_cast<affinity_t>(FWindowsPlatformMisc::NumCoresWithSMT());
     Assert(numCores <= PPE_MAX_NUMCPUCORE);
 
     return (numCores == PPE_MAX_NUMCPUCORE
@@ -77,7 +77,7 @@ auto FWindowsPlatformThread::AffinityMask() -> FAffinityMask {
 
     ::DWORD_PTR affinityMask;
 
-    affinityMask = ::SetThreadAffinityMask(hThread, AllThreadsAffinity);
+    affinityMask = ::SetThreadAffinityMask(hThread, checked_cast<::DWORD_PTR>(AllThreadsAffinity));
     CLOG(0 == affinityMask, HAL, Fatal, L"SetThreadAffinityMask({0:#16x}) failed with = {1}", AllThreadsAffinity, FLastError());
 
     const FAffinityMask result = checked_cast<FAffinityMask>(affinityMask);
