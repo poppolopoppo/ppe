@@ -519,6 +519,11 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TBasicS
     return oss << s.MakeView(); // will be lazily converted to corresponding char type, :'( ?
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+TBasicStringView<_Char> Slice(const TBasicString<_Char>& str, size_t offset, size_t count) {
+    return str.MakeView().SubRange(offset, count);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PPE_CORE_API size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
