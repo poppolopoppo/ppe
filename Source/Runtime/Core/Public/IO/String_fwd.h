@@ -57,8 +57,12 @@ struct TBasicFormatFunctor_;
 } //!details
 //----------------------------------------------------------------------------
 template <typename _Char>
-using TBasicFormatArgList = TMemoryView< const details::TBasicFormatFunctor_<_Char> >;
+using TBasicFormatArg = details::TBasicFormatFunctor_<_Char>;
+using FFormatArg = TBasicFormatArg<char>;
+using FWFormatArg = TBasicFormatArg<wchar_t>;
 //----------------------------------------------------------------------------
+template <typename _Char>
+using TBasicFormatArgList = TMemoryView< const TBasicFormatArg<_Char> >;
 using FFormatArgList = TBasicFormatArgList<char>;
 using FWFormatArgList = TBasicFormatArgList<wchar_t>;
 //----------------------------------------------------------------------------

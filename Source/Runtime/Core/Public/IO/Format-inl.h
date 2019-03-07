@@ -54,6 +54,12 @@ PPE_CORE_API void FormatArgs_(FWTextWriter& oss, const FWStringView& format, con
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _Char, typename T>
+auto MakeFormatArg(const T& arg) {
+    typedef details::TBasicFormatFunctor_<_Char> formatfunc_type;
+    return formatfunc_type::Make(arg);
+}
+//----------------------------------------------------------------------------
 template <typename _Char>
 void FormatArgs(TBasicTextWriter<_Char>& oss, const TBasicStringView<_Char>& format, const TBasicFormatArgList<_Char>& args) {
     details::FormatArgs_(oss, format, args);
