@@ -56,7 +56,7 @@ FASTBUILD_OPTIONS=fetch_fastbuild_options()
 
 puts "[Default target]      = <#{DEFAULT_TARGET}>"
 puts "[Fastbuild options]   = #{FASTBUILD_OPTIONS}"
-puts "[All modules]         ="
+puts "[All modules]         =" 
 puts " - #{ALL_MODULES.join(",\n - ")}"
 
 FileUtils.mkdir_p(VCDB_PATH, :verbose => true)
@@ -286,7 +286,7 @@ launchconfigurations = [
         "name": DEFAULT_TARGET,
         "type": "cppvsdbg",
         "request": "launch",
-        "program": "${workspaceRoot}\\Output\\Binary\\#{DEFAULT_TARGET}.${input:ppe_config}",
+        "program": "${workspaceRoot}\\Output\\Binary\\#{File.basename(DEFAULT_TARGET)}.${input:ppe_config}",
         "args": [],
         "stopAtEntry": false,
         "cwd": "${workspaceRoot}\\Output\\Binary",
@@ -303,7 +303,7 @@ inputs = [
         "default": "Release.Win64",
         "type": "pickString",
         "options": ALL_CONFIGURATIONS.collect do |build|
-            "#{build.config.name}.#{build.platform.name}.#{build.platform.binaryExtension}"
+            "#{build.config.name}.#{build.platform.name}#{build.platform.binaryExtension}"
         end
     }
 ]
