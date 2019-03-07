@@ -67,8 +67,8 @@ public:
     static void DestroyFactory() = delete;
 };
 //----------------------------------------------------------------------------
-template <typename _Char, typename _TokenTraits>
-bool ValidateToken(const TBasicStringView<_Char>& content);
+template <typename _TokenTraits, typename _Char>
+bool IsValidToken(const TBasicStringView<_Char>& content);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -200,6 +200,10 @@ public:
 
     static void Start() { token_traits::CreateFactory(); }
     static void Shutdown() { token_traits::DestroyFactory(); }
+
+    static bool IsValidToken(const stringview_type& str) {
+        return PPE::IsValidToken<token_traits>(str);
+    }
 
     static hash_t HashValue(const stringview_type& str) {
         return hasher_type{}(str);

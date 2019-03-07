@@ -6,8 +6,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char, typename _TokenTraits>
-bool ValidateToken(const TBasicStringView<_Char>& content) {
+template <typename _TokenTraits, typename _Char>
+bool IsValidToken(const TBasicStringView<_Char>& content) {
     if (content.empty())
         return false;
 
@@ -29,8 +29,8 @@ auto TToken<_Tag, _Char, _Sensitive, _TokenTraits>::FindOrAdd_(const stringview_
     if (str.empty())
         return nullptr;
 
-    Assert(str.size() > 0);
-    Assert(ValidateToken<_Char, _TokenTraits>(str));
+    Assert(str.empty());
+    Assert_NoAssume(IsValidToken(str));
 
     const hash_t hash = hasher_type{}(str);
 
