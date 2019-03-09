@@ -120,14 +120,14 @@ RTTI_ENUM_VALUE(B)
 RTTI_ENUM_VALUE(C)
 RTTI_ENUM_END()
 //----------------------------------------------------------------------------
-enum class ETestEnum64 : u64 {
-    A = 1 << 0, B = 1 << 1, C = 1 << 2
+enum class EFlags : u64 {
+    First = 1 << 0, Second = 1 << 1, Third = 1 << 2
 };
-RTTI_ENUM_HEADER(, ETestEnum64);
-RTTI_ENUM_BEGIN(RTTI_UnitTest, ETestEnum64)
-RTTI_ENUM_VALUE(A)
-RTTI_ENUM_VALUE(B)
-RTTI_ENUM_VALUE(C)
+RTTI_ENUM_HEADER(, EFlags);
+RTTI_ENUM_FLAGS_BEGIN(RTTI_UnitTest, EFlags)
+RTTI_ENUM_VALUE(First)
+RTTI_ENUM_VALUE(Second)
+RTTI_ENUM_VALUE(Third)
 RTTI_ENUM_END()
 //----------------------------------------------------------------------------
 FWD_REFPTR(RTTITestParent_);
@@ -140,13 +140,13 @@ public:
     const ETestEnum32& Enum32() const { return _testEnum32; }
     void SetEnum32(const ETestEnum32& value) { _testEnum32 = value; }
 
-    const ETestEnum64& Enum64() const { return _testEnum64; }
-    void SetEnum64(const ETestEnum64& value) { _testEnum64 = value; }
+    const EFlags& Enum64() const { return _testEnum64; }
+    void SetEnum64(const EFlags& value) { _testEnum64 = value; }
 
 private:
     FFilename _sourceName;
     ETestEnum32 _testEnum32;
-    ETestEnum64 _testEnum64;
+    EFlags _testEnum64;
     PRTTITestParent_ _child;
     FStructAsTuple _structAsTuple;
 };
@@ -617,7 +617,7 @@ public:
 
     void inspect(const RTTI::FAny& any) const {
         FStringBuilder oss;
-        RTTI::PrettyPrint(oss, any.InnerAtom(), true);
+        RTTI::PrettyPrint(oss, any.InnerAtom(), RTTI::EPrettyPrintFlags::Full);
         oss << Endl;
         SyntaxicHighlight(oss.Written());
     }
@@ -731,7 +731,6 @@ static NO_INLINE void Test_InteractiveConsole_() {
         FPlatformConsole::Write("\n");
     };
 
-    RTTI_NAMESPACE(RTTI_UnitTest).Start();
     {
         PRTTIConsole_ env{ NEW_RTTI(FRTTIConsole_) };
         env->PID = u32(FPlatformProcess::CurrentPID());
@@ -743,8 +742,8 @@ static NO_INLINE void Test_InteractiveConsole_() {
 
         do
         {
-            FPlatformConsole::Write(L" \u25C0", FPlatformConsole::FG_CYAN | FPlatformConsole::FG_INTENSITY);
-            FPlatformConsole::Write(" ", FPlatformConsole::WHITE_ON_BLACK);
+            FPlatformConsole::Write(L" \u25C0", FPlatformConsole::FG_BLUE|FPlatformConsole::FG_INTENSITY);
+            FPlatformConsole::Write(L" ", FPlatformConsole::WHITE_ON_BLACK);
 
             const size_t length = FPlatformConsole::Read(buffer);
 
@@ -756,7 +755,7 @@ static NO_INLINE void Test_InteractiveConsole_() {
             else if (0 == CompareI(MakeStringView("exit"), line))
                 break;
 
-            const wchar_t filename[] = L"@in_memory";
+            CONSTEXPR const wchar_t filename[] = L"@in_memory";
 
             try {
                 FMemoryViewReader reader(line.Cast<const u8>());
@@ -793,7 +792,6 @@ static NO_INLINE void Test_InteractiveConsole_() {
 
         } while (true);
     }
-    RTTI_NAMESPACE(RTTI_UnitTest).Shutdown();
 
     FPlatformConsole::Close();
 
@@ -857,7 +855,6 @@ static NO_INLINE void Test_TransactionSerialization_() {
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Serialize_() {
-    RTTI_NAMESPACE(RTTI_UnitTest).Start();
     {
         FStringBuilder serialized;
 
@@ -892,11 +889,9 @@ static NO_INLINE void Test_Serialize_() {
         Test_TransactionSerialization_<FRTTITestSimple_>();
         Test_TransactionSerialization_<FRTTITest_>();
     }
-
-    RTTI_NAMESPACE(RTTI_UnitTest).Shutdown();
 }
 //----------------------------------------------------------------------------
-static RTTI::FAtom EvalExpr_(Parser::FParseContext* context, const FStringView& input) {
+static bool EvalExpr_(Parser::FParseContext* context, const FStringView& input) {
     LOG(Test_RTTI, Info, L"EvalExpr('{0}') :", input);
     try
     {
@@ -913,27 +908,30 @@ static RTTI::FAtom EvalExpr_(Parser::FParseContext* context, const FStringView& 
 
         LOG(Test_RTTI, Info, L" -> {0}", result);
 
-        return result;
+        return true;
     }
     catch (const Parser::FParserException& e) {
         UNUSED(e);
         if (e.Item())
-            LOG(Test_RTTI, Error, L" !! Parser error : <{0}> {1}, {2}.\n", e.Item()->ToString(), MakeCStringView(e.What()), e.Site());
+            LOG(Test_RTTI, Error, L" !! Parser error : <{0}> {1}, {2}.", e.Item()->ToString(), MakeCStringView(e.What()), e.Site());
         else
-            LOG(Test_RTTI, Error, L" !! Parser error : {0}, {1}.\n", MakeCStringView(e.What()), e.Site());
+            LOG(Test_RTTI, Error, L" !! Parser error : {0}, {1}.", MakeCStringView(e.What()), e.Site());
     }
     catch (const Lexer::FLexerException& e) {
         UNUSED(e);
-        LOG(Test_RTTI, Error, L" ?? Lexer error : <{0}>: {1}, {2}.\n", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site());
+        LOG(Test_RTTI, Error, L" ?? Lexer error : <{0}>: {1}, {2}.", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site());
     }
 
-    return RTTI::FAtom();
+    return false;
 }
+//----------------------------------------------------------------------------
 static void Test_Grammar_() {
     Parser::FParseContext context(Meta::ForceInit);
-    EvalExpr_(&context, "(Any:\"toto\",Any:42,Any:3.456)");
-    EvalExpr_(&context, "[Any:42]");
-    EvalExpr_(&context, "Any:[Any:[Any:\"totototototototototototototoot\"]]");
+    VerifyRelease(EvalExpr_(&context, "(Any:\"toto\",Any:42,Any:3.456)"));
+    VerifyRelease(EvalExpr_(&context, "[Any:42]"));
+    VerifyRelease(EvalExpr_(&context, "Any:[Any:[Any:\"totototototototototototototoot\"]]"));
+    VerifyRelease(EvalExpr_(&context, "(Int32:-1317311908, WString:'zee')"));
+    VerifyRelease(EvalExpr_(&context, "FRTTITest__xxx is FRTTITest_ { AnyTPair = (Int32:-1317311908, WString:'zee') }"));
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -941,11 +939,15 @@ static void Test_Grammar_() {
 void Test_RTTI() {
     LOG(Test_RTTI, Emphasis, L"starting rtti tests ...");
 
+    RTTI_NAMESPACE(RTTI_UnitTest).Start();
+
     Test_Atoms_();
     Test_Any_();
     Test_Grammar_();
     Test_Serialize_();
     Test_InteractiveConsole_();
+
+    RTTI_NAMESPACE(RTTI_UnitTest).Shutdown();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
