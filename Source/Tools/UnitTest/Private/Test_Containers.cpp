@@ -1065,40 +1065,48 @@ static void Test_PODSet_(const FString& name, const _Generator& samples) {
             TDenseHashSet2<T> set;
             bm.Run("Dense2", set, input);
         }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TDenseHashSet2<THashMemoizer<T>> set;
             bm.Run("Dense2_M", set, input);
         }
+#   endif
 #endif
 #if 0 && !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TDenseHashSet3<T> set;
             bm.Run("Dense3", set, input);
         }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TDenseHashSet3<THashMemoizer<T>> set;
             bm.Run("Dense3_M", set, input);
         }
+#   endif
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             THopscotchHashSet<T> set;
             bm.Run("Hopscotch", set, input);
         }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             THopscotchHashSet<THashMemoizer<T>> set;
             bm.Run("Hopscotch_M", set, input);
         }
+#   endif
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             THopscotchHashSet2<T> set;
             bm.Run("Hopscotch2", set, input);
         }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             THopscotchHashSet2<THashMemoizer<T>> set;
             bm.Run("Hopscotch2_M", set, input);
         }
+#   endif
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
@@ -1161,16 +1169,20 @@ static void Test_PODSet_(const FString& name, const _Generator& samples) {
     auto generator = TSamplePool<T>::MakeUniqueGenerator(samples);
 
 #if 1
-    Benchmark_Containers_FindSpeed_<T>(name + "_find", generator, containers_all);
-
     Benchmark_Containers_Exhaustive_<T>(name + "_20", 20, generator, containers_all);
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
     Benchmark_Containers_Exhaustive_<T>(name + "_50", 50, generator, containers_all);
     Benchmark_Containers_Exhaustive_<T>(name + "_200", 200, generator, containers_large);
+
+    Benchmark_Containers_FindSpeed_<T>(name + "_find", generator, containers_all);
+#   endif
 #endif
 
 #ifndef WITH_PPE_ASSERT
     Benchmark_Containers_Exhaustive_<T>(name + "_2000", 2000, generator, containers_large);
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
     Benchmark_Containers_Exhaustive_<T>(name + "_20000", 20000, generator, containers_large);
+#   endif
 #endif
 }
 //----------------------------------------------------------------------------
@@ -1232,6 +1244,7 @@ static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("Dense2", set, input);
         }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             typedef TDenseHashSet2<
                 THashMemoizer<
@@ -1244,6 +1257,7 @@ static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("Dense2_M", set, input);
         }
+#   endif
 #endif
 #if 0 && !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
@@ -1256,6 +1270,7 @@ static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("DenseHashSet3", set, input);
         }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             typedef TDenseHashSet3<
                 THashMemoizer<
@@ -1268,6 +1283,7 @@ static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("DenseHashSet3_M", set, input);
         }
+#   endif
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
@@ -1280,6 +1296,7 @@ static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("Hopscotch", set, input);
         }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             typedef THopscotchHashSet <
                 THashMemoizer<
@@ -1292,6 +1309,7 @@ static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("Hopscotch_M", set, input);
         }
+#   endif
 #endif
 #if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER %_NOCOMMIT%
         {
@@ -1302,6 +1320,7 @@ static void Test_StringSet_() {
             >   set;
             bm.Run("Hopscotch2", set, input);
         }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             THopscotchHashSet2<
                 THashMemoizer<
@@ -1328,6 +1347,7 @@ static void Test_StringSet_() {
             bm.Run("Hopscotch2_OAAT", set, input);
         }
         */
+#   endif
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
@@ -1335,11 +1355,13 @@ static void Test_StringSet_() {
 
             bm.Run("HashSet", set, input);
         }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             STRINGVIEW_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
 
             bm.Run("HashSet_M", set, input);
         }
+#   endif
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         /*{
@@ -1359,6 +1381,7 @@ static void Test_StringSet_() {
 
             bm.Run("unordered_set", set, input);
         }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             std::unordered_set<
                 TBasicStringViewHashMemoizer<char, ECase::Sensitive>,
@@ -1367,18 +1390,22 @@ static void Test_StringSet_() {
 
             bm.Run("unordered_set_M", set, input);
         }
+#   endif
 #endif
     };
 
-#if 1
-    Benchmark_Containers_FindSpeed_<FStringView>("Strings_find", generator, containers);
-
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_20", 20, generator, containers);
+#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_50", 50, generator, containers);
+
+    Benchmark_Containers_FindSpeed_<FStringView>("Strings_find", generator, containers);
 #endif
 #ifndef WITH_PPE_ASSERT
+
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_200", 200, generator, containers);
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_2000", 2000, generator, containers);
+#   endif
 #endif
 }
 #endif //!USE_PPE_BENCHMARK
@@ -1402,9 +1429,11 @@ void Test_Containers() {
     Test_StealFromDifferentAllocator_();
 
 #if USE_PPE_BENCHMARK
-    Test_PODSet_<u32>("u32", [](auto& rnd) { return u32(rnd()); });
     Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+    Test_PODSet_<u32>("u32", [](auto& rnd) { return u32(rnd()); });
     Test_PODSet_<u128>("u128", [](auto& rnd) { return u128{ u64(rnd()), u64(rnd()) }; });
+#   endif
     Test_PODSet_<u256>("u256", [](auto& rnd) { return u256{ { u64(rnd()), u64(rnd()) }, { u64(rnd()), u64(rnd()) } }; });
     Test_StringSet_();
 #endif
