@@ -31,6 +31,7 @@ public:
     FParseExpression(const Lexer::FSpan& site);
     virtual ~FParseExpression();
 
+    virtual FStringView Alias() const = 0;
     virtual RTTI::FAtom Eval(FParseContext *context) const = 0;
     virtual void Invoke(FParseContext *context) const override { Eval(context); }
 };
@@ -44,6 +45,7 @@ public:
     TLiteral(const T& value, const Lexer::FSpan& site) : TLiteral(T(value), site) {}
     virtual ~TLiteral();
 
+    virtual FStringView Alias() const override final { return "Literal"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -71,6 +73,7 @@ public:
     explicit FVariableExport(const RTTI::FName& name, const PCParseExpression& value, const EFlags scope, const Lexer::FSpan& site);
     virtual ~FVariableExport();
 
+    virtual FStringView Alias() const override final { return "VariableExport"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -93,6 +96,7 @@ public:
     FVariableReference(const RTTI::FPathName& pathName, const Lexer::FSpan& site);
     virtual ~FVariableReference();
 
+    virtual FStringView Alias() const override final { return "VariableReference"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -115,6 +119,7 @@ public:
     explicit TUnaryFunction(_Functor&& functor, const FParseExpression *expr, const Lexer::FSpan& site);
     virtual ~TUnaryFunction();
 
+    virtual FStringView Alias() const override final { return "UnaryFunction"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
 
     SINGLETON_POOL_ALLOCATED_DECL();
@@ -137,6 +142,7 @@ public:
     explicit TBinaryFunction(_Functor&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site);
     virtual ~TBinaryFunction();
 
+    virtual FStringView Alias() const override final { return "BinaryFunction"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
 
     SINGLETON_POOL_ALLOCATED_DECL();
@@ -160,6 +166,7 @@ public:
     explicit TTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const Lexer::FSpan& site);
     virtual ~TTernary();
 
+    virtual FStringView Alias() const override final { return "Ternary"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
 
     SINGLETON_POOL_ALLOCATED_DECL();
@@ -190,6 +197,7 @@ public:
         _statements.insert(_statements.end(), begin, end);
     }
 
+    virtual FStringView Alias() const override final { return "ObjectDefinition"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -217,6 +225,7 @@ public:
     FPropertyReference(const PCParseExpression& object, const RTTI::FName& member, const Lexer::FSpan& site);
     virtual ~FPropertyReference();
 
+    virtual FStringView Alias() const override final { return "PropertyReference"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -244,6 +253,7 @@ public:
     FTupleExpr(elements_type&& relements, const Lexer::FSpan& site);
     virtual ~FTupleExpr();
 
+    virtual FStringView Alias() const override final { return "TupleExpr"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -272,6 +282,7 @@ public:
     void reserve(size_t capacity) { return _items.reserve(capacity); }
     void push_back(const PCParseExpression& expr) { _items.push_back(expr); }
 
+    virtual FStringView Alias() const override final { return "ArrayExpr"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -304,6 +315,7 @@ public:
     void reserve(size_t capacity) { return _dico.reserve(capacity); }
     void insert(const PCParseExpression& key, const PCParseExpression& value) { _dico.Insert_AssertUnique(key, value); }
 
+    virtual FStringView Alias() const override final { return "DictionaryExpr"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -328,6 +340,7 @@ public:
     FCastExpr(const RTTI::PTypeTraits& traits, const FParseExpression* expr, const Lexer::FSpan& site);
     virtual ~FCastExpr();
 
+    virtual FStringView Alias() const override final { return "CastExpr"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -351,6 +364,7 @@ public:
     FFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<const PCParseExpression>& args, const Lexer::FSpan& site);
     virtual ~FFunctionCall();
 
+    virtual FStringView Alias() const override final { return "FunctionCall"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
