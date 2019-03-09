@@ -257,8 +257,8 @@ struct TBinaryOp {
             else {
 
                 if (RTTI::is_boolean(rhs_type_id)) {
-                if (rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
-                    NOOP(); // b was already assigned
+                    if (rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
+                        NOOP(); // b was already assigned
                 }
                 else if (RTTI::is_signed_integral(rhs_type_id)) {
                     FParseInteger i;
@@ -273,7 +273,7 @@ struct TBinaryOp {
                 else if (RTTI::is_floating_point(rhs_type_id)) {
                     FParseFloat fp;
                     if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
-                    b = (FParseFloat(0) != fp);
+                        b = (FParseFloat(0) != fp);
                 }
                 else if (RTTI::is_string(rhs_type_id)) {
                     FParseString s;
@@ -282,7 +282,7 @@ struct TBinaryOp {
                 }
                 else {
                     PPE_THROW_IT(Parser::FParserException("could not convert to boolean", rhs));
-            }
+                }
             }
 
             return context->CreateAtomFrom( _Op< FParseBool >()(
@@ -317,30 +317,30 @@ struct TBinaryOp {
         else {
 
             if (RTTI::is_signed_integral(rhs_type_id)) {
-            if (rhs_value.PromoteCopy(RTTI::MakeAtom(&integer)))
-                return context->CreateAtomFrom(
+                if (rhs_value.PromoteCopy(RTTI::MakeAtom(&integer)))
+                    return context->CreateAtomFrom(
                         _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseInteger>(), integer));
             }
             else if (RTTI::is_unsigned_integral(rhs_type_id)) {
                 FParseUnsigned u;
                 if (rhs_value.PromoteCopy(RTTI::MakeAtom(&u)))
-                return context->CreateAtomFrom(
+                    return context->CreateAtomFrom(
                         _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseInteger>(), u));
             }
             else if (RTTI::is_floating_point(rhs_type_id)) {
                 FParseFloat fp;
                 if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
-                return context->CreateAtomFrom(
+                    return context->CreateAtomFrom(
                         _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseInteger>()), fp));
             }
             else if (RTTI::is_boolean(rhs_type_id)) {
                 FParseBool b;
                 if (rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
-                return context->CreateAtomFrom(
+                    return context->CreateAtomFrom(
                         _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseInteger>(), b ? FParseInteger(1) : FParseInteger(0)));
             }
 
-                PPE_THROW_IT(Parser::FParserException("could not convert to integer", rhs));
+            PPE_THROW_IT(Parser::FParserException("could not convert to integer", rhs));
         }
     }
 
@@ -369,30 +369,30 @@ struct TBinaryOp {
         else {
 
             if (RTTI::is_unsigned_integral(rhs_type_id)) {
-            if (rhs_value.PromoteCopy(RTTI::MakeAtom(&unsign_d)))
-                return context->CreateAtomFrom(
-                    _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseUnsigned>(), unsign_d));
+                if (rhs_value.PromoteCopy(RTTI::MakeAtom(&unsign_d)))
+                    return context->CreateAtomFrom(
+                        _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseUnsigned>(), unsign_d));
             }
             else if (RTTI::is_unsigned_integral(rhs_type_id)) {
                 FParseInteger i;
                 if (rhs_value.PromoteCopy(RTTI::MakeAtom(&i)))
-                return context->CreateAtomFrom(
-                    _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseUnsigned>(), i));
+                    return context->CreateAtomFrom(
+                        _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseUnsigned>(), i));
             }
             else if (RTTI::is_floating_point(rhs_type_id)) {
                 FParseFloat fp;
                 if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
-                return context->CreateAtomFrom(
-                    _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseUnsigned>()), fp));
+                    return context->CreateAtomFrom(
+                        _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseUnsigned>()), fp));
             }
             else if (RTTI::is_boolean(rhs_type_id)) {
                 FParseBool b;
                 if (rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
-                return context->CreateAtomFrom(
-                    _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseUnsigned>(), b ? FParseUnsigned(1) : FParseUnsigned(0)));
+                    return context->CreateAtomFrom(
+                        _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseUnsigned>(), b ? FParseUnsigned(1) : FParseUnsigned(0)));
             }
 
-                PPE_THROW_IT(Parser::FParserException("could not convert to integer", rhs));
+            PPE_THROW_IT(Parser::FParserException("could not convert to integer", rhs));
         }
     }
 
@@ -433,7 +433,7 @@ struct TBinaryOp {
             }
             else {
                 PPE_THROW_IT(Parser::FParserException("could not convert to float", rhs));
-        }
+            }
         }
 
         return context->CreateAtomFrom(
@@ -641,8 +641,9 @@ private:
     using match_p = const Lexer::FMatch*;
 
     Parser::TProduction< Parser::PCParseExpression > _literal;
-    Parser::TProduction< Parser::PCParseExpression > _variable;
     Parser::TProduction< Parser::PCParseExpression > _object;
+    Parser::TProduction< Parser::PCParseExpression > _cast;
+    Parser::TProduction< Parser::PCParseExpression > _variable;
     Parser::TProduction< Parser::PCParseExpression > _reference;
     Parser::TProduction< Parser::PCParseExpression > _rvalue;
 
@@ -661,9 +662,10 @@ private:
     Parser::TProduction< Parser::PCParseExpression > _tuple;
     Parser::TProduction< Parser::PCParseExpression > _array;
     Parser::TProduction< Parser::PCParseExpression > _dictionary;
-    Parser::TProduction< Parser::PCParseExpression > _cast;
 
+    Parser::TProduction< Parser::PCParseExpression > _lvalue;
     Parser::TProduction< Parser::PCParseExpression > _export;
+
     Parser::TProduction< Parser::PCParseExpression > _expr;
 
     Parser::TProduction< Parser::PCParseStatement >  _property;
@@ -706,6 +708,41 @@ FGrammarImpl::FGrammarImpl()
         Assert(m/* && m->Value().size()*//* strings can be empty */);
         return Parser::MakeLiteral(m->Value(), m->Site());
     }))
+    )
+
+,   _object(
+            Parser::Expect(Lexer::FSymbol::Identifier)
+    .And(   Parser::Expect(Lexer::FSymbol::LBrace))
+    .And(   _property.Ref().Many() )
+    .And(   Parser::Expect(Lexer::FSymbol::RBrace))
+    .Select<Parser::PCParseExpression>([](const TTuple<match_p, match_p, const Parser::TEnumerable<Parser::PCParseStatement>, match_p>& args) -> Parser::PCParseExpression {
+        match_p name = std::get<0>(args);
+        const Parser::TEnumerable<Parser::PCParseStatement>& statements = std::get<2>(args);
+
+        Assert(name);
+
+        return Parser::MakeObjectDefinition(RTTI::FName(name->Value()), name->Site(), statements.begin(), statements.end());
+    }))
+
+,   _cast(
+            ExpectTypenameRTTI()
+    .And(   Parser::Expect(Lexer::FSymbol::Colon))
+#if 0
+    .And(   _rvalue.Ref()   )
+#else
+    .And(   _unary.Ref()    ) // must allow '-123' which uses the unary operator '-' for instance
+#endif
+        .Select<Parser::PCParseExpression>([](const TTuple<PTypeTraitsWithSite, match_p, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
+            const PTypeTraitsWithSite& traitsWSite = std::get<0>(args);
+            const Parser::PCParseExpression& rvalue = std::get<2>(args);
+
+            const Lexer::FSpan site = Lexer::FSpan::FromSpan(
+                traitsWSite.second,
+                std::get<1>(args)->Site()
+            );
+
+            return Parser::MakeCastExpr(traitsWSite.first, rvalue.get(), site);
+        })
     )
 
 ,   _variable(
@@ -757,29 +794,13 @@ FGrammarImpl::FGrammarImpl()
         return Parser::MakeVariableReference(pathName, site);
     })))
 
-,   _object(
-            Parser::Expect(Lexer::FSymbol::Identifier)
-    .And(   Parser::Expect(Lexer::FSymbol::LBrace))
-    .And(       _property.Ref()
-            .Or(_statement.Ref())
-            .Many() )
-    .And(   Parser::Expect(Lexer::FSymbol::RBrace))
-    .Select<Parser::PCParseExpression>([](const TTuple<match_p, match_p, const Parser::TEnumerable<Parser::PCParseStatement>, match_p>& args) -> Parser::PCParseExpression {
-        match_p name = std::get<0>(args);
-        const Parser::TEnumerable<Parser::PCParseStatement>& statements = std::get<2>(args);
-
-        Assert(name);
-
-        return Parser::MakeObjectDefinition(RTTI::FName(name->Value()), name->Site(), statements.begin(), statements.end());
-    }))
-
 ,   _reference(
         _literal.Ref()
-    .Or(_cast.Ref())
     .Or(_tuple.Ref())
     .Or(_array.Ref())
     .Or(_dictionary.Ref())
     .Or(_object.Ref())
+    .Or(_cast.Ref())
     .Or(_variable.Ref())
     .Or(Parser::Expect(Lexer::FSymbol::LParenthese).And(_expr.Ref()).And(Parser::Expect(Lexer::FSymbol::RParenthese))
         .Select<Parser::PCParseExpression>([](const TTuple<match_p, Parser::PCParseExpression, match_p>& args) -> Parser::PCParseExpression {
@@ -1146,26 +1167,7 @@ FGrammarImpl::FGrammarImpl()
         return result;
     }))
 
-#if 0
-    , _pair(
-                Parser::Expect(Lexer::FSymbol::LParenthese)
-        .And(   _expr.Ref())
-        .And(   Parser::Expect(Lexer::FSymbol::Comma))
-        .And(   _expr.Ref())
-        .And(   Parser::Expect(Lexer::FSymbol::RParenthese))
-    .Select<Parser::PCParseExpression>([](const TTuple<match_p, Parser::PCParseExpression, match_p, Parser::PCParseExpression, match_p> & args) -> Parser::PCParseExpression {
-        const Parser::PCParseExpression& lhs = std::get<1>(args);
-        const Parser::PCParseExpression& rhs = std::get<3>(args);
-
-        Parser::FTupleExpr::elements_type elts;
-        elts.reserve(2);
-        elts.push_back(lhs);
-        elts.push_back(rhs);
-
-        return Parser::MakeTupleExpr(std::move(elts), std::get<0>(args)->Site());
-    }))
-#else
-    , _tuple(
+,   _tuple(
                 Parser::Expect(Lexer::FSymbol::LParenthese)
         .And(   _expr.Ref())
         .And(   Parser::Expect(Lexer::FSymbol::Comma))
@@ -1192,8 +1194,6 @@ FGrammarImpl::FGrammarImpl()
 
         return Parser::MakeTupleExpr(std::move(elts), site);
     }))
-
-#endif
 
 ,   _array(
             Parser::Expect(Lexer::FSymbol::LBracket)
@@ -1289,33 +1289,16 @@ FGrammarImpl::FGrammarImpl()
     })
     ))
 
-,   _cast(
-            ExpectTypenameRTTI()
-    .And(   Parser::Expect(Lexer::FSymbol::Colon))
-    .And(   _expr.Ref() )
-        .Select<Parser::PCParseExpression>([](const TTuple<PTypeTraitsWithSite, match_p, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
-            const PTypeTraitsWithSite& traitsWSite = std::get<0>(args);
-            match_p const colon = std::get<1>(args);
-            const Parser::PCParseExpression& value = std::get<2>(args);
 
-            const Lexer::FSpan site = Lexer::FSpan::FromSpan(
-                traitsWSite.second,
-                colon->Site()
-            );
-
-            return Parser::MakeCastExpr(traitsWSite.first, value.get(), site);
-        })
+,   _lvalue(    _ternary.Ref()
+            .Or(_rvalue.Ref())
     )
 
 ,   _export(
             Parser::Optional(Lexer::FSymbol::Export)
     .And(   Parser::Expect(Lexer::FSymbol::Identifier))
     .And(   Parser::Expect(Lexer::FSymbol::Is))
-    .And(   _cast.Ref()
-        .Or(_tuple.Ref())
-        .Or(_array.Ref())
-        .Or(_dictionary.Ref())
-        .Or(_ternary.Ref()) )
+    .And(   _lvalue.Ref() )
         .Select<Parser::PCParseExpression>([](const TTuple<match_p, match_p, match_p, Parser::PCParseExpression>& args) -> Parser::PCParseExpression {
             match_p const exportIFP = std::get<0>(args);
             match_p const name = std::get<1>(args);
@@ -1337,13 +1320,8 @@ FGrammarImpl::FGrammarImpl()
         })
     )
 
-,   _expr(
-            _export.Ref()
-    .Or(    _cast.Ref())
-    .Or(    _tuple.Ref())
-    .Or(    _array.Ref())
-    .Or(    _dictionary.Ref())
-    .Or(    _ternary.Ref())
+,   _expr(  _export.Ref()
+        .Or(_lvalue.Ref() )
     )
 
 ,   _property(

@@ -61,9 +61,12 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Lexer::FLocation& site) {
+inline FTextWriter& operator <<(FTextWriter& oss, const Lexer::FLocation& site) {
     return oss << site.Filename << '(' << site.Line << ':' << site.Column << ')';
+}
+//----------------------------------------------------------------------------
+inline FWTextWriter& operator <<(FWTextWriter& oss, const Lexer::FLocation& site) {
+    return oss << site.Filename << L'(' << site.Line << L':' << site.Column << L')';
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
