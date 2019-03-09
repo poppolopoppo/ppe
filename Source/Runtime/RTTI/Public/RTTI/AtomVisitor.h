@@ -17,6 +17,7 @@ enum class EVisitorFlags : u32 {
     KeepDeprecated      = 1<<0,
     KeepTransient       = 1<<1,
     OnlyObjects         = 1<<2,
+    NoRecursion         = 1<<3,
 };
 ENUM_FLAGS(EVisitorFlags);
 //----------------------------------------------------------------------------
@@ -30,6 +31,7 @@ public:
     bool KeepDeprecated() const { return (_flags ^ EVisitorFlags::KeepDeprecated); }
     bool KeepTransient() const { return (_flags ^ EVisitorFlags::KeepTransient); }
     bool OnlyObjects() const { return (_flags ^ EVisitorFlags::OnlyObjects); }
+    bool NoRecursion() const { return (_flags ^ EVisitorFlags::NoRecursion); }
 
     virtual bool Visit(const ITupleTraits* tuple, void* data) = 0;
     virtual bool Visit(const IListTraits* list, void* data) = 0;
@@ -96,11 +98,16 @@ FORCE_INLINE bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, 
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EPrettyPrintFlags : u32 {
-    None            = 0, 
+    None            = 0,
     ShowDefaults    = 1<<0,
-    ShowTypenames   = 1<<1,
+    ShowEnumNames   = 1<<1,
+    ShowTypeNames   = 1<<2,
+    NoRecursion     = 1<<3,
 
-    Default         = ShowTypenames
+    Minimal         = NoRecursion,
+    Full            = ShowDefaults|ShowEnumNames|ShowTypeNames,
+
+    Default         = Minimal
 };
 ENUM_FLAGS(EPrettyPrintFlags);
 //----------------------------------------------------------------------------

@@ -8,6 +8,7 @@
 #include "RTTI/TypeTraits.h"
 
 #include "MetaClass.h"
+#include "MetaEnum.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
 #include "MetaTransaction.h"
@@ -60,7 +61,10 @@ template <typename _Char>
 class TPrettyPrinter_ : public IAtomVisitor {
 public:
     TPrettyPrinter_(TBasicTextWriter<_Char>& oss, EPrettyPrintFlags flags)
-        : _oss(oss)
+        : IAtomVisitor(flags ^ EPrettyPrintFlags::NoRecursion
+            ? EVisitorFlags::NoRecursion|EVisitorFlags::Default
+            : EVisitorFlags::Default )
+        , _oss(oss)
         , _flags(flags)
     {}
 
@@ -140,7 +144,7 @@ public:
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
     virtual bool Visit(const IScalarTraits* scalar, T& value) override final { \
-        PrintDispatch_(scalar, value);
+        PrintDispatch_(scalar, value, std::bool_constant< RTTI::is_integral(_TypeId) >{}); \
         return true; \
     }
     FOREACH_RTTI_NATIVETYPES(DECL_ATOM_VIRTUAL_VISIT)
@@ -150,11 +154,43 @@ private:
     using PP = TPPFormat_<_Char>;
 
     template <typename T>
-    void PrintDispatch_(const IScalarTraits* scalar, const T& value) {
-        if (_flags & EPrettyPrintFlags::ShowTypenames)
+    void PrintDispatch_(const IScalarTraits* scalar, const T& value, std::false_type) {
+        if (_flags & EPrettyPrintFlags::ShowTypeNames)
             _oss << scalar->TypeInfos().Name() << Fmt::Colon;
 
         Print_(value);
+    }
+
+    template <typename T>
+    void PrintDispatch_(const IScalarTraits* scalar, T integral, std::true_type) {
+        if (_flags & EPrettyPrintFlags::ShowEnumNames) {
+            if (const FMetaEnum* const e = scalar->EnumClass()) {
+                if (e->IsFlags()) {
+                    FMetaEnum::FExpansion values;
+                    if (e->ExpandValues(integral, &values)) {
+                        Assert(not values.empty());
+
+                        _oss << Fmt::LParenthese << scalar->TypeInfos().Name() << Fmt::Colon << values[0]->Name;
+
+                        forrange(i, 1, values.size())
+                            _oss << Fmt::Or << scalar->TypeInfos().Name() << Fmt::Colon << values[i]->Name;
+
+                        _oss << Fmt::RParenthese;
+
+                        return;
+                    }
+                }
+                else {
+                    const FMetaEnumValue* const v = e->ValueToNameIFP(integral);;
+                    if (v) {
+                        _oss << scalar->TypeInfos().Name() << Fmt::Colon << v->Name;
+                        return;
+                    }
+                }
+            }
+        }
+
+        PrintDispatch_(scalar, integral, std::false_type{});
     }
 
     void Print_(const FAny& any) {
@@ -267,7 +303,7 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , PMetaObj
     if (pobj) {
         FMetaObject& obj = (*pobj);
 
-        if (not visitor->KeepTransient() && obj.RTTI_IsTransient())
+        if (visitor->NoRecursion() || (not visitor->KeepTransient() && obj.RTTI_IsTransient()) )
             return true;
 
         const FMetaClass* metaClass = obj.RTTI_Class();
@@ -307,14 +343,14 @@ DEBUG_FUNCTION(PPE_RTTI_API, DebugPrintAny, FString, (const FAny& any), {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom, bool showDefaults/* = false */) {
-    TPrettyPrinter_<char> printer(oss, showDefaults);
+FTextWriter& PrettyPrint(FTextWriter& oss, const FAtom& atom, EPrettyPrintFlags flags/* = EPrettyPrintFlags::Default */) {
+    TPrettyPrinter_<char> printer(oss, flags);
     atom.Accept(&printer);
     return oss;
 }
 //----------------------------------------------------------------------------
-FWTextWriter& PrettyPrint(FWTextWriter& oss, const FAtom& atom, bool showDefaults/* = false */) {
-    TPrettyPrinter_<wchar_t> printer(oss, showDefaults);
+FWTextWriter& PrettyPrint(FWTextWriter& oss, const FAtom& atom, EPrettyPrintFlags flags/* = EPrettyPrintFlags::Default */) {
+    TPrettyPrinter_<wchar_t> printer(oss, flags);
     atom.Accept(&printer);
     return oss;
 }
