@@ -12,19 +12,20 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationBase::FApplicationBase(FWString&& name)
-    : FPlatformApplication(std::move(name))
-{}
+namespace {
 //----------------------------------------------------------------------------
-FApplicationBase::~FApplicationBase()
-{}
+#if !USE_PPE_FINAL_RELEASE
+static bool ShouldUseDebugSystray_() {
+    ONE_TIME_INITIALIZE(bool, GEnabled, not FCurrentProcess::Get().StartedWithDebugger());
+    return GEnabled;
+}
+#endif
 //----------------------------------------------------------------------------
-void FApplicationBase::Start() {
-    FPlatformApplication::Start();
+#if !USE_PPE_FINAL_RELEASE
+static void SetupDebugMenuInSystray_() {
 
     using FAppNotify = Application::FPlatformNotification;
 
-#if !USE_PPE_FINAL_RELEASE
     FAppNotify::ShowSystray();
 
     FAppNotify::AddSystrayCommand(
@@ -79,15 +80,41 @@ void FApplicationBase::Start() {
         []() {
         FCurrentProcess::Get().DumpMemoryStats();
     });
-
+}
 #endif //!USE_PPE_FINAL_RELEASE
+//----------------------------------------------------------------------------
+#if !USE_PPE_FINAL_RELEASE
+static void TearDebugMenuInSystray_() {
+    using FAppNotify = Application::FPlatformNotification;
+
+    FAppNotify::HideSystray();
+}
+#endif //!USE_PPE_FINAL_RELEASE
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FApplicationBase::FApplicationBase(FWString&& name)
+    : FPlatformApplication(std::move(name))
+{}
+//----------------------------------------------------------------------------
+FApplicationBase::~FApplicationBase()
+{}
+//----------------------------------------------------------------------------
+void FApplicationBase::Start() {
+    FPlatformApplication::Start();
+
+#if !USE_PPE_FINAL_RELEASE
+    if (ShouldUseDebugSystray_())
+        SetupDebugMenuInSystray_();
+#endif
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::Shutdown() {
-    using FAppNotify = Application::FPlatformNotification;
-
 #if !USE_PPE_FINAL_RELEASE
-    FAppNotify::HideSystray();
+    if (ShouldUseDebugSystray_())
+        TearDebugMenuInSystray_();
 #endif
 
     FPlatformApplication::Shutdown();
