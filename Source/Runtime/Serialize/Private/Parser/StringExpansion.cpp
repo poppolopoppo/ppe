@@ -2,15 +2,24 @@
 
 #include "Parser/StringExpansion.h"
 
+#include "MetaEnum.h"
+#include "MetaObject.h"
+
+#include "RTTI/Any.h"
 #include "RTTI/Atom.h"
-#include "RTTI/AtomHelpers.h"
+#include "RTTI/AtomVisitor.h"
 #include "RTTI/TypeTraits.h"
 
 #include "Allocator/Alloca.h"
-#include "Container/Vector.h"
+#include "Container/Stack.h"
 #include "IO/Format.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
+#include "IO/TextWriter.h"
+
+#include "IO/FileSystem.h"
+#include "Maths/ScalarMatrix.h"
+#include "Maths/ScalarVector.h"
 
 // We expand string using PPE::Format(), which gives many options for formating inputs
 
@@ -21,117 +30,92 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static FString ExpandString_(const FString& fmt, const TMemoryView<const FString>& strs) {
-    STACKLOCAL_ASSUMEPOD_ARRAY(FFormatArg, args, strs.size());
-    forrange(i, 0, strs.size())
-        args[i] = MakeFormatArg<char>(strs[i]);
-
-    FStringBuilder sb;
-    FormatArgs(sb, fmt.MakeView(), args.AddConst());
-
-    return sb.ToString();
-}
-//----------------------------------------------------------------------------
-class FAtomFormatArgVisitor_ : public IAtomVisitor {
+class FAtomFormatArgVisitor_ : public RTTI::IAtomVisitor {
 public:
-    FAtomFormatArgVisitor_() {}
+    FAtomFormatArgVisitor_()
+    :   _null("null")
+    {}
 
-    FFormatArgList FormatArgs() const { return _formatArgs.MakeView(); }
+    FFormatArgList MakeView() const { return _args.MakeView(); }
 
-    virtual bool Visit(const ITupleTraits* tuple, void* data) override final {
-        _formatArgs.emplace_back(MakeFormatArg(tuple->TypeName()));
+    virtual bool Visit(const RTTI::ITupleTraits* tuple, void* data) override final {
+        PrettyPrint_(tuple, data);
         return true;
     }
 
-    virtual bool Visit(const IListTraits* list, void* data) override final {
-        _formatArgs.emplace_back(MakeFormatArg(tuple->TypeName()));
+    virtual bool Visit(const RTTI::IListTraits* list, void* data) override final {
+        PrettyPrint_(list, data);
         return true;
     }
 
-    virtual bool Visit(const IDicoTraits* dico, void* data) override final {
-        _formatArgs.emplace_back(MakeFormatArg(tuple->TypeName()));
+    virtual bool Visit(const RTTI::IDicoTraits* dico, void* data) override final {
+        PrettyPrint_(dico, data);
         return true;
     }
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
-    virtual bool Visit(const IScalarTraits* scalar, T& value) override final { \
-        _oss << scalar->TypeInfos().Name() << Fmt::Colon; \
-        Print_(value); \
+    virtual bool Visit(const RTTI::IScalarTraits* scalar, T& value) override final { \
+        PrintValue_(scalar, value, std::bool_constant< RTTI::is_integral(_TypeId) >{}); \
         return true; \
     }
     FOREACH_RTTI_NATIVETYPES(DECL_ATOM_VIRTUAL_VISIT)
 #undef DECL_ATOM_VIRTUAL_VISIT
 
 private:
-    using PP = TPPFormat_<_Char>;
+    template <typename T>
+    void PrintValue_(const RTTI::IScalarTraits* scalar, const T& integral, std::true_type) {
+        if (scalar->TypeFlags() & RTTI::ETypeFlags::Enum)
+            PrettyPrint_(scalar, &integral);
+        else
+            _args.Push(MakeFormatArg<char>(integral)); // *BEWARE* : keep const T& since we're passing a ref here !
+    }
 
-    void Print_(const FAny& any) {
+    void PrintValue_(const RTTI::IScalarTraits*, const RTTI::PMetaObject& pobj, std::false_type) {
+        if (pobj) {
+            _args.Push(MakeFormatLambda<char>(
+                [](FTextWriter& oss, const void* data) {
+                    const auto& o = *reinterpret_cast<const RTTI::FMetaObject*>(data);
+                    if (o.RTTI_IsExported() && o.RTTI_Outer())
+                        oss << RTTI::FPathName::FromObject(o);
+                    else
+                        oss << o.RTTI_Class()->Name() << '/' << (void*)&o;
+
+                },  pobj.get() ));
+        }
+        else {
+            _args.Push(MakeFormatArg<char>(_null));
+        }
+    }
+
+    void PrintValue_(const RTTI::IScalarTraits*, const RTTI::FAny& any, std::false_type) {
         if (any)
             any.InnerAtom().Accept(this);
     }
 
-    void Print_(const PMetaObject& pobj) {
-        if (pobj) {
-            FMetaObject& obj = (*pobj);
-            const FMetaClass* metaClass = obj.RTTI_Class();
-            Assert(metaClass);
-
-            if (obj.RTTI_IsExported())
-                _oss << PP::Export << Fmt::Space
-                     << obj.RTTI_Name() << Fmt::Space << PP::Is << Fmt::Space;
-
-            _oss << metaClass->Name() << Fmt::Space << Fmt::LBrace;
-
-            bool empty = true;
-            for (const FMetaProperty* prop : metaClass->AllProperties()) {
-                const RTTI::FAtom val = prop->Get(obj);
-                if (not _showDefaults & val.IsDefaultValue())
-                    continue;
-
-                if (empty) {
-                    empty = false;
-                    _oss << Eol;
-                    _indent.Inc();
-                }
-
-                _oss << _indent << prop->Name() << Fmt::Space << Fmt::Assignment << Fmt::Space;
-
-                val.Accept(this);
-                _oss << Eol;
-            }
-
-            if (not empty) {
-                _indent.Dec();
-                _oss << _indent;
-            }
-
-            _oss << Fmt::RBrace;
-        }
-        else {
-            _oss << PP::Null;
-        }
-    }
-
-    void Print_(bool b) { _oss << (b ? PP::True : PP::False); }
-
-    void Print_(i8 ch) { _oss << int(ch); }
-    void Print_(u8 uch) { _oss << unsigned(uch); }
-
-    void Print_(const FName& name) { _oss << name; }
-    void Print_(const FString& str) { _oss << Fmt::DoubleQuote << str << Fmt::DoubleQuote; }
-    void Print_(const FWString& wstr) { _oss << Fmt::DoubleQuote << wstr << Fmt::DoubleQuote; }
-
-    void Print_(const FDirpath& dirpath) { Print_(dirpath.ToString()); }
-    void Print_(const FFilename& filename) { Print_(filename.ToString()); }
-
     template <typename T>
-    void Print_(const T& value) {
-        _oss << value;
+    void PrintValue_(const RTTI::IScalarTraits*, const T& value, std::false_type) {
+        _args.Push(MakeFormatArg<char>(value));
     }
 
-    typename PP::FIndent _indent;
-    TBasicTextWriter<_Char>& _oss;
-    const bool _showDefaults;
+    void PrettyPrint_(const RTTI::ITypeTraits* traits, const void* data) {
+        Assert(traits);
+        UNUSED(data);
+
+        FStringBuilder sb;
+        PrettyPrint(sb, RTTI::FAtom{ data, RTTI::PTypeTraits(traits) },
+            RTTI::EPrettyPrintFlags::Minimal|
+            RTTI::EPrettyPrintFlags::ShowEnumNames );
+
+        _strs.Push(sb.ToString());
+        _args.Push(MakeFormatArg<char>(*_strs.Peek()));
+    }
+
+    const FStringView _null;
+
+    STATIC_CONST_INTEGRAL(size_t, MaxArgs, 9);
+
+    TFixedSizeStack<FFormatArg, MaxArgs> _args;
+    TFixedSizeStack<FString, MaxArgs> _strs;
 };
 //----------------------------------------------------------------------------
 } //!namespace
@@ -140,48 +124,45 @@ private:
 //----------------------------------------------------------------------------
 FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& scalar, const RTTI::IScalarTraits& traits, const Lexer::FSpan& site) {
     Assert(scalar);
-
     UNUSED(traits);
     UNUSED(site);
 
-    VECTOR(Parser, FString) args;
-    args.emplace_back(scalar.ToString());
+    FAtomFormatArgVisitor_ args;
+    scalar.Accept(&args);
 
-    return ExpandString_(fmt, args);
+    FStringBuilder sb;
+    FormatArgs(sb, fmt.MakeView(), args.MakeView());
+    return sb.ToString();
 }
 //----------------------------------------------------------------------------
 FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& tuple, const RTTI::ITupleTraits& traits, const Lexer::FSpan& site) {
     Assert(tuple);
-
     UNUSED(traits);
     UNUSED(site);
 
-    VECTOR(Parser, FString) args;
-    args.reserve(traits.Arity());
-
+    FAtomFormatArgVisitor_ args;
     traits.ForEach(tuple.Data(), [&args](const RTTI::FAtom& it) {
-        args.emplace_back(it.ToString());
-        return true;
+        return it.Accept(&args);
     });
 
-    return ExpandString_(fmt, args);
+    FStringBuilder sb;
+    FormatArgs(sb, fmt.MakeView(), args.MakeView());
+    return sb.ToString();
 }
 //----------------------------------------------------------------------------
 FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& list, const RTTI::IListTraits& traits, const Lexer::FSpan& site) {
     Assert(list);
-
     UNUSED(traits);
     UNUSED(site);
 
-    VECTOR(Parser, FString) args;
-    args.reserve(traits.Count(list));
-
+    FAtomFormatArgVisitor_ args;
     traits.ForEach(list.Data(), [&args](const RTTI::FAtom& it) {
-        args.emplace_back(it.ToString());
-        return true;
+        return it.Accept(&args);
     });
 
-    return ExpandString_(fmt, args);
+    FStringBuilder sb;
+    FormatArgs(sb, fmt.MakeView(), args.MakeView());
+    return sb.ToString();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

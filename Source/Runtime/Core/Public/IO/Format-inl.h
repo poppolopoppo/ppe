@@ -15,9 +15,6 @@ struct TBasicFormatFunctor_ {
     helper_type Helper;
     const void *Arg;
 
-    TBasicFormatFunctor_(helper_type helper, const void *arg)
-        : Helper(helper), Arg(arg) {}
-
     template <typename _Value>
     static void FromValue(TBasicTextWriter<_Char>& oss, const void *arg) {
         typedef Meta::TAddConst<_Value> value_type;
@@ -35,12 +32,12 @@ struct TBasicFormatFunctor_ {
         TBasicFormatFunctor_
     >::type Make(const T& value) {
         typedef Meta::TRemoveReference<T> value_type;
-        return TBasicFormatFunctor_(&FromValue<value_type>, &value);
+        return TBasicFormatFunctor_{ &FromValue<value_type>, &value };
     }
 
     template <typename T>
     static TBasicFormatFunctor_ Make(const T* pointer) {
-        return TBasicFormatFunctor_(&FromPointer<const T*>, pointer);
+        return TBasicFormatFunctor_{ &FromPointer<const T*>, pointer };
     }
 };
 //----------------------------------------------------------------------------
@@ -58,6 +55,12 @@ template <typename _Char, typename T>
 auto MakeFormatArg(const T& arg) {
     typedef details::TBasicFormatFunctor_<_Char> formatfunc_type;
     return formatfunc_type::Make(arg);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+auto MakeFormatLambda(typename details::template TBasicFormatFunctor_<_Char>::helper_type fmt, const void* arg) {
+    typedef details::TBasicFormatFunctor_<_Char> formatfunc_type;
+    return formatfunc_type{ fmt, arg };
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
