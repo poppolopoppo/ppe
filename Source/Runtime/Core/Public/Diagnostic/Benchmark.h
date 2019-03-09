@@ -411,10 +411,11 @@ public: // export table results
     static void WTxt(const TTable<_Benchmarks...>& table, FWTextWriter& oss) {
         oss << L"Benchmark table <" << table.Name << ">, units = " << FCounter::Units() << " :" << Eol;
 
-        constexpr size_t stride = 20;
+        constexpr u32 header = 20;
+        constexpr u32 stride = 12;
 
         oss << L'|'
-            << FTextFormat::Trunc(stride, L' ')
+            << FTextFormat::Trunc(header, L' ')
             << table.Name;
 
         table.ForeachHeader([&oss, stride](const auto& x) {
@@ -425,11 +426,11 @@ public: // export table results
 
         oss << L'|' << Eol;
 
-        oss << Fmt::Repeat(L"-", 21 * (table.dim() + 1/* name */)) << Eol;
+        oss << Fmt::Repeat(L"-", (stride+1) * table.dim() + header) << Eol;
 
-        table.ForeachEntry([&oss, stride](const auto& x) {
+        table.ForeachEntry([&oss, header, stride](const auto& x) {
             oss << L'|'
-                << FTextFormat::Trunc(stride, L' ')
+                << FTextFormat::Trunc(header, L' ')
                 << x.Name;
 
             for (const auto& c : x.Row)
