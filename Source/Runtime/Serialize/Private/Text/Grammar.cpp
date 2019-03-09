@@ -255,20 +255,34 @@ struct TBinaryOp {
             else if (rhs_type_id == PARSEID_FLOAT)
                 b = (FParseFloat(0) != rhs_value.FlatData<FParseFloat>());
             else {
-                FParseInteger integer;
-                FParseInteger unsign_d;
-                FParseFloat fp;
 
+                if (RTTI::is_boolean(rhs_type_id)) {
                 if (rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
                     NOOP(); // b was already assigned
-                else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&integer)))
-                    b = (FParseInteger(0) != integer);
-                else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&unsign_d)))
-                    b = (FParseUnsigned(0) != unsign_d);
-                else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
+                }
+                else if (RTTI::is_signed_integral(rhs_type_id)) {
+                    FParseInteger i;
+                    if (rhs_value.PromoteCopy(RTTI::MakeAtom(&i)))
+                        b = (FParseInteger(0) != i);
+                }
+                else if (RTTI::is_unsigned_integral(rhs_type_id)) {
+                    FParseUnsigned u;
+                    if (rhs_value.PromoteCopy(RTTI::MakeAtom(&u)))
+                        b = (FParseUnsigned(0) != u);
+                }
+                else if (RTTI::is_floating_point(rhs_type_id)) {
+                    FParseFloat fp;
+                    if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
                     b = (FParseFloat(0) != fp);
-                else
+                }
+                else if (RTTI::is_string(rhs_type_id)) {
+                    FParseString s;
+                    if (rhs_value.PromoteCopy(RTTI::MakeAtom(&s)))
+                        b = (not s.empty());
+                }
+                else {
                     PPE_THROW_IT(Parser::FParserException("could not convert to boolean", rhs));
+            }
             }
 
             return context->CreateAtomFrom( _Op< FParseBool >()(
@@ -301,23 +315,31 @@ struct TBinaryOp {
             return context->CreateAtomFrom(
                 _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseInteger>()), rhs_value.FlatData<FParseFloat>()) );
         else {
-            FParseBool b;
-            FParseUnsigned u;
-            FParseFloat fp;
 
+            if (RTTI::is_signed_integral(rhs_type_id)) {
             if (rhs_value.PromoteCopy(RTTI::MakeAtom(&integer)))
                 return context->CreateAtomFrom(
-                    _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseInteger>(), integer) );
-            else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&u)))
+                        _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseInteger>(), integer));
+            }
+            else if (RTTI::is_unsigned_integral(rhs_type_id)) {
+                FParseUnsigned u;
+                if (rhs_value.PromoteCopy(RTTI::MakeAtom(&u)))
                 return context->CreateAtomFrom(
-                    _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseInteger>(), u) );
-            else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
+                        _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseInteger>(), u));
+            }
+            else if (RTTI::is_floating_point(rhs_type_id)) {
+                FParseFloat fp;
+                if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
                 return context->CreateAtomFrom(
-                    _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseInteger>()), fp) );
-            else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
+                        _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseInteger>()), fp));
+            }
+            else if (RTTI::is_boolean(rhs_type_id)) {
+                FParseBool b;
+                if (rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
                 return context->CreateAtomFrom(
-                    _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseInteger>(), b ? FParseInteger(1) : FParseInteger(0)) );
-            else
+                        _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseInteger>(), b ? FParseInteger(1) : FParseInteger(0)));
+            }
+
                 PPE_THROW_IT(Parser::FParserException("could not convert to integer", rhs));
         }
     }
@@ -345,23 +367,31 @@ struct TBinaryOp {
             return context->CreateAtomFrom(
                 _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseUnsigned>()), rhs_value.FlatData<FParseFloat>()));
         else {
-            FParseBool b;
-            FParseInteger i;
-            FParseFloat fp;
 
+            if (RTTI::is_unsigned_integral(rhs_type_id)) {
             if (rhs_value.PromoteCopy(RTTI::MakeAtom(&unsign_d)))
                 return context->CreateAtomFrom(
                     _Op< FParseInteger >()(lhs, lhs_value.FlatData<FParseUnsigned>(), unsign_d));
-            else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&i)))
+            }
+            else if (RTTI::is_unsigned_integral(rhs_type_id)) {
+                FParseInteger i;
+                if (rhs_value.PromoteCopy(RTTI::MakeAtom(&i)))
                 return context->CreateAtomFrom(
                     _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseUnsigned>(), i));
-            else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
+            }
+            else if (RTTI::is_floating_point(rhs_type_id)) {
+                FParseFloat fp;
+                if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
                 return context->CreateAtomFrom(
                     _Op< FParseFloat >()(lhs, static_cast<FParseFloat>(lhs_value.FlatData<FParseUnsigned>()), fp));
-            else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
+            }
+            else if (RTTI::is_boolean(rhs_type_id)) {
+                FParseBool b;
+                if (rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
                 return context->CreateAtomFrom(
                     _Op< FParseUnsigned >()(lhs, lhs_value.FlatData<FParseUnsigned>(), b ? FParseUnsigned(1) : FParseUnsigned(0)));
-            else
+            }
+
                 PPE_THROW_IT(Parser::FParserException("could not convert to integer", rhs));
         }
     }
@@ -385,18 +415,25 @@ struct TBinaryOp {
         else if (rhs_type_id == PARSEID_BOOL)
             f = rhs_value.FlatData<FParseBool>() ? FParseFloat(1) : FParseFloat(0);
         else {
-            FParseInteger i;
-            FParseUnsigned u;
-            FParseFloat fp;
 
-            if (rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
+            if (RTTI::is_floating_point(rhs_type_id)) {
+                FParseFloat fp;
+                Verify(rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)));
                 f = fp;
-            else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&i)))
+            }
+            else if (RTTI::is_signed_integral(rhs_type_id)) {
+                FParseInteger i;
+                Verify(rhs_value.PromoteCopy(RTTI::MakeAtom(&i)));
                 f = static_cast<FParseFloat>(i);
-            else if (rhs_value.PromoteCopy(RTTI::MakeAtom(&u)))
+            }
+            else if (RTTI::is_unsigned_integral(rhs_type_id)) {
+                FParseUnsigned u;
+                Verify(rhs_value.PromoteCopy(RTTI::MakeAtom(&u)));
                 f = static_cast<FParseFloat>(u);
-            else
+            }
+            else {
                 PPE_THROW_IT(Parser::FParserException("could not convert to float", rhs));
+        }
         }
 
         return context->CreateAtomFrom(
@@ -434,15 +471,15 @@ struct TBinaryOp {
             FParseFloat fp;
             FParseBool b;
 
-            if (RTTI::is_string(rhs_value.TypeId()) && rhs_value.PromoteCopy(RTTI::MakeAtom(&s)))
+            if (RTTI::is_string(rhs_type_id) && rhs_value.PromoteCopy(RTTI::MakeAtom(&s)))
                 oss << s;
-            else if (RTTI::is_signed_integral(rhs_value.TypeId()) && rhs_value.PromoteCopy(RTTI::MakeAtom(&i)))
+            else if (RTTI::is_signed_integral(rhs_type_id) && rhs_value.PromoteCopy(RTTI::MakeAtom(&i)))
                 oss << i;
-            else if (RTTI::is_unsigned_integral(rhs_value.TypeId()) && rhs_value.PromoteCopy(RTTI::MakeAtom(&u)))
+            else if (RTTI::is_unsigned_integral(rhs_type_id) && rhs_value.PromoteCopy(RTTI::MakeAtom(&u)))
                 oss << u;
-            else if (RTTI::is_floating_point(rhs_value.TypeId()) && rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
+            else if (RTTI::is_floating_point(rhs_type_id) && rhs_value.PromoteCopy(RTTI::MakeAtom(&fp)))
                 oss << fp;
-            else if (RTTI::is_boolean(rhs_value.TypeId()) && rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
+            else if (RTTI::is_boolean(rhs_type_id) && rhs_value.PromoteCopy(RTTI::MakeAtom(&b)))
                 oss << b;
             else
                 PPE_THROW_IT(Parser::FParserException("could not convert to string", rhs));
@@ -474,27 +511,33 @@ struct TBinaryOp {
 
         default:
             // now try to cast, i.e not the current type but accessible through copy promotion
-            {
-                FParseBool b;
-                RTTI::FAtom lhs_bool(RTTI::MakeAtom(&b));
-                if (lhs_value.PromoteCopy(lhs_bool))
-                    return BooleanOp_(context, lhs, rhs, lhs_bool, rhs_value);
-            }{
+            const RTTI::FTypeId typeId = lhs_value.TypeId();
+
+            if (RTTI::is_signed_integral(typeId)) {
                 FParseInteger i;
                 RTTI::FAtom lhs_integer(RTTI::MakeAtom(&i));
                 if (lhs_value.PromoteCopy(lhs_integer))
                     return IntegerOp_(context, lhs, rhs, lhs_integer, rhs_value);
-            }{
+            }
+            else if (RTTI::is_unsigned_integral(typeId)) {
                 FParseUnsigned u;
                 RTTI::FAtom lhs_unsigned(RTTI::MakeAtom(&u));
                 if (lhs_value.PromoteCopy(lhs_unsigned))
                     return IntegerOp_(context, lhs, rhs, lhs_unsigned, rhs_value);
-            }{
+            }
+            else if (RTTI::is_floating_point(typeId)) {
                 FParseFloat fp;
                 RTTI::FAtom lhs_fp(RTTI::MakeAtom(&fp));
                 if (lhs_value.PromoteCopy(lhs_fp))
                     return FloatOp_(context, lhs, rhs, lhs_fp, rhs_value);
-            }{
+            }
+            else if (RTTI::is_boolean(typeId)) {
+                FParseBool b;
+                RTTI::FAtom lhs_bool(RTTI::MakeAtom(&b));
+                if (lhs_value.PromoteCopy(lhs_bool))
+                    return BooleanOp_(context, lhs, rhs, lhs_bool, rhs_value);
+            }
+            else if (RTTI::is_string(typeId)) {
                 FParseString str;
                 RTTI::FAtom lhs_str(RTTI::MakeAtom(&str));
                 if (lhs_value.PromoteCopy(lhs_str))
@@ -538,6 +581,7 @@ struct FTernaryOp {
         const RTTI::FAtom value = expr->Eval(context);
 
         Assert(value);
+        FParseBool b = false;
 
         switch (value.TypeId()) {
         case PARSEID_BOOL:
@@ -550,6 +594,10 @@ struct FTernaryOp {
             return (value.FlatData<FParseFloat>() != 0);
         case PARSEID_STRING:
             return (value.FlatData<FParseString>().empty() != false);
+
+        default:
+            if (value.PromoteCopy(RTTI::MakeAtom(&b)))
+                return b;
         }
 
         PPE_THROW_IT(Parser::FParserException("invalid atom type for ternary operator", expr));
