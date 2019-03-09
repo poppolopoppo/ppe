@@ -31,15 +31,15 @@ TBasicStringView<_Char> MakeCStringView(const _Char* cstr);
 template <typename _Char>
 TBasicStringView<_Char> MakeStringView(const TBasicString<_Char>& str);
 template <size_t _Dim>
-FStringView MakeStringView(const char(&cstr)[_Dim]);
+CONSTEXPR FStringView MakeStringView(const char(&cstr)[_Dim]);
 template <size_t _Dim>
-FWStringView MakeStringView(const wchar_t(&cstr)[_Dim]);
-FStringView MakeStringView(const TMemoryView<const char>& view);
-FWStringView MakeStringView(const TMemoryView<const wchar_t>& view);
-FStringView MakeStringView(const TMemoryView<char>& view);
-FWStringView MakeStringView(const TMemoryView<wchar_t>& view);
-const FStringView& MakeStringView(const FStringView& view);
-const FWStringView& MakeStringView(const FWStringView& view);
+CONSTEXPR FWStringView MakeStringView(const wchar_t(&cstr)[_Dim]);
+CONSTEXPR FStringView MakeStringView(const TMemoryView<const char>& view);
+CONSTEXPR FWStringView MakeStringView(const TMemoryView<const wchar_t>& view);
+CONSTEXPR FStringView MakeStringView(const TMemoryView<char>& view);
+CONSTEXPR FWStringView MakeStringView(const TMemoryView<wchar_t>& view);
+CONSTEXPR const FStringView& MakeStringView(const FStringView& view);
+CONSTEXPR const FWStringView& MakeStringView(const FWStringView& view);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -71,21 +71,17 @@ public:
 
     TBasicStringView(std::initializer_list<value_type> list) : parent_type(list) {}
     TBasicStringView(const iterator& first, const iterator& last) : parent_type(first, last) {}
-    TBasicStringView(pointer storage, size_type size) : parent_type(storage, size) {}
-
-    const _Char* c_str() const { return parent_type::data(); }
+    CONSTEXPR TBasicStringView(pointer storage, size_type size) : parent_type(storage, size) {}
 
     template <size_t _Dim>
-    TBasicStringView(const _Char (&staticChars)[_Dim])
-    :   parent_type(staticChars, _Dim - 1/* assume null terminated string */) {
+    CONSTEXPR TBasicStringView(const _Char(&staticChars)[_Dim])
+        : parent_type(staticChars, _Dim - 1/* assume null terminated string */) {
         static_assert(_Dim, "invalid string");
-        Assert(not staticChars[_Dim - 1]);
     }
 
     template <size_t _Dim>
-    TBasicStringView& operator =(const _Char(&staticChars)[_Dim]) {
+    CONSTEXPR TBasicStringView& operator =(const _Char(&staticChars)[_Dim]) {
         static_assert(_Dim, "invalid string");
-        Assert(not staticChars[_Dim - 1]);
         return (*this = TBasicStringView(staticChars, _Dim - 1));
     }
 
@@ -126,36 +122,36 @@ FORCE_INLINE TBasicStringView<_Char> MakeStringView(const TBasicString<_Char>& s
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-FORCE_INLINE FStringView MakeStringView(const char(&cstr)[_Dim]) {
+CONSTEXPR FStringView MakeStringView(const char(&cstr)[_Dim]) {
     return FStringView(cstr);
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-FORCE_INLINE FWStringView MakeStringView(const wchar_t(&cstr)[_Dim]) {
+CONSTEXPR FWStringView MakeStringView(const wchar_t(&cstr)[_Dim]) {
     return FWStringView(cstr);
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE FStringView MakeStringView(const TMemoryView<const char>& view) {
+CONSTEXPR FStringView MakeStringView(const TMemoryView<const char>& view) {
     return FStringView(view.data(), view.size());
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE FWStringView MakeStringView(const TMemoryView<const wchar_t>& view) {
+CONSTEXPR FWStringView MakeStringView(const TMemoryView<const wchar_t>& view) {
     return FWStringView(view.data(), view.size());
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE FStringView MakeStringView(const TMemoryView<char>& view) {
+CONSTEXPR FStringView MakeStringView(const TMemoryView<char>& view) {
     return FStringView(view.data(), view.size());
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE FWStringView MakeStringView(const TMemoryView<wchar_t>& view) {
+CONSTEXPR FWStringView MakeStringView(const TMemoryView<wchar_t>& view) {
     return FWStringView(view.data(), view.size());
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE const FStringView& MakeStringView(const FStringView& view) {
+CONSTEXPR const FStringView& MakeStringView(const FStringView& view) {
     return view;
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE const FWStringView& MakeStringView(const FWStringView& view) {
+CONSTEXPR const FWStringView& MakeStringView(const FWStringView& view) {
     return view;
 }
 //----------------------------------------------------------------------------
