@@ -109,6 +109,9 @@
 #define RTTI_ENUM_BEGIN(_Namespace, _Name) \
     RTTI_ENUM_BEGIN_EX(_Namespace, _Name, ::PPE::RTTI::EEnumFlags::None)
 //----------------------------------------------------------------------------
+#define RTTI_ENUM_FLAGS_BEGIN(_Namespace, _Name) \
+    RTTI_ENUM_BEGIN_EX(_Namespace, _Name, ::PPE::RTTI::EEnumFlags::Flags)
+//----------------------------------------------------------------------------
 #define RTTI_ENUM_VALUE_EX(_Name, _Value) \
     RegisterValue(::PPE::RTTI::FMetaEnumValue{ _Name, i64(_Value) });
 //----------------------------------------------------------------------------
