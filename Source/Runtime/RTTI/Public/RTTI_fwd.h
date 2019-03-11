@@ -59,6 +59,8 @@ class FMetaEnumHandle;
 class FMetaNamespace;
 FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------
+using FMetaEnumOrd = i64;
+//----------------------------------------------------------------------------
 class FMetaDatabase;
 class FMetaDatabaseReadable;
 class FMetaDatabaseReadWritable;
