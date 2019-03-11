@@ -43,6 +43,9 @@ public:
     static void SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec);
     static void UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec);
 
+    static void EnterHighResolutionTimer();
+    static void LeaveLowResolutionTimer();
+
 public: // platform specific
 
     static const double GSecondsPerCycle;

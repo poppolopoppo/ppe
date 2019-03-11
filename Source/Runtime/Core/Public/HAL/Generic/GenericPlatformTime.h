@@ -36,6 +36,10 @@ public: // must be defined for every platform
             std::chrono::microseconds::period >;
         return microseconds_type(chrono_type::now().time_since_epoch()).count();
     }
+
+    static void EnterHighResolutionTimer() = delete;
+    static void LeaveLowResolutionTimer() = delete;
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

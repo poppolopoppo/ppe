@@ -4,6 +4,7 @@
 
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformMessageHandler.h"
+#include "HAL/PlatformTime.h"
 
 namespace PPE {
 namespace Application {
@@ -22,10 +23,14 @@ FGenericApplication::~FGenericApplication() {
 //----------------------------------------------------------------------------
 void FGenericApplication::Start() {
     LOG(Application, Emphasis, L"start application <{0}>", _name);
+
+    FPlatformTime::EnterHighResolutionTimer();
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::PumpMessages() {
     FPlatformMessageHandler::PumpMessages(nullptr);
+
+    FPlatformTime::LeaveLowResolutionTimer();
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::Tick(FTimespan ) {
