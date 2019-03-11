@@ -292,7 +292,7 @@ launchconfigurations = [
         "cwd": "${workspaceRoot}\\Output\\Binary",
         "environment": [],
         "visualizerFile": "${workspaceRoot}\\Extras\\Debug\\PPE.natvis",
-        "externalConsole": true
+        "externalConsole": false
     }
 ]
 
