@@ -2,39 +2,69 @@
 
 #include "BuildGraph_fwd.h"
 
-#include "IO/FileSystem_fwd.h"
+#include "IO/Dirpath.h"
 #include "IO/String_fwd.h"
+#include "Misc/Guid.h"
 #include "RTTI/Typedefs.h"
-#include "Task/TaskManager.h"
 
 namespace PPE {
+class PPE_CORE_API ITargetPlaftorm;
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class EBuildFlags {
+    None        = 0,
+    Rebuild     = 1<<0,
+    CacheRead   = 1<<1,
+    CacheWrite  = 1<<2,
+    DryRun      = 1<<3,
+    Verbose     = 1<<4,
+};
+ENUM_FLAGS(EBuildFlags);
+//----------------------------------------------------------------------------
+enum class EBuildResult {
+    Unbuilt,
+    UpToDate,
+    Failed,
+    Built
+};
+//----------------------------------------------------------------------------
+struct FBuildInfos {
+    FGuid Revision;
+    FDirpath Output;
+    FDirpath Intermediate;
+    //IBuildCache* Cache; #TODO
+    IBuildExecutor* Executor;
+    //IBuildLog* Log; #TODO
+    const ITargetPlaftorm* Platform;
+};
+//----------------------------------------------------------------------------
 class PPE_BUILDGRAPH_API FBuildContext : Meta::FNonCopyable {
 public:
-    FBuildContext(IBuildExecutor& executor, FBuildNode* root);
-    FBuildContext(FBuildContext& parent, FBuildNode* root);
+    FBuildContext(const FBuildInfos& infos, FBuildNode& root);
+    FBuildContext(FBuildContext& parent, FBuildNode& root);
 
-    const IBuildExecutor& Executor() const;
-    const FBuildContext* Parent() const;
+    const FBuildContext* Parent() const { return _parent; }
+    const FBuildInfos& Infos() const { return _infos; }
+    const FBuildNode& Root() const { return (*_root); }
 
-    void Build(FBuildNode* node);
-    bool UpToDate(FBuildNode* node) const;
+    EBuildResult State() const { return _state; }
+
+    bool NeedToBuild(FBuildNode& node);
+    void Build(FBuildNode& node);
     void Flush();
-
-    void AddDynamicDependency(FBuildNode* dep);
-    void AddRuntimeDependency(FBuildNode* dep);
 
     void LogInfo(const FWStringView& fmt, const FWFormatArgList& args);
     void LogWarning(const FWStringView& fmt, const FWFormatArgList& args);
     void LogError(const FWStringView& fmt, const FWFormatArgList& args);
 
 private:
-    IBuildExecutor& _executor;
-    FBuildContext* _parent;
-    SBuildNode _root;
+    FBuildContext* const _parent;
+    const FBuildInfos& _infos;
+    const SBuildNode _root;
+
+    EBuildResult _state;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
