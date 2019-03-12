@@ -33,13 +33,17 @@
     "ProjectUseUnity"
 }
 
+.DynamicLinkType ? 'Dll'
 .ProjectConfigs = {}
+.UnityEnabled = 'true'
 
 ForEach( .CompileConfig in .AllCompileConfigs )
 {
     .ProjectConfig = // Visual project config
     [
         Using( .CompileConfig )
+
+        .ProjectLinkType       ? .ConfigLinkType
 
         // Evaluate parameters for this configuration
         #include "EvalParameters.bff"
@@ -54,8 +58,6 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .ProjectCompileConfig =
         [
             Using( .CompileConfig )
-
-            .ProjectLinkType   ? .ConfigLinkType
 
             // Project defines
 
@@ -134,31 +136,38 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             ^ProjectCompileConfigWithoutPCH = .ProjectCompileConfig + .PCHDisabled
         }
 
-        // Project Unity
-        Unity( '$ProjectName$-Unity-$Platform$-$Config$' )
+        .PurgeTargets = {}
+
+        If( .ProjectUseUnity == .UnityEnabled )
         {
-            Using( .ProjectCompileConfigWithPCH )
-
-            .UnityInputPath             = '$ProjectPath$'
-            .UnityOutputPath            = .UnityDirectory
-            .UnityInputPattern          = .ProjectInputPattern
-            .UnityOutputPattern         = 'Unity_*_of_$UnityNumFiles$.cpp'
-            .UnityInputExcludedFiles    = {}
-
-            ForEach( .Filename in .ProjectExcludedFiles )
+            // Project Unity
+            Unity( '$ProjectName$-Unity-$Platform$-$Config$' )
             {
-                ^UnityInputExcludedFiles + "$ProjectPath$/$Filename$"
-            }
-            ForEach( .Filename in .ProjectIsolatedFiles )
-            {
-                ^UnityInputExcludedFiles + "$ProjectPath$/$Filename$"
-            }
-        }
+                Using( .ProjectCompileConfigWithPCH )
 
-        RemoveDir( '$ProjectName$-Unity-$Platform$-$Config$-Purge' )
-        {
-            .RemovePaths          = .UnityDirectory
-            .RemovePathsPattern   = 'Unity*.cpp'
+                .UnityInputPath             = '$ProjectPath$'
+                .UnityOutputPath            = .UnityDirectory
+                .UnityInputPattern          = .ProjectInputPattern
+                .UnityOutputPattern         = 'Unity_*_of_$UnityNumFiles$.cpp'
+                .UnityInputExcludedFiles    = {}
+
+                ForEach( .Filename in .ProjectExcludedFiles )
+                {
+                    ^UnityInputExcludedFiles + "$ProjectPath$/$Filename$"
+                }
+                ForEach( .Filename in .ProjectIsolatedFiles )
+                {
+                    ^UnityInputExcludedFiles + "$ProjectPath$/$Filename$"
+                }
+            }
+
+            RemoveDir( '$ProjectName$-Unity-$Platform$-$Config$-Purge' )
+            {
+                .RemovePaths          = .UnityDirectory
+                .RemovePathsPattern   = 'Unity*.cpp'
+            }
+
+            .PurgeTargets + '$ProjectName$-Unity-$Platform$-$Config$-Purge'
         }
 
         // Object list
@@ -177,9 +186,10 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             }
 
             // Unity files IFN
-            .ProjectCompilerInputUnity_false = []
-            .ProjectCompilerInputUnity_true = [ .CompilerInputUnity = '$ProjectName$-Unity-$Platform$-$Config$' ]
-            Using( ."ProjectCompilerInputUnity_$ProjectUseUnity$" )
+            If( .ProjectUseUnity == .UnityEnabled )
+            {
+                .CompilerInputUnity = '$ProjectName$-Unity-$Platform$-$Config$'
+            }
 
             // Deoptimize files containings 'FASTBUILD_DEOPTIMIZE_OBJECT'
             .DeoptimizeWritableFilesWithToken = true
@@ -189,6 +199,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         {
             .RemovePaths        = .IntermediatePath
         }
+
+        .PurgeTargets + '$ProjectName$-Obj-$Platform$-$Config$-Purge'
 
         // Static library
         Library( '$ProjectName$-Lib-$Platform$-$Config$' )
@@ -206,47 +218,48 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .RemovePaths        = .IntermediatePath
         }
 
-        // Dynamic library
-        DLL( '$ProjectName$-Dll-$Platform$-$Config$' )
+        .PurgeTargets + '$ProjectName$-Lib-$Platform$-$Config$-Purge'
+
+        If( .ProjectLinkType == .DynamicLinkType )
         {
-            .LinkerOutput       = '$IntermediateRoot$\$ProjectName$.$Config$.$Platform$.$CompilerDllExtension$'
-            .LinkerOptions      = "$DllOptions$ $LinkerOptions$"
-
-            .Libraries          = { '$ProjectName$-Lib-$Platform$-$Config$' }
-#if USE_LIBRARY_DEPENDENCY_INPUT
-            .Libraries          = { '$ProjectName$-Obj-$Platform$-$Config$' }
-#endif
-            .Libraries          + .ProjectLibraries
-
-            .ProjectDependencies    = .ProjectPublicDependencies
-                                    + .ProjectPrivateDependencies
-
-            ForEach( .ProjectDependency in .ProjectDependencies )
+            // Dynamic library
+            DLL( '$ProjectName$-$DynamicLinkType$-$Platform$-$Config$' )
             {
-                ^Libraries + { '$ProjectDependency$-$Platform$-$Config$' }
-            }
-        }
+                .LinkerOutput       = '$IntermediateRoot$\$ProjectName$.$Config$.$Platform$.$CompilerDllExtension$'
+                .LinkerOptions      = "$DllOptions$ $LinkerOptions$"
 
-        RemoveDir( '$ProjectName$-Dll-$Platform$-$Config$-Purge' )
-        {
-            .RemovePaths          = .BinaryPath
-            .RemovePathsPattern   = "$ProjectName$.$Config$.$Platform$.*"
-            .PreBuildDependencies = { '$ProjectName$-Lib-$Platform$-$Config$-Purge' }
-#if USE_LIBRARY_DEPENDENCY_INPUT
-            .PreBuildDependencies = { '$ProjectName$-Obj-$Platform$-$Config$-Purge' }
-#endif
+                .Libraries          = { '$ProjectName$-Lib-$Platform$-$Config$' }
+    #if USE_LIBRARY_DEPENDENCY_INPUT
+                .Libraries          = { '$ProjectName$-Obj-$Platform$-$Config$' }
+    #endif
+                .Libraries          + .ProjectLibraries
+
+                .ProjectDependencies    = .ProjectPublicDependencies
+                                        + .ProjectPrivateDependencies
+
+                ForEach( .ProjectDependency in .ProjectDependencies )
+                {
+                    ^Libraries + { '$ProjectDependency$-$Platform$-$Config$' }
+                }
+            }
+
+            RemoveDir( '$ProjectName$-$DynamicLinkType$-$Platform$-$Config$-Purge' )
+            {
+                .RemovePaths          = .BinaryPath
+                .RemovePathsPattern   = "$ProjectName$.$Config$.$Platform$.*"
+                .PreBuildDependencies = { '$ProjectName$-Lib-$Platform$-$Config$-Purge' }
+    #if USE_LIBRARY_DEPENDENCY_INPUT
+                .PreBuildDependencies = { '$ProjectName$-Obj-$Platform$-$Config$-Purge' }
+    #endif
+            }
+
+            .PurgeTargets + '$ProjectName$-$DynamicLinkType$-$Platform$-$Config$-Purge'
         }
 
         // Purge alias
         Alias( '$ProjectName$-Purge-$Platform$-$Config$' )
         {
-            .Targets =
-            {
-                '$ProjectName$-Unity-$Platform$-$Config$-Purge',
-                '$ProjectName$-Obj-$Platform$-$Config$-Purge',
-                '$ProjectName$-Lib-$Platform$-$Config$-Purge',
-                '$ProjectName$-Dll-$Platform$-$Config$-Purge',
-            }
+            .Targets = .PurgeTargets
         }
 
         // Override project directories for visual studio ONLY
