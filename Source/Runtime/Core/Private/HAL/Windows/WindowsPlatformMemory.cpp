@@ -10,7 +10,8 @@
 #include "HAL/Windows/LastError.h"
 #include "HAL/Windows/WindowsPlatformIncludes.h"
 
-#include <Psapi.h>
+#include <intrin.h> // _AddressOfReturnAddress()
+#include <Psapi.h> // GetProcessMemoryInfo()
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -104,6 +105,35 @@ auto FWindowsPlatformMemory::Stats() -> FStats {
     stats.PeakUsedVirtual = checked_cast<u64>(counters.PeakPagefileUsage);
 
     return stats;
+}
+//----------------------------------------------------------------------------
+auto FWindowsPlatformMemory::StackUsage() -> FStackUsage {
+    FStackUsage usage;
+
+    ::MEMORY_BASIC_INFORMATION mbi;
+    ::VirtualQuery(&mbi, &mbi, sizeof(mbi));
+    // now mbi.AllocationBase = reserved stack memory base address
+
+    ::VirtualQuery(mbi.AllocationBase, &mbi, sizeof(mbi));
+    // now (mbi.BaseAddress, mbi.RegionSize) describe reserved (uncommitted) portion of the stack
+    usage.Reserved = checked_cast<u64>(mbi.RegionSize);
+
+    ::VirtualQuery((char*)mbi.BaseAddress + mbi.RegionSize, &mbi, sizeof(mbi));
+    // now (mbi.BaseAddress, mbi.RegionSize) describe the guard page
+    usage.Guard = checked_cast<u64>(mbi.RegionSize);
+
+    ::VirtualQuery((char*)mbi.BaseAddress + mbi.RegionSize, &mbi, sizeof(mbi));
+    // now (mbi.BaseAddress, mbi.RegionSize) describe the committed (i.e. accessed) portion of the stack
+    usage.Committed = checked_cast<u64>(mbi.RegionSize);
+
+    usage.BaseAddr = mbi.BaseAddress; // base of committed portion of the stack
+
+    return usage;
+}
+//----------------------------------------------------------------------------
+void* FWindowsPlatformMemory::AddressOfReturnAddress() {
+    // https://docs.microsoft.com/en-us/cpp/intrinsics/addressofreturnaddress?view=vs-2017
+    return _AddressOfReturnAddress();
 }
 //----------------------------------------------------------------------------
 void* FWindowsPlatformMemory::PageAlloc(size_t sizeInBytes) {

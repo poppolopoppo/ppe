@@ -24,6 +24,13 @@ struct FGenericPlatformMemoryStats {
     u64 PeakUsedPhysical;
 };
 //----------------------------------------------------------------------------
+struct FGenericPlatformMemoryStackUsage {
+    void* BaseAddr;
+    u64 Reserved;
+    u64 Guard;
+    u64 Committed;
+};
+//----------------------------------------------------------------------------
 struct PPE_CORE_API FGenericPlatformMemory {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(size_t, CacheLineSize, 64);
@@ -36,6 +43,11 @@ public: // must be defined for every platform
 
     using FStats = FGenericPlatformMemoryStats;
     static FStats Stats() = delete;
+
+    using FStackUsage = FGenericPlatformMemoryStackUsage;
+    static FStackUsage StackUsage() = delete;
+
+    static void* AddressOfReturnAddress() = delete;
 
     //------------------------------------------------------------------------
     // virtual memory *DONT USE THOSE DIRECTLY* (no logs !)

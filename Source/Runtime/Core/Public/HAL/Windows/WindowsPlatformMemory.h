@@ -26,6 +26,11 @@ public:
     using FGenericPlatformMemory::FStats;
     static FStats Stats();
 
+    using FGenericPlatformMemory::FStackUsage;
+    static FStackUsage StackUsage();
+
+    static void* AddressOfReturnAddress();
+
     //------------------------------------------------------------------------
     // virtual memory *DONT USE THOSE DIRECTLY, SEE VirtualMemory.h * (no logs !)
 
