@@ -81,6 +81,8 @@ public:
     FFilename Relative(const FDirpath& origin) const;
     FFilename RemoveExtname() const;
 
+    bool IsRelativeTo(const FDirpath& origin) const;
+
     bool Equals(const FFilename& other) const;
     bool Less(const FFilename& other) const;
 

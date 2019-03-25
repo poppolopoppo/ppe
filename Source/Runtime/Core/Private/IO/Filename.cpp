@@ -204,6 +204,11 @@ FFilename FFilename::RemoveExtname() const {
     return FFilename(_dirpath, _basename.RemoveExtname());
 }
 //----------------------------------------------------------------------------
+bool FFilename::IsRelativeTo(const FDirpath& origin) const {
+    FDirpath dirpath;
+    return FDirpath::Relative(&dirpath, origin, _dirpath);
+}
+//----------------------------------------------------------------------------
 size_t FFilename::HashValue() const {
     return hash_tuple(_dirpath, _basename);
 }

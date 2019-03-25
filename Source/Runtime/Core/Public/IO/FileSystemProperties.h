@@ -19,7 +19,8 @@ STATIC_CONST_INTEGRAL(size_t, MaxPathLength, FPlatformFile::MaxPathLength);
 //----------------------------------------------------------------------------
 enum : char_type {
     Separator = FPlatformFile::PathSeparator,
-    AltSeparator = FPlatformFile::PathSeparatorAlt
+    AltSeparator = FPlatformFile::PathSeparatorAlt,
+    NormalizedSeparator = L'/'
 };
 //----------------------------------------------------------------------------
 using FString = TBasicString<char_type>;

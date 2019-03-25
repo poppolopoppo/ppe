@@ -432,7 +432,7 @@ FTextWriter& operator <<(FTextWriter& oss, const PPE::FDirpath& dirpath) {
     STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, dirpath.Depth());
     const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
 
-    if (false == mountingPoint.empty())
+    if (not mountingPoint.empty())
         oss << mountingPoint << '/';
     for (size_t i = 0; i < k; ++i)
         oss << dirnames[i] << '/';
@@ -445,10 +445,10 @@ FWTextWriter& operator <<(FWTextWriter& oss, const PPE::FDirpath& dirpath) {
     STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, dirpath.Depth());
     const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
 
-    if (false == mountingPoint.empty())
-        oss << mountingPoint << wchar_t(FileSystem::Separator);
+    if (not mountingPoint.empty())
+        oss << mountingPoint << wchar_t(FileSystem::NormalizedSeparator);
     for (size_t i = 0; i < k; ++i)
-        oss << dirnames[i] << wchar_t(FileSystem::Separator);
+        oss << dirnames[i] << wchar_t(FileSystem::NormalizedSeparator);
 
     return oss;
 }
