@@ -32,15 +32,15 @@ public:
         typedef TMallocator<U> other;
     };
 
-    TMallocator() noexcept {}
+    CONSTEXPR TMallocator() noexcept = default;
 
-    TMallocator(const TMallocator& ) noexcept {}
+    CONSTEXPR TMallocator(const TMallocator&) noexcept = default;
     template <typename U>
-    TMallocator(const TMallocator<U>&) noexcept {}
+    CONSTEXPR TMallocator(const TMallocator<U>&) noexcept {}
 
-    TMallocator& operator=(const TMallocator& ) noexcept { return *this; }
+    CONSTEXPR TMallocator& operator=(const TMallocator&) noexcept = default;
     template <typename U>
-    TMallocator& operator=(const TMallocator<U>&) noexcept { return *this; }
+    CONSTEXPR TMallocator& operator=(const TMallocator<U>&) noexcept { return (*this); }
 
     pointer allocate(size_type n);
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
@@ -49,8 +49,6 @@ public:
     // see AllocatorRealloc()
     void* relocate(void* p, size_type newSize, size_type oldSize);
 };
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TMallocator<u8>;
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
 auto TMallocator<T, _Alignment>::allocate(size_type n) -> pointer {
@@ -98,6 +96,8 @@ void* TMallocator<T, _Alignment>::relocate(void* p, size_type newSize, size_type
     return newp;
 }
 //----------------------------------------------------------------------------
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TMallocator<u8>;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t A, typename U, size_t B>
@@ -127,7 +127,7 @@ struct allocator_can_steal_from<
 //----------------------------------------------------------------------------
 template <typename T, size_t _Alignment>
 std::true_type/* enabled */AllocatorStealFrom(
-    TMallocator<T, _Alignment>&, 
+    TMallocator<T, _Alignment>&,
     typename TMallocator<T, _Alignment>::pointer, size_t ) {
     return std::true_type{}; // nothing to do, everything is already checked statically
 }

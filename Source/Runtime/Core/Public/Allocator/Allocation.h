@@ -4,6 +4,7 @@
 
 #include "Allocator/Alloca.h"
 #include "Allocator/Mallocator.h"
+#include "Allocator/New.h"
 #include "Allocator/StackAllocator.h"
 #include "Allocator/TrackingAllocator.h"
 #include "Memory/MemoryDomain.h"

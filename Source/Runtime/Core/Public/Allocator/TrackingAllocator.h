@@ -91,29 +91,30 @@ public:
         typedef TTrackingAllocator< _Domain, typename traits_type::template rebind_alloc<U> > other;
     };
 
-    TTrackingAllocator() throw() {
+    CONSTEXPR TTrackingAllocator() noexcept {
         STATIC_ASSERT(  allocator_has_realloc<TTrackingAllocator>::value ==
                         allocator_has_realloc<base_type>::value );
     }
-    explicit TTrackingAllocator(const base_type& allocator) throw() : base_type(allocator) {}
+    CONSTEXPR explicit TTrackingAllocator(const base_type& allocator) noexcept
+        : base_type(allocator) {}
 
-    TTrackingAllocator(const TTrackingAllocator& other) throw() = default;
+    CONSTEXPR TTrackingAllocator(const TTrackingAllocator& other) noexcept = default;
     template<typename _D, typename _A>
-    TTrackingAllocator(const TTrackingAllocator<_D, _A>& other) throw() : base_type(other) {}
+    CONSTEXPR TTrackingAllocator(const TTrackingAllocator<_D, _A>& other) noexcept : base_type(other) {}
 
-    TTrackingAllocator& operator =(const TTrackingAllocator& other) = default;
+    CONSTEXPR TTrackingAllocator& operator =(const TTrackingAllocator& other) noexcept = default;
     template<typename _D, typename _A>
-    TTrackingAllocator& operator =(const TTrackingAllocator<_D, _A>& other) {
+    CONSTEXPR TTrackingAllocator& operator =(const TTrackingAllocator<_D, _A>& other) noexcept {
         base_type::operator =(other);
         return *this;
     }
 
-    FMemoryTracking* TrackingData() const { return &(domain_type::TrackingData()); }
+    FMemoryTracking* TrackingData() const noexcept { return &(domain_type::TrackingData()); }
 
-    _Allocator& WrappedAllocator() { return static_cast<_Allocator&>(*this); }
-    const _Allocator& WrappedAllocator() const { return static_cast<const _Allocator&>(*this); }
+    CONSTEXPR _Allocator& WrappedAllocator() noexcept { return static_cast<_Allocator&>(*this); }
+    CONSTEXPR const _Allocator& WrappedAllocator() const noexcept { return static_cast<const _Allocator&>(*this); }
 
-    size_type max_size() const { return base_type::max_size(); }
+    CONSTEXPR size_type max_size() const noexcept { return base_type::max_size(); }
 
     pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
     pointer allocate(size_type n) {

@@ -28,24 +28,24 @@ public:
         typedef TAllocatorBase<U> other;
     };
 
-    TAllocatorBase() throw() {}
+    CONSTEXPR TAllocatorBase() NOEXCEPT = default;
 
-    TAllocatorBase(const TAllocatorBase& ) throw() {}
+    CONSTEXPR TAllocatorBase(const TAllocatorBase&) noexcept = default;
     template<typename U>
-    TAllocatorBase(const TAllocatorBase<U>& ) throw() {}
+    CONSTEXPR TAllocatorBase(const TAllocatorBase<U>& ) noexcept {}
 
-    TAllocatorBase& operator=(const TAllocatorBase& ) { return *this; }
+    CONSTEXPR TAllocatorBase& operator=(const TAllocatorBase&) noexcept = default;
     template<typename U>
-    TAllocatorBase& operator=(const TAllocatorBase<U>&) { return *this; }
+    CONSTEXPR TAllocatorBase& operator=(const TAllocatorBase<U>&) noexcept { return (*this); }
 
-    pointer address(reference x) const { return std::addressof(x); }
-    const_pointer address(const_reference x) const { return std::addressof(x); }
+    CONSTEXPR pointer address(reference x) const noexcept { return std::addressof(x); }
+    CONSTEXPR const_pointer address(const_reference x) const noexcept { return std::addressof(x); }
 
     template <typename... _Args>
     void construct(pointer p, _Args&&... args) { Meta::Construct(p, std::forward<_Args>(args)...); }
     void destroy(pointer p) { Meta::Destroy(p); }
 
-    size_type max_size() const
+    CONSTEXPR size_type max_size() const noexcept
     {
         // The following has been carefully written to be independent of
         // the definition of size_t and to avoid signed/unsigned warnings.
