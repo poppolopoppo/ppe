@@ -53,17 +53,34 @@ static void SetClipboard_(HWND hwndDlg, const FWStringView& content)
 static void ExternalEditor_(const FWStringView& filename, size_t line) {
     Assert(not filename.empty());
 
+    struct FExternalEditor {
+        FWStringView Path;
+        FWStringView FormatArgs;
+    };
+
+    CONSTEXPR const FExternalEditor editors[] = {
+        {   // visual studio code
+            L"C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd",
+            L"\"{0}\" -g \"{1}:{2}\""
+        },
+        {   // sublime text 3
+            L"C:\\Program Files\\Sublime Text 3\\sublime_text.exe",
+            L"\"{0}\" \"{1}:{2}\""
+        },
+        {   // notepad(2-mod)
+            L"C:\\Windows\\System32\\notepad.exe",
+            L"\"{0}\" \"{1}\" -g {2}"
+        }
+    };
+
     wchar_t buffer[2048];
-    {
-        FWFixedSizeTextWriter oss(buffer);
-#if 0
-        Format(oss, L"\"{0}\" \"{1}:{2}\"",
-            L"C:\\Program Files\\Sublime Text 3\\sublime_text.exe", // TODO: handle other editors ?
-            filename, line);
-#else
-        Format(oss, L"code -g \"{0}:{1}\"", filename, line); // uses visual studio code
-#endif
-        oss << Eos;
+    for (const FExternalEditor& ed : editors) {
+        if (FPlatformFile::FileExists(ed.Path.data(), EExistPolicy::Exists)) {
+            FWFixedSizeTextWriter oss(buffer);
+            Format(oss, ed.FormatArgs, ed.Path, filename, line);
+            oss << Eos;
+            break;
+        }
     }
 
     ::STARTUPINFO startupInfo;
@@ -386,8 +403,8 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
     FWindowsPlatformDialog::EType buttons,
     const FWStringView& text,
     const FWStringView& caption ) {
-    STATIC_ASSERT(sizeof(u16) == sizeof(WORD));
-    STATIC_ASSERT(sizeof(u32) == sizeof(DWORD));
+    STATIC_ASSERT(sizeof(u16) == sizeof(::WORD));
+    STATIC_ASSERT(sizeof(u32) == sizeof(::DWORD));
 
     FTemplate_DialogContext_ ctx;
     ctx.Text = text;
@@ -419,7 +436,7 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
 
     static constexpr size_t GAllocSize = 8192;
 
-    HGLOBAL const hgbl = ::GlobalAlloc(GMEM_ZEROINIT, GAllocSize);
+    ::HGLOBAL const hgbl = ::GlobalAlloc(GMEM_ZEROINIT, GAllocSize);
     Assert(nullptr != hgbl);
     {
         constexpr size_t buttonWidthPerChar = 4;
@@ -429,7 +446,7 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
         FMemoryViewWriter writer(TMemoryView<u8>((u8*)::GlobalLock(hgbl), GAllocSize));
 
         const auto eaten = writer.Eat(sizeof(::DLGTEMPLATE));
-        Assert(Meta::IsAligned(sizeof(DWORD), eaten.Pointer()));
+        Assert(Meta::IsAligned(sizeof(::DWORD), eaten.Pointer()));
         ::LPDLGTEMPLATE const tpl = reinterpret_cast<::LPDLGTEMPLATE>(eaten.Pointer());
 
         tpl->x = 10;
@@ -439,12 +456,12 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
         tpl->style = WS_POPUP | WS_BORDER | WS_SYSMENU | DS_MODALFRAME | WS_CAPTION | DS_SETFONT;
         tpl->cdit = 0;
 
-        writer.WritePOD(WORD(0)); // No menu
-        writer.WritePOD(WORD(EAtomClass_::Predefined)); // default class
+        writer.WritePOD(::WORD(0)); // No menu
+        writer.WritePOD(::WORD(EAtomClass_::Predefined)); // default class
 
         Template_AddCaption_(writer, caption);
 
-        writer.WritePOD(WORD(9)); // Font size
+        writer.WritePOD(::WORD(9)); // Font size
         Template_AddCaption_(writer, L"Consolas"); // Font name
 
         // modal buttons
@@ -452,16 +469,14 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
         size_t buttonRight = tpl->cx - 2;
 
         for (FWindowsPlatformDialog::EResult button : GTemplate_AllButtons) {
-            if (((size_t)1<<(size_t)button) != (((size_t)1<<(size_t)button) & (size_t)buttons))
-                continue;
+            if ((size_t)button & (size_t)buttons) {
+                const FWStringView buttonCaption = ResultCaption_(button);
+                const size_t w = buttonWidthPadding * 2 + buttonWidthPerChar * buttonCaption.size();
+                buttonRight -= buttonWidthPadding + w;
 
-            const FWStringView buttonCaption = ResultCaption_(button);
-
-            const size_t w = buttonWidthPadding*2 + buttonWidthPerChar*buttonCaption.size();
-            buttonRight -= buttonWidthPadding + w;
-
-            Template_AddButton_(writer, buttonRight, buttonTop, w, buttonHeight, ResultToID_(button), buttonCaption);
-            tpl->cdit++;
+                Template_AddButton_(writer, buttonRight, buttonTop, w, buttonHeight, ResultToID_(button), buttonCaption);
+                tpl->cdit++;
+            }
         }
 
         Template_AddButton_(writer, 5, buttonTop, 32, buttonHeight, DIALOG_ID_COPY, L"Copy");
@@ -476,26 +491,26 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
         Template_AddItem_(writer, 15, 10, 32, 32,
             DIALOG_ID_ICON,
             WS_CHILD | WS_VISIBLE | SS_ICON | SS_LEFT, EAtomClass_::Static);
-        writer.WritePOD(WORD(0)); // no caption text
-        writer.WritePOD(WORD(0)); // no creation data
+        writer.WritePOD(::WORD(0)); // no caption text
+        writer.WritePOD(::WORD(0)); // no creation data
         tpl->cdit++;
 
         Template_AddItem_(writer, 45, 8, 350, 47,
             DIALOG_ID_TEXT,
-            WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY, EAtomClass_::Edit);
+            WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN | ES_READONLY, EAtomClass_::Edit);
         Template_AddCaption_(writer, text);
-        writer.WritePOD(WORD(0)); // no creation data
+        writer.WritePOD(::WORD(0)); // no creation data
         tpl->cdit++;
 
         Template_AddItem_(writer, 5, 5+50+5, 390, 127,
             DIALOG_ID_STACK,
             WS_BORDER | WS_HSCROLL | WS_VSCROLL | WS_CHILD | WS_VISIBLE, EAtomClass_::ListBox);
-        writer.WritePOD(WORD(0));
+        writer.WritePOD(::WORD(0));
         tpl->cdit++;
     }
     ::GlobalUnlock(hgbl);
 
-    const INT_PTR ret = DialogBoxIndirectParamW(NULL, (::LPDLGTEMPLATE)hgbl, NULL, (::DLGPROC)Template_DialogProc_, (LPARAM)&ctx);
+    const ::INT_PTR ret = DialogBoxIndirectParamW(NULL, (::LPDLGTEMPLATE)hgbl, NULL, (::DLGPROC)Template_DialogProc_, (LPARAM)&ctx);
     if (-1 == ret)
         PPE_THROW_IT(FLastErrorException("DialogBoxIndirectParamW"));
 
