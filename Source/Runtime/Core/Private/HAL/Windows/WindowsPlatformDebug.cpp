@@ -47,7 +47,7 @@ PRAGMA_MSVC_WARNING_POP()
 void FWindowsPlatformDebug::GuaranteeStackSizeForStackOverflowRecovery() {
     ULONG stackSizeInBytes = 0;
     if (::SetThreadStackGuarantee(&stackSizeInBytes)) {
-        stackSizeInBytes += 64 * 1024;
+        stackSizeInBytes += 4 * 1024; // 4 kb
         if (::SetThreadStackGuarantee(&stackSizeInBytes))
             return;
     }
