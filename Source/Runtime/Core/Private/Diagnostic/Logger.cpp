@@ -184,7 +184,7 @@ public: // ILowLevelLogger
         if (FReentrancyProtection_::GLockTLS) // skip Format() if already locked, but don't acquire the lock here
             return;
 
-        const FLogAllocator::FScope scopeAlloc;
+        const FLogAllocator::FScope scopeAlloc; // #TODO : could be a dead lock issue to keep the lock open while dispatching
 
         MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc.Heap());
         FWTextWriter oss(&buf);
@@ -236,47 +236,54 @@ public:
 
 public: // ILowLevelLogger
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
-        const FLogAllocator::FScope scopeAlloc;
+        FDeferredLog* log;
+        { // don't lock both allocator & task manager to avoid dead locking
+            const FLogAllocator::FScope scopeAlloc;
 
-        const size_t sizeInBytes = (sizeof(FDeferredLog) + text.SizeInBytes());
-        auto* const log = INPLACE_NEW(scopeAlloc.Heap().Allocate(sizeInBytes), FDeferredLog)(scopeAlloc.Heap());
-        log->LowLevelLogger = _userLogger;
-        log->Category = &category;
-        log->Level = level;
-        log->Site = site;
-        log->TextLength = checked_cast<u32>(text.size());
-        log->Bucket = checked_cast<u32>(scopeAlloc.Index);
-        log->AllocSizeInBytes = checked_cast<u32>(sizeInBytes);
+            const size_t sizeInBytes = (sizeof(FDeferredLog) + text.SizeInBytes());
+            log = INPLACE_NEW(scopeAlloc.Heap().Allocate(sizeInBytes), FDeferredLog)(scopeAlloc.Heap());
 
+            log->LowLevelLogger = _userLogger;
+            log->Category = &category;
+            log->Level = level;
+            log->Site = site;
+            log->TextLength = checked_cast<u32>(text.size());
+            log->Bucket = checked_cast<u32>(scopeAlloc.Index);
+            log->AllocSizeInBytes = checked_cast<u32>(sizeInBytes);
+        }
         FPlatformMemory::Memcpy(log + 1, text.data(), text.SizeInBytes());
 
         TaskManager_().Run(MakeFunction<&FDeferredLog::Log>(log));
     }
 
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
-        const FLogAllocator::FScope scopeAlloc;
+        FDeferredLog* log;
+        { // don't lock both allocator & task manager to avoid dead locking
+            const FLogAllocator::FScope scopeAlloc;
 
-        MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc.Heap());
-        buf.reserve(sizeof(FDeferredLog) + format.SizeInBytes());
-        buf.resize(sizeof(FDeferredLog)); // reserve space for FDeferredLog entry
-        buf.SeekO(0, ESeekOrigin::End); // seek at the end of the stream
-        {
-            FWTextWriter oss(&buf);
-            FormatArgs(oss, format, args);
+            MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc.Heap());
+            buf.reserve(sizeof(FDeferredLog) + format.SizeInBytes());
+            buf.resize(sizeof(FDeferredLog)); // reserve space for FDeferredLog entry
+            buf.SeekO(0, ESeekOrigin::End); // seek at the end of the stream
+            {
+                FWTextWriter oss(&buf);
+                FormatArgs(oss, format, args);
+            }
+
+            log = INPLACE_NEW(buf.Pointer(), FDeferredLog)(scopeAlloc.Heap());
+
+            size_t sizeInBytes = 0;
+            const TMemoryView<u8> stolen = buf.StealDataUnsafe(log->get_allocator(), &sizeInBytes);
+            Assert(stolen.data() == (u8*)log);
+
+            log->LowLevelLogger = _userLogger;
+            log->Category = &category;
+            log->Level = level;
+            log->Site = site;
+            log->TextLength = checked_cast<u32>((sizeInBytes - sizeof(FDeferredLog)) / sizeof(wchar_t));
+            log->Bucket = checked_cast<u32>(scopeAlloc.Index);
+            log->AllocSizeInBytes = checked_cast<u32>(stolen.SizeInBytes());
         }
-        auto* const log = INPLACE_NEW(buf.Pointer(), FDeferredLog)(scopeAlloc.Heap());
-
-        size_t sizeInBytes = 0;
-        const TMemoryView<u8> stolen = buf.StealDataUnsafe(log->get_allocator(), &sizeInBytes);
-        Assert(stolen.data() == (u8*)log);
-
-        log->LowLevelLogger = _userLogger;
-        log->Category = &category;
-        log->Level = level;
-        log->Site = site;
-        log->TextLength = checked_cast<u32>((sizeInBytes - sizeof(FDeferredLog)) / sizeof(wchar_t));
-        log->Bucket = checked_cast<u32>(scopeAlloc.Index);
-        log->AllocSizeInBytes = checked_cast<u32>(stolen.SizeInBytes());
 
         TaskManager_().Run(MakeFunction<&FDeferredLog::Log>(log));
     }
@@ -322,7 +329,13 @@ PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
         u32 Bucket;
         u32 AllocSizeInBytes;
 
-        FDeferredLog(FLinearHeap& heap) : TLinearHeapAllocator<u8>(heap) {}
+#   ifdef WITH_PPE_ASSERT
+        uintptr_t Canary = PPE_HASH_VALUE_SEED;
+#   endif
+
+        FDeferredLog(FLinearHeap& heap)
+            : TLinearHeapAllocator<u8>(heap)
+        {}
 
         FDeferredLog(const FDeferredLog&) = delete;
         FDeferredLog& operator =(const FDeferredLog&) = delete;
@@ -346,8 +359,12 @@ PRAGMA_MSVC_WARNING_POP()
             : FLogAllocator::FScope(log->Bucket)
             , Log(log) {
             Assert(log);
+            Assert_NoAssume(PPE_HASH_VALUE_SEED == Log->Canary);
+            ONLY_IF_ASSERT(Log->Canary = uintptr_t(this));
         }
         ~FSuicideScope_() {
+            Assert_NoAssume(uintptr_t(this) == Log->Canary);
+            ONLY_IF_ASSERT(Log->Canary = 0);
             Heap().Release(Log, Log->AllocSizeInBytes);
         }
     };
