@@ -77,12 +77,13 @@ static void Unalias_(
     oss << Eos;
 }
 //----------------------------------------------------------------------------
-static size_t GlobFiles_(
+template <typename _Predicate>
+static size_t EnumerateFiles_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
     const TFunction<void(const FFilename&)>& foreach,
-    const FWStringView& pattern,
-    bool recursive
+    bool recursive,
+    _Predicate&& pred
     ) {
     struct FContext_ {
         size_t Total = 0;
@@ -92,8 +93,8 @@ static size_t GlobFiles_(
 
     ctx.SubDirectories.push_back(aliased);
 
-    const TFunction<void(const FWStringView&)> onFile = [&ctx, &pattern, &foreach](const FWStringView& file) {
-        if (pattern.empty() || WildMatchI(pattern, file)) {
+    const TFunction<void(const FWStringView&)> onFile = [&ctx, &pred, &foreach](const FWStringView& file) {
+        if (pred(file)) {
             ctx.Total++;
             const FBasename basename(file);
             foreach(FFilename(ctx.Dirpath, basename));
@@ -162,7 +163,7 @@ FWString FVirtualFileSystemNativeComponent::Unalias(const FFilename& aliased) co
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::DirectoryExists(const FDirpath& dirpath, EExistPolicy policy) {
-    Assert(_openMode ^ EOpenPolicy::Readable);
+    Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
 
     FileSystem::char_type nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeDirpath, dirpath, _alias, _target);
@@ -171,7 +172,7 @@ bool FVirtualFileSystemNativeComponent::DirectoryExists(const FDirpath& dirpath,
 }
 //----------------------------------------------------------------------------
 bool FVirtualFileSystemNativeComponent::FileExists(const FFilename& filename, EExistPolicy policy) {
-    Assert(_openMode ^ EOpenPolicy::Readable);
+    Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
 
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);
@@ -188,26 +189,41 @@ bool FVirtualFileSystemNativeComponent::FileStats(FFileStat* pstat, const FFilen
 }
 //----------------------------------------------------------------------------
 size_t FVirtualFileSystemNativeComponent::EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
-    Assert(_openMode ^ EOpenPolicy::Readable);
+    Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
 
-    const size_t n = GlobFiles_(dirpath, _alias, _target, foreach, FWStringView(), recursive);
+    const size_t n = EnumerateFiles_(dirpath, _alias, _target, foreach, recursive, [](const FWStringView&) {
+        return true;
+    });
     LOG(VFS, Debug, L"enumerated {0} files in native directory '{1}' (recursive={2:A})", n, dirpath, recursive);
 
     return n;
 }
 //----------------------------------------------------------------------------
 size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
-    Assert(_openMode ^ EOpenPolicy::Readable);
-    Assert(pattern.size());
+    Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
+    Assert_NoAssume(not pattern.empty());
 
-    const size_t n = GlobFiles_(dirpath, _alias, _target, foreach, pattern, recursive);
+    const size_t n = EnumerateFiles_(dirpath, _alias, _target, foreach, recursive, [&pattern](const FWStringView& fname) {
+        return WildMatchI(pattern, fname);
+    });
     LOG(VFS, Debug, L"globbed {0} files with pattern '{1}' in native directory '{2}' (recursive={3:A})", n, pattern, dirpath, recursive);
 
     return n;
 }
 //----------------------------------------------------------------------------
+size_t FVirtualFileSystemNativeComponent::MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
+    Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
+
+    const size_t n = EnumerateFiles_(dirpath, _alias, _target, foreach, recursive, [&re](const FWStringView& fname) {
+        return re.Match(fname);
+    });
+    LOG(VFS, Debug, L"matched {0} files with regex in native directory '{1}' (recursive={2:A})", n, dirpath, recursive);
+
+    return n;
+}
+//----------------------------------------------------------------------------
 UStreamReader FVirtualFileSystemNativeComponent::OpenReadable(const FFilename& filename, EAccessPolicy policy) {
-    Assert(_openMode ^ EOpenPolicy::Readable);
+    Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
 
     FileSystem::char_type nativeFilename[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeFilename, filename, _alias, _target);

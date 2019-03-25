@@ -30,6 +30,7 @@ public:
 
     size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) const;
     size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) const;
+    size_t MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) const;
 
     bool CreateDirectory(const FDirpath& dirpath) const;
     bool MoveFile(const FFilename& src, const FFilename& dst) const;

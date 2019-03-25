@@ -98,6 +98,14 @@ size_t FVirtualFileSystemTrie::GlobFiles(const FDirpath& dirpath, const FWString
         : 0;
 }
 //----------------------------------------------------------------------------
+size_t FVirtualFileSystemTrie::MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) const {
+    READSCOPELOCK(_barrier);
+    IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
+    return (readable)
+        ? readable->MatchFiles(dirpath, re, recursive, foreach)
+        : 0;
+}
+//----------------------------------------------------------------------------
 bool FVirtualFileSystemTrie::CreateDirectory(const FDirpath& dirpath) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentWritable* const writable = WritableComponent_(dirpath.MountingPoint(), _nodes);

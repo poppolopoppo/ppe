@@ -3,6 +3,7 @@
 #include "VirtualFileSystem_fwd.h"
 
 #include "IO/Dirpath.h"
+#include "IO/Regexp.h"
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
 #include "Misc/Function.h"
@@ -59,6 +60,7 @@ public:
 
     virtual size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) = 0;
     virtual size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) = 0;
+    virtual size_t MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) = 0;
 
     virtual UStreamReader OpenReadable(const FFilename& filename, EAccessPolicy policy) = 0;
 };

@@ -37,6 +37,10 @@ size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool 
     return VFS().GlobFiles(dirpath, pattern, recursive, foreach);
 }
 //----------------------------------------------------------------------------
+size_t VFS_MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
+    return VFS().MatchFiles(dirpath, re, recursive, foreach);
+}
+//----------------------------------------------------------------------------
 bool VFS_CreateDirectory(const FDirpath& dirpath) {
     return VFS().CreateDirectory(dirpath);
 }

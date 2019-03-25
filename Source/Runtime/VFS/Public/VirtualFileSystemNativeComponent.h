@@ -33,6 +33,7 @@ private: // IVirtualFileSystemComponentReadable
 
     virtual size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) override final;
     virtual size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) override final;
+    virtual size_t MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) override final;
 
     virtual UStreamReader OpenReadable(const FFilename& filename, EAccessPolicy policy) override final;
 

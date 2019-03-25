@@ -10,6 +10,7 @@
 
 #include "Allocator/Allocation.h"
 #include "IO/FileSystem_fwd.h"
+#include "IO/Regexp.h"
 #include "IO/StreamPolicies.h"
 #include "Memory/UniquePtr.h"
 #include "Misc/Function.h"
@@ -41,6 +42,7 @@ PPE_VFS_API bool VFS_FileStats(FFileStat* pstat, const FFilename& filename);
 //----------------------------------------------------------------------------
 PPE_VFS_API size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach);
 PPE_VFS_API size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach);
+PPE_VFS_API size_t VFS_MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach);
 //----------------------------------------------------------------------------
 PPE_VFS_API bool VFS_CreateDirectory(const FDirpath& dirpath);
 PPE_VFS_API bool VFS_RemoveDirectory(const FDirpath& dirpath, bool force = true);
