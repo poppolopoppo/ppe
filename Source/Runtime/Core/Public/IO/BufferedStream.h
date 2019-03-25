@@ -18,7 +18,7 @@ constexpr size_t GBufferedStreamDefaultBufferSize = (4 * ALLOCATION_GRANULARITY)
 class PPE_CORE_API FBufferedStreamReader : public IBufferedStreamReader, FBufferedStreamAllocator {
 public:
     FBufferedStreamReader();
-    ~FBufferedStreamReader();
+    virtual ~FBufferedStreamReader();
 
     explicit FBufferedStreamReader(IStreamReader* nonBuffered, size_t bufferSize = GBufferedStreamDefaultBufferSize);
 
@@ -71,7 +71,7 @@ private:
 class PPE_CORE_API FBufferedStreamWriter : public IBufferedStreamWriter, FBufferedStreamAllocator {
 public:
     FBufferedStreamWriter();
-    ~FBufferedStreamWriter();
+    virtual ~FBufferedStreamWriter();
 
     explicit FBufferedStreamWriter(IStreamWriter* nonBuffered, size_t bufferSize = GBufferedStreamDefaultBufferSize);
 
