@@ -7,6 +7,8 @@
 #include "Thread/Fiber.h"
 #include "Thread/ThreadPool.h"
 
+#include "Meta/Iterator.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -27,6 +29,17 @@ void Async(
         manager = &FGlobalThreadPool::Get();
 
     manager->Run(std::move(task), priority);
+}
+//----------------------------------------------------------------------------
+void ParallelFor(
+    size_t first, size_t last,
+    const TFunction<void(size_t)>& foreach,
+    ETaskPriority priority /* = ETaskPriority::Normal */,
+    FTaskManager* manager /* = nullptr/* uses FHighPriorityThreadPool by default */) {
+    return ParallelForEach(
+        MakeCountingIterator(first),
+        MakeCountingIterator(last),
+        foreach, priority, manager);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

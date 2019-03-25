@@ -263,6 +263,61 @@ TCheckedArrayIterator<T> MakeCheckedIterator(T (&staticArray)[_Dim], size_t inde
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _Int, _Int _Inc = _Int(1)>
+class TCountingIterator : public Meta::TIterator<_Int, std::random_access_iterator_tag> {
+public:
+    typedef Meta::TIterator<_Int, std::random_access_iterator_tag> parent_type;
+
+    using typename parent_type::iterator_category;
+    using difference_type = decltype(_Int(0) - _Int(1));
+    using typename parent_type::value_type;
+    using typename parent_type::pointer;
+    using typename parent_type::reference;
+
+    TCountingIterator(_Int it) : _it(it) {}
+
+    TCountingIterator(const TCountingIterator&) = default;
+    TCountingIterator& operator =(const TCountingIterator&) = default;
+
+    TCountingIterator& operator++() /* prefix */ { _it += _Inc; return *this; }
+    TCountingIterator& operator--() /* prefix */ { _it -= _Inc; return *this; }
+
+    TCountingIterator operator++(int) /* postfix */ { const auto jt(_it); _it += _Inc; return TCountingIterator(jt); }
+    TCountingIterator operator--(int) /* postfix */ { const auto jt(_it); _it -= _Inc; return TCountingIterator(jt); }
+
+    TCountingIterator& operator+=(difference_type n) { _it += n * _Inc; return *this; }
+    TCountingIterator& operator-=(difference_type n) { _it -= n * _Inc; return *this; }
+
+    TCountingIterator operator+(difference_type n) const { return TCountingIterator(_it + n * _Inc); }
+    TCountingIterator operator-(difference_type n) const { return TCountingIterator(_it - n * _Inc); }
+
+    _Int operator*() const { return _it; }
+    //pointer operator->() const { return _it.operator ->(); }
+
+    _Int operator[](difference_type n) const { return (_it + n * _Inc); }
+
+    difference_type operator-(const TCountingIterator& other) const { return checked_cast<difference_type>(_it - other._it); }
+
+    bool operator==(const TCountingIterator& other) const { return (_it == other._it); }
+    bool operator!=(const TCountingIterator& other) const { return (_it != other._it); }
+
+    bool operator< (const TCountingIterator& other) const { return (_it < other._it); }
+    bool operator> (const TCountingIterator& other) const { return (_it > other._it); }
+
+    bool operator<=(const TCountingIterator& other) const { return (_it <= other._it); }
+    bool operator>=(const TCountingIterator& other) const { return (_it >= other._it); }
+
+private:
+    _Int _it;
+};
+//----------------------------------------------------------------------------
+template <typename _Int, _Int _Inc = _Int(1)>
+TCountingIterator<_Int, _Inc> MakeCountingIterator(_Int it) {
+    return TCountingIterator<_Int, _Inc>(it);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _It, typename _Transform>
 class TOutputIterator : public Meta::TIterator<
     decltype(std::declval<_Transform>()(*std::declval<_It>())),
@@ -295,8 +350,8 @@ public:
     TOutputIterator& operator+=(difference_type n) { _it += n; return *this; }
     TOutputIterator& operator-=(difference_type n) { _it -= n; return *this; }
 
-    TOutputIterator operator+(difference_type n) { return TOutputIterator(_it + n); }
-    TOutputIterator operator-(difference_type n) { return TOutputIterator(_it - n); }
+    TOutputIterator operator+(difference_type n) const { return TOutputIterator(_it + n); }
+    TOutputIterator operator-(difference_type n) const { return TOutputIterator(_it - n); }
 
     decltype( std::declval<_Transform>()(*std::declval<_It>()) ) operator*() const { return _transform(*_it); }
     //pointer operator->() const { return _it.operator ->(); }
@@ -458,6 +513,17 @@ TIterable< decltype(std::declval<T&>().begin()) > MakeIterable(T& container) {
 template <typename T>
 TIterable< decltype(std::declval<const T&>().begin()) > MakeConstIterable(const T& container) {
     return MakeIterable(std::begin(container), std::end(container));
+}
+//----------------------------------------------------------------------------
+template <typename _Int, _Int _Inc = _Int(1)>
+TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int first, _Int last) {
+    return MakeIterable(TCountingIterator<_Int, _Inc>(first),
+                        TCountingIterator<_Int, _Inc>(last) );
+}
+//----------------------------------------------------------------------------
+template <typename _Int, _Int _Inc = _Int(1)>
+TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int count) {
+    return MakeInterval(_Int(0), count);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

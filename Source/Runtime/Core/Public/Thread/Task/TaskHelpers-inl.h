@@ -60,9 +60,9 @@ PFuture<T> Future(
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _It>
-void ParallelFor(
+void ParallelForEach(
     _It first, _It last,
-    const TFunction<void(_It)>& foreach,
+    const TFunction<void(decltype(*std::declval<_It>()))>& foreach_item,
     ETaskPriority priority/* = ETaskPriority::Normal */,
     FTaskManager* manager/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
     STATIC_ASSERT(Meta::is_random_access_iterator<_It>::value);
@@ -75,7 +75,7 @@ void ParallelFor(
     }
     else if (1 == range_count) {
         // skip task creation if there is only 1 iteration
-        foreach(first);
+        foreach_item(*first);
         return;
     }
 
@@ -86,8 +86,8 @@ void ParallelFor(
     // less space needed to pass arguments to TFunction<>
     const struct loop_t_ {
         _It first, last;
-        decltype(foreach) foreach;
-    }   loop{ first, last, foreach };
+        decltype(foreach_item) foreach_item;
+    }   loop{ first, last, foreach_item };
 
     // all iterations are dispatch by regular slices to worker threads (less overhead)
     const size_t worker_count = Min(manager->WorkerCount(), range_count);
@@ -105,7 +105,7 @@ void ParallelFor(
         // push a new task for this slice of the loop
         tasks.Push([&loop, task_first, task_last](ITaskContext&) {
             forrange(it, loop.first + task_first, loop.first + task_last)
-                loop.foreach(it);
+                loop.foreach_item(*it);
         });
 
         task_first = task_last;
@@ -114,7 +114,7 @@ void ParallelFor(
     Assert(task_first + worker_tasks == range_count);
     FTaskFunc last_task = [&loop, task_first, task_last{ range_count }](ITaskContext&) {
         forrange(it, loop.first + task_first, loop.first + task_last)
-            loop.foreach(it);
+            loop.foreach_item(*it);
     };
 
     // decide if it's worth to process part of load on the current thread
@@ -132,16 +132,6 @@ void ParallelFor(
         Assert(tasks.size() == tasks.capacity());
         manager->RunAndWaitFor(tasks.MakeView(), priority);
     }
-}
-//----------------------------------------------------------------------------
-template <typename _It>
-void ParallelForEach(
-    _It first, _It last,
-    const TFunction<void(decltype(*std::declval<_It>()))>& foreach_item,
-    ETaskPriority priority/* = ETaskPriority::Normal */,
-    FTaskManager* manager/* = nullptr */) {
-    const TFunction<void(_It)> foreach = [&foreach_item](_It it) { foreach_item(*it); };
-    ParallelFor(first, last, foreach, priority, manager);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

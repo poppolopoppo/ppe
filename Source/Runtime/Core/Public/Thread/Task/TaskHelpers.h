@@ -83,10 +83,9 @@ PFuture<T> Future(
     ETaskPriority priority = ETaskPriority::Normal,
     FTaskManager* manager = nullptr/* uses FGlobalThreadPool by default */);
 //----------------------------------------------------------------------------
-template <typename _It>
-void ParallelFor(
-    _It first, _It last,
-    const TFunction<void(_It)>& foreach,
+PPE_CORE_API void ParallelFor(
+    size_t first, size_t last,
+    const TFunction<void(size_t)>& foreach,
     ETaskPriority priority = ETaskPriority::Normal,
     FTaskManager* manager = nullptr/* uses FHighPriorityThreadPool by default */);
 //----------------------------------------------------------------------------
