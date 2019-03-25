@@ -19,29 +19,44 @@ FException::FException(const char* what) noexcept
     Assert(_what);
 #if USE_PPE_EXCEPTION_CALLSTACK
     _siteHash = 0;
-    const size_t depth = PPE::FCallstack::Capture(MakeView(_callstack), &_siteHash, 1, lengthof(_callstack));
+    const size_t depth = PPE::FCallstack::Capture(MakeView(_callstack), &_siteHash, 3, lengthof(_callstack));
     if (depth < lengthof(_callstack))
         _callstack[depth] = nullptr;
 #endif
 }
 //----------------------------------------------------------------------------
+FException::~FException()
+{}
+//----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_CALLSTACK
 FDecodedCallstack FException::Callstack() const {
-    size_t depth = 0;
-    forrange(i, 0, lengthof(_callstack))
-        if (nullptr == _callstack[depth])
-            break;
+    const TMemoryView<void* const> frames = MakeView(_callstack);
+    const size_t depth = std::distance(
+        frames.begin(), frames.Find(nullptr) );
 
     FDecodedCallstack decoded;
-    PPE::FCallstack::Decode(&decoded, _siteHash, TMemoryView<void* const>(_callstack, depth));
+    PPE::FCallstack::Decode(&decoded, _siteHash, frames.FirstNElements(depth));
     return decoded;
+}
+#endif
+//----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FException::DefaultDescription(FWTextWriter& oss, const wchar_t* name, const FException& e) {
+    Assert_NoAssume(name);
+    return oss
+        << L"caught exception "
+        << MakeCStringView(name)
+        << L": "
+        << MakeCStringView(e.What())
+        << L" !";
 }
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const FException& e) {
-    return oss << e.What()
+    return oss
+        << MakeCStringView(e.What())
 #if USE_PPE_EXCEPTION_CALLSTACK
         << " (" << (void*)e.SiteHash() << ")" << Eol
         << e.Callstack()
@@ -50,9 +65,10 @@ FTextWriter& operator <<(FTextWriter& oss, const FException& e) {
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const FException& e) {
-    return oss << e.What()
+    return oss
+        << MakeCStringView(e.What())
 #if USE_PPE_EXCEPTION_CALLSTACK
-        << L" (" << (void*)e.SiteHash() << L")" << Eol
+        << L' ' << (void*)e.SiteHash() << Eol
         << e.Callstack()
 #endif
         ;

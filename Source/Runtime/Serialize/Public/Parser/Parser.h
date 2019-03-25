@@ -14,7 +14,7 @@ POOL_TAG_DECL(PPE_SERIALIZE_API, Parser);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FParserException : public PPE::Serialize::FSerializeException {
+class PPE_SERIALIZE_API FParserException : public PPE::Serialize::FSerializeException {
 public:
     typedef PPE::Serialize::FSerializeException parent_type;
 
@@ -29,11 +29,15 @@ public:
 
     virtual ~FParserException() {}
 
-    const Lexer::FSpan& Site() const { return _site; }
+    Lexer::FSpan Site() const { return _site; }
     const FParseItem *Item() const { return _item.get(); }
 
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+#endif
+
 private:
-    Lexer::FSpan _site;
+    Lexer::FErrorSpan _site;
     PCParseItem _item;
 };
 //----------------------------------------------------------------------------

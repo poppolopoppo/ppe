@@ -36,6 +36,10 @@ public:
     const wchar_t *File() const { return _file; }
     unsigned Line() const { return _line; }
 
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+#endif
+
 private:
     const wchar_t *_file;
     unsigned _line;
@@ -92,6 +96,10 @@ public:
 
     const wchar_t *File() const { return _file; }
     unsigned Line() const { return _line; }
+
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+#endif
 
 private:
     const wchar_t *_file;

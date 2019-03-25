@@ -25,7 +25,6 @@ LOG_CATEGORY(, Exception)
 FLastError::FLastError() : Code(::GetLastError()) {}
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const FLastError& error) {
-#ifdef PLATFORM_WINDOWS
     char buffer[4096];
     if (::FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
         nullptr,
@@ -37,7 +36,6 @@ FTextWriter& operator <<(FTextWriter& oss, const FLastError& error) {
         oss << MakeCStringView(buffer) << " (code=";
     }
     else
-#endif
     {
         oss << "unknown error (code=";
     }
@@ -45,7 +43,6 @@ FTextWriter& operator <<(FTextWriter& oss, const FLastError& error) {
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const FLastError& error) {
-#ifdef PLATFORM_WINDOWS
     wchar_t buffer[4096];
     if (::FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM,
         nullptr,
@@ -57,7 +54,6 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FLastError& error) {
         oss << MakeCStringView(buffer) << L" (code=";
     }
     else
-#endif
     {
         oss << L"unknown error (code=";
     }
@@ -79,6 +75,14 @@ FLastErrorException::FLastErrorException(const char* what, long errorCode)
 }
 //----------------------------------------------------------------------------
 FLastErrorException::~FLastErrorException() {}
+//----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FLastErrorException::Description(FWTextWriter& oss) const {
+    return oss
+        << MakeCStringView(What()) << L": "
+        << FLastError(_errorCode);
+}
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -32,6 +32,10 @@ public:
 
     const Lexer::FLocation& Site() const { return _site; }
 
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+#endif
+
 private:
     Lexer::FLocation _site;
 };

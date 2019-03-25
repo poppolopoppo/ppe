@@ -587,6 +587,16 @@ bool FJson::Load(FJson* json, const FWStringView& filename, IBufferedStreamReade
     return true;
 }
 //----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FJsonException::Description(FWTextWriter& oss) const {
+    return oss
+        << MakeCStringView(What())
+        << L": in json file '"
+        << _site
+        << L"' !";
+}
+#endif
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Serialize

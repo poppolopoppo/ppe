@@ -322,6 +322,16 @@ bool FMarkup::Load(FMarkup* markup, const FFilename& filename, IBufferedStreamRe
     return true;
 }
 //----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FMarkupException::Description(FWTextWriter& oss) const {
+    return oss
+        << MakeCStringView(What())
+        << L": in markup file '"
+        << _site
+        << L"' !";
+}
+#endif
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Serialize

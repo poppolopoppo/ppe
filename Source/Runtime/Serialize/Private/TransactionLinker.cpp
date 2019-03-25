@@ -18,10 +18,30 @@ FClassNotFound::FClassNotFound(const RTTI::FName& name)
 ,   _name(name)
 {}
 //----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FClassNotFound::Description(FWTextWriter& oss) const {
+    return oss
+        << MakeCStringView(What())
+        << L": while looking for <"
+        << _name
+        << L"> !";
+}
+#endif
+//----------------------------------------------------------------------------
 FObjectNotFound::FObjectNotFound(const RTTI::FPathName& path)
 :   FLinkerException("failed to find imported object")
 ,   _path(path)
 {}
+//----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FObjectNotFound::Description(FWTextWriter& oss) const {
+    return oss
+        << MakeCStringView(What())
+        << L": while looking for '"
+        << _path
+        << L"' !";
+}
+#endif
 //----------------------------------------------------------------------------
 FUnexpectedObjectClass::FUnexpectedObjectClass(const RTTI::FMetaClass* expected, const RTTI::FMetaClass* found)
 :   FLinkerException("unexpected object class")
@@ -29,6 +49,17 @@ FUnexpectedObjectClass::FUnexpectedObjectClass(const RTTI::FMetaClass* expected,
 ,   _found(found)
 {}
 //----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FUnexpectedObjectClass::Description(FWTextWriter& oss) const {
+    return oss
+        << MakeCStringView(What())
+        << L": got <"
+        << _found->Name()
+        << L"> instead of <"
+        << _expected->Name()
+        << L"> !";
+}
+#endif
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTransactionLinker::FTransactionLinker(RTTI::FMetaTransaction* loaded, const FFilename& filename)

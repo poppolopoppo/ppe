@@ -664,6 +664,18 @@ bool FLexer::NextMatch_(FMatch& match) {
     }
 }
 //----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FLexerException::Description(FWTextWriter& oss) const {
+    return oss
+        << MakeCStringView(What())
+        << L": with token ["
+        << Match()
+        << L"] at '"
+        << Site()
+        << L"' !";
+}
+#endif
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FLexerStartup::Start() {

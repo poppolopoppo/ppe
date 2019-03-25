@@ -15,6 +15,8 @@ namespace Serialize {
 class FBinarySerializerException : public FSerializeException {
 public:
     explicit FBinarySerializerException(const char* what) : FSerializeException(what) {}
+
+    PPE_DEFAULT_EXCEPTION_DESCRIPTION(FBinarySerializerException)
 };
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FBinarySerializer : public ISerializer {

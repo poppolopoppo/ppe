@@ -20,7 +20,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FMarkupException : public PPE::Serialize::FSerializeException {
+class PPE_SERIALIZE_API FMarkupException : public PPE::Serialize::FSerializeException {
 public:
     typedef PPE::Serialize::FSerializeException parent_type;
 
@@ -33,6 +33,10 @@ public:
     virtual ~FMarkupException() {}
 
     const Lexer::FLocation& Site() const { return _site; }
+
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+#endif
 
 private:
     Lexer::FLocation _site;

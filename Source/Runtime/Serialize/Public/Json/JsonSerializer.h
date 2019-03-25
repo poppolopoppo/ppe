@@ -16,6 +16,8 @@ namespace Serialize {
 class FJsonSerializerException : public FSerializeException {
 public:
     FJsonSerializerException(const char* what) : FSerializeException(what) {}
+
+    PPE_DEFAULT_EXCEPTION_DESCRIPTION(FJsonSerializerException);
 };
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FJsonSerializer : public ISerializer {

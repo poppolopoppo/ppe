@@ -50,6 +50,14 @@ FAssertException::FAssertException(const char *msg, const wchar_t *file, unsigne
 //----------------------------------------------------------------------------
 FAssertException::~FAssertException() {}
 //----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FAssertException::Description(FWTextWriter& oss) const {
+    return oss
+        << L"debug assert '" << MakeCStringView(What()) << L"' failed !" << Eol
+        << MakeCStringView(File()) << L':' << Line();
+}
+#endif
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned line) {
@@ -127,6 +135,14 @@ FAssertReleaseException::FAssertReleaseException(const char *msg, const wchar_t 
 :   FException(msg), _file(file), _line(line) {}
 //----------------------------------------------------------------------------
 FAssertReleaseException::~FAssertReleaseException() {}
+//----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FAssertReleaseException::Description(FWTextWriter& oss) const {
+    return oss
+        << L"release assert '" << MakeCStringView(What()) << L"' failed !" << Eol
+        << MakeCStringView(File()) << L':' << Line();
+}
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

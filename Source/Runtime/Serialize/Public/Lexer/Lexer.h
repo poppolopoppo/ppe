@@ -17,20 +17,28 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FLexerException : public PPE::Serialize::FSerializeException {
+class PPE_SERIALIZE_API FLexerException : public PPE::Serialize::FSerializeException {
 public:
     typedef PPE::Serialize::FSerializeException parent_type;
 
     FLexerException(const char *what, FMatch&& match)
         :   parent_type(what)
-        ,   _match(std::move(match)) {}
+        ,   _match(std::move(match))
+        ,   _site(_match.Site())
+    {}
 
     virtual ~FLexerException() {}
 
-    const PPE::Lexer::FMatch& Match() const { return _match; }
+    const Lexer::FMatch& Match() const { return _match; }
+    Lexer::FSpan Site() const { return _site; }
+
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+#endif
 
 private:
-    PPE::Lexer::FMatch _match;
+    Lexer::FMatch _match;
+    Lexer::FErrorSpan _site;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -60,13 +68,13 @@ public:
 
     void RewindPeekIFN();
 
-    const FWString& SourceFileName() const { return _sourceFileName; }
+    FWStringView SourceFileName() const { return _sourceFileName; }
     FLocation SourceSite() const { return _reader.SourceSite(); }
 
 private:
     bool NextMatch_(FMatch& match);
 
-    FWString _sourceFileName;
+    FWStringView _sourceFileName;
     FLookAheadReader _reader;
 
     FStringBuilder _lexing;

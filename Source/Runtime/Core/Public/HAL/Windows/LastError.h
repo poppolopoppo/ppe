@@ -31,6 +31,10 @@ public:
 
     const FLastError& ErrorCode() const { return _errorCode; }
 
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+#endif
+
 private:
     FLastError _errorCode;
 };

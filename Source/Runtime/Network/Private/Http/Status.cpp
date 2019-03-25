@@ -2,6 +2,8 @@
 
 #include "Http/Status.h"
 
+#include "Http/Exceptions.h"
+
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
 
@@ -39,6 +41,17 @@ FOREACH_HTTP_STATUSCODE(HTTP_STATUSCODE_DESCRIPTION)
     }
     return FStringView();
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FHttpException::Description(FWTextWriter& oss) const {
+    return oss
+        << MakeCStringView(What())
+        << L": "
+        << Status();
+}
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

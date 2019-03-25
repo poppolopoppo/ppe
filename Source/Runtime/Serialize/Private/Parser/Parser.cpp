@@ -4,9 +4,27 @@
 
 #include "Allocator/PoolAllocatorTag-impl.h"
 
+#if USE_PPE_EXCEPTION_DESCRIPTION
+#   include "Parser/ParseItem.h"
+#   include "IO/TextWriter.h"
+#endif
+
 namespace PPE {
 namespace Parser {
 POOL_TAG_DEF(Parser);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#if USE_PPE_EXCEPTION_DESCRIPTION
+FWTextWriter& FParserException::Description(FWTextWriter& oss) const {
+    oss << MakeCStringView(What()) << L": ";
+
+    if (_item)
+        oss << _item->ToString() << Eol;
+
+    return oss << L"\tat " << _site;
+}
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

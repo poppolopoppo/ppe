@@ -28,6 +28,9 @@ class PPE_SERIALIZE_API FClassNotFound : public FLinkerException {
 public:
     explicit FClassNotFound(const RTTI::FName& name);
     const RTTI::FName& name() const { return _name; }
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+#endif
 private:
     RTTI::FName _name;
 };
@@ -36,6 +39,9 @@ class PPE_SERIALIZE_API FObjectNotFound : public FLinkerException {
 public:
     explicit FObjectNotFound(const RTTI::FPathName& path);
     const RTTI::FPathName& Path() const { return _path; }
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+#endif
 private:
     RTTI::FPathName _path;
 };
@@ -45,6 +51,9 @@ public:
     FUnexpectedObjectClass(const RTTI::FMetaClass* expected, const RTTI::FMetaClass* found);
     const RTTI::FMetaClass* Expected() const { return _expected; }
     const RTTI::FMetaClass* Found() const { return _found; }
+#if USE_PPE_EXCEPTION_DESCRIPTION
+    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+#endif
 private:
     const RTTI::FMetaClass* _expected;
     const RTTI::FMetaClass* _found;

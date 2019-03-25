@@ -83,7 +83,6 @@ static void CheckSymbol_(const FSymbols::hashmap_type& symbols, const FSymbol* s
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool FSymbols::IsPrefix(const FSymbol** psymbol, const FStringView& cstr) const {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(psymbol);
     Assert(not cstr.empty());
 
