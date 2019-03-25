@@ -138,37 +138,36 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
         .PurgeTargets = {}
 
-        If( .ProjectUseUnity == .UnityEnabled )
+        //If( .ProjectUseUnity == .UnityEnabled )
+        // Project Unity
+        Unity( '$ProjectName$-Unity-$Platform$-$Config$' )
         {
-            // Project Unity
-            Unity( '$ProjectName$-Unity-$Platform$-$Config$' )
+            Using( .ProjectCompileConfigWithPCH )
+
+            .UnityInputPath             = '$ProjectPath$'
+            .UnityOutputPath            = .UnityDirectory
+            .UnityInputPattern          = .ProjectInputPattern
+            .UnityOutputPattern         = 'Unity_*_of_$UnityNumFiles$.cpp'
+            .UnityInputExcludedFiles    = {}
+
+            ForEach( .Filename in .ProjectExcludedFiles )
             {
-                Using( .ProjectCompileConfigWithPCH )
-
-                .UnityInputPath             = '$ProjectPath$'
-                .UnityOutputPath            = .UnityDirectory
-                .UnityInputPattern          = .ProjectInputPattern
-                .UnityOutputPattern         = 'Unity_*_of_$UnityNumFiles$.cpp'
-                .UnityInputExcludedFiles    = {}
-
-                ForEach( .Filename in .ProjectExcludedFiles )
-                {
-                    ^UnityInputExcludedFiles + "$ProjectPath$/$Filename$"
-                }
-                ForEach( .Filename in .ProjectIsolatedFiles )
-                {
-                    ^UnityInputExcludedFiles + "$ProjectPath$/$Filename$"
-                }
+                ^UnityInputExcludedFiles + "$ProjectPath$/$Filename$"
             }
-
-            RemoveDir( '$ProjectName$-Unity-$Platform$-$Config$-Purge' )
+            ForEach( .Filename in .ProjectIsolatedFiles )
             {
-                .RemovePaths          = .UnityDirectory
-                .RemovePathsPattern   = 'Unity*.cpp'
+                ^UnityInputExcludedFiles + "$ProjectPath$/$Filename$"
             }
-
-            .PurgeTargets + '$ProjectName$-Unity-$Platform$-$Config$-Purge'
         }
+
+        RemoveDir( '$ProjectName$-Unity-$Platform$-$Config$-Purge' )
+        {
+            .RemovePaths          = .UnityDirectory
+            .RemovePathsPattern   = 'Unity*.cpp'
+        }
+
+        .PurgeTargets + '$ProjectName$-Unity-$Platform$-$Config$-Purge'
+        //}
 
         // Object list
         ObjectList( '$ProjectName$-Obj-$Platform$-$Config$' )
@@ -186,10 +185,27 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             }
 
             // Unity files IFN
-            If( .ProjectUseUnity == .UnityEnabled )
-            {
+            //If( .ProjectUseUnity == .UnityEnabled )
+            //{
                 .CompilerInputUnity = '$ProjectName$-Unity-$Platform$-$Config$'
-            }
+            //}
+            // If( .ProjectUseUnity != .UnityEnabled )
+            // {
+            //     .CompilerInputPath = .ProjectPath
+            //     .CompilerInputPattern = .ProjectInputPattern
+
+            //     .CompilerInputFiles = {}
+            //     ForEach( .Filename in .ProjectIsolatedFiles )
+            //     {
+            //         ^CompilerInputFiles + "$ProjectPath$/$Filename$"
+            //     }
+
+            //     .CompilerInputExcludedFiles = {}
+            //     ForEach( .Filename in .ProjectExcludedFiles )
+            //     {
+            //         ^CompilerInputExcludedFiles + "$ProjectPath$/$Filename$"
+            //     }
+            // }
 
             // Deoptimize files containings 'FASTBUILD_DEOPTIMIZE_OBJECT'
             .DeoptimizeWritableFilesWithToken = true
