@@ -89,6 +89,10 @@ struct IUnknown;
 #ifdef MoveFile
 #   undef MoveFile
 #endif
+#pragma push_macro("RegisterClass")
+#ifdef RegisterClass
+#   undef RegisterClass
+#endif
 #pragma push_macro("RemoveDirectory")
 #ifdef RemoveDirectory
 #   undef RemoveDirectory
