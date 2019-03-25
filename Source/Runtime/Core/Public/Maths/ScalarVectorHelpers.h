@@ -240,28 +240,28 @@ CONSTEXPR auto Blend(const TScalarVectorExpr<_True, _Dim>& ifTrue, const TScalar
 template <typename _Lhs, typename _Rhs, size_t _Dim>
 CONSTEXPR bool AllGreater(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT {
-        return ((lhs.template get<idx>() > rhs.template get<idx>()) && ...);
+        return ((lhs.template get<idx>() > rhs.template get<idx>()) & ...);
     });
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs, size_t _Dim>
 CONSTEXPR bool AllGreaterEqual(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
-        return ((lhs.template get<idx>() >= rhs.template get<idx>()) && ...);
+        return ((lhs.template get<idx>() >= rhs.template get<idx>()) & ...);
     });
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs, size_t _Dim>
 CONSTEXPR bool AllLess(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
-        return ((lhs.template get<idx>() < rhs.template get<idx>()) && ...);
+        return ((lhs.template get<idx>() < rhs.template get<idx>()) & ...);
     });
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs, size_t _Dim>
 CONSTEXPR bool AllLessEqual(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
-        return ((lhs.template get<idx>() <= rhs.template get<idx>()) && ...);
+        return ((lhs.template get<idx>() <= rhs.template get<idx>()) & ...);
     });
 }
 //----------------------------------------------------------------------------
