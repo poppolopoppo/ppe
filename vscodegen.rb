@@ -19,6 +19,8 @@ FBUILD_RB=File.join(CORE_PATH, 'fbuild.rb')
 FBUILD_COMPDB=File.join(CORE_PATH, 'compile_commands.json')
 FBUILD_SOLUTION_PATH=File.join(CORE_PATH, 'Build', '_solution_path.bff')
 
+USE_CPPTOOLS_ACTIVECONFIGNAME = true
+
 system('ruby', FBUILD_RB, '-version') # make sure _solution_path.bff is generated
 raise "invalid solution path" unless File.exist?(FBUILD_SOLUTION_PATH)
 
@@ -237,7 +239,9 @@ ALL_MODULES.each do |target|
         "type": "shell",
         "isBackground": true,
         "command": "ruby",
-        "args": [ "fbuild.rb" ] + FASTBUILD_OPTIONS + [ "#{target}-${input:ppe_config}" ],
+        "args": USE_CPPTOOLS_ACTIVECONFIGNAME ?
+            [ "fbuild.rb" ] + FASTBUILD_OPTIONS + [ "#{target}-${command:cpptools.activeConfigName}" ] :
+            [ "fbuild.rb" ] + FASTBUILD_OPTIONS + [ "#{target}-${input:ppe_config}" ],
         "options": {
             "cwd": '${workspaceRoot}'
         },
@@ -258,7 +262,7 @@ ALL_MODULES.each do |target|
     }
 end
 
-inputs = [
+inputs = USE_CPPTOOLS_ACTIVECONFIGNAME ? [] : [
     {
         "id": "ppe_config",
         "description": "PPE build configuration ?",
@@ -286,7 +290,9 @@ launchconfigurations = [
         "name": DEFAULT_TARGET,
         "type": "cppvsdbg",
         "request": "launch",
-        "program": "${workspaceRoot}\\Output\\Binary\\#{File.basename(DEFAULT_TARGET)}.${input:ppe_config}",
+        "program": USE_CPPTOOLS_ACTIVECONFIGNAME ?
+            "${workspaceRoot}\\Output\\Binary\\#{File.basename(DEFAULT_TARGET)}.${command:cpptools.activeConfigName}" :
+            "${workspaceRoot}\\Output\\Binary\\#{File.basename(DEFAULT_TARGET)}.${input:ppe_config}",
         "args": [],
         "stopAtEntry": false,
         "cwd": "${workspaceRoot}\\Output\\Binary",
@@ -296,7 +302,7 @@ launchconfigurations = [
     }
 ]
 
-inputs = [
+inputs = USE_CPPTOOLS_ACTIVECONFIGNAME ? [] : [
     {
         "id": "ppe_config",
         "description": "PPE build configuration ?",
