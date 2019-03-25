@@ -329,6 +329,7 @@ FLinearHeap::FLinearHeap()
 FLinearHeap::~FLinearHeap() {
     ReleaseAll();
 #if USE_PPE_MEMORYDOMAINS
+    Assert_NoAssume(_trackingData.AllocationCount() == 0);
     UnregisterTrackingData(&_trackingData);
 #endif
 }
@@ -337,7 +338,11 @@ void* FLinearHeap::Allocate(size_t size) {
     Assert(size);
     AssertRelease(size <= MaxBlockSize);
 
+    ++_numAllocs;
     size = SnapSize(size);
+#if USE_PPE_MEMORYDOMAINS
+    _trackingData.Allocate(size / 16, 16);
+#endif
 
     void* ptr;
 
@@ -374,10 +379,6 @@ void* FLinearHeap::Allocate(size_t size) {
 
     Assert(ptr);
     Assert(Meta::IsAligned(16, ptr));
-#if USE_PPE_MEMORYDOMAINS
-    _trackingData.Allocate(size / 16, 16);
-#endif
-    _numAllocs++;
 
     return ptr;
 }
@@ -446,7 +447,7 @@ void FLinearHeap::Release(void* ptr, size_t size) {
     AssertRelease(size <= MaxBlockSize);
     Assert(_numAllocs);
 
-    _numAllocs--;
+    --_numAllocs;
     size = SnapSize(size);
 
 #if WITH_PPE_LINEARHEAP_FALLBACK_TO_MALLOC
@@ -507,6 +508,7 @@ void* FLinearHeap::Relocate_AssumeLast(void* ptr, size_t newSize, size_t oldSize
     Assert(newSize);
     Assert(oldSize);
     AssertRelease(newSize <= MaxBlockSize);
+    Assert_NoAssume(_numAllocs);
 
     newSize = SnapSize(newSize);
     oldSize = SnapSize(oldSize);
@@ -550,8 +552,13 @@ void FLinearHeap::Release_AssumeLast(void* ptr, size_t size) {
 #else
     Assert(nullptr != ptr);
     Assert(size);
+    Assert(_numAllocs);
 
+    --_numAllocs;
     size = SnapSize(size);
+#if USE_PPE_MEMORYDOMAINS
+    _trackingData.Deallocate(size / 16, 16);
+#endif
 
     FLinearHeapBlock_* blk = FLinearHeapBlock_::BlockFromPtr(ptr);
     Assert_NoAssume(FLinearHeapBlock_::Contains(static_cast<FLinearHeapBlock_*>(_blocks), blk));
