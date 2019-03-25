@@ -354,7 +354,8 @@ void FWindowsPlatformNotification::HideSystray() {
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformNotification::NotifySystray(ENotificationIcon icon, const FWStringView& title, const FWStringView& text) {
-    FWindowsSystray_::Get().Notify(icon, title, text);
+    if (GWindowsSystrayWindow_)
+        FWindowsSystray_::Get().Notify(icon, title, text);
 }
 //----------------------------------------------------------------------------
 size_t FWindowsPlatformNotification::AddSystrayCommand(
