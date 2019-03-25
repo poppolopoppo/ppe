@@ -136,6 +136,9 @@ size_t DecompressedSize(const TMemoryView<const u8>& src) {
         return 0;
 
     const FFileHeader_* pheader = reinterpret_cast<const FFileHeader_*>(src.Pointer());
+    Assert_NoAssume(FILE_MAGIC_ == pheader->Magic);
+    Assert_NoAssume(FILE_VERSION_ == pheader->Version);
+
     return pheader->SizeInBytes;
 }
 //----------------------------------------------------------------------------
