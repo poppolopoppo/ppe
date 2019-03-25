@@ -29,8 +29,6 @@ void FGenericApplication::Start() {
 //----------------------------------------------------------------------------
 void FGenericApplication::PumpMessages() {
     FPlatformMessageHandler::PumpMessages(nullptr);
-
-    FPlatformTime::LeaveLowResolutionTimer();
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::Tick(FTimespan ) {
@@ -39,6 +37,8 @@ void FGenericApplication::Tick(FTimespan ) {
 //----------------------------------------------------------------------------
 void FGenericApplication::Shutdown() {
     LOG(Application, Emphasis, L"shutdown application <{0}>", _name);
+
+    FPlatformTime::LeaveLowResolutionTimer();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
