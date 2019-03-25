@@ -17,12 +17,18 @@ inline TBasicTextWriter<wchar_t>& Crlf(TBasicTextWriter<wchar_t>& s) {
 }
 //----------------------------------------------------------------------------
 inline TBasicTextWriter<char>& Eol(TBasicTextWriter<char>& s) {
-    s.Put('\n');
+    if (s.Format().Misc() & FTextFormat::Crlf)
+        s.Put("\r\n");
+    else
+        s.Put('\n');
     return s;
 }
 //----------------------------------------------------------------------------
 inline TBasicTextWriter<wchar_t>& Eol(TBasicTextWriter<wchar_t>& s) {
-    s.Put(L'\n');
+    if (s.Format().Misc() & FTextFormat::Crlf)
+        s.Put(L"\r\n");
+    else
+        s.Put(L'\n');
     return s;
 }
 //----------------------------------------------------------------------------

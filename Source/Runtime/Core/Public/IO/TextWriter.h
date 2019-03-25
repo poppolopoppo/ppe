@@ -55,13 +55,13 @@ public:
         Padding_Truncate,
     };
     enum EMisc : u32 {
-        BoolAlpha = 1 << 0,
-        //Reserved0 = 1 << 1,
-        //Reserved1 = 1 << 2,
-        //Reserved2 = 1 << 3,
-        //Reserved3 = 1 << 4,
-        //Reserved4 = 1 << 5,
-        //Reserved5 = 1 << 6,
+        BoolAlpha   = 1 << 0,
+        Crlf        = 1 << 1,
+        //Reserved0 = 1 << 2,
+        //Reserved1 = 1 << 3,
+        //Reserved2 = 1 << 4,
+        //Reserved3 = 1 << 5,
+        //Reserved4 = 1 << 6,
     };
     ENUM_FLAGS_FRIEND(EMisc);
 
