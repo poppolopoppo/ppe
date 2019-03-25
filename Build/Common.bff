@@ -6,7 +6,7 @@
 ; Utilisé aussi par les options du compilo
 ;#define USE_FASTBUILD_CACHE
 ; Désactive l'utilisation des unity builds
-;#define DISABLE_UNITY_BUILDS
+;#define DISABLE_UNITY_BUILDS ;%_NOCOMMIT%
 
 #include "_solution_path.bff" ; généré par fbuild.bat, permet d'avoir le rep du sln
 

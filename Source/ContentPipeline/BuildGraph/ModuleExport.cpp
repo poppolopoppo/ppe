@@ -3,10 +3,12 @@
 #include "ModuleExport.h"
 
 #include "BuildNode.h"
+
+#include "Allocator/New.h"
 #include "Memory/MemoryDomain.h"
 #include "RTTI/Namespace-impl.h"
 
-PRAGMA_INITSEG_LIB
+#include "Module-impl.h"
 
 namespace PPE {
 namespace ContentPipeline {

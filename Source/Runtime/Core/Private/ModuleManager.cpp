@@ -70,7 +70,7 @@ void FModuleManager::ReleaseMemory(FModule& module) {
 void FModuleManager::PreInit(IModuleStartup& startup) {
     Assert(nullptr == _startup);
 
-    LOG(Module, Emphasis, L"pre init module startup ...");
+    LOG(Module, Emphasis, L"pre init module...");
 
     _startup = &startup;
 }
@@ -78,7 +78,7 @@ void FModuleManager::PreInit(IModuleStartup& startup) {
 void FModuleManager::PostDestroy(IModuleStartup& startup) {
     Assert(&startup == _startup);
 
-    LOG(Module, Emphasis, L"post destroy module startup ...");
+    LOG(Module, Emphasis, L"post destroy module...");
 
     _startup = nullptr;
 }

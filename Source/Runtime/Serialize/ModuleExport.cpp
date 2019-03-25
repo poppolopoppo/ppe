@@ -11,12 +11,15 @@
 #include "Allocator/PoolAllocatorTag-impl.h"
 #include "Diagnostic/Logger.h"
 
+#include "RTTI/Namespace-impl.h"
+
 PRAGMA_INITSEG_LIB
 
 namespace PPE {
 namespace Serialize {
 LOG_CATEGORY(, Serialize);
 POOL_TAG_DEF(Serialize);
+RTTI_NAMESPACE_DEF(PPE_SERIALIZE_API, Serialize, MetaSerialize);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -34,10 +37,14 @@ void FSerializeModule::Start(FModuleManager& manager) {
     Lexer::FLexerStartup::Start();
     Parser::FParserStartup::Start();
     FGrammarStartup::Start();
+
+    RTTI_NAMESPACE(Serialize).Start();
 }
 //----------------------------------------------------------------------------
 void FSerializeModule::Shutdown() {
     FModule::Shutdown();
+
+    RTTI_NAMESPACE(Serialize).Shutdown();
 
     FGrammarStartup::Shutdown();
     Parser::FParserStartup::Shutdown();

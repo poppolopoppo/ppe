@@ -11,7 +11,7 @@
 
 #include "Allocator/PoolAllocatorTag-impl.h"
 
-PRAGMA_INITSEG_LIB
+#include "Module-impl.h"
 
 namespace PPE {
 namespace RTTI {

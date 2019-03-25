@@ -15,11 +15,14 @@
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
 
-#include "ModuleManager.h"
-
 #include <memory_resource>
 
-PRAGMA_INITSEG_LIB
+#include "Module-impl.h"
+
+#if PPE_OVERRIDE_NEW_ONCE
+//  when compiling statically without inlined new operators it must be defined once in a separate TU
+#   include "Allocator/New.Definitions-inl.h"
+#endif
 
 namespace PPE {
 //----------------------------------------------------------------------------

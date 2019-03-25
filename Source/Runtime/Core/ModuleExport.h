@@ -6,7 +6,7 @@
 #include "ModuleManager.h"
 
 #ifndef PPE_STATICMODULES_STARTUP
-   error "Runtime/Core/ModuleExport.h can't be included first !"
+#   error "Runtime/Core/ModuleExport.h can't be included first !"
 #endif
 
 namespace PPE {

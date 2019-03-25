@@ -155,19 +155,23 @@ constexpr size_t INDEX_NONE = size_t(-1);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTIONS
-#    define PPE_THROW()                throw ()
-#    define PPE_THROW_IT(_EX)          throw _EX
-#    define PPE_THROW_VOID()           throw
-#    define PPE_TRY                    try
-#    define PPE_CATCH_BLOCK(...)       __VA_ARGS__
-#    define PPE_CATCH(_SPEC)           catch(_SPEC)
+#   if _HAS_CXX17
+#    define PPE_THROW()               noexcept(false)
+#   else
+#    define PPE_THROW()               throw ()
+#   endif
+#   define PPE_THROW_IT(_EX)          throw _EX
+#   define PPE_THROW_VOID()           throw
+#   define PPE_TRY                    try
+#   define PPE_CATCH_BLOCK(...)       __VA_ARGS__
+#   define PPE_CATCH(_SPEC)           catch(_SPEC)
 #else
-#    define PPE_THROW()
-#    define PPE_THROW_IT(_EX)          PPE_ABORT(STRINGIZE(_EX))
-#    define PPE_THROW_VOID()           PPE_ABORT("throw")
-#    define PPE_TRY                    if (true)
-#    define PPE_CATCH_BLOCK(...)
-#    define PPE_CATCH(spec)            if (false)
+#   define PPE_THROW()
+#   define PPE_THROW_IT(_EX)          PPE_ABORT(STRINGIZE(_EX))
+#   define PPE_THROW_VOID()           PPE_ABORT("throw")
+#   define PPE_TRY                    if (true)
+#   define PPE_CATCH_BLOCK(...)
+#   define PPE_CATCH(spec)            if (false)
 #endif
 //----------------------------------------------------------------------------
 #ifdef CPP_VISUALSTUDIO

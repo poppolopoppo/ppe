@@ -3,7 +3,7 @@
 #include "Meta/Aliases.h"
 
 #define PPE_MESSAGE(_Message) \
-    __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) ",1): " _Message))
+    __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) ",1): " EXPAND(_Message)))
 
 #define PPE_WARNING(_Code, _Message) PPE_MESSAGE("warning " _Code ": " _Message)
 #define PPE_ERROR(_Code, _Message) PPE_MESSAGE("error " _Code ": " _Message)
