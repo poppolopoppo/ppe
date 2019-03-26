@@ -444,7 +444,7 @@ public:
 
 public: // ILowLevelLogger
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
-        Assert(category.Verbosity & level);
+        Assert(category.Verbosity ^ level);
 
         wchar_t tmp[8192];
         FWFixedSizeTextWriter oss(tmp);
@@ -459,7 +459,7 @@ public: // ILowLevelLogger
     }
 
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
-        Assert(category.Verbosity & level);
+        Assert(category.Verbosity ^ level);
 
         wchar_t tmp[8192];
         FWFixedSizeTextWriter oss(tmp);
@@ -513,7 +513,7 @@ static void HandleFatalLogIFN_(FLogger::EVerbosity level) {
 void FLogger::Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) {
     const FIsInLoggerScope loggerScope;
 
-    if (category.Verbosity & level)
+    if (category.Verbosity ^ level)
         CurrentLogger_().Log(category, level, site, text);
 
     HandleFatalLogIFN_(level);
@@ -522,7 +522,7 @@ void FLogger::Log(const FCategory& category, EVerbosity level, const FSiteInfo& 
 void FLogger::LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) {
     const FIsInLoggerScope loggerScope;
 
-    if (category.Verbosity & level)
+    if (category.Verbosity ^ level)
         CurrentLogger_().LogArgs(category, level, site, format, args);
 
     HandleFatalLogIFN_(level);
