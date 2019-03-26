@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 
 #include "TransactionLinker.h"
 
@@ -75,7 +75,7 @@ FTransactionLinker::~FTransactionLinker()
 void FTransactionLinker::AddTopObject(RTTI::FMetaObject* topObject) {
     Assert(topObject);
 
-    _loaded.RegisterObject(topObject);
+    _topObjects.emplace_back(topObject);
 }
 //----------------------------------------------------------------------------
 void FTransactionLinker::AddExport(const RTTI::FName& name, const RTTI::PMetaObject& src) {
@@ -100,13 +100,20 @@ void FTransactionLinker::AddImport(const RTTI::FPathName& path, const RTTI::PTyp
     imp.Dst = dst;
 }
 //----------------------------------------------------------------------------
-void FTransactionLinker::ResolveImports() {
+void FTransactionLinker::Resolve(RTTI::FMetaTransaction& loaded) {
+    Assert_NoAssume(not loaded.IsLoaded());
+
+    {
     const RTTI::FMetaDatabaseReadable metaDB;
 
     for (const FImport_& imp : _imports) {
         Assert_NoAssume(not *imp.Dst);
         imp.Dst->reset(ResolveImport(metaDB, imp.Path, imp.Traits));
     }
+}
+
+    for (const RTTI::PMetaObject& o : _topObjects)
+        loaded.RegisterObject(o.get());
 }
 //----------------------------------------------------------------------------
 void FTransactionLinker::CheckAssignment(const RTTI::PTypeTraits& traits, const RTTI::FMetaObject& obj) const {

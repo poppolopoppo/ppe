@@ -278,16 +278,14 @@ void FTextSerializer::Deserialize(IStreamReader& input, FTransactionLinker* link
     Parser::FParseContext parseContext(Meta::ForceInit);
 
     while (Parser::PCParseExpression expr = FGrammarStartup::ParseExpression(parseList)) {
-        if (expr) {
-            const RTTI::FAtom atom = expr->Eval(&parseContext);
-            const RTTI::PMetaObject* ppobj = atom.TypedConstDataIFP<RTTI::PMetaObject>();
+        const RTTI::FAtom atom = expr->Eval(&parseContext);
+        const RTTI::PMetaObject* ppobj = atom.TypedConstDataIFP<RTTI::PMetaObject>();
 
-            if (ppobj && *ppobj)
-                linker->AddTopObject(ppobj->get());
-        }
+        if (ppobj && *ppobj)
+            linker->AddTopObject(ppobj->get());
     }
 
-    for (const auto& it : parseContext.LocalScope()) {
+    for (const auto& it : parseContext.GlobalScope()->LocalScope()) {
         if (const RTTI::PMetaObject* exported = it.second.TypedDataIFP<RTTI::PMetaObject>())
             linker->AddExport(it.first, *exported);
     }

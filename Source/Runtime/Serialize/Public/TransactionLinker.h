@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Serialize.h"
 
@@ -77,7 +77,7 @@ public:
     void AddExport(const RTTI::FName& name, const RTTI::PMetaObject& src);
     void AddImport(const RTTI::FPathName& path, const RTTI::PTypeTraits& traits, RTTI::PMetaObject* dst);
 
-    void ResolveImports();
+    void Resolve(RTTI::FMetaTransaction& loaded);
 
     void CheckAssignment(const RTTI::PTypeTraits& traits, const RTTI::FMetaObject& obj) const;
 
