@@ -18,6 +18,7 @@
 #include "Text/TextSerializer.h"
 #include "TransactionLinker.h"
 #include "TransactionSaver.h"
+#include "TransactionSerializer.h"
 
 #include "Text/Grammar.h"
 #include "Lexer/Lexer.h"
@@ -543,8 +544,9 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
         for (size_t i = 0; i < k; ++i)
             Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
 
-        Serialize::FTransactionLinker linker{ &output, filename };
+        Serialize::FTransactionLinker linker{ filename };
         Serialize::ISerializer::Deserialize(serializer, decompressed.MakeView(), &linker);
+        linker.Resolve(output);
     }
 
     AssertRelease(input.NumTopObjects() == output.NumTopObjects());
@@ -848,10 +850,28 @@ static NO_INLINE void Test_TransactionSerialization_() {
         Test_Serializer_(input, *json, basePath + L"_json.json");
     }
     {
+
         Serialize::PSerializer text{ Serialize::FTextSerializer::Get() };
         text->SetMinify(minify);
         Test_Serializer_(input, *text, basePath + L"_text.txt");
     }
+}
+//----------------------------------------------------------------------------
+static NO_INLINE void Test_TransactionSerializer_() {
+    Serialize::FDirectoryTransaction serializer(
+        RTTI::FName("Saved/RTTI/Robotapp"),
+        RTTI::FName("Tests/UnitTest"),
+        L"robotapp_.*\\.txt",
+        { L"Saved:/RTTI" } );
+
+    Serialize::FDirectoryTransaction::FSources sources;
+    serializer.BuildTransaction(sources);
+    serializer.SaveTransaction();
+    serializer.UnloadTransaction();
+    serializer.LoadTransaction();
+    serializer.MountToDB();
+    serializer.UnmountFromDB();
+    serializer.UnloadTransaction();
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Serialize_() {
@@ -888,6 +908,9 @@ static NO_INLINE void Test_Serialize_() {
     {
         Test_TransactionSerialization_<FRTTITestSimple_>();
         Test_TransactionSerialization_<FRTTITest_>();
+    }
+    {
+        Test_TransactionSerializer_();
     }
 }
 //----------------------------------------------------------------------------
@@ -931,7 +954,9 @@ static void Test_Grammar_() {
     VerifyRelease(EvalExpr_(&context, "[Any:42]"));
     VerifyRelease(EvalExpr_(&context, "Any:[Any:[Any:\"totototototototototototototoot\"]]"));
     VerifyRelease(EvalExpr_(&context, "(Int32:-1317311908, WString:'zee')"));
+    VerifyRelease(EvalExpr_(&context, "ETest:'a'+ETest:1"));
     VerifyRelease(EvalExpr_(&context, "FRTTITest__xxx is FRTTITest_ { AnyTPair = (Int32:-1317311908, WString:'zee') }"));
+    VerifyRelease(EvalExpr_(&context, "Any:[{(1,[(Double:Int64:(1+(2+(3*(2*(4+1))))),Int32:1)])}]"));
 }
 //----------------------------------------------------------------------------
 } //!namespace
