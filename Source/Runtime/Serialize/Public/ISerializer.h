@@ -15,11 +15,20 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 using PSerializer = TInSituPtr<ISerializer>;
 //----------------------------------------------------------------------------
-enum class ESerializeFlag {
+enum class ESerializeFlag : u32 {
     None    = 0,
     Minify  = 1<<0,
 };
 ENUM_FLAGS(ESerializeFlag);
+//----------------------------------------------------------------------------
+enum class ESerializeFormat : u32 {
+    Binary = 0,
+    Json = 1,
+    Markup = 2,
+    Script = 3,
+
+    Default = Script
+};
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API ISerializer : Meta::FNonCopyableNorMovable {
 protected: // abstract class :
@@ -45,7 +54,13 @@ public: // helpers :
         const TMemoryView<const u8>& rawData,
         FTransactionLinker* linker );
 
+    static bool InteractiveDeserialize(
+        const ISerializer& serializer,
+        IStreamReader& input, FTransactionLinker* linker );
+
+    static FExtname Extname(ESerializeFormat fmt);
     static PSerializer FromExtname(const FExtname& ext);
+    static PSerializer FromFormat(ESerializeFormat fmt);
 
 private:
     ESerializeFlag _flags;
