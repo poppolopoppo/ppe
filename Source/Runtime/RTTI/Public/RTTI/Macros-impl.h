@@ -5,6 +5,7 @@
 #include "RTTI/Macros.h"
 
 #include "RTTI/Atom.h"
+#include "RTTI/AtomVisitor.h"
 #include "RTTI/NativeTypes.h"
 
 #include "MetaClass.h"
@@ -65,12 +66,13 @@
 #define _RTTI_PROPERTY_IMPL(_Name, _Flags, ...) \
     RegisterProperty(PPE::RTTI::MakeProperty(PPE::RTTI::FName(_Name), _Flags, __VA_ARGS__))
 //----------------------------------------------------------------------------
-// Add a public property "Alias" from a field "_someName"
+// Add a public property "Alias" from a field "Any_name_"
 #define RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, _Flags) \
     _RTTI_PROPERTY_IMPL(STRINGIZE(_Alias), (_Flags), &object_type::_Name);
 #define RTTI_PROPERTY_FIELD_ALIAS(_Name, _Alias) RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, ::PPE::RTTI::EPropertyFlags::Public)
 #define RTTI_PROPERTY_DEPRECATED_ALIAS(_Name, _Alias) RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, ::PPE::RTTI::EPropertyFlags::Public + ::PPE::RTTI::EPropertyFlags::Deprecated)
 #define RTTI_PROPERTY_READONLY_ALIAS(_Name, _Alias) RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, ::PPE::RTTI::EPropertyFlags::Public + ::PPE::RTTI::EPropertyFlags::ReadOnly)
+#define RTTI_PROPERTY_TRANSIENT_ALIAS(_Name, _Alias) RTTI_PROPERTY_FIELD_ALIAS_FLAGS(_Name, _Alias, ::PPE::RTTI::EPropertyFlags::Public + ::PPE::RTTI::EPropertyFlags::Transient)
 //----------------------------------------------------------------------------
 // Add a private property "SomeName" from a private field "_someName"
 #define _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, _Flags) do { \
@@ -85,11 +87,13 @@
 #define RTTI_PROPERTY_PRIVATE_FIELD(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, ::PPE::RTTI::EPropertyFlags::Private);
 #define RTTI_PROPERTY_PRIVATE_DEPRECATED(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, ::PPE::RTTI::EPropertyFlags::Private + ::PPE::RTTI::EPropertyFlags::Deprecated);
 #define RTTI_PROPERTY_PRIVATE_READONLY(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, ::PPE::RTTI::EPropertyFlags::Private + ::PPE::RTTI::EPropertyFlags::ReadOnly);
+#define RTTI_PROPERTY_PRIVATE_TRANSIENT(_Name) _RTTI_PROPERTY_PRIVATE_FIELD_IMPL(_Name, ::PPE::RTTI::EPropertyFlags::Private + ::PPE::RTTI::EPropertyFlags::Transient);
 //----------------------------------------------------------------------------
 // Add a public property "SomeName" from a public field "SomeName"
 #define RTTI_PROPERTY_PUBLIC_FIELD(_Name) RTTI_PROPERTY_FIELD_ALIAS(_Name, _Name);
 #define RTTI_PROPERTY_DEPRECATED_FIELD(_Name) RTTI_PROPERTY_DEPRECATED_ALIAS(_Name, _Name);
 #define RTTI_PROPERTY_READONLY_FIELD(_Name) RTTI_PROPERTY_READONLY_ALIAS(_Name, _Name);
+#define RTTI_PROPERTY_TRANSIENT_FIELD(_Name) RTTI_PROPERTY_TRANSIENT_ALIAS(_Name, _Name);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
