@@ -1,21 +1,19 @@
-#pragma once
+﻿#pragma once
 
 #include "Serialize.h"
 
-#include "Container/HashMap.h"
-#include "Container/SparseArray.h"
+#include "SerializeExceptions.h"
+
 #include "Container/Vector.h"
 #include "IO/Filename.h"
 #include "Meta/PointerWFlags.h"
+
 #include "RTTI_fwd.h"
 #include "RTTI/Typedefs.h"
 #include "RTTI/TypeTraits.h"
 
-#include "SerializeExceptions.h"
-
 namespace PPE {
 namespace Serialize {
-class FTransactionSerializer;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -61,14 +59,19 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FTransactionLinker : Meta::FNonCopyableNorMovable {
+class PPE_SERIALIZE_API FTransactionLinker {
 public:
-    FTransactionLinker(
-        RTTI::FMetaTransaction* loaded,
-        const FFilename& filename);
+    explicit FTransactionLinker(const FFilename& filename);
     ~FTransactionLinker();
 
-    const RTTI::FMetaTransaction& Loaded() const { return _loaded; }
+    FTransactionLinker();
+
+    FTransactionLinker(const FTransactionLinker& ) = delete;
+    FTransactionLinker& operator =(const FTransactionLinker& ) = delete;
+
+    FTransactionLinker(FTransactionLinker&& rvalue);
+    FTransactionLinker& operator =(FTransactionLinker&& rvalue);
+
     const FFilename& Filename() const { return _filename; }
 
     size_t NumImports() const { return _imports.size(); }
@@ -76,6 +79,9 @@ public:
     void AddTopObject(RTTI::FMetaObject* topObject);
     void AddExport(const RTTI::FName& name, const RTTI::PMetaObject& src);
     void AddImport(const RTTI::FPathName& path, const RTTI::PTypeTraits& traits, RTTI::PMetaObject* dst);
+
+    void AppendTo(FTransactionLinker& other) const;
+    void MoveTo(FTransactionLinker& other);
 
     void Resolve(RTTI::FMetaTransaction& loaded);
 
@@ -97,9 +103,9 @@ private:
         RTTI::PMetaObject* Dst;
     };
 
-    RTTI::FMetaTransaction& _loaded;
-    const FFilename _filename;
-    SPARSEARRAY(MetaSerialize, FImport_, 64) _imports;
+    FFilename _filename;
+    VECTORINSITU(MetaSerialize, RTTI::PMetaObject, 8) _topObjects;
+    VECTORINSITU(MetaSerialize, FImport_, 8) _imports;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

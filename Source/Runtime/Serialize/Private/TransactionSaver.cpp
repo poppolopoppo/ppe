@@ -42,8 +42,6 @@ void FTransactionSaver::Append(const RTTI::FMetaObjectRef& obj) {
 }
 //----------------------------------------------------------------------------
 void FTransactionSaver::Append(const RTTI::FMetaTransaction& transaction) {
-    Assert(transaction.IsLoaded());
-
     const size_t sizeBefore = _objects.size();
     transaction.Linearize(&_objects);
 

@@ -2,6 +2,9 @@
 
 #include "Serialize_fwd.h"
 
+#include "IO/Dirpath.h"
+#include "IO/Filename.h"
+
 #include "MetaObject.h"
 #include "RTTI_fwd.h"
 #include "RTTI/Macros.h"
@@ -11,42 +14,115 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class ETransactionSerializerFlags : u32 {
-    None                = 0,
-    AutoBuild           = 1<<0,
-    AutoMount           = 1<<1,
-    AutoImport          = 1<<2,
-
-    Default             = AutoBuild|AutoMount|AutoImport
-};
-ENUM_FLAGS(ETransactionSerializerFlags);
-RTTI_ENUM_HEADER(PPE_SERIALIZE_API, ETransactionSerializerFlags);
+RTTI_ENUM_HEADER(PPE_SERIALIZE_API, ESerializeFormat);
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FTransactionSerializer : RTTI::FMetaObject {
+enum class ETransactionFlags : u32 {
+    None                = 0,
+
+    AutoBuild           = 1 << 0,
+    AutoMount           = 1 << 1,
+    AutoImport          = 1 << 2,
+
+    Compressed          = 1 << 5,
+    Merged              = 1 << 6, // #TODO
+
+    Automated           = AutoBuild | AutoMount | AutoImport,
+    Default             = Automated | Compressed | Merged
+};
+ENUM_FLAGS(ETransactionFlags);
+RTTI_ENUM_HEADER(PPE_SERIALIZE_API, ETransactionFlags);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class PPE_SERIALIZE_API FTransactionSerializer : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(PPE_SERIALIZE_API, FTransactionSerializer, RTTI::FMetaObject);
 public:
-    FTransactionSerializer(RTTI::FConstructorTag);
-    ~FTransactionSerializer();
+    FTransactionSerializer(
+        const RTTI::FName& id,
+        const RTTI::FName& namespace_,
+        ETransactionFlags flags = ETransactionFlags::Default );
+    virtual ~FTransactionSerializer();
 
     FTransactionSerializer(const FTransactionSerializer&) = delete;
     FTransactionSerializer& operator =(const FTransactionSerializer&) = delete;
 
+    const RTTI::FName& Id() const { return _id; }
     const RTTI::FName& Namespace() const { return _namespace; }
-    ETransactionSerializerFlags Flags() const { return _flags; }
+    ETransactionFlags Flags() const { return _flags; }
 
-    bool HasAutoBuild() const { return (_flags ^ ETransactionSerializerFlags::AutoBuild); }
-    bool HasAutoMount() const { return (_flags ^ ETransactionSerializerFlags::AutoMount); }
-    bool HasAutoImport() const { return (_flags ^ ETransactionSerializerFlags::AutoImport); }
+    bool HasAutoBuild() const { return (_flags ^ ETransactionFlags::AutoBuild); }
+    bool HasAutoMount() const { return (_flags ^ ETransactionFlags::AutoMount); }
+    bool HasAutoImport() const { return (_flags ^ ETransactionFlags::AutoImport); }
 
-    const RTTI::PMetaTransaction& Exported() const { return _exported; }
-    TMemoryView<const RTTI::PMetaTransaction> Importeds() const { return _importeds; }
+    const RTTI::PMetaTransaction& Transaction() const { return _transaction; }
+
+    using FSources = VECTORINSITU(MetaSerialize, FFilename, 3);
+
+    void BuildTransaction(FSources& sources);
+    void SaveTransaction();
+
+    void LoadTransaction();
+    void UnloadTransaction();
+
+    void MountToDB();
+    void UnmountFromDB();
+
+    static const FDirpath& TransactionPath();
+    static FFilename IdToTransaction(const RTTI::FName& name);
+    static RTTI::FName TransactionToId(const FFilename& transaction);
+
+protected:
+    virtual void FetchSources(FSources& sources) = 0;
+
+public: // RTTI
+    explicit FTransactionSerializer(RTTI::FConstructorTag);
+
+    virtual void RTTI_Load(RTTI::ILoadContext& context) override;
+    virtual void RTTI_Unload(RTTI::IUnloadContext& context) override;
+
+#ifdef WITH_RTTI_VERIFY_PREDICATES
+    virtual void RTTI_VerifyPredicates() const PPE_THROW() override;
+#endif
 
 private:
+    RTTI::FName _id;
     RTTI::FName _namespace;
-    ETransactionSerializerFlags _flags;
+    ETransactionFlags _flags;
 
-    RTTI::PMetaTransaction _exported;
-    VECTORINSITU(Transient, RTTI::PMetaTransaction, 4) _importeds;
+    RTTI::PMetaTransaction _transaction;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class PPE_SERIALIZE_API FDirectoryTransaction : public FTransactionSerializer {
+    RTTI_CLASS_HEADER(PPE_SERIALIZE_API, FDirectoryTransaction, FTransactionSerializer);
+public:
+    using FInputPaths = VECTORINSITU(MetaSerialize, FDirpath, 3);
+
+    FDirectoryTransaction(
+        const RTTI::FName& id,
+        const RTTI::FName& namespace_,
+        FWString&& inputPattern,
+        FInputPaths&& inputPaths,
+        ETransactionFlags flags = ETransactionFlags::Default );
+    virtual ~FDirectoryTransaction();
+
+    const FWString& InputPattern() const { return _inputPattern; }
+    TMemoryView<const FDirpath> InputPaths() const { return _inputPaths; }
+
+protected:
+    virtual void FetchSources(FSources& sources) override final;
+
+public: // RTTI
+    explicit FDirectoryTransaction(RTTI::FConstructorTag);
+
+#ifdef WITH_RTTI_VERIFY_PREDICATES
+    virtual void RTTI_VerifyPredicates() const PPE_THROW() override;
+#endif
+
+private:
+    FWString _inputPattern;
+    FInputPaths _inputPaths;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

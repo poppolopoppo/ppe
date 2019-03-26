@@ -17,8 +17,12 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class ESerializeFlags : u32;
+enum class ESerializeFormat : u32;
+//----------------------------------------------------------------------------
 class ISerializer;
-using PTypeTraits = TInSituPtr<ISerializer>;
+using PSerializer = TInSituPtr<ISerializer>;
+//----------------------------------------------------------------------------
 class FTransactionLinker;
 class FTransactionSaver;
 FWD_REFPTR(TransactionSerializer);

@@ -269,9 +269,11 @@ FTextSerializer::~FTextSerializer() {}
 void FTextSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);
 
+    const FWString fname = linker->Filename().ToWString();
+
     Parser::FParseList parseList;
-    UsingBufferedStream(&input, [&parseList, linker](IBufferedStreamReader* buffered) {
-        Lexer::FLexer lexer(*buffered, linker->Filename().ToWString(), true);
+    UsingBufferedStream(&input, [&parseList, &fname, linker](IBufferedStreamReader* buffered) {
+        Lexer::FLexer lexer(*buffered, fname, true);
         parseList.Parse(&lexer);
     });
 

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 
 #include "TransactionLinker.h"
 
@@ -60,12 +60,25 @@ FWTextWriter& FUnexpectedObjectClass::Description(FWTextWriter& oss) const {
         << L"> !";
 }
 #endif
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTransactionLinker::FTransactionLinker(RTTI::FMetaTransaction* loaded, const FFilename& filename)
-:   _loaded(*loaded)
-,   _filename(filename) {
-    Assert_NoAssume(not _loaded.IsLoaded());
+FTransactionLinker::FTransactionLinker()
+{}
+//----------------------------------------------------------------------------
+FTransactionLinker::FTransactionLinker(FTransactionLinker&& rvalue) {
+    operator =(std::move(rvalue));
+}
+//----------------------------------------------------------------------------
+FTransactionLinker& FTransactionLinker::operator =(FTransactionLinker&& rvalue) {
+    _filename = std::move(rvalue._filename);
+    _topObjects = std::move(rvalue._topObjects);
+    _imports = std::move(rvalue._imports);
+    return (*this);
+}
+//----------------------------------------------------------------------------
+FTransactionLinker::FTransactionLinker(const FFilename& filename)
+:   _filename(filename) {
     Assert_NoAssume(not _filename.empty());
 }
 //----------------------------------------------------------------------------
@@ -86,31 +99,41 @@ void FTransactionLinker::AddExport(const RTTI::FName& name, const RTTI::PMetaObj
 }
 //----------------------------------------------------------------------------
 void FTransactionLinker::AddImport(const RTTI::FPathName& path, const RTTI::PTypeTraits& traits, RTTI::PMetaObject* dst) {
+    Assert(dst);
     Assert_NoAssume(not path.empty());
     Assert_NoAssume(traits);
     Assert_NoAssume(traits->AsScalar());
     Assert_NoAssume(traits->AsScalar()->ObjectClass());
-    Assert(dst);
     Assert_NoAssume(not *dst);
-    Assert_NoAssume(path.Transaction != _loaded.Name());
 
-    FImport_& imp = _imports.Add();
-    imp.Path = path;
-    imp.Traits = traits;
-    imp.Dst = dst;
+    FImport_* imp = _imports.push_back_Uninitialized();
+    imp->Path = path;
+    imp->Traits = traits;
+    imp->Dst = dst;
+}
+//----------------------------------------------------------------------------
+void FTransactionLinker::AppendTo(FTransactionLinker& other) const {
+    other._topObjects.insert(other._topObjects.end(), _topObjects.begin(), _topObjects.end());
+    other._imports.insert(other._imports.end(), _imports.begin(), _imports.end());
+}
+//----------------------------------------------------------------------------
+void FTransactionLinker::MoveTo(FTransactionLinker& other) {
+    other._filename = _filename;
+    other._topObjects = std::move(_topObjects);
+    other._imports = std::move(_imports);
 }
 //----------------------------------------------------------------------------
 void FTransactionLinker::Resolve(RTTI::FMetaTransaction& loaded) {
     Assert_NoAssume(not loaded.IsLoaded());
 
     {
-    const RTTI::FMetaDatabaseReadable metaDB;
+        const RTTI::FMetaDatabaseReadable metaDB;
 
-    for (const FImport_& imp : _imports) {
-        Assert_NoAssume(not *imp.Dst);
-        imp.Dst->reset(ResolveImport(metaDB, imp.Path, imp.Traits));
+        for (const FImport_& imp : _imports) {
+            Assert_NoAssume(not *imp.Dst);
+            imp.Dst->reset(ResolveImport(metaDB, imp.Path, imp.Traits));
+        }
     }
-}
 
     for (const RTTI::PMetaObject& o : _topObjects)
         loaded.RegisterObject(o.get());
