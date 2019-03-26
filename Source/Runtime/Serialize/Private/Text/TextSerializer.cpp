@@ -305,7 +305,7 @@ void FTextSerializer::Serialize(const FTransactionSaver& saver, IStreamWriter* o
 }
 //----------------------------------------------------------------------------
 FExtname FTextSerializer::Extname() {
-    return FFSConstNames::Otxt();
+    return FFSConstNames::Txt();
 }
 //----------------------------------------------------------------------------
 PSerializer FTextSerializer::Get() {

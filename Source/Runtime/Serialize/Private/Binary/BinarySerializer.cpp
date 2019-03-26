@@ -39,7 +39,7 @@ void FBinarySerializer::Serialize(const FTransactionSaver& saver, IStreamWriter*
 }
 //----------------------------------------------------------------------------
 FExtname FBinarySerializer::Extname() {
-    return FFSConstNames::Bnz();
+    return FFSConstNames::Bnx();
 }
 //----------------------------------------------------------------------------
 PSerializer FBinarySerializer::Get() {
