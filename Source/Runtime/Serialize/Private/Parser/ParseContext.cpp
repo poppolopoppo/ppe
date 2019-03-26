@@ -13,6 +13,7 @@
 
 #include "Parser/Parser.h"
 #include "Parser/ParseExpression.h"
+#include "Parser/ParseStatement.h"
 
 namespace PPE {
 namespace Parser {
@@ -99,10 +100,6 @@ void FParseContext::AddGlobal(const FParseExpression* expr, const RTTI::FName& n
     const auto* atom = value.TypedConstDataIFP<RTTI::PMetaObject>();
     if (nullptr == atom)
         PPE_THROW_IT(FParserException("exported atom is not an object", expr));
-
-    const RTTI::PMetaObject& obj = (*atom);
-    if (obj)
-        obj->RTTI_Export(name);
 }
 //----------------------------------------------------------------------------
 void FParseContext::RemoveGlobal(const FParseExpression* expr, const RTTI::FName& name, const RTTI::FAtom& value) {
@@ -118,9 +115,6 @@ void FParseContext::RemoveGlobal(const FParseExpression* expr, const RTTI::FName
         PPE_THROW_IT(FParserException("failed to remove global variable with wrong value", expr));
 
     gbl->_localScope.erase(it);
-
-    if (const RTTI::PMetaObject& obj = value.TypedConstData<RTTI::PMetaObject>())
-        obj->RTTI_Unexport();
 }
 //----------------------------------------------------------------------------
 RTTI::FAtom FParseContext::GetGlobal(const RTTI::FName& name) const {

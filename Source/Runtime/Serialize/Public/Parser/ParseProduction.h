@@ -10,6 +10,7 @@
 #include "Container/Tuple.h"
 #include "Container/TupleHelpers.h"
 #include "Container/Vector.h"
+#include "Diagnostic/StackMarker.h"
 #include "Misc/Function.h"
 #include "Meta/Optional.h"
 
@@ -28,7 +29,11 @@ POOL_TAG_FWD(PPE_SERIALIZE_API, Parser);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using TEnumerable = VECTORINSITU(Parser, T, 4);
+#if 0 // in situ storage is bloating the stack
+using TEnumerable = VECTORINSITU(Parser, T, 1);
+#else
+using TEnumerable = VECTOR(Parser, T);
+#endif
 //----------------------------------------------------------------------------
 static CONSTEXPR size_t GProductionInSituSize = sizeof(intptr_t);
 //----------------------------------------------------------------------------
@@ -36,7 +41,7 @@ template <typename T>
 class TProduction {
 public:
     typedef T value_type;
-    typedef TFunction< TParseResult<T>(FParseList&), GProductionInSituSize > lambda_type;
+    typedef TFunction< FParseResult(FParseList&,T*), GProductionInSituSize > lambda_type;
 
 private:
     lambda_type _lambda;
@@ -52,220 +57,381 @@ public:
     CONSTEXPR TProduction(TProduction&&) NOEXCEPT = default;
     CONSTEXPR TProduction& operator =(TProduction&&) NOEXCEPT = default;
 
-    TParseResult<T> operator ()(FParseList& input) const {
-        return _lambda(input);
+    FORCE_INLINE FParseResult operator ()(FParseList& input, T* result) const {
+        return _lambda(input, result);
     }
 
-    TParseResult<T> Invoke(FParseList& input) const {
-        return _lambda(input);
+    FParseResult Invoke(FParseList& input, T* result) const {
+        return _lambda(input, result);
     }
+    FParseResult TryParse(FParseList& input, T* result) const {
+        const Lexer::FMatch* offset = input.Peek();
+        const FParseResult r = _lambda(input, result);
 
-    TParseResult<T> TryParse(FParseList& input) const {
-        const Lexer::FMatch *state = input.Peek();
+        if (not r)
+            input.Seek(offset);
 
-        TParseResult<T> result{ _lambda(input) };
-        if (not result.Succeed())
-            input.Seek(state);
-
-        return result;
+        return r;
     }
 
     T Parse(FParseList& input) const {
-        TParseResult<T> result = _lambda(input);
-        if (result.Succeed())
-            return result.Value();
+        T value;
+        const FParseResult result = _lambda(input, &value);
+        if (result)
+            return value;
 
-        PPE_THROW_IT(FParserException(result.Message(), result.Site(), nullptr));
+        input.Error(result);
     }
 
-    TProduction Ref() const {
-        const TProduction *ref = this;
-        return TProduction{ [ref](FParseList& input) -> TParseResult<T> {
-            return ref->Invoke(input);
-        } };
+    CONSTEXPR TProduction Ref() const NOEXCEPT {
+        return TProduction{ lambda_type::Bind<&TProduction::Invoke>(this) };
     }
 
-    static TProduction Return(T&& rvalue) {
-        return TProduction{ { Meta::ForceInit, [value{ std::move(rvalue) }](FParseList& input) -> TParseResult<T> {
-            return TParseResult<T>.Success(value, input.Site());
-        }} };
-    }
+    static TProduction Return(T&& rvalue) NOEXCEPT {
+        return TProduction{ { Meta::ForceInit, [value{ std::move(rvalue) }](FParseList& input, T* result) -> FParseResult {
+            PPE_STACKMARKER("return");
 
-    template <typename U>
-    TProduction<U> Then(TFunction< TProduction<U>(T&&) >&& rthen) const {
-        return TProduction<U>{ { Meta::ForceInit, [first{ *this }, then{ std::move(rthen) }](FParseList& input) -> TParseResult<U> {
-            TParseResult<T> result = first(input);
-            return (result.Succeed())
-                ? then(std::move(result.Value()))
-                : TParseResult<U>::Failure(result.Message(), result.Expected(), result.Site());
+            *result = value;
+            return FParseResult::Success(input.Site());
         }}};
     }
 
     template <typename U>
-    TProduction<U> Select(TFunction< U(T&&) >&& rconvert) const {
-        return TProduction<U>{ { Meta::ForceInit, [first{ *this }, convert{ std::move(rconvert) }](FParseList& input) -> TParseResult<U> {
-            TParseResult<T> result = first(input);
-            return (result.Succeed())
-                ? TParseResult<U>::Success(convert(std::move(result.Value())), result.Site())
-                : TParseResult<U>::Failure(result.Message(), result.Expected(), result.Site());
+    CONSTEXPR TProduction<U> Then(TFunction< TProduction<U>(T*) >&& rthen) const NOEXCEPT {
+        return TProduction<U>{ { Meta::ForceInit, [first{ *this }, then{ std::move(rthen) }](FParseList& input, T* result) -> FParseResult {
+            PPE_STACKMARKER("then");
+
+            const FParseResult r = first(input, result);
+            return (r ? then(result) : r );
         }}};
     }
 
-    TProduction< TEnumerable<T> > Many() const {
-        return TProduction< TEnumerable<T> >{ { Meta::ForceInit, [parser{ *this }](FParseList& input) -> TParseResult< TEnumerable<T> > {
-            const Lexer::FMatch* const offset = input.Peek();
+    template <typename U>
+    CONSTEXPR TProduction<U> Select(TFunction< void(U*, T&&) >&& rconvert) const NOEXCEPT {
+        return TProduction<U>{ { Meta::ForceInit, [first{ *this }, convert{ std::move(rconvert) }](FParseList& input, U* result) -> FParseResult {
+            PPE_STACKMARKER("select");
 
-            TEnumerable<T> many;
-            TParseResult<T> result;
-            while ((result = parser.TryParse(input)).Succeed())
-                many.push_back(std::move(result.Value()));
+            T tmp;
+            const FParseResult r = first(input, &tmp);
+            if (r)
+                convert(result, std::move(tmp));
 
-            return TParseResult< TEnumerable<T> >::Success(std::move(many), offset ? offset->Site() : input.Site());
+            return r;
         }}};
     }
 
-    TProduction< TEnumerable<T> > AtLeastOnce() const {
-        return TProduction< TEnumerable<T> >{ { Meta::ForceInit, [parser{ *this }](FParseList& input)->TParseResult< TEnumerable<T> > {
+    CONSTEXPR TProduction< TEnumerable<T> > Many() const NOEXCEPT {
+        return TProduction< TEnumerable<T> >{ { Meta::ForceInit, [parser{ *this }](FParseList& input, TEnumerable<T>* result) -> FParseResult {
+            PPE_STACKMARKER("many");
             const Lexer::FMatch* const offset = input.Peek();
 
-            TEnumerable<T> many;
-            TParseResult<T> result;
-            while ((result = parser.TryParse(input)).Succeed())
-                many.push_back(std::move(result.Value()));
+            T tmp;
+            for (;;) {
+                const FParseResult r = parser.TryParse(input, &tmp);
+                if (r)
+                    result->push_back(std::move(tmp));
+                else
+                    break;;
+            }
 
-            return (many.size())
-                ? TParseResult< TEnumerable<T> >::Success(std::move(many), offset ? offset->Site() : input.Site())
-                : TParseResult< TEnumerable<T> >::Failure("invalid match", Lexer::FSymbol::Invalid, offset ? offset->Site() : input.Site());
+            return FParseResult::Success(offset
+                ? Lexer::FSpan::FromSpan(offset->Site(), input.Site())
+                : input.Site());
         }}};
     }
 
-    TProduction< TEnumerable<T> > Join(Lexer::FSymbol::ETypeId symbol) const {
-        return TProduction < TEnumerable<T> >{ { Meta::ForceInit, [parser{ *this }, symbol](FParseList& input) {
+    CONSTEXPR TProduction< TEnumerable<T> > AtLeastOnce() const NOEXCEPT {
+        return TProduction< TEnumerable<T> >{ { Meta::ForceInit, [parser{ *this }](FParseList& input, TEnumerable<T>* result) -> FParseResult {
+            PPE_STACKMARKER("atleastonce");
             const Lexer::FMatch* const offset = input.Peek();
 
-            auto delimiter = Parser::Expect(symbol);
-
-            TEnumerable<T> join;
-            TParseResult<T> result;
-            while ((result = parser.TryParse(input)).Succeed()) {
-                join.emplace_back(std::move(result.Value()));
-
-                if (not delimiter.TryParse(input).Succeed())
+            T tmp;
+            FParseResult r;
+            for (;;) {
+                r = parser.TryParse(input, &tmp);
+                if (r)
+                    result->push_back(std::move(tmp));
+                else
                     break;
             }
 
-            return TParseResult< TEnumerable<T> >::Success(std::move(join), offset ? offset->Site() : input.Site());
+            if (result->empty())
+                return r;
+            else
+                return FParseResult::Success(Lexer::FSpan::FromSpan(offset->Site(), input.Site()));
         }}};
     }
 
-    TProduction Or(TProduction<T>&& rother) const {
-        return TProduction{ { Meta::ForceInit,[first{ *this }, other{ std::move(rother) }](FParseList& input)->TParseResult<T> {
-            TParseResult<T> result = first.TryParse(input);
-            if (not result.Succeed())
-                result = other(input);
-            return result;
-        }} };
+    template <typename U>
+    CONSTEXPR TProduction< TEnumerable<T> > Join(TProduction<U>&& rdelimiter) const NOEXCEPT {
+        return TProduction < TEnumerable<T> >{ { Meta::ForceInit, [parser{ *this }, delimiter{ std::move(rdelimiter) }]
+        (FParseList& input, TEnumerable<T>* result) -> FParseResult {
+            PPE_STACKMARKER("join");
+            const Lexer::FMatch* const offset = input.Peek();
+
+            T tmp;
+            const Lexer::FMatch* sep = nullptr;
+            for (;;) {
+                FParseResult r = parser.TryParse(input, &tmp);
+                if (r)
+                    result->push_back(std::move(tmp));
+                else
+                    break;
+
+                r = delimiter.TryParse(input, &sep);
+                if (not r)
+                    break;
+            }
+
+            return FParseResult::Success(offset
+                ? Lexer::FSpan::FromSpan(offset->Site(), input.Site())
+                : input.Site());
+        }}};
     }
 
     template <typename U>
-    auto Optional(TProduction<U>&& rother) const {
+    CONSTEXPR auto Optional(TProduction<U>&& rother) const NOEXCEPT {
         using tuple_type = decltype(MergeTuple(std::declval<T>(), Meta::MakeOptional(std::declval<U>())));
-        return TProduction<tuple_type>{ { Meta::ForceInit, [first{ *this }, other{ std::move(rother) }](FParseList& input)->TParseResult<tuple_type> {
-            TParseResult<T> a = first.TryParse(input);
-            if (not a.Succeed())
-                return TParseResult<tuple_type>::Failure(a.Message(), a.Expected(), a.Site());
+        return TProduction<tuple_type>{ { Meta::ForceInit, [first{ *this }, other{ std::move(rother) }](FParseList& input, tuple_type* result) -> FParseResult {
+            PPE_STACKMARKER("optional");
 
-            TParseResult<U> b = other.TryParse(input);
+            FParseResult r = first.TryParse(input, &std::get<0>(*result));
+            if (r) {
+                U opt;
+                r = r && other.TryParse(input, &opt);
+                if (r)
+                    std::get<1>(*result) = Meta::MakeOptional(std::move(opt));
 
-            Meta::TOptional<U> opt;
-            if (b.Succeed())
-                opt = Meta::MakeOptional(std::move(b.Value()));
-
-            tuple_type merged{ MergeTuple(std::move(a.Value()), std::move(opt)) };
-
-            return TParseResult<tuple_type>::Success(std::move(merged), a.Site());
+                return FParseResult::Success(r.Site);
+            }
+            else {
+                return r;
+            }
         }}};
     }
 
-    template <typename U>
-    auto And(TProduction<U>&& rother) const {
-        using tuple_type = decltype(MergeTuple(std::declval<T>(), std::declval<U>()));
-        return TProduction<tuple_type>{ { Meta::ForceInit, [first{ *this }, other{ std::move(rother) }](FParseList& input)->TParseResult<tuple_type> {
-            TParseResult<T> a = first.TryParse(input);
-            if (not a.Succeed())
-                return TParseResult<tuple_type>::Failure(a.Message(), a.Expected(), a.Site());
-
-            TParseResult<U> b = other.TryParse(input);
-            if (not b.Succeed())
-                return TParseResult<tuple_type>::Failure(b.Message(), b.Expected(), b.Site());
-
-            tuple_type merged{ MergeTuple(std::move(a.Value()), std::move(b.Value())) };
-
-            return TParseResult<tuple_type>::Success(std::move(merged), a.Site());
-        }}};
-    }
-
-    TProduction Except(TProduction&& rother) const {
-        return TProduction{ [other{ std::move(rother) }, second{ *this }](FParseList& input) {
-            TParseResult<T> result = other.TryParse(input);
-            return (result.Succeed())
-                ? TParseResult<T>::Failure("excepted parser succeeded", result.Site())
-                : second(input);
-        } };
+    CONSTEXPR TProduction Except(TProduction&& rother) const NOEXCEPT {
+        return TProduction{ [other{ std::move(rother) }, second{ *this }](FParseList& input, T* result) -> FParseResult {
+            PPE_STACKMARKER("except");
+            FParseResult r = other.TryParse(input, &result);
+            if (r)
+                return FParseResult::Failure("excepted parser succeeded", r.Site);
+            else
+                return second(input, result);
+        }};
     }
 };
 //----------------------------------------------------------------------------
-inline TProduction<const Lexer::FMatch *> Expect(Lexer::FSymbol::ETypeId symbol) {
-    return TProduction<const Lexer::FMatch *>{
-        [symbol](FParseList& input) -> TParseResult<const Lexer::FMatch *> {
-            const Lexer::FMatch *match = input.Read();
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename... _Args>
+CONSTEXPR auto And(TProduction<_Args>&&... rexprs) NOEXCEPT {
+    STATIC_ASSERT(sizeof...(_Args) >= 2);
+    using tuple_type = TTuple<_Args...>;
+    return TProduction<tuple_type>{ { Meta::ForceInit, [exprs{ MakeTuple(std::move(rexprs)...) }]
+        (FParseList& input, tuple_type* value) -> FParseResult {
+            PPE_STACKMARKER("and");
+            FParseResult result = FParseResult::Success(input.Site());
+            Meta::static_for<sizeof...(_Args)>([&](auto... idx) {
+                return (... && (result = result && std::get<idx>(exprs)(input, &std::get<idx>(*value))).Succeed());
+            });
+            return result;
+        }}};
+}
+//----------------------------------------------------------------------------
+template <typename... _Args>
+CONSTEXPR auto Or(TProduction<_Args>&&... rexprs) NOEXCEPT {
+    STATIC_ASSERT(sizeof...(_Args) >= 2);
+    using common_type = std::common_type_t<_Args...>;
+    return TProduction<common_type>{ { Meta::ForceInit, [exprs{ MakeTuple(std::move(rexprs)...) }]
+        (FParseList& input, common_type* value) -> FParseResult {
+            PPE_STACKMARKER("or");
+            FParseResult result;
+            Meta::static_for<sizeof...(_Args)>([&](auto... idx) {
+                return (... || (result = std::get<idx>(exprs).TryParse(input, value)).Succeed());
+            });
+            return result;
+        }}};
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace details {
+template <Lexer::FSymbol::ETypeId _Symbol>
+FParseResult Expect_(FParseList& input, const Lexer::FMatch** result) {
+    PPE_STACKMARKER("expect");
+    return (input.Expect<_Symbol>(result)
+        ? FParseResult::Success((*result)->Site())
+        : FParseResult::Unexpected(_Symbol, *result, input) );
+}
+template <Lexer::FSymbol::ETypeId _Symbol>
+FParseResult Optional_(FParseList& input, const Lexer::FMatch** result) {
+    PPE_STACKMARKER("optional");
+    *result = input.Peek();
+    if (not (*result) || not ((*result)->Symbol()->Type() ^ _Symbol)) {
+        return FParseResult::Success((*result) ? (*result)->Site() : input.Site());
+    }
+    else {
+        input.Read(); // consumes match
+        return FParseResult::Success((*result)->Site());
+    }
+}
+} //!details
+//----------------------------------------------------------------------------
+template <Lexer::FSymbol::ETypeId _Symbol>
+CONSTEXPR TProduction<const Lexer::FMatch *> Expect() NOEXCEPT {
+    using lambda_type = typename TProduction<const Lexer::FMatch *>::lambda_type;
+    return TProduction<const Lexer::FMatch *>{ lambda_type::template Bind<&details::Expect_<_Symbol>>() };
+}
+//----------------------------------------------------------------------------
+template <Lexer::FSymbol::ETypeId _Symbol, typename T>
+CONSTEXPR TProduction<T> Expect(T (*select)(const Lexer::FMatch*)) NOEXCEPT {
+    return TProduction<T>{ [select](FParseList& input, T* value) {
+        PPE_STACKMARKER("expect_select");
+        const Lexer::FMatch* m = nullptr;
+        if (input.Expect<_Symbol>(&m)) {
+            *value = select(m);
+            return FParseResult::Success(m->Site());
+        }
+        else {
+            return FParseResult::Unexpected(_Symbol, m, input);
+        }
+    }};
+}
+//----------------------------------------------------------------------------
+template <Lexer::FSymbol::ETypeId _Symbol>
+CONSTEXPR TProduction<const Lexer::FMatch *> Optional() NOEXCEPT {
+    using lambda_type = typename TProduction<const Lexer::FMatch *>::lambda_type;
+    return TProduction<const Lexer::FMatch *>{ lambda_type::template Bind<&details::Optional_<_Symbol>>() };
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace details {
+template <typename T>
+using TSequenceResult_ = const Lexer::FMatch*;
+template <Lexer::FSymbol::ETypeId... _Symbols>
+using TSequenceTuple_ = TTuple<TSequenceResult_<decltype(_Symbols)>...>;
+template <Lexer::FSymbol::ETypeId... _Symbols>
+FParseResult Sequence_(FParseList& input, TSequenceTuple_<_Symbols...>* value) {
+    PPE_STACKMARKER("sequence");
+    FParseResult result = FParseResult::Success(input.Site());
+    Meta::static_for<sizeof...(_Symbols)>([&](auto... idx) {
+        return (... && (result = result && Expect_<_Symbols>(input, &std::get<idx>(*value))).Succeed());
+    });
+    return result;
+}
+} //!details
+//----------------------------------------------------------------------------
+// Better using :
+//  Parser::Sequence<Lexer::FSymbol::Identifier, Lexer::FSymbol::Is, Lexer::FSymbol::Number>
+// Than :
+//  Parser::And(
+//      Parser::Expect<Lexer::FSymbol::Identifier>(),
+//      Parser::Expect<Lexer::FSymbol::Is>(),
+//      Parser::Expect<Lexer::FSymbol::Number> )
+// Since the later will produce 4 TFunction<> instead of one for the first.
+template <Lexer::FSymbol::ETypeId... _Symbols>
+CONSTEXPR auto Sequence() NOEXCEPT {
+    using tuple_type = details::TSequenceTuple_<_Symbols...>;
+    using lambda_type = typename TProduction<tuple_type>::lambda_type;
+    return TProduction<tuple_type>{ lambda_type::template Bind<&details::Sequence_<_Symbols...>>() };
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// This helpers won't copy the production passed as arguments but will keep a ref on them instead.
+// When available it's much cheaper than using Or() which will copy everything, more care is needed though
+template <typename... T>
+CONSTEXPR auto Switch(const TProduction<T>&... exprs) NOEXCEPT {
+    using common_t = std::common_type_t<T...>;
+    return TProduction<common_t>({ Meta::ForceInit,
+        [&](FParseList& input, common_t* value) -> FParseResult {
+            PPE_STACKMARKER("switch");
 
-            return (match && match->Symbol()->Type() == symbol)
-                ? TParseResult<const Lexer::FMatch *>::Success(match, match->Site())
-                : TParseResult<const Lexer::FMatch *>::Unexpected(symbol, match, input);
+            FParseResult result;
+            (... || (result = exprs.TryParse(input, value)).Succeed());
+            return result;
+        }});
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Better using :
+//  Parser::BinaryOp<op>(expr)
+// Than :
+//  Parser::And(op.Many(), expr)
+// Also this helper brings better error detection
+//----------------------------------------------------------------------------
+template <Lexer::FSymbol::ETypeId _Operator, typename T>
+CONSTEXPR TProduction<T> UnaryOp(const TProduction<T>& operand, T(*make_op)(const Lexer::FMatch*, const T&)) NOEXCEPT {
+    return TProduction<T>{
+        [&operand, make_op](FParseList& input, T* value) -> FParseResult {
+            PPE_STACKMARKER("unaryop");
+
+            TEnumerable<const Lexer::FMatch*> ops;
+            while (input.PeekType() ^ _Operator)
+                ops.push_back(input.Read());
+
+            if (Likely(ops.empty())) {
+                return operand(input, value);
+            }
+            else {
+                *value = operand.Parse(input);
+
+                reverseforeachitem(op, ops)
+                    *value = make_op(*op, *value);
+
+                return FParseResult::Success(ops.front()->Site(), input.Site() );
+            }
         }};
 }
 //----------------------------------------------------------------------------
-inline TProduction<const Lexer::FMatch *> ExpectMask(uint64_t symbolMask) {
-    return TProduction<const Lexer::FMatch *>{
-        [symbolMask](FParseList& input) -> TParseResult<const Lexer::FMatch *> {
-            const Lexer::FMatch *match = input.Read();
+template <Lexer::FSymbol::ETypeId _Operator, typename T>
+CONSTEXPR TProduction<T> BinaryOp(const TProduction<T>& operand, T (*make_op)(const T&, const Lexer::FMatch*, const T&)) NOEXCEPT {
+    return TProduction<T>{
+        [&operand, make_op](FParseList& input, T* value) -> FParseResult {
+            PPE_STACKMARKER("binaryop");
 
-            return (match && match->Symbol()->Type() & symbolMask)
-                ? TParseResult<const Lexer::FMatch *>::Success(match, match->Site())
-                : TParseResult<const Lexer::FMatch *>::Unexpected(Lexer::FSymbol::ETypeId(symbolMask), match, input);
+            FParseResult result = operand(input, value);
+
+            if (result) {
+                while (input.PeekType() ^ _Operator) {
+                    const Lexer::FMatch* op = input.Read();
+                    *value = make_op(*value, op, operand.Parse(input));
+                }
+
+                result = FParseResult::Success(result.Site, input.Site());
+            }
+
+            return result;
         }};
 }
 //----------------------------------------------------------------------------
-inline TProduction<const Lexer::FMatch *> Optional(Lexer::FSymbol::ETypeId symbol) {
-    return TProduction<const Lexer::FMatch *>{
-        [symbol](FParseList& input) -> TParseResult<const Lexer::FMatch *> {
-            const Lexer::FMatch *match = input.Peek();
-            if (not match || match->Symbol()->Type() != symbol)
-                return TParseResult<const Lexer::FMatch *>::Success(nullptr, match ? match->Site() : input.Site());
+template <Lexer::FSymbol::ETypeId _OpA, Lexer::FSymbol::ETypeId _OpB, typename T>
+CONSTEXPR TProduction<T> TernaryOp(const TProduction<T>& operand, T(*make_op)(const T&, const Lexer::FMatch*, const T&, const Lexer::FMatch*, const T&)) NOEXCEPT {
+    return TProduction<T>{
+        [&operand, make_op](FParseList& input, T* value) -> FParseResult {
+            PPE_STACKMARKER("ternaryop");
 
-            Assert(match->Symbol()->Type() == symbol);
-            const Lexer::FMatch *consumed = input.Read(); // consumes match
-            Assert(consumed == match);
-            UNUSED(consumed);
+            FParseResult result = operand(input, value);
 
-            return TParseResult<const Lexer::FMatch *>::Success(match, match->Site());
-        }};
-}
-//----------------------------------------------------------------------------
-inline TProduction<const Lexer::FMatch *> OptionalMask(uint64_t symbolMask) {
-    return TProduction<const Lexer::FMatch *>{
-        [symbolMask](FParseList& input) -> TParseResult<const Lexer::FMatch *> {
-            const Lexer::FMatch *match = input.Peek();
-            if (not match || 0 == (match->Symbol()->Type() & symbolMask))
-                return TParseResult<const Lexer::FMatch *>::Success(nullptr, match ? match->Site() : input.Site());
+            if (result) {
+                if (input.PeekType() ^ _OpA) {
+                    const Lexer::FMatch* opA = input.Read();
+                    const T a = operand.Parse(input);
+                    const Lexer::FMatch* opB = nullptr;
+                    if (not input.Expect<_OpB>(&opB))
+                        input.Error("ill-formed ternary operator", input.Site());
+                    const T b = operand.Parse(input);
 
-            Assert(match->Symbol()->Type() & symbolMask);
-            const Lexer::FMatch *consumed = input.Read(); // consumes match
-            Assert(consumed == match);
-            UNUSED(consumed);
+                    *value = make_op(*value, opA, a, opB, b);
+                }
 
-            return TParseResult<const Lexer::FMatch *>::Success(match, match->Site());
+                result = FParseResult::Success(result.Site, input.Site());
+            }
+
+            return result;
         }};
 }
 //----------------------------------------------------------------------------

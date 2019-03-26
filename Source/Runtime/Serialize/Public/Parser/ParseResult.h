@@ -7,6 +7,8 @@
 #include "Lexer/Location.h"
 #include "Lexer/Symbol.h"
 
+#include "Meta/PointerWFlags.h"
+
 #include <functional>
 
 namespace PPE {
@@ -14,78 +16,53 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-class TParseResult {
-public:
-    typedef T value_type;
+struct FParseResult {
+    const char* Error;
+    Lexer::FSpan Site;
+    Lexer::FSymbol::ETypeId Expected;
 
-    TParseResult()
-        : _succeed(false), _message(nullptr) {}
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (Error ? nullptr : this); }
 
-    TParseResult(T&& rvalue, const Lexer::FSpan& site)
-        : _succeed(true), _value(std::move(rvalue)), _message(nullptr), _site(site) {
-        Assert(not _site.Filename.empty());
+    bool Succeed() const { return (Error == nullptr); }
+
+    static FParseResult Success(const Lexer::FSpan& site) {
+        FParseResult r;
+        r.Error = nullptr;
+        r.Site = site;
+        r.Expected = Lexer::FSymbol::Invalid;
+        return r;
     }
 
-    TParseResult(const char *message, Lexer::FSymbol::ETypeId expected, const Lexer::FSpan& site)
-        : _succeed(false), _message(message), _expected(expected), _site(site) {
-        Assert(not _site.Filename.empty());
+    static FParseResult Success(const Lexer::FSpan& from, const Lexer::FSpan& to) {
+        return Success(Lexer::FSpan::FromSpan(from, to));
     }
 
-    ~TParseResult() {}
-
-    TParseResult(TParseResult&& rvalue)
-        :   _succeed(std::move(rvalue._succeed))
-        ,   _value(std::move(rvalue._value))
-        ,   _message(std::move(rvalue._message))
-        ,   _expected(std::move(rvalue._expected))
-        ,   _site(std::move(rvalue._site)) {}
-
-    TParseResult& operator =(TParseResult&& rvalue) {
-        _succeed = std::move(rvalue._succeed);
-        _value = std::move(rvalue._value);
-        _message = std::move(rvalue._message);
-        _expected = std::move(rvalue._expected);
-        _site = std::move(rvalue._site);
-        return *this;
+    static FParseResult Failure(const char* message, Lexer::FSymbol::ETypeId expected, const Lexer::FSpan& site) {
+        FParseResult r;
+        r.Error = message;
+        r.Site = site;
+        r.Expected = expected;
+        return r;
     }
 
-    bool Succeed() const { return _succeed; }
-
-    T& Value() { Assert(_succeed); return _value; }
-    const T& Value() const { Assert(_succeed); return _value; }
-
-    const char *Message() const { Assert(!_succeed); return _message; }
-    Lexer::FSymbol::ETypeId Expected() const { Assert(!_succeed); return _expected; }
-
-    const Lexer::FSpan& Site() const { return _site; }
-
-    static TParseResult Success(T&& rvalue, const Lexer::FSpan& site) {
-        return TParseResult(std::move(rvalue), site);
+    static FParseResult Failure(const Lexer::FSpan& site) {
+        return Failure("failed evaluation", Lexer::FSymbol::Invalid, site);
     }
 
-    static TParseResult Success(const T& value, const Lexer::FSpan& site) {
-        T rvalue(value);
-        return TParseResult(std::move(rvalue), site);
+    static FParseResult Unexpected(Lexer::FSymbol::ETypeId expected, const Lexer::FMatch* found, const FParseList& input) {
+        return Failure("unexpected match", expected, found ? found->Site() : input.Site());
     }
 
-    static TParseResult Failure(const char *message, Lexer::FSymbol::ETypeId expected, const Lexer::FSpan& site) {
-        return TParseResult(message, expected, site);
+    inline friend FParseResult operator &&(const FParseResult& lhs, const FParseResult& rhs) NOEXCEPT {
+        if (not lhs) return lhs;
+        else if (not rhs) return rhs;
+        else return Success(lhs.Site.Offset < rhs.Site.Offset
+            ? Lexer::FSpan::FromSpan(lhs.Site, rhs.Site)
+            : Lexer::FSpan::FromSpan(rhs.Site, lhs.Site) );
     }
-
-    static TParseResult Unexpected(Lexer::FSymbol::ETypeId expected, const Lexer::FMatch *found, const FParseList& input) {
-        return TParseResult("unexpected match", expected, found ? found->Site() : input.Site());
+    inline friend FParseResult operator ||(const FParseResult& lhs, const FParseResult& rhs) NOEXCEPT {
+        return (lhs ? lhs : rhs);
     }
-
-private:
-    bool _succeed;
-
-    T _value;
-
-    const char *_message;
-    Lexer::FSymbol::ETypeId _expected;
-
-    Lexer::FSpan _site;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

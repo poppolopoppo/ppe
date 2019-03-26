@@ -26,7 +26,7 @@ FWD_REFPTR(ParseStatement);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FParseExpression : public FParseItem {
+class PPE_SERIALIZE_API FParseExpression : public FParseItem, Meta::FNonCopyableNorMovable {
 public:
     FParseExpression(const Lexer::FSpan& site);
     virtual ~FParseExpression();

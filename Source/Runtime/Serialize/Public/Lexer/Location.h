@@ -2,6 +2,7 @@
 
 #include "Serialize.h"
 
+#include "IO/String.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 
@@ -51,6 +52,28 @@ struct FSpan : FLocation {
 
     u32 Length;
 };
+//----------------------------------------------------------------------------
+// Need a copy of Filename string for errors
+struct FErrorSpan {
+    FWString Filename;
+    std::streamoff Offset;
+    u32 Line;
+    u32 Column;
+    u32 Length;
+
+    FErrorSpan(const FSpan& span)
+        : Filename(span.Filename)
+        , Offset(span.Offset)
+        , Line(span.Line)
+        , Column(span.Column)
+        , Length(span.Length)
+    {}
+
+    operator FSpan () const {
+        return FSpan({ Filename, Line, Column, Offset }, Length);
+    }
+};
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

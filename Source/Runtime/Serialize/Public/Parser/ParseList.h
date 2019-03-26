@@ -14,6 +14,7 @@ namespace Lexer {
 }
 
 namespace Parser {
+struct FParseResult;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -40,7 +41,16 @@ public:
     bool Parse(Lexer::FLexer* lexer);
     void Reset();
     void Seek(const Lexer::FMatch *match);
-    const Lexer::FMatch *Read();
+
+    template <Lexer::FSymbol::ETypeId _Symbol>
+    bool Expect(const Lexer::FMatch** m) {
+        return ((*m = Read()) != nullptr ? (*m)->Symbol()->Type() ^ _Symbol : false );
+    }
+
+    const Lexer::FMatch* Read();
+
+    void NORETURN Error(const FParseResult& result) const;
+    void NORETURN Error(const char* what, const Lexer::FSpan& site) const;
 
 private:
     Lexer::FSpan _site;

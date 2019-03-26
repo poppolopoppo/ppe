@@ -2,6 +2,9 @@
 
 #include "Parser/ParseList.h"
 
+#include "Parser/Parser.h"
+#include "Parser/ParseResult.h"
+
 #include "Diagnostic/Logger.h"
 #include "Lexer/Lexer.h"
 
@@ -91,6 +94,14 @@ const Lexer::FMatch *FParseList::Read() {
         _site = _current->Site();
 
     return read;
+}
+//----------------------------------------------------------------------------
+void NORETURN FParseList::Error(const FParseResult& result) const {
+    Error(result.Error, result.Site);
+}
+//----------------------------------------------------------------------------
+void NORETURN FParseList::Error(const char* what, const Lexer::FSpan& site) const {
+    PPE_THROW_IT(FParserException(what, site, nullptr));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

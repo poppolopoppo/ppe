@@ -15,13 +15,13 @@ FWD_REFPTR(ParseExpression);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FParseContext {
+class PPE_SERIALIZE_API FParseContext : Meta::FNonCopyableNorMovable {
 public:
     explicit FParseContext(Meta::FForceInit);
     explicit FParseContext(const RTTI::PAtomHeap& atomHeap);
     explicit FParseContext(const FParseContext* parent);
 
-    virtual ~FParseContext();
+    ~FParseContext();
 
     const FParseContext* Parent() const { return _parent; }
     const FParseContext* GlobalScope() const;
