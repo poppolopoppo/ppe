@@ -170,8 +170,9 @@ void FMetaObject::RTTI_UnmarkAsTopObject() {
 }
 //----------------------------------------------------------------------------
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-void FMetaObject::RTTI_VerifyPredicates() const {
-    Assert(_flags ^ EObjectFlags::Verifying);
+void FMetaObject::RTTI_VerifyPredicates() const PPE_THROW() {
+    if (not (_flags ^ EObjectFlags::Verifying))
+        PPE_THROW_IT(FClassException("missing call to RTTI_parent_type::RTTI_VerifyPredicates()", RTTI_Class()));
 
     _flags = _flags - EObjectFlags::Verifying;
 }

@@ -3,6 +3,7 @@
 #include "RTTI_fwd.h"
 
 #include "MetaClass.h"
+#include "RTTI/Exceptions.h"
 #include "RTTI/Typedefs.h"
 
 #include "IO/TextWriter_fwd.h"
@@ -98,7 +99,7 @@ public:
     virtual void RTTI_Unload(IUnloadContext& context);
 
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-    virtual void RTTI_VerifyPredicates() const;
+    virtual void RTTI_VerifyPredicates() const PPE_THROW();
 #endif
 
 public: // Meta class
