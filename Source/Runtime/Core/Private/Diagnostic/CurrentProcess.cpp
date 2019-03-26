@@ -85,6 +85,12 @@ void FCurrentProcess::DumpMemoryStats() const {
         Fmt::SizeInBytes(mem.PeakUsedVirtual),
         Fmt::SizeInBytes(mem.AvailableVirtual),
         Fmt::Percentage(mem.UsedVirtual, mem.AvailableVirtual) );
+    auto stk = FPlatformMemory::StackUsage();
+    LOG(Process, Info, L"Stack memory    : {0:8} / {1:8} / {2:8} : {3}",
+        Fmt::SizeInBytes(stk.Committed),
+        Fmt::SizeInBytes(stk.Guard),
+        Fmt::SizeInBytes(stk.Reserved),
+        Fmt::Percentage(stk.Committed + stk.Guard, stk.Reserved) );
 #endif
 }
 //----------------------------------------------------------------------------
