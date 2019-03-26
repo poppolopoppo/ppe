@@ -326,7 +326,7 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , PMetaObj
 //----------------------------------------------------------------------------
 DEBUG_FUNCTION(PPE_RTTI_API, DebugPrintAtom, FString, (const FAtom& atom), {
     FStringBuilder oss;
-    PrettyPrint(oss, atom);
+    PrettyPrint(oss, atom, EPrettyPrintFlags::Minimal | EPrettyPrintFlags::ShowEnumNames);
     return oss.ToString();
 })
 //----------------------------------------------------------------------------

@@ -78,20 +78,20 @@ public:
 //----------------------------------------------------------------------------
 // Used for manipulating visitors and atoms with fwd decl only :
 //----------------------------------------------------------------------------
-FORCE_INLINE bool AtomVisit(IAtomVisitor& visitor, const ITupleTraits* tuple, void* data) {
+inline bool AtomVisit(IAtomVisitor& visitor, const ITupleTraits* tuple, void* data) {
     return visitor.Visit(tuple, data);
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool AtomVisit(IAtomVisitor& visitor, const IListTraits* list, void* data) {
+inline bool AtomVisit(IAtomVisitor& visitor, const IListTraits* list, void* data) {
     return visitor.Visit(list, data);
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool AtomVisit(IAtomVisitor& visitor, const IDicoTraits* dico, void* data) {
+inline bool AtomVisit(IAtomVisitor& visitor, const IDicoTraits* dico, void* data) {
     return visitor.Visit(dico, data);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value) {
+inline bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value) {
     return visitor.Visit(scalar, value);
 }
 //----------------------------------------------------------------------------
@@ -107,7 +107,7 @@ enum class EPrettyPrintFlags : u32 {
     Minimal         = NoRecursion,
     Full            = ShowDefaults|ShowEnumNames|ShowTypeNames,
 
-    Default         = Minimal
+    Default         = Minimal|ShowEnumNames
 };
 ENUM_FLAGS(EPrettyPrintFlags);
 //----------------------------------------------------------------------------
