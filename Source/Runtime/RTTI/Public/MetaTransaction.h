@@ -51,9 +51,9 @@ public:
     ETransactionState State() const { return _state; }
 
     size_t NumTopObjects() const { return _topObjects.size(); }
-    size_t NumExportedObjects() const { Assert_NoAssume(IsLoaded()); return _exportedObjects.size(); }
-    size_t NumLoadedObjects() const { Assert_NoAssume(IsLoaded()); return _loadedObjects.size(); }
-    size_t NumImportedTransactions() const { Assert_NoAssume(IsLoaded()); return _importedTransactions.size(); }
+    size_t NumExportedObjects() const { return _exportedObjects.size(); }
+    size_t NumLoadedObjects() const { return _loadedObjects.size(); }
+    size_t NumImportedTransactions() const { return _importedTransactions.size(); }
 
     bool KeepDeprecated() const { return (_flags ^ ETransactionFlags::KeepDeprecated); }
     bool KeepTransient() const { return (_flags ^ ETransactionFlags::KeepTransient); }

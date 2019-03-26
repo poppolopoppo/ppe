@@ -139,10 +139,17 @@ public:
         FMetaTransactionLinearizer_::Visit(nullptr, const_cast<PMetaObject&>(pobj));
     }
 
+    bool Internal(const RTTI::FMetaObject& obj) const NOEXCEPT {
+        return (_outer.IsLoaded()
+            ? obj.RTTI_Outer() == &_outer
+            : obj.RTTI_Outer() == nullptr );
+    }
+
 public: //FBaseAtomVisitor
     virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override final {
         if (pobj && _visiteds.insert_ReturnIfExists(pobj.get()) == false) {
-            const bool intern = (pobj->RTTI_Outer() == &_outer);
+            const bool intern = Internal(*pobj);
+
             const bool result = (intern
                 ? FBaseAtomVisitor::Visit(scalar, pobj)
                 : true );
