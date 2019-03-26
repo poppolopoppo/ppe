@@ -9,6 +9,12 @@ struct FGuid;
 class PPE_CORE_API FTimestamp;
 namespace RTTI {
 //----------------------------------------------------------------------------
+bool AtomVisit(IAtomVisitor& visitor, const ITupleTraits* tuple, void* data);
+bool AtomVisit(IAtomVisitor& visitor, const IListTraits* list, void* data);
+bool AtomVisit(IAtomVisitor& visitor, const IDicoTraits* dico, void* data);
+template <typename T>
+bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // TBaseScalarTraits<T>
@@ -184,7 +190,7 @@ template <typename T>
 bool TEnumTraits<T>::IsDefaultValue(const void* data) const {
     Assert(data);
 
-    const auto defaultValue= TEnumOrd<T>( MetaEnumDefaultValue(TEnumTraits<T>::EnumClass()) );
+    const auto defaultValue = TEnumOrd<T>( MetaEnumDefaultValue(TEnumTraits<T>::EnumClass()) );
     return (*reinterpret_cast<const TEnumOrd<T>*>(data) == defaultValue);
 }
 //----------------------------------------------------------------------------
@@ -192,7 +198,7 @@ template <typename T>
 void TEnumTraits<T>::ResetToDefaultValue(void* data) const {
     Assert(data);
 
-    const auto defaultValue = TEnumOrd<T>(MetaEnumDefaultValue(TEnumTraits<T>::EnumClass()));
+    const auto defaultValue = TEnumOrd<T>( MetaEnumDefaultValue(TEnumTraits<T>::EnumClass()) );
     *reinterpret_cast<TEnumOrd<T>*>(data) = defaultValue;
 }
 //----------------------------------------------------------------------------

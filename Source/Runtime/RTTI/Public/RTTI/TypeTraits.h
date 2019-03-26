@@ -26,11 +26,6 @@ class IListTraits;
 class IDicoTraits;
 //----------------------------------------------------------------------------
 class IAtomVisitor;
-bool AtomVisit(IAtomVisitor& visitor, const ITupleTraits* tuple, void* data);
-bool AtomVisit(IAtomVisitor& visitor, const IListTraits* list, void* data);
-bool AtomVisit(IAtomVisitor& visitor, const IDicoTraits* dico, void* data);
-template <typename T>
-bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
