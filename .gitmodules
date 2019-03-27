@@ -22,4 +22,5 @@
 [submodule "External/xxHash"]
     path = Source/External/xxHash/git
     url = https://github.com/Cyan4973/xxHash.git
+    branch = dev
     shallow = true

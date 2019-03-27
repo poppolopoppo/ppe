@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Meta/Warnings.h"
+
 #ifdef CPP_CLANG
 #    pragma clang system_header
 #endif
@@ -13,8 +15,20 @@
 #   pragma push_macro("FORCE_INLINE")
 #endif
 
-#undef FORCE_INLINE
+#define USE_PPE_XXH3 1 // new algorithm, 2x to 3x times faster
+
 #define XXH_NAMESPACE xxHash
+#define XXH_INLINE_ALL // inlining for better performance
+#define XXH_STATIC_LINKING_ONLY // unlocks XXH3
+
+// overrides xxhash detection for compiler intrinsics
+#if defined(__AVX2__)
+#    define XXH_VECTOR XXH_AVX2
+#else
+#    define XXH_VECTOR XXH_SSE2
+#endif
+
+PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
 
 #ifndef EXPORT_PPE_EXTERNAL_XXHASH
 
@@ -27,3 +41,5 @@
     PRAGMA_MSVC_WARNING_POP()
 
 #endif //!EXPORT_PPE_EXTERNAL_XXHASH
+
+

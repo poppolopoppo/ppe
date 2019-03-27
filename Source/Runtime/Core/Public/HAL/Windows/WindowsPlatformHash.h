@@ -13,7 +13,7 @@ namespace PPE {
 struct PPE_CORE_API FWindowsPlatformHash : FGenericPlatformHash {
 public:
 
-    static FORCE_INLINE size_t CRC32(size_t crc32, const void* p, size_t size) {
+    static FORCE_INLINE size_t CRC32(size_t crc32, const void* p, size_t size) NOEXCEPT {
         Assert_NoAssume(Meta::IsAligned(sizeof(intptr_t), p));
 
         const u32 fast = u32(size / sizeof(intptr_t));
@@ -32,10 +32,10 @@ public:
         return (crc32 ^ 0xffffffff);
     }
 
-    static u32 HashMem32(u32 seed, const void* p, size_t size);
-    static u64 HashMem64(u64 seed, const void* p, size_t size);
+    static u32 HashMem32(u32 seed, const void* p, size_t size) NOEXCEPT;
+    static u64 HashMem64(u64 seed, const void* p, size_t size) NOEXCEPT;
 
-    static FORCE_INLINE size_t HashMem(size_t seed, const void* p, size_t size) {
+    static FORCE_INLINE size_t HashMem(size_t seed, const void* p, size_t size) NOEXCEPT {
 #ifdef ARCH_X64
         return HashMem64(seed, p, size);
 #else

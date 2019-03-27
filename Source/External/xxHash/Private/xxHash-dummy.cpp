@@ -1,24 +1,15 @@
-﻿#include "stdafx.h"
-
-#include "HAL/Windows/WindowsPlatformHash.h"
-
 #include "xxHash-external.h"
+
+// includes xxhash.c conditionally, simce it must be compiled if inlining is enabled
+#if not (defined(XXH_INLINE_ALL) || defined(XXH_PRIVATE_API))
+#   include "External/xxHash/git/xxhash.c"
+#endif
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-u32 FWindowsPlatformHash::HashMem32(u32 seed, const void* p, size_t size) NOEXCEPT {
-    return XXH32(p, size, seed);
-}
-//----------------------------------------------------------------------------
-u64 FWindowsPlatformHash::HashMem64(u64 seed, const void* p, size_t size) NOEXCEPT {
-#if USE_PPE_XXH3
-    return XXH3_64bits_withSeed(p, size, seed);
-#else
-    return XXH64(p, size, seed);
-#endif
-}
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

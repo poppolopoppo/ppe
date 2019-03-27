@@ -14,7 +14,7 @@
     }
     .ModuleIsolatedFiles =
     {
-        'git/xxhash.c',
+        'Private/xxHash-dummy.cpp'
     }
     #include "$BuildPath$/Templates/Module.bff"
 }

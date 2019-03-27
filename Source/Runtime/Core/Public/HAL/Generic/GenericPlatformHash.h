@@ -85,6 +85,7 @@ public: // must be defined for every platform
 
     static u32 HashMem32(u32 seed, const void* p, size_t size) NOEXCEPT = delete;
     static u64 HashMem64(u64 seed, const void* p, size_t size) NOEXCEPT = delete;
+    static u128 HashMem128(u128 seed, const void* p, size_t size) NOEXCEPT = delete;
 
     static size_t HashMem(size_t seed, const void* p, size_t size) NOEXCEPT = delete;
 
