@@ -107,14 +107,14 @@ public:
     }
 
     template <typename U>
-    CONSTEXPR TProduction<U> Select(TFunction< void(U*, T&&) >&& rconvert) const NOEXCEPT {
+    CONSTEXPR TProduction<U> Select(TFunction< void(U*, const Lexer::FSpan&, T&&) >&& rconvert) const NOEXCEPT {
         return TProduction<U>{ { Meta::ForceInit, [first{ *this }, convert{ std::move(rconvert) }](FParseList& input, U* result) -> FParseResult {
             PPE_STACKMARKER("select");
 
             T tmp;
             const FParseResult r = first(input, &tmp);
             if (r)
-                convert(result, std::move(tmp));
+                convert(result, r.Site, std::move(tmp));
 
             return r;
         }}};
@@ -432,6 +432,31 @@ CONSTEXPR TProduction<T> TernaryOp(const TProduction<T>& operand, T(*make_op)(co
             }
 
             return result;
+        }};
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <Lexer::FSymbol::ETypeId _Open, Lexer::FSymbol::ETypeId _Close, typename T>
+CONSTEXPR TProduction<T> Closure(const TProduction<T>& inner) NOEXCEPT {
+    return TProduction<T>{
+        [&inner](FParseList& input, T* value) -> FParseResult {
+            PPE_STACKMARKER("closure");
+
+            const Lexer::FMatch* beg;
+            if (input.Expect<_Open>(&beg)) {
+                *value = inner.Parse(input);
+
+                const Lexer::FMatch* end;
+                if (not input.Expect<_Close>(&end))
+                    input.Error("missing closure closing token",
+                        Lexer::FSpan::FromSpan(beg->Site(), input.Site()) );
+
+                return FParseResult::Success(beg->Site(), end->Site());
+            }
+            else {
+                return FParseResult::Failure(input.Site());
+            }
         }};
 }
 //----------------------------------------------------------------------------

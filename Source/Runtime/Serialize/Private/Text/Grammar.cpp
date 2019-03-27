@@ -604,28 +604,21 @@ struct FTernaryOp {
     }
 };
 //----------------------------------------------------------------------------
-using PTypeTraitsWithSite = TPair<RTTI::PTypeTraits, Lexer::FSpan>;
-static Parser::TProduction<PTypeTraitsWithSite> ExpectTypenameRTTI() {
-    return Parser::TProduction<PTypeTraitsWithSite>{
-        [](Parser::FParseList& input, PTypeTraitsWithSite* result) -> Parser::FParseResult {
+static Parser::TProduction<RTTI::PTypeTraits> ExpectTypenameRTTI() {
+    return Parser::TProduction<RTTI::PTypeTraits>{
+        [](Parser::FParseList& input, RTTI::PTypeTraits* value) -> Parser::FParseResult {
             const Lexer::FMatch *match = input.Read();
-
-            RTTI::PTypeTraits traits;
 
             if (match) {
                 if (match->Symbol()->Type() == Lexer::FSymbol::Typename)
-                    traits = RTTI::MakeTraits(RTTI::ENativeType(match->Symbol()->Ord()));
+                    *value = RTTI::MakeTraits(RTTI::ENativeType(match->Symbol()->Ord()));
                 else if (match->Symbol()->Type() == Lexer::FSymbol::Identifier)
-                    traits = RTTI::MakeTraitsFromTypename(match->Value().MakeView());
+                    *value = RTTI::MakeTraitsFromTypename(match->Value().MakeView());
             }
 
-            if (traits) {
-                *result = MakePair(traits, match->Site());
-                return Parser::FParseResult::Success(match->Site());
-            }
-            else {
-                return Parser::FParseResult::Unexpected(Lexer::FSymbol::Typename, match, input);
-            }
+            return (*value
+                ? Parser::FParseResult::Success(match->Site())
+                : Parser::FParseResult::Unexpected(Lexer::FSymbol::Typename, match, input) );
         }};
 }
 //----------------------------------------------------------------------------
@@ -642,8 +635,14 @@ public:
     Parser::PCParseStatement ParseStatement(Parser::FParseList& input) const;
 
 private:
+    using site_t = Lexer::FSpan;
+    using symbol_t = Lexer::FSymbol;
+
     using expr_t = Parser::PCParseExpression;
     using statement_t = Parser::PCParseStatement;
+
+    using many_expr_t = Parser::TEnumerable<expr_t>;
+    using many_statement_t = Parser::TEnumerable<statement_t>;
 
     using match_p = const Lexer::FMatch*;
     using parse_t = Parser::FParseResult;
@@ -654,19 +653,24 @@ private:
     const Parser::TProduction< expr_t >& _lvalue; // only an alias
     Parser::TProduction< expr_t > _export;
     Parser::TProduction< expr_t > _expr;
+    Parser::TProduction< many_expr_t > _exprSeq;
     Parser::TProduction< statement_t > _statement;
 
     Parser::TProduction< expr_t > _literal;
 
     Parser::TProduction< statement_t > _property;
+    Parser::TProduction< many_statement_t > _objectInner;
     Parser::TProduction< expr_t > _object;
 
     Parser::TProduction< expr_t > _tuple;
     Parser::TProduction< expr_t > _array;
+
+    Parser::TProduction< TTuple<expr_t, match_p, expr_t> > _dictionaryItem;
+    Parser::TProduction< TEnumerable<TTuple<expr_t, match_p, expr_t>> > _dictionaryInner;
     Parser::TProduction< expr_t > _dictionary;
+
     Parser::TProduction< expr_t > _cast;
     Parser::TProduction< expr_t > _variable;
-    Parser::TProduction< expr_t > _parenthesized;
 
     Parser::TProduction< expr_t > _reference;
     Parser::TProduction< expr_t > _rvalue;
@@ -689,10 +693,10 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
 :   _lvalue(_ternary)
 
 ,   _export(Parser::And(
-        Parser::Optional<Lexer::FSymbol::Export>(),
-        Parser::Sequence<Lexer::FSymbol::Identifier, Lexer::FSymbol::Is>(),
+        Parser::Optional<symbol_t::Export>(),
+        Parser::Sequence<symbol_t::Identifier, symbol_t::Is>(),
         _lvalue.Ref() )
-    .Select<expr_t>([](expr_t* dst, TTuple<match_p, TTuple<match_p, match_p>, expr_t>&& src) {
+    .Select<expr_t>([](expr_t* dst, const site_t& site, const TTuple<match_p, TTuple<match_p, match_p>, expr_t>&& src) {
         match_p const exportIFP = std::get<0>(src);
         match_p const name = std::get<0>(std::get<1>(src));
         const expr_t& value = std::get<2>(src);
@@ -700,11 +704,6 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         const Parser::FVariableExport::EFlags scope = (exportIFP)
             ? Parser::FVariableExport::Global
             : Parser::FVariableExport::Public;
-
-        const Lexer::FSpan site = Lexer::FSpan::FromSpan(
-            exportIFP ? exportIFP->Site() : name->Site(),
-            std::get<1>(std::get<1>(src))->Site()
-        );
 
         *dst = Parser::MakeVariableExport(RTTI::FName(name->Value()), value, scope, site);
     }))
@@ -714,188 +713,138 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         _lvalue
     ))
 
-,   _statement(_expr.Select<statement_t>([](statement_t* dst, expr_t&& expr){
+,   _exprSeq(_expr.Join(Parser::Expect<symbol_t::Comma>()))
+
+,   _statement(_expr.Select<statement_t>([](statement_t* dst, const site_t& site, expr_t&& expr){
+        UNUSED(site);
         *dst = Parser::MakeEvalExpr(expr);
     }))
 
 ,   _literal(Parser::Or(
-        Parser::Expect<Lexer::FSymbol::Null, expr_t>([](match_p src) -> expr_t {
+        Parser::Expect<symbol_t::Null, expr_t>([](match_p src) -> expr_t {
             return Parser::MakeLiteral(FParseObject(), src->Site());
         }),
-        Parser::Expect<Lexer::FSymbol::True, expr_t>([](match_p src) -> expr_t {
+        Parser::Expect<symbol_t::True, expr_t>([](match_p src) -> expr_t {
             return Parser::MakeLiteral(true, src->Site());
         }),
-        Parser::Expect<Lexer::FSymbol::False, expr_t>([](match_p src) -> expr_t {
+        Parser::Expect<symbol_t::False, expr_t>([](match_p src) -> expr_t {
             return Parser::MakeLiteral(false, src->Site());
         }),
-        Parser::Expect<Lexer::FSymbol::Integer, expr_t>([](match_p src ) -> expr_t {
+        Parser::Expect<symbol_t::Integer, expr_t>([](match_p src ) -> expr_t {
             i64 i;
             Verify(Atoi(&i, src->Value().MakeView(), 10));
             return Parser::MakeLiteral(i, src->Site());
         }),
-        Parser::Expect<Lexer::FSymbol::Unsigned, expr_t>([](match_p src) -> expr_t {
+        Parser::Expect<symbol_t::Unsigned, expr_t>([](match_p src) -> expr_t {
             u64 u;
             Verify(Atoi(&u, src->Value().MakeView(), 10));
             return Parser::MakeLiteral(u, src->Site());
         }),
-        Parser::Expect<Lexer::FSymbol::Float, expr_t>([](match_p src) -> expr_t {
+        Parser::Expect<symbol_t::Float, expr_t>([](match_p src) -> expr_t {
             double d;
             Verify(Atod(&d, src->Value().MakeView()));
             return Parser::MakeLiteral(d, src->Site());
         }),
-        Parser::Expect<Lexer::FSymbol::String, expr_t>([](match_p src)  -> expr_t {
+        Parser::Expect<symbol_t::String, expr_t>([](match_p src)  -> expr_t {
             return Parser::MakeLiteral(src->Value(), src->Site());
         })
     ))
 
 ,   _property(Parser::And(
-        Parser::Sequence<Lexer::FSymbol::Identifier, Lexer::FSymbol::Assignment>(),
+        Parser::Sequence<symbol_t::Identifier, symbol_t::Assignment>(),
         _expr.Ref() )
-    .Select<statement_t>([](statement_t* dst, TTuple<TTuple<match_p, match_p>, expr_t>&& src) {
+    .Select<statement_t>([](statement_t* dst, const site_t& site, TTuple<TTuple<match_p, match_p>, expr_t>&& src) {
         match_p name = std::get<0>(std::get<0>(src));
         expr_t& value = std::get<1>(src);
 
-        *dst = Parser::MakePropertyAssignment(RTTI::FName(name->Value()), value, name->Site());
+        *dst = Parser::MakePropertyAssignment(RTTI::FName(name->Value()), value, site);
     }))
 
+,   _objectInner(_property.Many())
 ,   _object(Parser::And(
-        Parser::Sequence<
-            Lexer::FSymbol::Identifier,
-            Lexer::FSymbol::LBrace >(),
-        _property.Many(),
-        Parser::Expect<Lexer::FSymbol::RBrace>() )
+        Parser::Expect<symbol_t::Identifier>(),
+        Parser::Closure<
+            symbol_t::LBrace,
+            symbol_t::RBrace >(_objectInner) )
     .Select<expr_t>([](
         expr_t* dst,
-        TTuple<TTuple<match_p, match_p>, TEnumerable<Parser::PCParseStatement>, match_p>&& src) {
-        match_p name = std::get<0>(std::get<0>(src));
-        TEnumerable<Parser::PCParseStatement>& statements = std::get<1>(src);
+        const site_t& site,
+        TTuple<match_p, many_statement_t>&& src) {
+        match_p name = std::get<0>(src);
+        many_statement_t& statements = std::get<1>(src);
         *dst = Parser::MakeObjectDefinition(
-            RTTI::FName(name->Value()), name->Site(),
+            RTTI::FName(name->Value()), site,
             MakeMoveIterator(statements.begin()),
             MakeMoveIterator(statements.end()) );
     }))
 
-,   _tuple(Parser::And(
-        Parser::Expect<Lexer::FSymbol::LParenthese>(),
-        _expr.Ref(),
-        Parser::Expect<Lexer::FSymbol::Comma>(),
-        _expr.Ref(),
-        Parser::And(
-            Parser::Expect<Lexer::FSymbol::Comma>(),
-            _expr.Ref() ).Many(),
-        Parser::Expect<Lexer::FSymbol::RParenthese>() )
-    .Select<expr_t>([](
-        expr_t* dst,
-        TTuple<match_p, expr_t, match_p, expr_t, TEnumerable<TTuple<match_p, expr_t> >, match_p>&& src) {
-        const expr_t& arg0 = std::get<1>(src);
-        const expr_t& arg1 = std::get<3>(src);
-        const TEnumerable<TTuple<match_p, expr_t> >& args_1_N = std::get<4>(src);
-
-        Parser::FTupleExpr::elements_type elts;
-        elts.reserve(2 + args_1_N.size());
-        elts.push_back(arg0);
-        elts.push_back(arg1);
-
-        for (const auto& it : args_1_N)
-            elts.push_back(std::get<1>(it));
-
-        const Lexer::FSpan site = Lexer::FSpan::FromSpan(
-            std::get<0>(src)->Site(),
-            std::get<5>(src)->Site()
-        );
-
-        *dst = Parser::MakeTupleExpr(std::move(elts), site);
+,   _tuple(Parser::Closure<
+        symbol_t::LParenthese,
+        symbol_t::RParenthese >(_exprSeq)
+    .Select<expr_t>([](expr_t* dst, const site_t& site, many_expr_t&& src) {
+        Assert(not src.empty());
+        *dst = (src.size() > 1
+            ? Parser::MakeTupleExpr(src.MakeView(), site)
+            : src.front() /* tuple of 1 elt aren't wrapped inside a tuple expr, act as a parenthesized expr */ );
     }))
 
-,   _array(Parser::And(
-        Parser::Expect<Lexer::FSymbol::LBracket>(),
-        _expr.Join(Parser::Expect<Lexer::FSymbol::Comma>()),
-        Parser::Expect<Lexer::FSymbol::RBracket>() )
-    .Select<expr_t>([](
-        expr_t* dst,
-        TTuple<match_p, TEnumerable<expr_t>, match_p>&& src) {
-        TEnumerable<expr_t>& items = std::get<1>(src);
-
-        Parser::FArrayExpr::items_type arr;
-        arr.reserve(items.size());
-
-        for (auto& it : items)
-            arr.push_back(std::move(it));
-
-        const Lexer::FSpan site = Lexer::FSpan::FromSpan(
-            std::get<0>(src)->Site(),
-            std::get<2>(src)->Site()
-        );
-
-        *dst = Parser::MakeArrayExpr(std::move(arr), site);
+,   _array(Parser::Closure<
+        symbol_t::LBracket,
+        symbol_t::RBracket >(_exprSeq)
+    .Select<expr_t>([](expr_t* dst, const site_t& site, many_expr_t&& src) {
+        *dst = Parser::MakeArrayExpr(src.MakeView(), site);
     }))
 
-,   _dictionary(Parser::And(
-        Parser::Expect<Lexer::FSymbol::LBrace>(),
-        Parser::And(
-            Parser::Expect<Lexer::FSymbol::LParenthese>(),
-            _expr.Ref(),
-            Parser::Expect<Lexer::FSymbol::Comma>(),
-            _expr.Ref(),
-            Parser::Expect<Lexer::FSymbol::RParenthese>())
-            .Join(Parser::Expect<Lexer::FSymbol::Comma>()),
-        Parser::Expect<Lexer::FSymbol::RBrace>() )
-    .Select<expr_t>([](
-        expr_t* dst,
-        TTuple<match_p, TEnumerable<TTuple<match_p, expr_t, match_p, expr_t, match_p>>, match_p>&& src) {
-        TEnumerable<TTuple<match_p, expr_t, match_p, expr_t, match_p>>& items = std::get<1>(src);
-
+,   _dictionaryItem(Parser::And(
+        _expr.Ref(),
+        Parser::Expect<symbol_t::Comma>(),
+        _expr.Ref() ))
+,   _dictionaryInner(Parser::Closure<
+        symbol_t::LParenthese,
+        symbol_t::RParenthese >(_dictionaryItem)
+    .Join(Parser::Expect<symbol_t::Comma>() ))
+,   _dictionary(Parser::Closure<
+        symbol_t::LBrace,
+        symbol_t::RBrace >(_dictionaryInner)
+    .Select<expr_t>([](expr_t* dst, const site_t& site, TEnumerable<TTuple<expr_t, match_p, expr_t>>&& src) {
         Parser::FDictionaryExpr::dico_type dico;
-        dico.reserve(items.size());
+        dico.reserve(src.size());
 
-        for (auto& it : items)
-            dico.Add(std::move(std::get<1>(it))) = std::move(std::get<3>(it));
-
-        const Lexer::FSpan site = Lexer::FSpan::FromSpan(
-            std::get<0>(src)->Site(),
-            std::get<2>(src)->Site()
-        );
+        for (auto& it : src)
+            dico.Add(std::move(std::get<0>(it))) = std::move(std::get<2>(it));
 
         *dst = Parser::MakeDictionaryExpr(std::move(dico), site);
     }))
 
-
 ,   _cast(Parser::And(
         ExpectTypenameRTTI(),
-        Parser::Expect<Lexer::FSymbol::Colon>(),
+        Parser::Expect<symbol_t::Colon>(),
 #if 0
         _rvalue.Ref() )
 #else
         _unary.Ref() ) // must allow '-123' which uses the unary operator '-' for instance
 #endif
-    .Select<expr_t>([](expr_t* dst, TTuple<PTypeTraitsWithSite, match_p, expr_t>&& src) {
-        PTypeTraitsWithSite& traitsWSite = std::get<0>(src);
-        expr_t& rvalue = std::get<2>(src);
-
-        const Lexer::FSpan site = Lexer::FSpan::FromSpan(
-            traitsWSite.second,
-            std::get<1>(src)->Site()
-        );
-
-        *dst = Parser::MakeCastExpr(traitsWSite.first, rvalue.get(), site);
+    .Select<expr_t>([](expr_t* dst, const site_t& site, TTuple<RTTI::PTypeTraits, match_p, expr_t>&& src) {
+        *dst = Parser::MakeCastExpr(std::get<0>(src), std::get<2>(src).get(), site);
     }))
 
 ,   _variable(Parser::Or(
-        Parser::Expect<Lexer::FSymbol::Identifier>()
-            .Select<expr_t>([](expr_t* dst, match_p&& src) {
+        Parser::Expect<symbol_t::Identifier>()
+            .Select<expr_t>([](expr_t* dst, const site_t& site, match_p&& src) {
                 RTTI::FPathName pathName;
                 pathName.Identifier = RTTI::FName(src->Value());
 
-                *dst = Parser::MakeVariableReference(pathName, src->Site());
+                *dst = Parser::MakeVariableReference(pathName, site);
             }),
         Parser::Sequence<
-            Lexer::FSymbol::Dollar,
-            Lexer::FSymbol::Div,
-            Lexer::FSymbol::Identifier,
-            Lexer::FSymbol::Div,
-            Lexer::FSymbol::Identifier >()
+            symbol_t::Dollar,
+            symbol_t::Div,
+            symbol_t::Identifier,
+            symbol_t::Div,
+            symbol_t::Identifier >()
         .Select<expr_t>([](
             expr_t* dst,
+            const site_t& site,
             TTuple<match_p, match_p, match_p, match_p, match_p>&& src) {
             match_p transaction = std::get<2>(src);
             match_p identifier = std::get<4>(src);
@@ -904,41 +853,21 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
             pathName.Transaction = RTTI::FName(transaction->Value());
             pathName.Identifier = RTTI::FName(identifier->Value());
 
-            const Lexer::FSpan site = Lexer::FSpan::FromSpan(
-                std::get<0>(src)->Site(),
-                std::get<4>(src)->Site()
-            );
-
             *dst = Parser::MakeVariableReference(pathName, site);
         }),
         Parser::Sequence<
-            Lexer::FSymbol::Complement,
-            Lexer::FSymbol::Div,
-            Lexer::FSymbol::Identifier>()
-        .Select<expr_t>([](expr_t* dst, TTuple<match_p, match_p, match_p>&& src) {
+            symbol_t::Complement,
+            symbol_t::Div,
+            symbol_t::Identifier>()
+        .Select<expr_t>([](expr_t* dst, const site_t& site, TTuple<match_p, match_p, match_p>&& src) {
             match_p identifier = std::get<2>(src);
 
             RTTI::FPathName pathName;
             pathName.Identifier = RTTI::FName(identifier->Value());
 
-            const Lexer::FSpan site = Lexer::FSpan::FromSpan(
-                std::get<0>(src)->Site(),
-                std::get<2>(src)->Site()
-            );
-
             *dst = Parser::MakeVariableReference(pathName, site);
         })
     ))
-
-,   _parenthesized(Parser::And(
-        Parser::Expect<Lexer::FSymbol::LParenthese>(),
-        _expr.Ref(),
-        Parser::Expect<Lexer::FSymbol::RParenthese>() )
-    .Select<expr_t>([](
-        expr_t* dst,
-        TTuple<match_p, expr_t, match_p>&& src) {
-        *dst = std::get<1>(src);
-    }))
 
 ,   _reference(Parser::Switch(
         _literal,
@@ -947,21 +876,20 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         _dictionary,
         _object,
         _cast,
-        _variable,
-        _parenthesized
+        _variable
     ))
 
 ,   _rvalue([this](Parser::FParseList& input, expr_t* value) -> Parser::FParseResult {
         Parser::FParseResult result = _reference(input, value);
 
-        while (Unlikely(result && input.PeekType() == Lexer::FSymbol::Dot)) {
+        while (Unlikely(result && input.PeekType() == symbol_t::Dot)) {
             const match_p dot = input.Read(); // skip the dot
 
             match_p id;
-            if (not input.Expect<Lexer::FSymbol::Identifier>(&id))
+            if (not input.Expect<symbol_t::Identifier>(&id))
                 input.Error("expected an identifier", input.Site());
 
-            if (Unlikely(input.PeekType() == Lexer::FSymbol::LParenthese)) {
+            if (Unlikely(input.PeekType() == symbol_t::LParenthese)) {
                 input.Read(); // skip the lparen
 
                 Parser::TEnumerable<expr_t> args;
@@ -974,23 +902,23 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
 
                     args.push_back(std::move(arg));
 
-                    if (input.PeekType() != Lexer::FSymbol::Comma)
+                    if (input.PeekType() != symbol_t::Comma)
                         break;
 
                     input.Read(); // skip the comma separator
                 }
 
                 match_p rparen;
-                if (not input.Expect<Lexer::FSymbol::RParenthese>(&rparen))
+                if (not input.Expect<symbol_t::RParenthese>(&rparen))
                     input.Error("expected a closing ')' for function call", input.Site());
 
                 *value = Parser::MakeFunctionCall(std::move(*value), RTTI::FName(id->Value()), args,
-                    Lexer::FSpan::FromSite(dot->Site(), input.Site()) );
+                    site_t::FromSite(dot->Site(), input.Site()) );
 
             }
             else {
                 *value = Parser::MakePropertyReference(*value, RTTI::FName(id->Value()),
-                    Lexer::FSpan::FromSite(dot->Site(), id->Site()) );
+                    site_t::FromSite(dot->Site(), id->Site()) );
             }
 
             result = Parser::FParseResult::Success(result.Site, input.Site());
@@ -999,25 +927,25 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         return result;
     })
 
-,   _pow(Parser::BinaryOp<Lexer::FSymbol::Pow, expr_t>(_rvalue,
+,   _pow(Parser::BinaryOp<symbol_t::Pow, expr_t>(_rvalue,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Pow>(), lhs.get(), rhs.get(), op->Site());
         }))
 
 ,   _unary(Parser::UnaryOp<
-        Lexer::FSymbol::Add |
-        Lexer::FSymbol::Sub |
-        Lexer::FSymbol::Not |
-        Lexer::FSymbol::Complement, expr_t >(_pow,
+        symbol_t::Add |
+        symbol_t::Sub |
+        symbol_t::Not |
+        symbol_t::Complement, expr_t >(_pow,
         [](match_p op, const expr_t& rhs) -> expr_t {
             switch (op->Symbol()->Type()) {
-            case Lexer::FSymbol::Add:
+            case symbol_t::Add:
                 return rhs; // +1 <=> 1 : nothing to do
-            case Lexer::FSymbol::Sub:
+            case symbol_t::Sub:
                 return Parser::MakeUnaryFunction(TUnaryOp<TUnOp_Sub>(), rhs.get(), op->Site());
-            case Lexer::FSymbol::Not:
+            case symbol_t::Not:
                 return Parser::MakeUnaryFunction(TUnaryOp<TUnOp_Not>(), rhs.get(), op->Site());
-            case Lexer::FSymbol::Complement:
+            case symbol_t::Complement:
                 return Parser::MakeUnaryFunction(TUnaryOp<TUnOp_Cpl>(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
@@ -1025,16 +953,16 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         }))
 
 ,   _mulDivMod(Parser::BinaryOp<
-        Lexer::FSymbol::Mul |
-        Lexer::FSymbol::Div |
-        Lexer::FSymbol::Mod, expr_t >(_unary,
+        symbol_t::Mul |
+        symbol_t::Div |
+        symbol_t::Mod, expr_t >(_unary,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             switch (op->Symbol()->Type()) {
-            case Lexer::FSymbol::Mul:
+            case symbol_t::Mul:
                 return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Mul>(), lhs.get(), rhs.get(), op->Site());
-            case Lexer::FSymbol::Div:
+            case symbol_t::Div:
                 return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Div>(), lhs.get(), rhs.get(), op->Site());
-            case Lexer::FSymbol::Mod:
+            case symbol_t::Mod:
                 return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Mod>(), lhs.get(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
@@ -1042,13 +970,13 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         }))
 
 ,   _addSub(Parser::BinaryOp<
-        Lexer::FSymbol::Add |
-        Lexer::FSymbol::Sub, expr_t>(_mulDivMod,
+        symbol_t::Add |
+        symbol_t::Sub, expr_t>(_mulDivMod,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             switch (op->Symbol()->Type()) {
-            case Lexer::FSymbol::Add:
+            case symbol_t::Add:
                 return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Add>(), lhs.get(), rhs.get(), op->Site());
-            case Lexer::FSymbol::Sub:
+            case symbol_t::Sub:
                 return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Sub>(), lhs.get(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
@@ -1056,13 +984,13 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         }))
 
 ,   _lshRsh(Parser::BinaryOp<
-        Lexer::FSymbol::LShift |
-        Lexer::FSymbol::RShift, expr_t>(_addSub,
+        symbol_t::LShift |
+        symbol_t::RShift, expr_t>(_addSub,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             switch (op->Symbol()->Type()) {
-            case Lexer::FSymbol::LShift:
+            case symbol_t::LShift:
                 return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Lsh>(), lhs.get(), rhs.get(), op->Site());
-            case Lexer::FSymbol::RShift:
+            case symbol_t::RShift:
                 return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Rsh>(), lhs.get(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
@@ -1070,19 +998,19 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         }))
 
 ,   _compare(Parser::BinaryOp<
-        Lexer::FSymbol::Less |
-        Lexer::FSymbol::LessOrEqual |
-        Lexer::FSymbol::Greater |
-        Lexer::FSymbol::GreaterOrEqual, expr_t>(_lshRsh,
+        symbol_t::Less |
+        symbol_t::LessOrEqual |
+        symbol_t::Greater |
+        symbol_t::GreaterOrEqual, expr_t>(_lshRsh,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             switch (op->Symbol()->Type()) {
-            case Lexer::FSymbol::Less:
+            case symbol_t::Less:
                 return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_Less>(), lhs.get(), rhs.get(), op->Site());
-            case Lexer::FSymbol::LessOrEqual:
+            case symbol_t::LessOrEqual:
                 return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_LessOrEqual>(), lhs.get(), rhs.get(), op->Site());
-            case Lexer::FSymbol::Greater:
+            case symbol_t::Greater:
                 return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_Greater>(), lhs.get(), rhs.get(), op->Site());
-            case Lexer::FSymbol::GreaterOrEqual:
+            case symbol_t::GreaterOrEqual:
                 return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_GreaterOrEqual>(), lhs.get(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
@@ -1090,40 +1018,40 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         }))
 
 ,   _equalsNotEquals(Parser::BinaryOp<
-        Lexer::FSymbol::Equals |
-        Lexer::FSymbol::NotEquals, expr_t>(_compare,
+        symbol_t::Equals |
+        symbol_t::NotEquals, expr_t>(_compare,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             switch (op->Symbol()->Type()) {
-            case Lexer::FSymbol::Equals:
+            case symbol_t::Equals:
                 return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_Equals>(), lhs.get(), rhs.get(), op->Site());
-            case Lexer::FSymbol::NotEquals:
+            case symbol_t::NotEquals:
                 return Parser::MakeBinaryFunction(TBinaryOp<FCmpOp_NotEquals>(), lhs.get(), rhs.get(), op->Site());
             default:
                 AssertNotReached();
             }
         }))
 
-,   _and(Parser::BinaryOp<Lexer::FSymbol::And, expr_t>(_equalsNotEquals,
+,   _and(Parser::BinaryOp<symbol_t::And, expr_t>(_equalsNotEquals,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_And>(), lhs.get(), rhs.get(), op->Site());
         }))
 
-,   _xor(Parser::BinaryOp<Lexer::FSymbol::Xor, expr_t>(_and,
+,   _xor(Parser::BinaryOp<symbol_t::Xor, expr_t>(_and,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Xor>(), lhs.get(), rhs.get(), op->Site());
         }))
 
-,   _or(Parser::BinaryOp<Lexer::FSymbol::Or, expr_t>(_xor,
+,   _or(Parser::BinaryOp<symbol_t::Or, expr_t>(_xor,
         [](const expr_t& lhs, match_p op, const expr_t& rhs) -> expr_t {
             return Parser::MakeBinaryFunction(TBinaryOp<TBinOp_Or>(), lhs.get(), rhs.get(), op->Site());
         }))
 
-,   _ternary(Parser::TernaryOp<Lexer::FSymbol::Question, Lexer::FSymbol::Colon, expr_t>(_or,
+,   _ternary(Parser::TernaryOp<symbol_t::Question, symbol_t::Colon, expr_t>(_or,
         [](const expr_t& cond, match_p question, const expr_t& ifTrue, match_p colon, const expr_t& ifFalse) -> expr_t {
             UNUSED(question);
             UNUSED(colon);
             return Parser::MakeTernary(FTernaryOp(), cond.get(), ifTrue.get(), ifFalse.get(),
-                Lexer::FSpan::FromSite(cond->Site(), ifFalse->Site()) );
+                site_t::FromSite(cond->Site(), ifFalse->Site()) );
         }))
 
 {}

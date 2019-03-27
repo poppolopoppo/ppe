@@ -212,9 +212,11 @@ FTupleExpr::FTupleExpr(const Lexer::FSpan& site)
 :   FParseExpression(site)
 {}
 //----------------------------------------------------------------------------
-FTupleExpr::FTupleExpr(elements_type&& relements, const Lexer::FSpan& site)
-    : FParseExpression(site)
-    , _elements(std::move(relements)) {
+FTupleExpr::FTupleExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site)
+:   FParseExpression(site) {
+    _elements.insert(_elements.end(),
+        MakeMoveIterator(elts.begin()),
+        MakeMoveIterator(elts.end()) );
 #ifdef WITH_PPE_ASSERT
     Assert(_elements.size() > 1);
     for (const auto& expr : _elements)
@@ -263,10 +265,12 @@ SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FArrayExpr, )
 FArrayExpr::FArrayExpr(const Lexer::FSpan& site)
 :   FParseExpression(site) {}
 //----------------------------------------------------------------------------
-FArrayExpr::FArrayExpr(items_type&& ritems, const Lexer::FSpan& site)
-:   FParseExpression(site)
-,   _items(std::move(ritems))
-{}
+FArrayExpr::FArrayExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site)
+:   FParseExpression(site) {
+    _items.insert(_items.end(),
+        MakeMoveIterator(elts.begin()),
+        MakeMoveIterator(elts.end()));
+}
 //----------------------------------------------------------------------------
 FArrayExpr::~FArrayExpr() {}
 //----------------------------------------------------------------------------

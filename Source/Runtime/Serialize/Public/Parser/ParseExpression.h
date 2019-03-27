@@ -250,7 +250,7 @@ public:
     using elements_type = VECTORINSITU(Parser, PCParseExpression, 4);
 
     explicit FTupleExpr(const Lexer::FSpan& site);
-    FTupleExpr(elements_type&& relements, const Lexer::FSpan& site);
+    FTupleExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site);
     virtual ~FTupleExpr();
 
     virtual FStringView Alias() const override final { return "TupleExpr"; }
@@ -263,8 +263,8 @@ private:
     elements_type _elements;
 };
 //----------------------------------------------------------------------------
-inline Parser::FTupleExpr* MakeTupleExpr(FTupleExpr::elements_type&& relements, const Lexer::FSpan& site) {
-    return new Parser::FTupleExpr(std::move(relements), site);
+inline Parser::FTupleExpr* MakeTupleExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site) {
+    return new Parser::FTupleExpr(elts, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -274,7 +274,7 @@ public:
     using items_type = VECTORINSITU(Parser, PCParseExpression, 4);
 
     explicit FArrayExpr(const Lexer::FSpan& site);
-    FArrayExpr(items_type&& ritems, const Lexer::FSpan& site);
+    FArrayExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site);
     virtual ~FArrayExpr();
 
     size_t size() const { return _items.size(); }
@@ -296,8 +296,8 @@ inline Parser::FArrayExpr* MakeArrayExpr(const Lexer::FSpan& site) {
     return new Parser::FArrayExpr(site);
 }
 //----------------------------------------------------------------------------
-inline Parser::FArrayExpr* MakeArrayExpr(FArrayExpr::items_type&& ritems, const Lexer::FSpan& site) {
-    return new Parser::FArrayExpr(std::move(ritems), site);
+inline Parser::FArrayExpr* MakeArrayExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site) {
+    return new Parser::FArrayExpr(elts, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
