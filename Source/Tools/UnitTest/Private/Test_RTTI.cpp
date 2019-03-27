@@ -950,6 +950,16 @@ static bool EvalExpr_(Parser::FParseContext* context, const FStringView& input) 
 //----------------------------------------------------------------------------
 static void Test_Grammar_() {
     Parser::FParseContext context(Meta::ForceInit);
+    VerifyRelease(EvalExpr_(&context, "2*(3+5)"));
+    VerifyRelease(EvalExpr_(&context, "(1)"));
+    VerifyRelease(EvalExpr_(&context, "('foo','bar')"));
+    VerifyRelease(EvalExpr_(&context, "(1,true,'toto')"));
+    VerifyRelease(EvalExpr_(&context, "['toto']"));
+    VerifyRelease(EvalExpr_(&context, "[1,2,3]"));
+    VerifyRelease(EvalExpr_(&context, "[]"));
+    VerifyRelease(EvalExpr_(&context, "{('a',1),('b',2),('c',3)}"));
+    VerifyRelease(EvalExpr_(&context, "{('a',1.0)}"));
+    VerifyRelease(EvalExpr_(&context, "{}"));
     VerifyRelease(EvalExpr_(&context, "(Any:\"toto\",Any:42,Any:3.456)"));
     VerifyRelease(EvalExpr_(&context, "[Any:42]"));
     VerifyRelease(EvalExpr_(&context, "Any:[Any:[Any:\"totototototototototototototoot\"]]"));
