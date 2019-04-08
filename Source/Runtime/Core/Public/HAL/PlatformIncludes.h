@@ -8,7 +8,7 @@
 #ifdef CPP_GCC
 #   pragma GCC system_header
 #endif
-#if defined(CPP_VISUALSTUDIO) && defined(USE_PPE_MSVC17_PRAGMA_SYSTEMHEADER)
+#if defined(CPP_VISUALSTUDIO) && defined(USE_PPE_MSVC_PRAGMA_SYSTEMHEADER)
 #   pragma system_header
 #endif
 

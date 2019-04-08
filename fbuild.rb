@@ -119,20 +119,22 @@ private
     end
 end
 
-class FVisualStudio2017 < FVisualStudio
-    COMNTOOLS_COMMUNITY='C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\\'
-    COMNTOOLS_PROFESSIONAL='C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\Tools\\'
-
+class FVisualStudioPost2015 < FVisualStudio
     attr_reader :version
-    def initialize()
-        super('141', Dir.exist?(COMNTOOLS_PROFESSIONAL) ? COMNTOOLS_PROFESSIONAL : COMNTOOLS_COMMUNITY)
+    def initialize(major_version, toolset)
+        root = 'C:\Program Files (x86)\Microsoft Visual Studio\\' + major_version
+        comntools_communuty = root + '\Community\Common7\Tools\\'
+        comntools_professional = root + '\Professional\Common7\Tools\\'
+        super(toolset, Dir.exist?(comntools_professional) ?
+            comntools_professional :
+            comntools_communuty )
     end
     def export(oss)
         super(oss)
         if @available
-            oss.puts ".VS141VERSION='#{@version}'"
+            oss.puts ".VS#{@toolset}VERSION='#{@version}'"
         else
-            oss.puts ";.VS141VERSION='XXX'"
+            oss.puts ";.VS#{@toolset}VERSION='XXX'"
         end
     end
 private
@@ -237,9 +239,12 @@ DEPENDENCIES= [
     [ 'Visual Studio 2012'      , FVisualStudio.new('110', 'C:\Program Files (x86)\Microsoft Visual Studio 11.0\Common7\Tools\\')  ],
     [ 'Visual Studio 2013'      , FVisualStudio.new('120', 'C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\Tools\\')  ],
     [ 'Visual Studio 2015'      , FVisualStudio.new('140', 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\\')  ],
-    [ 'Visual Studio 2017'      , FVisualStudio2017.new()   ],
+    [ 'Visual Studio 2017'      , FVisualStudioPost2015.new('2017', 141) ],
+    [ 'Visual Studio 2019'      , FVisualStudioPost2015.new('2019', 142) ],
+
     [ 'Windows SDK 8.1'         , FWindowsSDK.new('8.1')    ],
     [ 'Windows SDK 10'          , FWindowsSDK.new('10')     ],
+
     [ 'LLVM for Windows'        , FLLVMWindows.new() ],
 ]
 
@@ -250,6 +255,7 @@ VISUALSTUDIO_DEFINES = %w{
     USE_VISUALSTUDIO_2013
     USE_VISUALSTUDIO_2015
     USE_VISUALSTUDIO_2017
+    USE_VISUALSTUDIO_2019
 }
 
 latestVisual = nil
