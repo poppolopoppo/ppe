@@ -329,10 +329,10 @@ void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
 
     if (not optional)
         FLogger::Log(
-            GLogCategory_MemoryDomain,
+            LOG_CATEGORY_GET(MemoryDomain),
             FLogger::EVerbosity::Info,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            sb.ToString() );
+            sb.Written() );
 #else
     NOOP(optional);
 #endif

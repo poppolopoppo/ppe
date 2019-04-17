@@ -79,8 +79,8 @@ public:
     static void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
         typedef details::TBasicFormatFunctor_<wchar_t> formatfunctor_t;
         const formatfunctor_t functors[] = {
-            formatfunctor_t::Make(std::forward<_Arg0>(arg0)),
-            formatfunctor_t::Make(std::forward<_Args>(args))...
+            MakeFormatArg<wchar_t>(arg0),
+            MakeFormatArg<wchar_t>(args)...
         };
 
         LogArgs(category, level, site, format, FWFormatArgList(functors));
