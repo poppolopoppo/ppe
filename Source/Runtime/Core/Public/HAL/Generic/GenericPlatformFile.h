@@ -30,6 +30,8 @@ struct FGenericPlatformFileStat {
 struct PPE_CORE_API FGenericPlatformFile {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, IsCaseSensitive, false);
+
+    STATIC_CONST_INTEGRAL(size_t, MaxPathDepth, 0);
     STATIC_CONST_INTEGRAL(size_t, MaxPathLength, 0);
 
     STATIC_CONST_INTEGRAL(wchar_t, PathSeparator, L'/');
@@ -54,7 +56,7 @@ public: // must be defined for every platform
     static bool DirectoryExists(const char_type* dirpath, EExistPolicy policy) = delete;
     static bool FileExists(const char_type* filename, EExistPolicy policy) = delete;
 
-    static void EnumerateDir(const char_type* dirpath, const char_type* pattern, const TFunction<void(const FWStringView&)>& onFile, const TFunction<void(const FWStringView&)>& onSubDir) = delete;
+    static void EnumerateDir(const char_type* dirpath, const TFunction<void(const FWStringView&)>& onFile, const TFunction<void(const FWStringView&)>& onSubDir) = delete;
     static void EnumerateFiles(const char_type* dirpath, bool recursive, const TFunction<void(const FWStringView&)>& onFile) = delete;
     static void GlobFiles(const char_type* dirpath, const char_type* pattern, bool recursive, const TFunction<void(const FWStringView&)>& onMatch) = delete;
 

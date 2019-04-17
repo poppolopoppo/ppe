@@ -36,12 +36,12 @@ namespace {
 using char_type = FWindowsPlatformFile::char_type;
 STATIC_ASSERT(FWindowsPlatformFile::MaxPathLength == MAX_PATH);
 //----------------------------------------------------------------------------
-static void EnumerateDirNonRecursive_(
+template <typename _OnSubFile, typename _OnSubDir>
+static bool EnumerateDirNonRecursive_(
     const char_type* path,
-    const TFunction<void(const FWStringView&)>& onFile,
-    const TFunction<void(const FWStringView&)>& onSubDir) {
+    const _OnSubFile& onFile,
+    const _OnSubDir& onSubDir) {
     Assert(path);
-    Assert(onFile || onSubDir);
 
     ::WIN32_FIND_DATAW ffd;
     ::ZeroMemory(&ffd, sizeof(ffd));
@@ -59,7 +59,7 @@ static void EnumerateDirNonRecursive_(
 
     if (INVALID_HANDLE_VALUE == hFind) {
         LOG_LASTERROR(HAL, L"FindFirstFileExW()");
-        return;
+        return false;
     }
 
     do {
@@ -68,12 +68,18 @@ static void EnumerateDirNonRecursive_(
             if (fname == L"." || fname == L"..")
                 continue;
 
-            if (onSubDir)
-                onSubDir(fname);
+            onSubDir(fname);
         }
-        else if (onFile) {
-            onFile(fname);
+        else {
+            IF_CONSTEXPR(std::is_same_v<void, decltype(onFile(fname))>) {
+                onFile(fname);
+            }
+            else {
+                if (not onFile(fname))
+                    return false;
+            }
         }
+
     } while (::FindNextFileW(hFind, &ffd) != 0);
 
 #ifdef WITH_PPE_ASSERT
@@ -85,12 +91,15 @@ static void EnumerateDirNonRecursive_(
 #endif
 
     Verify(::FindClose(hFind));
+
+    return true;
 }
 //----------------------------------------------------------------------------
+template <typename _OnMatch>
 static void GlobFilesNonRecursive_(
     const char_type* path,
     const char_type* pattern,
-    const TFunction<void(const FWStringView&)>& onMatch ) {
+    const _OnMatch& onMatch ) {
     Assert(path);
     Assert(pattern);
     Assert(onMatch);
@@ -318,7 +327,9 @@ void FWindowsPlatformFile::EnumerateDir(const char_type* dirpath, const TFunctio
     Assert(dirpath);
     Assert(onSubDir || onFile);
 
-    EnumerateDirNonRecursive_(dirpath, onFile, onSubDir);
+    EnumerateDirNonRecursive_(dirpath,
+        [&onFile](const FWStringView& file) { if (onFile) onFile(file); },
+        [&onSubDir](const FWStringView& subdir) { if (onSubDir) onSubDir(subdir); });
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformFile::EnumerateFiles(const char_type* dirpath, bool recursive, const TFunction<void(const FWStringView&)>& onFile) {
@@ -328,30 +339,33 @@ void FWindowsPlatformFile::EnumerateFiles(const char_type* dirpath, bool recursi
     if (recursive) {
         char_type buffer[MaxPathLength];
 
-        TFixedSizeRingBuffer<FDirectoryIterator_, 16> stack;
-        stack.push_back(MakeCStringView(dirpath));
+        VECTORINSITU(FileSystem, FDirectoryIterator_, MaxPathDepth) stack;
+        stack.emplace_back(MakeCStringView(dirpath));
 
         FDirectoryIterator_ currDir;
-        const TFunction<void(const FWStringView&)> onFile_toFullPath = [&currDir, &buffer, &onFile](const FWStringView& file) {
-            const size_t len = Format(buffer, L"{0}\\{1}", currDir.Relative, file);
-            onFile(FWStringView(buffer, len));
-        };
-        const TFunction<void(const FWStringView&)> onSubDir = [&currDir, &stack](const FWStringView& subDir) {
-            stack.push_back(
-                StringFormat(L"{0}\\{1}", currDir.FullName, subDir),
-                StringFormat(L"{0}\\{1}", currDir.Relative, subDir) );
-        };
-
         do {
+            currDir = std::move(stack.back());
+            stack.pop_back();
 
-            Verify(stack.pop_front(&currDir));
+            const size_t offset = stack.size();
 
-            EnumerateDirNonRecursive_(currDir.FullName.c_str(), onFile_toFullPath, onSubDir);
+            EnumerateDirNonRecursive_(currDir.FullName.c_str(),
+                [&currDir, &buffer, &onFile](const FWStringView & file) {
+                    const size_t len = Format(buffer, L"{0}\\{1}", currDir.Relative, file);
+                    onFile(FWStringView(buffer, len));
+                },
+                [&currDir, &stack](const FWStringView & subDir) {
+                    stack.emplace_back(
+                        StringFormat(L"{0}\\{1}", currDir.FullName, subDir),
+                        StringFormat(L"{0}\\{1}", currDir.Relative, subDir));
+                });
+
+            std::reverse(stack.begin() + offset, stack.end());
 
         } while (not stack.empty());
     }
     else {
-        EnumerateDirNonRecursive_(dirpath, onFile, TFunction<void(const FWStringView&)>{});
+        EnumerateDirNonRecursive_(dirpath, onFile, [](const FWStringView&){});
     }
 }
 //----------------------------------------------------------------------------
@@ -369,25 +383,29 @@ void FWindowsPlatformFile::GlobFiles(const char_type* dirpath, const char_type* 
         }   context;
         context.Pattern = MakeCStringView(pattern);
 
-        TFixedSizeRingBuffer<FDirectoryIterator_, 16> stack;
-        stack.push_back(MakeCStringView(dirpath));
-
-        const TFunction<void(const FWStringView&)> onFile = [&context, &onMatch](const FWStringView& file) {
-            if (WildMatchI(context.Pattern, file)) {
-                const size_t len = Format(context.Buffer, L"{0}\\{1}", context.Directory.Relative, file);
-                onMatch(FWStringView(context.Buffer, len));
-            }
-        };
-        const TFunction<void(const FWStringView&)> onSubDir = [&context, &stack](const FWStringView& subDir) {
-            stack.push_back(
-                StringFormat(L"{0}\\{1}", context.Directory.FullName, subDir),
-                StringFormat(L"{0}\\{1}", context.Directory.Relative, subDir));
-        };
+        VECTORINSITU(FileSystem, FDirectoryIterator_, MaxPathDepth) stack;
+        stack.emplace_back(MakeCStringView(dirpath));
 
         do {
-            Verify(stack.pop_front(&context.Directory));
+            context.Directory = std::move(stack.back());
+            stack.pop_back();
 
-            EnumerateDirNonRecursive_(context.Directory.FullName.c_str(), onFile, onSubDir);
+            const size_t offset = stack.size();
+
+            EnumerateDirNonRecursive_(context.Directory.FullName.c_str(),
+                [&context, &onMatch](const FWStringView& file) {
+                    if (WildMatchI(context.Pattern, file)) {
+                        const size_t len = Format(context.Buffer, L"{0}\\{1}", context.Directory.Relative, file);
+                        onMatch(FWStringView(context.Buffer, len));
+                    }
+                },
+                [&context, &stack](const FWStringView& subDir) {
+                    stack.emplace_back(
+                        StringFormat(L"{0}\\{1}", context.Directory.FullName, subDir),
+                        StringFormat(L"{0}\\{1}", context.Directory.Relative, subDir));
+                });
+
+            std::reverse(stack.begin() + offset, stack.end());
 
         } while (not stack.empty());
     }
@@ -460,7 +478,12 @@ bool FWindowsPlatformFile::MoveFile(const char_type* src, const char_type* dst) 
 bool FWindowsPlatformFile::RemoveDirectory(const char_type* dirpath, bool force) {
     Assert(dirpath);
 
+    // first assume empty directory
+    if (::RemoveDirectoryW(dirpath) == TRUE)
+        return true;
+
     if (force) { // will delete the directory recursively when non empty
+#if 0 /* SHFileOperation() IS DEPRECATED ! */
         // !! THE STRING MUST BE *DOUBLE-NULL* TERMINATED !!
         // https://docs.microsoft.com/fr-fr/windows/desktop/api/shellapi/ns-shellapi-_shfileopstructa
 
@@ -487,11 +510,59 @@ bool FWindowsPlatformFile::RemoveDirectory(const char_type* dirpath, bool force)
 
         LOG(HAL, Error, L"SHFileOperationW() failed, last error : {0}", FLastError(result));
         return false;
+
+#else
+        struct FDirectoryPass_ {
+            FWString Path;
+            bool Empty = false;
+            FDirectoryPass_() = default;
+            FDirectoryPass_(const FWStringView& path)
+                : Path(path)
+            {}
+        };
+        VECTORINSITU(FileSystem, FDirectoryPass_, MaxPathDepth) stack;
+        stack.emplace_back(MakeCStringView(dirpath));
+
+        FDirectoryPass_ currDir;
+
+        do {
+            currDir = std::move(stack.back());
+            stack.pop_back();
+
+            if (not currDir.Empty) {
+                const size_t offset = stack.size();
+
+                if (not EnumerateDirNonRecursive_(
+                    currDir.Path.c_str(),
+                    [&currDir](const FWStringView& file) {
+                        char_type buffer[MaxPathLength];
+                        Format(buffer, L"{0}\\{1}\0", currDir.Path, file);
+                        return RemoveFile(buffer);
+                    },
+                    [&currDir, &stack](const FWStringView& subDir) {
+                        stack.emplace_back(StringFormat(L"{0}\\{1}", currDir.Path, subDir));
+                    }))
+                    return false;
+
+                if (offset != stack.size()) {
+                    currDir.Empty = true;
+                    stack.push_back(std::move(currDir));
+                    std::reverse(stack.begin() + offset, stack.end());
+                    continue;
+                }
+            }
+
+            if (not ::RemoveDirectoryW(currDir.Path.data())) {
+                LOG_LASTERROR(HAL, L"RemoveDirectoryW()");
+                return false;
+            }
+
+        } while (not stack.empty());
+
+        return true;
+#endif
     }
     else {
-        if (::RemoveDirectoryW(dirpath) == TRUE)
-            return true;
-
         LOG_LASTERROR(HAL, L"RemoveDirectoryW()");
         return false;
     }

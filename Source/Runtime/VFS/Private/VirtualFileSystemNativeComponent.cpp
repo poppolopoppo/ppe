@@ -76,15 +76,37 @@ static void Unalias_(
     Unalias_(oss, aliased, alias, target);
     oss << Eos;
 }
+
 //----------------------------------------------------------------------------
 template <typename _Predicate>
-static size_t EnumerateFiles_(
+static size_t EnumerateFilesNonRec_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
     const TFunction<void(const FFilename&)>& foreach,
-    bool recursive,
-    _Predicate&& pred
-    ) {
+    _Predicate&& pred ) {
+    size_t total = 0;
+
+    FileSystem::char_type nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
+    Unalias_(nativeDirpath, aliased, alias, target);
+
+    FPlatformFile::EnumerateFiles(nativeDirpath, false,
+        [&](const FWStringView& file) {
+            if (pred(file)) {
+                total++;
+                const FBasename basename(file);
+                foreach(FFilename(aliased, basename));
+            }
+        });
+
+    return total;
+}
+//----------------------------------------------------------------------------
+template <typename _Predicate>
+static size_t EnumerateFilesRec_(
+    const FDirpath& aliased,
+    const FDirpath& alias, const FWString& target,
+    const TFunction<void(const FFilename&)>& foreach,
+    _Predicate&& pred ) {
     struct FContext_ {
         size_t Total = 0;
         FDirpath Dirpath;
@@ -101,13 +123,10 @@ static size_t EnumerateFiles_(
         }
     };
 
-    TFunction<void(const FWStringView&)> onSubDir;
-    if (recursive) {
-        onSubDir = [&ctx](const FWStringView& subdir) {
-            const FDirname dirname(subdir);
-            ctx.SubDirectories.emplace_back(ctx.Dirpath, dirname);
-        };
-    }
+    const TFunction<void(const FWStringView&)> onSubDir = [&ctx](const FWStringView& subdir) {
+        const FDirname dirname(subdir);
+        ctx.SubDirectories.emplace_back(ctx.Dirpath, dirname);
+    };
 
     FileSystem::char_type nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     do {
@@ -121,6 +140,19 @@ static size_t EnumerateFiles_(
     } while (not ctx.SubDirectories.empty());
 
     return ctx.Total;
+}
+//----------------------------------------------------------------------------
+template <typename _Predicate>
+static size_t EnumerateFiles_(
+    const FDirpath& aliased,
+    const FDirpath& alias, const FWString& target,
+    const TFunction<void(const FFilename&)>& foreach,
+    bool recursive,
+    _Predicate&& pred
+) {
+    return (recursive
+        ? EnumerateFilesRec_(aliased, alias, target, foreach, pred)
+        : EnumerateFilesNonRec_(aliased, alias, target, foreach, pred) );
 }
 //----------------------------------------------------------------------------
 } //!namespace

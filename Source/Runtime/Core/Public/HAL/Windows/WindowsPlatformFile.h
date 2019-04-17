@@ -11,7 +11,10 @@ namespace PPE {
 struct PPE_CORE_API FWindowsPlatformFile : FGenericPlatformFile {
 public:
     STATIC_CONST_INTEGRAL(bool, IsCaseSensitive, false);
+
+    STATIC_CONST_INTEGRAL(size_t, MaxPathDepth, 32);
     STATIC_CONST_INTEGRAL(size_t, MaxPathLength, 260);
+
     STATIC_CONST_INTEGRAL(wchar_t, PathSeparator, L'\\');
     STATIC_CONST_INTEGRAL(wchar_t, PathSeparatorAlt, L'/');
 
