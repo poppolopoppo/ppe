@@ -190,7 +190,11 @@ public:
     // Misc
 
     static FORCE_INLINE void MemoryBarrier() {
-        ::_mm_mfence(); //::MemoryBarrier();
+#ifdef ARCH_X64
+        ::__faststorefence();
+#else
+        ::_mm_mfence();
+#endif
     }
 
     static FORCE_INLINE void ShortSyncWait() {

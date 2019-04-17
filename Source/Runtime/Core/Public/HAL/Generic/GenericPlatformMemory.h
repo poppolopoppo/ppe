@@ -151,8 +151,9 @@ public: // must be defined for every platform
     //------------------------------------------------------------------------
     // prefetch
 
-    static void Prefetch(const void* p, size_t offset = 0) = delete; // stride is platform dependent
-    static void PrefetchBlock(const void* p, size_t sizeInBytes) = delete;
+    static void ReadPrefetch(const void* p, size_t offset = 0) = delete; // stride is platform dependent
+    static void ReadPrefetchBlock(const void* p, size_t sizeInBytes) = delete;
+    static void WritePrefetch(const void* p, size_t offset = 0) = delete; // stride is platform dependent
 
     //------------------------------------------------------------------------
     // out of memory

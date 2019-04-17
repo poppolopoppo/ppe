@@ -110,15 +110,19 @@ public:
     //------------------------------------------------------------------------
     // prefetch
 
-    static void Prefetch(const void* p, size_t offset = 0) {
-        return ::_mm_prefetch((char const*)(p)+offset, _MM_HINT_T0);
+    static void ReadPrefetch(const void* p, size_t offset = 0) {
+        ::_mm_prefetch((char const*)(p)+offset, _MM_HINT_T0);
     }
 
-    static void PrefetchBlock(const void* p, size_t sizeInBytes) {
+    static void ReadPrefetchBlock(const void* p, size_t sizeInBytes) {
         for (size_t lines = (sizeInBytes + CacheLineSize - 1) / CacheLineSize; lines; --lines) {
             ::_mm_prefetch((const char*)p, _MM_HINT_T0);
             p = (const char*)p + CacheLineSize;
         }
+    }
+
+    static void WritePrefetch(const void* p, size_t offset = 0) {
+        ::_m_prefetchw((char const*)(p)+offset);
     }
 
     //------------------------------------------------------------------------
