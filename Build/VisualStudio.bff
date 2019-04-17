@@ -8,10 +8,10 @@
 ;#define WITH_FASTBUILD_MONITOR
 
 ;.VisualStudioOutputDirectory        =
-;.VisualStudioIntermediateDirectory  = '^$(SolutionDir)\Intermediate\^$(Platform)\^$(Configuration)\^$(ProjectName)'
+;.VisualStudioIntermediateDirectory  = '^$(SolutionDir)/Intermediate/^$(Platform)/^$(Configuration)/^$(ProjectName)'
 ;
 .FastBuildOptions               = ' -ide -nosummaryonerror -fastcancel'
-.VisualStudioFBuildCommand      = 'cd "^$(SolutionDir)\.." &amp; ruby fbuild.rb -config fbuild.bff $FastBuildOptions$'
+.VisualStudioFBuildCommand      = 'cd "^$(SolutionDir)/.." &amp; ruby fbuild.rb -config fbuild.bff $FastBuildOptions$'
 #if WITH_FASTBUILD_MONITOR
 Print('Support for FastBuild Monitor : - monitor')
 .VisualStudioFBuildCommand      + ' -monitor'
@@ -26,5 +26,5 @@ Print('Support for FastBuild Monitor : - monitor')
 ;
 ;    .OutputPath        = .VisualStudioOutputDirectory
 ;    .IntermediatePath  = .VisualStudioIntermediateDirectory
-    .LocalDebuggerWorkingDirectory  = '^$(SolutionDir)\Binary'
+    .LocalDebuggerWorkingDirectory  = '^$(SolutionDir)/Binary'
 ]

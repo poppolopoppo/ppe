@@ -21,8 +21,8 @@ Settings
 #if __WINDOWS__
     .Environment +
     {
-        "SystemRoot=C:\Windows",
-        "TMP=C:\Windows\Temp",
+        "SystemRoot=C:/Windows",
+        "TMP=C:/Windows/Temp",
     }
 #endif
 

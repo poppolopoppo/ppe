@@ -1,14 +1,5 @@
 #once
 
-;   _____ _                         ____  ______
-;  / ____| |                       |___ \|____  |
-; | |    | |     __ _ _ __   __ _    __) |   / /
-; | |    | |    / _` | '_ \ / _` |  |__ <   / /
-; | |____| |___| (_| | | | | (_| |  ___) | / /
-;  \_____|______\__,_|_| |_|\__, | |____(_)_/
-;                            __/ |
-;                           |___/
-
 #include "CLangWindowsBase.bff"
 
 //------------------------------------------------------------------------------
@@ -18,16 +9,16 @@
 .CLangWindows37PlatformToolset = 'v120'
 
 #import VS120COMNTOOLS
-.PATH   = "$VS120COMNTOOLS$..\IDE;"
-        + "$VS120COMNTOOLS$..\..\VC\Bin;"
-        + "$VS120COMNTOOLS$..\..\VC\Bin\amd64;"
+.PATH   = "$VS120COMNTOOLS$../IDE;"
+        + "$VS120COMNTOOLS$../../VC/Bin;"
+        + "$VS120COMNTOOLS$../../VC/Bin/amd64;"
         + .PATH
 
 .CLangWindows37BasePath =
 [
     .LocalisationUID    = '1033' ; code zone pour le language (messages std FR)
-    .LLVMBasePath       = 'C:\Program Files (x86)\LLVM'
-    .VSBasePath         = '$VS120COMNTOOLS$..\..'
+    .LLVMBasePath       = 'C:/Program Files (x86)/LLVM'
+    .VSBasePath         = '$VS120COMNTOOLS$../..'
     .WindowsSDKBasePath = .WindowsSDKBasePath81
 ]
 
@@ -40,8 +31,8 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 {
     Using( .CLangWindows37BasePath )
 
-    .Root       = '$LLVMBasePath$\bin'
-    .Executable = '$Root$\clang-cl.exe'
+    .Root       = '$LLVMBasePath$/bin'
+    .Executable = '$Root$/clang-cl.exe'
 }
 
 //------------------------------------------------------------------------------
@@ -51,7 +42,7 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 [
     Using( .CLangWindows37BasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath$/Bin/x86/RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]
@@ -75,10 +66,10 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 
     .IncludePaths =
     {
-        '$VSBasePath$\VC\Include',
-        '$WindowsSDKBasePath$\Include\um',
-        '$WindowsSDKBasePath$\Include\shared',
-        '$WindowsSDKBasePath$\Include',
+        '$VSBasePath$/VC/Include',
+        '$WindowsSDKBasePath$/Include/um',
+        '$WindowsSDKBasePath$/Include/shared',
+        '$WindowsSDKBasePath$/Include',
     }
 ]
 
@@ -91,9 +82,9 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 
     ; TODO : pas be build x64 dispo mais a priori compilable...
     .Compiler           = 'Compiler-CLangWindows37-x86'
-    .ToolsBasePath      = '$LLVMBasePath$\bin'
-    .Librarian          = '$ToolsBasePath$\llvm-ar.exe'
-    .Linker             = '$ToolsBasePath$\lld.exe'
+    .ToolsBasePath      = '$LLVMBasePath$/bin'
+    .Librarian          = '$ToolsBasePath$/llvm-ar.exe'
+    .Linker             = '$ToolsBasePath$/lld.exe'
 
     .CompilerOptions    = ' -fmsc-version=1800'
 ]
@@ -102,8 +93,8 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 [
     Using( .CLangWindows37BasePlatform )
 
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\win8\um\x86"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\lib"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x86"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib"'
 ]
 .CLangWindows37PlatformX86 + .CLangWindowsBasePlatformX86
 
@@ -111,8 +102,8 @@ Compiler( 'Compiler-CLangWindows37-x86' )
 [
     Using( .CLangWindows37BasePlatform )
 
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\win8\um\x64"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/win8/um/x64"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
 ]
 .CLangWindows37PlatformX64 + .CLangWindowsBasePlatformX64
 

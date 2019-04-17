@@ -1,14 +1,5 @@
 #once
 
-;   _____ _                         ____   ___
-;  / ____| |                       |___ \ / _ \
-; | |    | |     __ _ _ __   __ _    __) | (_) |
-; | |    | |    / _` | '_ \ / _` |  |__ < \__, |
-; | |____| |___| (_| | | | | (_| |  ___) |  / /
-;  \_____|______\__,_|_| |_|\__, | |____(_)/_/
-;                            __/ |
-;                           |___/
-
 #include "CLangWindowsBase.bff"
 
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
@@ -41,7 +32,7 @@
 #endif
     .LocalisationUID      = '$VS140CLUID$' ; code zone pour le language (EN)
     Print( "Using CLang 3.9 with localisation uid $LocalisationUID$" )
-    .VSBasePath           = '$VS140COMNTOOLS$..\..'
+    .VSBasePath           = '$VS140COMNTOOLS$../..'
     .WindowsSDKBasePath   = .WindowsSDKBasePath10
     .WindowsSDKVersion    = .WindowsSDKVersion10
     Print( "Using CLang 3.9 with Windows 10 SDK $WindowsSDKVersion10$" )
@@ -56,8 +47,8 @@ Compiler( 'Compiler-CLangWindows39' )
 {
     Using( .CLangWindows39BasePath )
 
-    .Root       = '$LLVMBasePath$\msbuild-bin'
-    .Executable = '$Root$\CL.exe'
+    .Root       = '$LLVMBasePath$/msbuild-bin'
+    .Executable = '$Root$/CL.exe'
     .ExtraFiles = {}
 }
 
@@ -68,7 +59,7 @@ Compiler( 'Compiler-CLangWindows39' )
 [
     Using( .CLangWindows39BasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath$/Bin/x86/RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]
@@ -92,10 +83,10 @@ Compiler( 'Compiler-CLangWindows39' )
 
     .IncludePaths =
     {
-        '$VSBasePath$\VC\Include',
-        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\ucrt',
-        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\um',
-        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\shared',
+        '$VSBasePath$/VC/Include',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/ucrt',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/um',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/shared',
     }
 ]
 
@@ -107,12 +98,12 @@ Compiler( 'Compiler-CLangWindows39' )
     Using( .CLangWindows39BaseConfig )
 
     .Compiler           = 'Compiler-CLangWindows39'
-    .ToolsBasePath      = '$LLVMBasePath$\bin'
-    .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
-    .Linker             = '$ToolsBasePath$\lld-link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x86"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\lib"'
+    .ToolsBasePath      = '$LLVMBasePath$/bin'
+    .Librarian          = '$ToolsBasePath$/llvm-lib.exe'
+    .Linker             = '$ToolsBasePath$/lld-link.exe'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x86"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x86"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib"'
 ]
 .CLangWindows39PlatformX86 + .CLangBasePlatformX86
 
@@ -121,12 +112,12 @@ Compiler( 'Compiler-CLangWindows39' )
     Using( .CLangWindows39BaseConfig )
 
     .Compiler           = 'Compiler-CLangWindows39'
-    .ToolsBasePath      = '$LLVMBasePath$\bin'
-    .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
-    .Linker             = '$ToolsBasePath$\lld-link.exe'
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x64"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
+    .ToolsBasePath      = '$LLVMBasePath$/bin'
+    .Librarian          = '$ToolsBasePath$/llvm-lib.exe'
+    .Linker             = '$ToolsBasePath$/lld-link.exe'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x64"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x64"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
 ]
 .CLangWindows39PlatformX64 + .CLangBasePlatformX64
 

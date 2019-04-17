@@ -1,14 +1,5 @@
 #once
 
-;   _____ _
-;  / ____| |
-; | |    | |     __ _ _ __   __ _
-; | |    | |    / _` | '_ \ / _` |
-; | |____| |___| (_| | | | | (_| |
-;  \_____|______\__,_|_| |_|\__, |
-;                            __/
-;                           |___/
-
 #include "CLangWindowsBase.bff"
 
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc
@@ -28,8 +19,10 @@
 .CLangWindowsLatestPlatformToolset = 'v140'
 #endif
 #if WITH_VISUALSTUDIO_TOOLSET_141
-//#import VS141COMNTOOLS ; TODO
 .CLangWindowsLatestPlatformToolset = 'v141'
+#endif
+#if WITH_VISUALSTUDIO_TOOLSET_142
+.CLangWindowsLatestPlatformToolset = 'v142'
 #endif
 Print( "Using CLang latest  with platform toolset $CLangWindowsLatestPlatformToolset$" )
 
@@ -38,13 +31,19 @@ Print( "Using CLang latest  with platform toolset $CLangWindowsLatestPlatformToo
     Print( "Using CLang latest  installed in $LLVMWindowsBasePath$" )
 #if WITH_VISUALSTUDIO_TOOLSET_140
     .LocalisationUID      = '$VS140CLUID$'
-    .VSBasePath           = '$VS140COMNTOOLS$..\..'
+    .VSBasePath           = '$VS140COMNTOOLS$../..'
 #endif
 #if WITH_VISUALSTUDIO_TOOLSET_141
     .LocalisationUID      = '$VS141CLUID$'
-    .VSBasePath           = '$VS141COMNTOOLS$..\..'
+    .VSBasePath           = '$VS141COMNTOOLS$../..'
     .VSToolsVersion       = '$VS141VERSION$'
     Print( "Using CLang latest  with platform toolset 141 version $VSToolsVersion$" )
+#endif
+#if WITH_VISUALSTUDIO_TOOLSET_142
+    .LocalisationUID      = '$VS142CLUID$'
+    .VSBasePath           = '$VS142COMNTOOLS$../..'
+    .VSToolsVersion       = '$VS142VERSION$'
+    Print( "Using CLang latest  with platform toolset 142 version $VSToolsVersion$" )
 #endif
     Print( "Using CLang latest  with localisation uid $LocalisationUID$" )
     .WindowsSDKBasePath   = .WindowsSDKBasePath10
@@ -60,8 +59,8 @@ Compiler( 'Compiler-CLangWindowsLatest' )
     Using( .CLangWindowsLatestBasePath )
 
     .CompilerFamily = 'msvc'
-    .Root           = '$LLVMWindowsBasePath$\bin'
-    .Executable     = '$Root$\clang-cl.exe'
+    .Root           = '$LLVMWindowsBasePath$/bin'
+    .Executable     = '$Root$/clang-cl.exe'
     .ExtraFiles     = {}
 }
 
@@ -72,7 +71,7 @@ Compiler( 'Compiler-CLangWindowsLatest' )
 [
     Using( .CLangWindowsLatestBasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath$\Bin\$WindowsSDKVersion$\x64\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath$/Bin/$WindowsSDKVersion$/x64/RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]
@@ -116,30 +115,37 @@ Compiler( 'Compiler-CLangWindowsLatest' )
     .Defines + '_ENABLE_EXTENDED_ALIGNED_STORAGE'
 #endif
 
-    .LinkerOptions = ' /LIBPATH:"$LLVMWindowsBasePath$\lib\clang\$LLVMWindowsClangVer$\lib\windows"'
+    .LinkerOptions = ' /LIBPATH:"$LLVMWindowsBasePath$/lib/clang/$LLVMWindowsClangVer$/lib/windows"'
 
     .SystemIncludePaths =
     {
-        '$LLVMWindowsBasePath$\lib\clang\$LLVMWindowsClangVer$\include'
+        '$LLVMWindowsBasePath$/lib/clang/$LLVMWindowsClangVer$/include'
     }
 #if WITH_VISUALSTUDIO_TOOLSET_140
     .SystemIncludePaths +
     {
-        '$VSBasePath$\VC\Include',
+        '$VSBasePath$/VC/Include',
     }
 #endif
 #if WITH_VISUALSTUDIO_TOOLSET_141
     .SystemIncludePaths =
     {
-        '$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\include',
-        '$VSBasePath$\VC\Auxiliary\VS\include',
+        '$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/include',
+        '$VSBasePath$/VC/Auxiliary/VS/include',
+    }
+#endif
+#if WITH_VISUALSTUDIO_TOOLSET_142
+    .SystemIncludePaths =
+    {
+        '$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/include',
+        '$VSBasePath$/VC/Auxiliary/VS/include',
     }
 #endif
     .SystemIncludePaths +
     {
-        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\ucrt',
-        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\um',
-        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\shared',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/ucrt',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/um',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/shared',
     }
 ]
 
@@ -151,19 +157,23 @@ Compiler( 'Compiler-CLangWindowsLatest' )
     Using( .CLangWindowsLatestBaseConfig )
 
     .Compiler           = 'Compiler-CLangWindowsLatest'
-    .ToolsBasePath      = '$LLVMWindowsBasePath$\bin'
-    .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
-    .Linker             = '$ToolsBasePath$\lld-link.exe'
+    .ToolsBasePath      = '$LLVMWindowsBasePath$/bin'
+    .Librarian          = '$ToolsBasePath$/llvm-lib.exe'
+    .Linker             = '$ToolsBasePath$/lld-link.exe'
 
 #if WITH_VISUALSTUDIO_TOOLSET_140
-    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$\VC\lib"'
+    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/lib"'
 #endif
 #if WITH_VISUALSTUDIO_TOOLSET_141
-    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x86"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\Auxiliary\VS\lib\x86"'
+    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/lib/x86"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/Auxiliary/VS/lib/x86"'
 #endif
-    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x86"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
+#if WITH_VISUALSTUDIO_TOOLSET_142
+    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/lib/x86"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/Auxiliary/VS/lib/x86"'
+#endif
+    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x86"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x86"'
 ]
 .CLangWindowsLatestPlatformX86 + .CLangBasePlatformX86
 
@@ -172,20 +182,24 @@ Compiler( 'Compiler-CLangWindowsLatest' )
     Using( .CLangWindowsLatestBaseConfig )
 
     .Compiler           = 'Compiler-CLangWindowsLatest'
-    .ToolsBasePath      = '$LLVMWindowsBasePath$\bin'
+    .ToolsBasePath      = '$LLVMWindowsBasePath$/bin'
 
-    .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
-    .Linker             = '$ToolsBasePath$\lld-link.exe'
+    .Librarian          = '$ToolsBasePath$/llvm-lib.exe'
+    .Linker             = '$ToolsBasePath$/lld-link.exe'
 
 #if WITH_VISUALSTUDIO_TOOLSET_140
-    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
+    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
 #endif
 #if WITH_VISUALSTUDIO_TOOLSET_141
-    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x64"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\Auxiliary\VS\lib\x64"'
+    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/lib/x64"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/Auxiliary/VS/lib/x64"'
 #endif
-    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x64"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
+#if WITH_VISUALSTUDIO_TOOLSET_142
+    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/lib/x64"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/Auxiliary/VS/lib/x64"'
+#endif
+    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x64"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x64"'
 ]
 .CLangWindowsLatestPlatformX64 + .CLangBasePlatformX64
 
@@ -223,7 +237,7 @@ Compiler( 'Compiler-CLangWindowsLatest' )
 #if USE_LLVM_ADRESS_SANITIZER
     Print( "Using LLVM Address Sanitizer" )
     .CompilerOptions  = ' -fsanitize=address'
-                      + ' -fsanitize-blacklist="$LLVMWindowsBasePath$\lib\clang\$LLVMWindowsClangVer$\share\asan_blacklist.txt"'
+                      + ' -fsanitize-blacklist="$LLVMWindowsBasePath$/lib/clang/$LLVMWindowsClangVer$/share/asan_blacklist.txt"'
     .LinkerOptions = ' clang_rt.asan_dynamic_runtime_thunk-x86_64.lib clang_rt.asan_dynamic-x86_64.lib'
 #endif
 ]

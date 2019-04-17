@@ -1,11 +1,11 @@
 #once
 
 ;    _____           __ _____ _____  _  __
-;   |  __ \         / _/ ____|  __ \| |/ /
+;   |  __ /         / _/ ____|  __ /| |/ /
 ;   | |__) |__ _ __| || (___ | |  | | ' /
-;   |  ___/ _ \ '__|  _\___ \| |  | |  <
-;   | |  |  __/ |  | | ____) | |__| | . \
-;   |_|   \___|_|  |_||_____/|_____/|_|\_\
+;   |  ___/ _ / '__|  _/___ /| |  | |  <
+;   | |  |  __/ |  | | ____) | |__| | . /
+;   |_|   /___|_|  |_||_____/|_____/|_|/_/
 ;
 
 // instrumentation du profiler de visual studio
@@ -20,11 +20,11 @@
 
     .PerfSDK_Win32  =
     [
-        .PerfSDKRelativePath    = 'Team Tools\Performance Tools\PerfSDK'
+        .PerfSDKRelativePath    = 'Team Tools/Performance Tools/PerfSDK'
     ]
     .PerfSDK_Win64  =
     [
-        .PerfSDKRelativePath    = 'Team Tools\Performance Tools\x64\PerfSDK'
+        .PerfSDKRelativePath    = 'Team Tools/Performance Tools/x64/PerfSDK'
     ]
 
     .ExternalCompileConfigs = {}
@@ -35,7 +35,7 @@
             Using( .CompileConfig )
             Using( ."PerfSDK_$Platform$" )
 
-            .PerfSDKPath        = '$VSBasePath$\$PerfSDKRelativePath$'
+            .PerfSDKPath        = '$VSBasePath$/$PerfSDKRelativePath$'
             .IncludePaths       + '$PerfSDKPath$'
             .LinkerOptions      + ' /LIBPATH:"$PerfSDKPath$"'
         ]

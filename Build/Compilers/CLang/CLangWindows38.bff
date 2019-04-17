@@ -1,14 +1,5 @@
 #once
 
-;   _____ _                         ____   ___
-;  / ____| |                       |___ \ / _ \
-; | |    | |     __ _ _ __   __ _    __) | (_) |
-; | |    | |    / _` | '_ \ / _` |  |__ < > _ <
-; | |____| |___| (_| | | | | (_| |  ___) | (_) |
-;  \_____|______\__,_|_| |_|\__, | |____(_)___/
-;                            __/ |
-;                           |___/
-
 #include "CLangWindowsBase.bff"
 
 //------------------------------------------------------------------------------
@@ -21,19 +12,19 @@
 ;#define USE_CLANGWINDOWS38_X64
 
 #import VS120COMNTOOLS
-.PATH   = "$VS120COMNTOOLS$..\IDE;"
-        + "$VS120COMNTOOLS$..\..\VC\Bin;"
-        + "$VS120COMNTOOLS$..\..\VC\Bin\amd64;"
+.PATH   = "$VS120COMNTOOLS$../IDE;"
+        + "$VS120COMNTOOLS$../../VC/Bin;"
+        + "$VS120COMNTOOLS$../../VC/Bin/amd64;"
         + .PATH
 
 .CLangWindows38BasePath =
 [
     .LocalisationUID    = '1033' ; code zone pour le language (messages std FR)
-    .LLVMBasePath       = 'C:\Program Files (x86)\LLVM'
+    .LLVMBasePath       = 'C:/Program Files (x86)/LLVM'
 #if USE_CLANGWINDOWS38_X64
-    .LLVMBasePath       = 'C:\Program Files\LLVM'
+    .LLVMBasePath       = 'C:/Program Files/LLVM'
 #endif
-    .VSBasePath         = '$VS120COMNTOOLS$..\..'
+    .VSBasePath         = '$VS120COMNTOOLS$../..'
     .WindowsSDKBasePath = .WindowsSDKBasePath81
     .WindowsSDKVersion  = .WindowsSDKVersion81
 ]
@@ -47,8 +38,8 @@ Compiler( 'Compiler-CLangWindows38-x86' )
 {
     Using( .CLangWindows38BasePath )
 
-    .Root       = '$LLVMBasePath$\bin'
-    .Executable = '$Root$\clang-cl.exe'
+    .Root       = '$LLVMBasePath$/bin'
+    .Executable = '$Root$/clang-cl.exe'
 }
 
 //------------------------------------------------------------------------------
@@ -58,7 +49,7 @@ Compiler( 'Compiler-CLangWindows38-x86' )
 [
     Using( .CLangWindows38BasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath$/Bin/x86/RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]
@@ -82,10 +73,10 @@ Compiler( 'Compiler-CLangWindows38-x86' )
 
     .IncludePaths =
     {
-        '$VSBasePath$\VC\Include',
-        '$WindowsSDKBasePath$\Include\um',
-        '$WindowsSDKBasePath$\Include\shared',
-        '$WindowsSDKBasePath$\Include',
+        '$VSBasePath$/VC/Include',
+        '$WindowsSDKBasePath$/Include/um',
+        '$WindowsSDKBasePath$/Include/shared',
+        '$WindowsSDKBasePath$/Include',
     }
 ]
 
@@ -98,9 +89,9 @@ Compiler( 'Compiler-CLangWindows38-x86' )
 
     ; TODO : pas be build x64 dispo mais a priori compilable...
     .Compiler           = 'Compiler-CLangWindows38-x86'
-    .ToolsBasePath      = '$LLVMBasePath$\bin'
-    .Librarian          = '$ToolsBasePath$\llvm-lib.exe'
-    .Linker             = '$ToolsBasePath$\lld-link.exe'
+    .ToolsBasePath      = '$LLVMBasePath$/bin'
+    .Librarian          = '$ToolsBasePath$/llvm-lib.exe'
+    .Linker             = '$ToolsBasePath$/lld-link.exe'
 
     .CompilerOptions    = '';' -fmsc-version=1800'
 ]
@@ -109,8 +100,8 @@ Compiler( 'Compiler-CLangWindows38-x86' )
 [
     Using( .CLangWindows38BasePlatform )
 
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\lib"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x86"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib"'
 ]
 .CLangWindows38PlatformX86 + .CLangWindowsBasePlatformX86
 
@@ -118,8 +109,8 @@ Compiler( 'Compiler-CLangWindows38-x86' )
 [
     Using( .CLangWindows38BasePlatform )
 
-    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
+    .LinkerOptions      = ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x64"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
 ]
 .CLangWindows38PlatformX64 + .CLangWindowsBasePlatformX64
 

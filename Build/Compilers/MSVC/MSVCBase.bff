@@ -124,6 +124,10 @@
     + ' /NXCOMPAT:NO'       ; indique que le programme n'est pas compatible avec Data Execution Prevention
     + ' /STACK:4194304'     ; augmente la taille de la stack de chaque thread à 4mo
     + ' /SUBSYSTEM:WINDOWS'
+    ;+ ' /VERBOSE'
+    + ' /VERBOSE:REF'       ; affiche des infos sur le linker incremental
+    + ' /VERBOSE:INCR'      ; affiche des infos sur le linker incremental
+    + ' /VERBOSE:UNUSEDLIBS'      ; affiche des infos sur le linker incremental
     + ' /OUT:"%2" "%1"'
     + ' kernel32.lib'
     + ' User32.lib'
@@ -188,8 +192,8 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .PCHOptions             = ' /Fp"%2" /Fo"%3"'
                             + ' /Yc"^$ProjectPCHName^$.h"'
                             + '^$CompilerOptions^$'
-    .PCHInputFile           = '^$ProjectPath^$\^$ProjectPCHName^$.cpp'
-    .PCHOutputFile          = '^$IntermediatePath^$\^$ProjectPCHName^$.pch'
+    .PCHInputFile           = '^$ProjectPath^$/^$ProjectPCHName^$.cpp'
+    .PCHOutputFile          = '^$IntermediatePath^$/^$ProjectPCHName^$.pch'
     .CompilerOptions        = ' /Yu"^$ProjectPCHName^$.h" /Fp"$PCHOutputFile$"'
                             + ' /Fo"%2"'
     .Defines                = { 'USE_PPE_PRECOMPILEDHEADERS=1' }

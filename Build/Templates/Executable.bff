@@ -29,8 +29,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     Using( .CompileConfig )
 
     // Project directories
-    .IntermediateRoot   = .IntermediatePath + '\$Platform$\$Config$'
-    .IntermediatePath   = '$IntermediateRoot$\$ProjectName$'
+    .IntermediateRoot   = .IntermediatePath + '/$Platform$/$Config$'
+    .IntermediatePath   = '$IntermediateRoot$/$ProjectName$'
     .OutputPath         = .BinaryPath
 
     // Project Libraries
@@ -45,7 +45,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     {
         Using( .ResourceCompiler )
 
-        .CompilerInputFiles     = '$ProjectPath$\resource.rc'
+        .CompilerInputFiles     = '$ProjectPath$/resource.rc'
         .CompilerOutputPath     = .IntermediatePath
 
         .CompilerOptions = '/I"$SourcePath$" /I"$ProjectPath$" $CompilerOptions$'
@@ -55,7 +55,9 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     // Binary executable
     Executable( '$ProjectName$-Exe-$Platform$-$Config$' )
     {
-        .LinkerOutput       = '$IntermediateRoot$\$BinaryPrefix$.$Config$.$Platform$.$CompilerBinaryExtension$'
+        .LinkerVerboseOutput = true
+
+        .LinkerOutput       = '$IntermediateRoot$/$BinaryPrefix$.$Config$.$Platform$.$CompilerBinaryExtension$'
         .LinkerOptions      + .ExecutableOptions
 
         .Libraries          = { '$ProjectName$-Obj-$Platform$-$Config$' }
@@ -92,7 +94,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         }
 
 
-        .Dest               = '$BinaryPath$\'
+        .Dest               = '$BinaryPath$/'
     }
 
     // The main target is an alias to bulk compilation, copy and potentially user provided tasks

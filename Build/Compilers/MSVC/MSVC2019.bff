@@ -1,12 +1,5 @@
 #once
 
-
-; __   ___              _   ___ __  _ ___
-; \ \ / (_)____  _ __ _| | |_  )  \/ / _ \
-;  \ V /| (_-< || / _` | |  / / () | \_, /
-;   \_/ |_/__/\_,_\__,_|_| /___\__/|_|/_/
-;
-
 ; utilise la toolchain 64 bits pour compiler en 32
 #define USE_VISUAL2019_NATIVE_ENVIRONMENT
 ; 2X Faster Links, mais TODO: les versions ne doivent pas utiliser ça
@@ -19,7 +12,7 @@
 #define USE_VISUAL2019_UT8_CHARSET
 ; choisit le standard C++ utilisé (C++14 par défaut)
 //#define USE_VISUAL2019_STD_2014
-#define USE_VISUAL2019_STD_2019
+#define USE_VISUAL2019_STD_2017
 //#define USE_VISUAL2019_STD_LATEST
 ; considere les include <> comme headers systèmes et ignore leurs warnings
 #define USE_VISUAL2019_EXTERNAL_ANGLEBRACKETS
@@ -38,6 +31,14 @@
 ; utilise le linker incremental en profiling
 #define USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
 
+; new features : https://devblogs.microsoft.com/cppblog/msvc-backend-updates-in-visual-studio-2019-preview-2/
+
+; new more aggressive inliner
+#define USE_VISUAL2019_AGGRESSIVE_INLINER // Ob3
+; new exception handler :
+#define USE_VISUAL2019_LIGHT_EXCEPTION_HANDLER // d2FH4
+
+
 #include "MSVCBase.bff"
 
 //------------------------------------------------------------------------------
@@ -45,14 +46,14 @@
 //------------------------------------------------------------------------------
 
 .MSVC2019PlatformToolset = 'v142'
-.MSVC2019BinPath = "$VS142COMNTOOLS$..\..\VC\Tools\MSVC\$VS142VERSION$\bin"
+.MSVC2019BinPath = "$VS142COMNTOOLS$../../VC/Tools/MSVC/$VS142VERSION$/bin"
 Print( "Using Visual 2019 installation found in '$MSVC2019BinPath$'" )
 
-.PATH   = "$VS142COMNTOOLS$..\IDE;"
-        + "$MSVC2019BinPath$\HostX86\x86;"
-        + "$MSVC2019BinPath$\HostX64\x64;"
+.PATH   = "$VS142COMNTOOLS$../IDE;"
+        + "$MSVC2019BinPath$/HostX86/x86;"
+        + "$MSVC2019BinPath$/HostX64/x64;"
 #if USE_VISUAL2019_NATIVE_ENVIRONMENT
-        + "$MSVC2019BinPath$\HostX64\x86;"
+        + "$MSVC2019BinPath$/HostX64/x86;"
 #endif
         + .PATH
 
@@ -60,7 +61,7 @@ Print( "Using Visual 2019 installation found in '$MSVC2019BinPath$'" )
 [
     .LocalisationUID    = '$VS142CLUID$' ; code zone pour le language
     Print( "Using Visual 2019 with localisation uid $LocalisationUID$" )
-    .VSBasePath         = '$VS142COMNTOOLS$..\..'
+    .VSBasePath         = '$VS142COMNTOOLS$../..'
     .VSToolsVersion     = '$VS142VERSION$'
     Print( "Using Visual 2019 with tools version $VSToolsVersion$" )
     .WindowsSDKBasePath = .WindowsSDKBasePath10
@@ -77,21 +78,23 @@ Compiler( 'Compiler-MSVC2019-x86' )
 {
     Using( .MSVC2019BasePath )
 
-    .Root       = '$MSVC2019BinPath$\HostX86\x86'
-    .Executable = '$Root$\cl.exe'
+    .Root       = '$MSVC2019BinPath$/HostX86/x86'
+    .Executable = '$Root$/cl.exe'
     .ExtraFiles =
     {
-        '$Root$\$LocalisationUID$\clui.dll',
-        '$Root$\c1.dll',
-        '$Root$\c1xx.dll',
-        '$Root$\c2.dll',
-        '$Root$\msobj140.dll',
-        '$Root$\mspdb140.dll',
-        '$Root$\mspdbcore.dll',
-        '$Root$\mspdbst.dll',
-        '$Root$\mspdbsrv.exe',
-        '$Root$\mspft140.dll',
-        '$Root$\msvcdis140.dll',
+        '$Root$/$LocalisationUID$/clui.dll',
+        '$Root$/c1.dll'
+        '$Root$/c1xx.dll',
+        '$Root$/c2.dll',
+        '$Root$/msobj140.dll',
+        '$Root$/mspdb140.dll',
+        '$Root$/mspdbcore.dll',
+        '$Root$/mspdbsrv.exe',
+        '$Root$/mspft140.dll',
+        '$Root$/msvcp140_1.dll',
+        '$Root$/msvcp140_2.dll',
+        '$Root$/vcruntime140.dll',
+        '$Root$/vcruntime140_1.dll'
     }
 }
 
@@ -102,21 +105,23 @@ Compiler( 'Compiler-MSVC2019-x64' )
 {
     Using( .MSVC2019BasePath )
 
-    .Root       = '$MSVC2019BinPath$\HostX64\x64'
-    .Executable = '$Root$\cl.exe'
+    .Root       = '$MSVC2019BinPath$/HostX64/x64'
+    .Executable = '$Root$/cl.exe'
     .ExtraFiles =
     {
-        '$Root$\$LocalisationUID$\clui.dll',
-        '$Root$\c1.dll',
-        '$Root$\c1xx.dll',
-        '$Root$\c2.dll',
-        '$Root$\msobj140.dll',
-        '$Root$\mspdb140.dll',
-        '$Root$\mspdbcore.dll',
-        '$Root$\mspdbst.dll',
-        '$Root$\mspdbsrv.exe',
-        '$Root$\mspft140.dll',
-        '$Root$\msvcdis140.dll',
+        '$Root$/$LocalisationUID$/clui.dll',
+        '$Root$/c1.dll'
+        '$Root$/c1xx.dll',
+        '$Root$/c2.dll',
+        '$Root$/msobj140.dll',
+        '$Root$/mspdb140.dll',
+        '$Root$/mspdbcore.dll',
+        '$Root$/mspdbsrv.exe',
+        '$Root$/mspft140.dll',
+        '$Root$/msvcp140_1.dll',
+        '$Root$/msvcp140_2.dll',
+        '$Root$/vcruntime140.dll',
+        '$Root$/vcruntime140_1.dll'
     }
 }
 
@@ -128,22 +133,24 @@ Compiler( 'Compiler-MSVC2019-x64_x86' )
 {
     Using( .MSVC2019BasePath )
 
-    .Root       = '$MSVC2019BinPath$\HostX64\x86'
-    .RootX86    = '$MSVC2019BinPath$\HostX86\x86'
-    .Executable = '$Root$\cl.exe'
+    .Root       = '$MSVC2019BinPath$/HostX64/x86'
+    .RootX86    = '$MSVC2019BinPath$/HostX86/x86'
+    .Executable = '$Root$/cl.exe'
     .ExtraFiles =
     {
-        '$Root$\$LocalisationUID$\clui.dll'
-        '$Root$\c1.dll'
-        '$Root$\c1xx.dll',
-        '$Root$\c2.dll',
-        '$RootX86$\msobj140.dll',
-        '$RootX86$\mspdb140.dll',
-        '$RootX86$\mspdbcore.dll',
-        '$RootX86$\mspdbst.dll',
-        '$RootX86$\mspdbsrv.exe',
-        '$RootX86$\mspft140.dll',
-        '$RootX86$\msvcdis140.dll',
+        '$Root$/$LocalisationUID$/clui.dll',
+        '$Root$/c1.dll'
+        '$Root$/c1xx.dll',
+        '$Root$/c2.dll',
+        '$RootX86$/msobj140.dll',
+        '$RootX86$/mspdb140.dll',
+        '$RootX86$/mspdbcore.dll',
+        '$RootX86$/mspdbsrv.exe',
+        '$RootX86$/mspft140.dll',
+        '$RootX86$/msvcp140_1.dll',
+        '$RootX86$/msvcp140_2.dll',
+        '$RootX86$/vcruntime140.dll',
+        '$Root$/vcruntime140_1.dll',
     }
 }
 #endif
@@ -155,7 +162,7 @@ Compiler( 'Compiler-MSVC2019-x64_x86' )
 [
     Using( .MSVC2019BasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath$\Bin\$WindowsSDKVersion$\x64\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath$/Bin/$WindowsSDKVersion$/x64/RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]
@@ -227,7 +234,7 @@ Compiler( 'Compiler-MSVC2019-x64_x86' )
     Print( "Using Visual 2019 with C++14 standard" )
     .AdditionalOptions + ' /std:c++14' ; https://docs.microsoft.com/fr-fr/cpp/build/reference/std-specify-language-standard-version
 #endif
-#if USE_VISUAL2019_STD_2019
+#if USE_VISUAL2019_STD_2017
     Print( "Using Visual 2019 with C++17 standard" )
     .AdditionalOptions + ' /std:c++17' ; https://docs.microsoft.com/fr-fr/cpp/build/reference/std-specify-language-standard-version
 #endif
@@ -255,18 +262,18 @@ Compiler( 'Compiler-MSVC2019-x64_x86' )
 
     .SystemIncludePaths =
     {
-        '$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\include',
-        '$VSBasePath$\VC\Auxiliary\VS\include',
-        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\ucrt',
-        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\um',
-        '$WindowsSDKBasePath$\Include\$WindowsSDKVersion$\shared',
+        '$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/include',
+        '$VSBasePath$/VC/Auxiliary/VS/include',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/ucrt',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/um',
+        '$WindowsSDKBasePath$/Include/$WindowsSDKVersion$/shared',
     }
 ]
 
 .MSVC2019DebugFastLink =
 [
 #if USE_VISUAL2019_DEBUG_FASTLINK
-    Print( "Using Visual 2019 debug fast link : pdb references built objs" )
+    Print( "Using Visual 2019 debug fast link : pdb references built objs (/DEBUG:FASTLINK)" )
     ; utilise un lien symbolique vers les obj plutot que de les copier dans le pdb
     .LinkerOptions      = ' /DEBUG:FASTLINK'
 #endif
@@ -277,7 +284,7 @@ Compiler( 'Compiler-MSVC2019-x64_x86' )
     ; Link Time Code Generation (LTCG) incrémental pour accélérer les builds en FINAL
     .LinkerOptions      = ' /LTCG'
 #if USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
-    Print( "Using Visual 2019 incremental LTCG for profiling" )
+    Print( "Using Visual 2019 incremental LTCG for profiling (/LTCG:incremental)" )
     .LinkerOptions      = ' /LTCG:incremental'
 #endif
     .LibrarianOptions   = ' /LTCG'
@@ -296,22 +303,42 @@ Print( "Using Visual 2019 incremental LTCG for profiling : no profiling informat
 .MSVC2019GuardCF =
 [
 #if USE_VISUAL2019_GUARD_CF
-    Print( "Using Visual 2019 guard CF : control flow protection" )
+    Print( "Using Visual 2019 guard CF : control flow protection (/guard:cf)" )
     ; https://docs.microsoft.com/fr-fr/cpp/build/reference/guard-enable-guard-checks?view=vs-2019
     .CompilerOptions    = ' /guard:cf'
     .LinkerOptions      = ' /guard:cf /DYNAMICBASE'
 #endif
 ]
 
+.MSVC2019AggressiveInliner =
+[
+#if USE_VISUAL2019_AGGRESSIVE_INLINER
+    Print( "Using Visual 2019 aggressive inliner (/Ob3)" )
+    ; https://devblogs.microsoft.com/cppblog/msvc-backend-updates-in-visual-studio-2019-preview-2/
+    .CompilerOptions    = ' /Ob3'
+#endif
+]
+
 .MSVC2019ReportClassLayoutChanges =
 [
 #if USE_VISUAL2019_EBCO_REPORT
-    Print( "Using Visual 2019 empty base class optimizations report" )
+    Print( "Using Visual 2019 empty base class optimizations report (/d1reportClassLayoutChanges)" )
     ; https://blogs.msdn.microsoft.com/vcblog/2016/03/30/optimizing-the-layout-of-empty-base-classes-in-vs2015-update-2-3/
     .CompilerOptions    = ' /d1reportClassLayoutChanges'
 #endif
 ]
-.MSVC2019BaseConfig + .MSVC2019ReportClassLayoutChanges
+
+.MSVC2019LightExceptionHandler =
+[
+#if USE_VISUAL2019_LIGHT_EXCEPTION_HANDLER
+    Print( "Using Visual 2019 light exception handler (/d2FH4)" )
+    ; https://devblogs.microsoft.com/cppblog/msvc-backend-updates-in-visual-studio-2019-preview-2/
+    .CompilerOptions    = ' /d2FH4'
+#endif
+]
+
+.MSVC2019BaseConfig     + .MSVC2019ReportClassLayoutChanges
+                        + .MSVC2019LightExceptionHandler
 
 //------------------------------------------------------------------------------
 // Platforms
@@ -321,21 +348,21 @@ Print( "Using Visual 2019 incremental LTCG for profiling : no profiling informat
     Using( .MSVC2019BaseConfig )
 
     .Compiler           = 'Compiler-MSVC2019-x86'
-    .ToolsBasePath      = '$MSVC2019BinPath$\HostX86\x86'
+    .ToolsBasePath      = '$MSVC2019BinPath$/HostX86/x86'
 
 #if USE_VISUAL2019_NATIVE_ENVIRONMENT
     Print( "Using Visual 2019 native environment : cross compile x86 from x64" )
     .Compiler           = 'Compiler-MSVC2019-x64_x86'
-    .ToolsBasePath      = '$MSVC2019BinPath$\HostX64\x86'
+    .ToolsBasePath      = '$MSVC2019BinPath$/HostX64/x86'
 #endif
 
-    .Librarian          = '$ToolsBasePath$\lib.exe'
-    .Linker             = '$ToolsBasePath$\link.exe'
+    .Librarian          = '$ToolsBasePath$/lib.exe'
+    .Linker             = '$ToolsBasePath$/link.exe'
 
-    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x86"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x86"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\Auxiliary\VS\lib\x86"'
+    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/lib/x86"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x86"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x86"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/Auxiliary/VS/lib/x86"'
 ]
 .MSVC2019PlatformX86 + .MSVCBasePlatformX86
 
@@ -344,15 +371,15 @@ Print( "Using Visual 2019 incremental LTCG for profiling : no profiling informat
     Using( .MSVC2019BaseConfig )
 
     .Compiler           = 'Compiler-MSVC2019-x64'
-    .ToolsBasePath      = '$MSVC2019BinPath$\HostX64\x64'
+    .ToolsBasePath      = '$MSVC2019BinPath$/HostX64/x64'
 
-    .Librarian          = '$ToolsBasePath$\lib.exe'
-    .Linker             = '$ToolsBasePath$\link.exe'
+    .Librarian          = '$ToolsBasePath$/lib.exe'
+    .Linker             = '$ToolsBasePath$/link.exe'
 
-    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$\VC\Tools\MSVC\$VSToolsVersion$\lib\x64"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\ucrt\x64"'
-                        + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\Auxiliary\VS\lib\x64"'
+    .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/lib/x64"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x64"'
+                        + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x64"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/Auxiliary/VS/lib/x64"'
 ]
 .MSVC2019PlatformX64 + .MSVCBasePlatformX64
 
@@ -363,14 +390,14 @@ Print( "Using Visual 2019 incremental LTCG for profiling : no profiling informat
 .MSVC2019_X86Debug      = .MSVC2019PlatformX86   + .MSVCBaseDebugConfig          + .MSVC2019DebugFastLink
 .MSVC2019_X86FastDebug  = .MSVC2019PlatformX86   + .MSVCBaseFastDebugConfig      + .MSVC2019DebugFastLink    + .MSVC2019GuardCF
 .MSVC2019_X86Release    = .MSVC2019PlatformX86   + .MSVCBaseReleaseConfig        + .MSVC2019DebugFastLink
-.MSVC2019_X86Profiling  = .MSVC2019PlatformX86   + .MSVCBaseProfilingConfig      + .MSVC2019LinkTimeCodeGenerationIncremental + .MSVC2019GenerateProfilingInfos
-.MSVC2019_X86Final      = .MSVC2019PlatformX86   + .MSVCBaseFinalConfig          + .MSVC2019LinkTimeCodeGenerationIncremental
+.MSVC2019_X86Profiling  = .MSVC2019PlatformX86   + .MSVCBaseProfilingConfig      + .MSVC2019AggressiveInliner + .MSVC2019LinkTimeCodeGenerationIncremental + .MSVC2019GenerateProfilingInfos
+.MSVC2019_X86Final      = .MSVC2019PlatformX86   + .MSVCBaseFinalConfig          + .MSVC2019AggressiveInliner + .MSVC2019LinkTimeCodeGenerationIncremental
 
 .MSVC2019_X64Debug      = .MSVC2019PlatformX64   + .MSVCBaseDebugConfig          + .MSVC2019DebugFastLink
-.MSVC2019_X64FastDebug  = .MSVC2019PlatformX64   + .MSVCBaseFastDebugConfig      + .MSVC2019DebugFastLink    + .MSVC2019GuardCF
-.MSVC2019_X64Release    = .MSVC2019PlatformX64   + .MSVCBaseReleaseConfig        + .MSVC2019DebugFastLink
-.MSVC2019_X64Profiling  = .MSVC2019PlatformX64   + .MSVCBaseProfilingConfig      + .MSVC2019LinkTimeCodeGenerationIncremental + .MSVC2019GenerateProfilingInfos
-.MSVC2019_X64Final      = .MSVC2019PlatformX64   + .MSVCBaseFinalConfig          + .MSVC2019LinkTimeCodeGenerationIncremental
+.MSVC2019_X64FastDebug  = .MSVC2019PlatformX64   + .MSVCBaseFastDebugConfig       + .MSVC2019DebugFastLink    + .MSVC2019GuardCF
+.MSVC2019_X64Release    = .MSVC2019PlatformX64   + .MSVCBaseReleaseConfig         + .MSVC2019DebugFastLink
+.MSVC2019_X64Profiling  = .MSVC2019PlatformX64   + .MSVCBaseProfilingConfig      + .MSVC2019AggressiveInliner + .MSVC2019LinkTimeCodeGenerationIncremental + .MSVC2019GenerateProfilingInfos
+.MSVC2019_X64Final      = .MSVC2019PlatformX64   + .MSVCBaseFinalConfig          + .MSVC2019AggressiveInliner + .MSVC2019LinkTimeCodeGenerationIncremental
 
 .MSVC2019CompileConfigs =
 {

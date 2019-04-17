@@ -1,11 +1,11 @@
 #once
 
 ; __      ___                 _   ___   ___  __ ___
-; \ \    / (_)               | | |__ \ / _ \/_ |__ \
-;  \ \  / / _ ___ _   _  __ _| |    ) | | | || |  ) |
-;   \ \/ / | / __| | | |/ _` | |   / /| | | || | / /
-;    \  /  | \__ \ |_| | (_| | |  / /_| |_| || |/ /_
-;     \/   |_|___/\__,_|\__,_|_| |____|\___/ |_|____|
+; / /    / (_)               | | |__ / / _ //_ |__ /
+;  / /  / / _ ___ _   _  __ _| |    ) | | | || |  ) |
+;   / // / | / __| | | |/ _` | |   / /| | | || | / /
+;    /  /  | /__ / |_| | (_| | |  / /_| |_| || |/ /_
+;     //   |_|___//__,_|/__,_|_| |____|/___/ |_|____|
 ;
 
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
@@ -22,16 +22,16 @@
 .MSVC2012PlatformToolset = 'v110'
 
 #import VS110COMNTOOLS
-.PATH   = "$VS110COMNTOOLS$..\IDE;"
-        + "$VS110COMNTOOLS$..\..\VC\Bin;"
-        + "$VS110COMNTOOLS$..\..\VC\Bin\amd64;"
+.PATH   = "$VS110COMNTOOLS$../IDE;"
+        + "$VS110COMNTOOLS$../../VC/Bin;"
+        + "$VS110COMNTOOLS$../../VC/Bin/amd64;"
         + .PATH
 
 .MSVC2012BasePath =
 [
     .LocalisationUID    = '$VS110CLUID$' ; code zone pour le language (messages std FR)
     Print( "Using Visual 2012 with localisation uid $LocalisationUID$" )
-    .VSBasePath         = '$VS110COMNTOOLS$..\..'
+    .VSBasePath         = '$VS110COMNTOOLS$../..'
     .WindowsSDKBasePath = .WindowsSDKBasePath81
     .WindowsSDKVersion  = .WindowsSDKVersion81
 ]
@@ -45,24 +45,24 @@ Compiler( 'Compiler-MSVC2012-x86' )
 {
     Using( .MSVC2012BasePath )
 
-    .Root       = '$VSBasePath$\VC\bin'
-    .Executable = '$Root$\cl.exe'
+    .Root       = '$VSBasePath$/VC/bin'
+    .Executable = '$Root$/cl.exe'
     .ExtraFiles =
     {
-        '$Root$\$LocalisationUID$\clui.dll',
-        '$Root$\c1.dll',
-        '$Root$\c1ast.dll',
-        '$Root$\c1xx.dll',
-        '$Root$\c1xxast.dll',
-        '$Root$\c2.dll',
-        '$Root$\mspft110.dll',
-        '$VSBasePath$\Common7\IDE\msobj110.dll',
-        '$VSBasePath$\Common7\IDE\mspdb110.dll',
-        '$VSBasePath$\Common7\IDE\mspdbcore.dll',
-        '$VSBasePath$\Common7\IDE\mspdbsrv.exe',
-        '$VSBasePath$\VC\redist\x86\Microsoft.VC110.CRT\msvcp110.dll',
-        '$VSBasePath$\VC\redist\x86\Microsoft.VC110.CRT\msvcr110.dll',
-        '$VSBasePath$\VC\redist\x86\Microsoft.VC110.CRT\vccorlib110.dll'
+        '$Root$/$LocalisationUID$/clui.dll',
+        '$Root$/c1.dll',
+        '$Root$/c1ast.dll',
+        '$Root$/c1xx.dll',
+        '$Root$/c1xxast.dll',
+        '$Root$/c2.dll',
+        '$Root$/mspft110.dll',
+        '$VSBasePath$/Common7/IDE/msobj110.dll',
+        '$VSBasePath$/Common7/IDE/mspdb110.dll',
+        '$VSBasePath$/Common7/IDE/mspdbcore.dll',
+        '$VSBasePath$/Common7/IDE/mspdbsrv.exe',
+        '$VSBasePath$/VC/redist/x86/Microsoft.VC110.CRT/msvcp110.dll',
+        '$VSBasePath$/VC/redist/x86/Microsoft.VC110.CRT/msvcr110.dll',
+        '$VSBasePath$/VC/redist/x86/Microsoft.VC110.CRT/vccorlib110.dll'
     }
 }
 
@@ -73,24 +73,24 @@ Compiler( 'Compiler-MSVC2012-x64' )
 {
     Using( .MSVC2012BasePath )
 
-    .Root       = '$VSBasePath$\VC\bin\amd64'
-    .Executable = '$Root$\cl.exe'
+    .Root       = '$VSBasePath$/VC/bin/amd64'
+    .Executable = '$Root$/cl.exe'
     .ExtraFiles =
     {
-        '$Root$\$LocalisationUID$\clui.dll',
-        '$Root$\c1.dll',
-        '$Root$\c1ast.dll',
-        '$Root$\c1xx.dll',
-        '$Root$\c1xxast.dll',
-        '$Root$\c2.dll',
-        '$Root$\msobj110.dll',
-        '$Root$\mspdb110.dll',
-        '$Root$\mspdbcore.dll',
-        '$Root$\mspdbsrv.exe',
-        '$Root$\mspft110.dll',
-        '$VSBasePath$\VC\redist\x64\Microsoft.VC110.CRT\msvcp110.dll',
-        '$VSBasePath$\VC\redist\x64\Microsoft.VC110.CRT\msvcr110.dll',
-        '$VSBasePath$\VC\redist\x64\Microsoft.VC110.CRT\vccorlib110.dll'
+        '$Root$/$LocalisationUID$/clui.dll',
+        '$Root$/c1.dll',
+        '$Root$/c1ast.dll',
+        '$Root$/c1xx.dll',
+        '$Root$/c1xxast.dll',
+        '$Root$/c2.dll',
+        '$Root$/msobj110.dll',
+        '$Root$/mspdb110.dll',
+        '$Root$/mspdbcore.dll',
+        '$Root$/mspdbsrv.exe',
+        '$Root$/mspft110.dll',
+        '$VSBasePath$/VC/redist/x64/Microsoft.VC110.CRT/msvcp110.dll',
+        '$VSBasePath$/VC/redist/x64/Microsoft.VC110.CRT/msvcr110.dll',
+        '$VSBasePath$/VC/redist/x64/Microsoft.VC110.CRT/vccorlib110.dll'
     }
 }
 
@@ -101,7 +101,7 @@ Compiler( 'Compiler-MSVC2012-x64' )
 [
     Using( .MSVC2012BasePath )
 
-    .Compiler                   = '$WindowsSDKBasePath$\Bin\x86\RC.exe'
+    .Compiler                   = '$WindowsSDKBasePath$/Bin/x86/RC.exe'
     .CompilerOutputExtension    = '.res'
     .CompilerOptions            = '/nologo /fo"%2" %1'
 ]
@@ -127,10 +127,10 @@ Compiler( 'Compiler-MSVC2012-x64' )
 
     .SystemIncludePaths =
     {
-        '$VSBasePath$\VC\Include',
-        '$WindowsSDKBasePath$\Include\um',
-        '$WindowsSDKBasePath$\Include\shared',
-        '$WindowsSDKBasePath$\Include',
+        '$VSBasePath$/VC/Include',
+        '$WindowsSDKBasePath$/Include/um',
+        '$WindowsSDKBasePath$/Include/shared',
+        '$WindowsSDKBasePath$/Include',
     }
 ]
 
@@ -147,11 +147,11 @@ Compiler( 'Compiler-MSVC2012-x64' )
     Using( .MSVC2012BaseConfig )
 
     .Compiler           = 'Compiler-MSVC2012-x86'
-    .ToolsBasePath      = '$VSBasePath$\VC\bin'
-    .Librarian          = '$ToolsBasePath$\lib.exe'
-    .Linker             = '$ToolsBasePath$\link.exe'
-    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x86"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\lib"'
+    .ToolsBasePath      = '$VSBasePath$/VC/bin'
+    .Librarian          = '$ToolsBasePath$/lib.exe'
+    .Linker             = '$ToolsBasePath$/link.exe'
+    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x86"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib"'
 ]
 .MSVC2012PlatformX86 + .MSVCBasePlatformX86
 
@@ -160,11 +160,11 @@ Compiler( 'Compiler-MSVC2012-x64' )
     Using( .MSVC2012BaseConfig )
 
     .Compiler           = 'Compiler-MSVC2012-x64'
-    .ToolsBasePath      = '$VSBasePath$\VC\bin\amd64'
-    .Librarian          = '$ToolsBasePath$\lib.exe'
-    .Linker             = '$ToolsBasePath$\link.exe'
-    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$\Lib\$WindowsSDKVersion$\um\x64"'
-                        + ' /LIBPATH:"$VSBasePath$\VC\lib\amd64"'
+    .ToolsBasePath      = '$VSBasePath$/VC/bin/amd64'
+    .Librarian          = '$ToolsBasePath$/lib.exe'
+    .Linker             = '$ToolsBasePath$/link.exe'
+    .LinkerOptions      + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x64"'
+                        + ' /LIBPATH:"$VSBasePath$/VC/lib/amd64"'
                         + ' /LIBPATH:"$PerfSDKPath$"'
 ]
 .MSVC2012PlatformX64 + .MSVCBasePlatformX64

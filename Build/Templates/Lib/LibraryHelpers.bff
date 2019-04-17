@@ -49,10 +49,10 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         #include "EvalParameters.bff"
 
         // Project directories
-        .IntermediateRoot      = .IntermediatePath + '\$Platform$\$Config$'
-        .IntermediatePath      = '$IntermediateRoot$\$ProjectName$'
+        .IntermediateRoot      = .IntermediatePath + '/$Platform$/$Config$'
+        .IntermediatePath      = '$IntermediateRoot$/$ProjectName$'
         .OutputPath            = .BinaryPath
-        .UnityDirectory        = '$IntermediatePath$\Unity'
+        .UnityDirectory        = '$IntermediatePath$/Unity'
 
         // Project compiled config
         .ProjectCompileConfig =
@@ -116,7 +116,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
 #if USE_VISUALSTUDIO
             // PDB output path
-            .CompilerOptions                + ' /Fd"$IntermediateRoot$\$ProjectName$.$PlatformToolset$.pdb"'
+            .CompilerOptions                + ' /Fd"$IntermediateRoot$/$ProjectName$.$PlatformToolset$.pdb"'
 #endif
         ]
 
@@ -225,7 +225,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
             .CompilerOutputPath = .IntermediatePath
 
-            .LibrarianOutput    = '$IntermediateRoot$\$ProjectName$.$CompilerLibraryExtension$'
+            .LibrarianOutput    = '$IntermediateRoot$/$ProjectName$.$CompilerLibraryExtension$'
             .LibrarianAdditionalInputs = { '$ProjectName$-Obj-$Platform$-$Config$' }
         }
 
@@ -241,7 +241,9 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             // Dynamic library
             DLL( '$ProjectName$-$DynamicLinkType$-$Platform$-$Config$' )
             {
-                .LinkerOutput       = '$IntermediateRoot$\$ProjectName$.$Config$.$Platform$.$CompilerDllExtension$'
+                .LinkerVerboseOutput = true
+
+                .LinkerOutput       = '$IntermediateRoot$/$ProjectName$.$Config$.$Platform$.$CompilerDllExtension$'
                 .LinkerOptions      = "$DllOptions$ $LinkerOptions$"
 
                 .Libraries          = { '$ProjectName$-Lib-$Platform$-$Config$' }
@@ -283,8 +285,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         Using( .ProjectCompileConfigWithPCH )
 
         .ProjectBasePath        = "$ProjectPath$"
-        .BuildLogFile           = "$IntermediateRoot$\$ProjectName$.$Config$.$Platform$.log"
-        .Output                 = "$BinaryPath$\$BinaryPrefix$.$Config$.$Platform$.$CompilerBinaryExtension$"
+        .BuildLogFile           = "$IntermediateRoot$/$ProjectName$.$Config$.$Platform$.log"
+        .Output                 = "$BinaryPath$/$BinaryPrefix$.$Config$.$Platform$.$CompilerBinaryExtension$"
         .OutputDirectory        = "$BinaryPath$"
         .IntermediateDirectory  = "$IntermediatePath$"
         .ProjectBuildCommand    = '$VisualStudioFBuildCommand$ $VSBuildOptions$ "$ProjectName$-$Platform$-$Config$"'

@@ -5,16 +5,16 @@ require 'pathname'
 
 START_TIME=Time.now
 
-VERSION='2.4'
-VERSION_HEADER="; Version = <#{VERSION}>"
+VERSION='2.5'
+VERSION_HEADER="// VERSION = <#{VERSION}>"
 
 require 'rbconfig'
-RUBY_INTERPRETER_PATH = File.join(
+RUBY_INTERPRETER_PATH = Pathname.new(File.join(
     RbConfig::CONFIG["bindir"],
     RbConfig::CONFIG["RUBY_INSTALL_NAME"] +
-    RbConfig::CONFIG["EXEEXT"] )
+    RbConfig::CONFIG["EXEEXT"] )).realpath.to_s
 
-SOLUTION_ROOT = Pathname.new(File.join(File.dirname(__FILE__))).realpath.to_s
+SOLUTION_ROOT = Pathname.new(File.dirname(__FILE__)).realpath.to_s
 SOLUTION_FBUILDROOT = File.join(SOLUTION_ROOT, 'Build')
 SOLUTION_FBUILDCMD = File.join(SOLUTION_FBUILDROOT, 'FBuild.exe')
 SOLUTION_PATHFILE = File.join(SOLUTION_FBUILDROOT, '_solution_path.bff')
@@ -27,15 +27,40 @@ class FHeader
     attr_reader :filename, :header
     def initialize(filename)
         @filename = filename
+        @header = nil
+    end
+    def match?(other)
+        return (@filename == other.filename && @header == other.header)
+    end
+    def read?()
         @header = File.exist?(@filename) ? File.read(@filename) : nil
     end
-    def match?(header)
-        return (@header == header)
-    end
-    def write(header)
+    def write!()
         filename_old = @filename + '.old'
         FileUtils.mv(@filename, filename_old) if File.exist?(@filename)
         File.write(@filename, header)
+    end
+
+    def print(txt)
+        @header = '' if @header.nil?
+        @header += txt
+        return self
+    end
+    def puts(txt='')
+        self.print(txt + "\n")
+    end
+    def comment(txt)
+        self.print("\n// #{txt}\n")
+    end
+    def define(name, enabled=true)
+        self.print("#{enabled ? '#' : ';'}define WITH_#{name.to_s.upcase}\n")
+    end
+    def set(name, value)
+        if value
+            self.print(".#{name} = '#{value.gsub('\\', '/')}'\n")
+        else
+            self.print(";#{name} = 'XXX'\n")
+        end
     end
 end
 
@@ -54,9 +79,8 @@ class FDependency
         @available = eval_()
         #puts "Evaluate dependency : #{@name} = #{@available ? 'ENABLED' : 'DISABLED'}"
     end
-    def export(oss)
-        comment = @available ? '' : ';'
-        oss.puts "#{comment}#define WITH_#{@name.to_s.upcase}"
+    def export(header)
+        header.define(@name, @available)
     end
 private
     def eval_()
@@ -71,10 +95,9 @@ class FDirectoryDependency < FDependency
         @var = var
         @path = path
     end
-    def export(oss)
-        super(oss)
-        comment = @available ? '' : ';'
-        oss.puts "#{comment}.#{var} = '#{@path}'"
+    def export(header)
+        super(header)
+        header.set(var, @available ? @path : nil)
     end
 private
     def eval_()
@@ -89,15 +112,10 @@ class FVisualStudio < FDependency
         @default_comntools = default_comntools
         super("VISUALSTUDIO_TOOLSET_#{@toolset}")
     end
-    def export(oss)
-        super(oss)
-        if @available
-            oss.puts ".VS#{@toolset}CLUID='#{@cluid}'"
-            oss.puts ".VS#{@toolset}COMNTOOLS='#{@comntools}'"
-        else
-            oss.puts ";.VS#{@toolset}CLUID='XXX'"
-            oss.puts ";.VS#{@toolset}COMNTOOLS='XXX'"
-        end
+    def export(header)
+        super(header)
+        header.set("VS#{@toolset}CLUID", @available ? @cluid : nil)
+        header.set("VS#{@toolset}COMNTOOLS", @available ? @comntools : nil)
     end
 private
     def eval_comntools_()
@@ -129,13 +147,9 @@ class FVisualStudioPost2015 < FVisualStudio
             comntools_professional :
             comntools_communuty )
     end
-    def export(oss)
-        super(oss)
-        if @available
-            oss.puts ".VS#{@toolset}VERSION='#{@version}'"
-        else
-            oss.puts ";.VS#{@toolset}VERSION='XXX'"
-        end
+    def export(header)
+        super(header)
+        header.set("VS#{@toolset}VERSION", @available ? @version : nil)
     end
 private
     def eval_()
@@ -163,15 +177,10 @@ class FWindowsSDK < FDependency
     end
     def sdkpath() File.join(BASEPATH, @winver) end
     def winver_s() winver.to_s().gsub('.','') end
-    def export(oss)
-        super(oss)
-        if @available
-            oss.puts ".WindowsSDKBasePath#{winver_s}='#{sdkpath}'"
-            oss.puts ".WindowsSDKVersion#{winver_s}='#{@version}'"
-        else
-            oss.puts ";.WindowsSDKBasePath#{winver_s}='XXX'"
-            oss.puts ";.WindowsSDKVersion#{winver_s}='XXX'"
-        end
+    def export(header)
+        super(header)
+        header.set("WindowsSDKBasePath#{winver_s}", @available ? sdkpath : nil)
+        header.set("WindowsSDKVersion#{winver_s}", @available ? @version : nil)
     end
 private
     def eval_()
@@ -194,17 +203,12 @@ class FLLVMWindows < FDependency
     def initialize()
         super('LLVM_WINDOWS')
     end
-    def export(oss)
-        super(oss)
-        if @available
-            oss.puts ".LLVMBasePath#{@platform} = '#{@llvm_path}'"
-            oss.puts ".LLVMClangVer#{@platform} = '#{@clang_version}'"
-            oss.puts ".LLVMWindowsBasePath = .LLVMBasePath#{@platform}"
-            oss.puts ".LLVMWindowsClangVer = .LLVMClangVer#{@platform}"
-        else
-            oss.puts ";.LLVMWindowsBasePath = 'XXX'"
-            oss.puts ";.LLVMWindowsClangVer = 'XXX'"
-        end
+    def export(header)
+        super(header)
+        header.set("LLVMBasePath#{@platform}", @available ? @llvm_path : nil)
+        header.set("LLVMClangVer#{@platform}", @available ? @clang_version : nil)
+        header.set("LLVMWindowsBasePath", @available ? @llvm_path : nil)
+        header.set("LLVMWindowsClangVer", @available ? @clang_version : nil)
     end
     def self.fetch_version?(llvm_path)
         clang_lib_path = File.join(llvm_path, 'lib', 'clang')
@@ -263,31 +267,29 @@ VISUALSTUDIO_DEFINES.length.times do |i|
     latestVisual = i if DEPENDENCIES[i][1].available
 end
 
-newHeader = StringIO.new()
+newHeader = FHeader.new(SOLUTION_PATHFILE)
 newHeader.puts VERSION_HEADER
-newHeader.puts "; File generated by fbuild.rb"
-newHeader.puts
-newHeader.puts ".SolutionPath = '#{SOLUTION_ROOT}'"
-newHeader.puts ".RubyInterpreterPath = '#{RUBY_INTERPRETER_PATH}'"
-newHeader.puts
+newHeader.comment("File generated by fbuild.rb")
+newHeader.set("SolutionPath", SOLUTION_ROOT)
+newHeader.set("RubyInterpreterPath", RUBY_INTERPRETER_PATH)
+
 DEPENDENCIES.each do |(friendly, dep)|
-    newHeader.puts "; Depends on #{friendly} : #{dep.available ? 'ENABLED' : 'DISABLED'}"
+    newHeader.comment("Depends on #{friendly} : #{dep.available ? 'ENABLED' : 'DISABLED'}")
     dep.export(newHeader)
-    newHeader.puts
 end
 
-newHeader.puts '; Lastest Visual Studio version available :'
+newHeader.comment('Latest Visual Studio version available :')
 VISUALSTUDIO_DEFINES.each_with_index do |define, i|
     comment = latestVisual == i ? '' : ';'
     newHeader.puts "#{comment}#define #{define}"
 end
-newHeader.puts
-newHeader = newHeader.string
 
 oldHeader = FHeader.new(SOLUTION_PATHFILE)
+oldHeader.read?()
+
 unless oldHeader.match?(newHeader)
     puts "Regen solution bff : #{SOLUTION_PATHFILE}"
-    oldHeader.write(newHeader)
+    newHeader.write!()
 end
 
 SOURCE_FILES_PATTERN=/\.cpp$/
