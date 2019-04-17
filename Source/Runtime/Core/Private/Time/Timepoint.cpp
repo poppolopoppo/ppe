@@ -15,7 +15,7 @@ FTimepoint FTimepoint::Now() {
 FTimepoint::value_type FTimepoint::Ticks(const FTimespan& duration) {
     Assert(duration.Value() >= 0);
 
-    return FPlatformTime::ToTicks(duration.Value());
+    return FPlatformTime::ToCycles(duration.Value());
 }
 //----------------------------------------------------------------------------
 FTimespan FTimepoint::Duration(const FTimepoint& start, const FTimepoint& stop) {

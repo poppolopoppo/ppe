@@ -72,7 +72,7 @@ public: // Helpers
 #endif
     }
 
-    static FORCE_INLINE void ClobberMemory() {
+    static FORCE_INLINE void ClobberMemory() NOEXCEPT {
         FPlatformAtomics::MemoryBarrier();
     }
 
@@ -90,21 +90,22 @@ private: // FTimer
 
     template <> struct TCounter<CpuCycles> {
         using date_type = u64;
-        static const char* Units() { return "k.cycles"; }
-        static date_type Now() { return FPlatformTime::ThreadCpuCycles(); }
-        static double ElapsedSince(date_type start) { return static_cast<double>(Now() - start) * 0.001; }
+        static CONSTEXPR const char* Units() { return "k.cycles"; }
+        date_type Now() const NOEXCEPT { return FPlatformTime::ThreadCpuCycles(); }
+        double ElapsedSince(date_type start) const NOEXCEPT { return static_cast<double>(Now() - start) * 0.001; }
     };
     template <> struct TCounter<PerfCounter> {
         using date_type = i64;
-        static const char* Units() { return "µs"; }
-        static date_type Now() { return FPlatformTime::Cycles(); }
-        static double ElapsedSince(date_type start) { return FPlatformTime::ToMicroseconds(Now() - start); }
+        const double MicrosecondsPerCycle = FPlatformTime::MicrosecondsPerCycle();
+        static CONSTEXPR const char* Units() { return "µs"; }
+        date_type Now() const NOEXCEPT { return FPlatformTime::Cycles(); }
+        double ElapsedSince(date_type start) const NOEXCEPT { return MicrosecondsPerCycle * (Now() - start); }
     };
     template <> struct TCounter<ChronoTime> {
         using date_type = double;
-        static const char* Units() { return "µs"; }
-        static date_type Now() { return FPlatformTime::ChronoMicroseconds(); }
-        static double ElapsedSince(date_type start) { return static_cast<double>(Now() - start); }
+        static CONSTEXPR const char* Units() { return "µs"; }
+        date_type Now() const { return FPlatformTime::ChronoMicroseconds(); }
+        double ElapsedSince(date_type start) const { return static_cast<double>(Now() - start); }
     };
 
     using FCpuCycles = TCounter<CpuCycles>; // best resolution
@@ -113,8 +114,8 @@ private: // FTimer
 
     using FCounter = FCpuCycles;
 
-    struct FTimer {
-        FCounter::date_type StartedAt{ 0 };
+    struct FTimer : FCounter {
+        date_type StartedAt{ 0 };
         double Elapsed{ 0 };
         void Start() {
             Assert_NoAssume(0 == StartedAt);

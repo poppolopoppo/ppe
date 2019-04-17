@@ -15,28 +15,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
+const double FWindowsPlatformTime::GSecondsPerCycle = FWindowsPlatformTime::SecondsPerCycle();
 //----------------------------------------------------------------------------
-static double FetchSecondsPerCycle_() {
-    ::LARGE_INTEGER frequency;
-    Verify(::QueryPerformanceFrequency(&frequency));
-    return (1.0 / frequency.QuadPart);
+u64 FWindowsPlatformTime::NetworkTime() NOEXCEPT {
+    ::FILETIME ft;
+    ::GetSystemTimePreciseAsFileTime(&ft);
+    return *((const u64*)& ft);
 }
 //----------------------------------------------------------------------------
-static double FetchMicrosecondsPerCycle_() {
-    ::LARGE_INTEGER frequency;
-    Verify(::QueryPerformanceFrequency(&frequency));
-    return (1000000.0 / frequency.QuadPart);
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-const double FWindowsPlatformTime::GSecondsPerCycle = FetchSecondsPerCycle_();
-const double FWindowsPlatformTime::GMicrosecondsPerCycle = FetchMicrosecondsPerCycle_();
-//----------------------------------------------------------------------------
-void FWindowsPlatformTime::SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) {
+void FWindowsPlatformTime::SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) NOEXCEPT {
     ::SYSTEMTIME st;
     ::GetLocalTime(&st);
 
@@ -50,7 +37,7 @@ void FWindowsPlatformTime::SystemTime(u32& year, u32& month, u32& dayOfWeek, u32
     msec = checked_cast<u32>(st.wMilliseconds);
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformTime::UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) {
+void FWindowsPlatformTime::UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) NOEXCEPT {
     ::SYSTEMTIME st;
     ::GetSystemTime(&st);
 
@@ -66,12 +53,12 @@ void FWindowsPlatformTime::UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& d
 //----------------------------------------------------------------------------
 // https://docs.microsoft.com/en-us/windows/desktop/api/timeapi/nf-timeapi-timebeginperiod
 void FWindowsPlatformTime::EnterHighResolutionTimer() {
-#if USE_PPE_WINDOWS_HIGHRESTIMER    
+#if USE_PPE_WINDOWS_HIGHRESTIMER
     Verify(TIMERR_NOERROR == ::timeBeginPeriod(1)); // set timer resolution to 1ms (minimum value)
 #endif
 }
 void FWindowsPlatformTime::LeaveLowResolutionTimer() {
-#if USE_PPE_WINDOWS_HIGHRESTIMER    
+#if USE_PPE_WINDOWS_HIGHRESTIMER
     Verify(TIMERR_NOERROR == ::timeEndPeriod(1)); // unset timer resolution from 1ms (minimum value)
 #endif
 }
