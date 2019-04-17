@@ -44,7 +44,7 @@ void FTestApp::Start() {
         &Test_XML,
         &Test_Lattice,
         //&Test_Pixmap, // #TODO refactoring the asset generation pipeline
-        //&Test_Network, %NOCOMMTI%
+        &Test_Network
     };
 
     const size_t total = lengthof(tests);

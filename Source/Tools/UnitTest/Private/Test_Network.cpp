@@ -20,8 +20,12 @@
 #include "IO/FileStream.h"
 #include "IO/FormatHelpers.h"
 #include "IO/String.h"
+#include "IO/StringBuilder.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
+#include "Time/DateTime.h"
+
+// #TODO : wrap RTTI meta classes with OpenAPI/Swagger (https://editor.swagger.io/)
 
 #if (not defined(PROFILING_ENABLED) && not defined(FINAL_RELEASE))
 #   define WITH_PPE_NETWORK_INTERACTIVE_TESTS 1
@@ -89,6 +93,66 @@ static void Test_ParseUri_() {
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
+static void LogRequest_(const FHttpRequest& req) {
+#ifdef USE_DEBUG_LOGGER
+    FWStringBuilder oss;
+    oss << L"#HTTP_REQUEST" << Eol
+        << L"> URI      : " << req.Uri() << Eol
+        << L"> Method   : " << req.Method() << Eol
+        << L"> Headers  : " << Eol;
+
+    for (const auto& it : req.Headers()) {
+        Format(oss, L" - {{0}}' = \"{1}\"", it.first, it.second);
+        oss << Eol;
+    }
+
+    FHttpRequest::FCookieMap cookies;
+    if (FHttpRequest::UnpackCookie(&cookies, req)) {
+        oss << L"> Cookies  :" << Eol;
+        for (const auto& it : cookies) {
+            Format(oss, L" - {{0}}' = \"{1}\"", it.first, it.second);
+            oss << Eol;
+        }
+    }
+
+    FLogger::Log(
+        LOG_CATEGORY_GET(Test_Network),
+        FLogger::EVerbosity::Debug,
+        FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+        oss.Written() );
+
+#else
+    UNUSED(req);
+#endif
+}
+//----------------------------------------------------------------------------
+static void LogResponse_(const FHttpResponse& resp) {
+#ifdef USE_DEBUG_LOGGER
+    FWStringBuilder oss;
+    oss << L"#HTTP_RESPONSE" << Eol
+        << L"> Status   : " << resp.Status() << Eol
+        << L"> Reason   : " << resp.Reason() << Eol
+        << L"> Headers  : " << Eol;
+
+    for (const auto& it : resp.Headers()) {
+        Format(oss, L" - {{0}}' = \"{1}\"", it.first, it.second);
+        oss << Eol;
+    }
+
+    oss << L"> Body     : " << Fmt::FSizeInBytes{ checked_cast<size_t>(resp.Body().SizeInBytes()) } << Eol
+        << resp.MakeView();
+
+    FLogger::Log(
+        LOG_CATEGORY_GET(Test_Network),
+        FLogger::EVerbosity::Debug,
+        FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+        oss.Written());
+
+#else
+    UNUSED(resp);
+#endif
+}
+//----------------------------------------------------------------------------
 #if WITH_PPE_NETWORK_INTERACTIVE_TESTS
 static void Test_SocketAccept_() {
     FListener listener = FListener::Localhost(8123);
@@ -117,21 +181,7 @@ static void Test_SocketAccept_() {
                 FHttpRequest request;
                 FHttpRequest::Read(&request, socket, maxContentLength);
 
-#ifdef USE_DEBUG_LOGGER
-                LOG(Test_Network, Info, L"Method :   {0}", request.Method());
-                LOG(Test_Network, Info, L"Uri    :   {0}", request.Uri());
-
-                LOG(Test_Network, Info, L"Header :");
-                for (const auto& it : request.Headers())
-                    LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
-#endif
-
-                FHttpRequest::FCookieMap cookies;
-                if (FHttpRequest::UnpackCookie(&cookies, request)) {
-                    LOG(Test_Network, Info, L"Cookies :");
-                    for (const auto& it : cookies)
-                        LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
-                }
+                LogRequest_(request);
 
                 FHttpResponse response;
 
@@ -140,9 +190,13 @@ static void Test_SocketAccept_() {
                 }
                 else {
                     response.SetStatus(EHttpStatus::OK);
-                    response.Body().WriteView(MakeStringView("<marquee width='100%'>Coming soon <b>bitches</b> !</marquee>"));
+                    response.Body().WriteView("<marquee width='100%'>");
+                    response.Body().WriteView(ToString(FDateTime::Now()));
+                    response.Body().WriteView("</marquee>");
                     response.UpdateContentHeaders("text/html; charset=UTF-8");
                 }
+
+                LogResponse_(response);
 
                 FHttpResponse::Write(&socket, response);
             }
@@ -164,7 +218,7 @@ static void Test_SocketAccept_() {
 //----------------------------------------------------------------------------
 static void Test_HttpGet_() {
     FUri uri;
-    if (not FUri::Parse(uri, MakeStringView("http://freemusicarchive.org/api/trackSearch?q=deerhoof&limit=10")))
+    if (not FUri::Parse(uri, MakeStringView("http://frostiebek.free.fr/datas/sample.json?fake=arg")))
         AssertNotReached();
 
     forrange(i, 0, 3) {
@@ -172,19 +226,7 @@ static void Test_HttpGet_() {
         if (EHttpStatus::OK != HttpGet(&response, uri))
             AssertNotReached();
 
-#ifdef USE_DEBUG_LOGGER
-        LOG(Test_Network, Info, L"Status: {0}", response.Status());
-        LOG(Test_Network, Info, L"Reason: {0}", response.Reason());
-
-        LOG(Test_Network, Info, L"Headers   :");
-        for (const auto& it : response.Headers()) {
-            LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
-        }
-
-        LOG(Test_Network, Info, L"Body : {0} =\n{1}",
-            Fmt::FSizeInBytes{ checked_cast<size_t>(response.Body().SizeInBytes()) },
-            response.MakeView());
-#endif
+        LogResponse_(response);
 
         if (response.Status() == Network::EHttpStatus::OK) {
             Serialize::FJson json;
@@ -216,18 +258,7 @@ static void Test_HttpPost_() {
     if (EHttpStatus::OK != HttpPost(&response, uri, post))
         AssertNotReached();
 
-#ifdef USE_DEBUG_LOGGER
-    LOG(Test_Network, Info, L"Status: {0}", response.Status());
-    LOG(Test_Network, Info, L"Reason: {0}", response.Reason());
-
-    LOG(Test_Network, Info, L"Headers   :");
-    for (const auto& it : response.Headers())
-        LOG(Test_Network, Info, L" - '{0}' : '{1}'", it.first, it.second);
-
-    LOG(Test_Network, Info, L"Body : {0} =\n{1}",
-        Fmt::FSizeInBytes{ checked_cast<size_t>(response.Body().SizeInBytes()) },
-        response.MakeView() );
-#endif
+    LogResponse_(response);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -238,7 +269,7 @@ namespace {
 //----------------------------------------------------------------------------
 class FTestHttpServer : public FHttpServer {
 public:
-    FTestHttpServer() : FHttpServer("localhost", FAddress::Localhost(8126)) {}
+    FTestHttpServer() : FHttpServer("localhost", FAddress::Localhost(8776)) {}
 
 private:
     virtual void OnAccept(FSocketBuffered& socket) const override {
@@ -247,7 +278,9 @@ private:
     }
 
     virtual void OnRequest(FSocketBuffered& socket, const FHttpRequest& request) const PPE_THROW() override {
-        LOG(Test_Network, Info, L"[{0}] {1} requested : {2}", socket.Local(), socket.Remote(), request.Uri());
+        LOG(Test_Network, Info, L"[{0}] {1} requested", socket.Local(), socket.Remote());
+
+        LogRequest_(request);
 
         FHttpResponse response;
         response.SetStatus(EHttpStatus::OK);
