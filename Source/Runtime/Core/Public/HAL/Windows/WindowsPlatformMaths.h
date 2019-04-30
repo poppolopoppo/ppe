@@ -115,6 +115,12 @@ public:
     using FGenericPlatformMaths::Log2;
 
     //------------------------------------------------------------------------
+    // prime numbers
+
+    using FGenericPlatformMaths::IsPrime;
+    using FGenericPlatformMaths::NextPrime;
+
+    //------------------------------------------------------------------------
     // using _BitScanReverse
 
     using FGenericPlatformMaths::IsPow2;

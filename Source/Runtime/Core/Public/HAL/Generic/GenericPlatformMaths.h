@@ -168,6 +168,55 @@ public: // must be defined for every platform
     static FORCE_INLINE float Log2(float f) { return Loge(f) * 1.4426950f; } // 1.0 / Loge(2) = 1.4426950f
 
     //------------------------------------------------------------------------
+    // prime numbers
+
+    static FORCE_INLINE CONSTEXPR bool IsPrime(u32 v) NOEXCEPT {
+        if (v == 2 || v == 3)
+            return true;
+
+        if (v % 2 == 0 || v % 3 == 0)
+            return false;
+
+        for (u32 d = 6; d * d - 2 * d + 1 <= v; d += 6) {
+            if (v % (d - 1) == 0)
+                return false;
+
+            if (v % (d + 1) == 0)
+                return false;
+        }
+
+        return true;
+    }
+
+    static FORCE_INLINE CONSTEXPR bool IsPrime(u64 v) NOEXCEPT {
+        if (v == 2 || v == 3)
+            return true;
+
+        if (v % 2 == 0 || v % 3 == 0)
+            return false;
+
+        for (u64 d = 6; d * d - 2 * d + 1 <= v; d += 6) {
+            if (v % (d - 1) == 0)
+                return false;
+
+            if (v % (d + 1) == 0)
+                return false;
+        }
+
+        return true;
+    }
+
+    static CONSTEXPR u32 NextPrime(u32 a) NOEXCEPT {
+        while (not IsPrime(++a));
+        return a;
+    }
+
+    static CONSTEXPR u64 NextPrime(u64 a) NOEXCEPT {
+        while (not IsPrime(++a));
+        return a;
+    }
+
+    //------------------------------------------------------------------------
     // see http://codinggorilla.domemtech.com/?p=81 or http://en.wikipedia.org/wiki/Binary_logarithm
     // but modified to return 0 for a input value of 0, 686ms on test data
 
