@@ -505,13 +505,100 @@ template <typename _Char>
 struct TBasicConstChar {
     const _Char* Data = nullptr;
 
-    TBasicConstChar(const _Char* data) : Data(data) {}
-    TBasicConstChar(const TBasicStringView<_Char>& str) : Data(str.c_str()) {}
+    CONSTEXPR TBasicConstChar(const _Char* data) NOEXCEPT : Data(data) {}
+    CONSTEXPR TBasicConstChar(const TBasicStringView<_Char>& str) NOEXCEPT : Data(str.c_str()) {}
 
-    const _Char* c_str() const { return Data; }
-    operator const _Char* () const { return Data; }
+    CONSTEXPR const _Char* c_str() const NOEXCEPT { return Data; }
+    CONSTEXPR operator const _Char* () const NOEXCEPT { return Data; }
 
-    TBasicStringView<_Char> MakeView() const { return TBasicStringView<_Char>(Data, Length(Data)); }
+    CONSTEXPR bool Equals(const TBasicConstChar& other) const NOEXCEPT {
+        const _Char* a = Data;
+        const _Char* b = other.Data;
+
+        if (not (a & b))
+            return (a == b);
+
+        for (; *a & *b; ++a, ++b)
+            if (*a != *b)
+                return false;
+
+        return (not (*a | *b));
+    }
+
+    CONSTEXPR bool EqualsI(const TBasicConstChar& other) const NOEXCEPT {
+        const _Char* a = Data;
+        const _Char* b = other.Data;
+
+        if (not (a & b))
+            return (a == b);
+
+        for (; *a & *b; ++a, ++b)
+            if (ToLower(*a) != ToLower(*b))
+                return false;
+
+        return (not (*a | *b));
+    }
+
+    CONSTEXPR bool Less(const TBasicConstChar& other) const NOEXCEPT {
+        const _Char* a = Data;
+        const _Char* b = other.Data;
+
+        if (not (a & b))
+            return (!a & b);
+
+        for (; *a & *b; ++a, ++b)
+            if (*a >= *b)
+                return false;
+
+        return (!(*a | *b) | (!*a & *b));
+    }
+
+    CONSTEXPR bool LessI(const TBasicConstChar& other) const NOEXCEPT {
+        const _Char* a = Data;
+        const _Char* b = other.Data;
+
+        if (not (a & b))
+            return (!a & b);
+
+        for (; *a & *b; ++a, ++b)
+            if (ToLower(*a) >= ToLower(*b))
+                return false;
+
+        return ( !(*a | *b) | (!*a & *b) );
+    }
+
+    CONSTEXPR size_t HashValue() const NOEXCEPT {
+        size_t h = 0;
+        for (const _Char* ch = Data; *ch; ++ch)
+            h = hash_size_t_constexpr(h, *ch);
+        return h;
+    }
+
+    CONSTEXPR size_t HashValueI() const NOEXCEPT {
+        size_t h = 0;
+        for (const _Char* ch = Data; *ch; ++ch)
+            h = hash_size_t_constexpr(h, ToLower(*ch));
+        return h;
+    }
+
+    CONSTEXPR void Swap(TBasicConstChar& other) NOEXCEPT {
+        const _Char* const tmp = Data;
+        Data = other.Data;
+        other.Data = tmp;
+    }
+
+    CONSTEXPR TBasicStringView<_Char> MakeView() const NOEXCEPT { return TBasicStringView<_Char>(Data, Length(Data)); }
+
+    CONSTEXPR inline friend bool operator ==(const TBasicConstChar& lhs, const TBasicConstChar& rhs) NOEXCEPT { return lhs.Equals(rhs); }
+    CONSTEXPR inline friend bool operator !=(const TBasicConstChar& lhs, const TBasicConstChar& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
+
+    CONSTEXPR inline friend bool operator < (const TBasicConstChar& lhs, const TBasicConstChar& rhs) NOEXCEPT { return lhs.Less(rhs); }
+    CONSTEXPR inline friend bool operator >=(const TBasicConstChar& lhs, const TBasicConstChar& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
+
+    CONSTEXPR inline friend hash_t hash_value(const TBasicConstChar& s) NOEXCEPT { return s.HashValue(); }
+
+    CONSTEXPR inline friend void swap(TBasicConstChar& lhs, TBasicConstChar& rhs) NOEXCEPT { lhs.Swap(rhs); }
+
 };
 //----------------------------------------------------------------------------
 using FConstChar = TBasicConstChar<char>;
