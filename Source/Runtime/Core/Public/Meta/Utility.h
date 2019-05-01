@@ -1,0 +1,91 @@
+﻿#pragma once
+
+#include "Meta/Aliases.h"
+#include "Meta/Iterator.h"
+
+namespace PPE {
+namespace Meta {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// force wrapping a function call, a functor or a lambda in a function call
+template <typename _FuncLike, typename... _Args>
+NO_INLINE auto unlikely(_FuncLike funcLike, _Args... args) {
+    return funcLike(std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+// wraps a T& inside a T* to avoid copying T when using value semantics
+template <typename T>
+struct ptr_ref_t {
+    T* Ptr;
+
+    CONSTEXPR ptr_ref_t() noexcept : Ptr(nullptr) {}
+    explicit CONSTEXPR ptr_ref_t(T& ref) NOEXCEPT : Ptr(&ref) {}
+
+    CONSTEXPR ptr_ref_t(const ptr_ref_t&) NOEXCEPT = default;
+    CONSTEXPR ptr_ref_t& operator =(const ptr_ref_t&) noexcept = default;
+
+    CONSTEXPR operator T* () const NOEXCEPT { return Ptr; }
+    CONSTEXPR operator T& () const NOEXCEPT { return (*Ptr); }
+};
+template <typename T>
+CONSTEXPR ptr_ref_t<T> ptr_ref(T& ref) {
+    return ptr_ref_t{ &ref };
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <size_t N>
+struct TStaticBitset {
+    CONSTEXPR static size_t NPos = size_t(-1);
+
+    bool Flags[N];
+
+    CONSTEXPR TStaticBitset() NOEXCEPT
+        : Flags{ 0 }
+    {}
+
+    CONSTEXPR TStaticBitset(const TStaticBitset& other) NOEXCEPT = default;
+    CONSTEXPR TStaticBitset& operator =(const TStaticBitset& other) NOEXCEPT = default;
+
+    CONSTEXPR void set(size_t i) NOEXCEPT {
+        Flags[i] = true;
+    }
+
+    CONSTEXPR bool test(size_t i) const NOEXCEPT {
+        return Flags[i];
+    }
+
+    CONSTEXPR size_t first_free(size_t i = 0) const NOEXCEPT {
+        for (; i < N; ++i)
+            if (Flags[i] == false)
+                return i;
+
+        return NPos;
+    }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, typename _Pred>
+CONSTEXPR void StaticQuicksort(T* p, int n, const _Pred& pred) NOEXCEPT {
+    if (n > 0) {
+        using std::swap;
+
+        int m = 0;
+
+        for (int i = 1; i < n; ++i)
+            if (pred(p[i], p[0]))
+                swap(p[++m], p[i]);
+
+        swap(p[0], p[m]);
+
+        StaticQuicksort(p, m, pred);
+        StaticQuicksort(p + m + 1, n - m - 1, pred);
+    }
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Meta
+} //!namespace PPE

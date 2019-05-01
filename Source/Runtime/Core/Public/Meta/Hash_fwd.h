@@ -163,6 +163,22 @@ CONSTEXPR size_t hash_sequence_constexpr(const T* data, std::index_sequence<_Ind
     return hash_size_t_constexpr(sizeof...(_Indices)/* handles hash_sequence_constexpr(nullptr, 0) */, data[_Indices]...);
 }
 //----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR size_t hash_mem_constexpr(const T* data, size_t n) NOEXCEPT {
+    size_t h = n;
+    for (size_t i = 0; i < n; ++i)
+        h = hash_size_t_constexpr(h, data[i]);
+    return h;
+}
+//----------------------------------------------------------------------------
+template <typename _FwdIt>
+CONSTEXPR size_t hash_fwdit_constexpr(_FwdIt first, _FwdIt last) NOEXCEPT {
+    size_t h = 0;
+    for (; first != last; ++first)
+        h = hash_size_t_constexpr(h, *first);
+    return h;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

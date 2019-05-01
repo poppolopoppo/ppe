@@ -292,6 +292,13 @@ CONSTEXPR T MakeNoInit() NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Tricking the compiler to make implicit conversion with template argument deduction
+// https://stackoverflow.com/questions/45765205/template-function-argument-deduction-with-an-implicit-conversion
+template<class T>
+using TDontDeduce = typename TType<T>::type;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 namespace details {
 template <typename T>
 FORCE_INLINE void Construct_(T* p, FNoInit, std::false_type) { new ((void*)p) T{}; }
@@ -366,38 +373,6 @@ void Destroy(T* p) {
 #if USE_PPE_MEMORY_DEBUGGING
     ::memset(p, 0xDD, sizeof(T)); // necrophilia detection
 #endif
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Tricking the compiler to make implicit conversion with template argument deduction
-// https://stackoverflow.com/questions/45765205/template-function-argument-deduction-with-an-implicit-conversion
-template<class T>
-using TDontDeduce = typename TType<T>::type;
-//----------------------------------------------------------------------------
-// force wrapping a function call, a functor or a lambda in a function call
-template <typename _FuncLike, typename... _Args>
-NO_INLINE auto unlikely(_FuncLike funcLike, _Args... args) {
-    return funcLike(std::forward<_Args>(args)...);
-}
-//----------------------------------------------------------------------------
-// wraps a T& inside a T* to avoid copying T when using value semantics
-template <typename T>
-struct ptr_ref_t {
-    T* Ptr;
-
-    CONSTEXPR ptr_ref_t() noexcept : Ptr(nullptr) {}
-    explicit CONSTEXPR ptr_ref_t(T& ref) NOEXCEPT : Ptr(&ref) {}
-
-    CONSTEXPR ptr_ref_t(const ptr_ref_t&) NOEXCEPT = default;
-    CONSTEXPR ptr_ref_t& operator =(const ptr_ref_t&) noexcept = default;
-
-    CONSTEXPR operator T* () const NOEXCEPT { return Ptr; }
-    CONSTEXPR operator T& () const NOEXCEPT { return (*Ptr); }
-};
-template <typename T>
-CONSTEXPR ptr_ref_t<T> ptr_ref(T& ref) {
-    return ptr_ref_t{ &ref };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
