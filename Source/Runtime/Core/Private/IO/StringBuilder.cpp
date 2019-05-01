@@ -47,15 +47,19 @@ TBasicStringBuilder<_Char>::TBasicStringBuilder(string_type&& stolen)
 template <typename _Char>
 TBasicStringBuilder<_Char>::~TBasicStringBuilder() {
     // this predicate is needed to steal from/to TBasicString<> !
+#if USE_PPE_MEMORY_DEBUGGING && USE_PPE_BASICSTRING_SBO
+    STATIC_ASSERT(allocator_type::Capacity == string_type::GInSituSize);
+#elif !USE_PPE_MEMORY_DEBUGGING
     STATIC_ASSERT(Meta::TCheckSameSize<
         Meta::TArray<char, allocator_type::Capacity>,
         Meta::TArray<char, string_type::GInSituSize>
-    >::value );
+        >::value );
+#endif
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
 void TBasicStringBuilder<_Char>::reserve(size_t count) {
-    stream_type::reserve(count * sizeof(_Char) + 1/* null char */);
+    stream_type::reserve((count + 1/* null char */) * sizeof(_Char));
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
