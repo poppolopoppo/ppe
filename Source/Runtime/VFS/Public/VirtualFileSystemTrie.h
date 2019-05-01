@@ -8,6 +8,9 @@
 #include "Memory/RefPtr.h"
 #include "Thread/ReadWriteLock.h"
 
+// #TODO : DAWG as a map
+// http://stevehanov.ca/blog/index.php?id=115
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
