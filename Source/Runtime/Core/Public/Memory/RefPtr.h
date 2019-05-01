@@ -54,14 +54,14 @@ class TSafePtr;
 //----------------------------------------------------------------------------
 class PPE_CORE_API FRefCountable {
 public:
-    FRefCountable();
+    FRefCountable() NOEXCEPT;
     ~FRefCountable();
 
-    FRefCountable(FRefCountable&& );
-    FRefCountable& operator =(FRefCountable&& );
+    FRefCountable(FRefCountable&& ) NOEXCEPT;
+    FRefCountable& operator =(FRefCountable&& ) NOEXCEPT;
 
-    FRefCountable(const FRefCountable& );
-    FRefCountable& operator =(const FRefCountable& );
+    FRefCountable(const FRefCountable& ) NOEXCEPT;
+    FRefCountable& operator =(const FRefCountable& ) NOEXCEPT;
 
     int RefCount() const { return _refCount; }
 

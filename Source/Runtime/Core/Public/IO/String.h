@@ -102,7 +102,7 @@ public:
     _Char back() const { return MakeView().back(); }
 
     void assign(TBasicString&& rvalue);
-    void assign(const TBasicString&& other) { assign(other.MakeView()); }
+    void assign(const TBasicString& other) { assign(other.MakeView()); }
     void assign(const stringview_type& str);
     void assign(std::initializer_list<_Char> il) { assign(il.begin(), il.end()); }
     void assign(size_t n, _Char fill);
@@ -110,6 +110,7 @@ public:
     void assign(_It first, _It last);
     template <size_t _Dim>
     void assign(const _Char(&staticArray)[_Dim]) { assign(MakeStringView(staticArray)); }
+    void assign(const _Char* cstr, size_t len) { assign(MakeCheckedIterator(cstr, len, 0), MakeCheckedIterator(cstr, len, len)); }
 
     void append(_Char ch) { append(stringview_type(&ch, 1)); }
     void append(const TBasicString& other) { append(other.MakeView()); }

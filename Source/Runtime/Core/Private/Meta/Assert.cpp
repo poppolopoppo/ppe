@@ -181,7 +181,7 @@ NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, u
             if (FPlatformDebug::IsDebuggerPresent())
                 FPlatformDebug::DebugBreak();
             break;
-        case FGenericPlatformDialog::Ignore:
+        case FPlatformDialog::Ignore:
             failure = false;
             break;
         default:

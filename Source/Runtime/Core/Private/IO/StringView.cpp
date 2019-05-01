@@ -199,7 +199,7 @@ static const double_conversion::StringToDoubleConverter& DefaultStringToDoubleCo
         const double_conversion::StringToDoubleConverter,
         GStringToDoubleConverter_,
         double_conversion::StringToDoubleConverter::NO_FLAGS,
-        NAN, NAN, "Inf", "NaN" );
+        double(NAN), double(NAN), "Inf", "NaN" );
     return GStringToDoubleConverter_;
 }
 
@@ -231,7 +231,6 @@ static bool Atof_(double *dst, const TBasicStringView<_Char>& str) {
 }
 
 #endif
-
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct TWildChars_ {};
@@ -338,8 +337,8 @@ static size_t LevenshteinDistance_(
     if (str1.empty()) return (a * str2.size());
     if (str2.empty()) return (d * str1.size());
 
-    const u32 len1 = checked_cast<u32>(str1.size());
-    const u32 len2 = checked_cast<u32>(str2.size());
+    const size_t len1 = str1.size();
+    const size_t len2 = str2.size();
 
     STACKLOCAL_POD_ARRAY(u32, rows_alloc, (len2 + 1) * 3);
 
@@ -347,10 +346,10 @@ static size_t LevenshteinDistance_(
     TMemoryView<u32> row1 = rows_alloc.SubRange(1 * (len2 + 1), len2 + 1);
     TMemoryView<u32> row2 = rows_alloc.SubRange(2 * (len2 + 1), len2 + 1);
 
-    forrange(j, 0, len2 + 1) row1[j] = j * a;
+    forrange(j, 0, len2 + 1) row1[j] = u32(j) * a;
 
     forrange(i, 0, len1) {
-        row2[0] = (i + 1) * d;
+        row2[0] = (u32(i) + 1) * d;
 
         forrange(j, 0, len2) {
             /* substitution */
@@ -597,7 +596,7 @@ template <typename _Char, typename _Cmp>
 FORCE_INLINE static int Compare_(
     const TBasicStringView<_Char>& lhs,
     const TBasicStringView<_Char>& rhs,
-    _Cmp compare ) {
+    _Cmp compare ) NOEXCEPT {
     if (lhs == rhs)
         return 0;
 
@@ -622,7 +621,7 @@ template <typename _Char>
 FORCE_INLINE static int Compare_(
     const TBasicStringView<_Char>& lhs,
     const TBasicStringView<_Char>& rhs) {
-    return Compare_(lhs, rhs, [](const _Char* a, const _Char* b, size_t n) {
+    return Compare_(lhs, rhs, [](const _Char* a, const _Char* b, size_t n) NOEXCEPT {
         return FPlatformString::NCmp(a, b, n);
     });
 }
@@ -631,7 +630,7 @@ template <typename _Char>
 FORCE_INLINE static int CompareI_(
     const TBasicStringView<_Char>& lhs,
     const TBasicStringView<_Char>& rhs) {
-    return Compare_(lhs, rhs, [](const _Char* a, const _Char* b, size_t n) {
+    return Compare_(lhs, rhs, [](const _Char* a, const _Char* b, size_t n) NOEXCEPT {
         return FPlatformString::NCmpI(a, b, n);
     });
 }

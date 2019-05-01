@@ -78,7 +78,7 @@ struct TCheckFitInSize {
     template <typename _Lhs> \
     struct _NAME { \
         template <typename _Rhs> \
-        CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const { \
+        CONSTEXPR bool operator()(const _Lhs& lhs, const _Rhs& rhs) const NOEXCEPT { \
             return (lhs _OP rhs); \
         } \
     }

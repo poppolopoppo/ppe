@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "IO/TextWriter_fwd.h"
 #include "Meta/Aliases.h"
@@ -35,7 +35,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, hash_t h);
 //----------------------------------------------------------------------------
 #if _HAS_CXX14
 //----------------------------------------------------------------------------
-constexpr u32 hash_u32_constexpr(u32 h32) noexcept {
+CONSTEXPR u32 hash_u32_constexpr(u32 h32) NOEXCEPT {
     h32 ^= h32 >> 15; // XXH32_avalanche()
     h32 *= 2246822519U;
     h32 ^= h32 >> 13;
@@ -44,7 +44,7 @@ constexpr u32 hash_u32_constexpr(u32 h32) noexcept {
     return h32;
 }
 //----------------------------------------------------------------------------
-constexpr u32 hash_u32_constexpr(u32 h, u32 k) noexcept {
+CONSTEXPR u32 hash_u32_constexpr(u32 h, u32 k) NOEXCEPT {
     k *= 0xcc9e2d51ul; // https://www.boost.org/doc/libs/1_64_0/boost/functional/hash/hash.hpp
     k = (k << 15ul) | (k >> (32ul - 15ul));
     k *= 0x1b873593ul;
@@ -54,17 +54,17 @@ constexpr u32 hash_u32_constexpr(u32 h, u32 k) noexcept {
     return h;
 }
 //----------------------------------------------------------------------------
-#else // support for C++11 constexpr :
+#else // support for C++11 CONSTEXPR :
 //----------------------------------------------------------------------------
 namespace details {
     // http://burtleburtle.net/bob/hash/integer.html
-    constexpr u32 hash_u32_constexpr_0_(u32 a) { return u32(a^0xdeadbeefUL + (a<<4ul)); }
-    constexpr u32 hash_u32_constexpr_1_(u32 a) { return u32(a ^ (a>>10ul)); }
-    constexpr u32 hash_u32_constexpr_2_(u32 a) { return u32(a + (a>>24ul)); }
-    constexpr u32 hash_u32_constexpr_3_(u32 a) { return u32(a + (a<< 7ul)); }
-    constexpr u32 hash_u32_constexpr_4_(u32 a) { return u32(a ^ (a>>13ul)); }
+    CONSTEXPR u32 hash_u32_constexpr_0_(u32 a) { return u32(a^0xdeadbeefUL + (a<<4ul)); }
+    CONSTEXPR u32 hash_u32_constexpr_1_(u32 a) { return u32(a ^ (a>>10ul)); }
+    CONSTEXPR u32 hash_u32_constexpr_2_(u32 a) { return u32(a + (a>>24ul)); }
+    CONSTEXPR u32 hash_u32_constexpr_3_(u32 a) { return u32(a + (a<< 7ul)); }
+    CONSTEXPR u32 hash_u32_constexpr_4_(u32 a) { return u32(a ^ (a>>13ul)); }
 }
-constexpr u32 hash_u32_constexpr(u32 a) {
+CONSTEXPR u32 hash_u32_constexpr(u32 a) {
     return  details::hash_u32_constexpr_4_(
                 details::hash_u32_constexpr_3_(
                     details::hash_u32_constexpr_2_(
@@ -72,7 +72,7 @@ constexpr u32 hash_u32_constexpr(u32 a) {
                             details::hash_u32_constexpr_0_( u32(a * 0x9e370001UL) )))));
 }
 //----------------------------------------------------------------------------
-constexpr u32 hash_u32_constexpr(u32 lhs, u32 rhs) {
+CONSTEXPR u32 hash_u32_constexpr(u32 lhs, u32 rhs) {
     // http://www.boost.org/doc/libs/1_59_0/doc/html/hash/reference.html#boost.hash_combine
     return u32(hash_u32_constexpr(lhs) ^ (hash_u32_constexpr(rhs) + 0X9E3779B9UL // 2^32 / ((1 + sqrt(5)) / 2)
         + (hash_u32_constexpr(lhs) << 6ul) + (hash_u32_constexpr(rhs) >> 2ul)) );
@@ -82,7 +82,7 @@ constexpr u32 hash_u32_constexpr(u32 lhs, u32 rhs) {
 //----------------------------------------------------------------------------
 // recursion :
 template <typename... _Args>
-constexpr u32 hash_u32_constexpr(u32 h0, u32 h1, u32 h2, _Args... args) noexcept {
+CONSTEXPR u32 hash_u32_constexpr(u32 h0, u32 h1, u32 h2, _Args... args) NOEXCEPT {
     return hash_u32_constexpr(hash_u32_constexpr(h0, h1), h2, u32(args)...);
 }
 //----------------------------------------------------------------------------
@@ -90,7 +90,7 @@ constexpr u32 hash_u32_constexpr(u32 h0, u32 h1, u32 h2, _Args... args) noexcept
 //----------------------------------------------------------------------------
 #if _HAS_CXX14
 //----------------------------------------------------------------------------
-constexpr u64 hash_u64_constexpr(u64 h64) noexcept {
+CONSTEXPR u64 hash_u64_constexpr(u64 h64) NOEXCEPT {
     h64 ^= h64 >> 33; // XXH64_avalanche()
     h64 *= 14029467366897019727ULL;
     h64 ^= h64 >> 29;
@@ -99,7 +99,7 @@ constexpr u64 hash_u64_constexpr(u64 h64) noexcept {
     return h64;
 }
 //----------------------------------------------------------------------------
-constexpr u64 hash_u64_constexpr(u64 h, u64 k) noexcept {
+CONSTEXPR u64 hash_u64_constexpr(u64 h, u64 k) NOEXCEPT {
     k *= 0xc6a4a7935bd1e995ull; // https://www.boost.org/doc/libs/1_64_0/boost/functional/hash/hash.hpp
     k ^= k >> 47ull;
     k *= 0xc6a4a7935bd1e995ull;
@@ -109,18 +109,18 @@ constexpr u64 hash_u64_constexpr(u64 h, u64 k) noexcept {
     return h;
 }
 //----------------------------------------------------------------------------
-#else // support for C++11 constexpr :
+#else // support for C++11 CONSTEXPR :
 //----------------------------------------------------------------------------
 namespace details {
     // http://burtleburtle.net/bob/hash/integer.html
-    constexpr u64 hash_u64_constexpr_0_(u64 a) { return u64(a + (a>>32ull)^0x48655121ULL); }
-    constexpr u64 hash_u64_constexpr_1_(u64 a) { return u64((a^0xdeadbeefabadcafeULL) + (a<<4ull)); }
-    constexpr u64 hash_u64_constexpr_2_(u64 a) { return u64(a ^ (a>>10ull)); }
-    constexpr u64 hash_u64_constexpr_3_(u64 a) { return u64(a + (a>>24ull)); }
-    constexpr u64 hash_u64_constexpr_4_(u64 a) { return u64(a + (a<<7ull)); }
-    constexpr u64 hash_u64_constexpr_5_(u64 a) { return u64(a ^ (a>>13ull)); }
+    CONSTEXPR u64 hash_u64_constexpr_0_(u64 a) { return u64(a + (a>>32ull)^0x48655121ULL); }
+    CONSTEXPR u64 hash_u64_constexpr_1_(u64 a) { return u64((a^0xdeadbeefabadcafeULL) + (a<<4ull)); }
+    CONSTEXPR u64 hash_u64_constexpr_2_(u64 a) { return u64(a ^ (a>>10ull)); }
+    CONSTEXPR u64 hash_u64_constexpr_3_(u64 a) { return u64(a + (a>>24ull)); }
+    CONSTEXPR u64 hash_u64_constexpr_4_(u64 a) { return u64(a + (a<<7ull)); }
+    CONSTEXPR u64 hash_u64_constexpr_5_(u64 a) { return u64(a ^ (a>>13ull)); }
 }
-constexpr u64 hash_u64_constexpr(u64 a) {
+CONSTEXPR u64 hash_u64_constexpr(u64 a) {
     return  details::hash_u64_constexpr_5_(
                 details::hash_u64_constexpr_4_(
                     details::hash_u64_constexpr_3_(
@@ -129,7 +129,7 @@ constexpr u64 hash_u64_constexpr(u64 a) {
                                 details::hash_u64_constexpr_0_( u64(a * 0x9e37fffffffc0001ULL) ))))));
 }
 //----------------------------------------------------------------------------
-constexpr u64 hash_u64_constexpr(u64 lhs, u64 rhs) {
+CONSTEXPR u64 hash_u64_constexpr(u64 lhs, u64 rhs) {
     // http://www.boost.org/doc/libs/1_59_0/doc/html/hash/reference.html#boost.hash_combine
     return u64(hash_u64_constexpr(lhs) ^ (hash_u64_constexpr(rhs) + 0X278DDE6E5FD29E00ull // 2^64 / ((1 + sqrt(5)) / 2)
         + (hash_u64_constexpr(lhs) << 6ull) + (hash_u64_constexpr(rhs) >> 2ull)) );
@@ -138,7 +138,7 @@ constexpr u64 hash_u64_constexpr(u64 lhs, u64 rhs) {
 #endif //!_HAS_CXX14
 //----------------------------------------------------------------------------
 template <typename... _Args>
-constexpr u64 hash_u64_constexpr(u64 h0, u64 h1, u64 h2, _Args... args) noexcept {
+CONSTEXPR u64 hash_u64_constexpr(u64 h0, u64 h1, u64 h2, _Args... args) NOEXCEPT {
     return hash_u64_constexpr(hash_u64_constexpr(h0, h1), h2, u64(args)...);
 }
 //----------------------------------------------------------------------------
@@ -146,20 +146,20 @@ constexpr u64 hash_u64_constexpr(u64 h0, u64 h1, u64 h2, _Args... args) noexcept
 //----------------------------------------------------------------------------
 #ifdef ARCH_X64
 template <typename... _Args>
-constexpr size_t hash_size_t_constexpr(size_t arg0, _Args... args ) noexcept {
+CONSTEXPR size_t hash_size_t_constexpr(size_t arg0, _Args... args ) NOEXCEPT {
     static_assert(sizeof(size_t) == sizeof(u64), "invalid platform !");
     return hash_u64_constexpr(u64(arg0), u64(args)...);
 }
 #else
 template <typename... _Args>
-constexpr size_t hash_size_t_constexpr(size_t arg0, _Args... args ) noexcept {
+CONSTEXPR size_t hash_size_t_constexpr(size_t arg0, _Args... args ) NOEXCEPT {
     static_assert(sizeof(size_t) == sizeof(u32), "invalid platform !");
     return hash_u32_constexpr(u32(arg0), u32(args)...);
 }
 #endif //!ARCH_X64
 //----------------------------------------------------------------------------
 template <typename T, size_t... _Indices>
-constexpr size_t hash_sequence_constexpr(const T* data, std::index_sequence<_Indices...>) noexcept {
+CONSTEXPR size_t hash_sequence_constexpr(const T* data, std::index_sequence<_Indices...>) NOEXCEPT {
     return hash_size_t_constexpr(sizeof...(_Indices)/* handles hash_sequence_constexpr(nullptr, 0) */, data[_Indices]...);
 }
 //----------------------------------------------------------------------------

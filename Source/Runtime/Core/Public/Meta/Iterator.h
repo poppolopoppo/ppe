@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Meta/Hash_fwd.h"
 #include "Meta/TypeTraits.h"
 #include "Meta/Warnings.h"
 
@@ -335,8 +336,8 @@ public:
     using typename parent_type::pointer;
     using typename parent_type::reference;
 
-    TOutputIterator(const _It& it) : _it(it) {}
-    TOutputIterator(const _It& it, const _Transform& transform) : _it(it), _transform(transform) {}
+    TOutputIterator(_It it) : _it(it) {}
+    TOutputIterator(_It it, _Transform transform) : _it(it), _transform(transform) {}
 
     TOutputIterator(const TOutputIterator& ) = default;
     TOutputIterator& operator =(const TOutputIterator& ) = default;
@@ -488,53 +489,96 @@ TValueIterator<_It> MakeValueIterator(_It&& it) { return TValueIterator<_It>(std
 template <typename _It>
 class TIterable {
 public:
-    typedef _It iterator;
-    TIterable(iterator begin, iterator end)
+    using iterator = _It;
+    using value_type = Meta::TDecay<decltype(*std::declval<_It>())>;
+
+    template <typename _Jt>
+    friend class TIterable;
+
+    TIterable() = default;
+
+    CONSTEXPR TIterable(iterator begin, iterator end) NOEXCEPT
         : _begin(std::move(begin))
         , _end(std::move(end)) {
         STATIC_ASSERT(Meta::is_iterator<_It>::value);
     }
-    bool empty() const { return (_begin == _end); }
-    const iterator& begin() const { return _begin; }
-    const iterator& end() const { return _end; }
+
+    CONSTEXPR operator const void* () const { return (_begin != _end ? this : nullptr); }
+
+    CONSTEXPR bool empty() const NOEXCEPT { return (_begin == _end); }
+    CONSTEXPR bool size() const NOEXCEPT { return std::distance(_begin, _end); }
+
+    CONSTEXPR const iterator& begin() const NOEXCEPT { return _begin; }
+    CONSTEXPR const iterator& end() const NOEXCEPT { return _end; }
+
+    template <typename _Pred = Meta::TEqualTo<value_type> >
+    CONSTEXPR bool Equals(const TIterable& other, _Pred pred = _Pred{}) const NOEXCEPT {
+        return std::equal(_begin, _end, other._begin, other._end, pred);
+    }
+
+    template <typename _Jt, typename _Pred = Meta::TEqualTo<value_type> >
+    CONSTEXPR bool Equals(const TIterable<_Jt>& other, _Pred pred = _Pred{}) const NOEXCEPT {
+        return std::equal(_begin, _end, other._begin, other._end, pred);
+    }
+
+    CONSTEXPR hash_t HashValue() const NOEXCEPT {
+        return hash_fwdit_constexpr(_begin, _end);
+    }
+
 private:
     _It _begin;
     _It _end;
 };
 //----------------------------------------------------------------------------
 template <typename _It>
-TIterable<_It> MakeIterable(_It first, _It last) {
+CONSTEXPR TIterable<_It> MakeIterable(_It first, _It last) NOEXCEPT {
     return TIterable<_It>(first, last);
 }
+template <typename T, size_t N>
+CONSTEXPR TIterable<T*> MakeIterable(T (&arr)[N]) NOEXCEPT {
+    return TIterable<T*>(arr, arr + N);
+}
+template <typename T, size_t N>
+CONSTEXPR TIterable<const T*> MakeIterable(const T (&arr)[N]) NOEXCEPT {
+    return TIterable<const T*>(arr, arr + N);
+}
+//----------------------------------------------------------------------------
 template <typename T>
-TIterable< decltype(std::declval<T&>().begin()) > MakeIterable(T& container) {
+TIterable< decltype(std::declval<T&>().begin()) > MakeIterable(T& container) NOEXCEPT {
     return MakeIterable(std::begin(container), std::end(container));
 }
 template <typename T>
-TIterable< decltype(std::declval<const T&>().begin()) > MakeConstIterable(const T& container) {
+TIterable< decltype(std::declval<const T&>().begin()) > MakeConstIterable(const T& container) NOEXCEPT {
     return MakeIterable(std::begin(container), std::end(container));
 }
 //----------------------------------------------------------------------------
+template <typename _It, typename _Transform>
+TIterable<TOutputIterator<_It, _Transform>> MakeOutputIterable(_It first, _It last, _Transform&& transform) NOEXCEPT {
+    return MakeIterable(
+        TOutputIterator<_It, _Transform>(first, transform),
+        TOutputIterator<_It, _Transform>(last, transform) );
+}
+//----------------------------------------------------------------------------
 template <typename _Int, _Int _Inc = _Int(1)>
-TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int first, _Int last) {
+TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int first, _Int last) NOEXCEPT {
     return MakeIterable(TCountingIterator<_Int, _Inc>(first),
                         TCountingIterator<_Int, _Inc>(last) );
 }
 //----------------------------------------------------------------------------
 template <typename _Int, _Int _Inc = _Int(1)>
-TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int count) {
+TIterable<TCountingIterator<_Int, _Inc>> MakeInterval(_Int count) NOEXCEPT {
     return MakeInterval(_Int(0), count);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _It>
-std::move_iterator<_It> MakeMoveIterator(_It it) {
+CONSTEXPR std::move_iterator<_It> MakeMoveIterator(_It it) NOEXCEPT {
     return std::make_move_iterator(it);
 }
 //----------------------------------------------------------------------------
 template <typename _It>
-TIterable<std::move_iterator<_It>> MakeMoveIterable(_It first, _It last) {
+CONSTEXPR TIterable<std::move_iterator<_It>> MakeMoveIterable(_It first, _It last) NOEXCEPT {
     return MakeIterable(MakeMoveIterator(first), MakeMoveIterator(last));
 }
 //----------------------------------------------------------------------------

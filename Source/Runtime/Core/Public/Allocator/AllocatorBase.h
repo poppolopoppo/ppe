@@ -243,7 +243,7 @@ size_t SafeAllocatorSnapSize(const _Allocator& alloc, size_t size) {
 #ifdef WITH_PPE_ASSERT
     const size_t snapped = AllocatorSnapSize(alloc, size);
     Assert(snapped >= size);
-    Assert(AllocatorSnapSize(alloc, snapped) == snapped);
+    Assert_NoAssume(AllocatorSnapSize(alloc, snapped) == snapped);
     return snapped;
 #else
     return AllocatorSnapSize(alloc, size);

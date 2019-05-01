@@ -123,7 +123,7 @@ public:
     TInSituAllocator(const TInSituAllocator&) EXPORT_DELETED_FUNCTION;
     TInSituAllocator& operator=(const TInSituAllocator&) EXPORT_DELETED_FUNCTION;
 
-    TInSituAllocator(TInSituAllocator&& rvalue)
+    TInSituAllocator(TInSituAllocator&& rvalue) NOEXCEPT
     :   _insituRef(rvalue._insituRef) {
         rvalue._insituRef = nullptr;
     }

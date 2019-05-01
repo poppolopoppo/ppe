@@ -6,7 +6,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline FRefCountable::FRefCountable()
+inline FRefCountable::FRefCountable() NOEXCEPT
 :   _refCount(0)
 #if USE_PPE_SAFEPTR
 ,   _safeRefCount(0)
@@ -21,23 +21,27 @@ inline FRefCountable::~FRefCountable() {
 #endif
 }
 //----------------------------------------------------------------------------
-inline FRefCountable::FRefCountable(FRefCountable&& )
+inline FRefCountable::FRefCountable(FRefCountable&& ) NOEXCEPT
 :   _refCount(0)
 #if USE_PPE_SAFEPTR
 ,   _safeRefCount(0)
 #endif
 {}
 //----------------------------------------------------------------------------
-inline FRefCountable& FRefCountable::operator =(FRefCountable&& ) { return *this; }
+inline FRefCountable& FRefCountable::operator =(FRefCountable&& ) NOEXCEPT {
+    return *this;
+}
 //----------------------------------------------------------------------------
-inline FRefCountable::FRefCountable(const FRefCountable& )
+inline FRefCountable::FRefCountable(const FRefCountable& ) NOEXCEPT
 :   _refCount(0)
 #if USE_PPE_SAFEPTR
 ,   _safeRefCount(0)
 #endif
 {}
 //----------------------------------------------------------------------------
-inline FRefCountable& FRefCountable::operator =(const FRefCountable& ) { return *this; }
+inline FRefCountable& FRefCountable::operator =(const FRefCountable& ) NOEXCEPT {
+    return *this;
+}
 //----------------------------------------------------------------------------
 inline void FRefCountable::IncRefCount() const {
     _refCount.fetch_add(1);

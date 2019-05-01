@@ -7,11 +7,11 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR TMemoryView<T>::TMemoryView()
+CONSTEXPR TMemoryView<T>::TMemoryView() NOEXCEPT
 :   _storage(nullptr), _size(0) {}
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR TMemoryView<T>::TMemoryView(pointer storage, size_type size)
+CONSTEXPR TMemoryView<T>::TMemoryView(pointer storage, size_type size) NOEXCEPT
 :   _storage(storage), _size(size) {
     Assert(storage || 0 == size);
 }
@@ -19,7 +19,7 @@ CONSTEXPR TMemoryView<T>::TMemoryView(pointer storage, size_type size)
 // enables type promotion between char[] and TMemoryView<char>
 template <>
 template <size_t _Dim>
-CONSTEXPR TMemoryView<const char>::TMemoryView(const char (&staticString)[_Dim])
+CONSTEXPR TMemoryView<const char>::TMemoryView(const char (&staticString)[_Dim]) NOEXCEPT
 :   TMemoryView(staticString, _Dim - 1) {
     STATIC_ASSERT(0 < _Dim);
     Assert('\0' == staticString[_Dim - 1]);
@@ -28,14 +28,14 @@ CONSTEXPR TMemoryView<const char>::TMemoryView(const char (&staticString)[_Dim])
 // enables type promotion between wchar_t[] and TMemoryView<wchar_t>
 template <>
 template <size_t _Dim>
-CONSTEXPR TMemoryView<const wchar_t>::TMemoryView(const wchar_t (&staticString)[_Dim])
+CONSTEXPR TMemoryView<const wchar_t>::TMemoryView(const wchar_t (&staticString)[_Dim]) NOEXCEPT
 :   TMemoryView(staticString, _Dim - 1) {
     STATIC_ASSERT(0 < _Dim);
     Assert('\0' == staticString[_Dim - 1]);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR TMemoryView<T>::TMemoryView(TMemoryView&& rvalue)
+CONSTEXPR TMemoryView<T>::TMemoryView(TMemoryView&& rvalue) NOEXCEPT
 :   _storage(std::move(rvalue._storage))
 ,   _size(std::move(rvalue._size)) {
     rvalue._storage = nullptr;
@@ -43,7 +43,7 @@ CONSTEXPR TMemoryView<T>::TMemoryView(TMemoryView&& rvalue)
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(TMemoryView&& rvalue) {
+CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(TMemoryView&& rvalue) NOEXCEPT {
     _storage = std::move(rvalue._storage);
     _size = std::move(rvalue._size);
     rvalue._storage = nullptr;
@@ -52,11 +52,11 @@ CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(TMemoryView&& rvalue) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR TMemoryView<T>::TMemoryView(const TMemoryView& other)
+CONSTEXPR TMemoryView<T>::TMemoryView(const TMemoryView& other) NOEXCEPT
 :   _storage(other._storage), _size(other._size) {}
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView& other) {
+CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView& other) NOEXCEPT {
     _storage = other._storage;
     _size = other._size;
     return (*this);
@@ -64,14 +64,14 @@ CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView& other) {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-CONSTEXPR TMemoryView<T>::TMemoryView(const TMemoryView<U>& other)
+CONSTEXPR TMemoryView<T>::TMemoryView(const TMemoryView<U>& other) NOEXCEPT
 :   _storage(other._storage), _size(other._size) {
     STATIC_ASSERT(sizeof(T) == sizeof(U));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView<U>& other) {
+CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView<U>& other) NOEXCEPT {
     STATIC_ASSERT(sizeof(T) == sizeof(U));
     _storage = other._storage;
     _size = other._size;

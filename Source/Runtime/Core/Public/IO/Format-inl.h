@@ -186,11 +186,11 @@ constexpr bool ValidateFormatManip(wchar_t ch) noexcept {
 }
 //----------------------------------------------------------------------------
 constexpr bool ValidateFormatString(const char* fmt, size_t len, size_t numArgs) noexcept {
-    size_t unusedArgs = ((1ul << numArgs) - 1);
+    size_t unusedArgs = ((size_t(1) << numArgs) - 1);
     for (size_t i = 0; i < len - 2; ++i) {
         if (fmt[i] == '\0') return false;
         if (fmt[i] == '{' && fmt[i + 1] >= '0' && fmt[i + 1] <= '9') {
-            const size_t argIndex = (fmt[i + 1] - '0');
+            const size_t argIndex = (size_t(fmt[i + 1]) - '0');
             if (argIndex >= numArgs)
                 return false; // argument index out of bounds
 
@@ -216,11 +216,11 @@ constexpr bool ValidateFormatString(const char* fmt, size_t len, size_t numArgs)
 }
 //----------------------------------------------------------------------------
 constexpr bool ValidateFormatString(const wchar_t* fmt, size_t len, size_t numArgs) noexcept {
-    size_t unusedArgs = ((1ul << numArgs) - 1);
+    size_t unusedArgs = ((size_t(1) << numArgs) - 1);
     for (size_t i = 0; i < len - 2; ++i) {
         if (fmt[i] == L'\0') return false;
         if (fmt[i] == L'{' && fmt[i + 1] >= L'0' && fmt[i + 1] <= L'9') {
-            const size_t argIndex = (fmt[i + 1] - L'0');
+            const size_t argIndex = (size_t(fmt[i + 1]) - L'0');
             if (argIndex >= numArgs)
                 return false; // argument index out of bounds
 

@@ -21,7 +21,7 @@
 
 #include "HAL/PlatformMaths.h"
 
-// workaround a bug in Profiling : c4702 unreachable code - #TODO test after a few updates that this is no more necessary
+// workaround a bug in Profiling : c4702 unreachable code - #TODO test after a few updates if it's still necessary
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4702)
 

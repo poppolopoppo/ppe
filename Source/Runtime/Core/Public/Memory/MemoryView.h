@@ -32,31 +32,31 @@ public:
     typedef std::random_access_iterator_tag iterator_category;
     typedef std::reverse_iterator<iterator> reverse_iterator;
 
-    CONSTEXPR TMemoryView();
-    CONSTEXPR TMemoryView(pointer storage, size_type size);
+    CONSTEXPR TMemoryView() NOEXCEPT;
+    CONSTEXPR TMemoryView(pointer storage, size_type size) NOEXCEPT;
 
     // enables type promotion between {T(),T(),T()} and TMemoryView<T>
-    CONSTEXPR TMemoryView(std::initializer_list<T> list)
+    CONSTEXPR TMemoryView(std::initializer_list<T> list) NOEXCEPT
         : TMemoryView(list.begin(), std::distance(list.begin(), list.end())) {}
 
     // enables type promotion between T[] and TMemoryView<T>
     template <size_t _Dim>
-    CONSTEXPR TMemoryView(value_type (&staticArray)[_Dim])
+    CONSTEXPR TMemoryView(value_type (&staticArray)[_Dim]) NOEXCEPT
         : TMemoryView(staticArray, _Dim) {}
 
-    TMemoryView(const iterator& first, const iterator& last)
+    TMemoryView(const iterator& first, const iterator& last) NOEXCEPT
         : TMemoryView(std::addressof(*first), std::distance(first, last)) {}
 
-    CONSTEXPR TMemoryView(TMemoryView&& rvalue);
-    CONSTEXPR TMemoryView& operator =(TMemoryView&& rvalue);
+    CONSTEXPR TMemoryView(TMemoryView&& rvalue) NOEXCEPT;
+    CONSTEXPR TMemoryView& operator =(TMemoryView&& rvalue) NOEXCEPT;
 
-    CONSTEXPR TMemoryView(const TMemoryView& other);
-    CONSTEXPR TMemoryView& operator =(const TMemoryView& other);
+    CONSTEXPR TMemoryView(const TMemoryView& other) NOEXCEPT;
+    CONSTEXPR TMemoryView& operator =(const TMemoryView& other) NOEXCEPT;
 
     template <typename U>
-    CONSTEXPR TMemoryView(const TMemoryView<U>& other);
+    CONSTEXPR TMemoryView(const TMemoryView<U>& other) NOEXCEPT;
     template <typename U>
-    CONSTEXPR TMemoryView& operator =(const TMemoryView<U>& other);
+    CONSTEXPR TMemoryView& operator =(const TMemoryView<U>& other) NOEXCEPT;
 
     pointer Pointer() const { return _storage; }
     size_t SizeInBytes() const { return _size * sizeof(T); }

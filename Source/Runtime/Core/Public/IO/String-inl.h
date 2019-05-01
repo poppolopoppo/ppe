@@ -18,7 +18,7 @@ TBasicString<_Char>::TBasicString(TBasicStringBuilder<_Char>&& sb) noexcept
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicString<_Char>::~TBasicString() {
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 
     if (is_large_()) {
         Assert(_large.Storage);
@@ -40,7 +40,7 @@ void TBasicString<_Char>::assign(TBasicString&& rvalue) {
         rvalue._large = { 0, 0, 0, nullptr };
     }
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -52,7 +52,7 @@ void TBasicString<_Char>::assign(const stringview_type& str) {
         std::copy(str.begin(), str.end(), dst);
     }
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -64,7 +64,7 @@ void TBasicString<_Char>::assign(size_t n, _Char fill) {
     auto dst = resizeWNullChar_(n);
     std::fill_n(dst, n, fill);
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -77,7 +77,7 @@ void TBasicString<_Char>::append(size_t n, _Char fill) {
     auto dst = resizeWNullChar_(newSize);
     std::fill_n(dst + oldSize, n, fill);
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -90,7 +90,7 @@ void TBasicString<_Char>::append(const stringview_type& str) {
     auto dst = resizeWNullChar_(newSize);
     std::copy(str.begin(), str.end(), dst + oldSize);
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -105,7 +105,7 @@ void TBasicString<_Char>::insert(size_t pos, size_t n, _Char fill) {
     std::fill_n(dst + oldSize, n, fill);
     std::rotate(dst + pos, dst + oldSize, dst + newSize);
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -120,7 +120,7 @@ void TBasicString<_Char>::insert(size_t pos, const stringview_type& str) {
     std::copy(str.begin(), str.end(), dst + oldSize);
     std::rotate(dst + pos, dst + oldSize, dst + newSize);
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -140,7 +140,7 @@ void TBasicString<_Char>::erase(size_t pos/* = 0 */, size_t len/* = npos */) {
         _small.Size = checked_cast<_Char>(newSize);
     Assert(size() == newSize);
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -160,7 +160,7 @@ void TBasicString<_Char>::replace(size_t pos, size_t len, const stringview_type&
     std::copy(str.begin(), str.end(), dst + pos);
     dst[newSize] = _Char();
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -180,7 +180,7 @@ void TBasicString<_Char>::replace(size_t pos, size_t len, size_t n, _Char fill) 
     std::fill_n(dst + pos, n, fill);
     dst[newSize] = _Char();
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -214,7 +214,7 @@ void TBasicString<_Char>::resize(size_t newSize, _Char fill) {
 
     dst[newSize] = _Char();
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -247,7 +247,7 @@ void TBasicString<_Char>::shrink_to_fit() {
         }
     }
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -262,7 +262,7 @@ void TBasicString<_Char>::clear() {
         _small.Buffer[0] = _Char();
     }
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -275,7 +275,7 @@ void TBasicString<_Char>::clear_ReleaseMemory() {
     _large = { 0, 0, 0, nullptr };
 
     Assert(not is_large_());
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -347,7 +347,7 @@ void TBasicString<_Char>::assign(TBasicStringBuilder<_Char>&& sb) {
     }
 
     Assert(sb.empty());
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -406,7 +406,7 @@ TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeNoNullChar_(size_t count
 //----------------------------------------------------------------------------
 template <typename _Char>
 NO_INLINE TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeNoNullChar_Large_(size_t count, bool change_size) {
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 
     const size_t newCapacity = SafeAllocatorSnapSize(get_allocator_(), count + 1/* null char */);
 #if USE_PPE_BASICSTRING_SBO
@@ -438,7 +438,7 @@ NO_INLINE TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeNoNullChar_Lar
 //----------------------------------------------------------------------------
 template <typename _Char>
 NO_INLINE TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeNoNullChar_Small_(size_t count, bool change_size) {
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
     Assert(count < FSmallString_::GCapacity);
 
     if (is_large_()) {
@@ -463,7 +463,7 @@ TCheckedArrayIterator<_Char> TBasicString<_Char>::resizeWNullChar_(size_t count)
     auto dst = resizeNoNullChar_(count);
     dst[count] = _Char();
 
-    Assert(CheckInvariants());
+    Assert_NoAssume(CheckInvariants());
 
     return dst;
 }

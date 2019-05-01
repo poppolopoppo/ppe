@@ -22,8 +22,8 @@ enum class ECase : bool {
     Insensitive = false,
 };
 //----------------------------------------------------------------------------
-inline char ToLower(char ch) NOEXCEPT { return ((ch >= 'A') && (ch <= 'Z')) ? 'a' + (ch - 'A') : ch; }
-inline char ToUpper(char ch) NOEXCEPT { return ((ch >= 'a') && (ch <= 'z')) ? 'A' + (ch - 'a') : ch; }
+CONSTEXPR char ToLower(char ch) NOEXCEPT { return ((ch >= 'A') && (ch <= 'Z')) ? 'a' + (ch - 'A') : ch; }
+CONSTEXPR char ToUpper(char ch) NOEXCEPT { return ((ch >= 'a') && (ch <= 'z')) ? 'A' + (ch - 'a') : ch; }
 //----------------------------------------------------------------------------
 inline wchar_t ToLower(wchar_t wch) NOEXCEPT { return std::towlower(wch); }
 inline wchar_t ToUpper(wchar_t wch) NOEXCEPT { return std::towupper(wch); }
@@ -117,7 +117,7 @@ PPE_ASSUME_TYPE_AS_POD(FWStringView)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
-FORCE_INLINE TBasicStringView<_Char> MakeStringView(const TBasicString<_Char>& str) {
+TBasicStringView<_Char> MakeStringView(const TBasicString<_Char>& str) {
     return TBasicStringView<_Char>(str.data(), str.size());
 }
 //----------------------------------------------------------------------------
@@ -211,32 +211,32 @@ PPE_CORE_API FWStringView::iterator StrStr(const FWStringView& wstr, const FWStr
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsAlpha(char ch) { return ( ( ch >= 'a' ) && ( ch <= 'z' ) ) || ( ( ch >= 'A' ) && ( ch <= 'Z' ) ); }
-FORCE_INLINE bool IsAlpha(wchar_t wch) { return 0 != std::iswalpha(wch); }
+CONSTEXPR bool IsAlpha(char ch) { return ( ( ch >= 'a' ) && ( ch <= 'z' ) ) || ( ( ch >= 'A' ) && ( ch <= 'Z' ) ); }
+inline bool IsAlpha(wchar_t wch) { return 0 != std::iswalpha(wch); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsDigit(char ch) { return ( ( ch >= '0' ) && ( ch <= '9' ) ); }
-FORCE_INLINE bool IsDigit(wchar_t wch) { return 0 != std::iswdigit(wch); }
+CONSTEXPR bool IsDigit(char ch) { return ( ( ch >= '0' ) && ( ch <= '9' ) ); }
+inline bool IsDigit(wchar_t wch) { return 0 != std::iswdigit(wch); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsEndLine(char ch) { return ( ( ch == '\r' ) || ( ch == '\n' ) ); }
-FORCE_INLINE bool IsEndLine(wchar_t wch) { return ( ( wch == L'\r' ) || ( wch == L'\n' ) ); }
+CONSTEXPR bool IsEndLine(char ch) { return ( ( ch == '\r' ) || ( ch == '\n' ) ); }
+CONSTEXPR bool IsEndLine(wchar_t wch) { return ( ( wch == L'\r' ) || ( wch == L'\n' ) ); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsXDigit(char ch) { return IsDigit(ch) || ( ch >= 'a' && ch <= 'f' ) || ( ch >= 'A' && ch <= 'F' ); }
-FORCE_INLINE bool IsXDigit(wchar_t wch) { return 0 != std::iswxdigit(wch); }
+CONSTEXPR bool IsXDigit(char ch) { return IsDigit(ch) || ( ch >= 'a' && ch <= 'f' ) || ( ch >= 'A' && ch <= 'F' ); }
+inline bool IsXDigit(wchar_t wch) { return 0 != std::iswxdigit(wch); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsAlnum(char ch) { return IsAlpha(ch) || IsDigit(ch); }
-FORCE_INLINE bool IsAlnum(wchar_t wch) { return 0 != std::iswalnum(wch); }
+CONSTEXPR bool IsAlnum(char ch) { return IsAlpha(ch) || IsDigit(ch); }
+inline bool IsAlnum(wchar_t wch) { return 0 != std::iswalnum(wch); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsIdentifier(char ch) { return (IsAlnum(ch) || ch == '_' || ch == '.'); }
-FORCE_INLINE bool IsIdentifier(wchar_t wch) { return (IsAlnum(wch) || wch == L'_' || wch == L'.'); }
+CONSTEXPR bool IsIdentifier(char ch) { return (IsAlnum(ch) || ch == '_' || ch == '.'); }
+inline bool IsIdentifier(wchar_t wch) { return (IsAlnum(wch) || wch == L'_' || wch == L'.'); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsPrint(char ch) { return 0 != std::isprint((int)((unsigned char)ch)); }
-FORCE_INLINE bool IsPrint(wchar_t wch) { return 0 != std::iswprint(wch); }
+inline bool IsPrint(char ch) { return 0 != std::isprint((int)((unsigned char)ch)); }
+inline bool IsPrint(wchar_t wch) { return 0 != std::iswprint(wch); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsPunct(char ch) { return 0 != std::ispunct((int)((unsigned char)ch)); }
-FORCE_INLINE bool IsPunct(wchar_t wch) { return 0 != std::iswpunct(wch); }
+inline bool IsPunct(char ch) { return 0 != std::ispunct((int)((unsigned char)ch)); }
+inline bool IsPunct(wchar_t wch) { return 0 != std::iswpunct(wch); }
 //----------------------------------------------------------------------------
-FORCE_INLINE bool IsSpace(char ch) { return ( ch == ' ' || ch == '\f' || ch == '\n' || ch == '\r' || ch == '\t' || ch == '\v' ); }
-FORCE_INLINE bool IsSpace(wchar_t wch) { return 0 != std::iswdigit(wch); }
+CONSTEXPR bool IsSpace(char ch) { return ( ch == ' ' || ch == '\f' || ch == '\n' || ch == '\r' || ch == '\t' || ch == '\v' ); }
+inline bool IsSpace(wchar_t wch) { return 0 != std::iswdigit(wch); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -433,68 +433,68 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FStringView& sli
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TCharEqualTo {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const { return lhs == rhs; }
+    bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return lhs == rhs; }
 };
 template <typename _Char>
 struct TCharEqualTo<_Char, ECase::Insensitive> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const { return ToLower(lhs) == ToLower(rhs); }
+    bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return ToLower(lhs) == ToLower(rhs); }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TCharLess {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const { return lhs < rhs; }
+    bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return lhs < rhs; }
 };
 template <typename _Char>
 struct TCharLess<_Char, ECase::Insensitive> {
-    bool operator ()(const _Char& lhs, const _Char& rhs) const { return ToLower(lhs) < ToLower(rhs); }
+    bool operator ()(const _Char& lhs, const _Char& rhs) const NOEXCEPT { return ToLower(lhs) < ToLower(rhs); }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TCharCase {
-    _Char operator ()(const _Char& ch) const { return ch; }
+    _Char operator ()(const _Char& ch) const NOEXCEPT { return ch; }
 };
 template <typename _Char>
 struct TCharCase<_Char, ECase::Insensitive> {
-    _Char operator ()(const _Char& ch) const { return ToLower(ch); }
+    _Char operator ()(const _Char& ch) const NOEXCEPT { return ToLower(ch); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TStringViewEqualTo {
-    bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
+    bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const NOEXCEPT {
         return Equals(lhs, rhs);
     }
 };
 template <typename _Char>
 struct TStringViewEqualTo<_Char, ECase::Insensitive> {
-    bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
+    bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const NOEXCEPT {
         return EqualsI(lhs, rhs);
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TStringViewLess {
-    bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
+    bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const NOEXCEPT {
         return (Compare(lhs, rhs) < 0);
     }
 };
 template <typename _Char>
 struct TStringViewLess<_Char, ECase::Insensitive> {
-    bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
+    bool operator ()(const TBasicStringView<_Char>& lhs, const TBasicStringView<_Char>& rhs) const NOEXCEPT {
         return (CompareI(lhs, rhs) < 0);
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TStringViewHasher {
-    hash_t operator ()(const TBasicStringView<_Char>& str) const {
+    hash_t operator ()(const TBasicStringView<_Char>& str) const NOEXCEPT {
         return hash_string(str);
     }
 };
 template <typename _Char>
 struct TStringViewHasher<_Char, ECase::Insensitive> {
-    hash_t operator ()(const TBasicStringView<_Char>& str) const {
+    hash_t operator ()(const TBasicStringView<_Char>& str) const NOEXCEPT {
         return hash_stringI(str);
     }
 };
@@ -518,23 +518,41 @@ using FConstChar = TBasicConstChar<char>;
 using FConstWChar = TBasicConstChar<wchar_t>;
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
-struct TConstCharEqualTo : TStringViewEqualTo<_Char, _Sensitive> {
-    bool operator ()(const TBasicConstChar<_Char>& lhs, const TBasicConstChar<_Char>& rhs) const {
-        return (lhs.Data == rhs.Data || TStringViewEqualTo<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView()));
+struct TConstCharEqualTo {
+    CONSTEXPR bool operator ()(const TBasicConstChar<_Char>& lhs, const TBasicConstChar<_Char>& rhs) const NOEXCEPT {
+        return (lhs.Data == rhs.Data || lhs.Equals(rhs));
+    }
+};
+template <typename _Char>
+struct TConstCharEqualTo<_Char, ECase::Insensitive> {
+    CONSTEXPR bool operator ()(const TBasicConstChar<_Char>& lhs, const TBasicConstChar<_Char>& rhs) const NOEXCEPT {
+        return (lhs.Data == rhs.Data || lhs.EqualsI(rhs));
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
-struct TConstCharLess : TStringViewLess<_Char, _Sensitive> {
-    bool operator ()(const TBasicConstChar<_Char>& lhs, const TBasicConstChar<_Char>& rhs) const {
-        return (lhs.Data == rhs.Data ? 0 : TStringViewLess<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView()));
+struct TConstCharLess {
+    CONSTEXPR bool operator ()(const TBasicConstChar<_Char>& lhs, const TBasicConstChar<_Char>& rhs) const NOEXCEPT {
+        return (lhs.Data != rhs.Data && lhs.Less(rhs));
+    }
+};
+template <typename _Char>
+struct TConstCharLess<_Char, ECase::Insensitive> {
+    CONSTEXPR bool operator ()(const TBasicConstChar<_Char>& lhs, const TBasicConstChar<_Char>& rhs) const NOEXCEPT {
+        return (lhs.Data != rhs.Data && lhs.LessI(rhs));
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
-struct TConstCharHasher : TStringViewHasher<_Char, _Sensitive> {
-    hash_t operator ()(const TBasicConstChar<_Char>& cstr) const {
-        return TStringViewHasher<_Char, _Sensitive>::operator ()(cstr.MakeView());
+struct TConstCharHasher {
+    CONSTEXPR hash_t operator ()(const TBasicConstChar<_Char>& cstr) const NOEXCEPT {
+        return cstr.HashValue();
+    }
+};
+template <typename _Char>
+struct TConstCharHasher<_Char, ECase::Insensitive> {
+    CONSTEXPR hash_t operator ()(const TBasicConstChar<_Char>& cstr) const NOEXCEPT {
+        return cstr.HashValueI();
     }
 };
 //----------------------------------------------------------------------------

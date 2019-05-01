@@ -65,7 +65,7 @@ hash_t hash_range(_It first, _It last);
 namespace Meta {
 template <typename T>
 struct THash {
-    hash_t operator ()(const T& value) const NOEXCEPT {
+    CONSTEXPR hash_t operator ()(const T& value) const NOEXCEPT {
         using PPE::hash_value;
         return hash_value(value);
     }
