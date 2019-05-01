@@ -7,6 +7,7 @@
 #include "Container/BitMask.h"
 #include "Container/IntrusiveList.h"
 #include "Meta/Singleton.h"
+#include "Meta/Utility.h"
 
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
