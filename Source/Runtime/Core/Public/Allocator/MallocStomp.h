@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #if USE_PPE_MEMORY_DEBUGGING
 #   define WITH_PPE_MALLOCSTOMP

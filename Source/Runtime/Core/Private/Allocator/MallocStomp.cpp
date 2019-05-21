@@ -213,7 +213,7 @@ private:
     size_t _delayedSizeInBytes;
 
     FStompDelayedDeletes_()
-        : _delayeds((FDeletedBlock_*)FPlatformMemory::VirtualAlloc(sizeof(FDeletedBlock_) * MaxDelayedDeletes), MaxDelayedDeletes)
+        : _delayeds((FDeletedBlock_*)FPlatformMemory::VirtualAlloc(sizeof(FDeletedBlock_) * MaxDelayedDeletes, true), MaxDelayedDeletes)
         , _delayedSizeInBytes(0)
     {}
 
@@ -228,7 +228,7 @@ private:
 
         Assert(0 == _delayedSizeInBytes);
 
-        FPlatformMemory::VirtualFree(_delayeds.data(), sizeof(FDeletedBlock_) * MaxDelayedDeletes);
+        FPlatformMemory::VirtualFree(_delayeds.data(), sizeof(FDeletedBlock_) * MaxDelayedDeletes, true);
     }
 
     void ReleaseDelayedDelete_(const FDeletedBlock_& toDelete) {
@@ -379,7 +379,7 @@ void* FMallocStomp::AlignedRealloc(void* ptr, size_t size, size_t alignment) {
 //----------------------------------------------------------------------------
 size_t FMallocStomp::RegionSize(void* ptr) {
     Assert(ptr);
-    return StompGetPayload_(ptr)->AllocationSize;
+    return StompGetPayload_(ptr)->UserSize;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
