@@ -51,6 +51,34 @@ public:
 #endif
         FTaskFunc Pending;
         STaskCounter Counter;
+
+        FTaskQueued() = default;
+
+#if USE_PPE_THREAD_WORKSTEALINGQUEUE
+        FTaskQueued(size_t priority, FTaskFunc&& pending, FTaskCounter* counter) NOEXCEPT
+        :   Priority(priority)
+        ,   Pending(std::move(pending))
+        ,   Counter(counter)
+        {}
+#else
+        FTaskQueued(FTaskFunc&& pending, FTaskCounter* counter) NOEXCEPT
+        :   Pending(std::move(pending))
+        ,   Counter(counter)
+        {}
+#endif
+
+        FTaskQueued(const FTaskQueued&) = delete;
+        FTaskQueued& operator =(const FTaskQueued&) = delete;
+
+        FTaskQueued(FTaskQueued&& rvalue) NOEXCEPT { operator =(std::move(rvalue)); }
+        FTaskQueued& operator =(FTaskQueued&& rvalue) NOEXCEPT {
+#if USE_PPE_THREAD_WORKSTEALINGQUEUE
+            Priority = std::move(rvalue.Priority);
+#endif
+            Pending = std::move(rvalue.Pending);
+            Counter = std::move(rvalue.Counter);
+            return (*this);
+        }
     };
 
     FTaskScheduler(size_t numWorkers, size_t maxTasks);
@@ -87,11 +115,23 @@ private:
         std::condition_variable Empty;
         std::condition_variable Overflow;
 
-        std::priority_queue<
-            FTaskQueued,
-            VECTORINSITU(Task, FTaskQueued, 8),
-            FPrioritySort_
-        >   Queue;
+        VECTORINSITU(Task, FTaskQueued, 8) PriorityHeap;
+
+        const FTaskQueued& Top() const NOEXCEPT {
+            return PriorityHeap.front();
+        }
+
+        void Queue(FTaskQueued&& rvalue) {
+            PriorityHeap.push_back(std::move(rvalue));
+            std::push_heap(PriorityHeap.begin(), PriorityHeap.end(), FPrioritySort_{});
+        }
+
+        void Dequeue(FTaskQueued* task) NOEXCEPT {
+            Assert(task);
+            std::pop_heap(PriorityHeap.begin(), PriorityHeap.end(), FPrioritySort_{});
+            *task = std::move(PriorityHeap.back());
+            PriorityHeap.pop_back();
+        }
     };
 
     struct CACHELINE_ALIGNED state_t {
@@ -108,10 +148,10 @@ private:
         FLocalQueue_& worker = _workerQueues[workerIndex];
         Meta::FUniqueLock scopeLock(worker.Barrier, std::defer_lock);
 
-        if (scopeLock.try_lock() && worker.Queue.size() < _maxTasks) {
+        if (scopeLock.try_lock() && worker.PriorityHeap.size() < _maxTasks) {
             PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-            worker.Queue.emplace(std::move(task));
-            worker.HighestPriority = worker.Queue.top().Priority;
+            worker.Queue(std::move(task));
+            worker.HighestPriority = worker.Top().Priority;
         }
         else {
             return false;
@@ -126,14 +166,12 @@ private:
     void WorkerPop_(size_t workerIndex, FTaskQueued* ptask) {
         FLocalQueue_& worker = _workerQueues[workerIndex];
         Meta::FUniqueLock scopeLock(worker.Barrier);
-        worker.Empty.wait(scopeLock, [&worker] { return (not worker.Queue.empty()); });
+        worker.Empty.wait(scopeLock, [&worker] { return (not worker.PriorityHeap.empty()); });
 
-        *ptask = std::move(worker.Queue.top());
-
-        worker.Queue.pop();
-        worker.HighestPriority = (worker.Queue.empty()
+        worker.Dequeue(ptask);
+        worker.HighestPriority = (worker.PriorityHeap.empty()
             ? INDEX_NONE
-            : worker.Queue.top().Priority );
+            : worker.Top().Priority );
 
         scopeLock.unlock();    // unlock before notification to minimize mutex contention
         worker.Overflow.notify_all(); // always notifies all producer threads
@@ -145,19 +183,17 @@ private:
         if (scopeLock.try_lock() == false)
             return false;
 
-        if (worker.Queue.empty())
+        if (worker.PriorityHeap.empty())
             return false;
 
         worker.Empty.wait(scopeLock, [&worker] {
-            return (not worker.Queue.empty());
+            return (not worker.PriorityHeap.empty());
         });
 
-        *ptask = std::move(worker.Queue.top());
-
-        worker.Queue.pop();
-        worker.HighestPriority = (worker.Queue.empty()
+        worker.Dequeue(ptask);
+        worker.HighestPriority = (worker.PriorityHeap.empty()
             ? INDEX_NONE
-            : worker.Queue.top().Priority );
+            : worker.Top().Priority );
 
         scopeLock.unlock();    // unlock before notification to minimize mutex contention
         worker.Overflow.notify_all(); // always notifies all producer threads
@@ -255,7 +291,7 @@ void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FTas
     const size_t insertion_order_preserving_priority = size_t((u64(priority) << 16) | _state.TaskRevision++);
     Assert((insertion_order_preserving_priority >> 16) == size_t(priority));
 
-    FTaskQueued queued{ insertion_order_preserving_priority, task, pcounter };
+    FTaskQueued queued{ insertion_order_preserving_priority, FTaskFunc(task), pcounter };
 
     // used as hint for work stealing : worker will try to steal a job if a more priority task is available
     size_t globalHighest = _state.GlobalPriority;
@@ -319,7 +355,7 @@ void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& ta
         // make sure that each worker is getting his exit task
         forrange(i, 0, _numWorkers) {
             if (workers.Get(i)) {
-                FTaskQueued queuedExit{ priority, task, nullptr };
+                FTaskQueued queuedExit{ priority, FTaskFunc(task), nullptr };
                 if (WorkerTryPush_(i, queuedExit))
                     workers.SetFalse(i);
             }
@@ -364,7 +400,7 @@ void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FTaskCou
 }
 //----------------------------------------------------------------------------
 void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FTaskCounter* pcounter) {
-    _tasks.Produce(u32(priority), FTaskQueued{ task, pcounter });
+    _tasks.Produce(u32(priority), FTaskQueued{ FTaskFunc(task), pcounter });
 }
 //----------------------------------------------------------------------------
 void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FTaskCounter* pcounter) {
@@ -375,7 +411,7 @@ void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<FTaskFunc
 //----------------------------------------------------------------------------
 void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FTaskCounter* pcounter) {
     _tasks.Produce(u32(priority), tasks.size(), _numWorkers, [tasks, pcounter](size_t i) {
-        return FTaskQueued{ tasks[i], pcounter };
+        return FTaskQueued{ FTaskFunc(tasks[i]), pcounter };
     });
 }
 //----------------------------------------------------------------------------
@@ -387,7 +423,7 @@ void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& ta
     Assert(task);
 
     forrange(i, 0, _numWorkers)
-        Produce(ETaskPriority(priority), FTaskFunc(task), nullptr);
+        Produce(ETaskPriority(priority), task, nullptr);
 }
 //----------------------------------------------------------------------------
 #endif //!USE_PPE_THREAD_WORKSTEALINGQUEUE

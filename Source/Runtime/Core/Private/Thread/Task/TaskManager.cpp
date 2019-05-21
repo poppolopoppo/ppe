@@ -10,6 +10,7 @@
 #include "Thread/ThreadContext.h"
 
 #include "Allocator/Alloca.h"
+#include "Allocator/TrackingMalloc.h"
 #include "Container/BitMask.h"
 #include "Container/RingBuffer.h"
 #include "Container/Vector.h"
@@ -101,7 +102,25 @@ public:
 
     friend void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef);
 
-    OVERRIDE_CLASS_ALLOCATOR(ALIGNED_ALLOCATOR(Task, FTaskCounter, CACHELINE_SIZE))
+    // override new/delete operators to get allocations aligned on cache line size
+
+    void* (operator new)(size_t s) {
+    #if USE_PPE_MEMORYDOMAINS
+        Assert(s == sizeof(FTaskCounter));
+        MEMORYDOMAIN_TRACKING_DATA(Task).Allocate(s, PPE::malloc_snap_size(s));
+    #endif
+        return PPE::aligned_malloc(s, CACHELINE_SIZE);
+    }
+    void (operator delete)(void* p) {
+    #if USE_PPE_MEMORYDOMAINS
+        const size_t s = sizeof(FTaskCounter);
+        MEMORYDOMAIN_TRACKING_DATA(Task).Deallocate(s, PPE::malloc_snap_size(s));
+    #endif
+        PPE::aligned_free(p);
+    }
+    void(operator delete)(void* p, size_t) {
+        (operator delete)(p);
+    }
 
 private:
     mutable FAtomicSpinLock _barrier;
@@ -775,10 +794,10 @@ void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTaskWaitHandle::FTaskWaitHandle()
+FTaskWaitHandle::FTaskWaitHandle() NOEXCEPT
 :   _counter(nullptr) {}
 //----------------------------------------------------------------------------
-FTaskWaitHandle::FTaskWaitHandle(PTaskCounter&& counter)
+FTaskWaitHandle::FTaskWaitHandle(PTaskCounter&& counter) NOEXCEPT
 :   _counter(std::move(counter)) {}
 //----------------------------------------------------------------------------
 FTaskWaitHandle::~FTaskWaitHandle() {
@@ -788,11 +807,11 @@ FTaskWaitHandle::~FTaskWaitHandle() {
     }
 }
 //----------------------------------------------------------------------------
-FTaskWaitHandle::FTaskWaitHandle(FTaskWaitHandle&& rvalue) {
+FTaskWaitHandle::FTaskWaitHandle(FTaskWaitHandle&& rvalue) NOEXCEPT {
     operator =(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
-FTaskWaitHandle& FTaskWaitHandle::operator =(FTaskWaitHandle&& rvalue) {
+FTaskWaitHandle& FTaskWaitHandle::operator =(FTaskWaitHandle&& rvalue) NOEXCEPT {
     AssertRelease(not _counter.valid()); // should call DestroyCounter() to pool the counter
 
     _counter = std::move(rvalue._counter);

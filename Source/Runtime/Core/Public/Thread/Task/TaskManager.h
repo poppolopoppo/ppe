@@ -24,15 +24,16 @@ class PPE_CORE_API FTaskWaitHandle {
 public:
     friend class FTaskManagerImpl;
 
-    FTaskWaitHandle();
-    explicit FTaskWaitHandle(PTaskCounter&& counter);
+    FTaskWaitHandle() NOEXCEPT;
+    explicit FTaskWaitHandle(PTaskCounter&& counter) NOEXCEPT;
+
     ~FTaskWaitHandle();
 
     FTaskWaitHandle(const FTaskWaitHandle& other) = delete;
     FTaskWaitHandle& operator =(const FTaskWaitHandle& other) = delete;
 
-    FTaskWaitHandle(FTaskWaitHandle&& rvalue);
-    FTaskWaitHandle& operator =(FTaskWaitHandle&& rvalue);
+    FTaskWaitHandle(FTaskWaitHandle&& rvalue) NOEXCEPT;
+    FTaskWaitHandle& operator =(FTaskWaitHandle&& rvalue) NOEXCEPT;
 
     const FTaskCounter* Counter() const { return _counter.get(); }
 
