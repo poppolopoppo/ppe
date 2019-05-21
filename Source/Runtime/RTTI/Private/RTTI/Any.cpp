@@ -385,7 +385,7 @@ void* FAny::Allocate_AssumeNotInitialized_(const size_t sizeInBytes) {
         _externalBlock.Ptr = PPE::malloc(_externalBlock.SizeInBytes);
 
 #if USE_PPE_MEMORYDOMAINS
-        MEMORYDOMAIN_TRACKING_DATA(Any).Allocate(1, _externalBlock.SizeInBytes);
+        MEMORYDOMAIN_TRACKING_DATA(Any).Allocate(_externalBlock.SizeInBytes, _externalBlock.SizeInBytes);
 #endif
 
         return _externalBlock.Ptr;
@@ -405,7 +405,7 @@ void FAny::Reset_AssumeInitialized_(const size_t sizeInBytes) {
         _traits->Destroy(_externalBlock.Ptr);
 
 #if USE_PPE_MEMORYDOMAINS
-        MEMORYDOMAIN_TRACKING_DATA(Any).Deallocate(1, _externalBlock.SizeInBytes);
+        MEMORYDOMAIN_TRACKING_DATA(Any).Deallocate(_externalBlock.SizeInBytes, _externalBlock.SizeInBytes);
 #endif
 
         PPE::free(_externalBlock.Ptr);

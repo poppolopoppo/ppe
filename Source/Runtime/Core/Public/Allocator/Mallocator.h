@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "Allocator/AllocatorBase.h"
 #include "Allocator/Malloc.h"
@@ -9,135 +9,96 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t _Alignment = sizeof(ptrdiff_t) >
-class TMallocator : public TAllocatorBase<T> {
+// FMallocator is wrapping global malloc/realloc/free()
+//----------------------------------------------------------------------------
+class PPE_CORE_API FMallocator : private FGenericAllocator {
 public:
-    typedef TAllocatorBase<T> base_type;
+    using propagate_on_container_copy_assignment = std::true_type;
+    using propagate_on_container_move_assignment = std::true_type;
+    using propagate_on_container_swap = std::true_type;
 
-    using typename base_type::pointer;
-    using typename base_type::size_type;
+    using is_always_equal = std::true_type;
 
-    typedef std::true_type propagate_on_container_copy_assignment;
-    typedef std::true_type propagate_on_container_move_assignment;
-    typedef std::true_type propagate_on_container_swap;
-    typedef std::true_type is_always_equal;
+    using has_maxsize = std::false_type;
+    using has_owns = std::false_type;
+    using has_reallocate = std::true_type;
+    using has_acquire = std::true_type;
+    using has_steal = std::true_type;
 
-    using base_type::address;
-    using base_type::construct;
-    using base_type::destroy;
-    using base_type::max_size;
+    STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
 
-    template<typename U>
-    struct rebind {
-        typedef TMallocator<U> other;
-    };
+    FMallocator() = default;
 
-    CONSTEXPR TMallocator() noexcept = default;
+    static size_t SnapSize(size_t s) NOEXCEPT {
+        return malloc_snap_size(s);
+    }
 
-    CONSTEXPR TMallocator(const TMallocator&) noexcept = default;
-    template <typename U>
-    CONSTEXPR TMallocator(const TMallocator<U>&) noexcept {}
+    FAllocatorBlock Allocate(size_t s) const {
+        return FAllocatorBlock{ PPE::malloc(s), s };
+    }
 
-    CONSTEXPR TMallocator& operator=(const TMallocator&) noexcept = default;
-    template <typename U>
-    CONSTEXPR TMallocator& operator=(const TMallocator<U>&) noexcept { return (*this); }
+    void Deallocate(FAllocatorBlock b) const {
+        PPE::free(b.Data);
+    }
 
-    pointer allocate(size_type n);
-    pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
-    void deallocate(void* p, size_type n);
+    void Reallocate(FAllocatorBlock& b, size_t s) const {
+        b.Data = PPE::realloc(b.Data, s);
+        b.SizeInBytes = s;
+    }
 
-    // see AllocatorRealloc()
-    void* relocate(void* p, size_type newSize, size_type oldSize);
+    bool Acquire(FAllocatorBlock b) NOEXCEPT {
+        UNUSED(b); // nothing to do
+        return true;
+    }
+
+    bool Steal(FAllocatorBlock b) NOEXCEPT {
+        UNUSED(b); // nothing to do
+        return true;
+    }
 };
 //----------------------------------------------------------------------------
-template <typename T, size_t _Alignment>
-auto TMallocator<T, _Alignment>::allocate(size_type n) -> pointer {
-    // The return value of allocate(0) is unspecified.
-    // TMallocator returns NULL in order to avoid depending
-    // on malloc(0)'s implementation-defined behavior
-    // (the implementation can define malloc(0) to return NULL,
-    // in which case the bad_alloc check below would fire).
-    // All allocators can return NULL in this case.
-    if (n == 0)
-        return nullptr;
-
-    // All allocators should contain an integer overflow check.
-    // The Standardization Committee recommends that std::length_error
-    // be thrown in the case of integer overflow.
-    if (n > max_size())
-        PPE_THROW_IT(std::length_error("TMallocator<T>::allocate() - Integer overflow."));
-
-    // TMallocator wraps malloc().
-    void * const pv = PPE::malloc<_Alignment>(n * sizeof(T));
-
-    // Allocators should throw std::bad_alloc in the case of memory allocation failure.
-    if (pv == nullptr)
-        PPE_THROW_IT(std::bad_alloc());
-
-    return static_cast<T *>(pv);
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Alignment>
-void TMallocator<T, _Alignment>::deallocate(void* p, size_type n) {
-    UNUSED(n);
-    // TMallocator wraps malloc().
-    PPE::free<_Alignment>(p);
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Alignment>
-void* TMallocator<T, _Alignment>::relocate(void* p, size_type newSize, size_type oldSize) {
-    UNUSED(oldSize);
-
-    // TMallocator wraps malloc()
-    void* const newp = PPE::realloc<_Alignment>(p, newSize * sizeof(T));
-    if (nullptr == newp && newSize)
-        PPE_THROW_IT(std::bad_alloc());
-
-    return newp;
-}
-//----------------------------------------------------------------------------
-EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TMallocator<u8>;
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, size_t A, typename U, size_t B>
-bool operator ==(const TMallocator<T, A>&/* lhs */, const TMallocator<U, B>&/* rhs */) {
-    return A == B;
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t A, typename U, size_t B>
-bool operator !=(const TMallocator<T, A>& lhs, const TMallocator<U, B>& rhs) {
-    return !operator ==(lhs, rhs);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T, size_t _Alignment>
-size_t AllocatorSnapSize(const TMallocator<T, _Alignment>&, size_t size) {
-    return (PPE::malloc_snap_size(size * sizeof(T)) / sizeof(T));
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename U, size_t _Alignment, typename V>
-struct allocator_can_steal_from<
-    TMallocator<U, _Alignment>,
-    TMallocator<V, _Alignment>
->   : Meta::TIntegralConstant<bool, true> {};
-//----------------------------------------------------------------------------
-template <typename T, size_t _Alignment>
-std::true_type/* enabled */AllocatorStealFrom(
-    TMallocator<T, _Alignment>&,
-    typename TMallocator<T, _Alignment>::pointer, size_t ) {
-    return std::true_type{}; // nothing to do, everything is already checked statically
-}
-//----------------------------------------------------------------------------
-template <typename T, size_t _Alignment>
-std::true_type/* enabled */AllocatorAcquireStolen(
-    TMallocator<T, _Alignment>&,
-    typename TMallocator<T, _Alignment>::pointer, size_t ) {
-    return std::true_type{}; // nothing to do, everything is already checked statically
-}
+template <size_t _Alignment>
+class TAlignedMallocator : private FMallocator {
+public:
+    using typename FMallocator::propagate_on_container_copy_assignment;
+    using typename FMallocator::propagate_on_container_move_assignment;
+    using typename FMallocator::propagate_on_container_swap;
+
+    using typename FMallocator::is_always_equal;
+
+    using typename FMallocator::has_owns;
+    using typename FMallocator::has_reallocate;
+    using typename FMallocator::has_acquire;
+    using typename FMallocator::has_steal;
+
+    STATIC_CONST_INTEGRAL(size_t, Alignment, Max(size_t(ALLOCATION_BOUNDARY), _Alignment));
+    STATIC_ASSERT(Meta::IsPow2(Alignment));
+
+    TAlignedMallocator() = default;
+
+    static size_t SnapSize(size_t s) NOEXCEPT {
+        return FMallocator::SnapSize(Meta::RoundToNext(s, _Alignment));
+    }
+
+    FAllocatorBlock Allocate(size_t s) const {
+        STATIC_ASSERT(Meta::IsAligned(ALLOCATION_BOUNDARY, Alignment));
+        return FAllocatorBlock{ PPE::malloc<_Alignment>(s), s };
+    }
+
+    void Deallocate(FAllocatorBlock b) const {
+        PPE::free<_Alignment>(b.Data);
+    }
+
+    void Reallocate(FAllocatorBlock& b, size_t s) const {
+        b.Data = PPE::realloc<_Alignment>(b.Data, s);
+        b.SizeInBytes = s;
+    }
+
+    using FMallocator::Acquire;
+    using FMallocator::Steal;
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

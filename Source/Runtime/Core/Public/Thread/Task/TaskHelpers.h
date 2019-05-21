@@ -2,8 +2,6 @@
 
 #include "Core.h"
 
-#include "Allocator/PoolAllocator.h"
-#include "Allocator/PoolAllocator-impl.h"
 #include "Misc/Function.h"
 #include "Thread/Task/Task.h"
 #include "Thread/Task/TaskManager.h"
@@ -50,8 +48,6 @@ public:
     T* ResultIFP(); // non blocking
 
     void Async(ETaskPriority priority, FTaskManager* manager);
-
-    SINGLETON_POOL_ALLOCATED_DECL();
 
 private:
     enum EState_ : int {

@@ -117,15 +117,18 @@ void FModuleManager::ReleaseMemoryInModules() const {
     Assert(_startup);
 
     LOG(Module, Emphasis, L"releasing memory in modules ...");
-    LOG(Module, Info, L"used memory before release : {0} blocks / {1}",
-        Fmt::CountOfElements(FMemoryTracking::UsedMemory().AllocationCount()),
-        Fmt::SizeInBytes(FMemoryTracking::UsedMemory().TotalSizeInBytes()) );
-    LOG(Module, Info, L"pooled memory before release : {0} blocks / {1}",
-        Fmt::CountOfElements(FMemoryTracking::PooledMemory().AllocationCount()),
-        Fmt::SizeInBytes(FMemoryTracking::PooledMemory().TotalSizeInBytes()) );
-    LOG(Module, Info, L"reserved memory before release : {0} blocks / {1}",
-        Fmt::CountOfElements(FMemoryTracking::ReservedMemory().AllocationCount()),
-        Fmt::SizeInBytes(FMemoryTracking::ReservedMemory().TotalSizeInBytes()) );
+    LOG(Module, Info, L"used memory before release : {0} blocks / usr: {1} / sys: {2}",
+        Fmt::CountOfElements(FMemoryTracking::UsedMemory().NumAllocs()),
+        Fmt::SizeInBytes(FMemoryTracking::UsedMemory().User().TotalSize),
+        Fmt::SizeInBytes(FMemoryTracking::UsedMemory().System().TotalSize));
+    LOG(Module, Info, L"pooled memory before release : {0} blocks / usr: {1} / sys: {2}",
+        Fmt::CountOfElements(FMemoryTracking::PooledMemory().NumAllocs()),
+        Fmt::SizeInBytes(FMemoryTracking::PooledMemory().User().TotalSize),
+        Fmt::SizeInBytes(FMemoryTracking::PooledMemory().System().TotalSize));
+    LOG(Module, Info, L"reserved memory before release : {0} blocks / usr: {1} / sys: {2}",
+        Fmt::CountOfElements(FMemoryTracking::ReservedMemory().NumAllocs()),
+        Fmt::SizeInBytes(FMemoryTracking::ReservedMemory().User().TotalSize),
+        Fmt::SizeInBytes(FMemoryTracking::ReservedMemory().System().TotalSize));
 
 
 #ifdef USE_DEBUG_LOGGER
@@ -135,15 +138,18 @@ void FModuleManager::ReleaseMemoryInModules() const {
 
     LOG(Module, Debug, L" -> released memory in modules during {0:f3}",
         Fmt::DurationInMs(t.Elapsed()) );
-    LOG(Module, Info, L"used memory after release : {0} blocks / {1}",
-        Fmt::CountOfElements(FMemoryTracking::UsedMemory().AllocationCount()),
-        Fmt::SizeInBytes(FMemoryTracking::UsedMemory().TotalSizeInBytes()) );
-    LOG(Module, Info, L"pooled memory after release : {0} blocks / {1}",
-        Fmt::CountOfElements(FMemoryTracking::PooledMemory().AllocationCount()),
-        Fmt::SizeInBytes(FMemoryTracking::PooledMemory().TotalSizeInBytes()) );
-    LOG(Module, Info, L"reserved memory after release : {0} blocks / {1}",
-        Fmt::CountOfElements(FMemoryTracking::ReservedMemory().AllocationCount()),
-        Fmt::SizeInBytes(FMemoryTracking::ReservedMemory().TotalSizeInBytes()) );
+    LOG(Module, Info, L"used memory after release : {0} blocks / usr: {1} / sys: {2}",
+        Fmt::CountOfElements(FMemoryTracking::UsedMemory().NumAllocs()),
+        Fmt::SizeInBytes(FMemoryTracking::UsedMemory().User().TotalSize),
+        Fmt::SizeInBytes(FMemoryTracking::UsedMemory().System().TotalSize));
+    LOG(Module, Info, L"pooled memory after release : {0} blocks / usr: {1} / sys: {2}",
+        Fmt::CountOfElements(FMemoryTracking::PooledMemory().NumAllocs()),
+        Fmt::SizeInBytes(FMemoryTracking::PooledMemory().User().TotalSize),
+        Fmt::SizeInBytes(FMemoryTracking::PooledMemory().System().TotalSize));
+    LOG(Module, Info, L"reserved memory after release : {0} blocks / usr: {1} / sys: {2}",
+        Fmt::CountOfElements(FMemoryTracking::ReservedMemory().NumAllocs()),
+        Fmt::SizeInBytes(FMemoryTracking::ReservedMemory().User().TotalSize),
+        Fmt::SizeInBytes(FMemoryTracking::ReservedMemory().System().TotalSize));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

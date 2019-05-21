@@ -10,7 +10,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define HASHMAP(_DOMAIN, _KEY, _VALUE) \
-    ::PPE::THashMap<_KEY, _VALUE, ::PPE::Meta::THash<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, ALLOCATOR(_DOMAIN, ::PPE::TPair<_KEY COMMA _VALUE>)>
+    ::PPE::THashMap<_KEY, _VALUE, ::PPE::Meta::THash<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, ALLOCATOR(_DOMAIN)>
 //----------------------------------------------------------------------------
 #define HASHMAP_MEMOIZE(_DOMAIN, _KEY, _VALUE) \
     HASHMAP(_DOMAIN, ::PPE::THashMemoizer<_KEY>, _VALUE)
@@ -22,7 +22,7 @@ template <
     typename _Value,
     typename _Hasher = Meta::THash<_Key>,
     typename _EqualTo = Meta::TEqualTo<_Key>,
-    typename _Allocator = ALLOCATOR(Container, TPair<_Key COMMA _Value>)
+    typename _Allocator = ALLOCATOR(Container)
 >
 using THashMap = TBasicHashTable< details::THashMapTraits_<_Key, _Value>, _Hasher, _EqualTo, _Allocator >;
 //----------------------------------------------------------------------------

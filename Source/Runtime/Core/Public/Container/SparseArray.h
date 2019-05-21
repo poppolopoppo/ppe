@@ -13,7 +13,9 @@
 
 #define SPARSEARRAY(_DOMAIN, T, _ChunkSize) \
     ::PPE::TAlignedSparseArray<COMMA_PROTECT(T), _ChunkSize, \
-        ALLOCATOR(_DOMAIN, ::PPE::TSparseArrayItem<COMMA_PROTECT(T)>) >
+        ALLOCATOR(_DOMAIN) >
+
+// #TODO use exponential growth instead of linear (incremented instead of fixed block size)
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -50,10 +52,10 @@ public:
     using FDataChunk = Meta::TArray<FDataItem, _ChunkSize>;
 
     using value_type = T;
-    using pointer = std::add_pointer_t<T>;
-    using const_pointer = std::add_pointer_t<std::add_const_t<T>>;
-    using reference = std::add_lvalue_reference_t<T>;
-    using const_reference = std::add_lvalue_reference_t<std::add_const_t<T>>;
+    using pointer = Meta::TAddPointer<T>;
+    using const_pointer = Meta::TAddPointer<Meta::TAddConst<T>>;
+    using reference = Meta::TAddReference<T>;
+    using const_reference = Meta::TAddReference<Meta::TAddConst<T>>;
 
     using size_type = size_t;
     using difference_type = ptrdiff_t;
@@ -270,8 +272,8 @@ private:
     TSparseArrayIterator& GotoNextItem_();
 };
 //----------------------------------------------------------------------------
-template <typename T, size_t _ChunkSize = 8, typename _Allocator = ALLOCATOR(Container, TSparseArrayItem<T>) >
-class TSparseArray : public TBasicSparseArray<T, _ChunkSize>, private _Allocator {
+template <typename T, size_t _ChunkSize = 8, typename _Allocator = ALLOCATOR(Container) >
+class TSparseArray : private _Allocator, public TBasicSparseArray<T, _ChunkSize> {
 public:
     using parent_type = TBasicSparseArray<T, _ChunkSize>;
 
@@ -294,10 +296,7 @@ public:
     using typename parent_type::const_iterator;
 
     using allocator_type = _Allocator;
-    using allocator_traits = std::allocator_traits<_Allocator>;
-
-    static_assert(std::is_same<FDataItem, typename allocator_traits::value_type>::value,
-        "allocator value_type mismatch");
+    using allocator_traits = TAllocatorTraits<_Allocator>;
 
     TSparseArray() NOEXCEPT : parent_type() {}
     ~TSparseArray();
@@ -377,9 +376,6 @@ private:
     void ReleaseChunk_(FDataChunk* chunk, size_t offset);
     void ClearReleaseMemory_LeaveDirty_();
 
-    allocator_type& get_allocator_() {
-        return static_cast<allocator_type&>(*this);
-    }
 };
 //----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize, typename _Allocator>

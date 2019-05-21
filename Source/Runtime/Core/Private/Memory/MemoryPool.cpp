@@ -109,7 +109,8 @@ FMemoryPoolChunk::FMemoryPoolChunk(size_t chunkSize, size_t blockCount)
 ,   _blockCount(checked_cast<u32>(blockCount))
 ,   _blockUsed(0)
 ,   _blockAdded(0)
-,   _chunkSize(checked_cast<u32>(chunkSize)) {
+,   _chunkSize(checked_cast<u32>(chunkSize))
+,   _node{ nullptr, nullptr } {
     Assert(blockCount > 10);
 }
 //----------------------------------------------------------------------------
@@ -224,7 +225,7 @@ void FMemoryPool::AddChunk_(FMemoryPoolChunk *chunk) {
     Assert(nullptr == _sparesHead);
 
     using list_accessor = FMemoryPoolChunk::list_accessor;
-    list_accessor::PushFront(&_chunksHead, &_chunksTail, chunk);
+    list_accessor::PushHead(&_chunksHead, &_chunksTail, chunk);
 
     _chunkCount++;
     _totalSize = checked_cast<u32>(_totalSize + chunk->ChunkSize());
@@ -253,7 +254,7 @@ void *FMemoryPool::TryAllocate_FailIfNoBlockAvailable_() {
         Assert(_totalSize >= _usedSize);
 
         using list_accessor = FMemoryPoolChunk::list_accessor;
-        list_accessor::PokeFront(&_chunksHead, &_chunksTail, chunk);
+        list_accessor::PokeHead(&_chunksHead, &_chunksTail, chunk);
 
         return chunk->AllocateBlock(_blockSize);
     }
@@ -278,7 +279,7 @@ FMemoryPoolChunk *FMemoryPool::Deallocate_ReturnChunkToRelease_(void *ptr) {
                     // if some pages are spared :
                     (_sparesHead) &&
                     // size heuristic to decide if we give up on the empty chunk :
-                    (_totalSize - _sparesHead->ChunkSize()) >= 2*_usedSize)
+                    (_totalSize - _sparesHead->ChunkSize()) >= 2 * size_t(_usedSize))
                 ? ReleaseChunk_()
                 : nullptr;
         }
@@ -356,7 +357,7 @@ FMemoryPoolChunk *FMemoryPool::ReviveChunk_() {
     }
     else {
         Assert(revive->CompletelyFree());
-        list_accessor::PushFront(&_chunksHead, &_chunksTail, revive);
+        list_accessor::PushHead(&_chunksHead, &_chunksTail, revive);
         return revive;
     }
 }
@@ -398,7 +399,7 @@ void* FMemoryPool::Allocate(FMemoryTracking *trackingData /* = nullptr */) {
 #endif
 #if USE_PPE_MEMORYPOOL_FALLBACK_TO_MALLOC
     if (trackingData)
-        trackingData->Allocate(1, BlockSize());
+        trackingData->Allocate(BlockSize(), BlockSize());
 
     return PPE::aligned_malloc(BlockSize(), ALLOCATION_BOUNDARY);
 
@@ -418,13 +419,13 @@ void* FMemoryPool::Allocate(FMemoryTracking *trackingData /* = nullptr */) {
 
 #if USE_PPE_MEMORYDOMAINS
         if (trackingData)
-            trackingData->Pool_AllocateOneChunk(newChunk->ChunkSize(), newChunk->BlockCount());
+            trackingData->Allocate(0, newChunk->ChunkSize());
 #endif
     }
 
 #if USE_PPE_MEMORYDOMAINS
     if (trackingData)
-        trackingData->Pool_AllocateOneBlock(BlockSize());
+        trackingData->Allocate(BlockSize(), 0);
 #endif
 
     return ptr;
@@ -440,14 +441,14 @@ void FMemoryPool::Deallocate(void *ptr, FMemoryTracking *trackingData /* = nullp
     PPE::aligned_free(ptr);
 
     if (trackingData)
-        trackingData->Deallocate(1, BlockSize());
+        trackingData->Deallocate(BlockSize(), BlockSize());
 
 #else
     Assert(ptr);
 
 #if USE_PPE_MEMORYDOMAINS
     if (trackingData)
-        trackingData->Pool_DeallocateOneBlock(BlockSize());
+        trackingData->Deallocate(BlockSize(), 0);
 #endif
 
     FMemoryPoolChunk *chunk;
@@ -456,7 +457,7 @@ void FMemoryPool::Deallocate(void *ptr, FMemoryTracking *trackingData /* = nullp
 
 #if USE_PPE_MEMORYDOMAINS
     if (trackingData)
-        trackingData->Pool_DeallocateOneChunk(chunk->ChunkSize(), chunk->BlockCount());
+        trackingData->Deallocate(0, chunk->BlockCount());
 #endif
 
     DeallocateChunk_(chunk);
@@ -603,7 +604,7 @@ FMemoryPoolList::~FMemoryPoolList() {
 void FMemoryPoolList::Insert(IMemoryPool* ppool) {
     Assert(ppool);
     const FAtomicSpinLock::FScope scopeLock(_barrier);
-    _pools.PushFront(ppool);
+    _pools.PushHead(ppool);
 }
 //----------------------------------------------------------------------------
 void FMemoryPoolList::Remove(IMemoryPool* ppool) {

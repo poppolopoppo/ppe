@@ -2,7 +2,7 @@
 
 #include "Serialize.h"
 
-#include "Allocator/LinearHeapAllocator.h"
+#include "Allocator/LinearAllocator.h"
 #include "Container/HashSet.h"
 #include "HAL/PlatformMemory.h"
 #include "IO/StringView.h"

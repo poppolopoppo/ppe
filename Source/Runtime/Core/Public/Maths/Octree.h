@@ -3,7 +3,6 @@
 #include "Core.h"
 
 #include "Allocator/Allocation.h"
-#include "Allocator/NodeBasedContainerAllocator.h"
 
 #include "Maths/ScalarBoundingBox_fwd.h"
 #include "Maths/ScalarVector.h"
@@ -58,15 +57,18 @@ private:
     int _dimension;
 };
 //----------------------------------------------------------------------------
-template <typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Maths, FOctreeNode) >
+template <typename _Allocator = BATCH_ALLOCATOR(Maths, FOctreeNode) >
 class TBareOctree : public FBasicOctree, _Allocator {
 public:
     typedef _Allocator allocator_type;
+    typedef TAllocatorTraits<_Allocator> allocator_traits;
 
     using typename FBasicOctree::FLeafIndex;
     using typename FBasicOctree::FHitResult;
 
     using FBasicOctree::Intersects;
+
+    // #TODO finish impl ? already have a BVH
 
 private:
 

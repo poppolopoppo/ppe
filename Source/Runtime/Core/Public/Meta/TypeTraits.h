@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Meta/Aliases.h"
 #include "Meta/Config.h"
 
 #include <functional>
@@ -167,8 +168,9 @@ using has_trivial_move = std::bool_constant<TIsPod_v<T> || (
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if 0
 // Uses SFINAE to determine if T has a compatible constructor
+//----------------------------------------------------------------------------
+#if 0
 namespace details {
 template<
     class T,
@@ -209,8 +211,8 @@ using has_equals_ = std::bool_constant<
 //----------------------------------------------------------------------------
 } //!details
 //----------------------------------------------------------------------------
-template <typename T>
-constexpr bool has_equals_v = details::has_equals_<T>::value;
+template <typename U, typename V = U>
+constexpr bool has_equals_v = details::has_equals_<U, V>::value;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -245,8 +247,42 @@ struct has_destructor {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FNoInit {};
-struct FForceInit {};
+// Test is a class/struct is defining a using/function/typedef/value/enum ...
+// Ex:  // test for a using/typedef
+//      template <typename T> using_value_type_t = typename T::value_type;
+//      STATIC_ASSERT(Meta::has_defined_v<using_value_type_t, my_type_t>);
+//----------------------------------------------------------------------------
+namespace details {
+template <template<class> class _Using, typename T, class = _Using<T>>
+std::true_type has_defined_(int);
+template <template<class> class _Using, typename T>
+std::false_type has_defined_(...);
+} //!details
+//----------------------------------------------------------------------------
+template <template<class> class _Using, typename T>
+using has_defined_t = decltype(details::has_defined_<_Using, T>(0));
+//----------------------------------------------------------------------------
+template <template<class> class _Using, typename T>
+constexpr bool has_defined_v = has_defined_t<_Using, T>::value;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace details {
+template <template<class> class _Using, class _Fallback, typename T, class = _Using<T>>
+_Using<T> optional_definition_(int);
+template <template<class> class _Using, class _Fallback, typename T>
+_Fallback optional_definition_(...);
+} //!details
+//----------------------------------------------------------------------------
+template <template<class> class _Using, class _Fallback, typename T>
+using optional_definition_t = decltype(details::optional_definition_<_Using, _Fallback, T>(0));
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Optional control for data initialization
+//----------------------------------------------------------------------------
+struct FNoInit {}; // ctor with that arg must *NOT* initialize the data
+struct FForceInit {}; // ctor with that arg must initialize the data
 //----------------------------------------------------------------------------
 constexpr FNoInit NoInit{};
 constexpr FForceInit ForceInit{};
@@ -301,9 +337,9 @@ using TDontDeduce = typename TType<T>::type;
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
-FORCE_INLINE void Construct_(T* p, FNoInit, std::false_type) { new ((void*)p) T{}; }
+FORCE_INLINE void Construct_(T* p, FNoInit, std::false_type) { INPLACE_NEW(p, T){}; }
 template <typename T>
-FORCE_INLINE void Construct_(T* p, FNoInit noInit, std::true_type) { new ((void*)p) T{ noInit }; }
+FORCE_INLINE void Construct_(T* p, FNoInit noInit, std::true_type) { INPLACE_NEW(p, T){ noInit }; }
 } //!details
 template <typename T>
 void Construct(T* p, FNoInit noInit) {
@@ -313,9 +349,9 @@ void Construct(T* p, FNoInit noInit) {
 //----------------------------------------------------------------------------
 namespace details {
 template <typename T>
-FORCE_INLINE void Construct_(T* p, FForceInit, std::false_type) { new ((void*)p) T{}; }
+FORCE_INLINE void Construct_(T* p, FForceInit, std::false_type) { INPLACE_NEW(p, T){}; }
 template <typename T>
-FORCE_INLINE void Construct_(T* p, FForceInit init, std::true_type) { new ((void*)p) T{ init }; }
+FORCE_INLINE void Construct_(T* p, FForceInit init, std::true_type) { INPLACE_NEW(p, T){ init }; }
 } //!details
 template <typename T>
 void Construct(T* p, FForceInit init) {
@@ -396,11 +432,11 @@ void Destroy(T* p) {
             typename... _Args, \
             typename = PPE::Meta::TEnableIf< Meta::has_constructor<parent_type, _Args...>::value > \
         > \
-        explicit _NAME(_Args&&... args) \
+        explicit _NAME(_Args&&... args) NOEXCEPT \
             : parent_type(std::forward<_Args>(args)...) {} \
         \
         template <typename _Arg> \
-        _NAME& operator=(_Arg&& arg) { \
+        _NAME& operator=(_Arg&& arg) NOEXCEPT { \
             parent_type::operator =(std::forward<_Arg>(arg)); \
             return *this; \
         } \

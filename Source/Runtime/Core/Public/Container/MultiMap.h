@@ -3,7 +3,7 @@
 #include "Core.h"
 
 #include "Allocator/Allocation.h"
-#include "Allocator/NodeBasedContainerAllocator.h"
+#include "Allocator/StlAllocator.h"
 #include "Container/Pair.h"
 #include "IO/TextWriter_fwd.h"
 
@@ -17,12 +17,17 @@ template <
     typename _Key,
     typename _Value,
     typename _Predicate = Meta::TLess<_Key>,
-    typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, TPair<_Key COMMA _Value>)
+    typename _Allocator = ALLOCATOR(Container)
 >
-using TMultiMap = std::multimap<_Key, _Value, _Predicate, _Allocator >;
+using TMultiMap = std::multimap<
+    _Key,
+    _Value,
+    _Predicate,
+    TStlAllocator<std::pair<_Key, _Value>, _Allocator>
+>;
 //----------------------------------------------------------------------------
 #define MULTIMAP(_DOMAIN, _KEY, _VALUE) \
-    ::PPE::TMultiMap<_KEY, _VALUE, ::PPE::Meta::TLess<_KEY>, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, ::PPE::TPair<_KEY COMMA _VALUE>) >
+    ::PPE::TMultiMap<_KEY, _VALUE, ::PPE::Meta::TLess<_KEY>, ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Pred, typename _Allocator>
 hash_t hash_value(const TMultiMap<_Key, _Value, _Pred, _Allocator>& multiMap) {

@@ -186,7 +186,7 @@ template <typename U>
 TMemoryView<U> TMemoryView<T>::Cast() const {
     STATIC_ASSERT(  (0 == (sizeof(T) % sizeof(U)) ) ||
                     (0 == (sizeof(U) % sizeof(T)) ) );
-    Assert_NoAssume(Meta::IsAligned(sizeof(U), _size * sizeof(T)));
+    Assert_NoAssume((_size * sizeof(T)) % sizeof(U) == 0);
 
     return TMemoryView<U>(reinterpret_cast<U *>(_storage), (_size * sizeof(T)) / sizeof(U));
 }

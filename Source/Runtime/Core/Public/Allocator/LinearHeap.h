@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
@@ -88,9 +88,13 @@ public:
 } //!namespace PPE
 
 //----------------------------------------------------------------------------
-// Use FLinearHeap as an inplace allocator :
-template <typename T>
-void* operator new(size_t sizeInBytes, PPE::FLinearHeap& heap) {
-    Assert(sizeInBytes == sizeof(T));
-    return heap.Allocate(sizeInBytes, std::alignment_of_v<T>);
+// Use FLinearHeap as an in-place allocator :
+inline void* operator new(size_t sizeInBytes, PPE::FLinearHeap& heap) {
+    return heap.Allocate(sizeInBytes);
+}
+inline void operator delete(void* ptr, PPE::FLinearHeap& heap) {
+    Assert_NoAssume(heap.AliasesToHeap(ptr));
+    AssertNotImplemented(); // can't delete since we don't know the allocation size
+    UNUSED(ptr);
+    UNUSED(heap);
 }

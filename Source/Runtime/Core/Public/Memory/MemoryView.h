@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "IO/TextWriter_fwd.h"
+#include "Meta/Iterator.h"
 
 #include <algorithm>
 #include <initializer_list>
@@ -218,18 +219,23 @@ public:
             MakeOutputIterator(end(), transform) );
     }
 
+    // implicit cast to TIterable<>
+    CONSTEXPR operator TIterable<iterator>() const {
+        return MakeIterable(begin(), end());
+    }
+
     friend void swap(TMemoryView& lhs, TMemoryView& rhs) {
         std::swap(lhs._storage, rhs._storage);
         std::swap(lhs._size, rhs._size);
     }
 
     friend bool operator ==(const TMemoryView& lhs, const TMemoryView& rhs) {
-        return  lhs._storage == rhs._storage &&
-                lhs._size == rhs._size;
+        return (lhs._storage == rhs._storage &&
+                lhs._size == rhs._size );
     }
 
     friend bool operator !=(const TMemoryView& lhs, const TMemoryView& rhs) {
-        return false == operator ==(lhs, rhs);
+        return (not operator ==(lhs, rhs));
     }
 
 protected:
@@ -393,3 +399,25 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TMemory
 } //!namespace PPE
 
 #include "Memory/MemoryView-inl.h"
+
+namespace PPE {
+namespace Meta {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Construct/Destroy views
+//----------------------------------------------------------------------------
+template <typename T, typename... _Args>
+void Construct(const TMemoryView<T>& view, _Args&& ... args) {
+    Construct(MakeIterable(view.begin(), view.end()), std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+void Destroy(const TMemoryView<T>& view) {
+    Destroy(MakeIterable(view.begin(), view.end()));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace Meta
+} //!namespace PPE

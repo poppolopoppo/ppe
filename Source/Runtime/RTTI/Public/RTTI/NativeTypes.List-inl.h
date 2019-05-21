@@ -215,11 +215,6 @@ PTypeTraits Traits(Meta::TType< TVector<T, _Allocator> >) noexcept {
     return PTypeTraits::Make< TVectorLikeTraits< TVector<T, _Allocator> > >();
 }
 //----------------------------------------------------------------------------
-template <typename T, size_t _InSitu, typename _Allocator>
-PTypeTraits Traits(Meta::TType< TVectorInSitu<T, _InSitu, _Allocator> >) noexcept {
-    return PTypeTraits::Make< TVectorLikeTraits< TVectorInSitu<T, _InSitu, _Allocator> > >();
-}
-//----------------------------------------------------------------------------
 template <typename _VectorLike>
 size_t TVectorLikeTraits<_VectorLike>::Count(const void* data) const {
     Assert(data);

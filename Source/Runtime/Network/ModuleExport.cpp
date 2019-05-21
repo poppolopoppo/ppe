@@ -8,14 +8,12 @@
 #include "Http/ConstNames.h"
 #include "Socket/Socket.h"
 
-#include "Allocator/PoolAllocatorTag-impl.h"
 #include "Diagnostic/Logger.h"
 
 #include "Module-impl.h"
 
 namespace PPE {
 namespace Network {
-POOL_TAG_DEF(Network);
 LOG_CATEGORY(PPE_NETWORK_API, Network)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -29,8 +27,6 @@ FNetworkModule::~FNetworkModule()
 //----------------------------------------------------------------------------
 void FNetworkModule::Start(FModuleManager& manager) {
     FModule::Start(manager);
-
-    POOL_TAG(Network)::Start();
 
     FName::Start();
     FHttpConstNames::Start();
@@ -47,16 +43,12 @@ void FNetworkModule::Shutdown() {
     FAddress::Shutdown();
     FHttpConstNames::Shutdown();
     FName::Shutdown();
-
-    POOL_TAG(Network)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void FNetworkModule::ReleaseMemory() {
     FModule::ReleaseMemory();
 
     FlushDNSCache();
-
-    POOL_TAG(Network)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

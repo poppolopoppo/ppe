@@ -17,32 +17,34 @@ namespace Meta {
 //----------------------------------------------------------------------------
 #define ALIGN(_BOUNDARY) __declspec(align(_BOUNDARY))
 //----------------------------------------------------------------------------
-inline constexpr bool IsPow2(size_t u) { return ((u & (u - 1)) == 0 && u); }
+inline CONSTEXPR bool IsPow2(size_t u) { return ((u & (u - 1)) == 0 && u); }
 //----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
-inline constexpr bool IsAligned(const size_t alignment, const uintptr_t v) {
+inline CONSTEXPR bool IsAligned(const size_t alignment, const uintptr_t v) {
     return (0 == (v & (alignment - 1)));
 }
 //----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
 template <typename T>
-inline constexpr bool IsAligned(const size_t alignment, const T* ptr) {
+inline CONSTEXPR bool IsAligned(const size_t alignment, const T* ptr) {
     return (0 == (uintptr_t(ptr) & (alignment - 1)));
 }
 //----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
-inline constexpr size_t RoundToNext(const size_t v, size_t alignment) {
+inline CONSTEXPR size_t RoundToNext(const size_t v, size_t alignment) {
     return ((0 == v) ? 0 : (v + alignment - 1) & ~(alignment - 1));
 }
-template <typename T> T* RoundToNext(const T* p, size_t alignment) {
+template <typename T>
+T* RoundToNext(const T* p, size_t alignment) {
     return (T*)RoundToNext(size_t(p), alignment);
 }
 //----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
-inline constexpr size_t RoundToPrev(const size_t v, size_t alignment) {
+inline CONSTEXPR size_t RoundToPrev(const size_t v, size_t alignment) {
     return ((0 == v) ? 0 : v & ~(alignment - 1));
 }
-template <typename T> T* RoundToPrev(const T* p, size_t alignment) {
+template <typename T>
+T* RoundToPrev(const T* p, size_t alignment) {
     return (T*)RoundToPrev(size_t(p), alignment);
 }
 //----------------------------------------------------------------------------
@@ -62,15 +64,18 @@ template <typename T> T* RoundToPrev(const T* p, size_t alignment) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// By default std allocations are already aligned on intptr_t (pointer size).
+// By default std allocations are already aligned on ALLOCATION_BOUNDARY (16).
 // Aligned allocations induce overhead so this will prevent us from calling it systematically.
+//----------------------------------------------------------------------------
 template <size_t _Alignment>
-struct TIsNaturalyAligned {
-    // Power of 2 assertion guarantees <= test correctness :
-    // if aligned on 8, also aligned on 4, 2 & 1
-    static_assert(_Alignment && 0 == (_Alignment & (_Alignment - 1)), "_Alignment must be a power of 2");
-    enum { value = (_Alignment <= sizeof(intptr_t)) };
+struct need_alignment_t {
+    STATIC_ASSERT(IsPow2(_Alignment));
+    STATIC_ASSERT(IsAligned(ALLOCATION_BOUNDARY, _Alignment));
+    STATIC_CONST_INTEGRAL(bool, value, _Alignment > ALLOCATION_BOUNDARY);
 };
+//----------------------------------------------------------------------------
+template <size_t _Alignment>
+CONSTEXPR bool need_alignment_v = need_alignment_t<_Alignment>::value;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

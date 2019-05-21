@@ -13,10 +13,12 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define FLATMAP(_DOMAIN, _KEY, _VALUE) \
-    ::PPE::TFlatMap<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, ::PPE::Meta::TLess<_KEY>, VECTOR(_DOMAIN, ::PPE::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
+    ::PPE::TFlatMap<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, ::PPE::Meta::TLess<_KEY>, \
+        VECTOR(_DOMAIN, ::PPE::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>) >
 //----------------------------------------------------------------------------
 #define FLATMAP_INSITU(_DOMAIN, _KEY, _VALUE, _InSituCount) \
-    ::PPE::TFlatMap<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, ::PPE::Meta::TLess<_KEY>, VECTORINSITU(_DOMAIN, ::PPE::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
+    ::PPE::TFlatMap<_KEY, _VALUE, ::PPE::Meta::TEqualTo<_KEY>, ::PPE::Meta::TLess<_KEY>, \
+        VECTORINSITU(_DOMAIN, ::PPE::TPair<COMMA_PROTECT(_KEY) COMMA COMMA_PROTECT(_VALUE)>, _InSituCount) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

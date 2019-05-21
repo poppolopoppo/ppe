@@ -51,9 +51,9 @@ bool TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Insert_Retur
         const _Key& key = keys[i];
         do {
             if (nullptr == *it) {
-                *it = allocator_traits::allocate(*this, 1);
+                *it = static_cast<node_type*>(allocator_traits::Allocate(*this, sizeof(node_type)).Data);
                 Assert(nullptr != *it);
-                allocator_traits::construct(*this, *it, key);
+                Meta::Construct(*it, key);
                 (*it)->SetParent_(parent);
             }
 
@@ -158,8 +158,10 @@ void TTernarySearchTree<_Key, _Value, _Less, _EqualTo, _Allocator>::Clear() {
             --_size;
         }
 
-        allocator_traits::destroy(*this, node);
-        allocator_traits::deallocate(*this, node, 1);
+        Meta::Destroy(node);
+        allocator_traits::Deallocate(*this, FAllocatorBlock{
+            node,
+            sizeof(node_type) });
     }
 
     Assert(0 == _size);

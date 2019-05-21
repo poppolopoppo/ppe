@@ -38,7 +38,6 @@ static NO_INLINE FPlatformDialog::EResult ShowSerializeException_(const FTransac
 #   else
     text << MakeCStringView(e.What());
 #   endif
-    text << Eos;
 
     return FPlatformDialog::AbortRetryIgnore(
         text.Written(),

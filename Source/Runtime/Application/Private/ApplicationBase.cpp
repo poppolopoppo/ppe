@@ -53,7 +53,7 @@ static void SetupDebugMenuInSystray_() {
         L"Memory",
         L"Dump memory leaks",
         []() {
-        DumpMemoryLeaks();
+        FMallocDebug::DumpMemoryLeaks();
     });
     FAppNotify::AddSystrayCommand(
         L"Memory",

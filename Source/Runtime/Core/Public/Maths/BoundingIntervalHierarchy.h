@@ -3,7 +3,6 @@
 #include "Core.h"
 
 #include "Allocator/Allocation.h"
-#include "Allocator/NodeBasedContainerAllocator.h"
 #include "Maths/ScalarBoundingBox.h"
 #include "Memory/MemoryView.h"
 #include "Misc/Function.h"
@@ -44,8 +43,9 @@ struct FBIHNode {
     STATIC_CONST_INTEGRAL(size_t, MaxNodes, (1 << Child0Bits));
 };
 //----------------------------------------------------------------------------
-class PPE_CORE_API FBasicBIHTree : NODEBASED_CONTAINER_ALLOCATOR(Maths, FBIHNode) {
-    typedef NODEBASED_CONTAINER_ALLOCATOR(Maths, FBIHNode) allocator_type;
+class PPE_CORE_API FBasicBIHTree : BATCH_ALLOCATOR(Maths, FBIHNode) {
+    typedef BATCH_ALLOCATOR(Maths, FBIHNode) allocator_type;
+    typedef TAllocatorTraits<allocator_type> allocator_traits;
 public:
     FBasicBIHTree();
     ~FBasicBIHTree();

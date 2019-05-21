@@ -4,16 +4,12 @@
 
 #include "Parser/ParseContext.h"
 
-#include "Allocator/PoolAllocator-impl.h"
-
 #include "Parser.h"
 
 namespace PPE {
 namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TLiteral<T>, template <typename T>)
 //----------------------------------------------------------------------------
 template <typename T>
 TLiteral<T>::TLiteral(T&& rvalue, const Lexer::FSpan& site)
@@ -36,8 +32,6 @@ FString TLiteral<T>::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TUnaryFunction<_Functor>, template <typename _Functor>)
-//----------------------------------------------------------------------------
 template <typename _Functor>
 TUnaryFunction<_Functor>::TUnaryFunction(_Functor&& functor, const FParseExpression *expr, const Lexer::FSpan& site)
 :   FParseExpression(site)
@@ -56,8 +50,6 @@ RTTI::FAtom TUnaryFunction<_Functor>::Eval(FParseContext *context) const {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TBinaryFunction<_Functor>, template <typename _Functor>)
 //----------------------------------------------------------------------------
 template <typename _Functor>
 TBinaryFunction<_Functor>::TBinaryFunction(_Functor&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site)
@@ -79,8 +71,6 @@ RTTI::FAtom TBinaryFunction<_Functor>::Eval(FParseContext *context) const {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, TTernary<_Test>, template <typename _Test>)
 //----------------------------------------------------------------------------
 template <typename _Test>
 TTernary<_Test>::TTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const Lexer::FSpan& site)

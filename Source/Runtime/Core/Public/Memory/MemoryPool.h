@@ -93,7 +93,7 @@ public:
 
 private:
     friend class FMemoryPoolList;
-    TIntrusiveListNode<IMemoryPool> _node;
+    TIntrusiveListNode<IMemoryPool> _node{ nullptr, nullptr };
 };
 //----------------------------------------------------------------------------
 class PPE_CORE_API FMemoryPoolThreadLocal : public IMemoryPool, Meta::FThreadResource {

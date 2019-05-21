@@ -11,7 +11,6 @@
 #include "MetaProperty.h"
 #include "RTTI/TypeInfos.h"
 
-#include "Allocator/PoolAllocator-impl.h"
 #include "Diagnostic/Logger.h"
 #include "IO/Format.h"
 #include "IO/StringBuilder.h"
@@ -28,8 +27,6 @@ FParseStatement::FParseStatement(const Lexer::FSpan& site)
 FParseStatement::~FParseStatement() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FEvalExpr, )
 //----------------------------------------------------------------------------
 FEvalExpr::FEvalExpr(const Parser::PCParseExpression& expr)
 :   FParseStatement(expr->Site())
@@ -48,8 +45,6 @@ void FEvalExpr::Execute(FParseContext *context) const {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FPropertyAssignment, )
 //----------------------------------------------------------------------------
 FPropertyAssignment::FPropertyAssignment(
     const RTTI::FName& name,

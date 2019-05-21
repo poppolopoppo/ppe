@@ -9,13 +9,10 @@
 
 #include "MetaDatabase.h"
 
-#include "Allocator/PoolAllocatorTag-impl.h"
-
 #include "Module-impl.h"
 
 namespace PPE {
 namespace RTTI {
-POOL_TAG_DEF(RTTI);
 RTTI_NAMESPACE_DEF(PPE_RTTI_API, RTTI, MetaObject);
 #if USE_PPE_RTTI_CHECKS
 extern void RTTI_UnitTests();
@@ -32,8 +29,6 @@ FRTTIModule::~FRTTIModule()
 //----------------------------------------------------------------------------
 void FRTTIModule::Start(FModuleManager& manager) {
     FModule::Start(manager);
-
-    POOL_TAG(RTTI)::Start();
 
     FName::Start();
 
@@ -54,14 +49,10 @@ void FRTTIModule::Shutdown() {
     FMetaDatabase::Destroy();
 
     FName::Shutdown();
-
-    POOL_TAG(RTTI)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void FRTTIModule::ReleaseMemory() {
     FModule::ReleaseMemory();
-
-    POOL_TAG(RTTI)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

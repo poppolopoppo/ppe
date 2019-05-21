@@ -6,7 +6,7 @@
 #include "Lexer/TextHeap.h"
 #include "SerializeExceptions.h"
 
-#include "Allocator/LinearHeapAllocator.h"
+#include "Allocator/LinearAllocator.h"
 #include "Container/AssociativeVector.h"
 #include "Container/IntrusiveList.h"
 #include "Container/Vector.h"

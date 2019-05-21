@@ -25,9 +25,8 @@ template <
     , typename _Hash = Meta::THash<_Key>
     , typename _EqualTo = Meta::TEqualTo<_Key>
     , typename _Empty = Meta::TEmptyKey<_Key>
-    , typename _Allocator = ALLOCATOR(Container, _Key)
->   class EMPTY_BASES TDenseHashSet3
-    : _Allocator {
+    , typename _Allocator = ALLOCATOR(Container)
+>   class TDenseHashSet3 : _Allocator {
 public:
     typedef FDenseHashTableState3 state_t;
     typedef _Key value_type;
@@ -36,7 +35,7 @@ public:
     typedef _EqualTo key_equal;
 
     using allocator_type = _Allocator;
-    using allocator_traits = std::allocator_traits<allocator_type>;
+    using allocator_traits = TAllocatorTraits<allocator_type>;
 
     typedef value_type& reference;
     typedef const value_type& const_reference;
@@ -72,7 +71,7 @@ public:
             _capacity = other._capacity;
 
             const u32 numAllocatedBlocks = NumAllocatedBlocks_();
-            _elements = allocator_traits::allocate(allocator_(), numAllocatedBlocks);
+            _elements = allocator_traits::template AllocateT<_Key>(*this, numAllocatedBlocks).data();
 
             // trivial copy, don't try to rehash
             IF_CONSTEXPR(Meta::has_trivial_copy<_Key>::value) {
@@ -154,7 +153,7 @@ public:
 
         st = e;
 
-        allocator_traits::construct(allocator_(), _elements + _size++, key);
+        Meta::Construct(_elements + _size++, key);
 
         if (Likely(d <= MaxDistance))
             return MakePair(MakeCheckedIterator(_elements, _size, _size - 1), true);
@@ -317,11 +316,11 @@ private:
             }
             else {
                 _elements[st.Index] = std::move(_elements[ri]);
-                allocator_traits::destroy(allocator_(), _elements + ri);
+                Meta::Destroy(_elements + ri);
             }
         }
         else {
-            allocator_traits::destroy(allocator_(), _elements + st.Index);
+            Meta::Destroy(_elements + st.Index);
         }
 
         // backward shift deletion to avoid using tombstones
@@ -363,7 +362,7 @@ private:
         Assert_NoAssume(capacity <= numStates);
         AssertRelease(capacity <= UINT16_MAX); // trade-off limitation of this container
 
-        _elements = allocator_traits::allocate(allocator_(), numBlocks);
+        _elements = allocator_traits::template AllocateT<_Key>(*this, numBlocks);
 
         state_t* const states = reinterpret_cast<state_t*>(_elements + capacity);
 
@@ -417,7 +416,7 @@ private:
 
         if (_capacity) {
             // release previous key & state vectors (guaranteed to don't take benefit of Rellocate() since we snapped to allocator sizes)
-            allocator_traits::deallocate(allocator_(), oldElts, NumAllocatedBlocks_());
+            allocator_traits::DeallocateT(*this, oldElts, NumAllocatedBlocks_());
         }
 
         _capacity = capacity;
@@ -431,7 +430,7 @@ private:
 
         Destroy(allocator_(), MakeView());
 
-        allocator_traits::deallocate(allocator_(), _elements, NumAllocatedBlocks_());
+        allocator_traits::DeallocateT(*this, _elements, NumAllocatedBlocks_());
 
         _size = 0;
         _sizeClass = 0;

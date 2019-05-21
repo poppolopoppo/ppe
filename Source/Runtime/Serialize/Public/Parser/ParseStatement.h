@@ -6,8 +6,6 @@
 
 #include "RTTI/Typedefs.h"
 
-#include "Allocator/PoolAllocator.h"
-
 namespace PPE {
 namespace Parser {
 //----------------------------------------------------------------------------
@@ -37,14 +35,12 @@ public:
 
     virtual void Execute(FParseContext *context) const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     Parser::PCParseExpression _expr;
 };
 //----------------------------------------------------------------------------
-inline const FEvalExpr *MakeEvalExpr(const Parser::PCParseExpression& expr) {
-    return new FEvalExpr(expr);
+inline FEvalExpr* MakeEvalExpr(const Parser::PCParseExpression& expr) {
+    return NEW_REF(Parser, FEvalExpr)(expr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -60,18 +56,16 @@ public:
     virtual void Execute(FParseContext *context) const override;
     virtual FString ToString() const override;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     RTTI::FName _name;
     Parser::PCParseExpression _value;
 };
 //----------------------------------------------------------------------------
-inline const FPropertyAssignment *MakePropertyAssignment(
+inline FPropertyAssignment* MakePropertyAssignment(
     const RTTI::FName& name,
     const Parser::PCParseExpression& value,
     const Lexer::FSpan& site) {
-    return new FPropertyAssignment(name, value, site);
+    return NEW_REF(Parser, FPropertyAssignment)(name, value, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

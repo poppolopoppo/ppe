@@ -1,190 +1,189 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "Allocator/AllocatorBase.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 
-#include <memory>
-
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Allocate a new _Allocator when allocation fails
+//----------------------------------------------------------------------------
 template <typename _Domain, typename _Allocator>
-class TTrackingAllocator;
-//----------------------------------------------------------------------------
-namespace Meta {
-//----------------------------------------------------------------------------
-template <typename T>
-struct IsATrackingAllocator {
-    enum : bool { value = false };
-};
-template <typename _Domain, typename _Allocator>
-struct IsATrackingAllocator< TTrackingAllocator<_Domain, _Allocator> > {
-    enum : bool { value = true };
-};
-//----------------------------------------------------------------------------
-} //!namespace Meta
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace details {
-// See AllocatorRealloc()
-template <typename _Domain, typename _Allocator, bool = allocator_has_realloc<_Allocator>::value >
-class fwd_realloc_semantic_for_tracking : public _Allocator {
+class TTrackingAllocator : private _Allocator {
 public:
-    using _Allocator::_Allocator;
-};
-template <typename _Domain, typename _Allocator>
-class fwd_realloc_semantic_for_tracking<_Domain, _Allocator, true> : public _Allocator {
-public:
-    using _Allocator::_Allocator;
-    using typename _Allocator::size_type;
-    using typename _Allocator::value_type;
-    void* relocate(void* p, size_type newSize, size_type oldSize) {
-        auto pself = static_cast<TTrackingAllocator<_Domain, _Allocator>* >(this);
+    using allocator_traits = TAllocatorTraits<_Allocator>;
+    using domain_tag = _Domain;
 
-        if (p && pself->TrackingData())
-            pself->TrackingData()->Deallocate(oldSize, sizeof(value_type));
+#define TRACKING_USING_DEF(_NAME) \
+    using _NAME = typename allocator_traits::_NAME
 
-        void* const newp = _Allocator::relocate(p, newSize, oldSize);
+    TRACKING_USING_DEF(propagate_on_container_copy_assignment);
+    TRACKING_USING_DEF(propagate_on_container_move_assignment);
+    TRACKING_USING_DEF(propagate_on_container_swap);
 
-        if (newp && pself->TrackingData())
-            pself->TrackingData()->Allocate(newSize, sizeof(value_type));
+    TRACKING_USING_DEF(is_always_equal);
 
-        return newp;
+    TRACKING_USING_DEF(has_maxsize);
+    TRACKING_USING_DEF(has_owns);
+    TRACKING_USING_DEF(has_reallocate);
+    TRACKING_USING_DEF(has_acquire);
+    TRACKING_USING_DEF(has_steal);
+
+#undef TRACKING_USING_DEF
+
+    STATIC_CONST_INTEGRAL(size_t, Alignment, allocator_traits::Alignment);
+
+    TTrackingAllocator() = default;
+
+    explicit TTrackingAllocator(const _Allocator& alloc)
+    :   _Allocator(alloc)
+    {}
+    explicit TTrackingAllocator(_Allocator&& ralloc)
+    :   _Allocator(std::move(ralloc))
+    {}
+
+    TTrackingAllocator(const TTrackingAllocator& other)
+    :   _Allocator(allocator_traits::SelectOnCopy(other))
+    {}
+    TTrackingAllocator& operator =(const TTrackingAllocator& other) {
+        allocator_traits::Copy(this, other);
+        return (*this);
+    }
+
+    TTrackingAllocator(TTrackingAllocator&& rvalue)
+    :   _Allocator(allocator_traits::SelectOnMove(std::move(rvalue)))
+    {}
+    TTrackingAllocator& operator =(TTrackingAllocator&& rvalue) {
+        allocator_traits::Move(this, std::move(rvalue));
+        return (*this);
+    }
+
+    static size_t MaxSize() NOEXCEPT {
+        return allocator_traits::MaxSize();
+    }
+
+    static size_t SnapSize(size_t s) NOEXCEPT {
+        return allocator_traits::SnapSize(s);
+    }
+
+    bool Owns(FAllocatorBlock b) const NOEXCEPT {
+        return allocator_traits::Owns(*this, b);
+    }
+
+    FAllocatorBlock Allocate(size_t s) {
+        const FAllocatorBlock r = allocator_traits::Allocate(*this, s);
+        Tracking().Allocate(r.SizeInBytes, SnapSize(r.SizeInBytes));
+        return r;
+    }
+
+    void Deallocate(FAllocatorBlock b) {
+        Tracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+        allocator_traits::Deallocate(*this, b);
+    }
+
+    auto Reallocate(FAllocatorBlock& b, size_t s) {
+        IF_CONSTEXPR(allocator_traits::reallocate_can_fail::value) {
+            const size_t oldSize = b.SizeInBytes;
+            if (allocator_traits::Reallocate(*this, b, s)) {
+                if (oldSize)
+                    Tracking().Deallocate(oldSize, SnapSize(oldSize));
+                if (b.SizeInBytes)
+                    Tracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            if (b.SizeInBytes)
+                Tracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+            allocator_traits::Reallocate(*this, b, s);
+            if (b.SizeInBytes)
+                Tracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+            return;
+        }
+    }
+
+    bool Acquire(FAllocatorBlock b) NOEXCEPT {
+        if (allocator_traits::Acquire(*this, b)) {
+            Tracking().Allocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    bool Steal(FAllocatorBlock b) NOEXCEPT {
+        if (allocator_traits::Steal(*this, b)) {
+            Tracking().Deallocate(b.SizeInBytes, SnapSize(b.SizeInBytes));
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+public: // memory tracking
+    _Allocator& InnerAlloc() NOEXCEPT {
+        return allocator_traits::Get(*this);
+    }
+
+    const _Allocator& InnerAlloc() const NOEXCEPT {
+        return allocator_traits::Get(*this);
+    }
+
+    static FMemoryTracking& Tracking() NOEXCEPT {
+        return domain_tag::TrackingData();
     }
 };
-} //!details
-//----------------------------------------------------------------------------
-template <typename _Domain, typename _Allocator>
-class TTrackingAllocator : public details::fwd_realloc_semantic_for_tracking<_Domain, _Allocator> {
-public:
-    STATIC_ASSERT(!Meta::IsATrackingAllocator< _Allocator >::value);
-
-    friend class details::fwd_realloc_semantic_for_tracking<_Domain, _Allocator>;
-    typedef details::fwd_realloc_semantic_for_tracking<_Domain, _Allocator> base_type;
-
-    typedef _Domain domain_type;
-
-    using typename base_type::value_type;
-    using typename base_type::reference;
-    using typename base_type::const_reference;
-
-    typedef std::allocator_traits<_Allocator> traits_type;
-
-    typedef typename traits_type::difference_type difference_type;
-    typedef typename traits_type::size_type size_type;
-
-    typedef typename traits_type::pointer pointer;
-    typedef typename traits_type::const_pointer const_pointer;
-
-    typedef typename traits_type::propagate_on_container_copy_assignment propagate_on_container_copy_assignment;
-    typedef typename traits_type::propagate_on_container_move_assignment propagate_on_container_move_assignment;
-    typedef typename traits_type::propagate_on_container_swap propagate_on_container_swap;
-    typedef typename traits_type::is_always_equal is_always_equal;
-
-    template<typename U>
-    struct rebind {
-        typedef TTrackingAllocator< _Domain, typename traits_type::template rebind_alloc<U> > other;
-    };
-
-    CONSTEXPR TTrackingAllocator() noexcept {
-        STATIC_ASSERT(  allocator_has_realloc<TTrackingAllocator>::value ==
-                        allocator_has_realloc<base_type>::value );
-    }
-    CONSTEXPR explicit TTrackingAllocator(const base_type& allocator) noexcept
-        : base_type(allocator) {}
-
-    CONSTEXPR TTrackingAllocator(const TTrackingAllocator& other) noexcept = default;
-    template<typename _D, typename _A>
-    CONSTEXPR TTrackingAllocator(const TTrackingAllocator<_D, _A>& other) noexcept : base_type(other) {}
-
-    CONSTEXPR TTrackingAllocator& operator =(const TTrackingAllocator& other) noexcept = default;
-    template<typename _D, typename _A>
-    CONSTEXPR TTrackingAllocator& operator =(const TTrackingAllocator<_D, _A>& other) noexcept {
-        base_type::operator =(other);
-        return *this;
-    }
-
-    FMemoryTracking* TrackingData() const noexcept { return &(domain_type::TrackingData()); }
-
-    CONSTEXPR _Allocator& WrappedAllocator() noexcept { return static_cast<_Allocator&>(*this); }
-    CONSTEXPR const _Allocator& WrappedAllocator() const noexcept { return static_cast<const _Allocator&>(*this); }
-
-    CONSTEXPR size_type max_size() const noexcept { return base_type::max_size(); }
-
-    pointer allocate(size_type n, const void* /*hint*/) { return allocate(n); }
-    pointer allocate(size_type n) {
-        if (FMemoryTracking* const trackingData = TrackingData())
-            trackingData->Allocate(n, sizeof(value_type));
-
-        return traits_type::allocate(*this, n);
-    }
-
-    void deallocate(void* p, size_type n) {
-        Assert(!p || n); // must give the size of blocks or tracking won't work !
-
-        traits_type::deallocate(*this, pointer(p), n);
-
-        if (FMemoryTracking* const trackingData = TrackingData())
-            trackingData->Deallocate(n, sizeof(value_type));
-    }
-
-    void steal_from(void*, size_type n) {
-        if (FMemoryTracking* const trackingData = TrackingData())
-            trackingData->Deallocate(n, sizeof(value_type));
-    }
-
-    void acquire_stolen(void*, size_type n) {
-        if (FMemoryTracking* const trackingData = TrackingData())
-            trackingData->Allocate(n, sizeof(value_type));
-    }
-
-    template<typename _D, typename _A>
-    inline friend bool operator ==(const TTrackingAllocator& lhs, const TTrackingAllocator<_D, _A>& rhs) {
-        return (lhs.WrappedAllocator() == rhs.WrappedAllocator());
-    }
-
-    template<typename _D, typename _A>
-    inline friend bool operator !=(const TTrackingAllocator& lhs, const TTrackingAllocator<_D, _A>& rhs) {
-        return not operator ==(lhs, rhs);
-    }
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename _Domain, typename _Allocator>
-size_t AllocatorSnapSize(const TTrackingAllocator<_Domain, _Allocator>& allocator, size_t size) {
-    return AllocatorSnapSize(allocator.WrappedAllocator(), size);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <
-    typename _DomainDst, typename _AllocatorDst
-,   typename _DomainSrc, typename _AllocatorSrc >
-struct allocator_can_steal_from<
-    TTrackingAllocator<_DomainDst, _AllocatorDst>,
-    TTrackingAllocator<_DomainSrc, _AllocatorSrc>
->   : allocator_can_steal_from<_AllocatorDst, _AllocatorSrc> {};
-//----------------------------------------------------------------------------
-template <typename _Domain, typename _Allocator>
-auto/* inherited */AllocatorStealFrom(
-    TTrackingAllocator<_Domain, _Allocator>& alloc,
-    typename TTrackingAllocator<_Domain, _Allocator>::pointer ptr, size_t size ) {
-    alloc.steal_from(ptr, size);
-    return AllocatorStealFrom(alloc.WrappedAllocator(), ptr, size);
+    typename _DomainLhs, typename _AllocatorLhs,
+    typename _DomainRhs, typename _AllocatorRhs >
+bool operator ==(
+    const TTrackingAllocator<_DomainLhs, _AllocatorLhs>& lhs,
+    const TTrackingAllocator<_DomainRhs, _AllocatorRhs>& rhs ) NOEXCEPT {
+    return TAllocatorTraits<_AllocatorLhs>::Equals(lhs.InnerAlloc(), rhs.InnerAlloc());
 }
 //----------------------------------------------------------------------------
-template <typename _Domain, typename _Allocator>
-auto/* inherited */AllocatorAcquireStolen(
-    TTrackingAllocator<_Domain, _Allocator>& alloc,
-    typename TTrackingAllocator<_Domain, _Allocator>::pointer ptr, size_t size ) {
-    alloc.acquire_stolen(ptr, size);
-    return AllocatorAcquireStolen(alloc.WrappedAllocator(), ptr, size);
+template <
+    typename _DomainLhs, typename _AllocatorLhs,
+    typename _DomainRhs, typename _AllocatorRhs >
+bool operator !=(
+    const TTrackingAllocator<_DomainLhs, _AllocatorLhs>& lhs,
+    const TTrackingAllocator<_DomainRhs, _AllocatorRhs>& rhs ) NOEXCEPT {
+    return not operator ==(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Handles memory transfer from one domain to another
+//----------------------------------------------------------------------------
+template <typename _DomainDst, typename _Allocator, typename _DomainSrc>
+bool StealAllocatorBlock(
+    TTrackingAllocator<_DomainDst, _Allocator>* dst,
+    TTrackingAllocator<_DomainSrc, _Allocator>& src,
+    FAllocatorBlock b ) NOEXCEPT {
+    using traits_t = TAllocatorTraits<TTrackingAllocator<_DomainSrc, _Allocator>>;
+    return traits_t::StealAndAcquire(dst, src, b);
+}
+//----------------------------------------------------------------------------
+// Also handles transfer between 2 different allocators, if already handled by parents
+//----------------------------------------------------------------------------
+template <typename _DomainDst, typename _AllocatorDst, typename _DomainSrc, typename _AllocatorSrc,
+    class = Meta::TEnableIf< has_stealallocatorblock_v<_AllocatorDst, _AllocatorSrc> > >
+bool StealAllocatorBlock(
+    TTrackingAllocator<_DomainDst, _AllocatorDst>* dst,
+    TTrackingAllocator<_DomainSrc, _AllocatorSrc>& src,
+    FAllocatorBlock b ) NOEXCEPT {
+    using src_t = TAllocatorTraits<TTrackingAllocator<_DomainSrc, _AllocatorSrc>>;
+    return src_t::StealAndAcquire(dst, src, b);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

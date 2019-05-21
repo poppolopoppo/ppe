@@ -38,7 +38,7 @@ FMetaClass::~FMetaClass() {
     Assert_NoAssume(not IsRegistered());
     Assert_NoAssume(_propertiesAll.empty());
 #if USE_PPE_MEMORYDOMAINS
-    Assert_NoAssume(_trackingData.AllocationCount() == 0); // must be empty upon destruction
+    Assert_NoAssume(_trackingData.NumAllocs() == 0); // must be empty upon destruction
     UnregisterTrackingData(&_trackingData);
 #endif
 }

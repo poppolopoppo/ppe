@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 // Memory Domains ON/OFF
 #if not (USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING) // %_NOCOMMIT%

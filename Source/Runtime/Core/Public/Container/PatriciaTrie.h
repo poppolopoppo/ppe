@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#include "Allocator/NodeBasedContainerAllocator.h"
+#include "Allocator/Allocation.h"
 #include "Container/Stack.h"
 #include "Meta/AlignedStorage.h"
 #include "Memory/MemoryView.h"
@@ -19,12 +19,12 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define PATRICIATRIE(_DOMAIN, _KEY, _VALUE) \
-    ::PPE::TPatriciaTrie<_KEY, _VALUE, ::PPE::Meta::TLess<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, \
-        NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::PPE::TPatriciaNode<_KEY COMMA _VALUE>)) >
+#define PATRICIATRIE(_DOMAIN, _KEY, _VALUE, _INSITU) \
+    ::PPE::TPatriciaTrie<_KEY, _VALUE, _INSITU, ::PPE::Meta::TLess<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, \
+        BATCH_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::PPE::TPatriciaNode<_KEY COMMA _VALUE COMMA _INSITU>)) >
 //----------------------------------------------------------------------------
-#define PATRICIASET(_DOMAIN, _KEY) PATRICIATRIE(_DOMAIN, _KEY, void)
-#define PATRICIAMAP(_DOMAIN, _KEY, _VALUE) PATRICIATRIE(_DOMAIN, _KEY, _VALUE)
+#define PATRICIASET(_DOMAIN, _KEY, _INSITU) PATRICIATRIE(_DOMAIN, _KEY, void, _INSITU)
+#define PATRICIAMAP(_DOMAIN, _KEY, _VALUE, _INSITU) PATRICIATRIE(_DOMAIN, _KEY, _VALUE, _INSITU)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -127,11 +127,11 @@ template <
 ,   size_t _InSitu
 ,   typename _Less = Meta::TLess<_Key>
 ,   typename _EqualTo = Meta::TEqualTo<_Key>
-,   typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, TPatriciaNode<_Key COMMA _Value COMMA _InSitu>)
+,   typename _Allocator = BATCH_ALLOCATOR(Container, TPatriciaNode<_Key COMMA _Value COMMA _InSitu>)
 >   class TPatriciaTrie : _Allocator {
 public:
     typedef _Allocator allocator_type;
-    typedef std::allocator_traits<allocator_type> allocator_traits;
+    typedef TAllocatorTraits<allocator_type> allocator_traits;
 
     typedef _Key key_type;
     typedef _Value value_type;
@@ -142,11 +142,7 @@ public:
     typedef _Less less_functor;
     typedef _EqualTo equal_to_functor;
 
-    typedef typename allocator_traits::pointer pointer;
-    typedef typename allocator_traits::const_pointer const_pointer;
-
-    typedef typename allocator_traits::size_type size_type;
-    typedef typename allocator_traits::difference_type difference_type;
+    using size_type = size_t;
 
     struct iterator {
         const node_type* Node;

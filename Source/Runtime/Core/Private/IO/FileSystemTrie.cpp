@@ -3,7 +3,6 @@
 #include "IO/FileSystemTrie.h"
 
 #include "Allocator/Alloca.h"
-#include "Allocator/PoolAllocator-impl.h"
 #include "Container/Hash.h"
 #include "Container/Stack.h"
 #include "Container/Vector.h"
@@ -38,9 +37,7 @@ static size_t ExpandFileSystemNode_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(FileSystem, FFileSystemNode, );
-//----------------------------------------------------------------------------
-FFileSystemNode::FFileSystemNode()
+FFileSystemNode::FFileSystemNode() NOEXCEPT
 :   _parent(nullptr)
 ,   _child(nullptr)
 ,   _sibbling(nullptr)
@@ -50,7 +47,7 @@ FFileSystemNode::FFileSystemNode()
 ,   _sortValue(-1.0)
 {}
 //----------------------------------------------------------------------------
-FFileSystemNode::FFileSystemNode(FFileSystemNode& parent, const FFileSystemToken& token, double sortValue, size_t uid)
+FFileSystemNode::FFileSystemNode(FFileSystemNode& parent, const FFileSystemToken& token, double sortValue, size_t uid) NOEXCEPT
 :   _parent(&parent)
 ,   _child(nullptr)
 ,   _sibbling(nullptr)
@@ -62,8 +59,6 @@ FFileSystemNode::FFileSystemNode(FFileSystemNode& parent, const FFileSystemToken
 ,   _genealogy(FGenealogy::Combine(parent._genealogy, FGenealogy::Prime(uid))) {
     Assert_NoAssume(-1.0 <= _sortValue && _sortValue <= 1.0);
 }
-//----------------------------------------------------------------------------
-FFileSystemNode::~FFileSystemNode() {}
 //----------------------------------------------------------------------------
 bool FFileSystemNode::Greater(const FFileSystemNode& other) const {
     return (_sortValue > other._sortValue);
@@ -81,7 +76,8 @@ bool FFileSystemNode::IsChildOf(const FFileSystemNode& parent) const {
 //----------------------------------------------------------------------------
 FFileSystemTrie::FFileSystemTrie()
 :   _numNodes(0) {
-    _root._child = _root._leaf = new FFileSystemNode(_root, FFileSystemToken{}, 1.0, 0);
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE(); // handled by trie at destruction
+    _root._child = _root._leaf = new (_heap) FFileSystemNode{ _root, FFileSystemToken{}, 1.0, 0 };
 }
 //----------------------------------------------------------------------------
 FFileSystemTrie::~FFileSystemTrie() {
@@ -93,8 +89,12 @@ FFileSystemNode* FFileSystemTrie::CreateNode_(
     const FFileSystemToken& token,
     const FFileSystemNode& prev,
     const FFileSystemNode& next) {
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE(); // handled by trie at destruction
     const double s = ((prev._sortValue + next._sortValue) * 0.5);
-    return new FFileSystemNode(parent, token, s, token.empty() ? 0 : _numNodes++);
+    Assert_NoAssume(s > prev._sortValue);
+    Assert_NoAssume(s < next._sortValue);
+    return new (_heap) FFileSystemNode{
+        parent, token, s, token.empty() ? 0 : _numNodes++ };
 }
 //----------------------------------------------------------------------------
 const FFileSystemNode* FFileSystemTrie::Get_(const FFileSystemNode& root, const FFileSystemToken& token) const {
@@ -191,10 +191,11 @@ void FFileSystemTrie::Clear_ReleaseMemory_() {
     Assert_NoAssume(_root._child);
     Assert_NoAssume(not _root._sibbling);
 
+    WRITESCOPELOCK(_barrier);
+
+#if 0
     ONLY_IF_ASSERT(size_t numDeleteds = 0);
     STACKLOCAL_POD_STACK(FFileSystemNode*, queue, 128);
-
-    WRITESCOPELOCK(_barrier);
 
     queue.Push(_root._child);
 
@@ -210,19 +211,28 @@ void FFileSystemTrie::Clear_ReleaseMemory_() {
         if (n->_sibbling)
             queue.Push(n->_sibbling);
 
-        checked_delete(n);
+        Meta::Destroy(n);
+        allocator_traits::DeallocateOneT(*this, n);
 
         ONLY_IF_ASSERT(++numDeleteds);
     }
 
     Assert_NoAssume(numDeleteds >= _numNodes);
+
+#else
+    // nodes are trivially destructible, release all in one call
+    _heap.ReleaseAll();
+
+#endif
 }
 //----------------------------------------------------------------------------
 void FFileSystemTrie::Clear() {
     Clear_ReleaseMemory_();
 
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE(); // handled by trie at destruction
+
     _numNodes = 0;
-    _root._child = _root._leaf = new FFileSystemNode(_root, FFileSystemToken{}, 1.0, 0);
+    _root._child = _root._leaf = new (_heap) FFileSystemNode{ _root, FFileSystemToken{}, 1.0, 0 };
 }
 //----------------------------------------------------------------------------
 const FFileSystemNode& FFileSystemTrie::FirstNode(const FFileSystemNode& pnode) const {

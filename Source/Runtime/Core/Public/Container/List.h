@@ -3,7 +3,7 @@
 #include "Core.h"
 
 #include "Allocator/Allocation.h"
-#include "Allocator/NodeBasedContainerAllocator.h"
+#include "Allocator/StlAllocator.h"
 #include "IO/TextWriter_fwd.h"
 
 #include <list>
@@ -12,14 +12,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// #TODO use BATCH_ALLOCATOR(T) but std::list<> will rebind the TStlAllocator<> for nodes !
 template <
     typename T,
-    typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, T)
+    typename _Allocator = ALLOCATOR(Container)
 >
-using TList = std::list< T, _Allocator >;
+using TList = std::list< T, TStlAllocator<T, _Alloc64ator> >;
 //----------------------------------------------------------------------------
 #define LIST(_DOMAIN, T) \
-    ::PPE::TList<T, NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, T) >
+    ::PPE::TList<T, ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

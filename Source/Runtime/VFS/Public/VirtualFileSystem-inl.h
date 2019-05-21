@@ -25,7 +25,7 @@ bool FVirtualFileSystem::ReadAll(const FFilename& filename, TRawStorage<T, _Allo
         reader->ReadAll(storage);
 
         if (needDecompress) {
-            TRawStorage<u8, typename _Allocator::template rebind<u8>::other > uncompressed;
+            TRawStorage<u8, _Allocator> uncompressed{ TAllocatorTraits<_Allocator>::SelectOnCopy(storage.get_allocator()) };
             succeed = Compression::DecompressMemory(uncompressed, storage.MakeConstView().template Cast<const u8>());
             swap(storage, uncompressed);
         }

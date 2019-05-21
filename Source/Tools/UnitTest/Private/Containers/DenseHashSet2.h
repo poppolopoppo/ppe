@@ -21,22 +21,17 @@ template <
     typename _Key
     , typename _Hash = Meta::THash<_Key>
     , typename _EqualTo = Meta::TEqualTo<_Key>
-    , typename _Allocator = ALLOCATOR(Container, _Key)
+    , typename _Allocator = ALLOCATOR(Container)
     , u32 _MaxDistance = 5
->   class EMPTY_BASES TDenseHashSet2
-    : TRebindAlloc<_Allocator, FDenseHashTableState2>
-    , _Allocator {
+>   class TDenseHashSet2 : _Allocator {
 public:
     typedef FDenseHashTableState2 state_t;
     typedef _Key value_type;
     typedef _Hash hasher;
     typedef _EqualTo key_equal;
 
-    using allocator_key = _Allocator;
-    using allocator_state = TRebindAlloc<_Allocator, state_t>;
-
-    using key_traits = std::allocator_traits<allocator_key>;
-    using state_traits = std::allocator_traits<allocator_state>;
+    using allocator_type = _Allocator;
+    using allocator_traits = TAllocatorTraits<_Allocator>;
 
     typedef value_type& reference;
     typedef const value_type& const_reference;
@@ -69,8 +64,8 @@ public:
             _size = other._size;
             _numStates = other._numStates;
 
-            _states = state_traits::allocate(state_alloc(), _numStates);
-            _elements = key_traits::allocate(key_alloc(), Capacity_(_numStates));
+            _states = allocator_traits::template AllocateT<state_t>(*this, _numStates).data();
+            _elements = allocator_traits::template AllocateT<_Key>(*this, Capacity_(_numStates)).data();
 
             FPlatformMemory::MemcpyLarge(_states, other._states, _numStates * sizeof(state_t));
 
@@ -145,7 +140,7 @@ public:
 
         _size++;
 
-        key_traits::construct(key_alloc(), _elements + _size - 1, key);
+        Meta::Construct(_elements + _size - 1, key);
 
         if (Likely(d <= MaxDistance))
             return MakePair(MakeCheckedIterator(_elements, _size, _size - 1), true);
@@ -206,7 +201,7 @@ public:
                 st.Hash = u16(i);  // reset Hash to Index so DistanceIndex_() == 0
             }
 
-            Destroy(key_alloc(), MakeView());
+            Meta::Destroy(MakeView());
 
             _size = 0;
         }
@@ -214,11 +209,11 @@ public:
 
     void clear_ReleaseMemory() {
         if (_elements) {
-            state_traits::deallocate(state_alloc(), _states, _numStates);
+            allocator_traits::DeallocateT(*this, _states, _numStates);
 
-            Destroy(key_alloc(), MakeView());
+            Meta::Destroy(MakeView());
 
-            key_traits::deallocate(key_alloc(), _elements, Capacity_(_numStates));
+            allocator_traits::DeallocateT(*this, _elements, Capacity_(_numStates));
 
             _size = 0;
             _numStates = 1;
@@ -252,14 +247,14 @@ public:
         const u32 oldNumStates = _numStates;
 
         _numStates = checked_cast<u32>(Max(16ul, FPlatformMaths::NextPow2(
-            SafeAllocatorSnapSize(state_alloc(), n * 2 + 1))));
+            allocator_traits::template SnapSizeT<state_t>(n * 2 + 1) )));
         Assert_NoAssume(oldNumStates < _numStates);
 
         const u32 capacity = Capacity_(_numStates);
         Assert(capacity >= n);
         Assert_NoAssume(capacity <= _numStates);
 
-        _states = state_traits::allocate(state_alloc(), _numStates);
+        _states = allocator_traits::template AllocateT<state_t>(*this, _numStates).data();
 
         forrange(i, 0, _numStates) {
             state_t& st = _states[i];
@@ -271,10 +266,11 @@ public:
             Assert(oldStates);
             Assert_NoAssume((state_t*)&_elements != oldStates);
 
-            _elements = Relocate(
-                key_alloc(),
-                TMemoryView<_Key>(_elements, _size),
-                capacity, Capacity_(oldNumStates) );
+            TMemoryView<_Key> b{ _elements, _size };
+            ReallocateAllocatorBlock_AssumePOD(
+                allocator_traits::Get(*this),
+                b, Capacity_(oldNumStates), capacity );
+            _elements = b.data();
 
             // rehash using previous state which already contains the hash keys
             const u32 numStatesM1 = (_numStates - 1);
@@ -307,14 +303,14 @@ public:
             }
 
             // release previous state vector
-            state_traits::deallocate(state_alloc(), const_cast<state_t*>(oldStates), oldNumStates);
+            allocator_traits::DeallocateT(*this, const_cast<state_t*>(oldStates), oldNumStates);
         }
         else {
             Assert_NoAssume(0 == _size);
             Assert_NoAssume(nullptr == _elements);
             Assert_NoAssume((state_t*)&_elements == oldStates);
 
-            _elements = key_traits::allocate(key_alloc(), capacity);
+            _elements = allocator_traits::template AllocateT<_Key>(*this, capacity).data();
         }
 
         Assert_NoAssume(n <= capacity);
@@ -330,16 +326,13 @@ private:
     static constexpr u32 MaxLoadFactor = 75;
     static constexpr u32 SlackFactor = (((100 - MaxLoadFactor) * 128) / 100);
 
-    FORCE_INLINE allocator_key& key_alloc() NOEXCEPT { return static_cast<allocator_key&>(*this); }
-    FORCE_INLINE allocator_state& state_alloc() NOEXCEPT { return static_cast<allocator_state&>(*this); }
-
     static FORCE_INLINE u16 HashKey_(const _Key& key) NOEXCEPT {
         return u16(hasher()(key)); // the index is used to identify empty slots, so use full 16 bits for hash key
     }
 
     FORCE_INLINE u32 Capacity_(u32 numStates) const NOEXCEPT {
-        return (numStates > 1 ? checked_cast<u32>(SafeAllocatorSnapSize(
-            static_cast<const allocator_key&>(*this), numStates - ((numStates * SlackFactor) >> 7) + 1)) : 0);
+        return (numStates > 1 ? checked_cast<u32>(allocator_traits::template SnapSizeT<_Key>(
+            numStates - ((numStates * SlackFactor) >> 7) + 1)) : 0);
     }
 
     NO_INLINE void eraseAt_(u32 s) {
@@ -367,10 +360,10 @@ private:
 
             _elements[st.Index] = std::move(_elements[ri]);
 
-            key_traits::destroy(key_alloc(), _elements + ri);
+            Meta::Destroy(_elements + ri);
         }
         else {
-            key_traits::destroy(key_alloc(), _elements + st.Index);
+            Meta::Destroy(_elements + st.Index);
         }
 
         // backward shift deletion to avoid using tombstones

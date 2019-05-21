@@ -32,7 +32,7 @@ FBufferedStreamReader::FBufferedStreamReader(IStreamReader* nonBuffered, size_t 
 FBufferedStreamReader::~FBufferedStreamReader() {
     if (_buffer) {
         Assert(_nonBuffered);
-        FBufferedStreamAllocator::deallocate(_buffer, _bufferSize);
+        FBufferedStreamAllocator::Deallocate(FAllocatorBlock{ _buffer, _bufferSize });
         ONLY_IF_ASSERT(_buffer = nullptr);
     }
 }
@@ -41,7 +41,8 @@ void FBufferedStreamReader::ForceAllocateInnerBuffer() {
     Assert(nullptr == _buffer);
     Assert(_bufferSize);
 
-    _buffer = FBufferedStreamAllocator::allocate(_bufferSize);
+    _bufferSize = FBufferedStreamAllocator::SnapSize(_bufferSize);
+    _buffer = static_cast<u8*>(FBufferedStreamAllocator::Allocate(_bufferSize).Data);
 
     AssertRelease(_buffer);
 }
@@ -282,7 +283,7 @@ FBufferedStreamWriter::~FBufferedStreamWriter() {
         ONLY_IF_ASSERT(_nonBuffered = nullptr);
     }
     if (_buffer) {
-        FBufferedStreamAllocator::deallocate(_buffer, _bufferSize);
+        FBufferedStreamAllocator::Deallocate(FAllocatorBlock{ _buffer, _bufferSize });
         ONLY_IF_ASSERT(_buffer = nullptr);
     }
 }
@@ -291,7 +292,8 @@ void FBufferedStreamWriter::ForceAllocateInnerBuffer() {
     Assert(nullptr == _buffer);
     Assert(_bufferSize);
 
-    _buffer = FBufferedStreamAllocator::allocate(_bufferSize);
+    _bufferSize = FBufferedStreamAllocator::SnapSize(_bufferSize);
+    _buffer = static_cast<u8*>(FBufferedStreamAllocator::Allocate(_bufferSize).Data);
 
     AssertRelease(_buffer);
 }

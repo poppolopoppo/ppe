@@ -16,7 +16,7 @@ template <
     typename _Key
 ,   typename _Hash = Meta::THash<_Key>
 ,   typename _EqualTo = Meta::TEqualTo<_Key>
-,   typename _Allocator = ALLOCATOR(Container, _Key)
+,   typename _Allocator = ALLOCATOR(Container)
 >   class TCompactHashSet : _Allocator {
 public:
     typedef _Key value_type;
@@ -25,7 +25,7 @@ public:
     typedef _EqualTo key_equal;
 
     typedef _Allocator allocator_type;
-    typedef std::allocator_traits<_Allocator> allocator_traits;
+    typedef TAllocatorTraits<_Allocator> allocator_traits;
 
     typedef value_type& reference;
     typedef const value_type& const_reference;
@@ -135,12 +135,11 @@ public:
             if (oldcapacity) {
                 Assert(_values);
                 forrange(i, 0, oldcapacity)
-                    allocator_traits::destroy(*this, _values+i);
-                allocator_traits::deallocate(*this, _values, oldcapacity);
+                    Meta::Destroy(*this, _values+i);
+                allocator_traits::DeallocateT(*this, _values, oldcapacity);
             }
-            _values = allocator_traits::allocate(*this, _capacity);
-            forrange(i, 0, _capacity)
-                allocator_traits::construct(*this, _values+i);
+            _values = allocator_traits::template AllocateT<value_type>(*this, _capacity).data();
+            Meta::Construct(TMemoryView<value_type>{ _values, _capacity });
         }
     }
 
@@ -237,10 +236,9 @@ public:
         if (_capacity) {
             Assert(_values);
 
-            forrange(i, 0, _capacity)
-                allocator_traits::destroy(*this, _values+i);
+            Meta::Destroy(TMemoryView<value_type>{ _values, _capacity });
 
-            allocator_traits::deallocate(*this, _values, _capacity);
+            allocator_traits::DeallocateT(*this, _values, _capacity);
 
             _values = nullptr;
             _capacity = _size = 0;

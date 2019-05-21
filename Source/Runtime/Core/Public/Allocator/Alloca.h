@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "Memory/MemoryView.h"
 #include "Memory/UniquePtr.h"
 
-#include <malloc.h>
+#include <malloc.h> // for _alloca()
 
 #define USE_PPE_SYSALLOCA (!USE_PPE_MEMORY_DEBUGGING) //%__NOCOMMIT%
 

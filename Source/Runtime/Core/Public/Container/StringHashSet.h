@@ -13,7 +13,7 @@ namespace PPE {
 template <
     typename _Char,
     ECase _Sensitive,
-    typename _Allocator = ALLOCATOR(Container, TBasicStringView<_Char>)
+    typename _Allocator = ALLOCATOR(Container)
 >
 using TBasicStringViewHashSet = THashSet<
     TBasicStringView<_Char>,
@@ -23,10 +23,10 @@ using TBasicStringViewHashSet = THashSet<
 >;
 //----------------------------------------------------------------------------
 #define STRINGVIEW_HASHSET(_DOMAIN, _CASE_SENSITIVE) \
-    ::PPE::TBasicStringViewHashSet<char, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::PPE::TBasicStringView<char>)>
+    ::PPE::TBasicStringViewHashSet<char, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN)>
 //----------------------------------------------------------------------------
 #define WSTRINGVIEW_HASHSET(_DOMAIN, _CASE_SENSITIVE) \
-    ::PPE::TBasicStringViewHashSet<wchar_t, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::PPE::TBasicStringView<wchar_t>)>
+    ::PPE::TBasicStringViewHashSet<wchar_t, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN)>
 //----------------------------------------------------------------------------
 #define STRINGVIEW_HASHSET_MEMOIZE(_DOMAIN, _CASE_SENSITIVE) \
     HASHSET(_DOMAIN, ::PPE::TBasicStringViewHashMemoizer<char COMMA _CASE_SENSITIVE>)
@@ -39,7 +39,7 @@ using TBasicStringViewHashSet = THashSet<
 template <
     typename _Char,
     ECase _Sensitive,
-    typename _Allocator = ALLOCATOR(Container, TBasicConstChar<_Char>)
+    typename _Allocator = ALLOCATOR(Container)
 >
 using TBasicConstCharHashSet = THashSet<
     TBasicConstChar<_Char>,
@@ -49,10 +49,10 @@ using TBasicConstCharHashSet = THashSet<
 >;
 //----------------------------------------------------------------------------
 #define CONSTCHAR_HASHSET(_DOMAIN, _CASE_SENSITIVE) \
-    ::PPE::TBasicConstCharHashSet<char, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::PPE::TBasicConstChar<char>)>
+    ::PPE::TBasicConstCharHashSet<char, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
 #define CONSTWCHAR_HASHSET(_DOMAIN, _CASE_SENSITIVE) \
-    ::PPE::TBasicConstCharHashSet<wchar_t, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN, ::PPE::TBasicConstChar<wchar_t>)>
+    ::PPE::TBasicConstCharHashSet<wchar_t, _CASE_SENSITIVE, ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
 #define CONSTCHAR_HASHSET_MEMOIZE(_DOMAIN, _CASE_SENSITIVE) \
     HASHSET(_DOMAIN, ::PPE::TBasicConstCharHashMemoizer<char COMMA _CASE_SENSITIVE>)

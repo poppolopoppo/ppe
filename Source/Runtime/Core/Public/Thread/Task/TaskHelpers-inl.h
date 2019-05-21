@@ -10,8 +10,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Default, TFuture<T>, template <typename T>);
-//----------------------------------------------------------------------------
 template <typename T>
 TFuture<T>::TFuture(func_type&& func)
     : _state(Idle)
@@ -52,7 +50,7 @@ PFuture<T> Future(
     TFunction<T()>&& func,
     ETaskPriority priority/* = ETaskPriority::Normal */,
     FTaskManager* manager/* = nullptr *//* uses FGlobalThreadPool by default */) {
-    PFuture<T> future(new TFuture<T>(std::move(func)));
+    PFuture<T> future(NEW_REF(Task, TFuture<T>) { std::move(func) });
     future->Async(priority, manager);
     return future;
 }

@@ -277,7 +277,7 @@ public:
     typedef _EqualTo key_equal;
 
     typedef _Allocator allocator_type;
-    typedef std::allocator_traits<allocator_type> allocator_traits;
+    typedef TAllocatorTraits<allocator_type> allocator_traits;
 
     typedef details::THashTableIterator_<public_type> iterator;
     typedef details::THashTableIterator_<Meta::TAddConst<public_type>> const_iterator;
@@ -287,9 +287,6 @@ public:
     ~TBasicHashTable() {
         Assert(CheckInvariants());
         clear_ReleaseMemory();
-#ifdef WITH_PPE_ASSERT
-        FPlatformMemory::Memdeadbeef(this, sizeof(*this)); // crash if used after destruction
-#endif
     }
 
     explicit TBasicHashTable(allocator_type&& alloc) : allocator_type(std::move(alloc)) {}
@@ -301,31 +298,34 @@ public:
     explicit TBasicHashTable(size_type capacity) : TBasicHashTable() { reserve(capacity); }
     TBasicHashTable(size_type capacity, const allocator_type& alloc) : TBasicHashTable(alloc) { reserve(capacity); }
 
-    TBasicHashTable(const TBasicHashTable& other) : TBasicHashTable(allocator_traits::select_on_container_copy_construction(other)) { assign(other.begin(), other.end()); }
+    TBasicHashTable(const TBasicHashTable& other) : TBasicHashTable(allocator_traits::SelectOnCopy(other)) { assign(other.begin(), other.end()); }
     TBasicHashTable(const TBasicHashTable& other, const allocator_type& alloc) : TBasicHashTable(alloc) { assign(other.begin(), other.end()); }
     TBasicHashTable& operator=(const TBasicHashTable& other);
 
-    TBasicHashTable(TBasicHashTable&& rvalue) NOEXCEPT : TBasicHashTable(static_cast<allocator_type&&>(rvalue)) { assign(std::move(rvalue)); }
-    TBasicHashTable(TBasicHashTable&& rvalue, const allocator_type& alloc) NOEXCEPT : TBasicHashTable(alloc) { assign_rvalue_(std::move(rvalue), std::false_type()); }
+    TBasicHashTable(TBasicHashTable&& rvalue) NOEXCEPT : TBasicHashTable(allocator_traits::SelectOnMove(std::move(rvalue))) { assign(std::move(rvalue)); }
+    TBasicHashTable(TBasicHashTable&& rvalue, const allocator_type& alloc) NOEXCEPT : TBasicHashTable(alloc) { assign(std::move(rvalue)); }
     TBasicHashTable& operator=(TBasicHashTable&& rvalue) NOEXCEPT;
 
     TBasicHashTable(std::initializer_list<value_type> ilist) : TBasicHashTable() { assign(ilist.begin(), ilist.end()); }
     TBasicHashTable(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TBasicHashTable(alloc) { assign(ilist.begin(), ilist.end()); }
     TBasicHashTable& operator=(std::initializer_list<value_type> ilist) { assign(ilist.begin(), ilist.end()); return *this; }
 
-    template <typename _OtherAllocator, typename = Meta::TEnableIf<allocator_can_steal_from<_Allocator, _OtherAllocator>::value> >
+    template <typename _OtherAllocator, typename = Meta::TEnableIf<has_stealallocatorblock_v<_Allocator, _OtherAllocator>> >
     TBasicHashTable(TBasicHashTable<_Traits, _Hasher, _EqualTo, _OtherAllocator>&& rvalue) : TBasicHashTable() { operator =(std::move(rvalue)); }
-    template <typename _OtherAllocator, typename = Meta::TEnableIf<allocator_can_steal_from<_Allocator, _OtherAllocator>::value> >
+    template <typename _OtherAllocator, typename = Meta::TEnableIf<has_stealallocatorblock_v<_Allocator, _OtherAllocator>> >
     TBasicHashTable& operator =(TBasicHashTable<_Traits, _Hasher, _EqualTo, _OtherAllocator>&& rvalue) {
         if (_data.StatesAndBuckets)
             clear_ReleaseMemory();
 
-        auto stolen = AllocatorStealBlock(allocator_(), rvalue.allocated_block_(), rvalue.allocator_());
+        const TMemoryView<value_type> b = rvalue.allocated_block_();
+        Verify(TAllocatorTraits<_OtherAllocator>::StealAndAcquire(
+            &allocator_traits::Get(*this),
+            TAllocatorTraits<_OtherAllocator>::Get(rvalue),
+            FAllocatorBlock::From(b) ));
 
         std::swap(_data, rvalue._data);
-        _data.StatesAndBuckets = stolen.data();
-        Assert(allocated_block_() == stolen);
-        Assert(nullptr == rvalue._data.StatesAndBuckets);
+        Assert_NoAssume(allocated_block_() == b);
+        Assert_NoAssume(nullptr == rvalue._data.StatesAndBuckets);
 
         return (*this);
     }
@@ -335,7 +335,7 @@ public:
     size_type size() const { return size_type(_data.Size); }
 
     size_type bucket_count() const { return capacity(); }
-    size_type max_bucket_count() const { return Min(size_type(1ull << 24) - 1, size_type(allocator_traits::max_size(*this) / sizeof(value_type))); }
+    size_type max_bucket_count() const { return Min(size_type(1ull << 24) - 1, size_type(allocator_traits::MaxSize() / sizeof(value_type))); }
 
     float load_factor() const;
     size_type max_probe_dist() const;
@@ -527,9 +527,6 @@ private:
 
     void allocator_move_(allocator_type&& rvalue, std::true_type);
     void allocator_move_(allocator_type&& , std::false_type) {}
-
-    void assign_rvalue_(TBasicHashTable&& rvalue, std::true_type);
-    void assign_rvalue_(TBasicHashTable&& rvalue, std::false_type);
 
     template <typename _It>
     void insert_(_It first, _It last, std::forward_iterator_tag);

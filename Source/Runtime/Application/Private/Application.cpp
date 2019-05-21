@@ -74,8 +74,9 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
 #if USE_PPE_PLATFORM_PROFILER
     FPlatformProfiler::Name(FPlatformProfiler::ProcessLevel, ToString(app->Name()).data());
 #endif
-#ifndef FINAL_RELEASE
-    StartLeakDetector();
+#if !USE_PPE_FINAL_RELEASE
+    ReportAllTrackingData();
+    FMallocDebug::StartLeakDetector();
 #endif
     {
 #if USE_APPLICATION_EXCEPTION_TRAP
@@ -109,9 +110,9 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
         })
 #endif
     }
-#ifndef FINAL_RELEASE
+#if !USE_PPE_FINAL_RELEASE
     ReportAllTrackingData();
-    ShutdownLeakDetector();
+    FMallocDebug::ShutdownLeakDetector();
 #endif
 
     return FCurrentProcess::Get().ExitCode();

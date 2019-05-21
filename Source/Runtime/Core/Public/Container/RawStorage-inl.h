@@ -8,7 +8,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>::TRawStorage()
-:   _storage(nullptr), _size(0) {}
+:   _storage(nullptr)
+,   _size(0) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>::TRawStorage(size_type size)
@@ -19,26 +20,22 @@ TRawStorage<T, _Allocator>::TRawStorage(size_type size)
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>::TRawStorage(allocator_type&& allocator)
 :   allocator_type(std::move(allocator))
-,   _storage(nullptr), _size(0) {}
+,   _storage(nullptr)
+,   _size(0) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>::TRawStorage(allocator_type&& allocator, size_type size)
 :   allocator_type(std::move(allocator))
-,   _storage(nullptr), _size(0) {
+,   _storage(nullptr)
+,   _size(0) {
     Resize_DiscardData(size);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-TRawStorage<T, _Allocator>::TRawStorage(allocator_type&& allocator, const TMemoryView<T>& stolen)
-:   allocator_type(std::move(allocator))
-,   _storage(stolen.data())
-,   _size(stolen.size())
-{}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
 template <typename _It>
 TRawStorage<T, _Allocator>::TRawStorage(_It&& begin, _It&& end)
-:   _storage(nullptr), _size(0) {
+:   _storage(nullptr)
+,   _size(0) {
     insert(this->end(), begin, end);
 }
 //----------------------------------------------------------------------------
@@ -49,7 +46,7 @@ TRawStorage<T, _Allocator>::~TRawStorage() {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>::TRawStorage(TRawStorage&& rvalue)
-:   allocator_type(std::move(rvalue))
+:   allocator_type(allocator_traits::SelectOnMove(std::move(rvalue)))
 ,   _storage(std::move(rvalue._storage))
 ,   _size(std::move(rvalue._size)) {
     rvalue._storage = nullptr;
@@ -59,7 +56,7 @@ TRawStorage<T, _Allocator>::TRawStorage(TRawStorage&& rvalue)
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>& TRawStorage<T, _Allocator>::operator =(TRawStorage&& rvalue) {
     clear_ReleaseMemory();
-    allocator_type::operator =(std::move(rvalue));
+    allocator_traits::Move(this, std::move(rvalue));
     _storage = std::move(rvalue._storage);
     _size = std::move(rvalue._size);
     rvalue._storage = nullptr;
@@ -69,7 +66,7 @@ TRawStorage<T, _Allocator>& TRawStorage<T, _Allocator>::operator =(TRawStorage&&
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>::TRawStorage(const TRawStorage& other)
-:   allocator_type(other)
+:   allocator_type(allocator_traits::SelectOnCopy(other))
 ,   _storage(nullptr), _size(0) {
     insert(this->end(), other.begin(), other.end());
 }
@@ -77,7 +74,7 @@ TRawStorage<T, _Allocator>::TRawStorage(const TRawStorage& other)
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>& TRawStorage<T, _Allocator>::operator =(const TRawStorage& other) {
     clear_ReleaseMemory();
-    allocator_type::operator =(other);
+    allocator_traits::Copy(this, other);
     insert(end(), other.begin(), other.end());
     return (*this);
 }
@@ -116,17 +113,19 @@ void TRawStorage<T, _Allocator>::Resize(size_type size, bool keepData) {
 
     if (0 == size) {
         if (storage)
-            allocator_type::deallocate(storage, _size);
+            allocator_traits::DeallocateT(*this, _storage, _size);
     }
     else if (keepData) {
-        _storage = Relocate_AssumePod(static_cast<allocator_type&>(*this), TMemoryView<T>(storage, _size), size, _size);
-        AssertRelease(_storage);
+        TMemoryView<T> blk(storage, _size);
+        ReallocateAllocatorBlock(allocator_traits::Get(*this), blk, _size, size);
+        AssertRelease(blk.data());
+        _storage = blk.data();
     }
     else {
         if (storage)
-            allocator_type::deallocate(storage, _size);
+            allocator_traits::DeallocateT(*this, storage, _size);
 
-        _storage = allocator_type::allocate(size);
+        _storage = allocator_traits::template AllocateT<T>(*this, size).data();
         AssertRelease(_storage);
     }
 
@@ -155,7 +154,7 @@ void TRawStorage<T, _Allocator>::clear_ReleaseMemory() {
         return;
     }
 
-    allocator_type::deallocate(_storage, _size);
+    allocator_traits::DeallocateT(*this, _storage, _size);
     _storage = nullptr;
     _size = 0;
 }

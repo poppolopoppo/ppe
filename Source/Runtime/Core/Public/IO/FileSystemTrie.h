@@ -4,7 +4,7 @@
 
 #include "IO/FileSystemToken.h"
 
-#include "Allocator/PoolAllocator.h"
+#include "Allocator/LinearHeap.h"
 #include "Memory/MemoryView.h"
 #include "Memory/RefPtr.h"
 #include "Maths/PrimeNumbers.h"
@@ -19,9 +19,8 @@ class PPE_CORE_API FFileSystemNode {
 public:
     using FGenealogy = TPrimeNumberProduct<FFileSystemNode, true>;
 
-    FFileSystemNode();
-    FFileSystemNode(FFileSystemNode& parent, const FFileSystemToken& token, double sortValue, size_t uid);
-    ~FFileSystemNode();
+    FFileSystemNode() NOEXCEPT;
+    FFileSystemNode(FFileSystemNode& parent, const FFileSystemToken& token, double sortValue, size_t uid) NOEXCEPT;
 
     FFileSystemNode(const FFileSystemNode& ) = delete;
     FFileSystemNode& operator =(const FFileSystemNode& ) = delete;
@@ -43,8 +42,6 @@ public:
     bool Less(const FFileSystemNode& other) const;
     bool IsChildOf(const FFileSystemNode& parent) const;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     friend class FFileSystemTrie;
 
@@ -60,7 +57,7 @@ private:
     const FGenealogy _genealogy;
 };
 //----------------------------------------------------------------------------
-class PPE_CORE_API FFileSystemTrie : Meta::TSingleton<FFileSystemTrie> {
+class PPE_CORE_API FFileSystemTrie : private Meta::TSingleton<FFileSystemTrie> {
 public:
     using FGenealogy = FFileSystemNode::FGenealogy;
 
@@ -93,8 +90,9 @@ private:
     friend class Meta::TSingleton<FFileSystemTrie>;
 
     FReadWriteLock _barrier;
-    FFileSystemNode _root;
     size_t _numNodes;
+    FFileSystemNode _root;
+    LINEARHEAP(FileSystem) _heap;
 
     FFileSystemTrie();
 

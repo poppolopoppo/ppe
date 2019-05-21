@@ -14,7 +14,6 @@
 #include "MetaObject.h"
 #include "MetaProperty.h"
 
-#include "Allocator/PoolAllocator-impl.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/StringBuilder.h"
@@ -31,8 +30,6 @@ FParseExpression::FParseExpression(const Lexer::FSpan& site)
 FParseExpression::~FParseExpression() {}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FVariableExport, )
 //----------------------------------------------------------------------------
 FVariableExport::FVariableExport(const RTTI::FName& name, const PCParseExpression& value, const EFlags scope, const Lexer::FSpan& site)
 :   FParseExpression(site)
@@ -70,8 +67,6 @@ FString FVariableExport::ToString() const {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FVariableReference, )
 //----------------------------------------------------------------------------
 FVariableReference::FVariableReference(const RTTI::FPathName& pathName, const Lexer::FSpan& site)
 :   FParseExpression(site)
@@ -115,8 +110,7 @@ FString FVariableReference::ToString() const {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FObjectDefinition, )
+
 //----------------------------------------------------------------------------
 FObjectDefinition::FObjectDefinition(const RTTI::FName& name, const Lexer::FSpan& site)
 :   FParseExpression(site)
@@ -162,8 +156,6 @@ FString FObjectDefinition::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FPropertyReference, )
-//----------------------------------------------------------------------------
 FPropertyReference::FPropertyReference(
     const PCParseExpression& object,
     const RTTI::FName& member,
@@ -205,8 +197,6 @@ FString FPropertyReference::ToString() const {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FTupleExpr, )
 //----------------------------------------------------------------------------
 FTupleExpr::FTupleExpr(const Lexer::FSpan& site)
 :   FParseExpression(site)
@@ -260,8 +250,6 @@ FString FTupleExpr::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FArrayExpr, )
-//----------------------------------------------------------------------------
 FArrayExpr::FArrayExpr(const Lexer::FSpan& site)
 :   FParseExpression(site) {}
 //----------------------------------------------------------------------------
@@ -303,8 +291,6 @@ FString FArrayExpr::ToString() const {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FDictionaryExpr, )
 //----------------------------------------------------------------------------
 FDictionaryExpr::FDictionaryExpr(const Lexer::FSpan& site)
 :   FParseExpression(site) {}
@@ -352,8 +338,6 @@ FString FDictionaryExpr::ToString() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FCastExpr, )
-//----------------------------------------------------------------------------
 FCastExpr::FCastExpr(const RTTI::PTypeTraits& traits, const FParseExpression* expr, const Lexer::FSpan& site)
 :   FParseExpression(site)
 ,   _traits(traits)
@@ -390,8 +374,6 @@ FString FCastExpr::ToString() const {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Parser, FFunctionCall, )
 //----------------------------------------------------------------------------
 FFunctionCall::FFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<const PCParseExpression>& args, const Lexer::FSpan& site)
 :   FParseExpression(site)

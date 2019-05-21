@@ -12,27 +12,27 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define MEMORYSTREAM(_DOMAIN) \
-    ::PPE::TMemoryStream<ALLOCATOR(_DOMAIN, u8) >
+    ::PPE::TMemoryStream< ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
 #define MEMORYSTREAM_ALIGNED(_DOMAIN, _ALIGNMENT) \
-    ::PPE::TMemoryStream<ALIGNED_ALLOCATOR(_DOMAIN, u8, _ALIGNMENT)>
+    ::PPE::TMemoryStream< ALIGNED_ALLOCATOR(_DOMAIN, _ALIGNMENT) >
 //----------------------------------------------------------------------------
-#define MEMORYSTREAM_STACK() \
-    ::PPE::TMemoryStream<STACK_ALLOCATOR(u8)>
+#define MEMORYSTREAM_STACKLOCAL() \
+    ::PPE::TMemoryStream< STACKLOCAL_ALLOCATOR() >
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Allocator = ALLOCATOR(Stream, u8)>
+template <typename _Allocator = ALLOCATOR(Stream) >
 class TMemoryStream : public IBufferedStreamReader, public IBufferedStreamWriter  {
 public:
     typedef TRawStorage<u8, _Allocator> storage_type;
     typedef typename storage_type::allocator_type allocator_type;
+    typedef typename storage_type::allocator_traits allocator_traits;
 
     TMemoryStream();
     explicit TMemoryStream(allocator_type&& alloc);
     explicit TMemoryStream(storage_type&& storage);
     TMemoryStream(storage_type&& storage, std::streamsize size);
-    TMemoryStream(allocator_type&& allocator, const TMemoryView<u8>& stolen);
 
     u8* data() { return _storage.data(); }
     const u8* data() const { return _storage.data(); }
@@ -51,12 +51,15 @@ public:
     void shrink_to_fit();
     void clear();
 
-    TMemoryView<u8> Append(size_t sizeInBytes);
+    allocator_type& get_allocator() { return _storage.get_allocator(); }
+    const allocator_type& get_allocator() const { return _storage.get_allocator(); }
 
-    TMemoryView<u8> MakeView() { return TMemoryView<u8>(_storage.Pointer(), _size); }
-    TMemoryView<u8> MakeView(size_t offset, size_t count) {
+    FRawMemory Append(size_t sizeInBytes);
+
+    FRawMemory MakeView() { return FRawMemory(_storage.Pointer(), _size); }
+    FRawMemory MakeView(size_t offset, size_t count) {
         Assert(offset + count < _size);
-        return TMemoryView<u8>(&_storage[offset], count);
+        return FRawMemory(&_storage[offset], count);
     }
 
     TMemoryView<const u8> MakeView() const { return TMemoryView<const u8>(_storage.Pointer(), _size); }
@@ -68,16 +71,24 @@ public:
     void clear_ReleaseMemory();
     void clear_StealMemory(storage_type& storage);
 
-    template <typename _OtherAllocator>
-    auto StealDataUnsafe(_OtherAllocator& alloc, size_t* plen = nullptr) {
-        using other_value_type = typename _OtherAllocator::value_type;
-        const TMemoryView<other_value_type> stolen = _storage.StealDataUnsafe(alloc);
-        if (plen) {
-            Assert(Meta::IsAligned(sizeof(other_value_type), _size));
-            *plen = (_size / sizeof(other_value_type));
+    bool AcquireDataUnsafe(FAllocatorBlock b, size_t sz = 0) NOEXCEPT {
+        if (_storage.AcquireDataUnsafe(b)) {
+            _size = sz;
+            _offsetI = _offsetO = 0;
+            return true;
         }
-        _offsetI = _offsetO = _size = 0;
-        return stolen;
+        else {
+            return false;
+        }
+    }
+
+    FAllocatorBlock StealDataUnsafe(size_t* sz = nullptr) NOEXCEPT {
+        const FAllocatorBlock b = _storage.StealDataUnsafe();
+        if (b) {
+            if (sz) *sz = _size;
+            _offsetI = _offsetO = _size = 0;
+        }
+        return b;
     }
 
 public: // IStreamReader
@@ -142,19 +153,13 @@ TMemoryStream<_Allocator>::TMemoryStream(storage_type&& storage, std::streamsize
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-TMemoryStream<_Allocator>::TMemoryStream(allocator_type&& allocator, const TMemoryView<u8>& stolen)
-    : _size(0), _offsetI(0), _offsetO(0)
-    , _storage(std::move(allocator), stolen)
-{}
-//----------------------------------------------------------------------------
-template <typename _Allocator>
 void TMemoryStream<_Allocator>::resize(size_t count, bool keepData/* = true */) {
     if  (keepData) {
         reserve(count);
     }
     else if (count > _storage.size()) {
         // can only grow, except in shrink_to_fit() or clear_ReleaseMemory()
-        _storage.Resize_DiscardData(SafeAllocatorSnapSize(_storage.get_allocator(), count));
+        _storage.Resize_DiscardData(allocator_traits::SnapSize(count));
     }
 
     _size = count;
@@ -170,14 +175,14 @@ void TMemoryStream<_Allocator>::resize(size_t count, bool keepData/* = true */) 
 template <typename _Allocator>
 void TMemoryStream<_Allocator>::reserve(size_t count) {
     if (count > _storage.size()) // can only grow, except in shrink_to_fit() or clear_ReleaseMemory()
-        _storage.Resize_KeepData(SafeAllocatorSnapSize(_storage.get_allocator(), count));
+        _storage.Resize_KeepData(allocator_traits::SnapSize(count));
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TMemoryStream<_Allocator>::shrink_to_fit() {
     if (_size != _storage.size()) {
         Assert(_storage.size() > _size); // capacity cannot be smaller than size
-        _storage.Resize_KeepData(SafeAllocatorSnapSize(_storage.get_allocator(), _size));
+        _storage.Resize_KeepData(allocator_traits::SnapSize(_size));
     }
 }
 //----------------------------------------------------------------------------
@@ -187,17 +192,17 @@ void TMemoryStream<_Allocator>::clear() {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-TMemoryView<u8> TMemoryStream<_Allocator>::Append(size_t sizeInBytes) {
+FRawMemory TMemoryStream<_Allocator>::Append(size_t sizeInBytes) {
     _size = Max(sizeInBytes + _offsetO, _size);
 
     if (_size > _storage.size()) { // doubles the storage size if there is not enough space
-        const size_t newCapacity = SafeAllocatorSnapSize(_storage.get_allocator(), Max(_size, _storage.size() * 2));
+        const size_t newCapacity = allocator_traits::SnapSize(Max(_size, _storage.size() * 2));
         Assert(newCapacity >= _size);
         _storage.Resize_KeepData(newCapacity);
     }
 
     Assert(_storage.size() >= _size);
-    const TMemoryView<u8> reserved = _storage.MakeView().SubRange(_offsetO, sizeInBytes);
+    const FRawMemory reserved = _storage.MakeView().SubRange(_offsetO, sizeInBytes);
 
     _offsetO += sizeInBytes;
     return reserved;
@@ -231,8 +236,7 @@ std::streamoff TMemoryStream<_Allocator>::TellI() const {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 std::streamoff TMemoryStream<_Allocator>::SeekI(std::streamoff offset, ESeekOrigin origin/* = ESeekOrigin::Begin */) {
-    switch (origin)
-    {
+    switch (origin) {
     case ESeekOrigin::Begin:
         if (offset > checked_cast<std::streamoff>(_size))
             return std::streamoff(-1);
@@ -329,8 +333,7 @@ std::streamoff TMemoryStream<_Allocator>::TellO() const {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 std::streamoff TMemoryStream<_Allocator>::SeekO(std::streamoff offset, ESeekOrigin policy /* = ESeekOrigin::Begin */) {
-    switch (policy)
-    {
+    switch (policy) {
     case ESeekOrigin::Begin:
         if (offset > checked_cast<std::streamoff>(_size))
             return std::streamoff(-1);
@@ -356,7 +359,7 @@ std::streamoff TMemoryStream<_Allocator>::SeekO(std::streamoff offset, ESeekOrig
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 bool TMemoryStream<_Allocator>::Write(const void* storage, std::streamsize sizeInBytes) {
-    const TMemoryView<u8> reserved = Append(checked_cast<size_t>(sizeInBytes));
+    const FRawMemory reserved = Append(checked_cast<size_t>(sizeInBytes));
     Assert(std::streamsize(reserved.SizeInBytes()) == sizeInBytes);
 
     FPlatformMemory::Memcpy(reserved.data(), storage, reserved.SizeInBytes());
@@ -365,7 +368,7 @@ bool TMemoryStream<_Allocator>::Write(const void* storage, std::streamsize sizeI
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 size_t TMemoryStream<_Allocator>::WriteSome(const void* storage, size_t eltsize, size_t count) {
-    return (TMemoryStream::Write(storage, eltsize * count) ? count : 0);
+    return (TMemoryStream::Write(storage, std::streamsize(eltsize) * count) ? count : 0);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

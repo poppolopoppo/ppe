@@ -9,9 +9,6 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector() {}
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(allocator_type&& alloc)
     : _vector(std::move(alloc))
 {}
@@ -27,14 +24,11 @@ TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(size_typ
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::~TAssociativeVector() {}
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(vector_type&& vector)
+TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(vector_type&& vector) NOEXCEPT
 :   _vector(std::move(vector)) {}
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::operator =(vector_type&& vector) -> TAssociativeVector& {
+auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::operator =(vector_type&& vector) NOEXCEPT -> TAssociativeVector& {
     _vector = std::move(vector);
     return *this;
 }
@@ -50,11 +44,11 @@ auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::operator =(const vecto
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(TAssociativeVector&& rvalue)
+TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(TAssociativeVector&& rvalue) NOEXCEPT
 :   _vector(std::move(rvalue._vector)) {}
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::operator =(TAssociativeVector&& rvalue) -> TAssociativeVector& {
+auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::operator =(TAssociativeVector&& rvalue) NOEXCEPT -> TAssociativeVector& {
     _vector = std::move(rvalue._vector);
     return *this;
 }

@@ -18,8 +18,6 @@
 #   error "there is someone messing with the project configuration"
 #endif
 
-#define STATIC_ASSERT(...) static_assert(COMMA_PROTECT(__VA_ARGS__), #__VA_ARGS__)
-
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

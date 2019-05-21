@@ -6,7 +6,7 @@
 #include "RTTI/NativeTypes.h"
 
 #include "Allocator/LinearHeap.h"
-#include "Allocator/LinearHeapAllocator.h"
+#include "Allocator/LinearAllocator.h"
 #include "Container/Vector.h"
 #include "Memory/RefPtr.h"
 #include "Meta/ThreadResource.h"

@@ -13,23 +13,25 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Skip in-situ storage when debugging memory
+#if USE_PPE_MEMORY_DEBUGGING
 template <typename _Char>
-using TStringBuilderAllocator = TInSituAllocator<
-    TInSituStorage<_Char, TBasicString<_Char>::GInSituSize>,
-    TRebindAlloc< TStringAllocator<_Char>, u8 >
->;
+using TStringBuilderAllocator = FStringAllocator;
+#else
+template <typename _Char>
+using TStringBuilderAllocator = TSegregatorAllocator<
+    TBasicString<_Char>::GInSituSize * sizeof(_Char),
+    TInSituAllocator<TBasicString<_Char>::GInSituSize * sizeof(_Char)>,
+    FStringAllocator >;
+#endif
 //----------------------------------------------------------------------------
 template <typename _Char>
 class TBasicStringBuilder :
-    private TStringBuilderAllocator<_Char>::storage_type
-,   private TMemoryStream< TStringBuilderAllocator<_Char> >
+    private TMemoryStream< TStringBuilderAllocator<_Char> >
 ,   public  TBasicTextWriter<_Char> {
 public:
     typedef TBasicString<_Char> string_type;
     typedef TMemoryStream< TStringBuilderAllocator<_Char> > stream_type;
-
-    typedef TStringBuilderAllocator<_Char> allocator_type;
-    typedef typename TStringBuilderAllocator<_Char>::storage_type insitu_type;
 
     TBasicStringBuilder();
     virtual ~TBasicStringBuilder();
@@ -66,16 +68,21 @@ public:
         return stream_type::Append(n * sizeof(_Char)).template Cast<_Char>();
     }
 
-    template <typename _OtherAllocator>
-    TMemoryView<typename _OtherAllocator::value_type> StealDataUnsafe(_OtherAllocator& alloc, size_t* plen = nullptr) {
-        return stream_type::StealDataUnsafe(alloc, plen);
+    bool AcquireDataUnsafe(FAllocatorBlock b, size_t len = 0) NOEXCEPT {
+        return stream_type::AcquireDataUnsafe(b, len * sizeof(_Char));
     }
+
+    FAllocatorBlock StealDataUnsafe(size_t* len = nullptr) NOEXCEPT {
+        const FAllocatorBlock b = stream_type::StealDataUnsafe(len);
+        if (len) *len /= sizeof(_Char);
+        return b;
+    }
+
+    using stream_type::AcquireDataUnsafe;
+    using stream_type::StealDataUnsafe;
 
     using TBasicTextWriter<_Char>::Write; // otherwise ambiguous with TMemoryStream<>::Write()
 
-    bool UseInSitu() const {
-        return (stream_type::data() == insitu_type::data());
-    }
 };
 //----------------------------------------------------------------------------
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBasicStringBuilder<char>;

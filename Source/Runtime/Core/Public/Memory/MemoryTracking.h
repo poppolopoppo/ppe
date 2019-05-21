@@ -2,6 +2,7 @@
 
 #include "Core.h"
 
+#include "Container/IntrusiveList.h"
 #include "IO/TextWriter_fwd.h"
 #include "Meta/TypeTraits.h"
 
@@ -13,7 +14,18 @@ class TMemoryView;
 //----------------------------------------------------------------------------
 class PPE_CORE_API FMemoryTracking {
 public:
-    FMemoryTracking(const char* optionalName = "unknown", FMemoryTracking* optionalParent = nullptr);
+    using counter_t = std::atomic<size_t>;
+
+    struct FSnapshot {
+        size_t MinSize;
+        size_t MaxSize;
+        size_t PeakSize;
+        size_t TotalSize;
+    };
+
+    explicit FMemoryTracking(
+        const char* optionalName = "unknown",
+        FMemoryTracking* parent = nullptr );
 
     const char* Name() const { return _name; }
     size_t Level() const { return _level; }
@@ -21,65 +33,57 @@ public:
     FMemoryTracking* Parent() { return _parent; }
     const FMemoryTracking* Parent() const { return _parent; }
 
-    FMemoryTracking* Prev() { return _prev; }
-    const FMemoryTracking* Prev() const { return _prev; }
-    void SetPrev(FMemoryTracking* value) { _prev = value; }
+    size_t NumAllocs() const { return _numAllocs; }
+    size_t PeakAllocs() const { return _peakAllocs; }
 
-    FMemoryTracking* Next() { return _next; }
-    const FMemoryTracking* Next() const { return _next; }
-    void SetNext(FMemoryTracking* value) { _next = value; }
-
-    size_t BlockCount() const { return _blockCount; }
-    size_t AllocationCount() const { return _allocationCount; }
-    size_t TotalSizeInBytes() const { return _totalSizeInBytes; }
-
-    size_t MaxBlockCount() const { return _maxBlockCount; }
-    size_t MaxAllocationCount() const { return _maxAllocationCount; }
-
-    size_t MaxStrideInBytes() const { return _maxStrideInBytes; }
-    size_t MinStrideInBytes() const { return _minStrideInBytes; }
-
-    size_t MaxTotalSizeInBytes() const { return _maxTotalSizeInBytes; }
+    FSnapshot User() const { return _user.Snapshot(); }
+    FSnapshot System() const { return _system.Snapshot(); }
+    FSnapshot Wasted() const { return _system.Substract(_user); }
 
     bool IsChildOf(const FMemoryTracking& other) const;
 
-    void Allocate(size_t blockCount, size_t strideInBytes);
-    void Deallocate(size_t blockCount, size_t strideInBytes);
+    void Allocate(size_t userSize, size_t systemSize) NOEXCEPT;
+    void Deallocate(size_t userSize, size_t systemSize) NOEXCEPT;
 
     // used by linear heaps :
-    void ReleaseAll();
-    void Release(size_t blockCount, size_t allocationCount, size_t totalSizeInBytes);
-
-    // reserved for pool allocation tracking :
-    void Pool_AllocateOneBlock(size_t blockSizeInBytes);
-    void Pool_DeallocateOneBlock(size_t blockSizeInBytes);
-    void Pool_AllocateOneChunk(size_t chunkSizeInBytes, size_t numBlocks);
-    void Pool_DeallocateOneChunk(size_t chunkSizeInBytes, size_t numBlocks);
+    void ReleaseAll() NOEXCEPT;
+    void ReleaseBatch(size_t numAllocs, size_t userTotal, size_t systemTotal) NOEXCEPT;
 
     static FMemoryTracking& UsedMemory();
     static FMemoryTracking& ReservedMemory();
     static FMemoryTracking& PooledMemory();
 
 private:
-    std::atomic<size_t> _blockCount;
-    std::atomic<size_t> _allocationCount;
-    std::atomic<size_t> _totalSizeInBytes;
+    using counter_t = std::atomic<size_t>;
 
-    std::atomic<size_t> _maxBlockCount;
-    std::atomic<size_t> _maxAllocationCount;
+    struct FCounters_ {
+        counter_t MinSize{ CODE3264(UINT32_MAX, UINT64_MAX) };
+        counter_t MaxSize{ 0 };
+        counter_t PeakSize{ 0 };
+        counter_t TotalSize{ 0 };
 
-    std::atomic<size_t> _maxStrideInBytes;
-    std::atomic<size_t> _minStrideInBytes;
+        FCounters_() = default;
 
-    std::atomic<size_t> _maxTotalSizeInBytes;
+        void Allocate(size_t s);
+        void Deallocate(size_t s);
+        void ReleaseBatch(size_t s);
 
-    FMemoryTracking* _parent;
+        FSnapshot Snapshot() const;
+        FSnapshot Substract(const FCounters_& o) const;
+    };
 
-    FMemoryTracking* _prev;
-    FMemoryTracking* _next;
+    counter_t _numAllocs;
+    counter_t _peakAllocs;
+
+    FCounters_ _user;
+    FCounters_ _system;
 
     const char* _name;
     size_t _level;
+    FMemoryTracking* _parent;
+
+public:
+    TIntrusiveListNode<FMemoryTracking> Node;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

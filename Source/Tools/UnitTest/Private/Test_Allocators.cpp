@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "Allocator/Mallocator.h"
+#include "Allocator/StlAllocator.h"
 
 #include "Container/Pair.h"
 #include "Container/RingBuffer.h"
@@ -308,7 +309,7 @@ void Test_Allocators() {
     LOG(Test_Allocators, Info, L"Large blocks data set = {0} blocks / {1}", largeBlocks.size(), Fmt::SizeInBytes(largeBlocksSizeInBytes) );
     LOG(Test_Allocators, Info, L"Mixed blocks data set = {0} blocks / {1}", mixedBlocks.size(), Fmt::SizeInBytes(mixedBlocksSizeInBytes) );
 
-    Test_Allocator_(L"TMallocator", TMallocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
+    Test_Allocator_(L"TMallocator", TStlAllocator<value_type, FMallocator>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
     Test_Allocator_(L"std::allocator", std::allocator<value_type>{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
 
     ReleaseMemoryInModules();

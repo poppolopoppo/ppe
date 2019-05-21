@@ -2,7 +2,6 @@
 
 #include "Core.h"
 
-#include "Allocator/NodeBasedContainerAllocator.h"
 #include "Container/Stack.h"
 #include "Meta/AlignedStorage.h"
 #include "Memory/MemoryView.h"
@@ -20,7 +19,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #define TERNARYSEARCHTREE(_DOMAIN, _KEY, _VALUE) \
     ::PPE::TTernarySearchTree<_KEY, _VALUE, ::PPE::Meta::TLess<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, \
-        NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::PPE::TTernarySearchNode<_KEY COMMA _VALUE>)) >
+        BATCH_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::PPE::TTernarySearchNode<_KEY COMMA _VALUE>)) >
 //----------------------------------------------------------------------------
 #define TERNARYSEARCHSET(_DOMAIN, _KEY) TERNARYSEARCHTREE(_DOMAIN, _KEY, void)
 #define TERNARYSEARCHMAP(_DOMAIN, _KEY, _VALUE) TERNARYSEARCHTREE(_DOMAIN, _KEY, _VALUE)
@@ -106,11 +105,11 @@ template <
     typename _Value,
     typename _Less = Meta::TLess<_Key>,
     typename _EqualTo = Meta::TEqualTo<_Key>,
-    typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, TTernarySearchNode<_Key COMMA _Value>)
+    typename _Allocator = BATCH_ALLOCATOR(Container, TTernarySearchNode<_Key COMMA _Value>)
 >   class TTernarySearchTree : _Allocator {
 public:
     typedef _Allocator allocator_type;
-    typedef std::allocator_traits<allocator_type> allocator_traits;
+    typedef TAllocatorTraits<allocator_type> allocator_traits;
 
     typedef _Key key_type;
     typedef _Value value_type;
@@ -121,12 +120,12 @@ public:
     typedef _Less less_functor;
     typedef _EqualTo equal_to_functor;
 
-    typedef typename allocator_traits::pointer pointer;
-    typedef typename allocator_traits::const_pointer const_pointer;
+    using pointer = Meta::TAddPointer<node_type>;
+    using const_pointer = Meta::TAddPointer<Meta::TAddConst<node_type>>;
+    using reference = Meta::TAddReference<node_type>;
+    using const_reference = Meta::TAddReference<Meta::TAddConst<node_type>>;
 
-    typedef typename allocator_traits::size_type size_type;
-    typedef typename allocator_traits::difference_type difference_type;
-
+    typedef size_t size_type;
     typedef const node_type* iterator;
 
     TTernarySearchTree() : _root(nullptr), _size(0) {}

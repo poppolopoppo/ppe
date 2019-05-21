@@ -52,13 +52,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// This is for Dll builds due to export of FStringBuilder & FWStringBuilder (associated declaration in Mallocator.h)
-// #TODO : this might not be necessary, and I still wonder why only this particular instance
-// is found duplicated when tons of other templates pose no problem.
-EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TMallocator<u8>;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
 struct FMallocLowLevel {
@@ -75,9 +68,9 @@ struct FMallocLowLevel {
     FORCE_INLINE static void    ReleaseCacheMemory();
     FORCE_INLINE static void    ReleasePendingBlocks();
 
-    FORCE_INLINE static size_t  SnapSize(size_t size);
+    FORCE_INLINE static size_t  SnapSize(size_t size) NOEXCEPT;
 
-#ifndef FINAL_RELEASE
+#if !USE_PPE_FINAL_RELEASE
     FORCE_INLINE static size_t  RegionSize(void* ptr);
 #endif
 };
@@ -99,8 +92,8 @@ void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) 
 }
 void  FMallocLowLevel::ReleaseCacheMemory() {}
 void  FMallocLowLevel::ReleasePendingBlocks() {}
-size_t FMallocLowLevel::SnapSize(size_t size) { return size; }
-#ifndef FINAL_RELEASE
+size_t FMallocLowLevel::SnapSize(size_t size) NOEXCEPT { return size; }
+#if !USE_PPE_FINAL_RELEASE
 size_t FMallocLowLevel::RegionSize(void* ptr) {
 #   ifdef PLATFORM_WINDOWS
     return ::_msize(ptr);
@@ -136,10 +129,10 @@ void  FMallocLowLevel::ReleaseCacheMemory() {
 void  FMallocLowLevel::ReleasePendingBlocks() {
     FMallocBinned::ReleasePendingBlocks();
 }
-size_t FMallocLowLevel::SnapSize(size_t size) {
+size_t FMallocLowLevel::SnapSize(size_t size) NOEXCEPT {
     return FMallocBinned::SnapSize(size);
 }
-#ifndef FINAL_RELEASE
+#if !USE_PPE_FINAL_RELEASE
 size_t FMallocLowLevel::RegionSize(void* ptr) {
     return FMallocBinned::RegionSize(ptr);
 }
@@ -167,8 +160,8 @@ void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) 
 }
 void  FMallocLowLevel::ReleaseCacheMemory() {}
 void  FMallocLowLevel::ReleasePendingBlocks() {}
-size_t FMallocLowLevel::SnapSize(size_t size) { return size; }
-#ifndef FINAL_RELEASE
+size_t FMallocLowLevel::SnapSize(size_t size) NOEXCEPT { return size; }
+#if !USE_PPE_FINAL_RELEASE
 size_t FMallocLowLevel::RegionSize(void* ptr) {
     return FMallocStomp::RegionSize(ptr);
 }
@@ -176,21 +169,6 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 #endif //!PPE_MALLOC_ALLOCATOR_STOMP
 //----------------------------------------------------------------------------
 } //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-#if PPE_MALLOC_LEAKDETECTOR_PROXY
-namespace {
-struct FMallocLeakDetectorFacet {
-    static void A(void* ptr, size_t sizeInBytes) {
-        NOOP(ptr, sizeInBytes);
-    }
-    static void TestBlock(void* ptr) {
-        FLeakDetector::Get().Release(ptr);
-    }
-};
-} //!namespace
-#endif //!PPE_MALLOC_LEAKDETECTOR_PROXY
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -246,7 +224,7 @@ public:
     FORCE_INLINE static void* AlignedCalloc(size_t nmemb, size_t size, size_t alignment) { return AllocateBlock(FMallocLowLevel::AlignedCalloc(nmemb, size, alignment), size, alignment); }
     FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment) { return ReallocAllocateBlock(FMallocLowLevel::AlignedRealloc(ReallocReleaseBlock(ptr, alignment), size, alignment), ptr , size, alignment); }
 
-    FORCE_INLINE static size_t SnapSize(size_t size) { // must always return a block size larger or equal than user input
+    FORCE_INLINE static size_t SnapSize(size_t size) NOEXCEPT { // must always return a block size larger or equal than user input
         const size_t snapped = FMallocLowLevel::SnapSize(size);
         Assert_NoAssume(snapped >= size);
         return snapped;
@@ -340,6 +318,7 @@ void*   (realloc)(void *ptr, size_t size) {
 //----------------------------------------------------------------------------
 NOALIAS RESTRICT
 void*   (aligned_malloc)(size_t size, size_t alignment) {
+    Assert_NoAssume(ALLOCATION_BOUNDARY < alignment);
     return FMallocProxy::AlignedMalloc(size, alignment);
 }
 //----------------------------------------------------------------------------
@@ -350,11 +329,13 @@ void    (aligned_free)(void *ptr) {
 //----------------------------------------------------------------------------
 NOALIAS RESTRICT
 void*   (aligned_calloc)(size_t nmemb, size_t size, size_t alignment) {
+    Assert_NoAssume(ALLOCATION_BOUNDARY < alignment);
     return FMallocProxy::AlignedCalloc(nmemb, size, alignment);
 }
 //----------------------------------------------------------------------------
 NOALIAS RESTRICT
 void*   (aligned_realloc)(void *ptr, size_t size, size_t alignment) {
+    Assert_NoAssume(ALLOCATION_BOUNDARY < alignment);
     return FMallocProxy::AlignedRealloc(ptr, size, alignment);
 }
 //----------------------------------------------------------------------------
@@ -369,30 +350,30 @@ void    (malloc_release_pending_blocks)() {
 }
 //----------------------------------------------------------------------------
 NOALIAS
-size_t  (malloc_snap_size)(size_t size) {
+size_t  (malloc_snap_size)(size_t size) NOEXCEPT {
     return FMallocProxy::SnapSize(size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifndef FINAL_RELEASE
-void StartLeakDetector() {
+#if !USE_PPE_FINAL_RELEASE
+void FMallocDebug::StartLeakDetector() {
 #if PPE_MALLOC_LEAKDETECTOR_PROXY
     FLeakDetector::Get().Start();
 #endif
 }
-#endif //!FINAL_RELEASE
+#endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
-#ifndef FINAL_RELEASE
-void ShutdownLeakDetector() {
+#if !USE_PPE_FINAL_RELEASE
+void FMallocDebug::ShutdownLeakDetector() {
 #if PPE_MALLOC_LEAKDETECTOR_PROXY
     FLeakDetector::Get().Shutdown();
 #endif
 }
-#endif //!FINAL_RELEASE
+#endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
-#ifndef FINAL_RELEASE
-bool SetLeakDetectorWhiteListed(bool ignoreleaks) {
+#if !USE_PPE_FINAL_RELEASE
+bool FMallocDebug::SetLeakDetectorWhiteListed(bool ignoreleaks) {
 #if PPE_MALLOC_LEAKDETECTOR_PROXY
     bool& whitelistedTLS = FLeakDetector::WhiteListedTLS();
     const bool wasIgnoringLeaks = whitelistedTLS;
@@ -403,10 +384,10 @@ bool SetLeakDetectorWhiteListed(bool ignoreleaks) {
     return false;
 #endif
 }
-#endif //!FINAL_RELEASE
+#endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
-#ifndef FINAL_RELEASE
-void DumpMemoryLeaks(bool onlyNonDeleters/* = false */) {
+#if !USE_PPE_FINAL_RELEASE
+void FMallocDebug::DumpMemoryLeaks(bool onlyNonDeleters/* = false */) {
 #if PPE_MALLOC_LEAKDETECTOR_PROXY
     auto& leakDetector = FLeakDetector::Get();
     leakDetector.ReportLeaks(onlyNonDeleters
@@ -416,10 +397,10 @@ void DumpMemoryLeaks(bool onlyNonDeleters/* = false */) {
     NOOP(onlyNonDeleters);
 #endif
 }
-#endif //!FINAL_RELEASE
+#endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
-#ifndef FINAL_RELEASE
-bool FetchMemoryAllocationHistogram(
+#if !USE_PPE_FINAL_RELEASE
+bool FMallocDebug::FetchAllocationHistogram(
     TMemoryView<const size_t>* classes,
     TMemoryView<const i64>* allocations,
     TMemoryView<const i64>* totalBytes ) {
@@ -433,7 +414,7 @@ bool FetchMemoryAllocationHistogram(
     return false;
 #endif
 }
-#endif //!FINAL_RELEASE
+#endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

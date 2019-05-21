@@ -8,51 +8,34 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-template <typename _Char>
-struct TStealBasicString_ {
-    using string_type = typename TBasicStringBuilder<_Char>::string_type;
-    using stream_type = typename TBasicStringBuilder<_Char>::stream_type;
-    using allocator_type = typename TBasicStringBuilder<_Char>::allocator_type;
-    static stream_type StealData(allocator_type&& alloc, string_type&& str) {
-        return stream_type(std::move(alloc), str.StealDataUnsafe(alloc));
-    }
-};
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <typename _Char>
 TBasicStringBuilder<_Char>::TBasicStringBuilder()
-    : stream_type(allocator_type(static_cast<insitu_type&>(*this)))
-    , TBasicTextWriter<_Char>(static_cast<IBufferedStreamWriter*>(this))
+:   TBasicTextWriter<_Char>(static_cast<IBufferedStreamWriter*>(this))
 {}
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicStringBuilder<_Char>::TBasicStringBuilder(size_t capacity)
-    : TBasicStringBuilder() {
+:   TBasicStringBuilder() {
     reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicStringBuilder<_Char>::TBasicStringBuilder(string_type&& stolen)
-    : stream_type(TStealBasicString_<_Char>::StealData(
-        allocator_type(static_cast<insitu_type&>(*this)),
-        std::move(stolen) ))
-    , TBasicTextWriter<_Char>(static_cast<IBufferedStreamWriter*>(this))
-{}
+:   TBasicTextWriter<_Char>(static_cast<IBufferedStreamWriter*>(this)) {
+    if (FAllocatorBlock b = stolen.StealDataUnsafe())
+        Verify(stream_type::AcquireDataUnsafe(b)); // ignore the content, just want the allocation
+}
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicStringBuilder<_Char>::~TBasicStringBuilder() {
     // this predicate is needed to steal from/to TBasicString<> !
+    using allocator_t = typename stream_type::allocator_type;
 #if USE_PPE_MEMORY_DEBUGGING && USE_PPE_BASICSTRING_SBO
-    STATIC_ASSERT(allocator_type::Capacity == string_type::GInSituSize);
+    STATIC_ASSERT(allocator_t::Threshold == string_type::GInSituSize * sizeof(_Char));
 #elif !USE_PPE_MEMORY_DEBUGGING
     STATIC_ASSERT(Meta::TCheckSameSize<
-        Meta::TArray<char, allocator_type::Capacity>,
-        Meta::TArray<char, string_type::GInSituSize>
+        Meta::TArray<u8, allocator_t::Threshold>,
+        Meta::TArray<_Char, string_type::GInSituSize>
         >::value );
 #endif
 }
@@ -82,8 +65,8 @@ auto TBasicStringBuilder<_Char>::ToString() -> string_type {
 template <typename _Char>
 void TBasicStringBuilder<_Char>::ToString(string_type& output) {
     const TBasicStringView<_Char> str = stream_type::MakeView().template Cast<const _Char>();
-    if (str.empty() || str.back() != _Char())
-        *this << Eos;
+    if (not str.empty() and str.back() != _Char())
+        *this << Eos; // append '\0' terminator only to non empty strings
 
     output.assign(std::move(*this));
 }

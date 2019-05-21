@@ -3,7 +3,7 @@
 #include "Allocator/Alloca.h"
 
 #include "Allocator/LinearHeap.h"
-#include "Allocator/LinearHeapAllocator.h"
+#include "Allocator/LinearAllocator.h"
 #include "Allocator/Malloc.h"
 
 #include "HAL/PlatformMemory.h"
@@ -11,12 +11,16 @@
 #include "Memory/MemoryTracking.h"
 #include "Meta/Singleton.h"
 
+// skip linear heap when using memory debugging
+#define USE_PPE_ALLOCA_LINEARHEAP (!USE_PPE_MEMORY_DEBUGGING) // %_NOCOMMIT%
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+#if USE_PPE_ALLOCA_LINEARHEAP
 class FAllocaLinearHeapTLS_
     : public LINEARHEAP(Alloca)
     , Meta::TThreadLocalSingleton<FAllocaLinearHeapTLS_> {
@@ -59,6 +63,7 @@ public:
 
 #endif //!WITH_PPE_ASSERT
 };
+#endif //!USE_PPE_ALLOCA_LINEARHEAP
 //----------------------------------------------------------------------------
 // Fall back on thread local heap when the block is too large :
 struct FAllocaFallback_ {
@@ -82,8 +87,12 @@ struct FAllocaFallback_ {
 //----------------------------------------------------------------------------
 #ifdef WITH_PPE_ASSERT
 u32 AllocaDepth() {
+#if USE_PPE_ALLOCA_LINEARHEAP
     // used for detecting live alloca TLS blocks in debug
     return FAllocaLinearHeapTLS_::Get().Depth;
+#else
+    return 0;
+#endif
 }
 #endif //!WITH_PPE_ASSERT
 //----------------------------------------------------------------------------
@@ -91,9 +100,13 @@ void* Alloca(size_t size) {
     if (0 == size)
         return nullptr;
 
-    void* const p = ((size <= FAllocaLinearHeapTLS_::MaxBlockSize)
-        ? FAllocaLinearHeapTLS_::Malloc(size)
-        : FAllocaFallback_::Malloc(size) );
+    void* p;
+#if USE_PPE_ALLOCA_LINEARHEAP
+    if (size <= FAllocaLinearHeapTLS_::MaxBlockSize)
+        p = FAllocaLinearHeapTLS_::Malloc(size);
+    else
+#endif
+        p = FAllocaFallback_::Malloc(size);
 
     Assert(Meta::IsAligned(16, p));
     return p;
@@ -113,6 +126,7 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
     Assert(oldSize);
 
     void* result;
+#if USE_PPE_ALLOCA_LINEARHEAP
     auto& heap = FAllocaLinearHeapTLS_::Get();
     if (heap.AliasesToHeap(ptr)) {
         if (newSize <= FAllocaLinearHeapTLS_::MaxBlockSize) {
@@ -128,7 +142,11 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
             result = FAllocaFallback_::Malloc(newSize);
         }
     }
-    else {
+    else
+#else
+    UNUSED(keepData);
+#endif
+    {
         result = FAllocaFallback_::Realloc(ptr, newSize);
     }
 
@@ -145,27 +163,36 @@ void FreeAlloca(void* ptr, size_t size) {
     Assert(Meta::IsAligned(16, ptr));
     Assert(size);
 
+#if USE_PPE_ALLOCA_LINEARHEAP
     auto& heap = FAllocaLinearHeapTLS_::Get();
     if (heap.AliasesToHeap(ptr))
         heap.Free(ptr, size);
     else
+#endif
         FAllocaFallback_::Free(ptr);
 }
 //----------------------------------------------------------------------------
 size_t AllocaSnapSize(size_t size) {
-    return ((size <= FAllocaLinearHeapTLS_::MaxBlockSize)
-        ? ROUND_TO_NEXT_16(size)
-        : FAllocaFallback_::SnapSize(size) );
+#if USE_PPE_ALLOCA_LINEARHEAP
+    if (size <= FAllocaLinearHeapTLS_::MaxBlockSize)
+        return ROUND_TO_NEXT_16(size);
+    else
+#endif
+        return FAllocaFallback_::SnapSize(size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FAllocaStartup::Start(bool/* mainThread */) {
+#if USE_PPE_ALLOCA_LINEARHEAP
     FAllocaLinearHeapTLS_::Create();
+#endif
 }
 //----------------------------------------------------------------------------
 void FAllocaStartup::Shutdown() {
+#if USE_PPE_ALLOCA_LINEARHEAP
     FAllocaLinearHeapTLS_::Destroy();
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

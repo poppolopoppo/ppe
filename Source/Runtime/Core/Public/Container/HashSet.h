@@ -10,7 +10,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define HASHSET(_DOMAIN, T) \
-    ::PPE::THashSet<T, ::PPE::Meta::THash<T>, ::PPE::Meta::TEqualTo<T>, ALLOCATOR(_DOMAIN, T)>
+    ::PPE::THashSet<T, ::PPE::Meta::THash<T>, ::PPE::Meta::TEqualTo<T>, ALLOCATOR(_DOMAIN)>
 //----------------------------------------------------------------------------
 #define HASHSET_MEMOIZE(_DOMAIN, T) \
     HASHSET(_DOMAIN, ::PPE::THashMemoizer<T>)
@@ -21,7 +21,7 @@ template <
     typename _Key,
     typename _Hasher = Meta::THash<_Key>,
     typename _EqualTo = Meta::TEqualTo<_Key>,
-    typename _Allocator = ALLOCATOR(Container, _Key)
+    typename _Allocator = ALLOCATOR(Container)
 >
 using THashSet = TBasicHashTable< details::THashSetTraits_<_Key>, _Hasher, _EqualTo, _Allocator >;
 //----------------------------------------------------------------------------

@@ -2,11 +2,8 @@
 
 #include "Application_fwd.h"
 
-#include "Allocator/PoolAllocatorTag.h"
-
 namespace PPE {
 namespace Application {
-POOL_TAG_DECL(PPE_APPLICATION_API, Application);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

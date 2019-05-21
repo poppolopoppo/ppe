@@ -7,16 +7,12 @@
 #include "IO/FileSystemTrie.h"
 #include "IO/String.h"
 
-#include "Allocator/PoolAllocatorTag-impl.h"
-
 namespace PPE {
-POOL_TAG_DEF(FileSystem);
 BASICTOKEN_CLASS_DEF(FFileSystemToken);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FFileSystemStartup::Start() {
-    POOL_TAG(FileSystem)::Start();
     FFileSystemToken::Start();
     FFileSystemTrie::Create();
     FFSConstNames::Start();
@@ -26,12 +22,10 @@ void FFileSystemStartup::Shutdown() {
     FFSConstNames::Shutdown();
     FFileSystemTrie::Destroy();
     FFileSystemToken::Shutdown();
-    POOL_TAG(FileSystem)::Shutdown();
 }
 //----------------------------------------------------------------------------
 void FFileSystemStartup::Clear() {
     //FFileSystemTrie::Get().Clear_ReleaseMemory(); // #TODO ref counting ?
-    POOL_TAG(FileSystem)::ClearAll_UnusedMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

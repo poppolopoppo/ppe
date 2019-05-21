@@ -2,15 +2,12 @@
 
 #include "Serialize.h"
 
-#include "Allocator/PoolAllocatorTag.h"
-
 #include "Lexer/Location.h"
 #include "Parser/ParseItem.h"
 #include "SerializeExceptions.h"
 
 namespace PPE {
 namespace Parser {
-POOL_TAG_DECL(PPE_SERIALIZE_API, Parser);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -39,17 +36,6 @@ public:
 private:
     Lexer::FErrorSpan _site;
     PCParseItem _item;
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-struct FParserStartup {
-    static void Start();
-    static void Shutdown();
-    static void ClearAll_UnusedMemory();
-
-    FParserStartup() { Start(); }
-    ~FParserStartup() { Shutdown(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

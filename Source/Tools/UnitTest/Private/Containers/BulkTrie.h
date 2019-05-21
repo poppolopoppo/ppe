@@ -43,7 +43,7 @@ template <
 ,   size_t _BucketCount = 11
 ,   typename _Less = Meta::TLess<_Key>
 ,   typename _Equal = Meta::TEqualTo<_Key>
-,   typename _Allocator = ALLOCATOR(Container, TBulkTrieNode<_Key COMMA _Value COMMA _BulkSize>)
+,   typename _Allocator = ALLOCATOR(Container)
 >   class FBulkTrie : _Allocator {
 public:
     typedef _Key key_type;
@@ -52,9 +52,9 @@ public:
     typedef _Equal equal_to_functor;
     typedef _Allocator allocator_type;
 
-    typedef std::allocator_traits<allocator_type> allocator_traits;
-    typedef typename allocator_traits::difference_type difference_type;
-    typedef typename allocator_traits::size_type size_type;
+    typedef TAllocatorTraits<allocator_type> allocator_traits;
+    typedef intptr_t difference_type;
+    typedef size_t size_type;
 
     static constexpr size_type BulkSize = _BulkSize;
     static constexpr size_type BucketCount = _BucketCount;
@@ -125,9 +125,9 @@ public:
 
                     if (bucket.Nodes.size()*BulkSize <= current) {
                         rel = current%BulkSize;
-                        node = allocator_traits::allocate(*this, 1);
+                        node = allocator_traits::template AllocateOneT<node_type>(*this);
                         Assert(node);
-                        allocator_traits::construct(*this, node);
+                        Meta::Construct(node);
                         bucket.Nodes.push_back(node);
                     }
                     else {
@@ -239,8 +239,8 @@ public:
     void Clear() {
         for (FBucket& bucket : _buckets) {
             for (node_type* node : bucket.Nodes) {
-                allocator_traits::destroy(*this, node);
-                allocator_traits::deallocate(*this, node, 1);
+                Meta::Destroy(node);
+                allocator_traits::DeallocateOneT(*this, node);
             }
 
             bucket.Count = 0;

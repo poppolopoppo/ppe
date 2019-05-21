@@ -153,7 +153,7 @@ void FBasicBIHTree::Build(
     Assert(indices.size() <= FBIHNode::MaxItems);
     Assert(indices.size() / maxItemsPerLeaf <= FBIHNode::MaxNodes);
 
-    _root = allocator_type::allocate(1);
+    _root = allocator_traits::AllocateOneT<FBIHNode>(*this);
     Assert(_root);
 
     _bounds = bounds;
@@ -268,8 +268,8 @@ void FBasicBIHTree::Build(
             child1.Begin = pivot;
             child1.End = it.End;
 
-            child0.Node = allocator_type::allocate(1);
-            child1.Node = allocator_type::allocate(1);
+            child0.Node = allocator_traits::AllocateOneT<FBIHNode>(*this);
+            child1.Node = allocator_traits::AllocateOneT<FBIHNode>(*this);
             Assert(child1.Node == 1 + child0.Node); // necessary for packing in FBIHNode
 
             const ptrdiff_t offsetToChild0 = (child0.Node - it.Node);
@@ -307,7 +307,7 @@ void FBasicBIHTree::Clear() {
             nodes.Push(_root + _root->Child0 + 1);
         }
 
-        allocator_type::deallocate(_root, 1);
+        allocator_traits::DeallocateOneT<FBIHNode>(*this, _root);
 
     } while (nodes.Pop(&_root));
 }

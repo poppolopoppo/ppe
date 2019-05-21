@@ -60,7 +60,7 @@ bool TPatriciaTrie<_Key, _Value, _InSitu, _Less, _EqualTo, _Allocator>::Insert_R
     sequence_type ki = keys;
     while (ki.size()) {
         if (nullptr == *it) {
-            *it = allocator_traits::allocate(*this, 1);
+            *it = static_cast<node_type*>(allocator_traits::Allocate(*this, sizeof(node_type)).Data);
             Assert(nullptr != *it);
 
             const sequence_type ki0 = ki.CutBefore(std::min(ki.size(), _InSitu));

@@ -5,7 +5,7 @@
 #ifdef USE_DEBUG_LOGGER
 
 #   include "Allocator/LinearHeap.h"
-#   include "Allocator/LinearHeapAllocator.h"
+#   include "Allocator/LinearAllocator.h"
 #   include "Allocator/TrackingMalloc.h"
 #   include "Container/Vector.h"
 #   include "Diagnostic/CurrentProcess.h"
@@ -89,10 +89,10 @@ public:
     using singleton_type::Destroy;
     using singleton_type::Get;
 
-    struct FBucket : TLinearHeapAllocator<u8> {
+    struct FBucket {
         std::recursive_mutex Barrier;
         LINEARHEAP(Logger) Heap;
-        FBucket() : TLinearHeapAllocator<u8>(Heap) {}
+        FBucket() = default;
         ~FBucket() {
             const Meta::FRecursiveLockGuard scopeLock(Barrier);
             Heap.ReleaseAll();
@@ -105,6 +105,7 @@ public:
         Meta::FRecursiveLockGuard Lock;
 
         FLinearHeap& Heap() const { return Bucket.Heap; }
+        operator FLinearAllocator () const NOEXCEPT { return FLinearAllocator(Bucket.Heap); }
 
         FScope() : FScope(Get()) {}
 
@@ -186,7 +187,7 @@ public: // ILowLevelLogger
 
         const FLogAllocator::FScope scopeAlloc; // #TODO : could be a dead lock issue to keep the lock open while dispatching
 
-        MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc.Heap());
+        MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc);
         FWTextWriter oss(&buf);
 
         FormatArgs(oss, format, args);
@@ -261,7 +262,7 @@ public: // ILowLevelLogger
         { // don't lock both allocator & task manager to avoid dead locking
             const FLogAllocator::FScope scopeAlloc;
 
-            MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc.Heap());
+            MEMORYSTREAM_LINEARHEAP() buf(scopeAlloc);
             buf.reserve(sizeof(FDeferredLog) + format.SizeInBytes());
             buf.resize(sizeof(FDeferredLog)); // reserve space for FDeferredLog entry
             buf.SeekO(0, ESeekOrigin::End); // seek at the end of the stream
@@ -273,8 +274,9 @@ public: // ILowLevelLogger
             log = INPLACE_NEW(buf.Pointer(), FDeferredLog)(scopeAlloc.Heap());
 
             size_t sizeInBytes = 0;
-            const TMemoryView<u8> stolen = buf.StealDataUnsafe(log->get_allocator(), &sizeInBytes);
-            Assert(stolen.data() == (u8*)log);
+            const FAllocatorBlock stolen = buf.StealDataUnsafe(&sizeInBytes);
+            Assert_NoAssume(stolen.Data == (void*)log);
+            Verify(log->Acquire(stolen));
 
             log->LowLevelLogger = _userLogger;
             log->Category = &category;
@@ -282,7 +284,7 @@ public: // ILowLevelLogger
             log->Site = site;
             log->TextLength = checked_cast<u32>((sizeInBytes - sizeof(FDeferredLog)) / sizeof(wchar_t));
             log->Bucket = checked_cast<u32>(scopeAlloc.Index);
-            log->AllocSizeInBytes = checked_cast<u32>(stolen.SizeInBytes());
+            log->AllocSizeInBytes = checked_cast<u32>(stolen.SizeInBytes);
         }
 
         TaskManager_().Run(MakeFunction<&FDeferredLog::Log>(log));
@@ -317,7 +319,7 @@ private:
 
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
-    class ALIGN(16) FDeferredLog : public TLinearHeapAllocator<u8> {
+    class ALIGN(16) FDeferredLog : public FLinearAllocator {
     public:
         ILowLevelLogger* LowLevelLogger;
         const FCategory* Category;
@@ -333,8 +335,8 @@ PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
         uintptr_t Canary = PPE_HASH_VALUE_SEED;
 #   endif
 
-        FDeferredLog(FLinearHeap& heap)
-            : TLinearHeapAllocator<u8>(heap)
+        explicit FDeferredLog(FLinearHeap& heap) NOEXCEPT
+            : FLinearAllocator(heap)
         {}
 
         FDeferredLog(const FDeferredLog&) = delete;
@@ -346,8 +348,6 @@ PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
             const FSuicideScope_ logScope(this);
             LowLevelLogger->Log(*Category, Level, Site, Text());
         }
-
-        TLinearHeapAllocator<u8>& get_allocator() { return *this; }
     };
     STATIC_ASSERT(std::is_trivially_destructible_v<FDeferredLog>);
 PRAGMA_MSVC_WARNING_POP()

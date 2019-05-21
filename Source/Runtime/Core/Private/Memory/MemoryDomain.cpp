@@ -9,6 +9,7 @@
 #include "Meta/OneTimeInitialize.h"
 
 #if USE_PPE_MEMORYDOMAINS
+#   include "Container/IntrusiveList.h"
 #   include "Container/Stack.h"
 #   include "IO/FormatHelpers.h"
 #   include "IO/String.h"
@@ -109,17 +110,10 @@ public:
 
     void Register(FMemoryTracking* pTrackingData) {
         Assert(pTrackingData);
-        Assert(nullptr == pTrackingData->Prev());
-        Assert(nullptr == pTrackingData->Next());
 
         const FAtomicSpinLock::FScope scopeLock(_barrier);
 
-        if (_head) {
-            pTrackingData->SetNext(_head);
-            _head->SetPrev(pTrackingData);
-        }
-
-        _head = pTrackingData;
+        _domains.PushHead(pTrackingData);
     }
 
     void Unregister(FMemoryTracking* pTrackingData) {
@@ -127,17 +121,7 @@ public:
 
         const FAtomicSpinLock::FScope scopeLock(_barrier);
 
-        if (pTrackingData->Prev()) {
-            Assert(pTrackingData != _head);
-            pTrackingData->Prev()->SetNext(pTrackingData->Next());
-        }
-        else {
-            Assert(pTrackingData == _head);
-            _head = pTrackingData->Next();
-        }
-
-        if (pTrackingData->Next())
-            pTrackingData->Next()->SetPrev(pTrackingData->Prev());
+        _domains.Erase(pTrackingData);
     }
 
     using FMemoryDomainsList = TFixedSizeStack<const FMemoryTracking*, MemoryDomainsMaxCount>;
@@ -146,15 +130,16 @@ public:
 
         const FAtomicSpinLock::FScope scopeLock(_barrier);
 
-        for (FMemoryTracking* node = _head; node; node = node->Next())
+        for (FMemoryTracking* node = _domains.Head(); node; node = node->Node.Next)
             plist->Push(node);
     }
 
 private:
     mutable FAtomicSpinLock _barrier;
-    FMemoryTracking* _head;
 
-    FTrackingDataRegistry_() : _head(nullptr) {}
+    INTRUSIVELIST(&FMemoryTracking::Node) _domains;
+
+    FTrackingDataRegistry_() = default;
 
     FTrackingDataRegistry_(const FTrackingDataRegistry_&) = delete;
     FTrackingDataRegistry_& operator =(const FTrackingDataRegistry_&) = delete;
@@ -177,41 +162,61 @@ void ReportTrackingDatas_(
 
     oss << L"reporting tracking data :" << Eol;
 
-    const size_t width = 128;
-    const wchar_t fmt[] = L" {0:-33}| {1:8} {2:10} | {3:8} {4:11} | {5:9} {6:11} | {7:10} {8:11}\n";
+    CONSTEXPR size_t width = 128;
+    CONSTEXPR wchar_t fmt[] = L" {0:-30}| {1:7} {2:9} | {3:11} {4:11} | {5:11} {6:11} | {7:11} {8:11}\n";
+    const auto hr = Fmt::Repeat(L'-', width);
 
-    oss << Fmt::Repeat(L'-', width) << Eol
+    oss << hr << Eol
         << L"    " << header << L" (" << datas.size() << L" elements)" << Eol
-        << Fmt::Repeat(L'-', width) << Eol;
+        << hr << Eol;
 
     Format(oss, fmt, L"Tracking domain",
-        L"Block",   L"Max",
-        L"Alloc",   L"Max",
-        L"Stride",  L"Max",
-        L"Total",   L"Max" );
+        Fmt::AlignCenter(MakeStringView(L"Alloc")),
+        Fmt::AlignCenter(MakeStringView(L"Max")),
 
-    oss << Fmt::Repeat(L'-', width) << Eol;
+        Fmt::AlignCenter(MakeStringView(L"Stride")),
+        Fmt::AlignCenter(MakeStringView(L"Max")),
+
+        Fmt::AlignCenter(MakeStringView(L"User")),
+        Fmt::AlignCenter(MakeStringView(L"Peak")),
+
+        Fmt::AlignCenter(MakeStringView(L"System")),
+        Fmt::AlignCenter(MakeStringView(L"Peak"))
+        );
 
     STACKLOCAL_WTEXTWRITER(tmp, 128);
 
     for (const FMemoryTracking* data : datas) {
         Assert(data);
+
+        if (data->Parent() == nullptr)
+            oss << hr << Eol;
+
         tmp.Reset();
         const FStringView name = MakeCStringView(data->Name());
-        Format(tmp, L"{0}{1}", Fmt::Repeat(L' ', 2 * data->Level()), name);
+
+        const FMemoryTracking::FSnapshot usr = data->User();
+        const FMemoryTracking::FSnapshot sys = data->System();
+
+        Format(tmp, L"{0}{1}", Fmt::Repeat(L' ', data->Level()), name);
         Format(oss, fmt,
             tmp.Written(),
-            Fmt::FCountOfElements{ data->BlockCount() },
-            Fmt::FCountOfElements{ data->MaxBlockCount() },
-            Fmt::FCountOfElements{ data->AllocationCount() },
-            Fmt::FCountOfElements{ data->MaxAllocationCount() },
-            Fmt::FSizeInBytes{ Min(data->MaxStrideInBytes(), data->MinStrideInBytes()) },
-            Fmt::FSizeInBytes{ data->MaxStrideInBytes() },
-            Fmt::FSizeInBytes{ data->TotalSizeInBytes() },
-            Fmt::FSizeInBytes{ data->MaxTotalSizeInBytes() });
+
+            Fmt::FCountOfElements{ data->NumAllocs() },
+            Fmt::FCountOfElements{ data->PeakAllocs() },
+
+            Fmt::SizeInBytes(usr.MinSize),
+            Fmt::SizeInBytes(usr.MaxSize),
+
+            Fmt::SizeInBytes(usr.TotalSize),
+            Fmt::SizeInBytes(usr.PeakSize),
+
+            Fmt::SizeInBytes(sys.TotalSize),
+            Fmt::SizeInBytes(sys.PeakSize)
+            );
     }
 
-    oss << Fmt::Repeat(L'-', width) << Eol;
+    oss << hr << Eol;
 }
 #endif //!USE_PPE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
@@ -241,7 +246,7 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
 #if USE_PPE_MEMORYDOMAINS && defined(USE_DEBUG_LOGGER)
     TMemoryView<const size_t> classes;
     TMemoryView<const i64> allocations, totalBytes;
-    if (not FetchMemoryAllocationHistogram(&classes, &allocations, &totalBytes))
+    if (not FMallocDebug::FetchAllocationHistogram(&classes, &allocations, &totalBytes))
         return;
 
     Assert(classes.size() == allocations.size());

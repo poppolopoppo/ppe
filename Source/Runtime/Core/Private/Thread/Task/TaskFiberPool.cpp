@@ -255,7 +255,7 @@ void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
     if (Unlikely(chunk != _chunks))
         Meta::unlikely([&]() {
             const Meta::FLockGuard scopeLock(_barrier);
-            FTaskFiberChunk::list_t::PokeFront(&_chunks, nullptr, chunk);
+            FTaskFiberChunk::list_t::PokeHead(&_chunks, nullptr, chunk);
         });
 }
 //----------------------------------------------------------------------------
@@ -322,7 +322,7 @@ NO_INLINE FTaskFiberChunk* FTaskFiberPool::AcquireChunk_() {
     // first look for a potential chunk with free fibers remaining
     for (FTaskFiberChunk* ch = (_chunks ? _chunks->_node.Next/* ignores the first chunk */ : nullptr); ch; ch = ch->_node.Next) {
         if (not ch->Saturated()) {
-            FTaskFiberChunk::list_t::PokeFront(&_chunks, nullptr, ch);
+            FTaskFiberChunk::list_t::PokeHead(&_chunks, nullptr, ch);
             return nullptr; // don't return that existing chunk directly :
             // /!\ since it was just poked at the front of the chunk it has now be made available
             //     to all other threads, so it might not have a free fiber when finally access it after this return
@@ -335,7 +335,7 @@ NO_INLINE FTaskFiberChunk* FTaskFiberPool::AcquireChunk_() {
     // /!\  another thread could poke in the pool while we are still inside TakeOwnership(),
     //      so we wait for the new chunk to be completely initialized before insertion
 
-    FTaskFiberChunk::list_t::PushFront(&_chunks, nullptr, fresh);
+    FTaskFiberChunk::list_t::PushHead(&_chunks, nullptr, fresh);
 
     return fresh; // new => allocation is guaranteed to succeed
 }

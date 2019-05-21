@@ -22,16 +22,11 @@ template <
     typename _Key
     , typename _Hash = Meta::THash<_Key>
     , typename _EqualTo = Meta::TEqualTo<_Key>
-    , typename _Allocator = ALLOCATOR(Container, _Key)
->   class EMPTY_BASES TDenseHashSet
-:   TRebindAlloc<_Allocator, FDenseHashTableState>
-,   _Allocator {
+    , typename _Allocator = ALLOCATOR(Container)
+>   class TDenseHashSet :_Allocator {
 public:
-    using allocator_key = _Allocator;
-    using allocator_state = TRebindAlloc<_Allocator, FDenseHashTableState>;
-
-    using key_traits = std::allocator_traits<allocator_key>;
-    using state_traits = std::allocator_traits<allocator_state>;
+    using allocator_type = _Allocator;
+    using allocator_traits = TAllocatorTraits<_Allocator>;
 
     typedef _Key value_type;
 
@@ -117,7 +112,7 @@ public:
         }
 
         const u16 index = checked_cast<u16>(_size++);
-        key_traits::construct(key_alloc(), _elements + index, key);
+        Meta::Construct(_elements + index, key);
 
         FDenseHashTableState& st = _states[s];
         Assert_NoAssume(
@@ -170,7 +165,7 @@ public:
         }
 
         FDenseHashTableState& st = _states[s];
-        key_traits::destroy(key_alloc(), _elements + st.Index);
+        Meta::Destroy(_elements + st.Index);
 
         if (Likely(_size > 1 && st.Index + 1u < _size)) {
             // need to fill the hole in _elements
@@ -189,8 +184,8 @@ public:
             Assert_NoAssume(u16(h) == _states[s].Hash);
             _states[s].Index = st.Index;
 
-            key_traits::construct(key_alloc(), _elements + st.Index, std::move(_elements[replace]));
-            key_traits::destroy(key_alloc(), _elements + replace);
+            Meta::Construct(_elements + st.Index, std::move(_elements[replace]));
+            Meta::Destroy(_elements + replace);
         }
 
         st.Index = FDenseHashTableState::TombIndex;
@@ -206,8 +201,7 @@ public:
             const size_t numStates = NumStates_(_capacity);
             FPlatformMemory::Memset(_states, 0xFF, numStates * sizeof(*_states));
 
-            forrange(it, _elements, _elements + _size)
-                key_traits::destroy(key_alloc(), it);
+            Meta::Destroy(TMemoryView<_Key>{ _elements, _size });
 
             _size = 0;
         }
@@ -216,12 +210,11 @@ public:
     void clear_ReleaseMemory() {
         if (_capacity) {
             const size_t numStates = NumStates_(_capacity);
-            state_traits::deallocate(state_alloc(), _states, numStates);
+            allocator_traits::DeallocateT(*this, _states, numStates);
 
-            forrange(it, _elements, _elements + _size)
-                key_traits::destroy(key_alloc(), it);
+            Meta::Destroy(TMemoryView<_Key>{ _elements, _size });
 
-            key_traits::deallocate(key_alloc(), _elements, _capacity);
+            allocator_traits::DeallocateT(*this, _elements, _capacity);
 
             _size = 0;
             _capacity = 0;
@@ -241,23 +234,25 @@ public:
             return;
 
         const u32 oldCapacity = _capacity;
-        _capacity = checked_cast<u32>(SafeAllocatorSnapSize(key_alloc(), n));
+        _capacity = checked_cast<u32>(allocator_traits::template SnapSizeT<_Key>(n));
         Assert_NoAssume(oldCapacity < _capacity);
 
         const u32 numStates = NumStates_(_capacity);
         Assert(numStates);
 
         if (oldCapacity)
-            state_traits::deallocate(state_alloc(), _states, NumStates_(oldCapacity));
+            allocator_traits::DeallocateT(*this, _states, NumStates_(oldCapacity));
 
-        _states = state_traits::allocate(state_alloc(), numStates);
+        _states = allocator_traits::template AllocateT<FDenseHashTableState>(*this, numStates).data();
         FPlatformMemory::Memset(_states, 0xFF, numStates * sizeof(*_states));
 
         if (oldCapacity) {
-            _elements = Relocate(
-                key_alloc(),
-                TMemoryView<_Key>(_elements, _size),
-                _capacity, oldCapacity);
+            TMemoryView<_Key> b{ _elements, _size };
+            ReallocateAllocatorBlock_AssumePOD(
+                allocator_traits::Get(*this),
+                b, oldCapacity, _capacity);
+
+            _elements = b.data();
 
             const u32 numStatesM1 = (numStates - 1);
             forrange(i, 0, checked_cast<u16>(_size)) {
@@ -280,7 +275,7 @@ public:
             Assert_NoAssume(0 == _size);
             Assert_NoAssume(nullptr == _elements);
 
-            _elements = key_traits::allocate(key_alloc(), _capacity);
+            _elements = allocator_traits::template AllocateT<_Key>(*this, _capacity).data();
         }
 
         Assert_NoAssume(n <= _capacity);
@@ -293,9 +288,6 @@ private:
     FDenseHashTableState* _states;
 
     STATIC_CONST_INTEGRAL(u32, KeyStateDensityRatio, 2);
-
-    FORCE_INLINE allocator_key& key_alloc() { return static_cast<allocator_key&>(*this); }
-    FORCE_INLINE allocator_state& state_alloc() { return static_cast<allocator_state&>(*this); }
 
     static u32 NumStates_(u32 capacity) {
         return (capacity ? FPlatformMaths::NextPow2(capacity * KeyStateDensityRatio) : 0);

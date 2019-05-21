@@ -6,7 +6,6 @@
 #include "Parser/ParseList.h"
 #include "Parser/ParseResult.h"
 
-#include "Allocator/SingletonPoolAllocator.h"
 #include "Container/Tuple.h"
 #include "Container/TupleHelpers.h"
 #include "Container/Vector.h"
@@ -24,7 +23,6 @@
 
 namespace PPE {
 namespace Parser {
-POOL_TAG_FWD(PPE_SERIALIZE_API, Parser);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

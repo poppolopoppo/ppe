@@ -337,7 +337,12 @@ using TPODStackHeapAdapter = TStackHeapAdapter<T, _Less, true>;
 } //!namespace PPE
 
 template <typename T, bool _IsPod>
-void* operator new(size_t sizeInBytes, PPE::TStack<T, _IsPod>& stack) {
+inline void* operator new(size_t sizeInBytes, PPE::TStack<T, _IsPod>& stack) {
     Assert(sizeInBytes == sizeof(T));
     return stack.Push_Uninitialized();
+}
+template <typename T, bool _IsPod>
+inline void operator delete(void* ptr, PPE::TStack<T, _IsPod>& stack) {
+    Assert_NoAssume(stack.AliasesToContainer(static_cast<T*>(ptr)));
+    AssertNotImplemented(); // don't know the size of the block
 }

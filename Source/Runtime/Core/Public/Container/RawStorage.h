@@ -12,24 +12,25 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RAWSTORAGE(_DOMAIN, T) \
-    ::PPE::TRawStorage<T, ALLOCATOR(_DOMAIN, T)>
+    ::PPE::TRawStorage<T, ALLOCATOR(_DOMAIN)>
 //----------------------------------------------------------------------------
 #define RAWSTORAGE_ALIGNED(_DOMAIN, T, _ALIGNMENT) \
-    ::PPE::TRawStorage<T, ALIGNED_ALLOCATOR(_DOMAIN, T, _ALIGNMENT)>
+    ::PPE::TRawStorage<T, ALIGNED_ALLOCATOR(_DOMAIN, _ALIGNMENT)>
 //----------------------------------------------------------------------------
 #define RAWSTORAGE_STACK(T) \
-    ::PPE::TRawStorage<T, STACK_ALLOCATOR(T)>
+    ::PPE::TRawStorage<T, STACKLOCAL_ALLOCATOR()>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // No dtor will be called !
-template <typename T, typename _Allocator = ALLOCATOR(Container, T)>
-class TRawStorage : _Allocator {
+template <typename T, typename _Allocator = ALLOCATOR(Container)>
+class TRawStorage : private _Allocator {
 public:
     template <typename U, typename A>
     friend class TRawStorage;
 
     typedef _Allocator allocator_type;
+    typedef TAllocatorTraits<_Allocator> allocator_traits;
 
     typedef T value_type;
     typedef Meta::TAddPointer<T> pointer;
@@ -50,7 +51,6 @@ public:
     explicit TRawStorage(size_type size);
     explicit TRawStorage(allocator_type&& allocator);
     TRawStorage(allocator_type&& allocator, size_type size);
-    TRawStorage(allocator_type&& allocator, const TMemoryView<T>& stolen);
 
     template <typename _It>
     TRawStorage(_It&& begin, _It&& end);
@@ -68,7 +68,8 @@ public:
     size_type size() const { return _size; }
     bool empty() const { return 0 == _size; }
 
-    const allocator_type& get_allocator() const { return (*static_cast<const allocator_type*>(this)); }
+    allocator_type& get_allocator() { return allocator_traits::Get(*this); }
+    const allocator_type& get_allocator() const { return allocator_traits::Get(*this); }
 
     iterator begin() { return _storage; }
     iterator end() { return _storage + _size; }
@@ -94,7 +95,7 @@ public:
 
     template <typename U, typename A>
     typename std::enable_if< sizeof(U) == sizeof(T) >::type Swap(TRawStorage<U, A>& other) {
-        AssertRelease(get_allocator() == other.get_allocator());
+        allocator_traits::Swap(*this, other);
         std::swap((void*&)_storage, (void*&)other._storage);
         std::swap(_size, other._size);
     }
@@ -105,14 +106,35 @@ public:
     FORCE_INLINE void Resize_DiscardData(size_type size) { Resize(size, false); }
     FORCE_INLINE void Resize_KeepData(size_type size) { Resize(size, true); }
 
-    template <typename _OtherAllocator>
-    auto StealDataUnsafe(_OtherAllocator& alloc) {
-        using other_value_type = typename _OtherAllocator::value_type;
-        const TMemoryView<other_value_type> stolen = AllocatorStealBlock(alloc, MakeView(), get_allocator_());
+    bool AcquireDataUnsafe(FAllocatorBlock b) NOEXCEPT {
+        Assert_NoAssume(Meta::IsAligned(sizeof(value_type), b.SizeInBytes));
 
-        _storage = nullptr; // won't delete the block !
-        _size = 0;
-        return stolen;
+        if (allocator_traits::Acquire(*this, b)) {
+            clear_ReleaseMemory();
+
+            _storage = static_cast<pointer>(b.Data);
+            _size = b.SizeInBytes / sizeof(value_type);
+
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    FAllocatorBlock StealDataUnsafe() NOEXCEPT {
+        FAllocatorBlock b{ _storage, _size * sizeof(value_type) };
+        if (allocator_traits::Steal(*this, b)) {
+            // won't delete the block since it's been stolen !
+
+            _storage = nullptr;
+            _size = 0;
+
+            return b;
+        }
+        else {
+            return FAllocatorBlock::Null();
+        }
     }
 
     template <typename _It>
@@ -144,8 +166,6 @@ public:
     inline friend hash_t hash_value(const TRawStorage& storage) { return storage.HashValue(); }
 
 protected:
-    allocator_type& get_allocator_() { return (static_cast<allocator_type&>(*this)); }
-
     pointer _storage;
     size_type _size;
 };

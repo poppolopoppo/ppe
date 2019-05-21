@@ -24,7 +24,7 @@ template <
     typename _Key
 ,   typename _Hash = Meta::THash<_Key>
 ,   typename _EqualTo = Meta::TEqualTo<_Key>
-,   typename _Allocator = ALLOCATOR(Container, _Key)
+,   typename _Allocator = ALLOCATOR(Container)
 >   class THopscotchHashSet : _Allocator {
 public:
     typedef _Key value_type;
@@ -32,7 +32,7 @@ public:
     typedef _EqualTo key_equal;
 
     using allocator_type = _Allocator;
-    using allocator_traits = std::allocator_traits<allocator_type>;
+    using allocator_traits = TAllocatorTraits<allocator_type>;
 
     typedef value_type& reference;
     typedef const value_type& const_reference;
@@ -122,7 +122,7 @@ public:
 
         _size = other._size;
         _capacity = other._capacity;
-        _elements = allocator_traits::allocate(allocator_(), allocation_size);
+        _elements = allocator_traits::template AllocateT<_Key>(*this, allocation_size).data();
 
         // trivial copy, don't try to rehash
         IF_CONSTEXPR(Meta::has_trivial_copy<value_type>::value) {
@@ -140,7 +140,7 @@ public:
             forrange(i, 0, _capacity) {
                 statesDst[i] = statesSrc[i];
                 if (statesSrc[i].Filled) {
-                    allocator_traits::construct(allocator_(), _elements + i, other._elements[i]);
+                    Meta::Construct(_elements + i, other._elements[i]);
                 }
             }
         }
@@ -279,7 +279,7 @@ public:
         _capacity = FPlatformMaths::NextPow2(Max(state_t::MinCapacity, checked_cast<u32>(n)));
 
         const u32 allocation_size = allocation_size_(_capacity);
-        _elements = allocator_traits::allocate(allocator_(), allocation_size);
+        _elements = allocator_traits::template AllocateT<_Key>(*this, allocation_size).data();
 
         // memzero elements + states
         FPlatformMemory::Memzero(_elements, allocation_size * sizeof(value_type));
@@ -316,7 +316,7 @@ public:
         }
 
         if (oldElements)
-            allocator_traits::deallocate(allocator_(), oldElements, allocation_size_(oldCapacity));
+            allocator_traits::DeallocateT(*this, oldElements, allocation_size_(oldCapacity));
     }
 
 private:
@@ -540,7 +540,7 @@ private:
 
         Assert_NoAssume(0 == _size);
 
-        allocator_traits::deallocate(allocator_(), _elements, allocation_size_(_capacity));
+        allocator_traits::DeallocateT(*this, _elements, allocation_size_(_capacity));
         _capacity = 0;
         _elements = nullptr;
     }

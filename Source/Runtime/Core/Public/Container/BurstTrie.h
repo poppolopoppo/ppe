@@ -16,7 +16,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #define BURST_TRIE(_DOMAIN, _CHAR, _VALUE, _CASE_SENSITIVE, _CAPACITY) \
     ::PPE::TBurstTrie<_CHAR, _VALUE, BURST_TRIE_INSITU, _CASE_SENSITIVE, _CAPACITY, \
-        NODEBASED_CONTAINER_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::PPE::TPatriciaNode<_CHAR COMMA _VALUE COMMA BURST_TRIE_INSITU>)) >
+        BATCH_ALLOCATOR(_DOMAIN, COMMA_PROTECT(::PPE::TPatriciaNode<_CHAR COMMA _VALUE COMMA BURST_TRIE_INSITU>)) >
 //----------------------------------------------------------------------------
 #define STRINGTRIE_SET(_DOMAIN, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE(_DOMAIN, char, void, _CASE_SENSITIVE, _CAPACITY)
 #define STRINGTRIE_MAP(_DOMAIN, _VALUE, _CASE_SENSITIVE, _CAPACITY) BURST_TRIE(_DOMAIN, char, _VALUE, _CASE_SENSITIVE, _CAPACITY)
@@ -32,7 +32,7 @@ template <
 ,   size_t _InSitu = BURST_TRIE_INSITU
 ,   ECase _Sensitive = ECase::Sensitive
 ,   size_t _Capacity = 256
-,   typename _Allocator = NODEBASED_CONTAINER_ALLOCATOR(Container, TPatriciaNode<_Char COMMA _Value COMMA _InSitu>)
+,   typename _Allocator = BATCH_ALLOCATOR(Container, TPatriciaNode<_Char COMMA _Value COMMA _InSitu>)
 >   class TBurstTrie {
 public:
     typedef TCharCase<_Char, _Sensitive> case_functor;

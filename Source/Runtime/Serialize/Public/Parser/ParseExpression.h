@@ -9,8 +9,7 @@
 #include "Parser/Parser.h"
 #include "Parser/ParseItem.h"
 
-#include "Allocator/LinearHeapAllocator.h"
-#include "Allocator/PoolAllocator.h"
+#include "Allocator/LinearAllocator.h"
 #include "Container/AssociativeVector.h"
 #include "Container/Pair.h"
 #include "Container/Vector.h"
@@ -49,15 +48,13 @@ public:
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     T _literal;
 };
 //----------------------------------------------------------------------------
 template <typename T>
 auto* MakeLiteral(T&& rvalue, const Lexer::FSpan& site) {
-    return new TLiteral< Meta::TDecay<T> >(std::forward<T>(rvalue), site);
+    return NEW_REF(Parser, TLiteral< Meta::TDecay<T> >)(std::forward<T>(rvalue), site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -77,8 +74,6 @@ public:
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     RTTI::FName _name;
     PCParseExpression _value;
@@ -86,7 +81,7 @@ private:
 };
 //----------------------------------------------------------------------------
 inline FVariableExport *MakeVariableExport(const RTTI::FName& name, const PCParseExpression& value, const FVariableExport::EFlags scope, const Lexer::FSpan& site) {
-    return new FVariableExport(name, value, scope, site);
+    return NEW_REF(Parser, FVariableExport)(name, value, scope, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -100,15 +95,13 @@ public:
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     RTTI::FPathName _pathName;
 
 };
 //----------------------------------------------------------------------------
 inline FVariableReference *MakeVariableReference(const RTTI::FPathName& pathName, const Lexer::FSpan& site) {
-    return new FVariableReference(pathName, site);
+    return NEW_REF(Parser, FVariableReference)(pathName, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -122,8 +115,6 @@ public:
     virtual FStringView Alias() const override final { return "UnaryFunction"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     _Functor _functor;
     PCParseExpression _expr;
@@ -131,7 +122,7 @@ private:
 //----------------------------------------------------------------------------
 template <typename T>
 TUnaryFunction<T> *MakeUnaryFunction(T&& functor, const FParseExpression *expr, const Lexer::FSpan& site) {
-    return new TUnaryFunction<T>(std::move(functor), expr, site);
+    return NEW_REF(Parser, TUnaryFunction<T>)(std::move(functor), expr, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -145,8 +136,6 @@ public:
     virtual FStringView Alias() const override final { return "BinaryFunction"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     _Functor _functor;
     PCParseExpression _lhs;
@@ -155,7 +144,7 @@ private:
 //----------------------------------------------------------------------------
 template <typename T>
 TBinaryFunction<T> *MakeBinaryFunction(T&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site) {
-    return new TBinaryFunction<T>(std::move(functor), lhs, rhs, site);
+    return NEW_REF(Parser, TBinaryFunction<T>)(std::move(functor), lhs, rhs, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -169,8 +158,6 @@ public:
     virtual FStringView Alias() const override final { return "Ternary"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     _Test _test;
     PCParseExpression _if;
@@ -180,7 +167,7 @@ private:
 //----------------------------------------------------------------------------
 template <typename _Test>
 TTernary<_Test> *MakeTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const Lexer::FSpan& site) {
-    return new TTernary<_Test>(std::move(test), pif, ptrue, pfalse, site);
+    return NEW_REF(Parser, TTernary<_Test>)(std::move(test), pif, ptrue, pfalse, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -201,8 +188,6 @@ public:
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     RTTI::FName _name;
     VECTORINSITU(Parser, PCParseStatement, 3) _statements;
@@ -213,7 +198,7 @@ inline FObjectDefinition *MakeObjectDefinition(
     const RTTI::FName& name,
     const Lexer::FSpan& site,
     _It&& statementsBegin, _It&& statementsEnd) {
-    FObjectDefinition *const def = new FObjectDefinition(name, site);
+    FObjectDefinition *const def = NEW_REF(Parser, FObjectDefinition)(name, site);
     def->AddStatements(statementsBegin, statementsEnd);
     return def;
 }
@@ -229,8 +214,6 @@ public:
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     PCParseExpression _object;
     RTTI::FName _member;
@@ -240,7 +223,7 @@ inline FPropertyReference *MakePropertyReference(
     const PCParseExpression& object,
     const RTTI::FName& member,
     const Lexer::FSpan& site) {
-    return new FPropertyReference(object, member, site);
+    return NEW_REF(Parser, FPropertyReference)(object, member, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -257,14 +240,12 @@ public:
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     elements_type _elements;
 };
 //----------------------------------------------------------------------------
-inline Parser::FTupleExpr* MakeTupleExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site) {
-    return new Parser::FTupleExpr(elts, site);
+inline FTupleExpr* MakeTupleExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FTupleExpr)(elts, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -286,18 +267,16 @@ public:
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     items_type _items;
 };
 //----------------------------------------------------------------------------
-inline Parser::FArrayExpr* MakeArrayExpr(const Lexer::FSpan& site) {
-    return new Parser::FArrayExpr(site);
+inline FArrayExpr* MakeArrayExpr(const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FArrayExpr)(site);
 }
 //----------------------------------------------------------------------------
-inline Parser::FArrayExpr* MakeArrayExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site) {
-    return new Parser::FArrayExpr(elts, site);
+inline FArrayExpr* MakeArrayExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FArrayExpr)(elts, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -319,18 +298,16 @@ public:
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     dico_type _dico;
 };
 //----------------------------------------------------------------------------
-inline Parser::FDictionaryExpr* MakeDictionaryExpr(const Lexer::FSpan& site) {
-    return new Parser::FDictionaryExpr(site);
+inline FDictionaryExpr* MakeDictionaryExpr(const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FDictionaryExpr)(site);
 }
 //----------------------------------------------------------------------------
-inline Parser::FDictionaryExpr* MakeDictionaryExpr(FDictionaryExpr::dico_type&& ritems, const Lexer::FSpan& site) {
-    return new Parser::FDictionaryExpr(std::move(ritems), site);
+inline FDictionaryExpr* MakeDictionaryExpr(FDictionaryExpr::dico_type&& ritems, const Lexer::FSpan& site) {
+    return NEW_REF(Parser, FDictionaryExpr)(std::move(ritems), site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -344,15 +321,13 @@ public:
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     RTTI::PTypeTraits _traits;
     PCParseExpression _expr;
 };
 //----------------------------------------------------------------------------
 inline FCastExpr* MakeCastExpr(const RTTI::PTypeTraits& traits, const FParseExpression* expr, const Lexer::FSpan& site) {
-    return new FCastExpr(traits, expr, site);
+    return NEW_REF(Parser, FCastExpr)(traits, expr, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -368,8 +343,6 @@ public:
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
-    SINGLETON_POOL_ALLOCATED_DECL();
-
 private:
     PCParseExpression _obj;
     RTTI::FName _funcname;
@@ -377,7 +350,7 @@ private:
 };
 //----------------------------------------------------------------------------
 inline FFunctionCall *MakeFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<const PCParseExpression>& args, const Lexer::FSpan& site) {
-    return new FFunctionCall(std::move(obj), funcname, args, site);
+    return NEW_REF(Parser, FFunctionCall)(std::move(obj), funcname, args, site);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

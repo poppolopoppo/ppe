@@ -490,7 +490,11 @@ template <typename _It>
 class TIterable {
 public:
     using iterator = _It;
-    using value_type = Meta::TDecay<decltype(*std::declval<_It>())>;
+
+    using value_type = typename std::iterator_traits<_It>::value_type;
+    using pointer = typename std::iterator_traits<_It>::pointer;
+    using reference = typename std::iterator_traits<_It>::reference;
+    using iterator_category = typename std::iterator_traits<_It>::iterator_category;
 
     template <typename _Jt>
     friend class TIterable;
@@ -524,6 +528,11 @@ public:
     CONSTEXPR hash_t HashValue() const NOEXCEPT {
         return hash_fwdit_constexpr(_begin, _end);
     }
+
+    CONSTEXPR friend hash_t hash_value(const TIterable& v) NOEXCEPT { return v.HashValue(); }
+
+    CONSTEXPR friend bool operator ==(const TIterable& a, const TIterable& b) NOEXCEPT { return (a.Equals(b)); }
+    CONSTEXPR friend bool operator !=(const TIterable& a, const TIterable& b) NOEXCEPT { return (not operator ==(a, b)); }
 
 private:
     _It _begin;
@@ -581,6 +590,38 @@ template <typename _It>
 CONSTEXPR TIterable<std::move_iterator<_It>> MakeMoveIterable(_It first, _It last) NOEXCEPT {
     return MakeIterable(MakeMoveIterator(first), MakeMoveIterator(last));
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Meta {
+//----------------------------------------------------------------------------
+// Construct/Destroy ranges
+//----------------------------------------------------------------------------
+template <typename _It, typename... _Args>
+void Construct(const TIterable<_It>& range, _Args&&... args) {
+    using value_type = typename TIterable<_It>::value_type;
+    IF_CONSTEXPR(sizeof...(args) || not Meta::has_trivial_constructor<value_type>::value) {
+        for (auto& it : range)
+            Meta::Construct(&it, args...);
+    }
+    else {
+        UNUSED(range);
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _It>
+void Destroy(const TIterable<_It>& range) {
+    using value_type = typename TIterable<_It>::value_type;
+    IF_CONSTEXPR(not Meta::has_trivial_destructor<value_type>::value) {
+        for (auto& it : range)
+            Meta::Destroy(&it);
+    }
+    else {
+        UNUSED(range);
+    }
+}
+//----------------------------------------------------------------------------
+} //!namespace Meta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -14,6 +14,22 @@ NO_INLINE auto unlikely(_FuncLike funcLike, _Args... args) {
     return funcLike(std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
+// will call the trigger when leaving the scope using RAII
+namespace details {
+template <typename _Lambda>
+struct on_scope_exit_t {
+    _Lambda Trigger;
+    on_scope_exit_t(_Lambda&& trigger) NOEXCEPT : Trigger(std::move(trigger)) {}
+    ~on_scope_exit_t() { Trigger(); }
+};
+} //!details
+template <typename _Lambda>
+auto on_scope_exit(_Lambda&& trigger) NOEXCEPT {
+    return details::on_scope_exit_t{ std::move(trigger) };
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 // wraps a T& inside a T* to avoid copying T when using value semantics
 template <typename T>
 struct ptr_ref_t {
@@ -74,9 +90,10 @@ CONSTEXPR void StaticQuicksort(T* p, int n, const _Pred& pred) NOEXCEPT {
 
         int m = 0;
 
-        for (int i = 1; i < n; ++i)
+        for (int i = 1; i < n; ++i) {
             if (pred(p[i], p[0]))
                 swap(p[++m], p[i]);
+        }
 
         swap(p[0], p[m]);
 

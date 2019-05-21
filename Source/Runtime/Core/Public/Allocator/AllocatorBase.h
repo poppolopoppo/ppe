@@ -2,330 +2,538 @@
 
 #include "Core_fwd.h"
 
+#include "HAL/PlatformMemory.h"
 #include "Memory/MemoryView.h"
 #include "Meta/TypeTraits.h"
-
-#include <type_traits>
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
-class TAllocatorBase {
+struct NODISCARD FAllocatorBlock {
+    void* Data;
+    size_t SizeInBytes;
+
+    FAllocatorBlock() = default;
+
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Data; }
+    FRawMemory MakeView() const { return FRawMemory((u8*)Data, SizeInBytes); }
+
+    FAllocatorBlock Reset() {
+        const FAllocatorBlock cpy{ *this };
+        Data = nullptr;
+        SizeInBytes = 0;
+        return cpy;
+    }
+
+    static CONSTEXPR FAllocatorBlock Null() NOEXCEPT {
+        return FAllocatorBlock{ nullptr, 0 };
+    }
+
+    template <typename T>
+    static FAllocatorBlock From(TMemoryView<T> v) NOEXCEPT {
+        return FAllocatorBlock{ v.data(), v.SizeInBytes() };
+    }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Defines the concept of a PPE allocator
+//----------------------------------------------------------------------------
+class FGenericAllocator {
 public:
-    typedef size_t size_type;
-    typedef ptrdiff_t difference_type;
-    typedef Meta::TAddPointer<T> pointer;
-    typedef Meta::TAddPointer<const T> const_pointer;
-    typedef Meta::TAddReference<T> reference;
-    typedef Meta::TAddReference<const T> const_reference;
-    typedef T value_type;
+    using propagate_on_container_copy_assignment = std::false_type;
+    using propagate_on_container_move_assignment = std::false_type;
+    using propagate_on_container_swap = std::false_type;
 
-    template<typename U>
-    struct rebind
-    {
-        typedef TAllocatorBase<U> other;
-    };
+    using is_always_equal = std::false_type;
 
-    CONSTEXPR TAllocatorBase() NOEXCEPT = default;
+    using has_maxsize = std::false_type;
+    using has_owns = std::false_type;
+    using has_reallocate = std::false_type;
+    using has_acquire = std::false_type;
+    using has_steal = std::false_type;
 
-    CONSTEXPR TAllocatorBase(const TAllocatorBase&) noexcept = default;
-    template<typename U>
-    CONSTEXPR TAllocatorBase(const TAllocatorBase<U>& ) noexcept {}
+    STATIC_CONST_INTEGRAL(size_t, Alignment, INDEX_NONE);
 
-    CONSTEXPR TAllocatorBase& operator=(const TAllocatorBase&) noexcept = default;
-    template<typename U>
-    CONSTEXPR TAllocatorBase& operator=(const TAllocatorBase<U>&) noexcept { return (*this); }
+    static size_t MaxSize() NOEXCEPT = delete;
+    static size_t SnapSize(size_t s) NOEXCEPT = delete;
 
-    CONSTEXPR pointer address(reference x) const noexcept { return std::addressof(x); }
-    CONSTEXPR const_pointer address(const_reference x) const noexcept { return std::addressof(x); }
+    bool Owns(FAllocatorBlock b) const NOEXCEPT = delete;
 
-    template <typename... _Args>
-    void construct(pointer p, _Args&&... args) { Meta::Construct(p, std::forward<_Args>(args)...); }
-    void destroy(pointer p) { Meta::Destroy(p); }
+    FAllocatorBlock Allocate(size_t s) = delete;
+    void Deallocate(FAllocatorBlock b) = delete;
 
-    CONSTEXPR size_type max_size() const noexcept
-    {
-        // The following has been carefully written to be independent of
-        // the definition of size_t and to avoid signed/unsigned warnings.
-        return (static_cast<std::size_t>(0) - static_cast<std::size_t>(1)) / sizeof(T);
-    }
+    void Reallocate(FAllocatorBlock& b, size_t s) = delete;
 
-    /*
-    ** Implemented in derived classes :
-    */
+    bool Acquire(FAllocatorBlock b) NOEXCEPT = delete;
+    bool Steal(FAllocatorBlock b) NOEXCEPT = delete;
 
-    //pointer allocate(size_type n, const void* hint = 0) {}
-    //void deallocate(void* p, size_type n) {}
-
-    // AllocatorRealloc()
-    //void* relocate(void* p, size_type newSize, size_type oldSize) {}
+    friend bool operator ==(const FGenericAllocator& lhs, const FGenericAllocator& rhs) NOEXCEPT = delete;
+    friend bool operator !=(const FGenericAllocator& lhs, const FGenericAllocator& rhs) NOEXCEPT = delete;
 };
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Construct/Destroy ranges
+// Detects if given type if a valid allocator (ie has Allocate/Deallocate)
 //----------------------------------------------------------------------------
 namespace details {
-template <typename _Allocator, typename T>
-void Construct_(_Allocator&, const TMemoryView<T>&, std::true_type) {}
-template <typename _Allocator, typename T, typename _Arg0, typename... _Args>
-void Construct_(_Allocator& alloc, const TMemoryView<T>& items, std::true_type, _Arg0&& arg0, _Args&&... args) {
-    using traits = std::allocator_traits<_Allocator>;
-    for (T& pod : items)
-        traits::construct(alloc, &pod, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-}
-template <typename _Allocator, typename T, typename... _Args>
-void Construct_(_Allocator& alloc, const TMemoryView<T>& items, std::false_type, _Args&&... args) {
-    using traits = std::allocator_traits<_Allocator>;
-    for (T& non_pod : items)
-        traits::construct(alloc, &non_pod, std::forward<_Args>(args)...);
-}
+template <typename T>
+using if_has_allocate_ = decltype(std::declval<T&>().Allocate(size_t(0)));
+template <typename T>
+using if_has_deallocate_ = decltype(std::declval<T&>().Deallocate(std::declval<FAllocatorBlock>()));
 } //!details
-template <typename _Allocator, typename T, typename... _Args>
-void Construct(_Allocator& alloc, const TMemoryView<T>& items, _Args&&... args) {
-    details::Construct_(alloc, items, Meta::has_trivial_constructor<T>{}, std::forward<_Args>(args)...);
-}
 //----------------------------------------------------------------------------
-namespace details {
-template <typename _Allocator, typename T>
-void Destroy_(_Allocator&, const TMemoryView<T>&, std::true_type) {}
-template <typename _Allocator, typename T>
-void Destroy_(_Allocator& alloc, const TMemoryView<T>& items, std::false_type) {
-    using traits = std::allocator_traits<_Allocator>;
-    for (T& non_pod : items)
-        traits::destroy(alloc, &non_pod);
-}
-} //!details
-template <typename _Allocator, typename T>
-void Destroy(_Allocator& alloc, const TMemoryView<T>& items) {
-    details::Destroy_(alloc, items, Meta::has_trivial_destructor<T>{});
-}
+template <typename T>
+using is_allocator_t = std::bool_constant<
+    Meta::has_defined_v<details::if_has_allocate_, T> and
+    Meta::has_defined_v<details::if_has_deallocate_, T>
+    >;
+//----------------------------------------------------------------------------
+template <typename T>
+CONSTEXPR bool is_allocator_v = is_allocator_t<T>::value;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Realloc semantic for allocators
+// The traits will use default behaviors/values when missing in _Allocator
 //----------------------------------------------------------------------------
 namespace details {
-// Uses SFINAE to determine if an allocator implements relocate()
-template<
-    class _Allocator,
-    class = decltype(std::declval<_Allocator>().relocate( std::declval<void*>(), std::declval<size_t>(), std::declval<size_t>() ))
->   std::true_type  _allocator_has_realloc(_Allocator&& );
-    std::false_type _allocator_has_realloc(...);
+template <typename _Allocator>
+using if_propagate_on_container_copy_assignment_ = typename _Allocator::propagate_on_container_copy_assignment;
+template <typename _Allocator>
+using if_propagate_on_container_move_assignment_ = typename _Allocator::propagate_on_container_move_assignment;
+template <typename _Allocator>
+using if_propagate_on_container_swap_ = typename _Allocator::propagate_on_container_swap;
+template <typename _Allocator>
+using if_is_always_equal_ = typename _Allocator::is_always_equal;
+template <typename _Allocator>
+using if_has_maxsize_ = typename _Allocator::has_maxsize;
+template <typename _Allocator>
+using if_has_owns_ = typename _Allocator::has_owns;
+template <typename _Allocator>
+using if_has_reallocate_ = typename _Allocator::has_reallocate;
+template <typename _Allocator>
+using if_has_acquire_ = typename _Allocator::has_acquire;
+template <typename _Allocator>
+using if_has_steal_ = typename _Allocator::has_steal;
+template <typename _Allocator>
+using if_reallocate_can_fail_ = decltype(std::declval<_Allocator&>().Reallocate(
+    std::declval<FAllocatorBlock&>(), size_t(0) ));
 } //!details
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-struct allocator_has_realloc : decltype(details::_allocator_has_realloc( std::declval<_Allocator>() )) {};
-template <typename _Allocator>
-constexpr bool allocator_has_realloc_v = allocator_has_realloc<_Allocator>::value;
-//----------------------------------------------------------------------------
-template <typename _Allocator>
-Meta::TEnableIf<
-    Meta::has_trivial_move<typename _Allocator::value_type>::value,
-    typename _Allocator::pointer
->   Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
-    typedef std::allocator_traits<_Allocator> allocator_traits;
-    typedef typename allocator_traits::pointer pointer;
-    Assert(0 == oldSize || nullptr != data.Pointer());
-    pointer const p = data.Pointer();
-    pointer const newp = newSize ? allocator.allocate(newSize) : nullptr;
-    const size_t copyRange = (newSize < data.size()) ? newSize : data.size();
-    if (copyRange) {
-        Assert(p);
-        Assert(newp);
-#if 0
-        std::copy(p, p + copyRange, MakeCheckedIterator(newp, newSize, 0));
-#else
-        FPlatformMemory::MemcpyLarge(newp, p, copyRange * sizeof(*p));
-#endif
+struct TAllocatorTraits {
+    using allocator_type = _Allocator;
+
+    using propagate_on_container_copy_assignment = Meta::optional_definition_t<
+        details::if_propagate_on_container_copy_assignment_, std::false_type, _Allocator >;
+    using propagate_on_container_move_assignment = Meta::optional_definition_t<
+        details::if_propagate_on_container_move_assignment_, std::false_type, _Allocator >;
+    using propagate_on_container_swap = Meta::optional_definition_t<
+        details::if_propagate_on_container_swap_, std::false_type, _Allocator >;
+
+    using is_always_equal = Meta::optional_definition_t<
+        details::if_is_always_equal_, std::false_type, _Allocator >;
+
+    using has_maxsize = Meta::optional_definition_t<
+        details::if_has_maxsize_, std::false_type, _Allocator >;
+    using has_owns = Meta::optional_definition_t<
+        details::if_has_owns_, std::false_type, _Allocator >;
+    using has_reallocate = Meta::optional_definition_t<
+        details::if_has_reallocate_, std::false_type, _Allocator >;
+    using has_acquire = Meta::optional_definition_t<
+        details::if_has_acquire_, std::false_type, _Allocator >;
+    using has_steal = Meta::optional_definition_t<
+        details::if_has_steal_, std::false_type, _Allocator >;
+
+    STATIC_CONST_INTEGRAL(size_t, Alignment, _Allocator::Alignment);
+
+    using reallocate_can_fail = std::is_same<
+        Meta::optional_definition_t<details::if_reallocate_can_fail_, void, _Allocator>,
+        bool >;
+
+    static _Allocator& Get(_Allocator& self) NOEXCEPT { return self; }
+    static const _Allocator& Get(const _Allocator& self) NOEXCEPT { return self; }
+
+    static void Copy(_Allocator* dst, const _Allocator& src) {
+        IF_CONSTEXPR(propagate_on_container_copy_assignment::value) {
+            *dst = src;
+        }
+        else {
+            UNUSED(dst);
+            UNUSED(src);
+        }
     }
-    if (data.Pointer()) {
-        Assert(0 < oldSize);
-        allocator_traits::deallocate(allocator, p, oldSize);
+
+    static _Allocator SelectOnCopy(const _Allocator& other) {
+        IF_CONSTEXPR(propagate_on_container_copy_assignment::value) {
+            return _Allocator{ other };
+        }
+        else {
+            UNUSED(other);
+            return Meta::MakeForceInit<_Allocator>();
+        }
     }
-    return newp;
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator>
-Meta::TEnableIf<
-    not Meta::has_trivial_move<typename _Allocator::value_type>::value,
-    typename _Allocator::pointer
->   Relocate_AssumeNoRealloc(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
-    STATIC_ASSERT(std::is_move_constructible<typename _Allocator::value_type>::value);
 
-    typedef std::allocator_traits<_Allocator> allocator_traits;
-    typedef typename allocator_traits::pointer pointer;
-    pointer const p = data.Pointer();
-
-    Assert(0 == oldSize || nullptr != p);
-
-    pointer const newp = newSize ? allocator.allocate(newSize) : nullptr;
-    const size_t moveRange = (newSize < data.size()) ? newSize : data.size();
-
-    Assert((newp && p) || 0 == moveRange);
-
-    forrange(i, 0, moveRange)
-        allocator_traits::construct(allocator, newp + i, std::move(p[i]));
-
-    if (data.Pointer()) {
-        Assert(p);
-
-        Destroy(allocator, data);
-
-        allocator_traits::deallocate(allocator, p, oldSize);
+    static void Move(_Allocator* dst, _Allocator&& src) {
+        IF_CONSTEXPR(propagate_on_container_move_assignment::value) {
+            *dst = std::move(src);
+        }
+        else {
+            UNUSED(dst);
+            UNUSED(src);
+        }
     }
-    return newp;
-}
-//----------------------------------------------------------------------------
-// Best case : T is a pod and _Allocator supports reallocate()
-template <typename _Allocator>
-Meta::TEnableIf<
-    allocator_has_realloc_v<_Allocator> &&
-    Meta::has_trivial_move<typename _Allocator::value_type>::value,
-    typename _Allocator::pointer
->   Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
-    return static_cast<typename _Allocator::pointer>(allocator.relocate(data.Pointer(), newSize, oldSize));
-}
-//----------------------------------------------------------------------------
-// Worst case : T is a pod but _Allocator does not support relocate()
-template <typename _Allocator>
-Meta::TEnableIf<
-    not allocator_has_realloc_v<_Allocator> &&
-    Meta::has_trivial_move<typename _Allocator::value_type>::value,
-    typename _Allocator::pointer
->   Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
-    return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);
-}
-//----------------------------------------------------------------------------
-// Common case : T is not a pod, whether _Allocator supports relocate() or not
-template <typename _Allocator>
-Meta::TEnableIf<
-    not Meta::has_trivial_move<typename _Allocator::value_type>::value,
-    typename _Allocator::pointer
->   Relocate(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
-    return Relocate_AssumeNoRealloc(allocator, data, newSize, oldSize);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Use these when T is not a standard POD, but you know it call be treated as one
-//----------------------------------------------------------------------------
-template <typename _Allocator>
-Meta::TEnableIf<
-    allocator_has_realloc_v<_Allocator>,
-    typename _Allocator::pointer
->   Relocate_AssumePod(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
-    return static_cast<typename _Allocator::pointer>(allocator.relocate(data.Pointer(), newSize, oldSize));
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator>
-Meta::TEnableIf<
-    not allocator_has_realloc_v<_Allocator>,
-    typename _Allocator::pointer
->   Relocate_AssumePod(_Allocator& allocator, const TMemoryView<typename _Allocator::value_type>& data, size_t newSize, size_t oldSize) {
-    return Relocate(allocator, data, newSize, oldSize);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Must be overloaded by each allocator,
-//  - Correctly handle insitu allocations
-//  - Minimize wasted size for heap allocations
-//----------------------------------------------------------------------------
-// never defined, it should be specialized for each allocator
-template <typename _Allocator>
-size_t AllocatorSnapSize(const _Allocator&, size_t size);
-//----------------------------------------------------------------------------
-template <typename _Allocator>
-size_t SafeAllocatorSnapSize(const _Allocator& alloc, size_t size) {
+
+    static _Allocator SelectOnMove(_Allocator&& rvalue) {
+        IF_CONSTEXPR(propagate_on_container_move_assignment::value) {
+            return _Allocator{ std::move(rvalue) };
+        }
+        else {
+            UNUSED(rvalue);
+            return Meta::MakeForceInit<_Allocator>();
+        }
+    }
+
+    static void Swap(_Allocator& lhs, _Allocator& rhs) {
+        IF_CONSTEXPR(propagate_on_container_swap::value) {
+            using std::swap;
+            swap(lhs, rhs); // can be overloaded
+        }
+        else {
+            UNUSED(lhs);
+            UNUSED(rhs);
+        }
+    }
+
+    static bool Equals(const _Allocator& lhs, const _Allocator& rhs) NOEXCEPT {
+        IF_CONSTEXPR(is_always_equal::value) {
+            UNUSED(lhs);
+            UNUSED(rhs);
+            return true;
+        }
+        else
+            return (lhs == rhs);
+    }
+
+    template <typename _AllocatorOther>
+    static bool Equals(const _Allocator& lhs, const _AllocatorOther& rhs) NOEXCEPT {
+        IF_CONSTEXPR(Meta::has_equals_v<_Allocator, _AllocatorOther>)
+            return (lhs == rhs);
+        else {
+            UNUSED(lhs);
+            UNUSED(rhs);
+            return false;
+        }
+    }
+
+    static size_t MaxSize() NOEXCEPT {
+        IF_CONSTEXPR(has_maxsize::value) {
+            return _Allocator::MaxSize();
+        }
+        else {
+            return (size_t(0) - size_t(1));
+        }
+    }
+
+    static size_t SnapSize(size_t size) NOEXCEPT {
 #ifdef WITH_PPE_ASSERT
-    const size_t snapped = AllocatorSnapSize(alloc, size);
-    Assert(snapped >= size);
-    Assert_NoAssume(AllocatorSnapSize(alloc, snapped) == snapped);
-    return snapped;
+        const size_t snpd = _Allocator::SnapSize(size);
+        Assert(snpd >= size);
+        Assert_NoAssume(_Allocator::SnapSize(snpd) == snpd);
+        return snpd;
 #else
-    return AllocatorSnapSize(alloc, size);
+        return _Allocator::SnapSize(size);
 #endif
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Helpers for allocator copy/move assignment using std::allocator_traits<>
-//----------------------------------------------------------------------------
-template <typename _Allocator, class _Traits = std::allocator_traits<_Allocator> >
-Meta::TEnableIf< _Traits::propagate_on_container_copy_assignment::value >
-    AllocatorPropagateCopy(_Allocator& dst, const _Allocator& src) {
-    dst = src;
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator, class _Traits = std::allocator_traits<_Allocator> >
-Meta::TEnableIf< not _Traits::propagate_on_container_copy_assignment::value >
-    AllocatorPropagateCopy(_Allocator& dst, const _Allocator& src) {}
-//----------------------------------------------------------------------------
-template <typename _Allocator, class _Traits = std::allocator_traits<_Allocator> >
-Meta::TEnableIf< _Traits::propagate_on_container_move_assignment::value >
-    AllocatorPropagateMove(_Allocator& dst, _Allocator&& src) {
-    dst = std::move(src);
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator, class _Traits = std::allocator_traits<_Allocator> >
-Meta::TEnableIf< not _Traits::propagate_on_container_move_assignment::value >
-    AllocatorPropagateMove(_Allocator& dst, _Allocator&& src) {}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Can be overloaded by each allocator,
-//  - Handles stealing a block from an allocator to another
-//  - Used to disable memory stealing when not available and keep track of stolen blocks
-//----------------------------------------------------------------------------
-template <typename _Allocator>
-std::false_type/* disabled */ AllocatorStealFrom(_Allocator&, typename _Allocator::pointer, size_t) {}
-//----------------------------------------------------------------------------
-template <typename _Allocator>
-std::false_type/* disabled */ AllocatorAcquireStolen(_Allocator&, typename _Allocator::pointer, size_t) {}
-//----------------------------------------------------------------------------
-template <typename _AllocatorDst, typename _AllocatorSrc>
-struct allocator_can_steal_from : std::is_same<_AllocatorSrc, _AllocatorDst> {};
-//----------------------------------------------------------------------------
-template <typename _AllocatorDst, typename _AllocatorSrc>
-bool AllocatorCheckStealing(_AllocatorDst&, _AllocatorSrc&) { return true; }
-//----------------------------------------------------------------------------
-template <typename _AllocatorDst, typename _AllocatorSrc>
-struct allocator_can_steal_block {
-    using stealfrom_type = decltype(AllocatorStealFrom(
-        std::declval<_AllocatorSrc&>(),
-        std::declval<typename _AllocatorSrc::pointer>(), 0 ));
-    using acquirestolen_type = decltype(AllocatorAcquireStolen(
-        std::declval<_AllocatorDst&>(),
-        std::declval<typename _AllocatorDst::pointer>(), 0 ));
-    static constexpr bool implements_stealing =
-        stealfrom_type::value &&
-        acquirestolen_type::value &&
-        allocator_can_steal_from<_AllocatorDst, _AllocatorSrc>::value;
+    }
 
-    static constexpr bool value = (std::is_same_v<_AllocatorSrc, _AllocatorDst> || implements_stealing);
+    template <typename T>
+    static size_t SnapSizeT(size_t count) NOEXCEPT {
+        return (SnapSize(count * sizeof(T)) / sizeof(T));
+    }
+
+    static bool Owns(const _Allocator& a, FAllocatorBlock b) NOEXCEPT {
+        IF_CONSTEXPR(has_owns::value) {
+            return a.Owns(b);
+        }
+        else {
+#ifdef DYNAMIC_LINK
+            UNUSED(a);
+            UNUSED(b);
+            AssertNotImplemented();
+#else
+            static_assert(false, "given allocator doesn't implement Owns() method");
+#endif
+        }
+    }
+
+    static FAllocatorBlock Allocate(_Allocator& a, size_t s) {
+        return (s ? a.Allocate(s) : FAllocatorBlock::Null());
+    }
+
+    template <typename T>
+    static TMemoryView<T> AllocateT(_Allocator& a, size_t n) {
+        const FAllocatorBlock b{ Allocate(a, n * sizeof(T)) };
+        Assert_NoAssume(n * sizeof(T) <= b.SizeInBytes);
+        return b.MakeView().Cast<T>();
+    }
+
+    template <typename T>
+    static T* AllocateOneT(_Allocator& a) {
+        return static_cast<T*>(Allocate(a, sizeof(T)).Data);
+    }
+
+    static void Deallocate(_Allocator& a, FAllocatorBlock b) {
+        if (b)
+            a.Deallocate(b);
+    }
+
+    template <typename T>
+    static void DeallocateT(_Allocator& a, TMemoryView<T> v) {
+        Deallocate(a, FAllocatorBlock::From(v));
+    }
+
+    template <typename T>
+    static void DeallocateT(_Allocator& a, T* p, size_t n) {
+        Deallocate(a, FAllocatorBlock{ p,  n * sizeof(T) });
+    }
+
+    template <typename T>
+    static void DeallocateOneT(_Allocator& a, T* p) {
+        Deallocate(a, FAllocatorBlock{ p,  sizeof(T) });
+    }
+
+    static auto Reallocate(_Allocator& a, FAllocatorBlock& b, size_t s) {
+        Assert_NoAssume(b || s);
+
+        IF_CONSTEXPR(has_reallocate::value) {
+            return a.Reallocate(b, s);
+        }
+        else {
+            if ((!!b) & (!!s)) {
+                const FAllocatorBlock r = a.Allocate(s);
+                Assert_NoAssume(r);
+                FPlatformMemory::MemcpyLarge(r.Data, b.Data, Min(s, b.SizeInBytes));
+                a.Deallocate(b);
+                b = r;
+            }
+            else {
+                if (Likely(s)) {
+                    Assert_NoAssume(not b);
+                    b = a.Allocate(s);
+                }
+                else {
+                    Assert_NoAssume(b);
+                    a.Deallocate(b.Reset());
+                }
+            }
+            return;
+        }
+    }
+
+    // specialized this method to avoid over-copying when !has_reallocate
+    template <typename T>
+    static auto ReallocateT_AssumePOD(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
+        Assert(oldSize >= items.size());
+
+        FAllocatorBlock b{ items.data(), oldSize * sizeof(T) };
+        const size_t s = newSize * sizeof(T);
+
+        IF_CONSTEXPR(has_reallocate::value) {
+            IF_CONSTEXPR(reallocate_can_fail::value) {
+                if (a.Reallocate(b, s)) {
+                    items = TMemoryView<T>(static_cast<T*>(b.Data), Min(newSize, items.size()));
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+            else {
+                a.Reallocate(b, s);
+                items = TMemoryView<T>(static_cast<T*>(b.Data), Min(newSize, items.size()));
+                return;
+            }
+        }
+        else {
+            if ((!!b) & (!!s)) {
+                const FAllocatorBlock r = a.Allocate(s);
+                Assert_NoAssume(r);
+                // *HERE* copy potentially less since we're giving the actual used size (which can be less reserved size)
+                FPlatformMemory::MemcpyLarge(r.Data, b.Data, Min(s, /*b.SizeInBytes*/items.SizeInBytes()));
+                a.Deallocate(b);
+                b = r;
+            }
+            else {
+                if (Likely(s)) {
+                    Assert_NoAssume(not b);
+                    b = a.Allocate(s);
+                }
+                else {
+                    Assert_NoAssume(b);
+                    a.Deallocate(b.Reset());
+                }
+            }
+
+            items = TMemoryView<T>{ b.Data, Min(newSize, items.size()) };
+            return;
+        }
+    }
+
+    static bool Acquire(_Allocator& a, FAllocatorBlock b) NOEXCEPT {
+        Assert(b);
+
+        IF_CONSTEXPR(has_acquire::value)
+            return a.Acquire(b);
+        else {
+            UNUSED(a);
+            UNUSED(b);
+            return false;
+        }
+    }
+
+    static bool Steal(_Allocator& a, FAllocatorBlock b) NOEXCEPT {
+        Assert(b);
+
+        IF_CONSTEXPR(has_steal::value)
+            return a.Steal(b);
+        else {
+            UNUSED(a);
+            UNUSED(b);
+            return false;
+        }
+    }
+
+    template <typename _AllocatorDst>
+    static bool StealAndAcquire(_AllocatorDst* dst, _Allocator& src, FAllocatorBlock b) NOEXCEPT {
+        Assert(dst);
+
+        using dst_t = TAllocatorTraits<_AllocatorDst>;
+        IF_CONSTEXPR(dst_t::has_acquire::value && has_steal::value) {
+            return (Steal(src, b) && dst_t::Acquire(*dst, b));
+        }
+        else {
+            UNUSED(dst);
+            UNUSED(src);
+            UNUSED(b);
+            return false;
+        }
+    }
 };
 //----------------------------------------------------------------------------
-template <typename _AllocatorDst, typename _AllocatorSrc>
-Meta::TEnableIf<
-    allocator_can_steal_block<_AllocatorDst, _AllocatorSrc>::value,
-    TMemoryView<typename _AllocatorDst::value_type>
->   AllocatorStealBlock(_AllocatorDst& dst, const TMemoryView<typename _AllocatorSrc::value_type>& block, _AllocatorSrc& src) {
-    Assert(AllocatorCheckStealing(dst, src));
-    const TMemoryView<typename _AllocatorDst::value_type> stolen = block.template Cast<typename _AllocatorDst::value_type>();
-    AllocatorStealFrom(src, block.data(), block.size());
-    AllocatorAcquireStolen(dst, stolen.data(), stolen.size());
-    return stolen;
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Propagate allocation on move, return false if the source block was copied
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+bool MoveAllocatorBlock(_Allocator* dst, _Allocator& src, FAllocatorBlock b) NOEXCEPT {
+    Assert(dst);
+
+    using traits_t = TAllocatorTraits<_Allocator>;
+    IF_CONSTEXPR(traits_t::propagate_on_container_move_assignment::value) {
+        // nothing to do : the allocator is trivially movable
+        UNUSED(dst);
+        UNUSED(src);
+        UNUSED(b);
+
+        return true;
+    }
+    else {
+        return (not b || traits_t::StealAndAcquire(dst, src, b));
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator, typename T>
+bool MoveAllocatorBlock(_Allocator* dst, _Allocator& src, TMemoryView<T>& items, size_t capacity) {
+    Assert(dst);
+
+    using traits_t = TAllocatorTraits<_Allocator>;
+    IF_CONSTEXPR(traits_t::propagate_on_container_move_assignment::value) {
+        // nothing to do : the allocator is trivially movable
+        UNUSED(dst);
+        UNUSED(src);
+        UNUSED(items);
+        UNUSED(capacity);
+
+        return true;
+    }
+    else {
+        Assert_NoAssume(items.size() <= capacity);
+
+        const FAllocatorBlock b{ items.data(), capacity * sizeof(T) };
+        if (b && not traits_t::StealAndAcquire(dst, src, b)) {
+            TMemoryView<T> mve = traits_t::template AllocateT<T>(*dst, capacity);
+            mve = mve.CutBefore(items.size());
+            std::uninitialized_move(items.begin(), items.end(), mve.begin());
+            items = mve;
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Prettier syntax for allocator rebinding
+// Helpers for Reallocate()
 //----------------------------------------------------------------------------
 template <typename _Allocator, typename T>
-using TRebindAlloc = typename std::allocator_traits<_Allocator>::template rebind_alloc<T>;
+auto ReallocateAllocatorBlock_AssumePOD(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
+    return TAllocatorTraits<_Allocator>::ReallocateT_AssumePOD(a, items, oldSize, newSize);
+}
+//---------------------------------------------------------------------------
+template <typename _Allocator, typename T>
+void ReallocateAllocatorBlock_NonPOD(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
+    using traits_t = TAllocatorTraits<_Allocator>;
+
+    const FAllocatorBlock o{ items.data(), oldSize * sizeof(T) };
+    FAllocatorBlock b = traits_t::Allocate(a, newSize * sizeof(T));
+
+    std::uninitialized_move(
+        items.begin(), items.begin() + Min(newSize, items.size()),
+        MakeCheckedIterator(static_cast<T*>(b.Data), newSize, 0));
+
+    Meta::Destroy(items);
+
+    traits_t::Deallocate(a, o);
+
+    items = { static_cast<T*>(b.Data), Min(newSize, items.size()) };
+}
+//---------------------------------------------------------------------------
+template <typename _Allocator, typename T>
+auto ReallocateAllocatorBlock(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
+    IF_CONSTEXPR(Meta::has_trivial_move<T>::value)
+        return ReallocateAllocatorBlock_AssumePOD(a, items, oldSize, newSize);
+    else
+        return ReallocateAllocatorBlock_NonPOD(a, items, oldSize, newSize);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Handles memory stealing from one allocator to another
+// This is only handling the trivial case of stealing between 2 allocators of the same type
+// It should be specialized for every wanted allocator combinations
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+bool StealAllocatorBlock(_Allocator* dst, _Allocator& src, FAllocatorBlock b) NOEXCEPT {
+    using traits_t = TAllocatorTraits<_Allocator>;
+    return traits_t::StealAndAcquire(dst, src, b);
+}
+//----------------------------------------------------------------------------
+// Test statically if two allocators can steal/acquire from one to another
+//----------------------------------------------------------------------------
+namespace details {
+template <typename _AllocatorDst, typename _AllocatorSrc,
+    class = decltype(StealAllocatorBlock(std::declval<_AllocatorDst*>(), std::declval<_AllocatorSrc&>(), std::declval<FAllocatorBlock>())) >
+std::true_type has_stealallocatorblock_(int);
+template <typename _AllocatorDst, typename _AllocatorSrc>
+std::false_type has_stealallocatorblock_(...);
+} //!details
+//----------------------------------------------------------------------------
+template <typename _AllocatorDst, typename _AllocatorSrc>
+using has_stealallocatorblock_t = decltype(details::has_stealallocatorblock_<_AllocatorDst, _AllocatorSrc>(0));
+//----------------------------------------------------------------------------
+template <typename _AllocatorDst, typename _AllocatorSrc>
+CONSTEXPR bool has_stealallocatorblock_v = has_stealallocatorblock_t<_AllocatorDst, _AllocatorSrc>::value;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

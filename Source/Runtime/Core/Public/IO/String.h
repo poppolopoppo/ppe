@@ -18,16 +18,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Char>
-using TStringAllocator = ALLOCATOR(String, _Char);
+using FStringAllocator = ALLOCATOR(String);
 //----------------------------------------------------------------------------
 template <typename _Char>
-class TBasicString : private TStringAllocator<_Char> {
+class TBasicString : private FStringAllocator {
 public:
     typedef _Char char_type;
 
-    typedef TStringAllocator<_Char> allocator_type;
-    typedef std::allocator_traits<allocator_type> allocator_traits;
+    typedef FStringAllocator allocator_type;
+    typedef TAllocatorTraits<allocator_type> allocator_traits;
 
     typedef TMemoryView<_Char> mutableview_type;
     typedef TBasicStringView<_Char> stringview_type;
@@ -60,14 +59,14 @@ public:
     TBasicString(const TBasicString& other) : TBasicString() { assign(other); }
     TBasicString& operator =(const TBasicString& other) { assign(other); return (*this); }
 
-    TBasicString(TBasicString&& rvalue) : TBasicString() { assign(std::move(rvalue)); }
-    TBasicString& operator =(TBasicString&& rvalue) { assign(std::move(rvalue)); return (*this); }
+    TBasicString(TBasicString&& rvalue) NOEXCEPT : TBasicString() { assign(std::move(rvalue)); }
+    TBasicString& operator =(TBasicString&& rvalue) NOEXCEPT { assign(std::move(rvalue)); return (*this); }
 
     bool empty() const { return (0 == size()); }
     size_t length() const { return size(); } // stl compat
     size_t size() const { return (is_large_() ? _large.Size : _small.Size); }
     size_t capacity() const { return (is_large_() ? _large.Capacity : FSmallString_::GCapacity); }
-    size_t max_size() const { return get_allocator().max_size(); }
+    size_t max_size() const { return allocator_traits::MaxSize(); }
 
     size_t SizeInBytes() const { return (size() * sizeof(_Char)); }
 
@@ -90,7 +89,8 @@ public:
     const _Char* data() const { return data_(); }
     const _Char* operator *() const { return data_(); }
 
-    const TStringAllocator<_Char>& get_allocator() const { return (*this); }
+    FStringAllocator& get_allocator() { return allocator_traits::Get(*this); }
+    const FStringAllocator& get_allocator() const { return allocator_traits::Get(*this); }
 
     _Char& at(size_t index) { Assert(index < size()); return data_()[index]; }
     _Char& operator [](size_t index) { return at(index); }
@@ -327,12 +327,11 @@ public:
 public: // non stl
     // memory stealing between TBasicStringBuilder & TBasicString
 
-    explicit TBasicString(TBasicStringBuilder<_Char>&& sb) noexcept;
-
+    explicit TBasicString(TBasicStringBuilder<_Char>&& sb) NOEXCEPT;
     void assign(TBasicStringBuilder<_Char>&& sb);
 
-    template <typename _OtherAllocator>
-    TMemoryView<typename _OtherAllocator::value_type> StealDataUnsafe(_OtherAllocator& alloc, size_t* plen = nullptr);
+    bool AcquireDataUnsafe(FAllocatorBlock b, size_t sz) NOEXCEPT;
+    FAllocatorBlock StealDataUnsafe(size_t* sz = nullptr) NOEXCEPT;
 
     // can be implicitly casted to TBasicStringView<> since it's cheap and convenient
     operator TBasicStringView<_Char> () const { return MakeView(); }
@@ -381,10 +380,7 @@ public: // non stl
     inline friend hash_t hash_value(const TBasicString& str) { return hash_string(str.MakeView()); }
 
 private:
-    typedef std::allocator_traits<allocator_type> allocator_traits_;
-
     bool is_large_() const { return (_large.IsLarge); }
-    TStringAllocator<_Char>& get_allocator_() { return (*this); }
 
     _Char* data_() { return (is_large_() ? _large.Storage : _small.Buffer); }
     const _Char* data_() const { return (is_large_() ? _large.Storage : _small.Buffer); }
@@ -496,23 +492,6 @@ template <typename _Pred>
 inline size_t TBasicString<_Char>::rfind_if(_Pred pred, size_t pos/* = npos */) const noexcept {
     auto it = std::find_if(pos == npos ? rbegin() : const_reverse_iterator(begin() + pos), rend(), pred);
     return (it == rend() ? npos : rend() - it - 1);
-}
-//----------------------------------------------------------------------------
-template <typename _Char>
-template <typename _OtherAllocator>
-inline TMemoryView<typename _OtherAllocator::value_type> TBasicString<_Char>::StealDataUnsafe(_OtherAllocator& alloc, size_t* plen/* = nullptr */) {
-    TMemoryView<typename _OtherAllocator::value_type> stolen;
-
-    if (is_large_()) {
-        const TMemoryView<_Char> block(_large.Storage, _large.Capacity);
-        stolen = AllocatorStealBlock(alloc, block, get_allocator_());
-
-        if (plen)
-            *plen = _large.Size;
-    }
-
-    _large = { 0, 0, 0, nullptr };
-    return stolen;
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Char2>

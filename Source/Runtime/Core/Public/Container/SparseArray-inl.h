@@ -18,10 +18,7 @@ TBasicSparseArray<T, _ChunkSize>::TBasicSparseArray() NOEXCEPT
 //----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize>
 TBasicSparseArray<T, _ChunkSize>::~TBasicSparseArray() {
-#ifdef WITH_PPE_ASSERT
     Assert_NoAssume(CheckInvariants());
-    FPlatformMemory::Memdeadbeef(this, sizeof(*this)); // crash if used after destruction
-#endif
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize>
@@ -215,14 +212,14 @@ TSparseArray<T, _ChunkSize, _Allocator>::~TSparseArray() {
 //----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize, typename _Allocator>
 TSparseArray<T, _ChunkSize, _Allocator>::TSparseArray(TSparseArray&& rvalue) NOEXCEPT
-:   TBasicSparseArray(std::move(rvalue)) {
-    AllocatorPropagateMove(get_allocator_(), std::move(rvalue.get_allocator_()));
-}
+:   _Allocator(allocator_traits::SelectOnMove(std::move(rvalue)))
+,   TBasicSparseArray(std::move(rvalue))
+{}
 //----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize, typename _Allocator>
 auto TSparseArray<T, _ChunkSize, _Allocator>::operator =(TSparseArray&& rvalue) -> TSparseArray& {
+    allocator_traits::Move(this, std::move(rvalue));
     parent_type::operator =(std::move(rvalue));
-    AllocatorPropagateMove(get_allocator_(), std::move(rvalue.get_allocator_()));
     return (*this);
 }
 //----------------------------------------------------------------------------
@@ -235,7 +232,7 @@ auto TSparseArray<T, _ChunkSize, _Allocator>::Add() -> reference {
 
     FDataItem* const it = At_(unpacked.Index);
     it->Id = PackId_(unpacked);
-    allocator_traits::construct(get_allocator_(), &it->Data);
+    Meta::Construct(&it->Data);
 
     return it->Data;
 }
@@ -250,7 +247,7 @@ auto TSparseArray<T, _ChunkSize, _Allocator>::Emplace(_Args&&... args) -> FDataI
 
     FDataItem* const it = At_(unpacked.Index);
     it->Id = PackId_(unpacked);
-    allocator_traits::construct(get_allocator_(), &it->Data, std::forward<_Args>(args)...);
+    Meta::Construct(&it->Data, std::forward<_Args>(args)...);
 
     return it->Id;
 }
@@ -266,7 +263,7 @@ bool TSparseArray<T, _ChunkSize, _Allocator>::Remove(FDataId id) {
     if (it->Id != id)
         return false; // weak ref is invalid, can't remove
 
-    allocator_traits::destroy(get_allocator_(), &it->Data);
+    Meta::Destroy(&it->Data);
 
     Release_(unpacked, it);
     return true;
@@ -281,7 +278,7 @@ void TSparseArray<T, _ChunkSize, _Allocator>::Remove(iterator it) {
     const FUnpackedId_ unpacked = UnpackId_(pitem->Id);
     Assert(not unpacked.empty());
 
-    allocator_traits::destroy(get_allocator_(), &pitem->Data);
+    Meta::Destroy(&pitem->Data);
 
     Release_(unpacked, pitem);
 }
@@ -296,7 +293,7 @@ void TSparseArray<T, _ChunkSize, _Allocator>::Remove(reference data) {
     Assert(not unpacked.empty());
     Assert(unpacked.Index < _highestIndex);
 
-    allocator_traits::destroy(get_allocator_(), &it->Data);
+    Meta::Destroy(&it->Data);
 
     Release_(unpacked, it);
 }
@@ -312,7 +309,7 @@ void TSparseArray<T, _ChunkSize, _Allocator>::Clear() {
         Assert(not unpacked.empty());
         Assert(unpacked.Index < _highestIndex);
 
-        allocator_traits::destroy(get_allocator_(), &it->Data);
+        Meta::Destroy(&it->Data);
 
         Release_(unpacked, it);
     }
@@ -377,9 +374,8 @@ void TSparseArray<T, _ChunkSize, _Allocator>::Release_(FUnpackedId_ id, FDataIte
 //----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize, typename _Allocator>
 NO_INLINE void TSparseArray<T, _ChunkSize, _Allocator>::GrabNewChunk_() {
-    Assert_NoAssume(SafeAllocatorSnapSize(get_allocator(), ChunkSize) == ChunkSize); // checks that we're not wasting memory
-
-    FDataItem* const newChunk = allocator_traits::allocate(get_allocator_(), ChunkSize);
+    FDataItem* const newChunk = static_cast<FDataItem*>(
+        allocator_traits::Allocate(*this, ChunkSize * sizeof(FDataItem)).Data );
 
     if (Likely(0 == _numChunks)) {
         Assert(nullptr == _chunks);
@@ -394,7 +390,7 @@ NO_INLINE void TSparseArray<T, _ChunkSize, _Allocator>::GrabNewChunk_() {
 
         FDataChunk* const firstChunk = reinterpret_cast<FDataChunk*>(_chunks); // the first chunk is saved without extra allocation
 
-        _chunks = (FDataChunk**)allocator_traits::allocate(get_allocator_(), ChunkSize);
+        _chunks = (FDataChunk**)allocator_traits::Allocate(*this, ChunkSize * sizeof(FDataItem)).Data;
         _chunks[0] = firstChunk;
     }
     else if (Unlikely(0 == _numChunks % NumPtrsPerChunk)) {
@@ -402,13 +398,15 @@ NO_INLINE void TSparseArray<T, _ChunkSize, _Allocator>::GrabNewChunk_() {
         Assert(Meta::RoundToNext(_numChunks, NumPtrsPerChunk) == _numChunks);
 
         const TMemoryView<FDataChunk*> oldChunks(_chunks, _numChunks);
-        const TMemoryView<FDataItem> aliasedChunks = oldChunks.template Cast<FDataItem>();
 
-        _chunks = (FDataChunk**)Relocate_AssumePod( // assume POD to do a simple memcpy (not used a FDataItem*)
-            get_allocator_(),
+        // a new FDataChunk worth of free space
+        TMemoryView<FDataItem> aliasedChunks = oldChunks.template Cast<FDataItem>();
+        ReallocateAllocatorBlock_AssumePOD(
+            allocator_traits::Get(*this),
             aliasedChunks,
-            aliasedChunks.size() + ChunkSize, // a new FDataChunk worth of free space
-            aliasedChunks.size() );
+            aliasedChunks.size(), aliasedChunks.size() + ChunkSize);
+
+        _chunks = (FDataChunk**)aliasedChunks.data();
     }
 
     _chunks[_numChunks++] = reinterpret_cast<FDataChunk*>(_chunks);
@@ -420,15 +418,15 @@ template <typename T, size_t _ChunkSize, typename _Allocator>
 void TSparseArray<T, _ChunkSize, _Allocator>::ReleaseChunk_(FDataChunk* chunk, size_t offset) {
     Assert(chunk);
 
-    allocator_type& al = get_allocator_();
-
     for (size_t i = 0; i < ChunkSize && offset + i < _highestIndex; ++i) {
         auto& it = (*chunk)[i];
         if (not UnpackId_(it.Id).empty())
-            allocator_traits::destroy(al, &it.Data);
+            Meta::Destroy(&it.Data);
     }
 
-    allocator_traits::deallocate(al, reinterpret_cast<FDataItem*>(chunk), ChunkSize);
+    allocator_traits::Deallocate(*this, FAllocatorBlock{
+        chunk,
+        ChunkSize * sizeof(FDataItem) });
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize, typename _Allocator>
@@ -463,7 +461,9 @@ void TSparseArray<T, _ChunkSize, _Allocator>::ClearReleaseMemory_LeaveDirty_() {
         const TMemoryView<FDataChunk*> storage(_chunks, numChunksReserved);
         const TMemoryView<FDataItem> aliased = storage.template Cast<FDataItem>();
 
-        allocator_traits::deallocate(get_allocator_(), aliased.data(), aliased.size());
+        allocator_traits::Deallocate(*this, FAllocatorBlock{
+            aliased.data(),
+            aliased.SizeInBytes() });
     }
 }
 //----------------------------------------------------------------------------

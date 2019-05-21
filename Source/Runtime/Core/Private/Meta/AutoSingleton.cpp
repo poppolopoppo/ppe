@@ -55,7 +55,7 @@ void FAutoSingletonManagerImpl::Shutdown() {
 void FAutoSingletonManagerImpl::Register(FAbstractAutoSingleton *singleton) {
     Assert(singleton);
 
-    _instances.PushFront(singleton);
+    _instances.PushHead(singleton);
 }
 //----------------------------------------------------------------------------
 void FAutoSingletonManagerImpl::Unregister(FAbstractAutoSingleton *singleton) {
