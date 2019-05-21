@@ -141,11 +141,10 @@ static void HttpServicingThreadLaunchPad_(FHttpServer* owner) {
 }
 //----------------------------------------------------------------------------
 static void HttpServicingHandleConnection_(const FHttpServerImpl* server, FSocketBuffered&& socket) {
-    FSocketBuffered* psocket = new FSocketBuffered(std::move(socket));
-    FIOThreadPool::Get().Run([server, psocket](ITaskContext& ctx) {
+    TUniquePtr<FSocketBuffered> psocket{ new FSocketBuffered(std::move(socket)) };
+    FIOThreadPool::Get().Run([server, psocket{ std::move(psocket) }](ITaskContext & ctx) {
         HttpServicingTask_(ctx, server, *psocket);
         psocket->Disconnect(true);
-        checked_delete(psocket);
     });
 }
 //----------------------------------------------------------------------------
