@@ -492,7 +492,7 @@ public:
             for (const auto& it : *jsonProperties) {
                 const RTTI::FMetaProperty* const prop = klass->PropertyIFP(it.first.MakeView());
                 if (nullptr == prop) {
-                    LOG(Serialize, Error, L"unknown meta property <{0}::{1}>", klassName->ToString(), prop->Name());
+                    LOG(Serialize, Error, L"unknown meta property <{0}::{1}>", klassName->ToString(), it.first.MakeView());
                     return false;
                 }
 
