@@ -258,7 +258,8 @@ public:
 #   ifdef ARCH_X64
         return ::__popcnt64(v);
 #   else
-        return (::__popcnt(u32(v)) + ::__popcnt(u32(v >> 32)));
+        return (u64(::__popcnt(u32(v))) +
+                u64(::__popcnt(u32(v >> 32))) );
 #   endif
     }
 };

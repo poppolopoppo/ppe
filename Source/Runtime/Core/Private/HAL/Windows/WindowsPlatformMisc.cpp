@@ -99,6 +99,38 @@ static BOOL WINAPI ConsoleCtrlHandler_(::DWORD /*Type*/) {
     return TRUE;
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+static void ClipboardCopy_(::UINT fmt, const TMemoryView<const _Char>& src) {
+    const ::HWND hWindow = ::GetActiveWindow();
+
+    if (::OpenClipboard(hWindow)) {
+        if (not ::EmptyClipboard())
+            LOG_LASTERROR(HAL, L"EmptyClipboard()");
+
+        ::HGLOBAL const hGlobalMem = ::GlobalAlloc(GMEM_MOVEABLE, src.SizeInBytes() + sizeof(_Char));
+        if (not hGlobalMem)
+            LOG_LASTERROR(HAL, L"GlobalAlloc()");
+
+        void* const pData = ::GlobalLock(hGlobalMem);
+        if (not pData)
+            LOG_LASTERROR(HAL, L"GlobalLock()");
+
+        FPlatformMemory::Memcpy(pData, src.data(), src.SizeInBytes());
+        static_cast<_Char*>(pData)[src.size()] = _Char(0);
+
+        ::GlobalUnlock(hGlobalMem);
+
+        if (::SetClipboardData(fmt, hGlobalMem) == NULL)
+            LOG(HAL, Fatal, L"SetClipboardData failed with error : {0}", FLastError());
+
+        if (not ::CloseClipboard())
+            LOG_LASTERROR(HAL, L"CloseClipboard()");
+    }
+    else {
+        LOG_LASTERROR(HAL, L"OpenClipboard()");
+    }
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -313,28 +345,14 @@ void FWindowsPlatformMisc::PreventScreenSaver() {
     ::SendInput(1, &input, sizeof(::INPUT));
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformMisc::ClipboardCopy(const char* src) {
+void FWindowsPlatformMisc::ClipboardCopy(const char* src, size_t len) {
     Assert(src);
-
-    if (::OpenClipboard(::GetActiveWindow()))
-    {
-        Verify(::EmptyClipboard());
-
-        const size_t len = Length(src);
-
-        ::HGLOBAL globalMem = ::GlobalAlloc(GMEM_MOVEABLE, sizeof(char)*(len + 1));
-        Assert(globalMem);
-        {
-            char* data = (char*)::GlobalLock(globalMem);
-            FPlatformMemory::Memcpy(data, src, (len + 1) * sizeof(char));
-            ::GlobalUnlock(globalMem);
-        }
-
-        if (::SetClipboardData(CF_TEXT, globalMem) == NULL)
-            LOG(HAL, Fatal, L"SetClipboardData failed with error : {0}", FLastError());
-
-        Verify(::CloseClipboard());
-    }
+    ClipboardCopy_(CF_TEXT, FStringView(src, len));
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformMisc::ClipboardCopy(const wchar_t* src, size_t len) {
+    Assert(src);
+    ClipboardCopy_(CF_UNICODETEXT, FWStringView(src, len));
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformMisc::ClipboardPaste(FString& dst) {

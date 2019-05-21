@@ -32,7 +32,8 @@ public:
     static bool IsRunningOnBatery();
     static void PreventScreenSaver();
 
-    static void ClipboardCopy(const char* src);
+    static void ClipboardCopy(const char* src, size_t len);
+    static void ClipboardCopy(const wchar_t* src, size_t len);
     static bool ClipboardPaste(FString& dst);
 
     static void CreateGuid(struct FGuid& dst);

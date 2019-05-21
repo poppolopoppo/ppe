@@ -18,7 +18,9 @@
 #include "IO/TextWriter.h"
 #include "HAL/PlatformCrash.h"
 #include "HAL/PlatformFile.h"
+#include "HAL/PlatformMisc.h"
 #include "Memory/MemoryProvider.h"
+#include "Meta/Utility.h"
 
 #include "HAL/Windows/LastError.h"
 
@@ -29,26 +31,6 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
-//----------------------------------------------------------------------------
-static void SetClipboard_(HWND hwndDlg, const FWStringView& content)
-{
-    HANDLE handle = (HANDLE)::GlobalAlloc(GHND|GMEM_ZEROINIT, (content.size()+1)*sizeof(wchar_t));
-    if(handle != NULL)
-    {
-        wchar_t *pData = (wchar_t *) ::GlobalLock((HGLOBAL)handle);
-        AssertRelease(pData);
-
-        ::wcsncpy_s(pData, content.size(), content.Pointer(), content.size());
-        Assert(L'\0' == pData[content.size()]);
-        ::GlobalUnlock((HGLOBAL)handle);
-
-        ::OpenClipboard(hwndDlg);
-        ::EmptyClipboard();
-        ::SetClipboardData(CF_UNICODETEXT, handle);
-        ::CloseClipboard();
-    }
-    ::GlobalFree(handle);
-}
 //----------------------------------------------------------------------------
 static void ExternalEditor_(const FWStringView& filename, size_t line) {
     Assert(not filename.empty());
@@ -357,7 +339,8 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
                 for (const FWString& frame : ctx->CallstackFrames)
                     oss << frame << Crlf;
 
-                SetClipboard_(hwndDlg, oss.ToString());
+                const FWStringView clipboard = oss.Written();
+                FWindowsPlatformMisc::ClipboardCopy(clipboard.data(), clipboard.size());
             }
             return TRUE;
 
@@ -377,7 +360,7 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
 
                 ::MessageBoxExW(hwndDlg, path.c_str(), L"Core dumped", MB_OK|MB_ICONASTERISK, 0);
 
-                SetClipboard_(hwndDlg, MakeStringView(path));
+                FWindowsPlatformMisc::ClipboardCopy(path.data(), path.size());
             }
             return TRUE;
         }
@@ -421,15 +404,12 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
         ctx.DecodedCallstack = FDecodedCallstack(callstack);
         callstackFrames.reserve(ctx.DecodedCallstack.Frames().size());
 
-        wchar_t buffer[4096];
-        FWFixedSizeTextWriter oss(buffer);
+        FWStringBuilder sb;
         for (const FDecodedCallstack::FFrame& frame : ctx.DecodedCallstack.Frames()) {
-            oss << Fmt::FPointer{ reinterpret_cast<intptr_t>(frame.Address()) }
+            sb  << Fmt::Pointer(frame.Address())
                 << L' ' << frame.Filename()
-                << L'(' << frame.Line() << L"): " << frame.Symbol()
-                << Eos;
-            callstackFrames.emplace_back(oss.Written());
-            oss.Reset();
+                << L'(' << frame.Line() << L"): " << frame.Symbol();
+            callstackFrames.emplace_back(sb.ToString());
         }
     }
     ctx.CallstackFrames = callstackFrames.MakeConstView();
@@ -465,8 +445,8 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
         Template_AddCaption_(writer, L"Consolas"); // Font name
 
         // modal buttons
-        const size_t buttonTop = tpl->cy - 5 - buttonHeight;
-        size_t buttonRight = tpl->cx - 2;
+        const size_t buttonTop = size_t(tpl->cy) - 5 - buttonHeight;
+        size_t buttonRight = size_t(tpl->cx) - 2;
 
         for (FWindowsPlatformDialog::EResult button : GTemplate_AllButtons) {
             if ((size_t)button & (size_t)buttons) {

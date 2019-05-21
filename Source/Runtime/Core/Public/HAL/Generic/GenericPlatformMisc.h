@@ -49,7 +49,8 @@ public: // must be defined for every platform
     static bool IsRunningOnBatery() = delete;
     static void PreventScreenSaver() = delete;
 
-    static void ClipboardCopy(const char* src) = delete;
+    static void ClipboardCopy(const char* src, size_t len) = delete;
+    static void ClipboardCopy(const wchar_t* src, size_t len) = delete;
     static bool ClipboardPaste(FString& dst) = delete;
 
     static void CreateGuid(struct FGuid& dst) = delete;
