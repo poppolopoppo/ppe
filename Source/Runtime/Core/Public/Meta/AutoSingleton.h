@@ -23,7 +23,9 @@ namespace Meta {
 //----------------------------------------------------------------------------
 class FAbstractAutoSingleton {
 protected:
-    FAbstractAutoSingleton() {}
+    FAbstractAutoSingleton() NOEXCEPT
+    :   _node{ nullptr, nullptr }
+    {}
 
 public:
     virtual ~FAbstractAutoSingleton() { // must be virtual to allow delete()

@@ -22,7 +22,8 @@ struct TInSituPtr {
         POD_STORAGE(T) InSitu;
     };
 
-    FORCE_INLINE explicit TInSituPtr(Meta::FNoInit) {}
+    explicit TInSituPtr(Meta::FNoInit) NOEXCEPT {}
+
     TInSituPtr() : VTable(NullMagick) {}
 
     bool Valid() const { return (VTable != NullMagick); }

@@ -317,7 +317,7 @@ FJson::FValue& FJson::FValue::operator =(const FValue& other) {
     return (*this);
 }
 //----------------------------------------------------------------------------
-FJson::FValue& FJson::FValue::operator =(FValue&& rvalue) {
+FJson::FValue& FJson::FValue::operator =(FValue&& rvalue) NOEXCEPT {
     Clear();
 
     switch (rvalue._type) {

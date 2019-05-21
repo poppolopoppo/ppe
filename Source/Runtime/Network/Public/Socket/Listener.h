@@ -15,14 +15,17 @@ class FSocketBuffered;
 //----------------------------------------------------------------------------
 class PPE_NETWORK_API FListener {
 public:
-    FListener();
-    explicit FListener(FAddress&& listening);
+    FListener() NOEXCEPT;
+    explicit FListener(FAddress&& listening) NOEXCEPT;
     explicit FListener(const FAddress& listening)
         : FListener(FAddress(listening)) {}
     ~FListener();
 
-    FListener(FListener&& rvalue) : FListener() { operator =(std::move(rvalue)); }
-    FListener& operator =(FListener&& rvalue);
+    FListener(FListener&& rvalue) NOEXCEPT
+        : FListener() {
+        operator =(std::move(rvalue));
+    }
+    FListener& operator =(FListener&& rvalue) NOEXCEPT;
 
     FListener(const FListener& ) = delete;
     FListener& operator =(const FListener& ) = delete;

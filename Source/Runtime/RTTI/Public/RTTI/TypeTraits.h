@@ -40,7 +40,8 @@ const T TTraitsHolder<T>::GInstance;
 struct PPE_RTTI_API PTypeTraits {
     const ITypeTraits* Traits;
 
-    FORCE_INLINE explicit PTypeTraits(Meta::FNoInit) NOEXCEPT {}
+    explicit PTypeTraits(Meta::FNoInit) NOEXCEPT {}
+
     CONSTEXPR explicit PTypeTraits(const ITypeTraits* traits = nullptr) NOEXCEPT : Traits(traits) {}
 
     bool Valid() const { return (nullptr != Traits); }

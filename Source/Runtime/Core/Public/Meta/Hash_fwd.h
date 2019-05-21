@@ -15,7 +15,7 @@ public:
 
     hash_t() = default;
 
-    CONSTEXPR hash_t(size_t value) : _value(value) {}
+    CONSTEXPR hash_t(size_t value) NOEXCEPT : _value(value) {}
     CONSTEXPR operator size_t () const { return _value; }
 
     // hash_value(hash_t) = hash_t,
@@ -36,21 +36,21 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, hash_t h);
 #if _HAS_CXX14
 //----------------------------------------------------------------------------
 CONSTEXPR u32 hash_u32_constexpr(u32 h32) NOEXCEPT {
-    h32 ^= h32 >> 15; // XXH32_avalanche()
-    h32 *= 2246822519U;
-    h32 ^= h32 >> 13;
-    h32 *= 3266489917U;
-    h32 ^= h32 >> 16;
+    h32 ^= h32 >> u32(15); // XXH32_avalanche()
+    h32 *= u32(2246822519UL);
+    h32 ^= h32 >> u32(13);
+    h32 *= u32(3266489917UL);
+    h32 ^= h32 >> u32(16);
     return h32;
 }
 //----------------------------------------------------------------------------
 CONSTEXPR u32 hash_u32_constexpr(u32 h, u32 k) NOEXCEPT {
-    k *= 0xcc9e2d51ul; // https://www.boost.org/doc/libs/1_64_0/boost/functional/hash/hash.hpp
-    k = (k << 15ul) | (k >> (32ul - 15ul));
-    k *= 0x1b873593ul;
+    k *= u32(0xCC9E2D51UL); // https://www.boost.org/doc/libs/1_64_0/boost/functional/hash/hash.hpp
+    k = (k << u32(15)) | (k >> u32(32 - 15));
+    k *= u32(0x1B873593UL);
     h ^= k;
-    h = (h << 13ul) | (h >> (32ul - 13ul));
-    h = h * 5ul + 0xe6546b64ul;
+    h = (h << u32(13)) | (h >> u32(32 - 13));
+    h = h * u32(5) + u32(0xE6546B64UL);
     return h;
 }
 //----------------------------------------------------------------------------
@@ -91,21 +91,21 @@ CONSTEXPR u32 hash_u32_constexpr(u32 h0, u32 h1, u32 h2, _Args... args) NOEXCEPT
 #if _HAS_CXX14
 //----------------------------------------------------------------------------
 CONSTEXPR u64 hash_u64_constexpr(u64 h64) NOEXCEPT {
-    h64 ^= h64 >> 33; // XXH64_avalanche()
-    h64 *= 14029467366897019727ULL;
-    h64 ^= h64 >> 29;
-    h64 *= 1609587929392839161ULL;
-    h64 ^= h64 >> 32;
+    h64 ^= h64 >> u64(33); // XXH64_avalanche()
+    h64 *= u64(14029467366897019727ULL);
+    h64 ^= h64 >> u64(29);
+    h64 *= u64(1609587929392839161ULL);
+    h64 ^= h64 >> u64(32);
     return h64;
 }
 //----------------------------------------------------------------------------
 CONSTEXPR u64 hash_u64_constexpr(u64 h, u64 k) NOEXCEPT {
-    k *= 0xc6a4a7935bd1e995ull; // https://www.boost.org/doc/libs/1_64_0/boost/functional/hash/hash.hpp
-    k ^= k >> 47ull;
-    k *= 0xc6a4a7935bd1e995ull;
+    k *= u64(0xC6A4A7935BD1E995ULL); // https://www.boost.org/doc/libs/1_64_0/boost/functional/hash/hash.hpp
+    k ^= k >> u64(47);
+    k *= u64(0xC6A4A7935BD1E995ULL);
     h ^= k;
-    h *= 0xc6a4a7935bd1e995ull;
-    h += 0xe6546b64ull; // Completely arbitrary number, to prevent 0's from hashing to 0.
+    h *= u64(0xC6A4A7935BD1E995ULL);
+    h += u64(0xE6546B64ULL); // Completely arbitrary number, to prevent 0's from hashing to 0.
     return h;
 }
 //----------------------------------------------------------------------------
@@ -165,15 +165,15 @@ CONSTEXPR size_t hash_sequence_constexpr(const T* data, std::index_sequence<_Ind
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR size_t hash_mem_constexpr(const T* data, size_t n) NOEXCEPT {
-    size_t h = n;
-    for (size_t i = 0; i < n; ++i)
+    size_t h = hash_size_t_constexpr(data[0]);
+    for (size_t i = 1; i < n; ++i)
         h = hash_size_t_constexpr(h, data[i]);
     return h;
 }
 //----------------------------------------------------------------------------
 template <typename _FwdIt>
 CONSTEXPR size_t hash_fwdit_constexpr(_FwdIt first, _FwdIt last) NOEXCEPT {
-    size_t h = 0;
+    size_t h = hash_size_t_constexpr(*first++);
     for (; first != last; ++first)
         h = hash_size_t_constexpr(h, *first);
     return h;

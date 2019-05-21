@@ -145,8 +145,8 @@ public:
     TRefPtr(T* ptr);
     ~TRefPtr();
 
-    TRefPtr(TRefPtr&& rvalue);
-    TRefPtr& operator =(TRefPtr&& rvalue);
+    TRefPtr(TRefPtr&& rvalue) NOEXCEPT;
+    TRefPtr& operator =(TRefPtr&& rvalue) NOEXCEPT;
 
     TRefPtr(const TRefPtr& other);
     TRefPtr& operator =(const TRefPtr& other);
@@ -157,9 +157,9 @@ public:
     TRefPtr& operator =(const TRefPtr<U>& other);
 
     template <typename U>
-    TRefPtr(TRefPtr<U>&& rvalue);
+    TRefPtr(TRefPtr<U>&& rvalue) NOEXCEPT;
     template <typename U>
-    TRefPtr& operator =(TRefPtr<U>&& rvalue);
+    TRefPtr& operator =(TRefPtr<U>&& rvalue) NOEXCEPT;
 
     FORCE_INLINE T* get() const { return _ptr; }
     void reset(T* ptr = nullptr);
@@ -233,49 +233,49 @@ public:
     template <typename U>
     friend class TSafePtr;
 
-    TSafePtr();
-    TSafePtr(T* ptr);
+    TSafePtr() NOEXCEPT;
+    TSafePtr(T* ptr) NOEXCEPT;
     ~TSafePtr();
 
-    TSafePtr(TSafePtr&& rvalue);
-    TSafePtr& operator =(TSafePtr&& rvalue);
+    TSafePtr(TSafePtr&& rvalue) NOEXCEPT;
+    TSafePtr& operator =(TSafePtr&& rvalue) NOEXCEPT;
 
-    TSafePtr(const TSafePtr& other);
-    TSafePtr& operator =(const TSafePtr& other);
-
-    template <typename U>
-    TSafePtr(const TSafePtr<U>& other);
-    template <typename U>
-    TSafePtr& operator =(const TSafePtr<U>& other);
+    TSafePtr(const TSafePtr& other) NOEXCEPT;
+    TSafePtr& operator =(const TSafePtr& other) NOEXCEPT;
 
     template <typename U>
-    TSafePtr(TSafePtr<U>&& rvalue);
+    TSafePtr(const TSafePtr<U>& other) NOEXCEPT;
     template <typename U>
-    TSafePtr& operator =(TSafePtr<U>&& rvalue);
-
-    template <typename U>
-    TSafePtr(const TRefPtr<U>& refptr) : TSafePtr(refptr.get()) {}
-    template <typename U>
-    TSafePtr& operator =(const TRefPtr<U>&& refptr) { return operator =(refptr.get()); }
-
-    T* get() const { return _ptr; }
-    void reset(T* ptr = nullptr);
+    TSafePtr& operator =(const TSafePtr<U>& other) NOEXCEPT;
 
     template <typename U>
-    U *as() const { return checked_cast<U*>(_ptr); }
-
-    T& operator *() const { Assert(_ptr); return *_ptr; }
-    T* operator ->() const { Assert(_ptr); return _ptr; }
-
-    operator T* () const { return _ptr; }
+    TSafePtr(TSafePtr<U>&& rvalue) NOEXCEPT;
+    template <typename U>
+    TSafePtr& operator =(TSafePtr<U>&& rvalue) NOEXCEPT;
 
     template <typename U>
-    void Swap(TSafePtr<U>& other);
+    TSafePtr(const TRefPtr<U>& refptr) NOEXCEPT : TSafePtr(refptr.get()) {}
+    template <typename U>
+    TSafePtr& operator =(const TRefPtr<U>&& refptr) NOEXCEPT { return operator =(refptr.get()); }
+
+    T* get() const NOEXCEPT { return _ptr; }
+    void reset(T* ptr = nullptr) NOEXCEPT;
+
+    template <typename U>
+    U *as() const NOEXCEPT { return checked_cast<U*>(_ptr); }
+
+    T& operator *() const NOEXCEPT { Assert(_ptr); return *_ptr; }
+    T* operator ->() const NOEXCEPT { Assert(_ptr); return _ptr; }
+
+    operator T* () const NOEXCEPT { return _ptr; }
+
+    template <typename U>
+    void Swap(TSafePtr<U>& other) NOEXCEPT;
 
 #if USE_PPE_SAFEPTR
 protected:
-    void IncRefCountIFP() const;
-    void DecRefCountIFP() const;
+    void IncRefCountIFP() const NOEXCEPT;
+    void DecRefCountIFP() const NOEXCEPT;
 #endif //!USE_PPE_SAFEPTR
 private:
     T* _ptr;
@@ -285,17 +285,17 @@ template <typename T> struct IsSafePtr : public std::false_type {};
 template <typename T> struct IsSafePtr<TSafePtr<T>> : public std::true_type {};
 //----------------------------------------------------------------------------
 template <typename T>
-Meta::TEnableIf< IsRefCountable<T>::value, TSafePtr<T> > MakeSafePtr(T* ptr) {
+Meta::TEnableIf< IsRefCountable<T>::value, TSafePtr<T> > MakeSafePtr(T* ptr) NOEXCEPT {
     return TSafePtr<T>(ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-hash_t hash_value(const TSafePtr<T>& TSafePtr) {
+hash_t hash_value(const TSafePtr<T>& TSafePtr) NOEXCEPT {
     return hash_value(TSafePtr.get());
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>
-void swap(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) {
+void swap(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------

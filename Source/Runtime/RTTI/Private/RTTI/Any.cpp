@@ -20,18 +20,18 @@ namespace RTTI {
 namespace {
 //----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(FAny) == FAny::GInSituSize + sizeof(intptr_t)); // checks for padding
-constexpr size_t GNumSupportedTypes = 0
-#define DECL_RTTI_NATIVETYPE_SUPPORTED(_Name, T, _TypeId) + 1
+constexpr size_t GNumSupportedTypes = size_t(0)
+#define DECL_RTTI_NATIVETYPE_SUPPORTED(_Name, T, _TypeId) + size_t(1)
 FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_SUPPORTED)
 #undef DECL_RTTI_NATIVETYPE_SUPPORTED
     ;
-constexpr size_t GNumSupportedTypesFittingInSitu = 0
-#define DECL_RTTI_NATIVETYPE_SUPPORTED(_Name, T, _TypeId) + (sizeof(T) <= FAny::GInSituSize ? 1 : 0)
+constexpr size_t GNumSupportedTypesFittingInSitu = size_t(0)
+#define DECL_RTTI_NATIVETYPE_SUPPORTED(_Name, T, _TypeId) + size_t(sizeof(T) <= FAny::GInSituSize ? 1 : 0)
 FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_SUPPORTED)
 #undef DECL_RTTI_NATIVETYPE_SUPPORTED
     ;
 // checks that all types can be wrapped in except for FAny
-STATIC_ASSERT(GNumSupportedTypesFittingInSitu == GNumSupportedTypes - 1/* FAny */);
+STATIC_ASSERT(GNumSupportedTypesFittingInSitu == GNumSupportedTypes - size_t(1)/* FAny */);
 STATIC_ASSERT(sizeof(FAny) > sizeof(FAny::GInSituSize));
 //----------------------------------------------------------------------------
 static FORCE_INLINE bool Any_FitInSitu_(size_t sizeInBytes) {
@@ -80,7 +80,7 @@ FAny& FAny::operator =(const FAny& other) {
     return (*this);
 }
 //----------------------------------------------------------------------------
-FAny::FAny(FAny&& rvalue)
+FAny::FAny(FAny&& rvalue) NOEXCEPT
 :   _traits(Meta::NoInit) {
 
     if (rvalue._traits) {
@@ -105,7 +105,7 @@ FAny::FAny(FAny&& rvalue)
     }
 }
 //----------------------------------------------------------------------------
-FAny& FAny::operator =(FAny&& rvalue) {
+FAny& FAny::operator =(FAny&& rvalue) NOEXCEPT {
     if (rvalue._traits) {
         const size_t sizeInBytes = rvalue._traits->SizeInBytes();
 

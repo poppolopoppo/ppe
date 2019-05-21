@@ -29,14 +29,14 @@ public:
     FAny(const FAny& other);
     FAny& operator =(const FAny& other);
 
-    FAny(FAny&& rvalue);
-    FAny& operator =(FAny&& rvalue);
+    FAny(FAny&& rvalue) NOEXCEPT;
+    FAny& operator =(FAny&& rvalue) NOEXCEPT;
 
     explicit FAny(ENativeType type) : FAny(MakeTraits(type)) {}
     explicit FAny(const PTypeTraits& type);
 
     template <typename T, class = TWrapable<T> >
-    explicit FAny(T&& rvalue) : _traits(Meta::NoInit) {
+    explicit FAny(T&& rvalue) NOEXCEPT : _traits(Meta::NoInit) {
         const PTypeTraits traits = MakeTraits<T>();
         AssignMove_AssumeNotInitialized_(&rvalue, *traits, traits->SizeInBytes());
     }

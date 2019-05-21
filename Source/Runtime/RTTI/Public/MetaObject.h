@@ -63,6 +63,9 @@ public:
     FMetaObject();
     virtual ~FMetaObject();
 
+    FMetaObject(const FMetaObject&) = delete;
+    FMetaObject& operator =(const FMetaObject&) = delete;
+
     const FName& RTTI_Name() const  { return _name; }
     EObjectFlags RTTI_Flags() const { return _flags; }
 

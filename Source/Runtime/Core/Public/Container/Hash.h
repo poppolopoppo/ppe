@@ -13,27 +13,27 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FORCE_INLINE hash_t hash_value(bool v)  { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(i8 v)    { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(u8 v)    { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(i16 v)   { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(u16 v)   { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(i32 v)   { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(u32 v)   { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(i64 v)   { return hash_uint(u64(v)); }
-FORCE_INLINE hash_t hash_value(u64 v)   { return hash_uint(v); }
-FORCE_INLINE hash_t hash_value(u128 v)  { return hash_uint(v); }
-FORCE_INLINE hash_t hash_value(u256 v)  { return hash_as_pod(v); }
-FORCE_INLINE hash_t hash_value(float v) { return hash_uint(*(u32*)&v); }
-FORCE_INLINE hash_t hash_value(double v){ return hash_uint(*(u64*)&v); }
+FORCE_INLINE hash_t hash_value(bool v)  NOEXCEPT { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(i8 v)    NOEXCEPT { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(u8 v)    NOEXCEPT { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(i16 v)   NOEXCEPT { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(u16 v)   NOEXCEPT { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(i32 v)   NOEXCEPT { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(u32 v)   NOEXCEPT { return hash_uint(size_t(v)); }
+FORCE_INLINE hash_t hash_value(i64 v)   NOEXCEPT { return hash_uint(u64(v)); }
+FORCE_INLINE hash_t hash_value(u64 v)   NOEXCEPT { return hash_uint(v); }
+FORCE_INLINE hash_t hash_value(u128 v)  NOEXCEPT { return hash_uint(v); }
+FORCE_INLINE hash_t hash_value(u256 v)  NOEXCEPT { return hash_as_pod(v); }
+FORCE_INLINE hash_t hash_value(float v) NOEXCEPT { return hash_uint(*(u32*)&v); }
+FORCE_INLINE hash_t hash_value(double v)NOEXCEPT { return hash_uint(*(u64*)&v); }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE hash_t hash_value(const T *ptr) {
+FORCE_INLINE hash_t hash_value(const T *ptr) NOEXCEPT {
     return hash_ptr(ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE auto hash_value(T value)
+FORCE_INLINE auto hash_value(T value) NOEXCEPT
     -> typename std::enable_if<std::is_enum<T>::value, hash_t>::type {
     return hash_as_pod(value);
 }

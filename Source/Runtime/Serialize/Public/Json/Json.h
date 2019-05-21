@@ -83,18 +83,21 @@ public:
 
         explicit FValue(FJson& doc, EType type);
 
-        explicit FValue(FBool value) : _type(Bool), _bool(value) {}
-        explicit FValue(FInteger value) : _type(Integer), _integer(value) {}
-        explicit FValue(FFloat value) : _type(Float), _float(value) {}
-        explicit FValue(FText&& value) : _type(String), _string(std::move(value)) {}
-        explicit FValue(FArray&& value) : _type(Array), _array(std::move(value)) {}
-        explicit FValue(FObject&& value) : _type(Object), _object(std::move(value)) {}
+        explicit FValue(FBool value) NOEXCEPT : _type(Bool), _bool(value) {}
+        explicit FValue(FInteger value) NOEXCEPT : _type(Integer), _integer(value) {}
+        explicit FValue(FFloat value) NOEXCEPT : _type(Float), _float(value) {}
+        explicit FValue(FText&& value) NOEXCEPT : _type(String), _string(std::move(value)) {}
+        explicit FValue(FArray&& value) NOEXCEPT : _type(Array), _array(std::move(value)) {}
+        explicit FValue(FObject&& value) NOEXCEPT : _type(Object), _object(std::move(value)) {}
 
         FValue(const FValue& other) : FValue() { operator =(other); }
         FValue& operator =(const FValue& other);
 
-        FValue(FValue&& rvalue) : FValue() { operator =(std::move(rvalue)); }
-        FValue& operator =(FValue&& rvalue);
+        FValue(FValue&& rvalue) NOEXCEPT
+            : FValue() {
+            operator =(std::move(rvalue));
+        }
+        FValue& operator =(FValue&& rvalue) NOEXCEPT;
 
         EType Type() const { return _type; }
 

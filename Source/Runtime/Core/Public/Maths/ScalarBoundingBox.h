@@ -22,7 +22,7 @@ public:
     friend class TScalarBoundingBox;
 
     TScalarBoundingBox();
-    FORCE_INLINE explicit TScalarBoundingBox(Meta::FNoInit) {}
+    explicit TScalarBoundingBox(Meta::FNoInit noinit) NOEXCEPT {}
     TScalarBoundingBox(const vector_type& min, const vector_type& max);
 
     TScalarBoundingBox(const TScalarBoundingBox& other);

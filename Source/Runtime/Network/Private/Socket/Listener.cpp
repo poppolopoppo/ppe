@@ -19,9 +19,9 @@ EXTERN_LOG_CATEGORY(PPE_NETWORK_API, Network)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FListener::FListener() : _handle(0) {}
+FListener::FListener() NOEXCEPT : _handle(0) {}
 //----------------------------------------------------------------------------
-FListener::FListener(FAddress&& listening)
+FListener::FListener(FAddress&& listening) NOEXCEPT
 :   _handle(0)
 ,   _listening(std::move(listening)) {
     Assert(_listening.IsIPv4());
@@ -31,7 +31,7 @@ FListener::~FListener() {
     Assert(!IsConnected());
 }
 //----------------------------------------------------------------------------
-FListener& FListener::operator =(FListener&& rvalue) {
+FListener& FListener::operator =(FListener&& rvalue) NOEXCEPT {
     if (IsConnected())
         Disconnect();
 

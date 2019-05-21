@@ -166,12 +166,12 @@ TRefPtr<T>::~TRefPtr() {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TRefPtr<T>::TRefPtr(TRefPtr&& rvalue) : _ptr(rvalue._ptr) {
+TRefPtr<T>::TRefPtr(TRefPtr&& rvalue) NOEXCEPT : _ptr(rvalue._ptr) {
     rvalue._ptr = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto TRefPtr<T>::operator =(TRefPtr&& rvalue) -> TRefPtr& {
+auto TRefPtr<T>::operator =(TRefPtr&& rvalue) NOEXCEPT -> TRefPtr& {
     DecRefCountIFP();
     _ptr = rvalue._ptr;
     rvalue._ptr = nullptr;
@@ -213,14 +213,14 @@ auto TRefPtr<T>::operator =(const TRefPtr<U>& other) -> TRefPtr& {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-TRefPtr<T>::TRefPtr(TRefPtr<U>&& rvalue)
+TRefPtr<T>::TRefPtr(TRefPtr<U>&& rvalue) NOEXCEPT
 :   _ptr(checked_cast<T *>(rvalue.get())) {
     rvalue._ptr = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-auto TRefPtr<T>::operator =(TRefPtr<U>&& rvalue) -> TRefPtr& {
+auto TRefPtr<T>::operator =(TRefPtr<U>&& rvalue) NOEXCEPT -> TRefPtr& {
     DecRefCountIFP();
     _ptr = checked_cast<T *>(rvalue.get());
     rvalue._ptr = nullptr;
@@ -259,11 +259,11 @@ FORCE_INLINE void TRefPtr<T>::DecRefCountIFP() const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-TSafePtr<T>::TSafePtr()
+TSafePtr<T>::TSafePtr() NOEXCEPT
 :   _ptr(nullptr) {}
 //----------------------------------------------------------------------------
 template <typename T>
-TSafePtr<T>::TSafePtr(T* ptr)
+TSafePtr<T>::TSafePtr(T* ptr) NOEXCEPT
 :   _ptr(ptr) {
 #if USE_PPE_SAFEPTR
     IncRefCountIFP();
@@ -278,12 +278,12 @@ TSafePtr<T>::~TSafePtr() {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TSafePtr<T>::TSafePtr(TSafePtr&& rvalue) : _ptr(rvalue._ptr) {
+TSafePtr<T>::TSafePtr(TSafePtr&& rvalue) NOEXCEPT : _ptr(rvalue._ptr) {
     rvalue._ptr = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto TSafePtr<T>::operator =(TSafePtr&& rvalue) -> TSafePtr& {
+auto TSafePtr<T>::operator =(TSafePtr&& rvalue) NOEXCEPT -> TSafePtr& {
 #if USE_PPE_SAFEPTR
     DecRefCountIFP();
 #endif
@@ -293,14 +293,14 @@ auto TSafePtr<T>::operator =(TSafePtr&& rvalue) -> TSafePtr& {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TSafePtr<T>::TSafePtr(const TSafePtr& other) : _ptr(other._ptr) {
+TSafePtr<T>::TSafePtr(const TSafePtr& other) NOEXCEPT : _ptr(other._ptr) {
 #if USE_PPE_SAFEPTR
     IncRefCountIFP();
 #endif
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto TSafePtr<T>::operator =(const TSafePtr& other) -> TSafePtr& {
+auto TSafePtr<T>::operator =(const TSafePtr& other) NOEXCEPT -> TSafePtr& {
 #if USE_PPE_SAFEPTR
     if (other._ptr != _ptr) {
         DecRefCountIFP();
@@ -315,7 +315,7 @@ auto TSafePtr<T>::operator =(const TSafePtr& other) -> TSafePtr& {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-TSafePtr<T>::TSafePtr(const TSafePtr<U>& other)
+TSafePtr<T>::TSafePtr(const TSafePtr<U>& other) NOEXCEPT
 :   _ptr(checked_cast<T *>(other.get())) {
 #if USE_PPE_SAFEPTR
     IncRefCountIFP();
@@ -324,7 +324,7 @@ TSafePtr<T>::TSafePtr(const TSafePtr<U>& other)
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-auto TSafePtr<T>::operator =(const TSafePtr<U>& other) -> TSafePtr& {
+auto TSafePtr<T>::operator =(const TSafePtr<U>& other) NOEXCEPT -> TSafePtr& {
 #if USE_PPE_SAFEPTR
     if (other.get() != _ptr) {
         DecRefCountIFP();
@@ -339,14 +339,14 @@ auto TSafePtr<T>::operator =(const TSafePtr<U>& other) -> TSafePtr& {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-TSafePtr<T>::TSafePtr(TSafePtr<U>&& rvalue)
+TSafePtr<T>::TSafePtr(TSafePtr<U>&& rvalue) NOEXCEPT
 :   _ptr(checked_cast<T *>(rvalue.get())) {
     rvalue._ptr = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-auto TSafePtr<T>::operator =(TSafePtr<U>&& rvalue) -> TSafePtr& {
+auto TSafePtr<T>::operator =(TSafePtr<U>&& rvalue) NOEXCEPT -> TSafePtr& {
 #if USE_PPE_SAFEPTR
     DecRefCountIFP();
 #endif
@@ -356,7 +356,7 @@ auto TSafePtr<T>::operator =(TSafePtr<U>&& rvalue) -> TSafePtr& {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void TSafePtr<T>::reset(T* ptr/* = nullptr */) {
+void TSafePtr<T>::reset(T* ptr/* = nullptr */) NOEXCEPT {
 #if USE_PPE_SAFEPTR
     if (ptr != _ptr) {
         DecRefCountIFP();
@@ -370,13 +370,13 @@ void TSafePtr<T>::reset(T* ptr/* = nullptr */) {
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-void TSafePtr<T>::Swap(TSafePtr<U>& other) {
+void TSafePtr<T>::Swap(TSafePtr<U>& other) NOEXCEPT {
     std::swap(other._ptr, _ptr);
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_SAFEPTR
 template <typename T>
-FORCE_INLINE void TSafePtr<T>::IncRefCountIFP() const {
+FORCE_INLINE void TSafePtr<T>::IncRefCountIFP() const NOEXCEPT {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     if (_ptr)
         AddSafeRef(_ptr);
@@ -385,7 +385,7 @@ FORCE_INLINE void TSafePtr<T>::IncRefCountIFP() const {
 //----------------------------------------------------------------------------
 #if USE_PPE_SAFEPTR
 template <typename T>
-FORCE_INLINE void TSafePtr<T>::DecRefCountIFP() const {
+FORCE_INLINE void TSafePtr<T>::DecRefCountIFP() const NOEXCEPT {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     if (_ptr)
         RemoveSafeRef(_ptr);

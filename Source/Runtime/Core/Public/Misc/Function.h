@@ -20,6 +20,11 @@
 //   #TODO : add a special wrapper for TFunction<T, 0> (no in situ)
 //   #TODO : both tasks up there will need to implement bind outside TFunction<>
 //
+// *OR*
+//
+//   #TODO : don't handle the cases mention above (they're quite hard),
+//           and provide a new TFunctionExpr<> for compositions, based on the same model than TVectorExpr<>
+//
 */
 
 namespace PPE {
@@ -143,9 +148,9 @@ struct TFunctionVTable {
     template <typename T>
     static CONSTEXPR copy_t make_copy() NOEXCEPT {
         IF_CONSTEXPR(std::is_copy_constructible_v<T>)
-            return[](void* dst, const void* src) CONSTEXPR NOEXCEPT{
+            return [](void* dst, const void* src) CONSTEXPR NOEXCEPT{
                 INPLACE_NEW(dst, T){ *static_cast<const T*>(src) };
-        };
+            };
         else
             return nullptr; // crash when trying to copy
     }
@@ -153,17 +158,17 @@ struct TFunctionVTable {
     template <typename T>
     static CONSTEXPR move_t make_move() NOEXCEPT {
         IF_CONSTEXPR(std::is_move_constructible_v<T> || std::is_copy_constructible_v<T>)
-            return[](void* dst, void* src) CONSTEXPR NOEXCEPT{
+            return [](void* dst, void* src) CONSTEXPR NOEXCEPT{
                 INPLACE_NEW(dst, T){ std::move(*static_cast<T*>(src)) };
                 Meta::Destroy(static_cast<T*>(src)); // expected to destroy after move
-        };
+            };
         else
             return nullptr; // crash when trying to move
     }
 
     template <typename T>
     static CONSTEXPR destroy_t make_destroy() {
-        return[](void* p) CONSTEXPR NOEXCEPT{
+        return [](void* p) CONSTEXPR NOEXCEPT{
             Meta::Destroy(static_cast<T*>(p)); // simpler control flow to always call dtor
         };
     }
@@ -171,9 +176,9 @@ struct TFunctionVTable {
     template <typename T>
     static CONSTEXPR equals_t make_equals() NOEXCEPT {
         IF_CONSTEXPR(Meta::has_equals_v<T>)
-            return[](const void* lhs, const void* rhs) CONSTEXPR NOEXCEPT{
+            return [](const void* lhs, const void* rhs) CONSTEXPR NOEXCEPT{
                 return (*static_cast<const T*>(lhs) == *static_cast<const T*>(rhs));
-        };
+            };
         else
             return phony_equals; // always different
     }

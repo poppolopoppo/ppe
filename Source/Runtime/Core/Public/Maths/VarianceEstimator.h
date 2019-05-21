@@ -103,7 +103,7 @@ struct TReservoirSampling {
         if (Count < Capacity)
             Samples[Count] = sample;
         else {
-            const u32 r = checked_cast<u32>(rnd(Count + 1));
+            const u32 r = checked_cast<u32>(rnd(size_t(Count) + 1));
             if (r < Capacity)
                 Samples[r] = sample;
 
@@ -247,7 +247,7 @@ struct TApproximateHistogram {
         Assert_NoAssume(smin < smax);
 
         // deduce the bias and scale to normalize the samples
-        ApproximateBias = smin + (smax - smin) / (2 * _Bins);
+        ApproximateBias = smin + (smax - smin) / (T(2) * _Bins);
         ApproximateScale = Rcp(smax - smin);
 
         // finally construct the histogram bins and add all samples
