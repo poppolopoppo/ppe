@@ -21,7 +21,7 @@
 ; intégre le fichier .natvis au pdb
 #define USE_VISUAL2019_LINK_NATVIS
 ; supprime un warning de dépréciation de std::iterator
-#define USE_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
+;#define USE_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 ; supprime un warning de changement d'ABI depuis 15.8
 #define USE_VISUAL2019_EXTENDED_ALIGNED_STORAGE
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
