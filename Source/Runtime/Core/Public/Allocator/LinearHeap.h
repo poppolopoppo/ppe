@@ -46,11 +46,10 @@ public:
     void* Relocate_AssumeLast(void* ptr, size_t newSize, size_t oldSize);
     void  Release_AssumeLast(void* ptr, size_t size);
 
-    bool AliasesToHeap(void* ptr) const;
-
     void ReleaseAll();
 
 #if !USE_PPE_FINAL_RELEASE
+    bool AliasesToHeap(void* ptr) const;
     void DumpMemoryStats();
 #endif
 
@@ -92,6 +91,7 @@ public:
 inline void* operator new(size_t sizeInBytes, PPE::FLinearHeap& heap) {
     return heap.Allocate(sizeInBytes);
 }
+
 inline void operator delete(void* ptr, PPE::FLinearHeap& heap) {
     Assert_NoAssume(heap.AliasesToHeap(ptr));
     AssertNotImplemented(); // can't delete since we don't know the allocation size

@@ -597,30 +597,6 @@ void FLinearHeap::Release_AssumeLast(void* ptr, size_t size) {
 #endif
 }
 //----------------------------------------------------------------------------
-bool FLinearHeap::AliasesToHeap(void* ptr) const {
-    Assert(ptr);
-
-    // !!! SLOW !!! (but safe)
-
-#if WITH_PPE_LINEARHEAP_FALLBACK_TO_MALLOC
-    for (auto* blk = static_cast<FLinearHeapHeader_*>(_blocks); blk; blk = blk->Node.Next) {
-        AssertCheckCanary(*blk);
-        if (blk->data() == ptr)
-            return true;
-    }
-    return false;
-
-#else
-    for (auto* blk = static_cast<const FLinearHeapBlock_*>(_blocks); blk; blk = blk->Next) {
-        AssertCheckCanary(*blk);
-        if (blk->AliasesToBlock(ptr))
-            return true;
-    }
-    return false;
-
-#endif
-}
-//----------------------------------------------------------------------------
 void FLinearHeap::ReleaseAll() {
     if (nullptr == _blocks) {
         Assert(nullptr == _deleteds);
@@ -655,6 +631,32 @@ void FLinearHeap::ReleaseAll() {
 
 #endif
 }
+//----------------------------------------------------------------------------
+#if !USE_PPE_FINAL_RELEASE
+bool FLinearHeap::AliasesToHeap(void* ptr) const {
+    Assert(ptr);
+
+    // !!! SLOW !!! (but safe)
+
+#if WITH_PPE_LINEARHEAP_FALLBACK_TO_MALLOC
+    for (auto* blk = static_cast<FLinearHeapHeader_*>(_blocks); blk; blk = blk->Node.Next) {
+        AssertCheckCanary(*blk);
+        if (blk->data() == ptr)
+            return true;
+    }
+    return false;
+
+#else
+    for (auto* blk = static_cast<const FLinearHeapBlock_*>(_blocks); blk; blk = blk->Next) {
+        AssertCheckCanary(*blk);
+        if (blk->AliasesToBlock(ptr))
+            return true;
+    }
+    return false;
+
+#endif
+}
+#endif //!#if !USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
 void FLinearHeap::DumpMemoryStats() {
