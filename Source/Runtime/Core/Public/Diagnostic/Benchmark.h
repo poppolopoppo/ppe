@@ -195,7 +195,7 @@ public: // FState
             if (((loop - 1) & (_benchmark.BatchSize - 1)) == 0) {
                 _timer.Stop();
 
-                const double t = (_timer.Reset() / (_benchmark.BatchSize * _benchmark.InputDim));
+                const double t = (_timer.Reset() / (size_t(_benchmark.BatchSize) * _benchmark.InputDim));
 
                 _histogram.AddSample(t, _rnd);
             }
@@ -410,7 +410,7 @@ public: // TTable<>
 public: // export table results
     template <typename... _Benchmarks>
     static void WTxt(const TTable<_Benchmarks...>& table, FWTextWriter& oss) {
-        oss << L"Benchmark table <" << table.Name << ">, units = " << FCounter::Units() << " :" << Eol;
+        oss << L"Benchmark table <" << table.Name << L">, units = " << FCounter::Units() << L" :" << Eol;
 
         constexpr u32 header = 20;
         constexpr u32 stride = 12;
@@ -427,7 +427,7 @@ public: // export table results
 
         oss << L'|' << Eol;
 
-        oss << Fmt::Repeat(L"-", (stride+1) * table.dim() + header) << Eol;
+        oss << Fmt::Repeat(L'-', (stride+1) * table.dim() + header) << Eol;
 
         table.ForeachEntry([&oss, header, stride](const auto& x) {
             oss << L'|'

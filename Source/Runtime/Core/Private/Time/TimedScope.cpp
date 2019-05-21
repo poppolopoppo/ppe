@@ -40,7 +40,7 @@ FBenchmarkScope::~FBenchmarkScope() {
 
     LOG(Benchmark, Info, L"{0:28} | {1}{2} | {3:10f2} / {4:12f2}",
         _category,
-        Fmt::Repeat(L"  ", _depth),
+        Fmt::Repeat(L' ', _depth * 2),
         Fmt::PadRight(_message, 28 - _depth * 2, L' '),
         Fmt::DurationInMs(elapsed),
         Fmt::Ternary(*_accumulated > 0, _accumulated, L'-') );

@@ -102,7 +102,7 @@ static void LogRequest_(const FHttpRequest& req) {
         << L"> Headers  : " << Eol;
 
     for (const auto& it : req.Headers()) {
-        Format(oss, L" - {{0}}' = \"{1}\"", it.first, it.second);
+        Format(oss, L" - {{0}} = \"{1}\"", it.first, it.second);
         oss << Eol;
     }
 
@@ -110,7 +110,7 @@ static void LogRequest_(const FHttpRequest& req) {
     if (FHttpRequest::UnpackCookie(&cookies, req)) {
         oss << L"> Cookies  :" << Eol;
         for (const auto& it : cookies) {
-            Format(oss, L" - {{0}}' = \"{1}\"", it.first, it.second);
+            Format(oss, L" - {{0}} = \"{1}\"", it.first, it.second);
             oss << Eol;
         }
     }
@@ -135,7 +135,7 @@ static void LogResponse_(const FHttpResponse& resp) {
         << L"> Headers  : " << Eol;
 
     for (const auto& it : resp.Headers()) {
-        Format(oss, L" - {{0}}' = \"{1}\"", it.first, it.second);
+        Format(oss, L" - {{0}} = \"{1}\"", it.first, it.second);
         oss << Eol;
     }
 

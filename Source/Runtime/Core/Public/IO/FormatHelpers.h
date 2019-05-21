@@ -14,20 +14,16 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
-PPE_STRONGLYTYPED_NUMERIC_DEF(intptr_t, FPointer);
 template <typename T>
-FPointer Pointer(T* p) { return FPointer{ intptr_t(p) }; }
+void* Pointer(const T* p) NOEXCEPT { return (void*)p; }
 } //!namespace Fmt
-//----------------------------------------------------------------------------
-PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FPointer ptr);
-PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPointer ptr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
 PPE_STRONGLYTYPED_NUMERIC_DEF(float, FPercentage);
 template <typename T, typename = Meta::TEnableIf<std::is_arithmetic_v<T>> >
-FPercentage Percentage(T x, T total) { return FPercentage{ x * 100.f / total }; }
+FPercentage Percentage(T x, T total) NOEXCEPT { return FPercentage{ x * 100.f / total }; }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FPercentage prc);
@@ -38,7 +34,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPercentage prc);
 namespace Fmt {
 PPE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, FCountOfElements);
 template <typename T>
-Meta::TEnableIf<std::is_integral_v<T>, FCountOfElements> CountOfElements(T n) {
+Meta::TEnableIf<std::is_integral_v<T>, FCountOfElements> CountOfElements(T n) NOEXCEPT {
     return FCountOfElements{ checked_cast<T>(n) };
 }
 } //!namespace Fmt
@@ -51,7 +47,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FCountOfElements 
 namespace Fmt {
 PPE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, FSizeInBytes);
 template <typename T>
-Meta::TEnableIf<std::is_integral_v<T>, FSizeInBytes> SizeInBytes(T n) {
+Meta::TEnableIf<std::is_integral_v<T>, FSizeInBytes> SizeInBytes(T n) NOEXCEPT {
     return FSizeInBytes{ checked_cast<uint64_t>(n) };
 }
 } //!namespace Fmt
@@ -63,7 +59,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FSizeInBytes size
 //----------------------------------------------------------------------------
 namespace Fmt {
 struct FDurationInMs { double Value; };
-inline FDurationInMs DurationInMs(FMicroseconds t) {
+inline FDurationInMs DurationInMs(FMicroseconds t) NOEXCEPT {
     return FDurationInMs{ t.Value() };
 }
 } //!namespace Fmt
@@ -80,7 +76,7 @@ struct TQuoted {
     _Quote Quote;
 };
 template <typename T, typename _Quote>
-TQuoted<T, _Quote> Quoted(const T& value, _Quote quote) {
+TQuoted<T, _Quote> Quoted(const T& value, _Quote quote) NOEXCEPT {
     return TQuoted<T, _Quote>{ &value, quote };
 }
 } //!namespace Fmt
@@ -102,27 +98,27 @@ struct TPadded {
     _Char FillChar;
 };
 template <typename T, typename _Char>
-TPadded<T, _Char> PadLeft(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
+TPadded<T, _Char> PadLeft(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
     return TPadded<T, _Char>{ &value, FTextFormat::Padding_Left, width, ch };
 }
 template <typename T, typename _Char>
-TPadded<T, _Char> PadCenter(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
+TPadded<T, _Char> PadCenter(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
     return TPadded<T, _Char>{ &value, FTextFormat::Padding_Center, width, ch };
 }
 template <typename T, typename _Char>
-TPadded<T, _Char> PadRight(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
+TPadded<T, _Char> PadRight(const T& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
     return TPadded<T, _Char>{ &value, FTextFormat::Padding_Right, width, ch };
 }
 template <typename _Char>
-TPadded<TBasicStringView<_Char>, _Char> AlignLeft(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
+TPadded<TBasicStringView<_Char>, _Char> AlignLeft(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
     return TPadded<TBasicStringView<_Char>, _Char>{ &value, FTextFormat::Padding_Right, width, ch };
 }
 template <typename _Char>
-TPadded<TBasicStringView<_Char>, _Char> AlignCenter(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
+TPadded<TBasicStringView<_Char>, _Char> AlignCenter(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
     return TPadded<TBasicStringView<_Char>, _Char>{ &value, FTextFormat::Padding_Center, width, ch };
 }
 template <typename _Char>
-TPadded<TBasicStringView<_Char>, _Char> AlignRight(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) {
+TPadded<TBasicStringView<_Char>, _Char> AlignRight(const TBasicStringView<_Char>& value, size_t width = INDEX_NONE, _Char ch = _Char(' ')) NOEXCEPT {
     return TPadded<TBasicStringView<_Char>, _Char>{ &value, FTextFormat::Padding_Left, width, ch };
 }
 } //!namespace Fmt
@@ -141,7 +137,7 @@ struct TNotFirstTime {
     bool First = true;
 };
 template <typename T>
-TNotFirstTime<T> NotFirstTime(T&& outp) {
+TNotFirstTime<T> NotFirstTime(T&& outp) NOEXCEPT {
     return TNotFirstTime<T>{ std::move(outp) };
 }
 } //!namespace Fmt
@@ -165,7 +161,7 @@ struct TNotLastTime {
     size_t Index = 0;
 };
 template <typename T>
-TNotLastTime<T> NotLastTime(T&& outp, size_t count) {
+TNotLastTime<T> NotLastTime(T&& outp, size_t count) NOEXCEPT {
     return TNotLastTime<T>{ std::move(outp), count };
 }
 } //!namespace Fmt
@@ -182,20 +178,23 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, Fmt::TNotLast
 namespace Fmt {
 template <typename T>
 struct TRepeater {
-    const T *Value = nullptr;
-    size_t Count = 0;
+    T Value;
+    size_t Count;
 };
 template <typename T>
-TRepeater<T> Repeat(const T& value, size_t count) {
-    return TRepeater<T>{ &value, count };
+TRepeater<const T&> Repeat(const T& value, size_t count) NOEXCEPT {
+    return TRepeater<const T&>{ &value, count };
+}
+template <typename T>
+TRepeater<T> Repeat(T&& rvalue, size_t count) NOEXCEPT {
+    return TRepeater<T>{ std::move(rvalue), count };
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
 template <typename _Char, typename T>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Fmt::TRepeater<T>& repeat ) {
-    Assert(repeat.Value);
     forrange(i, 0, repeat.Count)
-        oss << *repeat.Value;
+        oss << repeat.Value;
     return oss;
 }
 //----------------------------------------------------------------------------
@@ -208,7 +207,7 @@ struct TConditional {
     bool Enabled = false;
 };
 template <typename T>
-TConditional<T> Conditional(const T& value, bool enabled) {
+TConditional<T> Conditional(const T& value, bool enabled) NOEXCEPT {
     return TConditional<T>{ &value, enabled };
 }
 } //!namespace Fmt
@@ -231,7 +230,7 @@ struct TTernary {
     const _False* IfFalse = nullptr;
 };
 template <typename _True, typename _False>
-TTernary<_True, _False> Ternary(bool condition, const _True& ifTrue, const _False& ifFalse) {
+TTernary<_True, _False> Ternary(bool condition, const _True& ifTrue, const _False& ifFalse) NOEXCEPT {
     return TTernary<_True, _False>{ condition, &ifTrue, &ifFalse };
 }
 } //!namespace Fmt
@@ -253,27 +252,27 @@ struct TJoin {
     _It First;
     _It Last;
     _Sep Separator;
-    TJoin(_It first, _It last, _Sep separator)
+    TJoin(_It first, _It last, _Sep separator) NOEXCEPT
         : First(first), Last(last), Separator(separator) {}
 };
 template <typename _It, typename _Sep>
-auto Join(_It first, _It last, _Sep separator) {
+auto Join(_It first, _It last, _Sep separator) NOEXCEPT {
     return TJoin<_It, _Sep>(first, last, separator);
 }
 template <typename _It, typename _Sep>
-auto Join(const TIterable<_It>& iterable, _Sep separator) {
+auto Join(const TIterable<_It>& iterable, _Sep separator) NOEXCEPT {
     return TJoin<_It, _Sep>(iterable.begin(), iterable.end(), separator);
 }
 template <typename T, typename _Sep>
-auto Join(const TMemoryView<T>& view, _Sep separator) {
+auto Join(const TMemoryView<T>& view, _Sep separator) NOEXCEPT {
     return TJoin<typename TMemoryView<T>::iterator, _Sep>(view.begin(), view.end(), separator);
 }
 template <typename T>
-auto CommaSeparated(const TMemoryView<T>& data) {
+auto CommaSeparated(const TMemoryView<T>& data) NOEXCEPT {
     return Join(data.begin(), data.end(), MakeStringView(", "));
 };
 template <typename T>
-auto CommaSeparatedW(const TMemoryView<T>& data) {
+auto CommaSeparatedW(const TMemoryView<T>& data) NOEXCEPT {
     return Join(data.begin(), data.end(), MakeStringView(L", "));
 };
 } //!namespace Fmt
@@ -294,15 +293,15 @@ namespace Fmt {
 struct FHexDump {
     TMemoryView<const u8> RawData;
     size_t BytesPerRow;
-    FHexDump(const TMemoryView<const u8>& rawData, size_t bytesPerRow = 16)
+    FHexDump(const TMemoryView<const u8>& rawData, size_t bytesPerRow = 16) NOEXCEPT
         : RawData(rawData), BytesPerRow(bytesPerRow) {}
 };
 template <typename T>
-FHexDump HexDump(const TMemoryView<T>& data) {
+FHexDump HexDump(const TMemoryView<T>& data) NOEXCEPT {
     return FHexDump(data.template Cast<const u8>());
 }
 template <typename T>
-FHexDump HexDump(T* data, size_t n) {
+FHexDump HexDump(T* data, size_t n) NOEXCEPT {
     return HexDump(TMemoryView<T>(data, n));
 }
 } //!namespace Fmt
@@ -322,14 +321,14 @@ struct TBasicIndent {
     void Dec() { Assert(Level > 0); --Level; }
     struct FScope {
         TBasicIndent& Indent;
-        FScope(TBasicIndent& indent) : Indent(indent) { Indent.Inc(); }
+        FScope(TBasicIndent& indent) NOEXCEPT : Indent(indent) { Indent.Inc(); }
         ~FScope() { Indent.Dec(); }
     };
 };
 struct FIndent : TBasicIndent<char> {
     using TBasicIndent<char>::FScope;
 
-    explicit FIndent(const FStringView& tab = "    ")
+    explicit FIndent(const FStringView& tab = "    ") NOEXCEPT
         : TBasicIndent<char>(tab) {}
 
     static FIndent UsingTabs() { return FIndent{ "\t" }; }
@@ -340,7 +339,7 @@ struct FIndent : TBasicIndent<char> {
 struct FWIndent : TBasicIndent<wchar_t> {
     using TBasicIndent<wchar_t>::FScope;
 
-    explicit FWIndent(const FWStringView& tab = L"    ")
+    explicit FWIndent(const FWStringView& tab = L"    ") NOEXCEPT
         : TBasicIndent<wchar_t>(tab) {}
 
     static FWIndent UsingTabs() { return FWIndent{ L"\t" }; }
