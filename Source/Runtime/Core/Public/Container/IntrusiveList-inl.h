@@ -32,7 +32,7 @@ struct TIntrusiveListAccessor {
     static T* PopHead(T** pHead, T** pTailIFP);
     static T* PopTail(T** pHead, T** pTail);
 
-    static void PushFront(T** pHead, T** pTailIFP, T* value);
+    static void PushHead(T** pHead, T** pTailIFP, T* value);
     static void PushTail(T** pHead, T** pTailIFP, T* value);
 
     static void Erase(T** pHead, T** pTailIFP, T* value);
@@ -42,11 +42,11 @@ struct TIntrusiveListAccessor {
 
     static bool Contains(T* head, T* value);
 
-    static void PokeFront(T** pHead, T** pTailIFP, T* value) {
+    static void PokeHead(T** pHead, T** pTailIFP, T* value) {
         Assert(pHead);
         if (*pHead != value) {
             Erase(pHead, pTailIFP, value);
-            PushFront(pHead, pTailIFP, value);
+            PushHead(pHead, pTailIFP, value);
         }
     }
 
@@ -97,7 +97,7 @@ T* TIntrusiveListAccessor<T, _Member>::PopTail(T** pHead, T** pTail) {
 }
 //----------------------------------------------------------------------------
 template <typename T, TIntrusiveListNode<T> T::*_Member>
-void TIntrusiveListAccessor<T, _Member>::PushFront(T** pHead, T** pTailIFP, T* value) {
+void TIntrusiveListAccessor<T, _Member>::PushHead(T** pHead, T** pTailIFP, T* value) {
     Assert(pHead);
     Assert(value);
 
@@ -247,7 +247,7 @@ struct TIntrusiveSingleListAccessor {
     static FORCE_INLINE const T* Next(const T* ptr) { Assert(ptr); return Node(ptr).Next; }
 
     static T* PopHead(T** pHead);
-    static void PushFront(T** pHead, T* value);
+    static void PushHead(T** pHead, T* value);
 
     static void Erase(T** pHead, T* prev, T* value);
 
@@ -256,11 +256,11 @@ struct TIntrusiveSingleListAccessor {
 
     static bool Contains(T* head, T* value);
 
-    static void PokeFront(T** pHead, T* prev, T* value) {
+    static void PokeHead(T** pHead, T* prev, T* value) {
         Assert(pHead);
         if (*pHead != value) {
             Erase(pHead, prev, value);
-            PushFront(pHead, value);
+            PushHead(pHead, value);
         }
         else {
             Assert(nullptr == prev);
@@ -284,7 +284,7 @@ T* TIntrusiveSingleListAccessor<T, _Member>::PopHead(T** pHead) {
 }
 //----------------------------------------------------------------------------
 template <typename T, TIntrusiveSingleListNode<T> T::*_Member>
-void TIntrusiveSingleListAccessor<T, _Member>::PushFront(T** pHead, T* value) {
+void TIntrusiveSingleListAccessor<T, _Member>::PushHead(T** pHead, T* value) {
     Assert(pHead);
     Assert(value);
 

@@ -231,7 +231,7 @@ void FMetaNamespace::RegisterClass(FMetaClassHandle& handle) {
     Assert(not _classHandles.Contains(&handle));
 
     _classCount++;
-    _classHandles.PushFront(&handle);
+    _classHandles.PushHead(&handle);
 }
 //----------------------------------------------------------------------------
 // Enums
@@ -267,7 +267,7 @@ void FMetaNamespace::RegisterEnum(FMetaEnumHandle& handle) {
     Assert(not _enumHandles.Contains(&handle));
 
     _enumCount++;
-    _enumHandles.PushFront(&handle);
+    _enumHandles.PushHead(&handle);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

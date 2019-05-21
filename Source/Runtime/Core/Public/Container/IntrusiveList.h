@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -47,6 +47,23 @@ public:
     TIntrusiveList() : _head(nullptr), _tail(nullptr) {}
     ~TIntrusiveList() { Assert(nullptr == _head); Assert(nullptr == _tail); }
 
+    TIntrusiveList(const TIntrusiveList&) = delete;
+    TIntrusiveList& operator =(const TIntrusiveList&) = delete;
+
+    TIntrusiveList(TIntrusiveList&& rvalue)
+    :   _head(rvalue._head)
+    ,   _tail(rvalue._tail) {
+        rvalue._head = rvalue._tail = nullptr;
+    }
+
+    TIntrusiveList& operator =(TIntrusiveList&& rvalue) {
+        Assert(nullptr == _head);
+        Assert(nullptr == _tail);
+        std::swap(_head, rvalue._head);
+        std::swap(_tail, rvalue._tail);
+        return (*this);
+    }
+
     bool empty() const {
         Assert((nullptr == _tail) == (nullptr == _head));
         return (nullptr == _head);
@@ -67,7 +84,7 @@ public:
     T* PopHead() { return traits_type::PopHead(&_head, &_tail); }
     T* PopTail() { return traits_type::PopTail(&_head, &_tail); }
 
-    void PushFront(T* value) { traits_type::PushFront(&_head, &_tail, value); }
+    void PushHead(T* value) { traits_type::PushHead(&_head, &_tail, value); }
     void PushTail(T* value) { traits_type::PushTail(&_head, &_tail, value); }
 
     void Erase(T* value) { traits_type::Erase(&_head, &_tail, value); }
@@ -75,7 +92,7 @@ public:
     template <typename _Less>
     void Insert(T* value, const _Less& pred) { traits_type::Insert(&_head, &_tail, value, pred); }
 
-    void PokeFront(T* value) { traits_type::PokeFront(&_head, &_tail, value); }
+    void PokeHead(T* value) { traits_type::PokeHead(&_head, &_tail, value); }
     void PokeTail(T* value) { traits_type::PokeTail(&_head, &_tail, value); }
 
     bool Contains(T* value) const { return traits_type::Contains(_head, value); }
@@ -96,6 +113,20 @@ public:
     TIntrusiveSingleList() : _head(nullptr) {}
     ~TIntrusiveSingleList() { Assert(nullptr == _head); }
 
+    TIntrusiveSingleList(const TIntrusiveSingleList&) = delete;
+    TIntrusiveSingleList& operator =(const TIntrusiveSingleList&) = delete;
+
+    TIntrusiveSingleList(TIntrusiveSingleList&& rvalue)
+    :   _head(rvalue._head) {
+        rvalue._head = nullptr;
+    }
+
+    TIntrusiveSingleList& operator =(TIntrusiveSingleList&& rvalue) {
+        Assert(nullptr == _head);
+        std::swap(_head, rvalue._head);
+        return (*this);
+    }
+
     bool empty() const { return (nullptr == _head); }
 
     T* Head() const { return _head; }
@@ -107,14 +138,14 @@ public:
     const T* Next(const T* ptr) { return traits_type::Next(ptr); }
 
     T* PopHead() { return traits_type::PopHead(&_head); }
-    void PushFront(T* value) { traits_type::PushFront(&_head, value); }
+    void PushHead(T* value) { traits_type::PushHead(&_head, value); }
 
     void Erase(T* value, T* prev = nullptr) { traits_type::Erase(&_head, prev, value); }
 
     template <typename _Less>
     void Insert(T* value, const _Less& pred) { traits_type::Insert(&_head, value, pred); }
 
-    void PokeFront(T* value, T* prev = nullptr) { traits_type::PokeFront(&_head, prev, value); }
+    void PokeHead(T* value, T* prev = nullptr) { traits_type::PokeHead(&_head, prev, value); }
 
     bool Contains(T* value) const { return traits_type::Contains(_head, value); }
 
