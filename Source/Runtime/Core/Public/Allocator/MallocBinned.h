@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -19,7 +19,7 @@ public:
     static void     ReleaseCacheMemory();
     static void     ReleasePendingBlocks();
 
-    static size_t   SnapSize(size_t size);
+    static size_t   SnapSize(size_t size) NOEXCEPT;
 
     static size_t   RegionSize(void* ptr);
 
