@@ -33,7 +33,7 @@
 #include "Thread/ThreadContext.h"
 
 namespace PPE {
-LOG_CATEGORY_VERBOSITY(, Leaks, NoDebug)
+LOG_CATEGORY_VERBOSITY(, Leaks, All)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -46,22 +46,30 @@ public:
         u32 SizeInBytes     : 30;   // 32
         u32 CallstackUID;
 
-        FBlockHeader() : Reserved(0) {}
+        CONSTEXPR FBlockHeader(bool enabled, u32 sz, u32 uid) NOEXCEPT
+            : Reserved(0)
+            , Enabled(enabled)
+            , SizeInBytes(sz)
+            , CallstackUID(uid)
+        {}
 
         u64 Pack() const { return (*reinterpret_cast<const u64*>(this)); }
         static FBlockHeader Unpack(u64 v) { return (*reinterpret_cast<FBlockHeader*>(&v)); }
     };
     STATIC_ASSERT(sizeof(FBlockHeader) == sizeof(u64));
 
+    using FCallstackFingerprint = u128;
+
+    static CONSTEXPR FCallstackFingerprint EmptyKey{ 0, 0 };
+
     struct FCallstackHeader {
-        u64 Fingerprint;
         u64 StreamOffset    : 62;
         u64 KnownTrimmer    : 1;
         u64 KnownDeleter    : 1;
 
         bool IsNonDeleter() const { return (0 == (KnownDeleter | KnownTrimmer)); }
     };
-    STATIC_ASSERT(sizeof(FCallstackHeader) == sizeof(u64) * 2);
+    STATIC_ASSERT(sizeof(FCallstackHeader) == sizeof(u64));
 
     struct FCallstackData {
         STATIC_CONST_INTEGRAL(size_t, FramesToSkip, 3);
@@ -84,7 +92,11 @@ public:
             Verify(FCallstack::Decode(decoded, 0, frames));
         }
 
-        u64 MakeFingerprint() const { return Fingerprint64(MakeConstView(Frames)); }
+        FCallstackFingerprint MakeFingerprint() const {
+            auto h = Fingerprint128(MakeConstView(Frames));
+            Assert(EmptyKey != h);
+            return h;
+        }
     };
 
     struct FCallstackBlocks {
@@ -177,10 +189,10 @@ public:
         FCallstackData callstackData;
         callstackData.CaptureBacktrace();
 
-        FBlockHeader alloc;
-        alloc.Enabled = DontDisregard();
-        alloc.SizeInBytes = sizeInBytes;
-        alloc.CallstackUID = _callstacks.FindOrAdd(callstackData);
+        FBlockHeader alloc{
+            DontDisregard(),
+            checked_cast<u32>(sizeInBytes),
+            _callstacks.FindOrAdd(callstackData) };
 
         _blocks.Allocate(ptr, alloc);
     }
@@ -230,7 +242,7 @@ public:
 
         const FRecursiveLockTLS reentrantLock; // make sure
 
-        _blocks.Foreach([&, this, report](void* /*ptr*/, const FBlockHeader& alloc) {
+        _blocks.Foreach([&, this, report](void* ptr, const FBlockHeader& alloc) {
             if (report->Mode == ReportAllBlocks ||
                 (alloc.Enabled && (report->Mode != ReportOnlyNonDeleters ||
                     _callstacks.IsNonDeleter(alloc.CallstackUID))) ) {
@@ -248,6 +260,12 @@ public:
                 FCallstackBlocks& callstack = report->Callstacks[it.first->second];
                 Assert(callstack.CallstackUID == alloc.CallstackUID);
                 callstack.Add(alloc);
+
+                LOG(Leaks, Debug, L"Dangling block {0} with {1} (UID={2})\n{3}",
+                    Fmt::Pointer(ptr),
+                    Fmt::SizeInBytes(alloc.SizeInBytes),
+                    alloc.CallstackUID,
+                    Fmt::HexDump(FRawMemoryConst((u8*)ptr, alloc.SizeInBytes)) );
             }
         });
 
@@ -377,18 +395,23 @@ private:
         FPlatformLowLevelIO::FHandle FileHandle;
         u64 NativeOffset;
 
-        STATIC_CONST_INTEGRAL(size_t, WriteBufferCapacity, (2 * 1024 * 1024) / sizeof(FCallstackData)); // 2 mb <=> 8192 different callstacks
-        STATIC_CONST_INTEGRAL(size_t, WriteBufferSizeInBytes, WriteBufferCapacity * sizeof(FCallstackData));
-        STATIC_ASSERT((2 * 1024 * 1024) == WriteBufferSizeInBytes);
+        STATIC_CONST_INTEGRAL(size_t, WriteBufferSizeInBytes, 2 * 1024 * 1024); // 2mb
+        STATIC_CONST_INTEGRAL(size_t, WriteBufferCapacity, WriteBufferSizeInBytes / sizeof(FCallstackData)); // 2 mb <=> 8192 different callstacks
+        STATIC_ASSERT(WriteBufferCapacity * sizeof(FCallstackData) == WriteBufferSizeInBytes);
         size_t BufferOffset;
         FCallstackData* const WriteBuffer;
 
-        STATIC_CONST_INTEGRAL(size_t, HashTableCapacity, (8 * 1024 * 1024) / sizeof(FCallstackHeader)); // 8 mb <=> 524288 different callstacks
-        STATIC_CONST_INTEGRAL(size_t, HashTableSizeInBytes, HashTableCapacity * sizeof(FCallstackHeader));
-        STATIC_ASSERT((8 * 1024 * 1024) == HashTableSizeInBytes);
+        STATIC_CONST_INTEGRAL(size_t, HashKeysSizeInBytes, 16 * 1024 * 1024); // 16mb
+        STATIC_CONST_INTEGRAL(size_t, HashTableCapacity, HashKeysSizeInBytes / sizeof(FCallstackFingerprint)); // 16 mb <=> 524288 different callstacks
+        STATIC_ASSERT(HashTableCapacity * sizeof(FCallstackFingerprint) == HashKeysSizeInBytes);
+
         STATIC_ASSERT(Meta::IsPow2(HashTableCapacity));
         STATIC_CONST_INTEGRAL(size_t, HashTableMask, HashTableCapacity - 1);
-        FCallstackHeader* const HashTable;
+
+        STATIC_CONST_INTEGRAL(size_t, HashValuesSizeInBytes, HashTableCapacity * sizeof(FCallstackHeader));
+
+        FCallstackFingerprint* const HashKeys;
+        FCallstackHeader* const HashValues;
 
         FCallstackTracker()
             : NumCallstacks(0)
@@ -397,10 +420,12 @@ private:
             , BufferOffset(0)
 #if USE_PPE_MEMORYDOMAINS
             , WriteBuffer((FCallstackData*)FVirtualMemory::InternalAlloc(WriteBufferSizeInBytes, MEMORYDOMAIN_TRACKING_DATA(LeakDetector)))
-            , HashTable((FCallstackHeader*)FVirtualMemory::InternalAlloc(HashTableSizeInBytes, MEMORYDOMAIN_TRACKING_DATA(LeakDetector)))
+            , HashKeys((FCallstackFingerprint*)FVirtualMemory::InternalAlloc(HashKeysSizeInBytes, MEMORYDOMAIN_TRACKING_DATA(LeakDetector)))
+            , HashValues((FCallstackHeader*)FVirtualMemory::InternalAlloc(HashValuesSizeInBytes, MEMORYDOMAIN_TRACKING_DATA(LeakDetector)))
 #else
             , WriteBuffer((FCallstackData*)FVirtualMemory::InternalAlloc(WriteBufferSizeInBytes))
-            , HashTable((FCallstackHeader*)FVirtualMemory::InternalAlloc(HashTableSizeInBytes))
+            , HashKeys((FCallstackFingerprint*)FVirtualMemory::InternalAlloc(HashKeysSizeInBytes))
+            , HashValues((FCallstackHeader*)FVirtualMemory::InternalAlloc(HashValuesSizeInBytes))
 #endif
         {}
 
@@ -414,10 +439,12 @@ private:
 
 #if USE_PPE_MEMORYDOMAINS
             FVirtualMemory::InternalFree(WriteBuffer, WriteBufferSizeInBytes, MEMORYDOMAIN_TRACKING_DATA(LeakDetector));
-            FVirtualMemory::InternalFree(HashTable, HashTableSizeInBytes, MEMORYDOMAIN_TRACKING_DATA(LeakDetector));
+            FVirtualMemory::InternalFree(HashKeys, HashKeysSizeInBytes, MEMORYDOMAIN_TRACKING_DATA(LeakDetector));
+            FVirtualMemory::InternalFree(HashValues, HashValuesSizeInBytes, MEMORYDOMAIN_TRACKING_DATA(LeakDetector));
 #else
             FVirtualMemory::InternalFree(WriteBuffer, WriteBufferSizeInBytes);
-            FVirtualMemory::InternalFree(HashTable, HashTableSizeInBytes);
+            FVirtualMemory::InternalFree(HashKeys, HashKeysSizeInBytes);
+            FVirtualMemory::InternalFree(HashValues, HashValuesSizeInBytes);
 #endif
         }
 
@@ -439,20 +466,21 @@ private:
 
         void Fetch(u32 uid, FCallstackHeader* pheader, FCallstackData* pdata) {
             Assert(uid < HashTableCapacity);
-            Assert(HashTable[uid].Fingerprint);
+            Assert_NoAssume(HashKeys[uid].lo);
             Assert(pheader);
             Assert(pdata);
 
             const FAtomicSpinLock::FScope scopeLock(Barrier);
+
+            *pheader = HashValues[uid];
 
             Flush_AssumeLocked();
 
             const std::streamoff org = FPlatformLowLevelIO::Tell(FileHandle);
             FPlatformLowLevelIO::Seek(FileHandle, pheader->StreamOffset, ESeekOrigin::Begin);
 
-            *pheader = HashTable[uid];
             Verify(FPlatformLowLevelIO::Read(FileHandle, pdata, sizeof(FCallstackData)) == sizeof(FCallstackData));
-            Assert(pdata->MakeFingerprint() == pheader->Fingerprint);
+            Assert_NoAssume(pdata->MakeFingerprint() == HashKeys[uid]);
 
             FPlatformLowLevelIO::Seek(FileHandle, org, ESeekOrigin::Begin);
             Assert(checked_cast<u64>(FPlatformLowLevelIO::Tell(FileHandle)) == NativeOffset);
@@ -460,40 +488,41 @@ private:
 
         bool IsNonDeleter(u32 uid) const {
             Assert(uid < HashTableCapacity);
-            Assert(HashTable[uid].Fingerprint);
+            Assert_NoAssume(HashKeys[uid].lo);
 
-            return HashTable[uid].IsNonDeleter();
+            return HashValues[uid].IsNonDeleter();
         }
 
         void Delete(u32 uid) {
             Assert(uid < HashTableCapacity);
-            Assert(HashTable[uid].Fingerprint);
+            Assert_NoAssume(HashKeys[uid].lo);
 
-            HashTable[uid].KnownDeleter = 1;
+            HashValues[uid].KnownDeleter = 1;
         }
 
         void Trim(u32 uid) {
             Assert(uid < HashTableCapacity);
-            Assert(HashTable[uid].Fingerprint);
+            Assert_NoAssume(HashKeys[uid].lo);
 
-            HashTable[uid].KnownTrimmer = 1;
+            HashValues[uid].KnownTrimmer = 1;
         }
 
         u32 FindOrAdd(const FCallstackData& callstack) {
-            const u64 fingerprint = callstack.MakeFingerprint();
+            const FCallstackFingerprint fingerprint = callstack.MakeFingerprint();
 
-            // first search without locking :
-
+            // first search without locking
             u32 uid = u32(-1);
             forrange(i, 0, HashTableCapacity) {
-                uid = checked_cast<u32>((fingerprint + i) & HashTableMask);
-                const FCallstackHeader& header = HashTable[uid];
-                if (header.Fingerprint == 0 || header.Fingerprint == fingerprint)
+                uid = checked_cast<u32>(((fingerprint.hi ^ fingerprint.lo) + i) & HashTableMask);
+                const FCallstackFingerprint& key = HashKeys[uid];
+                if ((key == EmptyKey) | (key == fingerprint))
                     break;
             }
 
+            Assert(uid < HashTableCapacity);
+
             // if absent, take the lock and insert
-            return (Unlikely(fingerprint != HashTable[uid].Fingerprint)
+            return (Unlikely(fingerprint != HashKeys[uid])
                 ? AddIFN_Locked(fingerprint, callstack)
                 : uid );
         }
@@ -525,26 +554,26 @@ private:
             return streamOffset;
         }
 
-        NO_INLINE u32 AddIFN_Locked(u64 fingerprint, const FCallstackData& callstack) {
+        NO_INLINE u32 AddIFN_Locked(FCallstackFingerprint fingerprint, const FCallstackData& callstack) {
             const FAtomicSpinLock::FScope scopeLock(Barrier);
 
             u32 uid = u32(-1);
             forrange(i, 0, HashTableCapacity) {
-                uid = checked_cast<u32>((fingerprint + i) & HashTableMask);
-                const FCallstackHeader& header = HashTable[uid];
-                if (header.Fingerprint == 0 || header.Fingerprint == fingerprint)
+                uid = checked_cast<u32>(((fingerprint.hi ^ fingerprint.lo) + i) & HashTableMask);
+                const FCallstackFingerprint & key = HashKeys[uid];
+                if (Likely(key == EmptyKey))
                     break;
+                else if (key == fingerprint)
+                    return uid;
             }
 
-            FCallstackHeader& header = HashTable[uid];
-            if (0 == header.Fingerprint) {
-                Assert(0 == header.KnownDeleter);
-                Assert(0 == header.KnownTrimmer);
+            Assert_NoAssume(EmptyKey == HashKeys[uid]);
+            HashKeys[uid] = fingerprint;
 
-                header.Fingerprint = fingerprint;
-                header.StreamOffset = Write_AssumeLocked(callstack);
-            }
-            Assert(fingerprint == header.Fingerprint);
+            FCallstackHeader& header = HashValues[uid];
+            header.StreamOffset = Write_AssumeLocked(callstack);
+            header.KnownDeleter = 0;
+            header.KnownTrimmer = 0;
 
             return uid;
         }
