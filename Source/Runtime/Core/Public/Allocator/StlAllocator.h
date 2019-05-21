@@ -38,8 +38,28 @@ public:
     TStlAllocator() = default;
 
     explicit TStlAllocator(_Allocator&& alloc)
-        : _Allocator(std::move(alloc))
+    :   _Allocator(std::move(alloc))
     {}
+
+    template <typename U>
+    TStlAllocator(const TStlAllocator<U, _Allocator>& other)
+    :   _Allocator(ppe_traits::SelectOnCopy(other.InnerAlloc()))
+    {}
+    template <typename U>
+    TStlAllocator& operator =(const TStlAllocator<U, _Allocator>& other) {
+        ppe_traits::Copy(this, other.InnerAlloc());
+        return (*this);
+    }
+
+    template <typename U>
+    TStlAllocator(TStlAllocator<U, _Allocator>&& rvalue) NOEXCEPT
+        : _Allocator(ppe_traits::SelectOnMove(std::move(rvalue.InnerAlloc())))
+    {}
+    template <typename U>
+    TStlAllocator& operator =(TStlAllocator<U, _Allocator>&& rvalue) NOEXCEPT {
+        ppe_traits::Move(this, std::move(rvalue.InnerAlloc()));
+        return (*this);
+    }
 
     pointer address(reference x) const NOEXCEPT {
         return std::addressof(x);
@@ -96,6 +116,15 @@ public:
 
     friend bool operator !=(const TStlAllocator& lhs, const TStlAllocator& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
+    }
+
+public: // PPE allocators :
+    _Allocator& InnerAlloc() NOEXCEPT {
+        return ppe_traits::Get(*this);
+    }
+
+    const _Allocator& InnerAlloc() const NOEXCEPT {
+        return ppe_traits::Get(*this);
     }
 };
 //----------------------------------------------------------------------------
