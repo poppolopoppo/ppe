@@ -228,13 +228,20 @@ constexpr size_t INDEX_NONE = size_t(-1);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if defined(CPP_VISUALSTUDIO)
-#   define PRAGMA_DISABLE_OPTIMIZATION __pragma(optimize("",off))
-#   define PRAGMA_ENABLE_OPTIMIZATION  __pragma(optimize("",on ))
+#   define PRAGMA_DISABLE_OPTIMIZATION_ACTUAL __pragma(optimize("",off))
+#   define PRAGMA_ENABLE_OPTIMIZATION_ACTUAL  __pragma(optimize("",on ))
 #elif defined(CPP_CLANG)
-#   define PRAGMA_DISABLE_OPTIMIZATION __pragma(clang optimize off)
-#   define PRAGMA_ENABLE_OPTIMIZATION  __pragma(clang optimize on )
+#   define PRAGMA_DISABLE_OPTIMIZATION_ACTUAL __pragma(clang optimize off)
+#   define PRAGMA_ENABLE_OPTIMIZATION_ACTUAL  __pragma(clang optimize on )
 #else
 #   error "need to implement PRAGMA_ENABLE/DISABLE_OPTIMIZATION !"
+#endif
+//----------------------------------------------------------------------------
+#define PRAGMA_DISABLE_OPTIMIZATION PRAGMA_DISABLE_OPTIMIZATION_ACTUAL
+#if USE_PPE_DEBUG
+#   define PRAGMA_ENABLE_OPTIMIZATION PRAGMA_DISABLE_OPTIMIZATION_ACTUAL
+#else
+#   define PRAGMA_ENABLE_OPTIMIZATION PRAGMA_ENABLE_OPTIMIZATION_ACTUAL
 #endif
 //----------------------------------------------------------------------------
 #if defined(CPP_VISUALSTUDIO)
