@@ -1,40 +1,34 @@
-Application
+# PPE TODO LIST
 
-HAL
-    Generic
-        GenericApplication
-        GenericWindow
-        GenericPlatformDialog
-        GenericPlatformNotification
-        GenericPlatformSplash
-        GenericPlatformKeyboard
-        GenericPlatformMouse
-        GenericPlatformGamepad
-        GenericPlatformSurvey
-    Windows
-        WindowsApplication
-        WindowsWindow
-        WindowsPlatformDialog
-        WindowsPlatformNotification
-        WindowsPlatformSplash
-        WindowsPlatformKeyboard
-        WindowsPlatformGamepad
-        WindowsPlatformMouse
-        WindowsPlatformSurvey
-Input
-    InputState
-    KeyboardState
-    GamepadState
-    MouseState
-Survey
-    DisplayMonitor
-    DisplayAdapter
-    StorageDevice
-Service
-    DisplayService
-    InputService
-    WindowService
-Window
-    MainWindow
-    ToolWindow
-Application
+- Report mipmaps fragmentation deminer-liker
+
+- Check efficiency of mipmaps de-commit heuristic
+    -> avoiding switching to newest chunk might help
+    -> use the fragmentation report
+
+- Change memory tracking for mipmaps to see reserved memory
+    -> memory domain ReservedMemory could use user/system memory for reporting commited/reserved memory ?
+
+- Change memory tracking inside allocator to report number of user allocs + number of system allocs
+    -> would get a hint of internal fragmentation that way
+    -> also interesting to see repartition of allocations, since reporting there is orthogonal to UsedMemory
+
+- Change memory tracking inside linear heap to report only allocated pages ?
+    -> imply to track user and system allocations completely separately ?
+
+- Add a large mipmap allocator inside FMallocBinned in addition to current medium mipmaps
+    -> current medium mips can't allocate more than 2mb, and virtual memory cache is weak (concurrency bottleneck)
+        -> large mips would have 2mb/bit <=> 64mb per chunk
+        -> could use large mips to allocate medium mips
+        -> this could avoid reserving/commiting too much memory and achieve better load balancing
+    -> *OR* implement a system that can allocate from several contiguous mips
+        -> might be done atomically at the end of the mip table
+        -> allocations would be aligned on mip granularity <=> 2mb
+        -> should cap allocation size to something reasonnable, like 64mb
+        -> could work better than virtual memory cache with a careful implementation
+
+- Remove memory domain PooledMemory
+    -> mirror linear heap behavior ?
+    -> maybe remove completely ???
+
+- Finish the build graph :p
