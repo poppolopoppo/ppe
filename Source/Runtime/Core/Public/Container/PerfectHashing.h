@@ -40,7 +40,7 @@ public:
         const size_t h = static_cast<const hash_type&>(*this)(key);
         const size_t i = (_offsets[h % G] < 0
             ? size_t(-_offsets[h % G]) - 1ul
-            : hash_size_t_constexpr(_offsets[h % G], h) % N);
+            : hash_size_t_constexpr(h, _offsets[h % G]) % N);
         return _map.get(i, key);
     }
 
@@ -48,7 +48,7 @@ public:
     CONSTEXPR auto Lookup(size_t h, _Pred pred) const NOEXCEPT {
         const size_t i = (_offsets[h % G] < 0
             ? size_t(-_offsets[h % G]) - 1ul
-            : hash_size_t_constexpr(_offsets[h % G], h) % N);
+            : hash_size_t_constexpr(h, _offsets[h % G]) % N);
         return _map.get(i, pred);
     }
 
@@ -85,7 +85,7 @@ public:
         }
 
         // 3 -- sort buckets by descending node count
-        Meta::StaticQuicksort(buckets, G,
+        Meta::StaticQuicksort(buckets, int(G),
             [](const list_t& a, const list_t& b) CONSTEXPR NOEXCEPT {
                 return (a.Count > b.Count);
             });
@@ -111,11 +111,11 @@ public:
                 Meta::TStaticBitset<N> tmp(slots);
                 const node_t* n = b.Head;
 
-                u32 d = 0;
+                size_t d = 0;
 
                 while (n) {
                     /* expecting linear time according to academia */
-                    const size_t h = hash_size_t_constexpr(size_t(d), n->Hash) % N;
+                    const size_t h = (hash_size_t_constexpr(n->Hash +  d) % N);
                     if (tmp.test(h)) {
                         tmp = slots;
                         n = b.Head;
@@ -128,7 +128,7 @@ public:
                 }
 
                 slots = tmp;
-                _offsets[b.Index] = d;
+                _offsets[b.Index] = i32(d);
             }
         }
 
@@ -137,7 +137,7 @@ public:
             const size_t h = n.Hash % G;
             const size_t g = (_offsets[h] < 0
                 ? size_t(-_offsets[h % G]) - 1ul
-                : hash_size_t_constexpr(_offsets[h], n.Hash) % N);
+                : hash_size_t_constexpr(n.Hash, _offsets[h]) % N);
             _map.set(g, n.It->first, n.It->second);
         }
 

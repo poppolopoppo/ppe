@@ -5,47 +5,64 @@
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
 
+#include <locale>
 #include <regex>
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-/*
+//----------------------------------------------------------------------------
+// Needed to use FString instead of std::string, also avoids locale BS
 template <typename _Char>
-class TRegexTraits : public std::regex_traits<_Char> {
+class TRegexTraits {
 public:
-    using parent_type = std::regex_traits<_Char>;
-
-    using typename parent_type::char_type;
-    using typename parent_type::locale_type;
-    using typename parent_type::char_class_type;
-
-    using parent_type::length;
-    using parent_type::translate;
-    using parent_type::translate_nocase;
-    //using parent_type::transform;
-    using parent_type::transform_primary;
-    using parent_type::lookup_collatename;
-    using parent_type::lookup_classname;
-    using parent_type::isctype;
-    using parent_type::value;
-    using parent_type::imbue;
-    using parent_type::getloc;
-
+    using char_type = _Char;
     using string_type = TBasicString<_Char>;
+    using locale_type = std::locale;
+    using char_class_type = typename std::ctype_base::mask;
+
+#ifdef _MSC_VER
+    // workaround a defect in M$TL which relies on non standard aliases
+    using _Uelem = std::make_unsigned_t<_Char>;
+    static CONSTEXPR const std::ctype_base::mask _Ch_alpha = std::ctype_base::alpha;
+    static CONSTEXPR const std::ctype_base::mask _Ch_upper = std::ctype_base::upper;
+#endif
 
     TRegexTraits() = default;
 
+    static size_t length(const char_type* s);
+
+    char_type translate(char_type ch) const;
+
+    char_type translate_nocase(char_type ch) const;
+
     template <typename _FwdIt>
-    string_type transform(_FwdIt first, _FwdIt last) {
-        return std::use_facet<std::collate<char_type>>(getloc())
-            .transform() // meh, returns std::string ... #TODO
+    string_type transform(_FwdIt first, _FwdIt last) const;
+
+    template <typename _FwdIt>
+    string_type transform_primary(_FwdIt first, _FwdIt last) const;
+
+    template <typename _FwdIt>
+    string_type lookup_collatename(_FwdIt first, _FwdIt last) const;
+
+    template <class _FwdIt>
+    char_class_type lookup_classname(_FwdIt first, _FwdIt last,
+        bool insensitive = false) const;
+
+    bool isctype(char_type ch, char_class_type classname) const;
+
+    int value(char_type ch, int base) const;
+
+    locale_type imbue(locale_type lc) {
+        return std::locale::classic();
     }
+
+    locale_type getloc() const {
+        return std::locale::classic();
+    }
+
 };
-*/
-template <typename _Char>
-using TRegexTraits = std::regex_traits<_Char>;
 //----------------------------------------------------------------------------
 template <typename _Char>
 class TBasicRegexp {
