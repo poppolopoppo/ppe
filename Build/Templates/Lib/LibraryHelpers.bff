@@ -231,7 +231,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
         RemoveDir( '$ProjectName$-Lib-$Platform$-$Config$-Purge' )
         {
-            .RemovePaths        = .IntermediatePath
+            .RemovePaths        = .IntermediateRoot
+            .RemovePathsPattern = "$ProjectName$.*"
         }
 
         .PurgeTargets + '$ProjectName$-Lib-$Platform$-$Config$-Purge'
@@ -284,11 +285,13 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 #if __WINDOWS__
         Using( .ProjectCompileConfigWithPCH )
 
-        .ProjectBasePath        = "$ProjectPath$"
+        .AnalyzeOptions         ? ''
+        .AdditionalOptions      + .AnalyzeOptions
         .BuildLogFile           = "$IntermediateRoot$/$ProjectName$.$Config$.$Platform$.log"
         .Output                 = "$BinaryPath$/$BinaryPrefix$.$Config$.$Platform$.$CompilerBinaryExtension$"
         .OutputDirectory        = "$BinaryPath$"
         .IntermediateDirectory  = "$IntermediatePath$"
+        .ProjectBasePath        = "$ProjectPath$"
         .ProjectBuildCommand    = '$VisualStudioFBuildCommand$ $VSBuildOptions$ "$ProjectName$-$Platform$-$Config$"'
         .ProjectRebuildCommand  = '$VisualStudioFBuildCommand$ $VSRebuildOptions$ -clean "$ProjectName$-$Platform$-$Config$"'
         .ProjectCleanCommand    = '$VisualStudioFBuildCommand$ $VSCleanOptions$ -clean "$ProjectName$-Purge-$Platform$-$Config$"'

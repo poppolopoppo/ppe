@@ -26,6 +26,8 @@
 //------------------------------------------------------------------------------
 .MSVCBase =
 [
+    .StackSize = "2097152" // thread stack size = 2mb
+
     .AdditionalWarnings = ''
     + ' /we4062' // enumerator 'identifier' in a switch of enum 'enumeration' is not handled
     + ' /we4263' // 'function' : member function does not override any base class virtual member function
@@ -77,11 +79,11 @@
     + ' /Zc:forScope'       ; interdit d'acceder à l'iterateur d'un for en dehors de son scope (comportement std)
     + ' /W4'                ; tous les warnings de level 4 sont reportés
     + ' /TP'                ; considère que toutes les sources sont du C++
+    + ' /F $StackSize$'      ; spécifie la taille la stack (aussi passé au linker), dans additional pour l'analyse statique du code
     + .AdditionalWarnings
     + .IgnoredWarnings
 
     .CompilerOptions = ''
-    + ' /showIncludes'      ; affiche les includes pdt la compilation, pratique pour certa
     + ' /nologo'            ; pas de message de copyright lors de la compilation
     + ' /WX'                ; les warnings génèrent des erreurs !
     + ' /Gm-'               ; minimal rebuild est incompatible avec FastBuild qui gère cette feature lui même
@@ -97,10 +99,12 @@
     + ' /c "%1"'
     + .AdditionalOptions
 
+    .AnalyzeOptions     = ' /analyze'
+                        + " /analyze:stacksize $StackSize$"
+
 #if USE_MSVC_ANALYZE
-    Print( 'Using common errors detection warnings : /analyze.' )
-    .CompilerOptions    + ' /analyze'
-                        + ' /analyze:stacksize 4194304'
+    Print( "Using common errors detection warnings : $AnalyzeOptions$." )
+    .CompilerOptions    + .AnalyzeOptions
 #endif
 
     .PreprocessorOptions = ''
@@ -122,7 +126,7 @@
     + ' /DEBUG'             ; genère les infos de debug pour le binaire
     + ' /IGNORE:4001'       ; https://msdn.microsoft.com/en-us/library/aa234697(v=vs.60).aspx
     + ' /NXCOMPAT:NO'       ; indique que le programme n'est pas compatible avec Data Execution Prevention
-    + ' /STACK:4194304'     ; augmente la taille de la stack de chaque thread à 4mo
+    + " /STACK:$StackSize$"     ; augmente la taille de la stack de chaque thread à 4mo
     + ' /SUBSYSTEM:WINDOWS'
     ;+ ' /VERBOSE'
     + ' /VERBOSE:REF'       ; affiche des infos sur le linker incremental
