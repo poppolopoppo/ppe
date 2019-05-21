@@ -11,17 +11,9 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMatch::FMatch()
+template <typename T>
+TBasicMatch<T>::TBasicMatch() NOEXCEPT
 :   _symbol(FSymbols::Invalid) {
-    Assert(_symbol);
-}
-//----------------------------------------------------------------------------
-FMatch::~FMatch() {}
-//----------------------------------------------------------------------------
-FMatch::FMatch(const symbol_type *symbol, FString&& rvalue, const FLocation& start, const FLocation& stop)
-:   _symbol(symbol)
-,   _value(std::move(rvalue))
-,   _site(FSpan::FromSite(start, stop)) {
     Assert(_symbol);
 }
 //----------------------------------------------------------------------------
@@ -29,3 +21,6 @@ FMatch::FMatch(const symbol_type *symbol, FString&& rvalue, const FLocation& sta
 //----------------------------------------------------------------------------
 } //!namespace Lexer
 } //!namespace PPE
+
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::Lexer::TBasicMatch<PPE::FString>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::Lexer::TBasicMatch<PPE::FStringView>;

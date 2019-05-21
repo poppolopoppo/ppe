@@ -274,7 +274,7 @@ void FTextSerializer::Deserialize(IStreamReader& input, FTransactionLinker* link
     Parser::FParseList parseList;
     UsingBufferedStream(&input, [&parseList, &fname, linker](IBufferedStreamReader* buffered) {
         Lexer::FLexer lexer(*buffered, fname, true);
-        parseList.Parse(&lexer);
+        VerifyRelease(parseList.Parse(&lexer));
     });
 
     Parser::FParseContext parseContext(Meta::ForceInit);

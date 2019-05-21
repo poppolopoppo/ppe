@@ -49,7 +49,7 @@ struct FParseResult {
         return Failure("failed evaluation", Lexer::FSymbol::Invalid, site);
     }
 
-    static FParseResult Unexpected(Lexer::FSymbol::ETypeId expected, const Lexer::FMatch* found, const FParseList& input) {
+    static FParseResult Unexpected(Lexer::FSymbol::ETypeId expected, const FParseMatch* found, const FParseList& input) {
         return Failure("unexpected match", expected, found ? found->Site() : input.Site());
     }
 

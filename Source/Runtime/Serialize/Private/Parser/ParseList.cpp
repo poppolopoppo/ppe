@@ -5,95 +5,89 @@
 #include "Parser/Parser.h"
 #include "Parser/ParseResult.h"
 
-#include "Diagnostic/Logger.h"
 #include "Lexer/Lexer.h"
+
+#include "Diagnostic/Logger.h"
+#include "HAL/PlatformMemory.h"
 
 namespace PPE {
 namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FParseList::FParseList()
-:   _site(Lexer::FLocation::None(), 0)
-,   _current(nullptr)
+FParseList::FParseList() NOEXCEPT
+:   _curr(nullptr)
+,   _site(Lexer::FLocation::None(), 0)
 {}
 //----------------------------------------------------------------------------
-FParseList::~FParseList() {}
-//----------------------------------------------------------------------------
-FParseList::FParseList(FParseList&& rvalue)
-:   _site(Lexer::FLocation::None(), 0)
-,   _current(nullptr)
-,   _matches(std::move(rvalue._matches)) {
-    std::swap(rvalue._current, _current);
-    std::swap(rvalue._site, _site);
-}
-//----------------------------------------------------------------------------
-FParseList& FParseList::operator =(FParseList&& rvalue) {
-    _current = nullptr;
-    _matches = std::move(rvalue._matches);
-    std::swap(rvalue._current, _current);
-    return *this;
+FParseList::~FParseList() {
+    Clear();
 }
 //----------------------------------------------------------------------------
 bool FParseList::Parse(Lexer::FLexer* lexer /* = nullptr */) {
     Assert(lexer);
 
-    _matches.clear();
+    Clear();
 
-    Lexer::FMatch match;
-    while (lexer->Read(match)) {
-        //LOG(Info, L"[Parser] match : <{0}> = '{1}'", match.Symbol()->CStr().Pointer(), match.Value().c_str());
-        _matches.emplace_back(std::move(match));
+    // replicate lexer matches on the heap to get nice batching of allocations
+    {
+        Lexer::FMatch m;
+        while (lexer->Read(m)) {
+            char* cpy = nullptr;
+            const size_t s = m.Value().size();
+
+            if (s) { // copy the string on the heap IFN
+                cpy = static_cast<char*>(_heap.Allocate(m.Value().SizeInBytes()));
+                FPlatformMemory::Memcpy(cpy, m.Value().data(), m.Value().SizeInBytes());
+            }
+
+            // also construct the match on the heap
+            const FStringView value(cpy, s);
+            _list.PushTail(new (_heap) FParseMatch{ m.Symbol(), value, m.Site() });
+
+        }
     }
 
-    if (_matches.size())
-        _site = _matches.front().Site();
-    else
+    if (_list.Head()) {
+        Seek(_list.Head());
+        return true;
+    }
+    else {
         _site.Filename = lexer->SourceFileName();
-
-    Reset();
-
-    return (not _matches.empty());
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
-void FParseList::Reset() {
-    if (_matches.size())
-        _current = &_matches.front();
-    else
-        _current = nullptr;
-}
-//----------------------------------------------------------------------------
-void FParseList::Seek(const Lexer::FMatch *match) {
+void FParseList::Seek(const FParseMatch* match) NOEXCEPT {
     if (nullptr == match) {
-        Assert(nullptr == _current);
+        _curr = nullptr;
+        _site.Rewind();
     }
     else {
         Assert(match);
-        Assert(_matches.size());
-        Assert(&_matches.front() <= match && &_matches.back() >= match);
+        Assert_NoAssume(_list.Head());
 
-        _current = match;
+        _curr = match;
+        _site = match->Site();
     }
 }
 //----------------------------------------------------------------------------
-const Lexer::FMatch *FParseList::Read() {
-    if (nullptr == _current)
+const FParseMatch* FParseList::Read() {
+    if (nullptr == _curr)
         return nullptr;
 
-    Assert(_matches.size());
-    Assert(&_matches.front() <= _current && &_matches.back() >= _current);
+    Assert_NoAssume(_list.Head());
 
-    const Lexer::FMatch *read = _current;
-
-    if (&_matches.back() == _current)
-        _current = nullptr;
-    else
-        ++_current;
-
-    if (_current)
-        _site = _current->Site();
+    const FParseMatch* const read = _curr;
+    Seek(_curr->Node.Next);
 
     return read;
+}
+//----------------------------------------------------------------------------
+void FParseList::Clear() {
+    _curr = nullptr;
+    _site = { Lexer::FLocation::None(), 0 };
+    _heap.ReleaseAll(); // FParseMatch is trivially destructible
 }
 //----------------------------------------------------------------------------
 void NORETURN FParseList::Error(const FParseResult& result) const {

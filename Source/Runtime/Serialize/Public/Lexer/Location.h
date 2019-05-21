@@ -25,6 +25,11 @@ struct FLocation {
     u32 Line;
     u32 Column;
 
+    void Rewind() {
+        Offset = 0;
+        Line = Column = 0;
+    }
+
     static FLocation None() { return FLocation(); }
 };
 //----------------------------------------------------------------------------

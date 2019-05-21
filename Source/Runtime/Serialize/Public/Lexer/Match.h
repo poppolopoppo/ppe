@@ -4,6 +4,7 @@
 
 #include "Lexer/Location.h"
 #include "Lexer/Symbol.h"
+
 #include "IO/String.h"
 #include "IO/TextWriter_fwd.h"
 
@@ -14,21 +15,30 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 class FLexer;
 //----------------------------------------------------------------------------
-class FMatch {
+template <typename T>
+class TBasicMatch {
 public:
+    typedef T value_type;
     typedef PPE::Lexer::FSymbol symbol_type;
 
-    FMatch();
-    ~FMatch();
+    TBasicMatch() NOEXCEPT;
 
-    FMatch(const symbol_type *symbol, FString&& rvalue, const FLocation& start, const FLocation& stop);
-    FMatch(const symbol_type *symbol, const FString& value, const FLocation& start, const FLocation& stop)
-        : FMatch(symbol, FString(value), start, stop)
+    TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FSpan& site) NOEXCEPT
+        : _symbol(symbol), _value(std::move(rvalue)), _site(site)
+    {}
+    TBasicMatch(const symbol_type* symbol, const value_type& value, const FSpan& site) NOEXCEPT
+        : TBasicMatch(symbol, value_type(value), site)
+    {}
+    TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FLocation& start, const FLocation& stop) NOEXCEPT
+        : TBasicMatch(symbol, std::move(rvalue), FSpan::FromSite(start, stop))
+    {}
+    TBasicMatch(const symbol_type* symbol, const value_type& value, const FLocation& start, const FLocation& stop) NOEXCEPT
+        : TBasicMatch(symbol, value_type(value), start, stop)
     {}
 
     const symbol_type *Symbol() const { return _symbol; }
-    FString& Value() { return _value; }
-    const FString& Value() const { return _value; }
+    value_type& Value() { return _value; }
+    const value_type& Value() const { return _value; }
     const FSpan& Site() const { return _site; }
 
     FStringView MakeView() const { return MakeStringView(_value); }
@@ -36,15 +46,21 @@ public:
     bool Valid() const { return symbol_type::Invalid != _symbol->Type(); }
 
 private:
-    const symbol_type *_symbol;
-    FString _value;
+    const symbol_type* _symbol;
+    value_type _value;
     FSpan _site;
 };
+//----------------------------------------------------------------------------
+using FMatch = TBasicMatch<FString>;
+using FMatchView = TBasicMatch<FStringView>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Lexer
 } //!namespace PPE
+
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::Lexer::TBasicMatch<PPE::FString>;
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::Lexer::TBasicMatch<PPE::FStringView>;
 
 namespace PPE {
 //----------------------------------------------------------------------------

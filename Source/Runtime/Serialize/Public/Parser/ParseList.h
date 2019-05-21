@@ -6,7 +6,7 @@
 #include "Lexer/Match.h"
 #include "Lexer/Symbol.h"
 
-#include "Container/Vector.h"
+#include "Allocator/LinearHeap.h"
 
 namespace PPE {
 namespace Lexer {
@@ -18,44 +18,65 @@ struct FParseResult;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+class FParseMatch : public Lexer::FMatchView {
+public:
+    FParseMatch(
+        const Lexer::FSymbol* symbol,
+        const FStringView& value,
+        const Lexer::FSpan& site ) NOEXCEPT
+    :   Lexer::FMatchView(symbol, value, site)
+    {}
+
+    using Lexer::FMatchView::Symbol;
+    using Lexer::FMatchView::Value;
+    using Lexer::FMatchView::Site;
+    using Lexer::FMatchView::MakeView;
+    using Lexer::FMatchView::Valid;
+
+    TIntrusiveListNode<FParseMatch> Node{ nullptr, nullptr };
+};
+//----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FParseList {
 public:
-    FParseList();
+    FParseList() NOEXCEPT;
     ~FParseList();
 
-    FParseList(FParseList&& rvalue);
-    FParseList& operator =(FParseList&& rvalue);
+    FParseList(FParseList&& rvalue) = delete;
+    FParseList& operator =(FParseList&& rvalue) = delete;
 
     FParseList(const FParseList&) = delete;
     FParseList& operator =(const FParseList&) = delete;
 
-    bool empty() const { return _matches.empty(); }
+    bool empty() const { return _list.empty(); }
 
     const Lexer::FSpan& Site() const { return _site; }
 
-    const Lexer::FMatch *Peek() const { return _current; }
-    Lexer::FSymbol::ETypeId PeekType() const { return (_current) ? _current->Symbol()->Type() : Lexer::FSymbol::Eof; }
-
-    const VECTOR(Parser, Lexer::FMatch)& Matches() const { return _matches; }
+    const FParseMatch *Peek() const { return _curr; }
+    Lexer::FSymbol::ETypeId PeekType() const { return (_curr ? _curr->Symbol()->Type() : Lexer::FSymbol::Eof); }
 
     bool Parse(Lexer::FLexer* lexer);
-    void Reset();
-    void Seek(const Lexer::FMatch *match);
+
+    void Reset() NOEXCEPT { Seek(_list.Head()); }
+    void Seek(const FParseMatch* match) NOEXCEPT;
 
     template <Lexer::FSymbol::ETypeId _Symbol>
-    bool Expect(const Lexer::FMatch** m) {
-        return ((*m = Read()) != nullptr ? (*m)->Symbol()->Type() ^ _Symbol : false );
+    bool Expect(const FParseMatch** m) {
+        return ((*m = Read()) != nullptr && (*m)->Symbol()->Type() ^ _Symbol);
     }
 
-    const Lexer::FMatch* Read();
+    NODISCARD const FParseMatch* Read();
 
     void NORETURN Error(const FParseResult& result) const;
     void NORETURN Error(const char* what, const Lexer::FSpan& site) const;
 
+    void Clear();
+
 private:
+    const FParseMatch* _curr;
     Lexer::FSpan _site;
-    const Lexer::FMatch *_current;
-    VECTOR(Parser, Lexer::FMatch) _matches;
+
+    INTRUSIVELIST(&FParseMatch::Node) _list;
+    LINEARHEAP(Parser) _heap;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -607,13 +607,13 @@ struct FTernaryOp {
 static Parser::TProduction<RTTI::PTypeTraits> ExpectTypenameRTTI() {
     return Parser::TProduction<RTTI::PTypeTraits>{
         [](Parser::FParseList& input, RTTI::PTypeTraits* value) -> Parser::FParseResult {
-            const Lexer::FMatch *match = input.Read();
+            const Parser::FParseMatch *match = input.Read();
 
             if (match) {
                 if (match->Symbol()->Type() == Lexer::FSymbol::Typename)
                     *value = RTTI::MakeTraits(RTTI::ENativeType(match->Symbol()->Ord()));
                 else if (match->Symbol()->Type() == Lexer::FSymbol::Identifier)
-                    *value = RTTI::MakeTraitsFromTypename(match->Value().MakeView());
+                    *value = RTTI::MakeTraitsFromTypename(match->Value());
             }
 
             return (*value
@@ -644,7 +644,7 @@ private:
     using many_expr_t = Parser::TEnumerable<expr_t>;
     using many_statement_t = Parser::TEnumerable<statement_t>;
 
-    using match_p = const Lexer::FMatch*;
+    using match_p = const Parser::FParseMatch*;
     using parse_t = Parser::FParseResult;
 
     template <typename T>
@@ -732,21 +732,21 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         }),
         Parser::Expect<symbol_t::Integer, expr_t>([](match_p src ) -> expr_t {
             i64 i;
-            Verify(Atoi(&i, src->Value().MakeView(), 10));
+            Verify(Atoi(&i, src->Value(), 10));
             return Parser::MakeLiteral(i, src->Site());
         }),
         Parser::Expect<symbol_t::Unsigned, expr_t>([](match_p src) -> expr_t {
             u64 u;
-            Verify(Atoi(&u, src->Value().MakeView(), 10));
+            Verify(Atoi(&u, src->Value(), 10));
             return Parser::MakeLiteral(u, src->Site());
         }),
         Parser::Expect<symbol_t::Float, expr_t>([](match_p src) -> expr_t {
             double d;
-            Verify(Atod(&d, src->Value().MakeView()));
+            Verify(Atod(&d, src->Value()));
             return Parser::MakeLiteral(d, src->Site());
         }),
         Parser::Expect<symbol_t::String, expr_t>([](match_p src)  -> expr_t {
-            return Parser::MakeLiteral(src->Value(), src->Site());
+            return Parser::MakeLiteral(FString(src->Value()), src->Site());
         })
     ))
 
@@ -890,7 +890,7 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
                 input.Error("expected an identifier", input.Site());
 
             if (Unlikely(input.PeekType() == symbol_t::LParenthese)) {
-                input.Read(); // skip the lparen
+                Verify(input.Read()); // skip the lparen
 
                 Parser::TEnumerable<expr_t> args;
 
@@ -905,7 +905,7 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
                     if (input.PeekType() != symbol_t::Comma)
                         break;
 
-                    input.Read(); // skip the comma separator
+                    Verify(input.Read()); // skip the comma separator
                 }
 
                 match_p rparen;
