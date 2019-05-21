@@ -97,18 +97,6 @@
     </Expand>
   </Type>
 
-  <Type Name="PPE::TVectorInSitu&lt;*, *, *&gt;">
-    <DisplayString>{{ size={_size}, capacity={_capacity}, insitu={sizeof(*_insituRef)/sizeof(value_type)} }}</DisplayString>
-    <Expand>
-      <Item Name="[Size]">_size</Item>
-      <Item Name="[Capacity]">sizeof(*_insituRef) / sizeof(value_type)</Item>
-      <Item Name="[InsituSize]">sizeof(*_insituRef)</Item>
-      <ArrayItems>
-        <Size>_size</Size>
-        <ValuePointer>_data</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
   <Type Name="PPE::TVector&lt;*, *&gt;">
     <DisplayString>{{ size={_size}, capacity={_capacity} }}</DisplayString>
     <Expand>
