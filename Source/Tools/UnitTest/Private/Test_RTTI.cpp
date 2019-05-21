@@ -33,7 +33,6 @@
 #include "Container/Tuple.h"
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
-#include "HAL/PlatformConsole.h"
 #include "IO/ConstNames.h"
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
@@ -49,6 +48,9 @@
 
 #include "Memory/Compression.h"
 #include "Memory/MemoryStream.h"
+
+#include "HAL/PlatformConsole.h"
+#include "HAL/PlatformProcess.h"
 
 #define USE_RTTI_TEST_YOLOTYPES 0 //%_NOCOMMIT%
 
