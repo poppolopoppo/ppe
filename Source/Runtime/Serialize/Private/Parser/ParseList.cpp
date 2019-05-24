@@ -61,7 +61,14 @@ bool FParseList::Parse(Lexer::FLexer* lexer /* = nullptr */) {
 void FParseList::Seek(const FParseMatch* match) NOEXCEPT {
     if (nullptr == match) {
         _curr = nullptr;
-        _site.Rewind();
+
+        // jump to the end of the parse list
+        if (const FParseMatch * tail = _list.Tail()) {
+            _site = tail->Site();
+            _site.Offset += _site.Length;
+            _site.Column += _site.Length;
+            _site.Length = 0;
+        }
     }
     else {
         Assert(match);
@@ -86,8 +93,9 @@ const FParseMatch* FParseList::Read() {
 //----------------------------------------------------------------------------
 void FParseList::Clear() {
     _curr = nullptr;
-    _site = { Lexer::FLocation::None(), 0 };
+    _list.Clear();
     _heap.ReleaseAll(); // FParseMatch is trivially destructible
+    _site = { Lexer::FLocation::None(), 0 };
 }
 //----------------------------------------------------------------------------
 void NORETURN FParseList::Error(const FParseResult& result) const {

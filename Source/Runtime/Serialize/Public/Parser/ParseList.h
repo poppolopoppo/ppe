@@ -63,6 +63,14 @@ public:
     bool Expect(const FParseMatch** m) {
         return ((*m = Read()) != nullptr && (*m)->Symbol()->Type() ^ _Symbol);
     }
+    template <Lexer::FSymbol::ETypeId _Symbol>
+    bool TryRead(const FParseMatch** m) {
+        if (PeekType() ^ _Symbol) {
+            *m = Read();
+            return true;
+        }
+        return false;
+    }
 
     NODISCARD const FParseMatch* Read();
 
