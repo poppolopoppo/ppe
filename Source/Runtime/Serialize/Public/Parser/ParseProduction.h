@@ -223,33 +223,31 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename... _Args>
-CONSTEXPR auto And(TProduction<_Args>&&... rexprs) NOEXCEPT {
+CONSTEXPR auto And(TProduction<_Args>&&... rexprs) NOEXCEPT -> TProduction<TTuple<_Args...>> {
     STATIC_ASSERT(sizeof...(_Args) >= 2);
-    using tuple_type = TTuple<_Args...>;
-    return TProduction<tuple_type>{ { Meta::ForceInit, [exprs{ MakeTuple(std::move(rexprs)...) }]
-        (FParseList& input, tuple_type* value) -> FParseResult {
+    return { Meta::ForceInit, [exprs{ MakeTuple(std::move(rexprs)...) }]
+        (FParseList& input, TTuple<_Args...>* value) -> FParseResult {
             PPE_STACKMARKER("and");
             FParseResult result = FParseResult::Success(input.Site());
             Meta::static_for<sizeof...(_Args)>([&](auto... idx) {
                 return (... && (result = result && std::get<idx>(exprs)(input, &std::get<idx>(*value))).Succeed());
             });
             return result;
-        }}};
+        }};
 }
 //----------------------------------------------------------------------------
 template <typename... _Args>
-CONSTEXPR auto Or(TProduction<_Args>&&... rexprs) NOEXCEPT {
+CONSTEXPR auto Or(TProduction<_Args>&&... rexprs) NOEXCEPT -> TProduction<std::common_type_t<_Args...>> {
     STATIC_ASSERT(sizeof...(_Args) >= 2);
-    using common_type = std::common_type_t<_Args...>;
-    return TProduction<common_type>{ { Meta::ForceInit, [exprs{ MakeTuple(std::move(rexprs)...) }]
-        (FParseList& input, common_type* value) -> FParseResult {
+    return { Meta::ForceInit, [exprs{ MakeTuple(std::move(rexprs)...) }]
+        (FParseList& input, std::common_type_t<_Args...>* value) -> FParseResult {
             PPE_STACKMARKER("or");
             FParseResult result;
             Meta::static_for<sizeof...(_Args)>([&](auto... idx) {
                 return (... || (result = std::get<idx>(exprs).TryParse(input, value)).Succeed());
             });
             return result;
-        }}};
+        }};
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -49,6 +49,10 @@ struct FParseResult {
         return Failure("failed evaluation", Lexer::FSymbol::Invalid, site);
     }
 
+    static FParseResult Eof(const FParseList& input) {
+        return Failure("unexpected end of file", Lexer::FSymbol::Invalid, input.Site());
+    }
+
     static FParseResult Unexpected(Lexer::FSymbol::ETypeId expected, const FParseMatch* found, const FParseList& input) {
         return Failure("unexpected match", expected, found ? found->Site() : input.Site());
     }

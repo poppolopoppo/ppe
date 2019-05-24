@@ -628,6 +628,9 @@ static Parser::TProduction<RTTI::PTypeTraits> ExpectTypenameRTTI() {
 //----------------------------------------------------------------------------
 class FGrammarImpl {
 public:
+
+#define USE_GRAMMAR_WORKAROUND_VS2019 1
+
     CONSTEXPR FGrammarImpl() NOEXCEPT;
     ~FGrammarImpl();
 
@@ -659,7 +662,9 @@ private:
     Parser::TProduction< expr_t > _literal;
 
     Parser::TProduction< statement_t > _property;
+#if !USE_GRAMMAR_WORKAROUND_VS2019
     Parser::TProduction< many_statement_t > _objectInner;
+#endif
     Parser::TProduction< expr_t > _object;
 
     Parser::TProduction< expr_t > _tuple;
@@ -692,6 +697,7 @@ private:
 CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
 :   _lvalue(_ternary)
 
+#if !USE_GRAMMAR_WORKAROUND_VS2019
 ,   _export(Parser::And(
         Parser::Optional<symbol_t::Export>(),
         Parser::Sequence<symbol_t::Identifier, symbol_t::Is>(),
@@ -707,6 +713,29 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
 
         *dst = Parser::MakeVariableExport(RTTI::FName(name->Value()), value, scope, site);
     }))
+#else
+,   _export([this](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
+        match_p export_ = nullptr, id_ = nullptr, is_ = nullptr;
+        auto scope = Parser::FVariableExport::Public;
+
+        if (input.TryRead<symbol_t::Export>(&export_))
+            scope = Parser::FVariableExport::Global;
+        if (not input.TryRead<symbol_t::Identifier>(&id_))
+            return Parser::FParseResult::Unexpected(symbol_t::Identifier, id_, input);
+        if (not input.TryRead<symbol_t::Is>(&is_))
+            return Parser::FParseResult::Unexpected(symbol_t::Is, is_, input);
+
+        expr_t value;
+        const Parser::FParseResult result = _lvalue(input, &value);
+        if (not result)
+            return result;
+
+        const site_t site{ Lexer::FSpan::FromSite(export_ ? export_->Site() : id_->Site(), value->Site()) };
+        *dst = Parser::MakeVariableExport(RTTI::FName(id_->Value()), value, scope, site);
+
+        return Parser::FParseResult::Success(site);
+    })
+#endif
 
 ,   _expr(Parser::Switch(
         _export,
@@ -720,6 +749,7 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         *dst = Parser::MakeEvalExpr(expr);
     }))
 
+#if !USE_GRAMMAR_WORKAROUND_VS2019
 ,   _literal(Parser::Or(
         Parser::Expect<symbol_t::Null, expr_t>([](match_p src) -> expr_t {
             return Parser::MakeLiteral(FParseObject(), src->Site());
@@ -749,7 +779,42 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
             return Parser::MakeLiteral(FString(src->Value()), src->Site());
         })
     ))
+#else
+,   _literal([this](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
+        match_p m = nullptr;
 
+        if (input.TryRead<symbol_t::Null>(&m))
+            *dst = Parser::MakeLiteral(FParseObject(), m->Site());
+        else if (input.TryRead<symbol_t::True>(&m))
+            *dst = Parser::MakeLiteral(true, m->Site());
+        else if (input.TryRead<symbol_t::False>(&m))
+            *dst = Parser::MakeLiteral(false, m->Site());
+        else if (input.TryRead<symbol_t::String>(&m))
+            *dst = Parser::MakeLiteral(FString(m->Value()), m->Site());
+        else if (input.TryRead<symbol_t::Integer>(&m)) {
+            i64 i;
+            Verify(Atoi(&i, m->Value(), 10));
+            *dst = Parser::MakeLiteral(i, m->Site());
+        }
+        else if (input.TryRead<symbol_t::Unsigned>(&m)) {
+            u64 u;
+            Verify(Atoi(&u, m->Value(), 10));
+            *dst = Parser::MakeLiteral(u, m->Site());
+        }
+        else if (input.TryRead<symbol_t::Float>(&m)) {
+            double d;
+            Verify(Atod(&d, m->Value()));
+            *dst = Parser::MakeLiteral(d, m->Site());
+        }
+        else
+            return Parser::FParseResult::Failure(input.Site());
+
+        Assert(*dst);
+        return Parser::FParseResult::Success(m->Site());
+    })
+#endif
+
+#if !USE_GRAMMAR_WORKAROUND_VS2019
 ,   _property(Parser::And(
         Parser::Sequence<symbol_t::Identifier, symbol_t::Assignment>(),
         _expr.Ref() )
@@ -759,7 +824,27 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
 
         *dst = Parser::MakePropertyAssignment(RTTI::FName(name->Value()), value, site);
     }))
+#else
+,   _property([this](Parser::FParseList& input, statement_t* dst) -> Parser::FParseResult {
+        match_p id_ = nullptr, assign_ = nullptr;
+        if (not input.Expect<symbol_t::Identifier>(&id_))
+            return Parser::FParseResult::Unexpected(symbol_t::Identifier, id_, input);
+        if (not input.Expect<symbol_t::Assignment>(&assign_))
+            return Parser::FParseResult::Unexpected(symbol_t::Assignment, assign_, input);
 
+        expr_t value;
+        const Parser::FParseResult result = _expr(input, &value);
+        if (not result)
+            return result;
+
+        const site_t site{ Lexer::FSpan::FromSite(id_->Site(), value->Site()) };
+        *dst = Parser::MakePropertyAssignment(RTTI::FName(id_->Value()), value, site);
+
+        return Parser::FParseResult::Success(site);
+    })
+#endif
+
+#if !USE_GRAMMAR_WORKAROUND_VS2019
 ,   _objectInner(_property.Many())
 ,   _object(Parser::And(
         Parser::Expect<symbol_t::Identifier>(),
@@ -777,6 +862,31 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
             MakeMoveIterator(statements.begin()),
             MakeMoveIterator(statements.end()) );
     }))
+#else
+,   _object([this](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
+        match_p class_ = nullptr, brace_ = nullptr;
+        if (not input.Expect<symbol_t::Identifier>(&class_))
+            return Parser::FParseResult::Unexpected(symbol_t::Identifier, class_, input);
+        if (not input.Expect<symbol_t::LBrace>(&brace_))
+            return Parser::FParseResult::Unexpected(symbol_t::LBrace, brace_, input);
+
+        many_statement_t inner;
+        const Parser::FParseResult result = _property.Many()(input, &inner);
+        if (not result)
+            return result;
+
+        if (not input.Expect<symbol_t::RBrace>(&brace_))
+            return Parser::FParseResult::Unexpected(symbol_t::RBrace, brace_, input);
+
+        const site_t site{ Lexer::FSpan::FromSite(class_->Site(), brace_->Site()) };
+        *dst = Parser::MakeObjectDefinition(
+            RTTI::FName(class_->Value()), site,
+            MakeMoveIterator(inner.begin()),
+            MakeMoveIterator(inner.end()) );
+
+        return Parser::FParseResult::Success(site);
+    })
+#endif
 
 ,   _tuple(Parser::Closure<
         symbol_t::LParenthese,
@@ -795,10 +905,33 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         *dst = Parser::MakeArrayExpr(src.MakeView(), site);
     }))
 
+#if !USE_GRAMMAR_WORKAROUND_VS2019
 ,   _dictionaryItem(Parser::And(
         _expr.Ref(),
         Parser::Expect<symbol_t::Comma>(),
         _expr.Ref() ))
+#else
+,   _dictionaryItem([this](Parser::FParseList& input, TTuple<expr_t, match_p, expr_t>* dst) -> Parser::FParseResult {
+        expr_t key;
+        Parser::FParseResult result = _expr(input, &key);
+        if (not result)
+            return result;
+
+        match_p comma = nullptr;
+        if (not input.Expect<symbol_t::Comma>(&comma))
+            return Parser::FParseResult::Unexpected(symbol_t::Comma, comma, input);
+
+        expr_t value;
+        result = _expr(input, &value);
+        if (not result)
+            return result;
+
+        const site_t site{ Lexer::FSpan::FromSpan(key->Site(), value->Site()) };
+        *dst = std::make_tuple(std::move(key), comma, std::move(value));
+
+        return Parser::FParseResult::Success(site);
+    })
+#endif
 ,   _dictionaryInner(Parser::Closure<
         symbol_t::LParenthese,
         symbol_t::RParenthese >(_dictionaryItem)
@@ -816,6 +949,7 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         *dst = Parser::MakeDictionaryExpr(std::move(dico), site);
     }))
 
+#if !USE_GRAMMAR_WORKAROUND_VS2019
 ,   _cast(Parser::And(
         ExpectTypenameRTTI(),
         Parser::Expect<symbol_t::Colon>(),
@@ -827,7 +961,32 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
     .Select<expr_t>([](expr_t* dst, const site_t& site, TTuple<RTTI::PTypeTraits, match_p, expr_t>&& src) {
         *dst = Parser::MakeCastExpr(std::get<0>(src), std::get<2>(src).get(), site);
     }))
+#else
+,   _cast([this](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
+        const Lexer::FSpan start = input.Site();
 
+        RTTI::PTypeTraits traits;
+        Parser::FParseResult result = ExpectTypenameRTTI()(input, &traits);
+        if (not result)
+            return result;
+
+        match_p colon = nullptr;
+        if (not input.Expect<symbol_t::Colon>(&colon))
+            return Parser::FParseResult::Unexpected(symbol_t::Colon, colon, input);
+
+        expr_t value;
+        result = _unary(input, &value);
+        if (not result)
+            return result;
+
+        const site_t site{ Lexer::FSpan::FromSite(start, value->Site()) };
+        *dst = Parser::MakeCastExpr(traits, value.get(), site);
+
+        return Parser::FParseResult::Success(site);
+    })
+#endif
+
+#if !USE_GRAMMAR_WORKAROUND_VS2019
 ,   _variable(Parser::Or(
         Parser::Expect<symbol_t::Identifier>()
             .Select<expr_t>([](expr_t* dst, const site_t& site, match_p&& src) {
@@ -868,6 +1027,50 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
             *dst = Parser::MakeVariableReference(pathName, site);
         })
     ))
+#else
+,   _variable([this](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
+        site_t site;
+        RTTI::FPathName pathName;
+
+        match_p id_ = nullptr, scope_ = nullptr;
+        if      (input.TryRead<symbol_t::Identifier>(&id_)) {
+            site = id_->Site();
+            pathName.Identifier = RTTI::FName(id_->Value());
+        }
+        else if (input.TryRead<symbol_t::Dollar>(&scope_)) {
+            match_p transaction, sep;
+            if (not input.Expect<symbol_t::Div>(&sep))
+                return Parser::FParseResult::Unexpected(symbol_t::Div, sep, input);
+            if (not input.Expect<symbol_t::Identifier>(&transaction))
+                return Parser::FParseResult::Unexpected(symbol_t::Identifier, transaction, input);
+            if (not input.Expect<symbol_t::Div>(&sep))
+                return Parser::FParseResult::Unexpected(symbol_t::Div, sep, input);
+            if (not input.Expect<symbol_t::Identifier>(&id_))
+                return Parser::FParseResult::Unexpected(symbol_t::Identifier, id_, input);
+
+            site = Lexer::FSpan::FromSite(scope_->Site(), id_->Site());
+            pathName.Transaction = RTTI::FName(transaction->Value());
+            pathName.Identifier = RTTI::FName(id_->Value());
+        }
+        else if (input.TryRead<symbol_t::Complement>(&scope_)) {
+            match_p sep;
+            if (not input.Expect<symbol_t::Div>(&sep))
+                return Parser::FParseResult::Unexpected(symbol_t::Div, sep, input);
+            if (not input.Expect<symbol_t::Identifier>(&id_))
+                return Parser::FParseResult::Unexpected(symbol_t::Identifier, id_, input);
+
+            site = Lexer::FSpan::FromSite(scope_->Site(), id_->Site());
+            pathName.Identifier = RTTI::FName(id_->Value());
+        }
+        else {
+            return Parser::FParseResult::Failure(input.Site());
+        }
+
+        *dst = Parser::MakeVariableReference(pathName, site);
+
+        return Parser::FParseResult::Success(site);
+    })
+#endif
 
 ,   _reference(Parser::Switch(
         _literal,
