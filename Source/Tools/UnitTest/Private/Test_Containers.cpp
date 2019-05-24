@@ -1,17 +1,20 @@
 #include "stdafx.h"
 
+#include "Allocator/LinearHeap.h"
+#include "Allocator/StlAllocator.h"
+
 #include "Container/AssociativeVector.h"
 #include "Container/BurstTrie.h"
 #include "Container/FixedSizeHashSet.h"
 #include "Container/FlatMap.h"
 #include "Container/FlatSet.h"
 #include "Container/HashTable.h"
+#include "Container/SparseArray.h"
 #include "Container/StringHashSet.h"
 
 #include "Diagnostic/Benchmark.h"
 #include "Diagnostic/Logger.h"
 
-#include "Allocator/LinearHeap.h"
 #include "IO/BufferedStream.h"
 #include "IO/FileStream.h"
 #include "IO/Filename.h"
@@ -34,6 +37,13 @@
 
 #define PPE_RUN_EXHAUSTIVE_BENCHMARKS (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHMARK_ONE_CONTAINER (0) // %_NOCOMMIT%
+
+#if defined(_MSC_VER) && _MSC_VER >= 1920
+#   define PPE_DONT_USE_STD_UNORDEREDSET (1) // #TODO remove when 2019 AVX2 codegen bug will be fixed
+//  https://developercommunity.visualstudio.com/content/problem/506484/autovectorization-on-x64-release-builds-uses-avx2.html
+#else
+#   define PPE_DONT_USE_STD_UNORDEREDSET (0)
+#endif
 
 namespace PPE {
 LOG_CATEGORY(, Test_Containers)
@@ -787,7 +797,7 @@ public:
 } //!namespace BenchmarkContainers
 //----------------------------------------------------------------------------
 template <typename T, typename _Generator, typename _Containers>
-static void Benchmark_Containers_Exhaustive_(
+NO_INLINE static void Benchmark_Containers_Exhaustive_(
     const FStringView& name, size_t dim,
     _Generator&& generator,
     _Containers&& tests ) {
@@ -1032,7 +1042,7 @@ static void Benchmark_Containers_FindSpeed_Impl_(
 #endif
 }
 template <typename T, typename _Generator, typename _Containers>
-static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&& generator, _Containers&& tests) {
+NO_INLINE static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&& generator, _Containers&& tests) {
     LOG(Benchmark, Emphasis, L"Running find speed benchmarks <{0}> :", name);
 
     // mt19937 has better distribution than FRandomGenerator for generating benchmark data
@@ -1052,7 +1062,7 @@ static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Generator>
-static void Test_PODSet_(const FString& name, const _Generator& samples) {
+NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& samples) {
     auto containers_large = [](auto& bm, const auto* input) {
         /*{ // very buggy
             typedef TCompactHashSet<T> hashtable_type;
@@ -1114,9 +1124,12 @@ static void Test_PODSet_(const FString& name, const _Generator& samples) {
             bm.Run("HashSet", set, input);
         }
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
         {
-            std::unordered_set<T, Meta::THash<T>, Meta::TEqualTo<T>, ALLOCATOR(Container, T)> set;
+            std::unordered_set<
+                T, Meta::THash<T>, Meta::TEqualTo<T>,
+                TStlAllocator< T, ALLOCATOR(Container) >
+            >   set;
             bm.Run("unordered_set", set, input);
         }
 #endif
@@ -1126,6 +1139,34 @@ static void Test_PODSet_(const FString& name, const _Generator& samples) {
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             typedef TVector<T> vector_type;
+
+            vector_type v;
+
+            struct FAdapter_ {
+                vector_type v;
+                size_t size() const { return v.size(); }
+                auto begin() const { return v.begin(); }
+                auto end() const { return v.end(); }
+                void insert(T i) { v.push_back(i); }
+                auto find(T i) const { return std::find(v.begin(), v.end(), i); }
+                void reserve(size_t n) { v.reserve(n); }
+                bool erase(T i) {
+                    auto it = find(i);
+                    if (v.end() == it)
+                        return false;
+                    v.erase_DontPreserveOrder(it);
+                    return true;
+                }
+                void clear() { v.clear(); }
+            };
+
+            FAdapter_ set;
+            bm.Run("Vector", set, input);
+        }
+#endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if 1 // !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
+        {
+            typedef TSparseArray<T> vector_type;
 
             vector_type v;
 
@@ -1173,20 +1214,19 @@ static void Test_PODSet_(const FString& name, const _Generator& samples) {
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
     Benchmark_Containers_Exhaustive_<T>(name + "_50", 50, generator, containers_all);
     Benchmark_Containers_Exhaustive_<T>(name + "_200", 200, generator, containers_large);
-
-    Benchmark_Containers_FindSpeed_<T>(name + "_find", generator, containers_all);
 #   endif
+    Benchmark_Containers_FindSpeed_<T>(name + "_find", generator, containers_all);
 #endif
 
 #ifndef WITH_PPE_ASSERT
-    Benchmark_Containers_Exhaustive_<T>(name + "_2000", 2000, generator, containers_large);
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+    Benchmark_Containers_Exhaustive_<T>(name + "_2000", 2000, generator, containers_large);
     Benchmark_Containers_Exhaustive_<T>(name + "_20000", 20000, generator, containers_large);
 #   endif
 #endif
 }
 //----------------------------------------------------------------------------
-static void Test_StringSet_() {
+NO_INLINE static void Test_StringSet_() {
     TRawStorage<char> stringPool;
     stringPool.Resize_DiscardData(64 * 1024); // 64k of text
     FRandomGenerator rnd(42);
@@ -1370,18 +1410,18 @@ static void Test_StringSet_() {
             bm.Run("ConstCharHashSet_M", set, input);
         }*/
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
         {
-            std::unordered_set<
+            std::unordered_set <
                 FStringView,
                 TStringViewHasher<char, ECase::Sensitive>,
                 TStringViewEqualTo<char, ECase::Sensitive>,
-                ALLOCATOR(Container, FStringView)
+                TStlAllocator < FStringView, ALLOCATOR(Container) >
             >   set;
 
             bm.Run("unordered_set", set, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS && !PPE_DONT_USE_STD_UNORDEREDSET
         {
             std::unordered_set<
                 TBasicStringViewHashMemoizer<char, ECase::Sensitive>,
@@ -1397,27 +1437,34 @@ static void Test_StringSet_() {
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_20", 20, generator, containers);
 #if PPE_RUN_EXHAUSTIVE_BENCHMARKS
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_50", 50, generator, containers);
-
-    Benchmark_Containers_FindSpeed_<FStringView>("Strings_find", generator, containers);
 #endif
+    Benchmark_Containers_FindSpeed_<FStringView>("Strings_find", generator, containers);
 #ifndef WITH_PPE_ASSERT
 
-    Benchmark_Containers_Exhaustive_<FStringView>("Strings_200", 200, generator, containers);
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+    Benchmark_Containers_Exhaustive_<FStringView>("Strings_200", 200, generator, containers);
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_2000", 2000, generator, containers);
 #   endif
 #endif
 }
 #endif //!USE_PPE_BENCHMARK
 //----------------------------------------------------------------------------
-static void Test_StealFromDifferentAllocator_() {
+NO_INLINE static void Test_StealFromDifferentAllocator_() {
     // steal allocations from different tracking domains
     {
+        STATIC_ASSERT(has_stealallocatorblock_v<
+            VECTOR(Container, int)::allocator_type,
+            VECTOR(NativeTypes, int)::allocator_type >);
+
         VECTOR(NativeTypes, int) u = { 1, 2, 3 };
         VECTOR(Container, int) v = u;
         VECTOR(Container, int) w = std::move(u);
     }
     {
+        STATIC_ASSERT(has_stealallocatorblock_v<
+            HASHSET(Container, int)::allocator_type,
+            HASHSET(NativeTypes, int)::allocator_type >);
+
         HASHSET(NativeTypes, int) u = { 1, 2, 3 };
         HASHSET(Container, int) w = std::move(u);
     }
@@ -1429,12 +1476,12 @@ void Test_Containers() {
     Test_StealFromDifferentAllocator_();
 
 #if USE_PPE_BENCHMARK
-    Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
+    //Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
-    Test_PODSet_<u32>("u32", [](auto& rnd) { return u32(rnd()); });
-    Test_PODSet_<u128>("u128", [](auto& rnd) { return u128{ u64(rnd()), u64(rnd()) }; });
+    //Test_PODSet_<u32>("u32", [](auto& rnd) { return u32(rnd()); });
+    //Test_PODSet_<u128>("u128", [](auto& rnd) { return u128{ u64(rnd()), u64(rnd()) }; });
+    //Test_PODSet_<u256>("u256", [](auto& rnd) { return u256{ { u64(rnd()), u64(rnd()) }, { u64(rnd()), u64(rnd()) } }; });
 #   endif
-    Test_PODSet_<u256>("u256", [](auto& rnd) { return u256{ { u64(rnd()), u64(rnd()) }, { u64(rnd()), u64(rnd()) } }; });
     Test_StringSet_();
 #endif
 
