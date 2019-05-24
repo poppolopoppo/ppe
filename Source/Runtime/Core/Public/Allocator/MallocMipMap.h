@@ -357,7 +357,10 @@ void TMallocMipMap<_VMemTraits>::GarbageCollect() {
 
     const FReadWriteLock::FScopeLockWrite GClockWrite(_GClockRW); // this is an exclusive process
 
-    for (u32 mipIndex = _numCommitedMipMaps; mipIndex; --mipIndex) {
+    if (0 == _numCommitedMipMaps)
+        return;
+
+    for (u32 mipIndex = (_numCommitedMipMaps - 1); mipIndex; --mipIndex) {
         FMipMap& mipMap = _mipMaps[mipIndex];
         if (mipMap.MipMask.load(std::memory_order_relaxed) == GMipMaskEmpty_) {
             Assert_NoAssume(_numFreeMipMaps);
@@ -418,6 +421,7 @@ NO_INLINE void* TMallocMipMap<_VMemTraits>::AllocateSlowPath_(u32 mipIndex, u32 
             _mipMaps[mipIndex].MipMask = GMipMaskEmpty_;
             _mipMaps[mipIndex].SizeMask = GSizeMaskEmpty_;
 
+            _numFreeMipMaps++;
             _numCommitedMipMaps = (mipIndex + 1); // increment last to be sure than no one touches it before it's fully initialized
             _nextFreeMipMap = mipIndex;
         }
