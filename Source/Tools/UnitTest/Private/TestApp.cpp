@@ -52,6 +52,7 @@ void FTestApp::Start() {
     forrange(i, 0, total) {
         tests[i]();
         FAppNotify::SetTaskbarProgress(i + 1, total);
+        ReportAllTrackingData();
     }
 
     FAppNotify::SetTaskbarState(FAppNotify::ETaskbarState::Indeterminate);

@@ -1086,7 +1086,7 @@ FBinnedGlobalCache_::~FBinnedGlobalCache_() {
 
             numDanglingBlocks += ch->NumBlocksInUse;
             numDanglingChunks++;
-            totalSizeDangling += (FMallocBinned::SizeClasses[ch->SizeClass] * ch->NumBlocksInUse);
+            totalSizeDangling += (size_t(FMallocBinned::SizeClasses[ch->SizeClass]) * ch->NumBlocksInUse);
 
 #ifdef   WITH_PPE_ASSERT
             size_t n = 0;
@@ -1275,6 +1275,47 @@ size_t FMallocBinned::RegionSize(void* ptr) {
         ? FMallocBinned::SizeClasses[ChunkFromBlock_((FBinnedBlock_*)ptr)->SizeClass]
         : NonSmallBlockRegionSize_(ptr) );
 }
+//----------------------------------------------------------------------------
+#if !USE_PPE_FINAL_RELEASE
+bool FMallocBinned::FetchMediumMips(
+    void** vspace,
+    size_t* numCommited,
+    size_t* numReserved,
+    size_t* mipSizeInBytes,
+    TMemoryView<const u32>* mipMasks ) {
+    Assert(vspace);
+    Assert(numCommited);
+    Assert(numReserved);
+    Assert(mipSizeInBytes);
+    Assert(mipMasks);
+
+#   if USE_MALLOCBINNED_MIPMAPS
+    constexpr size_t NumReserved = PPE_MIPMAPS_RESERVEDSIZE / FBinnedMediumBlocks_::TopMipSize;
+    static u32 GMips[NumReserved];
+
+    const size_t n = GBinnedGlobalCache_.MediumMips.EachCommitedMipMap([](size_t mipIndex, u32 mipMask) {
+        GMips[mipIndex] = mipMask;
+    });
+
+    *vspace = GBinnedGlobalCache_.MediumMips.VSpace();
+    *numCommited = n;
+    *numReserved = NumReserved;
+    *mipSizeInBytes = FBinnedMediumBlocks_::TopMipSize;
+    *mipMasks = MakeConstView(GMips).CutBefore(n);
+
+    return true;
+
+#   else
+    UNUSED(vspace);
+    UNUSED(numCommited);
+    UNUSED(numReserved);
+    UNUSED(mipSizeInBytes);
+    UNUSED(mipMasks);
+
+    return false;
+#   endif //!USE_MALLOCBINNED_MIPMAPS
+}
+#endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

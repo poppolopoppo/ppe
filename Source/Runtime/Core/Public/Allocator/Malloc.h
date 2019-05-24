@@ -110,14 +110,22 @@ void* (realloc)(void *ptr, size_t size, aligned_alloc_t<_Alignment>* = 0) {
 template <typename T>
 class TMemoryView;
 struct FMallocDebug {
+public: // leak detector
     static PPE_CORE_API void StartLeakDetector();
     static PPE_CORE_API void ShutdownLeakDetector();
     static PPE_CORE_API bool SetLeakDetectorWhiteListed(bool ignoreleaks);
     static PPE_CORE_API void DumpMemoryLeaks(bool onlyNonDeleters = false);
+public: // statistics
     static PPE_CORE_API bool FetchAllocationHistogram(
         TMemoryView<const size_t>* classes,
         TMemoryView<const i64>* allocations,
         TMemoryView<const i64>* totalBytes );
+    static PPE_CORE_API bool FetchMediumMips(
+        void** vspace,
+        size_t* numCommited,
+        size_t* numReserved,
+        size_t* mipSizeInBytes,
+        TMemoryView<const u32>* mipMasks );
 };
 struct FLeakDetectorWhiteListScope {
     const bool WasIgnoringLeaks;

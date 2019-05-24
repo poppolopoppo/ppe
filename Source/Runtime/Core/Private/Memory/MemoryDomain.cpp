@@ -216,7 +216,7 @@ void ReportTrackingDatas_(
             );
     }
 
-    oss << hr << Eol;
+    oss << Eol;
 }
 #endif //!USE_PPE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
@@ -242,6 +242,54 @@ void UnregisterTrackingData(FMemoryTracking *pTrackingData) {
 #endif
 }
 //----------------------------------------------------------------------------
+void ReportAllocationFragmentation(FWTextWriter& oss) {
+#if !USE_PPE_FINAL_RELEASE
+    void* vspace;
+    size_t numCommited, numReserved, mipSizeInBytes;
+    TMemoryView<const u32> mipMasks;
+
+    if (not FMallocDebug::FetchMediumMips(&vspace, &numCommited, &numReserved, &mipSizeInBytes, &mipMasks))
+        return;
+
+    CONSTEXPR size_t width = 128;
+    const auto hr = Fmt::Repeat(L'-', width);
+
+    oss << hr << Eol
+        << FTextFormat::Float(FTextFormat::FixedFloat, 2)
+        << L"report allocation internal fragmentation : "
+        << Fmt::SizeInBytes(mipSizeInBytes)
+        << L" x "
+        << Fmt::CountOfElements(numCommited)
+        << L'/'
+        << Fmt::CountOfElements(numReserved)
+        << L" => "
+        << Fmt::SizeInBytes(numCommited * mipSizeInBytes)
+        << Eol << hr << Eol;
+
+    Assert_NoAssume(numCommited == mipMasks.size());
+
+    FWString tmp;
+    CONSTEXPR const size_t perRow = 12;
+    for (size_t r = 0, rows = (numCommited + perRow - 1) / perRow; r < rows; ++r) {
+        Format(oss, L"{0}|{1:#3}| ", Fmt::Pointer((u8*)vspace + mipSizeInBytes * r), r * perRow);
+
+        forrange(i, 0, perRow) {
+            if (i == 4 || i == 8)
+                oss << L' ';
+
+            const size_t mipIndex = (r * perRow + i);
+            if (mipIndex < numCommited) {
+                tmp = StringFormat(L"{0:#8X}", mipMasks[mipIndex]);
+                tmp.gsub('0', '.');
+                oss << L' ' << tmp;
+            }
+        }
+
+        oss << Eol;
+    }
+#endif
+}
+//----------------------------------------------------------------------------
 void ReportAllocationHistogram(FWTextWriter& oss) {
 #if USE_PPE_MEMORYDOMAINS && defined(USE_DEBUG_LOGGER)
     TMemoryView<const size_t> classes;
@@ -264,8 +312,12 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
 
     const float distributionScale = distribution(maxCount);
 
-    oss << FTextFormat::Float(FTextFormat::FixedFloat, 2);
-    oss << L"report allocations size histogram" << Eol;
+    const auto hr = Fmt::Repeat(L'-', 128);
+
+    oss << FTextFormat::Float(FTextFormat::FixedFloat, 2)
+        << hr << Eol
+        << L"report allocations size histogram" << Eol
+        << hr << Eol;
 
     static i64 GPrevAllocations[MemoryDomainsMaxCount] = { 0 }; // beware this is not thread safe
     AssertRelease(lengthof(GPrevAllocations) >= classes.size());
@@ -331,6 +383,7 @@ void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
 
     ReportTrackingDatas_(oss, L"Memory domains", datas.MakeView());
     ReportAllocationHistogram(oss);
+    ReportAllocationFragmentation(oss);
 
     if (not optional)
         FLogger::Log(

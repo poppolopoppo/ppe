@@ -46,6 +46,8 @@ public:
     TMallocMipMap(TMallocMipMap&&) = delete;
     TMallocMipMap& operator =(TMallocMipMap&&) = delete;
 
+    void* VSpace() const { return _vSpace;  }
+
     bool AliasesToMipMaps(const void* ptr) const;
     size_t AllocationSize(const void* ptr) const;
 
@@ -58,7 +60,10 @@ public:
 
     void GarbageCollect();
 
-    static size_t SnapSize(size_t sizeInBytes);
+    template <typename _Each>
+    size_t EachCommitedMipMap(_Each&& each) const;
+
+    static size_t SnapSize(size_t sizeInBytes) NOEXCEPT;
 
 private:
     static constexpr u64 GMipMaskEmpty_     = 0xFFFFFFFFFFFFFFFFull;
@@ -200,6 +205,7 @@ TMallocMipMap<_VMemTraits>::~TMallocMipMap() {
     Assert(_vSpace);
 
     const FReadWriteLock::FScopeLockWrite GClockWrite(_GClockRW);
+
     vmem_traits::PageRelease(_vSpace, ReservedSize);
 }
 //----------------------------------------------------------------------------
@@ -383,7 +389,25 @@ void TMallocMipMap<_VMemTraits>::GarbageCollect() {
 }
 //----------------------------------------------------------------------------
 template <typename _VMemTraits>
-size_t TMallocMipMap<_VMemTraits>::SnapSize(size_t sizeInBytes) {
+template <typename _Each>
+size_t TMallocMipMap<_VMemTraits>::EachCommitedMipMap(_Each&& each) const {
+    // used for fragmentation diagnostic
+
+    const FReadWriteLock::FScopeLockRead GClockRead(_GClockRW);
+
+    const size_t n = _numCommitedMipMaps.load();
+
+    // convert the mip mask to a 32 bits mask (ie lowest mip)
+    forrange(mipIndex, 0, n) {
+        const FMipMap& mipMap = _mipMaps[mipIndex];
+        each(mipIndex, ~u32(mipMap.MipMask.load() >> u64(31)));
+    }
+
+    return n;
+}
+//----------------------------------------------------------------------------
+template <typename _VMemTraits>
+size_t TMallocMipMap<_VMemTraits>::SnapSize(size_t sizeInBytes) NOEXCEPT {
     Assert(sizeInBytes);
 
     const u32 lvl = MipLevel_(sizeInBytes);

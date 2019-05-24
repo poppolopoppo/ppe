@@ -23,6 +23,16 @@ public:
 
     static size_t   RegionSize(void* ptr);
 
+#if !USE_PPE_FINAL_RELEASE
+    // used for memory diagnostics only
+    static bool     FetchMediumMips(
+        void** vspace,
+        size_t* numCommited,
+        size_t* numReserved,
+        size_t* mipSizeInBytes,
+        TMemoryView<const u32>* mipMasks );
+#endif
+
 public:
     // made public so that external code can align on block sizes
     static constexpr size_t MinSizeClass = 19;

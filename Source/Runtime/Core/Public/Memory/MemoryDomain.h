@@ -72,6 +72,7 @@ struct MEMORYDOMAIN_NAME(ReservedMemory) { static PPE_CORE_API FMemoryTracking& 
 PPE_CORE_API void RegisterTrackingData(FMemoryTracking *pTrackingData);
 PPE_CORE_API void UnregisterTrackingData(FMemoryTracking *pTrackingData);
 //----------------------------------------------------------------------------
+PPE_CORE_API void ReportAllocationFragmentation(FWTextWriter& oss);
 PPE_CORE_API void ReportAllocationHistogram(FWTextWriter& oss);
 //----------------------------------------------------------------------------
 PPE_CORE_API void ReportAllTrackingData(FWTextWriter* optional = nullptr);

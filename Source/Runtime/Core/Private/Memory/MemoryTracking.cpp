@@ -39,7 +39,7 @@ void FMemoryTracking::Allocate(size_t userSize, size_t systemSize) NOEXCEPT {
     Assert_NoAssume(userSize <= systemSize);
 
     const size_t n = (++_numAllocs);
-    if (n > _peakAllocs)
+    if (Unlikely(n > _peakAllocs))
         _peakAllocs = n;
 
     _user.Allocate(userSize);

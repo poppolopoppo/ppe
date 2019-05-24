@@ -73,6 +73,9 @@ struct FMallocLowLevel {
 #if !USE_PPE_FINAL_RELEASE
     FORCE_INLINE static size_t  RegionSize(void* ptr);
 #endif
+#if !USE_PPE_FINAL_RELEASE
+    FORCE_INLINE static size_t  FetchMediumMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks);
+#endif
 };
 //----------------------------------------------------------------------------
 #if (PPE_MALLOC_ALLOCATOR == PPE_MALLOC_ALLOCATOR_STD)
@@ -100,6 +103,11 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 #   else
     return 0;
 #   endif
+#endif
+#if !USE_PPE_FINAL_RELEASE
+size_t FMallocLowLevel::FetchMediumMips(void**, size_t*, size_t*, size_t*, TMemoryView<const u32>*) {
+    return false; // unsupported
+}
 #endif
 }
 #endif //!PPE_MALLOC_ALLOCATOR_STD
@@ -137,6 +145,11 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
     return FMallocBinned::RegionSize(ptr);
 }
 #endif
+#if !USE_PPE_FINAL_RELEASE
+size_t FMallocLowLevel::FetchMediumMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks) {
+    return FMallocBinned::FetchMediumMips(vspace, numReserved, numCommited, mipSizeInBytes, mipMasks);
+}
+#endif
 #endif //!PPE_MALLOC_ALLOCATOR_BINNED
 //----------------------------------------------------------------------------
 #if (PPE_MALLOC_ALLOCATOR == PPE_MALLOC_ALLOCATOR_STOMP)
@@ -164,6 +177,11 @@ size_t FMallocLowLevel::SnapSize(size_t size) NOEXCEPT { return size; }
 #if !USE_PPE_FINAL_RELEASE
 size_t FMallocLowLevel::RegionSize(void* ptr) {
     return FMallocStomp::RegionSize(ptr);
+}
+#endif
+#if !USE_PPE_FINAL_RELEASE
+size_t FMallocLowLevel::FetchMediumMips(void**, size_t*, size_t*, size_t*, TMemoryView<const u32>*) {
+    return false; // unsupported
 }
 #endif
 #endif //!PPE_MALLOC_ALLOCATOR_STOMP
@@ -229,6 +247,18 @@ public:
         Assert_NoAssume(snapped >= size);
         return snapped;
     }
+
+#if !USE_PPE_FINAL_RELEASE
+    FORCE_INLINE static size_t RegionSize(void* ptr) {
+        Assert(ptr);
+        return FMallocLowLevel::RegionSize(ptr);
+    }
+#endif
+#if !USE_PPE_FINAL_RELEASE
+    FORCE_INLINE static size_t FetchMediumMips(void** vspace, size_t* numCommited, size_t* numReserved, size_t* mipSizeInBytes, TMemoryView<const u32>* mipMasks) {
+        return FMallocLowLevel::FetchMediumMips(vspace, numCommited, numReserved, mipSizeInBytes, mipMasks);
+    }
+#endif
 
 private:
     static void* AllocateBlock(void* ptr, size_t sizeInBytes, size_t alignment = 16) {
@@ -413,6 +443,17 @@ bool FMallocDebug::FetchAllocationHistogram(
     NOOP(classes, allocations, totalBytes);
     return false;
 #endif
+}
+#endif //!USE_PPE_FINAL_RELEASE
+//----------------------------------------------------------------------------
+#if !USE_PPE_FINAL_RELEASE
+bool FMallocDebug::FetchMediumMips(
+    void** vspace,
+    size_t* numCommited,
+    size_t* numReserved,
+    size_t* mipSizeInBytes,
+    TMemoryView<const u32>* mipMasks ) {
+    return FMallocProxy::FetchMediumMips(vspace, numReserved, numCommited, mipSizeInBytes, mipMasks);
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------

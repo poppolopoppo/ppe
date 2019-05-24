@@ -835,8 +835,6 @@ static NO_INLINE void Test_TransactionSerialization_() {
             rand.Randomize(t.get(), &import);
             input.RegisterObject(t.get());
         }
-
-        ReportAllTrackingData(); // inspect this transaction allocations
     }
     const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(input);
 
