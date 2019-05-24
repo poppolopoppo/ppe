@@ -58,17 +58,17 @@ FASTBUILD_OPTIONS=fetch_fastbuild_options()
 
 puts "[Default target]      = <#{DEFAULT_TARGET}>"
 puts "[Fastbuild options]   = #{FASTBUILD_OPTIONS}"
-puts "[All modules]         =" 
+puts "[All modules]         ="
 puts " - #{ALL_MODULES.join(",\n - ")}"
 
 FileUtils.mkdir_p(VCDB_PATH, :verbose => true)
 
 def make_compile_commands(platform, config)
     dirname = File.join(CORE_PATH, 'Output', 'Intermediate', platform, config)
-    FileUtils.mkdir_p(dirname, :verbose => true)
+    FileUtils.mkdir_p(dirname)
     filename = File.join(dirname, "compile_commands.json")
     unless system('ruby', FBUILD_RB, "-compdb", "#{DEFAULT_TARGET}-#{platform}-#{config}", :out => File::NULL)
-        raise "compdb generation failed :'("
+        raise "#{FBUILD_RB} #{DEFAULT_TARGET}-#{platform}-#{config}: compdb generation failed :'("
     end
     FileUtils.mv(FBUILD_COMPDB, filename)
     puts " + #{filename}"
@@ -103,9 +103,9 @@ class WindowsPlatform < Platform
     WindowsSDKBasePath10    = fetch_fbuilb_string(FBUILD_SOLUTION_PATH, 'WindowsSDKBasePath10')
     WindowsSDKVersion10     = fetch_fbuilb_string(FBUILD_SOLUTION_PATH, 'WindowsSDKVersion10')
 
-    VSBasePath              = "#{VS141COMNTOOLS}..\\.."
+    VSBasePath              = "#{VS141COMNTOOLS}../.."
     VSToolsVersion          = VS141VERSION
-    VSBinaryPath            = "#{VSBasePath}\\VC\\Tools\\MSVC\\#{VS141VERSION}\\bin"
+    VSBinaryPath            = "#{VSBasePath}/VC/Tools/MSVC/#{VS141VERSION}/bin"
     WindowsSDKBasePath      = WindowsSDKBasePath10
     WindowsSDKVersion       = WindowsSDKVersion10
 
@@ -121,15 +121,15 @@ class WindowsPlatform < Platform
 
     def includePath()
         return super + [
-            "#{VSBasePath}\\VC\\Tools\\MSVC\\#{VSToolsVersion}\\include\\*",
-            "#{VSBasePath}\\VC\\Auxiliary\\VS\\include\\*",
-            "#{WindowsSDKBasePath}\\Include\\#{WindowsSDKVersion}\\ucrt",
-            "#{WindowsSDKBasePath}\\Include\\#{WindowsSDKVersion}\\um",
-            "#{WindowsSDKBasePath}\\Include\\#{WindowsSDKVersion}\\shared",
+            "#{VSBasePath}/VC/Tools/MSVC/#{VSToolsVersion}/include/**",
+            "#{VSBasePath}/VC/Auxiliary/VS/include/**",
+            "#{WindowsSDKBasePath}/Include/#{WindowsSDKVersion}/ucrt/**",
+            "#{WindowsSDKBasePath}/Include/#{WindowsSDKVersion}/um/**",
+            "#{WindowsSDKBasePath}/Include/#{WindowsSDKVersion}/shared/**",
         ]
     end
 
-    def compilerPath() return "#{VSBinaryPath}\\HostX64\\x64\\cl.exe" end
+    def compilerPath() return "\"#{VSBinaryPath}/HostX64/x64/cl.exe\" #{@name == 'Win32' ? '-m32' : '-m64'}" end
 
     def binaryExtension() return '.exe' end
 
@@ -291,13 +291,13 @@ launchconfigurations = [
         "type": "cppvsdbg",
         "request": "launch",
         "program": USE_CPPTOOLS_ACTIVECONFIGNAME ?
-            "${workspaceRoot}\\Output\\Binary\\#{File.basename(DEFAULT_TARGET)}.${command:cpptools.activeConfigName}" :
-            "${workspaceRoot}\\Output\\Binary\\#{File.basename(DEFAULT_TARGET)}.${input:ppe_config}",
+            "${workspaceRoot}/Output/Binary/#{File.basename(DEFAULT_TARGET)}.${command:cpptools.activeConfigName}" :
+            "${workspaceRoot}/Output/Binary/#{File.basename(DEFAULT_TARGET)}.${input:ppe_config}",
         "args": [],
         "stopAtEntry": false,
-        "cwd": "${workspaceRoot}\\Output\\Binary",
+        "cwd": "${workspaceRoot}/Output/Binary",
         "environment": [],
-        "visualizerFile": "${workspaceRoot}\\Extras\\Debug\\PPE.natvis",
+        "visualizerFile": "${workspaceRoot}/Extras/Debug/PPE.natvis",
         "externalConsole": false
     }
 ]
