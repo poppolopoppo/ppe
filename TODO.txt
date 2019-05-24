@@ -6,6 +6,10 @@
     -> avoiding switching to newest chunk might help
     -> use the fragmentation report
 
+- Add total volume allocated to memory domains
+    -> total number of allocations
+    -> total number of bytes
+
 - Change memory tracking for mipmaps to see reserved memory
     -> memory domain ReservedMemory could use user/system memory for reporting commited/reserved memory ?
 
