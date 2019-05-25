@@ -32,10 +32,10 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPercentage prc);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
-PPE_STRONGLYTYPED_NUMERIC_DEF(uint64_t, FCountOfElements);
+PPE_STRONGLYTYPED_NUMERIC_DEF(u64, FCountOfElements);
 template <typename T>
 Meta::TEnableIf<std::is_integral_v<T>, FCountOfElements> CountOfElements(T n) NOEXCEPT {
-    return FCountOfElements{ checked_cast<T>(n) };
+    return FCountOfElements{ checked_cast<u64>(n) };
 }
 } //!namespace Fmt
 //----------------------------------------------------------------------------
