@@ -142,7 +142,7 @@ RTTI::FAtom FParseContext::CreateAtom(const RTTI::PTypeTraits& traits, void* rva
     return _atomHeap->AllocateMove(traits, rvalue);
 }
 //----------------------------------------------------------------------------
-FLinearHeap& FParseContext::LinearHeap_() const {
+FPooledLinearHeap& FParseContext::LinearHeap_() const {
     return _atomHeap->Heap();
 }
 //----------------------------------------------------------------------------

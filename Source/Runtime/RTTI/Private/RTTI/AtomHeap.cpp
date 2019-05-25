@@ -20,10 +20,6 @@ FAtomHeap::~FAtomHeap() {
 NO_INLINE void FAtomHeap::ReleaseAll() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-#if !USE_PPE_FINAL_RELEASE
-    _heap.DumpMemoryStats();
-#endif
-
     // destroy non-trivial type instances :
     for (FAtom& atom : _destructibles)
         atom.Traits()->Destroy(atom.Data());

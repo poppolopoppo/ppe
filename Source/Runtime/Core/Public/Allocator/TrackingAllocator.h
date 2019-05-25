@@ -54,10 +54,10 @@ public:
         return (*this);
     }
 
-    TTrackingAllocator(TTrackingAllocator&& rvalue)
+    TTrackingAllocator(TTrackingAllocator&& rvalue) NOEXCEPT
     :   _Allocator(allocator_traits::SelectOnMove(std::move(rvalue)))
     {}
-    TTrackingAllocator& operator =(TTrackingAllocator&& rvalue) {
+    TTrackingAllocator& operator =(TTrackingAllocator&& rvalue) NOEXCEPT {
         allocator_traits::Move(this, std::move(rvalue));
         return (*this);
     }

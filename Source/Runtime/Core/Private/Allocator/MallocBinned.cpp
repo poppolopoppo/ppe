@@ -1276,6 +1276,10 @@ size_t FMallocBinned::RegionSize(void* ptr) {
         : NonSmallBlockRegionSize_(ptr) );
 }
 //----------------------------------------------------------------------------
+size_t FMallocBinned::SizeClass(size_t size) NOEXCEPT {
+    return MakeBinnedClass_(SnapSize(size));
+}
+//----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
 bool FMallocBinned::FetchMediumMips(
     void** vspace,

@@ -182,7 +182,7 @@ public:
     static bool Load(FJson* json, const FWStringView& filename, const FStringView& content);
 
 private:
-    LINEARHEAP(Json) _heap;
+    LINEARHEAP_POOLED(Json) _heap;
     FValue _root;
     FTextHeap _textHeap;
 };

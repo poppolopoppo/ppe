@@ -106,7 +106,7 @@ public:
         }
     };
 
-    TTextHeap(FLinearHeap& heap)
+    TTextHeap(FPooledLinearHeap& heap)
         : _heap(heap) {
         STATIC_ASSERT(sizeof(typename FText::FLargeText_) == sizeof(typename FText::FSmallText_));
         STATIC_ASSERT(_Padded
@@ -163,7 +163,7 @@ public:
     }
 
 private:
-    FLinearHeap& _heap;
+    FPooledLinearHeap& _heap;
     HASHSET(Transient, FText) _texts;
 
     FStringView AllocateString_(const FStringView& str) {

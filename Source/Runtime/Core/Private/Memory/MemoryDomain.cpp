@@ -160,29 +160,41 @@ void ReportTrackingDatas_(
 
     oss << FTextFormat::Float(FTextFormat::FixedFloat, 2);
 
-    oss << L"reporting tracking data :" << Eol;
+    oss << L"  Reporting tracking data :" << Eol;
 
-    CONSTEXPR size_t width = 128;
-    CONSTEXPR wchar_t fmt[] = L" {0:-30}| {1:7} {2:9} | {3:11} {4:11} | {5:11} {6:11} | {7:11} {8:11}\n";
+    CONSTEXPR size_t width = 175;
+    CONSTEXPR wchar_t fmtTitle[] = L" {0:-30}";
+    CONSTEXPR wchar_t fmtSnapshot[] = L"| {0:7} {1:9} | {2:10} {3:10} | {4:11} {5:12}   ";
+
     const auto hr = Fmt::Repeat(L'-', width);
 
     oss << hr << Eol
         << L"    " << header << L" (" << datas.size() << L" elements)" << Eol
         << hr << Eol;
 
-    Format(oss, fmt, L"Tracking domain",
-        Fmt::AlignCenter(MakeStringView(L"Alloc")),
+    Format(oss, fmtTitle, L"Tracking domain");
+    Format(oss, fmtSnapshot,
+        Fmt::AlignCenter(MakeStringView(L"User")),
         Fmt::AlignCenter(MakeStringView(L"Max")),
 
         Fmt::AlignCenter(MakeStringView(L"Stride")),
         Fmt::AlignCenter(MakeStringView(L"Max")),
 
-        Fmt::AlignCenter(MakeStringView(L"User")),
-        Fmt::AlignCenter(MakeStringView(L"Peak")),
-
-        Fmt::AlignCenter(MakeStringView(L"System")),
+        Fmt::AlignCenter(MakeStringView(L"Size")),
         Fmt::AlignCenter(MakeStringView(L"Peak"))
         );
+    Format(oss, fmtSnapshot,
+        Fmt::AlignCenter(MakeStringView(L"System")),
+        Fmt::AlignCenter(MakeStringView(L"Max")),
+
+        Fmt::AlignCenter(MakeStringView(L"Stride")),
+        Fmt::AlignCenter(MakeStringView(L"Max")),
+
+        Fmt::AlignCenter(MakeStringView(L"Size")),
+        Fmt::AlignCenter(MakeStringView(L"Peak"))
+        );
+
+    oss << Eol;
 
     STACKLOCAL_WTEXTWRITER(tmp, 128);
 
@@ -199,21 +211,23 @@ void ReportTrackingDatas_(
         const FMemoryTracking::FSnapshot sys = data->System();
 
         Format(tmp, L"{0}{1}", Fmt::Repeat(L' ', data->Level()), name);
-        Format(oss, fmt,
-            tmp.Written(),
-
-            Fmt::FCountOfElements{ data->NumAllocs() },
-            Fmt::FCountOfElements{ data->PeakAllocs() },
-
+        Format(oss, fmtTitle, tmp.Written());
+        Format(oss, fmtSnapshot,
+            Fmt::CountOfElements(usr.NumAllocs),
+            Fmt::CountOfElements(usr.PeakAllocs),
             Fmt::SizeInBytes(usr.MinSize),
             Fmt::SizeInBytes(usr.MaxSize),
-
             Fmt::SizeInBytes(usr.TotalSize),
-            Fmt::SizeInBytes(usr.PeakSize),
-
+            Fmt::SizeInBytes(usr.PeakSize) );
+        Format(oss, fmtSnapshot,
+            Fmt::CountOfElements(sys.NumAllocs),
+            Fmt::CountOfElements(sys.PeakAllocs),
+            Fmt::SizeInBytes(sys.MinSize),
+            Fmt::SizeInBytes(sys.MaxSize),
             Fmt::SizeInBytes(sys.TotalSize),
-            Fmt::SizeInBytes(sys.PeakSize)
-            );
+            Fmt::SizeInBytes(sys.PeakSize) );
+
+        oss << Eol;
     }
 
     oss << Eol;
@@ -251,12 +265,12 @@ void ReportAllocationFragmentation(FWTextWriter& oss) {
     if (not FMallocDebug::FetchMediumMips(&vspace, &numCommited, &numReserved, &mipSizeInBytes, &mipMasks))
         return;
 
-    CONSTEXPR size_t width = 128;
+    CONSTEXPR size_t width = 175;
     const auto hr = Fmt::Repeat(L'-', width);
 
     oss << hr << Eol
         << FTextFormat::Float(FTextFormat::FixedFloat, 2)
-        << L"report allocation internal fragmentation : "
+        << L"  Report allocation internal fragmentation : "
         << Fmt::SizeInBytes(mipSizeInBytes)
         << L" x "
         << Fmt::CountOfElements(numCommited)
@@ -269,12 +283,12 @@ void ReportAllocationFragmentation(FWTextWriter& oss) {
     Assert_NoAssume(numCommited == mipMasks.size());
 
     FWString tmp;
-    CONSTEXPR const size_t perRow = 12;
+    CONSTEXPR const size_t perRow = 16;
     for (size_t r = 0, rows = (numCommited + perRow - 1) / perRow; r < rows; ++r) {
         Format(oss, L"{0}|{1:#3}| ", Fmt::Pointer((u8*)vspace + mipSizeInBytes * r), r * perRow);
 
         forrange(i, 0, perRow) {
-            if (i == 4 || i == 8)
+            if (i == 4 || i == 8 || i == 12)
                 oss << L' ';
 
             const size_t mipIndex = (r * perRow + i);
@@ -312,17 +326,17 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
 
     const float distributionScale = distribution(maxCount);
 
-    const auto hr = Fmt::Repeat(L'-', 128);
+    const auto hr = Fmt::Repeat(L'-', 175);
 
     oss << FTextFormat::Float(FTextFormat::FixedFloat, 2)
         << hr << Eol
-        << L"report allocations size histogram" << Eol
+        << L"  Report allocations size histogram" << Eol
         << hr << Eol;
 
     static i64 GPrevAllocations[MemoryDomainsMaxCount] = { 0 }; // beware this is not thread safe
     AssertRelease(lengthof(GPrevAllocations) >= classes.size());
 
-    constexpr float width = 80;
+    constexpr float width = 125;
     forrange(i, 0, classes.size()) {
         if (0 == classes[i]) continue;
 
@@ -391,6 +405,7 @@ void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
             FLogger::EVerbosity::Info,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             sb.Written() );
+
 #else
     NOOP(optional);
 #endif

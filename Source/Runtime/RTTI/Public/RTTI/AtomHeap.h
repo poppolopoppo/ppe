@@ -27,7 +27,7 @@ public:
     FAtomHeap(const FAtomHeap&) = delete;
     FAtomHeap& operator =(const FAtomHeap&) = delete;
 
-    FLinearHeap& Heap() { return _heap; }
+    FPooledLinearHeap& Heap() { return _heap; }
 
     FAtom Allocate(ENativeType type) {
         return Allocate(MakeTraits(type));
@@ -64,8 +64,8 @@ public:
     void ReleaseAll();
 
 private:
-    LINEARHEAP(Atom) _heap;
-    VECTOR(Atom, FAtom) _destructibles;
+    LINEARHEAP_POOLED(Atom) _heap;
+    VECTOR(Atom, FAtom) _destructibles; // #TODO switch TVector<> to TSparseArray<> and use the linear heap
 
     FAtom MakeAtomUinitialized_(const PTypeTraits& traits);
 };

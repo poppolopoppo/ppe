@@ -2,6 +2,10 @@
 
 #include "Core_fwd.h"
 
+#if !USE_PPE_FINAL_RELEASE
+#   include "Memory/MemoryView.h"
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -52,7 +56,8 @@ public:
         /* 44 */    32768
     };
 
-    static constexpr size_t SnapSizeConstexpr(size_t size, size_t index = 0) {
+    static size_t SizeClass(size_t size) NOEXCEPT;
+    static CONSTEXPR size_t SnapSizeConstexpr(size_t size, size_t index = 0) NOEXCEPT {
         return (index < NumSizeClasses
             ? (SizeClasses[index] < size
                 ? SnapSizeConstexpr(size, index + 1)

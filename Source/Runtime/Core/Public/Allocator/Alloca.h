@@ -32,17 +32,17 @@ PPE_CORE_API void* Alloca(size_t size);
 //----------------------------------------------------------------------------
 PPE_CORE_API void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData);
 //----------------------------------------------------------------------------
-PPE_CORE_API void FreeAlloca(void *ptr, size_t size);
+PPE_CORE_API void FreeAlloca(void* ptr, size_t size);
 //----------------------------------------------------------------------------
 PPE_CORE_API size_t AllocaSnapSize(size_t size);
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE T *TypedAlloca(size_t count) {
+FORCE_INLINE T* TypedAlloca(size_t count) {
     return reinterpret_cast<T *>( Alloca(count * sizeof(T)) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE T *TypedRelocateAlloca(T* ptr, size_t newCount, size_t oldCount, bool keepData) {
+FORCE_INLINE T* TypedRelocateAlloca(T* ptr, size_t newCount, size_t oldCount, bool keepData) {
     return reinterpret_cast<T *>(
         RelocateAlloca(ptr, newCount * sizeof(T), oldCount * sizeof(T), keepData) );
 }
@@ -64,9 +64,11 @@ struct TAllocaBlock {
     TAllocaBlock() : RawData(nullptr), Count(0), UsingSysAlloca(0) {}
 
     TAllocaBlock(T* rawData, size_t count)
-        : RawData(rawData), Count(count), UsingSysAlloca(1) {
+        : RawData(rawData)
+        , Count(count)
+        , UsingSysAlloca(1) {
         if (Unlikely(nullptr == RawData)) {
-            RawData = TypedAlloca< T >(Count);
+            RawData = TypedAlloca<T>(Count);
             UsingSysAlloca = 0;
         }
         Assert_NoAssume(RawData || 0 == Count);

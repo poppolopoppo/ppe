@@ -9,7 +9,7 @@
 #include "Memory/RefPtr.h"
 
 namespace PPE {
-class FLinearHeap;
+class FPooledLinearHeap;
 namespace Parser {
 FWD_REFPTR(ParseExpression);
 //----------------------------------------------------------------------------
@@ -62,7 +62,7 @@ private:
     RTTI::PMetaObject _scopeObject;
     HASHMAP(Parser, RTTI::FName, RTTI::FAtom) _localScope;
 
-    FLinearHeap& LinearHeap_() const;
+    FPooledLinearHeap& LinearHeap_() const;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

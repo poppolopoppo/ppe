@@ -91,7 +91,7 @@ public:
 
     struct FBucket {
         std::recursive_mutex Barrier;
-        LINEARHEAP(Logger) Heap;
+        LINEARHEAP_POOLED(Logger) Heap;
         FBucket() = default;
         ~FBucket() {
             const Meta::FRecursiveLockGuard scopeLock(Barrier);
@@ -104,8 +104,8 @@ public:
         FBucket& Bucket;
         Meta::FRecursiveLockGuard Lock;
 
-        FLinearHeap& Heap() const { return Bucket.Heap; }
-        operator FLinearAllocator () const NOEXCEPT { return FLinearAllocator(Bucket.Heap); }
+        FPooledLinearHeap& Heap() const { return Bucket.Heap; }
+        operator FLinearAllocator () const NOEXCEPT { return { Bucket.Heap }; }
 
         FScope() : FScope(Get()) {}
 
@@ -121,6 +121,13 @@ public:
             , Lock(Bucket.Barrier)
         {}
     };
+
+    void TrimCache() {
+        forrange(i, 0, NumAllocationBuckets) {
+            const Meta::FRecursiveLockGuard scopeLock(_buckets[i].Barrier);
+            _buckets[i].Heap.TrimPools();
+        }
+    }
 
 private:
     STATIC_CONST_INTEGRAL(size_t, NumAllocationBuckets, 8);
@@ -206,7 +213,7 @@ public: // ILowLevelLogger
     }
 
 private:
-    // Need to avoid reentrancy when we're not using FBackgroundLogger as the frontend
+    // Need to avoid re-entrance when we're not using FBackgroundLogger as the front-end
     struct FReentrancyProtection_ {
         static THREAD_LOCAL bool GLockTLS;
         const bool WasLocked;
@@ -300,6 +307,9 @@ public: // ILowLevelLogger
                 logger->Flush(true); // flush synchronously in asynchronous task
             },  ETaskPriority::Low );
         }
+
+        // good idea to trim the linear heaps when flushing
+        FLogAllocator::Get().TrimCache();
     }
 
 private:
@@ -319,7 +329,7 @@ private:
 
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
-    class ALIGN(16) FDeferredLog : public FLinearAllocator {
+    class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog : public FLinearAllocator, Meta::FNonCopyableNorMovable {
     public:
         ILowLevelLogger* LowLevelLogger;
         const FCategory* Category;
@@ -335,12 +345,9 @@ PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
         uintptr_t Canary = PPE_HASH_VALUE_SEED;
 #   endif
 
-        explicit FDeferredLog(FLinearHeap& heap) NOEXCEPT
+        explicit FDeferredLog(FPooledLinearHeap& heap) NOEXCEPT
             : FLinearAllocator(heap)
         {}
-
-        FDeferredLog(const FDeferredLog&) = delete;
-        FDeferredLog& operator =(const FDeferredLog&) = delete;
 
         FWStringView Text() const { return { (const wchar_t *)(this + 1), TextLength }; }
 
@@ -365,7 +372,7 @@ PRAGMA_MSVC_WARNING_POP()
         ~FSuicideScope_() {
             Assert_NoAssume(uintptr_t(this) == Log->Canary);
             ONLY_IF_ASSERT(Log->Canary = 0);
-            Heap().Release(Log, Log->AllocSizeInBytes);
+            Heap().Deallocate(Log, Log->AllocSizeInBytes);
         }
     };
 };

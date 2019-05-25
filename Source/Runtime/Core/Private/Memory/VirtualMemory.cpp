@@ -300,6 +300,8 @@ void* FVirtualMemoryCache::Allocate(size_t sizeInBytes, FFreePageBlock* first, s
     void* result = FVirtualMemory::Alloc(alignment, sizeInBytes TRACKINGDATA_ARG_FWD);
     Assert_NoAssume(Meta::IsAligned(alignment, result));
 
+    ONLY_IF_ASSERT(FPlatformMemory::Memset(result, 0xCC, sizeInBytes)); // initialize the memory block before yielding
+
     Assert(result);
     return result;
 }

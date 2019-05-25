@@ -22,7 +22,7 @@ namespace {
 //----------------------------------------------------------------------------
 #if USE_PPE_ALLOCA_LINEARHEAP
 class FAllocaLinearHeapTLS_
-    : public LINEARHEAP(Alloca)
+    : LINEARHEAP(Alloca)
     , Meta::TThreadLocalSingleton<FAllocaLinearHeapTLS_> {
     typedef Meta::TThreadLocalSingleton<FAllocaLinearHeapTLS_> parent_type;
 public:
@@ -36,13 +36,21 @@ public:
 
     STATIC_CONST_INTEGRAL(size_t, MaxBlockSize, 32 << 10); // 32 kb
 
+    using LINEARHEAP(Alloca)::Reallocate_AssumeLast;
+    using LINEARHEAP(Alloca)::SnapSize;
+
+#if !USE_PPE_FINAL_RELEASE
+    using LINEARHEAP(Alloca)::AliasesToHeap;
+#endif
+
+
 #ifndef WITH_PPE_ASSERT
     static void* Malloc(size_t sz) {
         return Get().Allocate(sz);
     }
 
     void Free(void* ptr, size_t sz) {
-        return Release_AssumeLast(ptr, sz);
+        Deallocate_AssumeLast(ptr, sz);
     }
 
 #else
@@ -55,10 +63,9 @@ public:
     }
 
     void Free(void* ptr, size_t sz) {
-        auto& heap = Get();
-        Assert(heap.Depth);
-        heap.Depth--;
-        heap.Release_AssumeLast(ptr, sz);
+        Assert(Depth);
+        Depth--;
+        Deallocate_AssumeLast(ptr, sz);
     }
 
 #endif //!WITH_PPE_ASSERT
@@ -127,19 +134,20 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
 
     void* result;
 #if USE_PPE_ALLOCA_LINEARHEAP
-    auto& heap = FAllocaLinearHeapTLS_::Get();
-    if (heap.AliasesToHeap(ptr)) {
+    if (oldSize <= FAllocaLinearHeapTLS_::MaxBlockSize) {
+        auto& heap = FAllocaLinearHeapTLS_::Get();
+        Assert_NoAssume(heap.AliasesToHeap(ptr));
+
         if (newSize <= FAllocaLinearHeapTLS_::MaxBlockSize) {
-            result = heap.Relocate_AssumeLast(ptr, newSize, oldSize);
-        }
-        else if (keepData) {
-            void* const dst = FAllocaFallback_::Malloc(newSize);
-            FPlatformMemory::Memcpy(dst, ptr, Min(oldSize, newSize));
-            result = dst;
+            result = heap.Reallocate_AssumeLast(ptr, newSize, oldSize);
         }
         else {
-            heap.Free(ptr, oldSize);
             result = FAllocaFallback_::Malloc(newSize);
+
+            if (keepData)
+                FPlatformMemory::Memcpy(result, ptr, Min(oldSize, newSize));
+
+            heap.Free(ptr, oldSize);
         }
     }
     else
@@ -147,6 +155,8 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
     UNUSED(keepData);
 #endif
     {
+        Assert_NoAssume(FAllocaLinearHeapTLS_::Get().AliasesToHeap(ptr) == false);
+
         result = FAllocaFallback_::Realloc(ptr, newSize);
     }
 
@@ -164,18 +174,21 @@ void FreeAlloca(void* ptr, size_t size) {
     Assert(size);
 
 #if USE_PPE_ALLOCA_LINEARHEAP
-    auto& heap = FAllocaLinearHeapTLS_::Get();
-    if (heap.AliasesToHeap(ptr))
-        heap.Free(ptr, size);
+    if (size <= FAllocaLinearHeapTLS_::MaxBlockSize)
+        FAllocaLinearHeapTLS_::Get().Free(ptr, size);
     else
 #endif
+    {
+        Assert_NoAssume(FAllocaLinearHeapTLS_::Get().AliasesToHeap(ptr) == false);
+
         FAllocaFallback_::Free(ptr);
+    }
 }
 //----------------------------------------------------------------------------
 size_t AllocaSnapSize(size_t size) {
 #if USE_PPE_ALLOCA_LINEARHEAP
     if (size <= FAllocaLinearHeapTLS_::MaxBlockSize)
-        return ROUND_TO_NEXT_16(size);
+        return FAllocaLinearHeapTLS_::SnapSize(size);
     else
 #endif
         return FAllocaFallback_::SnapSize(size);

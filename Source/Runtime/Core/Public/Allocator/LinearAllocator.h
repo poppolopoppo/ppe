@@ -23,7 +23,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Linear allocator have an handle to a FLinearHeap
+// Linear allocator have an handle to a FPooledLinearHeap
 //----------------------------------------------------------------------------
 class PPE_CORE_API FLinearAllocator : private FGenericAllocator {
 public:
@@ -41,9 +41,9 @@ public:
 
     STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
 
-    FLinearHeap* Heap;
+    FPooledLinearHeap* Heap;
 
-    explicit FLinearAllocator(FLinearHeap& heap) NOEXCEPT
+    FLinearAllocator(FPooledLinearHeap& heap) NOEXCEPT
     :   Heap(&heap)
     {}
     explicit FLinearAllocator(Meta::FForceInit) NOEXCEPT
@@ -55,7 +55,7 @@ public:
     }
 
     static size_t SnapSize(size_t s) NOEXCEPT {
-        return FLinearHeap::SnapSizeForRecycling(s);
+        return FPooledLinearHeap::SnapSize(s);
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {
@@ -67,11 +67,11 @@ public:
     }
 
     void Deallocate(FAllocatorBlock b) const {
-        Heap->Release(b.Data, b.SizeInBytes);
+        Heap->Deallocate(b.Data, b.SizeInBytes);
     }
 
     void Reallocate(FAllocatorBlock& b, size_t s) const {
-        b.Data = Heap->Relocate(b.Data, s, b.SizeInBytes);;
+        b.Data = Heap->Reallocate(b.Data, s, b.SizeInBytes);
         b.SizeInBytes = s;
     }
 

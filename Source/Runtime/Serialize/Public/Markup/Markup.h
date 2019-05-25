@@ -116,7 +116,7 @@ protected:
     virtual void WriteHeaders(FTextWriter& oss, bool minify) const = 0;
 
 private:
-    LINEARHEAP(Markup) _heap;
+    LINEARHEAP_POOLED(Markup) _heap;
     FElement _root;
     FTextHeap _textHeap;
 };
