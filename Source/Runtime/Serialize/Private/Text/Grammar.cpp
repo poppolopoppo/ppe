@@ -614,11 +614,12 @@ static Parser::TProduction<RTTI::PTypeTraits> ExpectTypenameRTTI() {
                     *value = RTTI::MakeTraits(RTTI::ENativeType(match->Symbol()->Ord()));
                 else if (match->Symbol()->Type() == Lexer::FSymbol::Identifier)
                     *value = RTTI::MakeTraitsFromTypename(match->Value());
+
+                if (*value)
+                    return Parser::FParseResult::Success(match->Site());
             }
 
-            return (*value
-                ? Parser::FParseResult::Success(match->Site())
-                : Parser::FParseResult::Unexpected(Lexer::FSymbol::Typename, match, input) );
+            return Parser::FParseResult::Unexpected(Lexer::FSymbol::Typename, match, input);
         }};
 }
 //----------------------------------------------------------------------------
