@@ -156,10 +156,12 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
     FCompressionBenchmark_ bm;
 #endif
 
-    const size_t dataSizeInBytes = checked_cast<size_t>(::LZ4_decompress_fast(
-        (const char*)&pheader[1],
-        (char*)dst.Pointer(),
-        pheader->SizeInBytes ));
+    const size_t dataSizeInBytes = checked_cast<size_t>(
+        ::LZ4_decompress_safe(
+            (const char*)&pheader[1],
+            (char*)dst.Pointer(),
+            pheader->SizeInBytes,
+            dst.SizeInBytes() ));
 
 #if USE_PPE_BENCHMARK
     bm.Finished(L"DECOMPRESS", src.SizeInBytes(), pheader->SizeInBytes);
