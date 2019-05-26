@@ -14,6 +14,10 @@ struct PPE_CORE_API FWindowsPlatformTime : FGenericPlatformTime {
 public:
     STATIC_CONST_INTEGRAL(bool, HasHighPrecision, true);
 
+    static FORCE_INLINE u64 Rdtsc() NOEXCEPT {
+        return ::__rdtsc();
+    }
+
     static FORCE_INLINE i64 Cycles() NOEXCEPT {
         ::LARGE_INTEGER cycles;
         ::QueryPerformanceCounter(&cycles);

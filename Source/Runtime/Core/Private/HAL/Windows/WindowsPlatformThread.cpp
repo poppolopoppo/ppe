@@ -30,7 +30,8 @@ static FWindowsPlatformThread::FAffinityMask LogicalAffinityMask_(size_t coreMas
     //   PU#0  |  PU#1  |  PU#2  |  PU#3  | LOGICAL THREADS
     //   PU#4  |  PU#5  |  PU#6  |  PU#7  |
 
-    FWindowsPlatformThread::FAffinityMask m = coreMask & ((1ul << numCores) - 1);
+    FWindowsPlatformThread::FAffinityMask m = coreMask & (
+        (FWindowsPlatformThread::FAffinityMask(1) << numCores) - 1);
     return ((numCores < numThreads)
         ? m | (m << (numThreads - numCores))
         : m );

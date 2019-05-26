@@ -12,6 +12,8 @@ struct PPE_CORE_API FGenericPlatformTime {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasHighPrecision, false);
 
+    static u64 Rdtsc() = delete;
+
     static i64 Cycles() = delete;
 
     static double SecondsPerCycle() = delete;
