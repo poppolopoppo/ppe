@@ -441,7 +441,7 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
 
         Template_AddCaption_(writer, caption);
 
-        writer.WritePOD(::WORD(9)); // Font size
+        writer.WritePOD(::WORD(8)); // Font size
         Template_AddCaption_(writer, L"Consolas"); // Font name
 
         // modal buttons
