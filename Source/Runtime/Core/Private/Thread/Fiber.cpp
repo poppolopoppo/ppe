@@ -27,12 +27,12 @@ FFiber::~FFiber() {
     Assert(nullptr == _pimpl); // need explicit Destroy() !
 }
 //----------------------------------------------------------------------------
-FFiber::FFiber(FFiber&& rvalue)
+FFiber::FFiber(FFiber&& rvalue) NOEXCEPT
     : _pimpl(rvalue._pimpl) {
     rvalue._pimpl = nullptr;
 }
 //----------------------------------------------------------------------------
-FFiber& FFiber::operator =(FFiber&& rvalue) {
+FFiber& FFiber::operator =(FFiber&& rvalue) NOEXCEPT {
     Assert(nullptr == _pimpl);
     std::swap(_pimpl, rvalue._pimpl);
 
@@ -55,7 +55,7 @@ void FFiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */)
     Assert(_pimpl);
 
 #if USE_PPE_MEMORYDOMAINS
-    MEMORYDOMAIN_TRACKING_DATA(Fibers).Allocate(stackSize, stackSize);
+    MEMORYDOMAIN_TRACKING_DATA(Fibers).AllocateSystem(stackSize);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -79,7 +79,7 @@ void FFiber::Destroy(size_t stackSize) {
     if (0 == stackSize)
         stackSize = FiberStackReserveSize;
 
-    MEMORYDOMAIN_TRACKING_DATA(Fibers).Deallocate(stackSize, stackSize);
+    MEMORYDOMAIN_TRACKING_DATA(Fibers).DeallocateSystem(stackSize);
 #else
     UNUSED(stackSize);
 #endif

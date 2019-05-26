@@ -111,6 +111,7 @@ public:
 
 #if USE_PPE_MEMORYDOMAINS
         trackingData.AllocateSystem(GLinearHeapAllocationSize);
+        MEMORYDOMAIN_TRACKING_DATA(LinearHeap).AllocateUser(GLinearHeapAllocationSize);
 #endif
 
         *off = 0;
@@ -125,6 +126,7 @@ public:
 
 #if USE_PPE_MEMORYDOMAINS
         trackingData.DeallocateSystem(GLinearHeapAllocationSize);
+        MEMORYDOMAIN_TRACKING_DATA(LinearHeap).DeallocateUser(GLinearHeapAllocationSize);
 #endif
 
         Get()._vm.Free(blk, GLinearHeapAllocationSize);
@@ -236,7 +238,7 @@ void* FLinearHeap::Allocate(size_t size) {
 
     FLinearHeapBlock_*& head = FLinearHeapBlock_::Head(_blocks);
 
-    if (Unlikely(!head | (_offset + size > MaxBlockSize))) {
+    if (Unlikely((!head) | (_offset + size > MaxBlockSize))) {
 #   if USE_PPE_MEMORYDOMAINS
         FLinearHeapVMCache_::Reserve(&head, &_offset, size, _trackingData);
 #   else

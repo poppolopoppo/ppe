@@ -6,6 +6,7 @@
 #include "Allocator/TrackingMalloc.h"
 #include "Container/BitMask.h"
 #include "Container/IntrusiveList.h"
+#include "Memory/MemoryTracking.h"
 #include "Meta/Singleton.h"
 #include "Meta/Utility.h"
 
@@ -236,8 +237,12 @@ auto FTaskFiberPool::AcquireFiber() -> FHandleRef {
     for (;;) {
         if (Likely(_chunks)) {
             FHandleRef const h = _chunks->AcquireFiber();
-            if (Likely(h))
+            if (Likely(h)) {
+#if USE_PPE_MEMORYDOMAINS
+                MEMORYDOMAIN_TRACKING_DATA(Fibers).AllocateUser(FTaskFiberChunk::StackSize);
+#endif
                 return h;
+            }
         }
 
         AcquireChunk_();
@@ -246,6 +251,10 @@ auto FTaskFiberPool::AcquireFiber() -> FHandleRef {
 //----------------------------------------------------------------------------
 void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
     Assert(handle);
+
+#if USE_PPE_MEMORYDOMAINS
+    MEMORYDOMAIN_TRACKING_DATA(Fibers).DeallocateUser(FTaskFiberChunk::StackSize);
+#endif
 
     FTaskFiberChunk* const chunk = handle->Chunk();
     chunk->ReleaseFiber(handle);
@@ -312,7 +321,7 @@ void FTaskFiberPool::ReleaseMemory() {
 NO_INLINE FTaskFiberChunk* FTaskFiberPool::AcquireChunk_() {
     FTaskFiberChunk* const head = _chunks;
 
-    // need to lock to avoid allocation more than one new chunk
+    // need to lock to avoid allocate more than one new chunk
     const Meta::FLockGuard scopeLock(_barrier);
 
     // another thread might have already allocated a new chunk when we wake up :

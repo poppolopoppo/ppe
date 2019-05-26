@@ -111,7 +111,7 @@ void* FVirtualMemory::Alloc(size_t alignment, size_t sizeInBytes TRACKINGDATA_AR
 #endif
 #if USE_PPE_MEMORYDOMAINS
     Assert_NoAssume(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
-    trackingData.Allocate(sizeInBytes, sizeInBytes);
+    trackingData.AllocateSystem(sizeInBytes);
 #endif
 
     return p;
@@ -128,7 +128,7 @@ void FVirtualMemory::Free(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
 
 #if USE_PPE_MEMORYDOMAINS
     Assert_NoAssume(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
-    trackingData.Deallocate(sizeInBytes, sizeInBytes);
+    trackingData.DeallocateSystem(sizeInBytes);
 #endif
 
     FPlatformMemory::VirtualFree(ptr, sizeInBytes, true);
@@ -154,7 +154,7 @@ void FVirtualMemory::PageCommit(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_I
 #endif
 #if USE_PPE_MEMORYDOMAINS
     Assert_NoAssume(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
-    trackingData.Allocate(sizeInBytes, sizeInBytes);
+    trackingData.AllocateSystem(sizeInBytes);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -171,7 +171,7 @@ void FVirtualMemory::PageDecommit(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG
 
 #if USE_PPE_MEMORYDOMAINS
     Assert_NoAssume(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
-    trackingData.Deallocate(sizeInBytes, sizeInBytes);
+    trackingData.DeallocateSystem(sizeInBytes);
 #endif
 
     FPlatformMemory::VirtualFree(ptr, sizeInBytes, false);
@@ -195,7 +195,7 @@ void* FVirtualMemory::InternalAlloc(size_t sizeInBytes TRACKINGDATA_ARG_IFP) {
 
 #if USE_PPE_MEMORYDOMAINS
     Assert(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
-    trackingData.Allocate(sizeInBytes, sizeInBytes);
+    trackingData.AllocateSystem(sizeInBytes);
 #endif
 
     return ptr;
@@ -206,12 +206,13 @@ void FVirtualMemory::InternalFree(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG
     Assert(ptr);
     Assert_NoAssume(Meta::IsAligned(ALLOCATION_BOUNDARY, sizeInBytes));
 
-    FPlatformMemory::VirtualFree(ptr, sizeInBytes, true);
 
 #if USE_PPE_MEMORYDOMAINS
     Assert(trackingData.IsChildOf(FMemoryTracking::ReservedMemory()));
-    trackingData.Deallocate(sizeInBytes, sizeInBytes);
+    trackingData.DeallocateSystem(sizeInBytes);
 #endif
+
+    FPlatformMemory::VirtualFree(ptr, sizeInBytes, true);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

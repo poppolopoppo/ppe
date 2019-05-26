@@ -125,6 +125,10 @@ private:
         uintptr_t xcmp = 0;
         uintptr_t nkey = (uintptr_t(_root) == NullSentinel_ ? 0 : _root->Keys[0]);
 
+#if USE_PPE_MEMORYDOMAINS
+        _trackingDataRef->AllocateUser(sizeof(FNode));
+#endif
+
         FNode** parent = &_root;
         for (;;) {
             FNode* const n = *parent;
@@ -214,6 +218,10 @@ private:
                 *parent = other;
                 *(FNode**)n = _freeList;
                 _freeList = n;
+
+#if USE_PPE_MEMORYDOMAINS
+                _trackingDataRef->AllocateUser(sizeof(FNode));
+#endif
 
                 return ((uintptr_t)child & ~uintptr_t(1));
             }

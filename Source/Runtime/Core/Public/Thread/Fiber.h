@@ -14,15 +14,15 @@ class FFiber {
 public:
     typedef void (STDCALL *callback_t)(void *arg);
 
-    FFiber() : FFiber(nullptr) {}
-    FFiber(void* pimpl) : _pimpl(pimpl) {}
+    FFiber() NOEXCEPT : FFiber(nullptr) {}
+    FFiber(void* pimpl) NOEXCEPT : _pimpl(pimpl) {}
     ~FFiber();
 
     FFiber(const FFiber& ) = delete;
     FFiber& operator =(const FFiber& ) = delete;
 
-    FFiber(FFiber&& rvalue);
-    FFiber& operator =(FFiber&& rvalue);
+    FFiber(FFiber&& rvalue) NOEXCEPT;
+    FFiber& operator =(FFiber&& rvalue) NOEXCEPT;
 
     void* Pimpl() const { return _pimpl; }
 

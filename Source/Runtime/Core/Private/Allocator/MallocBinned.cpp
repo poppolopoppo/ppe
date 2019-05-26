@@ -141,6 +141,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 #endif
         DeallocateBinnedChunk_(p);
     }
+
 };
 STATIC_ASSERT(sizeof(FAtomicSpinLock) == sizeof(u32));
 STATIC_ASSERT(sizeof(FBinnedChunk_) == CACHELINE_SIZE);
@@ -204,7 +205,26 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ : Meta::FNonCopyableNorMovable {
     void* MediumAlloc(size_t sizeInBytes) {
         Assert_NoAssume(Meta::IsAligned(FBinnedMediumBlocks_::Granularity, sizeInBytes));
         ONE_TIME_INITIALIZE_THREAD_LOCAL(size_t, GHintTLS, 0);
-        return MediumMips.Allocate(sizeInBytes, &GHintTLS);
+        void* const newp = MediumMips.Allocate(sizeInBytes, &GHintTLS);
+#if USE_PPE_MEMORYDOMAINS
+        if (newp)
+            MEMORYDOMAIN_TRACKING_DATA(MediumMipMaps).AllocateUser(MediumMips.AllocationSize(newp));
+#endif
+        return newp;
+    }
+
+    bool MediumFree(void* ptr) {
+        if (MediumMips.AliasesToMipMaps(ptr)) {
+            Assert_NoAssume(Meta::IsAligned(FBinnedMediumBlocks_::Granularity, ptr));
+#if USE_PPE_MEMORYDOMAINS
+            MEMORYDOMAIN_TRACKING_DATA(MediumMipMaps).DeallocateUser(MediumMips.AllocationSize(ptr));
+#endif
+            MediumMips.Free(ptr);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 };
 static FBinnedGlobalCache_ GBinnedGlobalCache_; // should be in compiler segment, so destroyed last hopefully
@@ -250,6 +270,32 @@ struct CACHELINE_ALIGNED FBinnedLargeBlocks_ : Meta::FNonCopyableNorMovable {
 
     FBinnedLargeBlocks_() {}
     ~FBinnedLargeBlocks_();
+
+    void* LargeAlloc(const size_t sizeInBytes) {
+        Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+
+        void* const newp = VM.Allocate(sizeInBytes);
+        AssertRelease(newp);
+
+#if USE_PPE_MEMORYDOMAINS
+        Assert_NoAssume(VM.RegionSize(newp) == sizeInBytes);
+        MEMORYDOMAIN_TRACKING_DATA(LargeBlocks).AllocateUser(sizeInBytes);
+#endif
+        return newp;
+    }
+
+    void LargeFree(void* p, size_t sizeInBytes = 0) {
+        Assert_NoAssume(Meta::IsAligned(ALLOCATION_GRANULARITY, sizeInBytes));
+
+#if USE_PPE_MEMORYDOMAINS
+        if (0 == sizeInBytes)
+            sizeInBytes = VM.RegionSize(p);
+
+        MEMORYDOMAIN_TRACKING_DATA(LargeBlocks).DeallocateUser(sizeInBytes);
+#endif
+
+        VM.Free(p, sizeInBytes);
+    }
 
     static FBinnedLargeBlocks_& Get() {
         ONE_TIME_DEFAULT_INITIALIZE(FBinnedLargeBlocks_, GInstance);
@@ -340,11 +386,8 @@ static void DeallocateBinnedChunk_(void* p) {
 
 #if USE_MALLOCBINNED_MIPMAPS
     // need to check if the container is aliasing
-    FBinnedGlobalCache_& gc = GBinnedGlobalCache_;
-    if (gc.MediumMips.AliasesToMipMaps(p)) {
-        gc.MediumMips.Free(p);
+    if (GBinnedGlobalCache_.MediumFree(p))
         return;
-    }
 #endif
 
 #if USE_PPE_MEMORYDOMAINS
@@ -742,7 +785,7 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
         if (nullptr == p) // also handle mip map OOM
 #endif
         {
-            p = FBinnedLargeBlocks_::Get().VM.Allocate(size);
+            p = FBinnedLargeBlocks_::Get().LargeAlloc(size);
         }
 #if USE_MALLOCBINNED_MIPMAPS
         else {
@@ -995,14 +1038,10 @@ static NO_INLINE void LargeFree_(void* ptr) {
     Assert(ptr);
 
 #if USE_MALLOCBINNED_MIPMAPS
-    FBinnedGlobalCache_& gc = GBinnedGlobalCache_;
-    if (gc.MediumMips.AliasesToMipMaps(ptr)) {
-        gc.MediumMips.Free(ptr);
-    }
-    else
+    if (GBinnedGlobalCache_.MediumFree(ptr) == false)
 #endif
     {
-        FBinnedLargeBlocks_::Get().VM.Free(ptr);
+        FBinnedLargeBlocks_::Get().LargeFree(ptr);
     }
 }
 //----------------------------------------------------------------------------
