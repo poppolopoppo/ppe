@@ -7,6 +7,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class EProcessPriority {
+    Realtime = 0,
+    High,
+    AboveNormal,
+    Normal,
+    BelowNormal,
+    Idle,
+};
+//----------------------------------------------------------------------------
 struct PPE_CORE_API FGenericPlatformProcess {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasSemaphore, false);
@@ -33,6 +42,9 @@ public: // must be defined for every platform
 
     static FProcessId CurrentPID() = delete;
     static void Daemonize() = delete; // make process run as system service
+
+    static EProcessPriority Priority() = delete;
+    static void SetPriority(EProcessPriority priority) = delete;
 
     static bool IsForeground() = delete; // returns true if this app is visible and selected
     static bool IsFirstInstance() = delete; // returns false if the same process is already running

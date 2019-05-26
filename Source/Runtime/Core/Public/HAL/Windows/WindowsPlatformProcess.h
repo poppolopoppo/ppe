@@ -37,6 +37,9 @@ public:
     static FProcessId CurrentPID();
     static void Daemonize(); // make process run as system service
 
+    static EProcessPriority Priority();
+    static void SetPriority(EProcessPriority priority);
+
     static bool IsFirstInstance(); // returns false if the same process is already running
 
     static bool IsProcessAlive(FProcessId pid);

@@ -222,6 +222,53 @@ void FWindowsPlatformProcess::Daemonize() {
     // #TODO
 }
 //----------------------------------------------------------------------------
+EProcessPriority FWindowsPlatformProcess::Priority() {
+    ::HANDLE hProcess = ::GetCurrentProcess();
+
+    switch (::GetPriorityClass(hProcess)) {
+    case REALTIME_PRIORITY_CLASS:
+        return EProcessPriority::Realtime;
+    case HIGH_PRIORITY_CLASS:
+        return EProcessPriority::High;
+    case ABOVE_NORMAL_PRIORITY_CLASS:
+        return EProcessPriority::AboveNormal;
+    case NORMAL_PRIORITY_CLASS:
+        return EProcessPriority::Normal;
+    case BELOW_NORMAL_PRIORITY_CLASS:
+        return EProcessPriority::BelowNormal;
+    case IDLE_PRIORITY_CLASS:
+        return EProcessPriority::Idle;
+    default:
+        LOG_LASTERROR(HAL, L"GetPriorityClass");
+        AssertNotReached();
+    }
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformProcess::SetPriority(EProcessPriority priority) {
+    ::HANDLE hProcess = ::GetCurrentProcess();
+    ::DWORD dPriorityClass = 0;
+
+    switch (priority) {
+    case PPE::EProcessPriority::Realtime:
+        dPriorityClass = REALTIME_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::High:
+        dPriorityClass = HIGH_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::AboveNormal:
+        dPriorityClass = ABOVE_NORMAL_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::Normal:
+        dPriorityClass = NORMAL_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::BelowNormal:
+        dPriorityClass = BELOW_NORMAL_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::Idle:
+        dPriorityClass = IDLE_PRIORITY_CLASS; break;
+    default:
+        AssertNotImplemented();
+    }
+
+    if (FALSE == ::SetPriorityClass(hProcess, dPriorityClass))
+        LOG_LASTERROR(HAL, L"SetPriorityClass");
+}
+//----------------------------------------------------------------------------
 bool FWindowsPlatformProcess::IsFirstInstance() {
     return GIsFirstInstance;
 }
