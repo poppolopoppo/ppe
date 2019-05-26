@@ -130,6 +130,8 @@ void FModuleManager::ReleaseMemoryInModules() const {
         Fmt::SizeInBytes(FMemoryTracking::ReservedMemory().User().TotalSize),
         Fmt::SizeInBytes(FMemoryTracking::ReservedMemory().System().TotalSize));
 
+    FLUSH_LOG();
+
 #ifdef USE_DEBUG_LOGGER
     const FTimedScope t;
 #endif

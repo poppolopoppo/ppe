@@ -188,10 +188,10 @@ private:
     FAnonymousStructAsTuple _structAsTuple;
     TVector<FAnonymousStructAsTuple> _structAsTupleVector;
     FAnonymousStructAsTuple2 _structAsTuple2;
-    VECTOR(NativeTypes, PTiti) _tities;
-    VECTOR(NativeTypes, PTiti) _titiesOld;
-    VECTOR(NativeTypes, PCTiti) _consttities;
-    ASSOCIATIVE_VECTOR(NativeTypes, PPE::TPair<int COMMA PTiti>, VECTORINSITU(NativeTypes, PPE::TPair<float COMMA PPE::FString>, 2)) _dict;
+    VECTOR(UnitTest, PTiti) _tities;
+    VECTOR(UnitTest, PTiti) _titiesOld;
+    VECTOR(UnitTest, PCTiti) _consttities;
+    ASSOCIATIVE_VECTOR(UnitTest, PPE::TPair<int COMMA PTiti>, VECTORINSITU(UnitTest, PPE::TPair<float COMMA PPE::FString>, 2)) _dict;
     PToto _toto;
     ETutut _tutut;
 };
@@ -229,17 +229,17 @@ private:
     typedef TPair<int, FString> value_type;
     int _count;
     FString _name;
-    VECTOR(NativeTypes, PTiti) _tities;
-    VECTORINSITU(NativeTypes, PTiti, 2) _tities2;
-    VECTOR(NativeTypes, FString) _titles;
+    VECTOR(UnitTest, PTiti) _tities;
+    VECTORINSITU(UnitTest, PTiti, 2) _tities2;
+    VECTOR(UnitTest, FString) _titles;
     TRefPtr<FToto> _parent;
     TPair<int, int> _pair;
     TPair<float, float> _fpair;
     TPair<TPair<int, int>, TPair<int, int> > _vpair;
     TPair<TPair<int, int>, TPair<int, float> > _vpair2;
-    HASHMAP(NativeTypes, FString, float) _dict;
-    HASHMAP(NativeTypes, FString, value_type) _dict2;
-    HASHMAP(NativeTypes, FString, float) _dict3;
+    HASHMAP(UnitTest, FString, float) _dict;
+    HASHMAP(UnitTest, FString, value_type) _dict2;
+    HASHMAP(UnitTest, FString, float) _dict3;
 };
 RTTI_CLASS_BEGIN(RTTI_UnitTest, FToto, Public)
 RTTI_PROPERTY_FIELD_ALIAS(_count, Count)
@@ -334,10 +334,10 @@ static void TestRTTI_() {
     RTTIPrintType_< uword2 >();
     RTTIPrintType_< float3 >();
     RTTIPrintType_< float3x3 >();
-    RTTIPrintType_< VECTOR(NativeTypes, PTiti) >();
-    RTTIPrintType_< HASHMAP(NativeTypes, int, int) >();
-    RTTIPrintType_< HASHMAP(NativeTypes, FString, PTiti) >();
-    RTTIPrintType_< ASSOCIATIVE_VECTOR(NativeTypes, FString, PTiti) >();
+    RTTIPrintType_< VECTOR(UnitTest, PTiti) >();
+    RTTIPrintType_< HASHMAP(UnitTest, int, int) >();
+    RTTIPrintType_< HASHMAP(UnitTest, FString, PTiti) >();
+    RTTIPrintType_< ASSOCIATIVE_VECTOR(UnitTest, FString, PTiti) >();
     //RTTIPrintType_< HASHSET(RTTI, FString) >();
     RTTIPrintType_< FAnonymousStructAsTuple >();
     RTTIPrintType_< TVector<FAnonymousStructAsTuple> >();

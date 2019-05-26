@@ -412,7 +412,7 @@ static NO_INLINE void Test_Atoms_() {
     RTTI::FAtom vatom = RTTI::MakeAtom(&v);
     print_atom(vatom);
 
-    VECTOR(NativeTypes, float2) v2;
+    VECTOR(Atom, float2) v2;
     RTTI::FAtom vatom2 = RTTI::MakeAtom(&v2);
 
     if (not vatom.PromoteMove(vatom2))
@@ -501,7 +501,7 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
     const FFilename fname_binz = filename.WithReplacedExtension(FFS::Z());
     const FFilename& fname_raw = filename;
 
-    MEMORYSTREAM(NativeTypes) uncompressed;
+    MEMORYSTREAM(Stream) uncompressed;
     {
         Serialize::FTransactionSaver saver{ input, filename };
         serializer.Serialize(saver, &uncompressed);
@@ -509,7 +509,7 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
         auto compressed = VFS_OpenBinaryWritable(filename, EAccessPolicy::Truncate);
         LZJB::CompressMemory(compressed.get(), uncompressed.MakeView());
 #else
-        RAWSTORAGE(NativeTypes, u8) compressed;
+        RAWSTORAGE(Stream, u8) compressed;
         const size_t compressedSizeInBytes = Compression::CompressMemory(compressed, uncompressed.MakeView(), Compression::HighCompression);
         Assert(compressedSizeInBytes <= compressed.SizeInBytes());
         const TMemoryView<const u8> compressedView = compressed.MakeView().SubRange(0, compressedSizeInBytes);

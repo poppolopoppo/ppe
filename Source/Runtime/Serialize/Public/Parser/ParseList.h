@@ -84,7 +84,7 @@ private:
     Lexer::FSpan _site;
 
     INTRUSIVELIST(&FParseMatch::Node) _list;
-    LINEARHEAP(Parser) _heap;
+    LINEARHEAP(Lexer) _heap;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

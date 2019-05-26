@@ -8,7 +8,7 @@
 #include "Diagnostic/Logger.h"
 #include "Meta/OneTimeInitialize.h"
 
-#if USE_PPE_MEMORYDOMAINS
+#if !USE_PPE_FINAL_RELEASE
 #   include "Container/IntrusiveList.h"
 #   include "Container/Stack.h"
 #   include "IO/FormatHelpers.h"
@@ -204,11 +204,14 @@ void ReportTrackingDatas_(
         if (data->Parent() == nullptr)
             oss << hr << Eol;
 
-        tmp.Reset();
-        const FStringView name = MakeCStringView(data->Name());
-
         const FMemoryTracking::FSnapshot usr = data->User();
         const FMemoryTracking::FSnapshot sys = data->System();
+
+        if (sys.AccumulatedAllocs == 0)
+            continue; // skip domains that never allocated
+
+        tmp.Reset();
+        const FStringView name = MakeCStringView(data->Name());
 
         Format(tmp, L"{0}{1}", Fmt::Repeat(L' ', data->Level()), name);
         Format(oss, fmtTitle, tmp.Written());
@@ -257,7 +260,9 @@ void UnregisterTrackingData(FMemoryTracking *pTrackingData) {
 }
 //----------------------------------------------------------------------------
 void ReportAllocationFragmentation(FWTextWriter& oss) {
-#if !USE_PPE_FINAL_RELEASE
+#if USE_PPE_FINAL_RELEASE
+    UNUSED(oss);
+#else
     void* vspace;
     size_t numCommited, numReserved, mipSizeInBytes;
     TMemoryView<const u32> mipMasks;
@@ -336,7 +341,7 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
     static i64 GPrevAllocations[MemoryDomainsMaxCount] = { 0 }; // beware this is not thread safe
     AssertRelease(lengthof(GPrevAllocations) >= classes.size());
 
-    constexpr float width = 125;
+    constexpr float width = 115;
     forrange(i, 0, classes.size()) {
         if (0 == classes[i]) continue;
 

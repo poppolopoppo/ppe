@@ -1454,18 +1454,18 @@ NO_INLINE static void Test_StealFromDifferentAllocator_() {
     {
         STATIC_ASSERT(has_stealallocatorblock_v<
             VECTOR(Container, int)::allocator_type,
-            VECTOR(NativeTypes, int)::allocator_type >);
+            VECTOR(Benchmark, int)::allocator_type >);
 
-        VECTOR(NativeTypes, int) u = { 1, 2, 3 };
+        VECTOR(Benchmark, int) u = { 1, 2, 3 };
         VECTOR(Container, int) v = u;
         VECTOR(Container, int) w = std::move(u);
     }
     {
         STATIC_ASSERT(has_stealallocatorblock_v<
             HASHSET(Container, int)::allocator_type,
-            HASHSET(NativeTypes, int)::allocator_type >);
+            HASHSET(Benchmark, int)::allocator_type >);
 
-        HASHSET(NativeTypes, int) u = { 1, 2, 3 };
+        HASHSET(Benchmark, int) u = { 1, 2, 3 };
         HASHSET(Container, int) w = std::move(u);
     }
 }
