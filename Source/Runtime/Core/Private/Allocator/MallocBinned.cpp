@@ -520,6 +520,7 @@ static void ReleaseFreeChunks_(FBinnedThreadCache_& tc) {
 }
 //----------------------------------------------------------------------------
 static FORCE_INLINE void ReleaseLargeBlocks_(FBinnedLargeBlocks_& lb) {
+    const Meta::FLockGuard scopeLock(lb.Barrier);
     lb.VM.ReleaseAll();
 }
 //----------------------------------------------------------------------------
@@ -1048,7 +1049,15 @@ static NO_INLINE void LargeFree_(void* ptr) {
 // Destructors
 //----------------------------------------------------------------------------
 FBinnedThreadCache_::~FBinnedThreadCache_() {
-    ReleaseDanglingBlocks_(*this);
+    // let other thread release blocks belonging to this thread, if any
+    for (size_t backoff = 0;;) {
+        ReleaseDanglingBlocks_(*this);
+        FPlatformProcess::SleepForSpinning(backoff);
+        if (nullptr == DanglingBlocks)
+            break;
+    }
+
+    FPlatformAtomics::MemoryBarrier();
 
     // invalid ptr to be sure than it won't be accessed
     FAtomicSpinLock::FScope scopeLock(DanglingBarrier);
