@@ -34,7 +34,7 @@ public:
     using is_always_equal = std::false_type;
 
     using has_maxsize = std::true_type;
-    using has_owns = std::true_type;
+    using has_owns = std::false_type;
     using has_reallocate = std::true_type;
     using has_acquire = std::true_type;
     using has_steal = std::true_type;
@@ -56,10 +56,6 @@ public:
 
     static size_t SnapSize(size_t s) NOEXCEPT {
         return FPooledLinearHeap::SnapSize(s);
-    }
-
-    bool Owns(FAllocatorBlock b) const NOEXCEPT {
-        return Heap->AliasesToHeap(b.Data);
     }
 
     FAllocatorBlock Allocate(size_t s) const {
