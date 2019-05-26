@@ -17,10 +17,14 @@ TBasicMatch<T>::TBasicMatch() NOEXCEPT
     Assert(_symbol);
 }
 //----------------------------------------------------------------------------
+template <typename T>
+TBasicMatch<T>::~TBasicMatch()
+{}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace Lexer
 } //!namespace PPE
 
-EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::Lexer::TBasicMatch<PPE::FString>;
-EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::Lexer::TBasicMatch<PPE::FStringView>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_SERIALIZE_API) PPE::Lexer::TBasicMatch<PPE::FString>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_SERIALIZE_API) PPE::Lexer::TBasicMatch<PPE::FStringView>;

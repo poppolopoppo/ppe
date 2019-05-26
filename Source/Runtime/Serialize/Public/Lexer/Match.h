@@ -22,6 +22,7 @@ public:
     typedef PPE::Lexer::FSymbol symbol_type;
 
     TBasicMatch() NOEXCEPT;
+    ~TBasicMatch();
 
     TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FSpan& site) NOEXCEPT
         : _symbol(symbol), _value(std::move(rvalue)), _site(site)
@@ -59,8 +60,8 @@ using FMatchView = TBasicMatch<FStringView>;
 } //!namespace Lexer
 } //!namespace PPE
 
-EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::Lexer::TBasicMatch<PPE::FString>;
-EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::Lexer::TBasicMatch<PPE::FStringView>;
+EXTERN_TEMPLATE_CLASS_DECL(PPE_SERIALIZE_API) PPE::Lexer::TBasicMatch<PPE::FString>;
+EXTERN_TEMPLATE_CLASS_DECL(PPE_SERIALIZE_API) PPE::Lexer::TBasicMatch<PPE::FStringView>;
 
 namespace PPE {
 //----------------------------------------------------------------------------
