@@ -632,7 +632,7 @@ public:
 
 #define USE_GRAMMAR_WORKAROUND_VS2019 1
 
-    CONSTEXPR FGrammarImpl() NOEXCEPT;
+    FGrammarImpl() NOEXCEPT;
     ~FGrammarImpl();
 
     Parser::PCParseExpression ParseExpression(Parser::FParseList& input) const;
@@ -695,7 +695,7 @@ private:
 
 };
 //----------------------------------------------------------------------------
-CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
+FGrammarImpl::FGrammarImpl() NOEXCEPT
 :   _lvalue(_ternary)
 
 #if !USE_GRAMMAR_WORKAROUND_VS2019
@@ -781,7 +781,7 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         })
     ))
 #else
-,   _literal([this](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
+,   _literal([](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
         match_p m = nullptr;
 
         if (input.TryRead<symbol_t::Null>(&m))
@@ -1029,7 +1029,7 @@ CONSTEXPR FGrammarImpl::FGrammarImpl() NOEXCEPT
         })
     ))
 #else
-,   _variable([this](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
+,   _variable([](Parser::FParseList& input, expr_t* dst) -> Parser::FParseResult {
         site_t site;
         RTTI::FPathName pathName;
 

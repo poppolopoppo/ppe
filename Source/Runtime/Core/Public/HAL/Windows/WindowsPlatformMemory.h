@@ -6,6 +6,7 @@
 
 #include <emmintrin.h>
 #include <intrin.h>
+#include <xmmintrin.h>
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -122,7 +123,12 @@ public:
     }
 
     static void WritePrefetch(const void* p, size_t offset = 0) {
+#ifdef __clang__
+        UNUSED(p);
+        UNUSED(offset);
+#else
         ::_m_prefetchw((char const*)(p)+offset);
+#endif
     }
 
     //------------------------------------------------------------------------

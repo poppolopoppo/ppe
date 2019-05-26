@@ -714,8 +714,6 @@ void FPooledLinearHeap::TrimPools() {
     FPoolLinearHeapBlock_* sorted = nullptr;
 
     forrange(cls, 0, FMallocBinned::NumSizeClasses) {
-        const size_t clz = FMallocBinned::SizeClasses[cls];
-
         for (auto* blk = static_cast<FPoolLinearHeapBlock_*>(_pools[cls]); blk; ) {
             FPoolLinearHeapBlock_* const b = blk;
             blk = blk->Node.Next;

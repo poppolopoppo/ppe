@@ -298,7 +298,14 @@ void FBinaryFormatWriter::Visit_(const RTTI::PMetaObject& obj) {
     }
     else {
         refData.IsImport = 0;
+#ifdef __clang__
+#   pragma clang diagnostic push
+#   pragma clang diagnostic ignored "-Wbitfield-constant-conversion"
+#endif
         refData.ObjectIndex = FDataIndex::DefaultValue();
+#ifdef __clang__
+#   pragma clang diagnostic pop
+#endif
         Assert_NoAssume(refData.IsNull());
     }
 

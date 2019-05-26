@@ -275,13 +275,13 @@ FParseResult Optional_(FParseList& input, const FParseMatch** result) {
 } //!details
 //----------------------------------------------------------------------------
 template <Lexer::FSymbol::ETypeId _Symbol>
-CONSTEXPR TProduction<const FParseMatch *> Expect() NOEXCEPT {
+TProduction<const FParseMatch *> Expect() NOEXCEPT {
     using lambda_type = typename TProduction<const FParseMatch *>::lambda_type;
     return TProduction<const FParseMatch *>{ lambda_type::template Bind<&details::Expect_<_Symbol>>() };
 }
 //----------------------------------------------------------------------------
 template <Lexer::FSymbol::ETypeId _Symbol, typename T>
-CONSTEXPR TProduction<T> Expect(T (*select)(const FParseMatch*)) NOEXCEPT {
+TProduction<T> Expect(T (*select)(const FParseMatch*)) NOEXCEPT {
     return TProduction<T>{ [select](FParseList& input, T* value) {
         PPE_STACKMARKER("expect_select");
         const FParseMatch* m = nullptr;
@@ -296,7 +296,7 @@ CONSTEXPR TProduction<T> Expect(T (*select)(const FParseMatch*)) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <Lexer::FSymbol::ETypeId _Symbol>
-CONSTEXPR TProduction<const FParseMatch *> Optional() NOEXCEPT {
+TProduction<const FParseMatch *> Optional() NOEXCEPT {
     using lambda_type = typename TProduction<const FParseMatch *>::lambda_type;
     return TProduction<const FParseMatch *>{ lambda_type::template Bind<&details::Optional_<_Symbol>>() };
 }
@@ -328,7 +328,7 @@ FParseResult Sequence_(FParseList& input, TSequenceTuple_<_Symbols...>* value) {
 //      Parser::Expect<Lexer::FSymbol::Number> )
 // Since the later will produce 4 TFunction<> instead of one for the first.
 template <Lexer::FSymbol::ETypeId... _Symbols>
-CONSTEXPR auto Sequence() NOEXCEPT {
+auto Sequence() NOEXCEPT {
     using tuple_type = details::TSequenceTuple_<_Symbols...>;
     using lambda_type = typename TProduction<tuple_type>::lambda_type;
     return TProduction<tuple_type>{ lambda_type::template Bind<&details::Sequence_<_Symbols...>>() };
@@ -339,7 +339,7 @@ CONSTEXPR auto Sequence() NOEXCEPT {
 // This helpers won't copy the production passed as arguments but will keep a ref on them instead.
 // When available it's much cheaper than using Or() which will copy everything, more care is needed though
 template <typename... T>
-CONSTEXPR auto Switch(const TProduction<T>&... exprs) NOEXCEPT {
+auto Switch(const TProduction<T>&... exprs) NOEXCEPT {
     using common_t = std::common_type_t<T...>;
     return TProduction<common_t>({ Meta::ForceInit,
         [&](FParseList& input, common_t* value) -> FParseResult {
@@ -360,7 +360,7 @@ CONSTEXPR auto Switch(const TProduction<T>&... exprs) NOEXCEPT {
 // Also this helper brings better error detection
 //----------------------------------------------------------------------------
 template <Lexer::FSymbol::ETypeId _Operator, typename T>
-CONSTEXPR TProduction<T> UnaryOp(const TProduction<T>& operand, T(*make_op)(const FParseMatch*, const T&)) NOEXCEPT {
+TProduction<T> UnaryOp(const TProduction<T>& operand, T(*make_op)(const FParseMatch*, const T&)) NOEXCEPT {
     return TProduction<T>{
         [&operand, make_op](FParseList& input, T* value) -> FParseResult {
             PPE_STACKMARKER("unaryop");
@@ -384,7 +384,7 @@ CONSTEXPR TProduction<T> UnaryOp(const TProduction<T>& operand, T(*make_op)(cons
 }
 //----------------------------------------------------------------------------
 template <Lexer::FSymbol::ETypeId _Operator, typename T>
-CONSTEXPR TProduction<T> BinaryOp(const TProduction<T>& operand, T (*make_op)(const T&, const FParseMatch*, const T&)) NOEXCEPT {
+TProduction<T> BinaryOp(const TProduction<T>& operand, T (*make_op)(const T&, const FParseMatch*, const T&)) NOEXCEPT {
     return TProduction<T>{
         [&operand, make_op](FParseList& input, T* value) -> FParseResult {
             PPE_STACKMARKER("binaryop");
@@ -405,7 +405,7 @@ CONSTEXPR TProduction<T> BinaryOp(const TProduction<T>& operand, T (*make_op)(co
 }
 //----------------------------------------------------------------------------
 template <Lexer::FSymbol::ETypeId _OpA, Lexer::FSymbol::ETypeId _OpB, typename T>
-CONSTEXPR TProduction<T> TernaryOp(const TProduction<T>& operand, T(*make_op)(const T&, const FParseMatch*, const T&, const FParseMatch*, const T&)) NOEXCEPT {
+TProduction<T> TernaryOp(const TProduction<T>& operand, T(*make_op)(const T&, const FParseMatch*, const T&, const FParseMatch*, const T&)) NOEXCEPT {
     return TProduction<T>{
         [&operand, make_op](FParseList& input, T* value) -> FParseResult {
             PPE_STACKMARKER("ternaryop");
@@ -434,7 +434,7 @@ CONSTEXPR TProduction<T> TernaryOp(const TProduction<T>& operand, T(*make_op)(co
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <Lexer::FSymbol::ETypeId _Open, Lexer::FSymbol::ETypeId _Close, typename T>
-CONSTEXPR TProduction<T> Closure(const TProduction<T>& inner) NOEXCEPT {
+TProduction<T> Closure(const TProduction<T>& inner) NOEXCEPT {
     return TProduction<T>{
         [&inner](FParseList& input, T* value) -> FParseResult {
             PPE_STACKMARKER("closure");

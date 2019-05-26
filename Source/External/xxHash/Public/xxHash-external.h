@@ -13,6 +13,9 @@
 #ifndef EXPORT_PPE_EXTERNAL_XXHASH
     PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("FORCE_INLINE")
+#   ifdef __clang__
+#       pragma clang diagnostic push
+#   endif
 #endif
 
 #define USE_PPE_XXH3 1 // new algorithm, 2x to 3x times faster
@@ -30,11 +33,19 @@
 
 PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
 
+#ifdef __clang__
+#   pragma clang diagnostic ignored "-Wpass-failed=transform-warning"
+#endif
+
 #ifndef EXPORT_PPE_EXTERNAL_XXHASH
 
 #   include "External/xxHash/git/xxhash.h"
 
 // clean the mess done by xxHash-config.h :
+
+#   ifdef __clang__
+#       pragma clang diagnostic pop
+#   endif
 
 #   pragma pop_macro("FORCE_INLINE")
 

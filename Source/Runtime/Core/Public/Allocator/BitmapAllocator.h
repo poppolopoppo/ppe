@@ -29,7 +29,7 @@ public:
     using has_acquire = std::false_type;
     using has_steal = std::false_type;
 
-    STATIC_CONST_INTEGRAL(size_t, Alignment, Min(_BlockSize, ALLOCATION_BOUNDARY));
+    STATIC_CONST_INTEGRAL(size_t, Alignment, Min(_BlockSize, size_t(ALLOCATION_BOUNDARY)));
     STATIC_CONST_INTEGRAL(size_t, BlockSize, _BlockSize);
 
     using bitmask_t = TBitMask<uintptr_t>;

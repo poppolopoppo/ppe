@@ -43,9 +43,8 @@ namespace {
 //----------------------------------------------------------------------------
 class FTextSerialize_ : public RTTI::IAtomVisitor {
 public:
-    FTextSerialize_(const FTransactionSaver& saver, IBufferedStreamWriter& ostream, bool minify)
-        : _saver(saver)
-        , _oss(&ostream)
+    FTextSerialize_(IBufferedStreamWriter& ostream, bool minify)
+        : _oss(&ostream)
         , _indent(minify ? FStringView() : MakeStringView("  "))
         , _newLine(minify ? ' ' : '\n')
     {}
@@ -247,8 +246,6 @@ private:
         _oss << value;
     }
 
-    const FTransactionSaver& _saver;
-
     FTextWriter _oss;
     Fmt::FIndent _indent;
     char _newLine;
@@ -272,7 +269,7 @@ void FTextSerializer::Deserialize(IStreamReader& input, FTransactionLinker* link
     const FWString fname = linker->Filename().ToWString();
 
     Parser::FParseList parseList;
-    UsingBufferedStream(&input, [&parseList, &fname, linker](IBufferedStreamReader* buffered) {
+    UsingBufferedStream(&input, [&parseList, &fname](IBufferedStreamReader* buffered) {
         Lexer::FLexer lexer(*buffered, fname, true);
         VerifyRelease(parseList.Parse(&lexer));
     });
@@ -297,7 +294,7 @@ void FTextSerializer::Serialize(const FTransactionSaver& saver, IStreamWriter* o
     Assert(output);
 
     UsingBufferedStream(output, [this, &saver](IBufferedStreamWriter* buffered) {
-        FTextSerialize_ visitor(saver, *buffered, Minify());
+        FTextSerialize_ visitor(*buffered, Minify());
 
         for (const RTTI::FMetaObjectRef& ref : saver.Objects())
             visitor.Append(ref);

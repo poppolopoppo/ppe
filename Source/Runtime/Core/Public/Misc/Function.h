@@ -228,7 +228,7 @@ struct TFunctionTraits<_Ret(_Args...)> {
         static CONSTEXPR _Ret invoke(const void*, _Args... args) {
             return _FreeFunc(std::forward<_Args>(args)...);
         }
-        static CONSTEXPR vtable_type vtable = vtable_type::template phony(&invoke);
+        static CONSTEXPR vtable_type vtable = vtable_type::phony(&invoke);
         STATIC_ASSERT(vtable.Invoke);
     };
 
@@ -343,7 +343,7 @@ template <typename _Ret, typename... _Args, size_t _InSitu>
 class TFunction<_Ret(_Args...), _InSitu> {
 public:
     using embed_type = std::aligned_storage_t<_InSitu>;
-    using traits_type = details::TFunctionTraits< _Ret(_Args...)>;
+    using traits_type = details::TFunctionTraits<_Ret(_Args...)>;
     using native_type = typename traits_type::native_type;
     using wrapper_type = typename traits_type::wrapper_type;
     using vtable_type = typename traits_type::vtable_type;
