@@ -100,12 +100,23 @@ end #~Platform
 class WindowsPlatform < Platform
     VS141COMNTOOLS          = fetch_fbuilb_string(FBUILD_SOLUTION_PATH, 'VS141COMNTOOLS')
     VS141VERSION            = fetch_fbuilb_string(FBUILD_SOLUTION_PATH, 'VS141VERSION')
+
+    VS142COMNTOOLS          = fetch_fbuilb_string(FBUILD_SOLUTION_PATH, 'VS142COMNTOOLS')
+    VS142VERSION            = fetch_fbuilb_string(FBUILD_SOLUTION_PATH, 'VS142VERSION')
+
     WindowsSDKBasePath10    = fetch_fbuilb_string(FBUILD_SOLUTION_PATH, 'WindowsSDKBasePath10')
     WindowsSDKVersion10     = fetch_fbuilb_string(FBUILD_SOLUTION_PATH, 'WindowsSDKVersion10')
 
-    VSBasePath              = "#{VS141COMNTOOLS}../.."
-    VSToolsVersion          = VS141VERSION
-    VSBinaryPath            = "#{VSBasePath}/VC/Tools/MSVC/#{VS141VERSION}/bin"
+    USE_VS2019              = true
+    VSCOMNTOOLS             = USE_VS2019 ? VS142COMNTOOLS : VS141COMNTOOLS
+    VSVERSION               = USE_VS2019 ? VS142VERSION   : VS141VERSION
+
+    VSBasePath              = "#{VSCOMNTOOLS}../.."
+    VSToolsVersion          = VSVERSION
+    VSBinaryPath            = "#{VSBasePath}/VC/Tools/MSVC/#{VSVERSION}/bin"
+
+    puts "Using VS found in '#{VSBinaryPath}'"
+
     WindowsSDKBasePath      = WindowsSDKBasePath10
     WindowsSDKVersion       = WindowsSDKVersion10
 
