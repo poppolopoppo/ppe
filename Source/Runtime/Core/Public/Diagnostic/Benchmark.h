@@ -30,6 +30,12 @@
 
 #include <algorithm>
 
+#if (!defined(__GNUC__) && !defined(__clang__)) || defined(__pnacl__) || defined(__EMSCRIPTEN__)
+#   define USE_BENCHMARK_ASM_DONOTOPTIMIZE (0)
+#else
+#   define USE_BENCHMARK_ASM_DONOTOPTIMIZE (1)
+#endif
+
 namespace PPE {
 EXTERN_LOG_CATEGORY(PPE_CORE_API, Benchmark);
 //----------------------------------------------------------------------------
@@ -57,38 +63,56 @@ public:
     u64 RandomSeed{ PPE_HASH_VALUE_SEED_64 };
 
 public: // Helpers
+#if USE_BENCHMARK_ASM_DONOTOPTIMIZE
+    template <class Tp>
+    static FORCE_INLINE void DoNotOptimize(Tp& value) {
+#   if defined(__clang__)
+        asm volatile("" : "+r,m"(value) : : "memory");
+#   else
+        asm volatile("" : "+m,r"(value) : : "memory");
+#   endif
+    }
+
+    template <class Tp>
+    static FORCE_INLINE void DoNotOptimize(Tp const& value) {
+        asm volatile("" : : "r,m"(value) : "memory");
+    }
+
+    static FORCE_INLINE void ClobberMemory() NOEXCEPT {
+        asm volatile("" : : : "memory");
+    }
+#else
     template <class Tp>
     static FORCE_INLINE void DoNotOptimize(Tp const& value) {
         UseCharPointer_(&reinterpret_cast<char const volatile&>(value));
         FPlatformAtomics::MemoryBarrier();
     }
 
-    template <class Tp>
-    static FORCE_INLINE void DoNotOptimizeLoop(Tp const& value) {
-#if 0
-        UseCharPointer_(&reinterpret_cast<char const volatile&>(value));
-#else
-        DoNotOptimize(value);
-#endif
-    }
-
     static FORCE_INLINE void ClobberMemory() NOEXCEPT {
         FPlatformAtomics::MemoryBarrier();
     }
+#endif //!USE_BENCHMARK_ASM_DONOTOPTIMIZE
 
 private:
     PPE_CORE_API static NO_INLINE void UseCharPointer_(char const volatile*);
 
 private: // FTimer
     enum ECounterType {
-        CpuCycles,
+        RawTicks,
+        ThreadCycles,
         PerfCounter,
         ChronoTime,
     };
 
     template <ECounterType _Type> struct TCounter;
 
-    template <> struct TCounter<CpuCycles> {
+    template <> struct TCounter<RawTicks> {
+        using date_type = u64;
+        static CONSTEXPR const char* Units() { return "ticks"; }
+        date_type Now() const NOEXCEPT { return FPlatformTime::Rdtsc(); }
+        double ElapsedSince(date_type start) const NOEXCEPT { return static_cast<double>(Now() - start) * 0.1; }
+    };
+    template <> struct TCounter<ThreadCycles> {
         using date_type = u64;
         static CONSTEXPR const char* Units() { return "k.cycles"; }
         date_type Now() const NOEXCEPT { return FPlatformTime::ThreadCpuCycles(); }
@@ -108,11 +132,12 @@ private: // FTimer
         double ElapsedSince(date_type start) const { return static_cast<double>(Now() - start); }
     };
 
-    using FCpuCycles = TCounter<CpuCycles>; // best resolution
+    using FRawTicks = TCounter<RawTicks>;
+    using FThreadCycles = TCounter<ThreadCycles>;
     using FPerfCounter = TCounter<PerfCounter>;
     using FChronoTime = TCounter<ChronoTime>;
 
-    using FCounter = FCpuCycles;
+    using FCounter = FPerfCounter;
 
     struct FTimer : FCounter {
         date_type StartedAt{ 0 };
@@ -516,5 +541,7 @@ inline FBenchmark::FIterator FBenchmark::FState::end() { return FIterator{ *this
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+#undef USE_BENCHMARK_ASM_DONOTOPTIMIZE
 
 #endif //!!(USE_PPE_FINAL_RELEASE)

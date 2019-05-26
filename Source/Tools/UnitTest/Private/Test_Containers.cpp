@@ -15,6 +15,8 @@
 #include "Diagnostic/Benchmark.h"
 #include "Diagnostic/Logger.h"
 
+#include "HAL/PlatformProcess.h"
+
 #include "IO/BufferedStream.h"
 #include "IO/FileStream.h"
 #include "IO/Filename.h"
@@ -30,6 +32,7 @@
 #include "Maths/RandomGenerator.h"
 #include "Memory/MemoryStream.h"
 #include "Meta/PointerWFlags.h"
+#include "Meta/Utility.h"
 #include "Time/TimedScope.h"
 
 #include <random>
@@ -461,7 +464,7 @@ public:
 
                 size_t n = 0;
                 for (const auto& it : c) {
-                    FBenchmark::DoNotOptimizeLoop(it);
+                    FBenchmark::DoNotOptimize(it);
                     n++;
                 }
 
@@ -487,7 +490,7 @@ public:
 
                 size_t n = 0;
                 for (const auto& it : c) {
-                    FBenchmark::DoNotOptimizeLoop(it);
+                    FBenchmark::DoNotOptimize(it);
                     n++;
                 }
 
@@ -514,7 +517,7 @@ public:
                 volatile uintptr_t hit = 0;
                 for (const auto& it : pool->MakeSamples(s.Search)) {
                     auto jt = c.find(it);
-                    FContainerBenchmark::DoNotOptimizeLoop(jt);
+                    FContainerBenchmark::DoNotOptimize(jt);
                     hit += uintptr_t(&*jt);
                 }
 
@@ -541,7 +544,7 @@ public:
                 const auto cend = c.end();
                 for (const auto& it : pool->MakeSamples(s.Unknown)) {
                     auto jt = c.find(it);
-                    FBenchmark::DoNotOptimizeLoop(jt);
+                    FBenchmark::DoNotOptimize(jt);
                     if (jt != cend) hit++;
                 }
 
@@ -569,7 +572,7 @@ public:
                 volatile uintptr_t h = 0;
                 for (const auto& it : pool->MakeSamples(s.Dense)) {
                     auto jt = c.find(it);
-                    FContainerBenchmark::DoNotOptimizeLoop(jt);
+                    FContainerBenchmark::DoNotOptimize(jt);
                     h += uintptr_t(&*jt);
                     ONLY_IF_ASSERT(n++);
                 }
@@ -598,7 +601,7 @@ public:
                 const auto cend = c.end();
                 for (const auto& it : pool->MakeSamples(s.Unknown)) {
                     auto jt = c.find(it);
-                    FBenchmark::DoNotOptimizeLoop(jt);
+                    FBenchmark::DoNotOptimize(jt);
                     if (jt != cend) hit++;
                 }
 
@@ -889,16 +892,12 @@ public:
                 const auto& s = series.Next();
                 const auto& c = tables[s.SeriesIndex];
 
+                const auto samples = pool->MakeSamples(s.Insert.MakeConstView().CutBefore(InputDim));
+
                 state.ResetTiming();
 
-                volatile uintptr_t hit = 0;
-                for (const auto& it : pool->MakeSamples(s.Insert.MakeConstView().CutBefore(InputDim))) {
-                    auto jt = c.find(it);
-                    FContainerBenchmark::DoNotOptimizeLoop(jt);
-                    hit += uintptr_t(&*jt);
-                }
-
-                FBenchmark::DoNotOptimize(hit);
+                for (const auto& it : samples)
+                    FBenchmark::DoNotOptimize(c.find(it));
             }
         });
     }
@@ -918,17 +917,12 @@ public:
                 const auto& s = series.Next();
                 const auto& c = tables[s.SeriesIndex];
 
+                const auto samples = pool->MakeSamples(s.Insert.MakeConstView().CutBefore(InputDim));
+
                 state.ResetTiming();
 
-                volatile u32 hit = 0;
-                const auto cend = c.end();
-                for (const auto& it : pool->MakeSamples(s.Unknown.MakeConstView().CutBefore(InputDim))) {
-                    auto jt = c.find(it);
-                    FBenchmark::DoNotOptimizeLoop(jt);
-                    if (jt != cend) hit++;
-                }
-
-                FBenchmark::DoNotOptimize(hit);
+                for (const auto& it : samples)
+                    FBenchmark::DoNotOptimize(c.find(it));
             }
         });
     }
@@ -1136,7 +1130,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
     };
 
     auto containers_all = [&](auto& bm, const auto* input) {
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if 0 //!PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             typedef TVector<T> vector_type;
 
@@ -1164,7 +1158,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("Vector", set, input);
         }
 #endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
-#if 1 // !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if 0 // !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             typedef TSparseArray<T> vector_type;
 
@@ -1403,12 +1397,12 @@ NO_INLINE static void Test_StringSet_() {
         }
 #   endif
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
-        /*{
+#if 0 //!PPE_RUN_BENCHMARK_ONE_CONTAINER
+        {
             CONSTCHAR_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
 
             bm.Run("ConstCharHashSet_M", set, input);
-        }*/
+        }
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
         {
@@ -1473,10 +1467,14 @@ NO_INLINE static void Test_StealFromDifferentAllocator_() {
 void Test_Containers() {
     LOG(Test_Containers, Emphasis, L"starting container tests ...");
 
+    const EProcessPriority prio = FPlatformProcess::Priority();
+    FPlatformProcess::SetPriority(EProcessPriority::Realtime);
+    Meta::on_scope_exit([prio]() { FPlatformProcess::SetPriority(prio); });
+
     Test_StealFromDifferentAllocator_();
 
 #if USE_PPE_BENCHMARK
-    //Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
+    Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
     //Test_PODSet_<u32>("u32", [](auto& rnd) { return u32(rnd()); });
     //Test_PODSet_<u128>("u128", [](auto& rnd) { return u128{ u64(rnd()), u64(rnd()) }; });
