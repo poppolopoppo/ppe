@@ -1,24 +1,8 @@
 # PPE TODO LIST
 
-- Report mipmaps fragmentation deminer-liker
-
 - Check efficiency of mipmaps de-commit heuristic
     -> avoiding switching to newest chunk might help
     -> use the fragmentation report
-
-- Add total volume allocated to memory domains
-    -> total number of allocations
-    -> total number of bytes
-
-- Change memory tracking for mipmaps to see reserved memory
-    -> memory domain ReservedMemory could use user/system memory for reporting commited/reserved memory ?
-
-- Change memory tracking inside allocator to report number of user allocs + number of system allocs
-    -> would get a hint of internal fragmentation that way
-    -> also interesting to see repartition of allocations, since reporting there is orthogonal to UsedMemory
-
-- Change memory tracking inside linear heap to report only allocated pages ?
-    -> imply to track user and system allocations completely separately ?
 
 - Add a large mipmap allocator inside FMallocBinned in addition to current medium mipmaps
     -> current medium mips can't allocate more than 2mb, and virtual memory cache is weak (concurrency bottleneck)
@@ -36,3 +20,6 @@
     -> maybe remove completely ???
 
 - Finish the build graph :p
+
+- Integrate AMD's texture library for content pipeline (replacing clunky STB)
+- Integrate AMD's mesh library for content pipeline (replacing old custom code)
