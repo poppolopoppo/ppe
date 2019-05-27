@@ -302,8 +302,8 @@ launchconfigurations = [
         "type": "cppvsdbg",
         "request": "launch",
         "program": USE_CPPTOOLS_ACTIVECONFIGNAME ?
-            "${workspaceRoot}/Output/Binary/#{File.basename(DEFAULT_TARGET)}.${command:cpptools.activeConfigName}" :
-            "${workspaceRoot}/Output/Binary/#{File.basename(DEFAULT_TARGET)}.${input:ppe_config}",
+            "${workspaceRoot}/Output/Binary/#{File.basename(DEFAULT_TARGET)}-${command:cpptools.activeConfigName}" :
+            "${workspaceRoot}/Output/Binary/#{File.basename(DEFAULT_TARGET)}-${input:ppe_config}",
         "args": [],
         "stopAtEntry": false,
         "cwd": "${workspaceRoot}/Output/Binary",

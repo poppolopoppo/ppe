@@ -57,7 +57,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     {
         .LinkerVerboseOutput = true
 
-        .LinkerOutput       = '$IntermediateRoot$/$BinaryPrefix$.$Config$.$Platform$.$CompilerBinaryExtension$'
+        .LinkerOutput       = '$IntermediateRoot$/$BinaryPrefix$-$Platform$-$Config$.$CompilerBinaryExtension$'
         .LinkerOptions      + .ExecutableOptions
 
         .Libraries          = { '$ProjectName$-Obj-$Platform$-$Config$' }

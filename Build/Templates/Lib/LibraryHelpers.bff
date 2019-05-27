@@ -288,7 +288,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .AnalyzeOptions         ? ''
         .AdditionalOptions      + .AnalyzeOptions
         .BuildLogFile           = "$IntermediateRoot$/$ProjectName$.$Config$.$Platform$.log"
-        .Output                 = "$BinaryPath$/$BinaryPrefix$.$Config$.$Platform$.$CompilerBinaryExtension$"
+        .Output                 = "$BinaryPath$/$BinaryPrefix$-$Platform$-$Config$.$CompilerBinaryExtension$"
         .OutputDirectory        = "$BinaryPath$"
         .IntermediateDirectory  = "$IntermediatePath$"
         .ProjectBasePath        = "$ProjectPath$"
