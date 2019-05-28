@@ -48,17 +48,8 @@ static bool ParseBasename_(const FileSystem::FStringView& str, FBasenameNoExt& b
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBasename::FBasename(const PPE::FBasenameNoExt& basenameNoExt, const PPE::FExtname& extname)
+FBasename::FBasename(const PPE::FBasenameNoExt& basenameNoExt, const PPE::FExtname& extname) NOEXCEPT
 :   _basenameNoExt(basenameNoExt), _extname(extname) {}
-//----------------------------------------------------------------------------
-FBasename::FBasename(const FBasename& other)
-:   _basenameNoExt(other._basenameNoExt), _extname(other._extname) {}
-//----------------------------------------------------------------------------
-FBasename& FBasename::operator =(const FBasename& other) {
-    _basenameNoExt = other._basenameNoExt;
-    _extname = other._extname;
-    return *this;
-}
 //----------------------------------------------------------------------------
 FBasename::FBasename(const FileSystem::FString& content)
     : FBasename(content.MakeView())
@@ -107,7 +98,7 @@ FWStringView FBasename::ToWCStr(wchar_t *dst, size_t capacity) const {
     return oss.Written().ShiftBack();
 }
 //----------------------------------------------------------------------------
-void FBasename::Swap(FBasename& other) {
+void FBasename::Swap(FBasename& other) NOEXCEPT {
     swap(other._basenameNoExt, _basenameNoExt);
     swap(other._extname, _extname);
 }

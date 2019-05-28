@@ -18,27 +18,11 @@ FBasenameNoExt& FBasenameNoExt::operator =(const FileSystem::FStringView& conten
     return *this;
 }
 //----------------------------------------------------------------------------
-FBasenameNoExt::FBasenameNoExt(const FBasenameNoExt& other)
-:   parent_type(other) {}
-//----------------------------------------------------------------------------
-FBasenameNoExt& FBasenameNoExt::operator =(const FBasenameNoExt& other) {
-    parent_type::operator =(other);
-    return *this;
-}
-//----------------------------------------------------------------------------
-FBasenameNoExt::FBasenameNoExt(const FFileSystemToken& token)
-:   parent_type(token) {}
-//----------------------------------------------------------------------------
-FBasenameNoExt& FBasenameNoExt::operator =(const FFileSystemToken& token) {
-    parent_type::operator =(token);
-    return *this;
-}
-//----------------------------------------------------------------------------
 FBasenameNoExt::FBasenameNoExt(const FileSystem::FString& content)
     : FBasenameNoExt(content.MakeView())
 {}
 //----------------------------------------------------------------------------
-void FBasenameNoExt::Swap(FBasenameNoExt& other) {
+void FBasenameNoExt::Swap(FBasenameNoExt& other) NOEXCEPT {
     parent_type::Swap(other);
 }
 //----------------------------------------------------------------------------

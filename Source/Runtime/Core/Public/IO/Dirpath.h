@@ -23,14 +23,10 @@ class PPE_CORE_API FDirpath {
 public:
     enum : size_t { MaxDepth = 16 };
 
-    FDirpath();
-    ~FDirpath();
+    CONSTEXPR FDirpath() NOEXCEPT : _path(nullptr) {}
 
-    FDirpath(FDirpath&& rvalue);
-    FDirpath& operator =(FDirpath&& rvalue);
-
-    FDirpath(const FDirpath& other);
-    FDirpath& operator =(const FDirpath& other);
+    FDirpath(const FDirpath& other) = default;
+    FDirpath& operator =(const FDirpath& other) = default;
 
     FDirpath(const PPE::FMountingPoint& mountingPoint, const TMemoryView<const FDirname>& path);
 
@@ -98,6 +94,8 @@ public:
 private:
     const FFileSystemNode* _path;
 };
+//----------------------------------------------------------------------------
+PPE_ASSUME_TYPE_AS_POD(FDirpath)
 //----------------------------------------------------------------------------
 inline bool operator ==(const FDirpath& lhs, const FDirpath& rhs) {
     return lhs.Equals(rhs);

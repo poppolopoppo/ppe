@@ -13,8 +13,10 @@ class PPE_CORE_API FDirname : public FFileSystemToken {
 public:
     typedef FFileSystemToken parent_type;
 
-    FDirname() {}
-    ~FDirname() {}
+    FDirname() = default;
+
+    FDirname(const FDirname& other) = default;
+    FDirname& operator =(const FDirname& other) = default;
 
     FDirname(const FileSystem::FString& content);
     FDirname& operator =(const FileSystem::FString& content);
@@ -27,14 +29,13 @@ public:
     template <size_t _Dim>
     FDirname& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
 
-    FDirname(const FFileSystemToken& token);
-    FDirname& operator =(const FFileSystemToken& token);
+    FDirname(const FFileSystemToken& token) NOEXCEPT;
+    FDirname& operator =(const FFileSystemToken& token) NOEXCEPT;
 
-    FDirname(const FDirname& other);
-    FDirname& operator =(const FDirname& other);
-
-    void Swap(FDirname& other);
+    void Swap(FDirname& other) NOEXCEPT;
 };
+//----------------------------------------------------------------------------
+PPE_ASSUME_TYPE_AS_POD(FDirname)
 //----------------------------------------------------------------------------
 inline void swap(FDirname& lhs, FDirname& rhs) {
     lhs.Swap(rhs);

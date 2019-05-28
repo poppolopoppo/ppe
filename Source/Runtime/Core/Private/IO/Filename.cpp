@@ -64,42 +64,22 @@ static bool AppendRelname_(FDirpath& dirpath, FBasename& basename, const FileSys
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FFilename::FFilename(FDirpath&& dirpath, FBasename&& basename)
+FFilename::FFilename(FDirpath&& dirpath, FBasename&& basename) NOEXCEPT
 :   _dirpath(std::move(dirpath)), _basename(std::move(basename)) {}
 //----------------------------------------------------------------------------
-FFilename::FFilename(const FDirpath& dirpath, const FBasename& basename)
+FFilename::FFilename(const FDirpath& dirpath, const FBasename& basename) NOEXCEPT
 :   _dirpath(dirpath), _basename(basename) {}
 //----------------------------------------------------------------------------
-FFilename::FFilename(FDirpath&& dirpath, FBasenameNoExt&& basenameNoExt, FExtname&& extname)
+FFilename::FFilename(FDirpath&& dirpath, FBasenameNoExt&& basenameNoExt, FExtname&& extname) NOEXCEPT
 :   _dirpath(std::move(dirpath)), _basename(std::move(basenameNoExt), std::move(extname)) {}
 //----------------------------------------------------------------------------
-FFilename::FFilename(const FDirpath& dirpath, const FBasenameNoExt& basenameNoExt, const FExtname& extname)
+FFilename::FFilename(const FDirpath& dirpath, const FBasenameNoExt& basenameNoExt, const FExtname& extname) NOEXCEPT
 :   _dirpath(dirpath), _basename(basenameNoExt, extname) {}
 //----------------------------------------------------------------------------
 FFilename::FFilename(const FDirpath& dirpath, const FileSystem::FStringView& relfilename)
 :   _dirpath(dirpath) {
     if (!AppendRelname_(_dirpath, _basename, relfilename))
         AssertNotReached();
-}
-//----------------------------------------------------------------------------
-FFilename::FFilename(FFilename&& rvalue)
-:   _dirpath(std::move(rvalue._dirpath)),
-    _basename(std::move(rvalue._basename)) {}
-//----------------------------------------------------------------------------
-FFilename& FFilename::operator =(FFilename&& rvalue) {
-    _dirpath = std::move(rvalue._dirpath);
-    _basename = std::move(rvalue._basename);
-    return *this;
-}
-//----------------------------------------------------------------------------
-FFilename::FFilename(const FFilename& other)
-:   _dirpath(other._dirpath),
-    _basename(other._basename) {}
-//----------------------------------------------------------------------------
-FFilename& FFilename::operator =(const FFilename& other) {
-    _dirpath = other._dirpath;
-    _basename = other._basename;
-    return *this;
 }
 //----------------------------------------------------------------------------}
 FFilename::FFilename(const FileSystem::FString& content)

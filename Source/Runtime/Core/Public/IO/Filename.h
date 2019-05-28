@@ -16,22 +16,21 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_CORE_API FFilename {
 public:
-    FFilename() {}
-    ~FFilename() {}
+    FFilename() = default;
 
-    FFilename(FDirpath&& dirpath, FBasename&& basename);
-    FFilename(const FDirpath& dirpath, const FBasename& basename);
+    FFilename(FFilename&& rvalue) = default;
+    FFilename& operator =(FFilename&& rvalue) = default;
 
-    FFilename(FDirpath&& dirpath, FBasenameNoExt&& basenameNoExt, FExtname&& extname);
-    FFilename(const FDirpath& dirpath, const FBasenameNoExt& basenameNoExt, const FExtname& extname);
+    FFilename(const FFilename& other) = default;
+    FFilename& operator =(const FFilename& other) = default;
+
+    FFilename(FDirpath&& dirpath, FBasename&& basename) NOEXCEPT;
+    FFilename(const FDirpath& dirpath, const FBasename& basename) NOEXCEPT;
+
+    FFilename(FDirpath&& dirpath, FBasenameNoExt&& basenameNoExt, FExtname&& extname) NOEXCEPT;
+    FFilename(const FDirpath& dirpath, const FBasenameNoExt& basenameNoExt, const FExtname& extname) NOEXCEPT;
 
     FFilename(const FDirpath& dirpath, const FileSystem::FStringView& relfilename);
-
-    FFilename(FFilename&& rvalue);
-    FFilename& operator =(FFilename&& rvalue);
-
-    FFilename(const FFilename& other);
-    FFilename& operator =(const FFilename& other);
 
     FFilename(const FileSystem::FString& content);
     FFilename& operator =(const FileSystem::FString& content);
@@ -98,6 +97,8 @@ private:
     FDirpath _dirpath;
     FBasename _basename;
 };
+//----------------------------------------------------------------------------
+PPE_ASSUME_TYPE_AS_POD(FFilename)
 //----------------------------------------------------------------------------
 inline void FFilename::ReplaceExtension(const FExtname& ext) {
     _basename.SetExtname(ext);

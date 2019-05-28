@@ -28,26 +28,18 @@ FExtname& FExtname::operator =(const FileSystem::FStringView& content) {
     return *this;
 }
 //----------------------------------------------------------------------------
-FExtname::FExtname(const FExtname& other)
-:   parent_type(other) {}
-//----------------------------------------------------------------------------
-FExtname& FExtname::operator =(const FExtname& other) {
-    parent_type::operator =(other);
-    return *this;
-}
-//----------------------------------------------------------------------------
-FExtname::FExtname(const FFileSystemToken& token)
+FExtname::FExtname(const FFileSystemToken& token) NOEXCEPT
     : parent_type(token) {
     Assert(token.empty() || L'.' == *token.c_str());
 }
 //----------------------------------------------------------------------------
-FExtname& FExtname::operator =(const FFileSystemToken& token) {
+FExtname& FExtname::operator =(const FFileSystemToken& token) NOEXCEPT {
     Assert(token.empty() || L'.' == *token.c_str());
     parent_type::operator =(token);
     return *this;
 }
 //----------------------------------------------------------------------------
-void FExtname::Swap(FExtname& other) {
+void FExtname::Swap(FExtname& other) NOEXCEPT {
     parent_type::Swap(other);
 }
 //----------------------------------------------------------------------------

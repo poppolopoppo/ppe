@@ -142,8 +142,8 @@ public:
 
     TToken() : _handle{ nullptr } {}
 
-    TToken(const TToken& other) : _handle(other._handle) {}
-    TToken& operator =(const TToken& other) { _handle = other._handle; return (*this); }
+    TToken(const TToken& other) = default;
+    TToken& operator =(const TToken& other) = default;
 
     explicit TToken(const stringview_type& content) : _handle(FindOrAdd_(content)) {}
     TToken& operator =(const stringview_type& content) { _handle = FindOrAdd_(content); return (*this); }
@@ -216,6 +216,13 @@ private:
 
     static const handle_type* FindOrAdd_(const stringview_type& str);
 };
+//----------------------------------------------------------------------------
+PPE_ASSUME_TEMPLATE_AS_POD(
+    COMMA_PROTECT(TToken<_Tag, _Char, _Sensitive, _TokenTraits>),
+    typename _Tag,
+    typename _Char,
+    ECase    _Sensitive,
+    typename _TokenTraits)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

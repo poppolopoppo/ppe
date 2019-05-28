@@ -79,6 +79,10 @@ private:
     value_type _value;
 };
 //----------------------------------------------------------------------------
+PPE_ASSUME_TEMPLATE_AS_POD(
+    COMMA_PROTECT(TPrimeNumberProduct<_Tag, _Large>),
+    typename _Tag, bool _Large)
+//----------------------------------------------------------------------------
 template <typename _Char, typename _Tag>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TPrimeNumberProduct<_Tag>& number) {
     return oss << number.Value();

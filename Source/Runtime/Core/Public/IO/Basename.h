@@ -15,13 +15,12 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_CORE_API FBasename {
 public:
-    FBasename() {}
-    ~FBasename() {}
+    FBasename() = default;
 
-    FBasename(const FBasenameNoExt& basenameNoExt, const FExtname& extname);
+    FBasename(const FBasename& other) = default;
+    FBasename& operator =(const FBasename& other) = default;
 
-    FBasename(const FBasename& other);
-    FBasename& operator =(const FBasename& other);
+    FBasename(const FBasenameNoExt& basenameNoExt, const FExtname& extname) NOEXCEPT;
 
     FBasename(const FileSystem::FString& content);
     FBasename& operator =(const FileSystem::FString& content);
@@ -60,7 +59,7 @@ public:
     FStringView ToCStr(char *dst, size_t capacity) const;
     FWStringView ToWCStr(wchar_t *dst, size_t capacity) const;
 
-    void Swap(FBasename& other);
+    void Swap(FBasename& other) NOEXCEPT;
 
     size_t HashValue() const;
 
@@ -68,6 +67,8 @@ private:
     FBasenameNoExt _basenameNoExt;
     FExtname _extname;
 };
+//----------------------------------------------------------------------------
+PPE_ASSUME_TYPE_AS_POD(FBasename)
 //----------------------------------------------------------------------------
 inline FBasename operator +(const FBasenameNoExt& bname, const FExtname& ext) {
     return FBasename(bname, ext);

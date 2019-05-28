@@ -13,8 +13,10 @@ class PPE_CORE_API FExtname : public FFileSystemToken {
 public:
     typedef FFileSystemToken parent_type;
 
-    FExtname() {}
-    ~FExtname() {}
+    FExtname() = default;
+
+    FExtname(const FExtname& other) = default;
+    FExtname& operator =(const FExtname& other) = default;
 
     FExtname(const FileSystem::FString& content);
     FExtname& operator =(const FileSystem::FString& content);
@@ -22,14 +24,13 @@ public:
     FExtname(const FileSystem::FStringView& content);
     FExtname& operator =(const FileSystem::FStringView& content);
 
-    FExtname(const FExtname& other);
-    FExtname& operator =(const FExtname& other);
+    FExtname(const FFileSystemToken& token) NOEXCEPT;
+    FExtname& operator =(const FFileSystemToken& token) NOEXCEPT;
 
-    FExtname(const FFileSystemToken& token);
-    FExtname& operator =(const FFileSystemToken& token);
-
-    void Swap(FExtname& other);
+    void Swap(FExtname& other) NOEXCEPT;
 };
+//----------------------------------------------------------------------------
+PPE_ASSUME_TYPE_AS_POD(FExtname)
 //----------------------------------------------------------------------------
 inline void swap(FExtname& lhs, FExtname& rhs) {
     lhs.Swap(rhs);

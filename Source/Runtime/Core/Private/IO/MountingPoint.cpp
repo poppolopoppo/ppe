@@ -27,26 +27,18 @@ FMountingPoint& FMountingPoint::operator =(const FileSystem::FStringView& conten
     return *this;
 }
 //----------------------------------------------------------------------------
-FMountingPoint::FMountingPoint(const FMountingPoint& other)
-:   parent_type(other) {}
-//----------------------------------------------------------------------------
-FMountingPoint& FMountingPoint::operator =(const FMountingPoint& other) {
-    parent_type::operator =(other);
-    return *this;
-}
-//----------------------------------------------------------------------------
-FMountingPoint::FMountingPoint(const FFileSystemToken& token)
+FMountingPoint::FMountingPoint(const FFileSystemToken& token) NOEXCEPT
 :   parent_type(token) {
     Assert(token.empty() || L':' == token.MakeView().back());
 }
 //----------------------------------------------------------------------------
-FMountingPoint& FMountingPoint::operator =(const FFileSystemToken& token) {
+FMountingPoint& FMountingPoint::operator =(const FFileSystemToken& token) NOEXCEPT {
     Assert(token.empty() || L':' == token.MakeView().back());
     parent_type::operator =(token);
     return *this;
 }
 //----------------------------------------------------------------------------
-void FMountingPoint::Swap(FMountingPoint& other) {
+void FMountingPoint::Swap(FMountingPoint& other) NOEXCEPT {
     parent_type::Swap(other);
 }
 //----------------------------------------------------------------------------

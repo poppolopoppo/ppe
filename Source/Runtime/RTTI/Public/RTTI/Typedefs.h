@@ -72,6 +72,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PPE_ASSUME_TYPE_AS_POD(RTTI::FName)
+PPE_ASSUME_TYPE_AS_POD(RTTI::FPathName)
+//----------------------------------------------------------------------------
 PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FBinaryData& bindata);
 PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FBinaryData& bindata);
 //----------------------------------------------------------------------------

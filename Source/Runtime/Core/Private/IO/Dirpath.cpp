@@ -89,26 +89,6 @@ static const FFileSystemNode *DirpathNode_(const FMountingPoint& mountingPoint, 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FDirpath::FDirpath() : _path(nullptr) {}
-//----------------------------------------------------------------------------
-FDirpath::~FDirpath() {}
-//----------------------------------------------------------------------------
-FDirpath::FDirpath(FDirpath&& rvalue)
-:   _path(std::move(rvalue._path)) {}
-//----------------------------------------------------------------------------
-FDirpath& FDirpath::operator =(FDirpath&& rvalue) {
-    _path = std::move(rvalue._path);
-    return *this;
-}
-//----------------------------------------------------------------------------
-FDirpath::FDirpath(const FDirpath& other)
-:   _path(other._path) {}
-//----------------------------------------------------------------------------
-FDirpath& FDirpath::operator =(const FDirpath& other) {
-    _path = other._path;
-    return *this;
-}
-//----------------------------------------------------------------------------
 FDirpath::FDirpath(const FMountingPoint& mountingPoint, const TMemoryView<const FDirname>& path) {
     _path = DirpathNode_(mountingPoint, path);
 }

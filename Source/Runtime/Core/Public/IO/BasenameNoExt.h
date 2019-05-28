@@ -12,22 +12,23 @@ class PPE_CORE_API FBasenameNoExt : public FFileSystemToken {
 public:
     typedef FFileSystemToken parent_type;
 
-    FBasenameNoExt() {}
-    ~FBasenameNoExt() {}
+    FBasenameNoExt() = default;
+
+    FBasenameNoExt(const FBasenameNoExt& other) = default;
+    FBasenameNoExt& operator =(const FBasenameNoExt& other) = default;
 
     FBasenameNoExt(const FileSystem::FStringView& content);
     FBasenameNoExt& operator =(const FileSystem::FStringView& content);
 
     FBasenameNoExt(const FileSystem::FString& content);
 
-    FBasenameNoExt(const FFileSystemToken& token);
-    FBasenameNoExt& operator =(const FFileSystemToken& token);
+    FBasenameNoExt(const FFileSystemToken& token) NOEXCEPT;
+    FBasenameNoExt& operator =(const FFileSystemToken& token) NOEXCEPT;
 
-    FBasenameNoExt(const FBasenameNoExt& other);
-    FBasenameNoExt& operator =(const FBasenameNoExt& other);
-
-    void Swap(FBasenameNoExt& other);
+    void Swap(FBasenameNoExt& other) NOEXCEPT;
 };
+//----------------------------------------------------------------------------
+PPE_ASSUME_TYPE_AS_POD(FBasenameNoExt)
 //----------------------------------------------------------------------------
 PPE_CORE_API FBasenameNoExt operator +(const FBasenameNoExt& lhs, const FileSystem::FStringView& rhs);
 //----------------------------------------------------------------------------

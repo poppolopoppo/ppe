@@ -25,23 +25,15 @@ FDirname& FDirname::operator =(const FileSystem::FStringView& content) {
     return *this;
 }
 //----------------------------------------------------------------------------
-FDirname::FDirname(const FDirname& other)
-:   parent_type(other) {}
-//----------------------------------------------------------------------------
-FDirname& FDirname::operator =(const FDirname& other) {
-    parent_type::operator =(other);
-    return *this;
-}
-//----------------------------------------------------------------------------
-FDirname::FDirname(const FFileSystemToken& token)
+FDirname::FDirname(const FFileSystemToken& token) NOEXCEPT
 :   parent_type(token) {}
 //----------------------------------------------------------------------------
-FDirname& FDirname::operator =(const FFileSystemToken& token) {
+FDirname& FDirname::operator =(const FFileSystemToken& token) NOEXCEPT {
     parent_type::operator =(token);
     return *this;
 }
 //----------------------------------------------------------------------------
-void FDirname::Swap(FDirname& other) {
+void FDirname::Swap(FDirname& other) NOEXCEPT {
     parent_type::Swap(other);
 }
 //----------------------------------------------------------------------------
