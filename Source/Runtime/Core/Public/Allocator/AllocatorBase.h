@@ -339,18 +339,10 @@ struct TAllocatorTraits {
 
         IF_CONSTEXPR(has_reallocate::value) {
             IF_CONSTEXPR(reallocate_can_fail::value) {
-                if (a.Reallocate(b, s)) {
-                    items = TMemoryView<T>(static_cast<T*>(b.Data), Min(newSize, items.size()));
-                    return true;
-                }
-                else {
-                    return false;
-                }
+                Verify(a.Reallocate(b, s));
             }
             else {
                 a.Reallocate(b, s);
-                items = TMemoryView<T>(static_cast<T*>(b.Data), Min(newSize, items.size()));
-                return;
             }
         }
         else {
@@ -372,10 +364,9 @@ struct TAllocatorTraits {
                     a.Deallocate(b.Reset());
                 }
             }
-
-            items = TMemoryView<T>{ b.Data, Min(newSize, items.size()) };
-            return;
         }
+
+        items = TMemoryView<T>(static_cast<T*>(b.Data), Min(newSize, items.size()));
     }
 
     static bool Acquire(_Allocator& a, FAllocatorBlock b) NOEXCEPT {
