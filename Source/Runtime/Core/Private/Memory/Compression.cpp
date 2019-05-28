@@ -16,7 +16,7 @@
 #define WITH_PPE_COMPRESSION_FINGERPRINT 1 //%_NOCOMMTI%
 
 namespace PPE {
-EXTERN_LOG_CATEGORY(PPE_CORE_API, Benchmark)
+LOG_CATEGORY(, Compress)
 namespace Compression {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -48,7 +48,7 @@ struct FCompressionBenchmark_ {
     FCompressionBenchmark_() : StartedAt(FTimepoint::Now()) {}
     void Finished(const wchar_t* msg, size_t a, size_t b) {
         const FTimespan elapsed = FTimepoint::ElapsedSince(StartedAt);
-        LOG(Benchmark, Info, L" {0:20} | {1:10f2} | {2:10f2} ==> {3:10f2} : {4:10f2}% = {5:10f2} Mb/s",
+        LOG(Compress, Info, L" {0:20} | {1:10f2} | {2:10f2} ==> {3:10f2} : {4:10f2}% = {5:10f2} Mb/s",
             msg,
             Fmt::DurationInMs(elapsed),
             Fmt::SizeInBytes(a),
@@ -64,15 +64,17 @@ struct FCompressionBenchmark_ {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 size_t CompressedSizeUpperBound(size_t sizeInBytes) {
+    Assert_NoAssume(sizeInBytes <= LZ4_MAX_INPUT_SIZE);
     return checked_cast<size_t>(::LZ4_compressBound(checked_cast<int>(sizeInBytes)))
         + sizeof(FFileHeader_);
 }
 //----------------------------------------------------------------------------
 size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src, ECompressMethod method /* = Default */) {
     Assert(dst.Pointer());
-    Assert(dst.size() >= CompressedSizeUpperBound(src.SizeInBytes()));
+    Assert_NoAssume(dst.size() >= CompressedSizeUpperBound(src.SizeInBytes()));
+    AssertRelease(src.SizeInBytes() <= LZ4_MAX_INPUT_SIZE);
 
-    FFileHeader_* const pheader = reinterpret_cast<FFileHeader_*>(dst.Pointer());
+    auto* const pheader = reinterpret_cast<FFileHeader_*>(dst.Pointer());
     pheader->Magic = FILE_MAGIC_;
     pheader->Version = FILE_VERSION_;
     pheader->SizeInBytes = checked_cast<u32>(src.SizeInBytes());
@@ -114,7 +116,7 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
             (char*)datas.Pointer(),
             checked_cast<int>(src.SizeInBytes()),
             checked_cast<int>(datas.SizeInBytes()),
-            LZ4HC_CLEVEL_OPT_MIN/* minimum settings for better compression with HC */));
+            LZ4HC_CLEVEL_MAX/* maximum compression level */));
         break;
 
     default:
@@ -126,6 +128,7 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
     bm.Finished(L"COMPRESS", src.SizeInBytes(), compressedSizeInBytes);
 #endif
 
+    Assert(compressedSizeInBytes > sizeof(FFileHeader_));
     return compressedSizeInBytes;
 }
 //----------------------------------------------------------------------------
@@ -146,36 +149,45 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
     Assert(dst.Pointer());
     Assert(dst.SizeInBytes() == DecompressedSize(src));
 
-    const FFileHeader_* pheader = reinterpret_cast<const FFileHeader_*>(src.Pointer());
-    if (nullptr == pheader ||
-        FILE_MAGIC_ != pheader->Magic ||
-        FILE_VERSION_ != pheader->Version )
+    if (src.SizeInBytes() < sizeof(FFileHeader_))
         return false;
+
+    const auto& header = *reinterpret_cast<const FFileHeader_*>(src.Pointer());
+    if ((FILE_MAGIC_ != header.Magic) | (FILE_VERSION_ != header.Version))
+        return false;
+
+    AssertRelease(header.SizeInBytes <= dst.SizeInBytes());
+    const TMemoryView<const u8> compressed = src.CutStartingAt(sizeof(FFileHeader_));
 
 #if USE_PPE_BENCHMARK
     FCompressionBenchmark_ bm;
 #endif
 
-    const size_t dataSizeInBytes = checked_cast<size_t>(
-        ::LZ4_decompress_safe(
-            (const char*)&pheader[1],
-            (char*)dst.Pointer(),
-            pheader->SizeInBytes,
-            dst.SizeInBytes() ));
+    const int ret = ::LZ4_decompress_safe(
+        (const char*)compressed.Pointer(),
+        (char*)dst.Pointer(),
+        checked_cast<int>(compressed.SizeInBytes()),
+        checked_cast<int>(dst.SizeInBytes()) );
 
 #if USE_PPE_BENCHMARK
-    bm.Finished(L"DECOMPRESS", src.SizeInBytes(), pheader->SizeInBytes);
+    bm.Finished(L"DECOMPRESS", src.SizeInBytes(), header.SizeInBytes);
 #endif
 
-    const size_t compressedSizeInBytes = dataSizeInBytes + sizeof(FFileHeader_);
-    Assert(compressedSizeInBytes <= src.SizeInBytes());
+    if (ret < 0) {
+        LOG(Compress, Error, L"decompression failed due to malformed input ({0})", ret);
+
+        return false;
+    }
+    else {
+        Assert_NoAssume(size_t(ret) == header.SizeInBytes);
 
 #if WITH_PPE_COMPRESSION_FINGERPRINT && defined(WITH_PPE_ASSERT_RELEASE)
-    const u32 readFingerprint = StreamFingerprint_(dst);
-    AssertRelease(readFingerprint == pheader->Fingerpint);
+        const u32 readFingerprint = StreamFingerprint_(dst);
+        AssertRelease(readFingerprint == header.Fingerpint);
 #endif
 
-    return true;
+        return true;
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
