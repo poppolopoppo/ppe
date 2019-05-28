@@ -41,6 +41,7 @@ TRawStorage<T, _Allocator>::TRawStorage(_It&& begin, _It&& end)
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TRawStorage<T, _Allocator>::~TRawStorage() {
+    STATIC_ASSERT(Meta::has_trivial_destructor<T>::value);
     clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
@@ -117,7 +118,7 @@ void TRawStorage<T, _Allocator>::Resize(size_type size, bool keepData) {
     }
     else if (keepData) {
         TMemoryView<T> blk(storage, _size);
-        ReallocateAllocatorBlock(allocator_traits::Get(*this), blk, _size, size);
+        ReallocateAllocatorBlock_AssumePOD(allocator_traits::Get(*this), blk, _size, size);
         AssertRelease(blk.data());
         _storage = blk.data();
     }
