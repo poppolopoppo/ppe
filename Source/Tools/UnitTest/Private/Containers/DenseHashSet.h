@@ -248,7 +248,7 @@ public:
 
         if (oldCapacity) {
             TMemoryView<_Key> b{ _elements, _size };
-            ReallocateAllocatorBlock_AssumePOD(
+            ReallocateAllocatorBlock(
                 allocator_traits::Get(*this),
                 b, oldCapacity, _capacity);
 

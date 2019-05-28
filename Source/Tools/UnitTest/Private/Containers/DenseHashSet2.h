@@ -267,7 +267,7 @@ public:
             Assert_NoAssume((state_t*)&_elements != oldStates);
 
             TMemoryView<_Key> b{ _elements, _size };
-            ReallocateAllocatorBlock_AssumePOD(
+            ReallocateAllocatorBlock(
                 allocator_traits::Get(*this),
                 b, Capacity_(oldNumStates), capacity );
             _elements = b.data();
