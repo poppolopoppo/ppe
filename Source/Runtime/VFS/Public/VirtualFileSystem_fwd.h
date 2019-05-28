@@ -12,6 +12,7 @@
 #include "IO/FileSystem_fwd.h"
 #include "IO/Regexp.h"
 #include "IO/StreamPolicies.h"
+#include "IO/StreamProvider.h"
 #include "Memory/UniquePtr.h"
 #include "Misc/Function.h"
 
@@ -24,10 +25,6 @@ template <typename T>
 class TMemoryView;
 template <typename T, typename _Allocator>
 class TRawStorage;
-
-FWD_INTEFARCE_UNIQUEPTR(StreamReader);
-FWD_INTEFARCE_UNIQUEPTR(StreamWriter);
-FWD_INTEFARCE_UNIQUEPTR(StreamReadWriter);
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
