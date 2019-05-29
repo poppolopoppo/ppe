@@ -67,7 +67,7 @@ void FCoreModule::Start(FModuleManager& manager) {
     // 5 - file system
     FFileSystemStartup::Start();
     // 6 - logger
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     FLogger::Start();
 #endif
 }
@@ -76,7 +76,7 @@ void FCoreModule::Shutdown() {
     FModule::Shutdown();
 
     // 6 - logger
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     FLogger::Shutdown();
 #endif
     // 5 - file system

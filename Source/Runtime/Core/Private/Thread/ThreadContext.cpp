@@ -216,7 +216,7 @@ void FThreadContextStartup::Start(const char* name, size_t tag) {
 
     malloc_release_pending_blocks(); // force allocation of malloc TLS
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
     LOG(Thread, Debug, L"start thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
@@ -227,7 +227,7 @@ void FThreadContextStartup::Start_MainThread() {
     Meta::FThreadLocalAutoSingletonManager::Start();
     FAllocaStartup::Start(true);
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
     LOG(Thread, Debug, L"start thread '{0}' with tag = {1} ({2}) <MainThread>", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
@@ -238,7 +238,7 @@ void FThreadContextStartup::Start_MainThread() {
 }
 //----------------------------------------------------------------------------
 void FThreadContextStartup::Shutdown() {
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
     LOG(Thread, Debug, L"stop thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif

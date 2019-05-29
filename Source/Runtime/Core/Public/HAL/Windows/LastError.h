@@ -39,7 +39,7 @@ private:
     FLastError _errorCode;
 };
 //----------------------------------------------------------------------------
-#if defined(USE_DEBUG_LOGGER) && defined(PLATFORM_WINDOWS)
+#if USE_PPE_LOGGER && defined(PLATFORM_WINDOWS)
 #   define LOG_LASTERROR(_CATEGORY, _CONTEXT) \
         LOG(_CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::PPE::FLastError())
 #   define CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) \

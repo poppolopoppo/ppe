@@ -382,13 +382,13 @@ namespace {
 static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, u64 affinityMask) {
     Assert(pmanager);
 
-#ifndef FINAL_RELEASE
+#if !USE_PPE_FINAL_RELEASE
     char workerName[128];
     Format(workerName, "{0}_Worker_{1}_of_{2}",
         pmanager->Name(), (workerIndex + 1), pmanager->WorkerCount() );
 #else
     const char* const workerName = "";
-#endif // !FINAL_RELEASE
+#endif // !USE_PPE_FINAL_RELEASE
     const FThreadContextStartup threadStartup(workerName, pmanager->ThreadTag());
 
     threadStartup.Context().SetAffinityMask(affinityMask);

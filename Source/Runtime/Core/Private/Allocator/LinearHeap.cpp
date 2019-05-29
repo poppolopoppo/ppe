@@ -10,7 +10,7 @@
 #include "Thread/ThreadContext.h"
 
 #include "Diagnostic/Logger.h"
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
 #   include "IO/FormatHelpers.h"
 #endif
 

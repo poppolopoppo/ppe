@@ -310,7 +310,7 @@ void ReportAllocationFragmentation(FWTextWriter& oss) {
 }
 //----------------------------------------------------------------------------
 void ReportAllocationHistogram(FWTextWriter& oss) {
-#if USE_PPE_MEMORYDOMAINS && defined(USE_DEBUG_LOGGER)
+#if USE_PPE_MEMORYDOMAINS && USE_PPE_LOGGER
     TMemoryView<const size_t> classes;
     TMemoryView<const i64> allocations, totalBytes;
     if (not FMallocDebug::FetchAllocationHistogram(&classes, &allocations, &totalBytes))
@@ -371,7 +371,7 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
 }
 //----------------------------------------------------------------------------
 void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
-#if USE_PPE_MEMORYDOMAINS && defined(USE_DEBUG_LOGGER)
+#if USE_PPE_MEMORYDOMAINS && USE_PPE_LOGGER
     FTrackingDataRegistry_::FMemoryDomainsList datas;
     FTrackingDataRegistry_::Get().FetchDatas(&datas);
 

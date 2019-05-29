@@ -59,7 +59,7 @@ static int AccessPolicyToOFlag_(EAccessPolicy accessFlags) {
     return oflag;
 }
 //----------------------------------------------------------------------------
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
 struct FErrno_ {
     int Num;
     static FErrno_ LastError() { return FErrno_{ errno }; }
@@ -70,16 +70,16 @@ struct FErrno_ {
             : oss << MakeCStringView(buffer));
     }
 };
-#endif //!USE_DEBUG_LOGGER
+#endif //!USE_PPE_LOGGER
 //----------------------------------------------------------------------------
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
 struct FHandle_ {
     int Handle;
     inline friend FWTextWriter& operator <<(FWTextWriter& oss, FHandle_ handle) {
         return oss << L'<' << handle.Handle << L'>';
     }
 };
-#endif //!USE_DEBUG_LOGGER
+#endif //!USE_PPE_LOGGER
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------

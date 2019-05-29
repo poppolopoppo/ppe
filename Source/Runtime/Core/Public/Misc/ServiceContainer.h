@@ -94,7 +94,7 @@ void FServiceContainer::Register(T* service) {
     const FServiceId serviceId = StaticServiceId<_Interface>();
 
     const FStringView serviceName{
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
         MakeCStringView(typeid(_Interface).name())
 #endif
     };

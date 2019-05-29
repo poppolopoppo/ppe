@@ -50,7 +50,7 @@ public:
         const auto it = std::find(_chainRef.begin(), chainEnd, object);
 
         if (chainEnd != it) {
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
             FWStringBuilder oss;
             oss << L"found a circular reference !" << Eol;
 
@@ -361,7 +361,7 @@ void FMetaTransaction::Load() {
         }
     }
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     LOG(RTTI, Info, L"loaded transaction '{0}' :", _name);
 
     FWStringBuilder oss;

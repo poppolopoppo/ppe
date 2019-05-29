@@ -43,7 +43,7 @@ FCurrentProcess::FCurrentProcess(void* appHandle, int nShowCmd, const wchar_t* f
 
     _appHandle = appHandle;
     _nShowCmd = nShowCmd;
-#ifndef FINAL_RELEASE
+#if !USE_PPE_FINAL_RELEASE
     _startedWithDebugger = FPlatformDebug::IsDebuggerPresent();
     if (_args.end() != _args.FindIf([](const FWString& arg) { return EqualsI(arg, L"-IgnoreDebugger"); })) {
         _startedWithDebugger = false;
@@ -52,7 +52,7 @@ FCurrentProcess::FCurrentProcess(void* appHandle, int nShowCmd, const wchar_t* f
     _startedWithDebugger = false;
 #endif
 
-#ifndef FINAL_RELEASE
+#if !USE_PPE_FINAL_RELEASE
     if (_args.end() != _args.FindIf([](const FWString& arg) { return EqualsI(arg, L"-WaitForDebugger"); })) {
         _startedWithDebugger = false; // some parts of the code won't detect that the debugger is attached
         volatile bool bTurnThisOffWhenDebuggerIsAttached = (!FPlatformDebug::IsDebuggerPresent());
@@ -73,7 +73,7 @@ FCurrentProcess::~FCurrentProcess() {
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::DumpMemoryStats() const {
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     auto mem = FPlatformMemory::Stats();
     LOG(Process, Info, L"Physical memory : {0:8} / {1:8} / {2:8} : {3}",
         Fmt::SizeInBytes(mem.UsedPhysical),
@@ -95,7 +95,7 @@ void FCurrentProcess::DumpMemoryStats() const {
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::DumpProcessInfos() const {
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     auto mem = FPlatformMemory::Constants();
     auto& platform = CurrentPlatform();
     LOG(Process, Info, L"platform name = {0} ({1})", platform.DisplayName(), CurrentPlatform().FullName());

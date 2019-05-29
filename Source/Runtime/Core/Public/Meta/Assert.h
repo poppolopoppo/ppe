@@ -3,10 +3,10 @@
 #include "Diagnostic/Exception.h"
 
 #define USE_PPE_ASSERT (USE_PPE_ASSERTIONS && USE_PPE_DEBUG)
-#define USE_PPE_ASSERT_RELEASE (!USE_PPE_FINAL_RELEASE && !defined(PROFILING_ENABLED))
+#define USE_PPE_ASSERT_RELEASE (!USE_PPE_FINAL_RELEASE && !USE_PPE_PROFILING)
 
 #define WITH_PPE_ASSERT_FALLBACK_TO_ASSUME 1 // when enabled every assert becomes an __assume() when !USE_PPE_DEBUG // %_NOCOMMIT%
-#define WITH_PPE_ASSERT_RELEASE_FALLBACK_TO_ASSUME 1 // when enabled every assert release becomes an __assume() when !FINAL_RELEASE // %_NOCOMMIT%
+#define WITH_PPE_ASSERT_RELEASE_FALLBACK_TO_ASSUME 1 // when enabled every assert release becomes an __assume() when !USE_PPE_FINAL_RELEASE // %_NOCOMMIT%
 
 #if defined(NDEBUG) && USE_PPE_ASSERT
 #   undef WITH_PPE_ASSERT

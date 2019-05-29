@@ -2,11 +2,9 @@
 
 #include "Core_fwd.h"
 
-#if !defined(FINAL_RELEASE) || USE_PPE_FORCE_LOGGING
-#   define USE_DEBUG_LOGGER
-#endif
+#define USE_PPE_LOGGER (!USE_PPE_FINAL_RELEASE || USE_PPE_FORCE_LOGGING)
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
 
 #define LOG_CATEGORY_GET(_NAME) CONCAT(GLogCategory_, _NAME)
 #define EXTERN_LOG_CATEGORY(_API, _NAME) \
@@ -26,4 +24,4 @@ struct FLoggerCategory;
 
 #define EXTERN_LOG_CATEGORY(...)
 
-#endif //!#ifdef USE_DEBUG_LOGGER
+#endif //!#if USE_PPE_LOGGER

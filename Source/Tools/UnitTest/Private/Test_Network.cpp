@@ -27,11 +27,7 @@
 
 // #TODO : wrap RTTI meta classes with OpenAPI/Swagger (https://editor.swagger.io/)
 
-#if (not defined(PROFILING_ENABLED) && not defined(FINAL_RELEASE))
-#   define WITH_PPE_NETWORK_INTERACTIVE_TESTS 1
-#else
-#   define WITH_PPE_NETWORK_INTERACTIVE_TESTS 0
-#endif
+#define WITH_PPE_NETWORK_INTERACTIVE_TESTS (not USE_PPE_FINAL_RELEASE && not USE_PPE_PROFILING)
 
 namespace PPE {
 namespace Test {
@@ -68,7 +64,7 @@ static bool ParseUri_(const FStringView& str) {
     if (not FUri::Unpack(args, uri))
         return false;
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     LOG(Test_Network, Info, L"Args[{0}]:", args.size());
     for (const auto& it : args)
         LOG(Test_Network, Info, L"    - {0} = '{1}'", it.first, it.second);
@@ -94,7 +90,7 @@ static void Test_ParseUri_() {
 }
 //----------------------------------------------------------------------------
 static void LogRequest_(const FHttpRequest& req) {
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     FWStringBuilder oss;
     oss << L"#HTTP_REQUEST" << Eol
         << L"> URI      : " << req.Uri() << Eol
@@ -127,7 +123,7 @@ static void LogRequest_(const FHttpRequest& req) {
 }
 //----------------------------------------------------------------------------
 static void LogResponse_(const FHttpResponse& resp) {
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     FWStringBuilder oss;
     oss << L"#HTTP_RESPONSE" << Eol
         << L"> Status   : " << resp.Status() << Eol

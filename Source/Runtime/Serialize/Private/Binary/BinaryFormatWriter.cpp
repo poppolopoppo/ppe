@@ -486,7 +486,7 @@ void FBinaryFormatWriter::MakeFingerprint_(FBinaryFormat::FHeaders& h) const {
 
     h.Fingerprint = Fingerprint32(&s, sizeof(s));
 
-#if USE_PPE_BINA_MARKERS && defined(USE_DEBUG_LOGGER)
+#if USE_PPE_BINA_MARKERS && USE_PPE_LOGGER
     FLogger::Log(
         GLogCategory_Serialize,
         FLogger::EVerbosity::Debug,

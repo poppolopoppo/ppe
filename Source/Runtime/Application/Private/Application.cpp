@@ -13,7 +13,7 @@
 #include "HAL/PlatformProcess.h"
 #include "HAL/PlatformProfiler.h"
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
 #   include "IO/FormatHelpers.h"
 #   include "IO/StreamProvider.h"
 #   include "IO/StringView.h"

@@ -16,7 +16,7 @@
 #   include "Diagnostic/Callstack.h"
 #   include "Diagnostic/DecodedCallstack.h"
 #endif
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
 #   include "IO/TextWriter.h"
 #   include "IO/FormatHelpers.h"
 #   include "Thread/ThreadContext.h"

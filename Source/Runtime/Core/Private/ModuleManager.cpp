@@ -7,7 +7,7 @@
 #include "Diagnostic/Logger.h"
 #include "Memory/MemoryTracking.h"
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
 #   include "IO/Format.h"
 #   include "IO/FormatHelpers.h"
 #   include "Time/TimedScope.h"
@@ -57,7 +57,7 @@ FModuleManager::~FModuleManager() {
 void FModuleManager::ReleaseMemory(FModule& module) {
     LOG(Module, Emphasis, L"releasing memory in <{0}> ...", MakeCStringView(module.Name()));
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     const FTimedScope t;
 #endif
     module.ReleaseMemory();
@@ -88,7 +88,7 @@ void FModuleManager::Start(FModule& module) {
 
     LOG(Module, Emphasis, L"starting module <{0}> ...", MakeCStringView(module.Name()));
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     const FTimedScope t;
 #endif
     module.Start(*this);
@@ -103,7 +103,7 @@ void FModuleManager::Shutdown(FModule& module) {
 
     LOG(Module, Emphasis, L"shutting down module <{0}> ...", MakeCStringView(module.Name()));
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     const FTimedScope t;
 #endif
     module.Shutdown();
@@ -132,7 +132,7 @@ void FModuleManager::ReleaseMemoryInModules() const {
 
     FLUSH_LOG();
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
     const FTimedScope t;
 #endif
     _startup->ReleaseMemory();

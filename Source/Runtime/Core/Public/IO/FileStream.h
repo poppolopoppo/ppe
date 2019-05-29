@@ -7,11 +7,7 @@
 #include "IO/TextWriter_fwd.h"
 #include "HAL/PlatformLowLevelIO.h"
 
-#ifndef FINAL_RELEASE
-#   define WITH_PPE_FILESTREAM_FILENAMEDBG 1 // %_NOCOMMIT%
-#else
-#   define WITH_PPE_FILESTREAM_FILENAMEDBG 0
-#endif
+#define WITH_PPE_FILESTREAM_FILENAMEDBG (!USE_PPE_FINAL_RELEASE) // %_NOCOMMIT%
 
 #if WITH_PPE_FILESTREAM_FILENAMEDBG
 #   include "IO/String.h"

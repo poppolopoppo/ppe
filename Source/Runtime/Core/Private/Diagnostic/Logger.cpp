@@ -2,7 +2,7 @@
 
 #include "Diagnostic/Logger.h"
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
 
 #   include "Allocator/LinearHeap.h"
 #   include "Allocator/LinearAllocator.h"
@@ -801,4 +801,4 @@ FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level) {
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#endif //!USE_DEBUG_LOGGER
+#endif //!USE_PPE_LOGGER

@@ -10,7 +10,7 @@
 #include "Memory/MemoryDomain.h"
 #include "Memory/RefPtr.h"
 
-#if !(defined(FINAL_RELEASE) || defined(PROFILING_ENABLED))
+#if !(USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING)
 #   define WITH_RTTI_VERIFY_PREDICATES
 #endif
 

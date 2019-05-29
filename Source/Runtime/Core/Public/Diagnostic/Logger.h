@@ -23,7 +23,7 @@ enum class ELoggerVerbosity {
     NoDebug     = (Info|Emphasis|Warning|Error|Fatal),
     NoDebugInfo = (Emphasis|Warning|Error|Fatal),
 
-#ifdef PROFILING_ENABLED
+#if USE_PPE_PROFILING
     All         = NoDebugInfo
 #else
     All         = (Debug|Info|Emphasis|Warning|Error|Fatal)
@@ -35,7 +35,7 @@ ENUM_FLAGS(ELoggerVerbosity);
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#ifdef USE_DEBUG_LOGGER
+#if USE_PPE_LOGGER
 
 #   include "IO/Format.h"
 #   include "IO/String_fwd.h"
@@ -163,7 +163,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #       define LOG(_CATEGORY, _LEVEL, _FORMAT, ...) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
 #   endif
 
-#endif //!#ifdef USE_DEBUG_LOGGER
+#endif //!#if USE_PPE_LOGGER
 
 #if USE_PPE_FINAL_RELEASE
 #   define CLOG(_CONDITION, _CATEGORY, _LEVEL, _FORMAT, ...) NOOP()

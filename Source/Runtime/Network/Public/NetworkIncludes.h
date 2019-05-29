@@ -60,7 +60,7 @@ constexpr ::SOCKET UnpackSocket_(intptr_t handle) {
     return static_cast<::SOCKET>(handle);
 }
 //----------------------------------------------------------------------------
-#if defined(USE_DEBUG_LOGGER) && defined(PLATFORM_WINDOWS)
+#if USE_PPE_LOGGER && defined(PLATFORM_WINDOWS)
 #   define LOG_WSALASTERROR(_CONTEXT) \
         LOG(Network, Error, _CONTEXT " failed, WSA last error : {0}", ::PPE::FLastError(::WSAGetLastError()))
 #else

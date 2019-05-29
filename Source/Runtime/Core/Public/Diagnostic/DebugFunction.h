@@ -2,11 +2,7 @@
 
 #include "Core.h"
 
-#ifdef FINAL_RELEASE
-#   define USE_PPE_DEBUGFUNCTION 0
-#else
-#   define USE_PPE_DEBUGFUNCTION 1
-#endif
+#define USE_PPE_DEBUGFUNCTION (!USE_PPE_FINAL_RELEASE)
 
 #if USE_PPE_DEBUGFUNCTION
 
