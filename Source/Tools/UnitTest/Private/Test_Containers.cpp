@@ -1158,35 +1158,35 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("Vector", set, input);
         }
 #endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
-#if 0 // !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
-            typedef TSparseArray<T> vector_type;
+            typedef TSparseArray<T> sparse_array_t;
 
-            vector_type v;
+            sparse_array_t v;
 
             struct FAdapter_ {
-                vector_type v;
-                size_t size() const { return v.size(); }
-                auto begin() const { return v.begin(); }
-                auto end() const { return v.end(); }
-                void insert(T i) { v.push_back(i); }
-                auto find(T i) const { return std::find(v.begin(), v.end(), i); }
-                void reserve(size_t n) { v.reserve(n); }
+                sparse_array_t a;
+                size_t size() const { return a.size(); }
+                auto begin() const { return a.begin(); }
+                auto end() const { return a.end(); }
+                void insert(T i) { a.Emplace(i); }
+                auto find(T i) const { return std::find(a.begin(), a.end(), i); }
+                void reserve(size_t n) { a.Reserve(n); }
                 bool erase(T i) {
                     auto it = find(i);
-                    if (v.end() == it)
+                    if (a.end() == it)
                         return false;
-                    v.erase_DontPreserveOrder(it);
+                    a.Remove(it);
                     return true;
                 }
-                void clear() { v.clear(); }
+                void clear() { a.Clear(); }
             };
 
             FAdapter_ set;
-            bm.Run("Vector", set, input);
+            bm.Run("SparseArray", set, input);
         }
 #endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TFlatSet<T> set;
             bm.Run("FlatSet", set, input);

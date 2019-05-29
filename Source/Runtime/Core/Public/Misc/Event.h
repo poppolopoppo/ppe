@@ -76,7 +76,7 @@ class TPublicEvent {
 public:
     using FDelegate = _Delegate;
     using FHandle = FEventHandle;
-    using FInvocationList = SPARSEARRAY(Event, FDelegate, 4);
+    using FInvocationList = SPARSEARRAY_INSITU(Event, FDelegate, 8);
 
     TPublicEvent() NOEXCEPT {}
 

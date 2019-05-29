@@ -9,6 +9,7 @@
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Memory/RefPtr.h"
+#include "Misc/Event.h"
 #include "Misc/Function.h"
 #include "Thread/Task.h"
 #include "Thread/ThreadContext.h"
@@ -21,6 +22,25 @@ LOG_CATEGORY(, Test_Thread)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+static void Test_Event() {
+    TEvent< TFunction<void(int)> > evt;
+    evt.Emplace([](int i) { LOG(Test_Thread, Info, L"A = {0}", i); });
+    evt.Emplace([](int i) { LOG(Test_Thread, Info, L"B = {0}", i); });
+    evt.Emplace([](int i) { LOG(Test_Thread, Info, L"C = {0}", i); });
+
+    FEventHandle id = evt.Add([](int i) { LOG(Test_Thread, Info, L"DELETED = {0}", i); });
+
+    evt(42);
+
+    evt.Remove(id);
+
+    evt(69);
+
+    evt.Clear();
+
+    evt(1337);
+}
 //----------------------------------------------------------------------------
 static void Test_Task_() {
     class FTest : public FRefCountable {
@@ -99,6 +119,7 @@ static void Test_ParallelFor_() {
 void Test_Thread() {
     LOG(Test_Thread, Emphasis, L"starting thread tests ...");
 
+    Test_Event();
     Test_Async_();
     Test_Future_();
     Test_ParallelFor_();
