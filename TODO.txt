@@ -1,7 +1,5 @@
 # PPE TODO LIST
 
-- Convert #ifdef WITH_PPE_ASSERT to #if USE_PPE_ASSERT
-
 - Check efficiency of mipmaps de-commit heuristic
     -> avoiding switching to newest chunk might help
     -> use the fragmentation report
@@ -25,3 +23,5 @@
 
 - Integrate AMD's texture library for content pipeline (replacing clunky STB)
 - Integrate AMD's mesh library for content pipeline (replacing old custom code)
+
+- wrap RTTI meta classes with Network module and OpenAPI/Swagger (https://editor.swagger.io/)

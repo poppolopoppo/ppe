@@ -338,8 +338,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, const TVector<T, _Allocator>& vecto
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#if 0 // **BAD IDEA** : will invalidate allocated blocks upon growth
-// #TODO this would fit well in a TSparseArray<> which never deallocates
+#if 0 // **BAD IDEA** : will invalidate allocated blocks upon growth => use a TSparseArray<> for this
 //----------------------------------------------------------------------------
 // Use TVector<T> as an in-place allocator :
 //----------------------------------------------------------------------------
