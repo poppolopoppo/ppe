@@ -17,7 +17,7 @@ template <
     typename T,
     typename _Allocator = ALLOCATOR(Container)
 >
-using TList = std::list< T, TStlAllocator<T, _Alloc64ator> >;
+using TList = std::list< T, TStlAllocator<T, _Allocator> >;
 //----------------------------------------------------------------------------
 #define LIST(_DOMAIN, T) \
     ::PPE::TList<T, ALLOCATOR(_DOMAIN) >
