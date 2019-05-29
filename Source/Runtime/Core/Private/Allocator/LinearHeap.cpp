@@ -43,7 +43,7 @@ STATIC_CONST_INTEGRAL(size_t, GLinearHeapBlockOffset, CODE3264(16, 32));
 STATIC_CONST_INTEGRAL(size_t, GLinearHeapBlockCapacity, GLinearHeapAllocationSize - GLinearHeapBlockOffset);
 STATIC_CONST_INTEGRAL(size_t, GLinearHeapMaxSize, GLinearHeapBlockCapacity);
 //----------------------------------------------------------------------------
-#if defined(WITH_PPE_ASSERT)
+#if USE_PPE_ASSERT
 static void FillUninitializedBlock_(void* ptr, size_t sizeInBytes) { FPlatformMemory::Memset(ptr, 0xCC, sizeInBytes); }
 static void FillDeletedBlock_(void* ptr, size_t sizeInBytes) { FPlatformMemory::Memset(ptr, 0xDD, sizeInBytes); }
 #endif
@@ -256,7 +256,7 @@ void* FLinearHeap::Allocate(size_t size) {
     _trackingData.AllocateUser(userSize);
 #   endif
 
-#   ifdef WITH_PPE_ASSERT
+#   if USE_PPE_ASSERT
     {
         size_t offset2;
         FLinearHeapBlock_* const blk = FLinearHeapBlock_::FromData(ptr, &offset2);

@@ -804,7 +804,7 @@ static NO_INLINE void Test_InteractiveConsole_() {
 //----------------------------------------------------------------------------
 template <typename T>
 static NO_INLINE void Test_TransactionSerialization_() {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     static constexpr bool minify = false;
     static constexpr size_t test_count = 5;
 #else

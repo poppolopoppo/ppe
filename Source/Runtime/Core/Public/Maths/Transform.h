@@ -13,7 +13,7 @@ namespace PPE {
 class PPE_CORE_API FTransform {
 public:
     FORCE_INLINE FTransform()
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         : _rotation(NAN, NAN, NAN, NAN)
         , _translation(NAN)
         , _scale(NAN)

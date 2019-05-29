@@ -210,7 +210,7 @@ public:
 
     template <typename U>
     bool operator ==(const THashTableIterator_<U>& other) const {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         if (_state == other.state()) {
             Assert(_bucket == other.bucket());
             return true;
@@ -423,7 +423,7 @@ public:
 
     template <typename _It>
     void insert_AssertUnique(_It first, _It last) {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         for (; first != last; ++first)
             insert_AssertUnique(*first);
 #else
@@ -555,7 +555,7 @@ private:
 
     template <typename _KeyLike>
     size_type FindFilledBucket_(const _KeyLike& key, size_t hash) const NOEXCEPT;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     template <typename _KeyLike>
     size_type FindEmptyBucket_(const _KeyLike& key, size_t hash) const NOEXCEPT;
 #else

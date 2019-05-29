@@ -181,7 +181,7 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
     else {
         Assert_NoAssume(size_t(ret) == header.SizeInBytes);
 
-#if WITH_PPE_COMPRESSION_FINGERPRINT && defined(WITH_PPE_ASSERT_RELEASE)
+#if WITH_PPE_COMPRESSION_FINGERPRINT && USE_PPE_ASSERT_RELEASE
         const u32 readFingerprint = StreamFingerprint_(dst);
         AssertRelease(readFingerprint == header.Fingerpint);
 #endif

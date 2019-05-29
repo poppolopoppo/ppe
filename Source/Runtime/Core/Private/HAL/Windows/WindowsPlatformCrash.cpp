@@ -335,7 +335,7 @@ auto FWindowsPlatformCrash::WriteMiniDump(
 
     // no reentrancy (needed by ::MiniDumpWriteDump !)
     const FAtomicSpinLock::FTryScope scopeLock(GMinidumpBarrier_);
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     if (not FDbghelpWrapper::HasInstance())
         return EResult::NoDbgHelpDLL;
 #endif

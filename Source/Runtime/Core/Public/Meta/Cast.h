@@ -6,7 +6,7 @@
 
 #include <type_traits>
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 #   define USE_PPE_CHECKEDCAST 1
 #else
 #   define USE_PPE_CHECKEDCAST 0

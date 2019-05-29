@@ -17,7 +17,7 @@ inline void UX10Y10Z10W2N::Pack_Float01(const TScalarVector<float, 3>& xyz, u8 w
         |   (static_cast<u32>(xyz.z * 1023.0f) << 20)
         |   (w << 30);
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     TScalarVector<float, 3> tmp;
     tmp.x = static_cast<float>(_data & 1023) / 1023.0f;
     tmp.y = static_cast<float>((_data >> 10) & 1023) / 1023.0f;

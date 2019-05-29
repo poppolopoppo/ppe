@@ -98,7 +98,7 @@ private:
 
     typedef std::priority_queue<item_type, vector_type, FPrioritySort_> priority_queue_type;
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     STATIC_CONST_INTEGRAL(size_t, CanaryDefault, CODE3264(0xDEADBEEFul, 0xDEADBEEFDEADBEEFul));
     const size_t _canary0 = CanaryDefault;
 #endif
@@ -112,7 +112,7 @@ private:
     size_t _counter;
     const size_t _capacity;
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     const size_t _canary1 = CanaryDefault;
     bool CheckCanary_() const {
         return (_canary0 == CanaryDefault &&

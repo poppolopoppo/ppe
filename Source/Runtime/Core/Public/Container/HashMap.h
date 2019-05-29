@@ -95,7 +95,7 @@ _Value Remove_ReturnValue(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>&
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void Remove_AssertExistsAndSameValue(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashmap, const _Key& key, const _Value& value) {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     const auto it = hashmap.find(key);
     if (hashmap.end() == it) {
         AssertNotReached();

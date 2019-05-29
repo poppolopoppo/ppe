@@ -51,7 +51,7 @@ static bool IsAssignableObject_(const IScalarTraits& src, const ITypeTraits& dst
     if (pobj) {
         srcClass = pobj->RTTI_Class();
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         Assert(srcClass);
         Assert(src.ObjectClass()->IsAssignableFrom(*srcClass));
 #endif

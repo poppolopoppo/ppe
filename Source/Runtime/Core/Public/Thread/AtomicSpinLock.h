@@ -93,13 +93,13 @@ class FAtomicOrderedLock {
 public:
     struct FScope : Meta::FNonCopyableNorMovable {
         FAtomicOrderedLock& Barrier;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         const size_t Order;
 #endif
 
         FScope(FAtomicOrderedLock& barrier) NOEXCEPT
         :   Barrier(barrier)
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         ,   Order(++Barrier.Revision)
         {
 #else

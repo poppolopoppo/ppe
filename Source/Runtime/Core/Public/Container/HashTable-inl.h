@@ -201,7 +201,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_AssertUniqu
     reserve_Additional(1); // TODO: problem here -> we reserve a slot (and potential alloc) even if nothing is inserted
 
     const size_type hash = HashValue_(rvalue);
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     const size_type index = FindEmptyBucket_(table_traits::Key(rvalue), hash);
 #else
     const size_type index = FindEmptyBucket_(hash);
@@ -329,7 +329,7 @@ bool TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::CheckInvariants() 
     STATIC_ASSERT(MaxLoadFactor < 100);
     STATIC_ASSERT(sizeof(value_type) == sizeof(public_type));
     STATIC_ASSERT(sizeof(value_type) >= sizeof(state_t));
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     const size_type n = capacity();
     if (0 != n && false == Meta::IsPow2(n))
         return false;
@@ -589,7 +589,7 @@ auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindF
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 template <typename _KeyLike>
 auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindEmptyBucket_(const _KeyLike& keyLikeForAssert, size_t hash) const NOEXCEPT -> size_type {
 #else
@@ -609,7 +609,7 @@ auto FORCE_INLINE TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindE
         if (freeMask)
             return ((bucket + freeMask.FirstBitSet_AssumeNotEmpty()) & capacityM1/* can overflow due to wrapping */);
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         FBitMask match = FHTD::Match(group, h2_16);
         while (size_type offsetP1 = match.PopFront()) {
             const size_type index = (bucket + offsetP1 - 1);
@@ -687,7 +687,7 @@ NO_INLINE void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Relocate
             const size_type src = (i + filled.PopFront_AssumeNotEmpty())/* can't overflow here due to loop */;
             const size_t hash = HashValue_(oldBuckets[src]); // still needs rehashing here, but THashMemoizer<> can amortize this cost for heavy hash functions
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
             const size_type dst = FindEmptyBucket_(table_traits::Key(oldBuckets[src]), hash);
 #else
             const size_type dst = FindEmptyBucket_(hash);

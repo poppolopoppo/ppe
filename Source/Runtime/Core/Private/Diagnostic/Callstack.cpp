@@ -15,7 +15,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 FCallstack::FCallstack()
 : _hash(0), _depth(0) {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     FPlatformMemory::Memset(_frames, 0xCD, sizeof(_frames));
 #endif
 }

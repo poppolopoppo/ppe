@@ -41,7 +41,7 @@ public:
     block_t Blocks[BlockCount];
     bitmask_t Mask{ bitmask_t::AllMask };
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     ~TBitmapAllocator() {
         STATIC_ASSERT(Meta::IsAligned(Alignment, _BlockSize));
         Assert_NoAssume(bitmask_t::AllMask == Mask);

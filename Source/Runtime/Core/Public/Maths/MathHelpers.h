@@ -78,7 +78,7 @@ CONSTEXPR void MinMax3(Meta::TDontDeduce<T> a, Meta::TDontDeduce<T> b, Meta::TDo
 inline float Pow(float f, float n) NOEXCEPT { return FPlatformMaths::Pow(f, n); }
 double Pow(double d, double n) NOEXCEPT;
 //----------------------------------------------------------------------------
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 float Rcp(float f);
 double Rcp(double d);
 #else

@@ -207,7 +207,7 @@ FTupleExpr::FTupleExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::
     _elements.insert(_elements.end(),
         MakeMoveIterator(elts.begin()),
         MakeMoveIterator(elts.end()) );
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     Assert(_elements.size() > 1);
     for (const auto& expr : _elements)
         Assert(expr);

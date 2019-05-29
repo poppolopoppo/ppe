@@ -14,7 +14,7 @@ namespace details {
 template <typename T, typename _Tag, bool _ThreadLocal>
 class TSingletonStorage_ {
 public:
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     static bool GHasInstance;
 #endif
 
@@ -23,14 +23,14 @@ public:
         return reinterpret_cast<T&>(GPod);
     }
 };
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 template <typename T, typename _Tag, bool _ThreadLocal>
 bool TSingletonStorage_<T, _Tag, _ThreadLocal>::GHasInstance = false;
 #endif
 template <typename T, typename _Tag>
 class TSingletonStorage_<T, _Tag, true> {
 public:
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     static THREAD_LOCAL bool GHasInstance;
 #endif
 
@@ -39,7 +39,7 @@ public:
         return reinterpret_cast<T&>(GPod);
     }
 };
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 template <typename T, typename _Tag>
 THREAD_LOCAL bool TSingletonStorage_<T, _Tag, true>::GHasInstance = false;
 #endif
@@ -58,7 +58,7 @@ public:
     TSingleton(TSingleton&& ) = delete;
     TSingleton& operator =(TSingleton&& ) = delete;
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     static bool HasInstance() {
         return storage_type::GHasInstance;
     }
@@ -95,7 +95,7 @@ protected:
     TIndirectSingleton() = default;
 
 public:
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     static bool HasInstance() {
         return parent_type::GHasInstance;
     }

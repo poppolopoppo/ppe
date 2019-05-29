@@ -59,7 +59,7 @@ inline double Pow(double d, double n) NOEXCEPT {
     return std::pow(d, n);
 }
 //----------------------------------------------------------------------------
-#ifndef WITH_PPE_ASSERT
+#if !USE_PPE_ASSERT
 inline CONSTEXPR float Rcp(float f) NOEXCEPT {
 #else
 inline float Rcp(float f) {
@@ -68,7 +68,7 @@ inline float Rcp(float f) {
     return (1.f / f);
 }
 //----------------------------------------------------------------------------
-#ifndef WITH_PPE_ASSERT
+#if !USE_PPE_ASSERT
 inline CONSTEXPR double Rcp(double d) NOEXCEPT {
 #else
 inline double Rcp(double d) {

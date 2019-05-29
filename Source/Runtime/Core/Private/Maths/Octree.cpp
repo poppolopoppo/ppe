@@ -99,7 +99,7 @@ static bool RayIntersectsOctree_(
 
             OctreeNodeBounds_(x, y, z, int(halfExtent), voxelSize, &bounds);
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
             float d = NAN;
 #else
             float d;

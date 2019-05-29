@@ -246,7 +246,7 @@ using TCheckedArrayIterator = Meta::TAddPointer<T>;
 //----------------------------------------------------------------------------
 template <typename T>
 TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index) {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     Assert(index <= count);
     Assert(0 == count || nullptr != ptr);
 #else

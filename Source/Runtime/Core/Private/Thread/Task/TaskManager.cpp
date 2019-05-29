@@ -140,7 +140,7 @@ private:
 
 #if USE_PPE_SAFEPTR // _safeCount disappears otherwise
     const size_t _canary_freeToUse = CODE3264(0x01234567ul, 0x0123456789ABCDEFull);
-#   ifdef WITH_PPE_ASSERT
+#   if USE_PPE_ASSERT
     bool CheckCanary_() const { return (CODE3264(0x01234567ul, 0x0123456789ABCDEFull) == _canary_freeToUse); }
 #   endif
 #endif
@@ -180,7 +180,7 @@ private:
     FTaskFiberPool _fibers;
     VECTOR(Task, std::thread) _threads;
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 public: // public since this is complicated to friend FWorkerContext_ due to anonymous namespace ...
     std::atomic<int> _countersInUse;
     std::atomic<int> _fibersInUse;
@@ -272,7 +272,7 @@ PTaskCounter FWorkerContext_::CreateCounter() {
         result.reset(new FTaskCounter());
     }
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     ++_pimpl._countersInUse;
 #endif
 
@@ -291,7 +291,7 @@ void FWorkerContext_::DestroyCounter(PTaskCounter& counter) {
     Assert(counter);
     Assert_NoAssume(counter->Finished());
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     --_pimpl._countersInUse;
     Assert(0 <= _pimpl._countersInUse);
 #endif
@@ -525,7 +525,7 @@ FTaskManagerImpl::FTaskManagerImpl(FTaskManager& manager)
 :   _manager(manager)
 ,   _scheduler(_manager.WorkerCount(), GTaskManagerQueueCapacity)
 ,   _fibers(MakeFunction<&FTaskManagerImpl::WorkerLoop_>())
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 ,   _countersInUse(0)
 ,   _fibersInUse(0)
 #endif
@@ -536,7 +536,7 @@ FTaskManagerImpl::FTaskManagerImpl(FTaskManager& manager)
 FTaskManagerImpl::~FTaskManagerImpl() {
     Assert(_threads.empty());
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     Assert(0 == _countersInUse);
     Assert(0 == _fibersInUse);
 #endif
@@ -755,7 +755,7 @@ NO_INLINE void FTaskCounter::ResumeStalledFibers_() {
 
         std::uninitialized_move(queue.begin(), queue.end(), resume.begin());
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         FPlatformMemory::Memdeadbeef(queue.data(), queue.SizeInBytes());
 #endif
 

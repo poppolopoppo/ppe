@@ -140,7 +140,7 @@ protected:
 
     static FDataId PackId_(u16 key, size_t index) {
         STATIC_ASSERT(sizeof(FUnpackedId_) == sizeof(FDataId));
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         const UDataId id{ key, index };
         Assert(id.Packed.Key == key);
         Assert(id.Packed.Index == index);

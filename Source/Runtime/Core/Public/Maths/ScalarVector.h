@@ -480,7 +480,7 @@ struct TScalarVector<T, 1> : TScalarVectorAssignable<TScalarVector<T, 1>, T, 1> 
 
     CONSTEXPR void Broadcast(T v) NOEXCEPT { x = v; }
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     component_type& operator [](size_t i) NOEXCEPT { Assert(i < Dim); return data[i]; }
     const component_type& operator [](size_t i) const NOEXCEPT { Assert(i < Dim); return data[i]; }
 #else
@@ -547,7 +547,7 @@ struct TScalarVector<T, 2> : TScalarVectorAssignable<TScalarVector<T, 2>, T, 2> 
 
     CONSTEXPR void Broadcast(T v) NOEXCEPT { x = y = v; }
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     component_type& operator [](size_t i) NOEXCEPT { Assert(i < Dim); return data[i]; }
     const component_type& operator [](size_t i) const NOEXCEPT { Assert(i < Dim); return data[i]; }
 #else
@@ -637,7 +637,7 @@ struct TScalarVector<T, 3> : TScalarVectorAssignable<TScalarVector<T, 3>, T, 3> 
 
     CONSTEXPR void Broadcast(T v) NOEXCEPT { x = y = z = v; }
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     component_type& operator [](size_t i) NOEXCEPT { Assert(i < Dim); return data[i]; }
     const component_type& operator [](size_t i) const NOEXCEPT { Assert(i < Dim); return data[i]; }
 #else
@@ -812,7 +812,7 @@ struct TScalarVector<T, 4> : TScalarVectorAssignable<TScalarVector<T, 4>, T, 4> 
 
     CONSTEXPR void Broadcast(T v) NOEXCEPT { x = y = z = w = v; }
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     component_type& operator [](size_t i) NOEXCEPT { Assert(i < Dim); return data[i]; }
     const component_type& operator [](size_t i) const NOEXCEPT { Assert(i < Dim); return data[i]; }
 #else
@@ -877,7 +877,7 @@ struct TScalarVector : TScalarVectorAssignable<TScalarVector<T, _Dim>, T, _Dim> 
         });
     }
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     component_type& operator [](size_t i) NOEXCEPT { Assert(i < _Dim); return data[i]; }
     const component_type& operator [](size_t i) const NOEXCEPT { Assert(i < _Dim); return data[i]; }
 #else

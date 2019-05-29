@@ -22,7 +22,7 @@ static bool ParseBasename_(const FileSystem::FStringView& str, FBasenameNoExt& b
     if (str.empty())
         return false;
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     const auto sep = str.FindIf([](FileSystem::char_type ch) {
         return (ch == FileSystem::Separator || ch == FileSystem::AltSeparator );
     });

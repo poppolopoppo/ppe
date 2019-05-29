@@ -97,7 +97,7 @@ void FWindowsPlatformThread::SetAffinityMask(FAffinityMask mask) {
     const ::DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, (::DWORD_PTR)mask);
     CLOG(0 == affinityMask, HAL, Fatal, L"SetThreadAffinityMask({0:#16x}) failed with = {1}", affinityMask, FLastError());
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     const FAffinityMask actualMask = FWindowsPlatformThread::AffinityMask();
     Assert((mask & AllThreadsAffinity) == actualMask);
 #endif

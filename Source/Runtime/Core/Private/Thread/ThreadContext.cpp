@@ -42,7 +42,7 @@ static std::atomic<size_t> GNumThreadContext_{ 0 };
 class FThreadLocalContext_ : Meta::TThreadLocalSingleton<FThreadContext, FThreadLocalContext_> {
     typedef Meta::TThreadLocalSingleton<FThreadContext, FThreadLocalContext_> parent_type;
 public:
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using parent_type::HasInstance;
 #endif
     using parent_type::Get;

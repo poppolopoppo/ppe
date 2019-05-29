@@ -93,7 +93,7 @@ struct TSamplePool {
         template <typename _Container>
         void FillDense(const TSamplePool& pool, _Container& c) const {
             c.reserve(Insert.size());
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
             forrange(i, 0, Insert.size()) {
                 c.insert(pool.Samples[Insert[i]]);
                 forrange(j, 0, i + 1)
@@ -960,7 +960,7 @@ static void Benchmark_Containers_FindSpeed_Impl_(
         _Test{ 169, "169" },
         _Test{ 182, "182" },
         _Test{ 196, "196" }
-#ifndef WITH_PPE_ASSERT
+#if !USE_PPE_ASSERT
         ,
         _Test{ 210, "210" },
         _Test{ 225, "225" },
@@ -1212,7 +1212,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
     Benchmark_Containers_FindSpeed_<T>(name + "_find", generator, containers_all);
 #endif
 
-#ifndef WITH_PPE_ASSERT
+#if !USE_PPE_ASSERT
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
     Benchmark_Containers_Exhaustive_<T>(name + "_2000", 2000, generator, containers_large);
     Benchmark_Containers_Exhaustive_<T>(name + "_20000", 20000, generator, containers_large);
@@ -1433,7 +1433,7 @@ NO_INLINE static void Test_StringSet_() {
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_50", 50, generator, containers);
 #endif
     Benchmark_Containers_FindSpeed_<FStringView>("Strings_find", generator, containers);
-#ifndef WITH_PPE_ASSERT
+#if !USE_PPE_ASSERT
 
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_200", 200, generator, containers);

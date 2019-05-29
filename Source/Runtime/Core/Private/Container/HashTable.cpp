@@ -37,7 +37,7 @@ void FHashTableData_::SetDeleted(size_t index) {
     // => tries to keep the load factor as small as possible
     const EState state = (((state_t*)StatesAndBuckets)[index + 1] == kEmpty ? kEmpty : kDeleted);
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     if (SetState(index, state) & kDeleted)
         AssertNotReached(); // double delete
 #else

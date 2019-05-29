@@ -56,7 +56,7 @@ public:
     using FGenericPlatformMemory::Memmove;
     using FGenericPlatformMemory::Memswap;
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using FGenericPlatformMemory::Memdeadbeef;
 #endif
 

@@ -79,7 +79,7 @@ public:
     struct FEntry {
         FEntry* Next;
         size_t HashValue;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 #   ifdef ARCH_X86
         u16 Length;
         u16 Canary = 0xFEED;

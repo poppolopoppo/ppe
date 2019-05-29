@@ -32,17 +32,17 @@ LOG_CATEGORY(, Test_Allocators)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 static constexpr size_t GNumBlocks_ = 1000;
 #else
 static constexpr size_t GNumBlocks_ = 10000;
 #endif
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 static constexpr size_t GLoopCount_ = 10;
 #else
 static constexpr size_t GLoopCount_ = 100;
 #endif
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 static constexpr size_t GSlidingWindow_ = 50;
 #else
 static constexpr size_t GSlidingWindow_ = 150;

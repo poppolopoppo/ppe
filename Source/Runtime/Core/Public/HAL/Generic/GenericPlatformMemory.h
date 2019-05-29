@@ -136,7 +136,7 @@ public: // must be defined for every platform
         }
     }
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     static bool Memtest(void* dst, u8 pattern, size_t sizeInBytes) {
         forrange(it, (u8*)dst, (u8*)dst + sizeInBytes)
             if (*it != pattern)

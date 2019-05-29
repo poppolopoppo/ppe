@@ -2,7 +2,7 @@
 
 #include "Core.h"
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 #   include <atomic>
 #endif
 

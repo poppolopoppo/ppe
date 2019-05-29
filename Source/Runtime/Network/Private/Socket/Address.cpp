@@ -117,7 +117,7 @@ public: // TSingleton<>
     typedef Meta::TSingleton<FDNSCache_> parent_type;
 
     using parent_type::Get;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using parent_type::HasInstance;
 #endif
 

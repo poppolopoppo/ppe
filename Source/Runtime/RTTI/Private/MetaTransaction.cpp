@@ -15,7 +15,7 @@
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 #   define WITH_PPE_RTTI_TRANSACTION_CHECKS 1
 #else
 #   define WITH_PPE_RTTI_TRANSACTION_CHECKS 0

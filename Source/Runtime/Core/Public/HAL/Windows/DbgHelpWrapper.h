@@ -108,7 +108,7 @@ public:
 
     bool Available() const { return _available; }
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using Meta::TSingleton<FDbghelpWrapper>::HasInstance;
 #endif
     using Meta::TSingleton<FDbghelpWrapper>::Get;

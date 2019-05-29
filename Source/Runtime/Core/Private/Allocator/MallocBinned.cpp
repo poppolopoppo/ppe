@@ -12,7 +12,7 @@
 #include "Memory/VirtualMemory.h"
 #include "Thread/AtomicSpinLock.h"
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 #   include "Diagnostic/Callstack.h"
 #   include "Diagnostic/DecodedCallstack.h"
 #endif
@@ -22,7 +22,7 @@
 #   include "Thread/ThreadContext.h"
 #endif
 
-#if (defined(WITH_PPE_ASSERT) || USE_PPE_MEMORY_DEBUGGING)
+#if (USE_PPE_ASSERT || USE_PPE_MEMORY_DEBUGGING)
 #   define USE_MALLOCBINNED_PAGE_PROTECT    1// Crash when using a cached block
 #else
 #   define USE_MALLOCBINNED_PAGE_PROTECT    0// Crash when using a cached block
@@ -90,7 +90,7 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     FBinnedThreadCache_* ThreadCache;
     FAtomicSpinLock ThreadBarrier;
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     STATIC_CONST_INTEGRAL(u32, DefaultCanary, 0x4110c470ul);
     u32 _Canary;
     bool CheckCanary() const {
@@ -305,7 +305,7 @@ struct CACHELINE_ALIGNED FBinnedLargeBlocks_ : Meta::FNonCopyableNorMovable {
 //----------------------------------------------------------------------------
 // Debugging
 //----------------------------------------------------------------------------
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 //----------------------------------------------------------------------------
 static THREAD_LOCAL bool GBinnedIsInScopeTLS_;
 struct FBinnedReentrancy_ {
@@ -499,7 +499,7 @@ static void ReleaseFreeBatches_(FBinnedGlobalCache_& gc) {
         }
 
         gc.FreeBatches = nullptr;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         Assert(0 == gc.NumFreeBatches);
 #else
         gc.NumFreeBatches = 0;
@@ -722,7 +722,7 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
                     ch->NumBlocksInUse = 0;
                     ch->NumChunksInBatch = 0;
                     ch->NextBatch = nullptr;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
                     ch->_Canary = FBinnedChunk_::DefaultCanary;
 #endif
                 }

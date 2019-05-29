@@ -235,7 +235,7 @@ struct TAllocatorTraits {
     }
 
     static size_t SnapSize(size_t size) NOEXCEPT {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         const size_t snpd = _Allocator::SnapSize(size);
         Assert(snpd >= size);
         Assert_NoAssume(_Allocator::SnapSize(snpd) == snpd);

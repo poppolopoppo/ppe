@@ -3,7 +3,7 @@
 #include "Meta/Assert.h"
 #include "Meta/Cast.h"
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 #   define WITH_PPE_THREADRESOURCE_CHECKS
 #endif
 

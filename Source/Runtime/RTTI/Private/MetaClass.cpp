@@ -66,7 +66,7 @@ bool FMetaClass::IsAssignableFrom(const FMetaClass& child) const {
 void FMetaClass::RegisterFunction(FMetaFunction&& function) {
     Assert(not IsRegistered());
     Assert(not function.Name().empty());
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     // check that no property with the same name was already registered
     for (const FMetaFunction& f : _functionsSelf)
         Assert(function.Name() != f.Name());
@@ -145,7 +145,7 @@ const FMetaFunction* FMetaClass::OnMissingFunction(const FName& name, EFunctionF
 void FMetaClass::RegisterProperty(FMetaProperty&& property) {
     Assert(not IsRegistered());
     Assert(not property.Name().empty());
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     // check that no property with the same name was already registered
     for (const FMetaProperty& p : _propertiesSelf)
         Assert(property.Name() != p.Name());

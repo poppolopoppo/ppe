@@ -94,7 +94,7 @@ CONSTEXPR auto LengthSq(const TScalarVector<T, _Dim>& v) NOEXCEPT {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 CONSTEXPR auto Normalize(const TScalarVector<T, _Dim>& v) NOEXCEPT {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     const T norm = Length(v);
     Assert(norm);
     return (v * (T(1) / norm));

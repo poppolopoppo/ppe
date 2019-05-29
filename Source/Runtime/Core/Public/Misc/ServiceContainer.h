@@ -120,7 +120,7 @@ void FServiceContainer::Unregister(T* service) {
     LOG(Services, Info, L"[Service] Unregister <{0}> with <{1}> (id={2})",
         typeid(_Interface).name(), typeid(T).name(), hash_t(serviceId) );
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     const auto it = _services.Find(serviceId);
     if (_services.end() == it)
         AssertNotReached();

@@ -29,7 +29,7 @@ private:
 
     T *_cache[_Dim];
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     std::thread::id _threadID;
     void CheckThreadOwnerShip_() const {
         Assert(std::this_thread::get_id() == _threadID);
@@ -43,11 +43,11 @@ template <typename T, size_t _Dim>
 TMRUCache<T, _Dim>::TMRUCache()
 :   _headPos(0)
 ,   _tailPos(0)
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 ,   _threadID(std::this_thread::get_id())
 #endif
 {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     for (size_t i = 0; i < _Dim; ++i)
         _cache[i] = nullptr;
 #endif
@@ -57,7 +57,7 @@ template <typename T, size_t _Dim>
 TMRUCache<T, _Dim>::~TMRUCache() {
     Assert(empty());
     CheckThreadOwnerShip_();
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     for (size_t i = 0; i < _Dim; ++i)
         Assert(nullptr == _cache[i]);
 #endif
@@ -73,7 +73,7 @@ bool TMRUCache<T, _Dim>::Get_ReturnIfEmpty(T **pacquire) {
         --_headPos;
         *pacquire = _cache[_headPos & Mask];
         Assert(*pacquire);
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         _cache[_headPos & Mask] = nullptr;
 #endif
         return false;
@@ -108,7 +108,7 @@ template <typename T, size_t _Dim>
 void TMRUCache<T, _Dim>::Clear_AssumeCacheDestroyed() {
     CheckThreadOwnerShip_();
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     for (size_t i = 0; i < _Dim; ++i)
         Assert(nullptr == _cache[i]);
 #endif

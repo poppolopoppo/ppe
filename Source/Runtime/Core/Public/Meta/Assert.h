@@ -2,18 +2,13 @@
 
 #include "Diagnostic/Exception.h"
 
-#if USE_PPE_ASSERTIONS && USE_PPE_DEBUG
-#   define WITH_PPE_ASSERT
-#endif
+#define USE_PPE_ASSERT (USE_PPE_ASSERTIONS && USE_PPE_DEBUG)
+#define USE_PPE_ASSERT_RELEASE (!USE_PPE_FINAL_RELEASE && !defined(PROFILING_ENABLED))
 
 #define WITH_PPE_ASSERT_FALLBACK_TO_ASSUME 1 // when enabled every assert becomes an __assume() when !USE_PPE_DEBUG // %_NOCOMMIT%
 #define WITH_PPE_ASSERT_RELEASE_FALLBACK_TO_ASSUME 1 // when enabled every assert release becomes an __assume() when !FINAL_RELEASE // %_NOCOMMIT%
 
-#if USE_PPE_ASSERTIONS && !defined(FINAL_RELEASE) && !defined(PROFILING_ENABLED)
-#   define WITH_PPE_ASSERT_RELEASE
-#endif
-
-#if defined(NDEBUG) && defined(WITH_PPE_ASSERT)
+#if defined(NDEBUG) && USE_PPE_ASSERT
 #   undef WITH_PPE_ASSERT
 #   error "there is someone messing with the project configuration"
 #endif
@@ -24,7 +19,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 typedef bool (*FAssertHandler)(const wchar_t* msg, const wchar_t *file, unsigned line);
 //----------------------------------------------------------------------------
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 //----------------------------------------------------------------------------
 class PPE_CORE_API FAssertException : public FException {
 public:
@@ -85,7 +80,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 typedef bool (*FAssertReleaseHandler)(const wchar_t* msg, const wchar_t* file, unsigned line);
 //----------------------------------------------------------------------------
-#ifdef WITH_PPE_ASSERT_RELEASE
+#if USE_PPE_ASSERT_RELEASE
 //----------------------------------------------------------------------------
 class PPE_CORE_API FAssertReleaseException : public FException {
 public:
@@ -149,13 +144,13 @@ inline void SetAssertionReleaseHandler(FAssertReleaseHandler ) {}
 #define AssertNotReached() AssertReleaseFailed(L"unreachable state")
 #define AssertNotImplemented() AssertReleaseFailed(L"not implemented")
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 #   define ONLY_IF_ASSERT(_Code) _Code
 #else
 #   define ONLY_IF_ASSERT(_Code) NOOP()
 #endif
 
-#ifdef WITH_PPE_ASSERT_RELEASE
+#if USE_PPE_ASSERT_RELEASE
 #   define ONLY_IF_ASSERT_RELEASE(_Code) _Code
 #else
 #   define ONLY_IF_ASSERT_RELEASE(_Code) NOOP()

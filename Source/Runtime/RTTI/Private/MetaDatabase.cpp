@@ -57,7 +57,7 @@ void FMetaDatabase::UnregisterTransaction(FMetaTransaction* metaTransaction) {
 
     LOG(RTTI, Info, L"unregister transaction in DB : '{0}'", exportName);
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     // Check that all objects from this transaction were unregistered
     for (const auto& it : _objects)
         Assert(it.second->RTTI_Outer() != metaTransaction);
@@ -145,7 +145,7 @@ void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
 
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     Remove_AssertExistsAndSameValue(_objects, exportPath, SMetaObject{ metaObject });
 #else
     _objects.erase(exportPath);
@@ -242,7 +242,7 @@ void FMetaDatabase::UnregisterNamespace(const FMetaNamespace* metaNamespace) {
 
     Remove_AssertExists(_namespaces, metaNamespace);
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     // Check that no object belonging to this namespace if still referenced
     for (const auto& it : _objects) {
         const FMetaClass* metaClass = it.second->RTTI_Class();

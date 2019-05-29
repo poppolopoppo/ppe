@@ -16,7 +16,7 @@ public:
     typedef Meta::TSingleton<FTaskManager, FGlobalThreadPool> parent_type;
 
     using parent_type::Get;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using parent_type::HasInstance;
 #endif
 
@@ -33,7 +33,7 @@ public:
     typedef Meta::TSingleton<FTaskManager, FIOThreadPool> parent_type;
 
     using parent_type::Get;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using parent_type::HasInstance;
 #endif
 
@@ -50,7 +50,7 @@ public:
     typedef Meta::TSingleton<FTaskManager, FHighPriorityThreadPool> parent_type;
 
     using parent_type::Get;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using parent_type::HasInstance;
 #endif
 
@@ -67,7 +67,7 @@ public:
     typedef Meta::TSingleton<FTaskManager, FBackgroundThreadPool> parent_type;
 
     using parent_type::Get;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using parent_type::HasInstance;
 #endif
 

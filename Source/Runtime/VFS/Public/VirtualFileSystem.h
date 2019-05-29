@@ -21,7 +21,7 @@ public:
     typedef Meta::TSingleton<FVirtualFileSystemTrie, FVirtualFileSystem> parent_type;
 
     using parent_type::Get;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using parent_type::HasInstance;
 #endif
 

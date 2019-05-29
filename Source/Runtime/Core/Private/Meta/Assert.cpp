@@ -2,7 +2,7 @@
 
 #include "Meta/Assert.h"
 
-#if defined(WITH_PPE_ASSERT) || defined(WITH_PPE_ASSERT_RELEASE)
+#if USE_PPE_ASSERT || USE_PPE_ASSERT_RELEASE
 
 #include "Diagnostic/Exception.h"
 #include "Diagnostic/Logger.h"
@@ -30,9 +30,9 @@ static FPlatformDialog::EResult AssertAbortRetryIgnore_(const FWStringView& titl
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#endif //!defined(WITH_PPE_ASSERT) || defined(WITH_PPE_ASSERT_RELEASE)
+#endif //!USE_PPE_ASSERT || USE_PPE_ASSERT_RELEASE
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -118,7 +118,7 @@ void SetAssertionHandler(FAssertHandler handler) {
 } //!namespace PPE
 #endif //!WITH_PPE_ASSERT
 
-#ifdef WITH_PPE_ASSERT_RELEASE
+#if USE_PPE_ASSERT_RELEASE
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -82,7 +82,7 @@ static bool EnumerateDirNonRecursive_(
 
     } while (::FindNextFileW(hFind, &ffd) != 0);
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     ::DWORD dwError = ::GetLastError();
     if (ERROR_NO_MORE_FILES != dwError) {
         LOG_LASTERROR(HAL, L"FindNextFileW()");
@@ -138,7 +138,7 @@ static void GlobFilesNonRecursive_(
         }
     } while (::FindNextFileW(hFind, &ffd));
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     ::DWORD dwError = ::GetLastError();
     Assert(ERROR_NO_MORE_FILES == dwError);
 #endif

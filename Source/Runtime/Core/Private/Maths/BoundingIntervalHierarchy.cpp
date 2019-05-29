@@ -241,7 +241,7 @@ void FBasicBIHTree::Build(
             it.Node->SetLeaf();
             Assert(it.Node->IsLeaf());
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
             {
                 FBoundingBox bounds0 = it.Bounds;
                 bounds0.Max()[axis] = UnquantizeClip0_(it.Node->Clip0, node0, node1);

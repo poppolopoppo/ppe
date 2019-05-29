@@ -170,7 +170,7 @@ const T* Cast(const FMetaObject* p) {
 //----------------------------------------------------------------------------
 template <typename T>
 T* CastChecked(FMetaObject* p) {
-#ifdef WITH_PPE_ASSERT_RELEASE
+#if USE_PPE_ASSERT_RELEASE
     T* const result = Cast<T>(p);
     AssertRelease(result);
     return result;
@@ -181,7 +181,7 @@ T* CastChecked(FMetaObject* p) {
 //----------------------------------------------------------------------------
 template <typename T>
 const T* CastChecked(const FMetaObject* p) {
-#ifdef WITH_PPE_ASSERT_RELEASE
+#if USE_PPE_ASSERT_RELEASE
     const T* const result = Cast<T>(p);
     AssertRelease(result);
     return result;

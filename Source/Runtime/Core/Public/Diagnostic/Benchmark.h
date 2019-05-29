@@ -51,7 +51,7 @@ public:
     FStringView Name{ "none" };
     u32 InputDim{ 1 };
     u32 BatchSize{ 1 };
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     u32 MaxIterations{ 5000 };
     double MaxVarianceError{ 1e-2 };
     static constexpr u32 MinIterations = FApproximateHistogram::MinSamples;

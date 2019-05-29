@@ -341,7 +341,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
         u32 Bucket;
         u32 AllocSizeInBytes;
 
-#   ifdef WITH_PPE_ASSERT
+#   if USE_PPE_ASSERT
         uintptr_t Canary = PPE_HASH_VALUE_SEED;
 #   endif
 

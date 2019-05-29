@@ -25,7 +25,7 @@ public:
 
 private:
     INTRUSIVELIST(&FAbstractAutoSingleton::_node) _instances;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     bool _isStarted = false;
 #endif
 };

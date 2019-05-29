@@ -25,11 +25,14 @@ namespace {
 //----------------------------------------------------------------------------
 static void Test_Event() {
     TEvent< TFunction<void(int)> > evt;
-    evt.Emplace([](int i) { LOG(Test_Thread, Info, L"A = {0}", i); });
-    evt.Emplace([](int i) { LOG(Test_Thread, Info, L"B = {0}", i); });
-    evt.Emplace([](int i) { LOG(Test_Thread, Info, L"C = {0}", i); });
+    evt.Emplace([](int i) { UNUSED(i); LOG(Test_Thread, Info, L"A = {0}", i); });
+    evt.Emplace([](int i) { UNUSED(i); LOG(Test_Thread, Info, L"B = {0}", i); });
+    evt.Emplace([](int i) { UNUSED(i); LOG(Test_Thread, Info, L"C = {0}", i); });
 
-    FEventHandle id = evt.Add([](int i) { LOG(Test_Thread, Info, L"DELETED = {0}", i); });
+    FEventHandle id = evt.Add([](int i) {
+        UNUSED(i);
+        LOG(Test_Thread, Info, L"DELETED = {0}", i);
+        });
 
     evt(42);
 

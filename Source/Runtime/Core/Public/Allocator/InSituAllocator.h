@@ -34,7 +34,7 @@ public:
 
     insitu_t InSitu;
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     enum class EState : size_t { // state + canary
         Allocated   = CODE3264(0x0CC491EDul, 0x0CC491ED0CC491EDull),
         Freed       = CODE3264(0xFA11BAC4ul, 0xFA11BAC4FA11BAC4ull),
@@ -75,7 +75,7 @@ public:
     }
 
     bool Owns(FAllocatorBlock b) const NOEXCEPT {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         if (b.Data == &InSitu) {
             Assert(EState::Allocated == State);
             Assert(b.SizeInBytes == SizeInBytes);
@@ -91,7 +91,7 @@ public:
     }
 
     FAllocatorBlock Allocate(size_t s) NOEXCEPT {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         Assert(s);
         Assert(s <= SizeInBytes);
         Assert(EState::Freed == State);
@@ -105,7 +105,7 @@ public:
     }
 
     void Deallocate(FAllocatorBlock b) NOEXCEPT {
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
         Assert(EState::Allocated == State);
         Assert(b.Data == &InSitu);
         Assert(b.SizeInBytes == SizeInBytes);

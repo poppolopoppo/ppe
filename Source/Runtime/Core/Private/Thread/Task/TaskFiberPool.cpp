@@ -20,7 +20,7 @@ namespace PPE {
 class FTaskFiberPool;
 class PPE_CORE_API FTaskFiberChunk : Meta::FNonCopyableNorMovable {
 public:
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     // debug programs often use far more stack without the optimizer :
     STATIC_CONST_INTEGRAL(size_t, StackSize, 4 * ALLOCATION_GRANULARITY); // 256 kb
 #else

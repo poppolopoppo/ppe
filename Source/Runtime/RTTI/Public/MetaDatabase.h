@@ -25,7 +25,7 @@ class PPE_RTTI_API FMetaDatabase : Meta::TSingleton<FMetaDatabase> {
 public:
     /* Singleton */
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using Meta::TSingleton<FMetaDatabase>::HasInstance;
 #endif
 

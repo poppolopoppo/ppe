@@ -42,7 +42,7 @@ public:
     const FTimepoint& StartedAt() const { return _startedAt; }
 
     using parent_type::Get;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using parent_type::HasInstance;
 #endif
     using parent_type::Destroy;

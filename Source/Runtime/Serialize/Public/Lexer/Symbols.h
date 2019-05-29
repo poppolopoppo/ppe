@@ -26,7 +26,7 @@ private:
 public:
     ~FSymbols();
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using singleton_type::HasInstance;
 #endif
     using singleton_type::Destroy;

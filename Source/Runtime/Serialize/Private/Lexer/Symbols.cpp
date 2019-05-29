@@ -54,7 +54,7 @@ static void RegisterRTTITypenames_(FSymbols::hashmap_type& symbols) {
 #undef RTTI_INSERT_TYPENAME
 }
 //----------------------------------------------------------------------------
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 static const FSymbol* FindSymbol_(const FSymbols::hashmap_type& symbols, const FStringView& cstr) {
     const auto it = symbols.find(cstr);
     return (symbols.end() != it ? &it->second : nullptr);
@@ -68,7 +68,7 @@ static void UnregisterSymbol_(const FSymbols::hashmap_type& symbols, const FSymb
     *psymbol = nullptr;
 }
 //----------------------------------------------------------------------------
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 static void CheckSymbol_(const FSymbols::hashmap_type& symbols, const FSymbol* symbol) {
     Assert(symbol);
     const FSymbol* stored = FindSymbol_(symbols, symbol->CStr());
@@ -156,7 +156,7 @@ FSymbols::FSymbols() {
 
     RegisterRTTITypenames_(_symbols);
 
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     CheckSymbol_(_symbols, FSymbols::True);
     CheckSymbol_(_symbols, FSymbols::False);
     CheckSymbol_(_symbols, FSymbols::Null);

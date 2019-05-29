@@ -27,7 +27,7 @@ class FAllocaLinearHeapTLS_
     typedef Meta::TThreadLocalSingleton<FAllocaLinearHeapTLS_> parent_type;
 public:
     using parent_type::Get;
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
     using parent_type::HasInstance;
 #endif
     using parent_type::Destroy;
@@ -44,7 +44,7 @@ public:
 #endif
 
 
-#ifndef WITH_PPE_ASSERT
+#if !USE_PPE_ASSERT
     static void* Malloc(size_t sz) {
         return Get().Allocate(sz);
     }
@@ -92,7 +92,7 @@ struct FAllocaFallback_ {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifdef WITH_PPE_ASSERT
+#if USE_PPE_ASSERT
 u32 AllocaDepth() {
 #if USE_PPE_ALLOCA_LINEARHEAP
     // used for detecting live alloca TLS blocks in debug
