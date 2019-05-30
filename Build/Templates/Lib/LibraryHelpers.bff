@@ -244,7 +244,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             {
                 .LinkerVerboseOutput = true
 
-                .LinkerOutput       = '$IntermediateRoot$/$ProjectName$.$Config$.$Platform$.$CompilerDllExtension$'
+                .LinkerOutput       = '$IntermediateRoot$/$ProjectName$-$Platform$-$Config$.$CompilerDllExtension$'
                 .LinkerOptions      = "$DllOptions$ $LinkerOptions$"
 
                 .Libraries          = { '$ProjectName$-Lib-$Platform$-$Config$' }
