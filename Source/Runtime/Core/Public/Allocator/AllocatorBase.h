@@ -266,6 +266,7 @@ struct TAllocatorTraits {
     }
 
     static FAllocatorBlock Allocate(_Allocator& a, size_t s) {
+        Assert_NoAssume(s <= MaxSize());
         return (s ? a.Allocate(s) : FAllocatorBlock::Null());
     }
 
@@ -282,6 +283,7 @@ struct TAllocatorTraits {
     }
 
     static void Deallocate(_Allocator& a, FAllocatorBlock b) {
+        Assert_NoAssume(b.SizeInBytes <= MaxSize());
         if (b)
             a.Deallocate(b);
     }
@@ -303,6 +305,8 @@ struct TAllocatorTraits {
 
     static auto Reallocate(_Allocator& a, FAllocatorBlock& b, size_t s) {
         Assert_NoAssume(b || s);
+        Assert_NoAssume(b.SizeInBytes <= MaxSize());
+        Assert_NoAssume(s <= MaxSize());
 
         IF_CONSTEXPR(has_reallocate::value) {
             return a.Reallocate(b, s);
@@ -333,6 +337,8 @@ struct TAllocatorTraits {
     template <typename T>
     static auto ReallocateT_AssumePOD(_Allocator& a, TMemoryView<T>& items, size_t oldSize, size_t newSize) {
         Assert(oldSize >= items.size());
+        Assert_NoAssume(oldSize * sizeof(T) <= MaxSize());
+        Assert_NoAssume(newSize * sizeof(T) <= MaxSize());
 
         FAllocatorBlock b{ items.data(), oldSize * sizeof(T) };
         const size_t s = newSize * sizeof(T);
@@ -371,6 +377,7 @@ struct TAllocatorTraits {
 
     static bool Acquire(_Allocator& a, FAllocatorBlock b) NOEXCEPT {
         Assert(b);
+        Assert_NoAssume(b.SizeInBytes <= MaxSize());
 
         IF_CONSTEXPR(has_acquire::value)
             return a.Acquire(b);
@@ -383,6 +390,7 @@ struct TAllocatorTraits {
 
     static bool Steal(_Allocator& a, FAllocatorBlock b) NOEXCEPT {
         Assert(b);
+        Assert_NoAssume(b.SizeInBytes <= MaxSize());
 
         IF_CONSTEXPR(has_steal::value)
             return a.Steal(b);
@@ -396,8 +404,11 @@ struct TAllocatorTraits {
     template <typename _AllocatorDst>
     static bool StealAndAcquire(_AllocatorDst* dst, _Allocator& src, FAllocatorBlock b) NOEXCEPT {
         Assert(dst);
+        Assert_NoAssume(b.SizeInBytes <= MaxSize());
 
         using dst_t = TAllocatorTraits<_AllocatorDst>;
+        Assert_NoAssume(b.SizeInBytes <= dst::MaxSize());
+
         IF_CONSTEXPR(dst_t::has_acquire::value && has_steal::value) {
             return (Steal(src, b) && dst_t::Acquire(*dst, b));
         }
