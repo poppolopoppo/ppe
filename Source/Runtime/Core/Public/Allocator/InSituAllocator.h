@@ -93,7 +93,7 @@ public:
     FAllocatorBlock Allocate(size_t s) NOEXCEPT {
 #if USE_PPE_ASSERT
         Assert(s);
-        Assert(s <= SizeInBytes);
+        Assert(s == SizeInBytes);
         Assert(EState::Freed == State);
 
         State = EState::Allocated;
