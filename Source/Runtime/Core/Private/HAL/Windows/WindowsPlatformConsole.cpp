@@ -268,10 +268,8 @@ size_t FWindowsPlatformConsole::Read(const TMemoryView<wchar_t>& buffer) {
     ::FlushConsoleInputBuffer(win32.Console.hConsoleIn);
 
     ::DWORD read = checked_cast<::DWORD>(buffer.size());
-    if (not ::ReadConsoleW(win32.Console.hConsoleIn, buffer.data(), read, &read, nullptr)) {
+    if (not ::ReadConsoleW(win32.Console.hConsoleIn, buffer.data(), read, &read, nullptr))
         LOG_LASTERROR(HAL, L"FWindowsPlatformConsole::ReadW");
-        AssertNotReached();
-    }
 
     return checked_cast<size_t>(read);
 }
