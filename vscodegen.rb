@@ -35,9 +35,11 @@ def fetch_all_modules()
     Dir.glob(File.join(rootpath, '**', '*.bff')).each do |bff|
         relpath = File.dirname(File.dirname(bff[(rootpath.length+1)..bff.length]))
         name = fetch_fbuilb_string(bff, 'ModuleName')
-        modules << "#{relpath}/#{name}" unless name.nil?
+        modules << Module.new(name, relpath, bff) unless name.nil?
     end
-    return modules.sort
+    return modules.sort do |a, b|
+        a.target <=> b.target
+    end
 end
 
 def fetch_default_target()
@@ -51,17 +53,6 @@ def fetch_fastbuild_options()
     opts = opts.strip.split(/\s+/)
     return opts
 end
-
-ALL_MODULES=fetch_all_modules()
-DEFAULT_TARGET=fetch_default_target()
-FASTBUILD_OPTIONS=fetch_fastbuild_options()
-
-puts "[Default target]      = <#{DEFAULT_TARGET}>"
-puts "[Fastbuild options]   = #{FASTBUILD_OPTIONS}"
-puts "[All modules]         ="
-puts " - #{ALL_MODULES.join(",\n - ")}"
-
-FileUtils.mkdir_p(VCDB_PATH, :verbose => true)
 
 def make_compile_commands(platform, config)
     dirname = File.join(CORE_PATH, 'Output', 'Intermediate', platform, config)
@@ -155,7 +146,38 @@ class Config
         @defines = defines
     end
 
-end #~Platform
+end #~Config
+
+class Module
+    attr_reader     :name,
+                    :relpath,
+                    :bff
+
+    def initialize(name, relpath, bff)
+        @name = name
+        @relpath = relpath
+        @bff = bff
+    end
+
+    def source_path() File.dirname(bff) end
+    def public_path() "#{source_path}/public" end
+    def private_path() "#{source_path}/private" end
+
+    def include_paths()
+        result = []
+        [public_path, private_path].each do |p|
+            result << p if Dir.exist?(p)
+        end
+        return result
+    end
+
+    def target() "#{@relpath}/#{@name}" end
+
+    def to_s()
+        self.target
+    end
+
+end #~ Module
 
 PLATFORMS=[
     WindowsPlatform.new('Win32', 'msvc-x64'), # msvc-x86 doesn't exist
@@ -193,9 +215,14 @@ class C_CPP_Configuration
         @name = "#{platform.name}-#{config.name}"
     end
 
-    def export()
+    def export(modules)
         includePath = @platform.includePath
         compileCommands = make_compile_commands(@platform.name, @config.name)
+
+        # greedy fallback for includes since this is a global state (!= per module)
+        # and headers don't benefit from compile_commands.json goodness :(
+        modules.each { |m| includePath.concat(m.include_paths) }
+
         return {
             'name' => @name,
             'intelliSenseMode' => @platform.intelliSenseMode,
@@ -217,19 +244,35 @@ class C_CPP_Configuration
 end #~ C_CPP_Configuration
 
 #-----------------------------------------------------------------------------
+#   Parse all modules from BFF
+#-----------------------------------------------------------------------------
+
+ALL_MODULES=fetch_all_modules()
+DEFAULT_TARGET=fetch_default_target()
+FASTBUILD_OPTIONS=fetch_fastbuild_options()
+
+puts "[Default target]      = <#{DEFAULT_TARGET}>"
+puts "[Fastbuild options]   = #{FASTBUILD_OPTIONS}"
+puts "[All modules]         ="
+puts " - #{ALL_MODULES.join(",\n - ")}"
+
+FileUtils.mkdir_p(VCDB_PATH, :verbose => true)
+
+#-----------------------------------------------------------------------------
 #   Parse all configurations
 #-----------------------------------------------------------------------------
 
 ALL_CONFIGURATIONS = []
 PLATFORMS.each do |p|
     CONFIGS.each do |c|
-        ALL_CONFIGURATIONS << C_CPP_Configuration.new(p, c)
+        cfg = C_CPP_Configuration.new(p, c)
+        ALL_CONFIGURATIONS << cfg
     end
 end
 
 configurations = []
-ALL_CONFIGURATIONS.each do |configuration|
-    configurations << configuration.export
+ALL_CONFIGURATIONS.each do |cfg|
+    configurations << cfg.export(ALL_MODULES)
 end
 
 c_cpp_properties = JSON.pretty_generate({
@@ -244,15 +287,15 @@ make_file(VSCODE_C_CPP_PROPERTIES, c_cpp_properties)
 #-----------------------------------------------------------------------------
 
 compiletasks = []
-ALL_MODULES.each do |target|
+ALL_MODULES.each do |m|
     compiletasks << {
-        "label": target,
+        "label": m.target,
         "type": "shell",
         "isBackground": true,
         "command": "ruby",
         "args": USE_CPPTOOLS_ACTIVECONFIGNAME ?
-            [ "fbuild.rb" ] + FASTBUILD_OPTIONS + [ "#{target}-${command:cpptools.activeConfigName}" ] :
-            [ "fbuild.rb" ] + FASTBUILD_OPTIONS + [ "#{target}-${input:ppe_config}" ],
+            [ "fbuild.rb" ] + FASTBUILD_OPTIONS + [ "#{m.target}-${command:cpptools.activeConfigName}" ] :
+            [ "fbuild.rb" ] + FASTBUILD_OPTIONS + [ "#{m.target}-${input:ppe_config}" ],
         "options": {
             "cwd": '${workspaceRoot}'
         },
