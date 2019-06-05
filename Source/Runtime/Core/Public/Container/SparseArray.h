@@ -12,13 +12,14 @@
 // Inspired from DataArray<T>
 // http://greysphere.tumblr.com/post/31601463396/data-arrays
 
-#define SPARSEARRAY_INLINE_ALLOCATOR(_Domain, T, N) \
-    ::PPE::TSparseArrayInlineAllocator< MEMORYDOMAIN_TAG(_Domain), T, N >
-
 #define SPARSEARRAY(_DOMAIN, T) \
     ::PPE::TSparseArray< COMMA_PROTECT(T), ALLOCATOR(_DOMAIN) >
-#define SPARSEARRAY_INSITU(_DOMAIN, T, N) \
-    ::PPE::TSparseArray< COMMA_PROTECT(T), SPARSEARRAY_INLINE_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T), N) >
+
+// will use insitu storage for the first chunk, can't tune insitu storage
+#define SPARSEARRAY_INSITU(_DOMAIN, T) \
+    ::PPE::TSparseArray< COMMA_PROTECT(T), \
+        ::PPE::TSparseArrayInlineAllocator< MEMORYDOMAIN_TAG(_DOMAIN), COMMA_PROTECT(T) > \
+        >
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -45,6 +46,9 @@ class TSparseArrayIterator;
 template <typename T>
 class TBasicSparseArray {
 public:
+    STATIC_CONST_INTEGRAL(size_t, MinChunkSize,     8);
+    STATIC_CONST_INTEGRAL(size_t, MinChunkExp,      3); // first chunk is always 8 elements (2^3)
+
     using FDataId = FSparseDataId;
     using FDataItem = TSparseArrayItem<T>;
     using FDataChunkRef = Meta::TPointerWFlags<FDataItem>;
@@ -163,13 +167,11 @@ protected:
     }
 
     // each time a sparse must grow it allocate a new chunk twice bigger than previous one
-    STATIC_CONST_INTEGRAL(size_t, MinChunkSize_, 8);
-    STATIC_CONST_INTEGRAL(size_t, MinChunkExp_, 3); // first chunk is always 8 elements (2^3)
     static size_t ckIndex_(size_t i) NOEXCEPT {
-        return (FPlatformMaths::CeilLog2(Meta::RoundToNext(i | 1, MinChunkSize_)) - MinChunkExp_);
+        return (FPlatformMaths::CeilLog2(Max(i, MinChunkSize)) - MinChunkExp);
     }
     static size_t ckSize_(size_t o) NOEXCEPT {
-        return (size_t(1) << (MinChunkExp_ + o));
+        return (size_t(1) << (MinChunkExp + o));
     }
     static size_t ckOffset_(size_t o) NOEXCEPT {
         return (o ? ckSize_(o - 1) : 0);
@@ -289,26 +291,25 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Uses an in situ only one allocation of N blocks, then uses malloc()
+// Uses in situ for only one allocation of N blocks, then uses malloc()
 //----------------------------------------------------------------------------
 namespace details {
-template <typename _Tag, typename T, size_t N>
+template <typename _Tag, typename T>
 struct TCheckedSparseArrayInlineAllocator_ {
-    STATIC_ASSERT(Meta::IsPow2(N));
-    STATIC_ASSERT(N >= 8); // this is the minimum allocation size by default TSparseArray
-    using type = TSegregatorAllocator<
-        sizeof(TSparseArrayItem<T>)* N,
-        TInSituAllocator<sizeof(TSparseArrayItem<T>)* N>,
+    STATIC_CONST_INTEGRAL(size_t, SizeInBytes,
+        TBasicSparseArray<T>::MinChunkSize * sizeof(TSparseArrayItem<T>) );
+    using type = TFallbackAllocator<
+        TInSituStackAllocator<SizeInBytes>,
         TDefaultAllocator<_Tag> >;
 };
 } //!details
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORY_DEBUGGING
-template <typename _Tag, typename T, size_t N>
+template <typename _Tag, typename T>
 using TSparseArrayInlineAllocator = TDefaultAllocator<_Tag>;
 #else
-template <typename _Tag, typename T, size_t N>
-using TSparseArrayInlineAllocator = typename details::TCheckedSparseArrayInlineAllocator_<_Tag, T, N>::type;
+template <typename _Tag, typename T>
+using TSparseArrayInlineAllocator = typename details::TCheckedSparseArrayInlineAllocator_<_Tag, T>::type;
 #endif //!USE_PPE_MEMORY_DEBUGGING
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator = ALLOCATOR(Container) >

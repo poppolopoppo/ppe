@@ -59,7 +59,7 @@ public:
     };
 
     mutable FAtomicSpinLock Barrier;
-    SPARSEARRAY_INSITU(Window, FUserCmd, 16) Commands;
+    SPARSEARRAY_INSITU(Window, FUserCmd) Commands;
 };
 //----------------------------------------------------------------------------
 static ::HWND GWindowsSystrayWindow_ = NULL;

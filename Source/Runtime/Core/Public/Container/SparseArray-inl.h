@@ -359,6 +359,7 @@ void TSparseArray<T, _Allocator>::Clear() {
 
     Assert(0 == _size);
 }
+//----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TSparseArray<T, _Allocator>::Clear_ReleaseMemory() {
     if (_chunks) {
