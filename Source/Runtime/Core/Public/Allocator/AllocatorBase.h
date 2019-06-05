@@ -407,7 +407,7 @@ struct TAllocatorTraits {
         Assert_NoAssume(b.SizeInBytes <= MaxSize());
 
         using dst_t = TAllocatorTraits<_AllocatorDst>;
-        Assert_NoAssume(b.SizeInBytes <= dst::MaxSize());
+        Assert_NoAssume(b.SizeInBytes <= dst_t::MaxSize());
 
         IF_CONSTEXPR(dst_t::has_acquire::value && has_steal::value) {
             return (Steal(src, b) && dst_t::Acquire(*dst, b));

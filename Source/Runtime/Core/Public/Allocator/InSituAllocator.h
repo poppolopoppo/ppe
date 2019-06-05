@@ -65,7 +65,7 @@ public:
         return (*this);
     }
 
-    static bool MaxSize() NOEXCEPT {
+    static size_t MaxSize() NOEXCEPT {
         return SizeInBytes;
     }
 
@@ -100,7 +100,6 @@ public:
 #else
         UNUSED(s);
 #endif
-        Assert_NoAssume(Meta::IsAligned(Alignment, &InSitu));
         return FAllocatorBlock{ &InSitu, SizeInBytes };
     }
 
@@ -117,7 +116,7 @@ public:
     }
 
     friend bool operator ==(const TInSituAllocator& lhs, const TInSituAllocator& rhs) NOEXCEPT {
-        return (static_cast<const void*>(&lhs) == static_cast<const void*>(&rhs));
+        return (static_cast<const void*>(&lhs.InSitu) == static_cast<const void*>(&rhs.InSitu));
     }
 
     friend bool operator !=(const TInSituAllocator& lhs, const TInSituAllocator& rhs) NOEXCEPT {
