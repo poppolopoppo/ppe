@@ -95,6 +95,8 @@ public:
         const size_t i = ((block_t*)b.Data - Blocks);
 
         Mask.Deallocate(i, n);
+
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(b.Data, b.SizeInBytes));
     }
 
     NODISCARD bool Reallocate(FAllocatorBlock& b, size_t s) {

@@ -110,6 +110,7 @@ public:
         Assert(b.SizeInBytes == SizeInBytes);
 
         State = EState::Freed;
+        FPlatformMemory::Memdeadbeef(b.Data, b.SizeInBytes);
 #else
         UNUSED(b);
 #endif
@@ -188,7 +189,7 @@ public:
             return false;
         }
 #else
-        return FPlatformMemory::Memoverlap(b.Data, b.SizeInBytes, &InSitu, Offset);
+        return ((u8*)b.Data >= (u8*)&InSitu && (u8*)&InSitu + Offset >= (u8*)b.Data);
 #endif
     }
 
@@ -214,6 +215,8 @@ public:
         const size_t off = checked_cast<size_t>((u8*)b.Data - (u8*)&InSitu);
         if (off + b.SizeInBytes == Offset)
             Offset -= b.SizeInBytes;
+
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(b.Data, b.SizeInBytes));
     }
 
     friend bool operator ==(const TInSituStackAllocator& lhs, const TInSituStackAllocator& rhs) NOEXCEPT {
