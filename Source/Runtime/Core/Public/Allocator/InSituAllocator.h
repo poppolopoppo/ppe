@@ -126,4 +126,105 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Uses an in-situ storage like a stack, can't reclaim memory if not FIFO
+//----------------------------------------------------------------------------
+template <size_t _SizeInBytes>
+class TInSituStackAllocator  : private FGenericAllocator {
+public:
+    using propagate_on_container_copy_assignment = std::false_type;
+    using propagate_on_container_move_assignment = std::false_type;
+    using propagate_on_container_swap = std::false_type;
+
+    using is_always_equal = std::false_type;
+
+    using has_maxsize = std::true_type;
+    using has_owns = std::true_type;
+    using has_reallocate = std::false_type;
+    using has_acquire = std::false_type;
+    using has_steal = std::false_type;
+
+    STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
+    STATIC_CONST_INTEGRAL(size_t, SizeInBytes, _SizeInBytes);
+
+    using insitu_t = ALIGNED_STORAGE(SizeInBytes, Alignment);
+
+    insitu_t InSitu;
+    size_t Offset{ 0 };
+
+    TInSituStackAllocator() = default;
+
+    // copy checks that both allocators are empty (can't copy in situ allocations)
+    TInSituStackAllocator(const TInSituStackAllocator& other) { operator =(other); }
+    TInSituStackAllocator& operator =(const TInSituStackAllocator& other) {
+        Assert_NoAssume(0 == Offset);
+        Assert_NoAssume(0 == other.Offset);
+        return (*this);
+    }
+
+    // move checks that both allocators are empty (can't move in situ allocations)
+    TInSituStackAllocator(TInSituStackAllocator&& rvalue) { operator =(std::move(rvalue)); }
+    TInSituStackAllocator& operator =(TInSituStackAllocator&& rvalue) {
+        Assert_NoAssume(0 == Offset);
+        Assert_NoAssume(0 == rvalue.Offset);
+        return (*this);
+    }
+
+    static size_t MaxSize() NOEXCEPT {
+        return SizeInBytes;
+    }
+
+    static size_t SnapSize(size_t s) NOEXCEPT {
+        Assert(s <= SizeInBytes);
+        return Meta::RoundToNext(s, Alignment);
+    }
+
+    bool Owns(FAllocatorBlock b) const NOEXCEPT {
+#if USE_PPE_ASSERT
+        if (FPlatformMemory::Memoverlap(b.Data, b.SizeInBytes, &InSitu, _SizeInBytes)) {
+            Assert_NoAssume((u8*)b.Data - (u8*)&InSitu < ptrdiff_t(Offset));
+            return true;
+        }
+        else {
+            return false;
+        }
+#else
+        return FPlatformMemory::Memoverlap(b.Data, b.SizeInBytes, &InSitu, Offset);
+#endif
+    }
+
+    FAllocatorBlock Allocate(size_t s) NOEXCEPT {
+        FAllocatorBlock b;
+        b.SizeInBytes = Meta::RoundToNext(s, Alignment);
+
+        if (Offset + s <= _SizeInBytes) {
+            b.Data = (u8*)&InSitu + Offset;
+            Offset += b.SizeInBytes;
+        }
+        else {
+            b.SizeInBytes = 0; // not enough space, fail allocation
+        }
+
+        return b;
+    }
+
+    void Deallocate(FAllocatorBlock b) NOEXCEPT {
+        Assert_NoAssume(Owns(b));
+
+        // can reclaim only the last block allocated !
+        const size_t off = checked_cast<size_t>((u8*)b.Data - (u8*)&InSitu);
+        if (off + b.SizeInBytes == Offset)
+            Offset -= b.SizeInBytes;
+    }
+
+    friend bool operator ==(const TInSituStackAllocator& lhs, const TInSituStackAllocator& rhs) NOEXCEPT {
+        return (static_cast<const void*>(&lhs.InSitu) == static_cast<const void*>(&rhs.InSitu));
+    }
+
+    friend bool operator !=(const TInSituStackAllocator& lhs, const TInSituStackAllocator& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
+    }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace PPE
