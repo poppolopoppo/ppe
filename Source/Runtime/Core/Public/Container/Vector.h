@@ -175,6 +175,9 @@ public:
     void assign(std::initializer_list<T> ilist) { assign(ilist.begin(), ilist.end()); }
     void assign(TVector&& rvalue);
 
+    template <typename _It>
+    auto assign(TIterable<_It> range) { return assign(range.begin(), range.end()); }
+
     template <typename U>
     void assign(const TMemoryView<U>& view) { assign(view.begin(), view.end()); }
     void assign(const TMemoryView<value_type>& view) { assign(std::make_move_iterator(view.begin()), std::make_move_iterator(view.end())); }
@@ -204,6 +207,9 @@ public:
     iterator insert(const_iterator pos, T&& rvalue) { return emplace(pos, std::move(rvalue)); }
     iterator insert(const_iterator pos, size_type count, const T& value);
     iterator insert(const_iterator pos, std::initializer_list<T> ilist) { return insert(pos, ilist.begin(), ilist.end()); }
+
+    template <typename _It>
+    auto insert(const_iterator pos, TIterable<_It> range) { return insert(pos, range.begin(), range.end()); }
 
     void push_back(const T& value) { emplace_back(value); }
     void push_back(T&& rvalue) { emplace_back(std::move(rvalue)); }
@@ -250,9 +256,6 @@ private:
 
     void allocator_copy_(const allocator_type& other, std::true_type );
     void allocator_copy_(const allocator_type& other, std::false_type ) { UNUSED(other); }
-
-    void allocator_move_(allocator_type&& rvalue, std::true_type );
-    void allocator_move_(allocator_type&& rvalue, std::false_type ) { UNUSED(rvalue); }
 
     template <typename _It>
     void assign_(_It first, _It last, std::input_iterator_tag );
