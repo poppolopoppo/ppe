@@ -11,11 +11,7 @@
 // Prefered to non intrusive ref counting (std::shared_ptr<>).
 */
 
-#if USE_PPE_DEBUG || USE_PPE_MEMORY_DEBUGGING
-#   define USE_PPE_SAFEPTR 1
-#else
-#   define USE_PPE_SAFEPTR 0
-#endif
+#define USE_PPE_SAFEPTR (USE_PPE_DEBUG || USE_PPE_MEMORY_DEBUGGING)
 
 #define _FWD_REFPTR_IMPL(T, _PREFIX)                                    \
     class CONCAT(_PREFIX, T);                                           \
@@ -104,16 +100,16 @@ protected:
     friend T *RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& ptr);
 
 #if USE_PPE_SAFEPTR
-    friend void AddSafeRef(const FRefCountable* ptr);
-    friend void RemoveSafeRef(const FRefCountable* ptr);
+    friend void AddSafeRef(const FRefCountable* ptr) NOEXCEPT;
+    friend void RemoveSafeRef(const FRefCountable* ptr) NOEXCEPT;
 #else
-    inline friend void AddSafeRef(const FRefCountable*) {}
-    inline friend void RemoveSafeRef(const FRefCountable*) {}
+    FORCE_INLINE friend void AddSafeRef(const FRefCountable*) NOEXCEPT {}
+    FORCE_INLINE friend void RemoveSafeRef(const FRefCountable*) NOEXCEPT {}
 #endif
 
 private:
-    void IncRefCount() const;
-    bool DecRefCount_ReturnIfReachZero() const;
+    void IncRefCount() const NOEXCEPT;
+    bool DecRefCount_ReturnIfReachZero() const NOEXCEPT;
 
     mutable std::atomic<int> _refCount;
 
@@ -123,8 +119,8 @@ private:
     friend class TSafePtr;
     mutable std::atomic<int> _safeRefCount;
 
-    void IncSafeRefCount() const;
-    void DecSafeRefCount() const;
+    void IncSafeRefCount() const NOEXCEPT;
+    void DecSafeRefCount() const NOEXCEPT;
 #endif
 };
 //----------------------------------------------------------------------------
@@ -177,8 +173,8 @@ public:
     void Swap(TRefPtr<U>& other);
 
 protected:
-    void IncRefCountIFP() const;
-    void DecRefCountIFP() const;
+    void IncRefCountIFP() const NOEXCEPT;
+    void DecRefCountIFP() const NOEXCEPT;
 
 private:
     T* _ptr;

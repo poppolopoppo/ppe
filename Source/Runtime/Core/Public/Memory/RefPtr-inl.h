@@ -29,7 +29,7 @@ inline FRefCountable::FRefCountable(FRefCountable&& ) NOEXCEPT
 {}
 //----------------------------------------------------------------------------
 inline FRefCountable& FRefCountable::operator =(FRefCountable&& ) NOEXCEPT {
-    return *this;
+    return (*this);
 }
 //----------------------------------------------------------------------------
 inline FRefCountable::FRefCountable(const FRefCountable& ) NOEXCEPT
@@ -40,14 +40,14 @@ inline FRefCountable::FRefCountable(const FRefCountable& ) NOEXCEPT
 {}
 //----------------------------------------------------------------------------
 inline FRefCountable& FRefCountable::operator =(const FRefCountable& ) NOEXCEPT {
-    return *this;
+    return (*this);
 }
 //----------------------------------------------------------------------------
-inline void FRefCountable::IncRefCount() const {
+inline void FRefCountable::IncRefCount() const NOEXCEPT {
     _refCount.fetch_add(1);
 }
 //----------------------------------------------------------------------------
-inline bool FRefCountable::DecRefCount_ReturnIfReachZero() const {
+inline bool FRefCountable::DecRefCount_ReturnIfReachZero() const NOEXCEPT {
     const int n = _refCount.fetch_sub(1);
     Assert(n > 0);
     return (1 == n);
@@ -72,7 +72,7 @@ T* RemoveRef_AssertAlive(TRefPtr<T>& ptr) {
     Assert(1 < ptr->RefCount());
     T* alive = ptr.get();
     ptr.reset();
-    Assert(0 < alive->RefCount());
+    Assert_NoAssume(0 < alive->RefCount());
     return alive;
 }
 //----------------------------------------------------------------------------
@@ -87,7 +87,7 @@ T* RemoveRef_KeepAlive(TRefPtr<T>& ptr) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void OnRefCountReachZero(T* ptr) {
+NO_INLINE void OnRefCountReachZero(T* ptr) {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     checked_delete(ptr);
 }
@@ -97,8 +97,7 @@ void RemoveRef_AssertReachZero_NoDelete(T *& ptr) {
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);
     Assert(ptr);
-    const bool result = ptr->DecRefCount_ReturnIfReachZero();
-    Assert(result);
+    VerifyRelease(ptr->DecRefCount_ReturnIfReachZero());
     ptr->~T();
     ptr = nullptr;
 }
@@ -107,7 +106,7 @@ template <typename T>
 void RemoveRef_AssertReachZero(TRefPtr<T>& ptr) {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     Assert(ptr);
-    Assert(1 == ptr->RefCount());
+    Assert_NoAssume(1 == ptr->RefCount());
     ptr.reset();
 }
 //----------------------------------------------------------------------------
@@ -115,7 +114,7 @@ template <typename T>
 void RemoveRef_AssertGreaterThanZero(TRefPtr<T>& ptr) {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     Assert(ptr);
-    Assert(1 < ptr->RefCount());
+    Assert_NoAssume(1 < ptr->RefCount());
     ptr.reset();
 }
 //----------------------------------------------------------------------------
@@ -126,24 +125,23 @@ T *RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& ptr) {
     T *const result = ptr.get();
     result->IncRefCount();
     ptr.reset();
-    if (not result->DecRefCount_ReturnIfReachZero())
-        AssertNotReached();
+    VerifyRelease(result->DecRefCount_ReturnIfReachZero());
     return result;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if USE_PPE_SAFEPTR
-inline void AddSafeRef(const FRefCountable* ptr) {
+inline void AddSafeRef(const FRefCountable* ptr) NOEXCEPT {
     ptr->IncSafeRefCount();
 }
-inline void RemoveSafeRef(const FRefCountable* ptr) {
+inline void RemoveSafeRef(const FRefCountable* ptr) NOEXCEPT {
     ptr->DecSafeRefCount();
 }
-inline void FRefCountable::IncSafeRefCount() const {
+inline void FRefCountable::IncSafeRefCount() const NOEXCEPT {
     _safeRefCount.fetch_add(1);
 }
-inline void FRefCountable::DecSafeRefCount() const {
+inline void FRefCountable::DecSafeRefCount() const NOEXCEPT {
     Verify(_safeRefCount.fetch_sub(1) > 0);
 }
 #endif //!WITH_PPE_SAFEPTR
@@ -205,7 +203,7 @@ template <typename U>
 auto TRefPtr<T>::operator =(const TRefPtr<U>& other) -> TRefPtr& {
     if (other.get() != _ptr) {
         DecRefCountIFP();
-        _ptr = checked_cast<T *>(other.get());
+        _ptr = checked_cast<T*>(other.get());
         IncRefCountIFP();
     }
     return *this;
@@ -214,7 +212,7 @@ auto TRefPtr<T>::operator =(const TRefPtr<U>& other) -> TRefPtr& {
 template <typename T>
 template <typename U>
 TRefPtr<T>::TRefPtr(TRefPtr<U>&& rvalue) NOEXCEPT
-:   _ptr(checked_cast<T *>(rvalue.get())) {
+:   _ptr(checked_cast<T*>(rvalue.get())) {
     rvalue._ptr = nullptr;
 }
 //----------------------------------------------------------------------------
@@ -243,14 +241,14 @@ void TRefPtr<T>::Swap(TRefPtr<U>& other) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE void TRefPtr<T>::IncRefCountIFP() const {
+FORCE_INLINE void TRefPtr<T>::IncRefCountIFP() const NOEXCEPT {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     if (_ptr)
         AddRef(_ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FORCE_INLINE void TRefPtr<T>::DecRefCountIFP() const {
+FORCE_INLINE void TRefPtr<T>::DecRefCountIFP() const NOEXCEPT {
     STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
     if (_ptr)
         RemoveRef(_ptr);
