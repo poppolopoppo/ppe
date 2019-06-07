@@ -219,21 +219,21 @@ template <typename _VectorLike>
 size_t TVectorLikeTraits<_VectorLike>::Count(const void* data) const {
     Assert(data);
 
-    return reinterpret_cast<const value_type*>(data)->size();
+    return static_cast<const value_type*>(data)->size();
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
 bool TVectorLikeTraits<_VectorLike>::IsEmpty(const void* data) const {
     Assert(data);
 
-    return reinterpret_cast<const value_type*>(data)->empty();
+    return static_cast<const value_type*>(data)->empty();
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
 FAtom TVectorLikeTraits<_VectorLike>::At(void* data, size_t index) const {
     Assert(data);
 
-    auto& item = reinterpret_cast<value_type*>(data)->at(index);
+    auto& item = static_cast<value_type*>(data)->at(index);
     return FAtom(&item, MakeTraits<item_type>());
 }
 //----------------------------------------------------------------------------
@@ -262,7 +262,7 @@ template <typename _VectorLike>
 FAtom TVectorLikeTraits<_VectorLike>::AddDefault(void* data) const {
     Assert(data);
 
-    auto& item = reinterpret_cast<value_type*>(data)->push_back_Default();
+    auto& item = static_cast<value_type*>(data)->push_back_Default();
     return FAtom(&item, MakeTraits<item_type>());
 }
 //----------------------------------------------------------------------------
@@ -271,7 +271,7 @@ void TVectorLikeTraits<_VectorLike>::AddCopy(void* data, const FAtom& item) cons
     Assert(data);
     Assert(item);
 
-    reinterpret_cast<value_type*>(data)->push_back(item.TypedConstData<item_type>());
+    static_cast<value_type*>(data)->push_back(item.TypedConstData<item_type>());
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
@@ -279,14 +279,14 @@ void TVectorLikeTraits<_VectorLike>::AddMove(void* data, const FAtom& item) cons
     Assert(data);
     Assert(item);
 
-    reinterpret_cast<value_type*>(data)->push_back(std::move(item.TypedData<item_type>()));
+    static_cast<value_type*>(data)->push_back(std::move(item.TypedData<item_type>()));
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
 void TVectorLikeTraits<_VectorLike>::Erase(void* data, size_t index) const {
     Assert(data);
 
-    value_type& v = *reinterpret_cast<value_type*>(data);
+    value_type& v = *static_cast<value_type*>(data);
     v.erase(v.begin() + index);
 }
 //----------------------------------------------------------------------------
@@ -298,7 +298,7 @@ bool TVectorLikeTraits<_VectorLike>::Remove(void* data, const FAtom& item) const
     const PTypeTraits item_traits = MakeTraits<typename _VectorLike::value_type>();
     Assert(item_traits->TypeId() == item.TypeId());
 
-    value_type& vector = (*reinterpret_cast<value_type*>(data));
+    value_type& vector = (*static_cast<value_type*>(data));
 
     foreachitem(it, vector) {
         const FAtom value(std::addressof(*it), item_traits);
@@ -316,21 +316,21 @@ template <typename _VectorLike>
 void TVectorLikeTraits<_VectorLike>::Reserve(void* data, size_t capacity) const {
     Assert(data);
 
-    reinterpret_cast<value_type*>(data)->reserve(capacity);
+    static_cast<value_type*>(data)->reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
 void TVectorLikeTraits<_VectorLike>::Clear(void* data) const {
     Assert(data);
 
-    reinterpret_cast<value_type*>(data)->clear();
+    static_cast<value_type*>(data)->clear();
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
 void TVectorLikeTraits<_VectorLike>::Empty(void* data, size_t capacity) const {
     Assert(data);
 
-    value_type& v = *reinterpret_cast<value_type*>(data);
+    value_type& v = *static_cast<value_type*>(data);
     if (capacity) {
         v.clear();
         v.reserve(capacity);
@@ -345,7 +345,7 @@ bool TVectorLikeTraits<_VectorLike>::ForEach(void* data, const foreach_fun& fore
     Assert(data);
 
     const PTypeTraits value_traits = MakeTraits<item_type>();
-    for (auto& elt : *reinterpret_cast<value_type*>(data)) {
+    for (auto& elt : *static_cast<value_type*>(data)) {
         if (not foreach(FAtom(&elt, value_traits)))
             return false;
     }

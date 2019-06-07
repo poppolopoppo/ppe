@@ -51,7 +51,7 @@ template <typename T, typename... _Args>
 FAtom TStructAsTupleTraits<T, TTuple<_Args&...> >::At(void* data, size_t index) const {
     Assert(data);
 
-    TTuple<_Args&...> refs = tie_as_tuple(*reinterpret_cast<value_type*>(data));
+    TTuple<_Args&...> refs = tie_as_tuple(*static_cast<value_type*>(data));
 
     return GetNth_(refs, index, std::index_sequence_for<_Args...>{});
 }
@@ -60,7 +60,7 @@ template <typename T, typename... _Args>
 bool TStructAsTupleTraits<T, TTuple<_Args&...> >::ForEach(void* data, const foreach_fun& foreach) const {
     Assert(data);
 
-    TTuple<_Args&...> refs = tie_as_tuple(*reinterpret_cast<value_type*>(data));
+    TTuple<_Args&...> refs = tie_as_tuple(*static_cast<value_type*>(data));
 
     forrange(index, 0, sizeof...(_Args)) {
         const FAtom elt = GetNth_(refs, index, std::index_sequence_for<_Args...>{});

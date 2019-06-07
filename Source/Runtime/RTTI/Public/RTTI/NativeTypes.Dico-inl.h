@@ -211,21 +211,21 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 size_t TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Count(const void* data) const {
     Assert(data);
 
-    return reinterpret_cast<const value_type*>(data)->size();
+    return static_cast<const value_type*>(data)->size();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::IsEmpty(const void* data) const {
     Assert(data);
 
-    return reinterpret_cast<const value_type*>(data)->empty();
+    return static_cast<const value_type*>(data)->empty();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 FAtom TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Find(const void* data, const FAtom& key) const {
     Assert(data);
 
-    const value_type& d = (*reinterpret_cast<const value_type*>(data));
+    const value_type& d = (*static_cast<const value_type*>(data));
     const auto it = d.find(key.TypedConstData<_Key>());
     return (it != d.end())
         ? FAtom(&it->second, MakeTraits<_Value>())
@@ -236,7 +236,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 FAtom TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddDefaultCopy(void* data, const FAtom& key) const {
     Assert(data);
 
-    value_type& d = (*reinterpret_cast<value_type*>(data));
+    value_type& d = (*static_cast<value_type*>(data));
     _Value& value = d.Add(key.TypedConstData<_Key>());
     return FAtom(&value, MakeTraits<_Value>());
 }
@@ -245,7 +245,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 FAtom TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddDefaultMove(void* data, const FAtom& key) const {
     Assert(data);
 
-    value_type& d = (*reinterpret_cast<value_type*>(data));
+    value_type& d = (*static_cast<value_type*>(data));
     _Value& value = d.Add(std::move(key.TypedData<_Key>()));
     return FAtom(&value, MakeTraits<_Value>());
 }
@@ -254,7 +254,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddCopy(void* data, const FAtom& key, const FAtom& value) const {
     Assert(data);
 
-    reinterpret_cast<value_type*>(data)->Insert_AssertUnique(
+    static_cast<value_type*>(data)->Insert_AssertUnique(
         key.TypedConstData<_Key>(),
         value.TypedConstData<_Value>());
 }
@@ -263,7 +263,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddMove(void* data, const FAtom& key, const FAtom& value) const {
     Assert(data);
 
-    reinterpret_cast<value_type*>(data)->Insert_AssertUnique(
+    static_cast<value_type*>(data)->Insert_AssertUnique(
         std::move(key.TypedData<_Key>()),
         std::move(value.TypedData<_Value>()));
 }
@@ -272,28 +272,28 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Remove(void* data, const FAtom& key) const {
     Assert(data);
 
-    return reinterpret_cast<value_type*>(data)->Erase(key.TypedConstData<_Key>());
+    return static_cast<value_type*>(data)->Erase(key.TypedConstData<_Key>());
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Reserve(void* data, size_t capacity) const {
     Assert(data);
 
-    reinterpret_cast<value_type*>(data)->reserve(capacity);
+    static_cast<value_type*>(data)->reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Clear(void* data) const {
     Assert(data);
 
-    reinterpret_cast<value_type*>(data)->clear();
+    static_cast<value_type*>(data)->clear();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Empty(void* data, size_t capacity) const {
     Assert(data);
 
-    value_type& d = (*reinterpret_cast<value_type*>(data));
+    value_type& d = (*static_cast<value_type*>(data));
     if (capacity) {
         d.clear();
         d.reserve(capacity);
@@ -310,7 +310,7 @@ bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::ForEach(void* da
     const PTypeTraits key_traits = MakeTraits<_Key>();
     const PTypeTraits value_traits = MakeTraits<_Value>();
 
-    for (const auto& it : *reinterpret_cast<value_type*>(data)) {
+    for (const auto& it : *static_cast<value_type*>(data)) {
         const FAtom key(&it.first, key_traits);
         const FAtom value(&it.second, value_traits);
         if (not foreach(key, value))
@@ -365,21 +365,21 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 size_t THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Count(const void* data) const {
     Assert(data);
 
-    return reinterpret_cast<const value_type*>(data)->size();
+    return static_cast<const value_type*>(data)->size();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 bool THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::IsEmpty(const void* data) const {
     Assert(data);
 
-    return reinterpret_cast<const value_type*>(data)->empty();
+    return static_cast<const value_type*>(data)->empty();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 FAtom THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Find(const void* data, const FAtom& key) const {
     Assert(data);
 
-    const value_type& d = (*reinterpret_cast<const value_type*>(data));
+    const value_type& d = (*static_cast<const value_type*>(data));
     const auto it = d.find(key.TypedConstData<_Key>());
     return (it != d.end())
         ? FAtom(&it->second, MakeTraits<_Value>())
@@ -390,7 +390,7 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 FAtom THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddDefaultCopy(void* data, const FAtom& key) const {
     Assert(data);
 
-    value_type& d = (*reinterpret_cast<value_type*>(data));
+    value_type& d = (*static_cast<value_type*>(data));
     _Value& v = d.Add(key.TypedConstData<_Key>());
     return FAtom(&v, MakeTraits<_Value>());
 }
@@ -399,7 +399,7 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 FAtom THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddDefaultMove(void* data, const FAtom& key) const {
     Assert(data);
 
-    value_type& d = (*reinterpret_cast<value_type*>(data));
+    value_type& d = (*static_cast<value_type*>(data));
     _Value& v = d.Add(std::move(key.TypedData<_Key>()));
     return FAtom(&v, MakeTraits<_Value>());
 }
@@ -408,7 +408,7 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddCopy(void* data, const FAtom& key, const FAtom& value) const {
     Assert(data);
 
-    reinterpret_cast<value_type*>(data)->emplace_AssertUnique(
+    static_cast<value_type*>(data)->emplace_AssertUnique(
         key.TypedConstData<_Key>(),
         value.TypedConstData<_Value>());
 }
@@ -417,7 +417,7 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddMove(void* data, const FAtom& key, const FAtom& value) const {
     Assert(data);
 
-    reinterpret_cast<value_type*>(data)->emplace_AssertUnique(
+    static_cast<value_type*>(data)->emplace_AssertUnique(
         std::move(key.TypedData<_Key>()),
         std::move(value.TypedData<_Value>()));
 }
@@ -426,28 +426,28 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 bool THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Remove(void* data, const FAtom& key) const {
     Assert(data);
 
-    return reinterpret_cast<value_type*>(data)->erase(key.TypedConstData<_Key>());
+    return static_cast<value_type*>(data)->erase(key.TypedConstData<_Key>());
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Reserve(void* data, size_t capacity) const {
     Assert(data);
 
-    reinterpret_cast<value_type*>(data)->reserve(capacity);
+    static_cast<value_type*>(data)->reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Clear(void* data) const {
     Assert(data);
 
-    reinterpret_cast<value_type*>(data)->clear();
+    static_cast<value_type*>(data)->clear();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Empty(void* data, size_t capacity) const {
     Assert(data);
 
-    value_type& d = (*reinterpret_cast<value_type*>(data));
+    value_type& d = (*static_cast<value_type*>(data));
     if (capacity) {
         d.clear();
         d.reserve(capacity);
@@ -462,7 +462,7 @@ bool THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::ForEach(void* 
     const PTypeTraits key_traits = MakeTraits<_Key>();
     const PTypeTraits value_traits = MakeTraits<_Value>();
 
-    for (const auto& it : *reinterpret_cast<value_type*>(data)) {
+    for (const auto& it : *static_cast<value_type*>(data)) {
         const FAtom key(&it.first, key_traits);
         const FAtom value(&it.second, value_traits);
         if (not foreach(key, value))

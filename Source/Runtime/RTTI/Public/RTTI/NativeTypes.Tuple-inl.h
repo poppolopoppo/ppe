@@ -227,8 +227,8 @@ FAtom TPairTraits<_First, _Second>::At(void* data, size_t index) const {
     Assert(index < 2);
 
     return (0 == index
-        ? FAtom(&reinterpret_cast<value_type*>(data)->first, MakeTraits<_First>())
-        : FAtom(&reinterpret_cast<value_type*>(data)->second, MakeTraits<_Second>()));
+        ? FAtom(&static_cast<value_type*>(data)->first, MakeTraits<_First>())
+        : FAtom(&static_cast<value_type*>(data)->second, MakeTraits<_Second>()));
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
@@ -236,8 +236,8 @@ bool TPairTraits<_First, _Second>::ForEach(void* data, const foreach_fun& foreac
     Assert(data);
 
     return (
-        foreach(FAtom(&reinterpret_cast<value_type*>(data)->first, MakeTraits<_First>())) &&
-        foreach(FAtom(&reinterpret_cast<value_type*>(data)->second, MakeTraits<_Second>())));
+        foreach(FAtom(&static_cast<value_type*>(data)->first, MakeTraits<_First>())) &&
+        foreach(FAtom(&static_cast<value_type*>(data)->second, MakeTraits<_Second>())));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -288,7 +288,7 @@ template <typename T, size_t _Dim>
 FAtom TStaticArrayTraits<T, _Dim>::At(void* data, size_t index) const {
     Assert(data);
 
-    return FAtom(&reinterpret_cast<pointer>(data)->at(index), MakeTraits<T>());
+    return FAtom(&static_cast<pointer>(data)->at(index), MakeTraits<T>());
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
@@ -297,7 +297,7 @@ bool TStaticArrayTraits<T, _Dim>::ForEach(void* data, const foreach_fun& foreach
 
     const PTypeTraits elt_traits = MakeTraits<T>();
 
-    foreachitem(elt, *reinterpret_cast<pointer>(data)) {
+    foreachitem(elt, *static_cast<pointer>(data)) {
         if (not foreach(FAtom(std::addressof(*elt), elt_traits)))
             return false;
     }
@@ -365,14 +365,14 @@ template <typename... _Args>
 FAtom TTupleTraits<_Args...>::At(void* data, size_t index) const {
     Assert(data);
 
-    return GetNth_(*reinterpret_cast<value_type*>(data), index, std::index_sequence_for<_Args...>{});
+    return GetNth_(*static_cast<value_type*>(data), index, std::index_sequence_for<_Args...>{});
 }
 //----------------------------------------------------------------------------
 template <typename... _Args>
 bool TTupleTraits<_Args...>::ForEach(void* data, const foreach_fun& foreach) const {
     Assert(data);
 
-    value_type& tuple = *reinterpret_cast<value_type*>(data);
+    value_type& tuple = *static_cast<value_type*>(data);
 
     forrange(i, 0, sizeof...(_Args)) {
         const FAtom elt = GetNth_(tuple, i, std::index_sequence_for<_Args...>{});

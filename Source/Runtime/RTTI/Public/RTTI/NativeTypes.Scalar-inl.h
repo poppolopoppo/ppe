@@ -39,14 +39,14 @@ bool TBaseScalarTraits<T>::Equals(const void* lhs, const void* rhs) const {
     Assert(lhs);
     Assert(rhs);
 
-    return (*reinterpret_cast<const T*>(lhs) == *reinterpret_cast<const T*>(rhs));
+    return (*static_cast<const T*>(lhs) == *static_cast<const T*>(rhs));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 hash_t TBaseScalarTraits<T>::HashValue(const void* data) const {
     Assert(data);
 
-    return hash_tuple(TypeId(), *reinterpret_cast<const T*>(data));
+    return hash_tuple(TypeId(), *static_cast<const T*>(data));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -147,27 +147,27 @@ FStringView TEnumTraits<T>::TypeName() const {
 //----------------------------------------------------------------------------
 template <typename T>
 bool TEnumTraits<T>::DeepEquals(const void* lhs, const void* rhs) const {
-    return (*reinterpret_cast<const TEnumOrd<T>*>(lhs) ==
-            *reinterpret_cast<const TEnumOrd<T>*>(rhs) );
+    return (*static_cast<const TEnumOrd<T>*>(lhs) ==
+            *static_cast<const TEnumOrd<T>*>(rhs) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void TEnumTraits<T>::DeepCopy(const void* src, void* dst) const {
-    *reinterpret_cast<TEnumOrd<T>*>(dst) =
-        *reinterpret_cast<const TEnumOrd<T>*>(src);
+    *static_cast<TEnumOrd<T>*>(dst) =
+        *static_cast<const TEnumOrd<T>*>(src);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 bool TEnumTraits<T>::PromoteCopy(const void* src, const FAtom& dst) const {
     return (not base_traits::PromoteCopy(src, dst)
-        ? PromoteEnum(*this, i64(*reinterpret_cast<const TEnumOrd<T>*>(src)), dst)
+        ? PromoteEnum(*this, i64(*static_cast<const TEnumOrd<T>*>(src)), dst)
         : true);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 bool TEnumTraits<T>::PromoteMove(void* src, const FAtom& dst) const {
     return (not base_traits::PromoteMove(src, dst)
-        ? PromoteEnum(*this, i64(*reinterpret_cast<TEnumOrd<T>*>(src)), dst)
+        ? PromoteEnum(*this, i64(*static_cast<TEnumOrd<T>*>(src)), dst)
         : true);
 }
 //----------------------------------------------------------------------------
@@ -183,7 +183,7 @@ bool TEnumTraits<T>::Accept(IAtomVisitor* visitor, void* data) const {
 
     return AtomVisit(*visitor,
         static_cast<const IScalarTraits*>(this),
-        *reinterpret_cast<TEnumOrd<T>*>(data) );
+        *static_cast<TEnumOrd<T>*>(data) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -191,7 +191,7 @@ bool TEnumTraits<T>::IsDefaultValue(const void* data) const {
     Assert(data);
 
     const auto defaultValue = TEnumOrd<T>( MetaEnumDefaultValue(TEnumTraits<T>::EnumClass()) );
-    return (*reinterpret_cast<const TEnumOrd<T>*>(data) == defaultValue);
+    return (*static_cast<const TEnumOrd<T>*>(data) == defaultValue);
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -199,7 +199,7 @@ void TEnumTraits<T>::ResetToDefaultValue(void* data) const {
     Assert(data);
 
     const auto defaultValue = TEnumOrd<T>( MetaEnumDefaultValue(TEnumTraits<T>::EnumClass()) );
-    *reinterpret_cast<TEnumOrd<T>*>(data) = defaultValue;
+    *static_cast<TEnumOrd<T>*>(data) = defaultValue;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -259,34 +259,34 @@ FStringView TObjectTraits<T>::TypeName() const {
 template <typename T>
 bool TObjectTraits<T>::DeepEquals(const void* lhs, const void* rhs) const {
     return DeepEqualsObject(
-        *reinterpret_cast<const PMetaObject*>(lhs),
-        *reinterpret_cast<const PMetaObject*>(rhs) );
+        *static_cast<const PMetaObject*>(lhs),
+        *static_cast<const PMetaObject*>(rhs) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void TObjectTraits<T>::DeepCopy(const void* src, void* dst) const {
     DeepCopyObject(*this,
-        *reinterpret_cast<const PMetaObject*>(src),
-        *reinterpret_cast<PMetaObject*>(dst) );
+        *static_cast<const PMetaObject*>(src),
+        *static_cast<PMetaObject*>(dst) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 bool TObjectTraits<T>::PromoteCopy(const void* src, const FAtom& dst) const {
     return (not base_traits::PromoteCopy(src, dst)
-        ? PromoteCopyObject(*this, *reinterpret_cast<const PMetaObject*>(src), dst)
+        ? PromoteCopyObject(*this, *static_cast<const PMetaObject*>(src), dst)
         : true );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 bool TObjectTraits<T>::PromoteMove(void* src, const FAtom& dst) const {
     return (not base_traits::PromoteMove(src, dst)
-        ? PromoteMoveObject(*this, *reinterpret_cast<PMetaObject*>(src), dst)
+        ? PromoteMoveObject(*this, *static_cast<PMetaObject*>(src), dst)
         : true );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void* TObjectTraits<T>::Cast(void* data, const PTypeTraits& dst) const {
-    return CastObject(*this, *reinterpret_cast<PMetaObject*>(data), dst);
+    return CastObject(*this, *static_cast<PMetaObject*>(data), dst);
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -296,14 +296,14 @@ bool TObjectTraits<T>::Accept(IAtomVisitor* visitor, void* data) const {
 
     return AtomVisit(*visitor,
         static_cast<const IScalarTraits*>(this),
-        *reinterpret_cast<PMetaObject*>(data) );
+        *static_cast<PMetaObject*>(data) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 bool TObjectTraits<T>::IsDefaultValue(const void* data) const {
     Assert(data);
 
-    const PMetaObject& pobj = (*reinterpret_cast<const PMetaObject*>(data));
+    const PMetaObject& pobj = (*static_cast<const PMetaObject*>(data));
     return(nullptr == pobj);
 }
 //----------------------------------------------------------------------------
@@ -311,7 +311,7 @@ template <typename T>
 void TObjectTraits<T>::ResetToDefaultValue(void* data) const {
     Assert(data);
 
-    PMetaObject& pobj = (*reinterpret_cast<PMetaObject*>(data));
+    PMetaObject& pobj = (*static_cast<PMetaObject*>(data));
     pobj.reset();
 }
 //----------------------------------------------------------------------------

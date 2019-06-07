@@ -199,13 +199,13 @@ public: // ITypeTraits
     virtual bool IsDefaultValue(const void* data) const override final {
         Assert(data);
 
-        return (*reinterpret_cast<const_pointer>(data) == Meta::MakeForceInit<T>());
+        return (*static_cast<const_pointer>(data) == Meta::MakeForceInit<T>());
     }
 
     virtual void ResetToDefaultValue(void* data) const override final {
         Assert(data);
 
-        *reinterpret_cast<pointer>(data) = Meta::MakeForceInit<T>();
+        *static_cast<pointer>(data) = Meta::MakeForceInit<T>();
     }
 
     virtual bool DeepEquals(const void* lhs, const void* rhs) const override final {
@@ -221,7 +221,7 @@ public: // ITypeTraits
         Assert(dst);
 
         return (not base_traits::PromoteCopy(src, dst)
-            ? PromoteValue_(*reinterpret_cast<const_pointer>(src), dst)
+            ? PromoteValue_(*static_cast<const_pointer>(src), dst)
             : true );
     }
 
@@ -230,7 +230,7 @@ public: // ITypeTraits
         Assert(dst);
 
         return (not base_traits::PromoteMove(src, dst)
-            ? PromoteValue_(*reinterpret_cast<const_pointer>(src), dst)
+            ? PromoteValue_(*static_cast<const_pointer>(src), dst)
             : true );
     }
 
@@ -243,7 +243,7 @@ public: // ITypeTraits
 
         return visitor->Visit(
             static_cast<const IScalarTraits*>(this),
-            *reinterpret_cast<pointer>(data) );
+            *static_cast<pointer>(data) );
     }
 };
 //----------------------------------------------------------------------------
@@ -289,15 +289,15 @@ const FMetaClass* TNativeTypeTraits<PMetaObject>::ObjectClass() const {
 template <>
 bool TNativeTypeTraits<PMetaObject>::DeepEquals(const void* lhs, const void* rhs) const {
     return DeepEqualsObject(
-        *reinterpret_cast<const PMetaObject*>(lhs),
-        *reinterpret_cast<const PMetaObject*>(rhs) );
+        *static_cast<const PMetaObject*>(lhs),
+        *static_cast<const PMetaObject*>(rhs) );
 }
 //----------------------------------------------------------------------------
 template <>
 void TNativeTypeTraits<PMetaObject>::DeepCopy(const void* src, void* dst) const {
     DeepCopyObject(*this,
-        *reinterpret_cast<const PMetaObject*>(src),
-        *reinterpret_cast<PMetaObject*>(dst) );
+        *static_cast<const PMetaObject*>(src),
+        *static_cast<PMetaObject*>(dst) );
 }
 //----------------------------------------------------------------------------
 template <>
@@ -306,7 +306,7 @@ bool TNativeTypeTraits<PMetaObject>::PromoteCopy(const void* src, const FAtom& d
     Assert(dst);
 
     return (not base_traits::PromoteCopy(src, dst)
-        ? PromoteCopyObject(*this, *reinterpret_cast<const PMetaObject*>(src), dst)
+        ? PromoteCopyObject(*this, *static_cast<const PMetaObject*>(src), dst)
         : true );
 }
 //----------------------------------------------------------------------------
@@ -316,13 +316,13 @@ bool TNativeTypeTraits<PMetaObject>::PromoteMove(void* src, const FAtom& dst) co
     Assert(dst);
 
     return (not base_traits::PromoteMove(src, dst)
-        ? PromoteMoveObject(*this, *reinterpret_cast<PMetaObject*>(src), dst)
+        ? PromoteMoveObject(*this, *static_cast<PMetaObject*>(src), dst)
         : true );
 }
 //----------------------------------------------------------------------------
 template <>
 void* TNativeTypeTraits<PMetaObject>::Cast(void* data, const PTypeTraits& dst) const {
-    return CastObject(*this, *reinterpret_cast<PMetaObject*>(data), dst);
+    return CastObject(*this, *static_cast<PMetaObject*>(data), dst);
 }
 //----------------------------------------------------------------------------
 // Specialize Traits(), TypeId() & TypeInfos() for each native type
@@ -443,7 +443,7 @@ bool PromoteCopyObject(const IScalarTraits& self, const PMetaObject& src, const 
 
     if (ENativeType(dst.TypeId()) == ENativeType::MetaObject) {
         if (IsAssignableObject_(self, *dst.Traits(), src)) {
-            (*reinterpret_cast<PMetaObject*>(dst.Data())) = src;
+            (*static_cast<PMetaObject*>(dst.Data())) = src;
             return true;
         }
     }
@@ -457,7 +457,7 @@ bool PromoteMoveObject(const IScalarTraits& self, PMetaObject& src, const FAtom&
 
     if (ENativeType(dst.TypeId()) == ENativeType::MetaObject) {
         if (IsAssignableObject_(self, *dst.Traits(), src)) {
-            (*reinterpret_cast<PMetaObject*>(dst.Data())) = std::move(src);
+            (*static_cast<PMetaObject*>(dst.Data())) = std::move(src);
             return true;
         }
     }
