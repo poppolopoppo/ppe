@@ -350,7 +350,7 @@ public:
     TSparseArray(const TSparseArray&);
     TSparseArray& operator =(const TSparseArray&);
 
-    TSparseArray(TSparseArray&& rvalue) NOEXCEPT;
+    TSparseArray(TSparseArray&& rvalue);
     TSparseArray& operator =(TSparseArray&& rvalue);
 
     using parent_type::empty;
@@ -380,6 +380,15 @@ public:
 
     template <typename... _Args>
     FDataId Emplace(_Args&&... args);
+
+    void Assign(TSparseArray&& rvalue);
+    void Assign(const TSparseArray& other);
+
+    template <typename _It>
+    void Assign(_It first, _It last) {
+        Clear();
+        AddRange(first, last);
+    }
 
     bool Remove(FDataId id);
     void Remove(iterator it);

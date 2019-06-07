@@ -94,20 +94,21 @@ template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Alloc
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::assign(TBasicHashTable&& rvalue) {
     Assert(&rvalue != this);
 
-    if (MoveAllocatorBlock(
-        &allocator_traits::Get(*this),
-        allocator_traits::Get(rvalue),
-        FAllocatorBlock{
-            rvalue._data.StatesAndBuckets,
-            (rvalue.OffsetOfBuckets_() + rvalue.capacity()) * sizeof(value_type) })) {
+    FAllocatorBlock b{
+        rvalue._data.StatesAndBuckets,
+        (rvalue.OffsetOfBuckets_() + rvalue.capacity()) * sizeof(value_type) };
 
+    const bool moved = MoveAllocatorBlock(&allocator_traits::Get(*this), allocator_traits::Get(rvalue), b);
+
+    if (moved) {
         clear_ReleaseMemory();
+
         std::swap(_data, rvalue._data);
     }
     else {
-        clear();
-        assign( std::make_move_iterator(rvalue.begin()),
-                std::make_move_iterator(rvalue.end()) );
+        assign(
+            MakeMoveIterator(rvalue.begin()),
+            MakeMoveIterator(rvalue.end()) );
 
         rvalue.clear();
     }

@@ -436,41 +436,12 @@ bool MoveAllocatorBlock(_Allocator* dst, _Allocator& src, FAllocatorBlock b) NOE
         UNUSED(src);
         UNUSED(b);
 
+        traits_t::Move(dst, std::move(src));
+
         return true;
     }
     else {
         return (not b || traits_t::StealAndAcquire(dst, src, b));
-    }
-}
-//----------------------------------------------------------------------------
-template <typename _Allocator, typename T>
-bool MoveAllocatorBlock(_Allocator* dst, _Allocator& src, TMemoryView<T>& items, size_t capacity) {
-    Assert(dst);
-
-    using traits_t = TAllocatorTraits<_Allocator>;
-    IF_CONSTEXPR(traits_t::propagate_on_container_move_assignment::value) {
-        // nothing to do : the allocator is trivially movable
-        UNUSED(dst);
-        UNUSED(src);
-        UNUSED(items);
-        UNUSED(capacity);
-
-        return true;
-    }
-    else {
-        Assert_NoAssume(items.size() <= capacity);
-
-        const FAllocatorBlock b{ items.data(), capacity * sizeof(T) };
-        if (b && not traits_t::StealAndAcquire(dst, src, b)) {
-            TMemoryView<T> mve = traits_t::template AllocateT<T>(*dst, capacity);
-            mve = mve.CutBefore(items.size());
-            std::uninitialized_move(items.begin(), items.end(), mve.begin());
-            items = mve;
-            return false;
-        }
-        else {
-            return true;
-        }
     }
 }
 //----------------------------------------------------------------------------

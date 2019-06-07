@@ -228,34 +228,24 @@ TSparseArray<T, _Allocator>::~TSparseArray() {
 template <typename T, typename _Allocator>
 TSparseArray<T, _Allocator>::TSparseArray(const TSparseArray& other)
 :   TSparseArray(allocator_traits::SelectOnCopy(other)) {
-    if (other.size()) {
-        Reserve(other.size());
-        AddRange(other.begin(), other.end());
-    }
+    Assign(other);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 auto TSparseArray<T, _Allocator>::operator =(const TSparseArray& other) -> TSparseArray& {
-    Clear_ReleaseMemory();
-    allocator_traits::Copy(this, other);
-    if (other.size()) {
-        Reserve(other.size());
-        AddRange(other.begin(), other.end());
-    }
+    Assign(other);
     return (*this);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-TSparseArray<T, _Allocator>::TSparseArray(TSparseArray&& rvalue) NOEXCEPT
-:   _Allocator(allocator_traits::SelectOnMove(std::move(rvalue)))
-,   TBasicSparseArray(std::move(rvalue))
-{}
+TSparseArray<T, _Allocator>::TSparseArray(TSparseArray&& rvalue)
+:   _Allocator(allocator_traits::SelectOnMove(std::move(rvalue))) {
+    Assign(std::move(rvalue));
+}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 auto TSparseArray<T, _Allocator>::operator =(TSparseArray&& rvalue) -> TSparseArray& {
-    Clear_ReleaseMemory();
-    allocator_traits::Move(this, std::move(rvalue));
-    parent_type::operator =(std::move(rvalue));
+    Assign(std::move(rvalue));
     return (*this);
 }
 //----------------------------------------------------------------------------
@@ -295,6 +285,33 @@ auto TSparseArray<T, _Allocator>::Emplace(_Args&&... args) -> FDataId {
     Meta::Construct(&it->Data, std::forward<_Args>(args)...);
 
     return it->Id;
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void TSparseArray<T, _Allocator>::Assign(const TSparseArray& other) {
+    Clear_ReleaseMemory();
+
+    allocator_traits::Copy(this, other);
+
+    if (other.size()) {
+        Reserve(other.size()); // better than Assign(begin(), end())
+        AddRange(other.begin(), other.end());
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void TSparseArray<T, _Allocator>::Assign(TSparseArray&& rvalue) {
+    IF_CONSTEXPR(allocator_traits::propagate_on_container_move_assignment::value) {
+        Clear_ReleaseMemory();
+        allocator_traits::Move(this, std::move(rvalue));
+        TBasicSparseArray<T>::operator =(std::move(rvalue));
+    }
+    else {
+        Clear();
+        Reserve(rvalue.size());
+        AddRange(MakeMoveIterator(rvalue.begin()), MakeMoveIterator(rvalue.end()));
+        rvalue.Clear();
+    }
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>

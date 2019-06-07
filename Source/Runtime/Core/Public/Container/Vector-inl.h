@@ -23,9 +23,6 @@ auto TVector<T, _Allocator>::operator =(TVector&& rvalue) NOEXCEPT -> TVector& {
     if (this == &rvalue)
         return *this;
 
-    typedef typename allocator_traits::propagate_on_container_move_assignment propagate_type;
-    allocator_move_(std::move(rvalue), propagate_type());
-
     assign(std::move(rvalue));
     return *this;
 }
@@ -42,39 +39,27 @@ void TVector<T, _Allocator>::allocator_copy_(const allocator_type& other, std::t
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void TVector<T, _Allocator>::allocator_move_(allocator_type&& rvalue, std::true_type ) {
-    if (not allocator_traits::Equals(*this, rvalue)) {
-        clear_ReleaseMemory();
-        Assert(nullptr == _data);
-        Assert(0 == _size);
-        Assert(0 == _capacity);
-        allocator_traits::Move(this, std::move(rvalue));
-    }
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Allocator>
 void TVector<T, _Allocator>::assign(TVector&& rvalue) {
     Assert(&rvalue != this);
 
-    clear_ReleaseMemory();
-
-    TMemoryView<T> b = rvalue.MakeView();
-    const bool moved = MoveAllocatorBlock(
-        &allocator_traits::Get(*this),
-        allocator_traits::Get(rvalue),
-        b, rvalue._capacity );
-
-    Assert_NoAssume(b.size() == rvalue._size);
-
-    _data = b.data();
-    _size = rvalue._size;
-    _capacity = rvalue._capacity;
+    FAllocatorBlock b{ rvalue._data, rvalue._capacity };
+    const bool moved = MoveAllocatorBlock(&allocator_traits::Get(*this), allocator_traits::Get(rvalue), b);
 
     if (moved) {
+        clear_ReleaseMemory();
+
+        _data = rvalue._data;
+        _size = rvalue._size;
+        _capacity = rvalue._capacity;
+
         rvalue._data = nullptr;
         rvalue._capacity = rvalue._size = 0;
     }
     else {
+        assign(
+            MakeMoveIterator(rvalue.begin()),
+            MakeMoveIterator(rvalue.end()) );
+
         rvalue.clear();
     }
 }
