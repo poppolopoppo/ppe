@@ -14,9 +14,11 @@
 #include "Container/BitMask.h"
 #include "Container/RingBuffer.h"
 #include "Container/Vector.h"
+#include "Container/SparseArray.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformMemory.h"
 #include "IO/Format.h"
+#include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 #include "Meta/PointerWFlags.h"
 #include "Meta/ThreadResource.h"
@@ -47,20 +49,13 @@ public:
     }
 
     FTaskFiberRef Stalled() const { return _stalled; }
-    ETaskPriority Priority() const {
-        Assert(_stalled);
+    ITaskContext* Context() const { return _taskContextAndPriority.Get(); }
+    ETaskPriority Priority() const { return ETaskPriority(_taskContextAndPriority.Flag01()); }
 
-        return ETaskPriority(_taskContextAndPriority.Flag01());
-    }
-
-    void Resume(void (*resume)(FTaskFiberRef)) const {
-        Assert(_stalled);
-
-        _taskContextAndPriority->RunOne(nullptr,
-            [resume, stalled{ _stalled }](ITaskContext&) {
-                resume(stalled);
-            },
-            ETaskPriority(_taskContextAndPriority.Flag01()) );
+    FTaskFunc ResumeTask() const {
+        return [resume{ _stalled }](ITaskContext&) {
+            FTaskFiberPool::CurrentHandleRef()->YieldFiber(resume, true/* release current fiber to the pool */);
+        };
     }
 
 private:
@@ -78,17 +73,16 @@ STATIC_ASSERT(sizeof(FStalledFiber) == sizeof(intptr_t) * 2);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // structure was padded due to alignment
 class CACHELINE_ALIGNED FTaskCounter : public FRefCountable {
 public:
-    FTaskCounter()
-        : _taskCount(-1)
-        , _queueSize(0)
-    {}
+    FTaskCounter() : _taskCount(-1) {}
 
     ~FTaskCounter() {
         Assert_NoAssume(CheckCanary_());
         Assert(-1 == _taskCount);
-        Assert(0 == _queueSize);
+        Assert_NoAssume(_queue.empty());
         Assert_NoAssume(SafeRefCount() == 0);
     }
 
@@ -97,8 +91,12 @@ public:
 
     bool Valid() const;
     bool Finished() const;
+
     void Start(size_t count);
     bool Queue(const FStalledFiber& waiting);
+
+    void AttachTo(const PTaskCounter& parent);
+    void Detach();
 
     friend void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef);
 
@@ -124,28 +122,22 @@ public:
 
 private:
     mutable FAtomicSpinLock _barrier;
-    std::atomic<i32> _taskCount;
-    u32 _queueSize;
 
-#if USE_PPE_SAFEPTR // _safeCount disappears otherwise
-    STATIC_CONST_INTEGRAL(u32, QueueCapacity, CODE3264(13, 14)); // exploit cache line alignment
-#else
-    STATIC_CONST_INTEGRAL(u32, QueueCapacity, CODE3264(14, 15)); // exploit all cache line alignment
-#endif
+    std::atomic<int> _taskCount;
+    STaskCounter _parent;
 
-    typedef POD_STORAGE(FStalledFiber) FQueueBuffer_[QueueCapacity];
-    FQueueBuffer_ _queue;
+    SPARSEARRAY_INSITU(Task, FStalledFiber) _queue;
 
     NO_INLINE void ResumeStalledFibers_();
 
 #if USE_PPE_SAFEPTR // _safeCount disappears otherwise
-    const size_t _canary_freeToUse = CODE3264(0x01234567ul, 0x0123456789ABCDEFull);
+    const size_t _canary = CODE3264(0x01234567ul, 0x0123456789ABCDEFull);
 #   if USE_PPE_ASSERT
-    bool CheckCanary_() const { return (CODE3264(0x01234567ul, 0x0123456789ABCDEFull) == _canary_freeToUse); }
+    bool CheckCanary_() const { return (CODE3264(0x01234567ul, 0x0123456789ABCDEFull) == _canary); }
 #   endif
 #endif
 };
-STATIC_ASSERT(sizeof(FTaskCounter) == CODE3264(128, 256));
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 class FTaskManagerImpl : public ITaskContext {
 public:
@@ -159,6 +151,8 @@ public:
 
     void Start(const TMemoryView<const u64>& threadAffinities);
     void Shutdown();
+
+    virtual void CreateWaitHandle(FTaskWaitHandle* phandle) override final;
 
     virtual void Run(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority) override final;
     virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;
@@ -212,25 +206,31 @@ public:
     PTaskCounter StartCounter(size_t n);
     void DestroyCounter(PTaskCounter& pcounter);
     void ClearCounters();
-
-    ITaskContext& Consume(FTaskScheduler::FTaskQueued* task);
-    void DutyCycle();
+    void SetPostTaskDelegate(FTaskFunc&& afterTask);
 
     static FWorkerContext_& Get();
 
     static void ExitWorkerTask(ITaskContext& ctx);
-    static void ResumeFiberTask(FTaskFiberRef resume);
-    static void Work();
+
+    static void ResumeStalledFiber(const FStalledFiber& fiber);
+    static void ResumeStalledFibers(const TMemoryView<const FStalledFiber>& fibers);
+
+    static ITaskContext& Consume(FTaskScheduler::FTaskQueued* task);
+    static void PostWork();
 
 private:
+    void DutyCycle();
+
     STATIC_CONST_INTEGRAL(size_t, CacheSize, 32); // 32 kb
 
     FTaskManagerImpl& _pimpl;
     FTaskFiberPool& _fibers;
+
     const size_t _workerIndex;
     FTaskFiberRef _fiberToRelease;
 
     size_t _revision = 0;
+    FTaskFunc _afterTask;
 
     TFixedSizeRingBuffer<PTaskCounter, CacheSize> _counters;
 
@@ -300,6 +300,8 @@ void FWorkerContext_::DestroyCounter(PTaskCounter& counter) {
     Assert_NoAssume(pcounter->SafeRefCount() == 0);
     Assert_NoAssume(pcounter->Finished());
 
+    pcounter->Detach(); // detach from potential parent
+
     _counters.push_back_OverflowIFN(nullptr, pcounter);
 }
 //----------------------------------------------------------------------------
@@ -315,18 +317,56 @@ void FWorkerContext_::ClearCounters() {
     Assert_NoAssume(0 == _counters.size());
 }
 //----------------------------------------------------------------------------
-ITaskContext& FWorkerContext_::Consume(FTaskScheduler::FTaskQueued* task) {
-    THIS_THREADRESOURCE_CHECKACCESS();
+void FWorkerContext_::SetPostTaskDelegate(FTaskFunc&& afterTask) {
+    Assert_NoAssume(afterTask);
+    AssertRelease(not _afterTask.Valid());
 
-    _pimpl.Consume(_workerIndex, task);
-    return _pimpl;
+    // this delegate will be executed after current task execution, and more
+    // importantly *AFTER* the decref, where it's safe to switch to another
+    // fiber.
+
+    _afterTask = std::move(afterTask);
 }
 //----------------------------------------------------------------------------
-void FWorkerContext_::DutyCycle() {
+ITaskContext& FWorkerContext_::Consume(FTaskScheduler::FTaskQueued* task) {
+    FWorkerContext_& ctx = Get();
+    ctx._pimpl.Consume(ctx._workerIndex, task);
+    return ctx._pimpl;
+}
+//----------------------------------------------------------------------------
+void FWorkerContext_::PostWork() {
+    FWorkerContext_& ctx = Get();
+
+    // trigger cleaning duty cycle every 128 calls per thread
+    if ((++ctx._revision & 127) == 0) {
+        ctx.DutyCycle();
+    }
+
+    // special tasks can inject a postfix callback to avoid skipping the decref
+    if (ctx._afterTask) {
+        // need to reset _afterTask before yielding, or it could be executed
+        // more than once since it's stored in the thread and not in the fiber
+        const FTaskFunc afterTaskCpy{ std::move(ctx._afterTask) };
+        Assert_NoAssume(not ctx._afterTask);
+        afterTaskCpy(ctx._pimpl);
+    }
+}
+//----------------------------------------------------------------------------
+NO_INLINE void FWorkerContext_::DutyCycle() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    if ((++_revision & 31) == 0) // every 32 calls
-        CurrentThreadContext().DutyCycle();
+#if !USE_PPE_FINAL_RELEASE && USE_PPE_LOGGER
+    size_t reserved, used;
+    _pimpl.Fibers().UsageStats(&reserved, &used);
+
+    LOG(Task, Debug, L"duty cycle for worker <{0}>, using {1} fibers / {2} reserved (max {3} used for stack)",
+        MakeCStringView(CurrentThreadContext().Name()),
+        Fmt::CountOfElements(used),
+        Fmt::CountOfElements(reserved),
+        Fmt::SizeInBytes(reserved * FTaskFiberPool::ReservedStackSize()));
+#endif
+
+    CurrentThreadContext().DutyCycle();
 }
 //----------------------------------------------------------------------------
 FWorkerContext_& FWorkerContext_::Get() {
@@ -335,8 +375,34 @@ FWorkerContext_& FWorkerContext_::Get() {
     return (*_gInstanceTLS);
 }
 //----------------------------------------------------------------------------
-void FWorkerContext_::ResumeFiberTask(FTaskFiberRef resume) {
-    FTaskFiberPool::CurrentHandleRef()->YieldFiber(resume, true/* release this fiber in the pool */);
+void FWorkerContext_::ResumeStalledFiber(const FStalledFiber& fiber) {
+    Assert(fiber.Stalled());
+    Assert_NoAssume(FTaskFiberPool::CurrentHandleRef() != fiber.Stalled());
+
+    FWorkerContext_& ctx = Get();
+
+    // if the fiber uses the same task manager we can resume the fiber without
+    // using a third fiber to release the current fiber
+    if (&ctx._pimpl == fiber.Context())
+        ctx.SetPostTaskDelegate(fiber.ResumeTask());
+    // if the fiber is waiting from another the task we *NEED* to use its own
+    // context to resume it, it's one of the key features of FTaskManager
+    else
+        fiber.Context()->RunOne(nullptr, fiber.ResumeTask(), fiber.Priority());
+}
+//----------------------------------------------------------------------------
+void FWorkerContext_::ResumeStalledFibers(const TMemoryView<const FStalledFiber>& fibers) {
+    Assert_NoAssume(not fibers.empty());
+
+    // don't use an intermediate fiber to release this task (first should be the task with max priority)
+    ResumeStalledFiber(fibers.front());
+
+    // but it still needed for count(tasks) > 1 since we'll lose EIP afterwards
+    for (const FStalledFiber& fiber : fibers.ShiftFront()) {
+        Assert(fiber.Stalled());
+
+        fiber.Context()->RunOne(nullptr, fiber.ResumeTask(), fiber.Priority());
+    }
 }
 //----------------------------------------------------------------------------
 void FWorkerContext_::ExitWorkerTask(ITaskContext&) {
@@ -353,24 +419,6 @@ void FWorkerContext_::ExitWorkerTask(ITaskContext&) {
     thread.Resume();
 
     AssertNotReached(); // final state of the fiber, this should never be executed !
-}
-//----------------------------------------------------------------------------
-void FWorkerContext_::Work() {
-    FTaskScheduler::FTaskQueued task;
-    {
-        // after Invoke() we could be in another thread,
-        // this is why this is a static function and why
-        // ctx is protected inside this scope.
-
-        ITaskContext& ctx = FWorkerContext_::Get().Consume(&task);
-        Assert(task.Pending.Valid());
-        task.Pending.Invoke(ctx);
-    }
-
-    // Decrement the counter and resume waiting tasks if any.
-    // Won't steal the thread from this fiber, so the loop can safely finish
-    if (task.Counter)
-        Decrement_ResumeWaitingTasksIfZero(task.Counter);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -568,6 +616,12 @@ void FTaskManagerImpl::Shutdown() {
     _threads.clear();
 }
 //----------------------------------------------------------------------------
+void FTaskManagerImpl::CreateWaitHandle(FTaskWaitHandle* phandle) {
+    Assert(phandle);
+
+    MakeCounterIFN_(phandle, 0);
+}
+//----------------------------------------------------------------------------
 void FTaskManagerImpl::Run(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority) {
     Assert_NoAssume(rtask);
 
@@ -662,18 +716,52 @@ void FTaskManagerImpl::Consume(size_t workerIndex, FTaskQueued* task) {
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::ReleaseMemory() {
-    _fibers.ReleaseMemory();
+#if USE_PPE_LOGGER
+    size_t reserved, used;
+    _fibers.UsageStats(&reserved, &used);
+
+    LOG(Task, Debug, L"before release memory in task manager <{0}>, using {1} fibers / {2} reserved (max {3} used for stack)",
+        _manager.Name(),
+        Fmt::CountOfElements(used),
+        Fmt::CountOfElements(reserved),
+        Fmt::SizeInBytes(reserved * FTaskFiberPool::ReservedStackSize()));
+#endif
+
+    _fibers.ReleaseMemory(); // get most memory at the top
+
+    BroadcastAndWaitFor(
+        [](ITaskContext&) {
+            // defragment malloc TLS caches
+            malloc_release_cache_memory();
+            // defragment fiber pool by getting releasing current fiber and getting a new one
+            FWorkerContext_::Get().SetPostTaskDelegate([](ITaskContext&) {
+                FTaskFiberPool::CurrentHandleRef()->YieldFiber(nullptr, true);
+                });
+        },
+        ETaskPriority::High/* highest priority, to avoid block waiting for all the jobs queued before */);
+
+    _fibers.ReleaseMemory(); // release defragmented blocks
+
+#if USE_PPE_LOGGER
+    _fibers.UsageStats(&reserved, &used);
+
+    LOG(Task, Debug, L"after release memory in task manager <{0}>, using {1} fibers / {2} reserved (max {3} used for stack)",
+        _manager.Name(),
+        Fmt::CountOfElements(used),
+        Fmt::CountOfElements(reserved),
+        Fmt::SizeInBytes(reserved * FTaskFiberPool::ReservedStackSize()));
+#endif
 }
 //----------------------------------------------------------------------------
 FTaskCounter* FTaskManagerImpl::MakeCounterIFN_(FTaskWaitHandle* phandle, size_t n) {
-    if (phandle) {
-        Assert_NoAssume(not phandle->Valid());
-
-        *phandle = FTaskWaitHandle{ FWorkerContext_::Get().StartCounter(n) };
-        return phandle->_counter.get();
+    if (nullptr == phandle) {
+        return nullptr;
     }
     else {
-        return nullptr;
+        if (Likely(not phandle->Valid()))
+            *phandle = FTaskWaitHandle{ FWorkerContext_::Get().StartCounter(n) };
+
+        return phandle->_counter.get();
     }
 }
 //----------------------------------------------------------------------------
@@ -686,9 +774,28 @@ void FTaskManagerImpl::WorkerLoop_() {
     Assert(FFiber::RunningFiber() != FFiber::ThreadFiber());
 
     for (;;) {
-        FWorkerContext_::Get().Work();
-        // beware : we potentially switch to another thread (multiple times) between these 2 calls
-        FWorkerContext_::Get().DutyCycle();
+        // need to destroy the task handle asap
+        {
+            FTaskScheduler::FTaskQueued task;
+            {
+                // after Invoke() we could be in another thread,
+                // this is why this is a static function and why
+                // ctx is protected inside this scope.
+
+                ITaskContext& ctx = FWorkerContext_::Consume(&task);
+                Assert(task.Pending.Valid());
+                task.Pending.Invoke(ctx);
+            }
+
+            // Decrement the counter and resume waiting tasks if any.
+            // Won't steal the thread from this fiber, so the loop can safely finish
+            if (task.Counter)
+                Decrement_ResumeWaitingTasksIfZero(task.Counter);
+        }
+
+        // this loop is thigh to a fiber, *NOT A THREAD*
+        // so we need to ask for the current thread again here
+        FWorkerContext_::PostWork();
     }
 }
 //----------------------------------------------------------------------------
@@ -710,6 +817,7 @@ bool FTaskCounter::Finished() const {
 void FTaskCounter::Start(size_t count) {
     Assert_NoAssume(CheckCanary_());
     Assert(-1 == _taskCount);
+    Assert_NoAssume(not _parent);
 
     _taskCount = checked_cast<i32>(count);
 }
@@ -723,26 +831,39 @@ bool FTaskCounter::Queue(const FStalledFiber& waiting) {
         const FAtomicSpinLock::FScope scopedLock(_barrier);
 
         if (_taskCount > 0) {
-            // will be resumed by counter when exhausted in Decrement_ResumeWaitingTasksIfZero()
-            Assert(_queueSize < QueueCapacity);
-
-            INPLACE_NEW(&_queue[_queueSize++], FStalledFiber)(waiting);
+            _queue.Emplace(waiting);
             return true;
         }
     }
 
     // queue for immediate resume if the counter is already exhausted (won't steal execution from current fiber)
-    waiting.Resume(&FWorkerContext_::ResumeFiberTask);
+    FWorkerContext_::ResumeStalledFiber(waiting);
 
     return false;
+}
+//----------------------------------------------------------------------------
+void FTaskCounter::AttachTo(const PTaskCounter& parent) {
+    Assert(parent);
+    Assert_NoAssume(CheckCanary_());
+
+    const FAtomicSpinLock::FScope scopedLock(_barrier);
+    AssertRelease(not _parent);
+
+    _parent.reset(parent.get());
+    _parent->_taskCount += _taskCount.load();
+}
+//----------------------------------------------------------------------------
+void FTaskCounter::Detach() {
+    Assert_NoAssume(CheckCanary_());
+    Assert_NoAssume(Finished());
+
+    _parent.reset();
 }
 //----------------------------------------------------------------------------
 NO_INLINE void FTaskCounter::ResumeStalledFibers_() {
     Assert_NoAssume(CheckCanary_());
 
-    FTaskCounter::FQueueBuffer_ buffer;
-    TMemoryView<FStalledFiber> resume;
-
+    TAllocaBlock<FStalledFiber> localq; // can use alloca since won't switch from thread here
     {
         // simply copy the queue with the lock acquired
         // avoid reading from this again !
@@ -750,46 +871,55 @@ NO_INLINE void FTaskCounter::ResumeStalledFibers_() {
         const FAtomicSpinLock::FScope scopedLock(_barrier);
         Assert_NoAssume(0 == _taskCount);
 
-        resume = TMemoryView<FStalledFiber>(reinterpret_cast<FStalledFiber*>(buffer), _queueSize);
-        const TMemoryView<FStalledFiber> queue(reinterpret_cast<FStalledFiber*>(_queue), _queueSize);
+        localq.RelocateIFP(_queue.size());
+        std::uninitialized_move(_queue.begin(), _queue.end(), localq.MakeView().begin());
 
-        std::uninitialized_move(queue.begin(), queue.end(), resume.begin());
-
-#if USE_PPE_ASSERT
-        FPlatformMemory::Memdeadbeef(queue.data(), queue.SizeInBytes());
-#endif
-
-        _queueSize = 0;
+        _queue.Clear_ReleaseMemory();
         _taskCount = -1;
     }
 
     Assert_NoAssume(Finished()); // from now on we work only on the stack :
 
-    // sort all queued fibers by priority before resuming and outside of the lock
-    std::stable_sort(resume.begin(), resume.end(),
-        [](const FStalledFiber& lhs, const FStalledFiber& rhs) {
-        return (lhs.Priority() < rhs.Priority());
-    });
+    if (localq.Count) {
+        const TMemoryView<FStalledFiber> resume = localq.MakeView();
 
-    // stalled fibers are resumed through a task to let the current fiber dispatch
-    // all jobs to every worker thread before yielding
-    for (FStalledFiber& fiber : resume)
-        fiber.Resume(&FWorkerContext_::ResumeFiberTask);
+        // sort all queued fibers by priority before resuming and outside of the lock
+        std::stable_sort(resume.begin(), resume.end(),
+            [](const FStalledFiber& lhs, const FStalledFiber& rhs) {
+                return (lhs.Priority() < rhs.Priority());
+            });
+
+        // stalled fibers are resumed through a task to let the current fiber dispatch
+        // all jobs to every worker thread before yielding (won't steal execution from current fiber)
+        FWorkerContext_::ResumeStalledFibers(resume);
+    }
 }
 //----------------------------------------------------------------------------
 void Decrement_ResumeWaitingTasksIfZero(STaskCounter& saferef) {
     Assert(saferef);
 
+    // need a local copy of the counter to decrement after reseting
     FTaskCounter* const pcounter = saferef.get();
     Assert(pcounter->Valid());
 
-    saferef.reset(); // need to reset just before decrementing, lifetime should be guaranteed by owner
+    STaskCounter parent{ pcounter->_parent };
 
+    // need to reset just before decrementing,
+    // lifetime should be guaranteed by owner until _taskCount == 0
+    saferef.reset();
+
+    // resume stalled fibers, this won't steal the execution from the current fiber
     const i32 n = (--pcounter->_taskCount);
     if (Unlikely(n == 0))
         pcounter->ResumeStalledFibers_();
     else
         Assert_NoAssume(n > 0);
+
+    // can't access pcounter anymore ! if n == 0 lifetime isn't guaranteed anymore
+
+    // safely recurse to the parent afterwards
+    if (parent)
+        Decrement_ResumeWaitingTasksIfZero(parent);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -801,10 +931,7 @@ FTaskWaitHandle::FTaskWaitHandle(PTaskCounter&& counter) NOEXCEPT
 :   _counter(std::move(counter)) {}
 //----------------------------------------------------------------------------
 FTaskWaitHandle::~FTaskWaitHandle() {
-    if (_counter) {
-        Assert_NoAssume(_counter->Finished());
-        FWorkerContext_::Get().DestroyCounter(_counter);
-    }
+    Reset();
 }
 //----------------------------------------------------------------------------
 FTaskWaitHandle::FTaskWaitHandle(FTaskWaitHandle&& rvalue) NOEXCEPT {
@@ -824,6 +951,20 @@ bool FTaskWaitHandle::Finished() const {
     Assert_NoAssume(_counter.valid());
 
     return _counter->Finished();
+}
+//----------------------------------------------------------------------------
+void FTaskWaitHandle::AttachTo(FTaskWaitHandle& parent) {
+    Assert(_counter);
+    Assert(parent._counter);
+
+    _counter->AttachTo(parent._counter);
+}
+//----------------------------------------------------------------------------
+void FTaskWaitHandle::Reset() {
+    if (_counter) {
+        AssertRelease(_counter->Finished());
+        FWorkerContext_::Get().DestroyCounter(_counter);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

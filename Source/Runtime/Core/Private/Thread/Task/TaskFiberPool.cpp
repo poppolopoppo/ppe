@@ -33,12 +33,14 @@ public:
     using FHandle = FTaskFiberPool::FHandle;
     using FHandleRef = FTaskFiberPool::FHandleRef;
 
+    using bit_mask = TBitMask<u64>;
+
     FTaskFiberChunk();
     ~FTaskFiberChunk();
 
     bool Idle() const { return (_free == BusyMask); }
-    bool Stressed() const { return (bit_mask{ _free }.Count() < Capacity/10); } // less than 10% idle fibers
     bool Saturated() const { return (_free == 0); }
+    size_t NumAvailable() const { return bit_mask{ _free }.Count(); }
 
     const TIntrusiveListNode<FTaskFiberChunk>& Node() const { return _node; }
 
@@ -52,8 +54,6 @@ public:
 
 private:
     friend class FTaskFiberPool;
-
-    using bit_mask = TBitMask<u64>;
 
     FHandle _handles[Capacity];
 
@@ -93,6 +93,8 @@ void FTaskFiberPool::FHandle::AttachWakeUpCallback(FCallback&& onWakeUp) const {
 }
 //----------------------------------------------------------------------------
 void FTaskFiberPool::FHandle::YieldFiber(FHandleRef to, bool release) const {
+    Assert(to != this);
+
     FTaskFiberChunk* const chunk = Chunk();
     Assert_NoAssume(chunk->_pool);
 
@@ -105,6 +107,7 @@ FTaskFiberChunk::FTaskFiberChunk()
 :   _free{ BusyMask }
 ,   _pool(nullptr)
 ,   _node{ nullptr, nullptr } {
+
     forrange(i, 0, Capacity) {
         FHandle& h = _handles[i];
         h.Index = i;
@@ -154,7 +157,10 @@ auto FTaskFiberChunk::AcquireFiber() -> FHandleRef {
 
         if (Likely(expected)) {
             TBitMask<u64> m{ expected };
+
+            ONLY_IF_ASSERT(const size_t n0 = m.Count());
             u64 w = m.PopFront_AssumeNotEmpty();
+            Assert_NoAssume(m.Count() + 1 == n0);
 
             if (Likely(_free.compare_exchange_weak(expected, m.Data,
                 std::memory_order_release, std::memory_order_relaxed))) {
@@ -182,7 +188,10 @@ void FTaskFiberChunk::ReleaseFiber(FHandleRef handle) {
         Assert_NoAssume(m.Data != FTaskFiberChunk::BusyMask); // at least one free fiber
         Assert_NoAssume(handle->Index < Capacity);
         Assert_NoAssume(not m.Get(handle->Index)); // check if it was correctly flagged as busy
+
+        ONLY_IF_ASSERT(const size_t n0 = m.Count());
         m.SetTrue(handle->Index); // set fiber as available
+        Assert_NoAssume(m.Count() == n0 + 1);
 
         if (Likely(_free.compare_exchange_weak(expected, m.Data,
             std::memory_order_release, std::memory_order_relaxed))) {
@@ -261,11 +270,13 @@ void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
 
     // we never release owned chunks (#TODO ? looks like this would be quite rare, and we still have ReleaseMemory() available)
 
+#if 0 // this is causing internal fragmentation in the chunks
     if (Unlikely(chunk != _chunks))
         Meta::unlikely([&]() {
             const Meta::FLockGuard scopeLock(_barrier);
             FTaskFiberChunk::list_t::PokeHead(&_chunks, nullptr, chunk);
         });
+#endif
 }
 //----------------------------------------------------------------------------
 void FTaskFiberPool::YieldCurrentFiber(FHandleRef self, FHandleRef to, bool release) {
@@ -311,11 +322,45 @@ void FTaskFiberPool::StartThread() {
 }
 //----------------------------------------------------------------------------
 void FTaskFiberPool::ReleaseMemory() {
-    // release potentially idle chunks :
     if (Likely(_chunks)) {
         const Meta::FLockGuard scopeLock(_barrier);
+
+        // sort chunks by diminishing available space order
+        for (FTaskFiberChunk* ch = _chunks; ch; ) {
+            FTaskFiberChunk* const nxt = ch->_node.Next;
+            if (ch != _chunks && ch->NumAvailable() > _chunks->NumAvailable())
+                FTaskFiberChunk::list_t::PokeHead(&_chunks, nullptr, ch);
+            ch = nxt;
+        }
+
+        // release potentially idle chunks :
         FTaskFiberChunk::ReleaseChunks(&_chunks, _chunks->_node.Next/* always keep one chunk alive */);
     }
+}
+//----------------------------------------------------------------------------
+#if !USE_PPE_FINAL_RELEASE
+void FTaskFiberPool::UsageStats(size_t* reserved, size_t* inUse) {
+    Assert(reserved);
+    Assert(inUse);
+
+    size_t r = 0;
+    size_t u = 0;
+    {
+        const Meta::FLockGuard scopeLock(_barrier);
+
+        for (FTaskFiberChunk* ch = _chunks; ch; ch = ch->Node().Next) {
+            r += FTaskFiberChunk::Capacity;
+            u += FTaskFiberChunk::Capacity - FTaskFiberChunk::bit_mask{ ch->_free.load() }.Count();
+        }
+    }
+
+    *reserved = r;
+    *inUse = u;
+}
+#endif //!!USE_PPE_FINAL_RELEASE
+//----------------------------------------------------------------------------
+size_t FTaskFiberPool::ReservedStackSize() {
+    return FTaskFiberChunk::StackSize;
 }
 //----------------------------------------------------------------------------
 NO_INLINE FTaskFiberChunk* FTaskFiberPool::AcquireChunk_() {
@@ -329,7 +374,7 @@ NO_INLINE FTaskFiberChunk* FTaskFiberPool::AcquireChunk_() {
         return nullptr; // let the callee recurse into AcquireFiber(), extremely likely to find a new fiber
 
     // first look for a potential chunk with free fibers remaining
-    for (FTaskFiberChunk* ch = (_chunks ? _chunks->_node.Next/* ignores the first chunk */ : nullptr); ch; ch = ch->_node.Next) {
+    for (FTaskFiberChunk* ch = _chunks; ch; ch = ch->_node.Next) {
         if (not ch->Saturated()) {
             FTaskFiberChunk::list_t::PokeHead(&_chunks, nullptr, ch);
             return nullptr; // don't return that existing chunk directly :

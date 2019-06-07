@@ -45,6 +45,11 @@ public:
     void StartThread();
     void ReleaseMemory();
 
+#if !USE_PPE_FINAL_RELEASE
+    void UsageStats(size_t* reserved, size_t* inUse);
+#endif
+
+    static size_t ReservedStackSize();
     static FHandleRef CurrentHandleRef() {
         auto* h = (FHandleRef)FFiber::CurrentFiberData(); // @FHandle is passed down as each fiber data
         Assert(h);

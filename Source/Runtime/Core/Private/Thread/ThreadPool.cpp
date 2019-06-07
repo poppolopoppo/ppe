@@ -6,6 +6,7 @@
 #include "Thread/ThreadContext.h"
 
 #include "HAL/PlatformThread.h"
+#include "Memory/MemoryTracking.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -23,16 +24,6 @@ template <typename _Pool>
 static void DestroyThreadPool_() {
     _Pool::Get().Shutdown();
     _Pool::Destroy();
-}
-//----------------------------------------------------------------------------
-static void ReleaseMemoryInWorkerThreads_(FTaskManager& taskManager) {
-    taskManager.BroadcastAndWaitFor(
-        [](ITaskContext&) {
-            malloc_release_cache_memory();
-        },
-        ETaskPriority::High/* highest priority, to avoid block waiting for all the jobs queued before */);
-
-    taskManager.ReleaseMemory(); // release free fiber chunks
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -107,13 +98,15 @@ void FThreadPoolStartup::Shutdown() {
     FHighPriorityThreadPool::Destroy();
     FIOThreadPool::Destroy();
     FGlobalThreadPool::Destroy();
+
+    Assert_NoAssume(MEMORYDOMAIN_TRACKING_DATA(Fibers).empty());
 }
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::ReleaseMemory() {
-    ReleaseMemoryInWorkerThreads_(FBackgroundThreadPool::Get());
-    ReleaseMemoryInWorkerThreads_(FHighPriorityThreadPool::Get());
-    ReleaseMemoryInWorkerThreads_(FIOThreadPool::Get());
-    ReleaseMemoryInWorkerThreads_(FGlobalThreadPool::Get());
+    FBackgroundThreadPool::Get().ReleaseMemory();
+    FHighPriorityThreadPool::Get().ReleaseMemory();
+    FIOThreadPool::Get().ReleaseMemory();
+    FGlobalThreadPool::Get().ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

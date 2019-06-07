@@ -25,6 +25,7 @@ public:
     friend class FTaskManagerImpl;
 
     FTaskWaitHandle() NOEXCEPT;
+
     explicit FTaskWaitHandle(PTaskCounter&& counter) NOEXCEPT;
 
     ~FTaskWaitHandle();
@@ -40,6 +41,9 @@ public:
     bool Valid() const { return _counter.valid(); }
     bool Finished() const;
 
+    void AttachTo(FTaskWaitHandle& parent);
+    void Reset();
+
 private:
     PTaskCounter _counter;
 };
@@ -47,6 +51,8 @@ private:
 class PPE_CORE_API ITaskContext {
 public:
     virtual ~ITaskContext() {}
+
+    virtual void CreateWaitHandle(FTaskWaitHandle* phandle) = 0;
 
     virtual void Run(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
