@@ -76,7 +76,7 @@ public:
     }
 
     static size_t MaxSize() NOEXCEPT {
-        return Min(primary_traits::MaxSize(), fallback_traits::MaxSize());
+        return Max(primary_traits::MaxSize(), fallback_traits::MaxSize());
     }
 
     static size_t SnapSize(size_t s) NOEXCEPT {
@@ -90,7 +90,9 @@ public:
     }
 
     FAllocatorBlock Allocate(size_t s) {
-        FAllocatorBlock b = primary_traits::Allocate(*this, s);
+        FAllocatorBlock b{ FAllocatorBlock::Null() };
+        if (Likely(s <= primary_traits::MaxSize()))
+            b = primary_traits::Allocate(*this, s);
         if (Unlikely(not b))
             b = fallback_traits::Allocate(*this, s);
         return b;
