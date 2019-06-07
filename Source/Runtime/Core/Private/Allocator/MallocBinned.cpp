@@ -1088,7 +1088,7 @@ FBinnedThreadCache_::~FBinnedThreadCache_() {
                 Assert_NoAssume(not next || next->PrevChunk == ch);
                 Assert_NoAssume(this == ch->ThreadCache);
                 Assert_NoAssume(ch->NumBlocksInUse);
-                Assert_NoAssume(ch->NumBlocksInUse < ch->NumBlocksTotal);
+                Assert_NoAssume(ch->NumBlocksInUse <= ch->NumBlocksTotal);
                 Assert_NoAssume(nullptr == ch->NextBatch);
                 Assert_NoAssume(0 == ch->NumChunksInBatch);
                 {
