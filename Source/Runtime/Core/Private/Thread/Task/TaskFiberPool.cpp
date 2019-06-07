@@ -27,7 +27,7 @@ public:
     STATIC_CONST_INTEGRAL(size_t, StackSize, 2 * ALLOCATION_GRANULARITY); // 128 kb
 #endif
     STATIC_CONST_INTEGRAL(size_t, Capacity, 64); // <=> 64 * 128 kb = 8 mb (16 for debug),
-    STATIC_CONST_INTEGRAL(u64, BusyMask, Capacity - 1); // all bits set <=> all fibers available
+    STATIC_CONST_INTEGRAL(u64, BusyMask, UINT64_MAX); // all bits set <=> all fibers available
 
     using FCallback = FTaskFiberPool::FCallback;
     using FHandle = FTaskFiberPool::FHandle;
