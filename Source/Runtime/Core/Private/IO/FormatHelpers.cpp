@@ -12,6 +12,26 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, Fmt::FPointer ptr) {
+    return (*oss.FormatScope())
+        << "[@0x"
+        << FTextFormat::Hexadecimal
+        << FTextFormat::PadLeft(sizeof(ptr) << 1, '0')
+        << uintptr_t(ptr.Value)
+        << ']';
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPointer ptr) {
+    return (*oss.FormatScope())
+        << L"[@0x"
+        << FTextFormat::Hexadecimal
+        << FTextFormat::PadLeft(sizeof(ptr) << 1, L'0')
+        << size_t(ptr.Value)
+        << L']';
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, Fmt::FPercentage prc) {
     return (*oss.FormatScope())
         << FTextFormat::PadLeft(6, ' ') // 100.00

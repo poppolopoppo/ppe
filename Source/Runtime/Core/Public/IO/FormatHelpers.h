@@ -14,9 +14,15 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
+struct FPointer {
+    void* Value;
+};
 template <typename T>
-void* Pointer(const T* p) NOEXCEPT { return (void*)p; }
+FPointer Pointer(const T* p) NOEXCEPT { return FPointer{ (void*)p }; }
 } //!namespace Fmt
+//----------------------------------------------------------------------------
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, Fmt::FPointer ptr);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, Fmt::FPointer ptr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
