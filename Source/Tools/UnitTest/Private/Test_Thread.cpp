@@ -2,22 +2,30 @@
 
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformProcess.h"
+
+#include "Container/Vector.h"
+
 #include "IO/BufferedStream.h"
 #include "IO/FileStream.h"
+#include "IO/FormatHelpers.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
+#include "Maths/RandomGenerator.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 #include "Memory/RefPtr.h"
 #include "Misc/Event.h"
 #include "Misc/Function.h"
+#include "Time/DateTime.h"
+#include "Time/Timestamp.h"
+#include "Time/TimedScope.h"
 #include "Thread/Task.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
 
 namespace PPE {
 namespace Test {
-LOG_CATEGORY(, Test_Thread)
+LOG_CATEGORY_VERBOSITY(, Test_Thread, NoDebug)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -115,6 +123,104 @@ static void Test_ParallelFor_() {
     LOG(Test_Thread, Info, L"ParallelFor stop");
 }
 //----------------------------------------------------------------------------
+struct FGraphNode {
+    int Depth{ 0 };
+    int Revision{ 0 };
+    FTimestamp Timestamp;
+    FTaskWaitHandle Status;
+    VECTOR(Task, FGraphNode*) Dependencies;
+
+    using FQueue = SPARSEARRAY_INSITU(Task, FGraphNode*);
+
+    void Pass(FQueue* q, int revision, int depth = 0) {
+        Depth = Max(depth, Depth);
+        if (Revision != revision) {
+            Revision = revision;
+
+            for (FGraphNode* dep : Dependencies)
+                dep->Pass(q, revision, Depth + 1);
+
+            q->Emplace(this);
+        }
+    }
+
+    void Build(ITaskContext& ctx) {
+        for (FGraphNode* dep : Dependencies)
+            ctx.WaitFor(dep->Status);
+
+        FPlatformProcess::Sleep(0.01f);
+        Timestamp = FTimestamp::Now();
+
+        LOG(Test_Thread, Debug, L"Build: {0} -> {1} (depth = {2:3})",
+            Fmt::Pointer(this), Timestamp, Depth );
+    }
+};
+struct FGraph {
+    int Revision{ 0 };
+    VECTOR(Task, FGraphNode) Storage;
+    VECTOR(Task, FGraphNode*) Nodes;
+
+    void Randomize(size_t n, size_t depth) {
+        Storage.clear();
+        Storage.reserve(n);
+
+        FRandomGenerator rnd;
+
+        forrange(i, 0, n) {
+            Storage.emplace_back_AssumeNoGrow();
+
+            if (i == 0) continue;
+
+            const size_t m = rnd.Next(depth + 1);
+            const TMemoryView<FGraphNode> deps = Storage.MakeView().ShiftBack();
+
+            FGraphNode& node = Storage.back();
+            node.Dependencies.reserve_AssumeEmpty(m);
+
+            forrange(j, 0, m)
+                Add_Unique(node.Dependencies, &rnd.RandomElement(deps));
+        }
+
+        Nodes.assign(Storage.MakeView().Map([](FGraphNode& n) { return &n; }));
+
+        rnd.Shuffle(Nodes.MakeView());
+    }
+
+    void Build(ITaskContext& ctx) {
+        Revision++;
+
+        FGraphNode::FQueue q;
+        for (FGraphNode* node : Nodes)
+            node->Pass(&q, Revision);
+
+        LOG(Test_Thread, Info, L"Collected {0} tasks to build",
+            Fmt::CountOfElements(q.size()) );
+
+        FTimedScope time;
+
+        FTaskWaitHandle waitAll;
+        ctx.CreateWaitHandle(&waitAll);
+
+        for (FGraphNode* dep : q) {
+            ctx.Run(&dep->Status, FTaskFunc::Bind<&FGraphNode::Build>(dep));
+            dep->Status.AttachTo(waitAll);
+        }
+
+        ctx.WaitFor(waitAll);
+
+        LOG(Test_Thread, Info, L"Collected {0} tasks to build in {1}",
+            Fmt::CountOfElements(q.size()), time.Elapsed() );
+
+        for (FGraphNode* dep : q)
+            dep->Status.Reset();
+    }
+};
+static void Test_Graph_() {
+    FGraph g;
+    g.Randomize(1024, 10);
+    FHighPriorityThreadPool::Get().RunAndWaitFor(FTaskFunc::Bind<&FGraph::Build>(&g));
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -127,6 +233,9 @@ void Test_Thread() {
     Test_Future_();
     Test_ParallelFor_();
     Test_Task_();
+    Test_Graph_();
+
+    ReleaseMemoryInModules();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
