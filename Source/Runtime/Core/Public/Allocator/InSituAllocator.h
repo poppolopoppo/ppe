@@ -197,11 +197,12 @@ public:
         FAllocatorBlock b;
         b.SizeInBytes = Meta::RoundToNext(s, Alignment);
 
-        if (Offset + s <= _SizeInBytes) {
+        if (Offset + b.SizeInBytes <= _SizeInBytes) {
             b.Data = (u8*)&InSitu + Offset;
             Offset += b.SizeInBytes;
         }
         else {
+            b.Data = nullptr;
             b.SizeInBytes = 0; // not enough space, fail allocation
         }
 
