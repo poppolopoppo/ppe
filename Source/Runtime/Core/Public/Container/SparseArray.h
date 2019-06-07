@@ -166,9 +166,10 @@ protected:
         return id.Unpacked;
     }
 
-    // each time a sparse must grow it allocate a new chunk twice bigger than previous one
+    // each time a sparse must grow it doubles capacity with a new chunk as big as current capacity
+
     static size_t ckIndex_(size_t i) NOEXCEPT {
-        return (FPlatformMaths::CeilLog2(Max(i, MinChunkSize)) - MinChunkExp);
+        return (FPlatformMaths::CeilLog2(Max(i + 1, MinChunkSize)) - MinChunkExp);
     }
     static size_t ckSize_(size_t o) NOEXCEPT {
         return (size_t(1) << (MinChunkExp + o));

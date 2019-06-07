@@ -546,7 +546,6 @@ template <typename T, typename _Allocator>
 void TSparseArray<T, _Allocator>::ReleaseChunk_(FDataItem* chunk, size_t off, size_t sz) {
     Assert(chunk);
     Assert(sz);
-    Assert_NoAssume(off + sz >= _highestIndex);
 
     IF_CONSTEXPR(Meta::has_trivial_destructor<T>::value == false) {
         for (size_t i = 0; (i < sz) & (off + i < _highestIndex); ++i) {
