@@ -3,6 +3,7 @@
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformProcess.h"
 
+#include "Container/RawStorage.h"
 #include "Container/Vector.h"
 
 #include "IO/BufferedStream.h"
@@ -123,14 +124,36 @@ static void Test_ParallelFor_() {
     LOG(Test_Thread, Info, L"ParallelFor stop");
 }
 //----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
 struct FGraphNode {
     int Depth{ 0 };
-    int Revision{ 0 };
+    std::atomic<int> Revision{ 0 };
     FTimestamp Timestamp;
     FTaskWaitHandle Status;
     VECTOR(Task, FGraphNode*) Dependencies;
 
+    FGraphNode() = default;
+
+    FGraphNode(const FGraphNode&) = delete;
+    FGraphNode& operator =(const FGraphNode&) = delete;
+
+    FGraphNode(FGraphNode&&) = default;
+    FGraphNode& operator =(FGraphNode&&) = default;
+
     using FQueue = SPARSEARRAY_INSITU(Task, FGraphNode*);
+
+    void Build(ITaskContext&) {
+        FPlatformProcess::Sleep(0.01f);
+        Timestamp = FTimestamp::Now();
+
+        LOG(Test_Thread, Debug, L"Build: {0} -> {1} (depth = {2:3})",
+            Fmt::Pointer(this), Timestamp, Depth);
+    }
 
     void Pass(FQueue* q, int revision, int depth = 0) {
         Depth = Max(depth, Depth);
@@ -143,58 +166,46 @@ struct FGraphNode {
             q->Emplace(this);
         }
     }
-
-    void Build(ITaskContext& ctx) {
-        for (FGraphNode* dep : Dependencies)
-            ctx.WaitFor(dep->Status);
-
-        FPlatformProcess::Sleep(0.01f);
-        Timestamp = FTimestamp::Now();
-
-        LOG(Test_Thread, Debug, L"Build: {0} -> {1} (depth = {2:3})",
-            Fmt::Pointer(this), Timestamp, Depth );
-    }
 };
 struct FGraph {
     int Revision{ 0 };
-    VECTOR(Task, FGraphNode) Storage;
+    TAllocaBlock<FGraphNode> Storage;
     VECTOR(Task, FGraphNode*) Nodes;
 
     void Randomize(size_t n, size_t depth) {
-        Storage.clear();
-        Storage.reserve(n);
+        Storage.RelocateIFP(n);
 
         FRandomGenerator rnd;
 
         forrange(i, 0, n) {
-            Storage.emplace_back_AssumeNoGrow();
+            FGraphNode* const p = INPLACE_NEW(&Storage.RawData[i], FGraphNode);
 
-            if (i == 0) continue;
+            if (i) {
+                const size_t m = rnd.Next(depth + 1);
 
-            const size_t m = rnd.Next(depth + 1);
-            const TMemoryView<FGraphNode> deps = Storage.MakeView().ShiftBack();
-
-            FGraphNode& node = Storage.back();
-            node.Dependencies.reserve_AssumeEmpty(m);
-
-            forrange(j, 0, m)
-                Add_Unique(node.Dependencies, &rnd.RandomElement(deps));
+                p->Dependencies.reserve_AssumeEmpty(m);
+                forrange(j, 0, m)
+                    Add_Unique(p->Dependencies, &Storage.RawData[rnd.Next(i)]);
+            }
         }
 
         Nodes.assign(Storage.MakeView().Map([](FGraphNode& n) { return &n; }));
-
         rnd.Shuffle(Nodes.MakeView());
     }
-
-    void Build(ITaskContext& ctx) {
-        Revision++;
+};
+//----------------------------------------------------------------------------
+static void Test_Graph_Preprocess_() {
+    FGraph g;
+    g.Randomize(1024, 10);
+    FHighPriorityThreadPool::Get().RunAndWaitFor([&g](ITaskContext& ctx) {
+        g.Revision++;
 
         FGraphNode::FQueue q;
-        for (FGraphNode* node : Nodes)
-            node->Pass(&q, Revision);
+        for (FGraphNode* node : g.Nodes)
+            node->Pass(&q, g.Revision);
 
         LOG(Test_Thread, Info, L"Collected {0} tasks to build",
-            Fmt::CountOfElements(q.size()) );
+            Fmt::CountOfElements(q.size()));
 
         FTimedScope time;
 
@@ -202,23 +213,52 @@ struct FGraph {
         ctx.CreateWaitHandle(&waitAll);
 
         for (FGraphNode* dep : q) {
-            ctx.Run(&dep->Status, FTaskFunc::Bind<&FGraphNode::Build>(dep));
+            ctx.Run(&dep->Status, [dep](ITaskContext& c) {
+                for (FGraphNode* d : dep->Dependencies)
+                    c.WaitFor(d->Status);
+
+                dep->Build(c);
+                });
             dep->Status.AttachTo(waitAll);
         }
 
         ctx.WaitFor(waitAll);
 
         LOG(Test_Thread, Info, L"Collected {0} tasks to build in {1}",
-            Fmt::CountOfElements(q.size()), time.Elapsed() );
+            Fmt::CountOfElements(q.size()), time.Elapsed());
 
         for (FGraphNode* dep : q)
             dep->Status.Reset();
+    });
+}
+//----------------------------------------------------------------------------
+static void EachGraphNode_(ITaskContext& ctx, int rev, FGraphNode* n) {
+    int old = n->Revision;
+    if (old == rev || not n->Revision.compare_exchange_strong(old, rev)) {
+        ctx.WaitFor(n->Status);
     }
-};
-static void Test_Graph_() {
+    else {
+        for (FGraphNode* dep : n->Dependencies)
+            ctx.Run(&n->Status, [rev, dep](ITaskContext& c) {
+                EachGraphNode_(c, rev, dep);
+                });
+
+        if (n->Status.Valid()) {
+            ctx.WaitFor(n->Status);
+            //n->Status.Reset();
+        }
+
+        n->Build(ctx);
+    }
+}
+static void Test_Graph_Incremental_() {
     FGraph g;
     g.Randomize(1024, 10);
-    FHighPriorityThreadPool::Get().RunAndWaitFor(FTaskFunc::Bind<&FGraph::Build>(&g));
+    FHighPriorityThreadPool::Get().RunAndWaitFor([&g](ITaskContext& ctx) {
+        g.Revision++;
+        for (FGraphNode* n : g.Nodes)
+            EachGraphNode_(ctx, g.Revision, n);
+        });
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -233,7 +273,8 @@ void Test_Thread() {
     Test_Future_();
     Test_ParallelFor_();
     Test_Task_();
-    Test_Graph_();
+    Test_Graph_Preprocess_();
+    Test_Graph_Incremental_();
 
     ReleaseMemoryInModules();
 }
