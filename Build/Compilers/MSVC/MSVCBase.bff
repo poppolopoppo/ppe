@@ -12,7 +12,7 @@
 ; active l'optimisation en fast debug (/O2)
 #define USE_OPTIMIZED_FASTDEBUG // %_NOCOMMIT%
 ; active l'utilistion de /analyze pour une meilleure détéction d'erreur (mais des builds bcp plus lent)
-;#define USE_MSVC_ANALYZE //%_NOCOMMIT%
+//#define USE_MSVC_ANALYZE //%_NOCOMMIT%
 ; active le folding des COMDAT en final (exe plus petit, pb pour debugger par contre)
 #define USE_MSVC_IDENTICAL_COMDAT_FOLDING
 ; link avec la libstd statiquement plutot que dynamiquement
@@ -26,7 +26,7 @@
 //------------------------------------------------------------------------------
 .MSVCBase =
 [
-    .StackSize = "2097152" // thread stack size = 2mb
+    .StackSize = "2000000" // thread stack size = 2mb
 
     .AdditionalWarnings = ''
     + ' /we4062' // enumerator 'identifier' in a switch of enum 'enumeration' is not handled
@@ -129,9 +129,9 @@
     + " /STACK:$StackSize$"     ; augmente la taille de la stack de chaque thread à 4mo
     + ' /SUBSYSTEM:WINDOWS'
     ;+ ' /VERBOSE'
-    + ' /VERBOSE:REF'       ; affiche des infos sur le linker incremental
+    ;+ ' /VERBOSE:REF'       ; affiche des infos sur le linker incremental
     + ' /VERBOSE:INCR'      ; affiche des infos sur le linker incremental
-    + ' /VERBOSE:UNUSEDLIBS'      ; affiche des infos sur le linker incremental
+    ;+ ' /VERBOSE:UNUSEDLIBS'      ; affiche des infos sur le linker incremental
     + ' /OUT:"%2" "%1"'
     + ' kernel32.lib'
     + ' User32.lib'
