@@ -91,15 +91,26 @@ void FThreadPoolStartup::Start() {
     FIOThreadPool::Create();
     FHighPriorityThreadPool::Create();
     FBackgroundThreadPool::Create();
+
+    DumpStats();
 }
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::Shutdown() {
+    DumpStats();
+
     FBackgroundThreadPool::Destroy();
     FHighPriorityThreadPool::Destroy();
     FIOThreadPool::Destroy();
     FGlobalThreadPool::Destroy();
 
     Assert_NoAssume(MEMORYDOMAIN_TRACKING_DATA(Fibers).empty());
+}
+//----------------------------------------------------------------------------
+void FThreadPoolStartup::DumpStats() {
+    FBackgroundThreadPool::Get().DumpStats();
+    FHighPriorityThreadPool::Get().DumpStats();
+    FIOThreadPool::Get().DumpStats();
+    FGlobalThreadPool::Get().DumpStats();
 }
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::ReleaseMemory() {

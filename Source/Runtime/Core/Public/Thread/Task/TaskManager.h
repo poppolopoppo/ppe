@@ -3,72 +3,19 @@
 #include "Core.h"
 
 #include "Thread/Task/Task.h"
+#include "Thread/Task/TaskContext.h"
 
 #include "IO/StringView.h"
 #include "Memory/MemoryView.h"
-#include "Memory/RefPtr.h"
-#include "Memory/UniquePtr.h"
 
 namespace PPE {
 enum class EThreadPriority;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FWD_REFPTR(TaskCounter);
+class FCompletionPort;
 class FTaskManager;
 class FTaskManagerImpl;
-//----------------------------------------------------------------------------
-PPE_CORE_API ITaskContext& CurrentTaskContext();
-//----------------------------------------------------------------------------
-class PPE_CORE_API FTaskWaitHandle {
-public:
-    friend class FTaskManagerImpl;
-
-    FTaskWaitHandle() NOEXCEPT;
-
-    explicit FTaskWaitHandle(PTaskCounter&& counter) NOEXCEPT;
-
-    ~FTaskWaitHandle();
-
-    FTaskWaitHandle(const FTaskWaitHandle& other) = delete;
-    FTaskWaitHandle& operator =(const FTaskWaitHandle& other) = delete;
-
-    FTaskWaitHandle(FTaskWaitHandle&& rvalue) NOEXCEPT;
-    FTaskWaitHandle& operator =(FTaskWaitHandle&& rvalue) NOEXCEPT;
-
-    const FTaskCounter* Counter() const { return _counter.get(); }
-
-    bool Valid() const { return _counter.valid(); }
-    bool Finished() const;
-
-    void AttachTo(FTaskWaitHandle& parent);
-    void Reset();
-
-private:
-    PTaskCounter _counter;
-};
-//----------------------------------------------------------------------------
-class PPE_CORE_API ITaskContext {
-public:
-    virtual ~ITaskContext() {}
-
-    virtual void CreateWaitHandle(FTaskWaitHandle* phandle) = 0;
-
-    virtual void Run(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
-    virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
-    virtual void Run(FTaskWaitHandle* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
-
-    virtual void WaitFor(FTaskWaitHandle& handle, ITaskContext* resume = nullptr, ETaskPriority priority = ETaskPriority::Normal) = 0;
-
-    virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) = 0;
-    virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) = 0;
-
-    virtual void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
-
-    void RunOne(FTaskWaitHandle* phandle, FTaskFunc&& rtask, ETaskPriority priority) {
-        Run(phandle, MakeView(&rtask, &rtask +1), priority);
-    }
-};
 //----------------------------------------------------------------------------
 class PPE_CORE_API FTaskManager {
 public:
@@ -91,14 +38,14 @@ public:
     void Run(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) const;
     void Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
 
-    void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) const;
-    void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTaskFunc& whileWaiting, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) const;
-    void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) const;
+    void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) const;
+    void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTaskFunc& whileWaiting, ETaskPriority priority = ETaskPriority::Normal) const;
+    void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
 
     void Run(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
 
-    void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal, ITaskContext* resume = nullptr) const {
-        RunAndWaitFor(MakeView(&rtask, &rtask+1), priority, resume);
+    void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const {
+        RunAndWaitFor(MakeView(&rtask, &rtask+1), priority);
     }
 
     void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
@@ -106,6 +53,7 @@ public:
     void WaitForAll() const;
     bool WaitForAll(int timeoutMS) const; // can timeout, recommended over WaitForAll() to avoid blocking the program
 
+    void DumpStats();
     void ReleaseMemory(); // release potentially unused memory
 
     FTaskManagerImpl* Pimpl() const { return _pimpl.get(); }

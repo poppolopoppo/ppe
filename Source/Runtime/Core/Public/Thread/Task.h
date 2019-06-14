@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Thread/Task/Task.h"
+#include "Thread/Task/CompletionPort.h"
 #include "Thread/Task/TaskHelpers.h"
 #include "Thread/Task/TaskManager.h"
 #include "Thread/ThreadPool.h"

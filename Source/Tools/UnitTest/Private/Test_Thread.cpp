@@ -20,6 +20,7 @@
 #include "Time/DateTime.h"
 #include "Time/Timestamp.h"
 #include "Time/TimedScope.h"
+
 #include "Thread/Task.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
@@ -131,10 +132,11 @@ static void Test_ParallelFor_() {
 namespace {
 //----------------------------------------------------------------------------
 struct FGraphNode {
+    FCompletionPort Port;
+
     int Depth{ 0 };
     std::atomic<int> Revision{ 0 };
     FTimestamp Timestamp;
-    FTaskWaitHandle Status;
     VECTOR(Task, FGraphNode*) Dependencies;
 
     FGraphNode() = default;
@@ -148,7 +150,7 @@ struct FGraphNode {
     using FQueue = SPARSEARRAY_INSITU(Task, FGraphNode*);
 
     void Build(ITaskContext&) {
-        FPlatformProcess::Sleep(0.01f);
+        FPlatformProcess::Sleep(0.f);
         Timestamp = FTimestamp::Now();
 
         LOG(Test_Thread, Debug, L"Build: {0} -> {1} (depth = {2:3})",
@@ -171,6 +173,10 @@ struct FGraph {
     int Revision{ 0 };
     TAllocaBlock<FGraphNode> Storage;
     VECTOR(Task, FGraphNode*) Nodes;
+
+    ~FGraph() {
+        Meta::Destroy(Storage.MakeView());
+    }
 
     void Randomize(size_t n, size_t depth) {
         Storage.RelocateIFP(n);
@@ -208,57 +214,66 @@ static void Test_Graph_Preprocess_() {
             Fmt::CountOfElements(q.size()));
 
         FTimedScope time;
+        {
+            FAggregationPort waitAll;
 
-        FTaskWaitHandle waitAll;
-        ctx.CreateWaitHandle(&waitAll);
+            for (FGraphNode* dep : q) {
+                ctx.Run(&dep->Port, [dep](ITaskContext& c) {
+                    for (FGraphNode* d : dep->Dependencies)
+                        c.WaitFor(d->Port);
 
-        for (FGraphNode* dep : q) {
-            ctx.Run(&dep->Status, [dep](ITaskContext& c) {
-                for (FGraphNode* d : dep->Dependencies)
-                    c.WaitFor(d->Status);
+                    dep->Build(c);
+                    });
 
-                dep->Build(c);
-                });
-            dep->Status.AttachTo(waitAll);
+                waitAll.DependsOn(&dep->Port);
+            }
+
+            waitAll.Join(ctx);
         }
 
-        ctx.WaitFor(waitAll);
-
-        LOG(Test_Thread, Info, L"Collected {0} tasks to build in {1}",
+        LOG(Test_Thread, Info, L"Collected {0} tasks to build in {1} <PREPROCESS>",
             Fmt::CountOfElements(q.size()), time.Elapsed());
-
-        for (FGraphNode* dep : q)
-            dep->Status.Reset();
     });
 }
 //----------------------------------------------------------------------------
-static void EachGraphNode_(ITaskContext& ctx, int rev, FGraphNode* n) {
+static void EachGraphNode_(FAggregationPort* port, ITaskContext& ctx, int rev, FGraphNode* n) {
+    Assert(port);
+
     int old = n->Revision;
-    if (old == rev || not n->Revision.compare_exchange_strong(old, rev)) {
-        ctx.WaitFor(n->Status);
-    }
-    else {
-        for (FGraphNode* dep : n->Dependencies)
-            ctx.Run(&n->Status, [rev, dep](ITaskContext& c) {
-                EachGraphNode_(c, rev, dep);
-                });
+    if (old != rev && n->Revision.compare_exchange_strong(old, rev)) {
+        ctx.Run(&n->Port, [n, rev](ITaskContext& subc) {
+            {
+                FAggregationPort waitDeps;
+                for (FGraphNode* dep : n->Dependencies)
+                    EachGraphNode_(&waitDeps, subc, rev, dep);
 
-        if (n->Status.Valid()) {
-            ctx.WaitFor(n->Status);
-            //n->Status.Reset();
-        }
-
-        n->Build(ctx);
+                waitDeps.Join(subc);
+            }
+            {
+                n->Build(subc);
+            }
+        });
     }
+
+    port->DependsOn(&n->Port);
 }
 static void Test_Graph_Incremental_() {
     FGraph g;
     g.Randomize(1024, 10);
     FHighPriorityThreadPool::Get().RunAndWaitFor([&g](ITaskContext& ctx) {
         g.Revision++;
+
+        FTimedScope time;
+
+        FAggregationPort waitAll;
         for (FGraphNode* n : g.Nodes)
-            EachGraphNode_(ctx, g.Revision, n);
-        });
+            EachGraphNode_(&waitAll, ctx, g.Revision, n);
+
+        waitAll.Join(ctx);
+
+        LOG(Test_Thread, Info, L"Collected {0} tasks to build in {1} <INCREMENTAL>",
+            Fmt::CountOfElements(g.Nodes.size()), time.Elapsed());
+    });
 }
 //----------------------------------------------------------------------------
 } //!namespace

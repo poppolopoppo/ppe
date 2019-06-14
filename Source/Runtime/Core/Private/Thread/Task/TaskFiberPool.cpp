@@ -18,7 +18,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FTaskFiberPool;
-class PPE_CORE_API FTaskFiberChunk : Meta::FNonCopyableNorMovable {
+class FTaskFiberChunk : Meta::FNonCopyableNorMovable {
 public:
 #if USE_PPE_ASSERT
     // debug programs often use far more stack without the optimizer :
@@ -35,7 +35,7 @@ public:
 
     using bit_mask = TBitMask<u64>;
 
-    FTaskFiberChunk();
+    FTaskFiberChunk() NOEXCEPT;
     ~FTaskFiberChunk();
 
     bool Idle() const { return (_free == BusyMask); }
@@ -50,7 +50,7 @@ public:
     FHandleRef AcquireFiber();
     void ReleaseFiber(FHandleRef handle);
 
-    static void ReleaseChunks(FTaskFiberChunk** head, FTaskFiberChunk* chunk);
+    static bool ReleaseChunk(FTaskFiberChunk** head, FTaskFiberChunk* chunk);
 
 private:
     friend class FTaskFiberPool;
@@ -72,6 +72,7 @@ private:
 namespace {
 //----------------------------------------------------------------------------
 static FTaskFiberChunk* AllocateTaskFiberChunk_() {
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
     return TRACKING_NEW(Fibers, FTaskFiberChunk);
 }
 //----------------------------------------------------------------------------
@@ -103,9 +104,9 @@ void FTaskFiberPool::FHandle::YieldFiber(FHandleRef to, bool release) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTaskFiberChunk::FTaskFiberChunk()
+FTaskFiberChunk::FTaskFiberChunk() NOEXCEPT
 :   _free{ BusyMask }
-,   _pool(nullptr)
+,   _pool{ nullptr }
 ,   _node{ nullptr, nullptr } {
 
     forrange(i, 0, Capacity) {
@@ -135,7 +136,7 @@ bool FTaskFiberChunk::AliasesToChunk(FHandleRef handle) const {
 void FTaskFiberChunk::TakeOwnerShip(FTaskFiberPool* pool) {
     Assert_NoAssume(BusyMask == _free);
 
-    // can't share the chunks across all pools because of _callback :
+    // #TODO can't share the chunks across all pools because of _callback :
     // those fibers would trigger the callback actually once, and then loop forever inside of it for processing incoming work
     // because of this a fiber started in certain pool will forever use the initial callback, and thus isn't sharable with a different pool
 
@@ -200,19 +201,18 @@ void FTaskFiberChunk::ReleaseFiber(FHandleRef handle) {
     }
 }
 //----------------------------------------------------------------------------
-void FTaskFiberChunk::ReleaseChunks(FTaskFiberChunk** head, FTaskFiberChunk* chunks) {
+bool FTaskFiberChunk::ReleaseChunk(FTaskFiberChunk** head, FTaskFiberChunk* chunk) {
     Assert(head);
 
-    for (FTaskFiberChunk* ch = chunks; ch;) {
-        FTaskFiberChunk* const nxt = ch->_node.Next;
+    if (chunk->Idle()) { // release the chunks when all fibers are idle
+        list_t::Erase(head, nullptr, chunk);
+        chunk->TakeOwnerShip(nullptr);
+        ReleaseTaskFiberChunk_(chunk);
 
-        if (ch->Idle()) { // release the chunks when all fibers are idle
-            list_t::Erase(head, nullptr, ch);
-            ch->TakeOwnerShip(nullptr);
-            ReleaseTaskFiberChunk_(ch);
-        }
-
-        ch = nxt;
+        return true;
+    }
+    else {
+        return false;
     }
 }
 //----------------------------------------------------------------------------
@@ -230,7 +230,7 @@ void STDCALL FTaskFiberChunk::FiberEntryPoint_(void* arg) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTaskFiberPool::FTaskFiberPool(FCallback&& callback)
+FTaskFiberPool::FTaskFiberPool(FCallback&& callback) NOEXCEPT
 :   _callback(callback)
 ,   _chunks(nullptr) {
     Assert_NoAssume(_callback);
@@ -238,15 +238,19 @@ FTaskFiberPool::FTaskFiberPool(FCallback&& callback)
 //----------------------------------------------------------------------------
 FTaskFiberPool::~FTaskFiberPool() {
     const Meta::FLockGuard scopeLock(_barrier);
-    FTaskFiberChunk::ReleaseChunks(&_chunks, _chunks);
-    AssertRelease(nullptr == _chunks); // all fibers should be idle !
+
+    while (_chunks) // all fibers should be idle !
+        VerifyRelease(FTaskFiberChunk::ReleaseChunk(&_chunks, _chunks));
 }
 //----------------------------------------------------------------------------
 auto FTaskFiberPool::AcquireFiber() -> FHandleRef {
     for (;;) {
         if (Likely(_chunks)) {
+            Assert_NoAssume(this == _chunks->_pool);
             FHandleRef const h = _chunks->AcquireFiber();
+
             if (Likely(h)) {
+                Assert_NoAssume(not h->OnWakeUp);
 #if USE_PPE_MEMORYDOMAINS
                 MEMORYDOMAIN_TRACKING_DATA(Fibers).AllocateUser(FTaskFiberChunk::StackSize);
 #endif
@@ -258,14 +262,22 @@ auto FTaskFiberPool::AcquireFiber() -> FHandleRef {
     }
 }
 //----------------------------------------------------------------------------
+bool FTaskFiberPool::OwnsFiber(FHandleRef handle) const NOEXCEPT {
+    Assert(handle);
+    return (handle->Chunk()->_pool == this);
+}
+//----------------------------------------------------------------------------
 void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
     Assert(handle);
+    Assert_NoAssume(OwnsFiber(handle));
+    Assert_NoAssume(not handle->OnWakeUp);
+
+    FTaskFiberChunk* const chunk = handle->Chunk();
 
 #if USE_PPE_MEMORYDOMAINS
     MEMORYDOMAIN_TRACKING_DATA(Fibers).DeallocateUser(FTaskFiberChunk::StackSize);
 #endif
 
-    FTaskFiberChunk* const chunk = handle->Chunk();
     chunk->ReleaseFiber(handle);
 
     // we never release owned chunks (#TODO ? looks like this would be quite rare, and we still have ReleaseMemory() available)
@@ -281,8 +293,10 @@ void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
 //----------------------------------------------------------------------------
 void FTaskFiberPool::YieldCurrentFiber(FHandleRef self, FHandleRef to, bool release) {
     Assert(self);
+    Assert_NoAssume(OwnsFiber(self));
     Assert_NoAssume(self == CurrentHandleRef());
-    Assert_NoAssume(AllocaDepth() == 0); // can't switch fibers with alive TLS blocks
+    Assert_NoAssume(not self->OnWakeUp);
+    Assert_NoAssume(AllocaDepth() == 0); // can't switch fibers with live TLS block(s)
 
     // prepare data for next fiber
     if (nullptr == to) {
@@ -325,16 +339,19 @@ void FTaskFiberPool::ReleaseMemory() {
     if (Likely(_chunks)) {
         const Meta::FLockGuard scopeLock(_barrier);
 
-        // sort chunks by diminishing available space order
         for (FTaskFiberChunk* ch = _chunks; ch; ) {
             FTaskFiberChunk* const nxt = ch->_node.Next;
-            if (ch != _chunks && ch->NumAvailable() > _chunks->NumAvailable())
-                FTaskFiberChunk::list_t::PokeHead(&_chunks, nullptr, ch);
+
+            // release potentially idle chunks
+            if (not FTaskFiberChunk::ReleaseChunk(&_chunks, ch)) {
+                // keep the chunk with most available fibers at head
+                if ((ch != _chunks) & (ch->NumAvailable() >= _chunks->NumAvailable()))
+                    // this will help concentrate future allocations on the first chunk
+                    FTaskFiberChunk::list_t::PokeHead(&_chunks, nullptr, ch);
+            }
+
             ch = nxt;
         }
-
-        // release potentially idle chunks :
-        FTaskFiberChunk::ReleaseChunks(&_chunks, _chunks->_node.Next/* always keep one chunk alive */);
     }
 }
 //----------------------------------------------------------------------------
@@ -392,6 +409,51 @@ NO_INLINE FTaskFiberChunk* FTaskFiberPool::AcquireChunk_() {
     FTaskFiberChunk::list_t::PushHead(&_chunks, nullptr, fresh);
 
     return fresh; // new => allocation is guaranteed to succeed
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Meant to be used as a thread local cache to remove contention on FTaskFiberPool
+//----------------------------------------------------------------------------
+FTaskFiberLocalCache::FTaskFiberLocalCache(FTaskFiberPool& pool) NOEXCEPT
+:   _pool(pool)
+{}
+//----------------------------------------------------------------------------
+FTaskFiberLocalCache::~FTaskFiberLocalCache() {
+    ReleaseMemory();
+}
+//----------------------------------------------------------------------------
+auto FTaskFiberLocalCache::AcquireFiber() -> FHandleRef {
+    THIS_THREADRESOURCE_CHECKACCESS();
+
+    FHandleRef result = nullptr;
+    if (not _freed.Pop(&result))
+        result = _pool.AcquireFiber();
+
+    Assert(result);
+    Assert_NoAssume(_pool.OwnsFiber(result));
+    return result;
+}
+//----------------------------------------------------------------------------
+void FTaskFiberLocalCache::ReleaseFiber(FHandleRef handle) {
+    THIS_THREADRESOURCE_CHECKACCESS();
+    Assert(handle);
+    Assert_NoAssume(_pool.OwnsFiber(handle));
+    Assert_NoAssume(not handle->OnWakeUp);
+
+    // release all when full, to avoid releasing at every call
+    if (Unlikely(_freed.full()))
+        ReleaseMemory();
+
+    _freed.Push(handle);
+}
+//----------------------------------------------------------------------------
+void FTaskFiberLocalCache::ReleaseMemory() {
+    THIS_THREADRESOURCE_CHECKACCESS();
+
+    FHandleRef fiber = nullptr;
+    while (_freed.Pop(&fiber))
+        _pool.ReleaseFiber(fiber);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

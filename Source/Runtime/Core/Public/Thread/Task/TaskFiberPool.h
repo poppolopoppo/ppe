@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
+#include "Container/Stack.h"
+#include "Meta/ThreadResource.h"
 #include "Misc/Function.h"
 #include "Thread/Fiber.h"
 
@@ -34,19 +36,20 @@ public:
         void YieldFiber(FHandleRef to, bool release) const;
     };
 
-    FTaskFiberPool(FCallback&& callback);
+    explicit FTaskFiberPool(FCallback&& callback) NOEXCEPT;
     ~FTaskFiberPool();
 
     const FCallback& Callback() const { return _callback; }
 
     FHandleRef AcquireFiber();
+    bool OwnsFiber(FHandleRef handle) const NOEXCEPT;
     void ReleaseFiber(FHandleRef handle);
     void YieldCurrentFiber(FHandleRef self, FHandleRef to, bool release);
     void StartThread();
     void ReleaseMemory();
 
 #if !USE_PPE_FINAL_RELEASE
-    void UsageStats(size_t* reserved, size_t* inUse);
+    NO_INLINE void UsageStats(size_t* reserved, size_t* inUse);
 #endif
 
     static size_t ReservedStackSize();
@@ -64,6 +67,25 @@ private:
     FTaskFiberChunk* AcquireChunk_();
 };
 PRAGMA_MSVC_WARNING_POP()
+//----------------------------------------------------------------------------
+class FTaskFiberLocalCache
+    : Meta::FNonCopyableNorMovable
+    , Meta::FThreadResource {
+public:
+    explicit FTaskFiberLocalCache(FTaskFiberPool& pool) NOEXCEPT;
+    ~FTaskFiberLocalCache();
+
+    using FHandleRef = FTaskFiberPool::FHandleRef;
+
+    FHandleRef AcquireFiber();
+    void ReleaseFiber(FHandleRef handle);
+
+    NO_INLINE void ReleaseMemory();
+
+private:
+    FTaskFiberPool& _pool;
+    TFixedSizeStack<FHandleRef, 3> _freed;
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -1,6 +1,9 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
+
+#include "Thread/Task/Task.h"
+#include "Thread/Task/CompletionPort.h"
 
 #include "HAL/PlatformProcess.h"
 #include "Memory/RefPtr.h"
@@ -39,7 +42,6 @@ PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX': structure was padded due to alignment specifier
 
 namespace PPE {
-FWD_REFPTR(TaskCounter);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -50,18 +52,18 @@ public:
         size_t Priority;
 #endif
         FTaskFunc Pending;
-        STaskCounter Counter;
+        FCompletionPort* Port;
 
         FTaskQueued() = default;
 
 #if USE_PPE_THREAD_WORKSTEALINGQUEUE
-        FTaskQueued(size_t priority, FTaskFunc&& pending, FTaskCounter* counter) NOEXCEPT
+        FTaskQueued(size_t priority, FTaskFunc&& pending, FCompletionPort* port) NOEXCEPT
         :   Priority(priority)
         ,   Pending(std::move(pending))
-        ,   Counter(counter)
+        ,   Port(port)
         {}
 #else
-        FTaskQueued(FTaskFunc&& pending, FTaskCounter* counter) NOEXCEPT
+        FTaskQueued(FTaskFunc&& pending, FCompletionPort* counter) NOEXCEPT
         :   Pending(std::move(pending))
         ,   Counter(counter)
         {}
@@ -70,15 +72,8 @@ public:
         FTaskQueued(const FTaskQueued&) = delete;
         FTaskQueued& operator =(const FTaskQueued&) = delete;
 
-        FTaskQueued(FTaskQueued&& rvalue) NOEXCEPT { operator =(std::move(rvalue)); }
-        FTaskQueued& operator =(FTaskQueued&& rvalue) NOEXCEPT {
-#if USE_PPE_THREAD_WORKSTEALINGQUEUE
-            Priority = std::move(rvalue.Priority);
-#endif
-            Pending = std::move(rvalue.Pending);
-            Counter = std::move(rvalue.Counter);
-            return (*this);
-        }
+        FTaskQueued(FTaskQueued&& rvalue) = default;
+        FTaskQueued& operator =(FTaskQueued&& rvalue) = default;
     };
 
     FTaskScheduler(size_t numWorkers, size_t maxTasks);
@@ -86,11 +81,11 @@ public:
 
     bool HasPendingTask() const;
 
-    void Produce(ETaskPriority priority, FTaskFunc&& rtask, FTaskCounter* pcounter);
-    void Produce(ETaskPriority priority, const FTaskFunc& task, FTaskCounter* pcounter);
+    void Produce(ETaskPriority priority, FTaskFunc&& rtask, FCompletionPort* pport);
+    void Produce(ETaskPriority priority, const FTaskFunc& task, FCompletionPort* pport);
 
-    void Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FTaskCounter* pcounter);
-    void Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FTaskCounter* pcounter);
+    void Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FCompletionPort* pport);
+    void Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FCompletionPort* pport);
 
     void Consume(size_t workerIndex, FTaskQueued* pop);
 
@@ -253,7 +248,7 @@ private:
 //  - Approximation of correct execution order for priorities
 //  - Can't guarantee insertion order
 //----------------------------------------------------------------------------
-FTaskScheduler::FTaskScheduler(size_t numWorkers, size_t maxTasks)
+inline FTaskScheduler::FTaskScheduler(size_t numWorkers, size_t maxTasks)
     : _numWorkers(numWorkers)
     , _maxTasks(maxTasks) {
     Assert(_numWorkers);
@@ -262,26 +257,27 @@ FTaskScheduler::FTaskScheduler(size_t numWorkers, size_t maxTasks)
     _workerQueues.resize_AssumeEmpty(_numWorkers);
 }
 //----------------------------------------------------------------------------
-FTaskScheduler::~FTaskScheduler() {
+inline FTaskScheduler::~FTaskScheduler() {
     Assert(0 == _state.TaskInFlight);
     Assert(0 == _state.TaskRevision);
 }
 //----------------------------------------------------------------------------
-bool FTaskScheduler::HasPendingTask() const {
+inline bool FTaskScheduler::HasPendingTask() const {
     return (_state.TaskInFlight != 0);
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FTaskCounter* pcounter) {
+inline void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FCompletionPort* pport) {
     for (FTaskFunc& rtask : rtasks)
-        Produce(priority, std::move(rtask), pcounter);
+        Produce(priority, std::move(rtask), pport);
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FTaskCounter* pcounter) {
+inline void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FCompletionPort* pport) {
     for (const FTaskFunc& task : tasks)
-        Produce(priority, task, pcounter);
+        Produce(priority, task, pport);
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FTaskCounter* pcounter) {
+inline void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FCompletionPort* pport) {
+    Assert_NoAssume(task);
     Assert(_state.TaskRevision < 0xFFFF); // just to get sure that we won't be overflowing Priority
 
     // track in flight tasks for HasPendingTask() and to reset _state.TaskRevision when the queues are finally empty
@@ -291,7 +287,7 @@ void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FTas
     const size_t insertion_order_preserving_priority = size_t((u64(priority) << 16) | _state.TaskRevision++);
     Assert((insertion_order_preserving_priority >> 16) == size_t(priority));
 
-    FTaskQueued queued{ insertion_order_preserving_priority, FTaskFunc(task), pcounter };
+    FTaskQueued queued{ insertion_order_preserving_priority, FTaskFunc(task), pport };
 
     // used as hint for work stealing : worker will try to steal a job if a more priority task is available
     size_t globalHighest = _state.GlobalPriority;
@@ -306,7 +302,8 @@ void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FTas
     }
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FTaskCounter* pcounter) {
+inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FCompletionPort* pport) {
+    Assert_NoAssume(rtask);
     Assert(_state.TaskRevision < 0xFFFF); // just to get sure that we won't be overflowing Priority
 
     // track in flight tasks for HasPendingTask() and to reset _state.TaskRevision when the queues are finally empty
@@ -316,7 +313,7 @@ void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FTaskCou
     const size_t insertion_order_preserving_priority = size_t((u64(priority) << 16) | _state.TaskRevision++);
     Assert((insertion_order_preserving_priority >> 16) == size_t(priority));
 
-    FTaskQueued queued{ insertion_order_preserving_priority, std::move(rtask), pcounter };
+    FTaskQueued queued{ insertion_order_preserving_priority, std::move(rtask), pport };
 
     // used as hint for work stealing : worker will try to steal a job if a more priority task is available
     size_t globalHighest = _state.GlobalPriority;
@@ -331,7 +328,7 @@ void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FTaskCou
     }
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
+inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
     if (not WorkerStealIFP_(workerIndex, pop))
         WorkerPop_(workerIndex, pop);
 
@@ -343,7 +340,7 @@ void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
         _state.TaskRevision = 0;
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& task) {
+inline void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& task) {
     // track in flight tasks for HasPendingTask() and to reset _state.TaskRevision when the queues are finally empty
     _state.TaskInFlight += _numWorkers;
 
@@ -380,46 +377,46 @@ void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& ta
 //  might deadlock if the queue is full and every thread is throttled
 //  low probability but still
 //----------------------------------------------------------------------------
-FTaskScheduler::FTaskScheduler(size_t numWorkers, size_t maxTasks)
+inline FTaskScheduler::FTaskScheduler(size_t numWorkers, size_t maxTasks)
     : _numWorkers(numWorkers)
     , _tasks(maxTasks) {
     Assert(_numWorkers);
     Assert(maxTasks > _numWorkers);
 }
 //----------------------------------------------------------------------------
-FTaskScheduler::~FTaskScheduler() {
+inline FTaskScheduler::~FTaskScheduler() {
     Assert(_tasks.empty());
 }
 //----------------------------------------------------------------------------
-bool FTaskScheduler::HasPendingTask() const {
+inline bool FTaskScheduler::HasPendingTask() const {
     return (not _tasks.empty());
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FTaskCounter* pcounter) {
-    _tasks.Produce(u32(priority), FTaskQueued{ std::move(rtask), pcounter });
+inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FCompletionPort* pport) {
+    _tasks.Produce(u32(priority), FTaskQueued{ std::move(rtask), pport });
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FTaskCounter* pcounter) {
-    _tasks.Produce(u32(priority), FTaskQueued{ FTaskFunc(task), pcounter });
+inline void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FCompletionPort* pport) {
+    _tasks.Produce(u32(priority), FTaskQueued{ FTaskFunc(task), pport });
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FTaskCounter* pcounter) {
-    _tasks.Produce(u32(priority), rtasks.size(), _numWorkers, [rtasks, pcounter](size_t i) {
-        return FTaskQueued{ std::move(rtasks[i]), pcounter };
+inline void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FCompletionPort* pport) {
+    _tasks.Produce(u32(priority), rtasks.size(), _numWorkers, [rtasks, pport](size_t i) {
+        return FTaskQueued{ std::move(rtasks[i]), pport };
     });
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FTaskCounter* pcounter) {
-    _tasks.Produce(u32(priority), tasks.size(), _numWorkers, [tasks, pcounter](size_t i) {
-        return FTaskQueued{ FTaskFunc(tasks[i]), pcounter };
+inline void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FCompletionPort* pport) {
+    _tasks.Produce(u32(priority), tasks.size(), _numWorkers, [tasks, pport](size_t i) {
+        return FTaskQueued{ FTaskFunc(tasks[i]), pport };
     });
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::Consume(size_t , FTaskQueued* pop) {
+inline void FTaskScheduler::Consume(size_t , FTaskQueued* pop) {
     _tasks.Consume(pop);
 }
 //----------------------------------------------------------------------------
-void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& task) {
+inline void FTaskScheduler::BroadcastToEveryWorker(size_t priority, const FTaskFunc& task) {
     Assert(task);
 
     forrange(i, 0, _numWorkers)
