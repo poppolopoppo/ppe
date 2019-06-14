@@ -150,7 +150,7 @@ struct FGraphNode {
     using FQueue = SPARSEARRAY_INSITU(Task, FGraphNode*);
 
     void Build(ITaskContext&) {
-        FPlatformProcess::Sleep(0.f);
+        //FPlatformProcess::Sleep(0);
         Timestamp = FTimestamp::Now();
 
         LOG(Test_Thread, Debug, L"Build: {0} -> {1} (depth = {2:3})",
