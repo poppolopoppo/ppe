@@ -45,6 +45,8 @@ public:
     static bool SetPersistentVariable(const char* storeId, const char* section, const char* key, const char* value);
     static bool ErasePersistentVariable(const char* storeId, const char* section, const char* key);
 
+    static bool ExternalTextEditor(const wchar_t* filename, size_t line = 0, size_t column = 0);
+
 public: // specific to this platform
 
     static bool QueryRegKey(const ::HKEY key, const char* subKey, const char* name, FString* pValue);

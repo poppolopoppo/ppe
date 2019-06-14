@@ -32,69 +32,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void ExternalEditor_(const FWStringView& filename, size_t line) {
-    Assert(not filename.empty());
-
-    struct FExternalEditor {
-        FWStringView Path;
-        FWStringView FormatArgs;
-    };
-
-    CONSTEXPR const FExternalEditor editors[] = {
-        {   // visual studio code
-            L"C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd",
-            L"\"{0}\" -g \"{1}:{2}\""
-        },
-        {   // sublime text 3
-            L"C:\\Program Files\\Sublime Text 3\\sublime_text.exe",
-            L"\"{0}\" \"{1}:{2}\""
-        },
-        {   // notepad(2-mod)
-            L"C:\\Windows\\System32\\notepad.exe",
-            L"\"{0}\" \"{1}\" -g {2}"
-        }
-    };
-
-    wchar_t buffer[2048];
-    for (const FExternalEditor& ed : editors) {
-        if (FPlatformFile::FileExists(ed.Path.data(), EExistPolicy::Exists)) {
-            FWFixedSizeTextWriter oss(buffer);
-            Format(oss, ed.FormatArgs, ed.Path, filename, line);
-            oss << Eos;
-            break;
-        }
-    }
-
-    ::STARTUPINFO startupInfo;
-    ::PROCESS_INFORMATION processInfo;
-
-    ZeroMemory(&startupInfo, sizeof(startupInfo));
-    ZeroMemory(&processInfo, sizeof(processInfo));
-
-    startupInfo.cb = sizeof(::STARTUPINFO);
-
-    // create a new process for external editor :
-    if (::CreateProcessW(NULL, buffer,
-        0, 0, FALSE, DETACHED_PROCESS, 0, 0,
-        &startupInfo, &processInfo) == 0) {
-        LOG(HAL, Error, L"failed to open external editor : {0}\n\t{1}",
-            FLastError(),
-            MakeCStringView(buffer) );
-    }
-    else {
-        // Immediately close handles since we run detached :
-        ::CloseHandle(processInfo.hThread);
-        ::CloseHandle(processInfo.hProcess);
-    }
-    //::WinExec(buffer, SW_SHOW);
-}
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
 static LPCWSTR SystemIcon_(FWindowsPlatformDialog::EIcon iconType) {
     switch (iconType)
     {
@@ -256,10 +193,9 @@ static LRESULT CALLBACK Template_StackProc_(HWND hwndDlg, UINT message, WPARAM w
                     const FTemplate_DialogContext_* ctx = reinterpret_cast<const FTemplate_DialogContext_*>(::GetWindowLongPtr(window, GWLP_USERDATA));
                     Assert(ctx);
 
-                    //LOG(Info, L"double click on frame : >>> {0} <<<", ctx->CallstackFrames[index]);
-
-                    ExternalEditor_(MakeStringView(ctx->DecodedCallstack.Frames()[index].Filename()),
-                                    ctx->DecodedCallstack.Frames()[index].Line() );
+                    FPlatformMisc::ExternalTextEditor(
+                        ctx->DecodedCallstack.Frames()[index].Filename().data(),
+                        ctx->DecodedCallstack.Frames()[index].Line() );
                 }
             }
             break;

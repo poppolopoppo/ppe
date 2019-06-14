@@ -61,6 +61,8 @@ public: // must be defined for every platform
     static bool PersistentVariable(const char* storeId, const char* key, FString* value) = delete;
     static bool SetPersistentVariable(const char* storeId, const char* key, const char* value) = delete;
     static bool ErasePersistentVariable(const char* storeId, const char* key) = delete;
+
+    static bool ExternalTextEditor(const wchar_t* filename, size_t line = 0, size_t column = 0) = delete;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

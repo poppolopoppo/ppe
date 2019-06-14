@@ -6,6 +6,7 @@
 
 #include "Allocator/Alloca.h"
 #include "Diagnostic/Logger.h"
+#include "HAL/PlatformFile.h"
 #include "HAL/PlatformMemory.h"
 #include "IO/Format.h"
 #include "IO/String.h"
@@ -112,11 +113,13 @@ static void ClipboardCopy_(::UINT fmt, const TMemoryView<const _Char>& src) {
             LOG_LASTERROR(HAL, L"GlobalAlloc()");
 
         void* const pData = ::GlobalLock(hGlobalMem);
-        if (not pData)
+        if (pData) {
+            FPlatformMemory::Memcpy(pData, src.data(), src.SizeInBytes());
+            static_cast<_Char*>(pData)[src.size()] = _Char(0);
+        }
+        else {
             LOG_LASTERROR(HAL, L"GlobalLock()");
-
-        FPlatformMemory::Memcpy(pData, src.data(), src.SizeInBytes());
-        static_cast<_Char*>(pData)[src.size()] = _Char(0);
+        }
 
         ::GlobalUnlock(hGlobalMem);
 
@@ -490,6 +493,55 @@ bool FWindowsPlatformMisc::ErasePersistentVariable(const char* storeId, const ch
     }
 
     return (result == ERROR_SUCCESS);
+}
+//----------------------------------------------------------------------------
+bool FWindowsPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t line/* = 0 */, size_t column/* = 0 */) {
+    Assert(filename);
+
+    CONSTEXPR const FWStringView editors[] = {
+        // visual studio code
+        L"\"C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd\" -g \"{0}:{1}:{2}\"",
+        // sublime text 3
+        L"\"C:\\Program Files\\Sublime Text 3\\sublime_text.exe\" \"{0}:{1}:{2}\"",
+        // notepad++ (not tested :p)
+        L"\"C:\\Program Files\\Notepad++\\Notepad++.exe\" \"{0}\" -n{1} -c{2}",
+        // notepad(2-mod)
+        L"\"C:\\Windows\\System32\\notepad.exe\" \"{0}\" /g {1}",
+    };
+
+    wchar_t buffer[2048];
+    ::STARTUPINFO startupInfo;
+    ::PROCESS_INFORMATION processInfo;
+
+    for (const FWStringView& ed : editors) {
+        FWFixedSizeTextWriter oss(buffer);
+        Format(oss, ed, filename, line, column);
+        oss << Eos;
+
+        ZeroMemory(&startupInfo, sizeof(startupInfo));
+        ZeroMemory(&processInfo, sizeof(processInfo));
+        startupInfo.cb = sizeof(::STARTUPINFO);
+
+        // create a new process for external editor :
+        if (::CreateProcessW(NULL, buffer,
+            0, 0, FALSE, CREATE_NO_WINDOW|DETACHED_PROCESS, 0, 0,
+            &startupInfo, &processInfo) == 0) {
+
+            LOG(HAL, Error, L"failed to open external editor : {0}\n\t{1}",
+                FLastError(), oss.Written() );
+        }
+        else {
+            // Immediately close handles since we run detached :
+            ::CloseHandle(processInfo.hThread);
+            ::CloseHandle(processInfo.hProcess);
+
+            LOG(HAL, Emphasis, L"opened external editor : {0}", oss.Written());
+
+            return true;
+        }
+    }
+
+    return false;
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformMisc::QueryRegKey(const ::HKEY key, const char* subKey, const char* name, FString* pValue) {
