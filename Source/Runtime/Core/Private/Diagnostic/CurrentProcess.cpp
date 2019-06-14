@@ -16,9 +16,9 @@ LOG_CATEGORY(PPE_CORE_API, Process)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FCurrentProcess::FCurrentProcess(void* appHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv)
-    : _fileName(MakeCStringView(filename))
-    , _args(NewArray<FWString>(argc)), _exitCode(0), _appIcon(0)
-    , _startedAt(FTimepoint::Now()) {
+:   _fileName(MakeCStringView(filename))
+,   _args(NewArray<FWString>(argc)), _exitCode(0), _appIcon(0)
+,   _startedAt(FTimepoint::Now()) {
 
     for (size_t i = 0; i < argc; ++i) {
         Assert(argv[i]);
@@ -75,18 +75,18 @@ FCurrentProcess::~FCurrentProcess() {
 void FCurrentProcess::DumpMemoryStats() const {
 #if USE_PPE_LOGGER
     auto mem = FPlatformMemory::Stats();
-    LOG(Process, Info, L"Physical memory : {0:8} / {1:8} / {2:8} : {3}",
+    LOG(Process, Info, L"Physical mem   : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
         Fmt::SizeInBytes(mem.UsedPhysical),
         Fmt::SizeInBytes(mem.PeakUsedPhysical),
         Fmt::SizeInBytes(mem.AvailablePhysical),
         Fmt::Percentage(mem.UsedPhysical, mem.AvailablePhysical) );
-    LOG(Process, Info, L"Virtual memory  : {0:8} / {1:8} / {2:8} : {3}",
+    LOG(Process, Info, L"Virtual mem    : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
         Fmt::SizeInBytes(mem.UsedVirtual),
         Fmt::SizeInBytes(mem.PeakUsedVirtual),
         Fmt::SizeInBytes(mem.AvailableVirtual),
         Fmt::Percentage(mem.UsedVirtual, mem.AvailableVirtual) );
     auto stk = FPlatformMemory::StackUsage();
-    LOG(Process, Info, L"Stack memory    : {0:8} / {1:8} / {2:8} : {3}",
+    LOG(Process, Info, L"StackLocal mem : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
         Fmt::SizeInBytes(stk.Committed),
         Fmt::SizeInBytes(stk.Guard),
         Fmt::SizeInBytes(stk.Reserved),

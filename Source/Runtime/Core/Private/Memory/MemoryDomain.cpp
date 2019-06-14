@@ -11,6 +11,7 @@
 #if !USE_PPE_FINAL_RELEASE
 #   include "Container/IntrusiveList.h"
 #   include "Container/Stack.h"
+#   include "Diagnostic/CurrentProcess.h"
 #   include "IO/FormatHelpers.h"
 #   include "IO/String.h"
 #   include "IO/StringBuilder.h"
@@ -372,6 +373,8 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
 //----------------------------------------------------------------------------
 void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
 #if USE_PPE_MEMORYDOMAINS && USE_PPE_LOGGER
+    FCurrentProcess::Get().DumpMemoryStats();
+
     FTrackingDataRegistry_::FMemoryDomainsList datas;
     FTrackingDataRegistry_::Get().FetchDatas(&datas);
 
