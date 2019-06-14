@@ -1,5 +1,8 @@
 # PPE TODO LIST
 
+- use ETW allocation events to integrate inside diagnostic tools :)
+  https://docs.microsoft.com/fr-fr/visualstudio/profiling/custom-native-etw-heap-events?view=vs-2019
+
 - Check efficiency of mipmaps de-commit heuristic
     -> avoiding switching to newest chunk might help
     -> use the fragmentation report
@@ -14,10 +17,6 @@
         -> allocations would be aligned on mip granularity <=> 2mb
         -> should cap allocation size to something reasonnable, like 64mb
         -> could work better than virtual memory cache with a careful implementation
-
-- Remove memory domain PooledMemory
-    -> mirror linear heap behavior ?
-    -> maybe remove completely ???
 
 - Finish the build graph :p
 
