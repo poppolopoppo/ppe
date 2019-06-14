@@ -40,13 +40,7 @@
 
 #define PPE_RUN_EXHAUSTIVE_BENCHMARKS (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHMARK_ONE_CONTAINER (0) // %_NOCOMMIT%
-
-#if defined(_MSC_VER) && _MSC_VER >= 1920
-#   define PPE_DONT_USE_STD_UNORDEREDSET (1) // #TODO remove when 2019 AVX2 codegen bug will be fixed
-//  https://developercommunity.visualstudio.com/content/problem/506484/autovectorization-on-x64-release-builds-uses-avx2.html
-#else
-#   define PPE_DONT_USE_STD_UNORDEREDSET (0)
-#endif
+#define PPE_DONT_USE_STD_UNORDEREDSET (0) // %_NOCOMMIT%
 
 namespace PPE {
 LOG_CATEGORY(, Test_Containers)
