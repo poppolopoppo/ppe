@@ -95,6 +95,7 @@ public:
         Assert(s);
         Assert(s == SizeInBytes);
         Assert(EState::Freed == State);
+        Assert(Meta::IsAligned(Alignment, &InSitu));
 
         State = EState::Allocated;
 #else
