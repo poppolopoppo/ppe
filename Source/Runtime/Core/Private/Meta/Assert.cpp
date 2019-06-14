@@ -16,14 +16,17 @@ LOG_CATEGORY(PPE_CORE_API, Assertion)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static FPlatformDialog::EResult AssertAbortRetryIgnore_(const FWStringView& title, const wchar_t* msg, const wchar_t *file, unsigned line) {
+static FPlatformDialog::EResult AssertAbortRetryIgnore_(
+    FPlatformDialog::EIcon icon,
+    const FWStringView& title, const wchar_t* msg,
+    const wchar_t *file, unsigned line ) {
     FWStringBuilder oss;
 
     oss << title << Crlf
         << L"----------------------------------------------------------------" << Crlf
         << file << L'(' << line << L"): " << msg;
 
-    return FPlatformDialog::AbortRetryIgnore(oss.ToString(), title);
+    return FPlatformDialog::AbortRetryIgnore(oss.ToString(), title, icon);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -87,7 +90,7 @@ NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned
         PPE_DEBUG_BREAK();
     }
     else {
-        switch (AssertAbortRetryIgnore_(L"Assert debug failed !", msg, file, line)) {
+        switch (AssertAbortRetryIgnore_(FPlatformDialog::Warning, L"Assert debug failed !", msg, file, line)) {
         case FPlatformDialog::Abort:
             failure = true;
             break;
@@ -173,7 +176,7 @@ NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, u
         PPE_DEBUG_BREAK();
     }
     else {
-        switch (AssertAbortRetryIgnore_(L"Assert release failed !", msg, file, line)) {
+        switch (AssertAbortRetryIgnore_(FPlatformDialog::Error, L"Assert release failed !", msg, file, line)) {
         case FPlatformDialog::Abort:
             failure = true;
             break;

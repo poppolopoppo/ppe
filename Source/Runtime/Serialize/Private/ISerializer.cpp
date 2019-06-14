@@ -41,7 +41,8 @@ static NO_INLINE FPlatformDialog::EResult ShowSerializeException_(const FTransac
 
     return FPlatformDialog::AbortRetryIgnore(
         text.Written(),
-        L"caught exception while serializing");
+        L"caught exception while serializing",
+        FPlatformDialog::Warning );
 }
 #endif //!#if USE_PPE_EXCEPTIONS
 //----------------------------------------------------------------------------
