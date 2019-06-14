@@ -240,39 +240,35 @@ public:
         callstackUIDtoIndex.reserve(_callstacks.NumCallstacks);
         report->Callstacks.reserve(_callstacks.NumCallstacks);
 
-        const FRecursiveLockTLS reentrantLock; // make sure
+        {
+            //  /\  don't log inside this scope since we are locking all allocations,
+            // /!!\ it could end up dead locking with the logger.
 
-        _blocks.Foreach([&, this, report](void* ptr, const FBlockHeader& alloc) {
-            if (report->Mode == ReportAllBlocks ||
-                (alloc.Enabled && (report->Mode != ReportOnlyNonDeleters ||
-                    _callstacks.IsNonDeleter(alloc.CallstackUID))) ) {
-                report->NumAllocs++;
-                report->MinSizeInBytes = Min(report->MinSizeInBytes, alloc.SizeInBytes);
-                report->MaxSizeInBytes = Max(report->MaxSizeInBytes, alloc.SizeInBytes);
-                report->TotalSizeInBytes += alloc.SizeInBytes;
+            const FRecursiveLockTLS reentrantLock; // make sure
 
-                const auto it = callstackUIDtoIndex.try_emplace(alloc.CallstackUID);
-                if (it.second) {
-                    it.first->second = checked_cast<u32>(report->Callstacks.size());
-                    report->Callstacks.emplace_back(alloc.CallstackUID);
+            _blocks.Foreach([&, this, report](void* ptr, const FBlockHeader& alloc) {
+                if (report->Mode == ReportAllBlocks ||
+                    (alloc.Enabled && (report->Mode != ReportOnlyNonDeleters ||
+                        _callstacks.IsNonDeleter(alloc.CallstackUID)))) {
+                    report->NumAllocs++;
+                    report->MinSizeInBytes = Min(report->MinSizeInBytes, alloc.SizeInBytes);
+                    report->MaxSizeInBytes = Max(report->MaxSizeInBytes, alloc.SizeInBytes);
+                    report->TotalSizeInBytes += alloc.SizeInBytes;
+
+                    const auto it = callstackUIDtoIndex.try_emplace(alloc.CallstackUID);
+                    if (it.second) {
+                        it.first->second = checked_cast<u32>(report->Callstacks.size());
+                        report->Callstacks.emplace_back(alloc.CallstackUID);
+                    }
+
+                    FCallstackBlocks& callstack = report->Callstacks[it.first->second];
+                    Assert(callstack.CallstackUID == alloc.CallstackUID);
+                    callstack.Add(alloc);
+
+                    UNUSED(ptr); // #TODO log pointers ?
                 }
-
-                FCallstackBlocks& callstack = report->Callstacks[it.first->second];
-                Assert(callstack.CallstackUID == alloc.CallstackUID);
-                callstack.Add(alloc);
-
-                LOG(Leaks, Debug, L"Dangling block {0} with {1} (UID={2})\n{3}",
-                    Fmt::Pointer(ptr),
-                    Fmt::SizeInBytes(alloc.SizeInBytes),
-                    alloc.CallstackUID,
-                    Fmt::HexDump(FRawMemoryConst((u8*)ptr, alloc.SizeInBytes)) );
-            }
-        });
-
-        std::sort(report->Callstacks.begin(), report->Callstacks.end(),
-            [](const FCallstackBlocks& lhs, const FCallstackBlocks& rhs) {
-                return (lhs.TotalSizeInBytes > rhs.TotalSizeInBytes); // sort from biggest leak to smallest
             });
+        }
     }
 
     void ReportLeaks(EReportMode mode = ReportOnlyLeaks) {
@@ -285,6 +281,12 @@ public:
             Assert(report.Callstacks.empty());
             return;
         }
+
+        std::sort(report.Callstacks.begin(), report.Callstacks.end(),
+            [](const FCallstackBlocks& lhs, const FCallstackBlocks& rhs) {
+                return ((lhs.TotalSizeInBytes > rhs.TotalSizeInBytes) | // sort from biggest leak to smallest
+                       ((lhs.TotalSizeInBytes == rhs.TotalSizeInBytes) & (&lhs < &rhs))); // and keep ptr order
+            });
 
         LOG(Leaks, Error, L"Found {0} leaking blocks, total {1} [{2}, {3}] (mode = {4})",
             Fmt::CountOfElements(report.NumAllocs),
