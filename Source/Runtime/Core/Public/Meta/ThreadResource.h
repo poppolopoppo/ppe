@@ -25,8 +25,8 @@ using FRecursiveLockGuard = std::lock_guard<std::recursive_mutex>;
 class PPE_CORE_API FThreadResource {
 public:
 #ifdef WITH_PPE_THREADRESOURCE_CHECKS
-    FThreadResource() : FThreadResource(std::this_thread::get_id()) {}
-    explicit FThreadResource(std::thread::id threadId) : _threadId(threadId) {}
+    FThreadResource() NOEXCEPT : FThreadResource(std::this_thread::get_id()) {}
+    explicit FThreadResource(std::thread::id threadId) NOEXCEPT : _threadId(threadId) {}
     ~FThreadResource() { Assert(std::this_thread::get_id() == _threadId); }
     std::thread::id ThreadId() const { return _threadId; }
     void CheckThreadId(std::thread::id threadId) const { Assert(threadId == _threadId); }
@@ -35,8 +35,7 @@ public:
 private:
     std::thread::id _threadId;
 #else
-    FThreadResource() {}
-    ~FThreadResource() {}
+    FThreadResource() = default;
     std::thread::id ThreadId() const { return std::thread::id(); }
     void CheckThreadId(std::thread::id) const {}
     void OwnedByThisThread() const {}

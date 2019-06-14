@@ -17,8 +17,8 @@ public:
     FDynamicLibrary(const FDynamicLibrary&) = delete;
     FDynamicLibrary& operator =(const FDynamicLibrary&) = delete;
 
-    FDynamicLibrary(FDynamicLibrary&& rvalue);
-    FDynamicLibrary& operator =(FDynamicLibrary&& rvalue);
+    FDynamicLibrary(FDynamicLibrary&& rvalue) NOEXCEPT;
+    FDynamicLibrary& operator =(FDynamicLibrary&& rvalue) NOEXCEPT;
 
     void* Handle() const {
         Assert(IsValid());

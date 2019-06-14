@@ -29,14 +29,14 @@ public:
     using base_type::size;
     using base_type::operator [];
 
-    TUniqueView();
+    TUniqueView() NOEXCEPT;
     ~TUniqueView();
 
     explicit TUniqueView(const TMemoryView<T>& other);
     TUniqueView(pointer storage, size_type capacity);
 
-    TUniqueView(TUniqueView&& rvalue);
-    TUniqueView& operator =(TUniqueView&& rvalue);
+    TUniqueView(TUniqueView&& rvalue) NOEXCEPT;
+    TUniqueView& operator =(TUniqueView&& rvalue) NOEXCEPT;
 
     TUniqueView(const TUniqueView& other) = delete;
     TUniqueView& operator =(const TUniqueView& other) = delete;
@@ -47,7 +47,8 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
-TUniqueView<T, _Deleter>::TUniqueView() {}
+TUniqueView<T, _Deleter>::TUniqueView() NOEXCEPT
+{}
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
 TUniqueView<T, _Deleter>::TUniqueView(const TMemoryView<T>& other)
@@ -64,11 +65,11 @@ TUniqueView<T, _Deleter>::~TUniqueView() {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
-TUniqueView<T, _Deleter>::TUniqueView(TUniqueView&& rvalue)
+TUniqueView<T, _Deleter>::TUniqueView(TUniqueView&& rvalue) NOEXCEPT
 :   base_type(std::move(rvalue)) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
-auto TUniqueView<T, _Deleter>::operator =(TUniqueView&& rvalue) -> TUniqueView& {
+auto TUniqueView<T, _Deleter>::operator =(TUniqueView&& rvalue) -> TUniqueView& NOEXCEPT {
     Reset(std::move(rvalue));
     return (*this);
 }

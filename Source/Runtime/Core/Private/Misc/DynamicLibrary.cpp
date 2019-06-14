@@ -22,12 +22,12 @@ FDynamicLibrary::~FDynamicLibrary() {
     UnloadIFP();
 }
 //----------------------------------------------------------------------------
-FDynamicLibrary::FDynamicLibrary(FDynamicLibrary&& rvalue) {
+FDynamicLibrary::FDynamicLibrary(FDynamicLibrary&& rvalue) NOEXCEPT {
     _handle.Reset(nullptr, false, false);
     swap(_handle, rvalue._handle);
 }
 //----------------------------------------------------------------------------
-FDynamicLibrary& FDynamicLibrary::operator =(FDynamicLibrary&& rvalue) {
+FDynamicLibrary& FDynamicLibrary::operator =(FDynamicLibrary&& rvalue) NOEXCEPT {
     AssertRelease(not IsValid());
     swap(_handle, rvalue._handle);
 
