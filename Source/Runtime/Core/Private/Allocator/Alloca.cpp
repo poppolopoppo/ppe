@@ -155,7 +155,9 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
     UNUSED(keepData);
 #endif
     {
+#if USE_PPE_ALLOCA_LINEARHEAP
         Assert_NoAssume(FAllocaLinearHeapTLS_::Get().AliasesToHeap(ptr) == false);
+#endif
 
         result = FAllocaFallback_::Realloc(ptr, newSize);
     }
@@ -179,7 +181,9 @@ void FreeAlloca(void* ptr, size_t size) {
     else
 #endif
     {
+#if USE_PPE_ALLOCA_LINEARHEAP
         Assert_NoAssume(FAllocaLinearHeapTLS_::Get().AliasesToHeap(ptr) == false);
+#endif
 
         FAllocaFallback_::Free(ptr);
     }
