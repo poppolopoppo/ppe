@@ -4,6 +4,7 @@
 
 #include "Memory/MemoryView.h"
 #include "Memory/UniquePtr.h"
+#include "Meta/ThreadResource.h"
 
 #include <malloc.h> // for _alloca()
 
@@ -50,7 +51,8 @@ FORCE_INLINE T* TypedRelocateAlloca(T* ptr, size_t newCount, size_t oldCount, bo
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-struct TAllocaBlock {
+class TAllocaBlock : Meta::FThreadResource {
+public:
     T* RawData;
 
 #ifdef ARCH_X64
@@ -75,7 +77,7 @@ struct TAllocaBlock {
     }
 
     ~TAllocaBlock() {
-        if (not UsingSysAlloca && RawData)
+        if ((!UsingSysAlloca) & (!!RawData))
             FreeAlloca(RawData, Count * sizeof(T));
     }
 
@@ -83,12 +85,14 @@ struct TAllocaBlock {
     TAllocaBlock& operator =(const TAllocaBlock& ) = delete;
 
     TAllocaBlock(TAllocaBlock&& rvalue)
-        : TAllocaBlock() {
+    :   TAllocaBlock() {
         std::swap(*this, rvalue);
     }
 
     TAllocaBlock& operator =(TAllocaBlock&& rvalue) {
-        if (not UsingSysAlloca && RawData)
+        THIS_THREADRESOURCE_CHECKACCESS();
+
+        if ((!UsingSysAlloca) & (!!RawData))
             FreeAlloca(RawData);
 
         RawData = nullptr;
@@ -100,13 +104,17 @@ struct TAllocaBlock {
     }
 
     void Relocate(size_t newCount, bool keepData = true) {
+        THIS_THREADRESOURCE_CHECKACCESS();
         Assert(newCount != Count);
         Assert(!UsingSysAlloca);
+
         RawData = TypedRelocateAlloca(RawData, newCount, Count, keepData);
         Count = newCount;
     }
 
     void RelocateIFP(size_t newCount, bool keepData = true) {
+        THIS_THREADRESOURCE_CHECKACCESS();
+
         if (newCount > Count)
             Relocate(newCount, keepData);
     }
