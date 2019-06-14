@@ -249,6 +249,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
                 .Libraries          = { '$ProjectName$-Lib-$Platform$-$Config$' }
     #if USE_LIBRARY_DEPENDENCY_INPUT
+                .LinkerLinkObjects  = true
                 .Libraries          = { '$ProjectName$-Obj-$Platform$-$Config$' }
     #endif
                 .Libraries          + .ProjectLibraries

@@ -376,6 +376,11 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .Lib_RuntimeDebug       = .StaticLib_RuntimeDebug
     .Lib_RuntimeRelease     = .StaticLib_RuntimeRelease
 #endif
+
+#if USE_LIBRARY_DEPENDENCY_INPUT
+    .Obj_RuntimeDebug       = .Lib_RuntimeDebug
+    .Obj_RuntimeRelease     = .Lib_RuntimeRelease
+#endif
 ]
 
 //------------------------------------------------------------------------------

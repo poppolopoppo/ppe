@@ -60,6 +60,10 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .LinkerOutput       = '$IntermediateRoot$/$BinaryPrefix$-$Platform$-$Config$.$CompilerBinaryExtension$'
         .LinkerOptions      + .ExecutableOptions
 
+#if USE_LIBRARY_DEPENDENCY_INPUT
+        .LinkerLinkObjects  = true
+#endif
+
         .Libraries          = { '$ProjectName$-Obj-$Platform$-$Config$' }
 
         .ProjectDependencies    = {}

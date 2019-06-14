@@ -27,7 +27,7 @@
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc)
 #define USE_PRECOMPILED_HEADERS // %_NOCOMMIT%
 ; utilise les .obj plutôt que les .lib comme input du linker (encore nécessaire ?)
-;#define USE_LIBRARY_DEPENDENCY_INPUT
+#define USE_LIBRARY_DEPENDENCY_INPUT
 ; utilise le linker incremental en profiling
 #define USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
 
