@@ -27,11 +27,11 @@ UNITS_DECL(Mass,         t, FTonnes,        1,      PPE::Units::Mass::FKilograms
 UNITS_END()
 //----------------------------------------------------------------------------
 UNITS_BEGIN(Storage)
-UNITS_DECL(Storage,      b, FBytes,         1024,   void)
-UNITS_DECL(Storage,     kb, FKilobytes,     1024,   PPE::Units::Storage::FBytes)
-UNITS_DECL(Storage,     mb, FMegabytes,     1024,   PPE::Units::Storage::FKilobytes)
-UNITS_DECL(Storage,     gb, FGigabytes,     1024,   PPE::Units::Storage::FMegabytes)
-UNITS_DECL(Storage,     tb, FTerabytes,     1024,   PPE::Units::Storage::FGigabytes)
+UNITS_DECL(Storage,      b, FBytes,         1000,   void)
+UNITS_DECL(Storage,     kb, FKilobytes,     1000,   PPE::Units::Storage::FBytes)
+UNITS_DECL(Storage,     mb, FMegabytes,     1000,   PPE::Units::Storage::FKilobytes)
+UNITS_DECL(Storage,     gb, FGigabytes,     1000,   PPE::Units::Storage::FMegabytes)
+UNITS_DECL(Storage,     tb, FTerabytes,     1000,   PPE::Units::Storage::FGigabytes)
 UNITS_DECL(Storage,     pb, FPetabytes,     1,      PPE::Units::Storage::FTerabytes)
 UNITS_END()
 //----------------------------------------------------------------------------
