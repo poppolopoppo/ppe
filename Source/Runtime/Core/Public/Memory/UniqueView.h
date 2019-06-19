@@ -69,7 +69,7 @@ TUniqueView<T, _Deleter>::TUniqueView(TUniqueView&& rvalue) NOEXCEPT
 :   base_type(std::move(rvalue)) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
-auto TUniqueView<T, _Deleter>::operator =(TUniqueView&& rvalue) -> TUniqueView& NOEXCEPT {
+auto TUniqueView<T, _Deleter>::operator =(TUniqueView&& rvalue) NOEXCEPT -> TUniqueView& {
     Reset(std::move(rvalue));
     return (*this);
 }
