@@ -171,6 +171,7 @@ struct FGraphNode {
 };
 struct FGraph {
     int Revision{ 0 };
+    FTimestamp Timestamp{ 0 };
     TAllocaBlock<FGraphNode> Storage;
     VECTOR(Task, FGraphNode*) Nodes;
 
@@ -185,6 +186,7 @@ struct FGraph {
 
         forrange(i, 0, n) {
             FGraphNode* const p = INPLACE_NEW(&Storage.RawData[i], FGraphNode);
+            p->Timestamp = Timestamp;
 
             if (i) {
                 const size_t m = rnd.Next(depth + 1);
@@ -197,6 +199,16 @@ struct FGraph {
 
         Nodes.assign(Storage.MakeView().Map([](FGraphNode& n) { return &n; }));
         rnd.Shuffle(Nodes.MakeView());
+    }
+
+    bool CheckBuild() const {
+        for (const FGraphNode* n : Nodes) {
+            if (n->Timestamp.Value() <= Timestamp.Value()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 };
 //----------------------------------------------------------------------------
@@ -234,6 +246,7 @@ static void Test_Graph_Preprocess_() {
         LOG(Test_Thread, Info, L"Collected {0} tasks to build in {1} <PREPROCESS>",
             Fmt::CountOfElements(q.size()), time.Elapsed());
     });
+    AssertRelease(g.CheckBuild());
 }
 //----------------------------------------------------------------------------
 static void EachGraphNode_(FAggregationPort* port, ITaskContext& ctx, int rev, FGraphNode* n) {
@@ -274,6 +287,7 @@ static void Test_Graph_Incremental_() {
         LOG(Test_Thread, Info, L"Collected {0} tasks to build in {1} <INCREMENTAL>",
             Fmt::CountOfElements(g.Nodes.size()), time.Elapsed());
     });
+    AssertRelease(g.CheckBuild());
 }
 //----------------------------------------------------------------------------
 } //!namespace
