@@ -3,7 +3,6 @@
 #include "Core_fwd.h"
 
 #include "Module.h"
-#include "ModuleManager.h"
 
 #ifndef PPE_STATICMODULES_STARTUP
 #   error "Runtime/Core/ModuleExport.h can't be included first !"

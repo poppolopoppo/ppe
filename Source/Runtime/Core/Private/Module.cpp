@@ -54,6 +54,18 @@ FBaseModuleStartup::~FBaseModuleStartup() {
 void FBaseModuleStartup::ReleaseMemory() {
 }
 //----------------------------------------------------------------------------
+void FBaseModuleStartup::StartModule(FModule& m) {
+    Manager.Start(m);
+}
+//----------------------------------------------------------------------------
+void FBaseModuleStartup::ShutdownModule(FModule& m) {
+    Manager.Shutdown(m);
+}
+//----------------------------------------------------------------------------
+void FBaseModuleStartup::ReleaseMemoryInModule(FModule& m) {
+    Manager.ReleaseMemory(m);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

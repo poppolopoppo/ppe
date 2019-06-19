@@ -12,18 +12,19 @@
         CONCAT3(F, _NAME, Module) _NAME; \
         explicit PPE_STATICMODULE_STARTUP_NAME(_NAME)(PPE::FModuleManager& manager) \
         :   PPE_STATICMODULES_STARTUP(manager) { \
-            Manager.Start(_NAME); \
+            StartModule(_NAME); \
         } \
         virtual ~PPE_STATICMODULE_STARTUP_NAME(_NAME)() { \
-            Manager.Shutdown(_NAME); \
+            ShutdownModule(_NAME); \
         } \
         virtual void ReleaseMemory() override { \
-            Manager.ReleaseMemory(_NAME); \
+            ReleaseMemoryInModule(_NAME); \
             PPE_STATICMODULES_STARTUP::ReleaseMemory(); \
         } \
     }
 
 namespace PPE {
+class FModuleManager;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -33,8 +34,6 @@ enum class EModuleStatus {
     Shutdown,
     Destroyed
 };
-//----------------------------------------------------------------------------
-class FModuleManager;
 //----------------------------------------------------------------------------
 struct PPE_CORE_API IModuleStartup {
     virtual ~IModuleStartup() {}
@@ -71,10 +70,15 @@ private:
 PPE_CORE_API void ReleaseMemoryInModules();
 //----------------------------------------------------------------------------
 struct PPE_CORE_API FBaseModuleStartup : public IModuleStartup {
+public:
     PPE::FModuleManager& Manager;
     explicit FBaseModuleStartup(PPE::FModuleManager& manager);
     virtual ~FBaseModuleStartup();
     virtual void ReleaseMemory() override;
+protected:
+    void StartModule(FModule& m);
+    void ShutdownModule(FModule& m);
+    void ReleaseMemoryInModule(FModule& m);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

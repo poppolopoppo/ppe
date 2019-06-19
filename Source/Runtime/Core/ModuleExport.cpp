@@ -10,6 +10,7 @@
 #include "IO/FileSystem.h"
 #include "IO/TextWriter.h"
 #include "Meta/AutoSingleton.h"
+#include "ModuleManager.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
 

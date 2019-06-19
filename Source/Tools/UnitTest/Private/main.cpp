@@ -3,6 +3,7 @@
 #include "TestApp.h"
 
 #include "Diagnostic/CurrentProcess.h"
+#include "ModuleManager.h"
 
 #if defined(PLATFORM_WINDOWS)
 //  Retrieves application icon for windows
