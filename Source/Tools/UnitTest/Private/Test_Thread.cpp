@@ -281,6 +281,8 @@ static void Test_Graph_Incremental_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_Thread() {
+    PPE_DEBUG_NAMEDSCOPE("Test_Thread");
+
     LOG(Test_Thread, Emphasis, L"starting thread tests ...");
 
     Test_Event();

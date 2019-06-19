@@ -14,6 +14,8 @@
 #include "HAL/PlatformMisc.h"
 
 #include "HAL/Windows/DbgHelpWrapper.h"
+#include "HAL/Windows/VSPerfWrapper.h"
+#include "HAL/Windows/VSToolsWrapper.h"
 #include "HAL/Windows/LastError.h"
 
 #include <Psapi.h>
@@ -170,11 +172,27 @@ void FWindowsPlatformProcess::OnProcessStart() {
 #   endif
 
     GIsFirstInstance = MakeNamedMutex_(nullptr);
+
+#if USE_PPE_PLATFORM_DEBUG
+    FVSToolsWrapper::Create();
+#endif
+#if USE_PPE_PLATFORM_PROFILER
+    FVSPerfWrapper::Create();
+#endif
+
     FDbghelpWrapper::Create();
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::OnProcessShutdown() {
     FDbghelpWrapper::Destroy();
+
+#if USE_PPE_PLATFORM_PROFILER
+    FVSPerfWrapper::Destroy();
+#endif
+#if USE_PPE_PLATFORM_DEBUG
+    FVSToolsWrapper::Destroy();
+#endif
+
     ReleaseNamedMutex_();
 }
 //----------------------------------------------------------------------------
@@ -918,7 +936,10 @@ void* FWindowsPlatformProcess::DynamicLibraryFunction(FDynamicLibraryHandle lib,
     Assert(lib);
     Assert(name);
 
-    return (void*)::GetProcAddress(lib, name);
+    const ::FARPROC fnAddr = ::GetProcAddress(lib, name);
+    CLOG(fnAddr == nullptr, HAL, Error, L"GetProcAddress({0}) failed with : {1}", MakeCStringView(name), FLastError());
+
+    return (void*)fnAddr;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

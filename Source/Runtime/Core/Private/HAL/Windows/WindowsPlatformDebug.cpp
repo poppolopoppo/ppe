@@ -4,9 +4,22 @@
 
 #if USE_PPE_PLATFORM_DEBUG && defined(PLATFORM_WINDOWS)
 
+#   include "HAL/PlatformProfiler.h"
+#   include "HAL/Windows/VSToolsWrapper.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::GuaranteeStackSizeForStackOverflowRecovery() {
+    ULONG stackSizeInBytes = 0;
+    if (::SetThreadStackGuarantee(&stackSizeInBytes)) {
+        stackSizeInBytes += 4 * 1024; // 4 kb
+        if (::SetThreadStackGuarantee(&stackSizeInBytes))
+            return;
+    }
+    AssertNotReached();
+}
 //----------------------------------------------------------------------------
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(6320) // L'expression de filtre d'exception correspond a la constante EXCEPTION_EXECUTE_HANDLER.
@@ -44,14 +57,30 @@ void FWindowsPlatformDebug::SetThreadDebugName(const char* name) {
 }
 PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
-void FWindowsPlatformDebug::GuaranteeStackSizeForStackOverflowRecovery() {
-    ULONG stackSizeInBytes = 0;
-    if (::SetThreadStackGuarantee(&stackSizeInBytes)) {
-        stackSizeInBytes += 4 * 1024; // 4 kb
-        if (::SetThreadStackGuarantee(&stackSizeInBytes))
-            return;
-    }
-    AssertNotReached();
+void FWindowsPlatformDebug::BeginNamedEvent(u32 uid, const char* name) {
+    FPlatformProfiler::MarkAndComment(uid, name);
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::EndNamedEvent(u32 uid) {
+    FPlatformProfiler::Mark(uid);
+}
+//----------------------------------------------------------------------------
+// Memory tracking
+//----------------------------------------------------------------------------
+FWindowsPlatformDebug::FHeapHandle& FWindowsPlatformDebug::HEAP_Alloca = FVSToolsWrapper::HEAP_Alloca;
+FWindowsPlatformDebug::FHeapHandle& FWindowsPlatformDebug::HEAP_Malloc = FVSToolsWrapper::HEAP_Malloc;
+FWindowsPlatformDebug::FHeapHandle& FWindowsPlatformDebug::HEAP_Linear = FVSToolsWrapper::HEAP_Linear;
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::AllocateEvent(FHeapHandle heap, void* ptr, size_t sz) {
+    FVSToolsWrapper::API.AllocateEvent(heap, ptr, checked_cast<unsigned long>(sz));
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::ReallocateEvent(FHeapHandle heap, void* newp, size_t newsz, void* oldp) {
+    FVSToolsWrapper::API.ReallocateEvent(heap, newp, checked_cast<unsigned long>(newsz), oldp);
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::DeallocateEvent(FHeapHandle heap, void* ptr) {
+    FVSToolsWrapper::API.DeallocateEvent(heap, ptr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

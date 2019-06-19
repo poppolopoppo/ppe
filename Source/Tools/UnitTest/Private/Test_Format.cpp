@@ -155,6 +155,8 @@ static void Test_TextWriter_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_Format() {
+    PPE_DEBUG_NAMEDSCOPE("Test_Format");
+
     LOG(Test_Format, Emphasis, L"starting format tests ...");
 
     Test_Format_();

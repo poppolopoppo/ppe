@@ -99,7 +99,7 @@ void FCurrentProcess::DumpProcessInfos() const {
     auto mem = FPlatformMemory::Constants();
     auto& platform = CurrentPlatform();
     LOG(Process, Info, L"platform name = {0} ({1})", platform.DisplayName(), CurrentPlatform().FullName());
-    LOG(Process, Info, L"build configuration = " WIDESTRING(STRINGIZE(BUILDCONFIG)));
+    LOG(Process, Info, L"build configuration = " WSTRINGIZE(BUILDCONFIG));
     LOG(Process, Info, L"compiled at = " WIDESTRING(__DATE__) L"  " WIDESTRING(__TIME__));
     LOG(Process, Info, L"   Client supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Client));
     LOG(Process, Info, L"   Server supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Server));

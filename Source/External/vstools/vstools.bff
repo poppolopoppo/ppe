@@ -1,0 +1,25 @@
+#once
+{
+    .ModuleName = 'vstools'
+    .ModuleType = 'External'
+    .ModuleDefines = { 'EXPORT_PPE_EXTERNAL_VSTOOLS' }
+    .ModuleFiles =
+    {
+        'Public/vstools.h',
+    }
+    .ModuleIsolatedFiles =
+    {
+        'Private/vstools.cpp'
+    }
+    ; needed since we're linking against a MSIL .lib
+    .ProjectLinkType = 'Dll'
+    .ProjectUseIncrementalLinker = .False
+    .ProjectUseLinkTimeCodeGeneration = .False
+    .ProjectLinkerOptions_Win32 = ' /IGNORE:4099'
+    .ProjectLinkerOptions_Win64 = .ProjectLinkerOptions_Win32
+    .ProjectLinkerOptions_Win32_Debug = .ProjectLinkerOptions_Win32 + ' /NODEFAULTLIB:MSVCRT.lib'
+    .ProjectLinkerOptions_Win64_Debug = .ProjectLinkerOptions_Win32_Debug
+    .ProjectLinkerOptions_Win32_FastDebug = .ProjectLinkerOptions_Win32_Debug
+    .ProjectLinkerOptions_Win64_FastDebug = .ProjectLinkerOptions_Win64_Debug
+    #include "$BuildPath$/Templates/Module.bff"
+}

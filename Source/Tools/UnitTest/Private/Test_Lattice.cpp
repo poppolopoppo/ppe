@@ -50,6 +50,8 @@ static void Test_LoadWaveFrontObj(const FFilename& filename) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_Lattice() {
+    PPE_DEBUG_NAMEDSCOPE("Test_Lattice");
+
     /* %_NOCOMMIT% TODO
     const FFilename inputs[] = {
         L"Data:/Models/Sphere.obj",

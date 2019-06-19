@@ -29,14 +29,17 @@
 #endif
 
 #if USE_PPE_MEMORY_DEBUGGING && !PPE_MALLOC_FORCE_STD
+#   define PPE_MALLOC_DEBUG_PROXY          1
 #   define PPE_MALLOC_HISTOGRAM_PROXY      1 // Keep memory histogram available, shouldn't have any influence on debugging
 #   define PPE_MALLOC_LEAKDETECTOR_PROXY   0 // Disabled since it adds payload to each allocation
 #   define PPE_MALLOC_POISON_PROXY         1 // Erase all data from blocks when allocating and releasing them, helps to find necrophilia
 #elif not (USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING)
+#   define PPE_MALLOC_DEBUG_PROXY          1
 #   define PPE_MALLOC_HISTOGRAM_PROXY      1 // %_NOCOMMIT%
 #   define PPE_MALLOC_LEAKDETECTOR_PROXY   (USE_PPE_MALLOC_LEAKDETECTOR) // %_NOCOMMIT%
 #   define PPE_MALLOC_POISON_PROXY         (USE_PPE_DEBUG) // %_NOCOMMIT%
 #else
+#   define PPE_MALLOC_DEBUG_PROXY          0
 #   define PPE_MALLOC_HISTOGRAM_PROXY      0
 #   define PPE_MALLOC_LEAKDETECTOR_PROXY   0
 #   define PPE_MALLOC_POISON_PROXY         0
@@ -44,6 +47,9 @@
 
 #define USE_PPE_MALLOC_PROXY               (PPE_MALLOC_HISTOGRAM_PROXY|PPE_MALLOC_LEAKDETECTOR_PROXY|PPE_MALLOC_POISON_PROXY)
 
+#if PPE_MALLOC_DEBUG_PROXY
+#   include "HAL/PlatformDebug.h"
+#endif
 #if PPE_MALLOC_HISTOGRAM_PROXY
 #   include "HAL/PlatformAtomics.h"
 #endif
@@ -267,6 +273,9 @@ private:
         if (nullptr == ptr) return nullptr;
         Assert(Meta::IsAligned(alignment, ptr));
         Assert_NoAssume(FMallocLowLevel::RegionSize(ptr) == SnapSize(sizeInBytes));
+#   if PPE_MALLOC_DEBUG_PROXY
+        PPE_DEBUG_ALLOCATEEVENT(Malloc, ptr, sizeInBytes);
+#   endif
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
         FLeakDetector::Get().Allocate(ptr, sizeInBytes);
 #   endif
@@ -283,6 +292,9 @@ private:
         Assert(Meta::IsPow2(alignment));
         Assert(Meta::IsAligned(alignment, ptr));
         if (nullptr == ptr) return nullptr;
+#   if PPE_MALLOC_DEBUG_PROXY
+        PPE_DEBUG_DEALLOCATEEVENT(Malloc, ptr);
+#   endif
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
         FLeakDetector::Get().Release(ptr);
 #   endif
@@ -298,6 +310,9 @@ private:
         if (nullptr == newp) return nullptr;
         Assert(Meta::IsAligned(alignment, newp));
         Assert_NoAssume(FMallocLowLevel::RegionSize(newp) == SnapSize(sizeInBytes));
+#   if PPE_MALLOC_DEBUG_PROXY
+        PPE_DEBUG_REALLOCATEEVENT(Malloc, newp, sizeInBytes, oldp);
+#   endif
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
         FLeakDetector::Get().Allocate(newp, sizeInBytes);
 #   endif
@@ -317,6 +332,9 @@ private:
         Assert(Meta::IsPow2(alignment));
         Assert(Meta::IsAligned(alignment, ptr));
         if (nullptr == ptr) return nullptr;
+#   if PPE_MALLOC_DEBUG_PROXY
+        PPE_DEBUG_DEALLOCATEEVENT(Malloc, ptr);
+#   endif
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
         FLeakDetector::Get().Release(ptr);
 #   endif
@@ -327,7 +345,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-NOALIAS RESTRICT
+NOALIAS RESTRICT PPE_DECLSPEC_ALLOCATOR()
 void*   (malloc)(size_t size) {
     return FMallocProxy::Malloc(size);
 }

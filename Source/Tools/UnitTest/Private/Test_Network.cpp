@@ -327,6 +327,8 @@ static void Test_HttpServer_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_Network() {
+    PPE_DEBUG_NAMEDSCOPE("Test_Network");
+
     LOG(Test_Network, Emphasis, L"starting network tests ...");
 
     Test_ParseUri_();

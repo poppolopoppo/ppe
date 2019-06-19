@@ -9,6 +9,10 @@
         'External/lz4',
         'External/xxHash',
     }
+    .ModuleRuntimeDependencies =
+    {
+        'External/vstools'
+    }
     .ModuleIsolatedFiles =
     {
         'Private/Allocator/MallocBinned.cpp',

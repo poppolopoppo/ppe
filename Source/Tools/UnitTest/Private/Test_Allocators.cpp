@@ -268,6 +268,8 @@ static void Test_Allocator_(
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_Allocators() {
+    PPE_DEBUG_NAMEDSCOPE("Test_Allocators");
+
     LOG(Test_Allocators, Emphasis, L"starting allocator tests ...");
 
     typedef u8 value_type;

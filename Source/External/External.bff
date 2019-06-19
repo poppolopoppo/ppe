@@ -8,7 +8,7 @@
     .ProjectInputPattern = { '.none' } ; disable auto listing of source files
     .ProjectAllowedFileExtensions = {} ; for VCX projects
     .ProjectLinkType = 'Lib' ; disable DLL linking for these projects #TODO remove that ?
-    .ProjectUseUnity = 'false' ; disable unity builds for externals (might be not supported by libraries like LZ4)
+    .ProjectUseUnity = .False ; disable unity builds for externals (might be not supported by libraries like LZ4)
     .ProjectIncludes = { '$SourcePath$/Runtime/Core/Public' }
 
     #include "double-conversion/double-conversion.bff"
@@ -16,6 +16,7 @@
     #include "lz4/lz4.bff"
     #include "stb/stb.bff"
     #include "renderdoc/renderdoc.bff"
+    #include "vstools/vstools.bff"
     #include "xxHash/xxHash.bff"
 
     #include "$BuildPath$/Templates/Namespace.bff"

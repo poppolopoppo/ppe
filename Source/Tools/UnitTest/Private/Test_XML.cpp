@@ -60,6 +60,8 @@ static void Test_XMLLoad_Collada_() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void Test_XML() {
+    PPE_DEBUG_NAMEDSCOPE("Test_Xml");
+
     Test_XMLLoad_Simple_();
     //Test_XMLLoad_Collada_();
 }

@@ -1459,6 +1459,8 @@ NO_INLINE static void Test_StealFromDifferentAllocator_() {
 }
 //----------------------------------------------------------------------------
 void Test_Containers() {
+    PPE_DEBUG_NAMEDSCOPE("Test_Containers");
+
     LOG(Test_Containers, Emphasis, L"starting container tests ...");
 
     const EProcessPriority prio = FPlatformProcess::Priority();

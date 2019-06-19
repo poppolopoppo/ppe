@@ -2,11 +2,13 @@
 
 #include "Core_fwd.h"
 
+#include "HAL/PlatformDebug.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API NOALIAS RESTRICT
+PPE_CORE_API NOALIAS RESTRICT PPE_DECLSPEC_ALLOCATOR()
 void*   (malloc)(size_t size);
 //----------------------------------------------------------------------------
 PPE_CORE_API NOALIAS

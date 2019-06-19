@@ -972,6 +972,8 @@ static void Test_Grammar_() {
 } //!namespace
 //----------------------------------------------------------------------------
 void Test_RTTI() {
+    PPE_DEBUG_NAMEDSCOPE("Test_RTTI");
+
     LOG(Test_RTTI, Emphasis, L"starting rtti tests ...");
 
     RTTI_NAMESPACE(RTTI_UnitTest).Start();
