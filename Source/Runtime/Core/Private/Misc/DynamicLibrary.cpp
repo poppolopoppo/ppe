@@ -55,7 +55,7 @@ bool FDynamicLibrary::Attach(const wchar_t* path) {
     if (auto* const hModule = FPlatformProcess::AttachToDynamicLibrary(path)) {
         _handle.Reset(hModule, true, true);
 
-        LOG(DynamicLib, Debug, L"attached to module '{0}'", FPlatformProcess::DynamicLibraryFilename(hModule));
+        LOG(DynamicLib, Debug, L"attached to module '{0}'", MakeCStringView(path) );
 
         return true;
     }
@@ -70,7 +70,7 @@ bool FDynamicLibrary::Load(const wchar_t* path) {
     if (auto* const hModule = FPlatformProcess::OpenDynamicLibrary(path)) {
         _handle.Reset(hModule, true, false);
 
-        LOG(DynamicLib, Debug, L"loaded module '{0}'", FPlatformProcess::DynamicLibraryFilename(hModule));
+        LOG(DynamicLib, Debug, L"loaded module '{0}'", MakeCStringView(path) );
 
         return true;
     }

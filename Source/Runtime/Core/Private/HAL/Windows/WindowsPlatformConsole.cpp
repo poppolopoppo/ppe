@@ -194,7 +194,7 @@ void FWindowsPlatformConsole::Open() {
         win32.Console.hConsoleOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
 
         ::SetConsoleOutputCP(CP_UTF8);
-        ::SetConsoleTitleW(L"PPE - " WIDESTRING(STRINGIZE(BUILDCONFIG)));
+        ::SetConsoleTitleW(L"PPE - " WSTRINGIZE(BUILDCONFIG));
         ::SetConsoleMode(win32.Console.hConsoleIn,
             ENABLE_QUICK_EDIT_MODE |
             ENABLE_ECHO_INPUT |

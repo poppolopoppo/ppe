@@ -151,13 +151,13 @@ DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
 
     const FMinidumpParams_ *const p = (const FMinidumpParams_ *)inParam;
 
-    // We need to keep track of the name of the process, sans extension, so that it can
+    // We need to keep track of the name of the process, without extension, so that it can
     // be used if we're filtering module data segments.  So we calculate that up front.
     wchar_t processName[MAX_PATH] = { 0 };
     ::GetModuleFileNameW(NULL, processName, MAX_PATH );
     ::_wsplitpath_s(processName, NULL, 0, NULL, 0, processName, MAX_PATH, NULL, 0 );
 
-    // TFirst, attempt to create the file that the minidump will be written to
+    // First, attempt to create the file that the minidump will be written to
     HANDLE hFile = ::CreateFileW(p->Filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
     if (INVALID_HANDLE_VALUE != hFile) {
         // Determine what information we want the minidumper to pass along for our
@@ -201,7 +201,7 @@ DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
         // Set up user streams (can optional put memory tracking data)
         ::MINIDUMP_USER_STREAM_INFORMATION userstreams;
 #if USE_PPE_MINIDUMP_EMBED_MEMORYTRACKING
-        wchar_t memoryTracking[PPE_SYSALLOCA_SIZELIMIT];
+        wchar_t memoryTracking[PPE_SYSALLOCA_SIZELIMIT / sizeof(wchar_t)];
         FWFixedSizeTextWriter oss(memoryTracking);
         ReportAllTrackingData(&oss);
 
@@ -225,11 +225,11 @@ DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
         callback.CallbackParam = (PVOID)&info;
         callback.CallbackRoutine = MinidumpFilter_;
 
-        // TAfter all that, we can write out the minidump
+        // After all that, we can write out the minidump
         ::BOOL bRet;
         {
             const FDbghelpWrapper::FLocked threadSafe(FDbghelpWrapper::Get());
-            bRet = threadSafe.MiniDumpWriteDump()(
+            bRet = threadSafe->MiniDumpWriteDump(
                 ::GetCurrentProcess(),
                 ::GetCurrentProcessId(),
                 hFile,

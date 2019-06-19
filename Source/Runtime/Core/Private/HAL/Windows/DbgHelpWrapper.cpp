@@ -14,15 +14,7 @@ LOG_CATEGORY(, DbgHelp)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FDbghelpWrapper::FDbghelpWrapper()
-:   _available(false)
-,   _symInitializeW(nullptr)
-,   _symCleanup(nullptr)
-,   _symSetOptions(nullptr)
-,   _symLoadModuleExW(nullptr)
-,   _symGetModuleInfoW64(nullptr)
-,   _symFromAddrW(nullptr)
-,   _symGetLineFromAddrW64(nullptr)
-,   _miniDumpWriteDump(nullptr) {
+:   _available(false) {
     static const wchar_t* GDbgHelpDllPossiblePaths[] = {
         // Windows 10 SDK ships with a dbghelp.dll which handles /DEBUG:fastlink
 #ifdef ARCH_X86
@@ -50,36 +42,25 @@ FDbghelpWrapper::FDbghelpWrapper()
     }
 
     if (_dbghelp_dll) {
-        _symInitializeW = (FSymInitializeW)_dbghelp_dll.FunctionAddr("SymInitializeW");
-        _symCleanup = (FSymCleanup)_dbghelp_dll.FunctionAddr("SymCleanup");
-        _symGetOptions = (FSymGetOptions)_dbghelp_dll.FunctionAddr("SymGetOptions");
-        _symSetOptions = (FSymSetOptions)_dbghelp_dll.FunctionAddr("SymSetOptions");
-        _symLoadModuleExW = (FSymLoadModuleExW)_dbghelp_dll.FunctionAddr("SymLoadModuleExW");
-        _symGetModuleInfoW64 = (FSymGetModuleInfoW64)_dbghelp_dll.FunctionAddr("SymGetModuleInfoW64");
-        _symFromAddrW = (FSymFromAddrW)_dbghelp_dll.FunctionAddr("SymFromAddrW");
-        _symGetLineFromAddrW64 = (FSymGetLineFromAddrW64)_dbghelp_dll.FunctionAddr("SymGetLineFromAddrW64");
+        Verify((_api.SymInitializeW = (FSymInitializeW)_dbghelp_dll.FunctionAddr("SymInitializeW")) != nullptr);
+        Verify((_api.SymCleanup = (FSymCleanup)_dbghelp_dll.FunctionAddr("SymCleanup")) != nullptr);
+        Verify((_api.SymGetOptions = (FSymGetOptions)_dbghelp_dll.FunctionAddr("SymGetOptions")) != nullptr);
+        Verify((_api.SymSetOptions = (FSymSetOptions)_dbghelp_dll.FunctionAddr("SymSetOptions")) != nullptr);
+        Verify((_api.SymLoadModuleExW = (FSymLoadModuleExW)_dbghelp_dll.FunctionAddr("SymLoadModuleExW")) != nullptr);
+        Verify((_api.SymGetModuleInfoW64 = (FSymGetModuleInfoW64)_dbghelp_dll.FunctionAddr("SymGetModuleInfoW64")) != nullptr);
+        Verify((_api.SymFromAddrW = (FSymFromAddrW)_dbghelp_dll.FunctionAddr("SymFromAddrW")) != nullptr);
+        Verify((_api.SymGetLineFromAddrW64 = (FSymGetLineFromAddrW64)_dbghelp_dll.FunctionAddr("SymGetLineFromAddrW64")) != nullptr);
 
-        Assert(_symInitializeW);
-        Assert(_symCleanup);
-        Assert(_symGetOptions);
-        Assert(_symSetOptions);
-        Assert(_symLoadModuleExW);
-        Assert(_symGetModuleInfoW64);
-        Assert(_symFromAddrW);
-        Assert(_symGetLineFromAddrW64);
-
-        _miniDumpWriteDump = (FMiniDumpWriteDump)_dbghelp_dll.FunctionAddr("MiniDumpWriteDump");
-
-        if (nullptr == _miniDumpWriteDump) {
+        _api.MiniDumpWriteDump = (FMiniDumpWriteDump)_dbghelp_dll.FunctionAddr("MiniDumpWriteDump");
+        if (nullptr == _api.MiniDumpWriteDump) {
             for (const wchar_t* filename : GDbgCoreDllPossiblePaths)
                 if (_dbgcore_dll.AttachOrLoad(filename))
                     break;
 
             if (_dbgcore_dll)
-                _miniDumpWriteDump = (FMiniDumpWriteDump)_dbgcore_dll.FunctionAddr("MiniDumpWriteDump");
+                _api.MiniDumpWriteDump = (FMiniDumpWriteDump)_dbgcore_dll.FunctionAddr("MiniDumpWriteDump");
         }
-
-        Assert(_miniDumpWriteDump);
+        Assert(_api.MiniDumpWriteDump != nullptr);
 
         LOG(DbgHelp, Info, L"dbghelp successfully loaded : callstacks and minidumps are available");
 

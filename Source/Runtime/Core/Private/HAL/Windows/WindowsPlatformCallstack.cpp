@@ -121,7 +121,7 @@ static void LoadModules_(const FDbghelpWrapper::FLocked& dbghelp) {
     PRAGMA_MSVC_WARNING_DISABLE(4826) // warning C4826: convert unsigned char* to DWORD64
     ::BOOL module_found = ::Module32First(snap, &module_entry);
     while (module_found) {
-        ::DWORD64 succeed = dbghelp.SymLoadModuleExW()(
+        ::DWORD64 succeed = dbghelp->SymLoadModuleExW(
             process,
             0,
             module_entry.szExePath,
@@ -145,12 +145,12 @@ static void LoadModules_(const FDbghelpWrapper::FLocked& dbghelp) {
 //----------------------------------------------------------------------------
 // Must be called once per run before any symbol query
 static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
-    ::DWORD options = dbghelp.SymGetOptions()();
+    ::DWORD options = dbghelp->SymGetOptions();
     options |= SYMOPT_LOAD_LINES;
     options |= SYMOPT_FAIL_CRITICAL_ERRORS;
     options |= SYMOPT_DEFERRED_LOADS;
     options |= SYMOPT_UNDNAME;
-    dbghelp.SymSetOptions()(options);
+    dbghelp->SymSetOptions(options);
 
     // Force standard malloc, this is called at a very early stage for custom allocators
     STATIC_CONST_INTEGRAL(size_t, SYMBOL_PATH_CAPACITY, 8 * MAX_PATH);
@@ -159,7 +159,7 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
     GetSymbolsPath_(symbol_path, SYMBOL_PATH_CAPACITY);
 
     ::HANDLE process = ::GetCurrentProcess();
-    ::BOOL succeed = dbghelp.SymInitializeW()(process, symbol_path, FALSE);
+    ::BOOL succeed = dbghelp->SymInitializeW(process, symbol_path, FALSE);
     UNUSED(succeed);
 
     LOG(HAL, Info, L"path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
@@ -222,7 +222,7 @@ bool FWindowsPlatformCallstack::ProgramCounterToModuleName(FWString* moduleName,
 
     const FDbghelpWrapper::FLocked dbghelp;
 
-    if (not dbghelp.SymGetModuleInfoW64()(hProcess, ::DWORD64(uintptr_t(pc)), &moduleInfo))
+    if (not dbghelp->SymGetModuleInfoW64(hProcess, ::DWORD64(uintptr_t(pc)), &moduleInfo))
         return false;
 
     *moduleName = MakeCStringView(moduleInfo.ImageName);
@@ -252,18 +252,18 @@ bool FWindowsPlatformCallstack::ProgramCounterToSymbolInfo(FProgramCounterSymbol
     const FDbghelpWrapper::FLocked dbghelp;
     {
         ::DWORD64 dw64Displacement = 0;
-        if (dbghelp.SymFromAddrW()(hProcess, ::DWORD64(uintptr_t(pc)), &dw64Displacement, pSymbol))
+        if (dbghelp->SymFromAddrW(hProcess, ::DWORD64(uintptr_t(pc)), &dw64Displacement, pSymbol))
             symbolInfo->Function = FWStringView(pSymbol->Name, checked_cast<size_t>(pSymbol->NameLen));
         else
             symbolInfo->Function = ToWString(FLastError());
     }
     {
         ::DWORD dwDisplacement = 0;
-        if (dbghelp.SymGetLineFromAddrW64()(hProcess, ::DWORD64(uintptr_t(pc)), &dwDisplacement, &line64)) {
+        if (dbghelp->SymGetLineFromAddrW64(hProcess, ::DWORD64(uintptr_t(pc)), &dwDisplacement, &line64)) {
             symbolInfo->Filename = MakeCStringView(line64.FileName);
             symbolInfo->Line = checked_cast<size_t>(line64.LineNumber);
         }
-        else if (dbghelp.SymGetModuleInfoW64()(hProcess, ::DWORD64(uintptr_t(pc)), &moduleInfo)) {
+        else if (dbghelp->SymGetModuleInfoW64(hProcess, ::DWORD64(uintptr_t(pc)), &moduleInfo)) {
             symbolInfo->Filename = MakeCStringView(moduleInfo.ImageName);
             symbolInfo->Line = 0;
         }

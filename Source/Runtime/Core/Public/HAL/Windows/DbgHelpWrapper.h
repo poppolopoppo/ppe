@@ -76,32 +76,35 @@ public:
         PMINIDUMP_CALLBACK_INFORMATION CallbackParam
         );
 
+    struct FAPI {
+        FSymInitializeW SymInitializeW;
+        FSymCleanup SymCleanup;
+
+        FSymGetOptions SymGetOptions;
+        FSymSetOptions SymSetOptions;
+        FSymLoadModuleExW SymLoadModuleExW;
+
+        FSymGetModuleInfoW64 SymGetModuleInfoW64;
+        FSymFromAddrW SymFromAddrW;
+        FSymGetLineFromAddrW64 SymGetLineFromAddrW64;
+
+        FMiniDumpWriteDump MiniDumpWriteDump;
+    };
+
     class FLocked : std::lock_guard<std::mutex> {
     public:
         FLocked() : FLocked(FDbghelpWrapper::Get()) {}
         explicit FLocked(const FDbghelpWrapper& owner)
             : std::lock_guard<std::mutex>(owner._barrier)
-            , _owner(&owner)
+            , _owner(owner)
         {}
 
-        bool Available() const { return _owner->Available(); }
+        bool Available() const { return _owner.Available(); }
 
-        FSymInitializeW SymInitializeW() const { return _owner->_symInitializeW; }
-        FSymCleanup SymCleanup() const { return _owner->_symCleanup; }
-
-        FSymGetOptions SymGetOptions() const { return _owner->_symGetOptions; }
-        FSymSetOptions SymSetOptions() const { return _owner->_symSetOptions; }
-
-        FSymLoadModuleExW SymLoadModuleExW() const { return _owner->_symLoadModuleExW; }
-
-        FSymGetModuleInfoW64 SymGetModuleInfoW64() const { return _owner->_symGetModuleInfoW64; }
-        FSymFromAddrW SymFromAddrW() const { return _owner->_symFromAddrW; }
-        FSymGetLineFromAddrW64 SymGetLineFromAddrW64() const { return _owner->_symGetLineFromAddrW64; }
-
-        FMiniDumpWriteDump MiniDumpWriteDump() const { return _owner->_miniDumpWriteDump; }
+        const FAPI* operator ->() const { return (&_owner._api); }
 
     private:
-        const FDbghelpWrapper* const _owner;
+        const FDbghelpWrapper& _owner;
     };
 
     ~FDbghelpWrapper();
@@ -128,18 +131,7 @@ private:
     FDynamicLibrary _dbgcore_dll;
     FDynamicLibrary _dbghelp_dll;
 
-    FSymInitializeW _symInitializeW;
-    FSymCleanup _symCleanup;
-
-    FSymGetOptions _symGetOptions;
-    FSymSetOptions _symSetOptions;
-    FSymLoadModuleExW _symLoadModuleExW;
-
-    FSymGetModuleInfoW64 _symGetModuleInfoW64;
-    FSymFromAddrW _symFromAddrW;
-    FSymGetLineFromAddrW64 _symGetLineFromAddrW64;
-
-    FMiniDumpWriteDump _miniDumpWriteDump;
+    FAPI _api;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

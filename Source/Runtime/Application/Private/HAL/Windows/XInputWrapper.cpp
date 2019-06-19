@@ -84,7 +84,13 @@ FXInputWrapper::FXInputWrapper()
 }
 //----------------------------------------------------------------------------
 FXInputWrapper::~FXInputWrapper() {
-    LOG(XInput, Info, L"destroying wrapper");
+    if (_XInputDLL) {
+        LOG(XInput, Info, L"destroying wrapper");
+
+        // unload the DLL explicitly while holding the lock
+        Meta::FLockGuard scopeLock(_barrier);
+        _XInputDLL.Unload();
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
