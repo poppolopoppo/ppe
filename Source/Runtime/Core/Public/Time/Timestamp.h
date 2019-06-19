@@ -38,6 +38,9 @@ public:
     friend bool operator < (const FTimestamp& lhs, const FTimestamp& rhs) { return lhs._value <  rhs._value; }
     friend bool operator >=(const FTimestamp& lhs, const FTimestamp& rhs) { return lhs._value >= rhs._value; }
 
+    friend bool operator <=(const FTimestamp& lhs, const FTimestamp& rhs) { return lhs._value <= rhs._value; }
+    friend bool operator > (const FTimestamp& lhs, const FTimestamp& rhs) { return lhs._value >  rhs._value; }
+
 private:
     value_type _value;
 };
