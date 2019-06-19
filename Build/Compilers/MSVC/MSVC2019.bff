@@ -282,12 +282,11 @@ Compiler( 'Compiler-MSVC2019-x64_x86' )
 .MSVC2019LinkTimeCodeGenerationIncremental =
 [
     ; Link Time Code Generation (LTCG) incrémental pour accélérer les builds en FINAL
-    .LinkerOptions      = ' /LTCG'
+    .LinkerOptions      = ''
 #if USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
     Print( "Using Visual 2019 incremental LTCG for profiling (/LTCG:incremental)" )
-    .LinkerOptions      = ' /LTCG:incremental'
+    .LinkerOptions      = ' /LTCG:INCREMENTAL'
 #endif
-    .LibrarianOptions   = ' /LTCG'
 ]
 
 .MSVC2019GenerateProfilingInfos =
@@ -388,16 +387,16 @@ Print( "Using Visual 2019 incremental LTCG for profiling : no profiling informat
 //------------------------------------------------------------------------------
 
 .MSVC2019_X86Debug      = .MSVC2019PlatformX86   + .MSVCBaseDebugConfig          + .MSVC2019DebugFastLink
-.MSVC2019_X86FastDebug  = .MSVC2019PlatformX86   + .MSVCBaseFastDebugConfig      + .MSVC2019DebugFastLink    + .MSVC2019GuardCF
+.MSVC2019_X86FastDebug  = .MSVC2019PlatformX86   + .MSVCBaseFastDebugConfig      + .MSVC2019DebugFastLink       + .MSVC2019GuardCF
 .MSVC2019_X86Release    = .MSVC2019PlatformX86   + .MSVCBaseReleaseConfig        + .MSVC2019DebugFastLink
-.MSVC2019_X86Profiling  = .MSVC2019PlatformX86   + .MSVCBaseProfilingConfig      + .MSVC2019AggressiveInliner + .MSVC2019LinkTimeCodeGenerationIncremental + .MSVC2019GenerateProfilingInfos
-.MSVC2019_X86Final      = .MSVC2019PlatformX86   + .MSVCBaseFinalConfig          + .MSVC2019AggressiveInliner + .MSVC2019LinkTimeCodeGenerationIncremental
+.MSVC2019_X86Profiling  = .MSVC2019PlatformX86   + .MSVCBaseProfilingConfig      + .MSVC2019AggressiveInliner   + .MSVC2019LinkTimeCodeGenerationIncremental + .MSVC2019GenerateProfilingInfos
+.MSVC2019_X86Final      = .MSVC2019PlatformX86   + .MSVCBaseFinalConfig          + .MSVC2019AggressiveInliner
 
 .MSVC2019_X64Debug      = .MSVC2019PlatformX64   + .MSVCBaseDebugConfig          + .MSVC2019DebugFastLink
-.MSVC2019_X64FastDebug  = .MSVC2019PlatformX64   + .MSVCBaseFastDebugConfig       + .MSVC2019DebugFastLink    + .MSVC2019GuardCF
-.MSVC2019_X64Release    = .MSVC2019PlatformX64   + .MSVCBaseReleaseConfig         + .MSVC2019DebugFastLink
-.MSVC2019_X64Profiling  = .MSVC2019PlatformX64   + .MSVCBaseProfilingConfig      + .MSVC2019AggressiveInliner + .MSVC2019LinkTimeCodeGenerationIncremental + .MSVC2019GenerateProfilingInfos
-.MSVC2019_X64Final      = .MSVC2019PlatformX64   + .MSVCBaseFinalConfig          + .MSVC2019AggressiveInliner + .MSVC2019LinkTimeCodeGenerationIncremental
+.MSVC2019_X64FastDebug  = .MSVC2019PlatformX64   + .MSVCBaseFastDebugConfig      + .MSVC2019DebugFastLink       + .MSVC2019GuardCF
+.MSVC2019_X64Release    = .MSVC2019PlatformX64   + .MSVCBaseReleaseConfig        + .MSVC2019DebugFastLink
+.MSVC2019_X64Profiling  = .MSVC2019PlatformX64   + .MSVCBaseProfilingConfig      + .MSVC2019AggressiveInliner   + .MSVC2019LinkTimeCodeGenerationIncremental + .MSVC2019GenerateProfilingInfos
+.MSVC2019_X64Final      = .MSVC2019PlatformX64   + .MSVCBaseFinalConfig          + .MSVC2019AggressiveInliner
 
 .MSVC2019CompileConfigs =
 {

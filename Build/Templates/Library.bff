@@ -8,6 +8,7 @@
 ;   [ProjectPCHName]        project specific defines (default value in Defaults.bff)
 ;   [ProjectPublicDependencies]   project specific public dependencies like dll (default value in Defaults.bff)
 ;   [ProjectPrivateDependencies]   project specific private dependencies like lib (default value in Defaults.bff)
+;   [ProjectRuntimeDependencies]   project specific runtime dependencies like dll (default value in Defaults.bff)
 ;   [ProjectForcedIncludes] project specific force includes (default value in Defaults.bff)
 ;   [ProjectExcludedFiles]  project specific excluded files (default value in Defaults.bff)
 ;   [ProjectIncludes]       project specific includes (default value in Defaults.bff)
@@ -27,6 +28,13 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     Alias( '$ProjectName$-$Platform$-$Config$' )
     {
         .Targets = '$ProjectName$-$ProjectLinkType$-$Platform$-$Config$'
+
+        // Runtime dependencies a built but not linked against the artefact
+        .PreBuildDependencies = {}
+        ForEach( .ProjectDependency in .ProjectRuntimeDependencies )
+        {
+            ^PreBuildDependencies + '$ProjectDependency$-$Platform$-$Config$'
+        }
     }
 
     Alias( '$ProjectName$-$Platform$-$Config$-Purge' )

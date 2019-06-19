@@ -10,6 +10,7 @@
 ;   [ProjectDefines]        project specific defines (default value in Defaults.bff)
 ;   [ProjectPublicDependencies]   project specific public dependencies like dll (default value in Defaults.bff)
 ;   [ProjectPrivateDependencies]   project specific private dependencies like lib (default value in Defaults.bff)
+;   [ProjectRuntimeDependencies]   project specific runtime dependencies like dll (default value in Defaults.bff)
 ;   [ProjectExcludedFiles]  project specific excluded files (default value in Defaults.bff)
 ;   [ProjectForcedIncludes] project specific force includes (default value in Defaults.bff)
 ;   [ProjectIncludes]       project specific includes (default value in Defaults.bff)
@@ -17,6 +18,7 @@
 ;   [ProjectPostBuild]      project specific post-build (default value in Defaults.bff)
 ;   [ProjectPreBuild]       project specific pre-build (default value in Defaults.bff)
 ;   [ProjectPCHConfig]      project Pre-Compiled Headers configuration to enable/disable PCH (default value in Defaults.bff)
+;   [ProjectUseIncrementalLinker] project specific boolean : if true use incremental linker
 //------------------------------------------------------------------------------
 
 #include "Lib/LibraryHelpers.bff"
@@ -60,6 +62,11 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .LinkerOutput       = '$IntermediateRoot$/$BinaryPrefix$-$Platform$-$Config$.$CompilerBinaryExtension$'
         .LinkerOptions      + .ExecutableOptions
 
+        If( .ProjectUseIncrementalLinker == .False )
+        {
+            ^LinkerOptions - .LinkerIncremental
+        }
+
 #if USE_LIBRARY_DEPENDENCY_INPUT
         .LinkerLinkObjects  = true
 #endif
@@ -97,6 +104,12 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             }
         }
 
+        ForEach( .ProjectDependency in .ProjectRuntimeDependencies )
+        {
+            // need to copy referenced dlls next to the binary or they won't be found
+            ^Source     + '$ProjectDependency$-$Platform$-$Config$'
+        }
+
 
         .Dest               = '$BinaryPath$/'
     }
@@ -105,6 +118,13 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     Alias( '$ProjectName$-$Platform$-$Config$' )
     {
         .PreBuildDependencies   = .ProjectPreBuild
+
+        // Runtime dependencies a built but not linked against the artefact
+        ForEach( .ProjectDependency in .ProjectRuntimeDependencies )
+        {
+            ^PreBuildDependencies + '$ProjectDependency$-$Platform$-$Config$'
+        }
+
         .Targets                = {}
                                 + '$ProjectName$-Exe-$Platform$-$Config$'
                                 + '$ProjectName$-CopyOutput-$Platform$-$Config$'

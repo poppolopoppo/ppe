@@ -8,6 +8,8 @@
 ;   [ProjectLinkType]       project specific linker type (Dll / Lib)
 ;   [ProjectPCHName]        precompiled header name (default value in Defaults.bff)
 ;   [ProjectDefines]        project specific defines (default value in Defaults.bff)
+;   [ProjectCompilerOptions]project specific compiler options
+;   [ProjectLinkerOptions]  project specific linkere options
 ;   [ProjectPublicDependencies]   project specific public dependencies like dll (default value in Defaults.bff)
 ;   [ProjectPrivateDependencies]   project specific private dependencies like lib (default value in Defaults.bff)
 ;   [ProjectExcludedFiles]  project specific excluded files (default value in Defaults.bff)
@@ -18,11 +20,15 @@
 ;   [ProjectIsolatedFiles]  project files not included in unity builds but still compiled (default value in Defaults.bff)
 ;   [ProjectPCHConfig]      project Pre-Compiled Headers configuration to enable/disable PCH (default value in Defaults.bff)
 ;   [ProjectUseUnity]       project specific boolean : if true use unity input, else only ProjectIsolatedFiles
+;   [ProjectUseIncrementalLinker] project specific boolean : if true use incremental linker
+;   [ProjectUseLinkTimeCodeGeneration] project specific boolean : if true use LTCG
 //------------------------------------------------------------------------------
 
 .EvalParameters = {
     "ProjectPCHName",
     "ProjectDefines",
+    "ProjectCompilerOptions",
+    "ProjectLinkerOptions",
     "ProjectPublicDependencies",
     "ProjectPrivateDependencies",
     "ProjectExcludedFiles",
@@ -30,12 +36,14 @@
     "ProjectIsolatedFiles",
     "ProjectLibraries",
     "ProjectPCHConfig",
-    "ProjectUseUnity"
+    "ProjectUseUnity",
+    "ProjectUseIncrementalLinker",
+    "ProjectUseLinkTimeCodeGeneration",
 }
 
 .DynamicLinkType ? 'Dll'
 .ProjectConfigs = {}
-.UnityEnabled = 'true'
+.UnityEnabled = .True
 
 ForEach( .CompileConfig in .AllCompileConfigs )
 {
@@ -59,10 +67,18 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         [
             Using( .CompileConfig )
 
+            // Project specific options
+
+            .ProjectCompilerOptions ? ''
+            .CompilerOptions + .ProjectCompilerOptions
+
+            .ProjectLinkerOptions ? ''
+            .LinkerOptions + .ProjectLinkerOptions
+
             // Project defines
 
             .Defines    + "BUILDCONFIG_$Platform$_$Config$"
-            .Defines    + "BUILDCONFIG=$Platform$_$Config$"
+            .Defines    + 'BUILDCONFIG="$Platform$-$Config$"'
             .Defines    + .ProjectDefines
 
             // Runtime is selected by config, but these defines are controlled by project
@@ -242,10 +258,27 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             // Dynamic library
             DLL( '$ProjectName$-$DynamicLinkType$-$Platform$-$Config$' )
             {
+                Using( .ProjectCompileConfigWithoutPCH )
+
                 .LinkerVerboseOutput = true
 
                 .LinkerOutput       = '$IntermediateRoot$/$ProjectName$-$Platform$-$Config$.$CompilerDllExtension$'
                 .LinkerOptions      = "$DllOptions$ $LinkerOptions$"
+
+                If( .ProjectUseIncrementalLinker == .False )
+                {
+                    ^LinkerOptions  - .LinkerNotIncremental
+                                    - .LinkerIncremental
+                                    + .LinkerNotIncremental
+                }
+
+                If( .ProjectUseLinkTimeCodeGeneration == .False )
+                {
+                    ^LinkerOptions  - .LinkerWithoutLTCG
+                                    - .LinkerWithLTCGIncremental
+                                    - .LinkerWithLTCG
+                                    + .LinkerWithoutLTCG
+                }
 
                 .Libraries          = { '$ProjectName$-Lib-$Platform$-$Config$' }
     #if USE_LIBRARY_DEPENDENCY_INPUT

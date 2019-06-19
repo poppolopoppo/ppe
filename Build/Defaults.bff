@@ -1,13 +1,21 @@
 #once
 
+; use strings instead of bools since booleans can't be converted to string
+.EmptyString = ''
+.True = 'true'
+.False = 'false'
+
 //------------------------------------------------------------------------------
 // Default Parameters for Templates
 //------------------------------------------------------------------------------
 .ProjectPCHName = 'stdafx'
 .ProjectPCHConfig = .PCHEnabled
+.ProjectCompilerOptions = ''
+.ProjectLinkerOptions = ''
 .ProjectDefines = {}
 .ProjectPublicDependencies = {}
 .ProjectPrivateDependencies = {}
+.ProjectRuntimeDependencies = {}
 .ProjectExcludedFiles = {}
 .ProjectForcedIncludes = {}
 .ProjectIncludes = {}
@@ -16,10 +24,17 @@
 .ProjectLibraries = {}
 .ProjectPostBuild = {}
 .ProjectPreBuild = {}
-.ProjectUseUnity = 'true'
+.ProjectUseUnity = .True
+.ProjectUseIncrementalLinker = .True
+.ProjectUseLinkTimeCodeGeneration = .True
 
 //------------------------------------------------------------------------------
 // Project registrations
 //------------------------------------------------------------------------------
 .ProjectList = {}
 .SolutionFolders = {}
+
+//------------------------------------------------------------------------------
+// Module details, that structure will be filled with module properties
+//------------------------------------------------------------------------------
+.AllModules = []

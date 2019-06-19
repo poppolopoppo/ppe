@@ -325,14 +325,6 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .CompilerWithoutCache       = ' /Zi' ; produit une base de données de programme (PDB)
     .CompilerWithCache          = .CompilerWithoutCache
 
-    ; On désactive le support du RTTI c++ en non debug (dynamic_cast<> est utilisé par certains assert)
-    .CompilerWithoutRTTI        = ' /GR-' ; désactive le support des RTTI std de C++
-    .CompilerWithRTTI           = ' /GR'  ; active le support des RTTI std de C++ (RunTime Type Information, nécessaire pour dynamic_cast<> par ex)
-
-    ; ASLR actif uniquement en final
-    .LinkerWithASLR             = ' /DYNAMICBASE'       ; Address Spase Layout Randomization
-    .LinkerWithoutASLR          = ' /DYNAMICBASE:NO'    ; pas de randomisation des adresses
-
 #if !USE_CLANG_WINDOWS
     .CompilerWithoutCache       + ' /FS' ; nécessaire pour lancer plusieurs CL.exe en meme temps sans le cache (https://msdn.microsoft.com/fr-fr/library/dn502518.aspx)
     .CompilerWithCache          + ' /FS' ; nécessaire pour lancer plusieurs CL.exe en meme temps sans le cache (https://msdn.microsoft.com/fr-fr/library/dn502518.aspx)
@@ -341,6 +333,23 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
     .CompilerWithCache          = ' /Z7' ; Produit un fichier .obj contenant des informations de débogage complètes
 #endif
 #endif
+
+    ; On désactive le support du RTTI c++ en non debug (dynamic_cast<> est utilisé par certains assert)
+    .CompilerWithoutRTTI        = ' /GR-' ; désactive le support des RTTI std de C++
+    .CompilerWithRTTI           = ' /GR'  ; active le support des RTTI std de C++ (RunTime Type Information, nécessaire pour dynamic_cast<> par ex)
+
+    ; ASLR actif uniquement en final
+    .LinkerWithASLR             = ' /DYNAMICBASE'       ; Address Spase Layout Randomization
+    .LinkerWithoutASLR          = ' /DYNAMICBASE:NO'    ; pas de randomisation des adresses
+
+    ; Link-time code generation
+    .LinkerWithLTCG             = ' /LTCG'
+    .LinkerWithLTCGIncremental  = ' /LTCG:INCREMENTAL'
+    .LinkerWithoutLTCG          = ' /LTCG:OFF'
+
+    ; Linker incremental
+    .LinkerIncremental          = ' /INCREMENTAL'
+    .LinkerNotIncremental       = ' /INCREMENTAL:NO'
 
     .LibraryLinkType = 'Lib'
 #if USE_LIBRARY_DEPENDENCY_INPUT
@@ -404,7 +413,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .CompilerOptionsDeoptimized = .CompilerOptions - ' /O2' + ' /Od'
 
-    .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
+    .LinkerOptions      = .LinkerIncremental
                         + .LinkerWithoutASLR
 
     .CompilerRuntime    = .'$ConfigLinkType$_RuntimeDebug'
@@ -429,8 +438,8 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .CompilerOptionsDeoptimized = .CompilerOptions - ' /O2' + ' /Od'
 
-    .LinkerOptions      = .LinkerWithoutASLR
-                        + ' /INCREMENTAL'   ; active le linker incrémental
+    .LinkerOptions      = .LinkerIncremental
+                        + .LinkerWithoutASLR
 
     .CompilerRuntime    = .'$ConfigLinkType$_RuntimeDebug'
 ]
@@ -456,7 +465,7 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .CompilerOptionsDeoptimized = .CompilerOptions - ' /O2' + ' /Od'
 
-    .LinkerOptions      = ' /INCREMENTAL'   ; active le linker incrémental
+    .LinkerOptions      = .LinkerIncremental
                         + .LinkerWithoutASLR
 
     .CompilerRuntime    = .'$ConfigLinkType$_RuntimeRelease'
@@ -483,10 +492,11 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .CompilerOptionsDeoptimized = .CompilerOptions - ' /O2' + ' /Od'
 
-    .LibrarianOptions   = ' /LTCG'          ; link time code generation
+    .LibrarianOptions   = .LinkerWithLTCG
 
-    .LinkerOptions      = ' /LTCG'          ; link time code generation
+    .LinkerOptions      = .LinkerWithLTCG
                         + .LinkerWithoutASLR
+                        + .LinkerNotIncremental
 
     .CompilerRuntime    = .'$ConfigLinkType$_RuntimeRelease'
 ]
@@ -512,11 +522,11 @@ Print( 'Using Pre-Compiled Headers (/Yc, /Yu, /Fp)' )
 
     .CompilerOptionsDeoptimized = .CompilerOptions - ' /O2' + ' /Od /Oy'
 
-    .LibrarianOptions   = ' /LTCG'          ; link time code generation
+    .LibrarianOptions   = .LinkerWithLTCG
 
-    .LinkerOptions      = ' /LTCG'          ; link time code generation
+    .LinkerOptions      = .LinkerWithLTCG
                         + ' /OPT:REF'       ; supprime le code non référencé
-                        + ' /INCREMENTAL:NO'
+                        + .LinkerNotIncremental
                         + .LinkerWithASLR
 
 #if USE_MSVC_IDENTICAL_COMDAT_FOLDING

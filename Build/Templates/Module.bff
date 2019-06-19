@@ -8,6 +8,7 @@
 ;   [ModuleDefines]             module specific defines
 ;   [ModulePublicDependencies]  module specific public dependencies
 ;   [ModulePrivateDependencies] module specific private dependencies
+;   [ModuleRuntimeDependencies] module specific runtime dependencies
 ;   [ModuleForcedIncludes]      module specific relative force includes
 ;   [ModuleExcludedFiles]       module specific relative excluded files
 ;   [ModuleFiles]               module specific relative included files
@@ -26,13 +27,11 @@
 //  - Private module dependencies are not needed by consuming modules (*SHOULD BE 90% OF THE TIME*)
 //------------------------------------------------------------------------------
 
-.ProjectName = '$ModulePath$/$ModuleName$'
-.ProjectPath = '$SourcePath$/$ProjectName$'
-
 .ModuleType ? 'Library'
 .ModuleDefines ? {}
 .ModulePublicDependencies ? {}
 .ModulePrivateDependencies ? {}
+.ModuleRuntimeDependencies ? {}
 .ModuleForcedIncludes ? {}
 .ModuleExcludedFiles ? {}
 .ModuleFiles ? {}
@@ -44,6 +43,84 @@
 .ModuleIsolatedFiles_External = .ModuleIsolatedFiles
 .ModuleIsolatedFiles_Library = .ModuleIsolatedFiles + 'ModuleExport.cpp'
 .ModuleIsolatedFiles = .'ModuleIsolatedFiles_$ModuleType$'
+
+.ProjectName = '$ModulePath$/$ModuleName$'
+.ProjectPath = '$SourcePath$/$ProjectName$'
+
+////////////////////////////////////////////////////////////////////////
+// Register the module details in global vars, propagate dependeencies
+////////////////////////////////////////////////////////////////////////
+
+^ModuleList + .ProjectName
+.ModuleKey = .ProjectName - '/' - '-'
+
+.ProjectPrivateDependencies = .ModulePrivateDependencies
+.ProjectPublicDependencies = .ModulePublicDependencies
+.ProjectRuntimeDependencies = .ModuleRuntimeDependencies
+
+.ModulePublicDependencies = {}
+.ModuleRuntimeDependencies = {}
+
+.LocalModules =
+[
+    Using( ^AllModules )
+
+    ForEach( .Module in .ProjectPublicDependencies )
+    {
+        .DependencyKey = .Module - '/' - '-'
+        Using( .'$DependencyKey$' )
+        ForEach( .Dependency in .PublicDependencies )
+        {
+            If( .Dependency not in .ModulePublicDependencies )
+            {
+                ^ModulePublicDependencies + .Dependency
+            }
+        }
+        ForEach( .Dependency in .RuntimeDependencies )
+        {
+            If( .Dependency not in .ModuleRuntimeDependencies )
+            {
+                ^ModuleRuntimeDependencies + .Dependency
+            }
+        }
+        If( .Module not in .ModulePublicDependencies )
+        {
+            ^ModulePublicDependencies + .Module
+        }
+    }
+
+    ForEach( .Module in .ProjectRuntimeDependencies )
+    {
+        .DependencyKey = .Module - '/' - '-'
+        Using( .'$DependencyKey$' )
+        ForEach( .Dependency in .RuntimeDependencies )
+        {
+            If( .Dependency not in .ModuleRuntimeDependencies )
+            {
+                ^ModuleRuntimeDependencies + .Dependency
+            }
+        }
+        If( .Module not in .ModuleRuntimeDependencies )
+        {
+            ^ModuleRuntimeDependencies + .Module
+        }
+    }
+
+    .'$ModuleKey$' =
+    [
+        .PathName = ^ProjectName
+        .Basename = ^ModuleName
+        .Path = ^ProjectPath
+        .PublicDependencies = ^ModulePublicDependencies
+        .RuntimeDependencies = ^ModuleRuntimeDependencies
+    ]
+]
+
+^AllModules = .LocalModules
+
+////////////////////////////////////////////////////////////////////////
+// Configure project settings from higher level module settings
+////////////////////////////////////////////////////////////////////////
 
 .BinaryPrefix ? .ModuleName
 .ProjectDefines = .ModuleDefines
@@ -66,6 +143,7 @@ ForEach( .Path in .ModuleIncludePaths )
 
 .ProjectPrivateDependencies = .ModulePrivateDependencies
 .ProjectPublicDependencies = .ModulePublicDependencies
+.ProjectRuntimeDependencies = .ModuleRuntimeDependencies
 
 .ModuleAllDependencies  = .ModulePrivateDependencies
                         + .ModulePublicDependencies
@@ -85,8 +163,10 @@ ForEach( .File in .ModuleForcedIncludes )
     ^ProjectForcedIncludes + .IncludePath
 }
 
-#include "$ModuleType$.bff"
+////////////////////////////////////////////////////////////////////////
+// Finally recurse to either Library.bff or Executable.bff
+////////////////////////////////////////////////////////////////////////
 
-^ModuleList + .ProjectName
+#include "$ModuleType$.bff"
 
 Print( "[+] $ModuleType$ module <$ProjectName$>" )
