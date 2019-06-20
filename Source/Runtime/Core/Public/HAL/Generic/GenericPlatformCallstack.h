@@ -21,8 +21,10 @@ public: // must be defined for every platform
     using FProgramCounter = void*;
     using FProgramCounterSymbolInfo = FGenericProgramCounterSymbol;
 
+    static void InitializeSymbolInfos() = delete;
+    static void LoadAllSymbolInfos() = delete;
+
     static void OnLoadModule() = delete; // signaled when a module is loaded to eventually refresh symbol infos
-    static void LoadSymbolInfos() = delete;
 
     static size_t CaptureCallstack(const TMemoryView<FProgramCounter>& backtrace, size_t framesToSkip) = delete;
 

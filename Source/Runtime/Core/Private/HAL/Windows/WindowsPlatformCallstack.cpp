@@ -38,12 +38,12 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
     wchar_t temp_buffer[MAX_PATH];
     ::DWORD call_result;
 
-    call_result = ::GetCurrentDirectory(MAX_PATH, temp_buffer);
+    call_result = ::GetCurrentDirectoryW(MAX_PATH, temp_buffer);
 
     if (call_result > 0)
         oss << MakeCStringView(temp_buffer) << L';';
 
-    call_result = ::GetModuleFileName(NULL, temp_buffer, MAX_PATH);
+    call_result = ::GetModuleFileNameW(NULL, temp_buffer, MAX_PATH);
 
     if (call_result > 0) {
         size_t tempBufferLength = Length(temp_buffer);
@@ -63,7 +63,7 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
     }
 
     for (int variable_id = 0; variable_id < 2; ++variable_id) {
-        call_result = ::GetEnvironmentVariable(
+        call_result = ::GetEnvironmentVariableW(
             kSymbolsPathEnvironmentVariables[variable_id],
             temp_buffer,
             MAX_PATH);
@@ -71,7 +71,7 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
             oss << MakeCStringView(temp_buffer) << L';';
     }
 
-    call_result = ::GetEnvironmentVariable(
+    call_result = ::GetEnvironmentVariableW(
         L"SYSTEMROOT",
         temp_buffer,
         MAX_PATH);
@@ -79,7 +79,7 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
     if (call_result > 0)
         oss << MakeCStringView(temp_buffer) << L"\\System32;";
 
-    call_result = ::GetEnvironmentVariable(
+    call_result = ::GetEnvironmentVariableW(
         L"SYSTEMDRIVE",
         temp_buffer,
         MAX_PATH);
@@ -105,42 +105,93 @@ static void GetSymbolsPath_(wchar_t* out_symbol_path, size_t max_length) {
     }
 }
 //----------------------------------------------------------------------------
+// Load module pointed at by given parameters
+static bool LoadModule_(const FDbghelpWrapper::FLocked& dbghelp,
+    ::HANDLE hProcess,
+    const wchar_t* imageName,
+    const wchar_t* moduleName,
+    u64 baseAddr, u64 imageSize ) {
+    const ::DWORD64 succeed = dbghelp->SymLoadModuleExW(
+        hProcess,
+        NULL,
+        imageName,
+        moduleName,
+        checked_cast<::DWORD64>(baseAddr),
+        checked_cast<::DWORD>(imageSize),
+        NULL, 0 );
+
+    const FLastError lastError;
+    if ((succeed == baseAddr) | (lastError.Code == ERROR_SUCCESS)) {
+        CLOG(lastError.Code != ERROR_SUCCESS, HAL, Debug, L"loaded debug symbols for \"{0}\"",
+            MakeCStringView(imageName) );
+
+        return true;
+    }
+    else {
+        LOG(HAL, Warning, L"failed to debug symbols for \"{0}\" ({1})",
+            MakeCStringView(imageName), lastError );
+
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
 // Fetch all symbols for modules currently loaded by this process
 static void LoadModules_(const FDbghelpWrapper::FLocked& dbghelp) {
-    ::HANDLE process = ::GetCurrentProcess();
+    ::HANDLE hProcess = ::GetCurrentProcess();
     ::DWORD process_id = ::GetCurrentProcessId();
     ::HANDLE snap = ::CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, process_id);
-
-    ::MODULEENTRY32 module_entry;
-    module_entry.dwSize = sizeof(::MODULEENTRY32);
 
     if (snap == (::HANDLE)-1)
         return;
 
-    PRAGMA_MSVC_WARNING_PUSH()
-    PRAGMA_MSVC_WARNING_DISABLE(4826) // warning C4826: convert unsigned char* to DWORD64
+    ::MODULEENTRY32 module_entry;
+    module_entry.dwSize = sizeof(::MODULEENTRY32);
+
     ::BOOL module_found = ::Module32First(snap, &module_entry);
     while (module_found) {
-        ::DWORD64 succeed = dbghelp->SymLoadModuleExW(
-            process,
-            0,
+        LoadModule_(dbghelp,
+            hProcess,
             module_entry.szExePath,
             module_entry.szModule,
-            (::DWORD64)module_entry.modBaseAddr,
-            module_entry.modBaseSize,
-            NULL,
-            0);
-        PRAGMA_MSVC_WARNING_POP()
-
-            LOG(HAL, Info, L"{0} for \"{1}\"",
-                succeed ? L"Loaded" : L"Failed to load",
-                module_entry.szExePath);
-        UNUSED(succeed);
+            checked_cast<u64>(uintptr_t(module_entry.modBaseAddr)),
+            module_entry.modBaseSize );
 
         module_found = ::Module32Next(snap, &module_entry);
     }
 
     ::CloseHandle(snap);
+}
+//----------------------------------------------------------------------------
+// Fetch symbols for module pointed at by given program counter
+static bool LoadModuleAtProgramCounter_(const FDbghelpWrapper::FLocked& dbghelp, void* pc) {
+    ::DWORD process_id = ::GetCurrentProcessId();
+    ::HANDLE snap = ::CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, process_id);
+
+    if (snap == (::HANDLE) - 1)
+        return false;
+
+    ::MODULEENTRY32 module_entry;
+    module_entry.dwSize = sizeof(::MODULEENTRY32);
+
+    ::BOOL module_found = ::Module32First(snap, &module_entry);
+    while (module_found) {
+        if ((uintptr_t(module_entry.modBaseAddr) <= uintptr_t(pc)) &
+            (uintptr_t(module_entry.modBaseAddr) + module_entry.modBaseSize > uintptr_t(pc)) ) {
+
+            return LoadModule_(dbghelp,
+                ::GetCurrentProcess(),
+                module_entry.szExePath,
+                module_entry.szModule,
+                checked_cast<u64>(uintptr_t(module_entry.modBaseAddr)),
+                module_entry.modBaseSize );
+        }
+
+        module_found = ::Module32Next(snap, &module_entry);
+    }
+
+    ::CloseHandle(snap);
+
+    return false;
 }
 //----------------------------------------------------------------------------
 // Must be called once per run before any symbol query
@@ -169,36 +220,39 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FWindowsPlatformCallstack::OnLoadModule() {
-    GWindowsPlatformSymbolsLoaded = false;
-}
-//----------------------------------------------------------------------------
-void FWindowsPlatformCallstack::LoadSymbolInfos() {
-    if (GWindowsPlatformSymbolsLoaded) {
-        GWindowsPlatformSymbolsInitialized = true;
-        return;
-    }
-
-    const FDbghelpWrapper::FLocked dbghelp;
-
-    if (dbghelp.Available()) {
-
-        if (not GWindowsPlatformSymbolsInitialized) {
+void FWindowsPlatformCallstack::InitializeSymbolInfos() {
+    if (not GWindowsPlatformSymbolsInitialized) {
+        const FDbghelpWrapper::FLocked dbghelp;
+        if (dbghelp.Available()) {
             InitializeSymbols_(dbghelp);
-            GWindowsPlatformSymbolsInitialized = true;
+            LOG(HAL, Debug, L"initialized symbols debug info");
+        }
+        else {
+            LOG(HAL, Warning, L"can't initialize symbols debug info without dbghelp.dll");
         }
 
-        LoadModules_(dbghelp);
+        GWindowsPlatformSymbolsInitialized = true;
+    }
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformCallstack::LoadAllSymbolInfos() {
+    InitializeSymbolInfos();
+
+    if (not GWindowsPlatformSymbolsLoaded) {
+        const FDbghelpWrapper::FLocked dbghelp;
+        if (dbghelp.Available())
+            LoadModules_(dbghelp);
 
         GWindowsPlatformSymbolsLoaded = true;
     }
 }
 //----------------------------------------------------------------------------
+void FWindowsPlatformCallstack::OnLoadModule() {
+    GWindowsPlatformSymbolsLoaded = false;
+}
+//----------------------------------------------------------------------------
 size_t FWindowsPlatformCallstack::CaptureCallstack(const TMemoryView<FProgramCounter>& backtrace, size_t framesToSkip) {
     Assert(not backtrace.empty());
-
-    if (not GWindowsPlatformSymbolsLoaded)
-        LoadSymbolInfos();
 
     const ::WORD depth = ::RtlCaptureStackBackTrace(
         checked_cast<::DWORD>(framesToSkip),
@@ -210,7 +264,7 @@ size_t FWindowsPlatformCallstack::CaptureCallstack(const TMemoryView<FProgramCou
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformCallstack::ProgramCounterToModuleName(FWString* moduleName, FProgramCounter pc) {
-    Assert(GWindowsPlatformSymbolsLoaded); // LoadSymbolInfos() before
+    Assert(GWindowsPlatformSymbolsInitialized); // LoadSymbolInfos() before
     Assert(moduleName);
     Assert(pc);
 
@@ -222,6 +276,9 @@ bool FWindowsPlatformCallstack::ProgramCounterToModuleName(FWString* moduleName,
 
     const FDbghelpWrapper::FLocked dbghelp;
 
+    if (not LoadModuleAtProgramCounter_(dbghelp, pc))
+        return false;
+
     if (not dbghelp->SymGetModuleInfoW64(hProcess, ::DWORD64(uintptr_t(pc)), &moduleInfo))
         return false;
 
@@ -231,7 +288,7 @@ bool FWindowsPlatformCallstack::ProgramCounterToModuleName(FWString* moduleName,
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformCallstack::ProgramCounterToSymbolInfo(FProgramCounterSymbolInfo* symbolInfo, FProgramCounter pc) {
-    Assert(GWindowsPlatformSymbolsLoaded); // LoadSymbolInfos() before
+    Assert(GWindowsPlatformSymbolsInitialized); // LoadSymbolInfos() before
     Assert(symbolInfo);
     Assert(pc);
 
@@ -250,6 +307,9 @@ bool FWindowsPlatformCallstack::ProgramCounterToSymbolInfo(FProgramCounterSymbol
     moduleInfo.SizeOfStruct = sizeof(moduleInfo);
 
     const FDbghelpWrapper::FLocked dbghelp;
+
+    LoadModuleAtProgramCounter_(dbghelp, pc);
+
     {
         ::DWORD64 dw64Displacement = 0;
         if (dbghelp->SymFromAddrW(hProcess, ::DWORD64(uintptr_t(pc)), &dw64Displacement, pSymbol))

@@ -54,6 +54,7 @@ bool FCallstack::Decode(FDecodedCallstack* decoded, size_t hash, const TMemoryVi
     decoded->_hash = hash;
     decoded->_depth = frames.size();
 
+    FPlatformCallstack::InitializeSymbolInfos();
     FPlatformCallstack::FProgramCounterSymbolInfo symbolInfo;
 
     void* const* address = frames.data();

@@ -16,8 +16,10 @@ public:
     using FGenericPlatformCallstack::FProgramCounter;
     using FGenericPlatformCallstack::FProgramCounterSymbolInfo;
 
+    static void InitializeSymbolInfos();
+    static void LoadAllSymbolInfos();
+
     static void OnLoadModule();
-    static void LoadSymbolInfos();
 
     static size_t CaptureCallstack(const TMemoryView<FProgramCounter>& backtrace, size_t framesToSkip);
 
