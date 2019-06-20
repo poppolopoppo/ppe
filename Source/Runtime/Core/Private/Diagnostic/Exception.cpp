@@ -8,6 +8,7 @@
 #if USE_PPE_EXCEPTION_CALLSTACK
 #   include "Diagnostic/Callstack.h"
 #   include "Diagnostic/DecodedCallstack.h"
+#   include "IO/Format.h"
 #endif
 
 namespace PPE {
@@ -55,23 +56,21 @@ FWTextWriter& FException::DefaultDescription(FWTextWriter& oss, const wchar_t* n
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const FException& e) {
-    return oss
-        << MakeCStringView(e.What())
+    oss << MakeCStringView(e.What());
 #if USE_PPE_EXCEPTION_CALLSTACK
-        << " (" << (void*)e.SiteHash() << ")" << Eol
-        << e.Callstack()
+    Format(oss, ", site hash = {0:#X}", e.SiteHash());
+    oss << Eol << e.Callstack();
 #endif
-        ;
+    return oss;
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const FException& e) {
-    return oss
-        << MakeCStringView(e.What())
+    oss << MakeCStringView(e.What());
 #if USE_PPE_EXCEPTION_CALLSTACK
-        << L' ' << (void*)e.SiteHash() << Eol
-        << e.Callstack()
+    Format(oss, L", site hash = {0:#X}", e.SiteHash());
+    oss << Eol << e.Callstack();
 #endif
-        ;
+    return oss;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

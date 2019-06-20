@@ -33,7 +33,7 @@ FTextWriter& operator <<(FTextWriter& oss, const FLastError& error) {
         buffer,
         lengthof(buffer),
         nullptr)) {
-        oss << MakeCStringView(buffer) << " (code=";
+        oss << Chomp(MakeCStringView(buffer)) << " (code=";
     }
     else
     {
@@ -51,7 +51,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FLastError& error) {
         buffer,
         lengthof(buffer),
         nullptr)) {
-        oss << MakeCStringView(buffer) << L" (code=";
+        oss << Chomp(MakeCStringView(buffer)) << L" (code=";
     }
     else
     {

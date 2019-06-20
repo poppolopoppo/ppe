@@ -17,7 +17,7 @@ FWTextWriter& FParserException::Description(FWTextWriter& oss) const {
     oss << MakeCStringView(What()) << L": ";
 
     if (_item)
-        oss << _item->ToString() << Eol;
+        oss << _item->ToString().MakeView() << Eol;
 
     return oss << L"\tat " << _site;
 }

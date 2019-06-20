@@ -27,7 +27,8 @@ namespace {
 #if USE_PPE_EXCEPTIONS
 static NO_INLINE FPlatformDialog::EResult ShowSerializeException_(const FTransactionLinker& linker, const FSerializeException& e) {
     UNUSED(linker);
-    LOG(Serialize, Error, L"caught exception while serializing '{0}':\n{1}", linker.Filename(), e);
+
+    LOG(Serialize, Error, L"caught exception while serializing '{0}': {1}", linker.Filename(), e);
 
     FWStringBuilder text;
 #   ifdef PLATFORM_WINDOWS
