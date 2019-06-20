@@ -593,6 +593,17 @@ public:
         return results;
     }
 
+    auto functions(const RTTI::PMetaObject& obj) const {
+        VECTOR(Script, FString) results;
+        if (obj) {
+            const RTTI::FMetaClass* const klass = obj->RTTI_Class();
+            for (const RTTI::FMetaFunction* f : klass->AllFunctions())
+                results.push_back(ToString(*f));
+            std::sort(results.begin(), results.end());
+        }
+        return results;
+    }
+
     auto properties(const RTTI::PMetaObject& obj) const {
         VECTOR(Script, RTTI::FName) results;
         if (obj) {
@@ -711,6 +722,7 @@ RTTI_PROPERTY_PUBLIC_FIELD(Hostname)
 RTTI_FUNCTION(classes)
 RTTI_FUNCTION(objects)
 RTTI_FUNCTION(enums)
+RTTI_FUNCTION(functions, obj)
 RTTI_FUNCTION(properties, obj)
 RTTI_FUNCTION(object, path)
 RTTI_FUNCTION(share, obj)

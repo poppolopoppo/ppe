@@ -365,6 +365,10 @@ template <typename _Char>
 using TBasicFormator = TFunction<void (TBasicTextWriter<_Char>&)>;
 using FFormator = TBasicFormator<char>;
 using FWFormator = TBasicFormator<wchar_t>;
+template <typename _Char, typename _Lambda>
+TBasicFormator<_Char> Formator(_Lambda&& lmb) {
+    return TBasicFormator<_Char>{ std::move(lmb) };
+}
 } //!namespace Fmt
 //----------------------------------------------------------------------------
 inline FTextWriter& operator <<(FTextWriter& oss, const Fmt::FFormator& formator) {

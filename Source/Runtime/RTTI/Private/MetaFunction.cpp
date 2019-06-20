@@ -179,6 +179,30 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EFunctionFlags flags) {
     return oss;
 }
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const RTTI::FMetaFunction& fun) {
+    Format(oss, "{0} {1}({2}) [{3}]",
+        fun.Result() ? fun.Result()->TypeInfos().Name() : "void",
+        fun.Name(),
+        Fmt::Join(fun.Parameters().Map([](const RTTI::FMetaParameter& prm) {
+            return Fmt::Formator<char>([&prm](FTextWriter& o) {
+                o << prm.Name() << " : " << prm.Traits()->TypeInfos().Name() << " <" << prm.Flags() << '>';
+            }); }), ", "),
+        fun.Flags() );
+    return oss;
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FMetaFunction& fun) {
+    Format(oss, L"{0} {1}({2}) [{3}]",
+        fun.Result() ? fun.Result()->TypeInfos().Name() : "void",
+        fun.Name(),
+        Fmt::Join(fun.Parameters().Map([](const RTTI::FMetaParameter& prm) {
+            return Fmt::Formator<wchar_t>([&prm](FWTextWriter& o) {
+                o << prm.Name() << L" : " << prm.Traits()->TypeInfos().Name() << L" <" << prm.Flags() << L'>';
+            }); }), L", "),
+        fun.Flags() );
+    return oss;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

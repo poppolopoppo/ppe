@@ -121,6 +121,9 @@ PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EParameterFlags 
 PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, RTTI::EFunctionFlags flags);
 PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EFunctionFlags flags);
 //----------------------------------------------------------------------------
+PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, const RTTI::FMetaFunction& fun);
+PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FMetaFunction& fun);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
