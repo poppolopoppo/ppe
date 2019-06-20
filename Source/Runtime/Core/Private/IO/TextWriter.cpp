@@ -311,28 +311,20 @@ static void Write_(Meta::TType<wchar_t>, TBasicTextWriter<wchar_t>& w, bool v) {
         : (v ? MakeStringView(L"1") : MakeStringView(L"0")));
 }
 //----------------------------------------------------------------------------
-static void Write_(Meta::TType<char>, TBasicTextWriter<char>& w, void* v) {
-    const FTextFormat org = w.ResetFormat();
-    const char fillChar = w.FillChar();
-    w.Put("[0x");
-    w << FTextFormat::Hexadecimal;
-    w << FTextFormat::PadLeft(sizeof(v) << 1, '0');
-    WriteItoaUnsigned_(w, uintptr_t(v));
-    w.Put(']');
-    w.Format() = org;
-    w.SetFillChar(fillChar);
+static void Write_(Meta::TType<char>, FTextWriter& w, void* v) {
+    const FTextWriter::FFormatScope o(w);
+    o->Put("[0x");
+    (*o) << FTextFormat::Hexadecimal << FTextFormat::PadLeft(sizeof(v) << 1, '0');
+    WriteItoaUnsigned_(*o, uintptr_t(v));
+    o->Put(']');
 }
 //----------------------------------------------------------------------------
-static void Write_(Meta::TType<wchar_t>, TBasicTextWriter<wchar_t>& w, void* v) {
-    const FTextFormat org = w.ResetFormat();
-    const wchar_t fillChar = w.FillChar();
-    w.Put(L"[0x");
-    w << FTextFormat::Hexadecimal;
-    w << FTextFormat::PadLeft(sizeof(v) << 1, L'0');
-    WriteItoaUnsigned_<wchar_t>(w, uintptr_t(v));
-    w.Put(L']');
-    w.Format() = org;
-    w.SetFillChar(fillChar);
+static void Write_(Meta::TType<wchar_t>, FWTextWriter& w, void* v) {
+    const FWTextWriter::FFormatScope o(w);
+    o->Put(L"[0x");
+    (*o) << FTextFormat::Hexadecimal << FTextFormat::PadLeft(sizeof(v) << 1, L'0');
+    WriteItoaUnsigned_(*o, uintptr_t(v));
+    o->Put(L']');
 }
 //----------------------------------------------------------------------------
 } //!namespace

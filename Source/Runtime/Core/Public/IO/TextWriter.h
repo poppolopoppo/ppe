@@ -228,9 +228,8 @@ public:
             Owner.SetFillChar(FillChar);
         }
 
-        TBasicTextWriter& operator *() const {
-            return Owner;
-        }
+        TBasicTextWriter& operator *() const { return Owner; }
+        TBasicTextWriter* operator->() const { return (&Owner); }
     };
 
     FFormatScope FormatScope() {
