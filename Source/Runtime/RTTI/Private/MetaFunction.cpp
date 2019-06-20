@@ -2,6 +2,7 @@
 
 #include "MetaFunction.h"
 
+#include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 

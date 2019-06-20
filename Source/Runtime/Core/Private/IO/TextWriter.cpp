@@ -332,7 +332,7 @@ static void Write_(Meta::TType<wchar_t>, FWTextWriter& w, void* v) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FBaseTextWriter::FBaseTextWriter(IBufferedStreamWriter* ostream)
-    : _ostream(ostream) {
+:   _ostream(ostream) {
     Assert(_ostream);
 }
 //----------------------------------------------------------------------------
