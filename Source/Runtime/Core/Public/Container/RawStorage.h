@@ -16,6 +16,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #define RAWSTORAGE_ALIGNED(_DOMAIN, T, _ALIGNMENT) \
     ::PPE::TRawStorage<T, ALIGNED_ALLOCATOR(_DOMAIN, _ALIGNMENT)>
+    //----------------------------------------------------------------------------
+#define RAWSTORAGE_INSITU(_DOMAIN, T, N) \
+    ::PPE::TRawStorage<T, INLINE_STACK_ALLOCATOR(_DOMAIN, T, N)>
 //----------------------------------------------------------------------------
 #define RAWSTORAGE_STACK(T) \
     ::PPE::TRawStorage<T, STACKLOCAL_ALLOCATOR()>

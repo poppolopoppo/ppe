@@ -44,6 +44,7 @@ void FMemoryTracking::Allocate(size_t userSize, size_t systemSize) NOEXCEPT {
     Assert(userSize);
     Assert(systemSize);
     Assert_NoAssume(userSize <= systemSize);
+    Assert_NoAssume(userSize * 2 > systemSize);
 
     _user.Allocate(userSize);
     _system.Allocate(systemSize);

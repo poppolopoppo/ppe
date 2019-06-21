@@ -45,7 +45,7 @@ using TBatchAllocator = TCascadedAllocator<
 >;
 #endif //!USE_PPE_MEMORY_DEBUGGING
 //----------------------------------------------------------------------------
-// Uses an in situ only one allocation of N blocks, then uses malloc()
+// Uses an in situ only for one allocation of N blocks, then uses malloc()
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORY_DEBUGGING
 template <typename _Tag, typename T, size_t N>
@@ -55,6 +55,18 @@ template <typename _Tag, typename T, size_t N>
 using TInlineAllocator = TSegregatorAllocator<
     sizeof(T) * N,
     TInSituAllocator<sizeof(T) * N>,
+    TDefaultAllocator<_Tag> >;
+#endif //!USE_PPE_MEMORY_DEBUGGING
+//----------------------------------------------------------------------------
+// Uses an in situ stack up to N blocks, then uses malloc()
+//----------------------------------------------------------------------------
+#if USE_PPE_MEMORY_DEBUGGING
+template <typename _Tag, typename T, size_t N>
+using TInlineStackAllocator = TDefaultAllocator<_Tag>;
+#else
+template <typename _Tag, typename T, size_t N>
+using TInlineStackAllocator = TFallbackAllocator<
+    TInSituStackAllocator<sizeof(T) * N>,
     TDefaultAllocator<_Tag> >;
 #endif //!USE_PPE_MEMORY_DEBUGGING
 //----------------------------------------------------------------------------
@@ -71,6 +83,9 @@ using TInlineAllocator = TSegregatorAllocator<
 //----------------------------------------------------------------------------
 #define INLINE_ALLOCATOR(_Domain, T, N) \
     ::PPE::TInlineAllocator< MEMORYDOMAIN_TAG(_Domain), T, N >
+//----------------------------------------------------------------------------
+#define INLINE_STACK_ALLOCATOR(_Domain, T, N) \
+    ::PPE::TInlineStackAllocator< MEMORYDOMAIN_TAG(_Domain), T, N >
 //----------------------------------------------------------------------------
 #define STACKLOCAL_ALLOCATOR() \
     ::PPE::FStackLocalAllocator// don't decorate to avoid double logging with "Alloca" domain
