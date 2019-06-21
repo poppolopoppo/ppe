@@ -33,7 +33,7 @@ LOG_CATEGORY_VERBOSITY(, Test_Thread, NoDebug)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void Test_Event() {
+NO_INLINE void Test_Event() {
     TEvent< TFunction<void(int)> > evt;
     evt.Emplace([](int i) { UNUSED(i); LOG(Test_Thread, Info, L"A = {0}", i); });
     evt.Emplace([](int i) { UNUSED(i); LOG(Test_Thread, Info, L"B = {0}", i); });
@@ -55,7 +55,7 @@ static void Test_Event() {
     evt(1337);
 }
 //----------------------------------------------------------------------------
-static void Test_Task_() {
+NO_INLINE void Test_Task_() {
     class FTest : public FRefCountable {
     public:
         FTest() {}
@@ -64,13 +64,16 @@ static void Test_Task_() {
         }
     };
 
-    TRefPtr<FTest> Ptr(NEW_REF(Task, FTest));
+    FTest task;
+    AddRef(&task);
 
     auto& pool = FGlobalThreadPool::Get();
-    pool.RunAndWaitFor(MakeFunction<&FTest::Log>(Ptr.get())); // should use a TSafePtr<> inside TFunction<>
+    pool.RunAndWaitFor(MakeFunction<&FTest::Log>(&task)); // should use a TSafePtr<> inside TFunction<>
+
+    RemoveRef_AssertReachZero_NoDelete(&task);
 }
 //----------------------------------------------------------------------------
-static void Test_Async_() {
+NO_INLINE void Test_Async_() {
     // Can't overload with std::function<>: http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2132
     /*
     async([]() {
@@ -86,7 +89,7 @@ static void Test_Async_() {
     });
 }
 //----------------------------------------------------------------------------
-static void Test_Future_() {
+NO_INLINE void Test_Future_() {
     LOG(Test_Thread, Info, L"Start future");
 
     const PFuture<int> future = Future<int>([]() -> int {
@@ -107,7 +110,7 @@ static void Test_Future_() {
     Assert(42 == future->Result());
 }
 //----------------------------------------------------------------------------
-static void Test_ParallelFor_() {
+NO_INLINE void Test_ParallelFor_() {
     const size_t values[] = {
         1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
         21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37
@@ -212,7 +215,7 @@ struct FGraph {
     }
 };
 //----------------------------------------------------------------------------
-static void Test_Graph_Preprocess_() {
+NO_INLINE void Test_Graph_Preprocess_() {
     FGraph g;
     g.Randomize(1024, 10);
     FHighPriorityThreadPool::Get().RunAndWaitFor([&g](ITaskContext& ctx) {
@@ -270,7 +273,7 @@ static void EachGraphNode_(FAggregationPort* port, ITaskContext& ctx, int rev, F
 
     port->DependsOn(&n->Port);
 }
-static void Test_Graph_Incremental_() {
+NO_INLINE void Test_Graph_Incremental_() {
     FGraph g;
     g.Randomize(1024, 10);
     FHighPriorityThreadPool::Get().RunAndWaitFor([&g](ITaskContext& ctx) {
