@@ -91,7 +91,7 @@ protected:
     template <typename T>
     friend void OnRefCountReachZero(T* ptr);
     template <typename T>
-    friend void RemoveRef_AssertReachZero_NoDelete(T *& ptr);
+    friend void RemoveRef_AssertReachZero_NoDelete(T* ptr);
     template <typename T>
     friend void RemoveRef_AssertReachZero(TRefPtr<T>& ptr);
     template <typename T>

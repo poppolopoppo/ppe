@@ -93,13 +93,11 @@ NO_INLINE void OnRefCountReachZero(T* ptr) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void RemoveRef_AssertReachZero_NoDelete(T *& ptr) {
+void RemoveRef_AssertReachZero_NoDelete(T* ptr) {
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);
     Assert(ptr);
     VerifyRelease(ptr->DecRefCount_ReturnIfReachZero());
-    ptr->~T();
-    ptr = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T>
