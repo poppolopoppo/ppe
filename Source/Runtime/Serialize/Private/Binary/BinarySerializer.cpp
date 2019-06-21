@@ -16,7 +16,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 FBinarySerializer::FBinarySerializer() {}
 //----------------------------------------------------------------------------
-FBinarySerializer::~FBinarySerializer() {}
+FBinarySerializer::~FBinarySerializer() = default;
 //----------------------------------------------------------------------------
 void FBinarySerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);

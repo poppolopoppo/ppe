@@ -100,7 +100,7 @@ class PPE_CORE_API FMemoryPoolThreadLocal : public IMemoryPool, Meta::FThreadRes
 public:
     FMemoryPoolThreadLocal(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
         : _pool(blockSize, minChunkSize, maxChunkSize) {}
-    virtual ~FMemoryPoolThreadLocal() {}
+    virtual ~FMemoryPoolThreadLocal() = default;
 
     FMemoryPoolThreadLocal(FMemoryPoolThreadLocal&&) = delete;
     FMemoryPoolThreadLocal& operator =(FMemoryPoolThreadLocal&&) = delete;
@@ -129,7 +129,7 @@ class PPE_CORE_API FMemoryPoolThreadSafe : public IMemoryPool {
 public:
     FMemoryPoolThreadSafe(size_t blockSize, size_t minChunkSize, size_t maxChunkSize)
         : _pool(blockSize, minChunkSize, maxChunkSize) {}
-    virtual ~FMemoryPoolThreadSafe() {}
+    virtual ~FMemoryPoolThreadSafe() = default;
 
     FMemoryPoolThreadSafe(FMemoryPoolThreadSafe&&) = delete;
     FMemoryPoolThreadSafe& operator =(FMemoryPoolThreadSafe&&) = delete;

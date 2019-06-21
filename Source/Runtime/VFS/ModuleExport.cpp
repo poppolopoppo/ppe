@@ -18,8 +18,7 @@ FVirtualFileSystemModule::FVirtualFileSystemModule()
 :   FModule("Runtime/VFS")
 {}
 //----------------------------------------------------------------------------
-FVirtualFileSystemModule::~FVirtualFileSystemModule()
-{}
+FVirtualFileSystemModule::~FVirtualFileSystemModule() = default;
 //----------------------------------------------------------------------------
 void FVirtualFileSystemModule::Start(FModuleManager& manager) {
     FModule::Start(manager);

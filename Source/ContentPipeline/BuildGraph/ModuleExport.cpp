@@ -20,8 +20,7 @@ FBuildGraphModule::FBuildGraphModule()
 :   FModule("ContentPipeline/BuildGraph")
 {}
 //----------------------------------------------------------------------------
-FBuildGraphModule::~FBuildGraphModule()
-{}
+FBuildGraphModule::~FBuildGraphModule() = default;
 //----------------------------------------------------------------------------
 void FBuildGraphModule::Start(FModuleManager& manager) {
     FModule::Start(manager);

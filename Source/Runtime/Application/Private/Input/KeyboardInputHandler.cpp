@@ -12,8 +12,7 @@ namespace Application {
 FKeyboardInputHandler::FKeyboardInputHandler()
 {}
 //----------------------------------------------------------------------------
-FKeyboardInputHandler::~FKeyboardInputHandler()
-{}
+FKeyboardInputHandler::~FKeyboardInputHandler() = default;
 //----------------------------------------------------------------------------
 void FKeyboardInputHandler::SetupWindow(FPlatformWindow& window) {
     FPlatformKeyboard::SetupMessageHandler(window, &_state).Forget();

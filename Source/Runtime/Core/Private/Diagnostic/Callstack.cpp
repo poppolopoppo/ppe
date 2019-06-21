@@ -25,7 +25,7 @@ FCallstack::FCallstack(size_t framesToSkip, size_t framesToCapture)
     Capture(this, framesToSkip, framesToCapture);
 }
 //----------------------------------------------------------------------------
-FCallstack::~FCallstack() {}
+FCallstack::~FCallstack() = default;
 //----------------------------------------------------------------------------
 FCallstack::FCallstack(const FCallstack& other)
 : _hash(other._hash), _depth(other._depth) {

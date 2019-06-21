@@ -33,7 +33,7 @@ static void RequestReadUntil_(FTextWriter* poss, FSocketBuffered& socket, const 
 //----------------------------------------------------------------------------
 FHttpRequest::FHttpRequest() : _method(EHttpMethod::Get) {}
 //----------------------------------------------------------------------------
-FHttpRequest::~FHttpRequest() {}
+FHttpRequest::~FHttpRequest() = default;
 //----------------------------------------------------------------------------
 FHttpRequest::FHttpRequest(EHttpMethod method, FUri&& uri, FBody&& body)
 :   FHttpHeader(std::move(body))

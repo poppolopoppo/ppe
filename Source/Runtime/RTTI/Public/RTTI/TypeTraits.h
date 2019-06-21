@@ -76,7 +76,7 @@ struct PPE_RTTI_API PTypeTraits {
 //----------------------------------------------------------------------------
 class PPE_RTTI_API ITypeTraits {
 public:
-    virtual ~ITypeTraits() {}
+    virtual ~ITypeTraits() = default;
 
     virtual void Construct(void* data) const = 0;
     virtual void ConstructCopy(void* data, const void* other) const = 0;

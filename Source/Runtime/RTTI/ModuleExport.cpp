@@ -24,8 +24,7 @@ FRTTIModule::FRTTIModule()
 :   FModule("Runtime/RTTI")
 {}
 //----------------------------------------------------------------------------
-FRTTIModule::~FRTTIModule()
-{}
+FRTTIModule::~FRTTIModule() = default;
 //----------------------------------------------------------------------------
 void FRTTIModule::Start(FModuleManager& manager) {
     FModule::Start(manager);

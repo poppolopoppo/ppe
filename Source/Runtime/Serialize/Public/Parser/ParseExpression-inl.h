@@ -18,7 +18,7 @@ TLiteral<T>::TLiteral(T&& rvalue, const Lexer::FSpan& site)
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TLiteral<T>::~TLiteral() {}
+TLiteral<T>::~TLiteral() = default;
 //----------------------------------------------------------------------------
 template <typename T>
 RTTI::FAtom TLiteral<T>::Eval(FParseContext* context) const {
@@ -40,7 +40,7 @@ TUnaryFunction<_Functor>::TUnaryFunction(_Functor&& functor, const FParseExpress
 }
 //----------------------------------------------------------------------------
 template <typename _Functor>
-TUnaryFunction<_Functor>::~TUnaryFunction() {}
+TUnaryFunction<_Functor>::~TUnaryFunction() = default;
 //----------------------------------------------------------------------------
 template <typename _Functor>
 RTTI::FAtom TUnaryFunction<_Functor>::Eval(FParseContext *context) const {
@@ -60,7 +60,7 @@ TBinaryFunction<_Functor>::TBinaryFunction(_Functor&& functor, const FParseExpre
 }
 //----------------------------------------------------------------------------
 template <typename _Functor>
-TBinaryFunction<_Functor>::~TBinaryFunction() {}
+TBinaryFunction<_Functor>::~TBinaryFunction() = default;
 //----------------------------------------------------------------------------
 template <typename _Functor>
 RTTI::FAtom TBinaryFunction<_Functor>::Eval(FParseContext *context) const {
@@ -83,7 +83,7 @@ TTernary<_Test>::TTernary(_Test&& test, const FParseExpression *pif, const FPars
 }
 //----------------------------------------------------------------------------
 template <typename _Test>
-TTernary<_Test>::~TTernary() {}
+TTernary<_Test>::~TTernary() = default;
 //----------------------------------------------------------------------------*
 template <typename _Test>
 RTTI::FAtom TTernary<_Test>::Eval(FParseContext *context) const {

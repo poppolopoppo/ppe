@@ -18,14 +18,14 @@ protected:
     FSafeBoolBase() {}
     FSafeBoolBase(const FSafeBoolBase& ) {}
     FSafeBoolBase& operator=(const FSafeBoolBase& ) { return *this; }
-    ~FSafeBoolBase() {}
+    ~FSafeBoolBase() = default;
 };
 //----------------------------------------------------------------------------
 template <typename T = void>
 class TSafeBoolImpl : public FSafeBoolBase {
     static_assert(!std::has_virtual_destructor<T>::value, "T should not be virtual");
 protected:
-    ~TSafeBoolImpl() {}
+    ~TSafeBoolImpl() = default;
 
 public:
     operator bool_type () const {
@@ -38,7 +38,7 @@ public:
 template <>
 class TSafeBoolImpl<void> : public FSafeBoolBase {
 protected:
-    virtual ~TSafeBoolImpl() {}
+    virtual ~TSafeBoolImpl() = default;
     virtual bool boolean_test() const=0;
 
 public:

@@ -12,7 +12,7 @@ FTimeline::FTimeline()
 FTimeline::FTimeline(const FTimepoint& start)
 :   _now(start), _last(start), _start(start) {}
 //----------------------------------------------------------------------------
-FTimeline::~FTimeline() {}
+FTimeline::~FTimeline() = default;
 //----------------------------------------------------------------------------
 FTimeline::FTimeline(const FTimeline& other)
 :   _now(other._now)

@@ -27,7 +27,7 @@ public:
             _small.Size = 0;
             ONLY_IF_ASSERT(FPlatformMemory::Memzero(_small.Data, sizeof(_small.Data)));
         }
-        ~FText() {}
+        ~FText() = default;
 
         FText(const FText& other) { operator =(other); }
         FText& operator =(const FText& other) {

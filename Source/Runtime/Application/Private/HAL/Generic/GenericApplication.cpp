@@ -17,9 +17,7 @@ FGenericApplication::FGenericApplication(FWString&& name)
     Assert(not _name.empty());
 }
 //----------------------------------------------------------------------------
-FGenericApplication::~FGenericApplication() {
-
-}
+FGenericApplication::~FGenericApplication() = default;
 //----------------------------------------------------------------------------
 void FGenericApplication::Start() {
     LOG(Application, Emphasis, L"start application <{0}>", _name);

@@ -38,7 +38,7 @@ FHttpHeader::FHttpHeader() {}
 //----------------------------------------------------------------------------
 FHttpHeader::FHttpHeader(FBody&& body) : _body(std::move(body)) {}
 //----------------------------------------------------------------------------
-FHttpHeader::~FHttpHeader() {}
+FHttpHeader::~FHttpHeader() = default;
 //----------------------------------------------------------------------------
 void FHttpHeader::Add(const FName& key, FString&& value) {
     Assert(not key.empty());

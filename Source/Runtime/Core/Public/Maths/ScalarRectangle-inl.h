@@ -28,7 +28,7 @@ TScalarRectangle<T, _Dim>::TScalarRectangle(const aabb_type& aabb)
 :   aabb_type(aabb) {}
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-TScalarRectangle<T, _Dim>::~TScalarRectangle() {}
+TScalarRectangle<T, _Dim>::~TScalarRectangle() = default;
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 TScalarRectangle<T, _Dim>::TScalarRectangle(const TScalarRectangle& other)

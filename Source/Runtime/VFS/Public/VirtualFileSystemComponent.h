@@ -29,7 +29,7 @@ FWD_REFPTR(VirtualFileSystemComponent);
 //----------------------------------------------------------------------------
 class PPE_VFS_API FVirtualFileSystemComponent : public FRefCountable {
 public:
-    virtual ~FVirtualFileSystemComponent() {}
+    virtual ~FVirtualFileSystemComponent() = default;
 
     FVirtualFileSystemComponent(const FVirtualFileSystemComponent& other) = delete;
     FVirtualFileSystemComponent& operator =(const FVirtualFileSystemComponent& other) = delete;
@@ -52,7 +52,7 @@ protected:
 //----------------------------------------------------------------------------
 class PPE_VFS_API IVirtualFileSystemComponentReadable {
 public:
-    virtual ~IVirtualFileSystemComponentReadable() {}
+    virtual ~IVirtualFileSystemComponentReadable() = default;
 
     virtual bool DirectoryExists(const FDirpath& dirpath, EExistPolicy policy) = 0;
     virtual bool FileExists(const FFilename& filename, EExistPolicy policy) = 0;
@@ -67,7 +67,7 @@ public:
 //----------------------------------------------------------------------------
 class PPE_VFS_API IVirtualFileSystemComponentWritable {
 public:
-    virtual ~IVirtualFileSystemComponentWritable() {}
+    virtual ~IVirtualFileSystemComponentWritable() = default;
 
     virtual bool CreateDirectory(const FDirpath& dirpath) = 0;
     virtual bool MoveFile(const FFilename& src, const FFilename& dst) = 0;
@@ -81,7 +81,7 @@ class PPE_VFS_API IVirtualFileSystemComponentReadWritable :
     public IVirtualFileSystemComponentReadable
 ,   public IVirtualFileSystemComponentWritable {
 public:
-    virtual ~IVirtualFileSystemComponentReadWritable() {}
+    virtual ~IVirtualFileSystemComponentReadWritable() = default;
 
     virtual UStreamReadWriter OpenReadWritable(const FFilename& filename, EAccessPolicy policy) = 0;
 };

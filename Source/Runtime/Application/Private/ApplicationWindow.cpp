@@ -47,8 +47,7 @@ FApplicationWindow::FApplicationWindow(FWString&& name, int left, int top, size_
     CreateApplicationWindow_(&_input, &_window, &_main, Name(), left, top, width, height);
 }
 //----------------------------------------------------------------------------
-FApplicationWindow::~FApplicationWindow()
-{}
+FApplicationWindow::~FApplicationWindow() = default;
 //----------------------------------------------------------------------------
 void FApplicationWindow::Start() {
     FApplicationBase::Start();

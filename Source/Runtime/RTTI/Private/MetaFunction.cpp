@@ -68,8 +68,7 @@ FMetaFunction::FMetaFunction(
 #endif
 }
 //----------------------------------------------------------------------------
-FMetaFunction::~FMetaFunction()
-{}
+FMetaFunction::~FMetaFunction() = default;
 //----------------------------------------------------------------------------
 void FMetaFunction::Invoke(
     const FMetaObject& obj,

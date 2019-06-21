@@ -16,8 +16,7 @@ FDeferredStreamReader::FDeferredStreamReader(IStreamReader* nonBuffered, ETaskPr
     AssertRelease_NoAssume(_nonBuffered->ToBufferedI() == nullptr);
 }
 //----------------------------------------------------------------------------
-FDeferredStreamReader::~FDeferredStreamReader()
-{}
+FDeferredStreamReader::~FDeferredStreamReader() = default;
 //----------------------------------------------------------------------------
 bool FDeferredStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
     Assert(_nonBuffered);
@@ -62,8 +61,7 @@ FDeferredStreamWriter::FDeferredStreamWriter(IStreamWriter* nonBuffered, ETaskPr
     AssertRelease_NoAssume(_nonBuffered->ToBufferedO() == nullptr);
 }
 //----------------------------------------------------------------------------
-FDeferredStreamWriter::~FDeferredStreamWriter()
-{}
+FDeferredStreamWriter::~FDeferredStreamWriter() = default;
 //----------------------------------------------------------------------------
 bool FDeferredStreamWriter::Write(const void* storage, std::streamsize sizeInBytes) {
     Assert(_nonBuffered);

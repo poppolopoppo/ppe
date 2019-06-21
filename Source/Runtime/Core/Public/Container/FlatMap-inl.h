@@ -20,7 +20,7 @@ TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TFlatMap(size_type capacity) :
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::~TFlatMap() {}
+TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::~TFlatMap() = default;
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TFlatMap(TFlatMap&& rvalue)

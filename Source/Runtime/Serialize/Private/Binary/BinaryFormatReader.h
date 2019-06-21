@@ -63,16 +63,16 @@ private:
     };
 
     struct FContents_ {
-        RAWSTORAGE(Binary, RTTI::FName) Names;
-        RAWSTORAGE(Binary, const RTTI::FMetaClass*) Classes;
-        RAWSTORAGE(Binary, RTTI::FMetaObject*) Imports;
-        RAWSTORAGE(Binary, FPropertyMemoizer_) Properties;
-        RAWSTORAGE(Binary, FDirpath) Dirpaths;
-        RAWSTORAGE(Binary, FBasenameNoExt) BasenameNoExts;
-        RAWSTORAGE(Binary, FExtname) Extnames;
-        RAWSTORAGE(Binary, FBinaryFormat::FRawData) Strings;
-        RAWSTORAGE(Binary, FBinaryFormat::FRawData) WStrings;
-        RAWSTORAGE(Binary, u8) Text;
+        RAWSTORAGE_INSITU(Binary, RTTI::FName, 8) Names;
+        RAWSTORAGE_INSITU(Binary, const RTTI::FMetaClass*, 8) Classes;
+        RAWSTORAGE_INSITU(Binary, RTTI::FMetaObject*, 8) Imports;
+        RAWSTORAGE_INSITU(Binary, FPropertyMemoizer_, 8) Properties;
+        RAWSTORAGE_INSITU(Binary, FDirpath, 8) Dirpaths;
+        RAWSTORAGE_INSITU(Binary, FBasenameNoExt, 8) BasenameNoExts;
+        RAWSTORAGE_INSITU(Binary, FExtname, 8) Extnames;
+        RAWSTORAGE_INSITU(Binary, FBinaryFormat::FRawData, 8) Strings;
+        RAWSTORAGE_INSITU(Binary, FBinaryFormat::FRawData, 8) WStrings;
+        RAWSTORAGE_INSITU(Binary, u8, ALLOCATION_BOUNDARY) Text;
         FBinaryFormat::FRawData Bulk;
 
     }   _contents;

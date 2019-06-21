@@ -179,8 +179,7 @@ FBasicOctree::FBasicOctree(const float3& center, float voxelSize, int dimension)
     Assert(Meta::IsPow2(_dimension));
 }
 //----------------------------------------------------------------------------
-FBasicOctree::~FBasicOctree()
-{}
+FBasicOctree::~FBasicOctree() = default;
 //----------------------------------------------------------------------------
 bool FBasicOctree::Intersects(const FRay& ray) const {
     const FRay localRay(ray.Origin() - _center, ray.Direction());

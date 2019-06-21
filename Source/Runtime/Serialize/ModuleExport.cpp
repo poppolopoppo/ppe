@@ -25,8 +25,7 @@ FSerializeModule::FSerializeModule()
 :   FModule("Runtime/Serialize")
 {}
 //----------------------------------------------------------------------------
-FSerializeModule::~FSerializeModule()
-{}
+FSerializeModule::~FSerializeModule() = default;
 //----------------------------------------------------------------------------
 void FSerializeModule::Start(FModuleManager& manager) {
     FModule::Start(manager);

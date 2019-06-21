@@ -43,7 +43,7 @@ FJsonSerializer::FJsonSerializer(bool minify/* = true */) {
     SetMinify(minify);
 }
 //----------------------------------------------------------------------------
-FJsonSerializer::~FJsonSerializer() {}
+FJsonSerializer::~FJsonSerializer() = default;
 //----------------------------------------------------------------------------
 void FJsonSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);

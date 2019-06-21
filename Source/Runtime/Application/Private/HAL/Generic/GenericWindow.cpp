@@ -23,8 +23,7 @@ FGenericWindow::FGenericWindow()
 ,   _type(EWindowType::Main)
 {}
 //----------------------------------------------------------------------------
-FGenericWindow::~FGenericWindow()
-{}
+FGenericWindow::~FGenericWindow() = default;
 //----------------------------------------------------------------------------
 bool FGenericWindow::Show() {
     Assert(not _visible);

@@ -20,7 +20,7 @@ FLookAheadReader::FLookAheadReader(IBufferedStreamReader& input, const FWStringV
 ,   _input(input)
 {}
 //----------------------------------------------------------------------------
-FLookAheadReader::~FLookAheadReader() {}
+FLookAheadReader::~FLookAheadReader() = default;
 //----------------------------------------------------------------------------
 bool FLookAheadReader::Eof() const {
     return _input.Eof();

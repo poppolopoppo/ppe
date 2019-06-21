@@ -22,7 +22,7 @@ FDecodedCallstack::FFrame::FFrame(void* address, const wchar_t* symbol, const wc
 FDecodedCallstack::FFrame::FFrame(void* address, FWString&& symbol, FWString&& filename, size_t line)
 : _address(address), _symbol(std::move(symbol)), _filename(std::move(filename)), _line(line) {}
 //----------------------------------------------------------------------------
-FDecodedCallstack::FFrame::~FFrame() {}
+FDecodedCallstack::FFrame::~FFrame() = default;
 //----------------------------------------------------------------------------
 FDecodedCallstack::FFrame::FFrame(FFrame&& rvalue)
 :   _address(rvalue._address)

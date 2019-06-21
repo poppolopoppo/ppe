@@ -88,7 +88,7 @@ struct FHalfFloat {
 
     FHalfFloat() {}
     explicit FHalfFloat(Meta::FForceInit) : _data(0) {}
-    ~FHalfFloat() {}
+    ~FHalfFloat() = default;
 
     FORCE_INLINE operator u16 () const { return _data; }
     FORCE_INLINE explicit FHalfFloat(u16 data) : _data(data) {}
@@ -198,7 +198,7 @@ struct TBasicNorm {
 
     FORCE_INLINE TBasicNorm() {}
     FORCE_INLINE explicit TBasicNorm(Meta::FForceInit) : _data(T(0)) {}
-    FORCE_INLINE ~TBasicNorm() {}
+    FORCE_INLINE ~TBasicNorm() = default;
 
     FORCE_INLINE operator T() const { return _data; }
     FORCE_INLINE TBasicNorm(T data) : _data(data) {}

@@ -28,7 +28,7 @@ public:
     FJsonException(const char *what, const Lexer::FLocation& site)
         : parent_type(what), _site(site) {}
 
-    virtual ~FJsonException() {}
+    virtual ~FJsonException() = default;
 
     const Lexer::FLocation& Site() const { return _site; }
 

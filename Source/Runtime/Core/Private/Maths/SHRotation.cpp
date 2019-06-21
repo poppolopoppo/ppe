@@ -54,7 +54,7 @@ FSHRotation::FSHRotation(size_t bands)
     _matrices.Resize_DiscardData(scalarCount);
 }
 //----------------------------------------------------------------------------
-FSHRotation::~FSHRotation() {}
+FSHRotation::~FSHRotation() = default;
 //----------------------------------------------------------------------------
 void FSHRotation::Transform(TSHVector<1> *dst, const TSHVector<1>& src) const {
     SHRotation_Transform_(_bands, _matrices.Pointer(), dst, src);

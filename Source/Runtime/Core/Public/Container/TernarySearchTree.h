@@ -41,7 +41,7 @@ public:
 
     explicit TTernarySearchNodeBase(_Key&& rkey);
     explicit TTernarySearchNodeBase(const _Key& key);
-    ~TTernarySearchNodeBase() {}
+    ~TTernarySearchNodeBase() = default;
 
     TTernarySearchNodeBase(const TTernarySearchNodeBase& other) = delete;
     TTernarySearchNodeBase& operator=(const TTernarySearchNodeBase& other) = delete;
@@ -77,7 +77,7 @@ public:
 
     explicit TTernarySearchNode(_Key&& rkey) : parent_type(std::move(rkey)) {}
     explicit TTernarySearchNode(const _Key& key) : parent_type(key) {}
-    ~TTernarySearchNode() {}
+    ~TTernarySearchNode() = default;
 
     const _Value& Value() const { Assert(HasValue()); return _value; }
 
@@ -95,7 +95,7 @@ public:
 
     explicit TTernarySearchNode(_Key&& rkey) : parent_type(std::move(rkey)) {}
     explicit TTernarySearchNode(const _Key& key) : parent_type(key) {}
-    ~TTernarySearchNode() {}
+    ~TTernarySearchNode() = default;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

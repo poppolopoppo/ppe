@@ -26,8 +26,7 @@ FException::FException(const char* what) noexcept
 #endif
 }
 //----------------------------------------------------------------------------
-FException::~FException()
-{}
+FException::~FException() = default;
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_CALLSTACK
 FDecodedCallstack FException::Callstack() const {

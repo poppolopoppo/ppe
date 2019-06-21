@@ -11,8 +11,7 @@ FWindowBase::FWindowBase(FWString&& title, const FWindowDefinition& def) {
     VerifyRelease(FPlatformWindow::CreateWindow(this, std::move(title), def));
 }
 //----------------------------------------------------------------------------
-FWindowBase::~FWindowBase()
-{}
+FWindowBase::~FWindowBase() = default;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

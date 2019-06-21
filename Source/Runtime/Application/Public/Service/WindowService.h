@@ -16,7 +16,7 @@ FWD_INTEFARCE_UNIQUEPTR(WindowService);
 class IWindowService {
 public:
     IWindowService() {}
-    virtual ~IWindowService() {}
+    virtual ~IWindowService() = default;
 
     virtual void CreateMainWindow(PWindowBase* window, FWString&& title) = 0;
     virtual void CreateMainWindow(PWindowBase* window, FWString&& title, size_t width, size_t height) = 0;

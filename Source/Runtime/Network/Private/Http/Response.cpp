@@ -34,7 +34,7 @@ static void ResponseReadUntil_(FTextWriter* poss, FSocketBuffered& socket, const
 //----------------------------------------------------------------------------
 FHttpResponse::FHttpResponse() : _status(EHttpStatus::InternalServerError) {}
 //----------------------------------------------------------------------------
-FHttpResponse::~FHttpResponse() {}
+FHttpResponse::~FHttpResponse() = default;
 //----------------------------------------------------------------------------
 FHttpResponse::FHttpResponse(EHttpStatus status, FString&& reason)
 :   _status(status)

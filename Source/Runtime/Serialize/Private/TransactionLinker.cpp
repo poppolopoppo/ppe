@@ -82,8 +82,7 @@ FTransactionLinker::FTransactionLinker(const FFilename& filename)
     Assert_NoAssume(not _filename.empty());
 }
 //----------------------------------------------------------------------------
-FTransactionLinker::~FTransactionLinker()
-{}
+FTransactionLinker::~FTransactionLinker() = default;
 //----------------------------------------------------------------------------
 void FTransactionLinker::AddTopObject(RTTI::FMetaObject* topObject) {
     Assert(topObject);

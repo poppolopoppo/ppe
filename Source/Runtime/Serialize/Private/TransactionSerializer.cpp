@@ -317,8 +317,7 @@ FDirectoryTransaction::FDirectoryTransaction(
 ,   _inputPaths(std::move(inputPaths))
 {}
 //----------------------------------------------------------------------------
-FDirectoryTransaction::~FDirectoryTransaction()
-{}
+FDirectoryTransaction::~FDirectoryTransaction() = default;
 //----------------------------------------------------------------------------
 void FDirectoryTransaction::FetchSources(FSources& sources) {
     FWRegexp re;

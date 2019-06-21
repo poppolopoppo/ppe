@@ -29,7 +29,7 @@ struct UX10Y10Z10W2N {
     UX10Y10Z10W2N(u32 data) : _data(data) {}
     UX10Y10Z10W2N(const float3& value) { Pack(value); }
     UX10Y10Z10W2N(const float4& value) { Pack(value); }
-    ~UX10Y10Z10W2N() {}
+    ~UX10Y10Z10W2N() = default;
 
     FORCE_INLINE void Pack_Float01(const float3& xyz, u8 w);
     FORCE_INLINE void Unpack_Float01(float3& xyz) const;

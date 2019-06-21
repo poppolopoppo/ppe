@@ -15,8 +15,7 @@ FGamepadInputHandler::FGamepadInputHandler()
     _states.resize_AssumeEmpty(FPlatformGamepad::MaxNumGamepad);
 }
 //----------------------------------------------------------------------------
-FGamepadInputHandler::~FGamepadInputHandler()
-{}
+FGamepadInputHandler::~FGamepadInputHandler() = default;
 //----------------------------------------------------------------------------
 const FGamepadState* FGamepadInputHandler::FirstConnectedIFP() const {
     return (INDEX_NONE != _firstConnected

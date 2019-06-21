@@ -1260,7 +1260,7 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
 
 {}
 //----------------------------------------------------------------------------
-FGrammarImpl::~FGrammarImpl() {}
+FGrammarImpl::~FGrammarImpl() = default;
 //----------------------------------------------------------------------------
 Parser::PCParseExpression FGrammarImpl::ParseExpression(Parser::FParseList& input) const {
     return ((input.Peek() == nullptr)

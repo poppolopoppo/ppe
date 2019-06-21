@@ -36,7 +36,7 @@ enum class EModuleStatus {
 };
 //----------------------------------------------------------------------------
 struct PPE_CORE_API IModuleStartup {
-    virtual ~IModuleStartup() {}
+    virtual ~IModuleStartup() = default;
     virtual void ReleaseMemory() = 0;
 };
 //----------------------------------------------------------------------------

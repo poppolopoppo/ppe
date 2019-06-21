@@ -24,7 +24,7 @@ LOG_CATEGORY(PPE_SERIALIZE_API, Parser)
 FParseStatement::FParseStatement(const Lexer::FSpan& site)
 :   FParseItem(site) {}
 //----------------------------------------------------------------------------
-FParseStatement::~FParseStatement() {}
+FParseStatement::~FParseStatement() = default;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ FEvalExpr::FEvalExpr(const Parser::PCParseExpression& expr)
     Assert(expr);
 }
 //----------------------------------------------------------------------------
-FEvalExpr::~FEvalExpr() {}
+FEvalExpr::~FEvalExpr() = default;
 //----------------------------------------------------------------------------
 void FEvalExpr::Execute(FParseContext *context) const {
     const RTTI::FAtom result = _expr->Eval(context);
@@ -57,7 +57,7 @@ FPropertyAssignment::FPropertyAssignment(
     Assert(value);
 }
 //----------------------------------------------------------------------------
-FPropertyAssignment::~FPropertyAssignment() {}
+FPropertyAssignment::~FPropertyAssignment() = default;
 //----------------------------------------------------------------------------
 void FPropertyAssignment::Execute(FParseContext *context) const {
     Assert(context);

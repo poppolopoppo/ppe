@@ -27,7 +27,7 @@ FSocketBuffered::FSocketBuffered(FSocket&& socket, size_t capacity/* = DefaultBu
     Assert(_bufferCapacity > 0);
 }
 //----------------------------------------------------------------------------
-FSocketBuffered::~FSocketBuffered() {}
+FSocketBuffered::~FSocketBuffered() = default;
 //----------------------------------------------------------------------------
 FSocketBuffered::FSocketBuffered(FSocketBuffered&& rvalue) {
     operator =(std::move(rvalue));

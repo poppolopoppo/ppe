@@ -23,8 +23,7 @@ FMetaEnum::FMetaEnum(const FName& name, EEnumFlags flags, size_t sizeInBytes, co
     Assert_NoAssume(_namespace);
 }
 //----------------------------------------------------------------------------
-FMetaEnum::~FMetaEnum()
-{}
+FMetaEnum::~FMetaEnum() = default;
 //----------------------------------------------------------------------------
 const FMetaEnumValue& FMetaEnum::NameToValue(const RTTI::FName& name) const {
     const FMetaEnumValue* const pValue = NameToValueIFP(name);

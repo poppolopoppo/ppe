@@ -12,7 +12,7 @@ namespace Application {
 FApplicationConsole::FApplicationConsole(FWString&& name)
 :   FApplicationBase(std::move(name)) {}
 //----------------------------------------------------------------------------
-FApplicationConsole::~FApplicationConsole() {}
+FApplicationConsole::~FApplicationConsole() = default;
 //----------------------------------------------------------------------------
 void FApplicationConsole::Start() {
     FPlatformConsole::Open();

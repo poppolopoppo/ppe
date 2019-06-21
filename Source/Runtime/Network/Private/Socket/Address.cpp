@@ -25,7 +25,7 @@ EXTERN_LOG_CATEGORY(PPE_NETWORK_API, Network)
 //----------------------------------------------------------------------------
 FAddress::FAddress() : _port(size_t(EServiceName::Any)) {}
 //----------------------------------------------------------------------------
-FAddress::~FAddress() {}
+FAddress::~FAddress() = default;
 //----------------------------------------------------------------------------
 FAddress::FAddress(const FStringView& host, size_t port) : FAddress(ToString(host), port) {}
 //----------------------------------------------------------------------------

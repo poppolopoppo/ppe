@@ -27,7 +27,7 @@ public:
         ,   _site(_match.Site())
     {}
 
-    virtual ~FLexerException() {}
+    virtual ~FLexerException() = default;
 
     const Lexer::FMatch& Match() const { return _match; }
     Lexer::FSpan Site() const { return _site; }

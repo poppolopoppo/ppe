@@ -236,8 +236,7 @@ TBasicRegexp<_Char>::TBasicRegexp() NOEXCEPT
 {}
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicRegexp<_Char>::~TBasicRegexp()
-{}
+TBasicRegexp<_Char>::~TBasicRegexp() = default;
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicRegexp<_Char>::TBasicRegexp(regex_type&& re) NOEXCEPT

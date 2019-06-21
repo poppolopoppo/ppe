@@ -173,8 +173,7 @@ FVirtualFileSystemNativeComponent::FVirtualFileSystemNativeComponent(const FDirp
 :   FVirtualFileSystemNativeComponent(alias, FWString(target), openMode)
 {}
 //----------------------------------------------------------------------------
-FVirtualFileSystemNativeComponent::~FVirtualFileSystemNativeComponent()
-{}
+FVirtualFileSystemNativeComponent::~FVirtualFileSystemNativeComponent() = default;
 //----------------------------------------------------------------------------
 IVirtualFileSystemComponentReadable* FVirtualFileSystemNativeComponent::Readable() {
     return (_openMode ^ EOpenPolicy::Readable ? this : nullptr);

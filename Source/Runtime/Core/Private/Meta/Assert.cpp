@@ -51,7 +51,7 @@ static std::atomic<FAssertHandler> GAssertionHandler = { nullptr };
 FAssertException::FAssertException(const char *msg, const wchar_t *file, unsigned line)
 :   FException(msg), _file(file), _line(line) {}
 //----------------------------------------------------------------------------
-FAssertException::~FAssertException() {}
+FAssertException::~FAssertException() = default;
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
 FWTextWriter& FAssertException::Description(FWTextWriter& oss) const {
@@ -137,7 +137,7 @@ static std::atomic<FAssertReleaseHandler> GAssertionReleaseHandler = { nullptr }
 FAssertReleaseException::FAssertReleaseException(const char *msg, const wchar_t *file, unsigned line)
 :   FException(msg), _file(file), _line(line) {}
 //----------------------------------------------------------------------------
-FAssertReleaseException::~FAssertReleaseException() {}
+FAssertReleaseException::~FAssertReleaseException() = default;
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
 FWTextWriter& FAssertReleaseException::Description(FWTextWriter& oss) const {

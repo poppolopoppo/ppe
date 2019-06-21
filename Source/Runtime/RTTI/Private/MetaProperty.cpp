@@ -35,8 +35,7 @@ FMetaProperty::FMetaProperty(const FName& name, EPropertyFlags flags, const PTyp
     Assert(0 != u32(_flags));
 }
 //----------------------------------------------------------------------------
-FMetaProperty::~FMetaProperty()
-{}
+FMetaProperty::~FMetaProperty() = default;
 //----------------------------------------------------------------------------
 FAtom FMetaProperty::Get(const FMetaObject& obj) const {
     CheckPropertyIFN(obj, false);

@@ -15,7 +15,7 @@ FSocketStreamWriter::FSocketStreamWriter(FSocketBuffered& socket)
     Assert(_socket.IsConnected());
 }
 //----------------------------------------------------------------------------
-FSocketStreamWriter::~FSocketStreamWriter() {}
+FSocketStreamWriter::~FSocketStreamWriter() = default;
 //----------------------------------------------------------------------------
 std::streamoff FSocketStreamWriter::TellO() const {
     return _tellO;

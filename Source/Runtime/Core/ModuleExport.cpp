@@ -46,8 +46,7 @@ FCoreModule::FCoreModule()
 :   FModule("Runtime/Core")
 {}
 //----------------------------------------------------------------------------
-FCoreModule::~FCoreModule()
-{}
+FCoreModule::~FCoreModule() = default;
 //----------------------------------------------------------------------------
 void FCoreModule::Start(FModuleManager& manager) {
     FModule::Start(manager);

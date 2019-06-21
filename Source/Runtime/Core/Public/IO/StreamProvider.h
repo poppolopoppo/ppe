@@ -18,7 +18,7 @@ FWD_INTEFARCE_UNIQUEPTR(StreamReader);
 //----------------------------------------------------------------------------
 class PPE_CORE_API IStreamReader {
 public: // virtual interface
-    virtual ~IStreamReader() {}
+    virtual ~IStreamReader() = default;
 
     virtual bool Eof() const = 0;
 
@@ -89,7 +89,7 @@ FWD_INTEFARCE_UNIQUEPTR(StreamWriter);
 //----------------------------------------------------------------------------
 class PPE_CORE_API IStreamWriter {
 public: // virtual interface
-    virtual ~IStreamWriter() {}
+    virtual ~IStreamWriter() = default;
 
     virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const = 0;
 
@@ -129,7 +129,7 @@ FWD_INTEFARCE_UNIQUEPTR(StreamReadWriter);
 //----------------------------------------------------------------------------
 class PPE_CORE_API EMPTY_BASES IStreamReadWriter : public IStreamReader, public IStreamWriter {
 public:
-    virtual ~IStreamReadWriter() {}
+    virtual ~IStreamReadWriter() = default;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

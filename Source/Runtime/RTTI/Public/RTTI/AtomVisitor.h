@@ -24,7 +24,7 @@ ENUM_FLAGS(EVisitorFlags);
 class IAtomVisitor {
 public:
     explicit IAtomVisitor(EVisitorFlags flags = EVisitorFlags::Default) : _flags(flags) {}
-    virtual ~IAtomVisitor() {}
+    virtual ~IAtomVisitor() = default;
 
     EVisitorFlags Flags() const { return _flags; }
 

@@ -12,8 +12,7 @@ namespace Application {
 FMouseInputHandler::FMouseInputHandler()
 {}
 //----------------------------------------------------------------------------
-FMouseInputHandler::~FMouseInputHandler()
-{}
+FMouseInputHandler::~FMouseInputHandler() = default;
 //----------------------------------------------------------------------------
 void FMouseInputHandler::SetupWindow(FPlatformWindow& window) {
     FPlatformMouse::SetupMessageHandler(window, &_state).Forget();

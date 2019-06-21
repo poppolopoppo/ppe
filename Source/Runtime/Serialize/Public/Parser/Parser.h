@@ -24,7 +24,7 @@ public:
     FParserException(const char *what, Lexer::FSpan site, const FParseItem *item)
         : parent_type(what), _site(site), _item(item) {}
 
-    virtual ~FParserException() {}
+    virtual ~FParserException() = default;
 
     Lexer::FSpan Site() const { return _site; }
     const FParseItem *Item() const { return _item.get(); }

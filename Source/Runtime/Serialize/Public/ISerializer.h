@@ -37,7 +37,7 @@ protected: // abstract class :
     {}
 
 public: // virtual :
-    virtual ~ISerializer() {}
+    virtual ~ISerializer() = default;
 
     virtual void Deserialize(IStreamReader& input, FTransactionLinker* linker) const = 0;
     virtual void Serialize(const FTransactionSaver& saver, IStreamWriter* output) const = 0;

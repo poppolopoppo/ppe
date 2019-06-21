@@ -45,7 +45,7 @@ enum class EPlatformFeature {
 class PPE_CORE_API ITargetPlaftorm {
 public:
     ITargetPlaftorm() = default;
-    virtual ~ITargetPlaftorm() {}
+    virtual ~ITargetPlaftorm() = default;
 
     ITargetPlaftorm(const ITargetPlaftorm&) = delete;
     ITargetPlaftorm& operator =(const ITargetPlaftorm&) = delete;

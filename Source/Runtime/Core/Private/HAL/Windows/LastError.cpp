@@ -74,7 +74,7 @@ FLastErrorException::FLastErrorException(const char* what, long errorCode)
 #endif
 }
 //----------------------------------------------------------------------------
-FLastErrorException::~FLastErrorException() {}
+FLastErrorException::~FLastErrorException() = default;
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
 FWTextWriter& FLastErrorException::Description(FWTextWriter& oss) const {

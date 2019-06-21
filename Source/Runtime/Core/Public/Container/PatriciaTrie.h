@@ -45,7 +45,7 @@ public:
     static constexpr size_t InSitu = _InSitu;
 
     explicit TPatriciaNodeBase(const sequence_type& keys);
-    ~TPatriciaNodeBase() {}
+    ~TPatriciaNodeBase() = default;
 
     TPatriciaNodeBase(const TPatriciaNodeBase& other) = delete;
     TPatriciaNodeBase& operator=(const TPatriciaNodeBase& other) = delete;

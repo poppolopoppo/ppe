@@ -25,7 +25,7 @@ FSHSampleCollection::FSHSampleCollection(size_t bands)
     Assert(0 < _bands);
 }
 //----------------------------------------------------------------------------
-FSHSampleCollection::~FSHSampleCollection() {}
+FSHSampleCollection::~FSHSampleCollection() = default;
 //----------------------------------------------------------------------------
 void FSHSampleCollection::GenerateSphericalSamples_JiterredStratification(size_t sampleCount, FRandomGenerator& random) {
     Assert(0 < sampleCount);

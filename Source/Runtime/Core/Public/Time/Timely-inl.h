@@ -9,7 +9,7 @@ namespace Timely {
 //----------------------------------------------------------------------------
 inline FNormalized::FNormalized() : _start(0), _stop(0) {}
 //----------------------------------------------------------------------------
-inline FNormalized::~FNormalized() {}
+inline FNormalized::~FNormalized() = default;
 //----------------------------------------------------------------------------
 inline FNormalized::FNormalized(const FTimeline& time, const Timespan& duration) {
     Start(time, duration);
@@ -39,7 +39,7 @@ inline float FNormalized::Eval(const FTimeline& time) const {
 //----------------------------------------------------------------------------
 inline FPulsar::FPulsar() : _start(0), _stop(0) {}
 //----------------------------------------------------------------------------
-inline FPulsar::~FPulsar() {}
+inline FPulsar::~FPulsar() = default;
 //----------------------------------------------------------------------------
 inline FPulsar::FPulsar(const FTimeline& time, const Timespan& duration) {
     Start(time, duration);
@@ -75,7 +75,7 @@ TLerp<T, _Eval>::TLerp(const T& v0, const T& v1)
 :   _v0(v0), _v1(v1) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Eval>
-TLerp<T, _Eval>::~TLerp() {}
+TLerp<T, _Eval>::~TLerp() = default;
 //----------------------------------------------------------------------------
 template <typename T, typename _Eval>
 TLerp<T, _Eval>::TLerp(const T& v0, const T& v1, const FTimepoint& start, const Timespan& duration)
@@ -107,7 +107,7 @@ TSmoothstep<T, _Eval>::TSmoothstep(const T& v0, const T& v1)
 :   _v0(v0), _v1(v1) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Eval>
-TSmoothstep<T, _Eval>::~TSmoothstep() {}
+TSmoothstep<T, _Eval>::~TSmoothstep() = default;
 //----------------------------------------------------------------------------
 template <typename T, typename _Eval>
 TSmoothstep<T, _Eval>::TSmoothstep(const T& v0, const T& v1, const FTimepoint& start, const Timespan& duration)

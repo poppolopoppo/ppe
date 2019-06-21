@@ -30,7 +30,7 @@ public:
     FMarkupException(const char *what, const Lexer::FLocation& site)
         : parent_type(what), _site(site) {}
 
-    virtual ~FMarkupException() {}
+    virtual ~FMarkupException() = default;
 
     const Lexer::FLocation& Site() const { return _site; }
 
@@ -74,7 +74,7 @@ public:
     private:
         friend class FMarkup;
 
-        ~FElement() {}
+        ~FElement() = default;
 
         FElement(const FElement&) = default;
         FElement& operator =(const FElement&) = default;

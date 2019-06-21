@@ -14,7 +14,7 @@ TSHVector<_Dim>::TSHVector(size_t bands)
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-TSHVector<_Dim>::~TSHVector() {}
+TSHVector<_Dim>::~TSHVector() = default;
 //----------------------------------------------------------------------------
 template <size_t _Dim>
 void TSHVector<_Dim>::Reset(SHScalar broadcast /* = 0 */) {

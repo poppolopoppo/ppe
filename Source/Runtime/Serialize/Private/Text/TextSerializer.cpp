@@ -261,7 +261,7 @@ FTextSerializer::FTextSerializer(bool minify/* = true */) {
     SetMinify(minify);
 }
 //----------------------------------------------------------------------------
-FTextSerializer::~FTextSerializer() {}
+FTextSerializer::~FTextSerializer() = default;
 //----------------------------------------------------------------------------
 void FTextSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);

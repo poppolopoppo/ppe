@@ -21,7 +21,7 @@ FORCE_INLINE float3 ProjectToPlane_(const float3& p, const float3& plane, const 
 //----------------------------------------------------------------------------
 FPNTriangle::FPNTriangle() {}
 //----------------------------------------------------------------------------
-FPNTriangle::~FPNTriangle() {}
+FPNTriangle::~FPNTriangle() = default;
 //----------------------------------------------------------------------------
 float3 FPNTriangle::LerpPosition(float u, float v, float w) const {
     return _p300 * (w * w * w) +

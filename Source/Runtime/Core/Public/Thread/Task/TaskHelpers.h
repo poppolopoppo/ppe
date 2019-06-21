@@ -13,7 +13,7 @@ class FTaskManager;
 //----------------------------------------------------------------------------
 class PPE_CORE_API FFireAndForget {
 public:
-    virtual ~FFireAndForget() {}
+    virtual ~FFireAndForget() = default;
 
     void RunAndSuicide(ITaskContext& ctx) {
         Run(ctx);

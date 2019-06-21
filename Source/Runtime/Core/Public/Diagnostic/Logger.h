@@ -104,7 +104,7 @@ public:
 //----------------------------------------------------------------------------
 class ILogger : FLogger, public FRefCountable {
 public:
-    virtual ~ILogger() {}
+    virtual ~ILogger() = default;
 
     using FLogger::EVerbosity;
     using FLogger::FCategory;

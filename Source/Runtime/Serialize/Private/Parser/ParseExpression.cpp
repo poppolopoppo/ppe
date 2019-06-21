@@ -27,7 +27,7 @@ namespace Parser {
 FParseExpression::FParseExpression(const Lexer::FSpan& site)
 :   FParseItem(site) {}
 //----------------------------------------------------------------------------
-FParseExpression::~FParseExpression() {}
+FParseExpression::~FParseExpression() = default;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -38,7 +38,7 @@ FVariableExport::FVariableExport(const RTTI::FName& name, const PCParseExpressio
     Assert(value);
 }
 //----------------------------------------------------------------------------
-FVariableExport::~FVariableExport() {}
+FVariableExport::~FVariableExport() = default;
 //----------------------------------------------------------------------------
 RTTI::FAtom FVariableExport::Eval(FParseContext* context) const {
     Assert(context);
@@ -74,7 +74,7 @@ FVariableReference::FVariableReference(const RTTI::FPathName& pathName, const Le
     Assert(not _pathName.empty());
 }
 //----------------------------------------------------------------------------
-FVariableReference::~FVariableReference() {}
+FVariableReference::~FVariableReference() = default;
 //----------------------------------------------------------------------------
 RTTI::FAtom FVariableReference::Eval(FParseContext* context) const {
     Assert(context);
@@ -118,7 +118,7 @@ FObjectDefinition::FObjectDefinition(const RTTI::FName& name, const Lexer::FSpan
     Assert(not name.empty());
 }
 //----------------------------------------------------------------------------
-FObjectDefinition::~FObjectDefinition() {}
+FObjectDefinition::~FObjectDefinition() = default;
 //----------------------------------------------------------------------------
 void FObjectDefinition::AddStatement(const FParseStatement *statement) {
     Assert(statement);
@@ -166,7 +166,7 @@ FPropertyReference::FPropertyReference(
     Assert(!member.empty());
 }
 //----------------------------------------------------------------------------
-FPropertyReference::~FPropertyReference() {}
+FPropertyReference::~FPropertyReference() = default;
 //----------------------------------------------------------------------------
 RTTI::FAtom FPropertyReference::Eval(FParseContext* context) const {
     Assert(context);
@@ -214,7 +214,7 @@ FTupleExpr::FTupleExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::
 #endif
 }
 //----------------------------------------------------------------------------
-FTupleExpr::~FTupleExpr() {}
+FTupleExpr::~FTupleExpr() = default;
 //----------------------------------------------------------------------------
 RTTI::FAtom FTupleExpr::Eval(FParseContext* context) const {
     Assert(context);
@@ -260,7 +260,7 @@ FArrayExpr::FArrayExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::
         MakeMoveIterator(elts.end()));
 }
 //----------------------------------------------------------------------------
-FArrayExpr::~FArrayExpr() {}
+FArrayExpr::~FArrayExpr() = default;
 //----------------------------------------------------------------------------
 RTTI::FAtom FArrayExpr::Eval(FParseContext* context) const {
     Assert(context);
@@ -300,7 +300,7 @@ FDictionaryExpr::FDictionaryExpr(dico_type&& rdico, const Lexer::FSpan& site)
 ,   _dico(std::move(rdico))
 {}
 //----------------------------------------------------------------------------
-FDictionaryExpr::~FDictionaryExpr() {}
+FDictionaryExpr::~FDictionaryExpr() = default;
 //----------------------------------------------------------------------------
 RTTI::FAtom FDictionaryExpr::Eval(FParseContext* context) const {
     Assert(context);
@@ -346,8 +346,7 @@ FCastExpr::FCastExpr(const RTTI::PTypeTraits& traits, const FParseExpression* ex
     Assert(expr);
 }
 //----------------------------------------------------------------------------
-FCastExpr::~FCastExpr()
-{}
+FCastExpr::~FCastExpr() = default;
 //----------------------------------------------------------------------------
 RTTI::FAtom FCastExpr::Eval(FParseContext* context) const {
     Assert(context);
@@ -384,7 +383,7 @@ FFunctionCall::FFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcnam
     Assert_NoAssume(not _funcname.empty());
 }
 //----------------------------------------------------------------------------
-FFunctionCall::~FFunctionCall() {}
+FFunctionCall::~FFunctionCall() = default;
 //----------------------------------------------------------------------------
 RTTI::FAtom FFunctionCall::Eval(FParseContext* context) const {
     Assert(context);

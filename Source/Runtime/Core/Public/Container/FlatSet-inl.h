@@ -20,7 +20,7 @@ TFlatSet<_Key, _EqualTo, _Less, _Vector>::TFlatSet(size_type capacity) : TFlatSe
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
-TFlatSet<_Key, _EqualTo, _Less, _Vector>::~TFlatSet() {}
+TFlatSet<_Key, _EqualTo, _Less, _Vector>::~TFlatSet() = default;
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 TFlatSet<_Key, _EqualTo, _Less, _Vector>::TFlatSet(TFlatSet&& rvalue)

@@ -36,7 +36,7 @@ FParseContext::FParseContext(const FParseContext *parent /* = nullptr */)
     Assert(_atomHeap);
 }
 //----------------------------------------------------------------------------
-FParseContext::~FParseContext() {}
+FParseContext::~FParseContext() = default;
 //----------------------------------------------------------------------------
 const FParseContext* FParseContext::GlobalScope() const {
     const FParseContext* ctx = this;

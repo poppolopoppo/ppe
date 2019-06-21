@@ -17,8 +17,7 @@ FApplicationModule::FApplicationModule()
 :   FModule("Runtime/Application")
 {}
 //----------------------------------------------------------------------------
-FApplicationModule::~FApplicationModule()
-{}
+FApplicationModule::~FApplicationModule() = default;
 //----------------------------------------------------------------------------
 void FApplicationModule::Start(FModuleManager& manager) {
     FModule::Start(manager);

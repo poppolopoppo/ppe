@@ -15,7 +15,7 @@ FWD_INTEFARCE_UNIQUEPTR(InputService);
 class IInputService {
 public:
     IInputService() {}
-    virtual ~IInputService() {}
+    virtual ~IInputService() = default;
 
     IInputService(const IInputService&) = delete;
     IInputService& operator =(const IInputService&) = delete;

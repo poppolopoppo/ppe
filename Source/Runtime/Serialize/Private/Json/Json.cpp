@@ -534,7 +534,7 @@ FJson::FJson()
     : _textHeap(_heap)
 {}
 //----------------------------------------------------------------------------
-FJson::~FJson() {}
+FJson::~FJson() = default;
 //----------------------------------------------------------------------------
 bool FJson::Load(FJson* json, const FFilename& filename) {
     Assert(json);

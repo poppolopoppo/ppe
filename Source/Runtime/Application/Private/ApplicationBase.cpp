@@ -99,8 +99,7 @@ FApplicationBase::FApplicationBase(FWString&& name)
     : FPlatformApplication(std::move(name))
 {}
 //----------------------------------------------------------------------------
-FApplicationBase::~FApplicationBase()
-{}
+FApplicationBase::~FApplicationBase() = default;
 //----------------------------------------------------------------------------
 void FApplicationBase::Start() {
     FPlatformApplication::Start();

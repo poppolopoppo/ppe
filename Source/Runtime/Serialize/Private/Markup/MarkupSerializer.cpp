@@ -418,7 +418,7 @@ void FXMLSerialize_::ProcessQueue() {
 //----------------------------------------------------------------------------
 FXMLSerializer::FXMLSerializer() {}
 //----------------------------------------------------------------------------
-FXMLSerializer::~FXMLSerializer() {}
+FXMLSerializer::~FXMLSerializer() = default;
 //----------------------------------------------------------------------------
 void FXMLSerializer::Deserialize(RTTI::FMetaTransaction* transaction, IStreamReader* input, const wchar_t *sourceName/* = nullptr */) {
     Assert(transaction);
