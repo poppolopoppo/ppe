@@ -21,6 +21,7 @@
 - Finish the build graph :p
 
 - Integrate AMD's texture library for content pipeline (replacing clunky STB)
+    -> *OR* https://github.com/bkaradzic/bimg
 - Integrate AMD's mesh library for content pipeline (replacing old custom code)
 
 - wrap RTTI meta classes with Network module and OpenAPI/Swagger (https://editor.swagger.io/)
