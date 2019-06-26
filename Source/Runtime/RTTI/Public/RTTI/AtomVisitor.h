@@ -23,10 +23,12 @@ ENUM_FLAGS(EVisitorFlags);
 //----------------------------------------------------------------------------
 class IAtomVisitor {
 public:
-    explicit IAtomVisitor(EVisitorFlags flags = EVisitorFlags::Default) : _flags(flags) {}
+    explicit IAtomVisitor(EVisitorFlags flags = EVisitorFlags::Default) NOEXCEPT
+        : _flags(flags) {}
     virtual ~IAtomVisitor() = default;
 
     EVisitorFlags Flags() const { return _flags; }
+    void SetFlags(EVisitorFlags flags) { _flags = flags; }
 
     bool KeepDeprecated() const { return (_flags ^ EVisitorFlags::KeepDeprecated); }
     bool KeepTransient() const { return (_flags ^ EVisitorFlags::KeepTransient); }
@@ -60,7 +62,8 @@ protected:
 //----------------------------------------------------------------------------
 class FBaseAtomVisitor : public IAtomVisitor {
 public:
-    explicit FBaseAtomVisitor(EVisitorFlags flags = EVisitorFlags::Default) : IAtomVisitor(flags) {}
+    explicit FBaseAtomVisitor(EVisitorFlags flags = EVisitorFlags::Default) NOEXCEPT
+        : IAtomVisitor(flags) {}
 
     using IAtomVisitor::Visit;
 

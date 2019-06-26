@@ -27,7 +27,7 @@ class FBinaryFormatWriter : Meta::FNonCopyableNorMovable, RTTI::IAtomVisitor {
 public:
     FBinaryFormatWriter();
 
-    void Append(const RTTI::FMetaObjectRef& obj);
+    void Append(const RTTI::FMetaObject* obj);
     void Append(const FTransactionSaver& saver);
 
     void Finalize(IStreamWriter& outp, bool mergeSort = true);
@@ -58,7 +58,7 @@ private:
 
     struct FObjectRef_ {
         FDataIndex Index;
-        RTTI::FMetaObjectRef Ref;
+        RTTI::SCMetaObject Ref;
     };
 
     struct FContents_ {

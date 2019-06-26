@@ -44,24 +44,23 @@ namespace {
 class FTextSerialize_ : public RTTI::IAtomVisitor {
 public:
     FTextSerialize_(IBufferedStreamWriter& ostream, bool minify)
-        : _oss(&ostream)
-        , _indent(minify ? FStringView() : MakeStringView("  "))
-        , _newLine(minify ? ' ' : '\n')
+    :   _oss(&ostream)
+    ,   _indent(minify ? FStringView() : MakeStringView("  "))
+    ,   _newLine(minify ? ' ' : '\n')
     {}
 
-    void Append(const RTTI::FMetaObjectRef& ref) {
-        Assert(ref.Get());
+    void Append(const TMemoryView<const RTTI::SMetaObject>& refs) {
+        _visiteds.reserve_Additional(refs.size());
+
+        for (const RTTI::SMetaObject& ref : refs)
+            Append(ref.get());
+    }
+
+    void Append(const RTTI::FMetaObject* ref) {
+        Assert(ref);
 
         FString name;
-        if (ref.IsImport()) {
-            Assert_NoAssume(not ref->RTTI_Name().empty());
-
-#if 0 // TODO : parser doesn't support this yet
-            _oss << "import $/" << obj.RTTI_Outer()->Name() << '/' << obj.RTTI_Name() << '\n';
-#endif
-            return;
-        }
-        else if (ref.IsExport()) {
+        if (ref->RTTI_IsExported()) {
             Assert_NoAssume(not ref->RTTI_Name().empty());
 
             name = StringFormat("~/{0}", ref->RTTI_Name());
@@ -72,10 +71,10 @@ public:
             name = StringFormat("{0}_{1}", ref->RTTI_Class()->Name(), _visiteds.size());
         }
 
-        Insert_AssertUnique(_visiteds, RTTI::SMetaObject{ ref.Get() }, name);
+        Insert_AssertUnique(_visiteds, ref, name);
 
         // definition :
-        if (ref.IsExport())
+        if (ref->RTTI_IsExported())
             _oss << "export ";
         _oss << name;
 
@@ -250,7 +249,7 @@ private:
     Fmt::FIndent _indent;
     char _newLine;
 
-    HASHMAP(Transient, RTTI::SMetaObject, FString) _visiteds;
+    HASHMAP(Transient, const RTTI::FMetaObject*, FString) _visiteds;
 };
 //----------------------------------------------------------------------------
 } //!namespace
@@ -295,9 +294,7 @@ void FTextSerializer::Serialize(const FTransactionSaver& saver, IStreamWriter* o
 
     UsingBufferedStream(output, [this, &saver](IBufferedStreamWriter* buffered) {
         FTextSerialize_ visitor(*buffered, Minify());
-
-        for (const RTTI::FMetaObjectRef& ref : saver.Objects())
-            visitor.Append(ref);
+        visitor.Append(saver.LoadedRefs());
     });
 }
 //----------------------------------------------------------------------------

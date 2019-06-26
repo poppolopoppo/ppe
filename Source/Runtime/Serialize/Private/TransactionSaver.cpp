@@ -3,6 +3,9 @@
 #include "TransactionSaver.h"
 
 #include "MetaObject.h"
+#include "MetaTransaction.h"
+
+#define USE_PPE_SERIALIZE_FREEZE (USE_PPE_ASSERT)
 
 namespace PPE {
 namespace Serialize {
@@ -10,44 +13,42 @@ namespace Serialize {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTransactionSaver::FTransactionSaver(
-    const RTTI::FName& namespace_,
+    const RTTI::FMetaTransaction& outer,
     const FFilename& filename )
-:   _namespace(namespace_)
+:   _outer(&outer)
 ,   _filename(filename) {
-    Assert_NoAssume(not _namespace.empty());
-    Assert_NoAssume(not _filename.empty());
+    Assert_NoAssume(_outer->IsLoaded() || _outer->IsMounted());
+
+#if USE_PPE_SERIALIZE_FREEZE
+    for (const RTTI::SMetaObject& ref : _outer->Linearized().LoadedRefs)
+        ref->RTTI_Freeze();
+#endif
 }
 //----------------------------------------------------------------------------
-FTransactionSaver::FTransactionSaver(
-    const RTTI::FMetaTransaction& transaction,
-    const FFilename& filename )
-:   FTransactionSaver(transaction.Name(), filename) {
-
-    Append(transaction);
+TMemoryView<const RTTI::PMetaObject> FTransactionSaver::TopRefs() const {
+    return _outer->TopObjects().MakeView();
+}
+//----------------------------------------------------------------------------
+TMemoryView<const RTTI::SMetaObject> FTransactionSaver::ImportedRefs() const {
+    return _outer->Linearized().ImportedRefs;
+}
+//----------------------------------------------------------------------------
+TMemoryView<const RTTI::SMetaObject> FTransactionSaver::LoadedRefs() const {
+    return _outer->Linearized().LoadedRefs;
+}
+//----------------------------------------------------------------------------
+TMemoryView<const RTTI::SMetaObject> FTransactionSaver::ExportedRefs() const {
+    return _outer->Linearized().ExportedRefs;
 }
 //----------------------------------------------------------------------------
 FTransactionSaver::~FTransactionSaver() {
+    Assert_NoAssume(_outer->IsLoaded() || _outer->IsMounted());
+
+#if USE_PPE_SERIALIZE_FREEZE
     // unfreeze all object before exiting
-    for (const RTTI::FMetaObjectRef& obj : _objects)
-        obj->RTTI_Unfreeze();
-}
-//----------------------------------------------------------------------------
-void FTransactionSaver::Append(const RTTI::FMetaObjectRef& obj) {
-    Assert(obj.Get());
-
-    Add_AssertUnique(_objects, obj);
-
-    // freeze object before serialization
-    obj->RTTI_Freeze();
-}
-//----------------------------------------------------------------------------
-void FTransactionSaver::Append(const RTTI::FMetaTransaction& transaction) {
-    const size_t sizeBefore = _objects.size();
-    transaction.Linearize(&_objects);
-
-    // freeze added objects before serialization
-    forrange(it, _objects.begin() + sizeBefore, _objects.end())
-        (*it)->RTTI_Freeze();
+    for (const RTTI::SMetaObject& ref : _outer->Linearized().LoadedRefs)
+        ref->RTTI_Unfreeze();
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

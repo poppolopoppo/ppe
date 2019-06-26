@@ -2,11 +2,8 @@
 
 #include "Serialize_fwd.h"
 
-#include "Container/Vector.h"
-#include "IO/Filename.h"
-#include "MetaTransaction.h"
 #include "RTTI_fwd.h"
-#include "RTTI/Typedefs.h"
+#include "IO/Filename.h"
 
 namespace PPE {
 namespace Serialize {
@@ -16,26 +13,21 @@ namespace Serialize {
 class PPE_SERIALIZE_API FTransactionSaver : Meta::FNonCopyableNorMovable {
 public:
     FTransactionSaver(
-        const RTTI::FName& namespace_,
-        const FFilename& filename );
-    FTransactionSaver(
-        const RTTI::FMetaTransaction& transaction,
+        const RTTI::FMetaTransaction& outer,
         const FFilename& filename );
     ~FTransactionSaver();
 
-    const RTTI::FName& Namespace() const { return _namespace; }
+    const RTTI::FMetaTransaction& Outer() const { return (*_outer); }
     const FFilename& Filename() const { return _filename; }
 
-    const RTTI::FLinearizedTransaction& Objects() const { return _objects; }
-
-    void Append(const RTTI::FMetaObjectRef& obj); // don't hold lifetime !
-    void Append(const RTTI::FMetaTransaction& transaction); // linearize the transaction
+    TMemoryView<const RTTI::PMetaObject> TopRefs() const;
+    TMemoryView<const RTTI::SMetaObject> ImportedRefs() const;
+    TMemoryView<const RTTI::SMetaObject> LoadedRefs() const;
+    TMemoryView<const RTTI::SMetaObject> ExportedRefs() const;
 
 private:
-    const RTTI::FName _namespace;
+    RTTI::SCMetaTransaction _outer;
     const FFilename _filename;
-
-    RTTI::FLinearizedTransaction _objects;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -2,11 +2,11 @@
 
 #include "MetaTransaction.h"
 
-#include "RTTI/AtomVisitor.h" // Linearize()
+#include "RTTI/AtomVisitor.h"
 
 #include "MetaDatabase.h"
 #include "MetaObject.h"
-#include "MetaObjectHelpers.h" // DeepEquals()
+#include "MetaObjectHelpers.h" // DeepEquals()/Linearize()/CollectReferences()
 
 #include "Container/HashSet.h"
 #include "Diagnostic/Logger.h"
@@ -15,14 +15,7 @@
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
 
-#if USE_PPE_ASSERT
-#   define WITH_PPE_RTTI_TRANSACTION_CHECKS 1
-#else
-#   define WITH_PPE_RTTI_TRANSACTION_CHECKS 0
-#endif
-
-#if WITH_PPE_RTTI_TRANSACTION_CHECKS
-#endif
+#define WITH_PPE_RTTI_TRANSACTION_CHECKS (USE_PPE_ASSERT)
 
 namespace PPE {
 namespace RTTI {
@@ -30,144 +23,151 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if WITH_PPE_RTTI_TRANSACTION_CHECKS
 namespace {
-class FCheckCircularReference_ {
-public:
-    FCheckCircularReference_() {}
-    ~FCheckCircularReference_() {
-        Assert(_chainRef.empty());
-    }
+//----------------------------------------------------------------------------
+void LinearizeTransaction_(
+    FLinearizedTransaction* linearized,
+    const FMetaTransaction& outer,
+    const TMemoryView<const PMetaObject>& topObjects) {
+    Assert(linearized);
+    Assert_NoAssume(linearized->ImportedRefs.empty());
+    Assert_NoAssume(linearized->LoadedRefs.empty());
+    Assert_NoAssume(linearized->ExportedRefs.empty());
 
-    bool empty() const { return _chainRef.empty(); }
+    HASHSET(MetaTransaction, const FMetaObject*) visiteds;
+    visiteds.reserve(topObjects.size());
+    linearized->LoadedRefs.reserve(visiteds.size());
 
-    void Push(const FMetaObject* object) {
-        Assert(object);
+    CollectReferences(
+        topObjects,
+        [linearized, &outer, &visiteds](const IScalarTraits&, FMetaObject& obj) {
+            if (not visiteds.insert_ReturnIfExists(&obj)) {
+                if (obj.RTTI_IsExported()) {
+                    if (obj.RTTI_Outer() == nullptr) {
+                        linearized->ExportedRefs.emplace_back(&obj);
+                    }
+                    else {
+                        AssertRelease(obj.RTTI_IsLoaded());
 
-        _chainRef.push_back(object);
+#if WITH_PPE_RTTI_TRANSACTION_CHECKS
+                        CLOG(obj.RTTI_Outer()->Linearized().HasImport(outer), RTTI, Fatal,
+                            L"found a circular transaction import : {0} <=> {1}",
+                            outer.Name(), obj.RTTI_Outer()->Name());
+#endif
 
-        const auto chainEnd = (_chainRef.end() - 1/* skip the item just added */);
-        const auto it = std::find(_chainRef.begin(), chainEnd, object);
+                        linearized->ImportedRefs.emplace_back(&obj);
+                        return false; // don't recurse on imported objects
+                    }
+                }
 
-        if (chainEnd != it) {
-#if USE_PPE_LOGGER
-            FWStringBuilder oss;
-            oss << L"found a circular reference !" << Eol;
-
-            const size_t prev = std::distance(_chainRef.begin(), it);
-
-            Fmt::FWIndent indent = Fmt::FWIndent::UsingTabs();
-            forrange(i, 0, _chainRef.size()) {
-                const FMetaObject* ref = _chainRef[i];
-                const FMetaClass* metaClass = ref->RTTI_Class();
-
-                Format(oss, L"[{0:#2}]", i);
-                oss << indent;
-
-                if (i == prev)
-                    oss << L" ==> ";
-                else if (i + 1 == _chainRef.size())
-                    oss << L" [*] ";
-                else
-                    oss << L" --- ";
-
-                oss << (void*)ref
-                    << L" \"" << ref->RTTI_Name()
-                    << L"\" : " << metaClass->Name()
-                    << L" (" << metaClass->Flags()
-                    << L")" << Eol;
-
-                indent.Inc();
+                Assert_NoAssume(obj.RTTI_Outer() == nullptr); // can't reference non-exported, non-local objects
+                return true;
+            }
+            else {
+                return false; // don't recurse if already visited
             }
 
-            FLogger::Log(
-                GLogCategory_RTTI,
-                FLogger::EVerbosity::Fatal,
-                FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-                oss.ToString() );
-#else
-            AssertNotReached();
-#endif
-        }
-    }
+        },
+        [linearized](const IScalarTraits&, FMetaObject& obj) {
+            Add_AssertUnique(linearized->LoadedRefs, SMetaObject{ &obj }); // postfix order
+            return true; // never fails recursion here
+        },
+        (EVisitorFlags::Default +
+            (outer.KeepDeprecated() ? EVisitorFlags::KeepDeprecated : EVisitorFlags{ 0 }) +
+            (outer.KeepTransient() ? EVisitorFlags::KeepTransient : EVisitorFlags{ 0 }))
+        );
 
-    void Pop(const FMetaObject* object) {
-        Assert(_chainRef.back() == object);
-
-        _chainRef.pop_back();
-    }
-
-    struct FScope {
-        FCheckCircularReference_& Check;
-        const FMetaObject* const Object;
-
-        FScope(FCheckCircularReference_& check, const FMetaObject* object)
-            : Check(check), Object(object) {
-            Check.Push(Object);
-        }
-
-        ~FScope() {
-            Check.Pop(Object);
-        }
-    };
-
-private:
-    VECTORINSITU(MetaTransaction, const FMetaObject*, 8) _chainRef;
-};
-} //!namespace
-#endif //!WITH_PPE_RTTI_TRANSACTION_CHECKS
+    Assert_NoAssume(linearized->LoadedRefs.size() >= topObjects.size());
+    Assert_NoAssume(linearized->ExportedRefs.size() <= linearized->LoadedRefs.size());
+}
 //----------------------------------------------------------------------------
-// Explore object graph and dump them sorted by discover order
-namespace {
-class FMetaTransactionLinearizer_ : public FBaseAtomVisitor {
-public:
-    FMetaTransactionLinearizer_(const FMetaTransaction& outer, FLinearizedTransaction& linearized)
-        : FBaseAtomVisitor(EVisitorFlags::OnlyObjects
-            + (outer.KeepDeprecated() ? EVisitorFlags::KeepDeprecated : EVisitorFlags::Default)
-            + (outer.KeepTransient() ? EVisitorFlags::KeepTransient : EVisitorFlags::Default) )
-        , _outer(outer)
-        , _linearized(linearized) {
-        Assert_NoAssume(KeepDeprecated() == _outer.KeepDeprecated());
-        Assert_NoAssume(KeepTransient() == _outer.KeepTransient());
+#if USE_PPE_LOGGER
+void ReportLoadedTransaction_(
+    const FMetaTransaction& outer,
+    const FLinearizedTransaction& linearized) {
+    LOG(RTTI, Info, L"loaded transaction '{0}' :", outer.Name());
 
-        _visiteds.reserve(Max( // in case outer wasn't loaded
-            outer.NumLoadedObjects(),
-            outer.NumTopObjects()) );
+    FWStringBuilder oss;
+    Fmt::FWIndent indent = Fmt::FWIndent::UsingTabs();
+    indent.Inc();
+
+    oss << indent << L" - Top objects : " << outer.TopObjects().size() << Eol;
+    {
+        size_t index = 0;
+        const Fmt::FWIndent::FScope scopeIndent(indent);
+        for (const PMetaObject& obj : outer.TopObjects())
+            oss << indent << L'['
+            << Fmt::PadLeft(index++, 3, L'0') << L"]  "
+            << Fmt::Pointer(obj.get()) << L" : "
+            << obj->RTTI_Class()->Name() << L" ("
+            << obj->RTTI_Flags() << L')'
+            << Eol;
+
+        FLogger::Log(
+            GLogCategory_RTTI,
+            FLogger::EVerbosity::Info,
+            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+            oss.ToString());
     }
+    oss << indent << L" - Exported objects : " << linearized.ExportedRefs.size() << Eol;
+    {
+        size_t index = 0;
+        const Fmt::FWIndent::FScope scopeIndent(indent);
+        for (const SMetaObject& obj : linearized.ExportedRefs)
+            oss << indent << L'['
+            << Fmt::PadLeft(index++, 3, L'0') << L"]  "
+            << Fmt::Pointer(obj.get()) << L" : "
+            << obj->RTTI_Class()->Name() << L" = '"
+            << obj->RTTI_Name() << L"' ("
+            << obj->RTTI_Flags() << L')'
+            << Eol;
 
-    void Linearize(const PMetaObject& pobj) {
-        FMetaTransactionLinearizer_::Visit(nullptr, const_cast<PMetaObject&>(pobj));
+        FLogger::Log(
+            GLogCategory_RTTI,
+            FLogger::EVerbosity::Info,
+            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+            oss.ToString());
     }
+    oss << indent << L" - Loaded objects : " << linearized.LoadedRefs.size() << Eol;
+    {
+        size_t index = 0;
+        const Fmt::FWIndent::FScope scopeIndent(indent);
+        for (const SMetaObject& obj : linearized.LoadedRefs)
+            oss << indent << L'['
+            << Fmt::PadLeft(index++, 3, L'0') << L"]  "
+            << Fmt::Pointer(obj.get()) << L" : "
+            << obj->RTTI_Class()->Name() << L" ("
+            << obj->RTTI_Flags() << L')'
+            << Eol;
 
-    bool Internal(const RTTI::FMetaObject& obj) const NOEXCEPT {
-        return (_outer.IsLoaded()
-            ? obj.RTTI_Outer() == &_outer
-            : obj.RTTI_Outer() == nullptr );
+        FLogger::Log(
+            GLogCategory_RTTI,
+            FLogger::EVerbosity::Info,
+            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+            oss.ToString());
     }
+    oss << indent << L" - Imported objects : " << linearized.ImportedRefs.size() << Eol;
+    {
+        size_t index = 0;
+        const Fmt::FWIndent::FScope scopeIndent(indent);
+        for (const SMetaObject& obj : linearized.ImportedRefs)
+            oss << indent << L'['
+            << Fmt::PadLeft(index++, 3, L'0') << L"]  "
+            << Fmt::Pointer(obj.get()) << L" : "
+            << obj->RTTI_Class()->Name() << L" = '"
+            << obj->RTTI_PathName() << L"' ("
+            << obj->RTTI_Flags() << L')'
+            << Eol;
 
-public: //FBaseAtomVisitor
-    virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override final {
-        if (pobj && _visiteds.insert_ReturnIfExists(pobj.get()) == false) {
-            const bool intern = Internal(*pobj);
-
-            const bool result = (intern
-                ? FBaseAtomVisitor::Visit(scalar, pobj)
-                : true );
-
-            // register after recursive traversal, so we get postfix order :
-            if (_outer.KeepTransient() || not pobj->RTTI_IsTransient())
-                _linearized.push_back(FMetaObjectRef::Make(pobj.get(), intern));
-
-            return result;
-        }
-        return true;
+        FLogger::Log(
+            GLogCategory_RTTI,
+            FLogger::EVerbosity::Info,
+            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+            oss.ToString());
     }
-
-private:
-    const FMetaTransaction& _outer;
-    FLinearizedTransaction& _linearized;
-    HASHSET(MetaTransaction, FMetaObject*) _visiteds;
-};
+}
+#endif //!USE_PPE_LOGGER
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -177,17 +177,17 @@ public:
     FTransactionLoadContext(FMetaTransaction& outer)
         : _outer(&outer) {
         Assert(outer.IsUnloaded());
-        Assert(outer._loadedObjects.empty());
-        Assert(outer._exportedObjects.empty());
-        Assert(outer._importedTransactions.empty());
 
         _outer->_state = ETransactionState::Loading;
     }
 
     ~FTransactionLoadContext() {
         Assert(ETransactionState::Loading == _outer->_state);
-        Assert(_outer->_loadedObjects.size() >= _outer->_topObjects.size());
-        Assert(_outer->_loadedObjects.size() >= _outer->_exportedObjects.size());
+
+#if WITH_PPE_RTTI_TRANSACTION_CHECKS
+        for (const SMetaObject& obj : _outer->_linearized.LoadedRefs)
+            Assert(obj->RTTI_IsLoaded());
+#endif
 
         _outer->_state = ETransactionState::Loaded;
     }
@@ -196,49 +196,11 @@ public:
         Assert(object.RTTI_IsLoaded());
         Assert(object.RTTI_IsTopObject() == Contains(_outer->_topObjects, &object));
 
-#if WITH_PPE_RTTI_TRANSACTION_CHECKS
-        const FCheckCircularReference_::FScope circularScope(_circularCheck, &object);
-#endif
-
         object.RTTI_SetOuter(_outer.get(), nullptr);
-
-        _outer->_loadedObjects.emplace_AssertUnique(&object);
-
-        if (object.RTTI_IsExported())
-            _outer->_exportedObjects.emplace_AssertUnique(&object);
-
-        FReferencedObjects children;
-        CollectReferencedObjects(object, children, 1/* only directly referenced objects */);
-
-        for (FMetaObject* ref : children) {
-            Assert(&object != ref);
-
-            const FMetaTransaction* refOuter = ref->RTTI_Outer();
-            if (refOuter && _outer != refOuter) {
-                Assert(refOuter);
-                Assert(refOuter->IsLoaded());
-                Assert(ref->RTTI_IsExported());
-
-                if (Add_Unique(_outer->_importedTransactions, SCMetaTransaction(refOuter))) {
-#if WITH_PPE_RTTI_TRANSACTION_CHECKS
-                    if (Contains(refOuter->_importedTransactions, _outer))
-                        LOG(RTTI, Fatal, L"found a circular transaction import : {0} <=> {1}",
-                            _outer->Name(), refOuter->Name());
-#endif
-                }
-            }
-            else {
-                ref->RTTI_CallLoadIFN(*this);
-                Assert(ref->RTTI_IsLoaded());
-            }
-        }
     }
 
 private:
     SMetaTransaction _outer;
-#if WITH_PPE_RTTI_TRANSACTION_CHECKS
-    FCheckCircularReference_ _circularCheck;
-#endif
 };
 //----------------------------------------------------------------------------
 class FTransactionUnloadContext : public IUnloadContext {
@@ -254,13 +216,9 @@ public:
         Assert(ETransactionState::Unloading == _outer->_state);
 
 #if WITH_PPE_RTTI_TRANSACTION_CHECKS
-        for (const SMetaObject& obj : _outer->_loadedObjects)
+        for (const SMetaObject& obj : _outer->_linearized.LoadedRefs)
             Assert(obj->RTTI_IsUnloaded());
 #endif
-
-        _outer->_loadedObjects.clear_ReleaseMemory();
-        _outer->_exportedObjects.clear_ReleaseMemory();
-        _outer->_importedTransactions.clear_ReleaseMemory();
 
         _outer->_state = ETransactionState::Unloaded;
     }
@@ -278,37 +236,21 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaTransaction::FMetaTransaction(
-    const FName& name,
-    ETransactionFlags flags/* = ETransactionFlags::Default */)
-    : _name(name)
-    , _flags(flags)
-    , _state(ETransactionState::Unloaded) {
-}
-//----------------------------------------------------------------------------
-FMetaTransaction::FMetaTransaction(const FName& name, VECTOR(MetaTransaction, PMetaObject)&& objects)
-    : FMetaTransaction(name) {
-    _topObjects.assign(std::move(objects));
+FMetaTransaction::FMetaTransaction(const FName& name, ETransactionFlags flags/* = ETransactionFlags::Default */)
+:   _name(name)
+,   _flags(flags)
+,   _state(ETransactionState::Unloaded) {
 }
 //----------------------------------------------------------------------------
 FMetaTransaction::~FMetaTransaction() {
-    Assert(not IsLoaded());
-    Assert(IsUnloaded());
-}
-//----------------------------------------------------------------------------
-bool FMetaTransaction::Contains(const FMetaObject* object) const {
-    Assert(IsLoaded());
-
-    hash_t h = hash_value(object);
-    const auto it = _loadedObjects.find_like(object, h);
-
-    return (_loadedObjects.end() != it);
+    Assert_NoAssume(not IsLoaded());
+    Assert_NoAssume(IsUnloaded());
 }
 //----------------------------------------------------------------------------
 void FMetaTransaction::RegisterObject(FMetaObject* object) {
     Assert(object);
-    Assert(object->RTTI_IsUnloaded());
-    Assert(IsUnloaded());
+    Assert_NoAssume(object->RTTI_IsUnloaded());
+    Assert_NoAssume(IsUnloaded());
 
     Add_AssertUnique(_topObjects, PMetaObject(object));
 
@@ -317,8 +259,8 @@ void FMetaTransaction::RegisterObject(FMetaObject* object) {
 //----------------------------------------------------------------------------
 void FMetaTransaction::UnregisterObject(FMetaObject* object) {
     Assert(object);
-    Assert(object->RTTI_IsUnloaded());
-    Assert(IsUnloaded());
+    Assert_NoAssume(object->RTTI_IsUnloaded());
+    Assert_NoAssume(IsUnloaded());
 
     object->RTTI_UnmarkAsTopObject();
 
@@ -326,150 +268,81 @@ void FMetaTransaction::UnregisterObject(FMetaObject* object) {
 }
 //----------------------------------------------------------------------------
 void FMetaTransaction::Load() {
-    Assert(IsUnloaded());
-
-    _loadedObjects.reserve(_topObjects.size());
-
-    FTransactionLoadContext loadContext(*this);
-
-    // explore all objects starting from roots
-    for (const PMetaObject& object : _topObjects) {
-        Assert(object);
-        Assert(object->RTTI_IsTopObject());
-
-        // Use IFN since cross referencing top objects could load themselves
-        object->RTTI_CallLoadIFN(loadContext);
-    }
+    Assert_NoAssume(IsUnloaded());
 
 #if WITH_PPE_RTTI_TRANSACTION_CHECKS
-    // checks that everything was correctly dispatched by load context
-    for (const PMetaObject& object : _topObjects) {
-        Assert(_loadedObjects.find(object) != _loadedObjects.end());
-        Assert(!object->RTTI_IsExported() || _exportedObjects.find(object) != _exportedObjects.end());
-    }
+    AssertRelease(CheckCircularReferences(_topObjects));
 #endif
 
-    // finally exports everything to database
-    {
-        const FMetaDatabaseReadWritable metaDB;
+    // the transaction is linearized when loaded, this simplifies every subsequent task
 
-        metaDB->RegisterTransaction(this);
+    LinearizeTransaction_(&_linearized, *this, _topObjects.MakeConstView());
 
-        for (const SMetaObject& object : _exportedObjects) {
-            Assert(object->RTTI_Outer() == this);
-            metaDB->RegisterObject(object);
-        }
+    FTransactionLoadContext loadContext(*this);
+    for (const SMetaObject& ref : _linearized.LoadedRefs) {
+        // don't use RTTI_CallLoadIFN() since we guarantee iteration order
+        ref->RTTI_Load(loadContext);
     }
 
 #if USE_PPE_LOGGER
-    LOG(RTTI, Info, L"loaded transaction '{0}' :", _name);
+    ReportLoadedTransaction_(*this, _linearized);
+#endif //!USE_PPE_LOGGER
+}
+//----------------------------------------------------------------------------
+void FMetaTransaction::Mount() {
+    Assert_NoAssume(IsLoaded());
 
-    FWStringBuilder oss;
-    Fmt::FWIndent indent = Fmt::FWIndent::UsingTabs();
-    indent.Inc();
+    LOG(RTTI, Info, L"mount transaction '{0}'", _name);
 
-    oss << indent << L" - Top objects : " << _topObjects.size() << Eol;
-    {
-        size_t index = 0;
-        const Fmt::FWIndent::FScope scopeIndent(indent);
-        for (const PMetaObject& obj : _topObjects)
-            oss << indent << L'['
-                << Fmt::PadLeft(index++, 3, L'0') << L"]  "
-                << (void*)obj.get() << L" : "
-                << obj->RTTI_Class()->Name() << L" ("
-                << obj->RTTI_Flags() << L')'
-                << Eol;
+    // exports everything to database
 
-        FLogger::Log(
-            GLogCategory_RTTI,
-            FLogger::EVerbosity::Info,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            oss.ToString() );
-    }
-    oss << indent << L" - Exported objects : " << _exportedObjects.size() << Eol;
-    {
-        size_t index = 0;
-        const Fmt::FWIndent::FScope scopeIndent(indent);
-        for (const SMetaObject& obj : _exportedObjects)
-            oss << indent << L'['
-                << Fmt::PadLeft(index++, 3, L'0') << L"]  "
-                << (void*)obj.get() << L" : "
-                << obj->RTTI_Class()->Name() << L" = '"
-                << obj->RTTI_Name() << L"' ("
-                << obj->RTTI_Flags() << L')'
-                << Eol;
+    _state = ETransactionState::Mounting;
 
-        FLogger::Log(
-            GLogCategory_RTTI,
-            FLogger::EVerbosity::Info,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            oss.ToString() );
-    }
-    oss << indent << L" - Loaded objects : " << _loadedObjects.size() << Eol;
-    {
-        size_t index = 0;
-        const Fmt::FWIndent::FScope scopeIndent(indent);
-        for (const SMetaObject& obj : _loadedObjects)
-            oss << indent << L'['
-                << Fmt::PadLeft(index++, 3, L'0') << L"]  "
-                << (void*)obj.get() << L" : "
-                << obj->RTTI_Class()->Name() << L" ("
-                << obj->RTTI_Flags() << L')'
-                << Eol;
+    const FMetaDatabaseReadWritable metaDB;
 
-        FLogger::Log(
-            GLogCategory_RTTI,
-            FLogger::EVerbosity::Info,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            oss.ToString() );
-    }
-    oss << indent << L" - Imported transactions : " << _importedTransactions.size() << Eol;
-    {
-        size_t index = 0;
-        const Fmt::FWIndent::FScope scopeIndent(indent);
-        for (const SCMetaTransaction& outer : _importedTransactions)
-            oss << indent << L'['
-                << Fmt::PadLeft(index++, 3, L'0') << L"]  "
-                << (void*)outer.get() << L" = '"
-                << outer->Name() << L"' : "
-                << outer->State() << L" ("
-                << outer->Flags() << L')'
-                << Eol;
+    metaDB->RegisterTransaction(this);
 
-        FLogger::Log(
-            GLogCategory_RTTI,
-            FLogger::EVerbosity::Info,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            oss.ToString() );
+    for (const SMetaObject& ref : _linearized.ExportedRefs) {
+        Assert_NoAssume(ref->RTTI_Outer() == this);
+        metaDB->RegisterObject(ref);
     }
 
-#endif
+    _state = ETransactionState::Mounted;
+}
+//----------------------------------------------------------------------------
+void FMetaTransaction::Unmount() {
+    Assert_NoAssume(IsMounted());
+
+    LOG(RTTI, Info, L"unmount transaction '{0}'", _name);
+
+    // unregister everything from database
+
+    _state = ETransactionState::Unmounting;
+
+    const FMetaDatabaseReadWritable metaDB;
+
+    for (const SMetaObject& ref : _linearized.ExportedRefs) {
+        Assert_NoAssume(ref->RTTI_Outer() == this);
+        metaDB->UnregisterObject(ref);
+    }
+
+    metaDB->UnregisterTransaction(this);
+
+    _state = ETransactionState::Loaded;
 }
 //----------------------------------------------------------------------------
 void FMetaTransaction::Unload() {
-    Assert(IsLoaded());
-    Assert(_loadedObjects.size() >= _topObjects.size());
+    Assert_NoAssume(IsLoaded());
+    Assert_NoAssume(_linearized.LoadedRefs.size() >= _topObjects.size());
+
+    LOG(RTTI, Info, L"unload transaction '{0}'", _name);
+
+    // unload every loaded object and clear linearized data
 
     FTransactionUnloadContext unloadContext(*this);
-
-    // first unregister everything from database
-    {
-        const FMetaDatabaseReadWritable metaDB;
-
-        for (const SMetaObject& object : _exportedObjects) {
-            Assert(object->RTTI_Outer() == this);
-            metaDB->UnregisterObject(object);
-        }
-
-        metaDB->UnregisterTransaction(this);
-    }
-
-    // unload every loaded object
-    for (const SMetaObject& object : _loadedObjects) {
-        Assert(object);
-
-        // Use IFN since cross referencing top objects could unload themselves
-        object->RTTI_CallUnloadIFN(unloadContext);
+    reverseforeachitem(ref, _linearized.LoadedRefs) {
+        // don't use RTTI_CallUnloadIFN() since we guarantee iteration order
+        (*ref)->RTTI_Unload(unloadContext);
     }
 }
 //----------------------------------------------------------------------------
@@ -477,8 +350,26 @@ void FMetaTransaction::Reload() {
     LOG(RTTI, Info, L"reloading transaction '{0}' ({1} top objects)",
         _name, _topObjects.size() );
 
+    const bool wasMounted = IsMounted();
+
+    if (wasMounted)
+        Unmount();
+
     Unload();
     Load();
+
+    if (wasMounted)
+        Mount();
+}
+//----------------------------------------------------------------------------
+void FMetaTransaction::LoadAndMount() {
+    Load();
+    Mount();
+}
+//----------------------------------------------------------------------------
+void FMetaTransaction::UnmountAndUnload() {
+    Unmount();
+    Unload();
 }
 //----------------------------------------------------------------------------
 void FMetaTransaction::reserve(size_t capacity) {
@@ -488,47 +379,36 @@ void FMetaTransaction::reserve(size_t capacity) {
 }
 //----------------------------------------------------------------------------
 bool FMetaTransaction::DeepEquals(const FMetaTransaction& other) const {
-    if (other._topObjects.size() != _topObjects.size())
-        return false;
+    return std::equal(
+        _topObjects.begin(), _topObjects.end(),
+        other._topObjects.begin(), other._topObjects.end(),
+        [](const PMetaObject& lhs, const PMetaObject& rhs) {
+            Assert(lhs);
+            Assert(rhs);
+            return RTTI::DeepEquals(*lhs, *rhs);
+        });
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FLinearizedTransaction::FLinearizedTransaction() = default;
+//----------------------------------------------------------------------------
+FLinearizedTransaction::~FLinearizedTransaction() = default;
+//----------------------------------------------------------------------------
+bool FLinearizedTransaction::HasImport(const FMetaTransaction& other) const {
+    Assert_NoAssume(ImportedRefs.size() < 32); // could be a performance issue
 
-    forrange(i, 0, _topObjects.size()) {
-        const FMetaObject* lhs = _topObjects[i].get();
-        const FMetaObject* rhs = other._topObjects[i].get();
-        if (not RTTI::DeepEquals(*lhs, *rhs))
-            return false;
+    for (const SMetaObject& ref : ImportedRefs) {
+        if (ref->RTTI_Outer() == &other)
+            return true;
     }
-
-    return true;
+    return false;
 }
 //----------------------------------------------------------------------------
-void FMetaTransaction::Linearize(FLinearizedTransaction* linearized) const {
-    Assert(linearized);
-    Assert(linearized->empty());
-
-    FMetaTransactionLinearizer_ linearizer(*this, *linearized);
-
-    // descend in each top object and append reference in order of discovery
-    for (const auto& topObject : _topObjects)
-        linearizer.Linearize(topObject);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FMetaObjectRef FMetaObjectRef::Make(FMetaObject* obj, bool intern) {
-    FMetaObjectRef ref;
-    ref.Reset(obj, intern && obj->RTTI_IsExported(), not intern);
-    return ref;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FMetaTransaction::FLoadingScope::FLoadingScope(FMetaTransaction& transaction)
-:   Transaction(transaction) {
-    Transaction.Load();
-}
-//----------------------------------------------------------------------------
-FMetaTransaction::FLoadingScope::~FLoadingScope() {
-    Transaction.Unload();
+void FLinearizedTransaction::Reset() {
+    ImportedRefs.clear_ReleaseMemory();
+    LoadedRefs.clear_ReleaseMemory();
+    ExportedRefs.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -573,6 +453,9 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionState state) {
     case RTTI::ETransactionState::Unloaded:     return oss << "Unloaded";
     case RTTI::ETransactionState::Loading:      return oss << "Loading";
     case RTTI::ETransactionState::Loaded:       return oss << "Loaded";
+    case RTTI::ETransactionState::Mounting:     return oss << "Mounting";
+    case RTTI::ETransactionState::Mounted:      return oss << "Mounted";
+    case RTTI::ETransactionState::Unmounting:   return oss << "Unmounting";
     case RTTI::ETransactionState::Unloading:    return oss << "Unloading";
     }
     AssertNotReached();
@@ -583,6 +466,9 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionState state) {
     case RTTI::ETransactionState::Unloaded:     return oss << L"Unloaded";
     case RTTI::ETransactionState::Loading:      return oss << L"Loading";
     case RTTI::ETransactionState::Loaded:       return oss << L"Loaded";
+    case RTTI::ETransactionState::Mounting:     return oss << L"Mounting";
+    case RTTI::ETransactionState::Mounted:      return oss << L"Mounted";
+    case RTTI::ETransactionState::Unmounting:   return oss << L"Unmounting";
     case RTTI::ETransactionState::Unloading:    return oss << L"Unloading";
     }
     AssertNotReached();

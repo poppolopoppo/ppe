@@ -117,10 +117,13 @@ void FTransactionSerializer::BuildTransaction(FSources& sources) {
 
     for (FTransactionLinker& linker : linkers)
         linker.Resolve(*_transaction);
+
+    _transaction->Load();
 }
 //----------------------------------------------------------------------------
 void FTransactionSerializer::SaveTransaction() {
     Assert(_transaction);
+    Assert_NoAssume(_transaction->IsLoaded() || _transaction->IsMounted());
 
     FTransactionSaver saver(*_transaction, IdToTransaction(_id));
     const PSerializer serializer = ISerializer::FromExtname(saver.Filename().Extname());
@@ -196,36 +199,40 @@ void FTransactionSerializer::LoadTransaction() {
     _transaction = NEW_REF(MetaSerialize, RTTI::FMetaTransaction) { _namespace };
 
     linker.Resolve(*_transaction);
+
+    _transaction->Load();
 }
 //----------------------------------------------------------------------------
 void FTransactionSerializer::UnloadTransaction() {
     Assert(_transaction);
-    AssertRelease_NoAssume(_transaction->IsUnloaded());
+    AssertRelease_NoAssume(_transaction->IsLoaded());
 
     LOG(Serialize, Emphasis, L"unloading transaction '{0}' with namespace <{1}> ...",
         _id, _namespace);
+
+    _transaction->Unload();
 
     RemoveRef_AssertReachZero(_transaction);
 }
 //----------------------------------------------------------------------------
 void FTransactionSerializer::MountToDB() {
     Assert(_transaction);
-    AssertRelease_NoAssume(_transaction->IsUnloaded());
+    AssertRelease_NoAssume(_transaction->IsLoaded());
 
     LOG(Serialize, Emphasis, L"mounting transaction '{0}' with namespace <{1}> ...",
         _id, _namespace);
 
-    _transaction->Load();
+    _transaction->Mount();
 }
 //----------------------------------------------------------------------------
 void FTransactionSerializer::UnmountFromDB() {
     Assert(_transaction);
-    AssertRelease_NoAssume(_transaction->IsLoaded());
+    AssertRelease_NoAssume(_transaction->IsMounted());
 
     LOG(Serialize, Emphasis, L"unmounting transaction '{0}' with namespace <{1}> ...",
         _id, _namespace);
 
-    _transaction->Unload();
+    _transaction->Unmount();
 }
 //----------------------------------------------------------------------------
 void FTransactionSerializer::RTTI_Load(RTTI::ILoadContext& context) {

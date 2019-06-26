@@ -21,6 +21,9 @@ enum class ETransactionState : u32 {
     Unloaded        = 0,
     Loading         ,
     Loaded          ,
+    Mounting        ,
+    Mounted         ,
+    Unmounting      ,
     Unloading       ,
 };
 //----------------------------------------------------------------------------
@@ -31,39 +34,45 @@ enum class ETransactionFlags : u32 {
 };
 ENUM_FLAGS(ETransactionFlags);
 //----------------------------------------------------------------------------
-struct PPE_RTTI_API FMetaObjectRef : Meta::TPointerWFlags<FMetaObject> {
-    bool IsExport() const { return Flag0(); }
-    bool IsImport() const { return Flag1(); }
-    static FMetaObjectRef Make(FMetaObject* obj, bool intern);
+struct PPE_RTTI_API FLinearizedTransaction {
+    FLinearizedTransaction();
+    ~FLinearizedTransaction();
+
+    using FReferences = VECTORINSITU(MetaTransaction, SMetaObject, 4);
+
+    FReferences ImportedRefs;   // exported, imported from other transaction
+    FReferences LoadedRefs;     // exported or not, belong to current transaction
+    FReferences ExportedRefs;   // only exported, belong to current transaction
+
+    bool HasImport(const FMetaTransaction& other) const;
+    bool HasExports() const { return (not ExportedRefs.empty()); }
+    void Reset();
 };
-using FLinearizedTransaction = VECTORINSITU(MetaTransaction, FMetaObjectRef, 8);
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaTransaction : public FRefCountable {
 public:
     explicit FMetaTransaction(
         const FName& name,
         ETransactionFlags flags = ETransactionFlags::Default );
-    FMetaTransaction(const FName& name, VECTOR(MetaTransaction, PMetaObject)&& objects);
     virtual ~FMetaTransaction();
 
     const FName& Name() const { return _name; }
     ETransactionFlags Flags() const { return _flags; }
     ETransactionState State() const { return _state; }
 
-    size_t NumTopObjects() const { return _topObjects.size(); }
-    size_t NumExportedObjects() const { return _exportedObjects.size(); }
-    size_t NumLoadedObjects() const { return _loadedObjects.size(); }
-    size_t NumImportedTransactions() const { return _importedTransactions.size(); }
-
     bool KeepDeprecated() const { return (_flags ^ ETransactionFlags::KeepDeprecated); }
     bool KeepTransient() const { return (_flags ^ ETransactionFlags::KeepTransient); }
 
+    bool empty() const { return _topObjects.empty(); }
+
     bool IsLoaded() const { return (_state == ETransactionState::Loaded); }
     bool IsLoading() const { return (_state == ETransactionState::Loading); }
+    bool IsMounting() const { return (_state == ETransactionState::Mounting); }
+    bool IsMounted() const { return (_state == ETransactionState::Mounted); }
+    bool IsUnmounting() const { return (_state == ETransactionState::Unmounting); }
     bool IsUnloaded() const { return (_state == ETransactionState::Unloaded); }
     bool IsUnloading() const { return (_state == ETransactionState::Unloading); }
 
-    bool Contains(const FMetaObject* object) const;
     void RegisterObject(FMetaObject* object);
     void UnregisterObject(FMetaObject* object);
 
@@ -71,36 +80,30 @@ public:
     void Unload();
     void Reload();
 
-    TMemoryView<const PMetaObject> TopObjects() const {
-        return _topObjects.MakeConstView();
-    }
+    void Mount();
+    void Unmount();
 
-    const auto& ImportedTransactions() const {
-        Assert_NoAssume(IsLoaded());
-        return _importedTransactions;
-    }
+    void LoadAndMount();
+    void UnmountAndUnload();
 
-    void reserve(size_t capacity);
+    const auto& TopObjects() const { return _topObjects; }
+    const FLinearizedTransaction& Linearized() const {
+        AssertRelease(IsLoaded() || IsMounted());
+        return _linearized;
+    }
 
     bool DeepEquals(const FMetaTransaction& other) const;
-    void Linearize(FLinearizedTransaction* linearized) const;
 
-    struct PPE_RTTI_API FLoadingScope {
-        FMetaTransaction& Transaction;
-        explicit FLoadingScope(FMetaTransaction& transaction);
-        ~FLoadingScope();
-    };
+    void reserve(size_t capacity);
 
 private:
     FName _name;
     ETransactionFlags _flags;
     ETransactionState _state;
-    VECTOR(MetaTransaction, PMetaObject) _topObjects; // hold lifetime of top objects only
 
-    HASHSET(MetaTransaction, SMetaObject) _exportedObjects;
-    HASHSET(MetaTransaction, SMetaObject) _loadedObjects;
+    VECTORINSITU(MetaTransaction, PMetaObject, 8) _topObjects; // hold lifetime of top objects only
 
-    VECTORINSITU(MetaTransaction, SCMetaTransaction, 3) _importedTransactions;
+    FLinearizedTransaction _linearized; // filled upon load, cleared when unloaded
 
     friend class FTransactionLoadContext;
     friend class FTransactionUnloadContext;
@@ -114,8 +117,6 @@ private:
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-PPE_ASSUME_TYPE_AS_POD(RTTI::FMetaObjectRef);
 //----------------------------------------------------------------------------
 PPE_RTTI_API FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionFlags flags);
 PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionFlags flags);

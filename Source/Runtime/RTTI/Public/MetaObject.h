@@ -20,12 +20,6 @@
 
 namespace PPE {
 namespace RTTI {
-class FAtom;
-class FMetaClass;
-class FMetaNamespace;
-FWD_REFPTR(MetaTransaction);
-class FLoadContext;
-class FUnloadContext;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -68,6 +62,7 @@ public:
 
     const FName& RTTI_Name() const  { return _name; }
     EObjectFlags RTTI_Flags() const { return _flags; }
+    PTypeTraits RTTI_Traits() const { return RTTI_Class()->MakeTraits(); }
 
     bool RTTI_IsLoaded() const      { return (_flags ^ EObjectFlags::Loaded     ); }
     bool RTTI_IsUnloaded() const    { return (_flags ^ EObjectFlags::Unloaded   ); }
@@ -78,6 +73,8 @@ public:
 
     const FMetaTransaction* RTTI_Outer() const { return _outer.get(); }
     void RTTI_SetOuter(const FMetaTransaction* outer, const FMetaTransaction* prevOuterForDbg = nullptr);
+
+    FPathName RTTI_PathName() const;
 
     bool RTTI_IsA(const FMetaClass& metaClass) const;
     bool RTTI_CastTo(const FMetaClass& metaClass) const;

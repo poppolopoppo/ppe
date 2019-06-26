@@ -21,16 +21,23 @@ FMetaObject::FMetaObject()
 {}
 //----------------------------------------------------------------------------
 FMetaObject::~FMetaObject() {
-    Assert(RTTI_IsUnloaded());
-    Assert(not RTTI_IsLoaded());
+    Assert_NoAssume(RTTI_IsUnloaded());
+    Assert_NoAssume(not RTTI_IsLoaded());
     Assert(nullptr == _outer);
 }
 //----------------------------------------------------------------------------
 void FMetaObject::RTTI_SetOuter(const FMetaTransaction* outer, const FMetaTransaction* prevOuterForDbg/* = nullptr */) {
-    Assert(RTTI_IsLoaded());
+    Assert_NoAssume(RTTI_IsLoaded());
     Assert(prevOuterForDbg == _outer);
 
     _outer = outer;
+}
+//----------------------------------------------------------------------------
+FPathName FMetaObject::RTTI_PathName() const {
+    Assert_NoAssume(RTTI_IsExported());
+    Assert_NoAssume(RTTI_IsLoaded());
+
+    return FPathName::FromObject(*this);
 }
 //----------------------------------------------------------------------------
 bool FMetaObject::RTTI_IsA(const FMetaClass& metaClass) const {

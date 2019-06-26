@@ -52,6 +52,8 @@
 #include "HAL/PlatformConsole.h"
 #include "HAL/PlatformProcess.h"
 
+#include "Meta/Utility.h"
+
 #define USE_RTTI_TEST_YOLOTYPES 0 //%_NOCOMMIT%
 
 #include <iostream> // Test_InteractiveConsole_
@@ -360,7 +362,7 @@ private:
         */
 #else
         if (_import && _rand.NextFloat01() < 0.7f)
-            obj = _rand.RandomElement(_import->TopObjects());
+            obj = _rand.RandomElement(_import->TopObjects().MakeView());
 #endif
     }
 
@@ -496,7 +498,7 @@ static NO_INLINE void Test_Any_() {
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Serialize::ISerializer& serializer, const FFilename& filename) {
-    Assert(input.NumTopObjects());
+    Assert_NoAssume(not input.empty());
 
     const FFilename fname_binz = filename.WithReplacedExtension(FFS::Z());
     const FFilename& fname_raw = filename;
@@ -551,7 +553,7 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
         linker.Resolve(output);
     }
 
-    AssertRelease(input.NumTopObjects() == output.NumTopObjects());
+    AssertRelease(input.TopObjects().size() == output.TopObjects().size());
 
     if (false == input.DeepEquals(output))
         AssertNotReached();
@@ -824,6 +826,17 @@ static NO_INLINE void Test_TransactionSerialization_() {
     static constexpr size_t test_count = 50;
 #endif
 
+    struct FLoadindScope {
+        RTTI::FMetaTransaction& Outer;
+        FLoadindScope(RTTI::FMetaTransaction& outer)
+        :   Outer(outer) {
+            Outer.LoadAndMount();
+        }
+        ~FLoadindScope() {
+            Outer.UnmountAndUnload();
+        }
+    };
+
     FRTTIAtomRandomizer_ rand(test_count, 0xabadcafedeadbeefull);
 
     RTTI::FMetaTransaction import(RTTI::FName(MakeStringView("UnitTest_Import")));
@@ -837,7 +850,9 @@ static NO_INLINE void Test_TransactionSerialization_() {
             import.RegisterObject(t.get());
         }
     }
-    const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(import);
+
+    const FLoadindScope importScope(import);
+
     RTTI::FMetaTransaction input(RTTI::FName(MakeStringView("UnitTest_Input")));
     {
         FWStringBuilder oss;
@@ -848,7 +863,8 @@ static NO_INLINE void Test_TransactionSerialization_() {
             input.RegisterObject(t.get());
         }
     }
-    const RTTI::FMetaTransaction::FLoadingScope ANONYMIZE(loadingScope)(input);
+
+    const FLoadindScope inputScope(input);
 
     const FWString basePath = StringFormat(L"Saved:/RTTI/robotapp_{0}", RTTI::MetaClass<T>()->Name());
 
@@ -862,7 +878,6 @@ static NO_INLINE void Test_TransactionSerialization_() {
         Test_Serializer_(input, *json, basePath + L"_json.json");
     }
     {
-
         Serialize::PSerializer text{ Serialize::FTextSerializer::Get() };
         text->SetMinify(minify);
         Test_Serializer_(input, *text, basePath + L"_text.txt");
@@ -876,7 +891,7 @@ static NO_INLINE void Test_TransactionSerializer_() {
         L"robotapp_.*\\.txt",
         { L"Saved:/RTTI" } );
 
-    Serialize::FDirectoryTransaction::FSources sources;
+    Serialize::FTransactionSources sources;
     serializer.BuildTransaction(sources);
     serializer.SaveTransaction();
     serializer.UnloadTransaction();

@@ -254,13 +254,17 @@ public:
         : _doc(doc)
     {}
 
-    void Append(const RTTI::FMetaObjectRef& ref, FJson::FValue& value) {
-        Assert_NoAssume(ref.Get());
+    void reserve(size_t n) {
+        _visiteds.reserve(n);
+        _values.reserve(n);
+    }
+
+    void Append(const RTTI::FMetaObject* ref, FJson::FValue& value) {
+        Assert(ref);
         Assert_NoAssume(_values.empty());
-        Assert_NoAssume(not ref.IsImport());
 
         FString name;
-        if (ref.IsExport()) {
+        if (ref->RTTI_IsExported()) {
             Assert_NoAssume(not ref->RTTI_Name().empty());
 
             name = StringFormat("~/{0}", ref->RTTI_Name());
@@ -271,7 +275,7 @@ public:
             name = StringFormat("{0}_{1}", ref->RTTI_Class()->Name(), _visiteds.size());
         }
 
-        Insert_AssertUnique(_visiteds, const_cast<const RTTI::FMetaObject*>(ref.Get()), name);
+        Insert_AssertUnique(_visiteds, ref, name);
 
         const RTTI::FMetaClass* metaClass = ref->RTTI_Class();
 
@@ -682,14 +686,13 @@ void RTTI_to_Json(const FTransactionSaver& saved, class FJson* dst) {
     Assert(dst);
 
     FRTTI_to_Json_ toJson(*dst);
+    toJson.reserve(saved.LoadedRefs().size());
 
     FJson::FArray& arr = dst->Root().SetType_AssumeNull(*dst, FJson::TypeArray{});
-    arr.reserve_AssumeEmpty(saved.Objects().size());
+    arr.reserve_AssumeEmpty(saved.LoadedRefs().size());
 
-    for (const RTTI::FMetaObjectRef& ref : saved.Objects()) {
-        if (not ref.IsImport()) // imports are serialized inline
-            toJson.Append(ref, arr.push_back_Default());
-    }
+    for (const RTTI::SMetaObject& ref : saved.LoadedRefs())
+        toJson.Append(ref.get(), arr.push_back_Default());
 }
 //----------------------------------------------------------------------------
 bool Json_to_RTTI(const class FJson& src, FTransactionLinker* link) {

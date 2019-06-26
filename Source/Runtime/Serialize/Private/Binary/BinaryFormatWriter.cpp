@@ -10,8 +10,10 @@
 #include "MetaClass.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
+#include "MetaTransaction.h"
 
 #include "Container/RawStorage.h"
+#include "Container/Stack.h"
 #include "IO/StringView.h"
 #include "Memory/HashFunctions.h"
 #include "Time/Timestamp.h"
@@ -63,7 +65,8 @@ static bool SortMetaProperty_(const RTTI::FMetaProperty* a, const RTTI::FMetaPro
 }
 //----------------------------------------------------------------------------
 static bool SortMetaObject_(const RTTI::FMetaObject* a, const RTTI::FMetaObject* b) {
-    auto outer_a = a->RTTI_Outer(), outer_b = b->RTTI_Outer();
+    const RTTI::FMetaTransaction* const outer_a = a->RTTI_Outer();
+    const RTTI::FMetaTransaction* const outer_b = b->RTTI_Outer();
     return (outer_a == outer_b
         ? a->RTTI_Name() < b->RTTI_Name()
         : outer_a->Name() < outer_b->Name());
@@ -78,10 +81,9 @@ static void Sort_(
     using item_t = typename map_t::public_type;
 
     // linearize all pairs
-    VECTOR(Binary, item_t*) sorted;
-    sorted.reserve_AssumeEmpty(map.size());
+    STACKLOCAL_POD_STACK(item_t*, sorted, map.size());
     for (item_t& it : map)
-        sorted.push_back_AssumeNoGrow(&it);
+        sorted.Push(&it);
 
     // sort linearized vector using pred
     std::sort(sorted.begin(), sorted.end(), [pred](item_t* a, item_t* b) {
@@ -102,27 +104,17 @@ static void Sort_(
 FBinaryFormatWriter::FBinaryFormatWriter()
 {}
 //----------------------------------------------------------------------------
-void FBinaryFormatWriter::Append(const RTTI::FMetaObjectRef& obj) {
-    Assert_NoAssume(obj.Get());
+void FBinaryFormatWriter::Append(const RTTI::FMetaObject* obj) {
+    Assert_NoAssume(obj);
 
-    if (Unlikely(obj.IsImport())) {
-        /* don't add serialize this object here, see Visit_(PMetaObject) */
-
-        _contents.Flags = _contents.Flags | FBinaryFormat::HasExternalImports;
-
-        return;
-    }
-
-    Insert_AssertUnique(
-        _contents.Objects,
-        const_cast<const RTTI::FMetaObject*>(obj.Get()),
+    Insert_AssertUnique(_contents.Objects, obj,
         FObjectRef_{ FDataIndex{ checked_cast<u32>(_contents.Objects.size()) }, obj });
 
     FBinaryFormat::FObjectData objData;
     objData.NumProperties = 0;
     objData.ClassIndex = DataIndex_(_contents.Classes, obj->RTTI_Class());
 
-    if (obj.IsExport()) {
+    if (obj->RTTI_IsExported()) {
         objData.Flags = FBinaryFormat::Export;
         objData.NameIndex = DataIndex_(_contents.Names, obj->RTTI_Name());
 
@@ -165,8 +157,12 @@ void FBinaryFormatWriter::Append(const RTTI::FMetaObjectRef& obj) {
 }
 //----------------------------------------------------------------------------
 void FBinaryFormatWriter::Append(const FTransactionSaver& saver) {
-    for (const RTTI::FMetaObjectRef& ref : saver.Objects())
-        Append(ref);
+    _contents.Objects.reserve_Additional(saver.LoadedRefs().size());
+    _contents.Imports.reserve_Additional(saver.ImportedRefs().size());
+    _contents.Names.reserve_Additional(saver.ExportedRefs().size());
+
+    for (const RTTI::SMetaObject& ref : saver.LoadedRefs())
+        Append(ref.get());
 }
 //----------------------------------------------------------------------------
 void FBinaryFormatWriter::Finalize(IStreamWriter& outp, bool mergeSort/* = true */) {
@@ -403,9 +399,7 @@ void FBinaryFormatWriter::MergeSortContents_() {
 
     // copy visited objects for a 2nd pass
 
-    VECTOR(Binary, RTTI::FMetaObjectRef) visiteds;
-    visiteds.resize_Uninitialized(_contents.Objects.size());
-
+    STACKLOCAL_POD_ARRAY(const RTTI::FMetaObject*, visiteds, _contents.Objects.size());
     for (const FObjectRef_& obj : _contents.Objects.Values())
         visiteds[obj.Index] = obj.Ref;
 
@@ -413,7 +407,7 @@ void FBinaryFormatWriter::MergeSortContents_() {
 
     // finally serialize all visited objects with sorted data
 
-    for (const RTTI::FMetaObjectRef& ref : visiteds)
+    for (const RTTI::FMetaObject* ref : visiteds)
         Append(ref);
 }
 //----------------------------------------------------------------------------

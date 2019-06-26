@@ -34,6 +34,8 @@ RTTI_ENUM_HEADER(PPE_SERIALIZE_API, ETransactionFlags);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+using FTransactionSources = VECTORINSITU(MetaSerialize, FFilename, 3);
+//----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FTransactionSerializer : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(PPE_SERIALIZE_API, FTransactionSerializer, RTTI::FMetaObject);
 public:
@@ -56,7 +58,7 @@ public:
 
     const RTTI::PMetaTransaction& Transaction() const { return _transaction; }
 
-    using FSources = VECTORINSITU(MetaSerialize, FFilename, 3);
+    using FSources = FTransactionSources;
 
     void BuildTransaction(FSources& sources);
     void SaveTransaction();

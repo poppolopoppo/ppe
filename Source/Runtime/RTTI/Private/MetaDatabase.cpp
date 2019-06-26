@@ -36,7 +36,7 @@ FMetaDatabase::~FMetaDatabase() {
 //----------------------------------------------------------------------------
 void FMetaDatabase::RegisterTransaction(FMetaTransaction* metaTransaction) {
     Assert(metaTransaction);
-    Assert(metaTransaction->IsLoading());
+    Assert(metaTransaction->IsMounting());
 
     const FName& exportName = metaTransaction->Name();
     Assert(not exportName.empty());
@@ -50,7 +50,7 @@ void FMetaDatabase::RegisterTransaction(FMetaTransaction* metaTransaction) {
 //----------------------------------------------------------------------------
 void FMetaDatabase::UnregisterTransaction(FMetaTransaction* metaTransaction) {
     Assert(metaTransaction);
-    Assert(metaTransaction->IsUnloading());
+    Assert(metaTransaction->IsUnmounting());
 
     const FName& exportName = metaTransaction->Name();
     Assert(not exportName.empty());
@@ -105,7 +105,7 @@ FMetaTransaction* FMetaDatabase::TransactionIFP(const FStringView& name) const {
 void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
     Assert(metaObject);
     Assert(metaObject->RTTI_Outer());
-    Assert(metaObject->RTTI_Outer()->IsLoading());
+    Assert(metaObject->RTTI_Outer()->IsMounting());
 
     const FPathName exportPath{ FPathName::FromObject(*metaObject) };
 
@@ -128,7 +128,7 @@ void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
 void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
     Assert(metaObject);
     Assert(metaObject->RTTI_Outer());
-    Assert(metaObject->RTTI_Outer()->IsUnloading());
+    Assert(metaObject->RTTI_Outer()->IsUnmounting());
 
     const FPathName exportPath{ FPathName::FromObject(*metaObject) };
 
@@ -156,10 +156,14 @@ FMetaObject& FMetaDatabase::Object(const FPathName& pathName) const {
     Assert(not pathName.empty());
     Assert(not pathName.Transaction.empty());
 
+#if USE_PPE_ASSERT
+    return *ObjectIFP(pathName); // profit from additional debugging features
+#else
     FMetaObject& obj = (*_objects.at(pathName));
     Assert(obj.RTTI_IsLoaded());
 
     return obj;
+#endif
 }
 //----------------------------------------------------------------------------
 FMetaObject* FMetaDatabase::ObjectIFP(const FPathName& pathName) const {
@@ -167,11 +171,17 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FPathName& pathName) const {
     Assert(not pathName.Transaction.empty());
 
     const auto it = _objects.find(pathName);
-    if (_objects.end() == it)
+    if (_objects.end() != it) {
+        Assert_NoAssume(it->second->RTTI_IsLoaded());
+        return it->second.get();
+    }
+    else {
+#if USE_PPE_ASSERT
+        CLOG(TransactionIFP(pathName.Transaction) == nullptr,
+            RTTI, Error, L"trying to fetch an object from an unmounted transaction : {0}", pathName);
+#endif
         return nullptr;
-
-    Assert(it->second->RTTI_IsLoaded());
-    return it->second.get();
+    }
 }
 //----------------------------------------------------------------------------
 FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& text) const {
@@ -365,7 +375,7 @@ void FMetaDatabase::RegisterTraits_(const FName& name, const PTypeTraits& traits
     Assert(traits);
 
     Insert_AssertUnique(_traits, name, traits);
-}  
+}
 //----------------------------------------------------------------------------
 void FMetaDatabase::UnregisterTraits_(const FName& name, const PTypeTraits& traits) {
     Assert_NoAssume(not name.empty());
