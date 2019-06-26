@@ -73,6 +73,17 @@ auto TBasicSparseArray<T>::IndexOf(const_reference data) const -> FDataId {
 }
 //----------------------------------------------------------------------------
 template <typename T>
+auto TBasicSparseArray<T>::At(size_t index) -> reference {
+    Assert_NoAssume(CheckInvariants());
+    Assert(_numChunks);
+
+    pointer const it = At_(index);
+    AssertRelease(it);
+
+    return (*it);
+}
+//----------------------------------------------------------------------------
+template <typename T>
 auto TBasicSparseArray<T>::Find(FDataId id) -> pointer {
     Assert_NoAssume(CheckInvariants());
     Assert(_numChunks);
@@ -624,6 +635,62 @@ template <typename _It, typename _IteratorTag>
 void TSparseArray<T, _Allocator>::AddRange_(_It first, _It last, _IteratorTag) {
     Reserve(std::distance(first, last));
     AddRange_(first, last, std::input_iterator_tag{});
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Append(TSparseArray<T, _Allocator>& v, const TMemoryView<const T>& elts) {
+    v.AddRange(elts.begin(), elts.end());
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename U>
+bool Contains(const TSparseArray<T, _Allocator>& v, const U& elt) {
+    return (v.end() != std::find_if(v.begin(), v.end(), [&](const auto& value) NOEXCEPT{
+        return (value == elt);
+    }));
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Add_AssertUnique(TSparseArray<T, _Allocator>& v, const T& elt) {
+    Assert_NoAssume(not Contains(v, elt));
+    v.Emplace(elt);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Add_AssertUnique(TSparseArray<T, _Allocator>& v, T&& elt) {
+    Assert_NoAssume(not Contains(v, elt));
+    v.Emplace(std::move(elt));
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+bool Add_Unique(TSparseArray<T, _Allocator>& v, T&& elt) {
+    if (Contains(v, elt)) {
+        return false;
+    }
+    else {
+        v.Emplace(std::move(elt));
+        return true;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Remove_AssertExists(TSparseArray<T, _Allocator>& v, const T& elt) {
+    Verify(Remove_ReturnIfExists(v, elt));
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+bool Remove_ReturnIfExists(TSparseArray<T, _Allocator>& v, const T& elt) {
+    const auto it = std::find_if(v.begin(), v.end(), [&](const auto& value) NOEXCEPT{
+        return (value == elt);
+    });
+    if (it != v.end()) {
+        v.Remove(it);
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -9,6 +9,9 @@
 #include "Meta/Iterator.h"
 #include "Meta/PointerWFlags.h"
 
+#include <algorithm>
+#include <initializer_list>
+
 // Inspired from DataArray<T>
 // http://greysphere.tumblr.com/post/31601463396/data-arrays
 
@@ -88,6 +91,11 @@ public:
     const_iterator cend() const NOEXCEPT { return end(); }
 
     FDataId IndexOf(const_reference data) const;
+
+    reference At(size_t index);
+    const_reference At(size_t index) const {
+        return const_cast<TBasicSparseArray*>(this)->At(index);
+    }
 
     pointer Find(FDataId id);
     const_pointer Find(FDataId id) const {
@@ -347,12 +355,20 @@ public:
     explicit TSparseArray(allocator_type&& alloc) : allocator_type(std::move(alloc)) {}
     explicit TSparseArray(const allocator_type& alloc) : allocator_type(alloc) {}
 
-    // #TODO not sure if it's really relevant to copy this container, particularly with the way it's implemented atm
-    TSparseArray(const TSparseArray&);
-    TSparseArray& operator =(const TSparseArray&);
+    TSparseArray(std::initializer_list<value_type> ilist) : TSparseArray() { AddRange(ilist.begin(), ilist.end()); }
+    TSparseArray(std::initializer_list<value_type> ilist, const allocator_type& alloc) : TSparseArray(alloc) { AddRange(ilist.begin(), ilist.end()); }
+    TSparseArray& operator =(std::initializer_list<value_type> ilist) { Assign(ilist.begin(), ilist.end()); return (*this); }
+
+    TSparseArray(const TSparseArray& other);
+    TSparseArray& operator =(const TSparseArray& other);
 
     TSparseArray(TSparseArray&& rvalue);
     TSparseArray& operator =(TSparseArray&& rvalue);
+
+    template <typename _OtherAllocator>
+    explicit TSparseArray(const TSparseArray<T, _OtherAllocator>& other) : TSparseArray() { operator =(other); }
+    template <typename _OtherAllocator>
+    TSparseArray& operator =(const TSparseArray<T, _OtherAllocator>& other) { Assign(other.begin(), other.end()); return (*this); }
 
     using parent_type::empty;
     using parent_type::size;
@@ -440,6 +456,29 @@ private:
     void AddRange_(_It first, _It last, _IteratorTag);
 
 };
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Append(TSparseArray<T, _Allocator>& v, const TMemoryView<const T>& elts);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename U>
+bool Contains(const TSparseArray<T, _Allocator>& v, const U& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Add_AssertUnique(TSparseArray<T, _Allocator>& v, const T& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Add_AssertUnique(TSparseArray<T, _Allocator>& v, T&& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+bool Add_Unique(TSparseArray<T, _Allocator>& v, T&& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Remove_AssertExists(TSparseArray<T, _Allocator>& v, const T& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+bool Remove_ReturnIfExists(TSparseArray<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
