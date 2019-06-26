@@ -49,7 +49,7 @@ public:
     const FMetaEnumValue& ValueToName(FMetaEnumOrd value) const;
     const FMetaEnumValue* ValueToNameIFP(FMetaEnumOrd value) const;
 
-    using FExpansion = VECTORINSITU(MetaEnum, const FMetaEnumValue*, 6);
+    using FExpansion = VECTORINSITU(MetaEnum, FMetaEnumValue, 6);
     bool ExpandValues(FMetaEnumOrd value, FExpansion* expansion) const;
     bool ExpandValues(const FAtom& src, FExpansion* expansion) const;
 

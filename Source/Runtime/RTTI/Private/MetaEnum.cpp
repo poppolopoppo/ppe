@@ -74,11 +74,11 @@ bool FMetaEnum::ExpandValues(FMetaEnumOrd value, FExpansion* expansion) const {
     if (IsFlags()) {
         for (const FMetaEnumValue& v : _values) {
             if ((v.Value & value) == v.Value)
-                expansion->push_back(&v);
+                expansion->push_back(v);
         }
     }
     else if (const FMetaEnumValue* v = ValueToNameIFP(value)) {
-        expansion->push_back(v);
+        expansion->push_back(*v);
     }
 
     return (not expansion->empty());
