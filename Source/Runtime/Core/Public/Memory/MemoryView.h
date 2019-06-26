@@ -203,15 +203,6 @@ public:
     TMemoryView<U> Cast() const;
     TMemoryView<const u8> RawView() const { return Cast<const u8>(); }
 
-    TMemoryView<Meta::TAddConst<value_type>> AddConst() const {
-        return TMemoryView<Meta::TAddConst<value_type>>(_storage, _size);
-    }
-
-    TMemoryView<Meta::TRemoveConst<value_type>> RemoveConst() const {
-        typedef TMemoryView<Meta::TRemoveConst<value_type>> nonconst_type;
-        return nonconst_type(const_cast<typename nonconst_type::pointer>(_storage), _size);
-    }
-
     template <typename _Transform>
     auto Map(const _Transform& transform) const {
         return MakeIterable(

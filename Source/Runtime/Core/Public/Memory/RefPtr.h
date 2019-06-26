@@ -95,8 +95,6 @@ protected:
     template <typename T>
     friend void RemoveRef_AssertReachZero(TRefPtr<T>& ptr);
     template <typename T>
-    friend void RemoveRef_AssertGreaterThanZero(TRefPtr<T>& ptr);
-    template <typename T>
     friend T *RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& ptr);
 
 #if USE_PPE_SAFEPTR

@@ -109,14 +109,6 @@ void RemoveRef_AssertReachZero(TRefPtr<T>& ptr) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void RemoveRef_AssertGreaterThanZero(TRefPtr<T>& ptr) {
-    STATIC_ASSERT(std::is_base_of<FRefCountable, T>::value);
-    Assert(ptr);
-    Assert_NoAssume(1 < ptr->RefCount());
-    ptr.reset();
-}
-//----------------------------------------------------------------------------
-template <typename T>
 T *RemoveRef_AssertReachZero_KeepAlive(TRefPtr<T>& ptr) {
     Assert(ptr);
     Assert(1 == ptr->RefCount());
