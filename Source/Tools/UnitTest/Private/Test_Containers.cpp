@@ -1465,7 +1465,9 @@ void Test_Containers() {
 
     const EProcessPriority prio = FPlatformProcess::Priority();
     FPlatformProcess::SetPriority(EProcessPriority::Realtime);
-    Meta::on_scope_exit([prio]() { FPlatformProcess::SetPriority(prio); });
+    const auto ANONYMIZE(scopeExit) { Meta::on_scope_exit([prio]() {
+        FPlatformProcess::SetPriority(prio);
+    })};
 
     Test_StealFromDifferentAllocator_();
 
