@@ -425,6 +425,7 @@ static void TestRTTI_() {
 
         transaction.RegisterObject(toto.get());
         transaction.RegisterObject(toto2.get());
+        transaction.RegisterObject(toto3.get());
 
         toto->RTTI_Export(RTTI::FName("toto"));
         toto3->RTTI_Export(RTTI::FName("toto3"));

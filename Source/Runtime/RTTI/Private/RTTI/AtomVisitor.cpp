@@ -170,10 +170,10 @@ private:
                     if (e->ExpandValues(integral, &values)) {
                         Assert(not values.empty());
 
-                        _oss << Fmt::LParenthese << scalar->TypeInfos().Name() << Fmt::Colon << values[0]->Name;
+                        _oss << Fmt::LParenthese << scalar->TypeInfos().Name() << Fmt::Colon << values[0].Name;
 
                         forrange(i, 1, values.size())
-                            _oss << Fmt::Or << scalar->TypeInfos().Name() << Fmt::Colon << values[i]->Name;
+                            _oss << Fmt::Or << scalar->TypeInfos().Name() << Fmt::Colon << values[i].Name;
 
                         _oss << Fmt::RParenthese;
 
@@ -267,7 +267,7 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const ITupleTraits* tuple, void* data) {
-    if (visitor->OnlyObjects() && not (tuple->TypeFlags() ^ ETypeFlags::Object))
+    if ((!!visitor->OnlyObjects()) & (!(tuple->TypeFlags() ^ ETypeFlags::Object)))
         return true;
 
     return tuple->ForEach(data, [visitor](const FAtom& elt) {
@@ -276,7 +276,7 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const ITupleTraits* tuple, void
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IListTraits* list, void* data) {
-    if (visitor->OnlyObjects() && not (list->TypeFlags() ^ ETypeFlags::Object))
+    if ((!!visitor->OnlyObjects()) & (!(list->TypeFlags() ^ ETypeFlags::Object)))
         return true;
 
     return list->ForEach(data, [visitor](const FAtom& item) {
@@ -285,7 +285,7 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IListTraits* list, void* 
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IDicoTraits* dico, void* data) {
-    if (visitor->OnlyObjects() && not (dico->TypeFlags() ^ ETypeFlags::Object))
+    if ((!!visitor->OnlyObjects()) & (!(dico->TypeFlags() ^ ETypeFlags::Object)))
         return true;
 
     return dico->ForEach(data, [visitor](const FAtom& key, const FAtom& value) {
@@ -303,22 +303,22 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , PMetaObj
     if (pobj) {
         FMetaObject& obj = (*pobj);
 
-        if (visitor->NoRecursion() || (not visitor->KeepTransient() && obj.RTTI_IsTransient()) )
+        if (visitor->NoRecursion() | ((!visitor->KeepTransient()) & obj.RTTI_IsTransient()) )
             return true;
 
-        const FMetaClass* metaClass = obj.RTTI_Class();
+        const FMetaClass* const metaClass = obj.RTTI_Class();
         Assert(metaClass);
 
         for (const FMetaProperty* prop : metaClass->AllProperties()) {
-            if ((not visitor->KeepDeprecated() && prop->IsDeprecated()) ||
-                (not visitor->KeepTransient() && prop->IsTransient()) ||
-                (visitor->OnlyObjects() && not (prop->Traits()->TypeFlags() ^ ETypeFlags::Object)) )
-                continue;
-
-            if (not prop->Get(obj).Accept(visitor))
-                return false;
+            if ((visitor->KeepDeprecated() | (!prop->IsDeprecated())) &
+                (visitor->KeepTransient() | (!prop->IsTransient())) &
+                ((!visitor->OnlyObjects()) | (prop->Traits()->TypeFlags() ^ ETypeFlags::Object))) {
+                if (not prop->Get(obj).Accept(visitor))
+                    return false;
+            }
         }
     }
+
     return true;
 }
 //----------------------------------------------------------------------------
@@ -332,7 +332,7 @@ DEBUG_FUNCTION(PPE_RTTI_API, DebugPrintAtom, FString, (const FAtom& atom), {
 //----------------------------------------------------------------------------
 DEBUG_FUNCTION(PPE_RTTI_API, DebugPrintObject, FString, (const FMetaObject* object), {
     PMetaObject p(const_cast<FMetaObject*>(object));
-    FString pp = DebugPrintAtom(MakeAtom(&p));
+    FString pp = DebugPrintAtom(FAtom::FromObj(p));
     RemoveRef_KeepAlive(p);
     return pp;
 })

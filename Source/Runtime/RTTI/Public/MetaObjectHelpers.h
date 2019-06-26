@@ -5,8 +5,8 @@
 #include "RTTI_fwd.h"
 #include "RTTI/Typedefs.h"
 
-#include "Container/Vector.h"
 #include "Memory/RefPtr.h"
+#include "Misc/Function_fwd.h"
 
 namespace PPE {
 namespace RTTI {
@@ -42,14 +42,6 @@ PPE_RTTI_API void ResetToDefaultValue(FMetaObject& obj);
 PPE_RTTI_API hash_t hash_value(const FMetaObject& obj);
 //----------------------------------------------------------------------------
 PPE_RTTI_API u128 Fingerprint128(const FMetaObject& obj);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-using FReferencedObjects = VECTORINSITU(MetaObject, FMetaObject*, 8);
-PPE_RTTI_API void CollectReferencedObjects(
-    const FMetaObject& root,
-    FReferencedObjects& references,
-    size_t maxDepth = INDEX_NONE );
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -94,6 +86,23 @@ bool CreateMetaObject(PMetaObject& dst, bool resetToDefaultValue) {
 
     return false;
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_RTTI_API size_t CollectReferences(
+    const FMetaObject& root,
+    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& prefix,
+    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& postfix,
+    EVisitorFlags flags);
+//----------------------------------------------------------------------------
+PPE_RTTI_API size_t CollectReferences(
+    const TMemoryView<const PMetaObject>& roots,
+    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& prefix,
+    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& postfix,
+    EVisitorFlags flags);
+//----------------------------------------------------------------------------
+PPE_RTTI_API bool CheckCircularReferences(const FMetaObject& root);
+PPE_RTTI_API bool CheckCircularReferences(const TMemoryView<const PMetaObject>& roots);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

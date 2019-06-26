@@ -5,6 +5,7 @@
 #include "RTTI/Atom.h"
 #include "RTTI/AtomVisitor.h"
 #include "RTTI/NativeTypes.h"
+#include "RTTI/ReferenceCollector.h"
 #include "RTTI/TypeTraits.h"
 
 #include "MetaClass.h"
@@ -13,22 +14,19 @@
 #include "MetaTransaction.h"
 
 #include "Container/Hash.h"
+#include "Container/HashSet.h"
 #include "Container/Stack.h"
+#include "Container/Vector.h"
 #include "Memory/HashFunctions.h"
 
-#if USE_PPE_RTTI_CHECKS
-#   include "Diagnostic/Logger.h"
-#   include "IO/FormatHelpers.h"
-#   include "RTTI/Exceptions.h"
+#include "Diagnostic/Logger.h"
+#include "IO/FormatHelpers.h"
+#include "IO/StringBuilder.h"
+#include "RTTI/Exceptions.h"
+
 namespace PPE {
 namespace RTTI {
 EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
-} //!namespace RTTI
-} //!namespace PPE
-#endif
-
-namespace PPE {
-namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -208,66 +206,6 @@ u128 Fingerprint128(const FMetaObject& obj) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-class FReferenceCollector_ : FBaseAtomVisitor {
-public:
-    FReferenceCollector_(size_t maxDepth)
-        : FBaseAtomVisitor(EVisitorFlags::OnlyObjects)
-        , _maxDepth(maxDepth), _depth(0), _references(nullptr)
-    {}
-
-    void Collect(const FMetaObject& root, FReferencedObjects& references) {
-        Assert(0 == _depth);
-        Assert(nullptr == _references);
-
-        _references = &references;
-
-        PMetaObject src(const_cast<FMetaObject*>(&root));
-
-        if (not InplaceAtom(src).Accept(static_cast<FBaseAtomVisitor*>(this)))
-            AssertNotReached();
-
-        Assert(0 == _depth);
-
-        _references = nullptr;
-        RemoveRef_AssertAlive(src);
-    }
-
-private:
-    const size_t _maxDepth;
-    size_t _depth;
-    FReferencedObjects* _references;
-
-    virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override final {
-        if (pobj) {
-            if (not Contains(*_references, pobj.get())) {
-
-                _references->push_back(pobj.get());
-
-                ++_depth;
-
-                if (_depth <= _maxDepth)
-                    FBaseAtomVisitor::Visit(scalar, pobj); // visits recursively
-
-                Assert(_depth);
-                --_depth;
-            }
-        }
-        return true;
-    }
-};
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-void CollectReferencedObjects(const FMetaObject& root, FReferencedObjects& references, size_t maxDepth/* = INDEX_NONE */) {
-    Assert(references.empty());
-    FReferenceCollector_ collector(maxDepth);
-    collector.Collect(root, references);
-    Assert(references.front() == &root);
-    references.erase_DontPreserveOrder(references.begin());
-}
-//----------------------------------------------------------------------------
 #if USE_PPE_RTTI_CHECKS
 void CheckMetaClassAllocation(const FMetaClass* metaClass) {
     if (nullptr == metaClass) {
@@ -292,6 +230,128 @@ void CheckMetaClassAllocation(const FMetaClass* metaClass) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+size_t CollectReferences(
+    const FMetaObject& root,
+    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& prefix,
+    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& postfix,
+    EVisitorFlags flags) {
+    FLambdaReferenceCollector collector{ flags };
+    collector.Collect(root, std::move(prefix), std::move(postfix));
+    return collector.NumReferences();
+}
+//----------------------------------------------------------------------------
+size_t CollectReferences(
+    const TMemoryView<const PMetaObject>& roots,
+    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& prefix,
+    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& postfix,
+    EVisitorFlags flags) {
+    FLambdaReferenceCollector collector{ flags };
+    collector.Collect(roots, std::move(prefix), std::move(postfix));
+    return collector.NumReferences();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+class FCheckCircularReferences_ : private FBaseReferenceCollector {
+public:
+    FCheckCircularReferences_() NOEXCEPT
+    :   FBaseReferenceCollector(
+            EVisitorFlags::KeepDeprecated +
+            EVisitorFlags::KeepTransient )
+    ,   _circular(false)
+    {}
+
+    bool Check(const FMetaObject& root) {
+        _circular = false;
+        FBaseReferenceCollector::Collect(root);
+        Assert_NoAssume(_chain.empty());
+        return (not _circular);
+    }
+
+    bool Check(const TMemoryView<const PMetaObject>& roots) {
+        _circular = false;
+        FBaseReferenceCollector::Collect(roots);
+        Assert_NoAssume(_chain.empty());
+        return (not _circular);
+    }
+
+protected:
+    virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override final {
+        bool result = true;
+        if (const FMetaObject * const ref = pobj.get()) {
+            const bool circular = Contains(_chain, ref);
+            _chain.push_back(ref);
+
+            if (circular)
+                OnCircularReference_();
+            else
+                result = FBaseReferenceCollector::Visit(scalar, pobj);
+
+            Verify(_chain.pop_back_ReturnBack() == ref);
+        }
+        return result;
+    }
+
+private:
+    bool _circular;
+    VECTORINSITU(MetaObject, const FMetaObject*, 8) _chain;
+
+    void OnCircularReference_() {
+        _circular = true;
+
+        FWStringBuilder oss;
+        oss << L"found a circular reference !" << Eol;
+
+        Fmt::FWIndent indent = Fmt::FWIndent::UsingTabs();
+        forrange(i, 0, _chain.size()) {
+            const FMetaObject* const ref = _chain[i];
+            const FMetaClass* const metaClass = ref->RTTI_Class();
+
+            Format(oss, L"[{0:#2}]", i);
+            oss << indent;
+
+            if (i + 1 == _chain.size())
+                oss << L" <=- ";
+            else if (ref == _chain.back())
+                oss << L" -=> ";
+            else
+                oss << L" --- ";
+
+            oss << Fmt::Pointer(ref)
+                << L" \"" << ref->RTTI_Name()
+                << L"\" : " << metaClass->Name()
+                << L" (" << metaClass->Flags()
+                << L")" << Eol;
+
+            indent.Inc();
+        }
+
+        FLogger::Log(
+            GLogCategory_RTTI,
+            FLogger::EVerbosity::Error,
+            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+            oss.ToString() );
+    }
+};
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool CheckCircularReferences(const FMetaObject& root) {
+    FCheckCircularReferences_ circular;
+    return circular.Check(root);
+}
+//----------------------------------------------------------------------------
+bool CheckCircularReferences(const TMemoryView<const PMetaObject>& roots) {
+    FCheckCircularReferences_ circular;
+    return circular.Check(roots);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace PPE
 
@@ -301,15 +361,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const RTTI::FMetaObject& obj) {
     RTTI::PMetaObject pobj(const_cast<RTTI::FMetaObject*>(&obj));
-    PrettyPrint(oss, InplaceAtom(pobj));
-    RemoveRef_AssertReachZero_KeepAlive(pobj);
+    PrettyPrint(oss, RTTI::FAtom::FromObj(pobj));
+    RemoveRef_AssertAlive(pobj);
     return oss;
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FMetaObject& obj) {
     RTTI::PMetaObject pobj(const_cast<RTTI::FMetaObject*>(&obj));
-    PrettyPrint(oss, InplaceAtom(pobj));
-    RemoveRef_AssertReachZero_KeepAlive(pobj);
+    PrettyPrint(oss, RTTI::FAtom::FromObj(pobj));
+    RemoveRef_AssertAlive(pobj);
     return oss;
 }
 //----------------------------------------------------------------------------

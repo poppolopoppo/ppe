@@ -65,7 +65,11 @@ class FMetaDatabase;
 class FMetaDatabaseReadable;
 class FMetaDatabaseReadWritable;
 //----------------------------------------------------------------------------
+enum class EObjectFlags : u32;
 FWD_REFPTR(MetaObject);
+//----------------------------------------------------------------------------
+enum class EVisitorFlags : u32;
+class IAtomVisitor;
 //----------------------------------------------------------------------------
 FWD_REFPTR(AtomHeap);
 //----------------------------------------------------------------------------
