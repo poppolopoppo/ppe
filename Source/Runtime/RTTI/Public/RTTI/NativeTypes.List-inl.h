@@ -2,7 +2,6 @@
 
 #include "RTTI/NativeTypes.h"
 
-#include "Container/AssociativeVector.h"
 #include "Container/Vector.h"
 
 namespace PPE {
@@ -176,12 +175,12 @@ void TBaseListTraits<T>::DeepCopy(const void* src, void* dst) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// TVectorLikeTraits<_VectorLike>
+// TVectorTraits<T, _Allocator>
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-class TVectorLikeTraits final : public TBaseTypeTraits< _VectorLike, TBaseListTraits<typename _VectorLike::value_type> > {
-    using item_type = typename _VectorLike::value_type;
-    using base_traits = TBaseTypeTraits< _VectorLike, TBaseListTraits<item_type> >;
+template <typename T, typename _Allocator>
+class TVectorTraits final : public TBaseTypeTraits< TVector<T, _Allocator>, TBaseListTraits<T> > {
+    using item_type = T;
+    using base_traits = TBaseTypeTraits< TVector<T, _Allocator>, TBaseListTraits<item_type> >;
     using typename base_traits::value_type;
     using typename base_traits::pointer;
     using typename base_traits::const_pointer;
@@ -189,7 +188,7 @@ class TVectorLikeTraits final : public TBaseTypeTraits< _VectorLike, TBaseListTr
 public: // IListTraits
     using typename base_traits::foreach_fun;
 
-    CONSTEXPR TVectorLikeTraits() : base_traits(sizeof(_VectorLike)) {}
+    CONSTEXPR TVectorTraits() : base_traits(sizeof(TVector<T, _Allocator>)) {}
 
     virtual size_t Count(const void* data) const override final;
     virtual bool IsEmpty(const void* data) const override final;
@@ -212,38 +211,38 @@ public: // IListTraits
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 PTypeTraits Traits(Meta::TType< TVector<T, _Allocator> >) noexcept {
-    return PTypeTraits::Make< TVectorLikeTraits< TVector<T, _Allocator> > >();
+    return PTypeTraits::Make< TVectorTraits<T, _Allocator> >();
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-size_t TVectorLikeTraits<_VectorLike>::Count(const void* data) const {
+template <typename T, typename _Allocator>
+size_t TVectorTraits<T, _Allocator>::Count(const void* data) const {
     Assert(data);
 
     return static_cast<const value_type*>(data)->size();
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-bool TVectorLikeTraits<_VectorLike>::IsEmpty(const void* data) const {
+template <typename T, typename _Allocator>
+bool TVectorTraits<T, _Allocator>::IsEmpty(const void* data) const {
     Assert(data);
 
     return static_cast<const value_type*>(data)->empty();
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-FAtom TVectorLikeTraits<_VectorLike>::At(void* data, size_t index) const {
+template <typename T, typename _Allocator>
+FAtom TVectorTraits<T, _Allocator>::At(void* data, size_t index) const {
     Assert(data);
 
     auto& item = static_cast<value_type*>(data)->at(index);
     return FAtom(&item, MakeTraits<item_type>());
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-size_t TVectorLikeTraits<_VectorLike>::Find(const void* data, const FAtom& item) const {
+template <typename T, typename _Allocator>
+size_t TVectorTraits<T, _Allocator>::Find(const void* data, const FAtom& item) const {
     Assert(data);
     Assert(item);
 
-    const PTypeTraits item_traits = MakeTraits<typename _VectorLike::value_type>();
-    Assert(item_traits->TypeId() == item.TypeId());
+    const PTypeTraits item_traits = MakeTraits<item_type>();
+    Assert_NoAssume(item_traits->TypeId() == item.TypeId());
 
     size_t i = 0;
     for (auto& val : *((value_type*)data)) {
@@ -258,45 +257,45 @@ size_t TVectorLikeTraits<_VectorLike>::Find(const void* data, const FAtom& item)
     return INDEX_NONE;
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-FAtom TVectorLikeTraits<_VectorLike>::AddDefault(void* data) const {
+template <typename T, typename _Allocator>
+FAtom TVectorTraits<T, _Allocator>::AddDefault(void* data) const {
     Assert(data);
 
     auto& item = static_cast<value_type*>(data)->push_back_Default();
     return FAtom(&item, MakeTraits<item_type>());
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-void TVectorLikeTraits<_VectorLike>::AddCopy(void* data, const FAtom& item) const {
+template <typename T, typename _Allocator>
+void TVectorTraits<T, _Allocator>::AddCopy(void* data, const FAtom& item) const {
     Assert(data);
     Assert(item);
 
     static_cast<value_type*>(data)->push_back(item.TypedConstData<item_type>());
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-void TVectorLikeTraits<_VectorLike>::AddMove(void* data, const FAtom& item) const {
+template <typename T, typename _Allocator>
+void TVectorTraits<T, _Allocator>::AddMove(void* data, const FAtom& item) const {
     Assert(data);
     Assert(item);
 
     static_cast<value_type*>(data)->push_back(std::move(item.TypedData<item_type>()));
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-void TVectorLikeTraits<_VectorLike>::Erase(void* data, size_t index) const {
+template <typename T, typename _Allocator>
+void TVectorTraits<T, _Allocator>::Erase(void* data, size_t index) const {
     Assert(data);
 
     value_type& v = *static_cast<value_type*>(data);
     v.erase(v.begin() + index);
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-bool TVectorLikeTraits<_VectorLike>::Remove(void* data, const FAtom& item) const {
+template <typename T, typename _Allocator>
+bool TVectorTraits<T, _Allocator>::Remove(void* data, const FAtom& item) const {
     Assert(data);
     Assert(item);
 
-    const PTypeTraits item_traits = MakeTraits<typename _VectorLike::value_type>();
-    Assert(item_traits->TypeId() == item.TypeId());
+    const PTypeTraits item_traits = MakeTraits<item_type>();
+    Assert_NoAssume(item_traits->TypeId() == item.TypeId());
 
     value_type& vector = (*static_cast<value_type*>(data));
 
@@ -312,22 +311,22 @@ bool TVectorLikeTraits<_VectorLike>::Remove(void* data, const FAtom& item) const
     return false;
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-void TVectorLikeTraits<_VectorLike>::Reserve(void* data, size_t capacity) const {
+template <typename T, typename _Allocator>
+void TVectorTraits<T, _Allocator>::Reserve(void* data, size_t capacity) const {
     Assert(data);
 
     static_cast<value_type*>(data)->reserve(capacity);
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-void TVectorLikeTraits<_VectorLike>::Clear(void* data) const {
+template <typename T, typename _Allocator>
+void TVectorTraits<T, _Allocator>::Clear(void* data) const {
     Assert(data);
 
     static_cast<value_type*>(data)->clear();
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-void TVectorLikeTraits<_VectorLike>::Empty(void* data, size_t capacity) const {
+template <typename T, typename _Allocator>
+void TVectorTraits<T, _Allocator>::Empty(void* data, size_t capacity) const {
     Assert(data);
 
     value_type& v = *static_cast<value_type*>(data);
@@ -340,8 +339,8 @@ void TVectorLikeTraits<_VectorLike>::Empty(void* data, size_t capacity) const {
     }
 }
 //----------------------------------------------------------------------------
-template <typename _VectorLike>
-bool TVectorLikeTraits<_VectorLike>::ForEach(void* data, const foreach_fun& foreach) const {
+template <typename T, typename _Allocator>
+bool TVectorTraits<T, _Allocator>::ForEach(void* data, const foreach_fun& foreach) const {
     Assert(data);
 
     const PTypeTraits value_traits = MakeTraits<item_type>();

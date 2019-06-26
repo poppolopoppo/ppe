@@ -2,6 +2,7 @@
 
 #include "RTTI/NativeTypes.h"
 
+#include "Container/AssociativeVector.h"
 #include "Container/HashMap.h"
 
 namespace PPE {
