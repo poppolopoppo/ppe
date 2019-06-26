@@ -2,6 +2,7 @@
 
 #include "RTTI/Atom.h"
 
+#include "MetaObject.h"
 #include "RTTI/AtomVisitor.h"
 
 #include "IO/StringBuilder.h"
@@ -21,6 +22,11 @@ FWString FAtom::ToWString() const {
     FWStringBuilder oss;
     oss << *this;
     return oss.ToString();
+}
+//----------------------------------------------------------------------------
+FAtom FAtom::FromObj(const PMetaObject& obj) {
+    Assert(obj);
+    return FAtom{ &obj, obj->RTTI_Traits() };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

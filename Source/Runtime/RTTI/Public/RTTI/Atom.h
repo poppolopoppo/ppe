@@ -121,6 +121,8 @@ public:
     inline friend void swap(FAtom& lhs, FAtom& rhs) { lhs.Swap(rhs); }
     inline friend hash_t hash_value(const FAtom& value) { return value.HashValue(); }
 
+    PPE_RTTI_API static FAtom FromObj(const PMetaObject& obj);
+
 private:
     void* _data;
     PTypeTraits _traits;
