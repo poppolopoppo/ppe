@@ -47,13 +47,13 @@ ENUM_FLAGS(EObjectFlags);
 //----------------------------------------------------------------------------
 class ILoadContext {
 public:
-    virtual ~ILoadContext() {}
+    virtual ~ILoadContext() = default;
     virtual void OnLoadObject(FMetaObject& object) = 0;
 };
 //----------------------------------------------------------------------------
 class IUnloadContext {
 public:
-    virtual ~IUnloadContext() {}
+    virtual ~IUnloadContext() = default;
     virtual void OnUnloadObject(FMetaObject& object) = 0;
 };
 //----------------------------------------------------------------------------

@@ -167,7 +167,7 @@ RTTI_STRUCT_DEF(CONSTEXPR, FAnonymousStructAsTuple2);
 class FTiti : public PPE::RTTI::FMetaObject {
 public:
     FTiti() {}
-    virtual ~FTiti() {}
+    virtual ~FTiti() = default;
     RTTI_CLASS_HEADER(, FTiti, PPE::RTTI::FMetaObject);
     void Proc(int a, float b, const FString& c) { NOOP(a, b, c); }
     float Id(float f) { return f; }
@@ -223,7 +223,7 @@ RTTI_CLASS_END()
 class FToto : public RTTI::FMetaObject {
 public:
     FToto() {}
-    virtual ~FToto() {}
+    virtual ~FToto() = default;
     RTTI_CLASS_HEADER(, FToto, RTTI::FMetaObject);
 private:
     typedef TPair<int, FString> value_type;
@@ -261,7 +261,7 @@ FWD_REFPTR(Toto2);
 class FToto2 : public FToto {
 public:
     FToto2() {}
-    virtual ~FToto2() {}
+    virtual ~FToto2() = default;
     void SetParent1(FToto* parent) { _parent1 = parent; }
     const PToto& Parent1() const { return _parent1; }
     RTTI_CLASS_HEADER(, FToto2, FToto);

@@ -73,7 +73,7 @@ struct FLoggerTypes {
 //----------------------------------------------------------------------------
 class ILowLevelLogger : public FLoggerTypes {
 public:
-    virtual ~ILowLevelLogger() {}
+    virtual ~ILowLevelLogger() = default;
 
     virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) = 0;
     virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) = 0;

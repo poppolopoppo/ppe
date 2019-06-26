@@ -170,7 +170,7 @@ public:
         , _fillChar(DefaultFillChar())
     {}
 
-    ~TBasicTextWriter() {}
+    ~TBasicTextWriter() = default;
 
     _Char FillChar() const { return _fillChar; }
     _Char SetFillChar(_Char ch) {

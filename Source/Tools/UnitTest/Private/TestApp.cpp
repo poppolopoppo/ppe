@@ -26,7 +26,7 @@ FTestApp::FTestApp()
     : parent_type(L"TestApp") {
 }
 //----------------------------------------------------------------------------
-FTestApp::~FTestApp() {}
+FTestApp::~FTestApp() = default;
 //----------------------------------------------------------------------------
 void FTestApp::Start() {
     parent_type::Start();

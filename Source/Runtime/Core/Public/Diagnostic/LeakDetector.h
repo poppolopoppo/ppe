@@ -346,7 +346,7 @@ private:
         FBlockCompressedRadixTrie Buckets[NumBuckets];
 
         FBlockTracker() : NumAllocs(0) {}
-        ~FBlockTracker() {}
+        ~FBlockTracker() = default;
 
         FCompressedRadixTrie& PtrToBucket(void* ptr, uintptr_t* key) {
             Assert(ptr);
