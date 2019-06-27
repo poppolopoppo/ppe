@@ -301,6 +301,7 @@ private:
     void OnCircularReference_() {
         _circular = true;
 
+#if USE_PPE_LOGGER
         FWStringBuilder oss;
         oss << L"found a circular reference !" << Eol;
 
@@ -333,6 +334,10 @@ private:
             FLogger::EVerbosity::Error,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             oss.ToString() );
+
+#else
+        AssertNotReached();
+#endif
     }
 };
 //----------------------------------------------------------------------------
