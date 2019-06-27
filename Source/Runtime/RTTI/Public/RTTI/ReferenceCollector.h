@@ -12,7 +12,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RTTI_API FBaseReferenceCollector : private FBaseAtomVisitor {
+class FBaseReferenceCollector : private FBaseAtomVisitor {
 public:
     virtual ~FBaseReferenceCollector() = default;
 
@@ -33,7 +33,7 @@ private:
     size_t _numReferences{ 0 };
 };
 //----------------------------------------------------------------------------
-class PPE_RTTI_API FDirectReferenceCollector : public FBaseReferenceCollector {
+class FDirectReferenceCollector : public FBaseReferenceCollector {
 public:
     using FReferences = SPARSEARRAY_INSITU(MetaObject, SMetaObject);
 
@@ -52,7 +52,7 @@ private:
     FReferences* _refs{ nullptr };
 };
 //----------------------------------------------------------------------------
-class PPE_RTTI_API FLambdaReferenceCollector : public FBaseReferenceCollector {
+class FLambdaReferenceCollector : public FBaseReferenceCollector {
 public:
     using FOnReference = TFunction<bool(const IScalarTraits&, FMetaObject&)>;
 
