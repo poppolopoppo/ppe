@@ -11,6 +11,7 @@
 #include "IO/Format.h"
 #include "IO/TextWriter.h"
 #include "HAL/PlatformFile.h"
+#include "Misc/Function.h"
 #include "Time/DateTime.h"
 
 namespace PPE {

@@ -4,7 +4,7 @@
 
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
-#include "Misc/Function.h"
+#include "Misc/Function_fwd.h"
 
 namespace PPE {
 namespace Application {

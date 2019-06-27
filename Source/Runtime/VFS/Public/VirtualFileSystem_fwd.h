@@ -14,7 +14,7 @@
 #include "IO/StreamPolicies.h"
 #include "IO/StreamProvider.h"
 #include "Memory/UniquePtr.h"
-#include "Misc/Function.h"
+#include "Misc/Function_fwd.h"
 
 namespace PPE {
 

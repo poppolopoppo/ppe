@@ -12,6 +12,7 @@
 
 #include "IO/String.h"
 #include "IO/TextWriter_fwd.h"
+#include "Misc/Function.h"
 
 namespace PPE {
 namespace RTTI {

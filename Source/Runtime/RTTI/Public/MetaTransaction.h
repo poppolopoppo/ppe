@@ -6,7 +6,7 @@
 
 #include "Container/HashSet.h"
 #include "Container/Vector.h"
-#include "IO/TextWriter.h"
+#include "IO/TextWriter_fwd.h"
 #include "Memory/RefPtr.h"
 #include "Meta/PointerWFlags.h"
 

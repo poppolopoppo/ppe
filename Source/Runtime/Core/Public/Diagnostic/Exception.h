@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core_fwd.h"
+
 #include "IO/TextWriter_fwd.h"
 
 #include <exception>

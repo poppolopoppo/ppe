@@ -17,6 +17,7 @@
 #include "HAL/Windows/LastError.h"
 #include "Meta/AlignedStorage.h"
 #include "Meta/Singleton.h"
+#include "Misc/Function.h"
 #include "Thread/AtomicSpinLock.h"
 #include "Thread/ThreadContext.h"
 

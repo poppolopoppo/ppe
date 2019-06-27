@@ -13,6 +13,7 @@
 #include "IO/TextWriter.h"
 #include "HAL/PlatformLowLevelIO.h"
 #include "HAL/PlatformTime.h"
+#include "Misc/Function.h"
 #include "Time/DateTime.h"
 
 #include "HAL/Windows/LastError.h"

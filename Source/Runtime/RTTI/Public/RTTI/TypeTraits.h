@@ -7,7 +7,7 @@
 #include "HAL/PlatformMemory.h"
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
-#include "Misc/Function.h"
+#include "Misc/Function_fwd.h"
 #include "Meta/TypeTraits.h"
 
 namespace PPE {

@@ -7,6 +7,8 @@
 #include "Meta/AlignedStorage.h"
 #include "Meta/TypeTraits.h"
 
+#include "Misc/Function_fwd.h"
+
 /*
 // #TODO : special case for handling TFunction<> combinations
 //
@@ -28,15 +30,6 @@
 */
 
 namespace PPE {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// TFunction<> is using an insitu storage to avoid allocation, unlike std::function<>
-//----------------------------------------------------------------------------
-CONSTEXPR size_t GFunctionInSitu = (4 * sizeof(size_t) - sizeof(void*));
-//----------------------------------------------------------------------------
-template <typename T, size_t _InSitu = GFunctionInSitu>
-class TFunction;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -218,7 +211,7 @@ struct TFunctionTraits<_Ret(_Args...)> {
     static std::false_type is_callable_(...);
 
     template <typename T>
-    static CONSTEXPR bool is_callable_v = decltype(is_callable_<T>(0))::value;
+    static CONSTEXPR const bool is_callable_v = decltype(is_callable_<T>(0))::value;
 
     // using a dummy vtable instead of nullptr leads to much simpler codegen
     static CONSTEXPR const vtable_type dummy_vtable = vtable_type::phony(nullptr);
@@ -577,12 +570,12 @@ CONSTEXPR auto MakeFunction(_Extra&&... extra) NOEXCEPT {
 //----------------------------------------------------------------------------
 struct FNoFunction {
     template <typename T, size_t N>
-    CONSTEXPR operator TFunction<T, N> () NOEXCEPT {
+    CONSTEXPR operator TFunction<T, N> () const NOEXCEPT {
         return TFunction<T, N>{};
     }
 };
 //----------------------------------------------------------------------------
-CONSTEXPR FNoFunction NoFunction;
+CONSTEXPR const FNoFunction NoFunction;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

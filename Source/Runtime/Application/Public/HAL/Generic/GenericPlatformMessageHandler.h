@@ -3,7 +3,7 @@
 #include "Application_fwd.h"
 
 #include "Container/Vector.h"
-#include "Misc/Function.h"
+#include "Misc/Function_fwd.h"
 
 namespace PPE {
 namespace Application {

@@ -73,18 +73,7 @@ public: // must be defined for every platform
         return ::modff(f, intPart);
     }
 
-    static FORCE_INLINE float Fmod(float x, float y) NOEXCEPT {
-        AssertRelease(::fabsf(y) > 1.e-8f);
-
-        float i = y * TruncToFloat(x / y);
-
-        // Rounding and imprecision could cause IntPortion to exceed X and cause the result to be outside the expected range.
-        // For example Fmod(55.8, 9.3) would result in a very small negative value!
-        if (::fabsf(i) > ::fabsf(x))
-            i = x;
-
-        return (x - i);
-    }
+    static float Fmod(float x, float y) NOEXCEPT;
 
     //------------------------------------------------------------------------
     // Double helpers

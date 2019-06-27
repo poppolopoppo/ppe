@@ -4,6 +4,7 @@
 
 #include "HAL/PlatformWindow.h"
 #include "HAL/PlatformNotification.h"
+#include "Misc/Function.h"
 #include "Window/WindowBase.h"
 #include "Window/WindowMain.h"
 

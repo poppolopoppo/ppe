@@ -104,20 +104,21 @@ public:
         std::swap(reinterpret_cast<u32&>(lhs), reinterpret_cast<u32&>(rhs));
     }
 
-    template <typename _Char>
-    static TBasicTextWriter<_Char>& DontPad(TBasicTextWriter<_Char>& s);
-    template <typename _Char>
-    static TBasicTextManipulator<_Char> Pad(EPadding padding, size_t width = INDEX_NONE, _Char fill = _Char());
-    template <typename _Char>
-    static TBasicTextManipulator<_Char> PadCenter(size_t width = INDEX_NONE, _Char fill = _Char());
-    template <typename _Char>
-    static TBasicTextManipulator<_Char> PadLeft(size_t width = INDEX_NONE, _Char fill = _Char());
-    template <typename _Char>
-    static TBasicTextManipulator<_Char> PadRight(size_t width = INDEX_NONE, _Char fill = _Char());
-    template <typename _Char>
-    static TBasicTextManipulator<_Char> Trunc(size_t width = INDEX_NONE, _Char fill = _Char());
-    template <typename _Char>
-    static TBasicTextManipulator<_Char> SetFill(_Char ch);
+    static FTextWriter& DontPad(FTextWriter& s);
+    static FTextManipulator Pad(EPadding padding, size_t width = INDEX_NONE, char fill = char());
+    static FTextManipulator PadCenter(size_t width = INDEX_NONE, char fill = char());
+    static FTextManipulator PadLeft(size_t width = INDEX_NONE, char fill = char());
+    static FTextManipulator PadRight(size_t width = INDEX_NONE, char fill = char());
+    static FTextManipulator Trunc(size_t width = INDEX_NONE, char fill = char());
+    static FTextManipulator SetFill(char ch);
+
+    static FWTextWriter& DontPad(FWTextWriter& s);
+    static FWTextManipulator Pad(EPadding padding, size_t width = INDEX_NONE, wchar_t fill = wchar_t());
+    static FWTextManipulator PadCenter(size_t width = INDEX_NONE, wchar_t fill = wchar_t());
+    static FWTextManipulator PadLeft(size_t width = INDEX_NONE, wchar_t fill = wchar_t());
+    static FWTextManipulator PadRight(size_t width = INDEX_NONE, wchar_t fill = wchar_t());
+    static FWTextManipulator Trunc(size_t width = INDEX_NONE, wchar_t fill = wchar_t());
+    static FWTextManipulator SetFill(wchar_t ch);
 
     struct FFloat {
         EFloat Float;
@@ -199,10 +200,6 @@ public:
     void Write(void* v);
     void Write(const _Char* v);
     void Write(const TBasicStringView<_Char>& v);
-
-    using FManipulator = TBasicTextManipulator<_Char>;
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, const FManipulator& f) { return f(w); }
-    inline friend TBasicTextWriter& operator <<(TBasicTextWriter& w, TBasicTextWriter& (*f)(TBasicTextWriter&)) { return f(w); }
 
     inline friend void swap(TBasicTextWriter& lhs, TBasicTextWriter& rhs) {
         using std::swap;
@@ -364,6 +361,14 @@ TBasicTextWriter<_Char>& operator >>(TBasicTextWriter<_Char>& s, FTextFormat::EM
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& writer, const FTextManipulator& manip);
+inline FTextWriter& operator <<(FTextWriter& w, FTextWriter& (*f)(FTextWriter&)) { return f(w); }
+//----------------------------------------------------------------------------
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& writer, const FWTextManipulator& manip);
+inline FWTextWriter& operator <<(FWTextWriter& w, FWTextWriter& (*f)(FWTextWriter&)) { return f(w); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Char>
 class TBasicFixedSizeTextWriter :
     private FMemoryViewWriter
@@ -412,5 +417,8 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::TFunction<PPE::TBasicTextWriter<char>& (PPE::TBasicTextWriter<char>&)>;
+EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) PPE::TFunction<PPE::TBasicTextWriter<wchar_t>& (PPE::TBasicTextWriter<wchar_t>&)>;
 
 #include "IO/TextWriter-inl.h"

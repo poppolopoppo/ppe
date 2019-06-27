@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Memory/HashFunctions.h"
+#include "Meta/TypeTraits.h"
 
 #include <functional>
 #include <tuple>

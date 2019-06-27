@@ -9,6 +9,7 @@
 #include "Memory/MemoryTracking.h"
 #include "Meta/Singleton.h"
 #include "Meta/Utility.h"
+#include "Misc/Function_fwd.h"
 
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment

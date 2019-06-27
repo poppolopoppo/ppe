@@ -6,7 +6,7 @@
 #include "IO/Regexp.h"
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
-#include "Misc/Function.h"
+#include "Misc/Function_fwd.h"
 
 #include "IO/StreamPolicies.h"
 #include "IO/StreamProvider.h"

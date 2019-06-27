@@ -4,7 +4,7 @@
 
 #include "IO/StreamPolicies.h"
 #include "IO/String_fwd.h"
-#include "Misc/Function.h"
+#include "Misc/Function_fwd.h"
 #include "Time/Timestamp.h"
 
 #include <initializer_list>

@@ -6,6 +6,7 @@
 
 #include "HAL/Windows/WindowsWindow.h"
 #include "HAL/PlatformIncludes.h"
+#include "Misc/Function.h"
 
 namespace PPE {
 namespace Application {

@@ -15,10 +15,10 @@
 
 #define _FWD_REFPTR_IMPL(T, _PREFIX)                                    \
     class CONCAT(_PREFIX, T);                                           \
-    typedef PPE::TRefPtr<CONCAT(_PREFIX, T)>           CONCAT(P,  T);  \
-    typedef PPE::TRefPtr<const CONCAT(_PREFIX, T)>     CONCAT(PC, T);  \
-    typedef PPE::TSafePtr<CONCAT(_PREFIX, T)>          CONCAT(S,  T);  \
-    typedef PPE::TSafePtr<const CONCAT(_PREFIX, T)>    CONCAT(SC, T)
+    typedef ::PPE::TRefPtr<CONCAT(_PREFIX, T)>           CONCAT(P,  T); \
+    typedef ::PPE::TRefPtr<const CONCAT(_PREFIX, T)>     CONCAT(PC, T); \
+    typedef ::PPE::TSafePtr<CONCAT(_PREFIX, T)>          CONCAT(S,  T); \
+    typedef ::PPE::TSafePtr<const CONCAT(_PREFIX, T)>    CONCAT(SC, T)
 
 #define FWD_REFPTR(T_WITHOUT_F)             _FWD_REFPTR_IMPL(T_WITHOUT_F, F)
 #define FWD_INTERFACE_REFPTR(T_WITHOUT_I)   _FWD_REFPTR_IMPL(T_WITHOUT_I, I)

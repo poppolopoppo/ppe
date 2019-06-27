@@ -5,8 +5,12 @@
 #include "IO/StreamProvider.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
+#include "Misc/Function.h"
 
 #include "double-conversion-external.h"
+
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::TFunction<PPE::TBasicTextWriter<char>& (PPE::TBasicTextWriter<char>&)>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::TFunction<PPE::TBasicTextWriter<wchar_t>& (PPE::TBasicTextWriter<wchar_t>&)>;
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -398,6 +402,131 @@ template <> void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t
 //----------------------------------------------------------------------------
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicTextWriter<char>;
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicTextWriter<wchar_t>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& TextFormat_DontPad_(TBasicTextWriter<_Char>& s) {
+    s.Format().SetPadding(FTextFormat::Padding_None);
+    return s;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextManipulator<_Char> TextFormat_Pad_(FTextFormat::EPadding padding, size_t width, _Char fill) {
+    return [padding, width, fill](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char> & {
+        s.Format().SetPadding(padding);
+
+        if (INDEX_NONE != width)
+            s.Format().SetWidth(width);
+
+        if (_Char() != fill)
+            s.SetFillChar(fill);
+
+        return s;
+    };
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextManipulator<_Char> TextFormat_PadCenter_(size_t width, _Char fill) {
+    return Pad(FTextFormat::Padding_Center, width, fill);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextManipulator<_Char> TextFormat_PadLeft_(size_t width, _Char fill) {
+    return Pad(FTextFormat::Padding_Left, width, fill);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextManipulator<_Char> TextFormat_PadRight_(size_t width, _Char fill) {
+    return Pad(FTextFormat::Padding_Right, width, fill);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextManipulator<_Char> TextFormat_Trunc_(size_t width, _Char fill) {
+    return Pad(FTextFormat::Padding_Truncate, width, fill);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextManipulator<_Char> TextFormat_SetFill_(_Char ch) {
+    return [ch](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char> & {
+        s.SetFillChar(ch);
+        return s;
+    };
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& FTextFormat::DontPad(FTextWriter& s) {
+    return TextFormat_DontPad_(s);
+}
+//----------------------------------------------------------------------------
+FTextManipulator FTextFormat::Pad(EPadding padding, size_t width, char fill) {
+    return TextFormat_Pad_(padding, width, fill);
+}
+//----------------------------------------------------------------------------
+FTextManipulator FTextFormat::PadCenter(size_t width, char fill) {
+    return TextFormat_Pad_(Padding_Center, width, fill);
+}
+//----------------------------------------------------------------------------
+FTextManipulator FTextFormat::PadLeft(size_t width, char fill) {
+    return TextFormat_Pad_(Padding_Left, width, fill);
+}
+//----------------------------------------------------------------------------
+FTextManipulator FTextFormat::PadRight(size_t width, char fill) {
+    return TextFormat_Pad_(Padding_Right, width, fill);
+}
+//----------------------------------------------------------------------------
+FTextManipulator FTextFormat::Trunc(size_t width, char fill) {
+    return TextFormat_Pad_(Padding_Truncate, width, fill);
+}
+//----------------------------------------------------------------------------
+FTextManipulator FTextFormat::SetFill(char ch) {
+    return TextFormat_SetFill_(ch);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FWTextWriter& FTextFormat::DontPad(FWTextWriter& s) {
+    return TextFormat_DontPad_(s);
+}
+//----------------------------------------------------------------------------
+FWTextManipulator FTextFormat::Pad(EPadding padding, size_t width, wchar_t fill) {
+    return TextFormat_Pad_(padding, width, fill);
+}
+//----------------------------------------------------------------------------
+FWTextManipulator FTextFormat::PadCenter(size_t width, wchar_t fill) {
+    return TextFormat_Pad_(Padding_Center, width, fill);
+}
+//----------------------------------------------------------------------------
+FWTextManipulator FTextFormat::PadLeft(size_t width, wchar_t fill) {
+    return TextFormat_Pad_(Padding_Left, width, fill);
+}
+//----------------------------------------------------------------------------
+FWTextManipulator FTextFormat::PadRight(size_t width, wchar_t fill) {
+    return TextFormat_Pad_(Padding_Right, width, fill);
+}
+//----------------------------------------------------------------------------
+FWTextManipulator FTextFormat::Trunc(size_t width, wchar_t fill) {
+    return TextFormat_Pad_(Padding_Truncate, width, fill);
+}
+//----------------------------------------------------------------------------
+FWTextManipulator FTextFormat::SetFill(wchar_t ch) {
+    return TextFormat_SetFill_(ch);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& writer, const FTextManipulator& manip) {
+    return manip(writer);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& writer, const FWTextManipulator& manip) {
+    return manip(writer);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

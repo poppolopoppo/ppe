@@ -38,12 +38,12 @@ public:
     FEventHandle(const FEventHandle&) = delete;
     FEventHandle& operator =(const FEventHandle&) = delete;
 
-    FEventHandle(FEventHandle&& rvalue)
+    FEventHandle(FEventHandle&& rvalue) NOEXCEPT
         : FEventHandle() {
         Swap(rvalue);
     }
 
-    FEventHandle& operator =(FEventHandle&& rvalue) {
+    FEventHandle& operator =(FEventHandle&& rvalue) NOEXCEPT {
         Assert(0 == _id); // don't support assigning to initialized handle !
         Swap(rvalue);
         return (*this);

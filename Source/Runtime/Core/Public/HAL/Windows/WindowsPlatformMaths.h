@@ -4,6 +4,8 @@
 
 #ifdef PLATFORM_WINDOWS
 
+#include "Meta/Assert.h"
+
 #include <cmath>
 #include <immintrin.h>
 #include <xmmintrin.h>
