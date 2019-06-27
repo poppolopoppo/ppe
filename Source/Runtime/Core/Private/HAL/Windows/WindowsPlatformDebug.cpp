@@ -58,11 +58,20 @@ void FWindowsPlatformDebug::SetThreadDebugName(const char* name) {
 PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 void FWindowsPlatformDebug::BeginNamedEvent(u32 uid, const char* name) {
+#if USE_PPE_PLATFORM_PROFILER
     FPlatformProfiler::MarkAndComment(uid, name);
+#else
+    UNUSED(uid);
+    UNUSED(name);
+#endif
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformDebug::EndNamedEvent(u32 uid) {
+#if USE_PPE_PLATFORM_PROFILER
     FPlatformProfiler::Mark(uid);
+#else
+    UNUSED(uid);
+#endif
 }
 //----------------------------------------------------------------------------
 // Memory tracking

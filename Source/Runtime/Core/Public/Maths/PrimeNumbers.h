@@ -80,7 +80,7 @@ private:
 };
 //----------------------------------------------------------------------------
 PPE_ASSUME_TEMPLATE_AS_POD(
-    COMMA_PROTECT(TPrimeNumberProduct<_Tag, _Large>),
+    COMMA_PROTECT(TPrimeNumberProduct<_Tag COMMA _Large>),
     typename _Tag, bool _Large)
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Tag>

@@ -218,7 +218,7 @@ private:
 };
 //----------------------------------------------------------------------------
 PPE_ASSUME_TEMPLATE_AS_POD(
-    COMMA_PROTECT(TToken<_Tag, _Char, _Sensitive, _TokenTraits>),
+    COMMA_PROTECT(TToken<_Tag COMMA _Char COMMA _Sensitive COMMA _TokenTraits>),
     typename _Tag,
     typename _Char,
     ECase    _Sensitive,
