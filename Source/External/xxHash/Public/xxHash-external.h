@@ -39,7 +39,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'uint64_t' to '
 
 #ifndef EXPORT_PPE_EXTERNAL_XXHASH
 
-#   include "External/xxHash/git/xxhash.h"
+#   include "External/xxHash/xxHash.git/xxhash.h"
 
 // clean the mess done by xxHash-config.h :
 

@@ -6,18 +6,18 @@
     .ModuleFiles =
     {
         'Public/double-conversion-external.h',
-        'git/double-conversion/bignum.h',
-        'git/double-conversion/bignum-dtoa.h',
-        'git/double-conversion/cached-powers.h',
-        'git/double-conversion/diy-fp.h',
-        'git/double-conversion/double-conversion.h',
-        'git/double-conversion/double-to-string.h',
-        'git/double-conversion/fast-dtoa.h',
-        'git/double-conversion/fixed-dtoa.h',
-        'git/double-conversion/ieee.h',
-        'git/double-conversion/string-to-double.h',
-        'git/double-conversion/strtod.h',
-        'git/double-conversion/utils.h',
+        'double-conversion.git/double-conversion/bignum.h',
+        'double-conversion.git/double-conversion/bignum-dtoa.h',
+        'double-conversion.git/double-conversion/cached-powers.h',
+        'double-conversion.git/double-conversion/diy-fp.h',
+        'double-conversion.git/double-conversion/double-conversion.h',
+        'double-conversion.git/double-conversion/double-to-string.h',
+        'double-conversion.git/double-conversion/fast-dtoa.h',
+        'double-conversion.git/double-conversion/fixed-dtoa.h',
+        'double-conversion.git/double-conversion/ieee.h',
+        'double-conversion.git/double-conversion/string-to-double.h',
+        'double-conversion.git/double-conversion/strtod.h',
+        'double-conversion.git/double-conversion/utils.h',
     }
     .ModuleForcedIncludes =
     {
@@ -25,14 +25,14 @@
     }
     .ModuleIsolatedFiles =
     {
-        'git/double-conversion/bignum.cc',
-        'git/double-conversion/bignum-dtoa.cc',
-        'git/double-conversion/cached-powers.cc',
-        'git/double-conversion/double-to-string.cc',
-        'git/double-conversion/fast-dtoa.cc',
-        'git/double-conversion/fixed-dtoa.cc',
-        'git/double-conversion/string-to-double.cc',
-        'git/double-conversion/strtod.cc',
+        'double-conversion.git/double-conversion/bignum.cc',
+        'double-conversion.git/double-conversion/bignum-dtoa.cc',
+        'double-conversion.git/double-conversion/cached-powers.cc',
+        'double-conversion.git/double-conversion/double-to-string.cc',
+        'double-conversion.git/double-conversion/fast-dtoa.cc',
+        'double-conversion.git/double-conversion/fixed-dtoa.cc',
+        'double-conversion.git/double-conversion/string-to-double.cc',
+        'double-conversion.git/double-conversion/strtod.cc',
     }
     .ModuleIncludePaths =
     {

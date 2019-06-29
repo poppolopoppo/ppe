@@ -6,7 +6,7 @@
     .ModuleFiles =
     {
         'Public/xxHash-external.h',
-        'git/xxhash.h',
+        'xxHash.git/xxhash.h',
     }
     .ModuleForcedIncludes =
     {

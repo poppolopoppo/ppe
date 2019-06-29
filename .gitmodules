@@ -1,26 +1,26 @@
 [submodule "External/double-conversion"]
-    path = Source/External/double-conversion/git
+	path = Source/External/double-conversion/double-conversion.git
     url = https://github.com/google/double-conversion.git
     shallow = true
 [submodule "External/farmhash"]
-    path = Source/External/farmhash/git
+	path = Source/External/farmhash/farmhash.git
     url = https://github.com/google/farmhash.git
     shallow = true
 [submodule "External/lz4"]
-    path = Source/External/lz4/git
+	path = Source/External/lz4/lz4.git
     url = https://github.com/lz4/lz4.git
     shallow = true
 [submodule "External/renderdoc"]
-    path = Source/External/renderdoc/git
+	path = Source/External/renderdoc/renderdoc.git
     url = https://github.com/baldurk/renderdoc.git
     branch = v1.x
     shallow = true
 [submodule "External/stb"]
-    path = Source/External/stb/git
+	path = Source/External/stb/stb.git
     url = https://github.com/nothings/stb.git
     shallow = true
 [submodule "External/xxHash"]
-    path = Source/External/xxHash/git
+	path = Source/External/xxHash/xxHash.git
     url = https://github.com/Cyan4973/xxHash.git
     branch = dev
     shallow = true

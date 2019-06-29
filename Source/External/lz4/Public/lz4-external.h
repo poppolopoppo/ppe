@@ -45,8 +45,8 @@ PRAGMA_MSVC_WARNING_DISABLE(6239) // (<non-zero constant> && <expression>) alway
 
 #ifndef EXPORT_PPE_EXTERNAL_LZ4
 
-#   include "External/lz4/git/lib/lz4.h"
-#   include "External/lz4/git/lib/lz4hc.h"
+#   include "External/lz4/lz4.git/lib/lz4.h"
+#   include "External/lz4/lz4.git/lib/lz4hc.h"
 
 // clean the mess done by lz4-config.h :
 

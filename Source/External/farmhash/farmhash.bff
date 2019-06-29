@@ -6,7 +6,7 @@
     .ModuleFiles =
     {
         'Public/farmhash-external.h',
-        'git/src/farmhash.h',
+        'farmhash.git/src/farmhash.h',
     }
     .ModuleForcedIncludes =
     {
@@ -14,7 +14,7 @@
     }
     .ModuleIsolatedFiles =
     {
-        'git/src/farmhash.cc',
+        'farmhash.git/src/farmhash.cc',
     }
     #include "$BuildPath$/Templates/Module.bff"
 }

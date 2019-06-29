@@ -6,9 +6,9 @@
     .ModuleFiles =
     {
         'Public/lz4-external.h',
-        'git/lib/lz4.h',
-        'git/lib/lz4hc.h',
-        'git/lib/lz4opt.h',
+        'lz4.git/lib/lz4.h',
+        'lz4.git/lib/lz4hc.h',
+        'lz4.git/lib/lz4opt.h',
     }
     .ModuleForcedIncludes =
     {
@@ -16,8 +16,8 @@
     }
     .ModuleIsolatedFiles =
     {
-        'git/lib/lz4.c',
-        'git/lib/lz4hc.c',
+        'lz4.git/lib/lz4.c',
+        'lz4.git/lib/lz4hc.c',
     }
     #include "$BuildPath$/Templates/Module.bff"
 }

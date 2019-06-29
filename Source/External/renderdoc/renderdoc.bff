@@ -6,7 +6,7 @@
     .ModuleFiles =
     {
         'Public/renderdoc-external.h',
-        'git/renderdoc/api/app/renderdoc.h',
+        'renderdoc.git/renderdoc/api/app/renderdoc.h',
     }
     .ModuleIsolatedFiles =
     {
