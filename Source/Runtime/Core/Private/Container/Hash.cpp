@@ -2,6 +2,7 @@
 
 #include "Container/Hash.h"
 
+#include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 
 namespace PPE {
@@ -9,11 +10,17 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, hash_t h) {
-    return oss << '#' << (const void*)h._value;
+    return *oss.FormatScope()
+        << '#'
+        << FTextFormat::Hexadecimal
+        << Fmt::PadLeft(h._value, sizeof(hash_t) * 2, '0');
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, hash_t h) {
-    return oss << L'#' << (const void*)h._value;
+    return *oss.FormatScope()
+        << L'#'
+        << FTextFormat::Hexadecimal
+        << Fmt::PadLeft(h._value, sizeof(hash_t) * 2, L'0');
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
