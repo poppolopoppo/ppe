@@ -68,6 +68,7 @@ public:
 
     using typename FMallocator::is_always_equal;
 
+    using typename FMallocator::has_maxsize;
     using typename FMallocator::has_owns;
     using typename FMallocator::has_reallocate;
     using typename FMallocator::has_acquire;
