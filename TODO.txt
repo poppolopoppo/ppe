@@ -1,11 +1,8 @@
 # PPE TODO LIST
 
-- use ETW allocation events to integrate inside diagnostic tools :)
-  https://docs.microsoft.com/fr-fr/visualstudio/profiling/custom-native-etw-heap-events?view=vs-2019
-
-- Check efficiency of mipmaps de-commit heuristic
-    -> avoiding switching to newest chunk might help
-    -> use the fragmentation report
+- Optimize THashTable<> by using a mix between THopscopScotch<> and SIMD :
+    -> load (States+aligned_first) instead of using unaligned load at (States+first)
+    -> used loaded bucket for insertion, after and *before* first
 
 - Add a large mipmap allocator inside FMallocBinned in addition to current medium mipmaps
     -> current medium mips can't allocate more than 2mb, and virtual memory cache is weak (concurrency bottleneck)
