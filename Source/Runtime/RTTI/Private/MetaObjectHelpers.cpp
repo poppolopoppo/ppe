@@ -493,6 +493,7 @@ private:
             oss.ToString() );
 
 #else
+        UNUSED(ref);
         AssertNotReached();
 #endif
     }
