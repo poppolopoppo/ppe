@@ -345,7 +345,7 @@ void* TNativeTypeTraits<PMetaObject>::Cast(void* data, const PTypeTraits& dst) c
     \
     /* Global helper for MakeTraits<T>() */ \
     PTypeTraits Traits(Meta::TType<T>) NOEXCEPT { \
-        return PTypeTraits::Make< TNativeTypeTraits<T> >(); \
+        return PTypeTraits::MakeConstexpr< TNativeTypeTraits<T> >(); \
     }
 
 FOREACH_RTTI_NATIVETYPES(DEF_RTTI_NATIVETYPE_TRAITS)
@@ -482,12 +482,12 @@ namespace {
 template <typename T, size_t _Dim>
 CONSTEXPR PTypeTraits StaticArrayTraits_(Meta::TType<TScalarVector<T, _Dim>>) NOEXCEPT {
     STATIC_ASSERT(sizeof(TArray<T, _Dim>) == sizeof(TScalarVector<T, _Dim>));
-    return PTypeTraits::Make< TStaticArrayTraits<T, _Dim> >();
+    return PTypeTraits::MakeDynamic< TStaticArrayTraits<T, _Dim> >();
 }
 template <typename T, size_t _Width, size_t _Height>
 CONSTEXPR PTypeTraits StaticArrayTraits_(Meta::TType<TScalarMatrix<T, _Width, _Height>>) NOEXCEPT {
     STATIC_ASSERT(sizeof(TArray<T, _Width * _Height>) == sizeof(TScalarMatrix<T, _Width, _Height>));
-    return PTypeTraits::Make< TStaticArrayTraits<T, _Width * _Height> >();
+    return PTypeTraits::MakeDynamic< TStaticArrayTraits<T, _Width * _Height> >();
 }
 } //!namespace
 //----------------------------------------------------------------------------
@@ -505,7 +505,7 @@ PTypeTraits Traits(Meta::TType<word4> t)    NOEXCEPT { return StaticArrayTraits_
 PTypeTraits Traits(Meta::TType<uword2> t)   NOEXCEPT { return StaticArrayTraits_(t); }
 PTypeTraits Traits(Meta::TType<uword3> t)   NOEXCEPT { return StaticArrayTraits_(t); }
 #ifdef _MSC_VER // workaround a weird compiler bug, #TODO check after a few updates if this is still needed
-PTypeTraits Traits(Meta::TType<uword4>)     NOEXCEPT { return PTypeTraits::Make< TStaticArrayTraits<uword, 4> >(); }
+PTypeTraits Traits(Meta::TType<uword4>)     NOEXCEPT { return PTypeTraits::MakeDynamic< TStaticArrayTraits<uword, 4> >(); }
 #else
 PTypeTraits Traits(Meta::TType<uword4> t)   NOEXCEPT { return StaticArrayTraits_(t); }
 #endif
@@ -519,7 +519,7 @@ PTypeTraits Traits(Meta::TType<float4x4> t) NOEXCEPT { return StaticArrayTraits_
 //----------------------------------------------------------------------------
 PTypeTraits Traits(Meta::TType<FQuaternion>) NOEXCEPT {
     STATIC_ASSERT(sizeof(FQuaternion) == sizeof(TArray<float, 4>));
-    return PTypeTraits::Make< TStaticArrayTraits<float, 4> >();
+    return PTypeTraits::MakeDynamic< TStaticArrayTraits<float, 4> >();
 }
 //----------------------------------------------------------------------------
 PTypeTraits Traits(Meta::TType<FTransform>) NOEXCEPT {

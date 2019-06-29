@@ -218,7 +218,7 @@ public: // ITupleTraits
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
 PTypeTraits Traits(Meta::TType< TPair<_First, _Second> >) noexcept {
-    return PTypeTraits::Make< TPairTraits<_First, _Second> >();
+    return PTypeTraits::MakeDynamic< TPairTraits<_First, _Second> >();
 }
 //----------------------------------------------------------------------------
 template <typename _First, typename _Second>
@@ -358,7 +358,7 @@ private:
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
 PTypeTraits Traits(Meta::TType< TTuple<_Arg0, _Args...> >) noexcept {
-    return PTypeTraits::Make< TTupleTraits<_Arg0, _Args...> >();
+    return PTypeTraits::MakeDynamic< TTupleTraits<_Arg0, _Args...> >();
 }
 //----------------------------------------------------------------------------
 template <typename... _Args>

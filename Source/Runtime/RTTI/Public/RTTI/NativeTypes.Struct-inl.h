@@ -44,7 +44,7 @@ private:
 //----------------------------------------------------------------------------
 template <typename T, typename _Tuple = decltype(tie_as_tuple(std::declval<T&>())) >
 CONSTEXPR PTypeTraits MakeStruct(Meta::TType< T >) NOEXCEPT {
-    return PTypeTraits::Make< TStructAsTupleTraits<T, _Tuple> >();
+    return PTypeTraits::MakeDynamic< TStructAsTupleTraits<T, _Tuple> >();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>

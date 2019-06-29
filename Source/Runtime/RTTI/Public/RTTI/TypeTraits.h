@@ -8,6 +8,7 @@
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
 #include "Misc/Function_fwd.h"
+#include "Memory/InSituPtr.h"
 #include "Meta/TypeTraits.h"
 
 namespace PPE {
@@ -29,54 +30,15 @@ class IAtomVisitor;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace details {
-template <typename T> struct TTraitsHolder {
-static const T GInstance;
-};
-template <typename T>
-const T TTraitsHolder<T>::GInstance;
-} //!details
-//----------------------------------------------------------------------------
-struct PPE_RTTI_API PTypeTraits {
-    const ITypeTraits* Traits;
-
-    explicit PTypeTraits(Meta::FNoInit) NOEXCEPT {}
-
-    CONSTEXPR explicit PTypeTraits(const ITypeTraits* traits = nullptr) NOEXCEPT : Traits(traits) {}
-
-    bool Valid() const { return (nullptr != Traits); }
-    PPE_FAKEBOOL_OPERATOR_DECL() { return Traits; }
-
-    const ITypeTraits* get() const { return Traits; }
-
-    const ITypeTraits& operator *() const { Assert_NoAssume(Valid()); return *Traits; }
-    const ITypeTraits* operator ->() const { Assert_NoAssume(Valid()); return Traits; }
-
-    inline friend bool operator ==(const PTypeTraits& lhs, const PTypeTraits& rhs) {
-        return (lhs.Traits == rhs.Traits);
-    }
-    inline friend bool operator !=(const PTypeTraits& lhs, const PTypeTraits& rhs) {
-        return not operator ==(lhs, rhs);
-    }
-
-    inline friend void swap(PTypeTraits& lhs, PTypeTraits& rhs) {
-        std::swap(lhs.Traits, rhs.Traits);
-    }
-
-    void CreateRawCopy_AssumeNotInitialized(const ITypeTraits& traits) {
-        Traits = &traits;
-    }
-
-    /** creates type traits at compile time, no overhead at runtime **/
-    template <typename T, class = Meta::TEnableIf<std::is_base_of_v<ITypeTraits, T>> >
-    static CONSTEXPR PTypeTraits Make() NOEXCEPT {
-        return PTypeTraits{ &details::TTraitsHolder<T>::GInstance };
-    }
-};
+struct PTypeTraits;
 //----------------------------------------------------------------------------
 class PPE_RTTI_API ITypeTraits {
 public:
+    // !! NON VIRTUAL DTOR !!
+    // There's nothing to destroy, and it disables constexpr semantics
+    /*
     virtual ~ITypeTraits() = default;
+    */
 
     virtual void Construct(void* data) const = 0;
     virtual void ConstructCopy(void* data, const void* other) const = 0;
@@ -144,6 +106,46 @@ private:
     FSizeAndFlags _sizeAndFlags;
 };
 STATIC_ASSERT(sizeof(ITypeTraits) == sizeof(i64)+sizeof(intptr_t));
+//----------------------------------------------------------------------------
+struct PTypeTraits {
+    const ITypeTraits* PTraits;
+
+    explicit PTypeTraits(Meta::FNoInit) NOEXCEPT {}
+    CONSTEXPR PTypeTraits() NOEXCEPT : PTraits(nullptr) {}
+    CONSTEXPR explicit PTypeTraits(const ITypeTraits* cpy) NOEXCEPT : PTraits(cpy) {}
+
+    bool Valid() const { return (!!PTraits); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return PTraits; }
+
+    const ITypeTraits& operator *() const { Assert_NoAssume(Valid()); return *PTraits; }
+    const ITypeTraits* operator ->() const { Assert_NoAssume(Valid()); return PTraits; }
+
+    inline friend bool operator ==(const PTypeTraits& lhs, const PTypeTraits& rhs) {
+        return (lhs.PTraits == rhs.PTraits);
+    }
+    inline friend bool operator !=(const PTypeTraits& lhs, const PTypeTraits& rhs) {
+        return (not operator ==(lhs, rhs));
+    }
+
+    inline friend void swap(PTypeTraits& lhs, PTypeTraits& rhs) {
+        std::swap(lhs.PTraits, rhs.PTraits);
+    }
+
+    void CreateRawCopy_AssumeNotInitialized(const ITypeTraits& traits) {
+        PTraits = &traits;
+    }
+
+    template <typename T, class = Meta::TEnableIf<std::is_base_of_v<ITypeTraits, T>> >
+    static CONSTEXPR PTypeTraits MakeConstexpr() NOEXCEPT {
+        static CONSTEXPR const T GTraitsConstexpr;
+        return PTypeTraits{ &GTraitsConstexpr };
+    }
+    template <typename T, class = Meta::TEnableIf<std::is_base_of_v<ITypeTraits, T>> >
+    static PTypeTraits MakeDynamic() NOEXCEPT {
+        ONE_TIME_DEFAULT_INITIALIZE(const T, GTraitsDynamic);
+        return PTypeTraits{ &GTraitsDynamic };
+    }
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

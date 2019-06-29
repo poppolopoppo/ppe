@@ -136,8 +136,8 @@ public: // ITypeTraits
 };
 //----------------------------------------------------------------------------
 template <typename _Enum>
-PTypeTraits Traits(Meta::TType< _Enum >, Meta::TEnableIf< std::is_enum_v<_Enum> >* = nullptr) NOEXCEPT {
-    return PTypeTraits::Make< TEnumTraits<_Enum> >();
+CONSTEXPR PTypeTraits Traits(Meta::TType< _Enum >, Meta::TEnableIf< std::is_enum_v<_Enum> >* = nullptr) NOEXCEPT {
+    return PTypeTraits::MakeConstexpr< TEnumTraits<_Enum> >();
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -247,8 +247,8 @@ public: // ITypeTraits
 };
 //----------------------------------------------------------------------------
 template <typename _Class, typename = Meta::TEnableIf< std::is_base_of_v<FMetaObject, _Class> > >
-PTypeTraits Traits(Meta::TType< TRefPtr<_Class> >) NOEXCEPT {
-    return PTypeTraits::Make< TObjectTraits<Meta::TDecay<_Class>> >();
+CONSTEXPR PTypeTraits Traits(Meta::TType< TRefPtr<_Class> >) NOEXCEPT {
+    return PTypeTraits::MakeConstexpr< TObjectTraits<Meta::TDecay<_Class>> >();
 }
 //----------------------------------------------------------------------------
 template <typename T>

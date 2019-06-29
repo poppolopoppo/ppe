@@ -211,7 +211,7 @@ public: // IListTraits
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 PTypeTraits Traits(Meta::TType< TVector<T, _Allocator> >) noexcept {
-    return PTypeTraits::Make< TVectorTraits<T, _Allocator> >();
+    return PTypeTraits::MakeDynamic< TVectorTraits<T, _Allocator> >();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>

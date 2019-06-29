@@ -205,7 +205,7 @@ public: // IDicoTraits:
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 PTypeTraits Traits(Meta::TType< TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >) noexcept {
-    return PTypeTraits::Make< TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector> >();
+    return PTypeTraits::MakeDynamic< TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector> >();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
@@ -359,7 +359,7 @@ public: // IDicoTraits:
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 PTypeTraits Traits(Meta::TType< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >) noexcept {
-    return PTypeTraits::Make< THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator> >();
+    return PTypeTraits::MakeDynamic< THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator> >();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
