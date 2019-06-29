@@ -101,6 +101,25 @@ struct TPointerWFlags<void> {
     }
 };
 //----------------------------------------------------------------------------
+template <>
+struct TPointerWFlags<const void> {
+    POINTERWFLAGS_BASE_DEF();
+
+    FORCE_INLINE void* Get() const { return RawPointer(); }
+    FORCE_INLINE void Set(const void* ptr) { SetRawPointer(ptr); }
+
+    void Reset(const void* p, bool flag0 = false, bool flag1 = false) {
+        SetRawPointer(p);
+        SetFlag0(flag0);
+        SetFlag1(flag1);
+    }
+
+    void Reset(const void* p, uintptr_t flag01) {
+        SetRawPointer(p);
+        SetFlag01(flag01);
+    }
+};
+//----------------------------------------------------------------------------
 #undef POINTERWFLAGS_BASE_DEF
 //----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(TPointerWFlags<int>) == sizeof(void*));
