@@ -170,6 +170,17 @@ static bool PromoteValue_(const FName& name, const FAtom& dst) {
     return false;
 }
 //----------------------------------------------------------------------------
+template <typename T>
+static CONSTEXPR ETypeFlags MakeTypeFlags_(Meta::TType<T>) NOEXCEPT {
+    return (ETypeFlags::Scalar | ETypeFlags::Native |
+        (Meta::TIsPod<T>::value ? ETypeFlags::POD : ETypeFlags(0)) |
+        (Meta::has_trivial_destructor<T>::value ? ETypeFlags::TriviallyDestructible : ETypeFlags(0)) );
+}
+//----------------------------------------------------------------------------
+static CONSTEXPR ETypeFlags MakeTypeFlags_(Meta::TType<PMetaObject>) NOEXCEPT {
+    return (ETypeFlags::Scalar | ETypeFlags::Native | ETypeFlags::Object);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -332,9 +343,7 @@ void* TNativeTypeTraits<PMetaObject>::Cast(void* data, const PTypeTraits& dst) c
     CONSTEXPR TNativeTypeTraits<T>::TNativeTypeTraits() \
         : base_traits( \
             FTypeId(ENativeType::_Name), \
-            ETypeFlags::Scalar|ETypeFlags::Native|( \
-                Meta::TIsPod<T>::value ? ETypeFlags::POD : ETypeFlags(0))|( \
-                std::is_trivially_destructible_v<T> ? ETypeFlags::TriviallyDestructible : ETypeFlags(0)), \
+            MakeTypeFlags_(Meta::TType<T>{}), \
             sizeof(T) ) \
     {} \
     \

@@ -266,8 +266,12 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+bool IAtomVisitor::ShouldSkipTraits(IAtomVisitor* visitor, const ITypeTraits& traits) NOEXCEPT {
+    return ((!!visitor->OnlyObjects()) & (!(traits.TypeFlags() ^ ETypeFlags::Object)));
+}
+//----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const ITupleTraits* tuple, void* data) {
-    if ((!!visitor->OnlyObjects()) & (!(tuple->TypeFlags() ^ ETypeFlags::Object)))
+    if (ShouldSkipTraits(visitor, *tuple))
         return true;
 
     return tuple->ForEach(data, [visitor](const FAtom& elt) {
@@ -276,7 +280,7 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const ITupleTraits* tuple, void
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IListTraits* list, void* data) {
-    if ((!!visitor->OnlyObjects()) & (!(list->TypeFlags() ^ ETypeFlags::Object)))
+    if (ShouldSkipTraits(visitor, *list))
         return true;
 
     return list->ForEach(data, [visitor](const FAtom& item) {
@@ -285,7 +289,7 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IListTraits* list, void* 
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IDicoTraits* dico, void* data) {
-    if ((!!visitor->OnlyObjects()) & (!(dico->TypeFlags() ^ ETypeFlags::Object)))
+    if (ShouldSkipTraits(visitor, *dico))
         return true;
 
     return dico->ForEach(data, [visitor](const FAtom& key, const FAtom& value) {
@@ -294,9 +298,13 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IDicoTraits* dico, void* 
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , FAny& any) {
-    return (any
-        ? any.InnerAtom().Accept(visitor)
-        : true );
+    if (any) {
+        const FAtom inner{ any.InnerAtom() };
+        if (not ShouldSkipTraits(visitor, *inner.Traits()))
+            return inner.Accept(visitor);
+    }
+
+    return true;
 }
 //----------------------------------------------------------------------------
 bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , PMetaObject& pobj) {
@@ -312,7 +320,7 @@ bool IAtomVisitor::Accept(IAtomVisitor* visitor, const IScalarTraits* , PMetaObj
         for (const FMetaProperty* prop : metaClass->AllProperties()) {
             if ((visitor->KeepDeprecated() | (!prop->IsDeprecated())) &
                 (visitor->KeepTransient() | (!prop->IsTransient())) &
-                ((!visitor->OnlyObjects()) | (prop->Traits()->TypeFlags() ^ ETypeFlags::Object))) {
+                (not ShouldSkipTraits(visitor, *prop->Traits())) ) {
                 if (not prop->Get(obj).Accept(visitor))
                     return false;
             }

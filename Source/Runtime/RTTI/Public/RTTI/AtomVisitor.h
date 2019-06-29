@@ -45,6 +45,8 @@ public:
 #undef DECL_ATOM_VIRTUAL_VISIT
 
 public: // helpers
+    static PPE_CORE_API bool ShouldSkipTraits(IAtomVisitor* visitor, const ITypeTraits& traits) NOEXCEPT;
+
     static PPE_RTTI_API bool Accept(IAtomVisitor* visitor, const ITupleTraits* tuple, void* data);
     static PPE_RTTI_API bool Accept(IAtomVisitor* visitor, const IListTraits* list, void* data);
     static PPE_RTTI_API bool Accept(IAtomVisitor* visitor, const IDicoTraits* dico, void* data);
@@ -53,7 +55,7 @@ public: // helpers
     static PPE_RTTI_API bool Accept(IAtomVisitor* visitor, const IScalarTraits* scalar, PMetaObject& pobj);
 
     template <typename T>
-    static bool Accept(IAtomVisitor* , const IScalarTraits* , T& ) { return true; }
+    static bool Accept(IAtomVisitor* , const IScalarTraits* , T& ) NOEXCEPT { return true; }
 
 protected:
     EVisitorFlags _flags;
