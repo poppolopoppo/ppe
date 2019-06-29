@@ -65,7 +65,7 @@ public:
 public: // Helpers
 #if USE_BENCHMARK_ASM_DONOTOPTIMIZE
     template <class Tp>
-    static FORCE_INLINE void DoNotOptimize(Tp& value) {
+    static FORCE_INLINE void DoNotOptimize(Tp& value) NOEXCEPT {
 #   if defined(__clang__)
         asm volatile("" : "+r,m"(value) : : "memory");
 #   else
@@ -74,7 +74,7 @@ public: // Helpers
     }
 
     template <class Tp>
-    static FORCE_INLINE void DoNotOptimize(Tp const& value) {
+    static FORCE_INLINE void DoNotOptimize(Tp const& value) NOEXCEPT {
         asm volatile("" : : "r,m"(value) : "memory");
     }
 
@@ -83,7 +83,7 @@ public: // Helpers
     }
 #else
     template <class Tp>
-    static FORCE_INLINE void DoNotOptimize(Tp const& value) {
+    static FORCE_INLINE void DoNotOptimize(Tp const& value) NOEXCEPT {
         UseCharPointer_(&reinterpret_cast<char const volatile&>(value));
         FPlatformAtomics::MemoryBarrier();
     }
@@ -94,7 +94,7 @@ public: // Helpers
 #endif //!USE_BENCHMARK_ASM_DONOTOPTIMIZE
 
 private:
-    PPE_CORE_API static NO_INLINE void UseCharPointer_(char const volatile*);
+    PPE_CORE_API static NO_INLINE void UseCharPointer_(char const volatile*) NOEXCEPT;
 
 private: // FTimer
     enum ECounterType {
@@ -137,7 +137,7 @@ private: // FTimer
     using FPerfCounter = TCounter<PerfCounter>;
     using FChronoTime = TCounter<ChronoTime>;
 
-    using FCounter = FPerfCounter;
+    using FCounter = FRawTicks;
 
     struct FTimer : FCounter {
         date_type StartedAt{ 0 };
@@ -229,7 +229,7 @@ public: // FState
         NO_INLINE u32 RemainingIterations() const {
             return (
                 (_histogram.NumSamples > MinIterations) &&
-                (_histogram.NumSamples > _benchmark.MaxIterations ||
+                ((_histogram.NumSamples > _benchmark.MaxIterations) |
                  NearlyEquals(_histogram.Mean(), _histogram.WeightedMean(), _benchmark.MaxVarianceError))
                 ? 0 : LoopCount() );
         }

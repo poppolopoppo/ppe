@@ -9,9 +9,11 @@ LOG_CATEGORY_VERBOSITY(PPE_CORE_API, Benchmark, NoDebug)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FBenchmark::UseCharPointer_(char const volatile*) {
-    FPlatformAtomics::MemoryBarrier();
+PRAGMA_DISABLE_OPTIMIZATION
+void FBenchmark::UseCharPointer_(char const volatile* p) NOEXCEPT {
+    UNUSED(p);
 }
+PRAGMA_ENABLE_OPTIMIZATION
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

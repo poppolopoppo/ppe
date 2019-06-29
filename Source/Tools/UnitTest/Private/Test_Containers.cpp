@@ -77,38 +77,29 @@ template <typename T>
 struct TSamplePool {
     struct FSampleData {
         u32 SeriesIndex;
-        VECTOR(Benchmark, u32) Insert;
-        VECTOR(Benchmark, u32) Unknown;
-        VECTOR(Benchmark, u32) Search;
-        VECTOR(Benchmark, u32) Erase;
-        VECTOR(Benchmark, u32) Dense;
-        VECTOR(Benchmark, u32) Sparse;
+        VECTOR(Benchmark, T) Insert;
+        VECTOR(Benchmark, T) Unknown;
+        VECTOR(Benchmark, T) Search;
+        VECTOR(Benchmark, T) Erase;
+        VECTOR(Benchmark, T) Dense;
+        VECTOR(Benchmark, T) Sparse;
 
         template <typename _Container>
         void FillDense(const TSamplePool& pool, _Container& c) const {
             c.reserve(Insert.size());
-#if USE_PPE_ASSERT
-            forrange(i, 0, Insert.size()) {
-                c.insert(pool.Samples[Insert[i]]);
-                forrange(j, 0, i + 1)
-                    Assert_NoAssume(c.find(pool.Samples[Insert[j]]) != c.end());
-            }
-#else
-            for (const auto& it : pool.MakeSamples(Insert))
+            for (const auto& it : Insert)
                 c.insert(it);
-#endif
         }
 
         template <typename _Container>
         void FillSparse(const TSamplePool& pool, _Container& c) const {
             FillDense(pool, c);
-            for (const auto& it : pool.MakeSamples(Sparse))
+            for (const auto& it : Sparse)
                 Verify(c.erase(it));
         }
     };
 
     size_t NumSamples;
-    VECTOR(Benchmark, T) Samples;
     VECTOR(Benchmark, u32) RandomOrder;
     VECTOR(Benchmark, FSampleData) Series;
 
@@ -133,13 +124,6 @@ struct TSamplePool {
     };
 
     FSeriesIterator MakeSeries() const { return FSeriesIterator(*this); }
-
-    auto MakeSamples(const TMemoryView<const u32>& sequence) const {
-        auto sample = [this](auto it) { return Samples[it]; };
-        return MakeIterable(
-            MakeOutputIterator(sequence.begin(), sample),
-            MakeOutputIterator(sequence.end(), sample));
-    }
 
     template <typename _Container, typename _Lambda>
     void MakeDenseTables(const _Container& archetype, _Lambda&& lambda) const {
@@ -176,7 +160,7 @@ struct TSamplePool {
             auto& h = *tables.Peek();
 
             h.reserve(n);
-            for (const auto& it : MakeSamples(series.Insert.MakeConstView().CutBefore(n)))
+            for (const auto& it : series.Insert.MakeConstView().CutBefore(n))
                 h.insert(it);
         }
 
@@ -184,24 +168,26 @@ struct TSamplePool {
     }
 
     template <typename _Rnd, typename _Generator>
-    void Generate(size_t series, size_t samples, size_t jitter, _Rnd& rnd, const _Generator& generatorArchetype) {
+    void Generate(size_t series, size_t numSamples, size_t jitter, _Rnd& rnd, const _Generator& generatorArchetype) {
         _Generator generator{ generatorArchetype }; // copy the generator before generating samples
 
-        NumSamples = samples;
+        NumSamples = numSamples;
 
-        const size_t totalSamples = (samples * 4); // generate 4x, will be shuffled
+        VECTOR(Benchmark, T) samples;
+
+        const size_t totalSamples = (numSamples * 4); // generate 4x, will be shuffled
 
         // one pool of generated samples for each series
-        Samples.clear();
-        Samples.reserve(totalSamples);
+        samples.clear();
+        samples.reserve(totalSamples);
         // generate exactly N unique samples
         forrange(i, 0, totalSamples)
-            Samples.emplace_back(generator(rnd));
+            samples.emplace_back(generator(rnd));
 
         // one random sequence to pick each series randomly
         RandomOrder.clear();
-        RandomOrder.reserve(samples);
-        forrange(i, 0, samples)
+        RandomOrder.reserve(numSamples);
+        forrange(i, 0, numSamples)
             RandomOrder.emplace_back(u32(i % series));
         std::shuffle(RandomOrder.begin(), RandomOrder.end(), rnd);
 
@@ -216,8 +202,8 @@ struct TSamplePool {
         forrange(i, 0, series) {
             // jitter can be used to vary the size of each series
             const size_t jitteredSamples = ((jitter)
-                 ? (samples + (rnd() % jitter * 2)) - jitter
-                 : samples );
+                 ? (numSamples + (rnd() % jitter * 2)) - jitter
+                 : numSamples);
             Assert_NoAssume(jitteredSamples > 0);
 
             Series.emplace_back_AssumeNoGrow();
@@ -225,11 +211,15 @@ struct TSamplePool {
             s.SeriesIndex = checked_cast<u32>(i);
             {
                 std::shuffle(shuffled.begin(), shuffled.end(), rnd);
-
                 TMemoryView<const u32> pool = shuffled.MakeConstView();
 
-                s.Insert.assign(pool.Eat(jitteredSamples));
-                s.Unknown.assign(pool.Eat(jitteredSamples));
+                s.Insert.reserve(jitteredSamples);
+                for (u32 sp : pool.Eat(jitteredSamples))
+                    s.Insert.push_back(samples[sp]);
+
+                s.Unknown.reserve(jitteredSamples);
+                for (u32 sp : pool.Eat(jitteredSamples))
+                    s.Unknown.push_back(samples[sp]);
             }
 
             constexpr size_t sparse_factor = 70;
@@ -886,7 +876,7 @@ public:
                 const auto& s = series.Next();
                 const auto& c = tables[s.SeriesIndex];
 
-                const auto samples = pool->MakeSamples(s.Insert.MakeConstView().CutBefore(InputDim));
+                const TMemoryView<const T> samples = s.Search.MakeConstView().CutBefore(InputDim);
 
                 state.ResetTiming();
 
@@ -911,7 +901,7 @@ public:
                 const auto& s = series.Next();
                 const auto& c = tables[s.SeriesIndex];
 
-                const auto samples = pool->MakeSamples(s.Insert.MakeConstView().CutBefore(InputDim));
+                const TMemoryView<const T> samples = s.Unknown.MakeConstView().CutBefore(InputDim);
 
                 state.ResetTiming();
 
