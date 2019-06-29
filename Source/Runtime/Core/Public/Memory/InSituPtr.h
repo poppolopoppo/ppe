@@ -22,33 +22,33 @@ struct TInSituPtr {
         POD_STORAGE(T) InSitu;
     };
 
-    explicit TInSituPtr(Meta::FNoInit) NOEXCEPT {}
+    CONSTEXPR explicit TInSituPtr(Meta::FNoInit) NOEXCEPT {}
 
-    TInSituPtr() : VTable(NullMagick) {}
+    CONSTEXPR TInSituPtr() NOEXCEPT : VTable(NullMagick) {}
 
-    bool Valid() const { return (VTable != NullMagick); }
+    CONSTEXPR bool Valid() const { return (VTable != NullMagick); }
     PPE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
 
-    T* get() {
+    CONSTEXPR T* get() {
         Assert(Valid());
         return reinterpret_cast<T*>(std::addressof(InSitu));
     }
-    const T* get() const { return const_cast<TInSituPtr*>(this)->get(); }
+    CONSTEXPR const T* get() const { return const_cast<TInSituPtr*>(this)->get(); }
 
-    T& operator *() { return *get(); }
-    const T& operator *() const { return *get(); }
+    CONSTEXPR T& operator *() { return *get(); }
+    CONSTEXPR const T& operator *() const { return *get(); }
 
-    T* operator ->() { return get(); }
-    const T* operator ->() const { return get(); }
+    CONSTEXPR T* operator ->() { return get(); }
+    CONSTEXPR const T* operator ->() const { return get(); }
 
     template <typename U, typename... _Args>
-    U* Create(_Args&&... args) {
+    CONSTEXPR U* Create(_Args&&... args) {
         Assert(not Valid());
         return Create_AssumeNotValid(std::forward<_Args>(args)...);
     }
 
     template <typename U, typename... _Args>
-    U* Create_AssumeNotValid(_Args&&... args) {
+    CONSTEXPR U* Create_AssumeNotValid(_Args&&... args) {
         STATIC_ASSERT(std::is_base_of<T, U>::value);
         STATIC_ASSERT(sizeof(U) == sizeof(T));
         U* const result = INPLACE_NEW(std::addressof(InSitu), U) { std::forward<_Args>(args)... };
@@ -56,26 +56,26 @@ struct TInSituPtr {
         return result;
     }
 
-    void CreateRawCopy(const T& src) {
+    CONSTEXPR void CreateRawCopy(const T& src) {
         STATIC_ASSERT(std::is_trivially_destructible_v<T>);
         Assert(not Valid());
         FPlatformMemory::Memcpy(&InSitu, (void*)&src, sizeof(T));
         Assert(Valid());
     }
 
-    void CreateRawCopy_AssumeNotInitialized(const T& src) {
+    CONSTEXPR void CreateRawCopy_AssumeNotInitialized(const T& src) {
         FPlatformMemory::Memcpy(&InSitu, (void*)&src, sizeof(T));
         Assert(Valid());
     }
 
-    void Destroy() {
+    CONSTEXPR void Destroy() {
         Assert(Valid());
         get()->~T();
         VTable = NullMagick;
     }
 
     template <typename U, typename... _Args>
-    static TInSituPtr Make(_Args&&... args) {
+    CONSTEXPR static TInSituPtr Make(_Args&&... args) {
         TInSituPtr p(Meta::NoInit);
         p.Create_AssumeNotValid<U>(std::forward<_Args>(args)...);
         return p;
@@ -92,7 +92,7 @@ struct TInSituPtr {
 #endif
     }
     inline friend bool operator !=(const TInSituPtr& lhs, const TInSituPtr& rhs) {
-        return not operator ==(lhs, rhs);
+        return (not operator ==(lhs, rhs));
     }
 };
 //----------------------------------------------------------------------------
