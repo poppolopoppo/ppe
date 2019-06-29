@@ -396,4 +396,18 @@
     </Expand>
   </Type>
 
+  <!-- TEMPORARY WORKAROUND FOR : https://developercommunity.visualstudio.com/content/problem/605247/stlnatvis-fails-to-evaluate-stdatomic-in-vs2019.html -->
+
+  <Type Name="std::atomic&lt;*&gt;">
+      <DisplayString>{*($T1 *)&amp;_Storage._Value}</DisplayString>
+      <Expand>
+          <Item Name="[value]">*($T1 *)&amp;_Storage._Value</Item>
+      </Expand>
+  </Type>
+
+  <Type Name="std::atomic_flag">
+      <DisplayString>{(bool)(_Storage._Storage._Value &amp; 1)}</DisplayString>
+      <Expand/>
+  </Type>
+
 </AutoVisualizer>
