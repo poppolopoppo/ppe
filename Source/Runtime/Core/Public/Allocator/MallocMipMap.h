@@ -88,7 +88,7 @@ private:
     void* _vSpace;
 
     FAtomicSpinLock _barrier;
-    std::atomic<u32> _numCommitedMipMaps;
+    u32 _numCommitedMipMaps;
     std::atomic<u32> _numFreeMipMaps;
     std::atomic<u32> _nextFreeMipMap;
 
@@ -192,7 +192,7 @@ TMallocMipMap<_VMemTraits>::TMallocMipMap()
 ,   _vSpace(nullptr)
 ,   _numCommitedMipMaps(0)
 ,   _numFreeMipMaps(0)
-,   _nextFreeMipMap(0) {
+,   _nextFreeMipMap(UINT32_MAX) {
     STATIC_ASSERT(ReservedSize > TopMipSize);
     STATIC_ASSERT(Meta::IsAligned(TopMipSize, ReservedSize));
     STATIC_ASSERT(std::atomic<u64>::is_always_lock_free);
@@ -271,12 +271,10 @@ void* TMallocMipMap<_VMemTraits>::Allocate(size_t sizeInBytes, size_t* hint) {
 
     const FReadWriteLock::FScopeLockRead GClockRead(_GClockRW);
 
-    const u32 n = _numCommitedMipMaps;
-
     for (;;) {
         // 1) try from last mip map this thread allocated from
-        if (Likely(mipIndex < n &&
-            (p = AllocateFromMip_(mipIndex, lvl, fst, msk, hint)) != nullptr ))
+        if (Likely(mipIndex < _numCommitedMipMaps &&
+            (p = AllocateFromMip_(mipIndex, lvl, fst, msk, hint)) != nullptr) )
             return p;
 
         // 2) loop on mip map with most free space, if not visited
@@ -288,7 +286,7 @@ void* TMallocMipMap<_VMemTraits>::Allocate(size_t sizeInBytes, size_t* hint) {
     }
 
     // 3) fall back on slow path if there's still some free mips or available virtual space
-    if ((_numFreeMipMaps > 0) | (n < MaxNumMipMaps))
+    if ((_numFreeMipMaps > 0) | (_numCommitedMipMaps < MaxNumMipMaps))
         return AllocateSlowPath_(mipIndex, lvl, fst, msk, hint);
     else
         return nullptr;
@@ -335,18 +333,16 @@ void TMallocMipMap<_VMemTraits>::Free(void* ptr) {
         if (mipMap.MipMask.compare_exchange_strong(mip, upd,
             std::memory_order_release, std::memory_order_relaxed)) {
 
-            // keep track of count of mip maps with space available, allows quick reject when full
-            if (mip == GMipMaskFull_) {
+            // increment free mipmap counter if the mip was completely allocated
+            if (Unlikely(mip == GMipMaskFull_)) {
                 Assert_NoAssume(_numFreeMipMaps < _numCommitedMipMaps);
                 ++_numFreeMipMaps;
             }
-
-            // keep track of the block with most free chunks, not thread safe but it's not important
-            const u32 nextFree = _nextFreeMipMap.load(std::memory_order_relaxed);
-            if ((nextFree < _numCommitedMipMaps) &
-                ((upd & GLevelMasks_[lengthof(GLevelMasks_) - 1]) >
-                (_mipMaps[nextFree].SizeMask & GLevelMasks_[lengthof(GLevelMasks_) - 1]))) {
-                _nextFreeMipMap = mipIndex;
+            // keep track of the completely unused mipmap with smallest index
+            else if (Unlikely(upd == GMipMaskEmpty_)) {
+                const u32 nextFree = _nextFreeMipMap.load(std::memory_order_relaxed);
+                if ((nextFree >= _numCommitedMipMaps) | (nextFree > mipIndex))
+                    _nextFreeMipMap = mipIndex;
             }
 
             return;
@@ -395,7 +391,7 @@ size_t TMallocMipMap<_VMemTraits>::EachCommitedMipMap(_Each&& each) const {
 
     const FReadWriteLock::FScopeLockRead GClockRead(_GClockRW);
 
-    const size_t n = _numCommitedMipMaps.load();
+    const size_t n = _numCommitedMipMaps;
 
     // convert the mip mask to a 32 bits mask (ie lowest mip)
     forrange(mipIndex, 0, n) {
