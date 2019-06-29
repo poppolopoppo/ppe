@@ -24,6 +24,7 @@
 #define UNREACHABLE AssertNotReached
 
 PRAGMA_MSVC_WARNING_DISABLE(4244) // 'argument': conversion from 'const uc16' to 'char', possible loss of data
+PRAGMA_MSVC_WARNING_DISABLE(4505) // 'double_conversion::AssertTrimmedDigits': unreferenced local function has been removed
 
 #ifdef CPP_CLANG
 #    pragma clang system_header

@@ -11,9 +11,11 @@
         'git/double-conversion/cached-powers.h',
         'git/double-conversion/diy-fp.h',
         'git/double-conversion/double-conversion.h',
+        'git/double-conversion/double-to-string.h',
         'git/double-conversion/fast-dtoa.h',
         'git/double-conversion/fixed-dtoa.h',
         'git/double-conversion/ieee.h',
+        'git/double-conversion/string-to-double.h',
         'git/double-conversion/strtod.h',
         'git/double-conversion/utils.h',
     }
@@ -26,10 +28,10 @@
         'git/double-conversion/bignum.cc',
         'git/double-conversion/bignum-dtoa.cc',
         'git/double-conversion/cached-powers.cc',
-        'git/double-conversion/diy-fp.cc',
-        'git/double-conversion/double-conversion.cc',
+        'git/double-conversion/double-to-string.cc',
         'git/double-conversion/fast-dtoa.cc',
         'git/double-conversion/fixed-dtoa.cc',
+        'git/double-conversion/string-to-double.cc',
         'git/double-conversion/strtod.cc',
     }
     .ModuleIncludePaths =
