@@ -148,6 +148,9 @@ public:
     const EFlags& Enum64() const { return _testEnum64; }
     void SetEnum64(const EFlags& value) { _testEnum64 = value; }
 
+    PRTTITestParent_ Child() const { return _child; }
+    void SetChild(const PRTTITestParent_& child) { _child = child; }
+
 private:
     FFilename _sourceName;
     ETestEnum32 _testEnum32;
@@ -495,6 +498,28 @@ static NO_INLINE void Test_Any_() {
     LOG(Test_RTTI, Debug, L"dico2_anyAny: {0}", dico2_anyAny.TypedConstData<float3>());
     AssertRelease(RTTI::MakeAny(float3(1, 2, 3)).InnerAtom().Equals(dico2_anyAny));
     //AssertRelease(dico2_anyAny.Equals(RTTI::MakeAny(float3(1, 2, 3)))); %TODO%
+}
+//----------------------------------------------------------------------------
+static NO_INLINE void Test_CircularReferences_() {
+    PRTTITest_ riri{ NEW_RTTI(FRTTITest_) };
+    PRTTITest_ fifi{ NEW_RTTI(FRTTITest_) };
+    PRTTITest_ lulu{ NEW_RTTI(FRTTITest_) };
+
+    riri->RTTI_Export(RTTI::FName{ "riri" });
+    fifi->RTTI_Export(RTTI::FName{ "fifi" });
+    lulu->RTTI_Export(RTTI::FName{ "lulu" });
+
+    riri->SetChild(fifi);
+    fifi->_MetaObjectVec.push_back(lulu);
+    lulu->_MetaObjectTPair = MakePair(RTTI::PMetaObject{}, riri);
+
+    const RTTI::PMetaObject objs[3] = { riri, fifi, lulu };
+
+    VerifyRelease(not RTTI::CheckCircularReferences(MakeView(objs)));
+
+    riri->SetChild(nullptr);
+
+    VerifyRelease(RTTI::CheckCircularReferences(MakeView(objs)));
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Serialize::ISerializer& serializer, const FFilename& filename) {
@@ -1007,6 +1032,7 @@ void Test_RTTI() {
 
     Test_Atoms_();
     Test_Any_();
+    Test_CircularReferences_();
     Test_Grammar_();
     Test_Serialize_();
     Test_InteractiveConsole_();

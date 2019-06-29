@@ -7,22 +7,23 @@
 #include "RTTI/NativeTypes.h"
 #include "RTTI/ReferenceCollector.h"
 #include "RTTI/TypeTraits.h"
+#include "RTTI/Exceptions.h"
 
 #include "MetaClass.h"
 #include "MetaObject.h"
 #include "MetaProperty.h"
 #include "MetaTransaction.h"
 
+#include "Container/FixedSizeHashSet.h"
 #include "Container/Hash.h"
-#include "Container/HashSet.h"
 #include "Container/Stack.h"
 #include "Container/Vector.h"
 #include "Memory/HashFunctions.h"
+#include "Meta/PointerWFlags.h"
 
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
 #include "IO/StringBuilder.h"
-#include "RTTI/Exceptions.h"
 
 namespace PPE {
 namespace RTTI {
@@ -278,53 +279,209 @@ public:
     }
 
 protected:
-    virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override final {
+    virtual bool Visit(const ITupleTraits* tuple, void* data) override final {
+        if (ShouldSkipTraits(this, *tuple))
+            return true;
+
+        size_t index = 0;
+        return tuple->ForEach(data, [this, &index](const FAtom& elt) {
+            static const FName GTuple{ "Tuple" };
+
+            const FMarker_ markerIt{
+                MARK_Struct,
+                elt.Traits(),
+                _chain.back()->Name,
+                GTuple,
+                index, elt.Data() };
+            _chain.emplace_back(&markerIt);
+
+            const bool result = elt.Accept(this);
+
+            ++index;
+            Verify(_chain.pop_back_ReturnBack() == &markerIt);
+
+            return result;
+        });
+    }
+
+    virtual bool Visit(const IListTraits* list, void* data) override final {
+        if (ShouldSkipTraits(this, *list))
+            return true;
+
+        size_t index = 0;
+        return list->ForEach(data, [this, &index](const FAtom& item) {
+            static const FName GList{ "List" };
+
+            const FMarker_ markerIt{
+                MARK_Container,
+                item.Traits(),
+                _chain.back()->Name,
+                GList,
+                index, item.Data() };
+            _chain.emplace_back(&markerIt);
+
+            const bool result = item.Accept(this);
+
+            ++index;
+            Verify(_chain.pop_back_ReturnBack() == &markerIt);
+
+            return result;
+        });
+    }
+
+    virtual bool Visit(const IDicoTraits* dico, void* data) override final {
+        if (ShouldSkipTraits(this, *dico))
+            return true;
+
+        size_t index = 0;
+        return dico->ForEach(data, [this, &index](const FAtom& key, const FAtom& value) {
+            bool result = true;
+
+            if (not ShouldSkipTraits(this, *key.Traits())) {
+                static const FName GKey{ "Key" };
+
+                const FMarker_ markerIt{
+                    MARK_Container,
+                    key.Traits(),
+                    _chain.back()->Name,
+                    GKey,
+                    index, key.Data() };
+                _chain.emplace_back(&markerIt);
+
+                result &= key.Accept(this);
+
+                Verify(_chain.pop_back_ReturnBack() == &markerIt);
+            }
+
+            if (not ShouldSkipTraits(this, *value.Traits())) {
+                static const FName GValue{ "Value" };
+
+                const FMarker_ markerIt{
+                    MARK_Container,
+                    value.Traits(),
+                    _chain.back()->Name,
+                    GValue,
+                    index, value.Data() };
+                _chain.emplace_back(&markerIt);
+
+                result &= value.Accept(this);
+
+                Verify(_chain.pop_back_ReturnBack() == &markerIt);
+            }
+
+            ++index;
+            return result;
+        });
+    }
+
+    virtual bool Visit(const IScalarTraits*, PMetaObject& pobj) override final {
         bool result = true;
         if (const FMetaObject * const ref = pobj.get()) {
-            const bool circular = Contains(_chain, ref);
-            _chain.push_back(ref);
+            const FMarker_ markerObj{
+                MARK_Object,
+                ref->RTTI_Traits(),
+                ref->RTTI_Outer() ? ref->RTTI_Outer()->Name() : ref->RTTI_Class()->Namespace()->Name(),
+                ref->RTTI_Name(),
+                size_t(0), ref };
+            _chain.emplace_back(&markerObj);
 
-            if (circular)
-                OnCircularReference_();
-            else
-                result = FBaseReferenceCollector::Visit(scalar, pobj);
+            if (not _visiteds.Add_KeepExisting(ref)) {
+                OnCircularReference_(ref);
+            }
+            else {
+                const FMetaClass* const klass = ref->RTTI_Class();
 
-            Verify(_chain.pop_back_ReturnBack() == ref);
+                size_t index = 0;
+                for (const FMetaProperty* prop : klass->AllProperties()) {
+                    if (not ShouldSkipTraits(this, *prop->Traits())) {
+                        const FAtom p = prop->Get(*ref);
+
+                        const FMarker_ markerProp{
+                            MARK_Property,
+                            p.Traits(),
+                            klass->Name(),
+                            prop->Name(),
+                            index, p.Data() };
+                        _chain.emplace_back(&markerProp);
+
+                        result &= p.Accept(this);
+
+                        Verify(_chain.pop_back_ReturnBack() == &markerProp);
+                    }
+                    ++index;
+                }
+
+                _visiteds.Remove_AssertExists(ref);
+            }
+
+            Verify(_chain.pop_back_ReturnBack() == &markerObj);
         }
         return result;
     }
 
 private:
-    bool _circular;
-    VECTORINSITU(MetaObject, const FMetaObject*, 8) _chain;
+    enum EMarker {
+        MARK_Object = 0,
+        MARK_Property,
+        MARK_Container,
+        MARK_Struct,
+    };
 
-    void OnCircularReference_() {
+    struct FMarker_ {
+        PTypeTraits Traits;
+        FName Outer;
+        FName Name;
+        size_t Index;
+        Meta::TPointerWFlags<const void> Ref;
+
+        FMarker_(EMarker type, const PTypeTraits& traits, const FName& outer, const FName& name, size_t index, const void* ref)
+        :   Traits(traits)
+        ,   Outer(outer)
+        ,   Name(name)
+        ,   Index(index) {
+            Ref.Reset(ref, checked_cast<uintptr_t>(type));
+        }
+
+    };
+
+    bool _circular;
+
+    VECTORINSITU(MetaObject, const FMarker_*, 16) _chain;
+    TFixedSizeHashSet<const FMetaObject*, 32> _visiteds;
+
+    void OnCircularReference_(const void* ref) {
         _circular = true;
 
 #if USE_PPE_LOGGER
         FWStringBuilder oss;
         oss << L"found a circular reference !" << Eol;
 
-        Fmt::FWIndent indent = Fmt::FWIndent::UsingTabs();
+        Fmt::FWIndent indent = Fmt::FWIndent::TwoSpaces();
         forrange(i, 0, _chain.size()) {
-            const FMetaObject* const ref = _chain[i];
-            const FMetaClass* const metaClass = ref->RTTI_Class();
+            const FMarker_& mark = (*_chain[i]);
 
             Format(oss, L"[{0:#2}]", i);
             oss << indent;
 
-            if (i + 1 == _chain.size())
-                oss << L" <=- ";
-            else if (ref == _chain.back())
+            if (mark.Ref.Get() == ref)
                 oss << L" -=> ";
             else
                 oss << L" --- ";
 
-            oss << Fmt::Pointer(ref)
-                << L" \"" << ref->RTTI_Name()
-                << L"\" : " << metaClass->Name()
-                << L" (" << metaClass->Flags()
-                << L")" << Eol;
+            CONSTEXPR const FWStringView typenames[] = {
+                L"OBJECT   ",
+                L"PROPERTY ",
+                L"CONTAINER",
+                L"STRUCT   "
+            };
+
+            oss << Fmt::Pointer(mark.Ref.Get())
+                << L' ' << typenames[mark.Ref.Flag01()]
+                << L" >>> " << mark.Outer
+                << L" . " << mark.Name
+                << L" [ " << mark.Index
+                << L" ]  (" << mark.Traits->TypeInfos() << L")"
+                << Eol;
 
             indent.Inc();
         }

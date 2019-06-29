@@ -12,7 +12,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FBaseReferenceCollector : private FBaseAtomVisitor {
+class FBaseReferenceCollector : protected FBaseAtomVisitor {
 public:
     virtual ~FBaseReferenceCollector() = default;
 
