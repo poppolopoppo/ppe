@@ -89,6 +89,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define NORETURN     __declspec(noreturn)
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
+#   define VECTORCALL   __vectorcall
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
 #   if defined(_MSC_VER)
@@ -102,6 +103,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define NORETURN     __declspec(noreturn)
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
+#   define VECTORCALL   __vectorcall
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
 #   define EMPTY_BASES  __declspec(empty_bases)
@@ -111,6 +113,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define NORETURN     __declspec(noreturn)
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
+#   define VECTORCALL   __vectorcall
 #   define THREAD_LOCAL __declspec(thread)
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) enum : _TYPE { _NAME = (_TYPE)(__VA_ARGS__) }
 #   define EMPTY_BASES

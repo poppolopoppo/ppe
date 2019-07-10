@@ -38,9 +38,10 @@
 #include <random>
 #include <unordered_set>
 
-#define PPE_RUN_EXHAUSTIVE_BENCHMARKS (0) // %_NOCOMMIT%
+#define PPE_RUN_EXHAUSTIVE_BENCHMARKS   (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHMARK_ONE_CONTAINER (0) // %_NOCOMMIT%
-#define PPE_DONT_USE_STD_UNORDEREDSET (0) // %_NOCOMMIT%
+#define PPE_RUN_BENCHMARK_MULTITHREADED (1) // %_NOCOMMIT%
+#define PPE_DONT_USE_STD_UNORDEREDSET   (0) // %_NOCOMMIT%
 
 namespace PPE {
 LOG_CATEGORY(, Test_Containers)
@@ -64,6 +65,7 @@ template class TFlatSet<FString>;
 #include "Containers/DenseHashSet3.h"
 #include "Containers/HopscotchHashSet.h"
 #include "Containers/HopscotchHashSet2.h"
+#include "Containers/SimdHashSet.h"
 
 namespace PPE {
 namespace Test {
@@ -85,17 +87,23 @@ struct TSamplePool {
         VECTOR(Benchmark, T) Sparse;
 
         template <typename _Container>
-        void FillDense(const TSamplePool& pool, _Container& c) const {
+        void FillDense(_Container& c) const {
             c.reserve(Insert.size());
-            for (const auto& it : Insert)
+            for (const auto& it : Insert) {
                 c.insert(it);
+                Assert_NoAssume(c.find(it) != c.end());
+            }
+
+            Assert_NoAssume(c.size() == Insert.size());
         }
 
         template <typename _Container>
-        void FillSparse(const TSamplePool& pool, _Container& c) const {
-            FillDense(pool, c);
+        void FillSparse(_Container& c) const {
+            FillDense(c);
             for (const auto& it : Sparse)
                 Verify(c.erase(it));
+
+            Assert_NoAssume(c.size() == Insert.size() - Sparse.size());
         }
     };
 
@@ -131,7 +139,7 @@ struct TSamplePool {
 
         for (const FSampleData& series : Series) {
             tables.Push(archetype);
-            series.FillDense(*this, *tables.Peek());
+            series.FillDense(*tables.Peek());
         }
 
         lambda(tables.MakeView());
@@ -143,7 +151,7 @@ struct TSamplePool {
 
         for (const FSampleData& series : Series) {
             tables.Push(archetype);
-            series.FillSparse(*this, *tables.Peek());
+            series.FillSparse(*tables.Peek());
         }
 
         lambda(tables.MakeView());
@@ -292,7 +300,7 @@ public:
             state.ResetTiming();
 
             auto c{ archetype };
-            for (const auto& it : pool->MakeSamples(s.Insert))
+            for (const auto& it : s.Insert)
                 Verify(c.insert(it).second);
             FBenchmark::DoNotOptimize(c);
         }
@@ -310,7 +318,7 @@ public:
 
             auto c{ archetype };
             c.reserve(s.Insert.size());
-            for (const auto& it : pool->MakeSamples(s.Insert))
+            for (const auto& it : s.Insert)
                 Verify(c.insert(it).second);
             FBenchmark::DoNotOptimize(c);
         }
@@ -394,8 +402,7 @@ public:
                 const auto& s = series.Next();
                 auto c{ tables[s.SeriesIndex] };
 
-                const u32 r = state.Random().RandomElement(s.Unknown.MakeView());
-                const auto& item = pool->Samples[r];
+                const auto& item = state.Random().RandomElement(s.Unknown.MakeView());
 
                 state.ResumeTiming();
 
@@ -421,8 +428,7 @@ public:
                 const auto& s = series.Next();
                 auto c{ tables[s.SeriesIndex] };
 
-                const u32 r = state.Random().RandomElement(s.Unknown.MakeView());
-                const auto& item = pool->Samples[r];
+                const auto& item = state.Random().RandomElement(s.Unknown.MakeView());
 
                 state.ResumeTiming();
 
@@ -499,7 +505,7 @@ public:
                 state.ResetTiming();
 
                 volatile uintptr_t hit = 0;
-                for (const auto& it : pool->MakeSamples(s.Search)) {
+                for (const auto& it : s.Search) {
                     auto jt = c.find(it);
                     FContainerBenchmark::DoNotOptimize(jt);
                     hit += uintptr_t(&*jt);
@@ -526,7 +532,7 @@ public:
 
                 volatile u32 hit = 0;
                 const auto cend = c.end();
-                for (const auto& it : pool->MakeSamples(s.Unknown)) {
+                for (const auto& it : s.Unknown) {
                     auto jt = c.find(it);
                     FBenchmark::DoNotOptimize(jt);
                     if (jt != cend) hit++;
@@ -554,7 +560,7 @@ public:
 
                 ONLY_IF_ASSERT(size_t n = 0);
                 volatile uintptr_t h = 0;
-                for (const auto& it : pool->MakeSamples(s.Dense)) {
+                for (const auto& it : s.Dense) {
                     auto jt = c.find(it);
                     FContainerBenchmark::DoNotOptimize(jt);
                     h += uintptr_t(&*jt);
@@ -583,7 +589,7 @@ public:
 
                 volatile u32 hit = 0;
                 const auto cend = c.end();
-                for (const auto& it : pool->MakeSamples(s.Unknown)) {
+                for (const auto& it : s.Unknown) {
                     auto jt = c.find(it);
                     FBenchmark::DoNotOptimize(jt);
                     if (jt != cend) hit++;
@@ -609,7 +615,7 @@ public:
 
                 state.ResetTiming();
 
-                for (const auto& it : pool->MakeSamples(s.Search))
+                for (const auto& it : s.Search)
                     Verify(c.erase(it));
 
                 FBenchmark::DoNotOptimize(c);
@@ -631,7 +637,7 @@ public:
 
                 state.ResetTiming();
 
-                for (const auto& it : pool->MakeSamples(s.Unknown))
+                for (const auto& it : s.Unknown)
                     Verify(not c.erase(it));
 
                 FBenchmark::DoNotOptimize(c);
@@ -653,7 +659,7 @@ public:
 
                 state.ResetTiming();
 
-                for (const auto& it : pool->MakeSamples(s.Dense))
+                for (const auto& it : s.Dense)
                     Verify(c.erase(it));
 
                 FBenchmark::DoNotOptimize(c);
@@ -675,7 +681,7 @@ public:
 
                 state.ResetTiming();
 
-                for (const auto& it : pool->MakeSamples(s.Unknown))
+                for (const auto& it : s.Unknown)
                     Verify(not c.erase(it));
 
                 FBenchmark::DoNotOptimize(c);
@@ -702,8 +708,8 @@ public:
                 state.ResetTiming();
 
                 forrange(i, 0, nn) {
-                    Verify(c.insert(pool->Samples[s.Unknown[i]]).second);
-                    Verify(c.erase(pool->Samples[s.Sparse[i]]));
+                    Verify(c.insert(s.Unknown[i]).second);
+                    Verify(c.erase(s.Sparse[i]));
                 }
 
                 FBenchmark::DoNotOptimize(c);
@@ -730,8 +736,8 @@ public:
                 state.ResetTiming();
 
                 forrange(i, 0, nn) {
-                    Verify(c.insert(pool->Samples[s.Unknown[i]]).second);
-                    Verify(c.erase(pool->Samples[s.Dense[i]]));
+                    Verify(c.insert(s.Unknown[i]).second);
+                    Verify(c.erase(s.Dense[i]));
                 }
 
                 FBenchmark::DoNotOptimize(c);
@@ -788,7 +794,7 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
     const FStringView& name, size_t dim,
     _Generator&& generator,
     _Containers&& tests ) {
-#if !PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if !(PPE_RUN_EXHAUSTIVE_BENCHMARKS || PPE_RUN_BENCHMARK_ONE_CONTAINER)
     UNUSED(name);
     UNUSED(dim);
     UNUSED(generator);
@@ -844,6 +850,8 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
         erase_sparse_pos_t{},
         erase_sparse_neg_t{});
 #endif
+
+    bm.UseMultiThread = !!(PPE_RUN_BENCHMARK_MULTITHREADED);
 
     tests(bm, &pool);
 
@@ -991,6 +999,8 @@ static void Benchmark_Containers_FindSpeed_Impl_(
 #endif //!WITH_PPE_ASSERT
     );
 
+    bm.UseMultiThread = !!(PPE_RUN_BENCHMARK_MULTITHREADED);
+
     tests(bm, &pool);
 
     FBenchmark::FlushAndLog(bm);
@@ -1089,17 +1099,17 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             THopscotchHashSet2<T> set;
             bm.Run("Hopscotch2", set, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
-        {
-            THopscotchHashSet2<THashMemoizer<T>> set;
-            bm.Run("Hopscotch2_M", set, input);
-        }
-#   endif
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             THashSet<T> set;
             bm.Run("HashSet", set, input);
+        }
+#endif
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+        {
+            TSimdHashSet<T> set;
+            bm.Run("SimdHashSet", set, input);
         }
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
@@ -1189,17 +1199,19 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
 
 #if 1
     Benchmark_Containers_Exhaustive_<T>(name + "_20", 20, generator, containers_all);
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS || PPE_RUN_BENCHMARK_ONE_CONTAINER
     Benchmark_Containers_Exhaustive_<T>(name + "_50", 50, generator, containers_all);
+    Benchmark_Containers_Exhaustive_<T>(name + "_100", 100, generator, containers_large);
     Benchmark_Containers_Exhaustive_<T>(name + "_200", 200, generator, containers_large);
+    Benchmark_Containers_Exhaustive_<T>(name + "_300", 300, generator, containers_large);
 #   endif
     Benchmark_Containers_FindSpeed_<T>(name + "_find", generator, containers_all);
 #endif
 
 #if !USE_PPE_ASSERT
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
-    Benchmark_Containers_Exhaustive_<T>(name + "_2000", 2000, generator, containers_large);
-    Benchmark_Containers_Exhaustive_<T>(name + "_20000", 20000, generator, containers_large);
+    Benchmark_Containers_Exhaustive_<T>(name + "_1000", 2000, generator, containers_large);
+    Benchmark_Containers_Exhaustive_<T>(name + "_10000", 20000, generator, containers_large);
 #   endif
 #endif
 }
@@ -1329,7 +1341,7 @@ NO_INLINE static void Test_StringSet_() {
         }
 #   endif
 #endif
-#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER %_NOCOMMIT%
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             THopscotchHashSet2<
                 FStringView,
@@ -1367,7 +1379,7 @@ NO_INLINE static void Test_StringSet_() {
         */
 #   endif
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
 
@@ -1381,6 +1393,29 @@ NO_INLINE static void Test_StringSet_() {
         }
 #   endif
 #endif
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+        {
+            TSimdHashSet<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   set;
+
+            bm.Run("SimdHashSet", set, input);
+        }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+        {
+            TSimdHashSet<
+                THashMemoizer<
+                    FStringView,
+                    TStringViewHasher<char, ECase::Sensitive>,
+                    TStringViewEqualTo<char, ECase::Sensitive> >
+            >   set;
+
+            bm.Run("SimdHashSet_M", set, input);
+        }
+#   endif
+#endif
 #if 0 //!PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             CONSTCHAR_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
@@ -1388,7 +1423,7 @@ NO_INLINE static void Test_StringSet_() {
             bm.Run("ConstCharHashSet_M", set, input);
         }
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
         {
             std::unordered_set <
                 FStringView,
@@ -1413,14 +1448,14 @@ NO_INLINE static void Test_StringSet_() {
     };
 
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_20", 20, generator, containers);
-#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if PPE_RUN_EXHAUSTIVE_BENCHMARKS || PPE_RUN_BENCHMARK_ONE_CONTAINER
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_50", 50, generator, containers);
+    Benchmark_Containers_Exhaustive_<FStringView>("Strings_200", 200, generator, containers);
 #endif
     Benchmark_Containers_FindSpeed_<FStringView>("Strings_find", generator, containers);
 #if !USE_PPE_ASSERT
 
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
-    Benchmark_Containers_Exhaustive_<FStringView>("Strings_200", 200, generator, containers);
     Benchmark_Containers_Exhaustive_<FStringView>("Strings_2000", 2000, generator, containers);
 #   endif
 #endif

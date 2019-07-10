@@ -133,8 +133,8 @@ struct TApproximateHistogram {
     STATIC_CONST_INTEGRAL(u32, Samples, _Samples);
     STATIC_CONST_INTEGRAL(u32, MinSamples, _Samples * 3);
 
-    T ApproximateBias;
-    T ApproximateScale;
+    T ApproximateBias{ 0 };
+    T ApproximateScale{ 0 };
 
     u32 NumSamples{ 0 };
     TVarianceEstimator<T> Estimator;

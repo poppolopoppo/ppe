@@ -129,29 +129,33 @@ STATIC_ASSERT(Meta::TIsPod< TPointerWFlags<void> >::value);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FHeapPtrWCounter { // assumed aligned on 16
-    uintptr_t Counter : 4;
-    uintptr_t Data : (sizeof(uintptr_t)<<3) - 4;
+    uintptr_t Data;
 
     CONSTEXPR void Reset() NOEXCEPT {
-        Counter = Data = 0;
+        Data = 0;
     }
 
-    void Reset(const void* data, size_t n) NOEXCEPT {
-        SetData(data);
-        SetCounter(n);
+    void Reset(const void* ptr, u8 n) NOEXCEPT {
+        Assert_NoAssume(Meta::IsAligned(16, ptr));
+        Data = ((uintptr_t(ptr) & ~uintptr_t(0xF)) | uintptr_t(n));
+        Assert_NoAssume(Ptr<const void>() == ptr);
+        Assert_NoAssume(Counter() == n);
     }
 
+    CONSTEXPR u8 Counter() const NOEXCEPT {
+        return u8(Data & 0xF);
+    }
     void SetCounter(size_t n) NOEXCEPT {
-        Counter = n;
-        Assert_NoAssume(n == Counter);
+        Data = ((Data & ~uintptr_t(0xF)) | uintptr_t(n));
+        Assert_NoAssume(Counter() == n);
     }
 
     template <typename T>
-    T* GetData() const NOEXCEPT { return reinterpret_cast<T*>(Data << 4); }
-    void SetData(const void* data) NOEXCEPT {
-        Assert_NoAssume(Meta::IsAligned(16, data));
-        Data = (uintptr_t(data) >> 4);
-        Assert_NoAssume(GetData<void>() == data);
+    T* Ptr() const NOEXCEPT { return reinterpret_cast<T*>(Data & ~uintptr_t(0xF)); }
+    void SetPtr(const void* ptr) NOEXCEPT {
+        Assert_NoAssume(Meta::IsAligned(16, ptr));
+        Data = ((Data & uintptr_t(0xF)) | uintptr_t(ptr));
+        Assert_NoAssume(Ptr<const void>() == ptr);
     }
 };
 //----------------------------------------------------------------------------
