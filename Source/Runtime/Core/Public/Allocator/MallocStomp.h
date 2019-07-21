@@ -2,7 +2,7 @@
 
 #include "Core_fwd.h"
 
-#if USE_PPE_MEMORY_DEBUGGING
+#if USE_PPE_MEMORY_DEBUGGING && !defined(WITH_PPE_MALLOCSTOMP)
 #   define WITH_PPE_MALLOCSTOMP
 #endif
 
