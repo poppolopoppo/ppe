@@ -103,7 +103,8 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
 #endif
 
     u32 SizeClass;
-    u32 NumBlocksInUse;
+    u16 HighestIndex;
+    u16 NumBlocksInUse;
     u32 NumBlocksTotal;
     u32 NumChunksInBatch;
 
@@ -135,11 +136,18 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
         Assert_NoAssume(0 == p->NumBlocksInUse);
         Assert_NoAssume(NumBlocksTotalInChunk(p->SizeClass) == p->NumBlocksTotal);
         Assert_NoAssume(p->FreeBlocks);
-        size_t n = 0;
+        u32 n = p->HighestIndex;
         for (FBinnedBlock_* b = p->FreeBlocks; b; b = b->Next) ++n;
         Assert_NoAssume(n == p->NumBlocksTotal);
 #endif
         DeallocateBinnedChunk_(p);
+    }
+
+    FORCE_INLINE static FBinnedBlock_* BlockFromIndex(FBinnedChunk_* ch, size_t i, size_t blockSize) {
+        Assert(i);
+        Assert_NoAssume(FMallocBinned::SizeClasses[ch->SizeClass] == blockSize);
+
+        return (FBinnedBlock_*)((u8*)ch + FBinnedChunk_::ChunkSizeInBytes - i * blockSize);
     }
 
 };
@@ -151,7 +159,8 @@ using FBinnedBatch_ = Meta::TAddPointer<FBinnedChunk_>;
 //----------------------------------------------------------------------------
 struct FBinnedBucket_ {
     FBinnedBlock_* FreeBlocks;
-    u32 NumBlocksInUse;
+    u16 HighestIndex;
+    u16 NumBlocksInUse;
     u32 NumBlocksAvailable;
     FBinnedChunk_* UsedChunks;
 };
@@ -342,7 +351,8 @@ static bool ContainsChunk_(const FBinnedBatch_ head, const FBinnedChunk_* ch) {
 }
 //----------------------------------------------------------------------------
 static void PoisonChunk_(FBinnedChunk_* ch) {
-    ch->NumBlocksInUse = u32(-1);
+    ch->HighestIndex = u16(-1);
+    ch->NumBlocksInUse = u16(-1);
     ch->FreeBlocks = (FBinnedBlock_*)intptr_t(-1);
 }
 //----------------------------------------------------------------------------
@@ -411,11 +421,13 @@ static void PokeChunkToFront_(FBinnedBucket_& bk, FBinnedChunk_* ch) {
     Assert(ch);
     Assert(ch != bk.UsedChunks);
     Assert_NoAssume(ch->CheckCanary());
+    Assert_NoAssume(ch->HighestIndex < ch->NumBlocksTotal);
     Assert_NoAssume(ch->NumBlocksInUse < ch->NumBlocksTotal);
     Assert_NoAssume(ch->PrevChunk->CheckCanary());
     Assert_NoAssume(bk.UsedChunks->FreeBlocks == (FBinnedBlock_*)intptr_t(-1));
 
     bk.UsedChunks->FreeBlocks = bk.FreeBlocks;
+    bk.UsedChunks->HighestIndex = bk.HighestIndex;
     bk.UsedChunks->NumBlocksInUse = bk.NumBlocksInUse;
 
     ch->PrevChunk->NextChunk = ch->NextChunk;
@@ -432,6 +444,7 @@ static void PokeChunkToFront_(FBinnedBucket_& bk, FBinnedChunk_* ch) {
     bk.UsedChunks->PrevChunk = ch;
     bk.UsedChunks = ch;
     bk.FreeBlocks = ch->FreeBlocks;
+    bk.HighestIndex = ch->HighestIndex;
     bk.NumBlocksInUse = ch->NumBlocksInUse;
 
     ONLY_IF_ASSERT(PoisonChunk_(ch)); // crash if we don't update back its state
@@ -472,6 +485,7 @@ static void ReleaseFreeBatch_(FBinnedBatch_ batch) {
         Assert_NoAssume(batch->CheckCanary());
         Assert_NoAssume(nullptr == batch->PrevChunk);
         Assert_NoAssume(nullptr == batch->ThreadCache);
+        Assert_NoAssume(batch->HighestIndex < batch->NumBlocksTotal);
         Assert_NoAssume(0 == batch->NumBlocksInUse);
         Assert_NoAssume(batch->FreeBlocks);
 
@@ -593,8 +607,8 @@ static FBinnedBatch_ FetchFreeBatch_() {
             Assert(gc.NumFreeBatches);
             Assert_NoAssume(batch->CheckCanary());
             Assert_NoAssume(batch->NumChunksInBatch);
-            Assert_NoAssume(batch->ThreadCache == nullptr);
-            Assert_NoAssume(batch->NumBlocksInUse == 0);
+            Assert_NoAssume(nullptr == batch->ThreadCache);
+            Assert_NoAssume(0 == batch->NumBlocksInUse);
             Assert_NoAssume(batch->FreeBlocks);
 
             gc.FreeBatches = batch->NextBatch;
@@ -616,20 +630,37 @@ static void InitializeChunk_(FBinnedChunk_* ch, const size_t sizeClass) {
     const size_t blockSize = FMallocBinned::SizeClasses[sizeClass];
     Assert_NoAssume(Meta::IsAligned(16, blockSize));
 
-    ch->SizeClass = u32(sizeClass);
+    ch->SizeClass = u32(sizeClass);;
     ch->NumBlocksTotal = u32(FBinnedChunk_::ChunkAvailableSizeInBytes / blockSize);
-    ch->FreeBlocks = (FBinnedBlock_*)((u8*)ch + FBinnedChunk_::ChunkSizeInBytes - ch->NumBlocksTotal * blockSize);
-    Assert_NoAssume(Meta::IsAligned(16, ch->FreeBlocks));
+    ch->HighestIndex = checked_cast<u16>(ch->NumBlocksTotal - 1);
+    ch->FreeBlocks = FBinnedChunk_::BlockFromIndex(ch, ch->NumBlocksTotal, blockSize);
+    Assert_NoAssume(Meta::IsAligned(ALLOCATION_BOUNDARY, ch->FreeBlocks));
 
-    FBinnedBlock_* blk = ch->FreeBlocks;
-    forrange(i, 1, ch->NumBlocksTotal) {
-        auto* const next = (FBinnedBlock_*)((u8*)blk + blockSize);
-        blk->Next = next;
-        blk = next;
+    // FreeBlocks linked list is lazily initialized thanks to HighestIndex
+    // It avoids traversing all the chunk to set all Next fields, and thus avoid trashing
+    // the cache. It's important since InitializeChunk_() can be call often due to chunk
+    // stealing and recycling mechanics.
+    ch->FreeBlocks->Next = nullptr;
+}
+//----------------------------------------------------------------------------
+static void* AllocateBlockFromChunk_(FBinnedChunk_* ch, size_t sizeClass) {
+    Assert(ch);
+    Assert_NoAssume(sizeClass == ch->SizeClass);
+    Assert_NoAssume(ch->NumBlocksInUse < ch->NumBlocksTotal);
+
+    void* p;
+    if (Likely(ch->FreeBlocks)) {
+        p = ch->FreeBlocks;
+        ch->FreeBlocks = ch->FreeBlocks->Next;
+    }
+    else {
+        Assert(ch->HighestIndex);
+        const size_t blockSize = FMallocBinned::SizeClasses[sizeClass];
+        p = FBinnedChunk_::BlockFromIndex(ch, ch->HighestIndex--, blockSize);
     }
 
-    Assert_NoAssume(((u8*)blk + blockSize) == ((u8*)ch + FBinnedChunk_::ChunkSizeInBytes));
-    blk->Next = nullptr;
+    ch->NumBlocksInUse++;
+    return p;
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t sizeClass) {
@@ -656,12 +687,10 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
                 Assert_NoAssume(ch != bk.UsedChunks);
 
                 if (ch->NumBlocksInUse < ch->NumBlocksTotal) {
-                    Assert(ch->FreeBlocks);
+                    Assert(ch->FreeBlocks || ch->HighestIndex);
 
                     // steal one free block for current allocation
-                    void* const p = ch->FreeBlocks;
-                    ch->FreeBlocks = ch->FreeBlocks->Next;
-                    ch->NumBlocksInUse++;
+                    void* const p = AllocateBlockFromChunk_(ch, sizeClass);
                     bk.NumBlocksAvailable--;
 
                     // poke to front of bk.UsedChunks if it has more free blocks than current head
@@ -719,6 +748,7 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
                     INPLACE_NEW(&ch->ThreadBarrier, FAtomicSpinLock);
                     ch->ThreadCache = nullptr;
                     ch->SizeClass = u32(-1); // to trigger initialization of FreeBlocks linked list
+                    ch->HighestIndex = 0;
                     ch->NumBlocksInUse = 0;
                     ch->NumChunksInBatch = 0;
                     ch->NextBatch = nullptr;
@@ -753,17 +783,20 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
                 Assert_NoAssume(bk.UsedChunks->FreeBlocks == (FBinnedBlock_*)intptr_t(-1)); // check poisoning
 
                 // sync previous chunk with bucket data
+                bk.UsedChunks->HighestIndex = bk.HighestIndex;
                 bk.UsedChunks->NumBlocksInUse = bk.NumBlocksInUse;
                 bk.UsedChunks->FreeBlocks = nullptr;
                 bk.UsedChunks->PrevChunk = ch;
             }
 
-            // allocate the first block for current request and register new chunk
-            void* const p = ch->FreeBlocks;
-            ch->FreeBlocks = ch->FreeBlocks->Next;
+            // allocate the first block for current request
+            void* const p = AllocateBlockFromChunk_(ch, sizeClass);
+
+            // then register and mirror new chunk in the bucket
             bk.FreeBlocks = ch->FreeBlocks;
-            bk.NumBlocksInUse = ++ch->NumBlocksInUse;
-            bk.NumBlocksAvailable += (ch->NumBlocksTotal - 1);
+            bk.HighestIndex = ch->HighestIndex;
+            bk.NumBlocksInUse = ch->NumBlocksInUse;
+            bk.NumBlocksAvailable += (ch->NumBlocksTotal - ch->NumBlocksInUse);
             bk.UsedChunks = ch;
 
             ONLY_IF_ASSERT(PoisonChunk_(ch));
@@ -916,6 +949,7 @@ static void DanglingFree_(FBinnedThreadCache_& tc, FBinnedChunk_* ch, FBinnedBlo
             Assert_NoAssume(nullptr == bk.UsedChunks->PrevChunk);
 
             // sync previous chunk with bucket data
+            bk.UsedChunks->HighestIndex = bk.HighestIndex;
             bk.UsedChunks->NumBlocksInUse = bk.NumBlocksInUse;
             bk.UsedChunks->FreeBlocks = bk.FreeBlocks;
             bk.UsedChunks->PrevChunk = ch;
@@ -923,6 +957,7 @@ static void DanglingFree_(FBinnedThreadCache_& tc, FBinnedChunk_* ch, FBinnedBlo
 
         // register the new free blocks as head of the used chunks
         bk.FreeBlocks = ch->FreeBlocks;
+        bk.HighestIndex = ch->HighestIndex;
         bk.NumBlocksInUse = ch->NumBlocksInUse;
         bk.NumBlocksAvailable += (ch->NumBlocksTotal - ch->NumBlocksInUse);
         bk.UsedChunks = ch;
@@ -953,7 +988,7 @@ static NO_INLINE void BinnedFree_(FBinnedBucket_& bk, FBinnedChunk_* ch, FBinned
         Assert_NoAssume(ch->CheckCanary());
         Assert_NoAssume(FBinnedThreadCache_::InvalidBlockRef != uintptr_t(tc.DanglingBlocks));
 
-        // if this the head chunk then it's because we need to release the chunk
+        // if it's the head chunk then we need to release the chunk
         if (Unlikely(bk.UsedChunks == ch)) {
             Assert(bk.NumBlocksInUse == 1);
             Assert_NoAssume(nullptr == ch->PrevChunk);
@@ -965,6 +1000,7 @@ static NO_INLINE void BinnedFree_(FBinnedBucket_& bk, FBinnedChunk_* ch, FBinned
 
             blk->Next = bk.FreeBlocks;
             ch->FreeBlocks = blk;
+            ch->HighestIndex = bk.HighestIndex;
             ch->NumBlocksInUse = 0;
             ch->ThreadCache = nullptr;
             ch->NextChunk = tc.FreeChunks;
@@ -976,6 +1012,7 @@ static NO_INLINE void BinnedFree_(FBinnedBucket_& bk, FBinnedChunk_* ch, FBinned
 
                 bk.UsedChunks->PrevChunk = nullptr;
                 bk.FreeBlocks = bk.UsedChunks->FreeBlocks;
+                bk.HighestIndex = bk.UsedChunks->HighestIndex;
                 bk.NumBlocksInUse = bk.UsedChunks->NumBlocksInUse;
 
                 ONLY_IF_ASSERT(PoisonChunk_(bk.UsedChunks));
@@ -984,6 +1021,7 @@ static NO_INLINE void BinnedFree_(FBinnedBucket_& bk, FBinnedChunk_* ch, FBinned
                 Assert_NoAssume(0 == bk.NumBlocksAvailable);
 
                 bk.FreeBlocks = nullptr;
+                bk.HighestIndex = 0;
                 bk.NumBlocksInUse = 0;
             }
 
@@ -994,6 +1032,7 @@ static NO_INLINE void BinnedFree_(FBinnedBucket_& bk, FBinnedChunk_* ch, FBinned
         else {
             Assert(ch->PrevChunk); // since ch != bk.UsedChunks
             Assert(ch->NumBlocksInUse);
+            Assert_NoAssume(ch->HighestIndex < ch->NumBlocksTotal);
             Assert_NoAssume(ch->NumBlocksInUse <= ch->NumBlocksTotal);
             Assert_NoAssume(ContainsChunk_(bk.UsedChunks, ch));
 
@@ -1076,6 +1115,7 @@ FBinnedThreadCache_::~FBinnedThreadCache_() {
             Assert_NoAssume(ch->FreeBlocks == (FBinnedBlock_*)intptr_t(-1));
 
             // don't forget to sync the head with the bucket
+            bk->UsedChunks->HighestIndex = bk->HighestIndex;
             bk->UsedChunks->NumBlocksInUse = bk->NumBlocksInUse;
             bk->UsedChunks->FreeBlocks = bk->FreeBlocks;
 
@@ -1088,6 +1128,7 @@ FBinnedThreadCache_::~FBinnedThreadCache_() {
                 Assert_NoAssume(not next || next->PrevChunk == ch);
                 Assert_NoAssume(this == ch->ThreadCache);
                 Assert_NoAssume(ch->NumBlocksInUse);
+                Assert_NoAssume(ch->HighestIndex < ch->NumBlocksTotal);
                 Assert_NoAssume(ch->NumBlocksInUse <= ch->NumBlocksTotal);
                 Assert_NoAssume(nullptr == ch->NextBatch);
                 Assert_NoAssume(0 == ch->NumChunksInBatch);
@@ -1127,6 +1168,7 @@ FBinnedGlobalCache_::~FBinnedGlobalCache_() {
             Assert_NoAssume(FBinnedChunk_::NumBlocksTotalInChunk(ch->SizeClass) == ch->NumBlocksTotal);
             Assert_NoAssume(nullptr == ch->ThreadCache);
             Assert_NoAssume(ch->NumBlocksInUse);
+            Assert_NoAssume(ch->HighestIndex < ch->NumBlocksTotal);
             Assert_NoAssume(ch->NumBlocksInUse < ch->NumBlocksTotal);
             Assert_NoAssume(nullptr == ch->NextBatch);
             Assert_NoAssume(0 == ch->NumChunksInBatch);
@@ -1184,13 +1226,20 @@ void* FMallocBinned::Malloc(size_t size) {
     // SizeClass <NumSizeClasses> won't ever be filled, allows to make only one test
     FBinnedBucket_& bk = GBinnedThreadBuckets_[Min(sizeClass, FMallocBinned::NumSizeClasses)];
 
-    FBinnedBlock_* const blk = bk.FreeBlocks;
-    if (Likely(blk)) {
+    FBinnedBlock_* blk = bk.FreeBlocks;
+    if (Likely(!!blk | !!bk.HighestIndex)) {
         Assert(bk.NumBlocksAvailable);
         Assert_NoAssume(size <= FMallocBinned::SizeClasses[sizeClass]);
+        Assert_NoAssume(bk.NumBlocksInUse < bk.UsedChunks->NumBlocksTotal);
         Assert_NoAssume(bk.UsedChunks->FreeBlocks == (FBinnedBlock_*)intptr_t(-1));
 
-        bk.FreeBlocks = blk->Next;
+        if (blk)
+            bk.FreeBlocks = blk->Next;
+        else // lazily initialize the chunk free list
+            blk = FBinnedChunk_::BlockFromIndex(bk.UsedChunks, bk.HighestIndex--, FMallocBinned::SizeClasses[sizeClass]);
+
+        Assert_NoAssume(ChunkFromBlock_(blk) == bk.UsedChunks);
+
         bk.NumBlocksInUse++;
         bk.NumBlocksAvailable--;
         return blk;

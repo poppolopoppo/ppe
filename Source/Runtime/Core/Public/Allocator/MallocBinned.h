@@ -39,9 +39,9 @@ public:
 
 public:
     // made public so that external code can align on block sizes
-    static constexpr size_t MinSizeClass = 19;
-    static constexpr size_t NumSizeClasses = 45;
-    static constexpr u16 SizeClasses[NumSizeClasses] = {
+    static constexpr const size_t MinSizeClass = 19;
+    static constexpr const size_t NumSizeClasses = 45;
+    static constexpr const u16 SizeClasses[NumSizeClasses] = {
         /*  0 */    16    , 0     , 0     , 0     ,
         /*  4 */    32    , 0     , 48    , 0     ,
         /*  8 */    64    , 80    , 96    , 112   ,
