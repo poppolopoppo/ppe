@@ -21,7 +21,7 @@
 #include "IO/StringView.h"
 #include "IO/TextWriter.h"
 
-#include "Maths/RandomGenerator.h"
+#include "Maths/Threefy.h"
 #include "Maths/Units.h"
 #include "Maths/VarianceEstimator.h"
 
@@ -60,7 +60,7 @@ public:
     double MaxVarianceError{ 1e-3 };
     static constexpr u32 MinIterations = Max(FApproximateHistogram::MinSamples * 2, 5000ul);
 #endif
-    u64 RandomSeed{ PPE_HASH_VALUE_SEED_64 };
+    u32 RandomSeed{ PPE_HASH_VALUE_SEED_32 };
 
 public: // Helpers
 #if USE_BENCHMARK_ASM_DONOTOPTIMIZE
@@ -166,14 +166,14 @@ public: // FState
     class FState {
     public:
         FState(const FBenchmark& benchmark)
-            : _benchmark(benchmark)
-            , _rnd(benchmark.RandomSeed)
-        {}
+        :   _benchmark(benchmark) {
+            _rnd.Seed(benchmark.RandomSeed);
+        }
 
         FIterator begin();
         FIterator end();
 
-        FRandomGenerator& Random() { return _rnd; }
+        FThreefy_4x32& Random() { return _rnd; }
         const FApproximateHistogram& Histogram() const { return _histogram; }
 
         void PauseTiming() { _timer.Stop(); }
@@ -238,7 +238,7 @@ public: // FState
         const FBenchmark& _benchmark;
 
         FTimer _timer;
-        FRandomGenerator _rnd;
+        FThreefy_4x32 _rnd;
         FApproximateHistogram _histogram;
 
         double VarianceError() const {
@@ -289,7 +289,7 @@ public: // FRun
     };
 
     template <typename _Benchmark, typename... _Args>
-    static FRun Run(_Benchmark& bm, const _Args&... args) {
+    static NO_INLINE FRun Run(_Benchmark& bm, const _Args&... args) {
         FState state{ bm };
         bm(state, args...);
         state.Finish();
