@@ -101,6 +101,7 @@ public: // generic helpers
     //----------------------------------------------------------------------------
     // Finalization mix - force all bits of a hash block to avalanche
 
+#if 0
     // XXH32_avalanche()
     static FORCE_INLINE CONSTEXPR u32 FMix32(u32 h32) NOEXCEPT {
         h32 ^= h32 >> 15;
@@ -120,6 +121,31 @@ public: // generic helpers
         h64 ^= h64 >> 32;
         return h64;
     }
+
+#else
+    // https://nullprogram.com/blog/2018/07/31/
+    // exact bias: 0.17353355999581582
+    // uint32_t lowbias32(uint32_t x)
+    static FORCE_INLINE CONSTEXPR u32 FMix32(u32 x) NOEXCEPT {
+        x ^= x >> 16;
+        x *= UINT32_C(0x7feb352d);
+        x ^= x >> 15;
+        x *= UINT32_C(0x846ca68b);
+        x ^= x >> 16;
+        return x;
+    }
+
+    // http://xoshiro.di.unimi.it/splitmix64.c
+    static FORCE_INLINE CONSTEXPR u64 FMix64(u64 x) NOEXCEPT {
+        x ^= x >> 30;
+        x *= UINT64_C(0xbf58476d1ce4e5b9);
+        x ^= x >> 27;
+        x *= UINT64_C(0x94d049bb133111eb);
+        x ^= x >> 31;
+        return x;
+    }
+
+#endif
 
     //----------------------------------------------------------------------------
 
