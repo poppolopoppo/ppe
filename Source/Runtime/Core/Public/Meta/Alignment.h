@@ -15,7 +15,11 @@ namespace Meta {
 #define ROUND_TO_NEXT_128(v) ((((uintptr_t)(v)) + 127) & ~127)
 #define ROUND_TO_NEXT_64K(v) ((((uintptr_t)(v)) + 64*1024-1) & ~(64*1024-1))
 //----------------------------------------------------------------------------
-#define ALIGN(_BOUNDARY) __declspec(align(_BOUNDARY))
+#if 0
+#   define ALIGN(_BOUNDARY) __declspec(align(_BOUNDARY))
+#else
+#   define ALIGN(_BOUNDARY) alignas(_BOUNDARY)
+#endif
 //----------------------------------------------------------------------------
 inline CONSTEXPR bool IsPow2(size_t u) { return ((u & (u - 1)) == 0 && u); }
 //----------------------------------------------------------------------------
