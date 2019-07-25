@@ -181,22 +181,22 @@ struct TScalarVectorBinaryOp : TScalarVectorExpr<TScalarVectorBinaryOp<_Lhs, _Rh
 };
 //----------------------------------------------------------------------------
 template <typename U, typename V, size_t _Dim>
-CONSTEXPR auto SIMD_INLINE operator +(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator +(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return a + b; });
 }
 //----------------------------------------------------------------------------
 template <typename U, typename V, size_t _Dim>
-CONSTEXPR auto SIMD_INLINE operator -(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator -(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return a - b; });
 }
 //----------------------------------------------------------------------------
 template <typename U, typename V, size_t _Dim>
-CONSTEXPR auto SIMD_INLINE operator *(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator *(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return a * b; });
 }
 //----------------------------------------------------------------------------
 template <typename U, typename V, size_t _Dim>
-CONSTEXPR auto SIMD_INLINE operator /(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator /(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorExpr<V, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return a / b; });
 }
 //----------------------------------------------------------------------------
@@ -226,79 +226,79 @@ struct TScalarVectorUnaryOp : TScalarVectorExpr<TScalarVectorUnaryOp<_Expr, _Op>
 };
 //----------------------------------------------------------------------------
 template <typename U, size_t _Dim>
-CONSTEXPR auto SIMD_INLINE operator -(const TScalarVectorExpr<U, _Dim>& e) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator -(const TScalarVectorExpr<U, _Dim>& e) NOEXCEPT {
     return TScalarVectorUnaryOp(e, [](auto x) CONSTEXPR NOEXCEPT { return (-x); });
 }
 template <typename U, size_t _Dim>
-CONSTEXPR auto SIMD_INLINE  operator ~(const TScalarVectorExpr<U, _Dim>& e) NOEXCEPT {
+CONSTEXPR auto VECTORCALL  operator ~(const TScalarVectorExpr<U, _Dim>& e) NOEXCEPT {
     return TScalarVectorUnaryOp(e, [](auto x) CONSTEXPR NOEXCEPT { return (~x); });
 }
 //----------------------------------------------------------------------------
 template <typename U, size_t _Dim, typename T, size_t _Idx>
-CONSTEXPR auto SIMD_INLINE operator +(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator +(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [&rhs](auto x) CONSTEXPR NOEXCEPT { return (x + rhs); });
 }
 template <typename U, size_t _Dim, typename T, size_t _Idx>
-CONSTEXPR auto SIMD_INLINE operator -(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator -(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [&rhs](auto x) CONSTEXPR NOEXCEPT { return (x - rhs); });
 }
 template <typename U, size_t _Dim, typename T, size_t _Idx>
-CONSTEXPR auto SIMD_INLINE operator *(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator *(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [&rhs](auto x) CONSTEXPR NOEXCEPT { return (x * rhs); });
 }
 template <typename U, size_t _Dim, typename T, size_t _Idx>
-CONSTEXPR auto SIMD_INLINE operator /(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator /(const TScalarVectorExpr<U, _Dim>& lhs, const TScalarVectorComponent<T, _Idx>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [&rhs](auto x) CONSTEXPR NOEXCEPT { return (x / rhs); });
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Idx, typename U, size_t _Dim>
-CONSTEXPR auto SIMD_INLINE operator +(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator +(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [&lhs](auto x) CONSTEXPR NOEXCEPT { return (lhs + x); });
 }
 template <typename T, size_t _Idx, typename U, size_t _Dim>
-CONSTEXPR auto SIMD_INLINE operator -(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator -(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [&lhs](auto x) CONSTEXPR NOEXCEPT { return (lhs - x); });
 }
 template <typename T, size_t _Idx, typename U, size_t _Dim>
-CONSTEXPR auto SIMD_INLINE operator *(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator *(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [&lhs](auto x) CONSTEXPR NOEXCEPT { return (lhs * x); });
 }
 template <typename T, size_t _Idx, typename U, size_t _Dim>
-CONSTEXPR auto SIMD_INLINE operator /(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator /(const TScalarVectorComponent<T, _Idx>& lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [&lhs](auto x) CONSTEXPR NOEXCEPT { return (lhs / x); });
 }
 //----------------------------------------------------------------------------
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto SIMD_INLINE operator +(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator +(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x + rhs); });
 }
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto SIMD_INLINE operator -(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator -(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x - rhs); });
 }
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto SIMD_INLINE operator *(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator *(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x * rhs); });
 }
 template <typename U, size_t _Dim, typename V, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto SIMD_INLINE operator /(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator /(const TScalarVectorExpr<U, _Dim>& lhs, V rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(lhs, [rhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (x / rhs); });
 }
 //----------------------------------------------------------------------------
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto SIMD_INLINE operator +(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator +(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs + x); });
 }
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto SIMD_INLINE operator -(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator -(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs - x); });
 }
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto SIMD_INLINE operator *(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator *(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs * x); });
 }
 template <typename V, typename U, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<U, _Dim>, V> >
-CONSTEXPR auto SIMD_INLINE operator /(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
+CONSTEXPR auto VECTORCALL operator /(V lhs, const TScalarVectorExpr<U, _Dim>& rhs) NOEXCEPT {
     return TScalarVectorUnaryOp(rhs, [lhs](auto x) CONSTEXPR NOEXCEPT->_Result { return (lhs / x); });
 }
 //----------------------------------------------------------------------------
@@ -312,29 +312,29 @@ struct TScalarVectorAssignable : TScalarVectorExpr<_Expr, _Dim> {
     using component_type = T;
 
     template <typename U>
-    CONSTEXPR auto SIMD_INLINE operator =(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
+    CONSTEXPR auto VECTORCALL operator =(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
         return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst = src; });
     }
 
     template <typename U>
-    CONSTEXPR auto SIMD_INLINE operator +=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
+    CONSTEXPR auto VECTORCALL operator +=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
         return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst += src; });
     }
     template <typename U>
-    CONSTEXPR auto SIMD_INLINE operator -=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
+    CONSTEXPR auto VECTORCALL operator -=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
         return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst -= src; });
     }
     template <typename U>
-    CONSTEXPR auto SIMD_INLINE operator *=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
+    CONSTEXPR auto VECTORCALL operator *=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
         return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst *= src; });
     }
     template <typename U>
-    CONSTEXPR auto SIMD_INLINE operator /=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
+    CONSTEXPR auto VECTORCALL operator /=(const TScalarVectorExpr<U, Dim>& other) NOEXCEPT {
         return assign(other, [](auto& dst, const auto& src) CONSTEXPR NOEXCEPT { dst /= src; });
     }
 
     template <typename U, typename _Op>
-    CONSTEXPR _Expr& SIMD_INLINE assign(const TScalarVectorExpr<U, Dim>& vec, _Op&& op) NOEXCEPT {
+    CONSTEXPR _Expr& VECTORCALL assign(const TScalarVectorExpr<U, Dim>& vec, _Op&& op) NOEXCEPT {
         Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR NOEXCEPT{
             ((op(static_cast<_Expr&>(*this).template get<idx>(), vec.template get<idx>())), ...);
         });

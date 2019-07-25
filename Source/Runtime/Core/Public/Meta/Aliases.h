@@ -126,7 +126,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define FORCE_INLINE    inline // don't want force inline when debugging
 #endif
 #define NO_INLINE       __declspec(noinline)
-#define SIMD_INLINE     _vectorcall
+#define SIMD_INLINE     FORCE_INLINE VECTORCALL
 //----------------------------------------------------------------------------
 #if ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
 #   define Likely(...) (__builtin_expect (!!(__VA_ARGS__),1) )
@@ -144,6 +144,12 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define CONSTEXPR constexpr
 #else
 #   define CONSTEXPR
+#endif
+//----------------------------------------------------------------------------
+#if USE_PPE_DEBUG
+#   define RELEASE_CONSTEXPR
+#else
+#   define RELEASE_CONSTEXPR CONSTEXPR
 #endif
 //----------------------------------------------------------------------------
 #if _HAS_CXX17

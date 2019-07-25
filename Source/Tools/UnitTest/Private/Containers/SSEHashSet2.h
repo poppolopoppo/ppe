@@ -10,46 +10,53 @@
 #include "Meta/PointerWFlags.h"
 #include "Meta/Iterator.h"
 
+#define USE_PPE_SSEHASHSET2_MICROPROFILING 0 //%_NOCOMMIT%
+#if USE_PPE_SSEHASHSET2_MICROPROFILING
+#   define PPE_SSEHASHSET2_MICROPROFILING NO_INLINE
+#else
+#   define PPE_SSEHASHSET2_MICROPROFILING
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using FSSEHashStates = Meta::TArray<i8, 16>;
+using FSSEHashStates2 = Meta::TArray<u8, 16>;
 //----------------------------------------------------------------------------
-ALIGN(16) CONSTEXPR const FSSEHashStates GSimdBucketSentinel{ 0 };
+ALIGN(16) CONSTEXPR const FSSEHashStates2 GSimdBucketSentinel2{ 0 };
 //----------------------------------------------------------------------------
 template <typename T>
-struct ALIGN(16) TSSEHashBucket {
+struct ALIGN(16) TSSEHashBucket2 {
     STATIC_CONST_INTEGRAL(u32, Capacity, 16);
-    using bitmask_t = TBitMask<u32>;
-    using states_t = FSSEHashStates;
+    using bitmask_t = TBitMask<size_t>;
+    using states_t = FSSEHashStates2;
     using storage_t = POD_STORAGE(T);
 
-    states_t States;
-    storage_t Items[Capacity];
+    ALIGN(16) states_t States;
+    ALIGN(16) storage_t Items[Capacity];
 
-    FORCE_INLINE TSSEHashBucket() noexcept {
+    FORCE_INLINE TSSEHashBucket2() noexcept {
         STATIC_ASSERT(sizeof(states_t) == sizeof(m128i_t));
         m128i_epi8_store_aligned(&States, m128i_epi8_set_true());
     }
 
-    FORCE_INLINE ~TSSEHashBucket() {
+    FORCE_INLINE ~TSSEHashBucket2() {
         clear_LeaveDirty();
     }
 
-    FORCE_INLINE TSSEHashBucket(const TSSEHashBucket& other) {
+    FORCE_INLINE TSSEHashBucket2(const TSSEHashBucket2& other) {
         copy_AssumeEmpty(other);
     }
-    FORCE_INLINE TSSEHashBucket& operator =(const TSSEHashBucket& other) {
+    FORCE_INLINE TSSEHashBucket2& operator =(const TSSEHashBucket2& other) {
         clear_LeaveDirty();
         copy_AssumeEmpty(other);
         return (*this);
     }
 
-    FORCE_INLINE TSSEHashBucket(TSSEHashBucket&& rvalue) {
+    FORCE_INLINE TSSEHashBucket2(TSSEHashBucket2&& rvalue) {
         move_AssumeEmpty(std::move(rvalue));
     }
-    FORCE_INLINE TSSEHashBucket& operator =(TSSEHashBucket&& rvalue) {
+    FORCE_INLINE TSSEHashBucket2& operator =(TSSEHashBucket2&& rvalue) {
         clear_LeaveDirty();
         move_AssumeEmpty(std::move(rvalue));
         return (*this);
@@ -58,7 +65,7 @@ struct ALIGN(16) TSSEHashBucket {
 #if USE_PPE_DEBUG
     bool is_sentinel() const {
         m128i_t st = m128i_epi8_load_aligned(&States);
-        const u32 bm = m128i_epi8_findeq(st, m128i_epi8_set_zero());
+        const size_t bm = m128i_epi8_findeq(st, m128i_epi8_set_zero());
         return (0xFFFFu == bm);
     }
 #endif
@@ -67,13 +74,15 @@ struct ALIGN(16) TSSEHashBucket {
         Assert(i < Capacity);
         return reinterpret_cast<T&>(Items[i]);
     }
-    const T& at(size_t i) const NOEXCEPT {
-        return const_cast<TSSEHashBucket*>(this)->at(i);
+    FORCE_INLINE const T& at(size_t i) const NOEXCEPT {
+        Assert(i < Capacity);
+        return reinterpret_cast<const T&>(Items[i]);
     }
 
     FORCE_INLINE void clear_LeaveDirty() NOEXCEPT {
         IF_CONSTEXPR(not Meta::has_trivial_destructor<T>::value) {
-            for (bitmask_t bm{ m128i_epi8_findneq(m128i_epi8_load_aligned(&States), m128i_epi8_set_true()) }; bm.Data; )
+            const m128i_t st = m128i_epi8_load_aligned(&States);
+            for (bitmask_t bm{ m128i_epi8_findge(st, m128i_epi8_set_zero()) }; bm.Data; )
                 Meta::Destroy(&at(bm.PopFront_AssumeNotEmpty()));
         }
     }
@@ -83,18 +92,18 @@ struct ALIGN(16) TSSEHashBucket {
         m128i_epi8_store_aligned(&States, m128i_epi8_set_true());
     }
 
-    FORCE_INLINE void copy_AssumeEmpty(const TSSEHashBucket& other) {
-        m128i_t st = m128i_epi8_load_aligned(&other.States);
-        for (bitmask_t bm{ m128i_epi8_findneq(st, m128i_epi8_set_true()) }; bm.Data; ) {
+    FORCE_INLINE void copy_AssumeEmpty(const TSSEHashBucket2& other) {
+        const m128i_t st = m128i_epi8_load_aligned(&other.States);
+        for (bitmask_t bm{ m128i_epi8_findge(st, m128i_epi8_set_zero()) }; bm.Data; ) {
             const u32 e = bm.PopFront_AssumeNotEmpty();
             Meta::Construct(&at(e), other.at(e));
         }
         m128i_epi8_store_aligned(&States, st);
     }
 
-    FORCE_INLINE void move_AssumeEmpty(TSSEHashBucket&& rvalue) NOEXCEPT {
-        m128i_t st = m128i_epi8_load_aligned(&rvalue.States);
-        for (bitmask_t bm{ m128i_epi8_findneq(st, m128i_epi8_set_true()) }; bm.Data; ) {
+    FORCE_INLINE void move_AssumeEmpty(TSSEHashBucket2&& rvalue) NOEXCEPT {
+        const m128i_t st = m128i_epi8_load_aligned(&rvalue.States);
+        for (bitmask_t bm{ m128i_epi8_findge(st, m128i_epi8_set_zero()) }; bm.Data; ) {
             const u32 e = bm.PopFront_AssumeNotEmpty();
             Meta::Construct(&at(e), std::move(rvalue.at(e)));
             Meta::Destroy(&rvalue.at(e));
@@ -103,20 +112,16 @@ struct ALIGN(16) TSSEHashBucket {
         m128i_epi8_store_aligned(&rvalue.States, m128i_epi8_set_true());
     }
 
-    FORCE_INLINE bitmask_t each() const NOEXCEPT {
-        return bitmask_t{ m128i_epi8_findneq(m128i_epi8_load_aligned(&States), m128i_epi8_set_true()) };
-    }
-
-    FORCE_INLINE static TSSEHashBucket* Sentinel() NOEXCEPT {
+    FORCE_INLINE static TSSEHashBucket2* Sentinel() NOEXCEPT {
         // we guarantee we won't access Items, so use a generic sentinel (avoid bloating rdata)
-        return (TSSEHashBucket*)(&GSimdBucketSentinel);
+        return (TSSEHashBucket2*)(&GSimdBucketSentinel);
     }
 
 };
 //----------------------------------------------------------------------------
 template <typename T, bool _Const>
-struct TSSEHashIterator : Meta::TIterator<Meta::TConditional<_Const, Meta::TAddConst<T>, T>> {
-    using bucket_t = TSSEHashBucket<T>;
+struct TSSEHashIterator2 : Meta::TIterator<Meta::TConditional<_Const, Meta::TAddConst<T>, T>> {
+    using bucket_t = TSSEHashBucket2<T>;
     using bitmask_t = typename bucket_t::bitmask_t;
     using parent_t = Meta::TIterator<Meta::TConditional<_Const, Meta::TAddConst<T>, T>>;
 
@@ -128,18 +133,18 @@ struct TSSEHashIterator : Meta::TIterator<Meta::TConditional<_Const, Meta::TAddC
 
     Meta::FHeapPtrWCounter BucketAndSlot;
 
-    CONSTEXPR TSSEHashIterator(Meta::FNoInit) NOEXCEPT {}
+    CONSTEXPR TSSEHashIterator2(Meta::FNoInit) NOEXCEPT {}
 
-    RELEASE_CONSTEXPR TSSEHashIterator(bucket_t* bucket, u32 slot) NOEXCEPT {
+    RELEASE_CONSTEXPR TSSEHashIterator2(bucket_t* bucket, u32 slot) NOEXCEPT {
         BucketAndSlot.Reset(bucket, slot);
     }
 
     template <bool _Other>
-    CONSTEXPR TSSEHashIterator(const TSSEHashIterator<T, _Other>& other) NOEXCEPT
+    CONSTEXPR TSSEHashIterator2(const TSSEHashIterator2<T, _Other>& other) NOEXCEPT
     :   BucketAndSlot(other.BucketAndSlot)
     {}
     template <bool _Other>
-    CONSTEXPR TSSEHashIterator& operator =(const TSSEHashIterator<T, _Other>& other) NOEXCEPT {
+    CONSTEXPR TSSEHashIterator2& operator =(const TSSEHashIterator2<T, _Other>& other) NOEXCEPT {
         BucketAndSlot = other.BucketAndSlot;
         return (*this);
     }
@@ -147,25 +152,26 @@ struct TSSEHashIterator : Meta::TIterator<Meta::TConditional<_Const, Meta::TAddC
     bucket_t& Bucket() const NOEXCEPT { return (*BucketAndSlot.Ptr<bucket_t>()); }
     u32 Slot() const NOEXCEPT { return BucketAndSlot.Counter(); }
 
-    TSSEHashIterator& operator++() { Advance(); return (*this); }
-    TSSEHashIterator& operator++(int) { TSSEHashIterator tmp(*this); Advance(); return tmp; }
+    TSSEHashIterator2& operator++() { Advance(); return (*this); }
+    TSSEHashIterator2& operator++(int) { TSSEHashIterator2 tmp(*this); Advance(); return tmp; }
 
     reference operator *() const { return Bucket().at(BucketAndSlot.Counter()); }
     pointer operator ->() const { return (&operator *()); }
 
-    CONSTEXPR inline friend bool operator ==(const TSSEHashIterator& lhs, const TSSEHashIterator& rhs) NOEXCEPT {
+    CONSTEXPR inline friend bool operator ==(const TSSEHashIterator2& lhs, const TSSEHashIterator2& rhs) NOEXCEPT {
         return (lhs.BucketAndSlot.Data == rhs.BucketAndSlot.Data);
     }
-    CONSTEXPR inline friend bool operator !=(const TSSEHashIterator& lhs, const TSSEHashIterator& rhs) NOEXCEPT {
+    CONSTEXPR inline friend bool operator !=(const TSSEHashIterator2& lhs, const TSSEHashIterator2& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
     void FirstSet(i8 slot) NOEXCEPT {
         bucket_t* pbucket = &Bucket();
         for (Assert(pbucket);; ++pbucket, slot = -1) {
-            const bitmask_t bm{ m128i_epi8_findneq_after(m128i_epi8_load_aligned(&pbucket->States), m128i_epi8_set_true(), slot) };
+            const m128i_t st = m128i_epi8_load_aligned(&pbucket->States);
+            const bitmask_t bm{ m128i_epi8_findge(st, m128i_epi8_set_zero()) & (u32(0xFFFF) << (slot + 1)) };
             if (Likely(bm.Data)) {
-                BucketAndSlot.Reset(pbucket, bm.FirstBitSet_AssumeNotEmpty());
+                BucketAndSlot.Reset(pbucket, u32(bm.FirstBitSet_AssumeNotEmpty()));
                 return;
             }
         }
@@ -182,7 +188,7 @@ template <
 ,   typename _Hash = Meta::THash<_Key>
 ,   typename _EqualTo = Meta::TEqualTo<_Key>
 ,   typename _Allocator = ALLOCATOR(Container)
->   class TSSEHashSet : _Allocator {
+>   class TSSEHashSet2 : _Allocator {
 public:
     typedef _Key value_type;
     typedef _Hash hasher;
@@ -191,7 +197,7 @@ public:
     using allocator_type = _Allocator;
     using allocator_traits = TAllocatorTraits<allocator_type>;
 
-    using bucket_t = TSSEHashBucket<value_type>;
+    using bucket_t = TSSEHashBucket2<value_type>;
 
     typedef value_type& reference;
     typedef const value_type& const_reference;
@@ -201,40 +207,40 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    using iterator = TSSEHashIterator<value_type, false>;
-    using const_iterator = TSSEHashIterator<value_type, true>;
+    using iterator = TSSEHashIterator2<value_type, false>;
+    using const_iterator = TSSEHashIterator2<value_type, true>;
 
-    CONSTEXPR TSSEHashSet() NOEXCEPT
+    CONSTEXPR TSSEHashSet2() NOEXCEPT
     :   _size(0)
     ,   _bucketMask(0)
     ,   _buckets(bucket_t::Sentinel())
     {}
 
-    FORCE_INLINE ~TSSEHashSet() {
+    FORCE_INLINE ~TSSEHashSet2() {
         if (has_content_())
             releaseMemory_ForDtor_();
     }
 
-    FORCE_INLINE TSSEHashSet(const TSSEHashSet& other) : TSSEHashSet() {
+    FORCE_INLINE TSSEHashSet2(const TSSEHashSet2& other) : TSSEHashSet2() {
         assign(other);
     }
-    FORCE_INLINE TSSEHashSet& operator =(const TSSEHashSet& other) {
+    FORCE_INLINE TSSEHashSet2& operator =(const TSSEHashSet2& other) {
         assign(other);
         return (*this);
     }
 
-    CONSTEXPR TSSEHashSet(TSSEHashSet&& rvalue) NOEXCEPT
-    :   TSSEHashSet() {
+    CONSTEXPR TSSEHashSet2(TSSEHashSet2&& rvalue) NOEXCEPT
+    :   TSSEHashSet2() {
         std::swap(_size, rvalue._size);
         std::swap(_bucketMask, rvalue._bucketMask);
         std::swap(_buckets, rvalue._buckets);
     }
-    FORCE_INLINE TSSEHashSet& operator =(TSSEHashSet&& rvalue) {
+    FORCE_INLINE TSSEHashSet2& operator =(TSSEHashSet2&& rvalue) {
         assign(std::move(rvalue));
         return (*this);
     }
 
-    void assign(const TSSEHashSet& other) {
+    void assign(const TSSEHashSet2& other) {
         clear_ReleaseMemory();
 
         if (not other._size)
@@ -266,7 +272,7 @@ public:
         Assert_NoAssume(_buckets[numBuckets].is_sentinel());
     }
 
-    void assign(TSSEHashSet&& rvalue) {
+    void assign(TSSEHashSet2&& rvalue) {
         clear_ReleaseMemory();
 
         std::swap(_size, rvalue._size);
@@ -284,142 +290,133 @@ public:
     const_iterator begin() const { return iterator_begin_<true>(); }
     const_iterator end() const { return iterator_end_<true>(); }
 
-    TPair<iterator, bool> insert(const _Key& key) {
-        return insert(_Key(key));
-    }
-    TPair<iterator, bool> insert(_Key&& key) {
-        u32 h0 = u32(hasher()(key));
-        m128i_t h1 = m128i_epi8_broadcast(i8(h0 & 0x7f));
-        h0 = (h0 >> 7);
+    PPE_SSEHASHSET2_MICROPROFILING TPair<iterator, bool> insert(_Key&& rkey) {
+        const u32 h0 = u32(hasher()(rkey));
 
-        m128i_t st;
-        u32 bk, it;
         for (;;) {
-            bk = (h0 & _bucketMask);
+            bucket_t* const pbucket = _buckets + ((h0 >> 7) & _bucketMask);
 
-            Assert(Meta::IsAligned(16, &_buckets[bk].States));
-            st = m128i_epi8_load_aligned(&_buckets[bk].States);
+            const m128i_t st = m128i_epi8_load_aligned(pbucket);
+            const m128i_t h1 = m128i_epi8_broadcast(i8(h0 & 0x7f));
 
-            for (bitmask_t bm{ m128i_epi8_findeq(st, h1) }; bm.Data; ) {
-                it = bm.PopFront_AssumeNotEmpty();
-                if (Likely(key_equal()(_buckets[bk].at(it), key)))
-                    return MakePair(iterator{ &_buckets[bk], it }, false);
+            bitmask_t exist{ m128i_epi8_findeq(st, h1) };
+            while (exist) {
+                const u32 e = u32(exist.PopFront_AssumeNotEmpty());
+                if (Likely(key_equal()(pbucket->at(e), rkey)))
+                    return MakePair(iterator{ pbucket, e }, false);
             }
 
-            it = u32(m128i_epi8_replace_first_assume_unique(&st, m128i_epi8_set_true(), h1));
-            if (Likely(it < bucket_t::Capacity))
-                break;
+            bitmask_t free{ m128i_epi8_findlt(st, m128i_epi8_set_zero()) };
+            if (Likely(free.Data)) {
+                const u32 e = u32(free.FirstBitSet_AssumeNotEmpty());
+                Assert_NoAssume(not pbucket->is_sentinel());
 
-            rehash_ForCollision_();
+                ++_size;
+                pbucket->States[e] = u8(h0 & 0x7f);
+                Assert_NoAssume(not pbucket->is_sentinel());
+                Meta::Construct(&pbucket->at(e), std::move(rkey));
+
+                return MakePair(iterator{ pbucket, e }, true);
+            }
+            else {
+                rehash_ForCollision_();
+            }
         }
+    }
+    FORCE_INLINE TPair<iterator, bool> insert(const _Key& key) {
+        return insert(_Key(key));
+    }
+
+    iterator insert_AssertUnique(_Key&& key) {
+        const u32 h0 = u32(hasher()(key));
+        const m128i_t h1 = m128i_epi8_broadcast(u8(h0 & 0x7f));
+
+        u32 e;
+    RETRY_INSERT:
+        u32 bk = ((h0 >> 7) & _bucketMask);
+
+        const m128i_t st = m128i_epi8_load_aligned(&_buckets[bk].States);
+        Assert_NoAssume(find_ForAssert(_buckets[bk], st, h1, key) == INDEX_NONE);
+
+        if (const bitmask_t bm{ m128i_epi8_findlt(st, m128i_epi8_set_zero()) }) {
+            e = u32(bm.FirstBitSet_AssumeNotEmpty());
+        }
+        else {
+            rehash_ForCollision_();
+            goto RETRY_INSERT;
+        }
+
         Assert_NoAssume(bk < num_buckets_());
+        Assert(e < bucket_t::Capacity);
         Assert_NoAssume(not _buckets[bk].is_sentinel());
 
         ++_size;
-        m128i_epi8_store_aligned(&_buckets[bk].States, st);
+        _buckets[bk].States[e] = u8(h0 & 0x7f);
         Assert_NoAssume(not _buckets[bk].is_sentinel());
-        Meta::Construct(&_buckets[bk].at(it), std::move(key));
+        Meta::Construct(&_buckets[bk].at(e), std::move(key));
 
-        return MakePair(iterator{ &_buckets[bk], it }, true);
+        return iterator{ &_buckets[bk], e };
     }
-
     iterator insert_AssertUnique(const _Key& key) {
         return insert_AssertUnique(_Key(key));
     }
-    iterator insert_AssertUnique(_Key&& key) {
-        u32 h0 = u32(hasher()(key));
-        m128i_t h1 = m128i_epi8_broadcast(i8(h0 & 0x7f));
-        h0 = (h0 >> 7);
 
-        m128i_t st;
-        u32 bk, it;
-        for (;;) {
-            bk = (h0 & _bucketMask);
-            st = m128i_epi8_load_aligned(&_buckets[bk].States);
-            Assert_NoAssume(find_ForAssert(_buckets[bk], st, h1, key) == INDEX_NONE);
+    PPE_SSEHASHSET2_MICROPROFILING iterator find(const _Key& key) NOEXCEPT {
+        const u32 h0 = u32(hasher()(key));
 
-            it = u32(m128i_epi8_replace_first_assume_unique(&st, m128i_epi8_set_true(), h1));
-            if (Likely(it < bucket_t::Capacity))
-                break;
-
-            rehash_ForCollision_();
-        }
-        Assert_NoAssume(bk < num_buckets_());
-        Assert_NoAssume(not _buckets[bk].is_sentinel());
-
-        ++_size;
-        m128i_epi8_store_aligned(&_buckets[bk].States, st);
-        Assert_NoAssume(not _buckets[bk].is_sentinel());
-        Meta::Construct(&_buckets[bk].at(it), std::move(key));
-
-        return iterator{ &_buckets[bk], it };
-    }
-
-    iterator find(const _Key& key) NOEXCEPT {
-        u32 h0 = u32(hasher()(key));
-        m128i_t h1 = m128i_epi8_broadcast(i8(h0 & 0x7f));
-        h0 = (h0 >> 7);
-
-        bucket_t* const pbucket = &_buckets[h0 & _bucketMask];
-        for (bitmask_t bm{ m128i_epi8_findeq(m128i_epi8_load_aligned(&pbucket->States), h1) }; bm.Data;) {
-            const u32 it = bm.PopFront_AssumeNotEmpty();
-            if (Likely(key_equal()(pbucket->at(it), key)))
-                return iterator{ pbucket, it };
+        bucket_t* const pbucket = &_buckets[(h0 >> 7) & _bucketMask];
+        for (bitmask_t bm{ m128i_epi8_findeq(
+            m128i_epi8_load_aligned(&pbucket->States),
+            m128i_epi8_broadcast(u8(h0 & 0x7f))) }; bm.Data;) {
+            const size_t e = bm.PopFront_AssumeNotEmpty();
+            if (Likely(key_equal()(pbucket->at(e), key)))
+                return iterator{ pbucket, u32(e) };
         }
 
         return end();
     }
-
-    const_iterator find(const _Key& key) const NOEXCEPT {
-        return const_cast<TSSEHashSet*>(this)->find(key);
+    FORCE_INLINE const_iterator find(const _Key& key) const NOEXCEPT {
+        return const_cast<TSSEHashSet2*>(this)->find(key);
     }
 
-    bool erase(const _Key& key) NOEXCEPT {
-        u32 h0 = u32(hasher()(key));
-        m128i_t h1 = m128i_epi8_broadcast(i8(h0 & 0x7f));
-        h0 = (h0 >> 7);
+    PPE_SSEHASHSET2_MICROPROFILING bool erase(const _Key& key) NOEXCEPT {
+        const u32 h0 = u32(hasher()(key));
 
-        bucket_t* const pbucket = &_buckets[h0 & _bucketMask];
+        bucket_t* const pbucket = &_buckets[(h0 >> 7) & _bucketMask];
+        for (bitmask_t bm{ m128i_epi8_findeq(
+            m128i_epi8_load_aligned(&pbucket->States),
+            m128i_epi8_broadcast(u8(h0 & 0x7f))) }; bm.Data;) {
+            const size_t e = bm.PopFront_AssumeNotEmpty();
 
-        m128i_t visited = m128i_epi8_set_zero();
+            pointer const pkey = &pbucket->at(e);
+            if (Likely(key_equal()(*pkey, key))) {
+                Assert(_size);
 
-        u32 it;
-        m128i_t st;
-        for (;;) {
-            st = m128i_epi8_load_aligned(pbucket);
-            it = u32(m128i_epi8_replace_first_loop(&st, &visited, h1, m128i_epi8_set_true()));
-            if (it >= bucket_t::Capacity)
-                return false;
-            else if (Likely(key_equal()(pbucket->at(it), key)))
-                break;
+                --_size;
+                pbucket->States[e] = u8(0xff); // mark as deleted
+                Meta::Destroy(pkey);
+
+                return true;
+            }
         }
-        Assert_NoAssume(checked_cast<u32>(pbucket - _buckets) < num_buckets_());
-        Assert_NoAssume(not pbucket->is_sentinel());
 
-        --_size;
-        m128i_epi8_store_aligned(&pbucket->States, st);
-        Meta::Destroy(&pbucket->at(it));
-
-        return true;
+        return false;
     }
-    void erase(iterator it) NOEXCEPT {
+    FORCE_INLINE void erase(iterator it) NOEXCEPT {
         erase(const_iterator{ it });
     }
     void erase(const_iterator it) NOEXCEPT {
-        Assert_NoAssume(_size);
+        Assert(_size);
         Assert_NoAssume(AliasesToContainer(it));
 
         bucket_t* const pbucket = &it.Bucket();
         const u32 e = it.Slot();
 
         Assert_NoAssume(e < bucket_t::Capacity);
-        Assert_NoAssume(pbucket->States[e] != 0xFF);
-
-        m128i_t st = m128i_epi8_load_aligned(&pbucket->States);
-        st = m128i_epi8_remove_at(st, e);
-        m128i_epi8_store_aligned(&pbucket->States, st);
+        Assert_NoAssume(pbucket->States[e] != u8(0xff));
 
         --_size;
+        pbucket->States[e] = u8(0xff); // mark as deleted
         Meta::Destroy(&pbucket->at(e));
     }
 
@@ -449,7 +446,7 @@ public:
 
 #if USE_PPE_ASSERT
     template <bool _Const>
-    bool AliasesToContainer(const TSSEHashIterator<value_type, _Const>& it) const {
+    bool AliasesToContainer(const TSSEHashIterator2<value_type, _Const>& it) const {
         return (FPlatformMemory::Memoverlap(
             it.Bucket(), sizeof(bucket_t),
             _buckets, num_buckets_() * sizeof(bucket_t)));
@@ -520,8 +517,9 @@ private:
             _size = 0; // reset size before inserting back all elements
 
             forrange(pbucket, oldBuckets, oldBuckets + oldNumBuckets) {
-                for (bitmask_t bm{ pbucket->each() }; bm.Data; ) {
-                    const u32 it = bm.PopFront_AssumeNotEmpty();
+                const m128i_t st = m128i_epi8_load_aligned(&pbucket->States);
+                for (bitmask_t bm{ m128i_epi8_findge(st, m128i_epi8_set_zero()) }; bm.Data; ) {
+                    const size_t it = bm.PopFront_AssumeNotEmpty();
                     value_type* const pkey = &pbucket->at(it);
                     insert_AssertUnique(std::move(*pkey));
                     Meta::Destroy(pkey);
@@ -572,8 +570,8 @@ private:
     }
 
     template <bool _Const>
-    FORCE_INLINE TSSEHashIterator<value_type, _Const> iterator_begin_() const NOEXCEPT {
-        TSSEHashIterator<value_type, _Const> it{ Meta::NoInit };
+    FORCE_INLINE TSSEHashIterator2<value_type, _Const> iterator_begin_() const NOEXCEPT {
+        TSSEHashIterator2<value_type, _Const> it{ Meta::NoInit };
         if (_size) {
             it.BucketAndSlot.Reset(_buckets, 0);
             it.FirstSet(i8(-1));
@@ -586,8 +584,8 @@ private:
     }
 
     template <bool _Const>
-    FORCE_INLINE TSSEHashIterator<value_type, _Const> iterator_end_() const NOEXCEPT {
-        return TSSEHashIterator<value_type, _Const>{ _buckets + num_buckets_(), 0 };
+    FORCE_INLINE TSSEHashIterator2<value_type, _Const> iterator_end_() const NOEXCEPT {
+        return TSSEHashIterator2<value_type, _Const>{ _buckets + num_buckets_(), 0 };
     }
 
 #if USE_PPE_ASSERT

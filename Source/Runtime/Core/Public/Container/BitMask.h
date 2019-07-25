@@ -27,6 +27,7 @@ struct TBitMask {
 
     size_t Count() const NOEXCEPT { return checked_cast<size_t>(FPlatformMaths::popcnt(Data)); }
 
+#if 0
     template <size_t _Index>
     CONSTEXPR bool Get() const NOEXCEPT {
         STATIC_ASSERT(_Index < BitCount);
@@ -34,6 +35,19 @@ struct TBitMask {
     }
 
     bool Get(size_t index) const { Assert(index < BitCount); return ((Data & (One << index)) != 0); }
+#else
+    template <size_t _Index>
+    CONSTEXPR bool Get() const NOEXCEPT {
+        STATIC_ASSERT(_Index < BitCount);
+        return (!!((Data >> _Index) & 1));
+    }
+
+    bool Get(size_t index) const {
+        Assert_NoAssume(index < BitCount);
+        return (!!((Data >> index) & 1));
+    }
+#endif
+
     void Set(size_t index, bool value) { Assert(index < BitCount); Data = (value ? Data | (One << index) : Data & ~(One << index)); }
 
     void SetTrue(size_t index) { Assert(index < BitCount); Data |= One << index; }
