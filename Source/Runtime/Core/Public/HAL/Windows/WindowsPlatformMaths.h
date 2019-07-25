@@ -21,7 +21,7 @@ public:
     //------------------------------------------------------------------------
     // SSE registers
 
-    using FGenericPlatformMaths::SetFlushToZeroMode;
+    using FGenericPlatformMaths::Disable_FP_Assist;
 
     //------------------------------------------------------------------------
     // Float helpers

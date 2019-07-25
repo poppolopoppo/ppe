@@ -53,8 +53,8 @@ static void ExceptionTrap_(const FWStringView& step, _Functor&& func) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationContext::FApplicationContext() {
-    // Set flush-to-zero mode for SSE+SSE2 registers
-    FPlatformMaths::SetFlushToZeroMode();
+    // Set FTZ + DAZ for FP_ASSIST
+    FPlatformMaths::Disable_FP_Assist();
     // Signal platform specific code of application start
     FPlatformProcess::OnProcessStart();
     // Install crash exception handlers

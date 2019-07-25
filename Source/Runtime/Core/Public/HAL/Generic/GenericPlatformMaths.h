@@ -3,7 +3,8 @@
 #include "HAL/TargetPlatform.h"
 
 #include <cmath>
-#include <xmmintrin.h> // SSE + SSE2 : flush to zero
+#include <pmmintrin.h> // FP_ASSIST : denormals are zero (DAZ)
+#include <xmmintrin.h> // FP_ASSIST : flush to zero (FTZ)
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -15,15 +16,15 @@ public: // must be defined for every platform
     //------------------------------------------------------------------------
     // SSE registers
 
-    static void SetFlushToZeroMode() NOEXCEPT {
-        // "It is strongly recommended to set the flush-to-zero mode unless you have special reasons
-        // to use subnormal numbers.
+    static void Disable_FP_Assist() NOEXCEPT {
+        // "It is strongly recommended to set the flush-to-zero mode unless you have special reasons to use subnormal numbers."
         // From : https://www.agner.org/optimize/optimizing_cpp.pdf
+        // Code : https://en.wikipedia.org/wiki/Denormal_number
 
-        // Set flush-to-zero mode (SSE) :
+        // Set Flush-To-Zero mode (FTZ) for FP_ASSIST :
         _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-        // Set flush-to-zero and denormals-are-zero mode (SSE2) :
-        ::_mm_setcsr(::_mm_getcsr() | 0x8040);
+        // Set Denormals-Are-Zero mode (DAZ) for FP_ASSIST :
+        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
     }
 
     //------------------------------------------------------------------------
