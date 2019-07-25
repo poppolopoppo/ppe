@@ -30,6 +30,7 @@
 #include "Maths/Maths.h"
 #include "Maths/PrimeNumbers.h"
 #include "Maths/RandomGenerator.h"
+#include "Maths/Threefy.h"
 #include "Memory/MemoryStream.h"
 #include "Meta/PointerWFlags.h"
 #include "Meta/Utility.h"
@@ -42,6 +43,7 @@
 #define PPE_RUN_BENCHMARK_ONE_CONTAINER (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHMARK_MULTITHREADED (1) // %_NOCOMMIT%
 #define PPE_DONT_USE_STD_UNORDEREDSET   (0) // %_NOCOMMIT%
+#define USE_PPE_CONTAINERS_LONGRUN      (0) // %_NOCOMMIT%
 
 namespace PPE {
 LOG_CATEGORY(, Test_Containers)
@@ -66,6 +68,7 @@ template class TFlatSet<FString>;
 #include "Containers/HopscotchHashSet.h"
 #include "Containers/HopscotchHashSet2.h"
 #include "Containers/SimdHashSet.h"
+#include "Containers/SSEHashSet2.h"
 
 namespace PPE {
 namespace Test {
@@ -176,7 +179,7 @@ struct TSamplePool {
     }
 
     template <typename _Rnd, typename _Generator>
-    void Generate(size_t series, size_t numSamples, size_t jitter, _Rnd& rnd, const _Generator& generatorArchetype) {
+    void Generate(size_t series, size_t numSamples, u32 jitter, _Rnd& rnd, const _Generator& generatorArchetype) {
         _Generator generator{ generatorArchetype }; // copy the generator before generating samples
 
         NumSamples = numSamples;
@@ -197,7 +200,8 @@ struct TSamplePool {
         RandomOrder.reserve(numSamples);
         forrange(i, 0, numSamples)
             RandomOrder.emplace_back(u32(i % series));
-        std::shuffle(RandomOrder.begin(), RandomOrder.end(), rnd);
+        //std::shuffle(RandomOrder.begin(), RandomOrder.end(), rnd);
+        rnd.Shuffle(RandomOrder.MakeView());
 
         // generate random shuffles for each series
         VECTOR(Benchmark, u32) shuffled;
@@ -209,16 +213,17 @@ struct TSamplePool {
         Series.reserve(series);
         forrange(i, 0, series) {
             // jitter can be used to vary the size of each series
-            const size_t jitteredSamples = ((jitter)
-                 ? (numSamples + (rnd() % jitter * 2)) - jitter
-                 : numSamples);
+            const size_t jitteredSamples = jitter ? rnd(
+                checked_cast<u32>(numSamples - jitter),
+                checked_cast<u32>(numSamples + jitter) ) : numSamples;
             Assert_NoAssume(jitteredSamples > 0);
 
             Series.emplace_back_AssumeNoGrow();
             FSampleData& s = Series.back();
             s.SeriesIndex = checked_cast<u32>(i);
             {
-                std::shuffle(shuffled.begin(), shuffled.end(), rnd);
+                //std::shuffle(shuffled.begin(), shuffled.end(), rnd);
+                rnd.Shuffle(shuffled.MakeView());
                 TMemoryView<const u32> pool = shuffled.MakeConstView();
 
                 s.Insert.reserve(jitteredSamples);
@@ -233,20 +238,24 @@ struct TSamplePool {
             constexpr size_t sparse_factor = 70;
 
             s.Search.assign(s.Insert);
-            std::shuffle(s.Search.begin(), s.Search.end(), rnd);
+            //std::shuffle(s.Search.begin(), s.Search.end(), rnd);
+            rnd.Shuffle(s.Search.MakeView());
 
             s.Erase.assign(s.Search);
-            std::shuffle(s.Erase.begin(), s.Erase.end(), rnd);
+            //std::shuffle(s.Erase.begin(), s.Erase.end(), rnd);
+            rnd.Shuffle(s.Erase.MakeView());
 
             s.Sparse.assign(s.Erase
                 .MakeConstView()
                 .CutBeforeConst((sparse_factor * s.Erase.size()) / 100) );
-            std::shuffle(s.Sparse.begin(), s.Sparse.end(), rnd);
+            //std::shuffle(s.Sparse.begin(), s.Sparse.end(), rnd);
+            rnd.Shuffle(s.Sparse.MakeView());
 
             s.Dense.assign(s.Erase
                 .MakeConstView()
                 .CutStartingAt(s.Sparse.size()) );
-            std::shuffle(s.Dense.begin(), s.Dense.end(), rnd);
+            //std::shuffle(s.Dense.begin(), s.Dense.end(), rnd);
+            rnd.Shuffle(s.Dense.MakeView());
         }
     }
 
@@ -287,6 +296,10 @@ public:
     :   FBenchmark{ name } {
         MaxIterations = Min(MaxIterations, 1000000ul);
         ONLY_IF_ASSERT(MaxIterations = Min(MinIterations, MaxIterations));
+#if USE_PPE_CONTAINERS_LONGRUN
+        MaxIterations *= 100;
+        MaxVarianceError = 1e-5f;
+#endif
     }
 };
 class construct_noreserve_t : public FContainerBenchmark {
@@ -297,9 +310,10 @@ public:
         auto series = pool->MakeSeries();
         for (auto _ : state) {
             const auto& s = series.Next();
+            auto c{ archetype };
+
             state.ResetTiming();
 
-            auto c{ archetype };
             for (const auto& it : s.Insert)
                 Verify(c.insert(it).second);
             FBenchmark::DoNotOptimize(c);
@@ -314,12 +328,14 @@ public:
         auto series = pool->MakeSeries();
         for (auto _ : state) {
             const auto& s = series.Next();
-            state.ResetTiming();
-
             auto c{ archetype };
             c.reserve(s.Insert.size());
+
+            state.ResetTiming();
+
             for (const auto& it : s.Insert)
                 Verify(c.insert(it).second);
+
             FBenchmark::DoNotOptimize(c);
         }
     }
@@ -388,9 +404,7 @@ public:
 };
 class insert_dense_t : public FContainerBenchmark {
 public:
-    insert_dense_t() : FContainerBenchmark{ "insert_dns" } {
-        //BatchSize = 16; // batching for better accuracy
-    }
+    insert_dense_t() : FContainerBenchmark{ "insert_dns" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
         pool->MakeDenseTables(archetype, [&](const TMemoryView<_Container>& tables) {
@@ -414,9 +428,7 @@ public:
 };
 class insert_sparse_t : public FContainerBenchmark {
 public:
-    insert_sparse_t() : FContainerBenchmark{ "insert_spr" } {
-        //BatchSize = 16; // batching for better accuracy
-    }
+    insert_sparse_t() : FContainerBenchmark{ "insert_spr" } {}
     template <typename _Container, typename T>
     void operator ()(FBenchmark::FState& state, const _Container& archetype, const TSamplePool<T>* pool) const {
         pool->MakeSparseTables(archetype, [&](const TMemoryView<_Container>& tables) {
@@ -804,16 +816,26 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
 
     LOG(Benchmark, Emphasis, L"Running benchmark <{0}> with {1} tests :", name, dim);
 
+#if 0
     // mt19937 has better distribution than FRandomGenerator for generating benchmark data
     std::random_device rdevice;
     std::mt19937 rand{ rdevice() };
     rand.seed(0x9025u); // fixed seed for repro
+#elif 0
+    // FRandomGeneratoor, poor statistical properties
+    FRandomGenerator rand;
+    rand.Reset(0x9025u);
+#else
+    // use new Threefy generator
+    FThreefy_4x32 rand;
+    rand.Seed(0x9025u);
+#endif
 
     using namespace BenchmarkContainers;
 
     // prepare 128 different samples with random distribution and 10% jitter
 
-    const size_t jitter = (dim * 10 / 100);
+    const u32 jitter = checked_cast<u32>(dim * 10 / 100);
 
     TSamplePool<T> pool;
     pool.Generate(128, dim, jitter, rand, generator);
@@ -823,14 +845,14 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
     auto bm = FBenchmark::MakeTable(
         name,
 #if 1
-        construct_noreserve_t{},
-        construct_reserve_t{},
-        copy_empty_t{},
-        copy_dense_t{},
-        copy_sparse_t{},
+        //construct_noreserve_t{},
+        //construct_reserve_t{},
+        ////copy_empty_t{},
+        //copy_dense_t{},
+        //copy_sparse_t{},
         insert_dense_t{},
-        insert_sparse_t{},
-        iterate_dense_t{},
+        insert_sparse_t{}
+        /*iterate_dense_t{},
         iterate_sparse_t{},
         find_dense_pos_t{},
         find_dense_neg_t{},
@@ -843,7 +865,8 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
         find_erase_dns_t{},
         find_erase_spr_t{},
         clear_dense_t{},
-        clear_sparse_t{});
+        clear_sparse_t{}*/
+        );
 #else
         erase_dense_pos_t{},
         erase_dense_neg_t{},
@@ -1033,10 +1056,20 @@ template <typename T, typename _Generator, typename _Containers>
 NO_INLINE static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&& generator, _Containers&& tests) {
     LOG(Benchmark, Emphasis, L"Running find speed benchmarks <{0}> :", name);
 
+#if 0
     // mt19937 has better distribution than FRandomGenerator for generating benchmark data
     std::random_device rdevice;
     std::mt19937 rand{ rdevice() };
     rand.seed(0x565Fu); // fixed seed for repro
+#elif 0
+    // use new Threefy generator
+    FRandomGenerator rand;
+    rand.Reset(0x565Fu);
+#else
+    // use new Threefy generator
+    FThreefy_4x32 rand;
+    rand.Seed(0x565Fu);
+#endif
 
     using namespace BenchmarkContainers;
 
@@ -1060,65 +1093,72 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
         }*/
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
-            TDenseHashSet2<T> set;
-            bm.Run("Dense2", set, input);
+            TDenseHashSet2<T> Dense2;
+            bm.Run("Dense2", Dense2, input);
         }
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
-            TDenseHashSet2<THashMemoizer<T>> set;
-            bm.Run("Dense2_M", set, input);
+            TDenseHashSet2<THashMemoizer<T>> Dense2_M;
+            bm.Run("Dense2_M", Dense2_M, input);
         }
 #   endif
 #endif
 #if 0 && !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
-            TDenseHashSet3<T> set;
-            bm.Run("Dense3", set, input);
+            TDenseHashSet3<T> Dense3;
+            bm.Run("Dense3", Dense3, input);
         }
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
-            TDenseHashSet3<THashMemoizer<T>> set;
-            bm.Run("Dense3_M", set, input);
+            TDenseHashSet3<THashMemoizer<T>> Dense3;
+            bm.Run("Dense3", Dense3, input);
         }
 #   endif
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
-            THopscotchHashSet<T> set;
-            bm.Run("Hopscotch", set, input);
+            THopscotchHashSet<T> Hopscotch;
+            bm.Run("Hopscotch", Hopscotch, input);
         }
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
-            THopscotchHashSet<THashMemoizer<T>> set;
-            bm.Run("Hopscotch_M", set, input);
+            THopscotchHashSet<THashMemoizer<T>> Hopscotch_M;
+            bm.Run("Hopscotch_M", Hopscotch_M, input);
         }
 #   endif
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
-            THopscotchHashSet2<T> set;
-            bm.Run("Hopscotch2", set, input);
+            THopscotchHashSet2<T> Hopscotch2;
+            bm.Run("Hopscotch2", Hopscotch2, input);
         }
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
-            THashSet<T> set;
-            bm.Run("HashSet", set, input);
+            THashSet<T> HashSet;
+            bm.Run("HashSet", HashSet, input);
         }
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
-            TSimdHashSet<T> set;
-            bm.Run("SimdHashSet", set, input);
+            TSSEHashSet<T> set;
+            bm.Run("SSEHashSet", set, input);
         }
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+        {
+            TSSEHashSet2<T> set;
+            bm.Run("SSEHashSet2", set, input);
+        }
+#endif
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+//#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
         {
             std::unordered_set<
                 T, Meta::THash<T>, Meta::TEqualTo<T>,
                 TStlAllocator< T, ALLOCATOR(Container) >
-            >   set;
-            bm.Run("unordered_set", set, input);
+            >   unordered_set;
+            bm.Run("unordered_set", unordered_set, input);
         }
 #endif
     };
@@ -1199,6 +1239,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
 
 #if 1
     Benchmark_Containers_Exhaustive_<T>(name + "_20", 20, generator, containers_all);
+    Benchmark_Containers_Exhaustive_<T>(name + "_20", 20, generator, containers_all);
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS || PPE_RUN_BENCHMARK_ONE_CONTAINER
     Benchmark_Containers_Exhaustive_<T>(name + "_50", 50, generator, containers_all);
     Benchmark_Containers_Exhaustive_<T>(name + "_100", 100, generator, containers_large);
@@ -1226,11 +1267,16 @@ NO_INLINE static void Test_StringSet_() {
     });
 
     auto samples = [&](auto& rnd) {
-        constexpr size_t MinSize = 5;
-        constexpr size_t MaxSize = 60;
+        constexpr u32 MinSize = 5;
+        constexpr u32 MaxSize = 60;
 
+#if 0
         const size_t n = (rnd() % (MaxSize - MinSize + 1)) + MinSize;
         const size_t o = (rnd() % (stringPool.size() - n));
+#else
+        const size_t n = rnd(MinSize,  MaxSize);
+        const size_t o = rnd(checked_cast<u32>(stringPool.size() - n));
+#endif
 
         return FStringView(&stringPool[o], n);
     };
@@ -1379,7 +1425,7 @@ NO_INLINE static void Test_StringSet_() {
         */
 #   endif
 #endif
-#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
 
@@ -1393,26 +1439,49 @@ NO_INLINE static void Test_StringSet_() {
         }
 #   endif
 #endif
-#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
-            TSimdHashSet<
+            TSSEHashSet<
                 FStringView,
                 TStringViewHasher<char, ECase::Sensitive>,
                 TStringViewEqualTo<char, ECase::Sensitive>
             >   set;
 
-            bm.Run("SimdHashSet", set, input);
+            bm.Run("SSEHashSet", set, input);
         }
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
-            TSimdHashSet<
+            TSSEHashSet<
                 THashMemoizer<
                     FStringView,
                     TStringViewHasher<char, ECase::Sensitive>,
                     TStringViewEqualTo<char, ECase::Sensitive> >
             >   set;
 
-            bm.Run("SimdHashSet_M", set, input);
+            bm.Run("SSEHashSet_M", set, input);
+        }
+#   endif
+#endif
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+        {
+            TSSEHashSet2<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   set;
+
+            bm.Run("SSEHashSet2", set, input);
+        }
+#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+        {
+            TSSEHashSet2<
+                THashMemoizer<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive> >
+            >   set;
+
+            bm.Run("SSEHashSet_M", set, input);
         }
 #   endif
 #endif
@@ -1423,7 +1492,7 @@ NO_INLINE static void Test_StringSet_() {
             bm.Run("ConstCharHashSet_M", set, input);
         }
 #endif
-#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
+#if 0//!PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
         {
             std::unordered_set <
                 FStringView,
@@ -1483,6 +1552,13 @@ NO_INLINE static void Test_StealFromDifferentAllocator_() {
     }
 }
 //----------------------------------------------------------------------------
+NO_INLINE void Test_SSEHashSet() {
+    TSSEHashSet<int> set;
+    set.insert(32);
+    TSSEHashSet<int> set2;
+    set2 = set;
+}
+//----------------------------------------------------------------------------
 void Test_Containers() {
     PPE_DEBUG_NAMEDSCOPE("Test_Containers");
 
@@ -1495,13 +1571,14 @@ void Test_Containers() {
     })};
 
     Test_StealFromDifferentAllocator_();
+    Test_SSEHashSet();
 
 #if USE_PPE_BENCHMARK
-    Test_PODSet_<u64>("u64", [](auto& rnd) { return u64(rnd()); });
+    Test_PODSet_<u64>("u64", [](auto& rnd) { return rnd(); });
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
-    //Test_PODSet_<u32>("u32", [](auto& rnd) { return u32(rnd()); });
-    //Test_PODSet_<u128>("u128", [](auto& rnd) { return u128{ u64(rnd()), u64(rnd()) }; });
-    //Test_PODSet_<u256>("u256", [](auto& rnd) { return u256{ { u64(rnd()), u64(rnd()) }, { u64(rnd()), u64(rnd()) } }; });
+    Test_PODSet_<u32>("u32", [](auto& rnd) { return rnd(); });
+    Test_PODSet_<u128>("u128", [](auto& rnd) { return u128{ rnd(), rnd() }; });
+    Test_PODSet_<u256>("u256", [](auto& rnd) { return u256{ { rnd(), rnd() }, { rnd(), rnd() } }; });
 #   endif
     Test_StringSet_();
 #endif
