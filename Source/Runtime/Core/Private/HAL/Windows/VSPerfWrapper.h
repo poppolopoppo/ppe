@@ -23,21 +23,21 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class FVSPerfWrapper : Meta::TSingleton<FVSPerfWrapper> {
 public:
-    typedef ::PROFILE_COMMAND_STATUS (*FStopProfile)(::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
-    typedef ::PROFILE_COMMAND_STATUS (*FStartProfile)(::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
+    typedef ::PROFILE_COMMAND_STATUS (STDCALL* FStopProfile)(::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
+    typedef ::PROFILE_COMMAND_STATUS (STDCALL* FStartProfile)(::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
 
-    typedef ::PROFILE_COMMAND_STATUS (*FSuspendProfile)(::PROFILE_CONTROL_LEVEL  Level, unsigned int dwId);
-    typedef ::PROFILE_COMMAND_STATUS (*FResumeProfile)(::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
+    typedef ::PROFILE_COMMAND_STATUS (STDCALL* FSuspendProfile)(::PROFILE_CONTROL_LEVEL  Level, unsigned int dwId);
+    typedef ::PROFILE_COMMAND_STATUS (STDCALL* FResumeProfile)(::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
 
-    typedef ::PROFILE_COMMAND_STATUS (*FMarkProfile)(long lMarker);
-    typedef ::PROFILE_COMMAND_STATUS (*FCommentMarkProfileA)(long lMarker, const char* szComment);
-    typedef ::PROFILE_COMMAND_STATUS (*FCommentMarkAtProfileA)(__int64 dnTimestamp, long lMarker, const char* szComment);
+    typedef ::PROFILE_COMMAND_STATUS (STDCALL* FMarkProfile)(long lMarker);
+    typedef ::PROFILE_COMMAND_STATUS (STDCALL* FCommentMarkProfileA)(long lMarker, const char* szComment);
+    typedef ::PROFILE_COMMAND_STATUS (STDCALL* FCommentMarkAtProfileA)(__int64 dnTimestamp, long lMarker, const char* szComment);
 
-    typedef ::PROFILE_COMMAND_STATUS (*FCommentMarkProfileW)(long lMarker, const VSPWCHAR* szComment);
-    typedef ::PROFILE_COMMAND_STATUS (*FCommentMarkAtProfileW)(__int64 dnTimestamp, long lMarker, const VSPWCHAR* szComment);
+    typedef ::PROFILE_COMMAND_STATUS (STDCALL* FCommentMarkProfileW)(long lMarker, const VSPWCHAR* szComment);
+    typedef ::PROFILE_COMMAND_STATUS (STDCALL* FCommentMarkAtProfileW)(__int64 dnTimestamp, long lMarker, const VSPWCHAR* szComment);
 
-    typedef ::PROFILE_COMMAND_STATUS (*FNameProfileA)(const char* pszName, ::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
-    typedef ::PROFILE_COMMAND_STATUS (*FNameProfileW)(const VSPWCHAR* pszName, ::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
+    typedef ::PROFILE_COMMAND_STATUS (STDCALL* FNameProfileA)(const char* pszName, ::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
+    typedef ::PROFILE_COMMAND_STATUS (STDCALL* FNameProfileW)(const VSPWCHAR* pszName, ::PROFILE_CONTROL_LEVEL Level, unsigned int dwId);
 
     struct FAPI {
         FStopProfile StopProfile;

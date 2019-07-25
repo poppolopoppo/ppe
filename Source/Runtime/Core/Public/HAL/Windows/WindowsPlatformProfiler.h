@@ -3,6 +3,46 @@
 #include "HAL/Generic/GenericPlatformProfiler.h"
 
 #if USE_PPE_PLATFORM_PROFILER && defined(PLATFORM_WINDOWS)
+#   if defined(__clang__) || defined(ARCH_X86)
+#       undef USE_PPE_PLATFORM_PROFILER
+#       define USE_PPE_PLATFORM_PROFILER 0
+namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+class PPE_CORE_API FWindowsPlatformProfiler : FGenericPlatformProfiler {
+public:
+    STATIC_CONST_INTEGRAL(bool, HasProfiler, false);
+
+    enum EWindowsProfilerLevel {
+        GlobalLevel = 1,
+        ProcessLevel = 2,
+        ThreadLevel = 3,
+    };
+
+    using EProfilerLevel = EWindowsProfilerLevel;
+
+    static void Start(EProfilerLevel) {}
+    static void Stop(EProfilerLevel) {}
+
+    static void Resume(EProfilerLevel) {}
+    static void Suspend(EProfilerLevel) {}
+
+    static void Mark(u32) {}
+    static void MarkAndComment(u32, const char*) {}
+    static void Name(EProfilerLevel, const char*) {}
+
+    static u32 NextMarker() { return 0; }
+
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace PPE
+#   endif
+#endif
+
+#if USE_PPE_PLATFORM_PROFILER && defined(PLATFORM_WINDOWS)
 
 namespace PPE {
 //----------------------------------------------------------------------------
