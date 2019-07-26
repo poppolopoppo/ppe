@@ -77,12 +77,12 @@ public:
 
     bool Available() const { return (_dll.IsValid()); }
 
-    using TSingleton<FVSPerfWrapper>::Get;
-    using TSingleton<FVSPerfWrapper>::Destroy;
-    static void Create() { TSingleton<FVSPerfWrapper>::Create(); }
+    using Meta::TSingleton<FVSPerfWrapper>::Get;
+    using Meta::TSingleton<FVSPerfWrapper>::Destroy;
+    static void Create() { Meta::TSingleton<FVSPerfWrapper>::Create(); }
 
 private:
-    friend class TSingleton<FVSPerfWrapper>;
+    friend class Meta::TSingleton<FVSPerfWrapper>;
 
     FVSPerfWrapper();
     FDynamicLibrary _dll;
