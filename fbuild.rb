@@ -23,6 +23,17 @@ RUNNING_ON_WINDOWS = (ENV['OS'] == 'Windows_NT')
 
 Dir.chdir(SOLUTION_ROOT)
 
+YIELD_PARAMS = ARGV.clone
+FORCE_USAGE = []
+YIELD_PARAMS.delete_if do |arg|
+    if arg =~ /-vs20\d{2}/i
+        FORCE_USAGE << arg[1..-1].downcase.to_sym
+        true
+    else
+        false
+    end
+end
+
 class FHeader
     attr_reader :filename, :header
     def initialize(filename)
@@ -106,16 +117,24 @@ private
 end
 
 class FVisualStudio < FDependency
-    attr_reader :toolset, :default_comntools, :comntools, :cluid
-    def initialize(toolset, default_comntools)
+    attr_reader :toolset, :default_comntools, :comntools, :cluid, :force_tag
+    def initialize(toolset, default_comntools, force_tag=nil)
         @toolset = toolset
         @default_comntools = default_comntools
+        @force_tag = force_tag
         super("VISUALSTUDIO_TOOLSET_#{@toolset}")
     end
     def export(header)
         super(header)
         header.set("VS#{@toolset}CLUID", @available ? @cluid : nil)
         header.set("VS#{@toolset}COMNTOOLS", @available ? @comntools : nil)
+    end
+    def force_usage()
+        if @available
+            return FORCE_USAGE.include?(@force_tag)
+        else
+            return false
+        end
     end
 private
     def eval_comntools_()
@@ -139,13 +158,14 @@ end
 
 class FVisualStudioPost2015 < FVisualStudio
     attr_reader :version
-    def initialize(major_version, toolset)
+    def initialize(major_version, toolset, force_tag)
         root = 'C:\Program Files (x86)\Microsoft Visual Studio\\' + major_version
         comntools_communuty = root + '\Community\Common7\Tools\\'
         comntools_professional = root + '\Professional\Common7\Tools\\'
         super(toolset, Dir.exist?(comntools_professional) ?
             comntools_professional :
-            comntools_communuty )
+            comntools_communuty,
+            force_tag )
     end
     def export(header)
         super(header)
@@ -240,11 +260,11 @@ private
 end
 
 DEPENDENCIES= [
-    [ 'Visual Studio 2012'      , FVisualStudio.new('110', 'C:\Program Files (x86)\Microsoft Visual Studio 11.0\Common7\Tools\\')  ],
-    [ 'Visual Studio 2013'      , FVisualStudio.new('120', 'C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\Tools\\')  ],
-    [ 'Visual Studio 2015'      , FVisualStudio.new('140', 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\\')  ],
-    [ 'Visual Studio 2017'      , FVisualStudioPost2015.new('2017', 141) ],
-    [ 'Visual Studio 2019'      , FVisualStudioPost2015.new('2019', 142) ],
+    [ 'Visual Studio 2012'      , FVisualStudio.new('110', 'C:\Program Files (x86)\Microsoft Visual Studio 11.0\Common7\Tools\\', :vs2012)  ],
+    [ 'Visual Studio 2013'      , FVisualStudio.new('120', 'C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\Tools\\', :vs2013)  ],
+    [ 'Visual Studio 2015'      , FVisualStudio.new('140', 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\\', :vs2015)  ],
+    [ 'Visual Studio 2017'      , FVisualStudioPost2015.new('2017', 141, :vs2017) ],
+    [ 'Visual Studio 2019'      , FVisualStudioPost2015.new('2019', 142, :vs2019) ],
 
     [ 'Windows SDK 8.1'         , FWindowsSDK.new('8.1')    ],
     [ 'Windows SDK 10'          , FWindowsSDK.new('10')     ],
@@ -262,9 +282,12 @@ VISUALSTUDIO_DEFINES = %w{
     USE_VISUALSTUDIO_2019
 }
 
-latestVisual = nil
+selectedVisual = nil
 VISUALSTUDIO_DEFINES.length.times do |i|
-    latestVisual = i if DEPENDENCIES[i][1].available
+    selectedVisual = i if DEPENDENCIES[i][1].available
+end
+(VISUALSTUDIO_DEFINES.length - 1).downto(0) do |i|
+    selectedVisual = i if DEPENDENCIES[i][1].force_usage
 end
 
 newHeader = FHeader.new(SOLUTION_PATHFILE)
@@ -280,7 +303,7 @@ end
 
 newHeader.comment('Latest Visual Studio version available :')
 VISUALSTUDIO_DEFINES.each_with_index do |define, i|
-    comment = latestVisual == i ? '' : ';'
+    comment = selectedVisual == i ? '' : ';'
     newHeader.puts "#{comment}#define #{define}"
 end
 
@@ -320,11 +343,12 @@ File.open(MODIFIED_FILES_LIST, 'w') do |f|
 end
 
 END_TIME=Time.now
+
 $stdout.puts("Spent %5.3f milliseconds in #{__FILE__}" % [(END_TIME - START_TIME)*1000])
-$stdout.puts("#{SOLUTION_FBUILDCMD} #{ARGV.join(' ')}")
+$stdout.puts("#{SOLUTION_FBUILDCMD} #{YIELD_PARAMS.join(' ')}")
 $stdout.flush
-unless exec(SOLUTION_FBUILDCMD, *ARGV)
+unless exec(SOLUTION_FBUILDCMD, *YIELD_PARAMS)
     $stderr.puts "failed to start fastbuild, command line:"
-    $stderr.puts([SOLUTION_FBUILDCMD, *ARGV].join(' '))
+    $stderr.puts([SOLUTION_FBUILDCMD, *YIELD_PARAMS].join(' '))
     exit 5
 end
