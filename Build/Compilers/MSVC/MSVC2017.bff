@@ -272,12 +272,11 @@ Compiler( 'Compiler-MSVC2017-x64_x86' )
 .MSVC2017LinkTimeCodeGenerationIncremental =
 [
     ; Link Time Code Generation (LTCG) incrémental pour accélérer les builds en FINAL
-    .LinkerOptions      = ' /LTCG'
+    .LinkerOptions      = ''
 #if USE_LTCG_INCREMENTAL_LINKER_IN_PROFILING
-    Print( "Using Visual 2017 incremental LTCG for profiling" )
-    .LinkerOptions      = ' /LTCG:incremental'
+    Print( "Using Visual 2017 incremental LTCG for profiling (/LTCG:incremental)" )
+    .LinkerOptions      = ' /LTCG:INCREMENTAL'
 #endif
-    .LibrarianOptions   = ' /LTCG'
 ]
 
 .MSVC2017GenerateProfilingInfos =
