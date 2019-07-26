@@ -13,7 +13,6 @@
 [submodule "External/renderdoc"]
 	path = Source/External/renderdoc/renderdoc.git
     url = https://github.com/baldurk/renderdoc.git
-    branch = v1.x
     shallow = true
 [submodule "External/stb"]
 	path = Source/External/stb/stb.git
