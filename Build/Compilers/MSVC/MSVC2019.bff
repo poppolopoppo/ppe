@@ -212,7 +212,6 @@ Compiler( 'Compiler-MSVC2019-x64_x86' )
     .CompilerOptions = ''
     + ' /Zo'                    ; https://msdn.microsoft.com/fr-fr/library/dn785163.aspx
     + ' /diagnostics:caret'     ; https://docs.microsoft.com/en-us/cpp/build/reference/diagnostics-compiler-diagnostic-options
-    + ' /arch:AVX'              ; active le support AVX
 
     .AdditionalOptions = ''
     + ' /Zc:inline'             ; https://msdn.microsoft.com/fr-fr/library/dn642448.aspx
@@ -358,6 +357,8 @@ Print( "Using Visual 2019 incremental LTCG for profiling : no profiling informat
     .Librarian          = '$ToolsBasePath$/lib.exe'
     .Linker             = '$ToolsBasePath$/link.exe'
 
+    .CompilerOptions    + ' /arch:SSE' ; active le support SSE sur x86
+
     .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/lib/x86"'
                         + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x86"'
                         + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/um/x86"'
@@ -374,6 +375,8 @@ Print( "Using Visual 2019 incremental LTCG for profiling : no profiling informat
 
     .Librarian          = '$ToolsBasePath$/lib.exe'
     .Linker             = '$ToolsBasePath$/link.exe'
+
+    .CompilerOptions    + ' /arch:AVX2' ; active le support AVX2 sur x64
 
     .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/lib/x64"'
                         + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x64"'

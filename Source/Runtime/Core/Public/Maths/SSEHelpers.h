@@ -20,22 +20,18 @@ using m128i_t = ::__m128i;
 #define m128i_epi8_set_zero() ::_mm_setzero_si128()
 #define m128i_epi8_set_false() ::_mm_setzero_si128()
 #if 1
-#define m128i_epi8_set_true() ::_mm_cmpeq_epi32(::_mm_setzero_si128(), ::_mm_setzero_si128())
+#   define m128i_epi8_set_true() ::_mm_cmpeq_epi32(::_mm_setzero_si128(), ::_mm_setzero_si128())
 #else
-#define m128i_epi8_set_true() m128i_epi8_broadcast(-1)
+#   define m128i_epi8_set_true() m128i_epi8_broadcast(-1)
 #endif
 #define m128i_epi8_set_true_after(i) ::_mm_cmpgt_epi8(::_mm_set1_epi8(i), ::_mm_set_epi64x(0x0f0e0d0c0b0a0908ULL, 0x0706050403020100ULL))
-#if defined(_MSC_VER) && _MSC_VER == 1921 // workaround on MSVC19 for
-#   define m128i_epi8_load_aligned(p) ::_mm_lddqu_si128((const m128i_t*)p)
-#else
-#   define m128i_epi8_load_aligned(p) ::_mm_load_si128((const m128i_t*)p)
-#endif
+#define m128i_epi8_load_aligned(p) ::_mm_load_si128((const m128i_t*)p)
 #define m128i_epi8_load_unaligned(p) ::_mm_lddqu_si128((const m128i_t*)p)
 #define m128i_epi8_store_aligned(p, v) ::_mm_store_si128((m128i_t*)p, v)
 #if 0 // assume SSE4.1 is available for everyone now
-#define m128i_epi8_blend(if_false, if_true, m) ::_mm_xor_si128(if_false, ::_mm_and_si128(m, ::_mm_xor_si128(if_true, if_false)))
+#   define m128i_epi8_blend(if_false, if_true, m) ::_mm_xor_si128(if_false, ::_mm_and_si128(m, ::_mm_xor_si128(if_true, if_false)))
 #else
-#define m128i_epi8_blend(if_false, if_true, m) ::_mm_blendv_epi8(if_false, if_true, m)
+#   define m128i_epi8_blend(if_false, if_true, m) ::_mm_blendv_epi8(if_false, if_true, m)
 #endif
 #define m128i_epi8_findlt(v, h) u16(::_mm_movemask_epi8(::_mm_cmplt_epi8(v, h)))
 #define m128i_epi8_findgt(v, h) u16(::_mm_movemask_epi8(::_mm_cmpgt_epi8(v, h)))
