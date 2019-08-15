@@ -44,6 +44,7 @@
 #define PPE_RUN_BENCHMARK_MULTITHREADED (1) // %_NOCOMMIT%
 #define PPE_DONT_USE_STD_UNORDEREDSET   (0) // %_NOCOMMIT%
 #define USE_PPE_CONTAINERS_LONGRUN      (0) // %_NOCOMMIT%
+#define USE_PPE_CONTAINERS_MEMOIZER     (0) // %_NOCOMMIT%
 
 namespace PPE {
 LOG_CATEGORY(, Test_Containers)
@@ -806,12 +807,6 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
     const FStringView& name, size_t dim,
     _Generator&& generator,
     _Containers&& tests ) {
-#if !(PPE_RUN_EXHAUSTIVE_BENCHMARKS || PPE_RUN_BENCHMARK_ONE_CONTAINER)
-    UNUSED(name);
-    UNUSED(dim);
-    UNUSED(generator);
-    UNUSED(tests);
-#else
     // prepare input data
 
     LOG(Benchmark, Emphasis, L"Running benchmark <{0}> with {1} tests :", name, dim);
@@ -844,15 +839,15 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
 
     auto bm = FBenchmark::MakeTable(
         name,
-#if 1
-        //construct_noreserve_t{},
-        //construct_reserve_t{},
-        ////copy_empty_t{},
-        //copy_dense_t{},
-        //copy_sparse_t{},
+#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+        construct_noreserve_t{},
+        construct_reserve_t{},
+        //copy_empty_t{},
+        copy_dense_t{},
+        copy_sparse_t{},
         insert_dense_t{},
-        insert_sparse_t{}
-        /*iterate_dense_t{},
+        insert_sparse_t{},
+        iterate_dense_t{},
         iterate_sparse_t{},
         find_dense_pos_t{},
         find_dense_neg_t{},
@@ -865,14 +860,16 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
         find_erase_dns_t{},
         find_erase_spr_t{},
         clear_dense_t{},
-        clear_sparse_t{}*/
-        );
+        clear_sparse_t{}
 #else
+        insert_dense_t{},
+        insert_sparse_t{},
         erase_dense_pos_t{},
         erase_dense_neg_t{},
         erase_sparse_pos_t{},
-        erase_sparse_neg_t{});
+        erase_sparse_neg_t{}
 #endif
+    );
 
     bm.UseMultiThread = !!(PPE_RUN_BENCHMARK_MULTITHREADED);
 
@@ -888,7 +885,6 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
         FBenchmark::StackedBarCharts(bm, sb);
         VFS_WriteAll(fname, sb.Written().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll);
     }
-#endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
 }
 //----------------------------------------------------------------------------
 namespace BenchmarkContainers {
@@ -1096,7 +1092,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             TDenseHashSet2<T> Dense2;
             bm.Run("Dense2", Dense2, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if USE_PPE_CONTAINERS_MEMOIZER
         {
             TDenseHashSet2<THashMemoizer<T>> Dense2_M;
             bm.Run("Dense2_M", Dense2_M, input);
@@ -1108,10 +1104,10 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             TDenseHashSet3<T> Dense3;
             bm.Run("Dense3", Dense3, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if USE_PPE_CONTAINERS_MEMOIZER
         {
             TDenseHashSet3<THashMemoizer<T>> Dense3;
-            bm.Run("Dense3", Dense3, input);
+            bm.Run("Dense3_M", Dense3, input);
         }
 #   endif
 #endif
@@ -1120,7 +1116,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             THopscotchHashSet<T> Hopscotch;
             bm.Run("Hopscotch", Hopscotch, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if USE_PPE_CONTAINERS_MEMOIZER
         {
             THopscotchHashSet<THashMemoizer<T>> Hopscotch_M;
             bm.Run("Hopscotch_M", Hopscotch_M, input);
@@ -1151,8 +1147,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("SSEHashSet2", set, input);
         }
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
-//#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
         {
             std::unordered_set<
                 T, Meta::THash<T>, Meta::TEqualTo<T>,
@@ -1192,7 +1187,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("Vector", set, input);
         }
 #endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if 0 //!PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             typedef TSparseArray<T> sparse_array_t;
 
@@ -1220,7 +1215,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("SparseArray", set, input);
         }
 #endif //!PPE_RUN_EXHAUSTIVE_BENCHMARKS
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#if 0 //!PPE_RUN_BENCHMARK_ONE_CONTAINER && PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TFlatSet<T> set;
             bm.Run("FlatSet", set, input);
@@ -1320,7 +1315,7 @@ NO_INLINE static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("Dense2", set, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if USE_PPE_CONTAINERS_MEMOIZER
         {
             typedef TDenseHashSet2<
                 THashMemoizer<
@@ -1346,7 +1341,7 @@ NO_INLINE static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("DenseHashSet3", set, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if USE_PPE_CONTAINERS_MEMOIZER
         {
             typedef TDenseHashSet3<
                 THashMemoizer<
@@ -1372,7 +1367,7 @@ NO_INLINE static void Test_StringSet_() {
             hashtable_type set;
             bm.Run("Hopscotch", set, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if USE_PPE_CONTAINERS_MEMOIZER
         {
             typedef THopscotchHashSet <
                 THashMemoizer<
@@ -1396,7 +1391,7 @@ NO_INLINE static void Test_StringSet_() {
             >   set;
             bm.Run("Hopscotch2", set, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if USE_PPE_CONTAINERS_MEMOIZER
         {
             THopscotchHashSet2<
                 THashMemoizer<
@@ -1431,7 +1426,7 @@ NO_INLINE static void Test_StringSet_() {
 
             bm.Run("HashSet", set, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if USE_PPE_CONTAINERS_MEMOIZER
         {
             STRINGVIEW_HASHSET_MEMOIZE(Container, ECase::Sensitive) set;
 
@@ -1449,7 +1444,7 @@ NO_INLINE static void Test_StringSet_() {
 
             bm.Run("SSEHashSet", set, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if USE_PPE_CONTAINERS_MEMOIZER
         {
             TSSEHashSet<
                 THashMemoizer<
@@ -1472,7 +1467,7 @@ NO_INLINE static void Test_StringSet_() {
 
             bm.Run("SSEHashSet2", set, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS
+#   if USE_PPE_CONTAINERS_MEMOIZER
         {
             TSSEHashSet2<
                 THashMemoizer<
@@ -1492,7 +1487,7 @@ NO_INLINE static void Test_StringSet_() {
             bm.Run("ConstCharHashSet_M", set, input);
         }
 #endif
-#if 0//!PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
         {
             std::unordered_set <
                 FStringView,
@@ -1503,7 +1498,7 @@ NO_INLINE static void Test_StringSet_() {
 
             bm.Run("unordered_set", set, input);
         }
-#   if PPE_RUN_EXHAUSTIVE_BENCHMARKS && !PPE_DONT_USE_STD_UNORDEREDSET
+#   if USE_PPE_CONTAINERS_MEMOIZER
         {
             std::unordered_set<
                 TBasicStringViewHashMemoizer<char, ECase::Sensitive>,
