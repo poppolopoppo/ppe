@@ -7,6 +7,8 @@
 ;#define USE_FASTBUILD_CACHE
 ; Désactive l'utilisation des unity builds
 ;#define DISABLE_UNITY_BUILDS ;%_NOCOMMIT%
+; Active le support pour AVX2
+;#define HAVE_AVX2
 
 #include "_solution_path.bff" ; généré par fbuild.bat, permet d'avoir le rep du sln
 
@@ -30,6 +32,15 @@
 .UnityInputIsolateWritableFiles = true
 Print("Unity input isolate writable files")
 #endif
+
+//------------------------------------------------------------------------------
+// Default CPU Options
+//------------------------------------------------------------------------------
+.CPU_AVX = 'AVX'
+#if HAVE_AVX2
+.CPU_AVX = 'AVX2'
+#endif
+Print( 'Using CPU Advanced Vector Instructions : $CPU_AVX$' )
 
 //------------------------------------------------------------------------------
 // Default Visual Options

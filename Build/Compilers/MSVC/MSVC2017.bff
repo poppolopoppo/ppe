@@ -346,7 +346,7 @@ Print( "Using Visual 2017 incremental LTCG for profiling : no profiling informat
     .Librarian          = '$ToolsBasePath$/lib.exe'
     .Linker             = '$ToolsBasePath$/link.exe'
 
-    .CompilerOptions    + ' /arch:AVX2' ; active le support AVX2 sur x64
+    .CompilerOptions    + ' /arch:$CPU_AVX$' ; active le support AVX2 sur x64
 
     .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/lib/x64"'
                         + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x64"'
