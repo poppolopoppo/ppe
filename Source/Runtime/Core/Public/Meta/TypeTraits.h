@@ -49,6 +49,8 @@ using TIntegralConstant = typename std::integral_constant<T, _Value>::type;
 // Function overloading helpers to use dummy parameters for specialization :
 template <typename T>
 struct TType { using type = T; };
+template <typename T>
+CONSTEXPR const TType<T> Type{};
 //----------------------------------------------------------------------------
 // This ugly piece of crap is just used in STATIC_ASSERT() to get to see the
 // actual size of the types when the assertion fails :
@@ -147,10 +149,10 @@ CONSTEXPR bool is_pod(TType<T>) NOEXCEPT {
     return std::is_pod_v<T>;
 }
 template <typename T>
-using TIsPod = std::bool_constant< is_pod(TType<T>{}) >;
+using TIsPod = std::bool_constant< is_pod(Type<T>) >;
 //----------------------------------------------------------------------------
 template <typename... _Args>
-constexpr bool TIsPod_v{ (TIsPod<_Args>::value && ...) };
+CONSTEXPR bool TIsPod_v{ (TIsPod<_Args>::value && ...) };
 //----------------------------------------------------------------------------
 template <typename T>
 using has_trivial_constructor = std::bool_constant<TIsPod_v<T> || std::is_trivially_constructible<T>::value >;
@@ -212,7 +214,7 @@ using has_equals_ = std::bool_constant<
 } //!details
 //----------------------------------------------------------------------------
 template <typename U, typename V = U>
-constexpr bool has_equals_v = details::has_equals_<U, V>::value;
+CONSTEXPR bool has_equals_v = details::has_equals_<U, V>::value;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -242,7 +244,7 @@ struct has_destructor {
     /* This will be either `std::true_type` or `std::false_type` */
     typedef decltype(test<T>(0)) type;
 
-    static constexpr bool value = type::value; /* Which is it? */
+    static CONSTEXPR bool value = type::value; /* Which is it? */
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -263,7 +265,7 @@ template <template<class> class _Using, typename T>
 using has_defined_t = decltype(details::has_defined_<_Using, T>(0));
 //----------------------------------------------------------------------------
 template <template<class> class _Using, typename T>
-constexpr bool has_defined_v = has_defined_t<_Using, T>::value;
+CONSTEXPR bool has_defined_v = has_defined_t<_Using, T>::value;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -284,8 +286,8 @@ using optional_definition_t = decltype(details::optional_definition_<_Using, _Fa
 struct FNoInit {}; // ctor with that arg must *NOT* initialize the data
 struct FForceInit {}; // ctor with that arg must initialize the data
 //----------------------------------------------------------------------------
-constexpr FNoInit NoInit{};
-constexpr FForceInit ForceInit{};
+CONSTEXPR FNoInit NoInit{};
+CONSTEXPR FForceInit ForceInit{};
 //----------------------------------------------------------------------------
 template <typename T>
 using has_noinit_constructor = has_constructor<T, Meta::FNoInit>;
@@ -306,7 +308,7 @@ CONSTEXPR T ForceInitType(TType<T>) NOEXCEPT {
 // simpler interface wrapping overloadable ForceInitType()
 template <typename T>
 CONSTEXPR T MakeForceInit() NOEXCEPT {
-    return ForceInitType(TType<T>{});
+    return ForceInitType(Type<T>);
 }
 //----------------------------------------------------------------------------
 namespace details {
@@ -323,8 +325,14 @@ CONSTEXPR T NoInitType(TType<T>) NOEXCEPT {
 // simpler interface wrapping overloadable NoInitType()
 template <typename T>
 CONSTEXPR T MakeNoInit() NOEXCEPT {
-    return NoInitType(TType<T>{});
+    return NoInitType(Type<T>);
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Helpers for static expressions
+template <typename T, auto... _Args>
+CONSTEXPR const T static_expr{ _Args... };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -401,7 +409,7 @@ void Construct(T* p, _Args&&... args) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void Destroy(T* p) {
+void Destroy(T* p) NOEXCEPT {
     Assume(p);
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);
