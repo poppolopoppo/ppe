@@ -79,6 +79,7 @@ struct FAnonymousStructAsTuple {
     float3 Position;
 };
 STATIC_ASSERT(struct_num_fields<FAnonymousStructAsTuple>() == 4);
+RTTI_STRUCT_DECL(CONSTEXPR, FAnonymousStructAsTuple);
 RTTI_STRUCT_DEF(CONSTEXPR, FAnonymousStructAsTuple);
 //----------------------------------------------------------------------------
 #if 0//_DEBUG - just keep track of reverse work for debugging boost::pfr
@@ -162,6 +163,7 @@ struct FAnonymousStructAsTuple2 {
     FAnonymousStructAsTuple Struct;
     FFilename File;
 };
+RTTI_STRUCT_DECL(CONSTEXPR, FAnonymousStructAsTuple2);
 RTTI_STRUCT_DEF(CONSTEXPR, FAnonymousStructAsTuple2);
 //----------------------------------------------------------------------------
 class FTiti : public PPE::RTTI::FMetaObject {
@@ -275,7 +277,7 @@ RTTI_CLASS_END()
 template <typename T>
 static void RTTIPrintType_() {
     const RTTI::PTypeTraits traits = RTTI::MakeTraits<T>();
-    const RTTI::FTypeInfos typeInfos = traits->TypeInfos();
+    const RTTI::FNamedTypeInfos typeInfos = traits->NamedTypeInfos();
     STACKLOCAL_ATOM(defaultValue, traits);
     LOG(RTTI_UnitTest, Debug, L"Id = {0}, Name = {1}, Flags = {2}, Default = {3}",
         typeInfos.Id(),
@@ -293,13 +295,13 @@ static void RTTIPrintClass_() {
 
     for (const auto& it : metaClass->AllFunctions()) {
         LOG(RTTI_UnitTest, Debug, L"   - FUNC {0} {1}({2}) : <{3}>",
-            it->HasReturnValue() ? it->Result()->TypeInfos().Name() : "void",
+            it->HasReturnValue() ? it->Result()->TypeName() : "void",
             it->Name(),
             Fmt::FWFormator([&it](FWTextWriter& oss) {
                 const auto& prms = it->Parameters();
                 forrange(i, 0, prms.size()) {
                     if (i > 0) oss << L", ";
-                    oss << prms[i].Name() << L" : " << prms[i].Traits()->TypeInfos().Name() << L" <" << prms[i].Flags() << L'>';
+                    oss << prms[i].Name() << L" : " << prms[i].Traits()->TypeName() << L" <" << prms[i].Flags() << L'>';
                 }
             }),
             it->Flags()
@@ -307,7 +309,7 @@ static void RTTIPrintClass_() {
     }
 
     for (const auto& it : metaClass->AllProperties()) {
-        const RTTI::FTypeInfos typeInfos = it->Traits()->TypeInfos();
+        const RTTI::FNamedTypeInfos typeInfos = it->Traits()->NamedTypeInfos();
         LOG(RTTI_UnitTest, Debug, L"   - PROP {0} : <{1}> -> {2} = {3} [{4}]",
             it->Name(),
             it->Flags(),
@@ -318,7 +320,7 @@ static void RTTIPrintClass_() {
     }
 }
 //----------------------------------------------------------------------------
-static void TestRTTI_() {
+static NO_INLINE void TestRTTI_() {
     using namespace PPE;
 
     RTTI_NAMESPACE(RTTI_UnitTest).Start();

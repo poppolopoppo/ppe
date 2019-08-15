@@ -15,31 +15,14 @@ namespace RTTI {
 template <typename _Key, typename _Value>
 class TBaseDicoTraits : public IDicoTraits {
 protected:
-    TBaseDicoTraits(size_t sizeInBytes)
-        : IDicoTraits(
-            MakeDicoTypeId(MakeTraits<_Key>(), MakeTraits<_Value>()),
-            MakeDicoTypeFlags(MakeTraits<_Key>(), MakeTraits<_Value>()),
-            sizeInBytes )
-    {}
+    using IDicoTraits::IDicoTraits;
 
 public: // ITypeTraits
     virtual FStringView TypeName() const override final;
 
-    virtual bool IsDefaultValue(const void* data) const override final;
-    virtual void ResetToDefaultValue(void* data) const override final;
-
-    virtual bool Equals(const void* lhs, const void* rhs) const override final;
-    virtual hash_t HashValue(const void* data) const override final;
-
-    virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
-    virtual void DeepCopy(const void* src, void* dst) const override final;
-
-    virtual bool PromoteCopy(const void* src, const FAtom& dst) const override /*final*/;
-    virtual bool PromoteMove(void* src, const FAtom& dst) const override /*final*/;
-
 public: // IDicoTraits
-    virtual PTypeTraits KeyTraits() const override final { return MakeTraits<_Key>(); }
-    virtual PTypeTraits ValueTraits() const override final { return MakeTraits<_Value>(); }
+    virtual PTypeTraits KeyTraits() const NOEXCEPT override final { return MakeTraits<_Key>(); }
+    virtual PTypeTraits ValueTraits() const NOEXCEPT override final { return MakeTraits<_Value>(); }
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
@@ -51,120 +34,197 @@ FStringView TBaseDicoTraits<_Key, _Value>::TypeName() const {
     return GCachedTypeName.MakeView();
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-bool TBaseDicoTraits<_Key, _Value>::IsDefaultValue(const void* data) const {
-    return IsEmpty(data);
-}
+// TDicoTraits<_Dico, _Key, _Value>
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-void TBaseDicoTraits<_Key, _Value>::ResetToDefaultValue(void* data) const {
-    Clear(data);
-}
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-bool TBaseDicoTraits<_Key, _Value>::Equals(const void* lhs, const void* rhs) const {
-    Assert(lhs);
-    Assert(rhs);
+template <typename _Dico, typename _Key, typename _Value>
+class TDicoTraits : public TBaseTypeTraits<_Dico, TBaseDicoTraits<_Key, _Value> > {
+protected:
+    using base_traits = TBaseTypeTraits<_Dico, TBaseDicoTraits<_Key, _Value> >;
 
-    const size_t n = Count(lhs);
-    if (Count(rhs) != n)
+    using typename base_traits::value_type;
+    using typename base_traits::pointer;
+    using typename base_traits::const_pointer;
+
+    using base_traits::base_traits;
+
+public: // ITypeTraits
+    virtual bool IsDefaultValue(const void* data) const NOEXCEPT override final;
+    virtual void ResetToDefaultValue(void* data) const override final;
+
+    virtual bool Equals(const void* lhs, const void* rhs) const NOEXCEPT override final;
+    virtual hash_t HashValue(const void* data) const NOEXCEPT override final;
+
+    virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
+    virtual void DeepCopy(const void* src, void* dst) const override final;
+
+    virtual bool PromoteCopy(const void* src, const FAtom& dst) const override final;
+    virtual bool PromoteMove(void* src, const FAtom& dst) const NOEXCEPT override final;
+
+    virtual void* Cast(void* data, const PTypeTraits& dst) const override final {
+        return base_traits::BaseCast(data, dst);
+    }
+
+protected:
+    static _Dico& Unwrap(void* data) NOEXCEPT {
+        Assert(data);
+        return (*static_cast<_Dico*>(data));
+    }
+    static const _Dico& Unwrap(const void* data) NOEXCEPT {
+        Assert(data);
+        return (*static_cast<const _Dico*>(data));
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _Dico, typename _Key, typename _Value>
+bool TDicoTraits<_Dico, _Key, _Value>::IsDefaultValue(const void* data) const NOEXCEPT {
+    return Unwrap(data).empty();
+}
+//----------------------------------------------------------------------------
+template <typename _Dico, typename _Key, typename _Value>
+void TDicoTraits<_Dico, _Key, _Value>::ResetToDefaultValue(void* data) const {
+    Unwrap(data).clear();
+}
+//----------------------------------------------------------------------------
+template <typename _Dico, typename _Key, typename _Value>
+bool TDicoTraits<_Dico, _Key, _Value>::Equals(const void* lhs, const void* rhs) const NOEXCEPT {
+    const _Dico& a = Unwrap(lhs);
+    const _Dico& b = Unwrap(rhs);
+
+    if (a.size() != b.size())
         return false;
 
-    return ForEach((void*)lhs, [this, rhs](const FAtom& lhsKey, const FAtom& lhsValue) {
-        const FAtom rhsValue = Find(rhs, lhsKey);
-        return (lhsValue == rhsValue);
-    });
+    for (const auto& elt : a) {
+        const auto it = b.find(elt.first);
+        if (b.end() == it)
+            return false;
+    }
+
+    return true;
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-hash_t TBaseDicoTraits<_Key, _Value>::HashValue(const void* data) const {
-    Assert(data);
+template <typename _Dico, typename _Key, typename _Value>
+hash_t TDicoTraits<_Dico, _Key, _Value>::HashValue(const void* data) const NOEXCEPT {
+    hash_t h{ ITypeTraits::TypeId() };
 
-    hash_t h{ TypeId() };
+    const PTypeTraits& key = MakeTraits<_Key>();
+    const PTypeTraits& value = MakeTraits<_Value>();
 
-    ForEach((void*)data, [&h](const FAtom& key, const FAtom& value) {
-        hash_combine(h, key.HashValue(), value.HashValue());
-        return true;
-    });
+    // #TODO : would need to sort by keys + values before hashing to be stable :/
+    for (const auto& elt : Unwrap(data)) {
+        hash_combine(h,
+            key->HashValue(&elt.first),
+            value->HashValue(&elt.second) );
+    }
 
     return h;
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-bool TBaseDicoTraits<_Key, _Value>::PromoteCopy(const void* src, const FAtom& dst) const {
-    Assert(src);
-    Assert(dst);
+template <typename _Dico, typename _Key, typename _Value>
+bool TDicoTraits<_Dico, _Key, _Value>::DeepEquals(const void* lhs, const void* rhs) const {
+    const _Dico& a = Unwrap(lhs);
+    const _Dico& b = Unwrap(rhs);
 
-    if (const IDicoTraits* const dstDico = dst.Traits()->AsDico()) {
-        const size_t n = Count(src);
-        dstDico->Empty(dst.Data(), n);
-
-        STACKLOCAL_ATOM(promotedKey, dstDico->KeyTraits());
-
-        return ForEach(const_cast<void*>(src), [&promotedKey, &dst, dstDico](const FAtom& key, const FAtom& value) {
-            if (not key.PromoteCopy(promotedKey))
-                return false;
-
-            const FAtom promotedValue = dstDico->AddDefaultMove(dst.Data(), promotedKey);
-            return value.PromoteCopy(promotedValue);
-        });
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-bool TBaseDicoTraits<_Key, _Value>::PromoteMove(void* src, const FAtom& dst) const {
-    Assert(src);
-    Assert(dst);
-
-    if (const IDicoTraits* const dstDico = dst.Traits()->AsDico()) {
-        const size_t n = Count(src);
-        dstDico->Empty(dst.Data(), n);
-
-        STACKLOCAL_ATOM(promotedKey, dstDico->KeyTraits());
-
-        const bool succeed = ForEach(src, [&promotedKey, &dst, dstDico](const FAtom& key, const FAtom& value) {
-            if (not key.PromoteMove(promotedKey))
-                return false;
-
-            const FAtom promotedValue = dstDico->AddDefaultMove(dst.Data(), promotedKey);
-            return value.PromoteMove(promotedValue);
-        });
-
-        if (succeed) {
-            Clear(src);
-            return true;
-        }
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-bool TBaseDicoTraits<_Key, _Value>::DeepEquals(const void* lhs, const void* rhs) const {
-    if (Count(lhs) != Count(rhs))
+    if (a.size() != b.size())
         return false;
 
-    return ForEach(const_cast<void*>(lhs), [this, rhs](const FAtom& key, const FAtom& value) {
-        const FAtom other = Find(rhs, key);
-        return (other && value.DeepEquals(other));
-    });
+    const PTypeTraits& value = MakeTraits<_Value>();
+
+    // #TODO : use standard equal instead of deep equal for keys, problem ?
+    for (const auto& elt : a) {
+        const auto it = b.find(elt.first);
+        if (b.end() == it || not value->DeepEquals(&elt.second, &it->second))
+            return false;
+    }
+
+    return true;
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value>
-void TBaseDicoTraits<_Key, _Value>::DeepCopy(const void* src, void* dst) const {
-    const size_t n = Count(src);
-    Empty(dst, n);
+template <typename _Dico, typename _Key, typename _Value>
+void TDicoTraits<_Dico, _Key, _Value>::DeepCopy(const void* src, void* dst) const {
+    const PTypeTraits& key = MakeTraits<_Key>();
+    const PTypeTraits& value = MakeTraits<_Value>();
 
-    STACKLOCAL_ATOM(promotedKey, KeyTraits());
+    const _Dico& srcT = Unwrap(src);
+    _Dico& dstT = Unwrap(dst);
 
-    ForEach(const_cast<void*>(src), [this, dst, &promotedKey](const FAtom& key, const FAtom& value) {
-        key.DeepCopy(promotedKey);
-        const FAtom promotedValue = AddDefaultMove(dst, promotedKey);
-        value.DeepCopy(promotedValue);
+    const size_t n = srcT.size();
+    dstT.clear();
+    dstT.reserve(n);
+
+    typename _Dico::value_type cpy;
+    for (const auto& elt : srcT) {
+        key->DeepCopy(&elt.first, &cpy.first);
+        value->DeepCopy(&elt.second, &cpy.second);
+        dstT.insert(std::move(cpy));
+    }
+}
+//----------------------------------------------------------------------------
+template <typename _Dico, typename _Key, typename _Value>
+bool TDicoTraits<_Dico, _Key, _Value>::PromoteCopy(const void* src, const FAtom& dst) const {
+    Assert(dst);
+
+    if (base_traits::BasePromoteCopy(src, dst))
         return true;
-    });
+
+    if (const IDicoTraits* const pdico = dst.Traits()->AsDico()) {
+        const _Dico& srcT = Unwrap(src);
+
+        const PTypeTraits& key = MakeTraits<_Key>();
+        const PTypeTraits& value = MakeTraits<_Value>();
+
+        STACKLOCAL_ATOM(pkey, pdico->KeyTraits());
+
+        pdico->Empty(dst.Data(), srcT.size());
+
+        for (const auto& elt : srcT) {
+            if (not key->PromoteCopy(&elt.first, pkey))
+                return false;
+
+            const FAtom pvalue = pdico->AddDefaultMove(dst.Data(), pkey);
+
+            if (not value->PromoteCopy(&elt.second, pvalue))
+                return false;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename _Dico, typename _Key, typename _Value>
+bool TDicoTraits<_Dico, _Key, _Value>::PromoteMove(void* src, const FAtom& dst) const NOEXCEPT {
+    Assert(dst);
+
+    if (base_traits::BasePromoteMove(src, dst))
+        return true;
+
+    if (const IDicoTraits * const pdico = dst.Traits()->AsDico()) {
+        _Dico& srcT = Unwrap(src);
+
+        const PTypeTraits& key = MakeTraits<_Key>();
+        const PTypeTraits& value = MakeTraits<_Value>();
+
+        STACKLOCAL_ATOM(pkey, pdico->KeyTraits());
+
+        pdico->Empty(dst.Data(), srcT.size());
+
+        for (auto& elt : srcT) {
+            if (not key->PromoteMove(const_cast<_Key*>(&elt.first), pkey))
+                return false;
+
+            const FAtom pvalue = pdico->AddDefaultMove(dst.Data(), pkey);
+
+            if (not value->PromoteMove(&elt.second, pvalue))
+                return false;
+        }
+
+        srcT.clear();
+
+        return true;
+    }
+
+    return false;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -172,22 +232,24 @@ void TBaseDicoTraits<_Key, _Value>::DeepCopy(const void* src, void* dst) const {
 // TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-class TAssociativeVectorTraits final : public TBaseTypeTraits< TAssociativeVector<_Key, _Value, _EqualTo, _Vector>, TBaseDicoTraits<_Key, _Value> > {
-    using base_traits = TBaseTypeTraits< TAssociativeVector<_Key, _Value, _EqualTo, _Vector>, TBaseDicoTraits<_Key, _Value> >;
+class TAssociativeVectorTraits final : public TDicoTraits< TAssociativeVector<_Key, _Value, _EqualTo, _Vector>, _Key, _Value > {
+    using base_traits = TDicoTraits< TAssociativeVector<_Key, _Value, _EqualTo, _Vector>, _Key, _Value >;
     using typename base_traits::value_type;
     using typename base_traits::pointer;
     using typename base_traits::const_pointer;
 
+    using base_traits::Unwrap;
+
 public: // ITypeTraits
-    TAssociativeVectorTraits() : base_traits(sizeof(TAssociativeVector<_Key, _Value, _EqualTo, _Vector>)) {}
+    using base_traits::base_traits;
 
 public: // IDicoTraits:
     using typename base_traits::foreach_fun;
 
-    virtual size_t Count(const void* data) const override final;
-    virtual bool IsEmpty(const void* data) const override final;
+    virtual size_t Count(const void* data) const NOEXCEPT override final;
+    virtual bool IsEmpty(const void* data) const NOEXCEPT override final;
 
-    virtual FAtom Find(const void* data, const FAtom& key) const override final;
+    virtual FAtom Find(const void* data, const FAtom& key) const NOEXCEPT override final;
 
     virtual FAtom AddDefaultCopy(void* data, const FAtom& key) const override final;
     virtual FAtom AddDefaultMove(void* data, const FAtom& key) const override final;
@@ -200,33 +262,38 @@ public: // IDicoTraits:
     virtual void Clear(void* data) const override final;
     virtual void Empty(void* data, size_t capacity) const override final;
 
-    virtual bool ForEach(void* data, const foreach_fun& foreach) const override final;
+    virtual bool ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT override final;
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-PTypeTraits Traits(Meta::TType< TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >) noexcept {
-    return PTypeTraits::MakeDynamic< TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector> >();
+CONSTEXPR PTypeInfos TypeInfos(TType< TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >) {
+    return FTypeHelpers::Dico< TAssociativeVector<_Key, _Value, _EqualTo, _Vector>, _Key, _Value >;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-size_t TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Count(const void* data) const {
-    Assert(data);
-
-    return static_cast<const value_type*>(data)->size();
+CONSTEXPR PTypeTraits Traits(TType< TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >) {
+    return MakeStaticType< TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>, TAssociativeVector<_Key, _Value, _EqualTo, _Vector> >();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::IsEmpty(const void* data) const {
+size_t TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Count(const void* data) const NOEXCEPT {
     Assert(data);
 
-    return static_cast<const value_type*>(data)->empty();
+    return Unwrap(data).size();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-FAtom TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Find(const void* data, const FAtom& key) const {
+bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::IsEmpty(const void* data) const NOEXCEPT {
     Assert(data);
 
-    const value_type& d = (*static_cast<const value_type*>(data));
+    return Unwrap(data).empty();
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+FAtom TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Find(const void* data, const FAtom& key) const NOEXCEPT {
+    Assert(data);
+
+    const value_type& d = Unwrap(data);
     const auto it = d.find(key.TypedConstData<_Key>());
     return (it != d.end())
         ? FAtom(&it->second, MakeTraits<_Value>())
@@ -237,7 +304,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 FAtom TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddDefaultCopy(void* data, const FAtom& key) const {
     Assert(data);
 
-    value_type& d = (*static_cast<value_type*>(data));
+    value_type& d = Unwrap(data);
     _Value& value = d.Add(key.TypedConstData<_Key>());
     return FAtom(&value, MakeTraits<_Value>());
 }
@@ -246,7 +313,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 FAtom TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddDefaultMove(void* data, const FAtom& key) const {
     Assert(data);
 
-    value_type& d = (*static_cast<value_type*>(data));
+    value_type& d = Unwrap(data);
     _Value& value = d.Add(std::move(key.TypedData<_Key>()));
     return FAtom(&value, MakeTraits<_Value>());
 }
@@ -255,7 +322,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddCopy(void* data, const FAtom& key, const FAtom& value) const {
     Assert(data);
 
-    static_cast<value_type*>(data)->Insert_AssertUnique(
+    Unwrap(data).Insert_AssertUnique(
         key.TypedConstData<_Key>(),
         value.TypedConstData<_Value>());
 }
@@ -264,7 +331,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::AddMove(void* data, const FAtom& key, const FAtom& value) const {
     Assert(data);
 
-    static_cast<value_type*>(data)->Insert_AssertUnique(
+    Unwrap(data).Insert_AssertUnique(
         std::move(key.TypedData<_Key>()),
         std::move(value.TypedData<_Value>()));
 }
@@ -273,28 +340,28 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Remove(void* data, const FAtom& key) const {
     Assert(data);
 
-    return static_cast<value_type*>(data)->Erase(key.TypedConstData<_Key>());
+    return Unwrap(data).Erase(key.TypedConstData<_Key>());
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Reserve(void* data, size_t capacity) const {
     Assert(data);
 
-    static_cast<value_type*>(data)->reserve(capacity);
+    Unwrap(data).reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Clear(void* data) const {
     Assert(data);
 
-    static_cast<value_type*>(data)->clear();
+    Unwrap(data).clear();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Empty(void* data, size_t capacity) const {
     Assert(data);
 
-    value_type& d = (*static_cast<value_type*>(data));
+    value_type& d = Unwrap(data);
     if (capacity) {
         d.clear();
         d.reserve(capacity);
@@ -305,13 +372,13 @@ void TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::Empty(void* data
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::ForEach(void* data, const foreach_fun& foreach) const {
+bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT {
     Assert(data);
 
     const PTypeTraits key_traits = MakeTraits<_Key>();
     const PTypeTraits value_traits = MakeTraits<_Value>();
 
-    for (const auto& it : *static_cast<value_type*>(data)) {
+    for (const auto& it : Unwrap(data)) {
         const FAtom key(&it.first, key_traits);
         const FAtom value(&it.second, value_traits);
         if (not foreach(key, value))
@@ -326,22 +393,24 @@ bool TAssociativeVectorTraits<_Key, _Value, _EqualTo, _Vector>::ForEach(void* da
 // THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-class THashMapTraits final : public TBaseTypeTraits< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>, TBaseDicoTraits<_Key, _Value> > {
-    using base_traits = TBaseTypeTraits< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>, TBaseDicoTraits<_Key, _Value> >;
+class THashMapTraits final : public TDicoTraits< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>, _Key, _Value > {
+    using base_traits = TDicoTraits< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>, _Key, _Value >;
     using typename base_traits::value_type;
     using typename base_traits::pointer;
     using typename base_traits::const_pointer;
 
+    using base_traits::Unwrap;
+
 public: // ITypeTraits
-    THashMapTraits() : base_traits(sizeof(THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>)) {}
+    using base_traits::base_traits;
 
 public: // IDicoTraits:
     using typename base_traits::foreach_fun;
 
-    virtual size_t Count(const void* data) const override final;
-    virtual bool IsEmpty(const void* data) const override final;
+    virtual size_t Count(const void* data) const NOEXCEPT override final;
+    virtual bool IsEmpty(const void* data) const NOEXCEPT override final;
 
-    virtual FAtom Find(const void* data, const FAtom& key) const override final;
+    virtual FAtom Find(const void* data, const FAtom& key) const NOEXCEPT override final;
 
     virtual FAtom AddDefaultCopy(void* data, const FAtom& key) const override final;
     virtual FAtom AddDefaultMove(void* data, const FAtom& key) const override final;
@@ -354,33 +423,38 @@ public: // IDicoTraits:
     virtual void Clear(void* data) const override final;
     virtual void Empty(void* data, size_t capacity) const override final;
 
-    virtual bool ForEach(void* data, const foreach_fun& foreach) const override final;
+    virtual bool ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT override final;
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-PTypeTraits Traits(Meta::TType< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >) noexcept {
-    return PTypeTraits::MakeDynamic< THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator> >();
+CONSTEXPR PTypeInfos TypeInfos(TType< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >) {
+    return FTypeHelpers::Dico< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>, _Key, _Value >;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-size_t THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Count(const void* data) const {
-    Assert(data);
-
-    return static_cast<const value_type*>(data)->size();
+CONSTEXPR PTypeTraits Traits(TType< THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >) {
+    return MakeStaticType< THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>, THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator> >();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-bool THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::IsEmpty(const void* data) const {
+size_t THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Count(const void* data) const NOEXCEPT {
     Assert(data);
 
-    return static_cast<const value_type*>(data)->empty();
+    return Unwrap(data).size();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-FAtom THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Find(const void* data, const FAtom& key) const {
+bool THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::IsEmpty(const void* data) const NOEXCEPT {
     Assert(data);
 
-    const value_type& d = (*static_cast<const value_type*>(data));
+    return Unwrap(data).empty();
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
+FAtom THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Find(const void* data, const FAtom& key) const NOEXCEPT {
+    Assert(data);
+
+    const value_type& d = Unwrap(data);
     const auto it = d.find(key.TypedConstData<_Key>());
     return (it != d.end())
         ? FAtom(&it->second, MakeTraits<_Value>())
@@ -391,7 +465,7 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 FAtom THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddDefaultCopy(void* data, const FAtom& key) const {
     Assert(data);
 
-    value_type& d = (*static_cast<value_type*>(data));
+    value_type& d = Unwrap(data);
     _Value& v = d.Add(key.TypedConstData<_Key>());
     return FAtom(&v, MakeTraits<_Value>());
 }
@@ -400,7 +474,7 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 FAtom THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddDefaultMove(void* data, const FAtom& key) const {
     Assert(data);
 
-    value_type& d = (*static_cast<value_type*>(data));
+    value_type& d = Unwrap(data);
     _Value& v = d.Add(std::move(key.TypedData<_Key>()));
     return FAtom(&v, MakeTraits<_Value>());
 }
@@ -409,7 +483,7 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddCopy(void* data, const FAtom& key, const FAtom& value) const {
     Assert(data);
 
-    static_cast<value_type*>(data)->emplace_AssertUnique(
+    Unwrap(data).emplace_AssertUnique(
         key.TypedConstData<_Key>(),
         value.TypedConstData<_Value>());
 }
@@ -418,7 +492,7 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::AddMove(void* data, const FAtom& key, const FAtom& value) const {
     Assert(data);
 
-    static_cast<value_type*>(data)->emplace_AssertUnique(
+    Unwrap(data).emplace_AssertUnique(
         std::move(key.TypedData<_Key>()),
         std::move(value.TypedData<_Value>()));
 }
@@ -427,28 +501,28 @@ template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, t
 bool THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Remove(void* data, const FAtom& key) const {
     Assert(data);
 
-    return static_cast<value_type*>(data)->erase(key.TypedConstData<_Key>());
+    return Unwrap(data).erase(key.TypedConstData<_Key>());
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Reserve(void* data, size_t capacity) const {
     Assert(data);
 
-    static_cast<value_type*>(data)->reserve(capacity);
+    Unwrap(data).reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Clear(void* data) const {
     Assert(data);
 
-    static_cast<value_type*>(data)->clear();
+    Unwrap(data).clear();
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
 void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Empty(void* data, size_t capacity) const {
     Assert(data);
 
-    value_type& d = (*static_cast<value_type*>(data));
+    value_type& d = Unwrap(data);
     if (capacity) {
         d.clear();
         d.reserve(capacity);
@@ -459,11 +533,11 @@ void THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::Empty(void* da
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-bool THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::ForEach(void* data, const foreach_fun& foreach) const {
+bool THashMapTraits<_Key, _Value, _Hasher, _EqualTo, _Allocator>::ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT {
     const PTypeTraits key_traits = MakeTraits<_Key>();
     const PTypeTraits value_traits = MakeTraits<_Value>();
 
-    for (const auto& it : *static_cast<value_type*>(data)) {
+    for (const auto& it : Unwrap(data)) {
         const FAtom key(&it.first, key_traits);
         const FAtom value(&it.second, value_traits);
         if (not foreach(key, value))

@@ -4,6 +4,7 @@
 
 #include "RTTI/Atom.h"
 #include "RTTI/NativeTypes.h"
+#include "RTTI/TypeTraits.h"
 
 #include "IO/TextWriter_fwd.h"
 #include "Meta/AlignedStorage.h"
@@ -13,7 +14,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// RTTI Runtime polymorphism with lifetime management
+// RTTI Runtime polymorphisms with lifetime management
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FAny {
 public:
@@ -32,7 +33,7 @@ public:
     FAny(FAny&& rvalue) NOEXCEPT;
     FAny& operator =(FAny&& rvalue) NOEXCEPT;
 
-    explicit FAny(ENativeType type) : FAny(MakeTraits(type)) {}
+    explicit FAny(ENativeType type);
     explicit FAny(const PTypeTraits& type);
 
     template <typename T, class = TWrapable<T> >
@@ -124,7 +125,7 @@ private:
 inline FAny& MakeAny(FAny& any) {
     return any;
 }
-//----------------------------------------------------------------------------
+////----------------------------------------------------------------------------
 template <typename T, class = FAny::TWrapable<T> >
 FAny MakeAny(T&& rvalue) {
     return FAny(std::move(rvalue));

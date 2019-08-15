@@ -6,7 +6,9 @@
 
 #include "RTTI/Any.h"
 #include "RTTI/Atom.h"
+#include "RTTI/AtomHelpers.h"
 #include "RTTI/AtomVisitor.h"
+#include "RTTI/NativeTypes.h"
 #include "RTTI/Typedefs.h"
 #include "MetaClass.h"
 #include "MetaDatabase.h"

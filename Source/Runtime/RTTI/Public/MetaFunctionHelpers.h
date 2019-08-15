@@ -13,7 +13,7 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-FMetaParameter MakeParameter(Meta::TType<T>, const FStringView& name) {
+FMetaParameter MakeParameter(TType<T>, const FStringView& name) {
     static_assert(not std::is_pointer<T>::value, "pointers are not supported, use non-const references instead");
     return FMetaParameter(
         FName(name),
@@ -38,7 +38,7 @@ struct TMakeFunction<_Result (_Class::*)(_Args...)> {
             name,
             flags,
             MakeTraits<_Result>(),
-            { MakeParameter(Meta::TType<_Args>{}, *nameIt++)... },
+            { MakeParameter(Type<_Args>, *nameIt++)... },
             &TMemberFunction_<_Member, typename std::is_void<_Result>::type>::Invoke
         );
     }
@@ -83,7 +83,7 @@ struct TMakeFunction<_Result (_Class::*)(_Args...) const> {
             name,
             flags,
             MakeTraits<_Result>(),
-            { MakeParameter(Meta::TType<_Args>{}, *nameIt++)... },
+            { MakeParameter(Type<_Args>, *nameIt++)... },
             &TMemberFunction_<_Member>::Invoke
         );
     }

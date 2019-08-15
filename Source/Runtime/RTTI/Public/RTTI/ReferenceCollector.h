@@ -54,7 +54,7 @@ private:
 //----------------------------------------------------------------------------
 class FLambdaReferenceCollector : public FBaseReferenceCollector {
 public:
-    using FOnReference = TFunction<bool(const IScalarTraits&, FMetaObject&)>;
+    using FOnReference = TFunction<bool(const ITypeTraits&, FMetaObject&)>;
 
     FLambdaReferenceCollector() = default;
     explicit FLambdaReferenceCollector(EVisitorFlags flags) NOEXCEPT

@@ -7,6 +7,7 @@
 #include "RTTI/Atom.h"
 #include "RTTI/AtomVisitor.h"
 #include "RTTI/NativeTypes.h"
+#include "RTTI/TypeInfos.h"
 
 #include "MetaClass.h"
 #include "MetaNamespace.h"
@@ -23,8 +24,8 @@
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RTTI_STRUCT_DEF(_Api, _Name) \
-    _Api ::PPE::RTTI::PTypeTraits Traits(Meta::TType<_Name> type) { \
-        return ::PPE::RTTI::MakeStruct(type); \
+    _Api ::PPE::RTTI::PTypeTraits Traits(::PPE::RTTI::TType< _Name > t) { \
+        return ::PPE::RTTI::StructTraits(t); \
     }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -34,11 +35,10 @@
     ::PPE::RTTI::FMetaNamespace& _Name::RTTI_FMetaClass::Namespace() { \
         return RTTI_NAMESPACE(_Namespace); \
     } \
-    \
     _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaNamespace* metaNamespace) \
         : metaclass_type(id, ::PPE::RTTI::FName(STRINGIZE(_Name)), \
             (PP_FOREACH(_RTTI_COMBINE_CLASSFLAGS_IMPL, __VA_ARGS__) ::PPE::RTTI::EClassFlags::None), \
-            metaNamespace) { \
+            metaNamespace) {
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_END() }
 //----------------------------------------------------------------------------

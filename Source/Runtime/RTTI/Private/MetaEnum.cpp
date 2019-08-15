@@ -92,13 +92,13 @@ bool FMetaEnum::ExpandValues(const FAtom& src, FExpansion* expansion) const {
 
     switch (_sizeInBytes) {
     case sizeof(u8) :
-        return ExpandValues(checked_cast<FMetaEnumOrd>(*reinterpret_cast<u8*>(src.Data())), expansion);
+        return ExpandValues(checked_cast<FMetaEnumOrd>(*static_cast<u8*>(src.Data())), expansion);
     case sizeof(u16):
-        return ExpandValues(checked_cast<FMetaEnumOrd>(*reinterpret_cast<u16*>(src.Data())), expansion);
+        return ExpandValues(checked_cast<FMetaEnumOrd>(*static_cast<u16*>(src.Data())), expansion);
     case sizeof(u32):
-        return ExpandValues(checked_cast<FMetaEnumOrd>(*reinterpret_cast<u32*>(src.Data())), expansion);
+        return ExpandValues(checked_cast<FMetaEnumOrd>(*static_cast<u32*>(src.Data())), expansion);
     case sizeof(u64):
-        return ExpandValues(checked_cast<FMetaEnumOrd>(*reinterpret_cast<u64*>(src.Data())), expansion);
+        return ExpandValues(checked_cast<FMetaEnumOrd>(*static_cast<u64*>(src.Data())), expansion);
     }
 
     AssertNotImplemented();
@@ -151,16 +151,16 @@ void FMetaEnum::SetValue(const FAtom& dst, const FMetaEnumValue& v) const {
 
     switch (_sizeInBytes) {
     case sizeof(u8) :
-        *reinterpret_cast<u8*>(dst.Data()) = checked_cast<u8>(v.Value);
+        *static_cast<u8*>(dst.Data()) = checked_cast<u8>(v.Value);
         return;
     case sizeof(u16):
-        *reinterpret_cast<u16*>(dst.Data()) = checked_cast<u16>(v.Value);
+        *static_cast<u16*>(dst.Data()) = checked_cast<u16>(v.Value);
         return;
     case sizeof(u32):
-        *reinterpret_cast<u32*>(dst.Data()) = checked_cast<u32>(v.Value);
+        *static_cast<u32*>(dst.Data()) = checked_cast<u32>(v.Value);
         return;
     case sizeof(u64):
-        *reinterpret_cast<u64*>(dst.Data()) = checked_cast<u64>(v.Value);
+        *static_cast<u64*>(dst.Data()) = checked_cast<u64>(v.Value);
         return;
     }
 

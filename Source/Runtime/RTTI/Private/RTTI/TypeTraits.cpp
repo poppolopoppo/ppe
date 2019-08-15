@@ -138,6 +138,7 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::ETypeFlags flags) {;
     if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << "Dico"; }
     if (flags & RTTI::ETypeFlags::Native)   { oss << sep << "Native"; }
     if (flags & RTTI::ETypeFlags::Enum)     { oss << sep << "Enum"; }
+    if (flags & RTTI::ETypeFlags::Object)   { oss << sep << "Object"; }
     if (flags & RTTI::ETypeFlags::POD)      { oss << sep << "POD"; }
     if (flags & RTTI::ETypeFlags::TriviallyDestructible) { oss << sep << "TriviallyDestructible"; }
 
@@ -152,6 +153,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETypeFlags flags) {
     if (flags & RTTI::ETypeFlags::List)     { oss << sep << L"List"; }
     if (flags & RTTI::ETypeFlags::Dico)     { oss << sep << L"Dico"; }
     if (flags & RTTI::ETypeFlags::Enum)     { oss << sep << L"Enum"; }
+    if (flags & RTTI::ETypeFlags::Object)   { oss << sep << L"Object"; }
     if (flags & RTTI::ETypeFlags::Native)   { oss << sep << L"Native"; }
     if (flags & RTTI::ETypeFlags::POD)      { oss << sep << L"POD"; }
     if (flags & RTTI::ETypeFlags::TriviallyDestructible) { oss << sep << L"TriviallyDestructible"; }
@@ -161,7 +163,7 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETypeFlags flags) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, const RTTI::FTypeInfos& typeInfos) {
+FTextWriter& operator <<(FTextWriter& oss, const RTTI::FNamedTypeInfos& typeInfos) {
     return oss
         << hash_t(typeInfos.Id()) << " : "
         << typeInfos.Name() << " ["
@@ -169,7 +171,7 @@ FTextWriter& operator <<(FTextWriter& oss, const RTTI::FTypeInfos& typeInfos) {
         << typeInfos.Flags() << ')';
 }
 //----------------------------------------------------------------------------
-FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FTypeInfos& typeInfos) {
+FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FNamedTypeInfos& typeInfos) {
     return oss
         << hash_t(typeInfos.Id()) << L" : "
         << typeInfos.Name() << L" ["

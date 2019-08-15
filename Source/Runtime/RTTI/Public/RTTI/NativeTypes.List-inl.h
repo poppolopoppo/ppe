@@ -14,30 +14,13 @@ namespace RTTI {
 template <typename T>
 class TBaseListTraits : public IListTraits {
 protected:
-    CONSTEXPR TBaseListTraits(size_t sizeInBytes)
-        : IListTraits(
-            MakeListTypeId(MakeTraits<T>()),
-            MakeListTypeFlags(MakeTraits<T>()),
-            sizeInBytes )
-    {}
+    using IListTraits::IListTraits;
 
 public: // ITypeTraits
     virtual FStringView TypeName() const override final;
 
-    virtual bool IsDefaultValue(const void* data) const override final;
-    virtual void ResetToDefaultValue(void* data) const override final;
-
-    virtual bool Equals(const void* lhs, const void* rhs) const override final;
-    virtual hash_t HashValue(const void* data) const override final;
-
-    virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
-    virtual void DeepCopy(const void* src, void* dst) const override final;
-
-    virtual bool PromoteCopy(const void* src, const FAtom& dst) const override /*final*/;
-    virtual bool PromoteMove(void* src, const FAtom& dst) const override /*final*/;
-
 public: // IListTraits
-    virtual PTypeTraits ValueTraits() const override final { return MakeTraits<T>(); }
+    virtual PTypeTraits ValueTraits() const NOEXCEPT override final { return MakeTraits<T>(); }
 };
 //----------------------------------------------------------------------------
 template <typename T>
@@ -48,128 +31,178 @@ FStringView TBaseListTraits<T>::TypeName() const {
     return GCachedTypeName.MakeView();
 }
 //----------------------------------------------------------------------------
-template <typename T>
-bool TBaseListTraits<T>::IsDefaultValue(const void* data) const {
-    return IsEmpty(data);
-}
+// TListTraits<T>
 //----------------------------------------------------------------------------
-template <typename T>
-void TBaseListTraits<T>::ResetToDefaultValue(void* data) const {
-    Clear(data);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-bool TBaseListTraits<T>::Equals(const void* lhs, const void* rhs) const {
-    Assert(lhs);
-    Assert(rhs);
+template <typename _List, typename T>
+class TListTraits : public TBaseTypeTraits< _List, TBaseListTraits<T> > {
+protected:
+    using base_traits = TBaseTypeTraits< _List, TBaseListTraits<T> >;
 
-    const size_t n = Count(lhs);
-    if (Count(rhs) != n)
-        return false;
+    using typename base_traits::value_type;
+    using typename base_traits::pointer;
+    using typename base_traits::const_pointer;
 
-    forrange(i, 0, n) {
-        const FAtom lhsIt = At((void*)lhs, i);
-        const FAtom rhsIt = At((void*)rhs, i);
+    using base_traits::base_traits;
 
-        if (not lhsIt.Equals(rhsIt))
-            return false;
+public: // ITypeTraits
+    virtual bool IsDefaultValue(const void* data) const NOEXCEPT override final;
+    virtual void ResetToDefaultValue(void* data) const override final;
+
+    virtual bool Equals(const void* lhs, const void* rhs) const NOEXCEPT override final;
+    virtual hash_t HashValue(const void* data) const NOEXCEPT override final;
+
+    virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
+    virtual void DeepCopy(const void* src, void* dst) const override final;
+
+    virtual bool PromoteCopy(const void* src, const FAtom& dst) const override final;
+    virtual bool PromoteMove(void* src, const FAtom& dst) const NOEXCEPT override final;
+
+    virtual void* Cast(void* data, const PTypeTraits& dst) const override final {
+        return base_traits::BaseCast(data, dst);
     }
 
-    return true;
+protected:
+    static _List& Unwrap(void* data) NOEXCEPT {
+        Assert(data);
+        return (*static_cast<_List*>(data));
+    }
+    static const _List& Unwrap(const void* data) NOEXCEPT {
+        Assert(data);
+        return (*static_cast<const _List*>(data));
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _List, typename T>
+bool TListTraits<_List, T>::IsDefaultValue(const void* data) const NOEXCEPT {
+    return Unwrap(data).empty();
 }
 //----------------------------------------------------------------------------
-template <typename T>
-hash_t TBaseListTraits<T>::HashValue(const void* data) const {
+template <typename _List, typename T>
+void TListTraits<_List, T>::ResetToDefaultValue(void* data) const {
+    Unwrap(data).clear();
+}
+//----------------------------------------------------------------------------
+template <typename _List, typename T>
+bool TListTraits<_List, T>::Equals(const void* lhs, const void* rhs) const NOEXCEPT {
+    const _List& a = Unwrap(lhs);
+    const _List& b = Unwrap(rhs);
+
+    if (a.size() != b.size())
+        return false;
+
+    const PTypeTraits item = MakeTraits<T>();
+
+    return std::equal(
+        a.begin(), a.end(),
+        b.begin(), b.end(),
+        [item](const T& it, const T& jt) NOEXCEPT{
+            return item->Equals(&it, &jt);
+        });
+}
+//----------------------------------------------------------------------------
+template <typename _List, typename T>
+hash_t TListTraits<_List, T>::HashValue(const void* data) const NOEXCEPT {
     Assert(data);
 
-    hash_t h{ TypeId() };
+    hash_t h{ ITypeTraits::TypeId() };
 
-    ForEach((void*)data, [&h](const FAtom& it) {
-        hash_combine(h, it.HashValue());
-        return true;
-    });
+    const PTypeTraits item = MakeTraits<T>();
+
+    for (const auto& it : Unwrap(data))
+        hash_combine(h, item->HashValue(&it));
 
     return h;
 }
 //----------------------------------------------------------------------------
-template <typename T>
-bool TBaseListTraits<T>::PromoteCopy(const void* src, const FAtom& dst) const {
+template <typename _List, typename T>
+bool TListTraits<_List, T>::PromoteCopy(const void* src, const FAtom& dst) const {
     Assert(src);
     Assert(dst);
 
-    if (const IListTraits* const dstList = dst.Traits()->AsList()) {
-        const size_t n = Count(src);
-        dstList->Empty(dst.Data(), n);
+    if (base_traits::BasePromoteCopy(src, dst))
+        return true;
 
-        void* const pdst = dst.Data();
+    if (const IListTraits* const plist = dst.Traits()->AsList()) {
+        const _List& srcT = Unwrap(src);
 
-        return ForEach(const_cast<void*>(src), [pdst, dstList](const FAtom& it) {
-            const FAtom last = dstList->AddDefault(pdst);
-            return (it.PromoteCopy(last));
-        });
-    }
+        const PTypeTraits item = MakeTraits<T>();
 
-    return false;
-}
-//----------------------------------------------------------------------------
-template <typename T>
-bool TBaseListTraits<T>::PromoteMove(void* src, const FAtom& dst) const {
-    Assert(src);
-    Assert(dst);
+        plist->Empty(dst.Data(), srcT.size());
 
-    if (const IListTraits* const dstList = dst.Traits()->AsList()) {
-        const size_t n = Count(src);
-        dstList->Empty(dst.Data(), n);
+        for (const auto& it : srcT) {
+            const FAtom last = plist->AddDefault(dst.Data());
 
-        void* const pdst = dst.Data();
-
-        const bool succeed = ForEach(src, [pdst, dstList](const FAtom& it) {
-            const FAtom last = dstList->AddDefault(pdst);
-            return (it.PromoteMove(last));
-        });
-
-        if (succeed) {
-            Clear(src);
-            return true;
+            if (not item->PromoteCopy(&it, last))
+                return false;
         }
+
+        return true;
     }
 
     return false;
 }
 //----------------------------------------------------------------------------
-template <typename T>
-bool TBaseListTraits<T>::DeepEquals(const void* lhs, const void* rhs) const {
-    const size_t n = Count(lhs);
-    if (Count(rhs) != n)
+template <typename _List, typename T>
+bool TListTraits<_List, T>::PromoteMove(void* src, const FAtom& dst) const NOEXCEPT {
+    Assert(src);
+    Assert(dst);
+
+    if (base_traits::BasePromoteMove(src, dst))
+        return true;
+
+    if (const IListTraits* const plist = dst.Traits()->AsList()) {
+        _List& srcT = Unwrap(src);
+
+        const PTypeTraits item = MakeTraits<T>();
+
+        plist->Empty(dst.Data(), srcT.size());
+
+        for (auto& it : srcT) {
+            const FAtom last = plist->AddDefault(dst.Data());
+            if (not item->PromoteMove(&it, last))
+                return false;
+        }
+
+        srcT.clear();
+
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename _List, typename T>
+bool TListTraits<_List, T>::DeepEquals(const void* lhs, const void* rhs) const {
+    const _List& a = Unwrap(lhs);
+    const _List& b = Unwrap(rhs);
+
+    if (a.size() != b.size())
         return false;
 
-    const PTypeTraits value_traits = MakeTraits<T>();
+    const PTypeTraits item = MakeTraits<T>();
 
-    forrange(i, 0, n) {
-        const FAtom a = At(const_cast<void*>(lhs), i);
-        const FAtom b = At(const_cast<void*>(rhs), i);
-
-        if (not value_traits->DeepEquals(a.Data(), b.Data()))
-            return false;
-    }
-
-    return true;
+    return std::equal(
+        a.begin(), a.end(),
+        b.begin(), b.end(),
+        [item](const T& it, const T& jt) NOEXCEPT{
+            return item->DeepEquals(&it, &jt);
+        });
 }
 //----------------------------------------------------------------------------
-template <typename T>
-void TBaseListTraits<T>::DeepCopy(const void* src, void* dst) const {
-    const size_t n = Count(src);
+template <typename _List, typename T>
+void TListTraits<_List, T>::DeepCopy(const void* src, void* dst) const {
+    const _List& srcT = Unwrap(src);
+    _List& dstT = Unwrap(dst);
 
-    Clear(dst);
-    Reserve(dst, n);
+    dstT.clear();
+    dstT.reserve(srcT.size());
 
-    const PTypeTraits value_traits = MakeTraits<T>();
+    const PTypeTraits item = MakeTraits<T>();
 
-    forrange(i, 0, n) {
-        const FAtom s = At(const_cast<void*>(src), i);
-        const FAtom d = AddDefault(dst);
-
-        value_traits->DeepCopy(s.Data(), d.Data());
+    typename _List::value_type cpy;
+    for (const auto& it : srcT) {
+        item->DeepCopy(&it, &cpy);
+        dstT.push_back(std::move(cpy));
     }
 }
 //----------------------------------------------------------------------------
@@ -178,23 +211,25 @@ void TBaseListTraits<T>::DeepCopy(const void* src, void* dst) const {
 // TVectorTraits<T, _Allocator>
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-class TVectorTraits final : public TBaseTypeTraits< TVector<T, _Allocator>, TBaseListTraits<T> > {
+class TVectorTraits final : public TListTraits< TVector<T, _Allocator>, T > {
     using item_type = T;
-    using base_traits = TBaseTypeTraits< TVector<T, _Allocator>, TBaseListTraits<item_type> >;
+    using base_traits = TListTraits< TVector<T, _Allocator>, T >;
     using typename base_traits::value_type;
     using typename base_traits::pointer;
     using typename base_traits::const_pointer;
 
+    using base_traits::Unwrap;
+
 public: // IListTraits
     using typename base_traits::foreach_fun;
 
-    CONSTEXPR TVectorTraits() : base_traits(sizeof(TVector<T, _Allocator>)) {}
+    using base_traits::base_traits;
 
-    virtual size_t Count(const void* data) const override final;
-    virtual bool IsEmpty(const void* data) const override final;
+    virtual size_t Count(const void* data) const NOEXCEPT override final;
+    virtual bool IsEmpty(const void* data) const NOEXCEPT override final;
 
-    virtual FAtom At(void* data, size_t index) const override final;
-    virtual size_t Find(const void* data, const FAtom& item) const override final;
+    virtual FAtom At(void* data, size_t index) const NOEXCEPT override final;
+    virtual size_t Find(const void* data, const FAtom& item) const NOEXCEPT override final;
 
     virtual FAtom AddDefault(void* data) const override final;
     virtual void AddCopy(void* data, const FAtom& item) const override final;
@@ -206,38 +241,43 @@ public: // IListTraits
     virtual void Clear(void* data) const override final;
     virtual void Empty(void* data, size_t capacaity) const override final;
 
-    virtual bool ForEach(void* data, const foreach_fun& foreach) const override final;
+    virtual bool ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT override final;
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-PTypeTraits Traits(Meta::TType< TVector<T, _Allocator> >) noexcept {
-    return PTypeTraits::MakeDynamic< TVectorTraits<T, _Allocator> >();
+CONSTEXPR auto TypeInfos(TType< TVector<T, _Allocator> >) {
+    return FTypeHelpers::List< TVector<T, _Allocator>, T >;
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-size_t TVectorTraits<T, _Allocator>::Count(const void* data) const {
-    Assert(data);
-
-    return static_cast<const value_type*>(data)->size();
+CONSTEXPR PTypeTraits Traits(TType< TVector<T, _Allocator> >) {
+    return MakeStaticType< TVectorTraits<T, _Allocator>, TVector<T, _Allocator> >();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool TVectorTraits<T, _Allocator>::IsEmpty(const void* data) const {
+size_t TVectorTraits<T, _Allocator>::Count(const void* data) const NOEXCEPT {
     Assert(data);
 
-    return static_cast<const value_type*>(data)->empty();
+    return Unwrap(data).size();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-FAtom TVectorTraits<T, _Allocator>::At(void* data, size_t index) const {
+bool TVectorTraits<T, _Allocator>::IsEmpty(const void* data) const NOEXCEPT {
     Assert(data);
 
-    auto& item = static_cast<value_type*>(data)->at(index);
+    return Unwrap(data).empty();
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+FAtom TVectorTraits<T, _Allocator>::At(void* data, size_t index) const NOEXCEPT {
+    Assert(data);
+
+    auto& item = Unwrap(data).at(index);
     return FAtom(&item, MakeTraits<item_type>());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-size_t TVectorTraits<T, _Allocator>::Find(const void* data, const FAtom& item) const {
+size_t TVectorTraits<T, _Allocator>::Find(const void* data, const FAtom& item) const NOEXCEPT {
     Assert(data);
     Assert(item);
 
@@ -261,7 +301,7 @@ template <typename T, typename _Allocator>
 FAtom TVectorTraits<T, _Allocator>::AddDefault(void* data) const {
     Assert(data);
 
-    auto& item = static_cast<value_type*>(data)->push_back_Default();
+    auto& item = Unwrap(data).push_back_Default();
     return FAtom(&item, MakeTraits<item_type>());
 }
 //----------------------------------------------------------------------------
@@ -270,7 +310,7 @@ void TVectorTraits<T, _Allocator>::AddCopy(void* data, const FAtom& item) const 
     Assert(data);
     Assert(item);
 
-    static_cast<value_type*>(data)->push_back(item.TypedConstData<item_type>());
+    Unwrap(data).push_back(item.TypedConstData<item_type>());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -278,14 +318,14 @@ void TVectorTraits<T, _Allocator>::AddMove(void* data, const FAtom& item) const 
     Assert(data);
     Assert(item);
 
-    static_cast<value_type*>(data)->push_back(std::move(item.TypedData<item_type>()));
+    Unwrap(data).push_back(std::move(item.TypedData<item_type>()));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVectorTraits<T, _Allocator>::Erase(void* data, size_t index) const {
     Assert(data);
 
-    value_type& v = *static_cast<value_type*>(data);
+    value_type& v = Unwrap(data);
     v.erase(v.begin() + index);
 }
 //----------------------------------------------------------------------------
@@ -297,7 +337,7 @@ bool TVectorTraits<T, _Allocator>::Remove(void* data, const FAtom& item) const {
     const PTypeTraits item_traits = MakeTraits<item_type>();
     Assert_NoAssume(item_traits->TypeId() == item.TypeId());
 
-    value_type& vector = (*static_cast<value_type*>(data));
+    value_type& vector = Unwrap(data);
 
     foreachitem(it, vector) {
         const FAtom value(std::addressof(*it), item_traits);
@@ -315,21 +355,21 @@ template <typename T, typename _Allocator>
 void TVectorTraits<T, _Allocator>::Reserve(void* data, size_t capacity) const {
     Assert(data);
 
-    static_cast<value_type*>(data)->reserve(capacity);
+    Unwrap(data).reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVectorTraits<T, _Allocator>::Clear(void* data) const {
     Assert(data);
 
-    static_cast<value_type*>(data)->clear();
+    Unwrap(data).clear();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void TVectorTraits<T, _Allocator>::Empty(void* data, size_t capacity) const {
     Assert(data);
 
-    value_type& v = *static_cast<value_type*>(data);
+    value_type& v = Unwrap(data);
     if (capacity) {
         v.clear();
         v.reserve(capacity);
@@ -340,11 +380,11 @@ void TVectorTraits<T, _Allocator>::Empty(void* data, size_t capacity) const {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-bool TVectorTraits<T, _Allocator>::ForEach(void* data, const foreach_fun& foreach) const {
+bool TVectorTraits<T, _Allocator>::ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT {
     Assert(data);
 
     const PTypeTraits value_traits = MakeTraits<item_type>();
-    for (auto& elt : *static_cast<value_type*>(data)) {
+    for (auto& elt : Unwrap(data)) {
         if (not foreach(FAtom(&elt, value_traits)))
             return false;
     }

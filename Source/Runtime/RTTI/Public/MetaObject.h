@@ -172,7 +172,7 @@ T* CastChecked(FMetaObject* p) {
     AssertRelease(result);
     return result;
 #else
-    return reinterpret_cast<T*>(p);
+    return static_cast<T*>(p);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -183,7 +183,7 @@ const T* CastChecked(const FMetaObject* p) {
     AssertRelease(result);
     return result;
 #else
-    return reinterpret_cast<const T*>(p);
+    return static_cast<const T*>(p);
 #endif
 }
 //----------------------------------------------------------------------------

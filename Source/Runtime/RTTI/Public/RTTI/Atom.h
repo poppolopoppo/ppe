@@ -32,7 +32,7 @@ public:
     template <typename T>
     T& FlatData() const {
         Assert_NoAssume(MakeTraits<T>()->TypeId() == _traits->TypeId());
-        return (*reinterpret_cast<T*>(_data));
+        return (*static_cast<T*>(_data));
     }
 
     template <typename T>
@@ -40,7 +40,7 @@ public:
         const PTypeTraits dst = MakeTraits<T>();
         void* const casted = ((*dst == *_traits) ? _data : Cast(dst));
         Assert(casted);
-        return (*reinterpret_cast<T*>(casted));
+        return (*static_cast<T*>(casted));
     }
 
     template <typename T>
@@ -52,7 +52,7 @@ public:
     T* TypedDataIFP() const {
         const PTypeTraits dst = MakeTraits<T>();
         void* const casted = ((*dst == *_traits) ? _data : Cast(dst));
-        return (casted ? reinterpret_cast<T*>(casted) : nullptr);
+        return (casted ? static_cast<T*>(casted) : nullptr);
     }
 
     template <typename T>
@@ -63,7 +63,9 @@ public:
     FTypeId TypeId() const { return _traits->TypeId(); }
     ETypeFlags TypeFlags() const { return _traits->TypeFlags(); }
     FTypeInfos TypeInfos() const { return _traits->TypeInfos(); }
+    FStringView TypeName() const { return _traits->TypeName(); }
     size_t SizeInBytes() const { return _traits->SizeInBytes(); }
+    FNamedTypeInfos NamedTypeInfos() const { return _traits->NamedTypeInfos(); }
 
     bool IsDefaultValue() const { return _traits->IsDefaultValue(_data); }
     void ResetToDefaultValue() { _traits->ResetToDefaultValue(_data); }
@@ -142,7 +144,7 @@ FAtom InplaceAtom(const T& inplace) {
 //----------------------------------------------------------------------------
 template <typename T>
 T* Cast(const FAtom& atom) {
-    return (reinterpret_cast<T*>(atom.Traits()
+    return (static_cast<T*>(atom.Traits()
         ? atom.Cast(MakeTraits<T>())
         : nullptr ));
 }

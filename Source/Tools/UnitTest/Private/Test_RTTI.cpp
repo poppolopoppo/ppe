@@ -74,7 +74,8 @@ struct FStructAsTuple {
     FString Name;
     TVector<int> Weights;
 };
-RTTI_STRUCT_DEF(, FStructAsTuple);
+RTTI_STRUCT_DEF(CONSTEXPR, FStructAsTuple);
+RTTI_STRUCT_DECL(CONSTEXPR, FStructAsTuple);
 //----------------------------------------------------------------------------
 enum ETest : u32 {
     A, B, C, D
@@ -393,12 +394,13 @@ void FRTTIAtomRandomizer_::Randomize(RTTI::FMetaObject* pobject, const RTTI::FMe
 }
 //----------------------------------------------------------------------------
 static void print_atom(const RTTI::FAtom& atom) {
-    const RTTI::FTypeInfos type_info = atom.TypeInfos();
-    LOG(Test_RTTI, Info, L"{0}[0x{1:#8x}] : {2} = {3} (default:{4:a})",
-        type_info.Name(),
-        type_info.Id(),
+    const RTTI::FNamedTypeInfos typeInfo = atom.NamedTypeInfos();
+    LOG(Test_RTTI, Info, L"{0}[0x{1:#8x}] : {2} = {3} (flags: {4}, default:{5:a})",
+        typeInfo.Name(),
+        typeInfo.Id(),
         atom.HashValue(),
         atom,
+        typeInfo.Flags(),
         atom.IsDefaultValue());
 }
 //----------------------------------------------------------------------------
@@ -1014,6 +1016,8 @@ static void Test_Grammar_() {
     VerifyRelease(EvalExpr_(&context, "{}"));
     VerifyRelease(EvalExpr_(&context, "(Any:\"toto\",Any:42,Any:3.456)"));
     VerifyRelease(EvalExpr_(&context, "[Any:42]"));
+    VerifyRelease(EvalExpr_(&context, "Any:[1,2,3]"));
+    VerifyRelease(EvalExpr_(&context, "Any:[Any:\"toto\"]"));
     VerifyRelease(EvalExpr_(&context, "Any:[Any:[Any:\"totototototototototototototoot\"]]"));
     VerifyRelease(EvalExpr_(&context, "(Int32:-1317311908, WString:'zee')"));
     VerifyRelease(EvalExpr_(&context, "ETest:'a'+ETest:1"));

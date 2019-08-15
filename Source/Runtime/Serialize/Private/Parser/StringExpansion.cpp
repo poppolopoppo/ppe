@@ -8,6 +8,7 @@
 #include "RTTI/Any.h"
 #include "RTTI/Atom.h"
 #include "RTTI/AtomVisitor.h"
+#include "RTTI/NativeTypes.h"
 #include "RTTI/TypeTraits.h"
 
 #include "Allocator/Alloca.h"
@@ -55,7 +56,7 @@ public:
 
 #define DECL_ATOM_VIRTUAL_VISIT(_Name, T, _TypeId) \
     virtual bool Visit(const RTTI::IScalarTraits* scalar, T& value) override final { \
-        PrintValue_(scalar, value, std::bool_constant< RTTI::is_integral(_TypeId) >{}); \
+        PrintValue_(scalar, value, std::bool_constant< RTTI::is_integral(RTTI::FTypeId(_TypeId)) >{}); \
         return true; \
     }
     FOREACH_RTTI_NATIVETYPES(DECL_ATOM_VIRTUAL_VISIT)

@@ -22,8 +22,8 @@ namespace RTTI {
 template <typename T, typename _Tuple>
 class TStructAsTupleTraits;
 template <typename T, typename... _Args>
-class TStructAsTupleTraits<T, TTuple<_Args&...>> final : public TBaseTypeTraits<T, TBaseTupleTraits<_Args...>> {
-    using base_traits = TBaseTypeTraits<T, TBaseTupleTraits<_Args...>>;
+class TStructAsTupleTraits<T, TTuple<_Args&...>> final : public TTupleTraits< T, _Args... > {
+    using base_traits = TTupleTraits< T, _Args... >;
     using typename base_traits::value_type;
     using typename base_traits::pointer;
     using typename base_traits::const_pointer;
@@ -31,24 +31,29 @@ class TStructAsTupleTraits<T, TTuple<_Args&...>> final : public TBaseTypeTraits<
 public: // ITupleTraits
     using typename base_traits::foreach_fun;
 
-    CONSTEXPR TStructAsTupleTraits() : base_traits(sizeof(T)) {}
+    using base_traits::base_traits;
 
-    virtual FAtom At(void* data, size_t index) const override final;
+    virtual FAtom At(void* data, size_t index) const NOEXCEPT override final;
 
-    virtual bool ForEach(void* data, const foreach_fun& foreach) const override final;
+    virtual bool ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT override final;
 
 private:
     template <size_t... _Idx>
-    static FAtom GetNth_(TTuple<_Args&...>& refs, size_t index, std::index_sequence<_Idx...>);
+    static FAtom GetNth_(TTuple<_Args&...>& refs, size_t index, std::index_sequence<_Idx...>) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Tuple = decltype(tie_as_tuple(std::declval<T&>())) >
-CONSTEXPR PTypeTraits MakeStruct(Meta::TType< T >) NOEXCEPT {
-    return PTypeTraits::MakeDynamic< TStructAsTupleTraits<T, _Tuple> >();
+CONSTEXPR PTypeInfos StructInfos(TType< T >) {
+    return TupleTypeInfos< T >(Type< _Tuple >);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Tuple = decltype(tie_as_tuple(std::declval<T&>())) >
+CONSTEXPR PTypeTraits StructTraits(TType< T >) {
+    return MakeStaticType< TStructAsTupleTraits<T, _Tuple>, T >();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
-FAtom TStructAsTupleTraits<T, TTuple<_Args&...> >::At(void* data, size_t index) const {
+FAtom TStructAsTupleTraits<T, TTuple<_Args&...> >::At(void* data, size_t index) const NOEXCEPT {
     Assert(data);
 
     TTuple<_Args&...> refs = tie_as_tuple(*static_cast<value_type*>(data));
@@ -57,7 +62,7 @@ FAtom TStructAsTupleTraits<T, TTuple<_Args&...> >::At(void* data, size_t index) 
 }
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
-bool TStructAsTupleTraits<T, TTuple<_Args&...> >::ForEach(void* data, const foreach_fun& foreach) const {
+bool TStructAsTupleTraits<T, TTuple<_Args&...> >::ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT {
     Assert(data);
 
     TTuple<_Args&...> refs = tie_as_tuple(*static_cast<value_type*>(data));
@@ -73,7 +78,7 @@ bool TStructAsTupleTraits<T, TTuple<_Args&...> >::ForEach(void* data, const fore
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
 template <size_t... _Idx>
-FAtom TStructAsTupleTraits<T, TTuple<_Args&...> >::GetNth_(TTuple<_Args&...>& refs, size_t index, std::index_sequence<_Idx...>) {
+FAtom TStructAsTupleTraits<T, TTuple<_Args&...> >::GetNth_(TTuple<_Args&...>& refs, size_t index, std::index_sequence<_Idx...>) NOEXCEPT {
     typedef FAtom(*getter_type)(TTuple<_Args&...>&);
     static const getter_type GGetNth[sizeof...(_Args)] = {
         [](TTuple<_Args&...>& val) { return MakeAtom(&std::get<_Idx>(val)); }...
@@ -82,12 +87,6 @@ FAtom TStructAsTupleTraits<T, TTuple<_Args&...> >::GetNth_(TTuple<_Args&...>& re
     Assert(index < sizeof...(_Idx));
     return (GGetNth[index](refs));
 }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Bindings for some basic types which don't justify being a native type
-//----------------------------------------------------------------------------
-inline auto Traits(Meta::TType<FPathName> t) { return MakeStruct(t); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

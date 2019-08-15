@@ -11,7 +11,10 @@
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define RTTI_STRUCT_DECL(_Api, _Name) \
-    _Api ::PPE::RTTI::PTypeTraits Traits(Meta::TType<_Name>)
+    CONSTEXPR ::PPE::RTTI::PTypeInfos TypeInfos(::PPE::RTTI::TType< _Name > t) { \
+        return ::PPE::RTTI::StructInfos(t); \
+    } \
+    _Api ::PPE::RTTI::PTypeTraits Traits(::PPE::RTTI::TType< _Name >)
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_HEADER(_Api, _Name, _Parent) \
 public: \

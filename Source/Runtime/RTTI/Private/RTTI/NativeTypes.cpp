@@ -37,7 +37,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool IsAssignableObject_(const IScalarTraits& src, const ITypeTraits& dst, const PMetaObject& pobj) {
+static bool IsAssignableObject_(const IScalarTraits& src, const ITypeTraits& dst, const PMetaObject& pobj) NOEXCEPT {
     if (src == dst)
         return true;
 
@@ -170,17 +170,6 @@ static bool PromoteValue_(const FName& name, const FAtom& dst) {
     return false;
 }
 //----------------------------------------------------------------------------
-template <typename T>
-static CONSTEXPR ETypeFlags MakeTypeFlags_(Meta::TType<T>) NOEXCEPT {
-    return (ETypeFlags::Scalar | ETypeFlags::Native |
-        (Meta::TIsPod<T>::value ? ETypeFlags::POD : ETypeFlags(0)) |
-        (Meta::has_trivial_destructor<T>::value ? ETypeFlags::TriviallyDestructible : ETypeFlags(0)) );
-}
-//----------------------------------------------------------------------------
-static CONSTEXPR ETypeFlags MakeTypeFlags_(Meta::TType<PMetaObject>) NOEXCEPT {
-    return (ETypeFlags::Scalar | ETypeFlags::Native | ETypeFlags::Object);
-}
-//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -193,21 +182,21 @@ class TNativeTypeTraits final : public TBaseTypeTraits<T, TBaseScalarTraits<T> >
     using typename base_traits::const_pointer;
 
 public:
-    CONSTEXPR TNativeTypeTraits();
+    using base_traits::base_traits;
 
 public: // IScalarTraits
-    virtual const FMetaEnum* EnumClass() const override final {
+    virtual const FMetaEnum* EnumClass() const NOEXCEPT override final {
         return nullptr;
     }
 
-    virtual const FMetaClass* ObjectClass() const override final {
+    virtual const FMetaClass* ObjectClass() const NOEXCEPT override final {
         return nullptr;
     }
 
 public: // ITypeTraits
     virtual FStringView TypeName() const override final;
 
-    virtual bool IsDefaultValue(const void* data) const override final {
+    virtual bool IsDefaultValue(const void* data) const NOEXCEPT override final {
         Assert(data);
 
         return (*static_cast<const_pointer>(data) == Meta::MakeForceInit<T>());
@@ -231,22 +220,22 @@ public: // ITypeTraits
         Assert(src);
         Assert(dst);
 
-        return (not base_traits::PromoteCopy(src, dst)
+        return (not base_traits::BasePromoteCopy(src, dst)
             ? PromoteValue_(*static_cast<const_pointer>(src), dst)
             : true );
     }
 
-    virtual bool PromoteMove(void* src, const FAtom& dst) const override final {
+    virtual bool PromoteMove(void* src, const FAtom& dst) const NOEXCEPT override final {
         Assert(src);
         Assert(dst);
 
-        return (not base_traits::PromoteMove(src, dst)
+        return (not base_traits::BasePromoteMove(src, dst)
             ? PromoteValue_(*static_cast<const_pointer>(src), dst)
             : true );
     }
 
     virtual void* Cast(void* data, const PTypeTraits& dst) const override final {
-        return base_traits::Cast(data, dst);
+        return base_traits::BaseCast(data, dst);
     }
 
     virtual bool Accept(IAtomVisitor* visitor, void* data) const override final {
@@ -265,17 +254,17 @@ bool TNativeTypeTraits<FAny>::PromoteCopy(const void* src, const FAtom& dst) con
     Assert(src);
     Assert(dst);
 
-    return (not base_traits::PromoteCopy(src, dst)
+    return (not BasePromoteCopy(src, dst)
         ? static_cast<const FAny*>(src)->InnerAtom().PromoteCopy(dst)
         : true );
 }
 //----------------------------------------------------------------------------
 template <>
-bool TNativeTypeTraits<FAny>::PromoteMove(void* src, const FAtom& dst) const {
+bool TNativeTypeTraits<FAny>::PromoteMove(void* src, const FAtom& dst) const NOEXCEPT {
     Assert(src);
     Assert(dst);
 
-    return (not base_traits::PromoteMove(src, dst)
+    return (not BasePromoteMove(src, dst)
         ? static_cast<FAny*>(src)->InnerAtom().PromoteMove(dst)
         : true );
 }
@@ -293,7 +282,7 @@ void* TNativeTypeTraits<FAny>::Cast(void* data, const PTypeTraits& dst) const {
 // PMetaObject specializations
 //----------------------------------------------------------------------------
 template <>
-const FMetaClass* TNativeTypeTraits<PMetaObject>::ObjectClass() const {
+const FMetaClass* TNativeTypeTraits<PMetaObject>::ObjectClass() const NOEXCEPT {
     return RTTI::MetaClass<FMetaObject>();
 }
 //----------------------------------------------------------------------------
@@ -316,17 +305,17 @@ bool TNativeTypeTraits<PMetaObject>::PromoteCopy(const void* src, const FAtom& d
     Assert(src);
     Assert(dst);
 
-    return (not base_traits::PromoteCopy(src, dst)
+    return (not BasePromoteCopy(src, dst)
         ? PromoteCopyObject(*this, *static_cast<const PMetaObject*>(src), dst)
         : true );
 }
 //----------------------------------------------------------------------------
 template <>
-bool TNativeTypeTraits<PMetaObject>::PromoteMove(void* src, const FAtom& dst) const {
+bool TNativeTypeTraits<PMetaObject>::PromoteMove(void* src, const FAtom& dst) const NOEXCEPT {
     Assert(src);
     Assert(dst);
 
-    return (not base_traits::PromoteMove(src, dst)
+    return (not BasePromoteMove(src, dst)
         ? PromoteMoveObject(*this, *static_cast<PMetaObject*>(src), dst)
         : true );
 }
@@ -340,21 +329,12 @@ void* TNativeTypeTraits<PMetaObject>::Cast(void* data, const PTypeTraits& dst) c
 //----------------------------------------------------------------------------
 #define DEF_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) \
     template <> \
-    CONSTEXPR TNativeTypeTraits<T>::TNativeTypeTraits() \
-        : base_traits( \
-            FTypeId(ENativeType::_Name), \
-            MakeTypeFlags_(Meta::TType<T>{}), \
-            sizeof(T) ) \
-    {} \
-    \
-    template <> \
     FStringView TNativeTypeTraits<T>::TypeName() const { \
         return STRINGIZE(_Name); \
     } \
-    \
     /* Global helper for MakeTraits<T>() */ \
-    PTypeTraits Traits(Meta::TType<T>) NOEXCEPT { \
-        return PTypeTraits::MakeConstexpr< TNativeTypeTraits<T> >(); \
+    PTypeTraits Traits(TType<T>) NOEXCEPT { \
+        return MakeStaticType< TNativeTypeTraits<T>, T >(); \
     }
 
 FOREACH_RTTI_NATIVETYPES(DEF_RTTI_NATIVETYPE_TRAITS)
@@ -373,32 +353,6 @@ PTypeTraits MakeTraits(ENativeType nativeType) NOEXCEPT {
         AssertNotImplemented();
     }
 }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Traits aliasing used to support packed/quantized data
-// - Not very user friendly for manual edition,
-// - But at least we can still load/save those types.
-//----------------------------------------------------------------------------
-#define DEF_RTTI_ALIASING_TRAITS(_FROM, _TO) \
-    PTypeTraits Traits(Meta::TType<_FROM>) NOEXCEPT { \
-        STATIC_ASSERT(sizeof(_FROM) == sizeof(_TO)); \
-        return Traits(Meta::TType<_TO>{}); \
-    }
-//----------------------------------------------------------------------------
-DEF_RTTI_ALIASING_TRAITS(byten,                 i8 )
-DEF_RTTI_ALIASING_TRAITS(shortn,                i16)
-DEF_RTTI_ALIASING_TRAITS(wordn,                 i32)
-DEF_RTTI_ALIASING_TRAITS(ubyten,                u8 )
-DEF_RTTI_ALIASING_TRAITS(ushortn,               u16)
-DEF_RTTI_ALIASING_TRAITS(uwordn,                u32)
-DEF_RTTI_ALIASING_TRAITS(FHalfFloat,            u16)
-DEF_RTTI_ALIASING_TRAITS(UX10Y10Z10W2N,         u32)
-DEF_RTTI_ALIASING_TRAITS(FGuid,                 COMMA_PROTECT(TTuple<u32, u32, u32, u32>))
-DEF_RTTI_ALIASING_TRAITS(FTimestamp,            i64)
-DEF_RTTI_ALIASING_TRAITS(u128,                  COMMA_PROTECT(TPair<u64, u64>))
-//----------------------------------------------------------------------------
-#undef DEF_RTTI_ALIASING_TRAITS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -460,7 +414,7 @@ bool PromoteCopyObject(const IScalarTraits& self, const PMetaObject& src, const 
     return false;
 }
 //----------------------------------------------------------------------------
-bool PromoteMoveObject(const IScalarTraits& self, PMetaObject& src, const FAtom& dst) {
+bool PromoteMoveObject(const IScalarTraits& self, PMetaObject& src, const FAtom& dst) NOEXCEPT {
     Assert(dst);
     Assert(*dst.Traits() != self);
 
@@ -474,7 +428,7 @@ bool PromoteMoveObject(const IScalarTraits& self, PMetaObject& src, const FAtom&
     return false;
 }
 //----------------------------------------------------------------------------
-void* CastObject(const IScalarTraits& self, PMetaObject& obj, const PTypeTraits& dst) {
+void* CastObject(const IScalarTraits& self, PMetaObject& obj, const PTypeTraits& dst) NOEXCEPT {
     if (self == *dst) {
         return &obj;
     }
@@ -483,58 +437,6 @@ void* CastObject(const IScalarTraits& self, PMetaObject& obj, const PTypeTraits&
             return &obj;
     }
     return nullptr;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-template <typename T, size_t _Dim>
-CONSTEXPR PTypeTraits StaticArrayTraits_(Meta::TType<TScalarVector<T, _Dim>>) NOEXCEPT {
-    STATIC_ASSERT(sizeof(TArray<T, _Dim>) == sizeof(TScalarVector<T, _Dim>));
-    return PTypeTraits::MakeDynamic< TStaticArrayTraits<T, _Dim> >();
-}
-template <typename T, size_t _Width, size_t _Height>
-CONSTEXPR PTypeTraits StaticArrayTraits_(Meta::TType<TScalarMatrix<T, _Width, _Height>>) NOEXCEPT {
-    STATIC_ASSERT(sizeof(TArray<T, _Width * _Height>) == sizeof(TScalarMatrix<T, _Width, _Height>));
-    return PTypeTraits::MakeDynamic< TStaticArrayTraits<T, _Width * _Height> >();
-}
-} //!namespace
-//----------------------------------------------------------------------------
-PTypeTraits Traits(Meta::TType<byte2> t)    NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<byte4> t)    NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<ubyte2> t)   NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<ubyte4> t)   NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<short2> t)   NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<short4> t)   NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<ushort2> t)  NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<ushort4> t)  NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<word2> t)    NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<word3> t)    NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<word4> t)    NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<uword2> t)   NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<uword3> t)   NOEXCEPT { return StaticArrayTraits_(t); }
-#ifdef _MSC_VER // workaround a weird compiler bug, #TODO check after a few updates if this is still needed
-PTypeTraits Traits(Meta::TType<uword4>)     NOEXCEPT { return PTypeTraits::MakeDynamic< TStaticArrayTraits<uword, 4> >(); }
-#else
-PTypeTraits Traits(Meta::TType<uword4> t)   NOEXCEPT { return StaticArrayTraits_(t); }
-#endif
-PTypeTraits Traits(Meta::TType<float2> t)   NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float3> t)   NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float4> t)   NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float2x2> t) NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float3x3> t) NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float4x3> t) NOEXCEPT { return StaticArrayTraits_(t); }
-PTypeTraits Traits(Meta::TType<float4x4> t) NOEXCEPT { return StaticArrayTraits_(t); }
-//----------------------------------------------------------------------------
-PTypeTraits Traits(Meta::TType<FQuaternion>) NOEXCEPT {
-    STATIC_ASSERT(sizeof(FQuaternion) == sizeof(TArray<float, 4>));
-    return PTypeTraits::MakeDynamic< TStaticArrayTraits<float, 4> >();
-}
-//----------------------------------------------------------------------------
-PTypeTraits Traits(Meta::TType<FTransform>) NOEXCEPT {
-    using FTransformAsTuple = TTuple<float4, float3, float3>;
-    STATIC_ASSERT(sizeof(FTransform) == sizeof(FTransformAsTuple));
-    return Traits(Meta::TType<FTransformAsTuple>{});
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -588,7 +490,7 @@ FString MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements) {
 
     auto sep = Fmt::NotFirstTime(", ");
     for (const auto& elt : elements)
-        oss << sep << elt->TypeInfos().Name();
+        oss << sep << elt->TypeName();
 
     oss << '>';
 
@@ -597,12 +499,12 @@ FString MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements) {
 //----------------------------------------------------------------------------
 FString MakeListTypeName(const PTypeTraits& value) {
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-    return StringFormat("TList<{0}>", value->TypeInfos().Name());
+    return StringFormat("TList<{0}>", value->TypeName());
 }
 //----------------------------------------------------------------------------
 FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value) {
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-    return StringFormat("TDico<{0}, {1}>", key->TypeInfos().Name(), value->TypeInfos().Name());
+    return StringFormat("TDico<{0}, {1}>", key->TypeName(), value->TypeName());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

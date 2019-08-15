@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
 #include "RTTI/Atom.h"
 #include "RTTI/AtomHelpers.h"
@@ -31,44 +31,44 @@ protected:
     typedef Meta::TAddPointer<T> pointer;
     typedef Meta::TAddPointer<const T> const_pointer;
 
-    template <typename... _Args>
-    CONSTEXPR explicit TBaseTypeTraits(_Args&&... args)
-        : _Parent(std::forward<_Args>(args)...)
-    {}
+    using _Parent::_Parent;
 
 public: // ITypeTraits
     virtual void Construct(void* data) const override final;
     virtual void ConstructCopy(void* data, const void* other) const override final;
-    virtual void ConstructMove(void* data, void* rvalue) const override final;
-    virtual void ConstructMoveDestroy(void* data, void* rvalue) const override final;
-    virtual void ConstructSwap(void* data, void* other) const override final;
-    virtual void Destroy(void* data) const override final;
+    virtual void ConstructMove(void* data, void* rvalue) const NOEXCEPT override final;
+    virtual void ConstructMoveDestroy(void* data, void* rvalue) const NOEXCEPT override final;
+    virtual void ConstructSwap(void* data, void* other) const NOEXCEPT override final;
+    virtual void Destroy(void* data) const NOEXCEPT override final;
 
-    using _Parent::IsDefaultValue;//virtual bool IsDefaultValue(const void* data) const override final;
-    using _Parent::ResetToDefaultValue;//virtual void ResetToDefaultValue(void* data) const override final;
-
-    using _Parent::Equals;//virtual bool Equals(const void* lhs, const void* rhs) const override final;
     virtual void Copy(const void* src, void* dst) const override final;
-    virtual void Move(void* src, void* dst) const override final;
+    virtual void Move(void* src, void* dst) const NOEXCEPT override final;
+    virtual void Swap(void* lhs, void* rhs) const NOEXCEPT override final;
 
-    virtual void Swap(void* lhs, void* rhs) const override final;
+protected:
+    // Needs to be defined inside derived classes :
+/*
+    virtual bool IsDefaultValue(const void* data) const override final;
+    virtual void ResetToDefaultValue(void* data) const override final;
+    virtual bool Equals(const void* lhs, const void* rhs) const override final;
+    virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
+    virtual void DeepCopy(const void* src, void* dst) const override final;
+    virtual hash_t HashValue(const void* data) const override final;
+    virtual void* Cast(void* data, const PTypeTraits& dst) const override final;
+    virtual bool PromoteCopy(const void* src, const FAtom& dst) const override final;
+    virtual bool PromoteMove(void* src, const FAtom& dst) const NOEXCEPT override final;
+*/
 
-    using _Parent::DeepEquals;//virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
-    using _Parent::DeepCopy;//virtual void DeepCopy(const void* src, void* dst) const override final;
-
-    virtual bool PromoteCopy(const void* src, const FAtom& dst) const override /*final*/;
-    virtual bool PromoteMove(void* src, const FAtom& dst) const override /*final*/;
-
-    virtual void* Cast(void* data, const PTypeTraits& dst) const override /*final*/;
-
-    using _Parent::HashValue;//virtual hash_t HashValue(const void* data) const override final;
+    void* BaseCast(void* data, const PTypeTraits& dst) const;
+    bool BasePromoteCopy(const void* src, const FAtom& dst) const;
+    bool BasePromoteMove(void* src, const FAtom& dst) const NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
 void TBaseTypeTraits<T, _Parent>::Construct(void* data) const {
     Assert(data);
 
-    Meta::Construct(reinterpret_cast<pointer>(data), Meta::ForceInit);
+    Meta::Construct(static_cast<pointer>(data), Meta::ForceInit);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
@@ -76,42 +76,42 @@ void TBaseTypeTraits<T, _Parent>::ConstructCopy(void* data, const void* other) c
     Assert(data);
     Assert(other);
 
-    Meta::Construct(reinterpret_cast<pointer>(data), *reinterpret_cast<const_pointer>(other));
+    Meta::Construct(static_cast<pointer>(data), *static_cast<const_pointer>(other));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
-void TBaseTypeTraits<T, _Parent>::ConstructMove(void* data, void* rvalue) const {
+void TBaseTypeTraits<T, _Parent>::ConstructMove(void* data, void* rvalue) const NOEXCEPT {
     Assert(data);
     Assert(rvalue);
 
-    Meta::Construct(reinterpret_cast<pointer>(data), std::move(*reinterpret_cast<pointer>(rvalue)));
+    Meta::Construct(static_cast<pointer>(data), std::move(*static_cast<pointer>(rvalue)));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
-void TBaseTypeTraits<T, _Parent>::ConstructMoveDestroy(void* data, void* rvalue) const {
+void TBaseTypeTraits<T, _Parent>::ConstructMoveDestroy(void* data, void* rvalue) const NOEXCEPT {
     Assert(data);
     Assert(rvalue);
 
-    Meta::Construct(reinterpret_cast<pointer>(data), std::move(*reinterpret_cast<pointer>(rvalue)));
-    Meta::Destroy(reinterpret_cast<pointer>(rvalue));
+    Meta::Construct(static_cast<pointer>(data), std::move(*static_cast<pointer>(rvalue)));
+    Meta::Destroy(static_cast<pointer>(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
-void TBaseTypeTraits<T, _Parent>::ConstructSwap(void* data, void* other) const {
+void TBaseTypeTraits<T, _Parent>::ConstructSwap(void* data, void* other) const NOEXCEPT {
     Assert(data);
     Assert(other);
 
     using std::swap;
 
-    Meta::Construct(reinterpret_cast<pointer>(data), Meta::ForceInit);
-    swap(*reinterpret_cast<pointer>(data), *reinterpret_cast<pointer>(other));
+    Meta::Construct(static_cast<pointer>(data), Meta::ForceInit);
+    swap(*static_cast<pointer>(data), *static_cast<pointer>(other));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
-void TBaseTypeTraits<T, _Parent>::Destroy(void* data) const {
+void TBaseTypeTraits<T, _Parent>::Destroy(void* data) const NOEXCEPT {
     Assert(data);
 
-    Meta::Destroy(reinterpret_cast<pointer>(data));
+    Meta::Destroy(static_cast<pointer>(data));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
@@ -119,28 +119,36 @@ void TBaseTypeTraits<T, _Parent>::Copy(const void* src, void* dst) const {
     Assert(src);
     Assert(dst);
 
-    *reinterpret_cast<pointer>(dst) = *reinterpret_cast<const_pointer>(src);
+    *static_cast<pointer>(dst) = *static_cast<const_pointer>(src);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
-void TBaseTypeTraits<T, _Parent>::Move(void* src, void* dst) const {
+void TBaseTypeTraits<T, _Parent>::Move(void* src, void* dst) const NOEXCEPT {
     Assert(src);
     Assert(dst);
 
-    *reinterpret_cast<pointer>(dst) = std::move(*reinterpret_cast<pointer>(src));
+    *static_cast<pointer>(dst) = std::move(*static_cast<pointer>(src));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
-void TBaseTypeTraits<T, _Parent>::Swap(void* lhs, void* rhs) const {
+void TBaseTypeTraits<T, _Parent>::Swap(void* lhs, void* rhs) const NOEXCEPT {
     Assert(lhs);
     Assert(rhs);
 
     using std::swap;
-    swap(*reinterpret_cast<pointer>(lhs), *reinterpret_cast<pointer>(rhs));
+    swap(*static_cast<pointer>(lhs), *static_cast<pointer>(rhs));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
-bool TBaseTypeTraits<T, _Parent>::PromoteCopy(const void* src, const FAtom& dst) const {
+void* TBaseTypeTraits<T, _Parent>::BaseCast(void* data, const PTypeTraits& dst) const {
+    Assert(data);
+
+    return (*dst == *this ? data : nullptr);
+}
+
+//----------------------------------------------------------------------------
+template <typename T, typename _Parent>
+bool TBaseTypeTraits<T, _Parent>::BasePromoteCopy(const void* src, const FAtom& dst) const {
     Assert(src);
     Assert(dst);
 
@@ -149,16 +157,16 @@ bool TBaseTypeTraits<T, _Parent>::PromoteCopy(const void* src, const FAtom& dst)
         return true;
     }
     else if (dst.Traits()->TypeId() == FTypeId(ENativeType::Any)) {
-        AssignCopy(reinterpret_cast<FAny*>(dst.Data()), src, *this);
+        AssignCopy(static_cast<FAny*>(dst.Data()), src, *this);
         return true;
     }
     else {
-        return _Parent::PromoteCopy(src, dst);
+        return false;
     }
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Parent>
-bool TBaseTypeTraits<T, _Parent>::PromoteMove(void* src, const FAtom& dst) const {
+bool TBaseTypeTraits<T, _Parent>::BasePromoteMove(void* src, const FAtom& dst) const NOEXCEPT {
     Assert(src);
     Assert(dst);
 
@@ -167,19 +175,12 @@ bool TBaseTypeTraits<T, _Parent>::PromoteMove(void* src, const FAtom& dst) const
         return true;
     }
     else if (dst.Traits()->TypeId() == FTypeId(ENativeType::Any)) {
-        AssignMove(reinterpret_cast<FAny*>(dst.Data()), src, *this);
+        AssignMove(static_cast<FAny*>(dst.Data()), src, *this);
         return true;
     }
     else {
-        return _Parent::PromoteMove(src, dst);
+        return false;
     }
-}
-//----------------------------------------------------------------------------
-template <typename T, typename _Parent>
-void* TBaseTypeTraits<T, _Parent>::Cast(void* data, const PTypeTraits& dst) const {
-    Assert(data);
-
-    return (*dst == *this ? data : nullptr);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -187,6 +188,20 @@ void* TBaseTypeTraits<T, _Parent>::Cast(void* data, const PTypeTraits& dst) cons
 PPE_RTTI_API FString MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements);
 PPE_RTTI_API FString MakeListTypeName(const PTypeTraits& value);
 PPE_RTTI_API FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value);
+//----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_PUSH() // #TODO : find where overflow really is when VS2019 get fixed
+PRAGMA_MSVC_WARNING_DISABLE(4307) // '*': integral constant overflow
+namespace details {
+template <typename _Traits, typename T>
+CONSTEXPR const _Traits TypeTraits{
+    MakeTypeInfos<T>()
+};
+} //!details
+template <typename _Traits, typename T>
+CONSTEXPR PTypeTraits MakeStaticType() {
+    return PTypeTraits{ &details::TypeTraits< _Traits, Meta::TDecay<T> > };
+}
+PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -198,6 +213,7 @@ PPE_RTTI_API FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits&
 #include "NativeTypes.List-inl.h"
 #include "NativeTypes.Dico-inl.h"
 #include "NativeTypes.Struct-inl.h"
+#include "NativeTypes.Aliasing-inl.h"
 
 namespace PPE {
 namespace RTTI {
@@ -207,7 +223,7 @@ namespace RTTI {
 // SFINAE to detect RTTI support (need to be defined at the end of this file for CLANG)
 //----------------------------------------------------------------------------
 namespace details {
-template <typename T, typename = decltype(Traits(std::declval<Meta::TType<T>>())) >
+template <typename T, typename = decltype(Traits(std::declval<TType<T>>())) >
 std::true_type IsSupportedType_(int);
 template <typename T>
 std::false_type IsSupportedType_(...);
@@ -237,7 +253,7 @@ CONSTEXPR bool is_string(FTypeId typeId);
 //----------------------------------------------------------------------------
 template <typename T>
 PTypeTraits MakeTraits() NOEXCEPT {
-    return Traits(Meta::TType< Meta::TDecay<T> >{});
+    return Traits(Type< Meta::TDecay<T> >);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

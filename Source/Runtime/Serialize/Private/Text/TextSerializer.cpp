@@ -195,7 +195,7 @@ private:
         AssertRelease(any); // not implemented : "null" or none ?
 
         RTTI::FAtom inner = any.InnerAtom();
-        _oss << inner.TypeInfos().Name() << ':';
+        _oss << inner.TypeName() << ':';
         inner.Accept(this);
     }
 

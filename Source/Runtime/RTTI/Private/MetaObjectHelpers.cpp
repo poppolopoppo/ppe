@@ -233,8 +233,8 @@ void CheckMetaClassAllocation(const FMetaClass* metaClass) {
 //----------------------------------------------------------------------------
 size_t CollectReferences(
     const FMetaObject& root,
-    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& prefix,
-    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& postfix,
+    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& prefix,
+    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& postfix,
     EVisitorFlags flags) {
     FLambdaReferenceCollector collector{ flags };
     collector.Collect(root, std::move(prefix), std::move(postfix));
@@ -243,8 +243,8 @@ size_t CollectReferences(
 //----------------------------------------------------------------------------
 size_t CollectReferences(
     const TMemoryView<const PMetaObject>& roots,
-    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& prefix,
-    TFunction<bool(const IScalarTraits&, FMetaObject&)>&& postfix,
+    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& prefix,
+    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& postfix,
     EVisitorFlags flags) {
     FLambdaReferenceCollector collector{ flags };
     collector.Collect(roots, std::move(prefix), std::move(postfix));
@@ -480,7 +480,7 @@ private:
                 << L" >>> " << mark.Outer
                 << L" . " << mark.Name
                 << L" [ " << mark.Index
-                << L" ]  (" << mark.Traits->TypeInfos() << L")"
+                << L" ]  (" << mark.Traits->NamedTypeInfos() << L")"
                 << Eol;
 
             indent.Inc();

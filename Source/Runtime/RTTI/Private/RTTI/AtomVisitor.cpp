@@ -69,7 +69,7 @@ public:
     {}
 
     virtual bool Visit(const ITupleTraits* tuple, void* data) override final {
-        _oss << tuple->TypeInfos().Name() << Fmt::Colon << Fmt::LParenthese;
+        _oss << tuple->TypeName() << Fmt::Colon << Fmt::LParenthese;
 
         auto sep = Fmt::NotFirstTime(MakeStringView(TPPFormat_<_Char>::Sep));
         tuple->ForEach(data, [this, &sep](const FAtom& elt) {
@@ -85,7 +85,7 @@ public:
     }
 
     virtual bool Visit(const IListTraits* list, void* data) override final {
-        _oss << list->TypeInfos().Name() << Fmt::Colon << Fmt::LBracket;
+        _oss << list->TypeName() << Fmt::Colon << Fmt::LBracket;
 
         const bool empty = (list->Count(data) == 0);
 
@@ -113,7 +113,7 @@ public:
     }
 
     virtual bool Visit(const IDicoTraits* dico, void* data) override final {
-        _oss << dico->TypeInfos().Name() << Fmt::Colon << Fmt::LBrace;
+        _oss << dico->TypeName() << Fmt::Colon << Fmt::LBrace;
 
         const bool empty = (dico->Count(data) == 0);
 
@@ -156,7 +156,7 @@ private:
     template <typename T>
     void PrintDispatch_(const IScalarTraits* scalar, const T& value, std::false_type) {
         if (_flags & EPrettyPrintFlags::ShowTypeNames)
-            _oss << scalar->TypeInfos().Name() << Fmt::Colon;
+            _oss << scalar->TypeName() << Fmt::Colon;
 
         Print_(value);
     }
@@ -170,10 +170,10 @@ private:
                     if (e->ExpandValues(integral, &values)) {
                         Assert(not values.empty());
 
-                        _oss << Fmt::LParenthese << scalar->TypeInfos().Name() << Fmt::Colon << values[0].Name;
+                        _oss << Fmt::LParenthese << scalar->TypeName() << Fmt::Colon << values[0].Name;
 
                         forrange(i, 1, values.size())
-                            _oss << Fmt::Or << scalar->TypeInfos().Name() << Fmt::Colon << values[i].Name;
+                            _oss << Fmt::Or << scalar->TypeName() << Fmt::Colon << values[i].Name;
 
                         _oss << Fmt::RParenthese;
 
@@ -183,7 +183,7 @@ private:
                 else {
                     const FMetaEnumValue* const v = e->ValueToNameIFP(integral);;
                     if (v) {
-                        _oss << scalar->TypeInfos().Name() << Fmt::Colon << v->Name;
+                        _oss << scalar->TypeName() << Fmt::Colon << v->Name;
                         return;
                     }
                 }

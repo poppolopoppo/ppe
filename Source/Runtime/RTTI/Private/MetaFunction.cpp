@@ -81,14 +81,14 @@ void FMetaFunction::Invoke(
 #if USE_PPE_RTTI_CHECKS
     if (not IsConst() && obj.RTTI_IsFrozen()) {
         LOG(RTTI, Fatal, L"can't call non-const function \"{0} {1}::{2}({3})\" on frozen \"{4}\" ({5})",
-            _result ? _result->TypeInfos().Name() : "void",
+            _result ? _result->TypeName() : "void",
             obj.RTTI_Class()->Name(),
             _name,
             Fmt::FWFormator([this](FWTextWriter& oss) {
                 const auto& prms = this->Parameters();
                 forrange(i, 0, prms.size()) {
                     if (i > 0) oss << L", ";
-                    oss << prms[i].Name() << L" : " << prms[i].Traits()->TypeInfos().Name() << L" <" << prms[i].Flags() << L'>';
+                    oss << prms[i].Name() << L" : " << prms[i].Traits()->TypeName() << L" <" << prms[i].Flags() << L'>';
                 }
             }),
             obj.RTTI_Name(),
@@ -96,14 +96,14 @@ void FMetaFunction::Invoke(
     }
     if (IsDeprecated()) {
         LOG(RTTI, Warning, L"using deprecated function \"{0} {1}::{2}({3})\" on \"{4}\" ({5})",
-            _result ? _result->TypeInfos().Name() : "void",
+            _result ? _result->TypeName() : "void",
             obj.RTTI_Class()->Name(),
             _name,
             Fmt::FWFormator([this](FWTextWriter& oss) {
                 const auto& prms = this->Parameters();
                 forrange(i, 0, prms.size()) {
                     if (i > 0) oss << L", ";
-                    oss << prms[i].Name() << L" : " << prms[i].Traits()->TypeInfos().Name() << L" <" << prms[i].Flags() << L'>';
+                    oss << prms[i].Name() << L" : " << prms[i].Traits()->TypeName() << L" <" << prms[i].Flags() << L'>';
                 }
             }),
             obj.RTTI_Name(),
@@ -181,11 +181,11 @@ FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EFunctionFlags flags) {
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const RTTI::FMetaFunction& fun) {
     Format(oss, "{0} {1}({2}) [{3}]",
-        fun.Result() ? fun.Result()->TypeInfos().Name() : "void",
+        fun.Result() ? fun.Result()->TypeName() : "void",
         fun.Name(),
         Fmt::Join(fun.Parameters().Map([](const RTTI::FMetaParameter& prm) {
             return Fmt::Formator<char>([&prm](FTextWriter& o) {
-                o << prm.Name() << " : " << prm.Traits()->TypeInfos().Name() << " <" << prm.Flags() << '>';
+                o << prm.Name() << " : " << prm.Traits()->TypeName() << " <" << prm.Flags() << '>';
             }); }), ", "),
         fun.Flags() );
     return oss;
@@ -193,11 +193,11 @@ FTextWriter& operator <<(FTextWriter& oss, const RTTI::FMetaFunction& fun) {
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FMetaFunction& fun) {
     Format(oss, L"{0} {1}({2}) [{3}]",
-        fun.Result() ? fun.Result()->TypeInfos().Name() : "void",
+        fun.Result() ? fun.Result()->TypeName() : "void",
         fun.Name(),
         Fmt::Join(fun.Parameters().Map([](const RTTI::FMetaParameter& prm) {
             return Fmt::Formator<wchar_t>([&prm](FWTextWriter& o) {
-                o << prm.Name() << L" : " << prm.Traits()->TypeInfos().Name() << L" <" << prm.Flags() << L'>';
+                o << prm.Name() << L" : " << prm.Traits()->TypeName() << L" <" << prm.Flags() << L'>';
             }); }), L", "),
         fun.Flags() );
     return oss;

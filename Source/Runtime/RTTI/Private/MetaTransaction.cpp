@@ -40,7 +40,7 @@ void LinearizeTransaction_(
 
     CollectReferences(
         topObjects,
-        [linearized, &outer, &visiteds](const IScalarTraits&, FMetaObject& obj) {
+        [linearized, &outer, &visiteds](const ITypeTraits&, FMetaObject& obj) {
             if (not visiteds.insert_ReturnIfExists(&obj)) {
                 if (obj.RTTI_IsExported()) {
                     if (obj.RTTI_Outer() == nullptr) {
@@ -68,7 +68,7 @@ void LinearizeTransaction_(
             }
 
         },
-        [linearized](const IScalarTraits&, FMetaObject& obj) {
+        [linearized](const ITypeTraits&, FMetaObject& obj) {
             Add_AssertUnique(linearized->LoadedRefs, SMetaObject{ &obj }); // postfix order
             return true; // never fails recursion here
         },

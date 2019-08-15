@@ -130,6 +130,10 @@ FAny& FAny::operator =(FAny&& rvalue) NOEXCEPT {
     return (*this);
 }
 //----------------------------------------------------------------------------
+FAny::FAny(ENativeType nativeType)
+:   FAny(MakeTraits(nativeType))
+{}
+//----------------------------------------------------------------------------
 FAny::FAny(const PTypeTraits& traits)
 :   _traits(Meta::NoInit) {
     Assert(traits);

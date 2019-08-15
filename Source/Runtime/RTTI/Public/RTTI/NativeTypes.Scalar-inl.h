@@ -2,18 +2,8 @@
 
 #include "RTTI/NativeTypes.h"
 
-#include "Maths/Packing_fwd.h"
-
 namespace PPE {
-struct FGuid;
-class PPE_CORE_API FTimestamp;
 namespace RTTI {
-//----------------------------------------------------------------------------
-bool AtomVisit(IAtomVisitor& visitor, const ITupleTraits* tuple, void* data);
-bool AtomVisit(IAtomVisitor& visitor, const IListTraits* list, void* data);
-bool AtomVisit(IAtomVisitor& visitor, const IDicoTraits* dico, void* data);
-template <typename T>
-bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -22,20 +12,15 @@ bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value);
 template <typename T>
 class TBaseScalarTraits : public IScalarTraits {
 protected:
-    CONSTEXPR TBaseScalarTraits(FTypeId typeId, ETypeFlags flags, size_t sizeInBytes)
-        : IScalarTraits(typeId, flags, sizeInBytes)
-    {}
+    using IScalarTraits::IScalarTraits;
 
 public: // ITypeTraits
-    virtual bool Equals(const void* lhs, const void* rhs) const override final;
-    virtual hash_t HashValue(const void* data) const override final;
-
-    virtual bool PromoteCopy(const void* , const FAtom& ) const override /*final*/ { return false; }
-    virtual bool PromoteMove(void* , const FAtom& ) const override /*final*/ { return false; }
+    virtual bool Equals(const void* lhs, const void* rhs) const NOEXCEPT override final;
+    virtual hash_t HashValue(const void* data) const NOEXCEPT override final;
 };
 //----------------------------------------------------------------------------
 template <typename T>
-bool TBaseScalarTraits<T>::Equals(const void* lhs, const void* rhs) const {
+bool TBaseScalarTraits<T>::Equals(const void* lhs, const void* rhs) const NOEXCEPT {
     Assert(lhs);
     Assert(rhs);
 
@@ -43,7 +28,7 @@ bool TBaseScalarTraits<T>::Equals(const void* lhs, const void* rhs) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-hash_t TBaseScalarTraits<T>::HashValue(const void* data) const {
+hash_t TBaseScalarTraits<T>::HashValue(const void* data) const NOEXCEPT {
     Assert(data);
 
     return hash_tuple(TypeId(), *static_cast<const T*>(data));
@@ -53,42 +38,50 @@ hash_t TBaseScalarTraits<T>::HashValue(const void* data) const {
 //----------------------------------------------------------------------------
 // ENatypeType traits
 //----------------------------------------------------------------------------
-#define DECL_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) \
-    PPE_RTTI_API PTypeTraits Traits(Meta::TType<T>) NOEXCEPT; \
-    inline constexpr FTypeId NativeTypeId(Meta::TType<T>) NOEXCEPT { return FTypeId(_TypeId); }
-FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_TRAITS)
-#undef DECL_RTTI_NATIVETYPE_TRAITS
+PPE_RTTI_API PTypeTraits MakeTraits(ENativeType nativeType) NOEXCEPT;
 //----------------------------------------------------------------------------
 enum class ENativeType : FTypeId {
     Invalid = 0,
 #define DECL_RTTI_NATIVETYPE_ENUM(_Name, T, _TypeId) _Name = _TypeId,
-FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_ENUM)
+    FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_ENUM)
 #undef DECL_RTTI_NATIVETYPE_ENUM
     __Count
 }; //!enum class ENativeType
 //----------------------------------------------------------------------------
+namespace details {
+template <ENativeType _NativeType, typename T>
+struct TNativeTypeInfos {
+    CONSTEXPR FTypeInfos operator ()() const {
+        return FTypeHelpers::Native< T, FTypeId(_NativeType) >();
+    }
+};
+template <ENativeType _NativeType>
+struct TNativeTypeInfos<_NativeType, FAny> {
+    CONSTEXPR FTypeInfos operator ()() const {
+        return FTypeHelpers::NativeObject< FAny, FTypeId(_NativeType) >();
+    }
+};
+template <ENativeType _NativeType>
+struct TNativeTypeInfos<_NativeType, PMetaObject> {
+    CONSTEXPR FTypeInfos operator ()() const {
+        return FTypeHelpers::NativeObject< PMetaObject, FTypeId(_NativeType) >();
+    }
+};
+} //!details
+//----------------------------------------------------------------------------
+#define DECL_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) \
+    PPE_RTTI_API PTypeTraits Traits(TType<T>) NOEXCEPT; \
+    CONSTEXPR FTypeId NativeTypeId(TType<T>) { return FTypeId(_TypeId); } \
+    CONSTEXPR auto TypeInfos(TType<T>) { \
+        return details::TNativeTypeInfos< ENativeType::_Name, T >{}; \
+    }
+FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_TRAITS)
+#undef DECL_RTTI_NATIVETYPE_TRAITS
+//----------------------------------------------------------------------------
 template <typename T>
-constexpr FTypeId NativeTypeId() NOEXCEPT {
-    return NativeTypeId(Meta::TType<T>{});
+CONSTEXPR FTypeId NativeTypeId() NOEXCEPT {
+    return NativeTypeId(Type<T>);
 }
-//----------------------------------------------------------------------------
-PPE_RTTI_API PTypeTraits MakeTraits(ENativeType nativeType) NOEXCEPT;
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// RTTI support for packed data
-//----------------------------------------------------------------------------
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<byten>) NOEXCEPT;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<shortn>) NOEXCEPT;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<wordn>) NOEXCEPT;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<ubyten>) NOEXCEPT;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<ushortn>) NOEXCEPT;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<uwordn>) NOEXCEPT;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<FHalfFloat>) NOEXCEPT;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<UX10Y10Z10W2N>) NOEXCEPT;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<FGuid>) NOEXCEPT;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<FTimestamp>) NOEXCEPT;
-PPE_RTTI_API PTypeTraits Traits(Meta::TType<u128>) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -104,40 +97,36 @@ class TEnumTraits final : public TBaseTypeTraits<TEnumOrd<T>, TBaseScalarTraits<
     using base_traits = TBaseTypeTraits<TEnumOrd<T>, TBaseScalarTraits<TEnumOrd<T>> >;
 
 public: // ITypeTraits
-    CONSTEXPR TEnumTraits()
-    :   base_traits(
-        NativeTypeId<TEnumOrd<T>>(),
-        ETypeFlags::Enum |
-        ETypeFlags::Native |
-        ETypeFlags::POD |
-        ETypeFlags::Scalar |
-        ETypeFlags::TriviallyDestructible,
-        sizeof(TEnumOrd<T>) )
-    {}
+    using base_traits::base_traits;
 
-    virtual const FMetaEnum* EnumClass() const override final { return RTTI::MetaEnum<T>(); }
-    virtual const FMetaClass* ObjectClass() const override final { return nullptr; }
+    virtual const FMetaEnum* EnumClass() const NOEXCEPT override final { return RTTI::MetaEnum<T>(); }
+    virtual const FMetaClass* ObjectClass() const NOEXCEPT override final { return nullptr; }
 
 public: // ITypeTraits
     virtual FStringView TypeName() const override final;
 
-    virtual bool IsDefaultValue(const void* data) const override final;
+    virtual bool IsDefaultValue(const void* data) const NOEXCEPT override final;
     virtual void ResetToDefaultValue(void* data) const override final;
 
     virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
     virtual void DeepCopy(const void* src, void* dst) const override final;
 
     virtual bool PromoteCopy(const void* src, const FAtom& dst) const override final;
-    virtual bool PromoteMove(void* src, const FAtom& dst) const override final;
+    virtual bool PromoteMove(void* src, const FAtom& dst) const NOEXCEPT override final;
 
     virtual void* Cast(void* data, const PTypeTraits& dst) const override final;
 
     virtual bool Accept(IAtomVisitor* visitor, void* data) const override final;
 };
 //----------------------------------------------------------------------------
+template <typename _Enum, class = Meta::TEnableIf< std::is_enum_v<_Enum> > >
+CONSTEXPR PTypeInfos TypeInfos(TType< _Enum >) {
+    return FTypeHelpers::Enum< _Enum, NativeTypeId< TEnumOrd<_Enum> >() >;
+}
+//----------------------------------------------------------------------------
 template <typename _Enum>
-CONSTEXPR PTypeTraits Traits(Meta::TType< _Enum >, Meta::TEnableIf< std::is_enum_v<_Enum> >* = nullptr) NOEXCEPT {
-    return PTypeTraits::MakeConstexpr< TEnumTraits<_Enum> >();
+CONSTEXPR PTypeTraits Traits(TType<_Enum>, Meta::TEnableIf< std::is_enum_v<_Enum> >* = nullptr) {
+    return MakeStaticType< TEnumTraits<_Enum>, _Enum >();
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -159,21 +148,21 @@ void TEnumTraits<T>::DeepCopy(const void* src, void* dst) const {
 //----------------------------------------------------------------------------
 template <typename T>
 bool TEnumTraits<T>::PromoteCopy(const void* src, const FAtom& dst) const {
-    return (not base_traits::PromoteCopy(src, dst)
+    return (not base_traits::BasePromoteCopy(src, dst)
         ? PromoteEnum(*this, i64(*static_cast<const TEnumOrd<T>*>(src)), dst)
         : true);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool TEnumTraits<T>::PromoteMove(void* src, const FAtom& dst) const {
-    return (not base_traits::PromoteMove(src, dst)
+bool TEnumTraits<T>::PromoteMove(void* src, const FAtom& dst) const NOEXCEPT {
+    return (not base_traits::BasePromoteMove(src, dst)
         ? PromoteEnum(*this, i64(*static_cast<TEnumOrd<T>*>(src)), dst)
         : true);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void* TEnumTraits<T>::Cast(void* data, const PTypeTraits& dst) const {
-    return base_traits::Cast(data, dst);
+    return base_traits::BaseCast(data, dst);
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -187,7 +176,7 @@ bool TEnumTraits<T>::Accept(IAtomVisitor* visitor, void* data) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool TEnumTraits<T>::IsDefaultValue(const void* data) const {
+bool TEnumTraits<T>::IsDefaultValue(const void* data) const NOEXCEPT {
     Assert(data);
 
     const auto defaultValue = TEnumOrd<T>( MetaEnumDefaultValue(TEnumTraits<T>::EnumClass()) );
@@ -209,37 +198,30 @@ void TEnumTraits<T>::ResetToDefaultValue(void* data) const {
 PPE_RTTI_API bool DeepEqualsObject(const PMetaObject& lhs, const PMetaObject& rhs);
 PPE_RTTI_API void DeepCopyObject(const IScalarTraits& self, const PMetaObject& src, PMetaObject& dst);
 PPE_RTTI_API bool PromoteCopyObject(const IScalarTraits& self, const PMetaObject& src, const FAtom& dst);
-PPE_RTTI_API bool PromoteMoveObject(const IScalarTraits& self, PMetaObject& src, const FAtom& dst);
-PPE_RTTI_API void* CastObject(const IScalarTraits& self, PMetaObject& data, const PTypeTraits& dst);
+PPE_RTTI_API bool PromoteMoveObject(const IScalarTraits& self, PMetaObject& src, const FAtom& dst) NOEXCEPT;
+PPE_RTTI_API void* CastObject(const IScalarTraits& self, PMetaObject& data, const PTypeTraits& dst) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T>
 class TObjectTraits final : public TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>> {
     using base_traits = TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>>;
 
 public: // IScalarTraits
-    virtual const FMetaEnum* EnumClass() const override final { return nullptr; }
-    virtual const FMetaClass* ObjectClass() const override final { return RTTI::MetaClass<T>(); }
+    virtual const FMetaEnum* EnumClass() const NOEXCEPT override final { return nullptr; }
+    virtual const FMetaClass* ObjectClass() const NOEXCEPT override final { return RTTI::MetaClass<T>(); }
 
 public: // ITypeTraits
-    CONSTEXPR TObjectTraits()
-    :   base_traits(
-        FTypeId(ENativeType::MetaObject),
-        ETypeFlags::Object |
-        ETypeFlags::Native |
-        ETypeFlags::Scalar,
-        sizeof(PMetaObject) )
-    {}
+    using base_traits::base_traits;
 
     virtual FStringView TypeName() const override final;
 
-    virtual bool IsDefaultValue(const void* data) const override final;
+    virtual bool IsDefaultValue(const void* data) const NOEXCEPT override final;
     virtual void ResetToDefaultValue(void* data) const override final;
 
     virtual bool DeepEquals(const void* lhs, const void* rhs) const override final;
     virtual void DeepCopy(const void* src, void* dst) const override final;
 
     virtual bool PromoteCopy(const void* src, const FAtom& dst) const override final;
-    virtual bool PromoteMove(void* src, const FAtom& dst) const override final;
+    virtual bool PromoteMove(void* src, const FAtom& dst) const NOEXCEPT override final;
 
     virtual void* Cast(void* data, const PTypeTraits& dst) const override final;
 
@@ -247,8 +229,13 @@ public: // ITypeTraits
 };
 //----------------------------------------------------------------------------
 template <typename _Class, typename = Meta::TEnableIf< std::is_base_of_v<FMetaObject, _Class> > >
-CONSTEXPR PTypeTraits Traits(Meta::TType< TRefPtr<_Class> >) NOEXCEPT {
-    return PTypeTraits::MakeConstexpr< TObjectTraits<Meta::TDecay<_Class>> >();
+CONSTEXPR PTypeInfos TypeInfos(TType< TRefPtr<_Class> >) {
+    return FTypeHelpers::Object< TRefPtr<_Class>, FTypeId(ENativeType::MetaObject) >;
+}
+//----------------------------------------------------------------------------
+template <typename _Class, typename = Meta::TEnableIf< std::is_base_of_v<FMetaObject, _Class> > >
+CONSTEXPR PTypeTraits Traits(TType< TRefPtr<_Class> >) {
+    return MakeStaticType< TObjectTraits<Meta::TDecay<_Class>>, TRefPtr<_Class> >();
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -272,21 +259,25 @@ void TObjectTraits<T>::DeepCopy(const void* src, void* dst) const {
 //----------------------------------------------------------------------------
 template <typename T>
 bool TObjectTraits<T>::PromoteCopy(const void* src, const FAtom& dst) const {
-    return (not base_traits::PromoteCopy(src, dst)
+    return (not BasePromoteCopy(src, dst)
         ? PromoteCopyObject(*this, *static_cast<const PMetaObject*>(src), dst)
         : true );
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool TObjectTraits<T>::PromoteMove(void* src, const FAtom& dst) const {
-    return (not base_traits::PromoteMove(src, dst)
+bool TObjectTraits<T>::PromoteMove(void* src, const FAtom& dst) const NOEXCEPT {
+    return (not BasePromoteMove(src, dst)
         ? PromoteMoveObject(*this, *static_cast<PMetaObject*>(src), dst)
         : true );
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void* TObjectTraits<T>::Cast(void* data, const PTypeTraits& dst) const {
-    return CastObject(*this, *static_cast<PMetaObject*>(data), dst);
+    void* p = BaseCast(data, dst);
+    if (not p)
+        p = CastObject(*this, *static_cast<PMetaObject*>(data), dst);
+
+    return p;
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -300,7 +291,7 @@ bool TObjectTraits<T>::Accept(IAtomVisitor* visitor, void* data) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool TObjectTraits<T>::IsDefaultValue(const void* data) const {
+bool TObjectTraits<T>::IsDefaultValue(const void* data) const NOEXCEPT {
     Assert(data);
 
     const PMetaObject& pobj = (*static_cast<const PMetaObject*>(data));
@@ -426,6 +417,14 @@ CONSTEXPR bool is_string(FTypeId typeId) {
         return false;
     }
 }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool AtomVisit(IAtomVisitor& visitor, const ITupleTraits* tuple, void* data);
+bool AtomVisit(IAtomVisitor& visitor, const IListTraits* list, void* data);
+bool AtomVisit(IAtomVisitor& visitor, const IDicoTraits* dico, void* data);
+template <typename T>
+bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

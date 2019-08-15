@@ -368,7 +368,7 @@ RTTI::FAtom FCastExpr::Eval(FParseContext* context) const {
 //----------------------------------------------------------------------------
 FString FCastExpr::ToString() const {
     FStringBuilder oss;
-    oss << _traits->TypeInfos().Name() << ": " << _expr->ToString();
+    oss << _traits->TypeName() << ": " << _expr->ToString();
     return oss.ToString();
 }
 //----------------------------------------------------------------------------

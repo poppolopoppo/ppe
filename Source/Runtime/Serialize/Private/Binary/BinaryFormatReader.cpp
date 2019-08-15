@@ -8,6 +8,8 @@
 #include "RTTI/Any.h"
 #include "RTTI/NativeTypes.h"
 #include "RTTI/Typedefs.h"
+#include "RTTI/TypeTraits.h"
+
 #include "MetaClass.h"
 #include "MetaDatabase.h"
 #include "MetaObject.h"
