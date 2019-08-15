@@ -178,6 +178,8 @@ public:
 #endif
     }
 
+    void insert(const value_type& value) { insert(value.first, value.second); }
+    void insert(value_type&& rvalue) { insert(std::move(rvalue.first), std::move(rvalue.second)); }
     void insert(_Key&& key, _Value&& value) { Insert_KeepOldIFN(std::move(key), std::move(value)); }
     void insert(const _Key& key, const _Value& value) { Insert_KeepOldIFN(key, value); }
 
