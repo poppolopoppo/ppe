@@ -9,20 +9,23 @@
 
 #include <type_traits>
 
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4307) // '*': integral constant overflow
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FORCE_INLINE hash_t hash_value(bool v)  NOEXCEPT { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(i8 v)    NOEXCEPT { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(u8 v)    NOEXCEPT { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(i16 v)   NOEXCEPT { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(u16 v)   NOEXCEPT { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(i32 v)   NOEXCEPT { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(u32 v)   NOEXCEPT { return hash_uint(size_t(v)); }
-FORCE_INLINE hash_t hash_value(i64 v)   NOEXCEPT { return hash_uint(u64(v)); }
-FORCE_INLINE hash_t hash_value(u64 v)   NOEXCEPT { return hash_uint(v); }
-FORCE_INLINE hash_t hash_value(u128 v)  NOEXCEPT { return hash_uint(v); }
+CONSTEXPR hash_t hash_value(bool v)     NOEXCEPT { return hash_uint(size_t(v)); }
+CONSTEXPR hash_t hash_value(i8 v)       NOEXCEPT { return hash_uint(size_t(v)); }
+CONSTEXPR hash_t hash_value(u8 v)       NOEXCEPT { return hash_uint(size_t(v)); }
+CONSTEXPR hash_t hash_value(i16 v)      NOEXCEPT { return hash_uint(size_t(v)); }
+CONSTEXPR hash_t hash_value(u16 v)      NOEXCEPT { return hash_uint(size_t(v)); }
+CONSTEXPR hash_t hash_value(i32 v)      NOEXCEPT { return hash_uint(size_t(v)); }
+CONSTEXPR hash_t hash_value(u32 v)      NOEXCEPT { return hash_uint(size_t(v)); }
+CONSTEXPR hash_t hash_value(i64 v)      NOEXCEPT { return hash_uint(u64(v)); }
+CONSTEXPR hash_t hash_value(u64 v)      NOEXCEPT { return hash_uint(v); }
+CONSTEXPR hash_t hash_value(u128 v)     NOEXCEPT { return hash_uint(v); }
 FORCE_INLINE hash_t hash_value(u256 v)  NOEXCEPT { return hash_as_pod(v); }
 FORCE_INLINE hash_t hash_value(float v) NOEXCEPT { return hash_uint(*(u32*)&v); }
 FORCE_INLINE hash_t hash_value(double v)NOEXCEPT { return hash_uint(*(u64*)&v); }
@@ -43,22 +46,22 @@ FORCE_INLINE auto hash_value(T value) NOEXCEPT
 // Helpers for combining hash values:
 //----------------------------------------------------------------------------
 template <typename T>
-void hash_combine(hash_t& seed, const T& value);
+CONSTEXPR void hash_combine(hash_t& seed, const T& value);
 //----------------------------------------------------------------------------
 template <typename T>
-void hash_range(hash_t& seed, const T *values, size_t count);
+CONSTEXPR void hash_range(hash_t& seed, const T *values, size_t count);
 //----------------------------------------------------------------------------
 template <typename T>
-hash_t hash_range(const T *values, size_t count);
+CONSTEXPR hash_t hash_range(const T *values, size_t count);
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
-void hash_combine(hash_t& seed, const _Arg0& arg0, const _Args&... args);
+CONSTEXPR void hash_combine(hash_t& seed, const _Arg0& arg0, const _Args&... args);
 //----------------------------------------------------------------------------
 template <typename _Arg0, typename... _Args>
-hash_t hash_tuple(_Arg0&& arg0, _Args&&... args);
+CONSTEXPR hash_t hash_tuple(_Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
 template <typename _It>
-hash_t hash_range(_It first, _It last);
+CONSTEXPR hash_t hash_range(_It first, _It last);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -77,3 +80,5 @@ struct THash {
 } //!namespace PPE
 
 #include "Container/Hash-inl.h"
+
+PRAGMA_MSVC_WARNING_POP()

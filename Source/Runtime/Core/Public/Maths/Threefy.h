@@ -53,33 +53,17 @@ struct FThreefy_4x32 {
     }
 
     template <size_t _NRounds = NumRounds>
-    CONSTEXPR float4 Bernoulli(float inf, float sup, float threshold) NOEXCEPT {
-        return threefry4x32_Bernoulli<_NRounds>(&State, inf, sup, threshold);
-    }
+    CONSTEXPR float4 Bernoulli(float inf, float sup, float threshold) NOEXCEPT;
     template <size_t _NRounds = NumRounds>
-    CONSTEXPR float4 UniformF(float inf, float sup) NOEXCEPT {
-        return threefry4x32_UniformF<_NRounds>(&State, inf, sup);
-    }
+    CONSTEXPR float4 UniformF(float inf, float sup) NOEXCEPT;
     template <size_t _NRounds = NumRounds>
-    CONSTEXPR u324 UniformI(u32 inf, u32 sup) NOEXCEPT {
-        return threefry4x32_UniformI<_NRounds>(&State, inf, sup);
-    }
+    CONSTEXPR u324 UniformI(u32 inf, u32 sup) NOEXCEPT;
     template <size_t _NRounds = NumRounds>
-    CONSTEXPR float4 Gaussian(float E, float V) NOEXCEPT {
-        return threefry4x32_Gaussian<_NRounds>(&State, E, V);
-    }
+    CONSTEXPR float4 Gaussian(float E, float V) NOEXCEPT;
 
-    CONSTEXPR u32 operator ()() NOEXCEPT {
-        const ukey_t ukey{ { u32(NumRounds), u32(NumRounds), u32(NumRounds), u32(NumRounds) } };
-        State = threefry4x32_R<NumRounds>(State, ukey);
-        return State.v[0];
-    }
-    CONSTEXPR u32 operator ()(u32 sup) NOEXCEPT {
-        return UniformI<NumRounds>(0, sup).x;
-    }
-    CONSTEXPR u32 operator ()(u32 inf, u32 sup) NOEXCEPT {
-        return UniformI<NumRounds>(inf, sup).x;
-    }
+    CONSTEXPR u32 operator ()() NOEXCEPT;
+    CONSTEXPR u32 operator ()(u32 sup) NOEXCEPT;
+    CONSTEXPR u32 operator ()(u32 inf, u32 sup) NOEXCEPT;
 
     template <typename T>
     T& RandomElement(const TMemoryView<T>& view) {
@@ -131,101 +115,9 @@ struct FThreefy_4x32 {
 };
 //----------------------------------------------------------------------------
 template <size_t _NRounds>
-CONSTEXPR float4 FThreefy_4x32::threefry4x32_Bernoulli(counter_t* inout, float inf, float sup, float threshold) NOEXCEPT {
-    Assert(inout);
-
-    const counter_t ctr = *inout;
-    const ukey_t ukey{ { u32(_NRounds), u32(_NRounds), u32(_NRounds), u32(_NRounds) } };
-    const counter_t random4 = threefry4x32_R<_NRounds>(ctr, ukey);
-
-    *inout = random4;
-
-    CONSTEXPR const float r = float(UINT32_MAX);
-    return float4{
-        ( ((((float)random4.v[0]) / r) * (sup - inf) + inf) < threshold ? 1.0f : 0.0f ),
-        ( ((((float)random4.v[1]) / r) * (sup - inf) + inf) < threshold ? 1.0f : 0.0f ),
-        ( ((((float)random4.v[2]) / r) * (sup - inf) + inf) < threshold ? 1.0f : 0.0f ),
-        ( ((((float)random4.v[3]) / r) * (sup - inf) + inf) < threshold ? 1.0f : 0.0f ) };
-}
-//----------------------------------------------------------------------------
-template <size_t _NRounds>
-CONSTEXPR float4 FThreefy_4x32::threefry4x32_UniformF(counter_t* inout, float inf, float sup) NOEXCEPT {
-    Assert(inout);
-
-    const counter_t ctr = *inout;
-    const ukey_t ukey{ { u32(_NRounds), u32(_NRounds), u32(_NRounds), u32(_NRounds) } };
-    const counter_t random4 = threefry4x32_R<_NRounds>(ctr, ukey);
-
-    *inout = random4;
-
-    CONSTEXPR const float r = float(UINT32_MAX);
-    return float4{
-        ( (((float)random4.v[0]) / r) * (sup - inf) + inf ),
-        ( (((float)random4.v[1]) / r) * (sup - inf) + inf ),
-        ( (((float)random4.v[2]) / r) * (sup - inf) + inf ),
-        ( (((float)random4.v[3]) / r) * (sup - inf) + inf ) };
-}
-//----------------------------------------------------------------------------
-template <size_t _NRounds>
-CONSTEXPR u324 FThreefy_4x32::threefry4x32_UniformI(counter_t* inout, u32 inf, u32 sup) NOEXCEPT {
-    Assert(inout);
-
-    const counter_t ctr = *inout;
-    const ukey_t ukey{ { u32(_NRounds), u32(_NRounds), u32(_NRounds), u32(_NRounds) } };
-    const counter_t random4 = threefry4x32_R<_NRounds>(ctr, ukey);
-
-    *inout = random4;
-
-    return u324{
-        random4.v[0] % (sup - inf) + inf,
-        random4.v[1] % (sup - inf) + inf,
-        random4.v[2] % (sup - inf) + inf,
-        random4.v[3] % (sup - inf) + inf };
-}
-//----------------------------------------------------------------------------
-template <size_t _NRounds>
-CONSTEXPR float4 FThreefy_4x32::threefry4x32_Gaussian(counter_t* inout, float E, float V) NOEXCEPT {
-    Assert(inout);
-
-    const counter_t ctr = *inout;
-    const ukey_t ukey1{ { u32(_NRounds), u32(_NRounds), u32(_NRounds), u32(_NRounds) } };
-    const ukey_t ukey2{ { 0, 0, 0, 0 } };
-
-    const counter_t random1 = threefry4x32_R<_NRounds>(ctr, ukey1);
-    const counter_t random2 = threefry4x32_R<_NRounds>(ctr, ukey2);
-
-    *inout = random2;
-
-    CONSTEXPR const float r = float(UINT32_MAX);
-
-    const float r1 = (((float)random1.v[0]) / r); // generate a random sequence of uniform distribution
-    float r2 = (((float)random2.v[0]) / r);
-    const float r3 = (((float)random1.v[1]) / r);
-    float r4 = (((float)random2.v[1]) / r);
-    const float r5 = (((float)random1.v[2]) / r);
-    float r6 = (((float)random2.v[2]) / r);
-    const float r7 = (((float)random1.v[3]) / r);
-    float r8 = (((float)random2.v[3]) / r);
-
-    if (r2 == 0 || r4 == 0 || r6 == 0 || r8 == 0) {
-        r2 += 0.0001f;
-        r4 += 0.0001f;
-        r6 += 0.0001f;
-        r8 += 0.0001f;
-    }
-
-    return float4{
-        FPlatformMaths::Cos(F_2PI * r1) * FPlatformMaths::Sqrt(-2.0 * FPlatformMaths::Loge(r2)) * V + E ,// return a pseudo sequence of normal distribution using two above uniform noise data
-        FPlatformMaths::Cos(F_2PI * r3) * FPlatformMaths::Sqrt(-2.0 * FPlatformMaths::Loge(r4)) * V + E ,// return a pseudo sequence of normal distribution using two above uniform noise data
-        FPlatformMaths::Cos(F_2PI * r5) * FPlatformMaths::Sqrt(-2.0 * FPlatformMaths::Loge(r6)) * V + E ,// return a pseudo sequence of normal distribution using two above uniform noise data
-        FPlatformMaths::Cos(F_2PI * r7) * FPlatformMaths::Sqrt(-2.0 * FPlatformMaths::Loge(r8)) * V + E };// return a pseudo sequence of normal distribution using two above uniform noise data
-}
-//----------------------------------------------------------------------------
-template <size_t _NRounds>
-CONSTEXPR auto FThreefy_4x32::threefry4x32_R(counter_t in, key_t k) NOEXCEPT -> counter_t {
+inline CONSTEXPR auto FThreefy_4x32::threefry4x32_R(counter_t in, key_t k) NOEXCEPT -> counter_t {
     counter_t X;
-    u32 ks[4 + 1];
-    ks[4] = 0x1BD11BDAul;
+    u32 ks[4 + 1] = { 0, 0, 0, 0, 0x1BD11BDAul };
 
     {
         ks[0] = k.v[0];
@@ -1042,6 +934,131 @@ CONSTEXPR auto FThreefy_4x32::threefry4x32_R(counter_t in, key_t k) NOEXCEPT -> 
     }
 
     return X;
+}
+//----------------------------------------------------------------------------
+template <size_t _NRounds>
+inline CONSTEXPR float4 FThreefy_4x32::threefry4x32_Bernoulli(counter_t* inout, float inf, float sup, float threshold) NOEXCEPT {
+    Assert(inout);
+
+    const counter_t ctr = *inout;
+    const ukey_t ukey{ { u32(_NRounds), u32(_NRounds), u32(_NRounds), u32(_NRounds) } };
+    const counter_t random4 = threefry4x32_R<_NRounds>(ctr, ukey);
+
+    *inout = random4;
+
+    CONSTEXPR const float r = float(UINT32_MAX);
+    return float4{
+        ( ((((float)random4.v[0]) / r) * (sup - inf) + inf) < threshold ? 1.0f : 0.0f ),
+        ( ((((float)random4.v[1]) / r) * (sup - inf) + inf) < threshold ? 1.0f : 0.0f ),
+        ( ((((float)random4.v[2]) / r) * (sup - inf) + inf) < threshold ? 1.0f : 0.0f ),
+        ( ((((float)random4.v[3]) / r) * (sup - inf) + inf) < threshold ? 1.0f : 0.0f ) };
+}
+//----------------------------------------------------------------------------
+template <size_t _NRounds>
+inline CONSTEXPR float4 FThreefy_4x32::threefry4x32_UniformF(counter_t* inout, float inf, float sup) NOEXCEPT {
+    Assert(inout);
+
+    const counter_t ctr = *inout;
+    const ukey_t ukey{ { u32(_NRounds), u32(_NRounds), u32(_NRounds), u32(_NRounds) } };
+    const counter_t random4 = threefry4x32_R<_NRounds>(ctr, ukey);
+
+    *inout = random4;
+
+    CONSTEXPR const float r = float(UINT32_MAX);
+    return float4{
+        ( (((float)random4.v[0]) / r) * (sup - inf) + inf ),
+        ( (((float)random4.v[1]) / r) * (sup - inf) + inf ),
+        ( (((float)random4.v[2]) / r) * (sup - inf) + inf ),
+        ( (((float)random4.v[3]) / r) * (sup - inf) + inf ) };
+}
+//----------------------------------------------------------------------------
+template <size_t _NRounds>
+inline CONSTEXPR u324 FThreefy_4x32::threefry4x32_UniformI(counter_t* inout, u32 inf, u32 sup) NOEXCEPT {
+    Assert(inout);
+
+    const counter_t ctr = *inout;
+    const ukey_t ukey{ { u32(_NRounds), u32(_NRounds), u32(_NRounds), u32(_NRounds) } };
+    const counter_t random4 = threefry4x32_R<_NRounds>(ctr, ukey);
+
+    *inout = random4;
+
+    return u324{
+        random4.v[0] % (sup - inf) + inf,
+        random4.v[1] % (sup - inf) + inf,
+        random4.v[2] % (sup - inf) + inf,
+        random4.v[3] % (sup - inf) + inf };
+}
+//----------------------------------------------------------------------------
+template <size_t _NRounds>
+inline CONSTEXPR float4 FThreefy_4x32::threefry4x32_Gaussian(counter_t* inout, float E, float V) NOEXCEPT {
+    Assert(inout);
+
+    const counter_t ctr = *inout;
+    const ukey_t ukey1{ { u32(_NRounds), u32(_NRounds), u32(_NRounds), u32(_NRounds) } };
+    const ukey_t ukey2{ { 0, 0, 0, 0 } };
+
+    const counter_t random1 = threefry4x32_R<_NRounds>(ctr, ukey1);
+    const counter_t random2 = threefry4x32_R<_NRounds>(ctr, ukey2);
+
+    *inout = random2;
+
+    CONSTEXPR const float r = float(UINT32_MAX);
+
+    const float r1 = (((float)random1.v[0]) / r); // generate a random sequence of uniform distribution
+    float r2 = (((float)random2.v[0]) / r);
+    const float r3 = (((float)random1.v[1]) / r);
+    float r4 = (((float)random2.v[1]) / r);
+    const float r5 = (((float)random1.v[2]) / r);
+    float r6 = (((float)random2.v[2]) / r);
+    const float r7 = (((float)random1.v[3]) / r);
+    float r8 = (((float)random2.v[3]) / r);
+
+    if (r2 == 0 || r4 == 0 || r6 == 0 || r8 == 0) {
+        r2 += 0.0001f;
+        r4 += 0.0001f;
+        r6 += 0.0001f;
+        r8 += 0.0001f;
+    }
+
+    return float4{
+        FPlatformMaths::Cos(F_2PI * r1) * FPlatformMaths::Sqrt(-2.0 * FPlatformMaths::Loge(r2)) * V + E ,// return a pseudo sequence of normal distribution using two above uniform noise data
+        FPlatformMaths::Cos(F_2PI * r3) * FPlatformMaths::Sqrt(-2.0 * FPlatformMaths::Loge(r4)) * V + E ,// return a pseudo sequence of normal distribution using two above uniform noise data
+        FPlatformMaths::Cos(F_2PI * r5) * FPlatformMaths::Sqrt(-2.0 * FPlatformMaths::Loge(r6)) * V + E ,// return a pseudo sequence of normal distribution using two above uniform noise data
+        FPlatformMaths::Cos(F_2PI * r7) * FPlatformMaths::Sqrt(-2.0 * FPlatformMaths::Loge(r8)) * V + E };// return a pseudo sequence of normal distribution using two above uniform noise data
+}
+//----------------------------------------------------------------------------
+template <size_t _NRounds>
+inline CONSTEXPR float4 FThreefy_4x32::Bernoulli(float inf, float sup, float threshold) NOEXCEPT {
+    return threefry4x32_Bernoulli<_NRounds>(&State, inf, sup, threshold);
+}
+//----------------------------------------------------------------------------
+template <size_t _NRounds>
+inline CONSTEXPR float4 FThreefy_4x32::UniformF(float inf, float sup) NOEXCEPT {
+    return threefry4x32_UniformF<_NRounds>(&State, inf, sup);
+}
+//----------------------------------------------------------------------------
+template <size_t _NRounds>
+inline CONSTEXPR u324 FThreefy_4x32::UniformI(u32 inf, u32 sup) NOEXCEPT {
+    return threefry4x32_UniformI<_NRounds>(&State, inf, sup);
+}
+//----------------------------------------------------------------------------
+template <size_t _NRounds>
+inline CONSTEXPR float4 FThreefy_4x32::Gaussian(float E, float V) NOEXCEPT {
+    return threefry4x32_Gaussian<_NRounds>(&State, E, V);
+}
+//----------------------------------------------------------------------------
+inline CONSTEXPR u32 FThreefy_4x32::operator ()() NOEXCEPT {
+    const ukey_t ukey{ { u32(NumRounds), u32(NumRounds), u32(NumRounds), u32(NumRounds) } };
+    State = threefry4x32_R<NumRounds>(State, ukey);
+    return State.v[0];
+}
+//----------------------------------------------------------------------------
+inline CONSTEXPR u32 FThreefy_4x32::operator ()(u32 sup) NOEXCEPT {
+    return UniformI<NumRounds>(0, sup).x;
+}
+//----------------------------------------------------------------------------
+inline CONSTEXPR u32 FThreefy_4x32::operator ()(u32 inf, u32 sup) NOEXCEPT {
+    return UniformI<NumRounds>(inf, sup).x;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

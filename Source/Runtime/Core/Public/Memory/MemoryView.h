@@ -404,7 +404,7 @@ void Construct(const TMemoryView<T>& view, _Args&& ... args) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void Destroy(const TMemoryView<T>& view) {
+void Destroy(const TMemoryView<T>& view) NOEXCEPT {
     Destroy(MakeIterable(view.begin(), view.end()));
 }
 //----------------------------------------------------------------------------

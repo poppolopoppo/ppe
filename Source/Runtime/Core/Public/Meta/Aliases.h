@@ -146,12 +146,6 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define CONSTEXPR
 #endif
 //----------------------------------------------------------------------------
-#if USE_PPE_DEBUG
-#   define RELEASE_CONSTEXPR
-#else
-#   define RELEASE_CONSTEXPR CONSTEXPR
-#endif
-//----------------------------------------------------------------------------
 #if _HAS_CXX17
 //  http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0292r2.html
 #   define IF_CONSTEXPR(...) if constexpr(__VA_ARGS__)

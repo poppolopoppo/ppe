@@ -28,7 +28,7 @@ ALIGN(16) CONSTEXPR const FSSEHashStates2 GSimdBucketSentinel2{ 0 };
 template <typename T>
 struct ALIGN(16) TSSEHashBucket2 {
     STATIC_CONST_INTEGRAL(u32, Capacity, 16);
-    using bitmask_t = TBitMask<size_t>;
+    using bitmask_t = TBitMask<u32>;
     using states_t = FSSEHashStates2;
     using storage_t = POD_STORAGE(T);
 
@@ -135,7 +135,7 @@ struct TSSEHashIterator2 : Meta::TIterator<Meta::TConditional<_Const, Meta::TAdd
 
     CONSTEXPR TSSEHashIterator2(Meta::FNoInit) NOEXCEPT {}
 
-    RELEASE_CONSTEXPR TSSEHashIterator2(bucket_t* bucket, u32 slot) NOEXCEPT {
+    CONSTEXPR TSSEHashIterator2(bucket_t* bucket, u32 slot) NOEXCEPT {
         BucketAndSlot.Reset(bucket, slot);
     }
 
@@ -591,7 +591,7 @@ private:
 #if USE_PPE_ASSERT
     static size_t VECTORCALL find_ForAssert(const bucket_t& bucket, const m128i_t& st, const m128i_t& h16, const value_type& x) NOEXCEPT {
         for (bitmask_t bm{ m128i_epi8_findeq(st, h16) }; bm.Data; ) {
-            const u32 e = bm.PopFront_AssumeNotEmpty();
+            const size_t e = bm.PopFront_AssumeNotEmpty();
             if (key_equal()(bucket.at(e), x))
                 return e;
         }

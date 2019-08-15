@@ -130,7 +130,7 @@ struct TSSEHashIterator : Meta::TIterator<Meta::TConditional<_Const, Meta::TAddC
 
     CONSTEXPR TSSEHashIterator(Meta::FNoInit) NOEXCEPT {}
 
-    RELEASE_CONSTEXPR TSSEHashIterator(bucket_t* bucket, u32 slot) NOEXCEPT {
+    CONSTEXPR TSSEHashIterator(bucket_t* bucket, u32 slot) NOEXCEPT {
         BucketAndSlot.Reset(bucket, slot);
     }
 
