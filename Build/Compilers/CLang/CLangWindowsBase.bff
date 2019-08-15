@@ -55,11 +55,27 @@
         + ' -msse4.2'
 ]
 
-.CLangWindowsOverrideMSVC =
+.CLangWindowsPlatformOverrideMSVC =
 [
     .CompilerSystemIncludeFlag = ' /imsvc'
     .LibrarianOptions   = ' /OUT:"%2" "%1"'
                         //+ ' /llvmlibthin'       // http://llvm.org/docs/CommandGuide/llvm-lib.html // NOT COMPATIBLE WITH LINK.EXE !
+]
+
+.CLangWindowsConfigOverrideMSVC =
+[
+    ; ASLR actif uniquement en final
+    .LinkerWithASLR             = ''
+    .LinkerWithoutASLR          = ''
+
+    ; Link-time code generation
+    .LinkerWithLTCG             = ''
+    .LinkerWithLTCGIncremental  = ''
+    .LinkerWithoutLTCG          = ''
+
+    ; Linker incremental
+    .LinkerIncremental          = ''
+    .LinkerNotIncremental       = ''
 ]
 
 //------------------------------------------------------------------------------
@@ -77,7 +93,8 @@
                 + .CLangWindowsBase
 
     Using( .Inherited )
-    Using( .CLangWindowsOverrideMSVC )
+    Using( .CLangWindowsPlatformOverrideMSVC )
+    Using( .CLangWindowsConfigOverrideMSVC )
 
     .CompilerOptions    + ' -m32'
     .LibrarianOptions   + ' /MACHINE:X86'
@@ -89,7 +106,8 @@
                 + .CLangWindowsBase
 
     Using( .Inherited )
-    Using( .CLangWindowsOverrideMSVC )
+    Using( .CLangWindowsPlatformOverrideMSVC )
+    Using( .CLangWindowsConfigOverrideMSVC )
 
     .CompilerOptions    + ' -m64'
     .LibrarianOptions   + ' /MACHINE:X64'
@@ -108,6 +126,7 @@
 .CLangBaseDebugConfig =
 [
     Using( .MSVCBaseDebugConfig )
+    Using( .CLangWindowsConfigOverrideMSVC )
 
     ; disable LTCG
     .LibrarianOptions   = ''
@@ -121,6 +140,7 @@
 .CLangBaseFastDebugConfig =
 [
     Using( .MSVCBaseFastDebugConfig )
+    Using( .CLangWindowsConfigOverrideMSVC )
 
     ; disable LTCG
     .LibrarianOptions   = ''
@@ -133,6 +153,7 @@
 .CLangBaseReleaseConfig =
 [
     Using( .MSVCBaseReleaseConfig )
+    Using( .CLangWindowsConfigOverrideMSVC )
 
     ; disable LTCG
     .LibrarianOptions   = ''
@@ -145,6 +166,7 @@
 .CLangBaseProfilingConfig =
 [
     Using( .MSVCBaseProfilingConfig )
+    Using( .CLangWindowsConfigOverrideMSVC )
 
     ; disable LTCG
     .LibrarianOptions   = ''
@@ -157,6 +179,7 @@
 .CLangBaseFinalConfig =
 [
     Using( .MSVCBaseFinalConfig )
+    Using( .CLangWindowsConfigOverrideMSVC )
 
     ; disable LTCG
     .LibrarianOptions   = ''
