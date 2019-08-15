@@ -42,7 +42,7 @@ PPE_CORE_API void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsig
 PPE_CORE_API void SetAssertionHandler(FAssertHandler handler);
 
 #   define AssertMessage(_Message, ...) \
-    (void)( (!!(__VA_ARGS__)) || (PPE::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__), 0) )
+    ( Likely(!!(__VA_ARGS__)) ? void(0) : []{ PPE::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )
 
 #   define AssertMessage_NoAssume(_Message, ...) AssertMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
 
@@ -100,11 +100,14 @@ private:
 };
 
 PPE_CORE_API void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
-inline void NORETURN AssertionReleaseFailed_NoReturn(const wchar_t* msg, const wchar_t *file, unsigned line) { AssertionReleaseFailed(msg, file, line); }
 PPE_CORE_API void SetAssertionReleaseHandler(FAssertReleaseHandler handler);
 
+inline void NORETURN AssertionReleaseFailed_NoReturn(const wchar_t* msg, const wchar_t* file, unsigned line) {
+    AssertionReleaseFailed(msg, file, line);
+}
+
 #   define AssertReleaseMessage(_Message, ...) \
-    (void)( (!!(__VA_ARGS__)) || (PPE::AssertionReleaseFailed(_Message, WIDESTRING(__FILE__), __LINE__), 0) )
+    ( Likely(!!(__VA_ARGS__)) ? void(0) : []{ PPE::AssertionReleaseFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )
 
 #   define AssertReleaseFailed(_Message) \
     PPE::AssertionReleaseFailed_NoReturn(_Message, WIDESTRING(__FILE__), __LINE__)
