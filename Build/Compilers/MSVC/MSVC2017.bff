@@ -327,7 +327,7 @@ Print( "Using Visual 2017 incremental LTCG for profiling : no profiling informat
     .Librarian          = '$ToolsBasePath$/lib.exe'
     .Linker             = '$ToolsBasePath$/link.exe'
 
-    .CompilerOptions    + ' /arch:SSE' ; active le support SSE sur x86
+    .CompilerOptions    + ' /arch:SSE2' ; active le support SSE2 sur x86
 
     .LinkerOptions      + ' /LIBPATH:"$VSBasePath$/VC/Tools/MSVC/$VSToolsVersion$/lib/x86"'
                         + ' /LIBPATH:"$WindowsSDKBasePath$/Lib/$WindowsSDKVersion$/ucrt/x86"'
