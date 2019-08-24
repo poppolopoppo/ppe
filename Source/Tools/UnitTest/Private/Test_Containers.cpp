@@ -70,6 +70,7 @@ template class TFlatSet<FString>;
 #include "Containers/HopscotchHashSet2.h"
 #include "Containers/SimdHashSet.h"
 #include "Containers/SSEHashSet2.h"
+#include "Containers/SSEHashSet3.h"
 
 namespace PPE {
 namespace Test {
@@ -295,11 +296,17 @@ class FContainerBenchmark : public FBenchmark {
 public:
     FContainerBenchmark(const FStringView& name)
     :   FBenchmark{ name } {
+#if !USE_PPE_CONTAINERS_LONGRUN
         MaxIterations = Min(MaxIterations, 1000000ul);
         ONLY_IF_ASSERT(MaxIterations = Min(MinIterations, MaxIterations));
-#if USE_PPE_CONTAINERS_LONGRUN
-        MaxIterations *= 100;
-        MaxVarianceError = 1e-5f;
+#else
+        // should run a fixed number of iterations for volume comparisons
+#   if USE_PPE_DEBUG
+        MinIterations = MaxIterations = 10000ul;
+#   else
+        MinIterations = MaxIterations = 5000000ul;
+#   endif
+        MaxVarianceError = 1e-9f;
 #endif
     }
 };
@@ -421,8 +428,10 @@ public:
 
                 state.ResumeTiming();
 
-                Verify(c.insert(item).second);
-                FBenchmark::DoNotOptimize(c);
+                auto it = c.insert(item);
+                Assert_NoAssume(it.second);
+
+                FBenchmark::DoNotOptimize(it);
             }
         });
     }
@@ -445,8 +454,10 @@ public:
 
                 state.ResumeTiming();
 
-                Verify(c.insert(item).second);
-                FBenchmark::DoNotOptimize(c);
+                auto it = c.insert(item);
+                Assert_NoAssume(it.second);
+
+                FBenchmark::DoNotOptimize(it);
             }
         });
     }
@@ -1129,7 +1140,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("Hopscotch2", Hopscotch2, input);
         }
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             THashSet<T> HashSet;
             bm.Run("HashSet", HashSet, input);
@@ -1141,10 +1152,16 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("SSEHashSet", set, input);
         }
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TSSEHashSet2<T> set;
             bm.Run("SSEHashSet2", set, input);
+        }
+#endif
+#if USE_PPE_AVX2//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+        {
+            TSSEHashSet3<T> set;
+            bm.Run("SSEHashSet3", set, input);
         }
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
@@ -1420,7 +1437,7 @@ NO_INLINE static void Test_StringSet_() {
         */
 #   endif
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             STRINGVIEW_HASHSET(Container, ECase::Sensitive) set;
 
@@ -1476,7 +1493,30 @@ NO_INLINE static void Test_StringSet_() {
                 TStringViewEqualTo<char, ECase::Sensitive> >
             >   set;
 
-            bm.Run("SSEHashSet_M", set, input);
+            bm.Run("SSEHashSet2_M", set, input);
+        }
+#   endif
+#endif
+#if USE_PPE_AVX2//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+        {
+            TSSEHashSet3<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive>
+            >   set;
+
+            bm.Run("SSEHashSet3", set, input);
+        }
+#   if USE_PPE_CONTAINERS_MEMOIZER
+        {
+            TSSEHashSet3<
+                THashMemoizer<
+                FStringView,
+                TStringViewHasher<char, ECase::Sensitive>,
+                TStringViewEqualTo<char, ECase::Sensitive> >
+            >   set;
+
+            bm.Run("SSEHashSet3_M", set, input);
         }
 #   endif
 #endif
