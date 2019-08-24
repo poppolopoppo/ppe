@@ -21,7 +21,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using FSSEHashStates2 = Meta::TArray<u8, 16>;
+using FSSEHashStates2 = Meta::TArray<i8, 16>;
 //----------------------------------------------------------------------------
 ALIGN(16) CONSTEXPR const FSSEHashStates2 GSimdBucketSentinel2{ 0 };
 //----------------------------------------------------------------------------
@@ -32,11 +32,13 @@ struct ALIGN(16) TSSEHashBucket2 {
     using states_t = FSSEHashStates2;
     using storage_t = POD_STORAGE(T);
 
-    ALIGN(16) states_t States;
-    ALIGN(16) storage_t Items[Capacity];
+    states_t States;
+    storage_t Items[Capacity];
 
     FORCE_INLINE TSSEHashBucket2() noexcept {
         STATIC_ASSERT(sizeof(states_t) == sizeof(m128i_t));
+        STATIC_ASSERT(sizeof(storage_t) == sizeof(T));
+        STATIC_ASSERT(sizeof(*this) == sizeof(T) * Capacity + sizeof(m128i_t));
         m128i_epi8_store_aligned(&States, m128i_epi8_set_true());
     }
 
@@ -65,18 +67,18 @@ struct ALIGN(16) TSSEHashBucket2 {
 #if USE_PPE_DEBUG
     bool is_sentinel() const {
         m128i_t st = m128i_epi8_load_aligned(&States);
-        const size_t bm = m128i_epi8_findeq(st, m128i_epi8_set_zero());
+        const u32 bm = m128i_epi8_findeq(st, m128i_epi8_set_zero());
         return (0xFFFFu == bm);
     }
 #endif
 
-    FORCE_INLINE T& at(size_t i) NOEXCEPT {
+    FORCE_INLINE T& at(u32 i) NOEXCEPT {
         Assert(i < Capacity);
-        return reinterpret_cast<T&>(Items[i]);
+        return (reinterpret_cast<T&>(Items[i]));
     }
-    FORCE_INLINE const T& at(size_t i) const NOEXCEPT {
+    FORCE_INLINE const T& at(u32 i) const NOEXCEPT {
         Assert(i < Capacity);
-        return reinterpret_cast<const T&>(Items[i]);
+        return (reinterpret_cast<const T&>(Items[i]));
     }
 
     FORCE_INLINE void clear_LeaveDirty() NOEXCEPT {
@@ -116,7 +118,6 @@ struct ALIGN(16) TSSEHashBucket2 {
         // we guarantee we won't access Items, so use a generic sentinel (avoid bloating rdata)
         return (TSSEHashBucket2*)(&GSimdBucketSentinel);
     }
-
 };
 //----------------------------------------------------------------------------
 template <typename T, bool _Const>
@@ -241,10 +242,12 @@ public:
     }
 
     void assign(const TSSEHashSet2& other) {
-        clear_ReleaseMemory();
+        Assert(&other != this);
 
-        if (not other._size)
+        if (not other._size) {
+            clear();
             return;
+        }
 
         Assert_NoAssume(other.num_buckets_());
         Assert_NoAssume(other._buckets != bucket_t::Sentinel());
@@ -252,9 +255,22 @@ public:
         const u32 numBuckets = other.num_buckets_();
         const u32 allocSize = checked_cast<u32>(allocation_size_(numBuckets));
 
+        if (num_buckets_() != other.num_buckets_()) {
+            if (has_content_())
+                releaseMemory_ForDtor_();
+
+            _bucketMask = other._bucketMask;
+            _buckets = (bucket_t*)allocator_traits::Allocate(*this, allocSize).Data;
+        }
+        else {
+            IF_CONSTEXPR(not Meta::has_trivial_destructor<value_type>::value) {
+                clear();
+            }
+
+            Assert_NoAssume(other._bucketMask == _bucketMask);
+        }
+
         _size = other._size;
-        _bucketMask = other._bucketMask;
-        _buckets = (bucket_t*)allocator_traits::Allocate(*this, allocSize).Data;
 
         // trivial copy, don't try to rehash
         IF_CONSTEXPR(Meta::has_trivial_copy<value_type>::value) {
@@ -291,32 +307,36 @@ public:
     const_iterator end() const { return iterator_end_<true>(); }
 
     PPE_SSEHASHSET2_MICROPROFILING TPair<iterator, bool> insert(_Key&& rkey) {
-        const u32 h0 = u32(hasher()(rkey));
+        const u32 hh = u32(hasher()(rkey));
+        const u32 h0 = (hh >> 7);
+
+        FPlatformMemory::ReadPrefetch(_buckets, h0 & _bucketMask);
+
+        const i8 h1 = i8(hh & 0x7f);
 
         for (;;) {
-            bucket_t* const pbucket = _buckets + ((h0 >> 7) & _bucketMask);
+            const u32 bk = h0 & _bucketMask;
+            
+            const m128i_t ex{ m128i_epi8_broadcast(h1) };
+            const m128i_t st{ m128i_epi8_load_aligned(_buckets + bk) };
 
-            const m128i_t st = m128i_epi8_load_aligned(pbucket);
-            const m128i_t h1 = m128i_epi8_broadcast(i8(h0 & 0x7f));
-
-            bitmask_t exist{ m128i_epi8_findeq(st, h1) };
-            while (exist) {
+            for (bitmask_t exist{ m128i_epi8_findeq(st, ex) }; exist; ) {
                 const u32 e = u32(exist.PopFront_AssumeNotEmpty());
-                if (Likely(key_equal()(pbucket->at(e), rkey)))
-                    return MakePair(iterator{ pbucket, e }, false);
+                if (Likely(key_equal()(_buckets[bk].at(e), rkey)))
+                    return MakePair(iterator{ _buckets + bk, e }, false);
             }
 
-            bitmask_t free{ m128i_epi8_findlt(st, m128i_epi8_set_zero()) };
-            if (Likely(free.Data)) {
+            const bitmask_t free{ m128i_epi8_findlt(st, m128i_epi8_set_zero()) };
+            if (Likely(free)) {
                 const u32 e = u32(free.FirstBitSet_AssumeNotEmpty());
-                Assert_NoAssume(not pbucket->is_sentinel());
+                Assert_NoAssume(not _buckets[bk].is_sentinel());
 
                 ++_size;
-                pbucket->States[e] = u8(h0 & 0x7f);
-                Assert_NoAssume(not pbucket->is_sentinel());
-                Meta::Construct(&pbucket->at(e), std::move(rkey));
+                _buckets[bk].States[e] = h1;
+                Assert_NoAssume(not _buckets[bk].is_sentinel());
 
-                return MakePair(iterator{ pbucket, e }, true);
+                Meta::Construct(&_buckets[bk].at(e), std::move(rkey));
+                return MakePair(iterator{ _buckets + bk, e }, true);
             }
             else {
                 rehash_ForCollision_();
@@ -368,7 +388,7 @@ public:
         for (bitmask_t bm{ m128i_epi8_findeq(
             m128i_epi8_load_aligned(&pbucket->States),
             m128i_epi8_broadcast(u8(h0 & 0x7f))) }; bm.Data;) {
-            const size_t e = bm.PopFront_AssumeNotEmpty();
+            const u32 e = bm.PopFront_AssumeNotEmpty();
             if (Likely(key_equal()(pbucket->at(e), key)))
                 return iterator{ pbucket, u32(e) };
         }
@@ -386,7 +406,7 @@ public:
         for (bitmask_t bm{ m128i_epi8_findeq(
             m128i_epi8_load_aligned(&pbucket->States),
             m128i_epi8_broadcast(u8(h0 & 0x7f))) }; bm.Data;) {
-            const size_t e = bm.PopFront_AssumeNotEmpty();
+            const u32 e = bm.PopFront_AssumeNotEmpty();
 
             pointer const pkey = &pbucket->at(e);
             if (Likely(key_equal()(*pkey, key))) {
@@ -475,7 +495,7 @@ private:
         return (bucket_t::Sentinel() != _buckets ? _bucketMask + 1 : 0);
     }
     CONSTEXPR static size_t allocation_size_(size_t numBuckets) NOEXCEPT {
-        return (numBuckets * sizeof(bucket_t) + sizeof(FSSEHashStates)/* sentinel */);
+        return (numBuckets * sizeof(bucket_t) + sizeof(FSSEHashStates2)/* sentinel */);
     }
 
     NO_INLINE void rehash_ForCollision_() {
@@ -519,7 +539,7 @@ private:
             forrange(pbucket, oldBuckets, oldBuckets + oldNumBuckets) {
                 const m128i_t st = m128i_epi8_load_aligned(&pbucket->States);
                 for (bitmask_t bm{ m128i_epi8_findge(st, m128i_epi8_set_zero()) }; bm.Data; ) {
-                    const size_t it = bm.PopFront_AssumeNotEmpty();
+                    const u32 it = bm.PopFront_AssumeNotEmpty();
                     value_type* const pkey = &pbucket->at(it);
                     insert_AssertUnique(std::move(*pkey));
                     Meta::Destroy(pkey);
@@ -591,7 +611,7 @@ private:
 #if USE_PPE_ASSERT
     static size_t VECTORCALL find_ForAssert(const bucket_t& bucket, const m128i_t& st, const m128i_t& h16, const value_type& x) NOEXCEPT {
         for (bitmask_t bm{ m128i_epi8_findeq(st, h16) }; bm.Data; ) {
-            const size_t e = bm.PopFront_AssumeNotEmpty();
+            const u32 e = bm.PopFront_AssumeNotEmpty();
             if (key_equal()(bucket.at(e), x))
                 return e;
         }
