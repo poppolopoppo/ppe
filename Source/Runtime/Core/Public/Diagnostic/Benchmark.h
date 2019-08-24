@@ -52,13 +52,13 @@ public:
     u32 InputDim{ 1 };
     u32 BatchSize{ 1 };
 #if USE_PPE_ASSERT
+    u32 MinIterations{ FApproximateHistogram::MinSamples };
     u32 MaxIterations{ 5000 };
     double MaxVarianceError{ 1e-2 };
-    static constexpr u32 MinIterations = FApproximateHistogram::MinSamples;
 #else
+    u32 MinIterations{ Max(FApproximateHistogram::MinSamples * 2, 5000ul) };
     u32 MaxIterations{ 1000000 };
     double MaxVarianceError{ 1e-3 };
-    static constexpr u32 MinIterations = Max(FApproximateHistogram::MinSamples * 2, 5000ul);
 #endif
     u32 RandomSeed{ PPE_HASH_VALUE_SEED_32 };
 
@@ -166,13 +166,17 @@ public: // FState
     class FState {
     public:
         FState(const FBenchmark& benchmark)
-        :   _benchmark(benchmark) {
+        :   _benchmark(benchmark)
+        ,   _totalTime(0.0) {
+            Assert(_benchmark.MinIterations >= FApproximateHistogram::MinSamples);
+            Assert(_benchmark.MinIterations >= _benchmark.MaxIterations);
             _rnd.Seed(benchmark.RandomSeed);
         }
 
         FIterator begin();
         FIterator end();
 
+        double TotalTime() const { return _totalTime; }
         FThreefy_4x32& Random() { return _rnd; }
         const FApproximateHistogram& Histogram() const { return _histogram; }
 
@@ -222,15 +226,16 @@ public: // FState
 
                 const double t = (_timer.Reset() / (size_t(_benchmark.BatchSize) * _benchmark.InputDim));
 
+                _totalTime += t;
                 _histogram.AddSample(t, _rnd);
             }
         }
 
         NO_INLINE u32 RemainingIterations() const {
             return (
-                (_histogram.NumSamples > MinIterations) &&
-                ((_histogram.NumSamples > _benchmark.MaxIterations) |
-                 NearlyEquals(_histogram.Mean(), _histogram.WeightedMean(), _benchmark.MaxVarianceError))
+                (_histogram.NumSamples > _benchmark.MinIterations) && (
+                (_histogram.NumSamples > _benchmark.MaxIterations) |
+                (NearlyEquals(_histogram.Mean(), _histogram.WeightedMean(), _benchmark.MaxVarianceError)) )
                 ? 0 : LoopCount() );
         }
 
@@ -238,6 +243,7 @@ public: // FState
         const FBenchmark& _benchmark;
 
         FTimer _timer;
+        double _totalTime;
         FThreefy_4x32 _rnd;
         FApproximateHistogram _histogram;
 
@@ -286,6 +292,7 @@ public: // FRun
         u64 NumIterations{ 0 };
         double Min, Q1, Median, Q3, Max;
         double Mode, Mean;
+        double TotalTime;
     };
 
     template <typename _Benchmark, typename... _Args>
@@ -302,7 +309,8 @@ public: // FRun
             hist.Q3(),
             hist.Max(),
             hist.Mode(),
-            hist.WeightedMean() };
+            hist.WeightedMean(),
+            state.TotalTime() };
     }
 
 public: // TTable<>
@@ -337,8 +345,8 @@ public: // TTable<>
         size_t dim() const { return Dim; }
 
         TTable(const FStringView& name, _Benchmarks&&... headers)
-            : Name(name)
-            , Headers(std::forward<_Benchmarks>(headers)...)
+        :   Name(name)
+        ,   Headers(std::forward<_Benchmarks>(headers)...)
         {}
 
         ~TTable() {
@@ -434,7 +442,7 @@ public: // TTable<>
 
 public: // export table results
     template <typename... _Benchmarks>
-    static void WTxt(const TTable<_Benchmarks...>& table, FWTextWriter& oss) {
+    static void WTxt(const TTable<_Benchmarks...>& table, FWTextWriter& oss, bool detailed = false) {
         oss << L"Benchmark table <" << table.Name << L">, units = " << FCounter::Units() << L" :" << Eol;
 
         constexpr u32 header = 20;
@@ -452,27 +460,47 @@ public: // export table results
 
         oss << L'|' << Eol;
 
-        oss << Fmt::Repeat(L'-', (stride+1) * table.dim() + header) << Eol;
+        oss << Fmt::Repeat(L'=', (stride+1) * table.dim() + header) << Eol;
 
-        table.ForeachEntry([&oss, header, stride](const auto& x) {
-            oss << L'|'
-                << FTextFormat::Trunc(header, L' ')
-                << x.Name;
+        if (detailed) {
+            table.ForeachEntry([&oss, header, stride, table_dim{table.dim()}](const auto& x) {
+                oss << L'|' << FTextFormat::Trunc(header, L' ') << x.Name;
 
-            for (const auto& c : x.Row)
-                oss << L'|'
-                    << FTextFormat::Trunc(stride, L' ')
-                    << FTextFormat::Float(FTextFormat::FixedFloat, 6)
-                    << c.Median;
+                for (const auto& c : x.Row)
+                    oss << L'|'
+                        << FTextFormat::Trunc(stride, L' ')
+                        << FTextFormat::Float(FTextFormat::FixedFloat, 6)
+                        << c.Q1 << L'/'
+                        << FTextFormat::Trunc(stride, L' ')
+                        << FTextFormat::Float(FTextFormat::FixedFloat, 6)
+                        << c.Median << L'/'
+                        << FTextFormat::Trunc(stride, L' ')
+                        << FTextFormat::Float(FTextFormat::FixedFloat, 6)
+                        << c.Q3;
 
-            oss << L'|' << Eol;
-        });
+                oss << L'|' << Eol;
+            });
+        }
+        else {
+            table.ForeachEntry([&oss, header, stride, table_dim{table.dim()}](const auto& x) {
+                oss << L'|' << FTextFormat::Trunc(header, L' ') << x.Name;
+
+                for (const auto& c : x.Row)
+                    oss << L'|'
+                        << FTextFormat::Trunc(stride, L' ')
+                        << FTextFormat::Float(FTextFormat::FixedFloat, 6)
+                        << c.Median;
+
+                oss << L'|' << Eol;
+            });
+        }
     }
 
     template <typename... _Benchmarks>
     static void Log(const TTable<_Benchmarks...>& table) {
         FWStringBuilder sb;
-        WTxt(table, sb);
+        const bool detailed = (table.dim() < 5);
+        WTxt(table, sb, detailed);
         FLogger::Log(
             GLogCategory_Benchmark,
             FLogger::EVerbosity::Info,
@@ -511,7 +539,6 @@ public: // export table results
         table.ForeachHeader([&oss](const auto& x) {
             oss << ';' << x.Name;
         });
-        oss << Eol;
 
         table.ForeachEntry([&](const auto& x) {
             oss << x.Name << ";Min";

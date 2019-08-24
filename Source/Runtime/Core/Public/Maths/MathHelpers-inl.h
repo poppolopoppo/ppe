@@ -146,6 +146,8 @@ inline void SinCos(double radians, double *fsin, double *fcos) NOEXCEPT {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline bool NearlyEquals(float A, float B, float maxRelDiff/* = F_Epsilon */) NOEXCEPT {
+    Assert(maxRelDiff > 0);
+
     // Calculate the difference.
     const float diff = Abs(A - B);
     A = Abs(A);
@@ -158,6 +160,8 @@ inline bool NearlyEquals(float A, float B, float maxRelDiff/* = F_Epsilon */) NO
 }
 //----------------------------------------------------------------------------
 inline bool NearlyEquals(double A, double B, double maxRelDiff/* = D_Epsilon */) NOEXCEPT {
+    Assert(maxRelDiff > 0);
+
     // Calculate the difference.
     const double diff = Abs(A - B);
     A = Abs(A);
