@@ -1262,7 +1262,7 @@ void FMallocBinned::Free(void* ptr) {
 
         FBinnedBucket_& bk = GBinnedThreadBuckets_[ch->SizeClass];
 
-        if (Likely(bk.UsedChunks == ch && bk.NumBlocksInUse > 1)) {
+        if (Likely((bk.UsedChunks == ch) & (bk.NumBlocksInUse > 1))) {
             Assert_NoAssume(bk.UsedChunks->FreeBlocks == (FBinnedBlock_*)intptr_t(-1));
 
             blk->Next = bk.FreeBlocks;
@@ -1285,7 +1285,7 @@ void* FMallocBinned::Realloc(void* ptr, size_t size) {
     Assert_NoAssume(ptr || size);
 
     if (Likely(ptr)) {
-        void* newp;
+        void* newp = nullptr;
 
         if (Likely(size)) {
             const size_t old = FMallocBinned::RegionSize(ptr);
@@ -1302,9 +1302,6 @@ void* FMallocBinned::Realloc(void* ptr, size_t size) {
 
             // copy previous data to new block without polluting caches
             FPlatformMemory::Memstream(newp, ptr, cpy);
-        }
-        else {
-            newp = nullptr;
         }
 
         // release old block
@@ -1391,6 +1388,7 @@ bool FMallocBinned::FetchMediumMips(
     Assert(mipMasks);
 
 #   if USE_MALLOCBINNED_MIPMAPS
+    // #TODO : this is *really* ugly, even for debug code :/
     constexpr size_t NumReserved = PPE_MIPMAPS_RESERVEDSIZE / FBinnedMediumBlocks_::TopMipSize;
     static u32 GMips[NumReserved];
 
