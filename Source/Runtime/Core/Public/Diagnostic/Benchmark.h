@@ -540,6 +540,8 @@ public: // export table results
             oss << ';' << x.Name;
         });
 
+        oss << Eol;
+
         table.ForeachEntry([&](const auto& x) {
             oss << x.Name << ";Min";
             for (const auto& c : x.Row)
