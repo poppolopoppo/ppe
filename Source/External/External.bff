@@ -13,6 +13,7 @@
 
     #include "double-conversion/double-conversion.bff"
     #include "farmhash/farmhash.bff"
+    #include "iaca/iaca.bff"
     #include "lz4/lz4.bff"
     #include "stb/stb.bff"
     #include "renderdoc/renderdoc.bff"
