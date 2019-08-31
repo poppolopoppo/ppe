@@ -17,14 +17,12 @@
 #   define PPE_SSEHASHSET4_MICROPROFILING
 #endif
 
-// using AVX256
-
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FSimdHashData {
-    STATIC_CONST_INTEGRAL(u32, Capacity, 16);
+    STATIC_CONST_INTEGRAL(u32, GroupSize, 16);
     using state_t = i8;
     using bmask_t = TBitMask<u32>;
 
@@ -36,7 +34,8 @@ struct FSimdHashData {
     STATIC_CONST_INTEGRAL(u32, FillRatio, 70); // 70% filled <=> 30% slack
     STATIC_CONST_INTEGRAL(u32, SlackFactor, ((100 + (100 - FillRatio)) * 128) / 100);
 
-    static ALIGN(16) CONSTEXPR const Meta::TArray<state_t, Capacity> GSentinel{ kSentinel };
+    static CONSTEXPR ALIGN(16) const Meta::TArray<state_t, GroupSize> GSentinel{ kSentinel };
+    static CONSTEXPR const void* PSentinel{ &GSentinel };
 
     u32 Size;
     u32 CapacityM1;
@@ -46,7 +45,7 @@ struct FSimdHashData {
     CONSTEXPR FSimdHashData() NOEXCEPT
     :   Size(0)
     ,	CapacityM1(0)
-    ,	StatesAndBuckets(const_cast<void*>(&GSentinel))
+    ,	StatesAndBuckets(const_cast<void*>(PSentinel))
     {}
 
     CONSTEXPR FSimdHashData(FSimdHashData&& rvalue)
@@ -54,11 +53,12 @@ struct FSimdHashData {
         Swap(rvalue);
     }
 
-    u32 Capacity() const { return (CapacityM1 ? CapacityM1 + 1 : 0); }
-    void* Buckets() const { return States(Capacity()); }
-    state_t* States(u32 i) const { return (static_cast<state_t*>(StatesAndBuckets) + i); }
+    CONSTEXPR bool HasAllocation() const NOEXCEPT { return (PSentinel != StatesAndBuckets); }
+    CONSTEXPR u32 Capacity() const { return (HasAllocation() ? CapacityM1 + 1 : 0); }
+    CONSTEXPR void* Buckets() const { return States(Capacity() + 1/* sentinel */); }
+    CONSTEXPR state_t* States(u32 i) const { return (static_cast<state_t*>(StatesAndBuckets) + i);  }
 
-    void Swap(FSimdHashData& rvalue) {
+    CONSTEXPR void Swap(FSimdHashData& rvalue) NOEXCEPT {
         using std::swap;
         swap(Size, rvalue.Size);
         swap(CapacityM1, rvalue.CapacityM1);
@@ -66,23 +66,32 @@ struct FSimdHashData {
     }
 
     template <typename T>
-    CONSTEXPR size_t AllocSize() NOEXCEPT {
-        return ((sizeof(T) + sizeof(state_t)) * Capacity());
+    CONSTEXPR static u32 AllocSize(u32 n) NOEXCEPT {
+        return ((sizeof(T) + sizeof(state_t)) * n + (sizeof(state_t) * GroupSize/* sentinel */));
     }
 
-    CONSTEXPR static size_t SizeWSlack(size_t n) NOEXCEPT {
-
+    CONSTEXPR static u32 SizeWSlack(u32 n) NOEXCEPT {
+        return ((n * SlackFactor) / 128);
     }
+
+#ifdef USE_PPE_ASSERT
+    static bool IsSentinel(m128i_t* it) NOEXCEPT {
+        return (m128i_epi8_findeq(
+            m128i_epi8_load_stream(it),
+            m128i_epi8_set_zero()
+        )   == m128i_mask_all_ones );
+    }
+#endif
 
     template <typename T, typename _Allocator>
     void Allocate(_Allocator& al, size_t capacity) {
         using alloc_traits = TAllocatorTraits<_Allocator>;
         Assert(capacity);
-        Assert(nullptr == StatesAndBuckets);
+        Assert(0 == Size);
         Assert_NoAssume(Meta::IsPow2(capacity));
 
         CapacityM1 = (capacity - 1);
-        StatesAndBuckets = alloc_traits::Allocate(al, AllocSize<T>()).Data;
+        StatesAndBuckets = alloc_traits::Allocate(al, AllocSize<T>(capacity)).Data;
     }
 
     template <typename T, typename _Allocator>
@@ -90,66 +99,91 @@ struct FSimdHashData {
         using alloc_traits = TAllocatorTraits<_Allocator>;
         Assert(CapacityM1);
         Assert(StatesAndBuckets);
+        Assert(0 == Size);
+        Assert(HasAllocation());
 
-        alloc_traits::Deallocate(al, FAllocatorBlock{ StatesAndBuckets, AllocSize<T>() );
+        alloc_traits::Deallocate(al, FAllocatorBlock{ StatesAndBuckets, AllocSize<T>(CapacityM1 + 1) );
     }
 
-    void ResetStates() {
-        for(m128i_t* it = (m128i_t*)StatesAndBuckets,
-            m128i_t* const iend = (it + Capacity());
+    void ResetStates() NOEXCEPT {
+        Assert(HasAllocation());
+
+        m128i_t* __restrict it = (m128i_t*)States(0);
+        for(m128i_t* const __restrict iend = (m128i_t*)States(Capacity());
             it != iend; ++it) {
             m128i_epi8_store_aligned(it, m128i_epi8_set_true());
         }
+
+        // set sentinel value
+        m128i_epi8_store_stream(it, m128i_epi8_set_zero);
     }
 
     template <typename T>
     void Destroy() NOEXCEPT {
         Assert(CapacityM1);
         Assert(StatesAndBuckets);
+        Assert(HasAllocation());
 
-        IF_CONSTEXPR(not Meta::has_trivial_destructor<T>::value) {
-#if USE_PPE_ASSERT // reset both states and values in debug
-            const size_t sizeInBytes = AllocSize<T>();
-#else // reset only states otherwise
-            const size_t sizeInBytes = (sizeof(state_t) * Capacity());
+        IF_CONSTEXPR(Meta::has_trivial_destructor<T>::value) {
+            ResetStates();
+#if USE_PPE_ASSERT // also stomp values in debug
+            FPlatformMemory::Memdeadbeef(Buckets(), (CapacityM1 + 1) * sizeof(T));
 #endif
-            FPlatformMemory::Memset(StatesAndBuckets, kEmpty, sizeInBytes);
         }
         else {
-            for(m128i_t* const it = (m128i_t*)StatesAndBuckets,
-                m128i_t* const iend = (it + Capacity());
+            T* const __restrict pbuckets = (T*)Buckets();
+
+            for(m128i_t* __restrict it = (m128i_t*)States(0),
+                m128i_t* __restrict const iend = (m128i_t*)States(Capacity());
                 it != iend; ++it ) {
                 const u32 off = checked_cast<u32>((state_t*)it - (state_t*)StatesAndBuckets);
+
                 const m128i_t st = m128i_epi8_load_stream(it);
                 for(bmask_t used{ m128i_epi8_findge(st, m128i_epi8_set_zero()) }; used.Data; ) {
+                    Assert_NoAssume(Size);
+                    ONLY_IF_ASSERT(Size--);
+
                     const u32 e = used.PopFront_AssumeNotEmpty();
                     Meta::Destroy((T*)Buckets() + (off + e));
                 }
+
                 m128i_epi8_store_aligned(it, m128i_epi8_set_true());
             }
+
+            Assert_NoAssume(0 == Size);
         }
+
+        Size = 0;
     }
 
     template <typename T>
-    void Copy(const FSimdHashData& other) NOEXCEPT {
+    void Copy(const FSimdHashData& other) {
+        Assert(this != &other);
+        Assert(0 == Size);
         Assert(CapacityM1 == other.CapacityM1);
+        Assert(HasAllocation());
 
         Size = rvalue.Size;
 
         IF_CONSTEXPR(Meta::has_trivial_copy<T>::value) {
-            FPlatformMemory::MemcpyLarge(StatesAndBuckets, other.StatesAndBuckets, AllocSize<T>());
+            FPlatformMemory::MemcpyLarge(StatesAndBuckets, other.StatesAndBuckets, AllocSize<T>(CapacityM1 + 1));
         }
         else {
-            for(m128i_t const* psrc = (m128i_t const*)StatesAndBuckets,
-                m128i_t* pdst = (m128i_t*)other.StatesAndBuckets,
-                m128i_t* const pend = (pdst + Capacity());
+            T* const __restrict dbuckets = (T*)Buckets();
+            const T* const __restrict sbuckets = (const T*)other.Buckets();
+
+            for(m128i_t const* __restrict psrc = (m128i_t const*)other.States(0),
+                m128i_t* __restrict pdst = (m128i_t*)States(0),
+                m128i_t* const __restrict pend = (m128i_t*)States(Capacity());
                 pdst != pend; ++psrc, ++pdst ) {
                 const u32 off = checked_cast<u32>((state_t*)pdst - (state_t*)StatesAndBuckets);
+
                 const m128i_t st = m128i_epi8_load_stream(psrc);
                 for (bmask_t used{ m128i_epi8_findge(st, m128i_epi8_set_zero()) }; used.Data; ) {
                     const u32 e = used.PopFront_AssumeNotEmpty();
-                    Meta::Construct((T*)Buckets() + (off + e), (const T*)other.Buckets() + (off + e));
+                    Meta::Construct(dbuckets + (off + e), sbuckets + (off + e));
                 }
+
                 m128i_epi8_store_stream(pdst, st);
             }
         }
@@ -157,32 +191,45 @@ struct FSimdHashData {
 
     template <typename T>
     void Move(FSimdHashData&& rvalue) NOEXCEPT {
+        Assert(this != &rvalue);
         Assert(0 == Size);
         Assert(CapacityM1 == rvalue.CapacityM1);
+        Assert(HasAllocation());
 
         Size = rvalue.Size;
-        rvalue.Size = 0;
 
         IF_CONSTEXPR(Meta::has_trivial_move<T>::value) {
-            FPlatformMemory::MemcpyLarge(StatesAndBuckets, rvalue.StatesAndBuckets, AllocSize<T>());
-            rvalue.Destroy();
+            FPlatformMemory::MemcpyLarge(StatesAndBuckets, rvalue.StatesAndBuckets, AllocSize<T>(CapacityM1 + 1));
+            rvalue.Destroy<T>();
         }
         else {
-            for(m128i_t* psrc = (m128i_t*)StatesAndBuckets,
-                m128i_t* pdst = (m128i_t*)rvalue.StatesAndBuckets,
-                m128i_t* const pend = (pdst + Capacity());
+            T* const __restrict dbuckets = (T*)Buckets();
+            T* const __restrict sbuckets = (T*)rvalue.Buckets();
+
+            for(m128i_t const* __restrict psrc = (m128i_t const*)other.States(0),
+                m128i_t* __restrict pdst = (m128i_t*)States(0),
+                m128i_t* const __restrict pend = (m128i_t*)States(Capacity());
                 pdst != pend; ++psrc, ++pdst ) {
                 const u32 off = checked_cast<u32>((state_t*)pdst - (state_t*)StatesAndBuckets);
+
                 const m128i_t st = m128i_epi8_load_stream(psrc);
                 for (bmask_t used{ m128i_epi8_findge(st, m128i_epi8_set_zero()) }; used.Data; ) {
+                    Assert_NoAssume(rvalue.Size);
+                    ONLY_IF_ASSERT(rvalue.Size--);
+
                     const u32 e = used.PopFront_AssumeNotEmpty();
-                    T* const tsrc = ((T*)rvalue.Buckets()) + (off + e);
-                    Meta::Construct((T*)Buckets() + (off + e), std::move(*tsrc));
+
+                    T* const tsrc = (sbuckets + (off + e));
+                    Meta::Construct(dbuckets + (off + e), std::move(*tsrc));
                     Meta::Destroy(tsrc);
                 }
+
                 m128i_epi8_store_stream(pdst, st);
                 m128i_epi8_store_aligned(psrc, m128i_epi8_set_true());
             }
+
+            Assert_NoAssume(0 == rvalue.Size);
+            rvalue.Size = 0;
         }
     }
 };
@@ -270,8 +317,6 @@ public:
     using allocator_type = _Allocator;
     using allocator_traits = TAllocatorTraits<allocator_type>;
 
-    using data_t = FSimdHashData;
-
     typedef value_type& reference;
     typedef const value_type& const_reference;
     typedef Meta::TAddPointer<value_type> pointer;
@@ -287,7 +332,7 @@ public:
     CONSTEXPR TSimdHashSet4(Meta::FForceInit fi) NOEXCEPT : _data(fi) {}
 
     FORCE_INLINE ~TSimdHashSet4() {
-        if (has_content_())
+        if (_data.HasAllocation())
             releaseMemory_ForDtor_();
     }
 
@@ -310,48 +355,26 @@ public:
     void assign(const TSimdHashSet4& other) {
         Assert(&other != this);
 
-        if (not other._size) {
-            clear();
-            return;
+        if (_data.Size)
+            _data.Destroy<_Key>();
+
+        if (other.empty())
+            return; // keep potentially allocated block
+
+        Assert_NoAssume(other._data.HasAllocation());
+
+        const u32 numBuckets = other._data.Capacity();
+        if (_data.Capacity() != numBuckets) {
+            if (_data.HasAllocation())
+                _data.Deallocate<_Key>(alloc_());
+
+            _data.Allocate<_Key>(alloc_(), numBuckets);
         }
 
-        Assert_NoAssume(other.num_buckets_());
-        Assert_NoAssume(other._buckets != bucket_t::Sentinel());
+        _data.Copy<_Key>(other._data);
 
-        const u32 numBuckets = other.num_buckets_();
-        const u32 allocSize = checked_cast<u32>(allocation_size_(numBuckets));
-
-        if (num_buckets_() != other.num_buckets_()) {
-            if (has_content_())
-                releaseMemory_ForDtor_();
-
-            _bucketMask = other._bucketMask;
-            _buckets = (bucket_t*)allocator_traits::Allocate(*this, allocSize).Data;
-        }
-        else {
-            IF_CONSTEXPR(not Meta::has_trivial_destructor<value_type>::value) {
-                clear();
-            }
-
-            Assert_NoAssume(other._bucketMask == _bucketMask);
-        }
-
-        _size = other._size;
-
-        // trivial copy, don't try to rehash
-        IF_CONSTEXPR(Meta::has_trivial_copy<value_type>::value) {
-            FPlatformMemory::MemcpyLarge(_buckets, other._buckets, allocSize);
-        }
-        else {
-            std::uninitialized_copy(
-                other._buckets, other._buckets + numBuckets,
-                MakeCheckedIterator(_buckets, numBuckets, 0) );
-
-            // initialize sentinel :
-            m256i_epi8_store_aligned(&_buckets[numBuckets].States, m256i_epi8_set_zero());
-        }
-
-        Assert_NoAssume(_buckets[numBuckets].is_sentinel());
+        Assert_NoAssume(other._data.Size == _data.Size);
+        Assert_NoAssume(other._data.CapacityM1 == _data.CapacityM1);
     }
 
     void assign(TSimdHashSet4&& rvalue) {
@@ -359,9 +382,9 @@ public:
         _data.Swap(rvalue._data);
     }
 
-    CONSTEXPR bool empty() const { return (0 == _size); }
-    CONSTEXPR size_t size() const { return _size; }
-    CONSTEXPR size_t capacity() const { return (num_buckets_() * bucket_t::Capacity); }
+    CONSTEXPR bool empty() const { return (0 == _data.Size); }
+    CONSTEXPR size_t size() const { return _data.Size; }
+    CONSTEXPR size_t capacity() const { return _data.Capacity(); }
 
     iterator begin() { return iterator_begin_<false>(); }
     iterator end() { return iterator_end_<false>(); }
@@ -534,29 +557,14 @@ public:
 #endif
 
 private:
-    using bitmask_t = typename bucket_t::bitmask_t;
+    using bmask_t = typename FSimdHashData::bmask_t;
 
     STATIC_ASSERT(Meta::has_trivial_destructor<hasher>::value);
-    STATIC_CONST_INTEGRAL(u32, FillRatio, 70); // 70% filled <=> 30% slack
-    STATIC_CONST_INTEGRAL(u32, SlackFactor, ((100 + (100 - FillRatio)) * 128) / 100);
 
-    u32 _size;
-    u32 _bucketMask;
-    bucket_t* _buckets;
+    FSimdHashData _data;
 
-    static CONSTEXPR size_t size_with_slack_(size_t n) NOEXCEPT {
-        return ((n * SlackFactor) / 128);
-    }
-
-    CONSTEXPR bool has_content_() const NOEXCEPT {
-        return (_bucketMask | _size);
-    }
-    CONSTEXPR u32 num_buckets_() const NOEXCEPT {
-        return (bucket_t::Sentinel() != _buckets ? _bucketMask + 1 : 0);
-    }
-    CONSTEXPR static size_t allocation_size_(size_t numBuckets) NOEXCEPT {
-        return (numBuckets * sizeof(bucket_t) + sizeof(FSSEHashStates3)/* sentinel */);
-    }
+    allocator_type& alloc_() NOEXCEPT { return (*this); }
+    const allocator_type& alloc_() const NOEXCEPT { return (*this); }
 
     NO_INLINE void rehash_ForCollision_() {
         rehash_(Max(u32(1), num_buckets_() * 2) * bucket_t::Capacity);

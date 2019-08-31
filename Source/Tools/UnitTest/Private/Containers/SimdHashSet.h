@@ -10,6 +10,8 @@
 #include "Meta/PointerWFlags.h"
 #include "Meta/Iterator.h"
 
+#include "Intel_IACA.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -288,6 +290,7 @@ public:
         return insert(_Key(key));
     }
     TPair<iterator, bool> insert(_Key&& key) {
+        //INTEL_IACA_START();
         u32 h0 = u32(hasher()(key));
         m128i_t h1 = m128i_epi8_broadcast(i8(h0 & 0x7f));
         h0 = (h0 >> 7);
@@ -306,7 +309,9 @@ public:
                     return MakePair(iterator{ &_buckets[bk], it }, false);
             }
 
-            it = u32(m128i_epi8_replace_first_assume_unique(&st, m128i_epi8_set_true(), h1));
+            m128i_t mask_epi8 = m128i_epi8_tzcnt_mask(::_mm_cmplt_epi8(st, m128i_epi8_set_zero()));
+            st = m128i_epi8_blend(st, h1, mask_epi8);
+            it = u32(FPlatformMaths::tzcnt(m128i_epi8_tznct_mask() | mask16_t(::_mm_movemask_epi8(mask_epi8))));
             if (Likely(it < bucket_t::Capacity))
                 break;
 
@@ -315,11 +320,14 @@ public:
         Assert_NoAssume(bk < num_buckets_());
         Assert_NoAssume(not _buckets[bk].is_sentinel());
 
-        ++_size;
         m128i_epi8_store_aligned(&_buckets[bk].States, st);
+
         Assert_NoAssume(not _buckets[bk].is_sentinel());
         Meta::Construct(&_buckets[bk].at(it), std::move(key));
 
+        ++_size;
+
+        //INTEL_IACA_END();
         return MakePair(iterator{ &_buckets[bk], it }, true);
     }
 

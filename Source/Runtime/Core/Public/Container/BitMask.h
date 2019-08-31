@@ -76,6 +76,9 @@ struct TBitMask {
         Assert(Data);
         return FPlatformMaths::tzcnt(Data);
     }
+    word_t FirstBitSet_Unsafe() const NOEXCEPT {
+        return FPlatformMaths::tzcnt(Data);
+    }
 
     word_t LastBitSet_AssumeNotEmpty() const NOEXCEPT {
         Assert(Data);
@@ -90,6 +93,12 @@ struct TBitMask {
 
     word_t PopFront_AssumeNotEmpty() NOEXCEPT {
         Assert(Data);
+        const word_t front = FPlatformMaths::tzcnt(Data);
+        Data &= ~(One << front);
+        return front;
+    }
+
+    word_t PopFront_Unsafe() NOEXCEPT {
         const word_t front = FPlatformMaths::tzcnt(Data);
         Data &= ~(One << front);
         return front;

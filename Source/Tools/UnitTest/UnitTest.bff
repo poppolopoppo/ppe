@@ -7,6 +7,7 @@
     {
         'External/double-conversion',
         'External/farmhash',
+        'External/iaca',
         'External/lz4',
         'External/xxHash',
     }
@@ -29,5 +30,6 @@
     }
     .ProjectPCHConfig = .PCHDisabled
     .UnityNumFiles = 1 // generated
+    .ProjectUseUnity = .False // better iteration times
     #include "$BuildPath$/Templates/Module.bff"
 }

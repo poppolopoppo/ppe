@@ -26,6 +26,9 @@ namespace PPE {
 using mask16_t = u16;
 using m128i_t = ::__m128i;
 //----------------------------------------------------------------------------
+static CONSTEXPR mask16_t m128i_mask_all_ones{ 0xFFFF };
+static CONSTEXPR mask16_t m128i_mask_all_zeros{ 0 };
+//----------------------------------------------------------------------------
 #define m128i_epi8_tznct_mask() u32(1 << 16)
 #define m128i_epi8_broadcast(v) ::_mm_set1_epi8(v)
 #define m128i_epi8_set_zero() ::_mm_setzero_si128()
@@ -46,25 +49,33 @@ using m128i_t = ::__m128i;
 #else
 #   define m128i_epi8_blend(if_false, if_true, m) ::_mm_xor_si128(if_false, ::_mm_and_si128(m, ::_mm_xor_si128(if_true, if_false)))
 #endif
-#define m128i_epi8_findlt(v, h) mask16_t(::_mm_movemask_epi8(::_mm_cmplt_epi8(v, h)))
-#define m128i_epi8_findgt(v, h) mask16_t(::_mm_movemask_epi8(::_mm_cmpgt_epi8(v, h)))
+//----------------------------------------------------------------------------
+#define m128i_epi8_cmpeq(a, b) ::_mm_cmpeq_epi8(a, b)
+#define m128i_epi8_cmplt(a, b) ::_mm_cmplt_epi8(a, b)
+#define m128i_epi8_cmpgt(a, b) ::_mm_cmpgt_epi8(a, b)
 #if 1
-#	define m128i_epi8_findle(v, h) mask16_t(::_mm_movemask_epi8(::_mm_cmpeq_epi8(::_mm_min_epi8(v, h), v)))
-#	define m128i_epi8_findge(v, h) m128i_epi8_findle(h, v)
+#   define m128i_epi8_cmple(a, b) ::_mm_cmpeq_epi8(::_mm_min_epi8(a, b), a)
+#   define m128i_epi8_cmpge(a, b) m128i_epi8_cmple(b, a)
 #else
-#	define m128i_epi8_findge(v, h) mask16_t(::_mm_movemask_epi8(::_mm_or_si128(::_mm_cmpgt_epi8(v, h), ::_mm_cmpeq_epi8(v, h))))
+#   define m128i_epi8_cmple(a, b) ::_mm_or_si128(::_mm_cmplt_epi8(a, b), ::_mm_cmpeq_epi8(a, b))
+#   define m128i_epi8_cmpge(a, b) ::_mm_or_si128(::_mm_cmpgt_epi8(a, b), ::_mm_cmpeq_epi8(a, b))
 #endif
-#define m128i_epi8_findeq(v, h) mask16_t(::_mm_movemask_epi8(::_mm_cmpeq_epi8(v, h)))
-#define m128i_epi8_findeq_after(v, h, i) mask16_t(::_mm_movemask_epi8(::_mm_and_si128( \
+//----------------------------------------------------------------------------
+#define m128i_epi8_movemask(m) mask16_t(::_mm_movemask_epi8(m))
+#define m128i_epi8_maskmoveu(v, m, p) ::_mm_maskmoveu_si128(v, m, (char*)(p))
+//----------------------------------------------------------------------------
+#define m128i_epi8_findlt(v, h) m128i_epi8_movemask(m128i_epi8_cmplt(v, h))
+#define m128i_epi8_findgt(v, h) m128i_epi8_movemask(m128i_epi8_cmpgt(v, h))
+#define m128i_epi8_findle(v, h) m128i_epi8_movemask(m128i_epi8_cmple(v, h))
+#define m128i_epi8_findge(v, h) m128i_epi8_movemask(m128i_epi8_cmpge(v, h))
+#define m128i_epi8_findeq(v, h) m128i_epi8_movemask(m128i_epi8_cmpeq(v, h))
+#define m128i_epi8_findneq(v, h) m128i_epi8_movemask(::_mm_cmpeq_epi8(::_mm_cmpeq_epi8(v, h), ::_mm_setzero_si128()))
+#define m128i_epi8_findeq_after(v, h, i) m128i_epi8_movemask(::_mm_and_si128( \
     ::_mm_cmpeq_epi8(v, h), \
-    ::_mm_cmpgt_epi8(::_mm_set_epi64x(0x0f0e0d0c0b0a0908ULL, 0x0706050403020100ULL), ::_mm_set1_epi8(i)) )))
-#define m128i_epi8_findneq(v, h) mask16_t(::_mm_movemask_epi8(::_mm_cmpeq_epi8(::_mm_cmpeq_epi8(v, h), ::_mm_setzero_si128())))
-#define m128i_epi8_findneq_after(v, h, i) mask16_t(::_mm_movemask_epi8(::_mm_andnot_si128( \
+    ::_mm_cmpgt_epi8(::_mm_set_epi64x(0x0f0e0d0c0b0a0908ULL, 0x0706050403020100ULL), ::_mm_set1_epi8(i)) ))
+#define m128i_epi8_findneq_after(v, h, i) m128i_epi8_movemask(::_mm_andnot_si128( \
     ::_mm_cmpeq_epi8(v, h), \
-    ::_mm_cmpgt_epi8(::_mm_set_epi64x(0x0f0e0d0c0b0a0908ULL, 0x0706050403020100ULL), ::_mm_set1_epi8(i)) )))
-#define m128i_epi8_findge_after(v, h, i) mask16_t(::_mm_movemask_epi8(::_mm_andnot_si128( \
-    ::_mm_cmplt_epi8(v, h), \
-    ::_mm_cmpgt_epi8(::_mm_set_epi64x(0x0f0e0d0c0b0a0908ULL, 0x0706050403020100ULL), ::_mm_set1_epi8(i)) )))
+    ::_mm_cmpgt_epi8(::_mm_set_epi64x(0x0f0e0d0c0b0a0908ULL, 0x0706050403020100ULL), ::_mm_set1_epi8(i)) ))
 //----------------------------------------------------------------------------
 FORCE_INLINE m128i_t VECTORCALL m128i_epi8_mask_move(mask16_t m) NOEXCEPT {
     m128i_t mask = ::_mm_set1_epi16(m);
@@ -74,7 +85,7 @@ FORCE_INLINE m128i_t VECTORCALL m128i_epi8_mask_move(mask16_t m) NOEXCEPT {
     return mask;
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE m128i_t VECTORCALL m128i_epi8_tzcnt_mask(const m128i_t& mask_epi8) NOEXCEPT {
+FORCE_INLINE m128i_t VECTORCALL m128i_epi8_tzcnt_mask(m128i_t mask_epi8) NOEXCEPT {
     const m128i_t shuf_epi64 = ::_mm_set_epi64x(0x0706050403020100ULL, 0x8080808080808080ULL);
     const m128i_t shuf_epi32 = ::_mm_set_epi64x(0x0b0a090880808080ULL, 0x0302010080808080ULL);
     const m128i_t shuf_epi16 = ::_mm_set_epi64x(0x0d0c808009088080ULL, 0x0504808001008080ULL);
@@ -90,23 +101,23 @@ FORCE_INLINE m128i_t VECTORCALL m128i_epi8_tzcnt_mask(const m128i_t& mask_epi8) 
         ::_mm_and_si128(nmsk_epi16, nmsk_epi8)));
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE size_t VECTORCALL m128i_epi8_replace_first_assume_unique(m128i_t* st, const m128i_t& hold, const m128i_t& hnew) NOEXCEPT {
+FORCE_INLINE mask16_t VECTORCALL m128i_epi8_replace_first_assume_unique(m128i_t* st, const m128i_t& hold, const m128i_t& hnew) NOEXCEPT {
     Assert(st);
     m128i_t mask_epi8 = m128i_epi8_tzcnt_mask(::_mm_cmpeq_epi8(*st, hold));
     *st = m128i_epi8_blend(*st, hnew, mask_epi8);
-    return FPlatformMaths::tzcnt(m128i_epi8_tznct_mask() | size_t(::_mm_movemask_epi8(mask_epi8)));
+    return mask16_t(FPlatformMaths::tzcnt(m128i_epi8_tznct_mask() | m128i_epi8_movemask(mask_epi8)));
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE size_t VECTORCALL m128i_epi8_replace_first_loop(m128i_t* st, m128i_t* visited, const m128i_t& hold, const m128i_t& hnew) NOEXCEPT {
+FORCE_INLINE mask16_t VECTORCALL m128i_epi8_replace_first_loop(m128i_t* st, m128i_t* visited, const m128i_t& hold, const m128i_t& hnew) NOEXCEPT {
     Assert(st);
     Assert(visited);
     m128i_t mask_epi8 = m128i_epi8_tzcnt_mask(::_mm_andnot_si128(*visited, ::_mm_cmpeq_epi8(*st, hold)));
     *visited = ::_mm_or_si128(*visited, mask_epi8);
     *st = m128i_epi8_blend(*st, hnew, mask_epi8);
-    return FPlatformMaths::tzcnt(m128i_epi8_tznct_mask() | size_t(::_mm_movemask_epi8(mask_epi8)));
+    return mask16_t(FPlatformMaths::tzcnt(m128i_epi8_tznct_mask() | m128i_epi8_movemask(mask_epi8)));
 }
 //----------------------------------------------------------------------------
-FORCE_INLINE m128i_t VECTORCALL m128i_epi8_remove_at(const m128i_t& st, size_t i) NOEXCEPT {
+FORCE_INLINE m128i_t VECTORCALL m128i_epi8_remove_at(m128i_t st, size_t i) NOEXCEPT {
     m128i_t mask_epi8 = ::_mm_set1_epi16(size_t(1) << i);
     mask_epi8 = ::_mm_shuffle_epi8(mask_epi8, ::_mm_set_epi64x(0x0101010101010101ULL, 0x0000000000000000ULL));
     mask_epi8 = ::_mm_or_si128(mask_epi8, ::_mm_set1_epi64x(0x7fbfdfeff7fbfdfeULL));
@@ -144,7 +155,7 @@ using m256i_t = ::__m256i;
 #   define m256i_epi8_findgt(v, h) mask32_t(::_mm256_movemask_epi8(::_mm256_cmpgt_epi8(v, h)))
 #	if 1
 #		define m256i_epi8_findle(v, h) mask32_t(::_mm256_movemask_epi8(::_mm256_cmpeq_epi8(::_mm256_min_epi8(v, h), v)))
-#		define m256i_epi8_findge(v, h) m256i_epi8_findle(h, v) 
+#		define m256i_epi8_findge(v, h) m256i_epi8_findle(h, v)
 #	else
 #		define m256i_epi8_findge(v, h) mask32_t(::_mm256_movemask_epi8(::_mm256_or_si256(::_mm256_cmpgt_epi8(v, h), ::_mm256_cmpeq_epi8(v, h))))
 #	endif

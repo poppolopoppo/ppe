@@ -144,13 +144,13 @@ struct TSSEHashIterator3 : Meta::TIterator<Meta::TConditional<_Const, Meta::TAdd
 
     CONSTEXPR TSSEHashIterator3(bucket_t* bucket, u32 slot) NOEXCEPT
     :	pBucket(bucket)
-    ,	iSlot(slot) 
+    ,	iSlot(slot)
     {}
 
     template <bool _Other>
     CONSTEXPR TSSEHashIterator3(const TSSEHashIterator3<T, _Other>& other) NOEXCEPT
     :	pBucket(other.pBucket)
-    ,	iSlot(other.iSlot) 
+    ,	iSlot(other.iSlot)
     {}
     template <bool _Other>
     CONSTEXPR TSSEHashIterator3& operator =(const TSSEHashIterator3<T, _Other>& other) NOEXCEPT {
@@ -319,9 +319,9 @@ public:
     PPE_SSEHASHSET3_MICROPROFILING TPair<iterator, bool> insert(_Key&& rkey) {
         const u32 hh = u32(hasher()(rkey));
         const u32 h0 = (hh >> 7);
-        
+
         FPlatformMemory::ReadPrefetch(_buckets, h0 & _bucketMask);
-        
+
         const i8 h1 = i8(hh & 0x7f);
 
         for (;;) {
