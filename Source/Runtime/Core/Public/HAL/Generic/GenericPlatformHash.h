@@ -9,6 +9,15 @@ namespace PPE {
 struct PPE_CORE_API FGenericPlatformHash {
 public: // must be defined for every platform
 
+    static size_t CRC32(u32 v) NOEXCEPT = delete;
+    static size_t CRC32(u64 v) NOEXCEPT = delete;
+    static size_t CRC32(u96 v) NOEXCEPT = delete;
+    static size_t CRC32(u128 v) NOEXCEPT = delete;
+    static size_t CRC32(u160 v) NOEXCEPT = delete;
+    static size_t CRC32(u192 v) NOEXCEPT = delete;
+    static size_t CRC32(u224 v) NOEXCEPT = delete;
+    static size_t CRC32(u256 v) NOEXCEPT = delete;
+
     static u32 CRC32(u32 seed, const void* p, size_t size) NOEXCEPT;
 
     static u32 FNV1a32(u32 seed, const void* key, const size_t sizeInBytes) NOEXCEPT {

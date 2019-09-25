@@ -6,12 +6,16 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace details {
+//----------------------------------------------------------------------------
 // Understanding the Linux Kernel
 // https://books.google.fr/books?id=h0lltXyJ8aIC&lpg=PT109&ots=gO2uM_c7FQ&dq=The%20Magic%20Constant%20linux%20hash&hl=fr&pg=PT109#v=onepage&q=The%20Magic%20Constant%20linux%20hash&f=false
 // 2^31 + 2^29 - 2^25 + 2^22 - 2^19 - 2^16 + 1
 #define GOLDEN_RATIO_PRIME_32 0x9e370001UL
 // 2^63 + 2^61 - 2^57 + 2^54 - 2^51 - 2^18 + 1
 #define GOLDEN_RATIO_PRIME_64 0x9e37fffffffc0001ULL
+//----------------------------------------------------------------------------
+#define GOLDEN_RATIO_PRIME CODE3264(GOLDEN_RATIO_PRIME_32, GOLDEN_RATIO_PRIME_64)
 //----------------------------------------------------------------------------
 // Random generated hash value seeds :
 // '0x' << Array.new(8).collect!{ rand(16).to_s(16).upcase }.join << 'ul'
@@ -20,6 +24,85 @@ namespace PPE {
 #define PPE_HASH_VALUE_SEED_64 0x829787DB44E899F5ull
 //----------------------------------------------------------------------------
 #define PPE_HASH_VALUE_SEED CODE3264(PPE_HASH_VALUE_SEED_32, PPE_HASH_VALUE_SEED_64)
+//----------------------------------------------------------------------------
+// Any pod size fall back to generic hash_mem()
+template <typename T, size_t _Sz = sizeof(T)>
+struct TCRC32Hash {
+    static FORCE_INLINE size_t fn(const T& pod) {
+        return hash_crc32((const void *)&pod, sizeof(T));
+    }
+};
+//----------------------------------------------------------------------------
+// Types with a small aligned size are using specialized hash functions
+template <typename T>
+struct TCRC32Hash<T, sizeof(u8)> {
+    static FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return hash_crc32(u32(reinterpret_cast<const u8&>(pod)));
+    }
+};
+template <typename T>
+struct TCRC32Hash<T, sizeof(u16)> {
+    static FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return hash_crc32(u32(reinterpret_cast<const u16&>(pod)));
+    }
+};
+template <typename T>
+struct TCRC32Hash<T, sizeof(u32)> {
+    static FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return hash_crc32(reinterpret_cast<const u32&>(pod));
+    }
+};
+template <typename T>
+struct TCRC32Hash<T, sizeof(u64)> {
+    static FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return hash_crc32(reinterpret_cast<const u64&>(pod));
+    }
+};
+template <typename T>
+struct TCRC32Hash<T, sizeof(u128)> {
+    static FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return hash_crc32(reinterpret_cast<const u128&>(pod));
+    }
+};
+template <typename T>
+struct TCRC32Hash<T, sizeof(u256)> {
+    static FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return hash_crc32(reinterpret_cast<const u256&>(pod));
+    }
+};
+//----------------------------------------------------------------------------
+// Wrap specialized hash functions for types with a small unaligned size
+template <typename T>
+struct TCRC32Hash<T, sizeof(u96)> {
+    static FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return FPlatformHash::CRC32(reinterpret_cast<const u96&>(pod));
+    }
+};
+template <typename T>
+struct TCRC32Hash<T, sizeof(u160)> {
+    static FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return FPlatformHash::CRC32(reinterpret_cast<const u160&>(pod));
+    }
+};
+template <typename T>
+struct TCRC32Hash<T, sizeof(u192)> {
+    static FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return FPlatformHash::CRC32(reinterpret_cast<const u192&>(pod));
+    }
+};
+template <typename T>
+struct TCRC32Hash<T, sizeof(u224)> {
+    static FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
+        return FPlatformHash::CRC32(reinterpret_cast<const u224&>(pod));
+    }
+};
+//----------------------------------------------------------------------------
+} //!namespace details
+//----------------------------------------------------------------------------
+template <typename T>
+size_t hash_as_crc32(const T& pod) NOEXCEPT {
+    return details::TCRC32Hash<T>::fn(pod);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -49,7 +132,7 @@ struct TPODHash<T, sizeof(u16)> {
 template <typename T>
 struct TPODHash<T, sizeof(u32)> {
     static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
-        return hash_uint(u32(reinterpret_cast<const u32&>(pod)));
+        return hash_uint(reinterpret_cast<const u32&>(pod));
     }
 };
 template <typename T>
@@ -73,39 +156,31 @@ struct TPODHash<T, sizeof(u256)> {
 //----------------------------------------------------------------------------
 // Wrap specialized hash functions for types with a small unaligned size
 template <typename T>
-struct TPODHash<T, sizeof(u32) * 3> {
-    struct uint96_t { u64 lo; u32 hi; };
-    STATIC_ASSERT(sizeof(uint96_t) == sizeof(u32) * 3);
+struct TPODHash<T, sizeof(u96)> {
     static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
-        const auto& u = reinterpret_cast<const uint96_t&>(pod);
+        const auto& u = reinterpret_cast<const u96&>(pod);
         return hash_uint(u128{ u.lo, u.hi });
     }
 };
 template <typename T>
-struct TPODHash<T, sizeof(u32) * 5> {
-    struct uint160_t { u128 lo; u32 hi; };
-    STATIC_ASSERT(sizeof(uint160_t) == sizeof(u32) * 5);
+struct TPODHash<T, sizeof(u160)> {
     static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
-        const auto& u = reinterpret_cast<const uint160_t&>(pod);
+        const auto& u = reinterpret_cast<const u160&>(pod);
         return hash_uint(u256{ u.lo, { u.hi, 0 } });
     }
 };
 template <typename T>
-struct TPODHash<T, sizeof(u32) * 6> {
-    struct uint192_t { u128 lo; u64 hi; };
-    STATIC_ASSERT(sizeof(uint192_t) == sizeof(u32) * 6);
+struct TPODHash<T, sizeof(u192)> {
     static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
-        const auto& u = reinterpret_cast<const uint192_t&>(pod);
+        const auto& u = reinterpret_cast<const u192&>(pod);
         return hash_uint(u256{ u.lo, { u.hi, 0 } });
     }
 };
 template <typename T>
-struct TPODHash<T, sizeof(u32) * 7> {
-    struct uint224_t { u128 lo; u64 hi0; u32 hi1; };
-    STATIC_ASSERT(sizeof(uint224_t) == sizeof(u32) * 7);
+struct TPODHash<T, sizeof(u224)> {
     static CONSTEXPR FORCE_INLINE size_t fn(const T& pod) NOEXCEPT {
-        const auto& u = reinterpret_cast<const uint224_t&>(pod);
-        return hash_uint(u256{ u.lo, { u.hi0, u.hi1 } });
+        const auto& u = reinterpret_cast<const u224&>(pod);
+        return hash_uint(u256{ u.lo, { u.hi.lo, u.hi.hi } });
     }
 };
 //----------------------------------------------------------------------------

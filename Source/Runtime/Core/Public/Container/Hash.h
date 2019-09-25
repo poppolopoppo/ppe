@@ -73,6 +73,13 @@ struct THash {
         return hash_value(value);
     }
 };
+template <typename T>
+struct TCRC32 {
+    CONSTEXPR hash_t operator ()(const T& value) const NOEXCEPT {
+        using PPE::hash_value;
+        return hash_as_crc32(value);
+    }
+};
 } //!namespace Meta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
