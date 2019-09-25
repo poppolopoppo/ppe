@@ -342,12 +342,19 @@ public: // must be defined for every platform
     }
 
     //------------------------------------------------------------------------
+    // Bit Scan Forward
+
+    static bool bsf(u32* r, u32 v) = delete;
+#ifdef ARCH_X64
+    static bool bsf(u32* r, u64 v) = delete;
+#endif
+
+    //------------------------------------------------------------------------
     // Bit Scan Reverse
 
-    static void bsr(u32* r, u32 v) = delete;
-
+    static bool bsr(u32* r, u32 v) = delete;
 #ifdef ARCH_X64
-    static void bsr(u32* r, u64 v) = delete;
+    static bool bsr(u32* r, u64 v) = delete;
 #endif
 
     //------------------------------------------------------------------------

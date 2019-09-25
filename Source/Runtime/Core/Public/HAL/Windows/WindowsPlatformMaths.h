@@ -11,6 +11,13 @@
 #include <xmmintrin.h>
 #include <intrin.h>
 
+#pragma intrinsic(_BitScanForward)
+#pragma intrinsic(_BitScanReverse)
+#ifdef ARCH_X64
+#   pragma intrinsic(_BitScanForward64)
+#   pragma intrinsic(_BitScanReverse64)
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -226,21 +233,45 @@ public:
             : tzcnt(u32(u)) );
 #   endif
     }
+    //------------------------------------------------------------------------
+    // Bit Scan Forward
+
+    static FORCE_INLINE bool bsf(unsigned long* __restrict r, u32 v) NOEXCEPT {
+        return ::_BitScanForward(r, v);
+    }
+    static FORCE_INLINE bool bsf(u32* __restrict r, u32 v) NOEXCEPT {
+        STATIC_ASSERT(sizeof(u32) == sizeof(unsigned long));
+        return ::_BitScanForward((unsigned long*)r, v);
+    }
+
+#   ifdef ARCH_X64
+    static FORCE_INLINE bool bsf(unsigned long* __restrict r, u64 v) NOEXCEPT {
+        return ::_BitScanForward64(r, v);
+    }
+    static FORCE_INLINE bool bsf(u32* __restrict r, u64 v) NOEXCEPT {
+        STATIC_ASSERT(sizeof(u32) == sizeof(unsigned long));
+        return ::_BitScanForward64((unsigned long*)r, v);
+    }
+#   endif
 
     //------------------------------------------------------------------------
     // Bit Scan Reverse
 
-    static FORCE_INLINE void bsr(u32* r, u32 v) NOEXCEPT {
-        unsigned long index;
-        Verify(::_BitScanReverse(&index, v));
-        *r = checked_cast<u32>(index);
+    static FORCE_INLINE bool bsr(unsigned long* __restrict r, u32 v) NOEXCEPT {
+        return ::_BitScanReverse(r, v);
+    }
+    static FORCE_INLINE bool bsr(u32* __restrict r, u32 v) NOEXCEPT {
+        STATIC_ASSERT(sizeof(u32) == sizeof(unsigned long));
+        return ::_BitScanReverse((unsigned long*)r, v);
     }
 
 #   ifdef ARCH_X64
-    static FORCE_INLINE void bsr(u32* r, u64 v) NOEXCEPT {
-        unsigned long index;
-        Verify(::_BitScanReverse64(&index, v));
-        *r = checked_cast<u32>(index);
+    static FORCE_INLINE bool bsr(unsigned long* __restrict r, u64 v) NOEXCEPT {
+        return ::_BitScanReverse64(r, v);
+    }
+    static FORCE_INLINE bool bsr(u32* __restrict r, u64 v) NOEXCEPT {
+        STATIC_ASSERT(sizeof(u32) == sizeof(unsigned long));
+        return ::_BitScanReverse64((unsigned long*)r, v);
     }
 #   endif
 
