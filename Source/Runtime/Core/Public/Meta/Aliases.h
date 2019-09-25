@@ -70,7 +70,6 @@ typedef int64_t     i64;
 #define CONCAT(_X, _Y) CONCAT_I(_X, _Y) //CONCAT_OO((_X, _Y))
 #define CONCAT3(_X, _Y, _Z) CONCAT(_X, CONCAT(_Y, _Z))
 //----------------------------------------------------------------------------
-#define NOOP(...) __noop(__VA_ARGS__)
 #define UNUSED(_X) (void)(_X)
 //----------------------------------------------------------------------------
 #define ANONYMIZE(_X) CONCAT(_X, __LINE__)
@@ -86,6 +85,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #if defined(CPP_CLANG)
 #   define NOALIAS
 #   define NOEXCEPT     noexcept
+#   define NOOP(...)    (void)0
 #   define NORETURN     __declspec(noreturn)
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
@@ -100,6 +100,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #elif defined(CPP_VISUALSTUDIO) && _MSC_VER >= 1900
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     noexcept
+#   define NOOP(...)    __noop(__VA_ARGS__)
 #   define NORETURN     __declspec(noreturn)
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
@@ -110,6 +111,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #elif defined (CPP_VISUALSTUDIO)
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     __declspec(nothrow)
+#   define NOOP(...)    __noop(__VA_ARGS__)
 #   define NORETURN     __declspec(noreturn)
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall

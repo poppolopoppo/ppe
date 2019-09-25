@@ -173,7 +173,7 @@ void FWindowsPlatformProcess::OnProcessStart() {
 
     GIsFirstInstance = MakeNamedMutex_(nullptr);
 
-#if USE_PPE_PLATFORM_DEBUG
+#if USE_PPE_VSTOOLS_WRAPPER
     FVSToolsWrapper::Create();
 #endif
 #if USE_PPE_PLATFORM_PROFILER
@@ -189,7 +189,7 @@ void FWindowsPlatformProcess::OnProcessShutdown() {
 #if USE_PPE_PLATFORM_PROFILER
     FVSPerfWrapper::Destroy();
 #endif
-#if USE_PPE_PLATFORM_DEBUG
+#if USE_PPE_VSTOOLS_WRAPPER
     FVSToolsWrapper::Destroy();
 #endif
 

@@ -2,7 +2,11 @@
 
 #include "External/iaca/Private/iacaMarks.h"
 
-#define USE_INTEL_IACA (0) // %_NOCOMMIT%
+#if defined(CPP_VISUALSTUDIO) && !defined(CPP_CLANG)
+#   define USE_INTEL_IACA (0) // enabled on demand %_NOCOMMIT%
+#else
+#   define USE_INTEL_IACA (0)
+#endif
 
 #if !USE_INTEL_IACA || defined(FINAL_RELEASE)
 #   define INTEL_IACA_START() (void)0

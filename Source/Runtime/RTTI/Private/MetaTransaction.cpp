@@ -40,7 +40,11 @@ void LinearizeTransaction_(
 
     CollectReferences(
         topObjects,
+#if WITH_PPE_RTTI_TRANSACTION_CHECKS
         [linearized, &outer, &visiteds](const ITypeTraits&, FMetaObject& obj) {
+#else
+        [linearized, &visiteds](const ITypeTraits&, FMetaObject& obj) {
+#endif
             if (not visiteds.insert_ReturnIfExists(&obj)) {
                 if (obj.RTTI_IsExported()) {
                     if (obj.RTTI_Outer() == nullptr) {

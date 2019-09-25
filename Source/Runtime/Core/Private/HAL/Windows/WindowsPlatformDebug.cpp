@@ -76,6 +76,8 @@ void FWindowsPlatformDebug::EndNamedEvent(u32 uid) {
 //----------------------------------------------------------------------------
 // Memory tracking
 //----------------------------------------------------------------------------
+#if USE_PPE_VSTOOLS_WRAPPER
+//----------------------------------------------------------------------------
 FWindowsPlatformDebug::FHeapHandle& FWindowsPlatformDebug::HEAP_Alloca = FVSToolsWrapper::HEAP_Alloca;
 FWindowsPlatformDebug::FHeapHandle& FWindowsPlatformDebug::HEAP_Malloc = FVSToolsWrapper::HEAP_Malloc;
 FWindowsPlatformDebug::FHeapHandle& FWindowsPlatformDebug::HEAP_Linear = FVSToolsWrapper::HEAP_Linear;
@@ -91,6 +93,14 @@ void FWindowsPlatformDebug::ReallocateEvent(FHeapHandle heap, void* newp, size_t
 void FWindowsPlatformDebug::DeallocateEvent(FHeapHandle heap, void* ptr) {
     FVSToolsWrapper::API.DeallocateEvent(heap, ptr);
 }
+//----------------------------------------------------------------------------
+#else
+//---------------------------------------------------------------------------
+void FWindowsPlatformDebug::AllocateEvent(FHeapHandle , void* , size_t ) {}
+void FWindowsPlatformDebug::ReallocateEvent(FHeapHandle , void* , size_t , void* ) {}
+void FWindowsPlatformDebug::DeallocateEvent(FHeapHandle , void* ) {}
+//---------------------------------------------------------------------------
+#endif //!USE_PPE_VSTOOLS_WRAPPER
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

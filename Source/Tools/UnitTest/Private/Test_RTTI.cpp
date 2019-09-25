@@ -74,8 +74,8 @@ struct FStructAsTuple {
     FString Name;
     TVector<int> Weights;
 };
-RTTI_STRUCT_DEF(CONSTEXPR, FStructAsTuple);
 RTTI_STRUCT_DECL(CONSTEXPR, FStructAsTuple);
+RTTI_STRUCT_DEF(CONSTEXPR, FStructAsTuple);
 //----------------------------------------------------------------------------
 enum ETest : u32 {
     A, B, C, D

@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_WINDOWS) && !defined(FINAL_RELEASE)
+#if defined(PLATFORM_WINDOWS) && !defined(CPP_CLANG) && !defined(FINAL_RELEASE)
 #   define USE_PPE_EXTERNAL_VSTOOLS 1
 #else
 #   define USE_PPE_EXTERNAL_VSTOOLS 0

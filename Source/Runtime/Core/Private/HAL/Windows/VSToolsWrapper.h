@@ -6,12 +6,17 @@
 
 #   include "External/vstools/Public/vstools.h"
 
-#   include "HAL/Windows/WindowsPlatformIncludes.h"
+#   if !(USE_PPE_EXTERNAL_VSTOOLS)
+#       define USE_PPE_VSTOOLS_WRAPPER (0)
+#   else
+#       define USE_PPE_VSTOOLS_WRAPPER (1)
 
-#   include "Diagnostic/Logger.h"
-#   include "IO/String.h"
-#   include "Meta/Singleton.h"
-#   include "Misc/DynamicLibrary.h"
+#       include "HAL/Windows/WindowsPlatformIncludes.h"
+
+#       include "Diagnostic/Logger.h"
+#       include "IO/String.h"
+#       include "Meta/Singleton.h"
+#       include "Misc/DynamicLibrary.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -134,5 +139,7 @@ inline FVSToolsWrapper::~FVSToolsWrapper() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+#   endif //!USE_PPE_EXTERNAL_VSTOOLS
 
 #endif //!USE_PPE_PLATFORM_DEBUG

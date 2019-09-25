@@ -105,7 +105,7 @@ void Remove_AssertExistsAndSameValue(THashMap<_Key, _Value, _Hasher, _EqualTo, _
         hashmap.erase(it);
     }
 #else
-    NOOP(value);
+    UNUSED(value);
     hashmap.erase(key);
 #endif
 }
