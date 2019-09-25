@@ -120,10 +120,10 @@ private: // FTimer
     };
     template <> struct TCounter<PerfCounter> {
         using date_type = i64;
-        const double MicrosecondsPerCycle = FPlatformTime::MicrosecondsPerCycle();
-        static CONSTEXPR FWStringView Units() { return L"µs"; }
+        const double NanosecondsPerCycle = (1000 * FPlatformTime::MicrosecondsPerCycle());
+        static CONSTEXPR FWStringView Units() { return L"ns"; }
         date_type Now() const NOEXCEPT { return FPlatformTime::Cycles(); }
-        double ElapsedSince(date_type start) const NOEXCEPT { return MicrosecondsPerCycle * (Now() - start); }
+        double ElapsedSince(date_type start) const NOEXCEPT { return NanosecondsPerCycle * (Now() - start); }
     };
     template <> struct TCounter<ChronoTime> {
         using date_type = double;
