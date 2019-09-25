@@ -30,7 +30,7 @@ static CONSTEXPR mask16_t m128i_mask_all_ones{ 0xFFFF };
 static CONSTEXPR mask16_t m128i_mask_all_zeros{ 0 };
 //----------------------------------------------------------------------------
 #define m128i_epi8_tznct_mask() u32(1 << 16)
-#define m128i_epi8_broadcast(v) ::_mm_set1_epi8(v)
+#define m128i_epi8_broadcast(v) ::_mm_set1_epi8((char)v)
 #define m128i_epi8_set_zero() ::_mm_setzero_si128()
 #define m128i_epi8_set_false() ::_mm_setzero_si128()
 #if 1
@@ -39,16 +39,25 @@ static CONSTEXPR mask16_t m128i_mask_all_zeros{ 0 };
 #   define m128i_epi8_set_true() m128i_epi8_broadcast(-1)
 #endif
 #define m128i_epi8_set_true_after(i) ::_mm_cmpgt_epi8(::_mm_set1_epi8(i), ::_mm_set_epi64x(0x0f0e0d0c0b0a0908ULL, 0x0706050403020100ULL))
+//----------------------------------------------------------------------------
 #define m128i_epi8_load_aligned(p) ::_mm_load_si128((const m128i_t*)(p))
 #define m128i_epi8_load_unaligned(p) ::_mm_lddqu_si128((const m128i_t*)(p))
 #define m128i_epi8_load_stream(p) ::_mm_stream_load_si128((const m128i_t*)(p))
+#define m128i_epi8_loadlo_epi64(p) ::_mm_loadl_epi64((const m128i_t*)(p))
+//----------------------------------------------------------------------------
 #define m128i_epi8_store_aligned(p, v) ::_mm_store_si128((m128i_t*)(p), v)
 #define m128i_epi8_store_stream(p, v) ::_mm_stream_si128((m128i_t*)(p), v)
+#define m128i_epi8_storelo_epi64(p, v) ::_mm_storel_epi64((m128i_t*)(p), v)
+//----------------------------------------------------------------------------
 #if USE_PPE_SSE4_1
 #   define m128i_epi8_blend(if_false, if_true, m) ::_mm_blendv_epi8(if_false, if_true, m)
 #else
 #   define m128i_epi8_blend(if_false, if_true, m) ::_mm_xor_si128(if_false, ::_mm_and_si128(m, ::_mm_xor_si128(if_true, if_false)))
 #endif
+//----------------------------------------------------------------------------
+#define m128i_epi8_and(a, b) ::_mm_and_si128(a, b)
+#define m128i_epi8_or(a, b)  ::_mm_or_si128(a, b)
+#define m128i_epi8_xor(a, b) ::_mm_xor_si128(a, b)
 //----------------------------------------------------------------------------
 #define m128i_epi8_cmpeq(a, b) ::_mm_cmpeq_epi8(a, b)
 #define m128i_epi8_cmplt(a, b) ::_mm_cmplt_epi8(a, b)
@@ -61,7 +70,7 @@ static CONSTEXPR mask16_t m128i_mask_all_zeros{ 0 };
 #   define m128i_epi8_cmpge(a, b) ::_mm_or_si128(::_mm_cmpgt_epi8(a, b), ::_mm_cmpeq_epi8(a, b))
 #endif
 //----------------------------------------------------------------------------
-#define m128i_epi8_movemask(m) mask16_t(::_mm_movemask_epi8(m))
+#define m128i_epi8_movemask(m) (unsigned int)::_mm_movemask_epi8(m)
 #define m128i_epi8_maskmoveu(v, m, p) ::_mm_maskmoveu_si128(v, m, (char*)(p))
 //----------------------------------------------------------------------------
 #define m128i_epi8_findlt(v, h) m128i_epi8_movemask(m128i_epi8_cmplt(v, h))
@@ -140,26 +149,26 @@ using m256i_t = ::__m256i;
 #define m256i_epi8_set_false() ::_mm256_setzero_si256()
 #define m256i_epi8_set_true() ::_mm256_cmpeq_epi32(::_mm256_setzero_si256(), ::_mm256_setzero_si256())
 #define m256i_epi8_set_true_after(i) ::_mm256_cmpgt_epi8(::_mm256_set1_epi8(i), \
-	::_mm256_set_epi64x(0x1f1e1d1c1b1a1918ULL, 0x1716151413121110ULL, 0x0f0e0d0c0b0a0908ULL, 0x0706050403020100ULL))
+    ::_mm256_set_epi64x(0x1f1e1d1c1b1a1918ULL, 0x1716151413121110ULL, 0x0f0e0d0c0b0a0908ULL, 0x0706050403020100ULL))
 #define m256i_epi8_load_aligned(p) ::_mm256_load_si256((const m256i_t*)(p))
 #define m256i_epi8_load_unaligned(p) ::_mm256_lddqu_si256((const m256i_t*)(p))
 #define m256i_epi8_store_aligned(p, v) ::_mm256_store_si256((m256i_t*)(p), v)
 #define m256i_epi8_blend(if_false, if_true, m) ::_mm256_blendv_epi8(if_false, if_true, m)
 #if USE_PPE_AVX512
-#   define m256i_epi8_findlt(v, h) mask32_t(::_mm256_cmplt_epi8_mask(v, h))
-#   define m256i_epi8_findgt(v, h) mask32_t(::_mm256_cmpgt_epi8_mask(v, h))
-#   define m256i_epi8_findge(v, h) mask32_t(::_mm256_cmpge_epi8_mask(v, h))
-#   define m256i_epi8_findeq(v, h) mask32_t(::_mm256_cmpeq_epi8_mask(v, h))
+#   define m256i_epi8_findlt(v, h) ::_mm256_cmplt_epi8_mask(v, h)
+#   define m256i_epi8_findgt(v, h) ::_mm256_cmpgt_epi8_mask(v, h)
+#   define m256i_epi8_findge(v, h) ::_mm256_cmpge_epi8_mask(v, h)
+#   define m256i_epi8_findeq(v, h) ::_mm256_cmpeq_epi8_mask(v, h)
 #else
-#   define m256i_epi8_findlt(v, h) mask32_t(::_mm256_movemask_epi8(::_mm256_cmpgt_epi8(h, v)))
-#   define m256i_epi8_findgt(v, h) mask32_t(::_mm256_movemask_epi8(::_mm256_cmpgt_epi8(v, h)))
+#   define m256i_epi8_findlt(v, h) ::_mm256_movemask_epi8(::_mm256_cmpgt_epi8(h, v))
+#   define m256i_epi8_findgt(v, h) ::_mm256_movemask_epi8(::_mm256_cmpgt_epi8(v, h))
 #	if 1
-#		define m256i_epi8_findle(v, h) mask32_t(::_mm256_movemask_epi8(::_mm256_cmpeq_epi8(::_mm256_min_epi8(v, h), v)))
+#		define m256i_epi8_findle(v, h) ::_mm256_movemask_epi8(::_mm256_cmpeq_epi8(::_mm256_min_epi8(v, h), v))
 #		define m256i_epi8_findge(v, h) m256i_epi8_findle(h, v)
 #	else
-#		define m256i_epi8_findge(v, h) mask32_t(::_mm256_movemask_epi8(::_mm256_or_si256(::_mm256_cmpgt_epi8(v, h), ::_mm256_cmpeq_epi8(v, h))))
+#		define m256i_epi8_findge(v, h) ::_mm256_movemask_epi8(::_mm256_or_si256(::_mm256_cmpgt_epi8(v, h), ::_mm256_cmpeq_epi8(v, h)))
 #	endif
-#   define m256i_epi8_findeq(v, h) mask32_t(::_mm256_movemask_epi8(::_mm256_cmpeq_epi8(v, h)))
+#   define m256i_epi8_findeq(v, h) ::_mm256_movemask_epi8(::_mm256_cmpeq_epi8(v, h))
 #endif
 //----------------------------------------------------------------------------
 #endif //!USE_PPE_AVX2
