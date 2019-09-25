@@ -30,8 +30,9 @@ void FCompletionPort::AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPrio
     FInteruptedTask waiting{ ITaskContext::Get(), cur, priority };
 
     // The wakeup callback will be executed just after the yield, and will perform
-    // the actual call to Queue(). If by this this time the counter would have been
+    // the actual call to Queue(). If by this time the counter would have been
     // already finished then we'd switch directly back to this current fiber.
+
     nxt->AttachWakeUpCallback([this, waiting]() {
         _queue.push_back(waiting);
         _barrier.Unlock();
