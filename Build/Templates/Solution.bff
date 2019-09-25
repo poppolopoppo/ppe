@@ -24,11 +24,51 @@ Alias( 'Purge' )
     .Targets = { 'All-Purge' }
 }
 
+// BFF fake project
+//------------------------------------------------------------------------------
+VCXProject( 'BFF-VCXProject' )
+{
+    Using( .VisualStudioBaseConfig )
+
+    .ProjectName            = 'BFF'
+    .ProjectBasePath        = .BuildPath
+    .ProjectConfigs         = {}
+    .ProjectInputPaths      = .BuildPath
+    .ProjectOutput          = '$SolutionPath$/Output/Projects/BFF.vcxproj'
+
+    .ProjectAllowedFileExtensions =
+    {
+        '*.bff',
+        '*.exe',
+        '*.rb',
+    }
+
+    ForEach( .CompileConfig in .AllCompileConfigs )
+    {
+        .ProjectConfig = // Visual project config
+        [
+            Using( .CompileConfig )
+
+            .BuildLogFile           = "$IntermediatePath$/BFF.$Config$.$Platform$.log"
+            .OutputDirectory        = "$BinaryPath$"
+            .IntermediateDirectory  = "$IntermediatePath$"
+            .Platform               = "$SolutionPlatform$"
+            .ProjectBasePath        = "$BuildPath$"
+        ]
+
+        ^ProjectConfigs     + .ProjectConfig
+    }
+
+    ; used to rebuild the solution
+    .ProjectBuildCommand    = '$VisualStudioFBuildCommand$ sln'
+    .ProjectRebuildCommand  = '$VisualStudioFBuildCommand$ -clean sln'
+}
+
 // VCXProj Generation
 //------------------------------------------------------------------------------
 Alias( 'VCXProject' )
 {
-    .Targets = {}
+    .Targets = { 'BFF-VCXProject' }
     ForEach( .ProjectName in .ProjectList )
     {
         ^Targets + { '$ProjectName$-VCXProject' }
@@ -52,7 +92,7 @@ VSSolution( 'sln' )
         ^SolutionConfigs + .SolutionConfig
     }
 
-    .SolutionProjects = {}
+    .SolutionProjects = { 'BFF-VCXProject' }
     ForEach( .ProjectName in .ProjectList )
     {
         ^SolutionProjects + '$ProjectName$-VCXProject'
