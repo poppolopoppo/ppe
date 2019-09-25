@@ -79,7 +79,9 @@ public:
 #endif
 
     // Compatibility with STL : callable like a function
+    size_t operator ()() { return Next(); }
     size_t operator ()(size_t vmax) { return Next(vmax); }
+    size_t operator ()(size_t vmin, size_t vmax) { return Next(vmin, vmax); }
 
     float NextFloat01();
     float NextFloatM11();
