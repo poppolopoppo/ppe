@@ -8,6 +8,15 @@
 
 #define USE_PPE_MM_CRC32_MIXER_ON_WINDOWS (1) //%_NOCOMMIT%
 
+#ifndef CPP_CLANG
+#   pragma intrinsic(_mm_crc32_u8)
+#   pragma intrinsic(_mm_crc32_u16)
+#   pragma intrinsic(_mm_crc32_u32)
+#   ifdef ARCH_X64
+#       pragma intrinsic(_mm_crc32_u64)
+#   endif
+#endif
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
