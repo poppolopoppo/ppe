@@ -31,7 +31,7 @@ public:
 #ifdef ARCH_X64
         return ::_mm_crc32_u64(0, v);
 #else
-        return ::_mm_crc32_u32(v >> 32, v);
+        return ::_mm_crc32_u32(v >> 32, u32(v));
 #endif
     }
     static FORCE_INLINE size_t CRC32(u96 v) NOEXCEPT {
@@ -39,7 +39,7 @@ public:
 #ifdef ARCH_X64
         return ::_mm_crc32_u64(v.hi, v.lo);
 #else
-        return ::_mm_crc32_u32(::_mm_crc32_u32(v.lo >> 32, v.lo), v.hi);
+        return ::_mm_crc32_u32(::_mm_crc32_u32(v.lo >> 32, u32(v.lo)), v.hi);
 #endif
     }
     static FORCE_INLINE size_t CRC32(u128 v) NOEXCEPT {
@@ -47,8 +47,8 @@ public:
         return ::_mm_crc32_u64(::_mm_crc32_u64(0, v.lo), v.hi);
 #else
         return ::_mm_crc32_u32(
-            ::_mm_crc32_u32(v.lo >> 32, v.lo),
-            ::_mm_crc32_u32(v.hi >> 32, v.hi) );
+            ::_mm_crc32_u32(v.lo >> 32, u32(v.lo)),
+            ::_mm_crc32_u32(v.hi >> 32, u32(v.hi)) );
 #endif
     }
     static FORCE_INLINE size_t CRC32(u160 v) NOEXCEPT {

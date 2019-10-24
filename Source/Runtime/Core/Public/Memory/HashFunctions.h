@@ -30,13 +30,7 @@ FORCE_INLINE CONSTEXPR u64 hash_fmix64(u64 k) NOEXCEPT { return FPlatformHash::F
 //----------------------------------------------------------------------------
 // Hw accelerated CRC32 with _mm_crc32_uXX()
 FORCE_INLINE size_t hash_crc32(u32 b) NOEXCEPT { return FPlatformHash::CRC32(b); }
-FORCE_INLINE size_t hash_crc32(u64 b) NOEXCEPT {
-#ifdef ARCH_X64
-    return FPlatformHash::CRC32(b);
-#else
-    return FPlatformHash::CRC32(b >> 32, b);
-#endif
-}
+FORCE_INLINE size_t hash_crc32(u64 b) NOEXCEPT { return FPlatformHash::CRC32(b); }
 FORCE_INLINE size_t hash_crc32(u128 b) NOEXCEPT { return FPlatformHash::HashUInt(b); }
 FORCE_INLINE size_t hash_crc32(u256 b) NOEXCEPT { return FPlatformHash::HashUInt(b); }
 //----------------------------------------------------------------------------
