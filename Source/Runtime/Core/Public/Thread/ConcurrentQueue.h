@@ -7,10 +7,15 @@
 #include "Container/Vector.h"
 #include "Meta/ThreadResource.h"
 
+#include <algorithm>
 #include <condition_variable>
 #include <mutex>
-#include <queue>
 #include <type_traits>
+
+#define CONCURRENT_QUEUE(_DOMAIN, T) \
+    ::PPE::TConcurrentQueue<T, ALLOCATOR(_DOMAIN)>
+#define CONCURRENT_PRIORITY_QUEUE(_DOMAIN, T) \
+    ::PPE::TConcurrentPriorityQueue<T, ALLOCATOR(_DOMAIN)>
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -22,7 +27,7 @@ namespace PPE {
 // http://natsys-lab.blogspot.ru/2013/05/lock-free-multi-producer-multi-consumer.html
 */
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator = ALLOCATOR(Container, T) >
+template <typename T, typename _Allocator = ALLOCATOR(Container) >
 class TConcurrentQueue : _Allocator {
 public:
     explicit TConcurrentQueue(size_t capacity);
@@ -37,6 +42,8 @@ public:
     bool TryConsume(T* pvalue);
 
 private:
+    using allocator_traits = TAllocatorTraits< _Allocator >;
+
     const size_t _capacity;
 
     size_t _head;
@@ -50,9 +57,6 @@ private:
     T* _queue;
 };
 //----------------------------------------------------------------------------
-#define CONCURRENT_QUEUE(_DOMAIN, T) \
-    ::PPE::TConcurrentQueue<T, ALLOCATOR(_DOMAIN, T)>
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 /*
@@ -61,7 +65,7 @@ private:
 // TNot using std::priority_queue<> since it is too restrictive (no non-const reference to top, no reserve()).
 */
 //----------------------------------------------------------------------------
-template <typename T, typename _Allocator = ALLOCATOR(Container, T) >
+template <typename T, typename _Allocator = ALLOCATOR(Container) >
 class TConcurrentPriorityQueue {
 public:
     explicit TConcurrentPriorityQueue(size_t capacity);
@@ -85,18 +89,12 @@ public:
 private:
     typedef TPair<u32, T> item_type;
 
-    typedef TVector<
-        item_type,
-        typename _Allocator::template rebind<item_type>::other
-    >   vector_type;
-
     struct FPrioritySort_ {
         bool operator ()(const item_type& lhs, const item_type& rhs) const {
             return (lhs.first > rhs.first);
         }
     };
 
-    typedef std::priority_queue<item_type, vector_type, FPrioritySort_> priority_queue_type;
 
 #if USE_PPE_ASSERT
     STATIC_CONST_INTEGRAL(size_t, CanaryDefault, CODE3264(0xDEADBEEFul, 0xDEADBEEFDEADBEEFul));
@@ -108,9 +106,8 @@ private:
     std::condition_variable _empty;
     std::condition_variable _overflow;
 
-    priority_queue_type _queue;
+    TVector<item_type, _Allocator> _queue;
     size_t _counter;
-    const size_t _capacity;
 
 #if USE_PPE_ASSERT
     const size_t _canary1 = CanaryDefault;
@@ -120,9 +117,6 @@ private:
     }
 #endif
 };
-//----------------------------------------------------------------------------
-#define CONCURRENT_PRIORITY_QUEUE(_DOMAIN, T) \
-    ::PPE::TConcurrentPriorityQueue<T, ALLOCATOR(_DOMAIN, T)>
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

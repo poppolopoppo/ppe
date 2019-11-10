@@ -12,7 +12,7 @@ TConcurrentQueue<T, _Allocator>::TConcurrentQueue(size_t capacity)
 :   _capacity(capacity)
 ,   _head(0)
 ,   _tail(0) {
-    _queue = _Allocator::allocate(capacity);
+    _queue = allocator_traits::template AllocateT<T>(*this, capacity);
     Assert(_queue);
 }
 //----------------------------------------------------------------------------
@@ -21,7 +21,7 @@ TConcurrentQueue<T, _Allocator>::TConcurrentQueue(size_t capacity, const _Alloca
 :   _Allocator(allocator)
 ,   _head(0)
 ,   _tail(0) {
-    _queue = _Allocator::allocate(_capacity);
+    _queue = allocator_traits::template AllocateT<T>(*this, capacity);
     Assert(_queue);
 }
 //----------------------------------------------------------------------------
@@ -30,7 +30,7 @@ TConcurrentQueue<T, _Allocator>::~TConcurrentQueue() {
     Assert(_queue);
     Assert(_tail == _head);
 
-    _Allocator::deallocate(_queue, _capacity);
+    allocator_traits::template DeallocateT<T>(*this, _queue, _capacity);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
@@ -77,17 +77,15 @@ bool TConcurrentQueue<T, _Allocator>::TryConsume(T *pvalue) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
 TConcurrentPriorityQueue<T, _Allocator>::TConcurrentPriorityQueue(size_t capacity)
-:   _counter(0)
-,   _capacity(capacity) {
-    Assert(_capacity > 0);
+:   _counter(0) {
+    _queue.reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
 TConcurrentPriorityQueue<T, _Allocator>::TConcurrentPriorityQueue(size_t capacity, const _Allocator& allocator)
 :   _queue(allocator)
-,   _counter(0)
-,   _capacity(capacity) {
-    Assert(_capacity > 0);
+,   _counter(0) {
+    _queue.reserve(capacity);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator >
@@ -103,14 +101,15 @@ void TConcurrentPriorityQueue<T, _Allocator>::Produce(u32 priority, T&& rvalue) 
     Meta::FUniqueLock scopeLock(_barrier);
     _overflow.wait(scopeLock, [this] {
         Assert_NoAssume(CheckCanary_());
-        return (_queue.size() < _capacity);
+        return (_queue.size() < _queue.capacity());
     });
 
     Assert(_counter < 0xFFFF);
     const u32 insertion_order_preserving_priority = u32((u64(priority) << 16) | _counter++);
     Assert((insertion_order_preserving_priority >> 16) == priority);
 
-    _queue.emplace(insertion_order_preserving_priority, std::move(rvalue));
+    _queue.emplace_back(insertion_order_preserving_priority, std::move(rvalue));
+    std::push_heap(_queue.begin(), _queue.end(), FPrioritySort_{});
 
     scopeLock.unlock();  // unlock before notification to minimize mutex contention
     _empty.notify_one(); // notify one consumer thread
@@ -133,15 +132,17 @@ void TConcurrentPriorityQueue<T, _Allocator>::Produce(u32 priority, size_t count
             Meta::FUniqueLock scopeLock(_barrier);
             _overflow.wait(scopeLock, [this, batchCount] {
                 Assert_NoAssume(CheckCanary_());
-                return (_queue.size() + batchCount <= _capacity);
+                return (_queue.size() + batchCount <= _queue.capacity());
             });
 
             Assert(_counter + batchCount < 0xFFFF);
             u32 insertion_order_preserving_priority = u32((u64(priority) << 16) | _counter);
             Assert((insertion_order_preserving_priority >> 16) == priority);
 
-            forrange(i, 0, batchCount)
-                _queue.emplace(++insertion_order_preserving_priority, std::move(lambda(batchIndex + i)));
+            forrange(i, 0, batchCount) {
+                _queue.emplace_back(++insertion_order_preserving_priority, std::move(lambda(batchIndex + i)));
+                std::push_heap(_queue.begin(), _queue.end(), FPrioritySort_{});
+            }
 
             scopeLock.unlock();  // unlock before notification to minimize mutex contention
             _empty.notify_all(); // notify all consumer threads, assuming stride == worker thread count
@@ -166,8 +167,9 @@ void TConcurrentPriorityQueue<T, _Allocator>::Consume(T *pvalue) {
         return (not _queue.empty());
     });
 
-    *pvalue = std::move(_queue.top().second);
-    _queue.pop();
+    std::pop_heap(_queue.begin(), _queue.end(), FPrioritySort_{});
+    *pvalue = std::move(_queue.back().second);
+    _queue.pop_back();
 
     // reset counter when the queue is empty
     // this book-keeping should avoid counter overflow (which is checked in Produce())
@@ -184,7 +186,6 @@ bool TConcurrentPriorityQueue<T, _Allocator>::TryConsume(T *pvalue) {
     Assert_NoAssume(CheckCanary_());
 
     Meta::FUniqueLock scopeLock(_barrier, std::defer_lock);
-
     if (scopeLock.try_lock() == false)
         return false; // return early if can't acquire the lock
 
@@ -198,8 +199,9 @@ bool TConcurrentPriorityQueue<T, _Allocator>::TryConsume(T *pvalue) {
         return (not _queue.empty());
     });
 
-    *pvalue = std::move(_queue.top().second);
-    _queue.pop();
+    std::pop_heap(_queue.begin(), _queue.end(), FPrioritySort_{});
+    *pvalue = std::move(_queue.back().second);
+    _queue.pop_back();
 
     // reset counter when the queue is empty
     // this book-keeping should avoid counter overflow (which is checked in Produce())
