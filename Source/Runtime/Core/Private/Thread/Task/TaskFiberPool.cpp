@@ -282,22 +282,14 @@ void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
     chunk->ReleaseFiber(handle);
 
     // we never release owned chunks (#TODO ? looks like this would be quite rare, and we still have ReleaseMemory() available)
-
-#if 0 // this is causing internal fragmentation in the chunks
-    if (Unlikely(chunk != _chunks))
-        Meta::unlikely([&]() {
-            const Meta::FLockGuard scopeLock(_barrier);
-            FTaskFiberChunk::list_t::PokeHead(&_chunks, nullptr, chunk);
-        });
-#endif
 }
 //----------------------------------------------------------------------------
 void FTaskFiberPool::YieldCurrentFiber(FHandleRef self, FHandleRef to, bool release) {
     Assert(self);
     Assert_NoAssume(OwnsFiber(self));
     Assert_NoAssume(self == CurrentHandleRef());
-    Assert_NoAssume(not self->OnWakeUp);
     Assert_NoAssume(AllocaDepth() == 0); // can't switch fibers with live TLS block(s)
+    Assert_NoAssume(not self->OnWakeUp);
 
     // prepare data for next fiber
     if (nullptr == to) {
@@ -310,9 +302,9 @@ void FTaskFiberPool::YieldCurrentFiber(FHandleRef self, FHandleRef to, bool rele
 
     if (release) {
         Assert_NoAssume(not to->OnWakeUp);
-        to->OnWakeUp = [this, released{ self }]() {
+        to->AttachWakeUpCallback([this, released{ self }]() {
             ReleaseFiber(released);
-        };
+        });
     }
 
     // <---- yield to another fiber
