@@ -75,10 +75,6 @@ NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned
 
     GIsInAssertion = true;
 
-    LOG(Assertion, Error, L"debug assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
-
-    FLUSH_LOG(); // flush log before continuing to get eventual log messages
-
     bool failure = false;
 
     FAssertHandler const handler = GAssertionHandler.load();
@@ -90,6 +86,9 @@ NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned
         PPE_DEBUG_BREAK();
     }
     else {
+        LOG(Assertion, Error, L"debug assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
+        FLUSH_LOG(); // flush log before continuing to get eventual log messages
+
         switch (AssertAbortRetryIgnore_(FPlatformDialog::Warning, L"Assert debug failed !", msg, file, line)) {
         case FPlatformDialog::Abort:
             failure = true;
@@ -161,10 +160,6 @@ NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, u
 
     GIsInAssertion = true;
 
-    LOG(Assertion, Error, L"release assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
-
-    FLUSH_LOG(); // flush log before continuing to get eventual log messages
-
     bool failure = true; // AssertRelease() fails by default
 
     FAssertReleaseHandler const handler = GAssertionReleaseHandler.load();
@@ -176,6 +171,9 @@ NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, u
         PPE_DEBUG_BREAK();
     }
     else {
+        LOG(Assertion, Error, L"release assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
+        FLUSH_LOG(); // flush log before continuing to get eventual log messages
+
         switch (AssertAbortRetryIgnore_(FPlatformDialog::Error, L"Assert release failed !", msg, file, line)) {
         case FPlatformDialog::Abort:
             failure = true;
