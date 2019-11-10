@@ -54,11 +54,12 @@ def fetch_fastbuild_options()
     return opts
 end
 
-def make_compile_commands(platform, config)
+def make_compile_commands(platform, config, modules)
     dirname = File.join(CORE_PATH, 'Output', 'Intermediate', platform, config)
     FileUtils.mkdir_p(dirname)
     filename = File.join(dirname, "compile_commands.json")
-    unless system('ruby', FBUILD_RB, "-compdb", "#{DEFAULT_TARGET}-#{platform}-#{config}", :out => File::NULL)
+    targets = modules.collect{|name| "#{name}-#{platform}-#{config}" }
+    unless system('ruby', FBUILD_RB, "-compdb", *targets, :out => File::NULL)
         raise "#{FBUILD_RB} #{DEFAULT_TARGET}-#{platform}-#{config}: compdb generation failed :'("
     end
     FileUtils.mv(FBUILD_COMPDB, filename)
@@ -85,6 +86,8 @@ class Platform
     def compilerPath() return '' end
     def macFrameworkPath() return [] end
     def binaryExtension() return '' end
+
+    def to_s() @name; end
 
 end #~Platform
 
@@ -145,6 +148,8 @@ class Config
         @name = name
         @defines = defines
     end
+
+    def to_s() @name; end
 
 end #~Config
 
@@ -217,7 +222,7 @@ class C_CPP_Configuration
 
     def export(modules)
         includePath = @platform.includePath
-        compileCommands = make_compile_commands(@platform.name, @config.name)
+        compileCommands = make_compile_commands(@platform.name, @config.name, modules)
 
         # greedy fallback for includes since this is a global state (!= per module)
         # and headers don't benefit from compile_commands.json goodness :(
@@ -253,6 +258,10 @@ FASTBUILD_OPTIONS=fetch_fastbuild_options()
 
 puts "[Default target]      = <#{DEFAULT_TARGET}>"
 puts "[Fastbuild options]   = #{FASTBUILD_OPTIONS}"
+puts "[All platforms]         ="
+puts " - #{PLATFORMS.join(",\n - ")}"
+puts "[All configs]         ="
+puts " - #{CONFIGS.join(",\n - ")}"
 puts "[All modules]         ="
 puts " - #{ALL_MODULES.join(",\n - ")}"
 
