@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Core_fwd.h"
 
@@ -22,14 +22,10 @@ public:
 
     virtual void WaitFor(FCompletionPort& handle, ETaskPriority priority = ETaskPriority::Normal) = 0;
 
+    virtual void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
 
-    virtual void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
-
-    void RunOne(FCompletionPort* phandle, FTaskFunc&& rtask, ETaskPriority priority) {
-        Run(phandle, MakeView(&rtask, &rtask +1), priority);
-    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

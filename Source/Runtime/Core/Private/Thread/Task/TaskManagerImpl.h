@@ -23,7 +23,6 @@ public:
     void Shutdown();
 
     void Consume(size_t workerIndex, FTaskScheduler::FTaskQueued* task);
-    void ReleaseMemory();
 
     void DumpStats();
 
@@ -36,21 +35,21 @@ public: // ITaskContext
 
     virtual void WaitFor(FCompletionPort& handle, ETaskPriority priority) override final;
 
+    virtual void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) override final;
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;
     virtual void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override final;
-
-    virtual void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) override final;
 
 private:
     using FTaskQueued = FTaskScheduler::FTaskQueued;
 
-    FTaskManager& _manager;
     FTaskScheduler _scheduler;
     FTaskFiberPool _fibers;
+
+    FTaskManager& _manager;
     VECTOR(Task, std::thread) _threads;
 
     static void WorkerLoop_();
-    static FCompletionPort* StartPortIFN_(FCompletionPort* port, size_t n);
+    static FCompletionPort* StartPortIFN_(FCompletionPort* port, size_t n) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
