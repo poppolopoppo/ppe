@@ -193,7 +193,7 @@ void FDirpath::ExpandTokens(const TMemoryView<FFileSystemToken>& tokens) const {
 }
 //----------------------------------------------------------------------------
 bool FDirpath::HasMountingPoint() const {
-    return (not MountingPoint().empty());
+    return (_path && _path->HasMountingPoint());
 }
 //----------------------------------------------------------------------------
 bool FDirpath::IsSubdirectory(const FDirpath& other) const {
@@ -300,8 +300,8 @@ size_t FDirpath::HashValue() const {
 //----------------------------------------------------------------------------
 bool FDirpath::Absolute(FDirpath* absolute, const FDirpath& origin, const FDirpath& relative) {
     Assert(absolute);
-    Assert(origin.HasMountingPoint());
-    Assert(not relative.HasMountingPoint());
+    Assert_NoAssume(origin.HasMountingPoint());
+    Assert_NoAssume(not relative.HasMountingPoint());
 
     STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, origin.Depth()+relative.Depth());
 
@@ -345,8 +345,8 @@ bool FDirpath::Normalize(FDirpath* normalized, const FDirpath& path) {
 //----------------------------------------------------------------------------
 bool FDirpath::Relative(FDirpath* relative, const FDirpath& origin, const FDirpath& other) {
     Assert(relative);
-    Assert(origin.HasMountingPoint());
-    Assert(other.HasMountingPoint());
+    Assert_NoAssume(origin.HasMountingPoint());
+    Assert_NoAssume(other.HasMountingPoint());
 
     if (origin.MountingPoint() != other.MountingPoint())
         return false;

@@ -20,7 +20,11 @@ public:
     using FGenealogy = TPrimeNumberProduct<FFileSystemNode, true>;
 
     FFileSystemNode() NOEXCEPT;
-    FFileSystemNode(FFileSystemNode& parent, const FFileSystemToken& token, double sortValue, size_t uid) NOEXCEPT;
+    FFileSystemNode(
+        FFileSystemNode& parent,
+        const FFileSystemToken& token,
+        double sortValue, size_t uid,
+        bool isMountingPoint ) NOEXCEPT;
 
     FFileSystemNode(const FFileSystemNode& ) = delete;
     FFileSystemNode& operator =(const FFileSystemNode& ) = delete;
@@ -29,6 +33,9 @@ public:
     const FFileSystemNode* Child() const { return _child; }
     const FFileSystemNode* Sibbling() const { return _sibbling; }
     const FFileSystemNode* Leaf() const { return _leaf; }
+
+    bool IsMountingPoint() const { return (1 == _depth && HasMountingPoint()); }
+    bool HasMountingPoint() const { return (_flags & EInternalFlags::HasMountingPoint); }
 
     bool IsTail() const { return _token.empty(); }
     const FFileSystemToken& Token() const { return _token; }
@@ -45,13 +52,20 @@ public:
 private:
     friend class FFileSystemTrie;
 
+    enum class EInternalFlags : u32 {
+        None = 0,
+        HasMountingPoint = 1<<0,
+    };
+    ENUM_FLAGS_FRIEND(EInternalFlags);
+
     FFileSystemNode* _parent;
     FFileSystemNode* _child;
     FFileSystemNode* _sibbling;
     FFileSystemNode* _leaf;
 
     const FFileSystemToken _token;
-    const size_t _depth;
+    const u32 _depth;
+    const EInternalFlags _flags;
     const hash_t _hashValue;
     const double _sortValue;
     const FGenealogy _genealogy;
@@ -96,6 +110,7 @@ private:
 
     FFileSystemTrie();
 
+    void CreateRootNode_();
     FFileSystemNode* CreateNode_(
         FFileSystemNode& parent,
         const FFileSystemToken& token,

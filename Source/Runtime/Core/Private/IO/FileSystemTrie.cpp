@@ -10,11 +10,19 @@
 
 #include <algorithm>
 
+#define PPE_USE_FSTRIENODE_SORTVALUE_FOR_HASH (1)
+//  1: use hash_value(sortValue), since sortValue is unique in the tree
+//  0: use hash_tuple() by combining tokens hash_value
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+static bool IsMountingPoint_(const FFileSystemToken& token) {
+    return (not token.empty() && token.MakeView().back() == L':');
+}
 //----------------------------------------------------------------------------
 static size_t ExpandFileSystemNode_(
     const TMemoryView<FFileSystemToken>& tokens,
@@ -43,18 +51,32 @@ FFileSystemNode::FFileSystemNode() NOEXCEPT
 ,   _sibbling(nullptr)
 ,   _leaf(nullptr)
 ,   _depth(0)
+,   _flags(EInternalFlags::None)
+#if !PPE_USE_FSTRIENODE_SORTVALUE_FOR_HASH
 ,   _hashValue(PPE_HASH_VALUE_SEED)
+#else
+,   _hashValue(0)
+#endif
 ,   _sortValue(-1.0)
 {}
 //----------------------------------------------------------------------------
-FFileSystemNode::FFileSystemNode(FFileSystemNode& parent, const FFileSystemToken& token, double sortValue, size_t uid) NOEXCEPT
+FFileSystemNode::FFileSystemNode(
+    FFileSystemNode& parent,
+    const FFileSystemToken& token,
+    double sortValue, size_t uid,
+    bool isMountingPoint) NOEXCEPT
 :   _parent(&parent)
 ,   _child(nullptr)
 ,   _sibbling(nullptr)
 ,   _leaf(nullptr)
 ,   _token(token)
 ,   _depth(parent._depth + 1)
+,   _flags(isMountingPoint || parent.HasMountingPoint() ? EInternalFlags::HasMountingPoint : EInternalFlags::None)
+#if !PPE_USE_FSTRIENODE_SORTVALUE_FOR_HASH
 ,   _hashValue(hash_tuple(parent._hashValue, token))
+#else
+,   _hashValue(hash_value(sortValue))
+#endif
 ,   _sortValue(sortValue)
 ,   _genealogy(FGenealogy::Combine(parent._genealogy, FGenealogy::Prime(uid))) {
     Assert_NoAssume(-1.0 <= _sortValue && _sortValue <= 1.0);
@@ -76,12 +98,17 @@ bool FFileSystemNode::IsChildOf(const FFileSystemNode& parent) const {
 //----------------------------------------------------------------------------
 FFileSystemTrie::FFileSystemTrie()
 :   _numNodes(0) {
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE(); // handled by trie at destruction
-    _root._child = _root._leaf = new (_heap) FFileSystemNode{ _root, FFileSystemToken{}, 1.0, 0 };
+    CreateRootNode_();
 }
 //----------------------------------------------------------------------------
 FFileSystemTrie::~FFileSystemTrie() {
     Clear_ReleaseMemory_();
+}
+//----------------------------------------------------------------------------
+void FFileSystemTrie::CreateRootNode_() {
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE(); // handled by trie at destruction
+
+    _root._child = _root._leaf = new (_heap) FFileSystemNode{ _root, FFileSystemToken{}, 1.0, 0, false };
 }
 //----------------------------------------------------------------------------
 FFileSystemNode* FFileSystemTrie::CreateNode_(
@@ -90,11 +117,13 @@ FFileSystemNode* FFileSystemTrie::CreateNode_(
     const FFileSystemNode& prev,
     const FFileSystemNode& next) {
     PPE_LEAKDETECTOR_WHITELIST_SCOPE(); // handled by trie at destruction
+
     const double s = ((prev._sortValue + next._sortValue) * 0.5);
     Assert_NoAssume(s > prev._sortValue);
     Assert_NoAssume(s < next._sortValue);
+
     return new (_heap) FFileSystemNode{
-        parent, token, s, token.empty() ? 0 : _numNodes++ };
+        parent, token, s, token.empty() ? 0 : _numNodes++, IsMountingPoint_(token) };
 }
 //----------------------------------------------------------------------------
 const FFileSystemNode* FFileSystemTrie::Get_(const FFileSystemNode& root, const FFileSystemToken& token) const {
@@ -228,11 +257,7 @@ void FFileSystemTrie::Clear_ReleaseMemory_() {
 //----------------------------------------------------------------------------
 void FFileSystemTrie::Clear() {
     Clear_ReleaseMemory_();
-
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE(); // handled by trie at destruction
-
-    _numNodes = 0;
-    _root._child = _root._leaf = new (_heap) FFileSystemNode{ _root, FFileSystemToken{}, 1.0, 0 };
+    CreateRootNode_(); // need to recreate the root node when invalidating the heap
 }
 //----------------------------------------------------------------------------
 const FFileSystemNode& FFileSystemTrie::FirstNode(const FFileSystemNode& pnode) const {

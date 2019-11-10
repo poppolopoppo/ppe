@@ -33,6 +33,35 @@ static void Test_FSTrie() {
     AssertRelease(a < d);
     AssertRelease(b < d);
     AssertRelease(c < d);
+
+    AssertRelease(a.Dirpath().IsAbsolute());
+    AssertRelease(b.Dirpath().IsAbsolute());
+    AssertRelease(c.Dirpath().IsAbsolute());
+    AssertRelease(d.Dirpath().IsAbsolute());
+
+    const FDirpath root = L"c:/windows";
+
+    AssertRelease(a.IsRelativeTo(root));
+    AssertRelease(b.IsRelativeTo(root));
+    AssertRelease(c.IsRelativeTo(root));
+    AssertRelease(d.IsRelativeTo(root));
+
+    const FFilename ra = a.Relative(root);
+    const FFilename rb = b.Relative(root);
+    const FFilename rc = c.Relative(root);
+    const FFilename rd = d.Relative(root);
+
+    AssertRelease(ra < rb);
+    AssertRelease(rc < ra);
+    AssertRelease(rc < rb);
+    AssertRelease(ra < rd);
+    AssertRelease(rb < rd);
+    AssertRelease(rc < rd);
+
+    AssertRelease(ra.Dirpath().IsRelative());
+    AssertRelease(rb.Dirpath().IsRelative());
+    AssertRelease(rc.Dirpath().IsRelative());
+    AssertRelease(rd.Dirpath().IsRelative());
 }
 //----------------------------------------------------------------------------
 static void Test_VFSFrontend_() {

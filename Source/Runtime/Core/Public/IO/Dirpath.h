@@ -62,6 +62,10 @@ public:
     bool empty() const { return nullptr == _path; }
 
     bool HasMountingPoint() const;
+
+    bool IsAbsolute() const { return HasMountingPoint(); }
+    bool IsRelative() const { return (not HasMountingPoint()); }
+
     bool IsSubdirectory(const FDirpath& other) const;
 
     void Concat(const FDirname& append);
