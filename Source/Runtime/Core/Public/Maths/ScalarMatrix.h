@@ -217,10 +217,10 @@ public:
 #undef DECL_SCALARMATRIX_SCALAR_OP_LHS
 
 #define DECL_SCALARMATRIX_SCALAR_OP_RHS(_Op) \
-    template <typename T, size_t _Width, size_t _Height> \
-    friend TScalarMatrix<T, _Width, _Height> operator _Op(T lhs, const TScalarMatrix<T, _Width, _Height>& rhs); \
-    template <typename U, typename T, size_t _Width, size_t _Height> \
-    friend TScalarMatrix<T, _Width, _Height> operator _Op(U lhs, const TScalarMatrix<T, _Width, _Height>& rhs);
+    template <typename U, size_t _W, size_t _H> \
+    friend TScalarMatrix<U, _W, _H> operator _Op(U lhs, const TScalarMatrix<U, _W, _H>& rhs); \
+    template <typename U, typename V, size_t _W, size_t _H> \
+    friend TScalarMatrix<U, _W, _H> operator _Op(U lhs, const TScalarMatrix<V, _W, _H>& rhs);
 
     DECL_SCALARMATRIX_SCALAR_OP_RHS(+)
     DECL_SCALARMATRIX_SCALAR_OP_RHS(-)

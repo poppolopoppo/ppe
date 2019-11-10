@@ -410,11 +410,12 @@ public:
 #endif
     }
 
-    static void Footer(FWTextWriter& oss, const ILogger::FCategory& category, ILogger::EVerbosity level, const ILogger::FSiteInfo& site) {
+    static void Footer(FWTextWriter& oss, const ILogger::FCategory&, ILogger::EVerbosity level, const ILogger::FSiteInfo& site) {
 #if PPE_DUMP_SITE_ON_LOG
         Format(oss, L"\n\tat {0}:{1}\n", site.Filename, site.Line);
 #else
-        NOOP(category, level, site);
+        UNUSED(level);
+        UNUSED(site);
         oss << Eol;
 #endif
     }

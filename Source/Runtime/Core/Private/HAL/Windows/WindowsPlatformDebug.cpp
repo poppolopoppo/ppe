@@ -95,6 +95,12 @@ void FWindowsPlatformDebug::DeallocateEvent(FHeapHandle heap, void* ptr) {
 }
 //----------------------------------------------------------------------------
 #else
+//----------------------------------------------------------------------------
+static FWindowsPlatformDebug::FHeapHandle GHeap_Dummy = nullptr;
+//----------------------------------------------------------------------------
+FWindowsPlatformDebug::FHeapHandle FWindowsPlatformDebug::HEAP_Alloca = GHeap_Dummy;
+FWindowsPlatformDebug::FHeapHandle FWindowsPlatformDebug::HEAP_Malloc = GHeap_Dummy;
+FWindowsPlatformDebug::FHeapHandle FWindowsPlatformDebug::HEAP_Linear = GHeap_Dummy;
 //---------------------------------------------------------------------------
 void FWindowsPlatformDebug::AllocateEvent(FHeapHandle , void* , size_t ) {}
 void FWindowsPlatformDebug::ReallocateEvent(FHeapHandle , void* , size_t , void* ) {}

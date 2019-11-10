@@ -127,5 +127,3 @@ PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FMetaFunct
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-
-#undef USE_MSVC17_WORKAROUND_FOR_INTERNALERROR

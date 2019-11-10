@@ -222,8 +222,7 @@ struct FMallocHistogram {
         return ((index << POW_N) + ((size - 1) >> (index - POW_N)) - MinClassIndex);
     }
 
-    static void Allocate(void* ptr, size_t sizeInBytes) {
-        NOOP(ptr);
+    static void Allocate(void*, size_t sizeInBytes) {
         const size_t sizeClass = Min(MakeSizeClass(sizeInBytes), GMallocNumClasses - 1);
         FPlatformAtomics::Increment(&GMallocSizeAllocations[sizeClass]);
         FPlatformAtomics::Add(&GMallocSizeTotalBytes[sizeClass], sizeInBytes);
@@ -429,7 +428,7 @@ bool FMallocDebug::SetLeakDetectorWhiteListed(bool ignoreleaks) {
     whitelistedTLS = ignoreleaks;
     return wasIgnoringLeaks;
 #else
-    NOOP(ignoreleaks);
+    UNUSED(ignoreleaks);
     return false;
 #endif
 }
@@ -443,7 +442,7 @@ void FMallocDebug::DumpMemoryLeaks(bool onlyNonDeleters/* = false */) {
         ? FLeakDetector::ReportOnlyNonDeleters
         : FLeakDetector::ReportOnlyLeaks );
 #else
-    NOOP(onlyNonDeleters);
+    UNUSED(onlyNonDeleters);
 #endif
 }
 #endif //!USE_PPE_FINAL_RELEASE
@@ -459,7 +458,9 @@ bool FMallocDebug::FetchAllocationHistogram(
     *totalBytes = TMemoryView<const i64>((const i64*)&GMallocSizeTotalBytes, lengthof(GMallocSizeTotalBytes));
     return true;
 #else
-    NOOP(classes, allocations, totalBytes);
+    UNUSED(classes);
+    UNUSED(allocations);
+    UNUSED(totalBytes);
     return false;
 #endif
 }

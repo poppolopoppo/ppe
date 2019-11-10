@@ -127,7 +127,7 @@ bool FMetaEnum::IsValidValue(FMetaEnumOrd value) const {
     }
     else {
         for (const FMetaEnumValue& it : _values)
-            if (it.Value == it.Value)
+            if (it.Value == value)
                 return true;
 
         return false;

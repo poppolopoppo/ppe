@@ -102,7 +102,7 @@ struct TScalarVectorComponent {
 
     FORCE_INLINE CONSTEXPR component_type& operator +=(component_type scalar) NOEXCEPT {
         return (get() += scalar);
-}
+    }
     FORCE_INLINE CONSTEXPR component_type& operator -=(component_type scalar) NOEXCEPT {
         return (get() -= scalar);
     }
