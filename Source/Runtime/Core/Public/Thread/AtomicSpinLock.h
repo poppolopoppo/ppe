@@ -7,17 +7,24 @@
 #include <atomic>
 #include <emmintrin.h>
 
-// http://anki3d.org/spinlock/
-// https://github.com/efficient/libcuckoo/blob/master/src/cuckoohash_map.hh
-
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// A fast, lightweight spinlock
+// A lightweight spin-lock
+// http://anki3d.org/spinlock/
+// https://github.com/efficient/libcuckoo/blob/master/src/cuckoohash_map.hh
 //----------------------------------------------------------------------------
-class FAtomicSpinLock {
+class FAtomicSpinLock : Meta::FNonCopyableNorMovable {
     std::atomic_flag State = ATOMIC_FLAG_INIT;
+
+#if USE_PPE_ASSERT
+public:
+    FAtomicSpinLock() = default;
+    ~FAtomicSpinLock() NOEXCEPT {
+        Assert_NoAssume(TryLock());
+    }
+#endif
 
 public:
     void Unlock() NOEXCEPT { State.clear(std::memory_order_release); }
@@ -85,9 +92,9 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Less fast, but order preserving
+// Less lightweight, but order preserving
 //----------------------------------------------------------------------------
-class FAtomicOrderedLock {
+class FAtomicOrderedLock : Meta::FNonCopyableNorMovable {
     std::atomic<size_t> Locked = 0;
     std::atomic<size_t> Revision = size_t(-1); // <-- must be == to (Locked - 1)
 
@@ -123,6 +130,92 @@ public:
             ++Barrier.Locked; // release the locks, the next waiting thread will stop spinning
         }
     };
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Read/Write lock with atomic spinning
+// https://gist.github.com/yizhang82/500da684837161055978011c5850d296#file-rw_spin_lock-h
+//----------------------------------------------------------------------------
+class FAtomicReadWriteLock : Meta::FNonCopyableNorMovable {
+    STATIC_CONST_INTEGRAL(size_t, WRITER_LOCK, INDEX_NONE);
+    std::atomic<size_t> Readers{ 0 };
+
+#if USE_PPE_ASSERT
+public:
+    FAtomicReadWriteLock() = default;
+    ~FAtomicReadWriteLock() NOEXCEPT {
+        Assert_NoAssume(0 == Readers);
+    }
+#endif
+
+public: // Reader
+    struct FReaderScope {
+        FAtomicReadWriteLock& Lock;
+        FReaderScope(FAtomicReadWriteLock& lock)
+        :   Lock(lock) {
+            Lock.AcquireReader();
+        }
+        ~FReaderScope() {
+            Lock.ReleaseReader();
+        }
+    };
+
+    void AcquireReader() NOEXCEPT {
+        for (size_t backoff = 0;;) {
+            size_t r = Readers;
+            if (WRITER_LOCK != r) {
+                if (Readers.compare_exchange_weak(r, r + 1))
+                    return; // lock read
+            }
+
+            FPlatformProcess::SleepForSpinning(backoff);
+        }
+    }
+
+    void ReleaseReader() NOEXCEPT {
+        for (size_t backoff = 0;;) {
+            size_t r = Readers;
+            Assert(r);
+            if (WRITER_LOCK != r) {
+                Assert_NoAssume(r > 0);
+                if (Readers.compare_exchange_weak(r, r - 1))
+                    return; // release read lock
+            }
+
+            FPlatformProcess::SleepForSpinning(backoff);
+        }
+    }
+
+public: // Writer
+    struct FWriterScope {
+        FAtomicReadWriteLock& Lock;
+        FWriterScope(FAtomicReadWriteLock& lock)
+        :   Lock(lock) {
+            Lock.AcquireWriter();
+        }
+        ~FWriterScope() {
+            Lock.ReleaseWriter();
+        }
+    };
+
+    void AcquireWriter() NOEXCEPT {
+        for (size_t backoff = 0;;) {
+            size_t r = Readers;
+            if (0 == r) {
+                if (Readers.compare_exchange_weak(r, WRITER_LOCK))
+                    return; // lock write
+            }
+
+            FPlatformProcess::SleepForSpinning(backoff);
+        }
+    }
+
+    void ReleaseWriter() NOEXCEPT {
+        Assert_NoAssume(WRITER_LOCK == Readers);
+        Readers = 0; // release write lock
+    }
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
