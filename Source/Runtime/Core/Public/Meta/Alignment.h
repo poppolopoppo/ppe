@@ -2,6 +2,8 @@
 
 #include "Meta/TypeTraits.h"
 
+#include <new>
+
 namespace PPE {
 namespace Meta {
 //----------------------------------------------------------------------------
@@ -60,11 +62,16 @@ T* RoundToPrev(const T* p, size_t alignment) {
 //----------------------------------------------------------------------------
 #define ALLOCATION_GRANULARITY (65536)
 //----------------------------------------------------------------------------
-#define CACHELINE_SIZE (64)
+#if _HAS_CXX17
+//  https://en.cppreference.com/w/cpp/thread/hardware_destructive_interference_size
+#   define CACHELINE_SIZE (std::hardware_destructive_interference_size)
+#   define ROUND_TO_NEXT_CACHELINE(v) ::PPE::Meta::RoundToNext((v), CACHELINE_SIZE)
+#else
+#   define CACHELINE_SIZE (64)
+#   define ROUND_TO_NEXT_CACHELINE(v) ROUND_TO_NEXT_64(v)
+#endif
 //----------------------------------------------------------------------------
 #define CACHELINE_ALIGNED ALIGN(CACHELINE_SIZE)
-//----------------------------------------------------------------------------
-#define ROUND_TO_NEXT_CACHELINE(v) ROUND_TO_NEXT_64(v)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
