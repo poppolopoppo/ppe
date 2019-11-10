@@ -2,6 +2,8 @@
 
 #include "Core_fwd.h"
 
+#include "HAL/TargetPlatform_fwd.h"
+
 #include "Diagnostic/Logger_fwd.h"
 #include "IO/String_fwd.h"
 #include "Memory/MemoryView.h"
@@ -60,8 +62,6 @@ public:
     virtual bool SupportsFeature(EPlatformFeature feature) const = 0;
 };
 //----------------------------------------------------------------------------
-PPE_CORE_API TMemoryView<const ITargetPlaftorm* const> AllTargetPlatforms();
-PPE_CORE_API const ITargetPlaftorm& TargetPlatform(ETargetPlatform platform);
 inline const ITargetPlaftorm& CurrentPlatform() { return TargetPlatform(ETargetPlatform::Current); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
