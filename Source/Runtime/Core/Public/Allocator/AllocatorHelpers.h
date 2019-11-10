@@ -141,6 +141,88 @@ public:
     }
 };
 //----------------------------------------------------------------------------
+// Min size allocator snap allocation size superior to _MinSize
+//----------------------------------------------------------------------------
+template <typename _Allocator, size_t _MinSize>
+class TMinSizeAllocator : private _Allocator {
+public:
+    using allocator_traits = TAllocatorTraits<_Allocator>;
+
+#define PROXY_USING_DEF(_NAME) \
+    using _NAME = typename allocator_traits::_NAME;
+
+    PROXY_USING_DEF(propagate_on_container_copy_assignment);
+    PROXY_USING_DEF(propagate_on_container_move_assignment);
+    PROXY_USING_DEF(propagate_on_container_swap);
+
+    PROXY_USING_DEF(is_always_equal);
+
+    PROXY_USING_DEF(has_maxsize);
+    PROXY_USING_DEF(has_owns);
+    PROXY_USING_DEF(has_reallocate);
+    PROXY_USING_DEF(has_acquire);
+    PROXY_USING_DEF(has_steal);
+
+#undef PROXY_USING_DEF
+
+    STATIC_CONST_INTEGRAL(size_t, Alignment, allocator_traits::Alignment);
+
+    TMinSizeAllocator() = default;
+
+    TMinSizeAllocator(const TMinSizeAllocator& other) = default;
+    TMinSizeAllocator& operator =(const TMinSizeAllocator& other) = default;
+
+    TMinSizeAllocator(TMinSizeAllocator&& rvalue) = default;
+    TMinSizeAllocator& operator =(TMinSizeAllocator&& rvalue) = default;
+
+    using _Allocator::_Allocator;
+
+    static size_t MaxSize() {
+        return allocator_traits::MaxSize();
+    }
+
+    static size_t SnapSize(size_t s) NOEXCEPT {
+        STATIC_ASSERT(_MinSize > 0); // or it's useless
+        return allocator_traits::SnapSize(Max(s, _MinSize));
+    }
+
+    bool Owns(FAllocatorBlock b) const NOEXCEPT {
+        return allocator_traits::Owns(*this, b);
+    }
+
+    FAllocatorBlock Allocate(size_t s) {
+        return allocator_traits::Allocate(*this, s);
+    }
+
+    void Deallocate(FAllocatorBlock b) {
+        allocator_traits::Deallocate(*this, b);
+    }
+
+    void Reallocate(FAllocatorBlock& b, size_t s) {
+        allocator_traits::Reallocate(*this, b, s);
+    }
+
+    bool Acquire(FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::Acquire(*this, b);
+    }
+
+    bool Steal(FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::Steal(*this, b);
+    }
+
+    friend bool operator ==(const TMinSizeAllocator& lhs, const TMinSizeAllocator& rhs) NOEXCEPT {
+        return (allocator_traits::Equals(lhs, rhs));
+    }
+
+    friend bool operator !=(const TMinSizeAllocator& lhs, const TMinSizeAllocator& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
+    }
+
+    friend void swap(TMinSizeAllocator& lhs, TMinSizeAllocator& rhs) NOEXCEPT {
+        allocator_traits::Swap(lhs, rhs);
+    }
+};
+//----------------------------------------------------------------------------
 // Proxy allocator is wrapping an internal reference to another allocator
 //----------------------------------------------------------------------------
 template <typename _Allocator>

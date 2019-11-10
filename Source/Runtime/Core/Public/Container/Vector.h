@@ -20,9 +20,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Uses the default allocator
 #define VECTOR(_DOMAIN, T) \
     ::PPE::TVector<COMMA_PROTECT(T), ALLOCATOR(_DOMAIN)>
 //----------------------------------------------------------------------------
+// Allocates minimum N elements, useful to avoid small allocations and fragmentation
+#define VECTORMINSIZE(_DOMAIN, T, N) \
+    ::PPE::TVector<COMMA_PROTECT(T), ALLOCATOR_MINSIZE(_DOMAIN, COMMA_PROTECT(T), N) >
+//----------------------------------------------------------------------------
+// Don't allocate for first N elements, use inline storage instead
 #define VECTORINSITU(_DOMAIN, T, N) \
     ::PPE::TVector<COMMA_PROTECT(T), INLINE_ALLOCATOR(_DOMAIN, COMMA_PROTECT(T), N) >
 //----------------------------------------------------------------------------

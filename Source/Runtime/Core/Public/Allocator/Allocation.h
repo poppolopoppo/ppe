@@ -70,10 +70,25 @@ using TInlineStackAllocator = TFallbackAllocator<
     TDefaultAllocator<_Tag> >;
 #endif //!USE_PPE_MEMORY_DEBUGGING
 //----------------------------------------------------------------------------
+// Uses malloc() but allocations are snapped to be superior to N
+//----------------------------------------------------------------------------
+#if USE_PPE_MEMORY_DEBUGGING
+template <typename _Tag, typename T, size_t N>
+using TDefaultAllocatorMinSize = TDefaultAllocator<_Tag>;
+#else
+template <typename _Tag, typename T, size_t N>
+using TDefaultAllocatorMinSize = TMinSizeAllocator<
+    TDefaultAllocator<_Tag>,
+    sizeof(T) * N >;
+#endif //!USE_PPE_MEMORY_DEBUGGING
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define ALLOCATOR(_Domain) \
     ::PPE::TDefaultAllocator< MEMORYDOMAIN_TAG(_Domain) >
+//----------------------------------------------------------------------------
+#define ALLOCATOR_MINSIZE(_Domain, T, N) \
+    ::PPE::TDefaultAllocatorMinSize< MEMORYDOMAIN_TAG(_Domain), T, N >
 //----------------------------------------------------------------------------
 #define ALIGNED_ALLOCATOR(_Domain, _Alignment) \
     ::PPE::TDecorateAllocator< MEMORYDOMAIN_TAG(_Domain), ::PPE::TAlignedMallocator<_Alignment> >
