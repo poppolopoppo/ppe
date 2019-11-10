@@ -48,7 +48,7 @@ inline void FRefCountable::IncRefCount() const NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 inline bool FRefCountable::DecRefCount_ReturnIfReachZero() const NOEXCEPT {
-    const int n = _refCount.fetch_sub(1);
+    const int n = atomic_fetch_sub_explicit(&_refCount, 1, std::memory_order_relaxed);
     Assert(n > 0);
     return (1 == n);
 }
