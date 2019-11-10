@@ -1,8 +1,8 @@
-﻿#pragma once
+#pragma once
 
 #include "Core_fwd.h"
 
-#include "Thread/Task/Task.h"
+#include "Thread/Task_fwd.h"
 
 #include "Container/Vector.h"
 #include "Memory/MemoryView.h"
@@ -12,7 +12,6 @@
 #include <atomic>
 
 namespace PPE {
-class ITaskContext;
 class FTaskFiberLocalCache;
 class FTaskManagerImpl;
 //----------------------------------------------------------------------------

@@ -2,15 +2,10 @@
 
 #include "Core.h"
 
-#include "Container/Stack.h"
-#include "Memory/RefPtr.h"
+#include "Thread/Task_fwd.h"
 #include "Misc/Function.h"
 
-#include <functional>
-
 namespace PPE {
-class ITaskContext;
-class FTaskManager;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -18,10 +13,10 @@ enum class ETaskPriority : u32 {
     High = 0,
     Normal,
     Low,
-    Internal, // Do not use for userland tasks ! (reserved for system)
+
+    // #TODO : hide this internal priority
+    Internal, // Do not use for user-land tasks ! (reserved for system)
 };
-//----------------------------------------------------------------------------
-using FTaskFunc = TFunction<void(ITaskContext&)>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

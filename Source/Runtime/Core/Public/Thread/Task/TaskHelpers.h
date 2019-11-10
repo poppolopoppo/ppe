@@ -3,11 +3,11 @@
 #include "Core.h"
 
 #include "Misc/Function.h"
+#include "Thread/Task_fwd.h"
 #include "Thread/Task/Task.h"
 #include "Thread/Task/TaskManager.h"
 
 namespace PPE {
-class FTaskManager;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

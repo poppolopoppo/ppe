@@ -2,6 +2,7 @@
 
 #include "Core.h"
 
+#include "Thread/Task_fwd.h"
 #include "Thread/Task/Task.h"
 #include "Thread/Task/TaskContext.h"
 
@@ -13,8 +14,6 @@ enum class EThreadPriority;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FCompletionPort;
-class FTaskManager;
 class FTaskManagerImpl;
 //----------------------------------------------------------------------------
 class PPE_CORE_API FTaskManager {
