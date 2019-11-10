@@ -4,6 +4,9 @@
 
 #define USE_PPE_PLATFORM_DEBUG (!USE_PPE_FINAL_RELEASE || USE_PPE_MEMORY_DEBUGGING)
 
+#define USE_PPE_PLATFORM_DEBUG_CPU_MARKERS (USE_PPE_PLATFORM_DEBUG && 1) // %_NOCOMMIT%
+#define USE_PPE_PLATFORM_DEBUG_MEM_MARKERS (USE_PPE_PLATFORM_DEBUG && !USE_PPE_PROFILING && 1) // %_NOCOMMIT%
+
 #if USE_PPE_PLATFORM_DEBUG
 
 namespace PPE {
@@ -54,24 +57,28 @@ public: // profiling
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
+#else
+#   define PPE_DEBUG_BREAK() NOOP()
+#   define PPE_DECLSPEC_ALLOCATOR()
+
+#endif //!USE_PLATFORM_DEBUG
+
+#if USE_PPE_PLATFORM_DEBUG_CPU_MARKERS
 #   define PPE_DEBUG_NAMEDSCOPE(_NAME) \
     const PPE::FPlatformDebug::FNamedScope ANONYMIZE(namedEvent){ (_NAME) }
+#else
+#   define PPE_DEBUG_NAMEDSCOPE(_NAME) NOOP()
+#endif
 
+#if USE_PPE_PLATFORM_DEBUG_MEM_MARKERS
 #   define PPE_DEBUG_ALLOCATEEVENT(_HEAP, _PTR, _SZ) \
     PPE::FPlatformDebug::AllocateEvent((PPE::FPlatformDebug::CONCAT(HEAP_, _HEAP)), (_PTR), (_SZ))
 #   define PPE_DEBUG_REALLOCATEEVENT(_HEAP, _NEWP, _SZ, _OLDP) \
     PPE::FPlatformDebug::ReallocateEvent((PPE::FPlatformDebug::CONCAT(HEAP_, _HEAP)), (_NEWP), (_SZ), (_OLDP))
 #   define PPE_DEBUG_DEALLOCATEEVENT(_HEAP, _PTR) \
     PPE::FPlatformDebug::DeallocateEvent((PPE::FPlatformDebug::CONCAT(HEAP_, _HEAP)), (_PTR))
-
 #else
-#   define PPE_DEBUG_BREAK() NOOP()
-#   define PPE_DECLSPEC_ALLOCATOR()
-
-#   define PPE_DEBUG_NAMEDSCOPE(_NAME) NOOP()
-
-#   define PPE_DEBUG_ALLOCATEEVENT(_HEAP, _SZ) NOOP()
+#   define PPE_DEBUG_ALLOCATEEVENT(_HEAP, _PTR, _SZ) NOOP()
 #   define PPE_DEBUG_REALLOCATEEVENT(_HEAP, _NEWP, _SZ, _OLDP) NOOP()
 #   define PPE_DEBUG_DEALLOCATEEVENT(_HEAP, _PTR) NOOP()
-
-#endif //!USE_PLATFORM_DEBUG
+#endif
