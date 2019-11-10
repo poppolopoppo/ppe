@@ -61,30 +61,21 @@ class THashMemoizer {
 public:
     CONSTEXPR THashMemoizer() = default;
 
-    THashMemoizer(const T& value)
+    THashMemoizer(const THashMemoizer& other) = default;
+    THashMemoizer& operator =(const THashMemoizer& other) = default;
+
+    THashMemoizer(THashMemoizer&& rvalue) = default;
+    THashMemoizer& operator =(THashMemoizer&& rvalue) = default;
+
+    THashMemoizer(const T& value, hash_t h) NOEXCEPT
         : _value(value)
-        , _hash(_Hash()(_value)) {}
-    THashMemoizer(T&& rvalue)
+        , _hash(h) {}
+    THashMemoizer(T&& rvalue, hash_t h) NOEXCEPT
         : _value(std::move(rvalue))
-        , _hash(_Hash()(_value)) {}
+        , _hash(h) {}
 
-    CONSTEXPR THashMemoizer(const THashMemoizer& other)
-        : _value(other._value)
-        , _hash(other._hash) {}
-    CONSTEXPR THashMemoizer& operator =(const THashMemoizer& other) {
-        _value = other._value;
-        _hash = other._hash;
-        return *this;
-    }
-
-    THashMemoizer(THashMemoizer&& rvalue) noexcept
-        : _value(std::move(rvalue._value))
-        , _hash(rvalue._hash) {}
-    THashMemoizer& operator =(THashMemoizer&& rvalue) noexcept {
-        _value = std::move(rvalue._value);
-        _hash = rvalue._hash;
-        return *this;
-    }
+    THashMemoizer(const T& value) : THashMemoizer(value, _Hash()(value)) {}
+    THashMemoizer(T&& rvalue) : THashMemoizer(std::move(rvalue), _Hash()(rvalue)) {}
 
     const T& Value() const { return _value; }
     hash_t Hash() const { return _hash; }
