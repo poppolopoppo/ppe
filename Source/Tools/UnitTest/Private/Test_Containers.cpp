@@ -40,8 +40,8 @@
 #include <unordered_set>
 
 #define PPE_RUN_BENCHMARK_POOLSIZE      (512) // avoid cache coherency
-#define PPE_RUN_EXHAUSTIVE_BENCHMARKS   (1) // %_NOCOMMIT%
-#define PPE_RUN_BENCHARMK_ALLTESTS      (1) // %_NOCOMMIT%
+#define PPE_RUN_EXHAUSTIVE_BENCHMARKS   (0) // %_NOCOMMIT%
+#define PPE_RUN_BENCHARMK_ALLTESTS      (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHMARK_ONE_CONTAINER (0) // %_NOCOMMIT%
 #define PPE_RUN_BENCHMARK_MULTITHREADED (1) // %_NOCOMMIT%
 #define PPE_DONT_USE_STD_UNORDEREDSET   (0) // %_NOCOMMIT%
@@ -1181,7 +1181,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
         }
 #   endif
 #endif
-#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             THopscotchHashSet2<T> Hopscotch2;
             bm.Run("Hopscotch2", Hopscotch2, input);
@@ -1229,19 +1229,19 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("SSEHashSet4", set, input);
         }
 #endif
-#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TSSEHashSet5<T> set;
             bm.Run("SSEHashSet5", set, input);
         }
 #endif
-#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TSSEHashSet5<T, Meta::TCRC32<T> > set;
             bm.Run("SSEHashSet5_CRC32", set, input);
         }
 #endif
-#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if PPE_RUN_EXHAUSTIVE_BENCHMARKS
         {
             TSSEHashSet6<T> set;
             bm.Run("SSEHashSet6", set, input);
@@ -1345,6 +1345,9 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
     Benchmark_Containers_Exhaustive_<T>(name + "_80", 80, generator, containers_all);
     Benchmark_Containers_Exhaustive_<T>(name + "_90", 90, generator, containers_all);
 #   endif
+#endif
+
+#if !USE_PPE_ASSERT
     Benchmark_Containers_Exhaustive_<T>(name + "_100", 100, generator, containers_large);
 #   if PPE_RUN_EXHAUSTIVE_BENCHMARKS || PPE_RUN_BENCHMARK_ONE_CONTAINER
     Benchmark_Containers_Exhaustive_<T>(name + "_120", 120, generator, containers_large);
