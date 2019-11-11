@@ -8,6 +8,7 @@
 
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformMemory.h"
+#include "Memory/RefPtr.h"
 #include "Meta/ThreadResource.h"
 
 #if USE_PPE_LOGGER
@@ -26,12 +27,6 @@ LOG_CATEGORY(PPE_CORE_API, Task)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
-//----------------------------------------------------------------------------
-// This global variable sets the maximum capacity of task manager queue,
-// - when using classic concurrent queue this is the *total* capacity
-// - when using work stealing queue you have to multiply this number by the
-//   number of workers.
-STATIC_CONST_INTEGRAL(size_t, GTaskManagerQueueCapacity, 128);
 //----------------------------------------------------------------------------
 class FWorkerContext_ : Meta::FThreadResource {
 public:
@@ -121,7 +116,7 @@ void FWorkerContext_::PostWork() {
 
     // special tasks can inject a postfix callback to avoid skipping the decref
     if (ctx._postWork) {
-        // need to reset _afterTask before yielding, or it could be executed
+        // need to reset _postWork before yielding, or it could be executed
         // more than once since it's stored in the thread and not in the fiber
         const FTaskFunc postWorkCpy{ std::move(ctx._postWork) };
         Assert_NoAssume(not ctx._postWork);
@@ -190,117 +185,95 @@ static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, u
     }
 }
 //----------------------------------------------------------------------------
-struct FBroadcast_ {
-    const FTaskFunc Broadcast;
+// Helpers used when calling FTaskManager outside of a Fiber
+FWD_REFPTR(WaitForTask_);
+class FWaitForTask_ : public FRefCountable {
+public:
+    const FTaskFunc Task;
+    std::mutex Barrier;
+    std::condition_variable OnTaskFinished;
+    int NumTasks = 0;
 
-    std::mutex FinishedBarrier;
-    size_t NumNotFinished;
-    std::condition_variable OnFinished;
-
-    std::mutex ExecutedBarrier;
-    std::atomic<size_t> NumNotExecuted;
-    std::condition_variable OnExecuted;
-
-    explicit FBroadcast_(FTaskFunc&& broadcast, size_t numWorkers)
-    :   Broadcast(std::move(broadcast))
-    ,   NumNotFinished(numWorkers)
-    ,   NumNotExecuted(numWorkers)
+    explicit FWaitForTask_(FTaskFunc&& rtask) NOEXCEPT
+    :   Task(std::move(rtask))
     {}
 
-    ~FBroadcast_() {
-        Assert_NoAssume(0 == NumNotFinished);
-        Assert_NoAssume(0 == NumNotExecuted);
+    static void Broadcast(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority) {
+        Assert_NoAssume(not FFiber::IsInFiber()); // won't work if we stall a worker thread !
+
+        const int numWorkers = checked_cast<int>(pimpl.Threads().size());
+
+        std::condition_variable onTaskBroadcast;
+        FWaitForTask_ waitfor{ std::move(rtask) };
+        waitfor.NumTasks = numWorkers;
+
+        const FTaskFunc broadcast = [&waitfor, &onTaskBroadcast](ITaskContext& ctx) {
+            waitfor.Task(ctx);
+            {
+                Meta::FUniqueLock scopeLock(waitfor.Barrier);
+                Assert_NoAssume(0 < waitfor.NumTasks);
+
+                --waitfor.NumTasks;
+
+                waitfor.OnTaskFinished.wait(scopeLock, [&]() NOEXCEPT {
+                    return (0 >= waitfor.NumTasks);
+                });
+
+                --waitfor.NumTasks;
+            }
+            waitfor.OnTaskFinished.notify_all();
+            onTaskBroadcast.notify_one();
+        };
+
+        Meta::FUniqueLock scopeLock(waitfor.Barrier);
+        forrange(n, 0, numWorkers)
+            pimpl.Scheduler().Produce(priority, broadcast, nullptr);
+
+        onTaskBroadcast.wait(scopeLock, [&waitfor, numWorkers]() NOEXCEPT {
+            return (numWorkers == -waitfor.NumTasks);
+        });
     }
 
-    FBroadcast_(const FBroadcast_&) = delete;
-    FBroadcast_& operator =(const FBroadcast_&) = delete;
+    static void Wait(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority) {
+        FWaitForTask_ waitfor{ std::move(rtask) };
+        waitfor.NumTasks = 1;
 
-    FBroadcast_(FBroadcast_&&) = delete;
-    FBroadcast_& operator =(FBroadcast_&&) = delete;
+        Meta::FUniqueLock scopeLock(waitfor.Barrier);
+        pimpl.Scheduler().Produce(priority, [&waitfor](ITaskContext& ctx) {
+            waitfor.Task(ctx);
+            {
+                const Meta::FLockGuard scopeLock(waitfor.Barrier);
+                Assert_NoAssume(1 == waitfor.NumTasks);
+                waitfor.NumTasks = 0;
+            }
+            waitfor.OnTaskFinished.notify_all();
+        },  nullptr );
 
-    void Task(ITaskContext& context) {
-        // run the task first
-        Broadcast.Invoke(context);
-
-        // notify callee when every task was executed
-        if (0 == --NumNotExecuted) // this is atomic
-            OnExecuted.notify_all();
-
-        bool notify;
-        {
-            // then lock the barrier to wait for calling thread
-            // since the calling thread has the lock this should block
-            const Meta::FLockGuard scopeLock(FinishedBarrier);
-
-            // finally decrement counter with the lock
-            Assert(NumNotFinished);
-            notify = (0 == --NumNotFinished);
-        }
-
-        // notify outside of the lock to avoid touching anything after this notify
-        // since we can't guarantee the lifetime of (*this) afterwards
-        if (notify)
-            OnFinished.notify_all();
+        waitfor.OnTaskFinished.wait(scopeLock, [&]() NOEXCEPT {
+            return (not waitfor.NumTasks);
+        });
     }
-};
-//----------------------------------------------------------------------------
-template <bool _Const>
-struct TRunAndWaitFor_ {
-    using taskfunc_type = std::conditional_t<_Const, const FTaskFunc, FTaskFunc>;
 
-    TMemoryView<taskfunc_type> Tasks;
-    ETaskPriority Priority;
-    bool Available;
+    static bool WaitFor(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority, int timeoutMS) {
+        PWaitForTask_ pWaitfor{ NEW_REF(Task, FWaitForTask_)(std::move(rtask)) };
+        pWaitfor->NumTasks = 1;
 
-    std::mutex Barrier;
-    std::condition_variable OnFinished;
+        Meta::FUniqueLock scopeLock(pWaitfor->Barrier);
+        pimpl.Scheduler().Produce(priority, [pWaitfor](ITaskContext& ctx) {
+            pWaitfor->Task(ctx);
+            {
+                const Meta::FLockGuard scopeLock(pWaitfor->Barrier);
+                Assert_NoAssume(1 == pWaitfor->NumTasks);
+                pWaitfor->NumTasks = 0;
+            }
+            pWaitfor->OnTaskFinished.notify_all();
+        },  nullptr);
 
-    TRunAndWaitFor_(const TMemoryView<taskfunc_type>& tasks, ETaskPriority priority)
-        : Tasks(tasks)
-        , Priority(priority)
-        , Available(false)
-    {}
+        pWaitfor->OnTaskFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS), [&]() NOEXCEPT {
+            return (not pWaitfor->NumTasks);
+        });
 
-    void Task(ITaskContext& context) {
-        context.RunAndWaitFor(Tasks, Priority);
-
-        {
-            Meta::FLockGuard scopeLock(Barrier);
-            Assert(false == Available);
-            Available = true;
-        }
-
-        OnFinished.notify_all();
-    }
-};
-//----------------------------------------------------------------------------
-struct FWaitForAll_ {
-    bool Available;
-
-    std::mutex Barrier;
-    std::condition_variable OnFinished;
-
-    FWaitForAll_() : Available(false) {}
-
-    void Task(ITaskContext& context) {
-        FTaskManagerImpl& impl = *FWorkerContext_::Get().Manager().Pimpl();
-
-        do {
-            FCompletionPort port;
-            context.RunOne(&port, [](ITaskContext&) {
-                NOOP();
-            },  ETaskPriority::Internal );
-            context.WaitFor(port);
-
-        } while (impl.Scheduler().HasPendingTask());
-
-        {
-            Meta::FLockGuard scopeLock(Barrier);
-            Assert(false == Available);
-            Available = true;
-        }
-
-        OnFinished.notify_all();
+        return (0 == pWaitfor->NumTasks);
     }
 };
 //----------------------------------------------------------------------------
@@ -309,9 +282,9 @@ struct FWaitForAll_ {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTaskManagerImpl::FTaskManagerImpl(FTaskManager& manager)
-:   _manager(manager)
-,   _scheduler(_manager.WorkerCount(), GTaskManagerQueueCapacity)
+:   _scheduler(manager.WorkerCount())
 ,   _fibers(MakeFunction<&FTaskManagerImpl::WorkerLoop_>())
+,   _manager(manager)
 {
     _threads.reserve(_manager.WorkerCount());
 }
@@ -334,9 +307,10 @@ void FTaskManagerImpl::Start(const TMemoryView<const u64>& threadAffinities) {
 void FTaskManagerImpl::Shutdown() {
     Assert(_threads.size() == _manager.WorkerCount());
 
-    _scheduler.BroadcastToEveryWorker(
-        INDEX_NONE, // lowest priority
-        &FWorkerContext_::ExitWorkerTask );
+    forrange(i, 0, _threads.size())
+        _scheduler.Produce(
+            ETaskPriority::Internal, // lowest priority possible
+            &FWorkerContext_::ExitWorkerTask, nullptr );
 
     for (std::thread& workerThread : _threads) {
         Assert_NoAssume(workerThread.joinable());
@@ -345,55 +319,11 @@ void FTaskManagerImpl::Shutdown() {
 
     _threads.clear();
 }
-
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::Consume(size_t workerIndex, FTaskQueued* task) {
     Assert(task);
 
     _scheduler.Consume(workerIndex, task);
-}
-//----------------------------------------------------------------------------
-void FTaskManagerImpl::ReleaseMemory() {
-#if USE_PPE_LOGGER
-    size_t reserved, used;
-    _fibers.UsageStats(&reserved, &used);
-
-    LOG(Task, Debug, L"before release memory in task manager <{0}>, using {1} fibers / {2} reserved ({3} reserved for stack)",
-        _manager.Name(),
-        Fmt::CountOfElements(used),
-        Fmt::CountOfElements(reserved),
-        Fmt::SizeInBytes(reserved * FTaskFiberPool::ReservedStackSize()));
-#endif
-
-    _fibers.ReleaseMemory(); // get most memory at the top
-
-    BroadcastAndWaitFor(
-        [](ITaskContext&) {
-            FWorkerContext_& worker = FWorkerContext_::Get();
-            // empty fibers thread local cache
-            worker.Fibers().ReleaseMemory();
-            // defragment malloc TLS caches
-            malloc_release_cache_memory();
-            // defragment fiber pool by releasing current fiber and getting new ones (hopefuly from first chunk)
-            FTaskFunc func([](ITaskContext&) {
-                FTaskFiberPool::CurrentHandleRef()->YieldFiber(nullptr, true);
-                });
-            if (not worker.SetPostTaskDelegate(std::move(func)))
-                AssertNotReached();
-        },
-        ETaskPriority::High/* highest priority, to avoid block waiting for all the jobs queued before */);
-
-    _fibers.ReleaseMemory(); // release defragmented blocks
-
-#if USE_PPE_LOGGER
-    _fibers.UsageStats(&reserved, &used);
-
-    LOG(Task, Debug, L"after release memory in task manager <{0}>, using {1} fibers / {2} reserved ({3} reserved for stack)",
-        _manager.Name(),
-        Fmt::CountOfElements(used),
-        Fmt::CountOfElements(reserved),
-        Fmt::SizeInBytes(reserved * FTaskFiberPool::ReservedStackSize()));
-#endif
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::DumpStats() {
@@ -438,6 +368,12 @@ void FTaskManagerImpl::WaitFor(FCompletionPort& handle, ETaskPriority priority) 
     handle.AttachCurrentFiber(FWorkerContext_::Get().Fibers(), priority);
 }
 //----------------------------------------------------------------------------
+void FTaskManagerImpl::RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) {
+    FCompletionPort handle;
+    Run(&handle, std::move(rtask), priority);
+    WaitFor(handle, priority);
+}
+//----------------------------------------------------------------------------
 void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) {
     FCompletionPort handle;
     Run(&handle, rtasks, priority);
@@ -450,38 +386,7 @@ void FTaskManagerImpl::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, 
     WaitFor(handle, priority);
 }
 //----------------------------------------------------------------------------
-void FTaskManagerImpl::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) {
-    AssertRelease(not FFiber::IsInFiber()); // well won't work if a task is busy handling this logic so no :/
-
-    FBroadcast_ args{ std::move(rtask), _threads.size() };
-    {
-        // first lock the barrier so that every worker thread could not consume more than one task
-        Meta::FUniqueLock scopeLock(args.FinishedBarrier);
-
-        _scheduler.BroadcastToEveryWorker(
-            size_t(priority),
-            MakeFunction<&FBroadcast_::Task>(&args) );
-
-        // wait for all task to be executed
-        {
-            Meta::FUniqueLock waitLock(args.ExecutedBarrier);
-            args.OnExecuted.wait(waitLock, [&args]() {
-                return (0 == args.NumNotExecuted);
-            });
-        }
-
-        // then wait for signal and check if every task has been completed
-        // this will actually release the barrier while waiting
-        args.OnFinished.wait(scopeLock, [&args]() {
-            return (0 == args.NumNotFinished);
-        });
-
-        // past this point every worker thread should have leaved the task scope
-        // so this finally safe to destroy args
-    }
-}
-//----------------------------------------------------------------------------
-FCompletionPort* FTaskManagerImpl::StartPortIFN_(FCompletionPort* phandle, size_t n) {
+FCompletionPort* FTaskManagerImpl::StartPortIFN_(FCompletionPort* phandle, size_t n) NOEXCEPT {
     Assert(n);
 
     if (phandle)
@@ -585,26 +490,26 @@ void FTaskManager::Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority 
     _pimpl->Run(nullptr, tasks, priority);
 }
 //----------------------------------------------------------------------------
+void FTaskManager::RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
+    Assert_NoAssume(rtask);
+    Assert(nullptr != _pimpl);
+
+    if (FFiber::IsInFiber())
+        _pimpl->RunAndWaitFor(std::move(rtask), priority);
+    else
+        FWaitForTask_::Wait(*_pimpl, std::move(rtask), priority);
+}
+//----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(not rtasks.empty());
     Assert(nullptr != _pimpl);
 
-    if (FFiber::IsInFiber()) {
+    if (FFiber::IsInFiber())
         _pimpl->RunAndWaitFor(rtasks, priority);
-    }
-    else {
-        TRunAndWaitFor_<false> args{ rtasks, priority };
-        {
-            Meta::FUniqueLock scopeLock(args.Barrier);
-
-            _pimpl->RunOne(nullptr,
-                MakeFunction<&TRunAndWaitFor_<false>::Task>(&args),
-                priority);
-
-            args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
-            Assert(args.Available);
-        }
-    }
+    else
+        FWaitForTask_::Wait(*_pimpl, [rtasks, priority](ITaskContext& ctx) {
+            ctx.RunAndWaitFor(rtasks, priority);
+        },  priority );
 }
 //----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTaskFunc& whileWaiting, ETaskPriority priority/* = ETaskPriority::Normal */) const {
@@ -613,99 +518,63 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTa
     Assert(whileWaiting);
     Assert(nullptr != _pimpl);
 
-    if (FFiber::IsInFiber()) {
-        FCompletionPort wait;
-        _pimpl->Run(&wait, rtasks, priority);
+    const auto waitfor = [rtasks, &whileWaiting, priority](ITaskContext& ctx) {
+        FCompletionPort port;
+        ctx.Run(&port, rtasks, priority);
 
-        whileWaiting(*_pimpl);
+        whileWaiting(ctx);
 
-        _pimpl->WaitFor(wait, priority);
-    }
-    else {
-        TRunAndWaitFor_<false> args{ rtasks, priority };
-        {
-            Meta::FUniqueLock scopeLock(args.Barrier);
+        ctx.WaitFor(port, priority);
+    };
 
-            _pimpl->RunOne(nullptr,
-                MakeFunction<&TRunAndWaitFor_<false>::Task>(&args),
-                priority);
-
-            whileWaiting(*_pimpl);
-
-            args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
-            Assert(args.Available);
-        }
-    }
+    if (FFiber::IsInFiber())
+        waitfor(*_pimpl);
+    else
+        FWaitForTask_::Wait(*_pimpl, waitfor, priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(not tasks.empty());
     Assert(nullptr != _pimpl);
 
-    if (FFiber::IsInFiber()) {
-        _pimpl->RunAndWaitFor(tasks, priority);
-    }
-    else {
-        TRunAndWaitFor_<true> args{ tasks, priority };
-        {
-            Meta::FUniqueLock scopeLock(args.Barrier);
+    const auto waitfor = [tasks, priority](ITaskContext& ctx) {
+        ctx.RunAndWaitFor(tasks, priority);
+    };
 
-            _pimpl->RunOne(nullptr,
-                MakeFunction<&TRunAndWaitFor_<true>::Task>(&args),
-                priority);
-
-            args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
-            Assert(args.Available);
-        }
-    }
+    if (FFiber::IsInFiber())
+        waitfor(*_pimpl);
+    else
+        FWaitForTask_::Wait(*_pimpl, waitfor, priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority/* = ETaskPriority::Normal */) const {
     Assert_NoAssume(rtask);
     Assert(nullptr != _pimpl);
 
-    _pimpl->BroadcastAndWaitFor(std::move(rtask), priority);
+    if (FFiber::IsInFiber())
+        AssertNotImplemented(); // not easily done inside fibers because of mutex locking used atm
+    else
+        FWaitForTask_::Broadcast(*_pimpl, std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::WaitForAll() const {
-    Assert_NoAssume(not FFiber::IsInFiber());
     Assert(nullptr != _pimpl);
 
-    FWaitForAll_ args;
-    // trigger a task with lowest priority and wait for it
-    // should wait for all other tasks since Internal is reserved
-    {
-        Meta::FUniqueLock scopeLock(args.Barrier);
-
-        _pimpl->RunOne(nullptr,
-            FTaskFunc::Bind<&FWaitForAll_::Task>(&args),
-            ETaskPriority::Internal/* this priority is reserved for this particular usage */);
-
-        args.OnFinished.wait(scopeLock, [&args]() { return args.Available; });
-    }
+    if (FFiber::IsInFiber())
+        AssertNotImplemented(); // not easily done inside fibers because of mutex locking used atm
+    else
+        FWaitForTask_::Broadcast(*_pimpl, [](ITaskContext&) { NOOP(); }, ETaskPriority::Internal);
 }
 //----------------------------------------------------------------------------
 bool FTaskManager::WaitForAll(int timeoutMS) const {
-    if (FFiber::IsInFiber())
-        return false;
-
     Assert(nullptr != _pimpl);
 
-    FWaitForAll_ args;
-    // trigger a task with lowest priority and wait for it
-    // should wait for all other tasks since Internal is reserved
-    {
-        Meta::FUniqueLock scopeLock(args.Barrier);
+    if (FFiber::IsInFiber())
+        _pimpl->RunAndWaitFor([](ITaskContext&) { NOOP(); }, ETaskPriority::Internal);
+    else
+        FWaitForTask_::WaitFor(*_pimpl, [](ITaskContext&) { NOOP(); }, ETaskPriority::Internal, timeoutMS);
 
-        _pimpl->RunOne(nullptr,
-            FTaskFunc::Bind<&FWaitForAll_::Task>(&args),
-            ETaskPriority::Internal/* this priority is reserved for this particular usage */);
-
-        return args.OnFinished.wait_for(scopeLock,
-            std::chrono::milliseconds(timeoutMS),
-            [&args]() { return args.Available;
-        });
-    }
+    return _pimpl->Scheduler().HasPendingTask();
 }
 //----------------------------------------------------------------------------
 void FTaskManager::DumpStats() {
@@ -714,8 +583,50 @@ void FTaskManager::DumpStats() {
 }
 //----------------------------------------------------------------------------
 void FTaskManager::ReleaseMemory() {
-    if (_pimpl)
-        _pimpl->ReleaseMemory();
+    if (not _pimpl)
+        return;
+
+#if USE_PPE_LOGGER
+    size_t reserved, used;
+    _pimpl->Fibers().UsageStats(&reserved, &used);
+
+    LOG(Task, Debug, L"before release memory in task manager <{0}>, using {1} fibers / {2} reserved ({3} reserved for stack)",
+        Name(),
+        Fmt::CountOfElements(used),
+        Fmt::CountOfElements(reserved),
+        Fmt::SizeInBytes(reserved * FTaskFiberPool::ReservedStackSize()));
+#endif
+
+    _pimpl->Fibers().ReleaseMemory(); // get most memory at the top
+
+    BroadcastAndWaitFor(
+        [](ITaskContext&) {
+            FWorkerContext_& worker = FWorkerContext_::Get();
+            // empty fibers thread local cache
+            worker.Fibers().ReleaseMemory();
+            // defragment malloc TLS caches
+            malloc_release_cache_memory();
+            // defragment fiber pool by releasing current fiber and getting new ones (hopefully from first chunk)
+            FTaskFunc func([](ITaskContext&) {
+                FTaskFiberPool::CurrentHandleRef()->YieldFiber(nullptr, true);
+            });
+            if (not worker.SetPostTaskDelegate(std::move(func)))
+                AssertNotReached();
+        },
+        ETaskPriority::High/* highest priority, to avoid block waiting for all the jobs queued before */);
+
+    _pimpl->Fibers().ReleaseMemory(); // release defragmented blocks
+    _pimpl->Scheduler().ReleaseMemory(); // release worker queues IFP
+
+#if USE_PPE_LOGGER
+    _pimpl->Fibers().UsageStats(&reserved, &used);
+
+    LOG(Task, Debug, L"after release memory in task manager <{0}>, using {1} fibers / {2} reserved ({3} reserved for stack)",
+        Name(),
+        Fmt::CountOfElements(used),
+        Fmt::CountOfElements(reserved),
+        Fmt::SizeInBytes(reserved * FTaskFiberPool::ReservedStackSize()));
+#endif
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -758,7 +669,7 @@ void FInteruptedTask::Resume(const TMemoryView<FInteruptedTask>& tasks) {
             // stalled fibers are resumed through a task to let the current fiber dispatch
             // all jobs to every worker thread before yielding (won't steal execution from current fiber)
 
-            task.Context()->RunOne(nullptr, std::move(func), task.Priority());
+            task.Context()->Run(nullptr, std::move(func), task.Priority());
         }
     }
 
