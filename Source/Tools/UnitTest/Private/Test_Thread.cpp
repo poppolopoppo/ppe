@@ -1,9 +1,13 @@
 #include "stdafx.h"
 
 #include "Diagnostic/Logger.h"
+#include "HAL/PlatformAtomics.h"
 #include "HAL/PlatformProcess.h"
 
+#include "Container/Deque.h"
+#include "Container/HashMap.h"
 #include "Container/RawStorage.h"
+#include "Container/SparseArray.h"
 #include "Container/Vector.h"
 
 #include "IO/BufferedStream.h"
@@ -21,6 +25,7 @@
 #include "Time/Timestamp.h"
 #include "Time/TimedScope.h"
 
+#include "Thread/ReadWriteLock.h"
 #include "Thread/Task.h"
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
@@ -136,11 +141,21 @@ namespace {
 //----------------------------------------------------------------------------
 struct FGraphNode {
     FCompletionPort Port;
+    FCompletionPort Port2;
 
     int Depth{ 0 };
+
     std::atomic<int> Revision{ 0 };
+    std::atomic<void*> UserData2{ 0 };
+    void* UserData{ 0 };
+
+    FAtomicReadWriteLock RWLock;
+
     FTimestamp Timestamp;
     VECTOR(Task, FGraphNode*) Dependencies;
+
+    template <typename T>
+    T* GetUserData() const { return static_cast<T*>(UserData); }
 
     FGraphNode() = default;
 
@@ -174,7 +189,13 @@ struct FGraphNode {
 };
 struct FGraph {
     int Revision{ 0 };
-    FTimestamp Timestamp{ 0 };
+
+    FTimestamp Timestamp;
+    FTimedScope Timer;
+    std::atomic<size_t> NumBuilt;
+    std::atomic<size_t> NumWorkers;
+    std::atomic<size_t> MaxWorkers;
+
     TAllocaBlock<FGraphNode> Storage;
     VECTOR(Task, FGraphNode*) Nodes;
 
@@ -182,21 +203,66 @@ struct FGraph {
         Meta::Destroy(Storage.MakeView());
     }
 
-    void Randomize(size_t n, size_t depth) {
+    FGraphNode* Root() const {
+        return Storage.data();
+    }
+
+    int Reset() {
+        Timestamp = 0;
+        NumBuilt = 0;
+        NumWorkers = 0;
+        MaxWorkers = 0;
+        FPlatformAtomics::MemoryBarrier();
+        Timer = FTimedScope();
+        return (++Revision);
+    }
+
+    void WorkerBegin() {
+        MaxWorkers = Max(MaxWorkers.load(), ++NumWorkers);
+    }
+
+    void WorkerEnd() {
+        ++NumBuilt;
+        --NumWorkers;
+    }
+
+    void OnBuildFinished(const FWStringView& executor) {
+        UNUSED(executor);
+
+        FPlatformAtomics::MemoryBarrier();
+
+        LOG(Test_Thread, Info, L"executor<{0}>: built {1} nodes in {2} with {3} max workers",
+            executor,
+            Fmt::CountOfElements(NumBuilt.load()),
+            Timer.Elapsed(),
+            Fmt::CountOfElements(MaxWorkers.load()) );
+
+        CheckBuild();
+    }
+
+    void Randomize(const size_t n, size_t depth) {
         Storage.RelocateIFP(n);
 
         FRandomGenerator rnd;
 
-        forrange(i, 0, n) {
-            FGraphNode* const p = INPLACE_NEW(&Storage.RawData[i], FGraphNode);
+        size_t al = 1;
+
+        DEQUE(Generation, void*) queue;
+        queue.emplace_back(Storage.data());
+
+        while (!queue.empty()) {
+            FGraphNode* p = INPLACE_NEW(queue.front(), FGraphNode);
             p->Timestamp = Timestamp;
 
-            if (i) {
-                const size_t m = rnd.Next(depth + 1);
+            queue.pop_front();
 
-                p->Dependencies.reserve_AssumeEmpty(m);
-                forrange(j, 0, m)
-                    Add_Unique(p->Dependencies, &Storage.RawData[rnd.Next(i)]);
+            const size_t m = 1+rnd.Next(depth + 1);
+            forrange(j, 0, m) {
+                if (al < n) {
+                    FGraphNode* dep = &Storage.RawData[al++];
+                    queue.emplace_back(dep);
+                    p->Dependencies.emplace_back(dep);
+                }
             }
         }
 
@@ -206,7 +272,7 @@ struct FGraph {
 
     bool CheckBuild() const {
         for (const FGraphNode* n : Nodes) {
-            if (n->Timestamp.Value() <= Timestamp.Value()) {
+            if (n->Timestamp.Value() < Timestamp.Value()) {
                 return false;
             }
         }
@@ -215,11 +281,9 @@ struct FGraph {
     }
 };
 //----------------------------------------------------------------------------
-NO_INLINE void Test_Graph_Preprocess_() {
-    FGraph g;
-    g.Randomize(1024, 10);
+NO_INLINE void Test_Graph_Preprocess_(FGraph& g) {
     FHighPriorityThreadPool::Get().RunAndWaitFor([&g](ITaskContext& ctx) {
-        g.Revision++;
+        g.Reset();
 
         FGraphNode::FQueue q;
         for (FGraphNode* node : g.Nodes)
@@ -233,64 +297,264 @@ NO_INLINE void Test_Graph_Preprocess_() {
             FAggregationPort waitAll;
 
             for (FGraphNode* dep : q) {
-                ctx.Run(&dep->Port, [dep](ITaskContext& c) {
+                ctx.Run(&dep->Port, [&g, dep](ITaskContext& c) {
+                    g.WorkerBegin();
+
                     for (FGraphNode* d : dep->Dependencies)
                         c.WaitFor(d->Port);
 
                     dep->Build(c);
-                    });
 
-                waitAll.DependsOn(&dep->Port);
+                    g.WorkerEnd();
+                });
+
+                waitAll.Attach(&dep->Port);
             }
 
             waitAll.Join(ctx);
         }
 
-        LOG(Test_Thread, Info, L"Collected {0} tasks to build in {1} <PREPROCESS>",
-            Fmt::CountOfElements(q.size()), time.Elapsed());
+        g.OnBuildFinished(L"Preprocess");
     });
-    AssertRelease(g.CheckBuild());
 }
 //----------------------------------------------------------------------------
-static void EachGraphNode_(FAggregationPort* port, ITaskContext& ctx, int rev, FGraphNode* n) {
+static void EachGraphNode_(FAggregationPort* port, ITaskContext& ctx, FGraph& g, FGraphNode* n) {
     Assert(port);
 
     int old = n->Revision;
-    if (old != rev && n->Revision.compare_exchange_strong(old, rev)) {
-        ctx.Run(&n->Port, [n, rev](ITaskContext& subc) {
+    if (old != g.Revision && n->Revision.compare_exchange_strong(old, g.Revision)) {
+        ctx.Run(&n->Port2, [&g, n](ITaskContext& subc) {
+            g.WorkerBegin();
             {
                 FAggregationPort waitDeps;
                 for (FGraphNode* dep : n->Dependencies)
-                    EachGraphNode_(&waitDeps, subc, rev, dep);
+                    EachGraphNode_(&waitDeps, subc, g, dep);
 
                 waitDeps.Join(subc);
             }
             {
                 n->Build(subc);
             }
+            g.WorkerEnd();
         });
     }
 
-    port->DependsOn(&n->Port);
+    port->Attach(&n->Port2);
 }
-NO_INLINE void Test_Graph_Incremental_() {
-    FGraph g;
-    g.Randomize(1024, 10);
-    FHighPriorityThreadPool::Get().RunAndWaitFor([&g](ITaskContext& ctx) {
-        g.Revision++;
+NO_INLINE void Test_Graph_Incremental_(FGraph& g) {
 
-        FTimedScope time;
+    FHighPriorityThreadPool::Get().RunAndWaitFor([&g](ITaskContext& ctx) {
+        g.Reset();
 
         FAggregationPort waitAll;
         for (FGraphNode* n : g.Nodes)
-            EachGraphNode_(&waitAll, ctx, g.Revision, n);
+            EachGraphNode_(&waitAll, ctx, g, n);
 
         waitAll.Join(ctx);
 
-        LOG(Test_Thread, Info, L"Collected {0} tasks to build in {1} <INCREMENTAL>",
-            Fmt::CountOfElements(g.Nodes.size()), time.Elapsed());
+        g.OnBuildFinished(L"Incremental");
     });
-    AssertRelease(g.CheckBuild());
+}
+//----------------------------------------------------------------------------
+struct FOutOfCoreBuilder_ : Meta::FNonCopyableNorMovable {
+    FGraph* Graph;
+    FAggregationPort WaitSink;
+
+    VECTOR(Generation, FCompletionPort) CompletionPorts;
+
+    FOutOfCoreBuilder_()
+    :   Graph(nullptr) {
+        WaitSink.Join(ITaskContext::Get());
+        Assert_NoAssume(WaitSink.Finished());
+    }
+
+    void Build(ITaskContext& ctx, FGraph& g) {
+        Graph = &g;
+        Graph->Reset();
+
+        CompletionPorts.resize_AssumeEmpty(g.Nodes.size());
+
+        forrange(i, 0, g.Nodes.size())
+            g.Nodes[i]->UserData = (&CompletionPorts[i]);
+
+        BatchBuild(ctx, g.Nodes);
+
+        CompletionPorts.clear_ReleaseMemory();
+
+        forrange(i, 0, g.Nodes.size())
+            g.Nodes[i]->UserData = nullptr;
+
+        g.OnBuildFinished(L"OutOfOrder");
+    }
+
+private:
+    void BatchBuild(ITaskContext& ctx, const TMemoryView<FGraphNode* const>& nodes) {
+        Assert(not nodes.empty());
+
+        FAggregationPort port;
+
+        for (FGraphNode* const node : nodes) {
+            FCompletionPort* const completionPort = static_cast<FCompletionPort*>(node->UserData);
+
+            int rev = node->Revision;
+            if (rev != Graph->Revision && node->Revision.compare_exchange_weak(rev, Graph->Revision)) {
+                ctx.Run(completionPort,
+                    FTaskFunc::Bind<&FOutOfCoreBuilder_::AsyncWork>(this, node),
+                    node->Dependencies.empty()
+                        ? ETaskPriority::High
+                        : ETaskPriority::Normal );
+            }
+
+            port.Attach(completionPort);
+        }
+
+        port.Join(ctx);
+    }
+
+    void AsyncWork(ITaskContext& ctx, FGraphNode* node) {
+        Assert(node);
+        Assert_NoAssume(node->UserData != this);
+
+        Graph->WorkerBegin();
+
+        if (not node->Dependencies.empty())
+            BatchBuild(ctx, node->Dependencies);
+
+        node->Build(ctx);
+        node->UserData = &WaitSink;
+
+        Graph->WorkerEnd();
+    }
+
+};
+NO_INLINE void Test_Graph_OutOfCore_(FGraph& g) {
+    FHighPriorityThreadPool::Get().RunAndWaitFor([&g](ITaskContext& ctx) {
+        FOutOfCoreBuilder_ builder;
+        builder.Build(ctx, g);
+    });
+}
+//----------------------------------------------------------------------------
+class FGraphCompletionBucket : public FRefCountable {
+public:
+    SPARSEARRAY_INSITU(Generation, FCompletionPort) children;
+};
+struct FOutOfCoreBuilder_Incremental_ : Meta::FNonCopyableNorMovable {
+    FGraph* Graph;
+    FAggregationPort WaitSink;
+
+    FOutOfCoreBuilder_Incremental_()
+    :   Graph(nullptr) {
+        WaitSink.Join(ITaskContext::Get());
+        Assert_NoAssume(WaitSink.Finished());
+    }
+
+    void Build(ITaskContext& ctx, FGraph& g) {
+        Graph = &g;
+        Graph->Reset();
+
+        BatchBuild(ctx, g.Nodes);
+
+        g.OnBuildFinished(L"OutOfOrder-Incremental");
+    }
+
+private:
+    static ETaskPriority PriorityFromArity_(const size_t n) NOEXCEPT {
+        if (0 == n)
+            return ETaskPriority::High;
+        else if (4 > n)
+            return ETaskPriority::Normal;
+        else
+            return ETaskPriority::Low;
+    }
+
+    void BatchBuild(ITaskContext& ctx, const TMemoryView<FGraphNode* const>& nodes) {
+        Assert(not nodes.empty());
+
+        FAggregationPort port;
+        SPARSEARRAY_INSITU(Generation, FCompletionPort) children;
+
+        FCompletionPort* tmp = nullptr;
+        const int globalRev = Graph->Revision;
+
+        for (FGraphNode* const node : nodes) {
+            if (globalRev != node->Revision) {
+                if (not tmp)
+                    tmp = &children.Add();
+
+                const FAtomicReadWriteLock::FReaderScope readScope(node->RWLock);
+
+                if (globalRev != node->Revision) {
+                    void* usr = nullptr;
+                    if (node->UserData2.compare_exchange_weak(usr, tmp)) {
+                        ctx.Run(tmp,
+                            FTaskFunc::Bind<&FOutOfCoreBuilder_Incremental_::AsyncWork>(this, node),
+                            PriorityFromArity_(node->Dependencies.size()) );
+
+                        usr = tmp;
+                        tmp = nullptr;
+                    }
+
+                    port.Attach(static_cast<FCompletionPort*>(usr));
+
+                    Assert_NoAssume(globalRev == Graph->Revision);
+                }
+            }
+        }
+
+        port.Join(ctx);
+
+        for (FGraphNode* const node : nodes) {
+            int nodeRev = node->Revision;
+            if (nodeRev != globalRev && node->Revision.compare_exchange_weak(nodeRev, globalRev)) {
+                const FAtomicReadWriteLock::FWriterScope readScope(node->RWLock);
+                node->UserData2 = nullptr;
+            }
+        }
+    }
+
+    void AsyncWork(ITaskContext& ctx, FGraphNode* node) {
+        Assert(node);
+        Assert(node->Revision != Graph->Revision);
+
+        Graph->WorkerBegin();
+
+        if (not node->Dependencies.empty())
+            BatchBuild(ctx, node->Dependencies);
+
+        node->Build(ctx);
+
+        Graph->WorkerEnd();
+    }
+
+};
+NO_INLINE void Test_Graph_OutOfCore_Incremental_(FGraph& g) {
+    FHighPriorityThreadPool::Get().RunAndWaitFor([&g](ITaskContext& ctx) {
+        FOutOfCoreBuilder_Incremental_ builder;
+        builder.Build(ctx, g);
+    });
+}
+//----------------------------------------------------------------------------
+NO_INLINE void Test_Graph_ParallelExecution_() {
+    {
+        FGraph g;
+        g.Randomize(2048, 10);
+
+        Test_Graph_Preprocess_(g);
+        Test_Graph_Incremental_(g);
+        Test_Graph_OutOfCore_(g);
+        Test_Graph_OutOfCore_Incremental_(g);
+    }
+#if 0 //%_NOCOMMIT%
+    {
+        forrange(i, 0, 1000) {
+            FGraph g;
+            g.Randomize(4096, 20);
+
+            forrange(j, 0, 30)
+                Test_Graph_OutOfCore_Incremental_(g);
+        }
+    }
+#endif
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -307,8 +571,8 @@ void Test_Thread() {
     Test_Future_();
     Test_ParallelFor_();
     Test_Task_();
-    Test_Graph_Preprocess_();
-    Test_Graph_Incremental_();
+
+    Test_Graph_ParallelExecution_();
 
     ReleaseMemoryInModules();
 }
