@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Core_fwd.h"
 
@@ -40,11 +40,6 @@ public:
 
 private:
     FTaskFiberRef _fiber;
-
-    STATIC_ASSERT(uintptr_t(ETaskPriority::High) == 0);
-    STATIC_ASSERT(uintptr_t(ETaskPriority::Normal) == 1);
-    STATIC_ASSERT(uintptr_t(ETaskPriority::Low) == 2);
-    STATIC_ASSERT(uintptr_t(ETaskPriority::Internal) == 3);
     Meta::TPointerWFlags<ITaskContext> _taskContextAndPriority;
 };
 PPE_ASSUME_TYPE_AS_POD(FInteruptedTask)
@@ -55,9 +50,7 @@ PPE_ASSUME_TYPE_AS_POD(FInteruptedTask)
 //  - value semantics, but not copyable nor movable ;
 //  - see FAggregationPort bellow to wait for tasks already in-flight.
 //----------------------------------------------------------------------------
-PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(4324) // structure was padded, #TODO use padding for in-situ queues
-class PPE_CORE_API CACHELINE_ALIGNED FCompletionPort : Meta::FNonCopyableNorMovable {
+class PPE_CORE_API FCompletionPort : Meta::FNonCopyableNorMovable {
 public:
     FCompletionPort() = default;
 
@@ -69,18 +62,12 @@ public:
     bool Finished() const { return (CP_Finished == _countDown); }
 
 private: // only accessible through ITaskContext
+    friend class FAggregationPort;
     friend class FTaskManagerImpl;
 
     void AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPriority priority) NOEXCEPT;
-
     void Start(size_t n) NOEXCEPT;
     void OnJobComplete();
-
-protected: // only accessible through FAggregationPort
-    friend class FAggregationPort;
-
-    void Increment(size_t n) NOEXCEPT;
-    void DependsOn(FCompletionPort* other);
 
 private:
     enum state_t : int {
@@ -90,12 +77,12 @@ private:
     std::atomic<int> _countDown{ CP_NotReady };
 
     FAtomicSpinLock _barrier;
-    VECTORINSITU(Task, FInteruptedTask, 4) _queue;
+
+    VECTORINSITU(Task, FInteruptedTask, 8) _queue;
     VECTORINSITU(Task, FCompletionPort*, 8) _children;
 
     static NO_INLINE void OnCountDownReachedZero_(FCompletionPort* port);
 };
-PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 // Can wait on multiple FCompletionPorts, *MUST* call Join() before destruction
 //----------------------------------------------------------------------------
@@ -103,8 +90,18 @@ class PPE_CORE_API FAggregationPort {
 public:
     FAggregationPort() NOEXCEPT;
 
-    void DependsOn(FCompletionPort* other);
+    bool Running() const { return _port.Running(); }
+    bool Finished() const { return _port.Finished(); }
+
+    bool Attach(FCompletionPort* dep);
+    bool Attach(FAggregationPort* other);
+
     void Join(ITaskContext& ctx);
+
+private: // only accessible through ITaskContext
+    friend class FTaskManagerImpl;
+
+    FCompletionPort* Increment(size_t n) NOEXCEPT;
 
 private:
     FCompletionPort _port;
