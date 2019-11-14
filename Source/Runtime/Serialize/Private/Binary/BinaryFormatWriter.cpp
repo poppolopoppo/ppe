@@ -69,7 +69,7 @@ static bool SortMetaObject_(const RTTI::FMetaObject* a, const RTTI::FMetaObject*
     const RTTI::FMetaTransaction* const outer_b = b->RTTI_Outer();
     return (outer_a == outer_b
         ? a->RTTI_Name() < b->RTTI_Name()
-        : outer_a->Name() < outer_b->Name());
+        : outer_a->Namespace() < outer_b->Namespace());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Write, typename _Pred = Meta::TLess<T> >
@@ -328,7 +328,7 @@ void FBinaryFormatWriter::Write_(const RTTI::FMetaObject* obj) {
     Assert(obj);
 
     FBinaryFormat::FImportData importData;
-    importData.TransactionIndex = DataIndex_(_contents.Names, obj->RTTI_Outer()->Name());
+    importData.TransactionIndex = DataIndex_(_contents.Names, obj->RTTI_Outer()->Namespace());
     importData.NameIndex = DataIndex_(_contents.Names, obj->RTTI_Name());
 
     _sections.Imports.WritePOD(importData);

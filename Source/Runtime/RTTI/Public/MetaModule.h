@@ -11,24 +11,21 @@
 
 namespace PPE {
 namespace RTTI {
-class FMetaClass;
-class FMetaEnum;
-class FMetaNamespace;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaClassHandle : Meta::FNonCopyableNorMovable {
 public:
-    typedef FMetaClass* (*create_func)(FClassId , const FMetaNamespace* );
+    typedef FMetaClass* (*create_func)(FClassId , const FMetaModule* );
     typedef void (*destroy_func)(FMetaClass*);
 
-    FMetaClassHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT;
+    FMetaClassHandle(FMetaModule& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT;
     ~FMetaClassHandle() NOEXCEPT;
 
     const FMetaClass* Class() const { return _class; }
 
 private:
-    friend class FMetaNamespace;
+    friend class FMetaModule;
 
     FMetaClass* _class;
 
@@ -40,16 +37,16 @@ private:
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaEnumHandle : Meta::FNonCopyableNorMovable {
 public:
-    typedef FMetaEnum* (*create_func)(const FMetaNamespace*);
+    typedef FMetaEnum* (*create_func)(const FMetaModule*);
     typedef void(*destroy_func)(FMetaEnum*);
 
-    FMetaEnumHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT;
+    FMetaEnumHandle(FMetaModule& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT;
     ~FMetaEnumHandle() NOEXCEPT;
 
     const FMetaEnum* Enum() const { return _enum; }
 
 private:
-    friend class FMetaNamespace;
+    friend class FMetaModule;
 
     FMetaEnum* _enum;
 
@@ -59,18 +56,18 @@ private:
     TIntrusiveSingleListNode<FMetaEnumHandle> _node;
 };
 //----------------------------------------------------------------------------
-class PPE_RTTI_API FMetaNamespace : Meta::FThreadResource {
+class PPE_RTTI_API FMetaModule : Meta::FThreadResource {
 public:
 #if USE_PPE_MEMORYDOMAINS
     FMemoryTracking& TrackingData() const { return _trackingData; }
-    FMetaNamespace(const FStringView& name, FMemoryTracking& domain);
+    FMetaModule(const FStringView& name, FMemoryTracking& domain);
 #else
-    explicit FMetaNamespace(const FStringView& name);
+    explicit FMetaModule(const FStringView& name);
 #endif
-    ~FMetaNamespace();
+    ~FMetaModule();
 
-    FMetaNamespace(const FMetaNamespace& ) = delete;
-    FMetaNamespace& operator =(const FMetaNamespace& ) = delete;
+    FMetaModule(const FMetaModule& ) = delete;
+    FMetaModule& operator =(const FMetaModule& ) = delete;
 
     bool IsStarted() const { return (not _nameToken.empty()); }
 
@@ -109,8 +106,8 @@ public:
     void RegisterEnum(FMetaEnumHandle& handle);
 
 private:
-    HASHMAP(MetaNamespace, FName, const FMetaClass*) _classes;
-    HASHMAP(MetaNamespace, FName, const FMetaEnum*) _enums;
+    HASHMAP(MetaModule, FName, const FMetaClass*) _classes;
+    HASHMAP(MetaModule, FName, const FMetaEnum*) _enums;
 
     FName _nameToken;
     size_t _classIdOffset;

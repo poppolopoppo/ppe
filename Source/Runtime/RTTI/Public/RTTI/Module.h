@@ -1,21 +1,18 @@
 #pragma once
 
-#include "RTTI.h"
-
 #include "RTTI_fwd.h"
 
 namespace PPE {
 namespace RTTI {
-class FMetaNamespace;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define RTTI_NAMESPACE_DECL(_Api, _Name) \
-    _Api class PPE::RTTI::FMetaNamespace& CONCAT(RTTI_, _Name)() NOEXCEPT;
+#define RTTI_MODULE_DECL(_Api, _Name) \
+    _Api class PPE::RTTI::FMetaModule& CONCAT(RTTI_, _Name)() NOEXCEPT;
 //----------------------------------------------------------------------------
-#define RTTI_NAMESPACE(_Name) CONCAT(RTTI_, _Name)()
+#define RTTI_MODULE(_Name) CONCAT(RTTI_, _Name)()
 //----------------------------------------------------------------------------
-RTTI_NAMESPACE_DECL(PPE_RTTI_API, RTTI);
+RTTI_MODULE_DECL(PPE_RTTI_API, RTTI);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

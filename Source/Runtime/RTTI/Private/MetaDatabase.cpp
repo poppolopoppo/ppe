@@ -4,8 +4,8 @@
 
 #include "MetaClass.h"
 #include "MetaEnum.h"
+#include "MetaModule.h"
 #include "MetaObject.h"
-#include "MetaNamespace.h"
 #include "MetaTransaction.h"
 #include "RTTI/NativeTypes.h"
 
@@ -27,35 +27,35 @@ FMetaDatabase::FMetaDatabase() {
 FMetaDatabase::~FMetaDatabase() {
     LOG(RTTI, Info, L"destroy meta database");
 
-    Assert(_namespaces.empty());
+    Assert(_transactions.empty());
     Assert(_objects.empty());
     Assert(_classes.empty());
 }
 //----------------------------------------------------------------------------
 // Transactions
 //----------------------------------------------------------------------------
-void FMetaDatabase::RegisterTransaction(FMetaTransaction* metaTransaction) {
+void FMetaDatabase::RegisterTransaction(const FMetaTransaction* metaTransaction) {
     Assert(metaTransaction);
     Assert(metaTransaction->IsMounting());
 
-    const FName& exportName = metaTransaction->Name();
-    Assert(not exportName.empty());
+    const FName& namespace_ = metaTransaction->Namespace();
+    Assert(not namespace_.empty());
 
-    LOG(RTTI, Info, L"register transaction in DB : '{0}'", exportName);
+    LOG(RTTI, Info, L"register transaction in DB : namespace <'{0}'>", namespace_);
 
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
-    Insert_AssertUnique(_transactions, exportName, SMetaTransaction(metaTransaction));
+    Add_AssertUnique(_transactions.Add(namespace_), SCMetaTransaction{ metaTransaction });
 }
 //----------------------------------------------------------------------------
-void FMetaDatabase::UnregisterTransaction(FMetaTransaction* metaTransaction) {
+void FMetaDatabase::UnregisterTransaction(const FMetaTransaction* metaTransaction) {
     Assert(metaTransaction);
     Assert(metaTransaction->IsUnmounting());
 
-    const FName& exportName = metaTransaction->Name();
-    Assert(not exportName.empty());
+    const FName& namspace_ = metaTransaction->Namespace();
+    Assert(not namspace_.empty());
 
-    LOG(RTTI, Info, L"unregister transaction in DB : '{0}'", exportName);
+    LOG(RTTI, Info, L"unregister transaction in DB : '{0}'", namspace_);
 
 #if USE_PPE_ASSERT
     // Check that all objects from this transaction were unregistered
@@ -65,60 +65,79 @@ void FMetaDatabase::UnregisterTransaction(FMetaTransaction* metaTransaction) {
 
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
-    Remove_AssertExistsAndSameValue(_transactions, exportName, SMetaTransaction(metaTransaction));
+    Remove_AssertExists(_transactions.at(namspace_), SCMetaTransaction{ metaTransaction });
 }
 //----------------------------------------------------------------------------
-FMetaTransaction& FMetaDatabase::Transaction(const FName& name) const {
-    Assert(not name.empty());
+TMemoryView<const SCMetaTransaction> FMetaDatabase::Transaction(const FName& namespace_) const {
+    Assert(not namespace_.empty());
 
-    FMetaTransaction& transaction = (*_transactions[name]);
-    Assert(transaction.IsLoaded());
+    const TMemoryView<const SCMetaTransaction> v{ _transactions.at(namespace_) };
 
-    return transaction;
+#if USE_PPE_ASSERT
+    for (const SCMetaTransaction& t : v) {
+        Assert_NoAssume(t->IsLoaded());
+    }
+#endif
+
+    return v;
 }
 //----------------------------------------------------------------------------
-FMetaTransaction* FMetaDatabase::TransactionIFP(const FName& name) const {
-    Assert(not name.empty());
+TMemoryView<const SCMetaTransaction> FMetaDatabase::TransactionIFP(const FName& namespace_) const {
+    Assert(not namespace_.empty());
 
-    const auto it = _transactions.find(name);
-    if (_transactions.end() == it)
-        return nullptr;
+    TMemoryView<const SCMetaTransaction> v;
 
-    Assert(it->second->IsLoaded());
-    return it->second.get();
+    const auto it = _transactions.find(namespace_);
+    if (_transactions.end() != it)
+        v = it->second;
+
+#if USE_PPE_ASSERT
+    for (const SCMetaTransaction& t : v) {
+        Assert_NoAssume(t->IsLoaded());
+    }
+#endif
+
+    return v;
 }
 //----------------------------------------------------------------------------
-FMetaTransaction* FMetaDatabase::TransactionIFP(const FStringView& name) const {
-    Assert(not name.empty());
+TMemoryView<const SCMetaTransaction> FMetaDatabase::TransactionIFP(const FStringView& namespace_) const {
+    Assert(not namespace_.empty());
 
-    const hash_t h = FName::HashValue(name);
-    const auto it = _transactions.find_like(name, h);
-    if (_transactions.end() == it)
-        return nullptr;
+    TMemoryView<const SCMetaTransaction> v;
 
-    Assert(it->second->IsLoaded());
-    return it->second.get();
+    const hash_t h = FName::HashValue(namespace_);
+    const auto it = _transactions.find_like(namespace_, h);
+    if (_transactions.end() != it)
+        v = it->second;
+
+#if USE_PPE_ASSERT
+    for (const SCMetaTransaction& t : v) {
+        Assert_NoAssume(t->IsLoaded());
+    }
+#endif
+
+    return v;
 }
 //----------------------------------------------------------------------------
 // Objects
 //----------------------------------------------------------------------------
 void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
     Assert(metaObject);
-    Assert(metaObject->RTTI_Outer());
-    Assert(metaObject->RTTI_Outer()->IsMounting());
+    Assert_NoAssume(metaObject->RTTI_Outer());
+    Assert_NoAssume(metaObject->RTTI_Outer()->IsMounting());
 
     const FPathName exportPath{ FPathName::FromObject(*metaObject) };
 
     LOG(RTTI, Info, L"register object in DB : <{0}::{1}> '{2}'",
-        metaObject->RTTI_Class()->Namespace()->Name(),
+        metaObject->RTTI_Class()->Module()->Name(),
         metaObject->RTTI_Class()->Name(),
         exportPath );
 
-    Assert(metaObject->RTTI_IsExported());
-    Assert(metaObject->RTTI_IsLoaded());
+    Assert_NoAssume(metaObject->RTTI_IsExported());
+    Assert_NoAssume(metaObject->RTTI_IsLoaded());
 
-    Assert(Contains(_namespaces, metaObject->RTTI_Class()->Namespace()));
-    Assert(_transactions.Contains(exportPath.Transaction));
+    Assert_NoAssume(Contains(_modules, metaObject->RTTI_Class()->Module()));
+    Assert_NoAssume(_transactions.Contains(exportPath.Namespace));
 
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
@@ -127,21 +146,21 @@ void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
 //----------------------------------------------------------------------------
 void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
     Assert(metaObject);
-    Assert(metaObject->RTTI_Outer());
-    Assert(metaObject->RTTI_Outer()->IsUnmounting());
+    Assert_NoAssume(metaObject->RTTI_Outer());
+    Assert_NoAssume(metaObject->RTTI_Outer()->IsUnmounting());
 
     const FPathName exportPath{ FPathName::FromObject(*metaObject) };
 
     LOG(RTTI, Info, L"unregister object from DB : <{0}::{1}> '{2}'",
-        metaObject->RTTI_Class()->Namespace()->Name(),
+        metaObject->RTTI_Class()->Module()->Name(),
         metaObject->RTTI_Class()->Name(),
         exportPath );
 
-    Assert(metaObject->RTTI_IsExported());
-    Assert(metaObject->RTTI_IsLoaded());
+    Assert_NoAssume(metaObject->RTTI_IsExported());
+    Assert_NoAssume(metaObject->RTTI_IsLoaded());
 
-    Assert(Contains(_namespaces, metaObject->RTTI_Class()->Namespace()));
-    Assert(_transactions.Contains(exportPath.Transaction));
+    Assert_NoAssume(Contains(_modules, metaObject->RTTI_Class()->Module()));
+    Assert_NoAssume(_transactions.Contains(exportPath.Namespace));
 
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
@@ -154,7 +173,7 @@ void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
 //----------------------------------------------------------------------------
 FMetaObject& FMetaDatabase::Object(const FPathName& pathName) const {
     Assert(not pathName.empty());
-    Assert(not pathName.Transaction.empty());
+    Assert(not pathName.Namespace.empty());
 
 #if USE_PPE_ASSERT
     return *ObjectIFP(pathName); // profit from additional debugging features
@@ -168,7 +187,7 @@ FMetaObject& FMetaDatabase::Object(const FPathName& pathName) const {
 //----------------------------------------------------------------------------
 FMetaObject* FMetaDatabase::ObjectIFP(const FPathName& pathName) const {
     Assert(not pathName.empty());
-    Assert(not pathName.Transaction.empty());
+    Assert(not pathName.Namespace.empty());
 
     const auto it = _objects.find(pathName);
     if (_objects.end() != it) {
@@ -177,7 +196,7 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FPathName& pathName) const {
     }
     else {
 #if USE_PPE_ASSERT
-        CLOG(TransactionIFP(pathName.Transaction) == nullptr,
+        CLOG(TransactionIFP(pathName.Namespace).empty(),
             RTTI, Error, L"trying to fetch an object from an unmounted transaction : {0}", pathName);
 #endif
         return nullptr;
@@ -193,103 +212,103 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& text) const {
     return ObjectIFP(pathName);
 }
 //----------------------------------------------------------------------------
-// Namespaces
+// Modules
 //----------------------------------------------------------------------------
-void FMetaDatabase::RegisterNamespace(const FMetaNamespace* metaNamespace) {
-    Assert(metaNamespace);
+void FMetaDatabase::RegisterModule(const FMetaModule* metaModule) {
+    Assert(metaModule);
 
-    LOG(RTTI, Info, L"register namespace in DB : <{0}>", metaNamespace->Name());
+    LOG(RTTI, Info, L"register module in DB : <{0}>", metaModule->Name());
 
-    Assert(metaNamespace->IsStarted());
+    Assert(metaModule->IsStarted());
 
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
-    Add_AssertUnique(_namespaces, metaNamespace);
+    Add_AssertUnique(_modules, metaModule);
 
-    for (const FMetaEnum* metaEnum : metaNamespace->Enums()) {
+    for (const FMetaEnum* metaEnum : metaModule->Enums()) {
         Assert(metaEnum);
-        Assert(metaEnum->Namespace() == metaNamespace);
+        Assert(metaEnum->Module() == metaModule);
 
         Insert_AssertUnique(_enums, metaEnum->Name(), metaEnum);
         RegisterTraits_(metaEnum->Name(), metaEnum->MakeTraits());
     }
 
-    for (const FMetaClass* metaClass : metaNamespace->Classes()) {
+    for (const FMetaClass* metaClass : metaModule->Classes()) {
         Assert(metaClass);
         Assert(metaClass->IsRegistered());
-        Assert(metaClass->Namespace() == metaNamespace);
+        Assert(metaClass->Module() == metaModule);
 
         Insert_AssertUnique(_classes, metaClass->Name(), metaClass);
         RegisterTraits_(metaClass->Name(), metaClass->MakeTraits());
     }
 }
 //----------------------------------------------------------------------------
-void FMetaDatabase::UnregisterNamespace(const FMetaNamespace* metaNamespace) {
-    Assert(metaNamespace);
+void FMetaDatabase::UnregisterModule(const FMetaModule* metaModule) {
+    Assert(metaModule);
 
-    LOG(RTTI, Info, L"unregister namespace from DB : <{0}>", metaNamespace->Name());
+    LOG(RTTI, Info, L"unregister module from DB : <{0}>", metaModule->Name());
 
-    Assert(metaNamespace->IsStarted());
+    Assert(metaModule->IsStarted());
 
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
-    for (const FMetaClass* metaClass : metaNamespace->Classes()) {
+    for (const FMetaClass* metaClass : metaModule->Classes()) {
         Assert(metaClass);
         Assert(metaClass->IsRegistered());
-        Assert(metaClass->Namespace() == metaNamespace);
+        Assert(metaClass->Module() == metaModule);
 
         UnregisterTraits_(metaClass->Name(), metaClass->MakeTraits());
         Remove_AssertExistsAndSameValue(_classes, metaClass->Name(), metaClass);
     }
 
-    for (const FMetaEnum* metaEnum : metaNamespace->Enums()) {
+    for (const FMetaEnum* metaEnum : metaModule->Enums()) {
         Assert(metaEnum);
-        Assert(metaEnum->Namespace() == metaNamespace);
+        Assert(metaEnum->Module() == metaModule);
 
         UnregisterTraits_(metaEnum->Name(), metaEnum->MakeTraits());
         Remove_AssertExistsAndSameValue(_enums, metaEnum->Name(), metaEnum);
     }
 
-    Remove_AssertExists(_namespaces, metaNamespace);
+    Remove_AssertExists(_modules, metaModule);
 
 #if USE_PPE_ASSERT
     // Check that no object belonging to this namespace if still referenced
     for (const auto& it : _objects) {
         const FMetaClass* metaClass = it.second->RTTI_Class();
-        Assert(metaClass->Namespace() != metaNamespace);
+        Assert(metaClass->Module() != metaModule);
     }
 #endif
 }
 //----------------------------------------------------------------------------
-const FMetaNamespace& FMetaDatabase::Namespace(const FName& name) const {
+const FMetaModule& FMetaDatabase::Module(const FName& name) const {
     Assert(not name.empty());
 
-    const auto it = std::find_if(_namespaces.begin(), _namespaces.end(), [&name](const FMetaNamespace* metaNamespace) {
-        return (metaNamespace->Name() == name);
+    const auto it = std::find_if(_modules.begin(), _modules.end(), [&name](const FMetaModule* metaModule) {
+        return (metaModule->Name() == name);
     });
-    AssertRelease(_namespaces.end() != it);
+    AssertRelease(_modules.end() != it);
 
     return (**it);
 }
 //----------------------------------------------------------------------------
-const FMetaNamespace* FMetaDatabase::NamespaceIFP(const FName& name) const {
+const FMetaModule* FMetaDatabase::ModuleIFP(const FName& name) const {
     Assert(not name.empty());
 
-    const auto it = std::find_if(_namespaces.begin(), _namespaces.end(), [&name](const FMetaNamespace* metaNamespace) {
-        return (metaNamespace->Name() == name);
+    const auto it = std::find_if(_modules.begin(), _modules.end(), [&name](const FMetaModule* metaModule) {
+        return (metaModule->Name() == name);
     });
 
-    return (_namespaces.end() == it ? nullptr : *it);
+    return (_modules.end() == it ? nullptr : *it);
 }
 //----------------------------------------------------------------------------
-const FMetaNamespace* FMetaDatabase::NamespaceIFP(const FStringView& name) const {
+const FMetaModule* FMetaDatabase::ModuleIFP(const FStringView& name) const {
     Assert(not name.empty());
 
-    const auto it = std::find_if(_namespaces.begin(), _namespaces.end(), [&name](const FMetaNamespace* metaNamespace) {
-        return (metaNamespace->Name() == name);
+    const auto it = std::find_if(_modules.begin(), _modules.end(), [&name](const FMetaModule* metaModule) {
+        return (metaModule->Name() == name);
     });
 
-    return (_namespaces.end() == it ? nullptr : *it);
+    return (_modules.end() == it ? nullptr : *it);
 }
 //----------------------------------------------------------------------------
 // Classes

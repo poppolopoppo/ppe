@@ -28,13 +28,13 @@ struct FMetaEnumValue {
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaEnum : Meta::FNonCopyableNorMovable {
 public:
-    FMetaEnum(const FName& name, EEnumFlags flags, size_t sizeInBytes, const FMetaNamespace* metaNamespace);
+    FMetaEnum(const FName& name, EEnumFlags flags, size_t sizeInBytes, const FMetaModule* module);
     virtual ~FMetaEnum();
 
     const FName& Name() const { return _name; }
     EEnumFlags Flags() const { return _flags; }
     size_t SizeInBytes() const { return _sizeInBytes; }
-    const FMetaNamespace* Namespace() const { return _namespace; }
+    const FMetaModule* Module() const { return _module; }
     TMemoryView<const FMetaEnumValue> Values() const { return _values.MakeConstView(); }
 
     bool IsFlags() const        { return (_flags ^ EEnumFlags::Flags        ); }
@@ -71,7 +71,7 @@ private:
     FName _name;
     EEnumFlags _flags;
     size_t _sizeInBytes;
-    const FMetaNamespace* _namespace;
+    const FMetaModule* _module;
     VECTORINSITU(MetaEnum, FMetaEnumValue, 6) _values;
 };
 //----------------------------------------------------------------------------

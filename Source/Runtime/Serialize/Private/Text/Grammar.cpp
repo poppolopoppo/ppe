@@ -1050,7 +1050,7 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
                 return Parser::FParseResult::Unexpected(symbol_t::Identifier, id_, input);
 
             site = Lexer::FSpan::FromSite(scope_->Site(), id_->Site());
-            pathName.Transaction = RTTI::FName(transaction->Value());
+            pathName.Namespace = RTTI::FName(transaction->Value());
             pathName.Identifier = RTTI::FName(id_->Value());
         }
         else if (input.TryRead<symbol_t::Complement>(&scope_)) {

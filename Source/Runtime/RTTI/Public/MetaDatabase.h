@@ -12,10 +12,6 @@
 
 namespace PPE {
 namespace RTTI {
-class FMetaClass;
-FWD_REFPTR(MetaObject);
-class FMetaNamespace;
-FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -32,15 +28,6 @@ public:
     static void Create() { Meta::TSingleton<FMetaDatabase>::Create(); }
     using Meta::TSingleton<FMetaDatabase>::Destroy;
 
-    /* Transactions */
-
-    void RegisterTransaction(FMetaTransaction* metaTransaction);
-    void UnregisterTransaction(FMetaTransaction* metaTransaction);
-
-    FMetaTransaction& Transaction(const FName& name) const;
-    FMetaTransaction* TransactionIFP(const FName& name) const;
-    FMetaTransaction* TransactionIFP(const FStringView& name) const;
-
     /* Objects */
 
     void RegisterObject(FMetaObject* metaObject);
@@ -51,15 +38,25 @@ public:
     FMetaObject* ObjectIFP(const FStringView& text) const;
     const auto& Objects() const { return _objects; }
 
-    /* Namespaces */
+    /* Transaction */
 
-    void RegisterNamespace(const FMetaNamespace* metaNamespace);
-    void UnregisterNamespace(const FMetaNamespace* metaNamespace);
+    void RegisterTransaction(const FMetaTransaction* metaTransaction);
+    void UnregisterTransaction(const FMetaTransaction* metaTransaction);
 
-    const FMetaNamespace& Namespace(const FName& name) const;
-    const FMetaNamespace* NamespaceIFP(const FName& name) const;
-    const FMetaNamespace* NamespaceIFP(const FStringView& name) const;
-    const auto& Namespaces() const { return _namespaces; }
+    TMemoryView<const SCMetaTransaction> Transaction(const FName& namespace_) const;
+    TMemoryView<const SCMetaTransaction> TransactionIFP(const FName& namespace_) const;
+    TMemoryView<const SCMetaTransaction> TransactionIFP(const FStringView& namespace_) const;
+    const auto& Transactions() const { return _transactions; }
+
+    /* Modules */
+
+    void RegisterModule(const FMetaModule* metaModule);
+    void UnregisterModule(const FMetaModule* metaModule);
+
+    const FMetaModule& Module(const FName& name) const;
+    const FMetaModule* ModuleIFP(const FName& name) const;
+    const FMetaModule* ModuleIFP(const FStringView& name) const;
+    const auto& Modules() const { return _modules; }
 
     /* Classes */
 
@@ -87,6 +84,8 @@ private:
     friend class FMetaDatabaseReadable;
     friend class FMetaDatabaseReadWritable;
 
+    using transactions_t = VECTOR(MetaDatabase, SCMetaTransaction);
+
     void InitializeNativeTypes_();
     void RegisterTraits_(const FName& name, const PTypeTraits& traits);
     void UnregisterTraits_(const FName& name, const PTypeTraits& traits);
@@ -100,13 +99,13 @@ private:
     FReadWriteLock _lockRW;
 
     // don't hold lifetime, must be handled separately
-    HASHMAP(MetaDatabase, FName, SMetaTransaction) _transactions;
+    HASHMAP(MetaDatabase, FName, transactions_t) _transactions;
     HASHMAP(MetaDatabase, FPathName, SMetaObject) _objects;
     HASHMAP(MetaDatabase, FName, const FMetaClass*) _classes;
     HASHMAP(MetaDatabase, FName, const FMetaEnum*) _enums;
     HASHMAP(MetaDatabase, FName, PTypeTraits) _traits;
 
-    VECTORINSITU(MetaDatabase, const FMetaNamespace*, 8) _namespaces;
+    VECTOR(MetaDatabase, const FMetaModule*) _modules;
 
 };
 //----------------------------------------------------------------------------

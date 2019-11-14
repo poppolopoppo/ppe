@@ -2,7 +2,6 @@
 
 #include "RTTI_fwd.h"
 
-#include "RTTI_fwd.h"
 #include "RTTI/Typedefs.h"
 
 #include "Memory/RefPtr.h"
@@ -10,8 +9,6 @@
 
 namespace PPE {
 namespace RTTI {
-class FMetaClass;
-FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

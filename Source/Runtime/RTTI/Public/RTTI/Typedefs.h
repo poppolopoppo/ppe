@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "RTTI.h"
-
 #include "RTTI_fwd.h"
 
 #include "Container/RawStorage.h"
@@ -28,7 +26,7 @@ INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FBinaryData, RAWSTORAGE_ALIGNED(NativeTy
 using FClassId = TPrimeNumberProduct<class FMetaClass>;
 //----------------------------------------------------------------------------
 struct PPE_RTTI_API FPathName {
-    FName Transaction;
+    FName Namespace;
     FName Identifier;
 
     bool empty() const NOEXCEPT { return (Identifier.empty()); }
@@ -37,21 +35,21 @@ struct PPE_RTTI_API FPathName {
     static bool Parse(FPathName* pathName, const FStringView& text);
 
     inline friend bool operator ==(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
-        return (lhs.Identifier == rhs.Identifier && lhs.Transaction == rhs.Transaction);
+        return ((lhs.Identifier == rhs.Identifier) & (lhs.Namespace == rhs.Namespace));
     }
     inline friend bool operator !=(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
     inline friend bool operator < (const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
-        return (lhs.Transaction == rhs.Transaction ? lhs.Identifier < rhs.Identifier : lhs.Transaction < rhs.Transaction);
+        return (lhs.Namespace == rhs.Namespace ? lhs.Identifier < rhs.Identifier : lhs.Namespace < rhs.Namespace);
     }
     inline friend bool operator >=(const FPathName& lhs, const FPathName& rhs) NOEXCEPT {
         return (not operator < (lhs, rhs));
     }
 
     inline friend hash_t hash_value(const FPathName& pathName) {
-        return hash_tuple(pathName.Transaction, pathName.Identifier);
+        return hash_tuple(pathName.Namespace, pathName.Identifier);
     }
 };
 //----------------------------------------------------------------------------

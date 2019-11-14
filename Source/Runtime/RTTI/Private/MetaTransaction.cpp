@@ -56,7 +56,7 @@ void LinearizeTransaction_(
 #if WITH_PPE_RTTI_TRANSACTION_CHECKS
                         CLOG(obj.RTTI_Outer()->Linearized().HasImport(outer), RTTI, Fatal,
                             L"found a circular transaction import : {0} <=> {1}",
-                            outer.Name(), obj.RTTI_Outer()->Name());
+                            outer.Namespace(), obj.RTTI_Outer()->Namespace() );
 #endif
 
                         linearized->ImportedRefs.emplace_back(&obj);
@@ -89,7 +89,7 @@ void LinearizeTransaction_(
 void ReportLoadedTransaction_(
     const FMetaTransaction& outer,
     const FLinearizedTransaction& linearized) {
-    LOG(RTTI, Info, L"loaded transaction '{0}' :", outer.Name());
+    LOG(RTTI, Info, L"loaded transaction '{0}' :", outer.Namespace());
 
     FWStringBuilder oss;
     Fmt::FWIndent indent = Fmt::FWIndent::UsingTabs();
@@ -240,8 +240,8 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaTransaction::FMetaTransaction(const FName& name, ETransactionFlags flags/* = ETransactionFlags::Default */)
-:   _name(name)
+FMetaTransaction::FMetaTransaction(const FName& namespace_, ETransactionFlags flags/* = ETransactionFlags::Default */)
+:   _namespace(namespace_)
 ,   _flags(flags)
 ,   _state(ETransactionState::Unloaded) {
 }
@@ -296,7 +296,7 @@ void FMetaTransaction::Load() {
 void FMetaTransaction::Mount() {
     Assert_NoAssume(IsLoaded());
 
-    LOG(RTTI, Info, L"mount transaction '{0}'", _name);
+    LOG(RTTI, Info, L"mount transaction '{0}'", _namespace);
 
     // exports everything to database
 
@@ -306,10 +306,10 @@ void FMetaTransaction::Mount() {
 
     metaDB->RegisterTransaction(this);
 
-    for (const SMetaObject& ref : _linearized.ExportedRefs) {
+#if USE_PPE_ASSERT
+    for (const SMetaObject& ref : _linearized.ExportedRefs)
         Assert_NoAssume(ref->RTTI_Outer() == this);
-        metaDB->RegisterObject(ref);
-    }
+#endif
 
     _state = ETransactionState::Mounted;
 }
@@ -317,7 +317,7 @@ void FMetaTransaction::Mount() {
 void FMetaTransaction::Unmount() {
     Assert_NoAssume(IsMounted());
 
-    LOG(RTTI, Info, L"unmount transaction '{0}'", _name);
+    LOG(RTTI, Info, L"unmount transaction '{0}'", _namespace);
 
     // unregister everything from database
 
@@ -339,7 +339,7 @@ void FMetaTransaction::Unload() {
     Assert_NoAssume(IsLoaded());
     Assert_NoAssume(_linearized.LoadedRefs.size() >= _topObjects.size());
 
-    LOG(RTTI, Info, L"unload transaction '{0}'", _name);
+    LOG(RTTI, Info, L"unload transaction '{0}'", _namespace);
 
     // unload every loaded object and clear linearized data
 
@@ -352,7 +352,7 @@ void FMetaTransaction::Unload() {
 //----------------------------------------------------------------------------
 void FMetaTransaction::Reload() {
     LOG(RTTI, Info, L"reloading transaction '{0}' ({1} top objects)",
-        _name, _topObjects.size() );
+        _namespace, _topObjects.size() );
 
     const bool wasMounted = IsMounted();
 

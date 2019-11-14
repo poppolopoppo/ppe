@@ -234,7 +234,7 @@ bool FBinaryFormatReader::RetrieveImports_(const FBinaryFormat::FHeaders& h) {
 
     RTTI::FPathName path;
     for (const FBinaryFormat::FImportData& importData : imports) {
-        path.Transaction = _contents.Names[importData.TransactionIndex];
+        path.Namespace = _contents.Names[importData.TransactionIndex];
         path.Identifier = _contents.Names[importData.NameIndex];
 
         *(pobj++) = _link->ResolveImport(metaDb, path, RTTI::PTypeTraits{});

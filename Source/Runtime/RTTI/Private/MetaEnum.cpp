@@ -13,14 +13,14 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaEnum::FMetaEnum(const FName& name, EEnumFlags flags, size_t sizeInBytes, const FMetaNamespace* metaNamespace)
+FMetaEnum::FMetaEnum(const FName& name, EEnumFlags flags, size_t sizeInBytes, const FMetaModule* module)
 :   _name(name)
 ,   _flags(flags)
 ,   _sizeInBytes(sizeInBytes)
-,   _namespace(metaNamespace) {
+,   _module(module) {
     Assert_NoAssume(not _name.empty());
     Assert_NoAssume(_sizeInBytes);
-    Assert_NoAssume(_namespace);
+    Assert_NoAssume(_module);
 }
 //----------------------------------------------------------------------------
 FMetaEnum::~FMetaEnum() = default;

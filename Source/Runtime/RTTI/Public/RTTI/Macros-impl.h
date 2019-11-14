@@ -10,10 +10,10 @@
 #include "RTTI/TypeInfos.h"
 
 #include "MetaClass.h"
-#include "MetaNamespace.h"
-#include "MetaObject.h"
 #include "MetaFunction.h"
 #include "MetaFunctionHelpers.h"
+#include "MetaModule.h"
+#include "MetaObject.h"
 #include "MetaProperty.h"
 
 #include "IO/StringView.h"
@@ -31,14 +31,14 @@
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define _RTTI_COMBINE_CLASSFLAGS_IMPL(_Attribute) ::PPE::RTTI::EClassFlags::_Attribute |
-#define RTTI_CLASS_BEGIN(_Namespace, _Name, ...) \
-    ::PPE::RTTI::FMetaNamespace& _Name::RTTI_FMetaClass::Namespace() { \
-        return RTTI_NAMESPACE(_Namespace); \
+#define RTTI_CLASS_BEGIN(_Module, _Name, ...) \
+    ::PPE::RTTI::FMetaModule& _Name::RTTI_FMetaClass::Module() { \
+        return RTTI_MODULE(_Module); \
     } \
-    _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaNamespace* metaNamespace) \
+    _Name::RTTI_FMetaClass::RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaModule* metaModule) \
         : metaclass_type(id, ::PPE::RTTI::FName(STRINGIZE(_Name)), \
             (PP_FOREACH(_RTTI_COMBINE_CLASSFLAGS_IMPL, __VA_ARGS__) ::PPE::RTTI::EClassFlags::None), \
-            metaNamespace) {
+            metaModule ) {
 //----------------------------------------------------------------------------
 #define RTTI_CLASS_END() }
 //----------------------------------------------------------------------------
@@ -97,24 +97,24 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#define RTTI_ENUM_BEGIN_EX(_Namespace, _Name, _Attributes) \
+#define RTTI_ENUM_BEGIN_EX(_Module, _Name, _Attributes) \
     const CONCAT(RTTI_, _Name)* RTTI_Enum(_Name) NOEXCEPT { \
         return static_cast<const CONCAT(RTTI_, _Name)*>(CONCAT(RTTI_, _Name)::Get()); \
     } \
     \
-    ::PPE::RTTI::FMetaNamespace& CONCAT(RTTI_, _Name)::Namespace() { \
-        return RTTI_NAMESPACE(_Namespace); \
+    ::PPE::RTTI::FMetaModule& CONCAT(RTTI_, _Name)::Module() { \
+        return RTTI_MODULE(_Module); \
     } \
     \
-    CONCAT(RTTI_, _Name)::CONCAT(RTTI_, _Name)(const ::PPE::RTTI::FMetaNamespace* metaNamespace) \
+    CONCAT(RTTI_, _Name)::CONCAT(RTTI_, _Name)(const ::PPE::RTTI::FMetaModule* metaNamespace) \
         : metaenum_type(PPE::RTTI::FName(STRINGIZE(_Name)), (_Attributes), metaNamespace) { \
         using enum_type = _Name;
 //----------------------------------------------------------------------------
-#define RTTI_ENUM_BEGIN(_Namespace, _Name) \
-    RTTI_ENUM_BEGIN_EX(_Namespace, _Name, ::PPE::RTTI::EEnumFlags::None)
+#define RTTI_ENUM_BEGIN(_Module, _Name) \
+    RTTI_ENUM_BEGIN_EX(_Module, _Name, ::PPE::RTTI::EEnumFlags::None)
 //----------------------------------------------------------------------------
-#define RTTI_ENUM_FLAGS_BEGIN(_Namespace, _Name) \
-    RTTI_ENUM_BEGIN_EX(_Namespace, _Name, ::PPE::RTTI::EEnumFlags::Flags)
+#define RTTI_ENUM_FLAGS_BEGIN(_Module, _Name) \
+    RTTI_ENUM_BEGIN_EX(_Module, _Name, ::PPE::RTTI::EEnumFlags::Flags)
 //----------------------------------------------------------------------------
 #define RTTI_ENUM_VALUE_EX(_Name, _Value) \
     RegisterValue(::PPE::RTTI::FMetaEnumValue{ _Name, i64(_Value) });

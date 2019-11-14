@@ -21,7 +21,7 @@ FPathName FPathName::FromObject(const FMetaObject& obj) NOEXCEPT {
     Assert(obj.RTTI_Outer());
 
     FPathName p;
-    p.Transaction = obj.RTTI_Outer()->Name();
+    p.Namespace = obj.RTTI_Outer()->Namespace();
     p.Identifier = obj.RTTI_Name();
 
     return p;
@@ -35,19 +35,17 @@ bool FPathName::Parse(FPathName* pathName, const FStringView& text) {
     if (text[0] != '$' || text[1] != '/')
         return false;
 
-    FStringView transaction;
+    FStringView namespace_;
     FStringView identifier = text.CutStartingAt(2);
-    if (not Split(identifier, '/', transaction))
+    if (not Split(identifier, '/', namespace_))
         return false;
 
-    if (transaction.empty())
-        return false;
-    if (identifier.empty())
-        return false;
-    if (identifier.Contains('/'))
+    if (namespace_.empty() ||
+        identifier.empty() ||
+        identifier.Contains('/') )
         return false;
 
-    pathName->Transaction = FName(transaction);
+    pathName->Namespace = FName(namespace_);
     pathName->Identifier = FName(identifier);
 
     return true;
@@ -77,14 +75,14 @@ FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FBinaryData& bindata) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const RTTI::FPathName& pathName) {
-    if (not pathName.Transaction.empty())
-        oss << '$' << '/' << pathName.Transaction << '/';
+    if (not pathName.Namespace.empty())
+        oss << '$' << '/' << pathName.Namespace << '/';
     return oss << pathName.Identifier;
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FPathName& pathName) {
-    if (not pathName.Transaction.empty())
-        oss << L'$' << L'/' << pathName.Transaction << L'/';
+    if (not pathName.Namespace.empty())
+        oss << L'$' << L'/' << pathName.Namespace << L'/';
     return oss << pathName.Identifier;
 }
 //----------------------------------------------------------------------------

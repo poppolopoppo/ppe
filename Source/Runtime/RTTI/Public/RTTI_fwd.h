@@ -56,7 +56,7 @@ class FMetaProperty;
 //----------------------------------------------------------------------------
 class FMetaClassHandle;
 class FMetaEnumHandle;
-class FMetaNamespace;
+class FMetaModule;
 FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------
 using FMetaEnumOrd = i64;

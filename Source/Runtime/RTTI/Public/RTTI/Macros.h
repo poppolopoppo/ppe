@@ -1,7 +1,5 @@
 #pragma once
 
-#include "RTTI.h"
-
 #include "RTTI_fwd.h"
 
 #include "MetaClassHelpers.h"
@@ -34,10 +32,10 @@ public: \
         \
         using metaclass_type::Get; \
         \
-        static ::PPE::RTTI::FMetaNamespace& Namespace(); \
+        static ::PPE::RTTI::FMetaModule& Module(); \
         \
     private: \
-        RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaNamespace* metaNamespace); \
+        RTTI_FMetaClass(::PPE::RTTI::FClassId id, const ::PPE::RTTI::FMetaModule* module); \
     }
 //----------------------------------------------------------------------------
 #define RTTI_ENUM_HEADER(_Api, _Name) \
@@ -47,10 +45,10 @@ public: \
         \
     public: \
         using metaenum_type::Get; \
-        static ::PPE::RTTI::FMetaNamespace& Namespace(); \
+        static ::PPE::RTTI::FMetaModule& Module(); \
         \
     private: \
-        explicit CONCAT(RTTI_, _Name)(const PPE::RTTI::FMetaNamespace* metaNamespace); \
+        explicit CONCAT(RTTI_, _Name)(const PPE::RTTI::FMetaModule* module); \
     }; \
     _Api const CONCAT(RTTI_, _Name)* RTTI_Enum(_Name) NOEXCEPT
 //----------------------------------------------------------------------------

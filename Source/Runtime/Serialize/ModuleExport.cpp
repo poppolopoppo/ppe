@@ -10,14 +10,14 @@
 
 #include "Diagnostic/Logger.h"
 
-#include "RTTI/Namespace-impl.h"
+#include "RTTI/Module-impl.h"
 
 PRAGMA_INITSEG_LIB
 
 namespace PPE {
 namespace Serialize {
 LOG_CATEGORY(, Serialize);
-RTTI_NAMESPACE_DEF(PPE_SERIALIZE_API, Serialize, MetaSerialize);
+RTTI_MODULE_DEF(PPE_SERIALIZE_API, Serialize, MetaSerialize);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -33,13 +33,13 @@ void FSerializeModule::Start(FModuleManager& manager) {
     Lexer::FLexerStartup::Start();
     FGrammarStartup::Start();
 
-    RTTI_NAMESPACE(Serialize).Start();
+    RTTI_MODULE(Serialize).Start();
 }
 //----------------------------------------------------------------------------
 void FSerializeModule::Shutdown() {
     FModule::Shutdown();
 
-    RTTI_NAMESPACE(Serialize).Shutdown();
+    RTTI_MODULE(Serialize).Shutdown();
 
     FGrammarStartup::Shutdown();
     Lexer::FLexerStartup::Shutdown();

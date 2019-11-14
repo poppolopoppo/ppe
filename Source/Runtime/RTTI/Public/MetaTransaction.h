@@ -12,8 +12,6 @@
 
 namespace PPE {
 namespace RTTI {
-FWD_REFPTR(MetaObject);
-FWD_REFPTR(MetaTransaction);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -52,11 +50,11 @@ struct PPE_RTTI_API FLinearizedTransaction {
 class PPE_RTTI_API FMetaTransaction : public FRefCountable {
 public:
     explicit FMetaTransaction(
-        const FName& name,
+        const FName& namespace_,
         ETransactionFlags flags = ETransactionFlags::Default );
     virtual ~FMetaTransaction();
 
-    const FName& Name() const { return _name; }
+    const FName& Namespace() const { return _namespace; }
     ETransactionFlags Flags() const { return _flags; }
     ETransactionState State() const { return _state; }
 
@@ -97,7 +95,7 @@ public:
     void reserve(size_t capacity);
 
 private:
-    FName _name;
+    FName _namespace;
     ETransactionFlags _flags;
     ETransactionState _state;
 

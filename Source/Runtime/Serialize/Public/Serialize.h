@@ -2,11 +2,11 @@
 
 #include "Serialize_fwd.h"
 
-#include "RTTI/Namespace.h"
+#include "RTTI/Module.h"
 
 namespace PPE {
 namespace Serialize {
-RTTI_NAMESPACE_DECL(PPE_SERIALIZE_API, Serialize);
+RTTI_MODULE_DECL(PPE_SERIALIZE_API, Serialize);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

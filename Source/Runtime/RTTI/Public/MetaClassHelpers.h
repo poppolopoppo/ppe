@@ -16,10 +16,11 @@ namespace RTTI {
 template <typename T>
 class TInScopeMetaClass : public FMetaClass {
 protected:
-    TInScopeMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaNamespace* metaNamespace)
-        : FMetaClass(id, name, std::is_abstract<T>::value
+    TInScopeMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaModule* module)
+    :   FMetaClass(id, name, std::is_abstract<T>::value
             ? flags + EClassFlags::Abstract
-            : flags + EClassFlags::Concrete, metaNamespace) {
+            : flags + EClassFlags::Concrete,
+        module ) {
         STATIC_ASSERT(std::is_base_of_v<FMetaObject, T>);
     }
 
@@ -46,14 +47,14 @@ public:
 private:
     static const FMetaClassHandle GMetaClassHandle;
 
-    static FMetaClass* CreateMetaClass_(FClassId id, const FMetaNamespace* metaNamespace) {
-        return TRACKING_NEW(MetaClass, TMetaClass<T>) { id, metaNamespace };
+    static FMetaClass* CreateMetaClass_(FClassId id, const FMetaModule* module) {
+        return TRACKING_NEW(MetaClass, TMetaClass<T>) { id, module };
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
 const FMetaClassHandle TInScopeMetaClass<T>::GMetaClassHandle(
-    TMetaClass<T>::Namespace(),
+    TMetaClass<T>::Module(),
     &TInScopeMetaClass<T>::CreateMetaClass_,
     [](FMetaClass* metaClass) { TRACKING_DELETE(MetaClass, metaClass); }
 );

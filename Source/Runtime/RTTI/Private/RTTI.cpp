@@ -18,8 +18,8 @@ LOG_CATEGORY(PPE_RTTI_API, RTTI);
 
 #if USE_PPE_RTTI_CHECKS
 
-#include "RTTI/Namespace.h"
-#include "RTTI/Namespace-impl.h"
+#include "RTTI/Module.h"
+#include "RTTI/Module-impl.h"
 
 #include "RTTI/Any.h"
 #include "RTTI/Atom.h"
@@ -52,8 +52,8 @@ namespace PPE {
 //namespace {
 //----------------------------------------------------------------------------
 LOG_CATEGORY(PPE_RTTI_API, RTTI_UnitTest)
-RTTI_NAMESPACE_DECL(, RTTI_UnitTest);
-RTTI_NAMESPACE_DEF(, RTTI_UnitTest, MetaObject);
+RTTI_MODULE_DECL(, RTTI_UnitTest);
+RTTI_MODULE_DEF(, RTTI_UnitTest, MetaObject);
 //----------------------------------------------------------------------------
 FWD_REFPTR(Titi);
 FWD_REFPTR(Toto);
@@ -323,7 +323,7 @@ static void RTTIPrintClass_() {
 static NO_INLINE void TestRTTI_() {
     using namespace PPE;
 
-    RTTI_NAMESPACE(RTTI_UnitTest).Start();
+    RTTI_MODULE(RTTI_UnitTest).Start();
 
 #define DECL_RTTI_NATIVETYPE_PRINT(_Name, T, _TypeId) RTTIPrintType_< T >();
     FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_PRINT)
@@ -491,7 +491,7 @@ static NO_INLINE void TestRTTI_() {
         transaction.Unload();
     }
 
-    RTTI_NAMESPACE(RTTI_UnitTest).Shutdown();
+    RTTI_MODULE(RTTI_UnitTest).Shutdown();
 }
 //----------------------------------------------------------------------------
 //} //!namespace

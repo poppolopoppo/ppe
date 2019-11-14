@@ -4,7 +4,7 @@
 
 #include "Allocator/TrackingMalloc.h"
 #include "MetaEnum.h"
-#include "MetaNamespace.h"
+#include "MetaModule.h"
 
 namespace PPE {
 namespace RTTI {
@@ -14,7 +14,7 @@ namespace RTTI {
 template <typename T>
 class TInScopeMetaEnum : public FMetaEnum {
 protected:
-    TInScopeMetaEnum(const FName& name, EEnumFlags flags, const FMetaNamespace* metaNamespace)
+    TInScopeMetaEnum(const FName& name, EEnumFlags flags, const FMetaModule* metaNamespace)
     :   FMetaEnum(name, flags, sizeof(T), metaNamespace) {
         STATIC_ASSERT(std::is_enum_v<T>);
     }
@@ -32,14 +32,14 @@ public:
 private:
     static const FMetaEnumHandle GMetaEnumHandle;
 
-    static FMetaEnum* CreateMetaEnum_(const FMetaNamespace* metaNamespace) {
+    static FMetaEnum* CreateMetaEnum_(const FMetaModule* metaNamespace) {
         return TRACKING_NEW(MetaEnum, TMetaEnum<T>) { metaNamespace };
     }
 };
 //----------------------------------------------------------------------------
 template <typename T>
 const FMetaEnumHandle TInScopeMetaEnum<T>::GMetaEnumHandle(
-    TMetaEnum<T>::Namespace(),
+    TMetaEnum<T>::Module(),
     &TInScopeMetaEnum<T>::CreateMetaEnum_,
     [](FMetaEnum* metaEnum) { TRACKING_DELETE(MetaEnum, metaEnum); }
 );

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RTTI.h"
+#include "RTTI_fwd.h"
 
 #include "RTTI/Atom.h"
 #include "RTTI/NativeTypes.h"
@@ -18,7 +18,6 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 // Use a FLinearHeap for transient FAtom allocation
 //----------------------------------------------------------------------------
-FWD_REFPTR(AtomHeap);
 class PPE_RTTI_API FAtomHeap : public FRefCountable, Meta::FThreadResource {
 public:
     FAtomHeap();

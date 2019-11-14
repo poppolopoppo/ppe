@@ -2,8 +2,8 @@
 
 #include "RTTI_fwd.h"
 
-#include "MetaNamespace.h"
 #include "MetaFunction.h"
+#include "MetaModule.h"
 #include "MetaProperty.h"
 #include "RTTI/Typedefs.h"
 #include "RTTI/TypeTraits.h"
@@ -15,8 +15,6 @@
 
 namespace PPE {
 namespace RTTI {
-FWD_REFPTR(MetaObject);
-class FMetaNamespace;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -43,7 +41,7 @@ template <typename T> const FMetaClass* MetaClass();
 //----------------------------------------------------------------------------
 class PPE_RTTI_API FMetaClass {
 public:
-    FMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaNamespace* metaNamespace);
+    FMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaModule* module);
     virtual ~FMetaClass();
 
     FMetaClass(const FMetaClass& ) = delete;
@@ -55,7 +53,7 @@ public:
     FClassId Id() const { return _id; }
     const FName& Name() const { return _name; }
     EClassFlags Flags() const { return _flags; }
-    const FMetaNamespace* Namespace() const { return _namespace; }
+    const FMetaModule* Module() const { return _module; }
 
     // Status
 
@@ -126,7 +124,7 @@ private:
     EClassFlags _flags;
 
     const FName _name;
-    const FMetaNamespace* _namespace;
+    const FMetaModule* _module;
 
     HASHMAP(MetaClass, FName, const FMetaProperty*) _propertiesAll;
     HASHMAP(MetaClass, FName, const FMetaFunction*) _functionsAll;

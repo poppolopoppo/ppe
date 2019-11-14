@@ -113,13 +113,13 @@ public: // Meta class
         virtual PTypeTraits MakeTraits() const override final;
 
         static const FMetaClass* Get();
-        static FMetaNamespace& Namespace();
+        static FMetaModule& Module();
 
     private:
         static const FMetaClassHandle GMetaClassHandle;
-        static FMetaClass* CreateMetaClass_(FClassId id, const FMetaNamespace* namespace_);
+        static FMetaClass* CreateMetaClass_(FClassId id, const FMetaModule* module);
 
-        RTTI_FMetaClass(FClassId id, const FMetaNamespace* namespace_);
+        RTTI_FMetaClass(FClassId id, const FMetaModule* module);
     };
 
     virtual const RTTI::FMetaClass* RTTI_Class() const {
@@ -139,7 +139,7 @@ private:
 public: // disable new/delete operators from FRefCountable
     static void* operator new(size_t sz, FMemoryTracking& trackingData) = delete;
     static void operator delete(void* p, FMemoryTracking&) = delete;
-public: // add new/delete operators for RTTI objects tracking through metaclass
+public: // add new/delete operators for RTTI objects tracking through meta class
     static void* operator new(size_t sz, const FMetaClass& metaClass) { return tracking_malloc(metaClass.TrackingData(), sz); }
     static void operator delete(void* p, const FMetaClass&) { tracking_free(p); }
 public: // override global delete operator

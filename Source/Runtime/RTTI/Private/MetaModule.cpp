@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "MetaNamespace.h"
+#include "MetaModule.h"
 
 #include "MetaClass.h"
 #include "MetaDatabase.h"
@@ -15,10 +15,10 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaClassHandle::FMetaClassHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT
-    : _class(nullptr)
-    , _create(create)
-    , _destroy(destroy) {
+FMetaClassHandle::FMetaClassHandle(FMetaModule& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT
+:   _class(nullptr)
+,   _create(create)
+,   _destroy(destroy) {
     Assert(_create);
     Assert(_destroy);
 
@@ -31,10 +31,10 @@ FMetaClassHandle::~FMetaClassHandle() NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaEnumHandle::FMetaEnumHandle(FMetaNamespace& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT
-    : _enum(nullptr)
-    , _create(create)
-    , _destroy(destroy) {
+FMetaEnumHandle::FMetaEnumHandle(FMetaModule& metaNamespace, create_func create, destroy_func destroy) NOEXCEPT
+:   _enum(nullptr)
+,   _create(create)
+,   _destroy(destroy) {
     Assert(_create);
     Assert(_destroy);
 
@@ -48,14 +48,14 @@ FMetaEnumHandle::~FMetaEnumHandle() NOEXCEPT {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS
-FMetaNamespace::FMetaNamespace(const FStringView& name, FMemoryTracking& domain)
+FMetaModule::FMetaModule(const FStringView& name, FMemoryTracking& domain)
 #else
-FMetaNamespace::FMetaNamespace(const FStringView& name)
+FMetaModule::FMetaModule(const FStringView& name)
 #endif
-    : _classIdOffset(INDEX_NONE)
-    , _classCount(0)
-    , _enumCount(0)
-    , _nameCStr(name)
+:   _classIdOffset(INDEX_NONE)
+,   _classCount(0)
+,   _enumCount(0)
+,   _nameCStr(name)
 #if USE_PPE_MEMORYDOMAINS
     , _trackingData(_nameCStr.data(), &domain) {
     RegisterTrackingData(&_trackingData);
@@ -65,7 +65,7 @@ FMetaNamespace::FMetaNamespace(const FStringView& name)
     Assert(not _nameCStr.empty());
 }
 //----------------------------------------------------------------------------
-FMetaNamespace::~FMetaNamespace() {
+FMetaModule::~FMetaModule() {
     Assert(not IsStarted());
     _classHandles.Clear();
     _enumHandles.Clear();
@@ -74,7 +74,7 @@ FMetaNamespace::~FMetaNamespace() {
 #endif
 }
 //----------------------------------------------------------------------------
-void FMetaNamespace::Start() {
+void FMetaModule::Start() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(not IsStarted());
     Assert(_classes.empty());
@@ -128,7 +128,7 @@ void FMetaNamespace::Start() {
 
     for (FMetaClassHandle* phandle = _classHandles.Head(); phandle; phandle = phandle->_node.Next) {
         Assert(phandle->_class);
-        Assert(phandle->_class->Namespace() == this);
+        Assert(phandle->_class->Module() == this);
 
         phandle->_class->CallOnRegister_IFN();
 
@@ -137,19 +137,19 @@ void FMetaNamespace::Start() {
 
     {
         const FMetaDatabaseReadWritable metaDB;
-        metaDB->RegisterNamespace(this);
+        metaDB->RegisterModule(this);
     }
 
     Assert(IsStarted());
 }
 //----------------------------------------------------------------------------
-void FMetaNamespace::Shutdown() {
+void FMetaModule::Shutdown() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(IsStarted());
 
     {
         const FMetaDatabaseReadWritable metaDB;
-        metaDB->UnregisterNamespace(this);
+        metaDB->UnregisterModule(this);
     }
 
     LOG(RTTI, Debug, L"shutdown namespace <{0}> ({1} handles)", _nameCStr, _classCount);
@@ -160,7 +160,7 @@ void FMetaNamespace::Shutdown() {
 
     for (FMetaClassHandle* phandle = _classHandles.Head(); phandle; phandle = phandle->_node.Next) {
         Assert(phandle->_class);
-        Assert(phandle->_class->Namespace() == this);
+        Assert(phandle->_class->Module() == this);
 
         LOG(RTTI, Info, L"unregister meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
 
@@ -173,7 +173,7 @@ void FMetaNamespace::Shutdown() {
 
     for (FMetaClassHandle* phandle = _classHandles.Head(); phandle; phandle = phandle->_node.Next) {
         Assert(phandle->_class);
-        Assert(phandle->_class->Namespace() == this);
+        Assert(phandle->_class->Module() == this);
 
         LOG(RTTI, Info, L"destroy meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
 
@@ -187,7 +187,7 @@ void FMetaNamespace::Shutdown() {
 
     for (FMetaEnumHandle* phandle = _enumHandles.Head(); phandle; phandle = phandle->_node.Next) {
         Assert(phandle->_enum);
-        Assert(phandle->_enum->Namespace() == this);
+        Assert(phandle->_enum->Module() == this);
 
         LOG(RTTI, Info, L"destroy meta class <{0}::{1}>", _nameCStr, phandle->_enum->Name());
 
@@ -200,7 +200,7 @@ void FMetaNamespace::Shutdown() {
 //----------------------------------------------------------------------------
 // Classes
 //----------------------------------------------------------------------------
-const FMetaClass& FMetaNamespace::Class(const FName& name) const {
+const FMetaClass& FMetaModule::Class(const FName& name) const {
     Assert(IsStarted());
 
     const auto it = _classes.find(name);
@@ -209,14 +209,14 @@ const FMetaClass& FMetaNamespace::Class(const FName& name) const {
     return (*it->second);
 }
 //----------------------------------------------------------------------------
-const FMetaClass* FMetaNamespace::ClassIFP(const FName& name) const {
+const FMetaClass* FMetaModule::ClassIFP(const FName& name) const {
     Assert(IsStarted());
 
     const auto it = _classes.find(name);
     return (_classes.end() == it ? nullptr : it->second);
 }
 //----------------------------------------------------------------------------
-const FMetaClass* FMetaNamespace::ClassIFP(const FStringView& name) const {
+const FMetaClass* FMetaModule::ClassIFP(const FStringView& name) const {
     Assert(IsStarted());
 
     const hash_t h = FName::HashValue(name);
@@ -225,7 +225,7 @@ const FMetaClass* FMetaNamespace::ClassIFP(const FStringView& name) const {
     return (_classes.end() == it ? nullptr : it->second);
 }
 //----------------------------------------------------------------------------
-void FMetaNamespace::RegisterClass(FMetaClassHandle& handle) {
+void FMetaModule::RegisterClass(FMetaClassHandle& handle) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(not IsStarted());
     Assert(not _classHandles.Contains(&handle));
@@ -236,7 +236,7 @@ void FMetaNamespace::RegisterClass(FMetaClassHandle& handle) {
 //----------------------------------------------------------------------------
 // Enums
 //----------------------------------------------------------------------------
-const FMetaEnum& FMetaNamespace::Enum(const FName& name) const {
+const FMetaEnum& FMetaModule::Enum(const FName& name) const {
     Assert(IsStarted());
 
     const auto it = _enums.find(name);
@@ -245,14 +245,14 @@ const FMetaEnum& FMetaNamespace::Enum(const FName& name) const {
     return (*it->second);
 }
 //----------------------------------------------------------------------------
-const FMetaEnum* FMetaNamespace::EnumIFP(const FName& name) const {
+const FMetaEnum* FMetaModule::EnumIFP(const FName& name) const {
     Assert(IsStarted());
 
     const auto it = _enums.find(name);
     return (_enums.end() == it ? nullptr : it->second);
 }
 //----------------------------------------------------------------------------
-const FMetaEnum* FMetaNamespace::EnumIFP(const FStringView& name) const {
+const FMetaEnum* FMetaModule::EnumIFP(const FStringView& name) const {
     Assert(IsStarted());
 
     const hash_t h = FName::HashValue(name);
@@ -261,7 +261,7 @@ const FMetaEnum* FMetaNamespace::EnumIFP(const FStringView& name) const {
     return (_enums.end() == it ? nullptr : it->second);
 }
 //----------------------------------------------------------------------------
-void FMetaNamespace::RegisterEnum(FMetaEnumHandle& handle) {
+void FMetaModule::RegisterEnum(FMetaEnumHandle& handle) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(not IsStarted());
     Assert(not _enumHandles.Contains(&handle));

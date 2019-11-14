@@ -6,7 +6,7 @@
 #include "MetaObjectHelpers.h"
 #include "MetaTransaction.h"
 
-#include "RTTI/Namespace.h"
+#include "RTTI/Module.h"
 
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
@@ -187,8 +187,8 @@ void FMetaObject::RTTI_VerifyPredicates() const PPE_THROW() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaObject::RTTI_FMetaClass::RTTI_FMetaClass(FClassId id, const FMetaNamespace* namespace_)
-:   FMetaClass(id, FName("FMetaObject"), EClassFlags::Abstract, namespace_)
+FMetaObject::RTTI_FMetaClass::RTTI_FMetaClass(FClassId id, const FMetaModule* module)
+:   FMetaClass(id, FName("FMetaObject"), EClassFlags::Abstract, module)
 {}
 //----------------------------------------------------------------------------
 const FMetaClass* FMetaObject::RTTI_FMetaClass::Parent() const {
@@ -208,16 +208,16 @@ const FMetaClass* FMetaObject::RTTI_FMetaClass::Get() {
     return GMetaClassHandle.Class();
 }
 //----------------------------------------------------------------------------
-FMetaNamespace& FMetaObject::RTTI_FMetaClass::Namespace() {
-    return RTTI_NAMESPACE(RTTI);
+FMetaModule& FMetaObject::RTTI_FMetaClass::Module() {
+    return RTTI_MODULE(RTTI);
 }
 //----------------------------------------------------------------------------
-FMetaClass* FMetaObject::RTTI_FMetaClass::CreateMetaClass_(FClassId id, const FMetaNamespace* namespace_) {
-    return TRACKING_NEW(MetaClass, FMetaObject::RTTI_FMetaClass) { id, namespace_ };
+FMetaClass* FMetaObject::RTTI_FMetaClass::CreateMetaClass_(FClassId id, const FMetaModule* module) {
+    return TRACKING_NEW(MetaClass, FMetaObject::RTTI_FMetaClass) { id, module };
 }
 //----------------------------------------------------------------------------
 const FMetaClassHandle FMetaObject::RTTI_FMetaClass::GMetaClassHandle(
-    FMetaObject::RTTI_FMetaClass::Namespace(),
+    FMetaObject::RTTI_FMetaClass::Module(),
     &FMetaObject::RTTI_FMetaClass::CreateMetaClass_,
     [](FMetaClass* metaClass) {
         TRACKING_DELETE(MetaClass, metaClass);

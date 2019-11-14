@@ -1,8 +1,7 @@
 #pragma once
 
-#include "RTTI.h"
-
 #include "RTTI_fwd.h"
+
 #include "RTTI/NativeTypes.Definitions-inl.h"
 #include "RTTI/TypeTraits.h"
 

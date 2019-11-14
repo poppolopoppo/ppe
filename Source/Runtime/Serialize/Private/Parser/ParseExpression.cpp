@@ -81,7 +81,7 @@ RTTI::FAtom FVariableReference::Eval(FParseContext* context) const {
 
     RTTI::FAtom value;
 
-    if (_pathName.Transaction.empty()) { // local ?
+    if (_pathName.Namespace.empty()) { // local ?
         const RTTI::FAtom local = context->GetAny(_pathName.Identifier);
 
         if (not local)

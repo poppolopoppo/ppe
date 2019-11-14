@@ -4,8 +4,8 @@
 
 #include "RTTI.h"
 
-#include "RTTI/Namespace.h"
-#include "RTTI/Namespace-impl.h"
+#include "RTTI/Module.h"
+#include "RTTI/Module-impl.h"
 
 #include "MetaDatabase.h"
 
@@ -13,7 +13,12 @@
 
 namespace PPE {
 namespace RTTI {
-RTTI_NAMESPACE_DEF(PPE_RTTI_API, RTTI, MetaObject);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// This the module used for RTTI backend
+RTTI_MODULE_DEF(PPE_RTTI_API, RTTI, MetaObject);
+//----------------------------------------------------------------------------
 #if USE_PPE_RTTI_CHECKS
 extern void RTTI_UnitTests();
 #endif
@@ -33,7 +38,7 @@ void FRTTIModule::Start(FModuleManager& manager) {
 
     FMetaDatabase::Create();
 
-    RTTI_NAMESPACE(RTTI).Start();
+    RTTI_MODULE(RTTI).Start();
 
 #if USE_PPE_RTTI_CHECKS
     RTTI_UnitTests();
@@ -43,7 +48,7 @@ void FRTTIModule::Start(FModuleManager& manager) {
 void FRTTIModule::Shutdown() {
     FModule::Shutdown();
 
-    RTTI_NAMESPACE(RTTI).Shutdown();
+    RTTI_MODULE(RTTI).Shutdown();
 
     FMetaDatabase::Destroy();
 

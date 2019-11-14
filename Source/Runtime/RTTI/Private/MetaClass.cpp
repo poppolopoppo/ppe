@@ -2,7 +2,7 @@
 
 #include "MetaClass.h"
 
-#include "MetaNamespace.h"
+#include "MetaModule.h"
 
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
@@ -14,14 +14,14 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaNamespace* metaNamespace)
+FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const FMetaModule* module)
     : _id(id)
     , _flags(flags)
     , _name(name)
-    , _namespace(metaNamespace)
+    , _module(module)
 #if USE_PPE_MEMORYDOMAINS
-    , _trackingData(name.data(), metaNamespace
-        ? &metaNamespace->TrackingData()
+    , _trackingData(name.data(), _module
+        ? &_module->TrackingData()
         : &MEMORYDOMAIN_TRACKING_DATA(MetaObject) )
 {
     RegisterTrackingData(&_trackingData);
@@ -31,7 +31,7 @@ FMetaClass::FMetaClass(FClassId id, const FName& name, EClassFlags flags, const 
     Assert_NoAssume(_id.Value());
     Assert_NoAssume(not _name.empty());
     Assert_NoAssume(_flags != EClassFlags(0));
-    Assert(_namespace);
+    Assert(_module);
 }
 //----------------------------------------------------------------------------
 FMetaClass::~FMetaClass() {
@@ -237,7 +237,7 @@ void FMetaClass::OnRegister() {
 
     const FMetaClass* parent = Parent();
     if (parent) {
-        if (parent->_namespace == _namespace)
+        if (parent->_module == _module)
             const_cast<FMetaClass*>(parent)->CallOnRegister_IFN();
         else
             Assert(parent->IsRegistered());

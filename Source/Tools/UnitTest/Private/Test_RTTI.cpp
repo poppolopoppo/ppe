@@ -7,8 +7,8 @@
 #include "RTTI/AtomVisitor.h"
 #include "RTTI/Macros.h"
 #include "RTTI/Macros-impl.h"
-#include "RTTI/Namespace.h"
-#include "RTTI/Namespace-impl.h"
+#include "RTTI/Module.h"
+#include "RTTI/Module-impl.h"
 #include "RTTI/NativeTypes.h"
 #include "RTTI/TypeInfos.h"
 
@@ -66,8 +66,8 @@ LOG_CATEGORY(, Test_RTTI)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-RTTI_NAMESPACE_DECL(, RTTI_UnitTest);
-RTTI_NAMESPACE_DEF(, RTTI_UnitTest, MetaObject);
+RTTI_MODULE_DECL(, RTTI_UnitTest);
+RTTI_MODULE_DEF(, RTTI_UnitTest, MetaObject);
 //----------------------------------------------------------------------------
 struct FStructAsTuple {
     float3 Position;
@@ -1032,7 +1032,7 @@ void Test_RTTI() {
 
     LOG(Test_RTTI, Emphasis, L"starting rtti tests ...");
 
-    RTTI_NAMESPACE(RTTI_UnitTest).Start();
+    RTTI_MODULE(RTTI_UnitTest).Start();
 
     Test_Atoms_();
     Test_Any_();
@@ -1041,7 +1041,7 @@ void Test_RTTI() {
     Test_Serialize_();
     Test_InteractiveConsole_();
 
-    RTTI_NAMESPACE(RTTI_UnitTest).Shutdown();
+    RTTI_MODULE(RTTI_UnitTest).Shutdown();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

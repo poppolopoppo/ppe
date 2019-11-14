@@ -380,7 +380,7 @@ protected:
             const FMarker_ markerObj{
                 MARK_Object,
                 ref->RTTI_Traits(),
-                ref->RTTI_Outer() ? ref->RTTI_Outer()->Name() : ref->RTTI_Class()->Namespace()->Name(),
+                ref->RTTI_Outer() ? ref->RTTI_Outer()->Namespace() : ref->RTTI_Class()->Module()->Name(),
                 ref->RTTI_Name(),
                 size_t(0), ref };
             _chain.emplace_back(&markerObj);
