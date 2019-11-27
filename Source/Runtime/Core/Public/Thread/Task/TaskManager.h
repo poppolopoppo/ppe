@@ -34,15 +34,20 @@ public:
 
     ITaskContext* Context() const;
 
+    void Run(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
     void Run(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) const;
     void Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
+
+    void Run(FAggregationPort& ap, FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
+    void Run(FAggregationPort& ap, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) const;
+    void Run(FAggregationPort& ap, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
 
     void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
     void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) const;
     void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTaskFunc& whileWaiting, ETaskPriority priority = ETaskPriority::Normal) const;
     void RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) const;
 
-    void Run(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
+    void RunInWorker(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const; // run task directly if already in of worker fibers
 
     void BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) const;
 

@@ -344,28 +344,46 @@ size_t FTaskManagerImpl::ThreadTag() const NOEXCEPT {
     return _manager.ThreadTag();
 }
 //----------------------------------------------------------------------------
-void FTaskManagerImpl::Run(FCompletionPort* phandle, FTaskFunc&& rtask, ETaskPriority priority) {
+void FTaskManagerImpl::Run(FAggregationPort& ap, FTaskFunc&& rtask, ETaskPriority priority) {
     Assert_NoAssume(rtask);
 
-    _scheduler.Produce(priority, std::move(rtask), StartPortIFN_(phandle, 1));
+    _scheduler.Produce(priority, std::move(rtask), ap.Increment(1));
 }
 //----------------------------------------------------------------------------
-void FTaskManagerImpl::Run(FCompletionPort* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) {
+void FTaskManagerImpl::Run(FAggregationPort& ap, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) {
     Assert_NoAssume(not rtasks.empty());
 
-    _scheduler.Produce(priority, rtasks, StartPortIFN_(phandle, rtasks.size()));
+    _scheduler.Produce(priority, rtasks, ap.Increment(rtasks.size()));
 }
 //----------------------------------------------------------------------------
-void FTaskManagerImpl::Run(FCompletionPort* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) {
+void FTaskManagerImpl::Run(FAggregationPort& ap, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) {
     Assert_NoAssume(not tasks.empty());
 
-    _scheduler.Produce(priority, tasks, StartPortIFN_(phandle, tasks.size()));
+    _scheduler.Produce(priority, tasks, ap.Increment(tasks.size()));
 }
 //----------------------------------------------------------------------------
-void FTaskManagerImpl::WaitFor(FCompletionPort& handle, ETaskPriority priority) {
+void FTaskManagerImpl::Run(FCompletionPort* cp, FTaskFunc&& rtask, ETaskPriority priority) {
+    Assert_NoAssume(rtask);
+
+    _scheduler.Produce(priority, std::move(rtask), StartPortIFN_(cp, 1));
+}
+//----------------------------------------------------------------------------
+void FTaskManagerImpl::Run(FCompletionPort* cp, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) {
+    Assert_NoAssume(not rtasks.empty());
+
+    _scheduler.Produce(priority, rtasks, StartPortIFN_(cp, rtasks.size()));
+}
+//----------------------------------------------------------------------------
+void FTaskManagerImpl::Run(FCompletionPort* cp, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) {
+    Assert_NoAssume(not tasks.empty());
+
+    _scheduler.Produce(priority, tasks, StartPortIFN_(cp, tasks.size()));
+}
+//----------------------------------------------------------------------------
+void FTaskManagerImpl::WaitFor(FCompletionPort& cp, ETaskPriority priority) {
     Assert_NoAssume(FFiber::IsInFiber());
 
-    handle.AttachCurrentFiber(FWorkerContext_::Get().Fibers(), priority);
+    cp.AttachCurrentFiber(FWorkerContext_::Get().Fibers(), priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) {
@@ -489,6 +507,28 @@ void FTaskManager::Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority 
 
     _pimpl->Run(nullptr, tasks, priority);
 }
+
+//----------------------------------------------------------------------------
+void FTaskManager::Run(FAggregationPort& ap, FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
+    Assert(rtask);
+    Assert(nullptr != _pimpl);
+
+    _pimpl->Run(ap, std::move(rtask), priority);
+}
+//----------------------------------------------------------------------------
+void FTaskManager::Run(FAggregationPort& ap, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
+    Assert_NoAssume(not rtasks.empty());
+    Assert(nullptr != _pimpl);
+
+    _pimpl->Run(ap, rtasks, priority);
+}
+//----------------------------------------------------------------------------
+void FTaskManager::Run(FAggregationPort& ap, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority /* = ETaskPriority::Normal */) const {
+    Assert_NoAssume(not tasks.empty());
+    Assert(nullptr != _pimpl);
+
+    _pimpl->Run(ap, tasks, priority);
+}
 //----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
     Assert_NoAssume(rtask);
@@ -545,6 +585,13 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<const FTaskFunc>& tasks, ETas
         waitfor(*_pimpl);
     else
         FWaitForTask_::Wait(*_pimpl, waitfor, priority);
+}
+//----------------------------------------------------------------------------
+void FTaskManager::RunInWorker(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
+    if (Likely(FFiber::IsInFiber() && &FWorkerContext_::Get().Manager() == this))
+        rtask(*_pimpl); // run inline when we're already in of current pool's workers
+    else
+        RunAndWaitFor(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 void FTaskManager::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority/* = ETaskPriority::Normal */) const {

@@ -62,7 +62,6 @@ public:
     bool Finished() const { return (CP_Finished == _countDown); }
 
 private: // only accessible through ITaskContext
-    friend class FAggregationPort;
     friend class FTaskManagerImpl;
 
     void AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPriority priority) NOEXCEPT;
@@ -70,6 +69,8 @@ private: // only accessible through ITaskContext
     void OnJobComplete();
 
 private:
+    friend class FAggregationPort;
+
     enum state_t : int {
         CP_NotReady = -1,
         CP_Finished = -2,
@@ -97,6 +98,7 @@ public:
     bool Attach(FAggregationPort* other);
 
     void Join(ITaskContext& ctx);
+    void JoinAndReset(ITaskContext& ctx);
 
 private: // only accessible through ITaskContext
     friend class FTaskManagerImpl;

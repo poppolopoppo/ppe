@@ -29,11 +29,15 @@ public:
 public: // ITaskContext
     virtual size_t ThreadTag() const NOEXCEPT override final;
 
-    virtual void Run(FCompletionPort* phandle, FTaskFunc&& rtask, ETaskPriority priority) override final;
-    virtual void Run(FCompletionPort* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;
-    virtual void Run(FCompletionPort* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override final;
+    virtual void Run(FAggregationPort& ap, FTaskFunc&& rtask, ETaskPriority priority) override final;
+    virtual void Run(FAggregationPort& ap, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;
+    virtual void Run(FAggregationPort& ap, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override final;
 
-    virtual void WaitFor(FCompletionPort& handle, ETaskPriority priority) override final;
+    virtual void Run(FCompletionPort* cp, FTaskFunc&& rtask, ETaskPriority priority) override final;
+    virtual void Run(FCompletionPort* cp, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;
+    virtual void Run(FCompletionPort* cp, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority) override final;
+
+    virtual void WaitFor(FCompletionPort& cp, ETaskPriority priority) override final;
 
     virtual void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority) override final;
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority) override final;

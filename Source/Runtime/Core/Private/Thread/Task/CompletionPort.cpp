@@ -231,6 +231,17 @@ void FAggregationPort::Join(ITaskContext& ctx) {
     Assert_NoAssume(_port.Finished()); // should be finished, and not reset-able
 }
 //----------------------------------------------------------------------------
+void FAggregationPort::JoinAndReset(ITaskContext& ctx) {
+    Join(ctx);
+
+    // reset the completion in-place
+    Meta::Destroy(&_port);
+    Meta::Construct(&_port);
+
+    // need to keep the port alive until Join()
+    _port.Start(1);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

@@ -16,11 +16,15 @@ public:
 
     virtual size_t ThreadTag() const NOEXCEPT = 0;
 
-    virtual void Run(FCompletionPort* phandle, FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
-    virtual void Run(FCompletionPort* phandle, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
-    virtual void Run(FCompletionPort* phandle, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
+    virtual void Run(FAggregationPort& ag, FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
+    virtual void Run(FAggregationPort& ag, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
+    virtual void Run(FAggregationPort& ag, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
 
-    virtual void WaitFor(FCompletionPort& handle, ETaskPriority priority = ETaskPriority::Normal) = 0;
+    virtual void Run(FCompletionPort* cp, FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
+    virtual void Run(FCompletionPort* cp, const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
+    virtual void Run(FCompletionPort* cp, const TMemoryView<const FTaskFunc>& tasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
+
+    virtual void WaitFor(FCompletionPort& cp, ETaskPriority priority = ETaskPriority::Normal) = 0;
 
     virtual void RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal) = 0;
     virtual void RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPriority priority = ETaskPriority::Normal) = 0;
