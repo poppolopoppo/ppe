@@ -60,7 +60,6 @@ struct ALIGN(16) TSSEHashBucket5 {
         default:
             // first try to align on cache line size
             for (size_t c = 11; c <= 16; ++c) {
-                const size_t s = sizeof(states_t) + sizeof(storage_t) * c;
                 if (Meta::IsAligned(CACHELINE_SIZE, sizeof(states_t) + sizeof(storage_t) * c))
                     return c; // succeed, bail out
             }

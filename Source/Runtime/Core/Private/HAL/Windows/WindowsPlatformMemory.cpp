@@ -268,7 +268,8 @@ bool FWindowsPlatformMemory::PageProtect(void* ptr, size_t sizeInBytes, bool rea
 //----------------------------------------------------------------------------
 void FWindowsPlatformMemory::OnOutOfMemory(size_t sizeInBytes, size_t alignment) {
     // #TODO add SubmitErrorReport() ?
-    NOOP(sizeInBytes, alignment);
+    UNUSED(sizeInBytes);
+    UNUSED(alignment);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -354,7 +354,6 @@ inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, F
                 std::push_heap(w.PriorityHeap.begin(), w.PriorityHeap.end(), FPrioritySort_{});
 
                 // keep track of worker priority
-                const size_t localPriority = w.HighestPriority;
                 w.HighestPriority = UnpackPriorityFromRevision_(w.PriorityHeap.front().Priority);
 
                 // used as hints for work stealing : worker will try to steal a job if a more priority task is available

@@ -16,7 +16,7 @@ void FKeyboardState::SetKeyUp(EKeyboardKey key) {
 }
 //----------------------------------------------------------------------------
 void FKeyboardState::Update(float dt) {
-    NOOP(dt); // key repeat ?
+    UNUSED(dt); // key repeat ?
 
     // that way we never miss an input
     _keysPressed.Update(&_keysUp, &_keysDown, _keysQueued);
