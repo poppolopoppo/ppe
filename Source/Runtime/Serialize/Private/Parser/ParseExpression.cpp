@@ -416,9 +416,9 @@ RTTI::FAtom FFunctionCall::Eval(FParseContext* context) const {
     const TMemoryView<const RTTI::FMetaParameter> prms = funcIFP->Parameters();
 
     // #TODO : handle optional parameters
-    if (prms.size() < _args.size())
+    if (prms.size() > _args.size())
         PPE_THROW_IT(FParserException("not enough parameters given to function call", this));
-    else if (prms.size() > _args.size())
+    else if (prms.size() < _args.size())
         PPE_THROW_IT(FParserException("too much parameters given to function call", this));
     Assert(prms.size() == _args.size());
 
