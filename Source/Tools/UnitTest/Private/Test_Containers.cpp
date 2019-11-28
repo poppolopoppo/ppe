@@ -3,14 +3,15 @@
 #include "Allocator/LinearHeap.h"
 #include "Allocator/StlAllocator.h"
 
+#include "Container/SparseArray.h"
 #include "Container/AssociativeVector.h"
 #include "Container/BurstTrie.h"
 #include "Container/FixedSizeHashSet.h"
 #include "Container/FlatMap.h"
 #include "Container/FlatSet.h"
 #include "Container/HashTable.h"
-#include "Container/SparseArray.h"
 #include "Container/StringHashSet.h"
+#include "Container/Vector.h"
 
 #include "Diagnostic/Benchmark.h"
 #include "Diagnostic/Logger.h"
@@ -59,6 +60,11 @@ LOG_CATEGORY(, Test_Containers)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template class TAssociativeVector<FString, int>;
+template class TAssociativeVector<
+    u64, FString,
+    Meta::TEqualTo<u64>,
+    SPARSEARRAY_INSITU(Container, TPair< u64 COMMA FString >)
+>;
 template class TFlatMap<FString, int>;
 template class TFlatSet<FString>;
 //template class TBasicHashTable< details::THashMapTraits_<FString, int>, Meta::THash<FString>, Meta::TEqualTo<FString>, ALLOCATOR(Container, TPair<FString COMMA int>)>; #TODO : after migrating default hash map
