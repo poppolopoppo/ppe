@@ -289,14 +289,50 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
         case DIALOG_ID_MINIDUMP:
             {
                 const FFilename process = FCurrentProcess::Get().FileName();
-                const FWString prefix = process.RemoveExtname().ToWString();
-                const FWString path = FPlatformFile::MakeTemporaryFile(prefix.c_str(), L".dmp");
+                const FWString path = FPlatformFile::MakeTemporaryFile(process.BasenameNoExt().c_str(), L".dmp");
 
-                FPlatformCrash::WriteMiniDump(path, FPlatformCrash::Large);
+                ::LPCWSTR caption = nullptr;
+                ::UINT dialogType = MB_OK;
+                switch (FPlatformCrash::WriteMiniDump(path, FPlatformCrash::Large)) {
+                // Success:
+                case FPlatformCrash::Success:
+                    caption = L"Coredump succeeded";
+                    dialogType |= MB_ICONASTERISK;
+                    FWindowsPlatformMisc::ClipboardCopy(path.data(), path.size());
+                    break;
 
-                ::MessageBoxExW(hwndDlg, path.c_str(), L"Core dumped", MB_OK|MB_ICONASTERISK, 0);
+                // Failure:
+                case FPlatformCrash::NoDbgHelpDLL:
+                    caption = L"Coredump failed: no dbghelp";
+                    dialogType |= MB_ICONEXCLAMATION;
+                    break;
+                case FPlatformCrash::InvalidFilename:
+                    caption = L"Coredump failed: invalid filename";
+                    dialogType |= MB_ICONEXCLAMATION;
+                    break;
+                case FPlatformCrash::CantCreateFile:
+                    caption = L"Coredump failed: can't create file";
+                    dialogType |= MB_ICONEXCLAMATION;
+                    break;
+                case FPlatformCrash::DumpFailed:
+                    caption = L"Coredump failed: unknown error";
+                    dialogType |= MB_ICONEXCLAMATION;
+                    break;
+                case FPlatformCrash::FailedToCloseHandle:
+                    caption = L"Coredump failed: failed to close file handle";
+                    dialogType |= MB_ICONEXCLAMATION;
+                    break;
+                case FPlatformCrash::NotAvailable:
+                    caption = L"Coredump failed: feature not available";
+                    dialogType |= MB_ICONEXCLAMATION;
+                    break;
+                case FPlatformCrash::Reentrancy:
+                    caption = L"Coredump failed: reentrancy";
+                    dialogType |= MB_ICONEXCLAMATION;
+                    break;
+                }
 
-                FWindowsPlatformMisc::ClipboardCopy(path.data(), path.size());
+                ::MessageBoxExW(hwndDlg, path.c_str(), caption, dialogType, 0);
             }
             return TRUE;
         }
