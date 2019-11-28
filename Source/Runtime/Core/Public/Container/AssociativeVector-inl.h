@@ -20,7 +20,7 @@ TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(Meta::FF
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TAssociativeVector(size_type capacity) {
-    _vector.reserve(capacity);
+    PPE::Reserve(_vector, capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
@@ -65,38 +65,38 @@ auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::operator =(const TAsso
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::reserve(size_type capacity) {
-    _vector.reserve(capacity);
+    PPE::Reserve(_vector, capacity);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::clear() {
-    _vector.clear();
+    PPE::Clear(_vector);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::clear_ReleaseMemory() {
-    _vector.clear_ReleaseMemory();
+    PPE::Clear_ReleaseMemory(_vector);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 _Value& TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Add(_Key&& rkey) {
     Assert(end() == Find(rkey));
-    _vector.emplace_back();
-    _vector.back().first = std::move(rkey);
-    return _vector.back().second;
+    auto it = PPE::Emplace_Back(_vector);
+    it->first = std::move(rkey);
+    return (it->second);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 _Value& TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Add(const _Key& key) {
     Assert(end() == Find(key));
-    _vector.emplace_back();
-    _vector.back().first = key;
-    return _vector.back().second;
+    auto it = PPE::Emplace_Back(_vector);
+    it->first = key;
+    return (it->second);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key) -> iterator {
-    return std::find_if(_vector.begin(), _vector.end(), [&key](const value_type& it) {
+    return std::find_if(std::begin(_vector), std::end(_vector), [&key](const value_type& it) {
         return key_equal()(it.first, key);
     });
 }
@@ -104,40 +104,40 @@ auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key) 
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindOrAdd(const _Key& key, bool* pAdded) -> iterator {
     iterator it = Find(key);
+
     if (end() == it) {
-        if (pAdded)
-            *pAdded = true;
-        _vector.emplace_back();
-        _vector.back().first = key;
-        return (_vector.end() - 1);
+        if (pAdded) *pAdded = true;
+
+        it = PPE::Emplace_Back(_vector);
+        it->first = key;
     }
     else {
-        if (pAdded)
-            *pAdded = false;
-        return it;
+        if (pAdded) *pAdded = false;
     }
+
+    return it;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key) const -> const_iterator {
-    return std::find_if(_vector.begin(), _vector.end(), [&key](const value_type& it) {
+    return std::find_if(std::begin(_vector), std::end(_vector), [&key](const value_type& it) {
         return key_equal()(it.first, key);
     });
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindAfter(const _Key& key, const iterator& after) -> iterator {
-    const iterator end = _vector.end();
-    const iterator first = (after == end ? end : after + 1);
+auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindAfter(const _Key& key, iterator after) -> iterator {
+    const iterator end{ std::end(_vector) };
+    const iterator first{ (after == end) ? end : ++after };
     return std::find_if(first, end, [&key](const value_type& it) {
         return key_equal()(it.first, key);
     });
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindAfter(const _Key& key, const const_iterator& after) const -> const_iterator {
-    const const_iterator end = _vector.end();
-    const const_iterator first = (after == end ? end : after + 1);
+auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindAfter(const _Key& key, const_iterator after) const -> const_iterator {
+    const const_iterator end{ std::end(_vector) };
+    const const_iterator first{ (after == end) ? end : ++after };
     return std::find_if(first, end, [&key](const value_type& it) {
         return key_equal()(it.first, key);
     });
@@ -157,7 +157,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 template <class... _Args>
 bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_ReturnIfExists(_Key&& key, _Args&&... args) {
     if (end() == Find(key)) {
-        _vector.emplace_back(std::move(key), mapped_type(std::forward<_Args>(args)...));
+        PPE::Emplace_Back(_vector, std::move(key), mapped_type(std::forward<_Args>(args)...));
         return false;
     }
     else {
@@ -175,13 +175,13 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 template <class... _Args>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_AssertUnique(_Key&& key, _Args&&... args) {
     Assert(end() == Find(key));
-    _vector.emplace_back(std::move(key), mapped_type(std::forward<_Args>(args)...));
+    PPE::Emplace_Back(_vector, std::move(key), mapped_type(std::forward<_Args>(args)...));
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_ReturnIfExists(_Key&& key, _Value&& rvalue) {
     if (end() == Find(key)) {
-        _vector.emplace_back(std::move(key), std::move(rvalue));
+        PPE::Emplace_Back(_vector, std::move(key), std::move(rvalue));
         return false;
     }
     else {
@@ -197,13 +197,13 @@ void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_KeepOldIFN(_Key
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_AssertUnique(_Key&& key, _Value&& rvalue) {
     Assert(end() == Find(key));
-    _vector.emplace_back(std::move(key), std::move(rvalue));
+    PPE::Emplace_Back(_vector, std::move(key), std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_ReturnIfExists(const _Key& key, const _Value& value) {
     if (end() == Find(key)) {
-        _vector.emplace_back(key, value);
+        PPE::Emplace_Back(_vector, key, value);
         return false;
     }
     else {
@@ -219,7 +219,7 @@ void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_KeepOldIFN(cons
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_AssertUnique(const _Key& key, const _Value& value) {
     Assert(end() == Find(key));
-    _vector.emplace_back(key, value);
+    PPE::Emplace_Back(_vector, key, value);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
@@ -250,7 +250,7 @@ bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TryGet(const _Key& key
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 const _Value& TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::At(const _Key& key) const {
     const const_iterator it = Find(key);
-    Assert(_vector.end() != it);
+    Assert(std::end(_vector) != it);
     return it->second;
 }
 //----------------------------------------------------------------------------

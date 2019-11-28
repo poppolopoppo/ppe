@@ -286,6 +286,9 @@ private:
 template <typename T, typename _Allocator>
 void Append(TVector<T, _Allocator>& v, const TMemoryView<const T>& elts);
 //----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _It>
+void Assign(TVector<T, _Allocator>& v, _It first, _It last);
+//----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename U>
 bool Contains(const TVector<T, _Allocator>& v, const U& elt);
 //----------------------------------------------------------------------------
@@ -306,6 +309,9 @@ void Add_AssertUnique(TVector<T, _Allocator>& v, T&& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 bool Add_Unique(TVector<T, _Allocator>& v, T&& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename... _Args>
+auto Emplace_Back(TVector<T, _Allocator>& v, _Args&&... args) -> typename TVector<T, _Allocator>::iterator;
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Remove_AssertExists(TVector<T, _Allocator>& v, const T& elt);
@@ -330,7 +336,13 @@ template <typename T, typename _Allocator>
 void Erase_DontPreserveOrder(TVector<T, _Allocator>& v, const typename TVector<T, _Allocator>::const_iterator& it);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void clear_ReleaseMemory(TVector<T, _Allocator>& v);
+void Clear(TVector<T, _Allocator>& v);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Clear_ReleaseMemory(TVector<T, _Allocator>& v);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Reserve(TVector<T, _Allocator>& v, size_t capacity);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 hash_t hash_value(const TVector<T, _Allocator>& vector);

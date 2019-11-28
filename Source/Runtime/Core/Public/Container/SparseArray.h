@@ -68,6 +68,9 @@ public:
     using iterator = TSparseArrayIterator<T>;
     using const_iterator = TSparseArrayIterator<Meta::TAddConst<T>>;
 
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
     TBasicSparseArray() NOEXCEPT;
     ~TBasicSparseArray();
 
@@ -90,7 +93,21 @@ public:
     const_iterator cbegin() const NOEXCEPT { return begin(); }
     const_iterator cend() const NOEXCEPT { return end(); }
 
+    reverse_iterator rbegin() NOEXCEPT { return reverse_iterator(end()); }
+    reverse_iterator rend() NOEXCEPT { return reverse_iterator(begin()); }
+
+    const_reverse_iterator rbegin() const NOEXCEPT { return const_reverse_iterator(end()); }
+    const_reverse_iterator rend() const NOEXCEPT { return const_reverse_iterator(begin()); }
+
+    const_reverse_iterator crbegin() const NOEXCEPT { return const_reverse_iterator(end()); }
+    const_reverse_iterator crend() const NOEXCEPT { return const_reverse_iterator(begin()); }
+
     FDataId IndexOf(const_reference data) const;
+
+    iterator Iterator(FDataId id);
+    const_iterator Iterator(FDataId id) const {
+        return const_cast<TBasicSparseArray*>(this)->Iterator(id);
+    }
 
     reference At(size_t index);
     const_reference At(size_t index) const {
@@ -285,6 +302,9 @@ public:
     }
 
 private:
+    template <typename U, typename _Allocator>
+    friend class TSparseArray;
+
     size_t _index;
     const FSparseArray* _owner;
 
@@ -397,6 +417,8 @@ public:
 
     template <typename... _Args>
     FDataId Emplace(_Args&&... args);
+    template <typename... _Args>
+    iterator EmplaceIt(_Args&&... args);
 
     void Assign(TSparseArray&& rvalue);
     void Assign(const TSparseArray& other);
@@ -407,13 +429,34 @@ public:
         AddRange(first, last);
     }
 
+    template <typename _OtherAllocator>
+    void AppendCopy(const TSparseArray<T, _OtherAllocator>& cpy) {
+        AddRange(cpy.begin(), cpy.end());
+    }
+    template <typename _OtherAllocator>
+    void AppendMove(TSparseArray<T, _OtherAllocator>& mve) {
+        AddRange(
+            MakeMoveIterator(mve.begin()),
+            MakeMoveIterator(mve.end()) );
+        mve.Clear();
+    }
+
     bool Remove(FDataId id);
-    void Remove(iterator it);
+    void Remove(const_iterator it);
     void Remove(reference data);
 
     void Clear(); // won't release memory
     void Clear_ReleaseMemory();
     void Reserve(size_t n);
+
+    bool Equals(const TSparseArray& other) const;
+
+    friend bool operator ==(const TSparseArray& lhs, const TSparseArray& rhs) {
+        return (lhs.Equals(rhs));
+    }
+    friend bool operator !=(const TSparseArray& lhs, const TSparseArray& rhs) {
+        return (not lhs.Equals(rhs));
+    }
 
     void Swap(TSparseArray& other) { parent_type::Swap(other); }
     inline friend void swap(TSparseArray& lhs, TSparseArray& rhs) {
@@ -454,13 +497,17 @@ private:
     void AddRange_(_It first, _It last, std::input_iterator_tag);
     template <typename _It, typename _IteratorTag>
     void AddRange_(_It first, _It last, _IteratorTag);
-
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Same API than TVector<>
+//----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Append(TSparseArray<T, _Allocator>& v, const TMemoryView<const T>& elts);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _It>
+void Assign(TSparseArray<T, _Allocator>& v, _It first, _It last);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename U>
 bool Contains(const TSparseArray<T, _Allocator>& v, const U& elt);
@@ -474,11 +521,29 @@ void Add_AssertUnique(TSparseArray<T, _Allocator>& v, T&& elt);
 template <typename T, typename _Allocator>
 bool Add_Unique(TSparseArray<T, _Allocator>& v, T&& elt);
 //----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename... _Args>
+auto Emplace_Back(TSparseArray<T, _Allocator>& v, _Args&&... args) -> typename TSparseArray<T, _Allocator>::iterator;
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Erase_DontPreserveOrder(TSparseArray<T, _Allocator>& v, const typename TSparseArray<T, _Allocator>::const_iterator& it);
+//----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Remove_AssertExists(TSparseArray<T, _Allocator>& v, const T& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 bool Remove_ReturnIfExists(TSparseArray<T, _Allocator>& v, const T& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Clear(TSparseArray<T, _Allocator>& v);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Clear_ReleaseMemory(TSparseArray<T, _Allocator>& v);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Reserve(TSparseArray<T, _Allocator>& v, size_t capacity);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+hash_t hash_value(const TSparseArray<T, _Allocator>& v);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

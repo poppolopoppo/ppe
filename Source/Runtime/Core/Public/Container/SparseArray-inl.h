@@ -73,6 +73,20 @@ auto TBasicSparseArray<T>::IndexOf(const_reference data) const -> FDataId {
 }
 //----------------------------------------------------------------------------
 template <typename T>
+auto TBasicSparseArray<T>::Iterator(FDataId id) -> iterator {
+    Assert_NoAssume(CheckInvariants());
+    Assert(_numChunks);
+
+    const FUnpackedId_ unpacked = UnpackId_(id);
+    FDataItem* const it = At_(unpacked.Index);
+
+    // checks validity of weak ref before returning data
+    return ((it->Id == id)
+        ? iterator{ *this, unpacked.Index }
+        : iterator::End(*this) );
+}
+//----------------------------------------------------------------------------
+template <typename T>
 auto TBasicSparseArray<T>::At(size_t index) -> reference {
     Assert_NoAssume(CheckInvariants());
     Assert(_numChunks);
@@ -295,7 +309,22 @@ auto TSparseArray<T, _Allocator>::Emplace(_Args&&... args) -> FDataId {
     it->Id = PackId_(unpacked);
     Meta::Construct(&it->Data, std::forward<_Args>(args)...);
 
-    return it->Id;
+    return (it->Id);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+template <typename... _Args>
+auto TSparseArray<T, _Allocator>::EmplaceIt(_Args&&... args) -> iterator {
+    Assert_NoAssume(CheckInvariants());
+
+    const FUnpackedId_ unpacked = AllocateItem_();
+    Assert(not unpacked.empty());
+
+    FDataItem* const it = At_(unpacked.Index);
+    it->Id = PackId_(unpacked);
+    Meta::Construct(&it->Data, std::forward<_Args>(args)...);
+
+    return iterator{ *this, unpacked.Index };
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -342,15 +371,15 @@ bool TSparseArray<T, _Allocator>::Remove(FDataId id) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void TSparseArray<T, _Allocator>::Remove(iterator it) {
+void TSparseArray<T, _Allocator>::Remove(const_iterator it) {
     Assert(AliasesToContainer(it));
 
-    auto* const pitem = reinterpret_cast<FDataItem*>(std::addressof(*it));
+    const auto* const pitem = reinterpret_cast<const FDataItem*>(std::addressof(*it));
 
     const FUnpackedId_ unpacked = UnpackId_(pitem->Id);
     Assert(not unpacked.empty());
 
-    ReleaseItem_(unpacked, pitem);
+    ReleaseItem_(unpacked, const_cast<FDataItem*>(pitem));
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -455,6 +484,12 @@ void TSparseArray<T, _Allocator>::Reserve(size_t n) {
 
         Assert_NoAssume(CheckInvariants());
     }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+bool TSparseArray<T, _Allocator>::Equals(const TSparseArray& other) const {
+    return ( (&other == this) || (other._size == _size and
+        std::equal(begin(), end(), other.begin(), other.end())) );
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -633,11 +668,16 @@ void TSparseArray<T, _Allocator>::AddRange_(_It first, _It last, std::input_iter
 template <typename T, typename _Allocator>
 template <typename _It, typename _IteratorTag>
 void TSparseArray<T, _Allocator>::AddRange_(_It first, _It last, _IteratorTag) {
-    Reserve(std::distance(first, last));
+    Reserve(_size + std::distance(first, last));
     AddRange_(first, last, std::input_iterator_tag{});
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _It>
+void Assign(TSparseArray<T, _Allocator>& v, _It first, _It last) {
+    v.Assign(first, last);
+}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Append(TSparseArray<T, _Allocator>& v, const TMemoryView<const T>& elts) {
@@ -674,6 +714,18 @@ bool Add_Unique(TSparseArray<T, _Allocator>& v, T&& elt) {
     }
 }
 //----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename... _Args>
+auto Emplace_Back(TSparseArray<T, _Allocator>& v, _Args&&... args) -> typename TSparseArray<T, _Allocator>::iterator {
+    return v.EmplaceIt(std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Erase_DontPreserveOrder(TSparseArray<T, _Allocator>& v, const typename TSparseArray<T, _Allocator>::const_iterator& it) {
+    // this is just for parity with TVector<>, so we can use TSparseArray<> with TAssociativeVector<>,
+    // TSparseArray<> has already a fast erase algorithm and don't need this trick.
+    v.Remove(it);
+}
+//----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Remove_AssertExists(TSparseArray<T, _Allocator>& v, const T& elt) {
     Verify(Remove_ReturnIfExists(v, elt));
@@ -691,6 +743,26 @@ bool Remove_ReturnIfExists(TSparseArray<T, _Allocator>& v, const T& elt) {
     else {
         return false;
     }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Clear(TSparseArray<T, _Allocator>& v) {
+    v.Clear();
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Clear_ReleaseMemory(TSparseArray<T, _Allocator>& v) {
+    v.Clear_ReleaseMemory();
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Reserve(TSparseArray<T, _Allocator>& v, size_t capacity) {
+    v.Reserve(capacity);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+hash_t hash_value(const TSparseArray<T, _Allocator>& v) {
+    return hash_range(v.begin(), v.end());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

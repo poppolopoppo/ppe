@@ -68,7 +68,7 @@ public:
 
     TAssociativeVector(std::initializer_list<value_type> values) : _vector(values) {}
     TAssociativeVector& operator =(std::initializer_list<value_type> values) {
-        _vector.assign(values.begin(), values.end());
+        Assign(_vector, values.begin(), values.end());
         return *this;
     }
 
@@ -130,8 +130,8 @@ public:
     iterator FindOrAdd(const _Key& key, bool* pAdded);
     const_iterator Find(const _Key& key) const;
 
-    iterator FindAfter(const _Key& key, const iterator& previous);
-    const_iterator FindAfter(const _Key& key, const const_iterator& previous) const;
+    iterator FindAfter(const _Key& key, iterator previous);
+    const_iterator FindAfter(const _Key& key, const_iterator previous) const;
 
     bool Find(const _Key& key, _Value *pvalue) const;
 
@@ -187,9 +187,6 @@ public:
     const_iterator find(const _Key& key) const { return Find(key); }
 
     size_t HashValue() const { return hash_value(_vector); }
-
-    TMemoryView<value_type> MakeView() { return _vector.MakeView(); }
-    TMemoryView<const value_type> MakeView() const { return _vector.MakeView(); }
 
     friend void swap(TAssociativeVector& lhs, TAssociativeVector& rhs) {
         swap(lhs._vector, rhs._vector);

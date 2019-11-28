@@ -629,6 +629,11 @@ void Append(TVector<T, _Allocator>& v, const TMemoryView<const T>& elts) {
     v.insert(v.end(), elts.begin(), elts.end());
 }
 //----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename _It>
+void Assign(TVector<T, _Allocator>& v, _It first, _It last) {
+    v.assign(first, last);
+}
+//----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename U>
 bool Contains(const TVector<T, _Allocator>& v, const U& elt) {
     return (v.end() != std::find(v.begin(), v.end(), elt));
@@ -676,6 +681,12 @@ template <typename T, typename _Allocator>
 void Add_AssertUnique(TVector<T, _Allocator>& v, T&& elt) {
     Assert(!Contains(v, elt));
     v.emplace_back(std::move(elt));
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator, typename... _Args>
+auto Emplace_Back(TVector<T, _Allocator>& v, _Args&&... args) -> typename TVector<T, _Allocator>::iterator {
+    v.emplace_back(std::forward<_Args>(args)...);
+    return (v.end() - 1);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -738,16 +749,23 @@ void Erase_DontPreserveOrder(TVector<T, _Allocator>& v, const typename TVector<T
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-void clear_ReleaseMemory(TVector<T, _Allocator>& v) {
+void Clear(TVector<T, _Allocator>& v) {
+    v.clear();
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Clear_ReleaseMemory(TVector<T, _Allocator>& v) {
     v.clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+void Reserve(TVector<T, _Allocator>& v, size_t capacity) {
+    v.reserve(capacity);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 hash_t hash_value(const TVector<T, _Allocator>& vector) {
-    hash_t h(PPE_HASH_VALUE_SEED);
-    for (const T& it : vector)
-        hash_combine(h, hash_value(it));
-    return h;
+    return hash_range(vector.begin(), vector.end());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
