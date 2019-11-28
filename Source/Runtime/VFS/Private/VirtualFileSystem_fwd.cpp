@@ -13,6 +13,7 @@
 #include "HAL/PlatformFile.h"
 #include "Misc/Function.h"
 #include "Time/DateTime.h"
+#include "Time/Timestamp.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -121,6 +122,32 @@ bool VFS_WriteAll(const FFilename& filename, const TMemoryView<const u8>& conten
 //----------------------------------------------------------------------------
 bool VFS_FileStats(FFileStat *pstats, const FFilename& filename) {
     return VFS().FileStats(pstats, filename);
+}
+//----------------------------------------------------------------------------
+bool VFS_FileCreatedAt(FTimestamp* ptime, const FFilename& filename) {
+    Assert(ptime);
+
+    FFileStat st;
+    if (VFS_FileStats(&st, filename)) {
+        *ptime = st.CreatedAt;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+bool VFS_FileLastModified(FTimestamp* ptime, const FFilename& filename) {
+    Assert(ptime);
+
+    FFileStat st;
+    if (VFS_FileStats(&st, filename)) {
+        *ptime = st.LastModified;
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
