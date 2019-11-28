@@ -251,7 +251,7 @@ FMetaTransaction::~FMetaTransaction() {
     Assert_NoAssume(IsUnloaded());
 }
 //----------------------------------------------------------------------------
-void FMetaTransaction::RegisterObject(FMetaObject* object) {
+void FMetaTransaction::Add(FMetaObject* object) {
     Assert(object);
     Assert_NoAssume(object->RTTI_IsUnloaded());
     Assert_NoAssume(IsUnloaded());
@@ -261,7 +261,7 @@ void FMetaTransaction::RegisterObject(FMetaObject* object) {
     object->RTTI_MarkAsTopObject();
 }
 //----------------------------------------------------------------------------
-void FMetaTransaction::UnregisterObject(FMetaObject* object) {
+void FMetaTransaction::Remove(FMetaObject* object) {
     Assert(object);
     Assert_NoAssume(object->RTTI_IsUnloaded());
     Assert_NoAssume(IsUnloaded());
@@ -306,10 +306,10 @@ void FMetaTransaction::Mount() {
 
     metaDB->RegisterTransaction(this);
 
-#if USE_PPE_ASSERT
-    for (const SMetaObject& ref : _linearized.ExportedRefs)
+    for (const SMetaObject& ref : _linearized.ExportedRefs) {
         Assert_NoAssume(ref->RTTI_Outer() == this);
-#endif
+        metaDB->RegisterObject(ref);
+    }
 
     _state = ETransactionState::Mounted;
 }

@@ -71,8 +71,8 @@ public:
     bool IsUnloaded() const { return (_state == ETransactionState::Unloaded); }
     bool IsUnloading() const { return (_state == ETransactionState::Unloading); }
 
-    void RegisterObject(FMetaObject* object);
-    void UnregisterObject(FMetaObject* object);
+    void Add(FMetaObject* object);
+    void Remove(FMetaObject* object);
 
     void Load();
     void Unload();

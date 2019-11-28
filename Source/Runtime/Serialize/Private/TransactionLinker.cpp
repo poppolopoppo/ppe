@@ -135,7 +135,7 @@ void FTransactionLinker::Resolve(RTTI::FMetaTransaction& loaded) {
     }
 
     for (const RTTI::PMetaObject& o : _topObjects)
-        loaded.RegisterObject(o.get());
+        loaded.Add(o.get());
 }
 //----------------------------------------------------------------------------
 void FTransactionLinker::CheckAssignment(const RTTI::PTypeTraits& traits, const RTTI::FMetaObject& obj) const {

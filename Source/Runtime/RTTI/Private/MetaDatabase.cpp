@@ -45,17 +45,17 @@ void FMetaDatabase::RegisterTransaction(const FMetaTransaction* metaTransaction)
 
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
-    Add_AssertUnique(_transactions.Add(namespace_), SCMetaTransaction{ metaTransaction });
+    Add_AssertUnique(_transactions.FindOrAdd(namespace_), SCMetaTransaction{ metaTransaction });
 }
 //----------------------------------------------------------------------------
 void FMetaDatabase::UnregisterTransaction(const FMetaTransaction* metaTransaction) {
     Assert(metaTransaction);
     Assert(metaTransaction->IsUnmounting());
 
-    const FName& namspace_ = metaTransaction->Namespace();
-    Assert(not namspace_.empty());
+    const FName& namespace_ = metaTransaction->Namespace();
+    Assert(not namespace_.empty());
 
-    LOG(RTTI, Info, L"unregister transaction in DB : '{0}'", namspace_);
+    LOG(RTTI, Info, L"unregister transaction in DB : '{0}'", namespace_);
 
 #if USE_PPE_ASSERT
     // Check that all objects from this transaction were unregistered
@@ -65,7 +65,11 @@ void FMetaDatabase::UnregisterTransaction(const FMetaTransaction* metaTransactio
 
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
-    Remove_AssertExists(_transactions.at(namspace_), SCMetaTransaction{ metaTransaction });
+    const auto it = _transactions.find(namespace_);
+    Remove_AssertExists(it->second, SCMetaTransaction{ metaTransaction });
+
+    if (it->second.empty())
+        _transactions.erase(it);
 }
 //----------------------------------------------------------------------------
 TMemoryView<const SCMetaTransaction> FMetaDatabase::Transaction(const FName& namespace_) const {

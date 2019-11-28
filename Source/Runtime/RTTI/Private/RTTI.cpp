@@ -425,9 +425,9 @@ static NO_INLINE void TestRTTI_() {
         PToto2 toto2(NEW_RTTI(FToto2)());
         PToto2 toto3(NEW_RTTI(FToto2)());
 
-        transaction.RegisterObject(toto.get());
-        transaction.RegisterObject(toto2.get());
-        transaction.RegisterObject(toto3.get());
+        transaction.Add(toto.get());
+        transaction.Add(toto2.get());
+        transaction.Add(toto3.get());
 
         toto->RTTI_Export(RTTI::FName("toto"));
         toto3->RTTI_Export(RTTI::FName("toto3"));
@@ -458,7 +458,7 @@ static NO_INLINE void TestRTTI_() {
             titi->RTTI_Export(RTTI::FName("titi"));
             titi->SetToto(toto3.get());
 
-            transaction2.RegisterObject(titi.get());
+            transaction2.Add(titi.get());
             transaction2.Load();
 
             const RTTI::FMetaClass* metaClass = titi->RTTI_Class();
