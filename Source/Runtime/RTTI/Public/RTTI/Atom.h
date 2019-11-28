@@ -13,11 +13,11 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 class FAtom {
 public:
-    FAtom() : _data(nullptr) {}
-    FAtom(const void* data, const PTypeTraits& traits)
-        : _data((void*)data)
-        , _traits(traits) {
-    }
+    CONSTEXPR FAtom() NOEXCEPT : _data(nullptr) {}
+    CONSTEXPR FAtom(const void* data, const PTypeTraits& traits) NOEXCEPT
+    :   _data((void*)data)
+    ,   _traits(traits)
+    {}
 
     PPE_FAKEBOOL_OPERATOR_DECL() { return _data; }
 
@@ -66,6 +66,16 @@ public:
     FStringView TypeName() const { return _traits->TypeName(); }
     size_t SizeInBytes() const { return _traits->SizeInBytes(); }
     FNamedTypeInfos NamedTypeInfos() const { return _traits->NamedTypeInfos(); }
+
+    bool IsScalar() const { return (_traits->TypeFlags() & ETypeFlags::Scalar); }
+    bool IsTuple() const { return (_traits->TypeFlags() & ETypeFlags::Tuple); }
+    bool IsList() const { return (_traits->TypeFlags() & ETypeFlags::List); }
+    bool IsDico() const { return (_traits->TypeFlags() & ETypeFlags::Dico); }
+    bool IsEnum() const { return (_traits->TypeFlags() & ETypeFlags::Enum); }
+    bool IsObject() const { return (_traits->TypeFlags() & ETypeFlags::Object); }
+    bool IsNative() const { return (_traits->TypeFlags() & ETypeFlags::Native); }
+    bool IsPOD() const { return (_traits->TypeFlags() & ETypeFlags::POD); }
+    bool IsTriviallyDestructible() const { return (_traits->TypeFlags() & ETypeFlags::TriviallyDestructible); }
 
     bool IsDefaultValue() const { return _traits->IsDefaultValue(_data); }
     void ResetToDefaultValue() { _traits->ResetToDefaultValue(_data); }
