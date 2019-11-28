@@ -109,36 +109,8 @@ public:
     FORCE_INLINE void Resize_DiscardData(size_type size) { Resize(size, false); }
     FORCE_INLINE void Resize_KeepData(size_type size) { Resize(size, true); }
 
-    bool AcquireDataUnsafe(FAllocatorBlock b) NOEXCEPT {
-        Assert_NoAssume(Meta::IsAligned(sizeof(value_type), b.SizeInBytes));
-
-        if (allocator_traits::Acquire(*this, b)) {
-            clear_ReleaseMemory();
-
-            _storage = static_cast<pointer>(b.Data);
-            _size = b.SizeInBytes / sizeof(value_type);
-
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    FAllocatorBlock StealDataUnsafe() NOEXCEPT {
-        FAllocatorBlock b{ _storage, _size * sizeof(value_type) };
-        if (allocator_traits::Steal(*this, b)) {
-            // won't delete the block since it's been stolen !
-
-            _storage = nullptr;
-            _size = 0;
-
-            return b;
-        }
-        else {
-            return FAllocatorBlock::Null();
-        }
-    }
+    bool AcquireDataUnsafe(FAllocatorBlock b) NOEXCEPT;
+    FAllocatorBlock StealDataUnsafe() NOEXCEPT;
 
     template <typename _It>
     void insert(iterator after, _It&& begin, _It&& end);

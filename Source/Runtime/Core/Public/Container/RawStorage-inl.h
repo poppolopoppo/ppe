@@ -175,6 +175,39 @@ bool TRawStorage<T, _Allocator>::Equals(const TRawStorage& other) const {
     return true;
 }
 //----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+bool TRawStorage<T, _Allocator>::AcquireDataUnsafe(FAllocatorBlock b) NOEXCEPT {
+    Assert_NoAssume(Meta::IsAligned(sizeof(value_type), b.SizeInBytes));
+
+    if (allocator_traits::Acquire(*this, b)) {
+        clear_ReleaseMemory();
+
+        _storage = static_cast<pointer>(b.Data);
+        _size = b.SizeInBytes / sizeof(value_type);
+
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+FAllocatorBlock TRawStorage<T, _Allocator>::StealDataUnsafe() NOEXCEPT {
+    FAllocatorBlock b{ _storage, _size * sizeof(value_type) };
+    if (allocator_traits::Steal(*this, b)) {
+        // won't delete the block since it's been stolen !
+
+        _storage = nullptr;
+        _size = 0;
+
+        return b;
+    }
+    else {
+        return FAllocatorBlock::Null();
+    }
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
