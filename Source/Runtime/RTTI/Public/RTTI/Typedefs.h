@@ -20,10 +20,18 @@ public:
 };
 BASICTOKEN_CLASS_DECL(PPE_RTTI_API, FName, char, ECase::Insensitive, FNameTokenTraits);
 //----------------------------------------------------------------------------
-INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FBinaryData, RAWSTORAGE_ALIGNED(NativeTypes, u8, ALLOCATION_BOUNDARY));
-//----------------------------------------------------------------------------
 // /!\ not guaranteed to be stable : depends on initialization order
 using FClassId = TPrimeNumberProduct<class FMetaClass>;
+//----------------------------------------------------------------------------
+// Use this as a constructor parameter for RTTI only construction pass
+//      ex:     explicit MyClass(FConstructorTag);
+//----------------------------------------------------------------------------
+struct FConstructorTag {};
+CONSTEXPR FConstructorTag ConstructorTag;
+//----------------------------------------------------------------------------
+INSTANTIATE_CLASS_TYPEDEF(PPE_RTTI_API, FBinaryData, RAWSTORAGE_ALIGNED(BinaryData, u8, ALLOCATION_BOUNDARY));
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct PPE_RTTI_API FPathName {
     FName Namespace;
@@ -52,14 +60,6 @@ struct PPE_RTTI_API FPathName {
         return hash_tuple(pathName.Namespace, pathName.Identifier);
     }
 };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Use this as a constructor parameter for RTTI only construction pass
-//      ex:     explicit MyClass(FConstructorTag);
-//----------------------------------------------------------------------------
-struct FConstructorTag {};
-CONSTEXPR FConstructorTag ConstructorTag;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
