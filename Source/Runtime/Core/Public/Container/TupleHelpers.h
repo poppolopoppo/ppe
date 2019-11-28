@@ -4,6 +4,8 @@
 
 #include "Container/Array.h"
 #include "Container/Tuple.h"
+
+#include "Memory/PtrRef.h"
 #include "Memory/RefPtr.h"
 
 #include <utility>
@@ -155,6 +157,10 @@ constexpr _Ret CallTupleEx_(_Ret(_Class::*m)(_Params...), const TTuple<_Class*, 
     return (std::get<0>(extra)->*m)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
 }
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
+constexpr _Ret CallTupleEx_(_Ret(_Class::*m)(_Params...), const TTuple<TPtrRef<_Class>, _Extra...>& extra, std::index_sequence<_Indices...>, _Args&&... args) {
+    return (std::get<0>(extra)->*m)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
+}
+template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
 constexpr _Ret CallTupleEx_(_Ret(_Class::*m)(_Params...), const TTuple<TSafePtr<_Class>, _Extra...>& extra, std::index_sequence<_Indices...>, _Args&&... args) {
     return (std::get<0>(extra)->*m)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
 }
@@ -165,6 +171,10 @@ constexpr _Ret CallTupleEx_(_Ret(_Class::*m)(_Params...), const TTuple<TRefPtr<_
 //----------------------------------------------------------------------------
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
 constexpr _Ret CallTupleEx_(_Ret(_Class::*mc)(_Params...) const, const TTuple<const _Class*, _Extra...>& extra, std::index_sequence<_Indices...>, _Args&&... args) {
+    return (std::get<0>(extra)->*mc)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
+}
+template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
+constexpr _Ret CallTupleEx_(_Ret(_Class::*mc)(_Params...) const, const TTuple<TPtrRef<const _Class>, _Extra...>& extra, std::index_sequence<_Indices...>, _Args&&... args) {
     return (std::get<0>(extra)->*mc)(std::forward<_Args>(args)..., std::get<1 + _Indices>(extra)...);
 }
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args, size_t... _Indices>
@@ -188,6 +198,10 @@ constexpr _Ret CallTupleEx(_Ret(_Class::*m)(_Params...), const TTuple<_Class*, _
     return details::CallTupleEx_(m, extra, std::index_sequence_for<_Extra...>{}, std::forward<_Args>(args)...);
 }
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args>
+constexpr _Ret CallTupleEx(_Ret(_Class::*m)(_Params...), const TTuple<TPtrRef<_Class>, _Extra...>& extra, _Args&&... args) {
+    return details::CallTupleEx_(m, extra, std::index_sequence_for<_Extra...>{}, std::forward<_Args>(args)...);
+}
+template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args>
 constexpr _Ret CallTupleEx(_Ret(_Class::*m)(_Params...), const TTuple<TSafePtr<_Class>, _Extra...>& extra, _Args&&... args) {
     return details::CallTupleEx_(m, extra, std::index_sequence_for<_Extra...>{}, std::forward<_Args>(args)...);
 }
@@ -198,6 +212,10 @@ constexpr _Ret CallTupleEx(_Ret(_Class::*m)(_Params...), const TTuple<TRefPtr<_C
 //----------------------------------------------------------------------------
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args>
 constexpr _Ret CallTupleEx(_Ret(_Class::*mc)(_Params...) const, const TTuple<const _Class*, _Extra...>& extra, _Args&&... args) {
+    return details::CallTupleEx_(mc, extra, std::index_sequence_for<_Extra...>{}, std::forward<_Args>(args)...);
+}
+template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args>
+constexpr _Ret CallTupleEx(_Ret(_Class::*mc)(_Params...) const, const TTuple<TPtrRef<const _Class>, _Extra...>& extra, _Args&&... args) {
     return details::CallTupleEx_(mc, extra, std::index_sequence_for<_Extra...>{}, std::forward<_Args>(args)...);
 }
 template <typename _Ret, typename _Class, typename... _Params, typename... _Extra, typename... _Args>

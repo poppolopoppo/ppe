@@ -330,12 +330,6 @@ CONSTEXPR T MakeNoInit() NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Helpers for static expressions
-template <typename T, auto... _Args>
-CONSTEXPR const T static_expr{ _Args... };
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 // Tricking the compiler to make implicit conversion with template argument deduction
 // https://stackoverflow.com/questions/45765205/template-function-argument-deduction-with-an-implicit-conversion
 template<class T>

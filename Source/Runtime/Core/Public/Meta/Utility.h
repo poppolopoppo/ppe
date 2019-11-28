@@ -30,27 +30,6 @@ auto on_scope_exit(_Lambda&& trigger) NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// wraps a T& inside a T* to avoid copying T when using value semantics
-template <typename T>
-struct ptr_ref_t {
-    T* Ptr;
-
-    CONSTEXPR ptr_ref_t() noexcept : Ptr(nullptr) {}
-    explicit CONSTEXPR ptr_ref_t(T& ref) NOEXCEPT : Ptr(&ref) {}
-
-    CONSTEXPR ptr_ref_t(const ptr_ref_t&) NOEXCEPT = default;
-    CONSTEXPR ptr_ref_t& operator =(const ptr_ref_t&) noexcept = default;
-
-    CONSTEXPR operator T* () const NOEXCEPT { return Ptr; }
-    CONSTEXPR operator T& () const NOEXCEPT { return (*Ptr); }
-};
-template <typename T>
-CONSTEXPR ptr_ref_t<T> ptr_ref(T& ref) {
-    return ptr_ref_t{ &ref };
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 template <size_t N>
 struct TStaticBitset {
     CONSTEXPR static size_t NPos = size_t(-1);

@@ -2,6 +2,7 @@
 
 #include "Allocator/TrackingMalloc.h"
 #include "Container/TupleHelpers.h"
+#include "Memory/PtrRef.h"
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
 #include "Meta/AlignedStorage.h"
@@ -180,16 +181,22 @@ struct TFunctionVTable {
 // TFunctionTuple<T> can wrap specific arguments :
 // - raw pointers pointing to a FRefCountable are wrapped inside a TSafePtr<>
 //----------------------------------------------------------------------------
-template <typename T, typename = void>
+template <typename T>
 struct TFunctionTupleArg { using type = T; };
 //----------------------------------------------------------------------------
-// Wraps FRefCountable* within TSafePtr<T> to check for lifetime :
-#if USE_PPE_SAFEPTR
+// Wraps references with pointers to keep value semantics :
 template <typename T>
-struct TFunctionTupleArg<T*, Meta::TEnableIf< IsRefCountable<T>::value > > {
-    using type = TSafePtr<T>;
+struct TFunctionTupleArg<T&> {
+    using type = TPtrRef<T>;
 };
-#endif //!USE_PPE_SAFEPTR
+//----------------------------------------------------------------------------
+// Wraps FRefCountable* within TSafePtr<T> to check for lifetime :
+template <typename T>
+struct TFunctionTupleArg<T*> {
+    using type = Meta::TConditional<
+        IsRefCountable<T>::value,
+        TSafePtr<T>, TPtrRef<T> >;
+};
 //----------------------------------------------------------------------------
 template <typename... _Args>
 using TFunctionTuple = TTupleMake< typename TFunctionTupleArg<_Args>::type... >;
