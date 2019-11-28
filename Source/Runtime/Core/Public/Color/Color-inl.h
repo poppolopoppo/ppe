@@ -2,6 +2,8 @@
 
 #include "Color/Color.h"
 
+#include "HAL/PlatformMaths.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -13,37 +15,37 @@ inline float SRGB_to_Linear(float srgb) {
 #if 0
     return srgb * (srgb * (srgb * 0.305306011f + 0.682171111f) + 0.012522878f);
 #elif 0
-    return std::pow(srgb, 2.2f);
+    return FPlatformMaths::Pow(srgb, 2.2f);
 #else
     return (srgb > 0.04045f)
-        ? std::pow(srgb * (1.0f / 1.055f) + 0.0521327f, 2.4f)
+        ? FPlatformMaths::Pow(srgb * (1.0f / 1.055f) + 0.0521327f, 2.4f)
         : srgb * (1.0f / 12.92f);
 #endif
 }
 //----------------------------------------------------------------------------
 inline float Linear_to_SRGB(float lin) {
 #if 0
-    const float s1 = std::sqrt(lin);
-    const float s2 = std::sqrt(s1);
-    const float s3 = std::sqrt(s2);
+    const float s1 = FPlatformMaths::Sqrt(lin);
+    const float s2 = FPlatformMaths::Sqrt(s1);
+    const float s3 = FPlatformMaths::Sqrt(s2);
     return 0.585122381f * s1 + 0.783140355f * s2 - 0.368262736f * s3;
 #elif 0
     constexpr float e = 1/2.2f;
-    return std::pow(lin, e);
+    return FPlatformMaths::Pow(lin, e);
 #else
     return (lin >= 0.00313067f)
-        ? std::pow(lin, (1.0f / 2.4f)) * 1.055f - 0.055f
+        ? FPlatformMaths::Pow(lin, (1.0f / 2.4f)) * 1.055f - 0.055f
         : lin * 12.92f;
 #endif
 }
 //----------------------------------------------------------------------------
 inline float Linear_to_Pow22(float lin) {
     constexpr float e = 1 / 2.2f;
-    return std::pow(lin, e);
+    return FPlatformMaths::Pow(lin, e);
 }
 //----------------------------------------------------------------------------
 inline float Pow22_to_Linear(float pow22) {
-    return std::pow(pow22, 2.2f);
+    return FPlatformMaths::Pow(pow22, 2.2f);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
