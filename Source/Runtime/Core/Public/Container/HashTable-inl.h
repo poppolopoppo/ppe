@@ -180,6 +180,18 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Add(key_type&& rke
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindOrAdd(const key_type& key) -> mapped_reference {
+    auto r = try_emplace(key);
+    return table_traits::Value(*r.first);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindOrAdd(key_type&& rkey) -> mapped_reference {
+    auto r = try_emplace(std::move(rkey));
+    return table_traits::Value(*r.first);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert(const value_type& value) -> TPair<iterator, bool> {
     return InsertIFN_(table_traits::Key(value), value);
 }

@@ -396,6 +396,9 @@ public:
     mapped_reference Add(const key_type& key);
     mapped_reference Add(key_type&& rkey);
 
+    mapped_reference FindOrAdd(const key_type& key);
+    mapped_reference FindOrAdd(key_type&& rkey);
+
     mapped_reference operator [](const key_type& key) { return table_traits::Value(*try_emplace(key).first); }
     mapped_reference operator [](key_type&& rkey) { return table_traits::Value(*try_emplace(std::move(rkey)).first); }
 
