@@ -38,7 +38,57 @@ LOG_CATEGORY_VERBOSITY(, Test_Thread, NoDebug)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-NO_INLINE void Test_Event() {
+struct FTask_Member_ : Meta::FNonCopyableNorMovable {
+    void Task(ITaskContext&) {}
+    void Task_Extra(ITaskContext&, int, bool, float, void*) {}
+
+    void TaskConst(ITaskContext&) const {}
+    void TaskConst_Extra(ITaskContext&, int, bool, float, void*) const {}
+};
+
+void TaskFunc_(ITaskContext&) {}
+void TaskFunc_Extra_(ITaskContext&, int, bool, float, void*) {}
+void TaskFunc_ExtraRef_(ITaskContext&, FTask_Member_&) {}
+void TaskFunc_ExtraConstRef_(ITaskContext&, const FTask_Member_&) {}
+
+NO_INLINE void Test_Function_() {
+    FTask_Member_ m;
+    auto lambda = [&m, p{ 42 }](ITaskContext&) {
+        UNUSED(m);
+        UNUSED(p);
+    };
+
+    FTaskFunc task;
+    task = [](ITaskContext&) {};
+    task = [&m](ITaskContext& ctx) { m.Task(ctx); };
+    task = lambda;
+    task = FTaskFunc::Bind<&TaskFunc_>();
+    task = FTaskFunc::Bind<&TaskFunc_Extra_>(42, false, 3.1415f, &task);
+    task = FTaskFunc::Bind<&TaskFunc_ExtraRef_>(&m);
+    task = FTaskFunc::Bind<&TaskFunc_ExtraConstRef_>(&m);
+    task = FTaskFunc::Bind<&FTask_Member_::Task>(&m);
+    task = FTaskFunc::Bind<&FTask_Member_::Task_Extra>(&m, 42, false, 3.1415f, &task);
+    task = FTaskFunc::Bind<&FTask_Member_::TaskConst>(&m);
+    task = FTaskFunc::Bind<&FTask_Member_::TaskConst_Extra>(&m, 42, false, 3.1415f, &task);
+}
+//--------------------1--------------------------------------------------------
+NO_INLINE void Test_Aggregation_() {
+    auto& pool = FGlobalThreadPool::Get();
+
+    FAggregationPort ag;
+    pool.Run(ag, TMemoryView<const FTaskFunc>{
+        [](ITaskContext&) {},
+        [](ITaskContext&) {},
+        [](ITaskContext&) {},
+        [](ITaskContext&) {}
+    });
+
+    pool.RunAndWaitFor([&ag](ITaskContext& ctx) {
+        ag.Join(ctx);
+    });
+}
+//--------------------1--------------------------------------------------------
+NO_INLINE void Test_Event_() {
     TEvent< TFunction<void(int)> > evt;
     evt.Emplace([](int i) { UNUSED(i); LOG(Test_Thread, Info, L"A = {0}", i); });
     evt.Emplace([](int i) { UNUSED(i); LOG(Test_Thread, Info, L"B = {0}", i); });
@@ -161,9 +211,6 @@ struct FGraphNode {
 
     FGraphNode(const FGraphNode&) = delete;
     FGraphNode& operator =(const FGraphNode&) = delete;
-
-    FGraphNode(FGraphNode&&) = default;
-    FGraphNode& operator =(FGraphNode&&) = default;
 
     using FQueue = SPARSEARRAY_INSITU(Task, FGraphNode*);
 
@@ -440,13 +487,10 @@ public:
 };
 struct FOutOfCoreBuilder_Incremental_ : Meta::FNonCopyableNorMovable {
     FGraph* Graph;
-    FAggregationPort WaitSink;
 
     FOutOfCoreBuilder_Incremental_()
-    :   Graph(nullptr) {
-        WaitSink.Join(ITaskContext::Get());
-        Assert_NoAssume(WaitSink.Finished());
-    }
+    :   Graph(nullptr)
+    {}
 
     void Build(ITaskContext& ctx, FGraph& g) {
         Graph = &g;
@@ -566,7 +610,9 @@ void Test_Thread() {
 
     LOG(Test_Thread, Emphasis, L"starting thread tests ...");
 
-    Test_Event();
+    Test_Function_();
+    Test_Aggregation_();
+    Test_Event_();
     Test_Async_();
     Test_Future_();
     Test_ParallelFor_();
