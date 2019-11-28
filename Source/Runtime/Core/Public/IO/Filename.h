@@ -63,6 +63,9 @@ public:
     bool HasExtname() const { return _basename.HasExtname(); }
     bool HasMountingPoint() const { return _dirpath.HasMountingPoint(); }
 
+    bool IsAbsolute() const { return _dirpath.IsAbsolute(); }
+    bool IsRelative() const { return _dirpath.IsRelative(); }
+
     void AppendBasename(const FileSystem::FStringView& basenameNoExt);
     void AppendBasename(const FBasenameNoExt& basenameNoExt) { AppendBasename(basenameNoExt.MakeView()); }
     FFilename WithAppendBasename(const FileSystem::FStringView& basenameNoExt) const;
