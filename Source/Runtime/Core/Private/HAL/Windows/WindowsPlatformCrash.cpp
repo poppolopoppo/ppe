@@ -25,6 +25,7 @@
 #endif
 
 #if USE_PPE_MINIDUMP_EMBED_MEMORYTRACKING
+#   include "Diagnostic/CurrentProcess.h"
 #   include "IO/TextWriter.h"
 #   include "Memory/MemoryTracking.h"
 #endif
@@ -201,14 +202,16 @@ DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
         // Set up user streams (can optional put memory tracking data)
         ::MINIDUMP_USER_STREAM_INFORMATION userstreams;
 #if USE_PPE_MINIDUMP_EMBED_MEMORYTRACKING
-        wchar_t memoryTracking[PPE_SYSALLOCA_SIZELIMIT / sizeof(wchar_t)];
-        FWFixedSizeTextWriter oss(memoryTracking);
-        ReportAllTrackingData(&oss);
+        char memoryTracking[PPE_SYSALLOCA_SIZELIMIT / sizeof(char)];
+        FFixedSizeTextWriter oss(memoryTracking);
+        oss << Eol;
+        FCurrentProcess::Get().DumpCrashInfos(oss);
+        oss << Eos;
 
         ::MINIDUMP_USER_STREAM memorystream;
         memorystream.Buffer = memoryTracking;
-        memorystream.BufferSize = ::ULONG(oss.size() + 1/* null char */);
-        memorystream.Type = CommentStreamW;
+        memorystream.BufferSize = checked_cast<::ULONG>(oss.size() - 1/* null char */);
+        memorystream.Type = CommentStreamA;
 
         userstreams.UserStreamArray = &memorystream;
         userstreams.UserStreamCount = 1;

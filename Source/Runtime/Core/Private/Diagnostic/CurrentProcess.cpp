@@ -8,7 +8,12 @@
 #include "HAL/PlatformMemory.h"
 #include "HAL/PlatformMisc.h"
 #include "HAL/TargetPlatform.h"
+#include "IO/Format.h"
 #include "IO/FormatHelpers.h"
+#include "IO/StringBuilder.h"
+#include "IO/TextWriter.h"
+#include "Memory/MemoryDomain.h"
+#include "Memory/MemoryTracking.h"
 
 namespace PPE {
 LOG_CATEGORY(PPE_CORE_API, Process)
@@ -65,93 +70,206 @@ FCurrentProcess::FCurrentProcess(void* appHandle, int nShowCmd, const wchar_t* f
     }
 #endif
 
-    DumpProcessInfos();
+    LogProcessInfos();
+    LogMemoryStats();
+    LogStorageInfos();
 }
 //----------------------------------------------------------------------------
 FCurrentProcess::~FCurrentProcess() {
     LOG(Process, Info, L"exit with code = {0}.", _exitCode.load());
 }
 //----------------------------------------------------------------------------
-void FCurrentProcess::DumpMemoryStats() const {
+void FCurrentProcess::LogMemoryStats() const {
 #if USE_PPE_LOGGER
-    auto mem = FPlatformMemory::Stats();
-    LOG(Process, Info, L"Physical mem   : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
-        Fmt::SizeInBytes(mem.UsedPhysical),
-        Fmt::SizeInBytes(mem.PeakUsedPhysical),
-        Fmt::SizeInBytes(mem.AvailablePhysical),
-        Fmt::Percentage(mem.UsedPhysical, mem.AvailablePhysical) );
-    LOG(Process, Info, L"Virtual mem    : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
-        Fmt::SizeInBytes(mem.UsedVirtual),
-        Fmt::SizeInBytes(mem.PeakUsedVirtual),
-        Fmt::SizeInBytes(mem.AvailableVirtual),
-        Fmt::Percentage(mem.UsedVirtual, mem.AvailableVirtual) );
-    auto stk = FPlatformMemory::StackUsage();
-    LOG(Process, Info, L"StackLocal mem : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
-        Fmt::SizeInBytes(stk.Committed),
-        Fmt::SizeInBytes(stk.Guard),
-        Fmt::SizeInBytes(stk.Reserved),
-        Fmt::Percentage(stk.Committed + stk.Guard, stk.Reserved) );
+    FStringBuilder sb;
+    DumpMemoryStats(sb);
+    LOG_DIRECT(Process, Info, ToWString(sb.Written()).MakeView());
 #endif
 }
 //----------------------------------------------------------------------------
-void FCurrentProcess::DumpProcessInfos() const {
+void FCurrentProcess::LogProcessInfos() const {
 #if USE_PPE_LOGGER
-    auto mem = FPlatformMemory::Constants();
-    auto& platform = CurrentPlatform();
-    LOG(Process, Info, L"platform name = {0} ({1})", platform.DisplayName(), CurrentPlatform().FullName());
-    LOG(Process, Info, L"build configuration = " WSTRINGIZE(BUILDCONFIG));
-    LOG(Process, Info, L"compiled at = " WIDESTRING(__DATE__) L"  " WIDESTRING(__TIME__));
-    LOG(Process, Info, L"   Client supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Client));
-    LOG(Process, Info, L"   Server supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Server));
-    LOG(Process, Info, L"   Editor supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Editor));
-    LOG(Process, Info, L"   DataGeneration supported = {0:A}", platform.SupportsFeature(EPlatformFeature::DataGeneration));
-    LOG(Process, Info, L"   HighQuality supported = {0:A}", platform.SupportsFeature(EPlatformFeature::HighQuality));
-    LOG(Process, Info, L"   CookedData supported = {0:A}", platform.SupportsFeature(EPlatformFeature::CookedData));
-
-    LOG(Process, Info, L"cpu = {0}, {1}", FPlatformMisc::CPUVendor(), FPlatformMisc::CPUBrand());
-    LOG(Process, Info, L"   {0} physical cores ({1} logical)", FPlatformMisc::NumCores(), FPlatformMisc::NumCoresWithSMT());
-    LOG(Process, Info, L"   allocation granularity = {0}", Fmt::SizeInBytes(mem.AllocationGranularity));
-    LOG(Process, Info, L"   cache line size = {0}", Fmt::SizeInBytes(mem.CacheLineSize));
-    LOG(Process, Info, L"   page size = {0}", Fmt::SizeInBytes(mem.PageSize));
-    LOG(Process, Info, L"   total physical memory = {0:f2}", Fmt::SizeInBytes(mem.TotalPhysical));
-    LOG(Process, Info, L"   total virtual memory = {0:f2}", Fmt::SizeInBytes(mem.TotalVirtual));
-
-    FString userName = FPlatformMisc::UserName();
-    FString machineName = FPlatformMisc::MachineName();
-    FString osName = FPlatformMisc::OSName();
-    LOG(Process, Info, L"localhost = {0} @ {1}", userName, machineName);
-    LOG(Process, Info, L"os = {0}", osName);
-
-    u64 totalSize, usedSize;
-    Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, _directory.c_str()));
-    LOG(Process, Info, L"   start directory = '{0}' : {1:f2}/{2:f2} ({3})", _directory, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
-
-    Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, _dataPath.c_str()));
-    LOG(Process, Info, L"   data directory = '{0}' : {1:f2}/{2:f2} ({3})", _dataPath, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
-
-    Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, _savedPath.c_str()));
-    LOG(Process, Info, L"   saved directory = '{0}' : {1:f2}/{2:f2} ({3})", _savedPath, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
-
-    FWString workingDir = FPlatformFile::WorkingDirectory();
-    Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, workingDir.c_str()));
-    LOG(Process, Info, L"   working directory = '{0}' : {1:f2}/{2:f2} ({3})", workingDir, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
-
-    FWString userDir = FPlatformFile::UserDirectory();
-    Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, userDir.c_str()));
-    LOG(Process, Info, L"   user directory = '{0}' : {1:f2}/{2:f2} ({3})", userDir, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
-
-    FWString tempDir = FPlatformFile::TemporaryDirectory();
-    Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, tempDir.c_str()));
-    LOG(Process, Info, L"   temporary directory = '{0}' : {1:f2}/{2:f2} ({3})", tempDir, Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize));
-
-    LOG(Process, Info, L"started with debugger = '{0:A}'", _startedWithDebugger);
-    LOG(Process, Info, L"application handle = '{0}', nShowCmd = '{1}'", _appHandle, _nShowCmd);
-    LOG(Process, Info, L"started '{0}' with {1} parameters", _fileName, _args.size());
-    forrange(i, 0, _args.size())
-        LOG(Process, Info, L"   [{0:2}] '{1}'", i, _args[i]);
-
-    FLUSH_LOG(); // be sure to get those infos in the log
+    FStringBuilder sb;
+    DumpProcessInfos(sb);
+    LOG_DIRECT(Process, Info, ToWString(sb.Written()).MakeView());
 #endif
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::LogStorageInfos() const {
+#if USE_PPE_LOGGER
+    FStringBuilder sb;
+    DumpStorageInfos(sb);
+    LOG_DIRECT(Process, Info, ToWString(sb.Written()).MakeView());
+#endif
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::DumpMemoryStats(FTextWriter& oss) const {
+    {
+        auto mem = FPlatformMemory::Stats();
+        Format(oss, "process memory =") << Eol;
+        Format(oss, "   physical mem   : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
+            Fmt::SizeInBytes(mem.UsedPhysical),
+            Fmt::SizeInBytes(mem.PeakUsedPhysical),
+            Fmt::SizeInBytes(mem.AvailablePhysical),
+            Fmt::Percentage(mem.UsedPhysical, mem.AvailablePhysical)) << Eol;
+        Format(oss, "   virtual mem    : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
+            Fmt::SizeInBytes(mem.UsedVirtual),
+            Fmt::SizeInBytes(mem.PeakUsedVirtual),
+            Fmt::SizeInBytes(mem.AvailableVirtual),
+            Fmt::Percentage(mem.UsedVirtual, mem.AvailableVirtual)) << Eol;
+        auto stk = FPlatformMemory::StackUsage();
+        Format(oss, "   stackLocal mem : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
+            Fmt::SizeInBytes(stk.Committed),
+            Fmt::SizeInBytes(stk.Guard),
+            Fmt::SizeInBytes(stk.Reserved),
+            Fmt::Percentage(stk.Committed + stk.Guard, stk.Reserved)) << Eol;
+    }
+#if USE_PPE_MEMORYDOMAINS
+    {
+        Format(oss, "memory domains =") << Eol;
+
+        const FMemoryTracking* domains[] = {
+            &MemoryDomain::FReservedMemory::TrackingData(),
+            &MemoryDomain::FUsedMemory::TrackingData(),
+            &MemoryDomain::FPooledMemory::TrackingData()
+        };
+
+        for (const FMemoryTracking* domain : domains) {
+            const auto usr = domain->User();
+            const auto sys = domain->System();
+
+            Format(oss,
+                "   [{0}]", domain->Name()) << Eol;
+            Format(oss,
+                "       $usr\n"
+                "           num allocs          = {0}\n"
+                "           min / max size      = {1:8f3} / {2:8f3}\n"
+                "           total size          = {3:8f3}\n"
+                "           peak allocs / size  = {4:8f3} / {5:8f3}\n"
+                "           accum allocs / size = {6:8f3} / {7:8f3}",
+                Fmt::CountOfElements(usr.NumAllocs),
+                Fmt::SizeInBytes(usr.MinSize),
+                Fmt::SizeInBytes(usr.MaxSize),
+                Fmt::SizeInBytes(usr.TotalSize),
+                Fmt::CountOfElements(usr.PeakAllocs),
+                Fmt::SizeInBytes(usr.PeakSize),
+                Fmt::CountOfElements(usr.AccumulatedAllocs),
+                Fmt::SizeInBytes(usr.AccumulatedSize)) << Eol;
+            Format(oss,
+                "       $sys\n"
+                "           num allocs          = {0}\n"
+                "           min / max size      = {1:8f3} / {2:8f3}\n"
+                "           total size          = {3:8f3}\n"
+                "           peak allocs / size  = {4:8f3} / {5:8f3}\n"
+                "           accum allocs / size = {6:8f3} / {7:8f3}",
+                Fmt::CountOfElements(sys.NumAllocs),
+                Fmt::SizeInBytes(sys.MinSize),
+                Fmt::SizeInBytes(sys.MaxSize),
+                Fmt::SizeInBytes(sys.TotalSize),
+                Fmt::CountOfElements(sys.PeakAllocs),
+                Fmt::SizeInBytes(sys.PeakSize),
+                Fmt::CountOfElements(sys.AccumulatedAllocs),
+                Fmt::SizeInBytes(sys.AccumulatedSize)) << Eol;
+        }
+
+    }
+#endif //!USE_PPE_MEMORYDOMAINS
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::DumpProcessInfos(FTextWriter& oss) const {
+    {
+        Format(oss, "host = {0} @ {1}", FPlatformMisc::UserName(), FPlatformMisc::MachineName()) << Eol;
+        Format(oss, "os = {0}", FPlatformMisc::OSName()) << Eol;
+        Format(oss, "started with debugger = '{0:A}'", _startedWithDebugger) << Eol;
+        Format(oss, "application handle = '{0}', nShowCmd = '{1}'", _appHandle, _nShowCmd) << Eol;
+        Format(oss, "started '{0}' with {1} parameters", _fileName, _args.size()) << Eol;
+        forrange(i, 0, _args.size())
+            Format(oss, "   [{0:2}] '{1}'", i, _args[i]) << Eol;
+    }
+    {
+        auto& platform = CurrentPlatform();
+        Format(oss, "platform = {0} ({1})", platform.DisplayName(), CurrentPlatform().FullName()) << Eol;
+        Format(oss, "build configuration = " STRINGIZE(BUILDCONFIG)) << Eol;
+        Format(oss, "compiled at = " __DATE__ "  " __TIME__) << Eol;
+        Format(oss, "   client supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Client)) << Eol;
+        Format(oss, "   server supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Server)) << Eol;
+        Format(oss, "   editor supported = {0:A}", platform.SupportsFeature(EPlatformFeature::Editor)) << Eol;
+        Format(oss, "   data generation supported = {0:A}", platform.SupportsFeature(EPlatformFeature::DataGeneration)) << Eol;
+        Format(oss, "   high quality supported = {0:A}", platform.SupportsFeature(EPlatformFeature::HighQuality)) << Eol;
+        Format(oss, "   cooked data supported = {0:A}", platform.SupportsFeature(EPlatformFeature::CookedData)) << Eol;
+    }
+    {
+        auto mem = FPlatformMemory::Constants();
+        Format(oss, "cpu = {0}, {1}", FPlatformMisc::CPUVendor(), FPlatformMisc::CPUBrand()) << Eol;
+        Format(oss, "   {0} physical cores ({1} logical)", FPlatformMisc::NumCores(), FPlatformMisc::NumCoresWithSMT()) << Eol;
+        Format(oss, "   allocation granularity = {0}", Fmt::SizeInBytes(mem.AllocationGranularity)) << Eol;
+        Format(oss, "   cache line size = {0}", Fmt::SizeInBytes(mem.CacheLineSize)) << Eol;
+        Format(oss, "   page size = {0}", Fmt::SizeInBytes(mem.PageSize)) << Eol;
+        Format(oss, "   total physical memory = {0:f2}", Fmt::SizeInBytes(mem.TotalPhysical)) << Eol;
+        Format(oss, "   total virtual memory = {0:f2}", Fmt::SizeInBytes(mem.TotalVirtual)) << Eol;
+    }
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::DumpStorageInfos(FTextWriter& oss) const {
+    {
+        Format(oss, "storage =") << Eol;
+
+        const FWString workingDir = FPlatformFile::WorkingDirectory();
+        const FWString userDir = FPlatformFile::UserDirectory();
+        const FWString tempDir = FPlatformFile::TemporaryDirectory();
+
+        struct FDirectory {
+            FStringView Name;
+            FWStringView Path;
+        };
+
+        const FDirectory directories[] = {
+            { "start",      _directory  },
+            { "data",       _dataPath   },
+            { "working",    workingDir  },
+            { "user",       userDir     },
+            { "temporary",  tempDir     }
+        };
+
+        for (const FDirectory& dir : directories) {
+            u64 totalSize, usedSize;
+            Verify(FPlatformFile::TotalSizeAndUsage(&totalSize, &usedSize, dir.Path.data()));
+            Format(oss, "   {0:9} dir = '{1:50}' : {2:f2}/{3:f2} ({4})",
+                dir.Name, ToString(dir.Path),
+                Fmt::SizeInBytes(usedSize), Fmt::SizeInBytes(totalSize), Fmt::Percentage(usedSize, totalSize))
+                << Eol;
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::DumpMemoryStats(FWTextWriter& oss) const{
+    FStringBuilder sb;
+    DumpMemoryStats(sb);
+    oss << ToWString(sb.Written());
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::DumpProcessInfos(FWTextWriter& oss) const {
+    FStringBuilder sb;
+    DumpProcessInfos(sb);
+    oss << ToWString(sb.Written());
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::DumpStorageInfos(FWTextWriter& oss) const {
+    FStringBuilder sb;
+    DumpStorageInfos(sb);
+    oss << ToWString(sb.Written());
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::DumpCrashInfos(FTextWriter& oss) const {
+    DumpProcessInfos(oss);
+    DumpMemoryStats(oss);
+    DumpStorageInfos(oss);
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::DumpCrashInfos(FWTextWriter& oss) const {
+    DumpProcessInfos(oss);
+    DumpMemoryStats(oss);
+    DumpStorageInfos(oss);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

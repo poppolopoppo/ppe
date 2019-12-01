@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "IO/String.h"
+#include "IO/TextWriter_fwd.h"
 #include "Memory/UniqueView.h"
 #include "Meta/Singleton.h"
 #include "Time/Timepoint.h"
@@ -36,8 +37,20 @@ public:
 
     bool StartedWithDebugger() const { return _startedWithDebugger; }
 
-    void DumpMemoryStats() const;
-    void DumpProcessInfos() const;
+    void DumpMemoryStats(FTextWriter& oss) const;
+    void DumpProcessInfos(FTextWriter& oss) const;
+    void DumpStorageInfos(FTextWriter& oss) const;
+
+    void DumpMemoryStats(FWTextWriter& oss) const;
+    void DumpProcessInfos(FWTextWriter& oss) const;
+    void DumpStorageInfos(FWTextWriter& oss) const;
+
+    void DumpCrashInfos(FTextWriter& oss) const;
+    void DumpCrashInfos(FWTextWriter& oss) const;
+
+    void LogMemoryStats() const;
+    void LogProcessInfos() const;
+    void LogStorageInfos() const;
 
     const FTimepoint& StartedAt() const { return _startedAt; }
 

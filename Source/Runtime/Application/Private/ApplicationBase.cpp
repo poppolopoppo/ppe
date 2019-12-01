@@ -70,15 +70,21 @@ static void SetupDebugMenuInSystray_() {
 
     FAppNotify::AddSystrayCommand(
         L"Process",
-        L"Dump process infos",
+        L"Dump memory stats",
         []() {
-        FCurrentProcess::Get().DumpProcessInfos();
+        FCurrentProcess::Get().LogMemoryStats();
     });
     FAppNotify::AddSystrayCommand(
         L"Process",
-        L"Dump process memory",
+        L"Dump process infos",
         []() {
-        FCurrentProcess::Get().DumpMemoryStats();
+        FCurrentProcess::Get().LogProcessInfos();
+    });
+    FAppNotify::AddSystrayCommand(
+        L"Process",
+        L"Dump storage infos",
+        []() {
+        FCurrentProcess::Get().LogStorageInfos();
     });
 }
 #endif //!USE_PPE_FINAL_RELEASE
