@@ -196,7 +196,7 @@ DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
         ::MINIDUMP_EXCEPTION_INFORMATION exception;
         exception.ThreadId = p->ExceptionThreadId;
         exception.ExceptionPointers = (::PEXCEPTION_POINTERS)p->ExceptionPtrs;
-        exception.ClientPointers = TRUE;
+        exception.ClientPointers = (p->ExceptionPtrs ? TRUE : FALSE);
 
         // Set up user streams (can optional put memory tracking data)
         ::MINIDUMP_USER_STREAM_INFORMATION userstreams;
