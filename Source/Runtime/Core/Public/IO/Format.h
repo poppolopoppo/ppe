@@ -44,6 +44,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PPE_CORE_API FTextWriter& Format(FTextWriter& oss, const FStringView& str);
+PPE_CORE_API FWTextWriter& Format(FWTextWriter& oss, const FWStringView& wstr);
+//----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
 size_t Format(const TMemoryView<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
