@@ -77,6 +77,8 @@ PPE_CORE_API void ReportAllocationHistogram(FWTextWriter& oss);
 //----------------------------------------------------------------------------
 PPE_CORE_API void ReportAllTrackingData(FWTextWriter* optional = nullptr);
 //----------------------------------------------------------------------------
+PPE_CORE_API void ReportCsvTrackingData(FTextWriter* optional = nullptr);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

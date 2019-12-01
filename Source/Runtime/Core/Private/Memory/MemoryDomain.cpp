@@ -12,6 +12,7 @@
 #   include "Container/IntrusiveList.h"
 #   include "Container/Stack.h"
 #   include "Diagnostic/CurrentProcess.h"
+#   include "Diagnostic/Logger.h"
 #   include "IO/FormatHelpers.h"
 #   include "IO/String.h"
 #   include "IO/StringBuilder.h"
@@ -238,6 +239,45 @@ void ReportTrackingDatas_(
 }
 #endif //!USE_PPE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
+#if USE_PPE_MEMORYDOMAINS
+void FetchAllTrackingDataSorted_(FTrackingDataRegistry_::FMemoryDomainsList* pDatas) {
+    FTrackingDataRegistry_::Get().FetchDatas(pDatas);
+
+    std::stable_sort(std::begin(*pDatas), std::end(*pDatas),
+        [](const FMemoryTracking* lhs, const FMemoryTracking* rhs) {
+            bool less = (lhs->Level() < rhs->Level());
+
+            while (lhs->Level() > rhs->Level()) lhs = lhs->Parent();
+            while (rhs->Level() > lhs->Level()) rhs = rhs->Parent();
+
+            for (; !!lhs & !!rhs; lhs = lhs->Parent(), rhs = rhs->Parent()) {
+                const int cmp = Compare(
+                    MakeCStringView(lhs->Name()),
+                    MakeCStringView(rhs->Name()) );
+
+                if (cmp < 0)
+                    less = true;
+                else if (cmp > 0)
+                    less = false;
+            }
+
+            return less;
+        });
+}
+#endif //!USE_PPE_MEMORYDOMAINS
+//----------------------------------------------------------------------------
+#if USE_PPE_MEMORYDOMAINS
+template <typename _Char>
+void DumpTrackingDataFullName_(TBasicTextWriter<_Char>& oss, const FMemoryTracking& data) {
+    if (data.Parent()) {
+        DumpTrackingDataFullName_(oss, *data.Parent());
+        oss << Fmt::Div;
+    }
+
+    oss << MakeCStringView(data.Name());
+}
+#endif //!USE_PPE_MEMORYDOMAINS
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -247,7 +287,7 @@ void RegisterTrackingData(FMemoryTracking *pTrackingData) {
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
     FTrackingDataRegistry_::Get().Register(pTrackingData);
 #else
-    NOOP(pTrackingData);
+    UNUSED(pTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -256,7 +296,7 @@ void UnregisterTrackingData(FMemoryTracking *pTrackingData) {
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
     FTrackingDataRegistry_::Get().Unregister(pTrackingData);
 #else
-    NOOP(pTrackingData);
+    UNUSED(pTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -367,55 +407,88 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
         GPrevAllocations[i] = allocations[i];
     }
 #else
-    NOOP(oss);
+    UNUSED(oss);
 #endif
 }
 //----------------------------------------------------------------------------
 void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
 #if USE_PPE_MEMORYDOMAINS && USE_PPE_LOGGER
-    FCurrentProcess::Get().DumpMemoryStats();
-
     FTrackingDataRegistry_::FMemoryDomainsList datas;
-    FTrackingDataRegistry_::Get().FetchDatas(&datas);
-
-    {
-        STACKLOCAL_POD_ARRAY(u32, indices, datas.size());
-        TFixedSizeStack<FString, MemoryDomainsMaxCount> fullnames;
-
-        forrange(i, 0, datas.size()) {
-            indices[i] = u32(i);
-            FString* str = INPLACE_NEW(fullnames.Push_Uninitialized(), FString)();
-            str->reserve(128);
-            for (const FMemoryTracking* p = datas[i]; p; p = p->Parent()) {
-                str->insert(str->begin(), MakeCStringView(p->Name()));
-                if (p == &MEMORYDOMAIN_TRACKING_DATA(PooledMemory))
-                    str->insert(str->begin(), 'Z'); // always listed last
-            }
-        }
-
-        std::stable_sort(indices.begin(), indices.end(), [&](size_t i, size_t j) {
-            return (Compare(fullnames[i], fullnames[j]) < 0);
-        });
-
-        ReindexMemoryView(datas.MakeView(), indices);
-    }
+    FetchAllTrackingDataSorted_(&datas);
 
     FWStringBuilder sb;
     FWTextWriter& oss = (optional ? *optional : sb);
+
+    FCurrentProcess::Get().DumpMemoryStats(oss);
 
     ReportTrackingDatas_(oss, L"Memory domains", datas.MakeView());
     ReportAllocationHistogram(oss);
     ReportAllocationFragmentation(oss);
 
-    if (not optional)
+    if (not optional) {
         FLogger::Log(
             LOG_CATEGORY_GET(MemoryDomain),
             FLogger::EVerbosity::Info,
             FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
             sb.Written() );
+    }
 
 #else
-    NOOP(optional);
+    UNUSED(optional);
+#endif
+}
+//----------------------------------------------------------------------------
+void ReportCsvTrackingData(FTextWriter* optional/* = nullptr */) {
+#if USE_PPE_MEMORYDOMAINS
+    FTrackingDataRegistry_::FMemoryDomainsList datas;
+    FetchAllTrackingDataSorted_(&datas);
+
+    FStringBuilder sb;
+    FTextWriter& oss = (optional ? *optional : sb);
+
+    oss << "Name;Segment;NumAllocs;MinSize;MaxSize;TotalSize;PeakAllocs;PeakSize;AccumulatedAllocs;AccumulatedSize" << Eol;
+
+    for (const FMemoryTracking* data : datas) {
+        const FMemoryTracking::FSnapshot usr = data->User();
+        const FMemoryTracking::FSnapshot sys = data->System();
+
+        DumpTrackingDataFullName_(oss, *data);
+
+        oss << ";USR;"
+            << usr.NumAllocs << Fmt::Colon
+            << usr.MinSize << Fmt::Colon
+            << usr.MaxSize << Fmt::Colon
+            << usr.TotalSize << Fmt::Colon
+            << usr.PeakAllocs << Fmt::Colon
+            << usr.PeakSize << Fmt::Colon
+            << usr.AccumulatedAllocs << Fmt::Colon
+            << usr.AccumulatedSize << Eol;
+
+        DumpTrackingDataFullName_(oss, *data);
+
+        oss << ";SYS;"
+            << sys.NumAllocs << Fmt::Colon
+            << sys.MinSize << Fmt::Colon
+            << sys.MaxSize << Fmt::Colon
+            << sys.TotalSize << Fmt::Colon
+            << sys.PeakAllocs << Fmt::Colon
+            << sys.PeakSize << Fmt::Colon
+            << sys.AccumulatedAllocs << Fmt::Colon
+            << sys.AccumulatedSize << Eol;
+    }
+
+#   if USE_PPE_LOGGER
+    if (not optional) {
+        FLogger::Log(
+            LOG_CATEGORY_GET(MemoryDomain),
+            FLogger::EVerbosity::Info,
+            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
+            ToWString(sb.Written()) );
+    }
+#   endif
+
+#else
+    UNUSED(optional);
 #endif
 }
 //----------------------------------------------------------------------------
