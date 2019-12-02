@@ -2,57 +2,71 @@
 
 #include "BuildGraph_fwd.h"
 
-#include "BuildDependencies.h"
-
-#include "Container/Vector.h"
-#include "Memory/RefPtr.h"
-#include "Misc/Guid.h"
-
 #include "MetaObject.h"
 #include "RTTI/Macros.h"
+#include "RTTI/Module.h"
+#include "RTTI/OpaqueData.h"
 #include "RTTI/Typedefs.h"
+
+#include "Container/Vector.h"
+#include "Thread/AtomicSpinLock.h"
+
+#include <atomic>
 
 namespace PPE {
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+RTTI_MODULE_DECL(PPE_BUILDGRAPH_API, BuildGraph);
+//----------------------------------------------------------------------------
+struct FBuildState {
+    FAtomicReadWriteLock RWLock;
+    std::atomic<void*> UserData;
+    std::atomic<FBuildRevision> Revision;
+    EBuildResult Result{};
+};
+//----------------------------------------------------------------------------
 class PPE_BUILDGRAPH_API FBuildNode : public RTTI::FMetaObject {
     RTTI_CLASS_HEADER(PPE_BUILDGRAPH_API, FBuildNode, RTTI::FMetaObject);
 public:
+    FBuildNode() NOEXCEPT;
     virtual ~FBuildNode();
 
-    const RTTI::FName& Name() const { return _name; }
+    FBuildState& State() { return _state; }
+    const FBuildState& State() const { return _state; }
 
-    const FGuid& Revision() const { return _revision; }
-    const FBuildFingerprint& Fingerprint() const { return _fingerprint; }
+    const RTTI::FOpaqueData& OpaqueData() const { return _opaqueData; }
 
-    const FBuildDependencies& StaticDeps() const { return _staticDeps; }
-    const FBuildDependencies& DynamicDeps() const { return _dynamicDeps; }
-    const FBuildDependencies& RuntimeDeps() const { return _runtimeDeps; }
+    using FDependenciesView = TMemoryView<const PBuildNode>;
 
-    bool DependsOn(const FBuildNode& node) const;
+    FDependenciesView StaticDeps() const { return _staticDeps; }
+    FDependenciesView DynamicDeps() const { return _dynamicDeps; }
+    FDependenciesView RuntimeDeps() const { return _runtimeDeps; }
 
-    virtual bool ImportData(FBuildContext& ctx) = 0;
-    virtual bool BuildArtefact(FBuildContext& ctx) = 0;
+public:
+    virtual EBuildResult Scan(FScanContext& ctx) = 0;
+    virtual EBuildResult Import(FBuildContext& ctx) = 0;
+    virtual EBuildResult Process(FBuildContext& ctx) = 0;
+    virtual EBuildResult Clean(FCleanContext& ctx) = 0;
 
 protected:
-    explicit FBuildNode(RTTI::FConstructorTag);
-    explicit FBuildNode(RTTI::FName&& name);
+    RTTI::FOpaqueData& OpaqueData() { return _opaqueData; }
 
     void AddStaticDep(FBuildNode* node);
     void AddDynamicDep(FBuildNode* node);
     void AddRuntimeDep(FBuildNode* node);
 
 private:
-    RTTI::FName _name;
+    using FDependencies = VECTORINSITU(BuildGraph, PBuildNode, 3);
 
-    FGuid _revision;
-    FBuildFingerprint _fingerprint;
+    FBuildState _state;
 
-    FBuildDependencies _staticDeps;
-    FBuildDependencies _dynamicDeps;
-    FBuildDependencies _runtimeDeps;
+    RTTI::FOpaqueData _opaqueData;
+
+    FDependencies _staticDeps;
+    FDependencies _dynamicDeps;
+    FDependencies _runtimeDeps;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

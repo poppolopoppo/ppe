@@ -5,6 +5,7 @@
     .ModulePublicDependencies =
     {
         'Runtime/Core',
+        'Runtime/VFS',
         'Runtime/RTTI',
     }
     .ModulePrivateDependencies =

@@ -9,19 +9,34 @@
 #endif
 
 #include "Memory/RefPtr.h"
+#include "Memory/UniquePtr.h"
 
 namespace PPE {
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+using FBuildFingerpint = u128;
+using FBuildRevision = size_t;
+using FBuildUniqueId = size_t;
+//----------------------------------------------------------------------------
+enum class EBuildFlags;
 enum class EBuildResult;
-struct FBuildInfos;
-class PPE_BUILDGRAPH_API FBuildContext;
-class PPE_BUILDGRAPH_API IBuildExecutor;
-FWD_REFPTR(BuildGraph);
+//----------------------------------------------------------------------------
 FWD_REFPTR(BuildNode);
-using FBuildFingerprint = u128;
+//----------------------------------------------------------------------------
+class PPE_BUILDGRAPH_API FBuildEnvironment;
+//----------------------------------------------------------------------------
+class PPE_BUILDGRAPH_API FPipelineContext;
+    class PPE_BUILDGRAPH_API FBuildContext;
+    class PPE_BUILDGRAPH_API FCleanContext;
+    class PPE_BUILDGRAPH_API FScanContext;
+//----------------------------------------------------------------------------
+FWD_INTEFARCE_UNIQUEPTR(BuildCache);
+FWD_INTEFARCE_UNIQUEPTR(BuildExecutor);
+FWD_INTEFARCE_UNIQUEPTR(BuildLog);
+//----------------------------------------------------------------------------
+class PPE_BUILDGRAPH_API FBuildGraph;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
