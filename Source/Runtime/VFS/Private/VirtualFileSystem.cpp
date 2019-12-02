@@ -58,7 +58,10 @@ bool FVirtualFileSystem::WriteAll(const FFilename& filename, const TMemoryView<c
         policy = policy - EAccessPolicy::Compress + EAccessPolicy::Binary;
     }
 
-    policy = policy + EAccessPolicy::Sequential; // we're going to make only 1 write, full sequential
+    policy = policy
+        + EAccessPolicy::Sequential // we're going to make only 1 write, full sequential
+        + EAccessPolicy::ShortLived // the handle will be closed immediately after write
+        ;
 
     const UStreamWriter writer = Get().OpenWritable(filename, policy);
 

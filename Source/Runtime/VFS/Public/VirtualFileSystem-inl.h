@@ -16,7 +16,10 @@ bool FVirtualFileSystem::ReadAll(const FFilename& filename, TRawStorage<T, _Allo
         policy = policy - EAccessPolicy::Compress + EAccessPolicy::Binary;
     }
 
-    policy = policy + EAccessPolicy::Sequential; // we're going to make one read only, fully sequential
+    policy = policy
+        + EAccessPolicy::Sequential // we're going to make one read only, fully sequential
+        + EAccessPolicy::ShortLived // the handle will be closed immediately after read
+        ;
 
     const UStreamReader reader = Get().OpenReadable(filename, policy);
 
