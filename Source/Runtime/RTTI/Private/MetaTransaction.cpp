@@ -178,8 +178,9 @@ void ReportLoadedTransaction_(
 //----------------------------------------------------------------------------
 class FTransactionLoadContext : public ILoadContext {
 public:
-    FTransactionLoadContext(FMetaTransaction& outer)
-        : _outer(&outer) {
+    FTransactionLoadContext(FMetaTransaction& outer, ILoadContext* parent)
+    :   _outer(&outer)
+    ,   _parent(parent) {
         Assert(outer.IsUnloaded());
 
         _outer->_state = ETransactionState::Loading;
@@ -201,16 +202,21 @@ public:
         Assert(object.RTTI_IsTopObject() == Contains(_outer->_topObjects, &object));
 
         object.RTTI_SetOuter(_outer.get(), nullptr);
+
+        if (_parent)
+            _parent->OnLoadObject(object);
     }
 
 private:
-    SMetaTransaction _outer;
+    const SMetaTransaction _outer;
+    ILoadContext* const _parent;
 };
 //----------------------------------------------------------------------------
 class FTransactionUnloadContext : public IUnloadContext {
 public:
-    FTransactionUnloadContext(FMetaTransaction& outer)
-        : _outer(&outer) {
+    FTransactionUnloadContext(FMetaTransaction& outer, IUnloadContext* parent)
+    :   _outer(&outer)
+    ,   _parent(parent) {
         Assert(outer.IsLoaded());
 
         _outer->_state = ETransactionState::Unloading;
@@ -231,11 +237,15 @@ public:
         Assert(object.RTTI_IsLoaded());
         Assert(object.RTTI_IsTopObject() == Contains(_outer->_topObjects, &object));
 
+        if (_parent)
+            _parent->OnUnloadObject(object);
+
         object.RTTI_SetOuter(nullptr, _outer.get());
     }
 
 private:
-    SMetaTransaction _outer;
+    const SMetaTransaction _outer;
+    IUnloadContext* const _parent;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -271,7 +281,7 @@ void FMetaTransaction::Remove(FMetaObject* object) {
     Remove_AssertExists(_topObjects, PMetaObject(object));
 }
 //----------------------------------------------------------------------------
-void FMetaTransaction::Load() {
+void FMetaTransaction::Load(ILoadContext* load/* = nullptr */) {
     Assert_NoAssume(IsUnloaded());
 
 #if WITH_PPE_RTTI_TRANSACTION_CHECKS
@@ -279,10 +289,9 @@ void FMetaTransaction::Load() {
 #endif
 
     // the transaction is linearized when loaded, this simplifies every subsequent task
-
     LinearizeTransaction_(&_linearized, *this, _topObjects.MakeConstView());
 
-    FTransactionLoadContext loadContext(*this);
+    FTransactionLoadContext loadContext(*this, load);
     for (const SMetaObject& ref : _linearized.LoadedRefs) {
         // don't use RTTI_CallLoadIFN() since we guarantee iteration order
         ref->RTTI_Load(loadContext);
@@ -335,7 +344,7 @@ void FMetaTransaction::Unmount() {
     _state = ETransactionState::Loaded;
 }
 //----------------------------------------------------------------------------
-void FMetaTransaction::Unload() {
+void FMetaTransaction::Unload(IUnloadContext* unload/* = nullptr */) {
     Assert_NoAssume(IsLoaded());
     Assert_NoAssume(_linearized.LoadedRefs.size() >= _topObjects.size());
 
@@ -343,7 +352,7 @@ void FMetaTransaction::Unload() {
 
     // unload every loaded object and clear linearized data
 
-    FTransactionUnloadContext unloadContext(*this);
+    FTransactionUnloadContext unloadContext(*this, unload);
     reverseforeachitem(ref, _linearized.LoadedRefs) {
         // don't use RTTI_CallUnloadIFN() since we guarantee iteration order
         (*ref)->RTTI_Unload(unloadContext);

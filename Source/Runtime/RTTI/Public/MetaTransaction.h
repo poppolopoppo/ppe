@@ -74,8 +74,9 @@ public:
     void Add(FMetaObject* object);
     void Remove(FMetaObject* object);
 
-    void Load();
-    void Unload();
+    void Load(ILoadContext* load = nullptr);
+    void Unload(IUnloadContext* load = nullptr);
+
     void Reload();
 
     void Mount();

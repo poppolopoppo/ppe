@@ -68,6 +68,9 @@ class FMetaDatabaseReadWritable;
 enum class EObjectFlags : u32;
 FWD_REFPTR(MetaObject);
 //----------------------------------------------------------------------------
+class ILoadContext;
+class IUnloadContext;
+//----------------------------------------------------------------------------
 enum class EVisitorFlags : u32;
 class IAtomVisitor;
 //----------------------------------------------------------------------------
