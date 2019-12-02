@@ -140,6 +140,16 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
         _FORMAT, __VA_ARGS__ ); \
     } while (0)
 
+#define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) do { \
+    ::PPE::FLogger::LogArgs( \
+        LOG_CATEGORY_GET(_CATEGORY), \
+        ::PPE::FLogger::EVerbosity::_LEVEL, \
+        ::PPE::FLogger::FSiteInfo::Make( \
+            WIDESTRING(__FILE__), \
+            __LINE__ ), \
+        _FORMAT, _FORMAT_ARG_LIST ); \
+    } while (0)
+
 #define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) do { \
     ::PPE::FLogger::Log( \
         LOG_CATEGORY_GET(_CATEGORY), \
@@ -163,6 +173,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 
 #   if USE_PPE_FINAL_RELEASE
 #       define LOG(_CATEGORY, _LEVEL, _FORMAT, ...) NOOP()
+#       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) NOOP()
 #       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) NOOP()
 #   else
 #       define _LOG_Debug() NOOP()
@@ -173,6 +184,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #       define _LOG_Fatal() AssertReleaseFailed(L"log : fatal error")
 
 #       define LOG(_CATEGORY, _LEVEL, _FORMAT, ...) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
+#       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
 #       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) EXPAND( CONCAT(_LOG_, _Level) _LPARENTHESIS _RPARENTHESIS )
 #   endif
 
