@@ -779,6 +779,7 @@ PLogger FLogger::MakeRollFile(const wchar_t* filename) {
 FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level) {
     auto sep = Fmt::NotFirstTime('|');
     if (level & FLogger::EVerbosity::Debug)     oss << sep << "Debug";
+    if (level & FLogger::EVerbosity::Verbose)   oss << sep << "Verbose";
     if (level & FLogger::EVerbosity::Info)      oss << sep << "Info";
     if (level & FLogger::EVerbosity::Emphasis)  oss << sep << "Emphasis";
     if (level & FLogger::EVerbosity::Warning)   oss << sep << "Warning";
@@ -790,6 +791,7 @@ FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level) {
 FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level) {
     auto sep = Fmt::NotFirstTime(L'|');
     if (level & FLogger::EVerbosity::Debug)     oss << sep << L"Debug";
+    if (level & FLogger::EVerbosity::Verbose)   oss << sep << L"Verbose";
     if (level & FLogger::EVerbosity::Info)      oss << sep << L"Info";
     if (level & FLogger::EVerbosity::Emphasis)  oss << sep << L"Emphasis";
     if (level & FLogger::EVerbosity::Warning)   oss << sep << L"Warning";

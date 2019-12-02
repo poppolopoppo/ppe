@@ -13,11 +13,12 @@ namespace PPE {
 //----------------------------------------------------------------------------
 enum class ELoggerVerbosity {
     Debug       = 1<<0,
-    Info        = 1<<1,
-    Emphasis    = 1<<2,
-    Warning     = 1<<3,
-    Error       = 1<<4,
-    Fatal       = 1<<5,
+    Verbose     = 1<<1,
+    Info        = 1<<2,
+    Emphasis    = 1<<3,
+    Warning     = 1<<4,
+    Error       = 1<<5,
+    Fatal       = 1<<6,
 
     None        = 0,
     NoDebug     = (Info|Emphasis|Warning|Error|Fatal),
