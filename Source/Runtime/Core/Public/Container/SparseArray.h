@@ -208,8 +208,8 @@ protected:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-class TSparseArrayIterator : public Meta::TIterator<T, std::input_iterator_tag> {
-    using parent_type = Meta::TIterator<T, std::input_iterator_tag>;
+class TSparseArrayIterator : public Meta::TIterator<T, std::forward_iterator_tag> {
+    using parent_type = Meta::TIterator<T, std::forward_iterator_tag>;
 
     template <typename U>
     friend class TSparseArrayIterator;
