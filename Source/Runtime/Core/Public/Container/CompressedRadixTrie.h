@@ -220,7 +220,7 @@ private:
                 _freeList = n;
 
 #if USE_PPE_MEMORYDOMAINS
-                _trackingDataRef->AllocateUser(sizeof(FNode));
+                _trackingDataRef->DeallocateUser(sizeof(FNode));
 #endif
 
                 return ((uintptr_t)child & ~uintptr_t(1));
