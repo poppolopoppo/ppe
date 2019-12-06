@@ -12,7 +12,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
 // Needed to use FString instead of std::string, also avoids locale BS
 template <typename _Char>
 class TRegexTraits {
@@ -90,6 +89,8 @@ public:
     inline friend void swap(TBasicRegexp& lhs, TBasicRegexp& rhs) NOEXCEPT {
         lhs.Swap(rhs);
     }
+
+    static bool ValidateSyntax(const stringview_type& expr) NOEXCEPT;
 
 private:
     regex_type _re;

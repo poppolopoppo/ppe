@@ -4,11 +4,13 @@
 
 #include "Container/Pair.h"
 #include "Container/PerfectHashing.h"
+#include "Diagnostic/Logger.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
 #include "Meta/Iterator.h"
 
 namespace PPE {
+LOG_CATEGORY(, Regex)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -276,6 +278,45 @@ bool TBasicRegexp<_Char>::Match(const stringview_type& str) const {
 template <typename _Char>
 void TBasicRegexp<_Char>::Swap(TBasicRegexp& other) NOEXCEPT {
     std::swap(_re, other._re);
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+bool TBasicRegexp<_Char>::ValidateSyntax(const stringview_type& expr) NOEXCEPT {
+    PPE_TRY {
+        TBasicRegexp re{ expr, ECase::Sensitive/* just validating format, don't need the case here */ };
+        return true;
+    }
+#define PPE_REGEXERROR_WSTR(_NAME) \
+    case std::regex_constants::_NAME: \
+        errorStr = WSTRINGIZE(_NAME); \
+        break
+    PPE_CATCH(const std::regex_error& e)
+    PPE_CATCH_BLOCK({
+        FWString errorStr;
+        switch (e.code()) {
+            PPE_REGEXERROR_WSTR(error_collate);
+            PPE_REGEXERROR_WSTR(error_ctype);
+            PPE_REGEXERROR_WSTR(error_escape);
+            PPE_REGEXERROR_WSTR(error_backref);
+            PPE_REGEXERROR_WSTR(error_brack);
+            PPE_REGEXERROR_WSTR(error_paren);
+            PPE_REGEXERROR_WSTR(error_brace);
+            PPE_REGEXERROR_WSTR(error_badbrace);
+            PPE_REGEXERROR_WSTR(error_range);
+            PPE_REGEXERROR_WSTR(error_space);
+            PPE_REGEXERROR_WSTR(error_badrepeat);
+            PPE_REGEXERROR_WSTR(error_complexity);
+            PPE_REGEXERROR_WSTR(error_stack);
+            PPE_REGEXERROR_WSTR(error_parse);
+            PPE_REGEXERROR_WSTR(error_syntax);
+        default:
+            AssertNotImplemented();
+        }
+        UNUSED(errorStr); // when logger is disabled
+        LOG(Regex, Error, L"regex_error caught: {0} (code: {1})\n\texpr: {2}", e.what(), errorStr, expr);
+        return false;
+    })
+#undef PPE_REGEXERROR_WSTR
 }
 //----------------------------------------------------------------------------
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicRegexp<char>;
