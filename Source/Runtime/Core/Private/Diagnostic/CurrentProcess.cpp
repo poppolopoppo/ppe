@@ -103,7 +103,7 @@ void FCurrentProcess::LogStorageInfos() const {
 #endif
 }
 //----------------------------------------------------------------------------
-void FCurrentProcess::DumpMemoryStats(FTextWriter& oss) const {
+void FCurrentProcess::DumpPhysicalMemory(FTextWriter& oss) const {
     {
         auto mem = FPlatformMemory::Stats();
         Format(oss, "process memory =") << Eol;
@@ -124,6 +124,9 @@ void FCurrentProcess::DumpMemoryStats(FTextWriter& oss) const {
             Fmt::SizeInBytes(stk.Reserved),
             Fmt::Percentage(stk.Committed + stk.Guard, stk.Reserved)) << Eol;
     }
+}
+//----------------------------------------------------------------------------
+void FCurrentProcess::DumpMemoryStats(FTextWriter& oss) const {
 #if USE_PPE_MEMORYDOMAINS
     {
         Format(oss, "memory domains =") << Eol;
@@ -242,6 +245,12 @@ void FCurrentProcess::DumpStorageInfos(FTextWriter& oss) const {
     }
 }
 //----------------------------------------------------------------------------
+void FCurrentProcess::DumpPhysicalMemory(FWTextWriter& oss) const {
+    FStringBuilder sb;
+    DumpPhysicalMemory(sb);
+    oss << ToWString(sb.Written());
+}
+//----------------------------------------------------------------------------
 void FCurrentProcess::DumpMemoryStats(FWTextWriter& oss) const{
     FStringBuilder sb;
     DumpMemoryStats(sb);
@@ -262,12 +271,14 @@ void FCurrentProcess::DumpStorageInfos(FWTextWriter& oss) const {
 //----------------------------------------------------------------------------
 void FCurrentProcess::DumpCrashInfos(FTextWriter& oss) const {
     DumpProcessInfos(oss);
+    DumpPhysicalMemory(oss);
     DumpMemoryStats(oss);
     DumpStorageInfos(oss);
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::DumpCrashInfos(FWTextWriter& oss) const {
     DumpProcessInfos(oss);
+    DumpPhysicalMemory(oss);
     DumpMemoryStats(oss);
     DumpStorageInfos(oss);
 }

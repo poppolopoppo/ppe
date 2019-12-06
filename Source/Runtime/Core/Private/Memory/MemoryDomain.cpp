@@ -419,7 +419,7 @@ void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
     FWStringBuilder sb;
     FWTextWriter& oss = (optional ? *optional : sb);
 
-    FCurrentProcess::Get().DumpMemoryStats(oss);
+    FCurrentProcess::Get().DumpPhysicalMemory(oss);
 
     ReportTrackingDatas_(oss, L"Memory domains", datas.MakeView());
     ReportAllocationHistogram(oss);

@@ -37,10 +37,12 @@ public:
 
     bool StartedWithDebugger() const { return _startedWithDebugger; }
 
+    void DumpPhysicalMemory(FTextWriter& oss) const;
     void DumpMemoryStats(FTextWriter& oss) const;
     void DumpProcessInfos(FTextWriter& oss) const;
     void DumpStorageInfos(FTextWriter& oss) const;
 
+    void DumpPhysicalMemory(FWTextWriter& oss) const;
     void DumpMemoryStats(FWTextWriter& oss) const;
     void DumpProcessInfos(FWTextWriter& oss) const;
     void DumpStorageInfos(FWTextWriter& oss) const;
