@@ -670,6 +670,27 @@ public:
         return x * m;
     }
 
+    FString formatA(const FString& fmt, const VECTOR(Atom, RTTI::FAny)& args) const {
+        STACKLOCAL_POD_ARRAY(FFormatArg, fmtArgs, args.size());
+        forrange(i, 0, args.size())
+            fmtArgs[i] = MakeFormatArg<char>(args[i]);
+
+        FStringBuilder sb;
+        FormatArgs<char>(sb, fmt.MakeView(), fmtArgs);
+
+        return sb.ToString();
+    }
+    FWString formatW(const FWString& fmt, const VECTOR(Atom, RTTI::FAny)& args) const {
+        STACKLOCAL_POD_ARRAY(FWFormatArg, fmtArgs, args.size());
+        forrange(i, 0, args.size())
+            fmtArgs[i] = MakeFormatArg<wchar_t>(args[i]);
+
+        FWStringBuilder sb;
+        FormatArgs<wchar_t>(sb, fmt.MakeView(), fmtArgs);
+
+        return sb.ToString();
+    }
+
     static void SyntaxicHighlight(const FStringView& str) {
         constexpr auto defaultStyle = FPlatformConsole::WHITE_ON_BLACK;
         constexpr auto stringStyle = FPlatformConsole::BG_BLACK | FPlatformConsole::FG_YELLOW;
@@ -757,6 +778,8 @@ RTTI_FUNCTION(object, path)
 RTTI_FUNCTION(share, obj)
 RTTI_FUNCTION(inspect, any)
 RTTI_FUNCTION(mul, x, m)
+RTTI_FUNCTION(formatA, fmt, args)
+RTTI_FUNCTION(formatW, fmt, args)
 RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_InteractiveConsole_() {
