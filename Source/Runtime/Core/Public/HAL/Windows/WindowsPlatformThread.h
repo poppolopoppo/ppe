@@ -22,7 +22,7 @@ public:
 
     using FGenericPlatformThread::FAffinityMask;
 
-    static const FAffinityMask AllThreadsAffinity;
+    static const FAffinityMask AllCoresAffinity;
 
     static FAffinityMask MainThreadAffinity();
     static FAffinityMask SecondaryThreadAffinity();

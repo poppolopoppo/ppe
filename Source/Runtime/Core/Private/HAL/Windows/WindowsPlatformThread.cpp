@@ -37,7 +37,7 @@ static FWindowsPlatformThread::FAffinityMask LogicalAffinityMask_(size_t coreMas
         : m );
 }
 //----------------------------------------------------------------------------
-static FWindowsPlatformThread::FAffinityMask FetchAllThreadsAffinityMask_() NOEXCEPT {
+static FWindowsPlatformThread::FAffinityMask FetchAllCoresAffinityMask_() NOEXCEPT {
     using affinity_t = FWindowsPlatformThread::FAffinityMask;
 
     const affinity_t numCores = checked_cast<affinity_t>(FWindowsPlatformMisc::NumCoresWithSMT());
@@ -52,8 +52,8 @@ static FWindowsPlatformThread::FAffinityMask FetchAllThreadsAffinityMask_() NOEX
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const FWindowsPlatformThread::FAffinityMask FWindowsPlatformThread::AllThreadsAffinity{
-     FetchAllThreadsAffinityMask_() };
+const FWindowsPlatformThread::FAffinityMask FWindowsPlatformThread::AllCoresAffinity{
+     FetchAllCoresAffinityMask_() };
 //----------------------------------------------------------------------------
 void FWindowsPlatformThread::OnThreadStart() {
 #if USE_PPE_PLATFORM_DEBUG
@@ -78,8 +78,8 @@ auto FWindowsPlatformThread::AffinityMask() -> FAffinityMask {
 
     ::DWORD_PTR affinityMask;
 
-    affinityMask = ::SetThreadAffinityMask(hThread, checked_cast<::DWORD_PTR>(AllThreadsAffinity));
-    CLOG(0 == affinityMask, HAL, Fatal, L"SetThreadAffinityMask({0:#16x}) failed with = {1}", AllThreadsAffinity, FLastError());
+    affinityMask = ::SetThreadAffinityMask(hThread, checked_cast<::DWORD_PTR>(AllCoresAffinity));
+    CLOG(0 == affinityMask, HAL, Fatal, L"SetThreadAffinityMask({0:#16x}) failed with = {1}", AllCoresAffinity, FLastError());
 
     const FAffinityMask result = checked_cast<FAffinityMask>(affinityMask);
 
@@ -90,7 +90,7 @@ auto FWindowsPlatformThread::AffinityMask() -> FAffinityMask {
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformThread::SetAffinityMask(FAffinityMask mask) {
-    Assert_NoAssume((mask & ~AllThreadsAffinity) == 0);
+    Assert_NoAssume((mask & ~AllCoresAffinity) == 0);
 
     const ::HANDLE hThread = ::GetCurrentThread();
 
@@ -99,7 +99,7 @@ void FWindowsPlatformThread::SetAffinityMask(FAffinityMask mask) {
 
 #if USE_PPE_ASSERT
     const FAffinityMask actualMask = FWindowsPlatformThread::AffinityMask();
-    Assert((mask & AllThreadsAffinity) == actualMask);
+    Assert((mask & AllCoresAffinity) == actualMask);
 #endif
     UNUSED(affinityMask);
 }
@@ -194,7 +194,7 @@ auto FWindowsPlatformThread::IOThreadsInfo() -> FThreadGroupInfo {
     info.Priority = EThreadPriority::Highest; // highest priority to be resumed asap
     info.NumWorkers = 2; // IO should be operated in 2 threads max to prevent slow seeks
     forrange(i, 0, FAffinityMask(info.NumWorkers))
-        info.Affinities[i] = FAffinityMask(~1ul) & AllThreadsAffinity; // all but first *thread*, let IO overlap on main thread with HT
+        info.Affinities[i] = FAffinityMask(~1ul) & AllCoresAffinity; // all but first *thread*, let IO overlap on main thread with HT
     return info;
 }
 //----------------------------------------------------------------------------

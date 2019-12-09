@@ -29,7 +29,7 @@ public: // must be defined for every platform
     using FAffinityMask = u64;
     STATIC_ASSERT(PPE_MAX_NUMCPUCORE <= sizeof(FAffinityMask)<<3); // should change FAffinityMask type otherwise
 
-    STATIC_CONST_INTEGRAL(FAffinityMask, AllThreadsAffinity, FAffinityMask(-1));
+    STATIC_CONST_INTEGRAL(FAffinityMask, AllCoresAffinity, FAffinityMask(-1));
 
     static FAffinityMask MainThreadAffinity() = delete;
     static FAffinityMask SecondaryThreadAffinity() = delete;
@@ -49,7 +49,7 @@ public: // must be defined for every platform
     struct FThreadGroupInfo {
         size_t NumWorkers = INDEX_NONE;
         EThreadPriority Priority = EThreadPriority::Normal;
-        FAffinityMask Affinities[PPE_MAX_NUMCPUCORE] = { AllThreadsAffinity };
+        FAffinityMask Affinities[PPE_MAX_NUMCPUCORE] = { AllCoresAffinity };
     };
 
     static FThreadGroupInfo BackgroundThreadsInfo() = delete;
