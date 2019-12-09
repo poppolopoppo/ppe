@@ -9,6 +9,7 @@
 #endif
 
 #include "Allocator/Allocation.h"
+#include "Container/RawStorage_fwd.h"
 #include "IO/FileSystem_fwd.h"
 #include "IO/Regexp.h"
 #include "IO/StreamPolicies.h"
@@ -24,8 +25,6 @@ using FFileStat = FGenericPlatformFileStat;
 
 template <typename T>
 class TMemoryView;
-template <typename T, typename _Allocator>
-class TRawStorage;
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
