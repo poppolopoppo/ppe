@@ -224,6 +224,17 @@ public:
     static FORCE_INLINE u64 popcnt(u64 u) NOEXCEPT { return FGenericPlatformMaths::popcnt(u); }
 #   endif
 
+    // number of bits set to one (support u64 on ARCH_X86)
+    template <typename T>
+    static FORCE_INLINE u64 popcnt64(T v) NOEXCEPT {
+#ifdef ARCH_X86
+        STATIC_ASSERT(sizeof(T) > sizeof(u32));
+        return FGenericPlatformMaths::popcnt_constexpr(static_cast<u64>(v));
+#else
+        return popcnt(static_cast<u64>(v));
+#endif
+    }
+
     static u64 tzcnt64(u64 u) NOEXCEPT {
 #   ifdef ARCH_X64
         return tzcnt(u);
@@ -233,6 +244,7 @@ public:
             : tzcnt(u32(u)) );
 #   endif
     }
+
     //------------------------------------------------------------------------
     // Bit Scan Forward
 

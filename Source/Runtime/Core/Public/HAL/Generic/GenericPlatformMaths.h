@@ -294,16 +294,6 @@ public: // must be defined for every platform
         return (T)(v * ((T)~(T)0 / 255)) >> (sizeof(T) - 1) * CHAR_BIT;     // count
     }
 
-    // number of bits set to one (support u64 on ARCH_X86)
-    template <typename T>
-    static FORCE_INLINE u64 popcnt64(T v) NOEXCEPT {
-#ifdef ARCH_X86
-        return popcnt_constexpr(static_cast<u64>(v));
-#else
-        return FPlatformMaths::popcnt(static_cast<u64>(v));
-#endif
-    }
-
     static u32 lzcnt(u32 u) NOEXCEPT = delete;
     static u32 tzcnt(u32 u) NOEXCEPT = delete;
     static u32 popcnt(u32 u) NOEXCEPT = delete;
@@ -314,6 +304,10 @@ public: // must be defined for every platform
     static u64 popcnt(u64 u) NOEXCEPT { return popcnt_constexpr(u); }
 
     static u64 tzcnt64(u64 u) NOEXCEPT = delete;
+
+    // number of bits set to one (support u64 on ARCH_X86)
+    template <typename T>
+    static u64 popcnt64(T v) NOEXCEPT = delete;
 
     static CONSTEXPR u32 lzcnt_constexpr(u32 u) NOEXCEPT {
         for (i32 i = 31; i >= 0; --i)

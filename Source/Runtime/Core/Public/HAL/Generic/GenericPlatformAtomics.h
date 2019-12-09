@@ -60,44 +60,6 @@ public: // must be defined for every platform
     static void MemoryBarrier() NOEXCEPT = delete;
     static void ShortSyncWait() NOEXCEPT = delete;
 
-public: // generic helpers
-
-    template <typename T>
-    static FORCE_INLINE T* ExchangePtr(volatile T** dst, T* exg) NOEXCEPT {
-        Assert(Meta::IsAligned(sizeof(void*), dst));
-        return (T*)FPlatformAtomics::Exchange((volatile intptr_t*)dst, (intptr_t)exg);
-    }
-
-    template <typename T>
-    static FORCE_INLINE T* CompareExchangePtr(volatile T** dst, T* exg, T* cmp) NOEXCEPT {
-        Assert(Meta::IsAligned(sizeof(void*), dst));
-        return (T*)FPlatformAtomics::CompareExchange((volatile intptr_t*)dst, (intptr_t)exg, (intptr_t)cmp);
-    }
-
-    template <typename T>
-    static FORCE_INLINE T* FetchPtr(const T** src) NOEXCEPT {
-        Assert(Meta::IsAligned(sizeof(void*), src));
-        return (T*)FPlatformAtomics::Fetch((volatile const intptr_t*)src);
-    }
-
-    template <typename T>
-    static FORCE_INLINE T* FetchPtr_Relaxed(const T** src) NOEXCEPT {
-        Assert(Meta::IsAligned(sizeof(void*), src));
-        return (T*)FPlatformAtomics::Fetch_Relaxed((volatile const intptr_t*)src);
-    }
-
-    template <typename T>
-    static FORCE_INLINE void StorePtr(T** dst, T* val) NOEXCEPT {
-        Assert(Meta::IsAligned(sizeof(void*), dst));
-        FPlatformAtomics::Store((volatile intptr_t**)dst, (intptr_t)val);
-    }
-
-    template <typename T>
-    static FORCE_INLINE void StorePtr_Relaxed(T** dst, T* val) NOEXCEPT {
-        Assert(Meta::IsAligned(sizeof(void*), dst));
-        FPlatformAtomics::Store_Relaxed((volatile intptr_t*)dst, (intptr_t)val);
-    }
-
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
