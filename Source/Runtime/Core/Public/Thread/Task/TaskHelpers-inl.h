@@ -79,7 +79,7 @@ void ParallelForEach(
 
     // fall back to global thread pool by default
     if (!manager)
-        manager = &FHighPriorityThreadPool::Get();
+        manager = &HighPriorityThreadPool();
 
     // less space needed to pass arguments to TFunction<>
     const struct loop_t_ {

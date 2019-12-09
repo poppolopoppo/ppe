@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Meta/Singleton.h"
+#include "Thread/Task_fwd.h"
 #include "Thread/Task/TaskManager.h"
 
 #include <chrono>
@@ -24,10 +25,6 @@ public:
     static void Destroy();
 };
 //----------------------------------------------------------------------------
-PPE_CORE_API void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 class PPE_CORE_API FIOThreadPool : Meta::TSingleton<FTaskManager, FIOThreadPool> {
 public:
     typedef Meta::TSingleton<FTaskManager, FIOThreadPool> parent_type;
@@ -40,10 +37,6 @@ public:
     static void Create();
     static void Destroy();
 };
-//----------------------------------------------------------------------------
-PPE_CORE_API void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class PPE_CORE_API FHighPriorityThreadPool : Meta::TSingleton<FTaskManager, FHighPriorityThreadPool> {
 public:
@@ -58,10 +51,6 @@ public:
     static void Destroy();
 };
 //----------------------------------------------------------------------------
-PPE_CORE_API void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 class PPE_CORE_API FBackgroundThreadPool : Meta::TSingleton<FTaskManager, FBackgroundThreadPool> {
 public:
     typedef Meta::TSingleton<FTaskManager, FBackgroundThreadPool> parent_type;
@@ -75,6 +64,12 @@ public:
     static void Destroy();
 };
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// same than Task_fwd.h, but optional parameter definition
+PPE_CORE_API void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
+PPE_CORE_API void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
+PPE_CORE_API void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 PPE_CORE_API void AsyncBackround(FTaskFunc&& rtask, ETaskPriority priority = ETaskPriority::Normal);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

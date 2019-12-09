@@ -20,4 +20,16 @@ using FTaskFunc = TFunction<void(ITaskContext&)>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PPE_CORE_API FTaskManager& GlobalThreadPool() NOEXCEPT;
+PPE_CORE_API FTaskManager& IOThreadPool() NOEXCEPT;
+PPE_CORE_API FTaskManager& HighPriorityThreadPool() NOEXCEPT;
+PPE_CORE_API FTaskManager& BackgroundThreadPool() NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority);
+PPE_CORE_API void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority);
+PPE_CORE_API void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority);
+PPE_CORE_API void AsyncBackround(FTaskFunc&& rtask, ETaskPriority priority);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace PPE

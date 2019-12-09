@@ -38,10 +38,6 @@ void FGlobalThreadPool::Destroy() {
     DestroyThreadPool_<parent_type>();
 }
 //----------------------------------------------------------------------------
-void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    FGlobalThreadPool::Get().Run(std::move(rtask), priority);
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FIOThreadPool::Create() {
@@ -51,10 +47,7 @@ void FIOThreadPool::Create() {
 void FIOThreadPool::Destroy() {
     DestroyThreadPool_<parent_type>();
 }
-//----------------------------------------------------------------------------
-void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    FIOThreadPool::Get().Run(std::move(rtask), priority);
-}
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -66,10 +59,6 @@ void FHighPriorityThreadPool::Destroy() {
     DestroyThreadPool_<parent_type>();
 }
 //----------------------------------------------------------------------------
-void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
-    FHighPriorityThreadPool::Get().Run(std::move(rtask), priority);
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FBackgroundThreadPool::Create() {
@@ -78,6 +67,38 @@ void FBackgroundThreadPool::Create() {
 //----------------------------------------------------------------------------
 void FBackgroundThreadPool::Destroy() {
     DestroyThreadPool_<parent_type>();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTaskManager& GlobalThreadPool() NOEXCEPT {
+    return FGlobalThreadPool::Get();
+}
+//----------------------------------------------------------------------------
+FTaskManager& IOThreadPool() NOEXCEPT {
+    return FIOThreadPool::Get();
+}
+//----------------------------------------------------------------------------
+FTaskManager& HighPriorityThreadPool() NOEXCEPT {
+    return FHighPriorityThreadPool::Get();
+}
+//----------------------------------------------------------------------------
+FTaskManager& BackgroundThreadPool() NOEXCEPT {
+    return FBackgroundThreadPool::Get();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void AsyncWork(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
+    FGlobalThreadPool::Get().Run(std::move(rtask), priority);
+}
+//----------------------------------------------------------------------------
+void AsyncIO(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
+    FIOThreadPool::Get().Run(std::move(rtask), priority);
+}
+//----------------------------------------------------------------------------
+void AsyncHighPriority(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
+    FHighPriorityThreadPool::Get().Run(std::move(rtask), priority);
 }
 //----------------------------------------------------------------------------
 void AsyncBackround(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) {
