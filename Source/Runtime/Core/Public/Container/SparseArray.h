@@ -558,7 +558,7 @@ template <typename T, typename _Allocator>
 inline void* operator new(size_t sizeInBytes, PPE::TSparseArray<T, _Allocator>& arr) {
     Assert(sizeInBytes == sizeof(T));
     void* const p = &arr.Add();
-    Assert(Meta::IsAligned(std::alignment_of_v<T>, p));
+    Assert(PPE::Meta::IsAligned(std::alignment_of_v<T>, p));
     return p;
 }
 template <typename T, typename _Allocator>
