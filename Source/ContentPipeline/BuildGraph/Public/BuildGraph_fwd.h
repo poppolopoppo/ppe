@@ -24,6 +24,7 @@ enum class EBuildFlags;
 enum class EBuildResult;
 //----------------------------------------------------------------------------
 FWD_REFPTR(BuildNode);
+FWD_REFPTR(FileNode);
 //----------------------------------------------------------------------------
 class PPE_BUILDGRAPH_API FBuildEnvironment;
 //----------------------------------------------------------------------------

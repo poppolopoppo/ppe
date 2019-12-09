@@ -24,7 +24,7 @@ class FFilesystemBuildCache : public IBuildCache {
 public:
     FFilesystemBuildCache(const FDirpath& path, bool writable)
     :   _path(path)
-    ,   _extname(PPE_FILESYSTEMCACHE_EXTNAME)
+    ,   _extname(MakeStringView(PPE_FILESYSTEMCACHE_EXTNAME))
     ,   _cacheExpiration(FTimestamp::Now().DaysAgo(30)) // clears everything older than 30 days
     ,   _writable(writable)
     {}

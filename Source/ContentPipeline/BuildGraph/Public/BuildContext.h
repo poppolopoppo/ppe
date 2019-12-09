@@ -5,6 +5,7 @@
 #include "BuildEnums.h"
 
 #include "Container/Pair.h"
+#include "Container/HashMap.h"
 #include "Container/SparseArray.h"
 #include "IO/Filename.h"
 #include "Time/Timepoint.h"
@@ -102,10 +103,13 @@ public:
     EBuildResult Scan(FBuildNode& node);
 
     void Flush(FScanContext&& rvalue);
-    void AddOutputFile(SBuildNode&& node, const FFilename& relative);
+
+    FFileNode* GetOrCreateFileNode(const FFilename& input);
+    void AddOutputFile(FBuildNode* target, const FFilename& output);
 
 private:
     std::mutex _barrier;
+    HASHMAP(BuildGraph, FFilename, PFileNode) _fileNodes;
     SPARSEARRAY_INSITU(BuildGraph, FTarget) _outputFiles;
 };
 //----------------------------------------------------------------------------

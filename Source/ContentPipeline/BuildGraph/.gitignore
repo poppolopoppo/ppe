@@ -1,0 +1,3 @@
+# don't ignore those 2 folders (excluded by Source/.gitignore)
+!/Public/Build
+!/Private/Build

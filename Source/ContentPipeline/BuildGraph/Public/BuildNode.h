@@ -57,6 +57,14 @@ protected:
     void AddDynamicDep(FBuildNode* node);
     void AddRuntimeDep(FBuildNode* node);
 
+    void AddStaticDeps(const TMemoryView<const SBuildNode>& nodes);
+    void AddDynamicDeps(const TMemoryView<const SBuildNode>& nodes);
+    void AddRuntimeDeps(const TMemoryView<const SBuildNode>& nodes);
+
+    void AddStaticDeps(const TMemoryView<const PBuildNode>& nodes);
+    void AddDynamicDeps(const TMemoryView<const PBuildNode>& nodes);
+    void AddRuntimeDeps(const TMemoryView<const PBuildNode>& nodes);
+
 private:
     using FDependencies = VECTORINSITU(BuildGraph, PBuildNode, 3);
 

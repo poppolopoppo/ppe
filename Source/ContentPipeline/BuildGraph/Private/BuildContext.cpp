@@ -164,14 +164,39 @@ EBuildResult FScanContext::Scan(FBuildNode& node) {
     return result;
 }
 //----------------------------------------------------------------------------
-void FScanContext::AddOutputFile(SBuildNode&& node, const FFilename& relative) {
-    Assert(node);
-    Assert(not relative.empty());
-    Assert_NoAssume(relative.IsRelative());
+void FScanContext::Flush(FScanContext&& rvalue) {
+    Assert(this != &rvalue);
+    Assert_NoAssume(rvalue._fileNodes.empty());
+
+    if (rvalue._outputFiles.empty())
+        return;
+
+    const Meta::FLockGuard scopeLock(_barrier);
+    _outputFiles.AppendMove(rvalue._outputFiles);
+}
+//----------------------------------------------------------------------------
+FFileNode* FScanContext::GetOrCreateFileNode(const FFilename& input) {
+    Assert(not input.empty());
+
+    if (_parent) // always use global state, to ensure uniqueness
+        return Root().GetOrCreateFileNode(input);
 
     const Meta::FLockGuard scopeLock(_barrier);
 
-    _outputFiles.Emplace(relative, std::move(node));
+    PFileNode& n = _fileNodes.FindOrAdd(input);
+    if (not n)
+        n.reset(NEW_RTTI(FFileNode) { input });
+
+    return n.get();
+}
+//----------------------------------------------------------------------------
+void FScanContext::AddOutputFile(FBuildNode* target, const FFilename& output) {
+    Assert(target);
+    Assert(not output.empty());
+
+    const Meta::FLockGuard scopeLock(_barrier);
+
+    _outputFiles.Emplace(output, SBuildNode{ target });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

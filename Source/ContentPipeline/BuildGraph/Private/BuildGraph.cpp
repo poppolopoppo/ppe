@@ -178,8 +178,9 @@ FBuildRevision FBuildGraph::NextRevision_() {
 EBuildResult FBuildGraph::ScanNodes_(const FBuildEnvironment& env, const TMemoryView<const SBuildNode>& nodes) {
     FScanContext ctx(*this, env, NextRevision_(), FTimepoint::Now());
 
-    env.Executor().QueueAndWaitFor(ctx, nodes);
-    env.Executor().WaitForAll();
+    IBuildExecutor& exe = env.Executor();
+    exe.QueueAndWaitFor(ctx, nodes);
+    exe.WaitForAll();
 
     if (ctx.Result() != EBuildResult::Failed) {
         _files.clear();
@@ -192,8 +193,9 @@ EBuildResult FBuildGraph::ScanNodes_(const FBuildEnvironment& env, const TMemory
 EBuildResult FBuildGraph::BuildNodes_(const FBuildEnvironment& env, const TMemoryView<const SBuildNode>& nodes) {
     FBuildContext ctx(*this, env, NextRevision_(), FTimepoint::Now());
 
-    env.Executor().QueueAndWaitFor(ctx, nodes);
-    env.Executor().WaitForAll();
+    IBuildExecutor& exe = env.Executor();
+    exe.QueueAndWaitFor(ctx, nodes);
+    exe.WaitForAll();
 
     return ReportBuildStatus_(ctx, L"BUILD");
 }
@@ -201,8 +203,9 @@ EBuildResult FBuildGraph::BuildNodes_(const FBuildEnvironment& env, const TMemor
 EBuildResult FBuildGraph::CleanNodes_(const FBuildEnvironment& env, const TMemoryView<const SBuildNode>& nodes) {
     FCleanContext ctx(*this, env, NextRevision_(), FTimepoint::Now());
 
-    env.Executor().QueueAndWaitFor(ctx, nodes);
-    env.Executor().WaitForAll();
+    IBuildExecutor& exe = env.Executor();
+    exe.QueueAndWaitFor(ctx, nodes);
+    exe.WaitForAll();
 
     return ReportBuildStatus_(ctx, L"CLEAN");
 }
