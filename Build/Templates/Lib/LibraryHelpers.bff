@@ -349,7 +349,7 @@ VCXProject( '$ProjectName$-VCXProject' )
     .ProjectBasePath    = .ProjectPath
     .ProjectInputPaths  = .ProjectPath
     .ProjectOutput      = '$SolutionPath$/Output/Projects/$ProjectName$.vcxproj'
-    .ProjectAllowedFileExtensions ? { '*.h' }
+    .ProjectAllowedFileExtensions ? { '*.h', '*.bff' }
     .ProjectAllowedFileExtensions + .ProjectInputPattern
 
     .ProjectFiles       ? {}
