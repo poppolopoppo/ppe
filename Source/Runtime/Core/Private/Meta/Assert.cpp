@@ -44,6 +44,33 @@ namespace {
 //----------------------------------------------------------------------------
 static std::atomic<FAssertHandler> GAssertionHandler = { nullptr };
 //----------------------------------------------------------------------------
+static bool ReportAssertionForDebug_(
+    const FWStringView& level,
+    const wchar_t* msg, const wchar_t* file, unsigned line) {
+#if USE_PPE_PLATFORM_DEBUG
+    if (FPlatformDebug::IsDebuggerPresent()) {
+        wchar_t buf[1024];
+        FWFixedSizeTextWriter oss(buf);
+        oss << L"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << Eol
+            << L" !!! " << level << L" assertion failed !!!" << Eol
+            << L"   text:  " << MakeCStringView(msg) << Eol
+            << L"   file:  " << MakeCStringView(file) << L"(" << line << L")" << Eol
+            << L"  -> breaking the debugger" << Eol
+            << L"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << Eol
+            << Eos;
+        FPlatformDebug::OutputDebug(buf);
+        PPE_DEBUG_BREAK();
+        return true;
+    }
+#else
+    UNUSED(level);
+    UNUSED(msg);
+    UNUSED(file);
+    UNUSED(line);
+#endif
+    return false;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -82,10 +109,7 @@ NO_INLINE void AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
-    else if (FPlatformDebug::IsDebuggerPresent()) {
-        PPE_DEBUG_BREAK();
-    }
-    else {
+    else if (not ReportAssertionForDebug_(L"debug", msg, file, line)) {
         LOG(Assertion, Error, L"debug assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
         FLUSH_LOG(); // flush log before continuing to get eventual log messages
 
@@ -167,10 +191,7 @@ NO_INLINE void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, u
     if (handler) {
         failure = (*handler)(msg, file, line);
     }
-    else if (FPlatformDebug::IsDebuggerPresent()) {
-        PPE_DEBUG_BREAK();
-    }
-    else {
+    else if (not ReportAssertionForDebug_(L"release", msg, file, line)) {
         LOG(Assertion, Error, L"release assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
         FLUSH_LOG(); // flush log before continuing to get eventual log messages
 
