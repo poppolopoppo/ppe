@@ -45,7 +45,7 @@ void FMemoryTracking::Allocate(size_t userSize, size_t systemSize) NOEXCEPT {
     Assert(systemSize);
     Assert_NoAssume(userSize <= systemSize);
 #if not USE_PPE_MEMORY_DEBUGGING // this is a performance consideration
-    Assert_NoAssume(userSize * 2 > systemSize);
+    Assert_NoAssume(systemSize <= ALLOCATION_BOUNDARY || userSize * 2 > systemSize);
 #endif
 
     _user.Allocate(userSize);
