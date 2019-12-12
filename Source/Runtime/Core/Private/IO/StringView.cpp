@@ -385,6 +385,11 @@ static bool IsAll_(const TBasicStringView<_Char>& str, bool (*pred)(_Char)) {
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
+static bool Has_(const TBasicStringView<_Char>& str, bool (*pred)(_Char)) {
+    return (str.end() != str.FindIf(pred));
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
 static TBasicStringView<_Char> SplitIf_(const TBasicStringView<_Char>& str, bool (*pred)(_Char)) {
     return str.SplitIf(pred);
 }
@@ -503,6 +508,26 @@ bool IsPrint(const FWStringView& wstr) { return IsAll_(wstr, &IsPrint); }
 //----------------------------------------------------------------------------
 bool IsSpace(const FStringView& str) { return IsAll_(str, &IsSpace); }
 bool IsSpace(const FWStringView& wstr) { return IsAll_(wstr, &IsSpace); }
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool HasAlnum(const FStringView& str) { return Has_(str, &IsAlnum); }
+bool HasAlnum(const FWStringView& wstr) { return Has_(wstr, &IsAlnum); }
+//----------------------------------------------------------------------------
+bool HasAlpha(const FStringView& str) { return Has_(str, &IsAlpha); }
+bool HasAlpha(const FWStringView& wstr) { return Has_(wstr, &IsAlpha); }
+//----------------------------------------------------------------------------
+bool HasDigit(const FStringView& str) { return Has_(str, &IsDigit); }
+bool HasDigit(const FWStringView& wstr) { return Has_(wstr, &IsDigit); }
+//----------------------------------------------------------------------------
+bool HasXDigit(const FStringView& str) { return Has_(str, &IsXDigit); }
+bool HasXDigit(const FWStringView& wstr) { return Has_(wstr, &IsXDigit); }
+//----------------------------------------------------------------------------
+bool HasPrint(const FStringView& str) { return Has_(str, &IsPrint); }
+bool HasPrint(const FWStringView& wstr) { return Has_(wstr, &IsPrint); }
+//----------------------------------------------------------------------------
+bool HasSpace(const FStringView& str) { return Has_(str, &IsSpace); }
+bool HasSpace(const FWStringView& wstr) { return Has_(wstr, &IsSpace); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

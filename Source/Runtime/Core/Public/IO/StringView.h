@@ -236,7 +236,7 @@ inline bool IsPunct(char ch) { return 0 != std::ispunct((int)((unsigned char)ch)
 inline bool IsPunct(wchar_t wch) { return 0 != std::iswpunct(wch); }
 //----------------------------------------------------------------------------
 CONSTEXPR bool IsSpace(char ch) { return ( ch == ' ' || ch == '\f' || ch == '\n' || ch == '\r' || ch == '\t' || ch == '\v' ); }
-inline bool IsSpace(wchar_t wch) { return 0 != std::iswdigit(wch); }
+inline bool IsSpace(wchar_t wch) { return 0 != std::iswspace(wch); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -260,6 +260,26 @@ PPE_CORE_API bool IsPrint(const FWStringView& wstr);
 //----------------------------------------------------------------------------
 PPE_CORE_API bool IsSpace(const FStringView& str);
 PPE_CORE_API bool IsSpace(const FWStringView& wstr);
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+PPE_CORE_API bool HasAlnum(const FStringView& str);
+PPE_CORE_API bool HasAlnum(const FWStringView& wstr);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool HasAlpha(const FStringView& str);
+PPE_CORE_API bool HasAlpha(const FWStringView& wstr);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool HasDigit(const FStringView& str);
+PPE_CORE_API bool HasDigit(const FWStringView& wstr);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool HasXDigit(const FStringView& str);
+PPE_CORE_API bool HasXDigit(const FWStringView& wstr);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool HasPrint(const FStringView& str);
+PPE_CORE_API bool HasPrint(const FWStringView& wstr);
+//----------------------------------------------------------------------------
+PPE_CORE_API bool HasSpace(const FStringView& str);
+PPE_CORE_API bool HasSpace(const FWStringView& wstr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
