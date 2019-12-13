@@ -10,6 +10,11 @@
 #include "IO/FormatHelpers.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
+#include "IO/StringView.h"
+#include "IO/TextWriter.h"
+#include "Memory/MemoryProvider.h"
+#include "Meta/Utility.h"
+
 #include "HAL/PlatformMemory.h"
 #include "HAL/PlatformMisc.h"
 
@@ -136,6 +141,30 @@ static bool OpenWebURL_(const FWStringView& url) {
     return false;
 }
 //----------------------------------------------------------------------------
+// https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw
+static void FormatCommandLineW_(
+    const TMemoryView<wchar_t>& cmdline,
+    const FWStringView& url, const TMemoryView<const FWStringView>& args ) {
+    Assert_NoAssume(not url.empty());
+
+    FMemoryViewWriter writer(cmdline);
+    FWTextWriter oss(&writer);
+
+    if (HasSpace(url))
+        oss << Fmt::Quoted(url, Fmt::DoubleQuote);
+    else
+        oss << url;
+
+    for (const FWStringView& arg : args) {
+        if (arg.empty() || HasSpace(arg))
+            oss << Fmt::Space << Fmt::Quoted(arg, Fmt::DoubleQuote);
+        else
+            oss << Fmt::Space << arg;
+    }
+
+    oss << Eos;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -236,63 +265,66 @@ auto FWindowsPlatformProcess::CurrentPID() -> FProcessId {
     return ::GetCurrentProcessId();
 }
 //----------------------------------------------------------------------------
+auto FWindowsPlatformProcess::CurrentProcess() -> FProcessHandle {
+    return ::GetCurrentProcess();
+}
+//----------------------------------------------------------------------------
+bool FWindowsPlatformProcess::EnableDebugPrivileges() {
+    ::HANDLE hToken;
+    ::LUID luid;
+    ::TOKEN_PRIVILEGES tkp;
+
+    if (not ::OpenProcessToken(::GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
+        LOG_LASTERROR(HAL, L"OpenProcessToken");
+        return false;
+    }
+
+    ON_SCOPE_EXIT([&]() {
+        if (not ::CloseHandle(hToken)) {
+            LOG_LASTERROR(HAL, L"CloseHandle(hToken)");
+            AssertNotReached();
+        }
+    });
+
+    if (not ::LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid)) {
+        LOG_LASTERROR(HAL, L"LookupPrivilegeValue");
+        return false;
+    }
+
+    tkp.PrivilegeCount = 1;
+    tkp.Privileges[0].Luid = luid;
+    tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    if (not ::AdjustTokenPrivileges(hToken, false, &tkp, sizeof(tkp), NULL, NULL)) {
+        LOG_LASTERROR(HAL, L"AdjustTokenPrivileges");
+        return false;
+    }
+
+    return true;
+}
+//----------------------------------------------------------------------------
 void FWindowsPlatformProcess::Daemonize() {
     // #TODO
+    AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-EProcessPriority FWindowsPlatformProcess::Priority() {
-    ::HANDLE hProcess = ::GetCurrentProcess();
+bool FWindowsPlatformProcess::IsForeground() {
+    const ::HWND hWnd = GetForegroundWindow();
+    if (NULL == hWnd)
+        return false;
 
-    switch (::GetPriorityClass(hProcess)) {
-    case REALTIME_PRIORITY_CLASS:
-        return EProcessPriority::Realtime;
-    case HIGH_PRIORITY_CLASS:
-        return EProcessPriority::High;
-    case ABOVE_NORMAL_PRIORITY_CLASS:
-        return EProcessPriority::AboveNormal;
-    case NORMAL_PRIORITY_CLASS:
-        return EProcessPriority::Normal;
-    case BELOW_NORMAL_PRIORITY_CLASS:
-        return EProcessPriority::BelowNormal;
-    case IDLE_PRIORITY_CLASS:
-        return EProcessPriority::Idle;
-    default:
-        LOG_LASTERROR(HAL, L"GetPriorityClass");
-        AssertNotReached();
+    ::DWORD dwPid;
+    if (::GetWindowThreadProcessId(hWnd, &dwPid)) {
+        return (::GetCurrentProcessId() == dwPid);
     }
-}
-//----------------------------------------------------------------------------
-void FWindowsPlatformProcess::SetPriority(EProcessPriority priority) {
-    ::HANDLE hProcess = ::GetCurrentProcess();
-    ::DWORD dPriorityClass = 0;
-
-    switch (priority) {
-    case PPE::EProcessPriority::Realtime:
-        dPriorityClass = REALTIME_PRIORITY_CLASS; break;
-    case PPE::EProcessPriority::High:
-        dPriorityClass = HIGH_PRIORITY_CLASS; break;
-    case PPE::EProcessPriority::AboveNormal:
-        dPriorityClass = ABOVE_NORMAL_PRIORITY_CLASS; break;
-    case PPE::EProcessPriority::Normal:
-        dPriorityClass = NORMAL_PRIORITY_CLASS; break;
-    case PPE::EProcessPriority::BelowNormal:
-        dPriorityClass = BELOW_NORMAL_PRIORITY_CLASS; break;
-    case PPE::EProcessPriority::Idle:
-        dPriorityClass = IDLE_PRIORITY_CLASS; break;
-    default:
-        AssertNotImplemented();
+    else {
+        LOG_LASTERROR(HAL, L"GetWindowThreadProcessId");
+        return false;
     }
-
-    if (FALSE == ::SetPriorityClass(hProcess, dPriorityClass))
-        LOG_LASTERROR(HAL, L"SetPriorityClass");
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformProcess::IsFirstInstance() {
     return GIsFirstInstance;
-}
-//----------------------------------------------------------------------------
-bool FWindowsPlatformProcess::IsProcessAlive(FProcessId pid) {
-    return IsProcessAlive(OpenProcess(pid));
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformProcess::IsProcessAlive(FProcessHandle process) {
@@ -302,30 +334,67 @@ bool FWindowsPlatformProcess::IsProcessAlive(FProcessHandle process) {
     return (waitResult == WAIT_TIMEOUT);
 }
 //----------------------------------------------------------------------------
-auto FWindowsPlatformProcess::OpenProcess(FProcessId pid) -> FProcessHandle {
-    return ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+auto FWindowsPlatformProcess::OpenProcess(FProcessId pid, bool fullAccess/* = true */) -> FProcessHandle {
+    const ::HANDLE hProc = ::OpenProcess(
+        (fullAccess
+            ? PROCESS_ALL_ACCESS
+            : PROCESS_QUERY_INFORMATION ),
+        FALSE, pid );
+
+    if (NULL == hProc)
+        LOG_LASTERROR(HAL, L"OpenProcess");
+
+    return hProc;
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::WaitForProcess(FProcessHandle process) {
     Assert(process);
 
-    ::WaitForSingleObject(process, INFINITE);
+    VerifyRelease(WAIT_OBJECT_0 == ::WaitForSingleObject(process, INFINITE));
+}
+//----------------------------------------------------------------------------
+NODISCARD bool FWindowsPlatformProcess::WaitForProcess(FProcessHandle process, size_t timeoutMs) {
+    Assert(process);
+
+    const ::DWORD waitResult = ::WaitForSingleObject(process, checked_cast<::DWORD>(timeoutMs));
+
+    switch (waitResult) {
+    case WAIT_OBJECT_0:
+        return true;
+
+    case WAIT_FAILED:
+        LOG_LASTERROR(HAL, L"WaitForSingleObject");
+    case WAIT_ABANDONED:
+    case WAIT_TIMEOUT:
+        return false;
+
+    default:
+        AssertNotImplemented();
+    }
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::CloseProcess(FProcessHandle process) {
     Assert(process);
 
-    ::CloseHandle(process);
+    if (not ::CloseHandle(process))
+        LOG_LASTERROR(HAL, L"CloseHandle");
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::TerminateProcess(FProcessHandle process, bool killTree) {
     Assert(process);
 
     if (killTree) {
-        ::HANDLE snapShot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        const ::HANDLE snapShot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
         if (snapShot != INVALID_HANDLE_VALUE) {
-            ::DWORD processId = ::GetProcessId(process);
+            ON_SCOPE_EXIT([&]() {
+                if (not ::CloseHandle(snapShot)) {
+                    LOG_LASTERROR(HAL, L"CloseHandle(snapShot)");
+                    AssertNotReached();
+                }
+            });
+
+            const ::DWORD processId = ::GetProcessId(process);
 
             ::PROCESSENTRY32 entry;
             entry.dwSize = sizeof(::PROCESSENTRY32);
@@ -341,194 +410,401 @@ void FWindowsPlatformProcess::TerminateProcess(FProcessHandle process, bool kill
                 } while (::Process32Next(snapShot, &entry));
             }
         }
+        else {
+            LOG_LASTERROR(HAL, L"CreateToolhelp32Snapshot");
+        }
     }
 
-    ::TerminateProcess(process, 0);
+    if (not ::TerminateProcess(process, 0))
+        LOG_LASTERROR(HAL, L"TerminateProcess");
+}
+//------------------------------------------------------------------------
+bool FWindowsPlatformProcess::FindByName(FProcessId* pPid, const FWStringView& name) {
+    Assert(pPid);
+    Assert(not name.empty());
+
+    const ::HANDLE snapShot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+    if (snapShot != INVALID_HANDLE_VALUE) {
+        ON_SCOPE_EXIT([&]() {
+            if (not ::CloseHandle(snapShot)) {
+                LOG_LASTERROR(HAL, L"CloseHandle(snapShot)");
+                AssertNotReached();
+            }
+        });
+
+        ::PROCESSENTRY32 entry;
+        entry.dwSize = sizeof(::PROCESSENTRY32);
+
+        if (::Process32FirstW(snapShot, &entry)) {
+            do {
+                const FWStringView processName{ MakeCStringView(entry.szExeFile) };
+                if (EqualsI(processName, name)) {
+                    *pPid = checked_cast<FProcessId>(entry.th32ProcessID);
+                    return true;
+                }
+            } while (::Process32NextW(snapShot, &entry));
+        }
+    }
+    else {
+        LOG_LASTERROR(HAL, L"CreateToolhelp32Snapshot");
+    }
+
+    *pPid = 0;
+    return false;
+}
+//------------------------------------------------------------------------
+// process infos
+//----------------------------------------------------------------------------
+bool FWindowsPlatformProcess::ExitCode(int* pExitCode, FProcessHandle process) {
+    Assert(pExitCode);
+
+    ::DWORD dwExitCode;
+    if (::GetExitCodeProcess(process, &dwExitCode)) {
+        *pExitCode = checked_cast<int>(dwExitCode);
+        return true;
+    }
+    else {
+        LOG_LASTERROR(HAL, L"GetExitCodeProcess");
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
-FString FWindowsPlatformProcess::ProcessName(FProcessId pid) {
-    const ::HANDLE process = ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+bool FWindowsPlatformProcess::MemoryStats(FMemoryStats* pStats, FProcessHandle process) {
+    Assert(pStats);
 
-    if (process != NULL) {
-        char buffer[MAX_PATH + 1];
-        ::DWORD len = lengthof(buffer);
+    ::PROCESS_MEMORY_COUNTERS counters;
+    ::ZeroMemory(&counters, sizeof(counters));
+    if (::GetProcessMemoryInfo(process, &counters, sizeof(counters))) {
+        ::ZeroMemory(pStats, sizeof(*pStats));
+
+        pStats->UsedPhysical = checked_cast<u64>(counters.WorkingSetSize);
+        pStats->UsedVirtual = checked_cast<u64>(counters.PagefileUsage);
+        pStats->PeakUsedPhysical = checked_cast<u64>(counters.PeakWorkingSetSize);
+        pStats->PeakUsedVirtual = checked_cast<u64>(counters.PeakPagefileUsage);
+
+        return true;
+    }
+    else {
+        LOG_LASTERROR(HAL, L"GetProcessMemoryInfo");
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+bool FWindowsPlatformProcess::Name(FString* pName, FProcessHandle process) {
+    Assert(pName);
+
+    char buffer[MAX_PATH + 1];
+    ::DWORD len = lengthof(buffer);
 
 #if WINVER == 0x0502
-        ::GetProcessImageFileNameA(process, buffer, len);
+    if ((len = ::GetProcessImageFileNameA(process, buffer, len)) != 0) {
+        pName->assign(buffer, buffer + len);
+        return true;
+    }
+    else {
+        LOG_LASTERROR(HAL, L"GetProcessImageFileNameA");
+        return false;
+    }
 #else
-        ::QueryFullProcessImageNameA(process, 0, buffer, &len);
+    if (::QueryFullProcessImageNameA(process, 0, buffer, &len)) {
+        pName->assign(buffer, buffer + len);
+        return true;
+    }
+    else {
+        LOG_LASTERROR(HAL, L"QueryFullProcessImageNameA");
+        return false;
+    }
 #endif
-
-        Verify(::CloseHandle(process));
-
-        return ToString(MakeCStringView(buffer));
-    }
-
-    return FString();
 }
 //----------------------------------------------------------------------------
-u64 FWindowsPlatformProcess::ProcessMemoryUsage(FProcessId pid) {
-    u64 memUsage = 0;
-    const ::HANDLE process = ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+bool FWindowsPlatformProcess::Pid(FProcessId* pPid, FProcessHandle process) {
+    Assert(pPid);
 
-    if (process != NULL) {
-        ::PROCESS_MEMORY_COUNTERS_EX memInfo;
-
-        if (::GetProcessMemoryInfo(process, (::PROCESS_MEMORY_COUNTERS*)&memInfo, sizeof(memInfo)))
-            memUsage = checked_cast<u64>(memInfo.PrivateUsage);
-
-        Verify(::CloseHandle(process));
-    }
-
-    return memUsage;
+    return checked_cast<FProcessId>(::GetProcessId(process));
 }
 //----------------------------------------------------------------------------
-bool FWindowsPlatformProcess::CreatePipe(FPipeHandle* pRead, FPipeHandle* pWrite) {
+bool FWindowsPlatformProcess::Priority(EProcessPriority* pPriority, FProcessHandle process) {
+    Assert(pPriority);
+
+    switch (::GetPriorityClass(process)) {
+    case REALTIME_PRIORITY_CLASS:
+        *pPriority = EProcessPriority::Realtime;
+        return true;
+    case HIGH_PRIORITY_CLASS:
+        *pPriority = EProcessPriority::High;
+        return true;
+    case ABOVE_NORMAL_PRIORITY_CLASS:
+        *pPriority = EProcessPriority::AboveNormal;
+        return true;
+    case NORMAL_PRIORITY_CLASS:
+        *pPriority = EProcessPriority::Normal;
+        return true;
+    case BELOW_NORMAL_PRIORITY_CLASS:
+        *pPriority = EProcessPriority::BelowNormal;
+        return true;
+    case IDLE_PRIORITY_CLASS:
+        *pPriority = EProcessPriority::Idle;
+        return true;
+
+    default:
+        LOG_LASTERROR(HAL, L"GetPriorityClass");
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+bool FWindowsPlatformProcess::SetPriority(FProcessHandle process, EProcessPriority priority) {
+    ::DWORD dPriorityClass = 0;
+
+    switch (priority) {
+    case PPE::EProcessPriority::Realtime:
+        dPriorityClass = REALTIME_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::High:
+        dPriorityClass = HIGH_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::AboveNormal:
+        dPriorityClass = ABOVE_NORMAL_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::Normal:
+        dPriorityClass = NORMAL_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::BelowNormal:
+        dPriorityClass = BELOW_NORMAL_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::Idle:
+        dPriorityClass = IDLE_PRIORITY_CLASS; break;
+
+    default:
+        AssertNotImplemented();
+    }
+
+    if (::SetPriorityClass(process, dPriorityClass)) {
+        return true;
+    }
+    else {
+        LOG_LASTERROR(HAL, L"SetPriorityClass");
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+// Use a constref to avoid issues with static variables initialization order !
+const FWindowsPlatformProcess::FAffinityMask& FWindowsPlatformProcess::AllCoresAffinity =
+    FWindowsPlatformThread::AllCoresAffinity;
+//----------------------------------------------------------------------------
+auto FWindowsPlatformProcess::AffinityMask(FProcessHandle process) -> FAffinityMask {
+    ::DWORD_PTR dwProcessAffinityMask, dwSystemAffinityMask;
+    if (::GetProcessAffinityMask(process, &dwProcessAffinityMask, &dwSystemAffinityMask)) {
+        return checked_cast<FAffinityMask>(dwProcessAffinityMask);
+    }
+    else {
+        LOG_LASTERROR(HAL, L"GetProcessAffinityMask");
+        return FAffinityMask{ 0 };
+    }
+}
+//----------------------------------------------------------------------------
+bool FWindowsPlatformProcess::SetAffinityMask(FProcessHandle process, FAffinityMask mask) {
+    ::DWORD_PTR dwProcessAffinityMask = checked_cast<::DWORD_PTR>(mask);
+    if (::SetProcessAffinityMask(process, dwProcessAffinityMask)) {
+        return true;
+    }
+    else {
+        LOG_LASTERROR(HAL, L"SetProcessAffinityMask");
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+// Pipes
+//----------------------------------------------------------------------------
+bool FWindowsPlatformProcess::IsPipeBlocked(FPipeHandle pipe) {
+    ::DWORD dwFlags;
+    return (not ::GetHandleInformation(pipe, &dwFlags));
+}
+//----------------------------------------------------------------------------
+bool FWindowsPlatformProcess::CreatePipe(FPipeHandle* pRead, FPipeHandle* pWrite, bool shareRead) {
     Assert(pRead);
     Assert(pWrite);
 
-    ::SECURITY_ATTRIBUTES security = {
-        sizeof(::SECURITY_ATTRIBUTES),
-        NULL, TRUE
-    };
+    ::SECURITY_ATTRIBUTES saAttr;
+    saAttr.nLength = sizeof(saAttr);
+    saAttr.bInheritHandle = TRUE;
+    saAttr.lpSecurityDescriptor = NULL;
 
-    if (not ::CreatePipe(pRead, pWrite, &security, 0))
+    if (not ::CreatePipe(pRead, pWrite, &saAttr, 0)) {
+        LOG_LASTERROR(HAL, L"CreatePipe");
         return false;
+    }
 
-    if (not ::SetHandleInformation(*pRead, HANDLE_FLAG_INHERIT, 0))
-        return false;
+    // Need to duplicate the non shared handle for 2 reasons:
+    //  1) disable inheritance of the non-shared handle
+    //  2) can close the shared handle without closing the non-shared side
+    const ::HANDLE hProc = ::GetCurrentProcess();
+    if (shareRead) {
+        if (not ::DuplicateHandle(hProc, *pWrite, hProc, pWrite, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
+            LOG_LASTERROR(HAL, L"DuplicateHandle");
+            return false;
+        }
+    }
+    else {
+        if (not ::DuplicateHandle(hProc, *pRead, hProc, pRead, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
+            LOG_LASTERROR(HAL, L"DuplicateHandle");
+            return false;
+        }
+    }
 
     return true;
 }
 //----------------------------------------------------------------------------
-bool FWindowsPlatformProcess::ReadPipe(FPipeHandle read, FStringBuilder& buffer) {
+size_t FWindowsPlatformProcess::PeekPipe(FPipeHandle read) {
     Assert(read);
 
     ::DWORD bytesAvailable = 0;
-    if (::PeekNamedPipe(read, NULL, 0, NULL, &bytesAvailable, NULL) && (bytesAvailable > 0)) {
-
-        const TMemoryView<char> data = buffer.AppendUninitialized(bytesAvailable);
-
-        ::DWORD bytesRead = 0;
-        if (::ReadFile(read, data.Pointer(), bytesAvailable, &bytesRead, NULL) && bytesRead > 0) {
-            Assert(bytesRead == bytesAvailable);
-            return true;
-        }
+    if (::PeekNamedPipe(read, NULL, 0, NULL, &bytesAvailable, NULL)) {
+        return checked_cast<size_t>(bytesAvailable);
     }
-
-    return false;
+    else {
+        //LOG_LASTERROR(HAL, L"PeekNamedPipe"); too much log generated ^^;
+        return 0;
+    }
 }
 //----------------------------------------------------------------------------
-bool FWindowsPlatformProcess::WritePipe(FPipeHandle write, const FStringView& buffer) {
+size_t FWindowsPlatformProcess::ReadPipe(FPipeHandle read, const FRawMemory& buffer) {
+    Assert(read);
+
+    ::DWORD bytesRead = 0;
+    const ::DWORD bytesToRead = checked_cast<::DWORD>(buffer.SizeInBytes());
+    if (::ReadFile(read, buffer.Pointer(), bytesToRead, &bytesRead, NULL)) {
+        return checked_cast<size_t>(bytesRead);
+    }
+    else {
+        LOG_LASTERROR(HAL, L"ReadFile");
+        return 0;
+    }
+}
+//----------------------------------------------------------------------------
+size_t FWindowsPlatformProcess::WritePipe(FPipeHandle write, const FRawMemoryConst& buffer) {
+    Assert(write);
+
     // If there is not a message or WritePipe is null
-    if (buffer.empty() || write == nullptr)
-        return false;
+    if (buffer.empty())
+        return 0;
 
     // Write to pipe
     ::DWORD bytesWritten = 0;
-    const ::DWORD bytesAvailable = checked_cast<::DWORD>(buffer.SizeInBytes());
+    const ::DWORD bytesToWrite = checked_cast<::DWORD>(buffer.SizeInBytes());
 
-    if (::WriteFile(write, buffer.data(), bytesAvailable, &bytesWritten, NULL) == TRUE) {
-        Assert(bytesWritten == bytesAvailable);
-        return true;
+    if (::WriteFile(write, buffer.data(), bytesToWrite, &bytesWritten, NULL)) {
+        return checked_cast<size_t>(bytesWritten);
     }
     else {
         Assert(bytesWritten == 0);
-        return false;
+        LOG_LASTERROR(HAL, L"WriteFile");
+        return 0;
     }
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::ClosePipe(FPipeHandle read, FPipeHandle write) {
-    if (read != NULL && read != INVALID_HANDLE_VALUE)
-        ::CloseHandle(read);
+    if (((read != NULL) & (read != INVALID_HANDLE_VALUE)) && not ::CloseHandle(read))
+        LOG_LASTERROR(HAL, L"CloseHandle(read)");
 
-    if (write != NULL && write != INVALID_HANDLE_VALUE)
-        ::CloseHandle(write);
+    if (((write != NULL) & (write != INVALID_HANDLE_VALUE)) && not ::CloseHandle(write))
+        LOG_LASTERROR(HAL, L"CloseHandle(write)");
 }
+//----------------------------------------------------------------------------
+// Spawn process
 //----------------------------------------------------------------------------
 auto FWindowsPlatformProcess::CreateProcess(
     FProcessId* pPID,
     const FWStringView& url,
     const TMemoryView<const FWStringView>& args,
-    bool detached, bool hidden, bool noWindow, int priority,
     const FWStringView& optionalWorkingDir,
-    FPipeHandle readPipe/* = nullptr */,
-    FPipeHandle writePipe/* = nullptr */) -> FProcessHandle {
+    bool detached, bool hidden, bool inheritHandles, bool noWindow,
+    EProcessPriority priority,
+    FPipeHandle hStdin/* = nullptr */,
+    FPipeHandle hStderr/* = nullptr */,
+    FPipeHandle hStdout/* = nullptr */) -> FProcessHandle {
     Assert(pPID);
     Assert(not url.empty());
 
-    // initialize process attributes
-    ::SECURITY_ATTRIBUTES security;
-    security.nLength = sizeof(::SECURITY_ATTRIBUTES);
-    security.lpSecurityDescriptor = NULL;
-    security.bInheritHandle = true;
-
-    // initialize process creation flags
-    ::DWORD createFlags = NORMAL_PRIORITY_CLASS;
-
-    if (priority < 0)
-        createFlags = (priority == -1) ? BELOW_NORMAL_PRIORITY_CLASS : IDLE_PRIORITY_CLASS;
-    else if (priority > 0)
-        createFlags = (priority ==  1) ? ABOVE_NORMAL_PRIORITY_CLASS : HIGH_PRIORITY_CLASS;
-
-    if (detached)
-        createFlags |= DETACHED_PROCESS;
+#if USE_PPE_DEBUG
+    for (FPipeHandle hPipe : { hStdin, hStderr, hStdout }) {
+        if (hPipe) {
+            ::DWORD dwFlags;
+            Verify(::GetHandleInformation(hPipe, &dwFlags));
+            Assert(HANDLE_FLAG_INHERIT & dwFlags);
+        }
+    }
+#endif
 
     // initialize window flags
     ::DWORD dwFlags = 0;
-    ::WORD showWindowFlags = SW_HIDE;
-    if (noWindow) {
-        dwFlags = STARTF_USESHOWWINDOW;
-    }
-    else if (hidden) {
-        dwFlags = STARTF_USESHOWWINDOW;
-        showWindowFlags = SW_SHOWMINNOACTIVE;
-    }
+    ::WORD wShowWindow = SW_HIDE;
 
-    if (readPipe || writePipe)
+    if (!!hStdin | !!hStdout | !!hStderr)
         dwFlags |= STARTF_USESTDHANDLES;
+    if (noWindow || hidden)
+        dwFlags |= STARTF_USESHOWWINDOW;
+    if (hidden)
+        wShowWindow = SW_SHOWMINNOACTIVE;
 
     // initialize startup info
-    ::STARTUPINFO startupInfo = {
-        sizeof(::STARTUPINFO),
-        NULL, NULL, NULL,
-        (::DWORD)CW_USEDEFAULT,
-        (::DWORD)CW_USEDEFAULT,
-        (::DWORD)CW_USEDEFAULT,
-        (::DWORD)CW_USEDEFAULT,
-        (::DWORD)0, (::DWORD)0, (::DWORD)0,
-        (::DWORD)dwFlags,
-        showWindowFlags,
-        0, NULL,
-        readPipe,
-        writePipe,
-        writePipe
-    };
+    ::STARTUPINFOW startupInfo;
+    ::ZeroMemory(&startupInfo, sizeof(startupInfo));
+    startupInfo.cb = (::DWORD)sizeof(startupInfo);
+    startupInfo.dwX = (::DWORD)CW_USEDEFAULT;
+    startupInfo.dwY = (::DWORD)CW_USEDEFAULT;
+    startupInfo.dwXSize = (::DWORD)CW_USEDEFAULT;
+    startupInfo.dwYSize = (::DWORD)CW_USEDEFAULT;
+    startupInfo.dwFlags = dwFlags;
+    startupInfo.wShowWindow = wShowWindow;
+    startupInfo.hStdInput = (hStdin ? hStdin : (detached ? nullptr : ::GetStdHandle(STD_INPUT_HANDLE)) );
+    startupInfo.hStdError = hStderr;
+    startupInfo.hStdOutput = hStdout;
 
-    // create the child process
-    const FWString commandLine = StringFormat(
-        L"\"{0}\" {1}",
-        url,
-        Fmt::Join(
-            args.Map([](const FWStringView& arg) { return Fmt::Quoted(arg, L'"'); }),
-            L' ') );
+    // prepare command-line
+    STACKLOCAL_POD_ARRAY(wchar_t, commandLine, 32768);
+    FormatCommandLineW_(commandLine, url, args);
+
+    // initialize process creation flags
+    ::DWORD dwCreationFlags;
+    switch (priority) {
+    case PPE::EProcessPriority::Realtime:
+        dwCreationFlags = REALTIME_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::High:
+        dwCreationFlags = HIGH_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::AboveNormal:
+        dwCreationFlags = ABOVE_NORMAL_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::Normal:
+        dwCreationFlags = NORMAL_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::BelowNormal:
+        dwCreationFlags = BELOW_NORMAL_PRIORITY_CLASS; break;
+    case PPE::EProcessPriority::Idle:
+        dwCreationFlags = IDLE_PRIORITY_CLASS; break;
+
+    default:
+        AssertNotImplemented();
+    }
+
+    if (detached)
+        dwCreationFlags |= DETACHED_PROCESS;
 
     FWString workingDir;
-    if (optionalWorkingDir.size())
+    if (not optionalWorkingDir.empty())
         workingDir.assign(optionalWorkingDir);
 
+    // create the child process
     ::PROCESS_INFORMATION procInfo;
+    ::ZeroMemory(&procInfo, sizeof(procInfo));
+
     if (not ::CreateProcessW(
-        NULL,
-        (::LPWSTR)commandLine.data(),
-        &security, &security, TRUE,
-        (::DWORD)createFlags, NULL,
-        workingDir.data(),
-        &startupInfo,
-        &procInfo )) {
+        NULL, // don't specify module name, use command-line instead
+        commandLine.data(),
+        NULL, // process security attributes
+        NULL, // primary thread security attributes
+        inheritHandles,
+        dwCreationFlags,
+        NULL, // use parent's environment
+        workingDir.empty() ? nullptr : workingDir.data(),
+        &startupInfo, &procInfo )) {
         const ::DWORD errorCode = ::GetLastError();
 
-        LOG(HAL, Warning, L"CreateProcess failed: {0}", FLastError(errorCode));
+        LOG(HAL, Error, L"CreateProcess failed: {0}\n\turl: {1}", FLastError(errorCode), MakeCStringView(commandLine.data()));
+
         if (errorCode == ERROR_NOT_ENOUGH_MEMORY || errorCode == ERROR_OUTOFMEMORY) {
             // These errors are common enough that we want some available memory information
             const FPlatformMemory::FStats stats = FPlatformMemory::Stats();
@@ -536,8 +812,6 @@ auto FWindowsPlatformProcess::CreateProcess(
                 Fmt::SizeInBytes(stats.UsedPhysical),
                 Fmt::SizeInBytes(stats.AvailablePhysical) );
         }
-
-        LOG(HAL, Warning, L"URL: {0}", commandLine);
         if (pPID != nullptr)
             *pPID = 0;
 
@@ -553,154 +827,24 @@ auto FWindowsPlatformProcess::CreateProcess(
     return procInfo.hProcess;
 }
 //----------------------------------------------------------------------------
-PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(6387) // 'startupInfoEx.lpAttributeList' could be '0':  this does not adhere to the specification for the function 'UpdateProcThreadAttribute'.
-bool FWindowsPlatformProcess::ExecProcess(
-    int* pReturnCode,
-    const FWStringView& url,
-    const TMemoryView<const FWStringView>& args,
-    FStringBuilder* pStdout/* = nullptr */,
-    FStringBuilder* pStderr/* = nullptr */ ) {
-
-    ::STARTUPINFOEXW startupInfoEx;
-    ::ZeroMemory(&startupInfoEx, sizeof(startupInfoEx));
-    startupInfoEx.StartupInfo.cb = (::DWORD)sizeof(startupInfoEx);
-    startupInfoEx.StartupInfo.dwX = (::DWORD)CW_USEDEFAULT;
-    startupInfoEx.StartupInfo.dwY = (::DWORD)CW_USEDEFAULT;
-    startupInfoEx.StartupInfo.dwXSize = (::DWORD)CW_USEDEFAULT;
-    startupInfoEx.StartupInfo.dwYSize = (::DWORD)CW_USEDEFAULT;
-    startupInfoEx.StartupInfo.dwFlags = (::DWORD)STARTF_USESHOWWINDOW;
-    startupInfoEx.StartupInfo.wShowWindow = (::WORD)SW_SHOWMINNOACTIVE;
-    startupInfoEx.StartupInfo.hStdInput = ::GetStdHandle(STD_INPUT_HANDLE);
-
-    ::HANDLE hStdOutRead = NULL;
-    ::HANDLE hStdErrRead = NULL;
-
-    TVector<u8> attributeList;
-
-    if (pStdout || pStderr) {
-        startupInfoEx.StartupInfo.dwFlags |= STARTF_USESTDHANDLES;
-
-        ::SECURITY_ATTRIBUTES security;
-        ::ZeroMemory(&security, sizeof(security));
-        security.nLength = sizeof(::SECURITY_ATTRIBUTES);
-        security.bInheritHandle = TRUE;
-
-        if (pStdout)
-            Verify(::CreatePipe(&hStdOutRead, &startupInfoEx.StartupInfo.hStdOutput, &security, 0));
-        if (pStderr)
-            Verify(::CreatePipe(&hStdErrRead, &startupInfoEx.StartupInfo.hStdError, &security, 0));
-
-        ::SIZE_T bufferSize = 0;
-        if (!::InitializeProcThreadAttributeList(NULL, 1, 0, &bufferSize) && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-            attributeList.resize_AssumeEmpty(bufferSize);
-            startupInfoEx.lpAttributeList = (::LPPROC_THREAD_ATTRIBUTE_LIST)attributeList.data();
-            Verify(::InitializeProcThreadAttributeList(startupInfoEx.lpAttributeList, 1, 0, &bufferSize));
-        }
-
-        ::HANDLE inheritHandles[2] = {
-            startupInfoEx.StartupInfo.hStdOutput,
-            startupInfoEx.StartupInfo.hStdError
-        };
-
-        Verify(::UpdateProcThreadAttribute(startupInfoEx.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, inheritHandles, sizeof(inheritHandles), NULL, NULL));
-    }
-
-    bool succeed = false;
-
-    const FWString commandLine = StringFormat(
-        L"\"{0}\" {1}",
-        url,
-        Fmt::Join(
-            args.Map([](const FWStringView& arg) { return Fmt::Quoted(arg, L'"'); }),
-            L' ') );
-
-    ::PROCESS_INFORMATION procInfo;
-    if (::CreateProcessW(NULL, (::LPWSTR)commandLine.data(), NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS | DETACHED_PROCESS | EXTENDED_STARTUPINFO_PRESENT, NULL, NULL, &startupInfoEx.StartupInfo, &procInfo)) {
-        if (pStdout || pStderr) {
-            do {
-                if (pStdout) ReadPipe(hStdOutRead, *pStdout);
-                if (pStderr) ReadPipe(hStdErrRead, *pStderr);
-
-                Sleep(0);
-
-            } while (IsProcessAlive(procInfo.hProcess));
-
-            if (pStdout) ReadPipe(hStdOutRead, *pStdout);
-            if (pStderr) ReadPipe(hStdErrRead, *pStderr);
-        }
-        else {
-            ::WaitForSingleObject(procInfo.hProcess, INFINITE);
-        }
-
-        if (pReturnCode) {
-            ::DWORD exitCode = 0;
-            Verify(::GetExitCodeProcess(procInfo.hProcess, (::LPDWORD)&exitCode));
-            *pReturnCode = int(exitCode);
-        }
-
-        ::CloseHandle(procInfo.hProcess);
-        ::CloseHandle(procInfo.hThread);
-
-        succeed = true;
-    }
-    else
-    {
-        const ::DWORD errorCode = ::GetLastError();
-
-        // if CreateProcess failed, we should return a useful error code, which GetLastError will have
-        if (pReturnCode)
-            *pReturnCode = int(errorCode);
-
-        LOG(HAL, Warning, L"CreateProc failed : {0}", FLastError(errorCode));
-        if (errorCode == ERROR_NOT_ENOUGH_MEMORY || errorCode == ERROR_OUTOFMEMORY) {
-            // These errors are common enough that we want some available memory information
-            const FPlatformMemory::FStats stats = FPlatformMemory::Stats();
-            LOG(HAL, Warning, TEXT("Mem used: {0}, OS Free {1}"),
-                Fmt::SizeInBytes(stats.UsedPhysical),
-                Fmt::SizeInBytes(stats.AvailablePhysical) );
-        }
-
-        LOG(HAL, Warning, L"URL: {0}", commandLine);
-    }
-
-    if (startupInfoEx.StartupInfo.hStdOutput != NULL)
-        ::CloseHandle(startupInfoEx.StartupInfo.hStdOutput);
-
-    if (startupInfoEx.StartupInfo.hStdError != NULL)
-        ::CloseHandle(startupInfoEx.StartupInfo.hStdError);
-
-    if (hStdOutRead != NULL)
-        ::CloseHandle(hStdOutRead);
-    if (hStdErrRead != NULL)
-        ::CloseHandle(hStdErrRead);
-
-    if (startupInfoEx.lpAttributeList != NULL)
-        ::DeleteProcThreadAttributeList(startupInfoEx.lpAttributeList);
-
-    return succeed;
-}
-PRAGMA_MSVC_WARNING_POP()
-//----------------------------------------------------------------------------
 bool FWindowsPlatformProcess::ExecElevatedProcess(
     int* pReturnCode,
     const FWStringView& url,
-    const TMemoryView<const FWStringView>& args ) {
+    const TMemoryView<const FWStringView>& args) {
 
-    const FWString urlNullTerminated(url);
-    const FWString argsNullTerminated = ToWString(
-        Fmt::Join(
-            args.Map([](const FWStringView& arg) { return Fmt::Quoted(arg, L'"'); }),
-            L' ') );
+    // prepare command-line
+    FWString nullTerminatedFile{ url };
+    STACKLOCAL_POD_ARRAY(wchar_t, nullTerminatedArgs, 32768);
+    FormatCommandLineW_(nullTerminatedArgs, {}, args);
 
     ::SHELLEXECUTEINFOW shellExecuteInfo;
     ::ZeroMemory(&shellExecuteInfo, sizeof(shellExecuteInfo));
     shellExecuteInfo.cbSize = sizeof(shellExecuteInfo);
     shellExecuteInfo.fMask = SEE_MASK_UNICODE | SEE_MASK_NOCLOSEPROCESS;
-    shellExecuteInfo.lpFile = urlNullTerminated.data();
+    shellExecuteInfo.lpFile = nullTerminatedFile.data();
     shellExecuteInfo.lpVerb = L"runas";
     shellExecuteInfo.nShow = SW_SHOW;
-    shellExecuteInfo.lpParameters = argsNullTerminated.data();
+    shellExecuteInfo.lpParameters = nullTerminatedArgs.data();
 
     bool succeed = false;
     if (::ShellExecuteEx(&shellExecuteInfo))
@@ -821,6 +965,8 @@ bool FWindowsPlatformProcess::EditWithDefaultApp(const FWStringView& filename) {
     }
 }
 //----------------------------------------------------------------------------
+// Semaphores
+//----------------------------------------------------------------------------
 auto FWindowsPlatformProcess::CreateSemaphore(const char* name, bool create, size_t maxLocks) -> FSemaphore {
     Assert(name);
 
@@ -898,6 +1044,8 @@ bool FWindowsPlatformProcess::DestroySemaphore(FSemaphore semaphore) {
     }
 }
 //----------------------------------------------------------------------------
+// Dynamic libraries (DLL)
+//----------------------------------------------------------------------------
 auto FWindowsPlatformProcess::AttachToDynamicLibrary(const wchar_t* name) -> FDynamicLibraryHandle {
     Assert(name);
 
@@ -913,13 +1061,17 @@ void FWindowsPlatformProcess::DetachFromDynamicLibrary(FDynamicLibraryHandle lib
 auto FWindowsPlatformProcess::OpenDynamicLibrary(const wchar_t* name) -> FDynamicLibraryHandle {
     Assert(name);
 
-    return ::LoadLibraryW(name);
+    const FDynamicLibraryHandle hDll = ::LoadLibraryW(name);
+    CLOG(NULL == hDll, HAL, Error, L"LoadLibraryW({0}) failed with : {1}", MakeCStringView(name), FLastError());
+
+    return hDll;
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::CloseDynamicLibrary(FDynamicLibraryHandle lib) {
     Assert(lib);
 
-    Verify(::FreeLibrary(lib));
+    if (not ::FreeLibrary(lib))
+        LOG_LASTERROR(HAL, L"FreeLibrary()");
 }
 //----------------------------------------------------------------------------
 FWString FWindowsPlatformProcess::DynamicLibraryFilename(FDynamicLibraryHandle lib) {
@@ -927,7 +1079,7 @@ FWString FWindowsPlatformProcess::DynamicLibraryFilename(FDynamicLibraryHandle l
 
     wchar_t buffer[MAX_PATH + 1];
     const ::DWORD len = ::GetModuleFileNameW(lib, buffer, MAX_PATH);
-    CLOG(len == 0, HAL, Fatal, L"GetModuleFileName({0}) failed with : {1}", (void*)lib, FLastError());
+    CLOG(len == 0, HAL, Error, L"GetModuleFileName({0}) failed with : {1}", (void*)lib, FLastError());
 
     return FWString(buffer, checked_cast<size_t>(len));
 }

@@ -802,7 +802,7 @@ static NO_INLINE void Test_InteractiveConsole_() {
     {
         PRTTIConsole_ env{ NEW_RTTI(FRTTIConsole_) };
         env->PID = u32(FPlatformProcess::CurrentPID());
-        env->Hostname = FPlatformProcess::ProcessName(FPlatformProcess::CurrentPID());
+        VerifyRelease(FPlatformProcess::Name(&env->Hostname, FPlatformProcess::CurrentProcess()));
 
         char buffer[1024];
         Parser::FParseContext globalContext(Meta::ForceInit);

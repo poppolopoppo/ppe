@@ -1777,11 +1777,13 @@ void Test_Containers() {
 
     LOG(Test_Containers, Emphasis, L"starting container tests ...");
 
-    const EProcessPriority prio = FPlatformProcess::Priority();
-    FPlatformProcess::SetPriority(EProcessPriority::Realtime);
-    const auto ANONYMIZE(scopeExit) { Meta::on_scope_exit([prio]() {
-        FPlatformProcess::SetPriority(prio);
-    })};
+    EProcessPriority prio = EProcessPriority::Normal;
+    Verify(FPlatformProcess::Priority(&prio, FPlatformProcess::CurrentProcess()));
+    Verify(FPlatformProcess::SetPriority(FPlatformProcess::CurrentProcess(), EProcessPriority::Realtime));
+
+    ON_SCOPE_EXIT([prio]() {
+        FPlatformProcess::SetPriority(FPlatformProcess::CurrentProcess(), prio);
+    });
 
     Test_StealFromDifferentAllocator_();
     Test_SSEHashSet();

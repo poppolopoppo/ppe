@@ -1,6 +1,8 @@
 #pragma once
 
 #include "HAL/TargetPlatform.h"
+#include "HAL/Generic/GenericPlatformMemory.h"
+#include "HAL/Generic/GenericPlatformThread.h"
 #include "IO/String_fwd.h"
 
 namespace PPE {
@@ -41,33 +43,58 @@ public: // must be defined for every platform
     using FProcessHandle = void*;
 
     static FProcessId CurrentPID() = delete;
-    static void Daemonize() = delete; // make process run as system service
+    static FProcessHandle CurrentProcess() = delete;
 
-    static EProcessPriority Priority() = delete;
-    static void SetPriority(EProcessPriority priority) = delete;
+    static void Daemonize() = delete; // make process run as system service
+    static bool EnableDebugPrivileges() = delete; // ask for elevated access
 
     static bool IsForeground() = delete; // returns true if this app is visible and selected
     static bool IsFirstInstance() = delete; // returns false if the same process is already running
 
-    static bool IsProcessAlive(FProcessId pid) = delete;
     static bool IsProcessAlive(FProcessHandle process) = delete;
 
-    static FProcessHandle OpenProcess(FProcessId pid) = delete;
+    static FProcessHandle OpenProcess(FProcessId pid, bool fullAccess = true) = delete;
+
     static void WaitForProcess(FProcessHandle process) = delete; // stall until process is closed
+    static bool WaitForProcess(FProcessHandle process, size_t timeoutMs) = delete;
+
     static void CloseProcess(FProcessHandle process) = delete;
     static void TerminateProcess(FProcessHandle process, bool killTree) = delete;
 
-    static FString ProcessName(FProcessId pid) = delete;
-    static u64 ProcessMemoryUsage(FProcessId pid) = delete;
+    static bool FindByName(FProcessId* pPid, const FWStringView& name) = delete;
+
+    //------------------------------------------------------------------------
+    // process infos
+
+    using FAffinityMask = FGenericPlatformThread::FAffinityMask;
+    using FMemoryStats = FGenericPlatformMemoryStats;
+
+    STATIC_CONST_INTEGRAL(FAffinityMask, AllCoresAffinity, FGenericPlatformThread::AllCoresAffinity);
+
+    static bool ExitCode(int* pExitCode, FProcessHandle process) = delete;
+
+    static bool MemoryStats(FMemoryStats* pStats, FProcessHandle process) = delete;
+
+    static bool Name(FString* name, FProcessHandle process) = delete;
+
+    static bool Pid(FProcessId* pPid, FProcessHandle process) = delete;
+
+    static bool Priority(EProcessPriority* pPriority, FProcessHandle process) = delete;
+    static bool SetPriority(FProcessHandle process, EProcessPriority priority) = delete;
+
+    static FAffinityMask AffinityMask(FProcessHandle process) = delete;
+    static bool SetAffinityMask(FProcessHandle process, FAffinityMask mask) = delete;
 
     //------------------------------------------------------------------------
     // pipe
 
     using FPipeHandle = void*;
 
-    static bool CreatePipe(FPipeHandle* pRead, FPipeHandle* pWrite) = delete;
-    static bool ReadPipe(FPipeHandle read, FStringBuilder& buffer) = delete;
-    static bool WritePipe(FPipeHandle write, const FStringView& buffer) = delete;
+    static bool IsPipeBlocked(FPipeHandle pipe) = delete;
+    static bool CreatePipe(FPipeHandle* pRead, FPipeHandle* pWrite, bool shareRead) = delete;
+    static size_t PeekPipe(FPipeHandle read) = delete;
+    static size_t ReadPipe(FPipeHandle read, const FRawMemory& buffer) = delete;
+    static size_t WritePipe(FPipeHandle write, const FRawMemoryConst& buffer) = delete;
     static void ClosePipe(FPipeHandle read, FPipeHandle write) = delete;
 
     //------------------------------------------------------------------------
@@ -77,17 +104,12 @@ public: // must be defined for every platform
         FProcessId* pPID,
         const FWStringView& url,
         const TMemoryView<const FWStringView>& args,
-        bool detached, bool hidden, bool noWindow, int priority,
         const FWStringView& optionalWorkingDir,
-        FPipeHandle readPipe = nullptr,
-        FPipeHandle writePipe = nullptr ) = delete;
-
-    static bool ExecProcess(
-        int* pReturnCode,
-        const FWStringView& url,
-        const TMemoryView<const FWStringView>& args,
-        FStringBuilder* pStdout = nullptr,
-        FStringBuilder* pStderr = nullptr ) = delete;
+        bool detached, bool hidden, bool inheritHandles, bool noWindow,
+        EProcessPriority priority,
+        FPipeHandle hStdin = nullptr,
+        FPipeHandle hStderr = nullptr,
+        FPipeHandle hStdout = nullptr ) = delete;
 
     static bool ExecElevatedProcess(
         int* pReturnCode,

@@ -7,6 +7,7 @@
 #include "Diagnostic/Logger.h"
 #include "IO/Format.h"
 #include "IO/StringBuilder.h"
+#include "Meta/Utility.h"
 
 #include "HAL/Windows/DbgHelpWrapper.h"
 #include "HAL/Windows/LastError.h"
@@ -137,12 +138,16 @@ static bool LoadModule_(const FDbghelpWrapper::FLocked& dbghelp,
 //----------------------------------------------------------------------------
 // Fetch all symbols for modules currently loaded by this process
 static void LoadModules_(const FDbghelpWrapper::FLocked& dbghelp) {
-    ::HANDLE hProcess = ::GetCurrentProcess();
-    ::DWORD process_id = ::GetCurrentProcessId();
-    ::HANDLE snap = ::CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, process_id);
+    const ::HANDLE hProcess = ::GetCurrentProcess();
+    const ::DWORD process_id = ::GetCurrentProcessId();
+    const ::HANDLE snap = ::CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, process_id);
 
-    if (snap == (::HANDLE)-1)
+    if (snap == INVALID_HANDLE_VALUE)
         return;
+
+    ON_SCOPE_EXIT([&]() {
+        ::CloseHandle(snap);
+    });
 
     ::MODULEENTRY32 module_entry;
     module_entry.dwSize = sizeof(::MODULEENTRY32);
@@ -158,17 +163,19 @@ static void LoadModules_(const FDbghelpWrapper::FLocked& dbghelp) {
 
         module_found = ::Module32Next(snap, &module_entry);
     }
-
-    ::CloseHandle(snap);
 }
 //----------------------------------------------------------------------------
 // Fetch symbols for module pointed at by given program counter
 static bool LoadModuleAtProgramCounter_(const FDbghelpWrapper::FLocked& dbghelp, void* pc) {
-    ::DWORD process_id = ::GetCurrentProcessId();
-    ::HANDLE snap = ::CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, process_id);
+    const ::DWORD process_id = ::GetCurrentProcessId();
+    const ::HANDLE snap = ::CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, process_id);
 
-    if (snap == (::HANDLE) - 1)
+    if (snap == INVALID_HANDLE_VALUE)
         return false;
+
+    ON_SCOPE_EXIT([&]() {
+        ::CloseHandle(snap);
+    });
 
     ::MODULEENTRY32 module_entry;
     module_entry.dwSize = sizeof(::MODULEENTRY32);
@@ -188,8 +195,6 @@ static bool LoadModuleAtProgramCounter_(const FDbghelpWrapper::FLocked& dbghelp,
 
         module_found = ::Module32Next(snap, &module_entry);
     }
-
-    ::CloseHandle(snap);
 
     return false;
 }
@@ -216,7 +221,7 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
     LOG(HAL, Info, L"path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
 }
 //----------------------------------------------------------------------------
-} //!namepsace
+} //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
