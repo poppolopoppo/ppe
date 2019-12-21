@@ -3,6 +3,7 @@
 #include "IO/BufferedStream.h"
 
 #include "HAL/PlatformMemory.h"
+#include "Misc/Function.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -412,6 +413,19 @@ size_t FBufferedStreamWriter::WriteSome(const void* storage, size_t eltsize, siz
     }
 
     return written;
+}
+//----------------------------------------------------------------------------
+size_t FBufferedStreamWriter::StreamCopy(const read_f& read, size_t blockSz) {
+    blockSz = Min(_bufferSize - _offset, blockSz);
+    Assert(blockSz);
+
+    blockSz = read(FRawMemory(_buffer + _offset, blockSz));
+
+    _offset += blockSz;
+    if (_offset == _bufferSize)
+        Verify(CommitBuffer_());
+
+    return blockSz;
 }
 //----------------------------------------------------------------------------
 void FBufferedStreamWriter::Flush() {

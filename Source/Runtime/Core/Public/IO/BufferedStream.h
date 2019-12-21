@@ -101,6 +101,9 @@ public: // IStreamWriter
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
 
 public: // IBufferedStreamWriter
+    using IBufferedStreamWriter::read_f;
+    virtual size_t StreamCopy(const read_f& read, size_t blockSz) override final;
+
     virtual void Flush() override final;
 
 private:

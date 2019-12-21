@@ -6,6 +6,7 @@
 #include "HAL/PlatformMemory.h"
 #include "IO/StreamProvider.h"
 #include "Memory/RefPtr.h"
+#include "Misc/Function.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -48,6 +49,7 @@ public:
 
     void resize(size_t count, bool keepData = true);
     void reserve(size_t count);
+    void reserve_Additional(size_t count);
     void shrink_to_fit();
     void clear();
 
@@ -120,6 +122,9 @@ public: // IStreamWriter
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
 
 public: // IBufferedStreamWriter
+    using typename IBufferedStreamWriter::read_f;
+    virtual size_t StreamCopy(const read_f& read, size_t blockSz) override final;
+
     virtual void Flush() override final {}
 
 private:
@@ -176,6 +181,11 @@ template <typename _Allocator>
 void TMemoryStream<_Allocator>::reserve(size_t count) {
     if (count > _storage.size()) // can only grow, except in shrink_to_fit() or clear_ReleaseMemory()
         _storage.Resize_KeepData(allocator_traits::SnapSize(count));
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+void TMemoryStream<_Allocator>::reserve_Additional(size_t count) {
+    reserve(_offsetO + count);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -369,6 +379,20 @@ bool TMemoryStream<_Allocator>::Write(const void* storage, std::streamsize sizeI
 template <typename _Allocator>
 size_t TMemoryStream<_Allocator>::WriteSome(const void* storage, size_t eltsize, size_t count) {
     return (TMemoryStream::Write(storage, std::streamsize(eltsize) * count) ? count : 0);
+}
+//----------------------------------------------------------------------------
+// IBufferedStreamWriter
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+size_t TMemoryStream<_Allocator>::StreamCopy(const read_f& read, size_t blockSz) {
+    reserve_Additional(blockSz);
+
+    blockSz = read(_storage.MakeView().SubRange(_offsetO, blockSz));
+
+    _offsetO += blockSz;
+    _size = Max(_offsetO, _size);
+
+    return blockSz;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

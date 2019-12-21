@@ -2,15 +2,16 @@
 
 #include "Core.h"
 
+#include "Container/RawStorage_fwd.h"
+#include "IO/Stream_fwd.h"
 #include "IO/StreamPolicies.h"
 #include "IO/String_fwd.h"
 #include "IO/StringView.h"
 #include "Memory/UniquePtr.h"
 #include "Meta/AlignedStorage.h"
+#include "Misc/Function_fwd.h"
 
 namespace PPE {
-template <typename T, typename _Allocator>
-class TRawStorage;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -116,6 +117,9 @@ class PPE_CORE_API IBufferedStreamWriter : public IStreamWriter {
     virtual class IBufferedStreamWriter* ToBufferedO() override final { return this; }
 
 public:
+    using read_f = TFunction<size_t(const FRawMemory&)>;
+    virtual size_t StreamCopy(const read_f& read, size_t blockSz) = 0;
+
     virtual void Flush() = 0;
 
 public: // helpers

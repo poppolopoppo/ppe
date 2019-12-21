@@ -3,6 +3,7 @@
 #include "Memory/MemoryProvider.h"
 
 #include "HAL/PlatformMemory.h"
+#include "Misc/Function.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -129,7 +130,7 @@ bool FMemoryViewWriter::Write(const void* storage, std::streamsize sizeInBytes) 
     FPlatformMemory::Memcpy(_rawData.Pointer() + _offsetO, storage, sizeT);
 
     _offsetO += sizeT;
-    _size = std::max(_offsetO, _size);
+    _size = Max(_offsetO, _size);
     return true;
 }
 //----------------------------------------------------------------------------
@@ -150,13 +151,23 @@ bool FMemoryViewWriter::WriteAlignmentPadding(size_t boundary, u8 padvalue /* = 
 
     if (_offsetO != offset) {
         Assert(_offsetO < offset);
-        _size = std::max(_size, offset);
+        _size = Max(_size, offset);
         FPlatformMemory::Memset(_rawData.Pointer() + _offsetO, padvalue, offset - _offsetO);
         _offsetO = offset;
     }
 
     Assert(Meta::IsAligned(boundary, _rawData.Pointer() + _offsetO));
     return true;
+}
+//----------------------------------------------------------------------------
+size_t FMemoryViewWriter::StreamCopy(const read_f& read, size_t blockSz) {
+    blockSz = Min(_rawData.SizeInBytes() - _offsetO, blockSz);
+    blockSz = read(_rawData.SubRange(_offsetO, blockSz));
+
+    _offsetO += blockSz;
+    _size = Max(_offsetO, _size);
+
+    return blockSz;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
