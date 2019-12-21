@@ -203,11 +203,28 @@ public:
     TMemoryView<U> Cast() const;
     TMemoryView<const u8> RawView() const { return Cast<const u8>(); }
 
-    template <typename _Transform>
-    auto Map(const _Transform& transform) const {
+    template <typename _Map>
+    auto Map(_Map&& map) const {
         return MakeIterable(
-            MakeOutputIterator(begin(), transform),
-            MakeOutputIterator(end(), transform) );
+            MakeOutputIterator(begin(), map),
+            MakeOutputIterator(end(), map) );
+    }
+
+    template <typename _Map, typename _Reduce>
+    auto MapReduce(_Map&& map, _Reduce&& reduce,
+        Meta::TDecay<decltype(std::declval<_Map>()(std::declval<T>()))>&& init = {} ) const {
+        auto reduced{ std::move(init) };
+        for (T& elt : *this)
+            reduced = reduce(reduced, map(elt));
+        return reduced;
+    }
+
+    template <typename _Map>
+    auto Sum(_Map&& map,
+        Meta::TDecay<decltype(std::declval<_Map>()(std::declval<T>()))>&& init = {} ) const {
+        return MapReduce(std::move(map),
+            [](auto a, auto b) CONSTEXPR NOEXCEPT{ return a + b; },
+            std::move(init) );
     }
 
     // implicit cast to TIterable<>
