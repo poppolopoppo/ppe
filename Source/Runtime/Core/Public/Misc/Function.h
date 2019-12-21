@@ -184,6 +184,9 @@ struct TFunctionVTable {
 template <typename T>
 struct TFunctionTupleArg { using type = T; };
 //----------------------------------------------------------------------------
+template <>
+struct TFunctionTupleArg<void*> { using type = void*; };
+//----------------------------------------------------------------------------
 // Wraps references with pointers to keep value semantics :
 template <typename T>
 struct TFunctionTupleArg<T&> {
