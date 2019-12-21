@@ -188,14 +188,14 @@ const T* CastChecked(const FMetaObject* p) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto Cast(const PMetaObject& p) {
-    return Cast<T>(p.get());
-}
+auto Cast(const PMetaObject& p) { return Cast<T>(p.get()); }
+template <typename T>
+auto CastChecked(const PMetaObject& p) { return Cast<T>(p.get()); }
 //----------------------------------------------------------------------------
 template <typename T>
-auto CastChecked(const PMetaObject& p) {
-    return Cast<T>(p.get());
-}
+auto Cast(const PCMetaObject& p) { return Cast<T>(p.get()); }
+template <typename T>
+auto CastChecked(const PCMetaObject& p) { return Cast<T>(p.get()); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
