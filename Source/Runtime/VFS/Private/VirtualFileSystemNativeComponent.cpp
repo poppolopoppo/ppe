@@ -187,6 +187,12 @@ IVirtualFileSystemComponentReadWritable* FVirtualFileSystemNativeComponent::Read
     return (_openMode ^ EOpenPolicy::ReadWritable ? this : nullptr);
 }
 //----------------------------------------------------------------------------
+FWString FVirtualFileSystemNativeComponent::Unalias(const FDirpath& aliased) const {
+    TBasicStringBuilder<FileSystem::char_type> nativePath;
+    Unalias_(nativePath, aliased, _alias, _target);
+    return nativePath.ToString();
+}
+//----------------------------------------------------------------------------
 FWString FVirtualFileSystemNativeComponent::Unalias(const FFilename& aliased) const {
     TBasicStringBuilder<FileSystem::char_type> nativePath;
     Unalias_(nativePath, aliased, _alias, _target);

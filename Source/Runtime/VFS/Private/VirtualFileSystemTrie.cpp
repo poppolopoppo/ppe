@@ -179,7 +179,24 @@ UStreamReadWriter FVirtualFileSystemTrie::OpenReadWritable(const FFilename& file
     return result;
 }
 //----------------------------------------------------------------------------
+FWString FVirtualFileSystemTrie::Unalias(const FDirpath& aliased) const {
+    if (aliased.empty())
+        return FWString{};
+
+    Assert_NoAssume(aliased.IsAbsolute());
+    READSCOPELOCK(_barrier);
+    SVirtualFileSystemComponent const component{ VFSComponent_(aliased.MountingPoint(), _nodes) };
+    FWString result;
+    if (component)
+        result = component->Unalias(aliased);
+    return result;
+}
+//----------------------------------------------------------------------------
 FWString FVirtualFileSystemTrie::Unalias(const FFilename& aliased) const {
+    if (aliased.empty())
+        return FWString{};
+
+    Assert_NoAssume(aliased.IsAbsolute());
     READSCOPELOCK(_barrier);
     SVirtualFileSystemComponent const component{ VFSComponent_(aliased.MountingPoint(), _nodes) };
     FWString result;

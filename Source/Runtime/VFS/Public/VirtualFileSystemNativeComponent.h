@@ -24,6 +24,7 @@ public:
     virtual IVirtualFileSystemComponentWritable* Writable() override final;
     virtual IVirtualFileSystemComponentReadWritable* ReadWritable() override final;
 
+    virtual FWString Unalias(const FDirpath& aliased) const override final;
     virtual FWString Unalias(const FFilename& aliased) const override final;
 
 private: // IVirtualFileSystemComponentReadable

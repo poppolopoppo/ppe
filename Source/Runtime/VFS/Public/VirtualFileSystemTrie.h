@@ -44,6 +44,7 @@ public:
     UStreamWriter OpenWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None) const;
     UStreamReadWriter OpenReadWritable(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None) const;
 
+    FWString Unalias(const FDirpath& aliased) const;
     FWString Unalias(const FFilename& aliased) const;
 
     void Clear();

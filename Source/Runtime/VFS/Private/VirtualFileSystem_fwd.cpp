@@ -23,6 +23,14 @@ FVirtualFileSystemTrie& VFS() {
     return FVirtualFileSystem::Get();
 }
 //----------------------------------------------------------------------------
+FWString VFS_Unalias(const FDirpath& dirpath) {
+    return VFS().Unalias(dirpath);
+}
+//----------------------------------------------------------------------------
+FWString VFS_Unalias(const FFilename& filename) {
+    return VFS().Unalias(filename);
+}
+//----------------------------------------------------------------------------
 bool VFS_DirectoryExists(const FDirpath& dirpath, EExistPolicy policy/* = ExistPolicy::Exists */) {
     return VFS().DirectoryExists(dirpath, policy);
 }

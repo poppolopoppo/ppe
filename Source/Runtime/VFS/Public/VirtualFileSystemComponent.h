@@ -38,6 +38,7 @@ public:
     virtual IVirtualFileSystemComponentWritable* Writable() = 0;
     virtual IVirtualFileSystemComponentReadWritable* ReadWritable() = 0;
 
+    virtual FWString Unalias(const FDirpath& aliased) const = 0;
     virtual FWString Unalias(const FFilename& aliased) const = 0;
 
     const FDirpath& Alias() const { return _alias; }

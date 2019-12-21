@@ -11,7 +11,8 @@
 #include "Allocator/Allocation.h"
 #include "Container/RawStorage_fwd.h"
 #include "IO/FileSystem_fwd.h"
-#include "IO/Regexp.h"
+#include "IO/regexp.h"
+#include "IO/String_fwd.h"
 #include "IO/StreamPolicies.h"
 #include "IO/StreamProvider.h"
 #include "Memory/UniquePtr.h"
@@ -32,6 +33,9 @@ class TMemoryView;
 using FRawStorage = TRawStorage<u8, ALLOCATOR(FileSystem)>;
 //----------------------------------------------------------------------------
 PPE_VFS_API class FVirtualFileSystemTrie& VFS();
+//----------------------------------------------------------------------------
+PPE_VFS_API FWString VFS_Unalias(const FDirpath& dirpath);
+PPE_VFS_API FWString VFS_Unalias(const FFilename& filename);
 //----------------------------------------------------------------------------
 PPE_VFS_API bool VFS_DirectoryExists(const FDirpath& dirpath, EExistPolicy policy = EExistPolicy::Exists);
 PPE_VFS_API bool VFS_FileExists(const FFilename& filename, EExistPolicy policy = EExistPolicy::Exists);
