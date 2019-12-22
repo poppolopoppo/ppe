@@ -57,13 +57,26 @@ protected:
     void AddDynamicDep(FBuildNode* node);
     void AddRuntimeDep(FBuildNode* node);
 
-    void AddStaticDeps(const TMemoryView<const SBuildNode>& nodes);
-    void AddDynamicDeps(const TMemoryView<const SBuildNode>& nodes);
-    void AddRuntimeDeps(const TMemoryView<const SBuildNode>& nodes);
+    template <typename _It>
+    void AddStaticDeps(_It first, _It last) {
+        _staticDeps.reserve_Additional(std::distance(first, last));
+        for (; first != last; ++first)
+            AddStaticDep(first->get());
+    }
 
-    void AddStaticDeps(const TMemoryView<const PBuildNode>& nodes);
-    void AddDynamicDeps(const TMemoryView<const PBuildNode>& nodes);
-    void AddRuntimeDeps(const TMemoryView<const PBuildNode>& nodes);
+    template <typename _It>
+    void AddDynamicDeps(_It first, _It last) {
+        _dynamicDeps.reserve_Additional(std::distance(first, last));
+        for (; first != last; ++first)
+            AddDynamicDep(first->get());
+    }
+
+    template <typename _It>
+    void AddRuntimeDeps(_It first, _It last) {
+        _runtimeDeps.reserve_Additional(std::distance(first, last));
+        for (; first != last; ++first)
+            AddRuntimeDep(first->get());
+    }
 
 private:
     using FDependencies = VECTORINSITU(BuildGraph, PBuildNode, 3);

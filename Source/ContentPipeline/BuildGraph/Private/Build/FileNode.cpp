@@ -32,11 +32,11 @@ FFileNode::FFileNode(const FFilename& filename) NOEXCEPT {
     SetFilename(filename);
 }
 //----------------------------------------------------------------------------
-EBuildResult FFileNode::Scan(FScanContext& ctx) {
+EBuildResult FFileNode::Scan(FScanContext&) {
     return EBuildResult::UpToDate;
 }
 //----------------------------------------------------------------------------
-EBuildResult FFileNode::Import(FBuildContext& ctx) {
+EBuildResult FFileNode::Import(FBuildContext&) {
     return EBuildResult::Built; // always call Process()
 }
 //----------------------------------------------------------------------------
