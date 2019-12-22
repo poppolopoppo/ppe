@@ -1297,8 +1297,7 @@ void* FMallocBinned::Realloc(void* ptr, size_t size) {
 
             // need to align on 16 for Memstream()
             const size_t cpy = ROUND_TO_NEXT_16(Min(old, size));
-            Assert_NoAssume(cpy <= FMallocBinned::SizeClasses[
-                MakeBinnedClass_(Min(old, size))]);
+            Assert_NoAssume(cpy <= RegionSize(newp));
 
             // copy previous data to new block without polluting caches
             FPlatformMemory::Memstream(newp, ptr, cpy);
