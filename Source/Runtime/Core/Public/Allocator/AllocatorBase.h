@@ -84,7 +84,7 @@ using if_has_deallocate_ = decltype(std::declval<T&>().Deallocate(std::declval<F
 //----------------------------------------------------------------------------
 template <typename T>
 using is_allocator_t = std::bool_constant<
-    Meta::has_defined_v<details::if_has_allocate_, T> and
+    Meta::has_defined_v<details::if_has_allocate_, T> &&
     Meta::has_defined_v<details::if_has_deallocate_, T>
     >;
 //----------------------------------------------------------------------------
