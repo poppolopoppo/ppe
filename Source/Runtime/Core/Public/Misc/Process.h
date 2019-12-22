@@ -2,9 +2,10 @@
 
 #include "Core_fwd.h"
 
-#include "HAL/PlatformProcess.h"
 #include "Container/RawStorage_fwd.h"
-#include "IO/String_fwd.h"
+#include "HAL/PlatformProcess.h"
+#include "IO/Stream_fwd.h"
+#include "IO/String.h"
 #include "Meta/enum.h"
 
 namespace PPE {
@@ -29,6 +30,8 @@ public:
         RedirectStdin   = 1<<4,
         RedirectStderr  = 1<<5,
         RedirectStdout  = 1<<6,
+
+        StderrToStdout  = 1<<7,
     };
 
     FProcess() NOEXCEPT;
@@ -76,21 +79,30 @@ public:
     void Swap(FProcess& other) NOEXCEPT;
 
 public:
-    static int CaptureOutput(
-        FRawStorage* pStdout,
-        FRawStorage* pStderr,
-        const FWStringView& url,
-        const TMemoryView<const FWStringView>& args,
-        const FWStringView& optionalWorkingDir,
-        EProcessFlags flags = None,
-        EProcessPriority priority = EProcessPriority::Normal );
-
     static FProcess Current();
 
     static FProcess Create(
-        const FWStringView& url,
-        const TMemoryView<const FWStringView>& args,
-        const FWStringView& optionalWorkingDir,
+        const FWString& executable,
+        const FWString& parameters = FWString{},
+        const FWString& workingDir = FWString{},
+        EProcessFlags flags = None,
+        EProcessPriority priority = EProcessPriority::Normal );
+
+    static int CaptureOutput(
+        FRawStorage* pStdout,
+        FRawStorage* pStderr,
+        const FWString& executable,
+        const FWString& parameters = FWString{},
+        const FWString& workingDir = FWString{},
+        EProcessFlags flags = None,
+        EProcessPriority priority = EProcessPriority::Normal );
+
+    static int CaptureOutput(
+        IBufferedStreamWriter* pStdout,
+        IBufferedStreamWriter* pStderr,
+        const FWString& executable,
+        const FWString& parameters = FWString{},
+        const FWString& workingDir = FWString{},
         EProcessFlags flags = None,
         EProcessPriority priority = EProcessPriority::Normal );
 

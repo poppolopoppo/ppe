@@ -123,7 +123,7 @@ static bool OpenWebURL_(const FWStringView& url) {
         }
 
         // Now that we have the shell open command to use, run the shell command in the open process with any and all parameters.
-        if (FWindowsPlatformProcess::ExecDetachedProcess(browserOpenCommand))
+        if (FWindowsPlatformProcess::ExecDetachedProcess(browserOpenCommand.data(), nullptr, nullptr))
             return true;
     }
 
@@ -141,29 +141,31 @@ static bool OpenWebURL_(const FWStringView& url) {
     return false;
 }
 //----------------------------------------------------------------------------
+// CreateProcessW() can reuse given command line buffer internally
 // https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw
-static void FormatCommandLineW_(
-    const TMemoryView<wchar_t>& cmdline,
-    const FWStringView& url, const TMemoryView<const FWStringView>& args ) {
-    Assert_NoAssume(not url.empty());
+struct FWindowsCommandLine_ {
+    wchar_t Data[32768];
 
-    FMemoryViewWriter writer(cmdline);
-    FWTextWriter oss(&writer);
+    FWindowsCommandLine_(const wchar_t* executable, const wchar_t* parameters) {
+        FMemoryViewWriter writer(Data);
+        FWTextWriter oss(&writer);
 
-    if (HasSpace(url))
-        oss << Fmt::Quoted(url, Fmt::DoubleQuote);
-    else
-        oss << url;
-
-    for (const FWStringView& arg : args) {
-        if (arg.empty() || HasSpace(arg))
-            oss << Fmt::Space << Fmt::Quoted(arg, Fmt::DoubleQuote);
+        FWStringView exe{ MakeCStringView(executable) };
+        if (HasSpace(exe) && (exe.front() != L'"') && (exe.front() != L'\''))
+            oss << Fmt::DoubleQuote << exe << Fmt::DoubleQuote;
         else
-            oss << Fmt::Space << arg;
+            oss << exe;
+
+        if (parameters)
+            oss << Fmt::Space << MakeCStringView(parameters);
+
+        oss << Eos;
     }
 
-    oss << Eos;
-}
+    operator wchar_t* () NOEXCEPT {
+        return Data;
+    }
+};
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
@@ -672,7 +674,8 @@ size_t FWindowsPlatformProcess::ReadPipe(FPipeHandle read, const FRawMemory& buf
         return checked_cast<size_t>(bytesRead);
     }
     else {
-        LOG_LASTERROR(HAL, L"ReadFile");
+        Assert(bytesRead == 0);
+        //LOG_LASTERROR(HAL, L"ReadFile"); // too much verbose
         return 0;
     }
 }
@@ -710,16 +713,16 @@ void FWindowsPlatformProcess::ClosePipe(FPipeHandle read, FPipeHandle write) {
 //----------------------------------------------------------------------------
 auto FWindowsPlatformProcess::CreateProcess(
     FProcessId* pPID,
-    const FWStringView& url,
-    const TMemoryView<const FWStringView>& args,
-    const FWStringView& optionalWorkingDir,
+    const wchar_t* executable,
+    const wchar_t* parameters,
+    const wchar_t* workingDir,
     bool detached, bool hidden, bool inheritHandles, bool noWindow,
     EProcessPriority priority,
     FPipeHandle hStdin/* = nullptr */,
     FPipeHandle hStderr/* = nullptr */,
     FPipeHandle hStdout/* = nullptr */) -> FProcessHandle {
     Assert(pPID);
-    Assert(not url.empty());
+    Assert(executable);
 
 #if USE_PPE_DEBUG
     for (FPipeHandle hPipe : { hStdin, hStderr, hStdout }) {
@@ -756,10 +759,6 @@ auto FWindowsPlatformProcess::CreateProcess(
     startupInfo.hStdError = hStderr;
     startupInfo.hStdOutput = hStdout;
 
-    // prepare command-line
-    STACKLOCAL_POD_ARRAY(wchar_t, commandLine, 32768);
-    FormatCommandLineW_(commandLine, url, args);
-
     // initialize process creation flags
     ::DWORD dwCreationFlags;
     switch (priority) {
@@ -783,27 +782,27 @@ auto FWindowsPlatformProcess::CreateProcess(
     if (detached)
         dwCreationFlags |= DETACHED_PROCESS;
 
-    FWString workingDir;
-    if (not optionalWorkingDir.empty())
-        workingDir.assign(optionalWorkingDir);
-
     // create the child process
     ::PROCESS_INFORMATION procInfo;
     ::ZeroMemory(&procInfo, sizeof(procInfo));
 
+    // Prepare executable path and parameters
+    FWindowsCommandLine_ commandLine{ executable, parameters };
+
     if (not ::CreateProcessW(
         NULL, // don't specify module name, use command-line instead
-        commandLine.data(),
+        commandLine,
         NULL, // process security attributes
         NULL, // primary thread security attributes
         inheritHandles,
         dwCreationFlags,
         NULL, // use parent's environment
-        workingDir.empty() ? nullptr : workingDir.data(),
+        workingDir,
         &startupInfo, &procInfo )) {
         const ::DWORD errorCode = ::GetLastError();
 
-        LOG(HAL, Error, L"CreateProcess failed: {0}\n\turl: {1}", FLastError(errorCode), MakeCStringView(commandLine.data()));
+        LOG(HAL, Error, L"CreateProcess failed: {0}\n\turl: {1}\n\t{2}",
+            FLastError(errorCode), MakeCStringView(commandLine.Data), MakeCStringView(workingDir) );
 
         if (errorCode == ERROR_NOT_ENOUGH_MEMORY || errorCode == ERROR_OUTOFMEMORY) {
             // These errors are common enough that we want some available memory information
@@ -827,46 +826,11 @@ auto FWindowsPlatformProcess::CreateProcess(
     return procInfo.hProcess;
 }
 //----------------------------------------------------------------------------
-bool FWindowsPlatformProcess::ExecElevatedProcess(
-    int* pReturnCode,
-    const FWStringView& url,
-    const TMemoryView<const FWStringView>& args) {
-
-    // prepare command-line
-    FWString nullTerminatedFile{ url };
-    STACKLOCAL_POD_ARRAY(wchar_t, nullTerminatedArgs, 32768);
-    FormatCommandLineW_(nullTerminatedArgs, {}, args);
-
-    ::SHELLEXECUTEINFOW shellExecuteInfo;
-    ::ZeroMemory(&shellExecuteInfo, sizeof(shellExecuteInfo));
-    shellExecuteInfo.cbSize = sizeof(shellExecuteInfo);
-    shellExecuteInfo.fMask = SEE_MASK_UNICODE | SEE_MASK_NOCLOSEPROCESS;
-    shellExecuteInfo.lpFile = nullTerminatedFile.data();
-    shellExecuteInfo.lpVerb = L"runas";
-    shellExecuteInfo.nShow = SW_SHOW;
-    shellExecuteInfo.lpParameters = nullTerminatedArgs.data();
-
-    bool succeed = false;
-    if (::ShellExecuteEx(&shellExecuteInfo))
-    {
-        ::WaitForSingleObject(shellExecuteInfo.hProcess, INFINITE);
-        if (pReturnCode) {
-            ::DWORD exitCode = 0;
-            Verify(::GetExitCodeProcess(shellExecuteInfo.hProcess, &exitCode));
-            *pReturnCode = int(exitCode);
-        }
-
-        Verify(::CloseHandle(shellExecuteInfo.hProcess));
-
-        succeed = true;
-    }
-
-    return succeed;
-}
-
-//----------------------------------------------------------------------------
-bool FWindowsPlatformProcess::ExecDetachedProcess(const FWStringView& commandLine) {
-    Assert(not commandLine.empty());
+bool FWindowsPlatformProcess::ExecDetachedProcess(
+    const wchar_t* executable,
+    const wchar_t* parameters,
+    const wchar_t* workingDir) {
+    Assert(executable);
 
     // initialize process attributes
     ::SECURITY_ATTRIBUTES security;
@@ -895,19 +859,25 @@ bool FWindowsPlatformProcess::ExecDetachedProcess(const FWStringView& commandLin
         0, NULL, NULL, NULL, NULL
     };
 
+    // Prepare executable path and parameters
+    FWindowsCommandLine_ commandLine{ executable, parameters };
+
     // create the child process
     ::PROCESS_INFORMATION procInfo;
     if (not ::CreateProcessW(
         NULL,
-        (::LPWSTR)commandLine.data(),
-        &security, &security, TRUE,
-        (::DWORD)createFlags, NULL,
-        NULL,
-        &startupInfo,
-        &procInfo) ) {
+        commandLine,
+        &security, &security,
+        TRUE, // inherit parent's handles
+        (::DWORD)createFlags,
+        NULL, // use parent's environment
+        workingDir,
+        &startupInfo, &procInfo)) {
         const ::DWORD errorCode = ::GetLastError();
 
-        LOG(HAL, Warning, L"CreateProcess failed: {0}", FLastError(errorCode));
+        LOG(HAL, Error, L"CreateProcess failed: {0}\n\turl: {1}\n\t{2}",
+            FLastError(errorCode), MakeCStringView(commandLine.Data), MakeCStringView(workingDir) );
+
         if (errorCode == ERROR_NOT_ENOUGH_MEMORY || errorCode == ERROR_OUTOFMEMORY) {
             // These errors are common enough that we want some available memory information
             const FPlatformMemory::FStats stats = FPlatformMemory::Stats();
@@ -915,8 +885,6 @@ bool FWindowsPlatformProcess::ExecDetachedProcess(const FWStringView& commandLin
                 Fmt::SizeInBytes(stats.UsedPhysical),
                 Fmt::SizeInBytes(stats.AvailablePhysical));
         }
-
-        LOG(HAL, Warning, L"URL: {0}", commandLine);
 
         return false;
     }
@@ -927,22 +895,57 @@ bool FWindowsPlatformProcess::ExecDetachedProcess(const FWStringView& commandLin
     return true;
 }
 //----------------------------------------------------------------------------
-bool FWindowsPlatformProcess::OpenURL(const FWStringView& url) {
-    Assert(not url.empty());
+bool FWindowsPlatformProcess::ExecElevatedProcess(
+    int* pReturnCode,
+    const wchar_t* executable,
+    const wchar_t* parameters,
+    const wchar_t* workingDir ) {
+    Assert(executable);
 
-    return ((StartsWithI(url, L"http://") || StartsWithI(url, L"https://"))
-        ? OpenWebURL_(url)
+    ::SHELLEXECUTEINFOW shellExecuteInfo;
+    ::ZeroMemory(&shellExecuteInfo, sizeof(shellExecuteInfo));
+    shellExecuteInfo.cbSize = sizeof(shellExecuteInfo);
+    shellExecuteInfo.fMask = SEE_MASK_UNICODE | SEE_MASK_NOCLOSEPROCESS;
+    shellExecuteInfo.lpFile = executable;
+    shellExecuteInfo.lpVerb = L"runas";
+    shellExecuteInfo.nShow = SW_SHOW;
+    shellExecuteInfo.lpParameters = parameters;
+    shellExecuteInfo.lpDirectory = workingDir;
+
+    bool succeed = false;
+    if (::ShellExecuteEx(&shellExecuteInfo))
+    {
+        ::WaitForSingleObject(shellExecuteInfo.hProcess, INFINITE);
+        if (pReturnCode) {
+            ::DWORD exitCode = 0;
+            Verify(::GetExitCodeProcess(shellExecuteInfo.hProcess, &exitCode));
+            *pReturnCode = int(exitCode);
+        }
+
+        Verify(::CloseHandle(shellExecuteInfo.hProcess));
+
+        succeed = true;
+    }
+
+    return succeed;
+}
+//----------------------------------------------------------------------------
+bool FWindowsPlatformProcess::OpenURL(const wchar_t* url) {
+    Assert(url);
+
+    const FWStringView s{ MakeCStringView(url) };
+    return ((StartsWithI(s, L"http://") || StartsWithI(s, L"https://"))
+        ? OpenWebURL_(s)
         : OpenWithDefaultApp(url) );
 }
 //----------------------------------------------------------------------------
-bool FWindowsPlatformProcess::OpenWithDefaultApp(const FWStringView& filename) {
-    Assert(not filename.empty());
+bool FWindowsPlatformProcess::OpenWithDefaultApp(const wchar_t* filename) {
+    Assert(filename);
 
     // ShellExecute will open the default handler for a URL
-    FWString urlNullTerminated(filename);
-    const ::HINSTANCE code = ::ShellExecuteW(NULL, L"open", urlNullTerminated.data(), NULL, NULL, SW_SHOWNORMAL);
+    const ::HINSTANCE code = ::ShellExecuteW(NULL, L"open", filename, NULL, NULL, SW_SHOWNORMAL);
     if (intptr_t(code) <= 32) { // https://docs.microsoft.com/en-us/windows/desktop/api/shellapi/nf-shellapi-shellexecutea
-        LOG(HAL, Error, L"failed open with default app : {0}", filename);
+        LOG(HAL, Error, L"failed open with default app : {0}", MakeCStringView(filename));
         return false;
     }
     else {
@@ -950,14 +953,13 @@ bool FWindowsPlatformProcess::OpenWithDefaultApp(const FWStringView& filename) {
     }
 }
 //----------------------------------------------------------------------------
-bool FWindowsPlatformProcess::EditWithDefaultApp(const FWStringView& filename) {
-    Assert(not filename.empty());
+bool FWindowsPlatformProcess::EditWithDefaultApp(const wchar_t* filename) {
+    Assert(filename);
 
     // ShellExecute will open the default handler for a URL
-    FWString urlNullTerminated(filename);
-    const ::HINSTANCE code = ::ShellExecuteW(NULL, L"edit", urlNullTerminated.data(), NULL, NULL, SW_SHOWNORMAL);
+    const ::HINSTANCE code = ::ShellExecuteW(NULL, L"edit", filename, NULL, NULL, SW_SHOWNORMAL);
     if (intptr_t(code) <= 32) { // https://docs.microsoft.com/en-us/windows/desktop/api/shellapi/nf-shellapi-shellexecutea
-        LOG(HAL, Error, L"failed edit with default app : {0}", filename);
+        LOG(HAL, Error, L"failed edit with default app : {0}", MakeCStringView(filename));
         return false;
     }
     else {

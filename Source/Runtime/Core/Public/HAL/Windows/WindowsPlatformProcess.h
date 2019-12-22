@@ -96,25 +96,29 @@ public:
 
     static FProcessHandle CreateProcess(
         FProcessId* pPID,
-        const FWStringView& url,
-        const TMemoryView<const FWStringView>& args,
-        const FWStringView& optionalWorkingDir,
+        const wchar_t* executable,
+        const wchar_t* parameters,
+        const wchar_t* workingDir,
         bool detached, bool hidden, bool inheritHandles, bool noWindow,
         EProcessPriority priority,
         FPipeHandle hStdin = nullptr,
         FPipeHandle hStderr = nullptr,
         FPipeHandle hStdout = nullptr );
 
+    static bool ExecDetachedProcess(
+        const wchar_t* executable,
+        const wchar_t* parameters,
+        const wchar_t* workingDir );
+
     static bool ExecElevatedProcess(
         int* pReturnCode,
-        const FWStringView& url,
-        const TMemoryView<const FWStringView>& args );
+        const wchar_t* executable,
+        const wchar_t* parameters,
+        const wchar_t* workingDir );
 
-    static bool ExecDetachedProcess(const FWStringView& commandLine);
-
-    static bool OpenURL(const FWStringView& url); // launch external internet browser
-    static bool OpenWithDefaultApp(const FWStringView& filename); // open with viewer associated to this file type
-    static bool EditWithDefaultApp(const FWStringView& filename); // open with editor associated to this file type
+    static bool OpenURL(const wchar_t* url); // launch external internet browser
+    static bool OpenWithDefaultApp(const wchar_t* filename); // open with viewer associated to this file type
+    static bool EditWithDefaultApp(const wchar_t* filename); // open with editor associated to this file type
 
     //------------------------------------------------------------------------
     // semaphore

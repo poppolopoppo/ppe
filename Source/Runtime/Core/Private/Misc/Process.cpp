@@ -3,7 +3,9 @@
 #include "Misc/Process.h"
 
 #include "Container/RawStorage.h"
-#include "IO/String.h"
+#include "HAL/PlatformMemory.h"
+#include "IO/StreamProvider.h"
+#include "Misc/Function.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -11,19 +13,46 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static bool ReadPipe_AppendOutp_(FProcess::FRawStorage& outp, FProcess::FPipeHandle pipe) {
+static size_t BlockingReadPipe_(const FRawMemory& outp, FProcess::FPipeHandle pipe) {
+    return FPlatformProcess::ReadPipe(pipe, outp);
+}
+//----------------------------------------------------------------------------
+static size_t ReadPipe_(const FRawMemory& outp, FProcess::FPipeHandle pipe) NOEXCEPT {
     size_t total = 0;
 
     while (size_t toRead = FPlatformProcess::PeekPipe(pipe)) {
-        const size_t off = outp.size();
-        outp.Resize_KeepData(off + toRead);
+        if (total + toRead > outp.size())
+            toRead = outp.size() - total;
 
-        const size_t read = FPlatformProcess::ReadPipe(pipe, outp.MakeView().CutStartingAt(off));
-        if (read != toRead)
-            outp.Resize_KeepData(off + read);
+        const size_t read = FPlatformProcess::ReadPipe(pipe,
+            outp.SubRange(total, toRead) );
 
         total += read;
+        if (outp.size() == total)
+            break;
     }
+
+    return total;
+}
+//----------------------------------------------------------------------------
+static bool ReadPipe_(FProcess::FRawStorage& outp, FProcess::FPipeHandle pipe) {
+    size_t total = 0;
+    size_t offset = outp.size();
+
+    while (size_t toRead = FPlatformProcess::PeekPipe(pipe)) {
+        if (outp.size() < offset + toRead)
+            outp.Resize_KeepData(offset + toRead);
+
+        const size_t read = FPlatformProcess::ReadPipe(pipe,
+            outp.MakeView().SubRange(offset, toRead) );
+
+        total += read;
+        offset += read;
+    }
+
+    if (offset < outp.size())
+        outp.Resize_KeepData(offset);
+    Assert_NoAssume(outp.size() == offset);
 
     return (total > 0);
 }
@@ -123,24 +152,24 @@ size_t FProcess::WriteStdin(const FRawMemoryConst& buffer) {
 //----------------------------------------------------------------------------
 size_t FProcess::ReadStderr(const FRawMemory& buffer) {
     Assert(_hStderrRead);
-    return FPlatformProcess::ReadPipe(_hStderrRead, buffer);
+    return ReadPipe_(buffer, _hStderrRead);
 }
 //----------------------------------------------------------------------------
 size_t FProcess::ReadStdout(const FRawMemory& buffer) {
     Assert(_hStdoutRead);
-    return FPlatformProcess::ReadPipe(_hStdoutRead, buffer);
+    return ReadPipe_(buffer, _hStdoutRead);
 }
 //----------------------------------------------------------------------------
 bool FProcess::ReadStderr(FRawStorage* outp) {
     Assert(outp);
     Assert(_hStderrRead);
-    return ReadPipe_AppendOutp_(*outp, _hStderrRead);
+    return ReadPipe_(*outp, _hStderrRead);
 }
 //----------------------------------------------------------------------------
 bool FProcess::ReadStdout(FRawStorage* outp) {
     Assert(outp);
     Assert(_hStdoutRead);
-    return ReadPipe_AppendOutp_(*outp, _hStdoutRead);
+    return ReadPipe_(*outp, _hStdoutRead);
 }
 //----------------------------------------------------------------------------
 void FProcess::WaitFor() {
@@ -176,60 +205,31 @@ void FProcess::Swap(FProcess& other) NOEXCEPT {
     std::swap(_hStdoutRead, other._hStdoutRead);
 }
 //----------------------------------------------------------------------------
-int FProcess::CaptureOutput(
-    FRawStorage* pStdout,
-    FRawStorage* pStderr,
-    const FWStringView& url,
-    const TMemoryView<const FWStringView>& args,
-    const FWStringView& optionalWorkingDir /* = FWStringView{} */,
-    EProcessFlags flags /* = None */,
-    EProcessPriority priority /* = EProcessPriority::Normal */) {
-    FProcess proc = Create(url, args, optionalWorkingDir,
-        static_cast<EProcessFlags>(flags |
-            (pStderr ? RedirectStderr : 0) |
-            (pStdout ? RedirectStdout : 0) |
-            (!!pStdout|!!pStderr ? InheritHandles : 0) ),
-        priority );
-
-    if (not proc.IsValid())
-        return -1;
-
-    do {
-        if (pStderr) proc.ReadStderr(pStderr);
-        if (pStdout) proc.ReadStdout(pStdout);
-
-        FPlatformProcess::Sleep(0);
-
-    } while (proc.IsAlive());
-
-    if (pStderr) proc.ReadStderr(pStderr);
-    if (pStdout) proc.ReadStdout(pStdout);
-
-    return proc.ExitCode();
-}
-//----------------------------------------------------------------------------
 FProcess FProcess::Current() {
     return FProcess(FPlatformProcess::CurrentPID(), FPlatformProcess::CurrentProcess());
 }
 //----------------------------------------------------------------------------
 FProcess FProcess::Create(
-    const FWStringView& url,
-    const TMemoryView<const FWStringView>& args,
-    const FWStringView& optionalWorkingDir /* = FWStringView{} */,
+    const FWString& executable,
+    const FWString& parameters /* = FWString{} */,
+    const FWString& workingDir /* = FWString{} */,
     EProcessFlags flags /* = None */,
     EProcessPriority priority /* = EProcessPriority::Normal */) {
+    Assert(not executable.empty());
 
     FPipeHandle hStdinRead{ 0 }, hStdinWrite{ 0 };
     if (flags & RedirectStdin)
         VerifyRelease(FPlatformProcess::CreatePipe(&hStdinRead, &hStdinWrite, true));
 
-    FPipeHandle hStderrRead{ 0 }, hStderrWrite{ 0 };
-    if (flags & RedirectStderr)
-        VerifyRelease(FPlatformProcess::CreatePipe(&hStderrRead, &hStderrWrite, false));
-
     FPipeHandle hStdoutRead{ 0 }, hStdoutWrite{ 0 };
     if (flags & RedirectStdout)
         VerifyRelease(FPlatformProcess::CreatePipe(&hStdoutRead, &hStdoutWrite, false));
+
+    FPipeHandle hStderrRead{ 0 }, hStderrWrite{ 0 };
+    if (flags & StderrToStdout)
+        hStderrWrite = hStdoutWrite;
+    else if (flags & RedirectStderr)
+        VerifyRelease(FPlatformProcess::CreatePipe(&hStderrRead, &hStderrWrite, false));
 
     if (!!hStdinRead | !!hStderrWrite | !!hStdoutWrite)
         flags = static_cast<EProcessFlags>(flags | InheritHandles);
@@ -237,7 +237,9 @@ FProcess FProcess::Create(
     FProcessId pid = 0;
     const FProcessHandle hProc = FPlatformProcess::CreateProcess(
         &pid,
-        url, args, optionalWorkingDir,
+        executable.c_str(),
+        (parameters.empty() ? nullptr : parameters.c_str()),
+        (workingDir.empty() ? nullptr : workingDir.c_str()),
         !!(flags & Detached),
         !!(flags & Hidden),
         !!(flags & InheritHandles),
@@ -247,18 +249,104 @@ FProcess FProcess::Create(
 
     if (hProc) {
         FPlatformProcess::ClosePipe(hStdinRead, nullptr);
-        FPlatformProcess::ClosePipe(nullptr, hStderrWrite);
         FPlatformProcess::ClosePipe(nullptr, hStdoutWrite);
+
+        if (not (flags & StderrToStdout))
+            FPlatformProcess::ClosePipe(nullptr, hStderrWrite);
 
         return FProcess{ pid, hProc, hStdinWrite, hStderrRead, hStdoutRead };
     }
     else {
         FPlatformProcess::ClosePipe(hStdinRead, hStdinWrite);
-        FPlatformProcess::ClosePipe(hStderrRead, hStderrWrite);
         FPlatformProcess::ClosePipe(hStdoutRead, hStdoutWrite);
+
+        if (not (flags & StderrToStdout))
+            FPlatformProcess::ClosePipe(hStderrRead, hStderrWrite);
 
         return FProcess{};
     }
+}
+//----------------------------------------------------------------------------
+int FProcess::CaptureOutput(
+    FRawStorage* pStdout,
+    FRawStorage* pStderr,
+    const FWString& executable,
+    const FWString& parameters /* = FWString{} */,
+    const FWString& workingDir /* = FWString{} */,
+    EProcessFlags flags /* = None */,
+    EProcessPriority priority /* = EProcessPriority::Normal */) {
+
+    FProcess proc = Create(
+        executable, parameters, workingDir,
+        static_cast<EProcessFlags>(flags |
+            (!!pStderr ? RedirectStderr : 0) |
+            (!!pStdout ? RedirectStdout : 0) |
+            (!!pStdout & (pStdout == pStderr) ? StderrToStdout : 0) |
+            (!!pStdout | !!pStderr ? InheritHandles : 0) ),
+        priority );
+
+    if (not proc.IsValid())
+        return -1;
+
+    do {
+        if (pStdout) proc.ReadStdout(pStdout);
+        if (pStderr) proc.ReadStderr(pStderr);
+
+        FPlatformProcess::Sleep(0);
+
+    } while (proc.IsAlive());
+
+    if (pStdout) proc.ReadStdout(pStdout);
+    if (pStderr) proc.ReadStderr(pStderr);
+
+    return proc.ExitCode();
+}
+//----------------------------------------------------------------------------
+int FProcess::CaptureOutput(
+    IBufferedStreamWriter* pStdout,
+    IBufferedStreamWriter* pStderr,
+    const FWString& executable,
+    const FWString& parameters /* = FWString{} */,
+    const FWString& workingDir /* = FWString{} */,
+    EProcessFlags flags /* = None */,
+    EProcessPriority priority /* = EProcessPriority::Normal */) {
+
+    FProcess proc = Create(
+        executable, parameters, workingDir,
+        static_cast<EProcessFlags>(flags |
+            (!!pStderr ? RedirectStderr : 0) |
+            (!!pStdout ? RedirectStdout : 0) |
+            (!!pStdout & (pStdout == pStderr) ? StderrToStdout : 0) |
+            (!!pStdout | !!pStderr ? InheritHandles : 0) ),
+        priority );
+
+    if (not proc.IsValid())
+        return -1;
+
+    if (pStdout == pStderr)
+        pStderr = nullptr;
+
+    IBufferedStreamWriter::read_f fStdout;
+    IBufferedStreamWriter::read_f fStderr;
+
+    if (pStdout)
+        fStdout = IBufferedStreamWriter::read_f::Bind<&BlockingReadPipe_>(proc._hStdoutRead);
+    if (pStderr)
+        fStderr = IBufferedStreamWriter::read_f::Bind<&BlockingReadPipe_>(proc._hStderrRead);
+
+    STATIC_CONST_INTEGRAL(size_t, BlockSize, PAGE_SIZE);
+
+    // this variant uses blocking reads to avoid wasting CPU spin waiting
+    do {
+        if (pStdout) pStdout->StreamCopy(fStdout, BlockSize);
+        if (pStderr) pStderr->StreamCopy(fStderr, BlockSize);
+
+    } while (proc.IsAlive());
+
+    if (pStdout) pStdout->StreamCopy(fStdout, BlockSize);
+    if (pStderr) pStderr->StreamCopy(fStderr, BlockSize);
+
+    return proc.ExitCode();
 }
 //----------------------------------------------------------------------------
 FProcess FProcess::Open(FProcessId pid, bool fullAccess/* = false */) {
