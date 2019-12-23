@@ -29,6 +29,9 @@ public:
     ,   _writable(writable)
     {}
 
+    virtual void Initialize(const FTimestamp&) override final
+    {}
+
     virtual UStreamReader Read(FBuildFingerpint fingerprint) override final {
         return VFS_OpenBinaryReadable(PathFromFingerprint_(fingerprint),
             EAccessPolicy::ShareRead | EAccessPolicy::Sequential );

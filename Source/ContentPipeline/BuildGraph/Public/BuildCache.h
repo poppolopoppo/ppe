@@ -17,7 +17,7 @@ class IBuildCache {
 public:
     virtual ~IBuildCache() = default;
 
-    virtual void Initialize(const FTimestamp& buildTime);
+    virtual void Initialize(const FTimestamp& buildTime) = 0;
 
     virtual UStreamReader Read(FBuildFingerpint fingerprint) = 0;
     virtual bool Write(FBuildFingerpint fingerprint, const FRawMemoryConst& rawdata) = 0;
