@@ -3,7 +3,7 @@
     .ModuleList = {}
     .ModulePath = 'Tools'
 
-    //#include "AssetWorker/AssetWorker.bff"
+    #include "BuildRobot/BuildRobot.bff"
     #include "UnitTest/UnitTest.bff"
 
     #include "$BuildPath$/Templates/Namespace.bff"

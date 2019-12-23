@@ -1,6 +1,0 @@
-#include "resource.h"
-
-#include "Core/resource.rc"
-
-// ICONS
-IDI_APP_ICON				ICON	"..\\..\\Data\\Icons\\Generator.ico"

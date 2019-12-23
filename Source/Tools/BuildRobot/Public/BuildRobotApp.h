@@ -1,28 +1,21 @@
 #pragma once
 
-#include "ApplicationGraphics.h"
+#include "ApplicationConsole.h"
 
 namespace PPE {
-namespace ContentGenerator {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FRobotApp : public Application::FApplicationGraphics {
-    typedef Application::FApplicationGraphics parent_type;
+class FBuildRobotApp : public Application::FApplicationConsole {
+    typedef Application::FApplicationConsole parent_type;
 public:
-    FRobotApp();
-    ~FRobotApp();
+    FBuildRobotApp();
+    ~FBuildRobotApp();
 
     virtual void Start() override;
     virtual void Shutdown() override;
-
-    virtual void Draw(const FTimeline& time) override;
-
-private:
-    TUniquePtr<class FRobotAppImpl> _pimpl;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace ContentGenerator
 } //!namespace PPE

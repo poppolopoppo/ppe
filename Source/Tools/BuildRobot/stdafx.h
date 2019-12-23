@@ -5,10 +5,4 @@
 
 #pragma once
 
-#include "Core/HAL/PlatformIncludes.h"
-
-#include "Core.Application/Application.h"
-
-#if USE_PPE_PRECOMPILEDHEADERS
-#   include "Core.Application/stdafx.generated.h"
-#endif
+#include "HAL/PlatformIncludes.h"
