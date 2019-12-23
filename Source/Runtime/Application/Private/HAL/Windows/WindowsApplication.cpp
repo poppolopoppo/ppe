@@ -9,29 +9,12 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-static FWindowsApplication* GAppInstance = nullptr;
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FWindowsApplication& FWindowsApplication::Get() {
-    AssertRelease(GAppInstance);
-    return (*GAppInstance);
-}
-//----------------------------------------------------------------------------
 FWindowsApplication::FWindowsApplication(FWString&& name)
-:   FGenericApplication(std::move(name)) {
-    Assert(nullptr == GAppInstance);
-    GAppInstance = this;
-}
+:   FGenericApplication(std::move(name))
+{}
 //----------------------------------------------------------------------------
-FWindowsApplication::~FWindowsApplication() {
-    Assert(this == GAppInstance);
-    GAppInstance = nullptr;
-}
+FWindowsApplication::~FWindowsApplication()
+{}
 //----------------------------------------------------------------------------
 void FWindowsApplication::Start() {
     parent_type::Start();

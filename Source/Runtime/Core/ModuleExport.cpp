@@ -48,18 +48,15 @@ FCoreModule::FCoreModule()
 //----------------------------------------------------------------------------
 FCoreModule::~FCoreModule() = default;
 //----------------------------------------------------------------------------
-void FCoreModule::Start(FModuleManager& manager) {
-    FModule::Start(manager);
+void FCoreModule::Start() {
+    FModule::Start();
 
     // 0 - main thread context
     FThreadContextStartup::Start_MainThread();
     // 1 - low-level IO
     FFileStream::Start();
     // 2 - diagnostics
-    FDiagnosticsStartup::Start(
-        manager.AppHandle(), manager.ShowCmd(),
-        manager.Filename(),
-        manager.Argc(), manager.Argv() );
+    FDiagnosticsStartup::Start();
     // 3 - auto singleton manager
     Meta::FAutoSingletonManager::Start();
     // 4 - thread pool

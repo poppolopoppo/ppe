@@ -27,8 +27,8 @@ FSerializeModule::FSerializeModule()
 //----------------------------------------------------------------------------
 FSerializeModule::~FSerializeModule() = default;
 //----------------------------------------------------------------------------
-void FSerializeModule::Start(FModuleManager& manager) {
-    FModule::Start(manager);
+void FSerializeModule::Start() {
+    FModule::Start();
 
     Lexer::FLexerStartup::Start();
     FGrammarStartup::Start();

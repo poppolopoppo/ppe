@@ -20,9 +20,13 @@ LOG_CATEGORY(PPE_CORE_API, Process)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FCurrentProcess::FCurrentProcess(void* appHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv)
+FCurrentProcess::FCurrentProcess(
+    void* appHandle, int nShowCmd,
+    const wchar_t* filename, size_t argc, const wchar_t * const* argv )
 :   _fileName(MakeCStringView(filename))
-,   _args(NewArray<FWString>(argc)), _exitCode(0), _appIcon(0)
+,   _args(NewArray<FWString>(argc))
+,   _exitCode(0)
+,   _appIcon(0)
 ,   _startedAt(FTimepoint::Now()) {
 
     for (size_t i = 0; i < argc; ++i) {

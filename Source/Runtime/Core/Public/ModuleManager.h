@@ -7,44 +7,27 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class FModule;
-struct IModuleStartup;
+struct FBaseModuleStartup;
 //----------------------------------------------------------------------------
-class PPE_CORE_API FModuleManager {
+class PPE_CORE_API FModuleManager : Meta::FNonCopyableNorMovable {
 public:
-    FModuleManager(
-        void* appHandle, int showCmd,
-        const wchar_t* filename,
-        size_t argc, const wchar_t** argv );
     ~FModuleManager();
 
-    FModuleManager(const FModuleManager&) = delete;
-    FModuleManager& operator =(const FModuleManager&) = delete;
+    void PreInit(FBaseModuleStartup& startup);
+    void PostDestroy(FBaseModuleStartup& startup);
 
-    FModuleManager(FModuleManager&&) = delete;
-    FModuleManager& operator =(FModuleManager&&) = delete;
+    void Start(FModule& m);
+    void Shutdown(FModule& m);
+    void ReleaseMemory(FModule& m);
 
-    void* AppHandle() const { return _appHandle; }
-    int ShowCmd() const { return _showCmd; }
-    const wchar_t* Filename() const { return _filename; }
-    size_t Argc() const { return _argc; }
-    const wchar_t** Argv() const { return _argv; }
+    void ReleaseMemoryInModules();
 
-    void PreInit(IModuleStartup& startup);
-    void PostDestroy(IModuleStartup& startup);
-
-    void Start(FModule& module);
-    void Shutdown(FModule& module);
-    void ReleaseMemory(FModule& module);
-
-    void ReleaseMemoryInModules() const;
+    static FModuleManager& Get() NOEXCEPT;
 
 private:
-    void* const _appHandle;
-    const int _showCmd;
-    const wchar_t* const _filename;
-    const size_t _argc;
-    const wchar_t** const _argv;
-    IModuleStartup* _startup;
+    FBaseModuleStartup* _startup;
+
+    FModuleManager() NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

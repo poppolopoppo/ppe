@@ -31,8 +31,8 @@ FRTTIModule::FRTTIModule()
 //----------------------------------------------------------------------------
 FRTTIModule::~FRTTIModule() = default;
 //----------------------------------------------------------------------------
-void FRTTIModule::Start(FModuleManager& manager) {
-    FModule::Start(manager);
+void FRTTIModule::Start() {
+    FModule::Start();
 
     FName::Start();
 

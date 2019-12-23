@@ -25,9 +25,12 @@ public: // must be defined for every platform
 
     //------------------------------------------------------------------------
     // platform hooks for process start/shutdown
+    // NOTE: these are implemented and should be called by platform specific overrides
 
-    static void OnProcessStart() = delete;
-    static void OnProcessShutdown() = delete;
+    static void OnProcessStart(
+        void* appHandle, int nShowCmd,
+        const wchar_t* filename, size_t argc, const wchar_t* const* argv );
+    static void OnProcessShutdown();
 
     //------------------------------------------------------------------------
     // sleep

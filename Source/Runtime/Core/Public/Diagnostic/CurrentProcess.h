@@ -62,7 +62,7 @@ public:
 #endif
     using parent_type::Destroy;
 
-    static void Create(void* appHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv) {
+    static void Create(void* appHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t * const* argv) {
         parent_type::Create(appHandle, nShowCmd, filename, argc, argv);
     }
 
@@ -72,7 +72,9 @@ public:
 
 private:
     friend class Meta::TSingleton<FCurrentProcess>;
-    FCurrentProcess(void* appHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t **argv);
+    FCurrentProcess(
+        void* appHandle, int nShowCmd,
+        const wchar_t* filename, size_t argc, const wchar_t * const* argv );
 
     FWString _executableName;
     FWString _fileName;

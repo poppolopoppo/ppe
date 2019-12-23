@@ -14,8 +14,6 @@ namespace Application {
 class PPE_APPLICATION_API FGenericApplication {
 public: // must be defined for every platform
 
-    static FGenericApplication& Get() = delete; // must implement a singleton !
-
     virtual ~FGenericApplication();
 
     const FWString& Name() const { return _name; }

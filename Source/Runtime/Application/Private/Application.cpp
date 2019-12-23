@@ -30,6 +30,10 @@ LOG_CATEGORY(PPE_APPLICATION_API, Application)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+static FApplicationBase* GRunningApp_ = nullptr;
+//----------------------------------------------------------------------------
 template <typename _Functor>
 static void ExceptionTrap_(const FWStringView& step, _Functor&& func) {
 #if USE_APPLICATION_EXCEPTION_TRAP
@@ -50,27 +54,21 @@ static void ExceptionTrap_(const FWStringView& step, _Functor&& func) {
 #endif
 }
 //----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FApplicationContext::FApplicationContext() {
-    // Set FTZ + DAZ for FP_ASSIST
-    FPlatformMaths::Disable_FP_Assist();
-    // Signal platform specific code of application start
-    FPlatformProcess::OnProcessStart();
-    // Install crash exception handlers
-    FPlatformCrash::SetExceptionHandlers();
-    // Force locale to EN with UTF-8 encoding
-    FPlatformMisc::SetUTF8Output();
+FApplicationBase& RunningApp() NOEXCEPT {
+    Assert(GRunningApp_);
+    return (*GRunningApp_);
 }
 //----------------------------------------------------------------------------
-FApplicationContext::~FApplicationContext() {
-    // Signal platform specific code of application shutdown
-    FPlatformProcess::OnProcessShutdown();
-}
-//----------------------------------------------------------------------------
-int LaunchApplication(const FApplicationContext& context, FApplicationBase* app) {
-    UNUSED(context);
+int LaunchApplication(FApplicationBase* app) {
     AssertRelease(app);
+    AssertRelease(GRunningApp_ == nullptr);
+
+    GRunningApp_ = app;
+
 #if USE_PPE_PLATFORM_PROFILER
     FPlatformProfiler::Name(FPlatformProfiler::ProcessLevel, ToString(app->Name()).data());
 #endif
@@ -114,6 +112,9 @@ int LaunchApplication(const FApplicationContext& context, FApplicationBase* app)
     ReportAllTrackingData();
     FMallocDebug::ShutdownLeakDetector();
 #endif
+
+    Assert(app == GRunningApp_);
+    GRunningApp_ = nullptr;
 
     return FCurrentProcess::Get().ExitCode();
 }

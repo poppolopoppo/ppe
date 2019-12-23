@@ -4,6 +4,8 @@
 
 #ifdef PLATFORM_WINDOWS
 
+#include "ApplicationBase.h"
+
 #include "Container/SparseArray.h"
 #include "Container/Stack.h"
 #include "Container/StringHashMap.h"
@@ -282,7 +284,7 @@ private:
             reinterpret_cast<::HINSTANCE>(process.AppHandle()),
             process.AppIcon());
 
-        const FPlatformApplication& app = FPlatformApplication::Get();
+        const FPlatformApplication& app = RunningApp();
         Assert(app.Name().size() < ARRAYSIZE(nid.szTip));
         ::memcpy(&nid.szTip, app.Name().data(), app.Name().size() * sizeof(wchar_t));
 

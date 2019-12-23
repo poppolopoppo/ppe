@@ -15,8 +15,6 @@ class PPE_APPLICATION_API FWindowsApplication : public FGenericApplication {
 public: // must be defined for every platform
     using parent_type = FGenericApplication;
 
-    static FWindowsApplication& Get(); // implementing a singleton
-
     explicit FWindowsApplication(FWString&& name);
     virtual ~FWindowsApplication();
 

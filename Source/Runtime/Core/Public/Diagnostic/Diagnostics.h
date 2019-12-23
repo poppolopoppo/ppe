@@ -8,10 +8,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_CORE_API FDiagnosticsStartup {
 public:
-    FDiagnosticsStartup(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv) { Start(applicationHandle, nShowCmd, filename, argc, argv); }
-    ~FDiagnosticsStartup() { Shutdown(); }
+    FDiagnosticsStartup() {
+        Start();
+    }
 
-    static void Start(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv);
+    ~FDiagnosticsStartup() {
+        Shutdown();
+    }
+
+    static void Start();
     static void Shutdown();
 };
 //----------------------------------------------------------------------------

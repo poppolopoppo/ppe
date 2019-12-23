@@ -21,7 +21,7 @@ public:
     virtual ~FCoreModule();
 
 protected:
-    virtual void Start(FModuleManager& manager) override final;
+    virtual void Start() override final;
     virtual void Shutdown() override final;
 
     virtual void ReleaseMemory() override final;

@@ -171,7 +171,11 @@ struct FWindowsCommandLine_ {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FWindowsPlatformProcess::OnProcessStart() {
+void FWindowsPlatformProcess::OnProcessStart(
+    void* appHandle, int nShowCmd,
+    const wchar_t* filename, size_t argc, const wchar_t* const* argv ) {
+    FGenericPlatformProcess::OnProcessStart(appHandle, nShowCmd, filename, argc, argv);
+
 #   if USE_PPE_MEMORY_DEBUGGING || USE_PPE_DEBUG
     constexpr int debugHeapEnabled = _CRTDBG_ALLOC_MEM_DF;
     constexpr int debugCheckMemory = _CRTDBG_CHECK_EVERY_1024_DF;
@@ -225,6 +229,8 @@ void FWindowsPlatformProcess::OnProcessShutdown() {
 #endif
 
     ReleaseNamedMutex_();
+
+    FGenericPlatformProcess::OnProcessShutdown();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

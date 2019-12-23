@@ -18,26 +18,8 @@ LOG_CATEGORY(, Module);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-static FModuleManager* GModuleManager_ = nullptr;
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FModuleManager::FModuleManager(
-    void* appHandle, int showCmd,
-    const wchar_t* filename,
-    size_t argc, const wchar_t** argv)
-:   _appHandle(appHandle)
-,   _showCmd(showCmd)
-,   _filename(filename)
-,   _argc(argc), _argv(argv)
-,   _startup(nullptr) {
-    Assert(nullptr == GModuleManager_);
-    GModuleManager_ = this;
-
+FModuleManager::FModuleManager() NOEXCEPT
+:   _startup(nullptr) {
     STATIC_ASSERT(PP_NUM_ARGS() == 0);
     STATIC_ASSERT(PP_NUM_ARGS(1) == 1);
     STATIC_ASSERT(PP_NUM_ARGS(a, b) == 2);
@@ -47,10 +29,6 @@ FModuleManager::FModuleManager(
 }
 //----------------------------------------------------------------------------
 FModuleManager::~FModuleManager() {
-    Assert(this == GModuleManager_);
-
-    GModuleManager_ = nullptr;
-
     LOG(Module, Info, L"destroyed module manager");
 }
 //----------------------------------------------------------------------------
@@ -67,7 +45,7 @@ void FModuleManager::ReleaseMemory(FModule& module) {
         Fmt::DurationInMs(t.Elapsed()) );
 }
 //----------------------------------------------------------------------------
-void FModuleManager::PreInit(IModuleStartup& startup) {
+void FModuleManager::PreInit(FBaseModuleStartup& startup) {
     Assert(nullptr == _startup);
 
     LOG(Module, Emphasis, L"pre init module...");
@@ -75,7 +53,7 @@ void FModuleManager::PreInit(IModuleStartup& startup) {
     _startup = &startup;
 }
 //----------------------------------------------------------------------------
-void FModuleManager::PostDestroy(IModuleStartup& startup) {
+void FModuleManager::PostDestroy(FBaseModuleStartup& startup) {
     Assert(&startup == _startup);
 
     LOG(Module, Emphasis, L"post destroy module...");
@@ -91,7 +69,7 @@ void FModuleManager::Start(FModule& module) {
 #if USE_PPE_LOGGER
     const FTimedScope t;
 #endif
-    module.Start(*this);
+    module.Start();
 
     LOG(Module, Debug, L" -> started module <{0}> during {1:f3}",
         MakeCStringView(module.Name()),
@@ -113,7 +91,7 @@ void FModuleManager::Shutdown(FModule& module) {
         Fmt::DurationInMs(t.Elapsed()) );
 }
 //----------------------------------------------------------------------------
-void FModuleManager::ReleaseMemoryInModules() const {
+void FModuleManager::ReleaseMemoryInModules() {
     Assert(_startup);
 
     LOG(Module, Emphasis, L"releasing memory in modules ...");
@@ -135,7 +113,7 @@ void FModuleManager::ReleaseMemoryInModules() const {
 #if USE_PPE_LOGGER
     const FTimedScope t;
 #endif
-    _startup->ReleaseMemory();
+    _startup->ReleaseMemory(*this);
 
     LOG(Module, Debug, L" -> released memory in modules during {0:f3}",
         Fmt::DurationInMs(t.Elapsed()) );
@@ -155,10 +133,13 @@ void FModuleManager::ReleaseMemoryInModules() const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FModuleManager& FModuleManager::Get() NOEXCEPT {
+    ONE_TIME_DEFAULT_INITIALIZE(FModuleManager, GInstance);
+    return GInstance;
+}
+//----------------------------------------------------------------------------
 void ReleaseMemoryInModules() {
-    Assert(GModuleManager_);
-
-    GModuleManager_->ReleaseMemoryInModules();
+    FModuleManager::Get().ReleaseMemoryInModules();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -21,10 +21,8 @@ const char* FModule::Name() const { return _name; }
 //----------------------------------------------------------------------------
 EModuleStatus FModule::Status() const { return _status; }
 //----------------------------------------------------------------------------
-void FModule::Start(FModuleManager& manager) {
+void FModule::Start() {
     AssertRelease(EModuleStatus::Initialized == _status);
-
-    UNUSED(manager);
 
     _status = EModuleStatus::Started;
 }
@@ -42,28 +40,27 @@ void FModule::ReleaseMemory() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBaseModuleStartup::FBaseModuleStartup(PPE::FModuleManager& manager)
-    : Manager(manager) {
-    Manager.PreInit(*this);
+void FBaseModuleStartup::Start(FModuleManager& manager) {
+    manager.PreInit(*this);
 }
 //----------------------------------------------------------------------------
-FBaseModuleStartup::~FBaseModuleStartup() {
-    Manager.PostDestroy(*this);
+void FBaseModuleStartup::Shutdown(FModuleManager& manager) {
+    manager.PostDestroy(*this);
 }
 //----------------------------------------------------------------------------
-void FBaseModuleStartup::ReleaseMemory() {
+void FBaseModuleStartup::ReleaseMemory(FModuleManager&) {
 }
 //----------------------------------------------------------------------------
-void FBaseModuleStartup::StartModule(FModule& m) {
-    Manager.Start(m);
+void FBaseModuleStartup::StartModule(FModuleManager& manager, FModule& m) {
+    manager.Start(m);
 }
 //----------------------------------------------------------------------------
-void FBaseModuleStartup::ShutdownModule(FModule& m) {
-    Manager.Shutdown(m);
+void FBaseModuleStartup::ShutdownModule(FModuleManager& manager, FModule& m) {
+    manager.Shutdown(m);
 }
 //----------------------------------------------------------------------------
-void FBaseModuleStartup::ReleaseMemoryInModule(FModule& m) {
-    Manager.ReleaseMemory(m);
+void FBaseModuleStartup::ReleaseMemoryInModule(FModuleManager& manager, FModule& m) {
+    manager.ReleaseMemory(m);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

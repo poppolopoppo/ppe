@@ -24,8 +24,8 @@ FNetworkModule::FNetworkModule()
 //----------------------------------------------------------------------------
 FNetworkModule::~FNetworkModule() = default;
 //----------------------------------------------------------------------------
-void FNetworkModule::Start(FModuleManager& manager) {
-    FModule::Start(manager);
+void FNetworkModule::Start() {
+    FModule::Start();
 
     FName::Start();
     FHttpConstNames::Start();

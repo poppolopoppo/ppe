@@ -22,8 +22,8 @@ FBuildGraphModule::FBuildGraphModule()
 //----------------------------------------------------------------------------
 FBuildGraphModule::~FBuildGraphModule() = default;
 //----------------------------------------------------------------------------
-void FBuildGraphModule::Start(FModuleManager& manager) {
-    FModule::Start(manager);
+void FBuildGraphModule::Start() {
+    FModule::Start();
 
     RTTI_MODULE(BuildGraph).Start();
 }

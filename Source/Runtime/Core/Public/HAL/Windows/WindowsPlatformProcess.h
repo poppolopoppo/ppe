@@ -20,7 +20,9 @@ public:
     //------------------------------------------------------------------------
     // platform hooks for process start/shutdown
 
-    static void OnProcessStart();
+    static void OnProcessStart(
+        void* appHandle, int nShowCmd,
+        const wchar_t* filename, size_t argc, const wchar_t* const* argv );
     static void OnProcessShutdown();
 
     //------------------------------------------------------------------------

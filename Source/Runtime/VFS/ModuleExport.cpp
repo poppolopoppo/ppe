@@ -20,8 +20,8 @@ FVirtualFileSystemModule::FVirtualFileSystemModule()
 //----------------------------------------------------------------------------
 FVirtualFileSystemModule::~FVirtualFileSystemModule() = default;
 //----------------------------------------------------------------------------
-void FVirtualFileSystemModule::Start(FModuleManager& manager) {
-    FModule::Start(manager);
+void FVirtualFileSystemModule::Start() {
+    FModule::Start();
 
     FVirtualFileSystem::Create();
 

@@ -19,8 +19,8 @@ FApplicationModule::FApplicationModule()
 //----------------------------------------------------------------------------
 FApplicationModule::~FApplicationModule() = default;
 //----------------------------------------------------------------------------
-void FApplicationModule::Start(FModuleManager& manager) {
-    FModule::Start(manager);
+void FApplicationModule::Start() {
+    FModule::Start();
 
     FPlatformApplicationMisc::Start();
 }

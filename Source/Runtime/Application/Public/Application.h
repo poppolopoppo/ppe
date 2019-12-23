@@ -7,13 +7,9 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_APPLICATION_API FApplicationContext {
-public:
-    FApplicationContext();
-    ~FApplicationContext();
-};
+PPE_APPLICATION_API FApplicationBase& RunningApp() NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_APPLICATION_API int LaunchApplication(const FApplicationContext& context, class FApplicationBase* app);
+PPE_APPLICATION_API int LaunchApplication(FApplicationBase* app);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

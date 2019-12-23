@@ -16,19 +16,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FDiagnosticsStartup::Start(void *applicationHandle, int nShowCmd, const wchar_t* filename, size_t argc, const wchar_t** argv) {
+void FDiagnosticsStartup::Start() {
     DEBUG_FUNCTION_START();
 
-    FCurrentProcess::Create(applicationHandle, nShowCmd, filename, argc, argv);
-
 #if USE_PPE_PLATFORM_PROFILER
-    FPlatformProfiler::Name(FPlatformProfiler::GlobalLevel, ToString(filename).data());
+    FPlatformProfiler::Name(FPlatformProfiler::GlobalLevel, ToString(FCurrentProcess::Get().FileName()).data());
 #endif
 }
 //----------------------------------------------------------------------------
 void FDiagnosticsStartup::Shutdown() {
-
-    FCurrentProcess::Destroy();
 
     DEBUG_FUNCTION_SHUTDOWN();
 }

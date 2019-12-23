@@ -10,16 +10,17 @@
 #define PPE_STATICMODULE_STARTUP_DEF(_NAME) \
     struct PPE_STATICMODULE_STARTUP_NAME(_NAME) : PPE_STATICMODULES_STARTUP { \
         CONCAT3(F, _NAME, Module) _NAME; \
-        explicit PPE_STATICMODULE_STARTUP_NAME(_NAME)(PPE::FModuleManager& manager) \
-        :   PPE_STATICMODULES_STARTUP(manager) { \
-            StartModule(_NAME); \
+        void Start(PPE::FModuleManager& manager) { \
+            PPE_STATICMODULES_STARTUP::Start(manager); \
+            PPE::FBaseModuleStartup::StartModule(manager, _NAME); \
         } \
-        virtual ~PPE_STATICMODULE_STARTUP_NAME(_NAME)() { \
-            ShutdownModule(_NAME); \
+        void Shutdown(PPE::FModuleManager& manager) { \
+            PPE::FBaseModuleStartup::ShutdownModule(manager, _NAME); \
+            PPE_STATICMODULES_STARTUP::Shutdown(manager); \
         } \
-        virtual void ReleaseMemory() override { \
-            ReleaseMemoryInModule(_NAME); \
-            PPE_STATICMODULES_STARTUP::ReleaseMemory(); \
+        virtual void ReleaseMemory(PPE::FModuleManager& manager) override { \
+            PPE::FBaseModuleStartup::ReleaseMemoryInModule(manager, _NAME); \
+            PPE_STATICMODULES_STARTUP::Shutdown(manager); \
         } \
     }
 
@@ -33,11 +34,6 @@ enum class EModuleStatus {
     Started,
     Shutdown,
     Destroyed
-};
-//----------------------------------------------------------------------------
-struct PPE_CORE_API IModuleStartup {
-    virtual ~IModuleStartup() = default;
-    virtual void ReleaseMemory() = 0;
 };
 //----------------------------------------------------------------------------
 class PPE_CORE_API FModule {
@@ -58,7 +54,7 @@ protected:
 
     friend class FModuleManager;
 
-    virtual void Start(FModuleManager& manager);
+    virtual void Start();
     virtual void Shutdown();
     virtual void ReleaseMemory();
 
@@ -69,16 +65,18 @@ private:
 //----------------------------------------------------------------------------
 PPE_CORE_API void ReleaseMemoryInModules();
 //----------------------------------------------------------------------------
-struct PPE_CORE_API FBaseModuleStartup : public IModuleStartup {
+struct PPE_CORE_API FBaseModuleStartup {
 public:
-    PPE::FModuleManager& Manager;
-    explicit FBaseModuleStartup(PPE::FModuleManager& manager);
-    virtual ~FBaseModuleStartup();
-    virtual void ReleaseMemory() override;
+    virtual ~FBaseModuleStartup() = default;
+
+    void Start(FModuleManager& manager);
+    void Shutdown(FModuleManager& manager);
+    virtual void ReleaseMemory(FModuleManager& manager);
+
 protected:
-    void StartModule(FModule& m);
-    void ShutdownModule(FModule& m);
-    void ReleaseMemoryInModule(FModule& m);
+    static void StartModule(FModuleManager& manager, FModule& m);
+    static void ShutdownModule(FModuleManager& manager, FModule& m);
+    static void ReleaseMemoryInModule(FModuleManager& manager, FModule& m);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
