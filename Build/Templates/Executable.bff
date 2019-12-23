@@ -59,7 +59,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
     {
         .LinkerVerboseOutput = true
 
-        .LinkerOutput       = '$IntermediateRoot$/$BinaryPrefix$-$Platform$-$Config$.$CompilerBinaryExtension$'
+        .LinkerOutput       = '$BinaryPath$/$BinaryPrefix$-$Platform$-$Config$.$CompilerBinaryExtension$'
         .LinkerOptions      + .ExecutableOptions
 
         If( .ProjectUseIncrementalLinker == .False )
@@ -88,32 +88,6 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         .PreBuildDependencies = .ExecutableDeps
     }
 
-    // Copy all binaries from intermediate to output path
-    Copy( '$ProjectName$-CopyOutput-$Platform$-$Config$' )
-    {
-        .Source             = {}
-                            + '$ProjectName$-Exe-$Platform$-$Config$'
-
-        .SharedLib          = 'Dll'
-        If( .ConfigLinkType == .SharedLib )
-        {
-            ForEach( .ProjectDependency in .ProjectPublicDependencies )
-            {
-                // need to copy referenced dlls next to the binary or they won't be found
-                ^Source     + '$ProjectDependency$-$Platform$-$Config$'
-            }
-        }
-
-        ForEach( .ProjectDependency in .ProjectRuntimeDependencies )
-        {
-            // need to copy referenced dlls next to the binary or they won't be found
-            ^Source     + '$ProjectDependency$-$Platform$-$Config$'
-        }
-
-
-        .Dest               = '$BinaryPath$/'
-    }
-
     // The main target is an alias to bulk compilation, copy and potentially user provided tasks
     Alias( '$ProjectName$-$Platform$-$Config$' )
     {
@@ -127,7 +101,6 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
         .Targets                = {}
                                 + '$ProjectName$-Exe-$Platform$-$Config$'
-                                + '$ProjectName$-CopyOutput-$Platform$-$Config$'
                                 + .ProjectPostBuild
     }
 

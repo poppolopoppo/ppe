@@ -262,7 +262,7 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
                 .LinkerVerboseOutput = true
 
-                .LinkerOutput       = '$IntermediateRoot$/$ProjectName$-$Platform$-$Config$.$CompilerDllExtension$'
+                .LinkerOutput       = '$BinaryPath$/$ProjectName$-$Platform$-$Config$.$CompilerDllExtension$'
                 .LinkerOptions      = "$DllOptions$ $LinkerOptions$"
 
                 If( .ProjectUseIncrementalLinker == .False )
