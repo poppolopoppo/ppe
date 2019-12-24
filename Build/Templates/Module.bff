@@ -122,7 +122,7 @@
 // Configure project settings from higher level module settings
 ////////////////////////////////////////////////////////////////////////
 
-.BinaryPrefix ? .ModuleName
+.BinaryPrefix ? "$ModulePath$-$ModuleName$"
 .ProjectDefines = .ModuleDefines
 .ProjectExcludedFiles = .ModuleExcludedFiles
 .ProjectFiles = .ModuleFiles + .ModuleExtraFiles
