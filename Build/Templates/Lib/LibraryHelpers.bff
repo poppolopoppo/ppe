@@ -154,7 +154,6 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
         .PurgeTargets = {}
 
-        //If( .ProjectUseUnity == .UnityEnabled )
         // Project Unity
         Unity( '$ProjectName$-Unity-$Platform$-$Config$' )
         {
@@ -183,7 +182,6 @@ ForEach( .CompileConfig in .AllCompileConfigs )
         }
 
         .PurgeTargets + '$ProjectName$-Unity-$Platform$-$Config$-Purge'
-        //}
 
         // Object list
         ObjectList( '$ProjectName$-Obj-$Platform$-$Config$' )
@@ -193,6 +191,9 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             .CompilerInputFilesRoot = .ProjectPath
             .CompilerOutputPath = .IntermediatePath
 
+            // Deoptimize files containings 'FASTBUILD_DEOPTIMIZE_OBJECT'
+            .DeoptimizeWritableFilesWithToken = true
+
             // Isolated files
             .CompilerInputFiles = {}
             ForEach( .Isolated in .ProjectIsolatedFiles )
@@ -200,31 +201,24 @@ ForEach( .CompileConfig in .AllCompileConfigs )
                 ^CompilerInputFiles + "$ProjectPath$/$Isolated$"
             }
 
-            // Unity files IFN
-            //If( .ProjectUseUnity == .UnityEnabled )
-            //{
+            // Per-project unity build enabled or disabled
+            .CompileWithUnity_true =
+            [
                 .CompilerInputUnity = '$ProjectName$-Unity-$Platform$-$Config$'
-            //}
-            // If( .ProjectUseUnity != .UnityEnabled )
-            // {
-            //     .CompilerInputPath = .ProjectPath
-            //     .CompilerInputPattern = .ProjectInputPattern
+            ]
 
-            //     .CompilerInputFiles = {}
-            //     ForEach( .Filename in .ProjectIsolatedFiles )
-            //     {
-            //         ^CompilerInputFiles + "$ProjectPath$/$Filename$"
-            //     }
+            .CompileWithUnity_false =
+            [
+                .CompilerInputPath = .ProjectPath
+                .CompilerInputPattern = .ProjectInputPattern
+                .CompilerInputExcludedFiles = {}
+                ForEach( .Filename in .ProjectExcludedFiles )
+                {
+                    ^CompilerInputExcludedFiles + "$ProjectPath$/$Filename$"
+                }
+            ]
 
-            //     .CompilerInputExcludedFiles = {}
-            //     ForEach( .Filename in .ProjectExcludedFiles )
-            //     {
-            //         ^CompilerInputExcludedFiles + "$ProjectPath$/$Filename$"
-            //     }
-            // }
-
-            // Deoptimize files containings 'FASTBUILD_DEOPTIMIZE_OBJECT'
-            .DeoptimizeWritableFilesWithToken = true
+            Using( ."CompileWithUnity_$ProjectUseUnity$" )
         }
 
         RemoveDir( '$ProjectName$-Obj-$Platform$-$Config$-Purge' )

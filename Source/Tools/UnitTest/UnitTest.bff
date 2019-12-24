@@ -20,10 +20,6 @@
         'Runtime/Network',
         'Runtime/Application'
     }
-    .ModuleIsolatedFiles =
-    {
-        'Private/main.cpp'
-    }
     .ModuleExtraFiles =
     {
         'resource.rc'

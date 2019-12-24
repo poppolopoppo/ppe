@@ -21,10 +21,6 @@
         'Runtime/Application',
         'ContentPipeline/BuildGraph',
     }
-    .ModuleIsolatedFiles =
-    {
-        'Private/main.cpp'
-    }
     .ModuleExtraFiles =
     {
         'resource.rc'
