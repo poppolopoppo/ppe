@@ -20,7 +20,7 @@
         } \
         virtual void ReleaseMemory(PPE::FModuleManager& manager) override { \
             PPE::FBaseModuleStartup::ReleaseMemoryInModule(manager, _NAME); \
-            PPE_STATICMODULES_STARTUP::Shutdown(manager); \
+            PPE_STATICMODULES_STARTUP::ReleaseMemory(manager); \
         } \
     }
 
