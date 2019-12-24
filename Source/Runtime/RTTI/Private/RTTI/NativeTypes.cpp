@@ -502,5 +502,28 @@ FString MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// Used for manipulating visitors and atoms with fwd decl only :
+//----------------------------------------------------------------------------
+bool AtomVisit(IAtomVisitor& visitor, const ITupleTraits* tuple, void* data) {
+    return visitor.Visit(tuple, data);
+}
+//----------------------------------------------------------------------------
+bool AtomVisit(IAtomVisitor& visitor, const IListTraits* list, void* data) {
+    return visitor.Visit(list, data);
+}
+//----------------------------------------------------------------------------
+bool AtomVisit(IAtomVisitor& visitor, const IDicoTraits* dico, void* data) {
+    return visitor.Visit(dico, data);
+}
+//----------------------------------------------------------------------------
+#define DEF_ATOMVISIT_SCALAR(_Name, T, _TypeId) \
+    bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value) { \
+        return visitor.Visit(scalar, value); \
+    }
+FOREACH_RTTI_NATIVETYPES(DEF_ATOMVISIT_SCALAR)
+#undef DEF_ATOMVISIT_SCALAR
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace PPE

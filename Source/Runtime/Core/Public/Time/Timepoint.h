@@ -46,9 +46,9 @@ public:
     bool operator >(const FTimepoint& other) const  { return _value >  other._value; }
     bool operator <=(const FTimepoint& other) const { return _value <= other._value; }
 
-    static FTimepoint Now();
-    static value_type Ticks(const FTimespan& duration);
-    static FTimespan Duration(const FTimepoint& start, const FTimepoint& stop);
+    static PPE_CORE_API FTimepoint Now();
+    static PPE_CORE_API value_type Ticks(const FTimespan& duration);
+    static PPE_CORE_API FTimespan Duration(const FTimepoint& start, const FTimepoint& stop);
     static FTimespan ElapsedSince(const FTimepoint& t) { return Duration(t, Now()); }
 
 private:

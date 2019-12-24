@@ -873,7 +873,7 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
     _Containers&& tests ) {
     // prepare input data
 
-    LOG(Benchmark, Emphasis, L"Running benchmark <{0}> with {1} tests :", name, dim);
+    LOG(Test_Containers, Emphasis, L"Running benchmark <{0}> with {1} tests :", name, dim);
 
 #if 0
     // mt19937 has better distribution than FRandomGenerator for generating benchmark data
@@ -1114,7 +1114,7 @@ static void Benchmark_Containers_FindSpeed_Impl_(
 }
 template <typename T, typename _Generator, typename _Containers>
 NO_INLINE static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&& generator, _Containers&& tests) {
-    LOG(Benchmark, Emphasis, L"Running find speed benchmarks <{0}> :", name);
+    LOG(Test_Containers, Emphasis, L"Running find speed benchmarks <{0}> :", name);
 
 #if 0
     // mt19937 has better distribution than FRandomGenerator for generating benchmark data

@@ -180,6 +180,8 @@ void FCurrentProcess::DumpMemoryStats(FTextWriter& oss) const {
         }
 
     }
+#else
+    UNUSED(oss);
 #endif //!USE_PPE_MEMORYDOMAINS
 }
 //----------------------------------------------------------------------------

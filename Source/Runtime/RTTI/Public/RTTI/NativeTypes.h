@@ -16,9 +16,22 @@
 
 namespace PPE {
 namespace RTTI {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 // Needed to manipulate FAny with fwd decl only :
+//----------------------------------------------------------------------------
 PPE_RTTI_API void AssignCopy(FAny* dst, const void* src, const ITypeTraits& traits);
 PPE_RTTI_API void AssignMove(FAny* dst, void* src, const ITypeTraits& traits);
+//----------------------------------------------------------------------------
+PPE_RTTI_API bool AtomVisit(IAtomVisitor& visitor, const ITupleTraits* tuple, void* data);
+PPE_RTTI_API bool AtomVisit(IAtomVisitor& visitor, const IListTraits* list, void* data);
+PPE_RTTI_API bool AtomVisit(IAtomVisitor& visitor, const IDicoTraits* dico, void* data);
+//----------------------------------------------------------------------------
+#define DECL_ATOMVISIT_SCALAR(_Name, T, _TypeId) \
+    PPE_RTTI_API bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value);
+FOREACH_RTTI_NATIVETYPES(DECL_ATOMVISIT_SCALAR)
+#undef DECL_ATOMVISIT_SCALAR
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

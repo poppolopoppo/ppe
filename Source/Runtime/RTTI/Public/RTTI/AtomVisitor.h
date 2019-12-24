@@ -81,27 +81,6 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Used for manipulating visitors and atoms with fwd decl only :
-//----------------------------------------------------------------------------
-inline bool AtomVisit(IAtomVisitor& visitor, const ITupleTraits* tuple, void* data) {
-    return visitor.Visit(tuple, data);
-}
-//----------------------------------------------------------------------------
-inline bool AtomVisit(IAtomVisitor& visitor, const IListTraits* list, void* data) {
-    return visitor.Visit(list, data);
-}
-//----------------------------------------------------------------------------
-inline bool AtomVisit(IAtomVisitor& visitor, const IDicoTraits* dico, void* data) {
-    return visitor.Visit(dico, data);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-inline bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value) {
-    return visitor.Visit(scalar, value);
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 enum class EPrettyPrintFlags : u32 {
     None            = 0,
     ShowDefaults    = 1<<0,

@@ -420,13 +420,5 @@ CONSTEXPR bool is_string(FTypeId typeId) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool AtomVisit(IAtomVisitor& visitor, const ITupleTraits* tuple, void* data);
-bool AtomVisit(IAtomVisitor& visitor, const IListTraits* list, void* data);
-bool AtomVisit(IAtomVisitor& visitor, const IDicoTraits* dico, void* data);
-template <typename T>
-bool AtomVisit(IAtomVisitor& visitor, const IScalarTraits* scalar, T& value);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 } //!namespace RTTI
 } //!namespace PPE
