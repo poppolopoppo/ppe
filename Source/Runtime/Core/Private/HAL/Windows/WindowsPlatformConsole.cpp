@@ -96,7 +96,9 @@ struct TBasicCStreamBind_ {
 };
 //----------------------------------------------------------------------------
 struct FConsoleWin32_ {
-    ::CRITICAL_SECTION Barrier;
+    ::CRITICAL_SECTION BarrierIn;
+    ::CRITICAL_SECTION BarrierOut;
+
     ::HANDLE hConsoleIn = nullptr;
     ::HANDLE hConsoleOut = nullptr;
     ::WORD Attributes = WORD(-1);
@@ -139,13 +141,35 @@ struct FConsoleWin32_ {
         return GInstance;
     }
 
-    struct FScope {
+    struct FReadScope {
         FConsoleWin32_& Console;
-        FScope() : Console(Get()) {
-            ::EnterCriticalSection(&Console.Barrier);
+        FReadScope() : Console(Get()) {
+            ::EnterCriticalSection(&Console.BarrierIn);
         }
-        ~FScope() {
-            ::LeaveCriticalSection(&Console.Barrier);
+        ~FReadScope() {
+            ::LeaveCriticalSection(&Console.BarrierIn);
+        }
+    };
+
+    struct FWriteScope {
+        FConsoleWin32_& Console;
+        FWriteScope() : Console(Get()) {
+            ::EnterCriticalSection(&Console.BarrierOut);
+        }
+        ~FWriteScope() {
+            ::LeaveCriticalSection(&Console.BarrierOut);
+        }
+    };
+
+    struct FReadWriteScope {
+        FConsoleWin32_& Console;
+        FReadWriteScope() : Console(Get()) {
+            ::EnterCriticalSection(&Console.BarrierIn);
+            ::EnterCriticalSection(&Console.BarrierOut);
+        }
+        ~FReadWriteScope() {
+            ::LeaveCriticalSection(&Console.BarrierOut);
+            ::LeaveCriticalSection(&Console.BarrierIn);
         }
     };
 
@@ -157,14 +181,16 @@ private:
         , WStdin(stdin)
         , WStdout(stdout)
         , WStderr(stderr) {
-        Verify(::InitializeCriticalSectionAndSpinCount(&Barrier, 0x00000400));
+        Verify(::InitializeCriticalSectionAndSpinCount(&BarrierIn, 0x00000400));
+        Verify(::InitializeCriticalSectionAndSpinCount(&BarrierOut, 0x00000400));
     }
 
     ~FConsoleWin32_() {
         Assert(0 == RefCount);
         Assert(nullptr == hConsoleIn);
         Assert(nullptr == hConsoleOut);
-        ::DeleteCriticalSection(&Barrier);
+        ::DeleteCriticalSection(&BarrierIn);
+        ::DeleteCriticalSection(&BarrierOut);
     }
 };
 //----------------------------------------------------------------------------
@@ -182,7 +208,7 @@ STATIC_ASSERT(FWindowsPlatformConsole::BG_RED == BACKGROUND_RED);
 STATIC_ASSERT(FWindowsPlatformConsole::BG_INTENSITY == BACKGROUND_INTENSITY);
 //----------------------------------------------------------------------------
 void FWindowsPlatformConsole::Open() {
-    const FConsoleWin32_::FScope win32;
+    const FConsoleWin32_::FReadWriteScope win32;
 
     if (0 == win32.Console.RefCount++) {
         if (not ::AllocConsole()) {
@@ -214,7 +240,7 @@ void FWindowsPlatformConsole::Open() {
 }
 //----------------------------------------------------------------------------d
 void FWindowsPlatformConsole::Close() {
-    const FConsoleWin32_::FScope win32;
+    const FConsoleWin32_::FReadWriteScope win32;
 
     Assert(win32.Console.RefCount > 0);
     if (0 == --win32.Console.RefCount) {
@@ -241,7 +267,7 @@ void FWindowsPlatformConsole::Close() {
 size_t FWindowsPlatformConsole::Read(const TMemoryView<char>& buffer) {
     Assert(not buffer.empty());
 
-    const FConsoleWin32_::FScope win32;
+    const FConsoleWin32_::FReadScope win32;
 
     Assert(win32.Console.RefCount);
     Assert(win32.Console.hConsoleIn);
@@ -260,7 +286,7 @@ size_t FWindowsPlatformConsole::Read(const TMemoryView<char>& buffer) {
 size_t FWindowsPlatformConsole::Read(const TMemoryView<wchar_t>& buffer) {
     Assert(not buffer.empty());
 
-    const FConsoleWin32_::FScope win32;
+    const FConsoleWin32_::FReadScope win32;
 
     Assert(win32.Console.RefCount);
     Assert(win32.Console.hConsoleIn);
@@ -277,7 +303,7 @@ size_t FWindowsPlatformConsole::Read(const TMemoryView<wchar_t>& buffer) {
 void FWindowsPlatformConsole::Write(const FStringView& text, EAttribute attrs/* = Default */) {
     Assert(not text.empty());
 
-    const FConsoleWin32_::FScope win32;
+    const FConsoleWin32_::FWriteScope win32;
 
     Assert(win32.Console.RefCount);
     Assert(win32.Console.hConsoleOut);
@@ -297,7 +323,7 @@ void FWindowsPlatformConsole::Write(const FStringView& text, EAttribute attrs/* 
 void FWindowsPlatformConsole::Write(const FWStringView& text, EAttribute attrs/* = Default */) {
     Assert(not text.empty());
 
-    const FConsoleWin32_::FScope win32;
+    const FConsoleWin32_::FWriteScope win32;
 
     Assert(win32.Console.RefCount);
     Assert(win32.Console.hConsoleOut);
