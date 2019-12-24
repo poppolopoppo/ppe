@@ -18,6 +18,7 @@ EXTERN_LOG_CATEGORY(PPE_BUILDGRAPH_API, BuildGraph)
 class PPE_BUILDGRAPH_API FBuildGraph : Meta::FNonCopyableNorMovable {
 public:
     FBuildGraph() NOEXCEPT;
+    ~FBuildGraph();
 
     FBuildRevision Revision() const { return _revision; }
 

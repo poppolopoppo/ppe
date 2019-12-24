@@ -12,7 +12,7 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_BUILDGRAPH_API FBuildEnvironment : Meta::FNonCopyable {
+class PPE_BUILDGRAPH_API FBuildEnvironment : Meta::FNonCopyableNorMovable {
 public:
     FBuildEnvironment(
         const ITargetPlaftorm& platform,
@@ -20,6 +20,7 @@ public:
         IBuildCache& cache,
         IBuildExecutor& executor,
         IBuildLog& log ) NOEXCEPT;
+    ~FBuildEnvironment();
 
     const ITargetPlaftorm& Platform() const { return _platform; }
     const FDirpath& OutputDir() const { return _outputDir; }

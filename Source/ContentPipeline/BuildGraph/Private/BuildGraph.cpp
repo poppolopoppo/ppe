@@ -69,6 +69,9 @@ FBuildGraph::FBuildGraph() NOEXCEPT
 :   _revision(INDEX_NONE) {
 }
 //----------------------------------------------------------------------------
+FBuildGraph::~FBuildGraph()
+{} // for fwd declaration
+//----------------------------------------------------------------------------
 void FBuildGraph::AddNode(FBuildNode* pnode) {
     Assert(pnode);
     Add_AssertUnique(_roots, SBuildNode{ pnode });

@@ -28,6 +28,9 @@ FBuildEnvironment::FBuildEnvironment(
     Assert_NoAssume(outputDir.IsAbsolute());
 }
 //----------------------------------------------------------------------------
+FBuildEnvironment::~FBuildEnvironment() 
+{} // for forward declaration
+//----------------------------------------------------------------------------
 FDirpath FBuildEnvironment::MakeOutputDir(const FDirpath& relative) const {
     Assert(not relative.empty());
     Assert_NoAssume(relative.IsRelative());
