@@ -17,7 +17,7 @@ namespace RTTI {
         return GInstance; \
     }
 #else
-#   define RTTI_NAMESPACE_DEF(_Api, _Name, _Domain) \
+#   define RTTI_MODULE_DEF(_Api, _Name, _Domain) \
     PPE::RTTI::FMetaModule& CONCAT(RTTI_, _Name)() NOEXCEPT { \
         ONE_TIME_INITIALIZE(PPE::RTTI::FMetaModule, GInstance, STRINGIZE(_Name)); \
         return GInstance; \
