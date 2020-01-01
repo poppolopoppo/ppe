@@ -13,6 +13,7 @@
         'PLATFORM_POSIX',
         'PLATFORM_LINUX',
         'PLATFORM_PC',
+        '__LINUX__',
         'TARGET_PLATFORM=$TargetPlatform$'
     }
 ]
@@ -20,7 +21,7 @@
 //------------------------------------------------------------------------------
 // Shared Linux Platform (32 bits)
 //------------------------------------------------------------------------------
-.SharedPlatformLinux32 =
+.SharedPlatformX86 =
 [
     Using( .SharedPlatformLinuxBase )
     Using( .SharedArchX86 )
@@ -28,12 +29,12 @@
     .Platform = 'Linux32'
     .PlatformDefines + .ArchDefines
 ]
-.AllSharedPlatforms = { .SharedPlatformLinux32 }
+.AllSharedPlatforms = { .SharedPlatformX86 }
 
 //------------------------------------------------------------------------------
 // Shared Linux Platform (64 bits)
 //------------------------------------------------------------------------------
-.SharedPlatformLinux =
+.SharedPlatformX64 =
 [
     Using( .SharedPlatformLinuxBase )
     Using( .SharedArchX64 )
@@ -41,4 +42,4 @@
     .Platform = 'Linux64'
     .PlatformDefines + .ArchDefines
 ]
-.AllSharedPlatforms + .SharedPlatformLinux
+.AllSharedPlatforms + .SharedPlatformX64

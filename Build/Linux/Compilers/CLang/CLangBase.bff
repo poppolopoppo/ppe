@@ -1,0 +1,289 @@
+#once
+
+//------------------------------------------------------------------------------
+// Common CLang Configuration
+//------------------------------------------------------------------------------
+.CLangBase = 
+[
+    .Defines =
+    {
+        'CPP_CLANG'
+    }
+
+    .IncludePaths = {}
+    .SystemIncludePaths = {}
+
+    .AdditionalOptions = ''
+    .PreprocessorOptions = ''
+    .DllOptions = ''
+    .ExecutableOptions = ''
+    .ExecutableDeps = {}
+
+    .CompilerOptions = ''
+    + ' -o "%2" "%1"'   // Input/Output
+    + ' -c'             // Compile only
+    + ' -g'             // Generate debug info
+    + ' -Wall -Werror -Wfatal-errors'   // warnings as errors
+    + ' -Wextra'
+    + ' -Wshadow'
+;    + ' -Wno-invalid-offsetof' // we get the offset of members in non-POD types
+    + ' -std=c++17'
+    + ' -msse4.1'
+;    + ' -L"$BinaryPath$"'
+
+    .LibrarianOptions = ''
+    + 'rcs "%2" "%1"'
+
+    .LinkerOptions = ''
+    + '"%1" -o "%2"'
+
+    ; utilisés pour généraliser les templates :
+    .CompilerDefineFlag         = ' -D'
+    .CompilerIncludeFlag        = ' -I'
+    .CompilerSystemIncludeFlag  = ' -I'
+    .CompilerQuote              = ''
+    .CompilerPreprocessorFlag   = ''
+    .CompilerForceIncludeFlag   = ' -include '
+    .CompilerBinaryExtension    = 'out'
+    .CompilerSymbolsExtension   = 'debug'
+    .CompilerDllExtension       = 'so'
+    .CompilerLibraryExtension   = 'a'
+]
+
+//------------------------------------------------------------------------------
+// CLang precompiled headers
+//------------------------------------------------------------------------------
+.CLangBasePCHDisabled = 
+[
+    .Defines = { 'USE_PPE_PRECOMPILEDHEADERS=0' }
+    .PreprocessorDefinitions= ';USE_PPE_PRECOMPILEDHEADERS=0'
+]
+.CLangBasePCHEnabled = .CLangBasePCHDisabled
+
+#if USE_PRECOMPILED_HEADERS
+Print( 'Using Pre-Compiled Headers' )
+.CLangBasePCHEnabled = 
+[
+    .Defines = { 'USE_PPE_PRECOMPILEDHEADERS=1' }
+    .PreprocessorDefinitions= ';USE_PPE_PRECOMPILEDHEADERS=1'
+]
+#endif
+
+//------------------------------------------------------------------------------
+// CLang Base Platforms
+//------------------------------------------------------------------------------
+.CLangBasePlatformX86 =
+[
+    Using( .SharedPlatformX86 )
+    Using( .CLangBase )
+
+    .Defines            + .PlatformDefines
+    .CompilerOptions    + ' -m32'
+    .LibrarianOptions   + ' -m32'
+    .LinkerOptions      + ' -m32'
+]
+
+.CLangBasePlatformX64 =
+[
+    Using( .SharedPlatformX64 )
+    Using( .CLangBase )
+
+    .Defines            + .PlatformDefines
+    .CompilerOptions    + ' -m64'
+    .LibrarianOptions   + ' -m64'
+    .LinkerOptions      + ' -m64'
+]
+
+//------------------------------------------------------------------------------
+// CLang Config Dependent Flags
+//------------------------------------------------------------------------------
+.CLangBaseConfig =
+[
+    .DebugDefines   = {}
+    .ReleaseDefines = {}
+
+    .DebugOptimisations = ''
+    + ' -O0'                ; désactive les optimisations (debug)
+
+    .FastDebugOptimisations = .DebugOptimisations
+
+    .ReleaseOptimisations = ''
+    + ' -O2'                ; optimisations favorisant la vitesse
+
+    .FinalOptimisations = ''
+    + ' -O3'                ; optimisations maximales
+
+    .CompilerWithoutCache       = ''
+    .CompilerWithCache          = ''
+
+    ; On désactive le support du RTTI c++ en non debug (dynamic_cast<> est utilisé par certains assert)
+    .CompilerWithoutRTTI        = ' -fno-rtti'  ; désactive le support des RTTI std de C++
+    .CompilerWithRTTI           = ' -frtti'     ; active le support des RTTI std de C++ (RunTime Type Information, nécessaire pour dynamic_cast<> par ex)
+
+    ; ASLR actif uniquement en final
+    .LinkerWithASLR             = ' -fpie'       ; Address Spase Layout Randomization
+    .LinkerWithoutASLR          = ' -fno-pie'    ; pas de randomisation des adresses
+
+    ; Link-time code generation
+    .LinkerWithLTCG             = ' -flto'
+    .LinkerWithLTCGIncremental  = ' -flto=thin'
+    .LinkerWithoutLTCG          = ' -fno-lto'
+
+    ; Linker incremental #TODO
+    .LinkerIncremental          = ''
+    .LinkerNotIncremental       = ''
+
+    .LibraryLinkType = 'Lib'
+#if USE_LIBRARY_DEPENDENCY_INPUT
+    .LibraryLinkType = 'Obj'
+    Print( "Using library dependency input" )
+#endif
+
+    .Obj_RuntimeDebug = []
+    .Obj_RuntimeRelease = []
+
+    .Lib_RuntimeDebug = []
+    .Lib_RuntimeRelease = []
+
+    .Dll_RuntimeDebug = []
+    .Dll_RuntimeRelease = []
+]
+
+//------------------------------------------------------------------------------
+// CLang Debug Configuration
+//------------------------------------------------------------------------------
+.CLangBaseDebugConfig =
+[
+    Using( .SharedDebugConfig )
+    Using( .CLangBaseConfig )
+
+    .ConfigLinkType     = .LibraryLinkType
+
+    .ConfigOptions      = .DebugOptimisations
+                        + .CompilerWithCache
+
+    .Defines            = .ConfigDefines
+                        + .DebugDefines
+
+    .CompilerOptions    = .ConfigOptions
+                        + .CompilerWithRTTI
+
+    .CompilerOptionsDeoptimized = .CompilerOptions - ' -O2' + ' -O0'
+
+    .LinkerOptions      = .LinkerIncremental
+                        + .LinkerWithoutASLR
+
+    .CompilerRuntime    = .'$ConfigLinkType$_RuntimeDebug'
+]
+
+//------------------------------------------------------------------------------
+// CLang FastDebug Configuration
+//------------------------------------------------------------------------------
+.CLangBaseFastDebugConfig =
+[
+    Using( .SharedFastDebugConfig )
+    Using( .CLangBaseConfig )
+
+    .ConfigOptions      = .FastDebugOptimisations
+                        + .CompilerWithCache
+
+    .Defines            = .ConfigDefines
+                        + .DebugDefines
+
+    .CompilerOptions    = .ConfigOptions
+                        + .CompilerWithRTTI
+
+    .CompilerOptionsDeoptimized = .CompilerOptions - ' -O2' + ' -O0'
+
+    .LinkerOptions      = .LinkerIncremental
+                        + .LinkerWithoutASLR
+
+    .CompilerRuntime    = .'$ConfigLinkType$_RuntimeDebug'
+]
+
+//------------------------------------------------------------------------------
+// CLang Release Configuration
+//------------------------------------------------------------------------------
+.CLangBaseReleaseConfig =
+[
+    Using( .SharedReleaseConfig )
+    Using( .CLangBaseConfig )
+
+    .ConfigLinkType     = .LibraryLinkType
+
+    .ConfigOptions      = .ReleaseOptimisations
+                        + .CompilerWithCache
+
+    .Defines            = .ConfigDefines
+                        + .ReleaseDefines
+
+    .CompilerOptions    = .ConfigOptions
+                        + .CompilerWithoutRTTI
+
+    .CompilerOptionsDeoptimized = .CompilerOptions - ' -O2' + ' -O0'
+
+    .LinkerOptions      = .LinkerIncremental
+                        + .LinkerWithoutASLR
+
+    .CompilerRuntime    = .'$ConfigLinkType$_RuntimeRelease'
+]
+
+//------------------------------------------------------------------------------
+// CLang Profiling Configuration
+//------------------------------------------------------------------------------
+.CLangBaseProfilingConfig =
+[
+    Using( .SharedProfilingConfig )
+    Using( .CLangBaseConfig )
+
+    .ConfigLinkType     = .LibraryLinkType
+
+    .ConfigOptions      = .FinalOptimisations
+                        + .CompilerWithCache
+
+    .Defines            = .ConfigDefines
+                        + .ReleaseDefines
+
+    .CompilerOptions    = .ConfigOptions
+                        + .CompilerWithoutRTTI
+
+    .CompilerOptionsDeoptimized = .CompilerOptions - ' -O2' + ' -O0'
+
+    .LibrarianOptions   = .LinkerWithLTCG
+
+    .LinkerOptions      = .LinkerWithLTCG
+                        + .LinkerWithoutASLR
+                        + .LinkerNotIncremental
+
+    .CompilerRuntime    = .'$ConfigLinkType$_RuntimeRelease'
+]
+
+//------------------------------------------------------------------------------
+// CLang Final Configuration
+//------------------------------------------------------------------------------
+.CLangBaseFinalConfig =
+[
+    Using( .SharedFinalConfig )
+    Using( .CLangBaseConfig )
+
+    .ConfigLinkType     = .LibraryLinkType
+
+    .ConfigOptions      = .FinalOptimisations
+                        + .CompilerWithoutCache
+
+    .Defines            = .ConfigDefines
+                        + .ReleaseDefines
+
+    .CompilerOptions    = .ConfigOptions
+                        + .CompilerWithoutRTTI
+
+    .CompilerOptionsDeoptimized = .CompilerOptions - ' -O3' + ' -O0'
+
+    .LibrarianOptions   = .LinkerWithLTCG
+
+    .LinkerOptions      = .LinkerWithLTCG
+                        + .LinkerNotIncremental
+                        + .LinkerWithASLR
+
+    .CompilerRuntime    = .'$ConfigLinkType$_RuntimeRelease'
+]

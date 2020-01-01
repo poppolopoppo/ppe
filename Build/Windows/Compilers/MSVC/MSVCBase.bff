@@ -166,6 +166,7 @@
     .CompilerDefineFlag         = ' /D'
     .CompilerIncludeFlag        = ' /I '
     .CompilerSystemIncludeFlag  = ' /I '
+    .CompilerQuote              = '"'
     .CompilerPreprocessorFlag   = ' /P /Fi"%2"'
     .CompilerForceIncludeFlag   = ' /FI'
     .CompilerBinaryExtension    = 'exe'

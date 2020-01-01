@@ -1,0 +1,22 @@
+#once
+
+;#define USE_LLVM_6
+;#define USE_LLVM_7
+
+//------------------------------------------------------------------------------
+// CLang XX
+//------------------------------------------------------------------------------
+
+#if USE_LLVM_6
+#   include "CLang/CLang-6.bff"
+    .CLangXXCompileConfigs      = .CLang6CompileConfigs
+    .CLangXXPCHEnabled          = .CLang6PCHEnabled
+    .CLangXXPCHDisabled         = .CLang6PCHDisabled
+#endif //!USE_LLVM_6
+
+#if USE_LLVM_7
+#   include "CLang/CLang-7.bff"
+    .CLangXXCompileConfigs      = .CLang7CompileConfigs
+    .CLangXXPCHEnabled          = .CLang7PCHEnabled
+    .CLangXXPCHDisabled         = .CLang7PCHDisabled
+#endif //!USE_LLVM_7

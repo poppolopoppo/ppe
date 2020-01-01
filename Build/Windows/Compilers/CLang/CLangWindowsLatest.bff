@@ -5,7 +5,7 @@
 ; active l'utilisation des Pre-Compiled Headers (/Yu, /Yc
 #define USE_PRECOMPILED_HEADER
 ; utilise les .obj plutôt que les .lib comme input du link
-#define USE_LIBRARY_DEPENDENCY_INPU
+#define USE_LIBRARY_DEPENDENCY_INPUT
 ; active l'utilisation de adress sanitizer
 #define USE_LLVM_ADRESS_SANITIZER
 ; supprime un warning de changement d'ABI depuis 15.8

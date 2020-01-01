@@ -44,7 +44,7 @@
     .MSVC20XXCompileConfigs     = .MSVC2017CompileConfigs
     .MSVC20XXPCHEnabled         = .MSVC2017PCHEnabled
     .MSVC20XXPCHDisabled        = .MSVC2017PCHDisabled
-#endif //!USE_VISUALSTUDIO_2015
+#endif //!USE_VISUALSTUDIO_2017
 
 #if USE_VISUALSTUDIO_2019
 #   include "MSVC/MSVC2019.bff"
@@ -53,4 +53,4 @@
     .MSVC20XXCompileConfigs     = .MSVC2019CompileConfigs
     .MSVC20XXPCHEnabled         = .MSVC2019PCHEnabled
     .MSVC20XXPCHDisabled        = .MSVC2019PCHDisabled
-#endif //!USE_VISUALSTUDIO_2015
+#endif //!USE_VISUALSTUDIO_2019

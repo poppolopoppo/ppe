@@ -24,6 +24,7 @@ Alias( 'Purge' )
     .Targets = { 'All-Purge' }
 }
 
+#if __WINDOWS__
 // BFF fake project
 //------------------------------------------------------------------------------
 VCXProject( 'BFF-VCXProject' )
@@ -100,3 +101,4 @@ VSSolution( 'sln' )
 
     Print('Solution build project : $SolutionBuildProject$')
 }
+#endif //!__WINDOWS__

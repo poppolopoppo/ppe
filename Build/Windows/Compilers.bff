@@ -1,0 +1,32 @@
+
+#if __WINDOWS__
+//------------------------------------------------------------------------------
+// Windows Compilers
+//------------------------------------------------------------------------------
+#   define USE_VISUALSTUDIO
+
+#if WITH_LLVM_WINDOWS
+;#   define USE_CLANG_WINDOWS // %_NOCOMMIT%
+#endif
+
+#   if USE_VISUALSTUDIO
+#       include "Compilers/MSVC20XX.bff"
+    .WindowsCompileConfigs  = .MSVC20XXCompileConfigs
+    .PlatformToolset        = .MSVC20XXPlatformToolset
+    .ResourceCompiler       = .MSVC20XXResourceCompiler
+    .PCHEnabled             = .MSVC20XXPCHEnabled
+    .PCHDisabled            = .MSVC20XXPCHDisabled
+#   endif //!USE_VISUALSTUDIO
+
+#   if USE_CLANG_WINDOWS
+#       include "Compilers/CLangWindowsXX.bff"
+    .WindowsCompileConfigs  = .CLangWindowsXXCompileConfigs
+    .PlatformToolset        = .CLangWindowsXXPlatformToolset
+    .ResourceCompiler       = .CLangWindowsXXResourceCompiler
+    .PCHEnabled             = .CLangWindowsXXPCHEnabled
+    .PCHDisabled            = .CLangWindowsXXPCHDisabled
+#   endif //!USE_CLANG_WINDOWS
+
+    .AllCompileConfigs      = .WindowsCompileConfigs
+
+#endif //!__WINDOWS__

@@ -95,8 +95,8 @@ ForEach( .CompileConfig in .AllCompileConfigs )
 
             ForEach( .define in .Defines )
             {
-                ^CompilerOptions            + ' $CompilerDefineFlag$"$define$"'
-                ^PreprocessorOptions        + ' $CompilerDefineFlag$"$define$"'
+                ^CompilerOptions            + ' $CompilerDefineFlag$$CompilerQuote$$define$$CompilerQuote$'
+                ^PreprocessorOptions        + ' $CompilerDefineFlag$$CompilerQuote$$define$$CompilerQuote$'
                 ^PreprocessorDefinitions    + ';$define$'
             }
 
@@ -116,18 +116,18 @@ ForEach( .CompileConfig in .AllCompileConfigs )
             // For actual compilation
             ForEach( .path in .ProjectForcedIncludes )
             {
-                ^CompilerOptions            + ' $CompilerForceIncludeFlag$"$path$"'
-                ^PreprocessorOptions        + ' $CompilerForceIncludeFlag$"$path$"'
+                ^CompilerOptions            + ' $CompilerForceIncludeFlag$$CompilerQuote$$path$$CompilerQuote$'
+                ^PreprocessorOptions        + ' $CompilerForceIncludeFlag$$CompilerQuote$$path$$CompilerQuote$'
             }
             ForEach( .path in .ProjectIncludes )
             {
-                ^CompilerOptions            + ' $CompilerIncludeFlag$"$path$"'
-                ^PreprocessorOptions        + ' $CompilerIncludeFlag$"$path$"'
+                ^CompilerOptions            + ' $CompilerIncludeFlag$$CompilerQuote$$path$$CompilerQuote$'
+                ^PreprocessorOptions        + ' $CompilerIncludeFlag$$CompilerQuote$$path$$CompilerQuote$'
             }
             ForEach( .path in .SystemIncludePaths )
             {
-                ^CompilerOptions            + ' $CompilerSystemIncludeFlag$"$path$"'
-                ^PreprocessorOptions        + ' $CompilerSystemIncludeFlag$"$path$"'
+                ^CompilerOptions            + ' $CompilerSystemIncludeFlag$$CompilerQuote$$path$$CompilerQuote$'
+                ^PreprocessorOptions        + ' $CompilerSystemIncludeFlag$$CompilerQuote$$path$$CompilerQuote$'
             }
 
 #if USE_VISUALSTUDIO

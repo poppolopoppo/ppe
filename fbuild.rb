@@ -1,11 +1,11 @@
-#!/bin/env ruby
+#!/usr/bin/env ruby
 
 require 'fileutils'
 require 'pathname'
 
 START_TIME=Time.now
 
-VERSION='2.5'
+VERSION='2.6'
 VERSION_HEADER="// VERSION = <#{VERSION}>"
 
 require 'rbconfig'
@@ -16,23 +16,11 @@ RUBY_INTERPRETER_PATH = Pathname.new(File.join(
 
 SOLUTION_ROOT = Pathname.new(File.dirname(__FILE__)).realpath.to_s
 SOLUTION_FBUILDROOT = File.join(SOLUTION_ROOT, 'Build')
-SOLUTION_FBUILDCMD = File.join(SOLUTION_FBUILDROOT, 'FBuild.exe')
 SOLUTION_PATHFILE = File.join(SOLUTION_FBUILDROOT, '_solution_path.bff')
-
-RUNNING_ON_WINDOWS = (ENV['OS'] == 'Windows_NT')
 
 Dir.chdir(SOLUTION_ROOT)
 
 YIELD_PARAMS = ARGV.clone
-FORCE_USAGE = []
-YIELD_PARAMS.delete_if do |arg|
-    if arg =~ /-vs20\d{2}/i
-        FORCE_USAGE << arg[1..-1].downcase.to_sym
-        true
-    else
-        false
-    end
-end
 
 class FHeader
     attr_reader :filename, :header
@@ -82,7 +70,7 @@ def touch_header(filename)
 end
 
 class FDependency
-    attr_reader :name, :available
+    attr_reader :name, :available, :force_tag
     def initialize(name)
         @name = name
     end
@@ -92,6 +80,13 @@ class FDependency
     end
     def export(header)
         header.define(@name, @available)
+    end
+    def force_usage()
+        if @available
+            return FORCE_USAGE.include?(@force_tag)
+        else
+            return false
+        end
     end
 private
     def eval_()
@@ -116,195 +111,31 @@ private
     end
 end
 
-class FVisualStudio < FDependency
-    attr_reader :toolset, :default_comntools, :comntools, :cluid, :force_tag
-    def initialize(toolset, default_comntools, force_tag=nil)
-        @toolset = toolset
-        @default_comntools = default_comntools
-        @force_tag = force_tag
-        super("VISUALSTUDIO_TOOLSET_#{@toolset}")
+class FPlatform
+    attr_reader :name, :dependencies
+    def initialize(name)
+        @name = name
+        @dependencies = {}
     end
-    def export(header)
-        super(header)
-        header.set("VS#{@toolset}CLUID", @available ? @cluid : nil)
-        header.set("VS#{@toolset}COMNTOOLS", @available ? @comntools : nil)
+    def depends(name, dependency)
+        dependency.eval()
+        @dependencies[name] = dependency
     end
-    def force_usage()
-        if @available
-            return FORCE_USAGE.include?(@force_tag)
-        else
-            return false
-        end
-    end
-private
-    def eval_comntools_()
-        return false if @comntools.nil?
-        binpath = File.join(@comntools, '..', '..', 'VC', 'bin')
-        '00'.upto('99') do |id|
-            @cluid = "10#{id}" if File.exist?(File.join(binpath, "10#{id}", 'clui.dll'))
-        end
-        return !@cluid.nil?
-    end
-    def eval_()
-        envname = "VS#{@toolset}COMNTOOLS"
-        @comntools = ENV[envname]
-        return true if eval_comntools_()
-        @comntools = @default_comntools
-        success = eval_comntools_()
-        ENV[envname] = @comntools if success
-        return success
-    end
-end
+end #~ FPlatform
 
-class FVisualStudioPost2015 < FVisualStudio
-    attr_reader :version
-    def initialize(major_version, toolset, force_tag)
-        root = 'C:\Program Files (x86)\Microsoft Visual Studio\\' + major_version
-        comntools_communuty = root + '\Community\Common7\Tools\\'
-        comntools_professional = root + '\Professional\Common7\Tools\\'
-        super(toolset, Dir.exist?(comntools_professional) ?
-            comntools_professional :
-            comntools_communuty,
-            force_tag )
-    end
-    def export(header)
-        super(header)
-        header.set("VS#{@toolset}VERSION", @available ? @version : nil)
-    end
-private
-    def eval_()
-        @comntools = @default_comntools
-        msvcpath = File.join(@comntools, '..', '..', 'VC', 'Tools', 'MSVC')
-        return false unless Dir.exist?(msvcpath)
-        versions = Dir.entries(msvcpath)
-        return false if versions.empty?
-        @version = versions.sort.last
-        binpath = File.join(@comntools, '..', '..', 'VC', 'Tools', 'MSVC', @version, 'bin', 'HostX64')
-        return false unless Dir.exist?(binpath)
-        '00'.upto('99') do |id|
-            @cluid = "10#{id}" if File.exist?(File.join(binpath, 'x64', "10#{id}", 'clui.dll'))
-        end
-        return !@cluid.nil?
-    end
-end
-
-class FWindowsSDK < FDependency
-    BASEPATH='C:\Program Files (x86)\Windows Kits\\'
-    attr_reader :winver, :version
-    def initialize(winver)
-        @winver = winver
-        super("WINDOWS_SDK#{winver_s}")
-    end
-    def sdkpath() File.join(BASEPATH, @winver) end
-    def winver_s() winver.to_s().gsub('.','') end
-    def export(header)
-        super(header)
-        header.set("WindowsSDKBasePath#{winver_s}", @available ? sdkpath : nil)
-        header.set("WindowsSDKVersion#{winver_s}", @available ? @version : nil)
-    end
-private
-    def eval_()
-        return false unless Dir.exist?(sdkpath)
-        libpath = File.join(sdkpath, 'lib')
-        return false unless Dir.exist?(libpath)
-        sdkversions = Dir.entries(libpath)
-        sdkversions.delete_if {|p| !Dir.exist?(File.join(libpath, p, 'um')) }
-        raise "Can't find Windows SDK #{@winver} version !" if sdkversions.empty?
-        @version = sdkversions.sort.last
-        return true
-    end
-end
-
-class FLLVMWindows < FDependency
-    BASEPATH_X86 = 'C:\Program Files (x86)\LLVM'
-    BASEPATH_X64 = 'C:\Program Files\LLVM'
-
-    attr_reader :platform, :llvm_path, :clang_version
-    def initialize()
-        super('LLVM_WINDOWS')
-    end
-    def export(header)
-        super(header)
-        header.set("LLVMBasePath#{@platform}", @available ? @llvm_path : nil)
-        header.set("LLVMClangVer#{@platform}", @available ? @clang_version : nil)
-        header.set("LLVMWindowsBasePath", @available ? @llvm_path : nil)
-        header.set("LLVMWindowsClangVer", @available ? @clang_version : nil)
-    end
-    def self.fetch_version?(llvm_path)
-        clang_lib_path = File.join(llvm_path, 'lib', 'clang')
-        entries = Dir.entries(clang_lib_path)
-        if entries
-            entries.delete_if{|x| x =~ /^\.+$/}
-            entries.sort!
-            return entries[0]
-        else
-            return nil
-        end
-    end
-private
-    def eval_()
-        if Dir.exist?(BASEPATH_X64)
-            @platform = 'X64'
-            @llvm_path = BASEPATH_X64
-        elsif Dir.exist?(BASEPATH_X86)
-            @platform = 'X86'
-            @llvm_path = BASEPATH_X86
-        else
-            @platform = nil
-            @llvm_path = nil
-            return false
-        end
-        @clang_version = FLLVMWindows.fetch_version?(@llvm_path)
-        return (@clang_version != nil)
-    end
-end
-
-DEPENDENCIES= [
-    [ 'Visual Studio 2012'      , FVisualStudio.new('110', 'C:\Program Files (x86)\Microsoft Visual Studio 11.0\Common7\Tools\\', :vs2012)  ],
-    [ 'Visual Studio 2013'      , FVisualStudio.new('120', 'C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\Tools\\', :vs2013)  ],
-    [ 'Visual Studio 2015'      , FVisualStudio.new('140', 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\\', :vs2015)  ],
-    [ 'Visual Studio 2017'      , FVisualStudioPost2015.new('2017', 141, :vs2017) ],
-    [ 'Visual Studio 2019'      , FVisualStudioPost2015.new('2019', 142, :vs2019) ],
-
-    [ 'Windows SDK 8.1'         , FWindowsSDK.new('8.1')    ],
-    [ 'Windows SDK 10'          , FWindowsSDK.new('10')     ],
-
-    [ 'LLVM for Windows'        , FLLVMWindows.new() ],
-]
-
-DEPENDENCIES.each { |it| it[1].eval }
-
-VISUALSTUDIO_DEFINES = %w{
-    USE_VISUALSTUDIO_2012
-    USE_VISUALSTUDIO_2013
-    USE_VISUALSTUDIO_2015
-    USE_VISUALSTUDIO_2017
-    USE_VISUALSTUDIO_2019
-}
-
-selectedVisual = nil
-VISUALSTUDIO_DEFINES.length.times do |i|
-    selectedVisual = i if DEPENDENCIES[i][1].available
-end
-(VISUALSTUDIO_DEFINES.length - 1).downto(0) do |i|
-    selectedVisual = i if DEPENDENCIES[i][1].force_usage
-end
+require "#{SOLUTION_ROOT}/Build/OS.rb"
+require "#{SOLUTION_ROOT}/Build/#{OS.name}/Platform.rb"
 
 newHeader = FHeader.new(SOLUTION_PATHFILE)
 newHeader.puts VERSION_HEADER
 newHeader.comment("File generated by fbuild.rb")
+newHeader.set("OS", SOLUTION_PLATFORM.name)
 newHeader.set("SolutionPath", SOLUTION_ROOT)
 newHeader.set("RubyInterpreterPath", RUBY_INTERPRETER_PATH)
 
-DEPENDENCIES.each do |(friendly, dep)|
+SOLUTION_PLATFORM.dependencies.each do |(friendly, dep)|
     newHeader.comment("Depends on #{friendly} : #{dep.available ? 'ENABLED' : 'DISABLED'}")
     dep.export(newHeader)
-end
-
-newHeader.comment('Latest Visual Studio version available :')
-VISUALSTUDIO_DEFINES.each_with_index do |define, i|
-    comment = selectedVisual == i ? '' : ';'
-    newHeader.puts "#{comment}#define #{define}"
 end
 
 oldHeader = FHeader.new(SOLUTION_PATHFILE)
