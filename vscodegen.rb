@@ -1,11 +1,13 @@
-#!/bin/env ruby
+#!/usr/bin/env ruby
 
 require 'fileutils'
 require 'json'
 
-CORE_PATH=File.dirname(File.absolute_path(__FILE__))
+ROOT_PATH=File.dirname(File.absolute_path(__FILE__))
 
-VSCODE_PATH=File.join(CORE_PATH, '.vscode')
+require "#{ROOT_PATH}/Build/OS.rb"
+
+VSCODE_PATH=File.join(ROOT_PATH, '.vscode')
 VSCODE_C_CPP_PROPERTIES=File.join(VSCODE_PATH, 'c_cpp_properties.json')
 VSCODE_C_CPP_PROPERTIES_VERSION=4
 VSCODE_TASKS=File.join(VSCODE_PATH, 'tasks.json')
@@ -15,9 +17,9 @@ VSCODE_LAUNCH_VERSION='0.2.0'
 
 VCDB_PATH=File.join(VSCODE_PATH, 'vc.db')
 
-FBUILD_RB=File.join(CORE_PATH, 'fbuild.rb')
-FBUILD_COMPDB=File.join(CORE_PATH, 'compile_commands.json')
-FBUILD_SOLUTION_PATH=File.join(CORE_PATH, 'Build', '_solution_path.bff')
+FBUILD_RB=File.join(ROOT_PATH, 'fbuild.rb')
+FBUILD_COMPDB=File.join(ROOT_PATH, 'compile_commands.json')
+FBUILD_SOLUTION_PATH=File.join(ROOT_PATH, 'Build', '_solution_path.bff')
 
 USE_CPPTOOLS_ACTIVECONFIGNAME = true
 
@@ -31,7 +33,7 @@ end
 
 def fetch_all_modules()
     modules = []
-    rootpath = File.join(CORE_PATH, 'Source')
+    rootpath = File.join(ROOT_PATH, 'Source')
     Dir.glob(File.join(rootpath, '**', '*.bff')).each do |bff|
         relpath = File.dirname(File.dirname(bff[(rootpath.length+1)..bff.length]))
         name = fetch_fbuilb_string(bff, 'ModuleName')
@@ -43,24 +45,24 @@ def fetch_all_modules()
 end
 
 def fetch_default_target()
-    target = fetch_fbuilb_string(File.join(CORE_PATH, 'fbuild.bff'), 'SolutionBuildProject')
+    target = fetch_fbuilb_string(File.join(ROOT_PATH, 'fbuild.bff'), 'SolutionBuildProject')
     target.gsub!(/-VCXProject$/, '')
     return target
 end
 
 def fetch_fastbuild_options()
-    opts = fetch_fbuilb_string(File.join(CORE_PATH, 'Build', 'VisualStudio.bff'), 'FastBuildOptions')
+    opts = fetch_fbuilb_string(File.join(ROOT_PATH, 'Build', 'VisualStudio.bff'), 'FastBuildOptions')
     opts = opts.strip.split(/\s+/)
     return opts
 end
 
 def make_compile_commands(platform, config, modules)
-    dirname = File.join(CORE_PATH, 'Output', 'Intermediate', platform, config)
+    dirname = File.join(ROOT_PATH, 'Output', 'Intermediate', platform, config)
     FileUtils.mkdir_p(dirname)
     filename = File.join(dirname, "compile_commands.json")
     targets = modules.collect{|name| "#{name}-#{platform}-#{config}" }
     unless system('ruby', FBUILD_RB, "-compdb", *targets, :out => File::NULL)
-        raise "#{FBUILD_RB} #{DEFAULT_TARGET}-#{platform}-#{config}: compdb generation failed :'("
+        raise "#{FBUILD_RB} -compdb #{targets.join(' ')}: compdb generation failed :'("
     end
     FileUtils.mv(FBUILD_COMPDB, filename)
     puts " + #{filename}"
@@ -91,6 +93,28 @@ class Platform
 
 end #~Platform
 
+class LinuxPlatform < Platform
+
+    def defines()
+        return [
+            'PLATFORM_PC',
+            'PLATFORM_LINUX',
+            'PLATFORM_POSIX',
+            'TARGET_PLATFORM=Linux',
+            '__LINUX__'
+        ]
+    end
+
+    def includePath()
+        return super
+    end
+
+    def compilerPath() return "/usr/bin/clang++ #{@name == 'Linux32' ? '-m32' : '-m64'}" end
+
+    def binaryExtension() return '.bin' end
+
+end #~ LinuxPlatform
+
 class WindowsPlatform < Platform
     VS141COMNTOOLS          = fetch_fbuilb_string(FBUILD_SOLUTION_PATH, 'VS141COMNTOOLS')
     VS141VERSION            = fetch_fbuilb_string(FBUILD_SOLUTION_PATH, 'VS141VERSION')
@@ -118,9 +142,9 @@ class WindowsPlatform < Platform
         return [
             'PLATFORM_PC',
             'PLATFORM_WINDOWS',
-            'WIN32',
+            'TARGET_PLATFORM=Windows',
             '__WINDOWS__',
-            'TARGET_PLATFORM=Windows'
+            'WIN32',
         ]
     end
 
@@ -184,11 +208,21 @@ class Module
 
 end #~ Module
 
-PLATFORMS=[
-    WindowsPlatform.new('Win32', 'msvc-x64'), # msvc-x86 doesn't exist
-    WindowsPlatform.new('Win64', 'msvc-x64'),
-    # TODO : add all platforms
-]
+PLATFORMS=[]
+if OS.windows?
+    PLATFORMS +=
+    [
+        WindowsPlatform.new('Win32', 'msvc-x64'), # msvc-x86 doesn't exist
+        WindowsPlatform.new('Win64', 'msvc-x64'),
+    ]
+end
+if OS.linux?
+    PLATFORMS +=
+    [
+        LinuxPlatform.new('Linux32', 'clang-x64'),
+        LinuxPlatform.new('Linux64', 'clang-x64'),
+    ]
+end
 
 CONFIGS=[
     Config.new('Debug',     "DEBUG", "_DEBUG"),
@@ -288,7 +322,7 @@ c_cpp_properties = JSON.pretty_generate({
     'version' => VSCODE_C_CPP_PROPERTIES_VERSION,
     'configurations' => configurations,
 })
-c_cpp_properties.gsub!(CORE_PATH, '${workspaceRoot}')
+c_cpp_properties.gsub!(ROOT_PATH, '${workspaceRoot}')
 make_file(VSCODE_C_CPP_PROPERTIES, c_cpp_properties)
 
 #-----------------------------------------------------------------------------
