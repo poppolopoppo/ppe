@@ -156,7 +156,7 @@ def git_modified_files()
         fname = l[3..-1]
         next unless fname =~ SOURCE_FILES_PATTERN
         fname = File.join(SOLUTION_ROOT, fname)
-        fname.gsub!('/', '\\') if RUNNING_ON_WINDOWS
+        fname.gsub!('/', '\\') if OS.windows?
         fname
     end
     .delete_if {|fname| fname.nil? || fname.length == 0 || !File.exist?(fname) }

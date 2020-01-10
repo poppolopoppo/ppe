@@ -20,3 +20,17 @@
     .CLangXXPCHEnabled          = .CLang7PCHEnabled
     .CLangXXPCHDisabled         = .CLang7PCHDisabled
 #endif //!USE_LLVM_7
+
+#if USE_LLVM_8
+#   include "CLang/CLang-8.bff"
+    .CLangXXCompileConfigs      = .CLang8CompileConfigs
+    .CLangXXPCHEnabled          = .CLang8PCHEnabled
+    .CLangXXPCHDisabled         = .CLang8PCHDisabled
+#endif //!USE_LLVM_7
+
+#if USE_LLVM_9
+#   include "CLang/CLang-9.bff"
+    .CLangXXCompileConfigs      = .CLang9CompileConfigs
+    .CLangXXPCHEnabled          = .CLang9PCHEnabled
+    .CLangXXPCHDisabled         = .CLang9PCHDisabled
+#endif //!USE_LLVM_7

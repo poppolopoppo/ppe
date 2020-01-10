@@ -27,8 +27,12 @@
     + ' -Wextra'
     + ' -Wshadow'
 ;    + ' -Wno-invalid-offsetof' // we get the offset of members in non-POD types
+;    + ' -Wno-unused-commandline-argument'
     + ' -std=c++17'
+    + ' -mlzcnt -mpopcnt'
     + ' -msse4.1'
+    + ' -pthread'
+    ;+ ' -ltermcap'
 ;    + ' -L"$BinaryPath$"'
 
     .LibrarianOptions = ''

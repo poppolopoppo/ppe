@@ -47,6 +47,8 @@ class FLinuxPlatform < FPlatform
         super('Linux')
         depends 'LLVM_6', FLLVMDependency.new('6', 'clang-6.0')
         depends 'LLVM_7', FLLVMDependency.new('7', 'clang-7')
+        depends 'LLVM_8', FLLVMDependency.new('8', 'clang-8')
+        depends 'LLVM_9', FLLVMDependency.new('9', 'clang-9')
     end
 end #~ FLinuxPlatform
 
