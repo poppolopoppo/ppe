@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "IO/Regexp.h"
+#include "IO/regexp.h"
 
 #include "Container/Pair.h"
 #include "Container/PerfectHashing.h"
@@ -16,6 +16,7 @@ LOG_CATEGORY(, Regex)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+#if USE_PPE_REGEX_CUSTOMTRAITS
 CONSTEXPR auto MakeRegexClassnameLookup(char) {
     CONSTEXPR const TPair<TIterable<const char*>, std::ctype_base::mask> ctypes[] = {
         { MakeIterable("alnum"), std::ctype_base::alnum },
@@ -56,10 +57,13 @@ CONSTEXPR auto MakeRegexClassnameLookup(wchar_t) {
     };
     return MinimalPerfectHashMap<false>(wctypes);
 }
+#endif //!USE_PPE_REGEX_CUSTOMTRAITS
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#if USE_PPE_REGEX_CUSTOMTRAITS
 //----------------------------------------------------------------------------
 template <typename _Char>
 size_t TRegexTraits<_Char>::length(const char_type* s) {
@@ -231,6 +235,8 @@ int TRegexTraits<wchar_t>::value(wchar_t ch, int base) const {
     return -1;
 }
 //----------------------------------------------------------------------------
+#endif //!USE_PPE_REGEX_CUSTOMTRAITS
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -307,8 +313,10 @@ bool TBasicRegexp<_Char>::ValidateSyntax(const stringview_type& expr) NOEXCEPT {
             PPE_REGEXERROR_WSTR(error_badrepeat);
             PPE_REGEXERROR_WSTR(error_complexity);
             PPE_REGEXERROR_WSTR(error_stack);
+#ifdef PLATFORM_WINDOWS
             PPE_REGEXERROR_WSTR(error_parse);
             PPE_REGEXERROR_WSTR(error_syntax);
+#endif
         default:
             AssertNotImplemented();
         }

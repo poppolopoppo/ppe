@@ -8,11 +8,18 @@
 #include <locale>
 #include <regex>
 
+// This is highly implementation dependent, and
+// it's going quite too deep down the rabbit hole :'(
+// #TODO: third party C regex engine ? (HYPERSCAN, TRE, PCRE, RE2, ...)
+// #NOTE: since we don't use capture groups this is not so important (I hope)
+#define USE_PPE_REGEX_CUSTOMTRAITS (0)
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Needed to use FString instead of std::string, also avoids locale BS
+#if USE_PPE_REGEX_CUSTOMTRAITS
+// Needed to use FString instead of std::string, also avoids locale bullshit
 template <typename _Char>
 class TRegexTraits {
 public:
@@ -53,15 +60,18 @@ public:
 
     int value(char_type ch, int base) const;
 
-    locale_type imbue(locale_type lc) {
+    locale_type imbue(locale_type) {
         return std::locale::classic();
     }
 
     locale_type getloc() const {
         return std::locale::classic();
     }
-
 };
+#else
+template <typename  _Char>
+using TRegexTraits = std::regex_traits<_Char>;
+#endif //!USE_PPE_REGEX_CUSTOMTRAITS
 //----------------------------------------------------------------------------
 template <typename _Char>
 class TBasicRegexp {
