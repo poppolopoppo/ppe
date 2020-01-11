@@ -194,10 +194,8 @@ public:
     TMemoryView SplitIfNot(const _Pred& pred) const { return TMemoryView(_storage, FindFirstNot(pred)); }
 
     bool AliasesToContainer(const_reference v) const { return (_storage <= &v && _storage + _size > &v); }
-#if USE_PPE_CHECKEDARRAYITERATOR
     bool AliasesToContainer(const iterator& it) const { return (begin() <= it && it < end()); }
     bool AliasesToContainer(const reverse_iterator& it) const { return (rbegin() <= it && it < rend()); }
-#endif
 
     template <typename U>
     TMemoryView<U> Cast() const;
@@ -350,7 +348,7 @@ TMemoryView<u8> MakeRawView(T& assumePod) {
 //----------------------------------------------------------------------------
 template <typename T>
 TMemoryView<u8> MakeRawView(const TMemoryView<T>& assumePods) {
-    return assumePods.Cast<u8>();
+    return assumePods.template Cast<u8>();
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -360,7 +358,7 @@ TMemoryView<const u8> MakeRawView(const T& assumePod) {
 //----------------------------------------------------------------------------
 template <typename T>
 TMemoryView<const u8> MakeRawView(const TMemoryView<const T>& assumePods) {
-    return assumePods.Cast<const u8>();
+    return assumePods.template Cast<const u8>();
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -370,7 +368,7 @@ TMemoryView<const u8> MakeRawConstView(const T& assumePod) {
 //----------------------------------------------------------------------------
 template <typename T>
 TMemoryView<const u8> MakeRawConstView(const TMemoryView<T>& assumePods) {
-    return assumePods.Cast<const u8>();
+    return assumePods.template Cast<const u8>();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

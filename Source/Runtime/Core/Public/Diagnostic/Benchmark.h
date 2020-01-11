@@ -115,15 +115,16 @@ private: // FTimer
     template <> struct TCounter<ThreadCycles> {
         using date_type = u64;
         static CONSTEXPR FWStringView Units() { return L"k.cycles"; }
-        date_type Now() const NOEXCEPT { return FPlatformTime::ThreadCpuCycles(); }
+        date_type Now() const NOEXCEPT { return FPlatformTime::CpuTime(); }
         double ElapsedSince(date_type start) const NOEXCEPT { return static_cast<double>(Now() - start) * 0.001; }
     };
     template <> struct TCounter<PerfCounter> {
         using date_type = i64;
-        const double NanosecondsPerCycle = (1000 * FPlatformTime::MicrosecondsPerCycle());
         static CONSTEXPR FWStringView Units() { return L"ns"; }
         date_type Now() const NOEXCEPT { return FPlatformTime::Cycles(); }
-        double ElapsedSince(date_type start) const NOEXCEPT { return NanosecondsPerCycle * (Now() - start); }
+        double ElapsedSince(date_type start) const NOEXCEPT { 
+            return FPlatformTime::ToSeconds(Now() - start) * 1000000; 
+        }
     };
     template <> struct TCounter<ChronoTime> {
         using date_type = double;

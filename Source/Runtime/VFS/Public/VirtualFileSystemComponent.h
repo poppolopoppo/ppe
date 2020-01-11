@@ -3,7 +3,7 @@
 #include "VirtualFileSystem_fwd.h"
 
 #include "IO/Dirpath.h"
-#include "IO/Regexp.h"
+#include "IO/regexp.h"
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
 #include "Misc/Function_fwd.h"

@@ -577,7 +577,6 @@ bool TVector<T, _Allocator>::CheckInvariants() const {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 bool operator==(const TVector<T, _Allocator>& lhs, const TVector<T, _Allocator>& rhs) {
-    typedef typename TVector<T, _Allocator>::const_pointer const_pointer;
     return (lhs.size() == rhs.size())
         ? std::equal(lhs.begin(), lhs.end(), rhs.begin())
         : false;

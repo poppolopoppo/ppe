@@ -151,7 +151,6 @@ struct CACHELINE_ALIGNED FBinnedChunk_ {
     }
 
 };
-STATIC_ASSERT(sizeof(FAtomicSpinLock) == sizeof(u32));
 STATIC_ASSERT(sizeof(FBinnedChunk_) == CACHELINE_SIZE);
 using FBinnedBatch_ = Meta::TAddPointer<FBinnedChunk_>;
 //----------------------------------------------------------------------------
@@ -166,7 +165,7 @@ struct FBinnedBucket_ {
 };
 STATIC_ASSERT(Meta::TIsPod_v<FBinnedBucket_>);
 // using POD for fast access to buckets without singleton to help inline trivial allocations
-static THREAD_LOCAL FBinnedBucket_ GBinnedThreadBuckets_[FMallocBinned::NumSizeClasses + 1/* extra for large blocks optimization */];
+static THREAD_LOCAL FBinnedBucket_ GBinnedThreadBuckets_[FMallocBinned::NumSizeClasses + 1/* extra for large blocks optimization */] INITSEG_COMPILER_PRIORITY;
 //----------------------------------------------------------------------------
 // FBinnedMediumBlocks_
 //----------------------------------------------------------------------------
@@ -236,7 +235,7 @@ struct CACHELINE_ALIGNED FBinnedGlobalCache_ : Meta::FNonCopyableNorMovable {
         }
     }
 };
-static FBinnedGlobalCache_ GBinnedGlobalCache_; // should be in compiler segment, so destroyed last hopefully
+static FBinnedGlobalCache_ GBinnedGlobalCache_ INITSEG_COMPILER_PRIORITY; // should be in compiler segment, so destroyed last hopefully
 //----------------------------------------------------------------------------
 // FBinnedThreadCache_
 //----------------------------------------------------------------------------
@@ -356,8 +355,8 @@ static void PoisonChunk_(FBinnedChunk_* ch) {
     ch->FreeBlocks = (FBinnedBlock_*)intptr_t(-1);
 }
 //----------------------------------------------------------------------------
-static std::atomic<i64> GBinnedAllocCount_;
-static std::atomic<i64> GBinnedAllocSizeInBytes_;
+static std::atomic<i64> GBinnedAllocCount_ INITSEG_COMPILER_PRIORITY;
+static std::atomic<i64> GBinnedAllocSizeInBytes_ INITSEG_COMPILER_PRIORITY;
 static void OnBinnedAlloc_(size_t sz) {
     GBinnedAllocCount_++;
     GBinnedAllocSizeInBytes_ += checked_cast<i64>(FMallocBinned::SnapSize(sz));

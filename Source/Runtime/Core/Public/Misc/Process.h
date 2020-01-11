@@ -6,7 +6,7 @@
 #include "HAL/PlatformProcess.h"
 #include "IO/Stream_fwd.h"
 #include "IO/String.h"
-#include "Meta/enum.h"
+#include "Meta/Enum.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

@@ -18,12 +18,12 @@ typedef int64_t     i64;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if     defined(ARCH_X64)
-#   ifndef _M_X64
+#   if !(defined(_M_X64) || defined(__x86_64__))
 #       error "invalid architecture"
 #   endif
 #   define CODE3264(_X32, _X64) _X64
 #elif   defined(ARCH_X86)
-#   ifndef _M_IX86
+#   if !(defined(_M_IX86) || defined(__i386__))
 #       error "invalid architecture"
 #   endif
 #   define CODE3264(_X32, _X64) _X32
@@ -31,24 +31,31 @@ typedef int64_t     i64;
 #   error "unknown architecture !"
 #endif
 //----------------------------------------------------------------------------
-#ifndef _HAS_CXX17
-#   define _HAS_CXX17 0
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1)
+#   define PPE_HAS_CXX17 1
+#else
+#   define PPE_HAS_CXX17 0
 #endif
 //----------------------------------------------------------------------------
-#ifndef _HAS_CXX14
-#   define _HAS_CXX14 (_HAS_CXX17) // CXX14 also available if CXX17
+#if (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
+#   define PPE_HAS_CXX14 1
+#else
+#   define PPE_HAS_CXX14 0
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#ifndef not
-#   define not !
+#ifdef CPP_VISUALSTUDIO
+#   ifndef not 
+#       define not !
+#   endif
 #endif
 //----------------------------------------------------------------------------
 #define EXPAND(x) x
 #define EXPAND_VA(X, ...)  X, ##__VA_ARGS__
 //----------------------------------------------------------------------------
-#define COMMA_2 ,
+#define COMMA_3 ,
+#define COMMA_2 EXPAND( COMMA_3 )
 #define COMMA_1 EXPAND( COMMA_2 )
 #define COMMA COMMA_1
 #define COMMA_PROTECT(...) __VA_ARGS__
@@ -86,22 +93,25 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define NOALIAS
 #   define NOEXCEPT     noexcept
 #   define NOOP(...)    (void)0
-#   define NORETURN     __declspec(noreturn)
-#   define RESTRICT     __declspec(restrict)
-#   define STDCALL      __stdcall
-#   define VECTORCALL   __vectorcall
+#   define NORETURN     [[noreturn]]
 #   define THREAD_LOCAL thread_local
 #   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
 #   if defined(_MSC_VER)
 #       define EMPTY_BASES __declspec(empty_bases)
+#       define RESTRICT     __declspec(restrict)
+#       define STDCALL      __stdcall
+#       define VECTORCALL   __vectorcall
 #   else
 #       define EMPTY_BASES
+#       define RESTRICT
+#       define STDCALL
+#       define VECTORCALL
 #   endif
 #elif defined(CPP_VISUALSTUDIO) && _MSC_VER >= 1900
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     noexcept
 #   define NOOP(...)    __noop(__VA_ARGS__)
-#   define NORETURN     __declspec(noreturn)
+#   define NORETURN     [[noreturn]]
 #   define RESTRICT     __declspec(restrict)
 #   define STDCALL      __stdcall
 #   define VECTORCALL   __vectorcall
@@ -123,12 +133,20 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   error "unsupported compiler"
 #endif
 #if !defined(_DEBUG) || defined(NDEBUG)
-#   define FORCE_INLINE    __forceinline //__attribute__((always_inline))
+#   if defined(CPP_CLANG) || defined(CPP_GCC)
+#       define FORCE_INLINE __attribute__((always_inline))
+#   else
+#       define FORCE_INLINE __forceinline
+#   endif
 #else
-#   define FORCE_INLINE    inline // don't want force inline when debugging
+#   define FORCE_INLINE inline // don't want force inline when debugging
 #endif
-#define NO_INLINE       __declspec(noinline)
-#define SIMD_INLINE     FORCE_INLINE VECTORCALL
+#if defined(CPP_CLANG) || defined(CPP_GCC)
+#   define NO_INLINE __attribute__((noinline))
+#else
+#   define NO_INLINE __declspec(noinline)
+#endif
+#define SIMD_INLINE FORCE_INLINE VECTORCALL
 //----------------------------------------------------------------------------
 #if ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) || (__INTEL_COMPILER >= 800) || defined(__clang__)
 #   define Likely(...) (__builtin_expect (!!(__VA_ARGS__),1) )
@@ -142,13 +160,13 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   error "unsupported compiler"
 #endif
 //----------------------------------------------------------------------------
-#if _HAS_CXX14 || _HAS_CXX17
+#if PPE_HAS_CXX14 || PPE_HAS_CXX17
 #   define CONSTEXPR constexpr
 #else
 #   define CONSTEXPR
 #endif
 //----------------------------------------------------------------------------
-#if _HAS_CXX17
+#if PPE_HAS_CXX17
 //  http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0292r2.html
 #   define IF_CONSTEXPR(...) if constexpr(__VA_ARGS__)
 //  http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4295.html
@@ -157,9 +175,9 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define IF_CONSTEXPR(...) if (__VA_ARGS__)
 //  Workaround from Jason Turner: https://youtu.be/nnY4e4faNp0?t=39m51s
 #   define FOLD_EXPR(...) (void)std::initializer_list<int>{ ((__VA_ARGS__), 0)... }
-#endif //!_HAS_CXX17
+#endif //!PPE_HAS_CXX17
 //----------------------------------------------------------------------------
-#if _HAS_CXX17
+#if PPE_HAS_CXX17
 //  https://en.cppreference.com/w/cpp/language/attributes/nodiscard
 #   define NODISCARD [[nodiscard]]
 #else
@@ -169,7 +187,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTIONS
-#   if _HAS_CXX17
+#   if PPE_HAS_CXX17
 #    define PPE_THROW()               noexcept(false)
 #   else
 #    define PPE_THROW()               throw ()
@@ -236,8 +254,8 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define PRAGMA_DISABLE_OPTIMIZATION_ACTUAL __pragma(optimize("",off))
 #   define PRAGMA_ENABLE_OPTIMIZATION_ACTUAL  __pragma(optimize("",on ))
 #elif defined(CPP_CLANG)
-#   define PRAGMA_DISABLE_OPTIMIZATION_ACTUAL __pragma(clang optimize off)
-#   define PRAGMA_ENABLE_OPTIMIZATION_ACTUAL  __pragma(clang optimize on )
+#   define PRAGMA_DISABLE_OPTIMIZATION_ACTUAL _Pragma("clang optimize off")
+#   define PRAGMA_ENABLE_OPTIMIZATION_ACTUAL  _Pragma("clang optimize on")
 #else
 #   error "need to implement PRAGMA_ENABLE/DISABLE_OPTIMIZATION !"
 #endif
@@ -256,6 +274,13 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define PRAGMA_INITSEG_COMPILER \
     __pragma(warning(disable: 4074)) \
     __pragma(init_seg(compiler))
+#   define INITSEG_LIB_PRIORITY
+#   define INITSEG_COMPILER_PRIORITY
+#elif defined(CPP_CLANG) || defined(CPP_GCC)
+#   define PRAGMA_INITSEG_LIB 
+#   define PRAGMA_INITSEG_COMPILER
+#   define INITSEG_LIB_PRIORITY __attribute__((init_priority (10000+__LINE__)))
+#   define INITSEG_COMPILER_PRIORITY __attribute__((init_priority(100+__LINE__)))
 #else
 #   error "need to implement PRAGMA_INITSEG_LIB/COMPILER !"
 #endif

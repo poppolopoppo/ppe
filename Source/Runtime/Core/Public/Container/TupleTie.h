@@ -252,7 +252,7 @@ constexpr std::size_t struct_num_fields() noexcept {
 // Wrap a structure instance in a tuple of references
 // https://github.com/apolukhin/magic_get/blob/develop/include/boost/pfr/detail/core17_generated.hpp
 //----------------------------------------------------------------------------
-#if _HAS_CXX17
+#if PPE_HAS_CXX17
 //----------------------------------------------------------------------------
 static constexpr size_t MaxArityForTieAsTuple = 8;
 //----------------------------------------------------------------------------
@@ -340,14 +340,14 @@ constexpr auto tie_as_tuple(T& val) noexcept {
     return details::tie_as_tuple(val, details::size_t_<_NumFields>{});
 }
 //----------------------------------------------------------------------------
-#else //_HAS_CXX17
+#else //PPE_HAS_CXX17
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR bool has_tie_as_tuple() noexcept {
     return false;
 }
 //----------------------------------------------------------------------------
-#endif //!_HAS_CXX17
+#endif //!PPE_HAS_CXX17
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -14,8 +14,6 @@
 #include "Thread/ThreadContext.h"
 #include "Thread/ThreadPool.h"
 
-#include <memory_resource>
-
 #include "Module-impl.h"
 
 #if PPE_OVERRIDE_NEW_ONCE

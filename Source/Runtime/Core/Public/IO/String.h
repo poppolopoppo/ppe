@@ -24,6 +24,7 @@ template <typename _Char>
 class TBasicString : private FStringAllocator {
 public:
     typedef _Char char_type;
+    typedef size_t size_type;
 
     typedef FStringAllocator allocator_type;
     typedef TAllocatorTraits<allocator_type> allocator_traits;
@@ -45,7 +46,8 @@ public:
     TBasicString(const _Char* s, size_t len) : TBasicString() { assign(stringview_type(s, len)); }
     TBasicString(size_t n, _Char fill) : TBasicString() { assign(n, fill); }
     explicit TBasicString(std::initializer_list<_Char> il) : TBasicString() { assign(il); }
-    template <typename _It>
+
+    template <typename _It, class = Meta::TEnableIf<Meta::is_iterator_v<_It>> >
     TBasicString(_It first, _It last) : TBasicString() { assign(first, last); }
 
     template <size_t _Dim>
@@ -106,7 +108,7 @@ public:
     void assign(const stringview_type& str);
     void assign(std::initializer_list<_Char> il) { assign(il.begin(), il.end()); }
     void assign(size_t n, _Char fill);
-    template <typename _It>
+    template <typename _It, class = Meta::TEnableIf<Meta::is_iterator_v<_It>> >
     void assign(_It first, _It last);
     template <size_t _Dim>
     void assign(const _Char(&staticArray)[_Dim]) { assign(MakeStringView(staticArray)); }
@@ -117,7 +119,7 @@ public:
     void append(const stringview_type& str);
     void append(std::initializer_list<_Char> il) { append(il.begin(), il.end()); }
     void append(size_t n, _Char fill);
-    template <typename _It>
+    template <typename _It, class = Meta::TEnableIf<Meta::is_iterator_v<_It>> >
     void append(_It first, _It last);
     template <size_t _Dim>
     void append(const _Char(&staticArray)[_Dim]) { append(MakeStringView(staticArray)); }
@@ -127,7 +129,7 @@ public:
     void insert(size_t pos, const stringview_type& str);
     void insert(size_t pos, std::initializer_list<_Char> il) { insert(pos, il.begin(), il.end()); }
     void insert(size_t pos, size_t n, _Char fill);
-    template <typename _It>
+    template <typename _It, class = Meta::TEnableIf<Meta::is_iterator_v<_It>> >
     void insert(size_t pos, _It first, _It last);
     template <size_t _Dim>
     void insert(size_t pos, const _Char(&staticArray)[_Dim]) { insert(pos, MakeStringView(staticArray)); }
@@ -137,7 +139,7 @@ public:
     void insert(iterator it, size_t n, _Char fill) { insert(it - begin(), n, fill); }
     void insert(iterator it, std::initializer_list<_Char> il) { insert(it - begin(), il.begin(), il.end()); }
     void insert(iterator it, const stringview_type& str) { insert(it - begin(), str); }
-    template <typename _It>
+    template <typename _It, class = Meta::TEnableIf<Meta::is_iterator_v<_It>> >
     void insert(iterator it, _It first, _It last) { insert(it - begin(), first, last); }
     template <size_t _Dim>
     void insert(iterator it, const _Char(&staticArray)[_Dim]) { insert(it, MakeStringView(staticArray)); }
@@ -152,7 +154,7 @@ public:
     void replace(size_t pos, size_t len, const stringview_type& str);
     void replace(size_t pos, size_t len, std::initializer_list<_Char> il) { replace(pos, len, il.begin(), il.end()); }
     void replace(size_t pos, size_t len, size_t n, _Char fill);
-    template <typename _It>
+    template <typename _It, class = Meta::TEnableIf<Meta::is_iterator_v<_It>> >
     void replace(size_t pos, size_t len, _It first, _It last);
     template <size_t _Dim>
     void replace(size_t pos, size_t len, const _Char(&staticArray)[_Dim]) { replace(pos, len, MakeStringView(staticArray)); }
@@ -161,7 +163,7 @@ public:
     void replace(iterator from, iterator to, const stringview_type& str) { replace(from - begin(), to - from, str); }
     void replace(iterator from, iterator to, std::initializer_list<_Char> il) { replace(from - begin(), to - from, il.begin(), il.end()); }
     void replace(iterator from, iterator to, size_t n, _Char fill) { replace(from - begin(), to - from, n, fill); }
-    template <typename _It>
+    template <typename _It, class = Meta::TEnableIf<Meta::is_iterator_v<_It>> >
     void replace(iterator from, iterator to, _It first, _It last) { replace(from - begin(), to - from, first, last); }
     template <size_t _Dim>
     void replace(iterator from, iterator to, const _Char(&staticArray)[_Dim]) { replace(from, to, MakeStringView(staticArray)); }
@@ -427,7 +429,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
-template <typename _It>
+template <typename _It, class>
 inline void TBasicString<_Char>::assign(_It first, _It last) {
     clear();
 
@@ -438,7 +440,7 @@ inline void TBasicString<_Char>::assign(_It first, _It last) {
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-template <typename _It>
+template <typename _It, class>
 inline void TBasicString<_Char>::append(_It first, _It last) {
     const size_t oldSize = size();
     const size_t newSize = (oldSize + std::distance(first, last));
@@ -448,7 +450,7 @@ inline void TBasicString<_Char>::append(_It first, _It last) {
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-template <typename _It>
+template <typename _It, class>
 inline void TBasicString<_Char>::insert(size_t pos, _It first, _It last) {
     const size_t oldSize = size();
     if (pos == npos) pos = oldSize;
@@ -461,7 +463,7 @@ inline void TBasicString<_Char>::insert(size_t pos, _It first, _It last) {
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-template <typename _It>
+template <typename _It, class>
 inline void TBasicString<_Char>::replace(size_t pos, size_t len, _It first, _It last) {
     const size_t n = std::distance(first, last);
     const size_t oldSize = size();

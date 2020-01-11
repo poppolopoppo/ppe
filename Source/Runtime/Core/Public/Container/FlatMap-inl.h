@@ -10,8 +10,9 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TFlatMap() {
-    typedef typename std::iterator_traits< iterator >::iterator_category iterator_category;
-    STATIC_ASSERT(std::is_same< iterator_category, std::random_access_iterator_tag >::value);
+    STATIC_ASSERT(std::is_same<
+        typename std::iterator_traits< iterator >::iterator_category,
+        std::random_access_iterator_tag >::value );
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>

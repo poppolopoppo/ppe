@@ -3,7 +3,7 @@
 #include "Meta/Assert.h"
 #include "Meta/TypeTraits.h"
 
-#if _HAS_CXX17
+#if PPE_HAS_CXX17
 #   include <optional>
 #endif
 
@@ -13,7 +13,7 @@ namespace Meta {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // TODO: use C++17 std::optional when available
-#if _HAS_CXX17
+#if PPE_HAS_CXX17
 template <typename T>
 using TOptional = std::optional<T>;
 #else

@@ -2,13 +2,18 @@
 
 #include "Meta/Aliases.h"
 
-#define PPE_MESSAGE(_Message) \
+#ifdef PLATFORM_WINDOWS
+#   define PPE_MESSAGE(_Message) \
     __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) ",1): " EXPAND(_Message)))
+#else
+#   define PPE_MESSAGE(_Message) \
+    _Pragma(STRINGIZE(message(_Message)))
+#endif
 
 #define PPE_WARNING(_Code, _Message) PPE_MESSAGE("warning " _Code ": " _Message)
 #define PPE_ERROR(_Code, _Message) PPE_MESSAGE("error " _Code ": " _Message)
 
-#if     defined(CPP_VISUALSTUDIO)
+#if defined(CPP_VISUALSTUDIO)
 #   define PPE_DEPRECATED __declspec(deprecated)
 #elif   defined(CPP_GCC) || defined(CPP_CLANG)
 #   define PPE_DEPRECATED __attribute__((deprecated))
@@ -31,7 +36,7 @@ PPE_WARNING("Core", "You need to implement PPE_DEPRECATED for this compiler")
 #endif
 
 // /W3
-#if !_HAS_CXX17 // use IF_CONSTEXPR for C++-17
+#if !PPE_HAS_CXX17 // use IF_CONSTEXPR for C++-17
 PRAGMA_MSVC_WARNING_DISABLE(4127) // conditional expression is constant
 #endif
 PRAGMA_MSVC_WARNING_DISABLE(4201) // nonstandard extension used : nameless struct/union

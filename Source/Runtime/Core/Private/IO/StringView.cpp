@@ -204,9 +204,14 @@ static const double_conversion::StringToDoubleConverter& DefaultStringToDoubleCo
 }
 
 const char* StringToDoubleStr_(const char* str) { return str; }
-const u16* StringToDoubleStr_(const wchar_t* str) {
-    STATIC_ASSERT(sizeof(wchar_t) == sizeof(u16));
-    return reinterpret_cast<const u16*>(str);
+const auto* StringToDoubleStr_(const wchar_t* str) {
+    IF_CONSTEXPR(sizeof(wchar_t) == sizeof(u16)) {
+        return reinterpret_cast<const u16*>(str);
+    }
+    else {
+        STATIC_ASSERT(sizeof(wchar_t) == sizeof(u32));
+        return reinterpret_cast<const u32*>(str);
+    }
 }
 
 template <typename _Char>

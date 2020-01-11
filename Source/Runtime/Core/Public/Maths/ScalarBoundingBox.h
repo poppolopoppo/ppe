@@ -22,7 +22,7 @@ public:
     friend class TScalarBoundingBox;
 
     TScalarBoundingBox();
-    explicit TScalarBoundingBox(Meta::FNoInit noinit) NOEXCEPT {}
+    explicit TScalarBoundingBox(Meta::FNoInit) NOEXCEPT {}
     TScalarBoundingBox(const vector_type& min, const vector_type& max);
 
     TScalarBoundingBox(const TScalarBoundingBox& other);
@@ -107,11 +107,11 @@ public:
     static TScalarBoundingBox<T, _Dim> DefaultValue() { return MaxMinValue(); }
 
     template <size_t _0, size_t _1>
-    TScalarBoundingBox<T, 2> Shuffle2() const { return TScalarBoundingBox<T, 2>(_min.Shuffle2<_0, _1>(), _max.Shuffle2<_0, _1>()); }
+    TScalarBoundingBox<T, 2> Shuffle2() const { return TScalarBoundingBox<T, 2>(_min.template Shuffle2<_0, _1>(), _max.template Shuffle2<_0, _1>()); }
     template <size_t _0, size_t _1, size_t _2>
-    TScalarBoundingBox<T, 3> Shuffle3() const { return TScalarBoundingBox<T, 3>(_min.Shuffle3<_0, _1, _2>(), _max.Shuffle3<_0, _1, _2>()); }
+    TScalarBoundingBox<T, 3> Shuffle3() const { return TScalarBoundingBox<T, 3>(_min.template Shuffle3<_0, _1, _2>(), _max.template Shuffle3<_0, _1, _2>()); }
     template <size_t _0, size_t _1, size_t _2, size_t _3>
-    TScalarBoundingBox<T, 4> Shuffle4() const { return TScalarBoundingBox<T, 4>(_min.Shuffle3<_0, _1, _2, _3>(), _max.Shuffle3<_0, _1, _2, _3>()); }
+    TScalarBoundingBox<T, 4> Shuffle4() const { return TScalarBoundingBox<T, 4>(_min.template Shuffle3<_0, _1, _2, _3>(), _max.template Shuffle3<_0, _1, _2, _3>()); }
 
 private:
     vector_type _min;

@@ -238,7 +238,7 @@ private:
         FPlatformMemory::PageFree(toDelete.Ptr, toDelete.SizeInBytes);
     }
 };
-FStompDelayedDeletes_& FStompDelayedDeletes_::GInstance = FStompDelayedDeletes_::Get();
+FStompDelayedDeletes_& FStompDelayedDeletes_::GInstance INITSEG_COMPILER_PRIORITY = FStompDelayedDeletes_::Get();
 #endif //!PPE_MALLOCSTOMP_DELAY_DELETES
 //----------------------------------------------------------------------------
 } //!namespace

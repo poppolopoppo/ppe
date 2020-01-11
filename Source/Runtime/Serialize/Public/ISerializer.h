@@ -4,7 +4,7 @@
 
 #include "IO/FileSystem_fwd.h"
 #include "Memory/InSituPtr.h"
-#include "Meta/enum.h"
+#include "Meta/Enum.h"
 
 namespace PPE {
 class IStreamReader;

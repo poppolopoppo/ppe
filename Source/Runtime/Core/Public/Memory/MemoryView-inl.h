@@ -178,7 +178,7 @@ TMemoryView<T> TMemoryView<T>::Slice(size_t index, size_t stride) const {
 //----------------------------------------------------------------------------
 template <typename T>
 TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SliceConst(size_t index, size_t stride) const {
-    return Slice(index, stride).Cast< Meta::TAddConst<T> >();
+    return Slice(index, stride).template Cast< Meta::TAddConst<T> >();
 }
 //----------------------------------------------------------------------------
 template <typename T>

@@ -6,7 +6,7 @@
 #include "Memory/UniquePtr.h"
 #include "Meta/ThreadResource.h"
 
-#include <malloc.h> // for _alloca()
+#include <malloc.h> // for SYSALLOCA()
 
 #define USE_PPE_SYSALLOCA (!USE_PPE_MEMORY_DEBUGGING) //%__NOCOMMIT%
 
@@ -128,8 +128,16 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if defined(CPP_VISUALSTUDIO)
+#   define SYSALLOCA(_SIZEINBYTES) _alloca(_SIZEINBYTES)
+#elif defined(CPP_CLANG) or defined(CPP_GCC)
+#   define SYSALLOCA(_SIZEINBYTES) __builtin_alloca(_SIZEINBYTES)
+#else
+#   error "unsupported platform for SYSALLOCA"
+#endif
+//----------------------------------------------------------------------------
 #if USE_PPE_SYSALLOCA
-#   define SYSALLOCA_IFP(_SIZEINBYTES) ((PPE_SYSALLOCA_SIZELIMIT >= (_SIZEINBYTES) ) ? _alloca(_SIZEINBYTES) : nullptr )
+#   define SYSALLOCA_IFP(_SIZEINBYTES) ((PPE_SYSALLOCA_SIZELIMIT >= (_SIZEINBYTES) ) ? SYSALLOCA(_SIZEINBYTES) : nullptr )
 #else
 #   define SYSALLOCA_IFP(_SIZEINBYTES) nullptr
 #endif

@@ -320,11 +320,15 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, void* v) { w.Wr
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const TBasicStringView<_Char>& v) { w.Write(v); return w; }
 //----------------------------------------------------------------------------
+#ifdef PLATFORM_WINDOWS
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, long v) { w.Write(checked_cast<i32>(v)); return w; }
-//----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, unsigned long v) { w.Write(checked_cast<u32>(v)); return w; }
+#else
+STATIC_ASSERT(std::is_same_v<long, i64>);
+STATIC_ASSERT(std::is_same_v<unsigned long, u64>);
+#endif
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const _Char(&v)[_Dim]) { w.Write(MakeStringView(v)); return w; }

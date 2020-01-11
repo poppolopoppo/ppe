@@ -360,7 +360,6 @@ public:
     template <typename _It>
     typename std::enable_if<Meta::is_iterator<_It>::value>::type
         assign(_It first, _It last) {
-        typedef std::iterator_traits<_It> iterator_traits;
         typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
         clear();
 
@@ -419,7 +418,6 @@ public:
     template <typename _It>
     typename std::enable_if< Meta::is_iterator<_It>::value >::type
         insert(_It first, _It last) {
-        typedef std::iterator_traits<_It> iterator_traits;
         typedef typename std::iterator_traits<_It>::iterator_category iterator_category;
         insert_(first, last, iterator_category());
     }

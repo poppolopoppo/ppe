@@ -8,7 +8,7 @@
 #include "Container/TupleTie.h"
 
 // need C++17 structured bindings
-#define USE_PPE_RTTI_STRUCT_AS_TUPLE _HAS_CXX17
+#define USE_PPE_RTTI_STRUCT_AS_TUPLE PPE_HAS_CXX17
 
 #if USE_PPE_RTTI_STRUCT_AS_TUPLE
 

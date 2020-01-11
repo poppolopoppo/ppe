@@ -67,8 +67,6 @@ public:
     static FMemoryTracking& PooledMemory();
 
 private:
-    using counter_t = std::atomic<size_t>;
-
     struct FCounters_ {
         counter_t NumAllocs{ 0 };
         counter_t MinSize{ CODE3264(UINT32_MAX, UINT64_MAX) };

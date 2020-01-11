@@ -62,7 +62,7 @@ T* RoundToPrev(const T* p, size_t alignment) {
 //----------------------------------------------------------------------------
 #define ALLOCATION_GRANULARITY (65536)
 //----------------------------------------------------------------------------
-#if _HAS_CXX17
+#if PPE_HAS_CXX17 && !defined(PLATFORM_LINUX)
 //  https://en.cppreference.com/w/cpp/thread/hardware_destructive_interference_size
 #   define CACHELINE_SIZE (std::hardware_destructive_interference_size)
 #   define ROUND_TO_NEXT_CACHELINE(v) ::PPE::Meta::RoundToNext((v), CACHELINE_SIZE)

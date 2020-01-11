@@ -65,14 +65,14 @@ void FFiber::Resume() {
     Assert(FPlatformThread::IsInFiber());
     Assert(FPlatformThread::CurrentFiber() != _pimpl);
 
-    FPlatformThread::SwitchToFiber(_pimpl);
+    FPlatformThread::SwitchToFiber(static_cast<FPlatformThread::FFiber>(_pimpl));
 }
 //----------------------------------------------------------------------------
 void FFiber::Destroy(size_t stackSize) {
     Assert(_pimpl);
     Assert(FPlatformThread::CurrentFiber() != _pimpl);
 
-    FPlatformThread::DestroyFiber(_pimpl);
+    FPlatformThread::DestroyFiber(static_cast<FPlatformThread::FFiber>(_pimpl));
     _pimpl = nullptr;
 
 #if USE_PPE_MEMORYDOMAINS
@@ -101,7 +101,7 @@ void FFiber::Shutdown() {
     Assert(FPlatformThread::IsInFiber());
     Assert(FPlatformThread::CurrentFiber() == GCurrentThreadFiber);
 
-    FPlatformThread::RevertCurrentFiberToThread(GCurrentThreadFiber);
+    FPlatformThread::RevertCurrentFiberToThread(static_cast<FPlatformThread::FFiber>(GCurrentThreadFiber));
     GCurrentThreadFiber = nullptr;
 }
 //----------------------------------------------------------------------------
@@ -127,7 +127,7 @@ void* FFiber::RunningFiberIFP() {
 //----------------------------------------------------------------------------
 bool FFiber::IsInFiber() {
     const bool result = (nullptr != GCurrentThreadFiber);
-    Assert(result == (TRUE == FPlatformThread::IsInFiber()) );
+    Assert(result == !!FPlatformThread::IsInFiber());
     return result;
 }
 //----------------------------------------------------------------------------

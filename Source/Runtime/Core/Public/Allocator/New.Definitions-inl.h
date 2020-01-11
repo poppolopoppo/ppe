@@ -7,17 +7,19 @@
 #   include "Allocator/Malloc.h"
 
 #   ifdef PLATFORM_WINDOWS
-#      define PPE_NEW_API
-#      define PPE_CHECK_RETURN_NOT_NULL _Check_return_ _Ret_notnull_ _Post_writable_byte_size_(size) _VCRT_ALLOCATOR
-#      define PPE_RETURN_NOT_NULL       _Ret_notnull_ _Post_writable_byte_size_(size) _VCRT_ALLOCATOR
-#      define PPE_RETURN_MAYBE_NULL     _Ret_maybenull_ _Post_writable_byte_size_(size) _Success_(return != NULL) _VCRT_ALLOCATOR
-#      define PPE_DECLSPEC_CALL         __CRTDECL
+#       define PPE_NEW_API
+#       define PPE_CHECK_RETURN_NOT_NULL _Check_return_ _Ret_notnull_ _Post_writable_byte_size_(size) _VCRT_ALLOCATOR
+#       define PPE_RETURN_NOT_NULL       _Ret_notnull_ _Post_writable_byte_size_(size) _VCRT_ALLOCATOR
+#       define PPE_RETURN_MAYBE_NULL     _Ret_maybenull_ _Post_writable_byte_size_(size) _Success_(return != NULL) _VCRT_ALLOCATOR
+#       define PPE_DECLSPEC_CALL         __CRTDECL
 #   else
-#      define PPE_NEW_API               PPE_CORE_API
-#      define PPE_CHECK_RETURN_NOT_NULL
-#      define PPE_RETURN_NOT_NULL
-#      define PPE_RETURN_MAYBE_NULL
-#      define PPE_DECLSPEC_CALL
+#       define PPE_NEW_API               PPE_CORE_API
+#       define PPE_CHECK_RETURN_NOT_NULL
+#       define PPE_RETURN_NOT_NULL
+#       define PPE_RETURN_MAYBE_NULL
+#       define PPE_DECLSPEC_CALL
+#       define _In_ // windows specific
+#       define _In_z_ // windows specific
 #   endif
 
 //----------------------------------------------------------------------------
@@ -113,7 +115,7 @@ PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // C++17 adds new overloads for user-defined new/delete overloads
-#if _HAS_CXX17
+#if PPE_HAS_CXX17
 //----------------------------------------------------------------------------
 PPE_NEW_API PPE_RETURN_NOT_NULL void* PPE_DECLSPEC_CALL operator new(size_t size, std::align_val_t al) {
     return (PPE::aligned_malloc)(size, static_cast<size_t>(al));
@@ -147,7 +149,7 @@ PPE_NEW_API void PPE_DECLSPEC_CALL operator delete[](void* block, std::align_val
     (PPE::aligned_free)(block);
 }
 //----------------------------------------------------------------------------
-#endif //!_HAS_CXX17
+#endif //!PPE_HAS_CXX17
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

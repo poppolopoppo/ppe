@@ -6,10 +6,10 @@
 #include <functional>
 #include <type_traits>
 
-#define PPE_ASSERT_TYPE_IS_POD(T, ...) \
+#define PPE_ASSERT_TYPE_IS_POD(T) \
     static_assert(::PPE::Meta::TIsPod_v<T>, STRINGIZE(T) " is not a POD type");
-#define PPE_ASSUME_TYPE_AS_POD(T) \
-    CONSTEXPR bool is_pod(Meta::TType<T>) NOEXCEPT { return true; }
+#define PPE_ASSUME_TYPE_AS_POD(...) \
+    CONSTEXPR bool is_pod(Meta::TType<__VA_ARGS__>) NOEXCEPT { return true; }
 #define PPE_ASSUME_TEMPLATE_AS_POD(T, ...) \
     template <__VA_ARGS__> PPE_ASSUME_TYPE_AS_POD(T)
 

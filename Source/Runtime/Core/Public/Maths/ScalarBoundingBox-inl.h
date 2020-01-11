@@ -293,7 +293,7 @@ void TScalarBoundingBox<T, _Dim>::Swap(TScalarBoundingBox& other) {
 template <typename T, size_t _Dim>
 template <typename U>
 TScalarBoundingBox<U, _Dim> TScalarBoundingBox<T, _Dim>::Cast() const {
-    return TScalarBoundingBox<U, _Dim>(_min.Cast<U>(), _max.Cast<U>());
+    return TScalarBoundingBox<U, _Dim>(_min.template Cast<U>(), _max.template Cast<U>());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

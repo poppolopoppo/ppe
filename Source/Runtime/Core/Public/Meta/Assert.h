@@ -102,7 +102,7 @@ private:
 PPE_CORE_API void AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
 PPE_CORE_API void SetAssertionReleaseHandler(FAssertReleaseHandler handler);
 
-inline void NORETURN AssertionReleaseFailed_NoReturn(const wchar_t* msg, const wchar_t* file, unsigned line) {
+NORETURN inline void AssertionReleaseFailed_NoReturn(const wchar_t* msg, const wchar_t* file, unsigned line) {
     AssertionReleaseFailed(msg, file, line);
 }
 
@@ -120,7 +120,7 @@ inline void NORETURN AssertionReleaseFailed_NoReturn(const wchar_t* msg, const w
 #else
 //----------------------------------------------------------------------------
 inline void AssertionReleaseFailed(const wchar_t*, const wchar_t*, unsigned ) {}
-inline void NORETURN AssertionReleaseFailed_NoReturn(const wchar_t*, const wchar_t*, unsigned ) { abort(); }
+NORETURN inline void AssertionReleaseFailed_NoReturn(const wchar_t*, const wchar_t*, unsigned ) { abort(); }
 inline void SetAssertionReleaseHandler(FAssertReleaseHandler ) {}
 
 #   if WITH_PPE_ASSERT_RELEASE_FALLBACK_TO_ASSUME

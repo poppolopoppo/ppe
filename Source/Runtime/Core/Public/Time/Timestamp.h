@@ -64,10 +64,8 @@ private:
 };
 PPE_ASSUME_TYPE_AS_POD(FTimestamp)
 //----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const FTimestamp& t) {
-    return oss << t.ToDateTime();
-}
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FTimestamp& t);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FTimestamp& t);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -252,10 +252,8 @@ public:
     bool CheckInvariants() const;
 
     bool AliasesToContainer(const_reference v) const { return ((&v >= _data) && (&v < _data + _size)); }
-#if USE_PPE_CHECKEDARRAYITERATOR
     bool AliasesToContainer(const iterator& it) const { return (it >= begin() && it < end()); }
     bool AliasesToContainer(const const_iterator& it) const { return (it >= begin() && it < end()); }
-#endif
 
 private:
     allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }

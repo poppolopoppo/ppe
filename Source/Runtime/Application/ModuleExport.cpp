@@ -8,6 +8,8 @@
 
 #include "Module-impl.h"
 
+PRAGMA_INITSEG_LIB
+
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
