@@ -28,14 +28,28 @@ public: // must be defined for every platform
         FG_WHITE        = FG_RED | FG_GREEN | FG_BLUE,
         FG_YELLOW       = FG_RED | FG_GREEN,
         FG_CYAN         = FG_GREEN | FG_BLUE,
+        FG_MAGENTA      = FG_RED | FG_BLUE,
 
         BG_BLACK        = 0,
         BG_WHITE        = BG_RED | BG_GREEN | BG_BLUE,
         BG_YELLOW       = BG_RED | BG_GREEN,
         BG_CYAN         = BG_GREEN | BG_BLUE,
+        BG_MAGENTA      = BG_RED | BG_BLUE,
 
-        WHITE_ON_BLACK  = FG_WHITE | BG_BLACK,
-        BLACK_ON_WHITE  = BG_WHITE | FG_BLACK,
+        WHITE_ON_BLACK  = FG_WHITE | BG_BLACK | FG_INTENSITY,
+        BLACK_ON_WHITE  = BG_WHITE | FG_BLACK | BG_INTENSITY,
+
+        VERBOSE         = FG_WHITE | BG_BLACK,
+        INFO            = FG_WHITE | FG_INTENSITY | BG_BLACK,
+        EMPHASIS        = FG_BLUE | FG_INTENSITY | BG_MAGENTA,
+        HALT            = FG_RED | BG_YELLOW | BG_INTENSITY,
+        ASTERISK        = FG_GREEN | BG_BLACK,
+        WARNING         = FG_YELLOW | FG_INTENSITY | BG_RED,
+        ERROR           = FG_WHITE | FG_INTENSITY | BG_RED | BG_INTENSITY,
+        SUCCESS         = FG_GREEN | FG_INTENSITY | BG_BLACK,
+
+        _FG_MASK        = FG_RED | FG_GREEN | FG_BLUE,
+        _BG_MASK        = BG_RED | BG_GREEN | BG_BLUE,
 
     };
     ENUM_FLAGS_FRIEND(EAttribute);

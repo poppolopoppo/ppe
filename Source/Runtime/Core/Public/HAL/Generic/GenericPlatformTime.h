@@ -13,17 +13,12 @@ public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasHighPrecision, false);
 
     static u64 Rdtsc() = delete;
-
     static i64 Cycles() = delete;
-
-    static double SecondsPerCycle() = delete;
-    static double MicrosecondsPerCycle() = delete;
+    static double Seconds() = delete;
 
     static double ToSeconds(i64 cycles) = delete;
-    static i64 ToCycles(double seconds) = delete;
 
-    static u64 ThreadCpuCycles() = delete; // can't convert to time
-
+    static u64 CpuTime() = delete; // can't convert to time
     static u64 NetworkTime() = delete;
     static void SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) = delete;
     static void UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) = delete;

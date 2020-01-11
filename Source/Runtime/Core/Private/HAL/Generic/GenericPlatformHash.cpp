@@ -3,6 +3,11 @@
 #include "HAL/Generic/GenericPlatformHash.h"
 
 //----------------------------------------------------------------------------
+// xxHH for 32/64 bit memory hash functions (cross-platform)
+//----------------------------------------------------------------------------
+#include "xxHash-external.h"
+
+//----------------------------------------------------------------------------
 // Farmhash for 32/64/128 bit fingerprint hash functions (stable)
 //----------------------------------------------------------------------------
 #include "farmhash-external.h"
@@ -15,6 +20,7 @@ namespace {
 //----------------------------------------------------------------------------
 // CRC32 polynomial table
 //----------------------------------------------------------------------------
+#if 0 // unused
 static constexpr u32 g_CRC32Table[ 256 ] =
 {
    0x00000000,0x77073096,0xEE0E612C,0x990951BA,0x076DC419,0x706AF48F,0xE963A535,
@@ -56,11 +62,13 @@ static constexpr u32 g_CRC32Table[ 256 ] =
    0xB40BBE37,0xC30C8EA1,0x5A05DF1B,0x2D02EF8D
 };
 //----------------------------------------------------------------------------
+#endif
+//----------------------------------------------------------------------------
 // Slicing-by-4 and slicing-by-8 algorithms by Michael E. Kounavis and Frank L. Berry from Intel Corp.
 // http://www.intel.com/technology/comms/perfnet/download/CRC_generators.pdf
 //----------------------------------------------------------------------------
 //#define CRCPOLY 0x82f63b78 // reversed 0x1EDC6F41
-static constexpr u32 CRCPOLY = 0xEDB88320;
+//static constexpr u32 CRCPOLY = 0xEDB88320;
 static constexpr u32 CRCINIT = 0xFFFFFFFF;
 //----------------------------------------------------------------------------
 constexpr u32 g_CRC32SlicingBy8[8][256] = {
@@ -363,6 +371,18 @@ u32 FGenericPlatformHash::CRC32(u32 seed, const void* p, size_t size) NOEXCEPT {
     Assert(p);
 
     return CRC32_SlicingBy8_(seed ^ CRCINIT, (const u8*)p, size);
+}
+//----------------------------------------------------------------------------
+u32 FGenericPlatformHash::HashMem32(u32 seed, const void* p, size_t size) NOEXCEPT {
+    return XXH32(p, size, seed);
+}
+//----------------------------------------------------------------------------
+u64 FGenericPlatformHash::HashMem64(u64 seed, const void* p, size_t size) NOEXCEPT {
+#if USE_PPE_XXH3
+    return XXH3_64bits_withSeed(p, size, seed);
+#else
+    return XXH64(p, size, seed);
+#endif
 }
 //----------------------------------------------------------------------------
 u32 FGenericPlatformHash::Fingeprint32(const void* p, size_t size) NOEXCEPT {

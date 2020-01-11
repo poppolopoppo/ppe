@@ -29,7 +29,6 @@ public:
     // sleep
 
     static void Sleep(float seconds);
-    static void SleepInfinite();
     static void SleepForSpinning(size_t& backoff);
 
     //------------------------------------------------------------------------

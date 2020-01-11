@@ -1,8 +1,10 @@
 #include "stdafx.h"
 
-#include "HAL/Windows/LastError.h"
+#include "Core_fwd.h"
 
 #ifdef PLATFORM_WINDOWS
+
+#include "HAL/Windows/LastError.h"
 
 #include "Diagnostic/Logger.h"
 #include "IO/StreamProvider.h"

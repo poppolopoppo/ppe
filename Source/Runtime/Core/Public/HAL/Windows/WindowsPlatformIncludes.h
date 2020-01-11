@@ -65,6 +65,7 @@ struct IUnknown;
 
 #include <comdef.h>
 #include <comutil.h>
+#include <tchar.h>
 #include <Windows.h>
 #include <winnt.h>
 

@@ -61,19 +61,19 @@ public: // generic helpers
     template <typename T>
     static void BigEndianInPlace(T * p) NOEXCEPT {
         IF_CONSTEXPR(FPlatformEndian::Endianness != EEndianness::BigEndian)
-            PPE_HAL_TARGETALIAS(PlatformEndian)::SwapInPlace(p);
+            SwapInPlace(p);
     }
 
     template <typename T>
     static void LittleEndianInPlace(T * p) NOEXCEPT {
         IF_CONSTEXPR(FPlatformEndian::Endianness != EEndianness::LittleEndian)
-            PPE_HAL_TARGETALIAS(PlatformEndian)::SwapInPlace(p);
+            SwapInPlace(p);
     }
 
     template <typename T>
     static void NetworkEndianInPlace(T * p) NOEXCEPT {
         IF_CONSTEXPR(FPlatformEndian::Endianness != EEndianness::NetworkEndian)
-            PPE_HAL_TARGETALIAS(PlatformEndian)::SwapInPlace(p);
+            SwapInPlace(p);
     }
 
 };

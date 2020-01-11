@@ -38,7 +38,7 @@ public: // generic helpers
     template <typename T>
     static FORCE_INLINE void StorePtr(T * *dst, T * val) NOEXCEPT {
         Assert(Meta::IsAligned(sizeof(void*), dst));
-        PPE_HAL_TARGETALIAS(PlatformAtomics)::Store((volatile intptr_t**)dst, (intptr_t)val);
+        PPE_HAL_TARGETALIAS(PlatformAtomics)::Store((volatile intptr_t*)dst, (intptr_t)val);
     }
 
     template <typename T>

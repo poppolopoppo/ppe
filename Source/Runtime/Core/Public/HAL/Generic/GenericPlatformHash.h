@@ -92,11 +92,16 @@ public: // must be defined for every platform
 #undef gror
     }
 
-    static u32 HashMem32(u32 seed, const void* p, size_t size) NOEXCEPT = delete;
-    static u64 HashMem64(u64 seed, const void* p, size_t size) NOEXCEPT = delete;
-    static u128 HashMem128(u128 seed, const void* p, size_t size) NOEXCEPT = delete;
+    static u32 HashMem32(u32 seed, const void* p, size_t size) NOEXCEPT;
+    static u64 HashMem64(u64 seed, const void* p, size_t size) NOEXCEPT;
 
-    static size_t HashMem(size_t seed, const void* p, size_t size) NOEXCEPT = delete;
+    static FORCE_INLINE size_t HashMem(size_t seed, const void* p, size_t size) NOEXCEPT {
+#ifdef ARCH_X64
+        return HashMem64(seed, p, size);
+#else
+        return HashMem32(seed, p, size);
+#endif
+    }
 
 public: // generic helpers
 

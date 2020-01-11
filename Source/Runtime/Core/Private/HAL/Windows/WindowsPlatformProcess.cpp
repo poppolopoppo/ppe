@@ -54,7 +54,7 @@ struct TBasicNullTerminatedStr_ {
         FPlatformMemory::Memcpy(Buffer, str.data(), str.SizeInBytes());
         Buffer[str.size()] = L'\0';
     }
-    operator const wchar_t* () const {
+    operator const _Char* () const {
         return (&Buffer[0]);
     }
 };
@@ -241,10 +241,6 @@ void FWindowsPlatformProcess::Sleep(float seconds) {
         ::SwitchToThread();
     else
         ::Sleep(milliseconds);
-}
-//----------------------------------------------------------------------------
-void FWindowsPlatformProcess::SleepInfinite() {
-    ::Sleep(INFINITE);
 }
 //----------------------------------------------------------------------------
 // Hybrid spinning

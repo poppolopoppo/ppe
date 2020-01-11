@@ -64,7 +64,7 @@ u16 FGenericPlatformMaths::FP32_to_FP16(float f) {
         24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 13 };
 
     u32 bits;
-    std::memcpy(&bits, &f, sizeof(float));
+    ::memcpy(&bits, &f, sizeof(float));
     return (base_table[bits >> 23] + static_cast<u16>((bits & 0x7FFFFF) >> shift_table[bits >> 23]));
 }
 //----------------------------------------------------------------------------
