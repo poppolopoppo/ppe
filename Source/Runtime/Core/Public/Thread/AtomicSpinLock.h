@@ -14,9 +14,11 @@ namespace PPE {
 // A lightweight spin-lock
 // http://anki3d.org/spinlock/
 // https://github.com/efficient/libcuckoo/blob/master/src/cuckoohash_map.hh
+// Update:
+// https://probablydance.com/2019/12/30/measuring-mutexes-spinlocks-and-how-bad-the-linux-scheduler-really-is/
 //----------------------------------------------------------------------------
 class FAtomicSpinLock : Meta::FNonCopyableNorMovable {
-    std::atomic_flag State = ATOMIC_FLAG_INIT;
+    std::atomic<bool> _locked{ false };
 
 #if USE_PPE_ASSERT
 public:
@@ -27,13 +29,16 @@ public:
 #endif
 
 public:
-    void Unlock() NOEXCEPT { State.clear(std::memory_order_release); }
-    bool TryLock() NOEXCEPT { return (not State.test_and_set(std::memory_order_acquire)); }
-
     void Lock() NOEXCEPT {
-        size_t backoff = 0;
-        while (State.test_and_set(std::memory_order_acquire))
+        for (size_t backoff = 0; !TryLock(); )
             FPlatformProcess::SleepForSpinning(backoff);
+    }
+    bool TryLock() NOEXCEPT {
+        return (not _locked.load(std::memory_order_relaxed) and
+                not _locked.exchange(true, std::memory_order_acquire) );
+    }
+    void Unlock() NOEXCEPT {
+        _locked.store(false, std::memory_order_release);
     }
 
     struct FScope : Meta::FNonCopyableNorMovable {
@@ -93,41 +98,38 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Less lightweight, but order preserving
+// And more consistent :
+// https://probablydance.com/2019/12/30/measuring-mutexes-spinlocks-and-how-bad-the-linux-scheduler-really-is/
 //----------------------------------------------------------------------------
 class FAtomicOrderedLock : Meta::FNonCopyableNorMovable {
-    std::atomic<size_t> Locked = 0;
-    std::atomic<size_t> Revision = size_t(-1); // <-- must be == to (Locked - 1)
+    std::atomic<unsigned> In{ 0 };
+    std::atomic<unsigned> Out{ 0 };
 
 public:
     struct FScope : Meta::FNonCopyableNorMovable {
         FAtomicOrderedLock& Barrier;
 #if USE_PPE_ASSERT
-        const size_t Order;
+        const unsigned Ticket;
 #endif
 
         FScope(FAtomicOrderedLock& barrier) NOEXCEPT
         :   Barrier(barrier)
 #if USE_PPE_ASSERT
-        ,   Order(++Barrier.Revision)
+        ,   Ticket(barrier.In.fetch_add(1, std::memory_order_relaxed))
         {
 #else
         {
-            const size_t Order = ++Barrier.Revision;
+            const unsigned Ticket = barrier.In.fetch_add(1, std::memory_order_relaxed);
 #endif
-            //size_t backoff = 0;
-            for (;;) { // spin for lock
-                size_t revision = Order;
-                if (Barrier.Locked.compare_exchange_weak(revision, revision, std::memory_order_acquire))
-                    return;
-
-                ::_mm_pause();//FPlatformProcess::SleepForSpinning(backoff); <- performs very poorly in this lock :/
-            }
+            for (size_t backoff = 0; Barrier.Out.load(std::memory_order_acquire) != Ticket;)
+                FPlatformProcess::SleepForSpinning(backoff);
         }
 
         ~FScope() NOEXCEPT {
-            Assert_NoAssume(Barrier.Locked == Order);
-
-            ++Barrier.Locked; // release the locks, the next waiting thread will stop spinning
+            Assert_NoAssume(Barrier.Out == Ticket);
+            // release the locks, the next waiting thread will stop spinning
+            Barrier.Out.store(Barrier.Out.load(std::memory_order_relaxed) + 1,
+                std::memory_order_release );
         }
     };
 };
@@ -138,8 +140,8 @@ public:
 // https://gist.github.com/yizhang82/500da684837161055978011c5850d296#file-rw_spin_lock-h
 //----------------------------------------------------------------------------
 class FAtomicReadWriteLock : Meta::FNonCopyableNorMovable {
-    STATIC_CONST_INTEGRAL(size_t, WRITER_LOCK, INDEX_NONE);
-    std::atomic<size_t> Readers{ 0 };
+    STATIC_CONST_INTEGRAL(unsigned, WRITER_LOCK, unsigned(INDEX_NONE));
+    std::atomic<unsigned> Readers{ 0 };
 
 #if USE_PPE_ASSERT
 public:
@@ -163,7 +165,7 @@ public: // Reader
 
     void AcquireReader() NOEXCEPT {
         for (size_t backoff = 0;;) {
-            size_t r = Readers;
+            unsigned r = Readers;
             if (WRITER_LOCK != r) {
                 if (Readers.compare_exchange_weak(r, r + 1))
                     return; // lock read
@@ -175,7 +177,7 @@ public: // Reader
 
     void ReleaseReader() NOEXCEPT {
         for (size_t backoff = 0;;) {
-            size_t r = Readers;
+            unsigned r = Readers;
             Assert(r);
             if (WRITER_LOCK != r) {
                 Assert_NoAssume(r > 0);
@@ -201,7 +203,7 @@ public: // Writer
 
     void AcquireWriter() NOEXCEPT {
         for (size_t backoff = 0;;) {
-            size_t r = Readers;
+            unsigned r = Readers;
             if (0 == r) {
                 if (Readers.compare_exchange_weak(r, WRITER_LOCK))
                     return; // lock write
