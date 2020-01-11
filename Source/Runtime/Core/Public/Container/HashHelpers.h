@@ -110,13 +110,6 @@ using TBasicStringViewHashMemoizer = THashMemoizer<
     TStringViewEqualTo<_Char, _Sensitive>
 >;
 //----------------------------------------------------------------------------
-template <typename _Char, ECase _Sensitive>
-using TBasicConstCharHashMemoizer = THashMemoizer<
-    TBasicConstChar<_Char>,
-    TConstCharHasher<_Char, _Sensitive>,
-    TConstCharEqualTo<_Char, _Sensitive>
->;
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
