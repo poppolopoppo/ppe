@@ -62,6 +62,8 @@ sftp-config.json
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
+![Bb]uild[Ll]og.cpp
+![Bb]uild[Ll]og.h
 
 *_i.c
 *_p.c
