@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 // Common CLang Configuration
 //------------------------------------------------------------------------------
-.CLangBase = 
+.CLangBase =
 [
     .Defines =
     {
@@ -30,7 +30,7 @@
 ;    + ' -Wno-unused-commandline-argument'
     + ' -std=c++17'
     + ' -mlzcnt -mpopcnt'
-    + ' -msse4.1'
+    + ' -msse4.2'
     + ' -pthread'
     ;+ ' -ltermcap'
 ;    + ' -L"$BinaryPath$"'
@@ -57,7 +57,7 @@
 //------------------------------------------------------------------------------
 // CLang precompiled headers
 //------------------------------------------------------------------------------
-.CLangBasePCHDisabled = 
+.CLangBasePCHDisabled =
 [
     .Defines = { 'USE_PPE_PRECOMPILEDHEADERS=0' }
     .PreprocessorDefinitions= ';USE_PPE_PRECOMPILEDHEADERS=0'
@@ -66,7 +66,7 @@
 
 #if USE_PRECOMPILED_HEADERS
 Print( 'Using Pre-Compiled Headers' )
-.CLangBasePCHEnabled = 
+.CLangBasePCHEnabled =
 [
     .Defines = { 'USE_PPE_PRECOMPILEDHEADERS=1' }
     .PreprocessorDefinitions= ';USE_PPE_PRECOMPILEDHEADERS=1'
@@ -83,7 +83,6 @@ Print( 'Using Pre-Compiled Headers' )
 
     .Defines            + .PlatformDefines
     .CompilerOptions    + ' -m32'
-    .LibrarianOptions   + ' -m32'
     .LinkerOptions      + ' -m32'
 ]
 
@@ -94,7 +93,6 @@ Print( 'Using Pre-Compiled Headers' )
 
     .Defines            + .PlatformDefines
     .CompilerOptions    + ' -m64'
-    .LibrarianOptions   + ' -m64'
     .LinkerOptions      + ' -m64'
 ]
 
