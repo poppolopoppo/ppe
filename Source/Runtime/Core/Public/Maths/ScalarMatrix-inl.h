@@ -428,7 +428,7 @@ auto TScalarMatrix<T, _Width, _Height>::operator -(const TScalarMatrix& other) c
     template <typename T, size_t _Width, size_t _Height> \
     auto TScalarMatrix<T, _Width, _Height>::operator _Op##=(T scalar) -> TScalarMatrix& { \
         for (size_t i = 0; i < Dim; ++i) \
-            _data.raw[i] _Op= scalar; \
+            _data.raw[i] _Op##= scalar; \
         return *this; \
     } \
     template <typename T, size_t _Width, size_t _Height> \

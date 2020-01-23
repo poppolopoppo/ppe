@@ -104,6 +104,7 @@ PPE_CORE_API void SetAssertionReleaseHandler(FAssertReleaseHandler handler);
 
 NORETURN inline void AssertionReleaseFailed_NoReturn(const wchar_t* msg, const wchar_t* file, unsigned line) {
     AssertionReleaseFailed(msg, file, line);
+    abort();
 }
 
 #   define AssertReleaseMessage(_Message, ...) \

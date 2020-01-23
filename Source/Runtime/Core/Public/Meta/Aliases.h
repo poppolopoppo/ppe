@@ -46,7 +46,7 @@ typedef int64_t     i64;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #ifdef CPP_VISUALSTUDIO
-#   ifndef not 
+#   ifndef not
 #       define not !
 #   endif
 #endif
@@ -277,7 +277,7 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define INITSEG_LIB_PRIORITY
 #   define INITSEG_COMPILER_PRIORITY
 #elif defined(CPP_CLANG) || defined(CPP_GCC)
-#   define PRAGMA_INITSEG_LIB 
+#   define PRAGMA_INITSEG_LIB
 #   define PRAGMA_INITSEG_COMPILER
 #   define INITSEG_LIB_PRIORITY __attribute__((init_priority (10000+__LINE__)))
 #   define INITSEG_COMPILER_PRIORITY __attribute__((init_priority(100+__LINE__)))
@@ -291,6 +291,12 @@ constexpr size_t INDEX_NONE = size_t(-1);
 #   define PPE_PRETTY_FUNCTION __FUNCSIG__
 #else
 #   error "need to implement PPE_PRETTY_FUNCTION !"
+#endif
+//----------------------------------------------------------------------------
+#if defined(__cpp_rtti)
+#   define PPE_TYPEID_NAME(T) (typeid(T).name())
+#else
+#   define PPE_TYPEID_NAME(T) (static_cast<const char*>(nullptr))
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

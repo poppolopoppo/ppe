@@ -52,60 +52,51 @@ void FLinuxPlatformTime::InitTiming() {
 	}
 }
 //----------------------------------------------------------------------------
+i64 FLinuxPlatformTime::Timestamp() NOEXCEPT {
+    STATIC_ASSERT(std::is_same_v<::time_t, i64>);
+    return ::time(nullptr);
+}
+//----------------------------------------------------------------------------
 u64 FLinuxPlatformTime::NetworkTime() NOEXCEPT {
     struct ::timeval tod;
     ::gettimeofday(&tod, nullptr);
     return static_cast<u64>(static_cast<u64>(tod.tv_sec) * 1000000ULL + static_cast<u64>(tod.tv_usec));
 }
 //----------------------------------------------------------------------------
-void FLinuxPlatformTime::SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) NOEXCEPT {
-    struct ::timespec ts = {0,0};
-
-    if (::clock_gettime(CLOCK_REALTIME, &ts)) {
-        LOG(HAL, Fatal, L"clock_gettime() failed with errno: {0}", FErrno{});
-        return;
-    }
-
+void FLinuxPlatformTime::LocalTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT {
     struct ::tm tp = {};
-    time_t timer = ts.tv_sec;
+    time_t timer = timestamp;
     if (::localtime_r(&timer, &tp)) {
         LOG(HAL, Fatal, L"localtime_r() failed with errno: {0}", FErrno{});
         return;
     }
 
-    year = checked_cast<u32>(tp.tm_year);
-    month = checked_cast<u32>(tp.tm_mon);
+    year = 1900 + checked_cast<u32>(tp.tm_year);
+    month = 1 + checked_cast<u32>(tp.tm_mon);
     dayOfWeek = checked_cast<u32>(tp.tm_wday);
-    day = checked_cast<u32>(tp.tm_yday);
+    dayOfYear = checked_cast<u32>(tp.tm_yday);
+    dayOfMon = checked_cast<u32>(tp.tm_mday);
     hour = checked_cast<u32>(tp.tm_hour);
     min = checked_cast<u32>(tp.tm_min);
     sec = checked_cast<u32>(tp.tm_sec);
-    msec = checked_cast<u32>(ts.tv_nsec / 1000000ull);
 }
 //----------------------------------------------------------------------------
-void FLinuxPlatformTime::UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) NOEXCEPT {
-    struct ::timespec ts = {0,0};
-
-    if (::clock_gettime(CLOCK_REALTIME, &ts)) {
-        LOG(HAL, Fatal, L"clock_gettime() failed with errno: {0}", FErrno{});
-        return;
-    }
-
+void FLinuxPlatformTime::UtcTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT {
     struct ::tm tp = {};
-    time_t timer = ts.tv_sec;
+    time_t timer = timestamp;
     if (::gmtime_r(&timer, &tp)) {
-        LOG(HAL, Fatal, L"localtime_r() failed with errno: {0}", FErrno{});
+        LOG(HAL, Fatal, L"gmtime_r() failed with errno: {0}", FErrno{});
         return;
     }
 
-    year = checked_cast<u32>(tp.tm_year);
-    month = checked_cast<u32>(tp.tm_mon);
+    year = 1900 + checked_cast<u32>(tp.tm_year);
+    month = 1 + checked_cast<u32>(tp.tm_mon);
     dayOfWeek = checked_cast<u32>(tp.tm_wday);
-    day = checked_cast<u32>(tp.tm_yday);
+    dayOfYear = checked_cast<u32>(tp.tm_yday);
+    dayOfMon = checked_cast<u32>(tp.tm_mday);
     hour = checked_cast<u32>(tp.tm_hour);
     min = checked_cast<u32>(tp.tm_min);
     sec = checked_cast<u32>(tp.tm_sec);
-    msec = checked_cast<u32>(ts.tv_nsec / 1000000ull);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

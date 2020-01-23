@@ -27,9 +27,7 @@ size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr, size_t length) {
     }
 
     Assert(wcstr);
-
-    size_t written;
-    VerifyRelease(::wcstombs_s(&written, dst, capacity, wcstr, length) == 0);
+    const size_t written = FPlatformString::WCHAR_to_CHAR(ECodePage::ACP, dst, capacity, wcstr, length);
 
     Assert(written >= length);
     Assert(written <= capacity);
@@ -62,9 +60,7 @@ size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr, size_t length) {
     }
 
     Assert(cstr);
-
-    size_t written;
-    VerifyRelease(::mbstowcs_s(&written, dst, capacity, cstr, length) == 0);
+    const size_t written = FPlatformString::CHAR_to_WCHAR(ECodePage::ANSI, dst, capacity, cstr, length);
 
     Assert(written >= length);
     Assert(written <= capacity);

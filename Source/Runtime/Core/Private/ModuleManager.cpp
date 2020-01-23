@@ -25,11 +25,11 @@ FModuleManager::FModuleManager() NOEXCEPT
     STATIC_ASSERT(PP_NUM_ARGS(a, b) == 2);
     STATIC_ASSERT(PP_NUM_ARGS(a, b, c) == 3);
 
-    LOG(Module, Info, L"created module manager");
+    LOG_DIRECT(Module, Info, L"created module manager");
 }
 //----------------------------------------------------------------------------
 FModuleManager::~FModuleManager() {
-    LOG(Module, Info, L"destroyed module manager");
+    LOG_DIRECT(Module, Info, L"destroyed module manager");
 }
 //----------------------------------------------------------------------------
 void FModuleManager::ReleaseMemory(FModule& module) {
@@ -48,7 +48,7 @@ void FModuleManager::ReleaseMemory(FModule& module) {
 void FModuleManager::PreInit(FBaseModuleStartup& startup) {
     Assert(nullptr == _startup);
 
-    LOG(Module, Emphasis, L"pre init module...");
+    LOG_DIRECT(Module, Emphasis, L"pre init module...");
 
     _startup = &startup;
 }
@@ -56,7 +56,7 @@ void FModuleManager::PreInit(FBaseModuleStartup& startup) {
 void FModuleManager::PostDestroy(FBaseModuleStartup& startup) {
     Assert(&startup == _startup);
 
-    LOG(Module, Emphasis, L"post destroy module...");
+    LOG_DIRECT(Module, Emphasis, L"post destroy module...");
 
     _startup = nullptr;
 }
@@ -94,7 +94,7 @@ void FModuleManager::Shutdown(FModule& module) {
 void FModuleManager::ReleaseMemoryInModules() {
     Assert(_startup);
 
-    LOG(Module, Emphasis, L"releasing memory in modules ...");
+    LOG_DIRECT(Module, Emphasis, L"releasing memory in modules ...");
     LOG(Module, Info, L"used memory before release : {0} blocks / usr: {1} / sys: {2}",
         Fmt::CountOfElements(FMemoryTracking::UsedMemory().System().NumAllocs),
         Fmt::SizeInBytes(FMemoryTracking::UsedMemory().User().TotalSize),

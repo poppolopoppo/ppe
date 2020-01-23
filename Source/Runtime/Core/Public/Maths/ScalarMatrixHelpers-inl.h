@@ -34,7 +34,7 @@ bool IsInversible(const TScalarMatrix<T, _Width, _Height>& m, float epsilon/* = 
 //----------------------------------------------------------------------------
 template <typename T>
 bool IsInvertible(const TScalarMatrix<T, 4, 4>& m) {
-    return IsInvertible(m.Crop<3, 3>());
+    return IsInvertible(m.template Crop<3, 3>());
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Width, size_t _Height>
@@ -69,7 +69,7 @@ template <typename T, size_t _Width, size_t _Height>
 bool IsSymetrical(const TScalarMatrix<T, _Width, _Height>& m, float epsilon/* = F_Epsilon */) {
     for(size_t j=0; j < _Height; ++j)
         for(size_t i=0; i < j; ++i)
-            if (m.at_(j, i) != m.at_(i, j))
+            if (not NearlyEquals(m.at_(j, i), m.at_(i, j), epsilon))
                 return false;
     return true;
 }

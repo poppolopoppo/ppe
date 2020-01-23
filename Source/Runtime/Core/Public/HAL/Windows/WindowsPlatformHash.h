@@ -24,14 +24,14 @@ namespace PPE {
 struct PPE_CORE_API FWindowsPlatformHash : FGenericPlatformHash {
 public:
 
-    static FORCE_INLINE size_t CRC32(u32 v) NOEXCEPT {
-        return CODE3264(::_mm_crc32_u32, ::_mm_crc32_u64)(0, v);
+    static FORCE_INLINE size_t CRC32(u32 v, size_t seed = 0) NOEXCEPT {
+        return CODE3264(::_mm_crc32_u32, ::_mm_crc32_u64)(seed, v);
     }
-    static FORCE_INLINE size_t CRC32(u64 v) NOEXCEPT {
+    static FORCE_INLINE size_t CRC32(u64 v, size_t seed = 0) NOEXCEPT {
 #ifdef ARCH_X64
-        return ::_mm_crc32_u64(0, v);
+        return ::_mm_crc32_u64(seed, v);
 #else
-        return ::_mm_crc32_u32(v >> 32, u32(v));
+        return ::_mm_crc32_u32(::_mm_crc32_u32(seed, u32(v)), u32(v >> 32));
 #endif
     }
     static FORCE_INLINE size_t CRC32(u96 v) NOEXCEPT {

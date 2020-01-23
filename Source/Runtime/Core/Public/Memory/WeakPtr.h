@@ -50,7 +50,15 @@ public:
 protected:
     FWeakPtrBase();
 
+    template <typename T = FWeakAndRefCountable>
+    T* get_() const NOEXCEPT { return static_cast<T*>(_weakAndRefCountable); }
     void set_(FWeakAndRefCountable* ptr);
+
+    void swap_(FWeakPtrBase& other) NOEXCEPT {
+        FWeakAndRefCountable* const self = get_<>();
+        set_(other.get_<>());
+        other.set_(self);
+    }
 
 private:
     friend class FWeakAndRefCountable;
@@ -67,7 +75,8 @@ public:
     template <typename U>
     friend class TWeakPtr;
 
-    TWeakPtr();
+    TWeakPtr() NOEXCEPT = default;
+
     explicit TWeakPtr(T* ptr);
     ~TWeakPtr();
 
@@ -92,11 +101,9 @@ public:
     template <typename U>
     bool TryLock(TRefPtr<U> *pLocked) const;
 
-    template <typename U>
-    void Swap(TWeakPtr<U>& other);
-
-private:
-    T *_ptr;
+    friend void swap(TWeakPtr& lhs, TWeakPtr& rhs) NOEXCEPT {
+        lhs.swap_(rhs);
+    }
 };
 //----------------------------------------------------------------------------
 template <typename T>

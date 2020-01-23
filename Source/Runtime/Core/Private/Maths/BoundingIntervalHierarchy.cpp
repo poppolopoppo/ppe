@@ -46,7 +46,6 @@ static size_t CullBIHTree_(
     const _Volume& volume,
     const FBasicBIHTree::hitrange_delegate& hitrange,
     size_t count, FBIHNode* root, const FBoundingBox& bounds ) {
-    typedef FBasicBIHTree::FHitResult FHitResult;
 
     if (0 == count)
         return 0;

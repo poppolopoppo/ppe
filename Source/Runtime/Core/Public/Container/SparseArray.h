@@ -564,5 +564,6 @@ inline void* operator new(size_t sizeInBytes, PPE::TSparseArray<T, _Allocator>& 
 template <typename T, typename _Allocator>
 inline void operator delete(void* ptr, PPE::TSparseArray<T, _Allocator>& arr) {
     Assert_NoAssume(arr.AliasesToContainer(static_cast<T*>(ptr)));
-    AssertNotImplemented(); // can't move elements around the sparse array
+    using pointer = typename PPE::TSparseArray<T, _Allocator>::pointer;
+    arr.Remove(*static_cast<pointer>(ptr));
 }

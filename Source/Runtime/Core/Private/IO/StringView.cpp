@@ -4,6 +4,7 @@
 
 #include "Allocator/Alloca.h"
 #include "HAL/PlatformMemory.h"
+#include "IO/StaticString.h"
 #include "IO/String.h"
 #include "IO/TextWriter.h"
 #include "HAL/PlatformString.h"
@@ -204,14 +205,11 @@ static const double_conversion::StringToDoubleConverter& DefaultStringToDoubleCo
 }
 
 const char* StringToDoubleStr_(const char* str) { return str; }
-const auto* StringToDoubleStr_(const wchar_t* str) {
-    IF_CONSTEXPR(sizeof(wchar_t) == sizeof(u16)) {
-        return reinterpret_cast<const u16*>(str);
-    }
-    else {
-        STATIC_ASSERT(sizeof(wchar_t) == sizeof(u32));
-        return reinterpret_cast<const u32*>(str);
-    }
+auto StringToDoubleStr_(const wchar_t* wstr) {
+    IF_CONSTEXPR(sizeof(wchar_t) == sizeof(u16))
+        return reinterpret_cast<const char16_t*>(wstr);
+    else
+        return WCHAR_TO_UTF_8<128>(wstr); // for platforms were wchart_t is 32 bits
 }
 
 template <typename _Char>
@@ -250,9 +248,8 @@ struct TWildChars_< wchar_t > {
 template <ECase _Sensitive, typename _Char>
 static bool WildMatch_(const TBasicStringView<_Char>& pat, const TBasicStringView<_Char>& str)
 {
-    TCharEqualTo<_Char, _Sensitive> equalto;
+    typedef TCharEqualTo<_Char, _Sensitive> equalto;
     typedef TWildChars_<_Char> chars;
-    typedef const typename TBasicStringView<_Char>::iterator iterator;
 
     // Wildcard matching algorithms
     // http://xoomer.virgilio.it/acantato/dev/wildcard/wildmatch.html#evolution
@@ -280,7 +277,7 @@ loopStart:
             if (pfirst == pend) return true;
             goto loopStart;
         default:
-            if (equalto(*s, *p) == false)
+            if (equalto()(*s, *p) == false)
                 goto starCheck;
             break;
         }

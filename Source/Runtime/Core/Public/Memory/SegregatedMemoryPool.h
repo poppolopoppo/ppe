@@ -150,7 +150,7 @@ public:
 #if defined(WITH_PPE_POOL_ALLOCATOR_TRACKING_DETAILS)
     static FMemoryTracking* TrackingData() {
         ONE_TIME_INITIALIZE_TPL(TPoolTracking<T COMMA _ThreadLocal>, sPoolTracking,
-            typeid(T).name(), segregatedpool_type::Get().TrackingData());
+            PPE_TYPEID_NAME(T), segregatedpool_type::Get().TrackingData());
         return &sPoolTracking.TrackingData;
     }
 #elif defined(WITH_PPE_POOL_ALLOCATOR_TRACKING)

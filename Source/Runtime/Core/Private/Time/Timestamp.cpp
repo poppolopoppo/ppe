@@ -2,10 +2,9 @@
 
 #include "Time/Timestamp.h"
 
-#include "Time/DateTime.h"
+#include "HAL/PlatformTime.h"
 #include "Memory/HashFunctions.h"
-
-#include <time.h>
+#include "Time/DateTime.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -24,18 +23,7 @@ size_t FTimestamp::HashValue() const {
 }
 //----------------------------------------------------------------------------
 FTimestamp FTimestamp::Now() {
-#if defined(PLATFORM_WINDOWS)
-    STATIC_ASSERT(sizeof(::__time64_t) == sizeof(value_type));
-    FTimestamp t;
-    ::_time64(reinterpret_cast<::__time64_t*>(&t._value));
-    return t;
-#elif defined(PLATFORM_LINUX)
-    ::time_t t;
-    ::time(&t);
-    return FTimestamp{ t };
-#else
-#   error "unsupported platform"
-#endif
+    return FTimestamp{ FPlatformTime::Timestamp() };
 }
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const FTimestamp& t) {

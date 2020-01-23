@@ -343,7 +343,6 @@ CONSTEXPR auto Shuffle(const TScalarVectorExpr<_Lhs, _Dim0>& lhs, const TScalarV
 #define PPE_SCALARVECTOR_UNARYFUNC_DEF(_NAME, _FUNC) \
     template <typename _Expr, size_t _Dim> \
     CONSTEXPR auto _NAME(const TScalarVectorExpr<_Expr, _Dim>& v) { \
-        using component_type = std::decay_t<decltype(_FUNC(v.template get<0>()))>; \
         return TScalarVectorUnaryOp(v, [](auto x) CONSTEXPR NOEXCEPT { return _FUNC(x); }); \
     }
 
@@ -386,17 +385,14 @@ PPE_SCALARVECTOR_UNARYFUNC_ALIAS_DEF(FloatM11_to_Float01)
 #define PPE_SCALARVECTOR_BINARYFUNC_DEF(_NAME, _FUNC) \
     template <typename T, typename _Expr, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<_Expr, _Dim>, T> > \
     CONSTEXPR auto _NAME(T a, const TScalarVectorExpr<_Expr, _Dim>& b) { \
-        using component_type = std::decay_t<decltype(_FUNC(a, b.template get<0>()))>; \
         return TScalarVectorUnaryOp(b, [a](auto x) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, x); }); \
     } \
     template <typename _Expr, size_t _Dim, typename T, typename _Result = TScalarComponent<TScalarVectorExpr<_Expr, _Dim>, T> > \
     CONSTEXPR auto _NAME(const TScalarVectorExpr<_Expr, _Dim>& a, T b) { \
-        using component_type = std::decay_t<decltype(_FUNC(a.template get<0>(), b))>; \
         return TScalarVectorUnaryOp(a, [b](auto x) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, b); }); \
     } \
     template <typename _Lhs, size_t _Dim, typename _Rhs> \
     CONSTEXPR auto _NAME(const TScalarVectorExpr<_Lhs, _Dim>& lhs, const TScalarVectorExpr<_Rhs, _Dim>& rhs) { \
-        using component_type = std::decay_t<decltype(_FUNC(lhs.template get<0>(), rhs.template get<0>()))>; \
         return TScalarVectorBinaryOp(lhs, rhs, [](auto a, auto b) CONSTEXPR NOEXCEPT { return _FUNC(a, b); }); \
     }
 
@@ -420,37 +416,30 @@ PPE_SCALARVECTOR_BINARYFUNC_ALIAS_DEF(Step)
 #define PPE_SCALARVECTOR_TERNARYFUNC_DEF(_NAME, _FUNC) \
     template <typename T, typename _B, size_t _Dim, typename _C, typename _Result = TScalarComponent<TScalarVectorExpr<_B, _Dim>, T> > \
     CONSTEXPR auto _NAME(T a, const TScalarVectorExpr<_B, _Dim>& b, const TScalarVectorExpr<_C, _Dim>& c) { \
-        using component_type = std::decay_t<decltype(_FUNC(a, b.template get<0>(), c.template get<0>()))>; \
         return TScalarVectorBinaryOp(b, c, [a](auto y, auto z) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, y, z); }); \
     } \
     template <typename _A, size_t _Dim, typename T, typename _C, typename _Result = TScalarComponent<TScalarVectorExpr<_A, _Dim>, T> > \
     CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, T b, const TScalarVectorExpr<_C, _Dim>& c) { \
-        using component_type = std::decay_t<decltype(_FUNC(a.template get<0>(), b, c.template get<0>()))>; \
         return TScalarVectorBinaryOp(a, c, [b](auto x, auto z) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, b, z); }); \
     } \
     template <typename _A, size_t _Dim, typename _B, typename T, typename _Result = TScalarComponent<TScalarVectorExpr<_A, _Dim>, T> > \
     CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, const TScalarVectorExpr<_B, _Dim>& b, T c) { \
-        using component_type = std::decay_t<decltype(_FUNC(a.template get<0>(), b.template get<0>(), c))>; \
         return TScalarVectorBinaryOp(a, b, [c](auto x, auto y) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, y, c); }); \
     } \
     template <typename T, typename _C, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<_C, _Dim>, T> > \
     CONSTEXPR auto _NAME(T a, T b, const TScalarVectorExpr<_C, _Dim>& c) { \
-        using component_type = std::decay_t<decltype(_FUNC(a, b, c.template get<0>()))>; \
         return TScalarVectorUnaryOp(c, [a, b](auto z) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, b, z); }); \
     } \
     template <typename T, typename _B, size_t _Dim, typename _Result = TScalarComponent<TScalarVectorExpr<_B, _Dim>, T> > \
     CONSTEXPR auto _NAME(T a, const TScalarVectorExpr<_B, _Dim>& b, T c) { \
-        using component_type = std::decay_t<decltype(_FUNC(a, b.template get<0>(), c))>; \
         return TScalarVectorUnaryOp(b, [a, c](auto y) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(a, y, c); }); \
     } \
     template <typename _A, size_t _Dim, typename T, typename _Result = TScalarComponent<TScalarVectorExpr<_A, _Dim>, T> > \
     CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, T b, T c) { \
-        using component_type = std::decay_t<decltype(_FUNC(a.template get<0>(), b, c))>; \
         return TScalarVectorUnaryOp(a, [b, c](auto x) CONSTEXPR NOEXCEPT -> _Result { return _FUNC(x, b, c); }); \
     } \
     template <typename _A, size_t _Dim, typename _B, typename _C> \
     CONSTEXPR auto _NAME(const TScalarVectorExpr<_A, _Dim>& a, const TScalarVectorExpr<_B, _Dim>& b, const TScalarVectorExpr<_C, _Dim>& c) { \
-        using component_type = std::decay_t<decltype(_FUNC(a.template get<0>(), b.template get<0>(), c.template get<0>()))>; \
         return TScalarVectorTernaryOp(a, b, c, [](auto x, auto y, auto z) CONSTEXPR NOEXCEPT { return _FUNC(x, y, z); }); \
     }
 

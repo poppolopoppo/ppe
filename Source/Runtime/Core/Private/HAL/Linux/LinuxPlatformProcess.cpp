@@ -78,13 +78,6 @@ FLinuxProcessState::~FLinuxProcessState() {
 
         Wait();
     }
-    else if (IsRunning()) {
-        // warn about leaking a thread :/
-        LOG(HAL, Error,
-            L"Process (pid={0}) is still running - we will reap it in a waiter thread, but the thread handle is going to be leaked",
-            Pid() );
-        AssertNotImplemented();
-    }
 }
 //----------------------------------------------------------------------------
 bool FLinuxProcessState::IsRunning() {
@@ -279,17 +272,17 @@ bool FLinuxPlatformProcess::IsFirstInstance() {
     return true;
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformProcess::IsProcessAlive(FProcessHandle& process) {
+bool FLinuxPlatformProcess::IsProcessAlive(FProcessHandle process) {
     Assert(process.Valid());
 
     bool running = false;
-    if (FLinuxProcessState* const procInfo = process.ProcInfo) {
+    if (FLinuxProcessState* const procInfo = process.ProcInfo()) {
         running = procInfo->IsRunning();
     }
     else {
         // process opened with OpenProcess() call (we only have pid)
 
-        int killResult = ::kill(process.Pid(), 0); // no actual signal is sent
+        int killResult = ::kill(process.UnpackedPid(), 0); // no actual signal is sent
         Assert((killResult != -1)|(errno != EINVAL));
 
         // errno == EPERM: don't have permissions to send signal
@@ -312,10 +305,10 @@ auto FLinuxPlatformProcess::OpenProcess(FProcessId pid, bool fullAccess/* = true
     return FLinuxProcessHandle(killResult == 0 ? pid : -1);
 }
 //----------------------------------------------------------------------------
-void FLinuxPlatformProcess::WaitForProcess(FProcessHandle& process) {
+void FLinuxPlatformProcess::WaitForProcess(FProcessHandle process) {
     Assert(process.Valid());
 
-    if (FLinuxProcessState* const procInfo = process.ProcInfo) {
+    if (FLinuxProcessState* const procInfo = process.ProcInfo()) {
         procInfo->Wait();
     }
     else {
@@ -323,10 +316,10 @@ void FLinuxPlatformProcess::WaitForProcess(FProcessHandle& process) {
     }
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformProcess::WaitForProcess(FProcessHandle& process, size_t timeoutMs) {
+bool FLinuxPlatformProcess::WaitForProcess(FProcessHandle process, size_t timeoutMs) {
     Assert(process.Valid());
 
-    if (FLinuxProcessState* const procInfo = process.ProcInfo) {
+    if (FLinuxProcessState* const procInfo = process.ProcInfo()) {
         return procInfo->WaitFor(timeoutMs);
     }
     else {
@@ -335,14 +328,12 @@ bool FLinuxPlatformProcess::WaitForProcess(FProcessHandle& process, size_t timeo
     }
 }
 //----------------------------------------------------------------------------
-void FLinuxPlatformProcess::CloseProcess(FProcessHandle& process) {
+void FLinuxPlatformProcess::CloseProcess(FProcessHandle process) {
     Assert(process.Valid());
-    FLinuxProcessState* procInfo = process.ProcInfo;
-    process.Reset();
-    TRACKING_DELETE(Process, procInfo);
+    TRACKING_DELETE(Process, process.ProcInfo());
 }
 //----------------------------------------------------------------------------
-void FLinuxPlatformProcess::TerminateProcess(FProcessHandle& process, bool killTree) {
+void FLinuxPlatformProcess::TerminateProcess(FProcessHandle process, bool killTree) {
     Assert(process.Valid());
 
     if (killTree) {
@@ -350,7 +341,7 @@ void FLinuxPlatformProcess::TerminateProcess(FProcessHandle& process, bool killT
         AssertNotImplemented();
     }
 
-    if (FLinuxProcessState* procInfo = process.ProcInfo) {
+    if (FLinuxProcessState* procInfo = process.ProcInfo()) {
         int killResult = ::kill(procInfo->Pid(), SIGTERM); // graceful
         Assert(killResult != -1 || errno != EINVAL);
     }
@@ -381,11 +372,11 @@ bool FLinuxPlatformProcess::FindByName(FProcessId* pPid, const FWStringView& nam
 //------------------------------------------------------------------------
 // process infos
 //----------------------------------------------------------------------------
-bool FLinuxPlatformProcess::ExitCode(int* pExitCode, FProcessHandle& process) {
+bool FLinuxPlatformProcess::ExitCode(int* pExitCode, FProcessHandle process) {
     Assert(pExitCode);
     Assert(process.Valid());
 
-    if (FLinuxProcessState* procInfo = process.ProcInfo) {
+    if (FLinuxProcessState* procInfo = process.ProcInfo()) {
         return procInfo->ExitCode(pExitCode);
     }
     else {
@@ -394,14 +385,14 @@ bool FLinuxPlatformProcess::ExitCode(int* pExitCode, FProcessHandle& process) {
     }
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformProcess::MemoryStats(FMemoryStats* pStats, FProcessHandle& process) {
+bool FLinuxPlatformProcess::MemoryStats(FMemoryStats* pStats, FProcessHandle process) {
     Assert(pStats);
     Assert(process.Valid());
     UNUSED(pStats);
     AssertNotImplemented(); // #TODO popen() ?
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformProcess::Name(FString* pName, FProcessHandle& process) {
+bool FLinuxPlatformProcess::Name(FString* pName, FProcessHandle process) {
     Assert(pName);
     Assert(process.Valid());
 
@@ -417,7 +408,7 @@ bool FLinuxPlatformProcess::Name(FString* pName, FProcessHandle& process) {
     return (::pclose(cmdPipe) != -1);
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformProcess::Pid(FProcessId* pPid, FProcessHandle& process) {
+bool FLinuxPlatformProcess::Pid(FProcessId* pPid, FProcessHandle process) {
     Assert(pPid);
 
     if (process.Valid()) {
@@ -429,7 +420,7 @@ bool FLinuxPlatformProcess::Pid(FProcessId* pPid, FProcessHandle& process) {
     }
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformProcess::Priority(EProcessPriority* pPriority, FProcessHandle& process) {
+bool FLinuxPlatformProcess::Priority(EProcessPriority* pPriority, FProcessHandle process) {
     Assert(pPriority);
     Assert(process.Valid());
 
@@ -461,7 +452,7 @@ bool FLinuxPlatformProcess::Priority(EProcessPriority* pPriority, FProcessHandle
     return true;
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformProcess::SetPriority(FProcessHandle& process, EProcessPriority priority) {
+bool FLinuxPlatformProcess::SetPriority(FProcessHandle process, EProcessPriority priority) {
     Assert(process.Valid());
 
     errno = 0;
@@ -522,14 +513,14 @@ bool FLinuxPlatformProcess::SetPriority(FProcessHandle& process, EProcessPriorit
 const FLinuxPlatformProcess::FAffinityMask& FLinuxPlatformProcess::AllCoresAffinity =
     FLinuxPlatformThread::AllCoresAffinity;
 //----------------------------------------------------------------------------
-auto FLinuxPlatformProcess::AffinityMask(FProcessHandle& process) -> FAffinityMask {
+auto FLinuxPlatformProcess::AffinityMask(FProcessHandle process) -> FAffinityMask {
     Assert(process.Valid());
     UNUSED(process);
     AssertNotImplemented();
     return FAffinityMask{ 0 };
 }
 //----------------------------------------------------------------------------
-bool FLinuxPlatformProcess::SetAffinityMask(FProcessHandle& process, FAffinityMask mask) {
+bool FLinuxPlatformProcess::SetAffinityMask(FProcessHandle process, FAffinityMask mask) {
     Assert(process.Valid());
     UNUSED(process);
     UNUSED(mask);

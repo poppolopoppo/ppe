@@ -2,8 +2,9 @@
 
 #include "Time/DateTime.h"
 
-#include "Time/Timestamp.h"
+#include "HAL/PlatformTime.h"
 #include "IO/TextWriter.h"
+#include "Time/Timestamp.h"
 
 #include <time.h>
 
@@ -11,58 +12,40 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+void FDateTime::Set(u32 year, u32 mon, u32 wday, u32 yday, u32 mday, u32 hour, u32 min, u32 sec) NOEXCEPT {
+    Year = year;
+    Month = mon;
+    DayOfWeek = wday;
+    DayOfYear = yday;
+    Day = mday;
+    Hours = hour;
+    Minutes = min;
+    Seconds = sec;
+
+    Assert_NoAssume(Year == year);
+    Assert_NoAssume(Month == mon);
+    Assert_NoAssume(DayOfYear == yday);
+    Assert_NoAssume(DayOfWeek == wday);
+    Assert_NoAssume(Day == mday);
+    Assert_NoAssume(Hours == hour);
+    Assert_NoAssume(Minutes == min);
+    Assert_NoAssume(Seconds == sec);
+}
+//----------------------------------------------------------------------------
 FDateTime FDateTime::Now() {
     return FromLocalTime(FTimestamp::Now());
 }
 //----------------------------------------------------------------------------
 FDateTime FDateTime::FromLocalTime(const FTimestamp& t) {
-    STATIC_ASSERT(sizeof(t) == sizeof(::__time64_t));
-    FDateTime d;
-    ::tm lc;
-    const ::errno_t err = ::_localtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&t));
-    AssertRelease(0 == err);
-    d.DayOfWeek = lc.tm_wday;
-    Assert(lc.tm_wday == d.DayOfWeek);
-    d.DayOfYear = lc.tm_yday;
-    Assert(lc.tm_yday == d.DayOfYear);
-    d.Day = lc.tm_mday;
-    Assert(lc.tm_mday == d.Day);
-    d.Month = 1 + lc.tm_mon;
-    Assert(lc.tm_mon + 1 == d.Month);
-    d.Year = 1900 + lc.tm_year;
-    Assert(lc.tm_year + 1900 == d.Year);
-    d.Hours = lc.tm_hour;
-    Assert(lc.tm_hour == d.Hours);
-    d.Minutes = lc.tm_min;
-    Assert(lc.tm_min == d.Minutes);
-    d.Seconds = lc.tm_sec;
-    Assert(lc.tm_sec == d.Seconds);
-    return d;
+    u32 year, mon, wday, yday, mday, hour, min, sec;
+    FPlatformTime::LocalTime(t.Value(), year, mon, wday, yday, mday, hour, min, sec);
+    return FDateTime{ year, mon, wday, yday, mday, hour, min, sec };
 }
 //----------------------------------------------------------------------------
 FDateTime FDateTime::FromTimeUTC(const FTimestamp& t) {
-    STATIC_ASSERT(sizeof(t) == sizeof(::__time64_t));
-    FDateTime d;
-    ::tm lc;
-    const ::errno_t err = ::_gmtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&t));
-    AssertRelease(0 == err);
-    d.DayOfWeek = lc.tm_wday;
-    Assert(lc.tm_wday == d.DayOfWeek);
-    d.DayOfYear = lc.tm_yday;
-    Assert(lc.tm_yday == d.DayOfYear);
-    d.Day = lc.tm_mday;
-    Assert(lc.tm_mday == d.Day);
-    d.Month = 1 + lc.tm_mon;
-    Assert(lc.tm_mon + 1 == d.Month);
-    d.Year = 1900 + lc.tm_year;
-    Assert(lc.tm_year + 1900 == d.Year);
-    d.Hours = lc.tm_hour;
-    Assert(lc.tm_hour == d.Hours);
-    d.Minutes = lc.tm_min;
-    Assert(lc.tm_min == d.Minutes);
-    d.Seconds = lc.tm_sec;
-    Assert(lc.tm_sec == d.Seconds);
-    return d;
+    u32 year, mon, wday, yday, mday, hour, min, sec;
+    FPlatformTime::UtcTime(t.Value(), year, mon, wday, yday, mday, hour, min, sec);
+    return FDateTime{ year, mon, wday, yday, mday, hour, min, sec };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

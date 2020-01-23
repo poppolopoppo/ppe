@@ -35,14 +35,18 @@ public:
 		return static_cast<double>(ts.tv_sec) + static_cast<double>(ts.tv_nsec) / 1e9;
     }
 
+    static i64 ToCycles(double seconds) NOEXCEPT {
+        return (static_cast<i64>(seconds * 1e6));
+    }
     static double ToSeconds(i64 cycles) NOEXCEPT {
         return (static_cast<double>(cycles)/* µs */ * 1e-6);
     }
 
-    static u64 CpuTime() NOEXCEPT;
+    static i64 Timestamp() NOEXCEPT;
     static u64 NetworkTime() NOEXCEPT;
-    static void SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) NOEXCEPT;
-    static void UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) NOEXCEPT;
+
+    static void LocalTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT;
+    static void UtcTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT;
 
     // not relevant on linux :
     static void EnterHighResolutionTimer() {}

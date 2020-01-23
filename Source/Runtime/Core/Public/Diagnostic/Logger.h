@@ -138,7 +138,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
         ::PPE::FLogger::FSiteInfo::Make( \
             WIDESTRING(__FILE__), \
             __LINE__ ), \
-        _FORMAT, __VA_ARGS__ ); \
+        _FORMAT,## __VA_ARGS__ ); \
     } while (0)
 
 #define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) do { \

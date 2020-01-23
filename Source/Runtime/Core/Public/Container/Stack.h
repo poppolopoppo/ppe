@@ -344,5 +344,7 @@ inline void* operator new(size_t sizeInBytes, PPE::TStack<T, _IsPod>& stack) {
 template <typename T, bool _IsPod>
 inline void operator delete(void* ptr, PPE::TStack<T, _IsPod>& stack) {
     Assert_NoAssume(stack.AliasesToContainer(static_cast<T*>(ptr)));
+    UNUSED(ptr);
+    UNUSED(stack);
     AssertNotImplemented(); // don't know the size of the block
 }

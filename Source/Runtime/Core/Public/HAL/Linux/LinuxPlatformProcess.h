@@ -8,6 +8,8 @@
 #include "HAL/Linux/LinuxPlatformMemory.h"
 #include "HAL/Linux/LinuxPlatformThread.h"
 
+#include "Meta/PointerWFlags.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -43,22 +45,62 @@ private:
 };
 //----------------------------------------------------------------------------
 struct FLinuxProcessHandle {
-    FLinuxProcessState* ProcInfo;
-    ::pid_t OpenedPid;
+    FLinuxProcessHandle() NOEXCEPT : FLinuxProcessHandle(nullptr) {}
+    FLinuxProcessHandle(std::nullptr_t) NOEXCEPT
+    :   Data{ nullptr } {
+        Assert(not Valid());
+    }
+    FLinuxProcessHandle(FLinuxProcessState* procInfo) NOEXCEPT
+    :   Data{ procInfo } {
+        Assert(not HasPackedPid_(Data.PackedPid));
+    }
+    explicit FLinuxProcessHandle(::pid_t pid) NOEXCEPT
+    :   Data{ nullptr }/* make sure *ALL* Data is initialized before packing pid */{
+        if (-1 != pid) { // invalid pid are converted to nullptr
+            Data.PackedPid = PackPid_(pid);
+            Assert(HasPackedPid_(Data.PackedPid));
+        }
+    }
 
-    FLinuxProcessHandle() NOEXCEPT : ProcInfo(nullptr), OpenedPid(-1) {}
-    ~FLinuxProcessHandle() { Assert(nullptr == ProcInfo); }
+    ~FLinuxProcessHandle() { Assert(nullptr == Data.ProcInfo); }
 
-    explicit FLinuxProcessHandle(FLinuxProcessState* procInfo) NOEXCEPT : ProcInfo(procInfo), OpenedPid(-1) {}
-    explicit FLinuxProcessHandle(::pid_t pid) : ProcInfo(nullptr), OpenedPid(pid) {}
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (Valid() ? this : nullptr); }
 
-    bool Valid() const { return (nullptr != ProcInfo || -1 != OpenedPid); }
-    ::pid_t Pid() const { return (ProcInfo ? ProcInfo->Pid() : OpenedPid); }
+    FLinuxProcessState* ProcInfo() const {
+        return (HasPackedPid_(Data.PackedPid) ? nullptr : Data.ProcInfo);
+    }
+
+    bool Valid() const { return (HasPackedPid_(Data.PackedPid) | !!Data.ProcInfo); }
+    ::pid_t UnpackedPid() const { return UnpackPid_(Data.PackedPid); }
+    ::pid_t Pid() const { return (HasPackedPid_(Data.PackedPid)
+        ? UnpackPid_(Data.PackedPid)
+        : (Data.ProcInfo ? Data.ProcInfo->Pid() : -1) ); }
 
     void Reset() NOEXCEPT {
-        Assert(ProcInfo);
-        ProcInfo = nullptr;
-        OpenedPid = -1;
+        Assert(Data.ProcInfo);
+        Data.ProcInfo = nullptr;
+    }
+
+    friend bool operator ==(FLinuxProcessHandle a, FLinuxProcessHandle b) NOEXCEPT {
+        return (a.Data.ProcInfo == b.Data.ProcInfo);
+    }
+    friend bool operator !=(FLinuxProcessHandle a, FLinuxProcessHandle b) NOEXCEPT {
+        return (not operator ==(a, b));
+    }
+
+private:
+    using packed_pid_t = intptr_t;
+    union {
+        FLinuxProcessState* ProcInfo;
+        packed_pid_t PackedPid;
+    }   Data;
+    STATIC_ASSERT(sizeof(packed_pid_t) >= sizeof(::pid_t));
+
+    static CONSTEXPR bool HasPackedPid_(packed_pid_t packed) { return !!(packed & 1); }
+    static CONSTEXPR packed_pid_t PackPid_(::pid_t pid) { return (intptr_t(pid << 1) | 1); }
+    static CONSTEXPR ::pid_t UnpackPid_(packed_pid_t packed) {
+        Assert(packed & 1);
+        return ::pid_t(packed >> 1);
     }
 };
 //----------------------------------------------------------------------------
@@ -85,7 +127,7 @@ public:
     // system process
 
     using FProcessId = ::pid_t;
-    using FProcessHandle = FLinuxProcessHandle*;
+    using FProcessHandle = FLinuxProcessHandle;
 
     static FProcessId CurrentPID();
     static FProcessHandle CurrentProcess();
@@ -96,15 +138,15 @@ public:
     static bool IsForeground(); // returns true if this app is visible and selected
     static bool IsFirstInstance(); // returns false if the same process is already running
 
-    static bool IsProcessAlive(FProcessHandle& process);
+    static bool IsProcessAlive(FProcessHandle process);
 
     static FProcessHandle OpenProcess(FProcessId pid, bool fullAccess = true);
 
-    static void WaitForProcess(FProcessHandle& process); // stall until process is closed
-    static bool WaitForProcess(FProcessHandle& process, size_t timeoutMs);
+    static void WaitForProcess(FProcessHandle process); // stall until process is closed
+    static bool WaitForProcess(FProcessHandle process, size_t timeoutMs);
 
-    static void CloseProcess(FProcessHandle& process);
-    static void TerminateProcess(FProcessHandle& process, bool killTree);
+    static void CloseProcess(FProcessHandle process);
+    static void TerminateProcess(FProcessHandle process, bool killTree);
 
     static bool FindByName(FProcessId* pPid, const FWStringView& name);
 
@@ -116,19 +158,19 @@ public:
 
     static const FAffinityMask& AllCoresAffinity;
 
-    static bool ExitCode(int* pExitCode, FProcessHandle& process);
+    static bool ExitCode(int* pExitCode, FProcessHandle process);
 
-    static bool MemoryStats(FMemoryStats* pStats, FProcessHandle& process);
+    static bool MemoryStats(FMemoryStats* pStats, FProcessHandle process);
 
-    static bool Name(FString* pName, FProcessHandle& process);
+    static bool Name(FString* pName, FProcessHandle process);
 
-    static bool Pid(FProcessId* pPid, FProcessHandle& process);
+    static bool Pid(FProcessId* pPid, FProcessHandle process);
 
-    static bool Priority(EProcessPriority* pPriority, FProcessHandle& process);
-    static bool SetPriority(FProcessHandle& process, EProcessPriority priority);
+    static bool Priority(EProcessPriority* pPriority, FProcessHandle process);
+    static bool SetPriority(FProcessHandle process, EProcessPriority priority);
 
-    static FAffinityMask AffinityMask(FProcessHandle& process);
-    static bool SetAffinityMask(FProcessHandle& process, FAffinityMask mask);
+    static FAffinityMask AffinityMask(FProcessHandle process);
+    static bool SetAffinityMask(FProcessHandle process, FAffinityMask mask);
 
     //------------------------------------------------------------------------
     // pipe

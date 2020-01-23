@@ -36,12 +36,11 @@ public:
         return (1000000.0 / frequency.QuadPart);
     }
 
-    static double ToSeconds(i64 cycles) NOEXCEPT {
-        return (cycles * GSecondsPerCycle);
-    }
-
     static i64 ToCycles(double seconds) NOEXCEPT {
         return i64(seconds / GSecondsPerCycle);
+    }
+    static double ToSeconds(i64 cycles) NOEXCEPT {
+        return (cycles * GSecondsPerCycle);
     }
 
     static FORCE_INLINE u64 ThreadCpuCycles() NOEXCEPT {
@@ -51,9 +50,11 @@ public:
         return cycleTime;
     }
 
+    static i64 Timestamp() NOEXCEPT;
     static u64 NetworkTime() NOEXCEPT;
-    static void SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) NOEXCEPT;
-    static void UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) NOEXCEPT;
+
+    static void LocalTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT;
+    static void UtcTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT;
 
     static void EnterHighResolutionTimer();
     static void LeaveLowResolutionTimer();

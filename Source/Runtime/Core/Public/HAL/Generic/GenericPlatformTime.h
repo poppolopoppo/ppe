@@ -16,12 +16,15 @@ public: // must be defined for every platform
     static i64 Cycles() = delete;
     static double Seconds() = delete;
 
+    static i64 ToCycles(double seconds) = delete;
     static double ToSeconds(i64 cycles) = delete;
 
+    static i64 Timestamp() = delete;
     static u64 CpuTime() = delete; // can't convert to time
     static u64 NetworkTime() = delete;
-    static void SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) = delete;
-    static void UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) = delete;
+
+    static void LocalTime(u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) = delete;
+    static void UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) = delete;
 
     static double ChronoMicroseconds() NOEXCEPT {
         using chrono_type = std::conditional_t<

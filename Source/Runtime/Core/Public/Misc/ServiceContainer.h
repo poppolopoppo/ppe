@@ -95,7 +95,7 @@ void FServiceContainer::Register(T* service) {
 
     const FStringView serviceName{
 #if USE_PPE_LOGGER
-        MakeCStringView(typeid(_Interface).name())
+        MakeCStringView(PPE_TYPEID_NAME(_Interface))
 #endif
     };
 
@@ -105,7 +105,7 @@ void FServiceContainer::Register(T* service) {
     _services.Emplace_AssertUnique(serviceId, serviceId, (void*)pimpl, serviceName);
 
     LOG(Services, Info, L"[Service] Register <{0}> with <{1}> (id={2:x})",
-        serviceName, typeid(T).name(), hash_t(serviceId));
+        serviceName, MakeCStringView(PPE_TYPEID_NAME(T)), hash_t(serviceId));
 }
 //----------------------------------------------------------------------------
 template <typename _Interface, typename T>
@@ -118,7 +118,7 @@ void FServiceContainer::Unregister(T* service) {
     WRITESCOPELOCK(_barrierRW);
 
     LOG(Services, Info, L"[Service] Unregister <{0}> with <{1}> (id={2})",
-        typeid(_Interface).name(), typeid(T).name(), hash_t(serviceId) );
+        MakeCStringView(PPE_TYPEID_NAME(_Interface)), MakeCStringView(PPE_TYPEID_NAME(T)), hash_t(serviceId) );
 
 #if USE_PPE_ASSERT
     const auto it = _services.Find(serviceId);
@@ -152,7 +152,7 @@ _Interface* FServiceContainer::GetIFP() const {
 
     if (_services.end() == it) {
         LOG(Services, Warning, L"[Service] Unknown service <{0}> ! (id={1})",
-            typeid(_Interface).name(), hash_t(serviceId) );
+            MakeCStringView(PPE_TYPEID_NAME(_Interface)), hash_t(serviceId) );
 
         return nullptr;
     }

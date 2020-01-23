@@ -38,8 +38,12 @@ void FWeakPtrBase::set_(FWeakAndRefCountable* ptr) {
             Assert(nullptr == _prev);
             _weakAndRefCountable->_weakPtrs = _next;
         }
+        else {
+            Assert(_prev);
+            _prev = nullptr;
+        }
 
-        _prev = _next = nullptr;
+         _next = nullptr;
         _weakAndRefCountable = nullptr;
     }
 

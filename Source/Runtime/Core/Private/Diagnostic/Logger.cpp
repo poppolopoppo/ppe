@@ -722,7 +722,7 @@ public: // ILogger
 public: // IStreamWriter, implemented to be low level and without calls to LOG()
     virtual bool IsSeekableO(ESeekOrigin) const override final { return true; }
 
-    virtual std::streamoff TellO() const { return FPlatformLowLevelIO::Tell(_hFile); }
+    virtual std::streamoff TellO() const override final { return FPlatformLowLevelIO::Tell(_hFile); }
     virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final {
         return FPlatformLowLevelIO::Seek(_hFile, offset, origin);
     }

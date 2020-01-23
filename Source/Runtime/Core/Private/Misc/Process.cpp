@@ -73,10 +73,10 @@ FProcess::~FProcess() {
     if (_hProc)
         Close();
 
-    Assert_NoAssume(nullptr == _hProc);
-    Assert_NoAssume(nullptr == _hStdinWrite);
-    Assert_NoAssume(nullptr == _hStderrRead);
-    Assert_NoAssume(nullptr == _hStdoutRead);
+    Assert_NoAssume(not _hProc);
+    Assert_NoAssume(not _hStdinWrite);
+    Assert_NoAssume(not _hStderrRead);
+    Assert_NoAssume(not _hStdoutRead);
 }
 //----------------------------------------------------------------------------
 FProcess::FProcess(
@@ -104,10 +104,10 @@ auto FProcess::operator =(FProcess&& rvalue) NOEXCEPT -> FProcess& {
     if (_hProc)
         Close();
 
-    Assert_NoAssume(nullptr == _hProc);
-    Assert_NoAssume(nullptr == _hStdinWrite);
-    Assert_NoAssume(nullptr == _hStderrRead);
-    Assert_NoAssume(nullptr == _hStdoutRead);
+    Assert_NoAssume(not _hProc);
+    Assert_NoAssume(not _hStdinWrite);
+    Assert_NoAssume(not _hStderrRead);
+    Assert_NoAssume(not _hStdoutRead);
 
     Swap(rvalue);
     return (*this);

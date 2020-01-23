@@ -67,7 +67,7 @@ FCurrentProcess::FCurrentProcess(
         volatile bool bTurnThisOffWhenDebuggerIsAttached = (!FPlatformDebug::IsDebuggerPresent());
         volatile size_t loopCount = 0;
         while (bTurnThisOffWhenDebuggerIsAttached) {
-            LOG(Process, Warning, L"waiting for debugger to be attached");
+            LOG_DIRECT(Process, Warning, L"waiting for debugger to be attached");
             std::this_thread::sleep_for(std::chrono::milliseconds(500)); // wait for debugger to be attached
             loopCount++;
         }

@@ -47,21 +47,23 @@ public:
     }
 #endif
 
-    TInSituAllocator() = default;
+    TInSituAllocator() NOEXCEPT = default;
 
     // copy checks that both allocators are empty (can't copy in situ allocations)
-    TInSituAllocator(const TInSituAllocator& other) { operator =(other); }
-    TInSituAllocator& operator =(const TInSituAllocator& other) {
+    TInSituAllocator(const TInSituAllocator& other) NOEXCEPT { operator =(other); }
+    TInSituAllocator& operator =(const TInSituAllocator& other) NOEXCEPT {
         Assert_NoAssume(EState::Freed == State);
         Assert_NoAssume(EState::Freed == other.State);
+        UNUSED(other);
         return (*this);
     }
 
     // move checks that both allocators are empty (can't move in situ allocations)
-    TInSituAllocator(TInSituAllocator&& rvalue) { operator =(std::move(rvalue)); }
-    TInSituAllocator& operator =(TInSituAllocator&& rvalue) {
+    TInSituAllocator(TInSituAllocator&& rvalue) NOEXCEPT { operator =(std::move(rvalue)); }
+    TInSituAllocator& operator =(TInSituAllocator&& rvalue) NOEXCEPT {
         Assert_NoAssume(EState::Freed == State);
         Assert_NoAssume(EState::Freed == rvalue.State);
+        UNUSED(rvalue);
         return (*this);
     }
 
@@ -153,21 +155,23 @@ public:
     insitu_t InSitu;
     size_t Offset{ 0 };
 
-    TInSituStackAllocator() = default;
+    TInSituStackAllocator() NOEXCEPT = default;
 
     // copy checks that both allocators are empty (can't copy in situ allocations)
-    TInSituStackAllocator(const TInSituStackAllocator& other) { operator =(other); }
-    TInSituStackAllocator& operator =(const TInSituStackAllocator& other) {
+    TInSituStackAllocator(const TInSituStackAllocator& other) NOEXCEPT { operator =(other); }
+    TInSituStackAllocator& operator =(const TInSituStackAllocator& other) NOEXCEPT {
         Assert_NoAssume(0 == Offset);
         Assert_NoAssume(0 == other.Offset);
+        UNUSED(other);
         return (*this);
     }
 
     // move checks that both allocators are empty (can't move in situ allocations)
-    TInSituStackAllocator(TInSituStackAllocator&& rvalue) { operator =(std::move(rvalue)); }
-    TInSituStackAllocator& operator =(TInSituStackAllocator&& rvalue) {
+    TInSituStackAllocator(TInSituStackAllocator&& rvalue) NOEXCEPT { operator =(std::move(rvalue)); }
+    TInSituStackAllocator& operator =(TInSituStackAllocator&& rvalue) NOEXCEPT {
         Assert_NoAssume(0 == Offset);
         Assert_NoAssume(0 == rvalue.Offset);
+        UNUSED(rvalue);
         return (*this);
     }
 

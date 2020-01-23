@@ -124,6 +124,11 @@ private:
     // Must check if the terminal has support for ANSI colors
     // https://www.badprog.com/unix-gnu-linux-system-calls-using-tgetent
     static bool HasColorSupportImpl_() {
+        // check if we're outputting to a terminal
+        if (not ::isatty(STDOUT_FILENO))
+            return false;
+
+        // check terminal for color support
         const char* term = ::getenv("TERM");
         if (nullptr == term)
             return false;

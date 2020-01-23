@@ -112,18 +112,18 @@ private: // FTimer
         date_type Now() const NOEXCEPT { return FPlatformTime::Rdtsc(); }
         double ElapsedSince(date_type start) const NOEXCEPT { return static_cast<double>(Now() - start) * 0.1; }
     };
-    template <> struct TCounter<ThreadCycles> {
-        using date_type = u64;
-        static CONSTEXPR FWStringView Units() { return L"k.cycles"; }
-        date_type Now() const NOEXCEPT { return FPlatformTime::CpuTime(); }
-        double ElapsedSince(date_type start) const NOEXCEPT { return static_cast<double>(Now() - start) * 0.001; }
-    };
+    // template <> struct TCounter<ThreadCycles> {
+    //     using date_type = u64;
+    //     static CONSTEXPR FWStringView Units() { return L"k.cycles"; }
+    //     date_type Now() const NOEXCEPT { return FPlatformTime::CpuTime(); }
+    //     double ElapsedSince(date_type start) const NOEXCEPT { return static_cast<double>(Now() - start) * 0.001; }
+    // };
     template <> struct TCounter<PerfCounter> {
         using date_type = i64;
         static CONSTEXPR FWStringView Units() { return L"ns"; }
         date_type Now() const NOEXCEPT { return FPlatformTime::Cycles(); }
-        double ElapsedSince(date_type start) const NOEXCEPT { 
-            return FPlatformTime::ToSeconds(Now() - start) * 1000000; 
+        double ElapsedSince(date_type start) const NOEXCEPT {
+            return FPlatformTime::ToSeconds(Now() - start) * 1000000;
         }
     };
     template <> struct TCounter<ChronoTime> {
@@ -134,7 +134,7 @@ private: // FTimer
     };
 
     using FRawTicks = TCounter<RawTicks>;
-    using FThreadCycles = TCounter<ThreadCycles>;
+    // usingµ FThreadCycles = TCounter<ThreadCycles>;
     using FPerfCounter = TCounter<PerfCounter>;
     using FChronoTime = TCounter<ChronoTime>;
 

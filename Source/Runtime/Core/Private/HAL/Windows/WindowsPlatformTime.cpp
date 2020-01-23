@@ -4,6 +4,8 @@
 
 #ifdef PLATFORM_WINDOWS
 
+#   include <time.h>
+
 #define USE_PPE_WINDOWS_HIGHRESTIMER 1
 #if USE_PPE_WINDOWS_HIGHRESTIMER
 //  Set granularity of sleep and such to 1 ms.
@@ -17,38 +19,44 @@ namespace PPE {
 //----------------------------------------------------------------------------
 const double FWindowsPlatformTime::GSecondsPerCycle = FWindowsPlatformTime::SecondsPerCycle();
 //----------------------------------------------------------------------------
+i64 FWindowsPlatformTime::Timestamp() NOEXCEPT {
+    STATIC_ASSERT(std::is_same_v<i64, ::__time64_t>));
+    return ::_time64(nullptr);
+}
+//----------------------------------------------------------------------------
 u64 FWindowsPlatformTime::NetworkTime() NOEXCEPT {
     ::FILETIME ft;
     ::GetSystemTimePreciseAsFileTime(&ft);
     return *((const u64*)& ft);
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformTime::SystemTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) NOEXCEPT {
-    ::SYSTEMTIME st;
-    ::GetLocalTime(&st);
+void FWindowsPlatformTime::LocalTime(i64 timestamp, u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT {
+    struct ::tm lc;
+    Verify(0 == ::_localtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&t)));
 
-    year = checked_cast<u32>(st.wYear);
-    month = checked_cast<u32>(st.wMonth);
-    dayOfWeek = checked_cast<u32>(st.wDayOfWeek);
-    day = checked_cast<u32>(st.wDay);
-    hour = checked_cast<u32>(st.wHour);
-    min = checked_cast<u32>(st.wMinute);
-    sec = checked_cast<u32>(st.wSecond);
-    msec = checked_cast<u32>(st.wMilliseconds);
+    year = 1900 + checked_cast<u32>(lc.tm_year);
+    month = 1 + checked_cast<u32>(lc.tm_mon);
+    dayOfWeek = checked_cast<u32>(lc.tm_wday);
+    dayOfYear = checked_cast<u32>(lc.tm_yday);
+    dayOfMon = checked_cast<u32>(lc.tm_mday);
+    hour = checked_cast<u32>(lc.tm_hour);
+    min = checked_cast<u32>(lc.tm_min);
+    sec = checked_cast<u32>(lc.tm_sec);
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformTime::UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& day, u32& hour, u32& min, u32& sec, u32& msec) NOEXCEPT {
-    ::SYSTEMTIME st;
-    ::GetSystemTime(&st);
+void FWindowsPlatformTime::UtcTime(u32& year, u32& month, u32& dayOfWeek, u32& dayOfYear, u32& dayOfMon, u32& hour, u32& min, u32& sec) NOEXCEPT {
+    struct ::tm lc;
+    Verify(0 == ::_gmtime64_s(&lc, reinterpret_cast<const ::__time64_t*>(&t)));
 
-    year = checked_cast<u32>(st.wYear);
-    month = checked_cast<u32>(st.wMonth);
-    dayOfWeek = checked_cast<u32>(st.wDayOfWeek);
-    day = checked_cast<u32>(st.wDay);
-    hour = checked_cast<u32>(st.wHour);
-    min = checked_cast<u32>(st.wMinute);
-    sec = checked_cast<u32>(st.wSecond);
-    msec = checked_cast<u32>(st.wMilliseconds);
+    year = 1900 + checked_cast<u32>(lc.tm_year);
+    month = 1 + checked_cast<u32>(lc.tm_mon);
+    dayOfWeek = checked_cast<u32>(lc.tm_wday);
+    dayOfYear = checked_cast<u32>(lc.tm_yday);
+    dayOfMon = checked_cast<u32>(lc.tm_mday);
+    day = checked_cast<u32>(lc.tm_yday);
+    hour = checked_cast<u32>(lc.tm_hour);
+    min = checked_cast<u32>(lc.tm_min);
+    sec = checked_cast<u32>(lc.tm_sec);
 }
 //----------------------------------------------------------------------------
 // https://docs.microsoft.com/en-us/windows/desktop/api/timeapi/nf-timeapi-timebeginperiod

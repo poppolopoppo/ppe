@@ -37,68 +37,62 @@ inline FWeakPtrBase::~FWeakPtrBase() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-TWeakPtr<T>::TWeakPtr()
-:   FWeakPtrBase((void **)&_ptr)
-,   _ptr(nullptr) {}
-//----------------------------------------------------------------------------
-template <typename T>
 TWeakPtr<T>::TWeakPtr(T* ptr)
-:   FWeakPtrBase((void **)&_ptr)
-,   _ptr(nullptr) {
+:   FWeakPtrBase() {
     FWeakPtrBase::set_(ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 TWeakPtr<T>::~TWeakPtr() {
-    FWeakPtrBase::set_<T>(nullptr);
+    STATIC_ASSERT(std::is_base_of_v<FWeakAndRefCountable, Meta::TDecay<T>>);
+    FWeakPtrBase::set_(nullptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TWeakPtr<T>::TWeakPtr(TWeakPtr&& rvalue)
-:   TWeakPtr(rvalue._ptr) {
-    rvalue.set_<T>(nullptr);
+TWeakPtr<T>::TWeakPtr(TWeakPtr&& rvalue) {
+    FWeakPtrBase::swap_(rvalue);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 auto TWeakPtr<T>::operator =(TWeakPtr&& rvalue) -> TWeakPtr& {
-    FWeakPtrBase::set_(rvalue._ptr);
-    rvalue.set_<T>(nullptr);
+    FWeakPtrBase::set_(nullptr);
+    FWeakPtrBase::swap_(rvalue);
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 TWeakPtr<T>::TWeakPtr(const TWeakPtr& other)
-:   TWeakPtr(other._ptr) {}
+:   TWeakPtr(other.template get_<T>()) {}
 //----------------------------------------------------------------------------
 template <typename T>
 auto TWeakPtr<T>::operator =(const TWeakPtr& other) -> TWeakPtr& {
-    FWeakPtrBase::set_(other._ptr);
+    FWeakPtrBase::set_(other.template get_<T>());
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
 TWeakPtr<T>::TWeakPtr(const TWeakPtr<U>& other)
-:   TWeakPtr(checked_cast<T *>(other.get())) {}
+:   TWeakPtr(other.template get_<T>()) {}
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
 auto TWeakPtr<T>::operator =(const TWeakPtr<U>& other) -> TWeakPtr& {
-    FWeakPtrBase::set_(checked_cast<T *>(other.get()));
+    FWeakPtrBase::set_(other.template get_<T>());
     return *this;
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
-TWeakPtr<T>::TWeakPtr(TWeakPtr<U>&& rvalue)
-:   TWeakPtr(checked_cast<T *>(rvalue.get())) {
-    rvalue.set_<U>(nullptr);
+TWeakPtr<T>::TWeakPtr(TWeakPtr<U>&& rvalue) {
+    FWeakPtrBase::set_(rvalue.template get_<T>());
+    rvalue.set_(nullptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 template <typename U>
 auto TWeakPtr<T>::operator =(TWeakPtr<U>&& rvalue) -> TWeakPtr& {
-    FWeakPtrBase::set_(checked_cast<T *>(rvalue.get()));
+    FWeakPtrBase::set_(rvalue.template get_<T>());
     rvalue.set_(nullptr);
     return *this;
 }
@@ -113,17 +107,9 @@ template <typename U>
 bool TWeakPtr<T>::TryLock(TRefPtr<U> *pLocked) const {
     Assert(pLocked);
     Likely(pLocked);
-    pLocked->reset(_ptr);
-    return (pLocked->get() != nullptr);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-template <typename U>
-void TWeakPtr<T>::Swap(TWeakPtr<U>& other) {
-    T *const lhs = _ptr;
-    U *const rhs = other._ptr;
-    FWeakPtrBase::set_(checked_cast<T *>(rhs));
-    other.set_(checked_cast<U *>(lhs));
+    U* const pRef = this->template get_<U>();
+    pLocked->reset(pRef);
+    return (!!pRef);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
