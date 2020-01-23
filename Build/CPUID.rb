@@ -1,5 +1,5 @@
-require "rubygems"
-gem "ffi"
+#require "rubygems"
+#gem "ffi"
 require "ffi"
 
 module CPUID
